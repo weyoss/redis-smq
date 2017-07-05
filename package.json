@@ -1,0 +1,52 @@
+{
+  "name": "redis-smq",
+  "version": "1.0.1",
+  "description": "A simple high-performance Redis message queue for Node.js.",
+  "main": "index.js",
+  "dependencies": {
+    "bunyan": "1.8.10",
+    "koa": "2.2.0",
+    "koa-send": "4.1.0",
+    "koa-static": "3.0.0",
+    "redis": "2.7.1",
+    "socket.io": "2.0.3",
+    "uuid": "3.0.1"
+  },
+  "devDependencies": {
+    "chai": "3.5.0",
+    "eslint": "3.15.0",
+    "eslint-config-airbnb-base": "11.1.0",
+    "eslint-config-google": "0.7.1",
+    "eslint-config-standard": "6.2.1",
+    "eslint-plugin-import": "2.2.0",
+    "eslint-plugin-promise": "3.4.1",
+    "eslint-plugin-standard": "2.0.1",
+    "mocha": "3.2.0",
+    "sinon": "1.17.7",
+    "sinon-chai": "2.11.0"
+  },
+  "scripts": {
+    "test": "eslint --ignore-path .jshintignore src/*.js && NODE_ENV=test mocha --reporter spec test/run/*.js",
+    "lint": "eslint --ignore-path .jshintignore src/monitor/assets src/*.js",
+    "fix": "eslint --ignore-path .jshintignore src/monitor/assets src --fix"
+  },
+  "author": "Weyoss <weyoss@protonmail.com>",
+  "license": "MIT",
+  "keywords": [
+    "redis",
+    "message queue",
+    "message",
+    "queue",
+    "job queue",
+    "jobs",
+    "redis-smq"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/weyoss/redis-smq.git"
+  },
+  "homepage": "https://github.com/weyoss/redis-smq",
+  "bugs": {
+    "url": "https://github.com/weyoss/redis-smq/issues"
+  }
+}
