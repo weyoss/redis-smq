@@ -131,24 +131,27 @@ so the message is re-queued again and considered to be unacknowledged.
 ```javascript
 // filename: ./example/test-queue-producer-launch.js
 
+'use strict';
+
 const config = require('./config');
 const Producer = require('redis-smq').Producer;
+
 const producer = new Producer('test_queue', config);
 
-producer.produce({'hello': 'world'}, (err) => {
-    if (err) {
-        console.error(err);
-        process.exit(1);
+producer.produce({ hello: 'world' }, (err) => {
+    if (err) throw err;
+    else {
+        console.log('Successfully published!');
+        process.exit(0);
     }
-    console.log('Successfully published!');
 });
 
-producer.produceWithTTL({'hello': 'world'}, 60000, (err) => {
-    if (err) {
-        console.error(err);
-        process.exit(1);
+producer.produceWithTTL({ hello: 'world' }, 60000, (err) => {
+    if (err) throw err;
+    else {
+        console.log('Successfully published!');
+        process.exit(0);
     }
-    console.log('Successfully published!');
 });
 ```
 
@@ -176,21 +179,30 @@ producer.produceWithTTL({'hello': 'world'}, 60000, (err) => {
 ```javascript
 // filename: ./example/consumers/test-queue-consumer.js
 
+'use strict';
+
 const redisSMQ = require('redis-smq');
+
 const Consumer = redisSMQ.Consumer;
 
 class TestQueueConsumer extends Consumer {
 
+    /**
+     *
+     * @param message
+     * @param cb
+     */
     consume(message, cb) {
-        //console.log(`Got message to consume: `, JSON.stringify(message));
-
-        //throw new Error('TEST!');
-
-        //cb(new Error('TEST!'));
-
-        //const timeout = parseInt(Math.random() * 100);
-        //setTimeout(cb, timeout);
-
+        //  console.log(`Got message to consume: `, JSON.stringify(message));
+        //  
+        //  throw new Error('TEST!');
+        //  
+        //  cb(new Error('TEST!'));
+        //  
+        //  const timeout = parseInt(Math.random() * 100);
+        //  setTimeout(() => {
+        //      cb();
+        //  }, timeout);
         cb();
     }
 }
@@ -268,10 +280,10 @@ $ node monitor.js
 ```
 #### RedisSMQ Monitor screenshots
 
-Please note that the numbers shown in the screenshots are related with Redis server configuration and host performance 
-parameters on which the server is running!
+Please note that the numbers shown in the screenshots are related to the Redis server configuration and the performance 
+parameters of the host the server is running on!
 
-##### Redis-SMQ running 30 consumers (15 consumers per 2 queues) messages while other producers are producing messages in parallel:
+##### RedisSMQ running 2 queues with 30 consumers (15 consumers/queue) while simultaneously 7 producers are producing messages in both queues
 
 ![RedisSMQ Monitor](./screenshots/img_1.png)
 
