@@ -8,9 +8,9 @@ module.exports = {
         port: 6379,
     },
     log: {
-        enabled: 1,
+        enabled: 0,
         options: {
-            level: "trace",
+            level: 'trace',
             /*
             streams: [
                 {
@@ -23,6 +23,6 @@ module.exports = {
     monitor: {
         enabled: true,
         host: '127.0.0.1',
-        port: 3000
+        port: 3000,
     },
 };

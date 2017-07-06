@@ -22,7 +22,7 @@ function produceNTimes(producer, message, n, cb) {
 }
 
 const producer = new Producer('test_queue', config);
-produceNTimes(producer, {hello: 'world'}, 1000000, (err) => {
+produceNTimes(producer, { hello: 'world' }, 1000000, (err) => {
     if (err) throw err;
     else {
         console.log('Produced successfully!');

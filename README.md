@@ -58,6 +58,8 @@ RedisSMQ configuration parameters:
 ```javascript
 // filename: ./example/config/index.js
 
+'use strict';
+
 const path = require('path');
 
 module.exports = {
@@ -68,7 +70,7 @@ module.exports = {
     log: {
         enabled: 0,
         options: {
-            level: "trace",
+            level: 'trace',
             /*
             streams: [
                 {
@@ -81,7 +83,7 @@ module.exports = {
     monitor: {
         enabled: true,
         host: '127.0.0.1',
-        port: 3000
+        port: 3000,
     },
 };
 ```
@@ -90,8 +92,8 @@ module.exports = {
 
 ### Definitions
 
-**Message TTL** - All queue messages are guarantied to not be consumed and destroyed if they have been in the queue for 
-longer than the amount of time called TTL (time-to-live) in milliseconds. Message TTL can be set per message when 
+**Message TTL** - All queue messages are guaranteed to not be consumed and destroyed if they have been in the queue for 
+longer than an amount of time called TTL (time-to-live) in milliseconds. Message TTL can be set per message when 
 producing it or per consumer (for all queue messages).
 
 **Message consumption timeout** - Also called job timeout, is the amount of time in milliseconds before a consumer 
@@ -172,9 +174,9 @@ producer.produceWithTTL({'hello': 'world'}, 60000, (err) => {
 #### Consumer example
 
 ```javascript
-// filename: ./example/consumers/test-queue-consumer-launch.js
+// filename: ./example/consumers/test-queue-consumer.js
 
-const redisSMQ = require('redis-smq')
+const redisSMQ = require('redis-smq');
 const Consumer = redisSMQ.Consumer;
 
 class TestQueueConsumer extends Consumer {
@@ -203,18 +205,21 @@ module.exports = TestQueueConsumer;
 Launch file:
 
 ```javascript
-// filename: ./example/consumer.js
+// filename: ./example/test-queue-consumer-launch.js
+
+'use strict';
 
 const config = require('./config');
 const TestQueueConsumer = require('./consumers/test-queue-consumer');
-const consumer = new TestQueueConsumer(config, {messageConsumeTimeout: 2000});
+
+const consumer = new TestQueueConsumer(config, { consumeTimeout: 2000 });
 consumer.run();
 ```
 
 Running from CLI:
 
 ```text
-$ node consumer.js
+$ node test-queue-consumer-launch.js
 ```
 ## Troubleshooting and monitoring
 
@@ -235,8 +240,8 @@ $ node consumer | ./node_modules/.bin/bunyan
 ```
 ### Monitoring
 
-The RedisSMQ Monitoring is an interface which let you monitor and debug your RedisSMQ server from a
- web browser in real-time.
+The RedisSMQ Monitoring is an interface which let you monitor and debug your RedisSMQ server from a web browser in 
+real-time.
 
 First enable monitoring in your configuration file and provide monitoring server parameters.
 
@@ -245,9 +250,15 @@ Monitor server example:
 ```javascript
 // filename: ./example/monitor.js
 
+'use strict';
+
 const config = require('./config');
 const monitorServer = require('redis-smq').monitor(config);
-monitorServer.listen();
+
+monitorServer.listen(() => {
+    console.log('Monitor server is running...');
+});
+
 ```
 
 Launching the server:
@@ -264,17 +275,7 @@ parameters on which the server is running!
 
 ![RedisSMQ Monitor](./screenshots/img_1.png)
 
-##### 7 producers are producing messages while other consumers are consuming messages:
-![RedisSMQ Monitor](./screenshots/img_2.png)
-
-##### Online consumers with theirs resources usage:
-![RedisSMQ Monitor](./screenshots/img_3.png)
-
-##### 7 producers are producing messages without consumers:
-![RedisSMQ Monitor](./screenshots/img_4.png)
-
-##### 30 consumers (15 consumers per 2 queues) are consuming messages without running producers:
-![RedisSMQ Monitor](./screenshots/img_5.png)
+More screenshots, could be found in the [screenshots folder](https://github.com/weyoss/redis-smq/tree/master/screenshots)
 
 ## Bugs
 
