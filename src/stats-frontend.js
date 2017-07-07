@@ -187,26 +187,25 @@ function statsFrontend(config) {
 
         /**
          *
-         * @param {function} cb
          */
-        run(cb) {
+        run() {
             const onPublished = (err) => {
-                if (err) cb(err);
+                if (err) throw err;
                 else {
                     setTimeout(() => {
-                        this.run(cb);
+                        this.run();
                     }, 1000);
                 }
             };
             const onStats = (err, stats) => {
-                if (err) cb(err);
+                if (err) throw err;
                 else {
                     const statsString = JSON.stringify(stats);
                     client.publish('stats', statsString, onPublished);
                 }
             };
             acquireLock((err) => {
-                if (err) cb(err);
+                if (err) throw err;
                 else getStats(onStats);
             });
         },

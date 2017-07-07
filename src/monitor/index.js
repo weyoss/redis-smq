@@ -26,8 +26,6 @@ function monitor(config = {}) {
          * @param {function} cb
          */
         listen(cb) {
-            const stats = statsFrontend(config);
-
             /**
              * KOA setup
              */
@@ -47,24 +45,25 @@ function monitor(config = {}) {
              */
             const server = http.createServer(app.callback());
             io.attach(server);
-            server.listen(config.monitor.port, config.monitor.host, (err) => {
-                if (err) throw err;
-                cb();
-            });
+            server.listen(config.monitor.port, config.monitor.host, () => {
+                /**
+                 * Run stats
+                 */
+                const stats = statsFrontend(config);
+                stats.run();
 
-            /**
-             * Stats
-             */
-            stats.run((err) => {
-                if (err) throw err;
-            });
-            const client = redis.createClient(config.redis.port, config.redis.host);
-            client.on('ready', () => {
-                client.subscribe('stats');
-            });
-            client.on('message', (channel, message) => {
-                const json = JSON.parse(message);
-                io.emit('stats', json);
+                /**
+                 * Subscribe to 'stats' events and broadcast data to all Websocket clients
+                 */
+                const client = redis.createClient(config.redis.port, config.redis.host);
+                client.on('ready', () => {
+                    client.subscribe('stats');
+                });
+                client.on('message', (channel, message) => {
+                    const json = JSON.parse(message);
+                    io.emit('stats', json);
+                });
+                cb();
             });
         },
     };
