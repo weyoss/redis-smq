@@ -3,28 +3,30 @@
 Please note that the numbers shown in the screenshots are related to the Redis server configuration and the performance 
 parameters of the host the server is running on!
 
-## Consumers rates
-
-RedisSMQ running 2 queues with 30 consumers (15 consumers/queue) while simultaneously 7 producers are producing messages in both queues:
+## RedisSMQ running 1 producer instance:
 
 ![RedisSMQ Monitor](./img_1.png)
 
-RedisSMQ running 2 queues with 30 consumers (15 consumers/queue), without producers:
-
-![RedisSMQ Monitor](./img_5.png)
-
-## Producers rates
-
-RedisSMQ running 2 queues with 30 consumers (15 consumers/queue) while simultaneously 7 producers are producing messages in both queues:
+## RedisSMQ running 10 producer instances:
 
 ![RedisSMQ Monitor](./img_2.png)
 
-RedisSMQ running 7 producers, without consumers:
+## RedisSMQ running 1 consumer instance:
+
+![RedisSMQ Monitor](./img_3.png)
+
+## RedisSMQ running 10 consumer instances:
 
 ![RedisSMQ Monitor](./img_4.png)
 
-## Online consumers
+## RedisSMQ running 1 consumer instance and 1 producer instance:
 
-Online consumers with theirs resources usage:
+![RedisSMQ Monitor](./img_5.png)
 
-![RedisSMQ Monitor](./img_3.png)
+## RedisSMQ running 10 consumer instances and 10 producer instances:
+
+![RedisSMQ Monitor](./img_6.png)
+
+## RedisSMQ running 10 producer instances and 20 consumer instances:
+
+![RedisSMQ Monitor](./img_7.png)

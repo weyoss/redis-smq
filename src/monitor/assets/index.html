@@ -2,10 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Redis Simple MQ</title>
+    <title>RedisSMQ Monitor</title>
     <link type="text/css" href="/assets/bootstrap.min.css" rel="stylesheet"/>
     <link type="text/css" href="/assets/jquery-ui.css" rel="stylesheet"/>
     <style type="text/css">
+        html,
+        html body {
+            min-width: 950px;
+        }
         #tabs {
             padding: 0;
             margin: 0;
@@ -44,6 +48,7 @@
     <script src="/assets/jquery-1.12.4.min.js"></script>
     <script src="/assets/jquery-ui.js"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/assets/Chart.min.js"></script>
     <script>
         let t2 = `
         <div id="rates-consumers-template">
@@ -141,6 +146,52 @@
         `;
 
         $( document ).ready(function() {
+            const labels = new Array(60).fill(' ');
+            const producersRatesData = new Array(60).fill(0);
+            const consumersRatesData = new Array(60).fill(0);
+            const ctx = document.getElementById('overview').getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: "Producers throughput (msg/sec)",
+                        fill: false,
+                        backgroundColor: '#f95951',
+                        borderColor: '#f95951',
+                        data: producersRatesData,
+                    }, {
+                        label: "Consumers throughput (msg/sec)",
+                        fill: false,
+                        backgroundColor: '#0051ba',
+                        borderColor: '#0051ba',
+                        data: consumersRatesData,
+                    }
+                    ]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{
+                            display: true,
+                            ticks: {
+                                beginAtZero: true,
+                            }
+                        }]
+                    }
+                }
+            });
+
+            function addData(producersRate, consumersRate) {
+                consumersRatesData.shift();
+                producersRatesData.shift();
+                labels.shift();
+                consumersRatesData.push(consumersRate);
+                producersRatesData.push(producersRate);
+                labels.push(' ');
+                chart.update(0);
+            }
+
+
             $( "#tabs" ).tabs();
             let frame = $('#main-template');
             let $rates = frame.find('.rates');
@@ -151,11 +202,11 @@
             let queues = frame.find('.queues');
             let socket = io();
             socket.on('stats', function (stats) {
+                addData(stats.rates.input, stats.rates.processing);
                 $rates.find('.processing').text(stats.rates.processing);
                 $rates.find('.ack').text(stats.rates.acknowledged);
                 $rates.find('.unack').text(stats.rates.unacknowledged);
                 $rates.find('.input').text(stats.rates.input);
-
                 if(Object.keys(stats.rates.consumers).length) {
                     let i = 0;
                     for (let queueName in stats.rates.consumers) {
@@ -241,7 +292,7 @@
                         listing.append(row);
                     });
                     deadQueues.html(queuesTemplate);
-                } else deadQueues.html('It seems that all queues are empty. Empty queues are not displayed.');
+                } else deadQueues.html('It seems that all dead-letter queues are empty. Empty queues are not displayed.');
             });
         });
     </script>
@@ -250,9 +301,10 @@
 
 
 <div id="main-template" style="padding: 2em">
-    <h1>Redis Simple MQ</h1>
+    <h1>RedisSMQ Monitor</h1>
     <hr />
     <h2>Overview</h2>
+    <canvas id="overview" height="50"></canvas>
     <table class="table rates">
         <thead>
         <th>Input<br /> msgs/sec</th>
@@ -280,7 +332,7 @@
         <div id="tabs-2" class="rates-consumers">There are no running consumers!</div>
         <div id="tabs-3" class="online-consumers">All consumers are offline!</div>
         <div id="tabs-4" class="queues">It seems that all queues are empty. Empty queues are not displayed.</div>
-        <div id="tabs-5" class="dead-letter-queues">It seems that all queues are empty. Empty queues are not displayed.</div>
+        <div id="tabs-5" class="dead-letter-queues">It seems that all dead-letter queues are empty. Empty queues are not displayed.</div>
     </div>
 </div>
 

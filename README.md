@@ -7,7 +7,7 @@ A simple high-performance Redis message queue for Node.js.
  * Persistent: No messages are lost in case of a consumer failure.
  * Atomic: A message is delivered only once to one consumer (in FIFO order) so you would never fall into a situation
  where a message could be processed more than once.
- * Fast: 14k+ messages/second on a virtual machine of 4 CPU cores and 8GB RAM and running one consumer.
+ * Fast: 13K+ messages/second on a virtual machine of 4 CPU cores and 8GB RAM and running one consumer.
  * Concurrent consumers: A queue can be consumed by many consumers, launched on the same or on different hosts.
  * Message TTL: A message will expire and not be consumed if it has been in the queue for longer than the TTL.
  * Message consume timeout: The amount of time for a consumer to consume a message. If the timeout exceeds,
@@ -233,6 +233,45 @@ Running from CLI:
 ```text
 $ node test-queue-consumer-launch.js
 ```
+
+## Performance
+
+One key indicator about how RedisSMQ is fast and performant is Message throughput. Message throughput is the number of
+messages per second that the message queue can process. 
+
+We can measure the Producer throughput and the Consumer throughput. The benchmark is composed of:
+
+1. Measuring Producer throughput (without consumers running at the same time)
+2. Measuring Consumer throughput (without producers running at the same time)
+3. Measuring throughput of Producer and Consumer both running at the same time
+
+In all scenarios messages are produced and consumed as fast as possible.
+
+
+### Environment
+
+The benchmark was performed on a VPS (4 CPU cores, 8GB RAM) running Debian 8. 
+
+No performance tuning was performed for the VPS, neither for Redis server. Default parameters were used out of box.
+
+The VPS was setup to run a single instance of Redis (Redis is single threaded, so more instances can boost performance).
+
+All consumers, producers, monitor and redis server are launched from the same host.
+
+### Results
+
+| Scenario                                             | Producer rate (msg/sec) | Consumer rate (msg/sec) |
+|-----------------------------------------------------|-------------------------|-------------------------|
+| Run 1 producer instance                             | 23K+                    | 0                       |
+| Run 10 producer instances                           | 96K+                    | 0                       |
+| Run 1 consumer instance                             | 0                       | 13K+                    |
+| Run 10 consumer instances                           | 0                       | 49K+                    |
+| Run 1 producer instance and 1 consumer instance     | 22K+                    | 12K+                    |
+| Run 10 producer instances and 10 consumer instances | 45K+                    | 27K+                    |
+| Run 10 producer instances and 20 consumer instances | 32K+                    | 32K+                    |
+
+Benchmarking charts are in the [screenshots folder](https://github.com/weyoss/redis-smq/tree/master/screenshots).
+
 ## Troubleshooting and monitoring
 
 ### Logs
@@ -283,11 +322,11 @@ $ node monitor.js
 Please note that the numbers shown in the screenshots are related to the Redis server configuration and the performance 
 parameters of the host the server is running on!
 
-##### RedisSMQ running 2 queues with 30 consumers (15 consumers/queue) while simultaneously 7 producers are producing messages in both queues
+##### RedisSMQ running 10 producer instances and 20 consumer instances:
 
-![RedisSMQ Monitor](./screenshots/img_1.png)
+![RedisSMQ Monitor](./screenshots/img_7.png)
 
-More screenshots, could be found in the [screenshots folder](https://github.com/weyoss/redis-smq/tree/master/screenshots)
+More screenshots, could be found in the [screenshots folder](https://github.com/weyoss/redis-smq/tree/master/screenshots).
 
 ## Bugs
 
