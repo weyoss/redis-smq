@@ -2,7 +2,7 @@
 
 const redisKeys = require('./redis-keys');
 const redisClient = require('./redis-client');
-const heartBeat = require('./hearbeat');
+const heartBeat = require('./heartbeat');
 
 const GC_ACQUIRE_LOCK_RETRY_INTERVAL = 2000; // in ms (2 seconds)
 const GC_SCAN_QUEUES_INTERVAL = 2000; // in ms (2 second)
