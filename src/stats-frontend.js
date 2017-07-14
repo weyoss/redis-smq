@@ -2,7 +2,7 @@
 
 const redisKeys = require('./redis-keys');
 const redisClient = require('./redis-client');
-const heartBeat = require('./hearbeat');
+const heartBeat = require('./heartbeat');
 const queue = require('./queue');
 
 /**
