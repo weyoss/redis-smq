@@ -2,6 +2,8 @@
 
 A simple high-performance Redis message queue for Node.js.
 
+For more details about RedisSMQ design see [https://medium.com/@weyoss/building-a-simple-message-queue-using-redis-server-and-node-js-964eda240a2a](https://medium.com/@weyoss/building-a-simple-message-queue-using-redis-server-and-node-js-964eda240a2a)
+
 ## Features
 
  * Persistent: No messages are lost in case of a consumer failure.

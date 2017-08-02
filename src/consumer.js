@@ -15,16 +15,16 @@ const CONSUMER_STATUS_GOING_UP = 2;
 const CONSUMER_STATUS_UP = 3;
 const CONSUMER_STATUS_CONSUMING = 4;
 
-const registerEvents = Symbol('registerEvents');
-const getEventsHandlers = Symbol('getEventsHandlers');
-const getNextMessage = Symbol('getNextMessage');
-const consumeMessage = Symbol('consumeMessage');
-const processMessageFailure = Symbol('processMessageFailure');
-const heartBeatS = Symbol('heartBeat');
-const garbageCollectorS = Symbol('garbageCollector');
-const statsS = Symbol('stats');
-const loggerS = Symbol('logger');
-const redisClientS = Symbol('redisClient');
+const sRegisterEvents = Symbol('registerEvents');
+const sGetEventsHandlers = Symbol('getEventsHandlers');
+const sGetNextMessage = Symbol('getNextMessage');
+const sConsumeMessage = Symbol('consumeMessage');
+const sProcessMessageFailure = Symbol('processMessageFailure');
+const sHeartBeat = Symbol('heartBeat');
+const sGarbageCollector = Symbol('garbageCollector');
+const sStats = Symbol('stats');
+const sLogger = Symbol('logger');
+const sRedisClient = Symbol('redisClient');
 
 class Consumer extends EventEmitter {
 
@@ -55,7 +55,7 @@ class Consumer extends EventEmitter {
          * EventEmitter
          */
         EventEmitter.call(this);
-        this[registerEvents]();
+        this[sRegisterEvents]();
 
         /**
          * Consumer parameters
@@ -74,30 +74,30 @@ class Consumer extends EventEmitter {
         /**
          * Logs
          */
-        this[loggerS] = logger.getNewInstance(`${this.queueName}:${this.consumerId}`, config.log);
+        this[sLogger] = logger.getNewInstance(`${this.queueName}:${this.consumerId}`, config.log);
 
         /**
          * Heartbeat
          */
-        this[heartBeatS] = heartBeat(this);
+        this[sHeartBeat] = heartBeat(this);
 
         /**
          * GC
          */
-        this[garbageCollectorS] = garbageCollector(this, this[loggerS]);
+        this[sGarbageCollector] = garbageCollector(this, this[sLogger]);
 
         /**
          * Stats
          */
         const monitorEnabled = !!(config.monitor && config.monitor.enabled);
-        if (monitorEnabled) this[statsS] = statsFactory(this, config);
+        if (monitorEnabled) this[sStats] = statsFactory(this, config);
     }
 
     /**
      *
      * @returns {object}
      */
-    [getEventsHandlers]() {
+    [sGetEventsHandlers]() {
         const consumer = this;
         return {
             /**
@@ -114,7 +114,7 @@ class Consumer extends EventEmitter {
              */
             onError(err) {
                 if (err.name !== 'AbortError' && consumer.status !== CONSUMER_STATUS_GOING_DOWN) {
-                    consumer[loggerS].error(err);
+                    consumer[sLogger].error(err);
                     process.exit(1);
                 }
             },
@@ -123,7 +123,7 @@ class Consumer extends EventEmitter {
              *
              */
             onHeartBeatHalt() {
-                if (consumer[statsS]) consumer[statsS].stop();
+                if (consumer[sStats]) consumer[sStats].stop();
                 else this.halt();
             },
 
@@ -132,16 +132,16 @@ class Consumer extends EventEmitter {
              */
             onConsumerHalt() {
                 consumer.status = CONSUMER_STATUS_GOING_DOWN;
-                consumer[redisClientS].end(true);
-                delete consumer[redisClientS];
-                consumer[garbageCollectorS].stop();
+                consumer[sRedisClient].end(true);
+                delete consumer[sRedisClient];
+                consumer[sGarbageCollector].stop();
             },
 
             /**
              *
              */
             onGCHalt() {
-                consumer[heartBeatS].stop();
+                consumer[sHeartBeat].stop();
             },
 
             /**
@@ -149,7 +149,7 @@ class Consumer extends EventEmitter {
              * @param message
              */
             onConsumeTimeout(message) {
-                consumer[processMessageFailure](
+                consumer[sProcessMessageFailure](
                     message, new Error(`Consumer timed out after [${consumer.messageConsumeTimeout}]`));
             },
 
@@ -158,10 +158,10 @@ class Consumer extends EventEmitter {
              * @param message
              */
             onMessageExpired(message) {
-                consumer[loggerS].info(`Message [${message.uuid}] has expired`);
-                consumer[garbageCollectorS].collectExpiredMessage(message, consumer.keys.keyQueueNameProcessing, () => {
-                    if (consumer[statsS]) consumer[statsS].incrementAcknowledgedSlot();
-                    consumer[loggerS].info(`Message [${message.uuid}] successfully processed`);
+                consumer[sLogger].info(`Message [${message.uuid}] has expired`);
+                consumer[sGarbageCollector].collectExpiredMessage(message, consumer.keys.keyQueueNameProcessing, () => {
+                    if (consumer[sStats]) consumer[sStats].incrementAcknowledgedSlot();
+                    consumer[sLogger].info(`Message [${message.uuid}] successfully processed`);
                     consumer.emit('next');
                 });
             },
@@ -172,9 +172,9 @@ class Consumer extends EventEmitter {
              */
             onMessage(message) {
                 if (consumer.status === CONSUMER_STATUS_UP) {
-                    if (consumer[garbageCollectorS].checkMessageExpiration(message)) {
+                    if (consumer[sGarbageCollector].checkMessageExpiration(message)) {
                         consumer.emit('message_expired', message);
-                    } else consumer[consumeMessage](message);
+                    } else consumer[sConsumeMessage](message);
                 }
             },
 
@@ -184,7 +184,7 @@ class Consumer extends EventEmitter {
             onNext() {
                 if (consumer.isRunning()) {
                     consumer.status = CONSUMER_STATUS_UP;
-                    consumer[getNextMessage]();
+                    consumer[sGetNextMessage]();
                 }
             },
         };
@@ -193,8 +193,8 @@ class Consumer extends EventEmitter {
     /**
      *
      */
-    [registerEvents]() {
-        const handlers = this[getEventsHandlers]();
+    [sRegisterEvents]() {
+        const handlers = this[sGetEventsHandlers]();
 
         /**
          * Events
@@ -216,10 +216,10 @@ class Consumer extends EventEmitter {
      * @param {object} message
      * @param {object} error
      */
-    [processMessageFailure](message, error) {
-        this[loggerS].error(`Consumer failed to consume message [${message.id}]...`);
-        if (this[statsS]) this[statsS].incrementUnacknowledgedSlot();
-        this[garbageCollectorS].collectMessage(message, this.keys.keyQueueNameProcessing, error, (err) => {
+    [sProcessMessageFailure](message, error) {
+        this[sLogger].error(`Consumer failed to consume message [${message.id}]...`);
+        if (this[sStats]) this[sStats].incrementUnacknowledgedSlot();
+        this[sGarbageCollector].collectMessage(message, this.keys.keyQueueNameProcessing, error, (err) => {
             if (err) this.emit('error', err);
             else this.emit('next');
         });
@@ -228,13 +228,13 @@ class Consumer extends EventEmitter {
     /**
      *
      */
-    [getNextMessage]() {
-        this[loggerS].info('Waiting for new messages...');
-        this[redisClientS].brpoplpush(this.keys.keyQueueName, this.keys.keyQueueNameProcessing, 0, (err, payload) => {
+    [sGetNextMessage]() {
+        this[sLogger].info('Waiting for new messages...');
+        this[sRedisClient].brpoplpush(this.keys.keyQueueName, this.keys.keyQueueNameProcessing, 0, (err, payload) => {
             if (err) this.emit('error', err);
             else {
-                this[loggerS].info('Got new message...');
-                if (this[statsS]) this[statsS].incrementProcessingSlot();
+                this[sLogger].info('Got new message...');
+                if (this[sStats]) this[sStats].incrementProcessingSlot();
                 const message = JSON.parse(payload);
                 this.emit('message', message);
             }
@@ -245,11 +245,11 @@ class Consumer extends EventEmitter {
      *
      * @param {object} message
      */
-    [consumeMessage](message) {
+    [sConsumeMessage](message) {
         this.status = CONSUMER_STATUS_CONSUMING;
         let isTimeout = false;
         let timer = null;
-        this[loggerS].info(`Processing message [${message.uuid}]...`);
+        this[sLogger].info(`Processing message [${message.uuid}]...`);
         try {
             if (this.messageConsumeTimeout) {
                 timer = setTimeout(() => {
@@ -261,8 +261,8 @@ class Consumer extends EventEmitter {
             const onDeleted = (err) => {
                 if (err) this.emit('error', err);
                 else {
-                    if (this[statsS]) this[statsS].incrementAcknowledgedSlot();
-                    this[loggerS].info(`Message [${message.uuid}] successfully processed`);
+                    if (this[sStats]) this[sStats].incrementAcknowledgedSlot();
+                    this[sLogger].info(`Message [${message.uuid}] successfully processed`);
                     this.emit('next');
                     if (this.isTest) this.emit('message_consumed', JSON.stringify(message));
                 }
@@ -272,8 +272,8 @@ class Consumer extends EventEmitter {
                     if (timer) clearTimeout(timer);
                     if (err) throw err;
                     // when a consumer is stopped, redis client instance is destroyed
-                    if (this[redisClientS]) {
-                        this[redisClientS].del(this.keys.keyQueueNameProcessing, onDeleted);
+                    if (this[sRedisClient]) {
+                        this[sRedisClient].del(this.keys.keyQueueNameProcessing, onDeleted);
                     } else if (this.isRunning()) {
                         throw new Error('Redis client instance has gone!');
                     }
@@ -281,7 +281,7 @@ class Consumer extends EventEmitter {
             };
             this.consume(message.data, onConsumed);
         } catch (error) {
-            this[processMessageFailure](message, error);
+            this[sProcessMessageFailure](message, error);
         }
     }
 
@@ -295,22 +295,22 @@ class Consumer extends EventEmitter {
             /**
              * Start heartbeat
              */
-            this[heartBeatS].start();
+            this[sHeartBeat].start();
 
             /**
              * Start garbage collector
              */
-            this[garbageCollectorS].start();
+            this[sGarbageCollector].start();
 
             /**
              * Start stats
              */
-            if (this[statsS]) this[statsS].start();
+            if (this[sStats]) this[sStats].start();
 
             /**
              * Wait for messages
              */
-            this[redisClientS] = redisClient.getNewInstance(this.config);
+            this[sRedisClient] = redisClient.getNewInstance(this.config);
             this.emit('next');
         }
     }
