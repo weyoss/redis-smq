@@ -117,7 +117,7 @@ so the message is re-queued again and considered to be unacknowledged.
 * Producer class constructor `Producer(queueName, config)`:
   * `queueName` *(string): Required.* The name of the queue where produced messages are queued.
   * `config` *(object): Required.* Configuration object.
-* A Producer instance provides 2 methods:
+* A Producer instance provides 3 methods:
   * `produce(message, cb)`: Produce a message.
     * `message` *(mixed): Required.* The actual message, to be consumed by a consumer.
     * `cb(err)` *(function): Required.* Callback function. When called without error argument, the message is 
@@ -127,7 +127,10 @@ so the message is re-queued again and considered to be unacknowledged.
     * `ttl` *(Integer): Required.* Message TTL in milliseconds.
     * `cb(err)` *(function): Required.* Callback function. When called without error argument, the message is 
     successfully published.
-
+  * `shutdown()`: Gracefully shutdown the producer and disconnect from the redis server. This method should be used 
+  only in rare cases where we need to force the producer to terminate its work. Normally a producer should be kept 
+  always online.
+  
 #### Producer example
 
 ```javascript
@@ -141,19 +144,15 @@ const Producer = require('redis-smq').Producer;
 const producer = new Producer('test_queue', config);
 
 producer.produce({ hello: 'world' }, (err) => {
-    if (err) throw err;
-    else {
-        console.log('Successfully published!');
-        process.exit(0);
-    }
+    if (err) throw err;   
+    console.log('Successfully published!');
+    producer.shutdown();
 });
 
 producer.produceWithTTL({ hello: 'world' }, 60000, (err) => {
     if (err) throw err;
-    else {
-        console.log('Successfully published!');
-        process.exit(0);
-    }
+    console.log('Successfully published!');
+    producer.shutdown();    
 });
 ```
 

@@ -29,6 +29,7 @@ function stats(eventEmitter, config) {
         clearInterval(interval);
         client.end(true);
         client = null;
+        halt = false;
         eventEmitter.emit('stats_halt');
     }
 
@@ -113,19 +114,24 @@ function stats(eventEmitter, config) {
 
         /**
          *
+         * @returns {boolean}
          */
         start() {
-            halt = false;
+            if (halt) return false;
             client = redisClient.getNewInstance(config);
             if (eventEmitter.hasOwnProperty('consumerId')) runConsumerStats();
             else runProducerStats();
+            return true;
         },
 
         /**
          *
+         * @returns {boolean}
          */
         stop() {
+            if (halt) return false;
             halt = true;
+            return true;
         },
     };
 }
