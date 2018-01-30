@@ -26,7 +26,7 @@ produceNTimes(producer, { hello: 'world' }, 1000000, (err) => {
     if (err) throw err;
     else {
         console.log('Produced successfully!');
-        process.exit(0);
+        producer.shutdown();
     }
 });
 

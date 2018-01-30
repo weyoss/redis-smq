@@ -72,6 +72,15 @@ class Producer extends EventEmitter {
         this[produceMessage](message, ttl, cb);
     }
 
+    /**
+     *
+     * @returns {boolean}
+     */
+    shutdown() {
+        if (this.stats) this.stats.stop();
+        this.client.end(true);
+        this.client = null;
+    }
 }
 
 module.exports = Producer;
