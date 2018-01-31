@@ -4,12 +4,15 @@ module.exports = {
 
     /**
      *
-     * @param {string} queueName
-     * @param {string} consumerId
-     * @param {string} producerId
+     * @param {object} args
+     * @param {string} args.queueName
+     * @param {string} [args.consumerId]
+     * @param {string} [args.producerId]
      * @returns {object}
      */
-    getKeys(queueName, consumerId, producerId) {
+    getKeys(args) {
+        let { queueName } = args;
+        const { consumerId, producerId } = args;
         if (queueName && queueName.indexOf('queue:') === 10) {
             queueName = queueName.split(':')[2];
         }

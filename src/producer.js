@@ -6,7 +6,9 @@ const redisKeys = require('./redis-keys');
 const redisClient = require('./redis-client');
 const statsFactory = require('./stats');
 
-const produceMessage = Symbol('produceMessage');
+const sProduceMessage = Symbol('produceMessage');
+const sRedisClient = Symbol('client');
+const sStats = Symbol('stats');
 
 class Producer extends EventEmitter {
 
@@ -19,13 +21,13 @@ class Producer extends EventEmitter {
         super();
         this.producerId = uuid();
         this.queueName = queueName;
-        this.keys = redisKeys.getKeys(queueName, null, this.producerId);
-        this.client = redisClient.getNewInstance(config);
+        this.keys = redisKeys.getKeys(this);
         this.isTest = process.env.NODE_ENV === 'test';
+        this[sRedisClient] = redisClient.getNewInstance(config);
         const monitorEnabled = !!(config.monitor && config.monitor.enabled);
         if (monitorEnabled) {
-            this.stats = statsFactory(this, config);
-            this.stats.start();
+            this[sStats] = statsFactory(this, config);
+            this[sStats].start();
         }
     }
 
@@ -35,7 +37,8 @@ class Producer extends EventEmitter {
      * @param {number} ttl
      * @param {function} cb
      */
-    [produceMessage](message, ttl, cb) {
+    [sProduceMessage](message, ttl, cb) {
+        if (!this[sRedisClient]) throw new Error('Producer is not running');
         const payload = {
             uuid: uuid(),
             attempts: 1,
@@ -44,10 +47,10 @@ class Producer extends EventEmitter {
             ttl: 0,
         };
         if (ttl) payload.ttl = ttl;
-        this.client.lpush(this.keys.keyQueueName, JSON.stringify(payload), (err) => {
+        this[sRedisClient].lpush(this.keys.keyQueueName, JSON.stringify(payload), (err) => {
             if (err) cb(err);
             else {
-                if (this.stats) this.stats.incrementInputSlot();
+                if (this[sStats]) this[sStats].incrementInputSlot();
                 cb();
             }
         });
@@ -59,7 +62,7 @@ class Producer extends EventEmitter {
      * @param {function} cb
      */
     produce(message, cb) {
-        this[produceMessage](message, null, cb);
+        this[sProduceMessage](message, null, cb);
     }
 
     /**
@@ -69,17 +72,16 @@ class Producer extends EventEmitter {
      * @param cb
      */
     produceWithTTL(message, ttl, cb) {
-        this[produceMessage](message, ttl, cb);
+        this[sProduceMessage](message, ttl, cb);
     }
 
     /**
      *
-     * @returns {boolean}
      */
     shutdown() {
-        if (this.stats) this.stats.stop();
-        this.client.end(true);
-        this.client = null;
+        if (this[sStats]) this[sStats].stop();
+        this[sRedisClient].end(true);
+        this[sRedisClient] = null;
     }
 }
 

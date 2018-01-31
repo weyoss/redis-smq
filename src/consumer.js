@@ -67,7 +67,7 @@ class Consumer extends EventEmitter {
         this.messageConsumeTimeout = options.hasOwnProperty('messageConsumeTimeout') ?
             Number(options.messageConsumeTimeout) : 0;
         this.messageTTL = options.hasOwnProperty('messageTTL') ? Number(options.messageTTL) : 0;
-        this.keys = redisKeys.getKeys(this.queueName, this.consumerId);
+        this.keys = redisKeys.getKeys(this);
         this.isTest = process.env.NODE_ENV === 'test';
         this.status = CONSUMER_STATUS_DOWN;
 
