@@ -70,7 +70,7 @@ function heartBeat(consumer) {
  * @param {function} cb
  */
 heartBeat.isOnline = function isOnline(client, queueName, consumerId, cb) {
-    const keys = redisKeys.getKeys(queueName, consumerId);
+    const keys = redisKeys.getKeys({ queueName, consumerId });
     client.get(keys.keyHeartBeat, (err, res) => {
         if (err) cb(err);
         else cb(null, !!res);

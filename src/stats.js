@@ -37,7 +37,7 @@ function stats(eventEmitter, config) {
      *
      */
     function runProducerStats() {
-        const keys = redisKeys.getKeys(eventEmitter.queueName, null, eventEmitter.producerId);
+        const keys = redisKeys.getKeys(eventEmitter);
         interval = setInterval(() => {
             if (!halt) {
                 inputRate = inputSlots.reduce((acc, cur) => acc + cur, 0);
@@ -51,7 +51,7 @@ function stats(eventEmitter, config) {
      *
      */
     function runConsumerStats() {
-        const keys = redisKeys.getKeys(eventEmitter.queueName, eventEmitter.consumerId);
+        const keys = redisKeys.getKeys(eventEmitter);
         let idle = 0;
         interval = setInterval(() => {
             if (!halt) {

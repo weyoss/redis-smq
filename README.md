@@ -148,7 +148,11 @@ producer.produce({ hello: 'world' }, (err) => {
     console.log('Successfully published!');
     producer.shutdown();
 });
+```
 
+Messages can also be produced with TTL:
+
+```javascript
 producer.produceWithTTL({ hello: 'world' }, 60000, (err) => {
     if (err) throw err;
     console.log('Successfully published!');
@@ -329,10 +333,9 @@ parameters of the host the server is running on!
 
 More screenshots, could be found in the [screenshots folder](https://github.com/weyoss/redis-smq/tree/master/screenshots).
 
-## Bugs
+## Contributing
 
-If you find any bugs, please let me know. Open a [issue](https://github.com/weyoss/redis-smq/issues) into github 
-(including the case to reproduce the bug when possible).
+So you are interested in contributing to this project? Please see [CONTRIBUTING.md](https://github.com/weyoss/guidelines/blob/master/CONTRIBUTIONS.md).
 
 ## License
 
