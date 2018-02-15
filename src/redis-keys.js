@@ -10,7 +10,7 @@ module.exports = {
      * @param {string} [args.producerId]
      * @returns {object}
      */
-    getKeys(args) {
+    getKeys(args = {}) {
         let { queueName } = args;
         const { consumerId, producerId } = args;
         if (queueName && queueName.indexOf('queue:') === 10) {
