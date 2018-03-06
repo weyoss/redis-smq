@@ -15,7 +15,7 @@ const CONSUMER_STATUS_GOING_UP = 2;
 const CONSUMER_STATUS_UP = 3;
 const CONSUMER_STATUS_CONSUMING = 4;
 
-const sRegisterEvents = Symbol('registerEvents');
+const sRegisterEventHandlers = Symbol('registerEventHandlers');
 const sGetEventsHandlers = Symbol('getEventsHandlers');
 const sGetNextMessage = Symbol('getNextMessage');
 const sConsumeMessage = Symbol('consumeMessage');
@@ -52,10 +52,9 @@ class Consumer extends EventEmitter {
         if (!this.constructor.hasOwnProperty('queueName')) throw new Error('Undefined queue name!');
 
         /**
-         * EventEmitter
+         * Event handlers
          */
-        EventEmitter.call(this);
-        this[sRegisterEvents]();
+        this[sRegisterEventHandlers]();
 
         /**
          * Consumer parameters
@@ -193,7 +192,7 @@ class Consumer extends EventEmitter {
     /**
      *
      */
-    [sRegisterEvents]() {
+    [sRegisterEventHandlers]() {
         const handlers = this[sGetEventsHandlers]();
 
         /**
@@ -217,7 +216,7 @@ class Consumer extends EventEmitter {
      * @param {object} error
      */
     [sProcessMessageFailure](message, error) {
-        this[sLogger].error(`Consumer failed to consume message [${message.id}]...`);
+        this[sLogger].error(`Consumer failed to consume message [${message.uuid}]...`);
         if (this[sStats]) this[sStats].incrementUnacknowledgedSlot();
         this[sGarbageCollector].collectMessage(message, this.keys.keyQueueNameProcessing, error, (err) => {
             if (err) this.emit('error', err);
