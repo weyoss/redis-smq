@@ -17,7 +17,7 @@ class Producer extends EventEmitter {
      * @param {string} queueName
      * @param {object} config
      */
-    constructor(queueName, config) {
+    constructor(queueName, config = {}) {
         super();
         this.producerId = uuid();
         this.queueName = queueName;
