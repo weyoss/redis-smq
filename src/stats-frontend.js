@@ -67,7 +67,7 @@ function statsFrontend(config) {
                             if (!rates.consumers.hasOwnProperty(segments.queueName)) {
                                 rates.consumers[segments.queueName] = {};
                             }
-                            if (!rates.consumers[segments.queueName].hasOwnProperty(segments.id)) {
+                            if (!rates.consumers[segments.queueName].hasOwnProperty(segments.consumerId)) {
                                 rates.consumers[segments.queueName][segments.consumerId] = {};
                             }
                         } else if (!rates.producers.hasOwnProperty(segments.queueName)) {
@@ -75,7 +75,7 @@ function statsFrontend(config) {
                         }
                         /* eslint default-case: 0 indent: 0 */
                         switch (segments.type) {
-                            case keyTypes.KEY_TYPE_PROCESSING_QUEUE:
+                            case keyTypes.KEY_TYPE_RATE_PROCESSING:
                                 rates.processing += value;
                                 rates.consumers[segments.queueName][segments.consumerId].processing = value;
                                 break;
