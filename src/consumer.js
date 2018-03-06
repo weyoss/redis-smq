@@ -46,7 +46,7 @@ class Consumer extends EventEmitter {
      * @param {number} options.messageTTL
      * @param {number} options.messageRetryThreshold
      */
-    constructor(config, options = {}) {
+    constructor(config = {}, options = {}) {
         super();
 
         if (!this.constructor.hasOwnProperty('queueName')) throw new Error('Undefined queue name!');
@@ -98,7 +98,7 @@ class Consumer extends EventEmitter {
      */
     [sGetEventsHandlers]() {
         const consumer = this;
-        return {
+        const handlers = {
             /**
              *
              */
@@ -123,7 +123,7 @@ class Consumer extends EventEmitter {
              */
             onHeartBeatHalt() {
                 if (consumer[sStats]) consumer[sStats].stop();
-                else this.halt();
+                else handlers.halt();
             },
 
             /**
@@ -187,6 +187,7 @@ class Consumer extends EventEmitter {
                 }
             },
         };
+        return handlers;
     }
 
     /**
