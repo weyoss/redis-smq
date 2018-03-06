@@ -44,8 +44,8 @@ Minimal Node.js version support is 6.5. The latest stable Node.js version is rec
 
 RedisSMQ configuration parameters:
 
-- `redis.host` *(String): Required.* IP address of the Redis server.
-- `redis.port` *(Integer): Required.* Port of the Redis server.
+- `redis` *(Object): Optional.* Redis client parameters. 
+  See https://github.com/NodeRedis/node_redis#options-object-properties for all valid parameters.
 - `log` *(Object): Optional.* Logging parameters.
 - `log.enabled` *(Integer/Boolean): Optional.* Enable/disable logging. By default logging is disabled.
 - `log.options` *(Object): Optional.* All valid Bunyan configuration options are accepted. Please look at the 
@@ -69,8 +69,6 @@ module.exports = {
         host: '127.0.0.1',
         port: 6379,
         connect_timeout: 3600000,
-        // ..
-        // see https://github.com/NodeRedis/node_redis#options-object-properties for all valid parameters
     },
     log: {
         enabled: 0,
