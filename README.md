@@ -68,6 +68,9 @@ module.exports = {
     redis: {
         host: '127.0.0.1',
         port: 6379,
+        connect_timeout: 3600000,
+        // ..
+        // see https://github.com/NodeRedis/node_redis#options-object-properties for all valid parameters
     },
     log: {
         enabled: 0,
