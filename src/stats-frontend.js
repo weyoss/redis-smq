@@ -68,7 +68,7 @@ function statsFrontend(config) {
                                 rates.consumers[segments.queueName] = {};
                             }
                             if (!rates.consumers[segments.queueName].hasOwnProperty(segments.id)) {
-                                rates.consumers[segments.queueName][segments.id] = {};
+                                rates.consumers[segments.queueName][segments.consumerId] = {};
                             }
                         } else if (!rates.producers.hasOwnProperty(segments.queueName)) {
                             rates.producers[segments.queueName] = {};
@@ -77,22 +77,22 @@ function statsFrontend(config) {
                         switch (segments.type) {
                             case keyTypes.KEY_TYPE_PROCESSING_QUEUE:
                                 rates.processing += value;
-                                rates.consumers[segments.queueName][segments.id].processing = value;
+                                rates.consumers[segments.queueName][segments.consumerId].processing = value;
                                 break;
 
                             case keyTypes.KEY_TYPE_RATE_ACKNOWLEDGED:
                                 rates.acknowledged += value;
-                                rates.consumers[segments.queueName][segments.id].acknowledged = value;
+                                rates.consumers[segments.queueName][segments.consumerId].acknowledged = value;
                                 break;
 
                             case keyTypes.KEY_TYPE_RATE_UNACKNOWLEDGED:
                                 rates.unacknowledged += value;
-                                rates.consumers[segments.queueName][segments.id].unacknowledged = value;
+                                rates.consumers[segments.queueName][segments.consumerId].unacknowledged = value;
                                 break;
 
                             case keyTypes.KEY_TYPE_RATE_INPUT:
                                 rates.input += value;
-                                rates.producers[segments.queueName][segments.id] = value;
+                                rates.producers[segments.queueName][segments.producerId] = value;
                                 break;
                         }
                     }

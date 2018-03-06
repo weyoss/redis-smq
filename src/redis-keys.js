@@ -110,41 +110,34 @@ module.exports = {
      */
     getKeySegments(key) {
         const segments = key.split('|');
-        if (segments[1].indexOf(`@${keyTypes.KEY_TYPE_PROCESSING_QUEUE}`) === 0) {
+        const type = segments[1].replace(/[@]/g, '');
+        if (type === keyTypes.KEY_TYPE_PROCESSING_QUEUE ||
+            type === keyTypes.KEY_TYPE_HEARTBEAT ||
+            keyTypes.KEY_TYPE_RATE_PROCESSING ||
+            keyTypes.KEY_TYPE_RATE_ACKNOWLEDGED ||
+            keyTypes.KEY_TYPE_RATE_UNACKNOWLEDGED) {
             const [, , queueName, consumerId] = segments;
             return {
-                type: keyTypes.KEY_TYPE_PROCESSING_QUEUE,
+                type,
                 queueName,
                 consumerId,
             };
         }
-        if (segments[1].indexOf('@4.') === 0) {
-            const [, , type, queueName, id] = segments;
+        if (type === keyTypes.KEY_TYPE_RATE_INPUT) {
+            const [, , queueName, producerId] = segments;
             return {
-                type: type.replace(/[@]/g, ''),
+                type,
                 queueName,
-                id,
+                producerId,
             };
         }
-        if (segments[1].indexOf(`@${keyTypes.KEY_TYPE_HEARTBEAT}`) === 0) {
-            const [, , queueName, consumerId] = segments;
-            return {
-                type: keyTypes.KEY_TYPE_HEARTBEAT,
-                queueName,
-                consumerId,
-            };
-        }
-        if (segments[1].indexOf(`@${keyTypes.KEY_TYPE_MESSAGE_QUEUE}`) === 0) {
+        if (type === keyTypes.KEY_TYPE_MESSAGE_QUEUE ||
+            type === keyTypes.KEY_TYPE_DEAD_LETTER_QUEUE ||
+            type === keyTypes.KEY_TYPE_GC_LOCK ||
+            type === keyTypes.KEY_TYPE_GC_LOCK_TMP) {
             const [, , queueName] = segments;
             return {
-                type: keyTypes.KEY_TYPE_MESSAGE_QUEUE,
-                queueName,
-            };
-        }
-        if (segments[1].indexOf(`@${keyTypes.KEY_TYPE_DEAD_LETTER_QUEUE}`) === 0) {
-            const [, , queueName] = segments;
-            return {
-                type: keyTypes.KEY_TYPE_DEAD_LETTER_QUEUE,
+                type,
                 queueName,
             };
         }
