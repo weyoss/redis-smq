@@ -16,7 +16,6 @@ const keyTypes = {
     KEY_TYPE_STATS_FRONTEND_LOCK: '5.1',
 };
 
-
 module.exports = {
 
     /**
@@ -113,9 +112,9 @@ module.exports = {
         const type = segments[1].replace(/[@]/g, '');
         if (type === keyTypes.KEY_TYPE_PROCESSING_QUEUE ||
             type === keyTypes.KEY_TYPE_HEARTBEAT ||
-            keyTypes.KEY_TYPE_RATE_PROCESSING ||
-            keyTypes.KEY_TYPE_RATE_ACKNOWLEDGED ||
-            keyTypes.KEY_TYPE_RATE_UNACKNOWLEDGED) {
+            type === keyTypes.KEY_TYPE_RATE_PROCESSING ||
+            type === keyTypes.KEY_TYPE_RATE_ACKNOWLEDGED ||
+            type === keyTypes.KEY_TYPE_RATE_UNACKNOWLEDGED) {
             const [, , queueName, consumerId] = segments;
             return {
                 type,
