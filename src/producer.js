@@ -20,7 +20,8 @@ class Producer extends EventEmitter {
     constructor(queueName, config = {}) {
         super();
         this.producerId = uuid();
-        this.queueName = queueName;
+        this.queueName = redisKeys.validateKeyPart(queueName);
+        if (config.hasOwnProperty('namespace')) redisKeys.setNamespace(config.namespace);
         this.keys = redisKeys.getKeys(this);
         this.isTest = process.env.NODE_ENV === 'test';
         this[sRedisClient] = redisClient.getNewInstance(config);

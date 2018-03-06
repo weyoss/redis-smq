@@ -1,6 +1,32 @@
 'use strict';
 
+let namespace = 'default';
+
 module.exports = {
+
+    /**
+     *
+     * @param {string} ns
+     */
+    setNamespace(ns) {
+        namespace = this.validateKeyPart(ns);
+    },
+
+    /**
+     *
+     * @param {string} part
+     * @return {string}
+     */
+    validateKeyPart(part) {
+        if (typeof part !== 'string' || !part.length) {
+            throw new Error('Redis key validation error. Expected be a non empty string.');
+        }
+        const filtered = part.toLowerCase().replace(/[^a-z0-9_-]/gi, '');
+        if (filtered.length !== part.length) {
+            throw new Error('Redis key validation error. Expected only letters (a-z), numbers (0-9) and (-_)');
+        }
+        return filtered;
+    },
 
     /**
      *
@@ -45,7 +71,7 @@ module.exports = {
                 keys.keyRateInput = `rate:input:${queueName}:${producerId}`;
             }
         }
-        const ns = 'redis-smq';
+        const ns = `redis-smp-${namespace}`;
         for (const k in keys) keys[k] = `${ns}:${keys[k]}`;
         return keys;
     },

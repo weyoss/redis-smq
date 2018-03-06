@@ -43,7 +43,8 @@ Minimal Node.js version support is 6.5. The latest stable Node.js version is rec
 ## Configuration 
 
 RedisSMQ configuration parameters:
-
+- `namespace` *(String): Optional.* The namespace for message queues. It can be composed only of letters (a-z), 
+  numbers (0-9) and (-_) characters. Namespace can be for example configured per project. 
 - `redis` *(Object): Optional.* Redis client parameters. 
   See https://github.com/NodeRedis/node_redis#options-object-properties for all valid parameters.
 - `log` *(Object): Optional.* Logging parameters.
@@ -65,6 +66,7 @@ RedisSMQ configuration parameters:
 const path = require('path');
 
 module.exports = {
+    namespace: 'my_project_name',
     redis: {
         host: '127.0.0.1',
         port: 6379,
@@ -116,7 +118,8 @@ so the message is re-queued again and considered to be unacknowledged.
 ### Producer
 
 * Producer class constructor `Producer(queueName, config)`:
-  * `queueName` *(string): Required.* The name of the queue where produced messages are queued.
+  * `queueName` *(string): Required.* The name of the queue where produced messages are queued. It can be composed 
+  only of letters (a-z), numbers (0-9) and (-_) characters.
   * `config` *(object): Required.* Configuration object.
 * A Producer instance provides 3 methods:
   * `produce(message, cb)`: Produce a message.
@@ -174,7 +177,8 @@ producer.produceWithTTL({ hello: 'world' }, 60000, (err) => {
 * Consumers classes are saved per files. Each consumer file represents a consumer class.
 * Each consumer class:
   * Extends redisSMQ.Consumer class.
-  * Has a static property 'queueName' - The name of the queue to consume messages from.
+  * Has a static property `queueName` - The name of the queue to consume messages from. The queue name can be composed 
+  only of letters (a-z), numbers (0-9) and (-_) characters.
   * Required to have a `consume(message, cb)` method which is called each time a message received:
     * `message` *(mixed): Required.* Actual message payload published by a producer
     * `cb(err)` *(function): Required.* Callback function. When called with an error argument the message is 

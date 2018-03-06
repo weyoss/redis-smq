@@ -60,7 +60,7 @@ class Consumer extends EventEmitter {
          * Consumer parameters
          */
         this.consumerId = uuid();
-        this.queueName = this.constructor.queueName;
+        this.queueName = redisKeys.validateKeyPart(this.constructor.queueName);
         this.config = config;
         this.options = options;
         this.messageConsumeTimeout = options.hasOwnProperty('messageConsumeTimeout') ?
@@ -69,6 +69,12 @@ class Consumer extends EventEmitter {
         this.keys = redisKeys.getKeys(this);
         this.isTest = process.env.NODE_ENV === 'test';
         this.status = CONSUMER_STATUS_DOWN;
+
+        /**
+         * Project namespace.
+         * If not provided the default one is used.
+         */
+        if (config.hasOwnProperty('namespace')) redisKeys.setNamespace(config.namespace);
 
         /**
          * Logs
