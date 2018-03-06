@@ -58,11 +58,12 @@ function statsFrontend(config) {
         const onRatesValues = (err, values) => {
             if (err) cb(err);
             else {
+                const keyTypes = redisKeys.getKeyTypes();
                 values.forEach((value, index) => {
                     if (value) {
                         value = Number(value);
                         const segments = redisKeys.getKeySegments(ratesKeys[index]);
-                        if (segments.type !== 'input') {
+                        if (segments.type !== keyTypes.KEY_TYPE_RATE_INPUT) {
                             if (!rates.consumers.hasOwnProperty(segments.queueName)) {
                                 rates.consumers[segments.queueName] = {};
                             }
@@ -74,22 +75,22 @@ function statsFrontend(config) {
                         }
                         /* eslint default-case: 0 indent: 0 */
                         switch (segments.type) {
-                            case 'processing':
+                            case keyTypes.KEY_TYPE_PROCESSING_QUEUE:
                                 rates.processing += value;
                                 rates.consumers[segments.queueName][segments.id].processing = value;
                                 break;
 
-                            case 'acknowledged':
+                            case keyTypes.KEY_TYPE_RATE_ACKNOWLEDGED:
                                 rates.acknowledged += value;
                                 rates.consumers[segments.queueName][segments.id].acknowledged = value;
                                 break;
 
-                            case 'unacknowledged':
+                            case keyTypes.KEY_TYPE_RATE_UNACKNOWLEDGED:
                                 rates.unacknowledged += value;
                                 rates.consumers[segments.queueName][segments.id].unacknowledged = value;
                                 break;
 
-                            case 'input':
+                            case keyTypes.KEY_TYPE_RATE_INPUT:
                                 rates.input += value;
                                 rates.producers[segments.queueName][segments.id] = value;
                                 break;
