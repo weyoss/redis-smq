@@ -9,6 +9,7 @@ const keyTypes = {
     KEY_TYPE_HEARTBEAT: '2.1',
     KEY_TYPE_GC_LOCK: '3.1',
     KEY_TYPE_GC_LOCK_TMP: '3.2',
+    KEY_TYPE_RATE: '4',
     KEY_TYPE_RATE_INPUT: '4.1',
     KEY_TYPE_RATE_PROCESSING: '4.2',
     KEY_TYPE_RATE_ACKNOWLEDGED: '4.3',
@@ -69,36 +70,30 @@ module.exports = {
         /**
          * Key patterns
          */
-        keys.patternQueueNameDead = `@${keyTypes.KEY_TYPE_DEAD_LETTER_QUEUE}|*`;
-        keys.patternQueueNameProcessing = `@${keyTypes.KEY_TYPE_PROCESSING_QUEUE}|*`;
-        keys.patternQueueName = `@${keyTypes.KEY_TYPE_MESSAGE_QUEUE}|*`;
-        keys.patternHeartBeat = `@${keyTypes.KEY_TYPE_HEARTBEAT}|*`;
-        keys.patternGC = '@3.*';
-        keys.patternRate = '@4.*';
-        keys.patternRateProcessing = `@${keyTypes.KEY_TYPE_RATE_PROCESSING}|*`;
-        keys.patternRateAcknowledged = `@${keyTypes.KEY_TYPE_RATE_ACKNOWLEDGED}|*`;
-        keys.patternRateUnacknowledged = `@${keyTypes.KEY_TYPE_RATE_UNACKNOWLEDGED}|*`;
-        keys.patternRateInput = `@${keyTypes.KEY_TYPE_RATE_INPUT}|*`;
-        keys.keyStatsFrontendLock = `@${keyTypes.KEY_TYPE_STATS_FRONTEND_LOCK}`;
+        keys.patternQueueNameDead = `${keyTypes.KEY_TYPE_DEAD_LETTER_QUEUE}|*`;
+        keys.patternQueueNameProcessing = `${keyTypes.KEY_TYPE_PROCESSING_QUEUE}|*`;
+        keys.patternQueueName = `${keyTypes.KEY_TYPE_MESSAGE_QUEUE}|*`;
+        keys.keyStatsFrontendLock = keyTypes.KEY_TYPE_STATS_FRONTEND_LOCK;
+        keys.keyRate = keyTypes.KEY_TYPE_RATE;
+        keys.keyHeartBeat = keyTypes.KEY_TYPE_HEARTBEAT;
         if (queueName) {
-            keys.patternQueueNameProcessing = `@${keyTypes.KEY_TYPE_PROCESSING_QUEUE}|${queueName}|*`;
-            keys.keyQueueName = `@${keyTypes.KEY_TYPE_MESSAGE_QUEUE}|${queueName}`;
-            keys.keyQueueNameDead = `@${keyTypes.KEY_TYPE_DEAD_LETTER_QUEUE}|${queueName}`;
-            keys.keyGCLock = `@${keyTypes.KEY_TYPE_GC_LOCK}|${queueName}`;
-            keys.keyGCLockTmp = `@${keyTypes.KEY_TYPE_GC_LOCK_TMP}|${queueName}`;
+            keys.patternQueueNameProcessing = `${keyTypes.KEY_TYPE_PROCESSING_QUEUE}|${queueName}|*`;
+            keys.keyQueueName = `${keyTypes.KEY_TYPE_MESSAGE_QUEUE}|${queueName}`;
+            keys.keyQueueNameDead = `${keyTypes.KEY_TYPE_DEAD_LETTER_QUEUE}|${queueName}`;
+            keys.keyGCLock = `${keyTypes.KEY_TYPE_GC_LOCK}|${queueName}`;
+            keys.keyGCLockTmp = `${keyTypes.KEY_TYPE_GC_LOCK_TMP}|${queueName}`;
             if (consumerId) {
-                keys.keyQueueNameProcessing = `@${keyTypes.KEY_TYPE_PROCESSING_QUEUE}|${queueName}|${consumerId}`;
-                keys.keyHeartBeat = `@${keyTypes.KEY_TYPE_HEARTBEAT}|${queueName}|${consumerId}`;
-                keys.keyRateProcessing = `@${keyTypes.KEY_TYPE_RATE_PROCESSING}|${queueName}|${consumerId}`;
-                keys.keyRateAcknowledged = `@${keyTypes.KEY_TYPE_RATE_ACKNOWLEDGED}|${queueName}|${consumerId}`;
-                keys.keyRateUnacknowledged = `@${keyTypes.KEY_TYPE_RATE_UNACKNOWLEDGED}|${queueName}|${consumerId}`;
+                keys.keyQueueNameProcessing = `${keyTypes.KEY_TYPE_PROCESSING_QUEUE}|${queueName}|${consumerId}`;
+                keys.keyRateProcessing = `${keyTypes.KEY_TYPE_RATE_PROCESSING}|${queueName}|${consumerId}`;
+                keys.keyRateAcknowledged = `${keyTypes.KEY_TYPE_RATE_ACKNOWLEDGED}|${queueName}|${consumerId}`;
+                keys.keyRateUnacknowledged = `${keyTypes.KEY_TYPE_RATE_UNACKNOWLEDGED}|${queueName}|${consumerId}`;
             }
             if (producerId) {
-                keys.keyRateInput = `@${keyTypes.KEY_TYPE_RATE_INPUT}|${queueName}|${producerId}`;
+                keys.keyRateInput = `${keyTypes.KEY_TYPE_RATE_INPUT}|${queueName}|${producerId}`;
             }
         }
         const ns = `redis-smp-${namespace}`;
-        for (const k in keys) keys[k] = `${ns}|${keys[k]}`;
+        for (const k in keys) keys[k] = `${ns}|@${keys[k]}`;
         return keys;
     },
 
