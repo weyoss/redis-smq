@@ -3,20 +3,62 @@
 const redisKeys = require('./redis-keys');
 
 module.exports = {
+    /**
+     *
+     * @param client
+     * @param queueName
+     * @param cb
+     */
+    addMessageQueue(client, queueName, cb) {
+        const keys = redisKeys.getKeys();
+        client.sadd(keys.keyMessageQueuesIndex, queueName, (err) => {
+            if (err) cb(err);
+            else cb();
+        });
+    },
 
     /**
      *
-     * @param {object} client
-     * @param {function} cb
+     * @param client
+     * @param queueName
+     * @param cb
      */
-    getQueues(client, cb) {
+    addProcessingQueue(client, queueName, cb) {
         const keys = redisKeys.getKeys();
-        client.scan('0', 'match', keys.patternQueueName, 'count', 1000, (err, res) => {
+        client.sadd(keys.keyProcessingQueuesIndex, queueName, (err) => {
             if (err) cb(err);
-            else {
-                const [cur, queues] = res;
-                cb(null, queues);
-            }
+            else cb();
+        });
+    },
+
+    /**
+     *
+     * @param client
+     * @param queueName
+     * @param cb
+     */
+    purgeProcessingQueue(client, queueName, cb) {
+        const keys = redisKeys.getKeys();
+        const multi = client.multi();
+        multi.srem(keys.keyProcessingQueuesIndex, queueName);
+        multi.del(queueName);
+        multi.exec((err) => {
+            if (err) cb(err);
+            else cb();
+        });
+    },
+
+    /**
+     *
+     * @param client
+     * @param queueName
+     * @param cb
+     */
+    addDLQueue(client, queueName, cb) {
+        const keys = redisKeys.getKeys();
+        client.sadd(keys.keyDLQueuesIndex, queueName, (err) => {
+            if (err) cb(err);
+            else cb();
         });
     },
 
@@ -25,14 +67,35 @@ module.exports = {
      * @param {object} client
      * @param {function} cb
      */
-    getDeadLetterQueues(client, cb) {
+    getMessageQueues(client, cb) {
         const keys = redisKeys.getKeys();
-        client.scan('0', 'match', keys.patternQueueNameDead, 'count', 1000, (err, res) => {
+        client.smembers(keys.keyMessageQueuesIndex, (err, result) => {
             if (err) cb(err);
-            else {
-                const [cur, queues] = res;
-                cb(null, queues);
-            }
+            else if (result.length) cb(null, result);
+            else cb();
+        });
+    },
+
+    /**
+     *
+     * @param {object} client
+     * @param {function} cb
+     */
+    getDLQueues(client, cb) {
+        const keys = redisKeys.getKeys();
+        client.smembers(keys.keyDLQueuesIndex, (err, result) => {
+            if (err) cb(err);
+            else if (result.length) cb(null, result);
+            else cb();
+        });
+    },
+
+    getProcessingQueues(client, cb) {
+        const keys = redisKeys.getKeys();
+        client.smembers(keys.keyProcessingQueuesIndex, (err, result) => {
+            if (err) cb(err);
+            else if (result.length) cb(null, result);
+            else cb();
         });
     },
 
