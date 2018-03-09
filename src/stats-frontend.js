@@ -54,63 +54,58 @@ function statsFrontend(config) {
             consumers: {},
             producers: {},
         };
-        let ratesKeys = [];
-        const onRatesValues = (err, values) => {
-            if (err) cb(err);
-            else {
-                const keyTypes = redisKeys.getKeyTypes();
-                values.forEach((value, index) => {
-                    if (value) {
-                        value = Number(value);
-                        const segments = redisKeys.getKeySegments(ratesKeys[index]);
-                        if (segments.type !== keyTypes.KEY_TYPE_RATE_INPUT) {
-                            if (!rates.consumers.hasOwnProperty(segments.queueName)) {
-                                rates.consumers[segments.queueName] = {};
-                            }
-                            if (!rates.consumers[segments.queueName].hasOwnProperty(segments.consumerId)) {
-                                rates.consumers[segments.queueName][segments.consumerId] = {};
-                            }
-                        } else if (!rates.producers.hasOwnProperty(segments.queueName)) {
-                            rates.producers[segments.queueName] = {};
+        const processResult = (result) => {
+            const now = Date.now();
+            const expiredKeys = [];
+            const keyTypes = redisKeys.getKeyTypes();
+            for (const key in result) {
+                const [valueStr, timestamp] = result[key].split('|');
+                if (now - timestamp <= 1000) {
+                    const value = Number(valueStr);
+                    const segments = redisKeys.getKeySegments(key);
+                    if (segments.type !== keyTypes.KEY_TYPE_RATE_INPUT) {
+                        if (!rates.consumers.hasOwnProperty(segments.queueName)) {
+                            rates.consumers[segments.queueName] = {};
                         }
-                        /* eslint default-case: 0 indent: 0 */
-                        switch (segments.type) {
-                            case keyTypes.KEY_TYPE_RATE_PROCESSING:
-                                rates.processing += value;
-                                rates.consumers[segments.queueName][segments.consumerId].processing = value;
-                                break;
-
-                            case keyTypes.KEY_TYPE_RATE_ACKNOWLEDGED:
-                                rates.acknowledged += value;
-                                rates.consumers[segments.queueName][segments.consumerId].acknowledged = value;
-                                break;
-
-                            case keyTypes.KEY_TYPE_RATE_UNACKNOWLEDGED:
-                                rates.unacknowledged += value;
-                                rates.consumers[segments.queueName][segments.consumerId].unacknowledged = value;
-                                break;
-
-                            case keyTypes.KEY_TYPE_RATE_INPUT:
-                                rates.input += value;
-                                rates.producers[segments.queueName][segments.producerId] = value;
-                                break;
+                        if (!rates.consumers[segments.queueName].hasOwnProperty(segments.consumerId)) {
+                            rates.consumers[segments.queueName][segments.consumerId] = {};
                         }
+                    } else if (!rates.producers.hasOwnProperty(segments.queueName)) {
+                        rates.producers[segments.queueName] = {};
                     }
-                });
-                cb(null, rates);
+                    /* eslint default-case: 0 indent: 0 */
+                    switch (segments.type) {
+                        case keyTypes.KEY_TYPE_RATE_PROCESSING:
+                            rates.processing += value;
+                            rates.consumers[segments.queueName][segments.consumerId].processing = value;
+                            break;
+
+                        case keyTypes.KEY_TYPE_RATE_ACKNOWLEDGED:
+                            rates.acknowledged += value;
+                            rates.consumers[segments.queueName][segments.consumerId].acknowledged = value;
+                            break;
+
+                        case keyTypes.KEY_TYPE_RATE_UNACKNOWLEDGED:
+                            rates.unacknowledged += value;
+                            rates.consumers[segments.queueName][segments.consumerId].unacknowledged = value;
+                            break;
+
+                        case keyTypes.KEY_TYPE_RATE_INPUT:
+                            rates.input += value;
+                            rates.producers[segments.queueName][segments.producerId] = value;
+                            break;
+                    }
+                } else expiredKeys.push(key);
             }
+            // Do not wait for keys deletion, reply as fast as possible
+            if (expiredKeys.length) client.hdel(rKeys.keyRate, ...expiredKeys);
+            cb(null, rates);
         };
-        const onRatesKeys = (err, res) => {
+        client.hgetall(rKeys.keyRate, (err, result) => {
             if (err) cb(err);
-            else {
-                const [cur, keys] = res;
-                if (keys && keys.length) {
-                    ratesKeys = keys;
-                    client.mget(keys, onRatesValues);
-                } else cb(null, rates);
-            }
-        };
-        client.scan('0', 'match', rKeys.patternRate, 'count', 1000, onRatesKeys);
+            else if (result) processResult(result);
+            else cb(null, rates);
+        });
     }
 
     /**

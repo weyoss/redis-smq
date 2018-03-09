@@ -14,19 +14,20 @@ function stats(eventEmitter, config) {
     const processingSlots = new Array(1000).fill(0);
     const acknowledgedSlots = new Array(1000).fill(0);
     const unacknowledgedSlots = new Array(1000).fill(0);
+    const keys = redisKeys.getKeys(eventEmitter);
     let client = null;
     let inputRate = 0;
     let processingRate = 0;
     let acknowledgedRate = 0;
     let unacknowledgedRate = 0;
-    let interval = 0;
+    let statsTickInterval = 0;
     let halt = false;
 
     /**
      *
      */
     function processHalt() {
-        clearInterval(interval);
+        clearInterval(statsTickInterval);
         client.end(true);
         client = null;
         halt = false;
@@ -37,12 +38,13 @@ function stats(eventEmitter, config) {
      *
      */
     function runProducerStats() {
-        const keys = redisKeys.getKeys(eventEmitter);
-        interval = setInterval(() => {
+        statsTickInterval = setInterval(() => {
             if (!halt) {
+                const now = Date.now();
                 inputRate = inputSlots.reduce((acc, cur) => acc + cur, 0);
                 inputSlots.fill(0);
                 client.setex(keys.keyRateInput, 1, inputRate);
+                client.hset(keys.keyRate, keys.keyRateInput, `${inputRate}|${now}`);
             } else processHalt();
         }, 1000);
     }
@@ -51,9 +53,9 @@ function stats(eventEmitter, config) {
      *
      */
     function runConsumerStats() {
-        const keys = redisKeys.getKeys(eventEmitter);
         let idle = 0;
-        interval = setInterval(() => {
+        statsTickInterval = setInterval(() => {
+            const now = Date.now();
             if (!halt) {
                 processingRate = processingSlots.reduce((acc, cur) => acc + cur, 0);
                 processingSlots.fill(0);
@@ -69,11 +71,12 @@ function stats(eventEmitter, config) {
                         eventEmitter.emit('idle', JSON.stringify({ consumerId: eventEmitter.consumerId }));
                     }
                 }
-                const multi = client.multi();
-                multi.setex(keys.keyRateProcessing, 1, processingRate);
-                multi.setex(keys.keyRateAcknowledged, 1, acknowledgedRate);
-                multi.setex(keys.keyRateUnacknowledged, 1, unacknowledgedRate);
-                multi.exec();
+                client.hmset(
+                    keys.keyRate,
+                    keys.keyRateProcessing, `${processingRate}|${now}`,
+                    keys.keyRateAcknowledged, `${acknowledgedRate}|${now}`,
+                    keys.keyRateUnacknowledged, `${unacknowledgedRate}|${now}`,
+                );
             } else processHalt();
         }, 1000);
     }
