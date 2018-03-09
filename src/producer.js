@@ -5,6 +5,7 @@ const uuid = require('uuid/v4');
 const redisKeys = require('./redis-keys');
 const redisClient = require('./redis-client');
 const statsFactory = require('./stats');
+const queue = require('./queue');
 
 const sProduceMessage = Symbol('produceMessage');
 const sRedisClient = Symbol('client');
@@ -25,6 +26,9 @@ class Producer extends EventEmitter {
         this.keys = redisKeys.getKeys(this);
         this.isTest = process.env.NODE_ENV === 'test';
         this[sRedisClient] = redisClient.getNewInstance(config);
+        queue.addMessageQueue(this[sRedisClient], this.keys.keyQueueName, (err) => {
+            if (err) throw err;
+        });
         const monitorEnabled = !!(config.monitor && config.monitor.enabled);
         if (monitorEnabled) {
             this[sStats] = statsFactory(this, config);

@@ -8,6 +8,7 @@ const heartBeat = require('./heartbeat');
 const statsFactory = require('./stats');
 const garbageCollector = require('./gc');
 const logger = require('./logger');
+const queue = require('./queue');
 
 const CONSUMER_STATUS_GOING_DOWN = 0;
 const CONSUMER_STATUS_DOWN = 1;
@@ -16,6 +17,7 @@ const CONSUMER_STATUS_UP = 3;
 const CONSUMER_STATUS_CONSUMING = 4;
 
 const sRegisterEventHandlers = Symbol('registerEventHandlers');
+const sRegisterConsumerQueues = Symbol('registerConsumerQueues');
 const sGetEventsHandlers = Symbol('getEventsHandlers');
 const sGetNextMessage = Symbol('getNextMessage');
 const sConsumeMessage = Symbol('consumeMessage');
@@ -164,11 +166,14 @@ class Consumer extends EventEmitter {
              */
             onMessageExpired(message) {
                 consumer[sLogger].info(`Message [${message.uuid}] has expired`);
-                consumer[sGarbageCollector].collectExpiredMessage(message, consumer.keys.keyQueueNameProcessing, () => {
-                    if (consumer[sStats]) consumer[sStats].incrementAcknowledgedSlot();
-                    consumer[sLogger].info(`Message [${message.uuid}] successfully processed`);
-                    consumer.emit('next');
-                });
+                consumer[sGarbageCollector].collectExpiredMessage(
+                    message,
+                    consumer.keys.keyQueueNameProcessing,
+                    () => {
+                        if (consumer[sStats]) consumer[sStats].incrementAcknowledgedSlot();
+                        consumer[sLogger].info(`Message [${message.uuid}] successfully processed`);
+                        consumer.emit('next');
+                    });
             },
 
             /**
@@ -215,6 +220,35 @@ class Consumer extends EventEmitter {
         .on('heartbeat_halt', handlers.onHeartBeatHalt)
         .on('stats_halt', handlers.halt)
         .on('error', handlers.onError);
+    }
+
+    /**
+     *
+     * @param cb
+     */
+    [sRegisterConsumerQueues](cb) {
+        const messageQueue = () => {
+            queue.addMessageQueue(this[sRedisClient], this.keys.keyQueueName, (err) => {
+                if (err) cb(err);
+                else processingQueue();
+            });
+        };
+
+        const processingQueue = () => {
+            queue.addProcessingQueue(this[sRedisClient], this.keys.keyQueueNameProcessing, (err) => {
+                if (err) cb(err);
+                else dlQueue();
+            });
+        };
+
+        const dlQueue = () => {
+            queue.addDLQueue(this[sRedisClient], this.keys.keyQueueNameDead, (err) => {
+                if (err) cb(err);
+                else cb();
+            });
+        };
+
+        messageQueue();
     }
 
     /**
@@ -279,7 +313,7 @@ class Consumer extends EventEmitter {
                     if (err) throw err;
                     // when a consumer is stopped, redis client instance is destroyed
                     if (this[sRedisClient]) {
-                        this[sRedisClient].del(this.keys.keyQueueNameProcessing, onDeleted);
+                        this[sRedisClient].rpop(this.keys.keyQueueNameProcessing, onDeleted);
                     } else if (this.isRunning()) {
                         throw new Error('Redis client instance has gone!');
                     }
@@ -314,10 +348,22 @@ class Consumer extends EventEmitter {
             if (this[sStats]) this[sStats].start();
 
             /**
-             * Wait for messages
+             * Get a new Redis instance
              */
             this[sRedisClient] = redisClient.getNewInstance(this.config);
-            this.emit('next');
+
+            /**
+             * Register consumer queues
+             */
+            this[sRegisterConsumerQueues]((err) => {
+                if (err) this.emit('error', err);
+                else {
+                    /**
+                     * Wait for messages
+                     */
+                    this.emit('next');
+                }
+            });
         }
     }
 

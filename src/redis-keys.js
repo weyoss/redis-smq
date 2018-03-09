@@ -15,6 +15,9 @@ const keyTypes = {
     KEY_TYPE_RATE_ACKNOWLEDGED: '4.3',
     KEY_TYPE_RATE_UNACKNOWLEDGED: '4.4',
     KEY_TYPE_STATS_FRONTEND_LOCK: '5.1',
+    KEY_TYPE_MESSAGE_QUEUES_INDEX: '6.1',
+    KEY_TYPE_PROCESSING_QUEUES_INDEX: '6.2',
+    KEY_TYPE_DEAD_LETTER_QUEUES_INDEX: '6.3',
 };
 
 module.exports = {
@@ -66,18 +69,13 @@ module.exports = {
             queueName = queueName.split('|')[2].replace(/[@]/g, '');
         }
         const keys = {};
-
-        /**
-         * Key patterns
-         */
-        keys.patternQueueNameDead = `${keyTypes.KEY_TYPE_DEAD_LETTER_QUEUE}|*`;
-        keys.patternQueueNameProcessing = `${keyTypes.KEY_TYPE_PROCESSING_QUEUE}|*`;
-        keys.patternQueueName = `${keyTypes.KEY_TYPE_MESSAGE_QUEUE}|*`;
         keys.keyStatsFrontendLock = keyTypes.KEY_TYPE_STATS_FRONTEND_LOCK;
         keys.keyRate = keyTypes.KEY_TYPE_RATE;
         keys.keyHeartBeat = keyTypes.KEY_TYPE_HEARTBEAT;
+        keys.keyMessageQueuesIndex = keyTypes.KEY_TYPE_MESSAGE_QUEUES_INDEX;
+        keys.keyProcessingQueuesIndex = keyTypes.KEY_TYPE_PROCESSING_QUEUES_INDEX;
+        keys.keyDLQueuesIndex = keyTypes.KEY_TYPE_DEAD_LETTER_QUEUES_INDEX;
         if (queueName) {
-            keys.patternQueueNameProcessing = `${keyTypes.KEY_TYPE_PROCESSING_QUEUE}|${queueName}|*`;
             keys.keyQueueName = `${keyTypes.KEY_TYPE_MESSAGE_QUEUE}|${queueName}`;
             keys.keyQueueNameDead = `${keyTypes.KEY_TYPE_DEAD_LETTER_QUEUE}|${queueName}`;
             keys.keyGCLock = `${keyTypes.KEY_TYPE_GC_LOCK}|${queueName}`;

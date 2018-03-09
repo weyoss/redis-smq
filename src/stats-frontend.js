@@ -124,8 +124,8 @@ function statsFrontend(config) {
      *
      * @param {function} cb
      */
-    function getQueues(cb) {
-        queue.getQueues(client, (err, queues) => {
+    function getMessageQueues(cb) {
+        queue.getMessageQueues(client, (err, queues) => {
             if (err) cb(err);
             else getQueuesSize(queues, cb);
         });
@@ -135,8 +135,8 @@ function statsFrontend(config) {
      *
      * @param {function} cb
      */
-    function getDeadLetterQueues(cb) {
-        queue.getDeadLetterQueues(client, (err, queues) => {
+    function getDLQueues(cb) {
+        queue.getDLQueues(client, (err, queues) => {
             if (err) cb(err);
             else getQueuesSize(queues, cb);
         });
@@ -159,14 +159,14 @@ function statsFrontend(config) {
             if (err) cb(err);
             else {
                 stats.queues = queues;
-                getDeadLetterQueues(onDeadQueues);
+                getDLQueues(onDeadQueues);
             }
         };
         const onConsumers = (err, consumers) => {
             if (err) cb(err);
             else {
                 stats.consumers = consumers;
-                getQueues(onQueues);
+                getMessageQueues(onQueues);
             }
         };
         const onRates = (err, rates) => {

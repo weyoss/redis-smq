@@ -43,7 +43,6 @@ function stats(eventEmitter, config) {
                 const now = Date.now();
                 inputRate = inputSlots.reduce((acc, cur) => acc + cur, 0);
                 inputSlots.fill(0);
-                client.setex(keys.keyRateInput, 1, inputRate);
                 client.hset(keys.keyRate, keys.keyRateInput, `${inputRate}|${now}`);
             } else processHalt();
         }, 1000);
