@@ -31,22 +31,10 @@ const sRedisClient = Symbol('redisClient');
 class Consumer extends EventEmitter {
 
     /**
+     * See docs.
      *
      * @param {object} config
-     * @param {object} config.redis
-     * @param {string} config.redis.host
-     * @param {number} config.redis.port
-     * @param {object} config.log
-     * @param {(boolean|number)} config.log.enabled
-     * @param {object} config.log.options
-     * @param {object} config.monitor
-     * @param {(boolean|number)} config.monitor.enabled
-     * @param {string} config.monitor.host
-     * @param {number} config.monitor.port
      * @param {object} options
-     * @param {number} options.messageConsumeTimeout
-     * @param {number} options.messageTTL
-     * @param {number} options.messageRetryThreshold
      */
     constructor(config = {}, options = {}) {
         super();
@@ -224,7 +212,7 @@ class Consumer extends EventEmitter {
 
     /**
      *
-     * @param cb
+     * @param {function} cb
      */
     [sRegisterConsumerQueues](cb) {
         const messageQueue = () => {

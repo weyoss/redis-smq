@@ -5,9 +5,9 @@ const redisKeys = require('./redis-keys');
 module.exports = {
     /**
      *
-     * @param client
-     * @param queueName
-     * @param cb
+     * @param {object} client
+     * @param {string} queueName
+     * @param {function} cb
      */
     addMessageQueue(client, queueName, cb) {
         const keys = redisKeys.getKeys();
@@ -19,9 +19,9 @@ module.exports = {
 
     /**
      *
-     * @param client
-     * @param queueName
-     * @param cb
+     * @param {object} client
+     * @param {string} queueName
+     * @param {function} cb
      */
     addProcessingQueue(client, queueName, cb) {
         const keys = redisKeys.getKeys();
@@ -33,9 +33,9 @@ module.exports = {
 
     /**
      *
-     * @param client
-     * @param queueName
-     * @param cb
+     * @param {object} client
+     * @param {string} queueName
+     * @param {function} cb
      */
     purgeProcessingQueue(client, queueName, cb) {
         const keys = redisKeys.getKeys();
@@ -50,9 +50,9 @@ module.exports = {
 
     /**
      *
-     * @param client
-     * @param queueName
-     * @param cb
+     * @param {object} client
+     * @param {string} queueName
+     * @param {function} cb
      */
     addDLQueue(client, queueName, cb) {
         const keys = redisKeys.getKeys();
@@ -90,6 +90,11 @@ module.exports = {
         });
     },
 
+    /**
+     *
+     * @param {object} client
+     * @param {function} cb
+     */
     getProcessingQueues(client, cb) {
         const keys = redisKeys.getKeys();
         client.smembers(keys.keyProcessingQueuesIndex, (err, result) => {

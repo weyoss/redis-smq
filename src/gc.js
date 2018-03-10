@@ -131,8 +131,8 @@ function garbageCollector(consumer, logger) {
 
     /**
      *
-     * @param queues
-     * @param done
+     * @param {Array} queues
+     * @param {function} done
      */
     function collectProcessingQueuesMessages(queues, done) {
         if (queues.length) {
