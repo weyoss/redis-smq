@@ -14,6 +14,7 @@ const sStats = Symbol('stats');
 class Producer extends EventEmitter {
 
     /**
+     * See docs.
      *
      * @param {string} queueName
      * @param {object} config
