@@ -181,9 +181,16 @@ class Consumer extends EventEmitter {
              */
             onNext() {
                 if (consumer.isRunning()) {
-                    consumer.status = CONSUMER_STATUS_UP;
                     consumer[sGetNextMessage]();
                 }
+            },
+
+            /**
+             *
+             * @param message
+             */
+            onMessageConsumed(message) {
+                handlers.onNext();
             },
         };
         return handlers;
@@ -202,6 +209,7 @@ class Consumer extends EventEmitter {
         .on('next', handlers.onNext)
         .on('message', handlers.onMessage)
         .on('message_expired', handlers.onMessageExpired)
+        .on('message_consumed', handlers.onMessageConsumed)
         .on('consume_timeout', handlers.onConsumeTimeout)
         .on('consumer_halt', handlers.onConsumerHalt)
         .on('gc_halt', handlers.onGCHalt)
@@ -257,6 +265,7 @@ class Consumer extends EventEmitter {
      *
      */
     [sGetNextMessage]() {
+        if (this.status !== CONSUMER_STATUS_UP) this.status = CONSUMER_STATUS_UP;
         this[sLogger].info('Waiting for new messages...');
         this[sRedisClient].brpoplpush(this.keys.keyQueueName, this.keys.keyQueueNameProcessing, 0, (err, payload) => {
             if (err) this.emit('error', err);
@@ -291,19 +300,18 @@ class Consumer extends EventEmitter {
                 else {
                     if (this[sStats]) this[sStats].incrementAcknowledgedSlot();
                     this[sLogger].info(`Message [${message.uuid}] successfully processed`);
-                    this.emit('next');
-                    if (this.isTest) this.emit('message_consumed', JSON.stringify(message));
+                    this.emit('message_consumed', message);
                 }
             };
             const onConsumed = (err) => {
                 if (!isTimeout) {
                     if (timer) clearTimeout(timer);
-                    if (err) throw err;
-                    // when a consumer is stopped, redis client instance is destroyed
-                    if (this[sRedisClient]) {
-                        this[sRedisClient].rpop(this.keys.keyQueueNameProcessing, onDeleted);
-                    } else if (this.isRunning()) {
-                        throw new Error('Redis client instance has gone!');
+                    if (err) this[sProcessMessageFailure](message, err);
+                    else if (this.isRunning()) {
+                        if (!this[sRedisClient]) {
+                            // Something went wrong. Redis client has been destroyed.
+                            this.emit('error', new Error('Redis client instance has gone!'));
+                        } else this[sRedisClient].rpop(this.keys.keyQueueNameProcessing, onDeleted);
                     }
                 }
             };
