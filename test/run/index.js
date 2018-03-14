@@ -183,6 +183,44 @@ describe('RedisSMQ Tests:', function() {
         });
     });
 
+    it('Async exceptions are caught when consuming a message', function (done) {
+        this.timeout(20000);
+        const producer = this.sandbox.producer;
+        const consumer = this.sandbox.getConsumer();
+
+        let callCount = 0;
+        this.sandbox.stub(consumer, 'consume', (msg, cb) => {
+            callCount += 1;
+            if (callCount === 1) {
+                setTimeout(() => {
+                    cb(new Error('Async error'));
+                }, 2000);
+            } else if (callCount === 2) cb();
+            else throw new Error('Unexpected call');
+        });
+
+        let queuedCount = 0;
+        consumer.on('message_requeued', () => {
+            queuedCount += 1;
+        });
+
+        let consumedCount = 0;
+        consumer.on('message_consumed', () => {
+            consumedCount += 1;
+        });
+
+        consumer.once('idle', () => {
+            expect(queuedCount).to.eq(1);
+            expect(consumedCount).to.eq(1);
+            done();
+        });
+
+        produceNTimes(producer, 1, (err) => {
+            if (err) throw err;
+            consumer.run();
+        });
+    });
+
     it('A consumer re-queues a failed message when threshold not reached and moves it to dead queue when threshold reached', function (done) {
         this.timeout(20000);
         const producer = this.sandbox.producer;
@@ -351,4 +389,5 @@ describe('RedisSMQ Tests:', function() {
 
         check();
     });
+
 });
