@@ -6,6 +6,7 @@ const Koa = require('koa');
 const send = require('koa-send');
 const redis = require('redis');
 const statsFrontend = require('../stats-frontend');
+const redisClient = require('../redis-client');
 
 /**
  *
@@ -55,7 +56,7 @@ function monitor(config = {}) {
                 /**
                  * Subscribe to 'stats' events and broadcast data to all Websocket clients
                  */
-                const client = redis.createClient(config.redis.port, config.redis.host);
+                const client = redisClient.getNewInstance(this.config);
                 client.on('ready', () => {
                     client.subscribe('stats');
                 });
