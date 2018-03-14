@@ -1,6 +1,6 @@
 {
   "name": "redis-smq",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "A simple high-performance Redis message queue for Node.js.",
   "main": "index.js",
   "dependencies": {
