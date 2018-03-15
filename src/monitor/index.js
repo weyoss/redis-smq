@@ -56,7 +56,7 @@ function monitor(config = {}) {
                 /**
                  * Subscribe to 'stats' events and broadcast data to all Websocket clients
                  */
-                const client = redisClient.getNewInstance(this.config);
+                const client = redisClient.getNewInstance(config);
                 client.on('ready', () => {
                     client.subscribe('stats');
                 });
