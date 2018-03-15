@@ -304,15 +304,10 @@ class Consumer extends EventEmitter {
                 }
             };
             const onConsumed = (err) => {
-                if (!isTimeout) {
+                if (this.isRunning() && !isTimeout) {
                     if (timer) clearTimeout(timer);
                     if (err) this[sProcessMessageFailure](message, err);
-                    else if (this.isRunning()) {
-                        if (!this[sRedisClient]) {
-                            // Something went wrong. Redis client has been destroyed.
-                            this.emit('error', new Error('Redis client instance has gone!'));
-                        } else this[sRedisClient].rpop(this.keys.keyQueueNameProcessing, onDeleted);
-                    }
+                    else this[sRedisClient].rpop(this.keys.keyQueueNameProcessing, onDeleted);
                 }
             };
             this.consume(message.data, onConsumed);
