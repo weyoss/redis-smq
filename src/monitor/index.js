@@ -7,6 +7,8 @@ const send = require('koa-send');
 const redis = require('redis');
 const statsFrontend = require('../stats-frontend');
 const redisClient = require('../redis-client');
+const redisKeys = require('../redis-keys');
+
 
 /**
  *
@@ -19,6 +21,9 @@ function monitor(config = {}) {
     }
     if (!config.monitor.hasOwnProperty('port') || !config.monitor.hasOwnProperty('host')) {
         throw new Error('HTTP port and host parameters are required!');
+    }
+    if (config.hasOwnProperty('namespace')) {
+        redisKeys.setNamespace(config.namespace);
     }
     return {
 
