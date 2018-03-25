@@ -90,7 +90,7 @@ module.exports = {
                 keys.keyRateInput = `${keyTypes.KEY_TYPE_RATE_INPUT}|${queueName}|${producerId}`;
             }
         }
-        const ns = `redis-smp-${namespace}`;
+        const ns = `redis-smq-${namespace}`;
         for (const k in keys) keys[k] = `${ns}|@${keys[k]}`;
         return keys;
     },
