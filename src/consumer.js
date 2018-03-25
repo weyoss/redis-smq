@@ -42,6 +42,12 @@ class Consumer extends EventEmitter {
         if (!this.constructor.hasOwnProperty('queueName')) throw new Error('Undefined queue name!');
 
         /**
+         * Keys namespace.
+         * If not provided the default one is used.
+         */
+        if (config.hasOwnProperty('namespace')) redisKeys.setNamespace(config.namespace);
+
+        /**
          * Event handlers
          */
         this[sRegisterEventHandlers]();
@@ -59,12 +65,6 @@ class Consumer extends EventEmitter {
         this.keys = redisKeys.getKeys(this);
         this.isTest = process.env.NODE_ENV === 'test';
         this.status = CONSUMER_STATUS_DOWN;
-
-        /**
-         * Project namespace.
-         * If not provided the default one is used.
-         */
-        if (config.hasOwnProperty('namespace')) redisKeys.setNamespace(config.namespace);
 
         /**
          * Logs
