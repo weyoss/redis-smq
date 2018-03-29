@@ -28,17 +28,8 @@ npm install redis-smq --save
 
 Considerations:
 
-This library make use of many of ES6 features including:
-
-- arrow functions
-- default function parameters
-- destructing assignment
-- template literals
-- const, let, block-level function declaration
-- symbols
-- classes
-
-Minimal Node.js version support is 6.5. The latest stable Node.js version is recommended. 
+- Minimal Node.js version support is 7.6. The latest stable Node.js version is recommended.
+- Minimal Redis server version 2.6.12.
 
 ## Configuration 
 

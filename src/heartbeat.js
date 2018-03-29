@@ -78,6 +78,7 @@ function heartBeat(consumer) {
 heartBeat.isOnline = function isOnline(client, queueName, consumerId, cb) {
     const keys = redisKeys.getKeys();
     const hashKey = `${queueName}|${consumerId}`;
+    const noop = () => {};
     client.hget(keys.keyHeartBeat, hashKey, (err, res) => {
         if (err) cb(err);
         else {
@@ -88,7 +89,7 @@ heartBeat.isOnline = function isOnline(client, queueName, consumerId, cb) {
                 const { timestamp } = payload;
                 online = (now - timestamp <= 10000);
                 // Do not wait for keys deletion, reply as fast as possible
-                if (!online) client.hdel(keys.keyHeartBeat, hashKey);
+                if (!online) client.hdel(keys.keyHeartBeat, hashKey, noop);
             }
             cb(null, online);
         }
@@ -104,6 +105,7 @@ heartBeat.getOnlineConsumers = function getOnlineConsumers(client, cb) {
     const rKeys = redisKeys.getKeys();
     const consumers = {};
     const deadConsumers = [];
+    const noop = () => {};
     client.hgetall(rKeys.keyHeartBeat, (err, result) => {
         if (err) cb(err);
         else if (result) {
@@ -120,7 +122,7 @@ heartBeat.getOnlineConsumers = function getOnlineConsumers(client, cb) {
                 } else deadConsumers.push(hashKey);
             }
             // Do not wait for keys deletion, reply as fast as possible
-            if (deadConsumers.length) client.hdel(rKeys.keyHeartBeat, ...deadConsumers);
+            if (deadConsumers.length) client.hdel(rKeys.keyHeartBeat, ...deadConsumers, noop);
             cb(null, consumers);
         } else cb(null, consumers);
     });

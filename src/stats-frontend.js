@@ -13,6 +13,7 @@ const queue = require('./queue');
 function statsFrontend(config) {
     const client = redisClient.getNewInstance(config);
     const rKeys = redisKeys.getKeys();
+    const noop = () => {};
     let lockAcquired = false;
 
     /**
@@ -98,7 +99,7 @@ function statsFrontend(config) {
                 } else expiredKeys.push(key);
             }
             // Do not wait for keys deletion, reply as fast as possible
-            if (expiredKeys.length) client.hdel(rKeys.keyRate, ...expiredKeys);
+            if (expiredKeys.length) client.hdel(rKeys.keyRate, ...expiredKeys, noop);
             cb(null, rates);
         };
         client.hgetall(rKeys.keyRate, (err, result) => {
