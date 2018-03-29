@@ -26,7 +26,7 @@
     "sinon-chai": "2.11.0"
   },
   "scripts": {
-    "test": "eslint --ignore-path .jshintignore src/*.js && NODE_ENV=test mocha --reporter spec test/run/*.js",
+    "test": "eslint --ignore-path .jshintignore src/*.js && NODE_ENV=test mocha --reporter --harmony spec test/run/*.js",
     "lint": "eslint --ignore-path .jshintignore src/monitor/assets src/*.js",
     "fix": "eslint --ignore-path .jshintignore src/monitor/assets src --fix"
   },
@@ -51,6 +51,6 @@
   },
   "engineStrict" : true,
   "engines" : {
-    "node" : ">=7.6.0"
+    "node" : ">=7.0.0"
   }
 }
