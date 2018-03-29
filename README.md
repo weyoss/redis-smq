@@ -28,8 +28,9 @@ npm install redis-smq --save
 
 Considerations:
 
-- Minimal Node.js version support is 7.6. The latest stable Node.js version is recommended.
-- Minimal Redis server version 2.6.12.
+- Minimal Node.js version support is 7.0.0 (with --harmony flag), 7.6.0 (without --harmony flag). The latest stable 
+  Node.js version is recommended.
+- Minimal Redis server version is 2.6.12.
 
 ## Configuration 
 
