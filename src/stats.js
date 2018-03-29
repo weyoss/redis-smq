@@ -15,6 +15,7 @@ function stats(eventEmitter, config) {
     const acknowledgedSlots = new Array(1000).fill(0);
     const unacknowledgedSlots = new Array(1000).fill(0);
     const keys = redisKeys.getKeys(eventEmitter);
+    const noop = () => {};
     let client = null;
     let inputRate = 0;
     let processingRate = 0;
@@ -43,7 +44,7 @@ function stats(eventEmitter, config) {
                 const now = Date.now();
                 inputRate = inputSlots.reduce((acc, cur) => acc + cur, 0);
                 inputSlots.fill(0);
-                client.hset(keys.keyRate, keys.keyRateInput, `${inputRate}|${now}`);
+                client.hset(keys.keyRate, keys.keyRateInput, `${inputRate}|${now}`, noop);
             } else processHalt();
         }, 1000);
     }
@@ -75,7 +76,7 @@ function stats(eventEmitter, config) {
                     keys.keyRateProcessing, `${processingRate}|${now}`,
                     keys.keyRateAcknowledged, `${acknowledgedRate}|${now}`,
                     keys.keyRateUnacknowledged, `${unacknowledgedRate}|${now}`,
-                );
+                    noop);
             } else processHalt();
         }, 1000);
     }

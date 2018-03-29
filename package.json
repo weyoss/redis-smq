@@ -48,5 +48,9 @@
   "homepage": "https://github.com/weyoss/redis-smq",
   "bugs": {
     "url": "https://github.com/weyoss/redis-smq/issues"
+  },
+  "engineStrict" : true,
+  "engines" : {
+    "node" : ">=7.6.0"
   }
 }
