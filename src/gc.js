@@ -196,8 +196,8 @@ function garbageCollector(consumer, logger) {
      */
     function inspectProcessingQueues() {
         acquireLock(() => {
-            debug('Checking processing queues...');
-            queue.getProcessingQueues(client, (err, result) => {
+            debug('Inspecting processing queues...');
+            queue.getProcessingQueues(client, queueName, (err, result) => {
                 if (err) consumer.emit('error', err);
                 else if (result && result.length) {
                     debug(`Found [${result.length}] processing queues`);

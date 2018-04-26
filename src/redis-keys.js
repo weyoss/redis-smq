@@ -78,6 +78,7 @@ module.exports = {
         if (queueName) {
             keys.keyQueueName = `${keyTypes.KEY_TYPE_MESSAGE_QUEUE}|${queueName}`;
             keys.keyQueueNameDead = `${keyTypes.KEY_TYPE_DEAD_LETTER_QUEUE}|${queueName}`;
+            keys.keyQueueNameProcessingCommon = `${keyTypes.KEY_TYPE_PROCESSING_QUEUE}|${queueName}`;
             keys.keyGCLock = `${keyTypes.KEY_TYPE_GC_LOCK}|${queueName}`;
             keys.keyGCLockTmp = `${keyTypes.KEY_TYPE_GC_LOCK_TMP}|${queueName}`;
             if (consumerId) {
