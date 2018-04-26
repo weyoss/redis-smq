@@ -93,14 +93,17 @@ module.exports = {
     /**
      *
      * @param {object} client
+     * @param {string} queueName
      * @param {function} cb
      */
-    getProcessingQueues(client, cb) {
-        const keys = redisKeys.getKeys();
+    getProcessingQueues(client, queueName, cb) {
+        const keys = redisKeys.getKeys({ queueName });
         client.smembers(keys.keyProcessingQueuesIndex, (err, result) => {
             if (err) cb(err);
-            else if (result.length) cb(null, result);
-            else cb();
+            else if (result.length) {
+                const filtered = result.filter(item => (item.indexOf(keys.keyQueueNameProcessingCommon) === 0));
+                cb(null, filtered);
+            } else cb();
         });
     },
 
