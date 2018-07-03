@@ -1,18 +1,19 @@
 'use strict';
 
-const redisKeys = require('./redis-keys');
-const redisClient = require('./redis-client');
-const heartBeat = require('./heartbeat');
-const queue = require('./queue');
+const redisKeys = require('../redis-keys');
+const redisClient = require('../redis-client');
+const getOnlineConsumers = require('../heartbeat').getOnlineConsumers;
+const util = require('../util');
 
 /**
  *
  * @param {object} config
  * @returns {object}
  */
-function statsFrontend(config) {
+function stats(config) {
     const client = redisClient.getNewInstance(config);
     const rKeys = redisKeys.getKeys();
+
     const noop = () => {};
     let lockAcquired = false;
 
@@ -115,10 +116,24 @@ function statsFrontend(config) {
      * @param {function} cb
      */
     function getQueuesSize(queues, cb) {
-        queue.calculateQueueSize(client, queues, (err, res) => {
-            if (err) cb(err);
-            else cb(null, res);
-        });
+        const queuesList = [];
+        if (queues && queues.length) {
+            const multi = client.multi();
+            for (const queueName of queues) multi.llen(queueName);
+            multi.exec((err, res) => {
+                if (err) cb(err);
+                else {
+                    res.forEach((size, index) => {
+                        const segments = redisKeys.getKeySegments(queues[index]);
+                        queuesList.push({
+                            name: segments.queueName,
+                            size,
+                        });
+                    });
+                    cb(null, queuesList);
+                }
+            });
+        } else cb(null, queuesList);
     }
 
     /**
@@ -126,7 +141,7 @@ function statsFrontend(config) {
      * @param {function} cb
      */
     function getMessageQueues(cb) {
-        queue.getMessageQueues(client, (err, queues) => {
+        util.getMessageQueues(client, (err, queues) => {
             if (err) cb(err);
             else getQueuesSize(queues, cb);
         });
@@ -137,7 +152,7 @@ function statsFrontend(config) {
      * @param {function} cb
      */
     function getDLQueues(cb) {
-        queue.getDLQueues(client, (err, queues) => {
+        util.getDLQueues(client, (err, queues) => {
             if (err) cb(err);
             else getQueuesSize(queues, cb);
         });
@@ -148,33 +163,33 @@ function statsFrontend(config) {
      * @param {function} cb
      */
     function getStats(cb) {
-        const stats = {};
+        const data = {};
         const onDeadQueues = (err, deadLetterQueues) => {
             if (err) cb(err);
             else {
-                stats.deadLetterQueues = deadLetterQueues;
-                cb(null, stats);
+                data.deadLetterQueues = deadLetterQueues;
+                cb(null, data);
             }
         };
         const onQueues = (err, queues) => {
             if (err) cb(err);
             else {
-                stats.queues = queues;
+                data.queues = queues;
                 getDLQueues(onDeadQueues);
             }
         };
         const onConsumers = (err, consumers) => {
             if (err) cb(err);
             else {
-                stats.consumers = consumers;
+                data.consumers = consumers;
                 getMessageQueues(onQueues);
             }
         };
         const onRates = (err, rates) => {
             if (err) cb(err);
             else {
-                stats.rates = rates;
-                heartBeat.getOnlineConsumers(client, onConsumers);
+                data.rates = rates;
+                getOnlineConsumers(client, onConsumers);
             }
         };
         getRates(onRates);
@@ -194,10 +209,10 @@ function statsFrontend(config) {
                     }, 1000);
                 }
             };
-            const onStats = (err, stats) => {
+            const onStats = (err, data) => {
                 if (err) throw err;
                 else {
-                    const statsString = JSON.stringify(stats);
+                    const statsString = JSON.stringify(data);
                     client.publish('stats', statsString, onPublished);
                 }
             };
@@ -209,4 +224,4 @@ function statsFrontend(config) {
     };
 }
 
-module.exports = statsFrontend;
+module.exports = stats;

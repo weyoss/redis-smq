@@ -6,6 +6,7 @@ const keyTypes = {
     KEY_TYPE_MESSAGE_QUEUE: '1.1',
     KEY_TYPE_PROCESSING_QUEUE: '1.2',
     KEY_TYPE_DEAD_LETTER_QUEUE: '1.3',
+    KEY_TYPE_MESSAGE_QUEUE_DELAYED: '1.4',
     KEY_TYPE_HEARTBEAT: '2.1',
     KEY_TYPE_GC_LOCK: '3.1',
     KEY_TYPE_GC_LOCK_TMP: '3.2',
@@ -18,6 +19,8 @@ const keyTypes = {
     KEY_TYPE_MESSAGE_QUEUES_INDEX: '6.1',
     KEY_TYPE_PROCESSING_QUEUES_INDEX: '6.2',
     KEY_TYPE_DEAD_LETTER_QUEUES_INDEX: '6.3',
+    KEY_TYPE_SCHEDULER_LOCK: '7.1',
+    KEY_TYPE_SCHEDULER_LOCK_TMP: '7.2',
 };
 
 module.exports = {
@@ -54,19 +57,24 @@ module.exports = {
         return filtered;
     },
 
+
     /**
      *
-     * @param {object} args
-     * @param {string} args.queueName
-     * @param {string} [args.consumerId]
-     * @param {string} [args.producerId]
-     * @returns {object}
+     * @param dispatcher
      */
-    getKeys(args = {}) {
-        let { queueName } = args;
-        const { consumerId, producerId } = args;
-        if (queueName && queueName.indexOf(`|@${keyTypes.KEY_TYPE_MESSAGE_QUEUE}|`) > 0) {
-            queueName = queueName.split('|')[2].replace(/[@]/g, '');
+    getKeys(dispatcher = null) {
+        let queueName = null;
+        let instanceId = null;
+        let isConsumer = false;
+        let isProducer = false;
+        if (dispatcher) {
+            instanceId = dispatcher.getInstanceId();
+            isConsumer = dispatcher.isConsumer();
+            isProducer = dispatcher.isProducer();
+            queueName = dispatcher.getQueueName();
+            if (queueName && queueName.indexOf(`|@${keyTypes.KEY_TYPE_MESSAGE_QUEUE}|`) > 0) {
+                queueName = queueName.split('|')[2].replace(/[@]/g, '');
+            }
         }
         const keys = {};
         keys.keyStatsFrontendLock = keyTypes.KEY_TYPE_STATS_FRONTEND_LOCK;
@@ -77,18 +85,21 @@ module.exports = {
         keys.keyDLQueuesIndex = keyTypes.KEY_TYPE_DEAD_LETTER_QUEUES_INDEX;
         if (queueName) {
             keys.keyQueueName = `${keyTypes.KEY_TYPE_MESSAGE_QUEUE}|${queueName}`;
+            keys.keyQueueNameDelayed = `${keyTypes.KEY_TYPE_MESSAGE_QUEUE_DELAYED}|${queueName}`;
             keys.keyQueueNameDead = `${keyTypes.KEY_TYPE_DEAD_LETTER_QUEUE}|${queueName}`;
             keys.keyQueueNameProcessingCommon = `${keyTypes.KEY_TYPE_PROCESSING_QUEUE}|${queueName}`;
             keys.keyGCLock = `${keyTypes.KEY_TYPE_GC_LOCK}|${queueName}`;
             keys.keyGCLockTmp = `${keyTypes.KEY_TYPE_GC_LOCK_TMP}|${queueName}`;
-            if (consumerId) {
-                keys.keyQueueNameProcessing = `${keyTypes.KEY_TYPE_PROCESSING_QUEUE}|${queueName}|${consumerId}`;
-                keys.keyRateProcessing = `${keyTypes.KEY_TYPE_RATE_PROCESSING}|${queueName}|${consumerId}`;
-                keys.keyRateAcknowledged = `${keyTypes.KEY_TYPE_RATE_ACKNOWLEDGED}|${queueName}|${consumerId}`;
-                keys.keyRateUnacknowledged = `${keyTypes.KEY_TYPE_RATE_UNACKNOWLEDGED}|${queueName}|${consumerId}`;
+            keys.keySchedulerLock = `${keyTypes.KEY_TYPE_SCHEDULER_LOCK}|${queueName}`;
+            keys.keySchedulerLockTmp = `${keyTypes.KEY_TYPE_SCHEDULER_LOCK_TMP}|${queueName}`;
+            if (isConsumer) {
+                keys.keyQueueNameProcessing = `${keyTypes.KEY_TYPE_PROCESSING_QUEUE}|${queueName}|${instanceId}`;
+                keys.keyRateProcessing = `${keyTypes.KEY_TYPE_RATE_PROCESSING}|${queueName}|${instanceId}`;
+                keys.keyRateAcknowledged = `${keyTypes.KEY_TYPE_RATE_ACKNOWLEDGED}|${queueName}|${instanceId}`;
+                keys.keyRateUnacknowledged = `${keyTypes.KEY_TYPE_RATE_UNACKNOWLEDGED}|${queueName}|${instanceId}`;
             }
-            if (producerId) {
-                keys.keyRateInput = `${keyTypes.KEY_TYPE_RATE_INPUT}|${queueName}|${producerId}`;
+            if (isProducer) {
+                keys.keyRateInput = `${keyTypes.KEY_TYPE_RATE_INPUT}|${queueName}|${instanceId}`;
             }
         }
         const ns = `redis-smq-${namespace}`;

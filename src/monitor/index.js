@@ -5,7 +5,7 @@ const http = require('http');
 const Koa = require('koa');
 const send = require('koa-send');
 const redis = require('redis');
-const statsFrontend = require('../stats-frontend');
+const statsFn = require('./stats');
 const redisClient = require('../redis-client');
 const redisKeys = require('../redis-keys');
 
@@ -55,7 +55,7 @@ function monitor(config = {}) {
                 /**
                  * Run stats
                  */
-                const stats = statsFrontend(config);
+                const stats = statsFn(config);
                 stats.run();
 
                 /**

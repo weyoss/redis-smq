@@ -2,6 +2,8 @@
 
 const redis = require('redis');
 
+const clients = [];
+
 module.exports = {
     /**
      *
@@ -10,6 +12,12 @@ module.exports = {
      */
     getNewInstance(config = {}) {
         const { redis: options = {} } = config;
-        return redis.createClient(options);
+        const c = redis.createClient(options);
+        clients.push(c);
+        return c;
+    },
+
+    getAllClients() {
+        return clients;
     },
 };

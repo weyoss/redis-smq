@@ -1,51 +1,39 @@
 'use strict';
 
-const redisKeys = require('./redis-keys');
 const redisClient = require('./redis-client');
 
 /**
- *
- * @param {object} eventEmitter
- * @param {object} config
- * @returns {object}
+ * 
+ * @param dispatcher
+ * @return {*}
  */
-function stats(eventEmitter, config) {
+function stats(dispatcher) {
     const inputSlots = new Array(1000).fill(0);
     const processingSlots = new Array(1000).fill(0);
     const acknowledgedSlots = new Array(1000).fill(0);
     const unacknowledgedSlots = new Array(1000).fill(0);
-    const keys = redisKeys.getKeys(eventEmitter);
+    const keys = dispatcher.getKeys();
+    const events = dispatcher.getEvents();
+    const config = dispatcher.getConfig();
     const noop = () => {};
     let client = null;
     let inputRate = 0;
     let processingRate = 0;
     let acknowledgedRate = 0;
     let unacknowledgedRate = 0;
-    let statsTickInterval = 0;
-    let halt = false;
-
-    /**
-     *
-     */
-    function processHalt() {
-        clearInterval(statsTickInterval);
-        client.end(true);
-        client = null;
-        halt = false;
-        eventEmitter.emit('stats_halt');
-    }
+    let timer = null;
 
     /**
      *
      */
     function runProducerStats() {
-        statsTickInterval = setInterval(() => {
-            if (!halt) {
+        timer = setInterval(() => {
+            if (dispatcher.isRunning()) {
                 const now = Date.now();
                 inputRate = inputSlots.reduce((acc, cur) => acc + cur, 0);
                 inputSlots.fill(0);
                 client.hset(keys.keyRate, keys.keyRateInput, `${inputRate}|${now}`, noop);
-            } else processHalt();
+            }
         }, 1000);
     }
 
@@ -54,21 +42,21 @@ function stats(eventEmitter, config) {
      */
     function runConsumerStats() {
         let idle = 0;
-        statsTickInterval = setInterval(() => {
-            const now = Date.now();
-            if (!halt) {
+        timer = setInterval(() => {
+            if (dispatcher.isRunning()) {
+                const now = Date.now();
                 processingRate = processingSlots.reduce((acc, cur) => acc + cur, 0);
                 processingSlots.fill(0);
                 acknowledgedRate = acknowledgedSlots.reduce((acc, cur) => acc + cur, 0);
                 acknowledgedSlots.fill(0);
                 unacknowledgedRate = unacknowledgedSlots.reduce((acc, cur) => acc + cur, 0);
                 unacknowledgedSlots.fill(0);
-                if (eventEmitter.isTest) {
+                if (dispatcher.isTest()) {
                     if (processingRate === 0 && acknowledgedRate === 0 && unacknowledgedRate === 0) idle += 1;
                     else idle = 0;
                     if (idle > 5) {
                         idle = 0;
-                        eventEmitter.emit('idle', JSON.stringify({ consumerId: eventEmitter.consumerId }));
+                        dispatcher.emit(events.IDLE);
                     }
                 }
                 client.hmset(
@@ -77,7 +65,7 @@ function stats(eventEmitter, config) {
                     keys.keyRateAcknowledged, `${acknowledgedRate}|${now}`,
                     keys.keyRateUnacknowledged, `${unacknowledgedRate}|${now}`,
                     noop);
-            } else processHalt();
+            }
         }, 1000);
     }
 
@@ -120,9 +108,8 @@ function stats(eventEmitter, config) {
          * @returns {boolean}
          */
         start() {
-            if (halt) return false;
             client = redisClient.getNewInstance(config);
-            if (eventEmitter.hasOwnProperty('consumerId')) runConsumerStats();
+            if (dispatcher.isConsumer()) runConsumerStats();
             else runProducerStats();
             return true;
         },
@@ -132,9 +119,10 @@ function stats(eventEmitter, config) {
          * @returns {boolean}
          */
         stop() {
-            if (halt) return false;
-            halt = true;
-            return true;
+            if (timer) clearInterval(timer);
+            client.end(true);
+            client = null;
+            dispatcher.emit(events.STATS_HALT);
         },
     };
 }

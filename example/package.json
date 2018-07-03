@@ -6,6 +6,6 @@
   "dependencies": {
     "pm2": "2.5.0",
     "redis": "2.7.1",
-    "redis-smq": "1.0.x"
+    "redis-smq": "file:../"
   }
 }

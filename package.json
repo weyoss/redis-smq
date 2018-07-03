@@ -5,6 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "bunyan": "1.8.10",
+    "cron-parser": "2.5.0",
     "koa": "2.2.0",
     "koa-send": "4.1.0",
     "koa-static": "3.0.0",
@@ -26,7 +27,7 @@
     "sinon-chai": "2.11.0"
   },
   "scripts": {
-    "test": "eslint --ignore-path .jshintignore src/*.js && NODE_ENV=test mocha --reporter --harmony spec test/run/*.js",
+    "test": "eslint --ignore-path .jshintignore src/*.js && NODE_ENV=test mocha  --reporter --harmony spec test/run/*.js",
     "lint": "eslint --ignore-path .jshintignore src/monitor/assets src/*.js",
     "fix": "eslint --ignore-path .jshintignore src/monitor/assets src --fix"
   },
@@ -49,8 +50,8 @@
   "bugs": {
     "url": "https://github.com/weyoss/redis-smq/issues"
   },
-  "engineStrict" : true,
-  "engines" : {
-    "node" : ">=7.0.0"
+  "engineStrict": true,
+  "engines": {
+    "node": ">=7.0.0"
   }
 }
