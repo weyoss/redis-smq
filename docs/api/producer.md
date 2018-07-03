@@ -1,4 +1,4 @@
-# Producer API
+# Producer Class API
 
 ## Properties
 
@@ -21,7 +21,7 @@ See [Producer.prototype.constructor](#producerprototypeconstructor).
 
 ### Producer.prototype.isTest
 
-Whether or not the consumer is running in the test environment (when running tests).
+Whether or not the producer is running in the test environment (when running tests).
 
 ## Methods
 
@@ -79,7 +79,7 @@ producer.produceMessage(message, (err) => {
 
 ### Producer.prototype.produce() - deprecated
 
-Create a message based on the content/payload provided and send it to the message queue.
+Create a message based on the provided content/payload and send it to the message queue.
 
 This method is deprecated and will be removed in future releases. Please use `produceMessage()` 
 instead.
@@ -105,7 +105,7 @@ producer.produce({ hello: 'world' }, (err) => {
 
 ### Producer.prototype.produceWithTTL() - deprecated
 
-Create a message based on the content/payload provided with TTL (time-to-live) and send it to the message queue.
+Create a message based on the provided content/payload and TTL (time-to-live) then send it to the message queue.
 
 This method is deprecated and will be removed in future releases. Please use `produceMessage()` 
 instead.
@@ -133,8 +133,11 @@ producer.produceWithTTL({ hello: 'world' }, 60000, (err) => {
 
 ### Producer.prototype.shutdown()
 
-Gracefully shutdown the producer and disconnect from the redis server. This method should be used only in rare cases 
-where we need to force the producer to terminate its work. Normally a producer should be kept always online.
+Gracefully shutdown the producer and disconnect from the redis server.
+
+This method should be used only in rare cases where we need to force the producer to terminate its work.
+
+Normally a producer should be kept always online.
 
 ```javascript
 producer.produceMessage(message, (err) => {

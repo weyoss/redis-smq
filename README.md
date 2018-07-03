@@ -16,7 +16,8 @@ For more details about RedisSMQ design see [https://medium.com/@weyoss/building-
  * **Message consume timeout**: The amount of time for a consumer to consume a message. If the timeout exceeds,
  message processing is cancelled and the message is re-queued to be consumed again.
  * **Delaying and scheduling message delivery**: From version 1.0.19 a persistent scheduler has been built into 
- RedisSMQ message queue. The scheduler accepts delays, repeats, periods between repeats and CRON expression.
+ RedisSMQ message queue. The scheduler accepts delaying messages, repeated messages delivery, period
+ between repeats and CRON expressions.
  * **Highly optimized**: No promises, no async/await, small memory footprint, no memory leaks.
  * **Monitorable**: Statistics (input/processing/acks/unacks messages rates, online consumers, queues, etc.)
    are provided in real-time.
@@ -139,9 +140,8 @@ See [Message API Reference](docs/api/message.md) for more details.
 
 Producer class is in turn responsible for producing messages. 
 
-Each producer instance has an associated message queue and provides `produceMessage()` method which handle a given 
-message and decides to either send it to the message queue scheduler or to immediately enqueue for delivery it 
-depending on the given message properties.
+Each producer instance has an associated message queue and provides `produceMessage()` method which handle the
+message and decides to either send it to the message queue scheduler or to immediately enqueue it for delivery.
 
 ```javascript
 // filename: ./example/test-queue-producer-launch.js
@@ -217,14 +217,15 @@ and wait for messages:
 $ node ./example/test-queue-consumer-launch.js
 ```
 
-Once a message is received if an error occurs, the error should be sent back to the consumer so the message is 
-re-queued again. 
+Once a message is received and processed the consumer should acknowledge the message by invoking the callback function
+without arguments.
 
 The message acknowledgment informs the message queue that the message has been successfully consumed.
 
-Failed messages are unacknowledged, re-queued and consumed again unless **message retry threshold** is exceeded. Then 
-the messages are moved to **dead-letter queue (DLQ)**. Each message queue has a system generated corresponding queue 
-called `dead-letter queue` where all failed to consume messages are moved to. 
+If an error occurs, the message should be unacknowledged and the error should be reported to the message queue by
+calling the callback function. Failed messages are re-queued and delivered again unless **message retry threshold** is
+exceeded. Then the messages are moved to **dead-letter queue (DLQ)**. Each message queue has a system generated
+corresponding queue called dead-letter queue where all failed to consume messages are moved to.
 
 See [Consumer API Reference](docs/api/consumer.md) for more details.
 
