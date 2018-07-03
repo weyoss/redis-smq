@@ -6,19 +6,22 @@ For more details about RedisSMQ design see [https://medium.com/@weyoss/building-
 
 ## Features
 
- * Persistent: No messages are lost in case of a consumer failure.
- * Atomic: A message is delivered only once to one consumer (in FIFO order) so you would never fall into a situation
+ * **Persistent**: No messages are lost in case of a consumer failure.
+ * **Atomic**: A message is delivered only once to one consumer (in FIFO order) so you would never fall into a situation
  where a message could be processed more than once.
- * Fast: 13K+ messages/second on a virtual machine of 4 CPU cores and 8GB RAM and running one consumer.
- * Concurrent consumers: A queue can be consumed by many consumers, launched on the same or on different hosts.
- * Message TTL: A message will expire and not be consumed if it has been in the queue for longer than the TTL.
- * Message consume timeout: The amount of time for a consumer to consume a message. If the timeout exceeds,
+ * **Fast**: 13K+ messages/second on a virtual machine of 4 CPU cores and 8GB RAM and running one consumer.
+ * **Scalable**: A queue can be consumed by many concurrent consumers, running on the same or on different hosts.
+ * **Message expiration**: A message will expire and not be consumed if it has been in the queue for longer than the 
+ TTL (time-to-live).
+ * **Message consume timeout**: The amount of time for a consumer to consume a message. If the timeout exceeds,
  message processing is cancelled and the message is re-queued to be consumed again.
- * Highly optimized: No promises, no async/await, small memory footprint, no memory leaks.
- * Monitorable: Statistics (input/processing/acks/unacks messages rates, online consumers, queues, etc.)
+ * **Delaying and scheduling message delivery**: From version 1.0.19 a persistent scheduler has been built into 
+ RedisSMQ message queue. The scheduler accepts delays, repeats, periods between repeats and CRON expression.
+ * **Highly optimized**: No promises, no async/await, small memory footprint, no memory leaks.
+ * **Monitorable**: Statistics (input/processing/acks/unacks messages rates, online consumers, queues, etc.)
    are provided in real-time.
- * Logging: Supports JSON log format for troubleshooting and analytics purposes.
- * Configurable: Many options and features can be configured.
+ * **Logging**: Supports JSON log format for troubleshooting and analytics purposes.
+ * **Configurable**: Many options and features can be configured.  
  
 ## Installation
 
@@ -32,27 +35,15 @@ Considerations:
   Node.js version is recommended.
 - Minimal Redis server version is 2.6.12.
 
-## Configuration 
 
-RedisSMQ configuration parameters:
-- `namespace` *(String): Optional.* The namespace for message queues. It can be composed only of letters (a-z), 
-  numbers (0-9) and (-_) characters. Namespace can be for example configured per project. 
-- `redis` *(Object): Optional.* Redis client parameters. 
-  See https://github.com/NodeRedis/node_redis#options-object-properties for all valid parameters.
-- `log` *(Object): Optional.* Logging parameters.
-- `log.enabled` *(Integer/Boolean): Optional.* Enable/disable logging. By default logging is disabled.
-- `log.options` *(Object): Optional.* All valid Bunyan configuration options are accepted. Please look at the 
-  [Bunyan Repository](https://github.com/trentm/node-bunyan) for more details.
-- `monitor` *(Object): Optional.* RedisSMQ monitor parameters.
-- `monitor.enabled` *(Boolean/Integer): Optional.* Enable/Disable the monitor.
-- `monitor.host` *(String): Optional.* IP address of the monitor server.
-- `monitor.port` *(Integer): Optional.* Port of the monitor server.
+# Configuration
 
-### Configuration example
+Before running a Producer or a Consumer instance, an object containing the configuration parameters can be supplied 
+to the class constructor in order to configure the message queue.
+
+A configuration object may look like:
 
 ```javascript
-// filename: ./example/config/index.js
-
 'use strict';
 
 const path = require('path');
@@ -85,101 +76,106 @@ module.exports = {
 };
 ```
 
+**Parameters**
+
+- `namespace` *(String): Optional.* The namespace for message queues. It can be composed only of letters (a-z), 
+  numbers (0-9) and (-_) characters. Namespace can be for example configured per project. 
+
+- `redis` *(Object): Optional.* Redis client parameters. 
+  See https://github.com/NodeRedis/node_redis#options-object-properties for all valid parameters.
+
+- `log` *(Object): Optional.* Logging parameters.
+
+- `log.enabled` *(Integer/Boolean): Optional.* Enable/disable logging. By default logging is disabled.
+
+- `log.options` *(Object): Optional.* All valid Bunyan configuration options are accepted. Please look at the 
+  [Bunyan Repository](https://github.com/trentm/node-bunyan) for more details.
+
+- `monitor` *(Object): Optional.* RedisSMQ monitor parameters.
+
+- `monitor.enabled` *(Boolean/Integer): Optional.* Enable/Disable the monitor.
+
+- `monitor.host` *(String): Optional.* IP address of the monitor server.
+
+- `monitor.port` *(Integer): Optional.* Port of the monitor server.
+
+
 ## Usage
 
-### Definitions
+## Overview
 
-**Message TTL** - All queue messages are guaranteed to not be consumed and destroyed if they have been in the queue for 
-longer than an amount of time called TTL (time-to-live) in milliseconds. Message TTL can be set per message when 
-producing it or per consumer (for all queue messages).
+RedisSMQ provides 3 classes: Message, Producer and Consumer in order to work with the message queue. 
 
-**Message consumption timeout** - Also called job timeout, is the amount of time in milliseconds before a consumer 
-consuming a message times out. If the consumer does not consume the message within the set time limit, the message 
-consumption is automatically canceled and the message is re-queued to be consumed again.
+### Message Class
 
-**Message retry threshold** - Failed messages are re-queued and consumed again unless retry threshold exceeded. If the 
-retry threshold exceeds, the messages are moved to a dead-letter queue (DLQ).
+Message class is the main component responsible for creating and handling messages. It encapsulates and provides all
+the required methods needed to construct and deal with messages.
 
-**Dead-Letter Queue** - Each queue has a system generated corresponding dead-letter queue where all failed to consume 
-messages are moved to. Messages from a dead-letter queue can only read and deleted (through the monitor). 
+```javascript
 
-**Message acknowledgment** - The message acknowledgment informs the consumer that the message has been consumed 
-successfully. If an error occurred during the processing of a message, the error should be sent back to the consumer 
-so the message is re-queued again and considered to be unacknowledged.
+const { Message } = require('redis-smq');
 
-### Producer
+const message = new Message();
 
-* Producer class constructor `Producer(queueName, config)`:
-  * `queueName` *(string): Required.* The name of the queue where produced messages are queued. It can be composed 
-  only of letters (a-z), numbers (0-9) and (-_) characters.
-  * `config` *(object): Required.* Configuration object.
-* A Producer instance provides 3 methods:
-  * `produce(message, cb)`: Produce a message.
-    * `message` *(mixed): Required.* The actual message, to be consumed by a consumer.
-    * `cb(err)` *(function): Required.* Callback function. When called without error argument, the message is 
-    successfully published.
-  * `produceWithTTL(message, ttl, cb)`: Produce a message with TTL (time-to-live).
-    * `message` *(mixed): Required.* The actual message, to be consumed by a consumer.
-    * `ttl` *(Integer): Required.* Message TTL in milliseconds.
-    * `cb(err)` *(function): Required.* Callback function. When called without error argument, the message is 
-    successfully published.
-  * `shutdown()`: Gracefully shutdown the producer and disconnect from the redis server. This method should be used 
-  only in rare cases where we need to force the producer to terminate its work. Normally a producer should be kept 
-  always online.
-  
-#### Producer example
+message
+    .setBody({hello: 'world'})
+    .setTTL(3600000)
+    .setScheduledDelay(10)
+    .setScheduledRepeat(6)
+    .setScheduledPeriod(60)
+    .setScheduledCron('* 30 * * * *');
+
+
+let messageTTL = message.getTTL();
+
+// same as 
+messageTTL = message.getProperty(Message.PROPERTY_TTL);
+```
+
+See [Message API Reference](docs/api/message.md) for more details.
+
+
+### Producer Class
+
+Producer class is in turn responsible for producing messages. 
+
+Each producer instance has an associated message queue and provides `produceMessage()` method which handle a given 
+message and decides to either send it to the message queue scheduler or to immediately enqueue for delivery it 
+depending on the given message properties.
 
 ```javascript
 // filename: ./example/test-queue-producer-launch.js
 
 'use strict';
+const { Message, Producer } = require('redis-smq');
 
-const config = require('./config');
-const Producer = require('redis-smq').Producer;
+const message = new Message();
 
-const producer = new Producer('test_queue', config);
+message
+    .setBody({hello: 'world'})
+    .setTTL(3600000)
+    .setScheduledDelay(10);
 
-producer.produce({ hello: 'world' }, (err) => {
-    if (err) throw err;   
-    console.log('Successfully published!');
-    producer.shutdown();
+const producer = new Producer('test_queue');
+producer.produceMessage(message, (err) => {
+   if (err) console.log(err);
+   else console.log('Successfully produced')
 });
 ```
 
-Messages can also be produced with TTL:
+See [Producer API Reference](docs/api/producer.md) for more details.
+
+### Consumer Class
+
+The Consumer class is the base class for all consumers. All consumers extends this base class and implements
+`consume()` method which got called once a message is received.
+
+Consumer classes are saved per files. Each consumer file represents a consumer class.
+
+A consumer class may look like:
 
 ```javascript
-producer.produceWithTTL({ hello: 'world' }, 60000, (err) => {
-    if (err) throw err;
-    console.log('Successfully published!');
-    producer.shutdown();    
-});
-```
-
-### Consumer
-
-* Consumer class constructor `Consumer(config, options)`:
-  * `config` *(object): Required.* Configuration object.
-  * `options` *(object): Optional.* Consumer configuration parameters.
-  * `options.messageConsumeTimeout` *(Integer): Optional.* Consumer timeout for consuming a message, in milliseconds. 
-  By default message consumption timeout is not set. 
-  * `options.messageTTL` *(Integer): Optional.* Message TTL in milliseconds. By default messageTTL is not set.
-  * `options.messageRetryThreshold` *(Integer): Optional.* Message retry threshold. By default message retry threshold 
-  is set to 3.
-* Consumers classes are saved per files. Each consumer file represents a consumer class.
-* Each consumer class:
-  * Extends redisSMQ.Consumer class.
-  * Has a static property `queueName` - The name of the queue to consume messages from. The queue name can be composed 
-  only of letters (a-z), numbers (0-9) and (-_) characters.
-  * Required to have a `consume(message, cb)` method which is called each time a message received:
-    * `message` *(mixed): Required.* Actual message payload published by a producer
-    * `cb(err)` *(function): Required.* Callback function. When called with an error argument the message is 
-    unacknowledged. Otherwise (if called without arguments) the message is acknowledged.
-
-#### Consumer example
-
-```javascript
-// filename: ./example/consumers/test-queue-consumer.js
+// filename: ./example/test-queue-consumer-launch.js
 
 'use strict';
 
@@ -188,14 +184,13 @@ const redisSMQ = require('redis-smq');
 const Consumer = redisSMQ.Consumer;
 
 class TestQueueConsumer extends Consumer {
-
     /**
      *
      * @param message
      * @param cb
      */
     consume(message, cb) {
-        //  console.log(`Got message to consume: `, JSON.stringify(message));
+        //  console.log('Got a message to consume:', message);
         //  
         //  throw new Error('TEST!');
         //  
@@ -211,35 +206,34 @@ class TestQueueConsumer extends Consumer {
 
 TestQueueConsumer.queueName = 'test_queue';
 
-module.exports = TestQueueConsumer;
-```
-
-#### Running a consumer
-
-Launch file:
-
-```javascript
-// filename: ./example/test-queue-consumer-launch.js
-
-'use strict';
-
-const config = require('./config');
-const TestQueueConsumer = require('./consumers/test-queue-consumer');
-
-const consumer = new TestQueueConsumer(config, { messageConsumeTimeout: 2000 });
+const consumer = new TestQueueConsumer();
 consumer.run();
 ```
 
-Running from CLI:
+To start consuming messages, a consumer needs first to be launched from CLI to connect to the Redis server 
+and wait for messages: 
 
 ```text
-$ node test-queue-consumer-launch.js
+$ node ./example/test-queue-consumer-launch.js
 ```
+
+Once a message is received if an error occurs, the error should be sent back to the consumer so the message is 
+re-queued again. 
+
+The message acknowledgment informs the message queue that the message has been successfully consumed.
+
+Failed messages are unacknowledged, re-queued and consumed again unless **message retry threshold** is exceeded. Then 
+the messages are moved to **dead-letter queue (DLQ)**. Each message queue has a system generated corresponding queue 
+called `dead-letter queue` where all failed to consume messages are moved to. 
+
+See [Consumer API Reference](docs/api/consumer.md) for more details.
 
 ## Performance
 
 One key indicator about how RedisSMQ is fast and performant is Message throughput. Message throughput is the number of
 messages per second that the message queue can process. 
+
+### Scenarios
 
 We can measure the Producer throughput and the Consumer throughput. The benchmark is composed of:
 
@@ -319,12 +313,14 @@ Launching the server:
 ```text
 $ node monitor.js
 ```
-#### RedisSMQ Monitor screenshots
+#### Monitor screenshots
 
 Please note that the numbers shown in the screenshots are related to the Redis server configuration and the performance 
 parameters of the host the server is running on!
 
-##### RedisSMQ running 10 producer instances and 20 consumer instances:
+##### Sample
+
+Running 10 producer instances and 20 consumer instances:
 
 ![RedisSMQ Monitor](./screenshots/img_7.png)
 

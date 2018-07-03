@@ -8,7 +8,7 @@ module.exports = {
         port: 6379,
     },
     log: {
-        enabled: 0,
+        enabled: false,
         options: {
             level: 'trace',
             /*

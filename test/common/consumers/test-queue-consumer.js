@@ -1,10 +1,15 @@
 'use strict';
 
 const redisSMQ = require('./../../../index');
+
 const Consumer = redisSMQ.Consumer;
 
 class TestQueueConsumer extends Consumer {
-
+    /**
+     *
+     * @param message
+     * @param cb
+     */
     consume(message, cb) {
         cb();
     }

@@ -9,17 +9,11 @@ const TestQueueConsumer = require('./../common/consumers/test-queue-consumer');
 const Producer = redisSMQ.Producer;
 const producer = new Producer('test_queue', config);
 const client = redisClient.getNewInstance(config);
-
 const consumersList = [];
 
 function cleanConsumers(cb) {
-    let consumer = consumersList.pop();
-    if (consumer) {
-        consumer.removeAllListeners('idle');
-        consumer.removeAllListeners('message_requeued');
-        consumer.removeAllListeners('message_consumed');
-        consumer.removeAllListeners('message_dead_queue');
-        consumer.removeAllListeners('halt');
+    if (consumersList.length) {
+        let consumer = consumersList.pop();
         const onStopped = () => {
             consumer = null;
             cleanConsumers(cb);
@@ -53,7 +47,7 @@ beforeEach(function (done) {
 });
 
 afterEach(function (done) {
-    this.timeout(20000);
+    this.timeout(40000);
     cleanConsumers(() => {
         done();
     });
