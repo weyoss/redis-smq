@@ -11,13 +11,13 @@ The universally unique identifier of the producer.
 The name of the queue where messages are to be enqueued for delivery. The queue name can be composed only of letters (a-z), numbers (0-9) 
 and (-_) characters.
 
-See [Producer.prototype.constructor](#producer.prototype.constructor()).
+See [Producer.prototype.constructor](#producerprototypeconstructor).
 
 ### Consumer.prototype.config
 
 The actual config object supplied to producer class upon construction.
 
-See [Producer.prototype.constructor](#producer.prototype.constructor()).
+See [Producer.prototype.constructor](#producerprototypeconstructor).
 
 ### Producer.prototype.isTest
 
@@ -38,7 +38,7 @@ const producer = new Producer(queueName, config)
 - `queueName` *(string): Required.* The name of the queue where produced messages are queued. It can be composed 
   only of letters (a-z), numbers (0-9) and (-_) characters.
 
-- `config` *(object): Required.* Configuration parameters. See [configuration](/weyoss/redis-smq#configuration).
+- `config` *(object): Required.* Configuration parameters. See [configuration](https://github.com/weyoss/redis-smq#configuration).
 
 ```javascript
 const { Producer } = require('redis-smq');

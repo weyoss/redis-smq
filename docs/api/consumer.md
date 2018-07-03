@@ -19,31 +19,31 @@ Whether or not the consumer is running in the test environment (when running tes
 
 The actual config object supplied to consumer upon construction.
 
-See [Consumer.prototype.constructor](#consumer.prototype.constructor()).
+See [Consumer.prototype.constructor](#consumerprototypeconstructor).
 
 ### Consumer.prototype.options
 
 The actual consumer options supplied to consumer class upon construction.
 
-See [Consumer.prototype.constructor](#consumer.prototype.constructor()).
+See [Consumer.prototype.constructor](#consumerprototypeconstructor).
 
 ### Consumer.prototype.messageConsumeTimeout
 
 Consumer timeout for consuming a message, in milliseconds. By default messageConsumeTimeout is not set.
 
-See [Consumer.prototype.constructor](#consumer.prototype.constructor()).
+See [Consumer.prototype.constructor](#consumerprototypeconstructor).
 
 ### Consumer.prototype.messageTTL
 
 Message TTL in milliseconds. By default messageTTL is not set.
 
-See [Consumer.prototype.constructor](#consumer.prototype.constructor()).
+See [Consumer.prototype.constructor](#consumerprototypeconstructor).
 
 ### Consumer.prototype.messageRetryThreshold
 
 The number of times the message can be enqueued and delivered again. By default message retry threshold is 3.
 
-See [Consumer.prototype.constructor](#consumer.prototype.constructor()).
+See [Consumer.prototype.constructor](#consumerprototypeconstructor).
 
 ## Methods
 
@@ -57,7 +57,7 @@ Consumer([config[, options]])
 
 **Parameters**
 
-- `config` *(object): Optional.* Configuration parameters. See [configuration](/weyoss/redis-smq#configuration).
+- `config` *(object): Optional.* Configuration parameters. See [configuration](https://github.com/weyoss/redis-smq#configuration).
 
 - `options` *(object): Optional.* Consumer configuration parameters.
 
