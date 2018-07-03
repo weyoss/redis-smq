@@ -1,4 +1,4 @@
-# Message API
+# Message Class API
 
 ## Properties
 
@@ -187,11 +187,18 @@ message.setScheduledDelay(60); // in seconds
 
 Set message scheduling using a CRON expression.
 
+CRON scheduling takes priority over delay scheduling.
+
+CRON scheduling can be combined with repeat and period scheduling. For example
+if we want a message to be delivered 5 times every hour with a 10 seconds delay between each message we can do:
+
 ```javascript
 const { Message } = require('redis-smq');
 
 const message = new Message();
-message.setScheduledCron('*/10 * * * * *');  // Schedule message for delivery each 10 seconds
+message.setScheduledCron('0 0 * * * *');  // Schedule message for delivery every hour
+message.setScheduledRepeat(5);
+message.setScheduledPeriod(10);
 ```
 
 ### Message.prototype.setScheduledRepeat()
@@ -209,9 +216,9 @@ message.setScheduledRepeat(6); // integer
 
 Sets the amount of time in milliseconds for which the message can live in the message queue.
 
-Consumer message TTL, if has been set, which applies to all queue messages takes priority over message TTL.
+Consumer message TTL takes priority over message TTL of a delivered message.
 
-Time to live is no set by default. 
+Time-to-live is no set by default.
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -324,7 +331,7 @@ message.getMessageScheduledCRON(); // '*/10 * * * * *'
 
 ### Message.prototype.isDelayed()
 
-Check is the message has been delayed. 
+Check if the message has been delayed.
 
 A message is delayed when it has been for some time in the scheduler queue and then removed and enqueued for delivery.
 
@@ -351,7 +358,7 @@ message.getProperty(Message.PROPERTY_CREATED_AT); // 1530613595087
 
 ### Message.prototype.toString()
 
-`toString()` method that is called when the message object is to be represented as a text value or when the message 
+`toString()` method is called when the message object is to be represented as a text value or when the message
 is referred to in a manner in which a string is expected.
 
 This method converts convert the message object to a JSON string.

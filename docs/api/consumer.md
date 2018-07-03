@@ -1,23 +1,19 @@
-# Consumer API
+# Consumer Class API
 
 ## Properties
+
+### Consumer.prototype.id
+
+The universally unique identifier of the consumer instance.
 
 ### Consumer.queueName
 
 The name of the queue to consume messages from. The queue name can be composed only of letters (a-z), numbers (0-9) 
 and (-_) characters.
 
-### Consumer.prototype.id
-
-The universally unique identifier of the consumer.
-
-### Consumer.prototype.isTest
-
-Whether or not the consumer is running in the test environment (when running tests).
-
 ### Consumer.prototype.config
 
-The actual config object supplied to consumer upon construction.
+The actual config object supplied to consumer class upon construction.
 
 See [Consumer.prototype.constructor](#consumerprototypeconstructor).
 
@@ -45,6 +41,10 @@ The number of times the message can be enqueued and delivered again. By default 
 
 See [Consumer.prototype.constructor](#consumerprototypeconstructor).
 
+### Consumer.prototype.isTest
+
+Whether or not the consumer is running in the test environment (when running tests).
+
 ## Methods
 
 ### Consumer.prototype.constructor()
@@ -61,22 +61,21 @@ Consumer([config[, options]])
 
 - `options` *(object): Optional.* Consumer configuration parameters.
 
-- `options.messageConsumeTimeout` *(Integer): Optional.* . Also called job timeout, is the amount of time in 
-  milliseconds before a consumer consuming a message times out. 
-  If the consumer does not consume the message within the set time limit, the message consumption is automatically 
-  anceled and the message is re-queued to be consumed again. By default message consumption timeout is not set.
+- `options.messageConsumeTimeout` *(Integer): Optional.* Also called job timeout, is the amount of time in
+  milliseconds before a consumer consuming a message times out. If the consumer does not consume the message
+  within the set time limit, the message consumption is automatically canceled and the message is re-queued
+  to be consumed again. By default message consumption timeout is not set.
   
 - `options.messageTTL` *(Integer): Optional.* All queue messages are guaranteed to not be consumed and destroyed if 
-  they have been in the queue for longer than an amount of time called TTL (time-to-live) in milliseconds. 
-  When message TTL is set per consumer it applies to all queue messages and overrides the message ttl of a given 
-  message.
+  they have been in the queue for longer than an amount of time called TTL (time-to-live) in milliseconds. When provided
+  consumer message ttl takes priority over message ttl of delivered messages.
   
 - `options.messageRetryThreshold` *(Integer): Optional.* Message retry threshold. By default message retry threshold 
   is set to 3.
 
 ### Consumer.prototype.run()
 
-Run the consumer and start consuming messages. No connection to the Redis server is opened before called this method.
+Run the consumer and start consuming messages. No connection to the Redis server is opened before this method is called.
 
 ```javascript
 const consumer = new TestQueueConsumer();
@@ -85,7 +84,7 @@ consumer.run();
 
 ### Consumer.prototype.consume()
 
-Each consumer class is required override the `consume()` method of the base consumer. `consume()` method is called 
+Each consumer class is required override the `consume()` method of the base consumer which get called
 each time a message received.
 
 **Syntax**
@@ -97,8 +96,8 @@ consumer.consume(message, cb);
 
 - `message` *(mixed): Required.* Actual message body published by the producer
 
-- `cb(err)` *(function): Required.* Callback function. When called with an error argument the message is 
-    unacknowledged. Otherwise (if called without arguments) the message is acknowledged.
+- `cb(err)` *(function): Required.* Callback function. When called with the error argument the message is
+    unacknowledged. Otherwise (when called without arguments) the message is acknowledged.
 
 ```javascript
 class TestQueueConsumer extends Consumer {
