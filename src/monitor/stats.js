@@ -28,7 +28,7 @@ function stats(config) {
                 else cb();
             });
         } else {
-            client.set(rKeys.keyStatsFrontendLock, 1, 'EX', 10, 'NX', (err, success) => {
+            client.setnx(rKeys.keyStatsFrontendLock, 1, (err, success) => {
                 if (err) cb(err);
                 else {
                     lockAcquired = !!success;
@@ -40,6 +40,7 @@ function stats(config) {
                     }
                 }
             });
+            client.expire(rKeys.keyStatsFrontendLock, 10)
         }
     }
 
