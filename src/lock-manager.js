@@ -60,7 +60,8 @@ module.exports = (dispatcher, lockKey, tmpLockKey, retryPeriod = 2000) => {
             else if (success) redisClient.set(lockKey, instanceId, onGCLock);
             else acquireLockRetry(cb);
         };
-        redisClient.set(tmpLockKey, instanceId, 'NX', 'EX', 60, onGCTmpLock);
+        redisClient.setnx(tmpLockKey, instanceId, onGCTmpLock);
+        redisClient.expire(tmpLockKey, 60)
     }
 
     /**
