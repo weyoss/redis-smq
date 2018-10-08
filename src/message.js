@@ -68,7 +68,7 @@ class Message {
      * @return {Message}
      */
     setScheduledRepeat(repeat) {
-        this[Message.PROPERTY_SCHEDULED_REPEAT] = repeat;
+        this[Message.PROPERTY_SCHEDULED_REPEAT] = Number(repeat);
         return this;
     }
 
@@ -78,7 +78,37 @@ class Message {
      * @return {Message}
      */
     setTTL(ttl) {
-        this[Message.PROPERTY_TTL] = ttl;
+        this[Message.PROPERTY_TTL] = Number(ttl);
+        return this;
+    }
+
+    /**
+     *
+     * @param timeout
+     * @return {Message}
+     */
+    setConsumeTimeout(timeout) {
+        this[Message.PROPERTY_CONSUME_TIMEOUT] = Number(timeout);
+        return this;
+    }
+
+    /**
+     *
+     * @param threshold
+     * @return {Message}
+     */
+    setRetryThreshold(threshold) {
+        this[Message.PROPERTY_RETRY_THRESHOLD] = Number(threshold);
+        return this;
+    }
+
+    /**
+     *
+     * @param delay
+     * @return {Message}
+     */
+    setRetryDelay(delay) {
+        this[Message.PROPERTY_RETRY_DELAY] = Number(delay);
         return this;
     }
 
@@ -114,6 +144,30 @@ class Message {
      */
     getTTL() {
         return this[Message.PROPERTY_TTL];
+    }
+
+    /**
+     *
+     * @return {number|null}
+     */
+    getRetryThreshold() {
+        return this[Message.PROPERTY_RETRY_THRESHOLD];
+    }
+
+    /**
+     *
+     * @return {number|null}
+     */
+    getRetryDelay() {
+        return this[Message.PROPERTY_RETRY_DELAY];
+    }
+
+    /**
+     *
+     * @return {number|null}
+     */
+    getConsumeTimeout() {
+        return this[Message.PROPERTY_CONSUME_TIMEOUT];
     }
 
     /**
@@ -210,9 +264,27 @@ Message.createFromMessage = (message) => {
 
 /**
  *
- * @type {string}
+ * @type {number}
  */
 Message.PROPERTY_TTL = 'ttl';
+
+/**
+ *
+ * @type {number}
+ */
+Message.PROPERTY_RETRY_THRESHOLD = 'retryThreshold';
+
+/**
+ *
+ * @type {number}
+ */
+Message.PROPERTY_RETRY_DELAY = 'retryDelay';
+
+/**
+ *
+ * @type {number}
+ */
+Message.PROPERTY_CONSUME_TIMEOUT = 'consumeTimeout';
 
 /**
  *
