@@ -31,6 +31,7 @@ const events = {
     MESSAGE_CONSUME_TIMEOUT: 'message.consume_timeout',
     MESSAGE_EXPIRED: 'message.expired',
     MESSAGE_REQUEUED: 'message.requeued',
+    MESSAGE_DELAYED: 'message.delayed',
     MESSAGE_DEAD_LETTER: 'message.moved_to_dlq',
     MESSAGE_DESTROYED: 'message.destroyed',
     HEARTBEAT_HALT: 'heartbeat.halt',
@@ -70,6 +71,8 @@ module.exports = () => {
     let consumerMessageTTL = 0;
 
     let messageRetryThreshold = 3;
+
+    let messageRetryDelay = 0;
 
     let state = states.DOWN;
 
@@ -315,6 +318,11 @@ module.exports = () => {
                 instance.messageRetryThreshold = messageRetryThreshold;
             }
 
+            if (options.hasOwnProperty('messageRetryDelay')) {
+                messageRetryDelay = Number(options.messageRetryDelay);
+                instance.messageRetryDelay = messageRetryDelay;
+            }
+
             setupCommon(this);
             setupConsumerEvents(this);
             setupConsumerHeartBeat(this);
@@ -410,8 +418,18 @@ module.exports = () => {
          * @param cb
          */
         produce(msg, cb) {
-            if (scheduler.isScheduled(msg)) scheduler.schedule(msg, cb);
+            if (scheduler.isScheduled(msg)) scheduler.schedule(msg, null, cb);
             else this.enqueue(msg, null, cb);
+        },
+
+        /**
+         *
+         * @param msg
+         * @param multi
+         * @param cb
+         */
+        schedule(msg, multi, cb) {
+            return scheduler.schedule(msg, multi, cb);
         },
 
         /**
@@ -524,6 +542,10 @@ module.exports = () => {
 
         getMessageRetryThreshold() {
             return messageRetryThreshold;
+        },
+
+        getMessageRetryDelay() {
+            return messageRetryDelay;
         },
 
         getQueueName() {

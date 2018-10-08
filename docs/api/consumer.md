@@ -41,6 +41,13 @@ The number of times the message can be enqueued and delivered again. By default 
 
 See [Consumer.prototype.constructor](#consumerprototypeconstructor).
 
+### Consumer.prototype.messageRetryDelay
+
+The amount of time in seconds to wait for before re-queuing a failed message. By default message retry delay is 
+not set.
+
+See [Consumer.prototype.constructor](#consumerprototypeconstructor).
+
 ### Consumer.prototype.isTest
 
 Whether or not the consumer is running in the test environment (when running tests).
@@ -72,6 +79,9 @@ Consumer([config[, options]])
   
 - `options.messageRetryThreshold` *(Integer): Optional.* Message retry threshold. By default message retry threshold 
   is set to 3.
+  
+- `options.messageRetryDelay` *(Integer): Optional.* Message retry delay in seconds. By default message retry delay is 
+not set.
 
 ### Consumer.prototype.run()
 

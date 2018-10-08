@@ -21,6 +21,8 @@ function garbageCollector(dispatcher) {
     const keys = dispatcher.getKeys();
     const { keyQueueName, keyQueueNameDead, keyGCLock, keyGCLockTmp } = keys;
     const messageRetryThreshold = dispatcher.getMessageRetryThreshold();
+    const messageRetryDelay = dispatcher.getMessageRetryDelay();
+
     const logger = dispatcher.getLogger();
     const lockManager = lockManagerFn(dispatcher, keyGCLock, keyGCLockTmp);
 
@@ -146,6 +148,9 @@ function garbageCollector(dispatcher) {
      */
     function collectMessage(message, processingQueue, cb) {
         let destQueueName = null;
+        let delayed = false;
+        let requeued = false;
+        const multi = client.multi();
 
         /**
          * Only exceptions from non periodic messages are handled.
@@ -163,25 +168,37 @@ function garbageCollector(dispatcher) {
              *
              */
             if (attempts < messageRetryThreshold) {
-                debug(`Re-queuing message (ID [${uuid}], attempts [${attempts}])...`);
-                destQueueName = keyQueueName;
+                debug(`Trying to consume message ID [${uuid}] again (attempts: [${attempts}]) ...`);
+                if (messageRetryDelay) {
+                    debug(`Scheduling message ID [${uuid}]  (delay: [${messageRetryDelay}])...`);
+                    message.setScheduledDelay(messageRetryDelay);
+                    dispatcher.schedule(message, multi);
+                    delayed = true;
+                } else {
+                    debug(`Message ID [${uuid}] is going to be enqueued immediately...`);
+                    destQueueName = keyQueueName;
+                    requeued = true;
+                }
             } else {
-                debug(`Moving message (ID [${uuid}] to dead-letter queue...`);
+                debug(`Message ID [${uuid}] has exceeded max retry threshold...`);
                 destQueueName = keyQueueNameDead;
             }
 
             /**
              *
              */
-            const multi = client.multi();
-            multi.lpush(destQueueName, message.toString());
+            if (destQueueName) {
+                debug(`Moving message [${uuid}] to queue [${destQueueName}]...`);
+                multi.lpush(destQueueName, message.toString());
+            }
             multi.rpop(processingQueue);
             multi.exec((err) => {
                 if (err) cb(err);
                 else {
                     if (dispatcher.isTest()) {
-                        if (destQueueName === keyQueueNameDead) dispatcher.emit(events.MESSAGE_DEAD_LETTER, message);
-                        else dispatcher.emit(events.MESSAGE_REQUEUED, message);
+                        if (requeued) dispatcher.emit(events.MESSAGE_REQUEUED, message);
+                        else if (delayed) dispatcher.emit(events.MESSAGE_DELAYED, message);
+                        else dispatcher.emit(events.MESSAGE_DEAD_LETTER, message);
                     }
                     cb();
                 }

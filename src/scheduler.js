@@ -156,11 +156,12 @@ function scheduler(dispatcher, tickPeriod = 1000) {
         /**
          *
          * @param message
+         * @param multi
          * @param cb
          */
-        schedule(message, cb) {
+        schedule(message, multi, cb) {
             const timestamp = getNextScheduledTimestamp(message);
-            scheduleMessage(message, timestamp, null, cb);
+            scheduleMessage(message, timestamp, multi, cb);
         },
 
         start() {
