@@ -460,21 +460,23 @@ module.exports = () => {
             state = states.CONSUMING_MESSAGE;
             let isTimeout = false;
             let timer = null;
-            loggerInstance.info(`Processing message [${msg.getProperty(Message.PROPERTY_UUID)}]...`);
+            const timeout = msg.getConsumeTimeout();
+            const consumeTimeout = typeof timeout === 'number' ? timeout : consumerMessageConsumeTimeout;
+            loggerInstance.info(`Processing message [${msg.getId()}]...`);
             try {
-                if (consumerMessageConsumeTimeout) {
+                if (consumeTimeout) {
                     timer = setTimeout(() => {
                         isTimeout = true;
                         timer = null;
                         instance.emit(events.MESSAGE_CONSUME_TIMEOUT, msg);
-                    }, consumerMessageConsumeTimeout);
+                    }, consumeTimeout);
                 }
                 const onDeleted = (err) => {
                     if (err) handleError(events.ERROR, err);
                     else {
                         if (stats) stats.incrementAcknowledgedSlot();
                         loggerInstance.info(
-                            `Message [${msg.getProperty(Message.PROPERTY_UUID)}] successfully processed`);
+                            `Message [${msg.getId()}] successfully processed`);
                         instance.emit(events.MESSAGE_ACKNOWLEDGED, msg);
                     }
                 };

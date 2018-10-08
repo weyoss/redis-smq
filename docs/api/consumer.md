@@ -1,5 +1,12 @@
 # Consumer Class API
 
+Consumer properties like `messageConsumeTimeout`, `messageTTL`,
+`messageRetryThreshold` and `messageRetryDelay` can also be defined
+for a given message instance.
+
+When defined, message instance properties always takes precedence over
+consumer properties (options).
+
 ## Properties
 
 ### Consumer.prototype.id
@@ -74,11 +81,10 @@ Consumer([config[, options]])
   to be consumed again. By default message consumption timeout is not set.
   
 - `options.messageTTL` *(Integer): Optional.* All queue messages are guaranteed to not be consumed and destroyed if 
-  they have been in the queue for longer than an amount of time called TTL (time-to-live) in milliseconds. When provided
-  consumer message ttl takes priority over message ttl of delivered messages.
+  they have been in the queue for longer than an amount of time called TTL (time-to-live) in milliseconds.
   
-- `options.messageRetryThreshold` *(Integer): Optional.* Message retry threshold. By default message retry threshold 
-  is set to 3.
+- `options.messageRetryThreshold` *(Integer): Optional.* Message retry threshold.
+   Can be defined per message instance or per consumer. By default message retry threshold is set to 3.
   
 - `options.messageRetryDelay` *(Integer): Optional.* Message retry delay in seconds. By default message retry delay is 
 not set.

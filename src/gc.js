@@ -20,8 +20,6 @@ function garbageCollector(dispatcher) {
     const events = dispatcher.getEvents();
     const keys = dispatcher.getKeys();
     const { keyQueueName, keyQueueNameDead, keyGCLock, keyGCLockTmp } = keys;
-    const messageRetryThreshold = dispatcher.getMessageRetryThreshold();
-    const messageRetryDelay = dispatcher.getMessageRetryDelay();
 
     const logger = dispatcher.getLogger();
     const lockManager = lockManagerFn(dispatcher, keyGCLock, keyGCLockTmp);
@@ -147,9 +145,16 @@ function garbageCollector(dispatcher) {
      * @param {function} cb
      */
     function collectMessage(message, processingQueue, cb) {
+        const threshold = message.getRetryThreshold();
+        const messageRetryThreshold = typeof threshold === 'number' ? threshold : dispatcher.getMessageRetryThreshold();
+
+        const delay = message.getRetryDelay();
+        const messageRetryDelay = typeof delay === 'number' ? delay : dispatcher.getMessageRetryDelay();
+
         let destQueueName = null;
         let delayed = false;
         let requeued = false;
+
         const multi = client.multi();
 
         /**
@@ -233,16 +238,14 @@ function garbageCollector(dispatcher) {
      * @returns {boolean}
      */
     function hasExpired(message) {
-        let expired = false;
         const ttl = message.getTTL();
-        const consumerMessageTTL = dispatcher.getConsumerMessageTTL();
-        if (ttl || consumerMessageTTL) {
+        const messageTTL = typeof ttl === 'number' ? ttl : dispatcher.getConsumerMessageTTL();
+        if (messageTTL) {
             const curTime = new Date().getTime();
             const createdAt = message.getCreatedAt();
-            expired = (ttl && ((createdAt + ttl) - curTime) <= 0) ||
-                (consumerMessageTTL && ((createdAt + consumerMessageTTL) - curTime) <= 0);
+            return (((createdAt + messageTTL) - curTime) <= 0);
         }
-        return expired;
+        return false;
     }
 
 

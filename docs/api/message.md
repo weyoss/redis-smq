@@ -1,10 +1,17 @@
 # Message Class API
 
+Message properties like `PROPERTY_TTL`, `PROPERTY_RETRY_THRESHOLD`,
+`PROPERTY_RETRY_DELAY` and `PROPERTY_CONSUME_TIMEOUT` can also be
+defined globally per consumer for all queue messages.
+
+When defined, message instance properties always takes precedence over
+consumer properties.
+
 ## Properties
 
 ### Message.PROPERTY_TTL;
 
-Represents the message TTL property.
+Message instance TTL property.
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -14,9 +21,45 @@ message.getTTL(); // the same as
 message.getProperty(Message.PROPERTY_TTL);
 ```
 
+### Message.PROPERTY_RETRY_THRESHOLD;
+
+Message instance retry threshold property.
+
+```javascript
+const { Message } = require('redis-smq');
+
+const message = new Message();
+message.getRetryThreshold(); // the same as
+message.getProperty(Message.PROPERTY_RETRY_TRESHOLD);
+```
+
+### Message.PROPERTY_RETRY_DELAY;
+
+Message instance retry delay property.
+
+```javascript
+const { Message } = require('redis-smq');
+
+const message = new Message();
+message.getRetryDelay(); // the same as
+message.getProperty(Message.PROPERTY_RETRY_DELAY);
+```
+
+### Message.PROPERTY_CONSUME_TIMEOUT;
+
+Message instance consumption timeout property.
+
+```javascript
+const { Message } = require('redis-smq');
+
+const message = new Message();
+message.getConsumeTimeout(); // the same as
+message.getProperty(Message.PROPERTY_CONSUME_TIMEOUT);
+```
+
 ### Message.PROPERTY_BODY;
 
-Represents the message body property.
+Message instance body property.
 
 
 ```javascript
@@ -29,7 +72,7 @@ message.getProperty(Message.PROPERTY_BODY);
 
 ### Message.PROPERTY_UUID;
 
-Represents the message ID property.
+Message instance ID property.
 
 
 ```javascript
@@ -42,7 +85,7 @@ message.getProperty(Message.PROPERTY_UUID);
 
 ### Message.PROPERTY_ATTEMPTS;
 
-Represents the message attempts property.
+Message instance attempts property.
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -54,7 +97,7 @@ message.getProperty(Message.PROPERTY_ATTEMPTS);
 
 ### Message.PROPERTY_CREATED_AT;
 
-Represents the message creation timestamp property.
+Message instance creation timestamp property.
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -66,7 +109,7 @@ message.getProperty(Message.PROPERTY_CREATED_AT);
 
 ### Message.PROPERTY_SCHEDULED_CRON;
 
-Represents the message scheduled CRON property.
+Message instance scheduled CRON property.
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -78,7 +121,7 @@ message.getProperty(Message.PROPERTY_SCHEDULED_CRON);
 
 ### Message.PROPERTY_SCHEDULED_DELAY;
 
-Represents the message scheduled delay property.
+Message instance scheduled delay property.
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -90,7 +133,7 @@ message.getProperty(Message.PROPERTY_SCHEDULED_DELAY);
 
 ### Message.PROPERTY_SCHEDULED_PERIOD;
 
-Represents the message scheduled period property.
+Message instance scheduled period property.
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -102,7 +145,7 @@ message.getProperty(Message.PROPERTY_SCHEDULED_PERIOD);
 
 ### Message.PROPERTY_SCHEDULED_REPEAT;
 
-Represents the message scheduled repeat property.
+Message instance scheduled repeat property.
 
 
 ```javascript
@@ -115,7 +158,7 @@ message.getProperty(Message.PROPERTY_SCHEDULED_REPEAT);
 
 ### Message.PROPERTY_SCHEDULED_REPEAT_COUNT;
 
-Represents the message scheduled repeat count property.
+Message instance scheduled repeat count property.
 
 
 ```javascript
@@ -128,7 +171,7 @@ message.getProperty(Message.PROPERTY_SCHEDULED_REPEAT_COUNT);
 
 ### Message.PROPERTY_DELAYED;
 
-Represents the message delayed property. `true` when the message has been delayed, otherwise `false`.
+Message instance delayed property. `true` when the message has been delayed, otherwise `false`.
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -142,7 +185,7 @@ message.getProperty(Message.PROPERTY_DELAYED);
 
 ### Message.createFromMessage()
 
-This method is used to created a new message based an existing message instance but with a new ID.
+This method is used to created a new message instance based on an existing message instance but with a new ID.
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -214,11 +257,7 @@ message.setScheduledRepeat(6); // integer
 
 ### Message.prototype.setTTL()
 
-Sets the amount of time in milliseconds for which the message can live in the message queue.
-
-Consumer message TTL takes priority over message TTL of a delivered message.
-
-Time-to-live is no set by default.
+Set the amount of time in milliseconds for which the message can live in the message queue.
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -227,9 +266,42 @@ const message = new Message();
 message.setTTL(3600000); // in milliseconds
 ```
 
+### Message.prototype.setRetryThreshold()
+
+Set the number of times the message can be re-queued after failure.
+
+```javascript
+const { Message } = require('redis-smq');
+
+const message = new Message();
+message.setRetryThreshold(10);
+```
+
+### Message.prototype.setRetryDelay()
+
+Set the amount of time in seconds to wait for before re-queuing a failed message.
+
+```javascript
+const { Message } = require('redis-smq');
+
+const message = new Message();
+message.setRetryDelay(60); // 1 minute
+```
+
+### Message.prototype.setConsumeTimeout()
+
+Set the amount of time, in milliseconds, for consuming a message.
+
+```javascript
+const { Message } = require('redis-smq');
+
+const message = new Message();
+message.setConsumeTimeout(30000); // 30 seconds
+```
+
 ### Message.prototype.setBody()
 
-Set the message's body property which contains the payload/data associated with the message.
+Set message body property which contains the payload/data associated with the message.
 
 The message body type can be of any supported JavaScript type.
 
@@ -245,7 +317,7 @@ message.setBody('hello world');
 
 ### Message.prototype.getBody()
 
-Get the message body.
+Get message body.
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -257,7 +329,7 @@ message.getBody(); // 123
 
 ### Message.prototype.getId()
 
-Get the message ID.
+Get message ID.
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -268,7 +340,7 @@ message.getId(); // c53d1766-0e56-4362-8aab-ef70c4eb03ad
 
 ### Message.prototype.getTTL()
 
-Get the message TTL.
+Get message TTL.
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -280,10 +352,52 @@ message.setTTL(6000);
 message.getTTL(); // 6000
 ````
 
+### Message.prototype.getRetryThreshold()
+
+Get message retry threshold.
+
+```javascript
+const { Message } = require('redis-smq');
+
+const message = new Message();
+message.getRetryThreshold(); // null
+
+message.setRetryThreshold(10);
+message.getRetryThreshold(); // 10
+```
+
+### Message.prototype.getRetryDelay()
+
+Get message retry delay.
+
+```javascript
+const { Message } = require('redis-smq');
+
+const message = new Message();
+message.getRetryDelay(); // null
+
+message.setRetryDelay(60);
+message.getRetryDelay(); // 60
+```
+
+### Message.prototype.getConsumeTimeout()
+
+Get message consumption timeout.
+
+```javascript
+const { Message } = require('redis-smq');
+
+const message = new Message();
+message.getConsumeTimeout(); // null
+
+message.setConsumeTimeout(30000);
+message.getConsumeTimeout(); // 30000
+```
+
 
 ### Message.prototype.getCreatedAt()
 
-Get the message creation timestamp.
+Get message creation timestamp.
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -294,7 +408,7 @@ message.getCreatedAt(); // 1530613595087 (in milliseconds)
 
 ### Message.prototype.getMessageScheduledRepeat()
 
-Get the message scheduled repeat.
+Get message scheduled repeat.
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -306,7 +420,7 @@ message.getMessageScheduledRepeat(); // 6
 
 ### Message.prototype.getMessageScheduledPeriod()
 
-Get the message scheduled period.
+Get message scheduled period.
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -319,7 +433,7 @@ message.getMessageScheduledPeriod(); // 1
 
 ### Message.prototype.getMessageScheduledCRON()
 
-Get the message scheduled CRON entry.
+Get message scheduled CRON entry.
 
 ```javascript
 const { Message } = require('redis-smq');
