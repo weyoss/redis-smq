@@ -7,7 +7,7 @@ const sinonChai = require('sinon-chai');
 const expect = chai.expect;
 chai.use(sinonChai);
 
-describe('Test 4: A message produced with TTL is not consumed and get destroyed when TTL exceeds', function() {
+describe('Test 4: Produce a message having messageTTL, and sure the message is not consumed and destroyed when messageTTL exceeds', function() {
 
     it('is OK', function (done) {
         this.timeout(20000);

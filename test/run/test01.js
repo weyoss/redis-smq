@@ -7,7 +7,7 @@ const sinonChai = require('sinon-chai');
 const expect = chai.expect;
 chai.use(sinonChai);
 
-describe('Test 1: A consumer does not a consume a message when no messages are produced', function() {
+describe('Test 1: A consumer is idle given no messages are produced', function() {
 
     it('is OK', function (done) {
         this.timeout(20000);

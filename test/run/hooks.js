@@ -37,6 +37,12 @@ before(function (done) {
     done();
 });
 
+after(function (done) {
+    this.sandbox.producer.shutdown();
+    client.end(true);
+    done();
+});
+
 beforeEach(function (done) {
     this.sandbox.restore();
     this.sandbox.getConsumer = getConsumer;

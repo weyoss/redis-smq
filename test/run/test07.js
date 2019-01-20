@@ -7,7 +7,7 @@ const sinonChai = require('sinon-chai');
 const expect = chai.expect;
 chai.use(sinonChai);
 
-describe('Test 7: A consumer re-queues and consumes again failed message when threshold not reached', function() {
+describe('Test 7: A consumer re-queues and consumes again a failed message when threshold not exceeded', function() {
 
     it('is OK', function (done) {
         this.timeout(20000);

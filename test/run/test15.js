@@ -7,7 +7,7 @@ const sinonChai = require('sinon-chai');
 const expect = chai.expect;
 chai.use(sinonChai);
 
-describe('Test 15: A consumer waits for rety delay before consuming again a failed message when threshold not reached', function() {
+describe('Test 15: A consumer delays a failed message before re-queuing it again, given messageRetryThreshold is not exceeded', function() {
 
     it('is OK', function (done) {
         this.timeout(20000);
