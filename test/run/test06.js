@@ -7,7 +7,7 @@ const sinonChai = require('sinon-chai');
 const expect = chai.expect;
 chai.use(sinonChai);
 
-describe('Test 6: A consumer does time out after consume timeout exceeds and requeue the message to be consumed again', function() {
+describe('Test 6: When consuming a mesage, a consumer does time out after messageConsumeTimeout exceeds and re-queues the message to be consumed again', function() {
 
     it('is OK', function (done) {
         this.timeout(20000);

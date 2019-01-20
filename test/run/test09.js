@@ -7,7 +7,7 @@ const sinonChai = require('sinon-chai');
 const expect = chai.expect;
 chai.use(sinonChai);
 
-describe('Test 9: A consumer re-queues a failed message when threshold not reached and moves it to dead queue when threshold reached', function() {
+describe('Test 9: A consumer re-queues a failed message when threshold is not exceeded, otherwise it moves the message to DLQ (dead letter queue)', function() {
 
     it('is OK', function (done) {
         this.timeout(20000);

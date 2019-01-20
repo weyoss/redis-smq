@@ -7,7 +7,7 @@ const sinonChai = require('sinon-chai');
 const expect = chai.expect;
 chai.use(sinonChai);
 
-describe('Test 5: A consumer with message TTL does not consume a message being in the queue for longer than TTL', function() {
+describe('Test 5: Construct a consumer with messageTTL parameter and make sure it does not consume a message when messageTTL is exceeded', function() {
 
     it('is OK', function (done) {
         this.timeout(20000);

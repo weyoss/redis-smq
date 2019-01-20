@@ -8,7 +8,7 @@ const Message = require('../../index').Message;
 const expect = chai.expect;
 chai.use(sinonChai);
 
-describe('Test 13: Produce and consume a delayed message with repeat and period', function() {
+describe('Test 13: Produce and consume a delayed message with scheduledRepeat and scheduledPeriod parameters', function() {
 
     it('Case 1: is OK', function (done) {
         this.timeout(60000);
