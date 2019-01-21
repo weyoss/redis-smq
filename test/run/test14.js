@@ -12,7 +12,7 @@ describe('Test 14: Produce and consume a delayed message with scheduledCRON/sche
 
     it('Case 1: is OK', function (done) {
         this.timeout(60000);
-        const producer = this.sandbox.producer;
+        const producer = this.sandbox.getProducer();
         const consumer = this.sandbox.getConsumer();
         let createdAt = null;
         let callCount = 0;
@@ -55,7 +55,7 @@ describe('Test 14: Produce and consume a delayed message with scheduledCRON/sche
 
     it('Case 2: is OK', function (done) {
         this.timeout(60000);
-        const producer = this.sandbox.producer;
+        const producer = this.sandbox.getProducer();
         const consumer = this.sandbox.getConsumer();
         let createdAt = null;
         let callCount = 0;
@@ -94,7 +94,7 @@ describe('Test 14: Produce and consume a delayed message with scheduledCRON/sche
 
     it('Case 3: is OK', function (done) {
         this.timeout(60000);
-        const producer = this.sandbox.producer;
+        const producer = this.sandbox.getProducer();
         const consumer = this.sandbox.getConsumer();
         let createdAt = null;
         let callCount = 0;
@@ -140,7 +140,7 @@ describe('Test 14: Produce and consume a delayed message with scheduledCRON/sche
 
     it('Case 4: is OK', function (done) {
         this.timeout(160000);
-        const producer = this.sandbox.producer;
+        const producer = this.sandbox.getProducer();
         const consumer = this.sandbox.getConsumer();
         let createdAt = null;
         let callCount = 0;

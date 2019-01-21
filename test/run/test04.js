@@ -7,11 +7,11 @@ const sinonChai = require('sinon-chai');
 const expect = chai.expect;
 chai.use(sinonChai);
 
-describe('Test 4: Produce a message having messageTTL, and sure the message is not consumed and destroyed when messageTTL exceeds', function() {
+describe('Test 4: Produce a message having messageTTL and sure the message is not consumed and destroyed when messageTTL exceeds', function() {
 
     it('is OK', function (done) {
         this.timeout(20000);
-        const producer = this.sandbox.producer;
+        const producer = this.sandbox.getProducer();
         const consumer = this.sandbox.getConsumer();
         const consume = this.sandbox.spy(consumer, 'consume');
 

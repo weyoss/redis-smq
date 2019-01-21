@@ -12,7 +12,7 @@ describe('Test 12: Produce and consume a delayed message', function() {
 
     it('is OK', function (done) {
         this.timeout(20000);
-        const producer = this.sandbox.producer;
+        const producer = this.sandbox.getProducer();
         const consumer = this.sandbox.getConsumer();
         let createdAt = null;
         let consumedAt = null;
