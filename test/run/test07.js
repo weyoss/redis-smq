@@ -11,7 +11,7 @@ describe('Test 7: A consumer re-queues and consumes again failed message when th
 
     it('is OK', function (done) {
         this.timeout(20000);
-        const producer = this.sandbox.producer;
+        const producer = this.sandbox.getProducer();
         const consumer = this.sandbox.getConsumer();
 
         let callCount = 0;

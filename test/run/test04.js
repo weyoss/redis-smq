@@ -11,7 +11,7 @@ describe('Test 4: A message produced with TTL is not consumed and get destroyed 
 
     it('is OK', function (done) {
         this.timeout(20000);
-        const producer = this.sandbox.producer;
+        const producer = this.sandbox.getProducer();
         const consumer = this.sandbox.getConsumer();
         const consume = this.sandbox.spy(consumer, 'consume');
 

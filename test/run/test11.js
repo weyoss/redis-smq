@@ -11,7 +11,7 @@ describe('Test 11: A message is delivered only once to one consumer', function()
 
     it('is OK', function (done) {
         this.timeout(20000);
-        const producer = this.sandbox.producer;
+        const producer = this.sandbox.getProducer();
 
         // First consumer
 
