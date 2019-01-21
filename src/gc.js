@@ -19,7 +19,7 @@ function garbageCollector(dispatcher) {
     const config = dispatcher.getConfig();
     const events = dispatcher.getEvents();
     const keys = dispatcher.getKeys();
-    const { keyQueueName, keyQueueNameDead, keyGCLock, keyGCLockTmp } = keys;
+    const { keyQueueName, keyQueueNameProcessingCommon, keyQueueNameDead, keyGCLock, keyGCLockTmp } = keys;
 
     const logger = dispatcher.getLogger();
     const lockManager = lockManagerFn(dispatcher, keyGCLock, keyGCLockTmp);
@@ -122,7 +122,7 @@ function garbageCollector(dispatcher) {
             if (err) dispatcher.error(err);
             else {
                 debug('Inspecting processing queues...');
-                util.getProcessingQueues(client, (e, result) => {
+                util.getProcessingQueuesOf(client, keyQueueNameProcessingCommon, (e, result) => {
                     if (e) dispatcher.error(e);
                     else if (result && result.length) {
                         debug(`Found [${result.length}] processing queues`);

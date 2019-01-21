@@ -4,48 +4,65 @@ const sinon = require('sinon');
 const config = require('../common/config');
 const redisSMQ = require('../../index');
 const redisClient = require('./../../src/redis-client');
-const TestQueueConsumer = require('./../common/consumers/test-queue-consumer');
 
+const Consumer = redisSMQ.Consumer;
 const Producer = redisSMQ.Producer;
-const producer = new Producer('test_queue', config);
+
 const client = redisClient.getNewInstance(config);
 const consumersList = [];
+const producersList = [];
 
-function cleanConsumers(cb) {
-    if (consumersList.length) {
-        let consumer = consumersList.pop();
+function clean(set, cb) {
+    if (set.length) {
+        let item = set.pop();
         const onStopped = () => {
-            consumer = null;
-            cleanConsumers(cb);
+            item = null;
+            clean(set, cb);
         };
-        if (consumer.isRunning()) {
-            consumer.on('halt', onStopped);
-            consumer.stop();
-        } else onStopped();
+        if (item.stop) {
+            if (item.isRunning()) {
+                item.on('halt', onStopped);
+                item.stop();
+            } else onStopped();
+        } else {
+            item.shutdown();
+            onStopped();
+        }
     } else cb();
 }
 
-function getConsumer(options) {
-    const consumer = new TestQueueConsumer(config, options);
+function getConsumer(queueName = 'test_queue', options = {}) {
+    const TemplateClass = class extends Consumer {
+        consume(message, cb) {
+            cb();
+        }
+    };
+    TemplateClass.queueName = queueName;
+    const consumer = new TemplateClass(config, options);
     consumersList.push(consumer);
     return consumer;
 }
 
+function getProducer(queueName = 'test_queue') {
+    const producer = new Producer(queueName, config);
+    producersList.push(producer);
+    return producer;
+}
+
 before(function (done) {
     this.sandbox = sinon.sandbox.create();
-    this.sandbox.producer = producer;
+    this.sandbox.getConsumer = getConsumer;
+    this.sandbox.getProducer = getProducer;
     done();
 });
 
 after(function (done) {
-    this.sandbox.producer.shutdown();
     client.end(true);
     done();
 });
 
 beforeEach(function (done) {
     this.sandbox.restore();
-    this.sandbox.getConsumer = getConsumer;
     client.flushall((err) => {
         if (err) throw err;
         done();
@@ -54,7 +71,7 @@ beforeEach(function (done) {
 
 afterEach(function (done) {
     this.timeout(40000);
-    cleanConsumers(() => {
-        done();
+    clean(consumersList, () => {
+        clean(producersList, done);
     });
 });

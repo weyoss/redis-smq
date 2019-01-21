@@ -11,7 +11,7 @@ describe('Test 10: A message is not lost in case of a consumer crash', function(
 
     it('is OK', function (done) {
         this.timeout(20000);
-        const producer = this.sandbox.producer;
+        const producer = this.sandbox.getProducer();
 
         /**
          * First consumer

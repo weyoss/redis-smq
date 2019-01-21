@@ -11,7 +11,7 @@ describe('Test 9: A consumer re-queues a failed message when threshold is not ex
 
     it('is OK', function (done) {
         this.timeout(20000);
-        const producer = this.sandbox.producer;
+        const producer = this.sandbox.getProducer();
         const consumer = this.sandbox.getConsumer();
         const consume = this.sandbox.stub(consumer, 'consume');
 

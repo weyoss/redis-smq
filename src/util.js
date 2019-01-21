@@ -1,6 +1,6 @@
 'use strict';
 
-const redisKeys = require('./redis-keys').getKeys();
+const redisKeys = require('./redis-keys');
 
 
 module.exports = {
@@ -11,30 +11,41 @@ module.exports = {
      * @param cb
      */
     rememberMessageQueue(redisClient, queueName, cb) {
-        redisClient.sadd(redisKeys.keyMessageQueuesIndex, queueName, cb);
+        const { keyMessageQueuesIndex } = redisKeys.getKeys();
+        redisClient.sadd(keyMessageQueuesIndex, queueName, cb);
     },
 
     /**
      *
      * @param redisClient
-     * @param queueName
+     * @param processingQueueName
      * @param cb
      */
-    rememberProcessingQueue(redisClient, queueName, cb) {
-        redisClient.sadd(redisKeys.keyProcessingQueuesIndex, queueName, cb);
-    },
-
-    /**
-     *
-     * @param redisClient
-     * @param queueName
-     * @param cb
-     */
-    purgeProcessingQueue(redisClient, queueName, cb) {
+    rememberProcessingQueue(redisClient, processingQueueName, cb) {
+        const { keyProcessingQueuesIndex } = redisKeys.getCommonKeys();
+        const { queueName, consumerId } = redisKeys.getKeySegments(processingQueueName);
+        const { keyQueueNameProcessingCommon } = redisKeys.getQueueKeys(queueName);
         const multi = redisClient.multi();
-        multi.srem(redisKeys.keyProcessingQueuesIndex, queueName);
-        multi.del(queueName);
-        multi.exec(err => cb);
+        multi.hset(keyQueueNameProcessingCommon, processingQueueName, consumerId);
+        multi.sadd(keyProcessingQueuesIndex, processingQueueName);
+        multi.exec(cb);
+    },
+
+    /**
+     *
+     * @param redisClient
+     * @param processingQueueName
+     * @param cb
+     */
+    purgeProcessingQueue(redisClient, processingQueueName, cb) {
+        const { keyProcessingQueuesIndex } = redisKeys.getCommonKeys();
+        const { queueName } = redisKeys.getKeySegments(processingQueueName);
+        const { keyQueueNameProcessingCommon } = redisKeys.getQueueKeys(queueName);
+        const multi = redisClient.multi();
+        multi.srem(keyProcessingQueuesIndex, processingQueueName);
+        multi.hdel(keyQueueNameProcessingCommon, processingQueueName);
+        multi.del(processingQueueName);
+        multi.exec(cb);
     },
 
     /**
@@ -44,7 +55,8 @@ module.exports = {
      * @param cb
      */
     rememberDLQueue(redisClient, queueName, cb) {
-        redisClient.sadd(redisKeys.keyDLQueuesIndex, queueName, cb);
+        const { keyDLQueuesIndex } = redisKeys.getKeys();
+        redisClient.sadd(keyDLQueuesIndex, queueName, cb);
     },
 
     /**
@@ -53,7 +65,8 @@ module.exports = {
      * @param cb
      */
     getMessageQueues(redisClient, cb) {
-        redisClient.smembers(redisKeys.keyMessageQueuesIndex, cb);
+        const { keyMessageQueuesIndex } = redisKeys.getKeys();
+        redisClient.smembers(keyMessageQueuesIndex, cb);
     },
 
     /**
@@ -62,7 +75,8 @@ module.exports = {
      * @param cb
      */
     getDLQueues(redisClient, cb) {
-        redisClient.smembers(redisKeys.keyDLQueuesIndex, cb);
+        const { keyDLQueuesIndex } = redisKeys.getKeys();
+        redisClient.smembers(keyDLQueuesIndex, cb);
     },
 
     /**
@@ -71,6 +85,18 @@ module.exports = {
      * @param cb
      */
     getProcessingQueues(redisClient, cb) {
-        redisClient.smembers(redisKeys.keyProcessingQueuesIndex, cb);
+        const { keyProcessingQueuesIndex } = redisKeys.getKeys();
+        redisClient.smembers(keyProcessingQueuesIndex, cb);
+    },
+
+    /**
+     *
+     * @param redisClient
+     * @param keyQueueNameProcessingCommon
+     * @param cb
+     * @return {*}
+     */
+    getProcessingQueuesOf(redisClient, keyQueueNameProcessingCommon, cb) {
+        redisClient.hkeys(keyQueueNameProcessingCommon, cb);
     },
 };

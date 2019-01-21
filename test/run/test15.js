@@ -9,10 +9,10 @@ chai.use(sinonChai);
 
 describe('Test 15: A consumer delays a failed message before re-queuing it again, given messageRetryThreshold is not exceeded', function() {
 
-    it('is OK', function (done) {
+    it('Case 1: is OK', function (done) {
         this.timeout(20000);
-        const producer = this.sandbox.producer;
-        const consumer = this.sandbox.getConsumer({messageRetryDelay: 10});
+        const producer = this.sandbox.getProducer('test_queue');
+        const consumer = this.sandbox.getConsumer('test_queue', { messageRetryDelay: 10 });
 
         let callCount = 0;
         let delayedCount = 0;
@@ -43,5 +43,4 @@ describe('Test 15: A consumer delays a failed message before re-queuing it again
             consumer.run();
         });
     });
-
 });
