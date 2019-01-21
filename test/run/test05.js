@@ -11,8 +11,8 @@ describe('Test 5: A consumer with message TTL does not consume a message being i
 
     it('is OK', function (done) {
         this.timeout(20000);
-        const producer = this.sandbox.producer;
-        const consumer = this.sandbox.getConsumer({ messageTTL: 2000 });
+        const producer = this.sandbox.getProducer('test_queue');
+        const consumer = this.sandbox.getConsumer('test_queue', { messageTTL: 2000 });
         const consume = this.sandbox.spy(consumer, 'consume');
 
         let messageDestroyed = 0;

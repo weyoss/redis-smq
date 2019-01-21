@@ -12,7 +12,7 @@ describe('Test 13: Produce and consume a delayed message with repeat and period'
 
     it('Case 1: is OK', function (done) {
         this.timeout(60000);
-        const producer = this.sandbox.producer;
+        const producer = this.sandbox.getProducer();
         const consumer = this.sandbox.getConsumer();
         const timeArray = [];
         let createdAt = null;
@@ -65,7 +65,7 @@ describe('Test 13: Produce and consume a delayed message with repeat and period'
 
     it('Case 2: is OK', function (done) {
         this.timeout(60000);
-        const producer = this.sandbox.producer;
+        const producer = this.sandbox.getProducer();
         const consumer = this.sandbox.getConsumer();
         const timeArray = [];
         let createdAt = null;

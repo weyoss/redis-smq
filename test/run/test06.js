@@ -11,8 +11,8 @@ describe('Test 6: A consumer does time out after consume timeout exceeds and req
 
     it('is OK', function (done) {
         this.timeout(20000);
-        const producer = this.sandbox.producer;
-        const consumer = this.sandbox.getConsumer({ messageConsumeTimeout: 2000 });
+        const producer = this.sandbox.getProducer('test_queue');
+        const consumer = this.sandbox.getConsumer('test_queue', { messageConsumeTimeout: 2000 });
 
         let consumeCount = 0;
         this.sandbox.stub(consumer, 'consume', (msg, cb) => {
