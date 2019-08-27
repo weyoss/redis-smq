@@ -4,7 +4,6 @@ const Socket = require('socket.io');
 const http = require('http');
 const Koa = require('koa');
 const send = require('koa-send');
-const redis = require('redis');
 const statsFn = require('./stats');
 const redisClient = require('../redis-client');
 const redisKeys = require('../redis-keys');

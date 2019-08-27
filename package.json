@@ -9,7 +9,7 @@
     "koa": "2.2.0",
     "koa-send": "4.1.0",
     "koa-static": "3.0.0",
-    "redis": "2.7.1",
+    "ioredis": "4.14.0",
     "socket.io": "2.0.3",
     "uuid": "3.0.1"
   },

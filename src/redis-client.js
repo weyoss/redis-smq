@@ -1,6 +1,6 @@
 'use strict';
 
-const redis = require('redis');
+const redis = require('ioredis');
 
 const clients = [];
 
