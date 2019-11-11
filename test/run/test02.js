@@ -10,7 +10,7 @@ chai.use(sinonChai);
 describe('Test 2: Produce and consume 1 message', function() {
 
     it('is OK', function (done) {
-        this.timeout(20000);
+        this.timeout(160000);
         const producer = this.sandbox.getProducer();
         const consumer = this.sandbox.getConsumer();
         const consume = this.sandbox.spy(consumer, 'consume');

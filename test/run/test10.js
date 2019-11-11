@@ -10,7 +10,7 @@ chai.use(sinonChai);
 describe('Test 10: A message is not lost in case of a consumer crash', function() {
 
     it('is OK', function (done) {
-        this.timeout(20000);
+        this.timeout(160000);
         const producer = this.sandbox.getProducer();
 
         /**
@@ -22,6 +22,13 @@ describe('Test 10: A message is not lost in case of a consumer crash', function(
         consumer1.on('halt', () => {
             // once stopped, start another consumer
             consumer2.run();
+            setTimeout(() => {
+                consumer2.once('idle', () => {
+                        expect(reQueuedCount).to.eq(1);
+                        expect(consumedCount).to.eq(1);
+                        done();
+                    });
+            }, 10000)
         });
 
         this.sandbox.stub(consumer1, 'consume', (msg, cb) => {
@@ -48,12 +55,9 @@ describe('Test 10: A message is not lost in case of a consumer crash', function(
             })
             .on('message.consumed', () => {
                 consumedCount += 1;
-            })
-            .once('idle', () => {
-                expect(reQueuedCount).to.eq(1);
-                expect(consumedCount).to.eq(1);
-                done();
             });
+
+
 
         producer.produce({ hello: 'world' }, (err) => {
             if (err) throw err;

@@ -23,6 +23,9 @@ For more details about RedisSMQ design see [https://medium.com/@weyoss/building-
    are provided in real-time.
  * **Logging**: Supports JSON log format for troubleshooting and analytics purposes.
  * **Configurable**: Many options and features can be configured.  
+ * **Support both redis & ioredis**: Starting from v1.1.0 RedisSMQ can be configured to use either `redis` or `ioredis` 
+ to connect to Redis server.  
+
  
 ## Installation
 
@@ -52,10 +55,21 @@ const path = require('path');
 module.exports = {
     namespace: 'my_project_name',
     redis: {
+        driver: 'redis',
+        options: {
+            host: '127.0.0.1',
+            port: 6379,
+            connect_timeout: 3600000,
+        },
+    },
+    /*
+    // for old syntax bellow, the redis driver is used by default
+    redis: {
         host: '127.0.0.1',
         port: 6379,
         connect_timeout: 3600000,
     },
+    */
     log: {
         enabled: 0,
         options: {
@@ -82,8 +96,15 @@ module.exports = {
 - `namespace` *(String): Optional.* The namespace for message queues. It can be composed only of letters (a-z), 
   numbers (0-9) and (-_) characters. Namespace can be for example configured per project. 
 
-- `redis` *(Object): Optional.* Redis client parameters. 
-  See https://github.com/NodeRedis/node_redis#options-object-properties for all valid parameters.
+- `redis` *(Object): Optional.* Redis client parameters. If used without `redis.driver` and `redis.options`, for 
+backward compatibility, this parameter would be considered as holding `redis` driver options and therefor the `redis`
+driver would be used by default.
+
+- `redis.driver` *(String): Optional.* Redis driver name. Can be either `redis` or `ioredis`.
+
+- `redis.options` *(Object): Optional.* Redis driver options.
+   - See https://github.com/NodeRedis/node_redis#options-object-properties for all valid parameters for `redis` driver.
+   - See https://github.com/luin/ioredis/blob/master/API.md#new_Redis for all valid `ioredis` parameters.
 
 - `log` *(Object): Optional.* Logging parameters.
 
@@ -94,12 +115,11 @@ module.exports = {
 
 - `monitor` *(Object): Optional.* RedisSMQ monitor parameters.
 
-- `monitor.enabled` *(Boolean/Integer): Optional.* Enable/Disable the monitor.
+- `monitor.enabled` *(Boolean/Integer): Optional.* Enable/Disable the monitor. By default disabled.
 
-- `monitor.host` *(String): Optional.* IP address of the monitor server.
+- `monitor.host` *(String): Optional.* IP address of the monitor server. By default `0.0.0.0`.
 
-- `monitor.port` *(Integer): Optional.* Port of the monitor server.
-
+- `monitor.port` *(Integer): Optional.* Port of the monitor server. By default `7210`.
 
 ## Usage
 
@@ -126,7 +146,6 @@ message
     .setScheduledPeriod(60)
     .setScheduledCron('* 30 * * * *');
 
-
 let messageTTL = message.getTTL();
 
 // same as 
@@ -144,7 +163,7 @@ Each producer instance has an associated message queue and provides `produceMess
 message and decides to either send it to the message queue scheduler or to immediately enqueue it for delivery.
 
 ```javascript
-// filename: ./example/test-queue-producer-launch.js
+// filename: ./example/test-queue-producer.js
 
 'use strict';
 const { Message, Producer } = require('redis-smq');
@@ -175,7 +194,7 @@ Consumer classes are saved per files. Each consumer file represents a consumer c
 A consumer class may look like:
 
 ```javascript
-// filename: ./example/test-queue-consumer-launch.js
+// filename: ./example/test-queue-consumer.js
 
 'use strict';
 
@@ -214,7 +233,7 @@ To start consuming messages, a consumer needs first to be launched from CLI to c
 and wait for messages: 
 
 ```text
-$ node ./example/test-queue-consumer-launch.js
+$ node ./example/test-queue-consumer.js
 ```
 
 Once a message is received and processed the consumer should acknowledge the message by invoking the callback function
@@ -247,11 +266,12 @@ In all scenarios messages are produced and consumed as fast as possible.
 
 ### Environment
 
-The benchmark was performed on a VPS (4 CPU cores, 8GB RAM) running Debian 8. 
+The benchmark was performed on a KVM virtual machine (4 CPU cores, 8GB RAM) hosted on a desktop computer 
+(CPU AMD FX8350, RAM 32GB) running Debian 8. 
 
-No performance tuning was performed for the VPS, neither for Redis server. Default parameters were used out of box.
+No performance tuning was performed for the VM, neither for Redis server. Default parameters were used out of box.
 
-The VPS was setup to run a single instance of Redis (Redis is single threaded, so more instances can boost performance).
+The virtual machine was setup to run a single instance of Redis (Redis is single threaded, so more instances can boost performance).
 
 All consumers, producers, monitor and redis server are launched from the same host.
 
@@ -266,8 +286,6 @@ All consumers, producers, monitor and redis server are launched from the same ho
 | Run 1 producer instance and 1 consumer instance     | 22K+                    | 12K+                    |
 | Run 10 producer instances and 10 consumer instances | 45K+                    | 27K+                    |
 | Run 10 producer instances and 20 consumer instances | 32K+                    | 32K+                    |
-
-Benchmarking charts are in the [screenshots folder](https://github.com/weyoss/redis-smq/tree/master/screenshots).
 
 ## Troubleshooting and monitoring
 
@@ -288,45 +306,25 @@ $ node consumer | ./node_modules/.bin/bunyan
 ```
 ### Monitoring
 
-The RedisSMQ Monitoring is an interface which let you monitor and debug your RedisSMQ server from a web browser in 
+The RedisSMQ Monitor is an interface which let you monitor and debug your RedisSMQ server from a web browser in 
 real-time.
 
-First enable monitoring in your configuration file and provide monitoring server parameters.
+Starting from version v1.1.0, RedisSMQ Monitor has split up into a standalone project and was packaged under
+[RedisSMQ Monitor](https://github.com/weyoss/redis-smq-monitor)
 
-Monitor server example:
+RedisSMQ includes the monitor as part of its package.
 
 ```javascript
 // filename: ./example/monitor.js
-
 'use strict';
 
 const config = require('./config');
-const monitorServer = require('redis-smq').monitor(config);
+const { monitor } = require('redis-smq');
 
-monitorServer.listen(() => {
-    console.log('Monitor server is running...');
+monitor(config).listen(() => {
+    console.log('It works!')
 });
-
 ```
-
-Launching the server:
-
-```text
-$ node monitor.js
-```
-#### Monitor screenshots
-
-Please note that the numbers shown in the screenshots are related to the Redis server configuration and the performance 
-parameters of the host the server is running on!
-
-##### Sample
-
-Running 10 producer instances and 20 consumer instances:
-
-![RedisSMQ Monitor](./screenshots/img_7.png)
-
-More screenshots, could be found in the [screenshots folder](https://github.com/weyoss/redis-smq/tree/master/screenshots).
-
 ## Contributing
 
 So you are interested in contributing to this project? Please see [CONTRIBUTING.md](https://github.com/weyoss/guidelines/blob/master/CONTRIBUTIONS.md).

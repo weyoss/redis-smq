@@ -21,6 +21,6 @@ module.exports = {
                 error() {},
             };
         }
-        return bunyan.createLogger(Object.assign({ name }, config.options || {}));
+        return bunyan.createLogger({ name, ...config.options || {} });
     },
 };

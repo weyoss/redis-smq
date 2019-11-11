@@ -1,19 +1,28 @@
 'use strict';
 
-const lockManagerFn = require('./lock-manager');
-const redisClient = require('./redis-client');
-const Message = require('./message');
 const cronParser = require('cron-parser');
+const Message = require('./message');
+const redisClient = require('./redis-client');
+const lockManager = require('./lock-manager');
 
+/**
+ *
+ * @param dispatcher
+ * @param tickPeriod
+ */
 function scheduler(dispatcher, tickPeriod = 1000) {
-    const config = dispatcher.getConfig();
-    const { keySchedulerLock, keySchedulerLockTmp, keyQueueNameDelayed } = dispatcher.getKeys();
+    const { keySchedulerLock, keyQueueNameDelayed } = dispatcher.getKeys();
     const logger = dispatcher.getLogger();
     const events = dispatcher.getEvents();
-    const lockManager = lockManagerFn(dispatcher, keySchedulerLock, keySchedulerLockTmp);
-
-    let client = null;
+    const states = {
+        UP: 1,
+        DOWN: 0,
+    };
+    let lockManagerInstance = null;
+    let redisClientInstance = null;
+    let state = states.DOWN;
     let timer = 0;
+    let shutdownNow = null;
 
     /**
      *
@@ -32,7 +41,7 @@ function scheduler(dispatcher, tickPeriod = 1000) {
      */
     function scheduleMessage(message, timestamp, multi, cb) {
         if (multi) multi.zadd(keyQueueNameDelayed, timestamp, message.toString());
-        else client.zadd(keyQueueNameDelayed, timestamp, message.toString(), cb);
+        else redisClientInstance.zadd(keyQueueNameDelayed, timestamp, message.toString(), cb);
     }
 
     /**
@@ -44,7 +53,7 @@ function scheduler(dispatcher, tickPeriod = 1000) {
             if (messages.length) {
                 const msg = messages.pop();
                 const message = new Message(msg);
-                const multi = client.multi();
+                const multi = redisClientInstance.multi();
                 dispatcher.enqueue(message, multi);
                 multi.zrem(keyQueueNameDelayed, msg);
                 if (isPeriodic(message)) {
@@ -60,22 +69,32 @@ function scheduler(dispatcher, tickPeriod = 1000) {
                 });
             } else run();
         };
-        client.zrangebyscore(keyQueueNameDelayed, 0, now, (err, messages) => {
-            if (err) dispatcher.error(err);
-            else process(messages);
-        });
+        if (state === states.UP) {
+            redisClientInstance.zrangebyscore(keyQueueNameDelayed, 0, now, (err, messages) => {
+                if (err) dispatcher.error(err);
+                else process(messages);
+            });
+        }
     }
 
     /**
      *
      */
     function run() {
-        if (dispatcher.isRunning()) {
-            debug(`Waiting for ${tickPeriod} before a new iteration...`);
-            timer = setTimeout(() => {
-                debug('Time is up...');
-                getNextMessages();
-            }, tickPeriod);
+        if (state === states.UP) {
+            lockManagerInstance.acquireLock(keySchedulerLock, 10000, (err) => {
+                if (err) dispatcher.error(err);
+
+                // after lock has been acquired, the scheduler could be shutdown
+                else if (state === states.UP) {
+                    debug(`Waiting for ${tickPeriod} before a new iteration...`);
+                    timer = setTimeout(() => {
+                        debug('Time is up...');
+                        if (shutdownNow) shutdownNow();
+                        else getNextMessages();
+                    }, tickPeriod);
+                }
+            });
         }
     }
 
@@ -100,9 +119,9 @@ function scheduler(dispatcher, tickPeriod = 1000) {
                 return 0;
             };
             const getDelayTimestamp = () => {
-                if (message[Message.PROPERTY_SCHEDULED_DELAY] &&
-                    !message[Message.PROPERTY_SCHEDULED_CRON] &&
-                    !message[Message.PROPERTY_DELAYED]) {
+                if (message[Message.PROPERTY_SCHEDULED_DELAY]
+                    && !message[Message.PROPERTY_SCHEDULED_CRON]
+                    && !message[Message.PROPERTY_DELAYED]) {
                     message[Message.PROPERTY_DELAYED] = true;
                     return Date.now() + message[Message.PROPERTY_SCHEDULED_DELAY];
                 }
@@ -112,8 +131,8 @@ function scheduler(dispatcher, tickPeriod = 1000) {
             if (delayTimestamp) {
                 return delayTimestamp;
             }
-            const nextCRONTimestamp = message[Message.PROPERTY_SCHEDULED_CRON] ?
-                cronParser.parseExpression(message[Message.PROPERTY_SCHEDULED_CRON]).next().getTime() : 0;
+            const nextCRONTimestamp = message[Message.PROPERTY_SCHEDULED_CRON]
+                ? cronParser.parseExpression(message[Message.PROPERTY_SCHEDULED_CRON]).next().getTime() : 0;
             const nextRepeatTimestamp = getScheduleRepeatTimestamp();
             if (nextCRONTimestamp && nextRepeatTimestamp) {
                 if (nextCRONTimestamp < nextRepeatTimestamp) {
@@ -133,9 +152,9 @@ function scheduler(dispatcher, tickPeriod = 1000) {
      */
     function isScheduled(message) {
         return (
-            message.hasOwnProperty(Message.PROPERTY_SCHEDULED_CRON) ||
-            message.hasOwnProperty(Message.PROPERTY_SCHEDULED_DELAY) ||
-            message.hasOwnProperty(Message.PROPERTY_SCHEDULED_REPEAT)
+            message.hasOwnProperty(Message.PROPERTY_SCHEDULED_CRON)
+            || message.hasOwnProperty(Message.PROPERTY_SCHEDULED_DELAY)
+            || message.hasOwnProperty(Message.PROPERTY_SCHEDULED_REPEAT)
         );
     }
 
@@ -146,11 +165,10 @@ function scheduler(dispatcher, tickPeriod = 1000) {
      */
     function isPeriodic(message) {
         return (
-            message.hasOwnProperty(Message.PROPERTY_SCHEDULED_CRON) ||
-            message.hasOwnProperty(Message.PROPERTY_SCHEDULED_REPEAT)
+            message.hasOwnProperty(Message.PROPERTY_SCHEDULED_CRON)
+            || message.hasOwnProperty(Message.PROPERTY_SCHEDULED_REPEAT)
         );
     }
-
 
     return {
         /**
@@ -165,33 +183,40 @@ function scheduler(dispatcher, tickPeriod = 1000) {
         },
 
         start() {
-            client = redisClient.getNewInstance(config);
-            lockManager.setRedisClient(client);
-            if (dispatcher.isConsumer()) {
-                lockManager.acquire((err) => {
-                    if (err) dispatcher.error(err);
-                    else run();
+            if (state === states.DOWN) {
+                const config = dispatcher.getConfig();
+                lockManager.getInstance(config, (l) => {
+                    lockManagerInstance = l;
+                    redisClient.getNewInstance(config, (c) => {
+                        state = states.UP;
+                        redisClientInstance = c;
+                        if (dispatcher.isConsumer()) {
+                            run();
+                        }
+                        dispatcher.emit(events.SCHEDULER_STARTED);
+                    });
                 });
             }
         },
 
         stop() {
-            if (timer) clearTimeout(timer);
-            const handler = () => {
-                client.end(true);
-                client = null;
-                dispatcher.emit(events.SCHEDULER_HALT);
-            };
-            if (dispatcher.isConsumer()) {
-                if (timer) clearTimeout(timer);
-                lockManager.release((err) => {
-                    if (err) {
-                        dispatcher.error(err);
-                    } else {
-                        handler();
-                    }
-                });
-            } else handler();
+            if (state === states.UP && !shutdownNow) {
+                shutdownNow = () => {
+                    state = states.DOWN;
+                    shutdownNow = null;
+                    if (timer) clearTimeout(timer);
+                    const handler = () => {
+                        lockManagerInstance = null;
+                        redisClientInstance.end(true);
+                        redisClientInstance = null;
+                        dispatcher.emit(events.SCHEDULER_HALT);
+                    };
+                    lockManagerInstance.quit(handler);
+                };
+                if (!lockManagerInstance.isLocked()) {
+                    shutdownNow();
+                }
+            }
         },
 
         isScheduled,

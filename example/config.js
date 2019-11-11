@@ -3,9 +3,13 @@
 const path = require('path');
 
 module.exports = {
+    namespace: 'ns1',
     redis: {
-        host: '127.0.0.1',
-        port: 6379,
+        driver: 'redis',
+        options: {
+            host: '127.0.0.1',
+            port: 6379,
+        },
     },
     log: {
         enabled: false,
@@ -14,7 +18,7 @@ module.exports = {
             /*
             streams: [
                 {
-                    path: path.normalize(`${__dirname}/../logs/redis-smq.log`)
+                    path: path.normalize(`${__dirname}/logs/redis-smq.log`)
                 },
             ],
             */
@@ -22,7 +26,7 @@ module.exports = {
     },
     monitor: {
         enabled: true,
-        host: '127.0.0.1',
         port: 3000,
+        host: '127.0.0.1',
     },
 };

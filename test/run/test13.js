@@ -11,16 +11,17 @@ chai.use(sinonChai);
 describe('Test 13: Produce and consume a delayed message with scheduledRepeat and scheduledPeriod parameters', function() {
 
     it('Case 1: is OK', function (done) {
-        this.timeout(60000);
+        this.timeout(160000);
         const producer = this.sandbox.getProducer();
         const consumer = this.sandbox.getConsumer();
+        const validateTime = this.sandbox.validateTime;
         const timeArray = [];
         let createdAt = null;
         let callCount = 0;
         let runCheck = true;
 
         this.sandbox.stub(consumer, 'consume', (msg, cb) => {
-            const diff = Math.floor((Date.now() - createdAt) / 1000);
+            const diff = Date.now() - createdAt;
             timeArray.push(diff);
             cb();
 
@@ -40,9 +41,9 @@ describe('Test 13: Produce and consume a delayed message with scheduledRepeat an
                 }, 3000);
             } else {
                 expect(timeArray.length === 3).to.be.true;
-                expect(timeArray[0] === 10).to.be.true;
-                expect(timeArray[1] === 13).to.be.true;
-                expect(timeArray[2] === 16).to.be.true;
+                expect(validateTime(timeArray[0], 10000)).to.be.true;
+                expect(validateTime(timeArray[1], 13000)).to.be.true;
+                expect(validateTime(timeArray[2], 16000)).to.be.true;
                 done();
             }
         };
@@ -64,16 +65,18 @@ describe('Test 13: Produce and consume a delayed message with scheduledRepeat an
 
 
     it('Case 2: is OK', function (done) {
-        this.timeout(60000);
+        this.timeout(160000);
         const producer = this.sandbox.getProducer();
         const consumer = this.sandbox.getConsumer();
+        const validateTime = this.sandbox.validateTime;
+
         const timeArray = [];
         let createdAt = null;
         let callCount = 0;
         let runCheck = true;
 
         this.sandbox.stub(consumer, 'consume', (msg, cb) => {
-            const diff = Math.floor((Date.now() - createdAt) / 1000);
+            const diff = Date.now() - createdAt;
             timeArray.push(diff);
             cb();
 
@@ -93,7 +96,7 @@ describe('Test 13: Produce and consume a delayed message with scheduledRepeat an
                 }, 3000);
             } else {
                 expect(timeArray.length === 1).to.be.true;
-                expect(timeArray[0] === 10).to.be.true;
+                expect(validateTime(timeArray[0], 10000)).to.be.true;
                 done();
             }
         };

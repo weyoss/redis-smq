@@ -10,7 +10,7 @@ chai.use(sinonChai);
 describe('Test 15: A consumer delays a failed message before re-queuing it again, given messageRetryThreshold is not exceeded', function() {
 
     it('Case 1: is OK', function (done) {
-        this.timeout(20000);
+        this.timeout(160000);
         const producer = this.sandbox.getProducer('test_queue');
         const consumer = this.sandbox.getConsumer('test_queue', { messageRetryDelay: 10 });
 
@@ -27,15 +27,17 @@ describe('Test 15: A consumer delays a failed message before re-queuing it again
 
         consumer.on('message.delayed', () => {
             delayedCount += 1;
-            setTimeout(() => {
-                expect(delayedCount).to.eq(1);
-                expect(consumedCount).to.eq(1);
-                done();
-            }, 15000);
         });
 
         consumer.on('message.consumed', () => {
             consumedCount += 1;
+            setTimeout(() => {
+                consumer.on('idle', () => {
+                    expect(delayedCount).to.eq(1);
+                    expect(consumedCount).to.eq(1);
+                    done();
+                });
+            }, 15000);
         });
 
         producer.produce({ hello: 'world' }, (err) => {

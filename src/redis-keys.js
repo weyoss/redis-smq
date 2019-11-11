@@ -1,6 +1,8 @@
 'use strict';
 
-let namespace = 'default';
+const globalNamespace = '___redis-smq-global-ns';
+
+let namespace = 'redis-smq-default-ns';
 
 const keyTypes = {
     KEY_TYPE_MESSAGE_QUEUE: '1.1',
@@ -9,18 +11,16 @@ const keyTypes = {
     KEY_TYPE_MESSAGE_QUEUE_DELAYED: '1.4',
     KEY_TYPE_HEARTBEAT: '2.1',
     KEY_TYPE_GC_LOCK: '3.1',
-    KEY_TYPE_GC_LOCK_TMP: '3.2',
     KEY_TYPE_RATE: '4',
     KEY_TYPE_RATE_INPUT: '4.1',
     KEY_TYPE_RATE_PROCESSING: '4.2',
     KEY_TYPE_RATE_ACKNOWLEDGED: '4.3',
     KEY_TYPE_RATE_UNACKNOWLEDGED: '4.4',
-    KEY_TYPE_STATS_FRONTEND_LOCK: '5.1',
+    KEY_TYPE_STATS_AGGREGATOR_LOCK: '5.1',
     KEY_TYPE_MESSAGE_QUEUES_INDEX: '6.1',
     KEY_TYPE_PROCESSING_QUEUES_INDEX: '6.2',
     KEY_TYPE_DEAD_LETTER_QUEUES_INDEX: '6.3',
     KEY_TYPE_SCHEDULER_LOCK: '7.1',
-    KEY_TYPE_SCHEDULER_LOCK_TMP: '7.2',
 };
 
 /**
@@ -29,8 +29,21 @@ const keyTypes = {
  * @return {*}
  */
 function formatKeys(keys) {
-    const ns = `redis-smq-${namespace}`;
-    for (const k in keys) keys[k] = `${ns}|@${keys[k]}`;
+    for (const k in keys) {
+        keys[k] = `${namespace}|@${keys[k]}`;
+    }
+    return keys;
+}
+
+/**
+ *
+ * @param keys
+ * @returns {*}
+ */
+function formatGlobalKeys(keys) {
+    for (const k in keys) {
+        keys[k] = `${globalNamespace}|@${keys[k]}`;
+    }
     return keys;
 }
 
@@ -49,7 +62,12 @@ module.exports = {
      * @param {string} ns
      */
     setNamespace(ns) {
-        namespace = this.validateKeyPart(ns);
+        ns = this.validateKeyPart(ns);
+        namespace = `redis-smq-${ns}`;
+    },
+
+    getNamespace() {
+        return namespace;
     },
 
     /**
@@ -131,9 +149,7 @@ module.exports = {
         keys.keyQueueNameDead = `${keyTypes.KEY_TYPE_DEAD_LETTER_QUEUE}|${queueName}`;
         keys.keyQueueNameProcessingCommon = `${keyTypes.KEY_TYPE_PROCESSING_QUEUE}|${queueName}`;
         keys.keyGCLock = `${keyTypes.KEY_TYPE_GC_LOCK}|${queueName}`;
-        keys.keyGCLockTmp = `${keyTypes.KEY_TYPE_GC_LOCK_TMP}|${queueName}`;
         keys.keySchedulerLock = `${keyTypes.KEY_TYPE_SCHEDULER_LOCK}|${queueName}`;
-        keys.keySchedulerLockTmp = `${keyTypes.KEY_TYPE_SCHEDULER_LOCK_TMP}|${queueName}`;
         return formatKeys(keys);
     },
 
@@ -143,13 +159,13 @@ module.exports = {
      */
     getCommonKeys() {
         const keys = {};
-        keys.keyStatsFrontendLock = keyTypes.KEY_TYPE_STATS_FRONTEND_LOCK;
-        keys.keyRate = keyTypes.KEY_TYPE_RATE;
         keys.keyHeartBeat = keyTypes.KEY_TYPE_HEARTBEAT;
         keys.keyMessageQueuesIndex = keyTypes.KEY_TYPE_MESSAGE_QUEUES_INDEX;
         keys.keyProcessingQueuesIndex = keyTypes.KEY_TYPE_PROCESSING_QUEUES_INDEX;
         keys.keyDLQueuesIndex = keyTypes.KEY_TYPE_DEAD_LETTER_QUEUES_INDEX;
-        return formatKeys(keys);
+        keys.keyStatsAggregatorLock = keyTypes.KEY_TYPE_STATS_AGGREGATOR_LOCK;
+        keys.keyRate = keyTypes.KEY_TYPE_RATE;
+        return formatGlobalKeys(keys);
     },
 
     /**
@@ -159,14 +175,16 @@ module.exports = {
      */
     getKeySegments(key) {
         const segments = key.split('|');
+        const ns = segments[0];
         const type = segments[1].replace(/[@]/g, '');
-        if (type === keyTypes.KEY_TYPE_PROCESSING_QUEUE ||
-            type === keyTypes.KEY_TYPE_HEARTBEAT ||
-            type === keyTypes.KEY_TYPE_RATE_PROCESSING ||
-            type === keyTypes.KEY_TYPE_RATE_ACKNOWLEDGED ||
-            type === keyTypes.KEY_TYPE_RATE_UNACKNOWLEDGED) {
+        if (type === keyTypes.KEY_TYPE_PROCESSING_QUEUE
+            || type === keyTypes.KEY_TYPE_HEARTBEAT
+            || type === keyTypes.KEY_TYPE_RATE_PROCESSING
+            || type === keyTypes.KEY_TYPE_RATE_ACKNOWLEDGED
+            || type === keyTypes.KEY_TYPE_RATE_UNACKNOWLEDGED) {
             const [, , queueName, consumerId] = segments;
             return {
+                ns,
                 type,
                 queueName,
                 consumerId,
@@ -175,17 +193,18 @@ module.exports = {
         if (type === keyTypes.KEY_TYPE_RATE_INPUT) {
             const [, , queueName, producerId] = segments;
             return {
+                ns,
                 type,
                 queueName,
                 producerId,
             };
         }
-        if (type === keyTypes.KEY_TYPE_MESSAGE_QUEUE ||
-            type === keyTypes.KEY_TYPE_DEAD_LETTER_QUEUE ||
-            type === keyTypes.KEY_TYPE_GC_LOCK ||
-            type === keyTypes.KEY_TYPE_GC_LOCK_TMP) {
+        if (type === keyTypes.KEY_TYPE_MESSAGE_QUEUE
+            || type === keyTypes.KEY_TYPE_DEAD_LETTER_QUEUE
+            || type === keyTypes.KEY_TYPE_GC_LOCK) {
             const [, , queueName] = segments;
             return {
+                ns,
                 type,
                 queueName,
             };

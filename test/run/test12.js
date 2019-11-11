@@ -11,17 +11,17 @@ chai.use(sinonChai);
 describe('Test 12: Produce and consume a delayed message', function() {
 
     it('is OK', function (done) {
-        this.timeout(20000);
+        this.timeout(160000);
         const producer = this.sandbox.getProducer();
         const consumer = this.sandbox.getConsumer();
+        const validateTime = this.sandbox.validateTime;
+
         let createdAt = null;
-        let consumedAt = null;
         this.sandbox.stub(consumer, 'consume', (msg, cb) => {
-            consumedAt = Date.now();
             cb();
 
-            const diff = Math.floor((consumedAt - createdAt) / 1000);
-            expect(diff === 10).to.be.true;
+            const diff = Date.now() - createdAt;
+            expect(validateTime(diff, 10000)).to.be.true;
             done();
         });
         consumer.run();

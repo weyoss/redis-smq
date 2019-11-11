@@ -10,7 +10,7 @@ chai.use(sinonChai);
 describe('Test 9: A consumer re-queues a failed message when threshold is not exceeded, otherwise it moves the message to DLQ (dead letter queue)', function() {
 
     it('is OK', function (done) {
-        this.timeout(20000);
+        this.timeout(160000);
         const producer = this.sandbox.getProducer();
         const consumer = this.sandbox.getConsumer();
         const consume = this.sandbox.stub(consumer, 'consume');

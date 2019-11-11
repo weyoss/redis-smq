@@ -10,7 +10,7 @@ chai.use(sinonChai);
 describe('Test 16: Given many queues, a message is not lost and re-queued to its origin queue in case of a consumer crash or a failure', function() {
 
     it('OK', function (done) {
-        this.timeout(20000);
+        this.timeout(160000);
 
         const producer1QueueA = this.sandbox.getProducer('queue_a');
         const consumer1QueueA = this.sandbox.getConsumer('queue_a');
@@ -32,6 +32,18 @@ describe('Test 16: Given many queues, a message is not lost and re-queued to its
         consumer1QueueA.on('halt', () => {
             // once stopped, start another consumer
             consumer2QueueA.run();
+            setTimeout(() => {
+            consumer2QueueA.once('idle', () => {
+                    expect(queueAReQueuedCount).to.eq(1);
+                    expect(queueAConsumedCount).to.eq(1);
+                    expect(queueBReQueuedCount).to.eq(0);
+                    expect(queueBConsumedCount).to.eq(1);
+                    expect(queueAReceivedMessages[0].id).to.eq('a');
+                    expect(queueAReceivedMessages[1].id).to.eq('a');
+                    expect(queueBReceivedMessages[0].id).to.eq('b');
+                    done();
+                });
+            }, 10000);
         });
         this.sandbox.stub(consumer1QueueA, 'consume', (msg, cb) => {
             // do not acknowledge/unacknowledge the message
@@ -53,16 +65,6 @@ describe('Test 16: Given many queues, a message is not lost and re-queued to its
             })
             .on('message.consumed', () => {
                 queueAConsumedCount += 1;
-            })
-            .once('idle', () => {
-                expect(queueAReQueuedCount).to.eq(1);
-                expect(queueAConsumedCount).to.eq(1);
-                expect(queueBReQueuedCount).to.eq(0);
-                expect(queueBConsumedCount).to.eq(1);
-                expect(queueAReceivedMessages[0].id).to.eq('a');
-                expect(queueAReceivedMessages[1].id).to.eq('a');
-                expect(queueBReceivedMessages[0].id).to.eq('b');
-                done();
             });
 
         /**

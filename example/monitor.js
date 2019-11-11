@@ -1,8 +1,8 @@
 'use strict';
 
 const config = require('./config');
-const monitorServer = require('redis-smq').monitor(config);
+const { monitor } = require('../'); // replace with require('redis-smq');
 
-monitorServer.listen(() => {
-    console.log('Monitor server is running...');
+monitor(config).listen(() => {
+    console.log('It works!');
 });

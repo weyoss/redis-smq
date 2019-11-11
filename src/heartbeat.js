@@ -5,82 +5,106 @@ const redisKeys = require('./redis-keys');
 const redisClient = require('./redis-client');
 
 function getHeartBeatIndexName(queueName, consumerId) {
-    return `${queueName}|${consumerId}`;
+    const ns = redisKeys.getNamespace();
+    return `${ns}|${queueName}|${consumerId}`;
 }
 
 /**
  *
  * @param dispatcher
- * @return {object}
+ * @constructor
  */
 function heartBeat(dispatcher) {
     const queueName = dispatcher.getQueueName();
     const instanceId = dispatcher.getInstanceId();
-    const config = dispatcher.getConfig();
     const events = dispatcher.getEvents();
     const { keyHeartBeat } = dispatcher.getKeys();
-    let client = null;
+    const states = {
+        UP: 1,
+        DOWN: 0,
+    };
+    let redisClientInstance = null;
+    let state = states.DOWN;
     let timer = null;
+    let shutdownNow = null;
+
+    function beat() {
+        if (state === states.UP) {
+            const usage = {
+                pid: process.pid,
+                ram: {
+                    usage: process.memoryUsage(),
+                    free: os.freemem(),
+                    total: os.totalmem(),
+                },
+                cpu: process.cpuUsage(),
+            };
+            const timestamp = Date.now();
+            const payload = JSON.stringify({
+                timestamp,
+                usage,
+            });
+            const hashKey = getHeartBeatIndexName(queueName, instanceId);
+            redisClientInstance.hset(keyHeartBeat, hashKey, payload, (err) => {
+                if (err) dispatcher.error(err);
+                else {
+                    timer = setTimeout(() => {
+                        if (shutdownNow) shutdownNow();
+                        else beat();
+                    }, 1000);
+                }
+            });
+        }
+    }
 
     return {
         start() {
-            client = redisClient.getNewInstance(config);
-            this.beat();
-        },
-
-        stop() {
-            if (timer) clearTimeout(timer);
-            const hashKey = getHeartBeatIndexName(queueName, instanceId);
-            client.hdel(keyHeartBeat, hashKey, (err) => {
-                if (err) dispatcher.error(err);
-                else {
-                    client.end(true);
-                    client = null;
-                    dispatcher.emit(events.HEARTBEAT_HALT);
-                }
-            });
-        },
-
-        beat() {
-            if (dispatcher.isRunning()) {
-                const usage = {
-                    pid: process.pid,
-                    ram: {
-                        usage: process.memoryUsage(),
-                        free: os.freemem(),
-                        total: os.totalmem(),
-                    },
-                    cpu: process.cpuUsage(),
-                };
-                const timestamp = Date.now();
-                const payload = JSON.stringify({
-                    timestamp,
-                    usage,
-                });
-                const hashKey = getHeartBeatIndexName(queueName, instanceId);
-                client.hset(keyHeartBeat, hashKey, payload, (err, result) => {
-                    if (err) dispatcher.error(err);
-                    else {
-                        timer = setTimeout(() => {
-                            this.beat();
-                        }, 1000);
-                    }
+            if (state === states.DOWN) {
+                state = states.UP;
+                redisClient.getNewInstance(dispatcher.getConfig(), (c) => {
+                    redisClientInstance = c;
+                    this.beat();
+                    dispatcher.emit(events.HEARTBEAT_STARTED);
                 });
             }
         },
+
+        stop() {
+            if (state === states.UP && !shutdownNow) {
+                shutdownNow = () => {
+                    state = states.DOWN;
+                    shutdownNow = null;
+                    if (timer) clearTimeout(timer);
+                    const hashKey = getHeartBeatIndexName(queueName, instanceId);
+                    redisClientInstance.hdel(keyHeartBeat, hashKey, (err) => {
+                        if (err) dispatcher.error(err);
+                        else {
+                            redisClientInstance.end(true);
+                            redisClientInstance = null;
+                            dispatcher.emit(events.HEARTBEAT_HALT);
+                        }
+                    });
+                };
+            }
+        },
+
+        beat,
     };
 }
 
 /**
  *
- * @param {Object} client
- * @param {string} queueName
- * @param {string} consumerId
+ * @param {Object} params
+ * @param {Object} params.client
+ * @param {string} params.ns
+ * @param {string} params.queueName
+ * @param {string} params.id
  * @param {function} cb
  */
-heartBeat.isOnline = function isOnline(client, queueName, consumerId, cb) {
+heartBeat.isOnline = function isOnline(params, cb) {
+    const { client, queueName, id } = params;
     const keys = redisKeys.getKeys();
-    const hashKey = getHeartBeatIndexName(queueName, consumerId);
+    const hashKey = getHeartBeatIndexName(queueName, id);
 
     const noop = () => {};
     client.hget(keys.keyHeartBeat, hashKey, (err, res) => {
@@ -110,7 +134,9 @@ heartBeat.isOnline = function isOnline(client, queueName, consumerId, cb) {
  */
 heartBeat.getOnlineConsumers = function getOnlineConsumers(client, cb) {
     const rKeys = redisKeys.getKeys();
-    const consumers = {};
+    const data = {
+        queues: {},
+    };
     const deadConsumers = [];
     const noop = () => {};
     client.hgetall(rKeys.keyHeartBeat, (err, result) => {
@@ -120,18 +146,27 @@ heartBeat.getOnlineConsumers = function getOnlineConsumers(client, cb) {
             for (const hashKey in result) {
                 const { timestamp, usage: resources } = JSON.parse(result[hashKey]);
                 if (now - timestamp <= 10000) {
-                    const [queueName, consumerId] = hashKey.split('|');
-                    if (!consumers.hasOwnProperty(queueName)) (consumers[queueName] = []);
-                    consumers[queueName].push({
-                        consumerId,
-                        resources,
-                    });
+                    const [ns, queueName, consumerId] = hashKey.split('|');
+                    if (!data.queues[ns]) {
+                        data.queues[ns] = {};
+                    }
+                    if (!data.queues[ns][queueName]) {
+                        data.queues[ns][queueName] = {
+                            consumers: {},
+                        };
+                    }
+                    if (!data.queues[ns][queueName].consumers[consumerId]) {
+                        data.queues[ns][queueName].consumers[consumerId] = {
+                            id: consumerId,
+                        };
+                    }
+                    data.queues[ns][queueName].consumers[consumerId].resources = resources;
                 } else deadConsumers.push(hashKey);
             }
             // Do not wait for keys deletion, reply as fast as possible
             if (deadConsumers.length) client.hdel(rKeys.keyHeartBeat, ...deadConsumers, noop);
-            cb(null, consumers);
-        } else cb(null, consumers);
+            cb(null, data);
+        } else cb(null, data);
     });
 };
 
