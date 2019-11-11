@@ -23,7 +23,7 @@ For more details about RedisSMQ design see [https://medium.com/@weyoss/building-
    are provided in real-time.
  * **Logging**: Supports JSON log format for troubleshooting and analytics purposes.
  * **Configurable**: Many options and features can be configured.  
- * **Support both redis & ioredis**: Starting from v1.1.0 RedisSMQ can be configured to use either `redis` or `ioredis` 
+ * **Supports both redis & ioredis**: Starting from v1.1.0 RedisSMQ can be configured to use either `redis` or `ioredis` 
  to connect to Redis server.  
 
  
