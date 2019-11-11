@@ -18,8 +18,7 @@ const states = {
     DOWN: 1,
     GOING_UP: 2,
     GOING_DOWN: 3,
-    CONSUMING_MESSAGE: 4,
-    BOOTSTRAPPING: 5,
+    BOOTSTRAPPING: 4,
 };
 
 const instanceTypes = {
@@ -344,7 +343,7 @@ module.exports = function dispatcher() {
             startupFiredEvents = [];
             state = states.UP;
             instance.emit(events.UP);
-            instance.emit(events.MESSAGE_NEXT);
+            if (dispatcherInstance.isConsumer()) instance.emit(events.MESSAGE_NEXT);
         };
         if (dispatcherInstance.isConsumer()) {
             if (startupFiredEvents.includes(events.GC_STARTED)
@@ -523,7 +522,6 @@ module.exports = function dispatcher() {
          * @param msg
          */
         consume(msg) {
-            state = states.CONSUMING_MESSAGE;
             let isTimeout = false;
             let timer = null;
             const timeout = msg.getConsumeTimeout();
@@ -574,7 +572,6 @@ module.exports = function dispatcher() {
         },
 
         getNextMessage() {
-            state = states.UP;
             loggerInstance.info('Waiting for new messages...');
             redisClientInstance.brpoplpush(keys.keyQueueName, keys.keyQueueNameProcessing, 0, (err, json) => {
                 if (err) handleError(err);
