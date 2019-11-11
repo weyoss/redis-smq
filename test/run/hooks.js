@@ -1,16 +1,25 @@
 'use strict';
 
+const path = require('path');
 const sinon = require('sinon');
-const config = require('../common/config');
-const redisSMQ = require('../../index');
-const redisClient = require('./../../src/redis-client');
+const { Consumer, Producer } = require('../../index');
+const redisClient = require('../../src/redis-client.js');
 
-const Consumer = redisSMQ.Consumer;
-const Producer = redisSMQ.Producer;
 
-const client = redisClient.getNewInstance(config);
+const config = {
+    namespace: 'testing',
+    redis: {
+        driver: 'ioredis'
+    },
+    monitor: {
+        enabled: true,
+        host: '127.0.0.1',
+        port: 3000,
+    },
+};
 const consumersList = [];
 const producersList = [];
+let redisClientInstance = null;
 
 function clean(set, cb) {
     if (set.length) {
@@ -49,29 +58,43 @@ function getProducer(queueName = 'test_queue') {
     return producer;
 }
 
-before(function (done) {
-    this.sandbox = sinon.sandbox.create();
-    this.sandbox.getConsumer = getConsumer;
-    this.sandbox.getProducer = getProducer;
-    done();
-});
+function validateTime(actualTime, expectedTime, driftTolerance = 3000) {
+    return (actualTime >= expectedTime - driftTolerance) && (actualTime <= expectedTime + driftTolerance);
+}
 
-after(function (done) {
-    client.end(true);
-    done();
+before(function (done) {
+    this.timeout(160000);
+    const proceed = () => {
+        this.sandbox = sinon.sandbox.create();
+        this.sandbox.getConsumer = getConsumer;
+        this.sandbox.getProducer = getProducer;
+        this.sandbox.validateTime = validateTime;
+        done();
+    }
+    if (!redisClientInstance) {
+        redisClient.getNewInstance(config, (c) => {
+            redisClientInstance = c;
+            proceed();
+        });
+    } else proceed();
 });
 
 beforeEach(function (done) {
     this.sandbox.restore();
-    client.flushall((err) => {
+    redisClientInstance.flushall((err) => {
         if (err) throw err;
         done();
     });
 });
 
 afterEach(function (done) {
-    this.timeout(40000);
+    this.timeout(160000);
     clean(consumersList, () => {
         clean(producersList, done);
     });
+});
+
+after(function (done) {
+    redisClientInstance.end(true);
+    done();
 });

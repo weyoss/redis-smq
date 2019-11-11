@@ -1,167 +1,94 @@
 'use strict';
 
-const heartBeat = require('./heartbeat');
+const Redlock = require('redlock');
+const redisClient = require('./redis-client');
 
-
-module.exports = (dispatcher, lockKey, tmpLockKey, retryPeriod = 2000) => {
-    const instanceId = dispatcher.getInstanceId();
-    const queueName = dispatcher.getQueueName();
-    const logger = dispatcher.getLogger();
-
+function lockManager(redisClientInstance) {
     const states = {
-        ACQUIRED: 2,
-        ACQUIRING: 3,
-        RELEASED: 4,
-        RELEASING: 5,
+        UP: 1,
+        DOWN: 0,
     };
+    let redlock = new Redlock([redisClientInstance]);
+    let acquiredLock = null;
+    let timer = 0;
+    let state = states.UP;
 
-    /**
-     *
-     * @type {number}
-     */
-    let state = states.RELEASED;
-
-    /**
-     *
-     * @type {object|null}
-     */
-    let redisClient = null;
-
-    /**
-     *
-     * @type {number|null}
-     */
-    let timer = null;
-
-
-    /**
-     *
-     * @param {string} message
-     */
-    function debug(message) {
-        logger.debug({ lockManager: true, lockKey }, message);
-    }
-
-    /**
-     *
-     * @param {function} cb
-     */
-    function lockNX(cb) {
-        const onGCLock = (err) => {
-            if (err) cb(err);
-            else if (state === states.ACQUIRING) {
-                state = states.ACQUIRED;
-                debug('Lock acquired!');
-                cb();
-            } else cb(new Error('UNEXPECTED_STATE'));
+    function acquireLock(lockKey, ttl, cb) {
+        const retry = (err) => {
+            if (err && err.name !== 'LockError') cb(err);
+            else {
+                acquiredLock = null;
+                timer = setTimeout(() => {
+                    acquireLock(lockKey, ttl, cb);
+                }, 1000);
+            }
         };
-        const onGCTmpLock = (err, success) => {
-            if (err) cb(err);
-            else if (success) redisClient.set(lockKey, instanceId, onGCLock);
-            else acquireLockRetry(cb);
-        };
-        redisClient.set(tmpLockKey, instanceId, 'NX', 'EX', 60, onGCTmpLock);
-    }
-
-    /**
-     *
-     * @param {function} cb
-     */
-    function acquireLock(cb) {
-        debug('Trying to acquire a lock...');
-        const onConsumerOnline = (err, online) => {
-            if (err) cb(err);
-            else if (online) acquireLockRetry(cb);
-            else lockNX(cb);
-        };
-        const onGCLock = (err, id) => {
-            if (err) cb(err);
-            else if (id) {
-                heartBeat.isOnline(redisClient, queueName, id, onConsumerOnline);
+        if (state === states.UP) {
+            if (acquiredLock) {
+                acquiredLock.extend(ttl, (err, lock) => {
+                    if (err) retry(err);
+                    else {
+                        acquiredLock = lock;
+                        cb();
+                    }
+                });
             } else {
-                lockNX(cb);
+                redlock.lock(lockKey, ttl, (err, lock) => {
+                    if (err) retry(err);
+                    else {
+                        acquiredLock = lock;
+                        cb();
+                    }
+                });
             }
-        };
-        redisClient.get(lockKey, onGCLock);
+        } else cb(new Error('Lock manager is down.'));
     }
 
-    /**
-     *
-     * @param cb
-     */
     function releaseLock(cb) {
-        debug('Releasing lock...');
-        const success = () => {
-            if (state === states.RELEASING) {
-                state = states.RELEASED;
-                debug('Lock released!');
-                cb();
-            } else cb(new Error('UNEXPECTED_STATE'));
-        };
-        const onTmpLockKeyDeleted = (err) => {
-            if (err) cb(err);
-            else success();
-        };
-        const onTmpLock = (err, key) => {
-            if (err) cb(err);
-            else if (key === instanceId) redisClient.del(tmpLockKey, onTmpLockKeyDeleted);
-            else success();
-        };
-        const onLockKeyDeleted = (err) => {
-            if (err) cb(err);
-            else redisClient.get(tmpLockKey, onTmpLock);
-        };
-        redisClient.del(lockKey, onLockKeyDeleted);
+        clearTimeout(timer);
+        if (!acquiredLock) cb();
+        else {
+            acquiredLock.unlock((err) => {
+                if (err && err.name !== 'LockError') cb(err);
+                else {
+                    acquiredLock = null;
+                    cb();
+                }
+            });
+        }
     }
 
-    /**
-     *
-     * @param {function} cb
-     */
-    function acquireLockRetry(cb) {
-        if (state === states.ACQUIRING) {
-            timer = setTimeout(() => {
-                acquireLock(cb);
-            }, retryPeriod);
-        } else cb(new Error('UNEXPECTED_STATE'));
+    function quit(cb) {
+        state = states.DOWN;
+        if (!redlock) cb();
+        else {
+            releaseLock((err) => {
+                if (err) cb(err);
+                else {
+                    redlock.quit(() => {
+                        redlock = null;
+                        cb();
+                    });
+                }
+            });
+        }
     }
-    
+
     return {
-        /**
-         *
-         * @param cb
-         */
-        acquire(cb) {
-            if (state === states.ACQUIRED) cb();
-            else if (state === states.ACQUIRING) cb(new Error('Acquiring lock operation is pending'));
-            else if (state === states.RELEASING) cb(new Error('Releasing lock operation is pending'));
-            else {
-                state = states.ACQUIRING;
-                acquireLock(cb);
-            }
+        isLocked() {
+            return (acquiredLock !== null);
         },
-
-        /**
-         *
-         * @param cb
-         */
-        release(cb) {
-            if (state === states.RELEASED) cb();
-            else if (state === states.RELEASING) cb(new Error('Releasing lock is pending'));
-            else {
-                state = states.RELEASING;
-                if (timer) clearTimeout(timer);
-                if (state === states.ACQUIRED) releaseLock(cb);
-                else cb();
-            }
-        },
-
-        /**
-         *
-         * @param client
-         */
-        setRedisClient(client) {
-            redisClient = client;
-        },
+        acquireLock,
+        releaseLock,
+        quit,
     };
+}
+
+lockManager.getInstance = (config, cb) => {
+    redisClient.getNewInstance(config, (c) => {
+        const instance = lockManager(c);
+        cb(instance);
+    });
 };
+
+module.exports = lockManager;

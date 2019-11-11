@@ -10,7 +10,7 @@ chai.use(sinonChai);
 describe('Test 11: A message is delivered only once to one consumer', function() {
 
     it('is OK', function (done) {
-        this.timeout(20000);
+        this.timeout(160000);
         const producer = this.sandbox.getProducer();
 
         // First consumer

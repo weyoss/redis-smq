@@ -10,7 +10,7 @@ chai.use(sinonChai);
 describe('Test 1: A consumer is idle given no messages are produced', function() {
 
     it('is OK', function (done) {
-        this.timeout(20000);
+        this.timeout(160000);
         const consumer = this.sandbox.getConsumer();
         const consume = this.sandbox.spy(consumer, 'consume');
         consumer.once('idle', () => {

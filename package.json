@@ -6,30 +6,30 @@
   "dependencies": {
     "bunyan": "1.8.10",
     "cron-parser": "2.5.0",
-    "koa": "2.2.0",
-    "koa-send": "4.1.0",
-    "koa-static": "3.0.0",
-    "redis": "2.7.1",
-    "socket.io": "2.0.3",
-    "uuid": "3.0.1"
+    "ioredis": "4.14.1",
+    "lodash": "4.17.15",
+    "redis": "2.8.0",
+    "redlock": "4.1.0",
+    "uuid": "3.0.1",
+    "redis-smq-monitor": "1"
   },
   "devDependencies": {
     "chai": "3.5.0",
-    "eslint": "3.15.0",
-    "eslint-config-airbnb-base": "11.1.0",
-    "eslint-config-google": "0.7.1",
-    "eslint-config-standard": "6.2.1",
-    "eslint-plugin-import": "2.2.0",
-    "eslint-plugin-promise": "3.4.1",
-    "eslint-plugin-standard": "2.0.1",
+    "eslint": "6.6.0",
+    "eslint-config-airbnb-base": "14.0.0",
+    "eslint-config-google": "0.14.0",
+    "eslint-config-standard": "14.1.0",
+    "eslint-plugin-import": "2.18.2",
+    "eslint-plugin-promise": "4.2.1",
+    "eslint-plugin-standard": "4.0.1",
     "mocha": "5.2.0",
     "sinon": "1.17.7",
     "sinon-chai": "2.11.0"
   },
   "scripts": {
     "test": "eslint --ignore-path .jshintignore src/*.js && NODE_ENV=test mocha  --reporter --harmony spec test/run/*.js",
-    "lint": "eslint --ignore-path .jshintignore src/monitor/assets src/*.js",
-    "fix": "eslint --ignore-path .jshintignore src/monitor/assets src --fix"
+    "lint": "eslint --ignore-path .jshintignore src/*.js",
+    "fix": "eslint --ignore-path .jshintignore src/*.js --fix"
   },
   "author": "Weyoss <weyoss@protonmail.com>",
   "license": "MIT",

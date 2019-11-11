@@ -1,10 +1,9 @@
 'use strict';
 
-const redisSMQ = require('redis-smq');
+const config = require('./config');
+const { Consumer } = require('../'); // replace with require('redis-smq)
 
-const Consumer = redisSMQ.Consumer;
-
-class TestQueueConsumer extends Consumer {
+class Ns2TestQueueConsumer extends Consumer {
 
     /**
      *
@@ -24,6 +23,18 @@ class TestQueueConsumer extends Consumer {
     }
 }
 
-TestQueueConsumer.queueName = 'test_queue';
+// Don't forget to set the queue name
+Ns2TestQueueConsumer.queueName = 'test_queue';
 
-module.exports = TestQueueConsumer;
+//
+const newConfig = { ...config };
+newConfig.namespace = 'ns2';
+
+const consumer = new Ns2TestQueueConsumer(newConfig, { messageConsumeTimeout: 2000 });
+consumer.run();
+
+/*
+setTimeout(() => {
+    consumer.stop();
+}, 2000);
+*/

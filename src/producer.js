@@ -1,6 +1,6 @@
 'use strict';
 
-const EventEmitter = require('events').EventEmitter;
+const { EventEmitter } = require('events');
 const uuid = require('uuid/v4');
 const dispatcher = require('./dispatcher');
 const Message = require('./message');

@@ -11,30 +11,31 @@ chai.use(sinonChai);
 describe('Test 14: Produce and consume a delayed message with scheduledCRON/scheduledRepeat/scheduledPeriod parameters', function() {
 
     it('Case 1: is OK', function (done) {
-        this.timeout(60000);
+        this.timeout(160000);
         const producer = this.sandbox.getProducer();
         const consumer = this.sandbox.getConsumer();
+        const validateTime = this.sandbox.validateTime;
         let createdAt = null;
         let callCount = 0;
         let first = null;
 
         this.sandbox.stub(consumer, 'consume', (msg, cb) => {
-            const diff = Math.floor((Date.now() - createdAt) / 1000);
+            const diff = Date.now() - createdAt;
             cb();
 
             callCount += 1;
             if (callCount === 1) {
                 first = diff;
             } else if (callCount === 2) {
-                expect(first + 3 === diff).to.be.true;
+                expect(validateTime(diff, first + 3000)).to.be.true;
             } else if (callCount === 3) {
-                expect(first + 6 === diff).to.be.true;
+                expect(validateTime(diff, first + 6000)).to.be.true;
             } else if (callCount === 4) {
-                expect(first + 9 === diff).to.be.true;
+                expect(validateTime(diff, first + 9000)).to.be.true;
             } else if (callCount === 5) {
-                expect(first + 12 === diff).to.be.true;
+                expect(validateTime(diff, first + 12000)).to.be.true;
             } else if (callCount === 6) {
-                expect(first + 15 === diff).to.be.true;
+                expect(validateTime(diff, first + 15000)).to.be.true;
             } else {
                 done();
             }
@@ -54,26 +55,28 @@ describe('Test 14: Produce and consume a delayed message with scheduledCRON/sche
     });
 
     it('Case 2: is OK', function (done) {
-        this.timeout(60000);
+        this.timeout(160000);
         const producer = this.sandbox.getProducer();
         const consumer = this.sandbox.getConsumer();
+        const validateTime = this.sandbox.validateTime;
+
         let createdAt = null;
         let callCount = 0;
         let first = null;
 
         this.sandbox.stub(consumer, 'consume', (msg, cb) => {
-            const diff = Math.floor((Date.now() - createdAt) / 1000);
+            const diff = Date.now() - createdAt;
             cb();
 
             callCount += 1;
             if (callCount === 1) {
                 first = diff;
             } else if (callCount === 2) {
-                expect(first + 6 === diff).to.be.true;
+                expect(validateTime(diff, first + 6000)).to.be.true;
             } else if (callCount === 3) {
-                expect(first + 12 === diff).to.be.true;
+                expect(validateTime(diff, first + 12000)).to.be.true;
             } else if (callCount === 4) {
-                expect(first + 18 === diff).to.be.true;
+                expect(validateTime(diff, first + 18000)).to.be.true;
             } else {
                 done();
             }
@@ -93,30 +96,32 @@ describe('Test 14: Produce and consume a delayed message with scheduledCRON/sche
     });
 
     it('Case 3: is OK', function (done) {
-        this.timeout(60000);
+        this.timeout(160000);
         const producer = this.sandbox.getProducer();
         const consumer = this.sandbox.getConsumer();
+        const validateTime = this.sandbox.validateTime;
+
         let createdAt = null;
         let callCount = 0;
         let first = null;
 
         this.sandbox.stub(consumer, 'consume', (msg, cb) => {
-            const diff = Math.floor((Date.now() - createdAt) / 1000);
+            const diff = Date.now() - createdAt;
             cb();
 
             callCount += 1;
             if (callCount === 1) {
                 first = diff;
             } else if (callCount === 2) {
-                expect(first + 3 === diff).to.be.true;
+                expect(validateTime(diff, first + 3000)).to.be.true;
             } else if (callCount === 3) {
-                expect(first + 6 === diff).to.be.true;
+                expect(validateTime(diff, first + 6000)).to.be.true;
             } else if (callCount === 4) {
-                expect(first + 20 === diff).to.be.true;
+                expect(validateTime(diff, first + 20000)).to.be.true;
             } else if (callCount === 5) {
-                expect(first + 23 === diff).to.be.true;
+                expect(validateTime(diff, first + 23000)).to.be.true;
             } else if (callCount === 6) {
-                expect(first + 26 === diff).to.be.true;
+                expect(validateTime(diff, first + 26000)).to.be.true;
             } else {
                 done();
             }
@@ -142,19 +147,21 @@ describe('Test 14: Produce and consume a delayed message with scheduledCRON/sche
         this.timeout(160000);
         const producer = this.sandbox.getProducer();
         const consumer = this.sandbox.getConsumer();
+        const validateTime = this.sandbox.validateTime;
+
         let createdAt = null;
         let callCount = 0;
         let first = null;
 
         this.sandbox.stub(consumer, 'consume', (msg, cb) => {
-            const diff = Math.floor((Date.now() - createdAt) / 1000);
+            const diff = Date.now() - createdAt;
             cb();
 
             callCount += 1;
             if (callCount === 1) {
                 first = diff;
             } else if (callCount === 2) {
-                expect(first + 20 === diff).to.be.true;
+                expect(validateTime(diff, first + 20000)).to.be.true;
             } else {
                 done();
             }

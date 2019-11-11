@@ -10,7 +10,7 @@ chai.use(sinonChai);
 describe('Test 7: A consumer re-queues and consumes again a failed message when threshold not exceeded', function() {
 
     it('is OK', function (done) {
-        this.timeout(20000);
+        this.timeout(160000);
         const producer = this.sandbox.getProducer();
         const consumer = this.sandbox.getConsumer();
 
@@ -32,11 +32,13 @@ describe('Test 7: A consumer re-queues and consumes again a failed message when 
             consumedCount += 1;
         });
 
-        consumer.once('idle', () => {
-            expect(queuedCount).to.eq(1);
-            expect(consumedCount).to.eq(1);
-            done();
-        });
+        setTimeout(() => {
+            consumer.once('idle', () => {
+                expect(queuedCount).to.eq(1);
+                expect(consumedCount).to.eq(1);
+                done();
+            });
+        }, 10000);
 
         producer.produce({ hello: 'world' }, (err) => {
             if (err) throw err;

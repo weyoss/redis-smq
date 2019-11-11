@@ -10,7 +10,7 @@ chai.use(sinonChai);
 describe('Test 6: When consuming a mesage, a consumer does time out after messageConsumeTimeout exceeds and re-queues the message to be consumed again', function() {
 
     it('is OK', function (done) {
-        this.timeout(20000);
+        this.timeout(160000);
         const producer = this.sandbox.getProducer('test_queue');
         const consumer = this.sandbox.getConsumer('test_queue', { messageConsumeTimeout: 2000 });
 

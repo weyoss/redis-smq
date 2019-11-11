@@ -2,8 +2,8 @@
 
 const redisKeys = require('./redis-keys');
 const redisClient = require('./redis-client');
+const lockManager = require('./lock-manager');
 const heartBeat = require('./heartbeat');
-const lockManagerFn = require('./lock-manager');
 const Message = require('./message');
 const util = require('./util');
 
@@ -11,24 +11,45 @@ const GC_INSPECTION_INTERVAL = 1000; // in ms
 
 /**
  *
- * @param {object} dispatcher
- * @returns {object}
+ * @param dispatcher
  */
 function garbageCollector(dispatcher) {
     const instanceId = dispatcher.getInstanceId();
-    const config = dispatcher.getConfig();
     const events = dispatcher.getEvents();
     const keys = dispatcher.getKeys();
-    const { keyQueueName, keyQueueNameProcessingCommon, keyQueueNameDead, keyGCLock, keyGCLockTmp } = keys;
-
+    const {
+        keyQueueName,
+        keyQueueNameProcessingCommon,
+        keyQueueNameDead,
+        keyGCLock,
+    } = keys;
     const logger = dispatcher.getLogger();
-    const lockManager = lockManagerFn(dispatcher, keyGCLock, keyGCLockTmp);
+    const states = {
+        UP: 1,
+        DOWN: 0,
+    };
+
+    /**
+     * @type {null|function}
+     */
+    let shutdownNow = null;
 
     /**
      *
-     * @type {(object|null)}
+     * @type {null|object}
      */
-    let client = null;
+    let lockManagerInstance = null;
+
+    /**
+     *
+     * @type {null|object}
+     */
+    let redisClientInstance = null;
+
+    /**
+     *
+     */
+    let state = states.DOWN;
 
     /**
      *
@@ -57,31 +78,31 @@ function garbageCollector(dispatcher) {
             const segments = redisKeys.getKeySegments(processingQueueName);
             if (segments.consumerId !== instanceId) {
                 const purgeProcessingQueue = (name) => {
-                    util.purgeProcessingQueue(client, name, (err) => {
+                    util.purgeProcessingQueue(redisClientInstance, name, (err) => {
                         if (err) dispatcher.error(err);
                     });
                 };
-                const onMessageCollected = (err) => {
+                const collectMessageCallback = (err) => {
                     if (err) dispatcher.error(err);
                     else {
                         if (deadConsumer) purgeProcessingQueue(processingQueueName);
                         collectProcessingQueuesMessages(queues, done);
                     }
                 };
-                const onRange = (err, range) => {
+                const lrangeCallback = (err, range) => {
                     if (err) dispatcher.error(err);
                     else if (range.length) {
                         const message = new Message(range[0]);
                         const uuid = message.getId();
                         debug(`Collecting message [${uuid}]...`);
                         if (hasExpired(message)) {
-                            collectExpiredMessage(message, processingQueueName, onMessageCollected);
+                            collectExpiredMessage(message, processingQueueName, collectMessageCallback);
                         } else {
-                            collectMessage(message, processingQueueName, onMessageCollected);
+                            collectMessage(message, processingQueueName, collectMessageCallback);
                         }
-                    } else onMessageCollected();
+                    } else collectMessageCallback();
                 };
-                const onConsumerOnline = (err, online) => {
+                const isOnlineCallback = (err, online) => {
                     if (err) dispatcher.err(err);
                     else if (online) {
                         debug(`Consumer ID [${segments.consumerId}] is alive!`);
@@ -89,11 +110,15 @@ function garbageCollector(dispatcher) {
                     } else {
                         deadConsumer = true;
                         debug(`Consumer ID [${segments.consumerId}] seems to be dead. Fetching queue message...`);
-                        client.lrange(processingQueueName, 0, 0, onRange);
+                        redisClientInstance.lrange(processingQueueName, 0, 0, lrangeCallback);
                     }
                 };
                 debug(`Is consumer ID [${segments.consumerId}] alive?`);
-                heartBeat.isOnline(client, segments.queueName, segments.consumerId, onConsumerOnline);
+                heartBeat.isOnline({
+                    client: redisClientInstance,
+                    queueName: segments.queueName,
+                    id: segments.consumerId,
+                }, isOnlineCallback);
             } else {
                 debug('Skipping self consumer instance ID...');
                 collectProcessingQueuesMessages(queues, done);
@@ -105,35 +130,38 @@ function garbageCollector(dispatcher) {
      *
      */
     function runInspectionTimer() {
-        if (dispatcher.isRunning()) {
-            debug(`Waiting for ${GC_INSPECTION_INTERVAL} before a new iteration...`);
-            timer = setTimeout(() => {
-                debug('Time is up...');
-                inspectProcessingQueues();
-            }, GC_INSPECTION_INTERVAL);
-        }
+        debug(`Waiting for ${GC_INSPECTION_INTERVAL} before a new iteration...`);
+        timer = setTimeout(() => {
+            debug('Time is up...');
+            if (shutdownNow) shutdownNow();
+            else inspectProcessingQueues();
+        }, GC_INSPECTION_INTERVAL);
     }
 
     /**
      *
      */
     function inspectProcessingQueues() {
-        lockManager.acquire((err) => {
-            if (err) dispatcher.error(err);
-            else {
-                debug('Inspecting processing queues...');
-                util.getProcessingQueuesOf(client, keyQueueNameProcessingCommon, (e, result) => {
-                    if (e) dispatcher.error(e);
-                    else if (result && result.length) {
-                        debug(`Found [${result.length}] processing queues`);
-                        collectProcessingQueuesMessages(result, runInspectionTimer);
-                    } else {
-                        debug('No processing queues found');
-                        runInspectionTimer();
-                    }
-                });
-            }
-        });
+        if (state === states.UP) {
+            lockManagerInstance.acquireLock(keyGCLock, 10000, (err) => {
+                if (err) dispatcher.error(err);
+
+                // after a lock has been acquired, the gc could be shutdown
+                else if (state === states.UP) {
+                    debug('Inspecting processing queues...');
+                    util.getProcessingQueuesOf(redisClientInstance, keyQueueNameProcessingCommon, (e, result) => {
+                        if (e) dispatcher.error(e);
+                        else if (result && result.length) {
+                            debug(`Found [${result.length}] processing queues`);
+                            collectProcessingQueuesMessages(result, runInspectionTimer);
+                        } else {
+                            debug('No processing queues found');
+                            runInspectionTimer();
+                        }
+                    });
+                }
+            });
+        }
     }
 
     /**
@@ -155,7 +183,7 @@ function garbageCollector(dispatcher) {
         let delayed = false;
         let requeued = false;
 
-        const multi = client.multi();
+        const multi = redisClientInstance.multi();
 
         /**
          * Only exceptions from non periodic messages are handled.
@@ -209,7 +237,7 @@ function garbageCollector(dispatcher) {
                 }
             });
         } else {
-            client.rpop(processingQueue, cb);
+            redisClientInstance.rpop(processingQueue, cb);
         }
     }
 
@@ -223,7 +251,7 @@ function garbageCollector(dispatcher) {
         const id = message.getId();
         debug(`Processing expired message [${id}]...`);
         // Just pop it out
-        client.rpop(processingQueue, (err) => {
+        redisClientInstance.rpop(processingQueue, (err) => {
             if (err) dispatcher.error(err);
             else {
                 cb();
@@ -261,18 +289,37 @@ function garbageCollector(dispatcher) {
 
     return {
         start() {
-            client = redisClient.getNewInstance(config);
-            lockManager.setRedisClient(client);
-            inspectProcessingQueues();
+            if (state === states.DOWN) {
+                const config = dispatcher.getConfig();
+                lockManager.getInstance(config, (l) => {
+                    lockManagerInstance = l;
+                    redisClient.getNewInstance(config, (c) => {
+                        redisClientInstance = c;
+                        state = states.UP;
+                        dispatcher.emit(events.GC_STARTED);
+                        inspectProcessingQueues();
+                    });
+                });
+            }
         },
 
         stop() {
-            if (timer) clearTimeout(timer);
-            lockManager.release(() => {
-                client.end(true);
-                client = null;
-                dispatcher.emit(events.GC_HALT);
-            });
+            if (state === states.UP && !shutdownNow) {
+                shutdownNow = () => {
+                    if (timer) clearTimeout(timer);
+                    lockManagerInstance.quit(() => {
+                        lockManagerInstance = null;
+                        redisClientInstance.end(true);
+                        redisClientInstance = null;
+                        shutdownNow = null;
+                        state = states.DOWN;
+                        dispatcher.emit(events.GC_HALT);
+                    });
+                };
+                if (!lockManagerInstance.isLocked()) {
+                    shutdownNow();
+                }
+            }
         },
 
         collectMessage,

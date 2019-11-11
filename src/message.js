@@ -348,4 +348,3 @@ Message.PROPERTY_DELAYED = 'delayed';
 
 
 module.exports = Message;
-

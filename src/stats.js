@@ -3,9 +3,9 @@
 const redisClient = require('./redis-client');
 
 /**
- * 
+ *
  * @param dispatcher
- * @return {*}
+ * @constructor
  */
 function stats(dispatcher) {
     const inputSlots = new Array(1000).fill(0);
@@ -14,63 +14,70 @@ function stats(dispatcher) {
     const unacknowledgedSlots = new Array(1000).fill(0);
     const keys = dispatcher.getKeys();
     const events = dispatcher.getEvents();
-    const config = dispatcher.getConfig();
     const noop = () => {};
-    let client = null;
+    const states = {
+        UP: 1,
+        DOWN: 0,
+    };
     let inputRate = 0;
     let processingRate = 0;
     let acknowledgedRate = 0;
     let unacknowledgedRate = 0;
+    let redisClientInstance = null;
     let timer = null;
+    let state = states.DOWN;
+    let shutdownNow = null;
+    let consumerIdle = [];
 
-    /**
-     *
-     */
-    function runProducerStats() {
+    function runStats(fn) {
         timer = setInterval(() => {
-            if (dispatcher.isRunning()) {
-                const now = Date.now();
-                inputRate = inputSlots.reduce((acc, cur) => acc + cur, 0);
-                inputSlots.fill(0);
-                client.hset(keys.keyRate, keys.keyRateInput, `${inputRate}|${now}`, noop);
-            }
+            if (shutdownNow) shutdownNow();
+            else fn();
         }, 1000);
     }
 
     /**
      *
      */
-    function runConsumerStats() {
-        let idle = 0;
-        timer = setInterval(() => {
-            if (dispatcher.isRunning()) {
-                const now = Date.now();
-                processingRate = processingSlots.reduce((acc, cur) => acc + cur, 0);
-                processingSlots.fill(0);
-                acknowledgedRate = acknowledgedSlots.reduce((acc, cur) => acc + cur, 0);
-                acknowledgedSlots.fill(0);
-                unacknowledgedRate = unacknowledgedSlots.reduce((acc, cur) => acc + cur, 0);
-                unacknowledgedSlots.fill(0);
-                if (dispatcher.isTest()) {
-                    if (processingRate === 0 && acknowledgedRate === 0 && unacknowledgedRate === 0) idle += 1;
-                    else idle = 0;
-                    if (idle > 5) {
-                        idle = 0;
-                        dispatcher.emit(events.IDLE);
-                    }
-                }
-                client.hmset(
-                    keys.keyRate,
-                    keys.keyRateProcessing, `${processingRate}|${now}`,
-                    keys.keyRateAcknowledged, `${acknowledgedRate}|${now}`,
-                    keys.keyRateUnacknowledged, `${unacknowledgedRate}|${now}`,
-                    noop);
+    function producerStats() {
+        if (state === states.UP) {
+            const now = Date.now();
+            inputRate = inputSlots.reduce((acc, cur) => acc + cur, 0);
+            inputSlots.fill(0);
+            redisClientInstance.hset(keys.keyRate, keys.keyRateInput, `${inputRate}|${now}`, noop);
+        }
+    }
+
+    /**
+     *
+     */
+    function consumerStats() {
+        if (state === states.UP) {
+            const now = Date.now();
+            processingRate = processingSlots.reduce((acc, cur) => acc + cur, 0);
+            processingSlots.fill(0);
+            acknowledgedRate = acknowledgedSlots.reduce((acc, cur) => acc + cur, 0);
+            acknowledgedSlots.fill(0);
+            unacknowledgedRate = unacknowledgedSlots.reduce((acc, cur) => acc + cur, 0);
+            unacknowledgedSlots.fill(0);
+            if (processingRate === 0 && acknowledgedRate === 0 && unacknowledgedRate === 0) consumerIdle.push(1);
+            else consumerIdle.push(0);
+            if (consumerIdle.length === 5) {
+                const r = consumerIdle.find((i) => i === 0);
+                if (r === undefined) dispatcher.emit(events.IDLE);
+                consumerIdle = [];
             }
-        }, 1000);
+            redisClientInstance.hmset(
+                keys.keyRate,
+                keys.keyRateProcessing, `${processingRate}|${now}`,
+                keys.keyRateAcknowledged, `${acknowledgedRate}|${now}`,
+                keys.keyRateUnacknowledged, `${unacknowledgedRate}|${now}`,
+                noop,
+            );
+        }
     }
 
     return {
-
         /**
          *
          */
@@ -108,10 +115,15 @@ function stats(dispatcher) {
          * @returns {boolean}
          */
         start() {
-            client = redisClient.getNewInstance(config);
-            if (dispatcher.isConsumer()) runConsumerStats();
-            else runProducerStats();
-            return true;
+            if (state === states.DOWN) {
+                redisClient.getNewInstance(dispatcher.getConfig(), (c) => {
+                    redisClientInstance = c;
+                    state = states.UP;
+                    if (dispatcher.isConsumer()) runStats(consumerStats);
+                    else runStats(producerStats);
+                    dispatcher.emit(events.STATS_STARTED);
+                });
+            }
         },
 
         /**
@@ -119,10 +131,15 @@ function stats(dispatcher) {
          * @returns {boolean}
          */
         stop() {
-            if (timer) clearInterval(timer);
-            client.end(true);
-            client = null;
-            dispatcher.emit(events.STATS_HALT);
+            if (state === states.UP && !shutdownNow) {
+                shutdownNow = () => {
+                    state = states.DOWN;
+                    if (timer) clearInterval(timer);
+                    redisClientInstance.end(true);
+                    redisClientInstance = null;
+                    dispatcher.emit(events.STATS_HALT);
+                };
+            }
         },
     };
 }

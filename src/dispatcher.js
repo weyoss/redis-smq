@@ -1,11 +1,13 @@
 'use strict';
 
+const { fork } = require('child_process');
+const path = require('path');
 const uuid = require('uuid/v4');
 const redisKeys = require('./redis-keys');
 const util = require('./util');
-const schedulerFn = require('./scheduler');
-const garbageCollectorFn = require('./gc');
-const statsFn = require('./stats');
+const scheduler = require('./scheduler');
+const garbageCollector = require('./gc');
+const stats = require('./stats');
 const redisClient = require('./redis-client');
 const logger = require('./logger');
 const heartBeat = require('./heartbeat');
@@ -34,16 +36,23 @@ const events = {
     MESSAGE_DELAYED: 'message.delayed',
     MESSAGE_DEAD_LETTER: 'message.moved_to_dlq',
     MESSAGE_DESTROYED: 'message.destroyed',
+    HEARTBEAT_STARTED: 'heartbeat.started',
     HEARTBEAT_HALT: 'heartbeat.halt',
+    GC_STARTED: 'gc.started',
     GC_HALT: 'gc.halt',
+    STATS_STARTED: 'stats.started',
     STATS_HALT: 'stats.halt',
+    SCHEDULER_STARTED: 'scheduler.started',
     SCHEDULER_HALT: 'scheduler.halt',
     HALT: 'halt',
     ERROR: 'error',
     IDLE: 'idle',
+    UP: 'up',
+    GOING_UP: 'going_up',
+    GOING_DOWN: 'going_down',
 };
 
-module.exports = () => {
+module.exports = function dispatcher() {
     let queueName = null;
 
     let redisClientInstance = null;
@@ -60,11 +69,13 @@ module.exports = () => {
 
     let keys = null;
 
-    let gc = null;
+    let garbageCollectorInstance = null;
 
-    let stats = null;
+    let statsInstance = null;
 
-    let consumerHeartBeat = null;
+    let statsAggregatorThread = null;
+
+    let heartBeatInstance = null;
 
     let consumerMessageConsumeTimeout = 0;
 
@@ -80,15 +91,17 @@ module.exports = () => {
 
     let isTest = null;
 
+    let startupFiredEvents = [];
+
     let shutdownFiredEvents = [];
 
-    let scheduler = null;
+    let schedulerInstance = null;
 
     /**
      *
-     * @param dispatcher
+     * @param dispatcherInstance
      */
-    function setupCommon(dispatcher) {
+    function setupCommon(dispatcherInstance) {
         if (config.hasOwnProperty('namespace')) {
             redisKeys.setNamespace(config.namespace);
         }
@@ -100,35 +113,10 @@ module.exports = () => {
         instance.isTest = isTest;
 
         redisKeys.validateKeyPart(queueName);
-        keys = redisKeys.getKeys(dispatcher);
+        keys = redisKeys.getKeys(dispatcherInstance);
 
         setupLogger();
-        setupMonitor(dispatcher);
-        setupScheduler(dispatcher);
-    }
-
-    /**
-     *
-     * @param dispatcher
-     */
-    function setUpGarbageCollector(dispatcher) {
-        gc = garbageCollectorFn(dispatcher);
-    }
-
-    /**
-     *
-     */
-    function setupRedisClient() {
-        redisClientInstance = redisClient.getNewInstance(config);
-    }
-
-    /**
-     *
-     * @param dispatcher
-     */
-    function setupMonitor(dispatcher) {
-        const enabled = !!(config.monitor && config.monitor.enabled);
-        if (enabled) stats = statsFn(dispatcher);
+        registerRuntimeEvents(dispatcherInstance);
     }
 
     /**
@@ -140,39 +128,125 @@ module.exports = () => {
 
     /**
      *
-     * @param dispatcher
      */
-    function setupConsumerHeartBeat(dispatcher) {
-        consumerHeartBeat = heartBeat(dispatcher);
+    function setupRedisClient(cb) {
+        redisClient.getNewInstance(config, (c) => {
+            redisClientInstance = c;
+            instance.on(events.GOING_DOWN, () => {
+                redisClientInstance.end(true);
+                redisClientInstance = null;
+            });
+            cb();
+        });
     }
 
     /**
      *
-     * @param dispatcher
+     * @param dispatcherInstance
      */
-    function setupConsumerEvents(dispatcher) {
+    function setupGarbageCollector(dispatcherInstance) {
+        garbageCollectorInstance = garbageCollector(dispatcherInstance);
+        instance.on(events.GOING_UP, () => {
+            garbageCollectorInstance.start();
+        });
+        instance.on(events.GOING_DOWN, () => {
+            garbageCollectorInstance.stop();
+        });
+    }
+
+    /**
+     *
+     * @param dispatcherInstance
+     */
+    function setupStats(dispatcherInstance) {
+        const enabled = !!(config.monitor && config.monitor.enabled);
+        if (enabled) {
+            statsInstance = stats(dispatcherInstance);
+            instance.on(events.GOING_UP, () => {
+                statsInstance.start();
+            });
+            instance.on(events.GOING_DOWN, () => {
+                statsInstance.stop();
+            });
+            if (dispatcherInstance.isConsumer()) {
+                statsAggregatorThread = fork(path.resolve(path.resolve(`${__dirname}/stats-aggregator.js`)));
+                statsAggregatorThread.on('error', (err) => {
+                    handleError(err);
+                });
+                statsAggregatorThread.on('exit', (code, signal) => {
+                    const err = new Error(`statsAggregatorThread exited with code ${code} and signal ${signal}`);
+                    handleError(err);
+                });
+                instance.on(events.GOING_UP, () => {
+                    statsAggregatorThread.send(JSON.stringify(config));
+                });
+                instance.on(events.GOING_DOWN, () => {
+                    statsAggregatorThread.kill('SIGHUP');
+                    statsAggregatorThread = null;
+                });
+            }
+        }
+    }
+
+    /**
+     *
+     * @param dispatcherInstance
+     */
+    function setupConsumerHeartBeat(dispatcherInstance) {
+        heartBeatInstance = heartBeat(dispatcherInstance);
+        heartBeatInstance.start();
+        instance.on(events.GOING_UP, () => {
+            heartBeatInstance.start();
+        });
+        instance.on(events.GOING_DOWN, () => {
+            heartBeatInstance.stop();
+        });
+    }
+
+    /**
+     *
+     * @param dispatcherInstance
+     */
+    function registerRuntimeEvents(dispatcherInstance) {
+        instance.on(events.GC_STARTED, () => startupEventsHook(dispatcherInstance, events.GC_STARTED));
+        instance.on(events.HEARTBEAT_STARTED, () => startupEventsHook(dispatcherInstance, events.HEARTBEAT_STARTED));
+        instance.on(events.STATS_STARTED, () => startupEventsHook(dispatcherInstance, events.STATS_STARTED));
+        instance.on(events.SCHEDULER_STARTED, () => startupEventsHook(dispatcherInstance, events.SCHEDULER_STARTED));
+        instance.on(events.SCHEDULER_HALT, () => shutdownEventsHook(dispatcherInstance, events.SCHEDULER_HALT));
+        instance.on(events.STATS_HALT, () => shutdownEventsHook(dispatcherInstance, events.STATS_HALT));
+        instance.on(events.HEARTBEAT_HALT, () => shutdownEventsHook(dispatcherInstance, events.HEARTBEAT_HALT));
+        instance.on(events.GC_HALT, () => shutdownEventsHook(dispatcherInstance, events.GC_HALT));
+    }
+
+    /**
+     *
+     * @param dispatcherInstance
+     */
+    function registerConsumerEvents(dispatcherInstance) {
         instance
             .on(events.MESSAGE_NEXT, () => {
-                if (dispatcher.isRunning()) dispatcher.getNextMessage();
+                if (dispatcherInstance.isRunning()) dispatcherInstance.getNextMessage();
             })
 
             .on(events.MESSAGE_RECEIVED, (message) => {
                 if (state === states.UP) {
-                    if (gc.hasExpired(message)) dispatcher.emit(events.MESSAGE_EXPIRED, message);
-                    else dispatcher.consume(message);
+                    if (garbageCollectorInstance.hasExpired(message)) {
+                        dispatcherInstance.emit(events.MESSAGE_EXPIRED, message);
+                    } else dispatcherInstance.consume(message);
                 }
             })
 
             .on(events.MESSAGE_EXPIRED, (message) => {
                 loggerInstance.info(`Message [${message.uuid}] has expired`);
-                gc.collectExpiredMessage(
+                garbageCollectorInstance.collectExpiredMessage(
                     message,
                     keys.keyQueueNameProcessing,
                     () => {
-                        if (stats) stats.incrementAcknowledgedSlot();
+                        if (statsInstance) statsInstance.incrementAcknowledgedSlot();
                         loggerInstance.info(`Message [${message.uuid}] successfully processed`);
-                        dispatcher.emit(events.MESSAGE_NEXT);
-                    });
+                        dispatcherInstance.emit(events.MESSAGE_NEXT);
+                    },
+                );
             })
 
             .on(events.MESSAGE_ACKNOWLEDGED, () => {
@@ -180,8 +254,10 @@ module.exports = () => {
             })
 
             .on(events.MESSAGE_CONSUME_TIMEOUT, (message) => {
-                dispatcher.handleConsumeFailure(
-                    message, new Error(`Consumer timed out after [${consumerMessageConsumeTimeout}]`));
+                dispatcherInstance.handleConsumeFailure(
+                    message,
+                    new Error(`Consumer timed out after [${consumerMessageConsumeTimeout}]`),
+                );
             })
 
             /**
@@ -209,10 +285,12 @@ module.exports = () => {
             });
         };
         const processingQueue = () => {
-            util.rememberProcessingQueue(redisClientInstance, keyQueueNameProcessing, (err) => {
-                if (err) cb(err);
-                else dlQueue();
-            });
+            if (keyQueueNameProcessing) {
+                util.rememberProcessingQueue(redisClientInstance, keyQueueNameProcessing, (err) => {
+                    if (err) cb(err);
+                    else dlQueue();
+                });
+            } else dlQueue();
         };
         const dlQueue = () => {
             util.rememberDLQueue(redisClientInstance, keyQueueNameDead, (err) => {
@@ -225,37 +303,77 @@ module.exports = () => {
 
     /**
      *
-     * @param dispatcher
+     * @param dispatcherInstance
      */
-    function setupScheduler(dispatcher) {
-        scheduler = schedulerFn(dispatcher);
+    function setupScheduler(dispatcherInstance) {
+        schedulerInstance = scheduler(dispatcherInstance);
+        instance.on(events.GOING_UP, () => {
+            schedulerInstance.start();
+        });
+        instance.on(events.GOING_DOWN, () => {
+            schedulerInstance.stop();
+        });
     }
 
     /**
      *
-     * @param dispatcher
+     * @param dispatcherInstance
      * @param event
      */
-    function shutdownEventsHook(dispatcher, event) {
+    function shutdownEventsHook(dispatcherInstance, event) {
         shutdownFiredEvents.push(event);
         const down = () => {
-            state = states.DOWN;
             shutdownFiredEvents = [];
+            garbageCollectorInstance = null;
+            heartBeatInstance = null;
+            statsInstance = null;
+            schedulerInstance = null;
+            state = states.DOWN;
             instance.emit(events.HALT);
         };
-        if (dispatcher.isConsumer()) {
-            if (shutdownFiredEvents.includes(events.GC_HALT) &&
-                shutdownFiredEvents.includes(events.HEARTBEAT_HALT) &&
-                shutdownFiredEvents.includes(events.SCHEDULER_HALT) &&
-                (!stats || shutdownFiredEvents.includes(events.STATS_HALT))) {
+        if (dispatcherInstance.isConsumer()) {
+            if (shutdownFiredEvents.includes(events.GC_HALT)
+                && shutdownFiredEvents.includes(events.HEARTBEAT_HALT)
+                && shutdownFiredEvents.includes(events.SCHEDULER_HALT)
+                && (!statsInstance || shutdownFiredEvents.includes(events.STATS_HALT))) {
                 down();
             }
-        } else if (shutdownFiredEvents.includes(events.SCHEDULER_HALT) &&
-            (!stats && shutdownFiredEvents.includes(events.STATS_HALT))) {
+        } else if (shutdownFiredEvents.includes(events.SCHEDULER_HALT)
+            && (!statsInstance || shutdownFiredEvents.includes(events.STATS_HALT))) {
             down();
         }
     }
 
+    /**
+     *
+     * @param dispatcherInstance
+     * @param event
+     */
+    function startupEventsHook(dispatcherInstance, event) {
+        startupFiredEvents.push(event);
+        const up = () => {
+            startupFiredEvents = [];
+            state = states.UP;
+            instance.emit(events.UP);
+            instance.emit(events.MESSAGE_NEXT);
+        };
+        if (dispatcherInstance.isConsumer()) {
+            if (startupFiredEvents.includes(events.GC_STARTED)
+                && startupFiredEvents.includes(events.HEARTBEAT_STARTED)
+                && startupFiredEvents.includes(events.SCHEDULER_STARTED)
+                && (!statsInstance || startupFiredEvents.includes(events.STATS_STARTED))) {
+                up();
+            }
+        } else if (startupFiredEvents.includes(events.SCHEDULER_STARTED)
+            && (!statsInstance || startupFiredEvents.includes(events.STATS_STARTED))) {
+            up();
+        }
+    }
+
+    /**
+     *
+     * @param err
+     */
     function handleError(err) {
         if ([states.GOING_DOWN, states.DOWN].indexOf(state) === -1) {
             instance.emit(events.ERROR, err);
@@ -324,91 +442,39 @@ module.exports = () => {
             }
 
             setupCommon(this);
-            setupConsumerEvents(this);
-            setupConsumerHeartBeat(this);
-            setUpGarbageCollector(this);
+            registerConsumerEvents(this);
         },
 
+        /**
+         *
+         */
         run() {
             if (state === states.DOWN) {
-                state = states.GOING_UP;
-
-                /**
-                 * Get a new Redis instance
-                 */
-                setupRedisClient();
-
-                /**
-                 * Start message scheduler
-                 */
-                scheduler.start();
-
-                /**
-                 *
-                 */
-                if (stats) stats.start();
-
-                /**
-                 *
-                 */
-                if (this.isConsumer()) {
-                    /**
-                     * Register consumer queues
-                     */
+                setupStats(this);
+                setupScheduler(this);
+                setupRedisClient(() => {
                     setupQueues((err) => {
                         if (err) this.error(err);
                         else {
-                            /**
-                             * Start heartbeat
-                             */
-                            consumerHeartBeat.start();
-
-                            /**
-                             * Start garbage collector
-                             */
-                            gc.start();
-
-                            /**
-                             * Wait for messages
-                             */
-                            instance.emit(events.MESSAGE_NEXT);
-
-                            /**
-                             *
-                             */
-                            state = states.UP;
+                            if (this.isConsumer()) {
+                                setupConsumerHeartBeat(this);
+                                setupGarbageCollector(this);
+                            }
+                            state = states.GOING_UP;
+                            instance.emit(events.GOING_UP);
                         }
                     });
-                } else {
-                    /**
-                     *
-                     */
-                    state = states.UP;
-                }
+                });
             }
         },
 
+        /**
+         *
+         */
         shutdown() {
             if (this.isRunning()) {
                 state = states.GOING_DOWN;
-                redisClientInstance.end(true);
-                redisClientInstance = null;
-
-                instance.once(events.SCHEDULER_HALT, () => shutdownEventsHook(this, events.SCHEDULER_HALT));
-                scheduler.stop();
-
-                if (stats) {
-                    instance.once(events.STATS_HALT, () => shutdownEventsHook(this, events.STATS_HALT));
-                    stats.stop();
-                }
-
-                if (this.isConsumer()) {
-                    instance.once(events.HEARTBEAT_HALT, () => shutdownEventsHook(this, events.HEARTBEAT_HALT));
-                    consumerHeartBeat.stop();
-
-                    instance.once(events.GC_HALT, () => shutdownEventsHook(this, events.GC_HALT));
-                    gc.stop();
-                }
+                instance.emit(events.GOING_DOWN);
             }
         },
 
@@ -418,8 +484,13 @@ module.exports = () => {
          * @param cb
          */
         produce(msg, cb) {
-            if (scheduler.isScheduled(msg)) scheduler.schedule(msg, null, cb);
-            else this.enqueue(msg, null, cb);
+            const proceed = () => {
+                if (schedulerInstance.isScheduled(msg)) schedulerInstance.schedule(msg, null, cb);
+                else this.enqueue(msg, null, cb);
+            };
+            if (state !== states.UP) {
+                instance.once(events.UP, proceed);
+            } else proceed();
         },
 
         /**
@@ -429,7 +500,7 @@ module.exports = () => {
          * @param cb
          */
         schedule(msg, multi, cb) {
-            return scheduler.schedule(msg, multi, cb);
+            return schedulerInstance.schedule(msg, multi, cb);
         },
 
         /**
@@ -445,7 +516,7 @@ module.exports = () => {
                 redisClientInstance.lpush(keys.keyQueueName, msg.toString(), (err) => {
                     if (err) cb(err);
                     else {
-                        if (stats) stats.incrementInputSlot();
+                        if (statsInstance) statsInstance.incrementInputSlot();
                         cb();
                     }
                 });
@@ -474,9 +545,8 @@ module.exports = () => {
                 const onDeleted = (err) => {
                     if (err) handleError(events.ERROR, err);
                     else {
-                        if (stats) stats.incrementAcknowledgedSlot();
-                        loggerInstance.info(
-                            `Message [${msg.getId()}] successfully processed`);
+                        if (statsInstance) statsInstance.incrementAcknowledgedSlot();
+                        loggerInstance.info(`Message [${msg.getId()}] successfully processed`);
                         instance.emit(events.MESSAGE_ACKNOWLEDGED, msg);
                     }
                 };
@@ -501,8 +571,8 @@ module.exports = () => {
         handleConsumeFailure(msg, error) {
             loggerInstance.error(`Consumer failed to consume message [${msg.uuid}]...`);
             loggerInstance.error(error);
-            if (stats) stats.incrementUnacknowledgedSlot();
-            gc.collectMessage(msg, keys.keyQueueNameProcessing, (err) => {
+            if (statsInstance) statsInstance.incrementUnacknowledgedSlot();
+            garbageCollectorInstance.collectMessage(msg, keys.keyQueueNameProcessing, (err) => {
                 if (err) handleError(err);
                 else this.emit(events.MESSAGE_NEXT);
             });
@@ -515,7 +585,7 @@ module.exports = () => {
                 if (err) handleError(err);
                 else {
                     loggerInstance.info('Got new message...');
-                    if (stats) stats.incrementProcessingSlot();
+                    if (statsInstance) statsInstance.incrementProcessingSlot();
                     const message = new Message(json);
                     instance.emit(events.MESSAGE_RECEIVED, message);
                 }
@@ -584,7 +654,7 @@ module.exports = () => {
          * @return {boolean}
          */
         isPeriodic(message) {
-            return scheduler.isPeriodic(message);
+            return schedulerInstance.isPeriodic(message);
         },
 
         isRunning() {
@@ -608,4 +678,3 @@ module.exports = () => {
         },
     };
 };
-
