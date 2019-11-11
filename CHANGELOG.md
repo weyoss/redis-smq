@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 1.1.1 (2019-11-12)
+
+* Handle gracefully unexpected errors for both consumers/producers. Instead of terminating the whole node process, in case of an unexpected error, just log the error and shutdown the instance.
+* Fixed wrong emitted event during producer instance bootstrap causing TypeError. 
+
 ## 1.1.0 (2019-11-11)
 
 * Major code refactoring and improvements
