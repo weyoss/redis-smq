@@ -19,6 +19,7 @@ const states = {
     GOING_UP: 2,
     GOING_DOWN: 3,
     CONSUMING_MESSAGE: 4,
+    BOOTSTRAPPING: 5,
 };
 
 const instanceTypes = {
@@ -48,6 +49,7 @@ const events = {
     ERROR: 'error',
     IDLE: 'idle',
     UP: 'up',
+    BOOTSTRAPPING: 'bootstrapping',
     GOING_UP: 'going_up',
     GOING_DOWN: 'going_down',
 };
@@ -216,27 +218,26 @@ module.exports = function dispatcher() {
         instance.on(events.STATS_HALT, () => shutdownEventsHook(dispatcherInstance, events.STATS_HALT));
         instance.on(events.HEARTBEAT_HALT, () => shutdownEventsHook(dispatcherInstance, events.HEARTBEAT_HALT));
         instance.on(events.GC_HALT, () => shutdownEventsHook(dispatcherInstance, events.GC_HALT));
-    }
-
-    /**
-     *
-     * @param dispatcherInstance
-     */
-    function registerConsumerEvents(dispatcherInstance) {
-        instance
-            .on(events.MESSAGE_NEXT, () => {
-                if (dispatcherInstance.isRunning()) dispatcherInstance.getNextMessage();
-            })
-
-            .on(events.MESSAGE_RECEIVED, (message) => {
+        instance.on(events.ERROR, (err) => {
+            if (err.name !== 'AbortError' && state !== states.GOING_DOWN) {
+                loggerInstance.error(err);
+                dispatcherInstance.shutdown();
+            }
+        });
+        if (dispatcherInstance.isConsumer()) {
+            instance.on(events.MESSAGE_NEXT, () => {
+                if (state === states.UP) {
+                    dispatcherInstance.getNextMessage();
+                }
+            });
+            instance.on(events.MESSAGE_RECEIVED, (message) => {
                 if (state === states.UP) {
                     if (garbageCollectorInstance.hasExpired(message)) {
                         dispatcherInstance.emit(events.MESSAGE_EXPIRED, message);
                     } else dispatcherInstance.consume(message);
                 }
-            })
-
-            .on(events.MESSAGE_EXPIRED, (message) => {
+            });
+            instance.on(events.MESSAGE_EXPIRED, (message) => {
                 loggerInstance.info(`Message [${message.uuid}] has expired`);
                 garbageCollectorInstance.collectExpiredMessage(
                     message,
@@ -247,29 +248,17 @@ module.exports = function dispatcher() {
                         dispatcherInstance.emit(events.MESSAGE_NEXT);
                     },
                 );
-            })
-
-            .on(events.MESSAGE_ACKNOWLEDGED, () => {
+            });
+            instance.on(events.MESSAGE_ACKNOWLEDGED, () => {
                 instance.emit(events.MESSAGE_NEXT);
-            })
-
-            .on(events.MESSAGE_CONSUME_TIMEOUT, (message) => {
+            });
+            instance.on(events.MESSAGE_CONSUME_TIMEOUT, (message) => {
                 dispatcherInstance.handleConsumeFailure(
                     message,
                     new Error(`Consumer timed out after [${consumerMessageConsumeTimeout}]`),
                 );
-            })
-
-            /**
-             * If an error occurred, the whole consumer should go down,
-             * A consumer can not exit without heartbeat/gc and vice-versa
-             */
-            .on(events.ERROR, (err) => {
-                if (err.name !== 'AbortError' && state !== states.GOING_DOWN) {
-                    loggerInstance.error(err);
-                    process.exit(1);
-                }
             });
+        }
     }
 
     /**
@@ -442,7 +431,6 @@ module.exports = function dispatcher() {
             }
 
             setupCommon(this);
-            registerConsumerEvents(this);
         },
 
         /**
@@ -450,6 +438,8 @@ module.exports = function dispatcher() {
          */
         run() {
             if (state === states.DOWN) {
+                state = states.BOOTSTRAPPING;
+                instance.emit(events.BOOTSTRAPPING);
                 setupStats(this);
                 setupScheduler(this);
                 setupRedisClient(() => {
@@ -489,7 +479,12 @@ module.exports = function dispatcher() {
                 else this.enqueue(msg, null, cb);
             };
             if (state !== states.UP) {
-                instance.once(events.UP, proceed);
+                if ([states.BOOTSTRAPPING, states.GOING_UP].indexOf(state) === -1) {
+                    instance.emit(
+                        events.ERROR,
+                        new Error(`Producer ID ${this.getInstanceId()} is not running`),
+                    );
+                } else instance.once(events.UP, proceed);
             } else proceed();
         },
 
