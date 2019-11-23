@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.1.4 (2019-11-23)
+
+* Hotfix release addresses a bug with invalid state checking at the dispatcher level
+
 ## 1.1.3 (2019-11-23)
 
 * Clean up
