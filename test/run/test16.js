@@ -29,7 +29,7 @@ describe('Test 16: Given many queues, a message is not lost and re-queued to its
         /**
          *
          */
-        consumer1QueueA.on('halt', () => {
+        consumer1QueueA.on('down', () => {
             // once stopped, start another consumer
             consumer2QueueA.run();
             setTimeout(() => {

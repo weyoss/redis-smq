@@ -19,7 +19,7 @@ describe('Test 10: A message is not lost in case of a consumer crash', function(
          */
 
         const consumer1 = this.sandbox.getConsumer();
-        consumer1.on('halt', () => {
+        consumer1.on('down', () => {
             // once stopped, start another consumer
             consumer2.run();
             setTimeout(() => {

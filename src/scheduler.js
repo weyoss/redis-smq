@@ -182,6 +182,16 @@ function scheduler(dispatcher, tickPeriod = 1000) {
             scheduleMessage(message, timestamp, multi, cb);
         },
 
+        init() {
+            const instance = dispatcher.getInstance();
+            instance.on(events.GOING_UP, () => {
+                this.start();
+            });
+            instance.on(events.GOING_DOWN, () => {
+                this.stop();
+            });
+        },
+
         start() {
             if (state === states.DOWN) {
                 const config = dispatcher.getConfig();
@@ -193,7 +203,7 @@ function scheduler(dispatcher, tickPeriod = 1000) {
                         if (dispatcher.isConsumer()) {
                             run();
                         }
-                        dispatcher.emit(events.SCHEDULER_STARTED);
+                        dispatcher.emit(events.SCHEDULER_UP);
                     });
                 });
             }
@@ -209,7 +219,7 @@ function scheduler(dispatcher, tickPeriod = 1000) {
                         lockManagerInstance = null;
                         redisClientInstance.end(true);
                         redisClientInstance = null;
-                        dispatcher.emit(events.SCHEDULER_HALT);
+                        dispatcher.emit(events.SCHEDULER_DOWN);
                     };
                     lockManagerInstance.quit(handler);
                 };

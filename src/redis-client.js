@@ -14,11 +14,13 @@ module.exports = {
      */
     getNewInstance(config = {}, cb) {
         const { redis: redisParams = {} } = config;
-        const driverOptions = redisParams.options || {
-            host: '127.0.0.1',
-            port: 6379,
-        };
-        const client = (redisParams.driver === 'ioredis') ? new IORedis(driverOptions)
+        let driver = 'redis';
+        let driverOptions = {};
+        if (redisParams.driver) {
+            driver = redisParams.driver;
+            if (redisParams.options) driverOptions = redisParams.options;
+        } else driverOptions = redisParams;
+        const client = (driver === 'ioredis') ? new IORedis(driverOptions)
             : redis.createClient(driverOptions);
         client.on('ready', () => {
             clients.push(client);

@@ -58,13 +58,23 @@ function heartBeat(dispatcher) {
     }
 
     return {
+        init() {
+            const instance = dispatcher.getInstance();
+            instance.on(events.GOING_UP, () => {
+                this.start();
+            });
+            instance.on(events.GOING_DOWN, () => {
+                this.stop();
+            });
+        },
+
         start() {
             if (state === states.DOWN) {
                 state = states.UP;
                 redisClient.getNewInstance(dispatcher.getConfig(), (c) => {
                     redisClientInstance = c;
                     this.beat();
-                    dispatcher.emit(events.HEARTBEAT_STARTED);
+                    dispatcher.emit(events.HEARTBEAT_UP);
                 });
             }
         },
@@ -81,7 +91,7 @@ function heartBeat(dispatcher) {
                         else {
                             redisClientInstance.end(true);
                             redisClientInstance = null;
-                            dispatcher.emit(events.HEARTBEAT_HALT);
+                            dispatcher.emit(events.HEARTBEAT_DOWN);
                         }
                     });
                 };
