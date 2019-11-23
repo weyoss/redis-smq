@@ -324,7 +324,7 @@ module.exports = function dispatcher() {
      * @param s
      */
     function switchState(s) {
-        if (!states[s]) {
+        if (!Object.values(states).includes(s)) {
             throw new Error('Can not switch to invalid state');
         }
         if (pending) {
