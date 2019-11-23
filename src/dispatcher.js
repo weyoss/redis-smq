@@ -1,7 +1,5 @@
 'use strict';
 
-const { fork } = require('child_process');
-const path = require('path');
 const uuid = require('uuid/v4');
 const redisKeys = require('./redis-keys');
 const util = require('./util');
@@ -13,20 +11,31 @@ const logger = require('./logger');
 const heartBeat = require('./heartbeat');
 const Message = require('./message');
 
-const states = {
-    UP: 0,
-    DOWN: 1,
-    GOING_UP: 2,
-    GOING_DOWN: 3,
-    BOOTSTRAPPING: 4,
-};
-
 const instanceTypes = {
     CONSUMER: 0,
     PRODUCER: 1,
 };
 
+const states = {
+    DOWN: 0,
+    UP: 1,
+};
+
 const events = {
+    GOING_UP: 'going_up',
+    UP: 'up',
+    GOING_DOWN: 'going_down',
+    DOWN: 'down',
+    ERROR: 'error',
+    IDLE: 'idle',
+    HEARTBEAT_UP: 'heartbeat.up',
+    HEARTBEAT_DOWN: 'heartbeat.down',
+    GC_UP: 'gc.up',
+    GC_DOWN: 'gc.down',
+    SCHEDULER_UP: 'scheduler.up',
+    SCHEDULER_DOWN: 'scheduler.down',
+    STATS_UP: 'stats.up',
+    STATS_DOWN: 'stats.down',
     MESSAGE_NEXT: 'message.next',
     MESSAGE_RECEIVED: 'message.new',
     MESSAGE_ACKNOWLEDGED: 'message.consumed',
@@ -36,21 +45,6 @@ const events = {
     MESSAGE_DELAYED: 'message.delayed',
     MESSAGE_DEAD_LETTER: 'message.moved_to_dlq',
     MESSAGE_DESTROYED: 'message.destroyed',
-    HEARTBEAT_STARTED: 'heartbeat.started',
-    HEARTBEAT_HALT: 'heartbeat.halt',
-    GC_STARTED: 'gc.started',
-    GC_HALT: 'gc.halt',
-    STATS_STARTED: 'stats.started',
-    STATS_HALT: 'stats.halt',
-    SCHEDULER_STARTED: 'scheduler.started',
-    SCHEDULER_HALT: 'scheduler.halt',
-    HALT: 'halt',
-    ERROR: 'error',
-    IDLE: 'idle',
-    UP: 'up',
-    BOOTSTRAPPING: 'bootstrapping',
-    GOING_UP: 'going_up',
-    GOING_DOWN: 'going_down',
 };
 
 module.exports = function dispatcher() {
@@ -73,9 +67,7 @@ module.exports = function dispatcher() {
     let garbageCollectorInstance = null;
 
     let statsInstance = null;
-
-    let statsAggregatorThread = null;
-
+    
     let heartBeatInstance = null;
 
     let consumerMessageConsumeTimeout = 0;
@@ -90,28 +82,28 @@ module.exports = function dispatcher() {
 
     let loggerInstance = null;
 
-    let isTest = null;
-
     let startupFiredEvents = [];
 
     let shutdownFiredEvents = [];
 
     let schedulerInstance = null;
 
+    let pending = false;
+
+    let bootstrapping = false;
+
     /**
      *
      * @param dispatcherInstance
      */
-    function setupCommon(dispatcherInstance) {
+    function bootstrap(dispatcherInstance) {
         if (config.hasOwnProperty('namespace')) {
             redisKeys.setNamespace(config.namespace);
         }
 
         instanceId = uuid();
         instance.id = instanceId;
-
-        isTest = (process.env.NODE_ENV === 'test');
-        instance.isTest = isTest;
+        bootstrapping = true;
 
         redisKeys.validateKeyPart(queueName);
         keys = redisKeys.getKeys(dispatcherInstance);
@@ -147,12 +139,7 @@ module.exports = function dispatcher() {
      */
     function setupGarbageCollector(dispatcherInstance) {
         garbageCollectorInstance = garbageCollector(dispatcherInstance);
-        instance.on(events.GOING_UP, () => {
-            garbageCollectorInstance.start();
-        });
-        instance.on(events.GOING_DOWN, () => {
-            garbageCollectorInstance.stop();
-        });
+        garbageCollectorInstance.init();
     }
 
     /**
@@ -160,32 +147,9 @@ module.exports = function dispatcher() {
      * @param dispatcherInstance
      */
     function setupStats(dispatcherInstance) {
-        const enabled = !!(config.monitor && config.monitor.enabled);
-        if (enabled) {
+        if (config.monitor && config.monitor.enabled) {
             statsInstance = stats(dispatcherInstance);
-            instance.on(events.GOING_UP, () => {
-                statsInstance.start();
-            });
-            instance.on(events.GOING_DOWN, () => {
-                statsInstance.stop();
-            });
-            if (dispatcherInstance.isConsumer()) {
-                statsAggregatorThread = fork(path.resolve(path.resolve(`${__dirname}/stats-aggregator.js`)));
-                statsAggregatorThread.on('error', (err) => {
-                    handleError(err);
-                });
-                statsAggregatorThread.on('exit', (code, signal) => {
-                    const err = new Error(`statsAggregatorThread exited with code ${code} and signal ${signal}`);
-                    handleError(err);
-                });
-                instance.on(events.GOING_UP, () => {
-                    statsAggregatorThread.send(JSON.stringify(config));
-                });
-                instance.on(events.GOING_DOWN, () => {
-                    statsAggregatorThread.kill('SIGHUP');
-                    statsAggregatorThread = null;
-                });
-            }
+            statsInstance.init();
         }
     }
 
@@ -195,13 +159,17 @@ module.exports = function dispatcher() {
      */
     function setupConsumerHeartBeat(dispatcherInstance) {
         heartBeatInstance = heartBeat(dispatcherInstance);
-        heartBeatInstance.start();
-        instance.on(events.GOING_UP, () => {
-            heartBeatInstance.start();
-        });
-        instance.on(events.GOING_DOWN, () => {
-            heartBeatInstance.stop();
-        });
+        heartBeatInstance.init();
+    }
+
+
+    /**
+     *
+     * @param dispatcherInstance
+     */
+    function setupScheduler(dispatcherInstance) {
+        schedulerInstance = scheduler(dispatcherInstance);
+        schedulerInstance.init();
     }
 
     /**
@@ -209,28 +177,25 @@ module.exports = function dispatcher() {
      * @param dispatcherInstance
      */
     function registerRuntimeEvents(dispatcherInstance) {
-        instance.on(events.GC_STARTED, () => startupEventsHook(dispatcherInstance, events.GC_STARTED));
-        instance.on(events.HEARTBEAT_STARTED, () => startupEventsHook(dispatcherInstance, events.HEARTBEAT_STARTED));
-        instance.on(events.STATS_STARTED, () => startupEventsHook(dispatcherInstance, events.STATS_STARTED));
-        instance.on(events.SCHEDULER_STARTED, () => startupEventsHook(dispatcherInstance, events.SCHEDULER_STARTED));
-        instance.on(events.SCHEDULER_HALT, () => shutdownEventsHook(dispatcherInstance, events.SCHEDULER_HALT));
-        instance.on(events.STATS_HALT, () => shutdownEventsHook(dispatcherInstance, events.STATS_HALT));
-        instance.on(events.HEARTBEAT_HALT, () => shutdownEventsHook(dispatcherInstance, events.HEARTBEAT_HALT));
-        instance.on(events.GC_HALT, () => shutdownEventsHook(dispatcherInstance, events.GC_HALT));
+        instance.on(events.GC_UP, () => startupEventsHook(dispatcherInstance, events.GC_UP));
+        instance.on(events.HEARTBEAT_UP, () => startupEventsHook(dispatcherInstance, events.HEARTBEAT_UP));
+        instance.on(events.STATS_UP, () => startupEventsHook(dispatcherInstance, events.STATS_UP));
+        instance.on(events.SCHEDULER_UP, () => startupEventsHook(dispatcherInstance, events.SCHEDULER_UP));
+        instance.on(events.SCHEDULER_DOWN, () => shutdownEventsHook(dispatcherInstance, events.SCHEDULER_DOWN));
+        instance.on(events.STATS_DOWN, () => shutdownEventsHook(dispatcherInstance, events.STATS_DOWN));
+        instance.on(events.HEARTBEAT_DOWN, () => shutdownEventsHook(dispatcherInstance, events.HEARTBEAT_DOWN));
+        instance.on(events.GC_DOWN, () => shutdownEventsHook(dispatcherInstance, events.GC_DOWN));
         instance.on(events.ERROR, (err) => {
-            if (err.name !== 'AbortError' && state !== states.GOING_DOWN) {
-                loggerInstance.error(err);
-                dispatcherInstance.shutdown();
-            }
+            handleError(dispatcherInstance, err);
         });
         if (dispatcherInstance.isConsumer()) {
             instance.on(events.MESSAGE_NEXT, () => {
-                if (state === states.UP) {
+                if (isUp()) {
                     dispatcherInstance.getNextMessage();
                 }
             });
             instance.on(events.MESSAGE_RECEIVED, (message) => {
-                if (state === states.UP) {
+                if (isUp()) {
                     if (garbageCollectorInstance.hasExpired(message)) {
                         dispatcherInstance.emit(events.MESSAGE_EXPIRED, message);
                     } else dispatcherInstance.consume(message);
@@ -292,20 +257,6 @@ module.exports = function dispatcher() {
     /**
      *
      * @param dispatcherInstance
-     */
-    function setupScheduler(dispatcherInstance) {
-        schedulerInstance = scheduler(dispatcherInstance);
-        instance.on(events.GOING_UP, () => {
-            schedulerInstance.start();
-        });
-        instance.on(events.GOING_DOWN, () => {
-            schedulerInstance.stop();
-        });
-    }
-
-    /**
-     *
-     * @param dispatcherInstance
      * @param event
      */
     function shutdownEventsHook(dispatcherInstance, event) {
@@ -316,18 +267,17 @@ module.exports = function dispatcher() {
             heartBeatInstance = null;
             statsInstance = null;
             schedulerInstance = null;
-            state = states.DOWN;
-            instance.emit(events.HALT);
+            setState(states.DOWN);
         };
         if (dispatcherInstance.isConsumer()) {
-            if (shutdownFiredEvents.includes(events.GC_HALT)
-                && shutdownFiredEvents.includes(events.HEARTBEAT_HALT)
-                && shutdownFiredEvents.includes(events.SCHEDULER_HALT)
-                && (!statsInstance || shutdownFiredEvents.includes(events.STATS_HALT))) {
+            if (shutdownFiredEvents.includes(events.GC_DOWN)
+                && shutdownFiredEvents.includes(events.HEARTBEAT_DOWN)
+                && shutdownFiredEvents.includes(events.SCHEDULER_DOWN)
+                && (!statsInstance || shutdownFiredEvents.includes(events.STATS_DOWN))) {
                 down();
             }
-        } else if (shutdownFiredEvents.includes(events.SCHEDULER_HALT)
-            && (!statsInstance || shutdownFiredEvents.includes(events.STATS_HALT))) {
+        } else if (shutdownFiredEvents.includes(events.SCHEDULER_DOWN)
+            && (!statsInstance || shutdownFiredEvents.includes(events.STATS_DOWN))) {
             down();
         }
     }
@@ -341,31 +291,94 @@ module.exports = function dispatcher() {
         startupFiredEvents.push(event);
         const up = () => {
             startupFiredEvents = [];
-            state = states.UP;
-            instance.emit(events.UP);
+            setState(states.UP);
             if (dispatcherInstance.isConsumer()) instance.emit(events.MESSAGE_NEXT);
         };
         if (dispatcherInstance.isConsumer()) {
-            if (startupFiredEvents.includes(events.GC_STARTED)
-                && startupFiredEvents.includes(events.HEARTBEAT_STARTED)
-                && startupFiredEvents.includes(events.SCHEDULER_STARTED)
-                && (!statsInstance || startupFiredEvents.includes(events.STATS_STARTED))) {
+            if (startupFiredEvents.includes(events.GC_UP)
+                && startupFiredEvents.includes(events.HEARTBEAT_UP)
+                && startupFiredEvents.includes(events.SCHEDULER_UP)
+                && (!statsInstance || startupFiredEvents.includes(events.STATS_UP))) {
                 up();
             }
-        } else if (startupFiredEvents.includes(events.SCHEDULER_STARTED)
-            && (!statsInstance || startupFiredEvents.includes(events.STATS_STARTED))) {
+        } else if (startupFiredEvents.includes(events.SCHEDULER_UP)
+            && (!statsInstance || startupFiredEvents.includes(events.STATS_UP))) {
             up();
         }
     }
 
     /**
      *
+     * @param dispatcherInstance
      * @param err
      */
-    function handleError(err) {
-        if ([states.GOING_DOWN, states.DOWN].indexOf(state) === -1) {
-            instance.emit(events.ERROR, err);
+    function handleError(dispatcherInstance, err) {
+        if (!isGoingDown()) {
+            dispatcherInstance.shutdown();
+            throw err;
         }
+    }
+
+    /**
+     *
+     * @param s
+     */
+    function switchState(s) {
+        if (!states[s]) {
+            throw new Error('Can not switch to invalid state');
+        }
+        if (pending) {
+            throw new Error('Can not switch state while another state transition is in progress');
+        }
+        pending = true;
+        if (s === states.UP) {
+            if (bootstrapping) bootstrapping = false;
+            instance.emit(events.GOING_UP);
+        } else instance.emit(events.GOING_DOWN);
+    }
+
+    /**
+     *
+     * @param s
+     */
+    function setState(s) {
+        pending = false;
+        state = s;
+        if (state === states.UP) {
+            instance.emit(events.UP);
+        } else instance.emit(events.DOWN);
+    }
+
+    /**
+     *
+     * @returns {boolean}
+     */
+    function isUp() {
+        return (state === states.UP);
+    }
+
+    /**
+     *
+     * @returns {boolean}
+     */
+    function isDown() {
+        return (state === states.DOWN);
+    }
+
+    /**
+     *
+     * @returns {boolean}
+     */
+    function isGoingUp() {
+        return isDown() && pending;
+    }
+
+    /**
+     *
+     * @returns {boolean}
+     */
+    function isGoingDown() {
+        return isUp() && pending;
     }
 
     return {
@@ -385,7 +398,7 @@ module.exports = function dispatcher() {
             config = cfg;
             instance.config = config;
 
-            setupCommon(this);
+            bootstrap(this);
         },
 
         /**
@@ -429,16 +442,14 @@ module.exports = function dispatcher() {
                 instance.messageRetryDelay = messageRetryDelay;
             }
 
-            setupCommon(this);
+            bootstrap(this);
         },
 
         /**
          *
          */
         run() {
-            if (state === states.DOWN) {
-                state = states.BOOTSTRAPPING;
-                instance.emit(events.BOOTSTRAPPING);
+            if (isDown()) {
                 setupStats(this);
                 setupScheduler(this);
                 setupRedisClient(() => {
@@ -449,8 +460,7 @@ module.exports = function dispatcher() {
                                 setupConsumerHeartBeat(this);
                                 setupGarbageCollector(this);
                             }
-                            state = states.GOING_UP;
-                            instance.emit(events.GOING_UP);
+                            switchState(states.UP);
                         }
                     });
                 });
@@ -461,9 +471,8 @@ module.exports = function dispatcher() {
          *
          */
         shutdown() {
-            if (this.isRunning()) {
-                state = states.GOING_DOWN;
-                instance.emit(events.GOING_DOWN);
+            if (isUp() && !isGoingDown()) {
+                switchState(states.DOWN);
             }
         },
 
@@ -477,13 +486,9 @@ module.exports = function dispatcher() {
                 if (schedulerInstance.isScheduled(msg)) schedulerInstance.schedule(msg, null, cb);
                 else this.enqueue(msg, null, cb);
             };
-            if (state !== states.UP) {
-                if ([states.BOOTSTRAPPING, states.GOING_UP].indexOf(state) === -1) {
-                    instance.emit(
-                        events.ERROR,
-                        new Error(`Producer ID ${this.getInstanceId()} is not running`),
-                    );
-                } else instance.once(events.UP, proceed);
+            if (!isUp()) {
+                if (bootstrapping || isGoingUp()) instance.once(events.UP, proceed);
+                else handleError(this, new Error(`Producer ID ${this.getInstanceId()} is not running`));
             } else proceed();
         },
 
@@ -536,7 +541,7 @@ module.exports = function dispatcher() {
                     }, consumeTimeout);
                 }
                 const onDeleted = (err) => {
-                    if (err) handleError(events.ERROR, err);
+                    if (err) handleError(this, err);
                     else {
                         if (statsInstance) statsInstance.incrementAcknowledgedSlot();
                         loggerInstance.info(`Message [${msg.getId()}] successfully processed`);
@@ -566,7 +571,7 @@ module.exports = function dispatcher() {
             loggerInstance.error(error);
             if (statsInstance) statsInstance.incrementUnacknowledgedSlot();
             garbageCollectorInstance.collectMessage(msg, keys.keyQueueNameProcessing, (err) => {
-                if (err) handleError(err);
+                if (err) handleError(this, err);
                 else this.emit(events.MESSAGE_NEXT);
             });
         },
@@ -574,7 +579,7 @@ module.exports = function dispatcher() {
         getNextMessage() {
             loggerInstance.info('Waiting for new messages...');
             redisClientInstance.brpoplpush(keys.keyQueueName, keys.keyQueueNameProcessing, 0, (err, json) => {
-                if (err) handleError(err);
+                if (err) handleError(this, err);
                 else {
                     loggerInstance.info('Got new message...');
                     if (statsInstance) statsInstance.incrementProcessingSlot();
@@ -650,11 +655,11 @@ module.exports = function dispatcher() {
         },
 
         isRunning() {
-            return ([states.GOING_DOWN, states.DOWN].indexOf(state) === -1);
+            return (isUp() && !isGoingDown());
         },
 
-        isTest() {
-            return isTest;
+        isBootstrapping() {
+            return (bootstrapping === true);
         },
 
         /**
@@ -662,7 +667,7 @@ module.exports = function dispatcher() {
          * @param err
          */
         error(err) {
-            handleError(err);
+            handleError(this, err);
         },
 
         emit(...args) {

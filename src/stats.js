@@ -1,5 +1,7 @@
 'use strict';
 
+const path = require('path');
+const { fork } = require('child_process');
 const redisClient = require('./redis-client');
 
 /**
@@ -28,6 +30,7 @@ function stats(dispatcher) {
     let state = states.DOWN;
     let shutdownNow = null;
     let consumerIdle = [];
+    let statsAggregatorThread = null;
 
     function runStats(fn) {
         timer = setInterval(() => {
@@ -110,6 +113,34 @@ function stats(dispatcher) {
             inputSlots[slot] += 1;
         },
 
+        init() {
+            const instance = dispatcher.getInstance();
+            instance.on(events.GOING_UP, () => {
+                this.start();
+            });
+            instance.on(events.GOING_DOWN, () => {
+                this.stop();
+            });
+            if (dispatcher.isConsumer()) {
+                statsAggregatorThread = fork(path.resolve(path.resolve(`${__dirname}/stats-aggregator.js`)));
+                statsAggregatorThread.on('error', (err) => {
+                    dispatcher.error(err);
+                });
+                statsAggregatorThread.on('exit', (code, signal) => {
+                    const err = new Error(`statsAggregatorThread exited with code ${code} and signal ${signal}`);
+                    dispatcher.error(err);
+                });
+                instance.on(events.GOING_UP, () => {
+                    const config = dispatcher.getConfig();
+                    statsAggregatorThread.send(JSON.stringify(config));
+                });
+                instance.on(events.GOING_DOWN, () => {
+                    statsAggregatorThread.kill('SIGHUP');
+                    statsAggregatorThread = null;
+                });
+            }
+        },
+
         /**
          *
          * @returns {boolean}
@@ -121,7 +152,7 @@ function stats(dispatcher) {
                     state = states.UP;
                     if (dispatcher.isConsumer()) runStats(consumerStats);
                     else runStats(producerStats);
-                    dispatcher.emit(events.STATS_STARTED);
+                    dispatcher.emit(events.STATS_UP);
                 });
             }
         },
@@ -137,7 +168,7 @@ function stats(dispatcher) {
                     if (timer) clearInterval(timer);
                     redisClientInstance.end(true);
                     redisClientInstance = null;
-                    dispatcher.emit(events.STATS_HALT);
+                    dispatcher.emit(events.STATS_DOWN);
                 };
             }
         },

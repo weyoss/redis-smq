@@ -30,7 +30,7 @@ function clean(set, cb) {
         };
         if (item.stop) {
             if (item.isRunning()) {
-                item.on('halt', onStopped);
+                item.on('down', onStopped);
                 item.stop();
             } else onStopped();
         } else {

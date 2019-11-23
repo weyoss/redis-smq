@@ -228,11 +228,9 @@ function garbageCollector(dispatcher) {
             multi.exec((err) => {
                 if (err) cb(err);
                 else {
-                    if (dispatcher.isTest()) {
-                        if (requeued) dispatcher.emit(events.MESSAGE_REQUEUED, message);
-                        else if (delayed) dispatcher.emit(events.MESSAGE_DELAYED, message);
-                        else dispatcher.emit(events.MESSAGE_DEAD_LETTER, message);
-                    }
+                    if (requeued) dispatcher.emit(events.MESSAGE_REQUEUED, message);
+                    else if (delayed) dispatcher.emit(events.MESSAGE_DELAYED, message);
+                    else dispatcher.emit(events.MESSAGE_DEAD_LETTER, message);
                     cb();
                 }
             });
@@ -255,7 +253,7 @@ function garbageCollector(dispatcher) {
             if (err) dispatcher.error(err);
             else {
                 cb();
-                if (dispatcher.isTest()) dispatcher.emit(events.MESSAGE_DESTROYED, message);
+                dispatcher.emit(events.MESSAGE_DESTROYED, message);
             }
         });
     }
@@ -288,6 +286,16 @@ function garbageCollector(dispatcher) {
     }
 
     return {
+        init() {
+            const instance = dispatcher.getInstance();
+            instance.on(events.GOING_UP, () => {
+                this.start();
+            });
+            instance.on(events.GOING_DOWN, () => {
+                this.stop();
+            });
+        },
+
         start() {
             if (state === states.DOWN) {
                 const config = dispatcher.getConfig();
@@ -296,7 +304,7 @@ function garbageCollector(dispatcher) {
                     redisClient.getNewInstance(config, (c) => {
                         redisClientInstance = c;
                         state = states.UP;
-                        dispatcher.emit(events.GC_STARTED);
+                        dispatcher.emit(events.GC_UP);
                         inspectProcessingQueues();
                     });
                 });
@@ -313,7 +321,7 @@ function garbageCollector(dispatcher) {
                         redisClientInstance = null;
                         shutdownNow = null;
                         state = states.DOWN;
-                        dispatcher.emit(events.GC_HALT);
+                        dispatcher.emit(events.GC_DOWN);
                     });
                 };
                 if (!lockManagerInstance.isLocked()) {
