@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 1.1.5 (2019-11-26)
+
+* Migrated from Mocha/sinon/chai to Jest
+* Minor scheduler bug fix in some cases when using both `PROPERTY_SCHEDULED_REPEAT` and `PROPERTY_SCHEDULED_CRON`
+* Code cleanup
+
 ## 1.1.4 (2019-11-23)
 
 * Hotfix release addresses a bug with invalid state checking at the dispatcher level
