@@ -1,10 +1,9 @@
 'use strict';
 
-const { EventEmitter } = require('events');
-const dispatcher = require('./dispatcher');
+const Instance = require('./instance');
 
 
-class Consumer extends EventEmitter {
+class Consumer extends Instance {
     /**
      * See docs.
      *
@@ -13,30 +12,7 @@ class Consumer extends EventEmitter {
      */
     constructor(config = {}, options = {}) {
         super();
-        this.dispatcher = dispatcher();
         this.dispatcher.bootstrapConsumer(this, config, options);
-    }
-
-    /**
-     *
-     */
-    run() {
-        this.dispatcher.run();
-    }
-
-    /**
-     *
-     */
-    stop() {
-        this.dispatcher.shutdown();
-    }
-
-    /**
-     *
-     * @returns {boolean}
-     */
-    isRunning() {
-        return this.dispatcher.isRunning();
     }
 
     /**

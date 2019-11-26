@@ -25,6 +25,7 @@ class Message {
             this[Message.PROPERTY_ATTEMPTS] = 0;
             this[Message.PROPERTY_SCHEDULED_REPEAT_COUNT] = 0;
             this[Message.PROPERTY_DELAYED] = false;
+            this[Message.PROPERTY_SCHEDULED_CRON_FIRED] = false;
         }
     }
 
@@ -315,6 +316,12 @@ Message.PROPERTY_CREATED_AT = 'createdAt';
  * @type {string}
  */
 Message.PROPERTY_SCHEDULED_CRON = 'scheduledCron';
+
+/**
+ *
+ * @type {boolean}
+ */
+Message.PROPERTY_SCHEDULED_CRON_FIRED = 'scheduledCronFired';
 
 /**
  * The time in milliseconds that a message will wait before being scheduled to be delivered

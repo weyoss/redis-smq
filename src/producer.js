@@ -1,12 +1,10 @@
 'use strict';
 
-const { EventEmitter } = require('events');
-const uuid = require('uuid/v4');
-const dispatcher = require('./dispatcher');
+const Instance = require('./instance');
 const Message = require('./message');
 
 
-class Producer extends EventEmitter {
+class Producer extends Instance {
     /**
      * See docs.
      *
@@ -15,7 +13,6 @@ class Producer extends EventEmitter {
      */
     constructor(queueName, config = {}) {
         super();
-        this.dispatcher = dispatcher();
         this.dispatcher.bootstrapProducer(this, config, queueName);
         this.dispatcher.run();
     }
@@ -36,9 +33,7 @@ class Producer extends EventEmitter {
      * @param cb
      */
     produce(payload, cb) {
-        const msg = new Message();
-        msg.setBody(payload);
-        this.produceMessage(msg, cb);
+        this.produceMessage(payload, cb);
     }
 
     /**
@@ -52,14 +47,6 @@ class Producer extends EventEmitter {
         const msg = new Message();
         msg.setBody(payload).setTTL(ttl);
         this.produceMessage(msg, cb);
-    }
-
-    /**
-     *
-     */
-    shutdown() {
-        /* eslint class-methods-use-this : 0 */
-        this.dispatcher.shutdown();
     }
 }
 

@@ -141,6 +141,10 @@ class TestQueueConsumer extends Consumer {
 
 ### Consumer.prototype.stop()
 
+Deprecated. Use `shutdown()` instead.
+
+### Consumer.prototype.shutdown()
+
 Disconnect from Redis server and stop consuming messages. This method is used to gracefully shutdown the consumer and
 go offline.
 
