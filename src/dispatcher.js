@@ -36,6 +36,7 @@ const events = {
     SCHEDULER_DOWN: 'scheduler.down',
     STATS_UP: 'stats.up',
     STATS_DOWN: 'stats.down',
+    MESSAGE_PRODUCED: 'message.produced',
     MESSAGE_NEXT: 'message.next',
     MESSAGE_RECEIVED: 'message.new',
     MESSAGE_ACKNOWLEDGED: 'message.consumed',
@@ -313,7 +314,7 @@ module.exports = function dispatcher() {
      * @param err
      */
     function handleError(dispatcherInstance, err) {
-        if (!isGoingDown()) {
+        if (isUp() && !isGoingDown()) {
             dispatcherInstance.shutdown();
             throw err;
         }
@@ -482,9 +483,18 @@ module.exports = function dispatcher() {
          * @param cb
          */
         produce(msg, cb) {
+            if (!(msg instanceof Message)) {
+                const m = new Message();
+                m.setBody(msg);
+                msg = m;
+            }
+            const onProduced = () => {
+                instance.emit(events.MESSAGE_PRODUCED, msg);
+                cb();
+            };
             const proceed = () => {
-                if (schedulerInstance.isScheduled(msg)) schedulerInstance.schedule(msg, null, cb);
-                else this.enqueue(msg, null, cb);
+                if (schedulerInstance.isScheduled(msg)) schedulerInstance.schedule(msg, null, onProduced);
+                else this.enqueue(msg, null, onProduced);
             };
             if (!isUp()) {
                 if (bootstrapping || isGoingUp()) instance.once(events.UP, proceed);

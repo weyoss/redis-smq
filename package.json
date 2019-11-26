@@ -9,12 +9,12 @@
     "ioredis": "4.14.1",
     "lodash": "4.17.15",
     "redis": "2.8.0",
+    "redis-smq-monitor": "1",
     "redlock": "4.1.0",
-    "uuid": "3.0.1",
-    "redis-smq-monitor": "1"
+    "uuid": "3.0.1"
   },
   "devDependencies": {
-    "chai": "3.5.0",
+    "bluebird": "3.7.1",
     "eslint": "6.6.0",
     "eslint-config-airbnb-base": "14.0.0",
     "eslint-config-google": "0.14.0",
@@ -22,12 +22,10 @@
     "eslint-plugin-import": "2.18.2",
     "eslint-plugin-promise": "4.2.1",
     "eslint-plugin-standard": "4.0.1",
-    "mocha": "5.2.0",
-    "sinon": "1.17.7",
-    "sinon-chai": "2.11.0"
+    "jest": "24.9.0"
   },
   "scripts": {
-    "test": "eslint --ignore-path .jshintignore src/*.js && NODE_ENV=test mocha  --reporter --harmony spec test/run/*.js",
+    "test": "eslint --ignore-path .jshintignore src/*.js && NODE_ENV=test jest --runInBand",
     "lint": "eslint --ignore-path .jshintignore src/*.js",
     "fix": "eslint --ignore-path .jshintignore src/*.js --fix"
   },

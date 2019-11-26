@@ -135,7 +135,10 @@ function scheduler(dispatcher, tickPeriod = 1000) {
                 ? cronParser.parseExpression(message[Message.PROPERTY_SCHEDULED_CRON]).next().getTime() : 0;
             const nextRepeatTimestamp = getScheduleRepeatTimestamp();
             if (nextCRONTimestamp && nextRepeatTimestamp) {
-                if (nextCRONTimestamp < nextRepeatTimestamp) {
+                if (!message[Message.PROPERTY_SCHEDULED_CRON_FIRED]
+                    || nextCRONTimestamp < nextRepeatTimestamp) {
+                    message[Message.PROPERTY_SCHEDULED_REPEAT_COUNT] = 0;
+                    message[Message.PROPERTY_SCHEDULED_CRON_FIRED] = true;
                     return nextCRONTimestamp;
                 }
                 return nextRepeatTimestamp;
