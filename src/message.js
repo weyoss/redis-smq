@@ -48,6 +48,7 @@ class Message {
     setScheduledDelay(delay) {
         if (delay < 1) throw new Error('Scheduling delay should not be less than 1 second');
         this[Message.PROPERTY_SCHEDULED_DELAY] = delay * 1000; // in ms
+        this[Message.PROPERTY_DELAYED] = false;
         return this;
     }
 
