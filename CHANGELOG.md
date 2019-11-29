@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.1.6 (2019-11-29)
+
+* Bug fix: Fixed broken message retry delay (see issue #24)
+
 ## 1.1.5 (2019-11-26)
 
 * Migrated from Mocha/sinon/chai to Jest
