@@ -7,11 +7,8 @@ const dispatcher = require('./dispatcher');
 class Instance extends EventEmitter {
     /**
      * See docs.
-     *
-     * @param {object} config
-     * @param {object} options
      */
-    constructor(config = {}, options = {}) {
+    constructor() {
         super();
         this.dispatcher = dispatcher();
     }
@@ -28,13 +25,6 @@ class Instance extends EventEmitter {
      */
     shutdown() {
         this.dispatcher.shutdown();
-    }
-
-    /**
-     * @deprecated use shutdown() instead.
-     */
-    stop() {
-        this.shutdown();
     }
 
     /**

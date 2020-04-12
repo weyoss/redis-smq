@@ -1,5 +1,6 @@
 const bluebird = require('bluebird');
 const { getConsumer, getProducer, onConsumerIdle } = require('./common');
+const { Message } = require('../');
 
 test('A consumer does re-queue a failed message when threshold is not exceeded, otherwise it moves the message to DLQ (dead letter queue)', async () => {
     const producer = getProducer();
@@ -20,7 +21,10 @@ test('A consumer does re-queue a failed message when threshold is not exceeded, 
         deadCount += 1;
     });
 
-    await producer.produceAsync({ hello: 'world' });
+    const msg = new Message();
+    msg.setBody({ hello: 'world' });
+
+    await producer.produceMessageAsync(msg);
     consumer.run();
 
     await onConsumerIdle(consumer, () => {

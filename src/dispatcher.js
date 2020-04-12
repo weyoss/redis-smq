@@ -593,7 +593,7 @@ module.exports = function dispatcher() {
                 else {
                     loggerInstance.info('Got new message...');
                     if (statsInstance) statsInstance.incrementProcessingSlot();
-                    const message = new Message(json);
+                    const message = Message.createFromMessage(json);
                     instance.emit(events.MESSAGE_RECEIVED, message);
                 }
             });

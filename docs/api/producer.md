@@ -77,60 +77,6 @@ producer.produceMessage(message, (err) => {
 });
 ```
 
-### Producer.prototype.produce() - deprecated
-
-Create a message based on the provided content/payload and send it to the message queue.
-
-This method is deprecated and will be removed in future releases. Please use `produceMessage()` 
-instead.
-
-**Syntax**
-
-```javascript
-producer.produce(payload, cb);
-```
-
-**Parameters**
-    
-- `payload` *(mixed): Required.* The actual content/payload to be delivered to a consumer.    
-
-- `cb(err)` *(function): Required.* Callback function.
- 
-```javascript
-producer.produce({ hello: 'world' }, (err) => {
-    if (err) console.log(err);
-    else console.log('Successfully published!');
-});
-```
-
-### Producer.prototype.produceWithTTL() - deprecated
-
-Create a message based on the provided content/payload and TTL (time-to-live) then send it to the message queue.
-
-This method is deprecated and will be removed in future releases. Please use `produceMessage()` 
-instead.
-
-**Syntax**
-
-```javascript
-producer.produceWithTTL(payload, ttl, cb)
-```
-
-**Parameters**
-    
-- `payload` *(mixed): Required.* The actual content/payload to be delivered to a consumer.    
-
-- `ttl` *(Integer): Required.* Message TTL in milliseconds. 
-
-- `cb(err)` *(function): Required.* Callback function.
-    
-```javascript
-producer.produceWithTTL({ hello: 'world' }, 60000, (err) => {
-    if (err) console.log(err);
-    else console.log('Successfully published!');
-});
-```
-
 ### Producer.prototype.shutdown()
 
 Gracefully shutdown the producer and disconnect from the redis server.

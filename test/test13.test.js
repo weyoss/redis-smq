@@ -34,7 +34,7 @@ describe('Produce and consume a delayed message with scheduledRepeat and schedul
         producer.once('message.produced', () => {
             producedAt = Date.now();
         });
-        await producer.produceAsync(msg);
+        await producer.produceMessageAsync(msg);
 
         await onMessageConsumed(consumer, () => {
             const diff = Date.now() - producedAt;
@@ -75,7 +75,7 @@ describe('Produce and consume a delayed message with scheduledRepeat and schedul
         producer.once('message.produced', () => {
             producedAt = Date.now();
         });
-        await producer.produceAsync(msg);
+        await producer.produceMessageAsync(msg);
 
         await onMessageConsumed(consumer, () => {
             const diff = Date.now() - producedAt;

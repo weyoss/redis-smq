@@ -1,9 +1,8 @@
-'use strict';
+import { config } from "./config";
+import RedisSMQ from "../../index";
 
-const config = require('./config');
-const { Producer, Message } = require('../'); // replace with require('redis-smq')
 
-const producer = new Producer('test_queue', config);
+const producer = new RedisSMQ.Producer('test_queue', config);
 
 /*
 function produceNTimes(payload, n, cb) {
@@ -27,8 +26,10 @@ produceNTimes({ hello: 'world' }, 1000000, (err) => {
 });
 */
 
+const msg = new RedisSMQ.Message();
+msg.setBody({ hello: 123 });
 
-producer.produceMessage({ hello: 123 }, (err) => {
+producer.produceMessage(msg, (err) => {
     if (err) throw err;
     else producer.shutdown();
 });

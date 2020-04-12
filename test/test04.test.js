@@ -1,5 +1,7 @@
 const bluebird = require('bluebird');
 const { getConsumer, getProducer, onConsumerIdle } = require('./common');
+const { Message } = require('../');
+
 
 test('Produce a message having messageTTL and sure the message is not consumed and destroyed when messageTTL exceeds', async () => {
     const producer = getProducer();
@@ -11,7 +13,10 @@ test('Produce a message having messageTTL and sure the message is not consumed a
         messageDestroyed += 1;
     });
 
-    await producer.produceWithTTLAsync({ hello: 'world' }, 3000);
+    const msg = new Message();
+    msg.setBody({ hello: 'world' }).setTTL(3000);
+
+    await producer.produceMessageAsync(msg);
     await bluebird.delay(5000);
     consumer.run();
 

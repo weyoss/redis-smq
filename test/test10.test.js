@@ -1,9 +1,20 @@
 const bluebird = require('bluebird');
-const { getConsumer, getProducer, onConsumerIdle, onConsumerUp } = require('./common');
+const {
+    getConsumer,
+    getProducer,
+    onConsumerIdle,
+    onConsumerUp,
+} = require('./common');
+const { Message } = require('./../');
+
 
 test('A message is not lost in case of a consumer crash', async () => {
     const producer = getProducer();
-    await producer.produceAsync({ hello: 'world' });
+
+    const msg = new Message();
+    msg.setBody({ hello: 'world' });
+
+    await producer.produceMessageAsync(msg);
 
     /**
      * First consumer

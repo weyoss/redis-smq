@@ -1,5 +1,12 @@
 const bluebird = require('bluebird');
-const { getConsumer, getProducer, onConsumerIdle, onConsumerUp } = require('./common');
+const {
+    getConsumer,
+    getProducer,
+    onConsumerIdle,
+    onConsumerUp,
+} = require('./common');
+const { Message } = require('../');
+
 
 test('A message is delivered only once to one consumer', async () => {
     /**
@@ -53,8 +60,11 @@ test('A message is delivered only once to one consumer', async () => {
     /**
      *
      */
+    const msg = new Message();
+    msg.setBody({ hello: 'world' });
+
     const producer = getProducer();
-    await producer.produceAsync({ hello: 'world' });
+    await producer.produceMessageAsync(msg);
 
     /**
      *
