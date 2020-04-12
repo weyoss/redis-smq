@@ -1,4 +1,6 @@
 const { getConsumer, getProducer, onConsumerIdle } = require('./common');
+const { Message } = require('../index');
+
 
 test('Produce and consume 100 messages', async () => {
     const producer = getProducer();
@@ -7,7 +9,9 @@ test('Produce and consume 100 messages', async () => {
     consumer.run();
 
     for (let i = 0; i < 100; i += 1) {
-        await producer.produceAsync({ hello: 'world' });
+        const msg = new Message();
+        msg.setBody({ hello: 'world' });
+        await producer.produceMessageAsync(msg);
     }
 
     await onConsumerIdle(consumer, () => {

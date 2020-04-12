@@ -52,14 +52,14 @@ function scheduler(dispatcher, tickPeriod = 1000) {
         const process = (messages) => {
             if (messages.length) {
                 const msg = messages.pop();
-                const message = new Message(msg);
+                const message = Message.createFromMessage(msg);
                 const multi = redisClientInstance.multi();
                 dispatcher.enqueue(message, multi);
                 multi.zrem(keyQueueNameDelayed, msg);
                 if (isPeriodic(message)) {
                     const timestamp = getNextScheduledTimestamp(message);
                     if (timestamp) {
-                        const newMessage = Message.createFromMessage(message);
+                        const newMessage = Message.createFromMessage(message, true);
                         scheduleMessage(newMessage, timestamp, multi);
                     }
                 }

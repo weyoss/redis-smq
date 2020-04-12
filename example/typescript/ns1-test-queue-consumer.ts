@@ -1,16 +1,15 @@
-'use strict';
+import { config } from "./config";
+import RedisSMQ from "../..";
+import {CallbackType} from "../../types/misc";
+import {MessageInterface} from "../../types/message";
 
-const config = require('./config');
-const { Consumer } = require('../'); // replace with require('redis-smq)
 
-class Ns1TestQueueConsumer extends Consumer {
+class Ns1TestQueueConsumer extends RedisSMQ.Consumer {
 
-    /**
-     *
-     * @param message
-     * @param cb
-     */
-    consume(message, cb) {
+    // Don't forget to set the queue name
+    static queueName: string = 'test_queue';
+
+    consume(message: MessageInterface, cb: CallbackType) {
         /* eslint class-methods-use-this: 0 */
         //  console.log(`Got message to consume: `, JSON.stringify(message));
         //  throw new Error('TEST!');
@@ -23,16 +22,13 @@ class Ns1TestQueueConsumer extends Consumer {
     }
 }
 
-// Don't forget to set the queue name
-Ns1TestQueueConsumer.queueName = 'test_queue';
-
 const consumer = new Ns1TestQueueConsumer(config, { messageConsumeTimeout: 2000 });
 consumer.run();
 
 /*
 setTimeout(() => {
     console.log('stopping');
-    consumer.stop();
+    consumer.shutdown();
 }, 5000);
 
 setTimeout(() => {

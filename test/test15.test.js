@@ -7,6 +7,7 @@ const {
     onMessageConsumed,
     validateTime,
 } = require('./common');
+const { Message } = require('../');
 
 
 test('A consumer delays a failed message before re-queuing it again, given messageRetryThreshold is not exceeded', async () => {
@@ -34,8 +35,11 @@ test('A consumer delays a failed message before re-queuing it again, given messa
         consumedCount += 1;
     });
 
+    const msg = new Message();
+    msg.setBody({ hello: 'world' });
+
     const producer = getProducer('test_queue');
-    await producer.produceAsync({ hello: 'world' });
+    await producer.produceMessageAsync(msg);
     consumer.run();
 
     await onMessageConsumed(consumer, () => {});

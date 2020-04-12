@@ -1,5 +1,7 @@
 const bluebird = require('bluebird');
 const { getConsumer, getProducer, onConsumerIdle } = require('./common');
+const { Message } = require('../index');
+
 
 test('When consuming a message, a consumer does time out after messageConsumeTimeout exceeds and re-queues the message to be consumed again', async () => {
     const producer = getProducer('test_queue');
@@ -29,8 +31,10 @@ test('When consuming a message, a consumer does time out after messageConsumeTim
     consumer.on('message.consumed', () => {
         consumedCount += 1;
     });
+    const msg = new Message();
+    msg.setBody({ hello: 'world' });
 
-    await producer.produceAsync({ hello: 'world' });
+    await producer.produceMessageAsync(msg);
     consumer.run();
 
     await onConsumerIdle(consumer, () => {

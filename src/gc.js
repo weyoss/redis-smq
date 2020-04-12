@@ -92,7 +92,7 @@ function garbageCollector(dispatcher) {
                 const lrangeCallback = (err, range) => {
                     if (err) dispatcher.error(err);
                     else if (range.length) {
-                        const message = new Message(range[0]);
+                        const message = Message.createFromMessage(range[0]);
                         const uuid = message.getId();
                         debug(`Collecting message [${uuid}]...`);
                         if (hasExpired(message)) {

@@ -27,7 +27,7 @@ describe('Produce and consume a delayed message with scheduledCRON/scheduledRepe
             .setBody({ hello: 'world' });
 
         const producer = getProducer();
-        await producer.produceAsync(msg);
+        await producer.produceMessageAsync(msg);
 
         await onMessageConsumed(consumer, () => {});
 
@@ -71,7 +71,7 @@ describe('Produce and consume a delayed message with scheduledCRON/scheduledRepe
             .setBody({ hello: 'world' });
 
         const producer = getProducer();
-        await producer.produceAsync(msg);
+        await producer.produceMessageAsync(msg);
 
         await onMessageConsumed(consumer, () => {});
 
@@ -118,7 +118,7 @@ describe('Produce and consume a delayed message with scheduledCRON/scheduledRepe
             .setBody({ hello: 'world' });
 
         const producer = getProducer();
-        await producer.produceAsync(msg);
+        await producer.produceMessageAsync(msg);
 
         await onMessageConsumed(consumer, () => {});
 
@@ -181,7 +181,7 @@ describe('Produce and consume a delayed message with scheduledCRON/scheduledRepe
             .setBody({ hello: 'world' });
 
         const producer = getProducer();
-        await producer.produceAsync(msg);
+        await producer.produceMessageAsync(msg);
 
         await onMessageConsumed(consumer, () => {});
 

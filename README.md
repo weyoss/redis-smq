@@ -9,7 +9,7 @@ For more details about RedisSMQ design see [https://medium.com/@weyoss/building-
  * **Persistent**: No messages are lost in case of a consumer failure.
  * **Atomic**: A message is delivered only once to one consumer (in FIFO order) so you would never fall into a situation
  where a message could be processed more than once.
- * **Fast**: 13K+ messages/second on a virtual machine of 4 CPU cores and 8GB RAM and running one consumer.
+ * **High-performance message processing**: See [Performance](#performance) for more details.
  * **Scalable**: A queue can be consumed by many concurrent consumers, running on the same or on different hosts.
  * **Message expiration**: A message will expire and not be consumed if it has been in the queue for longer than the 
  TTL (time-to-live).
@@ -26,7 +26,30 @@ For more details about RedisSMQ design see [https://medium.com/@weyoss/building-
  * **Supports both redis & ioredis**: Starting from v1.1.0 RedisSMQ can be configured to use either `redis` or `ioredis` 
  to connect to Redis server.  
 
- 
+## Table of content
+
+1. [What's new?](#whats-new)
+2. [Installation](#installation)
+3. [Configuration](#configuration)
+4. [Usage](#usage)
+    1. [Message Class](#message-class)
+    2. [Producer Class](#producer-class)
+    3. [Consumer Class](#consumer-class)
+5. [Performance](#performance)
+    1. [Scenarios](#scenarios)
+    2. [Environment](#environment)
+    3. [Results](#results)
+6. [Troubleshooting and monitoring](#troubleshooting-and-monitoring)
+    1. [Logs](#logs)
+    2. [Monitoring](#monitoring)
+7. [Contributing](#contributing)
+8. [License](#license)
+
+## What's new?
+
+Starting from v2.0.0 TypeScript is now supported. Types definitions are include out of box. Also you can find an example 
+about how to use RedisSMQ in a TypeScript project in the [example folder](https://github.com/weyoss/redis-smq/tree/master/example/typescript).
+
 ## Installation
 
 ```text
@@ -38,7 +61,6 @@ Considerations:
 - Minimal Node.js version support is 7.0.0 (with --harmony flag), 7.6.0 (without --harmony flag). The latest stable 
   Node.js version is recommended.
 - Minimal Redis server version is 2.6.12.
-
 
 # Configuration
 
@@ -122,8 +144,6 @@ driver would be used by default.
 - `monitor.port` *(Integer): Optional.* Port of the monitor server. By default `7210`.
 
 ## Usage
-
-## Overview
 
 RedisSMQ provides 3 classes: Message, Producer and Consumer in order to work with the message queue. 
 

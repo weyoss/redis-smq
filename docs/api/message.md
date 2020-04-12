@@ -1,11 +1,9 @@
 # Message Class API
 
-Message properties like `PROPERTY_TTL`, `PROPERTY_RETRY_THRESHOLD`,
-`PROPERTY_RETRY_DELAY` and `PROPERTY_CONSUME_TIMEOUT` can also be
-defined globally per consumer for all queue messages.
+Message properties like `PROPERTY_TTL`, `PROPERTY_RETRY_THRESHOLD`, `PROPERTY_RETRY_DELAY` and 
+`PROPERTY_CONSUME_TIMEOUT` can also be defined globally per consumer for all queue messages.
 
-When defined, message instance properties always takes precedence over
-consumer properties.
+When defined, message instance properties always takes precedence over consumer properties.
 
 ## Properties
 
@@ -95,7 +93,7 @@ message.getAttempts(); // the same as
 message.getProperty(Message.PROPERTY_ATTEMPTS);
 ```
 
-### Message.PROPERTY_CREATED_AT;
+### Message.PROPERTY_eED_AT;
 
 Message instance creation timestamp property.
 
@@ -182,24 +180,6 @@ message.getProperty(Message.PROPERTY_DELAYED);
 ```
 
 ## Methods
-
-### Message.createFromMessage()
-
-This method is used to created a new message instance based on an existing message instance but with a new ID.
-
-```javascript
-const { Message } = require('redis-smq');
-
-const message = new Message();
-message.setScheduledRepeat(6); // Schedule the message for delivery 6 times
-message.setScheduledPeriod(1); // Wait for one second after each delivery
-
-const newMessage = Message.createFromMessage(message);
-
-console.log(newMessage.getId() === message.getId()); // false
-console.log(newMessage.getMessageScheduledPeriod() === message.getMessageScheduledPeriod()); // true
-console.log(newMessage.getMessageScheduledRepeat() === message.getMessageScheduledRepeat()); // true
-```
 
 ### Message.prototype.setScheduledPeriod()
 
@@ -484,4 +464,37 @@ const message = new Message();
 message.setScheduledCron('*/10 * * * * *');  // Schedule message for delivery each 10 seconds
 message.getProperty(Message.PROPERTY_SCHEDULED_CRON); // '*/10 * * * * *'
 message.toString(); // 
+```
+
+### Message.createFromMessage()
+
+This method allows to create a new message instance from an existing message.
+
+```text
+Message.createFromMessage(message, reset = false) => Message
+```
+
+* _message_: required. Can be either a message instance or a string representing the serialized message.
+
+* _reset_: optional. If true, the new message will have all properties from the old one except Message.PROPERTY_UUID, 
+Message.PROPERTY_ATTEMPTS, Message.PROPERTY_CREATED_AT.
+
+
+```javascript
+const { Message } = require('redis-smq');
+
+const message = new Message();
+message.setScheduledRepeat(6); // Schedule the message for delivery 6 times
+message.setScheduledPeriod(1); // Wait for one second after each delivery
+
+const newMessage = Message.createFromMessage(message);
+
+console.log(newMessage.getId() === message.getId()); // true
+console.log(newMessage.getMessageScheduledPeriod() === message.getMessageScheduledPeriod()); // true
+console.log(newMessage.getMessageScheduledRepeat() === message.getMessageScheduledRepeat()); // true
+
+const anotherMessage = Message.createFromMessage(message, true);
+console.log(anotherMessage.getId() === message.getId()); // false
+console.log(anotherMessage.getMessageScheduledRepeat() === message.getMessageScheduledRepeat()); // true
+console.log(anotherMessage.getMessageScheduledRepeat() === message.getMessageScheduledRepeat()); // true
 ```

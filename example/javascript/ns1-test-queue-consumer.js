@@ -1,10 +1,9 @@
 'use strict';
 
 const config = require('./config');
-const { Consumer } = require('../'); // replace with require('redis-smq)
+const { Consumer } = require('../../index'); // replace with const { Consumer } = require('redis-smq);
 
-class Ns2TestQueueConsumer extends Consumer {
-
+class Ns1TestQueueConsumer extends Consumer {
     /**
      *
      * @param message
@@ -24,17 +23,19 @@ class Ns2TestQueueConsumer extends Consumer {
 }
 
 // Don't forget to set the queue name
-Ns2TestQueueConsumer.queueName = 'test_queue';
+Ns1TestQueueConsumer.queueName = 'test_queue';
 
-//
-const newConfig = { ...config };
-newConfig.namespace = 'ns2';
-
-const consumer = new Ns2TestQueueConsumer(newConfig, { messageConsumeTimeout: 2000 });
+const consumer = new Ns1TestQueueConsumer(config, { messageConsumeTimeout: 2000 });
 consumer.run();
 
 /*
 setTimeout(() => {
-    consumer.stop();
-}, 2000);
+    console.log('stopping');
+    consumer.shutdown();
+}, 5000);
+
+setTimeout(() => {
+    console.log('starting');
+    consumer.run();
+}, 30000);
 */

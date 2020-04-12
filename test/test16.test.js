@@ -7,6 +7,7 @@ const {
     onMessageConsumed,
     validateTime,
 } = require('./common');
+const { Message } = require('../');
 
 
 test('Given many queues, a message is not lost and re-queued to its origin queue in case of a consumer crash or a failure', async () => {
@@ -78,14 +79,20 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
     /**
      * Produce a message to QUEUE A
      */
+    const msg = new Message();
+    msg.setBody({ id: 'a', hello: 'world' });
+
     const queueAProducer = getProducer('queue_a');
-    await queueAProducer.produceAsync({ id: 'a', hello: 'world' });
+    await queueAProducer.produceMessageAsync(msg);
 
     /**
      * Produce a message to QUEUE B
      */
+    const anotherMsg = new Message();
+    anotherMsg.setBody({ id: 'b', hello: 'world' });
+
     const queueBProducer = getProducer('queue_b');
-    await queueBProducer.produceAsync({ id: 'b', hello: 'world' });
+    await queueBProducer.produceMessageAsync(anotherMsg);
 
     /**
      * Wait 10s

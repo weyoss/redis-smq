@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 2.0.0 (2020-04-12)
+
+* Removed all deprecated methods
+* Removed undocumented Message constructor parameters 
+* Message.createFromMessage() now accepts 2 parameters for cloning a message (see Message API docs)
+* Introduced TypeScript support
+* Added examples for TypeScript
+* Small refactoring and cleaning
+
 ## 1.1.6 (2019-11-29)
 
 * Bug fix: Fixed broken message retry delay (see issue #24)

@@ -1,5 +1,7 @@
 const bluebird = require('bluebird');
 const { getConsumer, getProducer, onConsumerIdle } = require('./common');
+const { Message } = require('../index');
+
 
 test('A consumer does re-queue and consume again a failed message when threshold not exceeded', async () => {
     const producer = getProducer();
@@ -25,7 +27,10 @@ test('A consumer does re-queue and consume again a failed message when threshold
         consumedCount += 1;
     });
 
-    await producer.produceAsync({ hello: 'world' });
+    const msg = new Message();
+    msg.setBody({ hello: 'world' });
+
+    await producer.produceMessageAsync(msg);
     consumer.run();
 
     await bluebird.delay(10000);

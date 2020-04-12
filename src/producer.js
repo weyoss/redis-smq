@@ -26,28 +26,6 @@ class Producer extends Instance {
         /* eslint class-methods-use-this : 0 */
         this.dispatcher.produce(msg, cb);
     }
-
-    /**
-     * @deprecated use produceMessage() instead.
-     * @param payload
-     * @param cb
-     */
-    produce(payload, cb) {
-        this.produceMessage(payload, cb);
-    }
-
-    /**
-     *
-     * @deprecated use produceMessage() instead
-     * @param payload
-     * @param ttl
-     * @param cb
-     */
-    produceWithTTL(payload, ttl, cb) {
-        const msg = new Message();
-        msg.setBody(payload).setTTL(ttl);
-        this.produceMessage(msg, cb);
-    }
 }
 
 

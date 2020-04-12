@@ -7,26 +7,14 @@ const uuid = require('uuid/v4');
 class Message {
     /**
      *
-     * @param json
-     * @param clone
      */
-    constructor(json, clone = false) {
-        if (json) {
-            if (typeof json === 'string') json = JSON.parse(json);
-            Object.assign(this, json);
-            if (clone) {
-                this[Message.PROPERTY_UUID] = uuid();
-                this[Message.PROPERTY_ATTEMPTS] = 0;
-                this[Message.PROPERTY_CREATED_AT] = Date.now();
-            }
-        } else {
-            this[Message.PROPERTY_CREATED_AT] = Date.now();
-            this[Message.PROPERTY_UUID] = uuid();
-            this[Message.PROPERTY_ATTEMPTS] = 0;
-            this[Message.PROPERTY_SCHEDULED_REPEAT_COUNT] = 0;
-            this[Message.PROPERTY_DELAYED] = false;
-            this[Message.PROPERTY_SCHEDULED_CRON_FIRED] = false;
-        }
+    constructor() {
+        this[Message.PROPERTY_CREATED_AT] = Date.now();
+        this[Message.PROPERTY_UUID] = uuid();
+        this[Message.PROPERTY_ATTEMPTS] = 0;
+        this[Message.PROPERTY_SCHEDULED_REPEAT_COUNT] = 0;
+        this[Message.PROPERTY_DELAYED] = false;
+        this[Message.PROPERTY_SCHEDULED_CRON_FIRED] = false;
     }
 
     /**
@@ -257,11 +245,19 @@ class Message {
 /**
  *
  * @param message
+ * @param reset
  * @return {Message}
  */
-Message.createFromMessage = (message) => {
-    const msgString = message.toString();
-    return new Message(msgString, true);
+Message.createFromMessage = (message, reset = false) => {
+    const messageJSON = (typeof message === 'string') ? JSON.parse(message) : message;
+    const m = new Message();
+    Object.assign(m, messageJSON);
+    if (reset) {
+        m[Message.PROPERTY_UUID] = uuid();
+        m[Message.PROPERTY_ATTEMPTS] = 0;
+        m[Message.PROPERTY_CREATED_AT] = Date.now();
+    }
+    return m;
 };
 
 /**
