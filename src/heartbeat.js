@@ -4,6 +4,34 @@ const os = require('os');
 const redisKeys = require('./redis-keys');
 const redisClient = require('./redis-client');
 
+const cpuUsageStats = {
+    cpuUsage: process.cpuUsage(),
+    time: process.hrtime()
+};
+
+// convert hrtime to milliseconds
+function hrtime (time) {
+    return time[0] * 1e3 + time[1] / 1e6;
+}
+
+// convert (user/system) usage time from micro to milliseconds
+function usageTime(time) {
+    return time/1000;
+}
+
+function cpuUsage() {
+    const currentTimestamp = process.hrtime();
+    const currentCPUUsage = process.cpuUsage();
+    const timestampDiff = process.hrtime(cpuUsageStats.time);
+    const cpuUsageDiff = process.cpuUsage(cpuUsageStats.cpuUsage);
+    cpuUsageStats.time = currentTimestamp;
+    cpuUsageStats.cpuUsage = currentCPUUsage;
+    return {
+        percentage: (usageTime(cpuUsageDiff.user + cpuUsageDiff.system) / hrtime(timestampDiff) * 100).toFixed(1),
+        ...cpuUsageDiff,
+    };
+}
+
 function getHeartBeatIndexName(queueName, consumerId) {
     const ns = redisKeys.getNamespace();
     return `${ns}|${queueName}|${consumerId}`;
@@ -37,7 +65,7 @@ function heartBeat(dispatcher) {
                     free: os.freemem(),
                     total: os.totalmem(),
                 },
-                cpu: process.cpuUsage(),
+                cpu: cpuUsage(),
             };
             const timestamp = Date.now();
             const payload = JSON.stringify({
