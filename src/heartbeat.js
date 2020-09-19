@@ -32,6 +32,19 @@ function cpuUsage() {
     };
 }
 
+function getIPAddresses() {
+    const nets = os.networkInterfaces();
+    const addresses = []
+    for (const name in nets) {
+        for (const net of nets[name]) {
+            if (net.family === 'IPv4' && !net.internal) {
+                addresses.push(net.address);
+            }
+        }
+    }
+    return addresses;
+}
+
 function getHeartBeatIndexName(queueName, consumerId) {
     const ns = redisKeys.getNamespace();
     return `${ns}|${queueName}|${consumerId}`;
@@ -59,6 +72,8 @@ function heartBeat(dispatcher) {
     function beat() {
         if (state === states.UP) {
             const usage = {
+                ipAddress: getIPAddresses(),
+                hostname: os.hostname(),
                 pid: process.pid,
                 ram: {
                     usage: process.memoryUsage(),
