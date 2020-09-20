@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 2.0.1 (2020-09-20)
+
+* Included CPU usage percentage, hostname, and IP address in the consumer stats
+* Bumped redis-smq-monitor to 1.1.1
+* Updated the monitor parameters types based on the redis-smq-monitor package typing
+
 ## 2.0.0 (2020-04-12)
 
 * Removed all deprecated methods
