@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2.0.3 (2020-09-21)
+
+* Bumped redis-smq-monitor to 1.1.3
+
 ## 2.0.2 (2020-09-20)
 
 * Bumped redis-smq-monitor to 1.1.2
