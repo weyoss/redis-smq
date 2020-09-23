@@ -10,7 +10,7 @@
     "ioredis": "4.14.1",
     "lodash": "4.17.20",
     "redis": "2.8.0",
-    "redis-smq-monitor": "1.1.4",
+    "redis-smq-monitor": "1.1.5",
     "redlock": "4.1.0",
     "uuid": "3.0.1"
   },
