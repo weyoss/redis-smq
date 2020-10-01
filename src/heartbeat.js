@@ -6,17 +6,17 @@ const redisClient = require('./redis-client');
 
 const cpuUsageStats = {
     cpuUsage: process.cpuUsage(),
-    time: process.hrtime()
+    time: process.hrtime(),
 };
 
 // convert hrtime to milliseconds
-function hrtime (time) {
+function hrtime(time) {
     return time[0] * 1e3 + time[1] / 1e6;
 }
 
 // convert (user/system) usage time from micro to milliseconds
 function usageTime(time) {
-    return time/1000;
+    return time / 1000;
 }
 
 function cpuUsage() {
@@ -27,14 +27,14 @@ function cpuUsage() {
     cpuUsageStats.time = currentTimestamp;
     cpuUsageStats.cpuUsage = currentCPUUsage;
     return {
-        percentage: (usageTime(cpuUsageDiff.user + cpuUsageDiff.system) / hrtime(timestampDiff) * 100).toFixed(1),
+        percentage: ((usageTime(cpuUsageDiff.user + cpuUsageDiff.system) / hrtime(timestampDiff)) * 100).toFixed(1),
         ...cpuUsageDiff,
     };
 }
 
 function getIPAddresses() {
     const nets = os.networkInterfaces();
-    const addresses = []
+    const addresses = [];
     for (const name in nets) {
         for (const net of nets[name]) {
             if (net.family === 'IPv4' && !net.internal) {
@@ -55,7 +55,7 @@ function getHeartBeatIndexName(queueName, consumerId) {
  * @param dispatcher
  * @constructor
  */
-function heartBeat(dispatcher) {
+function HeartBeat(dispatcher) {
     const queueName = dispatcher.getQueueName();
     const instanceId = dispatcher.getInstanceId();
     const events = dispatcher.getEvents();
@@ -154,7 +154,7 @@ function heartBeat(dispatcher) {
  * @param {string} params.id
  * @param {function} cb
  */
-heartBeat.isOnline = function isOnline(params, cb) {
+HeartBeat.isOnline = function isOnline(params, cb) {
     const { client, queueName, id } = params;
     const keys = redisKeys.getKeys();
     const hashKey = getHeartBeatIndexName(queueName, id);
@@ -185,7 +185,7 @@ heartBeat.isOnline = function isOnline(params, cb) {
  * @param {object} client
  * @param {function} cb
  */
-heartBeat.getOnlineConsumers = function getOnlineConsumers(client, cb) {
+HeartBeat.getOnlineConsumers = function getOnlineConsumers(client, cb) {
     const rKeys = redisKeys.getKeys();
     const data = {
         queues: {},
@@ -223,4 +223,4 @@ heartBeat.getOnlineConsumers = function getOnlineConsumers(client, cb) {
     });
 };
 
-module.exports = heartBeat;
+module.exports = HeartBeat;

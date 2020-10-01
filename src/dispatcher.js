@@ -3,12 +3,12 @@
 const uuid = require('uuid/v4');
 const redisKeys = require('./redis-keys');
 const util = require('./util');
-const scheduler = require('./scheduler');
-const garbageCollector = require('./gc');
-const stats = require('./stats');
+const Scheduler = require('./scheduler');
+const GarbageCollector = require('./gc');
+const Stats = require('./stats');
 const redisClient = require('./redis-client');
 const logger = require('./logger');
-const heartBeat = require('./heartbeat');
+const HeartBeat = require('./heartbeat');
 const Message = require('./message');
 
 const instanceTypes = {
@@ -139,7 +139,7 @@ module.exports = function dispatcher() {
      * @param dispatcherInstance
      */
     function setupGarbageCollector(dispatcherInstance) {
-        garbageCollectorInstance = garbageCollector(dispatcherInstance);
+        garbageCollectorInstance = GarbageCollector(dispatcherInstance);
         garbageCollectorInstance.init();
     }
 
@@ -149,7 +149,7 @@ module.exports = function dispatcher() {
      */
     function setupStats(dispatcherInstance) {
         if (config.monitor && config.monitor.enabled) {
-            statsInstance = stats(dispatcherInstance);
+            statsInstance = Stats(dispatcherInstance);
             statsInstance.init();
         }
     }
@@ -159,7 +159,7 @@ module.exports = function dispatcher() {
      * @param dispatcherInstance
      */
     function setupConsumerHeartBeat(dispatcherInstance) {
-        heartBeatInstance = heartBeat(dispatcherInstance);
+        heartBeatInstance = HeartBeat(dispatcherInstance);
         heartBeatInstance.init();
     }
 
@@ -169,7 +169,7 @@ module.exports = function dispatcher() {
      * @param dispatcherInstance
      */
     function setupScheduler(dispatcherInstance) {
-        schedulerInstance = scheduler(dispatcherInstance);
+        schedulerInstance = Scheduler(dispatcherInstance);
         schedulerInstance.init();
     }
 
