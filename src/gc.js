@@ -2,7 +2,7 @@
 
 const redisKeys = require('./redis-keys');
 const redisClient = require('./redis-client');
-const lockManager = require('./lock-manager');
+const LockManager = require('./lock-manager');
 const heartBeat = require('./heartbeat');
 const Message = require('./message');
 const util = require('./util');
@@ -13,7 +13,7 @@ const GC_INSPECTION_INTERVAL = 1000; // in ms
  *
  * @param dispatcher
  */
-function garbageCollector(dispatcher) {
+function GarbageCollector(dispatcher) {
     const instanceId = dispatcher.getInstanceId();
     const events = dispatcher.getEvents();
     const keys = dispatcher.getKeys();
@@ -71,59 +71,66 @@ function garbageCollector(dispatcher) {
      * @param {function} done
      */
     function collectProcessingQueuesMessages(queues, done) {
-        if (queues.length) {
-            let deadConsumer = false;
-            const processingQueueName = queues.pop();
+        const next = () => {
+            if (queues.length) {
+                const processingQueueName = queues.pop();
+                consumerStatus(processingQueueName);
+            } else done();
+        };
+        const consumerStatus = (processingQueueName) => {
             debug(`Inspecting processing queue [${processingQueueName}]... `);
-            const segments = redisKeys.getKeySegments(processingQueueName);
-            if (segments.consumerId !== instanceId) {
-                const purgeProcessingQueue = (name) => {
-                    util.purgeProcessingQueue(redisClientInstance, name, (err) => {
-                        if (err) dispatcher.error(err);
-                    });
-                };
-                const collectMessageCallback = (err) => {
-                    if (err) dispatcher.error(err);
-                    else {
-                        if (deadConsumer) purgeProcessingQueue(processingQueueName);
-                        collectProcessingQueuesMessages(queues, done);
-                    }
-                };
-                const lrangeCallback = (err, range) => {
-                    if (err) dispatcher.error(err);
-                    else if (range.length) {
-                        const message = Message.createFromMessage(range[0]);
-                        const uuid = message.getId();
-                        debug(`Collecting message [${uuid}]...`);
-                        if (hasExpired(message)) {
-                            collectExpiredMessage(message, processingQueueName, collectMessageCallback);
-                        } else {
-                            collectMessage(message, processingQueueName, collectMessageCallback);
-                        }
-                    } else collectMessageCallback();
-                };
-                const isOnlineCallback = (err, online) => {
-                    if (err) dispatcher.err(err);
-                    else if (online) {
-                        debug(`Consumer ID [${segments.consumerId}] is alive!`);
-                        collectProcessingQueuesMessages(queues, done);
-                    } else {
-                        deadConsumer = true;
-                        debug(`Consumer ID [${segments.consumerId}] seems to be dead. Fetching queue message...`);
-                        redisClientInstance.lrange(processingQueueName, 0, 0, lrangeCallback);
-                    }
-                };
-                debug(`Is consumer ID [${segments.consumerId}] alive?`);
+            const { queueName, consumerId } = redisKeys.getKeySegments(processingQueueName);
+            if (consumerId !== instanceId) {
+                debug(`Is consumer ID [${consumerId}] alive?`);
                 heartBeat.isOnline({
                     client: redisClientInstance,
-                    queueName: segments.queueName,
-                    id: segments.consumerId,
-                }, isOnlineCallback);
+                    queueName,
+                    id: consumerId,
+                }, (err, online) => {
+                    if (err) dispatcher.error(err);
+                    else if (online) {
+                        debug(`Consumer ID [${consumerId}] is alive!`);
+                        next();
+                    } else {
+                        debug(`Consumer ID [${consumerId}] seems to be dead. Fetching queue message...`);
+                        fetchMessage(processingQueueName);
+                    }
+                });
             } else {
                 debug('Skipping self consumer instance ID...');
-                collectProcessingQueuesMessages(queues, done);
+                next();
             }
-        } else done();
+        };
+        const fetchMessage = (processingQueueName) => {
+            redisClientInstance.lrange(processingQueueName, 0, 0, (err, range) => {
+                if (err) dispatcher.error(err);
+                else if (range.length) {
+                    const msg = Message.createFromMessage(range[0]);
+                    debug(`Fetched a message with ID [${msg.getId()}].`);
+                    message(processingQueueName, msg);
+                } else destroyQueue(processingQueueName);
+            });
+        };
+        const message = (processingQueueName, msg) => {
+            const uuid = msg.getId();
+            debug(`Collecting message [${uuid}]...`);
+            const cb = (err) => {
+                if (err) dispatcher.error(err);
+                else destroyQueue(processingQueueName);
+            };
+            if (hasExpired(msg)) {
+                collectExpiredMessage(msg, processingQueueName, cb);
+            } else {
+                collectMessage(msg, processingQueueName, cb);
+            }
+        };
+        const destroyQueue = (processingQueueName) => {
+            util.purgeProcessingQueue(redisClientInstance, processingQueueName, (err) => {
+                if (err) dispatcher.error(err);
+                else next();
+            });
+        };
+        next();
     }
 
     /**
@@ -299,7 +306,7 @@ function garbageCollector(dispatcher) {
         start() {
             if (state === states.DOWN) {
                 const config = dispatcher.getConfig();
-                lockManager.getInstance(config, (l) => {
+                LockManager.getInstance(config, (l) => {
                     lockManagerInstance = l;
                     redisClient.getNewInstance(config, (c) => {
                         redisClientInstance = c;
@@ -338,4 +345,4 @@ function garbageCollector(dispatcher) {
     };
 }
 
-module.exports = garbageCollector;
+module.exports = GarbageCollector;

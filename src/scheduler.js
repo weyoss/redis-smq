@@ -3,14 +3,14 @@
 const cronParser = require('cron-parser');
 const Message = require('./message');
 const redisClient = require('./redis-client');
-const lockManager = require('./lock-manager');
+const LockManager = require('./lock-manager');
 
 /**
  *
  * @param dispatcher
  * @param tickPeriod
  */
-function scheduler(dispatcher, tickPeriod = 1000) {
+function Scheduler(dispatcher, tickPeriod = 1000) {
     const { keySchedulerLock, keyQueueNameDelayed } = dispatcher.getKeys();
     const logger = dispatcher.getLogger();
     const events = dispatcher.getEvents();
@@ -198,7 +198,7 @@ function scheduler(dispatcher, tickPeriod = 1000) {
         start() {
             if (state === states.DOWN) {
                 const config = dispatcher.getConfig();
-                lockManager.getInstance(config, (l) => {
+                LockManager.getInstance(config, (l) => {
                     lockManagerInstance = l;
                     redisClient.getNewInstance(config, (c) => {
                         state = states.UP;
@@ -237,4 +237,4 @@ function scheduler(dispatcher, tickPeriod = 1000) {
     };
 }
 
-module.exports = scheduler;
+module.exports = Scheduler;

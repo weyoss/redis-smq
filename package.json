@@ -28,9 +28,10 @@
     "typescript": "3.8.3"
   },
   "scripts": {
-    "test": "eslint --ignore-path .jshintignore src/*.js && NODE_ENV=test jest --runInBand",
+    "test": "NODE_ENV=test jest --runInBand",
+    "pretest": "npm run lint",
     "lint": "eslint --ignore-path .jshintignore src/*.js",
-    "fix": "eslint --ignore-path .jshintignore src/*.js --fix"
+    "lint:fix": "eslint --ignore-path .jshintignore src/*.js --fix"
   },
   "author": "Weyoss <weyoss@protonmail.com>",
   "license": "MIT",

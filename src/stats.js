@@ -9,7 +9,7 @@ const redisClient = require('./redis-client');
  * @param dispatcher
  * @constructor
  */
-function stats(dispatcher) {
+function Stats(dispatcher) {
     const inputSlots = new Array(1000).fill(0);
     const processingSlots = new Array(1000).fill(0);
     const acknowledgedSlots = new Array(1000).fill(0);
@@ -175,4 +175,4 @@ function stats(dispatcher) {
     };
 }
 
-module.exports = stats;
+module.exports = Stats;

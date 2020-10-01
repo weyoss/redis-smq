@@ -3,7 +3,7 @@
 const Redlock = require('redlock');
 const redisClient = require('./redis-client');
 
-function lockManager(redisClientInstance) {
+function LockManager(redisClientInstance) {
     const states = {
         UP: 1,
         DOWN: 0,
@@ -84,11 +84,11 @@ function lockManager(redisClientInstance) {
     };
 }
 
-lockManager.getInstance = (config, cb) => {
+LockManager.getInstance = (config, cb) => {
     redisClient.getNewInstance(config, (c) => {
-        const instance = lockManager(c);
+        const instance = LockManager(c);
         cb(instance);
     });
 };
 
-module.exports = lockManager;
+module.exports = LockManager;

@@ -1,7 +1,7 @@
 'use strict';
 
 const lodash = require('lodash');
-const lockManager = require('./lock-manager');
+const LockManager = require('./lock-manager');
 const redisKeys = require('./redis-keys');
 const redisClient = require('./redis-client');
 const { getOnlineConsumers } = require('./heartbeat');
@@ -11,7 +11,7 @@ const util = require('./util');
  *
  * @param config
  */
-function statsAggregator(config) {
+function StatsAggregator(config) {
     if (config.hasOwnProperty('namespace')) {
         redisKeys.setNamespace(config.namespace);
     }
@@ -266,7 +266,7 @@ function statsAggregator(config) {
         start() {
             const getLockManager = (c) => {
                 redisClientInstance = c;
-                lockManager.getInstance(config, (l) => {
+                LockManager.getInstance(config, (l) => {
                     lockManagerInstance = l;
                     run();
                 });
@@ -281,7 +281,7 @@ let instance = null;
 process.on('message', (c) => {
     if (!instance) {
         const config = JSON.parse(c);
-        instance = statsAggregator(config);
+        instance = StatsAggregator(config);
         instance.start();
     }
 });
