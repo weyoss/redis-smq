@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 2.0.6 (2020-10-02)
+
+* Refactored gc.collectProcessingQueuesMessages()
+* Capitalized factory names
+
 ## 2.0.5 (2020-09-23)
 
 * Bumped redis-smq-monitor to 1.1.5
