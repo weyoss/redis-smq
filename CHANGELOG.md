@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2.0.7 (2020-10-04)
+
+* Fixed bug in stats aggregation causing lost of queue name and queue namespace.
+
 ## 2.0.6 (2020-10-02)
 
 * Refactored gc.collectProcessingQueuesMessages()
