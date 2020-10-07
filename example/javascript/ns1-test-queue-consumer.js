@@ -30,29 +30,27 @@ const consumer = new Ns1TestQueueConsumer(config, { messageConsumeTimeout: 2000 
 
 consumer.on(events.UP, () => {
     console.log('UP');
-})
+});
 
 consumer.on(events.DOWN, () => {
     console.log('DOWN');
-})
+});
 
 consumer.on(events.GOING_UP, () => {
     console.log('GOING UP');
-})
+});
 
 consumer.on(events.GOING_DOWN, () => {
     console.log('GOING DOWN');
-})
+});
 
 console.log('start');
 consumer.run();
-
 
 setTimeout(() => {
     console.log('stop');
     consumer.shutdown();
 }, 5000);
-
 
 setTimeout(() => {
     console.log('start');

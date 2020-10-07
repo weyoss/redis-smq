@@ -20,13 +20,13 @@ const keyTypes = {
     KEY_TYPE_MESSAGE_QUEUES_INDEX: '6.1',
     KEY_TYPE_PROCESSING_QUEUES_INDEX: '6.2',
     KEY_TYPE_DEAD_LETTER_QUEUES_INDEX: '6.3',
-    KEY_TYPE_SCHEDULER_LOCK: '7.1',
+    KEY_TYPE_SCHEDULER_LOCK: '7.1'
 };
 
 /**
  *
- * @param keys
- * @return {*}
+ * @param {object} keys
+ * @return {object}
  */
 function formatKeys(keys) {
     for (const k in keys) {
@@ -37,8 +37,8 @@ function formatKeys(keys) {
 
 /**
  *
- * @param keys
- * @returns {*}
+ * @param {object} keys
+ * @returns {object}
  */
 function formatGlobalKeys(keys) {
     for (const k in keys) {
@@ -48,10 +48,9 @@ function formatGlobalKeys(keys) {
 }
 
 module.exports = {
-
     /**
-     * 
-     * @return {object}
+     *
+     * @return {keyTypes}
      */
     getKeyTypes() {
         return keyTypes;
@@ -66,6 +65,10 @@ module.exports = {
         namespace = `redis-smq-${ns}`;
     },
 
+    /**
+     *
+     * @return {string}
+     */
     getNamespace() {
         return namespace;
     },
@@ -88,9 +91,9 @@ module.exports = {
 
     /**
      *
-     * @param instanceId
-     * @param queueName
-     * @return {*}
+     * @param {string} instanceId
+     * @param {string} queueName
+     * @return {object}
      */
     getConsumerKeys(instanceId, queueName) {
         const consumerKeys = {};
@@ -106,9 +109,9 @@ module.exports = {
 
     /**
      *
-     * @param instanceId
-     * @param queueName
-     * @return {*}
+     * @param {string} instanceId
+     * @param {string} queueName
+     * @return {object}
      */
     getProducerKeys(instanceId, queueName) {
         const producerKeys = {};
@@ -121,8 +124,8 @@ module.exports = {
 
     /**
      *
-     * @param queueName
-     * @return {*}
+     * @param {string} queueName
+     * @return {object}
      */
     getQueueKeys(queueName) {
         const keys = {};
@@ -137,7 +140,7 @@ module.exports = {
 
     /**
      *
-     * @return {*}
+     * @return {object}
      */
     getCommonKeys() {
         const keys = {};
@@ -159,17 +162,19 @@ module.exports = {
         const segments = key.split('|');
         const ns = segments[0];
         const type = segments[1].replace(/[@]/g, '');
-        if (type === keyTypes.KEY_TYPE_PROCESSING_QUEUE
-            || type === keyTypes.KEY_TYPE_HEARTBEAT
-            || type === keyTypes.KEY_TYPE_RATE_PROCESSING
-            || type === keyTypes.KEY_TYPE_RATE_ACKNOWLEDGED
-            || type === keyTypes.KEY_TYPE_RATE_UNACKNOWLEDGED) {
+        if (
+            type === keyTypes.KEY_TYPE_PROCESSING_QUEUE ||
+            type === keyTypes.KEY_TYPE_HEARTBEAT ||
+            type === keyTypes.KEY_TYPE_RATE_PROCESSING ||
+            type === keyTypes.KEY_TYPE_RATE_ACKNOWLEDGED ||
+            type === keyTypes.KEY_TYPE_RATE_UNACKNOWLEDGED
+        ) {
             const [, , queueName, consumerId] = segments;
             return {
                 ns,
                 type,
                 queueName,
-                consumerId,
+                consumerId
             };
         }
         if (type === keyTypes.KEY_TYPE_RATE_INPUT) {
@@ -178,19 +183,21 @@ module.exports = {
                 ns,
                 type,
                 queueName,
-                producerId,
+                producerId
             };
         }
-        if (type === keyTypes.KEY_TYPE_MESSAGE_QUEUE
-            || type === keyTypes.KEY_TYPE_DEAD_LETTER_QUEUE
-            || type === keyTypes.KEY_TYPE_GC_LOCK) {
+        if (
+            type === keyTypes.KEY_TYPE_MESSAGE_QUEUE ||
+            type === keyTypes.KEY_TYPE_DEAD_LETTER_QUEUE ||
+            type === keyTypes.KEY_TYPE_GC_LOCK
+        ) {
             const [, , queueName] = segments;
             return {
                 ns,
                 type,
-                queueName,
+                queueName
             };
         }
         return {};
-    },
+    }
 };

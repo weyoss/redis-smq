@@ -10,40 +10,39 @@ const events = require('./events');
 
 const GC_INSPECTION_INTERVAL = 1000; // in ms
 
+/**
+ * @param {Instance} instance
+ * @return {object}
+ */
 function GarbageCollector(instance) {
     const instanceId = instance.getId();
     const keys = instance.getInstanceRedisKeys();
-    const {
-        keyQueueName,
-        keyQueueNameProcessingCommon,
-        keyQueueNameDead,
-        keyGCLock,
-    } = keys;
+    const { keyQueueName, keyQueueNameProcessingCommon, keyQueueNameDead, keyGCLock } = keys;
     const logger = instance.getLogger();
     const states = {
         UP: 1,
-        DOWN: 0,
+        DOWN: 0
     };
 
     /**
-     * @type {null|function}
+     * @type {function|null}
      */
     let shutdownNow = null;
 
     /**
      *
-     * @type {null|object}
+     * @type {Object|null}
      */
     let lockManagerInstance = null;
 
     /**
      *
-     * @type {null|object}
+     * @type {Object|null}
      */
     let redisClientInstance = null;
 
     /**
-     *
+     *@type {number}
      */
     let state = states.DOWN;
 
@@ -54,13 +53,18 @@ function GarbageCollector(instance) {
     let timer = 0;
 
     /**
-     * 
+     *
      * @param {string} message
      */
     function debug(message) {
         logger.debug({ gc: true }, message);
     }
 
+    /**
+     *
+     * @param {string[]} queues
+     * @param {function} done
+     */
     function collectProcessingQueuesMessages(queues, done) {
         const next = () => {
             if (queues.length) {
@@ -73,25 +77,33 @@ function GarbageCollector(instance) {
             const { queueName, consumerId } = redisKeys.getKeySegments(processingQueueName);
             if (consumerId !== instanceId) {
                 debug(`Is consumer ID [${consumerId}] alive?`);
-                HeartBeat.isOnline({
-                    client: redisClientInstance,
-                    queueName,
-                    id: consumerId,
-                }, (err, online) => {
-                    if (err) instance.error(err);
-                    else if (online) {
-                        debug(`Consumer ID [${consumerId}] is alive!`);
-                        next();
-                    } else {
-                        debug(`Consumer ID [${consumerId}] seems to be dead. Fetching queue message...`);
-                        fetchMessage(processingQueueName);
+                HeartBeat.isOnline(
+                    {
+                        client: redisClientInstance,
+                        queueName,
+                        id: consumerId
+                    },
+                    (err, online) => {
+                        if (err) instance.error(err);
+                        else if (online) {
+                            debug(`Consumer ID [${consumerId}] is alive!`);
+                            next();
+                        } else {
+                            debug(`Consumer ID [${consumerId}] seems to be dead. Fetching queue message...`);
+                            fetchMessage(processingQueueName);
+                        }
                     }
-                });
+                );
             } else {
                 debug('Skipping self consumer instance ID...');
                 next();
             }
         };
+
+        /**
+         *
+         * @param {string} processingQueueName
+         */
         const fetchMessage = (processingQueueName) => {
             redisClientInstance.lrange(processingQueueName, 0, 0, (err, range) => {
                 if (err) instance.error(err);
@@ -102,6 +114,12 @@ function GarbageCollector(instance) {
                 } else destroyQueue(processingQueueName);
             });
         };
+
+        /**
+         *
+         * @param {string} processingQueueName
+         * @param {Message} msg
+         */
         const message = (processingQueueName, msg) => {
             const uuid = msg.getId();
             debug(`Collecting message [${uuid}]...`);
@@ -115,6 +133,10 @@ function GarbageCollector(instance) {
                 collectMessage(msg, processingQueueName, cb);
             }
         };
+
+        /**
+         * @param {string} processingQueueName
+         */
         const destroyQueue = (processingQueueName) => {
             util.purgeProcessingQueue(redisClientInstance, processingQueueName, (err) => {
                 if (err) instance.error(err);
@@ -137,7 +159,6 @@ function GarbageCollector(instance) {
         if (state === states.UP) {
             lockManagerInstance.acquireLock(keyGCLock, 10000, (err) => {
                 if (err) instance.error(err);
-
                 // It could takes a long time before a lock could be acquired. Once a lock has been acquired
                 // before continuing check first if we are still running. (may be a shutdown command is being in
                 // process for example)
@@ -162,7 +183,7 @@ function GarbageCollector(instance) {
      * Move the message to a dead-letter queue when max the attempts threshold is reached
      * or otherwise re-queue it again
      *
-     * @param {object} message
+     * @param {Message} message
      * @param {string} processingQueue
      * @param {function} cb
      */
@@ -225,7 +246,7 @@ function GarbageCollector(instance) {
 
     /**
      *
-     * @param {object} message
+     * @param {Message} message
      * @param {string} processingQueue
      * @param {function} cb
      */
@@ -244,7 +265,7 @@ function GarbageCollector(instance) {
 
     /**
      *
-     * @param {object} message
+     * @param {Message} message
      * @returns {boolean}
      */
     function hasExpired(message) {
@@ -253,15 +274,14 @@ function GarbageCollector(instance) {
         if (messageTTL) {
             const curTime = new Date().getTime();
             const createdAt = message.getCreatedAt();
-            return (((createdAt + messageTTL) - curTime) <= 0);
+            return createdAt + messageTTL - curTime <= 0;
         }
         return false;
     }
 
-
     /**
      *
-     * @param message
+     * @param {Message} message
      * @return {number}
      */
     function increaseAttempts(message) {
@@ -304,7 +324,7 @@ function GarbageCollector(instance) {
         },
         collectMessage,
         collectExpiredMessage,
-        hasExpired,
+        hasExpired
     };
 }
 

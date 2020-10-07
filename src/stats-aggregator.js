@@ -9,7 +9,8 @@ const util = require('./util');
 
 /**
  *
- * @param config
+ * @param {object} config
+ * @return {object}
  */
 function StatsAggregator(config) {
     if (config.hasOwnProperty('namespace')) {
@@ -34,9 +35,9 @@ function StatsAggregator(config) {
                 processing: 0,
                 acknowledged: 0,
                 unacknowledged: 0,
-                input: 0,
+                input: 0
             },
-            queues: {},
+            queues: {}
         };
 
         const processResult = (result) => {
@@ -55,7 +56,7 @@ function StatsAggregator(config) {
                             name: queueName,
                             namespace: ns,
                             consumers: {},
-                            producers: {},
+                            producers: {}
                         };
                     }
                     const [valueStr, timestamp] = result[key].split('|');
@@ -67,7 +68,7 @@ function StatsAggregator(config) {
                             if (!producers[segments.producerId]) {
                                 producers[segments.producerId] = {
                                     id: segments.producerId,
-                                    rates: {},
+                                    rates: {}
                                 };
                             }
                             rates = producers[segments.producerId].rates;
@@ -78,8 +79,8 @@ function StatsAggregator(config) {
                                     rates: {
                                         processing: 0,
                                         acknowledged: 0,
-                                        unacknowledged: 0,
-                                    },
+                                        unacknowledged: 0
+                                    }
                                 };
                             }
                             rates = consumers[segments.consumerId].rates;
@@ -126,7 +127,7 @@ function StatsAggregator(config) {
      */
     function getQueuesSize(queues, cb) {
         const data = {
-            queues: {},
+            queues: {}
         };
         const keyTypes = redisKeys.getKeyTypes();
         if (queues && queues.length) {
@@ -142,7 +143,7 @@ function StatsAggregator(config) {
                         }
                         data.queues[ns][queueName] = {
                             name: queueName,
-                            namespace: ns,
+                            namespace: ns
                         };
                         if (type === keyTypes.KEY_TYPE_DEAD_LETTER_QUEUE) {
                             data.queues[ns][queueName].erroredMessages = size;
@@ -256,9 +257,6 @@ function StatsAggregator(config) {
     }
 
     return {
-        /**
-         *
-         */
         start() {
             const getLockManager = (c) => {
                 redisClientInstance = c;
@@ -268,7 +266,7 @@ function StatsAggregator(config) {
                 });
             };
             redisClient.getNewInstance(config, getLockManager);
-        },
+        }
     };
 }
 

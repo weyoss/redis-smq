@@ -28,5 +28,5 @@ module.exports = {
     MESSAGE_REQUEUED: 'message.requeued',
     MESSAGE_DELAYED: 'message.delayed',
     MESSAGE_DEAD_LETTER: 'message.moved_to_dlq',
-    MESSAGE_DESTROYED: 'message.destroyed',
+    MESSAGE_DESTROYED: 'message.destroyed'
 };

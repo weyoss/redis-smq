@@ -8,7 +8,6 @@ const Message = require('./message');
 const events = require('./events');
 const util = require('./util');
 
-
 class Consumer extends Instance {
     /**
      * See docs.
@@ -25,29 +24,46 @@ class Consumer extends Instance {
         this.options = options;
         this.consumerMessageTTL = options.hasOwnProperty('messageTTL') ? Number(options.messageTTL) : 0;
         this.consumerMessageConsumeTimeout = options.hasOwnProperty('messageConsumeTimeout')
-            ? Number(options.messageConsumeTimeout) : 0;
+            ? Number(options.messageConsumeTimeout)
+            : 0;
         this.messageRetryThreshold = options.hasOwnProperty('messageRetryThreshold')
-            ? Number(options.messageRetryThreshold) : 3;
-        this.messageRetryDelay = options.hasOwnProperty('messageRetryDelay')
-            ? Number(options.messageRetryDelay) : 0;
+            ? Number(options.messageRetryThreshold)
+            : 3;
+        this.messageRetryDelay = options.hasOwnProperty('messageRetryDelay') ? Number(options.messageRetryDelay) : 0;
     }
 
+    /**
+     * @return {number}
+     */
     getConsumerMessageConsumeTimeout() {
         return this.consumerMessageConsumeTimeout;
     }
 
+    /**
+     * @return {number}
+     */
     getMessageRetryThreshold() {
         return this.messageRetryThreshold;
     }
 
+    /**
+     * @return {number}
+     */
     getConsumerMessageTTL() {
         return this.consumerMessageTTL;
     }
 
+    /**
+     * @return {number}
+     */
     getMessageRetryDelay() {
         return this.messageRetryDelay;
     }
 
+    /**
+     * @protected
+     * @return {object}
+     */
     getRedisKeys() {
         if (!this.redisKeys) {
             this.redisKeys = redisKeys.getConsumerKeys(this.getId(), this.getQueueName());
@@ -55,6 +71,9 @@ class Consumer extends Instance {
         return this.redisKeys;
     }
 
+    /**
+     * @protected
+     */
     getNextMessage() {
         this.loggerInstance.info('Waiting for new messages...');
         const { keyQueueName, keyQueueNameProcessing } = this.getInstanceRedisKeys();
@@ -68,18 +87,33 @@ class Consumer extends Instance {
         });
     }
 
+    /**
+     * @protected
+     * @return {boolean}
+     */
     hasGoneUp() {
-        return (super.hasGoneUp()
-            && this.startupFiredEvents.includes(events.GC_UP)
-            && this.startupFiredEvents.includes(events.HEARTBEAT_UP));
+        return (
+            super.hasGoneUp() &&
+            this.startupFiredEvents.includes(events.GC_UP) &&
+            this.startupFiredEvents.includes(events.HEARTBEAT_UP)
+        );
     }
 
+    /**
+     * @protected
+     * @return {boolean}
+     */
     hasGoneDown() {
-        return (super.hasGoneDown()
-            && this.shutdownFiredEvents.includes(events.GC_DOWN)
-            && this.shutdownFiredEvents.includes(events.HEARTBEAT_DOWN));
+        return (
+            super.hasGoneDown() &&
+            this.shutdownFiredEvents.includes(events.GC_DOWN) &&
+            this.shutdownFiredEvents.includes(events.HEARTBEAT_DOWN)
+        );
     }
 
+    /**
+     * @protected
+     */
     registerEventsHandlers() {
         super.registerEventsHandlers();
         this.on(events.HEARTBEAT_UP, () => this.handleStartupEvent(events.HEARTBEAT_UP));
@@ -120,15 +154,11 @@ class Consumer extends Instance {
         this.on(events.MESSAGE_EXPIRED, (message) => {
             this.loggerInstance.info(`Message [${message.uuid}] has expired`);
             const { keyQueueNameProcessing } = this.getInstanceRedisKeys();
-            this.garbageCollectorInstance.collectExpiredMessage(
-                message,
-                keyQueueNameProcessing,
-                () => {
-                    if (this.statsInstance) this.statsInstance.incrementAcknowledgedSlot();
-                    this.loggerInstance.info(`Message [${message.uuid}] successfully processed`);
-                    this.emit(events.MESSAGE_NEXT);
-                },
-            );
+            this.garbageCollectorInstance.collectExpiredMessage(message, keyQueueNameProcessing, () => {
+                if (this.statsInstance) this.statsInstance.incrementAcknowledgedSlot();
+                this.loggerInstance.info(`Message [${message.uuid}] successfully processed`);
+                this.emit(events.MESSAGE_NEXT);
+            });
         });
         this.on(events.MESSAGE_ACKNOWLEDGED, () => {
             if (this.statsInstance) this.statsInstance.incrementAcknowledgedSlot();
@@ -145,19 +175,28 @@ class Consumer extends Instance {
         this.on(events.MESSAGE_CONSUME_TIMEOUT, (message) => {
             this.handleConsumeFailure(
                 message,
-                new Error(`Consumer timed out after [${this.getConsumerMessageConsumeTimeout()}]`),
+                new Error(`Consumer timed out after [${this.getConsumerMessageConsumeTimeout()}]`)
             );
         });
     }
 
+    /**
+     * @protected
+     */
     setupHeartBeat() {
         this.heartBeatInstance = HeartBeat(this);
     }
 
+    /**
+     * @protected
+     */
     setupGarbageCollector() {
         this.garbageCollectorInstance = GarbageCollector(this);
     }
 
+    /**
+     * @protected
+     */
     setupQueues() {
         const { keyQueueNameProcessing } = this.getInstanceRedisKeys();
         util.rememberProcessingQueue(this.redisClientInstance, keyQueueNameProcessing, (err) => {
@@ -166,12 +205,20 @@ class Consumer extends Instance {
         });
     }
 
+    /**
+     * @protected
+     */
     completeBootstrap() {
         this.setupHeartBeat();
         this.setupGarbageCollector();
         super.completeBootstrap();
     }
 
+    /**
+     *
+     * @param {Message} msg
+     * @protected
+     */
     handleConsume(msg) {
         let isTimeout = false;
         let timer = null;
@@ -207,12 +254,23 @@ class Consumer extends Instance {
         }
     }
 
+    /**
+     *
+     * @param {Message} msg
+     * @param {Error} error
+     * @protected
+     */
     handleConsumeFailure(msg, error) {
-        this.loggerInstance.error(`Consumer failed to consume message [${msg.uuid}]...`);
+        this.loggerInstance.error(`Consumer failed to consume message [${msg.getId()}]...`);
         this.loggerInstance.error(error);
         this.emit(events.MESSAGE_UNACKNOWLEDGED, msg);
     }
 
+    /**
+     *
+     * @param {*} message
+     * @param {function} cb
+     */
     consume(message, cb) {
         /* eslint class-methods-use-this: 0 */
         throw new Error('Consume method should be extended');
