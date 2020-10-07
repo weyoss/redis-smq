@@ -16,7 +16,7 @@ function StatsAggregator(config) {
         redisKeys.setNamespace(config.namespace);
     }
 
-    const rKeys = redisKeys.getKeys();
+    const rKeys = redisKeys.getCommonKeys();
 
     const noop = () => {};
 
@@ -145,9 +145,9 @@ function StatsAggregator(config) {
                             namespace: ns,
                         };
                         if (type === keyTypes.KEY_TYPE_DEAD_LETTER_QUEUE) {
-                            data.queues[ns][queueName]['erroredMessages'] = size;
+                            data.queues[ns][queueName].erroredMessages = size;
                         } else {
-                            data.queues[ns][queueName]['size'] = size;
+                            data.queues[ns][queueName].size = size;
                         }
                     });
                     cb(null, data);

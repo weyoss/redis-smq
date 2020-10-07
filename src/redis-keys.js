@@ -88,24 +88,6 @@ module.exports = {
 
     /**
      *
-     * @param dispatcher
-     */
-    getKeys(dispatcher = null) {
-        if (dispatcher) {
-            const instanceId = dispatcher.getInstanceId();
-            const queueName = dispatcher.getQueueName();
-            if (dispatcher.isConsumer()) {
-                return this.getConsumerKeys(instanceId, queueName);
-            }
-            if (dispatcher.isProducer()) {
-                return this.getProducerKeys(instanceId, queueName);
-            }
-        }
-        return this.getCommonKeys();
-    },
-
-    /**
-     *
      * @param instanceId
      * @param queueName
      * @return {*}
