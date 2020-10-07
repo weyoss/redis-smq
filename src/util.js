@@ -11,7 +11,7 @@ module.exports = {
      * @param cb
      */
     rememberMessageQueue(redisClient, queueName, cb) {
-        const { keyMessageQueuesIndex } = redisKeys.getKeys();
+        const { keyMessageQueuesIndex } = redisKeys.getCommonKeys();
         redisClient.sadd(keyMessageQueuesIndex, queueName, cb);
     },
 
@@ -55,7 +55,7 @@ module.exports = {
      * @param cb
      */
     rememberDLQueue(redisClient, queueName, cb) {
-        const { keyDLQueuesIndex } = redisKeys.getKeys();
+        const { keyDLQueuesIndex } = redisKeys.getCommonKeys();
         redisClient.sadd(keyDLQueuesIndex, queueName, cb);
     },
 
@@ -65,7 +65,7 @@ module.exports = {
      * @param cb
      */
     getMessageQueues(redisClient, cb) {
-        const { keyMessageQueuesIndex } = redisKeys.getKeys();
+        const { keyMessageQueuesIndex } = redisKeys.getCommonKeys();
         redisClient.smembers(keyMessageQueuesIndex, cb);
     },
 
@@ -75,7 +75,7 @@ module.exports = {
      * @param cb
      */
     getDLQueues(redisClient, cb) {
-        const { keyDLQueuesIndex } = redisKeys.getKeys();
+        const { keyDLQueuesIndex } = redisKeys.getCommonKeys();
         redisClient.smembers(keyDLQueuesIndex, cb);
     },
 
@@ -85,7 +85,7 @@ module.exports = {
      * @param cb
      */
     getProcessingQueues(redisClient, cb) {
-        const { keyProcessingQueuesIndex } = redisKeys.getKeys();
+        const { keyProcessingQueuesIndex } = redisKeys.getCommonKeys();
         redisClient.smembers(keyProcessingQueuesIndex, cb);
     },
 

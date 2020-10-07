@@ -3,27 +3,23 @@
 const redisKeys = require('./redis-keys');
 const redisClient = require('./redis-client');
 const LockManager = require('./lock-manager');
-const heartBeat = require('./heartbeat');
+const HeartBeat = require('./heartbeat');
 const Message = require('./message');
 const util = require('./util');
+const events = require('./events');
 
 const GC_INSPECTION_INTERVAL = 1000; // in ms
 
-/**
- *
- * @param dispatcher
- */
-function GarbageCollector(dispatcher) {
-    const instanceId = dispatcher.getInstanceId();
-    const events = dispatcher.getEvents();
-    const keys = dispatcher.getKeys();
+function GarbageCollector(instance) {
+    const instanceId = instance.getId();
+    const keys = instance.getInstanceRedisKeys();
     const {
         keyQueueName,
         keyQueueNameProcessingCommon,
         keyQueueNameDead,
         keyGCLock,
     } = keys;
-    const logger = dispatcher.getLogger();
+    const logger = instance.getLogger();
     const states = {
         UP: 1,
         DOWN: 0,
@@ -65,11 +61,6 @@ function GarbageCollector(dispatcher) {
         logger.debug({ gc: true }, message);
     }
 
-    /**
-     *
-     * @param {Array} queues
-     * @param {function} done
-     */
     function collectProcessingQueuesMessages(queues, done) {
         const next = () => {
             if (queues.length) {
@@ -82,12 +73,12 @@ function GarbageCollector(dispatcher) {
             const { queueName, consumerId } = redisKeys.getKeySegments(processingQueueName);
             if (consumerId !== instanceId) {
                 debug(`Is consumer ID [${consumerId}] alive?`);
-                heartBeat.isOnline({
+                HeartBeat.isOnline({
                     client: redisClientInstance,
                     queueName,
                     id: consumerId,
                 }, (err, online) => {
-                    if (err) dispatcher.error(err);
+                    if (err) instance.error(err);
                     else if (online) {
                         debug(`Consumer ID [${consumerId}] is alive!`);
                         next();
@@ -103,7 +94,7 @@ function GarbageCollector(dispatcher) {
         };
         const fetchMessage = (processingQueueName) => {
             redisClientInstance.lrange(processingQueueName, 0, 0, (err, range) => {
-                if (err) dispatcher.error(err);
+                if (err) instance.error(err);
                 else if (range.length) {
                     const msg = Message.createFromMessage(range[0]);
                     debug(`Fetched a message with ID [${msg.getId()}].`);
@@ -115,7 +106,7 @@ function GarbageCollector(dispatcher) {
             const uuid = msg.getId();
             debug(`Collecting message [${uuid}]...`);
             const cb = (err) => {
-                if (err) dispatcher.error(err);
+                if (err) instance.error(err);
                 else destroyQueue(processingQueueName);
             };
             if (hasExpired(msg)) {
@@ -126,16 +117,13 @@ function GarbageCollector(dispatcher) {
         };
         const destroyQueue = (processingQueueName) => {
             util.purgeProcessingQueue(redisClientInstance, processingQueueName, (err) => {
-                if (err) dispatcher.error(err);
+                if (err) instance.error(err);
                 else next();
             });
         };
         next();
     }
 
-    /**
-     *
-     */
     function runInspectionTimer() {
         debug(`Waiting for ${GC_INSPECTION_INTERVAL} before a new iteration...`);
         timer = setTimeout(() => {
@@ -145,19 +133,18 @@ function GarbageCollector(dispatcher) {
         }, GC_INSPECTION_INTERVAL);
     }
 
-    /**
-     *
-     */
     function inspectProcessingQueues() {
         if (state === states.UP) {
             lockManagerInstance.acquireLock(keyGCLock, 10000, (err) => {
-                if (err) dispatcher.error(err);
+                if (err) instance.error(err);
 
-                // after a lock has been acquired, the gc could be shutdown
+                // It could takes a long time before a lock could be acquired. Once a lock has been acquired
+                // before continuing check first if we are still running. (may be a shutdown command is being in
+                // process for example)
                 else if (state === states.UP) {
                     debug('Inspecting processing queues...');
                     util.getProcessingQueuesOf(redisClientInstance, keyQueueNameProcessingCommon, (e, result) => {
-                        if (e) dispatcher.error(e);
+                        if (e) instance.error(e);
                         else if (result && result.length) {
                             debug(`Found [${result.length}] processing queues`);
                             collectProcessingQueuesMessages(result, runInspectionTimer);
@@ -172,8 +159,8 @@ function GarbageCollector(dispatcher) {
     }
 
     /**
-     * Move message to dead-letter queue when max attempts threshold is reached
-     * otherwise requeue it again
+     * Move the message to a dead-letter queue when max the attempts threshold is reached
+     * or otherwise re-queue it again
      *
      * @param {object} message
      * @param {string} processingQueue
@@ -181,10 +168,10 @@ function GarbageCollector(dispatcher) {
      */
     function collectMessage(message, processingQueue, cb) {
         const threshold = message.getRetryThreshold();
-        const messageRetryThreshold = typeof threshold === 'number' ? threshold : dispatcher.getMessageRetryThreshold();
+        const messageRetryThreshold = typeof threshold === 'number' ? threshold : instance.getMessageRetryThreshold();
 
         const delay = message.getRetryDelay();
-        const messageRetryDelay = typeof delay === 'number' ? delay : dispatcher.getMessageRetryDelay();
+        const messageRetryDelay = typeof delay === 'number' ? delay : instance.getMessageRetryDelay();
 
         let destQueueName = null;
         let delayed = false;
@@ -193,26 +180,20 @@ function GarbageCollector(dispatcher) {
         const multi = redisClientInstance.multi();
 
         /**
-         * Only exceptions from non periodic messages are handled.
-         * Periodic messages are ignored once they are delivered to a consumer.
+         * Try to recover only non-periodic messages.
+         * Periodic messages failure is ignored since such messages by default are scheduled for delivery
+         * based on a period of time.
          */
-        if (!dispatcher.isPeriodic(message)) {
+        const scheduler = instance.getScheduler();
+        if (!scheduler.isPeriodic(message)) {
             const uuid = message.getId();
-
-            /**
-             * Attempts
-             */
             const attempts = increaseAttempts(message);
-
-            /**
-             *
-             */
             if (attempts < messageRetryThreshold) {
                 debug(`Trying to consume message ID [${uuid}] again (attempts: [${attempts}]) ...`);
                 if (messageRetryDelay) {
                     debug(`Scheduling message ID [${uuid}]  (delay: [${messageRetryDelay}])...`);
                     message.setScheduledDelay(messageRetryDelay);
-                    dispatcher.schedule(message, multi);
+                    scheduler.schedule(message, multi);
                     delayed = true;
                 } else {
                     debug(`Message ID [${uuid}] is going to be enqueued immediately...`);
@@ -223,10 +204,6 @@ function GarbageCollector(dispatcher) {
                 debug(`Message ID [${uuid}] has exceeded max retry threshold...`);
                 destQueueName = keyQueueNameDead;
             }
-
-            /**
-             *
-             */
             if (destQueueName) {
                 debug(`Moving message [${uuid}] to queue [${destQueueName}]...`);
                 multi.lpush(destQueueName, message.toString());
@@ -235,9 +212,9 @@ function GarbageCollector(dispatcher) {
             multi.exec((err) => {
                 if (err) cb(err);
                 else {
-                    if (requeued) dispatcher.emit(events.MESSAGE_REQUEUED, message);
-                    else if (delayed) dispatcher.emit(events.MESSAGE_DELAYED, message);
-                    else dispatcher.emit(events.MESSAGE_DEAD_LETTER, message);
+                    if (requeued) instance.emit(events.MESSAGE_REQUEUED, message);
+                    else if (delayed) instance.emit(events.MESSAGE_DELAYED, message);
+                    else instance.emit(events.MESSAGE_DEAD_LETTER, message);
                     cb();
                 }
             });
@@ -257,10 +234,10 @@ function GarbageCollector(dispatcher) {
         debug(`Processing expired message [${id}]...`);
         // Just pop it out
         redisClientInstance.rpop(processingQueue, (err) => {
-            if (err) dispatcher.error(err);
+            if (err) instance.error(err);
             else {
                 cb();
-                dispatcher.emit(events.MESSAGE_DESTROYED, message);
+                instance.emit(events.MESSAGE_DESTROYED, message);
             }
         });
     }
@@ -272,7 +249,7 @@ function GarbageCollector(dispatcher) {
      */
     function hasExpired(message) {
         const ttl = message.getTTL();
-        const messageTTL = typeof ttl === 'number' ? ttl : dispatcher.getConsumerMessageTTL();
+        const messageTTL = typeof ttl === 'number' ? ttl : instance.getConsumerMessageTTL();
         if (messageTTL) {
             const curTime = new Date().getTime();
             const createdAt = message.getCreatedAt();
@@ -293,31 +270,20 @@ function GarbageCollector(dispatcher) {
     }
 
     return {
-        init() {
-            const instance = dispatcher.getInstance();
-            instance.on(events.GOING_UP, () => {
-                this.start();
-            });
-            instance.on(events.GOING_DOWN, () => {
-                this.stop();
-            });
-        },
-
         start() {
             if (state === states.DOWN) {
-                const config = dispatcher.getConfig();
+                const config = instance.getConfig();
                 LockManager.getInstance(config, (l) => {
                     lockManagerInstance = l;
                     redisClient.getNewInstance(config, (c) => {
                         redisClientInstance = c;
                         state = states.UP;
-                        dispatcher.emit(events.GC_UP);
+                        instance.emit(events.GC_UP);
                         inspectProcessingQueues();
                     });
                 });
             }
         },
-
         stop() {
             if (state === states.UP && !shutdownNow) {
                 shutdownNow = () => {
@@ -328,7 +294,7 @@ function GarbageCollector(dispatcher) {
                         redisClientInstance = null;
                         shutdownNow = null;
                         state = states.DOWN;
-                        dispatcher.emit(events.GC_DOWN);
+                        instance.emit(events.GC_DOWN);
                     });
                 };
                 if (!lockManagerInstance.isLocked()) {
@@ -336,11 +302,8 @@ function GarbageCollector(dispatcher) {
                 }
             }
         },
-
         collectMessage,
-
         collectExpiredMessage,
-
         hasExpired,
     };
 }

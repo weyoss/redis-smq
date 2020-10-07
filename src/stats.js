@@ -3,19 +3,19 @@
 const path = require('path');
 const { fork } = require('child_process');
 const redisClient = require('./redis-client');
+const events = require('./events');
 
 /**
  *
- * @param dispatcher
+ * @param instance
  * @constructor
  */
-function Stats(dispatcher) {
+function Stats(instance) {
     const inputSlots = new Array(1000).fill(0);
     const processingSlots = new Array(1000).fill(0);
     const acknowledgedSlots = new Array(1000).fill(0);
     const unacknowledgedSlots = new Array(1000).fill(0);
-    const keys = dispatcher.getKeys();
-    const events = dispatcher.getEvents();
+    const keys = instance.getInstanceRedisKeys();
     const noop = () => {};
     const states = {
         UP: 1,
@@ -67,7 +67,7 @@ function Stats(dispatcher) {
             else consumerIdle.push(0);
             if (consumerIdle.length === 5) {
                 const r = consumerIdle.find((i) => i === 0);
-                if (r === undefined) dispatcher.emit(events.IDLE);
+                if (r === undefined) instance.emit(events.IDLE);
                 consumerIdle = [];
             }
             redisClientInstance.hmset(
@@ -113,47 +113,41 @@ function Stats(dispatcher) {
             inputSlots[slot] += 1;
         },
 
-        init() {
-            const instance = dispatcher.getInstance();
-            instance.on(events.GOING_UP, () => {
-                this.start();
-            });
-            instance.on(events.GOING_DOWN, () => {
-                this.stop();
-            });
-            if (dispatcher.isConsumer()) {
-                statsAggregatorThread = fork(path.resolve(path.resolve(`${__dirname}/stats-aggregator.js`)));
-                statsAggregatorThread.on('error', (err) => {
-                    dispatcher.error(err);
-                });
-                statsAggregatorThread.on('exit', (code, signal) => {
-                    const err = new Error(`statsAggregatorThread exited with code ${code} and signal ${signal}`);
-                    dispatcher.error(err);
-                });
-                instance.on(events.GOING_UP, () => {
-                    const config = dispatcher.getConfig();
-                    statsAggregatorThread.send(JSON.stringify(config));
-                });
-                instance.on(events.GOING_DOWN, () => {
-                    statsAggregatorThread.kill('SIGHUP');
-                    statsAggregatorThread = null;
+        start() {
+            if (state === states.DOWN) {
+                redisClient.getNewInstance(instance.getConfig(), (c) => {
+                    redisClientInstance = c;
+                    state = states.UP;
+                    instance.emit(events.STATS_UP);
                 });
             }
         },
 
-        /**
-         *
-         * @returns {boolean}
-         */
-        start() {
-            if (state === states.DOWN) {
-                redisClient.getNewInstance(dispatcher.getConfig(), (c) => {
-                    redisClientInstance = c;
-                    state = states.UP;
-                    if (dispatcher.isConsumer()) runStats(consumerStats);
-                    else runStats(producerStats);
-                    dispatcher.emit(events.STATS_UP);
-                });
+        consumerStats() {
+            runStats(consumerStats);
+        },
+
+        producerStats() {
+            runStats(producerStats);
+        },
+
+        startAggregator() {
+            statsAggregatorThread = fork(path.resolve(path.resolve(`${__dirname}/stats-aggregator.js`)));
+            statsAggregatorThread.on('error', (err) => {
+                instance.error(err);
+            });
+            statsAggregatorThread.on('exit', (code, signal) => {
+                const err = new Error(`statsAggregatorThread exited with code ${code} and signal ${signal}`);
+                instance.error(err);
+            });
+            const config = instance.getConfig();
+            statsAggregatorThread.send(JSON.stringify(config));
+        },
+
+        stopAggregator() {
+            if (statsAggregatorThread) {
+                statsAggregatorThread.kill('SIGHUP');
+                statsAggregatorThread = null;
             }
         },
 
@@ -163,12 +157,14 @@ function Stats(dispatcher) {
          */
         stop() {
             if (state === states.UP && !shutdownNow) {
+                this.stopAggregator();
                 shutdownNow = () => {
                     state = states.DOWN;
                     if (timer) clearInterval(timer);
                     redisClientInstance.end(true);
                     redisClientInstance = null;
-                    dispatcher.emit(events.STATS_DOWN);
+                    shutdownNow = null;
+                    instance.emit(events.STATS_DOWN);
                 };
             }
         },

@@ -6,10 +6,10 @@ module.exports = {
     namespace: 'ns1',
     redis: {
         driver: 'redis',
-        options: {
-            host: '127.0.0.1',
-            port: 6379,
-        },
+        //options: {
+        //    host: '192.168.23.129',
+        //    port: 6379,
+        //},
     },
     log: {
         enabled: false,

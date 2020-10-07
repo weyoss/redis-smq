@@ -3,6 +3,7 @@
 const os = require('os');
 const redisKeys = require('./redis-keys');
 const redisClient = require('./redis-client');
+const events = require('./events');
 
 const cpuUsageStats = {
     cpuUsage: process.cpuUsage(),
@@ -52,14 +53,13 @@ function getHeartBeatIndexName(queueName, consumerId) {
 
 /**
  *
- * @param dispatcher
+ * @param instance
  * @constructor
  */
-function HeartBeat(dispatcher) {
-    const queueName = dispatcher.getQueueName();
-    const instanceId = dispatcher.getInstanceId();
-    const events = dispatcher.getEvents();
-    const { keyHeartBeat } = dispatcher.getKeys();
+function HeartBeat(instance) {
+    const queueName = instance.getQueueName();
+    const instanceId = instance.getId();
+    const { keyHeartBeat } = instance.getInstanceRedisKeys();
     const states = {
         UP: 1,
         DOWN: 0,
@@ -89,7 +89,7 @@ function HeartBeat(dispatcher) {
             });
             const hashKey = getHeartBeatIndexName(queueName, instanceId);
             redisClientInstance.hset(keyHeartBeat, hashKey, payload, (err) => {
-                if (err) dispatcher.error(err);
+                if (err) instance.error(err);
                 else {
                     timer = setTimeout(() => {
                         if (shutdownNow) shutdownNow();
@@ -101,23 +101,13 @@ function HeartBeat(dispatcher) {
     }
 
     return {
-        init() {
-            const instance = dispatcher.getInstance();
-            instance.on(events.GOING_UP, () => {
-                this.start();
-            });
-            instance.on(events.GOING_DOWN, () => {
-                this.stop();
-            });
-        },
-
         start() {
             if (state === states.DOWN) {
                 state = states.UP;
-                redisClient.getNewInstance(dispatcher.getConfig(), (c) => {
+                redisClient.getNewInstance(instance.getConfig(), (c) => {
                     redisClientInstance = c;
-                    this.beat();
-                    dispatcher.emit(events.HEARTBEAT_UP);
+                    beat();
+                    instance.emit(events.HEARTBEAT_UP);
                 });
             }
         },
@@ -130,18 +120,16 @@ function HeartBeat(dispatcher) {
                     if (timer) clearTimeout(timer);
                     const hashKey = getHeartBeatIndexName(queueName, instanceId);
                     redisClientInstance.hdel(keyHeartBeat, hashKey, (err) => {
-                        if (err) dispatcher.error(err);
+                        if (err) instance.error(err);
                         else {
                             redisClientInstance.end(true);
                             redisClientInstance = null;
-                            dispatcher.emit(events.HEARTBEAT_DOWN);
+                            instance.emit(events.HEARTBEAT_DOWN);
                         }
                     });
                 };
             }
         },
-
-        beat,
     };
 }
 
@@ -156,7 +144,7 @@ function HeartBeat(dispatcher) {
  */
 HeartBeat.isOnline = function isOnline(params, cb) {
     const { client, queueName, id } = params;
-    const keys = redisKeys.getKeys();
+    const keys = redisKeys.getCommonKeys();
     const hashKey = getHeartBeatIndexName(queueName, id);
 
     const noop = () => {};
@@ -186,7 +174,7 @@ HeartBeat.isOnline = function isOnline(params, cb) {
  * @param {function} cb
  */
 HeartBeat.getOnlineConsumers = function getOnlineConsumers(client, cb) {
-    const rKeys = redisKeys.getKeys();
+    const rKeys = redisKeys.getCommonKeys();
     const data = {
         queues: {},
     };

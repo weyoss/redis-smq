@@ -4,16 +4,16 @@ const cronParser = require('cron-parser');
 const Message = require('./message');
 const redisClient = require('./redis-client');
 const LockManager = require('./lock-manager');
+const events = require('./events');
 
 /**
  *
- * @param dispatcher
+ * @param instance
  * @param tickPeriod
  */
-function Scheduler(dispatcher, tickPeriod = 1000) {
-    const { keySchedulerLock, keyQueueNameDelayed } = dispatcher.getKeys();
-    const logger = dispatcher.getLogger();
-    const events = dispatcher.getEvents();
+function Scheduler(instance, tickPeriod = 1000) {
+    const { keySchedulerLock, keyQueueName, keyQueueNameDelayed } = instance.getInstanceRedisKeys();
+    const logger = instance.getLogger();
     const states = {
         UP: 1,
         DOWN: 0,
@@ -54,7 +54,7 @@ function Scheduler(dispatcher, tickPeriod = 1000) {
                 const msg = messages.pop();
                 const message = Message.createFromMessage(msg);
                 const multi = redisClientInstance.multi();
-                dispatcher.enqueue(message, multi);
+                multi.lpush(keyQueueName, msg.toString());
                 multi.zrem(keyQueueNameDelayed, msg);
                 if (isPeriodic(message)) {
                     const timestamp = getNextScheduledTimestamp(message);
@@ -64,14 +64,14 @@ function Scheduler(dispatcher, tickPeriod = 1000) {
                     }
                 }
                 multi.exec((err, res) => {
-                    if (err) dispatcher.error(err);
+                    if (err) instance.error(err);
                     else process(messages);
                 });
-            } else run();
+            } else runTicker();
         };
         if (state === states.UP) {
             redisClientInstance.zrangebyscore(keyQueueNameDelayed, 0, now, (err, messages) => {
-                if (err) dispatcher.error(err);
+                if (err) instance.error(err);
                 else process(messages);
             });
         }
@@ -80,10 +80,10 @@ function Scheduler(dispatcher, tickPeriod = 1000) {
     /**
      *
      */
-    function run() {
+    function runTicker() {
         if (state === states.UP) {
             lockManagerInstance.acquireLock(keySchedulerLock, 10000, (err) => {
-                if (err) dispatcher.error(err);
+                if (err) instance.error(err);
 
                 // after lock has been acquired, the scheduler could be shutdown
                 else if (state === states.UP) {
@@ -185,28 +185,15 @@ function Scheduler(dispatcher, tickPeriod = 1000) {
             scheduleMessage(message, timestamp, multi, cb);
         },
 
-        init() {
-            const instance = dispatcher.getInstance();
-            instance.on(events.GOING_UP, () => {
-                this.start();
-            });
-            instance.on(events.GOING_DOWN, () => {
-                this.stop();
-            });
-        },
-
         start() {
             if (state === states.DOWN) {
-                const config = dispatcher.getConfig();
+                const config = instance.getConfig();
                 LockManager.getInstance(config, (l) => {
                     lockManagerInstance = l;
                     redisClient.getNewInstance(config, (c) => {
                         state = states.UP;
                         redisClientInstance = c;
-                        if (dispatcher.isConsumer()) {
-                            run();
-                        }
-                        dispatcher.emit(events.SCHEDULER_UP);
+                        instance.emit(events.SCHEDULER_UP);
                     });
                 });
             }
@@ -222,7 +209,7 @@ function Scheduler(dispatcher, tickPeriod = 1000) {
                         lockManagerInstance = null;
                         redisClientInstance.end(true);
                         redisClientInstance = null;
-                        dispatcher.emit(events.SCHEDULER_DOWN);
+                        instance.emit(events.SCHEDULER_DOWN);
                     };
                     lockManagerInstance.quit(handler);
                 };
@@ -234,6 +221,7 @@ function Scheduler(dispatcher, tickPeriod = 1000) {
 
         isScheduled,
         isPeriodic,
+        runTicker,
     };
 }
 
