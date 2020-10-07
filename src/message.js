@@ -3,7 +3,6 @@
 const cronParser = require('cron-parser');
 const uuid = require('uuid/v4');
 
-
 class Message {
     /**
      *
@@ -249,7 +248,7 @@ class Message {
  * @return {Message}
  */
 Message.createFromMessage = (message, reset = false) => {
-    const messageJSON = (typeof message === 'string') ? JSON.parse(message) : message;
+    const messageJSON = typeof message === 'string' ? JSON.parse(message) : message;
     const m = new Message();
     Object.assign(m, messageJSON);
     if (reset) {
@@ -349,6 +348,5 @@ Message.PROPERTY_SCHEDULED_REPEAT_COUNT = 'scheduledRepeatCount';
  * @type {boolean}
  */
 Message.PROPERTY_DELAYED = 'delayed';
-
 
 module.exports = Message;

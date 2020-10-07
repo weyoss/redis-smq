@@ -3,7 +3,6 @@
 const bunyan = require('bunyan');
 
 module.exports = {
-
     /**
      *
      * @param {string} name
@@ -18,9 +17,9 @@ module.exports = {
                 info() {},
                 trace() {},
                 fatal() {},
-                error() {},
+                error() {}
             };
         }
-        return bunyan.createLogger({ name, ...config.options || {} });
-    },
+        return bunyan.createLogger({ name, ...(config.options || {}) });
+    }
 };

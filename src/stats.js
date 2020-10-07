@@ -7,8 +7,8 @@ const events = require('./events');
 
 /**
  *
- * @param instance
- * @constructor
+ * @param {Instance} instance
+ * @return {object}
  */
 function Stats(instance) {
     const inputSlots = new Array(1000).fill(0);
@@ -19,19 +19,73 @@ function Stats(instance) {
     const noop = () => {};
     const states = {
         UP: 1,
-        DOWN: 0,
+        DOWN: 0
     };
+
+    /**
+     *
+     * @type {number}
+     */
     let inputRate = 0;
+
+    /**
+     *
+     * @type {number}
+     */
     let processingRate = 0;
+
+    /**
+     *
+     * @type {number}
+     */
     let acknowledgedRate = 0;
+
+    /**
+     *
+     * @type {number}
+     */
     let unacknowledgedRate = 0;
+
+    /**
+     *
+     * @type {Object|null}
+     */
     let redisClientInstance = null;
+
+    /**
+     *
+     * @type {number|null}
+     */
     let timer = null;
+
+    /**
+     *
+     * @type {number}
+     */
     let state = states.DOWN;
+
+    /**
+     *
+     * @type {function|null}
+     */
     let shutdownNow = null;
+
+    /**
+     *
+     * @type {number[]}
+     */
     let consumerIdle = [];
+
+    /**
+     *
+     * @type {*}
+     */
     let statsAggregatorThread = null;
 
+    /**
+     *
+     * @param {function} fn
+     */
     function runStats(fn) {
         timer = setInterval(() => {
             if (shutdownNow) shutdownNow();
@@ -39,9 +93,6 @@ function Stats(instance) {
         }, 1000);
     }
 
-    /**
-     *
-     */
     function producerStats() {
         if (state === states.UP) {
             const now = Date.now();
@@ -51,9 +102,6 @@ function Stats(instance) {
         }
     }
 
-    /**
-     *
-     */
     function consumerStats() {
         if (state === states.UP) {
             const now = Date.now();
@@ -72,42 +120,32 @@ function Stats(instance) {
             }
             redisClientInstance.hmset(
                 keys.keyRate,
-                keys.keyRateProcessing, `${processingRate}|${now}`,
-                keys.keyRateAcknowledged, `${acknowledgedRate}|${now}`,
-                keys.keyRateUnacknowledged, `${unacknowledgedRate}|${now}`,
-                noop,
+                keys.keyRateProcessing,
+                `${processingRate}|${now}`,
+                keys.keyRateAcknowledged,
+                `${acknowledgedRate}|${now}`,
+                keys.keyRateUnacknowledged,
+                `${unacknowledgedRate}|${now}`,
+                noop
             );
         }
     }
-
     return {
-        /**
-         *
-         */
         incrementProcessingSlot() {
             const slot = new Date().getMilliseconds();
             processingSlots[slot] += 1;
         },
 
-        /**
-         *
-         */
         incrementAcknowledgedSlot() {
             const slot = new Date().getMilliseconds();
             acknowledgedSlots[slot] += 1;
         },
 
-        /**
-         *
-         */
         incrementUnacknowledgedSlot() {
             const slot = new Date().getMilliseconds();
             unacknowledgedSlots[slot] += 1;
         },
 
-        /**
-         *
-         */
         incrementInputSlot() {
             const slot = new Date().getMilliseconds();
             inputSlots[slot] += 1;
@@ -151,10 +189,6 @@ function Stats(instance) {
             }
         },
 
-        /**
-         *
-         * @returns {boolean}
-         */
         stop() {
             if (state === states.UP && !shutdownNow) {
                 this.stopAggregator();
@@ -167,7 +201,7 @@ function Stats(instance) {
                     instance.emit(events.STATS_DOWN);
                 };
             }
-        },
+        }
     };
 }
 

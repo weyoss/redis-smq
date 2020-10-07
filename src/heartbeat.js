@@ -7,7 +7,7 @@ const events = require('./events');
 
 const cpuUsageStats = {
     cpuUsage: process.cpuUsage(),
-    time: process.hrtime(),
+    time: process.hrtime()
 };
 
 // convert hrtime to milliseconds
@@ -29,7 +29,7 @@ function cpuUsage() {
     cpuUsageStats.cpuUsage = currentCPUUsage;
     return {
         percentage: ((usageTime(cpuUsageDiff.user + cpuUsageDiff.system) / hrtime(timestampDiff)) * 100).toFixed(1),
-        ...cpuUsageDiff,
+        ...cpuUsageDiff
     };
 }
 
@@ -53,8 +53,7 @@ function getHeartBeatIndexName(queueName, consumerId) {
 
 /**
  *
- * @param instance
- * @constructor
+ * @param {Instance} instance
  */
 function HeartBeat(instance) {
     const queueName = instance.getQueueName();
@@ -62,7 +61,7 @@ function HeartBeat(instance) {
     const { keyHeartBeat } = instance.getInstanceRedisKeys();
     const states = {
         UP: 1,
-        DOWN: 0,
+        DOWN: 0
     };
     let redisClientInstance = null;
     let state = states.DOWN;
@@ -78,14 +77,14 @@ function HeartBeat(instance) {
                 ram: {
                     usage: process.memoryUsage(),
                     free: os.freemem(),
-                    total: os.totalmem(),
+                    total: os.totalmem()
                 },
-                cpu: cpuUsage(),
+                cpu: cpuUsage()
             };
             const timestamp = Date.now();
             const payload = JSON.stringify({
                 timestamp,
-                usage,
+                usage
             });
             const hashKey = getHeartBeatIndexName(queueName, instanceId);
             redisClientInstance.hset(keyHeartBeat, hashKey, payload, (err) => {
@@ -129,14 +128,14 @@ function HeartBeat(instance) {
                     });
                 };
             }
-        },
+        }
     };
 }
 
 /**
  *
- * @param {Object} params
- * @param {Object} params.client
+ * @param {object} params
+ * @param {object} params.client
  * @param {string} params.ns
  * @param {string} params.queueName
  * @param {string} params.id
@@ -156,7 +155,7 @@ HeartBeat.isOnline = function isOnline(params, cb) {
                 const now = Date.now();
                 const payload = JSON.parse(res);
                 const { timestamp } = payload;
-                online = (now - timestamp <= 10000);
+                online = now - timestamp <= 10000;
                 cb(null, online);
 
                 // Do not wait for keys deletion, reply as fast as possible
@@ -176,7 +175,7 @@ HeartBeat.isOnline = function isOnline(params, cb) {
 HeartBeat.getOnlineConsumers = function getOnlineConsumers(client, cb) {
     const rKeys = redisKeys.getCommonKeys();
     const data = {
-        queues: {},
+        queues: {}
     };
     const deadConsumers = [];
     const noop = () => {};
@@ -193,12 +192,12 @@ HeartBeat.getOnlineConsumers = function getOnlineConsumers(client, cb) {
                     }
                     if (!data.queues[ns][queueName]) {
                         data.queues[ns][queueName] = {
-                            consumers: {},
+                            consumers: {}
                         };
                     }
                     if (!data.queues[ns][queueName].consumers[consumerId]) {
                         data.queues[ns][queueName].consumers[consumerId] = {
-                            id: consumerId,
+                            id: consumerId
                         };
                     }
                     data.queues[ns][queueName].consumers[consumerId].resources = resources;

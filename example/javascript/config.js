@@ -5,7 +5,7 @@ const path = require('path');
 module.exports = {
     namespace: 'ns1',
     redis: {
-        driver: 'redis',
+        driver: 'redis'
         //options: {
         //    host: '192.168.23.129',
         //    port: 6379,
@@ -14,7 +14,7 @@ module.exports = {
     log: {
         enabled: false,
         options: {
-            level: 'trace',
+            level: 'trace'
             /*
             streams: [
                 {
@@ -22,11 +22,11 @@ module.exports = {
                 },
             ],
             */
-        },
+        }
     },
     monitor: {
         enabled: true,
         port: 3000,
-        host: '127.0.0.1',
-    },
+        host: '127.0.0.1'
+    }
 };

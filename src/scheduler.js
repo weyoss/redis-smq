@@ -8,15 +8,15 @@ const events = require('./events');
 
 /**
  *
- * @param instance
- * @param tickPeriod
+ * @param {Instance} instance
+ * @param {number} tickPeriod
  */
 function Scheduler(instance, tickPeriod = 1000) {
     const { keySchedulerLock, keyQueueName, keyQueueNameDelayed } = instance.getInstanceRedisKeys();
     const logger = instance.getLogger();
     const states = {
         UP: 1,
-        DOWN: 0,
+        DOWN: 0
     };
     let lockManagerInstance = null;
     let redisClientInstance = null;
@@ -34,19 +34,16 @@ function Scheduler(instance, tickPeriod = 1000) {
 
     /**
      *
-     * @param message
-     * @param timestamp
-     * @param multi
-     * @param cb
+     * @param {Message} message
+     * @param {number} timestamp
+     * @param {Object|null} multi
+     * @param {function} cb
      */
     function scheduleMessage(message, timestamp, multi, cb) {
         if (multi) multi.zadd(keyQueueNameDelayed, timestamp, message.toString());
         else redisClientInstance.zadd(keyQueueNameDelayed, timestamp, message.toString(), cb);
     }
 
-    /**
-     *
-     */
     function getNextMessages() {
         const now = Date.now();
         const process = (messages) => {
@@ -77,14 +74,10 @@ function Scheduler(instance, tickPeriod = 1000) {
         }
     }
 
-    /**
-     *
-     */
     function runTicker() {
         if (state === states.UP) {
             lockManagerInstance.acquireLock(keySchedulerLock, 10000, (err) => {
                 if (err) instance.error(err);
-
                 // after lock has been acquired, the scheduler could be shutdown
                 else if (state === states.UP) {
                     debug(`Waiting for ${tickPeriod} before a new iteration...`);
@@ -119,9 +112,11 @@ function Scheduler(instance, tickPeriod = 1000) {
                 return 0;
             };
             const getDelayTimestamp = () => {
-                if (message[Message.PROPERTY_SCHEDULED_DELAY]
-                    && !message[Message.PROPERTY_SCHEDULED_CRON]
-                    && !message[Message.PROPERTY_DELAYED]) {
+                if (
+                    message[Message.PROPERTY_SCHEDULED_DELAY] &&
+                    !message[Message.PROPERTY_SCHEDULED_CRON] &&
+                    !message[Message.PROPERTY_DELAYED]
+                ) {
                     message[Message.PROPERTY_DELAYED] = true;
                     return Date.now() + message[Message.PROPERTY_SCHEDULED_DELAY];
                 }
@@ -132,11 +127,11 @@ function Scheduler(instance, tickPeriod = 1000) {
                 return delayTimestamp;
             }
             const nextCRONTimestamp = message[Message.PROPERTY_SCHEDULED_CRON]
-                ? cronParser.parseExpression(message[Message.PROPERTY_SCHEDULED_CRON]).next().getTime() : 0;
+                ? cronParser.parseExpression(message[Message.PROPERTY_SCHEDULED_CRON]).next().getTime()
+                : 0;
             const nextRepeatTimestamp = getScheduleRepeatTimestamp();
             if (nextCRONTimestamp && nextRepeatTimestamp) {
-                if (!message[Message.PROPERTY_SCHEDULED_CRON_FIRED]
-                    || nextCRONTimestamp < nextRepeatTimestamp) {
+                if (!message[Message.PROPERTY_SCHEDULED_CRON_FIRED] || nextCRONTimestamp < nextRepeatTimestamp) {
                     message[Message.PROPERTY_SCHEDULED_REPEAT_COUNT] = 0;
                     message[Message.PROPERTY_SCHEDULED_CRON_FIRED] = true;
                     return nextCRONTimestamp;
@@ -155,21 +150,21 @@ function Scheduler(instance, tickPeriod = 1000) {
      */
     function isScheduled(message) {
         return (
-            message.hasOwnProperty(Message.PROPERTY_SCHEDULED_CRON)
-            || message.hasOwnProperty(Message.PROPERTY_SCHEDULED_DELAY)
-            || message.hasOwnProperty(Message.PROPERTY_SCHEDULED_REPEAT)
+            message.hasOwnProperty(Message.PROPERTY_SCHEDULED_CRON) ||
+            message.hasOwnProperty(Message.PROPERTY_SCHEDULED_DELAY) ||
+            message.hasOwnProperty(Message.PROPERTY_SCHEDULED_REPEAT)
         );
     }
 
     /**
      *
-     * @param message
+     * @param {Message} message
      * @return {boolean}
      */
     function isPeriodic(message) {
         return (
-            message.hasOwnProperty(Message.PROPERTY_SCHEDULED_CRON)
-            || message.hasOwnProperty(Message.PROPERTY_SCHEDULED_REPEAT)
+            message.hasOwnProperty(Message.PROPERTY_SCHEDULED_CRON) ||
+            message.hasOwnProperty(Message.PROPERTY_SCHEDULED_REPEAT)
         );
     }
 
@@ -221,7 +216,7 @@ function Scheduler(instance, tickPeriod = 1000) {
 
         isScheduled,
         isPeriodic,
-        runTicker,
+        runTicker
     };
 }
 

@@ -5,7 +5,6 @@ const Message = require('./message');
 const redisKeys = require('./redis-keys');
 const events = require('./events');
 
-
 class Producer extends Instance {
     /**
      * See docs.
@@ -22,15 +21,27 @@ class Producer extends Instance {
         this.run();
     }
 
+    /**
+     * @protected
+     */
     registerEventsHandlers() {
         super.registerEventsHandlers();
         this.on(events.STATS_UP, () => this.statsInstance.producerStats());
     }
 
+    /**
+     * @protected
+     * @return {object}
+     */
     getRedisKeys() {
         return redisKeys.getProducerKeys(this.getId(), this.getQueueName());
     }
 
+    /**
+     *
+     * @param {*|Message}msg
+     * @param {function} cb
+     */
     produceMessage(msg, cb) {
         if (!(msg instanceof Message)) {
             const m = new Message();

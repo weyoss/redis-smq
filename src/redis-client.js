@@ -20,8 +20,7 @@ module.exports = {
             driver = redisParams.driver;
             if (redisParams.options) driverOptions = redisParams.options;
         } else driverOptions = redisParams;
-        const client = (driver === 'ioredis') ? new IORedis(driverOptions)
-            : redis.createClient(driverOptions);
+        const client = driver === 'ioredis' ? new IORedis(driverOptions) : redis.createClient(driverOptions);
         client.on('ready', () => {
             clients.push(client);
             cb(client);
@@ -30,5 +29,5 @@ module.exports = {
 
     getAllClients() {
         return clients;
-    },
+    }
 };
