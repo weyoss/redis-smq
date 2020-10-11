@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2.0.8 (2020-10-11)
+
+* Refactored legacy code, upgraded eslint and added prettier.
+
 ## 2.0.7 (2020-10-04)
 
 * Fixed bug in stats aggregation causing lost of queue name and queue namespace.
