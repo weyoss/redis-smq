@@ -2,13 +2,12 @@ const bluebird = require('bluebird');
 const {
     getConsumer,
     getProducer,
-    onConsumerIdle,
-    onConsumerUp,
-    onMessageConsumed,
-    validateTime,
+    untilConsumerIdle,
+    untilConsumerUp,
+    untilMessageAcknowledged,
+    validateTime
 } = require('./common');
 const { Message } = require('../index');
-
 
 test('Produce and consume a delayed message', async () => {
     const consumer = getConsumer();
@@ -31,11 +30,10 @@ test('Produce and consume a delayed message', async () => {
     await producer.produceMessageAsync(msg);
 
     let consumedAt = null;
-    await onMessageConsumed(consumer, () => {
-        consumedAt = Date.now();
-    });
+    await untilMessageAcknowledged(consumer);
+    consumedAt = Date.now();
 
-    await onConsumerIdle(consumer, () => {});
+    await untilConsumerIdle(consumer);
 
     const diff = consumedAt - producedAt;
     expect(validateTime(diff, 10000)).toBe(true);

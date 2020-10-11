@@ -2,14 +2,15 @@ const bluebird = require('bluebird');
 const {
     getConsumer,
     getProducer,
-    onConsumerIdle,
-    onConsumerUp,
-    onMessageConsumed,
-    validateTime,
+    untilConsumerIdle,
+    untilConsumerUp,
+    untilMessageAcknowledged,
+    validateTime
 } = require('./common');
 const { Message } = require('../');
+const events = require('../src/events');
 
-
+// eslint-disable-next-line max-len
 test('A consumer delays a failed message before re-queuing it again, given messageRetryThreshold is not exceeded', async () => {
     const consumer = getConsumer('test_queue', { messageRetryDelay: 10, messageRetryThreshold: 5 });
     const timestamps = [];
@@ -26,12 +27,12 @@ test('A consumer delays a failed message before re-queuing it again, given messa
     consumer.consume = mock;
 
     let delayedCount = 0;
-    consumer.on('message.delayed', () => {
+    consumer.on(events.MESSAGE_DELAYED, () => {
         delayedCount += 1;
     });
 
     let consumedCount = 0;
-    consumer.on('message.consumed', () => {
+    consumer.on(events.MESSAGE_ACKNOWLEDGED, () => {
         consumedCount += 1;
     });
 
@@ -42,12 +43,11 @@ test('A consumer delays a failed message before re-queuing it again, given messa
     await producer.produceMessageAsync(msg);
     consumer.run();
 
-    await onMessageConsumed(consumer, () => {});
+    await untilMessageAcknowledged(consumer);
 
-    await onConsumerIdle(consumer, () => {
-        expect(delayedCount).toBe(4);
-        expect(consumedCount).toBe(1);
-    });
+    await untilConsumerIdle(consumer);
+    expect(delayedCount).toBe(4);
+    expect(consumedCount).toBe(1);
 
     for (let i = 0; i < timestamps.length; i += 1) {
         const diff = timestamps[i] - timestamps[0];

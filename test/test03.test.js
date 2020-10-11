@@ -1,6 +1,5 @@
-const { getConsumer, getProducer, onConsumerIdle } = require('./common');
+const { getConsumer, getProducer, untilConsumerIdle } = require('./common');
 const { Message } = require('../index');
-
 
 test('Produce and consume 100 messages', async () => {
     const producer = getProducer();
@@ -14,8 +13,7 @@ test('Produce and consume 100 messages', async () => {
         await producer.produceMessageAsync(msg);
     }
 
-    await onConsumerIdle(consumer, () => {
-        expect(consume).toHaveBeenCalledTimes(100);
-        expect(consume.mock.calls[0][0]).toStrictEqual({ hello: 'world' });
-    });
+    await untilConsumerIdle(consumer);
+    expect(consume).toHaveBeenCalledTimes(100);
+    expect(consume.mock.calls[0][0]).toStrictEqual({ hello: 'world' });
 });

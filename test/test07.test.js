@@ -1,7 +1,7 @@
 const bluebird = require('bluebird');
-const { getConsumer, getProducer, onConsumerIdle } = require('./common');
+const { getConsumer, getProducer, untilConsumerIdle } = require('./common');
 const { Message } = require('../index');
-
+const events = require('../src/events');
 
 test('A consumer does re-queue and consume again a failed message when threshold not exceeded', async () => {
     const producer = getProducer();
@@ -18,12 +18,12 @@ test('A consumer does re-queue and consume again a failed message when threshold
     consumer.consume = mock;
 
     let queuedCount = 0;
-    consumer.on('message.requeued', () => {
+    consumer.on(events.MESSAGE_REQUEUED, () => {
         queuedCount += 1;
     });
 
     let consumedCount = 0;
-    consumer.on('message.consumed', () => {
+    consumer.on(events.MESSAGE_ACKNOWLEDGED, () => {
         consumedCount += 1;
     });
 
@@ -35,8 +35,7 @@ test('A consumer does re-queue and consume again a failed message when threshold
 
     await bluebird.delay(10000);
 
-    await onConsumerIdle(consumer, () => {
-        expect(queuedCount).toBe(1);
-        expect(consumedCount).toBe(1);
-    });
+    await untilConsumerIdle(consumer);
+    expect(queuedCount).toBe(1);
+    expect(consumedCount).toBe(1);
 });

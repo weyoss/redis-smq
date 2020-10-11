@@ -4,6 +4,7 @@ const bluebird = require('bluebird');
 const { Consumer, Producer } = require('../index');
 const redisClient = require('../src/redis-client.js');
 const config = require('./config');
+const events = require('../src/events');
 
 const consumersList = [];
 const producersList = [];
@@ -15,8 +16,8 @@ async function shutdown() {
                 // eslint-disable-next-line no-await-in-loop
                 await new Promise((resolve, reject) => {
                     i.shutdown();
-                    i.on('down', resolve);
-                    i.on('error', reject);
+                    i.on(events.DOWN, resolve);
+                    i.on(events.ERROR, reject);
                 });
             }
         }
@@ -47,7 +48,7 @@ function getProducer(queueName = 'test_queue') {
 }
 
 function validateTime(actualTime, expectedTime, driftTolerance = 3000) {
-    return (actualTime >= expectedTime - driftTolerance) && (actualTime <= expectedTime + driftTolerance);
+    return actualTime >= expectedTime - driftTolerance && actualTime <= expectedTime + driftTolerance;
 }
 
 async function getRedisInstance() {
@@ -60,33 +61,28 @@ async function getRedisInstance() {
     return bluebird.promisifyAll(c);
 }
 
-async function consumerOnEvent(consumer, event, cb) {
+async function consumerOnEvent(consumer, event) {
     return new Promise((resolve, reject) => {
         consumer.once(event, () => {
-            cb();
             resolve();
         });
     });
 }
 
-async function onConsumerIdle(consumer, cb) {
-    return consumerOnEvent(consumer, 'idle', cb);
+async function untilConsumerIdle(consumer) {
+    return consumerOnEvent(consumer, events.IDLE);
 }
 
-async function onConsumerUp(consumer, cb) {
-    return consumerOnEvent(consumer, 'up', cb);
+async function untilConsumerUp(consumer) {
+    return consumerOnEvent(consumer, events.UP);
 }
 
-async function onMessageConsumed(consumer, cb) {
-    return consumerOnEvent(consumer, 'message.consumed', cb);
+async function untilMessageAcknowledged(consumer) {
+    return consumerOnEvent(consumer, events.MESSAGE_ACKNOWLEDGED);
 }
 
-async function onMessageAcknowledged(consumer, cb) {
-    return consumerOnEvent(consumer, 'message.consumed', cb);
-}
-
-async function onMessageDelayed(consumer, cb) {
-    return consumerOnEvent(consumer, 'message.delayed', cb);
+async function untilMessageDelayed(consumer) {
+    return consumerOnEvent(consumer, events.MESSAGE_DELAYED);
 }
 
 module.exports = {
@@ -95,8 +91,8 @@ module.exports = {
     shutdown,
     getRedisInstance,
     validateTime,
-    onConsumerIdle,
-    onConsumerUp,
-    onMessageConsumed,
-    onMessageDelayed,
+    untilConsumerIdle,
+    untilConsumerUp,
+    untilMessageAcknowledged,
+    untilMessageDelayed
 };

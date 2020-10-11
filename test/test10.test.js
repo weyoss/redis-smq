@@ -1,12 +1,7 @@
 const bluebird = require('bluebird');
-const {
-    getConsumer,
-    getProducer,
-    onConsumerIdle,
-    onConsumerUp,
-} = require('./common');
+const { getConsumer, getProducer, untilConsumerIdle, untilConsumerUp } = require('./common');
 const { Message } = require('./../');
-
+const events = require('../src/events');
 
 test('A message is not lost in case of a consumer crash', async () => {
     const producer = getProducer();
@@ -27,7 +22,7 @@ test('A message is not lost in case of a consumer crash', async () => {
         consumer1.shutdown();
     });
     consumer1.consume = mock1;
-    consumer1.on('down', () => {
+    consumer1.on(events.DOWN, () => {
         // once stopped, start another consumer
         consumer2.run();
     });
@@ -46,22 +41,21 @@ test('A message is not lost in case of a consumer crash', async () => {
     let reQueuedCount = 0;
     let consumedCount = 0;
     consumer2
-        .on('message.requeued', () => {
+        .on(events.MESSAGE_REQUEUED, () => {
             reQueuedCount += 1;
         })
-        .on('message.consumed', () => {
+        .on(events.MESSAGE_ACKNOWLEDGED, () => {
             consumedCount += 1;
         });
     //
     consumer1.run();
 
     // Once consumer2 goes up
-    await onConsumerUp(consumer2, () => {});
+    await untilConsumerUp(consumer2);
 
     // Wait 10s
     await bluebird.delay(10000);
-    await onConsumerIdle(consumer2, () => {
-        expect(reQueuedCount).toBe(1);
-        expect(consumedCount).toBe(1);
-    });
+    await untilConsumerIdle(consumer2);
+    expect(reQueuedCount).toBe(1);
+    expect(consumedCount).toBe(1);
 });
