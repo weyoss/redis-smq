@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2.0.9 (2020-10-11)
+
+* Updated tests.
+
 ## 2.0.8 (2020-10-11)
 
 * Refactored legacy code, upgraded eslint and added prettier.
