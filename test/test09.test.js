@@ -1,7 +1,9 @@
 const bluebird = require('bluebird');
-const { getConsumer, getProducer, onConsumerIdle } = require('./common');
+const { getConsumer, getProducer, untilConsumerIdle } = require('./common');
 const { Message } = require('../');
+const events = require('../src/events');
 
+// eslint-disable-next-line max-len
 test('A consumer does re-queue a failed message when threshold is not exceeded, otherwise it moves the message to DLQ (dead letter queue)', async () => {
     const producer = getProducer();
     const consumer = getConsumer();
@@ -12,12 +14,12 @@ test('A consumer does re-queue a failed message when threshold is not exceeded, 
     consumer.consume = mock;
 
     let reQueuedCount = 0;
-    consumer.on('message.requeued', () => {
+    consumer.on(events.MESSAGE_REQUEUED, () => {
         reQueuedCount += 1;
     });
 
     let deadCount = 0;
-    consumer.on('message.moved_to_dlq', () => {
+    consumer.on(events.MESSAGE_DEAD_LETTER, () => {
         deadCount += 1;
     });
 
@@ -27,8 +29,7 @@ test('A consumer does re-queue a failed message when threshold is not exceeded, 
     await producer.produceMessageAsync(msg);
     consumer.run();
 
-    await onConsumerIdle(consumer, () => {
-        expect(reQueuedCount).toBe(2);
-        expect(deadCount).toBe(1);
-    });
+    await untilConsumerIdle(consumer);
+    expect(reQueuedCount).toBe(2);
+    expect(deadCount).toBe(1);
 });

@@ -1,15 +1,16 @@
 const bluebird = require('bluebird');
-const { getConsumer, getProducer, onConsumerIdle } = require('./common');
+const { getConsumer, getProducer, untilConsumerIdle } = require('./common');
 const { Message } = require('../');
+const events = require('../src/events');
 
-
+// eslint-disable-next-line max-len
 test('Produce a message having messageTTL and sure the message is not consumed and destroyed when messageTTL exceeds', async () => {
     const producer = getProducer();
     const consumer = getConsumer();
     const consume = jest.spyOn(consumer, 'consume');
 
     let messageDestroyed = 0;
-    consumer.on('message.destroyed', () => {
+    consumer.on(events.MESSAGE_DESTROYED, () => {
         messageDestroyed += 1;
     });
 
@@ -20,8 +21,7 @@ test('Produce a message having messageTTL and sure the message is not consumed a
     await bluebird.delay(5000);
     consumer.run();
 
-    await onConsumerIdle(consumer, () => {
-        expect(consume).toHaveBeenCalledTimes(0);
-        expect(messageDestroyed).toBe(1);
-    });
+    await untilConsumerIdle(consumer);
+    expect(consume).toHaveBeenCalledTimes(0);
+    expect(messageDestroyed).toBe(1);
 });

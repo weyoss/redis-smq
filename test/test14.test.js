@@ -2,13 +2,12 @@ const bluebird = require('bluebird');
 const {
     getConsumer,
     getProducer,
-    onConsumerIdle,
-    onConsumerUp,
-    onMessageConsumed,
-    validateTime,
+    untilConsumerIdle,
+    untilConsumerUp,
+    untilMessageAcknowledged,
+    validateTime
 } = require('./common');
 const { Message } = require('../index');
-
 
 describe('Produce and consume a delayed message with scheduledCRON/scheduledRepeat/scheduledPeriod parameters', () => {
     test('Case 1', async () => {
@@ -22,22 +21,14 @@ describe('Produce and consume a delayed message with scheduledCRON/scheduledRepe
         consumer.run();
 
         const msg = new Message();
-        msg
-            .setScheduledCron('*/3 * * * * *')
-            .setBody({ hello: 'world' });
+        msg.setScheduledCron('*/3 * * * * *').setBody({ hello: 'world' });
 
         const producer = getProducer();
         await producer.produceMessageAsync(msg);
 
-        await onMessageConsumed(consumer, () => {});
-
-        await onMessageConsumed(consumer, () => {});
-
-        await onMessageConsumed(consumer, () => {});
-
-        await onMessageConsumed(consumer, () => {});
-
-        await onMessageConsumed(consumer, () => {});
+        for (let i = 0; i < 5; i += 1) {
+            await untilMessageAcknowledged(consumer);
+        }
 
         for (let i = 0; i < timestamps.length; i += 1) {
             const diff = timestamps[i] - timestamps[0];
@@ -66,22 +57,14 @@ describe('Produce and consume a delayed message with scheduledCRON/scheduledRepe
         consumer.run();
 
         const msg = new Message();
-        msg
-            .setScheduledCron('*/6 * * * * *')
-            .setBody({ hello: 'world' });
+        msg.setScheduledCron('*/6 * * * * *').setBody({ hello: 'world' });
 
         const producer = getProducer();
         await producer.produceMessageAsync(msg);
 
-        await onMessageConsumed(consumer, () => {});
-
-        await onMessageConsumed(consumer, () => {});
-
-        await onMessageConsumed(consumer, () => {});
-
-        await onMessageConsumed(consumer, () => {});
-
-        await onMessageConsumed(consumer, () => {});
+        for (let i = 0; i < 5; i += 1) {
+            await untilMessageAcknowledged(consumer);
+        }
 
         for (let i = 0; i < timestamps.length; i += 1) {
             const diff = timestamps[i] - timestamps[0];
@@ -110,8 +93,7 @@ describe('Produce and consume a delayed message with scheduledCRON/scheduledRepe
         consumer.run();
 
         const msg = new Message();
-        msg
-            .setScheduledCron('*/20 * * * * *')
+        msg.setScheduledCron('*/20 * * * * *')
             .setScheduledRepeat(3)
             .setScheduledPeriod(3)
             .setScheduledDelay(10) // is ignored
@@ -120,23 +102,9 @@ describe('Produce and consume a delayed message with scheduledCRON/scheduledRepe
         const producer = getProducer();
         await producer.produceMessageAsync(msg);
 
-        await onMessageConsumed(consumer, () => {});
-
-        await onMessageConsumed(consumer, () => {});
-
-        await onMessageConsumed(consumer, () => {});
-
-        await onMessageConsumed(consumer, () => {});
-
-        await onMessageConsumed(consumer, () => {});
-
-        await onMessageConsumed(consumer, () => {});
-
-        await onMessageConsumed(consumer, () => {});
-
-        await onMessageConsumed(consumer, () => {});
-
-        await onMessageConsumed(consumer, () => {});
+        for (let i = 0; i < 9; i += 1) {
+            await untilMessageAcknowledged(consumer);
+        }
 
         for (let i = 0; i < timestamps.length; i += 1) {
             const diff = timestamps[i] - timestamps[0];
@@ -173,8 +141,7 @@ describe('Produce and consume a delayed message with scheduledCRON/scheduledRepe
         consumer.run();
 
         const msg = new Message();
-        msg
-            .setScheduledCron('*/20 * * * * *')
+        msg.setScheduledCron('*/20 * * * * *')
             .setScheduledRepeat(0)
             .setScheduledPeriod(3)
             .setScheduledDelay(10) // is ignored
@@ -183,15 +150,9 @@ describe('Produce and consume a delayed message with scheduledCRON/scheduledRepe
         const producer = getProducer();
         await producer.produceMessageAsync(msg);
 
-        await onMessageConsumed(consumer, () => {});
-
-        await onMessageConsumed(consumer, () => {});
-
-        await onMessageConsumed(consumer, () => {});
-
-        await onMessageConsumed(consumer, () => {});
-
-        await onMessageConsumed(consumer, () => {});
+        for (let i = 0; i < 5; i += 1) {
+            await untilMessageAcknowledged(consumer);
+        }
 
         for (let i = 0; i < timestamps.length; i += 1) {
             const diff = timestamps[i] - timestamps[0];

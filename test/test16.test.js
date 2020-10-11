@@ -2,23 +2,21 @@ const bluebird = require('bluebird');
 const {
     getConsumer,
     getProducer,
-    onConsumerIdle,
-    onConsumerUp,
-    onMessageConsumed,
-    validateTime,
+    untilConsumerIdle,
+    untilConsumerUp,
+    untilMessageAcknowledged,
+    validateTime
 } = require('./common');
 const { Message } = require('../');
+const events = require('../src/events');
 
-
+// eslint-disable-next-line max-len
 test('Given many queues, a message is not lost and re-queued to its origin queue in case of a consumer crash or a failure', async () => {
-    /**
-     *
-     */
     const queueAConsumer1 = getConsumer('queue_a');
     const queueAMeta = {
         receivedMessages: [],
         requeued: 0,
-        consumed: 0,
+        consumed: 0
     };
     const mock1 = jest.fn((msg, cb) => {
         // do not acknowledge/unacknowledge the message
@@ -28,17 +26,11 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
     queueAConsumer1.consume = mock1;
     queueAConsumer1.run();
 
-    /**
-     *
-     */
-    queueAConsumer1.on('down', () => {
+    queueAConsumer1.on(events.DOWN, () => {
         // once stopped, start another consumer
         queueAConsumer2.run();
     });
 
-    /**
-     *
-     */
     const queueAConsumer2 = getConsumer('queue_a');
     const mock2 = jest.fn((msg, cb) => {
         queueAMeta.receivedMessages.push(msg);
@@ -46,21 +38,18 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
     });
     queueAConsumer2.consume = mock2;
     queueAConsumer2
-        .on('message.requeued', () => {
+        .on(events.MESSAGE_REQUEUED, () => {
             queueAMeta.requeued += 1;
         })
-        .on('message.consumed', () => {
+        .on(events.MESSAGE_ACKNOWLEDGED, () => {
             queueAMeta.consumed += 1;
         });
 
-    /**
-     *
-     */
     const queueBConsumer1 = getConsumer('queue_b');
     const queueBMeta = {
         receivedMessages: [],
         requeued: 0,
-        consumed: 0,
+        consumed: 0
     };
     const mock3 = jest.fn((msg, cb) => {
         queueBMeta.receivedMessages.push(msg);
@@ -68,10 +57,10 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
     });
     queueBConsumer1.consume = mock3;
     queueBConsumer1
-        .on('message.requeued', () => {
+        .on(events.MESSAGE_REQUEUED, () => {
             queueBMeta.requeued += 1;
         })
-        .on('message.consumed', () => {
+        .on(events.MESSAGE_ACKNOWLEDGED, () => {
             queueBMeta.consumed += 1;
         });
     queueBConsumer1.run();
@@ -102,8 +91,8 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
     /**
      *  Wait until consumers are idle
      */
-    await onConsumerIdle(queueAConsumer2, () => {});
-    await onConsumerIdle(queueBConsumer1, () => {});
+    await untilConsumerIdle(queueAConsumer2);
+    await untilConsumerIdle(queueBConsumer1);
 
     /**
      * Check

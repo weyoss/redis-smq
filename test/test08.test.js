@@ -1,7 +1,7 @@
 const bluebird = require('bluebird');
-const { getConsumer, getProducer, onConsumerIdle } = require('./common');
+const { getConsumer, getProducer, untilConsumerIdle } = require('./common');
 const { Message } = require('../index');
-
+const events = require('../src/events');
 
 test('Async exceptions are caught when consuming a message', async () => {
     const producer = getProducer();
@@ -21,12 +21,12 @@ test('Async exceptions are caught when consuming a message', async () => {
     consumer.consume = mock;
 
     let queuedCount = 0;
-    consumer.on('message.requeued', () => {
+    consumer.on(events.MESSAGE_REQUEUED, () => {
         queuedCount += 1;
     });
 
     let consumedCount = 0;
-    consumer.on('message.consumed', () => {
+    consumer.on(events.MESSAGE_ACKNOWLEDGED, () => {
         consumedCount += 1;
     });
 
@@ -36,8 +36,7 @@ test('Async exceptions are caught when consuming a message', async () => {
     await producer.produceMessageAsync(msg);
     consumer.run();
 
-    await onConsumerIdle(consumer, () => {
-        expect(queuedCount).toBe(1);
-        expect(consumedCount).toBe(1);
-    });
+    await untilConsumerIdle(consumer);
+    expect(queuedCount).toBe(1);
+    expect(consumedCount).toBe(1);
 });

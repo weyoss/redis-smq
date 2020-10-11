@@ -1,8 +1,9 @@
 const bluebird = require('bluebird');
-const { getConsumer, getProducer, onConsumerIdle } = require('./common');
+const { getConsumer, getProducer, untilConsumerIdle } = require('./common');
 const { Message } = require('../index');
+const events = require('../src/events');
 
-
+// eslint-disable-next-line max-len
 test('When consuming a message, a consumer does time out after messageConsumeTimeout exceeds and re-queues the message to be consumed again', async () => {
     const producer = getProducer('test_queue');
     const consumer = getConsumer('test_queue', { messageConsumeTimeout: 2000 });
@@ -18,17 +19,17 @@ test('When consuming a message, a consumer does time out after messageConsumeTim
     consumer.consume = mock;
 
     let consumeTimeout = 0;
-    consumer.on('message.consume_timeout', () => {
+    consumer.on(events.MESSAGE_CONSUME_TIMEOUT, () => {
         consumeTimeout += 1;
     });
 
     let queuedCount = 0;
-    consumer.on('message.requeued', () => {
+    consumer.on(events.MESSAGE_REQUEUED, () => {
         queuedCount += 1;
     });
 
     let consumedCount = 0;
-    consumer.on('message.consumed', () => {
+    consumer.on(events.MESSAGE_ACKNOWLEDGED, () => {
         consumedCount += 1;
     });
     const msg = new Message();
@@ -37,9 +38,8 @@ test('When consuming a message, a consumer does time out after messageConsumeTim
     await producer.produceMessageAsync(msg);
     consumer.run();
 
-    await onConsumerIdle(consumer, () => {
-        expect(consumeTimeout).toBe(1);
-        expect(queuedCount).toBe(1);
-        expect(consumedCount).toBe(1);
-    });
+    await untilConsumerIdle(consumer);
+    expect(consumeTimeout).toBe(1);
+    expect(queuedCount).toBe(1);
+    expect(consumedCount).toBe(1);
 });

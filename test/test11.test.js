@@ -1,12 +1,7 @@
 const bluebird = require('bluebird');
-const {
-    getConsumer,
-    getProducer,
-    onConsumerIdle,
-    onConsumerUp,
-} = require('./common');
+const { getConsumer, getProducer, untilConsumerIdle, untilConsumerUp } = require('./common');
 const { Message } = require('../');
-
+const events = require('../src/events');
 
 test('A message is delivered only once to one consumer', async () => {
     /**
@@ -20,10 +15,10 @@ test('A message is delivered only once to one consumer', async () => {
     let reQueuedCount1 = 0;
     let consumedCount1 = 0;
     consumer1
-        .on('message.requeued', () => {
+        .on(events.MESSAGE_REQUEUED, () => {
             reQueuedCount1 += 1;
         })
-        .on('message.consumed', () => {
+        .on(events.MESSAGE_ACKNOWLEDGED, () => {
             consumedCount1 += 1;
         });
 
@@ -38,10 +33,10 @@ test('A message is delivered only once to one consumer', async () => {
     let reQueuedCount2 = 0;
     let consumedCount2 = 0;
     consumer2
-        .on('message.requeued', () => {
+        .on(events.MESSAGE_REQUEUED, () => {
             reQueuedCount2 += 1;
         })
-        .on('message.consumed', () => {
+        .on(events.MESSAGE_ACKNOWLEDGED, () => {
             consumedCount2 += 1;
         });
 
@@ -54,8 +49,8 @@ test('A message is delivered only once to one consumer', async () => {
     /**
      *
      */
-    await onConsumerIdle(consumer1, () => {});
-    await onConsumerIdle(consumer2, () => {});
+    await untilConsumerIdle(consumer1);
+    await untilConsumerIdle(consumer2);
 
     /**
      *
@@ -74,8 +69,8 @@ test('A message is delivered only once to one consumer', async () => {
     /**
      *
      */
-    await onConsumerIdle(consumer1, () => {});
-    await onConsumerIdle(consumer2, () => {});
+    await untilConsumerIdle(consumer1);
+    await untilConsumerIdle(consumer2);
 
     /**
      *
