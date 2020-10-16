@@ -59,6 +59,7 @@ function GarbageCollector(consumer) {
     }
 
     function registerEvents() {
+        unregisterEvents();
         consumer.on(events.GC_SM_QUEUE, (queue) => {
             debug(`Inspecting processing queue [${queue}]... `);
             const { queueName, consumerId } = redisKeys.getKeySegments(queue);
@@ -209,7 +210,6 @@ function GarbageCollector(consumer) {
                     redisClientInstance = null;
                     messageCollector = null;
                     ticker = null;
-                    unregisterEvents();
                     powerStateManager.down();
                     consumer.emit(events.GC_DOWN);
                 });
