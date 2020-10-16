@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2.0.10 (2020-10-16)
+
+* Implemented stats providers.
+* Fixed a potential memory leak issue relative to event listeners.
+* Created a new module for encapsulating message collecting logic. 
+* Improved code structure
+
 ## 2.0.9 (2020-10-11)
 
 * Updated tests.
