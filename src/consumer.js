@@ -7,6 +7,7 @@ const GarbageCollector = require('./gc');
 const Message = require('./message');
 const events = require('./events');
 const util = require('./util');
+const ConsumerStatsProvider = require('./consumer-stats-provider');
 
 class Consumer extends Instance {
     /**
@@ -74,6 +75,16 @@ class Consumer extends Instance {
     /**
      * @protected
      */
+    getStatsProvider() {
+        if (!this.statsProvider) {
+            this.statsProvider = ConsumerStatsProvider(this);
+        }
+        return this.statsProvider;
+    }
+
+    /**
+     * @protected
+     */
     getNextMessage() {
         this.loggerInstance.info('Waiting for new messages...');
         const { keyQueueName, keyQueueNameProcessing } = this.getInstanceRedisKeys();
@@ -121,7 +132,6 @@ class Consumer extends Instance {
         this.on(events.GC_UP, () => this.handleStartupEvent(events.GC_UP));
         this.on(events.GC_DOWN, () => this.handleShutdownEvent(events.GC_DOWN));
         this.on(events.STATS_UP, () => {
-            this.statsInstance.consumerStats();
             this.statsInstance.startAggregator();
         });
         this.on(events.SCHEDULER_UP, () => {
@@ -138,6 +148,7 @@ class Consumer extends Instance {
         this.on(events.DOWN, () => {
             this.garbageCollectorInstance = null;
             this.heartBeatInstance = null;
+            this.statsProvider = null;
         });
         this.on(events.UP, () => {
             this.emit(events.MESSAGE_NEXT);
@@ -150,7 +161,7 @@ class Consumer extends Instance {
         this.on(events.MESSAGE_RECEIVED, (message) => {
             const messageCollector = this.garbageCollectorInstance.getMessageCollector();
             if (this.powerStateManager.isRunning()) {
-                if (this.statsInstance) this.statsInstance.incrementProcessingSlot();
+                if (this.statsProvider) this.statsProvider.incrementProcessingSlot();
                 if (messageCollector.hasMessageExpired(message)) {
                     this.emit(events.MESSAGE_EXPIRED, message);
                 } else this.handleConsume(message);
@@ -161,17 +172,17 @@ class Consumer extends Instance {
             const { keyQueueNameProcessing } = this.getInstanceRedisKeys();
             const messageCollector = this.garbageCollectorInstance.getMessageCollector();
             messageCollector.collectExpiredMessage(message, keyQueueNameProcessing, () => {
-                if (this.statsInstance) this.statsInstance.incrementAcknowledgedSlot();
+                if (this.statsProvider) this.statsProvider.incrementAcknowledgedSlot();
                 this.loggerInstance.info(`Message [${message.uuid}] successfully processed`);
                 this.emit(events.MESSAGE_NEXT);
             });
         });
         this.on(events.MESSAGE_ACKNOWLEDGED, () => {
-            if (this.statsInstance) this.statsInstance.incrementAcknowledgedSlot();
+            if (this.statsProvider) this.statsProvider.incrementAcknowledgedSlot();
             this.emit(events.MESSAGE_NEXT);
         });
         this.on(events.MESSAGE_UNACKNOWLEDGED, (msg) => {
-            if (this.statsInstance) this.statsInstance.incrementUnacknowledgedSlot();
+            if (this.statsProvider) this.statsProvider.incrementUnacknowledgedSlot();
             const keys = this.getInstanceRedisKeys();
             const messageCollector = this.garbageCollectorInstance.getMessageCollector();
             messageCollector.collectMessage(msg, keys.keyQueueNameProcessing, (err) => {

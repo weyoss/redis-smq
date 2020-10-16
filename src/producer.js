@@ -4,6 +4,7 @@ const Instance = require('./instance');
 const Message = require('./message');
 const redisKeys = require('./redis-keys');
 const events = require('./events');
+const ProducerStatsProvider = require('./producer-stats-provider');
 
 class Producer extends Instance {
     /**
@@ -26,7 +27,9 @@ class Producer extends Instance {
      */
     registerEventsHandlers() {
         super.registerEventsHandlers();
-        this.on(events.STATS_UP, () => this.statsInstance.producerStats());
+        this.on(events.DOWN, () => {
+            this.statsProvider = null;
+        });
     }
 
     /**
@@ -35,6 +38,16 @@ class Producer extends Instance {
      */
     getRedisKeys() {
         return redisKeys.getProducerKeys(this.getId(), this.getQueueName());
+    }
+
+    /**
+     * @protected
+     */
+    getStatsProvider() {
+        if (!this.statsProvider) {
+            this.statsProvider = ProducerStatsProvider(this);
+        }
+        return this.statsProvider;
     }
 
     /**
@@ -59,7 +72,7 @@ class Producer extends Instance {
                 this.redisClientInstance.lpush(keyQueueName, msg.toString(), (err) => {
                     if (err) cb(err);
                     else {
-                        if (this.statsInstance) this.statsInstance.incrementInputSlot();
+                        if (this.statsProvider) this.statsProvider.incrementInputSlot();
                         cb();
                     }
                 });
