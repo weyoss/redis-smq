@@ -9,6 +9,7 @@ const util = require('./util');
 const events = require('./events');
 const PowerStateManager = require('./power-state-manager');
 const Ticker = require('./ticker');
+const MessageCollector = require('./gc-message-collector');
 
 const GC_INSPECTION_INTERVAL = 1000; // in ms
 
@@ -19,8 +20,13 @@ const GC_INSPECTION_INTERVAL = 1000; // in ms
 function GarbageCollector(consumer) {
     const powerStateManager = PowerStateManager();
     const instanceId = consumer.getId();
-    const { keyQueueName, keyQueueNameProcessingCommon, keyQueueNameDead, keyGCLock } = consumer.getInstanceRedisKeys();
+    const { keyQueueNameProcessingCommon, keyGCLock } = consumer.getInstanceRedisKeys();
     const logger = consumer.getLogger();
+
+    /**
+     * @type {object|null}
+     */
+    let messageCollector = null;
 
     /**
      *
@@ -92,17 +98,10 @@ function GarbageCollector(consumer) {
         });
 
         consumer.on(events.GC_SM_MESSAGE, (msg, queue) => {
-            const cb = (err) => {
+            messageCollector.collectMessage(msg, queue, (err) => {
                 if (err) consumer.error(err);
                 else consumer.emit(events.GC_SM_MESSAGE_COLLECTED, msg, queue);
-            };
-            if (hasMessageExpired(msg)) {
-                debug(`Message [${msg.getId()}]: Collecting expired message...`);
-                collectExpiredMessage(msg, queue, cb);
-            } else {
-                debug(`Message [${msg.getId()}]: Collecting message...`);
-                collectMessage(msg, queue, cb);
-            }
+            });
         });
 
         consumer.on(events.GC_SM_MESSAGE_COLLECTED, (message, queue) => {
@@ -171,137 +170,6 @@ function GarbageCollector(consumer) {
     }
 
     /**
-     * Move the message to a dead-letter queue when max the attempts threshold is reached
-     * or otherwise re-queue it again
-     *
-     * @param {Message} message
-     * @param {string} processingQueue
-     * @param {function} cb
-     */
-    function collectMessage(message, processingQueue, cb) {
-        const scheduler = consumer.getScheduler();
-
-        /**
-         * @param {Message} message
-         * @param {number} delay
-         * @param multi
-         */
-        const requeueMessageAfterDelay = (message, delay, multi) => {
-            debug(`Scheduling message ID [${message.getId()}]  (delay: [${delay}])...`);
-            message.setScheduledDelay(delay);
-            scheduler.schedule(message, multi);
-        };
-
-        /**
-         * @param {Message} message
-         * @param multi
-         */
-        const moveMessageToDLQ = (message, multi) => {
-            debug(`Moving message [${message.getId()}] to DLQ [${keyQueueNameDead}]...`);
-            multi.lpush(keyQueueNameDead, message.toString());
-        };
-
-        /**
-         * @param {Message} message
-         * @param multi
-         */
-        const requeueMessage = (message, multi) => {
-            debug(`Re-queuing message [${message.getId()}] ...`);
-            multi.lpush(keyQueueName, message.toString());
-        };
-
-        /**
-         * @param message
-         * @return {number}
-         */
-        const incrMessageAttempts = (message) => {
-            message.incrAttempts();
-            return message.getAttempts();
-        };
-
-        /**
-         * @param {Message} message
-         * @return {boolean}
-         */
-        const checkMessageThreshold = (message) => {
-            const attempts = incrMessageAttempts(message);
-            const threshold = message.getRetryThreshold();
-            const retryThreshold = typeof threshold === 'number' ? threshold : consumer.getMessageRetryThreshold();
-            return attempts < retryThreshold;
-        };
-
-        /**
-         * Try to recover only non-periodic messages.
-         * Periodic messages failure is ignored since such messages by default are scheduled for delivery
-         * based on a period of time.
-         */
-        if (scheduler.isPeriodic(message)) {
-            redisClientInstance.rpop(processingQueue, cb);
-        } else {
-            let delayed = false;
-            let requeued = false;
-            const multi = redisClientInstance.multi();
-            multi.rpop(processingQueue);
-            const retry = checkMessageThreshold(message);
-            if (retry) {
-                const delay = message.getRetryDelay();
-                const retryDelay = typeof delay === 'number' ? delay : consumer.getMessageRetryDelay();
-                if (retryDelay) {
-                    delayed = true;
-                    requeueMessageAfterDelay(message, retryDelay, multi);
-                } else {
-                    requeued = true;
-                    requeueMessage(message, multi);
-                }
-            } else moveMessageToDLQ(message, multi);
-            multi.exec((err) => {
-                if (err) cb(err);
-                else {
-                    if (requeued) consumer.emit(events.GC_MESSAGE_REQUEUED, message);
-                    else if (delayed) consumer.emit(events.GC_MESSAGE_DELAYED, message);
-                    else consumer.emit(events.GC_MESSAGE_DLQ, message);
-                    cb();
-                }
-            });
-        }
-    }
-
-    /**
-     *
-     * @param {Message} message
-     * @param {string} processingQueue
-     * @param {function} cb
-     */
-    function collectExpiredMessage(message, processingQueue, cb) {
-        const id = message.getId();
-        debug(`Processing expired message [${id}]...`);
-        // Just pop it out
-        redisClientInstance.rpop(processingQueue, (err) => {
-            if (err) cb(err);
-            else {
-                consumer.emit(events.GC_MESSAGE_DESTROYED, message);
-                cb();
-            }
-        });
-    }
-
-    /**
-     *
-     * @param {Message} message
-     * @returns {boolean}
-     */
-    function hasMessageExpired(message) {
-        const ttl = message.getTTL();
-        const messageTTL = typeof ttl === 'number' ? ttl : consumer.getConsumerMessageTTL();
-        if (messageTTL) {
-            const curTime = new Date().getTime();
-            const createdAt = message.getCreatedAt();
-            return createdAt + messageTTL - curTime <= 0;
-        }
-        return false;
-    }
-
-    /**
      * @param {string} processingQueueName
      */
     function destroyQueue(processingQueueName) {
@@ -309,6 +177,10 @@ function GarbageCollector(consumer) {
             if (err) consumer.error(err);
             else consumer.emit(events.GC_SM_QUEUE_DESTROYED, processingQueueName);
         });
+    }
+
+    function setupMessageCollector() {
+        messageCollector = MessageCollector(consumer, redisClientInstance);
     }
 
     return {
@@ -321,6 +193,7 @@ function GarbageCollector(consumer) {
                     redisClientInstance = client;
                     ticker = Ticker(() => consumer.emit(events.GC_SM_TICK), GC_INSPECTION_INTERVAL);
                     registerEvents();
+                    setupMessageCollector();
                     powerStateManager.up();
                     consumer.emit(events.GC_SM_TICK);
                     consumer.emit(events.GC_UP);
@@ -334,6 +207,7 @@ function GarbageCollector(consumer) {
                     lockManagerInstance = null;
                     redisClientInstance.end(true);
                     redisClientInstance = null;
+                    messageCollector = null;
                     ticker = null;
                     unregisterEvents();
                     powerStateManager.down();
@@ -343,9 +217,9 @@ function GarbageCollector(consumer) {
             if (!lockManagerInstance.isLocked()) shutdownFn();
             else ticker.shutdown(shutdownFn);
         },
-        collectMessage,
-        collectExpiredMessage,
-        hasMessageExpired
+        getMessageCollector() {
+            return messageCollector;
+        }
     };
 }
 

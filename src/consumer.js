@@ -148,9 +148,10 @@ class Consumer extends Instance {
             }
         });
         this.on(events.MESSAGE_RECEIVED, (message) => {
+            const messageCollector = this.garbageCollectorInstance.getMessageCollector();
             if (this.powerStateManager.isRunning()) {
                 if (this.statsInstance) this.statsInstance.incrementProcessingSlot();
-                if (this.garbageCollectorInstance.hasMessageExpired(message)) {
+                if (messageCollector.hasMessageExpired(message)) {
                     this.emit(events.MESSAGE_EXPIRED, message);
                 } else this.handleConsume(message);
             }
@@ -158,7 +159,8 @@ class Consumer extends Instance {
         this.on(events.MESSAGE_EXPIRED, (message) => {
             this.loggerInstance.info(`Message [${message.uuid}] has expired`);
             const { keyQueueNameProcessing } = this.getInstanceRedisKeys();
-            this.garbageCollectorInstance.collectExpiredMessage(message, keyQueueNameProcessing, () => {
+            const messageCollector = this.garbageCollectorInstance.getMessageCollector();
+            messageCollector.collectExpiredMessage(message, keyQueueNameProcessing, () => {
                 if (this.statsInstance) this.statsInstance.incrementAcknowledgedSlot();
                 this.loggerInstance.info(`Message [${message.uuid}] successfully processed`);
                 this.emit(events.MESSAGE_NEXT);
@@ -171,7 +173,8 @@ class Consumer extends Instance {
         this.on(events.MESSAGE_UNACKNOWLEDGED, (msg) => {
             if (this.statsInstance) this.statsInstance.incrementUnacknowledgedSlot();
             const keys = this.getInstanceRedisKeys();
-            this.garbageCollectorInstance.collectMessage(msg, keys.keyQueueNameProcessing, (err) => {
+            const messageCollector = this.garbageCollectorInstance.getMessageCollector();
+            messageCollector.collectMessage(msg, keys.keyQueueNameProcessing, (err) => {
                 if (err) this.error(err);
                 else this.emit(events.MESSAGE_NEXT);
             });
