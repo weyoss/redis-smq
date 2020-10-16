@@ -3,54 +3,46 @@
 const redisKeys = require('./redis-keys');
 const redisClient = require('./redis-client');
 const LockManager = require('./lock-manager');
-const HeartBeat = require('./heartbeat');
+const { isOnline } = require('./heartbeat');
 const Message = require('./message');
 const util = require('./util');
 const events = require('./events');
+const PowerStateManager = require('./power-state-manager');
+const Ticker = require('./ticker');
 
 const GC_INSPECTION_INTERVAL = 1000; // in ms
 
 /**
- * @param {Instance} instance
+ * @param {Consumer} consumer
  * @return {object}
  */
-function GarbageCollector(instance) {
-    const instanceId = instance.getId();
-    const keys = instance.getInstanceRedisKeys();
-    const { keyQueueName, keyQueueNameProcessingCommon, keyQueueNameDead, keyGCLock } = keys;
-    const logger = instance.getLogger();
-    const states = {
-        UP: 1,
-        DOWN: 0
-    };
-
-    /**
-     * @type {function|null}
-     */
-    let shutdownNow = null;
+function GarbageCollector(consumer) {
+    const powerStateManager = PowerStateManager();
+    const instanceId = consumer.getId();
+    const { keyQueueName, keyQueueNameProcessingCommon, keyQueueNameDead, keyGCLock } = consumer.getInstanceRedisKeys();
+    const logger = consumer.getLogger();
 
     /**
      *
-     * @type {Object|null}
+     * @type {object|null}
      */
     let lockManagerInstance = null;
 
     /**
      *
-     * @type {Object|null}
+     * @type {object|null}
      */
     let redisClientInstance = null;
 
     /**
-     *@type {number}
+     * @type {string[]}
      */
-    let state = states.DOWN;
+    let queues = [];
 
     /**
-     *
-     * @type {number}
+     * @type {object|null}
      */
-    let timer = 0;
+    let ticker = null;
 
     /**
      *
@@ -60,123 +52,122 @@ function GarbageCollector(instance) {
         logger.debug({ gc: true }, message);
     }
 
-    /**
-     *
-     * @param {string[]} queues
-     * @param {function} done
-     */
-    function collectProcessingQueuesMessages(queues, done) {
-        const next = () => {
-            if (queues.length) {
-                const processingQueueName = queues.pop();
-                consumerStatus(processingQueueName);
-            } else done();
-        };
-        const consumerStatus = (processingQueueName) => {
-            debug(`Inspecting processing queue [${processingQueueName}]... `);
-            const { queueName, consumerId } = redisKeys.getKeySegments(processingQueueName);
+    function registerEvents() {
+        consumer.on(events.GC_SM_QUEUE, (queue) => {
+            debug(`Inspecting processing queue [${queue}]... `);
+            const { queueName, consumerId } = redisKeys.getKeySegments(queue);
             if (consumerId !== instanceId) {
                 debug(`Is consumer ID [${consumerId}] alive?`);
-                HeartBeat.isOnline(
-                    {
-                        client: redisClientInstance,
-                        queueName,
-                        id: consumerId
-                    },
-                    (err, online) => {
-                        if (err) instance.error(err);
-                        else if (online) {
-                            debug(`Consumer ID [${consumerId}] is alive!`);
-                            next();
-                        } else {
-                            debug(`Consumer ID [${consumerId}] seems to be dead. Fetching queue message...`);
-                            fetchMessage(processingQueueName);
-                        }
+                isOnline({ client: redisClientInstance, queueName, id: consumerId }, (err, online) => {
+                    if (err) consumer.error(err);
+                    else if (online) {
+                        debug(`Consumer [${consumerId}]: The consumer is online.`);
+                        consumer.emit(events.GC_SM_NEXT_QUEUE);
+                    } else {
+                        debug(`Consumer [${consumerId}]: The consumer seems to be offline.`);
+                        consumer.emit(events.GC_SM_CONSUMER_OFFLINE, consumerId, queue);
                     }
-                );
+                });
             } else {
-                debug('Skipping self consumer instance ID...');
-                next();
+                debug(`Consumer [${consumerId}]: The consumer is online.`);
+                consumer.emit(events.GC_SM_NEXT_QUEUE);
             }
-        };
+        });
 
-        /**
-         *
-         * @param {string} processingQueueName
-         */
-        const fetchMessage = (processingQueueName) => {
-            redisClientInstance.lrange(processingQueueName, 0, 0, (err, range) => {
-                if (err) instance.error(err);
+        consumer.on(events.GC_SM_CONSUMER_OFFLINE, (consumerId, queue) => {
+            debug(`Consumer [${consumerId}]: Trying to fetch a message from the processing queue ...`);
+            redisClientInstance.lrange(queue, 0, 0, (err, range) => {
+                if (err) consumer.error(err);
                 else if (range.length) {
                     const msg = Message.createFromMessage(range[0]);
-                    debug(`Fetched a message with ID [${msg.getId()}].`);
-                    message(processingQueueName, msg);
-                } else destroyQueue(processingQueueName);
+                    debug(
+                        `Consumer [${consumerId}]: Fetched a message (ID [${msg.getId()}]) from the processing queue.`
+                    );
+                    consumer.emit(events.GC_SM_MESSAGE, msg, queue);
+                } else {
+                    debug(`Consumer [${consumerId}]: Processing queue is empty.`);
+                    consumer.emit(events.GC_SM_EMPTY_QUEUE, queue, consumerId);
+                }
             });
-        };
+        });
 
-        /**
-         *
-         * @param {string} processingQueueName
-         * @param {Message} msg
-         */
-        const message = (processingQueueName, msg) => {
-            const uuid = msg.getId();
-            debug(`Collecting message [${uuid}]...`);
+        consumer.on(events.GC_SM_MESSAGE, (msg, queue) => {
             const cb = (err) => {
-                if (err) instance.error(err);
-                else destroyQueue(processingQueueName);
+                if (err) consumer.error(err);
+                else consumer.emit(events.GC_SM_MESSAGE_COLLECTED, msg, queue);
             };
-            if (hasExpired(msg)) {
-                collectExpiredMessage(msg, processingQueueName, cb);
+            if (hasMessageExpired(msg)) {
+                debug(`Message [${msg.getId()}]: Collecting expired message...`);
+                collectExpiredMessage(msg, queue, cb);
             } else {
-                collectMessage(msg, processingQueueName, cb);
+                debug(`Message [${msg.getId()}]: Collecting message...`);
+                collectMessage(msg, queue, cb);
             }
-        };
+        });
 
-        /**
-         * @param {string} processingQueueName
-         */
-        const destroyQueue = (processingQueueName) => {
-            util.purgeProcessingQueue(redisClientInstance, processingQueueName, (err) => {
-                if (err) instance.error(err);
-                else next();
-            });
-        };
-        next();
-    }
+        consumer.on(events.GC_SM_MESSAGE_COLLECTED, (message, queue) => {
+            debug(`Message [${message.getId()}]: Message collected.`);
+            destroyQueue(queue);
+        });
 
-    function runInspectionTimer() {
-        debug(`Waiting for ${GC_INSPECTION_INTERVAL} before a new iteration...`);
-        timer = setTimeout(() => {
-            debug('Time is up...');
-            if (shutdownNow) shutdownNow();
-            else inspectProcessingQueues();
-        }, GC_INSPECTION_INTERVAL);
-    }
+        consumer.on(events.GC_SM_EMPTY_QUEUE, (queue, consumerId) => {
+            debug(`Consumer [${consumerId}]: Deleting the processing queue...`);
+            destroyQueue(queue);
+        });
 
-    function inspectProcessingQueues() {
-        if (state === states.UP) {
-            lockManagerInstance.acquireLock(keyGCLock, 10000, (err) => {
-                if (err) instance.error(err);
-                // It could takes a long time before a lock could be acquired. Once a lock has been acquired
-                // before continuing check first if we are still running. (may be a shutdown command is being in
-                // process for example)
-                else if (state === states.UP) {
+        consumer.on(events.GC_SM_QUEUE_DESTROYED, (queue) => {
+            debug(`Queue [${queue}] has been deleted. Inspecting next processing queue...`);
+            consumer.emit(events.GC_SM_NEXT_QUEUE);
+        });
+
+        consumer.on(events.GC_SM_NEXT_QUEUE, () => {
+            if (queues.length) {
+                const processingQueueName = queues.pop();
+                debug(`Got a new processing queue [${processingQueueName}].`);
+                consumer.emit(events.GC_SM_QUEUE, processingQueueName);
+            } else {
+                debug(`All queues has been inspected. Next iteration...`);
+                consumer.emit(events.GC_SM_NEXT_TICK);
+            }
+        });
+
+        consumer.on(events.GC_SM_NEXT_TICK, () => {
+            debug(`Waiting for ${GC_INSPECTION_INTERVAL} before the next iteration...`);
+            ticker.nextTick();
+        });
+
+        consumer.on(events.GC_SM_TICK, () => {
+            lockManagerInstance.acquireLock(keyGCLock, 10000, (error, extended) => {
+                if (error) consumer.error(error);
+                else {
+                    consumer.emit(events.GC_LOCK_ACQUIRED, instanceId, extended);
                     debug('Inspecting processing queues...');
                     util.getProcessingQueuesOf(redisClientInstance, keyQueueNameProcessingCommon, (e, result) => {
-                        if (e) instance.error(e);
-                        else if (result && result.length) {
-                            debug(`Found [${result.length}] processing queues`);
-                            collectProcessingQueuesMessages(result, runInspectionTimer);
+                        if (e) consumer.error(e);
+                        else if (result) {
+                            debug(`Fetched [${result.length}] processing queues`);
+                            queues = result;
+                            consumer.emit(events.GC_SM_NEXT_QUEUE);
                         } else {
                             debug('No processing queues found');
-                            runInspectionTimer();
+                            consumer.emit(events.GC_SM_NEXT_TICK);
                         }
                     });
                 }
             });
-        }
+        });
+    }
+
+    function unregisterEvents() {
+        consumer.removeAllListeners(events.GC_SM_QUEUE);
+        consumer.removeAllListeners(events.GC_SM_CONSUMER_OFFLINE);
+        consumer.removeAllListeners(events.GC_SM_EMPTY_QUEUE);
+        consumer.removeAllListeners(events.GC_SM_MESSAGE);
+        consumer.removeAllListeners(events.GC_SM_MESSAGE_COLLECTED);
+        consumer.removeAllListeners(events.GC_SM_NEXT_QUEUE);
+        consumer.removeAllListeners(events.GC_SM_NEXT_TICK);
+        consumer.removeAllListeners(events.GC_SM_QUEUE_DESTROYED);
+        consumer.removeAllListeners(events.GC_SM_TICK);
     }
 
     /**
@@ -188,59 +179,90 @@ function GarbageCollector(instance) {
      * @param {function} cb
      */
     function collectMessage(message, processingQueue, cb) {
-        const threshold = message.getRetryThreshold();
-        const messageRetryThreshold = typeof threshold === 'number' ? threshold : instance.getMessageRetryThreshold();
+        const scheduler = consumer.getScheduler();
 
-        const delay = message.getRetryDelay();
-        const messageRetryDelay = typeof delay === 'number' ? delay : instance.getMessageRetryDelay();
+        /**
+         * @param {Message} message
+         * @param {number} delay
+         * @param multi
+         */
+        const requeueMessageAfterDelay = (message, delay, multi) => {
+            debug(`Scheduling message ID [${message.getId()}]  (delay: [${delay}])...`);
+            message.setScheduledDelay(delay);
+            scheduler.schedule(message, multi);
+        };
 
-        let destQueueName = null;
-        let delayed = false;
-        let requeued = false;
+        /**
+         * @param {Message} message
+         * @param multi
+         */
+        const moveMessageToDLQ = (message, multi) => {
+            debug(`Moving message [${message.getId()}] to DLQ [${keyQueueNameDead}]...`);
+            multi.lpush(keyQueueNameDead, message.toString());
+        };
 
-        const multi = redisClientInstance.multi();
+        /**
+         * @param {Message} message
+         * @param multi
+         */
+        const requeueMessage = (message, multi) => {
+            debug(`Re-queuing message [${message.getId()}] ...`);
+            multi.lpush(keyQueueName, message.toString());
+        };
+
+        /**
+         * @param message
+         * @return {number}
+         */
+        const incrMessageAttempts = (message) => {
+            message.incrAttempts();
+            return message.getAttempts();
+        };
+
+        /**
+         * @param {Message} message
+         * @return {boolean}
+         */
+        const checkMessageThreshold = (message) => {
+            const attempts = incrMessageAttempts(message);
+            const threshold = message.getRetryThreshold();
+            const retryThreshold = typeof threshold === 'number' ? threshold : consumer.getMessageRetryThreshold();
+            return attempts < retryThreshold;
+        };
 
         /**
          * Try to recover only non-periodic messages.
          * Periodic messages failure is ignored since such messages by default are scheduled for delivery
          * based on a period of time.
          */
-        const scheduler = instance.getScheduler();
-        if (!scheduler.isPeriodic(message)) {
-            const uuid = message.getId();
-            const attempts = increaseAttempts(message);
-            if (attempts < messageRetryThreshold) {
-                debug(`Trying to consume message ID [${uuid}] again (attempts: [${attempts}]) ...`);
-                if (messageRetryDelay) {
-                    debug(`Scheduling message ID [${uuid}]  (delay: [${messageRetryDelay}])...`);
-                    message.setScheduledDelay(messageRetryDelay);
-                    scheduler.schedule(message, multi);
-                    delayed = true;
-                } else {
-                    debug(`Message ID [${uuid}] is going to be enqueued immediately...`);
-                    destQueueName = keyQueueName;
-                    requeued = true;
-                }
-            } else {
-                debug(`Message ID [${uuid}] has exceeded max retry threshold...`);
-                destQueueName = keyQueueNameDead;
-            }
-            if (destQueueName) {
-                debug(`Moving message [${uuid}] to queue [${destQueueName}]...`);
-                multi.lpush(destQueueName, message.toString());
-            }
+        if (scheduler.isPeriodic(message)) {
+            redisClientInstance.rpop(processingQueue, cb);
+        } else {
+            let delayed = false;
+            let requeued = false;
+            const multi = redisClientInstance.multi();
             multi.rpop(processingQueue);
+            const retry = checkMessageThreshold(message);
+            if (retry) {
+                const delay = message.getRetryDelay();
+                const retryDelay = typeof delay === 'number' ? delay : consumer.getMessageRetryDelay();
+                if (retryDelay) {
+                    delayed = true;
+                    requeueMessageAfterDelay(message, retryDelay, multi);
+                } else {
+                    requeued = true;
+                    requeueMessage(message, multi);
+                }
+            } else moveMessageToDLQ(message, multi);
             multi.exec((err) => {
                 if (err) cb(err);
                 else {
-                    if (requeued) instance.emit(events.MESSAGE_REQUEUED, message);
-                    else if (delayed) instance.emit(events.MESSAGE_DELAYED, message);
-                    else instance.emit(events.MESSAGE_DEAD_LETTER, message);
+                    if (requeued) consumer.emit(events.GC_MESSAGE_REQUEUED, message);
+                    else if (delayed) consumer.emit(events.GC_MESSAGE_DELAYED, message);
+                    else consumer.emit(events.GC_MESSAGE_DLQ, message);
                     cb();
                 }
             });
-        } else {
-            redisClientInstance.rpop(processingQueue, cb);
         }
     }
 
@@ -255,10 +277,10 @@ function GarbageCollector(instance) {
         debug(`Processing expired message [${id}]...`);
         // Just pop it out
         redisClientInstance.rpop(processingQueue, (err) => {
-            if (err) instance.error(err);
+            if (err) cb(err);
             else {
+                consumer.emit(events.GC_MESSAGE_DESTROYED, message);
                 cb();
-                instance.emit(events.MESSAGE_DESTROYED, message);
             }
         });
     }
@@ -268,9 +290,9 @@ function GarbageCollector(instance) {
      * @param {Message} message
      * @returns {boolean}
      */
-    function hasExpired(message) {
+    function hasMessageExpired(message) {
         const ttl = message.getTTL();
-        const messageTTL = typeof ttl === 'number' ? ttl : instance.getConsumerMessageTTL();
+        const messageTTL = typeof ttl === 'number' ? ttl : consumer.getConsumerMessageTTL();
         if (messageTTL) {
             const curTime = new Date().getTime();
             const createdAt = message.getCreatedAt();
@@ -280,51 +302,50 @@ function GarbageCollector(instance) {
     }
 
     /**
-     *
-     * @param {Message} message
-     * @return {number}
+     * @param {string} processingQueueName
      */
-    function increaseAttempts(message) {
-        message[Message.PROPERTY_ATTEMPTS] += 1;
-        return message[Message.PROPERTY_ATTEMPTS];
+    function destroyQueue(processingQueueName) {
+        util.purgeProcessingQueue(redisClientInstance, processingQueueName, (err) => {
+            if (err) consumer.error(err);
+            else consumer.emit(events.GC_SM_QUEUE_DESTROYED, processingQueueName);
+        });
     }
 
     return {
         start() {
-            if (state === states.DOWN) {
-                const config = instance.getConfig();
-                LockManager.getInstance(config, (l) => {
-                    lockManagerInstance = l;
-                    redisClient.getNewInstance(config, (c) => {
-                        redisClientInstance = c;
-                        state = states.UP;
-                        instance.emit(events.GC_UP);
-                        inspectProcessingQueues();
-                    });
+            powerStateManager.goingUp();
+            const config = consumer.getConfig();
+            LockManager.getInstance(config, (lockManager) => {
+                lockManagerInstance = lockManager;
+                redisClient.getNewInstance(config, (client) => {
+                    redisClientInstance = client;
+                    ticker = Ticker(() => consumer.emit(events.GC_SM_TICK), GC_INSPECTION_INTERVAL);
+                    registerEvents();
+                    powerStateManager.up();
+                    consumer.emit(events.GC_SM_TICK);
+                    consumer.emit(events.GC_UP);
                 });
-            }
+            });
         },
         stop() {
-            if (state === states.UP && !shutdownNow) {
-                shutdownNow = () => {
-                    if (timer) clearTimeout(timer);
-                    lockManagerInstance.quit(() => {
-                        lockManagerInstance = null;
-                        redisClientInstance.end(true);
-                        redisClientInstance = null;
-                        shutdownNow = null;
-                        state = states.DOWN;
-                        instance.emit(events.GC_DOWN);
-                    });
-                };
-                if (!lockManagerInstance.isLocked()) {
-                    shutdownNow();
-                }
-            }
+            powerStateManager.goingDown();
+            const shutdownFn = () => {
+                lockManagerInstance.quit(() => {
+                    lockManagerInstance = null;
+                    redisClientInstance.end(true);
+                    redisClientInstance = null;
+                    ticker = null;
+                    unregisterEvents();
+                    powerStateManager.down();
+                    consumer.emit(events.GC_DOWN);
+                });
+            };
+            if (!lockManagerInstance.isLocked()) shutdownFn();
+            else ticker.shutdown(shutdownFn);
         },
         collectMessage,
         collectExpiredMessage,
-        hasExpired
+        hasMessageExpired
     };
 }
 

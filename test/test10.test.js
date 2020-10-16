@@ -1,5 +1,5 @@
 const bluebird = require('bluebird');
-const { getConsumer, getProducer, untilConsumerIdle, untilConsumerUp } = require('./common');
+const { getConsumer, getProducer, untilConsumerIdle, untilConsumerUp, untilConsumerEvent } = require('./common');
 const { Message } = require('./../');
 const events = require('../src/events');
 
@@ -12,10 +12,8 @@ test('A message is not lost in case of a consumer crash', async () => {
     await producer.produceMessageAsync(msg);
 
     /**
-     * First consumer
-     * Tries to consume a message but "crushes" (stops) while message is not acknowledged
+     * Consumer1 tries to consume a message but "crushes" (stops)
      */
-
     const consumer1 = getConsumer();
     const mock1 = jest.fn((msg, cb) => {
         // do not acknowledge/unacknowledge the message
@@ -23,39 +21,22 @@ test('A message is not lost in case of a consumer crash', async () => {
     });
     consumer1.consume = mock1;
     consumer1.on(events.DOWN, () => {
-        // once stopped, start another consumer
+        // once stopped, start consumer2
         consumer2.run();
     });
 
     /**
-     * Second consumer
-     * Requeue failed message and consume it!
+     * Consumer2 re-queues failed message and consume it!
      */
-
     const consumer2 = getConsumer();
     const mock = jest.fn((msg, cb) => {
         cb();
     });
     consumer2.consume = mock;
 
-    let reQueuedCount = 0;
-    let consumedCount = 0;
-    consumer2
-        .on(events.MESSAGE_REQUEUED, () => {
-            reQueuedCount += 1;
-        })
-        .on(events.MESSAGE_ACKNOWLEDGED, () => {
-            consumedCount += 1;
-        });
-    //
     consumer1.run();
 
-    // Once consumer2 goes up
-    await untilConsumerUp(consumer2);
-
-    // Wait 10s
-    await bluebird.delay(10000);
-    await untilConsumerIdle(consumer2);
-    expect(reQueuedCount).toBe(1);
-    expect(consumedCount).toBe(1);
+    await untilConsumerEvent(consumer2, events.GC_LOCK_ACQUIRED);
+    await untilConsumerEvent(consumer2, events.GC_MESSAGE_REQUEUED);
+    await untilConsumerEvent(consumer2, events.MESSAGE_ACKNOWLEDGED);
 });

@@ -23,6 +23,10 @@ function StatsAggregator(config) {
 
     let redisClientInstance = null;
 
+    /**
+     *
+     * @type {LockManager|null}
+     */
     let lockManagerInstance = null;
 
     /**
@@ -251,31 +255,22 @@ function StatsAggregator(config) {
                 redisClientInstance.publish('stats', statsString, onPublished);
             }
         };
-        lockManagerInstance.acquireLock(rKeys.keyStatsAggregatorLock, 10000, () => {
+        lockManagerInstance.acquireLock(rKeys.keyStatsAggregatorLock, 10000, (err) => {
+            if (err) throw err;
             getStats(onData);
         });
     }
 
-    return {
-        start() {
-            const getLockManager = (c) => {
-                redisClientInstance = c;
-                LockManager.getInstance(config, (l) => {
-                    lockManagerInstance = l;
-                    run();
-                });
-            };
-            redisClient.getNewInstance(config, getLockManager);
-        }
-    };
+    redisClient.getNewInstance(config, (c) => {
+        redisClientInstance = c;
+        LockManager.getInstance(config, (l) => {
+            lockManagerInstance = l;
+            run();
+        });
+    });
 }
 
-let instance = null;
-
 process.on('message', (c) => {
-    if (!instance) {
-        const config = JSON.parse(c);
-        instance = StatsAggregator(config);
-        instance.start();
-    }
+    const config = JSON.parse(c);
+    StatsAggregator(config);
 });

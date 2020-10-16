@@ -103,6 +103,25 @@ class Message {
 
     /**
      *
+     * @param attempts
+     * @return {Message}
+     */
+    setAttempts(attempts) {
+        this[Message.PROPERTY_ATTEMPTS] = attempts;
+        return this;
+    }
+
+    /**
+     *
+     * @return {Message}
+     */
+    incrAttempts() {
+        this.setAttempts(this[Message.PROPERTY_ATTEMPTS] + 1);
+        return this;
+    }
+
+    /**
+     *
      * @param body
      * @return {Message}
      */

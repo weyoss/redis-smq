@@ -10,6 +10,7 @@ const keyTypes = {
     KEY_TYPE_DEAD_LETTER_QUEUE: '1.3',
     KEY_TYPE_MESSAGE_QUEUE_DELAYED: '1.4',
     KEY_TYPE_HEARTBEAT: '2.1',
+    KEY_TYPE_HEARTBEAT_MONITOR_LOCK: '2.2',
     KEY_TYPE_GC_LOCK: '3.1',
     KEY_TYPE_RATE: '4',
     KEY_TYPE_RATE_INPUT: '4.1',
@@ -145,6 +146,7 @@ module.exports = {
     getCommonKeys() {
         const keys = {};
         keys.keyHeartBeat = keyTypes.KEY_TYPE_HEARTBEAT;
+        keys.keyHeartBeatMonitorLock = keyTypes.KEY_TYPE_HEARTBEAT_MONITOR_LOCK;
         keys.keyMessageQueuesIndex = keyTypes.KEY_TYPE_MESSAGE_QUEUES_INDEX;
         keys.keyProcessingQueuesIndex = keyTypes.KEY_TYPE_PROCESSING_QUEUES_INDEX;
         keys.keyDLQueuesIndex = keyTypes.KEY_TYPE_DEAD_LETTER_QUEUES_INDEX;

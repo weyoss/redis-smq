@@ -38,7 +38,7 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
     });
     queueAConsumer2.consume = mock2;
     queueAConsumer2
-        .on(events.MESSAGE_REQUEUED, () => {
+        .on(events.GC_MESSAGE_REQUEUED, () => {
             queueAMeta.requeued += 1;
         })
         .on(events.MESSAGE_ACKNOWLEDGED, () => {
@@ -57,7 +57,7 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
     });
     queueBConsumer1.consume = mock3;
     queueBConsumer1
-        .on(events.MESSAGE_REQUEUED, () => {
+        .on(events.GC_MESSAGE_REQUEUED, () => {
             queueBMeta.requeued += 1;
         })
         .on(events.MESSAGE_ACKNOWLEDGED, () => {

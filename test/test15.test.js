@@ -27,7 +27,7 @@ test('A consumer delays a failed message before re-queuing it again, given messa
     consumer.consume = mock;
 
     let delayedCount = 0;
-    consumer.on(events.MESSAGE_DELAYED, () => {
+    consumer.on(events.GC_MESSAGE_DELAYED, () => {
         delayedCount += 1;
     });
 

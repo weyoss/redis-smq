@@ -125,7 +125,7 @@ class Consumer extends Instance {
             this.statsInstance.startAggregator();
         });
         this.on(events.SCHEDULER_UP, () => {
-            this.schedulerInstance.runTicker();
+            this.schedulerInstance.tick();
         });
         this.on(events.GOING_UP, () => {
             this.heartBeatInstance.start();
@@ -135,18 +135,22 @@ class Consumer extends Instance {
             this.heartBeatInstance.stop();
             this.garbageCollectorInstance.stop();
         });
+        this.on(events.DOWN, () => {
+            this.garbageCollectorInstance = null;
+            this.heartBeatInstance = null;
+        });
         this.on(events.UP, () => {
             this.emit(events.MESSAGE_NEXT);
         });
         this.on(events.MESSAGE_NEXT, () => {
-            if (this.isRunning()) {
+            if (this.powerStateManager.isRunning()) {
                 this.getNextMessage();
             }
         });
         this.on(events.MESSAGE_RECEIVED, (message) => {
-            if (this.isRunning()) {
+            if (this.powerStateManager.isRunning()) {
                 if (this.statsInstance) this.statsInstance.incrementProcessingSlot();
-                if (this.garbageCollectorInstance.hasExpired(message)) {
+                if (this.garbageCollectorInstance.hasMessageExpired(message)) {
                     this.emit(events.MESSAGE_EXPIRED, message);
                 } else this.handleConsume(message);
             }
@@ -242,7 +246,7 @@ class Consumer extends Instance {
                 }
             };
             const onConsumed = (err) => {
-                if (this.isRunning() && !isTimeout) {
+                if (this.powerStateManager.isRunning() && !isTimeout) {
                     if (timer) clearTimeout(timer);
                     if (err) this.handleConsumeFailure(msg, err);
                     else this.redisClientInstance.rpop(keys.keyQueueNameProcessing, onDeleted);

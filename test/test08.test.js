@@ -21,7 +21,7 @@ test('Async exceptions are caught when consuming a message', async () => {
     consumer.consume = mock;
 
     let queuedCount = 0;
-    consumer.on(events.MESSAGE_REQUEUED, () => {
+    consumer.on(events.GC_MESSAGE_REQUEUED, () => {
         queuedCount += 1;
     });
 
