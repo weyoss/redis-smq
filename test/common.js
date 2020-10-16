@@ -12,7 +12,7 @@ const producersList = [];
 async function shutdown() {
     const p = async (list) => {
         for (const i of list) {
-            if (i.isRunning()) {
+            if (i.powerStateManager.isRunning()) {
                 // eslint-disable-next-line no-await-in-loop
                 await new Promise((resolve, reject) => {
                     i.shutdown();
@@ -82,7 +82,11 @@ async function untilMessageAcknowledged(consumer) {
 }
 
 async function untilMessageDelayed(consumer) {
-    return consumerOnEvent(consumer, events.MESSAGE_DELAYED);
+    return consumerOnEvent(consumer, events.GC_MESSAGE_DELAYED);
+}
+
+async function untilConsumerEvent(consumer, event) {
+    return consumerOnEvent(consumer, event);
 }
 
 module.exports = {
@@ -94,5 +98,6 @@ module.exports = {
     untilConsumerIdle,
     untilConsumerUp,
     untilMessageAcknowledged,
-    untilMessageDelayed
+    untilMessageDelayed,
+    untilConsumerEvent
 };

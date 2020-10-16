@@ -14,12 +14,12 @@ test('A consumer does re-queue a failed message when threshold is not exceeded, 
     consumer.consume = mock;
 
     let reQueuedCount = 0;
-    consumer.on(events.MESSAGE_REQUEUED, () => {
+    consumer.on(events.GC_MESSAGE_REQUEUED, () => {
         reQueuedCount += 1;
     });
 
     let deadCount = 0;
-    consumer.on(events.MESSAGE_DEAD_LETTER, () => {
+    consumer.on(events.GC_MESSAGE_DLQ, () => {
         deadCount += 1;
     });
 

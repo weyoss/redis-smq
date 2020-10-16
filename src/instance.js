@@ -9,11 +9,7 @@ const logger = require('./logger');
 const util = require('./util');
 const redisKeys = require('./redis-keys');
 const events = require('./events');
-
-const states = {
-    DOWN: 0,
-    UP: 1
-};
+const PowerStateManager = require('./power-state-manager');
 
 class Instance extends EventEmitter {
     /**
@@ -27,9 +23,8 @@ class Instance extends EventEmitter {
         this.config = config;
         this.startupFiredEvents = [];
         this.shutdownFiredEvents = [];
-        this.state = states.DOWN;
-        this.stateSwitching = false;
         this.bootstrapping = false;
+        this.powerStateManager = PowerStateManager();
         if (config.hasOwnProperty('namespace')) {
             redisKeys.setNamespace(config.namespace);
         }
@@ -45,7 +40,7 @@ class Instance extends EventEmitter {
         this.on(events.BOOTSTRAP_SYSTEM_QUEUES, () => this.completeBootstrap());
         this.on(events.BOOTSTRAP_SUCCESS, () => {
             this.bootstrapping = false;
-            this.switchState(states.UP);
+            this.emit(events.GOING_UP);
         });
         this.on(events.GOING_UP, () => {
             this.schedulerInstance.start();
@@ -62,8 +57,6 @@ class Instance extends EventEmitter {
         });
         this.on(events.DOWN, () => {
             this.shutdownFiredEvents = [];
-            this.garbageCollectorInstance = null;
-            this.heartBeatInstance = null;
             this.statsInstance = null;
             this.schedulerInstance = null;
         });
@@ -108,7 +101,6 @@ class Instance extends EventEmitter {
     }
 
     /**
-     * @protected
      * @return {object}
      */
     getInstanceRedisKeys() {
@@ -144,7 +136,6 @@ class Instance extends EventEmitter {
     }
 
     /**
-     * @protected
      * @return {object}
      */
     getScheduler() {
@@ -152,7 +143,6 @@ class Instance extends EventEmitter {
     }
 
     /**
-     * @protected
      * @return {object}
      */
     getLogger() {
@@ -196,7 +186,10 @@ class Instance extends EventEmitter {
     handleStartupEvent(event) {
         this.startupFiredEvents.push(event);
         const isUp = this.hasGoneUp();
-        if (isUp) this.setState(states.UP);
+        if (isUp) {
+            this.powerStateManager.up();
+            this.emit(events.UP);
+        }
     }
 
     /**
@@ -206,7 +199,10 @@ class Instance extends EventEmitter {
     handleShutdownEvent(event) {
         this.shutdownFiredEvents.push(event);
         const isDown = this.hasGoneDown();
-        if (isDown) this.setState(states.DOWN);
+        if (isDown) {
+            this.powerStateManager.down();
+            this.emit(events.DOWN);
+        }
     }
 
     /**
@@ -232,23 +228,10 @@ class Instance extends EventEmitter {
     }
 
     /**
-     * @protected
-     * @param {number} state
-     */
-    setState(state) {
-        this.stateSwitching = false;
-        this.state = state;
-        if (this.state === states.UP) {
-            this.emit(events.UP);
-        } else this.emit(events.DOWN);
-    }
-
-    /**
-     * @protected
      * @param {Error} err
      */
     error(err) {
-        if (this.isRunning()) {
+        if (this.powerStateManager.isRunning()) {
             this.shutdown();
             throw err;
         }
@@ -275,71 +258,13 @@ class Instance extends EventEmitter {
     }
 
     run() {
-        if (this.isDown()) {
-            this.bootstrap();
-        }
+        this.powerStateManager.goingUp();
+        this.bootstrap();
     }
 
     shutdown() {
-        if (this.isRunning()) {
-            this.switchState(states.DOWN);
-        }
-    }
-
-    /**
-     * @protected
-     * @param {number} s
-     */
-    switchState(s) {
-        if (!Object.values(states).includes(s)) {
-            throw new Error('Can not switch to invalid state');
-        }
-        if (this.stateSwitching) {
-            throw new Error('Can not switch state while another state transition is in progress');
-        }
-        this.stateSwitching = true;
-        if (s === states.UP) this.emit(events.GOING_UP);
-        else this.emit(events.GOING_DOWN);
-    }
-
-    /**
-     *
-     * @return {boolean}
-     */
-    isUp() {
-        return this.state === states.UP;
-    }
-
-    /**
-     *
-     * @return {boolean}
-     */
-    isDown() {
-        return this.state === states.DOWN;
-    }
-
-    /**
-     *
-     * @return {boolean}
-     */
-    isGoingUp() {
-        return this.isDown() && this.stateSwitching;
-    }
-
-    /**
-     *
-     * @return {boolean}
-     */
-    isGoingDown() {
-        return this.isUp() && this.stateSwitching;
-    }
-
-    /**
-     *
-     * @return {boolean}
-     */
-    isRunning() {
-        return this.isUp() && !this.isGoingDown();
+        this.powerStateManager.goingDown();
+        this.emit(events.GOING_DOWN);
     }
 
     /**

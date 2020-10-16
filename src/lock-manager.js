@@ -8,14 +8,16 @@ const redisClient = require('./redis-client');
  * @return {object}
  */
 function LockManager(redisClientInstance) {
-    const states = {
-        UP: 1,
-        DOWN: 0
-    };
     let redlock = new Redlock([redisClientInstance]);
     let acquiredLock = null;
     let timer = 0;
-    let state = states.UP;
+
+    function setAcquiredLock(lock, extended, cb) {
+        if (redlock) {
+            acquiredLock = lock;
+            cb(null, extended);
+        } else cb(new Error('Instance no longer usable after calling quit()'));
+    }
 
     function acquireLock(lockKey, ttl, cb) {
         const retry = (err) => {
@@ -27,25 +29,20 @@ function LockManager(redisClientInstance) {
                 }, 1000);
             }
         };
-        if (state === states.UP) {
-            if (acquiredLock) {
-                acquiredLock.extend(ttl, (err, lock) => {
-                    if (err) retry(err);
-                    else {
-                        acquiredLock = lock;
-                        cb();
-                    }
-                });
-            } else {
+        if (acquiredLock) {
+            acquiredLock.extend(ttl, (err, lock) => {
+                if (err) retry(err);
+                else setAcquiredLock(lock, true, cb);
+            });
+        } else {
+            if (!redlock) cb(new Error('Instance is no longer usable after calling quit(). Create a new instance.'));
+            else {
                 redlock.lock(lockKey, ttl, (err, lock) => {
                     if (err) retry(err);
-                    else {
-                        acquiredLock = lock;
-                        cb();
-                    }
+                    else setAcquiredLock(lock, false, cb);
                 });
             }
-        } else cb(new Error('Lock manager is down.'));
+        }
     }
 
     function releaseLock(cb) {
@@ -63,7 +60,6 @@ function LockManager(redisClientInstance) {
     }
 
     function quit(cb) {
-        state = states.DOWN;
         if (!redlock) cb();
         else {
             releaseLock((err) => {

@@ -15,7 +15,7 @@ test('A message is delivered only once to one consumer', async () => {
     let reQueuedCount1 = 0;
     let consumedCount1 = 0;
     consumer1
-        .on(events.MESSAGE_REQUEUED, () => {
+        .on(events.GC_MESSAGE_REQUEUED, () => {
             reQueuedCount1 += 1;
         })
         .on(events.MESSAGE_ACKNOWLEDGED, () => {
@@ -33,7 +33,7 @@ test('A message is delivered only once to one consumer', async () => {
     let reQueuedCount2 = 0;
     let consumedCount2 = 0;
     consumer2
-        .on(events.MESSAGE_REQUEUED, () => {
+        .on(events.GC_MESSAGE_REQUEUED, () => {
             reQueuedCount2 += 1;
         })
         .on(events.MESSAGE_ACKNOWLEDGED, () => {

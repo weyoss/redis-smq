@@ -24,7 +24,7 @@ test('When consuming a message, a consumer does time out after messageConsumeTim
     });
 
     let queuedCount = 0;
-    consumer.on(events.MESSAGE_REQUEUED, () => {
+    consumer.on(events.GC_MESSAGE_REQUEUED, () => {
         queuedCount += 1;
     });
 

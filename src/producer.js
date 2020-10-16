@@ -65,8 +65,8 @@ class Producer extends Instance {
                 });
             }
         };
-        if (!this.isUp()) {
-            if (this.isBootstrapping() || this.isGoingUp()) this.once(events.UP, proceed);
+        if (!this.powerStateManager.isUp()) {
+            if (this.isBootstrapping() || this.powerStateManager.isGoingUp()) this.once(events.UP, proceed);
             else this.error(new Error(`Producer ID ${this.getId()} is not running`));
         } else proceed();
     }

@@ -5,6 +5,8 @@ const Message = require('./message');
 const redisClient = require('./redis-client');
 const LockManager = require('./lock-manager');
 const events = require('./events');
+const PowerStateManager = require('./power-state-manager');
+const Ticker = require('./ticker');
 
 /**
  *
@@ -12,17 +14,12 @@ const events = require('./events');
  * @param {number} tickPeriod
  */
 function Scheduler(instance, tickPeriod = 1000) {
+    const powerStateManager = PowerStateManager();
     const { keySchedulerLock, keyQueueName, keyQueueNameDelayed } = instance.getInstanceRedisKeys();
     const logger = instance.getLogger();
-    const states = {
-        UP: 1,
-        DOWN: 0
-    };
     let lockManagerInstance = null;
     let redisClientInstance = null;
-    let state = states.DOWN;
-    let timer = 0;
-    let shutdownNow = null;
+    let ticker = null;
 
     /**
      *
@@ -45,7 +42,6 @@ function Scheduler(instance, tickPeriod = 1000) {
     }
 
     function getNextMessages() {
-        const now = Date.now();
         const process = (messages) => {
             if (messages.length) {
                 const msg = messages.pop();
@@ -64,31 +60,29 @@ function Scheduler(instance, tickPeriod = 1000) {
                     if (err) instance.error(err);
                     else process(messages);
                 });
-            } else runTicker();
+            } else nextTick();
         };
-        if (state === states.UP) {
-            redisClientInstance.zrangebyscore(keyQueueNameDelayed, 0, now, (err, messages) => {
-                if (err) instance.error(err);
-                else process(messages);
-            });
-        }
+        const now = Date.now();
+        redisClientInstance.zrangebyscore(keyQueueNameDelayed, 0, now, (err, messages) => {
+            if (err) instance.error(err);
+            else process(messages);
+        });
     }
 
-    function runTicker() {
-        if (state === states.UP) {
-            lockManagerInstance.acquireLock(keySchedulerLock, 10000, (err) => {
-                if (err) instance.error(err);
-                // after lock has been acquired, the scheduler could be shutdown
-                else if (state === states.UP) {
-                    debug(`Waiting for ${tickPeriod} before a new iteration...`);
-                    timer = setTimeout(() => {
-                        debug('Time is up...');
-                        if (shutdownNow) shutdownNow();
-                        else getNextMessages();
-                    }, tickPeriod);
-                }
-            });
+    function nextTick() {
+        ticker.nextTick();
+    }
+
+    function tick() {
+        if (!ticker) {
+            ticker = Ticker(tick, tickPeriod);
         }
+        lockManagerInstance.acquireLock(keySchedulerLock, 10000, (err) => {
+            if (err) instance.error(err);
+            else {
+                getNextMessages();
+            }
+        });
     }
 
     /**
@@ -181,42 +175,39 @@ function Scheduler(instance, tickPeriod = 1000) {
         },
 
         start() {
-            if (state === states.DOWN) {
-                const config = instance.getConfig();
-                LockManager.getInstance(config, (l) => {
-                    lockManagerInstance = l;
-                    redisClient.getNewInstance(config, (c) => {
-                        state = states.UP;
-                        redisClientInstance = c;
-                        instance.emit(events.SCHEDULER_UP);
-                    });
+            powerStateManager.goingUp();
+            const config = instance.getConfig();
+            LockManager.getInstance(config, (l) => {
+                lockManagerInstance = l;
+                redisClient.getNewInstance(config, (c) => {
+                    redisClientInstance = c;
+                    powerStateManager.up();
+                    instance.emit(events.SCHEDULER_UP);
                 });
-            }
+            });
         },
 
         stop() {
-            if (state === states.UP && !shutdownNow) {
-                shutdownNow = () => {
-                    state = states.DOWN;
-                    shutdownNow = null;
-                    if (timer) clearTimeout(timer);
-                    const handler = () => {
+            powerStateManager.goingDown();
+            const shutdownFn = () => {
+                if (powerStateManager.isGoingDown()) {
+                    lockManagerInstance.quit(() => {
                         lockManagerInstance = null;
                         redisClientInstance.end(true);
                         redisClientInstance = null;
+                        powerStateManager.down();
                         instance.emit(events.SCHEDULER_DOWN);
-                    };
-                    lockManagerInstance.quit(handler);
-                };
-                if (!lockManagerInstance.isLocked()) {
-                    shutdownNow();
+                    });
                 }
-            }
+            };
+            if (ticker) {
+                if (!lockManagerInstance.isLocked()) shutdownFn();
+                else ticker.shutdown(shutdownFn);
+            } else shutdownFn();
         },
-
         isScheduled,
         isPeriodic,
-        runTicker
+        tick
     };
 }
 

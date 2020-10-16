@@ -8,8 +8,8 @@ module.exports = {
         driver: 'redis'
         //options: {
         //    host: '192.168.23.129',
-        //    port: 6379,
-        //},
+        //    port: 6379
+        //}
     },
     log: {
         enabled: false,
