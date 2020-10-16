@@ -44,13 +44,13 @@ class Instance extends EventEmitter {
         });
         this.on(events.GOING_UP, () => {
             this.schedulerInstance.start();
-            this.statsInstance.start();
+            if (this.statsInstance) this.statsInstance.start();
         });
         this.on(events.UP, () => {
             this.startupFiredEvents = [];
         });
         this.on(events.GOING_DOWN, () => {
-            this.statsInstance.stop();
+            if (this.statsInstance) this.statsInstance.stop();
             this.schedulerInstance.stop();
             this.redisClientInstance.end(true);
             this.redisClientInstance = null;
@@ -121,10 +121,19 @@ class Instance extends EventEmitter {
     /**
      * @protected
      */
+    getStatsProvider() {
+        /* eslint class-methods-use-this: 0 */
+        throw new Error('Method not implemented!');
+    }
+
+    /**
+     * @protected
+     */
     setupStats() {
         const { monitor } = this.config;
         if (monitor && monitor.enabled) {
-            this.statsInstance = Stats(this);
+            const statsProvider = this.getStatsProvider();
+            this.statsInstance = Stats(this, statsProvider);
         }
     }
 

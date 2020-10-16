@@ -5,11 +5,11 @@ const path = require('path');
 module.exports = {
     namespace: 'ns1',
     redis: {
-        driver: 'redis'
-        //options: {
-        //    host: '192.168.23.129',
-        //    port: 6379
-        //}
+        driver: 'redis',
+        options: {
+            host: '192.168.23.129',
+            port: 6379
+        }
     },
     log: {
         enabled: false,
