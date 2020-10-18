@@ -2,9 +2,9 @@
 
 const Instance = require('./instance');
 const Message = require('./message');
-const redisKeys = require('./redis-keys');
 const events = require('./events');
 const ProducerStatsProvider = require('./producer-stats-provider');
+const ProducerRedisKeys = require('./producer-redis-keys');
 
 class Producer extends Instance {
     /**
@@ -37,7 +37,7 @@ class Producer extends Instance {
      * @return {object}
      */
     getRedisKeys() {
-        return redisKeys.getProducerKeys(this.getId(), this.getQueueName());
+        return new ProducerRedisKeys(this.getId(), this.getQueueName());
     }
 
     /**
@@ -68,8 +68,8 @@ class Producer extends Instance {
         const proceed = () => {
             if (this.schedulerInstance.isScheduled(msg)) this.schedulerInstance.schedule(msg, null, onProduced);
             else {
-                const { keyQueueName } = this.getInstanceRedisKeys();
-                this.redisClientInstance.lpush(keyQueueName, msg.toString(), (err) => {
+                const { keyQueue } = this.getInstanceRedisKeys();
+                this.redisClientInstance.lpush(keyQueue, msg.toString(), (err) => {
                     if (err) cb(err);
                     else {
                         if (this.statsProvider) this.statsProvider.incrementInputSlot();

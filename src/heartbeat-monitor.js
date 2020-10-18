@@ -1,10 +1,11 @@
 'use strict';
 
+const async = require('neo-async');
 const LockManager = require('./lock-manager');
-const redisKeys = require('./redis-keys');
 const redisClient = require('./redis-client');
 const { getConsumersByOnlineStatus, handleOfflineConsumers } = require('./heartbeat');
 const Ticker = require('./ticker');
+const ConsumerRedisKeys = require('./consumer-redis-keys');
 
 /**
  *
@@ -12,43 +13,42 @@ const Ticker = require('./ticker');
  */
 function heartbeatMonitor(config) {
     if (config.hasOwnProperty('namespace')) {
-        redisKeys.setNamespace(config.namespace);
+        ConsumerRedisKeys.setNamespace(config.namespace);
     }
-    const { keyHeartBeatMonitorLock } = redisKeys.getCommonKeys();
+    const { keyLockHeartBeatMonitor } = ConsumerRedisKeys.getGlobalKeys();
+    const ticker = Ticker(tick, 1000);
+
     let redisClientInstance = null;
     let lockManagerInstance = null;
 
-    function run() {
-        const handleConsumers = (offlineConsumers, cb) => {
-            handleOfflineConsumers(redisClientInstance, offlineConsumers, (err) => {
+    function handleConsumers(offlineConsumers, cb) {
+        handleOfflineConsumers(redisClientInstance, offlineConsumers, cb);
+    }
+
+    function getOfflineConsumers(cb) {
+        getConsumersByOnlineStatus(redisClientInstance, (err, result) => {
+            if (err) cb(err);
+            else {
+                const { offlineConsumers } = result;
+                cb(null, offlineConsumers);
+            }
+        });
+    }
+
+    function tick() {
+        lockManagerInstance.acquireLock(keyLockHeartBeatMonitor, 10000, () => {
+            async.waterfall([getOfflineConsumers, handleConsumers], (err) => {
                 if (err) throw err;
-                cb();
+                ticker.nextTick();
             });
-        };
-        const getOfflineConsumers = (cb) => {
-            getConsumersByOnlineStatus(redisClientInstance, (err, result) => {
-                if (err) throw err;
-                else {
-                    const { offlineConsumers } = result;
-                    cb(offlineConsumers);
-                }
-            });
-        };
-        const tick = () => {
-            lockManagerInstance.acquireLock(keyHeartBeatMonitorLock, 10000, (err) => {
-                if (err) throw err;
-                getOfflineConsumers((consumers) => handleConsumers(consumers, ticker.nextTick));
-            });
-        };
-        const ticker = Ticker(tick, 1000);
-        ticker.nextTick();
+        });
     }
 
     redisClient.getNewInstance(config, (c) => {
         redisClientInstance = c;
         LockManager.getInstance(config, (l) => {
             lockManagerInstance = l;
-            run();
+            tick();
         });
     });
 }

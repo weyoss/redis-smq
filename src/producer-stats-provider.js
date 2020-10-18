@@ -5,7 +5,7 @@
  * @return {object}
  */
 module.exports = function ProducerStatsProvider(producer) {
-    const { keyRate, keyRateInput } = producer.getInstanceRedisKeys();
+    const { keyIndexRate, keyProducerRateInput } = producer.getInstanceRedisKeys();
 
     /**
      * @type {number[]}
@@ -28,7 +28,7 @@ module.exports = function ProducerStatsProvider(producer) {
         publish(redisClient, stats) {
             const now = Date.now();
             const { inputRate } = stats;
-            redisClient.hset(keyRate, keyRateInput, `${inputRate}|${now}`, () => {});
+            redisClient.hset(keyIndexRate, keyProducerRateInput, `${inputRate}|${now}`, () => {});
         },
         incrementInputSlot() {
             const slot = new Date().getMilliseconds();

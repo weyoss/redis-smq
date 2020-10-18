@@ -9,6 +9,7 @@
     "cron-parser": "2.5.0",
     "ioredis": "4.14.1",
     "lodash": "4.17.20",
+    "neo-async": "2.6.2",
     "redis": "2.8.0",
     "redis-smq-monitor": "1.1.5",
     "redlock": "4.1.0",

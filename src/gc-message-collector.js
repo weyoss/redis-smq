@@ -3,7 +3,7 @@
 const events = require('./events');
 
 module.exports = function MessageCollector(consumer, redisClientInstance) {
-    const { keyQueueName, keyQueueNameDead } = consumer.getInstanceRedisKeys();
+    const { keyQueue, keyQueueDLQ } = consumer.getInstanceRedisKeys();
     const scheduler = consumer.getScheduler();
     const logger = consumer.getLogger();
 
@@ -30,8 +30,8 @@ module.exports = function MessageCollector(consumer, redisClientInstance) {
      * @param multi
      */
     const moveMessageToDLQ = (message, multi) => {
-        debug(`Moving message [${message.getId()}] to DLQ [${keyQueueNameDead}]...`);
-        multi.lpush(keyQueueNameDead, message.toString());
+        debug(`Moving message [${message.getId()}] to DLQ [${keyQueueDLQ}]...`);
+        multi.lpush(keyQueueDLQ, message.toString());
     };
 
     /**
@@ -40,7 +40,7 @@ module.exports = function MessageCollector(consumer, redisClientInstance) {
      */
     const requeueMessage = (message, multi) => {
         debug(`Re-queuing message [${message.getId()}] ...`);
-        multi.lpush(keyQueueName, message.toString());
+        multi.lpush(keyQueue, message.toString());
     };
 
     /**

@@ -1,11 +1,15 @@
 'use strict';
 
 const lodash = require('lodash');
+const async = require('neo-async');
 const LockManager = require('./lock-manager');
-const redisKeys = require('./redis-keys');
 const redisClient = require('./redis-client');
 const { getOnlineConsumers } = require('./heartbeat');
-const util = require('./util');
+const Instance = require('./instance');
+const MQRedisKeys = require('./mq-redis-keys');
+const InstanceRedisKeys = require('./instance-redis-keys');
+const ConsumerRedisKeys = require('./consumer-redis-keys');
+const ProducerRedisKeys = require('./producer-redis-keys');
 
 /**
  *
@@ -14,13 +18,14 @@ const util = require('./util');
  */
 function StatsAggregator(config) {
     if (config.hasOwnProperty('namespace')) {
-        redisKeys.setNamespace(config.namespace);
+        MQRedisKeys.setNamespace(config.namespace);
     }
-
-    const rKeys = redisKeys.getCommonKeys();
-
+    const { keyIndexRate, keyLockStatsAggregator } = InstanceRedisKeys.getGlobalKeys();
     const noop = () => {};
 
+    /**
+     * @type {object|null}
+     */
     let redisClientInstance = null;
 
     /**
@@ -30,11 +35,241 @@ function StatsAggregator(config) {
     let lockManagerInstance = null;
 
     /**
-     *
+     * @type {object|null}
+     */
+    let data = null;
+
+    /**
      * @param {function} cb
      */
     function getRates(cb) {
-        const data = {
+        const addConsumerIfNotExists = (ns, queueName, consumerId) => {
+            const { consumers } = data.queues[ns][queueName];
+            if (!consumers[consumerId]) {
+                consumers[consumerId] = {
+                    id: consumerId,
+                    namespace: ns,
+                    queueName: queueName,
+                    rates: {
+                        processing: 0,
+                        acknowledged: 0,
+                        unacknowledged: 0
+                    }
+                };
+            }
+        };
+
+        const addProducerIfNotExists = (ns, queueName, producerId) => {
+            const { producers } = data.queues[ns][queueName];
+            if (!producers[producerId]) {
+                producers[producerId] = {
+                    id: producerId,
+                    namespace: ns,
+                    queueName: queueName,
+                    rates: {}
+                };
+            }
+        };
+
+        const addQueueIfNotExists = (ns, queueName) => {
+            if (!data.queues[ns]) {
+                data.queues[ns] = {};
+            }
+            if (!data.queues[ns][queueName]) {
+                data.queues[ns][queueName] = {
+                    name: queueName,
+                    namespace: ns,
+                    consumers: {},
+                    producers: {}
+                };
+            }
+        };
+
+        const handleProducerRate = ({ ns, queueName, producerId }, rate) => {
+            addQueueIfNotExists(ns, queueName);
+            rate = Number(rate);
+            const { producers } = data.queues[ns][queueName];
+            addProducerIfNotExists(ns, queueName, producerId);
+            data.rates.input += rate;
+            producers[producerId].rates.input = rate;
+        };
+
+        const handleConsumerRate = ({ ns, queueName, type, consumerId }, rate) => {
+            addQueueIfNotExists(ns, queueName);
+            rate = Number(rate);
+            const { consumers } = data.queues[ns][queueName];
+            addConsumerIfNotExists(ns, queueName, consumerId);
+            const consumerTypes = ConsumerRedisKeys.getTypes();
+            switch (type) {
+                case consumerTypes.KEY_TYPE_CONSUMER_RATE_PROCESSING:
+                    data.rates.processing += rate;
+                    consumers[consumerId].rates.processing = rate;
+                    break;
+
+                case consumerTypes.KEY_TYPE_CONSUMER_RATE_ACKNOWLEDGED:
+                    data.rates.acknowledged += rate;
+                    consumers[consumerId].rates.acknowledged = rate;
+                    break;
+
+                case consumerTypes.KEY_TYPE_CONSUMER_RATE_UNACKNOWLEDGED:
+                    data.rates.unacknowledged += rate;
+                    consumers[consumerId].rates.unacknowledged = rate;
+                    break;
+            }
+        };
+
+        const hasExpired = (timestamp) => {
+            const now = Date.now();
+            return now - timestamp > 1000;
+        };
+
+        redisClientInstance.hgetall(keyIndexRate, (err, result) => {
+            if (err) cb(err);
+            else {
+                if (result) {
+                    const expiredKeys = [];
+                    async.each(
+                        result,
+                        (item, key, done) => {
+                            const [rate, timestamp] = item.split('|');
+                            if (!hasExpired(timestamp)) {
+                                let extractedData = ProducerRedisKeys.extractData(key);
+                                if (extractedData) handleProducerRate(extractedData, rate);
+                                else {
+                                    extractedData = ConsumerRedisKeys.extractData(key);
+                                    handleConsumerRate(extractedData, rate);
+                                }
+                            } else expiredKeys.push(key);
+                            done();
+                        },
+                        () => {
+                            if (expiredKeys.length) redisClientInstance.hdel(keyIndexRate, ...expiredKeys, noop);
+                            cb();
+                        }
+                    );
+                } else cb();
+            }
+        });
+    }
+
+    /**
+     * @param {string[]} queues
+     * @param {function} cb
+     */
+    function getQueueSize(queues, cb) {
+        if (queues && queues.length) {
+            const multi = redisClientInstance.multi();
+            const handleResult = (res) => {
+                const instanceTypes = InstanceRedisKeys.getTypes();
+                async.each(
+                    res,
+                    (size, index, done) => {
+                        const { ns, queueName, type } = InstanceRedisKeys.extractData(queues[index]);
+                        if (!data.queues[ns]) {
+                            data.queues[ns] = {};
+                        }
+                        if (!data.queues[ns][queueName]) {
+                            data.queues[ns][queueName] = {};
+                        }
+                        data.queues[ns][queueName] = {
+                            ...data.queues[ns][queueName],
+                            name: queueName,
+                            namespace: ns
+                        };
+                        if (type === instanceTypes.KEY_TYPE_QUEUE_DLQ) {
+                            data.queues[ns][queueName].erroredMessages = size;
+                        } else {
+                            data.queues[ns][queueName].size = size;
+                        }
+                        done();
+                    },
+                    () => cb()
+                );
+            };
+            async.each(
+                queues,
+                (queue, done) => {
+                    multi.llen(queue);
+                    done();
+                },
+                () => {
+                    multi.exec((err, res) => {
+                        if (err) cb(err);
+                        else handleResult(res);
+                    });
+                }
+            );
+        } else cb();
+    }
+
+    /**
+     * @param {function} cb
+     */
+    function getQueues(cb) {
+        Instance.getMessageQueues(redisClientInstance, (err, queues) => {
+            if (err) cb(err);
+            else cb(null, queues);
+        });
+    }
+
+    /**
+     * @param {function} cb
+     */
+    function getDLQQueues(cb) {
+        Instance.getDLQQueues(redisClientInstance, (err, queues) => {
+            if (err) cb(err);
+            else cb(null, queues);
+        });
+    }
+
+    function getConsumers(cb) {
+        getOnlineConsumers(redisClientInstance, (err, consumers) => {
+            if (err) cb(err);
+            else {
+                lodash.merge(data, consumers);
+                cb();
+            }
+        });
+    }
+
+    function sanitizeData(cb) {
+        const handleConsumer = (consumer, done) => {
+            if (!consumer.rates || !consumer.resources) {
+                const { id, namespace, queueName } = consumer;
+                delete data.queues[namespace][queueName].consumers[id];
+            }
+            done();
+        };
+        const handleQueue = (queue, done) => {
+            if (!queue.consumers) {
+                queue.consumers = {};
+            }
+            if (!queue.producers) {
+                queue.producers = {};
+            }
+            async.each(queue.consumers, handleConsumer, done);
+        };
+        const handleQueues = (queues, done) => {
+            async.each(queues, handleQueue, done);
+        };
+
+        // this way: async.each(data.queues, handleQueues, cb), it doesn't work.
+        async.each(data.queues, handleQueues, () => cb());
+    }
+
+    function publish(cb) {
+        const statsString = JSON.stringify(data);
+        redisClientInstance.publish('stats', statsString, cb);
+    }
+
+    function nextTick() {
+        setTimeout(() => {
+            run();
+        }, 1000);
+    }
+
+    function reset(cb) {
+        data = {
             rates: {
                 processing: 0,
                 acknowledged: 0,
@@ -43,221 +278,29 @@ function StatsAggregator(config) {
             },
             queues: {}
         };
-
-        const processResult = (result) => {
-            if (result) {
-                const now = Date.now();
-                const expiredKeys = [];
-                const keyTypes = redisKeys.getKeyTypes();
-                for (const key in result) {
-                    const segments = redisKeys.getKeySegments(key);
-                    const { ns, queueName, type } = segments;
-                    if (!data.queues[ns]) {
-                        data.queues[ns] = {};
-                    }
-                    if (!data.queues[ns][queueName]) {
-                        data.queues[ns][queueName] = {
-                            name: queueName,
-                            namespace: ns,
-                            consumers: {},
-                            producers: {}
-                        };
-                    }
-                    const [valueStr, timestamp] = result[key].split('|');
-                    if (now - timestamp <= 1000) {
-                        const value = Number(valueStr);
-                        const { consumers, producers } = data.queues[ns][queueName];
-                        let rates = null;
-                        if (type === keyTypes.KEY_TYPE_RATE_INPUT) {
-                            if (!producers[segments.producerId]) {
-                                producers[segments.producerId] = {
-                                    id: segments.producerId,
-                                    rates: {}
-                                };
-                            }
-                            rates = producers[segments.producerId].rates;
-                        } else {
-                            if (!consumers[segments.consumerId]) {
-                                consumers[segments.consumerId] = {
-                                    id: segments.consumerId,
-                                    rates: {
-                                        processing: 0,
-                                        acknowledged: 0,
-                                        unacknowledged: 0
-                                    }
-                                };
-                            }
-                            rates = consumers[segments.consumerId].rates;
-                        }
-                        /* eslint default-case: 0 indent: 0 */
-                        switch (type) {
-                            case keyTypes.KEY_TYPE_RATE_PROCESSING:
-                                data.rates.processing += value;
-                                rates.processing = value;
-                                break;
-
-                            case keyTypes.KEY_TYPE_RATE_ACKNOWLEDGED:
-                                data.rates.acknowledged += value;
-                                rates.acknowledged = value;
-                                break;
-
-                            case keyTypes.KEY_TYPE_RATE_UNACKNOWLEDGED:
-                                data.rates.unacknowledged += value;
-                                rates.unacknowledged = value;
-                                break;
-
-                            case keyTypes.KEY_TYPE_RATE_INPUT:
-                                data.rates.input += value;
-                                rates.input = value;
-                                break;
-                        }
-                    } else expiredKeys.push(key);
-                }
-                // Do not wait for keys deletion, reply as fast as possible
-                if (expiredKeys.length) redisClientInstance.hdel(rKeys.keyRate, ...expiredKeys, noop);
-            }
-            cb(null, data);
-        };
-        redisClientInstance.hgetall(rKeys.keyRate, (err, result) => {
-            if (err) cb(err);
-            else processResult(result);
-        });
-    }
-
-    /**
-     *
-     * @param {Array} queues
-     * @param {function} cb
-     */
-    function getQueuesSize(queues, cb) {
-        const data = {
-            queues: {}
-        };
-        const keyTypes = redisKeys.getKeyTypes();
-        if (queues && queues.length) {
-            const multi = redisClientInstance.multi();
-            for (const queueName of queues) multi.llen(queueName);
-            multi.exec((err, res) => {
-                if (err) cb(err);
-                else {
-                    res.forEach((size, index) => {
-                        const { ns, queueName, type } = redisKeys.getKeySegments(queues[index]);
-                        if (!data.queues[ns]) {
-                            data.queues[ns] = {};
-                        }
-                        data.queues[ns][queueName] = {
-                            name: queueName,
-                            namespace: ns
-                        };
-                        if (type === keyTypes.KEY_TYPE_DEAD_LETTER_QUEUE) {
-                            data.queues[ns][queueName].erroredMessages = size;
-                        } else {
-                            data.queues[ns][queueName].size = size;
-                        }
-                    });
-                    cb(null, data);
-                }
-            });
-        } else cb(null, data);
-    }
-
-    /**
-     *
-     * @param {function} cb
-     */
-    function getMessageQueues(cb) {
-        util.getMessageQueues(redisClientInstance, (err, queues) => {
-            if (err) cb(err);
-            else getQueuesSize(queues, cb);
-        });
-    }
-
-    /**
-     *
-     * @param {function} cb
-     */
-    function getDLQueues(cb) {
-        util.getDLQueues(redisClientInstance, (err, queues) => {
-            if (err) cb(err);
-            else getQueuesSize(queues, cb);
-        });
-    }
-
-    /**
-     *
-     * @param {function} cb
-     */
-    function getStats(cb) {
-        const result = {};
-        const onDeadQueues = (err, deadLetterQueues) => {
-            if (err) cb(err);
-            else {
-                lodash.merge(result, deadLetterQueues);
-                cb(null, result);
-            }
-        };
-        const onQueues = (err, queues) => {
-            if (err) cb(err);
-            else {
-                lodash.merge(result, queues);
-                getDLQueues(onDeadQueues);
-            }
-        };
-        const onConsumers = (err, consumers) => {
-            if (err) cb(err);
-            else {
-                lodash.merge(result, consumers);
-                getMessageQueues(onQueues);
-            }
-        };
-        const onRates = (err, rates) => {
-            if (err) cb(err);
-            else {
-                lodash.merge(result, rates);
-                getOnlineConsumers(redisClientInstance, onConsumers);
-            }
-        };
-        getRates(onRates);
+        cb();
     }
 
     function run() {
-        const onPublished = (err) => {
+        lockManagerInstance.acquireLock(keyLockStatsAggregator, 10000, (err) => {
             if (err) throw err;
-            else {
-                setTimeout(() => {
-                    run();
-                }, 1000);
-            }
-        };
-        const sanitize = (data) => {
-            for (const ns in data.queues) {
-                for (const name in data.queues[ns]) {
-                    if (!data.queues[ns][name].consumers) {
-                        data.queues[ns][name].consumers = {};
-                    }
-                    if (!data.queues[ns][name].producers) {
-                        data.queues[ns][name].producers = {};
-                    }
-                    for (const consumerId in data.queues[ns][name].consumers) {
-                        const consumer = data.queues[ns][name].consumers[consumerId];
-                        if (!consumer.rates || !consumer.resources) {
-                            delete data.queues[ns][name].consumers[consumerId];
-                        }
-                    }
+            async.waterfall(
+                [
+                    reset,
+                    getRates,
+                    getConsumers,
+                    getQueues,
+                    getQueueSize,
+                    getDLQQueues,
+                    getQueueSize,
+                    sanitizeData,
+                    publish
+                ],
+                (err) => {
+                    if (err) throw err;
+                    nextTick();
                 }
-            }
-        };
-        const onData = (err, data) => {
-            if (err) throw err;
-            else {
-                sanitize(data);
-                const statsString = JSON.stringify(data);
-                redisClientInstance.publish('stats', statsString, onPublished);
-            }
-        };
-        lockManagerInstance.acquireLock(rKeys.keyStatsAggregatorLock, 10000, (err) => {
-            if (err) throw err;
-            getStats(onData);
+            );
         });
     }
 

@@ -47,6 +47,7 @@ consumer.on(events.GOING_DOWN, () => {
 console.log('start');
 consumer.run();
 
+/*
 setTimeout(() => {
     console.log('stop');
     consumer.shutdown();
@@ -61,3 +62,6 @@ setTimeout(() => {
     console.log('stop');
     consumer.shutdown();
 }, 15000);
+
+
+ */

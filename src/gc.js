@@ -1,15 +1,14 @@
 'use strict';
 
-const redisKeys = require('./redis-keys');
 const redisClient = require('./redis-client');
 const LockManager = require('./lock-manager');
 const { isOnline } = require('./heartbeat');
 const Message = require('./message');
-const util = require('./util');
 const events = require('./events');
 const PowerStateManager = require('./power-state-manager');
 const Ticker = require('./ticker');
 const MessageCollector = require('./gc-message-collector');
+const ConsumerRedisKeys = require('./consumer-redis-keys');
 
 const GC_INSPECTION_INTERVAL = 1000; // in ms
 
@@ -20,7 +19,7 @@ const GC_INSPECTION_INTERVAL = 1000; // in ms
 function GarbageCollector(consumer) {
     const powerStateManager = PowerStateManager();
     const instanceId = consumer.getId();
-    const { keyQueueNameProcessingCommon, keyGCLock } = consumer.getInstanceRedisKeys();
+    const { keyIndexQueueQueuesProcessing, keyLockGC, keyIndexQueueProcessing } = consumer.getInstanceRedisKeys();
     const logger = consumer.getLogger();
 
     /**
@@ -62,7 +61,7 @@ function GarbageCollector(consumer) {
         unregisterEvents();
         consumer.on(events.GC_SM_QUEUE, (queue) => {
             debug(`Inspecting processing queue [${queue}]... `);
-            const { queueName, consumerId } = redisKeys.getKeySegments(queue);
+            const { queueName, consumerId } = ConsumerRedisKeys.extractData(queue);
             if (consumerId !== instanceId) {
                 debug(`Is consumer ID [${consumerId}] alive?`);
                 isOnline({ client: redisClientInstance, queueName, id: consumerId }, (err, online) => {
@@ -137,12 +136,12 @@ function GarbageCollector(consumer) {
         });
 
         consumer.on(events.GC_SM_TICK, () => {
-            lockManagerInstance.acquireLock(keyGCLock, 10000, (error, extended) => {
+            lockManagerInstance.acquireLock(keyLockGC, 10000, (error, extended) => {
                 if (error) consumer.error(error);
                 else {
                     consumer.emit(events.GC_LOCK_ACQUIRED, instanceId, extended);
                     debug('Inspecting processing queues...');
-                    util.getProcessingQueuesOf(redisClientInstance, keyQueueNameProcessingCommon, (e, result) => {
+                    redisClientInstance.hkeys(keyIndexQueueQueuesProcessing, (e, result) => {
                         if (e) consumer.error(e);
                         else if (result) {
                             debug(`Fetched [${result.length}] processing queues`);
@@ -174,7 +173,11 @@ function GarbageCollector(consumer) {
      * @param {string} processingQueueName
      */
     function destroyQueue(processingQueueName) {
-        util.purgeProcessingQueue(redisClientInstance, processingQueueName, (err) => {
+        const multi = redisClientInstance.multi();
+        multi.srem(keyIndexQueueProcessing, processingQueueName);
+        multi.hdel(keyIndexQueueQueuesProcessing, processingQueueName);
+        multi.del(processingQueueName);
+        multi.exec((err) => {
             if (err) consumer.error(err);
             else consumer.emit(events.GC_SM_QUEUE_DESTROYED, processingQueueName);
         });

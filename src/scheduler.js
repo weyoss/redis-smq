@@ -15,7 +15,7 @@ const Ticker = require('./ticker');
  */
 function Scheduler(instance, tickPeriod = 1000) {
     const powerStateManager = PowerStateManager();
-    const { keySchedulerLock, keyQueueName, keyQueueNameDelayed } = instance.getInstanceRedisKeys();
+    const { keyLockScheduler, keyQueue, keyQueueDelayed } = instance.getInstanceRedisKeys();
     const logger = instance.getLogger();
     let lockManagerInstance = null;
     let redisClientInstance = null;
@@ -37,8 +37,8 @@ function Scheduler(instance, tickPeriod = 1000) {
      * @param {function} cb
      */
     function scheduleMessage(message, timestamp, multi, cb) {
-        if (multi) multi.zadd(keyQueueNameDelayed, timestamp, message.toString());
-        else redisClientInstance.zadd(keyQueueNameDelayed, timestamp, message.toString(), cb);
+        if (multi) multi.zadd(keyQueueDelayed, timestamp, message.toString());
+        else redisClientInstance.zadd(keyQueueDelayed, timestamp, message.toString(), cb);
     }
 
     function getNextMessages() {
@@ -47,8 +47,8 @@ function Scheduler(instance, tickPeriod = 1000) {
                 const msg = messages.pop();
                 const message = Message.createFromMessage(msg);
                 const multi = redisClientInstance.multi();
-                multi.lpush(keyQueueName, msg.toString());
-                multi.zrem(keyQueueNameDelayed, msg);
+                multi.lpush(keyQueue, msg.toString());
+                multi.zrem(keyQueueDelayed, msg);
                 if (isPeriodic(message)) {
                     const timestamp = getNextScheduledTimestamp(message);
                     if (timestamp) {
@@ -63,7 +63,7 @@ function Scheduler(instance, tickPeriod = 1000) {
             } else nextTick();
         };
         const now = Date.now();
-        redisClientInstance.zrangebyscore(keyQueueNameDelayed, 0, now, (err, messages) => {
+        redisClientInstance.zrangebyscore(keyQueueDelayed, 0, now, (err, messages) => {
             if (err) instance.error(err);
             else process(messages);
         });
@@ -77,7 +77,7 @@ function Scheduler(instance, tickPeriod = 1000) {
         if (!ticker) {
             ticker = Ticker(tick, tickPeriod);
         }
-        lockManagerInstance.acquireLock(keySchedulerLock, 10000, (err) => {
+        lockManagerInstance.acquireLock(keyLockScheduler, 10000, (err) => {
             if (err) instance.error(err);
             else {
                 getNextMessages();

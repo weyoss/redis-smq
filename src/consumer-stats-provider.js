@@ -10,7 +10,12 @@ module.exports = function ConsumerStatsProvider(consumer) {
     const processingSlots = new Array(1000).fill(0);
     const acknowledgedSlots = new Array(1000).fill(0);
     const unacknowledgedSlots = new Array(1000).fill(0);
-    const { keyRate, keyRateProcessing, keyRateAcknowledged, keyRateUnacknowledged } = consumer.getInstanceRedisKeys();
+    const {
+        keyIndexRate,
+        keyConsumerRateProcessing,
+        keyConsumerRateAcknowledged,
+        keyConsumerRateUnacknowledged
+    } = consumer.getInstanceRedisKeys();
 
     /**
      * @type {number}
@@ -61,12 +66,12 @@ module.exports = function ConsumerStatsProvider(consumer) {
             const now = Date.now();
             const { processingRate, acknowledgedRate, unacknowledgedRate, isIdle } = stats;
             redisClient.hmset(
-                keyRate,
-                keyRateProcessing,
+                keyIndexRate,
+                keyConsumerRateProcessing,
                 `${processingRate}|${now}`,
-                keyRateAcknowledged,
+                keyConsumerRateAcknowledged,
                 `${acknowledgedRate}|${now}`,
-                keyRateUnacknowledged,
+                keyConsumerRateUnacknowledged,
                 `${unacknowledgedRate}|${now}`,
                 () => {}
             );

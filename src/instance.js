@@ -2,14 +2,14 @@
 
 const uuid = require('uuid/v4');
 const { EventEmitter } = require('events');
+const async = require('neo-async');
 const redisClient = require('./redis-client');
 const Stats = require('./stats');
 const Scheduler = require('./scheduler');
 const logger = require('./logger');
-const util = require('./util');
-const redisKeys = require('./redis-keys');
 const events = require('./events');
 const PowerStateManager = require('./power-state-manager');
+const InstanceRedisKeys = require('./instance-redis-keys');
 
 class Instance extends EventEmitter {
     /**
@@ -26,7 +26,7 @@ class Instance extends EventEmitter {
         this.bootstrapping = false;
         this.powerStateManager = PowerStateManager();
         if (config.hasOwnProperty('namespace')) {
-            redisKeys.setNamespace(config.namespace);
+            InstanceRedisKeys.setNamespace(config.namespace);
         }
         this.registerEventsHandlers();
     }
@@ -86,7 +86,7 @@ class Instance extends EventEmitter {
      * @param {string} name
      */
     setQueueName(name) {
-        redisKeys.validateKeyPart(name);
+        name = InstanceRedisKeys.sanitizeKeySegment(name);
         this.queueName = name;
     }
 
@@ -105,13 +105,15 @@ class Instance extends EventEmitter {
      */
     getInstanceRedisKeys() {
         if (!this.redisKeys) {
-            this.redisKeys = this.getRedisKeys();
+            const redisKeys = this.getRedisKeys();
+            this.redisKeys = redisKeys.getKeys();
         }
         return this.redisKeys;
     }
 
     /**
      * @protected
+     * @return {InstanceRedisKeys}
      */
     getRedisKeys() {
         /* eslint class-methods-use-this: 0 */
@@ -175,16 +177,22 @@ class Instance extends EventEmitter {
      * @protected
      */
     setupQueues() {
-        const { keyQueueName, keyQueueNameDead } = this.getInstanceRedisKeys();
-        const deadLetterQueue = () => {
-            util.rememberDLQueue(this.redisClientInstance, keyQueueNameDead, (err) => {
-                if (err) this.error(err);
-                else this.emit(events.BOOTSTRAP_SYSTEM_QUEUES);
+        const { keyIndexQueue, keyQueue, keyQueueDLQ, keyIndexQueueDLQ } = this.getInstanceRedisKeys();
+        const rememberDLQ = (cb) => {
+            this.redisClientInstance.sadd(keyIndexQueueDLQ, keyQueueDLQ, (err) => {
+                if (err) cb(err);
+                else cb();
             });
         };
-        util.rememberMessageQueue(this.redisClientInstance, keyQueueName, (err) => {
+        const rememberQueue = (cb) => {
+            this.redisClientInstance.sadd(keyIndexQueue, keyQueue, (err) => {
+                if (err) cb(err);
+                else cb();
+            });
+        };
+        async.parallel([rememberQueue, rememberDLQ], (err) => {
             if (err) this.error(err);
-            else deadLetterQueue();
+            else this.emit(events.BOOTSTRAP_SYSTEM_QUEUES);
         });
     }
 
@@ -284,5 +292,15 @@ class Instance extends EventEmitter {
         return this.bootstrapping === true;
     }
 }
+
+Instance.getMessageQueues = (redisClient, cb) => {
+    const { keyIndexQueue } = InstanceRedisKeys.getGlobalKeys();
+    redisClient.smembers(keyIndexQueue, cb);
+};
+
+Instance.getDLQQueues = (redisClient, cb) => {
+    const { keyIndexQueueDLQ } = InstanceRedisKeys.getGlobalKeys();
+    redisClient.smembers(keyIndexQueueDLQ, cb);
+};
 
 module.exports = Instance;

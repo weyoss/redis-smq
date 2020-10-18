@@ -18,7 +18,7 @@ For more details about RedisSMQ design see [https://medium.com/@weyoss/building-
  * **Delaying and scheduling message delivery**: From version 1.0.19 a persistent scheduler has been built into 
  RedisSMQ message queue. The scheduler accepts delaying messages, repeated messages delivery, period
  between repeats and CRON expressions.
- * **Highly optimized**: No promises, no async/await, small memory footprint, no memory leaks.
+ * **Highly optimized**: No promises, no async/await, small memory footprint, no memory leaks. See [callbacks vs promises vs async/await benchmarks](http://bluebirdjs.com/docs/benchmarks.html).
  * **Monitorable**: Statistics (input/processing/acks/unacks messages rates, online consumers, queues, etc.)
    are provided in real-time.
  * **Logging**: Supports JSON log format for troubleshooting and analytics purposes.
