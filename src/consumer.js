@@ -1,13 +1,12 @@
 'use strict';
 
 const Instance = require('./instance');
-const redisKeys = require('./redis-keys');
 const HeartBeat = require('./heartbeat');
 const GarbageCollector = require('./gc');
 const Message = require('./message');
 const events = require('./events');
-const util = require('./util');
 const ConsumerStatsProvider = require('./consumer-stats-provider');
+const ConsumerRedisKeys = require('./consumer-redis-keys');
 
 class Consumer extends Instance {
     /**
@@ -66,10 +65,7 @@ class Consumer extends Instance {
      * @return {object}
      */
     getRedisKeys() {
-        if (!this.redisKeys) {
-            this.redisKeys = redisKeys.getConsumerKeys(this.getId(), this.getQueueName());
-        }
-        return this.redisKeys;
+        return new ConsumerRedisKeys(this.getId(), this.getQueueName());
     }
 
     /**
@@ -87,8 +83,8 @@ class Consumer extends Instance {
      */
     getNextMessage() {
         this.loggerInstance.info('Waiting for new messages...');
-        const { keyQueueName, keyQueueNameProcessing } = this.getInstanceRedisKeys();
-        this.redisClientInstance.brpoplpush(keyQueueName, keyQueueNameProcessing, 0, (err, json) => {
+        const { keyQueue, keyConsumerProcessingQueue } = this.getInstanceRedisKeys();
+        this.redisClientInstance.brpoplpush(keyQueue, keyConsumerProcessingQueue, 0, (err, json) => {
             if (err) this.error(err);
             else {
                 this.loggerInstance.info('Got new message...');
@@ -169,9 +165,9 @@ class Consumer extends Instance {
         });
         this.on(events.MESSAGE_EXPIRED, (message) => {
             this.loggerInstance.info(`Message [${message.uuid}] has expired`);
-            const { keyQueueNameProcessing } = this.getInstanceRedisKeys();
+            const { keyConsumerProcessingQueue } = this.getInstanceRedisKeys();
             const messageCollector = this.garbageCollectorInstance.getMessageCollector();
-            messageCollector.collectExpiredMessage(message, keyQueueNameProcessing, () => {
+            messageCollector.collectExpiredMessage(message, keyConsumerProcessingQueue, () => {
                 if (this.statsProvider) this.statsProvider.incrementAcknowledgedSlot();
                 this.loggerInstance.info(`Message [${message.uuid}] successfully processed`);
                 this.emit(events.MESSAGE_NEXT);
@@ -185,7 +181,7 @@ class Consumer extends Instance {
             if (this.statsProvider) this.statsProvider.incrementUnacknowledgedSlot();
             const keys = this.getInstanceRedisKeys();
             const messageCollector = this.garbageCollectorInstance.getMessageCollector();
-            messageCollector.collectMessage(msg, keys.keyQueueNameProcessing, (err) => {
+            messageCollector.collectMessage(msg, keys.keyConsumerProcessingQueue, (err) => {
                 if (err) this.error(err);
                 else this.emit(events.MESSAGE_NEXT);
             });
@@ -216,8 +212,15 @@ class Consumer extends Instance {
      * @protected
      */
     setupQueues() {
-        const { keyQueueNameProcessing } = this.getInstanceRedisKeys();
-        util.rememberProcessingQueue(this.redisClientInstance, keyQueueNameProcessing, (err) => {
+        const {
+            keyConsumerProcessingQueue,
+            keyIndexQueueProcessing,
+            keyIndexQueueQueuesProcessing
+        } = this.getInstanceRedisKeys();
+        const multi = this.redisClientInstance.multi();
+        multi.hset(keyIndexQueueQueuesProcessing, keyConsumerProcessingQueue, this.getId());
+        multi.sadd(keyIndexQueueProcessing, keyConsumerProcessingQueue);
+        multi.exec((err) => {
             if (err) this.error(err);
             else super.setupQueues();
         });
@@ -252,18 +255,20 @@ class Consumer extends Instance {
                     this.emit(events.MESSAGE_CONSUME_TIMEOUT, msg);
                 }, consumeTimeout);
             }
-            const onDeleted = (err) => {
-                if (err) this.error(err);
-                else {
-                    this.loggerInstance.info(`Message [${msg.getId()}] successfully processed`);
-                    this.emit(events.MESSAGE_ACKNOWLEDGED, msg);
-                }
+            const acknowledgeMessage = () => {
+                this.redisClientInstance.rpop(keys.keyConsumerProcessingQueue, (err) => {
+                    if (err) this.error(err);
+                    else {
+                        this.loggerInstance.info(`Message [${msg.getId()}] successfully processed`);
+                        this.emit(events.MESSAGE_ACKNOWLEDGED, msg);
+                    }
+                });
             };
             const onConsumed = (err) => {
                 if (this.powerStateManager.isRunning() && !isTimeout) {
                     if (timer) clearTimeout(timer);
                     if (err) this.handleConsumeFailure(msg, err);
-                    else this.redisClientInstance.rpop(keys.keyQueueNameProcessing, onDeleted);
+                    else acknowledgeMessage();
                 }
             };
             this.consume(msg.getBody(), onConsumed);

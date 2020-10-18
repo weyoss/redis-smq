@@ -13,6 +13,7 @@ const Ticker = require('./ticker');
  * @return {object}
  */
 function Stats(instance, statsProvider) {
+    const config = instance.getConfig();
     const powerStateManager = PowerStateManager();
 
     /**
@@ -33,7 +34,7 @@ function Stats(instance, statsProvider) {
     return {
         start() {
             powerStateManager.goingUp();
-            redisClient.getNewInstance(instance.getConfig(), (c) => {
+            redisClient.getNewInstance(config, (c) => {
                 redisClientInstance = c;
                 ticker = Ticker(() => {
                     const stats = statsProvider.tick();
@@ -54,7 +55,6 @@ function Stats(instance, statsProvider) {
                 const err = new Error(`statsAggregatorThread exited with code ${code} and signal ${signal}`);
                 instance.error(err);
             });
-            const config = instance.getConfig();
             statsAggregatorThread.send(JSON.stringify(config));
         },
 
