@@ -80,11 +80,9 @@ module.exports = function MessageCollector(consumer, redisClientInstance) {
         },
 
         /**
-         * Moves the message to a dead-letter queue when max the attempts threshold is reached
-         * or otherwise re-queue it again.
-         * Only recovers non-periodic messages.
-         * Periodic messages failure is ignored since such messages by default are scheduled for delivery
-         * based on a period of time.
+         * Move the message to DLQ queue when max attempts threshold is reached or otherwise re-queue it again.
+         * Only non-periodic messages are re-queued. Failure of periodic messages is ignored since such messages
+         * are periodically scheduled for delivery.
          *
          * @param {Message} message
          * @param {string} processingQueue
