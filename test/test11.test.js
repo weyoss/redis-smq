@@ -4,14 +4,11 @@ const { Message } = require('../');
 const events = require('../src/events');
 
 test('A message is delivered only once to one consumer', async () => {
-    /**
-     *
-     */
-    const consumer1 = getConsumer();
-    const mock1 = jest.fn((msg, cb) => {
-        cb();
+    const consumer1 = getConsumer({
+        consumeMock: jest.fn((msg, cb) => {
+            cb();
+        })
     });
-    consumer1.consume = mock1;
     let reQueuedCount1 = 0;
     let consumedCount1 = 0;
     consumer1
@@ -25,11 +22,11 @@ test('A message is delivered only once to one consumer', async () => {
     /**
      *
      */
-    const consumer2 = getConsumer();
-    const mock2 = jest.fn((msg, cb) => {
-        cb();
+    const consumer2 = getConsumer({
+        consumeMock: jest.fn((msg, cb) => {
+            cb();
+        })
     });
-    consumer2.consume = mock2;
     let reQueuedCount2 = 0;
     let consumedCount2 = 0;
     consumer2

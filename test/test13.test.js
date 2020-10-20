@@ -11,15 +11,15 @@ const { Message } = require('../index');
 
 describe('Produce and consume a delayed message with scheduledRepeat and scheduledPeriod parameters', () => {
     test('Case 1', async () => {
-        const consumer = getConsumer();
         let producedAt = null;
         let callCount = 0;
-        const mock = jest.fn((msg, cb) => {
-            callCount += 1;
-            if (callCount > 3) throw new Error('Unexpected call');
-            cb();
+        const consumer = getConsumer({
+            consumeMock: jest.fn((msg, cb) => {
+                callCount += 1;
+                if (callCount > 3) throw new Error('Unexpected call');
+                cb();
+            })
         });
-        consumer.consume = mock;
         consumer.run();
 
         const msg = new Message();
@@ -47,15 +47,16 @@ describe('Produce and consume a delayed message with scheduledRepeat and schedul
     });
 
     test('Case 2', async () => {
-        const consumer = getConsumer();
         let producedAt = null;
         let callCount = 0;
-        const mock = jest.fn((msg, cb) => {
-            callCount += 1;
-            if (callCount > 1) throw new Error('Unexpected call');
-            cb();
+
+        const consumer = getConsumer({
+            consumeMock: jest.fn((msg, cb) => {
+                callCount += 1;
+                if (callCount > 1) throw new Error('Unexpected call');
+                cb();
+            })
         });
-        consumer.consume = mock;
         consumer.run();
 
         const msg = new Message();

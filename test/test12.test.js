@@ -10,11 +10,11 @@ const {
 const { Message } = require('../index');
 
 test('Produce and consume a delayed message', async () => {
-    const consumer = getConsumer();
-    const mock = jest.fn((msg, cb) => {
-        cb();
+    const consumer = getConsumer({
+        consumeMock: jest.fn((msg, cb) => {
+            cb();
+        })
     });
-    consumer.consume = mock;
     consumer.run();
 
     const msg = new Message();
@@ -29,9 +29,8 @@ test('Produce and consume a delayed message', async () => {
 
     await producer.produceMessageAsync(msg);
 
-    let consumedAt = null;
     await untilMessageAcknowledged(consumer);
-    consumedAt = Date.now();
+    const consumedAt = Date.now();
 
     await untilConsumerIdle(consumer);
 

@@ -6,12 +6,11 @@ const events = require('../src/events');
 // eslint-disable-next-line max-len
 test('A consumer does re-queue a failed message when threshold is not exceeded, otherwise it moves the message to DLQ (dead letter queue)', async () => {
     const producer = getProducer();
-    const consumer = getConsumer();
-
-    const mock = jest.fn((msg, cb) => {
-        throw new Error('Explicit error');
+    const consumer = getConsumer({
+        consumeMock: jest.fn((msg, cb) => {
+            throw new Error('Explicit error');
+        })
     });
-    consumer.consume = mock;
 
     let reQueuedCount = 0;
     consumer.on(events.GC_MESSAGE_REQUEUED, () => {

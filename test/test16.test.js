@@ -12,18 +12,19 @@ const events = require('../src/events');
 
 // eslint-disable-next-line max-len
 test('Given many queues, a message is not lost and re-queued to its origin queue in case of a consumer crash or a failure', async () => {
-    const queueAConsumer1 = getConsumer('queue_a');
     const queueAMeta = {
         receivedMessages: [],
         requeued: 0,
         consumed: 0
     };
-    const mock1 = jest.fn((msg, cb) => {
-        // do not acknowledge/unacknowledge the message
-        queueAMeta.receivedMessages.push(msg);
-        queueAConsumer1.shutdown();
+    const queueAConsumer1 = getConsumer({
+        queueName: 'queue_a',
+        consumeMock: jest.fn((msg, cb) => {
+            // do not acknowledge/unacknowledge the message
+            queueAMeta.receivedMessages.push(msg);
+            queueAConsumer1.shutdown();
+        })
     });
-    queueAConsumer1.consume = mock1;
     queueAConsumer1.run();
 
     queueAConsumer1.on(events.DOWN, () => {
@@ -31,12 +32,13 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
         queueAConsumer2.run();
     });
 
-    const queueAConsumer2 = getConsumer('queue_a');
-    const mock2 = jest.fn((msg, cb) => {
-        queueAMeta.receivedMessages.push(msg);
-        cb();
+    const queueAConsumer2 = getConsumer({
+        queueName: 'queue_a',
+        consumeMock: jest.fn((msg, cb) => {
+            queueAMeta.receivedMessages.push(msg);
+            cb();
+        })
     });
-    queueAConsumer2.consume = mock2;
     queueAConsumer2
         .on(events.GC_MESSAGE_REQUEUED, () => {
             queueAMeta.requeued += 1;
@@ -45,17 +47,18 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
             queueAMeta.consumed += 1;
         });
 
-    const queueBConsumer1 = getConsumer('queue_b');
     const queueBMeta = {
         receivedMessages: [],
         requeued: 0,
         consumed: 0
     };
-    const mock3 = jest.fn((msg, cb) => {
-        queueBMeta.receivedMessages.push(msg);
-        cb();
+    const queueBConsumer1 = getConsumer({
+        queueName: 'queue_b',
+        consumeMock: jest.fn((msg, cb) => {
+            queueBMeta.receivedMessages.push(msg);
+            cb();
+        })
     });
-    queueBConsumer1.consume = mock3;
     queueBConsumer1
         .on(events.GC_MESSAGE_REQUEUED, () => {
             queueBMeta.requeued += 1;

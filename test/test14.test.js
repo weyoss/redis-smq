@@ -11,13 +11,13 @@ const { Message } = require('../index');
 
 describe('Produce and consume a delayed message with scheduledCRON/scheduledRepeat/scheduledPeriod parameters', () => {
     test('Case 1', async () => {
-        const consumer = getConsumer();
         const timestamps = [];
-        const mock = jest.fn((msg, cb) => {
-            timestamps.push(Date.now());
-            cb();
+        const consumer = getConsumer({
+            consumeMock: jest.fn((msg, cb) => {
+                timestamps.push(Date.now());
+                cb();
+            })
         });
-        consumer.consume = mock;
         consumer.run();
 
         const msg = new Message();
@@ -47,13 +47,13 @@ describe('Produce and consume a delayed message with scheduledCRON/scheduledRepe
     });
 
     test('Case 2', async () => {
-        const consumer = getConsumer();
         const timestamps = [];
-        const mock = jest.fn((msg, cb) => {
-            timestamps.push(Date.now());
-            cb();
+        const consumer = getConsumer({
+            consumeMock: jest.fn((msg, cb) => {
+                timestamps.push(Date.now());
+                cb();
+            })
         });
-        consumer.consume = mock;
         consumer.run();
 
         const msg = new Message();
@@ -83,13 +83,13 @@ describe('Produce and consume a delayed message with scheduledCRON/scheduledRepe
     });
 
     test('Case 3', async () => {
-        const consumer = getConsumer();
         const timestamps = [];
-        const mock = jest.fn((msg, cb) => {
-            timestamps.push(Date.now());
-            cb();
+        const consumer = getConsumer({
+            consumeMock: jest.fn((msg, cb) => {
+                timestamps.push(Date.now());
+                cb();
+            })
         });
-        consumer.consume = mock;
         consumer.run();
 
         const msg = new Message();
@@ -131,13 +131,13 @@ describe('Produce and consume a delayed message with scheduledCRON/scheduledRepe
     });
 
     test('Case 4', async () => {
-        const consumer = getConsumer();
         const timestamps = [];
-        const mock = jest.fn((msg, cb) => {
-            timestamps.push(Date.now());
-            cb();
+        const consumer = getConsumer({
+            consumeMock: jest.fn((msg, cb) => {
+                timestamps.push(Date.now());
+                cb();
+            })
         });
-        consumer.consume = mock;
         consumer.run();
 
         const msg = new Message();

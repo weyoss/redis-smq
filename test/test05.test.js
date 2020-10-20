@@ -6,7 +6,7 @@ const events = require('../src/events');
 // eslint-disable-next-line max-len
 test('Construct a consumer with messageTTL parameter and make sure it does not consume a message which has been in the queue longer than messageTTL', async () => {
     const producer = getProducer('test_queue');
-    const consumer = getConsumer('test_queue', { messageTTL: 2000 });
+    const consumer = getConsumer({ queueName: 'test_queue', options: { messageTTL: 2000 } });
     const consume = jest.spyOn(consumer, 'consume');
 
     let messageDestroyed = 0;

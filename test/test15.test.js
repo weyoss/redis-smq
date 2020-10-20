@@ -12,19 +12,21 @@ const events = require('../src/events');
 
 // eslint-disable-next-line max-len
 test('A consumer delays a failed message before re-queuing it again, given messageRetryThreshold is not exceeded', async () => {
-    const consumer = getConsumer('test_queue', { messageRetryDelay: 10, messageRetryThreshold: 5 });
     const timestamps = [];
     let callCount = 0;
-    const mock = jest.fn((msg, cb) => {
-        timestamps.push(Date.now());
-        callCount += 1;
-        if (callCount < 5) {
-            throw new Error('Explicit error');
-        } else if (callCount === 5) {
-            cb();
-        } else throw new Error('Unexpected call');
+    const consumer = getConsumer({
+        queueName: 'test_queue',
+        options: { messageRetryDelay: 10, messageRetryThreshold: 5 },
+        consumeMock: jest.fn((msg, cb) => {
+            timestamps.push(Date.now());
+            callCount += 1;
+            if (callCount < 5) {
+                throw new Error('Explicit error');
+            } else if (callCount === 5) {
+                cb();
+            } else throw new Error('Unexpected call');
+        })
     });
-    consumer.consume = mock;
 
     let delayedCount = 0;
     consumer.on(events.GC_MESSAGE_DELAYED, () => {
