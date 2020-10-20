@@ -26,7 +26,14 @@ async function shutdown() {
     await p(producersList);
 }
 
-function getConsumer(queueName = 'test_queue', options = {}) {
+/**
+ * @param {object} params
+ * @param {string} params.queueName
+ * @param {object} params.options
+ * @param {function} params.consumeMock
+ * @return {Consumer}
+ */
+function getConsumer({ queueName = 'test_queue', options = {}, consumeMock = null } = {}) {
     const TemplateClass = class extends Consumer {
         // eslint-disable-next-line class-methods-use-this
         consume(message, cb) {
@@ -35,6 +42,9 @@ function getConsumer(queueName = 'test_queue', options = {}) {
     };
     TemplateClass.queueName = queueName;
     let consumer = new TemplateClass(config, options);
+    if (consumeMock) {
+        consumer.consume = consumeMock;
+    }
     consumer = bluebird.promisifyAll(consumer);
     consumersList.push(consumer);
     return consumer;

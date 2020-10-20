@@ -6,17 +6,20 @@ const events = require('../src/events');
 // eslint-disable-next-line max-len
 test('When consuming a message, a consumer does time out after messageConsumeTimeout exceeds and re-queues the message to be consumed again', async () => {
     const producer = getProducer('test_queue');
-    const consumer = getConsumer('test_queue', { messageConsumeTimeout: 2000 });
 
     let consumeCount = 0;
-    const mock = jest.fn((msg, cb) => {
-        if (consumeCount === 0) setTimeout(cb, 5000);
-        else if (consumeCount === 1) cb();
-        else throw new Error('Unexpected call');
-        consumeCount += 1;
+    const consumer = getConsumer({
+        queueName: 'test_queue',
+        options: {
+            messageConsumeTimeout: 2000
+        },
+        consumeMock: jest.fn((msg, cb) => {
+            if (consumeCount === 0) setTimeout(cb, 5000);
+            else if (consumeCount === 1) cb();
+            else throw new Error('Unexpected call');
+            consumeCount += 1;
+        })
     });
-
-    consumer.consume = mock;
 
     let consumeTimeout = 0;
     consumer.on(events.MESSAGE_CONSUME_TIMEOUT, () => {

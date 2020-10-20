@@ -1,5 +1,6 @@
 'use strict';
 
+const async = require('neo-async');
 const cronParser = require('cron-parser');
 const Message = require('./message');
 const redisClient = require('./redis-client');
@@ -33,60 +34,97 @@ function Scheduler(instance, tickPeriod = 1000) {
      *
      * @param {Message} message
      * @param {number} timestamp
-     * @param {Object|null} multi
-     * @param {function} cb
+     * @param {object|null} multi
+     * @param {function|null} cb
      */
     function scheduleMessage(message, timestamp, multi, cb) {
         if (multi) multi.zadd(keyQueueDelayed, timestamp, message.toString());
-        else redisClientInstance.zadd(keyQueueDelayed, timestamp, message.toString(), cb);
-    }
-
-    function getNextMessages() {
-        const process = (messages) => {
-            if (messages.length) {
-                const msg = messages.pop();
-                const message = Message.createFromMessage(msg);
-                const multi = redisClientInstance.multi();
-                multi.lpush(keyQueue, msg.toString());
-                multi.zrem(keyQueueDelayed, msg);
-                if (isPeriodic(message)) {
-                    const timestamp = getNextScheduledTimestamp(message);
-                    if (timestamp) {
-                        const newMessage = Message.createFromMessage(message, true);
-                        scheduleMessage(newMessage, timestamp, multi);
-                    }
-                }
-                multi.exec((err, res) => {
-                    if (err) instance.error(err);
-                    else process(messages);
-                });
-            } else nextTick();
-        };
-        const now = Date.now();
-        redisClientInstance.zrangebyscore(keyQueueDelayed, 0, now, (err, messages) => {
-            if (err) instance.error(err);
-            else process(messages);
-        });
-    }
-
-    function nextTick() {
-        ticker.nextTick();
-    }
-
-    function tick() {
-        if (!ticker) {
-            ticker = Ticker(tick, tickPeriod);
+        else {
+            if (!cb) {
+                throw new Error('Callback function is required');
+            }
+            redisClientInstance.zadd(keyQueueDelayed, timestamp, message.toString(), cb);
         }
+    }
+
+    /**
+     * @param {string} msg
+     * @param {object|null} multi
+     * @param {function|null} cb
+     */
+    function scheduleNextDelivery(msg, multi, cb) {
+        const message = Message.createFromMessage(msg);
+        if (isPeriodic(message)) {
+            const timestamp = getNextScheduledTimestamp(message);
+            if (timestamp) {
+                const newMessage = Message.createFromMessage(message, true);
+                scheduleMessage(newMessage, timestamp, multi, cb);
+            }
+        } else if (cb) cb();
+    }
+
+    /**
+     * @param {string} msg
+     * @param {object|null} multi
+     * @param {function|null} cb
+     */
+    function deliverScheduledMessage(msg, multi, cb) {
+        if (multi) {
+            multi.lpush(keyQueue, msg);
+            multi.zrem(keyQueueDelayed, msg);
+        } else {
+            if (typeof cb !== 'function') {
+                throw new Error('Callback function required.');
+            }
+            multi = redisClientInstance.multi();
+            multi.lpush(keyQueue, msg);
+            multi.zrem(keyQueueDelayed, msg);
+            multi.exec(cb);
+        }
+    }
+
+    /**
+     * @param {function} callback
+     */
+    function run(callback) {
         lockManagerInstance.acquireLock(keyLockScheduler, 10000, (err) => {
             if (err) instance.error(err);
             else {
-                getNextMessages();
+                const now = Date.now();
+                const process = (messages, cb) => {
+                    if (messages.length) {
+                        async.each(
+                            messages,
+                            (msg, done) => {
+                                const multi = redisClientInstance.multi();
+                                deliverScheduledMessage(msg, multi);
+                                scheduleNextDelivery(msg, multi);
+                                multi.exec(done);
+                            },
+                            cb
+                        );
+                    } else cb();
+                };
+                const fetch = (cb) => {
+                    redisClientInstance.zrangebyscore(keyQueueDelayed, 0, now, (err, messages) => {
+                        if (err) cb(err);
+                        else cb(null, messages);
+                    });
+                };
+                async.waterfall([fetch, process], callback);
             }
         });
     }
 
+    function tick() {
+        run((err) => {
+            if (err) instance.error(err);
+            else ticker.nextTick();
+        });
+    }
+
     /**
-     *
+     * @param {Message} message
      * @return {number|boolean}
      */
     function getNextScheduledTimestamp(message) {
@@ -126,6 +164,8 @@ function Scheduler(instance, tickPeriod = 1000) {
             const nextRepeatTimestamp = getScheduleRepeatTimestamp();
             if (nextCRONTimestamp && nextRepeatTimestamp) {
                 if (!message[Message.PROPERTY_SCHEDULED_CRON_FIRED] || nextCRONTimestamp < nextRepeatTimestamp) {
+                    //@todo Modify message from outside this function
+                    //@todo Function getNextScheduledTimestamp() should just return values
                     message[Message.PROPERTY_SCHEDULED_REPEAT_COUNT] = 0;
                     message[Message.PROPERTY_SCHEDULED_CRON_FIRED] = true;
                     return nextCRONTimestamp;
@@ -139,7 +179,7 @@ function Scheduler(instance, tickPeriod = 1000) {
     }
 
     /**
-     *
+     * @param {Message} message
      * @return {boolean}
      */
     function isScheduled(message) {
@@ -151,7 +191,6 @@ function Scheduler(instance, tickPeriod = 1000) {
     }
 
     /**
-     *
      * @param {Message} message
      * @return {boolean}
      */
@@ -163,8 +202,10 @@ function Scheduler(instance, tickPeriod = 1000) {
     }
 
     return {
+        isScheduled,
+        isPeriodic,
+
         /**
-         *
          * @param message
          * @param multi
          * @param cb
@@ -205,9 +246,13 @@ function Scheduler(instance, tickPeriod = 1000) {
                 else ticker.shutdown(shutdownFn);
             } else shutdownFn();
         },
-        isScheduled,
-        isPeriodic,
-        tick
+
+        runTicker() {
+            if (!ticker) {
+                ticker = Ticker(tick, tickPeriod);
+                tick();
+            }
+        }
     };
 }
 

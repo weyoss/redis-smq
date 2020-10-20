@@ -131,7 +131,7 @@ class Consumer extends Instance {
             this.statsInstance.startAggregator();
         });
         this.on(events.SCHEDULER_UP, () => {
-            this.schedulerInstance.tick();
+            this.schedulerInstance.runTicker();
         });
         this.on(events.GOING_UP, () => {
             this.heartBeatInstance.start();
