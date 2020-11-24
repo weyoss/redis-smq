@@ -1,14 +1,9 @@
 import { Monitor } from 'redis-smq-monitor';
 
-export enum ConfigRedisDriver {
-    REDIS = "redis",
-    IOREDIS = "ioredis"
-}
-
 export interface ConfigInterface extends Monitor.ConfigInterface {
     namespace?: string,
     redis: {
-        driver: ConfigRedisDriver,
+        driver: Monitor.RedisDriver,
         options: {
             [key:string]: any
         }

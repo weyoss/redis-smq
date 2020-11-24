@@ -1,11 +1,11 @@
-import {ConfigInterface, ConfigRedisDriver} from "../../types/config";
-
+import {ConfigInterface} from "../../types/config";
+import { Monitor } from "redis-smq-monitor";
 
 export const config: ConfigInterface = {
     namespace: 'ns1',
     redis: {
         //
-        driver: ConfigRedisDriver.IOREDIS,
+        driver: Monitor.RedisDriver.IOREDIS,
         options: {
             host: '127.0.0.1',
             port: 6379,
