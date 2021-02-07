@@ -63,7 +63,6 @@ class Instance extends EventEmitter {
         this.on(events.SCHEDULER_UP, () => this.handleStartupEvent(events.SCHEDULER_UP));
         this.on(events.SCHEDULER_DOWN, () => this.handleShutdownEvent(events.SCHEDULER_DOWN));
         this.on(events.STATS_UP, () => this.handleStartupEvent(events.STATS_UP));
-        this.on(events.STATS_UP, () => this.handleStartupEvent(events.STATS_UP));
         this.on(events.STATS_DOWN, () => this.handleShutdownEvent(events.STATS_DOWN));
     }
 
