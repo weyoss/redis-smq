@@ -7,6 +7,7 @@ export interface ConsumerConstructorOptionsInterface {
     messageTTL?: number,
     messageRetryThreshold?: number,
     messageRetryDelay?: number,
+    queueName?: string,
 }
 
 export interface ConsumerConstructorInterface {

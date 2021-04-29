@@ -17,10 +17,10 @@ class Consumer extends Instance {
      */
     constructor(config = {}, options = {}) {
         super(config);
-        if (!this.constructor.hasOwnProperty('queueName')) {
+        if (!this.constructor.hasOwnProperty('queueName') && !options.queueName) {
             throw new Error('Undefined queue name!');
         }
-        this.setQueueName(this.constructor.queueName);
+        this.setQueueName(this.constructor.queueName || options.queueName);
         this.options = options;
         this.consumerMessageTTL = options.hasOwnProperty('messageTTL') ? Number(options.messageTTL) : 0;
         this.consumerMessageConsumeTimeout = options.hasOwnProperty('messageConsumeTimeout')

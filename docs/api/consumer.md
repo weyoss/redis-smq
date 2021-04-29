@@ -88,6 +88,7 @@ Consumer([config[, options]])
   
 - `options.messageRetryDelay` *(Integer): Optional.* Message retry delay in seconds. By default message retry delay is 
 not set.
+- `options.queueName` *(String): Optional.* If unknown in advance, provide a queue name to consume for this consumer
 
 ### Consumer.prototype.run()
 
