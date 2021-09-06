@@ -1,36 +1,7 @@
 {
   "name": "redis-smq",
-  "version": "2.0.12",
+  "version": "3.0.0",
   "description": "A simple high-performance Redis message queue for Node.js.",
-  "main": "index.js",
-  "types": "index.d.ts",
-  "dependencies": {
-    "bunyan": "1.8.10",
-    "cron-parser": "2.5.0",
-    "ioredis": "4.14.1",
-    "lodash": "4.17.20",
-    "neo-async": "2.6.2",
-    "redis": "2.8.0",
-    "redis-smq-monitor": "1.1.5",
-    "redlock": "4.1.0",
-    "uuid": "3.0.1"
-  },
-  "devDependencies": {
-    "bluebird": "3.7.1",
-    "eslint": "7.2.0",
-    "eslint-config-prettier": "6.12.0",
-    "eslint-plugin-prettier": "3.1.4",
-    "jest": "24.9.0",
-    "prettier": "2.1.2",
-    "ts-node": "8.8.2",
-    "typescript": "3.8.3"
-  },
-  "scripts": {
-    "test": "NODE_ENV=test jest --runInBand",
-    "pretest": "npm run lint",
-    "lint": "eslint --ignore-path .jshintignore src/*.js",
-    "lint:fix": "eslint --ignore-path .jshintignore src/*.js --fix"
-  },
   "author": "Weyoss <weyoss@protonmail.com>",
   "license": "MIT",
   "keywords": [
@@ -49,6 +20,69 @@
   "homepage": "https://github.com/weyoss/redis-smq",
   "bugs": {
     "url": "https://github.com/weyoss/redis-smq/issues"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "bunyan": "^1.8.15",
+    "cron-parser": "^3.5.0",
+    "ioredis": "^4.27.9",
+    "neo-async": "^2.6.2",
+    "redis": "^3.1.2",
+    "redis-smq-monitor": "^2.0.0",
+    "redlock": "^4.2.0",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "@types/bunyan": "^1.8.7",
+    "@types/ioredis": "^4.27.1",
+    "@types/jest": "^27.0.1",
+    "@types/lodash": "^4.14.172",
+    "@types/node": "^16.7.10",
+    "@types/redis": "^2.8.31",
+    "@types/redlock": "^4.0.2",
+    "@types/uuid": "^8.3.1",
+    "@typescript-eslint/eslint-plugin": "^4.30.0",
+    "@typescript-eslint/parser": "^4.30.0",
+    "bluebird": "^3.7.2",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "husky": "^7.0.2",
+    "jest": "^27.1.0",
+    "lint-staged": "^11.1.2",
+    "prettier": "^2.3.2",
+    "ts-jest": "^27.0.5",
+    "ts-node": "^10.2.1",
+    "type-coverage": "^2.18.2",
+    "typescript": "^4.4.2"
+  },
+  "scripts": {
+    "build:clean": "rimraf dist",
+    "prebuild": "npm run build:clean",
+    "build": "tsc",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "lint": "eslint \"{src,tests,types}/**/*.ts\" --fix",
+    "pretest": "npm run build",
+    "test": "NODE_ENV=test jest --runInBand",
+    "type-coverage": "type-coverage --strict --at-least 100 --ignore-files \"dist/**/*\""
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "pre-push": "npm run type-coverage && npm run build"
+    }
+  },
+  "lint-staged": {
+    "*.(ts)": [
+      "prettier --write",
+      "eslint --fix",
+      "git add"
+    ],
+    "*.(json|js)": [
+      "prettier --write",
+      "git add"
+    ]
   },
   "engineStrict": true,
   "engines": {

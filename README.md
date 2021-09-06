@@ -47,8 +47,14 @@ For more details about RedisSMQ design see [https://medium.com/@weyoss/building-
 
 ## What's new?
 
-Starting from v2.0.0 TypeScript is now supported. Types definitions are include out of box. Also you can find an example 
-about how to use RedisSMQ in a TypeScript project in the [example folder](https://github.com/weyoss/redis-smq/tree/master/example/typescript).
+**2021.09.06**
+
+- A major release v3.0.0 is out. 
+- Upgrading your installation to the newest version should be straightforward as most APIs are compatible, [with some exceptions](docs/migrating-from-v2-to-v3.md).
+- The project's code base has been migrated to TypeScript to make use of strong typings. 
+- JavaScript's users are always first class citizens and backward compatibility with old NodeJS versions has been kept, down to v7.0.0
+
+See [CHANGELOG](CHANGELOG.md) for more details.
 
 ## Installation
 
@@ -77,21 +83,13 @@ const path = require('path');
 module.exports = {
     namespace: 'my_project_name',
     redis: {
-        driver: 'redis',
+        client: 'redis',
         options: {
             host: '127.0.0.1',
             port: 6379,
             connect_timeout: 3600000,
         },
     },
-    /*
-    // for old syntax bellow, the redis driver is used by default
-    redis: {
-        host: '127.0.0.1',
-        port: 6379,
-        connect_timeout: 3600000,
-    },
-    */
     log: {
         enabled: 0,
         options: {
@@ -118,14 +116,12 @@ module.exports = {
 - `namespace` *(String): Optional.* The namespace for message queues. It can be composed only of letters (a-z), 
   numbers (0-9) and (-_) characters. Namespace can be for example configured per project. 
 
-- `redis` *(Object): Optional.* Redis client parameters. If used without `redis.driver` and `redis.options`, for 
-backward compatibility, this parameter would be considered as holding `redis` driver options and therefor the `redis`
-driver would be used by default.
+- `redis` *(Object): Optional.* Redis client parameters. If not provided the `redis` client would be used by default.
 
-- `redis.driver` *(String): Optional.* Redis driver name. Can be either `redis` or `ioredis`.
+- `redis.client` *(String): Optional.* Redis client name. Can be either `redis` or `ioredis`.
 
-- `redis.options` *(Object): Optional.* Redis driver options.
-   - See https://github.com/NodeRedis/node_redis#options-object-properties for all valid parameters for `redis` driver.
+- `redis.options` *(Object): Optional.* Redis client options.
+   - See https://github.com/NodeRedis/node_redis#options-object-properties for all valid parameters for `redis` client.
    - See https://github.com/luin/ioredis/blob/master/API.md#new_Redis for all valid `ioredis` parameters.
 
 - `log` *(Object): Optional.* Logging parameters.
@@ -167,9 +163,6 @@ message
     .setScheduledCron('* 30 * * * *');
 
 let messageTTL = message.getTTL();
-
-// same as 
-messageTTL = message.getProperty(Message.PROPERTY_TTL);
 ```
 
 See [Message API Reference](docs/api/message.md) for more details.
@@ -218,9 +211,7 @@ A consumer class may look like:
 
 'use strict';
 
-const redisSMQ = require('redis-smq');
-
-const Consumer = redisSMQ.Consumer;
+const { Consumer } = require('redis-smq');
 
 class TestQueueConsumer extends Consumer {
     /**
@@ -243,9 +234,7 @@ class TestQueueConsumer extends Consumer {
     }
 }
 
-TestQueueConsumer.queueName = 'test_queue';
-
-const consumer = new TestQueueConsumer();
+const consumer = new TestQueueConsumer('test_queue');
 consumer.run();
 ```
 
