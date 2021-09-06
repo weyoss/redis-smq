@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2.0.12 (2021-02-07)
+
+* Fixed a bug in redis-client.js.
+
 ## 2.0.11 (2020-10-20)
 
 * Improved overall performance by using asynchronous loops and avoiding recursion.

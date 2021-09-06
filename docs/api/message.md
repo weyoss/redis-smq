@@ -1,183 +1,19 @@
 # Message Class API
 
-Message properties like `PROPERTY_TTL`, `PROPERTY_RETRY_THRESHOLD`, `PROPERTY_RETRY_DELAY` and 
-`PROPERTY_CONSUME_TIMEOUT` can also be defined globally per consumer for all queue messages.
+Message properties like:
+
+- message TTL
+- message retry threshold
+- message retry delay
+- message consume timeout
+
+can also be defined globally per consumer for all queue messages.
 
 When defined, message instance properties always takes precedence over consumer properties.
 
-## Properties
+## Public properties
 
-### Message.PROPERTY_TTL;
-
-Message instance TTL property.
-
-```javascript
-const { Message } = require('redis-smq');
-
-const message = new Message();
-message.getTTL(); // the same as
-message.getProperty(Message.PROPERTY_TTL);
-```
-
-### Message.PROPERTY_RETRY_THRESHOLD;
-
-Message instance retry threshold property.
-
-```javascript
-const { Message } = require('redis-smq');
-
-const message = new Message();
-message.getRetryThreshold(); // the same as
-message.getProperty(Message.PROPERTY_RETRY_TRESHOLD);
-```
-
-### Message.PROPERTY_RETRY_DELAY;
-
-Message instance retry delay property.
-
-```javascript
-const { Message } = require('redis-smq');
-
-const message = new Message();
-message.getRetryDelay(); // the same as
-message.getProperty(Message.PROPERTY_RETRY_DELAY);
-```
-
-### Message.PROPERTY_CONSUME_TIMEOUT;
-
-Message instance consumption timeout property.
-
-```javascript
-const { Message } = require('redis-smq');
-
-const message = new Message();
-message.getConsumeTimeout(); // the same as
-message.getProperty(Message.PROPERTY_CONSUME_TIMEOUT);
-```
-
-### Message.PROPERTY_BODY;
-
-Message instance body property.
-
-
-```javascript
-const { Message } = require('redis-smq');
-
-const message = new Message();
-message.getBody(); // the same as
-message.getProperty(Message.PROPERTY_BODY);
-```
-
-### Message.PROPERTY_UUID;
-
-Message instance ID property.
-
-
-```javascript
-const { Message } = require('redis-smq');
-
-const message = new Message();
-message.getId(); // the same as
-message.getProperty(Message.PROPERTY_UUID);
-```
-
-### Message.PROPERTY_ATTEMPTS;
-
-Message instance attempts property.
-
-```javascript
-const { Message } = require('redis-smq');
-
-const message = new Message();
-message.getAttempts(); // the same as
-message.getProperty(Message.PROPERTY_ATTEMPTS);
-```
-
-### Message.PROPERTY_eED_AT;
-
-Message instance creation timestamp property.
-
-```javascript
-const { Message } = require('redis-smq');
-
-const message = new Message();
-message.getCreatedAt(); // the same as
-message.getProperty(Message.PROPERTY_CREATED_AT);
-```
-
-### Message.PROPERTY_SCHEDULED_CRON;
-
-Message instance scheduled CRON property.
-
-```javascript
-const { Message } = require('redis-smq');
-
-const message = new Message();
-message.getMessageScheduledCRON(); // the same as
-message.getProperty(Message.PROPERTY_SCHEDULED_CRON);
-```
-
-### Message.PROPERTY_SCHEDULED_DELAY;
-
-Message instance scheduled delay property.
-
-```javascript
-const { Message } = require('redis-smq');
-
-const message = new Message();
-message.getMessageScheduledDelay(); // the same as
-message.getProperty(Message.PROPERTY_SCHEDULED_DELAY);
-```
-
-### Message.PROPERTY_SCHEDULED_PERIOD;
-
-Message instance scheduled period property.
-
-```javascript
-const { Message } = require('redis-smq');
-
-const message = new Message();
-message.getMessageScheduledPeriod(); // the same as
-message.getProperty(Message.PROPERTY_SCHEDULED_PERIOD);
-```
-
-### Message.PROPERTY_SCHEDULED_REPEAT;
-
-Message instance scheduled repeat property.
-
-
-```javascript
-const { Message } = require('redis-smq');
-
-const message = new Message();
-message.getMessageScheduledRepeat(); // the same as
-message.getProperty(Message.PROPERTY_SCHEDULED_REPEAT);
-```
-
-### Message.PROPERTY_SCHEDULED_REPEAT_COUNT;
-
-Message instance scheduled repeat count property.
-
-
-```javascript
-const { Message } = require('redis-smq');
-
-const message = new Message();
-message.getMessageScheduledRepeatCount(); // the same as
-message.getProperty(Message.PROPERTY_SCHEDULED_REPEAT_COUNT);
-```
-
-### Message.PROPERTY_DELAYED;
-
-Message instance delayed property. `true` when the message has been delayed, otherwise `false`.
-
-```javascript
-const { Message } = require('redis-smq');
-
-const message = new Message();
-message.isDelayed(); // the same as
-message.getProperty(Message.PROPERTY_DELAYED);
-```
+No public property exists.
 
 ## Methods
 
@@ -436,20 +272,6 @@ const message = new Message();
 message.isDelayed(); // false
 ```
 
-### Message.prototype.getProperty()
-
-Get a message property by specifying its name. This method is an alternative to other existing getters methods 
-(like `getTTL()`, `getCreatedAt()`, etc.).
-
-```javascript
-const { Message } = require('redis-smq');
-
-const message = new Message();
-message.setScheduledCron('*/10 * * * * *');  // Schedule message for delivery each 10 seconds
-message.getProperty(Message.PROPERTY_SCHEDULED_CRON); // '*/10 * * * * *'
-message.getProperty(Message.PROPERTY_CREATED_AT); // 1530613595087
-```
-
 ### Message.prototype.toString()
 
 `toString()` method is called when the message object is to be represented as a text value or when the message
@@ -462,7 +284,7 @@ const { Message } = require('redis-smq');
 
 const message = new Message();
 message.setScheduledCron('*/10 * * * * *');  // Schedule message for delivery each 10 seconds
-message.getProperty(Message.PROPERTY_SCHEDULED_CRON); // '*/10 * * * * *'
+message.getMessageScheduledCRON(); // '*/10 * * * * *'
 message.toString(); // 
 ```
 
@@ -476,8 +298,8 @@ Message.createFromMessage(message, reset = false) => Message
 
 * _message_: required. Can be either a message instance or a string representing the serialized message.
 
-* _reset_: optional. If true, the new message will have all properties from the old one except Message.PROPERTY_UUID, 
-Message.PROPERTY_ATTEMPTS, Message.PROPERTY_CREATED_AT.
+* _reset_: optional. If true, the new message will have all properties from the old one, except `message id`, 
+`message total attempts`, and `message creation time`.
 
 
 ```javascript
@@ -498,3 +320,19 @@ console.log(anotherMessage.getId() === message.getId()); // false
 console.log(anotherMessage.getMessageScheduledRepeat() === message.getMessageScheduledRepeat()); // true
 console.log(anotherMessage.getMessageScheduledRepeat() === message.getMessageScheduledRepeat()); // true
 ```
+
+## Other public methods
+
+These methods are used internally and should not be used in your application:
+
+- Message.prototype.getMessageScheduledDelay()
+- Message.prototype.getMessageScheduledRepeatCount()
+- Message.prototype.getAttempts()
+- Message.prototype.incrAttempts()
+- Message.prototype.resetMessageScheduledRepeatCount()
+- Message.prototype.setMessageScheduledRepeatCount()
+- Message.prototype.setMessageScheduledCronFired()
+- Message.prototype.incrMessageScheduledRepeatCount()
+- Message.prototype.setAttempts()
+- Message.prototype.setMessageDelayed()
+- Message.prototype.hasScheduledCronFired()

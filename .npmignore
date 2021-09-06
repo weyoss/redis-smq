@@ -1,0 +1,15 @@
+dist/tests
+dist/tsconfig.tsbuildinfo
+docs/coverage
+examples
+src/**
+tests/**
+types/**
+.eslintrc.js
+.gitignore
+.npmignore
+.prettierrc
+index.ts
+tsconfig.json
+jest.config.js
+.idea
