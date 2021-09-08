@@ -1,9 +1,6 @@
 import { Producer } from '../producer';
-import {
-  IProducerStats,
-  IStatsProvider,
-  TCompatibleRedisClient,
-} from '../../types';
+import { IProducerStats, IStatsProvider } from '../../types';
+import { RedisClient } from '../redis-client';
 
 export class ProducerStatsProvider implements IStatsProvider {
   protected inputSlots: number[] = new Array(1000).fill(0);
@@ -28,7 +25,7 @@ export class ProducerStatsProvider implements IStatsProvider {
     };
   }
 
-  publish(redisClient: TCompatibleRedisClient, stats: IProducerStats) {
+  publish(redisClient: RedisClient, stats: IProducerStats) {
     const now = Date.now();
     const { inputRate } = stats;
     redisClient.hset(

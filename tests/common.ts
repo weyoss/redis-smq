@@ -3,11 +3,7 @@ import { events } from '../src/events';
 import { RedisClient } from '../src/redis-client';
 import { Producer, Consumer, Message } from '../index';
 import { config } from './config';
-import {
-  TCallback,
-  TCompatibleRedisClient,
-  IConsumerConstructorOptions,
-} from '../types';
+import { TCallback, IConsumerConstructorOptions } from '../types';
 
 const consumersList: Consumer[] = [];
 const producersList: Producer[] = [];
@@ -18,9 +14,9 @@ export async function shutdown() {
       if (i.isRunning()) {
         // eslint-disable-next-line no-await-in-loop
         await new Promise((resolve, reject) => {
+          i.once(events.DOWN, resolve);
+          i.once(events.ERROR, reject);
           i.shutdown();
-          i.on(events.DOWN, resolve);
-          i.on(events.ERROR, reject);
         });
       }
     }
@@ -72,8 +68,8 @@ export function validateTime(
 }
 
 export async function getRedisInstance() {
-  const c = await new Promise<TCompatibleRedisClient>((resolve) => {
-    RedisClient.getNewInstance(config, (i: TCompatibleRedisClient) => {
+  const c = await new Promise<RedisClient>((resolve) => {
+    RedisClient.getInstance(config, (i) => {
       resolve(i);
     });
   });

@@ -1,75 +1,60 @@
-import { IConfig, TCallback, TCompatibleRedisClient } from '../types';
+import { IConfig, TCallback } from '../types';
 import { RedisClient } from './redis-client';
 import * as Redlock from 'redlock';
 
 export class LockManager {
-  protected redisClient: TCompatibleRedisClient | null = null;
+  protected redisClient: RedisClient | null = null;
   protected redlock: Redlock | null = null;
   protected acquiredLock: Redlock.Lock | null = null;
   protected timer: NodeJS.Timeout | null = null;
 
-  constructor(redisClient: TCompatibleRedisClient) {
+  constructor(redisClient: RedisClient) {
     this.redisClient = redisClient;
     this.redlock = new Redlock([redisClient]);
   }
 
-  protected setAcquiredLock(
-    lock: Redlock.Lock,
-    extended: boolean,
-    cb: TCallback<boolean>,
-  ): void {
-    if (this.redlock) {
-      this.acquiredLock = lock;
-      cb(null, extended);
-    } else cb(new Error('Instance no longer usable after calling quit()'));
+  protected getRedlock() {
+    if (!this.redlock) {
+      throw new Error(
+        'Instance is no longer usable after calling quit(). Create a new instance.',
+      );
+    }
+    return this.redlock;
   }
 
-  acquireLock(lockKey: string, ttl: number, cb: TCallback<boolean>): void {
-    const retry = (err: Error) => {
-      if (err && err.name !== 'LockError') cb(err);
-      else {
+  protected acquireLockRetryOnFail(
+    err: Error,
+    retryOnFail: boolean,
+    lockKey: string,
+    ttl: number,
+    cb: TCallback<boolean>,
+  ) {
+    if (err.name === 'LockError') {
+      if (retryOnFail) {
         this.acquiredLock = null;
         this.timer = setTimeout(() => {
-          this.acquireLock(lockKey, ttl, cb);
+          this.acquireLock(lockKey, ttl, true, cb);
         }, 1000);
+      } else cb(null, false);
+    } else cb(err);
+  }
+
+  acquireLock(
+    lockKey: string,
+    ttl: number,
+    retryOnFail: boolean,
+    cb: TCallback<boolean>,
+  ): void {
+    const handleRedlockReply = (err?: Error | null, lock?: Redlock.Lock) => {
+      if (err) this.acquireLockRetryOnFail(err, retryOnFail, lockKey, ttl, cb);
+      else if (!lock) cb(new Error('Expected a Redlock instance'));
+      else {
+        this.acquiredLock = lock;
+        cb(null, true);
       }
     };
-    if (this.acquiredLock) {
-      this.acquiredLock.extend(
-        ttl,
-        (err?: Error | null, lock?: Redlock.Lock) => {
-          if (err) retry(err);
-          else {
-            if (!lock) {
-              throw new Error();
-            }
-            this.setAcquiredLock(lock, true, cb);
-          }
-        },
-      );
-    } else {
-      if (!this.redlock)
-        cb(
-          new Error(
-            'Instance is no longer usable after calling quit(). Create a new instance.',
-          ),
-        );
-      else {
-        this.redlock.lock(
-          lockKey,
-          ttl,
-          (err?: Error | null, lock?: Redlock.Lock) => {
-            if (err) retry(err);
-            else {
-              if (!lock) {
-                throw new Error();
-              }
-              this.setAcquiredLock(lock, false, cb);
-            }
-          },
-        );
-      }
-    }
+    if (this.acquiredLock) this.acquiredLock.extend(ttl, handleRedlockReply);
+    else this.getRedlock().lock(lockKey, ttl, handleRedlockReply);
   }
 
   releaseLock(cb: TCallback<void>): void {
@@ -109,12 +94,9 @@ export class LockManager {
     config: IConfig,
     cb: (lockManager: LockManager) => void,
   ): void {
-    RedisClient.getNewInstance(
-      config,
-      (redisClient: TCompatibleRedisClient) => {
-        const instance = new LockManager(redisClient);
-        cb(instance);
-      },
-    );
+    RedisClient.getInstance(config, (redisClient) => {
+      const instance = new LockManager(redisClient);
+      cb(instance);
+    });
   }
 }

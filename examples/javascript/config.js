@@ -4,14 +4,14 @@ const path = require('path');
 module.exports = {
   namespace: 'ns1',
   redis: {
-    client: 'redis',
+    client: 'ioredis',
     options: {
       host: 'localhost',
       port: 6379,
     },
   },
   log: {
-    enabled: true,
+    enabled: false,
     options: {
       name: 'qqqq',
       level: 'trace',

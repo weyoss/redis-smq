@@ -49,7 +49,7 @@ export class PowerManager {
 
   commit(): void {
     if (this.pendingState === null) {
-      throw new Error();
+      throw new Error(`Expected a pending state`);
     }
     this.state = this.pendingState;
     this.pendingState = null;

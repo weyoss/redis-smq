@@ -45,14 +45,28 @@ const testQueueConsumer = new TestQueueConsumer(queueName , config, options)
 
 Run the consumer and start consuming messages. No connection to the Redis server is opened until this method is called.
 
-```javascript
-const consumer = new TestQueueConsumer('test_queue');
+**Syntax**
 
-consumer.once('up', () => {
-  console.log(`Consumer ID ${consumer.getId()} is running.`);
+```javascript
+testQueueConsumer.run(cb);
+```
+
+**Parameters**
+- `cb` *(function): Optional.* A callback function which get called once the consumer instance is up and running.
+
+```javascript
+const testQueueConsumer = new TestQueueConsumer('test_queue')
+testQueueConsumer.run();
+
+// or 
+testQueueConsumer.run(() => {
+    console.log('Consumer is now running...')
 })
 
-consumer.run();
+//
+consumer.once('up', () => {
+    console.log(`Consumer ID ${consumer.getId()} is running.`);
+})
 ```
 
 ### Consumer.prototype.consume()
@@ -100,6 +114,28 @@ class TestQueueConsumer extends Consumer {
 
 Disconnect from Redis server and stop consuming messages. This method is used to gracefully shutdown the consumer and
 go offline.
+
+**Syntax**
+
+```javascript
+testQueueConsumer.shutdown(cb);
+```
+
+**Parameters**
+- `cb` *(function): Optional.* A callback function which get called once the consumer instance is totally down .
+
+```javascript
+const testQueueConsumer = new TestQueueConsumer('test_queue')
+
+testQueueConsumer.run(() => {
+    console.log('Consumer is now running...');
+    testQueueConsumer.shutdown();
+})
+
+consumer.once('down', () => {
+    console.log(`Consumer ID ${consumer.getId()} has gone down.`);
+})
+```
 
 ### Consumer.prototype.isRunning()
 

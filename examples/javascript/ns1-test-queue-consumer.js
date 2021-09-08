@@ -44,19 +44,20 @@ consumer.on(events.GOING_DOWN, () => {
 });
 
 console.log('start');
-consumer.run();
-
-setTimeout(() => {
-  console.log('stop');
-  consumer.shutdown();
-}, 5000);
-
-setTimeout(() => {
-  console.log('start');
-  consumer.run();
-}, 10000);
-
-setTimeout(() => {
-  console.log('stop');
-  consumer.shutdown();
-}, 15000);
+consumer.run(() => {
+  setTimeout(() => {
+    consumer.once(events.DOWN, () => {
+      consumer.once(events.UP, () => {
+        setTimeout(() => {
+          consumer.shutdown(() => {
+            console.log('Done.');
+          });
+        }, 15000);
+      });
+      setTimeout(() => {
+        consumer.run();
+      }, 10000);
+    });
+    consumer.shutdown();
+  }, 5000);
+});

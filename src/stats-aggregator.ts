@@ -4,7 +4,6 @@ import {
   TAggregatedStatsQueue,
   TAggregatedStatsQueueConsumer,
   TCallback,
-  TCompatibleRedisClient,
 } from '../types';
 import * as async from 'neo-async';
 import { MQRedisKeys } from './redis-keys/mq-redis-keys';
@@ -22,7 +21,7 @@ function StatsAggregator(config: IConfig) {
   }
   const { keyIndexRate, keyLockStatsAggregator } = MQRedisKeys.getGlobalKeys();
   const noop = () => void 0;
-  let redisClientInstance: TCompatibleRedisClient | null = null;
+  let redisClientInstance: RedisClient | null = null;
   let lockManagerInstance: LockManager | null = null;
   let data: TAggregatedStats = {
     rates: {
@@ -101,14 +100,14 @@ function StatsAggregator(config: IConfig) {
 
   function getRedisClient() {
     if (!redisClientInstance) {
-      throw new Error();
+      throw new Error(`Expected an instance of RedisClient`);
     }
     return redisClientInstance;
   }
 
   function getLockManager() {
     if (!lockManagerInstance) {
-      throw new Error();
+      throw new Error(`Expected an instance of LockManager`);
     }
     return lockManagerInstance;
   }
@@ -194,7 +193,7 @@ function StatsAggregator(config: IConfig) {
             },
             () => {
               if (expiredKeys.length) {
-                getRedisClient().hdel(keyIndexRate, ...expiredKeys, noop);
+                getRedisClient().hdel(keyIndexRate, expiredKeys, noop);
               }
               cb();
             },
@@ -234,21 +233,15 @@ function StatsAggregator(config: IConfig) {
           done();
         },
         () => {
-          // taking into account different replies format:
-          // - node_redis returns res as [2,3,4,5]
-          // - ioredis returns res as [[null, 2], [null, 3], [null, 4], [null, 5]]
-          multi.exec((err, res: (number | (null | number)[])[]) => {
-            if (err) cb(err);
-            else {
-              const lengths = res.map((i) => {
-                if (Array.isArray(i)) {
-                  return i.pop() as number;
-                }
-                return i;
-              });
-              handleResult(lengths);
-            }
-          });
+          getRedisClient().execMulti<number>(
+            multi,
+            (err?, res?: number[] | null) => {
+              if (err) cb(err);
+              else {
+                handleResult(res ?? []);
+              }
+            },
+          );
         },
       );
     } else cb();
@@ -341,7 +334,7 @@ function StatsAggregator(config: IConfig) {
   }
 
   function run() {
-    getLockManager().acquireLock(keyLockStatsAggregator, 10000, (err) => {
+    getLockManager().acquireLock(keyLockStatsAggregator, 10000, true, (err) => {
       if (err) throw err;
       async.waterfall(
         [
@@ -363,7 +356,7 @@ function StatsAggregator(config: IConfig) {
     });
   }
 
-  RedisClient.getNewInstance(config, (c) => {
+  RedisClient.getInstance(config, (c) => {
     redisClientInstance = c;
     LockManager.getInstance(config, (l) => {
       lockManagerInstance = l;

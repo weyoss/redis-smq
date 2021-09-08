@@ -1,11 +1,14 @@
-import { RedisOptions } from 'ioredis';
-import { ClientOpts, RedisClient } from 'redis';
+import IORedis, { Redis, RedisOptions } from 'ioredis';
+import { ClientOpts, Multi, RedisClient as NodeRedis } from 'redis';
 import * as Logger from 'bunyan';
 import { IMonitorConfig } from 'redis-smq-monitor/types';
+import { RedisClient } from '../src/redis-client';
 
-export type TCallback<T> = (err?: Error | null, reply?: T) => void;
+export type TCallback<T> = (err?: Error | null, reply?: T | null) => void;
 
-export type TFunction<T = void> = (...args: unknown[]) => T;
+export type TFunction<TReturn = void, TArgs = any> = (
+  ...args: TArgs[]
+) => TReturn;
 
 export interface IConsumerStats {
   acknowledgedRate: number;
@@ -20,7 +23,7 @@ export interface IProducerStats {
 
 export interface IStatsProvider<T = unknown> {
   tick(): T;
-  publish(redisClient: TCompatibleRedisClient, stats: T): void;
+  publish(redisClient: RedisClient, stats: T): void;
 }
 
 export enum RedisClientName {
@@ -28,7 +31,9 @@ export enum RedisClientName {
   IOREDIS = 'ioredis',
 }
 
-export type TCompatibleRedisClient = RedisClient; // IORedis | RedisClient;
+export type TCompatibleRedisClient = NodeRedis | Redis;
+
+export type TRedisClientMulti = Multi | IORedis.Pipeline;
 
 export interface IRedisOptions {
   client: RedisClientName;

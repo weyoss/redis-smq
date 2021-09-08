@@ -1,6 +1,6 @@
 import * as os from 'os';
 import * as async from 'neo-async';
-import { TCallback, TCompatibleRedisClient } from '../types';
+import { TCallback } from '../types';
 import { PowerManager } from './power-manager';
 import { Instance } from './instance';
 import { Ticker } from './ticker';
@@ -67,7 +67,7 @@ function validateOnlineTimestamp(timestamp: number) {
 function handleConsumerData(hashKey: string, resources: Record<string, any>) {
   const extractedData = ConsumerRedisKeys.extractData(hashKey);
   if (!extractedData || !extractedData.consumerId) {
-    throw new Error();
+    throw new Error(`Invalid extracted consumer data`);
   }
   const { ns, queueName, consumerId } = extractedData;
   return {
@@ -89,13 +89,13 @@ function handleConsumerData(hashKey: string, resources: Record<string, any>) {
 }
 
 function getAllHeartBeats(
-  client: TCompatibleRedisClient,
+  client: RedisClient,
   cb: TCallback<Record<string, string>>,
 ) {
   const { keyIndexHeartBeat } = ConsumerRedisKeys.getGlobalKeys();
   client.hgetall(
     keyIndexHeartBeat,
-    (err?: Error | null, result?: Record<string, string>) => {
+    (err?: Error | null, result?: Record<string, string> | null) => {
       if (err) cb(err);
       else cb(null, result);
     },
@@ -103,7 +103,7 @@ function getAllHeartBeats(
 }
 
 function getConsumerHeartBeat(
-  client: TCompatibleRedisClient,
+  client: RedisClient,
   id: string,
   queueName: string,
   cb: TCallback<string>,
@@ -112,10 +112,14 @@ function getConsumerHeartBeat(
     id,
     queueName,
   ).getKeys();
-  client.hget(keyIndexHeartBeat, keyConsumerHeartBeat, (err, res) => {
-    if (err) cb(err);
-    else cb(null, res);
-  });
+  client.hget(
+    keyIndexHeartBeat,
+    keyConsumerHeartBeat,
+    (err?: Error | null, res?: string | null) => {
+      if (err) cb(err);
+      else cb(null, res);
+    },
+  );
 }
 
 export function HeartBeat(instance: Instance) {
@@ -123,60 +127,62 @@ export function HeartBeat(instance: Instance) {
   const config = instance.getConfig();
   const instanceRedisKeys = instance.getInstanceRedisKeys();
   const { keyIndexHeartBeat, keyConsumerHeartBeat } = instanceRedisKeys;
-  let redisClientInstance: TCompatibleRedisClient | null = null;
+  let redisClientInstance: RedisClient | null = null;
   let monitorThread: ChildProcess | null = null;
   let ticker: Ticker | null = null;
 
   function getRedisClientInstance() {
     if (!redisClientInstance) {
-      throw new Error();
+      throw new Error(`Expected an instance of RedisClient`);
     }
     return redisClientInstance;
   }
 
   function getTicker() {
     if (!ticker) {
-      throw new Error();
+      throw new Error(`Expected an instance of Ticker`);
     }
     return ticker;
   }
 
   function nextTick() {
     if (!ticker) {
-      ticker = new Ticker(beat, 1000);
+      ticker = new Ticker(onTick, 1000);
     }
     ticker.nextTick();
   }
 
-  function beat() {
-    if (!redisClientInstance) {
-      throw new Error();
+  function onTick() {
+    if (powerManager.isRunning()) {
+      const usage = {
+        ipAddress: IPAddresses,
+        hostname: os.hostname(),
+        pid: process.pid,
+        ram: {
+          usage: process.memoryUsage(),
+          free: os.freemem(),
+          total: os.totalmem(),
+        },
+        cpu: cpuUsage(),
+      };
+      const timestamp = Date.now();
+      const payload = JSON.stringify({
+        timestamp,
+        usage,
+      });
+      getRedisClientInstance().hset(
+        keyIndexHeartBeat,
+        keyConsumerHeartBeat,
+        payload,
+        (err?: Error | null) => {
+          if (err) instance.error(err);
+          else nextTick();
+        },
+      );
     }
-    const usage = {
-      ipAddress: IPAddresses,
-      hostname: os.hostname(),
-      pid: process.pid,
-      ram: {
-        usage: process.memoryUsage(),
-        free: os.freemem(),
-        total: os.totalmem(),
-      },
-      cpu: cpuUsage(),
-    };
-    const timestamp = Date.now();
-    const payload = JSON.stringify({
-      timestamp,
-      usage,
-    });
-    redisClientInstance.hset(
-      keyIndexHeartBeat,
-      keyConsumerHeartBeat,
-      payload,
-      (err) => {
-        if (err) instance.error(err);
-        else nextTick();
-      },
-    );
+    if (powerManager.isGoingDown()) {
+      instance.emit(events.HEARTBEAT_READY_TO_SHUTDOWN);
+    }
   }
 
   function startMonitor() {
@@ -203,7 +209,7 @@ export function HeartBeat(instance: Instance) {
   return {
     start() {
       powerManager.goingUp();
-      RedisClient.getNewInstance(config, (c: TCompatibleRedisClient) => {
+      RedisClient.getInstance(config, (c) => {
         redisClientInstance = c;
         startMonitor();
         nextTick();
@@ -214,28 +220,30 @@ export function HeartBeat(instance: Instance) {
 
     stop() {
       powerManager.goingDown();
-      stopMonitor();
-      getTicker().shutdown(() => {
-        getRedisClientInstance().hdel(
-          keyIndexHeartBeat,
-          keyConsumerHeartBeat,
-          (err) => {
-            if (err) instance.error(err);
-            else {
-              getRedisClientInstance().end(true);
-              redisClientInstance = null;
-              powerManager.commit();
-              instance.emit(events.HEARTBEAT_DOWN);
-            }
-          },
-        );
+      instance.once(events.HEARTBEAT_READY_TO_SHUTDOWN, () => {
+        stopMonitor();
+        getTicker().shutdown(() => {
+          getRedisClientInstance().hdel(
+            keyIndexHeartBeat,
+            keyConsumerHeartBeat,
+            (err?: Error | null) => {
+              if (err) instance.error(err);
+              else {
+                getRedisClientInstance().end(true);
+                redisClientInstance = null;
+                powerManager.commit();
+                instance.emit(events.HEARTBEAT_DOWN);
+              }
+            },
+          );
+        });
       });
     },
   };
 }
 
 HeartBeat.getConsumersByOnlineStatus = (
-  client: TCompatibleRedisClient,
+  client: RedisClient,
   cb: TCallback<{ onlineConsumers: string[]; offlineConsumers: string[] }>,
 ) => {
   getAllHeartBeats(client, (err, data) => {
@@ -275,7 +283,7 @@ HeartBeat.isOnline = function isOnline(
     queueName,
     id,
   }: {
-    client: TCompatibleRedisClient;
+    client: RedisClient;
     queueName: string;
     id: string;
   },
@@ -285,7 +293,7 @@ HeartBeat.isOnline = function isOnline(
     client,
     id,
     queueName,
-    (err?: Error | null, res?: string) => {
+    (err?: Error | null, res?: string | null) => {
       if (err) cb(err);
       else {
         let online = false;
@@ -300,18 +308,18 @@ HeartBeat.isOnline = function isOnline(
 };
 
 HeartBeat.handleOfflineConsumers = (
-  client: TCompatibleRedisClient,
+  client: RedisClient,
   offlineConsumers: string[],
   cb: TCallback<number>,
 ) => {
   if (offlineConsumers.length) {
     const { keyIndexHeartBeat } = ConsumerRedisKeys.getGlobalKeys();
-    client.hdel(keyIndexHeartBeat, ...offlineConsumers, cb);
+    client.hdel(keyIndexHeartBeat, offlineConsumers, cb);
   } else cb();
 };
 
 HeartBeat.getOnlineConsumers = (
-  client: TCompatibleRedisClient,
+  client: RedisClient,
   cb: TCallback<Record<string, any>>,
 ) => {
   getAllHeartBeats(client, (err, data) => {

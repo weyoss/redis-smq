@@ -1,5 +1,5 @@
 import * as async from 'neo-async';
-import { IConfig, TCallback, TCompatibleRedisClient } from '../types';
+import { IConfig, TCallback } from '../types';
 import { LockManager } from './lock-manager';
 import { Ticker } from './ticker';
 import { HeartBeat } from './heartbeat';
@@ -13,19 +13,19 @@ function heartbeatMonitor(config: IConfig) {
   const { keyLockHeartBeatMonitor } = ConsumerRedisKeys.getGlobalKeys();
   const ticker = new Ticker(tick, 1000);
 
-  let redisClientInstance: TCompatibleRedisClient | null = null;
+  let redisClientInstance: RedisClient | null = null;
   let lockManagerInstance: LockManager | null = null;
 
   function getRedisClient() {
     if (!redisClientInstance) {
-      throw new Error();
+      throw new Error(`Expected an instance of RedisClient`);
     }
     return redisClientInstance;
   }
 
   function getLockManager() {
     if (!lockManagerInstance) {
-      throw new Error();
+      throw new Error(`Expected an instance of LockManager`);
     }
     return lockManagerInstance;
   }
@@ -45,7 +45,7 @@ function heartbeatMonitor(config: IConfig) {
   }
 
   function tick() {
-    getLockManager().acquireLock(keyLockHeartBeatMonitor, 10000, () => {
+    getLockManager().acquireLock(keyLockHeartBeatMonitor, 10000, true, () => {
       async.waterfall(
         [getOfflineConsumers, handleConsumers],
         (err?: Error | null) => {
@@ -56,7 +56,7 @@ function heartbeatMonitor(config: IConfig) {
     });
   }
 
-  RedisClient.getNewInstance(config, (c: TCompatibleRedisClient) => {
+  RedisClient.getInstance(config, (c) => {
     redisClientInstance = c;
     LockManager.getInstance(config, (l) => {
       lockManagerInstance = l;
