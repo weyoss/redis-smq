@@ -1,4 +1,4 @@
-import { IConfig, RedisClientName } from '../../types'; // from 'redis-smq/types';
+import { IConfig, RedisClientName } from '../../types'; // from 'redis-smq/dist/types';
 
 export const config: IConfig = {
   namespace: 'ns1',

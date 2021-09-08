@@ -1,7 +1,7 @@
 'use strict';
 
 const config = require('./config');
-const { Producer, Message } = require('../..'); // replace with const { Producer, Message } = require('redis-smq');
+const { Producer, Message } = require('../..'); // require('redis-smq');
 
 const producer = new Producer('test_queue', config);
 
