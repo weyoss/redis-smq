@@ -1,4 +1,4 @@
-import { IConfig, IStatsProvider, TCompatibleRedisClient } from '../types';
+import { IConfig, IStatsProvider } from '../types';
 import { PowerManager } from './power-manager';
 import { ChildProcess, fork } from 'child_process';
 import { Instance } from './instance';
@@ -12,7 +12,7 @@ export class Stats {
   protected config: IConfig;
   protected powerManager: PowerManager;
   protected statsProvider: IStatsProvider;
-  protected redisClientInstance: TCompatibleRedisClient | null = null;
+  protected redisClientInstance: RedisClient | null = null;
   protected statsAggregatorThread: ChildProcess | null = null;
   protected ticker: Ticker | null = null;
 
@@ -25,29 +25,51 @@ export class Stats {
 
   protected getRedisClientInstance() {
     if (!this.redisClientInstance) {
-      throw new Error();
+      throw new Error(`Expected an instance of RedisInstance`);
     }
     return this.redisClientInstance;
   }
 
   protected getTicker() {
     if (!this.ticker) {
-      throw new Error();
+      throw new Error(`Expected an instance of Ticker`);
     }
     return this.ticker;
   }
 
+  protected onTick() {
+    if (this.powerManager.isRunning()) {
+      const stats = this.statsProvider.tick();
+      this.statsProvider.publish(this.getRedisClientInstance(), stats);
+    }
+    if (this.powerManager.isGoingDown()) {
+      this.instance.emit(events.STATS_READY_TO_SHUTDOWN);
+    }
+  }
+
   start() {
     this.powerManager.goingUp();
-    RedisClient.getNewInstance(this.config, (c: TCompatibleRedisClient) => {
+    RedisClient.getInstance(this.config, (c) => {
       this.redisClientInstance = c;
       this.ticker = new Ticker(() => {
-        const stats = this.statsProvider.tick();
-        this.statsProvider.publish(this.getRedisClientInstance(), stats);
+        this.onTick();
       }, 1000);
-      this.ticker.autoRun();
+      this.ticker.runTimer();
       this.powerManager.commit();
       this.instance.emit(events.STATS_UP);
+    });
+  }
+
+  stop() {
+    this.powerManager.goingDown();
+    this.instance.once(events.STATS_READY_TO_SHUTDOWN, () => {
+      this.stopAggregator();
+      this.getTicker().shutdown(() => {
+        this.getRedisClientInstance().end(true);
+        this.redisClientInstance = null;
+        this.powerManager.commit();
+        this.instance.emit(events.STATS_DOWN);
+      });
     });
   }
 
@@ -72,16 +94,5 @@ export class Stats {
       this.statsAggregatorThread.kill('SIGHUP');
       this.statsAggregatorThread = null;
     }
-  }
-
-  stop() {
-    this.powerManager.goingDown();
-    this.stopAggregator();
-    this.getTicker().shutdown(() => {
-      this.getRedisClientInstance().end(true);
-      this.redisClientInstance = null;
-      this.powerManager.commit();
-      this.instance.emit(events.STATS_DOWN);
-    });
   }
 }

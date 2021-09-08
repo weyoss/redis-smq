@@ -14,7 +14,9 @@ describe('Produce and consume a delayed message with scheduledRepeat and schedul
     const consumer = getConsumer({
       consumeMock: jest.fn((msg, cb) => {
         callCount += 1;
-        if (callCount > 3) throw new Error('Unexpected call');
+        if (callCount > 3) {
+          throw new Error('Unexpected call');
+        }
         cb();
       }),
     });

@@ -1,10 +1,7 @@
 import { Consumer } from '../consumer';
-import {
-  IConsumerStats,
-  IStatsProvider,
-  TCompatibleRedisClient,
-} from '../../types';
+import { IConsumerStats, IStatsProvider } from '../../types';
 import { events } from '../events';
+import { RedisClient } from '../redis-client';
 
 export class ConsumerStatsProvider implements IStatsProvider {
   protected consumer: Consumer;
@@ -73,20 +70,19 @@ export class ConsumerStatsProvider implements IStatsProvider {
     };
   }
 
-  publish(redisClient: TCompatibleRedisClient, stats: IConsumerStats) {
+  publish(redisClient: RedisClient, stats: IConsumerStats) {
     const now = Date.now();
     const { processingRate, acknowledgedRate, unacknowledgedRate, isIdle } =
       stats;
-    redisClient.hmset(
-      this.keyIndexRate,
+    const payload: string[] = [
       this.keyConsumerRateProcessing,
       `${processingRate}|${now}`,
       this.keyConsumerRateAcknowledged,
       `${acknowledgedRate}|${now}`,
       this.keyConsumerRateUnacknowledged,
       `${unacknowledgedRate}|${now}`,
-      () => void 0,
-    );
+    ];
+    redisClient.hmset(this.keyIndexRate, payload, () => void 0);
     if (isIdle) this.consumer.emit(events.IDLE);
   }
 

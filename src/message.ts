@@ -41,7 +41,6 @@ export class Message {
     this.attempts = 0;
     this.scheduledRepeatCount = 0;
     this.delayed = false;
-    this.scheduledCronFired = false;
   }
 
   setScheduledPeriod(period: number): Message {
@@ -52,8 +51,9 @@ export class Message {
   }
 
   setScheduledDelay(delay: number): Message {
-    if (delay < 1)
+    if (delay < 1) {
       throw new Error('Scheduling delay should not be less than 1 second');
+    }
     this.scheduledDelay = delay * 1000; // in ms
     this.delayed = false;
     return this;

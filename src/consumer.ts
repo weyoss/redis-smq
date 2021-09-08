@@ -66,11 +66,11 @@ export abstract class Consumer extends Instance {
       keyQueue,
       keyConsumerProcessingQueue,
       0,
-      (err, json) => {
+      (err?: Error | null, json?: string | null) => {
         if (err) this.error(err);
         else {
           if (!json) {
-            throw new Error();
+            throw new Error(`Expected a non-empty string`);
           }
           this.loggerInstance.info('Got new message...');
           const message = Message.createFromMessage(json);
@@ -199,14 +199,14 @@ export abstract class Consumer extends Instance {
 
   protected getGarbageCollectorInstance(): GarbageCollector {
     if (!this.garbageCollectorInstance) {
-      throw new Error();
+      throw new Error(`Expected an instance of GarbageCollector`);
     }
     return this.garbageCollectorInstance;
   }
 
   protected getHeartBeatInstance(): ReturnType<typeof HeartBeat> {
     if (!this.heartBeatInstance) {
-      throw new Error();
+      throw new Error(`Expected an instance of HeartBeat`);
     }
     return this.heartBeatInstance;
   }
@@ -224,7 +224,7 @@ export abstract class Consumer extends Instance {
       this.getId(),
     );
     multi.sadd(keyIndexQueueProcessing, keyConsumerProcessingQueue);
-    multi.exec((err) => {
+    this.getRedisInstance().execMulti(multi, (err?: Error | null) => {
       if (err) this.error(err);
       else super.setupQueues();
     });
@@ -255,15 +255,18 @@ export abstract class Consumer extends Instance {
         }, consumeTimeout);
       }
       const acknowledgeMessage = () => {
-        this.getRedisInstance().rpop(keys.keyConsumerProcessingQueue, (err) => {
-          if (err) this.error(err);
-          else {
-            this.loggerInstance.info(
-              `Message [${msg.getId()}] successfully processed`,
-            );
-            this.emit(events.MESSAGE_ACKNOWLEDGED, msg);
-          }
-        });
+        this.getRedisInstance().rpop(
+          keys.keyConsumerProcessingQueue,
+          (err?: Error | null) => {
+            if (err) this.error(err);
+            else {
+              this.loggerInstance.info(
+                `Message [${msg.getId()}] successfully processed`,
+              );
+              this.emit(events.MESSAGE_ACKNOWLEDGED, msg);
+            }
+          },
+        );
       };
       const onConsumed = (err?: Error | null) => {
         if (this.powerManager.isRunning() && !isTimeout) {
@@ -273,7 +276,7 @@ export abstract class Consumer extends Instance {
         }
       };
       // As a safety measure, in case if we mess with message system
-      // properties, only a clone of the actual message is given
+      // properties, only a clone of the message is actually given
       this.consume(Message.createFromMessage(msg), onConsumed);
     } catch (error: unknown) {
       const err =

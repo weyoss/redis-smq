@@ -35,6 +35,8 @@ message.setScheduledPeriod(1); // Wait for one second after each delivery
 
 Set the time in seconds that a message will wait before being scheduled for delivery.
 
+`Delay scheduling`, when set, always takes priority over `CRON scheduling` or `repeat scheduling`.
+
 ```javascript
 const { Message } = require('redis-smq');
 
@@ -46,9 +48,7 @@ message.setScheduledDelay(60); // in seconds
 
 Set message scheduling using a CRON expression.
 
-CRON scheduling takes priority over delay scheduling.
-
-CRON scheduling can be combined with repeat and period scheduling. For example
+`CRON scheduling` can be combined with `repeat and period scheduling`. For example
 if we want a message to be delivered 5 times every hour with a 10 seconds delay between each message we can do:
 
 ```javascript
@@ -335,4 +335,3 @@ These methods are used internally and should not be used in your application:
 - Message.prototype.incrMessageScheduledRepeatCount()
 - Message.prototype.setAttempts()
 - Message.prototype.setMessageDelayed()
-- Message.prototype.hasScheduledCronFired()

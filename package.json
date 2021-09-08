@@ -26,10 +26,11 @@
   "dependencies": {
     "bunyan": "^1.8.15",
     "cron-parser": "^3.5.0",
+    "husky": "^4.3.8",
     "ioredis": "^4.27.9",
     "neo-async": "^2.6.2",
     "redis": "^3.1.2",
-    "redis-smq-monitor": "^2.0.0",
+    "redis-smq-monitor": "^2.0.1",
     "redlock": "^4.2.0",
     "uuid": "^8.3.2"
   },
@@ -48,7 +49,6 @@
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
-    "husky": "^7.0.2",
     "jest": "^27.1.0",
     "lint-staged": "^11.1.2",
     "prettier": "^2.3.2",
@@ -63,7 +63,6 @@
     "build": "tsc",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
     "lint": "eslint \"{src,tests,types}/**/*.ts\" --fix",
-    "pretest": "npm run build",
     "test": "NODE_ENV=test jest --runInBand",
     "type-coverage": "type-coverage --strict --at-least 100 --ignore-files \"dist/**/*\""
   },

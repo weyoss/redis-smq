@@ -1,42 +1,49 @@
-import { TFunction } from '../types';
+import { TCallback, TFunction } from '../types';
 
 export class Ticker {
+  protected isRunning = false;
   protected timer: NodeJS.Timeout | null = null;
   protected interval: NodeJS.Timer | null = null;
-  protected shutdownFn: TFunction | null = null;
   protected onTick: TFunction;
   protected time: number;
 
   constructor(onTick: TFunction, time: number) {
     this.onTick = onTick;
     this.time = time;
+    this.isRunning = true;
   }
 
-  shutdown(fn: TFunction): void {
-    this.shutdownFn = fn;
+  shutdown(cb?: TCallback<void>): void {
+    if (!this.isRunning) {
+      throw new Error('Ticker is already down');
+    }
+    this.isRunning = false;
     if (this.timer) {
       clearTimeout(this.timer);
-      this.shutdownFn();
     }
     if (this.interval) {
       clearInterval(this.interval);
-      this.shutdownFn();
+    }
+    if (cb) {
+      cb();
     }
   }
 
   nextTick(): void {
-    if (this.shutdownFn) this.shutdownFn();
-    else {
-      this.timer = setTimeout(this.onTick, this.time);
+    if (!this.isRunning) {
+      throw new Error('Ticker is down');
     }
+    this.timer = setTimeout(this.onTick, this.time);
   }
 
-  autoRun(): void {
+  runTimer(): void {
+    if (!this.isRunning) {
+      throw new Error('Ticker is down');
+    }
     this.interval = setInterval(() => {
-      if (this.shutdownFn) {
-        this.interval && clearInterval(this.interval);
-        this.shutdownFn();
-      } else this.onTick();
+      if (this.isRunning) {
+        this.onTick();
+      }
     }, this.time);
   }
 }

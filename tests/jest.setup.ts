@@ -1,7 +1,8 @@
 import { getRedisInstance, shutdown } from './common';
-import { TCompatibleRedisClient } from '../types';
 
-let redisInstance: TCompatibleRedisClient | null = null;
+type ThenArg<T> = T extends PromiseLike<infer U> ? U : T;
+
+let redisInstance: ThenArg<ReturnType<typeof getRedisInstance>> | null = null;
 
 beforeAll(async () => {
   if (!redisInstance) {
@@ -17,7 +18,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-  await redisInstance?.flushall();
+  await redisInstance?.flushallAsync();
 });
 
 afterEach(async () => {

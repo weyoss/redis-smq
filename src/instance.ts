@@ -1,12 +1,7 @@
 import * as async from 'neo-async';
 import { v4 as uuid } from 'uuid';
 import { EventEmitter } from 'events';
-import {
-  IConfig,
-  IStatsProvider,
-  TCallback,
-  TCompatibleRedisClient,
-} from '../types';
+import { IConfig, IStatsProvider, TCallback } from '../types';
 import { PowerManager } from './power-manager';
 import { Logger } from './logger';
 import * as BunyanLogger from 'bunyan';
@@ -25,13 +20,13 @@ export abstract class Instance extends EventEmitter {
   protected shutdownFiredEvents: string[] = [];
   protected bootstrapping = false;
   protected schedulerInstance: Scheduler | null = null;
-  protected redisClientInstance: TCompatibleRedisClient | null = null;
+  protected redisClientInstance: RedisClient | null = null;
   protected statsInstance: Stats | null = null;
   protected instanceRedisKeys: Record<string, string> | null = null;
   protected redisKeys: MQRedisKeys | null = null;
   protected loggerInstance: BunyanLogger;
 
-  constructor(queueName: string, config: IConfig) {
+  protected constructor(queueName: string, config: IConfig) {
     super();
     this.id = uuid();
     this.config = config;
@@ -98,13 +93,10 @@ export abstract class Instance extends EventEmitter {
   }
 
   protected setupRedisClient(): void {
-    RedisClient.getNewInstance(
-      this.config,
-      (client: TCompatibleRedisClient) => {
-        this.redisClientInstance = client;
-        this.emit(events.BOOTSTRAP_REDIS_CLIENT);
-      },
-    );
+    RedisClient.getInstance(this.config, (client) => {
+      this.redisClientInstance = client;
+      this.emit(events.BOOTSTRAP_REDIS_CLIENT);
+    });
   }
 
   protected setupQueues(): void {
@@ -112,13 +104,13 @@ export abstract class Instance extends EventEmitter {
     const { keyIndexQueue, keyQueue, keyQueueDLQ, keyIndexQueueDLQ } =
       this.getInstanceRedisKeys();
     const rememberDLQ = (cb: TCallback<void>) => {
-      redis.sadd(keyIndexQueueDLQ, keyQueueDLQ, (err) => {
+      redis.sadd(keyIndexQueueDLQ, keyQueueDLQ, (err?: Error | null) => {
         if (err) cb(err);
         else cb();
       });
     };
     const rememberQueue = (cb: TCallback<void>) => {
-      redis.sadd(keyIndexQueue, keyQueue, (err) => {
+      redis.sadd(keyIndexQueue, keyQueue, (err?: Error | null) => {
         if (err) cb(err);
         else cb();
       });
@@ -186,14 +178,20 @@ export abstract class Instance extends EventEmitter {
 
   protected abstract getStatsProvider(): IStatsProvider;
 
-  run(): void {
+  run(cb?: TCallback<void>): void {
     this.powerManager.goingUp();
     this.bootstrap();
+    if (cb) {
+      this.once(events.UP, cb);
+    }
   }
 
-  shutdown(): void {
+  shutdown(cb?: TCallback<void>): void {
     this.powerManager.goingDown();
     this.emit(events.GOING_DOWN);
+    if (cb) {
+      this.once(events.DOWN, cb);
+    }
   }
 
   isBootstrapping(): boolean {
@@ -206,21 +204,21 @@ export abstract class Instance extends EventEmitter {
 
   protected getStatsInstance() {
     if (!this.statsInstance) {
-      throw new Error();
+      throw new Error(`Expected an instance of Stats`);
     }
     return this.statsInstance;
   }
 
   protected getRedisInstance() {
     if (!this.redisClientInstance) {
-      throw new Error();
+      throw new Error(`Expected an instance of RedisClient`);
     }
     return this.redisClientInstance;
   }
 
   getScheduler() {
     if (!this.schedulerInstance) {
-      throw new Error();
+      throw new Error(`Expected an instance of Scheduler`);
     }
     return this.schedulerInstance;
   }
@@ -243,7 +241,7 @@ export abstract class Instance extends EventEmitter {
   getInstanceRedisKeys() {
     if (!this.instanceRedisKeys) {
       if (!this.redisKeys) {
-        throw new Error();
+        throw new Error(`Expected an instance of RedisKeys`);
       }
       this.instanceRedisKeys = this.redisKeys.getKeys();
     }
@@ -252,23 +250,20 @@ export abstract class Instance extends EventEmitter {
 
   getLogger(): BunyanLogger {
     if (!this.loggerInstance) {
-      throw new Error();
+      throw new Error(`Expected an instance of Logger`);
     }
     return this.loggerInstance;
   }
 
   static getMessageQueues(
-    redisClient: TCompatibleRedisClient,
+    redisClient: RedisClient,
     cb: TCallback<string[]>,
   ): void {
     const { keyIndexQueue } = MQRedisKeys.getGlobalKeys();
     redisClient.smembers(keyIndexQueue, cb);
   }
 
-  static getDLQQueues(
-    redisClient: TCompatibleRedisClient,
-    cb: TCallback<string[]>,
-  ): void {
+  static getDLQQueues(redisClient: RedisClient, cb: TCallback<string[]>): void {
     const { keyIndexQueueDLQ } = MQRedisKeys.getGlobalKeys();
     redisClient.smembers(keyIndexQueueDLQ, cb);
   }

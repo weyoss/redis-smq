@@ -116,7 +116,7 @@ export class MQRedisKeys {
   }
 
   static validateRedisKey(key: string) {
-    if (!key.length) {
+    if (!key || !key.length) {
       throw new Error(
         'Redis key validation error. Expected be a non empty string.',
       );

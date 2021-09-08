@@ -1,10 +1,11 @@
 import { Message } from './message';
 import { Multi } from 'redis';
-import { TCallback, TCompatibleRedisClient } from '../types';
+import { TCallback, TRedisClientMulti } from '../types';
 import { Consumer } from './consumer';
 import { events } from './events';
 import { Scheduler } from './scheduler';
 import * as Logger from 'bunyan';
+import { RedisClient } from './redis-client';
 
 export class GCMessageCollector {
   protected consumer: Consumer;
@@ -12,9 +13,9 @@ export class GCMessageCollector {
   protected logger: Logger;
   protected keyQueue: string;
   protected keyQueueDLQ: string;
-  protected redisClientInstance: TCompatibleRedisClient;
+  protected redisClientInstance: RedisClient;
 
-  constructor(consumer: Consumer, redisClientInstance: TCompatibleRedisClient) {
+  constructor(consumer: Consumer, redisClientInstance: RedisClient) {
     this.consumer = consumer;
     this.scheduler = consumer.getScheduler();
     this.logger = consumer.getLogger();
@@ -31,7 +32,7 @@ export class GCMessageCollector {
   protected requeueMessageAfterDelay(
     message: Message,
     delay: number,
-    multi: Multi,
+    multi: TRedisClientMulti,
   ): void {
     this.debug(
       `Scheduling message ID [${message.getId()}]  (delay: [${delay}])...`,
@@ -40,14 +41,14 @@ export class GCMessageCollector {
     this.scheduler.schedule(message, multi);
   }
 
-  protected moveMessageToDLQ(message: Message, multi: Multi): void {
+  protected moveMessageToDLQ(message: Message, multi: TRedisClientMulti): void {
     this.debug(
       `Moving message [${message.getId()}] to DLQ [${this.keyQueueDLQ}]...`,
     );
     multi.lpush(this.keyQueueDLQ, message.toString());
   }
 
-  protected requeueMessage(message: Message, multi: Multi): void {
+  protected requeueMessage(message: Message, multi: TRedisClientMulti): void {
     this.debug(`Re-queuing message [${message.getId()}] ...`);
     multi.lpush(this.keyQueue, message.toString());
   }
@@ -85,9 +86,12 @@ export class GCMessageCollector {
     cb: TCallback<void | string>,
   ): void {
     if (this.hasMessageExpired(message)) {
-      this.debug(`Message [${message.getId()}]: Collecting expired message...`);
+      this.debug(`Message ID [${message.getId()}] has expired.`);
       this.collectExpiredMessage(message, processingQueue, cb);
     } else if (this.scheduler.isPeriodic(message)) {
+      this.debug(
+        `Message ID [${message.getId()}] has a periodic schedule. Cleaning processing queue...`,
+      );
       this.redisClientInstance.rpop(processingQueue, cb);
     } else {
       let delayed = false;
@@ -96,20 +100,34 @@ export class GCMessageCollector {
       multi.rpop(processingQueue);
       const retry = this.checkMessageThreshold(message);
       if (retry) {
+        this.debug(
+          `Message ID [${message.getId()}] is valid (threshold not exceeded) for re-queuing...`,
+        );
         const delay = message.getRetryDelay();
         const retryDelay =
           typeof delay === 'number'
             ? delay
             : this.consumer.getMessageRetryDelay();
         if (retryDelay) {
+          this.debug(
+            `Delaying message ID [${message.getId()}] before re-queuing...`,
+          );
           delayed = true;
           this.requeueMessageAfterDelay(message, retryDelay, multi);
         } else {
+          this.debug(
+            `Re-queuing message ID [${message.getId()}] for one more time...`,
+          );
           requeued = true;
           this.requeueMessage(message, multi);
         }
-      } else this.moveMessageToDLQ(message, multi);
-      multi.exec((err) => {
+      } else {
+        this.debug(
+          `Message ID [${message.getId()}] retry threshold exceeded. Moving message to DLQ...`,
+        );
+        this.moveMessageToDLQ(message, multi);
+      }
+      this.redisClientInstance.execMulti(multi, (err?: Error | null) => {
         if (err) cb(err);
         else {
           if (requeued) this.consumer.emit(events.GC_MESSAGE_REQUEUED, message);
@@ -128,7 +146,9 @@ export class GCMessageCollector {
     cb: TCallback<void>,
   ): void {
     const id = message.getId();
-    this.debug(`Processing expired message [${id}]...`);
+    this.debug(
+      `Deleting expired message [${id}] from the processing queue [processingQueue]...`,
+    );
     // Just pop it out
     this.redisClientInstance.rpop(processingQueue, (err?: Error | null) => {
       if (err) cb(err);

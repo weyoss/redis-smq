@@ -4,7 +4,6 @@ docs/coverage
 examples
 src/**
 tests/**
-types/**
 .eslintrc.js
 .gitignore
 .npmignore
