@@ -96,6 +96,5 @@ message.getRetryDelay();
 
 ## For TypeScript users
 
-- Renamed:
-  - `ConfigInterface` to `IConfig`
-  - `RedisDriver` to `RedisClientName`
+Updated almost all typings. Some breaking changes include interfaces and types renaming (for example`ConfigInterface` 
+to `IConfig`, `RedisDriver` to `RedisClientName`, etc.)
