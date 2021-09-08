@@ -47,7 +47,7 @@ For more details about RedisSMQ design see [https://medium.com/@weyoss/building-
 
 ## What's new?
 
-**2021.09.06**
+**2021.09.08**
 
 - A major release v3.0.0 is out. 
 - Upgrading your installation to the newest version should be straightforward as most APIs are compatible, [with some exceptions](docs/migrating-from-v2-to-v3.md).
