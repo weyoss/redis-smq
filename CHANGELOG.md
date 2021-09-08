@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.0.1 (2021-09-08)
+
+* Moved husky to devDependencies.
+
 ## 3.0.0 (2021-09-08)
 
 * A major release v3.0.0 is out.
