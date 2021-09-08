@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.0.2 (2021-09-08)
+
+* Moved all dependant declaration packages from "devDependencies" to "dependencies".
+
 ## 3.0.1 (2021-09-08)
 
 * Moved husky to devDependencies.
