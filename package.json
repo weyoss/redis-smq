@@ -1,6 +1,6 @@
 {
   "name": "redis-smq",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "description": "A simple high-performance Redis message queue for Node.js.",
   "author": "Weyoss <weyoss@protonmail.com>",
   "license": "MIT",
