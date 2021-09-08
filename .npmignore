@@ -11,4 +11,4 @@ index.ts
 tsconfig.json
 jest.config.js
 .idea
-!types/**
+types/**
