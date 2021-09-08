@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.0.3 (2021-09-08)
+
+* Fixed .npmignore
+
+
 ## 3.0.2 (2021-09-08)
 
 * Moved all dependant declaration packages from "devDependencies" to "dependencies".
