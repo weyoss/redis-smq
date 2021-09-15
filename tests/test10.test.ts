@@ -21,7 +21,6 @@ test('A message is not lost in case of a consumer crash', async () => {
   });
   consumer1.on(events.DOWN, () => {
     // once stopped, start consumer2
-    console.log('consumer1 down');
     consumer2.run();
   });
 

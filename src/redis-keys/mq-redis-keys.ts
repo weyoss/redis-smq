@@ -14,6 +14,7 @@ export class MQRedisKeys {
     KEY_TYPE_INDEX_RATE: '4',
     KEY_TYPE_INDEX_QUEUE: '6.1',
     KEY_TYPE_INDEX_QUEUE_DLQ: '6.3',
+    KEY_INDEX_QUEUE_DELAYED_MESSAGES: '8',
     KEY_TYPE_LOCK_STATS_AGGREGATOR: '5.1',
   };
 
@@ -40,6 +41,10 @@ export class MQRedisKeys {
       ),
       keyLockScheduler: MQRedisKeys.joinSegments(
         MQRedisKeys.types.KEY_TYPE_LOCK_SCHEDULER,
+        this.queueName,
+      ),
+      keyIndexQueueDelayedMessages: MQRedisKeys.joinSegments(
+        MQRedisKeys.types.KEY_INDEX_QUEUE_DELAYED_MESSAGES,
         this.queueName,
       ),
     };

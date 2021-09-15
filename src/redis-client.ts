@@ -90,6 +90,19 @@ export class RedisClient extends EventEmitter {
     }
   }
 
+  zcard(key: string, cb: TCallback<number>) {
+    this.client.zcard(key, cb);
+  }
+
+  zrange(key: string, min: number, max: number, cb: TCallback<string[]>) {
+    // different typescript signatures, using if/else to get it done
+    if (this.client instanceof NodeRedis) {
+      this.client.zrange(key, min, max, cb);
+    } else {
+      this.client.zrange(key, min, max, cb);
+    }
+  }
+
   zrangebyscore(
     key: string,
     min: number,
