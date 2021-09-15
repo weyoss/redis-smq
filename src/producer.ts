@@ -39,7 +39,7 @@ export class Producer extends Instance {
     const proceed = () => {
       const scheduler = this.getScheduler();
       if (scheduler.isSchedulable(message)) {
-        scheduler.schedule(message, undefined, onProduced);
+        scheduler.schedule(message, onProduced);
       } else {
         const { keyQueue } = this.getInstanceRedisKeys();
         this.getRedisInstance().lpush(

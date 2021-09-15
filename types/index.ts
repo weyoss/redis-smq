@@ -3,6 +3,7 @@ import { ClientOpts, Multi, RedisClient as NodeRedis } from 'redis';
 import * as Logger from 'bunyan';
 import { IMonitorConfig } from 'redis-smq-monitor/types';
 import { RedisClient } from '../src/redis-client';
+import { Message } from '../src/message';
 
 export type TCallback<T> = (err?: Error | null, reply?: T | null) => void;
 
@@ -103,4 +104,9 @@ export type TAggregatedStats = {
       [queueName: string]: TAggregatedStatsQueue;
     };
   };
+};
+
+export type TGetScheduledMessagesReply = {
+  total: number;
+  items: Message[];
 };

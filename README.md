@@ -35,6 +35,7 @@ For more details about RedisSMQ design see [https://medium.com/@weyoss/building-
     1. [Message Class](#message-class)
     2. [Producer Class](#producer-class)
     3. [Consumer Class](#consumer-class)
+    4. [Message Scheduler](#message-scheduler)
 5. [Performance](#performance)
     1. [Scenarios](#scenarios)
     2. [Environment](#environment)
@@ -185,8 +186,7 @@ const message = new Message();
 
 message
     .setBody({hello: 'world'})
-    .setTTL(3600000)
-    .setScheduledDelay(10);
+    .setTTL(3600000);
 
 const producer = new Producer('test_queue');
 producer.produceMessage(message, (err) => {
@@ -256,6 +256,48 @@ exceeded. Then the messages are moved to **dead-letter queue (DLQ)**. Each messa
 corresponding queue called dead-letter queue where all failed to consume messages are moved to.
 
 See [Consumer API Reference](docs/api/consumer.md) for more details.
+
+### Message Scheduler
+
+Message Scheduler enables you to schedule a one-time or repeating messages in your MQ server.
+
+The [Message API](docs/api/message.md) provides many methods:
+
+- [setScheduledPeriod()](docs/api/message.md#messageprototypesetscheduledperiod) 
+- [setScheduledDelay()](docs/api/message.md#messageprototypesetscheduleddelay) 
+- [setScheduledCron()](docs/api/message.md#messageprototypesetscheduledcron)
+- [setScheduledRepeat()](docs/api/message.md#messageprototypesetscheduledrepeat)
+
+in order to set up scheduling parameters for a specific message. Once your message is ready, you can use 
+[producer.produceMessage()](docs/api/producer.md#producerprototypeproducemessage) to publish it. 
+
+Under the hood, the `producer` invokes `isSchedulable()` and `schedule()`  of the [Scheduler class](docs/api/scheduler.md) 
+to place your message in the delay queue.
+
+Alternatively, you can also manually get the scheduler instance from the producer using `producer.getScheduler()` 
+and call the `schedule()` method as shown in the example bellow:
+
+```javascript
+'use strict';
+const { Message, Producer } = require('redis-smq');
+
+const message = new Message();
+
+message
+    .setBody({hello: 'world'})
+    .setScheduledCron(`0 0 * * * *`);
+
+const producer = new Producer('test_queue');
+const scheduler = producer.getScheduler();
+
+scheduler.schedule(message, (err, reply) => {
+    if (err) console.log(err);
+    else if (rely) console.log('Message has been succefully scheduled');
+    else console.log('Message has not been scheduled');
+});
+```
+
+See [Scheduler API Reference](docs/api/scheduler.md) for more details.
 
 ## Performance
 
