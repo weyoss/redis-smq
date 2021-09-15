@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.1.0 (2021-09-15)
+
+* Added Scheduler API docs.
+* Added new methods to fetch and delete scheduled messages.
+
 ## 3.0.4 (2021-09-08)
 
 * Updated examples.
