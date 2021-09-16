@@ -1,5 +1,12 @@
 # RedisSMQ - Yet another simple Redis message queue
 
+[![CI](https://github.com/weyoss/redis-smq/actions/workflows/main.yml/badge.svg)](https://github.com/weyoss/redis-smq/actions/workflows/main.yml)
+[![Coverage Status](https://coveralls.io/repos/weyoss/redis-smq/badge.svg?branch=ci)](https://coveralls.io/r/weyoss/redis-smq?branch=master)
+[![Dependencies Status](https://david-dm.org/weyoss/redis-smq.svg)]((https://david-dm.org/weyoss/redis-smq))
+[![NPM version](http://img.shields.io/npm/v/redis-smq.svg)](https://npmjs.org/package/redis-smq)
+[![NPM downloads](https://img.shields.io/npm/dm/redis-smq.svg)](https://npmjs.org/package/redis-smq)
+[![Code quality](https://img.shields.io/lgtm/grade/javascript/github/weyoss/redis-smq.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/weyoss/redis-smq/context:javascript)
+
 A simple high-performance Redis message queue for Node.js.
 
 For more details about RedisSMQ design see [https://medium.com/@weyoss/building-a-simple-message-queue-using-redis-server-and-node-js-964eda240a2a](https://medium.com/@weyoss/building-a-simple-message-queue-using-redis-server-and-node-js-964eda240a2a)

@@ -1,5 +1,4 @@
 dist/tests
-docs/coverage
 examples
 src/**
 tests/**
@@ -12,3 +11,5 @@ tsconfig.json
 jest.config.js
 .idea
 types/**
+coverage/**
+.github/**

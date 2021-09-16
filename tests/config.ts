@@ -1,12 +1,15 @@
 import { IConfig, RedisClientName } from '../types';
 
+const redisHost = process.env.REDIS_HOST || '127.0.0.1';
+const redisPort = Number(process.env.REDIS_PORT) || 6379;
+
 export const config: IConfig = {
   namespace: 'testing',
   redis: {
     client: RedisClientName.IOREDIS,
     options: {
-      host: '127.0.0.1',
-      port: 6379,
+      host: redisHost,
+      port: redisPort,
     },
   },
   monitor: {
