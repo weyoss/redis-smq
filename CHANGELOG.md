@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 3.1.1 (2021-09-16)
+
+* Added Github CI
+
 ## 3.1.0 (2021-09-15)
 
 * Added Scheduler API docs.
