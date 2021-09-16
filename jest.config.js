@@ -7,6 +7,6 @@ module.exports = {
   rootDir: path.resolve('./'),
   testMatch: ['**/dist/**/*.test.js'],
   setupFilesAfterEnv: ['<rootDir>/dist/tests/jest.setup.js'],
-  coverageDirectory: '<rootDir>/docs/coverage',
+  coverageDirectory: '<rootDir>/coverage',
   collectCoverage: true,
 };
