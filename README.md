@@ -1,6 +1,6 @@
 # RedisSMQ - Yet another simple Redis message queue
 
-[![CI](https://github.com/weyoss/redis-smq/actions/workflows/main.yml/badge.svg)](https://github.com/weyoss/redis-smq/actions/workflows/main.yml)
+[![CI](https://github.com/weyoss/redis-smq/actions/workflows/tests.yml/badge.svg)](https://github.com/weyoss/redis-smq/actions/workflows/tests.yml)
 [![Coverage Status](https://coveralls.io/repos/weyoss/redis-smq/badge.svg?branch=ci)](https://coveralls.io/r/weyoss/redis-smq?branch=master)
 [![Dependencies Status](https://david-dm.org/weyoss/redis-smq.svg)]((https://david-dm.org/weyoss/redis-smq))
 [![NPM version](http://img.shields.io/npm/v/redis-smq.svg)](https://npmjs.org/package/redis-smq)

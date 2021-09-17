@@ -1,8 +1,6 @@
-# This is a basic workflow to help you get started with Actions
+name: Tests
 
-name: CI
-
-# Controls when the workflow will run
+#on: [push, pull_request]
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
@@ -15,16 +13,23 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Label of the container job
-  tests-and-coverage:
-    # Containers must run in Linux based operating systems
-    runs-on: ubuntu-latest
-    # Docker Hub image that `container-job` executes in
-    container: node:10.18-jessie
+  tests:
+    strategy:
+      matrix:
+        os:
+          #- windows-latest
+          #- macos-latest
+          - ubuntu-latest
 
-    # Service containers to run with `container-job`
+        node:
+          - 12
+          - 14
+          - 16
+
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }} (Node v${{ matrix.node }})
+
     services:
-      # Label used to access the service container
       redis:
         # Docker Hub image
         image: redis
@@ -34,7 +39,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
     steps:
       # Downloads a copy of the code in your repository before running CI tests
       - name: Check out repository code
@@ -45,9 +49,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Check type coverage
-        run: npm run type-coverage
-
       - name: Run tests
         run: npm test
         env:
@@ -55,9 +56,3 @@ jobs:
           REDIS_HOST: redis
           # The default Redis port
           REDIS_PORT: 6379
-
-      - name: Coveralls
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-        if: success()
