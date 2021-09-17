@@ -33,9 +33,20 @@ test('A message is not lost in case of a consumer crash', async () => {
     }),
   });
 
+  let messageRequeued = false;
+  consumer2.on(events.GC_MESSAGE_REQUEUED, () => {
+    messageRequeued = true;
+  });
+
+  let messageAcknowledged = false;
+  consumer2.on(events.GC_MESSAGE_REQUEUED, () => {
+    messageAcknowledged = true;
+  });
+
   consumer1.run();
 
   await untilConsumerEvent(consumer2, events.GC_LOCK_ACQUIRED);
-  await untilConsumerEvent(consumer2, events.GC_MESSAGE_REQUEUED);
-  await untilConsumerEvent(consumer2, events.MESSAGE_ACKNOWLEDGED);
+  await untilConsumerEvent(consumer2, events.IDLE);
+  expect(messageRequeued).toBe(true);
+  expect(messageAcknowledged).toBe(true);
 });
