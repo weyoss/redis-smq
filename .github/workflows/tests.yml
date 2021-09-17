@@ -17,8 +17,6 @@ jobs:
     strategy:
       matrix:
         os:
-          #- windows-latest
-          #- macos-latest
           - ubuntu-latest
 
         node:
@@ -26,33 +24,32 @@ jobs:
           - 14
           - 16
 
-    runs-on: ${{ matrix.os }}
-    name: ${{ matrix.os }} (Node v${{ matrix.node }})
+        redis:
+          - 2.6.17
+          - 3
+          - 4
+          - 5
+          - 6
 
-    services:
-      redis:
-        # Docker Hub image
-        image: redis
-        # Set health checks to wait until redis has started
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    runs-on: ${{ matrix.os }}
+
     steps:
-      # Downloads a copy of the code in your repository before running CI tests
+
+      - name: Use Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Start Redis ${{ matrix.redis }}
+        uses: weyoss/redis-github-action@25915a901815971e3f91b3ae7010ab9fdca79392
+        with:
+          redis-version: ${{ matrix.redis }}
+
       - name: Check out repository code
         uses: actions/checkout@v2
 
-      # Performs a clean installation of all dependencies in the `package.json` file
-      # For more information, see https://docs.npmjs.com/cli/ci.html
       - name: Install dependencies
         run: npm ci
 
       - name: Run tests
         run: npm test
-        env:
-          # The hostname used to communicate with the Redis service container
-          REDIS_HOST: redis
-          # The default Redis port
-          REDIS_PORT: 6379
