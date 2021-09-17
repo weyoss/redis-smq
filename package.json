@@ -67,6 +67,7 @@
     "lint": "eslint \"{src,tests,types}/**/*.ts\" --fix",
     "pretest": "npm run build",
     "test": "NODE_ENV=test jest --runInBand",
+    "precoverage": "npm run build",
     "coverage": "NODE_ENV=test jest --runInBand --collectCoverage",
     "type-coverage": "type-coverage --strict --at-least 100 --ignore-files \"dist/**/*\""
   },
