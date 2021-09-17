@@ -39,7 +39,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Check type coverage
+      - name: Run type coverage
         run: npm run type-coverage
 
       - name: Run code coverage
