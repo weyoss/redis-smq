@@ -1,8 +1,8 @@
-name: Coverage
+name: coverage
 
 on:
   workflow_run:
-    workflows: ["Tests"]
+    workflows: ["tests"]
     types:
       - completed
 
