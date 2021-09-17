@@ -88,6 +88,6 @@
   },
   "engineStrict": true,
   "engines": {
-    "node": ">=7.0.0"
+    "node": "^12 || ^14 || ^16"
   }
 }

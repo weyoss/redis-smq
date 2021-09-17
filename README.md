@@ -57,10 +57,10 @@ For more details about RedisSMQ design see [https://medium.com/@weyoss/building-
 
 **2021.09.08**
 
-- A major release v3.0.0 is out. 
+- A major release v3 is out. 
 - Upgrading your installation to the newest version should be straightforward as most APIs are compatible, [with some exceptions](docs/migrating-from-v2-to-v3.md).
 - The project's code base has been migrated to TypeScript to make use of strong typings. 
-- JavaScript's users are always first class citizens and backward compatibility with old NodeJS versions has been kept, down to v7.0.0
+- JavaScript's users are always first class citizens.
 
 See [CHANGELOG](CHANGELOG.md) for more details.
 
@@ -72,8 +72,8 @@ npm install redis-smq --save
 
 Considerations:
 
-- Minimal Node.js version support is 7.0.0 (with --harmony flag), 7.6.0 (without --harmony flag). The latest stable 
-  Node.js version is recommended.
+- RedisSMQ is targeted to be used in production environments. Therefore, only active LTS and maintenance LTS Node.js 
+  releases (v12, v14, and v16) are supported. The latest stable Node.js version is recommended.
 - Minimal Redis server version is 2.6.12.
 
 # Configuration

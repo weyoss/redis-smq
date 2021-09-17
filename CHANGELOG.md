@@ -27,10 +27,11 @@
 
 ## 3.0.0 (2021-09-08)
 
-* A major release v3.0.0 is out.
+* A major release v3 is out.
+* Starting from this release, only active LTS and maintenance LTS Node.js releases are supported. 
 * Upgrading your installation to the newest version should be straightforward as most APIs are compatible with some exceptions.
-* Project codebase has been migrated to TypeScript to make use of strong typings.
-* JavaScript's users are always first class citizens and backward compatibility with old NodeJS versions has been kept, down to v7.0.0.
+* Project codebase has been migrated to TypeScript to make use of strong typings. 
+* JavaScript's users are always first class citizens.
 * Fixed a compatibility issue between ioredis and redis when calling multi.exec().
 * Fixed typing inconsistencies (ConfigRedisDriver and RedisDriver types) between redis-smq and redis-smq-monitor.
 * Improved scheduler mechanics, refactored GC, and updated tests.
