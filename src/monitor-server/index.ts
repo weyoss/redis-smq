@@ -8,6 +8,7 @@ import { Middleware } from 'redis-smq-monitor';
 import { IConfig, TCallback } from '../../types';
 import { api } from './routes';
 import { RedisClient } from '../redis-client';
+import { Logger } from '../logger';
 
 function runStatsAggregator(config: IConfig) {
   const statsAggregatorThread = fork(
@@ -34,6 +35,7 @@ export function MonitorServer(config: IConfig = {}) {
   if (!config.monitor || !config.monitor.enabled) {
     throw new Error('RedisSMQ monitor is not enabled. Exiting...');
   }
+  const logger = Logger('monitor-server', config.log);
   const {
     host = '0.0.0.0',
     port = 7210,
@@ -55,13 +57,16 @@ export function MonitorServer(config: IConfig = {}) {
     listen(cb?: TCallback<void>) {
       runStatsAggregator(config);
       RedisClient.getInstance(config, (client) => {
-        console.log('Successfully connected to Redis server.');
+        logger.info('Successfully connected to Redis server.');
         client.subscribe('stats');
         client.on('message', (channel, message) => {
           const json = JSON.parse(message) as Record<string, any>;
           socketIO.emit('stats', json);
         });
-        httpServer.listen(port, host, () => cb && cb());
+        httpServer.listen(port, host, () => {
+          logger.info(`Monitor server is running on ${host}:${port}...`);
+          cb && cb();
+        });
       });
     },
   };
