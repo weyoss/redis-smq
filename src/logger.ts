@@ -2,7 +2,10 @@ import { IConfig } from '../types';
 import BLogger, { createLogger } from 'bunyan';
 
 export function Logger(name: string, config: IConfig['log'] = {}): BLogger {
-  const instance = createLogger({ name, ...(config.options ?? {}) });
+  if (!name) {
+    throw new Error('Parameter [name] is required.');
+  }
+  const instance = createLogger({ ...(config.options ?? {}), name });
   if (!config.enabled) {
     const noop = () => void 0;
     return Object.assign(instance, {

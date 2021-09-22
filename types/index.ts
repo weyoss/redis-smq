@@ -53,7 +53,7 @@ export interface IConfig {
   namespace?: string;
   log?: {
     enabled?: boolean;
-    options?: Logger.LoggerOptions;
+    options?: Partial<Logger.LoggerOptions>;
   };
   monitor?: IMonitorConfig;
 }
