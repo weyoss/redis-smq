@@ -1,7 +1,7 @@
+import { ServerOptions } from 'socket.io';
 import IORedis, { Redis, RedisOptions } from 'ioredis';
 import { ClientOpts, Multi, RedisClient as NodeRedis } from 'redis';
 import * as Logger from 'bunyan';
-import { IMonitorConfig } from 'redis-smq-monitor/types';
 import { RedisClient } from '../src/redis-client';
 import { Message } from '../src/message';
 
@@ -39,6 +39,13 @@ export type TRedisClientMulti = Multi | IORedis.Pipeline;
 export interface IRedisOptions {
   client: RedisClientName;
   options?: RedisOptions | ClientOpts;
+}
+
+export interface IMonitorConfig {
+  enabled?: boolean;
+  port?: number;
+  host?: string;
+  socketOpts?: ServerOptions;
 }
 
 export interface IConfig {

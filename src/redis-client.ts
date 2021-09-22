@@ -103,6 +103,15 @@ export class RedisClient extends EventEmitter {
     }
   }
 
+  subscribe(channel: string) {
+    this.client.subscribe(channel);
+  }
+
+  on(event: string, listener: (channel: string, message: string) => void) {
+    this.client.on(event, listener);
+    return this;
+  }
+
   zrangebyscore(
     key: string,
     min: number,

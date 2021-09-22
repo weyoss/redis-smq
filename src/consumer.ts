@@ -106,9 +106,6 @@ export abstract class Consumer extends Instance {
     );
     this.on(events.GC_UP, () => this.handleStartupEvent(events.GC_UP));
     this.on(events.GC_DOWN, () => this.handleShutdownEvent(events.GC_DOWN));
-    this.on(events.STATS_UP, () => {
-      this.getStatsInstance().startAggregator();
-    });
     this.on(events.SCHEDULER_UP, () => {
       this.getScheduler().runTicker();
     });
