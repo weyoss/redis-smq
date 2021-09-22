@@ -25,18 +25,25 @@ function runStatsAggregator(config: IConfig) {
 }
 
 export function MonitorServer(config: IConfig = {}) {
+  if (!config) {
+    throw new Error('Configuration object is required.');
+  }
+  if (typeof config !== 'object') {
+    throw new Error('Invalid argument type');
+  }
+  if (!config.monitor || !config.monitor.enabled) {
+    throw new Error('RedisSMQ monitor is not enabled. Exiting...');
+  }
   const {
     host = '0.0.0.0',
     port = 7210,
     socketOpts = {},
   } = config.monitor || {};
-
   const app = new Koa();
   app.use(Middleware(['/api/', '/socket.io/']));
   app.use(KoaBodyParser());
   app.use(api.routes());
   app.use(api.allowedMethods());
-
   const httpServer = createServer(app.callback());
   const socketIO = new SocketIO(httpServer, {
     ...socketOpts,
@@ -44,7 +51,6 @@ export function MonitorServer(config: IConfig = {}) {
       origin: '*',
     },
   });
-
   return {
     listen(cb?: TCallback<void>) {
       runStatsAggregator(config);
