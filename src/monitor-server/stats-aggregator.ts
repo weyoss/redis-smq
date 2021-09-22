@@ -4,15 +4,15 @@ import {
   TAggregatedStatsQueue,
   TAggregatedStatsQueueConsumer,
   TCallback,
-} from '../types';
+} from '../../types';
 import * as async from 'neo-async';
-import { MQRedisKeys } from './redis-keys/mq-redis-keys';
-import { LockManager } from './lock-manager';
-import { RedisClient } from './redis-client';
-import { ConsumerRedisKeys } from './redis-keys/consumer-redis-keys';
-import { ProducerRedisKeys } from './redis-keys/producer-redis-keys';
-import { Instance } from './instance';
-import { HeartBeat } from './heartbeat';
+import { MQRedisKeys } from '../redis-keys/mq-redis-keys';
+import { LockManager } from '../lock-manager';
+import { RedisClient } from '../redis-client';
+import { ConsumerRedisKeys } from '../redis-keys/consumer-redis-keys';
+import { ProducerRedisKeys } from '../redis-keys/producer-redis-keys';
+import { Instance } from '../instance';
+import { HeartBeat } from '../heartbeat';
 import { merge } from 'lodash';
 
 function StatsAggregator(config: IConfig) {
