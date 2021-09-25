@@ -1,40 +1,44 @@
-import * as async from 'neo-async';
 import { v4 as uuid } from 'uuid';
 import { EventEmitter } from 'events';
 import { IConfig, IStatsProvider, TCallback } from '../types';
 import { PowerManager } from './power-manager';
 import { Logger } from './logger';
 import * as BunyanLogger from 'bunyan';
-import { Scheduler } from './scheduler';
-import { MQRedisKeys } from './redis-keys/mq-redis-keys';
 import { Stats } from './stats';
 import { events } from './events';
 import { RedisClient } from './redis-client';
+import { Scheduler } from './scheduler';
+import { Queue } from './queue';
+import { redisKeys } from './redis-keys';
 
 export abstract class Instance extends EventEmitter {
   protected readonly id: string;
-  protected readonly queueName: string | null = null;
+  protected readonly queueName: string;
   protected readonly config: IConfig;
   protected powerManager: PowerManager;
+  protected redisKeys: ReturnType<typeof redisKeys['getInstanceKeys']>;
   protected startupFiredEvents: string[] = [];
   protected shutdownFiredEvents: string[] = [];
   protected bootstrapping = false;
   protected schedulerInstance: Scheduler | null = null;
   protected redisClientInstance: RedisClient | null = null;
   protected statsInstance: Stats | null = null;
-  protected instanceRedisKeys: Record<string, string> | null = null;
-  protected redisKeys: MQRedisKeys | null = null;
   protected loggerInstance: BunyanLogger;
+  protected queue: Queue | null = null;
 
   protected constructor(queueName: string, config: IConfig) {
     super();
+    if (config.namespace) {
+      redisKeys.setNamespace(config.namespace);
+    }
     this.id = uuid();
     this.config = config;
-    this.queueName = MQRedisKeys.validateRedisKey(queueName);
+    this.queueName = redisKeys.validateRedisKey(queueName);
+    this.redisKeys = redisKeys.getInstanceKeys(
+      this.getQueueName(),
+      this.getId(),
+    );
     this.powerManager = new PowerManager();
-    if (config.namespace) {
-      MQRedisKeys.setNamespace(config.namespace);
-    }
     this.loggerInstance = Logger(
       `${this.getQueueName()}:${this.getId()}`,
       this.config.log,
@@ -44,14 +48,7 @@ export abstract class Instance extends EventEmitter {
 
   protected registerEventsHandlers() {
     this.on(events.ERROR, (err: Error) => this.error(err));
-    this.on(events.BOOTSTRAP_REDIS_CLIENT, () => this.setupQueues());
-    this.on(events.BOOTSTRAP_SYSTEM_QUEUES, () => this.completeBootstrap());
-    this.on(events.BOOTSTRAP_SUCCESS, () => {
-      this.bootstrapping = false;
-      this.emit(events.GOING_UP);
-    });
     this.on(events.GOING_UP, () => {
-      this.getScheduler().start();
       if (this.statsInstance) this.statsInstance.start();
     });
     this.on(events.UP, () => {
@@ -59,7 +56,7 @@ export abstract class Instance extends EventEmitter {
     });
     this.on(events.GOING_DOWN, () => {
       if (this.statsInstance) this.statsInstance.stop();
-      this.getScheduler().stop();
+      this.shutdownScheduler();
       this.getRedisInstance().end(true);
       this.redisClientInstance = null;
     });
@@ -88,45 +85,41 @@ export abstract class Instance extends EventEmitter {
     }
   }
 
+  protected setupQueues() {
+    this.getQueueInstance().setupQueues(this.getQueueName());
+    this.getQueueInstance().on(events.SYSTEM_QUEUES_CREATED, () =>
+      this.handleStartupEvent(events.SYSTEM_QUEUES_CREATED),
+    );
+  }
+
   protected setupScheduler() {
-    this.schedulerInstance = new Scheduler(this);
+    this.schedulerInstance = new Scheduler(
+      this.getQueueName(),
+      new RedisClient(this.config),
+    );
+    this.emit(events.SCHEDULER_UP);
   }
 
-  protected setupRedisClient(): void {
-    RedisClient.getInstance(this.config, (client) => {
-      this.redisClientInstance = client;
-      this.emit(events.BOOTSTRAP_REDIS_CLIENT);
-    });
-  }
-
-  protected setupQueues(): void {
-    const redis = this.getRedisInstance();
-    const { keyIndexQueue, keyQueue, keyQueueDLQ, keyIndexQueueDLQ } =
-      this.getInstanceRedisKeys();
-    const rememberDLQ = (cb: TCallback<void>) => {
-      redis.sadd(keyIndexQueueDLQ, keyQueueDLQ, (err?: Error | null) => {
-        if (err) cb(err);
-        else cb();
-      });
-    };
-    const rememberQueue = (cb: TCallback<void>) => {
-      redis.sadd(keyIndexQueue, keyQueue, (err?: Error | null) => {
-        if (err) cb(err);
-        else cb();
-      });
-    };
-    async.parallel([rememberQueue, rememberDLQ], (err?: Error | null) => {
-      if (err) this.error(err);
-      else this.emit(events.BOOTSTRAP_SYSTEM_QUEUES);
-    });
+  protected shutdownScheduler() {
+    this.getScheduler().quit();
+    this.schedulerInstance = null;
+    this.emit(events.SCHEDULER_DOWN);
   }
 
   protected handleStartupEvent(event: string): void {
     this.startupFiredEvents.push(event);
-    const isUp = this.hasGoneUp();
-    if (isUp) {
-      this.powerManager.commit();
-      this.emit(events.UP);
+    if (this.bootstrapping) {
+      const hasBootstrapped = this.hasBootstrapped();
+      if (hasBootstrapped) {
+        this.bootstrapping = false;
+        this.emit(events.GOING_UP);
+      }
+    } else {
+      const isUp = this.hasGoneUp();
+      if (isUp) {
+        this.powerManager.commit();
+        this.emit(events.UP);
+      }
     }
   }
 
@@ -137,6 +130,10 @@ export abstract class Instance extends EventEmitter {
       this.powerManager.commit();
       this.emit(events.DOWN);
     }
+  }
+
+  protected hasBootstrapped(): boolean {
+    return this.startupFiredEvents.includes(events.SYSTEM_QUEUES_CREATED);
   }
 
   protected hasGoneUp(): boolean {
@@ -161,19 +158,13 @@ export abstract class Instance extends EventEmitter {
     }
   }
 
-  /**
-   * Overwrite this method to do extra bootstrapping before starting up
-   * This method should always emit 'BOOTSTRAP_SUCCESS' once bootstrap completed
-   */
-  protected completeBootstrap(): void {
-    this.emit(events.BOOTSTRAP_SUCCESS);
-  }
-
   protected bootstrap(): void {
     this.bootstrapping = true;
-    this.setupStats();
+    this.redisClientInstance = new RedisClient(this.config);
+    this.queue = new Queue(this.redisClientInstance);
     this.setupScheduler();
-    this.setupRedisClient();
+    this.setupStats();
+    this.setupQueues();
   }
 
   protected abstract getStatsProvider(): IStatsProvider;
@@ -216,6 +207,13 @@ export abstract class Instance extends EventEmitter {
     return this.redisClientInstance;
   }
 
+  protected getQueueInstance() {
+    if (!this.queue) {
+      throw new Error(`Expected an instance of Queue`);
+    }
+    return this.queue;
+  }
+
   getScheduler() {
     if (!this.schedulerInstance) {
       throw new Error(`Expected an instance of Scheduler`);
@@ -239,13 +237,7 @@ export abstract class Instance extends EventEmitter {
   }
 
   getInstanceRedisKeys() {
-    if (!this.instanceRedisKeys) {
-      if (!this.redisKeys) {
-        throw new Error(`Expected an instance of RedisKeys`);
-      }
-      this.instanceRedisKeys = this.redisKeys.getKeys();
-    }
-    return this.instanceRedisKeys;
+    return this.redisKeys;
   }
 
   getLogger(): BunyanLogger {
@@ -253,18 +245,5 @@ export abstract class Instance extends EventEmitter {
       throw new Error(`Expected an instance of Logger`);
     }
     return this.loggerInstance;
-  }
-
-  static getMessageQueues(
-    redisClient: RedisClient,
-    cb: TCallback<string[]>,
-  ): void {
-    const { keyIndexQueue } = MQRedisKeys.getGlobalKeys();
-    redisClient.smembers(keyIndexQueue, cb);
-  }
-
-  static getDLQQueues(redisClient: RedisClient, cb: TCallback<string[]>): void {
-    const { keyIndexQueueDLQ } = MQRedisKeys.getGlobalKeys();
-    redisClient.smembers(keyIndexQueueDLQ, cb);
   }
 }

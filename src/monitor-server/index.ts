@@ -1,29 +1,19 @@
+import 'reflect-metadata';
 import { createServer } from 'http';
-import { resolve } from 'path';
 import * as Koa from 'koa';
-import { fork } from 'child_process';
 import { Server as SocketIO } from 'socket.io';
 import * as KoaBodyParser from 'koa-bodyparser';
 import { Middleware } from 'redis-smq-monitor';
 import { IConfig, TCallback } from '../../types';
-import { api } from './routes';
 import { RedisClient } from '../redis-client';
 import { Logger } from '../logger';
-
-function runStatsAggregator(config: IConfig) {
-  const statsAggregatorThread = fork(
-    resolve(`${__dirname}/stats-aggregator.js`),
-  );
-  statsAggregatorThread.on('error', (err) => {
-    throw err;
-  });
-  statsAggregatorThread.on('exit', (code, signal) => {
-    throw new Error(
-      `statsAggregatorThread exited with code ${code} and signal ${signal}`,
-    );
-  });
-  statsAggregatorThread.send(JSON.stringify(config));
-}
+import { errorHandler } from './middlewares/error-handler';
+import { Services } from './services';
+import { startThreads } from './utils/thread-runner';
+import { resolve } from 'path';
+import { getApplicationRouter } from './lib/routing';
+import { schedulerController } from './controllers/scheduler';
+import { IContext } from './types/common';
 
 export function MonitorServer(config: IConfig = {}) {
   if (!config) {
@@ -41,11 +31,18 @@ export function MonitorServer(config: IConfig = {}) {
     port = 7210,
     socketOpts = {},
   } = config.monitor || {};
-  const app = new Koa();
+  const app = new Koa<Koa.DefaultState, IContext>();
+  app.use(errorHandler);
   app.use(Middleware(['/api/', '/socket.io/']));
   app.use(KoaBodyParser());
-  app.use(api.routes());
-  app.use(api.allowedMethods());
+  app.context.config = config;
+  app.context.redis = new RedisClient(config);
+  app.context.services = Services(app);
+
+  const router = getApplicationRouter(app, [schedulerController]);
+  app.use(router.routes());
+  app.use(router.allowedMethods());
+
   const httpServer = createServer(app.callback());
   const socketIO = new SocketIO(httpServer, {
     ...socketOpts,
@@ -55,18 +52,16 @@ export function MonitorServer(config: IConfig = {}) {
   });
   return {
     listen(cb?: TCallback<void>) {
-      runStatsAggregator(config);
-      RedisClient.getInstance(config, (client) => {
-        logger.info('Successfully connected to Redis server.');
-        client.subscribe('stats');
-        client.on('message', (channel, message) => {
-          const json = JSON.parse(message) as Record<string, any>;
-          socketIO.emit('stats', json);
-        });
-        httpServer.listen(port, host, () => {
-          logger.info(`Monitor server is running on ${host}:${port}...`);
-          cb && cb();
-        });
+      startThreads(config, resolve(__dirname, './threads'));
+      const redisClient = new RedisClient(config);
+      redisClient.subscribe('stats');
+      redisClient.on('message', (channel, message) => {
+        const json = JSON.parse(message) as Record<string, any>;
+        socketIO.emit('stats', json);
+      });
+      httpServer.listen(port, host, () => {
+        logger.info(`Monitor server is running on ${host}:${port}...`);
+        cb && cb();
       });
     },
   };

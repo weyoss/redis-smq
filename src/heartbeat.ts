@@ -7,9 +7,9 @@ import { Ticker } from './ticker';
 import { ChildProcess, fork } from 'child_process';
 import { resolve } from 'path';
 import { events } from './events';
-import { ConsumerRedisKeys } from './redis-keys/consumer-redis-keys';
 import { merge } from 'lodash';
 import { RedisClient } from './redis-client';
+import { redisKeys } from './redis-keys';
 
 const IPAddresses = getIPAddresses();
 
@@ -65,7 +65,7 @@ function validateOnlineTimestamp(timestamp: number) {
 }
 
 function handleConsumerData(hashKey: string, resources: Record<string, any>) {
-  const extractedData = ConsumerRedisKeys.extractData(hashKey);
+  const extractedData = redisKeys.extractData(hashKey);
   if (!extractedData || !extractedData.consumerId) {
     throw new Error(`Invalid extracted consumer data`);
   }
@@ -92,7 +92,7 @@ function getAllHeartBeats(
   client: RedisClient,
   cb: TCallback<Record<string, string>>,
 ) {
-  const { keyIndexHeartBeat } = ConsumerRedisKeys.getGlobalKeys();
+  const { keyIndexHeartBeat } = redisKeys.getGlobalKeys();
   client.hgetall(
     keyIndexHeartBeat,
     (err?: Error | null, result?: Record<string, string> | null) => {
@@ -108,10 +108,10 @@ function getConsumerHeartBeat(
   queueName: string,
   cb: TCallback<string>,
 ) {
-  const { keyConsumerHeartBeat, keyIndexHeartBeat } = new ConsumerRedisKeys(
-    id,
+  const { keyConsumerHeartBeat, keyIndexHeartBeat } = redisKeys.getInstanceKeys(
     queueName,
-  ).getKeys();
+    id,
+  );
   client.hget(
     keyIndexHeartBeat,
     keyConsumerHeartBeat,
@@ -209,13 +209,11 @@ export function HeartBeat(instance: Instance) {
   return {
     start() {
       powerManager.goingUp();
-      RedisClient.getInstance(config, (c) => {
-        redisClientInstance = c;
-        startMonitor();
-        nextTick();
-        instance.emit(events.HEARTBEAT_UP);
-        powerManager.commit();
-      });
+      redisClientInstance = new RedisClient(config);
+      startMonitor();
+      nextTick();
+      instance.emit(events.HEARTBEAT_UP);
+      powerManager.commit();
     },
 
     stop() {
@@ -313,7 +311,7 @@ HeartBeat.handleOfflineConsumers = (
   cb: TCallback<number>,
 ) => {
   if (offlineConsumers.length) {
-    const { keyIndexHeartBeat } = ConsumerRedisKeys.getGlobalKeys();
+    const { keyIndexHeartBeat } = redisKeys.getGlobalKeys();
     client.hdel(keyIndexHeartBeat, offlineConsumers, cb);
   } else cb();
 };

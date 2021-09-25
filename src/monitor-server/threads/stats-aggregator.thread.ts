@@ -4,25 +4,24 @@ import {
   TAggregatedStatsQueue,
   TAggregatedStatsQueueConsumer,
   TCallback,
-} from '../../types';
+} from '../../../types';
 import * as async from 'neo-async';
-import { MQRedisKeys } from '../redis-keys/mq-redis-keys';
-import { LockManager } from '../lock-manager';
-import { RedisClient } from '../redis-client';
-import { ConsumerRedisKeys } from '../redis-keys/consumer-redis-keys';
-import { ProducerRedisKeys } from '../redis-keys/producer-redis-keys';
-import { Instance } from '../instance';
-import { HeartBeat } from '../heartbeat';
+import { redisKeys } from '../../redis-keys';
+import { LockManager } from '../../lock-manager';
+import { RedisClient } from '../../redis-client';
+import { HeartBeat } from '../../heartbeat';
 import { merge } from 'lodash';
+import { Queue } from '../../queue';
 
-function StatsAggregator(config: IConfig) {
+function StatsAggregatorThread(config: IConfig) {
   if (config.namespace) {
-    MQRedisKeys.setNamespace(config.namespace);
+    redisKeys.setNamespace(config.namespace);
   }
-  const { keyIndexRate, keyLockStatsAggregator } = MQRedisKeys.getGlobalKeys();
+  const { keyIndexRate, keyLockStatsAggregator } = redisKeys.getGlobalKeys();
   const noop = () => void 0;
-  let redisClientInstance: RedisClient | null = null;
-  let lockManagerInstance: LockManager | null = null;
+  const redisClientInstance = new RedisClient(config);
+  const lockManagerInstance = new LockManager(redisClientInstance);
+  const queue = new Queue(redisClientInstance);
   let data: TAggregatedStats = {
     rates: {
       input: 0,
@@ -145,7 +144,7 @@ function StatsAggregator(config: IConfig) {
       addQueueIfNotExists(ns, queueName);
       rate = Number(rate);
       const consumers = addConsumerIfNotExists(ns, queueName, consumerId);
-      const consumerTypes = ConsumerRedisKeys.types;
+      const consumerTypes = redisKeys.getTypes();
       switch (type) {
         case consumerTypes.KEY_TYPE_CONSUMER_RATE_PROCESSING:
           data.rates.processing += rate;
@@ -180,13 +179,12 @@ function StatsAggregator(config: IConfig) {
               const keyStr = String(key);
               const [rate, timestamp] = item.split('|');
               if (!hasExpired(+timestamp)) {
-                const pExtractedData = ProducerRedisKeys.extractData(keyStr);
-                if (pExtractedData) handleProducerRate(pExtractedData, +rate);
-                else {
-                  const cExtractedData = ConsumerRedisKeys.extractData(keyStr);
-                  if (cExtractedData && cExtractedData.consumerId) {
-                    handleConsumerRate(cExtractedData, +rate);
-                  }
+                const extractedData = redisKeys.extractData(keyStr);
+                if (extractedData) {
+                  if (extractedData.producerId)
+                    handleProducerRate(extractedData, +rate);
+                  if (extractedData.consumerId)
+                    handleConsumerRate(extractedData, +rate);
                 }
               } else expiredKeys.push(keyStr);
               done();
@@ -207,11 +205,11 @@ function StatsAggregator(config: IConfig) {
     if (queues && queues.length) {
       const multi = getRedisClient().multi();
       const handleResult = (res: number[]) => {
-        const instanceTypes = MQRedisKeys.types;
+        const instanceTypes = redisKeys.getTypes();
         async.each(
           res,
           (size: number, index: number | string, done: TCallback<void>) => {
-            const extractedData = MQRedisKeys.extractData(queues[+index]);
+            const extractedData = redisKeys.extractData(queues[+index]);
             if (extractedData) {
               const { ns, queueName, type } = extractedData;
               const queue = addQueueIfNotExists(ns, queueName);
@@ -248,14 +246,14 @@ function StatsAggregator(config: IConfig) {
   }
 
   function getQueues(cb: TCallback<string[]>) {
-    Instance.getMessageQueues(getRedisClient(), (err, queues) => {
+    queue.getMessageQueues((err, queues) => {
       if (err) cb(err);
       else cb(null, queues);
     });
   }
 
   function getDLQQueues(cb: TCallback<string[]>) {
-    Instance.getDLQQueues(getRedisClient(), (err, queues) => {
+    queue.getDLQQueues((err, queues) => {
       if (err) cb(err);
       else cb(null, queues);
     });
@@ -355,17 +353,10 @@ function StatsAggregator(config: IConfig) {
       );
     });
   }
-
-  RedisClient.getInstance(config, (c) => {
-    redisClientInstance = c;
-    LockManager.getInstance(config, (l) => {
-      lockManagerInstance = l;
-      run();
-    });
-  });
+  run();
 }
 
 process.on('message', (c: string) => {
   const config: IConfig = JSON.parse(c);
-  StatsAggregator(config);
+  StatsAggregatorThread(config);
 });

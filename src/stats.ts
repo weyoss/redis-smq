@@ -46,15 +46,13 @@ export class Stats {
 
   start() {
     this.powerManager.goingUp();
-    RedisClient.getInstance(this.config, (c) => {
-      this.redisClientInstance = c;
-      this.ticker = new Ticker(() => {
-        this.onTick();
-      }, 1000);
-      this.ticker.runTimer();
-      this.powerManager.commit();
-      this.instance.emit(events.STATS_UP);
-    });
+    this.redisClientInstance = new RedisClient(this.config);
+    this.ticker = new Ticker(() => {
+      this.onTick();
+    }, 1000);
+    this.ticker.runTimer();
+    this.powerManager.commit();
+    this.instance.emit(events.STATS_UP);
   }
 
   stop() {

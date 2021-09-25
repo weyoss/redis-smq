@@ -1,5 +1,4 @@
 import * as async from 'neo-async';
-import { Instance } from './instance';
 import {
   TCallback,
   TGetScheduledMessagesReply,
@@ -7,41 +6,16 @@ import {
 } from '../types';
 import { Message } from './message';
 import { parseExpression } from 'cron-parser';
-import { LockManager } from './lock-manager';
-import * as Logger from 'bunyan';
-import { PowerManager } from './power-manager';
-import { Ticker } from './ticker';
 import { RedisClient } from './redis-client';
-import { events } from './events';
+import { redisKeys } from './redis-keys';
 
 export class Scheduler {
-  protected instance: Instance;
-  protected powerManager = new PowerManager();
-  protected logger: Logger;
-  protected lockManagerInstance: LockManager | null = null;
-  protected redisClientInstance: RedisClient | null = null;
-  protected ticker: Ticker | null = null;
-  protected keyLockScheduler: string;
-  protected keyQueue: string;
-  protected keyQueueDelayed: string;
-  protected keyIndexQueueDelayedMessages: string;
+  protected redisClientInstance: RedisClient | null;
+  protected keys: ReturnType<typeof redisKeys['getKeys']>;
 
-  protected tickPeriod: number;
-
-  constructor(instance: Instance, tickPeriod = 1000) {
-    this.instance = instance;
-    const {
-      keyLockScheduler,
-      keyQueue,
-      keyQueueDelayed,
-      keyIndexQueueDelayedMessages,
-    } = instance.getInstanceRedisKeys();
-    this.keyLockScheduler = keyLockScheduler;
-    this.keyQueue = keyQueue;
-    this.keyQueueDelayed = keyQueueDelayed;
-    this.keyIndexQueueDelayedMessages = keyIndexQueueDelayedMessages;
-    this.logger = instance.getLogger();
-    this.tickPeriod = tickPeriod;
+  constructor(queueName: string, redisClient: RedisClient) {
+    this.keys = redisKeys.getKeys(queueName);
+    this.redisClientInstance = redisClient;
   }
 
   protected getRedisClient(): RedisClient {
@@ -51,33 +25,16 @@ export class Scheduler {
     return this.redisClientInstance;
   }
 
-  protected getLockManager(): LockManager {
-    if (!this.lockManagerInstance) {
-      throw new Error(`Expected an instance of LockManager`);
-    }
-    return this.lockManagerInstance;
-  }
-
-  protected getTicker(): Ticker {
-    if (!this.ticker) {
-      throw new Error(`Expected an instance of Ticker`);
-    }
-    return this.ticker;
-  }
-
-  protected debug(message: string): void {
-    this.logger.debug({ scheduler: true }, message);
-  }
-
   protected scheduleMessage(
     message: Message,
     timestamp: number,
     mixed: TRedisClientMulti | TCallback<boolean>,
   ): void {
+    const { keyQueueDelayed, keyIndexQueueDelayedMessages } = this.keys;
     const schedule = (m: TRedisClientMulti) => {
       const msgStr = message.toString();
-      m.zadd(this.keyQueueDelayed, timestamp, msgStr);
-      m.hset(this.keyIndexQueueDelayedMessages, message.getId(), msgStr);
+      m.zadd(keyQueueDelayed, timestamp, msgStr);
+      m.hset(keyIndexQueueDelayedMessages, message.getId(), msgStr);
       return m;
     };
     if (typeof mixed === 'object') schedule(mixed);
@@ -94,7 +51,7 @@ export class Scheduler {
     }
   }
 
-  protected scheduleNextDelivery(msg: Message, multi: TRedisClientMulti): void {
+  scheduleNextDelivery(msg: Message, multi: TRedisClientMulti): void {
     if (this.isPeriodic(msg)) {
       const timestamp = this.getNextScheduledTimestamp(msg) ?? 0;
       if (timestamp > 0) {
@@ -103,70 +60,13 @@ export class Scheduler {
     }
   }
 
-  protected deliverScheduledMessage(
-    msg: Message,
-    multi: TRedisClientMulti,
-  ): void {
+  deliverScheduledMessage(msg: Message, multi: TRedisClientMulti): void {
+    const { keyQueue, keyQueueDelayed } = this.keys;
     const message = this.isPeriodic(msg)
       ? Message.createFromMessage(msg, true)
       : msg;
-    multi.lpush(this.keyQueue, message.toString());
-    multi.zrem(this.keyQueueDelayed, msg.toString());
-  }
-
-  protected onTick(): void {
-    if (this.powerManager.isRunning()) {
-      this.getLockManager().acquireLock(
-        this.keyLockScheduler,
-        10000,
-        false,
-        (err, acquired) => {
-          if (err) this.instance.error(err);
-          else {
-            if (acquired) {
-              const now = Date.now();
-              const process = (messages: string[], cb: TCallback<void>) => {
-                if (messages.length) {
-                  async.each(
-                    messages,
-                    (
-                      msg: string,
-                      _: string | number,
-                      done: TCallback<unknown>,
-                    ) => {
-                      const message = Message.createFromMessage(msg);
-                      const multi = this.getRedisClient().multi();
-                      this.deliverScheduledMessage(message, multi);
-                      this.scheduleNextDelivery(message, multi);
-                      multi.exec(done);
-                    },
-                    cb,
-                  );
-                } else cb();
-              };
-              const fetch = (cb: TCallback<string[]>) => {
-                this.getRedisClient().zrangebyscore(
-                  this.keyQueueDelayed,
-                  0,
-                  now,
-                  (err?: Error | null, messages?: string[] | null) => {
-                    if (err) cb(err);
-                    else cb(null, messages);
-                  },
-                );
-              };
-              async.waterfall([fetch, process], (err) => {
-                if (err) this.instance.error(err);
-                else this.getTicker().nextTick();
-              });
-            } else this.getTicker().nextTick();
-          }
-        },
-      );
-    }
-    if (this.powerManager.isGoingDown()) {
-      this.instance.emit(events.SCHEDULER_READY_TO_SHUTDOWN);
-    }
+    multi.lpush(keyQueue, message.toString());
+    multi.zrem(keyQueueDelayed, msg.toString());
   }
 
   //@todo Modify message from outside this function
@@ -177,8 +77,7 @@ export class Scheduler {
       const msgScheduledDelay = message.getMessageScheduledDelay();
       if (msgScheduledDelay && !message.isDelayed()) {
         message.setMessageDelayed(true);
-        const delayTimestamp = Date.now() + msgScheduledDelay;
-        return delayTimestamp;
+        return Date.now() + msgScheduledDelay;
       }
 
       // CRON
@@ -258,9 +157,10 @@ export class Scheduler {
   }
 
   deleteScheduledMessage(messageId: string, cb: TCallback<boolean>): void {
+    const { keyQueueDelayed, keyIndexQueueDelayedMessages } = this.keys;
     const getMessage = (cb: TCallback<string>) => {
       this.getRedisClient().hget(
-        this.keyIndexQueueDelayedMessages,
+        keyIndexQueueDelayedMessages,
         messageId,
         (err, message) => {
           if (err) cb(err);
@@ -271,8 +171,8 @@ export class Scheduler {
     const deleteMessage = (msg: string | null, cb: TCallback<boolean>) => {
       if (msg) {
         const multi = this.getRedisClient().multi();
-        multi.zrem(this.keyQueueDelayed, msg);
-        multi.hdel(this.keyIndexQueueDelayedMessages, messageId);
+        multi.zrem(keyQueueDelayed, msg);
+        multi.hdel(keyIndexQueueDelayedMessages, messageId);
         this.getRedisClient().execMulti(
           multi,
           (err?: Error | null, reply?: number[] | null) => {
@@ -292,6 +192,7 @@ export class Scheduler {
     take: number,
     cb: TCallback<TGetScheduledMessagesReply>,
   ): void {
+    const { keyQueueDelayed } = this.keys;
     if (skip < 0 || take <= 0) {
       cb(
         new Error(
@@ -300,7 +201,7 @@ export class Scheduler {
       );
     } else {
       const getTotal = (cb: TCallback<number>) => {
-        this.getRedisClient().zcard(this.keyQueueDelayed, cb);
+        this.getRedisClient().zcard(keyQueueDelayed, cb);
       };
       const getItems = (
         total: number,
@@ -313,7 +214,7 @@ export class Scheduler {
           });
         } else {
           this.getRedisClient().zrange(
-            this.keyQueueDelayed,
+            keyQueueDelayed,
             skip,
             skip + take - 1,
             (err, result) => {
@@ -338,44 +239,43 @@ export class Scheduler {
     }
   }
 
-  start(): void {
-    this.powerManager.goingUp();
-    const config = this.instance.getConfig();
-    LockManager.getInstance(config, (l: LockManager) => {
-      this.lockManagerInstance = l;
-      RedisClient.getInstance(config, (c) => {
-        this.redisClientInstance = c;
-        this.powerManager.commit();
-        this.instance.emit(events.SCHEDULER_UP);
-      });
+  enqueueMessages(cb: TCallback<void>) {
+    const now = Date.now();
+    const { keyQueueDelayed } = this.keys;
+    const process = (messages: string[], cb: TCallback<void>) => {
+      if (messages.length) {
+        async.each(
+          messages,
+          (msg: string, _: string | number, done: TCallback<unknown>) => {
+            const message = Message.createFromMessage(msg);
+            const multi = this.getRedisClient().multi();
+            this.deliverScheduledMessage(message, multi);
+            this.scheduleNextDelivery(message, multi);
+            multi.exec(done);
+          },
+          cb,
+        );
+      } else cb();
+    };
+    const fetch = (cb: TCallback<string[]>) => {
+      this.getRedisClient().zrangebyscore(
+        keyQueueDelayed,
+        0,
+        now,
+        (err?: Error | null, messages?: string[] | null) => {
+          if (err) cb(err);
+          else cb(null, messages);
+        },
+      );
+    };
+    async.waterfall([fetch, process], (err) => {
+      if (err) throw err;
+      else cb();
     });
   }
 
-  stop(): void {
-    this.powerManager.goingDown();
-    const shutdown = () => {
-      this.getLockManager().quit(() => {
-        this.lockManagerInstance = null;
-        this.getRedisClient().end(true);
-        this.redisClientInstance = null;
-        this.powerManager.commit();
-        this.instance.emit(events.SCHEDULER_DOWN);
-      });
-    };
-    if (this.ticker) {
-      this.instance.once(events.SCHEDULER_READY_TO_SHUTDOWN, () => {
-        this.getTicker().shutdown(shutdown);
-      });
-    } else shutdown();
-  }
-
-  runTicker(): void {
-    if (this.ticker) {
-      throw new Error(`Ticker already running`);
-    }
-    this.ticker = new Ticker(() => {
-      this.onTick();
-    }, this.tickPeriod);
-    this.onTick();
+  quit() {
+    this.getRedisClient().end(true);
+    this.redisClientInstance = null;
   }
 }

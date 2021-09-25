@@ -3,25 +3,17 @@ import { IConfig, TCallback } from '../types';
 import { LockManager } from './lock-manager';
 import { Ticker } from './ticker';
 import { HeartBeat } from './heartbeat';
-import { ConsumerRedisKeys } from './redis-keys/consumer-redis-keys';
 import { RedisClient } from './redis-client';
+import { redisKeys } from './redis-keys';
 
 function heartbeatMonitor(config: IConfig) {
   if (config.namespace) {
-    ConsumerRedisKeys.setNamespace(config.namespace);
+    redisKeys.setNamespace(config.namespace);
   }
-  const { keyLockHeartBeatMonitor } = ConsumerRedisKeys.getGlobalKeys();
+  const { keyLockHeartBeatMonitor } = redisKeys.getGlobalKeys();
   const ticker = new Ticker(tick, 1000);
-
-  let redisClientInstance: RedisClient | null = null;
-  let lockManagerInstance: LockManager | null = null;
-
-  function getRedisClient() {
-    if (!redisClientInstance) {
-      throw new Error(`Expected an instance of RedisClient`);
-    }
-    return redisClientInstance;
-  }
+  const redisClientInstance = new RedisClient(config);
+  const lockManagerInstance = new LockManager(redisClientInstance);
 
   function getLockManager() {
     if (!lockManagerInstance) {
@@ -31,11 +23,11 @@ function heartbeatMonitor(config: IConfig) {
   }
 
   function handleConsumers(offlineConsumers: string[], cb: TCallback<number>) {
-    HeartBeat.handleOfflineConsumers(getRedisClient(), offlineConsumers, cb);
+    HeartBeat.handleOfflineConsumers(redisClientInstance, offlineConsumers, cb);
   }
 
   function getOfflineConsumers(cb: TCallback<string[]>) {
-    HeartBeat.getConsumersByOnlineStatus(getRedisClient(), (err, result) => {
+    HeartBeat.getConsumersByOnlineStatus(redisClientInstance, (err, result) => {
       if (err) cb(err);
       else {
         const { offlineConsumers = [] } = result ?? {};
@@ -55,14 +47,7 @@ function heartbeatMonitor(config: IConfig) {
       );
     });
   }
-
-  RedisClient.getInstance(config, (c) => {
-    redisClientInstance = c;
-    LockManager.getInstance(config, (l) => {
-      lockManagerInstance = l;
-      tick();
-    });
-  });
+  tick();
 }
 
 process.on('message', (payload: string) => {

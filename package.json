@@ -32,6 +32,8 @@
     "@types/redlock": "^4.0.2",
     "@types/uuid": "^8.3.1",
     "bunyan": "^1.8.15",
+    "class-transformer": "^0.4.0",
+    "class-validator": "^0.13.1",
     "cron-parser": "^3.5.0",
     "ioredis": "^4.27.9",
     "koa": "^2.13.1",
@@ -41,6 +43,7 @@
     "redis": "^3.1.2",
     "redis-smq-monitor": "^3.0.0",
     "redlock": "^4.2.0",
+    "reflect-metadata": "^0.1.13",
     "serve-static": "^1.14.1",
     "socket.io": "^4.2.0",
     "uuid": "^8.3.2"
