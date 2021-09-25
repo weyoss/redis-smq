@@ -1,4 +1,4 @@
-import { IConfig, TCallback } from '../types';
+import { TCallback } from '../types';
 import { RedisClient } from './redis-client';
 import * as Redlock from 'redlock';
 
@@ -88,15 +88,5 @@ export class LockManager {
 
   isLocked(): boolean {
     return this.acquiredLock !== null;
-  }
-
-  static getInstance(
-    config: IConfig,
-    cb: (lockManager: LockManager) => void,
-  ): void {
-    RedisClient.getInstance(config, (redisClient) => {
-      const instance = new LockManager(redisClient);
-      cb(instance);
-    });
   }
 }

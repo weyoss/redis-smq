@@ -5,7 +5,7 @@ import { ConsumerStatsProvider } from './stats-provider/consumer-stats-provider'
 import { events } from './events';
 import { HeartBeat } from './heartbeat';
 import { GarbageCollector } from './gc';
-import { ConsumerRedisKeys } from './redis-keys/consumer-redis-keys';
+import { SchedulerRunner } from './scheduler-runner';
 
 export abstract class Consumer extends Instance {
   protected readonly options: IConsumerConstructorOptions;
@@ -13,6 +13,7 @@ export abstract class Consumer extends Instance {
   protected readonly consumerMessageConsumeTimeout: number;
   protected readonly messageRetryThreshold: number;
   protected readonly messageRetryDelay: number;
+  protected schedulerRunnerInstance: SchedulerRunner | null = null;
   protected statsProvider: ConsumerStatsProvider | null = null;
   protected garbageCollectorInstance: GarbageCollector | null = null;
   protected heartBeatInstance: ReturnType<typeof HeartBeat> | null = null;
@@ -28,7 +29,6 @@ export abstract class Consumer extends Instance {
     this.consumerMessageConsumeTimeout = +(options.messageConsumeTimeout ?? 0);
     this.messageRetryThreshold = +(options.messageRetryThreshold ?? 3);
     this.messageRetryDelay = +(options.messageRetryDelay ?? 0);
-    this.redisKeys = new ConsumerRedisKeys(this.getQueueName(), this.getId());
   }
 
   getConsumerMessageConsumeTimeout(): number {
@@ -60,8 +60,7 @@ export abstract class Consumer extends Instance {
 
   protected getNextMessage(): void {
     this.loggerInstance.info('Waiting for new messages...');
-    const { keyQueue, keyConsumerProcessingQueue } =
-      this.getInstanceRedisKeys();
+    const { keyQueue, keyConsumerProcessingQueue } = this.redisKeys;
     this.getRedisInstance().brpoplpush(
       keyQueue,
       keyConsumerProcessingQueue,
@@ -84,7 +83,8 @@ export abstract class Consumer extends Instance {
     return (
       super.hasGoneUp() &&
       this.startupFiredEvents.includes(events.GC_UP) &&
-      this.startupFiredEvents.includes(events.HEARTBEAT_UP)
+      this.startupFiredEvents.includes(events.HEARTBEAT_UP) &&
+      this.startupFiredEvents.includes(events.SCHEDULER_RUNNER_UP)
     );
   }
 
@@ -92,7 +92,8 @@ export abstract class Consumer extends Instance {
     return (
       super.hasGoneDown() &&
       this.shutdownFiredEvents.includes(events.GC_DOWN) &&
-      this.shutdownFiredEvents.includes(events.HEARTBEAT_DOWN)
+      this.shutdownFiredEvents.includes(events.HEARTBEAT_DOWN) &&
+      this.shutdownFiredEvents.includes(events.SCHEDULER_RUNNER_DOWN)
     );
   }
 
@@ -106,12 +107,10 @@ export abstract class Consumer extends Instance {
     );
     this.on(events.GC_UP, () => this.handleStartupEvent(events.GC_UP));
     this.on(events.GC_DOWN, () => this.handleShutdownEvent(events.GC_DOWN));
-    this.on(events.SCHEDULER_UP, () => {
-      this.getScheduler().runTicker();
-    });
     this.on(events.GOING_UP, () => {
       this.getHeartBeatInstance().start();
       this.getGarbageCollectorInstance().start();
+      this.getSchedulerRunnerInstance().start(this.getScheduler());
     });
     this.on(events.GOING_DOWN, () => {
       this.getHeartBeatInstance().stop();
@@ -208,29 +207,49 @@ export abstract class Consumer extends Instance {
     return this.heartBeatInstance;
   }
 
-  protected setupQueues(): void {
-    const {
-      keyConsumerProcessingQueue,
-      keyIndexQueueProcessing,
-      keyIndexQueueQueuesProcessing,
-    } = this.getInstanceRedisKeys();
-    const multi = this.getRedisInstance().multi();
-    multi.hset(
-      keyIndexQueueQueuesProcessing,
-      keyConsumerProcessingQueue,
-      this.getId(),
+  protected getSchedulerRunnerInstance(): SchedulerRunner {
+    if (!this.schedulerRunnerInstance) {
+      throw new Error('Expected instance of SchedulerRunner');
+    }
+    return this.schedulerRunnerInstance;
+  }
+
+  protected setupScheduler() {
+    super.setupScheduler();
+    this.schedulerRunnerInstance = new SchedulerRunner(
+      this.getQueueName(),
+      this.config,
     );
-    multi.sadd(keyIndexQueueProcessing, keyConsumerProcessingQueue);
-    this.getRedisInstance().execMulti(multi, (err?: Error | null) => {
-      if (err) this.error(err);
-      else super.setupQueues();
+    this.schedulerRunnerInstance.on(events.SCHEDULER_RUNNER_UP, () =>
+      this.handleStartupEvent(events.SCHEDULER_RUNNER_UP),
+    );
+    this.schedulerRunnerInstance.on(events.SCHEDULER_RUNNER_DOWN, () => {
+      this.schedulerInstance = null;
+      this.schedulerRunnerInstance = null;
+      this.emit(events.SCHEDULER_DOWN);
+      this.handleShutdownEvent(events.SCHEDULER_RUNNER_DOWN);
     });
   }
 
-  protected completeBootstrap(): void {
+  protected shutdownScheduler() {
+    this.getSchedulerRunnerInstance().stop();
+  }
+
+  protected setupQueues(): void {
+    this.getQueueInstance().setupConsumerQueues(
+      this.getQueueName(),
+      this.getId(),
+      (err?: Error | null) => {
+        if (err) this.error(err);
+        else super.setupQueues();
+      },
+    );
+  }
+
+  protected bootstrap() {
+    super.bootstrap();
     this.setupHeartBeat();
     this.setupGarbageCollector();
-    super.completeBootstrap();
   }
 
   protected handleConsume(msg: Message): void {

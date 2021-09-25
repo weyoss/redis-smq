@@ -67,12 +67,8 @@ export function validateTime(
   );
 }
 
-export async function getRedisInstance() {
-  const c = await new Promise<RedisClient>((resolve) => {
-    RedisClient.getInstance(config, (i) => {
-      resolve(i);
-    });
-  });
+export function getRedisInstance() {
+  const c = new RedisClient(config);
   return promisifyAll(c);
 }
 

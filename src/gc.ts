@@ -9,37 +9,34 @@ import { Message } from './message';
 import { HeartBeat } from './heartbeat';
 import { GCMessageCollector } from './gc-message-collector';
 import { RedisClient } from './redis-client';
-import { ConsumerRedisKeys } from './redis-keys/consumer-redis-keys';
 import { TCallback } from '../types';
+import { Queue } from './queue';
+import { redisKeys } from './redis-keys';
 
 const GC_INSPECTION_INTERVAL = 1000; // in ms
 
 export class GarbageCollector {
   protected consumer: Consumer;
   protected instanceId: string;
-  protected powerManager = new PowerManager();
-  protected keyIndexQueueQueuesProcessing: string;
+  protected queueName: string;
   protected keyLockGC: string;
-  protected keyIndexQueueProcessing: string;
   protected logger: Logger;
+  protected powerManager: PowerManager;
 
   protected lockManagerInstance: LockManager | null = null;
   protected redisClientInstance: RedisClient | null = null;
   protected ticker: Ticker | null = null;
   protected gcMessageCollector: GCMessageCollector | null = null;
+  protected queue: Queue | null = null;
 
   constructor(consumer: Consumer) {
     this.consumer = consumer;
     this.instanceId = consumer.getId();
-    const {
-      keyIndexQueueQueuesProcessing,
-      keyLockGC,
-      keyIndexQueueProcessing,
-    } = consumer.getInstanceRedisKeys();
-    this.keyIndexQueueQueuesProcessing = keyIndexQueueQueuesProcessing;
+    this.queueName = consumer.getQueueName();
+    const { keyLockGC } = consumer.getInstanceRedisKeys();
     this.keyLockGC = keyLockGC;
-    this.keyIndexQueueProcessing = keyIndexQueueProcessing;
     this.logger = consumer.getLogger();
+    this.powerManager = new PowerManager();
   }
 
   protected getRedisInstance() {
@@ -54,6 +51,13 @@ export class GarbageCollector {
       throw new Error(`Expected an instance of LockManager`);
     }
     return this.lockManagerInstance;
+  }
+
+  protected getQueueInstance() {
+    if (!this.queue) {
+      throw new Error(`Expected an instance of Queue`);
+    }
+    return this.queue;
   }
 
   protected getTicker(): Ticker {
@@ -71,18 +75,18 @@ export class GarbageCollector {
     processingQueueName: string,
     cb: TCallback<void>,
   ): void {
-    const multi = this.getRedisInstance().multi();
-    multi.srem(this.keyIndexQueueProcessing, processingQueueName);
-    multi.hdel(this.keyIndexQueueQueuesProcessing, processingQueueName);
-    multi.del(processingQueueName);
-    multi.exec((err?: Error | null) => {
-      if (err) this.consumer.error(err);
-      else {
-        this.debug(`Processing queue [${processingQueueName}] deleted.`);
-        this.consumer.emit(events.GC_SM_QUEUE_DESTROYED, processingQueueName);
-        cb();
-      }
-    });
+    this.getQueueInstance().deleteProcessingQueue(
+      this.queueName,
+      processingQueueName,
+      (err?: Error | null) => {
+        if (err) this.consumer.error(err);
+        else {
+          this.debug(`Processing queue [${processingQueueName}] deleted.`);
+          this.consumer.emit(events.GC_SM_QUEUE_DESTROYED, processingQueueName);
+          cb();
+        }
+      },
+    );
   }
 
   protected handleOfflineConsumer(
@@ -121,7 +125,7 @@ export class GarbageCollector {
 
   protected handleProcessingQueue(queue: string, cb: TCallback<void>): void {
     this.debug(`Inspecting processing queue [${queue}]... `);
-    const extractedData = ConsumerRedisKeys.extractData(queue);
+    const extractedData = redisKeys.extractData(queue);
     if (!extractedData || !extractedData.consumerId) {
       throw new Error(`Invalid extracted consumer data`);
     }
@@ -179,8 +183,8 @@ export class GarbageCollector {
             if (acquired) {
               this.consumer.emit(events.GC_LOCK_ACQUIRED, this.instanceId);
               this.debug('Inspecting processing queues...');
-              this.getRedisInstance().hkeys(
-                this.keyIndexQueueQueuesProcessing,
+              this.getQueueInstance().getProcessingQueues(
+                this.queueName,
                 (e?: Error | null, result?: string[] | null) => {
                   if (e) this.consumer.error(e);
                   else if (result) {
@@ -221,19 +225,16 @@ export class GarbageCollector {
   start(): void {
     this.powerManager.goingUp();
     const config = this.consumer.getConfig();
-    LockManager.getInstance(config, (lockManager) => {
-      this.lockManagerInstance = lockManager;
-      RedisClient.getInstance(config, (client) => {
-        this.redisClientInstance = client;
-        this.setupMessageCollector();
-        this.ticker = new Ticker(() => {
-          this.onTick();
-        }, GC_INSPECTION_INTERVAL);
-        this.powerManager.commit();
-        this.consumer.emit(events.GC_UP);
-        this.onTick();
-      });
-    });
+    this.redisClientInstance = new RedisClient(config);
+    this.lockManagerInstance = new LockManager(this.redisClientInstance);
+    this.queue = new Queue(this.redisClientInstance);
+    this.setupMessageCollector();
+    this.ticker = new Ticker(() => {
+      this.onTick();
+    }, GC_INSPECTION_INTERVAL);
+    this.powerManager.commit();
+    this.consumer.emit(events.GC_UP);
+    this.onTick();
   }
 
   stop(): void {
@@ -241,10 +242,11 @@ export class GarbageCollector {
     this.consumer.once(events.GC_READY_TO_SHUTDOWN, () => {
       this.getTicker().shutdown();
       this.getLockManagerInstance().quit(() => {
-        this.lockManagerInstance = null;
         this.getRedisInstance().end(true);
+        this.lockManagerInstance = null;
         this.redisClientInstance = null;
         this.gcMessageCollector = null;
+        this.queue = null;
         this.ticker = null;
         this.powerManager.commit();
         this.consumer.emit(events.GC_DOWN);

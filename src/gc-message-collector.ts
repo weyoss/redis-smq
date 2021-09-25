@@ -1,5 +1,4 @@
 import { Message } from './message';
-import { Multi } from 'redis';
 import { TCallback, TRedisClientMulti } from '../types';
 import { Consumer } from './consumer';
 import { events } from './events';

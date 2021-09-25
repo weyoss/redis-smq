@@ -2,7 +2,6 @@ import { IConfig, TCallback } from '../types';
 import { Message } from './message';
 import { ProducerStatsProvider } from './stats-provider/producer-stats-provider';
 import { Instance } from './instance';
-import { ProducerRedisKeys } from './redis-keys/producer-redis-keys';
 import { events } from './events';
 
 export class Producer extends Instance {
@@ -10,7 +9,6 @@ export class Producer extends Instance {
 
   constructor(queueName: string, config: IConfig = {}) {
     super(queueName, config);
-    this.redisKeys = new ProducerRedisKeys(this.getQueueName(), this.getId());
     this.run();
   }
 

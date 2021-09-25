@@ -13,7 +13,7 @@ export class RedisClient extends EventEmitter {
   protected client: TCompatibleRedisClient;
   protected key: string | null = null;
 
-  private constructor(config: IConfig = {}) {
+  constructor(config: IConfig = {}) {
     super();
     const { client = RedisClientName.REDIS, options = {} } = config.redis ?? {};
     if (![RedisClientName.IOREDIS, RedisClientName.REDIS].includes(client)) {
@@ -28,16 +28,6 @@ export class RedisClient extends EventEmitter {
     });
     this.client.once('error', (err: Error) => {
       throw err;
-    });
-  }
-
-  static getInstance(
-    config: IConfig = {},
-    cb: (client: RedisClient) => void,
-  ): void {
-    const instance = new RedisClient(config);
-    instance.once('ready', () => {
-      cb(instance);
     });
   }
 
