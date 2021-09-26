@@ -57,7 +57,7 @@ describe('Monitor server: fetch scheduled messages using, delete a scheduled mes
     for (let i = 0; i < 4; i += 1) {
       const msg = new Message();
       msg
-        .setScheduledCron(`* * ${i} * * *`)
+        .setScheduledDelay(60 * (i + 1))
         .setBody({ hello: `world ${msg.getId()}` });
       await producer.produceMessageAsync(msg);
       messages.push(msg);

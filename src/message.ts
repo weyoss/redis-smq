@@ -43,6 +43,9 @@ export class Message {
     this.delayed = false;
   }
 
+  /**
+   * @param period In seconds
+   */
   setScheduledPeriod(period: number): Message {
     if (period < 1)
       throw new Error('Scheduling period should not be less than 1 second');
@@ -50,6 +53,9 @@ export class Message {
     return this;
   }
 
+  /**
+   * @param delay In seconds
+   */
   setScheduledDelay(delay: number): Message {
     if (delay < 1) {
       throw new Error('Scheduling delay should not be less than 1 second');
@@ -71,11 +77,17 @@ export class Message {
     return this;
   }
 
+  /**
+   * @param ttl In milliseconds
+   */
   setTTL(ttl: number): Message {
     this.ttl = Number(ttl);
     return this;
   }
 
+  /**
+   * @param timeout In milliseconds
+   */
   setConsumeTimeout(timeout: number): Message {
     this.consumeTimeout = Number(timeout);
     return this;
@@ -86,6 +98,9 @@ export class Message {
     return this;
   }
 
+  /**
+   * @param delay In seconds
+   */
   setRetryDelay(delay: number): Message {
     this.retryDelay = Number(delay);
     return this;
