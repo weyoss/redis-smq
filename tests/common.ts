@@ -1,12 +1,15 @@
 import { promisifyAll } from 'bluebird';
 import { events } from '../src/events';
 import { RedisClient } from '../src/redis-client';
-import { Producer, Consumer, Message } from '../index';
+import { Producer, Consumer, Message, MonitorServer } from '../index';
 import { config } from './config';
 import { TCallback, IConsumerConstructorOptions } from '../types';
 
+type TMonitorServer = ReturnType<typeof MonitorServer>;
+
 const consumersList: Consumer[] = [];
 const producersList: Producer[] = [];
+let monitorServer: TMonitorServer | null = null;
 
 export async function shutdown() {
   const p = async (list: (Consumer | Producer)[]) => {
@@ -23,6 +26,7 @@ export async function shutdown() {
   };
   await p(consumersList);
   await p(producersList);
+  await stopMonitorServer();
 }
 
 export function getConsumer({
@@ -54,6 +58,26 @@ export function getProducer(queueName = 'test_queue') {
   const p = promisifyAll(producer);
   producersList.push(p);
   return p;
+}
+
+export async function startMonitorServer() {
+  if (!monitorServer) {
+    monitorServer = await new Promise<TMonitorServer>((resolve) => {
+      const monitorServer = MonitorServer(config);
+      monitorServer.listen(() => resolve(monitorServer));
+    });
+  }
+}
+
+export async function stopMonitorServer() {
+  return new Promise<void>((resolve) => {
+    if (monitorServer) {
+      monitorServer.quit(() => {
+        monitorServer = null;
+        resolve();
+      });
+    } else resolve();
+  });
 }
 
 export function validateTime(

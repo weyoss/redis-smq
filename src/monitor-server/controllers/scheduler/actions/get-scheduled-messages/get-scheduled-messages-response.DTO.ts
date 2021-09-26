@@ -1,5 +1,6 @@
 import {
   Allow,
+  Equals,
   IsBoolean,
   IsInt,
   IsOptional,
@@ -63,11 +64,27 @@ export class MessageDTO {
   delayed!: boolean;
 }
 
-export class GetScheduledMessagesResponseDTO {
+export class GetScheduledMessagesResponseBodyDataDTO {
   @IsInt()
   total!: number;
 
   @ValidateNested()
   @Type(() => MessageDTO)
   items!: MessageDTO[];
+}
+
+export class GetScheduledMessagesResponseBodyDTO {
+  @ValidateNested()
+  @Type(() => GetScheduledMessagesResponseBodyDataDTO)
+  data!: GetScheduledMessagesResponseBodyDataDTO;
+}
+
+export class GetScheduledMessagesResponseDTO {
+  @IsInt()
+  @Equals(200)
+  status!: number;
+
+  @ValidateNested()
+  @Type(() => GetScheduledMessagesResponseBodyDTO)
+  body!: GetScheduledMessagesResponseBodyDTO;
 }
