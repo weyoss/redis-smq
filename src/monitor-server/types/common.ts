@@ -3,6 +3,7 @@ import { IConfig } from '../../../types';
 import { RedisClient } from '../../redis-client';
 import { Services } from '../services';
 import { ParameterizedContext } from 'koa';
+import Logger from 'bunyan';
 
 export interface IResponseBodyError {
   code: number;
@@ -36,6 +37,7 @@ export interface IContext extends Koa.DefaultContext {
   config: IConfig;
   redis: RedisClient;
   services: ReturnType<typeof Services>;
+  logger: Logger;
 }
 
 export type TApplication = Koa<Koa.DefaultState, IContext>;

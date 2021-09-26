@@ -46,6 +46,8 @@ export function getActionRouter(
       if (data) {
         ctx.status = 200;
         ctx.body = { data };
+      } else {
+        ctx.status = 204;
       }
       await next();
     },
