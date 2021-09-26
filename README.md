@@ -141,11 +141,11 @@ module.exports = {
 
 - `monitor` *(Object): Optional.* RedisSMQ monitor parameters.
 
-- `monitor.enabled` *(Boolean/Integer): Optional.* Enable/Disable the monitor. By default disabled.
+- `monitor.enabled` *(Boolean/Integer): Optional.* Enable/Disable the monitor. By default, disabled.
 
-- `monitor.host` *(String): Optional.* IP address of the monitor server. By default `0.0.0.0`.
+- `monitor.host` *(String): Optional.* IP address of the monitor server. By default, `0.0.0.0`.
 
-- `monitor.port` *(Integer): Optional.* Port of the monitor server. By default `7210`.
+- `monitor.port` *(Integer): Optional.* Port of the monitor server. By default, `7210`.
 
 ## Usage
 
@@ -157,11 +157,8 @@ Message class is the main component responsible for creating and handling messag
 the required methods needed to construct and deal with messages.
 
 ```javascript
-
 const { Message } = require('redis-smq');
-
 const message = new Message();
-
 message
     .setBody({hello: 'world'})
     .setTTL(3600000)
@@ -184,7 +181,7 @@ Each producer instance has an associated message queue and provides `produceMess
 message and decides to either send it to the message queue scheduler or to immediately enqueue it for delivery.
 
 ```javascript
-// filename: ./example/test-queue-producer.js
+// filename: ./examples/javascript/ns1-test-queue-producer.js
 
 'use strict';
 const { Message, Producer } = require('redis-smq');
@@ -214,8 +211,7 @@ Consumer classes are saved per files. Each consumer file represents a consumer c
 A consumer class may look like:
 
 ```javascript
-// filename: ./example/test-queue-consumer.js
-
+// filename: ./examples/javascript/ns1-test-queue-consumer.js
 'use strict';
 
 const { Consumer } = require('redis-smq');
@@ -249,7 +245,7 @@ To start consuming messages, a consumer needs first to be launched from CLI to c
 and wait for messages: 
 
 ```text
-$ node ./example/test-queue-consumer.js
+$ node ./examples/javascript/test-queue-consumer.js
 ```
 
 Once a message is received and processed the consumer should acknowledge the message by invoking the callback function
@@ -364,23 +360,24 @@ $ node consumer | ./node_modules/.bin/bunyan
 ```
 ### Monitoring
 
-The RedisSMQ Monitor is an interface which let you monitor and debug your RedisSMQ server from a web browser in 
+The RedisSMQ Monitor is an interface which let you monitor, debug, and manage your RedisSMQ server from a web browser in 
 real-time.
 
-Starting from version v1.1.0, RedisSMQ Monitor has split up into a standalone project and was packaged under
-[RedisSMQ Monitor](https://github.com/weyoss/redis-smq-monitor)
+Starting from version v1.1.0, the frontend part of the RedisSMQ Monitor has split up into a standalone project and 
+is packaged under [RedisSMQ Monitor](https://github.com/weyoss/redis-smq-monitor)
 
-RedisSMQ includes the monitor as part of its package.
+Being an integral part of the MQ, the monitor can be launched and used by starting first the monitor server as shown 
+in the example bellow:
 
 ```javascript
-// filename: ./example/monitor.js
+// filename: ./examples/javascript/monitor.js
 'use strict';
 
 const config = require('./config');
-const { monitor } = require('redis-smq');
+const { MonitorServer } = require('redis-smq');
 
-monitor(config).listen(() => {
-    console.log('It works!')
+MonitorServer(config).listen(() => {
+    console.log('It works!');
 });
 ```
 ## Contributing
