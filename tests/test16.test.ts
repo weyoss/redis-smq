@@ -1,7 +1,7 @@
 import { getConsumer, getProducer, untilConsumerIdle } from './common';
 import { Message } from '../src/message';
 import { delay } from 'bluebird';
-import { TCallback } from '../types';
+import { ICallback } from '../types';
 import { events } from '../src/events';
 
 type TQueueMetadata = {
@@ -18,7 +18,7 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
   };
   const queueAConsumer1 = getConsumer({
     queueName: 'queue_a',
-    consumeMock: jest.fn((msg: Message, cb: TCallback<void>) => {
+    consumeMock: jest.fn((msg: Message, cb: ICallback<void>) => {
       // do not acknowledge/unacknowledge the message
       queueAMeta.receivedMessages.push(msg);
       queueAConsumer1.shutdown();
@@ -33,9 +33,9 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
 
   const queueAConsumer2 = getConsumer({
     queueName: 'queue_a',
-    consumeMock: jest.fn((msg: Message, cb: TCallback<void>) => {
+    consumeMock: jest.fn((msg: Message, cb: ICallback<void>) => {
       queueAMeta.receivedMessages.push(msg);
-      cb();
+      cb(null);
     }),
   });
   queueAConsumer2
@@ -53,9 +53,9 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
   };
   const queueBConsumer1 = getConsumer({
     queueName: 'queue_b',
-    consumeMock: jest.fn((msg: Message, cb: TCallback<void>) => {
+    consumeMock: jest.fn((msg: Message, cb: ICallback<void>) => {
       queueBMeta.receivedMessages.push(msg);
-      cb();
+      cb(null);
     }),
   });
   queueBConsumer1

@@ -67,7 +67,8 @@ export class SchedulerRunner extends EventEmitter {
           if (err) throw err;
           else {
             if (acquired) {
-              this.getScheduler().enqueueMessages(() => {
+              this.getScheduler().enqueueScheduledMessages((err) => {
+                if (err) throw err;
                 this.getTicker().nextTick();
               });
             } else this.getTicker().nextTick();
@@ -80,16 +81,18 @@ export class SchedulerRunner extends EventEmitter {
     }
   }
 
-  start(scheduler: Scheduler): void {
+  start(): void {
     this.powerManager.goingUp();
-    this.lockManagerInstance = new LockManager(new RedisClient(this.config));
-    this.schedulerInstance = scheduler;
-    this.powerManager.commit();
-    this.ticker = new Ticker(() => {
+    RedisClient.getInstance(this.config, (client) => {
+      this.lockManagerInstance = new LockManager(client);
+      this.schedulerInstance = new Scheduler(this.queueName, client);
+      this.powerManager.commit();
+      this.ticker = new Ticker(() => {
+        this.onTick();
+      }, this.tickPeriod);
       this.onTick();
-    }, this.tickPeriod);
-    this.onTick();
-    this.emit(events.SCHEDULER_RUNNER_UP);
+      this.emit(events.SCHEDULER_RUNNER_UP);
+    });
   }
 
   stop(): void {
@@ -98,7 +101,6 @@ export class SchedulerRunner extends EventEmitter {
       this.getTicker().shutdown(() => {
         this.getLockManager().quit(() => {
           this.lockManagerInstance = null;
-          this.getScheduler().quit();
           this.schedulerInstance = null;
           this.powerManager.commit();
           this.emit(events.SCHEDULER_RUNNER_DOWN);

@@ -3,7 +3,7 @@ import { events } from '../src/events';
 import { RedisClient } from '../src/redis-client';
 import { Producer, Consumer, Message, MonitorServer } from '../index';
 import { config } from './config';
-import { TCallback, IConsumerConstructorOptions } from '../types';
+import { ICallback, IConsumerConstructorOptions } from '../types';
 
 type TMonitorServer = ReturnType<typeof MonitorServer>;
 
@@ -36,12 +36,12 @@ export function getConsumer({
 }: {
   queueName?: string;
   options?: IConsumerConstructorOptions;
-  consumeMock?: ((msg: Message, cb: TCallback<void>) => void) | null;
+  consumeMock?: ((msg: Message, cb: ICallback<void>) => void) | null;
 } = {}): Consumer {
   const TemplateClass = class extends Consumer {
     // eslint-disable-next-line class-methods-use-this
-    consume(message: Message, cb: TCallback<void>) {
-      cb();
+    consume(message: Message, cb: ICallback<void>) {
+      cb(null);
     }
   };
   const consumer = new TemplateClass(queueName, config, options);
@@ -61,12 +61,12 @@ export function getProducer(queueName = 'test_queue') {
 }
 
 export async function startMonitorServer() {
-  if (!monitorServer) {
-    monitorServer = await new Promise<TMonitorServer>((resolve) => {
-      const monitorServer = MonitorServer(config);
-      monitorServer.listen(() => resolve(monitorServer));
+  await new Promise<void>((resolve) => {
+    monitorServer = MonitorServer(config);
+    monitorServer.listen(() => {
+      resolve();
     });
-  }
+  });
 }
 
 export async function stopMonitorServer() {
@@ -91,8 +91,10 @@ export function validateTime(
   );
 }
 
-export function getRedisInstance() {
-  const c = new RedisClient(config);
+export async function getRedisInstance() {
+  const c = await new Promise<RedisClient>((resolve) =>
+    RedisClient.getInstance(config, resolve),
+  );
   return promisifyAll(c);
 }
 

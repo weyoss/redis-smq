@@ -5,7 +5,10 @@ import * as Logger from 'bunyan';
 import { RedisClient } from '../src/redis-client';
 import { Message } from '../src/message';
 
-export type TCallback<T> = (err?: Error | null, reply?: T | null) => void;
+export interface ICallback<T> {
+  (err?: Error | null, reply?: T | null): void;
+  (err: null | undefined, reply: T): void;
+}
 
 export type TFunction<TReturn = void, TArgs = any> = (
   ...args: TArgs[]

@@ -29,7 +29,7 @@ test('A message is not lost in case of a consumer crash', async () => {
    */
   const consumer2 = getConsumer({
     consumeMock: jest.fn((msg, cb) => {
-      cb();
+      cb(null);
     }),
   });
 

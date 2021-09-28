@@ -8,11 +8,15 @@ or the consumer using `getScheduler()`.
 const { Consumer, Producer } = require('redis-smq');
 
 const producer = new Producer('test_queue');
-const scheduler = producer.getScheduler();
+producer.getScheduler((err, scheduler) => {
+    // ...   
+});
 
 // Or
 const consumer = new Consumer('test_queue');
-const scheduler = consumer.getScheduler();
+consumer.getScheduler((err, scheduler) => {
+    // ...
+});
 ```
 
 ## Public properties
@@ -36,22 +40,12 @@ scheduler.schedule(message, mixed);
     - `result` *(boolean | undefined).* Indicates whether the message has been scheduled.
   
 ```javascript
-'use strict';
-const { Message, Producer } = require('redis-smq');
-
 const message = new Message();
-
-message
-    .setBody({hello: 'world'})
-    .setScheduledCron(`0 0 * * * *`);
-
-const producer = new Producer('test_queue');
-const scheduler = producer.getScheduler();
-
+message.setBody({hello: 'world'}).setScheduledCron(`0 0 * * * *`);
 scheduler.schedule(message, (err, rely) => {
-    if (err) console.log(err);
-    else if (rely) console.log('Message has been succefully scheduled');
-    else console.log('Message has not been scheduled');
+  if (err) console.log(err);
+  else if (rely) console.log('Message has been succefully scheduled');
+  else console.log('Message has not been scheduled');
 });
 ```
 
@@ -69,12 +63,6 @@ scheduler.deleteScheduledMessage(messageId, cb);
     - `result` *(boolean | undefined).* Indicates whether the message has been deleted.
 
 ```javascript
-'use strict';
-const { Message, Producer } = require('redis-smq');
-
-const producer = new Producer('test_queue');
-const scheduler = producer.getScheduler();
-
 scheduler.deleteScheduledMessage(message_id, (err, result) => {
    if (err) console.log(err);
    else if (result === true) console.log('Message has been succefully deleted');
@@ -99,12 +87,6 @@ scheduler.getScheduledMessages(skip, take, cb);
 
 
 ```javascript
-'use strict';
-const { Message, Producer } = require('redis-smq');
-
-const producer = new Producer('test_queue');
-const scheduler = producer.getScheduler();
-
 scheduler.getScheduledMessages(0, 25, (err, result) => {
    if (err) console.log(err);
    else {
@@ -147,6 +129,7 @@ Boolean. True when either message `scheduling repeat` or `scheduling CRON` has b
 
 These methods are used internally and should not be used in your application:
 
-- Scheduler.prototype.start()
-- Scheduler.prototype.stop()
-- Scheduler.prototype.runTicker()
+- Scheduler.prototype.scheduleAtNextTimestamp()
+- Scheduler.prototype.enqueueScheduledMessage()
+- Scheduler.prototype.enqueueScheduledMessages()
+- Scheduler.prototype.quit()

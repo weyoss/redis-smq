@@ -1,4 +1,4 @@
-import { TCallback } from '../types';
+import { ICallback } from '../types';
 import { RedisClient } from './redis-client';
 import * as Redlock from 'redlock';
 
@@ -27,7 +27,7 @@ export class LockManager {
     retryOnFail: boolean,
     lockKey: string,
     ttl: number,
-    cb: TCallback<boolean>,
+    cb: ICallback<boolean>,
   ) {
     if (err.name === 'LockError') {
       if (retryOnFail) {
@@ -43,7 +43,7 @@ export class LockManager {
     lockKey: string,
     ttl: number,
     retryOnFail: boolean,
-    cb: TCallback<boolean>,
+    cb: ICallback<boolean>,
   ): void {
     const handleRedlockReply = (err?: Error | null, lock?: Redlock.Lock) => {
       if (err) this.acquireLockRetryOnFail(err, retryOnFail, lockKey, ttl, cb);
@@ -57,7 +57,7 @@ export class LockManager {
     else this.getRedlock().lock(lockKey, ttl, handleRedlockReply);
   }
 
-  releaseLock(cb: TCallback<void>): void {
+  releaseLock(cb: ICallback<void>): void {
     if (this.timer) clearTimeout(this.timer);
     if (!this.acquiredLock) cb();
     else {
@@ -71,7 +71,7 @@ export class LockManager {
     }
   }
 
-  quit(cb: TCallback<void>): void {
+  quit(cb: ICallback<void>): void {
     if (!this.redlock) cb();
     else {
       this.releaseLock((err) => {

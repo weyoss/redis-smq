@@ -1,4 +1,4 @@
-import { TCallback, TFunction } from '../types';
+import { ICallback, TFunction } from '../types';
 
 export class Ticker {
   protected isRunning = false;
@@ -13,7 +13,7 @@ export class Ticker {
     this.isRunning = true;
   }
 
-  shutdown(cb?: TCallback<void>): void {
+  shutdown(cb?: ICallback<void>): void {
     if (!this.isRunning) {
       throw new Error('Ticker is already down');
     }

@@ -1,4 +1,4 @@
-import { IConfig, IConsumerConstructorOptions, TCallback } from '../types';
+import { IConfig, IConsumerConstructorOptions, ICallback } from '../types';
 import { Instance } from './instance';
 import { Message } from './message';
 import { ConsumerStatsProvider } from './stats-provider/consumer-stats-provider';
@@ -65,12 +65,10 @@ export abstract class Consumer extends Instance {
       keyQueue,
       keyConsumerProcessingQueue,
       0,
-      (err?: Error | null, json?: string | null) => {
+      (err, json) => {
         if (err) this.error(err);
+        else if (!json) throw new Error();
         else {
-          if (!json) {
-            throw new Error(`Expected a non-empty string`);
-          }
           this.loggerInstance.info('Got new message...');
           const message = Message.createFromMessage(json);
           this.emit(events.MESSAGE_RECEIVED, message);
@@ -110,11 +108,12 @@ export abstract class Consumer extends Instance {
     this.on(events.GOING_UP, () => {
       this.getHeartBeatInstance().start();
       this.getGarbageCollectorInstance().start();
-      this.getSchedulerRunnerInstance().start(this.getScheduler());
+      this.getSchedulerRunnerInstance().start();
     });
     this.on(events.GOING_DOWN, () => {
       this.getHeartBeatInstance().stop();
       this.getGarbageCollectorInstance().stop();
+      this.getSchedulerRunnerInstance().stop();
     });
     this.on(events.DOWN, () => {
       this.garbageCollectorInstance = null;
@@ -214,8 +213,7 @@ export abstract class Consumer extends Instance {
     return this.schedulerRunnerInstance;
   }
 
-  protected setupScheduler() {
-    super.setupScheduler();
+  protected setupSchedulerRunner() {
     this.schedulerRunnerInstance = new SchedulerRunner(
       this.getQueueName(),
       this.config,
@@ -224,22 +222,16 @@ export abstract class Consumer extends Instance {
       this.handleStartupEvent(events.SCHEDULER_RUNNER_UP),
     );
     this.schedulerRunnerInstance.on(events.SCHEDULER_RUNNER_DOWN, () => {
-      this.schedulerInstance = null;
       this.schedulerRunnerInstance = null;
-      this.emit(events.SCHEDULER_DOWN);
       this.handleShutdownEvent(events.SCHEDULER_RUNNER_DOWN);
     });
-  }
-
-  protected shutdownScheduler() {
-    this.getSchedulerRunnerInstance().stop();
   }
 
   protected setupQueues(): void {
     this.getQueueInstance().setupConsumerQueues(
       this.getQueueName(),
       this.getId(),
-      (err?: Error | null) => {
+      (err) => {
         if (err) this.error(err);
         else super.setupQueues();
       },
@@ -250,6 +242,7 @@ export abstract class Consumer extends Instance {
     super.bootstrap();
     this.setupHeartBeat();
     this.setupGarbageCollector();
+    this.setupSchedulerRunner();
   }
 
   protected handleConsume(msg: Message): void {
@@ -309,5 +302,5 @@ export abstract class Consumer extends Instance {
     this.emit(events.MESSAGE_UNACKNOWLEDGED, msg);
   }
 
-  abstract consume(msg: Message, cb: TCallback<void>): void;
+  abstract consume(msg: Message, cb: ICallback<void>): void;
 }

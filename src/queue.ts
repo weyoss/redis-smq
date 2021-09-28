@@ -1,5 +1,5 @@
 import { RedisClient } from './redis-client';
-import { TCallback } from '../types';
+import { ICallback } from '../types';
 import { redisKeys } from './redis-keys';
 import * as async from 'neo-async';
 import { events } from './events';
@@ -13,12 +13,12 @@ export class Queue extends EventEmitter {
     this.redisClientInstance = redisClient;
   }
 
-  getMessageQueues(cb: TCallback<string[]>): void {
+  getMessageQueues(cb: ICallback<string[]>): void {
     const { keyIndexQueue } = redisKeys.getGlobalKeys();
     this.redisClientInstance.smembers(keyIndexQueue, cb);
   }
 
-  getDLQQueues(cb: TCallback<string[]>): void {
+  getDLQQueues(cb: ICallback<string[]>): void {
     const { keyIndexQueueDLQ } = redisKeys.getGlobalKeys();
     this.redisClientInstance.smembers(keyIndexQueueDLQ, cb);
   }
@@ -26,25 +26,11 @@ export class Queue extends EventEmitter {
   setupQueues(queueName: string): void {
     const { keyIndexQueue, keyQueue, keyQueueDLQ, keyIndexQueueDLQ } =
       redisKeys.getKeys(queueName);
-    const rememberDLQ = (cb: TCallback<void>) => {
-      this.redisClientInstance.sadd(
-        keyIndexQueueDLQ,
-        keyQueueDLQ,
-        (err?: Error | null) => {
-          if (err) cb(err);
-          else cb();
-        },
-      );
+    const rememberDLQ = (cb: ICallback<unknown>) => {
+      this.redisClientInstance.sadd(keyIndexQueueDLQ, keyQueueDLQ, cb);
     };
-    const rememberQueue = (cb: TCallback<void>) => {
-      this.redisClientInstance.sadd(
-        keyIndexQueue,
-        keyQueue,
-        (err?: Error | null) => {
-          if (err) cb(err);
-          else cb();
-        },
-      );
+    const rememberQueue = (cb: ICallback<unknown>) => {
+      this.redisClientInstance.sadd(keyIndexQueue, keyQueue, cb);
     };
     async.parallel([rememberQueue, rememberDLQ], (err?: Error | null) => {
       if (err) throw err;
@@ -55,7 +41,7 @@ export class Queue extends EventEmitter {
   setupConsumerQueues(
     queueName: string,
     consumerId: string,
-    cb: TCallback<any[]>,
+    cb: ICallback<unknown[]>,
   ): void {
     const {
       keyConsumerProcessingQueue,
@@ -75,7 +61,7 @@ export class Queue extends EventEmitter {
   deleteProcessingQueue(
     queueName: string,
     processingQueueName: string,
-    cb: TCallback<void>,
+    cb: ICallback<void>,
   ): void {
     const multi = this.redisClientInstance.multi();
     const { keyIndexQueueProcessing, keyIndexQueueQueuesProcessing } =
@@ -86,7 +72,7 @@ export class Queue extends EventEmitter {
     multi.exec((err) => cb(err));
   }
 
-  getProcessingQueues(queueName: string, cb: TCallback<string[]>): void {
+  getProcessingQueues(queueName: string, cb: ICallback<string[]>): void {
     const { keyIndexQueueQueuesProcessing } = redisKeys.getKeys(queueName);
     this.redisClientInstance.hkeys(keyIndexQueueQueuesProcessing, cb);
   }

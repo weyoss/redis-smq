@@ -3,7 +3,7 @@ import { createClient, Multi, RedisClient as NodeRedis } from 'redis';
 import {
   IConfig,
   RedisClientName,
-  TCallback,
+  ICallback,
   TCompatibleRedisClient,
   TRedisClientMulti,
 } from '../types';
@@ -13,7 +13,7 @@ export class RedisClient extends EventEmitter {
   protected client: TCompatibleRedisClient;
   protected key: string | null = null;
 
-  constructor(config: IConfig = {}) {
+  protected constructor(config: IConfig = {}) {
     super();
     const { client = RedisClientName.REDIS, options = {} } = config.redis ?? {};
     if (![RedisClientName.IOREDIS, RedisClientName.REDIS].includes(client)) {
@@ -35,7 +35,7 @@ export class RedisClient extends EventEmitter {
     key: string,
     score: number,
     member: string,
-    cb: TCallback<number | string>,
+    cb: ICallback<number | string>,
   ): void {
     // different typescript signatures, using if/else to get it done
     if (this.client instanceof NodeRedis) {
@@ -49,7 +49,7 @@ export class RedisClient extends EventEmitter {
     return this.client.multi();
   }
 
-  execMulti<T>(multi: TRedisClientMulti, cb: TCallback<T[]>): void {
+  execMulti<T>(multi: TRedisClientMulti, cb: ICallback<T[]>): void {
     if (multi instanceof Multi) {
       multi.exec(cb);
     } else {
@@ -80,11 +80,11 @@ export class RedisClient extends EventEmitter {
     }
   }
 
-  zcard(key: string, cb: TCallback<number>) {
+  zcard(key: string, cb: ICallback<number>) {
     this.client.zcard(key, cb);
   }
 
-  zrange(key: string, min: number, max: number, cb: TCallback<string[]>) {
+  zrange(key: string, min: number, max: number, cb: ICallback<string[]>) {
     // different typescript signatures, using if/else to get it done
     if (this.client instanceof NodeRedis) {
       this.client.zrange(key, min, max, cb);
@@ -106,7 +106,7 @@ export class RedisClient extends EventEmitter {
     key: string,
     min: number,
     max: number,
-    cb: TCallback<string[]>,
+    cb: ICallback<string[]>,
   ): void {
     // different typescript signatures, using if/else to get it done
     if (this.client instanceof NodeRedis) {
@@ -116,7 +116,7 @@ export class RedisClient extends EventEmitter {
     }
   }
 
-  smembers(key: string, cb: TCallback<string[]>): void {
+  smembers(key: string, cb: ICallback<string[]>): void {
     // different typescript signatures, using if/else to get it done
     if (this.client instanceof NodeRedis) {
       this.client.smembers(key, cb);
@@ -125,7 +125,7 @@ export class RedisClient extends EventEmitter {
     }
   }
 
-  sadd(key: string, member: string, cb: TCallback<number>): void {
+  sadd(key: string, member: string, cb: ICallback<number>): void {
     // different typescript signatures, using if/else to get it done
     if (this.client instanceof NodeRedis) {
       this.client.sadd(key, member, cb);
@@ -134,15 +134,15 @@ export class RedisClient extends EventEmitter {
     }
   }
 
-  hgetall(key: string, cb: TCallback<Record<string, string>>): void {
+  hgetall(key: string, cb: ICallback<Record<string, string>>): void {
     this.client.hgetall(key, cb);
   }
 
-  hget(key: string, field: string, cb: TCallback<string>): void {
+  hget(key: string, field: string, cb: ICallback<string>): void {
     this.client.hget(key, field, cb);
   }
 
-  hset(key: string, field: string, value: string, cb: TCallback<number>): void {
+  hset(key: string, field: string, value: string, cb: ICallback<number>): void {
     // different typescript signatures, using if/else to get it done
     if (this.client instanceof NodeRedis) {
       this.client.hset(key, field, value, cb);
@@ -151,7 +151,7 @@ export class RedisClient extends EventEmitter {
     }
   }
 
-  hdel(key: string, fields: string | string[], cb: TCallback<number>): void {
+  hdel(key: string, fields: string | string[], cb: ICallback<number>): void {
     // different typescript signatures, using if/else to get it done
     if (this.client instanceof NodeRedis) {
       this.client.hdel(key, fields, cb);
@@ -164,16 +164,16 @@ export class RedisClient extends EventEmitter {
     key: string,
     start: number,
     stop: number,
-    cb: TCallback<string[]>,
+    cb: ICallback<string[]>,
   ): void {
     this.client.lrange(key, start, stop, cb);
   }
 
-  hkeys(key: string, cb: TCallback<string[]>): void {
+  hkeys(key: string, cb: ICallback<string[]>): void {
     this.client.hkeys(key, cb);
   }
 
-  hmset(key: string, args: string[], cb: TCallback<string>): void {
+  hmset(key: string, args: string[], cb: ICallback<string>): void {
     // different typescript signatures, using if/else to get it done
     if (this.client instanceof NodeRedis) {
       this.client.hmset(key, args, cb);
@@ -186,16 +186,16 @@ export class RedisClient extends EventEmitter {
     source: string,
     destination: string,
     timeout: number,
-    cb: TCallback<string>,
+    cb: ICallback<string>,
   ): void {
     this.client.brpoplpush(source, destination, timeout, cb);
   }
 
-  rpop(key: string, cb: TCallback<string>): void {
+  rpop(key: string, cb: ICallback<string>): void {
     this.client.rpop(key, cb);
   }
 
-  lpush(key: string, element: string, cb: TCallback<number>): void {
+  lpush(key: string, element: string, cb: ICallback<number>): void {
     // different typescript signatures, using if/else to get it done
     if (this.client instanceof NodeRedis) {
       this.client.lpush(key, element, cb);
@@ -204,12 +204,20 @@ export class RedisClient extends EventEmitter {
     }
   }
 
-  publish(channel: string, message: string, cb: TCallback<number>): void {
+  publish(channel: string, message: string, cb: ICallback<number>): void {
     this.client.publish(channel, message, cb);
   }
 
-  flushall(cb: TCallback<string>): void {
+  flushall(cb: ICallback<string>): void {
     this.client.flushall(cb);
+  }
+
+  static getInstance(
+    config: IConfig = {},
+    cb: (client: RedisClient) => void,
+  ): void {
+    const client = new RedisClient(config);
+    client.once('ready', () => cb(client));
   }
 
   // this exists ONLY to retain compatibility to `redlock`

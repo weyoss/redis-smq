@@ -1,6 +1,6 @@
 import * as async from 'neo-async';
 import {
-  TCallback,
+  ICallback,
   TGetScheduledMessagesReply,
   TRedisClientMulti,
 } from '../types';
@@ -8,14 +8,17 @@ import { Message } from './message';
 import { parseExpression } from 'cron-parser';
 import { RedisClient } from './redis-client';
 import { redisKeys } from './redis-keys';
+import { EventEmitter } from 'events';
+import { events } from './events';
 
-export class Scheduler {
+export class Scheduler extends EventEmitter {
   protected redisClientInstance: RedisClient | null;
   protected keys: ReturnType<typeof redisKeys['getKeys']>;
 
-  constructor(queueName: string, redisClient: RedisClient) {
+  constructor(queueName: string, client: RedisClient) {
+    super();
     this.keys = redisKeys.getKeys(queueName);
-    this.redisClientInstance = redisClient;
+    this.redisClientInstance = client;
   }
 
   protected getRedisClient(): RedisClient {
@@ -25,10 +28,10 @@ export class Scheduler {
     return this.redisClientInstance;
   }
 
-  protected scheduleMessage(
+  protected scheduleAtTimestamp(
     message: Message,
     timestamp: number,
-    mixed: TRedisClientMulti | TCallback<boolean>,
+    mixed: TRedisClientMulti | ICallback<boolean>,
   ): void {
     const { keyQueueDelayed, keyIndexQueueDelayedMessages } = this.keys;
     const schedule = (m: TRedisClientMulti) => {
@@ -51,16 +54,16 @@ export class Scheduler {
     }
   }
 
-  scheduleNextDelivery(msg: Message, multi: TRedisClientMulti): void {
+  scheduleAtNextTimestamp(msg: Message, multi: TRedisClientMulti): void {
     if (this.isPeriodic(msg)) {
       const timestamp = this.getNextScheduledTimestamp(msg) ?? 0;
       if (timestamp > 0) {
-        this.scheduleMessage(msg, timestamp, multi);
+        this.scheduleAtTimestamp(msg, timestamp, multi);
       }
     }
   }
 
-  deliverScheduledMessage(msg: Message, multi: TRedisClientMulti): void {
+  enqueueScheduledMessage(msg: Message, multi: TRedisClientMulti): void {
     const { keyQueue, keyQueueDelayed } = this.keys;
     const message = this.isPeriodic(msg)
       ? Message.createFromMessage(msg, true)
@@ -148,27 +151,20 @@ export class Scheduler {
 
   schedule(
     message: Message,
-    mixed: TRedisClientMulti | TCallback<boolean>,
+    mixed: TRedisClientMulti | ICallback<boolean>,
   ): void {
     const timestamp = this.getNextScheduledTimestamp(message) ?? 0;
     if (timestamp > 0) {
-      this.scheduleMessage(message, timestamp, mixed);
+      this.scheduleAtTimestamp(message, timestamp, mixed);
     } else if (typeof mixed === 'function') mixed(null, false);
   }
 
-  deleteScheduledMessage(messageId: string, cb: TCallback<boolean>): void {
+  deleteScheduledMessage(messageId: string, cb: ICallback<boolean>): void {
     const { keyQueueDelayed, keyIndexQueueDelayedMessages } = this.keys;
-    const getMessage = (cb: TCallback<string>) => {
-      this.getRedisClient().hget(
-        keyIndexQueueDelayedMessages,
-        messageId,
-        (err, message) => {
-          if (err) cb(err);
-          else cb(null, message);
-        },
-      );
+    const getMessage = (cb: ICallback<string>) => {
+      this.getRedisClient().hget(keyIndexQueueDelayedMessages, messageId, cb);
     };
-    const deleteMessage = (msg: string | null, cb: TCallback<boolean>) => {
+    const deleteMessage = (msg: string | null, cb: ICallback<boolean>) => {
       if (msg) {
         const multi = this.getRedisClient().multi();
         multi.zrem(keyQueueDelayed, msg);
@@ -182,15 +178,13 @@ export class Scheduler {
         );
       } else cb(null, false);
     };
-    async.waterfall([getMessage, deleteMessage], (err, result?: boolean) =>
-      cb(err, result),
-    );
+    async.waterfall([getMessage, deleteMessage], cb);
   }
 
   getScheduledMessages(
     skip: number,
     take: number,
-    cb: TCallback<TGetScheduledMessagesReply>,
+    cb: ICallback<TGetScheduledMessagesReply>,
   ): void {
     const { keyQueueDelayed } = this.keys;
     if (skip < 0 || take <= 0) {
@@ -200,12 +194,12 @@ export class Scheduler {
         ),
       );
     } else {
-      const getTotal = (cb: TCallback<number>) => {
+      const getTotal = (cb: ICallback<number>) => {
         this.getRedisClient().zcard(keyQueueDelayed, cb);
       };
       const getItems = (
         total: number,
-        cb: TCallback<TGetScheduledMessagesReply>,
+        cb: ICallback<TGetScheduledMessagesReply>,
       ) => {
         if (!total) {
           cb(null, {
@@ -239,43 +233,38 @@ export class Scheduler {
     }
   }
 
-  enqueueMessages(cb: TCallback<void>) {
+  enqueueScheduledMessages(cb: ICallback<void>) {
     const now = Date.now();
     const { keyQueueDelayed } = this.keys;
-    const process = (messages: string[], cb: TCallback<void>) => {
+    const process = (messages: string[], cb: ICallback<void>) => {
       if (messages.length) {
         async.each(
           messages,
-          (msg: string, _: string | number, done: TCallback<unknown>) => {
+          (msg, _, done) => {
             const message = Message.createFromMessage(msg);
             const multi = this.getRedisClient().multi();
-            this.deliverScheduledMessage(message, multi);
-            this.scheduleNextDelivery(message, multi);
-            multi.exec(done);
+            this.enqueueScheduledMessage(message, multi);
+            this.scheduleAtNextTimestamp(message, multi);
+            multi.exec((err) => {
+              if (err) throw err;
+              else done();
+            });
           },
           cb,
         );
       } else cb();
     };
-    const fetch = (cb: TCallback<string[]>) => {
-      this.getRedisClient().zrangebyscore(
-        keyQueueDelayed,
-        0,
-        now,
-        (err?: Error | null, messages?: string[] | null) => {
-          if (err) cb(err);
-          else cb(null, messages);
-        },
-      );
+    const fetch = (cb: ICallback<string[]>) => {
+      this.getRedisClient().zrangebyscore(keyQueueDelayed, 0, now, cb);
     };
-    async.waterfall([fetch, process], (err) => {
-      if (err) throw err;
-      else cb();
-    });
+    async.waterfall([fetch, process], cb);
   }
 
   quit() {
-    this.getRedisClient().end(true);
-    this.redisClientInstance = null;
+    if (this.redisClientInstance) {
+      this.redisClientInstance.end(true);
+      this.redisClientInstance = null;
+      this.emit(events.SCHEDULER_QUIT);
+    }
   }
 }

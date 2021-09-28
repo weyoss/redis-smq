@@ -9,7 +9,7 @@ import { Message } from './message';
 import { HeartBeat } from './heartbeat';
 import { GCMessageCollector } from './gc-message-collector';
 import { RedisClient } from './redis-client';
-import { TCallback } from '../types';
+import { ICallback } from '../types';
 import { Queue } from './queue';
 import { redisKeys } from './redis-keys';
 
@@ -73,7 +73,7 @@ export class GarbageCollector {
 
   protected destroyQueue(
     processingQueueName: string,
-    cb: TCallback<void>,
+    cb: ICallback<void>,
   ): void {
     this.getQueueInstance().deleteProcessingQueue(
       this.queueName,
@@ -92,7 +92,7 @@ export class GarbageCollector {
   protected handleOfflineConsumer(
     consumerId: string,
     queue: string,
-    cb: TCallback<void>,
+    cb: ICallback<void>,
   ): void {
     this.debug(
       `Inspecting consumer [${consumerId}] processing queue [${queue}] ...`,
@@ -123,7 +123,7 @@ export class GarbageCollector {
     );
   }
 
-  protected handleProcessingQueue(queue: string, cb: TCallback<void>): void {
+  protected handleProcessingQueue(queue: string, cb: ICallback<void>): void {
     this.debug(`Inspecting processing queue [${queue}]... `);
     const extractedData = redisKeys.extractData(queue);
     if (!extractedData || !extractedData.consumerId) {
@@ -158,7 +158,7 @@ export class GarbageCollector {
 
   protected handleProcessingQueues(
     queues: string[],
-    cb: TCallback<void>,
+    cb: ICallback<void>,
   ): void {
     async.each(
       queues,
@@ -225,16 +225,18 @@ export class GarbageCollector {
   start(): void {
     this.powerManager.goingUp();
     const config = this.consumer.getConfig();
-    this.redisClientInstance = new RedisClient(config);
-    this.lockManagerInstance = new LockManager(this.redisClientInstance);
-    this.queue = new Queue(this.redisClientInstance);
-    this.setupMessageCollector();
-    this.ticker = new Ticker(() => {
+    RedisClient.getInstance(config, (client) => {
+      this.redisClientInstance = client;
+      this.lockManagerInstance = new LockManager(this.redisClientInstance);
+      this.queue = new Queue(this.redisClientInstance);
+      this.setupMessageCollector();
+      this.ticker = new Ticker(() => {
+        this.onTick();
+      }, GC_INSPECTION_INTERVAL);
+      this.powerManager.commit();
+      this.consumer.emit(events.GC_UP);
       this.onTick();
-    }, GC_INSPECTION_INTERVAL);
-    this.powerManager.commit();
-    this.consumer.emit(events.GC_UP);
-    this.onTick();
+    });
   }
 
   stop(): void {
