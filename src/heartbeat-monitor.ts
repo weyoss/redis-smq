@@ -1,5 +1,5 @@
 import * as async from 'neo-async';
-import { IConfig, TCallback } from '../types';
+import { IConfig, ICallback } from '../types';
 import { LockManager } from './lock-manager';
 import { Ticker } from './ticker';
 import { HeartBeat } from './heartbeat';
@@ -12,8 +12,15 @@ function heartbeatMonitor(config: IConfig) {
   }
   const { keyLockHeartBeatMonitor } = redisKeys.getGlobalKeys();
   const ticker = new Ticker(tick, 1000);
-  const redisClientInstance = new RedisClient(config);
-  const lockManagerInstance = new LockManager(redisClientInstance);
+  let redisClientInstance: RedisClient | null = null;
+  let lockManagerInstance: LockManager | null = null;
+
+  function getRedisClient() {
+    if (!redisClientInstance) {
+      throw new Error(`Expected an instance of RedisClient`);
+    }
+    return redisClientInstance;
+  }
 
   function getLockManager() {
     if (!lockManagerInstance) {
@@ -22,12 +29,12 @@ function heartbeatMonitor(config: IConfig) {
     return lockManagerInstance;
   }
 
-  function handleConsumers(offlineConsumers: string[], cb: TCallback<number>) {
-    HeartBeat.handleOfflineConsumers(redisClientInstance, offlineConsumers, cb);
+  function handleConsumers(offlineConsumers: string[], cb: ICallback<number>) {
+    HeartBeat.handleOfflineConsumers(getRedisClient(), offlineConsumers, cb);
   }
 
-  function getOfflineConsumers(cb: TCallback<string[]>) {
-    HeartBeat.getConsumersByOnlineStatus(redisClientInstance, (err, result) => {
+  function getOfflineConsumers(cb: ICallback<string[]>) {
+    HeartBeat.getConsumersByOnlineStatus(getRedisClient(), (err, result) => {
       if (err) cb(err);
       else {
         const { offlineConsumers = [] } = result ?? {};
@@ -47,7 +54,12 @@ function heartbeatMonitor(config: IConfig) {
       );
     });
   }
-  tick();
+
+  RedisClient.getInstance(config, (client) => {
+    redisClientInstance = client;
+    lockManagerInstance = new LockManager(redisClientInstance);
+    tick();
+  });
 }
 
 process.on('message', (payload: string) => {

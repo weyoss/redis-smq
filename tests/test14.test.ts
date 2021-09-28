@@ -12,7 +12,7 @@ describe('Produce and consume a delayed message with scheduledCRON/scheduledRepe
     const consumer = getConsumer({
       consumeMock: jest.fn((msg, cb) => {
         timestamps.push(Date.now());
-        cb();
+        cb(null);
       }),
     });
     consumer.run();
@@ -48,7 +48,7 @@ describe('Produce and consume a delayed message with scheduledCRON/scheduledRepe
     const consumer = getConsumer({
       consumeMock: jest.fn((msg, cb) => {
         timestamps.push(Date.now());
-        cb();
+        cb(null);
       }),
     });
     consumer.run();
@@ -89,7 +89,7 @@ describe('Produce and consume a delayed message with scheduledCRON/scheduledRepe
     const consumer = getConsumer({
       consumeMock: jest.fn((msg, cb) => {
         timestamps.push(Date.now());
-        cb();
+        cb(null);
       }),
     });
     consumer.run();

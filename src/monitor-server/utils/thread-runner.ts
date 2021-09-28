@@ -1,4 +1,4 @@
-import { IConfig, TCallback } from '../../../types';
+import { IConfig, ICallback } from '../../../types';
 import { ChildProcess, fork } from 'child_process';
 import { join } from 'path';
 import { readdirSync } from 'fs';
@@ -32,7 +32,7 @@ export function startThreads(config: IConfig, dir: string): void {
   powerManager.commit();
 }
 
-export function stopThreads(cb?: TCallback<void>) {
+export function stopThreads(cb?: ICallback<void>) {
   powerManager.goingDown();
   if (runningThreads.length) {
     let total = runningThreads.length;
@@ -43,7 +43,7 @@ export function stopThreads(cb?: TCallback<void>) {
           total = total - 1;
           if (!total) {
             powerManager.commit();
-            cb && setTimeout(cb, 1000);
+            cb && cb();
           }
         });
         thread.kill('SIGHUP');

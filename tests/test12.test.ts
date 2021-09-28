@@ -10,7 +10,7 @@ import { Message } from '../src/message';
 test('Produce and consume a delayed message', async () => {
   const consumer = getConsumer({
     consumeMock: jest.fn((msg, cb) => {
-      cb();
+      cb(null);
     }),
   });
   consumer.run();

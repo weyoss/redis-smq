@@ -6,7 +6,7 @@ import { events } from '../src/events';
 test('A message is delivered only once to one consumer', async () => {
   const consumer1 = getConsumer({
     consumeMock: jest.fn((msg, cb) => {
-      cb();
+      cb(null);
     }),
   });
   let reQueuedCount1 = 0;
@@ -24,7 +24,7 @@ test('A message is delivered only once to one consumer', async () => {
    */
   const consumer2 = getConsumer({
     consumeMock: jest.fn((msg, cb) => {
-      cb();
+      cb(null);
     }),
   });
   let reQueuedCount2 = 0;

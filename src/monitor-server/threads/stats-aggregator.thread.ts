@@ -3,7 +3,7 @@ import {
   TAggregatedStats,
   TAggregatedStatsQueue,
   TAggregatedStatsQueueConsumer,
-  TCallback,
+  ICallback,
 } from '../../../types';
 import * as async from 'neo-async';
 import { redisKeys } from '../../redis-keys';
@@ -19,9 +19,9 @@ function StatsAggregatorThread(config: IConfig) {
   }
   const { keyIndexRate, keyLockStatsAggregator } = redisKeys.getGlobalKeys();
   const noop = () => void 0;
-  const redisClientInstance = new RedisClient(config);
-  const lockManagerInstance = new LockManager(redisClientInstance);
-  const queue = new Queue(redisClientInstance);
+  let redisClientInstance: RedisClient | null = null;
+  let lockManagerInstance: LockManager | null = null;
+  let queueInstance: Queue | null = null;
   let data: TAggregatedStats = {
     rates: {
       input: 0,
@@ -111,7 +111,14 @@ function StatsAggregatorThread(config: IConfig) {
     return lockManagerInstance;
   }
 
-  function getRates(cb: TCallback<void>) {
+  function getQueueInstance() {
+    if (!queueInstance) {
+      throw new Error(`Expected an instance of Queue`);
+    }
+    return queueInstance;
+  }
+
+  function getRates(cb: ICallback<void>) {
     const handleProducerRate = (
       {
         ns,
@@ -201,14 +208,14 @@ function StatsAggregatorThread(config: IConfig) {
     });
   }
 
-  function getQueueSize(queues: string[], cb: TCallback<void>) {
+  function getQueueSize(queues: string[], cb: ICallback<void>) {
     if (queues && queues.length) {
       const multi = getRedisClient().multi();
       const handleResult = (res: number[]) => {
         const instanceTypes = redisKeys.getTypes();
         async.each(
           res,
-          (size: number, index: number | string, done: TCallback<void>) => {
+          (size, index, done) => {
             const extractedData = redisKeys.extractData(queues[+index]);
             if (extractedData) {
               const { ns, queueName, type } = extractedData;
@@ -226,40 +233,31 @@ function StatsAggregatorThread(config: IConfig) {
       };
       async.each(
         queues,
-        (queue: string, _, done: TCallback<void>) => {
+        (queue, _, done) => {
           multi.llen(queue);
           done();
         },
         () => {
-          getRedisClient().execMulti<number>(
-            multi,
-            (err?, res?: number[] | null) => {
-              if (err) cb(err);
-              else {
-                handleResult(res ?? []);
-              }
-            },
-          );
+          getRedisClient().execMulti<number>(multi, (err, res) => {
+            if (err) cb(err);
+            else {
+              handleResult(res ?? []);
+            }
+          });
         },
       );
     } else cb();
   }
 
-  function getQueues(cb: TCallback<string[]>) {
-    queue.getMessageQueues((err, queues) => {
-      if (err) cb(err);
-      else cb(null, queues);
-    });
+  function getQueues(cb: ICallback<string[]>) {
+    getQueueInstance().getMessageQueues(cb);
   }
 
-  function getDLQQueues(cb: TCallback<string[]>) {
-    queue.getDLQQueues((err, queues) => {
-      if (err) cb(err);
-      else cb(null, queues);
-    });
+  function getDLQQueues(cb: ICallback<string[]>) {
+    getQueueInstance().getDLQQueues(cb);
   }
 
-  function getConsumers(cb: TCallback<void>) {
+  function getConsumers(cb: ICallback<void>) {
     HeartBeat.getOnlineConsumers(getRedisClient(), (err, consumers) => {
       if (err) cb(err);
       else {
@@ -269,11 +267,11 @@ function StatsAggregatorThread(config: IConfig) {
     });
   }
 
-  function sanitizeData(cb: TCallback<void>) {
+  function sanitizeData(cb: ICallback<void>) {
     const handleConsumer = (
       consumer: TAggregatedStatsQueueConsumer,
       _: string | number,
-      done: TCallback<void>,
+      done: () => void,
     ) => {
       if (!consumer.rates || !consumer.resources) {
         const { id, namespace, queueName } = consumer;
@@ -285,7 +283,7 @@ function StatsAggregatorThread(config: IConfig) {
     const handleQueue = (
       queue: TAggregatedStatsQueue,
       _: string | number,
-      done: TCallback<void>,
+      done: () => void,
     ) => {
       if (!queue.consumers) {
         queue.consumers = {};
@@ -298,16 +296,14 @@ function StatsAggregatorThread(config: IConfig) {
     const handleQueues = (
       queues: Record<string, TAggregatedStatsQueue>,
       _: string | number,
-      done: TCallback<void>,
+      done: () => void,
     ) => {
       async.each(queues, handleQueue, done);
     };
-
-    // this way: async.each(data.queues, handleQueues, cb), it doesn't work.
-    async.each(data.queues, handleQueues, () => cb());
+    async.each(data.queues, handleQueues, cb);
   }
 
-  function publish(cb: TCallback<number>) {
+  function publish(cb: ICallback<number>) {
     const statsString = JSON.stringify(data);
     getRedisClient().publish('stats', statsString, cb);
   }
@@ -318,7 +314,7 @@ function StatsAggregatorThread(config: IConfig) {
     }, 1000);
   }
 
-  function reset(cb: TCallback<void>) {
+  function reset(cb: ICallback<void>) {
     data = {
       rates: {
         processing: 0,
@@ -353,7 +349,13 @@ function StatsAggregatorThread(config: IConfig) {
       );
     });
   }
-  run();
+
+  RedisClient.getInstance(config, (client) => {
+    redisClientInstance = client;
+    lockManagerInstance = new LockManager(redisClientInstance);
+    queueInstance = new Queue(redisClientInstance);
+    run();
+  });
 }
 
 process.on('message', (c: string) => {

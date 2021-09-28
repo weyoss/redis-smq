@@ -17,7 +17,7 @@ describe('Produce and consume a delayed message with scheduledRepeat and schedul
         if (callCount > 3) {
           throw new Error('Unexpected call');
         }
-        cb();
+        cb(null);
       }),
     });
     consumer.run();
@@ -58,7 +58,7 @@ describe('Produce and consume a delayed message with scheduledRepeat and schedul
       consumeMock: jest.fn((msg, cb) => {
         callCount += 1;
         if (callCount > 1) throw new Error('Unexpected call');
-        cb();
+        cb(null);
       }),
     });
     consumer.run();

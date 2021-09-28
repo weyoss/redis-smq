@@ -20,7 +20,7 @@ test('A consumer delays a failed message before re-queuing it again, given messa
       if (callCount < 5) {
         throw new Error('Explicit error');
       } else if (callCount === 5) {
-        cb();
+        cb(null);
       } else throw new Error('Unexpected call');
     }),
   });

@@ -1,6 +1,6 @@
 import * as os from 'os';
 import * as async from 'neo-async';
-import { TCallback } from '../types';
+import { ICallback } from '../types';
 import { PowerManager } from './power-manager';
 import { Instance } from './instance';
 import { Ticker } from './ticker';
@@ -90,36 +90,23 @@ function handleConsumerData(hashKey: string, resources: Record<string, any>) {
 
 function getAllHeartBeats(
   client: RedisClient,
-  cb: TCallback<Record<string, string>>,
+  cb: ICallback<Record<string, string>>,
 ) {
   const { keyIndexHeartBeat } = redisKeys.getGlobalKeys();
-  client.hgetall(
-    keyIndexHeartBeat,
-    (err?: Error | null, result?: Record<string, string> | null) => {
-      if (err) cb(err);
-      else cb(null, result);
-    },
-  );
+  client.hgetall(keyIndexHeartBeat, cb);
 }
 
 function getConsumerHeartBeat(
   client: RedisClient,
   id: string,
   queueName: string,
-  cb: TCallback<string>,
+  cb: ICallback<string>,
 ) {
   const { keyConsumerHeartBeat, keyIndexHeartBeat } = redisKeys.getInstanceKeys(
     queueName,
     id,
   );
-  client.hget(
-    keyIndexHeartBeat,
-    keyConsumerHeartBeat,
-    (err?: Error | null, res?: string | null) => {
-      if (err) cb(err);
-      else cb(null, res);
-    },
-  );
+  client.hget(keyIndexHeartBeat, keyConsumerHeartBeat, cb);
 }
 
 export function HeartBeat(instance: Instance) {
@@ -209,11 +196,13 @@ export function HeartBeat(instance: Instance) {
   return {
     start() {
       powerManager.goingUp();
-      redisClientInstance = new RedisClient(config);
-      startMonitor();
-      nextTick();
-      instance.emit(events.HEARTBEAT_UP);
-      powerManager.commit();
+      RedisClient.getInstance(config, (client) => {
+        redisClientInstance = client;
+        startMonitor();
+        nextTick();
+        instance.emit(events.HEARTBEAT_UP);
+        powerManager.commit();
+      });
     },
 
     stop() {
@@ -242,7 +231,7 @@ export function HeartBeat(instance: Instance) {
 
 HeartBeat.getConsumersByOnlineStatus = (
   client: RedisClient,
-  cb: TCallback<{ onlineConsumers: string[]; offlineConsumers: string[] }>,
+  cb: ICallback<{ onlineConsumers: string[]; offlineConsumers: string[] }>,
 ) => {
   getAllHeartBeats(client, (err, data) => {
     if (err) cb(err);
@@ -252,7 +241,7 @@ HeartBeat.getConsumersByOnlineStatus = (
       if (data) {
         async.each(
           data,
-          (value: string, key: string | number, done: TCallback<void>) => {
+          (value, key, done) => {
             const { timestamp }: { timestamp: number } = JSON.parse(value);
             const r = validateOnlineTimestamp(timestamp);
             if (r) onlineConsumers.push(String(key));
@@ -285,30 +274,25 @@ HeartBeat.isOnline = function isOnline(
     queueName: string;
     id: string;
   },
-  cb: TCallback<boolean>,
+  cb: ICallback<boolean>,
 ) {
-  getConsumerHeartBeat(
-    client,
-    id,
-    queueName,
-    (err?: Error | null, res?: string | null) => {
-      if (err) cb(err);
-      else {
-        let online = false;
-        if (res) {
-          const { timestamp }: { timestamp: number } = JSON.parse(res);
-          online = validateOnlineTimestamp(timestamp);
-        }
-        cb(null, online);
+  getConsumerHeartBeat(client, id, queueName, (err, res) => {
+    if (err) cb(err);
+    else {
+      let online = false;
+      if (res) {
+        const { timestamp }: { timestamp: number } = JSON.parse(res);
+        online = validateOnlineTimestamp(timestamp);
       }
-    },
-  );
+      cb(null, online);
+    }
+  });
 };
 
 HeartBeat.handleOfflineConsumers = (
   client: RedisClient,
   offlineConsumers: string[],
-  cb: TCallback<number>,
+  cb: ICallback<number>,
 ) => {
   if (offlineConsumers.length) {
     const { keyIndexHeartBeat } = redisKeys.getGlobalKeys();
@@ -318,7 +302,7 @@ HeartBeat.handleOfflineConsumers = (
 
 HeartBeat.getOnlineConsumers = (
   client: RedisClient,
-  cb: TCallback<Record<string, any>>,
+  cb: ICallback<Record<string, any>>,
 ) => {
   getAllHeartBeats(client, (err, data) => {
     if (err) cb(err);
@@ -327,7 +311,7 @@ HeartBeat.getOnlineConsumers = (
       if (data) {
         async.each(
           data,
-          (value: string, key: string | number, done: TCallback<void>) => {
+          (value, key, done) => {
             const { usage: resources }: { usage: Record<string, any> } =
               JSON.parse(value);
             const r = handleConsumerData(`${key}`, resources);

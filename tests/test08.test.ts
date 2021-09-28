@@ -13,7 +13,7 @@ test('Async exceptions are caught when consuming a message', async () => {
         setTimeout(() => {
           cb(new Error('Async error'));
         }, 2000);
-      } else if (callCount === 2) cb();
+      } else if (callCount === 2) cb(null);
       else throw new Error('Unexpected call');
     }),
   });

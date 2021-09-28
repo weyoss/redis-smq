@@ -1,9 +1,9 @@
 import { config } from './config';
 import { Consumer, Message } from '../..'; // from 'redis-smq'
-import { TCallback } from '../../types'; // from 'redis-smq/dist/types'
+import { ICallback } from '../../types'; // from 'redis-smq/dist/types'
 
 class Ns1TestQueueConsumer extends Consumer {
-  consume(message: Message, cb: TCallback<void>) {
+  consume(message: Message, cb: ICallback<void>) {
     //  console.log(`Got message to consume: `, JSON.stringify(message));
     //  throw new Error('TEST!');
     //  cb(new Error('TEST!'));

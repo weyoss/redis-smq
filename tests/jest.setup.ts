@@ -6,7 +6,7 @@ let redisInstance: ThenArg<ReturnType<typeof getRedisInstance>> | null = null;
 
 beforeAll(async () => {
   if (!redisInstance) {
-    redisInstance = getRedisInstance();
+    redisInstance = await getRedisInstance();
   }
 });
 

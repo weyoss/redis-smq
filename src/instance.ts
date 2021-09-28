@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import { EventEmitter } from 'events';
-import { IConfig, IStatsProvider, TCallback } from '../types';
+import { IConfig, IStatsProvider, ICallback } from '../types';
 import { PowerManager } from './power-manager';
 import { Logger } from './logger';
 import * as BunyanLogger from 'bunyan';
@@ -56,7 +56,10 @@ export abstract class Instance extends EventEmitter {
     });
     this.on(events.GOING_DOWN, () => {
       if (this.statsInstance) this.statsInstance.stop();
-      this.shutdownScheduler();
+      if (this.schedulerInstance) {
+        this.schedulerInstance.quit();
+        this.schedulerInstance = null;
+      }
       this.getRedisInstance().end(true);
       this.redisClientInstance = null;
     });
@@ -65,12 +68,6 @@ export abstract class Instance extends EventEmitter {
       this.statsInstance = null;
       this.schedulerInstance = null;
     });
-    this.on(events.SCHEDULER_UP, () =>
-      this.handleStartupEvent(events.SCHEDULER_UP),
-    );
-    this.on(events.SCHEDULER_DOWN, () =>
-      this.handleShutdownEvent(events.SCHEDULER_DOWN),
-    );
     this.on(events.STATS_UP, () => this.handleStartupEvent(events.STATS_UP));
     this.on(events.STATS_DOWN, () =>
       this.handleShutdownEvent(events.STATS_DOWN),
@@ -90,20 +87,6 @@ export abstract class Instance extends EventEmitter {
     this.getQueueInstance().on(events.SYSTEM_QUEUES_CREATED, () =>
       this.handleStartupEvent(events.SYSTEM_QUEUES_CREATED),
     );
-  }
-
-  protected setupScheduler() {
-    this.schedulerInstance = new Scheduler(
-      this.getQueueName(),
-      new RedisClient(this.config),
-    );
-    this.emit(events.SCHEDULER_UP);
-  }
-
-  protected shutdownScheduler() {
-    this.getScheduler().quit();
-    this.schedulerInstance = null;
-    this.emit(events.SCHEDULER_DOWN);
   }
 
   protected handleStartupEvent(event: string): void {
@@ -138,16 +121,15 @@ export abstract class Instance extends EventEmitter {
 
   protected hasGoneUp(): boolean {
     return (
-      this.startupFiredEvents.includes(events.SCHEDULER_UP) &&
+      this.hasBootstrapped() &&
       (!this.statsInstance || this.startupFiredEvents.includes(events.STATS_UP))
     );
   }
 
   protected hasGoneDown(): boolean {
     return (
-      this.shutdownFiredEvents.includes(events.SCHEDULER_DOWN) &&
-      (!this.statsInstance ||
-        this.shutdownFiredEvents.includes(events.STATS_DOWN))
+      !this.statsInstance ||
+      this.shutdownFiredEvents.includes(events.STATS_DOWN)
     );
   }
 
@@ -160,16 +142,17 @@ export abstract class Instance extends EventEmitter {
 
   protected bootstrap(): void {
     this.bootstrapping = true;
-    this.redisClientInstance = new RedisClient(this.config);
-    this.queue = new Queue(this.redisClientInstance);
-    this.setupScheduler();
-    this.setupStats();
-    this.setupQueues();
+    RedisClient.getInstance(this.config, (client) => {
+      this.redisClientInstance = client;
+      this.queue = new Queue(this.redisClientInstance);
+      this.setupStats();
+      this.setupQueues();
+    });
   }
 
   protected abstract getStatsProvider(): IStatsProvider;
 
-  run(cb?: TCallback<void>): void {
+  run(cb?: ICallback<void>): void {
     this.powerManager.goingUp();
     this.bootstrap();
     if (cb) {
@@ -177,7 +160,7 @@ export abstract class Instance extends EventEmitter {
     }
   }
 
-  shutdown(cb?: TCallback<void>): void {
+  shutdown(cb?: ICallback<void>): void {
     this.powerManager.goingDown();
     this.emit(events.GOING_DOWN);
     if (cb) {
@@ -214,11 +197,16 @@ export abstract class Instance extends EventEmitter {
     return this.queue;
   }
 
-  getScheduler() {
+  getScheduler(cb: ICallback<Scheduler>) {
     if (!this.schedulerInstance) {
-      throw new Error(`Expected an instance of Scheduler`);
-    }
-    return this.schedulerInstance;
+      RedisClient.getInstance(this.config, (client) => {
+        this.schedulerInstance = new Scheduler(this.queueName, client);
+        this.schedulerInstance.once(events.SCHEDULER_QUIT, () => {
+          this.schedulerInstance = null;
+        });
+        cb(null, this.schedulerInstance);
+      });
+    } else cb(null, this.schedulerInstance);
   }
 
   getId() {

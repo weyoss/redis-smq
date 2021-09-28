@@ -1,4 +1,4 @@
-import { IConfig, TCallback } from '../types';
+import { IConfig, ICallback } from '../types';
 import { Message } from './message';
 import { ProducerStatsProvider } from './stats-provider/producer-stats-provider';
 import { Instance } from './instance';
@@ -26,7 +26,7 @@ export class Producer extends Instance {
     return this.statsProvider;
   }
 
-  produceMessage(msg: unknown, cb: TCallback<void>): void {
+  produceMessage(msg: unknown, cb: ICallback<void>): void {
     const message = !(msg instanceof Message)
       ? new Message().setBody(msg)
       : msg;
@@ -35,23 +35,29 @@ export class Producer extends Instance {
       cb();
     };
     const proceed = () => {
-      const scheduler = this.getScheduler();
-      if (scheduler.isSchedulable(message)) {
-        scheduler.schedule(message, onProduced);
-      } else {
-        const { keyQueue } = this.getInstanceRedisKeys();
-        this.getRedisInstance().lpush(
-          keyQueue,
-          message.toString(),
-          (err?: Error | null) => {
-            if (err) cb(err);
-            else {
-              if (this.statsProvider) this.statsProvider.incrementInputSlot();
-              cb();
-            }
-          },
-        );
-      }
+      this.getScheduler((err, scheduler) => {
+        if (err) throw err;
+        else if (!scheduler) throw new Error();
+        else {
+          if (scheduler.isSchedulable(message)) {
+            scheduler.schedule(message, onProduced);
+          } else {
+            const { keyQueue } = this.getInstanceRedisKeys();
+            this.getRedisInstance().lpush(
+              keyQueue,
+              message.toString(),
+              (err?: Error | null) => {
+                if (err) cb(err);
+                else {
+                  if (this.statsProvider)
+                    this.statsProvider.incrementInputSlot();
+                  cb();
+                }
+              },
+            );
+          }
+        }
+      });
     };
     if (!this.powerManager.isUp()) {
       if (this.isBootstrapping() || this.powerManager.isGoingUp())

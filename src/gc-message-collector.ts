@@ -1,5 +1,5 @@
 import { Message } from './message';
-import { TCallback, TRedisClientMulti } from '../types';
+import { ICallback, TRedisClientMulti } from '../types';
 import { Consumer } from './consumer';
 import { events } from './events';
 import { Scheduler } from './scheduler';
@@ -16,7 +16,10 @@ export class GCMessageCollector {
 
   constructor(consumer: Consumer, redisClientInstance: RedisClient) {
     this.consumer = consumer;
-    this.scheduler = consumer.getScheduler();
+    this.scheduler = new Scheduler(
+      consumer.getQueueName(),
+      redisClientInstance,
+    );
     this.logger = consumer.getLogger();
     this.redisClientInstance = redisClientInstance;
     const { keyQueue, keyQueueDLQ } = consumer.getInstanceRedisKeys();
@@ -82,7 +85,7 @@ export class GCMessageCollector {
   collectMessage(
     message: Message,
     processingQueue: string,
-    cb: TCallback<void | string>,
+    cb: ICallback<void | string>,
   ): void {
     if (this.hasMessageExpired(message)) {
       this.debug(`Message ID [${message.getId()}] has expired.`);
@@ -126,7 +129,7 @@ export class GCMessageCollector {
         );
         this.moveMessageToDLQ(message, multi);
       }
-      this.redisClientInstance.execMulti(multi, (err?: Error | null) => {
+      this.redisClientInstance.execMulti(multi, (err) => {
         if (err) cb(err);
         else {
           if (requeued) this.consumer.emit(events.GC_MESSAGE_REQUEUED, message);
@@ -142,7 +145,7 @@ export class GCMessageCollector {
   collectExpiredMessage(
     message: Message,
     processingQueue: string,
-    cb: TCallback<void>,
+    cb: ICallback<void>,
   ): void {
     const id = message.getId();
     this.debug(

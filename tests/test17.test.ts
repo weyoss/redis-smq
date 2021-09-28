@@ -5,7 +5,7 @@ import { promisifyAll } from 'bluebird';
 describe('Produce and delete a scheduled message', () => {
   test('Case 1', async () => {
     const producer = getProducer();
-    const scheduler = promisifyAll(producer.getScheduler());
+    const scheduler = promisifyAll(await producer.getSchedulerAsync());
 
     // Message 1
     const msg1 = new Message();
