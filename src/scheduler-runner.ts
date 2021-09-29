@@ -1,84 +1,110 @@
-import { IConfig } from '../types';
+import { IConfig, TUnitaryFunction } from '../types';
 import { LockManager } from './lock-manager';
 import * as BLogger from 'bunyan';
 import { PowerManager } from './power-manager';
 import { Ticker } from './ticker';
 import { events } from './events';
-import { EventEmitter } from 'events';
-import { redisKeys } from './redis-keys';
 import { Logger } from './logger';
 import { Scheduler } from './scheduler';
 import { RedisClient } from './redis-client';
+import { Consumer } from './consumer';
 
-export class SchedulerRunner extends EventEmitter {
+export class SchedulerRunner {
+  protected consumer: Consumer;
   protected powerManager: PowerManager;
   protected logger: BLogger;
   protected keyLockScheduler: string;
   protected config: IConfig;
   protected tickPeriod: number;
   protected queueName: string;
+  protected consumerId: string;
   protected schedulerInstance: Scheduler | null = null;
   protected ticker: Ticker | null = null;
   protected lockManagerInstance: LockManager | null = null;
 
-  constructor(queueName: string, config: IConfig = {}, tickPeriod = 1000) {
-    super();
-    this.queueName = queueName;
-    this.config = config;
-    const { keyLockScheduler } = redisKeys.getKeys(queueName);
+  constructor(consumer: Consumer, tickPeriod = 1000) {
+    this.consumer = consumer;
+    this.queueName = consumer.getQueueName();
+    this.config = consumer.getConfig();
+    this.consumerId = consumer.getId();
+    const { keyLockScheduler } = consumer.getInstanceRedisKeys();
     this.keyLockScheduler = keyLockScheduler;
-    this.logger = Logger('scheduler', config.log);
+    this.logger = Logger(
+      `scheduler (${this.queueName}/${this.consumerId})`,
+      this.config.log,
+    );
     this.tickPeriod = tickPeriod;
     this.powerManager = new PowerManager();
   }
 
-  protected getLockManager(): LockManager {
-    if (!this.lockManagerInstance) {
-      throw new Error(`Expected an instance of LockManager`);
-    }
-    return this.lockManagerInstance;
+  protected getLockManager(cb: TUnitaryFunction<LockManager>): void {
+    if (!this.lockManagerInstance)
+      this.consumer.emit(
+        events.ERROR,
+        new Error(`Expected an instance of LockManager`),
+      );
+    else cb(this.lockManagerInstance);
   }
 
-  protected getTicker(): Ticker {
-    if (!this.ticker) {
-      throw new Error(`Expected an instance of Ticker`);
-    }
-    return this.ticker;
+  protected getTicker(cb: TUnitaryFunction<Ticker>): void {
+    if (!this.ticker)
+      this.consumer.emit(
+        events.ERROR,
+        new Error(`Expected an instance of Ticker`),
+      );
+    else cb(this.ticker);
   }
 
   protected debug(message: string): void {
     this.logger.debug({ scheduler: true }, message);
   }
 
-  protected getScheduler(): Scheduler {
-    if (!this.schedulerInstance) {
-      throw new Error(`Expected an instance of Scheduler`);
-    }
-    return this.schedulerInstance;
+  protected getScheduler(cb: TUnitaryFunction<Scheduler>): void {
+    if (!this.schedulerInstance)
+      this.consumer.emit(
+        events.ERROR,
+        new Error(`Expected an instance of Scheduler`),
+      );
+    else cb(this.schedulerInstance);
   }
 
   protected onTick(): void {
     if (this.powerManager.isRunning()) {
-      this.getLockManager().acquireLock(
-        this.keyLockScheduler,
-        10000,
-        false,
-        (err, acquired) => {
-          if (err) throw err;
-          else {
-            if (acquired) {
-              this.getScheduler().enqueueScheduledMessages((err) => {
-                if (err) throw err;
-                this.getTicker().nextTick();
+      this.getLockManager((lockerManager) => {
+        lockerManager.acquireLock(
+          this.keyLockScheduler,
+          10000,
+          false,
+          (err, acquired) => {
+            if (err) this.consumer.emit(events.ERROR, err);
+            else {
+              this.getTicker((ticker) => {
+                if (acquired) {
+                  this.getScheduler((scheduler) => {
+                    scheduler.enqueueScheduledMessages((err) => {
+                      if (err) this.consumer.emit(events.ERROR, err);
+                      else ticker.nextTick();
+                    });
+                  });
+                } else ticker.nextTick();
               });
-            } else this.getTicker().nextTick();
-          }
-        },
-      );
+            }
+          },
+        );
+      });
     }
     if (this.powerManager.isGoingDown()) {
-      this.emit(events.SCHEDULER_RUNNER_READY_TO_SHUTDOWN);
+      this.consumer.emit(events.SCHEDULER_RUNNER_READY_TO_SHUTDOWN);
     }
+  }
+
+  protected setupTicker() {
+    this.ticker = new Ticker(() => {
+      this.onTick();
+    }, this.tickPeriod);
+    this.ticker.on(events.ERROR, (err: Error) =>
+      this.consumer.emit(events.ERROR, err),
+    );
   }
 
   start(): void {
@@ -87,23 +113,24 @@ export class SchedulerRunner extends EventEmitter {
       this.lockManagerInstance = new LockManager(client);
       this.schedulerInstance = new Scheduler(this.queueName, client);
       this.powerManager.commit();
-      this.ticker = new Ticker(() => {
-        this.onTick();
-      }, this.tickPeriod);
+      this.setupTicker();
       this.onTick();
-      this.emit(events.SCHEDULER_RUNNER_UP);
+      this.consumer.emit(events.SCHEDULER_RUNNER_UP);
     });
   }
 
   stop(): void {
     this.powerManager.goingDown();
-    this.once(events.SCHEDULER_RUNNER_READY_TO_SHUTDOWN, () => {
-      this.getTicker().shutdown(() => {
-        this.getLockManager().quit(() => {
-          this.lockManagerInstance = null;
-          this.schedulerInstance = null;
-          this.powerManager.commit();
-          this.emit(events.SCHEDULER_RUNNER_DOWN);
+    this.consumer.once(events.SCHEDULER_RUNNER_READY_TO_SHUTDOWN, () => {
+      this.getTicker((ticker) => {
+        ticker.shutdown();
+        this.getLockManager((lockManager) => {
+          lockManager.quit(() => {
+            this.lockManagerInstance = null;
+            this.schedulerInstance = null;
+            this.powerManager.commit();
+            this.consumer.emit(events.SCHEDULER_RUNNER_DOWN);
+          });
         });
       });
     });

@@ -1,28 +1,40 @@
 import { Message } from './message';
-import { ICallback, TRedisClientMulti } from '../types';
-import { Consumer } from './consumer';
+import {
+  ICallback,
+  IConfig,
+  IConsumerConstructorOptions,
+  TRedisClientMulti,
+} from '../types';
 import { events } from './events';
 import { Scheduler } from './scheduler';
-import * as Logger from 'bunyan';
+import BLogger from 'bunyan';
 import { RedisClient } from './redis-client';
+import { Logger } from './logger';
+import { Consumer } from './consumer';
 
 export class GCMessageCollector {
   protected consumer: Consumer;
+  protected queueName: string;
+  protected config: IConfig;
   protected scheduler: Scheduler;
-  protected logger: Logger;
+  protected logger: BLogger;
   protected keyQueue: string;
   protected keyQueueDLQ: string;
   protected redisClientInstance: RedisClient;
+  protected consumerOptions: Required<IConsumerConstructorOptions>;
 
-  constructor(consumer: Consumer, redisClientInstance: RedisClient) {
+  constructor(consumer: Consumer, redisClient: RedisClient) {
     this.consumer = consumer;
-    this.scheduler = new Scheduler(
-      consumer.getQueueName(),
-      redisClientInstance,
-    );
-    this.logger = consumer.getLogger();
-    this.redisClientInstance = redisClientInstance;
+    this.queueName = consumer.getQueueName();
+    this.config = consumer.getConfig();
+    this.consumerOptions = consumer.getOptions();
     const { keyQueue, keyQueueDLQ } = consumer.getInstanceRedisKeys();
+    this.scheduler = new Scheduler(this.queueName, redisClient);
+    this.logger = Logger(
+      `gc:message-collector (${this.queueName})`,
+      this.config.log,
+    );
+    this.redisClientInstance = redisClient;
     this.keyQueue = keyQueue;
     this.keyQueueDLQ = keyQueueDLQ;
   }
@@ -61,14 +73,14 @@ export class GCMessageCollector {
     const retryThreshold =
       typeof threshold === 'number'
         ? threshold
-        : this.consumer.getMessageRetryThreshold();
+        : this.consumerOptions.messageRetryThreshold;
     return attempts < retryThreshold;
   }
 
   hasMessageExpired(message: Message): boolean {
     const ttl = message.getTTL();
     const messageTTL =
-      typeof ttl === 'number' ? ttl : this.consumer.getConsumerMessageTTL();
+      typeof ttl === 'number' ? ttl : this.consumerOptions.messageTTL;
     if (messageTTL) {
       const curTime = new Date().getTime();
       const createdAt = message.getCreatedAt();
@@ -109,7 +121,7 @@ export class GCMessageCollector {
         const retryDelay =
           typeof delay === 'number'
             ? delay
-            : this.consumer.getMessageRetryDelay();
+            : this.consumerOptions.messageRetryDelay;
         if (retryDelay) {
           this.debug(
             `Delaying message ID [${message.getId()}] before re-queuing...`,
@@ -132,10 +144,13 @@ export class GCMessageCollector {
       this.redisClientInstance.execMulti(multi, (err) => {
         if (err) cb(err);
         else {
-          if (requeued) this.consumer.emit(events.GC_MESSAGE_REQUEUED, message);
-          else if (delayed) {
-            this.consumer.emit(events.GC_MESSAGE_DELAYED, message);
-          } else this.consumer.emit(events.GC_MESSAGE_DLQ, message);
+          if (requeued) {
+            this.consumer.emit(events.GC_MC_MESSAGE_REQUEUED, message);
+          } else if (delayed) {
+            this.consumer.emit(events.GC_MC_MESSAGE_DELAYED, message);
+          } else {
+            this.consumer.emit(events.GC_MC_MESSAGE_DLQ, message);
+          }
           cb();
         }
       });
@@ -155,7 +170,7 @@ export class GCMessageCollector {
     this.redisClientInstance.rpop(processingQueue, (err?: Error | null) => {
       if (err) cb(err);
       else {
-        this.consumer.emit(events.GC_MESSAGE_DESTROYED, message);
+        this.consumer.emit(events.GC_MC_MESSAGE_DESTROYED, message);
         cb();
       }
     });

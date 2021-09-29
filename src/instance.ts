@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import { EventEmitter } from 'events';
-import { IConfig, IStatsProvider, ICallback } from '../types';
+import { IConfig, IStatsProvider, ICallback, TUnitaryFunction } from '../types';
 import { PowerManager } from './power-manager';
 import { Logger } from './logger';
 import * as BunyanLogger from 'bunyan';
@@ -8,7 +8,7 @@ import { Stats } from './stats';
 import { events } from './events';
 import { RedisClient } from './redis-client';
 import { Scheduler } from './scheduler';
-import { Queue } from './queue';
+import { queueHelpers } from './queue-helpers';
 import { redisKeys } from './redis-keys';
 
 export abstract class Instance extends EventEmitter {
@@ -24,7 +24,7 @@ export abstract class Instance extends EventEmitter {
   protected redisClientInstance: RedisClient | null = null;
   protected statsInstance: Stats | null = null;
   protected loggerInstance: BunyanLogger;
-  protected queue: Queue | null = null;
+  protected statsProvider: IStatsProvider | null = null;
 
   protected constructor(queueName: string, config: IConfig) {
     super();
@@ -47,7 +47,7 @@ export abstract class Instance extends EventEmitter {
   }
 
   protected registerEventsHandlers() {
-    this.on(events.ERROR, (err: Error) => this.error(err));
+    this.on(events.ERROR, (err: Error) => this.handleError(err));
     this.on(events.GOING_UP, () => {
       if (this.statsInstance) this.statsInstance.start();
     });
@@ -60,13 +60,16 @@ export abstract class Instance extends EventEmitter {
         this.schedulerInstance.quit();
         this.schedulerInstance = null;
       }
-      this.getRedisInstance().end(true);
-      this.redisClientInstance = null;
+      this.getRedisInstance((client) => {
+        client.end(true);
+        this.redisClientInstance = null;
+      });
     });
     this.on(events.DOWN, () => {
       this.shutdownFiredEvents = [];
       this.statsInstance = null;
       this.schedulerInstance = null;
+      this.statsProvider = null;
     });
     this.on(events.STATS_UP, () => this.handleStartupEvent(events.STATS_UP));
     this.on(events.STATS_DOWN, () =>
@@ -77,32 +80,20 @@ export abstract class Instance extends EventEmitter {
   protected setupStats() {
     const { monitor } = this.config;
     if (monitor && monitor.enabled) {
-      const statsProvider = this.getStatsProvider();
-      this.statsInstance = new Stats(this, statsProvider);
+      this.statsInstance = new Stats(this);
     }
   }
 
-  protected setupQueues() {
-    this.getQueueInstance().setupQueues(this.getQueueName());
-    this.getQueueInstance().on(events.SYSTEM_QUEUES_CREATED, () =>
-      this.handleStartupEvent(events.SYSTEM_QUEUES_CREATED),
-    );
+  protected setupQueues(client: RedisClient, cb: ICallback<void>) {
+    queueHelpers.setupQueues(client, this.getQueueName(), cb);
   }
 
   protected handleStartupEvent(event: string): void {
     this.startupFiredEvents.push(event);
-    if (this.bootstrapping) {
-      const hasBootstrapped = this.hasBootstrapped();
-      if (hasBootstrapped) {
-        this.bootstrapping = false;
-        this.emit(events.GOING_UP);
-      }
-    } else {
-      const isUp = this.hasGoneUp();
-      if (isUp) {
-        this.powerManager.commit();
-        this.emit(events.UP);
-      }
+    const isUp = this.hasGoneUp();
+    if (isUp) {
+      this.powerManager.commit();
+      this.emit(events.UP);
     }
   }
 
@@ -115,14 +106,9 @@ export abstract class Instance extends EventEmitter {
     }
   }
 
-  protected hasBootstrapped(): boolean {
-    return this.startupFiredEvents.includes(events.SYSTEM_QUEUES_CREATED);
-  }
-
   protected hasGoneUp(): boolean {
     return (
-      this.hasBootstrapped() &&
-      (!this.statsInstance || this.startupFiredEvents.includes(events.STATS_UP))
+      !this.statsInstance || this.startupFiredEvents.includes(events.STATS_UP)
     );
   }
 
@@ -133,28 +119,32 @@ export abstract class Instance extends EventEmitter {
     );
   }
 
-  error(err: Error): void {
+  handleError(err: Error): void {
     if (this.powerManager.isRunning()) {
-      this.shutdown();
       throw err;
     }
   }
 
-  protected bootstrap(): void {
-    this.bootstrapping = true;
+  protected bootstrap(cb: ICallback<void>): void {
     RedisClient.getInstance(this.config, (client) => {
       this.redisClientInstance = client;
-      this.queue = new Queue(this.redisClientInstance);
       this.setupStats();
-      this.setupQueues();
+      this.setupQueues(client, cb);
     });
   }
 
-  protected abstract getStatsProvider(): IStatsProvider;
+  abstract getStatsProvider(): IStatsProvider;
 
   run(cb?: ICallback<void>): void {
     this.powerManager.goingUp();
-    this.bootstrap();
+    this.bootstrapping = true;
+    this.bootstrap((err) => {
+      if (err) this.handleError(err);
+      else {
+        this.bootstrapping = false;
+        this.emit(events.GOING_UP);
+      }
+    });
     if (cb) {
       this.once(events.UP, cb);
     }
@@ -176,25 +166,16 @@ export abstract class Instance extends EventEmitter {
     return this.powerManager.isRunning();
   }
 
-  protected getStatsInstance() {
-    if (!this.statsInstance) {
-      throw new Error(`Expected an instance of Stats`);
-    }
-    return this.statsInstance;
+  protected getStatsInstance(cb: TUnitaryFunction<Stats>): void {
+    if (!this.statsInstance)
+      this.emit(events.ERROR, new Error(`Expected an instance of Stats`));
+    else cb(this.statsInstance);
   }
 
-  protected getRedisInstance() {
-    if (!this.redisClientInstance) {
-      throw new Error(`Expected an instance of RedisClient`);
-    }
-    return this.redisClientInstance;
-  }
-
-  protected getQueueInstance() {
-    if (!this.queue) {
-      throw new Error(`Expected an instance of Queue`);
-    }
-    return this.queue;
+  protected getRedisInstance(cb: TUnitaryFunction<RedisClient>): void {
+    if (!this.redisClientInstance)
+      this.emit(events.ERROR, new Error(`Expected an instance of RedisClient`));
+    else cb(this.redisClientInstance);
   }
 
   getScheduler(cb: ICallback<Scheduler>) {
@@ -218,20 +199,10 @@ export abstract class Instance extends EventEmitter {
   }
 
   getQueueName() {
-    if (!this.queueName) {
-      throw new Error('Queue name has not been provided');
-    }
     return this.queueName;
   }
 
   getInstanceRedisKeys() {
     return this.redisKeys;
-  }
-
-  getLogger(): BunyanLogger {
-    if (!this.loggerInstance) {
-      throw new Error(`Expected an instance of Logger`);
-    }
-    return this.loggerInstance;
   }
 }

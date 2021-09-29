@@ -66,7 +66,7 @@ export class Message {
   }
 
   setScheduledCron(cron: string): Message {
-    // throws an exception for invalid value
+    // it throws an exception for an invalid value
     parseExpression(cron);
     this.scheduledCron = cron;
     return this;
