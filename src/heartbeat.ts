@@ -1,6 +1,6 @@
 import * as os from 'os';
 import * as async from 'async';
-import { ICallback, IConfig, TUnitaryFunction } from '../types';
+import { ICallback, IConfig, TUnaryFunction } from '../types';
 import { PowerManager } from './power-manager';
 import { Ticker } from './ticker';
 import { ChildProcess, fork } from 'child_process';
@@ -205,7 +205,7 @@ export class Heartbeat {
     }
   }
 
-  protected getRedisClientInstance(cb: TUnitaryFunction<RedisClient>): void {
+  protected getRedisClientInstance(cb: TUnaryFunction<RedisClient>): void {
     if (!this.redisClientInstance)
       this.consumer.emit(
         events.ERROR,
@@ -214,7 +214,7 @@ export class Heartbeat {
     else cb(this.redisClientInstance);
   }
 
-  protected getTicker(cb: TUnitaryFunction<Ticker>): void {
+  protected getTicker(cb: TUnaryFunction<Ticker>): void {
     if (!this.ticker)
       this.consumer.emit(
         events.ERROR,

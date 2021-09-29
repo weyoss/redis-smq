@@ -1,4 +1,4 @@
-import { IConfig, IStatsProvider, TUnitaryFunction } from '../types';
+import { IConfig, IStatsProvider, TUnaryFunction } from '../types';
 import { PowerManager } from './power-manager';
 import { Instance } from './instance';
 import { events } from './events';
@@ -20,7 +20,7 @@ export class Stats {
     this.powerManager = new PowerManager();
   }
 
-  protected getRedisClientInstance(cb: TUnitaryFunction<RedisClient>): void {
+  protected getRedisClientInstance(cb: TUnaryFunction<RedisClient>): void {
     if (!this.redisClientInstance)
       this.instance.emit(
         events.ERROR,
@@ -29,7 +29,7 @@ export class Stats {
     else cb(this.redisClientInstance);
   }
 
-  protected getTicker(cb: TUnitaryFunction<Ticker>): void {
+  protected getTicker(cb: TUnaryFunction<Ticker>): void {
     if (!this.ticker)
       this.instance.emit(
         events.ERROR,

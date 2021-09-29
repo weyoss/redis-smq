@@ -1,4 +1,4 @@
-import { IConfig, TUnitaryFunction } from '../types';
+import { IConfig, TUnaryFunction } from '../types';
 import { LockManager } from './lock-manager';
 import * as BLogger from 'bunyan';
 import { PowerManager } from './power-manager';
@@ -37,7 +37,7 @@ export class SchedulerRunner {
     this.powerManager = new PowerManager();
   }
 
-  protected getLockManager(cb: TUnitaryFunction<LockManager>): void {
+  protected getLockManager(cb: TUnaryFunction<LockManager>): void {
     if (!this.lockManagerInstance)
       this.consumer.emit(
         events.ERROR,
@@ -46,7 +46,7 @@ export class SchedulerRunner {
     else cb(this.lockManagerInstance);
   }
 
-  protected getTicker(cb: TUnitaryFunction<Ticker>): void {
+  protected getTicker(cb: TUnaryFunction<Ticker>): void {
     if (!this.ticker)
       this.consumer.emit(
         events.ERROR,
@@ -59,7 +59,7 @@ export class SchedulerRunner {
     this.logger.debug({ scheduler: true }, message);
   }
 
-  protected getScheduler(cb: TUnitaryFunction<Scheduler>): void {
+  protected getScheduler(cb: TUnaryFunction<Scheduler>): void {
     if (!this.schedulerInstance)
       this.consumer.emit(
         events.ERROR,

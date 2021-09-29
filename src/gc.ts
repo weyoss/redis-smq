@@ -12,7 +12,7 @@ import {
   ICallback,
   IConfig,
   IConsumerConstructorOptions,
-  TUnitaryFunction,
+  TUnaryFunction,
 } from '../types';
 import { redisKeys } from './redis-keys';
 import BLogger from 'bunyan';
@@ -50,7 +50,7 @@ export class GarbageCollector {
     this.powerManager = new PowerManager();
   }
 
-  getRedisInstance(cb: TUnitaryFunction<RedisClient>): void {
+  getRedisInstance(cb: TUnaryFunction<RedisClient>): void {
     if (!this.redisClientInstance)
       this.consumer.emit(
         events.ERROR,
@@ -59,7 +59,7 @@ export class GarbageCollector {
     else cb(this.redisClientInstance);
   }
 
-  protected getLockManagerInstance(cb: TUnitaryFunction<LockManager>): void {
+  protected getLockManagerInstance(cb: TUnaryFunction<LockManager>): void {
     if (!this.lockManagerInstance)
       this.consumer.emit(
         events.ERROR,
@@ -68,7 +68,7 @@ export class GarbageCollector {
     else cb(this.lockManagerInstance);
   }
 
-  protected getTicker(cb: TUnitaryFunction<Ticker>): void {
+  protected getTicker(cb: TUnaryFunction<Ticker>): void {
     if (!this.ticker)
       this.consumer.emit(
         events.ERROR,
@@ -282,7 +282,7 @@ export class GarbageCollector {
     });
   }
 
-  getMessageCollector(cb: TUnitaryFunction<GCMessageCollector>): void {
+  getMessageCollector(cb: TUnaryFunction<GCMessageCollector>): void {
     if (!this.gcMessageCollector)
       this.consumer.emit(
         events.ERROR,
