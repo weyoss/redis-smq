@@ -277,6 +277,23 @@ in order to set up scheduling parameters for a specific message. Once your messa
 Under the hood, the `producer` invokes `isSchedulable()` and `schedule()`  of the [Scheduler class](docs/api/scheduler.md) 
 to place your message in the delay queue.
 
+```javascript
+'use strict';
+const { Message, Producer } = require('redis-smq');
+
+const producer = new Producer('test_queue');
+
+const message = new Message();
+message
+    .setBody({hello: 'world'})
+    .setScheduledCron(`0 0 * * * *`);
+
+producer.produceMessage(message, (err) => {
+    if (err) console.log(err);
+    // ...
+})
+```
+
 Alternatively, you can also manually get the scheduler instance from the producer using `producer.getScheduler()` 
 and call the `schedule()` method as shown in the example bellow:
 
@@ -284,20 +301,19 @@ and call the `schedule()` method as shown in the example bellow:
 'use strict';
 const { Message, Producer } = require('redis-smq');
 
-const message = new Message();
-
-message
-    .setBody({hello: 'world'})
-    .setScheduledCron(`0 0 * * * *`);
-
 const producer = new Producer('test_queue');
-const scheduler = producer.getScheduler();
 
-scheduler.schedule(message, (err, reply) => {
-    if (err) console.log(err);
-    else if (rely) console.log('Message has been succefully scheduled');
-    else console.log('Message has not been scheduled');
-});
+producer.getScheduler((err, scheduler) => {
+    const message = new Message();
+    message
+        .setBody({hello: 'world'})
+        .setScheduledCron(`0 0 * * * *`);
+    scheduler.schedule(message, (err, reply) => {
+        if (err) console.log(err);
+        else if (rely) console.log('Message has been succefully scheduled');
+        else console.log('Message has not been scheduled');
+    });  
+})
 ```
 
 See [Scheduler API Reference](docs/api/scheduler.md) for more details.

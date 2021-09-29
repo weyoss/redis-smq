@@ -12,14 +12,7 @@ export class Producer extends Instance {
     this.run();
   }
 
-  protected registerEventsHandlers(): void {
-    super.registerEventsHandlers();
-    this.on(events.DOWN, () => {
-      this.statsProvider = null;
-    });
-  }
-
-  protected getStatsProvider(): ProducerStatsProvider {
+  getStatsProvider(): ProducerStatsProvider {
     if (!this.statsProvider) {
       this.statsProvider = new ProducerStatsProvider(this);
     }
@@ -36,25 +29,27 @@ export class Producer extends Instance {
     };
     const proceed = () => {
       this.getScheduler((err, scheduler) => {
-        if (err) throw err;
-        else if (!scheduler) throw new Error();
+        if (err) cb(err);
+        else if (!scheduler) cb(new Error());
         else {
           if (scheduler.isSchedulable(message)) {
             scheduler.schedule(message, onProduced);
           } else {
             const { keyQueue } = this.getInstanceRedisKeys();
-            this.getRedisInstance().lpush(
-              keyQueue,
-              message.toString(),
-              (err?: Error | null) => {
-                if (err) cb(err);
-                else {
-                  if (this.statsProvider)
-                    this.statsProvider.incrementInputSlot();
-                  cb();
-                }
-              },
-            );
+            this.getRedisInstance((client) => {
+              client.lpush(
+                keyQueue,
+                message.toString(),
+                (err?: Error | null) => {
+                  if (err) cb(err);
+                  else {
+                    if (this.statsProvider)
+                      this.statsProvider.incrementInputSlot();
+                    cb();
+                  }
+                },
+              );
+            });
           }
         }
       });
@@ -62,7 +57,7 @@ export class Producer extends Instance {
     if (!this.powerManager.isUp()) {
       if (this.isBootstrapping() || this.powerManager.isGoingUp())
         this.once(events.UP, proceed);
-      else this.error(new Error(`Producer ID ${this.getId()} is not running`));
+      else cb(new Error(`Producer ID ${this.getId()} is not running`));
     } else proceed();
   }
 }

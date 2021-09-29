@@ -23,9 +23,7 @@ export class RedisClient extends EventEmitter {
     const opts: Record<string, any> = options;
     this.client =
       client === RedisClientName.REDIS ? createClient(opts) : new IORedis(opts);
-    this.client.once('ready', () => {
-      this.emit('ready');
-    });
+    this.client.once('ready', () => this.emit('ready'));
     this.client.once('error', (err: Error) => {
       throw err;
     });
@@ -56,17 +54,22 @@ export class RedisClient extends EventEmitter {
       multi.exec((err?: Error | null, res?: Array<[Error | null, T]>) => {
         if (err) cb(err);
         else {
-          const lengths = (res ?? []).map((i) => {
-            if (!i) {
-              throw new Error('Expected an array reply from multi.exec()');
+          const lengths: T[] = [];
+          let err: Error | null = null;
+          for (const i of res ?? []) {
+            if (!Array.isArray(i)) {
+              err = new Error('Expected an array reply from multi.exec()');
+              break;
             }
-            const [err, result] = i;
-            if (err instanceof Error) {
-              throw err;
+            const [error, result] = i;
+            if (error instanceof Error) {
+              err = error;
+              break;
             }
-            return result;
-          });
-          cb(null, lengths);
+            lengths.push(result);
+          }
+          if (err) cb(err);
+          else cb(null, lengths);
         }
       });
     }
@@ -97,7 +100,7 @@ export class RedisClient extends EventEmitter {
     this.client.subscribe(channel);
   }
 
-  on(event: string, listener: (channel: string, message: string) => void) {
+  on(event: string, listener: (...args: unknown[]) => void) {
     this.client.on(event, listener);
     return this;
   }

@@ -1,79 +1,79 @@
 import { RedisClient } from './redis-client';
 import { ICallback } from '../types';
 import { redisKeys } from './redis-keys';
-import * as async from 'neo-async';
-import { events } from './events';
-import { EventEmitter } from 'events';
+import * as async from 'async';
 
-export class Queue extends EventEmitter {
-  protected redisClientInstance: RedisClient;
-
-  constructor(redisClient: RedisClient) {
-    super();
-    this.redisClientInstance = redisClient;
-  }
-
-  getMessageQueues(cb: ICallback<string[]>): void {
+export const queueHelpers = {
+  getMessageQueues(redisClient: RedisClient, cb: ICallback<string[]>): void {
     const { keyIndexQueue } = redisKeys.getGlobalKeys();
-    this.redisClientInstance.smembers(keyIndexQueue, cb);
-  }
+    redisClient.smembers(keyIndexQueue, cb);
+  },
 
-  getDLQQueues(cb: ICallback<string[]>): void {
+  getDLQQueues(redisClient: RedisClient, cb: ICallback<string[]>): void {
     const { keyIndexQueueDLQ } = redisKeys.getGlobalKeys();
-    this.redisClientInstance.smembers(keyIndexQueueDLQ, cb);
-  }
+    redisClient.smembers(keyIndexQueueDLQ, cb);
+  },
 
-  setupQueues(queueName: string): void {
+  setupQueues(
+    redisClient: RedisClient,
+    queueName: string,
+    cb: ICallback<void>,
+  ): void {
     const { keyIndexQueue, keyQueue, keyQueueDLQ, keyIndexQueueDLQ } =
       redisKeys.getKeys(queueName);
     const rememberDLQ = (cb: ICallback<unknown>) => {
-      this.redisClientInstance.sadd(keyIndexQueueDLQ, keyQueueDLQ, cb);
+      redisClient.sadd(keyIndexQueueDLQ, keyQueueDLQ, cb);
     };
     const rememberQueue = (cb: ICallback<unknown>) => {
-      this.redisClientInstance.sadd(keyIndexQueue, keyQueue, cb);
+      redisClient.sadd(keyIndexQueue, keyQueue, cb);
     };
-    async.parallel([rememberQueue, rememberDLQ], (err?: Error | null) => {
-      if (err) throw err;
-      else this.emit(events.SYSTEM_QUEUES_CREATED);
-    });
-  }
+    async.parallel([rememberQueue, rememberDLQ], (err?: Error | null) =>
+      cb(err),
+    );
+  },
 
   setupConsumerQueues(
+    redisClient: RedisClient,
     queueName: string,
     consumerId: string,
-    cb: ICallback<unknown[]>,
+    cb: ICallback<void>,
   ): void {
     const {
       keyConsumerProcessingQueue,
       keyIndexQueueProcessing,
       keyIndexQueueQueuesProcessing,
     } = redisKeys.getInstanceKeys(queueName, consumerId);
-    const multi = this.redisClientInstance.multi();
+    const multi = redisClient.multi();
     multi.hset(
       keyIndexQueueQueuesProcessing,
       keyConsumerProcessingQueue,
       consumerId,
     );
     multi.sadd(keyIndexQueueProcessing, keyConsumerProcessingQueue);
-    this.redisClientInstance.execMulti(multi, cb);
-  }
+    redisClient.execMulti(multi, (err) => cb(err));
+  },
 
   deleteProcessingQueue(
+    redisClient: RedisClient,
     queueName: string,
     processingQueueName: string,
     cb: ICallback<void>,
   ): void {
-    const multi = this.redisClientInstance.multi();
+    const multi = redisClient.multi();
     const { keyIndexQueueProcessing, keyIndexQueueQueuesProcessing } =
       redisKeys.getKeys(queueName);
     multi.srem(keyIndexQueueProcessing, processingQueueName);
     multi.hdel(keyIndexQueueQueuesProcessing, processingQueueName);
     multi.del(processingQueueName);
     multi.exec((err) => cb(err));
-  }
+  },
 
-  getProcessingQueues(queueName: string, cb: ICallback<string[]>): void {
+  getProcessingQueues(
+    redisClient: RedisClient,
+    queueName: string,
+    cb: ICallback<string[]>,
+  ): void {
     const { keyIndexQueueQueuesProcessing } = redisKeys.getKeys(queueName);
-    this.redisClientInstance.hkeys(keyIndexQueueQueuesProcessing, cb);
-  }
-}
+    redisClient.hkeys(keyIndexQueueQueuesProcessing, cb);
+  },
+};

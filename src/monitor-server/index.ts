@@ -92,8 +92,10 @@ export function MonitorServer(config: IConfig = {}) {
           subscribeClient = client;
           subscribeClient.subscribe('stats');
           subscribeClient.on('message', (channel, message) => {
-            const json = JSON.parse(message) as Record<string, any>;
-            socketIO.emit('stats', json);
+            if (typeof message === 'string') {
+              const json = JSON.parse(message) as Record<string, any>;
+              socketIO.emit('stats', json);
+            }
           });
           httpServer.listen(port, host, () => {
             powerManager.commit();

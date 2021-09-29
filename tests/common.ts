@@ -16,10 +16,8 @@ export async function shutdown() {
     for (const i of list) {
       if (i.isRunning()) {
         // eslint-disable-next-line no-await-in-loop
-        await new Promise((resolve, reject) => {
-          i.once(events.DOWN, resolve);
-          i.once(events.ERROR, reject);
-          i.shutdown();
+        await new Promise((resolve) => {
+          i.shutdown(resolve);
         });
       }
     }
@@ -44,7 +42,10 @@ export function getConsumer({
       cb(null);
     }
   };
-  const consumer = new TemplateClass(queueName, config, options);
+  const consumer = new TemplateClass(queueName, config, {
+    messageRetryDelay: 0,
+    ...options,
+  });
   if (consumeMock) {
     consumer.consume = consumeMock;
   }
@@ -116,10 +117,6 @@ export async function untilConsumerUp(consumer: Consumer) {
 
 export async function untilMessageAcknowledged(consumer: Consumer) {
   return consumerOnEvent(consumer, events.MESSAGE_ACKNOWLEDGED);
-}
-
-export async function untilMessageDelayed(consumer: Consumer) {
-  return consumerOnEvent(consumer, events.GC_MESSAGE_DELAYED);
 }
 
 export async function untilConsumerEvent(consumer: Consumer, event: string) {

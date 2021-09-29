@@ -20,13 +20,13 @@ test('A consumer delays a failed message before re-queuing it again, given messa
       if (callCount < 5) {
         throw new Error('Explicit error');
       } else if (callCount === 5) {
-        cb(null);
+        cb();
       } else throw new Error('Unexpected call');
     }),
   });
 
   let delayedCount = 0;
-  consumer.on(events.GC_MESSAGE_DELAYED, () => {
+  consumer.on(events.GC_MC_MESSAGE_DELAYED, () => {
     delayedCount += 1;
   });
 

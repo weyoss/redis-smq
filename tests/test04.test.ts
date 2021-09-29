@@ -9,7 +9,7 @@ test('Produce a message having messageTTL and sure the message is not consumed a
   const consume = jest.spyOn(consumer, 'consume');
 
   let messageDestroyed = 0;
-  consumer.on(events.GC_MESSAGE_DESTROYED, () => {
+  consumer.on(events.GC_MC_MESSAGE_DESTROYED, () => {
     messageDestroyed += 1;
   });
 

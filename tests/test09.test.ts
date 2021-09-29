@@ -11,12 +11,12 @@ test('A consumer does re-queue a failed message when threshold is not exceeded, 
   });
 
   let reQueuedCount = 0;
-  consumer.on(events.GC_MESSAGE_REQUEUED, () => {
+  consumer.on(events.GC_MC_MESSAGE_REQUEUED, () => {
     reQueuedCount += 1;
   });
 
   let deadCount = 0;
-  consumer.on(events.GC_MESSAGE_DLQ, () => {
+  consumer.on(events.GC_MC_MESSAGE_DLQ, () => {
     deadCount += 1;
   });
 

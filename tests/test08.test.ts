@@ -19,7 +19,7 @@ test('Async exceptions are caught when consuming a message', async () => {
   });
 
   let queuedCount = 0;
-  consumer.on(events.GC_MESSAGE_REQUEUED, () => {
+  consumer.on(events.GC_MC_MESSAGE_REQUEUED, () => {
     queuedCount += 1;
   });
 

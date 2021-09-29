@@ -10,6 +10,8 @@ export interface ICallback<T> {
   (err: null | undefined, reply: T): void;
 }
 
+export type TUnitaryFunction<T, E = void> = (reply: T) => E;
+
 export type TFunction<TReturn = void, TArgs = any> = (
   ...args: TArgs[]
 ) => TReturn;

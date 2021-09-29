@@ -1,4 +1,4 @@
-import * as async from 'neo-async';
+import * as async from 'async';
 import {
   ICallback,
   TGetScheduledMessagesReply,
@@ -21,13 +21,6 @@ export class Scheduler extends EventEmitter {
     this.redisClientInstance = client;
   }
 
-  protected getRedisClient(): RedisClient {
-    if (!this.redisClientInstance) {
-      throw new Error(`Expected an instance of RedisClient`);
-    }
-    return this.redisClientInstance;
-  }
-
   protected scheduleAtTimestamp(
     message: Message,
     timestamp: number,
@@ -42,11 +35,15 @@ export class Scheduler extends EventEmitter {
     };
     if (typeof mixed === 'object') schedule(mixed);
     else if (typeof mixed === 'function') {
-      const m = this.getRedisClient().multi();
-      schedule(m).exec((err) => {
-        if (err) mixed(err);
-        else mixed(null, true);
-      });
+      if (!this.redisClientInstance)
+        mixed(new Error('Expected an instance of RedisClient'));
+      else {
+        const m = this.redisClientInstance.multi();
+        schedule(m).exec((err) => {
+          if (err) mixed(err);
+          else mixed(null, true);
+        });
+      }
     } else {
       throw new Error(
         'Invalid function argument [mixed]. Expected a callback or an instance of Multi.',
@@ -162,20 +159,31 @@ export class Scheduler extends EventEmitter {
   deleteScheduledMessage(messageId: string, cb: ICallback<boolean>): void {
     const { keyQueueDelayed, keyIndexQueueDelayedMessages } = this.keys;
     const getMessage = (cb: ICallback<string>) => {
-      this.getRedisClient().hget(keyIndexQueueDelayedMessages, messageId, cb);
+      if (!this.redisClientInstance)
+        cb(new Error('Expected an instance of RedisClient'));
+      else
+        this.redisClientInstance.hget(
+          keyIndexQueueDelayedMessages,
+          messageId,
+          cb,
+        );
     };
     const deleteMessage = (msg: string | null, cb: ICallback<boolean>) => {
       if (msg) {
-        const multi = this.getRedisClient().multi();
-        multi.zrem(keyQueueDelayed, msg);
-        multi.hdel(keyIndexQueueDelayedMessages, messageId);
-        this.getRedisClient().execMulti(
-          multi,
-          (err?: Error | null, reply?: number[] | null) => {
-            if (err) cb(err);
-            else cb(null, reply && reply[0] === 1 && reply[1] === 1);
-          },
-        );
+        if (!this.redisClientInstance)
+          cb(new Error('Expected an instance of RedisClient'));
+        else {
+          const multi = this.redisClientInstance.multi();
+          multi.zrem(keyQueueDelayed, msg);
+          multi.hdel(keyIndexQueueDelayedMessages, messageId);
+          this.redisClientInstance.execMulti(
+            multi,
+            (err?: Error | null, reply?: number[] | null) => {
+              if (err) cb(err);
+              else cb(null, reply && reply[0] === 1 && reply[1] === 1);
+            },
+          );
+        }
       } else cb(null, false);
     };
     async.waterfall([getMessage, deleteMessage], cb);
@@ -195,7 +203,9 @@ export class Scheduler extends EventEmitter {
       );
     } else {
       const getTotal = (cb: ICallback<number>) => {
-        this.getRedisClient().zcard(keyQueueDelayed, cb);
+        if (!this.redisClientInstance)
+          cb(new Error('Expected an instance of RedisClient'));
+        else this.redisClientInstance.zcard(keyQueueDelayed, cb);
       };
       const getItems = (
         total: number,
@@ -207,20 +217,24 @@ export class Scheduler extends EventEmitter {
             items: [],
           });
         } else {
-          this.getRedisClient().zrange(
-            keyQueueDelayed,
-            skip,
-            skip + take - 1,
-            (err, result) => {
-              if (err) cb(err);
-              else {
-                const items = (result ?? []).map((msg) =>
-                  Message.createFromMessage(msg),
-                );
-                cb(null, { total, items });
-              }
-            },
-          );
+          if (!this.redisClientInstance)
+            cb(new Error('Expected an instance of RedisClient'));
+          else {
+            this.redisClientInstance.zrange(
+              keyQueueDelayed,
+              skip,
+              skip + take - 1,
+              (err, result) => {
+                if (err) cb(err);
+                else {
+                  const items = (result ?? []).map((msg) =>
+                    Message.createFromMessage(msg),
+                  );
+                  cb(null, { total, items });
+                }
+              },
+            );
+          }
         }
       };
       async.waterfall(
@@ -238,24 +252,27 @@ export class Scheduler extends EventEmitter {
     const { keyQueueDelayed } = this.keys;
     const process = (messages: string[], cb: ICallback<void>) => {
       if (messages.length) {
-        async.each(
+        async.each<string, Error>(
           messages,
-          (msg, _, done) => {
-            const message = Message.createFromMessage(msg);
-            const multi = this.getRedisClient().multi();
-            this.enqueueScheduledMessage(message, multi);
-            this.scheduleAtNextTimestamp(message, multi);
-            multi.exec((err) => {
-              if (err) throw err;
-              else done();
-            });
+          (msg, done) => {
+            if (!this.redisClientInstance)
+              done(new Error('Expected an instance of RedisClient'));
+            else {
+              const message = Message.createFromMessage(msg);
+              const multi = this.redisClientInstance.multi();
+              this.enqueueScheduledMessage(message, multi);
+              this.scheduleAtNextTimestamp(message, multi);
+              multi.exec(done);
+            }
           },
           cb,
         );
       } else cb();
     };
     const fetch = (cb: ICallback<string[]>) => {
-      this.getRedisClient().zrangebyscore(keyQueueDelayed, 0, now, cb);
+      if (!this.redisClientInstance)
+        cb(new Error('Expected an instance of RedisClient'));
+      else this.redisClientInstance.zrangebyscore(keyQueueDelayed, 0, now, cb);
     };
     async.waterfall([fetch, process], cb);
   }
