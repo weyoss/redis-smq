@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import { EventEmitter } from 'events';
-import { IConfig, IStatsProvider, ICallback, TUnitaryFunction } from '../types';
+import { IConfig, IStatsProvider, ICallback, TUnaryFunction } from '../types';
 import { PowerManager } from './power-manager';
 import { Logger } from './logger';
 import * as BunyanLogger from 'bunyan';
@@ -166,13 +166,13 @@ export abstract class Instance extends EventEmitter {
     return this.powerManager.isRunning();
   }
 
-  protected getStatsInstance(cb: TUnitaryFunction<Stats>): void {
+  protected getStatsInstance(cb: TUnaryFunction<Stats>): void {
     if (!this.statsInstance)
       this.emit(events.ERROR, new Error(`Expected an instance of Stats`));
     else cb(this.statsInstance);
   }
 
-  protected getRedisInstance(cb: TUnitaryFunction<RedisClient>): void {
+  protected getRedisInstance(cb: TUnaryFunction<RedisClient>): void {
     if (!this.redisClientInstance)
       this.emit(events.ERROR, new Error(`Expected an instance of RedisClient`));
     else cb(this.redisClientInstance);

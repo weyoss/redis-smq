@@ -2,7 +2,7 @@ import {
   IConfig,
   IConsumerConstructorOptions,
   ICallback,
-  TUnitaryFunction,
+  TUnaryFunction,
 } from '../types';
 import { Instance } from './instance';
 import { Message } from './message';
@@ -208,7 +208,7 @@ export abstract class Consumer extends Instance {
   }
 
   protected getGarbageCollectorInstance(
-    cb: TUnitaryFunction<GarbageCollector>,
+    cb: TUnaryFunction<GarbageCollector>,
   ): void {
     if (!this.garbageCollectorInstance)
       this.emit(
@@ -218,14 +218,14 @@ export abstract class Consumer extends Instance {
     else cb(this.garbageCollectorInstance);
   }
 
-  protected getHeartBeatInstance(cb: TUnitaryFunction<Heartbeat>): void {
+  protected getHeartBeatInstance(cb: TUnaryFunction<Heartbeat>): void {
     if (!this.heartbeatInstance)
       this.emit(events.ERROR, new Error(`Expected an instance of HeartBeat`));
     else cb(this.heartbeatInstance);
   }
 
   protected getSchedulerRunnerInstance(
-    cb: TUnitaryFunction<SchedulerRunner>,
+    cb: TUnaryFunction<SchedulerRunner>,
   ): void {
     if (!this.schedulerRunnerInstance)
       this.emit(
