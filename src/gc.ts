@@ -150,7 +150,7 @@ export class GarbageCollector {
       if (consumerId !== this.consumerId) {
         this.debug(`Is consumer ID [${consumerId}] alive?`);
         this.getRedisInstance((client) => {
-          Heartbeat.isOnline(
+          Heartbeat.isAlive(
             { client: client, queueName, id: consumerId },
             (err, online) => {
               if (err) cb(err);

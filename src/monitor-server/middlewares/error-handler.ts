@@ -5,7 +5,7 @@ export const errorHandler: TMiddleware = async (ctx, next) => {
   try {
     await next();
   } catch (e: unknown) {
-    console.log(e);
+    ctx.logger.error(e);
     if (e instanceof ValidationError) {
       ctx.status = 422;
       ctx.body = {

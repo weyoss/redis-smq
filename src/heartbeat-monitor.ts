@@ -34,16 +34,19 @@ function heartbeatMonitor(config: IConfig) {
     return lockManagerInstance;
   }
 
-  function handleConsumers(offlineConsumers: string[], cb: ICallback<number>) {
-    Heartbeat.handleOfflineConsumers(getRedisClient(), offlineConsumers, cb);
+  function handleExpiredHeartbeats(
+    heartbeats: string[],
+    cb: ICallback<number>,
+  ) {
+    Heartbeat.handleExpiredHeartbeat(getRedisClient(), heartbeats, cb);
   }
 
-  function getOfflineConsumers(cb: ICallback<string[]>) {
-    Heartbeat.getConsumersByOnlineStatus(getRedisClient(), (err, result) => {
+  function getExpiredHeartbeats(cb: ICallback<string[]>) {
+    Heartbeat.getHeartbeatsByStatus(getRedisClient(), (err, result) => {
       if (err) cb(err);
       else {
-        const { offlineConsumers = [] } = result ?? {};
-        cb(null, offlineConsumers);
+        const { expired = [] } = result ?? {};
+        cb(null, expired);
       }
     });
   }
@@ -51,7 +54,7 @@ function heartbeatMonitor(config: IConfig) {
   function tick() {
     getLockManager().acquireLock(keyLockHeartBeatMonitor, 10000, true, () => {
       async.waterfall(
-        [getOfflineConsumers, handleConsumers],
+        [getExpiredHeartbeats, handleExpiredHeartbeats],
         (err?: Error | null) => {
           if (err) throw err;
           ticker.nextTick();
