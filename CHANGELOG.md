@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 3.2.0 (2021-10-01)
+
+- Run tests in Node.js v12, v14, and v16
+- Run tests in Redis v2.6.17, v3, v4, v5, and v6
+- Made redis-smq-monitor server an integral part of redis-smq
+- Implemented Scheduler HTTP API endpoints
+- Various fixes and improvements
+
 ## 3.1.1 (2021-09-16)
 
 * Added Github CI
