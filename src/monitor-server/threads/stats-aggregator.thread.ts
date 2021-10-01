@@ -10,14 +10,15 @@ import { redisKeys } from '../../redis-keys';
 import { LockManager } from '../../lock-manager';
 import { RedisClient } from '../../redis-client';
 import { Heartbeat } from '../../heartbeat';
-import { merge } from 'lodash';
 import { queueHelpers } from '../../queue-helpers';
+import { Logger } from '../../logger';
 
 function StatsAggregatorThread(config: IConfig) {
   if (config.namespace) {
     redisKeys.setNamespace(config.namespace);
   }
   const { keyIndexRate, keyLockStatsAggregator } = redisKeys.getGlobalKeys();
+  const logger = Logger(`monitor-server:stats-aggregator-thread`, config.log);
   const noop = () => void 0;
   let redisClientInstance: RedisClient | null = null;
   let lockManagerInstance: LockManager | null = null;
@@ -46,14 +47,9 @@ function StatsAggregatorThread(config: IConfig) {
         id: consumerId,
         namespace: ns,
         queueName: queueName,
-        rates: {
-          processing: 0,
-          acknowledged: 0,
-          unacknowledged: 0,
-        },
       };
     }
-    return consumers;
+    return consumers[consumerId];
   };
 
   const addProducerIfNotExists = (
@@ -142,22 +138,27 @@ function StatsAggregatorThread(config: IConfig) {
     ) => {
       addQueueIfNotExists(ns, queueName);
       rate = Number(rate);
-      const consumers = addConsumerIfNotExists(ns, queueName, consumerId);
+      const consumer = addConsumerIfNotExists(ns, queueName, consumerId);
+      consumer.rates = {
+        acknowledged: consumer.rates?.acknowledged ?? 0,
+        unacknowledged: consumer.rates?.unacknowledged ?? 0,
+        processing: consumer.rates?.processing ?? 0,
+      };
       const consumerTypes = redisKeys.getTypes();
       switch (type) {
         case consumerTypes.KEY_TYPE_CONSUMER_RATE_PROCESSING:
           data.rates.processing += rate;
-          consumers[consumerId].rates.processing = rate;
+          consumer.rates.processing = rate;
           break;
 
         case consumerTypes.KEY_TYPE_CONSUMER_RATE_ACKNOWLEDGED:
           data.rates.acknowledged += rate;
-          consumers[consumerId].rates.acknowledged = rate;
+          consumer.rates.acknowledged = rate;
           break;
 
         case consumerTypes.KEY_TYPE_CONSUMER_RATE_UNACKNOWLEDGED:
           data.rates.unacknowledged += rate;
-          consumers[consumerId].rates.unacknowledged = rate;
+          consumer.rates.unacknowledged = rate;
           break;
       }
     };
@@ -251,7 +252,12 @@ function StatsAggregatorThread(config: IConfig) {
     Heartbeat.getHeartbeats(getRedisClient(), (err, reply) => {
       if (err) cb(err);
       else {
-        merge(data, reply);
+        for (const consumerId in reply) {
+          const { ns, queueName, resources } = reply[consumerId];
+          addQueueIfNotExists(ns, queueName);
+          const consumer = addConsumerIfNotExists(ns, queueName, consumerId);
+          consumer.resources = resources;
+        }
         cb();
       }
     });
@@ -288,6 +294,7 @@ function StatsAggregatorThread(config: IConfig) {
   }
 
   function publish(cb: ICallback<number>) {
+    logger.debug(`Publishing stats...`);
     const statsString = JSON.stringify(data);
     getRedisClient().publish('stats', statsString, cb);
   }
@@ -312,8 +319,10 @@ function StatsAggregatorThread(config: IConfig) {
   }
 
   function run() {
+    logger.debug(`Acquiring lock...`);
     getLockManager().acquireLock(keyLockStatsAggregator, 10000, true, (err) => {
       if (err) throw err;
+      logger.debug(`Lock acquired. Processing stats...`);
       async.waterfall(
         [
           reset,
