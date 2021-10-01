@@ -290,7 +290,7 @@ message
 
 producer.produceMessage(message, (err) => {
     if (err) console.log(err);
-    // ...
+    else console.log('Message has been succefully produced');
 })
 ```
 
@@ -304,15 +304,18 @@ const { Message, Producer } = require('redis-smq');
 const producer = new Producer('test_queue');
 
 producer.getScheduler((err, scheduler) => {
-    const message = new Message();
-    message
-        .setBody({hello: 'world'})
-        .setScheduledCron(`0 0 * * * *`);
-    scheduler.schedule(message, (err, reply) => {
-        if (err) console.log(err);
-        else if (rely) console.log('Message has been succefully scheduled');
-        else console.log('Message has not been scheduled');
-    });  
+    if (err) console.log(err);
+    else {
+        const message = new Message();
+        message
+            .setBody({hello: 'world'})
+            .setScheduledCron(`0 0 * * * *`);
+        scheduler.schedule(message, (err, reply) => {
+            if (err) console.log(err);
+            else if (rely) console.log('Message has been succefully scheduled');
+            else console.log('Message has not been scheduled');
+        });
+    }
 })
 ```
 
