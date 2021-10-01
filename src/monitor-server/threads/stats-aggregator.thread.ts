@@ -247,11 +247,11 @@ function StatsAggregatorThread(config: IConfig) {
     queueHelpers.getDLQQueues(getRedisClient(), cb);
   }
 
-  function getConsumers(cb: ICallback<void>) {
-    Heartbeat.getOnlineConsumers(getRedisClient(), (err, consumers) => {
+  function getConsumersHeartbeats(cb: ICallback<void>) {
+    Heartbeat.getHeartbeats(getRedisClient(), (err, reply) => {
       if (err) cb(err);
       else {
-        merge(data, consumers);
+        merge(data, reply);
         cb();
       }
     });
@@ -318,7 +318,7 @@ function StatsAggregatorThread(config: IConfig) {
         [
           reset,
           getRates,
-          getConsumers,
+          getConsumersHeartbeats,
           getQueues,
           getQueueSize,
           getDLQQueues,

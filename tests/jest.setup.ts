@@ -1,24 +1,13 @@
-import { getRedisInstance, shutdown } from './common';
+import { shutdown, startUp } from './common';
 
-type ThenArg<T> = T extends PromiseLike<infer U> ? U : T;
+const noop = () => void 0;
 
-let redisInstance: ThenArg<ReturnType<typeof getRedisInstance>> | null = null;
+beforeAll(noop);
 
-beforeAll(async () => {
-  if (!redisInstance) {
-    redisInstance = await getRedisInstance();
-  }
-});
-
-afterAll(async () => {
-  if (redisInstance) {
-    redisInstance.end(true);
-    redisInstance = null;
-  }
-});
+afterAll(noop);
 
 beforeEach(async () => {
-  await redisInstance?.flushallAsync();
+  await startUp();
 });
 
 afterEach(async () => {

@@ -64,7 +64,7 @@ function validateOnlineTimestamp(timestamp: number) {
   return now - timestamp <= 10000;
 }
 
-function handleConsumerData(
+function handleHeartbeatPayload(
   hashKey: string,
   resources: Record<string, any>,
   cb: ICallback<Record<string, any>>,
@@ -93,25 +93,25 @@ function handleConsumerData(
   }
 }
 
-function getAllHeartBeats(
+function fetchHeartbeats(
   client: RedisClient,
   cb: ICallback<Record<string, string>>,
 ) {
-  const { keyIndexHeartBeat } = redisKeys.getGlobalKeys();
-  client.hgetall(keyIndexHeartBeat, cb);
+  const { keyIndexHeartbeat } = redisKeys.getGlobalKeys();
+  client.hgetall(keyIndexHeartbeat, cb);
 }
 
-function getConsumerHeartBeat(
+function getConsumerHeartbeat(
   client: RedisClient,
   id: string,
   queueName: string,
   cb: ICallback<string>,
 ) {
-  const { keyConsumerHeartBeat, keyIndexHeartBeat } = redisKeys.getInstanceKeys(
+  const { keyConsumerHeartbeat, keyIndexHeartbeat } = redisKeys.getInstanceKeys(
     queueName,
     id,
   );
-  client.hget(keyIndexHeartBeat, keyConsumerHeartBeat, cb);
+  client.hget(keyIndexHeartbeat, keyConsumerHeartbeat, cb);
 }
 
 export class Heartbeat {
@@ -187,11 +187,11 @@ export class Heartbeat {
         timestamp,
         usage,
       });
-      const { keyIndexHeartBeat, keyConsumerHeartBeat } = this.redisKeys;
+      const { keyIndexHeartbeat, keyConsumerHeartbeat } = this.redisKeys;
       this.getRedisClientInstance((client) => {
         client.hset(
-          keyIndexHeartBeat,
-          keyConsumerHeartBeat,
+          keyIndexHeartbeat,
+          keyConsumerHeartbeat,
           payload,
           (err?: Error | null) => {
             if (err) this.consumer.emit(events.ERROR, err);
@@ -223,6 +223,13 @@ export class Heartbeat {
     else cb(this.ticker);
   }
 
+  protected expireHeartbeat(client: RedisClient, cb: ICallback<void>) {
+    const { keyConsumerHeartbeat } = this.redisKeys;
+    Heartbeat.handleExpiredHeartbeat(client, [keyConsumerHeartbeat], (err) =>
+      cb(err),
+    );
+  }
+
   start() {
     this.powerManager.goingUp();
     RedisClient.getInstance(this.config, (client) => {
@@ -240,62 +247,57 @@ export class Heartbeat {
       this.stopMonitor();
       this.getTicker((ticker) => {
         ticker.shutdown();
-        const { keyIndexHeartBeat, keyConsumerHeartBeat } = this.redisKeys;
         this.getRedisClientInstance((client) => {
-          client.hdel(
-            keyIndexHeartBeat,
-            keyConsumerHeartBeat,
-            (err?: Error | null) => {
-              if (err) this.consumer.emit(events.ERROR, err);
-              else {
-                client.end(true);
-                this.redisClientInstance = null;
-                this.powerManager.commit();
-                this.consumer.emit(events.HEARTBEAT_DOWN);
-              }
-            },
-          );
+          this.expireHeartbeat(client, (err?: Error | null) => {
+            if (err) this.consumer.emit(events.ERROR, err);
+            else {
+              client.end(true);
+              this.redisClientInstance = null;
+              this.powerManager.commit();
+              this.consumer.emit(events.HEARTBEAT_DOWN);
+            }
+          });
         });
       });
     });
   }
 
-  static getConsumersByOnlineStatus(
+  static getHeartbeatsByStatus(
     client: RedisClient,
-    cb: ICallback<{ onlineConsumers: string[]; offlineConsumers: string[] }>,
+    cb: ICallback<{ valid: string[]; expired: string[] }>,
   ) {
-    getAllHeartBeats(client, (err, data) => {
+    fetchHeartbeats(client, (err, data) => {
       if (err) cb(err);
       else {
-        const onlineConsumers: string[] = [];
-        const offlineConsumers: string[] = [];
+        const valid: string[] = [];
+        const expired: string[] = [];
         if (data) {
           async.eachOf(
             data,
             (value, key, done) => {
               const { timestamp }: { timestamp: number } = JSON.parse(value);
               const r = validateOnlineTimestamp(timestamp);
-              if (r) onlineConsumers.push(String(key));
-              else offlineConsumers.push(String(key));
+              if (r) valid.push(String(key));
+              else expired.push(String(key));
               done();
             },
             () => {
               cb(null, {
-                onlineConsumers,
-                offlineConsumers,
+                valid,
+                expired,
               });
             },
           );
         } else
           cb(null, {
-            onlineConsumers,
-            offlineConsumers,
+            valid,
+            expired,
           });
       }
     });
   }
 
-  static isOnline(
+  static isAlive(
     {
       client,
       queueName,
@@ -307,7 +309,7 @@ export class Heartbeat {
     },
     cb: ICallback<boolean>,
   ) {
-    getConsumerHeartBeat(client, id, queueName, (err, res) => {
+    getConsumerHeartbeat(client, id, queueName, (err, res) => {
       if (err) cb(err);
       else {
         let online = false;
@@ -320,45 +322,45 @@ export class Heartbeat {
     });
   }
 
-  static handleOfflineConsumers(
+  static handleExpiredHeartbeat(
     client: RedisClient,
-    offlineConsumers: string[],
+    heartbeats: string[],
     cb: ICallback<number>,
   ) {
-    if (offlineConsumers.length) {
-      const { keyIndexHeartBeat } = redisKeys.getGlobalKeys();
-      client.hdel(keyIndexHeartBeat, offlineConsumers, cb);
+    if (heartbeats.length) {
+      const { keyIndexHeartbeat } = redisKeys.getGlobalKeys();
+      client.hdel(keyIndexHeartbeat, heartbeats, cb);
     } else cb();
   }
 
-  static getOnlineConsumers(
+  static getHeartbeats(
     client: RedisClient,
     cb: ICallback<Record<string, any>>,
   ) {
-    getAllHeartBeats(client, (err, data) => {
+    fetchHeartbeats(client, (err, data) => {
       if (err) cb(err);
       else {
-        const onlineConsumers = {};
+        const result = {};
         if (data) {
           async.eachOf(
             data,
             (value, key, done) => {
               const { usage: resources }: { usage: Record<string, any> } =
                 JSON.parse(value);
-              handleConsumerData(`${key}`, resources, (err, r) => {
+              handleHeartbeatPayload(`${key}`, resources, (err, r) => {
                 if (err) done(err);
                 else {
-                  merge(onlineConsumers, r);
+                  merge(result, r);
                   done();
                 }
               });
             },
             (err) => {
               if (err) cb(err);
-              else cb(null, onlineConsumers);
+              else cb(null, result);
             },
           );
-        } else cb(null, onlineConsumers);
+        } else cb(null, result);
       }
     });
   }

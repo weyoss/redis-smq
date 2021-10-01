@@ -8,6 +8,11 @@ interface IResponse extends supertest.Response {
       items: { uuid: string }[];
       total: number;
     };
+    error?: {
+      code: string;
+      message: string;
+      details: Record<string, any>;
+    };
   };
 }
 
@@ -91,5 +96,21 @@ describe('Monitor server: fetch scheduled messages using, delete a scheduled mes
     expect(response3.body.data).toBeDefined();
     expect(response3.body.data?.total).toBe(4);
     expect(response3.body.data?.items.length).toBe(0);
+  });
+
+  test('Case 3', async () => {
+    await startMonitorServer();
+    const request = supertest('http://127.0.0.1:3000');
+    const response1: IResponse = await request.get('/api/scheduler/messages');
+    expect(response1.statusCode).toBe(422);
+    expect(response1.body.data).toBeUndefined();
+    expect(response1.body.error).toBeDefined();
+    expect(response1.body.error?.code).toBe(422);
+    expect(Object.keys(response1.body.error ?? {})).toEqual(
+      expect.arrayContaining(['code', 'message', 'details']),
+    );
+    expect(Object.keys(response1.body.error?.details ?? {})).toEqual(
+      expect.arrayContaining(['target', 'property', 'children', 'constraints']),
+    );
   });
 });

@@ -7,9 +7,15 @@ import { ICallback, IConsumerConstructorOptions } from '../types';
 
 type TMonitorServer = ReturnType<typeof MonitorServer>;
 
+const redisClients: RedisClient[] = [];
 const consumersList: Consumer[] = [];
 const producersList: Producer[] = [];
 let monitorServer: TMonitorServer | null = null;
+
+export async function startUp() {
+  const redisClient = await getRedisInstance();
+  await redisClient.flushallAsync();
+}
 
 export async function shutdown() {
   const p = async (list: (Consumer | Producer)[]) => {
@@ -24,6 +30,12 @@ export async function shutdown() {
   };
   await p(consumersList);
   await p(producersList);
+  while (redisClients.length) {
+    const redisClient = redisClients.pop();
+    if (redisClient) {
+      redisClient.end(true);
+    }
+  }
   await stopMonitorServer();
 }
 
@@ -93,10 +105,13 @@ export function validateTime(
 }
 
 export async function getRedisInstance() {
-  const c = await new Promise<RedisClient>((resolve) =>
-    RedisClient.getInstance(config, resolve),
+  const c = promisifyAll(
+    await new Promise<RedisClient>((resolve) =>
+      RedisClient.getInstance(config, resolve),
+    ),
   );
-  return promisifyAll(c);
+  redisClients.push(c);
+  return c;
 }
 
 export async function consumerOnEvent(consumer: Consumer, event: string) {

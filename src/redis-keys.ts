@@ -78,7 +78,7 @@ export const redisKeys = {
         queueName,
         instanceId,
       ),
-      keyConsumerHeartBeat: this.joinSegments(
+      keyConsumerHeartbeat: this.joinSegments(
         types.KEY_TYPE_CONSUMER_HEARTBEAT,
         queueName,
         instanceId,
@@ -175,7 +175,7 @@ export const redisKeys = {
       keyIndexRate: types.KEY_TYPE_INDEX_RATE,
       keyLockStatsAggregator: types.KEY_TYPE_LOCK_STATS_AGGREGATOR,
       keyIndexQueueProcessing: types.KEY_TYPE_INDEX_QUEUE_PROCESSING,
-      keyIndexHeartBeat: types.KEY_TYPE_INDEX_HEARTBEAT,
+      keyIndexHeartbeat: types.KEY_TYPE_INDEX_HEARTBEAT,
       keyLockHeartBeatMonitor: types.KEY_TYPE_LOCK_HEARTBEAT_MONITOR,
     };
     return this.makeGlobalNamespacedKeys(keys);
