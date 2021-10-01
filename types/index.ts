@@ -84,7 +84,7 @@ export type TAggregatedStatsQueueConsumer = {
   namespace: string;
   queueName: string;
   resources?: Record<string, any>;
-  rates: {
+  rates?: {
     processing: number;
     acknowledged: number;
     unacknowledged: number;

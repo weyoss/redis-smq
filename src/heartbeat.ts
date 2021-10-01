@@ -6,10 +6,19 @@ import { Ticker } from './ticker';
 import { ChildProcess, fork } from 'child_process';
 import { resolve } from 'path';
 import { events } from './events';
-import { merge } from 'lodash';
 import { RedisClient } from './redis-client';
 import { redisKeys } from './redis-keys';
 import { Consumer } from './consumer';
+
+type TGetHeartbeatReply = Record<
+  string,
+  {
+    ns: string;
+    queueName: string;
+    consumerId: string;
+    resources: Record<string, any>;
+  }
+>;
 
 const IPAddresses = getIPAddresses();
 
@@ -62,35 +71,6 @@ function getIPAddresses() {
 function validateOnlineTimestamp(timestamp: number) {
   const now = Date.now();
   return now - timestamp <= 10000;
-}
-
-function handleHeartbeatPayload(
-  hashKey: string,
-  resources: Record<string, any>,
-  cb: ICallback<Record<string, any>>,
-) {
-  const extractedData = redisKeys.extractData(hashKey);
-  if (!extractedData || !extractedData.consumerId) {
-    cb(new Error(`Invalid extracted consumer data`));
-  } else {
-    const { ns, queueName, consumerId } = extractedData;
-    cb(null, {
-      queues: {
-        [ns]: {
-          [queueName]: {
-            consumers: {
-              [consumerId]: {
-                id: consumerId,
-                namespace: ns,
-                queueName: queueName,
-                resources,
-              },
-            },
-          },
-        },
-      },
-    });
-  }
 }
 
 function fetchHeartbeats(
@@ -333,27 +313,25 @@ export class Heartbeat {
     } else cb();
   }
 
-  static getHeartbeats(
-    client: RedisClient,
-    cb: ICallback<Record<string, any>>,
-  ) {
+  static getHeartbeats(client: RedisClient, cb: ICallback<TGetHeartbeatReply>) {
     fetchHeartbeats(client, (err, data) => {
       if (err) cb(err);
       else {
-        const result = {};
+        const result: TGetHeartbeatReply = {};
         if (data) {
           async.eachOf(
             data,
             (value, key, done) => {
               const { usage: resources }: { usage: Record<string, any> } =
                 JSON.parse(value);
-              handleHeartbeatPayload(`${key}`, resources, (err, r) => {
-                if (err) done(err);
-                else {
-                  merge(result, r);
-                  done();
-                }
-              });
+              const extractedData = redisKeys.extractData(`${key}`);
+              if (!extractedData || !extractedData.consumerId) {
+                done(new Error(`Invalid extracted consumer data`));
+              } else {
+                const { ns, queueName, consumerId } = extractedData;
+                result[consumerId] = { ns, queueName, consumerId, resources };
+                done();
+              }
             },
             (err) => {
               if (err) cb(err);
