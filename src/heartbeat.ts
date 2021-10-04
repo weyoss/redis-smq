@@ -1,15 +1,24 @@
 import * as os from 'os';
-import * as async from 'neo-async';
-import { ICallback } from '../types';
+import * as async from 'async';
+import { ICallback, IConfig, TUnaryFunction } from '../types';
 import { PowerManager } from './power-manager';
-import { Instance } from './instance';
 import { Ticker } from './ticker';
 import { ChildProcess, fork } from 'child_process';
 import { resolve } from 'path';
 import { events } from './events';
-import { merge } from 'lodash';
 import { RedisClient } from './redis-client';
 import { redisKeys } from './redis-keys';
+import { Consumer } from './consumer';
+
+type TGetHeartbeatReply = Record<
+  string,
+  {
+    ns: string;
+    queueName: string;
+    consumerId: string;
+    resources: Record<string, any>;
+  }
+>;
 
 const IPAddresses = getIPAddresses();
 
@@ -64,83 +73,84 @@ function validateOnlineTimestamp(timestamp: number) {
   return now - timestamp <= 10000;
 }
 
-function handleConsumerData(hashKey: string, resources: Record<string, any>) {
-  const extractedData = redisKeys.extractData(hashKey);
-  if (!extractedData || !extractedData.consumerId) {
-    throw new Error(`Invalid extracted consumer data`);
-  }
-  const { ns, queueName, consumerId } = extractedData;
-  return {
-    queues: {
-      [ns]: {
-        [queueName]: {
-          consumers: {
-            [consumerId]: {
-              id: consumerId,
-              namespace: ns,
-              queueName: queueName,
-              resources,
-            },
-          },
-        },
-      },
-    },
-  };
-}
-
-function getAllHeartBeats(
+function fetchHeartbeats(
   client: RedisClient,
   cb: ICallback<Record<string, string>>,
 ) {
-  const { keyIndexHeartBeat } = redisKeys.getGlobalKeys();
-  client.hgetall(keyIndexHeartBeat, cb);
+  const { keyIndexHeartbeat } = redisKeys.getGlobalKeys();
+  client.hgetall(keyIndexHeartbeat, cb);
 }
 
-function getConsumerHeartBeat(
+function getConsumerHeartbeat(
   client: RedisClient,
   id: string,
   queueName: string,
   cb: ICallback<string>,
 ) {
-  const { keyConsumerHeartBeat, keyIndexHeartBeat } = redisKeys.getInstanceKeys(
+  const { keyConsumerHeartbeat, keyIndexHeartbeat } = redisKeys.getInstanceKeys(
     queueName,
     id,
   );
-  client.hget(keyIndexHeartBeat, keyConsumerHeartBeat, cb);
+  client.hget(keyIndexHeartbeat, keyConsumerHeartbeat, cb);
 }
 
-export function HeartBeat(instance: Instance) {
-  const powerManager = new PowerManager();
-  const config = instance.getConfig();
-  const instanceRedisKeys = instance.getInstanceRedisKeys();
-  const { keyIndexHeartBeat, keyConsumerHeartBeat } = instanceRedisKeys;
-  let redisClientInstance: RedisClient | null = null;
-  let monitorThread: ChildProcess | null = null;
-  let ticker: Ticker | null = null;
+export class Heartbeat {
+  protected consumer: Consumer;
+  protected queueName: string;
+  protected consumerId: string;
+  protected powerManager: PowerManager;
+  protected config: IConfig;
+  protected redisKeys: ReturnType<typeof redisKeys['getInstanceKeys']>;
+  protected redisClientInstance: RedisClient | null = null;
+  protected monitorThread: ChildProcess | null = null;
+  protected ticker: Ticker | null = null;
 
-  function getRedisClientInstance() {
-    if (!redisClientInstance) {
-      throw new Error(`Expected an instance of RedisClient`);
-    }
-    return redisClientInstance;
+  constructor(consumer: Consumer) {
+    this.consumer = consumer;
+    this.queueName = consumer.getQueueName();
+    this.consumerId = consumer.getId();
+    this.config = consumer.getConfig();
+    this.powerManager = new PowerManager();
+    this.redisKeys = consumer.getInstanceRedisKeys();
   }
 
-  function getTicker() {
-    if (!ticker) {
-      throw new Error(`Expected an instance of Ticker`);
-    }
-    return ticker;
+  protected startMonitor() {
+    this.monitorThread = fork(resolve(`${__dirname}/heartbeat-monitor.js`));
+    this.monitorThread.on('error', (err) => {
+      this.consumer.emit(events.ERROR, err);
+    });
+    this.monitorThread.on('exit', (code, signal) => {
+      this.consumer.emit(
+        events.ERROR,
+        new Error(
+          `statsAggregatorThread exited with code ${code} and signal ${signal}`,
+        ),
+      );
+    });
+    this.monitorThread.send(JSON.stringify(this.config));
   }
 
-  function nextTick() {
-    if (!ticker) {
-      ticker = new Ticker(onTick, 1000);
+  protected stopMonitor() {
+    if (this.monitorThread) {
+      this.monitorThread.kill('SIGHUP');
+      this.monitorThread = null;
     }
-    ticker.nextTick();
   }
 
-  function onTick() {
-    if (powerManager.isRunning()) {
+  protected nextTick() {
+    if (!this.ticker) {
+      this.ticker = new Ticker(() => {
+        this.onTick();
+      }, 1000);
+      this.ticker.on(events.ERROR, (err: Error) =>
+        this.consumer.emit(events.ERROR, err),
+      );
+    }
+    this.ticker.nextTick();
+  }
+
+  protected onTick() {
+    if (this.powerManager.isRunning()) {
       const usage = {
         ipAddress: IPAddresses,
         hostname: os.hostname(),
@@ -157,172 +167,179 @@ export function HeartBeat(instance: Instance) {
         timestamp,
         usage,
       });
-      getRedisClientInstance().hset(
-        keyIndexHeartBeat,
-        keyConsumerHeartBeat,
-        payload,
-        (err?: Error | null) => {
-          if (err) instance.error(err);
-          else nextTick();
-        },
-      );
-    }
-    if (powerManager.isGoingDown()) {
-      instance.emit(events.HEARTBEAT_READY_TO_SHUTDOWN);
-    }
-  }
-
-  function startMonitor() {
-    monitorThread = fork(resolve(`${__dirname}/heartbeat-monitor.js`));
-    monitorThread.on('error', (err) => {
-      instance.error(err);
-    });
-    monitorThread.on('exit', (code, signal) => {
-      const err = new Error(
-        `statsAggregatorThread exited with code ${code} and signal ${signal}`,
-      );
-      instance.error(err);
-    });
-    monitorThread.send(JSON.stringify(config));
-  }
-
-  function stopMonitor() {
-    if (monitorThread) {
-      monitorThread.kill('SIGHUP');
-      monitorThread = null;
-    }
-  }
-
-  return {
-    start() {
-      powerManager.goingUp();
-      RedisClient.getInstance(config, (client) => {
-        redisClientInstance = client;
-        startMonitor();
-        nextTick();
-        instance.emit(events.HEARTBEAT_UP);
-        powerManager.commit();
+      const { keyIndexHeartbeat, keyConsumerHeartbeat } = this.redisKeys;
+      this.getRedisClientInstance((client) => {
+        client.hset(
+          keyIndexHeartbeat,
+          keyConsumerHeartbeat,
+          payload,
+          (err?: Error | null) => {
+            if (err) this.consumer.emit(events.ERROR, err);
+            else this.nextTick();
+          },
+        );
       });
-    },
+    }
+    if (this.powerManager.isGoingDown()) {
+      this.consumer.emit(events.HEARTBEAT_READY_TO_SHUTDOWN);
+    }
+  }
 
-    stop() {
-      powerManager.goingDown();
-      instance.once(events.HEARTBEAT_READY_TO_SHUTDOWN, () => {
-        stopMonitor();
-        getTicker().shutdown(() => {
-          getRedisClientInstance().hdel(
-            keyIndexHeartBeat,
-            keyConsumerHeartBeat,
-            (err?: Error | null) => {
-              if (err) instance.error(err);
-              else {
-                getRedisClientInstance().end(true);
-                redisClientInstance = null;
-                powerManager.commit();
-                instance.emit(events.HEARTBEAT_DOWN);
-              }
+  protected getRedisClientInstance(cb: TUnaryFunction<RedisClient>): void {
+    if (!this.redisClientInstance)
+      this.consumer.emit(
+        events.ERROR,
+        new Error(`Expected an instance of RedisClient`),
+      );
+    else cb(this.redisClientInstance);
+  }
+
+  protected getTicker(cb: TUnaryFunction<Ticker>): void {
+    if (!this.ticker)
+      this.consumer.emit(
+        events.ERROR,
+        new Error(`Expected an instance of Ticker`),
+      );
+    else cb(this.ticker);
+  }
+
+  protected expireHeartbeat(client: RedisClient, cb: ICallback<void>) {
+    const { keyConsumerHeartbeat } = this.redisKeys;
+    Heartbeat.handleExpiredHeartbeat(client, [keyConsumerHeartbeat], (err) =>
+      cb(err),
+    );
+  }
+
+  start() {
+    this.powerManager.goingUp();
+    RedisClient.getInstance(this.config, (client) => {
+      this.redisClientInstance = client;
+      this.startMonitor();
+      this.nextTick();
+      this.consumer.emit(events.HEARTBEAT_UP);
+      this.powerManager.commit();
+    });
+  }
+
+  stop() {
+    this.powerManager.goingDown();
+    this.consumer.once(events.HEARTBEAT_READY_TO_SHUTDOWN, () => {
+      this.stopMonitor();
+      this.getTicker((ticker) => {
+        ticker.shutdown();
+        this.getRedisClientInstance((client) => {
+          this.expireHeartbeat(client, (err?: Error | null) => {
+            if (err) this.consumer.emit(events.ERROR, err);
+            else {
+              client.end(true);
+              this.redisClientInstance = null;
+              this.powerManager.commit();
+              this.consumer.emit(events.HEARTBEAT_DOWN);
+            }
+          });
+        });
+      });
+    });
+  }
+
+  static getHeartbeatsByStatus(
+    client: RedisClient,
+    cb: ICallback<{ valid: string[]; expired: string[] }>,
+  ) {
+    fetchHeartbeats(client, (err, data) => {
+      if (err) cb(err);
+      else {
+        const valid: string[] = [];
+        const expired: string[] = [];
+        if (data) {
+          async.eachOf(
+            data,
+            (value, key, done) => {
+              const { timestamp }: { timestamp: number } = JSON.parse(value);
+              const r = validateOnlineTimestamp(timestamp);
+              if (r) valid.push(String(key));
+              else expired.push(String(key));
+              done();
+            },
+            () => {
+              cb(null, {
+                valid,
+                expired,
+              });
             },
           );
-        });
-      });
-    },
-  };
-}
-
-HeartBeat.getConsumersByOnlineStatus = (
-  client: RedisClient,
-  cb: ICallback<{ onlineConsumers: string[]; offlineConsumers: string[] }>,
-) => {
-  getAllHeartBeats(client, (err, data) => {
-    if (err) cb(err);
-    else {
-      const onlineConsumers: string[] = [];
-      const offlineConsumers: string[] = [];
-      if (data) {
-        async.each(
-          data,
-          (value, key, done) => {
-            const { timestamp }: { timestamp: number } = JSON.parse(value);
-            const r = validateOnlineTimestamp(timestamp);
-            if (r) onlineConsumers.push(String(key));
-            else offlineConsumers.push(String(key));
-            done();
-          },
-          () => {
-            cb(null, {
-              onlineConsumers,
-              offlineConsumers,
-            });
-          },
-        );
-      } else
-        cb(null, {
-          onlineConsumers,
-          offlineConsumers,
-        });
-    }
-  });
-};
-
-HeartBeat.isOnline = function isOnline(
-  {
-    client,
-    queueName,
-    id,
-  }: {
-    client: RedisClient;
-    queueName: string;
-    id: string;
-  },
-  cb: ICallback<boolean>,
-) {
-  getConsumerHeartBeat(client, id, queueName, (err, res) => {
-    if (err) cb(err);
-    else {
-      let online = false;
-      if (res) {
-        const { timestamp }: { timestamp: number } = JSON.parse(res);
-        online = validateOnlineTimestamp(timestamp);
+        } else
+          cb(null, {
+            valid,
+            expired,
+          });
       }
-      cb(null, online);
-    }
-  });
-};
+    });
+  }
 
-HeartBeat.handleOfflineConsumers = (
-  client: RedisClient,
-  offlineConsumers: string[],
-  cb: ICallback<number>,
-) => {
-  if (offlineConsumers.length) {
-    const { keyIndexHeartBeat } = redisKeys.getGlobalKeys();
-    client.hdel(keyIndexHeartBeat, offlineConsumers, cb);
-  } else cb();
-};
+  static isAlive(
+    {
+      client,
+      queueName,
+      id,
+    }: {
+      client: RedisClient;
+      queueName: string;
+      id: string;
+    },
+    cb: ICallback<boolean>,
+  ) {
+    getConsumerHeartbeat(client, id, queueName, (err, res) => {
+      if (err) cb(err);
+      else {
+        let online = false;
+        if (res) {
+          const { timestamp }: { timestamp: number } = JSON.parse(res);
+          online = validateOnlineTimestamp(timestamp);
+        }
+        cb(null, online);
+      }
+    });
+  }
 
-HeartBeat.getOnlineConsumers = (
-  client: RedisClient,
-  cb: ICallback<Record<string, any>>,
-) => {
-  getAllHeartBeats(client, (err, data) => {
-    if (err) cb(err);
-    else {
-      const onlineConsumers = {};
-      if (data) {
-        async.each(
-          data,
-          (value, key, done) => {
-            const { usage: resources }: { usage: Record<string, any> } =
-              JSON.parse(value);
-            const r = handleConsumerData(`${key}`, resources);
-            merge(onlineConsumers, r);
-            done();
-          },
-          () => {
-            cb(null, onlineConsumers);
-          },
-        );
-      } else cb(null, onlineConsumers);
-    }
-  });
-};
+  static handleExpiredHeartbeat(
+    client: RedisClient,
+    heartbeats: string[],
+    cb: ICallback<number>,
+  ) {
+    if (heartbeats.length) {
+      const { keyIndexHeartbeat } = redisKeys.getGlobalKeys();
+      client.hdel(keyIndexHeartbeat, heartbeats, cb);
+    } else cb();
+  }
+
+  static getHeartbeats(client: RedisClient, cb: ICallback<TGetHeartbeatReply>) {
+    fetchHeartbeats(client, (err, data) => {
+      if (err) cb(err);
+      else {
+        const result: TGetHeartbeatReply = {};
+        if (data) {
+          async.eachOf(
+            data,
+            (value, key, done) => {
+              const { usage: resources }: { usage: Record<string, any> } =
+                JSON.parse(value);
+              const extractedData = redisKeys.extractData(`${key}`);
+              if (!extractedData || !extractedData.consumerId) {
+                done(new Error(`Invalid extracted consumer data`));
+              } else {
+                const { ns, queueName, consumerId } = extractedData;
+                result[consumerId] = { ns, queueName, consumerId, resources };
+                done();
+              }
+            },
+            (err) => {
+              if (err) cb(err);
+              else cb(null, result);
+            },
+          );
+        } else cb(null, result);
+      }
+    });
+  }
+}

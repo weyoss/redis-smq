@@ -7,25 +7,35 @@ import { ICallback, IConsumerConstructorOptions } from '../types';
 
 type TMonitorServer = ReturnType<typeof MonitorServer>;
 
+const redisClients: RedisClient[] = [];
 const consumersList: Consumer[] = [];
 const producersList: Producer[] = [];
 let monitorServer: TMonitorServer | null = null;
+
+export async function startUp() {
+  const redisClient = await getRedisInstance();
+  await redisClient.flushallAsync();
+}
 
 export async function shutdown() {
   const p = async (list: (Consumer | Producer)[]) => {
     for (const i of list) {
       if (i.isRunning()) {
         // eslint-disable-next-line no-await-in-loop
-        await new Promise((resolve, reject) => {
-          i.once(events.DOWN, resolve);
-          i.once(events.ERROR, reject);
-          i.shutdown();
+        await new Promise((resolve) => {
+          i.shutdown(resolve);
         });
       }
     }
   };
   await p(consumersList);
   await p(producersList);
+  while (redisClients.length) {
+    const redisClient = redisClients.pop();
+    if (redisClient) {
+      redisClient.end(true);
+    }
+  }
   await stopMonitorServer();
 }
 
@@ -46,7 +56,10 @@ export function getConsumer({
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     expired(_message: any) {}
   };
-  const consumer = new TemplateClass(queueName, config, options);
+  const consumer = new TemplateClass(queueName, config, {
+    messageRetryDelay: 0,
+    ...options,
+  });
   if (consumeMock) {
     consumer.consume = consumeMock;
   }
@@ -94,10 +107,13 @@ export function validateTime(
 }
 
 export async function getRedisInstance() {
-  const c = await new Promise<RedisClient>((resolve) =>
-    RedisClient.getInstance(config, resolve),
+  const c = promisifyAll(
+    await new Promise<RedisClient>((resolve) =>
+      RedisClient.getInstance(config, resolve),
+    ),
   );
-  return promisifyAll(c);
+  redisClients.push(c);
+  return c;
 }
 
 export async function consumerOnEvent(consumer: Consumer, event: string) {
@@ -118,10 +134,6 @@ export async function untilConsumerUp(consumer: Consumer) {
 
 export async function untilMessageAcknowledged(consumer: Consumer) {
   return consumerOnEvent(consumer, events.MESSAGE_ACKNOWLEDGED);
-}
-
-export async function untilMessageDelayed(consumer: Consumer) {
-  return consumerOnEvent(consumer, events.GC_MESSAGE_DELAYED);
 }
 
 export async function untilConsumerEvent(consumer: Consumer, event: string) {

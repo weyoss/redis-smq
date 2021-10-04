@@ -13,15 +13,6 @@ export class LockManager {
     this.redlock = new Redlock([redisClient]);
   }
 
-  protected getRedlock() {
-    if (!this.redlock) {
-      throw new Error(
-        'Instance is no longer usable after calling quit(). Create a new instance.',
-      );
-    }
-    return this.redlock;
-  }
-
   protected acquireLockRetryOnFail(
     err: Error,
     retryOnFail: boolean,
@@ -47,14 +38,22 @@ export class LockManager {
   ): void {
     const handleRedlockReply = (err?: Error | null, lock?: Redlock.Lock) => {
       if (err) this.acquireLockRetryOnFail(err, retryOnFail, lockKey, ttl, cb);
-      else if (!lock) cb(new Error('Expected a Redlock instance'));
+      else if (!lock) cb(new Error('Expected an instance of Redlock.Lock'));
       else {
         this.acquiredLock = lock;
         cb(null, true);
       }
     };
     if (this.acquiredLock) this.acquiredLock.extend(ttl, handleRedlockReply);
-    else this.getRedlock().lock(lockKey, ttl, handleRedlockReply);
+    else {
+      if (!this.redlock)
+        cb(
+          new Error(
+            'Instance is no longer usable after calling quit(). Create a new instance.',
+          ),
+        );
+      else this.redlock.lock(lockKey, ttl, handleRedlockReply);
+    }
   }
 
   releaseLock(cb: ICallback<void>): void {

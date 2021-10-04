@@ -19,4 +19,5 @@ test('Produce and consume 1 expired message', async () => {
   expect(expiredMsg.getId()).toStrictEqual(msg.getId());
   expect(expiredMsg.getBody()).toStrictEqual({ hello: 'world' });
   expect(expired).toHaveBeenCalledTimes(1);
+
 });

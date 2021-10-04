@@ -39,7 +39,7 @@ const testQueueConsumer = new TestQueueConsumer(queueName , config, options)
    Can be defined per message instance or per consumer. By default, message retry threshold is set to 3.
   
 - `options.messageRetryDelay` *(Integer): Optional.* In seconds. The amount of time in seconds to wait for before 
-   re-queuing a failed message. By default, message retry delay is not set.
+   re-queuing a failed message. By default, message retry delay is 60 seconds.
 
 ### Consumer.prototype.run()
 

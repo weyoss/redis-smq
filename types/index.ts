@@ -10,6 +10,8 @@ export interface ICallback<T> {
   (err: null | undefined, reply: T): void;
 }
 
+export type TUnaryFunction<T, E = void> = (reply: T) => E;
+
 export type TFunction<TReturn = void, TArgs = any> = (
   ...args: TArgs[]
 ) => TReturn;
@@ -82,7 +84,7 @@ export type TAggregatedStatsQueueConsumer = {
   namespace: string;
   queueName: string;
   resources?: Record<string, any>;
-  rates: {
+  rates?: {
     processing: number;
     acknowledged: number;
     unacknowledged: number;
