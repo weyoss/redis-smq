@@ -20,6 +20,8 @@ class Ns2TestQueueConsumer extends Consumer {
     //  }, timeout);
     cb();
   }
+
+  expired(message) {}
 }
 
 //

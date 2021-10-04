@@ -6,6 +6,8 @@ class Ns2TestQueueConsumer extends Consumer {
   consume(message: Message, cb: ICallback<void>) {
     cb();
   }
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  expired(_message: any) {}
 }
 
 const newConfig = { ...config, namespace: 'ns2' };

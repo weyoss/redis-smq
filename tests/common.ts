@@ -43,6 +43,8 @@ export function getConsumer({
     consume(message: Message, cb: ICallback<void>) {
       cb(null);
     }
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    expired(_message: any) {}
   };
   const consumer = new TemplateClass(queueName, config, options);
   if (consumeMock) {

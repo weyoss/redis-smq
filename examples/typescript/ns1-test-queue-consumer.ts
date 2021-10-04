@@ -13,6 +13,8 @@ class Ns1TestQueueConsumer extends Consumer {
     //  }, timeout);
     cb();
   }
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  expired(_message: any) {}
 }
 
 const consumer = new Ns1TestQueueConsumer('test_queue', config, {
