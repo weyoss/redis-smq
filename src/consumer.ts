@@ -155,6 +155,7 @@ export abstract class Consumer extends Instance {
           this.emit(events.MESSAGE_NEXT);
         },
       );
+      this.expired(message)
     });
     this.on(events.MESSAGE_ACKNOWLEDGED, () => {
       if (this.statsProvider) this.statsProvider.incrementAcknowledgedSlot();
@@ -303,4 +304,5 @@ export abstract class Consumer extends Instance {
   }
 
   abstract consume(msg: Message, cb: ICallback<void>): void;
+  abstract expired(msg: Message): void;
 }
