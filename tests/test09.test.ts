@@ -27,6 +27,6 @@ test('A consumer does re-queue a failed message when threshold is not exceeded, 
   consumer.run();
 
   await untilConsumerIdle(consumer);
-  expect(reQueuedCount).toBe(2);
+  expect(reQueuedCount).toBe(3);
   expect(deadCount).toBe(1);
 });

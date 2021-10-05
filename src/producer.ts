@@ -19,45 +19,40 @@ export class Producer extends Instance {
     return this.statsProvider;
   }
 
-  produceMessage(msg: unknown, cb: ICallback<void>): void {
+  produceMessage(msg: unknown, cb: ICallback<boolean>): void {
     const message = !(msg instanceof Message)
       ? new Message().setBody(msg)
       : msg;
-    const onProduced = () => {
-      this.emit(events.MESSAGE_PRODUCED, message);
-      cb();
+    const callback: ICallback<boolean> = (err, reply) => {
+      if (err) cb(err);
+      else {
+        if (this.statsProvider) this.statsProvider.incrementInputSlot();
+        this.emit(events.MESSAGE_PRODUCED, message);
+        cb(null, reply);
+      }
     };
     const proceed = () => {
       this.getScheduler((err, scheduler) => {
         if (err) cb(err);
-        else if (!scheduler) cb(new Error());
+        else if (!scheduler) cb(new Error(`Expected an instance of Scheduler`));
         else {
           if (scheduler.isSchedulable(message)) {
-            scheduler.schedule(message, onProduced);
+            scheduler.schedule(message, callback);
           } else {
-            const { keyQueue } = this.getInstanceRedisKeys();
-            this.getRedisInstance((client) => {
-              client.lpush(
-                keyQueue,
-                message.toString(),
-                (err?: Error | null) => {
-                  if (err) cb(err);
-                  else {
-                    if (this.statsProvider)
-                      this.statsProvider.incrementInputSlot();
-                    cb();
-                  }
-                },
-              );
+            this.getBroker().enqueueMessage(message, (err?: Error | null) => {
+              if (err) callback(err);
+              else callback(null, true);
             });
           }
         }
       });
     };
     if (!this.powerManager.isUp()) {
-      if (this.isBootstrapping() || this.powerManager.isGoingUp())
+      if (this.powerManager.isGoingUp()) {
         this.once(events.UP, proceed);
-      else cb(new Error(`Producer ID ${this.getId()} is not running`));
+      } else {
+        cb(new Error(`Producer ID ${this.getId()} is not running`));
+      }
     } else proceed();
   }
 }

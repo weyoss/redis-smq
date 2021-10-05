@@ -70,15 +70,15 @@ export class LockManager {
     }
   }
 
-  quit(cb: ICallback<void>): void {
-    if (!this.redlock) cb();
+  quit(cb?: ICallback<void>): void {
+    if (!this.redlock) cb && cb();
     else {
       this.releaseLock((err) => {
-        if (err) cb(err);
+        if (err) cb && cb(err);
         else {
           this.redlock?.quit(() => {
             this.redlock = null;
-            cb();
+            cb && cb();
           });
         }
       });

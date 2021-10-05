@@ -1,8 +1,10 @@
 import * as async from 'async';
 import {
   ICallback,
+  IConfig,
   TGetScheduledMessagesReply,
   TRedisClientMulti,
+  TUnaryFunction,
 } from '../types';
 import { Message } from './message';
 import { parseExpression } from 'cron-parser';
@@ -275,6 +277,16 @@ export class Scheduler extends EventEmitter {
       else this.redisClientInstance.zrangebyscore(keyQueueDelayed, 0, now, cb);
     };
     async.waterfall([fetch, process], cb);
+  }
+
+  static getInstance(
+    queueName: string,
+    config: IConfig,
+    cb: TUnaryFunction<Scheduler>,
+  ) {
+    RedisClient.getInstance(config, (client) =>
+      cb(new Scheduler(queueName, client)),
+    );
   }
 
   quit() {

@@ -1,5 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import { parseExpression } from 'cron-parser';
+import { EMessagesPriority } from '../types';
 
 export class Message {
   protected uuid: string;
@@ -34,6 +35,8 @@ export class Message {
   protected scheduledRepeatCount = 0;
 
   protected delayed = false;
+
+  protected priority: EMessagesPriority | null = null;
 
   constructor() {
     this.createdAt = Date.now();
@@ -146,15 +149,27 @@ export class Message {
     return this;
   }
 
+  setPriority(priority: EMessagesPriority): Message {
+    if (!Object.values(EMessagesPriority).includes(priority)) {
+      throw new Error('Invalid message priority.');
+    }
+    this.priority = priority;
+    return this;
+  }
+
+  getPriority() {
+    return this.priority;
+  }
+
   getBody() {
     return this.body;
   }
 
-  getId() {
+  getId(): string {
     return this.uuid;
   }
 
-  getTTL() {
+  getTTL(): number | null {
     return this.ttl;
   }
 
@@ -208,6 +223,25 @@ export class Message {
 
   hasScheduledCronFired(): boolean {
     return this.scheduledCronFired;
+  }
+
+  hasExpired(): boolean {
+    const messageTTL = this.getTTL();
+    if (messageTTL) {
+      const curTime = new Date().getTime();
+      const createdAt = this.getCreatedAt();
+      return createdAt + messageTTL - curTime <= 0;
+    }
+    return false;
+  }
+
+  hasRetryThresholdExceeded(): boolean {
+    const threshold = this.getRetryThreshold();
+    if (threshold) {
+      const attempts = this.getAttempts() + 1;
+      return attempts > threshold;
+    }
+    return false;
   }
 
   static createFromMessage(message: string | Message, reset = false): Message {

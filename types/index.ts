@@ -4,6 +4,7 @@ import { ClientOpts, Multi, RedisClient as NodeRedis } from 'redis';
 import * as Logger from 'bunyan';
 import { RedisClient } from '../src/redis-client';
 import { Message } from '../src/message';
+import { redisKeys } from '../src/redis-keys';
 
 export interface ICallback<T> {
   (err?: Error | null, reply?: T | null): void;
@@ -63,12 +64,12 @@ export interface IConfig {
   monitor?: IMonitorConfig;
 }
 
-export interface IConsumerConstructorOptions {
-  messageConsumeTimeout?: number;
-  messageTTL?: number;
-  messageRetryThreshold?: number;
-  messageRetryDelay?: number;
-}
+export type TConsumerOptions = {
+  messageConsumeTimeout: number;
+  messageTTL: number;
+  messageRetryThreshold: number;
+  messageRetryDelay: number;
+};
 
 export type TAggregatedStatsQueueProducer = {
   id: string;
@@ -122,3 +123,13 @@ export type TGetScheduledMessagesReply = {
   total: number;
   items: Message[];
 };
+
+export type TInstanceRedisKeys = ReturnType<
+  typeof redisKeys['getInstanceKeys']
+>;
+
+export enum EMessagesPriority {
+  LOW = 0,
+  NORMAL = 1,
+  HIGH = 2,
+}

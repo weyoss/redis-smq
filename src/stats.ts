@@ -60,7 +60,7 @@ export class Stats {
     this.ticker.runTimer();
   }
 
-  start() {
+  start(): void {
     this.powerManager.goingUp();
     RedisClient.getInstance(this.config, (client) => {
       this.redisClientInstance = client;
@@ -70,18 +70,19 @@ export class Stats {
     });
   }
 
-  stop() {
+  stop(): void {
     this.powerManager.goingDown();
     this.instance.once(events.STATS_READY_TO_SHUTDOWN, () => {
-      this.getTicker((ticker) => {
-        ticker.shutdown();
-        this.getRedisClientInstance((client) => {
-          client.end(true);
-          this.redisClientInstance = null;
-          this.powerManager.commit();
-          this.instance.emit(events.STATS_DOWN);
-        });
-      });
+      if (this.ticker) {
+        this.ticker.quit();
+        this.ticker = null;
+      }
+      if (this.redisClientInstance) {
+        this.redisClientInstance.end(true);
+        this.redisClientInstance = null;
+      }
+      this.powerManager.commit();
+      this.instance.emit(events.STATS_DOWN);
     });
   }
 }

@@ -123,13 +123,17 @@ export class SchedulerRunner {
     this.powerManager.goingDown();
     this.consumer.once(events.SCHEDULER_RUNNER_READY_TO_SHUTDOWN, () => {
       this.getTicker((ticker) => {
-        ticker.shutdown();
+        ticker.quit();
+        this.ticker = null;
         this.getLockManager((lockManager) => {
           lockManager.quit(() => {
             this.lockManagerInstance = null;
-            this.schedulerInstance = null;
-            this.powerManager.commit();
-            this.consumer.emit(events.SCHEDULER_RUNNER_DOWN);
+            this.getScheduler((scheduler) => {
+              scheduler.quit();
+              this.schedulerInstance = null;
+              this.powerManager.commit();
+              this.consumer.emit(events.SCHEDULER_RUNNER_DOWN);
+            });
           });
         });
       });
