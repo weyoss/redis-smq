@@ -11,7 +11,6 @@ import { EventEmitter } from 'events';
 
 export class RedisClient extends EventEmitter {
   protected client: TCompatibleRedisClient;
-  protected key: string | null = null;
 
   protected constructor(config: IConfig = {}) {
     super();

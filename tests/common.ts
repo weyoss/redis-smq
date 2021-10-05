@@ -3,7 +3,7 @@ import { events } from '../src/events';
 import { RedisClient } from '../src/redis-client';
 import { Producer, Consumer, Message, MonitorServer } from '../index';
 import { config } from './config';
-import { ICallback, IConsumerConstructorOptions } from '../types';
+import { ICallback, TConsumerOptions } from '../types';
 
 type TMonitorServer = ReturnType<typeof MonitorServer>;
 
@@ -45,7 +45,7 @@ export function getConsumer({
   consumeMock = null,
 }: {
   queueName?: string;
-  options?: IConsumerConstructorOptions;
+  options?: Partial<TConsumerOptions>;
   consumeMock?: ((msg: Message, cb: ICallback<void>) => void) | null;
 } = {}): Consumer {
   const TemplateClass = class extends Consumer {

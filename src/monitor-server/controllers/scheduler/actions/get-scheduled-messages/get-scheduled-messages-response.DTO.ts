@@ -2,6 +2,7 @@ import {
   Allow,
   Equals,
   IsBoolean,
+  IsEnum,
   IsInt,
   IsOptional,
   IsString,
@@ -9,6 +10,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { EMessagesPriority } from '../../../../../../types';
 
 export class MessageDTO {
   @IsUUID('4')
@@ -62,6 +64,10 @@ export class MessageDTO {
 
   @IsBoolean()
   delayed!: boolean;
+
+  @IsEnum(EMessagesPriority)
+  @IsOptional()
+  priority: EMessagesPriority | null = null;
 }
 
 export class GetScheduledMessagesResponseBodyDataDTO {

@@ -16,7 +16,7 @@ export class Ticker extends EventEmitter {
     this.isRunning = true;
   }
 
-  shutdown(cb?: ICallback<void>): void {
+  quit(cb?: ICallback<void>): void {
     if (!this.isRunning) {
       const err = new Error('Ticker is already down');
       if (cb) cb(err);

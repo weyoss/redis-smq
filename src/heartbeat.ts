@@ -130,8 +130,9 @@ export class Heartbeat {
     this.monitorThread.send(JSON.stringify(this.config));
   }
 
-  protected stopMonitor() {
+  protected stopMonitor(cb: ICallback<void>) {
     if (this.monitorThread) {
+      this.monitorThread.once('exit', cb);
       this.monitorThread.kill('SIGHUP');
       this.monitorThread = null;
     }
@@ -210,36 +211,35 @@ export class Heartbeat {
     );
   }
 
-  start() {
+  start(): void {
     this.powerManager.goingUp();
     RedisClient.getInstance(this.config, (client) => {
       this.redisClientInstance = client;
       this.startMonitor();
       this.nextTick();
-      this.consumer.emit(events.HEARTBEAT_UP);
       this.powerManager.commit();
+      this.consumer.emit(events.HEARTBEAT_UP);
     });
   }
 
-  stop() {
+  stop(): void {
     this.powerManager.goingDown();
-    this.consumer.once(events.HEARTBEAT_READY_TO_SHUTDOWN, () => {
-      this.stopMonitor();
-      this.getTicker((ticker) => {
-        ticker.shutdown();
+    this.consumer.once(events.HEARTBEAT_READY_TO_SHUTDOWN, () =>
+      this.stopMonitor(() =>
         this.getRedisClientInstance((client) => {
-          this.expireHeartbeat(client, (err?: Error | null) => {
-            if (err) this.consumer.emit(events.ERROR, err);
-            else {
-              client.end(true);
-              this.redisClientInstance = null;
-              this.powerManager.commit();
-              this.consumer.emit(events.HEARTBEAT_DOWN);
+          this.expireHeartbeat(client, () => {
+            if (this.ticker) {
+              this.ticker.quit();
+              this.ticker = null;
             }
+            client.end(true);
+            this.redisClientInstance = null;
+            this.powerManager.commit();
+            this.consumer.emit(events.HEARTBEAT_DOWN);
           });
-        });
-      });
-    });
+        }),
+      ),
+    );
   }
 
   static getHeartbeatsByStatus(

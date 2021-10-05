@@ -10,7 +10,7 @@ import { redisKeys } from '../../redis-keys';
 import { LockManager } from '../../lock-manager';
 import { RedisClient } from '../../redis-client';
 import { Heartbeat } from '../../heartbeat';
-import { queueHelpers } from '../../queue-helpers';
+import { Broker } from '../../broker';
 import { Logger } from '../../logger';
 
 function StatsAggregatorThread(config: IConfig) {
@@ -241,11 +241,11 @@ function StatsAggregatorThread(config: IConfig) {
   }
 
   function getQueues(cb: ICallback<string[]>) {
-    queueHelpers.getMessageQueues(getRedisClient(), cb);
+    Broker.getMessageQueues(getRedisClient(), cb);
   }
 
   function getDLQQueues(cb: ICallback<string[]>) {
-    queueHelpers.getDLQQueues(getRedisClient(), cb);
+    Broker.getDLQQueues(getRedisClient(), cb);
   }
 
   function getConsumersHeartbeats(cb: ICallback<void>) {
