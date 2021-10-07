@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.3.0 (2021-10-07)
+
+- With the release of v3.3.0, reliable, persistent priority queues are now supported.
+- Added new tests and increased code coverage.
+
 ## 3.2.0 (2021-10-01)
 
 - Run tests in Node.js v12, v14, and v16

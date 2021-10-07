@@ -54,6 +54,10 @@ For more details about RedisSMQ design see [https://medium.com/@weyoss/building-
 
 ## What's new?
 
+**2021.10.07**
+
+- With the release of v3.3.0, reliable, persistent priority queues are now supported.
+
 **2021.09.08**
 
 - A major release v3 is out. 
