@@ -2,9 +2,9 @@
 
 Starting with version 3.3.0, reliable priority queues are supported. 
 
-By design, a consumer/producer pair can be configured to use either as a `FIFO (first-in, first-out) MQ` or as a `Priority MQ`.
+By design, a consumer/producer pair can be configured to be use either a `FIFO (first-in, first-out) MQ` or a `Priority MQ`.
 
-In a `FIFO queue`, consumers receive messages in the same order that they were published to the MQ. `FIFO queues` use 
+Using `FIFO queues`, consumers receive messages in the same order that they were published to the MQ. `FIFO queues` use 
 [brpoplpush](https://redis.io/commands/brpoplpush) which blocks the connection until a message is received.
 
 When using `Priority queues`, messages with higher priority are always consumed first before messages with lower priority. 
