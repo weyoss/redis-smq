@@ -1,19 +1,19 @@
-# HTTP API
+# HTTP API Reference
 
 > ☝️ **Important Note**: The HTTP API is stable but many management features are missing. Currently, it is still a work in progress with frequent, maybe breaking, API changes.
 
 This is the backend part of the [RedisSMQ Monitor](https://github.com/weyoss/redis-smq-monitor). 
 
-In contrast to system/core functionalities and features, which use pure callbacks for asynchronous tasks, the monitor 
+In contrast to system/core functionalities and features, which use pure callbacks for asynchronous tasks, the HTTP API 
 server has been implemented using async/await. 
 
-The monitor server performs 3 tasks:
+The HTTP API allows:
 
 - Serving the SPA frontend application (UI).
 - Providing "real-time" statistical data about various RedisSMQ metrics through WebSocket.
-- Providing an HTTP API interface to interact with and manage the MQ.
+- Providing an interface to interact with and manage the MQ.
 
-## HTTP API
+## HTTP APIs
 
 ### Scheduler API
 
