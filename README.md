@@ -13,24 +13,24 @@ For more details about RedisSMQ design see [https://medium.com/@weyoss/building-
 
 ## Features
 
- * **Persistent**: No messages are lost in case of a consumer failure.
- * **Atomic**: A message is delivered only once to one consumer (in FIFO order) so you would never fall into a situation
- where a message could be processed more than once.
- * **High-performance message processing**: See [Performance](#performance) for more details.
- * **Scalable**: A queue can be consumed by many concurrent consumers, running on the same or on different hosts.
- * **Message expiration**: A message will expire and not be consumed if it has been in the queue for longer than the 
+ * **[High-performance message processing](docs/performance.md)**
+ * **Scalable**: A queue can be consumed by many concurrent consumers, running on the same or different hosts.
+ * **Persistent**: No messages are lost in case of consumer failures.
+ * **Atomic**: A message can be delivered only to one consumer at a time.
+ * **[Message expiration](docs/api/message.md)**: A message will expire and not be consumed if it has been in the queue for longer than the
  TTL (time-to-live).
- * **Message consume timeout**: The amount of time for a consumer to consume a message. If the timeout exceeds,
- message processing is cancelled and the message is re-queued to be consumed again.
- * **Delaying and scheduling message delivery**: From version 1.0.19 a persistent scheduler has been built into 
- RedisSMQ message queue. The scheduler accepts delaying messages, repeated messages delivery, period
- between repeats and CRON expressions.
+ * **[Message consume timeout](docs/api/message.md)**: The amount of time for a consumer to consume a message. If the timeout exceeded,
+ message processing is cancelled and the message is re-queued again.
+ * **[Delaying and scheduling message delivery](docs/api/scheduler.md)**: Messages can be configured to be delayed, delivered 
+   for N times with an optional period between deliveries, and to be scheduled using CRON expressions.
+ * **[Reliable Priority Queues](docs/priority-queues.md)**: Supports priority messaging.
+ * **[HTTP API](docs/http-api.md)**: an HTTP interface is provided to interact with the MQ.
+ * **[Web UI](docs/web-ui.md)**: The MQ state (input/processing/acks/unacks messages rates, online consumers, queues, etc.) is provided 
+   and updated in real-time. The Web UI allows monitoring and managing the MQ.
+ * **[JSON Logging](docs/logs.md)**: Supports JSON log format for troubleshooting and analytic purposes.
  * **Highly optimized**: No promises, no async/await, small memory footprint, no memory leaks. See [callbacks vs promises vs async/await benchmarks](http://bluebirdjs.com/docs/benchmarks.html).
- * **Monitorable**: Statistics (input/processing/acks/unacks messages rates, online consumers, queues, etc.)
-   are provided in real-time.
- * **Logging**: Supports JSON log format for troubleshooting and analytics purposes.
- * **Configurable**: Many options and features can be configured.  
- * **Supports both redis & ioredis**: Starting from v1.1.0 RedisSMQ can be configured to use either `redis` or `ioredis` 
+ * **[Configurable](docs/configuration.md)**: Many options and features can be configured.
+ * **Supports both redis & ioredis**: RedisSMQ can be configured to use either `redis` or `ioredis` 
  to connect to Redis server.  
 
 ## Table of content
@@ -39,19 +39,19 @@ For more details about RedisSMQ design see [https://medium.com/@weyoss/building-
 2. [Installation](#installation)
 3. [Configuration](#configuration)
 4. [Usage](#usage)
-    1. [Message Class](#message-class)
-    2. [Producer Class](#producer-class)
-    3. [Consumer Class](#consumer-class)
-    4. [Message Scheduler](#message-scheduler)
+   1. Basic
+       1. [Message Class](#message-class)
+       2. [Producer Class](#producer-class)
+       3. [Consumer Class](#consumer-class)
+   2. Advanced Topics
+      1. [Message Scheduler](docs/api/scheduler.md)
+      2. [Priority Queues](docs/priority-queues.md)
+      3. [HTTP API](docs/http-api.md)
+      4. [Web UI](docs/web-ui.md)
+      5. [Logs](docs/logs.md)
 5. [Performance](#performance)
-    1. [Scenarios](#scenarios)
-    2. [Environment](#environment)
-    3. [Results](#results)
-6. [Troubleshooting and monitoring](#troubleshooting-and-monitoring)
-    1. [Logs](#logs)
-    2. [Monitoring](#monitoring)
-7. [Contributing](#contributing)
-8. [License](#license)
+6. [Contributing](#contributing)
+7. [License](#license)
 
 ## What's new?
 
@@ -76,82 +76,17 @@ Considerations:
   releases (v12, v14, and v16) are supported. The latest stable Node.js version is recommended.
 - Minimal Redis server version is 2.6.12.
 
-# Configuration
+## Configuration
 
-Before running a Producer or a Consumer instance, an object containing the configuration parameters can be supplied 
-to the class constructor in order to configure the message queue.
-
-A configuration object may look like:
-
-```javascript
-'use strict';
-
-const path = require('path');
-
-module.exports = {
-    namespace: 'my_project_name',
-    redis: {
-        client: 'redis',
-        options: {
-            host: '127.0.0.1',
-            port: 6379,
-            connect_timeout: 3600000,
-        },
-    },
-    log: {
-        enabled: 0,
-        options: {
-            level: 'trace',
-            /*
-            streams: [
-                {
-                    path: path.normalize(`${__dirname}/../logs/redis-smq.log`)
-                },
-            ],
-            */
-        },
-    },
-    monitor: {
-        enabled: true,
-        host: '127.0.0.1',
-        port: 3000,
-    },
-};
-```
-
-**Parameters**
-
-- `namespace` *(String): Optional.* The namespace for message queues. It can be composed only of letters (a-z), 
-  numbers (0-9) and (-_) characters. Namespace can be for example configured per project. 
-
-- `redis` *(Object): Optional.* Redis client parameters. If not provided the `redis` client would be used by default.
-
-- `redis.client` *(String): Optional.* Redis client name. Can be either `redis` or `ioredis`.
-
-- `redis.options` *(Object): Optional.* Redis client options.
-   - See https://github.com/NodeRedis/node_redis#options-object-properties for all valid parameters for `redis` client.
-   - See https://github.com/luin/ioredis/blob/master/API.md#new_Redis for all valid `ioredis` parameters.
-
-- `log` *(Object): Optional.* Logging parameters.
-
-- `log.enabled` *(Integer/Boolean): Optional.* Enable/disable logging. By default logging is disabled.
-
-- `log.options` *(Object): Optional.* All valid Bunyan configuration options are accepted. Please look at the 
-  [Bunyan Repository](https://github.com/trentm/node-bunyan) for more details.
-
-- `monitor` *(Object): Optional.* RedisSMQ monitor parameters.
-
-- `monitor.enabled` *(Boolean/Integer): Optional.* Enable/Disable the monitor. By default, disabled.
-
-- `monitor.host` *(String): Optional.* IP address of the monitor server. By default, `0.0.0.0`.
-
-- `monitor.port` *(Integer): Optional.* Port of the monitor server. By default, `7210`.
+See [Configuration](docs/configuration.md) for more details.
 
 ## Usage
 
-RedisSMQ provides 3 classes: Message, Producer and Consumer in order to work with the message queue. 
+### Basics
 
-### Message Class
+RedisSMQ provides 3 classes: Message, Producer and Consumer in order to work with the message queue.
+
+#### Message Class
 
 Message class is the main component responsible for creating and handling messages. It encapsulates and provides all
 the required methods needed to construct and deal with messages.
@@ -170,10 +105,9 @@ message
 let messageTTL = message.getTTL();
 ```
 
-See [Message API Reference](docs/api/message.md) for more details.
+See [Message Reference](docs/api/message.md) for more details.
 
-
-### Producer Class
+#### Producer Class
 
 Producer class is in turn responsible for producing messages. 
 
@@ -199,9 +133,9 @@ producer.produceMessage(message, (err) => {
 });
 ```
 
-See [Producer API Reference](docs/api/producer.md) for more details.
+See [Producer Reference](docs/api/producer.md) for more details.
 
-### Consumer Class
+#### Consumer Class
 
 The Consumer class is the base class for all consumers. All consumers extends this base class and implements
 `consume()` method which got called once a message is received.
@@ -217,22 +151,8 @@ A consumer class may look like:
 const { Consumer } = require('redis-smq');
 
 class TestQueueConsumer extends Consumer {
-    /**
-     *
-     * @param message
-     * @param cb
-     */
     consume(message, cb) {
-        //  console.log('Got a message to consume:', message);
-        //  
-        //  throw new Error('TEST!');
-        //  
-        //  cb(new Error('TEST!'));
-        //  
-        //  const timeout = parseInt(Math.random() * 100);
-        //  setTimeout(() => {
-        //      cb();
-        //  }, timeout);
+        console.log('Got a message to consume:', message);
         cb();
     }
 }
@@ -251,154 +171,31 @@ $ node ./examples/javascript/test-queue-consumer.js
 Once a message is received and processed the consumer should acknowledge the message by invoking the callback function
 without arguments.
 
-The message acknowledgment informs the message queue that the message has been successfully consumed.
+The message acknowledgment informs the MQ that the message has been successfully consumed.
 
-If an error occurs, the message should be unacknowledged and the error should be reported to the message queue by
+If an error occurs, the message should be unacknowledged and the error should be reported to the MQ by
 calling the callback function. Failed messages are re-queued and delivered again unless **message retry threshold** is
 exceeded. Then the messages are moved to **dead-letter queue (DLQ)**. Each message queue has a system generated
-corresponding queue called dead-letter queue where all failed to consume messages are moved to.
+corresponding queue called dead-letter queue where all failed messages are moved to.
 
-See [Consumer API Reference](docs/api/consumer.md) for more details.
+See [Consumer Reference](docs/api/consumer.md) for more details.
 
-### Message Scheduler
+### Advanced Topics
 
-Message Scheduler enables you to schedule a one-time or repeating messages in your MQ server.
+* [Scheduler](docs/api/scheduler.md)
 
-The [Message API](docs/api/message.md) provides many methods:
+* [Priority Queues](docs/priority-queues.md)
 
-- [setScheduledPeriod()](docs/api/message.md#messageprototypesetscheduledperiod) 
-- [setScheduledDelay()](docs/api/message.md#messageprototypesetscheduleddelay) 
-- [setScheduledCron()](docs/api/message.md#messageprototypesetscheduledcron)
-- [setScheduledRepeat()](docs/api/message.md#messageprototypesetscheduledrepeat)
+* [HTTP API](docs/http-api.md)
 
-in order to set up scheduling parameters for a specific message. Once your message is ready, you can use 
-[producer.produceMessage()](docs/api/producer.md#producerprototypeproducemessage) to publish it. 
+* [Web UI](docs/web-ui.md)
 
-Under the hood, the `producer` invokes `isSchedulable()` and `schedule()`  of the [Scheduler class](docs/api/scheduler.md) 
-to place your message in the delay queue.
-
-```javascript
-'use strict';
-const { Message, Producer } = require('redis-smq');
-
-const producer = new Producer('test_queue');
-
-const message = new Message();
-message
-    .setBody({hello: 'world'})
-    .setScheduledCron(`0 0 * * * *`);
-
-producer.produceMessage(message, (err) => {
-    if (err) console.log(err);
-    else console.log('Message has been succefully produced');
-})
-```
-
-Alternatively, you can also manually get the scheduler instance from the producer using `producer.getScheduler()` 
-and call the `schedule()` method as shown in the example bellow:
-
-```javascript
-'use strict';
-const { Message, Producer } = require('redis-smq');
-
-const producer = new Producer('test_queue');
-
-producer.getScheduler((err, scheduler) => {
-    if (err) console.log(err);
-    else {
-        const message = new Message();
-        message
-            .setBody({hello: 'world'})
-            .setScheduledCron(`0 0 * * * *`);
-        scheduler.schedule(message, (err, reply) => {
-            if (err) console.log(err);
-            else if (rely) console.log('Message has been succefully scheduled');
-            else console.log('Message has not been scheduled');
-        });
-    }
-})
-```
-
-See [Scheduler API Reference](docs/api/scheduler.md) for more details.
+* [Logs](docs/logs.md)
 
 ## Performance
 
-One key indicator about how RedisSMQ is fast and performant is Message throughput. Message throughput is the number of
-messages per second that the message queue can process. 
+See [Performance](docs/performance.md) for more details.
 
-### Scenarios
-
-We can measure the Producer throughput and the Consumer throughput. The benchmark is composed of:
-
-1. Measuring Producer throughput (without consumers running at the same time)
-2. Measuring Consumer throughput (without producers running at the same time)
-3. Measuring throughput of Producer and Consumer both running at the same time
-
-In all scenarios messages are produced and consumed as fast as possible.
-
-
-### Environment
-
-The benchmark was performed on a KVM virtual machine (4 CPU cores, 8GB RAM) hosted on a desktop computer 
-(CPU AMD FX8350, RAM 32GB) running Debian 8. 
-
-No performance tuning was performed for the VM, neither for Redis server. Default parameters were used out of box.
-
-The virtual machine was setup to run a single instance of Redis (Redis is single threaded, so more instances can boost performance).
-
-All consumers, producers, monitor and redis server are launched from the same host.
-
-### Results
-
-| Scenario                                             | Producer rate (msg/sec) | Consumer rate (msg/sec) |
-|-----------------------------------------------------|-------------------------|-------------------------|
-| Run 1 producer instance                             | 23K+                    | 0                       |
-| Run 10 producer instances                           | 96K+                    | 0                       |
-| Run 1 consumer instance                             | 0                       | 13K+                    |
-| Run 10 consumer instances                           | 0                       | 49K+                    |
-| Run 1 producer instance and 1 consumer instance     | 22K+                    | 12K+                    |
-| Run 10 producer instances and 10 consumer instances | 45K+                    | 27K+                    |
-| Run 10 producer instances and 20 consumer instances | 32K+                    | 32K+                    |
-
-## Troubleshooting and monitoring
-
-### Logs
-
-This package is using JSON log format, thanks to [Bunyan](https://github.com/trentm/node-bunyan).
-
-The structured data format of JSON allows analytics tools to take place but also helps to monitor and troubleshoot 
-issues easier and faster.
-
-By default all logs are disabled. Logging can affect performance (due to I/O operations). When enabled you can 
-use bunyan utility to pretty format the output.
-
-Unless configured otherwise, the standard output is the console which launched the consumer.
-
-```text
-$ node consumer | ./node_modules/.bin/bunyan
-```
-### Monitoring
-
-The RedisSMQ Monitor is an interface which let you monitor, debug, and manage your RedisSMQ server from a web browser in 
-real-time.
-
-Starting from version v1.1.0, the frontend part of the RedisSMQ Monitor has split up into a standalone project and 
-is packaged under [RedisSMQ Monitor](https://github.com/weyoss/redis-smq-monitor)
-
-Being an integral part of the MQ, the monitor can be launched and used by starting first the monitor server as shown 
-in the example bellow:
-
-```javascript
-// filename: ./examples/javascript/monitor.js
-'use strict';
-
-const config = require('./config');
-const { MonitorServer } = require('redis-smq');
-
-MonitorServer(config).listen(() => {
-    console.log('It works!');
-});
-```
 ## Contributing
 
 So you are interested in contributing to this project? Please see [CONTRIBUTING.md](https://github.com/weyoss/guidelines/blob/master/CONTRIBUTIONS.md).

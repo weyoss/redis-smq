@@ -65,7 +65,7 @@ export abstract class Consumer extends Instance {
     );
   }
 
-  protected getRedisClient(cb: TUnaryFunction<RedisClient>) {
+  protected getRedisClient(cb: TUnaryFunction<RedisClient>): void {
     if (!this.redisClient)
       this.emit(events.ERROR, new Error('Expected an instance of RedisClient'));
     else cb(this.redisClient);
@@ -106,9 +106,7 @@ export abstract class Consumer extends Instance {
       this.garbageCollectorInstance.stop();
       this.schedulerRunnerInstance.stop();
     });
-    this.on(events.UP, () => {
-      this.emit(events.MESSAGE_NEXT);
-    });
+    this.on(events.UP, () => this.emit(events.MESSAGE_NEXT));
     this.on(events.MESSAGE_NEXT, () => {
       if (this.powerManager.isRunning()) {
         this.getRedisClient((client) => {

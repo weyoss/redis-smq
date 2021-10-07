@@ -7,13 +7,30 @@ Message properties like:
 - message retry delay
 - message consume timeout
 
-can also be defined globally per consumer for all queue messages.
+can be also defined globally per consumer for all queue messages. See [Consumer Options](consumer.md#consumerprototypeconstructor) for more details. 
 
-When defined, message instance properties always takes precedence over consumer properties.
+When defined, message instance properties always take precedence over consumer properties.
 
 ## Public properties
 
 No public property exists.
+
+## Static properties
+
+### Message.MessagePriority
+
+Specifies a priority that can be applied to a message. Valid message priorities are:
+
+- `Message.MessagePriority.LOWEST`
+- `Message.MessagePriority.VERY_LOW`
+- `Message.MessagePriority.LOW`
+- `Message.MessagePriority.NORMAL`
+- `Message.MessagePriority.ABOVE_NORMAL`
+- `Message.MessagePriority.HIGH`
+- `Message.MessagePriority.VERY_HIGH`
+- `Message.MessagePriority.HIGHEST`
+
+To set a message priority use [setPriority()](#messageprototypesetpriority).
 
 ## Methods
 
@@ -129,6 +146,17 @@ message.setBody(123);
 message.setBody({hello: 'world'});
 message.setBody('hello world');
 message.setBody('hello world');
+```
+
+### Message.prototype.setPriority()
+
+Set the priority of the message.
+
+```javascript
+const { Message } = require('redis-smq');
+
+const msg = new Message();
+msg.setPriority(Message.MessagePriority.ABOVE_NORMAL);
 ```
 
 ### Message.prototype.getBody()
@@ -257,6 +285,19 @@ const { Message } = require('redis-smq');
 const message = new Message();
 message.setScheduledCron('*/10 * * * * *');  // Schedule message for delivery each 10 seconds
 message.getMessageScheduledCRON(); // '*/10 * * * * *'
+```
+
+### Message.prototype.getPriority()
+
+Get message priority. 
+
+```javascript
+const { Message } = require('redis-smq');
+
+const msg = new Message();
+msg.setPriority(Message.MessagePriority.ABOVE_NORMAL);
+
+msg.getPriority() // Message.MessagePriority.ABOVE_NORMAL
 ```
 
 ### Message.prototype.isDelayed()

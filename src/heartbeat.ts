@@ -114,7 +114,7 @@ export class Heartbeat {
     this.redisKeys = consumer.getInstanceRedisKeys();
   }
 
-  protected startMonitor() {
+  protected startMonitor(): void {
     this.monitorThread = fork(resolve(`${__dirname}/heartbeat-monitor.js`));
     this.monitorThread.on('error', (err) => {
       this.consumer.emit(events.ERROR, err);
@@ -127,10 +127,13 @@ export class Heartbeat {
         ),
       );
     });
+    process.on('exit', () => {
+      if (this.monitorThread) this.monitorThread.kill();
+    });
     this.monitorThread.send(JSON.stringify(this.config));
   }
 
-  protected stopMonitor(cb: ICallback<void>) {
+  protected stopMonitor(cb: ICallback<void>): void {
     if (this.monitorThread) {
       this.monitorThread.once('exit', cb);
       this.monitorThread.kill('SIGHUP');
@@ -138,7 +141,7 @@ export class Heartbeat {
     }
   }
 
-  protected nextTick() {
+  protected nextTick(): void {
     if (!this.ticker) {
       this.ticker = new Ticker(() => {
         this.onTick();
@@ -150,7 +153,7 @@ export class Heartbeat {
     this.ticker.nextTick();
   }
 
-  protected onTick() {
+  protected onTick(): void {
     if (this.powerManager.isRunning()) {
       const usage = {
         ipAddress: IPAddresses,
@@ -204,7 +207,7 @@ export class Heartbeat {
     else cb(this.ticker);
   }
 
-  protected expireHeartbeat(client: RedisClient, cb: ICallback<void>) {
+  protected expireHeartbeat(client: RedisClient, cb: ICallback<void>): void {
     const { keyConsumerHeartbeat } = this.redisKeys;
     Heartbeat.handleExpiredHeartbeat(client, [keyConsumerHeartbeat], (err) =>
       cb(err),
@@ -245,7 +248,7 @@ export class Heartbeat {
   static getHeartbeatsByStatus(
     client: RedisClient,
     cb: ICallback<{ valid: string[]; expired: string[] }>,
-  ) {
+  ): void {
     fetchHeartbeats(client, (err, data) => {
       if (err) cb(err);
       else {
@@ -288,7 +291,7 @@ export class Heartbeat {
       id: string;
     },
     cb: ICallback<boolean>,
-  ) {
+  ): void {
     getConsumerHeartbeat(client, id, queueName, (err, res) => {
       if (err) cb(err);
       else {
@@ -306,14 +309,17 @@ export class Heartbeat {
     client: RedisClient,
     heartbeats: string[],
     cb: ICallback<number>,
-  ) {
+  ): void {
     if (heartbeats.length) {
       const { keyIndexHeartbeat } = redisKeys.getGlobalKeys();
       client.hdel(keyIndexHeartbeat, heartbeats, cb);
     } else cb();
   }
 
-  static getHeartbeats(client: RedisClient, cb: ICallback<TGetHeartbeatReply>) {
+  static getHeartbeats(
+    client: RedisClient,
+    cb: ICallback<TGetHeartbeatReply>,
+  ): void {
     fetchHeartbeats(client, (err, data) => {
       if (err) cb(err);
       else {

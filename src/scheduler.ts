@@ -12,6 +12,7 @@ import { RedisClient } from './redis-client';
 import { redisKeys } from './redis-keys';
 import { EventEmitter } from 'events';
 import { events } from './events';
+import { Broker } from './broker';
 
 export class Scheduler extends EventEmitter {
   protected redisClientInstance: RedisClient | null;
@@ -62,13 +63,17 @@ export class Scheduler extends EventEmitter {
     }
   }
 
-  enqueueScheduledMessage(msg: Message, multi: TRedisClientMulti): void {
-    const { keyQueue, keyQueueDelayed } = this.keys;
+  protected enqueueScheduledMessage(
+    broker: Broker,
+    msg: Message,
+    multi: TRedisClientMulti,
+  ): void {
+    const { keyQueueDelayed } = this.keys;
+    multi.zrem(keyQueueDelayed, msg.toString());
     const message = this.isPeriodic(msg)
       ? Message.createFromMessage(msg, true)
       : msg;
-    multi.lpush(keyQueue, message.toString());
-    multi.zrem(keyQueueDelayed, msg.toString());
+    broker.enqueueMessage(message, multi);
   }
 
   //@todo Modify message from outside this function
@@ -249,7 +254,7 @@ export class Scheduler extends EventEmitter {
     }
   }
 
-  enqueueScheduledMessages(cb: ICallback<void>) {
+  enqueueScheduledMessages(broker: Broker, cb: ICallback<void>): void {
     const now = Date.now();
     const { keyQueueDelayed } = this.keys;
     const process = (messages: string[], cb: ICallback<void>) => {
@@ -262,7 +267,7 @@ export class Scheduler extends EventEmitter {
             else {
               const message = Message.createFromMessage(msg);
               const multi = this.redisClientInstance.multi();
-              this.enqueueScheduledMessage(message, multi);
+              this.enqueueScheduledMessage(broker, message, multi);
               this.scheduleAtNextTimestamp(message, multi);
               multi.exec(done);
             }
@@ -283,13 +288,13 @@ export class Scheduler extends EventEmitter {
     queueName: string,
     config: IConfig,
     cb: TUnaryFunction<Scheduler>,
-  ) {
+  ): void {
     RedisClient.getInstance(config, (client) =>
       cb(new Scheduler(queueName, client)),
     );
   }
 
-  quit() {
+  quit(): void {
     if (this.redisClientInstance) {
       this.redisClientInstance.end(true);
       this.redisClientInstance = null;

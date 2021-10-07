@@ -120,14 +120,11 @@ Tell whether the producer is running or not. `true` if the producer is running, 
 - Producer.prototype.getId()
 - Producer.prototype.getConfig()
 - Producer.prototype.getQueueName()
-
+- Producer.prototype.getScheduler()
+- 
 These methods are used internally and should not be used in your application:
 
-- Producer.prototype.getLogger()
-- Producer.prototype.isBootstrapping()
-- Producer.prototype.getInstanceRedisKeys()
-- Producer.prototype.getScheduler()
-- Producer.prototype.isBootstrapping()
-- Producer.prototype.error()
-- Producer.getMessageQueues()
-- Producer.getDLQQueues()
+- getInstanceRedisKeys()
+- getBroker()
+- getStatsProvider()
+- handleError()

@@ -9,6 +9,7 @@ const types = {
   KEY_TYPE_QUEUE: '1.1',
   KEY_TYPE_QUEUE_DLQ: '1.3',
   KEY_TYPE_QUEUE_DELAYED_QUEUE: '1.4',
+  KEY_TYPE_QUEUE_PRIORITY_QUEUE: '1.5',
   KEY_TYPE_LOCK_SCHEDULER: '7.1',
   KEY_TYPE_INDEX_RATE: '4',
   KEY_TYPE_INDEX_QUEUE: '6.1',
@@ -55,6 +56,10 @@ export const redisKeys = {
       keyLockGC: this.joinSegments(types.KEY_TYPE_LOCK_GC, queueName),
       keyIndexQueueQueuesProcessing: this.joinSegments(
         types.KEY_TYPE_INDEX_QUEUE_QUEUES_PROCESSING,
+        queueName,
+      ),
+      keyQueuePriorityQueue: this.joinSegments(
+        types.KEY_TYPE_QUEUE_PRIORITY_QUEUE,
         queueName,
       ),
     };
@@ -181,7 +186,7 @@ export const redisKeys = {
     return this.makeGlobalNamespacedKeys(keys);
   },
 
-  joinSegments(...segments: string[]) {
+  joinSegments(...segments: string[]): string {
     return segments.join('|');
   },
 
@@ -205,12 +210,12 @@ export const redisKeys = {
     return result;
   },
 
-  setNamespace(ns: string) {
+  setNamespace(ns: string): void {
     ns = this.validateRedisKey(ns);
     namespace = `redis-smq-${ns}`;
   },
 
-  validateRedisKey(key: string) {
+  validateRedisKey(key: string): string {
     if (!key || !key.length) {
       throw new Error(
         'Redis key validation error. Expected be a non empty string.',

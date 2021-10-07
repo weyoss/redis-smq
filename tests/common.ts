@@ -3,21 +3,28 @@ import { events } from '../src/events';
 import { RedisClient } from '../src/redis-client';
 import { Producer, Consumer, Message, MonitorServer } from '../index';
 import { config } from './config';
-import { ICallback, TConsumerOptions } from '../types';
+import { ICallback, IConfig, TConsumerOptions } from '../types';
 
 type TMonitorServer = ReturnType<typeof MonitorServer>;
+
+class TestConsumer extends Consumer {
+  // eslint-disable-next-line class-methods-use-this
+  consume(message: Message, cb: ICallback<void>) {
+    cb(null);
+  }
+}
 
 const redisClients: RedisClient[] = [];
 const consumersList: Consumer[] = [];
 const producersList: Producer[] = [];
 let monitorServer: TMonitorServer | null = null;
 
-export async function startUp() {
+export async function startUp(): Promise<void> {
   const redisClient = await getRedisInstance();
   await redisClient.flushallAsync();
 }
 
-export async function shutdown() {
+export async function shutdown(): Promise<void> {
   const p = async (list: (Consumer | Producer)[]) => {
     for (const i of list) {
       if (i.isRunning()) {
@@ -41,39 +48,35 @@ export async function shutdown() {
 
 export function getConsumer({
   queueName = 'test_queue',
+  cfg = config,
   options = {},
   consumeMock = null,
 }: {
   queueName?: string;
+  cfg?: IConfig;
   options?: Partial<TConsumerOptions>;
   consumeMock?: ((msg: Message, cb: ICallback<void>) => void) | null;
-} = {}): Consumer {
-  const TemplateClass = class extends Consumer {
-    // eslint-disable-next-line class-methods-use-this
-    consume(message: Message, cb: ICallback<void>) {
-      cb(null);
-    }
-  };
-  const consumer = new TemplateClass(queueName, config, {
+} = {}) {
+  const consumer = new TestConsumer(queueName, cfg, {
     messageRetryDelay: 0,
     ...options,
   });
   if (consumeMock) {
     consumer.consume = consumeMock;
   }
-  const p = promisifyAll(consumer);
-  consumersList.push(p);
-  return p;
+  const c = promisifyAll(consumer);
+  consumersList.push(c);
+  return c;
 }
 
-export function getProducer(queueName = 'test_queue') {
-  const producer = new Producer(queueName, config);
+export function getProducer(queueName = 'test_queue', cfg = config) {
+  const producer = new Producer(queueName, cfg);
   const p = promisifyAll(producer);
   producersList.push(p);
   return p;
 }
 
-export async function startMonitorServer() {
+export async function startMonitorServer(): Promise<void> {
   await new Promise<void>((resolve) => {
     monitorServer = MonitorServer(config);
     monitorServer.listen(() => {
@@ -82,7 +85,7 @@ export async function startMonitorServer() {
   });
 }
 
-export async function stopMonitorServer() {
+export async function stopMonitorServer(): Promise<void> {
   return new Promise<void>((resolve) => {
     if (monitorServer) {
       monitorServer.quit(() => {
@@ -97,7 +100,7 @@ export function validateTime(
   actualTime: number,
   expectedTime: number,
   driftTolerance = 3000,
-) {
+): boolean {
   return (
     actualTime >= expectedTime - driftTolerance &&
     actualTime <= expectedTime + driftTolerance
@@ -114,7 +117,10 @@ export async function getRedisInstance() {
   return c;
 }
 
-export async function consumerOnEvent(consumer: Consumer, event: string) {
+export async function consumerOnEvent(
+  consumer: Consumer,
+  event: string,
+): Promise<void> {
   return new Promise<void>((resolve) => {
     consumer.once(event, () => {
       resolve();
@@ -122,18 +128,23 @@ export async function consumerOnEvent(consumer: Consumer, event: string) {
   });
 }
 
-export async function untilConsumerIdle(consumer: Consumer) {
+export async function untilConsumerIdle(consumer: Consumer): Promise<void> {
   return consumerOnEvent(consumer, events.IDLE);
 }
 
-export async function untilConsumerUp(consumer: Consumer) {
+export async function untilConsumerUp(consumer: Consumer): Promise<void> {
   return consumerOnEvent(consumer, events.UP);
 }
 
-export async function untilMessageAcknowledged(consumer: Consumer) {
+export async function untilMessageAcknowledged(
+  consumer: Consumer,
+): Promise<void> {
   return consumerOnEvent(consumer, events.MESSAGE_ACKNOWLEDGED);
 }
 
-export async function untilConsumerEvent(consumer: Consumer, event: string) {
+export async function untilConsumerEvent(
+  consumer: Consumer,
+  event: string,
+): Promise<void> {
   return consumerOnEvent(consumer, event);
 }
