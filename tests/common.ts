@@ -4,6 +4,7 @@ import { RedisClient } from '../src/redis-client';
 import { Producer, Consumer, Message, MonitorServer } from '../index';
 import { config } from './config';
 import { ICallback, IConfig, TConsumerOptions } from '../types';
+import { StatsAggregatorThread } from '../src/monitor-server/threads/stats-aggregator.thread';
 
 type TMonitorServer = ReturnType<typeof MonitorServer>;
 
@@ -18,6 +19,7 @@ const redisClients: RedisClient[] = [];
 const consumersList: Consumer[] = [];
 const producersList: Producer[] = [];
 let monitorServer: TMonitorServer | null = null;
+let statsAggregator: ReturnType<typeof StatsAggregatorThread> | null = null;
 
 export async function startUp(): Promise<void> {
   const redisClient = await getRedisInstance();
@@ -44,6 +46,7 @@ export async function shutdown(): Promise<void> {
     }
   }
   await stopMonitorServer();
+  await stopStatsAggregator();
 }
 
 export function getConsumer({
@@ -89,6 +92,27 @@ export async function stopMonitorServer(): Promise<void> {
   return new Promise<void>((resolve) => {
     if (monitorServer) {
       monitorServer.quit(() => {
+        monitorServer = null;
+        resolve();
+      });
+    } else resolve();
+  });
+}
+
+export async function startStatsAggregator(): Promise<void> {
+  return new Promise<void>((resolve) => {
+    statsAggregator = StatsAggregatorThread(config);
+    statsAggregator.start(() => {
+      monitorServer = null;
+      resolve();
+    });
+  });
+}
+
+export async function stopStatsAggregator(): Promise<void> {
+  return new Promise<void>((resolve) => {
+    if (statsAggregator) {
+      statsAggregator.shutdown(() => {
         monitorServer = null;
         resolve();
       });
