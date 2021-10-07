@@ -12,16 +12,21 @@ import { RedisClient } from '../../redis-client';
 import { Heartbeat } from '../../heartbeat';
 import { Broker } from '../../broker';
 import { Logger } from '../../logger';
+import { PowerManager } from '../../power-manager';
+import { EventEmitter } from 'events';
 
-function StatsAggregatorThread(config: IConfig) {
+export function StatsAggregatorThread(config: IConfig) {
   if (config.namespace) {
     redisKeys.setNamespace(config.namespace);
   }
   const { keyIndexRate, keyLockStatsAggregator } = redisKeys.getGlobalKeys();
-  const logger = Logger(`monitor-server:stats-aggregator-thread`, config.log);
   const noop = () => void 0;
-  let redisClientInstance: RedisClient | null = null;
+  const logger = Logger(`monitor-server:stats-aggregator-thread`, config.log);
+  const powerManager = new PowerManager();
+  const eventEmitter = new EventEmitter();
+
   let lockManagerInstance: LockManager | null = null;
+  let redisClientInstance: RedisClient | null = null;
   let data: TAggregatedStats = {
     rates: {
       input: 0,
@@ -300,9 +305,12 @@ function StatsAggregatorThread(config: IConfig) {
   }
 
   function nextTick() {
-    setTimeout(() => {
-      run();
-    }, 1000);
+    if (powerManager.isRunning()) {
+      setTimeout(() => {
+        run();
+      }, 1000);
+    }
+    if (powerManager.isGoingDown()) eventEmitter.emit('shutdown_ready');
   }
 
   function reset(cb: ICallback<void>) {
@@ -343,14 +351,34 @@ function StatsAggregatorThread(config: IConfig) {
     });
   }
 
-  RedisClient.getInstance(config, (client) => {
-    redisClientInstance = client;
-    lockManagerInstance = new LockManager(redisClientInstance);
-    run();
-  });
+  return {
+    start(cb?: ICallback<void>) {
+      powerManager.goingUp();
+      RedisClient.getInstance(config, (client) => {
+        redisClientInstance = client;
+        lockManagerInstance = new LockManager(client);
+        powerManager.commit();
+        run();
+        cb && cb();
+      });
+    },
+    shutdown(cb?: ICallback<void>) {
+      powerManager.goingDown();
+      eventEmitter.once('shutdown_ready', () => {
+        const lockManager = getLockManager();
+        lockManager.quit(() => {
+          lockManagerInstance = null;
+          redisClientInstance?.end(true);
+          redisClientInstance = null;
+          powerManager.commit();
+          cb && cb();
+        });
+      });
+    },
+  };
 }
 
 process.on('message', (c: string) => {
   const config: IConfig = JSON.parse(c);
-  StatsAggregatorThread(config);
+  StatsAggregatorThread(config).start();
 });

@@ -38,7 +38,31 @@ export enum RedisClientName {
   IOREDIS = 'ioredis',
 }
 
-export type TCompatibleRedisClient = NodeRedis | Redis;
+export type TCompatibleRedisClient = (NodeRedis | Redis) & {
+  zadd(
+    key: string,
+    score: number,
+    member: string,
+    cb: ICallback<number | string>,
+  ): void;
+  zrange(key: string, min: number, max: number, cb: ICallback<string[]>): void;
+  subscribe(channel: string): void;
+  zrangebyscore(
+    key: string,
+    min: number,
+    max: number,
+    cb: ICallback<string[]>,
+  ): void;
+  smembers(key: string, cb: ICallback<string[]>): void;
+  sadd(key: string, member: string, cb: ICallback<number>): void;
+  hset(key: string, field: string, value: string, cb: ICallback<number>): void;
+  hdel(key: string, fields: string | string[], cb: ICallback<number>): void;
+  hmset(key: string, args: string[], cb: ICallback<string>): void;
+  lpush(key: string, element: string, cb: ICallback<number>): void;
+  script(arg1: string, arg2: string, cb: ICallback<string>): void;
+  eval: TFunction;
+  evalsha: TFunction;
+};
 
 export type TRedisClientMulti = Multi | IORedis.Pipeline;
 
