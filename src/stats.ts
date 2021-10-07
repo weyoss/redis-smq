@@ -38,7 +38,7 @@ export class Stats {
     else cb(this.ticker);
   }
 
-  protected onTick() {
+  protected onTick(): void {
     if (this.powerManager.isRunning()) {
       const stats = this.statsProvider.tick();
       this.getRedisClientInstance((client) => {
@@ -46,11 +46,11 @@ export class Stats {
       });
     }
     if (this.powerManager.isGoingDown()) {
-      this.instance.emit(events.STATS_READY_TO_SHUTDOWN);
+      this.instance.emit(events.STATS_SHUTDOWN_READY);
     }
   }
 
-  protected setupTicker() {
+  protected setupTicker(): void {
     this.ticker = new Ticker(() => {
       this.onTick();
     }, 1000);
@@ -72,7 +72,7 @@ export class Stats {
 
   stop(): void {
     this.powerManager.goingDown();
-    this.instance.once(events.STATS_READY_TO_SHUTDOWN, () => {
+    this.instance.once(events.STATS_SHUTDOWN_READY, () => {
       if (this.ticker) {
         this.ticker.quit();
         this.ticker = null;

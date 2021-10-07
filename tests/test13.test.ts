@@ -6,6 +6,7 @@ import {
   validateTime,
 } from './common';
 import { Message } from '../src/message';
+import { events } from '../src/events';
 
 describe('Produce and consume a delayed message with scheduledRepeat and scheduledPeriod parameters', () => {
   test('Case 1', async () => {
@@ -30,7 +31,7 @@ describe('Produce and consume a delayed message with scheduledRepeat and schedul
       .setBody({ hello: 'world' });
 
     const producer = getProducer();
-    producer.once('message.produced', () => {
+    producer.once(events.MESSAGE_PRODUCED, () => {
       producedAt = Date.now();
     });
     await producer.produceMessageAsync(msg);
@@ -71,7 +72,7 @@ describe('Produce and consume a delayed message with scheduledRepeat and schedul
       .setBody({ hello: 'world' });
 
     const producer = getProducer();
-    producer.once('message.produced', () => {
+    producer.once(events.MESSAGE_PRODUCED, () => {
       producedAt = Date.now();
     });
     await producer.produceMessageAsync(msg);

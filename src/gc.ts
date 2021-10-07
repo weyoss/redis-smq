@@ -85,7 +85,7 @@ export class GarbageCollector {
           if (err) cb(err);
           else {
             this.debug(`Processing queue [${processingQueueName}] deleted.`);
-            this.consumer.emit(events.GC_QUEUE_DESTROYED, processingQueueName);
+            this.consumer.emit(events.QUEUE_DESTROYED, processingQueueName);
             cb();
           }
         },
@@ -151,11 +151,7 @@ export class GarbageCollector {
                 cb();
               } else {
                 this.debug(`Consumer ID [${consumerId}] seems to be offline.`);
-                this.consumer.emit(
-                  events.GC_CONSUMER_OFFLINE,
-                  consumerId,
-                  queue,
-                );
+                this.consumer.emit(events.CONSUMER_OFFLINE, consumerId, queue);
                 this.handleOfflineConsumer(consumerId, queue, cb);
               }
             },
@@ -181,7 +177,7 @@ export class GarbageCollector {
     );
   }
 
-  protected onTick() {
+  protected onTick(): void {
     if (this.powerManager.isRunning()) {
       this.getLockManagerInstance((lockManager) => {
         lockManager.acquireLock(
@@ -226,11 +222,11 @@ export class GarbageCollector {
       });
     }
     if (this.powerManager.isGoingDown()) {
-      this.consumer.emit(events.GC_READY_TO_SHUTDOWN);
+      this.consumer.emit(events.GC_SHUTDOWN_READY);
     }
   }
 
-  protected setupTicker() {
+  protected setupTicker(): void {
     this.ticker = new Ticker(() => {
       this.onTick();
     }, GC_INSPECTION_INTERVAL);
@@ -253,7 +249,7 @@ export class GarbageCollector {
 
   stop(): void {
     this.powerManager.goingDown();
-    this.consumer.once(events.GC_READY_TO_SHUTDOWN, () => {
+    this.consumer.once(events.GC_SHUTDOWN_READY, () => {
       this.getLockManagerInstance((lockManagerInstance) => {
         lockManagerInstance.quit(() => {
           this.lockManagerInstance = null;

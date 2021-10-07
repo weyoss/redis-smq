@@ -124,7 +124,7 @@ export class Broker {
       client.rpop(processingQueue, (err?: Error | null) => {
         if (err) cb(err);
         else {
-          this.instance.emit(events.GC_MC_MESSAGE_DESTROYED, message);
+          this.instance.emit(events.MESSAGE_DESTROYED, message);
           cb();
         }
       });
@@ -370,11 +370,11 @@ export class Broker {
               if (err) cb(err);
               else {
                 if (requeued) {
-                  this.instance.emit(events.GC_MC_MESSAGE_REQUEUED, message);
+                  this.instance.emit(events.MESSAGE_REQUEUED, message);
                 } else if (delayed) {
-                  this.instance.emit(events.GC_MC_MESSAGE_DELAYED, message);
+                  this.instance.emit(events.MESSAGE_DELAYED, message);
                 } else {
-                  this.instance.emit(events.GC_MC_MESSAGE_DLQ, message);
+                  this.instance.emit(events.MESSAGE_DEAD_LETTER, message);
                 }
                 cb();
               }

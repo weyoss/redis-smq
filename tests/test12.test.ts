@@ -6,6 +6,7 @@ import {
   validateTime,
 } from './common';
 import { Message } from '../src/message';
+import { events } from '../src/events';
 
 test('Produce and consume a delayed message', async () => {
   const consumer = getConsumer({
@@ -21,7 +22,7 @@ test('Produce and consume a delayed message', async () => {
   const producer = getProducer();
 
   let producedAt = 0;
-  producer.once('message.produced', () => {
+  producer.once(events.MESSAGE_PRODUCED, () => {
     producedAt = Date.now();
   });
 
