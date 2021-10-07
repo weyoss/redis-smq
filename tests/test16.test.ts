@@ -39,7 +39,7 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
     }),
   });
   queueAConsumer2
-    .on(events.GC_MC_MESSAGE_REQUEUED, () => {
+    .on(events.MESSAGE_REQUEUED, () => {
       queueAMeta.requeued += 1;
     })
     .on(events.MESSAGE_ACKNOWLEDGED, () => {
@@ -59,7 +59,7 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
     }),
   });
   queueBConsumer1
-    .on(events.GC_MC_MESSAGE_REQUEUED, () => {
+    .on(events.MESSAGE_REQUEUED, () => {
       queueBMeta.requeued += 1;
     })
     .on(events.MESSAGE_ACKNOWLEDGED, () => {

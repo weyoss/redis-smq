@@ -34,12 +34,10 @@ export class RedisClient extends EventEmitter {
     member: string,
     cb: ICallback<number | string>,
   ): void {
-    // different typescript signatures, using if/else to get it done
-    if (this.client instanceof NodeRedis) {
-      this.client.zadd(key, score, member, cb);
-    } else {
-      this.client.zadd(key, score, member, cb);
-    }
+    // incompatible typescript signatures between NodeRedis and IORedis
+    // casting to a generic type
+    const client = this.client as Record<string, any>;
+    client.zadd(key, score, member, cb);
   }
 
   multi(): TRedisClientMulti {
@@ -87,12 +85,10 @@ export class RedisClient extends EventEmitter {
   }
 
   zrange(key: string, min: number, max: number, cb: ICallback<string[]>): void {
-    // different typescript signatures, using if/else to get it done
-    if (this.client instanceof NodeRedis) {
-      this.client.zrange(key, min, max, cb);
-    } else {
-      this.client.zrange(key, min, max, cb);
-    }
+    // incompatible typescript signatures between NodeRedis and IORedis
+    // casting to a generic type
+    const client = this.client as Record<string, any>;
+    client.zrange(key, min, max, cb);
   }
 
   subscribe(channel: string): void {
@@ -110,30 +106,24 @@ export class RedisClient extends EventEmitter {
     max: number,
     cb: ICallback<string[]>,
   ): void {
-    // different typescript signatures, using if/else to get it done
-    if (this.client instanceof NodeRedis) {
-      this.client.zrangebyscore(key, min, max, cb);
-    } else {
-      this.client.zrangebyscore(key, min, max, cb);
-    }
+    // incompatible typescript signatures between NodeRedis and IORedis
+    // casting to a generic type
+    const client = this.client as Record<string, any>;
+    client.zrangebyscore(key, min, max, cb);
   }
 
   smembers(key: string, cb: ICallback<string[]>): void {
-    // different typescript signatures, using if/else to get it done
-    if (this.client instanceof NodeRedis) {
-      this.client.smembers(key, cb);
-    } else {
-      this.client.smembers(key, cb);
-    }
+    // incompatible typescript signatures between NodeRedis and IORedis
+    // casting to a generic type
+    const client = this.client as Record<string, any>;
+    client.smembers(key, cb);
   }
 
   sadd(key: string, member: string, cb: ICallback<number>): void {
-    // different typescript signatures, using if/else to get it done
-    if (this.client instanceof NodeRedis) {
-      this.client.sadd(key, member, cb);
-    } else {
-      this.client.sadd(key, member, cb);
-    }
+    // incompatible typescript signatures between NodeRedis and IORedis
+    // casting to a generic type
+    const client = this.client as Record<string, any>;
+    client.sadd(key, member, cb);
   }
 
   hgetall(key: string, cb: ICallback<Record<string, string>>): void {
@@ -145,21 +135,17 @@ export class RedisClient extends EventEmitter {
   }
 
   hset(key: string, field: string, value: string, cb: ICallback<number>): void {
-    // different typescript signatures, using if/else to get it done
-    if (this.client instanceof NodeRedis) {
-      this.client.hset(key, field, value, cb);
-    } else {
-      this.client.hset(key, field, value, cb);
-    }
+    // incompatible typescript signatures between NodeRedis and IORedis
+    // casting to a generic type    if (this.client instanceof NodeRedis) {
+    const client = this.client as Record<string, any>;
+    client.hset(key, field, value, cb);
   }
 
   hdel(key: string, fields: string | string[], cb: ICallback<number>): void {
-    // different typescript signatures, using if/else to get it done
-    if (this.client instanceof NodeRedis) {
-      this.client.hdel(key, fields, cb);
-    } else {
-      this.client.hdel(key, fields, cb);
-    }
+    // incompatible typescript signatures between NodeRedis and IORedis
+    // casting to a generic type    if (this.client instanceof NodeRedis) {
+    const client = this.client as Record<string, any>;
+    client.hdel(key, fields, cb);
   }
 
   lrange(
@@ -176,12 +162,10 @@ export class RedisClient extends EventEmitter {
   }
 
   hmset(key: string, args: string[], cb: ICallback<string>): void {
-    // different typescript signatures, using if/else to get it done
-    if (this.client instanceof NodeRedis) {
-      this.client.hmset(key, args, cb);
-    } else {
-      this.client.hmset(key, args, cb);
-    }
+    // incompatible typescript signatures between NodeRedis and IORedis
+    // casting to a generic type    if (this.client instanceof NodeRedis) {
+    const client = this.client as Record<string, any>;
+    client.hmset(key, args, cb);
   }
 
   brpoplpush(
@@ -198,12 +182,10 @@ export class RedisClient extends EventEmitter {
   }
 
   lpush(key: string, element: string, cb: ICallback<number>): void {
-    // different typescript signatures, using if/else to get it done
-    if (this.client instanceof NodeRedis) {
-      this.client.lpush(key, element, cb);
-    } else {
-      this.client.lpush(key, element, cb);
-    }
+    // incompatible typescript signatures between NodeRedis and IORedis
+    // casting to a generic type
+    const client = this.client as Record<string, any>;
+    client.lpush(key, element, cb);
   }
 
   publish(channel: string, message: string, cb: ICallback<number>): void {
@@ -226,12 +208,16 @@ export class RedisClient extends EventEmitter {
     args: (string | number)[] | string | number,
     cb?: (err: Error | null, res?: unknown) => void,
   ): void {
+    // incompatible typescript signatures between NodeRedis and IORedis
+    // casting to a generic type
     const client = this.client as Record<string, any>;
     const arrArgs = Array.isArray(args) ? args : [args];
     client['eval'](arrArgs, cb);
   }
 
   loadScript(script: string, cb: ICallback<string>): void {
+    // incompatible typescript signatures between NodeRedis and IORedis
+    // casting to a generic type
     const client = this.client as Record<string, any>;
     client['script']('load', script, cb);
   }
@@ -241,6 +227,8 @@ export class RedisClient extends EventEmitter {
     args: (string | number)[] | string | number,
     cb?: (err: Error | null, res?: unknown) => void,
   ): void {
+    // incompatible typescript signatures between NodeRedis and IORedis
+    // casting to a generic type
     const client = this.client as Record<string, any>;
     const arrHash: (string | number)[] = [hash];
     const arrArgs = Array.isArray(args) ? args : [args];

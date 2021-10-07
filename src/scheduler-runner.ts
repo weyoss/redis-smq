@@ -97,7 +97,7 @@ export class SchedulerRunner {
       });
     }
     if (this.powerManager.isGoingDown()) {
-      this.consumer.emit(events.SCHEDULER_RUNNER_READY_TO_SHUTDOWN);
+      this.consumer.emit(events.SCHEDULER_RUNNER_SHUTDOWN_READY);
     }
   }
 
@@ -124,7 +124,7 @@ export class SchedulerRunner {
 
   stop(): void {
     this.powerManager.goingDown();
-    this.consumer.once(events.SCHEDULER_RUNNER_READY_TO_SHUTDOWN, () => {
+    this.consumer.once(events.SCHEDULER_RUNNER_SHUTDOWN_READY, () => {
       this.getTicker((ticker) => {
         ticker.quit();
         this.ticker = null;

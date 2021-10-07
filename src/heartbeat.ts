@@ -185,7 +185,7 @@ export class Heartbeat {
       });
     }
     if (this.powerManager.isGoingDown()) {
-      this.consumer.emit(events.HEARTBEAT_READY_TO_SHUTDOWN);
+      this.consumer.emit(events.HEARTBEAT_SHUTDOWN_READY);
     }
   }
 
@@ -227,7 +227,7 @@ export class Heartbeat {
 
   stop(): void {
     this.powerManager.goingDown();
-    this.consumer.once(events.HEARTBEAT_READY_TO_SHUTDOWN, () =>
+    this.consumer.once(events.HEARTBEAT_SHUTDOWN_READY, () =>
       this.stopMonitor(() =>
         this.getRedisClientInstance((client) => {
           this.expireHeartbeat(client, () => {
