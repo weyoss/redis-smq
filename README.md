@@ -2,7 +2,6 @@
 
 [![Tests](https://github.com/weyoss/redis-smq/actions/workflows/tests.yml/badge.svg)](https://github.com/weyoss/redis-smq/actions/workflows/tests.yml)
 [![Coverage Status](https://img.shields.io/coveralls/github/weyoss/redis-smq.svg)](https://coveralls.io/r/weyoss/redis-smq?branch=master)
-[![Dependencies Status](https://img.shields.io/david/weyoss/redis-smq.svg)]((https://david-dm.org/weyoss/redis-smq))
 [![NPM version](http://img.shields.io/npm/v/redis-smq.svg)](https://npmjs.org/package/redis-smq)
 [![NPM downloads](https://img.shields.io/npm/dm/redis-smq.svg)](https://npmjs.org/package/redis-smq)
 [![Code quality](https://img.shields.io/lgtm/grade/javascript/github/weyoss/redis-smq.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/weyoss/redis-smq/context:javascript)
