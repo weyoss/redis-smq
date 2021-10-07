@@ -62,6 +62,7 @@ export interface IConfig {
     options?: Partial<Logger.LoggerOptions>;
   };
   monitor?: IMonitorConfig;
+  priorityQueue?: boolean;
 }
 
 export type TConsumerOptions = {
@@ -127,9 +128,3 @@ export type TGetScheduledMessagesReply = {
 export type TInstanceRedisKeys = ReturnType<
   typeof redisKeys['getInstanceKeys']
 >;
-
-export enum EMessagesPriority {
-  LOW = 0,
-  NORMAL = 1,
-  HIGH = 2,
-}

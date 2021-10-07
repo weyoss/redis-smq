@@ -16,6 +16,19 @@ import BLogger from 'bunyan';
 import { Logger } from './logger';
 import { PowerManager } from './power-manager';
 
+const dequeueScript = `
+if redis.call("EXISTS", KEYS[1]) == 1 then 
+    local result = redis.call("ZRANGE", KEYS[1], 0, 0)
+	if #(result) then 
+	    local message = result[1]
+	    redis.call("RPUSH", KEYS[2], message)
+	    redis.call("ZREM", KEYS[1], message)
+	    return message
+    end
+end 
+return nil
+`;
+
 export class Broker {
   protected instance: Instance;
   protected queueName: string;
@@ -24,6 +37,7 @@ export class Broker {
   protected powerManager: PowerManager;
   protected schedulerInstance: Scheduler | null = null;
   protected redisClient: RedisClient | null = null;
+  protected dequeueScriptId: string | null | undefined = null;
 
   constructor(instance: Instance) {
     this.instance = instance;
@@ -57,7 +71,7 @@ export class Broker {
     } else cb(null, this.schedulerInstance);
   }
 
-  setupQueues(cb: ICallback<void>): void {
+  bootstrap(cb: ICallback<void>): void {
     this.getRedisClient((client) => {
       const multi = client.multi();
       const { keyIndexQueue, keyQueue, keyQueueDLQ, keyIndexQueueDLQ } =
@@ -77,7 +91,22 @@ export class Broker {
         );
         multi.sadd(keyIndexQueueProcessing, keyConsumerProcessingQueue);
       }
-      client.execMulti(multi, (err) => cb(err));
+      client.execMulti(multi, (err) => {
+        if (err) cb(err);
+        else this.loadScripts(cb);
+      });
+    });
+  }
+
+  protected loadScripts(cb: ICallback<void>): void {
+    this.getRedisClient((client) => {
+      client.loadScript(dequeueScript, (err, sha) => {
+        if (err) cb(err);
+        else {
+          this.dequeueScriptId = sha;
+          cb();
+        }
+      });
     });
   }
 
@@ -124,7 +153,7 @@ export class Broker {
     multi.lpush(keyQueueDLQ, message.toString());
   }
 
-  enqueueMessageAfterDelay(
+  protected enqueueMessageAfterDelay(
     message: Message,
     delay: number,
     multi: TRedisClientMulti,
@@ -146,18 +175,70 @@ export class Broker {
     });
   }
 
+  protected enqueueMessageWithPriority(
+    message: Message,
+    mixed: TRedisClientMulti | ICallback<void>,
+  ): void {
+    const { keyQueuePriorityQueue } = this.instance.getInstanceRedisKeys();
+    const priority = message.getPriority() ?? Message.MessagePriority.NORMAL;
+    if (typeof mixed === 'function') {
+      this.getRedisClient((client) => {
+        client.zadd(
+          keyQueuePriorityQueue,
+          priority,
+          message.toString(),
+          (err?: Error | null) => mixed(err),
+        );
+      });
+    } else mixed.zadd(keyQueuePriorityQueue, priority, message.toString());
+  }
+
+  protected dequeueMessageWithPriority(
+    redisClient: RedisClient,
+    consumerOptions: TConsumerOptions,
+  ): void {
+    if (!this.dequeueScriptId)
+      this.instance.emit(
+        events.ERROR,
+        new Error('dequeueScriptSha is required'),
+      );
+    else {
+      const { keyQueuePriorityQueue, keyConsumerProcessingQueue } =
+        this.instance.getInstanceRedisKeys();
+      redisClient.evalsha(
+        this.dequeueScriptId,
+        [2, keyQueuePriorityQueue, keyConsumerProcessingQueue],
+        (err, json) => {
+          if (err) this.instance.emit(events.ERROR, err);
+          else if (typeof json === 'string')
+            this.handleReceivedMessage(json, consumerOptions);
+          else
+            setTimeout(
+              () =>
+                this.dequeueMessageWithPriority(redisClient, consumerOptions),
+              1000,
+            );
+        },
+      );
+    }
+  }
+
   enqueueMessage(
     message: Message,
     mixed: TRedisClientMulti | ICallback<void>,
   ): void {
-    const { keyQueue } = this.instance.getInstanceRedisKeys();
-    if (typeof mixed === 'function') {
-      this.getRedisClient((client) => {
-        client.lpush(keyQueue, message.toString(), (err?: Error | null) =>
-          mixed(err),
-        );
-      });
-    } else mixed.lpush(keyQueue, message.toString());
+    if (this.config.priorityQueue === true)
+      this.enqueueMessageWithPriority(message, mixed);
+    else {
+      const { keyQueue } = this.instance.getInstanceRedisKeys();
+      if (typeof mixed === 'function') {
+        this.getRedisClient((client) => {
+          client.lpush(keyQueue, message.toString(), (err?: Error | null) =>
+            mixed(err),
+          );
+        });
+      } else mixed.lpush(keyQueue, message.toString());
+    }
   }
 
   // Requires an exclusive RedisClient client as brpoplpush will block the connection until a message is received.
@@ -165,28 +246,37 @@ export class Broker {
     redisClient: RedisClient,
     consumerOptions: TConsumerOptions,
   ): void {
-    const { keyQueue, keyConsumerProcessingQueue } =
-      this.instance.getInstanceRedisKeys();
-    redisClient.brpoplpush(
-      keyQueue,
-      keyConsumerProcessingQueue,
-      0,
-      (err, json) => {
-        if (err) this.instance.emit(events.ERROR, err);
-        else if (!json)
-          this.instance.emit(
-            events.ERROR,
-            new Error('Expected a non empty string'),
-          );
-        else {
-          const message = Message.createFromMessage(json);
-          this.applyConsumerOptions(message, consumerOptions);
-          if (message.hasExpired())
-            this.instance.emit(events.MESSAGE_EXPIRED, message);
-          else this.instance.emit(events.MESSAGE_RECEIVED, message);
-        }
-      },
-    );
+    if (this.config.priorityQueue === true) {
+      this.dequeueMessageWithPriority(redisClient, consumerOptions);
+    } else {
+      const { keyQueue, keyConsumerProcessingQueue } =
+        this.instance.getInstanceRedisKeys();
+      redisClient.brpoplpush(
+        keyQueue,
+        keyConsumerProcessingQueue,
+        0,
+        (err, json) => {
+          if (err) this.instance.emit(events.ERROR, err);
+          else if (!json)
+            this.instance.emit(
+              events.ERROR,
+              new Error('Expected a non empty string'),
+            );
+          else this.handleReceivedMessage(json, consumerOptions);
+        },
+      );
+    }
+  }
+
+  protected handleReceivedMessage(
+    json: string,
+    consumerOptions: TConsumerOptions,
+  ): void {
+    const message = Message.createFromMessage(json);
+    this.applyConsumerOptions(message, consumerOptions);
+    if (message.hasExpired())
+      this.instance.emit(events.MESSAGE_EXPIRED, message);
+    else this.instance.emit(events.MESSAGE_RECEIVED, message);
   }
 
   acknowledgeMessage(cb: ICallback<void>): void {
@@ -299,7 +389,7 @@ export class Broker {
     this.powerManager.goingUp();
     RedisClient.getInstance(this.config, (client) => {
       this.redisClient = client;
-      this.setupQueues((err) => {
+      this.bootstrap((err) => {
         if (err) this.instance.emit(events.ERROR, err);
         else {
           this.powerManager.commit();

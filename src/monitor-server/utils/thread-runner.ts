@@ -26,13 +26,16 @@ export function startThreads(config: IConfig, dir: string): void {
           );
         }
       });
+      process.on('exit', () => {
+        runningThreads.forEach((i) => i.kill());
+      });
       thread.send(JSON.stringify(config));
       runningThreads.push(thread);
     });
   powerManager.commit();
 }
 
-export function stopThreads(cb?: ICallback<void>) {
+export function stopThreads(cb?: ICallback<void>): void {
   powerManager.goingDown();
   if (runningThreads.length) {
     let total = runningThreads.length;

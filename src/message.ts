@@ -1,8 +1,19 @@
 import { v4 as uuid } from 'uuid';
 import { parseExpression } from 'cron-parser';
-import { EMessagesPriority } from '../types';
 
 export class Message {
+  // Do not forget about javascript users. Using an object map instead of enum
+  static readonly MessagePriority = {
+    LOWEST: 7,
+    VERY_LOW: 6,
+    LOW: 5,
+    NORMAL: 4,
+    ABOVE_NORMAL: 3,
+    HIGH: 2,
+    VERY_HIGH: 1,
+    HIGHEST: 0,
+  };
+
   protected uuid: string;
 
   protected attempts: number;
@@ -36,7 +47,7 @@ export class Message {
 
   protected delayed = false;
 
-  protected priority: EMessagesPriority | null = null;
+  protected priority: number | null = null;
 
   constructor() {
     this.createdAt = Date.now();
@@ -149,19 +160,19 @@ export class Message {
     return this;
   }
 
-  setPriority(priority: EMessagesPriority): Message {
-    if (!Object.values(EMessagesPriority).includes(priority)) {
+  setPriority(priority: number): Message {
+    if (!Object.values(Message.MessagePriority).includes(priority)) {
       throw new Error('Invalid message priority.');
     }
     this.priority = priority;
     return this;
   }
 
-  getPriority() {
+  getPriority(): number | null {
     return this.priority;
   }
 
-  getBody() {
+  getBody(): unknown {
     return this.body;
   }
 

@@ -1,22 +1,60 @@
 # Scheduler Class API
 
-Scheduler Class can not be directly instantiated but instead its instance can be obtained from the producer 
-or the consumer using `getScheduler()`.
+Starting with version 1.0.19, `Message Scheduler` enables you to schedule a one-time or repeating messages in your MQ server.
+
+The [Message API](docs/api/message.md) provides many methods:
+
+- [setScheduledPeriod()](docs/api/message.md#messageprototypesetscheduledperiod)
+- [setScheduledDelay()](docs/api/message.md#messageprototypesetscheduleddelay)
+- [setScheduledCron()](docs/api/message.md#messageprototypesetscheduledcron)
+- [setScheduledRepeat()](docs/api/message.md#messageprototypesetscheduledrepeat)
+
+in order to set up scheduling parameters for a specific message. Once your message is ready, you can use
+[producer.produceMessage()](docs/api/producer.md#producerprototypeproducemessage) to publish it.
+
+Under the hood, the `producer` invokes `isSchedulable()` and `schedule()`  of the [Scheduler class](docs/api/scheduler.md)
+to place your message in the delay queue.
 
 ```javascript
 'use strict';
-const { Consumer, Producer } = require('redis-smq');
+const { Message, Producer } = require('redis-smq');
 
 const producer = new Producer('test_queue');
-producer.getScheduler((err, scheduler) => {
-    // ...   
-});
 
-// Or
-const consumer = new Consumer('test_queue');
-consumer.getScheduler((err, scheduler) => {
-    // ...
-});
+const message = new Message();
+message
+    .setBody({hello: 'world'})
+    .setScheduledCron(`0 0 * * * *`);
+
+producer.produceMessage(message, (err) => {
+    if (err) console.log(err);
+    else console.log('Message has been succefully produced');
+})
+```
+
+Alternatively, you can also manually get the scheduler instance from the producer using `producer.getScheduler()`
+and call the `schedule()` method as shown in the example bellow:
+
+```javascript
+'use strict';
+const { Message, Producer } = require('redis-smq');
+
+const producer = new Producer('test_queue');
+
+producer.getScheduler((err, scheduler) => {
+    if (err) console.log(err);
+    else {
+        const message = new Message();
+        message
+            .setBody({hello: 'world'})
+            .setScheduledCron(`0 0 * * * *`);
+        scheduler.schedule(message, (err, reply) => {
+            if (err) console.log(err);
+            else if (rely) console.log('Message has been succefully scheduled');
+            else console.log('Message has not been scheduled');
+        });
+    }
+})
 ```
 
 ## Public properties

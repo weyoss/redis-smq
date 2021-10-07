@@ -1,4 +1,6 @@
-# RedisSMQ Monitor Server
+# HTTP API
+
+> ☝️ **Important Note**: The HTTP API is stable but many management features are missing. Currently, it is still a work in progress with frequent, maybe breaking, API changes.
 
 This is the backend part of the [RedisSMQ Monitor](https://github.com/weyoss/redis-smq-monitor). 
 

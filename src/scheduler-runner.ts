@@ -81,10 +81,13 @@ export class SchedulerRunner {
               this.getTicker((ticker) => {
                 if (acquired) {
                   this.getScheduler((scheduler) => {
-                    scheduler.enqueueScheduledMessages((err) => {
-                      if (err) this.consumer.emit(events.ERROR, err);
-                      else ticker.nextTick();
-                    });
+                    scheduler.enqueueScheduledMessages(
+                      this.consumer.getBroker(),
+                      (err) => {
+                        if (err) this.consumer.emit(events.ERROR, err);
+                        else ticker.nextTick();
+                      },
+                    );
                   });
                 } else ticker.nextTick();
               });
@@ -98,7 +101,7 @@ export class SchedulerRunner {
     }
   }
 
-  protected setupTicker() {
+  protected setupTicker(): void {
     this.ticker = new Ticker(() => {
       this.onTick();
     }, this.tickPeriod);

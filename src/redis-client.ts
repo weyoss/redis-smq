@@ -42,7 +42,7 @@ export class RedisClient extends EventEmitter {
     }
   }
 
-  multi() {
+  multi(): TRedisClientMulti {
     return this.client.multi();
   }
 
@@ -82,11 +82,11 @@ export class RedisClient extends EventEmitter {
     }
   }
 
-  zcard(key: string, cb: ICallback<number>) {
+  zcard(key: string, cb: ICallback<number>): void {
     this.client.zcard(key, cb);
   }
 
-  zrange(key: string, min: number, max: number, cb: ICallback<string[]>) {
+  zrange(key: string, min: number, max: number, cb: ICallback<string[]>): void {
     // different typescript signatures, using if/else to get it done
     if (this.client instanceof NodeRedis) {
       this.client.zrange(key, min, max, cb);
@@ -95,7 +95,7 @@ export class RedisClient extends EventEmitter {
     }
   }
 
-  subscribe(channel: string) {
+  subscribe(channel: string): void {
     this.client.subscribe(channel);
   }
 
@@ -222,37 +222,31 @@ export class RedisClient extends EventEmitter {
     client.once('ready', () => cb(client));
   }
 
-  // this exists ONLY to retain compatibility to `redlock`
   eval(
     args: (string | number)[] | string | number,
     cb?: (err: Error | null, res?: unknown) => void,
   ): void {
     const client = this.client as Record<string, any>;
-    if (this.client instanceof NodeRedis) {
-      client['eval'](args, cb);
-    } else {
-      const arrArgs = Array.isArray(args) ? args : [args];
-      client['eval'](arrArgs, cb);
-    }
+    const arrArgs = Array.isArray(args) ? args : [args];
+    client['eval'](arrArgs, cb);
   }
 
-  // this exists ONLY to retain compatibility to `redlock`
+  loadScript(script: string, cb: ICallback<string>): void {
+    const client = this.client as Record<string, any>;
+    client['script']('load', script, cb);
+  }
+
   evalsha(
     hash: string,
     args: (string | number)[] | string | number,
     cb?: (err: Error | null, res?: unknown) => void,
   ): void {
     const client = this.client as Record<string, any>;
-    if (this.client instanceof NodeRedis) {
-      client['evalsha'](hash, args, cb);
-    } else {
-      const arrHash: (string | number)[] = [hash];
-      const arrArgs = Array.isArray(args) ? args : [args];
-      client['evalsha'](arrHash.concat(arrArgs), cb);
-    }
+    const arrHash: (string | number)[] = [hash];
+    const arrArgs = Array.isArray(args) ? args : [args];
+    client['evalsha'](arrHash.concat(arrArgs), cb);
   }
 
-  // this exists ONLY to retain compatibility to `redlock`
   quit(): void {
     this.end(true);
   }
