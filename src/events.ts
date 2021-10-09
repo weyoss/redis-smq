@@ -33,5 +33,4 @@ export const events = {
   MESSAGE_REQUEUED: 'message_requeued',
   MESSAGE_DELAYED: 'message_delayed',
   MESSAGE_DEAD_LETTER: 'message_dead_letter',
-  MESSAGE_DESTROYED: 'message_destroyed',
 };

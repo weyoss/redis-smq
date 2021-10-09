@@ -110,21 +110,19 @@ export class Broker {
     });
   }
 
-  dequeueExpiredMessage(
+  handleMessageWithExpiredTTL(
     message: Message,
     processingQueue: string,
     cb: ICallback<void>,
   ): void {
     this.getRedisClient((client) => {
-      const id = message.getId();
-      this.logger.debug(
-        `Deleting expired message [${id}] from the processing queue [processingQueue]...`,
-      );
-      // Just pop it out
-      client.rpop(processingQueue, (err?: Error | null) => {
+      const multi = client.multi();
+      multi.rpop(processingQueue);
+      this.moveMessageToDLQQueue(message, multi);
+      client.execMulti(multi, (err) => {
         if (err) cb(err);
         else {
-          this.instance.emit(events.MESSAGE_DESTROYED, message);
+          this.instance.emit(events.MESSAGE_DEAD_LETTER, message);
           cb();
         }
       });
@@ -330,7 +328,7 @@ export class Broker {
         else {
           if (message.hasExpired()) {
             this.logger.debug(`Message ID [${message.getId()}] has expired.`);
-            this.dequeueExpiredMessage(message, processingQueue, cb);
+            this.handleMessageWithExpiredTTL(message, processingQueue, cb);
           } else if (scheduler.isPeriodic(message)) {
             this.logger.debug(
               `Message ID [${message.getId()}] has a periodic schedule. Cleaning processing queue...`,

@@ -125,7 +125,7 @@ export abstract class Consumer extends Instance {
     this.on(events.MESSAGE_EXPIRED, (message: Message) => {
       this.loggerInstance.info(`Message [${message.getId()}] has expired`);
       const { keyConsumerProcessingQueue } = this.getInstanceRedisKeys();
-      this.getBroker().dequeueExpiredMessage(
+      this.getBroker().handleMessageWithExpiredTTL(
         message,
         keyConsumerProcessingQueue,
         (err) => {
