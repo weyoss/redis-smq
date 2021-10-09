@@ -3,14 +3,14 @@ import { getConsumer, getProducer, untilConsumerIdle } from './common';
 import { Message } from '../src/message';
 import { events } from '../src/events';
 
-test('Produce a message having messageTTL and sure the message is not consumed and destroyed when messageTTL exceeds', async () => {
+test('Message TTL: a message with TTL is not consumed and moved to DLQ when TTL is exceeded', async () => {
   const producer = getProducer();
   const consumer = getConsumer();
   const consume = jest.spyOn(consumer, 'consume');
 
-  let messageDestroyed = 0;
-  consumer.on(events.MESSAGE_DESTROYED, () => {
-    messageDestroyed += 1;
+  let messageDL = 0;
+  consumer.on(events.MESSAGE_DEAD_LETTER, () => {
+    messageDL += 1;
   });
 
   const msg = new Message();
@@ -22,5 +22,5 @@ test('Produce a message having messageTTL and sure the message is not consumed a
 
   await untilConsumerIdle(consumer);
   expect(consume).toHaveBeenCalledTimes(0);
-  expect(messageDestroyed).toBe(1);
+  expect(messageDL).toBe(1);
 });

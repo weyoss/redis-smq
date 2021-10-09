@@ -41,7 +41,6 @@
     "redis-smq-monitor": "^3.0.0",
     "redlock": "^4.2.0",
     "reflect-metadata": "^0.1.13",
-    "serve-static": "^1.14.1",
     "socket.io": "^4.2.0",
     "stoppable": "^1.1.0",
     "uuid": "^8.3.2"
@@ -55,7 +54,6 @@
     "@types/lodash": "^4.14.175",
     "@types/node": "^16.10.2",
     "@types/redlock": "^4.0.2",
-    "@types/serve-static": "^1.13.10",
     "@types/stoppable": "^1.1.1",
     "@types/supertest": "^2.0.11",
     "@types/uuid": "^8.3.1",
