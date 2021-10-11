@@ -11,10 +11,10 @@ export class ProducerStatsProvider implements IStatsProvider {
 
   constructor(producer: Producer) {
     this.producer = producer;
-    const { keyIndexRate, keyProducerRateInput } =
+    const { keyIndexRates, keyRateProducerInput } =
       this.producer.getInstanceRedisKeys();
-    this.keyIndexRate = keyIndexRate;
-    this.keyProducerRateInput = keyProducerRateInput;
+    this.keyIndexRate = keyIndexRates;
+    this.keyProducerRateInput = keyRateProducerInput;
   }
 
   tick() {

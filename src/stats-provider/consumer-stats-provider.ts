@@ -24,15 +24,15 @@ export class ConsumerStatsProvider implements IStatsProvider {
   constructor(consumer: Consumer) {
     this.consumer = consumer;
     const {
-      keyIndexRate,
-      keyConsumerRateProcessing,
-      keyConsumerRateAcknowledged,
-      keyConsumerRateUnacknowledged,
+      keyIndexRates,
+      keyRateConsumerProcessing,
+      keyRateConsumerAcknowledged,
+      keyRateConsumerUnacknowledged,
     } = consumer.getInstanceRedisKeys();
-    this.keyIndexRate = keyIndexRate;
-    this.keyConsumerRateProcessing = keyConsumerRateProcessing;
-    this.keyConsumerRateAcknowledged = keyConsumerRateAcknowledged;
-    this.keyConsumerRateUnacknowledged = keyConsumerRateUnacknowledged;
+    this.keyIndexRate = keyIndexRates;
+    this.keyConsumerRateProcessing = keyRateConsumerProcessing;
+    this.keyConsumerRateAcknowledged = keyRateConsumerAcknowledged;
+    this.keyConsumerRateUnacknowledged = keyRateConsumerUnacknowledged;
   }
 
   tick() {

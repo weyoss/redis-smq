@@ -11,7 +11,7 @@ test('A consumer does re-queue a failed message when threshold is not exceeded, 
   });
 
   let reQueuedCount = 0;
-  consumer.on(events.MESSAGE_REQUEUED, () => {
+  consumer.on(events.MESSAGE_RETRY, () => {
     reQueuedCount += 1;
   });
 

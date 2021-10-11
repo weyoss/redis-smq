@@ -66,6 +66,9 @@ export class MessageDTO {
   @IsInt()
   @IsOptional()
   priority: number | null = null;
+
+  @IsBoolean()
+  expired!: boolean;
 }
 
 export class GetScheduledMessagesResponseBodyDataDTO {

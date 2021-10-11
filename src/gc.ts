@@ -11,7 +11,7 @@ import { ICallback, IConfig, TUnaryFunction } from '../types';
 import { redisKeys } from './redis-keys';
 import BLogger from 'bunyan';
 import { Consumer } from './consumer';
-import { Broker } from './broker';
+import { Broker, EMessageUnacknowledgementCause } from './broker';
 
 const GC_INSPECTION_INTERVAL = 1000; // in ms
 
@@ -118,6 +118,7 @@ export class GarbageCollector {
                 msg,
                 processingQueue,
                 this.consumer.getOptions(),
+                EMessageUnacknowledgementCause.RECOVERY,
                 (err) => {
                   if (err) cb(err);
                   else {

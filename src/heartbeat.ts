@@ -77,8 +77,8 @@ function fetchHeartbeats(
   client: RedisClient,
   cb: ICallback<Record<string, string>>,
 ) {
-  const { keyIndexHeartbeat } = redisKeys.getGlobalKeys();
-  client.hgetall(keyIndexHeartbeat, cb);
+  const { keyIndexHeartbeats } = redisKeys.getGlobalKeys();
+  client.hgetall(keyIndexHeartbeats, cb);
 }
 
 function getConsumerHeartbeat(
@@ -87,11 +87,11 @@ function getConsumerHeartbeat(
   queueName: string,
   cb: ICallback<string>,
 ) {
-  const { keyConsumerHeartbeat, keyIndexHeartbeat } = redisKeys.getInstanceKeys(
+  const { keyHeartbeat, keyIndexHeartbeats } = redisKeys.getInstanceKeys(
     queueName,
     id,
   );
-  client.hget(keyIndexHeartbeat, keyConsumerHeartbeat, cb);
+  client.hget(keyIndexHeartbeats, keyHeartbeat, cb);
 }
 
 export class Heartbeat {
@@ -171,11 +171,11 @@ export class Heartbeat {
         timestamp,
         usage,
       });
-      const { keyIndexHeartbeat, keyConsumerHeartbeat } = this.redisKeys;
+      const { keyIndexHeartbeats, keyHeartbeat } = this.redisKeys;
       this.getRedisClientInstance((client) => {
         client.hset(
-          keyIndexHeartbeat,
-          keyConsumerHeartbeat,
+          keyIndexHeartbeats,
+          keyHeartbeat,
           payload,
           (err?: Error | null) => {
             if (err) this.consumer.emit(events.ERROR, err);
@@ -208,10 +208,8 @@ export class Heartbeat {
   }
 
   protected expireHeartbeat(client: RedisClient, cb: ICallback<void>): void {
-    const { keyConsumerHeartbeat } = this.redisKeys;
-    Heartbeat.handleExpiredHeartbeat(client, [keyConsumerHeartbeat], (err) =>
-      cb(err),
-    );
+    const { keyHeartbeat } = this.redisKeys;
+    Heartbeat.handleExpiredHeartbeat(client, [keyHeartbeat], (err) => cb(err));
   }
 
   start(): void {
@@ -311,8 +309,8 @@ export class Heartbeat {
     cb: ICallback<number>,
   ): void {
     if (heartbeats.length) {
-      const { keyIndexHeartbeat } = redisKeys.getGlobalKeys();
-      client.hdel(keyIndexHeartbeat, heartbeats, cb);
+      const { keyIndexHeartbeats } = redisKeys.getGlobalKeys();
+      client.hdel(keyIndexHeartbeats, heartbeats, cb);
     } else cb();
   }
 
