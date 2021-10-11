@@ -13,15 +13,20 @@ import { redisKeys } from './redis-keys';
 import { EventEmitter } from 'events';
 import { events } from './events';
 import { Broker } from './broker';
+import { Metadata } from './metadata';
 
 export class Scheduler extends EventEmitter {
+  protected queueName: string;
   protected redisClientInstance: RedisClient | null;
   protected keys: ReturnType<typeof redisKeys['getKeys']>;
+  protected metadata: Metadata;
 
   constructor(queueName: string, client: RedisClient) {
     super();
+    this.queueName = queueName;
     this.keys = redisKeys.getKeys(queueName);
     this.redisClientInstance = client;
+    this.metadata = new Metadata(this);
   }
 
   protected scheduleAtTimestamp(
@@ -29,11 +34,12 @@ export class Scheduler extends EventEmitter {
     timestamp: number,
     mixed: TRedisClientMulti | ICallback<boolean>,
   ): void {
-    const { keyQueueDelayed, keyIndexQueueDelayedMessages } = this.keys;
+    const { keyQueueScheduledMessages, keyIndexScheduledMessages } = this.keys;
     const schedule = (m: TRedisClientMulti) => {
       const msgStr = message.toString();
-      m.zadd(keyQueueDelayed, timestamp, msgStr);
-      m.hset(keyIndexQueueDelayedMessages, message.getId(), msgStr);
+      m.zadd(keyQueueScheduledMessages, timestamp, msgStr);
+      m.hset(keyIndexScheduledMessages, message.getId(), msgStr);
+      this.emit(events.PRE_MESSAGE_SCHEDULED, message, this.queueName, m);
       return m;
     };
     if (typeof mixed === 'object') schedule(mixed);
@@ -54,7 +60,10 @@ export class Scheduler extends EventEmitter {
     }
   }
 
-  scheduleAtNextTimestamp(msg: Message, multi: TRedisClientMulti): void {
+  protected scheduleAtNextTimestamp(
+    msg: Message,
+    multi: TRedisClientMulti,
+  ): void {
     if (this.isPeriodic(msg)) {
       const timestamp = this.getNextScheduledTimestamp(msg) ?? 0;
       if (timestamp > 0) {
@@ -68,11 +77,17 @@ export class Scheduler extends EventEmitter {
     msg: Message,
     multi: TRedisClientMulti,
   ): void {
-    const { keyQueueDelayed } = this.keys;
-    multi.zrem(keyQueueDelayed, msg.toString());
+    const { keyQueueScheduledMessages } = this.keys;
+    multi.zrem(keyQueueScheduledMessages, msg.toString());
     const message = this.isPeriodic(msg)
       ? Message.createFromMessage(msg, true)
       : msg;
+    this.emit(
+      events.PRE_MESSAGE_SCHEDULED_ENQUEUE,
+      message,
+      this.queueName,
+      multi,
+    );
     broker.enqueueMessage(message, multi);
   }
 
@@ -164,16 +179,12 @@ export class Scheduler extends EventEmitter {
   }
 
   deleteScheduledMessage(messageId: string, cb: ICallback<boolean>): void {
-    const { keyQueueDelayed, keyIndexQueueDelayedMessages } = this.keys;
+    const { keyQueueScheduledMessages, keyIndexScheduledMessages } = this.keys;
     const getMessage = (cb: ICallback<string>) => {
       if (!this.redisClientInstance)
         cb(new Error('Expected an instance of RedisClient'));
       else
-        this.redisClientInstance.hget(
-          keyIndexQueueDelayedMessages,
-          messageId,
-          cb,
-        );
+        this.redisClientInstance.hget(keyIndexScheduledMessages, messageId, cb);
     };
     const deleteMessage = (msg: string | null, cb: ICallback<boolean>) => {
       if (msg) {
@@ -181,8 +192,14 @@ export class Scheduler extends EventEmitter {
           cb(new Error('Expected an instance of RedisClient'));
         else {
           const multi = this.redisClientInstance.multi();
-          multi.zrem(keyQueueDelayed, msg);
-          multi.hdel(keyIndexQueueDelayedMessages, messageId);
+          multi.zrem(keyQueueScheduledMessages, msg);
+          multi.hdel(keyIndexScheduledMessages, messageId);
+          this.emit(
+            events.PRE_MESSAGE_SCHEDULED_DELETE,
+            Message.createFromMessage(msg),
+            this.queueName,
+            multi,
+          );
           this.redisClientInstance.execMulti(
             multi,
             (err?: Error | null, reply?: number[] | null) => {
@@ -201,7 +218,7 @@ export class Scheduler extends EventEmitter {
     take: number,
     cb: ICallback<TGetScheduledMessagesReply>,
   ): void {
-    const { keyQueueDelayed } = this.keys;
+    const { keyQueueScheduledMessages } = this.keys;
     if (skip < 0 || take <= 0) {
       cb(
         new Error(
@@ -212,7 +229,7 @@ export class Scheduler extends EventEmitter {
       const getTotal = (cb: ICallback<number>) => {
         if (!this.redisClientInstance)
           cb(new Error('Expected an instance of RedisClient'));
-        else this.redisClientInstance.zcard(keyQueueDelayed, cb);
+        else this.redisClientInstance.zcard(keyQueueScheduledMessages, cb);
       };
       const getItems = (
         total: number,
@@ -228,7 +245,7 @@ export class Scheduler extends EventEmitter {
             cb(new Error('Expected an instance of RedisClient'));
           else {
             this.redisClientInstance.zrange(
-              keyQueueDelayed,
+              keyQueueScheduledMessages,
               skip,
               skip + take - 1,
               (err, result) => {
@@ -256,7 +273,7 @@ export class Scheduler extends EventEmitter {
 
   enqueueScheduledMessages(broker: Broker, cb: ICallback<void>): void {
     const now = Date.now();
-    const { keyQueueDelayed } = this.keys;
+    const { keyQueueScheduledMessages } = this.keys;
     const process = (messages: string[], cb: ICallback<void>) => {
       if (messages.length) {
         async.each<string, Error>(
@@ -279,7 +296,13 @@ export class Scheduler extends EventEmitter {
     const fetch = (cb: ICallback<string[]>) => {
       if (!this.redisClientInstance)
         cb(new Error('Expected an instance of RedisClient'));
-      else this.redisClientInstance.zrangebyscore(keyQueueDelayed, 0, now, cb);
+      else
+        this.redisClientInstance.zrangebyscore(
+          keyQueueScheduledMessages,
+          0,
+          now,
+          cb,
+        );
     };
     async.waterfall([fetch, process], cb);
   }

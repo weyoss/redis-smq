@@ -49,6 +49,8 @@ export class Message {
 
   protected priority: number | null = null;
 
+  protected expired = false;
+
   constructor() {
     this.createdAt = Date.now();
     this.uuid = uuid();
@@ -237,13 +239,15 @@ export class Message {
   }
 
   hasExpired(): boolean {
-    const messageTTL = this.getTTL();
-    if (messageTTL) {
-      const curTime = new Date().getTime();
-      const createdAt = this.getCreatedAt();
-      return createdAt + messageTTL - curTime <= 0;
+    if (!this.expired) {
+      const messageTTL = this.getTTL();
+      if (messageTTL) {
+        const curTime = new Date().getTime();
+        const createdAt = this.getCreatedAt();
+        this.expired = createdAt + messageTTL - curTime <= 0;
+      }
     }
-    return false;
+    return this.expired;
   }
 
   hasRetryThresholdExceeded(): boolean {
@@ -263,6 +267,7 @@ export class Message {
     if (reset) {
       m.uuid = uuid();
       m.attempts = 0;
+      m.expired = false;
       m.createdAt = Date.now();
     }
     return m;

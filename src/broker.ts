@@ -15,6 +15,19 @@ import { Scheduler } from './scheduler';
 import BLogger from 'bunyan';
 import { Logger } from './logger';
 import { PowerManager } from './power-manager';
+import { Metadata } from './metadata';
+
+export enum EMessageDeadLetterCause {
+  TTL_EXPIRED = 'ttl_expired',
+  RETRY_THRESHOLD = 'retry_threshold',
+}
+
+export enum EMessageUnacknowledgementCause {
+  TIMEOUT = 'timeout',
+  CAUGHT_ERROR = 'caught_error',
+  UNACKNOWLEDGED = 'unacknowledged',
+  RECOVERY = 'recovery',
+}
 
 const dequeueScript = `
 if redis.call("EXISTS", KEYS[1]) == 1 then 
@@ -35,6 +48,7 @@ export class Broker {
   protected config: IConfig;
   protected logger: BLogger;
   protected powerManager: PowerManager;
+  protected metadata: Metadata;
   protected schedulerInstance: Scheduler | null = null;
   protected redisClient: RedisClient | null = null;
   protected dequeueScriptId: string | null | undefined = null;
@@ -48,6 +62,7 @@ export class Broker {
       instance.getConfig().log,
     );
     this.powerManager = new PowerManager();
+    this.metadata = new Metadata(instance);
   }
 
   protected getRedisClient(cb: TUnaryFunction<RedisClient>): void {
@@ -57,6 +72,10 @@ export class Broker {
         new Error('Expected an instance of RedisClient'),
       );
     else cb(this.redisClient);
+  }
+
+  getInstance() {
+    return this.instance;
   }
 
   getScheduler(cb: ICallback<Scheduler>): void {
@@ -74,22 +93,22 @@ export class Broker {
   bootstrap(cb: ICallback<void>): void {
     this.getRedisClient((client) => {
       const multi = client.multi();
-      const { keyIndexQueue, keyQueue, keyQueueDLQ, keyIndexQueueDLQ } =
+      const { keyIndexQueue, keyQueue, keyQueueDL, keyIndexDLQueues } =
         this.instance.getInstanceRedisKeys();
-      multi.sadd(keyIndexQueueDLQ, keyQueueDLQ);
+      multi.sadd(keyIndexDLQueues, keyQueueDL);
       multi.sadd(keyIndexQueue, keyQueue);
       if (this.instance instanceof Consumer) {
         const {
-          keyConsumerProcessingQueue,
-          keyIndexQueueProcessing,
-          keyIndexQueueQueuesProcessing,
+          keyQueueProcessing,
+          keyIndexMessageProcessingQueues,
+          keyIndexQueueMessageProcessingQueues,
         } = this.instance.getInstanceRedisKeys();
         multi.hset(
-          keyIndexQueueQueuesProcessing,
-          keyConsumerProcessingQueue,
+          keyIndexQueueMessageProcessingQueues,
+          keyQueueProcessing,
           this.instance.getId(),
         );
-        multi.sadd(keyIndexQueueProcessing, keyConsumerProcessingQueue);
+        multi.sadd(keyIndexMessageProcessingQueues, keyQueueProcessing);
       }
       client.execMulti(multi, (err) => {
         if (err) cb(err);
@@ -118,7 +137,11 @@ export class Broker {
     this.getRedisClient((client) => {
       const multi = client.multi();
       multi.rpop(processingQueue);
-      this.moveMessageToDLQQueue(message, multi);
+      this.moveMessageToDLQQueue(
+        message,
+        EMessageDeadLetterCause.TTL_EXPIRED,
+        multi,
+      );
       client.execMulti(multi, (err) => {
         if (err) cb(err);
         else {
@@ -136,19 +159,32 @@ export class Broker {
   ): void {
     this.getRedisClient((client) => {
       const multi = client.multi();
-      const { keyIndexQueueProcessing, keyIndexQueueQueuesProcessing } =
-        this.instance.getInstanceRedisKeys();
-      multi.srem(keyIndexQueueProcessing, processingQueueName);
-      multi.hdel(keyIndexQueueQueuesProcessing, processingQueueName);
+      const {
+        keyIndexMessageProcessingQueues,
+        keyIndexQueueMessageProcessingQueues,
+      } = this.instance.getInstanceRedisKeys();
+      multi.srem(keyIndexMessageProcessingQueues, processingQueueName);
+      multi.hdel(keyIndexQueueMessageProcessingQueues, processingQueueName);
       multi.del(processingQueueName);
       multi.exec((err) => cb(err));
     });
   }
 
-  moveMessageToDLQQueue(message: Message, multi: TRedisClientMulti): void {
-    const { keyQueueDLQ } = this.instance.getInstanceRedisKeys();
+  moveMessageToDLQQueue(
+    message: Message,
+    cause: EMessageDeadLetterCause,
+    multi: TRedisClientMulti,
+  ): void {
+    const { keyQueueDL } = this.instance.getInstanceRedisKeys();
     this.logger.debug(`Moving message [${message.getId()}] to DLQ...`);
-    multi.lpush(keyQueueDLQ, message.toString());
+    this.instance.emit(
+      events.PRE_MESSAGE_DEAD_LETTER,
+      message,
+      this.queueName,
+      cause,
+      multi,
+    );
+    multi.lpush(keyQueueDL, message.toString());
   }
 
   protected enqueueMessageAfterDelay(
@@ -175,20 +211,11 @@ export class Broker {
 
   protected enqueueMessageWithPriority(
     message: Message,
-    mixed: TRedisClientMulti | ICallback<void>,
+    multi: TRedisClientMulti,
   ): void {
-    const { keyQueuePriorityQueue } = this.instance.getInstanceRedisKeys();
+    const { keyQueuePriority } = this.instance.getInstanceRedisKeys();
     const priority = message.getPriority() ?? Message.MessagePriority.NORMAL;
-    if (typeof mixed === 'function') {
-      this.getRedisClient((client) => {
-        client.zadd(
-          keyQueuePriorityQueue,
-          priority,
-          message.toString(),
-          (err?: Error | null) => mixed(err),
-        );
-      });
-    } else mixed.zadd(keyQueuePriorityQueue, priority, message.toString());
+    multi.zadd(keyQueuePriority, priority, message.toString());
   }
 
   protected dequeueMessageWithPriority(
@@ -201,11 +228,11 @@ export class Broker {
         new Error('dequeueScriptSha is required'),
       );
     else {
-      const { keyQueuePriorityQueue, keyConsumerProcessingQueue } =
+      const { keyQueuePriority, keyQueueProcessing } =
         this.instance.getInstanceRedisKeys();
       redisClient.evalsha(
         this.dequeueScriptId,
-        [2, keyQueuePriorityQueue, keyConsumerProcessingQueue],
+        [2, keyQueuePriority, keyQueueProcessing],
         (err, json) => {
           if (err) this.instance.emit(events.ERROR, err);
           else if (typeof json === 'string')
@@ -225,18 +252,25 @@ export class Broker {
     message: Message,
     mixed: TRedisClientMulti | ICallback<void>,
   ): void {
-    if (this.config.priorityQueue === true)
-      this.enqueueMessageWithPriority(message, mixed);
-    else {
-      const { keyQueue } = this.instance.getInstanceRedisKeys();
-      if (typeof mixed === 'function') {
-        this.getRedisClient((client) => {
-          client.lpush(keyQueue, message.toString(), (err?: Error | null) =>
-            mixed(err),
-          );
-        });
-      } else mixed.lpush(keyQueue, message.toString());
-    }
+    const { keyQueue } = this.instance.getInstanceRedisKeys();
+    const process = (multi: TRedisClientMulti) => {
+      if (this.config.priorityQueue === true)
+        this.enqueueMessageWithPriority(message, multi);
+      else multi.lpush(keyQueue, message.toString());
+      this.instance.emit(
+        events.PRE_MESSAGE_ENQUEUED,
+        message,
+        this.queueName,
+        multi,
+      );
+    };
+    if (typeof mixed === 'function') {
+      this.getRedisClient((client) => {
+        const multi = client.multi();
+        process(multi);
+        client.execMulti(multi, (err) => mixed(err));
+      });
+    } else process(mixed);
   }
 
   // Requires an exclusive RedisClient client as brpoplpush will block the connection until a message is received.
@@ -247,22 +281,17 @@ export class Broker {
     if (this.config.priorityQueue === true) {
       this.dequeueMessageWithPriority(redisClient, consumerOptions);
     } else {
-      const { keyQueue, keyConsumerProcessingQueue } =
+      const { keyQueue, keyQueueProcessing } =
         this.instance.getInstanceRedisKeys();
-      redisClient.brpoplpush(
-        keyQueue,
-        keyConsumerProcessingQueue,
-        0,
-        (err, json) => {
-          if (err) this.instance.emit(events.ERROR, err);
-          else if (!json)
-            this.instance.emit(
-              events.ERROR,
-              new Error('Expected a non empty string'),
-            );
-          else this.handleReceivedMessage(json, consumerOptions);
-        },
-      );
+      redisClient.brpoplpush(keyQueue, keyQueueProcessing, 0, (err, json) => {
+        if (err) this.instance.emit(events.ERROR, err);
+        else if (!json)
+          this.instance.emit(
+            events.ERROR,
+            new Error('Expected a non empty string'),
+          );
+        else this.handleReceivedMessage(json, consumerOptions);
+      });
     }
   }
 
@@ -277,11 +306,20 @@ export class Broker {
     else this.instance.emit(events.MESSAGE_RECEIVED, message);
   }
 
-  acknowledgeMessage(cb: ICallback<void>): void {
+  acknowledgeMessage(msg: Message, cb: ICallback<void>): void {
     this.getRedisClient((client) => {
-      const { keyConsumerProcessingQueue } =
+      const { keyQueueProcessing, keyAcknowledgedMessages } =
         this.instance.getInstanceRedisKeys();
-      client.rpop(keyConsumerProcessingQueue, (err?: Error | null) => cb(err));
+      const multi = client.multi();
+      multi.zadd(keyAcknowledgedMessages, Date.now(), msg.toString());
+      multi.lpop(keyQueueProcessing);
+      this.instance.emit(
+        events.PRE_MESSAGE_ACKNOWLEDGED,
+        msg,
+        this.queueName,
+        multi,
+      );
+      client.execMulti(multi, (err) => cb(err));
     });
   }
 
@@ -318,6 +356,7 @@ export class Broker {
     message: Message,
     processingQueue: string,
     consumerOptions: TConsumerOptions,
+    unacknowledgementCause: EMessageUnacknowledgementCause,
     cb: ICallback<void | string>,
   ): void {
     this.applyConsumerOptions(message, consumerOptions);
@@ -350,27 +389,45 @@ export class Broker {
                   `Delaying message ID [${message.getId()}] before re-queuing...`,
                 );
                 delayed = true;
+                this.instance.emit(
+                  events.PRE_MESSAGE_RETRY_AFTER_DELAY,
+                  message,
+                  this.queueName,
+                  unacknowledgementCause,
+                  multi,
+                );
                 this.enqueueMessageAfterDelay(message, delay, multi);
               } else {
                 this.logger.debug(
                   `Re-queuing message ID [${message.getId()}] for one more time...`,
                 );
                 requeued = true;
+                this.instance.emit(
+                  events.PRE_MESSAGE_RETRY,
+                  message,
+                  this.queueName,
+                  unacknowledgementCause,
+                  multi,
+                );
                 this.enqueueMessage(message, multi);
               }
             } else {
               this.logger.debug(
                 `Message ID [${message.getId()}] retry threshold exceeded. Moving message to DLQ...`,
               );
-              this.moveMessageToDLQQueue(message, multi);
+              this.moveMessageToDLQQueue(
+                message,
+                EMessageDeadLetterCause.RETRY_THRESHOLD,
+                multi,
+              );
             }
             client.execMulti(multi, (err) => {
               if (err) cb(err);
               else {
                 if (requeued) {
-                  this.instance.emit(events.MESSAGE_REQUEUED, message);
+                  this.instance.emit(events.MESSAGE_RETRY, message);
                 } else if (delayed) {
-                  this.instance.emit(events.MESSAGE_DELAYED, message);
+                  this.instance.emit(events.MESSAGE_RETRY_AFTER_DELAY, message);
                 } else {
                   this.instance.emit(events.MESSAGE_DEAD_LETTER, message);
                 }
@@ -416,8 +473,9 @@ export class Broker {
     queueName: string,
     cb: ICallback<string[]>,
   ): void {
-    const { keyIndexQueueQueuesProcessing } = redisKeys.getKeys(queueName);
-    client.hkeys(keyIndexQueueQueuesProcessing, cb);
+    const { keyIndexQueueMessageProcessingQueues } =
+      redisKeys.getKeys(queueName);
+    client.hkeys(keyIndexQueueMessageProcessingQueues, cb);
   }
 
   static getMessageQueues(
@@ -429,7 +487,7 @@ export class Broker {
   }
 
   static getDLQQueues(redisClient: RedisClient, cb: ICallback<string[]>): void {
-    const { keyIndexQueueDLQ } = redisKeys.getGlobalKeys();
-    redisClient.smembers(keyIndexQueueDLQ, cb);
+    const { keyIndexDLQueues } = redisKeys.getGlobalKeys();
+    redisClient.smembers(keyIndexDLQueues, cb);
   }
 }

@@ -5,6 +5,10 @@ import * as Logger from 'bunyan';
 import { RedisClient } from '../src/redis-client';
 import { Message } from '../src/message';
 import { redisKeys } from '../src/redis-keys';
+import {
+  EMessageDeadLetterCause,
+  EMessageUnacknowledgementCause,
+} from '../src/broker';
 
 export interface ICallback<T> {
   (err?: Error | null, reply?: T | null): void;
@@ -152,3 +156,37 @@ export type TGetScheduledMessagesReply = {
 export type TInstanceRedisKeys = ReturnType<
   typeof redisKeys['getInstanceKeys']
 >;
+
+export enum EQueueMetadataType {
+  PENDING_MESSAGES = 'pending',
+  SCHEDULED_MESSAGES = 'scheduled',
+  DEAD_LETTER_MESSAGES = 'dead_letter',
+  UNACKNOWLEDGED_MESSAGES = 'errored',
+  ACKNOWLEDGED_MESSAGES = 'acknowledged',
+}
+
+export enum EMessageMetadataType {
+  ENQUEUED = 'enqueued_at',
+  SCHEDULED = 'scheduled_at',
+  SCHEDULED_DELETED = 'scheduled_deleted_at',
+  SCHEDULED_ENQUEUED = 'scheduled_delivered_at',
+  ACKNOWLEDGED = 'acknowledged_at',
+  UNACKNOWLEDGED = 'unacknowledged_at',
+  DEAD_LETTER = 'dead_letter_at',
+}
+
+export type TMessageMetadata = {
+  type: EMessageMetadataType;
+  timestamp: number;
+  deadLetterCause?: EMessageDeadLetterCause;
+  unacknowledgedCause?: EMessageUnacknowledgementCause;
+  delayed?: boolean;
+};
+
+export type TQueueMetadata = {
+  pending: number;
+  scheduled: number;
+  deadLetter: number;
+  unacknowledged: number;
+  acknowledged: number;
+};

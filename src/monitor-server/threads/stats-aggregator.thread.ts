@@ -19,7 +19,7 @@ export function StatsAggregatorThread(config: IConfig) {
   if (config.namespace) {
     redisKeys.setNamespace(config.namespace);
   }
-  const { keyIndexRate, keyLockStatsAggregator } = redisKeys.getGlobalKeys();
+  const { keyIndexRates, keyLockStatsAggregator } = redisKeys.getGlobalKeys();
   const noop = () => void 0;
   const logger = Logger(`monitor-server:stats-aggregator-thread`, config.log);
   const powerManager = new PowerManager();
@@ -97,83 +97,83 @@ export function StatsAggregatorThread(config: IConfig) {
     return data.queues[ns][queueName];
   };
 
-  function getRedisClient() {
+  const getRedisClient = () => {
     if (!redisClientInstance) {
       throw new Error(`Expected an instance of RedisClient`);
     }
     return redisClientInstance;
-  }
+  };
 
-  function getLockManager() {
+  const getLockManager = () => {
     if (!lockManagerInstance) {
       throw new Error(`Expected an instance of LockManager`);
     }
     return lockManagerInstance;
-  }
+  };
+
+  const handleProducerRate = (
+    {
+      ns,
+      queueName,
+      producerId,
+    }: { ns: string; queueName: string; producerId: string },
+    rate: number,
+  ) => {
+    addQueueIfNotExists(ns, queueName);
+    rate = Number(rate);
+    const producers = addProducerIfNotExists(ns, queueName, producerId);
+    data.rates.input += rate;
+    producers[producerId].rates.input = rate;
+  };
+
+  const handleConsumerRate = (
+    {
+      ns,
+      queueName,
+      type,
+      consumerId,
+    }: {
+      ns: string;
+      queueName: string;
+      type: string;
+      consumerId: string;
+    },
+    rate: number,
+  ) => {
+    addQueueIfNotExists(ns, queueName);
+    rate = Number(rate);
+    const consumer = addConsumerIfNotExists(ns, queueName, consumerId);
+    consumer.rates = {
+      acknowledged: consumer.rates?.acknowledged ?? 0,
+      unacknowledged: consumer.rates?.unacknowledged ?? 0,
+      processing: consumer.rates?.processing ?? 0,
+    };
+    const consumerTypes = redisKeys.getTypes();
+    switch (type) {
+      case consumerTypes.KEY_RATE_CONSUMER_PROCESSING:
+        data.rates.processing += rate;
+        consumer.rates.processing = rate;
+        break;
+
+      case consumerTypes.KEY_RATE_CONSUMER_ACKNOWLEDGED:
+        data.rates.acknowledged += rate;
+        consumer.rates.acknowledged = rate;
+        break;
+
+      case consumerTypes.KEY_RATE_CONSUMER_UNACKNOWLEDGED:
+        data.rates.unacknowledged += rate;
+        consumer.rates.unacknowledged = rate;
+        break;
+    }
+  };
+
+  const hasExpired = (timestamp: number) => {
+    const now = Date.now();
+    return now - timestamp > 1000;
+  };
 
   function getRates(cb: ICallback<void>) {
-    const handleProducerRate = (
-      {
-        ns,
-        queueName,
-        producerId,
-      }: { ns: string; queueName: string; producerId: string },
-      rate: number,
-    ) => {
-      addQueueIfNotExists(ns, queueName);
-      rate = Number(rate);
-      const producers = addProducerIfNotExists(ns, queueName, producerId);
-      data.rates.input += rate;
-      producers[producerId].rates.input = rate;
-    };
-
-    const handleConsumerRate = (
-      {
-        ns,
-        queueName,
-        type,
-        consumerId,
-      }: {
-        ns: string;
-        queueName: string;
-        type: string;
-        consumerId: string;
-      },
-      rate: number,
-    ) => {
-      addQueueIfNotExists(ns, queueName);
-      rate = Number(rate);
-      const consumer = addConsumerIfNotExists(ns, queueName, consumerId);
-      consumer.rates = {
-        acknowledged: consumer.rates?.acknowledged ?? 0,
-        unacknowledged: consumer.rates?.unacknowledged ?? 0,
-        processing: consumer.rates?.processing ?? 0,
-      };
-      const consumerTypes = redisKeys.getTypes();
-      switch (type) {
-        case consumerTypes.KEY_TYPE_CONSUMER_RATE_PROCESSING:
-          data.rates.processing += rate;
-          consumer.rates.processing = rate;
-          break;
-
-        case consumerTypes.KEY_TYPE_CONSUMER_RATE_ACKNOWLEDGED:
-          data.rates.acknowledged += rate;
-          consumer.rates.acknowledged = rate;
-          break;
-
-        case consumerTypes.KEY_TYPE_CONSUMER_RATE_UNACKNOWLEDGED:
-          data.rates.unacknowledged += rate;
-          consumer.rates.unacknowledged = rate;
-          break;
-      }
-    };
-
-    const hasExpired = (timestamp: number) => {
-      const now = Date.now();
-      return now - timestamp > 1000;
-    };
-
-    getRedisClient().hgetall(keyIndexRate, (err, result) => {
+    getRedisClient().hgetall(keyIndexRates, (err, result) => {
       if (err) throw err;
       else {
         if (result) {
@@ -196,7 +196,7 @@ export function StatsAggregatorThread(config: IConfig) {
             },
             () => {
               if (expiredKeys.length) {
-                getRedisClient().hdel(keyIndexRate, expiredKeys, noop);
+                getRedisClient().hdel(keyIndexRates, expiredKeys, noop);
               }
               cb();
             },
@@ -218,7 +218,7 @@ export function StatsAggregatorThread(config: IConfig) {
             if (extractedData) {
               const { ns, queueName, type } = extractedData;
               const queue = addQueueIfNotExists(ns, queueName);
-              if (type === instanceTypes.KEY_TYPE_QUEUE_DLQ) {
+              if (type === instanceTypes.KEY_QUEUE_DL) {
                 queue.erroredMessages = size;
               } else {
                 queue.size = size;

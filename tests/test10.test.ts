@@ -34,12 +34,12 @@ test('A message is not lost in case of a consumer crash', async () => {
   });
 
   let messageRequeued = false;
-  consumer2.on(events.MESSAGE_REQUEUED, () => {
+  consumer2.on(events.MESSAGE_RETRY, () => {
     messageRequeued = true;
   });
 
   let messageAcknowledged = false;
-  consumer2.on(events.MESSAGE_REQUEUED, () => {
+  consumer2.on(events.MESSAGE_RETRY, () => {
     messageAcknowledged = true;
   });
 

@@ -19,7 +19,7 @@ test('Async exceptions are caught when consuming a message', async () => {
   });
 
   let queuedCount = 0;
-  consumer.on(events.MESSAGE_REQUEUED, () => {
+  consumer.on(events.MESSAGE_RETRY, () => {
     queuedCount += 1;
   });
 

@@ -19,7 +19,7 @@ test('A consumer does re-queue and consume again a failed message when threshold
   consumer.consume = mock;
 
   let queuedCount = 0;
-  consumer.on(events.MESSAGE_REQUEUED, () => {
+  consumer.on(events.MESSAGE_RETRY, () => {
     queuedCount += 1;
   });
 
