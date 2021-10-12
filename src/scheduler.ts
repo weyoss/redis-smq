@@ -17,7 +17,7 @@ import { Metadata } from './metadata';
 
 export class Scheduler extends EventEmitter {
   protected queueName: string;
-  protected redisClientInstance: RedisClient | null;
+  protected redisClientInstance: RedisClient;
   protected keys: ReturnType<typeof redisKeys['getKeys']>;
   protected metadata: Metadata;
 
@@ -44,15 +44,11 @@ export class Scheduler extends EventEmitter {
     };
     if (typeof mixed === 'object') schedule(mixed);
     else if (typeof mixed === 'function') {
-      if (!this.redisClientInstance)
-        mixed(new Error('Expected an instance of RedisClient'));
-      else {
-        const m = this.redisClientInstance.multi();
-        schedule(m).exec((err) => {
-          if (err) mixed(err);
-          else mixed(null, true);
-        });
-      }
+      const m = this.redisClientInstance.multi();
+      schedule(m).exec((err) => {
+        if (err) mixed(err);
+        else mixed(null, true);
+      });
     } else {
       throw new Error(
         'Invalid function argument [mixed]. Expected a callback or an instance of Multi.',
@@ -181,94 +177,29 @@ export class Scheduler extends EventEmitter {
   deleteScheduledMessage(messageId: string, cb: ICallback<boolean>): void {
     const { keyQueueScheduledMessages, keyIndexScheduledMessages } = this.keys;
     const getMessage = (cb: ICallback<string>) => {
-      if (!this.redisClientInstance)
-        cb(new Error('Expected an instance of RedisClient'));
-      else
-        this.redisClientInstance.hget(keyIndexScheduledMessages, messageId, cb);
+      this.redisClientInstance.hget(keyIndexScheduledMessages, messageId, cb);
     };
     const deleteMessage = (msg: string | null, cb: ICallback<boolean>) => {
       if (msg) {
-        if (!this.redisClientInstance)
-          cb(new Error('Expected an instance of RedisClient'));
-        else {
-          const multi = this.redisClientInstance.multi();
-          multi.zrem(keyQueueScheduledMessages, msg);
-          multi.hdel(keyIndexScheduledMessages, messageId);
-          this.emit(
-            events.PRE_MESSAGE_SCHEDULED_DELETE,
-            Message.createFromMessage(msg),
-            this.queueName,
-            multi,
-          );
-          this.redisClientInstance.execMulti(
-            multi,
-            (err?: Error | null, reply?: number[] | null) => {
-              if (err) cb(err);
-              else cb(null, reply && reply[0] === 1 && reply[1] === 1);
-            },
-          );
-        }
+        const multi = this.redisClientInstance.multi();
+        multi.zrem(keyQueueScheduledMessages, msg);
+        multi.hdel(keyIndexScheduledMessages, messageId);
+        this.emit(
+          events.PRE_MESSAGE_SCHEDULED_DELETE,
+          Message.createFromMessage(msg),
+          this.queueName,
+          multi,
+        );
+        this.redisClientInstance.execMulti(
+          multi,
+          (err?: Error | null, reply?: number[] | null) => {
+            if (err) cb(err);
+            else cb(null, reply && reply[0] === 1 && reply[1] === 1);
+          },
+        );
       } else cb(null, false);
     };
     async.waterfall([getMessage, deleteMessage], cb);
-  }
-
-  getScheduledMessages(
-    skip: number,
-    take: number,
-    cb: ICallback<TGetScheduledMessagesReply>,
-  ): void {
-    const { keyQueueScheduledMessages } = this.keys;
-    if (skip < 0 || take <= 0) {
-      cb(
-        new Error(
-          `Parameter [skip] should be >= 0. Parameter [take] should be >= 1.`,
-        ),
-      );
-    } else {
-      const getTotal = (cb: ICallback<number>) => {
-        if (!this.redisClientInstance)
-          cb(new Error('Expected an instance of RedisClient'));
-        else this.redisClientInstance.zcard(keyQueueScheduledMessages, cb);
-      };
-      const getItems = (
-        total: number,
-        cb: ICallback<TGetScheduledMessagesReply>,
-      ) => {
-        if (!total) {
-          cb(null, {
-            total,
-            items: [],
-          });
-        } else {
-          if (!this.redisClientInstance)
-            cb(new Error('Expected an instance of RedisClient'));
-          else {
-            this.redisClientInstance.zrange(
-              keyQueueScheduledMessages,
-              skip,
-              skip + take - 1,
-              (err, result) => {
-                if (err) cb(err);
-                else {
-                  const items = (result ?? []).map((msg) =>
-                    Message.createFromMessage(msg),
-                  );
-                  cb(null, { total, items });
-                }
-              },
-            );
-          }
-        }
-      };
-      async.waterfall(
-        [getTotal, getItems],
-        (err?: Error | null, result?: TGetScheduledMessagesReply) => {
-          if (err) cb(err);
-          else cb(null, result);
-        },
-      );
-    }
   }
 
   enqueueScheduledMessages(broker: Broker, cb: ICallback<void>): void {
@@ -279,32 +210,65 @@ export class Scheduler extends EventEmitter {
         async.each<string, Error>(
           messages,
           (msg, done) => {
-            if (!this.redisClientInstance)
-              done(new Error('Expected an instance of RedisClient'));
-            else {
-              const message = Message.createFromMessage(msg);
-              const multi = this.redisClientInstance.multi();
-              this.enqueueScheduledMessage(broker, message, multi);
-              this.scheduleAtNextTimestamp(message, multi);
-              multi.exec(done);
-            }
+            const message = Message.createFromMessage(msg);
+            const multi = this.redisClientInstance.multi();
+            this.enqueueScheduledMessage(broker, message, multi);
+            this.scheduleAtNextTimestamp(message, multi);
+            multi.exec(done);
           },
           cb,
         );
       } else cb();
     };
     const fetch = (cb: ICallback<string[]>) => {
-      if (!this.redisClientInstance)
-        cb(new Error('Expected an instance of RedisClient'));
-      else
-        this.redisClientInstance.zrangebyscore(
-          keyQueueScheduledMessages,
-          0,
-          now,
-          cb,
-        );
+      this.redisClientInstance.zrangebyscore(
+        keyQueueScheduledMessages,
+        0,
+        now,
+        cb,
+      );
     };
     async.waterfall([fetch, process], cb);
+  }
+
+  quit(): void {
+    this.redisClientInstance.end(true);
+    this.emit(events.SCHEDULER_QUIT);
+  }
+
+  getScheduledMessages(
+    skip: number,
+    take: number,
+    cb: ICallback<TGetScheduledMessagesReply>,
+  ): void {
+    Scheduler.getScheduledMessages(
+      this.redisClientInstance,
+      this.queueName,
+      skip,
+      take,
+      cb,
+    );
+  }
+
+  static getScheduledMessages(
+    client: RedisClient,
+    queueName: string,
+    skip: number,
+    take: number,
+    cb: ICallback<TGetScheduledMessagesReply>,
+  ): void {
+    const getTotalFn = (redisClient: RedisClient, cb: ICallback<number>) =>
+      Metadata.getQueueMetadataByKey(redisClient, queueName, 'scheduled', cb);
+    const transformFn = (msgStr: string) => Message.createFromMessage(msgStr);
+    const { keyQueueScheduledMessages } = redisKeys.getKeys(queueName);
+    client.zRangePage(
+      keyQueueScheduledMessages,
+      skip,
+      take,
+      getTotalFn,
+      transformFn,
+      cb,
+    );
   }
 
   static getInstance(
@@ -315,13 +279,5 @@ export class Scheduler extends EventEmitter {
     RedisClient.getInstance(config, (client) =>
       cb(new Scheduler(queueName, client)),
     );
-  }
-
-  quit(): void {
-    if (this.redisClientInstance) {
-      this.redisClientInstance.end(true);
-      this.redisClientInstance = null;
-      this.emit(events.SCHEDULER_QUIT);
-    }
   }
 }

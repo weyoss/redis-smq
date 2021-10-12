@@ -12,6 +12,7 @@ const types = {
   KEY_QUEUE_PRIORITY: '1.5',
   KEY_QUEUE_PROCESSING: '1.2',
   KEY_QUEUE_ACKNOWLEDGED_MESSAGES: '1.6',
+  KEY_QUEUE_UNACKNOWLEDGED_MESSAGES: '1.7',
 
   KEY_INDEX_QUEUES: '6.1', // Redis key for message queues
   KEY_INDEX_DL_QUEUES: '6.3', // Redis key for dead-letter queues
@@ -65,8 +66,12 @@ export const redisKeys = {
       ),
       keyQueuePriority: this.joinSegments(types.KEY_QUEUE_PRIORITY, queueName),
       keyMetadataQueue: this.joinSegments(types.KEY_METADATA_QUEUE, queueName),
-      keyAcknowledgedMessages: this.joinSegments(
+      keyQueueAcknowledgedMessages: this.joinSegments(
         types.KEY_QUEUE_ACKNOWLEDGED_MESSAGES,
+        queueName,
+      ),
+      keyQueueUnacknowledgedMessages: this.joinSegments(
+        types.KEY_QUEUE_UNACKNOWLEDGED_MESSAGES,
         queueName,
       ),
     };

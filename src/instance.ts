@@ -116,13 +116,13 @@ export abstract class Instance extends EventEmitter {
     );
   }
 
+  abstract getStatsProvider(): IStatsProvider;
+
   handleError(err: Error): void {
     if (!this.powerManager.isGoingDown()) {
       throw err;
     }
   }
-
-  abstract getStatsProvider(): IStatsProvider;
 
   run(cb?: ICallback<void>): void {
     this.powerManager.goingUp();

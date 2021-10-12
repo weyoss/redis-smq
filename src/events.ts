@@ -39,10 +39,9 @@ export const events = {
 
   PRE_MESSAGE_ACKNOWLEDGED: 'pre_message_acknowledged',
   PRE_MESSAGE_UNACKNOWLEDGED: 'pre_message_unacknowledged',
-  PRE_MESSAGE_RETRY: 'pre_message_retry',
-  PRE_MESSAGE_RETRY_AFTER_DELAY: 'pre_message_retry_after_delay',
   PRE_MESSAGE_DEAD_LETTER: 'pre_message_dead_letter',
   PRE_MESSAGE_ENQUEUED: 'pre_message_enqueued',
+  PRE_MESSAGE_WITH_PRIORITY_ENQUEUED: 'pre_priority_message_enqueued',
   PRE_MESSAGE_RECEIVED: 'pre_message_received',
   PRE_MESSAGE_SCHEDULED: 'pre_message_scheduled',
   PRE_MESSAGE_SCHEDULED_ENQUEUE: 'pre_message_scheduled_dequeue',
