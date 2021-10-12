@@ -1,8 +1,13 @@
 import { RedisClient } from './redis-client';
 import {
+  EMessageDeadLetterCause,
+  EMessageUnacknowledgedCause,
   ICallback,
   IConfig,
   TConsumerOptions,
+  TGetAcknowledgedMessagesReply,
+  TGetDeadLetterMessagesReply,
+  TGetPendingMessagesReply,
   TRedisClientMulti,
   TUnaryFunction,
 } from '../types';
@@ -16,18 +21,6 @@ import BLogger from 'bunyan';
 import { Logger } from './logger';
 import { PowerManager } from './power-manager';
 import { Metadata } from './metadata';
-
-export enum EMessageDeadLetterCause {
-  TTL_EXPIRED = 'ttl_expired',
-  RETRY_THRESHOLD = 'retry_threshold',
-}
-
-export enum EMessageUnacknowledgementCause {
-  TIMEOUT = 'timeout',
-  CAUGHT_ERROR = 'caught_error',
-  UNACKNOWLEDGED = 'unacknowledged',
-  RECOVERY = 'recovery',
-}
 
 const dequeueScript = `
 if redis.call("EXISTS", KEYS[1]) == 1 then 
@@ -184,7 +177,7 @@ export class Broker {
       cause,
       multi,
     );
-    multi.lpush(keyQueueDL, message.toString());
+    multi.zadd(keyQueueDL, Date.now(), message.toString());
   }
 
   protected enqueueMessageAfterDelay(
@@ -215,6 +208,13 @@ export class Broker {
   ): void {
     const { keyQueuePriority } = this.instance.getInstanceRedisKeys();
     const priority = message.getPriority() ?? Message.MessagePriority.NORMAL;
+    if (message.getPriority() !== priority) message.setPriority(priority);
+    this.instance.emit(
+      events.PRE_MESSAGE_WITH_PRIORITY_ENQUEUED,
+      message,
+      this.queueName,
+      multi,
+    );
     multi.zadd(keyQueuePriority, priority, message.toString());
   }
 
@@ -256,13 +256,15 @@ export class Broker {
     const process = (multi: TRedisClientMulti) => {
       if (this.config.priorityQueue === true)
         this.enqueueMessageWithPriority(message, multi);
-      else multi.lpush(keyQueue, message.toString());
-      this.instance.emit(
-        events.PRE_MESSAGE_ENQUEUED,
-        message,
-        this.queueName,
-        multi,
-      );
+      else {
+        this.instance.emit(
+          events.PRE_MESSAGE_ENQUEUED,
+          message,
+          this.queueName,
+          multi,
+        );
+        multi.lpush(keyQueue, message.toString());
+      }
     };
     if (typeof mixed === 'function') {
       this.getRedisClient((client) => {
@@ -308,10 +310,10 @@ export class Broker {
 
   acknowledgeMessage(msg: Message, cb: ICallback<void>): void {
     this.getRedisClient((client) => {
-      const { keyQueueProcessing, keyAcknowledgedMessages } =
+      const { keyQueueProcessing, keyQueueAcknowledgedMessages } =
         this.instance.getInstanceRedisKeys();
       const multi = client.multi();
-      multi.zadd(keyAcknowledgedMessages, Date.now(), msg.toString());
+      multi.zadd(keyQueueAcknowledgedMessages, Date.now(), msg.toString());
       multi.lpop(keyQueueProcessing);
       this.instance.emit(
         events.PRE_MESSAGE_ACKNOWLEDGED,
@@ -320,6 +322,21 @@ export class Broker {
         multi,
       );
       client.execMulti(multi, (err) => cb(err));
+    });
+  }
+
+  unacknowledgeMessage(
+    msg: Message,
+    failure: EMessageUnacknowledgedCause,
+    consumerOptions: TConsumerOptions,
+    error?: Error,
+  ): void {
+    if (error) this.logger.error(error);
+    this.logger.debug(`Unacknowledging message [${msg.getId()}]...`);
+    const { keyQueueProcessing } = this.instance.getInstanceRedisKeys();
+    this.retry(msg, keyQueueProcessing, consumerOptions, failure, (err) => {
+      if (err) this.instance.emit(events.ERROR, err);
+      else this.instance.emit(events.MESSAGE_UNACKNOWLEDGED, msg, failure);
     });
   }
 
@@ -356,7 +373,7 @@ export class Broker {
     message: Message,
     processingQueue: string,
     consumerOptions: TConsumerOptions,
-    unacknowledgementCause: EMessageUnacknowledgementCause,
+    unacknowledgedCause: EMessageUnacknowledgedCause,
     cb: ICallback<void | string>,
   ): void {
     this.applyConsumerOptions(message, consumerOptions);
@@ -378,6 +395,13 @@ export class Broker {
             let requeued = false;
             const multi = client.multi();
             multi.rpop(processingQueue);
+            this.instance.emit(
+              events.PRE_MESSAGE_UNACKNOWLEDGED,
+              message,
+              this.queueName,
+              unacknowledgedCause,
+              multi,
+            );
             if (!message.hasRetryThresholdExceeded()) {
               message.incrAttempts();
               this.logger.debug(
@@ -389,26 +413,12 @@ export class Broker {
                   `Delaying message ID [${message.getId()}] before re-queuing...`,
                 );
                 delayed = true;
-                this.instance.emit(
-                  events.PRE_MESSAGE_RETRY_AFTER_DELAY,
-                  message,
-                  this.queueName,
-                  unacknowledgementCause,
-                  multi,
-                );
                 this.enqueueMessageAfterDelay(message, delay, multi);
               } else {
                 this.logger.debug(
                   `Re-queuing message ID [${message.getId()}] for one more time...`,
                 );
                 requeued = true;
-                this.instance.emit(
-                  events.PRE_MESSAGE_RETRY,
-                  message,
-                  this.queueName,
-                  unacknowledgementCause,
-                  multi,
-                );
                 this.enqueueMessage(message, multi);
               }
             } else {
@@ -417,7 +427,7 @@ export class Broker {
               );
               this.moveMessageToDLQQueue(
                 message,
-                EMessageDeadLetterCause.RETRY_THRESHOLD,
+                EMessageDeadLetterCause.RETRY_THRESHOLD_EXCEEDED,
                 multi,
               );
             }
@@ -489,5 +499,85 @@ export class Broker {
   static getDLQQueues(redisClient: RedisClient, cb: ICallback<string[]>): void {
     const { keyIndexDLQueues } = redisKeys.getGlobalKeys();
     redisClient.smembers(keyIndexDLQueues, cb);
+  }
+
+  static getAcknowledgedMessages(
+    client: RedisClient,
+    queueName: string,
+    skip: number,
+    take: number,
+    cb: ICallback<TGetAcknowledgedMessagesReply>,
+  ): void {
+    const getTotalFn = (redisClient: RedisClient, cb: ICallback<number>) =>
+      Metadata.getQueueMetadataByKey(
+        redisClient,
+        queueName,
+        'acknowledged',
+        cb,
+      );
+    const transformFn = (msgStr: string) => Message.createFromMessage(msgStr);
+    const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName);
+    client.zRangePage(
+      keyQueueAcknowledgedMessages,
+      skip,
+      take,
+      getTotalFn,
+      transformFn,
+      cb,
+    );
+  }
+
+  static getDeadLetterMessages(
+    client: RedisClient,
+    queueName: string,
+    skip: number,
+    take: number,
+    cb: ICallback<TGetDeadLetterMessagesReply>,
+  ): void {
+    const getTotalFn = (redisClient: RedisClient, cb: ICallback<number>) =>
+      Metadata.getQueueMetadataByKey(redisClient, queueName, 'deadLetter', cb);
+    const transformFn = (msgStr: string) => Message.createFromMessage(msgStr);
+    const { keyQueueDL } = redisKeys.getKeys(queueName);
+    client.zRangePage(keyQueueDL, skip, take, getTotalFn, transformFn, cb);
+  }
+
+  static getPendingMessages(
+    client: RedisClient,
+    queueName: string,
+    skip: number,
+    take: number,
+    cb: ICallback<TGetPendingMessagesReply>,
+  ): void {
+    const getTotalFn = (redisClient: RedisClient, cb: ICallback<number>) =>
+      Metadata.getQueueMetadataByKey(redisClient, queueName, 'pending', cb);
+    const transformFn = (msgStr: string) => Message.createFromMessage(msgStr);
+    const { keyQueue } = redisKeys.getKeys(queueName);
+    client.lRangePage(keyQueue, skip, take, getTotalFn, transformFn, cb);
+  }
+
+  static getPendingMessagesWithPriority(
+    client: RedisClient,
+    queueName: string,
+    skip: number,
+    take: number,
+    cb: ICallback<TGetPendingMessagesReply>,
+  ): void {
+    const getTotalFn = (redisClient: RedisClient, cb: ICallback<number>) =>
+      Metadata.getQueueMetadataByKey(
+        redisClient,
+        queueName,
+        'pendingWithPriority',
+        cb,
+      );
+    const transformFn = (msgStr: string) => Message.createFromMessage(msgStr);
+    const { keyQueuePriority } = redisKeys.getKeys(queueName);
+    client.zRangePage(
+      keyQueuePriority,
+      skip,
+      take,
+      getTotalFn,
+      transformFn,
+      cb,
+    );
   }
 }

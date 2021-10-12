@@ -1,4 +1,10 @@
-import { ICallback, IConfig, TConsumerOptions, TUnaryFunction } from '../types';
+import {
+  EMessageUnacknowledgedCause,
+  ICallback,
+  IConfig,
+  TConsumerOptions,
+  TUnaryFunction,
+} from '../types';
 import { Instance } from './instance';
 import { Message } from './message';
 import { ConsumerStatsProvider } from './stats-provider/consumer-stats-provider';
@@ -7,7 +13,6 @@ import { Heartbeat } from './heartbeat';
 import { GarbageCollector } from './gc';
 import { SchedulerRunner } from './scheduler-runner';
 import { RedisClient } from './redis-client';
-import { EMessageUnacknowledgementCause } from './broker';
 
 export abstract class Consumer extends Instance {
   protected schedulerRunnerInstance: SchedulerRunner;
@@ -146,29 +151,15 @@ export abstract class Consumer extends Instance {
       if (this.statsProvider) this.statsProvider.incrementAcknowledgedSlot();
       this.emit(events.MESSAGE_NEXT);
     });
-    this.on(
-      events.MESSAGE_UNACKNOWLEDGED,
-      (message: Message, messageFailure: EMessageUnacknowledgementCause) => {
-        if (this.statsProvider)
-          this.statsProvider.incrementUnacknowledgedSlot();
-        const { keyQueueProcessing } = this.getInstanceRedisKeys();
-        this.getBroker().retry(
-          message,
-          keyQueueProcessing,
-          this.getOptions(),
-          messageFailure,
-          (err) => {
-            if (err) this.emit(events.ERROR, err);
-            else this.emit(events.MESSAGE_NEXT);
-          },
-        );
-      },
-    );
+    this.on(events.MESSAGE_UNACKNOWLEDGED, () => {
+      if (this.statsProvider) this.statsProvider.incrementUnacknowledgedSlot();
+      this.emit(events.MESSAGE_NEXT);
+    });
     this.on(events.MESSAGE_CONSUME_TIMEOUT, (message: Message) => {
-      this.handleConsumeFailure(
+      this.broker.unacknowledgeMessage(
         message,
-        EMessageUnacknowledgementCause.TIMEOUT,
-        new Error(`Consumer timed out.`),
+        EMessageUnacknowledgedCause.TIMEOUT,
+        this.getOptions(),
       );
     });
   }
@@ -190,9 +181,10 @@ export abstract class Consumer extends Instance {
         if (this.powerManager.isRunning() && !isTimeout) {
           if (timer) clearTimeout(timer);
           if (err)
-            this.handleConsumeFailure(
+            this.broker.unacknowledgeMessage(
               msg,
-              EMessageUnacknowledgementCause.UNACKNOWLEDGED,
+              EMessageUnacknowledgedCause.UNACKNOWLEDGED,
+              this.getOptions(),
               err,
             );
           else
@@ -213,24 +205,13 @@ export abstract class Consumer extends Instance {
     } catch (error: unknown) {
       const err =
         error instanceof Error ? error : new Error(`Unexpected error`);
-      this.handleConsumeFailure(
+      this.broker.unacknowledgeMessage(
         msg,
-        EMessageUnacknowledgementCause.CAUGHT_ERROR,
+        EMessageUnacknowledgedCause.CAUGHT_ERROR,
+        this.getOptions(),
         err,
       );
     }
-  }
-
-  protected handleConsumeFailure(
-    msg: Message,
-    failure: EMessageUnacknowledgementCause,
-    error: Error,
-  ): void {
-    this.loggerInstance.error(
-      `Consumer [${this.getId()}] failed to consume message [${msg.getId()}]...`,
-    );
-    this.loggerInstance.error(error);
-    this.emit(events.MESSAGE_UNACKNOWLEDGED, msg, failure);
   }
 
   abstract consume(msg: Message, cb: ICallback<void>): void;

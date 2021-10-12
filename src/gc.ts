@@ -7,11 +7,16 @@ import { events } from './events';
 import { Message } from './message';
 import { Heartbeat } from './heartbeat';
 import { RedisClient } from './redis-client';
-import { ICallback, IConfig, TUnaryFunction } from '../types';
+import {
+  EMessageUnacknowledgedCause,
+  ICallback,
+  IConfig,
+  TUnaryFunction,
+} from '../types';
 import { redisKeys } from './redis-keys';
 import BLogger from 'bunyan';
 import { Consumer } from './consumer';
-import { Broker, EMessageUnacknowledgementCause } from './broker';
+import { Broker } from './broker';
 
 const GC_INSPECTION_INTERVAL = 1000; // in ms
 
@@ -118,7 +123,7 @@ export class GarbageCollector {
                 msg,
                 processingQueue,
                 this.consumer.getOptions(),
-                EMessageUnacknowledgementCause.RECOVERY,
+                EMessageUnacknowledgedCause.RECOVERY,
                 (err) => {
                   if (err) cb(err);
                   else {

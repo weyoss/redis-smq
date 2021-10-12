@@ -5,10 +5,6 @@ import * as Logger from 'bunyan';
 import { RedisClient } from '../src/redis-client';
 import { Message } from '../src/message';
 import { redisKeys } from '../src/redis-keys';
-import {
-  EMessageDeadLetterCause,
-  EMessageUnacknowledgementCause,
-} from '../src/broker';
 
 export interface ICallback<T> {
   (err?: Error | null, reply?: T | null): void;
@@ -148,10 +144,25 @@ export type TAggregatedStats = {
   };
 };
 
-export type TGetScheduledMessagesReply = {
+export type TPaginatedRedisQuery<T> = {
   total: number;
-  items: Message[];
+  items: T[];
 };
+
+export type TPaginatedRedisQueryTotalItemsFn = (
+  redisClient: RedisClient,
+  cb: ICallback<number>,
+) => void;
+
+export type TPaginatedRedisQueryTransformFn<T> = (data: string) => T;
+
+export type TGetScheduledMessagesReply = TPaginatedRedisQuery<Message>;
+
+export type TGetAcknowledgedMessagesReply = TPaginatedRedisQuery<Message>;
+
+export type TGetDeadLetterMessagesReply = TPaginatedRedisQuery<Message>;
+
+export type TGetPendingMessagesReply = TPaginatedRedisQuery<Message>;
 
 export type TInstanceRedisKeys = ReturnType<
   typeof redisKeys['getInstanceKeys']
@@ -159,34 +170,46 @@ export type TInstanceRedisKeys = ReturnType<
 
 export enum EQueueMetadataType {
   PENDING_MESSAGES = 'pending',
+  PENDING_MESSAGES_WITH_PRIORITY = 'pending_with_priority',
   SCHEDULED_MESSAGES = 'scheduled',
   DEAD_LETTER_MESSAGES = 'dead_letter',
-  UNACKNOWLEDGED_MESSAGES = 'errored',
   ACKNOWLEDGED_MESSAGES = 'acknowledged',
 }
 
 export enum EMessageMetadataType {
-  ENQUEUED = 'enqueued_at',
-  SCHEDULED = 'scheduled_at',
-  SCHEDULED_DELETED = 'scheduled_deleted_at',
-  SCHEDULED_ENQUEUED = 'scheduled_delivered_at',
-  ACKNOWLEDGED = 'acknowledged_at',
-  UNACKNOWLEDGED = 'unacknowledged_at',
-  DEAD_LETTER = 'dead_letter_at',
+  ENQUEUED = 'enqueued',
+  ENQUEUED_WITH_PRIORITY = 'enqueued_with_priority',
+  SCHEDULED = 'scheduled',
+  SCHEDULED_DELETED = 'scheduled_deleted',
+  SCHEDULED_ENQUEUED = 'scheduled_enqueued',
+  ACKNOWLEDGED = 'acknowledged',
+  UNACKNOWLEDGED = 'unacknowledged',
+  DEAD_LETTER = 'dead_letter',
 }
 
 export type TMessageMetadata = {
   type: EMessageMetadataType;
   timestamp: number;
   deadLetterCause?: EMessageDeadLetterCause;
-  unacknowledgedCause?: EMessageUnacknowledgementCause;
-  delayed?: boolean;
+  unacknowledgedCause?: EMessageUnacknowledgedCause;
 };
 
 export type TQueueMetadata = {
   pending: number;
+  pendingWithPriority: number;
   scheduled: number;
   deadLetter: number;
-  unacknowledged: number;
   acknowledged: number;
 };
+
+export enum EMessageDeadLetterCause {
+  TTL_EXPIRED = 'ttl_expired',
+  RETRY_THRESHOLD_EXCEEDED = 'retry_threshold_exceeded',
+}
+
+export enum EMessageUnacknowledgedCause {
+  TIMEOUT = 'timeout',
+  CAUGHT_ERROR = 'caught_error',
+  UNACKNOWLEDGED = 'unacknowledged',
+  RECOVERY = 'recovery',
+}

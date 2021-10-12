@@ -15,13 +15,18 @@ export class SchedulerService {
     args: GetSchedulerMessagesDTO,
   ): Promise<TGetScheduledMessagesReply> {
     const { queueName, skip = 0, take = 1 } = args;
-    const scheduler = new Scheduler(queueName, this.redisClient);
     return new Promise<TGetScheduledMessagesReply>((resolve, reject) => {
-      scheduler.getScheduledMessages(skip, take, (err, reply) => {
-        if (err) reject(err);
-        else if (!reply) reject();
-        else resolve(reply);
-      });
+      Scheduler.getScheduledMessages(
+        this.redisClient,
+        queueName,
+        skip,
+        take,
+        (err, reply) => {
+          if (err) reject(err);
+          else if (!reply) reject();
+          else resolve(reply);
+        },
+      );
     });
   }
 

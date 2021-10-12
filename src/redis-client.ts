@@ -6,8 +6,59 @@ import {
   ICallback,
   TCompatibleRedisClient,
   TRedisClientMulti,
+  TPaginatedRedisQuery,
+  TPaginatedRedisQueryTransformFn,
+  TPaginatedRedisQueryTotalItemsFn,
 } from '../types';
 import { EventEmitter } from 'events';
+import * as async from 'async';
+
+function getPage<T>(
+  client: RedisClient,
+  from: 'zrange' | 'lrange',
+  key: string,
+  skip: number,
+  take: number,
+  getTotalFn: TPaginatedRedisQueryTotalItemsFn,
+  transformFn: TPaginatedRedisQueryTransformFn<T>,
+  cb: ICallback<TPaginatedRedisQuery<T>>,
+) {
+  if (skip < 0 || take <= 0) {
+    cb(
+      new Error(
+        `Parameter [skip] should be >= 0. Parameter [take] should be >= 1.`,
+      ),
+    );
+  } else {
+    const getTotalItems = (cb: ICallback<number>) => getTotalFn(client, cb);
+    const getItems = (
+      total: number,
+      cb: ICallback<TPaginatedRedisQuery<T>>,
+    ) => {
+      if (!total) {
+        cb(null, {
+          total,
+          items: [],
+        });
+      } else {
+        client[from](key, skip, skip + take - 1, (err, result) => {
+          if (err) cb(err);
+          else {
+            const items = (result ?? []).map((msg) => transformFn(msg));
+            cb(null, { total, items });
+          }
+        });
+      }
+    };
+    async.waterfall(
+      [getTotalItems, getItems],
+      (err?: Error | null, result?: TPaginatedRedisQuery<T>) => {
+        if (err) cb(err);
+        else cb(null, result);
+      },
+    );
+  }
+}
 
 export class RedisClient extends EventEmitter {
   protected client: TCompatibleRedisClient;
@@ -197,6 +248,28 @@ export class RedisClient extends EventEmitter {
     const arrHash: (string | number)[] = [hash];
     const arrArgs = Array.isArray(args) ? args : [args];
     this.client.evalsha(arrHash.concat(arrArgs), cb);
+  }
+
+  zRangePage<T>(
+    key: string,
+    skip: number,
+    take: number,
+    getTotalFn: TPaginatedRedisQueryTotalItemsFn,
+    transformFn: TPaginatedRedisQueryTransformFn<T>,
+    cb: ICallback<TPaginatedRedisQuery<T>>,
+  ): void {
+    getPage<T>(this, 'zrange', key, skip, take, getTotalFn, transformFn, cb);
+  }
+
+  lRangePage<T>(
+    key: string,
+    skip: number,
+    take: number,
+    getTotalFn: TPaginatedRedisQueryTotalItemsFn,
+    transformFn: TPaginatedRedisQueryTransformFn<T>,
+    cb: ICallback<TPaginatedRedisQuery<T>>,
+  ): void {
+    getPage<T>(this, 'lrange', key, skip, take, getTotalFn, transformFn, cb);
   }
 
   quit(): void {

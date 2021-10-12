@@ -1,7 +1,13 @@
 import { promisifyAll } from 'bluebird';
 import { events } from '../src/events';
 import { RedisClient } from '../src/redis-client';
-import { Producer, Consumer, Message, MonitorServer } from '../index';
+import {
+  Producer,
+  Consumer,
+  Message,
+  MonitorServer,
+  MessageProvider,
+} from '../index';
 import { config } from './config';
 import { ICallback, IConfig, TConsumerOptions } from '../types';
 import { StatsAggregatorThread } from '../src/monitor-server/threads/stats-aggregator.thread';
@@ -20,6 +26,7 @@ const consumersList: Consumer[] = [];
 const producersList: Producer[] = [];
 let monitorServer: TMonitorServer | null = null;
 let statsAggregator: ReturnType<typeof StatsAggregatorThread> | null = null;
+let messageProvider: MessageProvider | null = null;
 
 export async function startUp(): Promise<void> {
   const redisClient = await getRedisInstance();
@@ -44,6 +51,10 @@ export async function shutdown(): Promise<void> {
     if (redisClient) {
       redisClient.end(true);
     }
+  }
+  if (messageProvider) {
+    messageProvider.quit();
+    messageProvider = null;
   }
   await stopMonitorServer();
   await stopStatsAggregator();
@@ -77,6 +88,17 @@ export function getProducer(queueName = 'test_queue', cfg = config) {
   const p = promisifyAll(producer);
   producersList.push(p);
   return p;
+}
+
+export async function getMessageProvider(cfg = config) {
+  if (!messageProvider) {
+    messageProvider = await new Promise<MessageProvider>((resolve) => {
+      MessageProvider.getInstance(cfg, (messageProvider) => {
+        resolve(messageProvider);
+      });
+    });
+  }
+  return messageProvider;
 }
 
 export async function startMonitorServer(): Promise<void> {
