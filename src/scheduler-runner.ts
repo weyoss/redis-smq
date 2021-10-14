@@ -1,29 +1,34 @@
-import { IConfig, TUnaryFunction } from '../types';
+import { ICallback, IConfig } from '../types';
 import { LockManager } from './lock-manager';
 import * as BLogger from 'bunyan';
-import { PowerManager } from './power-manager';
 import { Ticker } from './ticker';
 import { events } from './events';
 import { Logger } from './logger';
 import { Scheduler } from './scheduler';
-import { RedisClient } from './redis-client';
 import { Consumer } from './consumer';
+import { EventEmitter } from 'events';
+import { RedisClient } from './redis-client';
 
-export class SchedulerRunner {
+export class SchedulerRunner extends EventEmitter {
   protected consumer: Consumer;
-  protected powerManager: PowerManager;
   protected logger: BLogger;
   protected keyLockScheduler: string;
   protected config: IConfig;
   protected tickPeriod: number;
   protected queueName: string;
   protected consumerId: string;
-  protected schedulerInstance: Scheduler | null = null;
-  protected ticker: Ticker | null = null;
-  protected lockManagerInstance: LockManager | null = null;
+  protected schedulerInstance: Scheduler;
+  protected ticker: Ticker;
+  protected lockManagerInstance: LockManager;
 
-  constructor(consumer: Consumer, tickPeriod = 1000) {
+  constructor(consumer: Consumer, redisClient: RedisClient, tickPeriod = 1000) {
+    super();
     this.consumer = consumer;
+    this.schedulerInstance = new Scheduler(
+      consumer.getQueueName(),
+      redisClient,
+    );
+    this.lockManagerInstance = new LockManager(redisClient);
     this.queueName = consumer.getQueueName();
     this.config = consumer.getConfig();
     this.consumerId = consumer.getId();
@@ -34,112 +39,41 @@ export class SchedulerRunner {
       this.config.log,
     );
     this.tickPeriod = tickPeriod;
-    this.powerManager = new PowerManager();
-  }
-
-  protected getLockManager(cb: TUnaryFunction<LockManager>): void {
-    if (!this.lockManagerInstance)
-      this.consumer.emit(
-        events.ERROR,
-        new Error(`Expected an instance of LockManager`),
-      );
-    else cb(this.lockManagerInstance);
-  }
-
-  protected getTicker(cb: TUnaryFunction<Ticker>): void {
-    if (!this.ticker)
-      this.consumer.emit(
-        events.ERROR,
-        new Error(`Expected an instance of Ticker`),
-      );
-    else cb(this.ticker);
+    this.ticker = new Ticker(() => {
+      this.onTick();
+    }, this.tickPeriod);
+    this.ticker.nextTick();
   }
 
   protected debug(message: string): void {
     this.logger.debug({ scheduler: true }, message);
   }
 
-  protected getScheduler(cb: TUnaryFunction<Scheduler>): void {
-    if (!this.schedulerInstance)
-      this.consumer.emit(
-        events.ERROR,
-        new Error(`Expected an instance of Scheduler`),
-      );
-    else cb(this.schedulerInstance);
-  }
-
   protected onTick(): void {
-    if (this.powerManager.isRunning()) {
-      this.getLockManager((lockerManager) => {
-        lockerManager.acquireLock(
-          this.keyLockScheduler,
-          10000,
-          false,
-          (err, acquired) => {
-            if (err) this.consumer.emit(events.ERROR, err);
-            else {
-              this.getTicker((ticker) => {
-                if (acquired) {
-                  this.getScheduler((scheduler) => {
-                    scheduler.enqueueScheduledMessages(
-                      this.consumer.getBroker(),
-                      (err) => {
-                        if (err) this.consumer.emit(events.ERROR, err);
-                        else ticker.nextTick();
-                      },
-                    );
-                  });
-                } else ticker.nextTick();
+    this.lockManagerInstance.acquireLock(
+      this.keyLockScheduler,
+      10000,
+      false,
+      (err, acquired) => {
+        if (err) this.consumer.emit(events.ERROR, err);
+        else {
+          if (acquired) {
+            this.consumer.getBroker((broker) => {
+              this.schedulerInstance.enqueueScheduledMessages(broker, (err) => {
+                if (err) this.consumer.emit(events.ERROR, err);
+                else this.ticker.nextTick();
               });
-            }
-          },
-        );
-      });
-    }
-    if (this.powerManager.isGoingDown()) {
-      this.consumer.emit(events.SCHEDULER_RUNNER_SHUTDOWN_READY);
-    }
-  }
-
-  protected setupTicker(): void {
-    this.ticker = new Ticker(() => {
-      this.onTick();
-    }, this.tickPeriod);
-    this.ticker.on(events.ERROR, (err: Error) =>
-      this.consumer.emit(events.ERROR, err),
+            });
+          } else this.ticker.nextTick();
+        }
+      },
     );
   }
 
-  start(): void {
-    this.powerManager.goingUp();
-    RedisClient.getInstance(this.config, (client) => {
-      this.lockManagerInstance = new LockManager(client);
-      this.schedulerInstance = new Scheduler(this.queueName, client);
-      this.powerManager.commit();
-      this.setupTicker();
-      this.onTick();
-      this.consumer.emit(events.SCHEDULER_RUNNER_UP);
+  quit(cb: ICallback<void>): void {
+    this.ticker.once(events.DOWN, () => {
+      this.lockManagerInstance.quit(cb);
     });
-  }
-
-  stop(): void {
-    this.powerManager.goingDown();
-    this.consumer.once(events.SCHEDULER_RUNNER_SHUTDOWN_READY, () => {
-      this.getTicker((ticker) => {
-        ticker.quit();
-        this.ticker = null;
-        this.getLockManager((lockManager) => {
-          lockManager.quit(() => {
-            this.lockManagerInstance = null;
-            this.getScheduler((scheduler) => {
-              scheduler.quit();
-              this.schedulerInstance = null;
-              this.powerManager.commit();
-              this.consumer.emit(events.SCHEDULER_RUNNER_DOWN);
-            });
-          });
-        });
-      });
-    });
+    this.ticker.quit();
   }
 }

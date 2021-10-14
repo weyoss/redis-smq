@@ -5,7 +5,10 @@ import {
   IStatsProvider,
   ICallback,
   TInstanceRedisKeys,
+  TUnaryFunction,
+  TFunction,
 } from '../types';
+import * as async from 'async';
 import { PowerManager } from './power-manager';
 import { Logger } from './logger';
 import * as BunyanLogger from 'bunyan';
@@ -14,6 +17,9 @@ import { events } from './events';
 import { Scheduler } from './scheduler';
 import { Broker } from './broker';
 import { redisKeys } from './redis-keys';
+import { RedisClient } from './redis-client';
+import { MessageManager } from './message-manager';
+import { QueueManager } from './queue-manager';
 
 export abstract class Instance extends EventEmitter {
   protected readonly id: string;
@@ -21,12 +27,17 @@ export abstract class Instance extends EventEmitter {
   protected readonly config: IConfig;
   protected powerManager: PowerManager;
   protected redisKeys: TInstanceRedisKeys;
-  protected startupFiredEvents: string[] = [];
-  protected shutdownFiredEvents: string[] = [];
-  protected statsInstance: Stats | null = null;
   protected loggerInstance: BunyanLogger;
+
+  protected brokerInstance: Broker | null = null;
+  protected statsInstance: Stats | null = null;
+  protected schedulerInstance: Scheduler | null = null;
+  protected messageManager: MessageManager | null = null;
+  protected queueManager: QueueManager | null = null;
   protected statsProvider: IStatsProvider | null = null;
-  protected broker: Broker;
+
+  protected commonRedisClient: RedisClient | null = null;
+  protected statsRedisClient: RedisClient | null = null;
 
   protected constructor(queueName: string, config: IConfig) {
     super();
@@ -45,81 +56,153 @@ export abstract class Instance extends EventEmitter {
       `${this.getQueueName()}:${this.getId()}`,
       this.config.log,
     );
-    this.broker = new Broker(this);
-    this.setupStats();
     this.registerEventsHandlers();
+  }
+
+  getCommonRedisClient(cb: TUnaryFunction<RedisClient>): void {
+    if (!this.commonRedisClient)
+      this.emit(events.ERROR, new Error('Expected an instance of RedisClient'));
+    else cb(this.commonRedisClient);
   }
 
   protected registerEventsHandlers(): void {
     this.on(events.ERROR, (err: Error) => this.handleError(err));
-    this.on(events.GOING_UP, () => {
-      this.broker.start();
-      if (this.statsInstance) this.statsInstance.start();
-    });
-    this.on(events.UP, () => {
-      this.startupFiredEvents = [];
-    });
-    this.on(events.GOING_DOWN, () => {
-      if (this.statsInstance) this.statsInstance.stop();
-    });
-    this.on(events.DOWN, () => {
-      this.shutdownFiredEvents = [];
-    });
-    this.on(events.STATS_UP, () => this.handleStartupEvent(events.STATS_UP));
-    this.on(events.STATS_DOWN, () =>
-      this.handleShutdownEvent(events.STATS_DOWN),
-    );
-    this.on(events.BROKER_UP, () => this.handleStartupEvent(events.BROKER_UP));
   }
 
-  protected setupStats(): void {
+  protected setupCommonRedisClient = (cb: ICallback<RedisClient>): void => {
+    RedisClient.getNewInstance(this.config, (client) => {
+      this.commonRedisClient = client;
+      cb(null, client);
+    });
+  };
+
+  protected setupStats = (cb: ICallback<void>): void => {
     const { monitor } = this.config;
     if (monitor && monitor.enabled) {
-      this.statsInstance = new Stats(this);
-    }
-  }
-
-  protected handleStartupEvent(event: string): void {
-    this.startupFiredEvents.push(event);
-    const isUp = this.hasGoneUp();
-    if (isUp) {
-      this.powerManager.commit();
-      this.emit(events.UP);
-    }
-  }
-
-  protected handleShutdownEvent(event: string): void {
-    this.shutdownFiredEvents.push(event);
-    const isReady = this.isReadyToGoDown();
-    if (isReady) {
-      this.once(events.BROKER_DOWN, () => {
-        this.powerManager.commit();
-        this.emit(events.DOWN);
+      RedisClient.getNewInstance(this.config, (client) => {
+        this.statsInstance = new Stats(this, client);
+        this.statsRedisClient = client;
+        cb();
       });
+    } else cb();
+  };
 
-      // shutdown the broker as the last step
-      this.getBroker().stop();
-    }
+  protected setupMessageManager = (
+    client: RedisClient,
+    cb: (
+      err?: Error | null,
+      client?: RedisClient,
+      messageManager?: MessageManager,
+    ) => void,
+  ): void => {
+    const messageManager = new MessageManager(client);
+    this.messageManager = messageManager;
+    messageManager.bootstrap((err) => {
+      if (err) cb(err);
+      else cb(null, client, messageManager);
+    });
+  };
+
+  protected setupQueueManager = (
+    client: RedisClient,
+    messageManager: MessageManager,
+    cb: (
+      err?: Error | null,
+      client?: RedisClient,
+      messageManager?: MessageManager,
+      queueManager?: QueueManager,
+    ) => void,
+  ): void => {
+    const queueManager = new QueueManager(client);
+    this.queueManager = queueManager;
+    queueManager.bootstrap(this, (err) => {
+      if (err) cb(err);
+      else cb(null, client, messageManager, queueManager);
+    });
+  };
+
+  protected setupScheduler = (
+    client: RedisClient,
+    messageManager: MessageManager,
+    queueManager: QueueManager,
+    cb: (
+      err?: Error | null,
+      client?: RedisClient,
+      messageManager?: MessageManager,
+      queueManager?: QueueManager,
+      scheduler?: Scheduler,
+    ) => void,
+  ): void => {
+    this.schedulerInstance = new Scheduler(this.queueName, client);
+    cb(null, client, messageManager, queueManager, this.schedulerInstance);
+  };
+
+  protected setupBroker = (
+    client: RedisClient,
+    messageManager: MessageManager,
+    queueManager: QueueManager,
+    scheduler: Scheduler,
+    cb: ICallback<Broker>,
+  ): void => {
+    this.brokerInstance = new Broker(
+      this,
+      scheduler,
+      messageManager,
+      queueManager,
+    );
+    cb();
+  };
+
+  protected goingUp(): TFunction[] {
+    return [
+      this.setupCommonRedisClient,
+      this.setupMessageManager,
+      this.setupQueueManager,
+      this.setupScheduler,
+      this.setupBroker,
+      this.setupStats,
+    ];
   }
 
-  protected hasGoneUp(): boolean {
-    return (
-      this.startupFiredEvents.includes(events.BROKER_UP) &&
-      (!this.statsInstance || this.startupFiredEvents.includes(events.STATS_UP))
-    );
-  }
-
-  protected isReadyToGoDown(): boolean {
-    return (
-      !this.statsInstance ||
-      this.shutdownFiredEvents.includes(events.STATS_DOWN)
-    );
+  protected goingDown(): TUnaryFunction<ICallback<void>>[] {
+    const stopMessageManager = (cb: ICallback<void>) => {
+      if (this.messageManager) {
+        this.messageManager.quit(() => {
+          this.messageManager = null;
+          cb();
+        });
+      } else cb();
+    };
+    const stopStats = (cb: ICallback<void>) => {
+      if (this.statsInstance) {
+        this.statsInstance.quit(() => {
+          this.statsInstance = null;
+          this.statsRedisClient?.halt(() => {
+            this.statsRedisClient = null;
+            cb();
+          });
+        });
+      } else cb();
+    };
+    const stopCommonRedisClient = (cb: ICallback<void>) => {
+      this.commonRedisClient?.halt(() => {
+        this.commonRedisClient = null;
+        cb();
+      });
+    };
+    const cleanUp = (cb: ICallback<void>): void => {
+      this.queueManager = null;
+      this.brokerInstance = null;
+      this.schedulerInstance = null;
+      cb();
+    };
+    return [stopMessageManager, stopStats, stopCommonRedisClient, cleanUp];
   }
 
   abstract getStatsProvider(): IStatsProvider;
 
   handleError(err: Error): void {
-    if (!this.powerManager.isGoingDown()) {
+    if (this.powerManager.isGoingUp() || this.powerManager.isRunning()) {
       throw err;
     }
   }
@@ -127,29 +210,110 @@ export abstract class Instance extends EventEmitter {
   run(cb?: ICallback<void>): void {
     this.powerManager.goingUp();
     this.emit(events.GOING_UP);
-    if (cb) {
-      this.once(events.UP, cb);
-    }
+    const tasks = this.goingUp();
+    async.waterfall(tasks, () => {
+      this.powerManager.commit();
+      this.emit(events.UP);
+      cb && cb();
+    });
   }
 
   shutdown(cb?: ICallback<void>): void {
     this.powerManager.goingDown();
     this.emit(events.GOING_DOWN);
-    if (cb) {
-      this.once(events.DOWN, cb);
-    }
+    const tasks = this.goingDown();
+    async.waterfall(tasks, () => {
+      this.powerManager.commit();
+      this.emit(events.DOWN);
+      cb && cb();
+    });
   }
 
   isRunning(): boolean {
     return this.powerManager.isRunning();
   }
 
-  getBroker(): Broker {
-    return this.broker;
+  getBroker(cb: TUnaryFunction<Broker>): void {
+    if (!this.brokerInstance) {
+      if (this.powerManager.isGoingUp()) {
+        this.once(events.UP, () => {
+          if (!this.brokerInstance)
+            this.emit(
+              events.ERROR,
+              new Error('Expected an instance of Broker'),
+            );
+          else cb(this.brokerInstance);
+        });
+      } else {
+        this.emit(events.ERROR, new Error('Expected an instance of Broker'));
+      }
+    } else cb(this.brokerInstance);
   }
 
   getScheduler(cb: ICallback<Scheduler>): void {
-    this.broker.getScheduler(cb);
+    if (!this.schedulerInstance) {
+      if (this.powerManager.isGoingUp()) {
+        this.once(events.UP, () => {
+          if (!this.schedulerInstance)
+            this.emit(
+              events.ERROR,
+              new Error('Expected an instance of Scheduler'),
+            );
+          else cb(null, this.schedulerInstance);
+        });
+      } else {
+        this.emit(
+          events.ERROR,
+          new Error(
+            'Expected an instance of Broker. Is your instance running?',
+          ),
+        );
+      }
+    } else cb(null, this.schedulerInstance);
+  }
+
+  getMessageManager(cb: ICallback<MessageManager>): void {
+    if (!this.messageManager) {
+      if (this.powerManager.isGoingUp()) {
+        this.once(events.UP, () => {
+          if (!this.messageManager)
+            this.emit(
+              events.ERROR,
+              new Error('Expected an instance of MessageManager'),
+            );
+          else cb(null, this.messageManager);
+        });
+      } else {
+        this.emit(
+          events.ERROR,
+          new Error(
+            'Expected an instance of MessageManager. Is your instance running?',
+          ),
+        );
+      }
+    } else cb(null, this.messageManager);
+  }
+
+  getQueueManager(cb: ICallback<QueueManager>): void {
+    if (!this.queueManager) {
+      if (this.powerManager.isGoingUp()) {
+        this.once(events.UP, () => {
+          if (!this.queueManager)
+            this.emit(
+              events.ERROR,
+              new Error('Expected an instance of QueueManager'),
+            );
+          else cb(null, this.queueManager);
+        });
+      } else {
+        this.emit(
+          events.ERROR,
+          new Error(
+            'Expected an instance of QueueManager. Is your instance running?',
+          ),
+        );
+      }
+    } else cb(null, this.queueManager);
   }
 
   getId(): string {

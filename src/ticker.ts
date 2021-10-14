@@ -1,47 +1,74 @@
-import { ICallback, TFunction } from '../types';
+import { TFunction } from '../types';
 import { EventEmitter } from 'events';
 import { events } from './events';
+import { PowerManager } from './power-manager';
 
 export class Ticker extends EventEmitter {
-  protected isRunning = false;
-  protected timer: NodeJS.Timeout | null = null;
-  protected interval: NodeJS.Timer | null = null;
-  protected onTick: TFunction;
+  protected powerManager = new PowerManager();
+  protected onTickFn: TFunction;
+  protected onNextTickFn: TFunction | null = null;
   protected time: number;
 
-  constructor(onTick: TFunction, time: number) {
+  protected timeout: NodeJS.Timeout | null = null;
+  protected interval: NodeJS.Timer | null = null;
+
+  constructor(onTickFn: TFunction, time: number) {
     super();
-    this.onTick = onTick;
+    this.onTickFn = onTickFn;
     this.time = time;
-    this.isRunning = true;
+    this.powerManager.goingUp();
   }
 
-  quit(cb?: ICallback<void>): void {
-    if (!this.isRunning) {
-      const err = new Error('Ticker is already down');
-      if (cb) cb(err);
-      else this.emit(events.ERROR, err);
+  protected shutdown(): void {
+    if (this.timeout) clearTimeout(this.timeout);
+    if (this.interval) clearInterval(this.interval);
+    this.powerManager.commit();
+    this.emit(events.DOWN);
+  }
+
+  protected onTick(): void {
+    if (this.powerManager.isRunning()) {
+      const tickFn = this.onNextTickFn ?? this.onTickFn;
+      this.onNextTickFn = null;
+      tickFn();
+    }
+  }
+
+  quit(): void {
+    if (this.powerManager.isGoingUp()) {
+      this.powerManager.rollback();
+      this.emit(events.DOWN);
     } else {
-      this.isRunning = false;
-      if (this.timer) clearTimeout(this.timer);
-      if (this.interval) clearInterval(this.interval);
-      if (cb) cb();
+      this.powerManager.goingDown();
+      this.shutdown();
     }
   }
 
   nextTick(): void {
-    if (!this.isRunning) this.emit(events.ERROR, new Error('Ticker is down'));
-    else this.timer = setTimeout(this.onTick, this.time);
+    if (this.timeout || this.interval) {
+      throw new Error('A timer is already running');
+    }
+    if (this.powerManager.isGoingUp() || this.powerManager.isRunning()) {
+      if (this.powerManager.isGoingUp()) this.powerManager.commit();
+      this.timeout = setTimeout(() => {
+        this.timeout = null;
+        this.onTick();
+      }, this.time);
+    }
+  }
+
+  nextTickFn(fn: TFunction): void {
+    this.nextTickFn = fn;
+    this.nextTick();
   }
 
   runTimer(): void {
-    if (!this.isRunning) this.emit(events.ERROR, new Error('Ticker is down'));
-    else {
-      this.interval = setInterval(() => {
-        if (this.isRunning) {
-          this.onTick();
-        }
-      }, this.time);
+    if (this.interval || this.timeout) {
+      throw new Error('A timer is already running');
+    }
+    if (this.powerManager.isGoingUp() || this.powerManager.isRunning()) {
+      if (this.powerManager.isGoingUp()) this.powerManager.commit();
+      this.interval = setInterval(() => this.onTick(), this.time);
     }
   }
 }

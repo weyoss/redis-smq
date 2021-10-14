@@ -6,7 +6,7 @@ import {
   Consumer,
   Message,
   MonitorServer,
-  MessageProvider,
+  MessageManager,
 } from '../index';
 import { config } from './config';
 import { ICallback, IConfig, TConsumerOptions } from '../types';
@@ -25,8 +25,8 @@ const redisClients: RedisClient[] = [];
 const consumersList: Consumer[] = [];
 const producersList: Producer[] = [];
 let monitorServer: TMonitorServer | null = null;
-let statsAggregator: ReturnType<typeof StatsAggregatorThread> | null = null;
-let messageProvider: MessageProvider | null = null;
+let statsAggregator: StatsAggregatorThread | null = null;
+let messageManager: MessageManager | null = null;
 
 export async function startUp(): Promise<void> {
   const redisClient = await getRedisInstance();
@@ -52,9 +52,8 @@ export async function shutdown(): Promise<void> {
       redisClient.end(true);
     }
   }
-  if (messageProvider) {
-    messageProvider.quit();
-    messageProvider = null;
+  if (messageManager) {
+    messageManager = null;
   }
   await stopMonitorServer();
   await stopStatsAggregator();
@@ -90,15 +89,12 @@ export function getProducer(queueName = 'test_queue', cfg = config) {
   return p;
 }
 
-export async function getMessageProvider(cfg = config) {
-  if (!messageProvider) {
-    messageProvider = await new Promise<MessageProvider>((resolve) => {
-      MessageProvider.getInstance(cfg, (messageProvider) => {
-        resolve(messageProvider);
-      });
-    });
+export async function getMessageManager(cfg = config) {
+  if (!messageManager) {
+    const client = await getRedisInstance();
+    messageManager = new MessageManager(client);
   }
-  return messageProvider;
+  return messageManager;
 }
 
 export async function startMonitorServer(): Promise<void> {
@@ -122,19 +118,14 @@ export async function stopMonitorServer(): Promise<void> {
 }
 
 export async function startStatsAggregator(): Promise<void> {
-  return new Promise<void>((resolve) => {
-    statsAggregator = StatsAggregatorThread(config);
-    statsAggregator.start(() => {
-      monitorServer = null;
-      resolve();
-    });
-  });
+  const redisClient = await getRedisInstance();
+  statsAggregator = new StatsAggregatorThread(redisClient, config);
 }
 
 export async function stopStatsAggregator(): Promise<void> {
   return new Promise<void>((resolve) => {
     if (statsAggregator) {
-      statsAggregator.shutdown(() => {
+      statsAggregator.quit(() => {
         monitorServer = null;
         resolve();
       });
@@ -156,7 +147,7 @@ export function validateTime(
 export async function getRedisInstance() {
   const c = promisifyAll(
     await new Promise<RedisClient>((resolve) =>
-      RedisClient.getInstance(config, resolve),
+      RedisClient.getNewInstance(config, resolve),
     ),
   );
   redisClients.push(c);

@@ -1,7 +1,6 @@
 import * as os from 'os';
 import * as async from 'async';
-import { ICallback, IConfig, TUnaryFunction } from '../types';
-import { PowerManager } from './power-manager';
+import { ICallback, IConfig } from '../types';
 import { Ticker } from './ticker';
 import { ChildProcess, fork } from 'child_process';
 import { resolve } from 'path';
@@ -9,6 +8,7 @@ import { events } from './events';
 import { RedisClient } from './redis-client';
 import { redisKeys } from './redis-keys';
 import { Consumer } from './consumer';
+import { EventEmitter } from 'events';
 
 type TGetHeartbeatReply = Record<
   string,
@@ -94,24 +94,29 @@ function getConsumerHeartbeat(
   client.hget(keyIndexHeartbeats, keyHeartbeat, cb);
 }
 
-export class Heartbeat {
+export class Heartbeat extends EventEmitter {
   protected consumer: Consumer;
   protected queueName: string;
   protected consumerId: string;
-  protected powerManager: PowerManager;
   protected config: IConfig;
   protected redisKeys: ReturnType<typeof redisKeys['getInstanceKeys']>;
-  protected redisClientInstance: RedisClient | null = null;
+  protected redisClient: RedisClient;
   protected monitorThread: ChildProcess | null = null;
-  protected ticker: Ticker | null = null;
+  protected ticker: Ticker;
 
-  constructor(consumer: Consumer) {
+  constructor(consumer: Consumer, redisClient: RedisClient) {
+    super();
     this.consumer = consumer;
     this.queueName = consumer.getQueueName();
     this.consumerId = consumer.getId();
     this.config = consumer.getConfig();
-    this.powerManager = new PowerManager();
     this.redisKeys = consumer.getInstanceRedisKeys();
+    this.redisClient = redisClient;
+    this.startMonitor();
+    this.ticker = new Ticker(() => {
+      this.onTick();
+    }, 1000);
+    this.ticker.nextTick();
   }
 
   protected startMonitor(): void {
@@ -141,70 +146,33 @@ export class Heartbeat {
     }
   }
 
-  protected nextTick(): void {
-    if (!this.ticker) {
-      this.ticker = new Ticker(() => {
-        this.onTick();
-      }, 1000);
-      this.ticker.on(events.ERROR, (err: Error) =>
-        this.consumer.emit(events.ERROR, err),
-      );
-    }
-    this.ticker.nextTick();
-  }
-
   protected onTick(): void {
-    if (this.powerManager.isRunning()) {
-      const usage = {
-        ipAddress: IPAddresses,
-        hostname: os.hostname(),
-        pid: process.pid,
-        ram: {
-          usage: process.memoryUsage(),
-          free: os.freemem(),
-          total: os.totalmem(),
-        },
-        cpu: cpuUsage(),
-      };
-      const timestamp = Date.now();
-      const payload = JSON.stringify({
-        timestamp,
-        usage,
-      });
-      const { keyIndexHeartbeats, keyHeartbeat } = this.redisKeys;
-      this.getRedisClientInstance((client) => {
-        client.hset(
-          keyIndexHeartbeats,
-          keyHeartbeat,
-          payload,
-          (err?: Error | null) => {
-            if (err) this.consumer.emit(events.ERROR, err);
-            else this.nextTick();
-          },
-        );
-      });
-    }
-    if (this.powerManager.isGoingDown()) {
-      this.consumer.emit(events.HEARTBEAT_SHUTDOWN_READY);
-    }
-  }
-
-  protected getRedisClientInstance(cb: TUnaryFunction<RedisClient>): void {
-    if (!this.redisClientInstance)
-      this.consumer.emit(
-        events.ERROR,
-        new Error(`Expected an instance of RedisClient`),
-      );
-    else cb(this.redisClientInstance);
-  }
-
-  protected getTicker(cb: TUnaryFunction<Ticker>): void {
-    if (!this.ticker)
-      this.consumer.emit(
-        events.ERROR,
-        new Error(`Expected an instance of Ticker`),
-      );
-    else cb(this.ticker);
+    const usage = {
+      ipAddress: IPAddresses,
+      hostname: os.hostname(),
+      pid: process.pid,
+      ram: {
+        usage: process.memoryUsage(),
+        free: os.freemem(),
+        total: os.totalmem(),
+      },
+      cpu: cpuUsage(),
+    };
+    const timestamp = Date.now();
+    const payload = JSON.stringify({
+      timestamp,
+      usage,
+    });
+    const { keyIndexHeartbeats, keyHeartbeat } = this.redisKeys;
+    this.redisClient.hset(
+      keyIndexHeartbeats,
+      keyHeartbeat,
+      payload,
+      (err?: Error | null) => {
+        if (err) this.consumer.emit(events.ERROR, err);
+        else this.ticker.nextTick();
+      },
+    );
   }
 
   protected expireHeartbeat(client: RedisClient, cb: ICallback<void>): void {
@@ -212,35 +180,15 @@ export class Heartbeat {
     Heartbeat.handleExpiredHeartbeat(client, [keyHeartbeat], (err) => cb(err));
   }
 
-  start(): void {
-    this.powerManager.goingUp();
-    RedisClient.getInstance(this.config, (client) => {
-      this.redisClientInstance = client;
-      this.startMonitor();
-      this.nextTick();
-      this.powerManager.commit();
-      this.consumer.emit(events.HEARTBEAT_UP);
-    });
-  }
-
-  stop(): void {
-    this.powerManager.goingDown();
-    this.consumer.once(events.HEARTBEAT_SHUTDOWN_READY, () =>
+  quit(cb: ICallback<void>): void {
+    this.ticker.once(events.DOWN, () => {
       this.stopMonitor(() =>
-        this.getRedisClientInstance((client) => {
-          this.expireHeartbeat(client, () => {
-            if (this.ticker) {
-              this.ticker.quit();
-              this.ticker = null;
-            }
-            client.end(true);
-            this.redisClientInstance = null;
-            this.powerManager.commit();
-            this.consumer.emit(events.HEARTBEAT_DOWN);
-          });
+        this.expireHeartbeat(this.redisClient, () => {
+          cb();
         }),
-      ),
-    );
+      );
+    });
+    this.ticker.quit();
   }
 
   static getHeartbeatsByStatus(

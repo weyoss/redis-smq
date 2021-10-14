@@ -4,7 +4,6 @@ import {
   IConfig,
   TGetScheduledMessagesReply,
   TRedisClientMulti,
-  TUnaryFunction,
 } from '../types';
 import { Message } from './message';
 import { parseExpression } from 'cron-parser';
@@ -16,16 +15,17 @@ import { Broker } from './broker';
 import { Metadata } from './metadata';
 
 export class Scheduler extends EventEmitter {
+  protected static instance: Scheduler | null = null;
   protected queueName: string;
-  protected redisClientInstance: RedisClient;
+  protected redisClient: RedisClient;
   protected keys: ReturnType<typeof redisKeys['getKeys']>;
   protected metadata: Metadata;
 
-  constructor(queueName: string, client: RedisClient) {
+  constructor(queueName: string, redisClient: RedisClient) {
     super();
     this.queueName = queueName;
     this.keys = redisKeys.getKeys(queueName);
-    this.redisClientInstance = client;
+    this.redisClient = redisClient;
     this.metadata = new Metadata(this);
   }
 
@@ -44,7 +44,7 @@ export class Scheduler extends EventEmitter {
     };
     if (typeof mixed === 'object') schedule(mixed);
     else if (typeof mixed === 'function') {
-      const m = this.redisClientInstance.multi();
+      const m = this.redisClient.multi();
       schedule(m).exec((err) => {
         if (err) mixed(err);
         else mixed(null, true);
@@ -177,11 +177,11 @@ export class Scheduler extends EventEmitter {
   deleteScheduledMessage(messageId: string, cb: ICallback<boolean>): void {
     const { keyQueueScheduledMessages, keyIndexScheduledMessages } = this.keys;
     const getMessage = (cb: ICallback<string>) => {
-      this.redisClientInstance.hget(keyIndexScheduledMessages, messageId, cb);
+      this.redisClient.hget(keyIndexScheduledMessages, messageId, cb);
     };
     const deleteMessage = (msg: string | null, cb: ICallback<boolean>) => {
       if (msg) {
-        const multi = this.redisClientInstance.multi();
+        const multi = this.redisClient.multi();
         multi.zrem(keyQueueScheduledMessages, msg);
         multi.hdel(keyIndexScheduledMessages, messageId);
         this.emit(
@@ -190,7 +190,7 @@ export class Scheduler extends EventEmitter {
           this.queueName,
           multi,
         );
-        this.redisClientInstance.execMulti(
+        this.redisClient.execMulti(
           multi,
           (err?: Error | null, reply?: number[] | null) => {
             if (err) cb(err);
@@ -211,7 +211,7 @@ export class Scheduler extends EventEmitter {
           messages,
           (msg, done) => {
             const message = Message.createFromMessage(msg);
-            const multi = this.redisClientInstance.multi();
+            const multi = this.redisClient.multi();
             this.enqueueScheduledMessage(broker, message, multi);
             this.scheduleAtNextTimestamp(message, multi);
             multi.exec(done);
@@ -221,19 +221,9 @@ export class Scheduler extends EventEmitter {
       } else cb();
     };
     const fetch = (cb: ICallback<string[]>) => {
-      this.redisClientInstance.zrangebyscore(
-        keyQueueScheduledMessages,
-        0,
-        now,
-        cb,
-      );
+      this.redisClient.zrangebyscore(keyQueueScheduledMessages, 0, now, cb);
     };
     async.waterfall([fetch, process], cb);
-  }
-
-  quit(): void {
-    this.redisClientInstance.end(true);
-    this.emit(events.SCHEDULER_QUIT);
   }
 
   getScheduledMessages(
@@ -242,12 +232,35 @@ export class Scheduler extends EventEmitter {
     cb: ICallback<TGetScheduledMessagesReply>,
   ): void {
     Scheduler.getScheduledMessages(
-      this.redisClientInstance,
+      this.redisClient,
       this.queueName,
       skip,
       take,
       cb,
     );
+  }
+
+  quit(cb: ICallback<void>): void {
+    if (this === Scheduler.instance) {
+      this.redisClient.halt(() => {
+        Scheduler.instance = null;
+        cb();
+      });
+    } else cb();
+  }
+
+  static getSingletonInstance(
+    queueName: string,
+    config: IConfig,
+    cb: ICallback<Scheduler>,
+  ): void {
+    if (!Scheduler.instance) {
+      RedisClient.getNewInstance(config, (redisClient) => {
+        const instance = new Scheduler(queueName, redisClient);
+        Scheduler.instance = instance;
+        cb(null, instance);
+      });
+    } else cb(null, Scheduler.instance);
   }
 
   static getScheduledMessages(
@@ -268,16 +281,6 @@ export class Scheduler extends EventEmitter {
       getTotalFn,
       transformFn,
       cb,
-    );
-  }
-
-  static getInstance(
-    queueName: string,
-    config: IConfig,
-    cb: TUnaryFunction<Scheduler>,
-  ): void {
-    RedisClient.getInstance(config, (client) =>
-      cb(new Scheduler(queueName, client)),
     );
   }
 }

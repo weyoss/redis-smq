@@ -54,4 +54,11 @@ export class PowerManager {
     this.state = this.pendingState;
     this.pendingState = null;
   }
+
+  rollback(): void {
+    if (this.pendingState === null) {
+      throw new Error(`Expected a pending state`);
+    }
+    this.pendingState = null;
+  }
 }

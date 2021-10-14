@@ -32,29 +32,25 @@ producer.produceMessage(message, (err) => {
 })
 ```
 
-Alternatively, you can also manually get the scheduler instance from the producer using `producer.getScheduler()`
-and call the `schedule()` method as shown in the example bellow:
+Alternatively, you can also manually get the `Scheduler` from MQ and use it like shown in the example bellow: 
 
 ```javascript
-'use strict';
-const { Message, Producer } = require('redis-smq');
+const { Scheduler } = require('redis-smq');
+const config = require('./config');
 
-const producer = new Producer('test_queue');
-
-producer.getScheduler((err, scheduler) => {
-    if (err) console.log(err);
-    else {
-        const message = new Message();
-        message
-            .setBody({hello: 'world'})
-            .setScheduledCron(`0 0 * * * *`);
-        scheduler.schedule(message, (err, reply) => {
-            if (err) console.log(err);
-            else if (rely) console.log('Message has been succefully scheduled');
-            else console.log('Message has not been scheduled');
-        });
-    }
+Scheduler.getSingletonInstance('test_queue', config, (err, scheduler) => {
+  if (err) console.log(err);
+  else {
+    const message = new Message();
+    message.setBody({hello: 'world'}).setScheduledCron(`0 0 * * * *`);
+    scheduler.schedule(message, (err, reply) => {
+      if (err) console.log(err);
+      else if (rely) console.log('Message has been successfully scheduled');
+      else console.log('Message has not been scheduled');
+    });
+  }
 })
+
 ```
 
 ## Public properties

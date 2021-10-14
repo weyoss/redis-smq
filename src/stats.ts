@@ -1,88 +1,40 @@
-import { IConfig, IStatsProvider, TUnaryFunction } from '../types';
-import { PowerManager } from './power-manager';
+import { ICallback, IStatsProvider } from '../types';
 import { Instance } from './instance';
 import { events } from './events';
 import { Ticker } from './ticker';
 import { RedisClient } from './redis-client';
+import { EventEmitter } from 'events';
 
-export class Stats {
+export class Stats extends EventEmitter {
   protected instance: Instance;
-  protected config: IConfig;
-  protected powerManager: PowerManager;
   protected statsProvider: IStatsProvider;
-  protected redisClientInstance: RedisClient | null = null;
-  protected ticker: Ticker | null = null;
+  protected redisClient: RedisClient;
+  protected ticker: Ticker;
 
-  constructor(instance: Instance) {
+  constructor(instance: Instance, redisClient: RedisClient) {
+    super();
     this.instance = instance;
-    this.config = instance.getConfig();
+    this.redisClient = redisClient;
     this.statsProvider = instance.getStatsProvider();
-    this.powerManager = new PowerManager();
-  }
-
-  protected getRedisClientInstance(cb: TUnaryFunction<RedisClient>): void {
-    if (!this.redisClientInstance)
-      this.instance.emit(
-        events.ERROR,
-        new Error(`Expected an instance of RedisInstance`),
-      );
-    else cb(this.redisClientInstance);
-  }
-
-  protected getTicker(cb: TUnaryFunction<Ticker>): void {
-    if (!this.ticker)
-      this.instance.emit(
-        events.ERROR,
-        new Error(`Expected an instance of Ticker`),
-      );
-    else cb(this.ticker);
-  }
-
-  protected onTick(): void {
-    if (this.powerManager.isRunning()) {
-      const stats = this.statsProvider.tick();
-      this.getRedisClientInstance((client) => {
-        this.statsProvider.publish(client, stats);
-      });
-    }
-    if (this.powerManager.isGoingDown()) {
-      this.instance.emit(events.STATS_SHUTDOWN_READY);
-    }
-  }
-
-  protected setupTicker(): void {
     this.ticker = new Ticker(() => {
       this.onTick();
     }, 1000);
-    this.ticker.on(events.ERROR, (err: Error) =>
-      this.instance.emit(events.ERROR, err),
-    );
     this.ticker.runTimer();
   }
 
-  start(): void {
-    this.powerManager.goingUp();
-    RedisClient.getInstance(this.config, (client) => {
-      this.redisClientInstance = client;
-      this.setupTicker();
-      this.powerManager.commit();
-      this.instance.emit(events.STATS_UP);
-    });
+  protected onTick(): void {
+    const stats = this.statsProvider.getStats();
+    this.publish(stats);
   }
 
-  stop(): void {
-    this.powerManager.goingDown();
-    this.instance.once(events.STATS_SHUTDOWN_READY, () => {
-      if (this.ticker) {
-        this.ticker.quit();
-        this.ticker = null;
-      }
-      if (this.redisClientInstance) {
-        this.redisClientInstance.end(true);
-        this.redisClientInstance = null;
-      }
-      this.powerManager.commit();
-      this.instance.emit(events.STATS_DOWN);
-    });
+  protected publish(stats: Record<string, any>): void {
+    const formatted = this.statsProvider.format(stats);
+    const { keyIndexRates } = this.instance.getInstanceRedisKeys();
+    this.redisClient.hmset(keyIndexRates, formatted, () => void 0);
+  }
+
+  quit(cb: ICallback<void>): void {
+    this.ticker.once(events.DOWN, cb);
+    this.ticker.quit();
   }
 }

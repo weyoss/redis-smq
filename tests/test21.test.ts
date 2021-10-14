@@ -7,7 +7,7 @@ import {
 } from './common';
 import { TAggregatedStats } from '../types';
 
-describe('Stats aggregator: check that stats are aggregated and published', () => {
+describe('StatsAggregatorThread: check that stats are aggregated and published', () => {
   test('Case 1', async () => {
     await startStatsAggregator();
 
