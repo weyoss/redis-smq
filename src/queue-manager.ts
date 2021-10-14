@@ -1,9 +1,15 @@
 import { RedisClient } from './redis-client';
-import { ICallback, IConfig, TRedisClientMulti } from '../types';
+import {
+  ICallback,
+  IConfig,
+  TQueueMetadata,
+  TRedisClientMulti,
+} from '../types';
 import { Consumer } from './consumer';
 import { Broker } from './broker';
 import { redisKeys } from './redis-keys';
 import { Instance } from './instance';
+import { Metadata } from './metadata';
 
 export class QueueManager {
   protected static instance: QueueManager | null = null;
@@ -73,6 +79,10 @@ export class QueueManager {
   getDLQQueues(cb: ICallback<string[]>): void {
     const { keyIndexDLQueues } = redisKeys.getGlobalKeys();
     this.redisClient.smembers(keyIndexDLQueues, cb);
+  }
+
+  getQueueMetadata(queueName: string, cb: ICallback<TQueueMetadata>): void {
+    Metadata.getQueueMetadata(this.redisClient, queueName, cb);
   }
 
   quit(cb: ICallback<void>): void {
