@@ -4,30 +4,28 @@ import {
   TAggregatedStatsQueue,
   TAggregatedStatsQueueConsumer,
   ICallback,
+  TAggregatedStatsQueueProducer,
 } from '../../../types';
 import * as async from 'async';
 import { redisKeys } from '../../redis-keys';
 import { LockManager } from '../../lock-manager';
 import { RedisClient } from '../../redis-client';
 import { Heartbeat } from '../../heartbeat';
-import { Broker } from '../../broker';
 import { Logger } from '../../logger';
-import { PowerManager } from '../../power-manager';
-import { EventEmitter } from 'events';
+import { QueueManager } from '../../queue-manager';
+import { Ticker } from '../../ticker';
+import { events } from '../../events';
 
-export function StatsAggregatorThread(config: IConfig) {
-  if (config.namespace) {
-    redisKeys.setNamespace(config.namespace);
-  }
-  const { keyIndexRates, keyLockStatsAggregator } = redisKeys.getGlobalKeys();
-  const noop = () => void 0;
-  const logger = Logger(`monitor-server:stats-aggregator-thread`, config.log);
-  const powerManager = new PowerManager();
-  const eventEmitter = new EventEmitter();
-
-  let lockManagerInstance: LockManager | null = null;
-  let redisClientInstance: RedisClient | null = null;
-  let data: TAggregatedStats = {
+export class StatsAggregatorThread {
+  protected keyIndexRates;
+  protected keyLockStatsAggregator;
+  protected logger;
+  protected lockManagerInstance: LockManager;
+  protected redisClientInstance: RedisClient;
+  protected queueManager: QueueManager;
+  protected ticker: Ticker;
+  protected noop = (): void => void 0;
+  protected data: TAggregatedStats = {
     rates: {
       input: 0,
       processing: 0,
@@ -37,15 +35,27 @@ export function StatsAggregatorThread(config: IConfig) {
     queues: {},
   };
 
-  const addConsumerIfNotExists = (
+  constructor(redisClient: RedisClient, config: IConfig) {
+    const { keyIndexRates, keyLockStatsAggregator } = redisKeys.getGlobalKeys();
+    this.keyIndexRates = keyIndexRates;
+    this.keyLockStatsAggregator = keyLockStatsAggregator;
+    this.logger = Logger(`monitor-server:stats-aggregator-thread`, config.log);
+    this.lockManagerInstance = new LockManager(redisClient);
+    this.redisClientInstance = redisClient;
+    this.queueManager = new QueueManager(redisClient);
+    this.ticker = new Ticker(this.run, 1000);
+    this.ticker.nextTick();
+  }
+
+  protected addConsumerIfNotExists = (
     ns: string,
     queueName: string,
     consumerId: string,
-  ) => {
-    let { consumers } = data.queues[ns][queueName];
+  ): TAggregatedStatsQueueConsumer => {
+    let { consumers } = this.data.queues[ns][queueName];
     if (!consumers) {
       consumers = {};
-      data.queues[ns][queueName].consumers = consumers;
+      this.data.queues[ns][queueName].consumers = consumers;
     }
     if (!consumers[consumerId]) {
       consumers[consumerId] = {
@@ -57,15 +67,15 @@ export function StatsAggregatorThread(config: IConfig) {
     return consumers[consumerId];
   };
 
-  const addProducerIfNotExists = (
+  protected addProducerIfNotExists = (
     ns: string,
     queueName: string,
     producerId: string,
-  ) => {
-    let { producers } = data.queues[ns][queueName];
+  ): Record<string, TAggregatedStatsQueueProducer> => {
+    let { producers } = this.data.queues[ns][queueName];
     if (!producers) {
       producers = {};
-      data.queues[ns][queueName].producers = producers;
+      this.data.queues[ns][queueName].producers = producers;
     }
     if (!producers[producerId]) {
       producers[producerId] = {
@@ -80,12 +90,15 @@ export function StatsAggregatorThread(config: IConfig) {
     return producers;
   };
 
-  const addQueueIfNotExists = (ns: string, queueName: string) => {
-    if (!data.queues[ns]) {
-      data.queues[ns] = {};
+  protected addQueueIfNotExists = (
+    ns: string,
+    queueName: string,
+  ): TAggregatedStatsQueue => {
+    if (!this.data.queues[ns]) {
+      this.data.queues[ns] = {};
     }
-    if (!data.queues[ns][queueName]) {
-      data.queues[ns][queueName] = {
+    if (!this.data.queues[ns][queueName]) {
+      this.data.queues[ns][queueName] = {
         queueName,
         namespace: ns,
         erroredMessages: 0,
@@ -94,39 +107,25 @@ export function StatsAggregatorThread(config: IConfig) {
         producers: {},
       };
     }
-    return data.queues[ns][queueName];
+    return this.data.queues[ns][queueName];
   };
 
-  const getRedisClient = () => {
-    if (!redisClientInstance) {
-      throw new Error(`Expected an instance of RedisClient`);
-    }
-    return redisClientInstance;
-  };
-
-  const getLockManager = () => {
-    if (!lockManagerInstance) {
-      throw new Error(`Expected an instance of LockManager`);
-    }
-    return lockManagerInstance;
-  };
-
-  const handleProducerRate = (
+  protected handleProducerRate = (
     {
       ns,
       queueName,
       producerId,
     }: { ns: string; queueName: string; producerId: string },
     rate: number,
-  ) => {
-    addQueueIfNotExists(ns, queueName);
+  ): void => {
+    this.addQueueIfNotExists(ns, queueName);
     rate = Number(rate);
-    const producers = addProducerIfNotExists(ns, queueName, producerId);
-    data.rates.input += rate;
+    const producers = this.addProducerIfNotExists(ns, queueName, producerId);
+    this.data.rates.input += rate;
     producers[producerId].rates.input = rate;
   };
 
-  const handleConsumerRate = (
+  protected handleConsumerRate = (
     {
       ns,
       queueName,
@@ -139,10 +138,10 @@ export function StatsAggregatorThread(config: IConfig) {
       consumerId: string;
     },
     rate: number,
-  ) => {
-    addQueueIfNotExists(ns, queueName);
+  ): void => {
+    this.addQueueIfNotExists(ns, queueName);
     rate = Number(rate);
-    const consumer = addConsumerIfNotExists(ns, queueName, consumerId);
+    const consumer = this.addConsumerIfNotExists(ns, queueName, consumerId);
     consumer.rates = {
       acknowledged: consumer.rates?.acknowledged ?? 0,
       unacknowledged: consumer.rates?.unacknowledged ?? 0,
@@ -151,29 +150,29 @@ export function StatsAggregatorThread(config: IConfig) {
     const consumerTypes = redisKeys.getTypes();
     switch (type) {
       case consumerTypes.KEY_RATE_CONSUMER_PROCESSING:
-        data.rates.processing += rate;
+        this.data.rates.processing += rate;
         consumer.rates.processing = rate;
         break;
 
       case consumerTypes.KEY_RATE_CONSUMER_ACKNOWLEDGED:
-        data.rates.acknowledged += rate;
+        this.data.rates.acknowledged += rate;
         consumer.rates.acknowledged = rate;
         break;
 
       case consumerTypes.KEY_RATE_CONSUMER_UNACKNOWLEDGED:
-        data.rates.unacknowledged += rate;
+        this.data.rates.unacknowledged += rate;
         consumer.rates.unacknowledged = rate;
         break;
     }
   };
 
-  const hasExpired = (timestamp: number) => {
+  protected hasExpired = (timestamp: number): boolean => {
     const now = Date.now();
     return now - timestamp > 1000;
   };
 
-  function getRates(cb: ICallback<void>) {
-    getRedisClient().hgetall(keyIndexRates, (err, result) => {
+  protected getRates = (cb: ICallback<void>): void => {
+    this.redisClientInstance.hgetall(this.keyIndexRates, (err, result) => {
       if (err) throw err;
       else {
         if (result) {
@@ -183,20 +182,24 @@ export function StatsAggregatorThread(config: IConfig) {
             (item, key, done: () => void) => {
               const keyStr = String(key);
               const [rate, timestamp] = item.split('|');
-              if (!hasExpired(+timestamp)) {
+              if (!this.hasExpired(+timestamp)) {
                 const extractedData = redisKeys.extractData(keyStr);
                 if (extractedData) {
                   if (extractedData.producerId)
-                    handleProducerRate(extractedData, +rate);
+                    this.handleProducerRate(extractedData, +rate);
                   if (extractedData.consumerId)
-                    handleConsumerRate(extractedData, +rate);
+                    this.handleConsumerRate(extractedData, +rate);
                 }
               } else expiredKeys.push(keyStr);
               done();
             },
             () => {
               if (expiredKeys.length) {
-                getRedisClient().hdel(keyIndexRates, expiredKeys, noop);
+                this.redisClientInstance.hdel(
+                  this.keyIndexRates,
+                  expiredKeys,
+                  this.noop,
+                );
               }
               cb();
             },
@@ -204,11 +207,11 @@ export function StatsAggregatorThread(config: IConfig) {
         } else cb();
       }
     });
-  }
+  };
 
-  function getQueueSize(queues: string[], cb: ICallback<void>) {
+  protected getQueueSize = (queues: string[], cb: ICallback<void>): void => {
     if (queues && queues.length) {
-      const multi = getRedisClient().multi();
+      const multi = this.redisClientInstance.multi();
       const handleResult = (res: number[]) => {
         const instanceTypes = redisKeys.getTypes();
         async.eachOf(
@@ -217,7 +220,7 @@ export function StatsAggregatorThread(config: IConfig) {
             const extractedData = redisKeys.extractData(queues[+index]);
             if (extractedData) {
               const { ns, queueName, type } = extractedData;
-              const queue = addQueueIfNotExists(ns, queueName);
+              const queue = this.addQueueIfNotExists(ns, queueName);
               if (type === instanceTypes.KEY_QUEUE_DL) {
                 queue.erroredMessages = size;
               } else {
@@ -236,46 +239,51 @@ export function StatsAggregatorThread(config: IConfig) {
           done();
         },
         () => {
-          getRedisClient().execMulti<number>(multi, (err, res) => {
+          this.redisClientInstance.execMulti<number>(multi, (err, res) => {
             if (err) cb(err);
             else handleResult(res ?? []);
           });
         },
       );
     } else cb();
-  }
+  };
 
-  function getQueues(cb: ICallback<string[]>) {
-    Broker.getMessageQueues(getRedisClient(), cb);
-  }
+  protected getQueues = (cb: ICallback<string[]>): void => {
+    this.queueManager.getMessageQueues(cb);
+  };
 
-  function getDLQQueues(cb: ICallback<string[]>) {
-    Broker.getDLQQueues(getRedisClient(), cb);
-  }
+  protected getDLQQueues = (cb: ICallback<string[]>): void => {
+    this.queueManager.getDLQQueues(cb);
+  };
 
-  function getConsumersHeartbeats(cb: ICallback<void>) {
-    Heartbeat.getHeartbeats(getRedisClient(), (err, reply) => {
+  protected getConsumersHeartbeats = (cb: ICallback<void>): void => {
+    Heartbeat.getHeartbeats(this.redisClientInstance, (err, reply) => {
       if (err) cb(err);
       else {
         for (const consumerId in reply) {
           const { ns, queueName, resources } = reply[consumerId];
-          addQueueIfNotExists(ns, queueName);
-          const consumer = addConsumerIfNotExists(ns, queueName, consumerId);
+          this.addQueueIfNotExists(ns, queueName);
+          const consumer = this.addConsumerIfNotExists(
+            ns,
+            queueName,
+            consumerId,
+          );
           consumer.resources = resources;
         }
         cb();
       }
     });
-  }
+  };
 
-  function sanitizeData(cb: ICallback<void>) {
+  protected sanitizeData = (cb: ICallback<void>): void => {
     const handleConsumer = (
       consumer: TAggregatedStatsQueueConsumer,
       done: () => void,
     ) => {
       if (!consumer.rates || !consumer.resources) {
         const { id, namespace, queueName } = consumer;
-        const consumers = data.queues[namespace][queueName].consumers ?? {};
+        const consumers =
+          this.data.queues[namespace][queueName].consumers ?? {};
         delete consumers[id];
       }
       done();
@@ -295,26 +303,17 @@ export function StatsAggregatorThread(config: IConfig) {
     ) => {
       async.each(queues, handleQueue, done);
     };
-    async.each(data.queues, handleQueues, cb);
-  }
+    async.each(this.data.queues, handleQueues, cb);
+  };
 
-  function publish(cb: ICallback<number>) {
-    logger.debug(`Publishing stats...`);
-    const statsString = JSON.stringify(data);
-    getRedisClient().publish('stats', statsString, cb);
-  }
+  protected publish = (cb: ICallback<number>): void => {
+    this.logger.debug(`Publishing stats...`);
+    const statsString = JSON.stringify(this.data);
+    this.redisClientInstance.publish('stats', statsString, cb);
+  };
 
-  function nextTick() {
-    if (powerManager.isRunning()) {
-      setTimeout(() => {
-        run();
-      }, 1000);
-    }
-    if (powerManager.isGoingDown()) eventEmitter.emit('shutdown_ready');
-  }
-
-  function reset(cb: ICallback<void>) {
-    data = {
+  protected reset = (cb: ICallback<void>): void => {
+    this.data = {
       rates: {
         processing: 0,
         acknowledged: 0,
@@ -324,61 +323,50 @@ export function StatsAggregatorThread(config: IConfig) {
       queues: {},
     };
     cb();
-  }
-
-  function run() {
-    logger.debug(`Acquiring lock...`);
-    getLockManager().acquireLock(keyLockStatsAggregator, 10000, true, (err) => {
-      if (err) throw err;
-      logger.debug(`Lock acquired. Processing stats...`);
-      async.waterfall(
-        [
-          reset,
-          getRates,
-          getConsumersHeartbeats,
-          getQueues,
-          getQueueSize,
-          getDLQQueues,
-          getQueueSize,
-          sanitizeData,
-          publish,
-        ],
-        (err?: Error | null) => {
-          if (err) throw err;
-          nextTick();
-        },
-      );
-    });
-  }
-
-  return {
-    start(cb?: ICallback<void>) {
-      powerManager.goingUp();
-      RedisClient.getInstance(config, (client) => {
-        redisClientInstance = client;
-        lockManagerInstance = new LockManager(client);
-        powerManager.commit();
-        run();
-        cb && cb();
-      });
-    },
-    shutdown(cb?: ICallback<void>) {
-      powerManager.goingDown();
-      eventEmitter.once('shutdown_ready', () => {
-        const lockManager = getLockManager();
-        lockManager.quit(() => {
-          lockManagerInstance = null;
-          redisClientInstance?.end(true);
-          redisClientInstance = null;
-          powerManager.commit();
-          cb && cb();
-        });
-      });
-    },
   };
+
+  protected run = (): void => {
+    this.logger.debug(`Acquiring lock...`);
+    this.lockManagerInstance.acquireLock(
+      this.keyLockStatsAggregator,
+      10000,
+      true,
+      (err) => {
+        if (err) throw err;
+        this.logger.debug(`Lock acquired. Processing stats...`);
+        async.waterfall(
+          [
+            this.reset,
+            this.getRates,
+            this.getConsumersHeartbeats,
+            this.getQueues,
+            this.getQueueSize,
+            this.getDLQQueues,
+            this.getQueueSize,
+            this.sanitizeData,
+            this.publish,
+          ],
+          (err?: Error | null) => {
+            if (err) throw err;
+            this.ticker.nextTick();
+          },
+        );
+      },
+    );
+  };
+
+  quit(cb: ICallback<void>): void {
+    this.ticker.once(events.DOWN, cb);
+    this.ticker.quit();
+  }
 }
 
 process.on('message', (c: string) => {
   const config: IConfig = JSON.parse(c);
-  StatsAggregatorThread(config).start();
+  if (config.namespace) {
+    redisKeys.setNamespace(config.namespace);
+  }
+  RedisClient.getNewInstance(config, (redisClient) => {
+    new StatsAggregatorThread(redisClient, config);
+  });
 });

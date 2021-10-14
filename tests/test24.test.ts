@@ -1,6 +1,6 @@
 import {
   getConsumer,
-  getMessageProvider,
+  getMessageManager,
   getProducer,
   untilConsumerIdle,
 } from './common';
@@ -9,7 +9,7 @@ import { promisifyAll } from 'bluebird';
 import { config } from './config';
 import { EMessageMetadataType } from '../types';
 
-describe('Message Provider', () => {
+describe('MessageManager', () => {
   test('Case 1', async () => {
     const msg = new Message();
     msg.setBody({ hello: 'world' });
@@ -17,7 +17,7 @@ describe('Message Provider', () => {
     const producer = getProducer();
     await producer.produceMessageAsync(msg);
 
-    const messageProvider = promisifyAll(await getMessageProvider());
+    const messageProvider = promisifyAll(await getMessageManager());
     const res = await messageProvider.getPendingMessagesAsync(
       producer.getQueueName(),
       0,
@@ -43,7 +43,7 @@ describe('Message Provider', () => {
     consumer.run();
     await untilConsumerIdle(consumer);
 
-    const messageProvider = promisifyAll(await getMessageProvider());
+    const messageProvider = promisifyAll(await getMessageManager());
     const res = await messageProvider.getAcknowledgedMessagesAsync(
       producer.getQueueName(),
       0,
@@ -69,7 +69,7 @@ describe('Message Provider', () => {
     consumer.run();
     await untilConsumerIdle(consumer);
 
-    const messageProvider = promisifyAll(await getMessageProvider());
+    const messageProvider = promisifyAll(await getMessageManager());
     const res = await messageProvider.getDeadLetterMessagesAsync(
       producer.getQueueName(),
       0,
@@ -92,7 +92,7 @@ describe('Message Provider', () => {
     const producer = promisifyAll(getProducer(queueName, cfg));
     await producer.produceMessageAsync(msg);
 
-    const messageProvider = promisifyAll(await getMessageProvider());
+    const messageProvider = promisifyAll(await getMessageManager());
     const res = await messageProvider.getPendingMessagesWithPriorityAsync(
       producer.getQueueName(),
       0,
@@ -110,7 +110,7 @@ describe('Message Provider', () => {
     const producer = getProducer();
     await producer.produceMessageAsync(msg);
 
-    const messageProvider = promisifyAll(await getMessageProvider());
+    const messageProvider = promisifyAll(await getMessageManager());
     const res = await messageProvider.getScheduledMessagesAsync(
       producer.getQueueName(),
       0,
@@ -136,7 +136,7 @@ describe('Message Provider', () => {
     consumer.run();
     await untilConsumerIdle(consumer);
 
-    const messageProvider = promisifyAll(await getMessageProvider());
+    const messageProvider = promisifyAll(await getMessageManager());
     const metadata = await messageProvider.getMessageMetadataAsync(msg.getId());
 
     expect(metadata.length).toBe(2);

@@ -1,11 +1,9 @@
 import { Consumer } from '../consumer';
 import { IConsumerStats, IStatsProvider } from '../../types';
 import { events } from '../events';
-import { RedisClient } from '../redis-client';
 
 export class ConsumerStatsProvider implements IStatsProvider {
   protected consumer: Consumer;
-  protected keyIndexRate: string;
   protected keyConsumerRateProcessing: string;
   protected keyConsumerRateAcknowledged: string;
   protected keyConsumerRateUnacknowledged: string;
@@ -24,18 +22,16 @@ export class ConsumerStatsProvider implements IStatsProvider {
   constructor(consumer: Consumer) {
     this.consumer = consumer;
     const {
-      keyIndexRates,
       keyRateConsumerProcessing,
       keyRateConsumerAcknowledged,
       keyRateConsumerUnacknowledged,
     } = consumer.getInstanceRedisKeys();
-    this.keyIndexRate = keyIndexRates;
     this.keyConsumerRateProcessing = keyRateConsumerProcessing;
     this.keyConsumerRateAcknowledged = keyRateConsumerAcknowledged;
     this.keyConsumerRateUnacknowledged = keyRateConsumerUnacknowledged;
   }
 
-  tick() {
+  getStats() {
     this.processingRate = this.processingSlots.reduce(
       (acc: number, cur: number) => acc + cur,
       0,
@@ -62,6 +58,7 @@ export class ConsumerStatsProvider implements IStatsProvider {
     }
     this.idleStack.shift();
     this.isIdle = this.idleStack.find((i) => i === 0) === undefined;
+    if (this.isIdle) this.consumer.emit(events.IDLE);
     return {
       processingRate: this.processingRate,
       acknowledgedRate: this.acknowledgedRate,
@@ -70,11 +67,10 @@ export class ConsumerStatsProvider implements IStatsProvider {
     };
   }
 
-  publish(redisClient: RedisClient, stats: IConsumerStats) {
+  format(stats: IConsumerStats): string[] {
     const now = Date.now();
-    const { processingRate, acknowledgedRate, unacknowledgedRate, isIdle } =
-      stats;
-    const payload: string[] = [
+    const { processingRate, acknowledgedRate, unacknowledgedRate } = stats;
+    return [
       this.keyConsumerRateProcessing,
       `${processingRate}|${now}`,
       this.keyConsumerRateAcknowledged,
@@ -82,21 +78,19 @@ export class ConsumerStatsProvider implements IStatsProvider {
       this.keyConsumerRateUnacknowledged,
       `${unacknowledgedRate}|${now}`,
     ];
-    redisClient.hmset(this.keyIndexRate, payload, () => void 0);
-    if (isIdle) this.consumer.emit(events.IDLE);
   }
 
-  incrementProcessingSlot() {
+  incrementProcessingSlot(): void {
     const slot = new Date().getMilliseconds();
     this.processingSlots[slot] += 1;
   }
 
-  incrementAcknowledgedSlot() {
+  incrementAcknowledgedSlot(): void {
     const slot = new Date().getMilliseconds();
     this.acknowledgedSlots[slot] += 1;
   }
 
-  incrementUnacknowledgedSlot() {
+  incrementUnacknowledgedSlot(): void {
     const slot = new Date().getMilliseconds();
     this.unacknowledgedSlots[slot] += 1;
   }

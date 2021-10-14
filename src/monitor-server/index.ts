@@ -33,7 +33,7 @@ function bootstrap(config: IConfig, cb: (result: TApiServer) => void) {
   if (!config.monitor || !config.monitor.enabled) {
     throw new Error('RedisSMQ monitor is not enabled. Exiting...');
   }
-  RedisClient.getInstance(config, (client) => {
+  RedisClient.getNewInstance(config, (client) => {
     const logger = Logger('monitor-server', config.log);
     const { socketOpts = {} } = config.monitor || {};
     const app = new Koa<Koa.DefaultState, IContext>();
@@ -88,7 +88,7 @@ export function MonitorServer(config: IConfig = {}) {
         apiServer = result;
         const { app, socketIO, httpServer } = result;
         startThreads(config, resolve(__dirname, './threads'));
-        RedisClient.getInstance(config, (client) => {
+        RedisClient.getNewInstance(config, (client) => {
           subscribeClient = client;
           subscribeClient.subscribe('stats');
           subscribeClient.on('message', (channel, message) => {

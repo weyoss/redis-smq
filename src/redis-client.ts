@@ -61,7 +61,9 @@ function getPage<T>(
 }
 
 export class RedisClient extends EventEmitter {
+  protected static instance: RedisClient | null = null;
   protected client: TCompatibleRedisClient;
+  protected ready = false;
 
   protected constructor(config: IConfig = {}) {
     super();
@@ -73,10 +75,17 @@ export class RedisClient extends EventEmitter {
     const opts: Record<string, any> = options;
     this.client =
       client === RedisClientName.REDIS ? createClient(opts) : new IORedis(opts);
-    this.client.once('ready', () => this.emit('ready'));
+    this.client.once('ready', () => {
+      this.ready = true;
+      this.emit('ready');
+    });
     this.client.once('error', (err: Error) => {
       throw err;
     });
+  }
+
+  isReady(): boolean {
+    return this.ready;
   }
 
   zadd(
@@ -117,14 +126,6 @@ export class RedisClient extends EventEmitter {
           else cb(null, lengths);
         }
       });
-    }
-  }
-
-  end(flush: boolean): void {
-    if (this.client instanceof NodeRedis) {
-      this.client.end(flush);
-    } else {
-      this.client.disconnect(false);
     }
   }
 
@@ -220,7 +221,7 @@ export class RedisClient extends EventEmitter {
     this.client.flushall(cb);
   }
 
-  static getInstance(
+  static getNewInstance(
     config: IConfig = {},
     cb: (client: RedisClient) => void,
   ): void {
@@ -270,6 +271,22 @@ export class RedisClient extends EventEmitter {
     cb: ICallback<TPaginatedRedisQuery<T>>,
   ): void {
     getPage<T>(this, 'lrange', key, skip, take, getTotalFn, transformFn, cb);
+  }
+
+  halt(cb: ICallback<void>): void {
+    this.client.once('end', cb);
+    this.end(true);
+  }
+
+  end(flush: boolean): void {
+    if (this.client instanceof NodeRedis) {
+      this.client.end(flush);
+    } else {
+      this.client.disconnect(false);
+    }
+    if (this === RedisClient.instance) {
+      RedisClient.instance = null;
+    }
   }
 
   quit(): void {

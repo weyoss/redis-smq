@@ -28,9 +28,9 @@ export interface IProducerStats {
   inputRate: number;
 }
 
-export interface IStatsProvider<T = unknown> {
-  tick(): T;
-  publish(redisClient: RedisClient, stats: T): void;
+export interface IStatsProvider<T = Record<string, any>> {
+  getStats(): T;
+  format(stats: Record<string, any>): string[];
 }
 
 export enum RedisClientName {
@@ -205,6 +205,7 @@ export type TQueueMetadata = {
 export enum EMessageDeadLetterCause {
   TTL_EXPIRED = 'ttl_expired',
   RETRY_THRESHOLD_EXCEEDED = 'retry_threshold_exceeded',
+  PERIODIC_MESSAGE = 'periodic_message',
 }
 
 export enum EMessageUnacknowledgedCause {

@@ -1,6 +1,5 @@
 import { Producer } from '../producer';
 import { IProducerStats, IStatsProvider } from '../../types';
-import { RedisClient } from '../redis-client';
 
 export class ProducerStatsProvider implements IStatsProvider {
   protected inputSlots: number[] = new Array(1000).fill(0);
@@ -17,7 +16,7 @@ export class ProducerStatsProvider implements IStatsProvider {
     this.keyProducerRateInput = keyRateProducerInput;
   }
 
-  tick() {
+  getStats() {
     this.inputRate = this.inputSlots.reduce((acc, cur) => acc + cur, 0);
     this.inputSlots.fill(0);
     return {
@@ -25,18 +24,13 @@ export class ProducerStatsProvider implements IStatsProvider {
     };
   }
 
-  publish(redisClient: RedisClient, stats: IProducerStats) {
+  format(stats: IProducerStats): string[] {
     const now = Date.now();
     const { inputRate } = stats;
-    redisClient.hset(
-      this.keyIndexRate,
-      this.keyProducerRateInput,
-      `${inputRate}|${now}`,
-      () => void 0,
-    );
+    return [this.keyProducerRateInput, `${inputRate}|${now}`];
   }
 
-  incrementInputSlot() {
+  incrementInputSlot(): void {
     const slot = new Date().getMilliseconds();
     this.inputSlots[slot] += 1;
   }

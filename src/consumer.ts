@@ -15,17 +15,23 @@ import { SchedulerRunner } from './scheduler-runner';
 import { RedisClient } from './redis-client';
 
 export abstract class Consumer extends Instance {
-  protected schedulerRunnerInstance: SchedulerRunner;
-  protected garbageCollectorInstance: GarbageCollector;
-  protected heartbeatInstance: Heartbeat;
-  protected statsProvider: ConsumerStatsProvider | null = null;
   protected options: TConsumerOptions = {
     messageConsumeTimeout: 0,
     messageRetryThreshold: 3,
     messageRetryDelay: 60,
     messageTTL: 0,
   };
-  protected redisClient: RedisClient | null = null;
+
+  // exclusive redis clients
+  protected consumerRedisClient: RedisClient | null = null;
+  protected heartbeatRedisClient: RedisClient | null = null;
+  protected gcRedisClient: RedisClient | null = null;
+  protected schedulerRunnerRedisClient: RedisClient | null = null;
+
+  protected schedulerRunnerInstance: SchedulerRunner | null = null;
+  protected garbageCollectorInstance: GarbageCollector | null = null;
+  protected heartbeatInstance: Heartbeat | null = null;
+  protected statsProvider: ConsumerStatsProvider | null = null;
 
   constructor(
     queueName: string,
@@ -37,9 +43,6 @@ export abstract class Consumer extends Instance {
       ...this.options,
       ...options,
     };
-    this.heartbeatInstance = new Heartbeat(this);
-    this.garbageCollectorInstance = new GarbageCollector(this);
-    this.schedulerRunnerInstance = new SchedulerRunner(this);
   }
 
   getOptions(): TConsumerOptions {
@@ -53,71 +56,46 @@ export abstract class Consumer extends Instance {
     return this.statsProvider;
   }
 
-  protected hasGoneUp(): boolean {
-    return (
-      super.hasGoneUp() &&
-      this.startupFiredEvents.includes(events.GC_UP) &&
-      this.startupFiredEvents.includes(events.HEARTBEAT_UP) &&
-      this.startupFiredEvents.includes(events.SCHEDULER_RUNNER_UP)
-    );
-  }
-
-  protected isReadyToGoDown(): boolean {
-    return (
-      super.isReadyToGoDown() &&
-      this.shutdownFiredEvents.includes(events.HEARTBEAT_DOWN) &&
-      this.shutdownFiredEvents.includes(events.GC_DOWN) &&
-      this.shutdownFiredEvents.includes(events.SCHEDULER_RUNNER_DOWN)
-    );
-  }
-
-  protected getRedisClient(cb: TUnaryFunction<RedisClient>): void {
-    if (!this.redisClient)
+  protected getConsumerRedisClient(cb: TUnaryFunction<RedisClient>): void {
+    if (!this.consumerRedisClient)
       this.emit(events.ERROR, new Error('Expected an instance of RedisClient'));
-    else cb(this.redisClient);
+    else cb(this.consumerRedisClient);
+  }
+
+  protected getGarbageCollector(cb: TUnaryFunction<GarbageCollector>): void {
+    if (!this.garbageCollectorInstance)
+      this.emit(
+        events.ERROR,
+        new Error('Expected an instance of GarbageCollector'),
+      );
+    else cb(this.garbageCollectorInstance);
+  }
+
+  protected getHeartbeat(cb: TUnaryFunction<Heartbeat>): void {
+    if (!this.heartbeatInstance)
+      this.emit(events.ERROR, new Error('Expected an instance of Heartbeat'));
+    else cb(this.heartbeatInstance);
+  }
+
+  protected getSchedulerRunner(cb: TUnaryFunction<SchedulerRunner>): void {
+    if (!this.schedulerRunnerInstance)
+      this.emit(
+        events.ERROR,
+        new Error('Expected an instance of SchedulerRunner'),
+      );
+    else cb(this.schedulerRunnerInstance);
   }
 
   protected registerEventsHandlers(): void {
     super.registerEventsHandlers();
-    this.on(events.HEARTBEAT_UP, () =>
-      this.handleStartupEvent(events.HEARTBEAT_UP),
-    );
-    this.on(events.HEARTBEAT_DOWN, () => {
-      this.handleShutdownEvent(events.HEARTBEAT_DOWN);
-    });
-    this.on(events.GC_UP, () => this.handleStartupEvent(events.GC_UP));
-    this.on(events.GC_DOWN, () => {
-      this.handleShutdownEvent(events.GC_DOWN);
-    });
-    this.on(events.SCHEDULER_RUNNER_UP, () =>
-      this.handleStartupEvent(events.SCHEDULER_RUNNER_UP),
-    );
-    this.on(events.SCHEDULER_RUNNER_DOWN, () => {
-      this.handleShutdownEvent(events.SCHEDULER_RUNNER_DOWN);
-    });
-    this.on(events.GOING_UP, () => {
-      RedisClient.getInstance(this.config, (client) => {
-        this.redisClient = client;
-        this.heartbeatInstance.start();
-        this.garbageCollectorInstance.start();
-        this.schedulerRunnerInstance.start();
-      });
-    });
-    this.on(events.GOING_DOWN, () => {
-      if (this.redisClient) {
-        this.redisClient.end(true);
-        this.redisClient = null;
-      }
-      this.heartbeatInstance.stop();
-      this.garbageCollectorInstance.stop();
-      this.schedulerRunnerInstance.stop();
-    });
     this.on(events.UP, () => this.emit(events.MESSAGE_NEXT));
     this.on(events.MESSAGE_NEXT, () => {
       if (this.powerManager.isRunning()) {
-        this.getRedisClient((client) => {
+        this.getConsumerRedisClient((client) => {
           this.loggerInstance.info('Waiting for new messages...');
-          this.getBroker().dequeueMessage(client, this.getOptions());
+          this.getBroker((broker) => {
+            broker.dequeueMessage(client, this.getOptions());
+          });
         });
       }
     });
@@ -131,21 +109,26 @@ export abstract class Consumer extends Instance {
     this.on(events.MESSAGE_EXPIRED, (message: Message) => {
       this.loggerInstance.info(`Message [${message.getId()}] has expired`);
       const { keyQueueProcessing } = this.getInstanceRedisKeys();
-      this.getBroker().handleMessageWithExpiredTTL(
-        message,
-        keyQueueProcessing,
-        (err) => {
-          if (err) this.emit(events.ERROR, err);
-          else {
-            this.loggerInstance.info(
-              `Expired message [${message.getId()}] has been deleted`,
-            );
-            if (this.statsProvider)
-              this.statsProvider.incrementAcknowledgedSlot();
-            this.emit(events.MESSAGE_NEXT);
-          }
-        },
-      );
+      this.getConsumerRedisClient((client) => {
+        this.getBroker((broker) => {
+          broker.handleMessageWithExpiredTTL(
+            client,
+            message,
+            keyQueueProcessing,
+            (err) => {
+              if (err) this.emit(events.ERROR, err);
+              else {
+                this.loggerInstance.info(
+                  `Expired message [${message.getId()}] has been deleted`,
+                );
+                if (this.statsProvider)
+                  this.statsProvider.incrementAcknowledgedSlot();
+                this.emit(events.MESSAGE_NEXT);
+              }
+            },
+          );
+        });
+      });
     });
     this.on(events.MESSAGE_ACKNOWLEDGED, () => {
       if (this.statsProvider) this.statsProvider.incrementAcknowledgedSlot();
@@ -156,11 +139,16 @@ export abstract class Consumer extends Instance {
       this.emit(events.MESSAGE_NEXT);
     });
     this.on(events.MESSAGE_CONSUME_TIMEOUT, (message: Message) => {
-      this.broker.unacknowledgeMessage(
-        message,
-        EMessageUnacknowledgedCause.TIMEOUT,
-        this.getOptions(),
-      );
+      this.getConsumerRedisClient((client) => {
+        this.getBroker((broker) => {
+          broker.unacknowledgeMessage(
+            client,
+            message,
+            EMessageUnacknowledgedCause.TIMEOUT,
+            this.getOptions(),
+          );
+        });
+      });
     });
   }
 
@@ -181,21 +169,24 @@ export abstract class Consumer extends Instance {
         if (this.powerManager.isRunning() && !isTimeout) {
           if (timer) clearTimeout(timer);
           if (err)
-            this.broker.unacknowledgeMessage(
+            this.unacknowledgeMessage(
               msg,
               EMessageUnacknowledgedCause.UNACKNOWLEDGED,
-              this.getOptions(),
               err,
             );
           else
-            this.getBroker().acknowledgeMessage(msg, (err) => {
-              if (err) this.emit(events.ERROR, err);
-              else {
-                this.loggerInstance.info(
-                  `Message [${msg.getId()}] successfully processed`,
-                );
-                this.emit(events.MESSAGE_ACKNOWLEDGED, msg, this.queueName);
-              }
+            this.getConsumerRedisClient((client) => {
+              this.getBroker((broker) => {
+                broker.acknowledgeMessage(client, msg, (err) => {
+                  if (err) this.emit(events.ERROR, err);
+                  else {
+                    this.loggerInstance.info(
+                      `Message [${msg.getId()}] successfully processed`,
+                    );
+                    this.emit(events.MESSAGE_ACKNOWLEDGED, msg, this.queueName);
+                  }
+                });
+              });
             });
         }
       };
@@ -205,13 +196,115 @@ export abstract class Consumer extends Instance {
     } catch (error: unknown) {
       const err =
         error instanceof Error ? error : new Error(`Unexpected error`);
-      this.broker.unacknowledgeMessage(
+      this.unacknowledgeMessage(
         msg,
         EMessageUnacknowledgedCause.CAUGHT_ERROR,
-        this.getOptions(),
         err,
       );
     }
+  }
+
+  protected unacknowledgeMessage(
+    msg: Message,
+    cause: EMessageUnacknowledgedCause,
+    err?: Error,
+  ): void {
+    this.getConsumerRedisClient((client) => {
+      this.getBroker((broker) => {
+        broker.unacknowledgeMessage(
+          client,
+          msg,
+          EMessageUnacknowledgedCause.CAUGHT_ERROR,
+          this.getOptions(),
+          err,
+        );
+      });
+    });
+  }
+
+  goingUp(): TUnaryFunction<ICallback<void>>[] {
+    //return super.goingUp();
+    const setupConsumerRedisClient = (cb: ICallback<void>): void => {
+      RedisClient.getNewInstance(this.config, (client) => {
+        this.consumerRedisClient = client;
+        cb();
+      });
+    };
+    const startHeartbeat = (cb: ICallback<void>) => {
+      RedisClient.getNewInstance(this.config, (client) => {
+        this.heartbeatRedisClient = client;
+        this.heartbeatInstance = new Heartbeat(this, client);
+        cb();
+      });
+    };
+    const startGC = (cb: ICallback<void>) => {
+      RedisClient.getNewInstance(this.config, (client) => {
+        this.gcRedisClient = client;
+        this.garbageCollectorInstance = new GarbageCollector(this, client);
+        cb();
+      });
+    };
+    const startSchedulerRunner = (cb: ICallback<void>) => {
+      RedisClient.getNewInstance(this.config, (client) => {
+        this.schedulerRunnerRedisClient = client;
+        this.schedulerRunnerInstance = new SchedulerRunner(this, client);
+        cb();
+      });
+    };
+    return super
+      .goingUp()
+      .concat([
+        setupConsumerRedisClient,
+        startHeartbeat,
+        startGC,
+        startSchedulerRunner,
+      ]);
+  }
+
+  goingDown(): TUnaryFunction<ICallback<void>>[] {
+    //return super.goingDown();
+    const stopSchedulerRunner = (cb: ICallback<void>) => {
+      this.getSchedulerRunner((schedulerRunner) => {
+        schedulerRunner.quit(() => {
+          this.schedulerRunnerRedisClient?.halt(() => {
+            this.schedulerRunnerRedisClient = null;
+            cb();
+          });
+        });
+      });
+    };
+    const stopGC = (cb: ICallback<void>) => {
+      this.getGarbageCollector((gc) => {
+        gc.quit(() => {
+          this.gcRedisClient?.halt(() => {
+            this.gcRedisClient = null;
+            cb();
+          });
+        });
+      });
+    };
+    const stopHeartbeat = (cb: ICallback<void>) => {
+      this.getHeartbeat((heartbeat) => {
+        heartbeat.quit(() => {
+          this.heartbeatRedisClient?.halt(() => {
+            this.heartbeatRedisClient = null;
+            cb();
+          });
+        });
+      });
+    };
+    const stopConsumerRedisClient = (cb: ICallback<void>) => {
+      this.consumerRedisClient?.halt(() => {
+        this.consumerRedisClient = null;
+        cb();
+      });
+    };
+    return [
+      stopSchedulerRunner,
+      stopGC,
+      stopHeartbeat,
+      stopConsumerRedisClient,
+    ].concat(super.goingDown());
   }
 
   abstract consume(msg: Message, cb: ICallback<void>): void;

@@ -39,9 +39,13 @@ export class Producer extends Instance {
           if (scheduler.isSchedulable(message)) {
             scheduler.schedule(message, callback);
           } else {
-            this.getBroker().enqueueMessage(message, (err?: Error | null) => {
-              if (err) callback(err);
-              else callback(null, true);
+            this.getCommonRedisClient((client) => {
+              this.getBroker((broker) => {
+                broker.enqueueMessage(message, client, (err?: Error | null) => {
+                  if (err) callback(err);
+                  else callback(null, true);
+                });
+              });
             });
           }
         }

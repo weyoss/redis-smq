@@ -45,9 +45,11 @@ For more details about RedisSMQ design see [https://medium.com/@weyoss/building-
    2. Advanced Topics
       1. [Message Scheduler](docs/api/scheduler.md)
       2. [Priority Queues](docs/priority-queues.md)
-      3. [HTTP API](docs/http-api.md)
-      4. [Web UI](docs/web-ui.md)
-      5. [Logs](docs/logs.md)
+      3. [Message Manager](docs/api/message-manager.md)
+      4. [Queue Manager](docs/api/queue-manager.md)
+      5. [HTTP API](docs/http-api.md)
+      6. [Web UI](docs/web-ui.md)
+      7. [Logs](docs/logs.md)
 5. [Performance](#performance)
 6. [Contributing](#contributing)
 7. [License](#license)
@@ -188,6 +190,10 @@ See [Consumer Reference](docs/api/consumer.md) for more details.
 * [Scheduler](docs/api/scheduler.md)
 
 * [Priority Queues](docs/priority-queues.md)
+  
+* [Message Manager](docs/api/message-manager.md)
+
+* [Queue Manager](docs/api/queue-manager.md)
 
 * [HTTP API](docs/http-api.md)
 
