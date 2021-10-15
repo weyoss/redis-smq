@@ -1,4 +1,4 @@
-import { ICallback } from '../types';
+import { ICallback } from '../../types';
 import { RedisClient } from './redis-client';
 import * as Redlock from 'redlock';
 

@@ -5,12 +5,12 @@ import {
   untilConsumerIdle,
 } from './common';
 import { Message } from '../src/message';
-import { Metadata } from '../src/metadata';
+import { Metadata } from '../src/system/metadata';
 import { TQueueMetadata } from '../types';
 import { config } from './config';
 import { promisifyAll } from 'bluebird';
 
-describe('Metadata: check that queue metadata are valid', () => {
+describe('Queue Metadata: check that queue metadata are valid', () => {
   test('Case 1', async () => {
     const producer = getProducer();
     const consumer = getConsumer({

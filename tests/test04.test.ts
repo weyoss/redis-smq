@@ -1,7 +1,7 @@
 import { delay } from 'bluebird';
 import { getConsumer, getProducer, untilConsumerIdle } from './common';
 import { Message } from '../src/message';
-import { events } from '../src/events';
+import { events } from '../src/system/events';
 
 test('Message TTL: a message with TTL is not consumed and moved to DLQ when TTL is exceeded', async () => {
   const producer = getProducer();

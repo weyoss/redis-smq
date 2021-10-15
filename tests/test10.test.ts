@@ -1,6 +1,6 @@
 import { getConsumer, getProducer, untilConsumerEvent } from './common';
 import { Message } from '../src/message';
-import { events } from '../src/events';
+import { events } from '../src/system/events';
 
 test('A message is not lost in case of a consumer crash', async () => {
   const producer = getProducer();
@@ -14,7 +14,7 @@ test('A message is not lost in case of a consumer crash', async () => {
    * Consumer1 tries to consume a message but "crushes" (stops)
    */
   const consumer1 = getConsumer({
-    consumeMock: jest.fn((msg, cb) => {
+    consumeMock: jest.fn(() => {
       // do not acknowledge/unacknowledge the message
       consumer1.shutdown();
     }),

@@ -29,9 +29,9 @@ const msg = new Message();
 msg.setBody({ hello: 123 });
 
 producer.produceMessage(msg, (err) => {
-    if (err) throw err;
-    else {
-        console.log(`Successfully produced. Going down...`)
-        producer.shutdown();
-    }
+  if (err) throw err;
+  else {
+    console.log(`Successfully produced. Going down...`);
+    producer.shutdown();
+  }
 });

@@ -6,7 +6,7 @@ import {
   validateTime,
 } from './common';
 import { Message } from '../src/message';
-import { events } from '../src/events';
+import { events } from '../src/system/events';
 
 test('Produce and consume a delayed message', async () => {
   const consumer = getConsumer({

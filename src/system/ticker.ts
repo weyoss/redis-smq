@@ -1,4 +1,4 @@
-import { TFunction } from '../types';
+import { TFunction } from '../../types';
 import { EventEmitter } from 'events';
 import { events } from './events';
 import { PowerManager } from './power-manager';

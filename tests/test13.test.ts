@@ -6,7 +6,7 @@ import {
   validateTime,
 } from './common';
 import { Message } from '../src/message';
-import { events } from '../src/events';
+import { events } from '../src/system/events';
 
 describe('Produce and consume a delayed message with scheduledRepeat and scheduledPeriod parameters', () => {
   test('Case 1', async () => {

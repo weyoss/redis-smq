@@ -1,11 +1,11 @@
-import { ICallback, IConfig } from '../types';
+import { ICallback, IConfig } from '../../types';
 import { LockManager } from './lock-manager';
 import * as BLogger from 'bunyan';
 import { Ticker } from './ticker';
 import { events } from './events';
 import { Logger } from './logger';
 import { Scheduler } from './scheduler';
-import { Consumer } from './consumer';
+import { Consumer } from '../consumer';
 import { EventEmitter } from 'events';
 import { RedisClient } from './redis-client';
 
@@ -17,22 +17,19 @@ export class SchedulerRunner extends EventEmitter {
   protected tickPeriod: number;
   protected queueName: string;
   protected consumerId: string;
-  protected schedulerInstance: Scheduler;
+  protected scheduler: Scheduler;
   protected ticker: Ticker;
-  protected lockManagerInstance: LockManager;
+  protected lockManager: LockManager;
 
   constructor(consumer: Consumer, redisClient: RedisClient, tickPeriod = 1000) {
     super();
     this.consumer = consumer;
-    this.schedulerInstance = new Scheduler(
-      consumer.getQueueName(),
-      redisClient,
-    );
-    this.lockManagerInstance = new LockManager(redisClient);
+    this.scheduler = new Scheduler(consumer.getQueueName(), redisClient);
+    this.lockManager = new LockManager(redisClient);
     this.queueName = consumer.getQueueName();
     this.config = consumer.getConfig();
     this.consumerId = consumer.getId();
-    const { keyLockScheduler } = consumer.getInstanceRedisKeys();
+    const { keyLockScheduler } = consumer.getRedisKeys();
     this.keyLockScheduler = keyLockScheduler;
     this.logger = Logger(
       `scheduler (${this.queueName}/${this.consumerId})`,
@@ -50,7 +47,7 @@ export class SchedulerRunner extends EventEmitter {
   }
 
   protected onTick(): void {
-    this.lockManagerInstance.acquireLock(
+    this.lockManager.acquireLock(
       this.keyLockScheduler,
       10000,
       false,
@@ -59,7 +56,7 @@ export class SchedulerRunner extends EventEmitter {
         else {
           if (acquired) {
             this.consumer.getBroker((broker) => {
-              this.schedulerInstance.enqueueScheduledMessages(broker, (err) => {
+              this.scheduler.enqueueScheduledMessages(broker, (err) => {
                 if (err) this.consumer.emit(events.ERROR, err);
                 else this.ticker.nextTick();
               });
@@ -72,7 +69,7 @@ export class SchedulerRunner extends EventEmitter {
 
   quit(cb: ICallback<void>): void {
     this.ticker.once(events.DOWN, () => {
-      this.lockManagerInstance.quit(cb);
+      this.lockManager.quit(cb);
     });
     this.ticker.quit();
   }

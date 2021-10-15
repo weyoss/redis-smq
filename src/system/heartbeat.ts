@@ -1,13 +1,13 @@
 import * as os from 'os';
 import * as async from 'async';
-import { ICallback, IConfig } from '../types';
+import { ICallback, IConfig } from '../../types';
 import { Ticker } from './ticker';
 import { ChildProcess, fork } from 'child_process';
 import { resolve } from 'path';
 import { events } from './events';
 import { RedisClient } from './redis-client';
 import { redisKeys } from './redis-keys';
-import { Consumer } from './consumer';
+import { Consumer } from '../consumer';
 import { EventEmitter } from 'events';
 
 type TGetHeartbeatReply = Record<
@@ -110,7 +110,7 @@ export class Heartbeat extends EventEmitter {
     this.queueName = consumer.getQueueName();
     this.consumerId = consumer.getId();
     this.config = consumer.getConfig();
-    this.redisKeys = consumer.getInstanceRedisKeys();
+    this.redisKeys = consumer.getRedisKeys();
     this.redisClient = redisClient;
     this.startMonitor();
     this.ticker = new Ticker(() => {

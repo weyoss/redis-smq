@@ -2,7 +2,7 @@ import { IConfig, ICallback } from '../../../types';
 import { ChildProcess, fork } from 'child_process';
 import { join } from 'path';
 import { readdirSync } from 'fs';
-import { PowerManager } from '../../power-manager';
+import { PowerManager } from '../../system/power-manager';
 
 const powerManager = new PowerManager();
 const runningThreads: ChildProcess[] = [];

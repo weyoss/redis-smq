@@ -1,5 +1,5 @@
-import { Consumer } from '../consumer';
-import { IConsumerStats, IStatsProvider } from '../../types';
+import { Consumer } from '../../consumer';
+import { IConsumerStats, IStatsProvider } from '../../../types';
 import { events } from '../events';
 
 export class ConsumerStatsProvider implements IStatsProvider {
@@ -25,7 +25,7 @@ export class ConsumerStatsProvider implements IStatsProvider {
       keyRateConsumerProcessing,
       keyRateConsumerAcknowledged,
       keyRateConsumerUnacknowledged,
-    } = consumer.getInstanceRedisKeys();
+    } = consumer.getRedisKeys();
     this.keyConsumerRateProcessing = keyRateConsumerProcessing;
     this.keyConsumerRateAcknowledged = keyRateConsumerAcknowledged;
     this.keyConsumerRateUnacknowledged = keyRateConsumerUnacknowledged;

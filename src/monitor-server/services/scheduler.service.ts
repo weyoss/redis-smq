@@ -1,5 +1,5 @@
-import { Scheduler } from '../../scheduler';
-import { RedisClient } from '../../redis-client';
+import { Scheduler } from '../../system/scheduler';
+import { RedisClient } from '../../system/redis-client';
 import { TGetScheduledMessagesReply } from '../../../types';
 import { GetScheduledMessagesRequestDTO as GetSchedulerMessagesDTO } from '../controllers/scheduler/actions/get-scheduled-messages/get-scheduled-messages-request.DTO';
 import { DeleteScheduledMessageRequestDTO as DeletedScheduledMessageDTO } from '../controllers/scheduler/actions/delete-scheduled-message/delete-scheduled-message-request.DTO';

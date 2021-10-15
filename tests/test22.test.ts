@@ -2,11 +2,12 @@ import {
   getConsumer,
   getProducer,
   getRedisInstance,
+  getScheduler,
   untilConsumerIdle,
   untilMessageAcknowledged,
 } from './common';
 import { Message } from '../src/message';
-import { Metadata } from '../src/metadata';
+import { Metadata } from '../src/system/metadata';
 import {
   EMessageDeadLetterCause,
   EMessageMetadataType,
@@ -15,7 +16,7 @@ import {
 } from '../types';
 import { delay, promisifyAll } from 'bluebird';
 
-describe('Metadata: check that message metadata are valid', () => {
+describe('Message Metadata: check that message metadata are valid', () => {
   test('Case 1', async () => {
     const client = await getRedisInstance();
     const producer = getProducer();
@@ -149,7 +150,7 @@ describe('Metadata: check that message metadata are valid', () => {
       }),
     });
     await consumer.runAsync();
-    const scheduler = promisifyAll(await consumer.getSchedulerAsync());
+    const scheduler = promisifyAll(await getScheduler(consumer.getQueueName()));
 
     await scheduler.deleteScheduledMessageAsync(message.getId());
 

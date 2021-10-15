@@ -5,17 +5,17 @@ import {
   TConsumerOptions,
   TUnaryFunction,
 } from '../types';
-import { Instance } from './instance';
+import { Instance } from './system/instance';
 import { Message } from './message';
-import { ConsumerStatsProvider } from './stats-provider/consumer-stats-provider';
-import { events } from './events';
-import { Heartbeat } from './heartbeat';
-import { GarbageCollector } from './gc';
-import { SchedulerRunner } from './scheduler-runner';
-import { RedisClient } from './redis-client';
+import { ConsumerStatsProvider } from './system/stats-provider/consumer-stats-provider';
+import { events } from './system/events';
+import { Heartbeat } from './system/heartbeat';
+import { GarbageCollector } from './system/gc';
+import { SchedulerRunner } from './system/scheduler-runner';
+import { RedisClient } from './system/redis-client';
 
 export abstract class Consumer extends Instance {
-  protected options: TConsumerOptions = {
+  private readonly options: TConsumerOptions = {
     messageConsumeTimeout: 0,
     messageRetryThreshold: 3,
     messageRetryDelay: 60,
@@ -23,15 +23,15 @@ export abstract class Consumer extends Instance {
   };
 
   // exclusive redis clients
-  protected consumerRedisClient: RedisClient | null = null;
-  protected heartbeatRedisClient: RedisClient | null = null;
-  protected gcRedisClient: RedisClient | null = null;
-  protected schedulerRunnerRedisClient: RedisClient | null = null;
+  private consumerRedisClient: RedisClient | null = null;
+  private heartbeatRedisClient: RedisClient | null = null;
+  private gcRedisClient: RedisClient | null = null;
+  private schedulerRunnerRedisClient: RedisClient | null = null;
 
-  protected schedulerRunnerInstance: SchedulerRunner | null = null;
-  protected garbageCollectorInstance: GarbageCollector | null = null;
-  protected heartbeatInstance: Heartbeat | null = null;
-  protected statsProvider: ConsumerStatsProvider | null = null;
+  private schedulerRunner: SchedulerRunner | null = null;
+  private garbageCollector: GarbageCollector | null = null;
+  private heartbeat: Heartbeat | null = null;
+  private statsProvider: ConsumerStatsProvider | null = null;
 
   constructor(
     queueName: string,
@@ -45,45 +45,98 @@ export abstract class Consumer extends Instance {
     };
   }
 
-  getOptions(): TConsumerOptions {
-    return this.options;
-  }
-
-  getStatsProvider(): ConsumerStatsProvider {
-    if (!this.statsProvider) {
-      this.statsProvider = new ConsumerStatsProvider(this);
-    }
-    return this.statsProvider;
-  }
-
-  protected getConsumerRedisClient(cb: TUnaryFunction<RedisClient>): void {
+  private getConsumerRedisClient(cb: TUnaryFunction<RedisClient>): void {
     if (!this.consumerRedisClient)
       this.emit(events.ERROR, new Error('Expected an instance of RedisClient'));
     else cb(this.consumerRedisClient);
   }
 
-  protected getGarbageCollector(cb: TUnaryFunction<GarbageCollector>): void {
-    if (!this.garbageCollectorInstance)
+  private getGarbageCollector(cb: TUnaryFunction<GarbageCollector>): void {
+    if (!this.garbageCollector)
       this.emit(
         events.ERROR,
         new Error('Expected an instance of GarbageCollector'),
       );
-    else cb(this.garbageCollectorInstance);
+    else cb(this.garbageCollector);
   }
 
-  protected getHeartbeat(cb: TUnaryFunction<Heartbeat>): void {
-    if (!this.heartbeatInstance)
+  private getHeartbeat(cb: TUnaryFunction<Heartbeat>): void {
+    if (!this.heartbeat)
       this.emit(events.ERROR, new Error('Expected an instance of Heartbeat'));
-    else cb(this.heartbeatInstance);
+    else cb(this.heartbeat);
   }
 
-  protected getSchedulerRunner(cb: TUnaryFunction<SchedulerRunner>): void {
-    if (!this.schedulerRunnerInstance)
+  private getSchedulerRunner(cb: TUnaryFunction<SchedulerRunner>): void {
+    if (!this.schedulerRunner)
       this.emit(
         events.ERROR,
         new Error('Expected an instance of SchedulerRunner'),
       );
-    else cb(this.schedulerRunnerInstance);
+    else cb(this.schedulerRunner);
+  }
+
+  private handleConsume(msg: Message): void {
+    let isTimeout = false;
+    let timer: NodeJS.Timeout | null = null;
+    this.logger.info(`Processing message [${msg.getId()}]...`);
+    try {
+      const consumeTimeout = msg.getConsumeTimeout();
+      if (consumeTimeout) {
+        timer = setTimeout(() => {
+          isTimeout = true;
+          timer = null;
+          this.emit(events.MESSAGE_CONSUME_TIMEOUT, msg);
+        }, consumeTimeout);
+      }
+      const onConsumed = (err?: Error | null) => {
+        if (this.powerManager.isRunning() && !isTimeout) {
+          if (timer) clearTimeout(timer);
+          if (err)
+            this.unacknowledgeMessage(
+              msg,
+              EMessageUnacknowledgedCause.UNACKNOWLEDGED,
+              err,
+            );
+          else
+            this.getConsumerRedisClient((client) => {
+              this.getBroker((broker) => {
+                broker.acknowledgeMessage(client, msg, (err) => {
+                  if (err) this.emit(events.ERROR, err);
+                  else {
+                    this.logger.info(
+                      `Message [${msg.getId()}] successfully processed`,
+                    );
+                    this.emit(events.MESSAGE_ACKNOWLEDGED, msg, this.queueName);
+                  }
+                });
+              });
+            });
+        }
+      };
+      // As a safety measure, in case if we mess with message system
+      // properties, only a clone of the message is actually given
+      this.consume(Message.createFromMessage(msg), onConsumed);
+    } catch (error: unknown) {
+      const err =
+        error instanceof Error ? error : new Error(`Unexpected error`);
+      this.unacknowledgeMessage(
+        msg,
+        EMessageUnacknowledgedCause.CAUGHT_ERROR,
+        err,
+      );
+    }
+  }
+
+  private unacknowledgeMessage(
+    msg: Message,
+    cause: EMessageUnacknowledgedCause,
+    err?: Error,
+  ): void {
+    this.getConsumerRedisClient((client) => {
+      this.getBroker((broker) => {
+        broker.unacknowledgeMessage(client, msg, cause, this.getOptions(), err);
+      });
+    });
   }
 
   protected registerEventsHandlers(): void {
@@ -92,7 +145,7 @@ export abstract class Consumer extends Instance {
     this.on(events.MESSAGE_NEXT, () => {
       if (this.powerManager.isRunning()) {
         this.getConsumerRedisClient((client) => {
-          this.loggerInstance.info('Waiting for new messages...');
+          this.logger.info('Waiting for new messages...');
           this.getBroker((broker) => {
             broker.dequeueMessage(client, this.getOptions());
           });
@@ -100,15 +153,15 @@ export abstract class Consumer extends Instance {
       }
     });
     this.on(events.MESSAGE_RECEIVED, (message: Message) => {
-      this.loggerInstance.info('Got new message...');
+      this.logger.info('Got new message...');
       if (this.powerManager.isRunning()) {
         if (this.statsProvider) this.statsProvider.incrementProcessingSlot();
         this.handleConsume(message);
       }
     });
     this.on(events.MESSAGE_EXPIRED, (message: Message) => {
-      this.loggerInstance.info(`Message [${message.getId()}] has expired`);
-      const { keyQueueProcessing } = this.getInstanceRedisKeys();
+      this.logger.info(`Message [${message.getId()}] has expired`);
+      const { keyQueueProcessing } = this.getRedisKeys();
       this.getConsumerRedisClient((client) => {
         this.getBroker((broker) => {
           broker.handleMessageWithExpiredTTL(
@@ -118,7 +171,7 @@ export abstract class Consumer extends Instance {
             (err) => {
               if (err) this.emit(events.ERROR, err);
               else {
-                this.loggerInstance.info(
+                this.logger.info(
                   `Expired message [${message.getId()}] has been deleted`,
                 );
                 if (this.statsProvider)
@@ -152,77 +205,7 @@ export abstract class Consumer extends Instance {
     });
   }
 
-  protected handleConsume(msg: Message): void {
-    let isTimeout = false;
-    let timer: NodeJS.Timeout | null = null;
-    this.loggerInstance.info(`Processing message [${msg.getId()}]...`);
-    try {
-      const consumeTimeout = msg.getConsumeTimeout();
-      if (consumeTimeout) {
-        timer = setTimeout(() => {
-          isTimeout = true;
-          timer = null;
-          this.emit(events.MESSAGE_CONSUME_TIMEOUT, msg);
-        }, consumeTimeout);
-      }
-      const onConsumed = (err?: Error | null) => {
-        if (this.powerManager.isRunning() && !isTimeout) {
-          if (timer) clearTimeout(timer);
-          if (err)
-            this.unacknowledgeMessage(
-              msg,
-              EMessageUnacknowledgedCause.UNACKNOWLEDGED,
-              err,
-            );
-          else
-            this.getConsumerRedisClient((client) => {
-              this.getBroker((broker) => {
-                broker.acknowledgeMessage(client, msg, (err) => {
-                  if (err) this.emit(events.ERROR, err);
-                  else {
-                    this.loggerInstance.info(
-                      `Message [${msg.getId()}] successfully processed`,
-                    );
-                    this.emit(events.MESSAGE_ACKNOWLEDGED, msg, this.queueName);
-                  }
-                });
-              });
-            });
-        }
-      };
-      // As a safety measure, in case if we mess with message system
-      // properties, only a clone of the message is actually given
-      this.consume(Message.createFromMessage(msg), onConsumed);
-    } catch (error: unknown) {
-      const err =
-        error instanceof Error ? error : new Error(`Unexpected error`);
-      this.unacknowledgeMessage(
-        msg,
-        EMessageUnacknowledgedCause.CAUGHT_ERROR,
-        err,
-      );
-    }
-  }
-
-  protected unacknowledgeMessage(
-    msg: Message,
-    cause: EMessageUnacknowledgedCause,
-    err?: Error,
-  ): void {
-    this.getConsumerRedisClient((client) => {
-      this.getBroker((broker) => {
-        broker.unacknowledgeMessage(
-          client,
-          msg,
-          EMessageUnacknowledgedCause.CAUGHT_ERROR,
-          this.getOptions(),
-          err,
-        );
-      });
-    });
-  }
-
-  goingUp(): TUnaryFunction<ICallback<void>>[] {
+  protected goingUp(): TUnaryFunction<ICallback<void>>[] {
     //return super.goingUp();
     const setupConsumerRedisClient = (cb: ICallback<void>): void => {
       RedisClient.getNewInstance(this.config, (client) => {
@@ -233,21 +216,21 @@ export abstract class Consumer extends Instance {
     const startHeartbeat = (cb: ICallback<void>) => {
       RedisClient.getNewInstance(this.config, (client) => {
         this.heartbeatRedisClient = client;
-        this.heartbeatInstance = new Heartbeat(this, client);
+        this.heartbeat = new Heartbeat(this, client);
         cb();
       });
     };
     const startGC = (cb: ICallback<void>) => {
       RedisClient.getNewInstance(this.config, (client) => {
         this.gcRedisClient = client;
-        this.garbageCollectorInstance = new GarbageCollector(this, client);
+        this.garbageCollector = new GarbageCollector(this, client);
         cb();
       });
     };
     const startSchedulerRunner = (cb: ICallback<void>) => {
       RedisClient.getNewInstance(this.config, (client) => {
         this.schedulerRunnerRedisClient = client;
-        this.schedulerRunnerInstance = new SchedulerRunner(this, client);
+        this.schedulerRunner = new SchedulerRunner(this, client);
         cb();
       });
     };
@@ -261,7 +244,7 @@ export abstract class Consumer extends Instance {
       ]);
   }
 
-  goingDown(): TUnaryFunction<ICallback<void>>[] {
+  protected goingDown(): TUnaryFunction<ICallback<void>>[] {
     //return super.goingDown();
     const stopSchedulerRunner = (cb: ICallback<void>) => {
       this.getSchedulerRunner((schedulerRunner) => {
@@ -305,6 +288,17 @@ export abstract class Consumer extends Instance {
       stopHeartbeat,
       stopConsumerRedisClient,
     ].concat(super.goingDown());
+  }
+
+  getOptions(): TConsumerOptions {
+    return this.options;
+  }
+
+  getStatsProvider(): ConsumerStatsProvider {
+    if (!this.statsProvider) {
+      this.statsProvider = new ConsumerStatsProvider(this);
+    }
+    return this.statsProvider;
   }
 
   abstract consume(msg: Message, cb: ICallback<void>): void;
