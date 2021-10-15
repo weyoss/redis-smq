@@ -1,5 +1,5 @@
 import { events } from './events';
-import { Message } from './message';
+import { Message } from '../message';
 import {
   EMessageDeadLetterCause,
   EMessageMetadataType,
@@ -9,7 +9,7 @@ import {
   TMessageMetadata,
   TQueueMetadata,
   TRedisClientMulti,
-} from '../types';
+} from '../../types';
 import { redisKeys } from './redis-keys';
 import { EventEmitter } from 'events';
 import { RedisClient } from './redis-client';

@@ -1,16 +1,13 @@
 import { promisifyAll } from 'bluebird';
-import { events } from '../src/events';
-import { RedisClient } from '../src/redis-client';
-import {
-  Producer,
-  Consumer,
-  Message,
-  MonitorServer,
-  MessageManager,
-} from '../index';
+import { events } from '../src/system/events';
+import { RedisClient } from '../src/system/redis-client';
+import { Producer, Consumer, Message, MonitorServer } from '../index';
 import { config } from './config';
 import { ICallback, IConfig, TConsumerOptions } from '../types';
 import { StatsAggregatorThread } from '../src/monitor-server/threads/stats-aggregator.thread';
+import { QueueManager } from '../src/system/queue-manager';
+import { MessageManager } from '../src/system/message-manager';
+import { Scheduler } from '../src/system/scheduler';
 
 type TMonitorServer = ReturnType<typeof MonitorServer>;
 
@@ -27,6 +24,8 @@ const producersList: Producer[] = [];
 let monitorServer: TMonitorServer | null = null;
 let statsAggregator: StatsAggregatorThread | null = null;
 let messageManager: MessageManager | null = null;
+let queueManager: QueueManager | null = null;
+let scheduler: Scheduler | null = null;
 
 export async function startUp(): Promise<void> {
   const redisClient = await getRedisInstance();
@@ -54,6 +53,12 @@ export async function shutdown(): Promise<void> {
   }
   if (messageManager) {
     messageManager = null;
+  }
+  if (queueManager) {
+    queueManager = null;
+  }
+  if (scheduler) {
+    scheduler = null;
   }
   await stopMonitorServer();
   await stopStatsAggregator();
@@ -89,12 +94,28 @@ export function getProducer(queueName = 'test_queue', cfg = config) {
   return p;
 }
 
-export async function getMessageManager(cfg = config) {
+export async function getMessageManager() {
   if (!messageManager) {
     const client = await getRedisInstance();
     messageManager = new MessageManager(client);
   }
   return messageManager;
+}
+
+export async function getQueueManager() {
+  if (!queueManager) {
+    const client = await getRedisInstance();
+    queueManager = new QueueManager(client);
+  }
+  return queueManager;
+}
+
+export async function getScheduler(queueName: string) {
+  if (!scheduler) {
+    const client = await getRedisInstance();
+    scheduler = new Scheduler(queueName, client);
+  }
+  return scheduler;
 }
 
 export async function startMonitorServer(): Promise<void> {
@@ -167,10 +188,6 @@ export async function consumerOnEvent(
 
 export async function untilConsumerIdle(consumer: Consumer): Promise<void> {
   return consumerOnEvent(consumer, events.IDLE);
-}
-
-export async function untilConsumerUp(consumer: Consumer): Promise<void> {
-  return consumerOnEvent(consumer, events.UP);
 }
 
 export async function untilMessageAcknowledged(

@@ -7,14 +7,14 @@ import {
   TAggregatedStatsQueueProducer,
 } from '../../../types';
 import * as async from 'async';
-import { redisKeys } from '../../redis-keys';
-import { LockManager } from '../../lock-manager';
-import { RedisClient } from '../../redis-client';
-import { Heartbeat } from '../../heartbeat';
-import { Logger } from '../../logger';
-import { QueueManager } from '../../queue-manager';
-import { Ticker } from '../../ticker';
-import { events } from '../../events';
+import { redisKeys } from '../../system/redis-keys';
+import { LockManager } from '../../system/lock-manager';
+import { RedisClient } from '../../system/redis-client';
+import { Heartbeat } from '../../system/heartbeat';
+import { Logger } from '../../system/logger';
+import { QueueManager } from '../../system/queue-manager';
+import { Ticker } from '../../system/ticker';
+import { events } from '../../system/events';
 
 export class StatsAggregatorThread {
   protected keyIndexRates;
@@ -253,7 +253,7 @@ export class StatsAggregatorThread {
   };
 
   protected getDLQQueues = (cb: ICallback<string[]>): void => {
-    this.queueManager.getDLQQueues(cb);
+    this.queueManager.getDeadLetterQueues(cb);
   };
 
   protected getConsumersHeartbeats = (cb: ICallback<void>): void => {

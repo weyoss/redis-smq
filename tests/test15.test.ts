@@ -6,7 +6,7 @@ import {
   validateTime,
 } from './common';
 import { Message } from '../src/message';
-import { events } from '../src/events';
+import { events } from '../src/system/events';
 
 test('A consumer delays a failed message before re-queuing it again, given messageRetryThreshold is not exceeded', async () => {
   const timestamps: number[] = [];

@@ -2,9 +2,9 @@ import { ServerOptions } from 'socket.io';
 import IORedis, { Redis, RedisOptions } from 'ioredis';
 import { ClientOpts, Multi, RedisClient as NodeRedis } from 'redis';
 import * as Logger from 'bunyan';
-import { RedisClient } from '../src/redis-client';
+import { RedisClient } from '../src/system/redis-client';
 import { Message } from '../src/message';
-import { redisKeys } from '../src/redis-keys';
+import { redisKeys } from '../src/system/redis-keys';
 
 export interface ICallback<T> {
   (err?: Error | null, reply?: T | null): void;
@@ -66,9 +66,16 @@ export type TCompatibleRedisClient = (NodeRedis | Redis) & {
 
 export type TRedisClientMulti = Multi | IORedis.Pipeline;
 
-export interface IRedisOptions {
-  client: RedisClientName;
-  options?: RedisOptions | ClientOpts;
+export type IRedisOptions = IORedisOptions | INodeRedisOptions;
+
+export interface IORedisOptions {
+  client: RedisClientName.IOREDIS;
+  options?: RedisOptions;
+}
+
+export interface INodeRedisOptions {
+  client: RedisClientName.REDIS;
+  options?: ClientOpts;
 }
 
 export interface IMonitorConfig {

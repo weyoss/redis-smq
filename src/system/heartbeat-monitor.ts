@@ -1,5 +1,5 @@
 import * as async from 'async';
-import { IConfig, ICallback } from '../types';
+import { IConfig, ICallback } from '../../types';
 import { LockManager } from './lock-manager';
 import { Ticker } from './ticker';
 import { Heartbeat } from './heartbeat';
@@ -8,7 +8,7 @@ import { redisKeys } from './redis-keys';
 
 function heartbeatMonitor(redisClient: RedisClient) {
   const { keyLockHeartBeatMonitor } = redisKeys.getGlobalKeys();
-  const lockManagerInstance = new LockManager(redisClient);
+  const lockManager = new LockManager(redisClient);
   const ticker = new Ticker(tick, 1000);
 
   function handleExpiredHeartbeats(
@@ -29,20 +29,15 @@ function heartbeatMonitor(redisClient: RedisClient) {
   }
 
   function tick() {
-    lockManagerInstance.acquireLock(
-      keyLockHeartBeatMonitor,
-      10000,
-      true,
-      () => {
-        async.waterfall(
-          [getExpiredHeartbeats, handleExpiredHeartbeats],
-          (err?: Error | null) => {
-            if (err) throw err;
-            ticker.nextTick();
-          },
-        );
-      },
-    );
+    lockManager.acquireLock(keyLockHeartBeatMonitor, 10000, true, () => {
+      async.waterfall(
+        [getExpiredHeartbeats, handleExpiredHeartbeats],
+        (err?: Error | null) => {
+          if (err) throw err;
+          ticker.nextTick();
+        },
+      );
+    });
   }
 
   ticker.nextTick();

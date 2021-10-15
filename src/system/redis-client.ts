@@ -1,15 +1,15 @@
 import IORedis from 'ioredis';
 import { createClient, Multi, RedisClient as NodeRedis } from 'redis';
 import {
+  ICallback,
   IConfig,
   RedisClientName,
-  ICallback,
   TCompatibleRedisClient,
-  TRedisClientMulti,
   TPaginatedRedisQuery,
-  TPaginatedRedisQueryTransformFn,
   TPaginatedRedisQueryTotalItemsFn,
-} from '../types';
+  TPaginatedRedisQueryTransformFn,
+  TRedisClientMulti,
+} from '../../types';
 import { EventEmitter } from 'events';
 import * as async from 'async';
 
@@ -61,22 +61,12 @@ function getPage<T>(
 }
 
 export class RedisClient extends EventEmitter {
-  protected static instance: RedisClient | null = null;
   protected client: TCompatibleRedisClient;
-  protected ready = false;
 
   protected constructor(config: IConfig = {}) {
     super();
-    const { client = RedisClientName.REDIS, options = {} } = config.redis ?? {};
-    if (![RedisClientName.IOREDIS, RedisClientName.REDIS].includes(client)) {
-      throw new Error('Invalid Redis driver name');
-    }
-    // cast to a generic type to avoid type-coverage complaining about (options as ClientOpts/RedisOptions)
-    const opts: Record<string, any> = options;
-    this.client =
-      client === RedisClientName.REDIS ? createClient(opts) : new IORedis(opts);
+    this.client = this.getClient(config);
     this.client.once('ready', () => {
-      this.ready = true;
       this.emit('ready');
     });
     this.client.once('error', (err: Error) => {
@@ -84,8 +74,20 @@ export class RedisClient extends EventEmitter {
     });
   }
 
-  isReady(): boolean {
-    return this.ready;
+  protected getClient(config: IConfig): TCompatibleRedisClient {
+    if (config.redis) {
+      // in javascript land, we can pass any value
+      if (!Object.values(RedisClientName).includes(config.redis.client)) {
+        throw new Error('Invalid Redis driver name');
+      }
+      if (config.redis.client === RedisClientName.REDIS) {
+        return createClient(config.redis.options);
+      }
+      if (config.redis.client === RedisClientName.IOREDIS) {
+        return new IORedis(config.redis.options);
+      }
+    }
+    return createClient();
   }
 
   zadd(
@@ -221,14 +223,6 @@ export class RedisClient extends EventEmitter {
     this.client.flushall(cb);
   }
 
-  static getNewInstance(
-    config: IConfig = {},
-    cb: (client: RedisClient) => void,
-  ): void {
-    const client = new RedisClient(config);
-    client.once('ready', () => cb(client));
-  }
-
   eval(
     args: (string | number)[] | string | number,
     cb?: (err: Error | null, res?: unknown) => void,
@@ -284,12 +278,17 @@ export class RedisClient extends EventEmitter {
     } else {
       this.client.disconnect(false);
     }
-    if (this === RedisClient.instance) {
-      RedisClient.instance = null;
-    }
   }
 
-  quit(): void {
-    this.end(true);
+  quit(cb?: ICallback<void>): void {
+    this.client.quit(() => cb && cb());
+  }
+
+  static getNewInstance(
+    config: IConfig = {},
+    cb: (client: RedisClient) => void,
+  ): void {
+    const client = new RedisClient(config);
+    client.once('ready', () => cb(client));
   }
 }

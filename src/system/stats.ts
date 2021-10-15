@@ -1,4 +1,4 @@
-import { ICallback, IStatsProvider } from '../types';
+import { ICallback, IStatsProvider } from '../../types';
 import { Instance } from './instance';
 import { events } from './events';
 import { Ticker } from './ticker';
@@ -29,7 +29,7 @@ export class Stats extends EventEmitter {
 
   protected publish(stats: Record<string, any>): void {
     const formatted = this.statsProvider.format(stats);
-    const { keyIndexRates } = this.instance.getInstanceRedisKeys();
+    const { keyIndexRates } = this.instance.getRedisKeys();
     this.redisClient.hmset(keyIndexRates, formatted, () => void 0);
   }
 

@@ -5,8 +5,8 @@ import { Server as SocketIO } from 'socket.io';
 import * as KoaBodyParser from 'koa-bodyparser';
 import { Middleware } from 'redis-smq-monitor';
 import { IConfig, ICallback } from '../../types';
-import { RedisClient } from '../redis-client';
-import { Logger } from '../logger';
+import { RedisClient } from '../system/redis-client';
+import { Logger } from '../system/logger';
 import { errorHandler } from './middlewares/error-handler';
 import { Services } from './services';
 import { startThreads, stopThreads } from './utils/thread-runner';
@@ -15,7 +15,7 @@ import { getApplicationRouter } from './lib/routing';
 import { schedulerController } from './controllers/scheduler';
 import { IContext, TApplication } from './types/common';
 import * as stoppable from 'stoppable';
-import { PowerManager } from '../power-manager';
+import { PowerManager } from '../system/power-manager';
 
 type TApiServer = {
   httpServer: ReturnType<typeof stoppable>;

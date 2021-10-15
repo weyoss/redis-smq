@@ -1,8 +1,8 @@
 import { IConfig, ICallback } from '../types';
 import { Message } from './message';
-import { ProducerStatsProvider } from './stats-provider/producer-stats-provider';
-import { Instance } from './instance';
-import { events } from './events';
+import { ProducerStatsProvider } from './system/stats-provider/producer-stats-provider';
+import { Instance } from './system/instance';
+import { events } from './system/events';
 
 export class Producer extends Instance {
   protected statsProvider: ProducerStatsProvider | null = null;

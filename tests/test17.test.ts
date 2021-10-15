@@ -1,11 +1,11 @@
-import { getProducer } from './common';
+import { getProducer, getScheduler } from './common';
 import { Message } from '../src/message';
 import { promisifyAll } from 'bluebird';
 
 describe('Produce and delete a scheduled message', () => {
   test('Case 1', async () => {
     const producer = getProducer();
-    const scheduler = promisifyAll(await producer.getSchedulerAsync());
+    const scheduler = promisifyAll(await getScheduler(producer.getQueueName()));
 
     // Message 1
     const msg1 = new Message();

@@ -10,6 +10,23 @@ describe('Priority queue: check that messages are consumed with respect to their
       priorityQueue: true,
     };
     const queueName = 'test_queue';
+    const consumer = promisifyAll(
+      getConsumer({
+        queueName,
+        cfg,
+      }),
+    );
+
+    await consumer.runAsync();
+    await untilConsumerIdle(consumer);
+  });
+
+  test('Case 2', async () => {
+    const cfg = {
+      ...config,
+      priorityQueue: true,
+    };
+    const queueName = 'test_queue';
     const consumedMessages: Message[] = [];
     const consumer = promisifyAll(
       getConsumer({

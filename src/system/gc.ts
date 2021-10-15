@@ -3,13 +3,13 @@ import { LockManager } from './lock-manager';
 import { Logger } from './logger';
 import { Ticker } from './ticker';
 import { events } from './events';
-import { Message } from './message';
+import { Message } from '../message';
 import { Heartbeat } from './heartbeat';
 import { RedisClient } from './redis-client';
-import { EMessageUnacknowledgedCause, ICallback, IConfig } from '../types';
+import { EMessageUnacknowledgedCause, ICallback, IConfig } from '../../types';
 import { redisKeys } from './redis-keys';
 import BLogger from 'bunyan';
-import { Consumer } from './consumer';
+import { Consumer } from '../consumer';
 import { QueueManager } from './queue-manager';
 import { EventEmitter } from 'events';
 
@@ -33,7 +33,7 @@ export class GarbageCollector extends EventEmitter {
     this.queueName = consumer.getQueueName();
     this.consumerId = consumer.getId();
     this.config = consumer.getConfig();
-    const { keyLockGC } = consumer.getInstanceRedisKeys();
+    const { keyLockGC } = consumer.getRedisKeys();
     this.keyLockGC = keyLockGC;
     this.logger = Logger(
       `gc (${this.queueName}/${this.consumerId})`,

@@ -1,7 +1,7 @@
 'use strict';
 
 const config = require('./config');
-const { events } = require('../../dist/src/events'); // require('redis-smq/dist/src/events');
+const { events } = require('../../dist/src/system/events'); // require('redis-smq/dist/src/system/events');
 const { Consumer } = require('../..'); // require('redis-smq);
 
 class Ns1TestQueueConsumer extends Consumer {

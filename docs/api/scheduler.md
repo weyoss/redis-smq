@@ -28,11 +28,12 @@ message
 
 producer.produceMessage(message, (err) => {
     if (err) console.log(err);
-    else console.log('Message has been succefully produced');
+    else if (rely) console.log('Message has been successfully scheduled');
+    else console.log('Message has not been scheduled');
 })
 ```
 
-Alternatively, you can also manually get the `Scheduler` from MQ and use it like shown in the example bellow: 
+Alternatively, the `Scheduler` can be used like shown in the example bellow: 
 
 ```javascript
 const { Scheduler } = require('redis-smq');
@@ -45,8 +46,12 @@ Scheduler.getSingletonInstance('test_queue', config, (err, scheduler) => {
     message.setBody({hello: 'world'}).setScheduledCron(`0 0 * * * *`);
     scheduler.schedule(message, (err, reply) => {
       if (err) console.log(err);
-      else if (rely) console.log('Message has been successfully scheduled');
-      else console.log('Message has not been scheduled');
+      else {
+        if (rely) console.log('Message has been successfully scheduled');
+        else console.log('Message has not been scheduled');
+        // Disconnect from Redis server
+        scheduler.quit(() => console.log('Disconnected'));
+      }
     });
   }
 })
@@ -159,11 +164,13 @@ scheduler.isPeriodic(message);
 
 Boolean. True when either message `scheduling repeat` or `scheduling CRON` has been set.
 
-## Other public methods
+### Scheduler.prototype.quit()
 
-These methods are used internally and should not be used in your application:
+```javascript
+scheduler.quit(cb);
+```
 
-- Scheduler.prototype.scheduleAtNextTimestamp()
-- Scheduler.prototype.enqueueScheduledMessage()
-- Scheduler.prototype.enqueueScheduledMessages()
-- Scheduler.prototype.quit()
+**Parameters**
+
+- `cb()` *(Function): Required.* A callback function which get called when active Redis connection is closed. 
+

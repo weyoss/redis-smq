@@ -1,6 +1,6 @@
 import { getConsumer, getProducer, untilConsumerIdle } from './common';
 import { Message } from '../src/message';
-import { events } from '../src/events';
+import { events } from '../src/system/events';
 import { ICallback } from '../types';
 
 test('When consuming a message, a consumer does time out after messageConsumeTimeout exceeds and re-queues the message to be consumed again', async () => {

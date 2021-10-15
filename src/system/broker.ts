@@ -5,8 +5,8 @@ import {
   IConfig,
   TConsumerOptions,
   TRedisClientMulti,
-} from '../types';
-import { Message } from './message';
+} from '../../types';
+import { Message } from '../message';
 import { Instance } from './instance';
 import { events } from './events';
 import { Scheduler } from './scheduler';
@@ -14,9 +14,9 @@ import BLogger from 'bunyan';
 import { Logger } from './logger';
 import { PowerManager } from './power-manager';
 import { Metadata } from './metadata';
-import { MessageManager } from './message-manager';
 import { QueueManager } from './queue-manager';
 import { RedisClient } from './redis-client';
+import { MessageManager } from './message-manager';
 
 export class Broker {
   protected instance: Instance;
@@ -49,7 +49,7 @@ export class Broker {
     this.queueManager = queueManager;
   }
 
-  getInstance() {
+  getInstance(): Instance {
     return this.instance;
   }
 
@@ -154,7 +154,7 @@ export class Broker {
     msg: Message,
     cb: ICallback<void>,
   ): void {
-    const { keyQueueProcessing } = this.instance.getInstanceRedisKeys();
+    const { keyQueueProcessing } = this.instance.getRedisKeys();
     const multi = client.multi();
     this.moveMessageToAcknowledgmentQueue(msg, multi);
     this.cleanProcessingQueue(keyQueueProcessing, multi);
@@ -176,7 +176,7 @@ export class Broker {
   ): void {
     if (error) this.logger.error(error);
     this.logger.debug(`Unacknowledging message [${msg.getId()}]...`);
-    const { keyQueueProcessing } = this.instance.getInstanceRedisKeys();
+    const { keyQueueProcessing } = this.instance.getRedisKeys();
     this.retry(
       client,
       msg,

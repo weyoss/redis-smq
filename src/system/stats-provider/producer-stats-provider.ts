@@ -1,5 +1,5 @@
-import { Producer } from '../producer';
-import { IProducerStats, IStatsProvider } from '../../types';
+import { Producer } from '../../producer';
+import { IProducerStats, IStatsProvider } from '../../../types';
 
 export class ProducerStatsProvider implements IStatsProvider {
   protected inputSlots: number[] = new Array(1000).fill(0);
@@ -11,7 +11,7 @@ export class ProducerStatsProvider implements IStatsProvider {
   constructor(producer: Producer) {
     this.producer = producer;
     const { keyIndexRates, keyRateProducerInput } =
-      this.producer.getInstanceRedisKeys();
+      this.producer.getRedisKeys();
     this.keyIndexRate = keyIndexRates;
     this.keyProducerRateInput = keyRateProducerInput;
   }

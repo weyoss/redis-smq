@@ -17,8 +17,8 @@ describe('MessageManager', () => {
     const producer = getProducer();
     await producer.produceMessageAsync(msg);
 
-    const messageProvider = promisifyAll(await getMessageManager());
-    const res = await messageProvider.getPendingMessagesAsync(
+    const messageManager = promisifyAll(await getMessageManager());
+    const res = await messageManager.getPendingMessagesAsync(
       producer.getQueueName(),
       0,
       100,
@@ -43,8 +43,8 @@ describe('MessageManager', () => {
     consumer.run();
     await untilConsumerIdle(consumer);
 
-    const messageProvider = promisifyAll(await getMessageManager());
-    const res = await messageProvider.getAcknowledgedMessagesAsync(
+    const messageManager = promisifyAll(await getMessageManager());
+    const res = await messageManager.getAcknowledgedMessagesAsync(
       producer.getQueueName(),
       0,
       100,
@@ -69,8 +69,8 @@ describe('MessageManager', () => {
     consumer.run();
     await untilConsumerIdle(consumer);
 
-    const messageProvider = promisifyAll(await getMessageManager());
-    const res = await messageProvider.getDeadLetterMessagesAsync(
+    const messageManager = promisifyAll(await getMessageManager());
+    const res = await messageManager.getDeadLetterMessagesAsync(
       producer.getQueueName(),
       0,
       100,
@@ -92,8 +92,8 @@ describe('MessageManager', () => {
     const producer = promisifyAll(getProducer(queueName, cfg));
     await producer.produceMessageAsync(msg);
 
-    const messageProvider = promisifyAll(await getMessageManager());
-    const res = await messageProvider.getPendingMessagesWithPriorityAsync(
+    const messageManager = promisifyAll(await getMessageManager());
+    const res = await messageManager.getPendingMessagesWithPriorityAsync(
       producer.getQueueName(),
       0,
       100,
@@ -110,8 +110,8 @@ describe('MessageManager', () => {
     const producer = getProducer();
     await producer.produceMessageAsync(msg);
 
-    const messageProvider = promisifyAll(await getMessageManager());
-    const res = await messageProvider.getScheduledMessagesAsync(
+    const messageManager = promisifyAll(await getMessageManager());
+    const res = await messageManager.getScheduledMessagesAsync(
       producer.getQueueName(),
       0,
       100,
@@ -136,8 +136,8 @@ describe('MessageManager', () => {
     consumer.run();
     await untilConsumerIdle(consumer);
 
-    const messageProvider = promisifyAll(await getMessageManager());
-    const metadata = await messageProvider.getMessageMetadataAsync(msg.getId());
+    const messageManager = promisifyAll(await getMessageManager());
+    const metadata = await messageManager.getMessageMetadataAsync(msg.getId());
 
     expect(metadata.length).toBe(2);
     expect(metadata[0].type).toBe(EMessageMetadataType.ENQUEUED);

@@ -1,11 +1,11 @@
 import { getConsumer, getProducer, untilConsumerIdle } from './common';
 import { Message } from '../src/message';
-import { events } from '../src/events';
+import { events } from '../src/system/events';
 
 test('A consumer does re-queue a failed message when threshold is not exceeded, otherwise it moves the message to DLQ (dead letter queue)', async () => {
   const producer = getProducer();
   const consumer = getConsumer({
-    consumeMock: jest.fn((msg, cb) => {
+    consumeMock: jest.fn(() => {
       throw new Error('Explicit error');
     }),
   });
