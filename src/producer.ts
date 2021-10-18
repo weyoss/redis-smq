@@ -41,10 +41,15 @@ export class Producer extends Instance {
           } else {
             this.getCommonRedisClient((client) => {
               this.getBroker((broker) => {
-                broker.enqueueMessage(message, client, (err?: Error | null) => {
-                  if (err) callback(err);
-                  else callback(null, true);
-                });
+                broker.enqueueMessage(
+                  this.queueName,
+                  message,
+                  client,
+                  (err?: Error | null) => {
+                    if (err) callback(err);
+                    else callback(null, true);
+                  },
+                );
               });
             });
           }

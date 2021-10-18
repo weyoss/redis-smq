@@ -1,18 +1,139 @@
-import { Scheduler as BaseScheduler } from '../scheduler';
 import { Broker } from './broker';
-import { ICallback, TRedisClientMulti } from '../../types';
+import {
+  EMessageMetadataType,
+  ICallback,
+  TGetScheduledMessagesReply,
+  TRedisClientMulti,
+} from '../../types';
 import * as async from 'async';
 import { Message } from '../message';
-import { events } from './events';
-import { Metadata } from './metadata';
+import { metadata } from './metadata';
 import { RedisClient } from './redis-client';
+import { redisKeys } from './redis-keys';
+import { EventEmitter } from 'events';
+import { parseExpression } from 'cron-parser';
 
-export class Scheduler extends BaseScheduler {
-  protected metadata: Metadata;
+export class Scheduler extends EventEmitter {
+  protected static instance: Scheduler | null = null;
+  protected queueName: string;
+  protected redisClient: RedisClient;
+  protected keys: ReturnType<typeof redisKeys['getKeys']>;
 
   constructor(queueName: string, redisClient: RedisClient) {
-    super(queueName, redisClient);
-    this.metadata = new Metadata(this);
+    super();
+    this.queueName = queueName;
+    this.keys = redisKeys.getKeys(queueName);
+    this.redisClient = redisClient;
+  }
+
+  protected scheduleAtTimestamp(
+    message: Message,
+    timestamp: number,
+    mixed: TRedisClientMulti | ICallback<boolean>,
+  ): void {
+    const { keyQueueScheduledMessages } = this.keys;
+    const schedule = (m: TRedisClientMulti) => {
+      const msgStr = message.toString();
+      m.zadd(keyQueueScheduledMessages, timestamp, msgStr);
+      metadata.preMessageScheduled(message, this.queueName, m);
+      return m;
+    };
+    if (typeof mixed === 'object') schedule(mixed);
+    else if (typeof mixed === 'function') {
+      const m = this.redisClient.multi();
+      schedule(m).exec((err) => {
+        if (err) mixed(err);
+        else mixed(null, true);
+      });
+    } else {
+      throw new Error(
+        'Invalid function argument [mixed]. Expected a callback or an instance of Multi.',
+      );
+    }
+  }
+
+  protected getNextScheduledTimestamp(message: Message): number | null {
+    if (this.isSchedulable(message)) {
+      // Delay
+      const msgScheduledDelay = message.getMessageScheduledDelay();
+      if (msgScheduledDelay && !message.isDelayed()) {
+        message.setMessageDelayed(true);
+        return Date.now() + msgScheduledDelay;
+      }
+
+      // CRON
+      const msgScheduledCron = message.getMessageScheduledCRON();
+      const cronTimestamp = msgScheduledCron
+        ? parseExpression(msgScheduledCron).next().getTime()
+        : 0;
+
+      // Repeat
+      const msgScheduledRepeat = message.getMessageScheduledRepeat();
+      let repeatTimestamp = 0;
+      if (msgScheduledRepeat) {
+        const newCount = message.getMessageScheduledRepeatCount() + 1;
+        if (newCount <= msgScheduledRepeat) {
+          const msgScheduledPeriod = message.getMessageScheduledPeriod();
+          const now = Date.now();
+          if (msgScheduledPeriod) {
+            repeatTimestamp = now + msgScheduledPeriod;
+          } else {
+            repeatTimestamp = now;
+          }
+        }
+      }
+
+      if (repeatTimestamp && cronTimestamp) {
+        if (
+          repeatTimestamp < cronTimestamp &&
+          message.hasScheduledCronFired()
+        ) {
+          message.incrMessageScheduledRepeatCount();
+          return repeatTimestamp;
+        }
+      }
+
+      if (cronTimestamp) {
+        // reset repeat count on each cron tick
+        message.resetMessageScheduledRepeatCount();
+
+        // if the message has also a repeat scheduling then the first time it will fires only
+        // after CRON scheduling has been fired
+        message.setMessageScheduledCronFired(true);
+
+        return cronTimestamp;
+      }
+
+      if (repeatTimestamp) {
+        message.incrMessageScheduledRepeatCount();
+        return repeatTimestamp;
+      }
+    }
+    return 0;
+  }
+
+  protected enqueueScheduledMessage(
+    broker: Broker,
+    msg: Message,
+    multi: TRedisClientMulti,
+  ): void {
+    const { keyQueueScheduledMessages } = this.keys;
+    multi.zrem(keyQueueScheduledMessages, msg.toString());
+    const message = this.isPeriodic(msg) ? msg.reset() : msg;
+    metadata.preMessageScheduledEnqueue(message, this.queueName, multi);
+    broker.enqueueMessage(this.queueName, message, multi);
+  }
+
+  protected scheduleAtNextTimestamp(
+    msg: Message,
+    multi: TRedisClientMulti,
+  ): void {
+    if (this.isPeriodic(msg)) {
+      const timestamp = this.getNextScheduledTimestamp(msg) ?? 0;
+      if (timestamp > 0) {
+        this.scheduleAtTimestamp(msg, timestamp, multi);
+      }
+    }
   }
 
   enqueueScheduledMessages(broker: Broker, cb: ICallback<void>): void {
@@ -39,35 +160,52 @@ export class Scheduler extends BaseScheduler {
     async.waterfall([fetch, process], cb);
   }
 
-  protected enqueueScheduledMessage(
-    broker: Broker,
-    msg: Message,
-    multi: TRedisClientMulti,
-  ): void {
-    const { keyQueueScheduledMessages } = this.keys;
-    multi.zrem(keyQueueScheduledMessages, msg.toString());
-    const message = this.isPeriodic(msg)
-      ? Message.createFromMessage(msg, true)
-      : msg;
-    this.emit(
-      events.PRE_MESSAGE_SCHEDULED_ENQUEUE,
-      message,
-      this.queueName,
-      multi,
+  isSchedulable(message: Message): boolean {
+    return (
+      message.getMessageScheduledCRON() !== null ||
+      message.getMessageScheduledDelay() !== null ||
+      message.getMessageScheduledRepeat() > 0
     );
-    broker.enqueueMessage(message, multi);
   }
 
-  protected scheduleAtNextTimestamp(
-    msg: Message,
-    multi: TRedisClientMulti,
+  isPeriodic(message: Message): boolean {
+    return (
+      message.getMessageScheduledCRON() !== null ||
+      message.getMessageScheduledRepeat() > 0
+    );
+  }
+
+  schedule(
+    message: Message,
+    mixed: TRedisClientMulti | ICallback<boolean>,
   ): void {
-    if (this.isPeriodic(msg)) {
-      const timestamp = this.getNextScheduledTimestamp(msg) ?? 0;
-      if (timestamp > 0) {
-        this.scheduleAtTimestamp(msg, timestamp, multi);
-      }
-    }
+    const timestamp = this.getNextScheduledTimestamp(message) ?? 0;
+    if (timestamp > 0) {
+      this.scheduleAtTimestamp(message, timestamp, mixed);
+    } else if (typeof mixed === 'function') mixed(null, false);
+  }
+
+  deleteScheduledMessage(messageId: string, cb: ICallback<void>): void {
+    Scheduler.deleteScheduledMessage(
+      this.redisClient,
+      this.queueName,
+      messageId,
+      cb,
+    );
+  }
+
+  getScheduledMessages(
+    skip: number,
+    take: number,
+    cb: ICallback<TGetScheduledMessagesReply>,
+  ): void {
+    Scheduler.getScheduledMessages(
+      this.redisClient,
+      this.queueName,
+      skip,
+      take,
+      cb,
+    );
   }
 
   quit(cb: ICallback<void>): void {
@@ -77,5 +215,58 @@ export class Scheduler extends BaseScheduler {
         cb();
       });
     } else cb();
+  }
+
+  static getScheduledMessages(
+    client: RedisClient,
+    queueName: string,
+    skip: number,
+    take: number,
+    cb: ICallback<TGetScheduledMessagesReply>,
+  ): void {
+    const getTotalFn = (redisClient: RedisClient, cb: ICallback<number>) =>
+      metadata.getQueueMetadataByKey(redisClient, queueName, 'scheduled', cb);
+    const transformFn = (msgStr: string) => Message.createFromMessage(msgStr);
+    const { keyQueueScheduledMessages } = redisKeys.getKeys(queueName);
+    client.zRangePage(
+      keyQueueScheduledMessages,
+      skip,
+      take,
+      getTotalFn,
+      transformFn,
+      cb,
+    );
+  }
+
+  static deleteScheduledMessage(
+    redisClient: RedisClient,
+    queueName: string,
+    messageId: string,
+    cb: ICallback<void>,
+  ): void {
+    const { keyQueueScheduledMessages } = redisKeys.getKeys(queueName);
+    const getMessage = (cb: ICallback<Message>) => {
+      metadata.getMessageMetadata(
+        redisClient,
+        messageId,
+        (err, msgMetatadata) => {
+          if (err) cb(err);
+          else if (!msgMetatadata) cb(new Error('Message does not exist'));
+          else {
+            const last = msgMetatadata.pop();
+            if (last?.type === EMessageMetadataType.SCHEDULED)
+              cb(null, Message.createFromMessage(last.state));
+            else cb(new Error('Message is not scheduled'));
+          }
+        },
+      );
+    };
+    const deleteMessage = (msg: Message, cb: ICallback<void>) => {
+      const multi = redisClient.multi();
+      multi.zrem(keyQueueScheduledMessages, msg.toString());
+      metadata.preMessageScheduledDelete(msg, queueName, multi);
+      redisClient.execMulti(multi, (err) => cb(err));
+    };
+    async.waterfall([getMessage, deleteMessage], cb);
   }
 }

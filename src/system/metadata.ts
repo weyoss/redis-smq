@@ -1,4 +1,3 @@
-import { events } from './events';
 import { Message } from '../message';
 import {
   EMessageDeadLetterCause,
@@ -6,49 +5,34 @@ import {
   EMessageUnacknowledgedCause,
   EQueueMetadataType,
   ICallback,
-  TMessageMetadata,
+  IMessageMetadata,
   TQueueMetadata,
   TRedisClientMulti,
 } from '../../types';
 import { redisKeys } from './redis-keys';
-import { EventEmitter } from 'events';
 import { RedisClient } from './redis-client';
 
-export class Metadata {
-  constructor(eventEmitter: EventEmitter) {
-    eventEmitter
-      .on(events.PRE_MESSAGE_ENQUEUED, this.preMessageEnqueued)
-      .on(
-        events.PRE_MESSAGE_WITH_PRIORITY_ENQUEUED,
-        this.preMessageWithPriorityEnqueued,
-      )
-      .on(events.PRE_MESSAGE_ACKNOWLEDGED, this.preMessageAcknowledged)
-      .on(events.PRE_MESSAGE_UNACKNOWLEDGED, this.preMessageUnacknowledged)
-      .on(events.PRE_MESSAGE_DEAD_LETTER, this.preMessageDeadLetter)
-      .on(events.PRE_MESSAGE_SCHEDULED_ENQUEUE, this.preMessageScheduledEnqueue)
-      .on(events.PRE_MESSAGE_SCHEDULED, this.preMessageScheduled)
-      .on(events.PRE_MESSAGE_SCHEDULED_DELETE, this.preMessageScheduledDelete);
-  }
-
-  protected addMessageMetadata = (
+export const metadata = {
+  addMessageMetadata(
     message: Message,
-    metadata: TMessageMetadata,
+    metadata: IMessageMetadata,
     multi: TRedisClientMulti,
-  ): void => {
+  ): void {
     const messageId = message.getId();
     const { keyMetadataMessage } = redisKeys.getMessageKeys(messageId);
     multi.rpush(keyMetadataMessage, JSON.stringify(metadata));
-  };
+  },
 
-  preMessageUnacknowledged = (
+  preMessageUnacknowledged(
     msg: Message,
     queueName: string,
     unacknowledgedCause: EMessageUnacknowledgedCause,
     multi: TRedisClientMulti,
-  ): void => {
+  ): void {
     this.addMessageMetadata(
       msg,
       {
+        state: msg,
         type: EMessageMetadataType.UNACKNOWLEDGED,
         timestamp: Date.now(),
         unacknowledgedCause,
@@ -57,17 +41,18 @@ export class Metadata {
     );
     const { keyMetadataQueue } = redisKeys.getKeys(queueName);
     multi.hincrby(keyMetadataQueue, EQueueMetadataType.PENDING_MESSAGES, -1);
-  };
+  },
 
-  preMessageDeadLetter = (
+  preMessageDeadLetter(
     msg: Message,
     queueName: string,
     deadLetterCause: EMessageDeadLetterCause,
     multi: TRedisClientMulti,
-  ): void => {
+  ): void {
     this.addMessageMetadata(
       msg,
       {
+        state: msg,
         type: EMessageMetadataType.DEAD_LETTER,
         timestamp: Date.now(),
         deadLetterCause,
@@ -76,16 +61,61 @@ export class Metadata {
     );
     const { keyMetadataQueue } = redisKeys.getKeys(queueName);
     multi.hincrby(keyMetadataQueue, EQueueMetadataType.DEAD_LETTER_MESSAGES, 1);
-  };
+  },
 
-  preMessageEnqueued = (
+  preMessageDeadLetterDelete(
     msg: Message,
     queueName: string,
     multi: TRedisClientMulti,
-  ): void => {
+  ): void {
     this.addMessageMetadata(
       msg,
       {
+        state: msg,
+        type: EMessageMetadataType.DELETED_FROM_DL,
+        timestamp: Date.now(),
+      },
+      multi,
+    );
+    const { keyMetadataQueue } = redisKeys.getKeys(queueName);
+    multi.hincrby(
+      keyMetadataQueue,
+      EQueueMetadataType.DEAD_LETTER_MESSAGES,
+      -1,
+    );
+  },
+
+  preMessageAcknowledgedDelete(
+    msg: Message,
+    queueName: string,
+    multi: TRedisClientMulti,
+  ): void {
+    this.addMessageMetadata(
+      msg,
+      {
+        state: msg,
+        type: EMessageMetadataType.DELETED_FROM_ACKNOWLEDGED_QUEUE,
+        timestamp: Date.now(),
+      },
+      multi,
+    );
+    const { keyMetadataQueue } = redisKeys.getKeys(queueName);
+    multi.hincrby(
+      keyMetadataQueue,
+      EQueueMetadataType.ACKNOWLEDGED_MESSAGES,
+      -1,
+    );
+  },
+
+  preMessageEnqueued(
+    msg: Message,
+    queueName: string,
+    multi: TRedisClientMulti,
+  ): void {
+    this.addMessageMetadata(
+      msg,
+      {
+        state: msg,
         type: EMessageMetadataType.ENQUEUED,
         timestamp: Date.now(),
       },
@@ -93,16 +123,17 @@ export class Metadata {
     );
     const { keyMetadataQueue } = redisKeys.getKeys(queueName);
     multi.hincrby(keyMetadataQueue, EQueueMetadataType.PENDING_MESSAGES, 1);
-  };
+  },
 
-  preMessageWithPriorityEnqueued = (
+  preMessageWithPriorityEnqueued(
     msg: Message,
     queueName: string,
     multi: TRedisClientMulti,
-  ): void => {
+  ): void {
     this.addMessageMetadata(
       msg,
       {
+        state: msg,
         type: EMessageMetadataType.ENQUEUED_WITH_PRIORITY,
         timestamp: Date.now(),
       },
@@ -114,16 +145,17 @@ export class Metadata {
       EQueueMetadataType.PENDING_MESSAGES_WITH_PRIORITY,
       1,
     );
-  };
+  },
 
-  preMessageAcknowledged = (
+  preMessageAcknowledged(
     msg: Message,
     queueName: string,
     multi: TRedisClientMulti,
-  ): void => {
+  ): void {
     this.addMessageMetadata(
       msg,
       {
+        state: msg,
         type: EMessageMetadataType.ACKNOWLEDGED,
         timestamp: Date.now(),
       },
@@ -136,16 +168,17 @@ export class Metadata {
       1,
     );
     multi.hincrby(keyMetadataQueue, EQueueMetadataType.PENDING_MESSAGES, -1);
-  };
+  },
 
-  preMessageScheduledEnqueue = (
+  preMessageScheduledEnqueue(
     msg: Message,
     queueName: string,
     multi: TRedisClientMulti,
-  ): void => {
+  ): void {
     this.addMessageMetadata(
       msg,
       {
+        state: msg,
         type: EMessageMetadataType.SCHEDULED_ENQUEUED,
         timestamp: Date.now(),
       },
@@ -153,16 +186,17 @@ export class Metadata {
     );
     const { keyMetadataQueue } = redisKeys.getKeys(queueName);
     multi.hincrby(keyMetadataQueue, EQueueMetadataType.SCHEDULED_MESSAGES, -1);
-  };
+  },
 
-  preMessageScheduled = (
+  preMessageScheduled(
     msg: Message,
     queueName: string,
     multi: TRedisClientMulti,
-  ): void => {
+  ): void {
     this.addMessageMetadata(
       msg,
       {
+        state: msg,
         type: EMessageMetadataType.SCHEDULED,
         timestamp: Date.now(),
       },
@@ -170,16 +204,17 @@ export class Metadata {
     );
     const { keyMetadataQueue } = redisKeys.getKeys(queueName);
     multi.hincrby(keyMetadataQueue, EQueueMetadataType.SCHEDULED_MESSAGES, 1);
-  };
+  },
 
-  preMessageScheduledDelete = (
+  preMessageScheduledDelete(
     msg: Message,
     queueName: string,
     multi: TRedisClientMulti,
-  ): void => {
+  ): void {
     this.addMessageMetadata(
       msg,
       {
+        state: msg,
         type: EMessageMetadataType.SCHEDULED_DELETED,
         timestamp: Date.now(),
       },
@@ -187,26 +222,88 @@ export class Metadata {
     );
     const { keyMetadataQueue } = redisKeys.getKeys(queueName);
     multi.hincrby(keyMetadataQueue, EQueueMetadataType.SCHEDULED_MESSAGES, -1);
-  };
+  },
 
-  static getMessageMetadata(
+  preMessagePendingDelete(
+    msg: Message,
+    queueName: string,
+    withPriority: boolean,
+    multi: TRedisClientMulti,
+  ): void {
+    this.addMessageMetadata(
+      msg,
+      {
+        state: msg,
+        type: withPriority
+          ? EMessageMetadataType.DELETED_FROM_PRIORITY_QUEUE
+          : EMessageMetadataType.DELETED_FROM_QUEUE,
+        timestamp: Date.now(),
+      },
+      multi,
+    );
+    const { keyMetadataQueue } = redisKeys.getKeys(queueName);
+    multi.hincrby(
+      keyMetadataQueue,
+      withPriority
+        ? EQueueMetadataType.PENDING_MESSAGES_WITH_PRIORITY
+        : EQueueMetadataType.PENDING_MESSAGES,
+      -1,
+    );
+  },
+
+  ///
+
+  preQueueDeadLetterPurge(queueName: string, multi: TRedisClientMulti): void {
+    const { keyMetadataQueue } = redisKeys.getKeys(queueName);
+    multi.hset(keyMetadataQueue, EQueueMetadataType.DEAD_LETTER_MESSAGES, '0');
+  },
+
+  prePurgeAcknowledgedMessagesQueue(
+    queueName: string,
+    multi: TRedisClientMulti,
+  ): void {
+    const { keyMetadataQueue } = redisKeys.getKeys(queueName);
+    multi.hset(keyMetadataQueue, EQueueMetadataType.ACKNOWLEDGED_MESSAGES, '0');
+  },
+
+  preQueuePurge(queueName: string, multi: TRedisClientMulti): void {
+    const { keyMetadataQueue } = redisKeys.getKeys(queueName);
+    multi.hset(keyMetadataQueue, EQueueMetadataType.PENDING_MESSAGES, '0');
+  },
+
+  prePriorityQueuePurge(queueName: string, multi: TRedisClientMulti): void {
+    const { keyMetadataQueue } = redisKeys.getKeys(queueName);
+    multi.hset(
+      keyMetadataQueue,
+      EQueueMetadataType.PENDING_MESSAGES_WITH_PRIORITY,
+      '0',
+    );
+  },
+
+  ///
+
+  getMessageMetadata(
     client: RedisClient,
     messageId: string,
-    cb: ICallback<TMessageMetadata[]>,
+    cb: ICallback<IMessageMetadata[]>,
   ): void {
     const { keyMetadataMessage } = redisKeys.getMessageKeys(messageId);
     client.lrange(keyMetadataMessage, 0, -1, (err, metadata) => {
       if (err) cb(err);
       else {
-        const metadataList: TMessageMetadata[] = (metadata ?? []).map((i) =>
-          JSON.parse(i),
-        );
+        const metadataList: IMessageMetadata[] = (metadata ?? []).map((i) => {
+          const msgMetadataItem: IMessageMetadata = JSON.parse(i);
+          msgMetadataItem.state = Message.createFromMessage(
+            msgMetadataItem.state,
+          );
+          return msgMetadataItem;
+        });
         cb(null, metadataList);
       }
     });
-  }
+  },
 
-  static getQueueMetadata(
+  getQueueMetadata(
     client: RedisClient,
     queueName: string,
     cb: ICallback<TQueueMetadata>,
@@ -238,9 +335,9 @@ export class Metadata {
         cb(null, result);
       }
     });
-  }
+  },
 
-  static getQueueMetadataByKey(
+  getQueueMetadataByKey(
     client: RedisClient,
     queueName: string,
     key: keyof TQueueMetadata,
@@ -254,5 +351,5 @@ export class Metadata {
         cb(null, m);
       }
     });
-  }
-}
+  },
+};

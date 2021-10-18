@@ -3,7 +3,7 @@ import { RedisClient } from './redis-client';
 import { Instance } from './instance';
 import { ICallback, TRedisClientMulti } from '../../types';
 import { Consumer } from '../consumer';
-import { Broker } from './broker';
+import { redisKeys } from './redis-keys';
 
 export class QueueManager extends BaseQueueManager {
   constructor(redisClient: RedisClient) {
@@ -33,27 +33,26 @@ export class QueueManager extends BaseQueueManager {
   }
 
   deleteProcessingQueue(
-    broker: Broker,
+    queueName: string,
     processingQueueName: string,
     cb: ICallback<void>,
   ): void {
-    const instance = broker.getInstance();
     const multi = this.redisClient.multi();
     const {
       keyIndexMessageProcessingQueues,
       keyIndexQueueMessageProcessingQueues,
-    } = instance.getRedisKeys();
+    } = redisKeys.getKeys(queueName);
     multi.srem(keyIndexMessageProcessingQueues, processingQueueName);
     multi.hdel(keyIndexQueueMessageProcessingQueues, processingQueueName);
     multi.del(processingQueueName);
     multi.exec((err) => cb(err));
   }
 
-  cleanProcessingQueue(
+  purgeProcessingQueue(
     processingQueue: string,
     multi: TRedisClientMulti,
   ): void {
-    multi.rpop(processingQueue);
+    multi.del(processingQueue);
   }
 
   quit(cb: ICallback<void>): void {

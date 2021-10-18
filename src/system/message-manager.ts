@@ -2,14 +2,14 @@ import { MessageManager as BaseMessageManager } from '../message-manager';
 import {
   EMessageDeadLetterCause,
   ICallback,
-  TConsumerOptions,
   TRedisClientMulti,
 } from '../../types';
-import { Broker } from './broker';
 import { Message } from '../message';
 import { events } from './events';
 import { RedisClient } from './redis-client';
 import { Ticker } from './ticker';
+import { redisKeys } from './redis-keys';
+import { metadata } from './metadata';
 
 const dequeueScript = `
 if redis.call("EXISTS", KEYS[1]) == 1 then 
@@ -32,7 +32,7 @@ export class MessageManager extends BaseMessageManager {
     super(redisClient);
 
     // Initialize a dummy ticker. nextTickFn will be used instead of nextTick
-    // A ticker is needed to pool priority queues
+    // A ticker is needed for pooling priority queues
     this.ticker = new Ticker(() => void 0, 1000);
   }
 
@@ -47,78 +47,48 @@ export class MessageManager extends BaseMessageManager {
   }
 
   moveMessageToDLQQueue(
-    broker: Broker,
+    queueName: string,
     message: Message,
     cause: EMessageDeadLetterCause,
     multi: TRedisClientMulti,
   ): void {
-    const instance = broker.getInstance();
-    const queueName = instance.getQueueName();
-    const { keyQueueDL } = instance.getRedisKeys();
-    instance.emit(
-      events.PRE_MESSAGE_DEAD_LETTER,
-      message,
-      queueName,
-      cause,
-      multi,
-    );
+    const { keyQueueDL } = redisKeys.getKeys(queueName);
+    metadata.preMessageDeadLetter(message, queueName, cause, multi);
     multi.zadd(keyQueueDL, Date.now(), message.toString());
   }
 
   moveMessageToAcknowledgmentQueue(
-    broker: Broker,
+    queueName: string,
     message: Message,
     multi: TRedisClientMulti,
   ): void {
-    const { keyQueueAcknowledgedMessages } = broker
-      .getInstance()
-      .getRedisKeys();
+    const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName);
+    metadata.preMessageAcknowledged(message, queueName, multi);
     multi.zadd(keyQueueAcknowledgedMessages, Date.now(), message.toString());
-  }
-
-  enqueueMessageWithPriority(
-    broker: Broker,
-    message: Message,
-    multi: TRedisClientMulti,
-  ): void {
-    const instance = broker.getInstance();
-    const queueName = instance.getQueueName();
-    instance.emit(
-      events.PRE_MESSAGE_WITH_PRIORITY_ENQUEUED,
-      message,
-      queueName,
-      multi,
-    );
-    const priority = message.getPriority() ?? Message.MessagePriority.NORMAL;
-    if (message.getPriority() !== priority) message.setPriority(priority);
-    const { keyQueuePriority } = instance.getRedisKeys();
-    multi.zadd(keyQueuePriority, priority, message.toString());
   }
 
   // Requires an exclusive RedisClient client
   dequeueMessageWithPriority(
-    broker: Broker,
     redisClient: RedisClient,
-    consumerOptions: TConsumerOptions,
+    keyQueuePriority: string,
+    keyQueueProcessing: string,
+    cb: ICallback<string>,
   ): void {
-    const instance = broker.getInstance();
-    if (!this.dequeueScriptId)
-      instance.emit(events.ERROR, new Error('dequeueScriptSha is required'));
+    if (!this.dequeueScriptId) throw new Error('dequeueScriptSha is required');
     else {
-      const { keyQueuePriority, keyQueueProcessing } = instance.getRedisKeys();
       redisClient.evalsha(
         this.dequeueScriptId,
         [2, keyQueuePriority, keyQueueProcessing],
         (err, json) => {
-          if (err) instance.emit(events.ERROR, err);
-          else if (typeof json === 'string')
-            broker.handleReceivedMessage(json, consumerOptions);
+          if (err) cb(err);
+          else if (typeof json === 'string') cb(null, json);
           else
             this.ticker.nextTickFn(() =>
               this.dequeueMessageWithPriority(
-                broker,
                 redisClient,
-                consumerOptions,
+                keyQueuePriority,
+                keyQueueProcessing,
+                cb,
               ),
             );
         },
@@ -126,33 +96,14 @@ export class MessageManager extends BaseMessageManager {
     }
   }
 
-  enqueueMessage(
-    broker: Broker,
-    message: Message,
-    multi: TRedisClientMulti,
-  ): void {
-    const instance = broker.getInstance();
-    const queueName = instance.getQueueName();
-    const { keyQueue } = instance.getRedisKeys();
-    instance.emit(events.PRE_MESSAGE_ENQUEUED, message, queueName, multi);
-    multi.lpush(keyQueue, message.toString());
-  }
-
   // Requires an exclusive RedisClient client
   dequeueMessage(
-    broker: Broker,
     redisClient: RedisClient,
-    consumerOptions: TConsumerOptions,
+    keyQueue: string,
+    keyQueueProcessing: string,
+    cb: ICallback<string>,
   ): void {
-    const instance = broker.getInstance();
-    const { keyQueue, keyQueueProcessing } = instance.getRedisKeys();
-    redisClient.brpoplpush(keyQueue, keyQueueProcessing, 0, (err, json) => {
-      if (err) {
-        instance.emit(events.ERROR, err);
-      } else if (!json)
-        instance.emit(events.ERROR, new Error('Expected a non empty string'));
-      else broker.handleReceivedMessage(json, consumerOptions);
-    });
+    redisClient.brpoplpush(keyQueue, keyQueueProcessing, 0, cb);
   }
 
   quit(cb: ICallback<void>): void {

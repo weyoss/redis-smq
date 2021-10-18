@@ -57,19 +57,17 @@ export class GarbageCollector extends EventEmitter {
     processingQueueName: string,
     cb: ICallback<void>,
   ): void {
-    this.consumer.getBroker((broker) => {
-      broker.deleteProcessingQueue(
-        this.queueName,
-        processingQueueName,
-        (err?: Error | null) => {
-          if (err) cb(err);
-          else {
-            this.debug(`Processing queue [${processingQueueName}] deleted.`);
-            cb();
-          }
-        },
-      );
-    });
+    this.queueManager.deleteProcessingQueue(
+      this.queueName,
+      processingQueueName,
+      (err?: Error | null) => {
+        if (err) cb(err);
+        else {
+          this.debug(`Processing queue [${processingQueueName}] deleted.`);
+          cb();
+        }
+      },
+    );
   }
 
   protected handleOfflineConsumer(
@@ -88,6 +86,7 @@ export class GarbageCollector extends EventEmitter {
         if (err) cb(err);
         else if (range && range.length) {
           const msg = Message.createFromMessage(range[0]);
+          this.consumer.emit(events.MESSAGE_RECOVERING, msg);
           this.debug(
             `Fetched message ID [${msg.getId()}] from consumer [${consumerId}] processing queue [${processingQueue}].`,
           );
@@ -96,7 +95,7 @@ export class GarbageCollector extends EventEmitter {
               this.redisClientInstance,
               msg,
               processingQueue,
-              this.consumer.getOptions(),
+              this.consumer,
               EMessageUnacknowledgedCause.RECOVERY,
               (err) => {
                 if (err) cb(err);

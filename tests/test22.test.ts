@@ -7,14 +7,14 @@ import {
   untilMessageAcknowledged,
 } from './common';
 import { Message } from '../src/message';
-import { Metadata } from '../src/system/metadata';
 import {
   EMessageDeadLetterCause,
   EMessageMetadataType,
   EMessageUnacknowledgedCause,
-  TMessageMetadata,
+  IMessageMetadata,
 } from '../types';
 import { delay, promisifyAll } from 'bluebird';
+import { metadata } from '../src/system/metadata';
 
 describe('Message Metadata: check that message metadata are valid', () => {
   test('Case 1', async () => {
@@ -33,38 +33,36 @@ describe('Message Metadata: check that message metadata are valid', () => {
     consumer.run();
     await untilConsumerIdle(consumer);
 
-    const metadata = await new Promise<TMessageMetadata[]>(
-      (resolve, reject) => {
-        Metadata.getMessageMetadata(client, msg.getId(), (err, data) => {
-          if (err) reject(err);
-          else resolve(data ?? []);
-        });
-      },
-    );
+    const m = await new Promise<IMessageMetadata[]>((resolve, reject) => {
+      metadata.getMessageMetadata(client, msg.getId(), (err, data) => {
+        if (err) reject(err);
+        else resolve(data ?? []);
+      });
+    });
 
-    expect(metadata.length).toBe(9);
-    expect(metadata[0].type).toBe(EMessageMetadataType.ENQUEUED);
-    expect(metadata[1].type).toBe(EMessageMetadataType.UNACKNOWLEDGED);
-    expect(metadata[1].unacknowledgedCause).toBe(
+    expect(m.length).toBe(9);
+    expect(m[0].type).toBe(EMessageMetadataType.ENQUEUED);
+    expect(m[1].type).toBe(EMessageMetadataType.UNACKNOWLEDGED);
+    expect(m[1].unacknowledgedCause).toBe(
       EMessageUnacknowledgedCause.CAUGHT_ERROR,
     );
-    expect(metadata[2].type).toBe(EMessageMetadataType.ENQUEUED);
-    expect(metadata[3].type).toBe(EMessageMetadataType.UNACKNOWLEDGED);
-    expect(metadata[3].unacknowledgedCause).toBe(
+    expect(m[2].type).toBe(EMessageMetadataType.ENQUEUED);
+    expect(m[3].type).toBe(EMessageMetadataType.UNACKNOWLEDGED);
+    expect(m[3].unacknowledgedCause).toBe(
       EMessageUnacknowledgedCause.CAUGHT_ERROR,
     );
-    expect(metadata[4].type).toBe(EMessageMetadataType.ENQUEUED);
-    expect(metadata[5].type).toBe(EMessageMetadataType.UNACKNOWLEDGED);
-    expect(metadata[5].unacknowledgedCause).toBe(
+    expect(m[4].type).toBe(EMessageMetadataType.ENQUEUED);
+    expect(m[5].type).toBe(EMessageMetadataType.UNACKNOWLEDGED);
+    expect(m[5].unacknowledgedCause).toBe(
       EMessageUnacknowledgedCause.CAUGHT_ERROR,
     );
-    expect(metadata[6].type).toBe(EMessageMetadataType.ENQUEUED);
-    expect(metadata[7].type).toBe(EMessageMetadataType.UNACKNOWLEDGED);
-    expect(metadata[7].unacknowledgedCause).toBe(
+    expect(m[6].type).toBe(EMessageMetadataType.ENQUEUED);
+    expect(m[7].type).toBe(EMessageMetadataType.UNACKNOWLEDGED);
+    expect(m[7].unacknowledgedCause).toBe(
       EMessageUnacknowledgedCause.CAUGHT_ERROR,
     );
-    expect(metadata[8].type).toBe(EMessageMetadataType.DEAD_LETTER);
-    expect(metadata[8].deadLetterCause).toBe(
+    expect(m[8].type).toBe(EMessageMetadataType.DEAD_LETTER);
+    expect(m[8].deadLetterCause).toBe(
       EMessageDeadLetterCause.RETRY_THRESHOLD_EXCEEDED,
     );
   });
@@ -88,21 +86,21 @@ describe('Message Metadata: check that message metadata are valid', () => {
     await consumer.runAsync();
     await untilConsumerIdle(consumer);
 
-    const metadata = await new Promise<TMessageMetadata[]>(
-      (resolve, reject) => {
-        Metadata.getMessageMetadata(client, msg.getId(), (err, data) => {
-          if (err) reject(err);
-          else resolve(data ?? []);
-        });
-      },
-    );
+    const m = await new Promise<IMessageMetadata[]>((resolve, reject) => {
+      metadata.getMessageMetadata(client, msg.getId(), (err, data) => {
+        if (err) reject(err);
+        else resolve(data ?? []);
+      });
+    });
 
-    expect(metadata.length).toBe(2);
-    expect(metadata[0].type).toBe(EMessageMetadataType.ENQUEUED);
-    expect(metadata[1].type).toBe(EMessageMetadataType.DEAD_LETTER);
-    expect(metadata[1].deadLetterCause).toBe(
-      EMessageDeadLetterCause.TTL_EXPIRED,
+    expect(m.length).toBe(3);
+    expect(m[0].type).toBe(EMessageMetadataType.ENQUEUED);
+    expect(m[1].type).toBe(EMessageMetadataType.UNACKNOWLEDGED);
+    expect(m[1].unacknowledgedCause).toBe(
+      EMessageUnacknowledgedCause.TTL_EXPIRED,
     );
+    expect(m[2].type).toBe(EMessageMetadataType.DEAD_LETTER);
+    expect(m[2].deadLetterCause).toBe(EMessageDeadLetterCause.TTL_EXPIRED);
   });
 
   test('Case 3', async () => {
@@ -121,20 +119,18 @@ describe('Message Metadata: check that message metadata are valid', () => {
     await untilMessageAcknowledged(consumer);
 
     const client = await getRedisInstance();
-    const metadata = await new Promise<TMessageMetadata[]>(
-      (resolve, reject) => {
-        Metadata.getMessageMetadata(client, message.getId(), (err, data) => {
-          if (err) reject(err);
-          else resolve(data ?? []);
-        });
-      },
-    );
+    const m = await new Promise<IMessageMetadata[]>((resolve, reject) => {
+      metadata.getMessageMetadata(client, message.getId(), (err, data) => {
+        if (err) reject(err);
+        else resolve(data ?? []);
+      });
+    });
 
-    expect(metadata.length).toBe(4);
-    expect(metadata[0].type).toBe(EMessageMetadataType.SCHEDULED);
-    expect(metadata[1].type).toBe(EMessageMetadataType.SCHEDULED_ENQUEUED);
-    expect(metadata[2].type).toBe(EMessageMetadataType.ENQUEUED);
-    expect(metadata[3].type).toBe(EMessageMetadataType.ACKNOWLEDGED);
+    expect(m.length).toBe(4);
+    expect(m[0].type).toBe(EMessageMetadataType.SCHEDULED);
+    expect(m[1].type).toBe(EMessageMetadataType.SCHEDULED_ENQUEUED);
+    expect(m[2].type).toBe(EMessageMetadataType.ENQUEUED);
+    expect(m[3].type).toBe(EMessageMetadataType.ACKNOWLEDGED);
   });
 
   test('Case 4', async () => {
@@ -155,17 +151,15 @@ describe('Message Metadata: check that message metadata are valid', () => {
     await scheduler.deleteScheduledMessageAsync(message.getId());
 
     const client = await getRedisInstance();
-    const metadata = await new Promise<TMessageMetadata[]>(
-      (resolve, reject) => {
-        Metadata.getMessageMetadata(client, message.getId(), (err, data) => {
-          if (err) reject(err);
-          else resolve(data ?? []);
-        });
-      },
-    );
+    const m = await new Promise<IMessageMetadata[]>((resolve, reject) => {
+      metadata.getMessageMetadata(client, message.getId(), (err, data) => {
+        if (err) reject(err);
+        else resolve(data ?? []);
+      });
+    });
 
-    expect(metadata.length).toBe(2);
-    expect(metadata[0].type).toBe(EMessageMetadataType.SCHEDULED);
-    expect(metadata[1].type).toBe(EMessageMetadataType.SCHEDULED_DELETED);
+    expect(m.length).toBe(2);
+    expect(m[0].type).toBe(EMessageMetadataType.SCHEDULED);
+    expect(m[1].type).toBe(EMessageMetadataType.SCHEDULED_DELETED);
   });
 });

@@ -22,8 +22,6 @@ import { QueueManager } from './queue-manager';
 import { MessageManager } from './message-manager';
 
 export abstract class Instance extends EventEmitter {
-  private readonly redisKeys: TInstanceRedisKeys;
-
   private broker: Broker | null = null;
   private stats: Stats | null = null;
   private scheduler: Scheduler | null = null;
@@ -37,6 +35,7 @@ export abstract class Instance extends EventEmitter {
   protected readonly config: IConfig;
   protected readonly logger: BunyanLogger;
   protected readonly powerManager: PowerManager;
+  protected readonly redisKeys: TInstanceRedisKeys;
 
   protected constructor(queueName: string, config: IConfig) {
     super();
@@ -133,7 +132,12 @@ export abstract class Instance extends EventEmitter {
     scheduler: Scheduler,
     cb: ICallback<Broker>,
   ): void => {
-    this.broker = new Broker(this, scheduler, messageManager, queueManager);
+    this.broker = new Broker(
+      this.config,
+      scheduler,
+      messageManager,
+      queueManager,
+    );
     cb();
   };
 

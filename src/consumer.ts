@@ -100,13 +100,13 @@ export abstract class Consumer extends Instance {
           else
             this.getConsumerRedisClient((client) => {
               this.getBroker((broker) => {
-                broker.acknowledgeMessage(client, msg, (err) => {
+                broker.acknowledgeMessage(client, this, msg, (err) => {
                   if (err) this.emit(events.ERROR, err);
                   else {
                     this.logger.info(
                       `Message [${msg.getId()}] successfully processed`,
                     );
-                    this.emit(events.MESSAGE_ACKNOWLEDGED, msg, this.queueName);
+                    this.emit(events.MESSAGE_ACKNOWLEDGED, msg);
                   }
                 });
               });
@@ -134,7 +134,7 @@ export abstract class Consumer extends Instance {
   ): void {
     this.getConsumerRedisClient((client) => {
       this.getBroker((broker) => {
-        broker.unacknowledgeMessage(client, msg, cause, this.getOptions(), err);
+        broker.unacknowledgeMessage(client, this, msg, cause, err);
       });
     });
   }
@@ -147,41 +147,18 @@ export abstract class Consumer extends Instance {
         this.getConsumerRedisClient((client) => {
           this.logger.info('Waiting for new messages...');
           this.getBroker((broker) => {
-            broker.dequeueMessage(client, this.getOptions());
+            broker.dequeueMessage(client, this, (err, msgStr) => {
+              if (err) this.emit(events.ERROR, err);
+              else if (!msgStr)
+                this.emit(
+                  events.ERROR,
+                  new Error('Expected a non empty string'),
+                );
+              else this.handleReceivedMessage(msgStr);
+            });
           });
         });
       }
-    });
-    this.on(events.MESSAGE_RECEIVED, (message: Message) => {
-      this.logger.info('Got new message...');
-      if (this.powerManager.isRunning()) {
-        if (this.statsProvider) this.statsProvider.incrementProcessingSlot();
-        this.handleConsume(message);
-      }
-    });
-    this.on(events.MESSAGE_EXPIRED, (message: Message) => {
-      this.logger.info(`Message [${message.getId()}] has expired`);
-      const { keyQueueProcessing } = this.getRedisKeys();
-      this.getConsumerRedisClient((client) => {
-        this.getBroker((broker) => {
-          broker.handleMessageWithExpiredTTL(
-            client,
-            message,
-            keyQueueProcessing,
-            (err) => {
-              if (err) this.emit(events.ERROR, err);
-              else {
-                this.logger.info(
-                  `Expired message [${message.getId()}] has been deleted`,
-                );
-                if (this.statsProvider)
-                  this.statsProvider.incrementAcknowledgedSlot();
-                this.emit(events.MESSAGE_NEXT);
-              }
-            },
-          );
-        });
-      });
     });
     this.on(events.MESSAGE_ACKNOWLEDGED, () => {
       if (this.statsProvider) this.statsProvider.incrementAcknowledgedSlot();
@@ -196,13 +173,35 @@ export abstract class Consumer extends Instance {
         this.getBroker((broker) => {
           broker.unacknowledgeMessage(
             client,
+            this,
             message,
             EMessageUnacknowledgedCause.TIMEOUT,
-            this.getOptions(),
           );
         });
       });
     });
+  }
+
+  protected handleReceivedMessage(json: string): void {
+    const message = Message.createFromMessage(json);
+    this.applyOptions(message);
+    this.emit(events.MESSAGE_DEQUEUED, message);
+    if (message.hasExpired()) {
+      this.getConsumerRedisClient((client) => {
+        this.getBroker((broker) =>
+          broker.unacknowledgeMessage(
+            client,
+            this,
+            message,
+            EMessageUnacknowledgedCause.TTL_EXPIRED,
+          ),
+        );
+      });
+    } else {
+      this.logger.info(`Consuming message [${message.getId()}] ...`);
+      if (this.statsProvider) this.statsProvider.incrementProcessingSlot();
+      this.handleConsume(message);
+    }
   }
 
   protected goingUp(): TUnaryFunction<ICallback<void>>[] {
@@ -292,6 +291,27 @@ export abstract class Consumer extends Instance {
 
   getOptions(): TConsumerOptions {
     return this.options;
+  }
+
+  applyOptions(msg: Message): void {
+    const {
+      messageConsumeTimeout,
+      messageRetryDelay,
+      messageRetryThreshold,
+      messageTTL,
+    } = this.options;
+    if (msg.getTTL() === null) {
+      msg.setTTL(messageTTL);
+    }
+    if (msg.getRetryDelay() === null) {
+      msg.setRetryDelay(messageRetryDelay);
+    }
+    if (msg.getConsumeTimeout() === null) {
+      msg.setConsumeTimeout(messageConsumeTimeout);
+    }
+    if (msg.getRetryThreshold() === null) {
+      msg.setRetryThreshold(messageRetryThreshold);
+    }
   }
 
   getStatsProvider(): ConsumerStatsProvider {

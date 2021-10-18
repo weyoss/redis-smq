@@ -56,10 +56,7 @@ describe('Produce and delete a scheduled message', () => {
     expect(pageTwo.items[0].getMessageScheduledDelay()).toEqual(90000);
 
     // Delete a scheduled message
-    const result = await scheduler.deleteScheduledMessageAsync(
-      pageOne.items[1].getId(),
-    );
-    expect(result).toBe(true);
+    await scheduler.deleteScheduledMessageAsync(pageOne.items[1].getId());
 
     // Page 1
     const singlePage = await scheduler.getScheduledMessagesAsync(0, 100);
