@@ -55,10 +55,6 @@ export const redisKeys = {
         queueName,
       ),
       keyLockScheduler: this.joinSegments(types.KEY_LOCK_SCHEDULER, queueName),
-      keyIndexScheduledMessages: this.joinSegments(
-        types.KEY_INDEX_SCHEDULED_MESSAGES,
-        queueName,
-      ),
       keyLockGC: this.joinSegments(types.KEY_LOCK_GC, queueName),
       keyIndexQueueMessageProcessingQueues: this.joinSegments(
         types.KEY_INDEX_QUEUE_MESSAGE_PROCESSING_QUEUES,

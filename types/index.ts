@@ -46,6 +46,12 @@ export type TCompatibleRedisClient = (NodeRedis | Redis) & {
     cb: ICallback<number | string>,
   ): void;
   zrange(key: string, min: number, max: number, cb: ICallback<string[]>): void;
+  zrevrange(
+    key: string,
+    min: number,
+    max: number,
+    cb: ICallback<string[]>,
+  ): void;
   subscribe(channel: string): void;
   zrangebyscore(
     key: string,
@@ -192,14 +198,19 @@ export enum EMessageMetadataType {
   ACKNOWLEDGED = 'acknowledged',
   UNACKNOWLEDGED = 'unacknowledged',
   DEAD_LETTER = 'dead_letter',
+  DELETED_FROM_DL = 'deleted_from_dl',
+  DELETED_FROM_QUEUE = 'deleted_from_queue',
+  DELETED_FROM_PRIORITY_QUEUE = 'deleted_from_priority_queue',
+  DELETED_FROM_ACKNOWLEDGED_QUEUE = 'deleted_from_acknowledged_queue',
 }
 
-export type TMessageMetadata = {
+export interface IMessageMetadata {
+  state: Message;
   type: EMessageMetadataType;
   timestamp: number;
   deadLetterCause?: EMessageDeadLetterCause;
   unacknowledgedCause?: EMessageUnacknowledgedCause;
-};
+}
 
 export type TQueueMetadata = {
   pending: number;
@@ -220,4 +231,5 @@ export enum EMessageUnacknowledgedCause {
   CAUGHT_ERROR = 'caught_error',
   UNACKNOWLEDGED = 'unacknowledged',
   RECOVERY = 'recovery',
+  TTL_EXPIRED = 'ttl_expired',
 }

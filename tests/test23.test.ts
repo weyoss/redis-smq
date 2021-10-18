@@ -5,10 +5,10 @@ import {
   untilConsumerIdle,
 } from './common';
 import { Message } from '../src/message';
-import { Metadata } from '../src/system/metadata';
 import { TQueueMetadata } from '../types';
 import { config } from './config';
 import { promisifyAll } from 'bluebird';
+import { metadata } from '../src/system/metadata';
 
 describe('Queue Metadata: check that queue metadata are valid', () => {
   test('Case 1', async () => {
@@ -24,8 +24,8 @@ describe('Queue Metadata: check that queue metadata are valid', () => {
     await producer.produceMessageAsync(msg);
 
     const client = await getRedisInstance();
-    const metadata = await new Promise<TQueueMetadata>((resolve, reject) => {
-      Metadata.getQueueMetadata(
+    const m = await new Promise<TQueueMetadata>((resolve, reject) => {
+      metadata.getQueueMetadata(
         client,
         consumer.getQueueName(),
         (err, data) => {
@@ -36,11 +36,11 @@ describe('Queue Metadata: check that queue metadata are valid', () => {
       );
     });
 
-    expect(metadata.pending).toBe(1);
-    expect(metadata.pendingWithPriority).toBe(0);
-    expect(metadata.acknowledged).toBe(0);
-    expect(metadata.deadLetter).toBe(0);
-    expect(metadata.scheduled).toBe(0);
+    expect(m.pending).toBe(1);
+    expect(m.pendingWithPriority).toBe(0);
+    expect(m.acknowledged).toBe(0);
+    expect(m.deadLetter).toBe(0);
+    expect(m.scheduled).toBe(0);
   });
 
   test('Case 2', async () => {
@@ -59,8 +59,8 @@ describe('Queue Metadata: check that queue metadata are valid', () => {
     await untilConsumerIdle(consumer);
 
     const client = await getRedisInstance();
-    const metadata = await new Promise<TQueueMetadata>((resolve, reject) => {
-      Metadata.getQueueMetadata(
+    const m = await new Promise<TQueueMetadata>((resolve, reject) => {
+      metadata.getQueueMetadata(
         client,
         consumer.getQueueName(),
         (err, data) => {
@@ -71,11 +71,11 @@ describe('Queue Metadata: check that queue metadata are valid', () => {
       );
     });
 
-    expect(metadata.pending).toBe(0);
-    expect(metadata.pendingWithPriority).toBe(0);
-    expect(metadata.acknowledged).toBe(0);
-    expect(metadata.deadLetter).toBe(1);
-    expect(metadata.scheduled).toBe(0);
+    expect(m.pending).toBe(0);
+    expect(m.pendingWithPriority).toBe(0);
+    expect(m.acknowledged).toBe(0);
+    expect(m.deadLetter).toBe(1);
+    expect(m.scheduled).toBe(0);
   });
 
   test('Case 3', async () => {
@@ -94,8 +94,8 @@ describe('Queue Metadata: check that queue metadata are valid', () => {
     await untilConsumerIdle(consumer);
 
     const client = await getRedisInstance();
-    const metadata = await new Promise<TQueueMetadata>((resolve, reject) => {
-      Metadata.getQueueMetadata(
+    const m = await new Promise<TQueueMetadata>((resolve, reject) => {
+      metadata.getQueueMetadata(
         client,
         consumer.getQueueName(),
         (err, data) => {
@@ -106,11 +106,11 @@ describe('Queue Metadata: check that queue metadata are valid', () => {
       );
     });
 
-    expect(metadata.pending).toBe(0);
-    expect(metadata.pendingWithPriority).toBe(0);
-    expect(metadata.acknowledged).toBe(1);
-    expect(metadata.deadLetter).toBe(0);
-    expect(metadata.scheduled).toBe(0);
+    expect(m.pending).toBe(0);
+    expect(m.pendingWithPriority).toBe(0);
+    expect(m.acknowledged).toBe(1);
+    expect(m.deadLetter).toBe(0);
+    expect(m.scheduled).toBe(0);
   });
 
   test('Case 4', async () => {
@@ -121,8 +121,8 @@ describe('Queue Metadata: check that queue metadata are valid', () => {
     await producer.produceMessageAsync(msg);
 
     const client = await getRedisInstance();
-    const metadata = await new Promise<TQueueMetadata>((resolve, reject) => {
-      Metadata.getQueueMetadata(
+    const m = await new Promise<TQueueMetadata>((resolve, reject) => {
+      metadata.getQueueMetadata(
         client,
         producer.getQueueName(),
         (err, data) => {
@@ -133,11 +133,11 @@ describe('Queue Metadata: check that queue metadata are valid', () => {
       );
     });
 
-    expect(metadata.pending).toBe(0);
-    expect(metadata.pendingWithPriority).toBe(0);
-    expect(metadata.acknowledged).toBe(0);
-    expect(metadata.deadLetter).toBe(0);
-    expect(metadata.scheduled).toBe(1);
+    expect(m.pending).toBe(0);
+    expect(m.pendingWithPriority).toBe(0);
+    expect(m.acknowledged).toBe(0);
+    expect(m.deadLetter).toBe(0);
+    expect(m.scheduled).toBe(1);
   });
 
   test('Case 5', async () => {
@@ -153,8 +153,8 @@ describe('Queue Metadata: check that queue metadata are valid', () => {
     await producer.produceMessageAsync(msg);
 
     const client = await getRedisInstance();
-    const metadata = await new Promise<TQueueMetadata>((resolve, reject) => {
-      Metadata.getQueueMetadata(
+    const m = await new Promise<TQueueMetadata>((resolve, reject) => {
+      metadata.getQueueMetadata(
         client,
         producer.getQueueName(),
         (err, data) => {
@@ -165,10 +165,10 @@ describe('Queue Metadata: check that queue metadata are valid', () => {
       );
     });
 
-    expect(metadata.pending).toBe(0);
-    expect(metadata.pendingWithPriority).toBe(1);
-    expect(metadata.acknowledged).toBe(0);
-    expect(metadata.deadLetter).toBe(0);
-    expect(metadata.scheduled).toBe(0);
+    expect(m.pending).toBe(0);
+    expect(m.pendingWithPriority).toBe(1);
+    expect(m.acknowledged).toBe(0);
+    expect(m.deadLetter).toBe(0);
+    expect(m.scheduled).toBe(0);
   });
 });

@@ -139,6 +139,15 @@ export class RedisClient extends EventEmitter {
     this.client.zrange(key, min, max, cb);
   }
 
+  zrevrange(
+    key: string,
+    min: number,
+    max: number,
+    cb: ICallback<string[]>,
+  ): void {
+    this.client.zrevrange(key, min, max, cb);
+  }
+
   subscribe(channel: string): void {
     this.client.subscribe(channel);
   }

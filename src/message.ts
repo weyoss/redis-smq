@@ -16,8 +16,6 @@ export class Message {
 
   protected uuid: string;
 
-  protected attempts: number;
-
   protected createdAt: number;
 
   protected ttl: number | null = null;
@@ -30,9 +28,9 @@ export class Message {
 
   protected body: unknown = null;
 
-  protected scheduledCron: string | null = null;
+  protected priority: number | null = null;
 
-  protected scheduledCronFired = false;
+  protected scheduledCron: string | null = null;
 
   // The time in milliseconds that a message will wait before being scheduled to be delivered
   protected scheduledDelay: number | null = null;
@@ -43,13 +41,19 @@ export class Message {
   // The number of times to repeat scheduling a message for delivery
   protected scheduledRepeat = 0;
 
+  ///
+
+  protected scheduledCronFired = false;
+
+  protected attempts = 0;
+
   protected scheduledRepeatCount = 0;
 
   protected delayed = false;
 
-  protected priority: number | null = null;
-
   protected expired = false;
+
+  ///
 
   constructor() {
     this.createdAt = Date.now();
@@ -259,17 +263,28 @@ export class Message {
     return false;
   }
 
-  static createFromMessage(message: string | Message, reset = false): Message {
+  reset(hardReset = false): Message {
+    if (hardReset) {
+      this.createdAt = Date.now();
+      this.delayed = false;
+      this.scheduledCronFired = false;
+      this.scheduledRepeatCount = 0;
+    }
+    this.attempts = 0;
+    this.expired = false;
+    return this;
+  }
+
+  static createFromMessage(
+    message: string | Message,
+    reset = false,
+    hardReset = false,
+  ): Message {
     const messageJSON: Message =
       typeof message === 'string' ? JSON.parse(message) : message;
     const m = new Message();
     Object.assign(m, messageJSON);
-    if (reset) {
-      m.uuid = uuid();
-      m.attempts = 0;
-      m.expired = false;
-      m.createdAt = Date.now();
-    }
+    if (reset) m.reset(hardReset);
     return m;
   }
 }

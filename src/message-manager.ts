@@ -1,14 +1,16 @@
 import {
+  EMessageMetadataType,
   ICallback,
   IConfig,
   TGetAcknowledgedMessagesReply,
-  TMessageMetadata,
+  IMessageMetadata,
+  TRedisClientMulti,
 } from '../types';
 import { RedisClient } from './system/redis-client';
-import { Scheduler } from './scheduler';
-import { Metadata } from './system/metadata';
+import { Scheduler } from './system/scheduler';
 import { Message } from './message';
 import { redisKeys } from './system/redis-keys';
+import { metadata } from './system/metadata';
 
 export class MessageManager {
   protected static instance: MessageManager | null = null;
@@ -18,6 +20,178 @@ export class MessageManager {
     this.redisClient = redisClient;
   }
 
+  ///
+
+  protected requeueMessage(
+    queueName: string,
+    message: Message,
+    withPriority: boolean,
+    multi: TRedisClientMulti,
+  ): void {
+    // a brand new state
+    const msg = Message.createFromMessage(message, true);
+    withPriority
+      ? this.enqueueMessageWithPriority(queueName, msg, multi)
+      : this.enqueueMessage(queueName, msg, multi);
+  }
+
+  enqueueMessageFromAcknowledgedQueue(
+    queueName: string,
+    messageId: string,
+    withPriority: boolean,
+    cb: ICallback<void>,
+  ): void {
+    this.getMessageMetadata(messageId, (err, messageMetata) => {
+      if (err) cb(err);
+      else if (!messageMetata || !messageMetata.length)
+        cb(new Error('Message does not exist'));
+      else {
+        const last = messageMetata.pop();
+        if (last?.type === EMessageMetadataType.ACKNOWLEDGED) {
+          const multi = this.redisClient.multi();
+          const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName);
+          metadata.preMessageAcknowledgedDelete(last.state, queueName, multi);
+          multi.zrem(keyQueueAcknowledgedMessages, last.state.toString());
+          this.requeueMessage(queueName, last?.state, withPriority, multi);
+          this.redisClient.execMulti(multi, (err) => cb(err));
+        } else cb(new Error('Message is not currently in acknowledged queue'));
+      }
+    });
+  }
+
+  enqueueMessageFromDLQueue(
+    queueName: string,
+    messageId: string,
+    withPriority: boolean,
+    cb: ICallback<void>,
+  ): void {
+    this.getMessageMetadata(messageId, (err, messageMetata) => {
+      if (err) cb(err);
+      else if (!messageMetata || !messageMetata.length)
+        cb(new Error('Message does not exist'));
+      else {
+        const last = messageMetata.pop();
+        if (last?.type === EMessageMetadataType.DEAD_LETTER) {
+          const multi = this.redisClient.multi();
+          const { keyQueueDL } = redisKeys.getKeys(queueName);
+          metadata.preMessageDeadLetterDelete(last.state, queueName, multi);
+          multi.zrem(keyQueueDL, last.state.toString());
+          this.requeueMessage(queueName, last?.state, withPriority, multi);
+          this.redisClient.execMulti(multi, (err) => cb(err));
+        } else cb(new Error('Message is not currently in dead-letter queue'));
+      }
+    });
+  }
+
+  deleteDeadLetterMessage(
+    queueName: string,
+    messageId: string,
+    cb: ICallback<void>,
+  ): void {
+    this.getMessageMetadata(messageId, (err, messageMetata) => {
+      if (err) cb(err);
+      else if (!messageMetata || !messageMetata.length)
+        cb(new Error('Message does not exist'));
+      else {
+        const last = messageMetata.pop();
+        if (last?.type === EMessageMetadataType.DEAD_LETTER) {
+          const multi = this.redisClient.multi();
+          const { keyQueueDL } = redisKeys.getKeys(queueName);
+          metadata.preMessageDeadLetterDelete(last.state, queueName, multi);
+          multi.zrem(keyQueueDL, last.state.toString());
+          this.redisClient.execMulti(multi, (err) => cb(err));
+        } else cb(new Error('Message is not currently in dead-letter queue'));
+      }
+    });
+  }
+
+  deleteAcknowledgedMessage(
+    queueName: string,
+    messageId: string,
+    cb: ICallback<void>,
+  ): void {
+    this.getMessageMetadata(messageId, (err, messageMetata) => {
+      if (err) cb(err);
+      else if (!messageMetata || !messageMetata.length)
+        cb(new Error('Message does not exist'));
+      else {
+        const last = messageMetata.pop();
+        if (last?.type === EMessageMetadataType.ACKNOWLEDGED) {
+          const multi = this.redisClient.multi();
+          const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName);
+          metadata.preMessageAcknowledgedDelete(last.state, queueName, multi);
+          multi.zrem(keyQueueAcknowledgedMessages, last.state.toString());
+          this.redisClient.execMulti(multi, (err) => cb(err));
+        } else cb(new Error('Message is not currently in acknowledged queue'));
+      }
+    });
+  }
+
+  deletePendingMessage(
+    queueName: string,
+    messageId: string,
+    cb: ICallback<void>,
+  ): void {
+    this.getMessageMetadata(messageId, (err, messageMetata) => {
+      if (err) cb(err);
+      else if (!messageMetata || !messageMetata.length)
+        cb(new Error('Message does not exist'));
+      else {
+        const last = messageMetata.pop();
+        if (last?.type === EMessageMetadataType.ENQUEUED) {
+          const multi = this.redisClient.multi();
+          const { keyQueue } = redisKeys.getKeys(queueName);
+          metadata.preMessagePendingDelete(last.state, queueName, false, multi);
+          multi.lrem(keyQueue, 1, last.state.toString());
+          this.redisClient.execMulti(multi, (err) => cb(err));
+        } else if (last?.type === EMessageMetadataType.ENQUEUED_WITH_PRIORITY) {
+          const multi = this.redisClient.multi();
+          const { keyQueuePriority } = redisKeys.getKeys(queueName);
+          metadata.preMessagePendingDelete(last.state, queueName, true, multi);
+          multi.zrem(keyQueuePriority, last.state.toString());
+          this.redisClient.execMulti(multi, (err) => cb(err));
+        } else cb(new Error('Message is not currently in pending queue'));
+      }
+    });
+  }
+
+  deleteScheduledMessage(
+    queueName: string,
+    messageId: string,
+    cb: ICallback<void>,
+  ): void {
+    Scheduler.deleteScheduledMessage(
+      this.redisClient,
+      queueName,
+      messageId,
+      cb,
+    );
+  }
+
+  enqueueMessage(
+    queueName: string,
+    message: Message,
+    multi: TRedisClientMulti,
+  ): void {
+    const { keyQueue } = redisKeys.getKeys(queueName);
+    metadata.preMessageEnqueued(message, queueName, multi);
+    multi.lpush(keyQueue, message.toString());
+  }
+
+  enqueueMessageWithPriority(
+    queueName: string,
+    message: Message,
+    multi: TRedisClientMulti,
+  ): void {
+    const priority = message.getPriority() ?? Message.MessagePriority.NORMAL;
+    if (message.getPriority() !== priority) message.setPriority(priority);
+    const { keyQueuePriority } = redisKeys.getKeys(queueName);
+    metadata.preMessageWithPriorityEnqueued(message, queueName, multi);
+    multi.zadd(keyQueuePriority, priority, message.toString());
+  }
+
+  ///
+
   getAcknowledgedMessages(
     queueName: string,
     skip: number,
@@ -25,7 +199,7 @@ export class MessageManager {
     cb: ICallback<TGetAcknowledgedMessagesReply>,
   ): void {
     const getTotalFn = (redisClient: RedisClient, cb: ICallback<number>) =>
-      Metadata.getQueueMetadataByKey(
+      metadata.getQueueMetadataByKey(
         redisClient,
         queueName,
         'acknowledged',
@@ -50,7 +224,7 @@ export class MessageManager {
     cb: ICallback<TGetAcknowledgedMessagesReply>,
   ): void {
     const getTotalFn = (redisClient: RedisClient, cb: ICallback<number>) =>
-      Metadata.getQueueMetadataByKey(redisClient, queueName, 'deadLetter', cb);
+      metadata.getQueueMetadataByKey(redisClient, queueName, 'deadLetter', cb);
     const transformFn = (msgStr: string) => Message.createFromMessage(msgStr);
     const { keyQueueDL } = redisKeys.getKeys(queueName);
     this.redisClient.zRangePage(
@@ -70,7 +244,7 @@ export class MessageManager {
     cb: ICallback<TGetAcknowledgedMessagesReply>,
   ): void {
     const getTotalFn = (redisClient: RedisClient, cb: ICallback<number>) =>
-      Metadata.getQueueMetadataByKey(redisClient, queueName, 'pending', cb);
+      metadata.getQueueMetadataByKey(redisClient, queueName, 'pending', cb);
     const transformFn = (msgStr: string) => Message.createFromMessage(msgStr);
     const { keyQueue } = redisKeys.getKeys(queueName);
     this.redisClient.lRangePage(
@@ -90,7 +264,7 @@ export class MessageManager {
     cb: ICallback<TGetAcknowledgedMessagesReply>,
   ): void {
     const getTotalFn = (redisClient: RedisClient, cb: ICallback<number>) =>
-      Metadata.getQueueMetadataByKey(
+      metadata.getQueueMetadataByKey(
         redisClient,
         queueName,
         'pendingWithPriority',
@@ -119,9 +293,9 @@ export class MessageManager {
 
   getMessageMetadata(
     messageId: string,
-    cb: ICallback<TMessageMetadata[]>,
+    cb: ICallback<IMessageMetadata[]>,
   ): void {
-    Metadata.getMessageMetadata(this.redisClient, messageId, cb);
+    metadata.getMessageMetadata(this.redisClient, messageId, cb);
   }
 
   quit(cb: ICallback<void>): void {

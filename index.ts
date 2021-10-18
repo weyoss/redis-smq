@@ -3,5 +3,4 @@ export { Producer } from './src/producer';
 export { Message } from './src/message';
 export { MessageManager } from './src/message-manager';
 export { QueueManager } from './src/queue-manager';
-export { Scheduler } from './src/scheduler';
 export { MonitorServer } from './src/monitor-server';
