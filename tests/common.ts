@@ -6,7 +6,7 @@ import { config } from './config';
 import { ICallback, IConfig, TConsumerOptions } from '../types';
 import { StatsAggregatorThread } from '../src/monitor-server/threads/stats-aggregator.thread';
 import { QueueManager } from '../src/system/queue-manager';
-import { MessageManager } from '../src/system/message-manager';
+import { MessageManager } from '../src/message-manager';
 import { Scheduler } from '../src/system/scheduler';
 
 type TMonitorServer = ReturnType<typeof MonitorServer>;

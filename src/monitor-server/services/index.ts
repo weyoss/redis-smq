@@ -1,15 +1,19 @@
-import { SchedulerService } from './scheduler.service';
+import { MessageManagerService } from './message-manager.service';
 import { TApplication } from '../types/common';
+import { MessageManager } from '../../message-manager';
 
 export function Services(app: TApplication) {
   const { redis } = app.context;
-  let schedulerServiceInstance: SchedulerService | null = null;
+  let messageManagerServiceInstance: MessageManagerService | null = null;
   return {
-    SchedulerService() {
-      if (!schedulerServiceInstance) {
-        schedulerServiceInstance = new SchedulerService(redis);
+    MessageManagerService() {
+      if (!messageManagerServiceInstance) {
+        const messageManager = new MessageManager(redis);
+        messageManagerServiceInstance = new MessageManagerService(
+          messageManager,
+        );
       }
-      return schedulerServiceInstance;
+      return messageManagerServiceInstance;
     },
   };
 }

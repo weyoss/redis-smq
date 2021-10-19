@@ -1,8 +1,8 @@
-import { getProducer, getScheduler } from './common';
+import { getMessageManager, getProducer, getScheduler } from './common';
 import { Message } from '../src/message';
 import { promisifyAll } from 'bluebird';
 
-describe('Produce and delete a scheduled message', () => {
+describe('Scheduler: Schedule and fetch scheduled messages', () => {
   test('Case 1', async () => {
     const producer = getProducer();
     const scheduler = promisifyAll(await getScheduler(producer.getQueueName()));
@@ -36,8 +36,15 @@ describe('Produce and delete a scheduled message', () => {
     const r3 = await scheduler.scheduleAsync(msg3);
     expect(r3).toBe(true);
 
+    const messageManager = promisifyAll(await getMessageManager());
+
     // Page 1
-    const pageOne = await scheduler.getScheduledMessagesAsync(0, 2);
+    const queueName = producer.getQueueName();
+    const pageOne = await messageManager.getScheduledMessagesAsync(
+      queueName,
+      0,
+      2,
+    );
     if (!pageOne) {
       throw new Error('Expected non empty reply');
     }
@@ -47,25 +54,16 @@ describe('Produce and delete a scheduled message', () => {
     expect(pageOne.items[1].getMessageScheduledDelay()).toEqual(60000);
 
     // Page 2
-    const pageTwo = await scheduler.getScheduledMessagesAsync(2, 2);
+    const pageTwo = await messageManager.getScheduledMessagesAsync(
+      queueName,
+      2,
+      2,
+    );
     if (!pageTwo) {
       throw new Error('Expected non empty reply');
     }
     expect(pageTwo.total).toEqual(3);
     expect(pageTwo.items.length).toEqual(1);
     expect(pageTwo.items[0].getMessageScheduledDelay()).toEqual(90000);
-
-    // Delete a scheduled message
-    await scheduler.deleteScheduledMessageAsync(pageOne.items[1].getId());
-
-    // Page 1
-    const singlePage = await scheduler.getScheduledMessagesAsync(0, 100);
-    if (!singlePage) {
-      throw new Error('Expected non empty reply');
-    }
-    expect(singlePage.total).toEqual(2);
-    expect(singlePage.items.length).toEqual(2);
-    expect(singlePage.items[0].getMessageScheduledDelay()).toEqual(30000);
-    expect(singlePage.items[1].getMessageScheduledDelay()).toEqual(90000);
   });
 });

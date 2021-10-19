@@ -13,6 +13,62 @@ import {
 import { EventEmitter } from 'events';
 import * as async from 'async';
 
+/**
+ * client.end() does unregister all event listeners which causes the 'end' event not being emitted.
+ * This is a known bug. See https://github.com/redis/node-redis/issues/1565
+ *
+ * Monkey patching the "end" method to fix the issue. The only small change is:
+ *
+ * this.stream.once('close', () => {
+ *  this.emit('end');
+ *  this.emitted_end = true;
+ * });
+ *
+ * which has been added after this.stream.removeAllListeners().
+ * That's all.
+ */
+const patchedEnd = function (
+  this: EventEmitter & {
+    stream: EventEmitter & { destroySoon: () => void };
+    flush_and_error: (...args: unknown[]) => void;
+    warn: (...args: unknown[]) => void;
+    connected: boolean;
+    emitted_end: boolean;
+    ready: boolean;
+    closing: boolean;
+    retry_timer: NodeJS.Timeout | null;
+  },
+  flush: boolean,
+) {
+  // Flush queue if wanted
+  if (flush) {
+    this.flush_and_error({
+      message: 'Connection forcefully ended and command aborted.',
+      code: 'NR_CLOSED',
+    });
+  } else if (arguments.length === 0) {
+    this.warn(
+      'Using .end() without the flush parameter is deprecated and throws from v.3.0.0 on.\n' +
+        'Please check the doku (https://github.com/NodeRedis/node_redis) and explictly use flush.',
+    );
+  }
+  // Clear retry_timer
+  if (this.retry_timer) {
+    clearTimeout(this.retry_timer);
+    this.retry_timer = null;
+  }
+  this.stream.removeAllListeners();
+  this.stream.once('close', () => {
+    this.emit('end');
+    this.emitted_end = true;
+  });
+  this.stream.on('error', () => void 0);
+  this.connected = false;
+  this.ready = false;
+  this.closing = true;
+  return this.stream.destroySoon();
+};
+
 function getPage<T>(
   client: RedisClient,
   from: 'zrange' | 'lrange',
@@ -72,6 +128,9 @@ export class RedisClient extends EventEmitter {
     this.client.once('error', (err: Error) => {
       throw err;
     });
+    if (this.client instanceof NodeRedis) {
+      this.client.end = patchedEnd;
+    }
   }
 
   protected getClient(config: IConfig): TCompatibleRedisClient {

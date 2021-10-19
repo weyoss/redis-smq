@@ -13,7 +13,7 @@ type TGetScheduledMessagesContext = TRequestContext<
 
 export function GetScheduledMessagesHandler(app: TApplication) {
   return async (ctx: TGetScheduledMessagesContext) => {
-    const { SchedulerService } = app.context.services;
-    return SchedulerService().getSchedulerMessages(ctx.state.dto);
+    const { MessageManagerService } = app.context.services;
+    return MessageManagerService().getScheduledMessages(ctx.state.dto);
   };
 }

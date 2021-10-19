@@ -63,50 +63,6 @@ export const metadata = {
     multi.hincrby(keyMetadataQueue, EQueueMetadataType.DEAD_LETTER_MESSAGES, 1);
   },
 
-  preMessageDeadLetterDelete(
-    msg: Message,
-    queueName: string,
-    multi: TRedisClientMulti,
-  ): void {
-    this.addMessageMetadata(
-      msg,
-      {
-        state: msg,
-        type: EMessageMetadataType.DELETED_FROM_DL,
-        timestamp: Date.now(),
-      },
-      multi,
-    );
-    const { keyMetadataQueue } = redisKeys.getKeys(queueName);
-    multi.hincrby(
-      keyMetadataQueue,
-      EQueueMetadataType.DEAD_LETTER_MESSAGES,
-      -1,
-    );
-  },
-
-  preMessageAcknowledgedDelete(
-    msg: Message,
-    queueName: string,
-    multi: TRedisClientMulti,
-  ): void {
-    this.addMessageMetadata(
-      msg,
-      {
-        state: msg,
-        type: EMessageMetadataType.DELETED_FROM_ACKNOWLEDGED_QUEUE,
-        timestamp: Date.now(),
-      },
-      multi,
-    );
-    const { keyMetadataQueue } = redisKeys.getKeys(queueName);
-    multi.hincrby(
-      keyMetadataQueue,
-      EQueueMetadataType.ACKNOWLEDGED_MESSAGES,
-      -1,
-    );
-  },
-
   preMessageEnqueued(
     msg: Message,
     queueName: string,
@@ -204,51 +160,6 @@ export const metadata = {
     );
     const { keyMetadataQueue } = redisKeys.getKeys(queueName);
     multi.hincrby(keyMetadataQueue, EQueueMetadataType.SCHEDULED_MESSAGES, 1);
-  },
-
-  preMessageScheduledDelete(
-    msg: Message,
-    queueName: string,
-    multi: TRedisClientMulti,
-  ): void {
-    this.addMessageMetadata(
-      msg,
-      {
-        state: msg,
-        type: EMessageMetadataType.SCHEDULED_DELETED,
-        timestamp: Date.now(),
-      },
-      multi,
-    );
-    const { keyMetadataQueue } = redisKeys.getKeys(queueName);
-    multi.hincrby(keyMetadataQueue, EQueueMetadataType.SCHEDULED_MESSAGES, -1);
-  },
-
-  preMessagePendingDelete(
-    msg: Message,
-    queueName: string,
-    withPriority: boolean,
-    multi: TRedisClientMulti,
-  ): void {
-    this.addMessageMetadata(
-      msg,
-      {
-        state: msg,
-        type: withPriority
-          ? EMessageMetadataType.DELETED_FROM_PRIORITY_QUEUE
-          : EMessageMetadataType.DELETED_FROM_QUEUE,
-        timestamp: Date.now(),
-      },
-      multi,
-    );
-    const { keyMetadataQueue } = redisKeys.getKeys(queueName);
-    multi.hincrby(
-      keyMetadataQueue,
-      withPriority
-        ? EQueueMetadataType.PENDING_MESSAGES_WITH_PRIORITY
-        : EQueueMetadataType.PENDING_MESSAGES,
-      -1,
-    );
   },
 
   ///
@@ -349,6 +260,21 @@ export const metadata = {
       else {
         const m = metadata[key];
         cb(null, m);
+      }
+    });
+  },
+
+  getLastMessageMetadata(
+    client: RedisClient,
+    messageId: string,
+    cb: ICallback<IMessageMetadata>,
+  ): void {
+    this.getMessageMetadata(client, messageId, (err, messageMetata) => {
+      if (err) cb(err);
+      else {
+        const m = messageMetata?.pop();
+        if (!m) cb(new Error('Message does not exist'));
+        else cb(null, m);
       }
     });
   },

@@ -134,7 +134,7 @@ export class StatsAggregatorThread {
     }: {
       ns: string;
       queueName: string;
-      type: string;
+      type: number;
       consumerId: string;
     },
     rate: number,

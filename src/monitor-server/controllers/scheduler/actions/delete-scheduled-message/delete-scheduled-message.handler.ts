@@ -6,7 +6,7 @@ type TDeleteScheduledMessageContext =
 
 export function DeleteScheduledMessageHandler(app: TApplication) {
   return async (ctx: TDeleteScheduledMessageContext) => {
-    const { SchedulerService } = app.context.services;
-    return SchedulerService().deleteScheduledMessage(ctx.state.dto);
+    const { MessageManagerService } = app.context.services;
+    return MessageManagerService().deleteScheduledMessage(ctx.state.dto);
   };
 }

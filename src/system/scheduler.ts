@@ -1,10 +1,5 @@
 import { Broker } from './broker';
-import {
-  EMessageMetadataType,
-  ICallback,
-  TGetScheduledMessagesReply,
-  TRedisClientMulti,
-} from '../../types';
+import { ICallback, TRedisClientMulti } from '../../types';
 import * as async from 'async';
 import { Message } from '../message';
 import { metadata } from './metadata';
@@ -185,29 +180,6 @@ export class Scheduler extends EventEmitter {
     } else if (typeof mixed === 'function') mixed(null, false);
   }
 
-  deleteScheduledMessage(messageId: string, cb: ICallback<void>): void {
-    Scheduler.deleteScheduledMessage(
-      this.redisClient,
-      this.queueName,
-      messageId,
-      cb,
-    );
-  }
-
-  getScheduledMessages(
-    skip: number,
-    take: number,
-    cb: ICallback<TGetScheduledMessagesReply>,
-  ): void {
-    Scheduler.getScheduledMessages(
-      this.redisClient,
-      this.queueName,
-      skip,
-      take,
-      cb,
-    );
-  }
-
   quit(cb: ICallback<void>): void {
     if (this === Scheduler.instance) {
       this.redisClient.halt(() => {
@@ -215,58 +187,5 @@ export class Scheduler extends EventEmitter {
         cb();
       });
     } else cb();
-  }
-
-  static getScheduledMessages(
-    client: RedisClient,
-    queueName: string,
-    skip: number,
-    take: number,
-    cb: ICallback<TGetScheduledMessagesReply>,
-  ): void {
-    const getTotalFn = (redisClient: RedisClient, cb: ICallback<number>) =>
-      metadata.getQueueMetadataByKey(redisClient, queueName, 'scheduled', cb);
-    const transformFn = (msgStr: string) => Message.createFromMessage(msgStr);
-    const { keyQueueScheduledMessages } = redisKeys.getKeys(queueName);
-    client.zRangePage(
-      keyQueueScheduledMessages,
-      skip,
-      take,
-      getTotalFn,
-      transformFn,
-      cb,
-    );
-  }
-
-  static deleteScheduledMessage(
-    redisClient: RedisClient,
-    queueName: string,
-    messageId: string,
-    cb: ICallback<void>,
-  ): void {
-    const { keyQueueScheduledMessages } = redisKeys.getKeys(queueName);
-    const getMessage = (cb: ICallback<Message>) => {
-      metadata.getMessageMetadata(
-        redisClient,
-        messageId,
-        (err, msgMetatadata) => {
-          if (err) cb(err);
-          else if (!msgMetatadata) cb(new Error('Message does not exist'));
-          else {
-            const last = msgMetatadata.pop();
-            if (last?.type === EMessageMetadataType.SCHEDULED)
-              cb(null, Message.createFromMessage(last.state));
-            else cb(new Error('Message is not scheduled'));
-          }
-        },
-      );
-    };
-    const deleteMessage = (msg: Message, cb: ICallback<void>) => {
-      const multi = redisClient.multi();
-      multi.zrem(keyQueueScheduledMessages, msg.toString());
-      metadata.preMessageScheduledDelete(msg, queueName, multi);
-      redisClient.execMulti(multi, (err) => cb(err));
-    };
-    async.waterfall([getMessage, deleteMessage], cb);
   }
 }

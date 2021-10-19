@@ -78,6 +78,7 @@
     "build:clean": "rimraf dist",
     "prebuild": "npm run build:clean",
     "build": "tsc",
+    "postbuild": "cp -r src/system/message-manager/lua dist/src/system/message-manager",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
     "lint": "eslint \"{src,tests,types}/**/*.ts\" --fix",
     "pretest": "npm run build",

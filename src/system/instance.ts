@@ -19,7 +19,7 @@ import { Broker } from './broker';
 import { redisKeys } from './redis-keys';
 import { RedisClient } from './redis-client';
 import { QueueManager } from './queue-manager';
-import { MessageManager } from './message-manager';
+import { MessageManager } from '../message-manager';
 
 export abstract class Instance extends EventEmitter {
   private broker: Broker | null = null;

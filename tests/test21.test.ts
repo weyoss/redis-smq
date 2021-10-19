@@ -84,14 +84,14 @@ describe('StatsAggregatorThread: check that stats are aggregated and published',
     expect(json.rates.input).toBe(0);
 
     expect(Object.keys(json.queues)).toEqual(
-      expect.arrayContaining(['redis-smq-testing']),
+      expect.arrayContaining(['testing']),
     );
 
-    expect(Object.keys(json.queues['redis-smq-testing'])).toEqual(
+    expect(Object.keys(json.queues['testing'])).toEqual(
       expect.arrayContaining(['test_queue']),
     );
 
-    expect(Object.keys(json.queues['redis-smq-testing']['test_queue'])).toEqual(
+    expect(Object.keys(json.queues['testing']['test_queue'])).toEqual(
       expect.arrayContaining([
         'queueName',
         'namespace',
@@ -103,13 +103,10 @@ describe('StatsAggregatorThread: check that stats are aggregated and published',
     );
 
     expect(
-      Object.keys(
-        json.queues['redis-smq-testing']['test_queue']['consumers'] ?? {},
-      ),
+      Object.keys(json.queues['testing']['test_queue']['consumers'] ?? {}),
     ).toEqual(expect.arrayContaining([consumer.getId()]));
 
-    const consumers =
-      json.queues['redis-smq-testing']['test_queue']['consumers'] ?? {};
+    const consumers = json.queues['testing']['test_queue']['consumers'] ?? {};
 
     expect(Object.keys(consumers[consumer.getId()])).toEqual(
       expect.arrayContaining([
@@ -149,8 +146,7 @@ describe('StatsAggregatorThread: check that stats are aggregated and published',
       expect.arrayContaining(['percentage', 'user', 'system']),
     );
 
-    const producers =
-      json.queues['redis-smq-testing']['test_queue']['producers'] ?? {};
+    const producers = json.queues['testing']['test_queue']['producers'] ?? {};
 
     expect(Object.keys(producers)).toEqual(
       expect.arrayContaining([producer.getId()]),

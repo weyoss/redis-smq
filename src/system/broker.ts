@@ -13,7 +13,7 @@ import { Logger } from './logger';
 import { PowerManager } from './power-manager';
 import { QueueManager } from './queue-manager';
 import { RedisClient } from './redis-client';
-import { MessageManager } from './message-manager';
+import { MessageManager } from '../message-manager';
 import { metadata } from './metadata';
 import { Consumer } from '../consumer';
 
