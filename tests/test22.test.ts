@@ -1,8 +1,8 @@
 import {
   getConsumer,
+  getMessageManager,
   getProducer,
   getRedisInstance,
-  getScheduler,
   untilConsumerIdle,
   untilMessageAcknowledged,
 } from './common';
@@ -146,9 +146,12 @@ describe('Message Metadata: check that message metadata are valid', () => {
       }),
     });
     await consumer.runAsync();
-    const scheduler = promisifyAll(await getScheduler(consumer.getQueueName()));
+    const messageManager = promisifyAll(await getMessageManager());
 
-    await scheduler.deleteScheduledMessageAsync(message.getId());
+    await messageManager.deleteScheduledMessageAsync(
+      consumer.getQueueName(),
+      message.getId(),
+    );
 
     const client = await getRedisInstance();
     const m = await new Promise<IMessageMetadata[]>((resolve, reject) => {
@@ -160,6 +163,6 @@ describe('Message Metadata: check that message metadata are valid', () => {
 
     expect(m.length).toBe(2);
     expect(m[0].type).toBe(EMessageMetadataType.SCHEDULED);
-    expect(m[1].type).toBe(EMessageMetadataType.SCHEDULED_DELETED);
+    expect(m[1].type).toBe(EMessageMetadataType.DELETED_FROM_SCHEDULED_QUEUE);
   });
 });

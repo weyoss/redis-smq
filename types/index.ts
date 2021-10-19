@@ -193,7 +193,6 @@ export enum EMessageMetadataType {
   ENQUEUED = 'enqueued',
   ENQUEUED_WITH_PRIORITY = 'enqueued_with_priority',
   SCHEDULED = 'scheduled',
-  SCHEDULED_DELETED = 'scheduled_deleted',
   SCHEDULED_ENQUEUED = 'scheduled_enqueued',
   ACKNOWLEDGED = 'acknowledged',
   UNACKNOWLEDGED = 'unacknowledged',
@@ -202,6 +201,7 @@ export enum EMessageMetadataType {
   DELETED_FROM_QUEUE = 'deleted_from_queue',
   DELETED_FROM_PRIORITY_QUEUE = 'deleted_from_priority_queue',
   DELETED_FROM_ACKNOWLEDGED_QUEUE = 'deleted_from_acknowledged_queue',
+  DELETED_FROM_SCHEDULED_QUEUE = 'deleted_from_scheduled_queue',
 }
 
 export interface IMessageMetadata {

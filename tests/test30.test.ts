@@ -3,37 +3,39 @@ import { Message } from '../src/message';
 import { promisifyAll } from 'bluebird';
 import { EMessageMetadataType } from '../types';
 
-describe('MessageManager: deletePendingMessage with priority', () => {
+describe('MessageManager: deleteScheduledMessage', () => {
   test('Case 1', async () => {
-    const msg = new Message();
-    msg.setBody({ hello: 'world' });
+    const producer = getProducer();
 
-    const producer = getProducer('test_queue', {
-      priorityQueue: true,
-    });
+    const msg = new Message();
+    msg.setScheduledCron('0 * * * * *').setBody({ hello: 'world1' });
     await producer.produceMessageAsync(msg);
 
     const messageManager = promisifyAll(await getMessageManager());
-    const res1 = await messageManager.getPendingMessagesWithPriorityAsync(
+    const res1 = await messageManager.getScheduledMessagesAsync(
       producer.getQueueName(),
       0,
       100,
     );
-
     expect(res1.total).toBe(1);
-    expect(res1.items[0].getId()).toBe(msg.getId());
+    expect(res1.items.length).toBe(1);
+    expect(res1.items[0]).toEqual(msg);
 
     const queueManager = promisifyAll(await getQueueManager());
     const queueMetadata1 = await queueManager.getQueueMetadataAsync(
       producer.getQueueName(),
     );
-    expect(queueMetadata1.pendingWithPriority).toBe(1);
+    expect(queueMetadata1.pending).toBe(0);
+    expect(queueMetadata1.acknowledged).toBe(0);
+    expect(queueMetadata1.deadLetter).toBe(0);
+    expect(queueMetadata1.scheduled).toBe(1);
 
-    await messageManager.deletePendingMessageAsync(
+    await messageManager.deleteScheduledMessageAsync(
       producer.getQueueName(),
       msg.getId(),
     );
-    const res2 = await messageManager.getPendingMessagesWithPriorityAsync(
+
+    const res2 = await messageManager.getScheduledMessagesAsync(
       producer.getQueueName(),
       0,
       100,
@@ -44,29 +46,25 @@ describe('MessageManager: deletePendingMessage with priority', () => {
     const queueMetadata2 = await queueManager.getQueueMetadataAsync(
       producer.getQueueName(),
     );
-    expect(queueMetadata2.pending).toBe(0);
+    expect(queueMetadata2.scheduled).toBe(0);
 
     const msgMeta = await messageManager.getMessageMetadataAsync(msg.getId());
     expect(msgMeta.length).toBe(2);
-    expect(msgMeta[0].type).toBe(EMessageMetadataType.ENQUEUED_WITH_PRIORITY);
-    expect(msgMeta[0].state).toEqual(msg);
-    expect(msgMeta[1].type).toBe(
-      EMessageMetadataType.DELETED_FROM_PRIORITY_QUEUE,
-    );
 
-    const msg1 = Message.createFromMessage(msg);
-    msg1.setPriority(Message.MessagePriority.NORMAL);
-    expect(msgMeta[1].state).toEqual(msg1);
+    expect(msgMeta[1].type).toBe(
+      EMessageMetadataType.DELETED_FROM_SCHEDULED_QUEUE,
+    );
+    expect(msgMeta[1].state).toEqual(msg);
 
     await expect(async () => {
-      await messageManager.deletePendingMessageAsync(
+      await messageManager.deleteScheduledMessageAsync(
         producer.getQueueName(),
         msg.getId(),
       );
     }).rejects.toThrow('Message last metadata does not match expected ones');
 
     await expect(async () => {
-      await messageManager.deletePendingMessageAsync(
+      await messageManager.deleteScheduledMessageAsync(
         producer.getQueueName(),
         new Message().getId(),
       );

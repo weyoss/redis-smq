@@ -1,23 +1,21 @@
-import { Scheduler } from '../../system/scheduler';
-import { RedisClient } from '../../system/redis-client';
 import { TGetScheduledMessagesReply } from '../../../types';
 import { GetScheduledMessagesRequestDTO as GetSchedulerMessagesDTO } from '../controllers/scheduler/actions/get-scheduled-messages/get-scheduled-messages-request.DTO';
 import { DeleteScheduledMessageRequestDTO as DeletedScheduledMessageDTO } from '../controllers/scheduler/actions/delete-scheduled-message/delete-scheduled-message-request.DTO';
+import { MessageManager } from '../../message-manager';
 
-export class SchedulerService {
-  protected redisClient: RedisClient;
+export class MessageManagerService {
+  protected messageManager: MessageManager;
 
-  constructor(redisClient: RedisClient) {
-    this.redisClient = redisClient;
+  constructor(messageManager: MessageManager) {
+    this.messageManager = messageManager;
   }
 
-  async getSchedulerMessages(
+  async getScheduledMessages(
     args: GetSchedulerMessagesDTO,
   ): Promise<TGetScheduledMessagesReply> {
     const { queueName, skip = 0, take = 1 } = args;
     return new Promise<TGetScheduledMessagesReply>((resolve, reject) => {
-      Scheduler.getScheduledMessages(
-        this.redisClient,
+      this.messageManager.getScheduledMessages(
         queueName,
         skip,
         take,
@@ -34,9 +32,8 @@ export class SchedulerService {
     args: DeletedScheduledMessageDTO,
   ): Promise<void> {
     const { id, queueName } = args;
-    const scheduler = new Scheduler(queueName, this.redisClient);
     return new Promise<void>((resolve, reject) => {
-      scheduler.deleteScheduledMessage(id, (err) => {
+      this.messageManager.deleteScheduledMessage(queueName, id, (err) => {
         if (err) reject(err);
         else resolve();
       });
