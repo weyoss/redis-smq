@@ -3,7 +3,6 @@ import {
   EMessageUnacknowledgedCause,
   ICallback,
   IConfig,
-  TRedisClientMulti,
 } from '../../types';
 import { Message } from '../message';
 import { events } from './events';
@@ -14,7 +13,6 @@ import { PowerManager } from './power-manager';
 import { QueueManager } from './queue-manager';
 import { RedisClient } from './redis-client';
 import { MessageManager } from '../message-manager';
-import { metadata } from './metadata';
 import { Consumer } from '../consumer';
 
 export class Broker {
@@ -42,26 +40,11 @@ export class Broker {
   enqueueMessage(
     queueName: string,
     message: Message,
-    mixed: TRedisClientMulti | RedisClient,
-    cb?: ICallback<void>,
+    cb: ICallback<void>,
   ): void {
-    const process = (multi: TRedisClientMulti) => {
-      if (this.config.priorityQueue === true)
-        this.messageManager.enqueueMessageWithPriority(
-          queueName,
-          message,
-          multi,
-        );
-      else this.messageManager.enqueueMessage(queueName, message, multi);
-    };
-    if (mixed instanceof RedisClient) {
-      if (typeof cb !== 'function') {
-        throw new Error('Wrong argument types. Expected a callback function');
-      }
-      const multi = mixed.multi();
-      process(multi);
-      mixed.execMulti(multi, (err) => cb(err));
-    } else process(mixed);
+    const withPriority = this.config.priorityQueue === true;
+    if (withPriority) message.getSetPriority(undefined);
+    this.messageManager.enqueueMessage(queueName, message, withPriority, cb);
   }
 
   dequeueMessage(
@@ -89,17 +72,18 @@ export class Broker {
   }
 
   acknowledgeMessage(
-    client: RedisClient,
     consumer: Consumer,
     msg: Message,
     cb: ICallback<void>,
   ): void {
     const queueName = consumer.getQueueName();
     const { keyQueueProcessing } = consumer.getRedisKeys();
-    const multi = client.multi();
-    this.messageManager.moveMessageToAcknowledgmentQueue(queueName, msg, multi);
-    this.queueManager.purgeProcessingQueue(keyQueueProcessing, multi);
-    client.execMulti(multi, (err) => cb(err));
+    this.messageManager.acknowledgeMessage(
+      msg,
+      queueName,
+      keyQueueProcessing,
+      cb,
+    );
   }
 
   unacknowledgeMessage(
@@ -143,19 +127,9 @@ export class Broker {
     unacknowledgedCause: EMessageUnacknowledgedCause,
     cb: ICallback<void | string>,
   ): void {
-    consumer.applyOptions(message);
-    const multi = client.multi();
     const queueName = consumer.getQueueName();
-    metadata.preMessageUnacknowledged(
-      message,
-      queueName,
-      unacknowledgedCause,
-      multi,
-    );
-    this.queueManager.purgeProcessingQueue(processingQueue, multi);
-    let scheduled = false;
-    let requeued = false;
-    let deadLetter = false;
+    const withPriority = this.config.priorityQueue === true;
+    if (withPriority) message.getSetPriority(undefined);
     if (
       unacknowledgedCause === EMessageUnacknowledgedCause.TTL_EXPIRED ||
       message.hasExpired()
@@ -164,70 +138,102 @@ export class Broker {
       this.logger.debug(
         `Message ID [${message.getId()}] has expired. Moving it to DLQ...`,
       );
-      this.messageManager.moveMessageToDLQQueue(
-        queueName,
+      this.messageManager.deadLetterUnacknowledgedMessage(
         message,
+        queueName,
+        processingQueue,
+        unacknowledgedCause,
         EMessageDeadLetterCause.TTL_EXPIRED,
-        multi,
+        (err) => {
+          if (err) cb(err);
+          else {
+            consumer.emit(events.MESSAGE_DEAD_LETTER, message);
+            cb();
+          }
+        },
       );
-      deadLetter = true;
     } else if (this.schedulerInstance.isPeriodic(message)) {
       this.logger.debug(
         `Message ID [${message.getId()}] is periodic. Moving it to DLQ...`,
       );
-      this.messageManager.moveMessageToDLQQueue(
-        queueName,
+      this.messageManager.deadLetterUnacknowledgedMessage(
         message,
+        queueName,
+        processingQueue,
+        unacknowledgedCause,
         EMessageDeadLetterCause.PERIODIC_MESSAGE,
-        multi,
+        (err) => {
+          if (err) cb(err);
+          else {
+            consumer.emit(events.MESSAGE_DEAD_LETTER, message);
+            cb();
+          }
+        },
       );
-      deadLetter = true;
-    } else {
-      if (!message.hasRetryThresholdExceeded()) {
-        message.incrAttempts();
+    } else if (!message.hasRetryThresholdExceeded()) {
+      this.logger.debug(
+        `Message ID [${message.getId()}] is valid (threshold not exceeded) for re-queuing...`,
+      );
+      message.incrAttempts();
+      const delay = message.getRetryDelay();
+      if (delay) {
         this.logger.debug(
-          `Message ID [${message.getId()}] is valid (threshold not exceeded) for re-queuing...`,
+          `Delaying message ID [${message.getId()}] before re-queuing...`,
         );
-        const delay = message.getRetryDelay();
-        if (delay) {
-          this.logger.debug(
-            `Delaying message ID [${message.getId()}] before re-queuing...`,
-          );
-          message.setScheduledDelay(delay);
-          this.schedulerInstance.schedule(message, multi);
-          scheduled = true;
-        } else {
-          this.logger.debug(
-            `Re-queuing message ID [${message.getId()}] for one more time...`,
-          );
-          this.enqueueMessage(queueName, message, multi);
-          requeued = true;
-        }
+        message.setScheduledDelay(delay);
+        const delayTimestamp =
+          this.schedulerInstance.getNextScheduledTimestamp(message);
+        this.messageManager.delayUnacknowledgedMessageBeforeRequeuing(
+          message,
+          queueName,
+          delayTimestamp,
+          processingQueue,
+          unacknowledgedCause,
+          (err) => {
+            if (err) cb(err);
+            else {
+              consumer.emit(events.MESSAGE_RETRY_AFTER_DELAY, message);
+              cb();
+            }
+          },
+        );
       } else {
         this.logger.debug(
-          `Message ID [${message.getId()}] retry threshold exceeded. Moving message to DLQ...`,
+          `Re-queuing message ID [${message.getId()}] for one more time...`,
         );
-        this.messageManager.moveMessageToDLQQueue(
-          queueName,
+        this.messageManager.requeueUnacknowledgedMessage(
           message,
-          EMessageDeadLetterCause.RETRY_THRESHOLD_EXCEEDED,
-          multi,
+          queueName,
+          processingQueue,
+          withPriority,
+          unacknowledgedCause,
+          (err) => {
+            if (err) cb(err);
+            else {
+              consumer.emit(events.MESSAGE_RETRY, message);
+              cb();
+            }
+          },
         );
-        deadLetter = true;
       }
+    } else {
+      this.logger.debug(
+        `Message ID [${message.getId()}] retry threshold exceeded. Moving message to DLQ...`,
+      );
+      this.messageManager.deadLetterUnacknowledgedMessage(
+        message,
+        queueName,
+        processingQueue,
+        unacknowledgedCause,
+        EMessageDeadLetterCause.RETRY_THRESHOLD_EXCEEDED,
+        (err) => {
+          if (err) cb(err);
+          else {
+            consumer.emit(events.MESSAGE_DEAD_LETTER, message);
+            cb();
+          }
+        },
+      );
     }
-    client.execMulti(multi, (err) => {
-      if (err) cb(err);
-      else {
-        if (requeued) {
-          consumer.emit(events.MESSAGE_RETRY, message);
-        } else if (scheduled) {
-          consumer.emit(events.MESSAGE_RETRY_AFTER_DELAY, message);
-        } else if (deadLetter) {
-          consumer.emit(events.MESSAGE_DEAD_LETTER, message);
-        }
-        cb();
-      }
-    });
   }
 }

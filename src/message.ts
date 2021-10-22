@@ -1,7 +1,15 @@
 import { v4 as uuid } from 'uuid';
 import { parseExpression } from 'cron-parser';
+import { TMessageDefaultOptions } from '../types';
 
 export class Message {
+  protected static defaultOpts: TMessageDefaultOptions = {
+    consumeTimeout: 0,
+    retryThreshold: 3,
+    retryDelay: 60000,
+    ttl: 0,
+  };
+
   // Do not forget about javascript users. Using an object map instead of enum
   static readonly MessagePriority = {
     LOWEST: 7,
@@ -18,13 +26,13 @@ export class Message {
 
   protected createdAt: number;
 
-  protected ttl: number | null = null;
+  protected ttl: number;
 
-  protected retryThreshold: number | null = null;
+  protected retryThreshold: number;
 
-  protected retryDelay: number | null = null;
+  protected retryDelay: number;
 
-  protected consumeTimeout: number | null = null;
+  protected consumeTimeout: number;
 
   protected body: unknown = null;
 
@@ -32,13 +40,10 @@ export class Message {
 
   protected scheduledCron: string | null = null;
 
-  // The time in milliseconds that a message will wait before being scheduled to be delivered
   protected scheduledDelay: number | null = null;
 
-  // The time in milliseconds to wait after the start time to wait before scheduling the message again
   protected scheduledPeriod: number | null = null;
 
-  // The number of times to repeat scheduling a message for delivery
   protected scheduledRepeat = 0;
 
   ///
@@ -61,26 +66,30 @@ export class Message {
     this.attempts = 0;
     this.scheduledRepeatCount = 0;
     this.delayed = false;
+    this.ttl = Message.defaultOpts.ttl;
+    this.retryDelay = Message.defaultOpts.retryDelay;
+    this.retryThreshold = Message.defaultOpts.retryThreshold;
+    this.consumeTimeout = Message.defaultOpts.consumeTimeout;
   }
 
   /**
-   * @param period In seconds
+   * @param period In millis
    */
   setScheduledPeriod(period: number): Message {
-    if (period < 1)
+    if (period < 1000)
       throw new Error('Scheduling period should not be less than 1 second');
-    this.scheduledPeriod = period * 1000; // in ms
+    this.scheduledPeriod = period;
     return this;
   }
 
   /**
-   * @param delay In seconds
+   * @param delay In millis
    */
   setScheduledDelay(delay: number): Message {
-    if (delay < 1) {
+    if (delay < 1000) {
       throw new Error('Scheduling delay should not be less than 1 second');
     }
-    this.scheduledDelay = delay * 1000; // in ms
+    this.scheduledDelay = delay;
     this.delayed = false;
     return this;
   }
@@ -101,6 +110,9 @@ export class Message {
    * @param ttl In milliseconds
    */
   setTTL(ttl: number): Message {
+    if (ttl && ttl < 1000) {
+      throw new Error('TTL should not be less than 1 second');
+    }
     this.ttl = Number(ttl);
     return this;
   }
@@ -109,6 +121,9 @@ export class Message {
    * @param timeout In milliseconds
    */
   setConsumeTimeout(timeout: number): Message {
+    if (timeout && timeout < 1000) {
+      throw new Error('Timeout should not be less than 1 second');
+    }
     this.consumeTimeout = Number(timeout);
     return this;
   }
@@ -119,9 +134,12 @@ export class Message {
   }
 
   /**
-   * @param delay In seconds
+   * @param delay In millis
    */
   setRetryDelay(delay: number): Message {
+    if (delay && delay < 1000) {
+      throw new Error('Delay should not be less than 1 second');
+    }
     this.retryDelay = Number(delay);
     return this;
   }
@@ -186,19 +204,19 @@ export class Message {
     return this.uuid;
   }
 
-  getTTL(): number | null {
+  getTTL(): number {
     return this.ttl;
   }
 
-  getRetryThreshold(): number | null {
+  getRetryThreshold(): number {
     return this.retryThreshold;
   }
 
-  getRetryDelay(): number | null {
+  getRetryDelay(): number {
     return this.retryDelay;
   }
 
-  getConsumeTimeout(): number | null {
+  getConsumeTimeout(): number {
     return this.consumeTimeout;
   }
 
@@ -265,7 +283,6 @@ export class Message {
 
   reset(hardReset = false): Message {
     if (hardReset) {
-      this.createdAt = Date.now();
       this.delayed = false;
       this.scheduledCronFired = false;
       this.scheduledRepeatCount = 0;
@@ -273,6 +290,18 @@ export class Message {
     this.attempts = 0;
     this.expired = false;
     return this;
+  }
+
+  getSetPriority(priority: number | undefined): number {
+    const defaultPriority = priority ?? Message.MessagePriority.NORMAL;
+    if (!Object.values(Message.MessagePriority).includes(defaultPriority)) {
+      throw new Error(`Invalid message priority`);
+    }
+    const msgPriority = this.getPriority() ?? defaultPriority;
+    if (msgPriority !== this.getPriority()) {
+      this.setPriority(msgPriority);
+    }
+    return msgPriority;
   }
 
   static createFromMessage(
@@ -286,5 +315,23 @@ export class Message {
     Object.assign(m, messageJSON);
     if (reset) m.reset(hardReset);
     return m;
+  }
+
+  static setDefaultOptions(
+    options: Partial<TMessageDefaultOptions> = {},
+  ): void {
+    if (options.consumeTimeout && options.consumeTimeout < 1000) {
+      throw new Error('Timeout should not be less than 1 second');
+    }
+    if (options.retryDelay && options.retryDelay < 1000) {
+      throw new Error('Delay should not be less than 1 second');
+    }
+    if (options.ttl && options.ttl < 1000) {
+      throw new Error('TTL should not be less than 1 second');
+    }
+    Message.defaultOpts = {
+      ...Message.defaultOpts,
+      ...options,
+    };
   }
 }

@@ -1,53 +1,18 @@
-import { Broker } from './broker';
-import { ICallback, TRedisClientMulti } from '../../types';
-import * as async from 'async';
+import { ICallback } from '../../types';
 import { Message } from '../message';
-import { metadata } from './metadata';
-import { RedisClient } from './redis-client';
-import { redisKeys } from './redis-keys';
 import { EventEmitter } from 'events';
 import { parseExpression } from 'cron-parser';
+import { MessageManager } from '../message-manager';
 
 export class Scheduler extends EventEmitter {
-  protected static instance: Scheduler | null = null;
-  protected queueName: string;
-  protected redisClient: RedisClient;
-  protected keys: ReturnType<typeof redisKeys['getKeys']>;
+  protected messageManager: MessageManager;
 
-  constructor(queueName: string, redisClient: RedisClient) {
+  constructor(messageManager: MessageManager) {
     super();
-    this.queueName = queueName;
-    this.keys = redisKeys.getKeys(queueName);
-    this.redisClient = redisClient;
+    this.messageManager = messageManager;
   }
 
-  protected scheduleAtTimestamp(
-    message: Message,
-    timestamp: number,
-    mixed: TRedisClientMulti | ICallback<boolean>,
-  ): void {
-    const { keyQueueScheduledMessages } = this.keys;
-    const schedule = (m: TRedisClientMulti) => {
-      const msgStr = message.toString();
-      m.zadd(keyQueueScheduledMessages, timestamp, msgStr);
-      metadata.preMessageScheduled(message, this.queueName, m);
-      return m;
-    };
-    if (typeof mixed === 'object') schedule(mixed);
-    else if (typeof mixed === 'function') {
-      const m = this.redisClient.multi();
-      schedule(m).exec((err) => {
-        if (err) mixed(err);
-        else mixed(null, true);
-      });
-    } else {
-      throw new Error(
-        'Invalid function argument [mixed]. Expected a callback or an instance of Multi.',
-      );
-    }
-  }
-
-  protected getNextScheduledTimestamp(message: Message): number | null {
+  getNextScheduledTimestamp(message: Message): number {
     if (this.isSchedulable(message)) {
       // Delay
       const msgScheduledDelay = message.getMessageScheduledDelay();
@@ -107,52 +72,17 @@ export class Scheduler extends EventEmitter {
     return 0;
   }
 
-  protected enqueueScheduledMessage(
-    broker: Broker,
-    msg: Message,
-    multi: TRedisClientMulti,
+  enqueueScheduledMessages(
+    queueName: string,
+    withPriority: boolean,
+    cb: ICallback<void>,
   ): void {
-    const { keyQueueScheduledMessages } = this.keys;
-    multi.zrem(keyQueueScheduledMessages, msg.toString());
-    const message = this.isPeriodic(msg) ? msg.reset() : msg;
-    metadata.preMessageScheduledEnqueue(message, this.queueName, multi);
-    broker.enqueueMessage(this.queueName, message, multi);
-  }
-
-  protected scheduleAtNextTimestamp(
-    msg: Message,
-    multi: TRedisClientMulti,
-  ): void {
-    if (this.isPeriodic(msg)) {
-      const timestamp = this.getNextScheduledTimestamp(msg) ?? 0;
-      if (timestamp > 0) {
-        this.scheduleAtTimestamp(msg, timestamp, multi);
-      }
-    }
-  }
-
-  enqueueScheduledMessages(broker: Broker, cb: ICallback<void>): void {
-    const now = Date.now();
-    const { keyQueueScheduledMessages } = this.keys;
-    const process = (messages: string[], cb: ICallback<void>) => {
-      if (messages.length) {
-        async.each<string, Error>(
-          messages,
-          (msg, done) => {
-            const message = Message.createFromMessage(msg);
-            const multi = this.redisClient.multi();
-            this.enqueueScheduledMessage(broker, message, multi);
-            this.scheduleAtNextTimestamp(message, multi);
-            multi.exec(done);
-          },
-          cb,
-        );
-      } else cb();
-    };
-    const fetch = (cb: ICallback<string[]>) => {
-      this.redisClient.zrangebyscore(keyQueueScheduledMessages, 0, now, cb);
-    };
-    async.waterfall([fetch, process], cb);
+    this.messageManager.enqueueScheduledMessages(
+      this,
+      queueName,
+      withPriority,
+      cb,
+    );
   }
 
   isSchedulable(message: Message): boolean {
@@ -170,22 +100,22 @@ export class Scheduler extends EventEmitter {
     );
   }
 
-  schedule(
-    message: Message,
-    mixed: TRedisClientMulti | ICallback<boolean>,
-  ): void {
+  schedule(queueName: string, message: Message, cb: ICallback<boolean>): void {
     const timestamp = this.getNextScheduledTimestamp(message) ?? 0;
     if (timestamp > 0) {
-      this.scheduleAtTimestamp(message, timestamp, mixed);
-    } else if (typeof mixed === 'function') mixed(null, false);
+      this.messageManager.scheduleMessage(
+        queueName,
+        message,
+        timestamp,
+        (err) => {
+          if (err) cb(err);
+          else cb(null, true);
+        },
+      );
+    } else cb(null, false);
   }
 
   quit(cb: ICallback<void>): void {
-    if (this === Scheduler.instance) {
-      this.redisClient.halt(() => {
-        Scheduler.instance = null;
-        cb();
-      });
-    } else cb();
+    cb();
   }
 }

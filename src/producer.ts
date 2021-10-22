@@ -32,25 +32,21 @@ export class Producer extends Instance {
       }
     };
     const proceed = () => {
-      this.getScheduler((err, scheduler) => {
-        if (err) cb(err);
-        else if (!scheduler) cb(new Error(`Expected an instance of Scheduler`));
+      this.getScheduler((scheduler) => {
+        if (!scheduler) cb(new Error(`Expected an instance of Scheduler`));
         else {
           if (scheduler.isSchedulable(message)) {
-            scheduler.schedule(message, callback);
+            scheduler.schedule(this.queueName, message, callback);
           } else {
-            this.getCommonRedisClient((client) => {
-              this.getBroker((broker) => {
-                broker.enqueueMessage(
-                  this.queueName,
-                  message,
-                  client,
-                  (err?: Error | null) => {
-                    if (err) callback(err);
-                    else callback(null, true);
-                  },
-                );
-              });
+            this.getBroker((broker) => {
+              broker.enqueueMessage(
+                this.queueName,
+                message,
+                (err?: Error | null) => {
+                  if (err) callback(err);
+                  else callback(null, true);
+                },
+              );
             });
           }
         }

@@ -16,7 +16,7 @@ No public property exists.
 **Syntax**
 
 ```javascript
-const testQueueConsumer = new TestQueueConsumer(queueName , config, options)
+const testQueueConsumer = new TestQueueConsumer(queueName , config)
 ```
 
 **Parameters**
@@ -24,22 +24,6 @@ const testQueueConsumer = new TestQueueConsumer(queueName , config, options)
   only of letters (a-z), numbers (0-9) and (-_) characters.
 
 - `config` *(object): Optional.* Configuration parameters. See [configuration](https://github.com/weyoss/redis-smq#configuration).
-
-- `options` *(object): Optional.* Consumer configuration parameters.
-
-- `options.messageConsumeTimeout` *(Integer): Optional.* In milliseconds. Also called job timeout, is the amount of time in
-  milliseconds before a consumer consuming a message times out. If the consumer does not consume the message
-  within the set time limit, the message consumption is automatically canceled and the message is re-queued
-  to be consumed again. By default, message consumption timeout is not set.
-  
-- `options.messageTTL` *(Integer): Optional.* In milliseconds. All queue messages are guaranteed to not be consumed and destroyed if 
-  they have been in the queue for longer than an amount of time called TTL (time-to-live). By default, message TTL is not set.
-  
-- `options.messageRetryThreshold` *(Integer): Optional.* The number of times the message can be enqueued and delivered again.
-   Can be defined per message instance or per consumer. By default, message retry threshold is set to 3.
-  
-- `options.messageRetryDelay` *(Integer): Optional.* In seconds. The amount of time in seconds to wait for before 
-   re-queuing a failed message. By default, message retry delay is 60 seconds.
 
 ### Consumer.prototype.run()
 

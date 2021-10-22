@@ -1,21 +1,21 @@
+import * as async from 'async';
 import {
-  EMessageMetadataType,
+  EMessageMetadata,
   ICallback,
   IMessageMetadata,
-} from '../../../types';
-import { LockManager } from '../lock-manager';
-import { redisKeys } from '../redis-keys';
-import { metadata } from '../metadata';
-import * as async from 'async';
-import { RedisClient } from '../redis-client';
+} from '../../../../types';
+import { LockManager } from '../../lock-manager';
+import { redisKeys } from '../../redis-keys';
+import { metadata } from '../../metadata';
+import { RedisClient } from '../../redis-client';
 
 const lockTTL = 10000; // 10 seconds
 
-export class MessageOperation {
+export abstract class MessageOperation {
   protected handleMessageOperation(
     redisClient: RedisClient,
     messageId: string,
-    expectedLastMessageMetadata: EMessageMetadataType[],
+    expectedLastMessageMetadata: EMessageMetadata[],
     operation: (messageMetadata: IMessageMetadata, cb: ICallback<void>) => void,
     cb: ICallback<void>,
   ): void {
@@ -41,13 +41,24 @@ export class MessageOperation {
       );
     };
     const getLastMetadata = (cb: ICallback<IMessageMetadata>) =>
-      metadata.getLastMessageMetadata(redisClient, messageId, cb);
+      metadata.getLastMessageMetadataItem(
+        redisClient,
+        messageId,
+        undefined,
+        cb,
+      );
     const validateLastMetatadata = (
       messageMetadata: IMessageMetadata,
       cb: ICallback<IMessageMetadata>,
     ) => {
       if (!expectedLastMessageMetadata.includes(messageMetadata.type)) {
-        cb(new Error('Message last metadata does not match expected ones'));
+        cb(
+          new Error(
+            `Unexpected metadata type [${
+              messageMetadata.type
+            }]. Expected ${JSON.stringify(expectedLastMessageMetadata)}`,
+          ),
+        );
       } else cb(null, messageMetadata);
     };
     async.waterfall(

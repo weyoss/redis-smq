@@ -7,13 +7,17 @@ import {
 } from './common';
 import { Message } from '../src/message';
 import { events } from '../src/system/events';
+import { config } from './config';
 
 test('A consumer delays a failed message before re-queuing it again, given messageRetryThreshold is not exceeded', async () => {
   const timestamps: number[] = [];
   let callCount = 0;
   const consumer = getConsumer({
     queueName: 'test_queue',
-    options: { messageRetryDelay: 10, messageRetryThreshold: 5 },
+    cfg: {
+      ...config,
+      message: { retryDelay: 10000, retryThreshold: 5 },
+    },
     consumeMock: jest.fn((msg, cb) => {
       timestamps.push(Date.now());
       callCount += 1;

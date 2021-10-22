@@ -3,13 +3,15 @@ import { events } from '../src/system/events';
 import { RedisClient } from '../src/system/redis-client';
 import { Producer, Consumer, Message, MonitorServer } from '../index';
 import { config } from './config';
-import { ICallback, IConfig, TConsumerOptions } from '../types';
+import { ICallback, IConfig } from '../types';
 import { StatsAggregatorThread } from '../src/monitor-server/threads/stats-aggregator.thread';
 import { QueueManager } from '../src/system/queue-manager';
 import { MessageManager } from '../src/message-manager';
 import { Scheduler } from '../src/system/scheduler';
 
 type TMonitorServer = ReturnType<typeof MonitorServer>;
+
+Message.setDefaultOptions(config.message);
 
 class TestConsumer extends Consumer {
   // eslint-disable-next-line class-methods-use-this
@@ -67,18 +69,13 @@ export async function shutdown(): Promise<void> {
 export function getConsumer({
   queueName = 'test_queue',
   cfg = config,
-  options = {},
   consumeMock = null,
 }: {
   queueName?: string;
   cfg?: IConfig;
-  options?: Partial<TConsumerOptions>;
   consumeMock?: ((msg: Message, cb: ICallback<void>) => void) | null;
 } = {}) {
-  const consumer = new TestConsumer(queueName, cfg, {
-    messageRetryDelay: 0,
-    ...options,
-  });
+  const consumer = new TestConsumer(queueName, cfg);
   if (consumeMock) {
     consumer.consume = consumeMock;
   }
@@ -110,10 +107,10 @@ export async function getQueueManager() {
   return queueManager;
 }
 
-export async function getScheduler(queueName: string) {
+export async function getScheduler() {
   if (!scheduler) {
-    const client = await getRedisInstance();
-    scheduler = new Scheduler(queueName, client);
+    const messageManager = await getMessageManager();
+    scheduler = new Scheduler(messageManager);
   }
   return scheduler;
 }

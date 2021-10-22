@@ -45,7 +45,7 @@ const { Message } = require('redis-smq');
 
 const message = new Message();
 message.setScheduledRepeat(6); // Schedule the message for delivery 6 times
-message.setScheduledPeriod(1); // Wait for one second after each delivery
+message.setScheduledPeriod(1000); // Wait for one second after each delivery
 ```
 
 ### Message.prototype.setScheduledDelay()
@@ -58,7 +58,7 @@ Set the time in seconds that a message will wait before being scheduled for deli
 const { Message } = require('redis-smq');
 
 const message = new Message();
-message.setScheduledDelay(60); // in seconds
+message.setScheduledDelay(60000); // in millis
 ```
 
 ### Message.prototype.setScheduledCron()
@@ -74,7 +74,7 @@ const { Message } = require('redis-smq');
 const message = new Message();
 message.setScheduledCron('0 0 * * * *');  // Schedule message for delivery every hour
 message.setScheduledRepeat(5);
-message.setScheduledPeriod(10);
+message.setScheduledPeriod(10000); // in millis
 ```
 
 ### Message.prototype.setScheduledRepeat()
@@ -271,8 +271,8 @@ const { Message } = require('redis-smq');
 
 const message = new Message();
 message.setScheduledRepeat(6); // Schedule the message for delivery 6 times
-message.setScheduledPeriod(1); // Wait for one second after each delivery
-message.getMessageScheduledPeriod(); // 1
+message.setScheduledPeriod(1000); // Wait for one second after each delivery
+message.getMessageScheduledPeriod(); // 1000
 ```
 
 ### Message.prototype.getMessageScheduledCRON()
@@ -348,7 +348,7 @@ const { Message } = require('redis-smq');
 
 const message = new Message();
 message.setScheduledRepeat(6); // Schedule the message for delivery 6 times
-message.setScheduledPeriod(1); // Wait for one second after each delivery
+message.setScheduledPeriod(1000); // Wait for one second after each delivery
 
 const newMessage = Message.createFromMessage(message);
 

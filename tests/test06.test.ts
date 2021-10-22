@@ -2,6 +2,7 @@ import { getConsumer, getProducer, untilConsumerIdle } from './common';
 import { Message } from '../src/message';
 import { events } from '../src/system/events';
 import { ICallback } from '../types';
+import { config } from './config';
 
 test('When consuming a message, a consumer does time out after messageConsumeTimeout exceeds and re-queues the message to be consumed again', async () => {
   const producer = getProducer('test_queue');
@@ -9,8 +10,11 @@ test('When consuming a message, a consumer does time out after messageConsumeTim
   let consumeCount = 0;
   const consumer = getConsumer({
     queueName: 'test_queue',
-    options: {
-      messageConsumeTimeout: 2000,
+    cfg: {
+      ...config,
+      message: {
+        consumeTimeout: 2000,
+      },
     },
     consumeMock: jest.fn((msg: unknown, cb: ICallback<void>) => {
       if (consumeCount === 0) setTimeout(cb, 5000);

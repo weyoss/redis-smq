@@ -114,10 +114,10 @@ describe('Queue Metadata: check that queue metadata are valid', () => {
   });
 
   test('Case 4', async () => {
-    const msg = new Message();
-    msg.setScheduledDelay(10);
-
     const producer = getProducer();
+
+    const msg = new Message();
+    msg.setScheduledDelay(10000);
     await producer.produceMessageAsync(msg);
 
     const client = await getRedisInstance();
@@ -141,15 +141,15 @@ describe('Queue Metadata: check that queue metadata are valid', () => {
   });
 
   test('Case 5', async () => {
-    const msg = new Message();
-    msg.setPriority(Message.MessagePriority.LOW);
-
     const cfg = {
       ...config,
       priorityQueue: true,
     };
     const queueName = 'test_queue';
     const producer = promisifyAll(getProducer(queueName, cfg));
+
+    const msg = new Message();
+    msg.setPriority(Message.MessagePriority.LOW);
     await producer.produceMessageAsync(msg);
 
     const client = await getRedisInstance();

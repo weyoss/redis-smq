@@ -49,7 +49,7 @@ const message = new Message();
 message
     .setBody({hello: 'world'})
     .setTTL(3600000)
-    .setScheduledDelay(10);
+    .setScheduledDelay(10000); // in millis
 
 const producer = new Producer('test_queue');
 producer.produceMessage(message, (err) => {

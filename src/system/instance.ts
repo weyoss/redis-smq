@@ -20,6 +20,7 @@ import { redisKeys } from './redis-keys';
 import { RedisClient } from './redis-client';
 import { QueueManager } from './queue-manager';
 import { MessageManager } from '../message-manager';
+import { Message } from '../message';
 
 export abstract class Instance extends EventEmitter {
   private broker: Broker | null = null;
@@ -37,7 +38,7 @@ export abstract class Instance extends EventEmitter {
   protected readonly powerManager: PowerManager;
   protected readonly redisKeys: TInstanceRedisKeys;
 
-  protected constructor(queueName: string, config: IConfig) {
+  constructor(queueName: string, config: IConfig) {
     super();
     if (config.namespace) {
       redisKeys.setNamespace(config.namespace);
@@ -55,6 +56,7 @@ export abstract class Instance extends EventEmitter {
       this.config.log,
     );
     this.registerEventsHandlers();
+    Message.setDefaultOptions(config.message);
   }
 
   private setupCommonRedisClient = (cb: ICallback<RedisClient>): void => {
@@ -121,7 +123,7 @@ export abstract class Instance extends EventEmitter {
       scheduler?: Scheduler,
     ) => void,
   ): void => {
-    this.scheduler = new Scheduler(this.queueName, client);
+    this.scheduler = new Scheduler(messageManager);
     cb(null, client, messageManager, queueManager, this.scheduler);
   };
 
@@ -191,10 +193,19 @@ export abstract class Instance extends EventEmitter {
     return [stopMessageManager, stopStats, stopCommonRedisClient, cleanUp];
   }
 
-  protected getScheduler(cb: ICallback<Scheduler>): void {
+  getScheduler(cb: TUnaryFunction<Scheduler>): void {
     if (!this.scheduler)
       this.emit(events.ERROR, new Error('Expected an instance of Scheduler'));
-    else cb(null, this.scheduler);
+    else cb(this.scheduler);
+  }
+
+  getMessageManager(cb: ICallback<MessageManager>): void {
+    if (!this.messageManager)
+      this.emit(
+        events.ERROR,
+        new Error('Expected an instance of MessageManager'),
+      );
+    else cb(null, this.messageManager);
   }
 
   handleError(err: Error): void {
