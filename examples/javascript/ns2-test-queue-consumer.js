@@ -24,9 +24,7 @@ class Ns2TestQueueConsumer extends Consumer {
 
 //
 const newConfig = { ...config, namespace: 'ns2' };
-const consumer = new Ns2TestQueueConsumer('test_queue', newConfig, {
-  messageConsumeTimeout: 2000,
-});
+const consumer = new Ns2TestQueueConsumer('test_queue', newConfig);
 consumer.run();
 
 /*

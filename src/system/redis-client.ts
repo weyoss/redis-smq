@@ -306,7 +306,7 @@ export class RedisClient extends EventEmitter {
   evalsha(
     hash: string,
     args: (string | number)[] | string | number,
-    cb?: (err: Error | null, res?: unknown) => void,
+    cb: (err?: Error | null, res?: unknown) => void,
   ): void {
     const arrHash: (string | number)[] = [hash];
     const arrArgs = Array.isArray(args) ? args : [args];

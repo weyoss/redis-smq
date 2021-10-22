@@ -102,9 +102,9 @@ const message = new Message();
 message
     .setBody({hello: 'world'})
     .setTTL(3600000)
-    .setScheduledDelay(10)
+    .setScheduledDelay(10000) // in millis
     .setScheduledRepeat(6)
-    .setScheduledPeriod(60)
+    .setScheduledPeriod(60000)
     .setScheduledCron('* 30 * * * *');
 
 let messageTTL = message.getTTL();

@@ -1,8 +1,6 @@
 import {
   EMessageUnacknowledgedCause,
   ICallback,
-  IConfig,
-  TConsumerOptions,
   TUnaryFunction,
 } from '../types';
 import { Instance } from './system/instance';
@@ -15,35 +13,15 @@ import { SchedulerRunner } from './system/scheduler-runner';
 import { RedisClient } from './system/redis-client';
 
 export abstract class Consumer extends Instance {
-  private readonly options: TConsumerOptions = {
-    messageConsumeTimeout: 0,
-    messageRetryThreshold: 3,
-    messageRetryDelay: 60,
-    messageTTL: 0,
-  };
-
   // exclusive redis clients
   private consumerRedisClient: RedisClient | null = null;
   private heartbeatRedisClient: RedisClient | null = null;
   private gcRedisClient: RedisClient | null = null;
-  private schedulerRunnerRedisClient: RedisClient | null = null;
 
   private schedulerRunner: SchedulerRunner | null = null;
   private garbageCollector: GarbageCollector | null = null;
   private heartbeat: Heartbeat | null = null;
   private statsProvider: ConsumerStatsProvider | null = null;
-
-  constructor(
-    queueName: string,
-    config: IConfig = {},
-    options: Partial<TConsumerOptions> = {},
-  ) {
-    super(queueName, config);
-    this.options = {
-      ...this.options,
-      ...options,
-    };
-  }
 
   private getConsumerRedisClient(cb: TUnaryFunction<RedisClient>): void {
     if (!this.consumerRedisClient)
@@ -98,17 +76,15 @@ export abstract class Consumer extends Instance {
               err,
             );
           else
-            this.getConsumerRedisClient((client) => {
-              this.getBroker((broker) => {
-                broker.acknowledgeMessage(client, this, msg, (err) => {
-                  if (err) this.emit(events.ERROR, err);
-                  else {
-                    this.logger.info(
-                      `Message [${msg.getId()}] successfully processed`,
-                    );
-                    this.emit(events.MESSAGE_ACKNOWLEDGED, msg);
-                  }
-                });
+            this.getBroker((broker) => {
+              broker.acknowledgeMessage(this, msg, (err) => {
+                if (err) this.emit(events.ERROR, err);
+                else {
+                  this.logger.info(
+                    `Message [${msg.getId()}] successfully processed`,
+                  );
+                  this.emit(events.MESSAGE_ACKNOWLEDGED, msg);
+                }
               });
             });
         }
@@ -184,7 +160,6 @@ export abstract class Consumer extends Instance {
 
   protected handleReceivedMessage(json: string): void {
     const message = Message.createFromMessage(json);
-    this.applyOptions(message);
     this.emit(events.MESSAGE_DEQUEUED, message);
     if (message.hasExpired()) {
       this.getConsumerRedisClient((client) => {
@@ -227,9 +202,15 @@ export abstract class Consumer extends Instance {
       });
     };
     const startSchedulerRunner = (cb: ICallback<void>) => {
-      RedisClient.getNewInstance(this.config, (client) => {
-        this.schedulerRunnerRedisClient = client;
-        this.schedulerRunner = new SchedulerRunner(this, client);
+      this.getScheduler((scheduler) => {
+        this.schedulerRunner = new SchedulerRunner(
+          this.queueName,
+          this.config,
+          scheduler,
+        );
+        this.schedulerRunner.on(events.ERROR, (err: Error) =>
+          this.emit(events.ERROR, err),
+        );
         cb();
       });
     };
@@ -248,10 +229,8 @@ export abstract class Consumer extends Instance {
     const stopSchedulerRunner = (cb: ICallback<void>) => {
       this.getSchedulerRunner((schedulerRunner) => {
         schedulerRunner.quit(() => {
-          this.schedulerRunnerRedisClient?.halt(() => {
-            this.schedulerRunnerRedisClient = null;
-            cb();
-          });
+          this.schedulerRunner = null;
+          cb();
         });
       });
     };
@@ -287,31 +266,6 @@ export abstract class Consumer extends Instance {
       stopHeartbeat,
       stopConsumerRedisClient,
     ].concat(super.goingDown());
-  }
-
-  getOptions(): TConsumerOptions {
-    return this.options;
-  }
-
-  applyOptions(msg: Message): void {
-    const {
-      messageConsumeTimeout,
-      messageRetryDelay,
-      messageRetryThreshold,
-      messageTTL,
-    } = this.options;
-    if (msg.getTTL() === null) {
-      msg.setTTL(messageTTL);
-    }
-    if (msg.getRetryDelay() === null) {
-      msg.setRetryDelay(messageRetryDelay);
-    }
-    if (msg.getConsumeTimeout() === null) {
-      msg.setConsumeTimeout(messageConsumeTimeout);
-    }
-    if (msg.getRetryThreshold() === null) {
-      msg.setRetryThreshold(messageRetryThreshold);
-    }
   }
 
   getStatsProvider(): ConsumerStatsProvider {

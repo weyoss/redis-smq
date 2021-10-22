@@ -15,7 +15,5 @@ class Ns1TestQueueConsumer extends Consumer {
   }
 }
 
-const consumer = new Ns1TestQueueConsumer('test_queue', config, {
-  messageConsumeTimeout: 2000,
-});
+const consumer = new Ns1TestQueueConsumer('test_queue', config);
 consumer.run();

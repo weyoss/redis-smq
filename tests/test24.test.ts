@@ -7,14 +7,14 @@ import {
 import { Message } from '../src/message';
 import { promisifyAll } from 'bluebird';
 import { config } from './config';
-import { EMessageMetadataType } from '../types';
+import { EMessageMetadata } from '../types';
 
 describe('MessageManager', () => {
   test('Case 1', async () => {
+    const producer = getProducer();
+
     const msg = new Message();
     msg.setBody({ hello: 'world' });
-
-    const producer = getProducer();
     await producer.produceMessageAsync(msg);
 
     const messageManager = promisifyAll(await getMessageManager());
@@ -81,15 +81,15 @@ describe('MessageManager', () => {
   });
 
   test('Case 4', async () => {
-    const msg = new Message();
-    msg.setPriority(Message.MessagePriority.LOW);
-
     const cfg = {
       ...config,
       priorityQueue: true,
     };
     const queueName = 'test_queue';
     const producer = promisifyAll(getProducer(queueName, cfg));
+
+    const msg = new Message();
+    msg.setPriority(Message.MessagePriority.LOW);
     await producer.produceMessageAsync(msg);
 
     const messageManager = promisifyAll(await getMessageManager());
@@ -104,10 +104,10 @@ describe('MessageManager', () => {
   });
 
   test('Case 5', async () => {
-    const msg = new Message();
-    msg.setScheduledDelay(10);
-
     const producer = getProducer();
+
+    const msg = new Message();
+    msg.setScheduledDelay(10000);
     await producer.produceMessageAsync(msg);
 
     const messageManager = promisifyAll(await getMessageManager());
@@ -137,10 +137,12 @@ describe('MessageManager', () => {
     await untilConsumerIdle(consumer);
 
     const messageManager = promisifyAll(await getMessageManager());
-    const metadata = await messageManager.getMessageMetadataAsync(msg.getId());
+    const metadata = await messageManager.getMessageMetadataListAsync(
+      msg.getId(),
+    );
 
     expect(metadata.length).toBe(2);
-    expect(metadata[0].type).toBe(EMessageMetadataType.ENQUEUED);
-    expect(metadata[1].type).toBe(EMessageMetadataType.ACKNOWLEDGED);
+    expect(metadata[0].type).toBe(EMessageMetadata.ENQUEUED);
+    expect(metadata[1].type).toBe(EMessageMetadata.ACKNOWLEDGED);
   });
 });

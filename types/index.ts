@@ -100,13 +100,14 @@ export interface IConfig {
   };
   monitor?: IMonitorConfig;
   priorityQueue?: boolean;
+  message?: Partial<TMessageDefaultOptions>;
 }
 
-export type TConsumerOptions = {
-  messageConsumeTimeout: number;
-  messageTTL: number;
-  messageRetryThreshold: number;
-  messageRetryDelay: number;
+export type TMessageDefaultOptions = {
+  consumeTimeout: number;
+  ttl: number;
+  retryThreshold: number;
+  retryDelay: number;
 };
 
 export type TAggregatedStatsQueueProducer = {
@@ -181,7 +182,7 @@ export type TInstanceRedisKeys = ReturnType<
   typeof redisKeys['getInstanceKeys']
 >;
 
-export enum EQueueMetadataType {
+export enum EQueueMetadata {
   PENDING_MESSAGES = 'pending',
   PENDING_MESSAGES_WITH_PRIORITY = 'pending_with_priority',
   SCHEDULED_MESSAGES = 'scheduled',
@@ -189,11 +190,10 @@ export enum EQueueMetadataType {
   ACKNOWLEDGED_MESSAGES = 'acknowledged',
 }
 
-export enum EMessageMetadataType {
+export enum EMessageMetadata {
   ENQUEUED = 'enqueued',
   ENQUEUED_WITH_PRIORITY = 'enqueued_with_priority',
   SCHEDULED = 'scheduled',
-  SCHEDULED_ENQUEUED = 'scheduled_enqueued',
   ACKNOWLEDGED = 'acknowledged',
   UNACKNOWLEDGED = 'unacknowledged',
   DEAD_LETTER = 'dead_letter',
@@ -206,7 +206,7 @@ export enum EMessageMetadataType {
 
 export interface IMessageMetadata {
   state: Message;
-  type: EMessageMetadataType;
+  type: EMessageMetadata;
   timestamp: number;
   deadLetterCause?: EMessageDeadLetterCause;
   unacknowledgedCause?: EMessageUnacknowledgedCause;
