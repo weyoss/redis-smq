@@ -1,7 +1,6 @@
 'use strict';
 
 const config = require('./config');
-const { events } = require('../../dist/src/system/events'); // require('redis-smq/dist/src/system/events');
 const { Consumer } = require('../..'); // require('redis-smq);
 
 class Ns1TestQueueConsumer extends Consumer {
@@ -23,41 +22,8 @@ class Ns1TestQueueConsumer extends Consumer {
   }
 }
 
-const consumer = new Ns1TestQueueConsumer('test_queue', config);
-
-consumer.on(events.UP, () => {
-  console.log('UP');
-});
-
-consumer.on(events.DOWN, () => {
-  console.log('DOWN');
-});
-
-consumer.on(events.GOING_UP, () => {
-  console.log('GOING UP');
-});
-
-consumer.on(events.GOING_DOWN, () => {
-  console.log('GOING DOWN');
-});
-
-console.log('start');
-consumer.run(() => {
-  console.log('a');
-  consumer.shutdown(() => {
-    console.log('b');
-    consumer.run(() => {
-      console.log('c');
-      consumer.shutdown(() => {
-        console.log('d');
-        consumer.run(() => {
-          console.log('e');
-          consumer.shutdown(() => {
-            console.log('f');
-            console.log('Done.');
-          });
-        });
-      });
-    });
-  });
+const queueName = 'test_queue';
+const consumer = new Ns1TestQueueConsumer(queueName, config);
+consumer.run(function () {
+  console.log(`Consuming messages from ${queueName}...`);
 });
