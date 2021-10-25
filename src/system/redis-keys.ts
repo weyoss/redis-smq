@@ -1,4 +1,5 @@
-const globalNamespace = 'redis-smq';
+const nsPrefix = 'redis-smq';
+const globalNamespace = 'global-ns';
 let namespace = 'default-ns';
 
 enum ERedisKey {
@@ -74,7 +75,7 @@ export const redisKeys = {
     };
     return {
       ...globalKeys,
-      ...this.makeNamespacedKeys(keys),
+      ...this.makeNamespacedKeys(keys, namespace),
     };
   },
 
@@ -116,7 +117,7 @@ export const redisKeys = {
     return {
       ...parentKeys,
       ...globalKeys,
-      ...this.makeNamespacedKeys(keys),
+      ...this.makeNamespacedKeys(keys, namespace),
     };
   },
 
@@ -128,7 +129,7 @@ export const redisKeys = {
       ),
     };
     return {
-      ...this.makeNamespacedKeys(keys),
+      ...this.makeNamespacedKeys(keys, namespace),
     };
   },
 
@@ -208,7 +209,7 @@ export const redisKeys = {
       keyLockQueueManager: ERedisKey.KEY_LOCK_QUEUE_MANAGER,
     };
     return {
-      ...this.makeNamespacedKeys(keys),
+      ...this.makeNamespacedKeys(keys, globalNamespace),
     };
   },
 
@@ -218,10 +219,11 @@ export const redisKeys = {
 
   makeNamespacedKeys<T extends Record<string, string | number>>(
     keys: T,
+    namespace: string,
   ): Record<Extract<keyof T, string>, string> {
     const result: Record<string, string> = {};
     for (const k in keys) {
-      result[k] = this.joinSegments(globalNamespace, namespace, keys[k]);
+      result[k] = this.joinSegments(nsPrefix, namespace, keys[k]);
     }
     return result;
   },
