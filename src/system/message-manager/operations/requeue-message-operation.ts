@@ -4,7 +4,6 @@ import {
   ICallback,
   IMessageMetadata,
 } from '../../../../types';
-import { ELuaScriptName, getScriptId } from '../lua-scripts';
 import { redisKeys } from '../../redis-keys';
 import { MessageOperation } from './message-operation';
 import { RedisClient } from '../../redis-client';
@@ -51,62 +50,6 @@ export class RequeueMessageOperation extends MessageOperation {
     throw new Error(`Unexpected message metadata type [${type}]`);
   }
 
-  protected getScriptArguments(
-    messageMetadata: IMessageMetadata,
-    queueName: string,
-    messageId: string,
-    withPriority: boolean,
-    priority: number | undefined,
-  ): (string | number)[] {
-    const { state, type } = messageMetadata;
-    const newState = Message.createFromMessage(state);
-    if (type === EMessageMetadata.DEAD_LETTER) newState.reset(true);
-    if (withPriority) newState.getSetPriority(priority);
-    const { keyMetadataQueue } = redisKeys.getKeys(queueName);
-    const { keyMetadataMessage } = redisKeys.getMessageKeys(messageId);
-    const deletedMetadata = metadata.getDeletedMessageMetadata(messageMetadata);
-    const enqueuedMetadata = metadata.getEnqueuedMessageMetadata(
-      newState,
-      withPriority,
-    );
-    return [
-      11,
-      this.getOriginQueue(queueName, messageMetadata),
-      this.getDstQueue(queueName, withPriority),
-      JSON.stringify(state),
-      JSON.stringify(newState),
-      enqueuedMetadata.state.getPriority() ?? '-1',
-      keyMetadataMessage,
-      JSON.stringify(deletedMetadata),
-      JSON.stringify(enqueuedMetadata),
-      keyMetadataQueue,
-      this.getOriginQueueMetadataProperty(messageMetadata),
-      this.getDstQueueMetadataProperty(withPriority),
-    ];
-  }
-
-  protected getScriptId(
-    messageMetadata: IMessageMetadata,
-    withPriority: boolean,
-  ): string {
-    const { type } = messageMetadata;
-    if (withPriority) {
-      if (type === EMessageMetadata.ACKNOWLEDGED)
-        return getScriptId(
-          ELuaScriptName.REQUEUE_ACKNOWLEDGED_MESSAGE_WITH_PRIORITY,
-        );
-      if (type === EMessageMetadata.DEAD_LETTER)
-        return getScriptId(
-          ELuaScriptName.REQUEUE_DEAD_LETTER_MESSAGE_WITH_PRIORITY,
-        );
-    }
-    if (type === EMessageMetadata.ACKNOWLEDGED)
-      return getScriptId(ELuaScriptName.REQUEUE_ACKNOWLEDGED_MESSAGE);
-    if (type === EMessageMetadata.DEAD_LETTER)
-      return getScriptId(ELuaScriptName.REQUEUE_DEAD_LETTER_MESSAGE);
-    throw new Error(`Unexpected message metadata type [${type}]`);
-  }
-
   requeue(
     redisClient: RedisClient,
     queueName: string,
@@ -121,22 +64,55 @@ export class RequeueMessageOperation extends MessageOperation {
       messageId,
       expectedLastMessageMetadata,
       (messageMetadata: IMessageMetadata, cb: ICallback<void>) => {
-        redisClient.evalsha(
-          this.getScriptId(messageMetadata, withPriority),
-          this.getScriptArguments(
-            messageMetadata,
-            queueName,
-            messageId,
-            withPriority,
-            priority,
-          ),
-          (err, reply) => {
-            if (err) cb(err);
-            else if (!reply || reply !== 'OK')
-              cb(new Error('An error occurred'));
-            else cb();
-          },
+        const { state, type } = messageMetadata;
+        const newState = Message.createFromMessage(state);
+        if (type === EMessageMetadata.DEAD_LETTER) newState.reset(true);
+        const messagePriority = withPriority
+          ? newState.getSetPriority(priority)
+          : null;
+        const { keyMetadataQueue } = redisKeys.getKeys(queueName);
+        const { keyMetadataMessage } = redisKeys.getMessageKeys(messageId);
+        const deletedMetadata =
+          metadata.getDeletedMessageMetadata(messageMetadata);
+        const enqueuedMetadata = metadata.getEnqueuedMessageMetadata(
+          newState,
+          withPriority,
         );
+        const originQueue = this.getOriginQueue(queueName, messageMetadata);
+        const dstQueue = this.getDstQueue(queueName, withPriority);
+        redisClient.watch([originQueue], (err) => {
+          if (err) cb(err);
+          else {
+            const multi = redisClient.multi();
+            multi.zrem(originQueue, JSON.stringify(state));
+            if (
+              ![
+                EMessageMetadata.ACKNOWLEDGED,
+                EMessageMetadata.DEAD_LETTER,
+              ].includes(type)
+            ) {
+              throw new Error(`Unexpected message metadata type [${type}]`);
+            }
+            if (messagePriority) {
+              multi.zadd(dstQueue, messagePriority, JSON.stringify(newState));
+            } else {
+              multi.lpush(dstQueue, JSON.stringify(newState));
+            }
+            multi.rpush(keyMetadataMessage, JSON.stringify(deletedMetadata));
+            multi.rpush(keyMetadataMessage, JSON.stringify(enqueuedMetadata));
+            multi.hincrby(
+              keyMetadataQueue,
+              this.getOriginQueueMetadataProperty(messageMetadata),
+              -1,
+            );
+            multi.hincrby(
+              keyMetadataQueue,
+              this.getDstQueueMetadataProperty(withPriority),
+              1,
+            );
+            redisClient.execMulti(multi, (err) => cb(err));
+          }
+        });
       },
       cb,
     );

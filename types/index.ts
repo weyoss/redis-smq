@@ -68,6 +68,7 @@ export type TCompatibleRedisClient = (NodeRedis | Redis) & {
   script(arg1: string, arg2: string, cb: ICallback<string>): void;
   eval: TFunction;
   evalsha: TFunction;
+  watch(args: string[], cb: ICallback<string>): void;
 };
 
 export type TRedisClientMulti = Multi | IORedis.Pipeline;

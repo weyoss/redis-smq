@@ -162,16 +162,25 @@ export class RedisClient extends EventEmitter {
     return this.client.multi();
   }
 
+  watch(args: string[], cb: ICallback<string>): void {
+    this.client.watch(args, cb);
+  }
+
   execMulti<T>(multi: TRedisClientMulti, cb: ICallback<T[]>): void {
     if (multi instanceof Multi) {
       multi.exec(cb);
     } else {
-      multi.exec((err?: Error | null, res?: Array<[Error | null, T]>) => {
+      multi.exec((err?: Error | null, reply?: Array<[Error | null, T]>) => {
         if (err) cb(err);
         else {
           const lengths: T[] = [];
           let err: Error | null = null;
-          for (const i of res ?? []) {
+          if (reply === null) {
+            console.log(
+              'Exec multi has been abandoned due to a concurrency issue',
+            );
+          }
+          for (const i of reply ?? []) {
             if (!Array.isArray(i)) {
               err = new Error('Expected an array reply from multi.exec()');
               break;
