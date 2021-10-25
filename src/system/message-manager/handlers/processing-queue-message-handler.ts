@@ -8,7 +8,6 @@ import {
   ICallback,
   IMessageMetadata,
 } from '../../../../types';
-import { ELuaScriptName, getScriptId } from '../lua-scripts';
 import { redisKeys } from '../../redis-keys';
 import { metadata } from '../../metadata';
 
@@ -71,26 +70,40 @@ export class ProcessingQueueMessageHandler {
           message,
           deadLetterCause,
         );
-        redisClient.evalsha(
-          getScriptId(ELuaScriptName.DEAD_LETTER_UNACKNOWLEDGED_MESSAGE),
-          [
-            11,
-            keyQueueProcessing,
-            keyQueueDL,
-            JSON.stringify(metadataItem.state),
-            JSON.stringify(message),
-            deadLetterMetadata.timestamp,
-            keyMetadataMessage,
-            JSON.stringify(unacknowledgedMetadata),
-            JSON.stringify(deadLetterMetadata),
-            keyMetadataQueue,
-            metadataItem.type === EMessageMetadata.ENQUEUED
-              ? EQueueMetadata.PENDING_MESSAGES
-              : EQueueMetadata.PENDING_MESSAGES_WITH_PRIORITY,
-            EQueueMetadata.DEAD_LETTER_MESSAGES,
-          ],
-          (err) => cb(err),
-        );
+        redisClient.watch([keyQueueProcessing], (err) => {
+          if (err) cb(err);
+          else {
+            const multi = redisClient.multi();
+            multi.lrem(
+              keyQueueProcessing,
+              1,
+              JSON.stringify(metadataItem.state),
+            );
+            multi.zadd(
+              keyQueueDL,
+              deadLetterMetadata.timestamp,
+              JSON.stringify(message),
+            );
+            multi.rpush(
+              keyMetadataMessage,
+              JSON.stringify(unacknowledgedMetadata),
+            );
+            multi.rpush(keyMetadataMessage, JSON.stringify(deadLetterMetadata));
+            multi.hincrby(
+              keyMetadataQueue,
+              metadataItem.type === EMessageMetadata.ENQUEUED
+                ? EQueueMetadata.PENDING_MESSAGES
+                : EQueueMetadata.PENDING_MESSAGES_WITH_PRIORITY,
+              -1,
+            );
+            multi.hincrby(
+              keyMetadataQueue,
+              EQueueMetadata.DEAD_LETTER_MESSAGES,
+              1,
+            );
+            redisClient.execMulti(multi, (err) => cb(err));
+          }
+        });
       },
       cb,
     );
@@ -114,25 +127,39 @@ export class ProcessingQueueMessageHandler {
         );
         const acknowledgedMetadata =
           metadata.getMessageAcknowledgedMetadata(message);
-        redisClient.evalsha(
-          getScriptId(ELuaScriptName.ACKNOWLEDGE_MESSAGE),
-          [
-            10,
-            keyQueueProcessing,
-            keyQueueAcknowledgedMessages,
-            JSON.stringify(metadataItem.state),
-            JSON.stringify(message),
-            acknowledgedMetadata.timestamp,
-            keyMetadataMessage,
-            JSON.stringify(acknowledgedMetadata),
-            keyMetadataQueue,
-            metadataItem.type === EMessageMetadata.ENQUEUED
-              ? EQueueMetadata.PENDING_MESSAGES
-              : EQueueMetadata.PENDING_MESSAGES_WITH_PRIORITY,
-            EQueueMetadata.ACKNOWLEDGED_MESSAGES,
-          ],
-          (err) => cb(err),
-        );
+        redisClient.watch([keyQueueProcessing], (err) => {
+          if (err) cb(err);
+          else {
+            const multi = redisClient.multi();
+            multi.lrem(
+              keyQueueProcessing,
+              1,
+              JSON.stringify(metadataItem.state),
+            );
+            multi.zadd(
+              keyQueueAcknowledgedMessages,
+              acknowledgedMetadata.timestamp,
+              JSON.stringify(message),
+            );
+            multi.rpush(
+              keyMetadataMessage,
+              JSON.stringify(acknowledgedMetadata),
+            );
+            multi.hincrby(
+              keyMetadataQueue,
+              metadataItem.type === EMessageMetadata.ENQUEUED
+                ? EQueueMetadata.PENDING_MESSAGES
+                : EQueueMetadata.PENDING_MESSAGES_WITH_PRIORITY,
+              -1,
+            );
+            multi.hincrby(
+              keyMetadataQueue,
+              EQueueMetadata.ACKNOWLEDGED_MESSAGES,
+              1,
+            );
+            redisClient.execMulti(multi, (err) => cb(err));
+          }
+        });
       },
       cb,
     );
@@ -162,26 +189,40 @@ export class ProcessingQueueMessageHandler {
             unacknowledgedCause,
           );
         const scheduledMetadata = metadata.getScheduledMessageMetadata(message);
-        redisClient.evalsha(
-          getScriptId(ELuaScriptName.ACKNOWLEDGE_MESSAGE),
-          [
-            11,
-            keyQueueProcessing,
-            keyQueueScheduledMessages,
-            JSON.stringify(metadataItem.state),
-            JSON.stringify(message),
-            delayTimestamp,
-            keyMetadataMessage,
-            JSON.stringify(unacknowledgedMetadata),
-            JSON.stringify(scheduledMetadata),
-            keyMetadataQueue,
-            metadataItem.type === EMessageMetadata.ENQUEUED
-              ? EQueueMetadata.PENDING_MESSAGES
-              : EQueueMetadata.PENDING_MESSAGES_WITH_PRIORITY,
-            EQueueMetadata.SCHEDULED_MESSAGES,
-          ],
-          (err) => cb(err),
-        );
+        redisClient.watch([keyQueueProcessing], (err) => {
+          if (err) cb(err);
+          else {
+            const multi = redisClient.multi();
+            multi.lrem(
+              keyQueueProcessing,
+              1,
+              JSON.stringify(metadataItem.state),
+            );
+            multi.zadd(
+              keyQueueScheduledMessages,
+              delayTimestamp,
+              JSON.stringify(message),
+            );
+            multi.rpush(
+              keyMetadataMessage,
+              JSON.stringify(unacknowledgedMetadata),
+            );
+            multi.rpush(keyMetadataMessage, JSON.stringify(scheduledMetadata));
+            multi.hincrby(
+              keyMetadataQueue,
+              metadataItem.type === EMessageMetadata.ENQUEUED
+                ? EQueueMetadata.PENDING_MESSAGES
+                : EQueueMetadata.PENDING_MESSAGES_WITH_PRIORITY,
+              -1,
+            );
+            multi.hincrby(
+              keyMetadataQueue,
+              EQueueMetadata.SCHEDULED_MESSAGES,
+              1,
+            );
+            redisClient.execMulti(multi, (err) => cb(err));
+          }
+        });
       },
       cb,
     );
@@ -213,21 +254,31 @@ export class ProcessingQueueMessageHandler {
           message,
           withPriority,
         );
-        redisClient.evalsha(
-          getScriptId(ELuaScriptName.REQUEUE_UNACKNOWLEDGED_MESSAGE),
-          [
-            8,
-            keyQueueProcessing,
-            withPriority ? keyQueuePriority : keyQueue,
-            JSON.stringify(metadataItem.state),
-            JSON.stringify(message),
-            enqueuedMetadata.state.getPriority() ?? '-1',
-            keyMetadataMessage,
-            JSON.stringify(unacknowledgedMetadata),
-            JSON.stringify(enqueuedMetadata),
-          ],
-          (err) => cb(err),
-        );
+        const priority = withPriority
+          ? enqueuedMetadata.state.getPriority()
+          : null;
+        redisClient.watch([keyQueueProcessing], (err) => {
+          if (err) cb(err);
+          else {
+            const multi = redisClient.multi();
+            multi.lrem(
+              keyQueueProcessing,
+              1,
+              JSON.stringify(metadataItem.state),
+            );
+            if (typeof priority === 'number') {
+              multi.zadd(keyQueuePriority, priority, JSON.stringify(message));
+            } else {
+              multi.lpush(keyQueue, JSON.stringify(message));
+            }
+            multi.rpush(
+              keyMetadataMessage,
+              JSON.stringify(unacknowledgedMetadata),
+            );
+            multi.rpush(keyMetadataMessage, JSON.stringify(enqueuedMetadata));
+            redisClient.execMulti(multi, (err) => cb(err));
+          }
+        });
       },
       cb,
     );

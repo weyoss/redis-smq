@@ -1,7 +1,6 @@
 import { RedisClient } from '../../redis-client';
 import { Message } from '../../../message';
 import { EMessageMetadata, EQueueMetadata, ICallback } from '../../../../types';
-import { ELuaScriptName, getScriptId } from '../lua-scripts';
 import { metadata } from '../../metadata';
 import { redisKeys } from '../../redis-keys';
 import * as async from 'async';
@@ -9,14 +8,6 @@ import { Scheduler } from '../../scheduler';
 import { LockManager } from '../../lock-manager';
 
 export class ScheduledMessagesHandler {
-  protected getScriptId(withPriority: boolean): string {
-    if (withPriority)
-      return getScriptId(
-        ELuaScriptName.ENQUEUE_SCHEDULED_MESSAGE_WITH_PRIORITY,
-      );
-    return getScriptId(ELuaScriptName.ENQUEUE_SCHEDULED_MESSAGE);
-  }
-
   protected getDstQueue(queueName: string, withPriority: boolean): string {
     const { keyQueue, keyQueuePriority } = redisKeys.getKeys(queueName);
     if (withPriority) return keyQueuePriority;
@@ -75,43 +66,66 @@ export class ScheduledMessagesHandler {
         ) {
           cb();
         } else {
-          //
           const { keyMetadataQueue, keyQueueScheduledMessages } =
             redisKeys.getKeys(queueName);
           const { keyMetadataMessage } = redisKeys.getMessageKeys(
             message.getId(),
           );
-
-          //
           const newState = Message.createFromMessage(message);
           if (scheduler.isPeriodic(newState)) newState.reset();
-
+          const priority = withPriority
+            ? newState.getSetPriority(undefined)
+            : null;
           const nextScheduleTimestamp =
             scheduler.getNextScheduledTimestamp(newState);
-          if (withPriority) newState.getSetPriority(undefined);
-
           const enqueuedMetadata = metadata.getEnqueuedMessageMetadata(
             newState,
             withPriority,
           );
-          redisClient.evalsha(
-            this.getScriptId(withPriority),
-            [
-              11,
-              keyQueueScheduledMessages,
-              this.getDstQueue(queueName, withPriority),
-              JSON.stringify(message),
-              JSON.stringify(newState),
-              enqueuedMetadata.state.getPriority() ?? '-1',
-              keyMetadataMessage,
-              JSON.stringify(enqueuedMetadata),
-              keyMetadataQueue,
-              EQueueMetadata.SCHEDULED_MESSAGES,
-              this.getDstQueueMetadataProperty(withPriority),
-              nextScheduleTimestamp || '-1',
-            ],
-            (err) => cb(err),
-          );
+          //todo handle null reply
+          redisClient.watch([keyQueueScheduledMessages], (err) => {
+            if (err) cb(err);
+            else {
+              const dstQueue = this.getDstQueue(queueName, withPriority);
+              const stateStr = JSON.stringify(message);
+              const newStateStr = JSON.stringify(newState);
+              const enqueuedMetadataStr = JSON.stringify(enqueuedMetadata);
+              const multi = redisClient.multi();
+              multi.zrem(keyQueueScheduledMessages, stateStr);
+              if (typeof priority === 'number') {
+                multi.zadd(dstQueue, priority, newStateStr);
+              } else {
+                multi.lpush(dstQueue, newStateStr);
+              }
+              multi.rpush(keyMetadataMessage, enqueuedMetadataStr);
+              multi.hincrby(
+                keyMetadataQueue,
+                EQueueMetadata.SCHEDULED_MESSAGES,
+                -1,
+              );
+              multi.hincrby(
+                keyMetadataQueue,
+                this.getDstQueueMetadataProperty(withPriority),
+                1,
+              );
+              if (nextScheduleTimestamp) {
+                multi.zadd(
+                  keyQueueScheduledMessages,
+                  nextScheduleTimestamp,
+                  newStateStr,
+                );
+                multi.hincrby(
+                  keyMetadataQueue,
+                  EQueueMetadata.SCHEDULED_MESSAGES,
+                  1,
+                );
+              }
+              redisClient.execMulti(multi, (err) => {
+                if (err) cb(err);
+                else cb();
+              });
+            }
+          });
         }
       },
     );
@@ -127,24 +141,14 @@ export class ScheduledMessagesHandler {
     const { keyQueueScheduledMessages, keyMetadataQueue } =
       redisKeys.getKeys(queueName);
     const { keyMetadataMessage } = redisKeys.getMessageKeys(message.getId());
-    redisClient.evalsha(
-      getScriptId(ELuaScriptName.SCHEDULE_MESSAGE),
-      [
-        7,
-        keyQueueScheduledMessages,
-        JSON.stringify(message),
-        timestamp,
-        keyMetadataMessage,
-        JSON.stringify(metadata.getScheduledMessageMetadata(message)),
-        keyMetadataQueue,
-        EQueueMetadata.SCHEDULED_MESSAGES,
-      ],
-      (err, reply) => {
-        if (err) cb(err);
-        else if (!reply || reply !== 'OK') cb(new Error('An error occurred'));
-        else cb();
-      },
+    const multi = redisClient.multi();
+    multi.zadd(keyQueueScheduledMessages, timestamp, JSON.stringify(message));
+    multi.rpush(
+      keyMetadataMessage,
+      JSON.stringify(metadata.getScheduledMessageMetadata(message)),
     );
+    multi.hincrby(keyMetadataQueue, EQueueMetadata.SCHEDULED_MESSAGES, 1);
+    redisClient.execMulti(multi, (err) => cb(err));
   }
 
   enqueueScheduledMessages(

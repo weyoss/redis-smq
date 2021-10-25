@@ -1,7 +1,6 @@
 import { Message } from '../../../message';
 import { EQueueMetadata, ICallback } from '../../../../types';
 import { redisKeys } from '../../redis-keys';
-import { ELuaScriptName, getScriptId } from '../lua-scripts';
 import { RedisClient } from '../../redis-client';
 import { metadata } from '../../metadata';
 
@@ -20,24 +19,19 @@ export class EnqueueMessageHandler {
       message,
       withPriority,
     );
-    const scriptName = withPriority
-      ? ELuaScriptName.ENQUEUE_MESSAGE_WITH_PRIORITY
-      : ELuaScriptName.ENQUEUE_MESSAGE;
-    redisClient.evalsha(
-      getScriptId(scriptName),
-      [
-        7,
-        withPriority ? keyQueuePriority : keyQueue,
-        JSON.stringify(message),
-        messageMetadata.state.getPriority() ?? '-1',
-        keyMetadataMessage,
-        JSON.stringify(messageMetadata),
-        keyMetadataQueue,
-        withPriority
-          ? EQueueMetadata.PENDING_MESSAGES_WITH_PRIORITY
-          : EQueueMetadata.PENDING_MESSAGES,
-      ],
-      (err) => cb(err),
+    const priority = withPriority ? messageMetadata.state.getPriority() : null;
+    const multi = redisClient.multi();
+    if (typeof priority === 'number')
+      multi.zadd(keyQueuePriority, priority, JSON.stringify(message));
+    else multi.lpush(keyQueue, JSON.stringify(message));
+    multi.rpush(keyMetadataMessage, JSON.stringify(messageMetadata));
+    multi.hincrby(
+      keyMetadataQueue,
+      withPriority
+        ? EQueueMetadata.PENDING_MESSAGES_WITH_PRIORITY
+        : EQueueMetadata.PENDING_MESSAGES,
+      1,
     );
+    redisClient.execMulti(multi, (err) => cb(err));
   }
 }

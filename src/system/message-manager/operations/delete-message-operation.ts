@@ -5,7 +5,6 @@ import {
   ICallback,
   IMessageMetadata,
 } from '../../../../types';
-import { ELuaScriptName, getScriptId } from '../lua-scripts';
 import { redisKeys } from '../../redis-keys';
 import { RedisClient } from '../../redis-client';
 import { metadata } from '../../metadata';
@@ -63,46 +62,6 @@ export class DeleteMessageOperation extends MessageOperation {
     throw new Error(`Unexpected message metadata type [${type}]`);
   }
 
-  protected getScriptArguments(
-    queueName: string,
-    messageId: string,
-    messageMetadata: IMessageMetadata,
-  ): (string | number)[] {
-    const { state } = messageMetadata;
-    const { keyMetadataQueue } = redisKeys.getKeys(queueName);
-    const { keyMetadataMessage } = redisKeys.getMessageKeys(messageId);
-    const message = JSON.stringify(state);
-    return [
-      6,
-      this.getQueue(queueName, messageMetadata),
-      message,
-      keyMetadataMessage,
-      JSON.stringify(metadata.getDeletedMessageMetadata(messageMetadata)),
-      keyMetadataQueue,
-      this.getQueueMetadataProperty(messageMetadata),
-    ];
-  }
-
-  protected getScriptId(messageMetadata: IMessageMetadata): string {
-    const { type } = messageMetadata;
-    if (type === EMessageMetadata.ENQUEUED) {
-      return getScriptId(ELuaScriptName.DELETE_PENDING_MESSAGE);
-    }
-    if (type === EMessageMetadata.ENQUEUED_WITH_PRIORITY) {
-      return getScriptId(ELuaScriptName.DELETE_PENDING_MESSAGE_WITH_PRIORITY);
-    }
-    if (type === EMessageMetadata.ACKNOWLEDGED) {
-      return getScriptId(ELuaScriptName.DELETE_ACKNOWLEDGED_MESSAGE);
-    }
-    if (type === EMessageMetadata.SCHEDULED) {
-      return getScriptId(ELuaScriptName.DELETE_SCHEDULED_MESSAGE);
-    }
-    if (type === EMessageMetadata.DEAD_LETTER) {
-      return getScriptId(ELuaScriptName.DELETE_DEAD_LETTER_MESSAGE);
-    }
-    throw new Error(`Unexpected message metadata type [${type}]`);
-  }
-
   deleteMessage(
     redisClient: RedisClient,
     queueName: string,
@@ -115,12 +74,44 @@ export class DeleteMessageOperation extends MessageOperation {
       messageId,
       expectedLastMetadata,
       (messageMetadata: IMessageMetadata, cb: ICallback<void>) => {
-        const scriptId = this.getScriptId(messageMetadata);
-        redisClient.evalsha(
-          scriptId,
-          this.getScriptArguments(queueName, messageId, messageMetadata),
-          (err) => cb(err),
-        );
+        const { state } = messageMetadata;
+        const { keyMetadataQueue } = redisKeys.getKeys(queueName);
+        const { keyMetadataMessage } = redisKeys.getMessageKeys(messageId);
+        const message = JSON.stringify(state);
+        const originQueue = this.getQueue(queueName, messageMetadata);
+        redisClient.watch([originQueue], (err) => {
+          if (err) cb(err);
+          else {
+            const multi = redisClient.multi();
+            const { type } = messageMetadata;
+            if (type === EMessageMetadata.ENQUEUED) {
+              multi.lrem(originQueue, 1, message);
+            } else if (
+              [
+                EMessageMetadata.ENQUEUED_WITH_PRIORITY,
+                EMessageMetadata.ACKNOWLEDGED,
+                EMessageMetadata.SCHEDULED,
+                EMessageMetadata.DEAD_LETTER,
+              ].includes(type)
+            ) {
+              multi.zrem(originQueue, message);
+            } else {
+              throw new Error(`Unexpected message metadata type [${type}]`);
+            }
+            multi.rpush(
+              keyMetadataMessage,
+              JSON.stringify(
+                metadata.getDeletedMessageMetadata(messageMetadata),
+              ),
+            );
+            multi.hincrby(
+              keyMetadataQueue,
+              this.getQueueMetadataProperty(messageMetadata),
+              -1,
+            );
+            redisClient.execMulti(multi, (err) => cb(err));
+          }
+        });
       },
       cb,
     );
