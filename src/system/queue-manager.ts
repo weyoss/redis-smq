@@ -1,5 +1,5 @@
 import { QueueManager as BaseQueueManager } from '../queue-manager';
-import { RedisClient } from './redis-client';
+import { RedisClient } from './redis-client/redis-client';
 import { Instance } from './instance';
 import { ICallback, TRedisClientMulti } from '../../types';
 import { Consumer } from '../consumer';

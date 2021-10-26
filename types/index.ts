@@ -2,7 +2,7 @@ import { ServerOptions } from 'socket.io';
 import IORedis, { Redis, RedisOptions } from 'ioredis';
 import { ClientOpts, Multi, RedisClient as NodeRedis } from 'redis';
 import * as Logger from 'bunyan';
-import { RedisClient } from '../src/system/redis-client';
+import { RedisClient } from '../src/system/redis-client/redis-client';
 import { Message } from '../src/message';
 import { redisKeys } from '../src/system/redis-keys';
 

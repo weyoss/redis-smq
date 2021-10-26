@@ -17,10 +17,11 @@ import { events } from './events';
 import { Scheduler } from './scheduler';
 import { Broker } from './broker';
 import { redisKeys } from './redis-keys';
-import { RedisClient } from './redis-client';
+import { RedisClient } from './redis-client/redis-client';
 import { QueueManager } from './queue-manager';
 import { MessageManager } from '../message-manager';
 import { Message } from '../message';
+import { loadScripts } from './redis-client/lua-scripts';
 
 export abstract class Instance extends EventEmitter {
   private broker: Broker | null = null;
@@ -59,10 +60,13 @@ export abstract class Instance extends EventEmitter {
     Message.setDefaultOptions(config.message);
   }
 
-  private setupCommonRedisClient = (cb: ICallback<RedisClient>): void => {
+  private setupSharedRedisClient = (cb: ICallback<RedisClient>): void => {
     RedisClient.getNewInstance(this.config, (client) => {
       this.commonRedisClient = client;
-      cb(null, client);
+      loadScripts(client, (err) => {
+        if (err) cb(err);
+        else cb(null, client);
+      });
     });
   };
 
@@ -85,12 +89,8 @@ export abstract class Instance extends EventEmitter {
       messageManager?: MessageManager,
     ) => void,
   ): void => {
-    const messageManager = new MessageManager(client);
-    this.messageManager = messageManager;
-    messageManager.bootstrap((err) => {
-      if (err) cb(err);
-      else cb(null, client, messageManager);
-    });
+    this.messageManager = new MessageManager(client);
+    cb(null, client, this.messageManager);
   };
 
   private setupQueueManager = (
@@ -149,7 +149,7 @@ export abstract class Instance extends EventEmitter {
 
   protected goingUp(): TFunction[] {
     return [
-      this.setupCommonRedisClient,
+      this.setupSharedRedisClient,
       this.setupMessageManager,
       this.setupQueueManager,
       this.setupScheduler,

@@ -5,6 +5,8 @@ let namespace = 'default-ns';
 enum ERedisKey {
   KEY_QUEUE,
   KEY_QUEUE_DL,
+  KEY_QUEUE_DELAY,
+  KEY_QUEUE_REQUEUE,
   KEY_QUEUE_SCHEDULED_MESSAGES,
   KEY_QUEUE_PRIORITY,
   KEY_QUEUE_PROCESSING,
@@ -42,6 +44,11 @@ export const redisKeys = {
     const globalKeys = this.getGlobalKeys();
     const keys = {
       keyQueue: this.joinSegments(ERedisKey.KEY_QUEUE, queueName),
+      keyQueueDelay: this.joinSegments(ERedisKey.KEY_QUEUE_DELAY, queueName),
+      keyQueueRequeue: this.joinSegments(
+        ERedisKey.KEY_QUEUE_REQUEUE,
+        queueName,
+      ),
       keyQueueDL: this.joinSegments(ERedisKey.KEY_QUEUE_DL, queueName),
       keyQueueScheduledMessages: this.joinSegments(
         ERedisKey.KEY_QUEUE_SCHEDULED_MESSAGES,

@@ -3,7 +3,7 @@ import { IConfig, ICallback } from '../../types';
 import { LockManager } from './lock-manager';
 import { Ticker } from './ticker';
 import { Heartbeat } from './heartbeat';
-import { RedisClient } from './redis-client';
+import { RedisClient } from './redis-client/redis-client';
 import { redisKeys } from './redis-keys';
 
 function heartbeatMonitor(redisClient: RedisClient) {

@@ -9,9 +9,10 @@ import {
   TPaginatedRedisQueryTotalItemsFn,
   TPaginatedRedisQueryTransformFn,
   TRedisClientMulti,
-} from '../../types';
+} from '../../../types';
 import { EventEmitter } from 'events';
 import * as async from 'async';
+import { ELuaScriptName, getScriptId } from './lua-scripts';
 
 /**
  * client.end() does unregister all event listeners which causes the 'end' event not being emitted.
@@ -282,6 +283,23 @@ export class RedisClient extends EventEmitter {
     cb: ICallback<string>,
   ): void {
     this.client.brpoplpush(source, destination, timeout, cb);
+  }
+
+  rpoplpush(source: string, destination: string, cb: ICallback<string>): void {
+    this.client.rpoplpush(source, destination, cb);
+  }
+
+  zpoprpush(source: string, destination: string, cb: ICallback<string>): void {
+    this.evalsha(
+      getScriptId(ELuaScriptName.ZPOPRPUSH),
+      [2, source, destination],
+      (err, res?: unknown) => {
+        if (err) cb(err);
+        else if (typeof res !== 'string')
+          cb(new Error('Expected a non empty string reply'));
+        else cb(null, res);
+      },
+    );
   }
 
   rpop(key: string, cb: ICallback<string>): void {

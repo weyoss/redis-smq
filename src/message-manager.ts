@@ -1,6 +1,5 @@
 import {
   EMessageDeadLetterCause,
-  EMessageMetadata,
   EMessageUnacknowledgedCause,
   ICallback,
   IConfig,
@@ -8,24 +7,18 @@ import {
   TGetAcknowledgedMessagesReply,
   TGetScheduledMessagesReply,
 } from '../types';
-import { RedisClient } from './system/redis-client';
+import { RedisClient } from './system/redis-client/redis-client';
 import { Message } from './message';
 import { redisKeys } from './system/redis-keys';
-import { metadata } from './system/metadata';
-import { loadScripts } from './system/message-manager/lua-scripts';
-import { RequeueMessageOperation } from './system/message-manager/operations/requeue-message-operation';
 import { EnqueueMessageHandler } from './system/message-manager/handlers/enqueue-message-handler';
 import { DequeueMessageHandler } from './system/message-manager/handlers/dequeue-message-handler';
 import { ScheduledMessagesHandler } from './system/message-manager/handlers/scheduled-messages-handler';
-import { DeleteMessageOperation } from './system/message-manager/operations/delete-message-operation';
 import { ProcessingQueueMessageHandler } from './system/message-manager/handlers/processing-queue-message-handler';
 import { Scheduler } from './system/scheduler';
 
 export class MessageManager {
   protected static instance: MessageManager | null = null;
   protected redisClient: RedisClient;
-  protected requeueMessageOperation: RequeueMessageOperation;
-  protected deleteMessageOperation: DeleteMessageOperation;
   protected enqueueMessageHandler: EnqueueMessageHandler;
   protected dequeueMessageHandler: DequeueMessageHandler;
   protected processingQueueMessageHandler: ProcessingQueueMessageHandler;
@@ -33,8 +26,6 @@ export class MessageManager {
 
   constructor(redisClient: RedisClient) {
     this.redisClient = redisClient;
-    this.requeueMessageOperation = new RequeueMessageOperation();
-    this.deleteMessageOperation = new DeleteMessageOperation();
     this.enqueueMessageHandler = new EnqueueMessageHandler();
     this.dequeueMessageHandler = new DequeueMessageHandler();
     this.scheduledMessageHandler = new ScheduledMessagesHandler();
@@ -197,7 +188,7 @@ export class MessageManager {
   }
 
   ///
-
+  /*
   deletePendingMessage(
     queueName: string,
     messageId: string,
@@ -253,9 +244,11 @@ export class MessageManager {
       cb,
     );
   }
+   */
 
   ///
 
+  /*
   requeueMessageFromAcknowledgedQueue(
     queueName: string,
     messageId: string,
@@ -321,7 +314,7 @@ export class MessageManager {
       cb,
     );
   }
-
+  */
   ///
 
   getAcknowledgedMessages(
@@ -434,18 +427,7 @@ export class MessageManager {
     );
   }
 
-  getMessageMetadataList(
-    messageId: string,
-    cb: ICallback<IMessageMetadata[]>,
-  ): void {
-    metadata.getMessageMetadataList(this.redisClient, messageId, cb);
-  }
-
   ///
-
-  bootstrap(cb: ICallback<void>): void {
-    loadScripts(this.redisClient, cb);
-  }
 
   quit(cb: ICallback<void>): void {
     this.dequeueMessageHandler.quit(() => {

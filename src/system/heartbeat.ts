@@ -5,7 +5,7 @@ import { Ticker } from './ticker';
 import { ChildProcess, fork } from 'child_process';
 import { resolve } from 'path';
 import { events } from './events';
-import { RedisClient } from './redis-client';
+import { RedisClient } from './redis-client/redis-client';
 import { redisKeys } from './redis-keys';
 import { Consumer } from '../consumer';
 import { EventEmitter } from 'events';

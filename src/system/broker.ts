@@ -11,7 +11,7 @@ import BLogger from 'bunyan';
 import { Logger } from './logger';
 import { PowerManager } from './power-manager';
 import { QueueManager } from './queue-manager';
-import { RedisClient } from './redis-client';
+import { RedisClient } from './redis-client/redis-client';
 import { MessageManager } from '../message-manager';
 import { Consumer } from '../consumer';
 

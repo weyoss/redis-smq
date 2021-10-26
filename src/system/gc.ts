@@ -5,7 +5,7 @@ import { Ticker } from './ticker';
 import { events } from './events';
 import { Message } from '../message';
 import { Heartbeat } from './heartbeat';
-import { RedisClient } from './redis-client';
+import { RedisClient } from './redis-client/redis-client';
 import { EMessageUnacknowledgedCause, ICallback, IConfig } from '../../types';
 import { redisKeys } from './redis-keys';
 import BLogger from 'bunyan';
