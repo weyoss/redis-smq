@@ -5,7 +5,7 @@ import { Server as SocketIO } from 'socket.io';
 import * as KoaBodyParser from 'koa-bodyparser';
 import { Middleware } from 'redis-smq-monitor';
 import { IConfig, ICallback } from '../../types';
-import { RedisClient } from '../system/redis-client';
+import { RedisClient } from '../system/redis-client/redis-client';
 import { Logger } from '../system/logger';
 import { errorHandler } from './middlewares/error-handler';
 import { Services } from './services';

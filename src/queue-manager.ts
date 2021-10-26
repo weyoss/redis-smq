@@ -1,4 +1,4 @@
-import { RedisClient } from './system/redis-client';
+import { RedisClient } from './system/redis-client/redis-client';
 import { ICallback, IConfig, TQueueMetadata } from '../types';
 import { redisKeys } from './system/redis-keys';
 import { metadata } from './system/metadata';

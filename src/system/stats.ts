@@ -2,7 +2,7 @@ import { ICallback, IStatsProvider } from '../../types';
 import { Instance } from './instance';
 import { events } from './events';
 import { Ticker } from './ticker';
-import { RedisClient } from './redis-client';
+import { RedisClient } from './redis-client/redis-client';
 import { EventEmitter } from 'events';
 
 export class Stats extends EventEmitter {

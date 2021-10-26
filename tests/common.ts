@@ -1,6 +1,6 @@
 import { promisifyAll } from 'bluebird';
 import { events } from '../src/system/events';
-import { RedisClient } from '../src/system/redis-client';
+import { RedisClient } from '../src/system/redis-client/redis-client';
 import { Producer, Consumer, Message, MonitorServer } from '../index';
 import { config } from './config';
 import { ICallback, IConfig } from '../types';

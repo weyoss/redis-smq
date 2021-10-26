@@ -1,25 +1,18 @@
 import * as fs from 'fs';
 import { ICallback } from '../../../types';
 import * as async from 'async';
-import { RedisClient } from '../redis-client';
+import { RedisClient } from './redis-client';
 
 export enum ELuaScriptName {
-  DEQUEUE_MESSAGE_WITH_PRIORITY,
+  ZPOPRPUSH,
 }
-
-///
-
-const dequeueMessageFromPriorityQueue = fs
-  .readFileSync(`${__dirname}/lua/dequeue-message-from-priority-queue.lua`)
-  .toString();
 
 ////
 
 const scriptsMap = new Map<ELuaScriptName, { id?: string; content: string }>();
-scriptsMap.set(ELuaScriptName.DEQUEUE_MESSAGE_WITH_PRIORITY, {
-  content: dequeueMessageFromPriorityQueue,
+scriptsMap.set(ELuaScriptName.ZPOPRPUSH, {
+  content: fs.readFileSync(`${__dirname}/lua/zpoprpush.lua`).toString(),
 });
-
 ///
 
 export const loadScripts = (

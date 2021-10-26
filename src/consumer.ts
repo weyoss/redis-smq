@@ -10,7 +10,7 @@ import { events } from './system/events';
 import { Heartbeat } from './system/heartbeat';
 import { GarbageCollector } from './system/gc';
 import { SchedulerRunner } from './system/scheduler-runner';
-import { RedisClient } from './system/redis-client';
+import { RedisClient } from './system/redis-client/redis-client';
 
 export abstract class Consumer extends Instance {
   // exclusive redis clients

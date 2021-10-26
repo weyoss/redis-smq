@@ -1,5 +1,5 @@
 import { ICallback } from '../../types';
-import { RedisClient } from './redis-client';
+import { RedisClient } from './redis-client/redis-client';
 import * as Redlock from 'redlock';
 
 export class LockManager {
