@@ -7,9 +7,8 @@ import {
 } from './common';
 import { Message } from '../src/message';
 import { promisifyAll } from 'bluebird';
-import { EMessageMetadata } from '../types';
 
-test('Combined test: Delete an acknowledged message. Check pending, acknowledged, and dead-letter messages. Check both message metadata and queue metadata.', async () => {
+test('Combined test: Delete an acknowledged message. Check pending, acknowledged, and dead-letter messages. Check queue metrics.', async () => {
   const msg = new Message();
   msg.setBody({ hello: 'world' });
 
@@ -58,14 +57,15 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   expect(res2.items[0]).toEqual(msg1);
 
   const queueManager = promisifyAll(await getQueueManager());
-  const queueMetadata1 = await queueManager.getQueueMetadataAsync(
+  const queueMetrics = await queueManager.getQueueMetricsAsync(
     producer.getQueueName(),
   );
-  expect(queueMetadata1.pending).toBe(0);
-  expect(queueMetadata1.acknowledged).toBe(1);
+  expect(queueMetrics.pending).toBe(0);
+  expect(queueMetrics.acknowledged).toBe(1);
 
   await messageManager.deleteAcknowledgedMessageAsync(
     producer.getQueueName(),
+    0,
     msg.getId(),
   );
 
@@ -101,38 +101,16 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   expect(res6.total).toBe(0);
   expect(res6.items.length).toBe(0);
 
-  const queueMetadata2 = await queueManager.getQueueMetadataAsync(
+  const queueMetrics1 = await queueManager.getQueueMetricsAsync(
     producer.getQueueName(),
   );
-  expect(queueMetadata2.acknowledged).toBe(0);
-
-  const msgMeta = await messageManager.getMessageMetadataListAsync(msg.getId());
-  expect(msgMeta.length).toBe(3);
-
-  expect(msgMeta[0].type).toBe(EMessageMetadata.ENQUEUED);
-  expect(msgMeta[0].state).toEqual(msg);
-
-  expect(msgMeta[1].type).toBe(EMessageMetadata.ACKNOWLEDGED);
-  expect(msgMeta[1].state).toEqual(msg1);
-
-  expect(msgMeta[2].type).toBe(
-    EMessageMetadata.DELETED_FROM_ACKNOWLEDGED_QUEUE,
-  );
-  expect(msgMeta[2].state).toEqual(msg1);
+  expect(queueMetrics1.acknowledged).toBe(0);
 
   await expect(async () => {
     await messageManager.deleteAcknowledgedMessageAsync(
       producer.getQueueName(),
+      0,
       msg.getId(),
     );
-  }).rejects.toThrow(
-    'Unexpected metadata type [deleted_from_acknowledged_queue]. Expected ["acknowledged"]',
-  );
-
-  await expect(async () => {
-    await messageManager.deleteAcknowledgedMessageAsync(
-      producer.getQueueName(),
-      new Message().getId(),
-    );
-  }).rejects.toThrow('Message does not exist');
+  }).rejects.toThrow('Message not found');
 });

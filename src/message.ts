@@ -60,6 +60,11 @@ export class Message {
 
   ///
 
+  // needed for delay and requeue workers
+  protected queueName: string | null = null;
+
+  ///
+
   constructor() {
     this.createdAt = Date.now();
     this.uuid = uuid();
@@ -190,6 +195,15 @@ export class Message {
     }
     this.priority = priority;
     return this;
+  }
+
+  setQueue(queueName: string): Message {
+    this.queueName = queueName;
+    return this;
+  }
+
+  getQueue(): string | null {
+    return this.queueName;
   }
 
   getPriority(): number | null {

@@ -7,7 +7,6 @@ import {
 import { Message } from '../src/message';
 import { promisifyAll } from 'bluebird';
 import { config } from './config';
-import { EMessageMetadata } from '../types';
 
 describe('MessageManager', () => {
   test('Case 1', async () => {
@@ -111,38 +110,9 @@ describe('MessageManager', () => {
     await producer.produceMessageAsync(msg);
 
     const messageManager = promisifyAll(await getMessageManager());
-    const res = await messageManager.getScheduledMessagesAsync(
-      producer.getQueueName(),
-      0,
-      100,
-    );
+    const res = await messageManager.getScheduledMessagesAsync(0, 100);
 
     expect(res.total).toBe(1);
     expect(res.items[0].getId()).toBe(msg.getId());
-  });
-
-  test('Case 6', async () => {
-    const producer = getProducer();
-    const consumer = getConsumer({
-      consumeMock: jest.fn((msg, cb) => {
-        cb();
-      }),
-    });
-
-    const msg = new Message();
-    msg.setBody({ hello: 'world' });
-    await producer.produceMessageAsync(msg);
-
-    consumer.run();
-    await untilConsumerIdle(consumer);
-
-    const messageManager = promisifyAll(await getMessageManager());
-    const metadata = await messageManager.getMessageMetadataListAsync(
-      msg.getId(),
-    );
-
-    expect(metadata.length).toBe(2);
-    expect(metadata[0].type).toBe(EMessageMetadata.ENQUEUED);
-    expect(metadata[1].type).toBe(EMessageMetadata.ACKNOWLEDGED);
   });
 });

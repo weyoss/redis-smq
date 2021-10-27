@@ -7,9 +7,8 @@ import {
 } from './common';
 import { Message } from '../src/message';
 import { promisifyAll } from 'bluebird';
-import { EMessageMetadata } from '../types';
 
-test('Combined test: Delete a dead-letter message. Check pending, acknowledged, and dead-letter messages. Check both message metadata and queue metadata.', async () => {
+test('Combined test: Delete a dead-letter message. Check pending, acknowledged, and dead-letter messages. Check queue metrics.', async () => {
   const msg = new Message();
   msg.setBody({ hello: 'world' });
 
@@ -57,15 +56,16 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(res3.items[0]).toEqual(msg1);
 
   const queueManager = promisifyAll(await getQueueManager());
-  const queueMetadata1 = await queueManager.getQueueMetadataAsync(
+  const queueMetrics = await queueManager.getQueueMetricsAsync(
     producer.getQueueName(),
   );
-  expect(queueMetadata1.pending).toBe(0);
-  expect(queueMetadata1.acknowledged).toBe(0);
-  expect(queueMetadata1.deadLetter).toBe(1);
+  expect(queueMetrics.pending).toBe(0);
+  expect(queueMetrics.acknowledged).toBe(0);
+  expect(queueMetrics.deadLettered).toBe(1);
 
   await messageManager.deleteDeadLetterMessageAsync(
     producer.getQueueName(),
+    0,
     msg.getId(),
   );
 
@@ -78,30 +78,16 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(res4.total).toBe(0);
   expect(res4.items.length).toBe(0);
 
-  const queueMetadata2 = await queueManager.getQueueMetadataAsync(
+  const queueMetrics1 = await queueManager.getQueueMetricsAsync(
     producer.getQueueName(),
   );
-  expect(queueMetadata2.deadLetter).toBe(0);
-
-  const msgMeta = await messageManager.getMessageMetadataListAsync(msg.getId());
-  expect(msgMeta.length).toBe(10);
-
-  expect(msgMeta[9].type).toBe(EMessageMetadata.DELETED_FROM_DL);
-  expect(msgMeta[9].state).toEqual(msg1);
+  expect(queueMetrics1.deadLettered).toBe(0);
 
   await expect(async () => {
     await messageManager.deleteDeadLetterMessageAsync(
       producer.getQueueName(),
+      0,
       msg.getId(),
     );
-  }).rejects.toThrow(
-    'Unexpected metadata type [deleted_from_dl]. Expected ["dead_letter"]',
-  );
-
-  await expect(async () => {
-    await messageManager.deleteDeadLetterMessageAsync(
-      producer.getQueueName(),
-      new Message().getId(),
-    );
-  }).rejects.toThrow('Message does not exist');
+  }).rejects.toThrow('Message not found');
 });

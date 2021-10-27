@@ -13,27 +13,22 @@ export class MessageManagerService {
   async getScheduledMessages(
     args: GetSchedulerMessagesDTO,
   ): Promise<TGetScheduledMessagesReply> {
-    const { queueName, skip = 0, take = 1 } = args;
+    const { skip = 0, take = 1 } = args;
     return new Promise<TGetScheduledMessagesReply>((resolve, reject) => {
-      this.messageManager.getScheduledMessages(
-        queueName,
-        skip,
-        take,
-        (err, reply) => {
-          if (err) reject(err);
-          else if (!reply) reject();
-          else resolve(reply);
-        },
-      );
+      this.messageManager.getScheduledMessages(skip, take, (err, reply) => {
+        if (err) reject(err);
+        else if (!reply) reject();
+        else resolve(reply);
+      });
     });
   }
 
   async deleteScheduledMessage(
     args: DeletedScheduledMessageDTO,
   ): Promise<void> {
-    const { id, queueName } = args;
+    const { id, index } = args;
     return new Promise<void>((resolve, reject) => {
-      this.messageManager.deleteScheduledMessage(queueName, id, (err) => {
+      this.messageManager.deleteScheduledMessage(index, id, (err) => {
         if (err) reject(err);
         else resolve();
       });

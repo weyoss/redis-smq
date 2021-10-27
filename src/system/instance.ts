@@ -2,7 +2,7 @@ import { v4 as uuid } from 'uuid';
 import { EventEmitter } from 'events';
 import {
   IConfig,
-  IStatsProvider,
+  IRatesProvider,
   ICallback,
   TInstanceRedisKeys,
   TUnaryFunction,
@@ -12,25 +12,23 @@ import * as async from 'async';
 import { PowerManager } from './power-manager';
 import { Logger } from './logger';
 import * as BunyanLogger from 'bunyan';
-import { Stats } from './stats';
+import { Rates } from './rates';
 import { events } from './events';
-import { Scheduler } from './scheduler';
 import { Broker } from './broker';
 import { redisKeys } from './redis-keys';
 import { RedisClient } from './redis-client/redis-client';
-import { QueueManager } from './queue-manager';
+import { QueueManager } from '../queue-manager';
 import { MessageManager } from '../message-manager';
 import { Message } from '../message';
 import { loadScripts } from './redis-client/lua-scripts';
 
 export abstract class Instance extends EventEmitter {
   private broker: Broker | null = null;
-  private stats: Stats | null = null;
-  private scheduler: Scheduler | null = null;
+  private rates: Rates | null = null;
   private messageManager: MessageManager | null = null;
   private queueManager: QueueManager | null = null;
   private commonRedisClient: RedisClient | null = null;
-  private statsRedisClient: RedisClient | null = null;
+  private ratesRedisClient: RedisClient | null = null;
 
   protected readonly id: string;
   protected readonly queueName: string;
@@ -74,8 +72,8 @@ export abstract class Instance extends EventEmitter {
     const { monitor } = this.config;
     if (monitor && monitor.enabled) {
       RedisClient.getNewInstance(this.config, (client) => {
-        this.stats = new Stats(this, client);
-        this.statsRedisClient = client;
+        this.rates = new Rates(this, client);
+        this.ratesRedisClient = client;
         cb();
       });
     } else cb();
@@ -111,35 +109,13 @@ export abstract class Instance extends EventEmitter {
     });
   };
 
-  private setupScheduler = (
-    client: RedisClient,
-    messageManager: MessageManager,
-    queueManager: QueueManager,
-    cb: (
-      err?: Error | null,
-      client?: RedisClient,
-      messageManager?: MessageManager,
-      queueManager?: QueueManager,
-      scheduler?: Scheduler,
-    ) => void,
-  ): void => {
-    this.scheduler = new Scheduler(messageManager);
-    cb(null, client, messageManager, queueManager, this.scheduler);
-  };
-
   private setupBroker = (
     client: RedisClient,
     messageManager: MessageManager,
     queueManager: QueueManager,
-    scheduler: Scheduler,
     cb: ICallback<Broker>,
   ): void => {
-    this.broker = new Broker(
-      this.config,
-      scheduler,
-      messageManager,
-      queueManager,
-    );
+    this.broker = new Broker(this.config, messageManager, queueManager);
     cb();
   };
 
@@ -152,7 +128,6 @@ export abstract class Instance extends EventEmitter {
       this.setupSharedRedisClient,
       this.setupMessageManager,
       this.setupQueueManager,
-      this.setupScheduler,
       this.setupBroker,
       this.setupStats,
     ];
@@ -168,11 +143,11 @@ export abstract class Instance extends EventEmitter {
       } else cb();
     };
     const stopStats = (cb: ICallback<void>) => {
-      if (this.stats) {
-        this.stats.quit(() => {
-          this.stats = null;
-          this.statsRedisClient?.halt(() => {
-            this.statsRedisClient = null;
+      if (this.rates) {
+        this.rates.quit(() => {
+          this.rates = null;
+          this.ratesRedisClient?.halt(() => {
+            this.ratesRedisClient = null;
             cb();
           });
         });
@@ -187,25 +162,18 @@ export abstract class Instance extends EventEmitter {
     const cleanUp = (cb: ICallback<void>): void => {
       this.queueManager = null;
       this.broker = null;
-      this.scheduler = null;
       cb();
     };
     return [stopMessageManager, stopStats, stopCommonRedisClient, cleanUp];
   }
 
-  getScheduler(cb: TUnaryFunction<Scheduler>): void {
-    if (!this.scheduler)
-      this.emit(events.ERROR, new Error('Expected an instance of Scheduler'));
-    else cb(this.scheduler);
-  }
-
-  getMessageManager(cb: ICallback<MessageManager>): void {
+  getMessageManager(cb: TUnaryFunction<MessageManager>): void {
     if (!this.messageManager)
       this.emit(
         events.ERROR,
         new Error('Expected an instance of MessageManager'),
       );
-    else cb(null, this.messageManager);
+    else cb(this.messageManager);
   }
 
   handleError(err: Error): void {
@@ -268,5 +236,5 @@ export abstract class Instance extends EventEmitter {
     return this.redisKeys;
   }
 
-  abstract getStatsProvider(): IStatsProvider;
+  abstract getStatsProvider(): IRatesProvider;
 }

@@ -5,23 +5,25 @@ import {
 } from '../types';
 import { Instance } from './system/instance';
 import { Message } from './message';
-import { ConsumerStatsProvider } from './system/stats-provider/consumer-stats-provider';
+import { ConsumerRatesProvider } from './system/rates-provider/consumer-rates-provider';
 import { events } from './system/events';
 import { Heartbeat } from './system/heartbeat';
-import { GarbageCollector } from './system/gc';
-import { SchedulerRunner } from './system/scheduler-runner';
 import { RedisClient } from './system/redis-client/redis-client';
+import { ChildProcess, fork } from 'child_process';
+import { resolve } from 'path';
 
 export abstract class Consumer extends Instance {
   // exclusive redis clients
   private consumerRedisClient: RedisClient | null = null;
   private heartbeatRedisClient: RedisClient | null = null;
-  private gcRedisClient: RedisClient | null = null;
 
-  private schedulerRunner: SchedulerRunner | null = null;
-  private garbageCollector: GarbageCollector | null = null;
   private heartbeat: Heartbeat | null = null;
-  private statsProvider: ConsumerStatsProvider | null = null;
+  private ratesProvider: ConsumerRatesProvider | null = null;
+
+  protected gcWorkerThread: ChildProcess | null = null;
+  protected scheduleWorkerThread: ChildProcess | null = null;
+  protected requeueWorkerThread: ChildProcess | null = null;
+  protected delayWorkerThread: ChildProcess | null = null;
 
   private getConsumerRedisClient(cb: TUnaryFunction<RedisClient>): void {
     if (!this.consumerRedisClient)
@@ -29,28 +31,10 @@ export abstract class Consumer extends Instance {
     else cb(this.consumerRedisClient);
   }
 
-  private getGarbageCollector(cb: TUnaryFunction<GarbageCollector>): void {
-    if (!this.garbageCollector)
-      this.emit(
-        events.ERROR,
-        new Error('Expected an instance of GarbageCollector'),
-      );
-    else cb(this.garbageCollector);
-  }
-
   private getHeartbeat(cb: TUnaryFunction<Heartbeat>): void {
     if (!this.heartbeat)
       this.emit(events.ERROR, new Error('Expected an instance of Heartbeat'));
     else cb(this.heartbeat);
-  }
-
-  private getSchedulerRunner(cb: TUnaryFunction<SchedulerRunner>): void {
-    if (!this.schedulerRunner)
-      this.emit(
-        events.ERROR,
-        new Error('Expected an instance of SchedulerRunner'),
-      );
-    else cb(this.schedulerRunner);
   }
 
   private handleConsume(msg: Message): void {
@@ -77,15 +61,21 @@ export abstract class Consumer extends Instance {
             );
           else
             this.getBroker((broker) => {
-              broker.acknowledgeMessage(this, msg, (err) => {
-                if (err) this.emit(events.ERROR, err);
-                else {
-                  this.logger.info(
-                    `Message [${msg.getId()}] successfully processed`,
-                  );
-                  this.emit(events.MESSAGE_ACKNOWLEDGED, msg);
-                }
-              });
+              const { keyQueueProcessing } = this.redisKeys;
+              broker.acknowledgeMessage(
+                this.queueName,
+                keyQueueProcessing,
+                msg,
+                (err) => {
+                  if (err) this.emit(events.ERROR, err);
+                  else {
+                    this.logger.info(
+                      `Message [${msg.getId()}] successfully processed`,
+                    );
+                    this.emit(events.MESSAGE_ACKNOWLEDGED, msg);
+                  }
+                },
+              );
             });
         }
       };
@@ -110,7 +100,19 @@ export abstract class Consumer extends Instance {
   ): void {
     this.getConsumerRedisClient((client) => {
       this.getBroker((broker) => {
-        broker.unacknowledgeMessage(client, this, msg, cause, err);
+        const { keyQueueProcessing } = this.redisKeys;
+        broker.unacknowledgeMessage(
+          client,
+          this.queueName,
+          keyQueueProcessing,
+          msg,
+          cause,
+          err,
+          (err) => {
+            if (err) this.emit(events.ERROR, err);
+            else this.emit(events.MESSAGE_UNACKNOWLEDGED, msg, cause);
+          },
+        );
       });
     });
   }
@@ -137,44 +139,52 @@ export abstract class Consumer extends Instance {
       }
     });
     this.on(events.MESSAGE_ACKNOWLEDGED, () => {
-      if (this.statsProvider) this.statsProvider.incrementAcknowledgedSlot();
+      if (this.ratesProvider) this.ratesProvider.incrementAcknowledgedSlot();
       this.emit(events.MESSAGE_NEXT);
     });
     this.on(events.MESSAGE_UNACKNOWLEDGED, () => {
-      if (this.statsProvider) this.statsProvider.incrementUnacknowledgedSlot();
+      if (this.ratesProvider) this.ratesProvider.incrementUnacknowledgedSlot();
       this.emit(events.MESSAGE_NEXT);
     });
     this.on(events.MESSAGE_CONSUME_TIMEOUT, (message: Message) => {
-      this.getConsumerRedisClient((client) => {
-        this.getBroker((broker) => {
-          broker.unacknowledgeMessage(
-            client,
-            this,
-            message,
-            EMessageUnacknowledgedCause.TIMEOUT,
-          );
-        });
-      });
+      this.unacknowledgeMessage(message, EMessageUnacknowledgedCause.TIMEOUT);
     });
+    process.once('exit', () => {
+      if (this.gcWorkerThread) this.gcWorkerThread.kill();
+      if (this.requeueWorkerThread) this.requeueWorkerThread.kill();
+      if (this.delayWorkerThread) this.delayWorkerThread.kill();
+      if (this.scheduleWorkerThread) this.scheduleWorkerThread.kill();
+    });
+  }
+
+  protected startThread(path: string): ChildProcess {
+    const thread = fork(path);
+    thread.on('error', (err) => {
+      this.emit(events.ERROR, err);
+    });
+    thread.on('exit', (code, signal) => {
+      this.emit(
+        events.ERROR,
+        new Error(
+          `Thread [${path}] exited with code ${code} and signal ${signal}`,
+        ),
+      );
+    });
+    thread.send(JSON.stringify(this.config));
+    return thread;
   }
 
   protected handleReceivedMessage(json: string): void {
     const message = Message.createFromMessage(json);
     this.emit(events.MESSAGE_DEQUEUED, message);
     if (message.hasExpired()) {
-      this.getConsumerRedisClient((client) => {
-        this.getBroker((broker) =>
-          broker.unacknowledgeMessage(
-            client,
-            this,
-            message,
-            EMessageUnacknowledgedCause.TTL_EXPIRED,
-          ),
-        );
-      });
+      this.unacknowledgeMessage(
+        message,
+        EMessageUnacknowledgedCause.TTL_EXPIRED,
+      );
     } else {
       this.logger.info(`Consuming message [${message.getId()}] ...`);
-      if (this.statsProvider) this.statsProvider.incrementProcessingSlot();
+      if (this.ratesProvider) this.ratesProvider.incrementProcessingSlot();
       this.handleConsume(message);
     }
   }
@@ -194,55 +204,79 @@ export abstract class Consumer extends Instance {
         cb();
       });
     };
-    const startGC = (cb: ICallback<void>) => {
-      RedisClient.getNewInstance(this.config, (client) => {
-        this.gcRedisClient = client;
-        this.garbageCollector = new GarbageCollector(this, client);
-        cb();
-      });
+    const startGCWorker = (cb: ICallback<void>) => {
+      this.gcWorkerThread = this.startThread(
+        resolve(`${__dirname}/system/workers/gc.worker.js`),
+      );
+      cb();
     };
-    const startSchedulerRunner = (cb: ICallback<void>) => {
-      this.getScheduler((scheduler) => {
-        this.schedulerRunner = new SchedulerRunner(
-          this.queueName,
-          this.config,
-          scheduler,
-        );
-        this.schedulerRunner.on(events.ERROR, (err: Error) =>
-          this.emit(events.ERROR, err),
-        );
-        cb();
-      });
+    const startRequeueWorker = (cb: ICallback<void>) => {
+      this.requeueWorkerThread = this.startThread(
+        resolve(`${__dirname}/system/workers/requeue.worker.js`),
+      );
+      cb();
+    };
+    const startDelayWorker = (cb: ICallback<void>) => {
+      this.delayWorkerThread = this.startThread(
+        resolve(`${__dirname}/system/workers/delay.worker.js`),
+      );
+      cb();
+    };
+    const startScheduleWorker = (cb: ICallback<void>) => {
+      this.scheduleWorkerThread = this.startThread(
+        resolve(`${__dirname}/system/workers/schedule.worker.js`),
+      );
+      cb();
     };
     return super
       .goingUp()
       .concat([
         setupConsumerRedisClient,
         startHeartbeat,
-        startGC,
-        startSchedulerRunner,
+        startGCWorker,
+        startDelayWorker,
+        startRequeueWorker,
+        startScheduleWorker,
       ]);
   }
 
   protected goingDown(): TUnaryFunction<ICallback<void>>[] {
     //return super.goingDown();
-    const stopSchedulerRunner = (cb: ICallback<void>) => {
-      this.getSchedulerRunner((schedulerRunner) => {
-        schedulerRunner.quit(() => {
-          this.schedulerRunner = null;
+    const stopScheduleWorker = (cb: ICallback<void>) => {
+      if (this.scheduleWorkerThread) {
+        this.scheduleWorkerThread.once('exit', () => {
+          this.scheduleWorkerThread = null;
           cb();
         });
-      });
+        this.scheduleWorkerThread.kill('SIGHUP');
+      } else cb();
     };
-    const stopGC = (cb: ICallback<void>) => {
-      this.getGarbageCollector((gc) => {
-        gc.quit(() => {
-          this.gcRedisClient?.halt(() => {
-            this.gcRedisClient = null;
-            cb();
-          });
+    const stopGCWorker = (cb: ICallback<void>) => {
+      if (this.gcWorkerThread) {
+        this.gcWorkerThread.once('exit', () => {
+          this.gcWorkerThread = null;
+          cb();
         });
-      });
+        this.gcWorkerThread.kill('SIGHUP');
+      } else cb();
+    };
+    const stopRequeueWorker = (cb: ICallback<void>) => {
+      if (this.requeueWorkerThread) {
+        this.requeueWorkerThread.once('exit', () => {
+          this.requeueWorkerThread = null;
+          cb();
+        });
+        this.requeueWorkerThread.kill('SIGHUP');
+      } else cb();
+    };
+    const stopDelayWorker = (cb: ICallback<void>) => {
+      if (this.delayWorkerThread) {
+        this.delayWorkerThread.once('exit', () => {
+          this.delayWorkerThread = null;
+          cb();
+        });
+        this.delayWorkerThread.kill('SIGHUP');
+      } else cb();
     };
     const stopHeartbeat = (cb: ICallback<void>) => {
       this.getHeartbeat((heartbeat) => {
@@ -261,18 +295,20 @@ export abstract class Consumer extends Instance {
       });
     };
     return [
-      stopSchedulerRunner,
-      stopGC,
+      stopScheduleWorker,
+      stopGCWorker,
+      stopDelayWorker,
+      stopRequeueWorker,
       stopHeartbeat,
       stopConsumerRedisClient,
     ].concat(super.goingDown());
   }
 
-  getStatsProvider(): ConsumerStatsProvider {
-    if (!this.statsProvider) {
-      this.statsProvider = new ConsumerStatsProvider(this);
+  getStatsProvider(): ConsumerRatesProvider {
+    if (!this.ratesProvider) {
+      this.ratesProvider = new ConsumerRatesProvider(this);
     }
-    return this.statsProvider;
+    return this.ratesProvider;
   }
 
   abstract consume(msg: Message, cb: ICallback<void>): void;

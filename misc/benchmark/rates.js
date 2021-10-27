@@ -1,11 +1,13 @@
 const config = require('./config');
 const {
-  StatsAggregatorThread,
-} = require('../../dist/src/monitor-server/threads/stats-aggregator.thread');
+  StatsWorker,
+} = require('../../dist/src/monitor-server/workers/stats.worker');
 
-const { RedisClient } = require('../../dist/src/system/redis-client');
+const {
+  RedisClient,
+} = require('../../dist/src/system/redis-client/redis-client');
 RedisClient.getNewInstance(config, (client) => {
-  new StatsAggregatorThread(client, config);
+  new StatsWorker(client, config);
 });
 
 RedisClient.getNewInstance(config, (client) => {

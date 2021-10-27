@@ -3,18 +3,17 @@ import {
   EMessageUnacknowledgedCause,
   ICallback,
   IConfig,
-  IMessageMetadata,
   TGetAcknowledgedMessagesReply,
   TGetScheduledMessagesReply,
 } from '../types';
 import { RedisClient } from './system/redis-client/redis-client';
 import { Message } from './message';
-import { redisKeys } from './system/redis-keys';
-import { EnqueueMessageHandler } from './system/message-manager/handlers/enqueue-message-handler';
-import { DequeueMessageHandler } from './system/message-manager/handlers/dequeue-message-handler';
-import { ScheduledMessagesHandler } from './system/message-manager/handlers/scheduled-messages-handler';
-import { ProcessingQueueMessageHandler } from './system/message-manager/handlers/processing-queue-message-handler';
-import { Scheduler } from './system/scheduler';
+import { EnqueueMessageHandler } from './system/message-manager/handlers/enqueue-message.handler';
+import { DequeueMessageHandler } from './system/message-manager/handlers/dequeue-message.handler';
+import { ScheduledMessagesHandler } from './system/message-manager/handlers/scheduled-messages.handler';
+import { ProcessingQueueMessageHandler } from './system/message-manager/handlers/processing-queue-message.handler';
+import { DelayedMessagesHandler } from './system/message-manager/handlers/delayed-messages.handler';
+import { RequeueMessageHandler } from './system/message-manager/handlers/requeue-message.handler';
 
 export class MessageManager {
   protected static instance: MessageManager | null = null;
@@ -23,6 +22,8 @@ export class MessageManager {
   protected dequeueMessageHandler: DequeueMessageHandler;
   protected processingQueueMessageHandler: ProcessingQueueMessageHandler;
   protected scheduledMessageHandler: ScheduledMessagesHandler;
+  protected delayedMessagesHandler: DelayedMessagesHandler;
+  protected requeueMessageHandler: RequeueMessageHandler;
 
   constructor(redisClient: RedisClient) {
     this.redisClient = redisClient;
@@ -30,6 +31,8 @@ export class MessageManager {
     this.dequeueMessageHandler = new DequeueMessageHandler();
     this.scheduledMessageHandler = new ScheduledMessagesHandler();
     this.processingQueueMessageHandler = new ProcessingQueueMessageHandler();
+    this.delayedMessagesHandler = new DelayedMessagesHandler();
+    this.requeueMessageHandler = new RequeueMessageHandler();
   }
 
   ///
@@ -83,34 +86,16 @@ export class MessageManager {
 
   ///
 
-  enqueueScheduledMessages(
-    scheduler: Scheduler,
-    queueName: string,
-    withPriority: boolean,
-    cb: ICallback<void>,
-  ): void {
+  enqueueScheduledMessages(withPriority: boolean, cb: ICallback<void>): void {
     this.scheduledMessageHandler.enqueueScheduledMessages(
       this.redisClient,
-      scheduler,
-      queueName,
       withPriority,
       cb,
     );
   }
 
-  scheduleMessage(
-    queueName: string,
-    message: Message,
-    timestamp: number,
-    cb: ICallback<void>,
-  ): void {
-    this.scheduledMessageHandler.schedule(
-      this.redisClient,
-      queueName,
-      message,
-      timestamp,
-      cb,
-    );
+  scheduleMessage(message: Message, cb: ICallback<boolean>): void {
+    this.scheduledMessageHandler.schedule(this.redisClient, message, cb);
   }
 
   ///
@@ -134,10 +119,13 @@ export class MessageManager {
     );
   }
 
+  scheduleDelayedMessages(cb: ICallback<void>): void {
+    this.delayedMessagesHandler.schedule(this.redisClient, cb);
+  }
+
   delayUnacknowledgedMessageBeforeRequeuing(
     message: Message,
     queueName: string,
-    delayTimestamp: number,
     keyQueueProcessing: string,
     unacknowledgedCause: EMessageUnacknowledgedCause,
     cb: ICallback<void>,
@@ -146,7 +134,6 @@ export class MessageManager {
       this.redisClient,
       message,
       queueName,
-      delayTimestamp,
       keyQueueProcessing,
       unacknowledgedCause,
       cb,
@@ -187,134 +174,104 @@ export class MessageManager {
     );
   }
 
-  ///
-  /*
-  deletePendingMessage(
-    queueName: string,
-    messageId: string,
-    cb: ICallback<void>,
-  ): void {
-    this.deleteMessageOperation.deleteMessage(
-      this.redisClient,
-      queueName,
-      messageId,
-      [EMessageMetadata.ENQUEUED, EMessageMetadata.ENQUEUED_WITH_PRIORITY],
-      cb,
-    );
-  }
-
-  deleteAcknowledgedMessage(
-    queueName: string,
-    messageId: string,
-    cb: ICallback<void>,
-  ): void {
-    this.deleteMessageOperation.deleteMessage(
-      this.redisClient,
-      queueName,
-      messageId,
-      [EMessageMetadata.ACKNOWLEDGED],
-      cb,
-    );
-  }
-
   deleteScheduledMessage(
-    queueName: string,
+    index: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    this.deleteMessageOperation.deleteMessage(
+    this.scheduledMessageHandler.deleteScheduled(
       this.redisClient,
-      queueName,
+      index,
       messageId,
-      [EMessageMetadata.SCHEDULED],
       cb,
     );
   }
 
   deleteDeadLetterMessage(
     queueName: string,
+    index: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    this.deleteMessageOperation.deleteMessage(
+    this.processingQueueMessageHandler.deleteDeadLetterMessage(
       this.redisClient,
       queueName,
+      index,
       messageId,
-      [EMessageMetadata.DEAD_LETTER],
       cb,
     );
   }
-   */
+
+  deleteAcknowledgedMessage(
+    queueName: string,
+    index: number,
+    messageId: string,
+    cb: ICallback<void>,
+  ): void {
+    this.processingQueueMessageHandler.deleteAcknowledgedMessage(
+      this.redisClient,
+      queueName,
+      index,
+      messageId,
+      cb,
+    );
+  }
+
+  deletePendingMessage(
+    queueName: string,
+    index: number,
+    messageId: string,
+    cb: ICallback<void>,
+  ): void {
+    this.enqueueMessageHandler.deletePendingMessage(
+      this.redisClient,
+      queueName,
+      index,
+      messageId,
+      cb,
+    );
+  }
 
   ///
 
-  /*
-  requeueMessageFromAcknowledgedQueue(
-    queueName: string,
-    messageId: string,
-    cb: ICallback<void>,
-  ): void {
-    this.requeueMessageOperation.requeue(
-      this.redisClient,
-      queueName,
-      messageId,
-      false,
-      undefined,
-      [EMessageMetadata.ACKNOWLEDGED],
-      cb,
-    );
-  }
-
-  requeueMessageWithPriorityFromAcknowledgedQueue(
-    queueName: string,
-    messageId: string,
-    priority: number | undefined,
-    cb: ICallback<void>,
-  ): void {
-    this.requeueMessageOperation.requeue(
-      this.redisClient,
-      queueName,
-      messageId,
-      true,
-      priority,
-      [EMessageMetadata.ACKNOWLEDGED],
-      cb,
-    );
-  }
-
   requeueMessageFromDLQueue(
     queueName: string,
+    index: number,
     messageId: string,
+    withPriority: boolean,
+    priority: number | undefined,
     cb: ICallback<void>,
   ): void {
-    this.requeueMessageOperation.requeue(
+    this.requeueMessageHandler.requeueMessageFromDLQueue(
       this.redisClient,
       queueName,
+      index,
       messageId,
-      false,
-      undefined,
-      [EMessageMetadata.DEAD_LETTER],
+      withPriority,
+      priority,
       cb,
     );
   }
 
-  requeueMessageWithPriorityFromDLQueue(
+  requeueMessageFromAcknowledgedQueue(
     queueName: string,
+    index: number,
     messageId: string,
+    withPriority: boolean,
     priority: number | undefined,
     cb: ICallback<void>,
   ): void {
-    this.requeueMessageOperation.requeue(
+    this.requeueMessageHandler.requeueMessageFromAcknowledgedQueue(
       this.redisClient,
       queueName,
+      index,
       messageId,
-      true,
+      withPriority,
       priority,
-      [EMessageMetadata.DEAD_LETTER],
       cb,
     );
   }
-  */
+
   ///
 
   getAcknowledgedMessages(
@@ -323,21 +280,11 @@ export class MessageManager {
     take: number,
     cb: ICallback<TGetAcknowledgedMessagesReply>,
   ): void {
-    const getTotalFn = (redisClient: RedisClient, cb: ICallback<number>) =>
-      metadata.getQueueMetadataByKey(
-        redisClient,
-        queueName,
-        'acknowledged',
-        cb,
-      );
-    const transformFn = (msgStr: string) => Message.createFromMessage(msgStr);
-    const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName);
-    this.redisClient.zRangePage(
-      keyQueueAcknowledgedMessages,
+    this.enqueueMessageHandler.getAcknowledgedMessages(
+      this.redisClient,
+      queueName,
       skip,
       take,
-      getTotalFn,
-      transformFn,
       cb,
     );
   }
@@ -348,16 +295,11 @@ export class MessageManager {
     take: number,
     cb: ICallback<TGetAcknowledgedMessagesReply>,
   ): void {
-    const getTotalFn = (redisClient: RedisClient, cb: ICallback<number>) =>
-      metadata.getQueueMetadataByKey(redisClient, queueName, 'deadLetter', cb);
-    const transformFn = (msgStr: string) => Message.createFromMessage(msgStr);
-    const { keyQueueDL } = redisKeys.getKeys(queueName);
-    this.redisClient.zRangePage(
-      keyQueueDL,
+    this.enqueueMessageHandler.getDeadLetterMessages(
+      this.redisClient,
+      queueName,
       skip,
       take,
-      getTotalFn,
-      transformFn,
       cb,
     );
   }
@@ -368,16 +310,11 @@ export class MessageManager {
     take: number,
     cb: ICallback<TGetAcknowledgedMessagesReply>,
   ): void {
-    const getTotalFn = (redisClient: RedisClient, cb: ICallback<number>) =>
-      metadata.getQueueMetadataByKey(redisClient, queueName, 'pending', cb);
-    const transformFn = (msgStr: string) => Message.createFromMessage(msgStr);
-    const { keyQueue } = redisKeys.getKeys(queueName);
-    this.redisClient.lRangePage(
-      keyQueue,
+    this.enqueueMessageHandler.getPendingMessages(
+      this.redisClient,
+      queueName,
       skip,
       take,
-      getTotalFn,
-      transformFn,
       cb,
     );
   }
@@ -388,41 +325,24 @@ export class MessageManager {
     take: number,
     cb: ICallback<TGetAcknowledgedMessagesReply>,
   ): void {
-    const getTotalFn = (redisClient: RedisClient, cb: ICallback<number>) =>
-      metadata.getQueueMetadataByKey(
-        redisClient,
-        queueName,
-        'pendingWithPriority',
-        cb,
-      );
-    const transformFn = (msgStr: string) => Message.createFromMessage(msgStr);
-    const { keyQueuePriority } = redisKeys.getKeys(queueName);
-    this.redisClient.zRangePage(
-      keyQueuePriority,
+    this.enqueueMessageHandler.getPendingMessagesWithPriority(
+      this.redisClient,
+      queueName,
       skip,
       take,
-      getTotalFn,
-      transformFn,
       cb,
     );
   }
 
   getScheduledMessages(
-    queueName: string,
     skip: number,
     take: number,
     cb: ICallback<TGetScheduledMessagesReply>,
   ): void {
-    const getTotalFn = (redisClient: RedisClient, cb: ICallback<number>) =>
-      metadata.getQueueMetadataByKey(redisClient, queueName, 'scheduled', cb);
-    const transformFn = (msgStr: string) => Message.createFromMessage(msgStr);
-    const { keyQueueScheduledMessages } = redisKeys.getKeys(queueName);
-    this.redisClient.zRangePage(
-      keyQueueScheduledMessages,
+    this.scheduledMessageHandler.getScheduledMessages(
+      this.redisClient,
       skip,
       take,
-      getTotalFn,
-      transformFn,
       cb,
     );
   }

@@ -7,9 +7,8 @@ import {
 } from './common';
 import { Message } from '../src/message';
 import { promisifyAll } from 'bluebird';
-import { EMessageMetadata } from '../types';
 
-test('Combined test. Requeue message from acknowledged queue. Check both pending and acknowledged messages. Check both message metadata and queue metadata.', async () => {
+test('Combined test. Requeue message from acknowledged queue. Check both pending and acknowledged messages. Check queue metrics.', async () => {
   const msg = new Message();
   msg.setBody({ hello: 'world' });
 
@@ -43,15 +42,18 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
   expect(res2.items.length).toBe(1);
 
   const queueManager = promisifyAll(await getQueueManager());
-  const queueMetadata1 = await queueManager.getQueueMetadataAsync(
+  const queueMetrics = await queueManager.getQueueMetricsAsync(
     producer.getQueueName(),
   );
-  expect(queueMetadata1.pending).toBe(0);
-  expect(queueMetadata1.acknowledged).toBe(1);
+  expect(queueMetrics.pending).toBe(0);
+  expect(queueMetrics.acknowledged).toBe(1);
 
   await messageManager.requeueMessageFromAcknowledgedQueueAsync(
     producer.getQueueName(),
+    0,
     msg.getId(),
+    false,
+    undefined,
   );
 
   const res5 = await messageManager.getPendingMessagesAsync(
@@ -78,36 +80,19 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
   expect(res6.total).toBe(0);
   expect(res6.items.length).toBe(0);
 
-  const queueMetadata2 = await queueManager.getQueueMetadataAsync(
+  const queueMetrics1 = await queueManager.getQueueMetricsAsync(
     producer.getQueueName(),
   );
-  expect(queueMetadata2.acknowledged).toBe(0);
-  expect(queueMetadata2.pending).toBe(1);
-
-  const msgMeta = await messageManager.getMessageMetadataListAsync(msg.getId());
-  expect(msgMeta.length).toBe(4);
-
-  expect(msgMeta[2].type).toBe(
-    EMessageMetadata.DELETED_FROM_ACKNOWLEDGED_QUEUE,
-  );
-  expect(msgMeta[2].state).toEqual(msg2);
-
-  expect(msgMeta[3].type).toBe(EMessageMetadata.ENQUEUED);
-  expect(msgMeta[3].state).toEqual(msg2);
+  expect(queueMetrics1.acknowledged).toBe(0);
+  expect(queueMetrics1.pending).toBe(1);
 
   await expect(async () => {
     await messageManager.requeueMessageFromAcknowledgedQueueAsync(
       producer.getQueueName(),
+      0,
       msg.getId(),
+      false,
+      undefined,
     );
-  }).rejects.toThrow(
-    'Unexpected metadata type [enqueued]. Expected ["acknowledged"]',
-  );
-
-  await expect(async () => {
-    await messageManager.requeueMessageFromAcknowledgedQueueAsync(
-      producer.getQueueName(),
-      new Message().getId(),
-    );
-  }).rejects.toThrow('Message does not exist');
+  }).rejects.toThrow('Message not found');
 });

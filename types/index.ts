@@ -1,6 +1,6 @@
 import { ServerOptions } from 'socket.io';
 import IORedis, { Redis, RedisOptions } from 'ioredis';
-import { ClientOpts, Multi, RedisClient as NodeRedis } from 'redis';
+import { Callback, ClientOpts, Multi, RedisClient as NodeRedis } from 'redis';
 import * as Logger from 'bunyan';
 import { RedisClient } from '../src/system/redis-client/redis-client';
 import { Message } from '../src/message';
@@ -28,8 +28,8 @@ export interface IProducerStats {
   inputRate: number;
 }
 
-export interface IStatsProvider<T = Record<string, any>> {
-  getStats(): T;
+export interface IRatesProvider<T = Record<string, any>> {
+  getRates(): T;
   format(stats: Record<string, any>): string[];
 }
 
@@ -69,6 +69,8 @@ export type TCompatibleRedisClient = (NodeRedis | Redis) & {
   eval: TFunction;
   evalsha: TFunction;
   watch(args: string[], cb: ICallback<string>): void;
+  set(key: string, value: string, cb: Callback<string>): void;
+  zrem(key: string, value: string, cb: Callback<number>): void;
 };
 
 export type TRedisClientMulti = Multi | IORedis.Pipeline;
@@ -183,43 +185,12 @@ export type TInstanceRedisKeys = ReturnType<
   typeof redisKeys['getInstanceKeys']
 >;
 
-export enum EQueueMetadata {
-  PENDING_MESSAGES = 'pending',
-  PENDING_MESSAGES_WITH_PRIORITY = 'pending_with_priority',
-  SCHEDULED_MESSAGES = 'scheduled',
-  DEAD_LETTER_MESSAGES = 'dead_letter',
-  ACKNOWLEDGED_MESSAGES = 'acknowledged',
-}
-
-export enum EMessageMetadata {
-  ENQUEUED = 'enqueued',
-  ENQUEUED_WITH_PRIORITY = 'enqueued_with_priority',
-  SCHEDULED = 'scheduled',
-  ACKNOWLEDGED = 'acknowledged',
-  UNACKNOWLEDGED = 'unacknowledged',
-  DEAD_LETTER = 'dead_letter',
-  DELETED_FROM_DL = 'deleted_from_dl',
-  DELETED_FROM_QUEUE = 'deleted_from_queue',
-  DELETED_FROM_PRIORITY_QUEUE = 'deleted_from_priority_queue',
-  DELETED_FROM_ACKNOWLEDGED_QUEUE = 'deleted_from_acknowledged_queue',
-  DELETED_FROM_SCHEDULED_QUEUE = 'deleted_from_scheduled_queue',
-}
-
-export interface IMessageMetadata {
-  state: Message;
-  type: EMessageMetadata;
-  timestamp: number;
-  deadLetterCause?: EMessageDeadLetterCause;
-  unacknowledgedCause?: EMessageUnacknowledgedCause;
-}
-
-export type TQueueMetadata = {
+export interface IQueueMetrics {
+  acknowledged: number;
+  deadLettered: number;
   pending: number;
   pendingWithPriority: number;
-  scheduled: number;
-  deadLetter: number;
-  acknowledged: number;
-};
+}
 
 export enum EMessageDeadLetterCause {
   TTL_EXPIRED = 'ttl_expired',

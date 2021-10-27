@@ -7,9 +7,8 @@ import {
 } from './common';
 import { Message } from '../src/message';
 import { promisifyAll } from 'bluebird';
-import { EMessageMetadata } from '../types';
 
-test('Combined test: Requeue a message from acknowledged queue with priority. Check both queue metadata and message metadata.  Check both pending and acknowledged messages. Check both message metadata and queue metadata.', async () => {
+test('Combined test: Requeue a message from acknowledged queue with priority. Check both queue metadata and message metadata.  Check both pending and acknowledged messages. Check queue metrics.', async () => {
   const producer = getProducer();
 
   const msg = new Message();
@@ -27,9 +26,11 @@ test('Combined test: Requeue a message from acknowledged queue with priority. Ch
   await consumer.shutdownAsync();
 
   const messageManager = promisifyAll(await getMessageManager());
-  await messageManager.requeueMessageWithPriorityFromAcknowledgedQueueAsync(
+  await messageManager.requeueMessageFromAcknowledgedQueueAsync(
     producer.getQueueName(),
+    0,
     msg.getId(),
+    true,
     undefined,
   );
 
@@ -66,44 +67,20 @@ test('Combined test: Requeue a message from acknowledged queue with priority. Ch
   expect(res7.items.length).toBe(0);
 
   const queueManager = promisifyAll(await getQueueManager());
-  const queueMetadata2 = await queueManager.getQueueMetadataAsync(
+  const queueMetrics = await queueManager.getQueueMetricsAsync(
     producer.getQueueName(),
   );
-  expect(queueMetadata2.acknowledged).toBe(0);
-  expect(queueMetadata2.pending).toBe(0);
-  expect(queueMetadata2.pendingWithPriority).toBe(1);
-
-  const msgMeta = await messageManager.getMessageMetadataListAsync(msg.getId());
-  expect(msgMeta.length).toBe(4);
-
-  expect(msgMeta[2].type).toBe(
-    EMessageMetadata.DELETED_FROM_ACKNOWLEDGED_QUEUE,
-  );
-  const msg2 = Message.createFromMessage(msg)
-    .setTTL(0)
-    .setRetryThreshold(3)
-    .setRetryDelay(0)
-    .setConsumeTimeout(0);
-  expect(msgMeta[2].state).toEqual(msg2);
-
-  expect(msgMeta[3].type).toBe(EMessageMetadata.ENQUEUED_WITH_PRIORITY);
-  expect(msgMeta[3].state).toEqual(msg1);
+  expect(queueMetrics.acknowledged).toBe(0);
+  expect(queueMetrics.pending).toBe(0);
+  expect(queueMetrics.pendingWithPriority).toBe(1);
 
   await expect(async () => {
-    await messageManager.requeueMessageWithPriorityFromAcknowledgedQueueAsync(
+    await messageManager.requeueMessageFromAcknowledgedQueueAsync(
       producer.getQueueName(),
+      0,
       msg.getId(),
+      true,
       undefined,
     );
-  }).rejects.toThrow(
-    'Unexpected metadata type [enqueued_with_priority]. Expected ["acknowledged"]',
-  );
-
-  await expect(async () => {
-    await messageManager.requeueMessageWithPriorityFromAcknowledgedQueueAsync(
-      producer.getQueueName(),
-      new Message().getId(),
-      undefined,
-    );
-  }).rejects.toThrow('Message does not exist');
+  }).rejects.toThrow('Message not found');
 });

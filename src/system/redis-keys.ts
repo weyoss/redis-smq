@@ -7,30 +7,30 @@ enum ERedisKey {
   KEY_QUEUE_DL,
   KEY_QUEUE_DELAY,
   KEY_QUEUE_REQUEUE,
-  KEY_QUEUE_SCHEDULED_MESSAGES,
+  KEY_QUEUE_SCHEDULED,
   KEY_QUEUE_PRIORITY,
   KEY_QUEUE_PROCESSING,
   KEY_QUEUE_ACKNOWLEDGED_MESSAGES,
   KEY_QUEUE_UNACKNOWLEDGED_MESSAGES,
   KEY_INDEX_QUEUES, // Redis key for message queues
   KEY_INDEX_DL_QUEUES, // Redis key for dead-letter queues
-  KEY_INDEX_MESSAGE_PROCESSING_QUEUES, // Redis key for all processing queues
+  KEY_INDEX_PROCESSING_QUEUES, // Redis key for all processing queues
   KEY_INDEX_QUEUE_MESSAGE_PROCESSING_QUEUES, // Redis key for processing queues of a given queue
   KEY_INDEX_RATES, // Redis key for rates from all producersand consumers
   KEY_INDEX_HEARTBEATS, // Redis key for consumers heartbeats
-  KEY_LOCK_SCHEDULER,
-  KEY_LOCK_STATS_AGGREGATOR,
-  KEY_LOCK_GC,
+  KEY_LOCK_WORKER_SCHEDULE,
+  KEY_LOCK_WORKER_GC,
   KEY_LOCK_HEARTBEAT_MONITOR,
   KEY_LOCK_MESSAGE_MANAGER,
   KEY_LOCK_QUEUE_MANAGER,
+  KEY_LOCK_WORKER_REQUEUE,
+  KEY_LOCK_WORKER_DELAY,
+  KEY_LOCK_WORKER_STATS,
   KEY_RATE_PRODUCER_INPUT,
   KEY_RATE_CONSUMER_PROCESSING,
   KEY_RATE_CONSUMER_ACKNOWLEDGED,
   KEY_RATE_CONSUMER_UNACKNOWLEDGED,
   KEY_HEARTBEAT,
-  KEY_METADATA_QUEUE,
-  KEY_METADATA_MESSAGE,
 }
 
 export const redisKeys = {
@@ -44,31 +44,13 @@ export const redisKeys = {
     const globalKeys = this.getGlobalKeys();
     const keys = {
       keyQueue: this.joinSegments(ERedisKey.KEY_QUEUE, queueName),
-      keyQueueDelay: this.joinSegments(ERedisKey.KEY_QUEUE_DELAY, queueName),
-      keyQueueRequeue: this.joinSegments(
-        ERedisKey.KEY_QUEUE_REQUEUE,
-        queueName,
-      ),
       keyQueueDL: this.joinSegments(ERedisKey.KEY_QUEUE_DL, queueName),
-      keyQueueScheduledMessages: this.joinSegments(
-        ERedisKey.KEY_QUEUE_SCHEDULED_MESSAGES,
-        queueName,
-      ),
-      keyLockScheduler: this.joinSegments(
-        ERedisKey.KEY_LOCK_SCHEDULER,
-        queueName,
-      ),
-      keyLockGC: this.joinSegments(ERedisKey.KEY_LOCK_GC, queueName),
       keyIndexQueueMessageProcessingQueues: this.joinSegments(
         ERedisKey.KEY_INDEX_QUEUE_MESSAGE_PROCESSING_QUEUES,
         queueName,
       ),
       keyQueuePriority: this.joinSegments(
         ERedisKey.KEY_QUEUE_PRIORITY,
-        queueName,
-      ),
-      keyMetadataQueue: this.joinSegments(
-        ERedisKey.KEY_METADATA_QUEUE,
         queueName,
       ),
       keyQueueAcknowledgedMessages: this.joinSegments(
@@ -128,25 +110,13 @@ export const redisKeys = {
     };
   },
 
-  getMessageKeys(messageId: string) {
-    const keys = {
-      keyMetadataMessage: this.joinSegments(
-        ERedisKey.KEY_METADATA_MESSAGE,
-        messageId,
-      ),
-    };
-    return {
-      ...this.makeNamespacedKeys(keys, namespace),
-    };
-  },
-
   extractData(key: string) {
     const { ns, type, segments } = this.getSegments(key);
     if (
       type === ERedisKey.KEY_QUEUE ||
-      type === ERedisKey.KEY_QUEUE_SCHEDULED_MESSAGES ||
+      type === ERedisKey.KEY_QUEUE_SCHEDULED ||
       type === ERedisKey.KEY_QUEUE_DL ||
-      type === ERedisKey.KEY_LOCK_SCHEDULER
+      type === ERedisKey.KEY_LOCK_WORKER_SCHEDULE
     ) {
       const [queueName] = segments;
       return {
@@ -156,7 +126,7 @@ export const redisKeys = {
       };
     }
     if (
-      type === ERedisKey.KEY_LOCK_GC ||
+      type === ERedisKey.KEY_LOCK_WORKER_GC ||
       type === ERedisKey.KEY_INDEX_QUEUE_MESSAGE_PROCESSING_QUEUES
     ) {
       const [queueName] = segments;
@@ -207,17 +177,21 @@ export const redisKeys = {
       keyIndexQueue: ERedisKey.KEY_INDEX_QUEUES,
       keyIndexDLQueues: ERedisKey.KEY_INDEX_DL_QUEUES,
       keyIndexRates: ERedisKey.KEY_INDEX_RATES,
-      keyLockStatsAggregator: ERedisKey.KEY_LOCK_STATS_AGGREGATOR,
-      keyIndexMessageProcessingQueues:
-        ERedisKey.KEY_INDEX_MESSAGE_PROCESSING_QUEUES,
+      keyIndexProcessingQueues: ERedisKey.KEY_INDEX_PROCESSING_QUEUES,
       keyIndexHeartbeats: ERedisKey.KEY_INDEX_HEARTBEATS,
       keyLockHeartBeatMonitor: ERedisKey.KEY_LOCK_HEARTBEAT_MONITOR,
       keyLockMessageManager: ERedisKey.KEY_LOCK_MESSAGE_MANAGER,
       keyLockQueueManager: ERedisKey.KEY_LOCK_QUEUE_MANAGER,
+      keyLockWorkerGC: ERedisKey.KEY_LOCK_WORKER_GC,
+      keyLockWorkerSchedule: ERedisKey.KEY_LOCK_WORKER_SCHEDULE,
+      keyLockWorkerRequeue: ERedisKey.KEY_LOCK_WORKER_REQUEUE,
+      keyLockWorkerDelay: ERedisKey.KEY_LOCK_WORKER_DELAY,
+      keyLockWorkerStats: ERedisKey.KEY_LOCK_WORKER_STATS,
+      keyQueueDelay: ERedisKey.KEY_QUEUE_DELAY,
+      keyQueueRequeue: ERedisKey.KEY_QUEUE_REQUEUE,
+      keyQueueScheduled: ERedisKey.KEY_QUEUE_SCHEDULED,
     };
-    return {
-      ...this.makeNamespacedKeys(keys, globalNamespace),
-    };
+    return this.makeNamespacedKeys(keys, globalNamespace);
   },
 
   joinSegments(...segments: (string | number)[]): string {
