@@ -1,9 +1,11 @@
-import { IsString, IsUUID } from 'class-validator';
+import { IsInt, IsUUID } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class DeleteScheduledMessageRequestDTO {
   @IsUUID('4')
   id!: string;
 
-  @IsString()
-  queueName!: string;
+  @IsInt()
+  @Type(() => Number)
+  index!: number;
 }

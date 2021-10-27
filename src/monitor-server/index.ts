@@ -87,7 +87,7 @@ export function MonitorServer(config: IConfig = {}) {
       bootstrap(config, (result) => {
         apiServer = result;
         const { app, socketIO, httpServer } = result;
-        startThreads(config, resolve(__dirname, './threads'));
+        startThreads(config, resolve(__dirname, './workers'));
         RedisClient.getNewInstance(config, (client) => {
           subscribeClient = client;
           subscribeClient.subscribe('stats');

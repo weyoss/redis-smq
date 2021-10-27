@@ -4,10 +4,9 @@ import { RedisClient } from '../src/system/redis-client/redis-client';
 import { Producer, Consumer, Message, MonitorServer } from '../index';
 import { config } from './config';
 import { ICallback, IConfig } from '../types';
-import { StatsAggregatorThread } from '../src/monitor-server/threads/stats-aggregator.thread';
-import { QueueManager } from '../src/system/queue-manager';
+import { StatsWorker } from '../src/monitor-server/workers/stats.worker';
+import { QueueManager } from '../src/queue-manager';
 import { MessageManager } from '../src/message-manager';
-import { Scheduler } from '../src/system/scheduler';
 
 type TMonitorServer = ReturnType<typeof MonitorServer>;
 
@@ -24,10 +23,9 @@ const redisClients: RedisClient[] = [];
 const consumersList: Consumer[] = [];
 const producersList: Producer[] = [];
 let monitorServer: TMonitorServer | null = null;
-let statsAggregator: StatsAggregatorThread | null = null;
+let statsAggregator: StatsWorker | null = null;
 let messageManager: MessageManager | null = null;
 let queueManager: QueueManager | null = null;
-let scheduler: Scheduler | null = null;
 
 export async function startUp(): Promise<void> {
   const redisClient = await getRedisInstance();
@@ -58,9 +56,6 @@ export async function shutdown(): Promise<void> {
   }
   if (queueManager) {
     queueManager = null;
-  }
-  if (scheduler) {
-    scheduler = null;
   }
   await stopMonitorServer();
   await stopStatsAggregator();
@@ -107,14 +102,6 @@ export async function getQueueManager() {
   return queueManager;
 }
 
-export async function getScheduler() {
-  if (!scheduler) {
-    const messageManager = await getMessageManager();
-    scheduler = new Scheduler(messageManager);
-  }
-  return scheduler;
-}
-
 export async function startMonitorServer(): Promise<void> {
   await new Promise<void>((resolve) => {
     monitorServer = MonitorServer(config);
@@ -137,7 +124,7 @@ export async function stopMonitorServer(): Promise<void> {
 
 export async function startStatsAggregator(): Promise<void> {
   const redisClient = await getRedisInstance();
-  statsAggregator = new StatsAggregatorThread(redisClient, config);
+  statsAggregator = new StatsWorker(redisClient, config);
 }
 
 export async function stopStatsAggregator(): Promise<void> {

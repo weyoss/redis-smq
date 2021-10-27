@@ -1,7 +1,7 @@
 import { Producer } from '../../producer';
-import { IProducerStats, IStatsProvider } from '../../../types';
+import { IProducerStats, IRatesProvider } from '../../../types';
 
-export class ProducerStatsProvider implements IStatsProvider {
+export class ProducerRatesProvider implements IRatesProvider {
   protected inputSlots: number[] = new Array(1000).fill(0);
   protected inputRate = 0;
   protected producer: Producer;
@@ -16,7 +16,7 @@ export class ProducerStatsProvider implements IStatsProvider {
     this.keyProducerRateInput = keyRateProducerInput;
   }
 
-  getStats() {
+  getRates() {
     this.inputRate = this.inputSlots.reduce((acc, cur) => acc + cur, 0);
     this.inputSlots.fill(0);
     return {

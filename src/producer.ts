@@ -1,20 +1,21 @@
 import { IConfig, ICallback } from '../types';
 import { Message } from './message';
-import { ProducerStatsProvider } from './system/stats-provider/producer-stats-provider';
+import { ProducerRatesProvider } from './system/rates-provider/producer-rates-provider';
 import { Instance } from './system/instance';
 import { events } from './system/events';
+import { ScheduledMessagesHandler } from './system/message-manager/handlers/scheduled-messages.handler';
 
 export class Producer extends Instance {
-  protected statsProvider: ProducerStatsProvider | null = null;
+  protected statsProvider: ProducerRatesProvider | null = null;
 
   constructor(queueName: string, config: IConfig = {}) {
     super(queueName, config);
     this.run();
   }
 
-  getStatsProvider(): ProducerStatsProvider {
+  getStatsProvider(): ProducerRatesProvider {
     if (!this.statsProvider) {
-      this.statsProvider = new ProducerStatsProvider(this);
+      this.statsProvider = new ProducerRatesProvider(this);
     }
     return this.statsProvider;
   }
@@ -23,6 +24,7 @@ export class Producer extends Instance {
     const message = !(msg instanceof Message)
       ? new Message().setBody(msg)
       : msg;
+    message.setQueue(this.queueName);
     const callback: ICallback<boolean> = (err, reply) => {
       if (err) cb(err);
       else {
@@ -32,23 +34,20 @@ export class Producer extends Instance {
       }
     };
     const proceed = () => {
-      this.getScheduler((scheduler) => {
-        if (!scheduler) cb(new Error(`Expected an instance of Scheduler`));
-        else {
-          if (scheduler.isSchedulable(message)) {
-            scheduler.schedule(this.queueName, message, callback);
-          } else {
-            this.getBroker((broker) => {
-              broker.enqueueMessage(
-                this.queueName,
-                message,
-                (err?: Error | null) => {
-                  if (err) callback(err);
-                  else callback(null, true);
-                },
-              );
-            });
-          }
+      this.getMessageManager((messageManager) => {
+        if (ScheduledMessagesHandler.isSchedulable(message)) {
+          messageManager.scheduleMessage(message, callback);
+        } else {
+          this.getBroker((broker) => {
+            broker.enqueueMessage(
+              this.queueName,
+              message,
+              (err?: Error | null) => {
+                if (err) callback(err);
+                else callback(null, true);
+              },
+            );
+          });
         }
       });
     };

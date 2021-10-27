@@ -7,9 +7,8 @@ import {
 } from './common';
 import { Message } from '../src/message';
 import { promisifyAll } from 'bluebird';
-import { EMessageMetadata } from '../types';
 
-test('Combined test: Requeue a message from dead-letter queue with priority.  Check both pending and acknowledged messages. Check both message metadata and queue metadata.', async () => {
+test('Combined test: Requeue a message from dead-letter queue with priority.  Check both pending and acknowledged messages. Check queue metrics.', async () => {
   const producer = getProducer();
 
   const msg = new Message();
@@ -26,9 +25,11 @@ test('Combined test: Requeue a message from dead-letter queue with priority.  Ch
   await consumer.shutdownAsync();
 
   const messageManager = promisifyAll(await getMessageManager());
-  await messageManager.requeueMessageWithPriorityFromDLQueueAsync(
+  await messageManager.requeueMessageFromDLQueueAsync(
     producer.getQueueName(),
+    0,
     msg.getId(),
+    true,
     undefined,
   );
 
@@ -62,20 +63,10 @@ test('Combined test: Requeue a message from dead-letter queue with priority.  Ch
   expect(res3.items.length).toBe(0);
 
   const queueManager = promisifyAll(await getQueueManager());
-  const queueMetadata2 = await queueManager.getQueueMetadataAsync(
+  const queueMetrics = await queueManager.getQueueMetricsAsync(
     producer.getQueueName(),
   );
-  expect(queueMetadata2.deadLetter).toBe(0);
-  expect(queueMetadata2.pending).toBe(0);
-  expect(queueMetadata2.pendingWithPriority).toBe(1);
-
-  const msgMeta = await messageManager.getMessageMetadataListAsync(msg.getId());
-  expect(msgMeta.length).toBe(11);
-
-  expect(msgMeta[9].type).toBe(EMessageMetadata.DELETED_FROM_DL);
-  const msg2 = Message.createFromMessage(msg).setAttempts(3);
-  expect(msgMeta[9].state).toEqual(msg2);
-
-  expect(msgMeta[10].type).toBe(EMessageMetadata.ENQUEUED_WITH_PRIORITY);
-  expect(msgMeta[10].state).toEqual(msg1);
+  expect(queueMetrics.deadLettered).toBe(0);
+  expect(queueMetrics.pending).toBe(0);
+  expect(queueMetrics.pendingWithPriority).toBe(1);
 });

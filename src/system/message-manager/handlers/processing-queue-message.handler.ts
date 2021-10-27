@@ -6,8 +6,37 @@ import {
   ICallback,
 } from '../../../../types';
 import { redisKeys } from '../../redis-keys';
+import { deleteListMessageAtIndex } from '../common';
 
 export class ProcessingQueueMessageHandler {
+  deleteDeadLetterMessage(
+    redisClient: RedisClient,
+    queueName: string,
+    index: number,
+    messageId: string,
+    cb: ICallback<void>,
+  ): void {
+    const { keyQueueDL } = redisKeys.getKeys(queueName);
+    deleteListMessageAtIndex(redisClient, keyQueueDL, index, messageId, cb);
+  }
+
+  deleteAcknowledgedMessage(
+    redisClient: RedisClient,
+    queueName: string,
+    index: number,
+    messageId: string,
+    cb: ICallback<void>,
+  ): void {
+    const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName);
+    deleteListMessageAtIndex(
+      redisClient,
+      keyQueueAcknowledgedMessages,
+      index,
+      messageId,
+      cb,
+    );
+  }
+
   deadLetterMessage(
     redisClient: RedisClient,
     message: Message,
@@ -46,7 +75,6 @@ export class ProcessingQueueMessageHandler {
     redisClient: RedisClient,
     message: Message,
     queueName: string,
-    delayTimestamp: number,
     keyQueueProcessing: string,
     unacknowledgedCause: EMessageUnacknowledgedCause,
     cb: ICallback<void>,

@@ -1,10 +1,7 @@
-import { IsInt, IsOptional, IsString } from 'class-validator';
+import { IsInt, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class GetScheduledMessagesRequestDTO {
-  @IsString()
-  queueName!: string;
-
   @IsInt()
   @Type(() => Number)
   @IsOptional()

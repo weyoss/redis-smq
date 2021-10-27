@@ -7,9 +7,8 @@ import {
 } from './common';
 import { Message } from '../src/message';
 import { promisifyAll } from 'bluebird';
-import { EMessageMetadata } from '../types';
 
-test(`Combined test: Dead-letter a message and requeue it with priority. Check pending, acknowledged and pending messages. Check both queue and message metadata.`, async () => {
+test(`Combined test: Dead-letter a message and requeue it with priority. Check pending, acknowledged and pending messages.`, async () => {
   const msg = new Message();
   msg.setBody({ hello: 'world' });
 
@@ -58,16 +57,19 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   expect(res3.items[0]).toEqual(msg1);
 
   const queueManager = promisifyAll(await getQueueManager());
-  const queueMetadata1 = await queueManager.getQueueMetadataAsync(
+  const queueMetrics = await queueManager.getQueueMetricsAsync(
     producer.getQueueName(),
   );
-  expect(queueMetadata1.pending).toBe(0);
-  expect(queueMetadata1.acknowledged).toBe(0);
-  expect(queueMetadata1.deadLetter).toBe(1);
+  expect(queueMetrics.pendingWithPriority).toBe(0);
+  expect(queueMetrics.pending).toBe(0);
+  expect(queueMetrics.acknowledged).toBe(0);
+  expect(queueMetrics.deadLettered).toBe(1);
 
-  await messageManager.requeueMessageWithPriorityFromDLQueueAsync(
+  await messageManager.requeueMessageFromDLQueueAsync(
     producer.getQueueName(),
+    0,
     msg.getId(),
+    true,
     undefined,
   );
 
@@ -103,37 +105,20 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   expect(res7.total).toBe(0);
   expect(res7.items.length).toBe(0);
 
-  const queueMetadata2 = await queueManager.getQueueMetadataAsync(
+  const queueMetrics1 = await queueManager.getQueueMetricsAsync(
     producer.getQueueName(),
   );
-  expect(queueMetadata2.deadLetter).toBe(0);
-  expect(queueMetadata2.pending).toBe(0);
-  expect(queueMetadata2.pendingWithPriority).toBe(1);
-
-  const msgMeta = await messageManager.getMessageMetadataListAsync(msg.getId());
-  expect(msgMeta.length).toBe(11);
-
-  expect(msgMeta[9].type).toBe(EMessageMetadata.DELETED_FROM_DL);
-  expect(msgMeta[9].state).toEqual(msg1);
-
-  expect(msgMeta[10].type).toBe(EMessageMetadata.ENQUEUED_WITH_PRIORITY);
-  expect(msgMeta[10].state).toEqual(msg2);
+  expect(queueMetrics1.deadLettered).toBe(0);
+  expect(queueMetrics1.pending).toBe(0);
+  expect(queueMetrics1.pendingWithPriority).toBe(1);
 
   await expect(async () => {
-    await messageManager.requeueMessageWithPriorityFromDLQueueAsync(
+    await messageManager.requeueMessageFromDLQueueAsync(
       producer.getQueueName(),
+      0,
       msg.getId(),
+      true,
       undefined,
     );
-  }).rejects.toThrow(
-    'Unexpected metadata type [enqueued_with_priority]. Expected ["dead_letter"]',
-  );
-
-  await expect(async () => {
-    await messageManager.requeueMessageWithPriorityFromDLQueueAsync(
-      producer.getQueueName(),
-      new Message().getId(),
-      undefined,
-    );
-  }).rejects.toThrow('Message does not exist');
+  }).rejects.toThrow('Message not found');
 });

@@ -1,8 +1,8 @@
 import { Consumer } from '../../consumer';
-import { IConsumerStats, IStatsProvider } from '../../../types';
+import { IConsumerStats, IRatesProvider } from '../../../types';
 import { events } from '../events';
 
-export class ConsumerStatsProvider implements IStatsProvider {
+export class ConsumerRatesProvider implements IRatesProvider {
   protected consumer: Consumer;
   protected keyConsumerRateProcessing: string;
   protected keyConsumerRateAcknowledged: string;
@@ -31,7 +31,7 @@ export class ConsumerStatsProvider implements IStatsProvider {
     this.keyConsumerRateUnacknowledged = keyRateConsumerUnacknowledged;
   }
 
-  getStats() {
+  getRates() {
     this.processingRate = this.processingSlots.reduce(
       (acc: number, cur: number) => acc + cur,
       0,

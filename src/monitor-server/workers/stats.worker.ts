@@ -12,13 +12,13 @@ import { LockManager } from '../../system/lock-manager';
 import { RedisClient } from '../../system/redis-client/redis-client';
 import { Heartbeat } from '../../system/heartbeat';
 import { Logger } from '../../system/logger';
-import { QueueManager } from '../../system/queue-manager';
+import { QueueManager } from '../../queue-manager';
 import { Ticker } from '../../system/ticker';
 import { events } from '../../system/events';
 
-export class StatsAggregatorThread {
+export class StatsWorker {
   protected keyIndexRates;
-  protected keyLockStatsAggregator;
+  protected keyLock;
   protected logger;
   protected lockManagerInstance: LockManager;
   protected redisClientInstance: RedisClient;
@@ -36,9 +36,9 @@ export class StatsAggregatorThread {
   };
 
   constructor(redisClient: RedisClient, config: IConfig) {
-    const { keyIndexRates, keyLockStatsAggregator } = redisKeys.getGlobalKeys();
+    const { keyIndexRates, keyLockWorkerStats } = redisKeys.getGlobalKeys();
     this.keyIndexRates = keyIndexRates;
-    this.keyLockStatsAggregator = keyLockStatsAggregator;
+    this.keyLock = keyLockWorkerStats;
     this.logger = Logger(`monitor-server:stats-aggregator-thread`, config.log);
     this.lockManagerInstance = new LockManager(redisClient);
     this.redisClientInstance = redisClient;
@@ -327,32 +327,27 @@ export class StatsAggregatorThread {
 
   protected run = (): void => {
     this.logger.debug(`Acquiring lock...`);
-    this.lockManagerInstance.acquireLock(
-      this.keyLockStatsAggregator,
-      10000,
-      true,
-      (err) => {
-        if (err) throw err;
-        this.logger.debug(`Lock acquired. Processing stats...`);
-        async.waterfall(
-          [
-            this.reset,
-            this.getRates,
-            this.getConsumersHeartbeats,
-            this.getQueues,
-            this.getQueueSize,
-            this.getDLQQueues,
-            this.getQueueSize,
-            this.sanitizeData,
-            this.publish,
-          ],
-          (err?: Error | null) => {
-            if (err) throw err;
-            this.ticker.nextTick();
-          },
-        );
-      },
-    );
+    this.lockManagerInstance.acquireLock(this.keyLock, 10000, true, (err) => {
+      if (err) throw err;
+      this.logger.debug(`Lock acquired. Processing stats...`);
+      async.waterfall(
+        [
+          this.reset,
+          this.getRates,
+          this.getConsumersHeartbeats,
+          this.getQueues,
+          this.getQueueSize,
+          this.getDLQQueues,
+          this.getQueueSize,
+          this.sanitizeData,
+          this.publish,
+        ],
+        (err?: Error | null) => {
+          if (err) throw err;
+          this.ticker.nextTick();
+        },
+      );
+    });
   };
 
   quit(cb: ICallback<void>): void {
@@ -367,6 +362,6 @@ process.on('message', (c: string) => {
     redisKeys.setNamespace(config.namespace);
   }
   RedisClient.getNewInstance(config, (redisClient) => {
-    new StatsAggregatorThread(redisClient, config);
+    new StatsWorker(redisClient, config);
   });
 });

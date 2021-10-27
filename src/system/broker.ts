@@ -5,34 +5,30 @@ import {
   IConfig,
 } from '../../types';
 import { Message } from '../message';
-import { events } from './events';
-import { Scheduler } from './scheduler';
 import BLogger from 'bunyan';
 import { Logger } from './logger';
 import { PowerManager } from './power-manager';
-import { QueueManager } from './queue-manager';
+import { QueueManager } from '../queue-manager';
 import { RedisClient } from './redis-client/redis-client';
 import { MessageManager } from '../message-manager';
 import { Consumer } from '../consumer';
+import { ScheduledMessagesHandler } from './message-manager/handlers/scheduled-messages.handler';
 
 export class Broker {
   protected config: IConfig;
   protected logger: BLogger;
   protected powerManager: PowerManager;
-  protected schedulerInstance: Scheduler;
   protected messageManager: MessageManager;
   protected queueManager: QueueManager;
 
   constructor(
     config: IConfig,
-    schedulerInstance: Scheduler,
     messageManager: MessageManager,
     queueManager: QueueManager,
   ) {
     this.config = config;
     this.logger = Logger(`broker`, config.log);
     this.powerManager = new PowerManager();
-    this.schedulerInstance = schedulerInstance;
     this.messageManager = messageManager;
     this.queueManager = queueManager;
   }
@@ -72,45 +68,32 @@ export class Broker {
   }
 
   acknowledgeMessage(
-    consumer: Consumer,
+    queueName: string,
+    processingQueue: string,
     msg: Message,
     cb: ICallback<void>,
   ): void {
-    const queueName = consumer.getQueueName();
-    const { keyQueueProcessing } = consumer.getRedisKeys();
-    this.messageManager.acknowledgeMessage(
-      msg,
-      queueName,
-      keyQueueProcessing,
-      cb,
-    );
+    this.messageManager.acknowledgeMessage(msg, queueName, processingQueue, cb);
   }
 
   unacknowledgeMessage(
     client: RedisClient,
-    consumer: Consumer,
+    queueName: string,
+    processingQueue: string,
     message: Message,
     unacknowledgedCause: EMessageUnacknowledgedCause,
-    error?: Error,
+    error: Error | undefined,
+    cb: ICallback<void>,
   ): void {
     if (error) this.logger.error(error);
     this.logger.debug(`Unacknowledging message [${message.getId()}]...`);
-    const { keyQueueProcessing } = consumer.getRedisKeys();
     this.retry(
       client,
+      queueName,
+      processingQueue,
       message,
-      keyQueueProcessing,
-      consumer,
       unacknowledgedCause,
-      (err) => {
-        if (err) consumer.emit(events.ERROR, err);
-        else
-          consumer.emit(
-            events.MESSAGE_UNACKNOWLEDGED,
-            message,
-            unacknowledgedCause,
-          );
-      },
+      cb,
     );
   }
 
@@ -121,20 +104,19 @@ export class Broker {
    */
   retry(
     client: RedisClient,
-    message: Message,
+    queueName: string,
     processingQueue: string,
-    consumer: Consumer,
+    message: Message,
     unacknowledgedCause: EMessageUnacknowledgedCause,
-    cb: ICallback<void | string>,
+    cb: ICallback<void>,
   ): void {
-    const queueName = consumer.getQueueName();
     const withPriority = this.config.priorityQueue === true;
     if (withPriority) message.getSetPriority(undefined);
     if (
       unacknowledgedCause === EMessageUnacknowledgedCause.TTL_EXPIRED ||
       message.hasExpired()
     ) {
-      consumer.emit(events.MESSAGE_EXPIRED, message);
+      //consumer.emit(events.MESSAGE_EXPIRED, message);
       this.logger.debug(
         `Message ID [${message.getId()}] has expired. Moving it to DLQ...`,
       );
@@ -147,12 +129,12 @@ export class Broker {
         (err) => {
           if (err) cb(err);
           else {
-            consumer.emit(events.MESSAGE_DEAD_LETTER, message);
+            //consumer.emit(events.MESSAGE_DEAD_LETTER, message);
             cb();
           }
         },
       );
-    } else if (this.schedulerInstance.isPeriodic(message)) {
+    } else if (ScheduledMessagesHandler.isPeriodic(message)) {
       this.logger.debug(
         `Message ID [${message.getId()}] is periodic. Moving it to DLQ...`,
       );
@@ -165,7 +147,7 @@ export class Broker {
         (err) => {
           if (err) cb(err);
           else {
-            consumer.emit(events.MESSAGE_DEAD_LETTER, message);
+            //consumer.emit(events.MESSAGE_DEAD_LETTER, message);
             cb();
           }
         },
@@ -180,19 +162,15 @@ export class Broker {
         this.logger.debug(
           `Delaying message ID [${message.getId()}] before re-queuing...`,
         );
-        message.setScheduledDelay(delay);
-        const delayTimestamp =
-          this.schedulerInstance.getNextScheduledTimestamp(message);
         this.messageManager.delayUnacknowledgedMessageBeforeRequeuing(
           message,
           queueName,
-          delayTimestamp,
           processingQueue,
           unacknowledgedCause,
           (err) => {
             if (err) cb(err);
             else {
-              consumer.emit(events.MESSAGE_RETRY_AFTER_DELAY, message);
+              //consumer.emit(events.MESSAGE_RETRY_AFTER_DELAY, message);
               cb();
             }
           },
@@ -210,7 +188,7 @@ export class Broker {
           (err) => {
             if (err) cb(err);
             else {
-              consumer.emit(events.MESSAGE_RETRY, message);
+              //consumer.emit(events.MESSAGE_RETRY, message);
               cb();
             }
           },
@@ -229,7 +207,7 @@ export class Broker {
         (err) => {
           if (err) cb(err);
           else {
-            consumer.emit(events.MESSAGE_DEAD_LETTER, message);
+            //consumer.emit(events.MESSAGE_DEAD_LETTER, message);
             cb();
           }
         },
