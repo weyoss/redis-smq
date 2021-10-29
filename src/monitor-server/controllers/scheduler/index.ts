@@ -9,11 +9,11 @@ import { GetScheduledMessagesRequestDTO } from './actions/get-scheduled-messages
 import { GetScheduledMessagesResponseDTO } from './actions/get-scheduled-messages/get-scheduled-messages-response.DTO';
 import { GetScheduledMessagesHandler } from './actions/get-scheduled-messages/get-scheduled-messages.handler';
 
-export const schedulerController = {
-  prefix: '/scheduler',
+export const messagesController = {
+  prefix: '/messages',
   actions: [
     {
-      path: '/messages',
+      path: '/',
       method: ERouteControllerActionMethod.GET,
       payload: ERouteControllerActionPayload.QUERY,
       Handler: GetScheduledMessagesHandler,
@@ -21,7 +21,7 @@ export const schedulerController = {
       ResponseDTO: GetScheduledMessagesResponseDTO,
     },
     {
-      path: '/messages',
+      path: '/',
       method: ERouteControllerActionMethod.DELETE,
       payload: ERouteControllerActionPayload.QUERY,
       Handler: DeleteScheduledMessageHandler,

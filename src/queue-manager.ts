@@ -69,40 +69,30 @@ export class QueueManager {
 
   ///
 
-  /*
   purgeDeadLetterQueue(queueName: string, cb: ICallback<void>): void {
     const { keyQueueDL } = redisKeys.getKeys(queueName);
-    const multi = this.redisClient.multi();
-    metadata.preQueueDeadLetterPurge(queueName, multi);
-    multi.del(keyQueueDL);
-    this.redisClient.execMulti(multi, (err) => cb(err));
+    this.redisClient.del(keyQueueDL, (err) => cb(err));
   }
 
   purgeAcknowledgedMessagesQueue(queueName: string, cb: ICallback<void>): void {
     const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName);
-    const multi = this.redisClient.multi();
-    metadata.prePurgeAcknowledgedMessagesQueue(queueName, multi);
-    multi.del(keyQueueAcknowledgedMessages);
-    this.redisClient.execMulti(multi, (err) => cb(err));
+    this.redisClient.del(keyQueueAcknowledgedMessages, (err) => cb(err));
   }
 
   purgeQueue(queueName: string, cb: ICallback<void>): void {
     const { keyQueue } = redisKeys.getKeys(queueName);
-    const multi = this.redisClient.multi();
-    metadata.preQueuePurge(queueName, multi);
-    multi.del(keyQueue);
-    this.redisClient.execMulti(multi, (err) => cb(err));
+    this.redisClient.del(keyQueue, (err) => cb(err));
   }
 
   purgePriorityQueue(queueName: string, cb: ICallback<void>): void {
     const { keyQueuePriority } = redisKeys.getKeys(queueName);
-    const multi = this.redisClient.multi();
-    metadata.prePriorityQueuePurge(queueName, multi);
-    multi.del(keyQueuePriority);
-    this.redisClient.execMulti(multi, (err) => cb(err));
+    this.redisClient.del(keyQueuePriority, (err) => cb(err));
   }
-   */
 
+  purgeScheduledMessagesQueue(cb: ICallback<void>): void {
+    const { keyQueueScheduled } = redisKeys.getGlobalKeys();
+    this.redisClient.del(keyQueueScheduled, (err) => cb(err));
+  }
   ///
 
   getProcessingQueues(cb: ICallback<string[]>): void {

@@ -2,6 +2,7 @@ import { ICallback } from '../../../../types';
 import { RedisClient } from '../../redis-client/redis-client';
 import { redisKeys } from '../../redis-keys';
 import { getListMessageAtIndex } from '../common';
+import { Message } from '../../../message';
 
 export class RequeueMessageHandler {
   protected requeueListMessage(
@@ -21,10 +22,13 @@ export class RequeueMessageHandler {
       else {
         const multi = redisClient.multi();
         multi.lrem(from, 1, JSON.stringify(msg));
-        const msgPriority = withPriority ? msg.getSetPriority(priority) : null;
+        const message = Message.createFromMessage(msg, true, true);
+        const msgPriority = withPriority
+          ? message.getSetPriority(priority)
+          : null;
         if (typeof msgPriority === 'number')
-          multi.zadd(keyQueuePriority, msgPriority, JSON.stringify(msg));
-        else multi.lpush(keyQueue, JSON.stringify(msg));
+          multi.zadd(keyQueuePriority, msgPriority, JSON.stringify(message));
+        else multi.lpush(keyQueue, JSON.stringify(message));
         redisClient.execMulti(multi, (err) => cb(err));
       }
     });

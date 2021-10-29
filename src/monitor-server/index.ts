@@ -12,7 +12,7 @@ import { Services } from './services';
 import { startThreads, stopThreads } from './utils/thread-runner';
 import { resolve } from 'path';
 import { getApplicationRouter } from './lib/routing';
-import { schedulerController } from './controllers/scheduler';
+import { messagesController } from './controllers/scheduler';
 import { IContext, TApplication } from './types/common';
 import * as stoppable from 'stoppable';
 import { PowerManager } from '../system/power-manager';
@@ -44,7 +44,7 @@ function bootstrap(config: IConfig, cb: (result: TApiServer) => void) {
     app.context.logger = logger;
     app.context.redis = client;
     app.context.services = Services(app);
-    const router = getApplicationRouter(app, [schedulerController]);
+    const router = getApplicationRouter(app, [messagesController]);
     app.use(router.routes());
     app.use(router.allowedMethods());
     const httpServer = stoppable(createServer(app.callback()));

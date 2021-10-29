@@ -23,13 +23,20 @@ export class DelayWorker extends EventEmitter {
 
   onTick = (): void => {
     const { keyLockWorkerDelay } = this.redisKeys;
-    this.lockManager.acquireLock(keyLockWorkerDelay, 10000, true, (err) => {
-      if (err) throw err;
-      this.messageManager.scheduleDelayedMessages((err) => {
+    this.lockManager.acquireLock(
+      keyLockWorkerDelay,
+      10000,
+      false,
+      (err, locked) => {
         if (err) throw err;
-        this.ticker.nextTick();
-      });
-    });
+        if (locked)
+          this.messageManager.scheduleDelayedMessages((err) => {
+            if (err) throw err;
+            this.ticker.nextTick();
+          });
+        else this.ticker.nextTick();
+      },
+    );
   };
 }
 

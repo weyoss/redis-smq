@@ -58,9 +58,6 @@ export class Message {
 
   protected expired = false;
 
-  ///
-
-  // needed for delay and requeue workers
   protected queueName: string | null = null;
 
   ///
@@ -289,8 +286,7 @@ export class Message {
   hasRetryThresholdExceeded(): boolean {
     const threshold = this.getRetryThreshold();
     if (threshold) {
-      const attempts = this.getAttempts() + 1;
-      return attempts > threshold;
+      return this.getAttempts() + 1 >= threshold;
     }
     return false;
   }

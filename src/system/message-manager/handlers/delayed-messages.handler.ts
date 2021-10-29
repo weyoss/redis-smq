@@ -17,6 +17,7 @@ export class DelayedMessagesHandler {
           const tasks = messages.map((i) => (cb: () => void) => {
             multi.lrem(keyQueueDelay, 1, i);
             const message = Message.createFromMessage(i);
+            message.incrAttempts();
             const delay = message.getRetryDelay();
             message.setScheduledDelay(delay);
             const timestamp =
@@ -28,7 +29,7 @@ export class DelayedMessagesHandler {
             if (err) cb(err);
             else redisClient.execMulti(multi, (err) => cb(err));
           });
-        }
+        } else cb();
       }
     });
   }

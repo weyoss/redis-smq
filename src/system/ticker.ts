@@ -58,7 +58,7 @@ export class Ticker extends EventEmitter {
   }
 
   nextTickFn(fn: TFunction): void {
-    this.nextTickFn = fn;
+    this.onNextTickFn = fn;
     this.nextTick();
   }
 

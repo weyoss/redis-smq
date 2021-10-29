@@ -47,7 +47,7 @@ export abstract class Consumer extends Instance {
         timer = setTimeout(() => {
           isTimeout = true;
           timer = null;
-          this.emit(events.MESSAGE_CONSUME_TIMEOUT, msg);
+          this.unacknowledgeMessage(msg, EMessageUnacknowledgedCause.TIMEOUT);
         }, consumeTimeout);
       }
       const onConsumed = (err?: Error | null) => {
@@ -145,9 +145,6 @@ export abstract class Consumer extends Instance {
     this.on(events.MESSAGE_UNACKNOWLEDGED, () => {
       if (this.ratesProvider) this.ratesProvider.incrementUnacknowledgedSlot();
       this.emit(events.MESSAGE_NEXT);
-    });
-    this.on(events.MESSAGE_CONSUME_TIMEOUT, (message: Message) => {
-      this.unacknowledgeMessage(message, EMessageUnacknowledgedCause.TIMEOUT);
     });
     process.once('exit', () => {
       if (this.gcWorkerThread) this.gcWorkerThread.kill();

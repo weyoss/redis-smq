@@ -126,13 +126,7 @@ export class Broker {
         processingQueue,
         unacknowledgedCause,
         EMessageDeadLetterCause.TTL_EXPIRED,
-        (err) => {
-          if (err) cb(err);
-          else {
-            //consumer.emit(events.MESSAGE_DEAD_LETTER, message);
-            cb();
-          }
-        },
+        (err) => cb(err),
       );
     } else if (ScheduledMessagesHandler.isPeriodic(message)) {
       this.logger.debug(
@@ -144,19 +138,12 @@ export class Broker {
         processingQueue,
         unacknowledgedCause,
         EMessageDeadLetterCause.PERIODIC_MESSAGE,
-        (err) => {
-          if (err) cb(err);
-          else {
-            //consumer.emit(events.MESSAGE_DEAD_LETTER, message);
-            cb();
-          }
-        },
+        (err) => cb(err),
       );
     } else if (!message.hasRetryThresholdExceeded()) {
       this.logger.debug(
         `Message ID [${message.getId()}] is valid (threshold not exceeded) for re-queuing...`,
       );
-      message.incrAttempts();
       const delay = message.getRetryDelay();
       if (delay) {
         this.logger.debug(
@@ -167,13 +154,7 @@ export class Broker {
           queueName,
           processingQueue,
           unacknowledgedCause,
-          (err) => {
-            if (err) cb(err);
-            else {
-              //consumer.emit(events.MESSAGE_RETRY_AFTER_DELAY, message);
-              cb();
-            }
-          },
+          (err) => cb(err),
         );
       } else {
         this.logger.debug(
@@ -185,13 +166,7 @@ export class Broker {
           processingQueue,
           withPriority,
           unacknowledgedCause,
-          (err) => {
-            if (err) cb(err);
-            else {
-              //consumer.emit(events.MESSAGE_RETRY, message);
-              cb();
-            }
-          },
+          (err) => cb(err),
         );
       }
     } else {
@@ -204,13 +179,7 @@ export class Broker {
         processingQueue,
         unacknowledgedCause,
         EMessageDeadLetterCause.RETRY_THRESHOLD_EXCEEDED,
-        (err) => {
-          if (err) cb(err);
-          else {
-            //consumer.emit(events.MESSAGE_DEAD_LETTER, message);
-            cb();
-          }
-        },
+        (err) => cb(err),
       );
     }
   }
