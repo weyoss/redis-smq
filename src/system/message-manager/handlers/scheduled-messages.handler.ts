@@ -92,7 +92,7 @@ export class ScheduledMessagesHandler {
               ScheduledMessagesHandler.getNextScheduledTimestamp(message);
             if (nextScheduleTimestamp) {
               multi.zadd(
-                keyQueuePriority,
+                keyQueueScheduled,
                 nextScheduleTimestamp,
                 JSON.stringify(message),
               );

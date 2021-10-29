@@ -69,6 +69,9 @@ export class MessageDTO {
 
   @IsBoolean()
   expired!: boolean;
+
+  @IsString()
+  queueName!: string;
 }
 
 export class GetScheduledMessagesResponseBodyDataDTO {

@@ -10,7 +10,7 @@ export class LockManager {
 
   constructor(redisClient: RedisClient) {
     this.redisClient = redisClient;
-    this.redlock = new Redlock([redisClient]);
+    this.redlock = new Redlock([redisClient], { retryCount: 0 });
   }
 
   protected acquireLockRetryOnFail(

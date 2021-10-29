@@ -24,15 +24,16 @@ export class DequeueMessageHandler {
       (err, reply) => {
         if (err) cb(err);
         else if (typeof reply === 'string') cb(null, reply);
-        else
-          this.ticker.nextTickFn(() =>
+        else {
+          this.ticker.nextTickFn(() => {
             this.dequeueWithPriority(
               redisClient,
               keyQueuePriority,
               keyQueueProcessing,
               cb,
-            ),
-          );
+            );
+          });
+        }
       },
     );
   }

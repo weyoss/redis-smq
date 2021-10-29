@@ -49,7 +49,7 @@ export const getListMessageAtIndex = (
   messageId: string,
   cb: ICallback<Message>,
 ): void => {
-  redisClient.zrange(from, index, index, (err, reply) => {
+  redisClient.lrange(from, index, index, (err, reply) => {
     if (err) cb(err);
     else if (!reply || !reply.length) cb(new Error('Message not found'));
     else {

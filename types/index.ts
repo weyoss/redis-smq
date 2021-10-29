@@ -70,6 +70,7 @@ export type TCompatibleRedisClient = (NodeRedis | Redis) & {
   evalsha: TFunction;
   watch(args: string[], cb: ICallback<string>): void;
   set(key: string, value: string, cb: Callback<string>): void;
+  del(key: string, cb: Callback<number>): void;
   zrem(key: string, value: string, cb: Callback<number>): void;
 };
 

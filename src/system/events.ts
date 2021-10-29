@@ -6,17 +6,10 @@ export const events = {
   ERROR: 'error',
   IDLE: 'idle',
   SHUTDOWN_READY: 'shutdown_ready',
-  GC_LOCK_ACQUIRED: 'gc_lock_acquired',
 
   MESSAGE_PRODUCED: 'message_produced',
   MESSAGE_NEXT: 'message_next',
   MESSAGE_DEQUEUED: 'message_dequeued',
   MESSAGE_ACKNOWLEDGED: 'message_acknowledged',
   MESSAGE_UNACKNOWLEDGED: 'message_unacknowledged',
-  MESSAGE_CONSUME_TIMEOUT: 'message_consume_timeout',
-  MESSAGE_RECOVERING: 'message_recovering',
-  MESSAGE_EXPIRED: 'message_expired',
-  MESSAGE_RETRY: 'message_retry',
-  MESSAGE_RETRY_AFTER_DELAY: 'message_retry_after_delay',
-  MESSAGE_DEAD_LETTER: 'message_dead_letter',
 };

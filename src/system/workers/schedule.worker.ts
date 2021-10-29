@@ -25,14 +25,24 @@ export class ScheduleWorker {
   }
 
   onTick = (): void => {
-    const { keyLockWorkerRequeue } = redisKeys.getGlobalKeys();
-    this.lockManager.acquireLock(keyLockWorkerRequeue, 10000, true, (err) => {
-      if (err) throw err;
-      this.messageManager.enqueueScheduledMessages(this.withPriority, (err) => {
+    const { keyLockWorkerSchedule } = redisKeys.getGlobalKeys();
+    this.lockManager.acquireLock(
+      keyLockWorkerSchedule,
+      10000,
+      false,
+      (err, locked) => {
         if (err) throw err;
-        this.ticker.nextTick();
-      });
-    });
+        if (locked) {
+          this.messageManager.enqueueScheduledMessages(
+            this.withPriority,
+            (err) => {
+              if (err) throw err;
+              this.ticker.nextTick();
+            },
+          );
+        } else this.ticker.nextTick();
+      },
+    );
   };
 }
 

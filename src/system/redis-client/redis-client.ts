@@ -244,8 +244,7 @@ export class RedisClient extends EventEmitter {
       [2, source, destination],
       (err, res?: unknown) => {
         if (err) cb(err);
-        else if (typeof res !== 'string')
-          cb(new Error('Expected a non empty string reply'));
+        else if (typeof res !== 'string') cb();
         else cb(null, res);
       },
     );
@@ -308,6 +307,10 @@ export class RedisClient extends EventEmitter {
 
   set(key: string, value: string, cb: ICallback<void>): void {
     this.client.set(key, value, (err) => cb(err));
+  }
+
+  del(key: string, cb: ICallback<number>): void {
+    this.client.del(key, cb);
   }
 
   llen(key: string, cb: ICallback<number>): void {

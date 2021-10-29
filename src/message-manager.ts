@@ -232,6 +232,21 @@ export class MessageManager {
     );
   }
 
+  deletePendingMessageWithPriority(
+    queueName: string,
+    index: number,
+    messageId: string,
+    cb: ICallback<void>,
+  ): void {
+    this.enqueueMessageHandler.deletePendingMessageWithPriority(
+      this.redisClient,
+      queueName,
+      index,
+      messageId,
+      cb,
+    );
+  }
+
   ///
 
   requeueMessageFromDLQueue(
