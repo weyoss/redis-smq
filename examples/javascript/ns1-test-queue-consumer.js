@@ -1,9 +1,9 @@
 'use strict';
 
 const config = require('./config');
-const { Consumer } = require('../..'); // require('redis-smq);
+const { BaseConsumer } = require('../..'); // require('redis-smq);
 
-class Ns1TestQueueConsumer extends Consumer {
+class Ns1TestQueueConsumer extends BaseConsumer {
   /**
    *
    * @param message

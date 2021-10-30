@@ -2,7 +2,7 @@ import {
   getConsumer,
   getProducer,
   getRedisInstance,
-  startStatsAggregator,
+  startStatsWorker,
   untilConsumerIdle,
 } from '../common';
 import { TAggregatedStats } from '../../types';
@@ -14,7 +14,7 @@ test('Check that stats are aggregated and published: Case 2', async () => {
   const producer = getProducer();
   await untilConsumerIdle(consumer);
 
-  await startStatsAggregator();
+  await startStatsWorker();
 
   const subscribeClient = await getRedisInstance();
   subscribeClient.subscribe('stats');

@@ -1,27 +1,24 @@
 import * as async from 'async';
-import { LockManager } from '../lock-manager';
-import { Logger } from '../logger';
-import { Ticker } from '../ticker';
-import { events } from '../events';
-import { Message } from '../../message';
-import { Heartbeat } from '../heartbeat';
+import { Logger } from '../common/logger';
+import { Ticker } from '../common/ticker';
+import { events } from '../common/events';
+import { Message } from '../message';
+import { Heartbeat } from '../consumer/heartbeat';
 import { RedisClient } from '../redis-client/redis-client';
 import {
   EMessageUnacknowledgedCause,
   ICallback,
   IConfig,
 } from '../../../types';
-import { redisKeys } from '../redis-keys';
+import { redisKeys } from '../common/redis-keys';
 import BLogger from 'bunyan';
 import { Broker } from '../broker';
-import { MessageManager } from '../../message-manager';
-import { QueueManager } from '../../queue-manager';
+import { MessageManager } from '../message-manager/message-manager';
+import { QueueManager } from '../queue-manager/queue-manager';
 
 export class GCWorker {
   protected config: IConfig;
-  protected keyLock: string;
   protected logger: BLogger;
-  protected lockManagerInstance: LockManager;
   protected redisClient: RedisClient;
   protected ticker: Ticker;
   protected broker: Broker;
@@ -34,12 +31,9 @@ export class GCWorker {
     queueManager: QueueManager,
   ) {
     this.config = config;
-    const { keyLockWorkerGC } = redisKeys.getGlobalKeys();
-    this.keyLock = keyLockWorkerGC;
     this.logger = Logger(`gc`, this.config.log);
     this.redisClient = client;
     this.queueManager = queueManager;
-    this.lockManagerInstance = new LockManager(client);
     this.broker = broker;
     this.ticker = new Ticker(() => {
       this.onTick();
@@ -149,42 +143,28 @@ export class GCWorker {
   }
 
   protected onTick(): void {
-    this.lockManagerInstance.acquireLock(
-      this.keyLock,
-      10000,
-      false,
-      (error, acquired) => {
-        if (error) throw error;
-        if (acquired) {
-          this.logger.debug('Inspecting processing queues...');
-          this.queueManager.getProcessingQueues(
-            (e?: Error | null, result?: string[] | null) => {
-              if (e) throw e;
-              if (result && result.length) {
-                this.logger.debug(
-                  `Fetched [${result.length}] processing queues`,
-                );
-                this.handleProcessingQueues(result, (err) => {
-                  if (err) throw err;
-                  this.ticker.nextTick();
-                });
-              } else {
-                this.logger.debug(
-                  'No processing queues found. Waiting for next tick...',
-                );
-                this.ticker.nextTick();
-              }
-            },
+    this.logger.debug('Inspecting processing queues...');
+    this.queueManager.getProcessingQueues(
+      (e?: Error | null, result?: string[] | null) => {
+        if (e) throw e;
+        if (result && result.length) {
+          this.logger.debug(`Fetched [${result.length}] processing queues`);
+          this.handleProcessingQueues(result, (err) => {
+            if (err) throw err;
+            this.ticker.nextTick();
+          });
+        } else {
+          this.logger.debug(
+            'No processing queues found. Waiting for next tick...',
           );
-        } else this.ticker.nextTick();
+          this.ticker.nextTick();
+        }
       },
     );
   }
 
   quit(cb: ICallback<void>): void {
-    this.ticker.once(events.DOWN, () => {
-      this.lockManagerInstance.quit(cb);
-    });
+    this.ticker.once(events.DOWN, cb);
     this.ticker.quit();
   }
 }
@@ -194,10 +174,14 @@ process.on('message', (c: string) => {
   if (config.namespace) {
     redisKeys.setNamespace(config.namespace);
   }
-  RedisClient.getNewInstance(config, (redisClient) => {
-    const messageManager = new MessageManager(redisClient);
-    const queueManager = new QueueManager(redisClient);
-    const broker = new Broker(config, messageManager, queueManager);
-    new GCWorker(config, redisClient, broker, queueManager);
+  RedisClient.getNewInstance(config, (err, client) => {
+    if (err) throw err;
+    else if (!client) throw new Error(`Expected an instance of RedisClient`);
+    else {
+      const messageManager = new MessageManager(client);
+      const queueManager = new QueueManager(client);
+      const broker = new Broker(config, messageManager, queueManager);
+      new GCWorker(config, client, broker, queueManager);
+    }
   });
 });

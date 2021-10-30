@@ -3,7 +3,7 @@ import {
   TResponsePaginationBody,
   TRequestContext,
 } from '../../../../types/common';
-import { Message } from '../../../../../message';
+import { Message } from '../../../../../system/message';
 import { GetScheduledMessagesRequestDTO } from './get-scheduled-messages-request.DTO';
 
 type TGetScheduledMessagesContext = TRequestContext<

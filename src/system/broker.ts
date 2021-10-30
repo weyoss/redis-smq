@@ -4,14 +4,14 @@ import {
   ICallback,
   IConfig,
 } from '../../types';
-import { Message } from '../message';
+import { Message } from './message';
 import BLogger from 'bunyan';
-import { Logger } from './logger';
-import { PowerManager } from './power-manager';
-import { QueueManager } from '../queue-manager';
+import { Logger } from './common/logger';
+import { PowerManager } from './common/power-manager';
+import { QueueManager } from './queue-manager/queue-manager';
 import { RedisClient } from './redis-client/redis-client';
-import { MessageManager } from '../message-manager';
-import { Consumer } from '../consumer';
+import { MessageManager } from './message-manager/message-manager';
+import { Consumer } from './consumer/consumer';
 import { ScheduledMessagesHandler } from './message-manager/handlers/scheduled-messages.handler';
 
 export class Broker {

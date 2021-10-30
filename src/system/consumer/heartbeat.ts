@@ -1,13 +1,11 @@
 import * as os from 'os';
 import * as async from 'async';
-import { ICallback, IConfig } from '../../types';
-import { Ticker } from './ticker';
-import { ChildProcess, fork } from 'child_process';
-import { resolve } from 'path';
-import { events } from './events';
-import { RedisClient } from './redis-client/redis-client';
-import { redisKeys } from './redis-keys';
-import { Consumer } from '../consumer';
+import { ICallback, IConfig } from '../../../types';
+import { Ticker } from '../common/ticker';
+import { events } from '../common/events';
+import { RedisClient } from '../redis-client/redis-client';
+import { redisKeys } from '../common/redis-keys';
+import { Consumer } from './consumer';
 import { EventEmitter } from 'events';
 
 type TGetHeartbeatReply = Record<
@@ -101,7 +99,6 @@ export class Heartbeat extends EventEmitter {
   protected config: IConfig;
   protected redisKeys: ReturnType<typeof redisKeys['getInstanceKeys']>;
   protected redisClient: RedisClient;
-  protected monitorThread: ChildProcess | null = null;
   protected ticker: Ticker;
 
   constructor(consumer: Consumer, redisClient: RedisClient) {
@@ -112,38 +109,10 @@ export class Heartbeat extends EventEmitter {
     this.config = consumer.getConfig();
     this.redisKeys = consumer.getRedisKeys();
     this.redisClient = redisClient;
-    this.startMonitor();
     this.ticker = new Ticker(() => {
       this.onTick();
     }, 1000);
     this.ticker.nextTick();
-  }
-
-  protected startMonitor(): void {
-    this.monitorThread = fork(resolve(`${__dirname}/heartbeat-monitor.js`));
-    this.monitorThread.on('error', (err) => {
-      this.consumer.emit(events.ERROR, err);
-    });
-    this.monitorThread.on('exit', (code, signal) => {
-      this.consumer.emit(
-        events.ERROR,
-        new Error(
-          `statsAggregatorThread exited with code ${code} and signal ${signal}`,
-        ),
-      );
-    });
-    process.on('exit', () => {
-      if (this.monitorThread) this.monitorThread.kill();
-    });
-    this.monitorThread.send(JSON.stringify(this.config));
-  }
-
-  protected stopMonitor(cb: ICallback<void>): void {
-    if (this.monitorThread) {
-      this.monitorThread.once('exit', cb);
-      this.monitorThread.kill('SIGHUP');
-      this.monitorThread = null;
-    }
   }
 
   protected onTick(): void {
@@ -177,17 +146,13 @@ export class Heartbeat extends EventEmitter {
 
   protected expireHeartbeat(client: RedisClient, cb: ICallback<void>): void {
     const { keyHeartbeat } = this.redisKeys;
-    Heartbeat.handleExpiredHeartbeat(client, [keyHeartbeat], (err) => cb(err));
+    Heartbeat.handleExpiredHeartbeats(client, [keyHeartbeat], (err) => cb(err));
   }
 
   quit(cb: ICallback<void>): void {
-    this.ticker.once(events.DOWN, () => {
-      this.stopMonitor(() =>
-        this.expireHeartbeat(this.redisClient, () => {
-          cb();
-        }),
-      );
-    });
+    this.ticker.once(events.DOWN, () =>
+      this.expireHeartbeat(this.redisClient, cb),
+    );
     this.ticker.quit();
   }
 
@@ -251,7 +216,7 @@ export class Heartbeat extends EventEmitter {
     });
   }
 
-  static handleExpiredHeartbeat(
+  static handleExpiredHeartbeats(
     client: RedisClient,
     heartbeats: string[],
     cb: ICallback<number>,

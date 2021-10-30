@@ -1,8 +1,8 @@
-import { Message } from '../../../message';
+import { Message } from '../../message';
 import { ScheduledMessagesHandler } from './scheduled-messages.handler';
 import * as async from 'async';
 import { RedisClient } from '../../redis-client/redis-client';
-import { redisKeys } from '../../redis-keys';
+import { redisKeys } from '../../common/redis-keys';
 import { ICallback } from '../../../../types';
 
 export class DelayedMessagesHandler {

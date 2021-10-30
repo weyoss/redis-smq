@@ -1,7 +1,7 @@
-import { Heartbeat } from '../../src/system/heartbeat';
+import { Heartbeat } from '../../src/system/consumer/heartbeat';
 import { getConsumer, getRedisInstance, untilConsumerIdle } from '../common';
 import { promisifyAll } from 'bluebird';
-import { redisKeys } from '../../src/system/redis-keys';
+import { redisKeys } from '../../src/system/common/redis-keys';
 
 describe('Consumer heartbeat: check online/offline consumers', () => {
   test('Case 1', async () => {

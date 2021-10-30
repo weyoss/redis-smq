@@ -1,5 +1,5 @@
-import { events } from '../../src/system/events';
-import { Ticker } from '../../src/system/ticker';
+import { events } from '../../src/system/common/events';
+import { Ticker } from '../../src/system/common/ticker';
 import { delay } from 'bluebird';
 
 describe('Ticker', () => {

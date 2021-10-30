@@ -1,7 +1,7 @@
 import { delay } from 'bluebird';
 import { getConsumer, getProducer, untilConsumerIdle } from '../common';
 import { Message } from '../../src/message';
-import { events } from '../../src/system/events';
+import { events } from '../../src/system/common/events';
 import { ICallback } from '../../types';
 
 test('A consumer does re-queue and consume again a failed message when threshold not exceeded', async () => {

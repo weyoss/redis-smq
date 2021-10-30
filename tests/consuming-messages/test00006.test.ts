@@ -1,6 +1,6 @@
 import { getConsumer, getProducer, untilConsumerIdle } from '../common';
 import { Message } from '../../src/message';
-import { events } from '../../src/system/events';
+import { events } from '../../src/system/common/events';
 import { ICallback } from '../../types';
 import { config } from '../config';
 

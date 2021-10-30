@@ -4,26 +4,29 @@ import * as Koa from 'koa';
 import { Server as SocketIO } from 'socket.io';
 import * as KoaBodyParser from 'koa-bodyparser';
 import { Middleware } from 'redis-smq-monitor';
-import { IConfig, ICallback } from '../../types';
+import { IConfig, IMonitorServer } from '../../types';
 import { RedisClient } from '../system/redis-client/redis-client';
-import { Logger } from '../system/logger';
+import { Logger } from '../system/common/logger';
 import { errorHandler } from './middlewares/error-handler';
 import { Services } from './services';
-import { startThreads, stopThreads } from './utils/thread-runner';
 import { resolve } from 'path';
 import { getApplicationRouter } from './lib/routing';
 import { messagesController } from './controllers/scheduler';
 import { IContext, TApplication } from './types/common';
 import * as stoppable from 'stoppable';
-import { PowerManager } from '../system/power-manager';
+import { PowerManager } from '../system/common/power-manager';
+import { promisifyAll } from 'bluebird';
+import { WorkerRunner } from '../system/common/worker-runner';
 
-type TApiServer = {
+const RedisClientAsync = promisifyAll(RedisClient);
+
+type TAPIServer = {
   httpServer: ReturnType<typeof stoppable>;
   socketIO: SocketIO;
   app: TApplication;
 };
 
-function bootstrap(config: IConfig, cb: (result: TApiServer) => void) {
+async function bootstrap(config: IConfig): Promise<TAPIServer> {
   if (!config) {
     throw new Error('Configuration object is required.');
   }
@@ -33,100 +36,83 @@ function bootstrap(config: IConfig, cb: (result: TApiServer) => void) {
   if (!config.monitor || !config.monitor.enabled) {
     throw new Error('RedisSMQ monitor is not enabled. Exiting...');
   }
-  RedisClient.getNewInstance(config, (client) => {
-    const logger = Logger('monitor-server', config.log);
-    const { socketOpts = {} } = config.monitor || {};
-    const app = new Koa<Koa.DefaultState, IContext>();
-    app.use(errorHandler);
-    app.use(Middleware(['/api/', '/socket.io/']));
-    app.use(KoaBodyParser());
-    app.context.config = config;
-    app.context.logger = logger;
-    app.context.redis = client;
-    app.context.services = Services(app);
-    const router = getApplicationRouter(app, [messagesController]);
-    app.use(router.routes());
-    app.use(router.allowedMethods());
-    const httpServer = stoppable(createServer(app.callback()));
-    const socketIO = new SocketIO(httpServer, {
-      ...socketOpts,
-      cors: {
-        origin: '*',
-      },
-    });
-    cb({
-      httpServer,
-      socketIO,
-      app,
-    });
+  const client = await RedisClientAsync.getNewInstanceAsync(config);
+  const logger = Logger('monitor-server', config.log);
+  const { socketOpts = {} } = config.monitor || {};
+  const app = new Koa<Koa.DefaultState, IContext>();
+  app.use(errorHandler);
+  app.use(Middleware(['/api/', '/socket.io/']));
+  app.use(KoaBodyParser());
+  app.context.config = config;
+  app.context.logger = logger;
+  app.context.redis = client;
+  app.context.services = Services(app);
+  const router = getApplicationRouter(app, [messagesController]);
+  app.use(router.routes());
+  app.use(router.allowedMethods());
+  const httpServer = stoppable(createServer(app.callback()));
+  const socketIO = new SocketIO(httpServer, {
+    ...socketOpts,
+    cors: {
+      origin: '*',
+    },
   });
+  return {
+    httpServer,
+    socketIO,
+    app,
+  };
 }
 
-export function MonitorServer(config: IConfig = {}) {
+export function MonitorServer(config: IConfig = {}): IMonitorServer {
   const powerManager = new PowerManager();
   const { host = '0.0.0.0', port = 7210 } = config.monitor || {};
-  let subscribeClient: RedisClient | null = null;
-  let apiServer: TApiServer | null = null;
-  function getApiServer() {
+  const getApiServer = () => {
     if (!apiServer) {
       throw new Error(`Expected a non null value.`);
     }
     return apiServer;
-  }
-  function getSubscribeClient() {
+  };
+  const getSubscribeClient = () => {
     if (!subscribeClient) {
       throw new Error(`Expected a non null value.`);
     }
     return subscribeClient;
-  }
+  };
+  const workerRunner = promisifyAll(new WorkerRunner());
+  let subscribeClient: RedisClient | null = null;
+  let apiServer: TAPIServer | null = null;
   return {
-    // @todo use async/await in the next major release
-    // Keeping callback signature for compatibility with v3
-    listen(cb?: ICallback<void>) {
+    async listen() {
       powerManager.goingUp();
-      bootstrap(config, (result) => {
-        apiServer = result;
-        const { app, socketIO, httpServer } = result;
-        startThreads(config, resolve(__dirname, './workers'));
-        RedisClient.getNewInstance(config, (client) => {
-          subscribeClient = client;
-          subscribeClient.subscribe('stats');
-          subscribeClient.on('message', (channel, message) => {
-            if (typeof message === 'string') {
-              const json = JSON.parse(message) as Record<string, any>;
-              socketIO.emit('stats', json);
-            }
-          });
-          httpServer.listen(port, host, () => {
-            powerManager.commit();
-            app.context.logger.info(
-              `Monitor server is running on ${host}:${port}...`,
-            );
-            cb && cb();
-          });
-        });
+      apiServer = await bootstrap(config);
+      const { app, socketIO, httpServer } = apiServer;
+      await workerRunner.runAsync(config, resolve(__dirname, './workers'));
+      subscribeClient = await RedisClientAsync.getNewInstanceAsync(config);
+      subscribeClient.subscribe('stats');
+      subscribeClient.on('message', (channel, message) => {
+        if (typeof message === 'string') {
+          const json = JSON.parse(message) as Record<string, any>;
+          socketIO.emit('stats', json);
+        }
+      });
+      httpServer.listen(port, host, () => {
+        powerManager.commit();
+        app.context.logger.info(
+          `Monitor server is running on ${host}:${port}...`,
+        );
       });
     },
-    getHttpServer() {
-      if (!powerManager.isRunning()) {
-        throw new Error('API server is not running.');
-      }
-      const { httpServer } = getApiServer();
-      return httpServer;
-    },
-    quit(cb?: ICallback<void>) {
+    async quit() {
       powerManager.goingDown();
       const { app, httpServer } = getApiServer();
-      httpServer.stop(() => {
-        getSubscribeClient().end(true);
-        app.context.redis.end(true);
-        stopThreads(() => {
-          powerManager.commit();
-          apiServer = null;
-          subscribeClient = null;
-          cb && cb();
-        });
-      });
+      await new Promise((resolve) => httpServer.stop(resolve));
+      getSubscribeClient().end(true);
+      app.context.redis.end(true);
+      await workerRunner.shutdownAsync();
+      powerManager.commit();
+      apiServer = null;
+      subscribeClient = null;
     },
   };
 }

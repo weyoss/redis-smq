@@ -1,6 +1,6 @@
-import { Consumer } from '../../consumer';
+import { Consumer } from './consumer';
 import { IConsumerStats, IRatesProvider } from '../../../types';
-import { events } from '../events';
+import { events } from '../common/events';
 
 export class ConsumerRatesProvider implements IRatesProvider {
   protected consumer: Consumer;

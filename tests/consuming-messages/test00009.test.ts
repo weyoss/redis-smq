@@ -5,7 +5,7 @@ import {
   untilConsumerIdle,
 } from '../common';
 import { Message } from '../../src/message';
-import { events } from '../../src/system/events';
+import { events } from '../../src/system/common/events';
 import { promisifyAll } from 'bluebird';
 
 test('A consumer does re-queue a failed message when threshold is not exceeded, otherwise it moves the message to DLQ (dead letter queue)', async () => {

@@ -7,21 +7,20 @@ import {
   TAggregatedStatsQueueProducer,
 } from '../../../types';
 import * as async from 'async';
-import { redisKeys } from '../../system/redis-keys';
-import { LockManager } from '../../system/lock-manager';
+import { redisKeys } from '../../system/common/redis-keys';
+import { LockManager } from '../../system/common/lock-manager';
 import { RedisClient } from '../../system/redis-client/redis-client';
-import { Heartbeat } from '../../system/heartbeat';
-import { Logger } from '../../system/logger';
-import { QueueManager } from '../../queue-manager';
-import { Ticker } from '../../system/ticker';
-import { events } from '../../system/events';
+import { Heartbeat } from '../../system/consumer/heartbeat';
+import { Logger } from '../../system/common/logger';
+import { QueueManager } from '../../system/queue-manager/queue-manager';
+import { Ticker } from '../../system/common/ticker';
+import { events } from '../../system/common/events';
 
 export class StatsWorker {
   protected keyIndexRates;
-  protected keyLock;
   protected logger;
-  protected lockManagerInstance: LockManager;
-  protected redisClientInstance: RedisClient;
+  protected lockManager: LockManager;
+  protected redisClient: RedisClient;
   protected queueManager: QueueManager;
   protected ticker: Ticker;
   protected noop = (): void => void 0;
@@ -38,10 +37,14 @@ export class StatsWorker {
   constructor(redisClient: RedisClient, config: IConfig) {
     const { keyIndexRates, keyLockWorkerStats } = redisKeys.getGlobalKeys();
     this.keyIndexRates = keyIndexRates;
-    this.keyLock = keyLockWorkerStats;
     this.logger = Logger(`monitor-server:stats-aggregator-thread`, config.log);
-    this.lockManagerInstance = new LockManager(redisClient);
-    this.redisClientInstance = redisClient;
+    this.lockManager = new LockManager(
+      redisClient,
+      keyLockWorkerStats,
+      10000,
+      true,
+    );
+    this.redisClient = redisClient;
     this.queueManager = new QueueManager(redisClient);
     this.ticker = new Ticker(this.run, 1000);
     this.ticker.nextTick();
@@ -172,7 +175,7 @@ export class StatsWorker {
   };
 
   protected getRates = (cb: ICallback<void>): void => {
-    this.redisClientInstance.hgetall(this.keyIndexRates, (err, result) => {
+    this.redisClient.hgetall(this.keyIndexRates, (err, result) => {
       if (err) throw err;
       else {
         if (result) {
@@ -195,7 +198,7 @@ export class StatsWorker {
             },
             () => {
               if (expiredKeys.length) {
-                this.redisClientInstance.hdel(
+                this.redisClient.hdel(
                   this.keyIndexRates,
                   expiredKeys,
                   this.noop,
@@ -211,7 +214,7 @@ export class StatsWorker {
 
   protected getQueueSize = (queues: string[], cb: ICallback<void>): void => {
     if (queues && queues.length) {
-      const multi = this.redisClientInstance.multi();
+      const multi = this.redisClient.multi();
       const handleResult = (res: number[]) => {
         const instanceTypes = redisKeys.getTypes();
         async.eachOf(
@@ -239,7 +242,7 @@ export class StatsWorker {
           done();
         },
         () => {
-          this.redisClientInstance.execMulti<number>(multi, (err, res) => {
+          this.redisClient.execMulti<number>(multi, (err, res) => {
             if (err) cb(err);
             else handleResult(res ?? []);
           });
@@ -257,7 +260,7 @@ export class StatsWorker {
   };
 
   protected getConsumersHeartbeats = (cb: ICallback<void>): void => {
-    Heartbeat.getHeartbeats(this.redisClientInstance, (err, reply) => {
+    Heartbeat.getHeartbeats(this.redisClient, (err, reply) => {
       if (err) cb(err);
       else {
         for (const consumerId in reply) {
@@ -309,7 +312,7 @@ export class StatsWorker {
   protected publish = (cb: ICallback<number>): void => {
     this.logger.debug(`Publishing stats...`);
     const statsString = JSON.stringify(this.data);
-    this.redisClientInstance.publish('stats', statsString, cb);
+    this.redisClient.publish('stats', statsString, cb);
   };
 
   protected reset = (cb: ICallback<void>): void => {
@@ -327,7 +330,7 @@ export class StatsWorker {
 
   protected run = (): void => {
     this.logger.debug(`Acquiring lock...`);
-    this.lockManagerInstance.acquireLock(this.keyLock, 10000, true, (err) => {
+    this.lockManager.acquireLock((err) => {
       if (err) throw err;
       this.logger.debug(`Lock acquired. Processing stats...`);
       async.waterfall(
@@ -361,7 +364,9 @@ process.on('message', (c: string) => {
   if (config.namespace) {
     redisKeys.setNamespace(config.namespace);
   }
-  RedisClient.getNewInstance(config, (redisClient) => {
-    new StatsWorker(redisClient, config);
+  RedisClient.getNewInstance(config, (err, client) => {
+    if (err) throw err;
+    else if (!client) throw new Error(`Expected an instance of RedisClient`);
+    else new StatsWorker(client, config);
   });
 });

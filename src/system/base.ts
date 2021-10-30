@@ -9,25 +9,25 @@ import {
   TFunction,
 } from '../../types';
 import * as async from 'async';
-import { PowerManager } from './power-manager';
-import { Logger } from './logger';
+import { PowerManager } from './common/power-manager';
+import { Logger } from './common/logger';
 import * as BunyanLogger from 'bunyan';
 import { Rates } from './rates';
-import { events } from './events';
+import { events } from './common/events';
 import { Broker } from './broker';
-import { redisKeys } from './redis-keys';
+import { redisKeys } from './common/redis-keys';
 import { RedisClient } from './redis-client/redis-client';
-import { QueueManager } from '../queue-manager';
-import { MessageManager } from '../message-manager';
-import { Message } from '../message';
+import { QueueManager } from './queue-manager/queue-manager';
+import { MessageManager } from './message-manager/message-manager';
+import { Message } from './message';
 import { loadScripts } from './redis-client/lua-scripts';
 
-export abstract class Instance extends EventEmitter {
+export abstract class Base extends EventEmitter {
   private broker: Broker | null = null;
   private rates: Rates | null = null;
   private messageManager: MessageManager | null = null;
   private queueManager: QueueManager | null = null;
-  private commonRedisClient: RedisClient | null = null;
+  private sharedRedisClient: RedisClient | null = null;
   private ratesRedisClient: RedisClient | null = null;
 
   protected readonly id: string;
@@ -59,22 +59,30 @@ export abstract class Instance extends EventEmitter {
   }
 
   private setupSharedRedisClient = (cb: ICallback<RedisClient>): void => {
-    RedisClient.getNewInstance(this.config, (client) => {
-      this.commonRedisClient = client;
-      loadScripts(client, (err) => {
-        if (err) cb(err);
-        else cb(null, client);
-      });
+    RedisClient.getNewInstance(this.config, (err, client) => {
+      if (err) cb(err);
+      else if (!client) cb(new Error(`Expected an instance of RedisClient`));
+      else {
+        this.sharedRedisClient = client;
+        loadScripts(client, (err) => {
+          if (err) cb(err);
+          else cb(null, client);
+        });
+      }
     });
   };
 
   private setupStats = (cb: ICallback<void>): void => {
     const { monitor } = this.config;
     if (monitor && monitor.enabled) {
-      RedisClient.getNewInstance(this.config, (client) => {
-        this.rates = new Rates(this, client);
-        this.ratesRedisClient = client;
-        cb();
+      RedisClient.getNewInstance(this.config, (err, client) => {
+        if (err) cb(err);
+        else if (!client) cb(new Error(`Expected an instance of RedisClient`));
+        else {
+          this.rates = new Rates(this, client);
+          this.ratesRedisClient = client;
+          cb();
+        }
       });
     } else cb();
   };
@@ -153,9 +161,9 @@ export abstract class Instance extends EventEmitter {
         });
       } else cb();
     };
-    const stopCommonRedisClient = (cb: ICallback<void>) => {
-      this.commonRedisClient?.halt(() => {
-        this.commonRedisClient = null;
+    const stopSharedRedisClient = (cb: ICallback<void>) => {
+      this.sharedRedisClient?.halt(() => {
+        this.sharedRedisClient = null;
         cb();
       });
     };
@@ -164,7 +172,7 @@ export abstract class Instance extends EventEmitter {
       this.broker = null;
       cb();
     };
-    return [stopMessageManager, stopStats, stopCommonRedisClient, cleanUp];
+    return [stopMessageManager, stopStats, stopSharedRedisClient, cleanUp];
   }
 
   getMessageManager(cb: TUnaryFunction<MessageManager>): void {
@@ -214,10 +222,10 @@ export abstract class Instance extends EventEmitter {
     else cb(this.broker);
   }
 
-  getCommonRedisClient(cb: TUnaryFunction<RedisClient>): void {
-    if (!this.commonRedisClient)
+  getSharedRedisClient(cb: TUnaryFunction<RedisClient>): void {
+    if (!this.sharedRedisClient)
       this.emit(events.ERROR, new Error('Expected an instance of RedisClient'));
-    else cb(this.commonRedisClient);
+    else cb(this.sharedRedisClient);
   }
 
   getId(): string {

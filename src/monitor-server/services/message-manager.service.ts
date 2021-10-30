@@ -1,7 +1,7 @@
 import { TGetScheduledMessagesReply } from '../../../types';
 import { GetScheduledMessagesRequestDTO as GetSchedulerMessagesDTO } from '../controllers/scheduler/actions/get-scheduled-messages/get-scheduled-messages-request.DTO';
 import { DeleteScheduledMessageRequestDTO as DeletedScheduledMessageDTO } from '../controllers/scheduler/actions/delete-scheduled-message/delete-scheduled-message-request.DTO';
-import { MessageManager } from '../../message-manager';
+import { MessageManager } from '../../system/message-manager/message-manager';
 
 export class MessageManagerService {
   protected messageManager: MessageManager;

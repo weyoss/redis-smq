@@ -1,11 +1,11 @@
 import { RedisClient } from '../../redis-client/redis-client';
-import { Message } from '../../../message';
+import { Message } from '../../message';
 import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgedCause,
   ICallback,
 } from '../../../../types';
-import { redisKeys } from '../../redis-keys';
+import { redisKeys } from '../../common/redis-keys';
 import { deleteListMessageAtIndex } from '../common';
 
 export class ProcessingQueueMessageHandler {

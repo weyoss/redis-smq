@@ -1,9 +1,9 @@
 'use strict';
 
 const config = require('./config');
-const { Consumer } = require('../..'); // require('redis-smq);
+const { BaseConsumer } = require('../..'); // require('redis-smq);
 
-class MyConsumer extends Consumer {
+class MyConsumer extends BaseConsumer {
   consume(message, cb) {
     cb();
   }

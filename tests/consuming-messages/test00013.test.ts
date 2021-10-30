@@ -2,7 +2,7 @@ import { getConsumer, getProducer, untilConsumerIdle } from '../common';
 import { Message } from '../../src/message';
 import { delay } from 'bluebird';
 import { ICallback } from '../../types';
-import { events } from '../../src/system/events';
+import { events } from '../../src/system/common/events';
 
 type TQueueMetrics = {
   receivedMessages: Message[];

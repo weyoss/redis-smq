@@ -18,18 +18,15 @@ enum ERedisKey {
   KEY_INDEX_QUEUE_MESSAGE_PROCESSING_QUEUES, // Redis key for processing queues of a given queue
   KEY_INDEX_RATES, // Redis key for rates from all producersand consumers
   KEY_INDEX_HEARTBEATS, // Redis key for consumers heartbeats
-  KEY_LOCK_WORKER_SCHEDULE,
-  KEY_LOCK_WORKER_GC,
   KEY_LOCK_HEARTBEAT_MONITOR,
   KEY_LOCK_MESSAGE_MANAGER,
   KEY_LOCK_QUEUE_MANAGER,
-  KEY_LOCK_WORKER_REQUEUE,
-  KEY_LOCK_WORKER_DELAY,
-  KEY_LOCK_WORKER_STATS,
   KEY_RATE_PRODUCER_INPUT,
   KEY_RATE_CONSUMER_PROCESSING,
   KEY_RATE_CONSUMER_ACKNOWLEDGED,
   KEY_RATE_CONSUMER_UNACKNOWLEDGED,
+  KEY_LOCK_WORKER_STATS,
+  KEY_LOCK_WORKERS_RUNNER_CONSUMER,
   KEY_HEARTBEAT,
 }
 
@@ -114,20 +111,9 @@ export const redisKeys = {
     const { ns, type, segments } = this.getSegments(key);
     if (
       type === ERedisKey.KEY_QUEUE ||
-      type === ERedisKey.KEY_QUEUE_SCHEDULED ||
-      type === ERedisKey.KEY_QUEUE_DL ||
-      type === ERedisKey.KEY_LOCK_WORKER_SCHEDULE
-    ) {
-      const [queueName] = segments;
-      return {
-        ns,
-        type,
-        queueName,
-      };
-    }
-    if (
-      type === ERedisKey.KEY_LOCK_WORKER_GC ||
-      type === ERedisKey.KEY_INDEX_QUEUE_MESSAGE_PROCESSING_QUEUES
+      type === ERedisKey.KEY_QUEUE_PRIORITY ||
+      type === ERedisKey.KEY_QUEUE_ACKNOWLEDGED_MESSAGES ||
+      type === ERedisKey.KEY_QUEUE_DL
     ) {
       const [queueName] = segments;
       return {
@@ -182,10 +168,7 @@ export const redisKeys = {
       keyLockHeartBeatMonitor: ERedisKey.KEY_LOCK_HEARTBEAT_MONITOR,
       keyLockMessageManager: ERedisKey.KEY_LOCK_MESSAGE_MANAGER,
       keyLockQueueManager: ERedisKey.KEY_LOCK_QUEUE_MANAGER,
-      keyLockWorkerGC: ERedisKey.KEY_LOCK_WORKER_GC,
-      keyLockWorkerSchedule: ERedisKey.KEY_LOCK_WORKER_SCHEDULE,
-      keyLockWorkerRequeue: ERedisKey.KEY_LOCK_WORKER_REQUEUE,
-      keyLockWorkerDelay: ERedisKey.KEY_LOCK_WORKER_DELAY,
+      keyLockWorkersRunnerConsumer: ERedisKey.KEY_LOCK_WORKERS_RUNNER_CONSUMER,
       keyLockWorkerStats: ERedisKey.KEY_LOCK_WORKER_STATS,
       keyQueueDelay: ERedisKey.KEY_QUEUE_DELAY,
       keyQueueRequeue: ERedisKey.KEY_QUEUE_REQUEUE,
