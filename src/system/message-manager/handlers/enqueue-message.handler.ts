@@ -1,6 +1,6 @@
-import { Message } from '../../../message';
+import { Message } from '../../message';
 import { ICallback, TGetAcknowledgedMessagesReply } from '../../../../types';
-import { redisKeys } from '../../redis-keys';
+import { redisKeys } from '../../common/redis-keys';
 import { RedisClient } from '../../redis-client/redis-client';
 import {
   deleteListMessageAtIndex,

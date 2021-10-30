@@ -6,7 +6,7 @@ import {
   validateTime,
 } from '../common';
 import { Message } from '../../src/message';
-import { events } from '../../src/system/events';
+import { events } from '../../src/system/common/events';
 
 test('Produce and consume a delayed message: Case 1', async () => {
   let producedAt = 0;

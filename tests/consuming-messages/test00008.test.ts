@@ -1,6 +1,6 @@
 import { getConsumer, getProducer, untilConsumerIdle } from '../common';
 import { Message } from '../../src/message';
-import { events } from '../../src/system/events';
+import { events } from '../../src/system/common/events';
 
 test('Async exceptions are caught when consuming a message', async () => {
   const producer = getProducer();

@@ -5,7 +5,7 @@ import {
   validateTime,
 } from '../common';
 import { Message } from '../../src/message';
-import { events } from '../../src/system/events';
+import { events } from '../../src/system/common/events';
 
 test('Schedule a message with a combination of CRON expression, repeat, period, and delay parameters. Check that it is enqueued periodically on time.', async () => {
   const timestamps: number[] = [];

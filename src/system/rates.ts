@@ -1,17 +1,17 @@
 import { ICallback, IRatesProvider } from '../../types';
-import { Instance } from './instance';
-import { events } from './events';
-import { Ticker } from './ticker';
+import { Base } from './base';
+import { events } from './common/events';
+import { Ticker } from './common/ticker';
 import { RedisClient } from './redis-client/redis-client';
 import { EventEmitter } from 'events';
 
 export class Rates extends EventEmitter {
-  protected instance: Instance;
+  protected instance: Base;
   protected ratesProvider: IRatesProvider;
   protected redisClient: RedisClient;
   protected ticker: Ticker;
 
-  constructor(instance: Instance, redisClient: RedisClient) {
+  constructor(instance: Base, redisClient: RedisClient) {
     super();
     this.instance = instance;
     this.redisClient = redisClient;

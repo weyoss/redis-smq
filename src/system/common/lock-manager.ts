@@ -1,50 +1,49 @@
-import { ICallback } from '../../types';
-import { RedisClient } from './redis-client/redis-client';
+import { ICallback } from '../../../types';
+import { RedisClient } from '../redis-client/redis-client';
 import * as Redlock from 'redlock';
 
 export class LockManager {
-  protected redisClient: RedisClient | null = null;
-  protected redlock: Redlock | null = null;
+  protected redlock: Redlock;
+  protected lockKey: string;
   protected acquiredLock: Redlock.Lock | null = null;
   protected timer: NodeJS.Timeout | null = null;
+  protected retryOnFail: boolean;
+  protected ttl: number;
 
-  constructor(redisClient: RedisClient) {
-    this.redisClient = redisClient;
+  constructor(
+    redisClient: RedisClient,
+    lockKey: string,
+    ttl: number,
+    retryOnFail = false,
+  ) {
+    this.lockKey = lockKey;
+    this.ttl = ttl;
+    this.retryOnFail = retryOnFail;
     this.redlock = new Redlock([redisClient], { retryCount: 0 });
   }
 
-  protected acquireLockRetryOnFail(
-    err: Error,
-    retryOnFail: boolean,
-    lockKey: string,
-    ttl: number,
-    cb: ICallback<boolean>,
-  ) {
+  protected acquireLockRetryOnFail(err: Error, cb: ICallback<boolean>): void {
     if (err.name === 'LockError') {
-      if (retryOnFail) {
+      if (this.retryOnFail) {
         this.acquiredLock = null;
         this.timer = setTimeout(() => {
-          this.acquireLock(lockKey, ttl, true, cb);
+          this.acquireLock(cb);
         }, 1000);
       } else cb(null, false);
     } else cb(err);
   }
 
-  acquireLock(
-    lockKey: string,
-    ttl: number,
-    retryOnFail: boolean,
-    cb: ICallback<boolean>,
-  ): void {
+  acquireLock(cb: ICallback<boolean>): void {
     const handleRedlockReply = (err?: Error | null, lock?: Redlock.Lock) => {
-      if (err) this.acquireLockRetryOnFail(err, retryOnFail, lockKey, ttl, cb);
+      if (err) this.acquireLockRetryOnFail(err, cb);
       else if (!lock) cb(new Error('Expected an instance of Redlock.Lock'));
       else {
         this.acquiredLock = lock;
         cb(null, true);
       }
     };
-    if (this.acquiredLock) this.acquiredLock.extend(ttl, handleRedlockReply);
+    if (this.acquiredLock)
+      this.acquiredLock.extend(this.ttl, handleRedlockReply);
     else {
       if (!this.redlock)
         cb(
@@ -52,7 +51,7 @@ export class LockManager {
             'Instance is no longer usable after calling quit(). Create a new instance.',
           ),
         );
-      else this.redlock.lock(lockKey, ttl, handleRedlockReply);
+      else this.redlock.lock(this.lockKey, this.ttl, handleRedlockReply);
     }
   }
 
@@ -74,10 +73,7 @@ export class LockManager {
     if (!this.redlock) cb && cb();
     else {
       const callback = cb ?? (() => void 0);
-      this.releaseLock(() => {
-        this.redisClient = null;
-        callback();
-      });
+      this.releaseLock(callback);
     }
   }
 

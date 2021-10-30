@@ -1,6 +1,6 @@
 import { getConsumer, getProducer, untilConsumerEvent } from '../common';
 import { Message } from '../../src/message';
-import { events } from '../../src/system/events';
+import { events } from '../../src/system/common/events';
 
 test('A message is not lost in case of a consumer crash', async () => {
   const producer = getProducer();

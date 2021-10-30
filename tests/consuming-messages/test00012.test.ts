@@ -6,7 +6,7 @@ import {
   validateTime,
 } from '../common';
 import { Message } from '../../src/message';
-import { events } from '../../src/system/events';
+import { events } from '../../src/system/common/events';
 import { config } from '../config';
 
 test('A consumer delays a failed message before re-queuing it again, given messageRetryThreshold is not exceeded', async () => {

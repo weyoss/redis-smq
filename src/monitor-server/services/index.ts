@@ -1,6 +1,6 @@
 import { MessageManagerService } from './message-manager.service';
 import { TApplication } from '../types/common';
-import { MessageManager } from '../../message-manager';
+import { MessageManager } from '../../system/message-manager/message-manager';
 
 export function Services(app: TApplication) {
   const { redis } = app.context;

@@ -1,23 +1,19 @@
 import { IConfig } from '../../../types';
-import { Ticker } from '../ticker';
-import { MessageManager } from '../../message-manager';
-import { LockManager } from '../lock-manager';
-import { redisKeys } from '../redis-keys';
+import { Ticker } from '../common/ticker';
+import { MessageManager } from '../message-manager/message-manager';
+import { redisKeys } from '../common/redis-keys';
 import { RedisClient } from '../redis-client/redis-client';
 
 export class ScheduleWorker {
   protected messageManager: MessageManager;
   protected ticker: Ticker;
-  protected lockManager: LockManager;
   protected withPriority: boolean;
 
   constructor(
-    lockManager: LockManager,
     messageManager: MessageManager,
     withPriority: boolean,
     tickPeriod = 1000,
   ) {
-    this.lockManager = lockManager;
     this.messageManager = messageManager;
     this.withPriority = withPriority;
     this.ticker = new Ticker(this.onTick, tickPeriod);
@@ -25,24 +21,10 @@ export class ScheduleWorker {
   }
 
   onTick = (): void => {
-    const { keyLockWorkerSchedule } = redisKeys.getGlobalKeys();
-    this.lockManager.acquireLock(
-      keyLockWorkerSchedule,
-      10000,
-      false,
-      (err, locked) => {
-        if (err) throw err;
-        if (locked) {
-          this.messageManager.enqueueScheduledMessages(
-            this.withPriority,
-            (err) => {
-              if (err) throw err;
-              this.ticker.nextTick();
-            },
-          );
-        } else this.ticker.nextTick();
-      },
-    );
+    this.messageManager.enqueueScheduledMessages(this.withPriority, (err) => {
+      if (err) throw err;
+      this.ticker.nextTick();
+    });
   };
 }
 
@@ -51,13 +33,12 @@ process.on('message', (c: string) => {
   if (config.namespace) {
     redisKeys.setNamespace(config.namespace);
   }
-  RedisClient.getNewInstance(config, (redisClient) => {
-    const lockManager = new LockManager(redisClient);
-    const messageManager = new MessageManager(redisClient);
-    new ScheduleWorker(
-      lockManager,
-      messageManager,
-      config.priorityQueue === true,
-    );
+  RedisClient.getNewInstance(config, (err, client) => {
+    if (err) throw err;
+    else if (!client) throw new Error(`Expected an instance of RedisClient`);
+    else {
+      const messageManager = new MessageManager(client);
+      new ScheduleWorker(messageManager, config.priorityQueue === true);
+    }
   });
 });

@@ -1,5 +1,5 @@
-import { Message } from '../../../message';
-import { redisKeys } from '../../redis-keys';
+import { Message } from '../../message';
+import { redisKeys } from '../../common/redis-keys';
 import * as async from 'async';
 import { RedisClient } from '../../redis-client/redis-client';
 import { ICallback, TGetScheduledMessagesReply } from '../../../../types';

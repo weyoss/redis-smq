@@ -1,4 +1,4 @@
-import { IConfig } from '../../types';
+import { IConfig } from '../../../types';
 import BLogger, { createLogger } from 'bunyan';
 
 export function Logger(name: string, config: IConfig['log']): BLogger {

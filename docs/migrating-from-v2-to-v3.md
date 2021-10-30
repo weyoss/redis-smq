@@ -45,6 +45,7 @@ module.exports = {
 ```
 
 - Consumer queue name. Static property `TestQueueConsumer.queueName` is no more supported. Now Queue name is the first argument of a consumer constructor:
+
 ```javascript
 // Before
 class TestQueueConsumer extends Consumer {
@@ -52,6 +53,7 @@ class TestQueueConsumer extends Consumer {
     // ...
   }
 }
+
 TestQueueConsumer.queueName = 'my_queue';
 const myTestQueueConsumer = new TestQueueConsumer();
 
@@ -61,10 +63,12 @@ class TestQueueConsumer extends Consumer {
     // ...
   }
 }
+
 const myTestQueueConsumer = new TestQueueConsumer('my_queue');
 ```
 
 - Consumer.consume(msg, cb). The `msg` payload is now an instance of Message instead of the message body:
+
 ```javascript
 // Before
 class TestQueueConsumer extends Consumer {

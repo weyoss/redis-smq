@@ -336,9 +336,9 @@ export class RedisClient extends EventEmitter {
 
   static getNewInstance(
     config: IConfig = {},
-    cb: (client: RedisClient) => void,
+    cb: ICallback<RedisClient>,
   ): void {
     const client = new RedisClient(config);
-    client.once('ready', () => cb(client));
+    client.once('ready', () => cb(null, client));
   }
 }

@@ -1,42 +1,28 @@
-import { Ticker } from '../ticker';
+import { Ticker } from '../common/ticker';
 import { RedisClient } from '../redis-client/redis-client';
-import { redisKeys } from '../redis-keys';
+import { redisKeys } from '../common/redis-keys';
 import { EventEmitter } from 'events';
-import { LockManager } from '../lock-manager';
 import { IConfig } from '../../../types';
-import { MessageManager } from '../../message-manager';
+import { MessageManager } from '../message-manager/message-manager';
 
 export class DelayWorker extends EventEmitter {
   protected ticker: Ticker;
   protected messageManager: MessageManager;
-  protected lockManager: LockManager;
   protected redisKeys: ReturnType<typeof redisKeys['getGlobalKeys']>;
 
-  constructor(messageManager: MessageManager, lockManager: LockManager) {
+  constructor(messageManager: MessageManager) {
     super();
     this.ticker = new Ticker(this.onTick, 1000);
     this.messageManager = messageManager;
     this.redisKeys = redisKeys.getGlobalKeys();
-    this.lockManager = lockManager;
     this.ticker.nextTick();
   }
 
   onTick = (): void => {
-    const { keyLockWorkerDelay } = this.redisKeys;
-    this.lockManager.acquireLock(
-      keyLockWorkerDelay,
-      10000,
-      false,
-      (err, locked) => {
-        if (err) throw err;
-        if (locked)
-          this.messageManager.scheduleDelayedMessages((err) => {
-            if (err) throw err;
-            this.ticker.nextTick();
-          });
-        else this.ticker.nextTick();
-      },
-    );
+    this.messageManager.scheduleDelayedMessages((err) => {
+      if (err) throw err;
+      this.ticker.nextTick();
+    });
   };
 }
 
@@ -45,9 +31,12 @@ process.on('message', (c: string) => {
   if (config.namespace) {
     redisKeys.setNamespace(config.namespace);
   }
-  RedisClient.getNewInstance(config, (redisClient) => {
-    const messageManager = new MessageManager(redisClient);
-    const lockManager = new LockManager(redisClient);
-    new DelayWorker(messageManager, lockManager);
+  RedisClient.getNewInstance(config, (err, client) => {
+    if (err) throw err;
+    else if (!client) throw new Error(`Expected an instance of RedisClient`);
+    else {
+      const messageManager = new MessageManager(client);
+      new DelayWorker(messageManager);
+    }
   });
 });

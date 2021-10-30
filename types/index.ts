@@ -3,8 +3,8 @@ import IORedis, { Redis, RedisOptions } from 'ioredis';
 import { Callback, ClientOpts, Multi, RedisClient as NodeRedis } from 'redis';
 import * as Logger from 'bunyan';
 import { RedisClient } from '../src/system/redis-client/redis-client';
-import { Message } from '../src/message';
-import { redisKeys } from '../src/system/redis-keys';
+import { Message } from '../src/system/message';
+import { redisKeys } from '../src/system/common/redis-keys';
 
 export interface ICallback<T> {
   (err?: Error | null, reply?: T | null): void;
@@ -105,6 +105,11 @@ export interface IConfig {
   monitor?: IMonitorConfig;
   priorityQueue?: boolean;
   message?: Partial<TMessageDefaultOptions>;
+}
+
+export interface IMonitorServer {
+  listen: () => Promise<void>;
+  quit: () => Promise<void>;
 }
 
 export type TMessageDefaultOptions = {

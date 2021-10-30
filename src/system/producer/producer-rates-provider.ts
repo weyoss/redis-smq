@@ -1,4 +1,4 @@
-import { Producer } from '../../producer';
+import { Producer } from './producer';
 import { IProducerStats, IRatesProvider } from '../../../types';
 
 export class ProducerRatesProvider implements IRatesProvider {

@@ -2,9 +2,9 @@
 
 const config = require('./benchmark/config');
 const { events } = require('../dist/src/system/events'); // require('redis-smq/dist/src/system/events');
-const { Consumer } = require('../'); // require('redis-smq);
+const { BaseConsumer } = require('../'); // require('redis-smq);
 
-class Ns1TestQueueConsumer extends Consumer {
+class Ns1TestQueueConsumer extends BaseConsumer {
   /**
    *
    * @param message

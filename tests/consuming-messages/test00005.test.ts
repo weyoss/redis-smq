@@ -6,7 +6,7 @@ import {
   untilConsumerIdle,
 } from '../common';
 import { Message } from '../../src/message';
-import { events } from '../../src/system/events';
+import { events } from '../../src/system/common/events';
 import { config } from '../config';
 
 test('Default message TTL: a message without TTL is not consumed and moved to DLQ when default messageTTL is exceeded', async () => {

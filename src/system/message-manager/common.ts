@@ -1,6 +1,6 @@
 import { RedisClient } from '../redis-client/redis-client';
 import { ICallback } from '../../../types';
-import { Message } from '../../message';
+import { Message } from '../message';
 import { TPaginatedRedisQuery } from '../../../types';
 import * as async from 'async';
 

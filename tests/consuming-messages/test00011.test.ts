@@ -1,7 +1,7 @@
 import { delay } from 'bluebird';
 import { getConsumer, getProducer, untilConsumerIdle } from '../common';
 import { Message } from '../../src/message';
-import { events } from '../../src/system/events';
+import { events } from '../../src/system/common/events';
 
 test('A message is delivered only once to one consumer', async () => {
   const consumer1 = getConsumer({
