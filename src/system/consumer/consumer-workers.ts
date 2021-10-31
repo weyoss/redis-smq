@@ -24,10 +24,10 @@ export class ConsumerWorkers extends EventEmitter {
     this.workersDir = workersDir;
     this.config = config;
     this.workerRunner = workerRunner;
-    const { keyLockWorkersRunnerConsumer } = redisKeys.getGlobalKeys();
+    const { keyLockConsumerWorkersRunner } = redisKeys.getGlobalKeys();
     this.lockerManager = new LockManager(
       redisClient,
-      keyLockWorkersRunnerConsumer,
+      keyLockConsumerWorkersRunner,
       10000,
       false,
     );

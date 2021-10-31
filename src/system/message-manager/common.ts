@@ -3,43 +3,60 @@ import { ICallback } from '../../../types';
 import { Message } from '../message';
 import { TPaginatedRedisQuery } from '../../../types';
 import * as async from 'async';
+import { LockManager } from '../common/lock-manager';
 
 export const deleteListMessageAtIndex = (
   redisClient: RedisClient,
+  lockKey: string,
   from: string,
   index: number,
   messageId: string,
   cb: ICallback<void>,
 ): void => {
-  redisClient.lrange(from, index, index, (err, reply) => {
-    if (err) cb(err);
-    else if (!reply || !reply.length) cb(new Error('Message not found'));
-    else {
-      const [msg] = reply;
-      const message = Message.createFromMessage(msg);
-      if (message.getId() !== messageId) cb(new Error('Message not found'));
-      else redisClient.lrem(from, 1, msg, (err) => cb(err));
-    }
-  });
+  LockManager.lockFN(
+    redisClient,
+    lockKey,
+    (cb) => {
+      redisClient.lrange(from, index, index, (err, reply) => {
+        if (err) cb(err);
+        else if (!reply || !reply.length) cb(new Error('Message not found'));
+        else {
+          const [msg] = reply;
+          const message = Message.createFromMessage(msg);
+          if (message.getId() !== messageId) cb(new Error('Message not found'));
+          else redisClient.lrem(from, 1, msg, (err) => cb(err));
+        }
+      });
+    },
+    cb,
+  );
 };
 
 export const deleteSortedSetMessageAtIndex = (
   redisClient: RedisClient,
+  lockKey: string,
   from: string,
   index: number,
   messageId: string,
   cb: ICallback<void>,
 ): void => {
-  redisClient.zrange(from, index, index, (err, reply) => {
-    if (err) cb(err);
-    else if (!reply || !reply.length) cb(new Error('Message not found'));
-    else {
-      const [msg] = reply;
-      const message = Message.createFromMessage(msg);
-      if (message.getId() !== messageId) cb(new Error('Message not found'));
-      else redisClient.zrem(from, msg, (err) => cb(err));
-    }
-  });
+  LockManager.lockFN(
+    redisClient,
+    lockKey,
+    (cb) => {
+      redisClient.zrange(from, index, index, (err, reply) => {
+        if (err) cb(err);
+        else if (!reply || !reply.length) cb(new Error('Message not found'));
+        else {
+          const [msg] = reply;
+          const message = Message.createFromMessage(msg);
+          if (message.getId() !== messageId) cb(new Error('Message not found'));
+          else redisClient.zrem(from, msg, (err) => cb(err));
+        }
+      });
+    },
+    cb,
+  );
 };
 
 export const getListMessageAtIndex = (
