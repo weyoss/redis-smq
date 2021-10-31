@@ -80,4 +80,26 @@ export class LockManager {
   isLocked(): boolean {
     return this.acquiredLock !== null;
   }
+
+  static lockFN(
+    redisClient: RedisClient,
+    key: string,
+    fn: (cb: ICallback<void>) => void,
+    cb: ICallback<void>,
+  ): void {
+    const lockManager = new LockManager(redisClient, key, 10000, false);
+    lockManager.acquireLock((err, locked) => {
+      if (err) cb(err);
+      else {
+        if (locked) {
+          fn((err) => {
+            lockManager.quit(() => {
+              if (err) cb(err);
+              else cb();
+            });
+          });
+        } else cb(new Error('Could not acquire a  lock. Try again later.'));
+      }
+    });
+  }
 }

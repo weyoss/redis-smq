@@ -73,8 +73,16 @@ export class EnqueueMessageHandler {
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const { keyQueue } = redisKeys.getKeys(queueName);
-    deleteListMessageAtIndex(redisClient, keyQueue, index, messageId, cb);
+    const { keyQueue, keyLockDeletePendingMessage } =
+      redisKeys.getKeys(queueName);
+    deleteListMessageAtIndex(
+      redisClient,
+      keyLockDeletePendingMessage,
+      keyQueue,
+      index,
+      messageId,
+      cb,
+    );
   }
 
   deletePendingMessageWithPriority(
@@ -84,9 +92,11 @@ export class EnqueueMessageHandler {
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const { keyQueuePriority } = redisKeys.getKeys(queueName);
+    const { keyQueuePriority, keyLockDeletePendingMessageWithPriority } =
+      redisKeys.getKeys(queueName);
     deleteSortedSetMessageAtIndex(
       redisClient,
+      keyLockDeletePendingMessageWithPriority,
       keyQueuePriority,
       index,
       messageId,

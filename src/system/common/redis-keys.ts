@@ -18,7 +18,6 @@ enum ERedisKey {
   KEY_INDEX_QUEUE_MESSAGE_PROCESSING_QUEUES, // Redis key for processing queues of a given queue
   KEY_INDEX_RATES, // Redis key for rates from all producersand consumers
   KEY_INDEX_HEARTBEATS, // Redis key for consumers heartbeats
-  KEY_LOCK_HEARTBEAT_MONITOR,
   KEY_LOCK_MESSAGE_MANAGER,
   KEY_LOCK_QUEUE_MANAGER,
   KEY_RATE_PRODUCER_INPUT,
@@ -26,7 +25,12 @@ enum ERedisKey {
   KEY_RATE_CONSUMER_ACKNOWLEDGED,
   KEY_RATE_CONSUMER_UNACKNOWLEDGED,
   KEY_LOCK_WORKER_STATS,
-  KEY_LOCK_WORKERS_RUNNER_CONSUMER,
+  KEY_LOCK_CONSUMER_WORKERS_RUNNER,
+  KEY_LOCK_DELETE_PENDING_MESSAGE,
+  KEY_LOCK_DELETE_PENDING_MESSAGE_WITH_PRIORITY,
+  KEY_LOCK_DELETE_ACKNOWLEDGED_MESSAGE,
+  KEY_LOCK_DELETE_DEAD_LETTER_MESSAGE,
+  KEY_LOCK_DELETE_SCHEDULED_MESSAGE,
   KEY_HEARTBEAT,
 }
 
@@ -165,14 +169,22 @@ export const redisKeys = {
       keyIndexRates: ERedisKey.KEY_INDEX_RATES,
       keyIndexProcessingQueues: ERedisKey.KEY_INDEX_PROCESSING_QUEUES,
       keyIndexHeartbeats: ERedisKey.KEY_INDEX_HEARTBEATS,
-      keyLockHeartBeatMonitor: ERedisKey.KEY_LOCK_HEARTBEAT_MONITOR,
       keyLockMessageManager: ERedisKey.KEY_LOCK_MESSAGE_MANAGER,
       keyLockQueueManager: ERedisKey.KEY_LOCK_QUEUE_MANAGER,
-      keyLockWorkersRunnerConsumer: ERedisKey.KEY_LOCK_WORKERS_RUNNER_CONSUMER,
+      keyLockConsumerWorkersRunner: ERedisKey.KEY_LOCK_CONSUMER_WORKERS_RUNNER,
       keyLockWorkerStats: ERedisKey.KEY_LOCK_WORKER_STATS,
       keyQueueDelay: ERedisKey.KEY_QUEUE_DELAY,
       keyQueueRequeue: ERedisKey.KEY_QUEUE_REQUEUE,
       keyQueueScheduled: ERedisKey.KEY_QUEUE_SCHEDULED,
+      keyLockDeleteAcknowledgedMessage:
+        ERedisKey.KEY_LOCK_DELETE_ACKNOWLEDGED_MESSAGE,
+      keyLockDeleteDeadLetterMessage:
+        ERedisKey.KEY_LOCK_DELETE_DEAD_LETTER_MESSAGE,
+      keyLockDeleteScheduledMessage:
+        ERedisKey.KEY_LOCK_DELETE_SCHEDULED_MESSAGE,
+      keyLockDeletePendingMessage: ERedisKey.KEY_LOCK_DELETE_PENDING_MESSAGE,
+      keyLockDeletePendingMessageWithPriority:
+        ERedisKey.KEY_LOCK_DELETE_PENDING_MESSAGE_WITH_PRIORITY,
     };
     return this.makeNamespacedKeys(keys, globalNamespace);
   },

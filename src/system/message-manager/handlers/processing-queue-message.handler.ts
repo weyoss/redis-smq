@@ -16,8 +16,16 @@ export class ProcessingQueueMessageHandler {
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const { keyQueueDL } = redisKeys.getKeys(queueName);
-    deleteListMessageAtIndex(redisClient, keyQueueDL, index, messageId, cb);
+    const { keyQueueDL, keyLockDeleteDeadLetterMessage } =
+      redisKeys.getKeys(queueName);
+    deleteListMessageAtIndex(
+      redisClient,
+      keyLockDeleteDeadLetterMessage,
+      keyQueueDL,
+      index,
+      messageId,
+      cb,
+    );
   }
 
   deleteAcknowledgedMessage(
@@ -27,9 +35,11 @@ export class ProcessingQueueMessageHandler {
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName);
+    const { keyQueueAcknowledgedMessages, keyLockDeleteAcknowledgedMessage } =
+      redisKeys.getKeys(queueName);
     deleteListMessageAtIndex(
       redisClient,
+      keyLockDeleteAcknowledgedMessage,
       keyQueueAcknowledgedMessages,
       index,
       messageId,

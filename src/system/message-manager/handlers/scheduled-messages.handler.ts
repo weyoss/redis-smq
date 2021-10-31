@@ -32,9 +32,11 @@ export class ScheduledMessagesHandler {
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const { keyQueueScheduled } = redisKeys.getGlobalKeys();
+    const { keyQueueScheduled, keyLockDeleteScheduledMessage } =
+      redisKeys.getGlobalKeys();
     deleteSortedSetMessageAtIndex(
       redisClient,
+      keyLockDeleteScheduledMessage,
       keyQueueScheduled,
       index,
       messageId,
