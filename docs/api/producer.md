@@ -1,10 +1,6 @@
 # Producer Class API
 
-## Public properties
-
-No public property exists.
-
-## Public methods
+## Public Methods
 
 ### Producer.prototype.constructor()
 
@@ -111,11 +107,8 @@ producer.produceMessage(message, (err) => {
 });
 ```
 
-### Producer.prototype.isRunning()
+### Other Methods
 
-Tell whether the producer is running or not. `true` if the producer is running, otherwise `false`.
-
-
-### Producer.prototype.getId()
-
-### Producer.prototype.getQueueName()
+- Producer.prototype.isRunning()
+- Producer.prototype.getId()
+- Producer.prototype.getQueueName()

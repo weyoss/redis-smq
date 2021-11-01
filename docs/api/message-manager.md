@@ -12,46 +12,44 @@ MessageManager.getSingletonInstance(config, (err, messageManager) => {
 })
 ```
 
-## Public properties
+## Public Static Methods
 
-No public property exists.
+### MessageManager.getSingletonInstance()
 
-## Public methods
+```javascript
+getSingletonInstance(config, cb)
+```
+
+**Parameters**
+- `config` *(number): Required.* configuration object.
+- `cb(err, messageManager)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+  - `messageManager` *(MessageManager).* MessageManager instance.
+
+## Public Methods
 
 ### MessageManager.prototype.getScheduledMessages()
 
 ```javascript
-
+getScheduledMessages(skip, take, cb);
 ```
+
+**Parameters**
+
+- `skip` *(number): Required.* Offset from where messages should be taken. Starts from 0.
+- `take` *(number): Required.* Max number of messages that should be taken. Starts from 1.
+- `cb(err, result)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).*
+  - `result.total` *(number).* Total messages that has been scheduled so far.
+  - `result.items` *(Array).* An array of scheduled messages.
+    - `result.items[*].sequenceId` *(number).* Message sequence ID.
+    - `result.items[*].message` *(Message).* The stored message at the sequence ID.
+
 
 ### MessageManager.prototype.getPendingMessagesWithPriority()
 
 ```javascript
-
-```
-
-### MessageManager.prototype.getDeadLetterMessages()
-
-```javascript
-
-```
-
-### MessageManager.prototype.getPendingMessages()
-
-```javascript
-
-```
-
-### MessageManager.prototype.getAcknowledgedMessages()
-
-```javascript
-
-```
-
-### MessageManager.prototype.getScheduledMessages()
-
-```javascript
-messageManager.getScheduledMessages(queueName, skip, take, cb);
+getPendingMessagesWithPriority(queueName, skip, take, cb);
 ```
 
 **Parameters**
@@ -59,88 +57,166 @@ messageManager.getScheduledMessages(queueName, skip, take, cb);
 - `queueName` *(string): Required.* Queue name.
 - `skip` *(number): Required.* Offset from where messages should be taken. Starts from 0.
 - `take` *(number): Required.* Max number of messages that should be taken. Starts from 1.
-- `cb(err, result)` *(Function): Required.* A callback function.
-    - `err` *(Error | null | undefined).*
-    - `result.total` *(number).* Total messages that has been scheduled so far.
-    - `result.items` *(Message[]).* An array of scheduled messages.
+- `cb(err, result)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).*
+  - `result.total` *(number).* Total messages that has been scheduled so far.
+  - `result.items` *(Array).* An array of scheduled messages.
+    - `result.items[*].sequenceId` *(number).* Message sequence ID.
+    - `result.items[*].message` *(Message).* The stored message at the sequence ID.
 
+### MessageManager.prototype.getDeadLetterMessages()
 
 ```javascript
-messageManager.getScheduledMessages(0, 25, (err, result) => {
-   if (err) console.log(err);
-   else {
-       console.log('Total scheduled items: ', result.total);
-       console.log('Items: ', result.items);
-   }
-});
+getDeadLetterMessages(queueName, skip, take, cb);
 ```
+
+**Parameters**
+
+- `queueName` *(string): Required.* Queue name.
+- `skip` *(number): Required.* Offset from where messages should be taken. Starts from 0.
+- `take` *(number): Required.* Max number of messages that should be taken. Starts from 1.
+- `cb(err, result)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).*
+  - `result.total` *(number).* Total messages that has been scheduled so far.
+  - `result.items` *(Array).* An array of scheduled messages.
+    - `result.items[*].sequenceId` *(number).* Message sequence ID.
+    - `result.items[*].message` *(Message).* The stored message at the sequence ID.
+
+### MessageManager.prototype.getPendingMessages()
+
+```javascript
+getPendingMessages(queueName, skip, take, cb);
+```
+
+**Parameters**
+
+- `queueName` *(string): Required.* Queue name.
+- `skip` *(number): Required.* Offset from where messages should be taken. Starts from 0.
+- `take` *(number): Required.* Max number of messages that should be taken. Starts from 1.
+- `cb(err, result)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).*
+  - `result.total` *(number).* Total messages that has been scheduled so far.
+  - `result.items` *(Array).* An array of scheduled messages.
+    - `result.items[*].sequenceId` *(number).* Message sequence ID.
+    - `result.items[*].message` *(Message).* The stored message at the sequence ID.
+
+### MessageManager.prototype.getAcknowledgedMessages()
+
+```javascript
+getAcknowledgedMessages(queueName, skip, take, cb);
+```
+
+**Parameters**
+
+- `queueName` *(string): Required.* Queue name.
+- `skip` *(number): Required.* Offset from where messages should be taken. Starts from 0.
+- `take` *(number): Required.* Max number of messages that should be taken. Starts from 1.
+- `cb(err, result)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).*
+  - `result.total` *(number).* Total messages that has been scheduled so far.
+  - `result.items` *(Array).* An array of scheduled messages.
+    - `result.items[*].sequenceId` *(number).* Message sequence ID.
+    - `result.items[*].message` *(Message).* The stored message at the sequence ID.
 
 ### MessageManager.prototype.deletePendingMessageWithPriority()
 
 ```javascript
-
-```
-
-### MessageManager.prototype.deleteDeadLetterMessage()
-
-```javascript
-
-```
-
-### MessageManager.prototype.deleteAcknowledgedMessage()
-
-```javascript
-
-```
-
-### MessageManager.prototype.deletePendingMessage()
-
-```javascript
-
-```
-
-### MessageManager.prototype.deleteScheduledMessage()
-
-```javascript
-messageManager.deleteScheduledMessage(queueName, messageId, cb);
+deletePendingMessageWithPriority(queueName, sequenceId, messageId, cb);
 ```
 
 **Parameters**
 - `queueName` *(string): Required.* Queue name.
-- `messageId` *(string): Required.* A Message ID which was previously scheduled.
-- `cb(err, result)` * (Function): Required. A callback function.
-    - `err` *(Error | null | undefined).*
-    - `result` *(boolean | undefined).* Indicates whether the message has been deleted.
+- `sequenceId` *(number): Required.* Message sequence ID.
+- `messageId` *(string): Required.* Message ID.
+- `cb(err)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+
+### MessageManager.prototype.deleteDeadLetterMessage()
 
 ```javascript
-messageManager.deleteScheduledMessage(queueName, messageId, (err, result) => {
-   if (err) console.log(err);
-   else if (result === true) console.log('Message has been successfully deleted');
-   else console.log('Message has not been deleted');
-});
+deleteDeadLetterMessage(queueName, sequenceId, messageId, cb);
 ```
+
+**Parameters**
+- `queueName` *(string): Required.* Queue name.
+- `sequenceId` *(number): Required.* Message sequence ID.
+- `messageId` *(string): Required.* Message ID.
+- `cb(err)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+
+### MessageManager.prototype.deleteAcknowledgedMessage()
+
+```javascript
+deleteAcknowledgedMessage(queueName, sequenceId, messageId, cb);
+```
+
+**Parameters**
+- `queueName` *(string): Required.* Queue name.
+- `sequenceId` *(number): Required.* Message sequence ID.
+- `messageId` *(string): Required.* Message ID.
+- `cb(err)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+
+### MessageManager.prototype.deletePendingMessage()
+
+```javascript
+deletePendingMessage(queueName, sequenceId, messageId, cb);
+```
+
+**Parameters**
+- `queueName` *(string): Required.* Queue name.
+- `sequenceId` *(number): Required.* Message sequence ID.
+- `messageId` *(string): Required.* Message ID.
+- `cb(err)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+
+### MessageManager.prototype.deleteScheduledMessage()
+
+```javascript
+deleteScheduledMessage(sequenceId, messageId, cb);
+```
+
+**Parameters**
+- `sequenceId` *(number): Required.* Message sequence ID.
+- `messageId` *(string): Required.* Message ID.
+- `cb(err)` *(Function): Required.* Callback function.
+    - `err` *(Error | null | undefined).* Error object.
+
 ### MessageManager.prototype.requeueMessageFromDLQueue()
 
 ```javascript
-
+requeueMessageFromDLQueue(queueName, sequenceId, messageId, withPriority, priority, cb);
 ```
+
+**Parameters**
+- `queueName` *(number): Required.* Queue name.
+- `sequenceId` *(number): Required.* Message sequence ID.
+- `messageId` *(string): Required.* Message ID.
+- `withPriority` *(boolean): Required.* Whether to enqueue the message with priority.
+- `priority` *(number|undefined): Required.* Message priority.
+- `cb(err)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
 
 ### MessageManager.prototype.requeueMessageFromAcknowledgedQueue()
 
 ```javascript
-
+requeueMessageFromAcknowledgedQueue(queueName, sequenceId, messageId, withPriority, priority, cb);
 ```
+
+**Parameters**
+- `queueName` *(number): Required.* Queue name.
+- `sequenceId` *(number): Required.* Message sequence ID.
+- `messageId` *(string): Required.* Message ID.
+- `withPriority` *(boolean): Required.* Whether to enqueue the message with priority.
+- `priority` *(number|undefined): Required.* Message priority.
+- `cb(err)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
 
 ### MessageManager.prototype.quit()
 
 ```javascript
-
+quit(cb);
 ```
 
-## Public static methods
-
-### MessageManager.getSingletonInstance()
-
-```javascript
-
-```
+**Parameters**
+- `cb` *(Function): Required.* Callback function.
