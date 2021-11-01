@@ -37,5 +37,5 @@ test('A consumer does re-queue a failed message when threshold is not exceeded, 
     100,
   );
   expect(list.total).toBe(1);
-  expect(list.items[0].getId()).toBe(msg.getId());
+  expect(list.items[0].message.getId()).toBe(msg.getId());
 });

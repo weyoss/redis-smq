@@ -3,7 +3,6 @@ import { Message } from '../message';
 import { ProducerRatesProvider } from './producer-rates-provider';
 import { Base } from '../base';
 import { events } from '../common/events';
-import { ScheduledMessagesHandler } from '../message-manager/handlers/scheduled-messages.handler';
 
 export class Producer extends Base {
   protected statsProvider: ProducerRatesProvider | null = null;
@@ -34,20 +33,18 @@ export class Producer extends Base {
       }
     };
     const proceed = () => {
-      this.getMessageManager((messageManager) => {
-        if (ScheduledMessagesHandler.isSchedulable(message)) {
-          messageManager.scheduleMessage(message, callback);
+      this.getBroker((broker) => {
+        if (message.isSchedulable()) {
+          broker.scheduleMessage(message, callback);
         } else {
-          this.getBroker((broker) => {
-            broker.enqueueMessage(
-              this.queueName,
-              message,
-              (err?: Error | null) => {
-                if (err) callback(err);
-                else callback(null, true);
-              },
-            );
-          });
+          broker.enqueueMessage(
+            this.queueName,
+            message,
+            (err?: Error | null) => {
+              if (err) callback(err);
+              else callback(null, true);
+            },
+          );
         }
       });
     };

@@ -1,12 +1,6 @@
-import {
-  ICallback,
-  IConfig,
-  TGetAcknowledgedMessagesReply,
-  TGetScheduledMessagesReply,
-} from '../../../types';
+import { ICallback, IConfig, TGetMessagesReply } from '../../../types';
 import { RedisClient } from '../redis-client/redis-client';
 import { MessageManager } from './message-manager';
-import { Message } from '../message';
 
 export class MessageManagerFrontend {
   private static instance: MessageManagerFrontend | null = null;
@@ -20,29 +14,23 @@ export class MessageManagerFrontend {
 
   ///
 
-  scheduleMessage(message: Message, cb: ICallback<boolean>): void {
-    this.messageManager.scheduleMessage(message, cb);
-  }
-
-  ///
-
   deleteScheduledMessage(
-    index: number,
+    sequenceId: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    this.messageManager.deleteScheduledMessage(index, messageId, cb);
+    this.messageManager.deleteScheduledMessage(sequenceId, messageId, cb);
   }
 
   deleteDeadLetterMessage(
     queueName: string,
-    index: number,
+    sequenceId: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
     this.messageManager.deleteDeadLetterMessage(
       queueName,
-      index,
+      sequenceId,
       messageId,
       cb,
     );
@@ -50,13 +38,13 @@ export class MessageManagerFrontend {
 
   deleteAcknowledgedMessage(
     queueName: string,
-    index: number,
+    sequenceId: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
     this.messageManager.deleteAcknowledgedMessage(
       queueName,
-      index,
+      sequenceId,
       messageId,
       cb,
     );
@@ -64,22 +52,27 @@ export class MessageManagerFrontend {
 
   deletePendingMessage(
     queueName: string,
-    index: number,
+    sequenceId: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    this.messageManager.deletePendingMessage(queueName, index, messageId, cb);
+    this.messageManager.deletePendingMessage(
+      queueName,
+      sequenceId,
+      messageId,
+      cb,
+    );
   }
 
   deletePendingMessageWithPriority(
     queueName: string,
-    index: number,
+    sequenceId: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
     this.messageManager.deletePendingMessageWithPriority(
       queueName,
-      index,
+      sequenceId,
       messageId,
       cb,
     );
@@ -89,7 +82,7 @@ export class MessageManagerFrontend {
 
   requeueMessageFromDLQueue(
     queueName: string,
-    index: number,
+    sequenceId: number,
     messageId: string,
     withPriority: boolean,
     priority: number | undefined,
@@ -97,7 +90,7 @@ export class MessageManagerFrontend {
   ): void {
     this.messageManager.requeueMessageFromDLQueue(
       queueName,
-      index,
+      sequenceId,
       messageId,
       withPriority,
       priority,
@@ -107,7 +100,7 @@ export class MessageManagerFrontend {
 
   requeueMessageFromAcknowledgedQueue(
     queueName: string,
-    index: number,
+    sequenceId: number,
     messageId: string,
     withPriority: boolean,
     priority: number | undefined,
@@ -115,7 +108,7 @@ export class MessageManagerFrontend {
   ): void {
     this.messageManager.requeueMessageFromAcknowledgedQueue(
       queueName,
-      index,
+      sequenceId,
       messageId,
       withPriority,
       priority,
@@ -129,7 +122,7 @@ export class MessageManagerFrontend {
     queueName: string,
     skip: number,
     take: number,
-    cb: ICallback<TGetAcknowledgedMessagesReply>,
+    cb: ICallback<TGetMessagesReply>,
   ): void {
     this.messageManager.getAcknowledgedMessages(queueName, skip, take, cb);
   }
@@ -138,16 +131,16 @@ export class MessageManagerFrontend {
     queueName: string,
     skip: number,
     take: number,
-    cb: ICallback<TGetAcknowledgedMessagesReply>,
+    cb: ICallback<TGetMessagesReply>,
   ): void {
-    this.messageManager.getDeadLetterMessages(queueName, skip, take, cb);
+    this.messageManager.getDeadLetteredMessages(queueName, skip, take, cb);
   }
 
   getPendingMessages(
     queueName: string,
     skip: number,
     take: number,
-    cb: ICallback<TGetAcknowledgedMessagesReply>,
+    cb: ICallback<TGetMessagesReply>,
   ): void {
     this.messageManager.getPendingMessages(queueName, skip, take, cb);
   }
@@ -156,7 +149,7 @@ export class MessageManagerFrontend {
     queueName: string,
     skip: number,
     take: number,
-    cb: ICallback<TGetAcknowledgedMessagesReply>,
+    cb: ICallback<TGetMessagesReply>,
   ): void {
     this.messageManager.getPendingMessagesWithPriority(
       queueName,
@@ -169,7 +162,7 @@ export class MessageManagerFrontend {
   getScheduledMessages(
     skip: number,
     take: number,
-    cb: ICallback<TGetScheduledMessagesReply>,
+    cb: ICallback<TGetMessagesReply>,
   ): void {
     this.messageManager.getScheduledMessages(skip, take, cb);
   }

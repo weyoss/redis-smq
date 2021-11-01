@@ -4,13 +4,13 @@ Starting with version 1.0.19, `Message Scheduler` enables you to schedule a one-
 
 To set up scheduling parameters for a specific message, the [Message API](docs/api/message.md) provides:
 
-- [setScheduledPeriod()](docs/api/message.md#messageprototypesetscheduledperiod)
-- [setScheduledDelay()](docs/api/message.md#messageprototypesetscheduleddelay)
-- [setScheduledCron()](docs/api/message.md#messageprototypesetscheduledcron)
-- [setScheduledRepeat()](docs/api/message.md#messageprototypesetscheduledrepeat)
+- [setScheduledPeriod()](message.md#messageprototypesetscheduledperiod)
+- [setScheduledDelay()](message.md#messageprototypesetscheduleddelay)
+- [setScheduledCron()](message.md#messageprototypesetscheduledcron)
+- [setScheduledRepeat()](message.md#messageprototypesetscheduledrepeat)
 
 Once ready, to schedule your message you can use, as usually you do for publishing any message, 
-[producer.produceMessage()](docs/api/producer.md#producerprototypeproducemessage): 
+[producer.produceMessage()](producer.md#producerprototypeproducemessage): 
 
 ```javascript
 'use strict';
@@ -37,4 +37,4 @@ For managing scheduled messages, the [Message Manager](message-manager.md) provi
 
 To purge clear all scheduled messages of a given queue, the [Queue Manager](queue-manager.md) provides:
 
-- [purgeScheduledMessagesQueue]()
+- [purgeScheduledMessagesQueue](queue-manager.md#queuemanagerprototypepurgescheduledmessagesqueue)

@@ -5,7 +5,7 @@ import { Message } from '../../src/message';
 interface IResponse extends supertest.Response {
   body: {
     data?: {
-      items: { uuid: string }[];
+      items: { sequenceId: number; message: { uuid: string } }[];
       total: number;
     };
     error?: {
@@ -28,24 +28,25 @@ test('Messages HTTP API: Case 1', async () => {
 
   //
   const response1: IResponse = await request.get(
-    '/api/messages?skip=0&take=100',
+    '/api/scheduled-messages?skip=0&take=100',
   );
   expect(response1.statusCode).toBe(200);
   expect(response1.body.data).toBeDefined();
   expect(response1.body.data?.total).toBe(1);
   expect(response1.body.data?.items.length).toBe(1);
-  expect(response1.body.data?.items[0].uuid).toBe(msg1.getId());
+  expect(response1.body.data?.items[0].sequenceId).toBe(0);
+  expect(response1.body.data?.items[0].message.uuid).toBe(msg1.getId());
 
   //
   const response2: IResponse = await request.delete(
-    `/api/messages?index=0&id=${msg1.getId()}`,
+    `/api/scheduled-messages/${msg1.getId()}?sequenceId=0`,
   );
   expect(response2.statusCode).toBe(204);
   expect(response2.body).toEqual({});
 
   //
   const response3: IResponse = await request.get(
-    '/api/messages?skip=0&take=100',
+    '/api/scheduled-messages?skip=0&take=100',
   );
   expect(response3.statusCode).toBe(200);
   expect(response3.body.data).toBeDefined();

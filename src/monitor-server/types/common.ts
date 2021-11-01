@@ -11,17 +11,9 @@ export interface IResponseBodyError {
   details?: Record<any, any>;
 }
 
-export interface IResponseBody<Data = Record<any, any>> {
+export interface IResponseBody<Data = Record<string, any>> {
   data?: Data;
   error?: IResponseBodyError;
-}
-
-export interface IRequestPaginationParams {
-  query: {
-    queueName: string;
-    skip?: string;
-    take?: string;
-  };
 }
 
 export type TResponsePaginationBody<PageItem> = IResponseBody<{
@@ -51,8 +43,8 @@ export type TRequestContext<
   IResponseBody<ResponseBody>
 >;
 
-export type TMiddleware<DTO = any> = Koa.Middleware<
+export type TMiddleware<DTO = Record<string, any>> = Koa.Middleware<
   IContextState<DTO>,
-  IContext,
+  IContext & { params: Record<string, string> },
   IResponseBody
 >;

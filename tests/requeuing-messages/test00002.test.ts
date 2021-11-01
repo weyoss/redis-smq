@@ -70,7 +70,7 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
     .setRetryThreshold(3)
     .setRetryDelay(0)
     .setConsumeTimeout(0);
-  expect(res5.items[0]).toEqual(msg2);
+  expect(res5.items[0].message).toEqual(msg2);
 
   const res6 = await messageManager.getAcknowledgedMessagesAsync(
     producer.getQueueName(),

@@ -1,10 +1,10 @@
 import { Message } from '../../message';
-import { ICallback, TGetAcknowledgedMessagesReply } from '../../../../types';
+import { ICallback, TGetMessagesReply } from '../../../../types';
 import { redisKeys } from '../../common/redis-keys';
 import { RedisClient } from '../../redis-client/redis-client';
 import {
-  deleteListMessageAtIndex,
-  deleteSortedSetMessageAtIndex,
+  deleteListMessageAtSequenceId,
+  deleteSortedSetMessageAtSequenceId,
   getPaginatedListMessages,
   getPaginatedSortedSetMessages,
 } from '../common';
@@ -15,7 +15,7 @@ export class EnqueueMessageHandler {
     queueName: string,
     skip: number,
     take: number,
-    cb: ICallback<TGetAcknowledgedMessagesReply>,
+    cb: ICallback<TGetMessagesReply>,
   ): void {
     const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName);
     getPaginatedListMessages(
@@ -27,12 +27,12 @@ export class EnqueueMessageHandler {
     );
   }
 
-  getDeadLetterMessages(
+  getDeadLetteredMessages(
     redisClient: RedisClient,
     queueName: string,
     skip: number,
     take: number,
-    cb: ICallback<TGetAcknowledgedMessagesReply>,
+    cb: ICallback<TGetMessagesReply>,
   ): void {
     const { keyQueueDL } = redisKeys.getKeys(queueName);
     getPaginatedListMessages(redisClient, keyQueueDL, skip, take, cb);
@@ -43,7 +43,7 @@ export class EnqueueMessageHandler {
     queueName: string,
     skip: number,
     take: number,
-    cb: ICallback<TGetAcknowledgedMessagesReply>,
+    cb: ICallback<TGetMessagesReply>,
   ): void {
     const { keyQueue } = redisKeys.getKeys(queueName);
     getPaginatedListMessages(redisClient, keyQueue, skip, take, cb);
@@ -54,7 +54,7 @@ export class EnqueueMessageHandler {
     queueName: string,
     skip: number,
     take: number,
-    cb: ICallback<TGetAcknowledgedMessagesReply>,
+    cb: ICallback<TGetMessagesReply>,
   ): void {
     const { keyQueuePriority } = redisKeys.getKeys(queueName);
     getPaginatedSortedSetMessages(
@@ -75,7 +75,7 @@ export class EnqueueMessageHandler {
   ): void {
     const { keyQueue, keyLockDeletePendingMessage } =
       redisKeys.getKeys(queueName);
-    deleteListMessageAtIndex(
+    deleteListMessageAtSequenceId(
       redisClient,
       keyLockDeletePendingMessage,
       keyQueue,
@@ -94,7 +94,7 @@ export class EnqueueMessageHandler {
   ): void {
     const { keyQueuePriority, keyLockDeletePendingMessageWithPriority } =
       redisKeys.getKeys(queueName);
-    deleteSortedSetMessageAtIndex(
+    deleteSortedSetMessageAtSequenceId(
       redisClient,
       keyLockDeletePendingMessageWithPriority,
       keyQueuePriority,

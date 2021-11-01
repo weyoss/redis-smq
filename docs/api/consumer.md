@@ -125,18 +125,6 @@ consumer.once('down', () => {
 
 Tell whether the consumer is running or not. `true` if the consumer is running otherwise `false`.
 
-## Other public methods
+### Consumer.prototype.getId()
 
-- Consumer.prototype.getId()
-- Consumer.prototype.getQueueName()
-- Consumer.prototype.getConfig()
-- Consumer.prototype.getOptions()
-- Consumer.prototype.getScheduler()
-
-These methods are used internally and should not be used in your application:
-
-- getInstanceRedisKeys()
-- getBroker()
-- isRunning()
-- getStatsProvider()
-- handleError()
+### Consumer.prototype.getQueueName()

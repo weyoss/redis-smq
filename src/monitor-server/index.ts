@@ -11,7 +11,9 @@ import { errorHandler } from './middlewares/error-handler';
 import { Services } from './services';
 import { resolve } from 'path';
 import { getApplicationRouter } from './lib/routing';
-import { messagesController } from './controllers/scheduler';
+import { messagesController } from './controllers/messages';
+import { scheduledMessagesController } from './controllers/scheduled-messages';
+import { queuesController } from './controllers/queues';
 import { IContext, TApplication } from './types/common';
 import * as stoppable from 'stoppable';
 import { PowerManager } from '../system/common/power-manager';
@@ -47,7 +49,11 @@ async function bootstrap(config: IConfig): Promise<TAPIServer> {
   app.context.logger = logger;
   app.context.redis = client;
   app.context.services = Services(app);
-  const router = getApplicationRouter(app, [messagesController]);
+  const router = getApplicationRouter(app, [
+    queuesController,
+    messagesController,
+    scheduledMessagesController,
+  ]);
   app.use(router.routes());
   app.use(router.allowedMethods());
   const httpServer = stoppable(createServer(app.callback()));

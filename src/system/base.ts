@@ -175,15 +175,6 @@ export abstract class Base extends EventEmitter {
     return [stopMessageManager, stopStats, stopSharedRedisClient, cleanUp];
   }
 
-  getMessageManager(cb: TUnaryFunction<MessageManager>): void {
-    if (!this.messageManager)
-      this.emit(
-        events.ERROR,
-        new Error('Expected an instance of MessageManager'),
-      );
-    else cb(this.messageManager);
-  }
-
   handleError(err: Error): void {
     if (this.powerManager.isGoingUp() || this.powerManager.isRunning()) {
       throw err;

@@ -1,10 +1,5 @@
 import { RedisClient } from '../redis-client/redis-client';
-import {
-  ICallback,
-  IConfig,
-  IQueueMetrics,
-  TRedisClientMulti,
-} from '../../../types';
+import { ICallback, IConfig, IQueueMetrics } from '../../../types';
 import { redisKeys } from '../common/redis-keys';
 import { Base } from '../base';
 import { Consumer } from '../consumer/consumer';
@@ -22,10 +17,8 @@ export class QueueManager {
 
   bootstrap(instance: Base, cb: ICallback<void>): void {
     const multi = this.redisClient.multi();
-    const { keyIndexQueue, keyQueue, keyQueueDL, keyIndexDLQueues } =
-      instance.getRedisKeys();
-    multi.sadd(keyIndexDLQueues, keyQueueDL);
-    multi.sadd(keyIndexQueue, keyQueue);
+    const { keyIndexQueue } = instance.getRedisKeys();
+    multi.sadd(keyIndexQueue, instance.getQueueName());
     if (instance instanceof Consumer) {
       const {
         keyQueueProcessing,
@@ -54,13 +47,6 @@ export class QueueManager {
     multi.hdel(keyIndexQueueMessageProcessingQueues, processingQueueName);
     multi.del(processingQueueName);
     multi.exec((err) => cb(err));
-  }
-
-  purgeProcessingQueue(
-    processingQueue: string,
-    multi: TRedisClientMulti,
-  ): void {
-    multi.del(processingQueue);
   }
 
   quit(cb: ICallback<void>): void {
@@ -105,11 +91,6 @@ export class QueueManager {
   getMessageQueues(cb: ICallback<string[]>): void {
     const { keyIndexQueue } = redisKeys.getGlobalKeys();
     this.redisClient.smembers(keyIndexQueue, cb);
-  }
-
-  getDeadLetterQueues(cb: ICallback<string[]>): void {
-    const { keyIndexDLQueues } = redisKeys.getGlobalKeys();
-    this.redisClient.smembers(keyIndexDLQueues, cb);
   }
 
   getQueueMetrics(queueName: string, cb: ICallback<IQueueMetrics>): void {

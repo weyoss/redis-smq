@@ -54,7 +54,7 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
     .setRetryDelay(0)
     .setConsumeTimeout(0)
     .setAttempts(2);
-  expect(res3.items[0]).toEqual(msg1);
+  expect(res3.items[0].message).toEqual(msg1);
 
   const queueManager = promisifyAll(await getQueueManager());
   const queueMetrics = await queueManager.getQueueMetricsAsync(
@@ -95,7 +95,7 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
     .setRetryDelay(0)
     .setConsumeTimeout(0)
     .setPriority(Message.MessagePriority.NORMAL);
-  expect(res6.items[0]).toEqual(msg2);
+  expect(res6.items[0].message).toEqual(msg2);
 
   const res7 = await messageManager.getDeadLetterMessagesAsync(
     producer.getQueueName(),

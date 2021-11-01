@@ -2,10 +2,10 @@ import { Message } from '../../message';
 import { redisKeys } from '../../common/redis-keys';
 import * as async from 'async';
 import { RedisClient } from '../../redis-client/redis-client';
-import { ICallback, TGetScheduledMessagesReply } from '../../../../types';
+import { ICallback, TGetMessagesReply } from '../../../../types';
 import { parseExpression } from 'cron-parser';
 import {
-  deleteSortedSetMessageAtIndex,
+  deleteSortedSetMessageAtSequenceId,
   getPaginatedSortedSetMessages,
 } from '../common';
 
@@ -14,7 +14,7 @@ export class ScheduledMessagesHandler {
     redisClient: RedisClient,
     skip: number,
     take: number,
-    cb: ICallback<TGetScheduledMessagesReply>,
+    cb: ICallback<TGetMessagesReply>,
   ): void {
     const { keyQueueScheduled } = redisKeys.getGlobalKeys();
     getPaginatedSortedSetMessages(
@@ -34,7 +34,7 @@ export class ScheduledMessagesHandler {
   ): void {
     const { keyQueueScheduled, keyLockDeleteScheduledMessage } =
       redisKeys.getGlobalKeys();
-    deleteSortedSetMessageAtIndex(
+    deleteSortedSetMessageAtSequenceId(
       redisClient,
       keyLockDeleteScheduledMessage,
       keyQueueScheduled,
@@ -125,7 +125,7 @@ export class ScheduledMessagesHandler {
   }
 
   static getNextScheduledTimestamp(message: Message): number {
-    if (ScheduledMessagesHandler.isSchedulable(message)) {
+    if (message.isSchedulable()) {
       // Delay
       const msgScheduledDelay = message.getMessageScheduledDelay();
       if (msgScheduledDelay && !message.isDelayed()) {
@@ -182,20 +182,5 @@ export class ScheduledMessagesHandler {
       }
     }
     return 0;
-  }
-
-  static isSchedulable(message: Message): boolean {
-    return (
-      message.getMessageScheduledCRON() !== null ||
-      message.getMessageScheduledDelay() !== null ||
-      message.getMessageScheduledRepeat() > 0
-    );
-  }
-
-  static isPeriodic(message: Message): boolean {
-    return (
-      message.getMessageScheduledCRON() !== null ||
-      message.getMessageScheduledRepeat() > 0
-    );
   }
 }

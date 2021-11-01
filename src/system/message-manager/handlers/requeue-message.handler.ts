@@ -1,7 +1,7 @@
 import { ICallback } from '../../../../types';
 import { RedisClient } from '../../redis-client/redis-client';
 import { redisKeys } from '../../common/redis-keys';
-import { getListMessageAtIndex } from '../common';
+import { getListMessageAtSequenceId } from '../common';
 import { Message } from '../../message';
 
 export class RequeueMessageHandler {
@@ -16,22 +16,28 @@ export class RequeueMessageHandler {
     cb: ICallback<void>,
   ): void {
     const { keyQueuePriority, keyQueue } = redisKeys.getKeys(queueName);
-    getListMessageAtIndex(redisClient, from, index, messageId, (err, msg) => {
-      if (err) cb(err);
-      else if (!msg) cb(new Error('Expected an instance of Message'));
-      else {
-        const multi = redisClient.multi();
-        multi.lrem(from, 1, JSON.stringify(msg));
-        const message = Message.createFromMessage(msg, true, true);
-        const msgPriority = withPriority
-          ? message.getSetPriority(priority)
-          : null;
-        if (typeof msgPriority === 'number')
-          multi.zadd(keyQueuePriority, msgPriority, JSON.stringify(message));
-        else multi.lpush(keyQueue, JSON.stringify(message));
-        redisClient.execMulti(multi, (err) => cb(err));
-      }
-    });
+    getListMessageAtSequenceId(
+      redisClient,
+      from,
+      index,
+      messageId,
+      (err, msg) => {
+        if (err) cb(err);
+        else if (!msg) cb(new Error('Expected an instance of Message'));
+        else {
+          const multi = redisClient.multi();
+          multi.lrem(from, 1, JSON.stringify(msg));
+          const message = Message.createFromMessage(msg, true, true);
+          const msgPriority = withPriority
+            ? message.getSetPriority(priority)
+            : null;
+          if (typeof msgPriority === 'number')
+            multi.zadd(keyQueuePriority, msgPriority, JSON.stringify(message));
+          else multi.lpush(keyQueue, JSON.stringify(message));
+          redisClient.execMulti(multi, (err) => cb(err));
+        }
+      },
+    );
   }
 
   requeueMessageFromDLQueue(

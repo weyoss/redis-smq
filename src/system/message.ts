@@ -314,6 +314,21 @@ export class Message {
     return msgPriority;
   }
 
+  isSchedulable(): boolean {
+    return (
+      this.getMessageScheduledCRON() !== null ||
+      this.getMessageScheduledDelay() !== null ||
+      this.getMessageScheduledRepeat() > 0
+    );
+  }
+
+  isPeriodic(): boolean {
+    return (
+      this.getMessageScheduledCRON() !== null ||
+      this.getMessageScheduledRepeat() > 0
+    );
+  }
+
   static createFromMessage(
     message: string | Message,
     reset = false,

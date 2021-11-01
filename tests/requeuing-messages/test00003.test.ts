@@ -56,7 +56,7 @@ test('Combined test: Requeue a message from acknowledged queue with priority. Ch
   const msg1 = Message.createFromMessage(msg).setPriority(
     Message.MessagePriority.NORMAL,
   );
-  expect(res6.items[0]).toEqual(msg1);
+  expect(res6.items[0].message).toEqual(msg1);
 
   const res7 = await messageManager.getAcknowledgedMessagesAsync(
     producer.getQueueName(),

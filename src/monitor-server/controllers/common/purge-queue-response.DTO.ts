@@ -1,6 +1,6 @@
 import { Equals, IsInt } from 'class-validator';
 
-export class DeleteScheduledMessageResponseDTO {
+export class PurgeQueueResponseDTO {
   @IsInt()
   @Equals(204)
   status!: number;

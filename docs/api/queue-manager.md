@@ -18,12 +18,52 @@ No public property exists.
 
 ## Public methods
 
-### QueueManager.prototype.getProcessingQueues()
-### QueueManager.prototype.getMessageQueues()
-### QueueManager.prototype.getDeadLetterQueues()
-### QueueManager.prototype.getQueueMetadata()
-### QueueManager.prototype.quit()
+### QueueManager.prototype.purgeDeadLetterQueue
+
+```javascript
+
+```
+
+### QueueManager.prototype.purgeAcknowledgedMessagesQueue
+
+```javascript
+
+```
+
+### QueueManager.prototype.purgeQueue
+
+```javascript
+
+```
+
+### QueueManager.prototype.purgePriorityQueue
+
+```javascript
+
+```
+
+### QueueManager.prototype.purgeScheduledMessagesQueue
+
+```javascript
+
+```
+
+### QueueManager.prototype.getQueueMetrics
+
+```javascript
+
+```
+
+### QueueManager.prototype.quit
+
+```javascript
+
+```
 
 ## Public static methods
 
 ### QueueManager.getSingletonInstance()
+
+```javascript
+
+```

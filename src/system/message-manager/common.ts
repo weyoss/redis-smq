@@ -5,11 +5,11 @@ import { TPaginatedRedisQuery } from '../../../types';
 import * as async from 'async';
 import { LockManager } from '../common/lock-manager';
 
-export const deleteListMessageAtIndex = (
+export const deleteListMessageAtSequenceId = (
   redisClient: RedisClient,
   lockKey: string,
   from: string,
-  index: number,
+  sequenceId: number,
   messageId: string,
   cb: ICallback<void>,
 ): void => {
@@ -17,7 +17,7 @@ export const deleteListMessageAtIndex = (
     redisClient,
     lockKey,
     (cb) => {
-      redisClient.lrange(from, index, index, (err, reply) => {
+      redisClient.lrange(from, sequenceId, sequenceId, (err, reply) => {
         if (err) cb(err);
         else if (!reply || !reply.length) cb(new Error('Message not found'));
         else {
@@ -32,11 +32,11 @@ export const deleteListMessageAtIndex = (
   );
 };
 
-export const deleteSortedSetMessageAtIndex = (
+export const deleteSortedSetMessageAtSequenceId = (
   redisClient: RedisClient,
   lockKey: string,
   from: string,
-  index: number,
+  sequenceId: number,
   messageId: string,
   cb: ICallback<void>,
 ): void => {
@@ -44,7 +44,7 @@ export const deleteSortedSetMessageAtIndex = (
     redisClient,
     lockKey,
     (cb) => {
-      redisClient.zrange(from, index, index, (err, reply) => {
+      redisClient.zrange(from, sequenceId, sequenceId, (err, reply) => {
         if (err) cb(err);
         else if (!reply || !reply.length) cb(new Error('Message not found'));
         else {
@@ -59,14 +59,14 @@ export const deleteSortedSetMessageAtIndex = (
   );
 };
 
-export const getListMessageAtIndex = (
+export const getListMessageAtSequenceId = (
   redisClient: RedisClient,
   from: string,
-  index: number,
+  sequenceId: number,
   messageId: string,
   cb: ICallback<Message>,
 ): void => {
-  redisClient.lrange(from, index, index, (err, reply) => {
+  redisClient.lrange(from, sequenceId, sequenceId, (err, reply) => {
     if (err) cb(err);
     else if (!reply || !reply.length) cb(new Error('Message not found'));
     else {
@@ -78,14 +78,14 @@ export const getListMessageAtIndex = (
   });
 };
 
-export const getSortedSetMessageAtIndex = (
+export const getSortedSetMessageAtSequenceId = (
   redisClient: RedisClient,
   from: string,
-  index: number,
+  sequenceId: number,
   messageId: string,
   cb: ICallback<Message>,
 ): void => {
-  redisClient.zrange(from, index, index, (err, reply) => {
+  redisClient.zrange(from, sequenceId, sequenceId, (err, reply) => {
     if (err) cb(err);
     else if (!reply || !reply.length) cb(new Error('Message not found'));
     else {
@@ -177,9 +177,15 @@ export const getPaginatedListMessages = (
           items: [],
         });
       } else
-        getListMessages(client, key, skip, take, (err, items) => {
+        getListMessages(client, key, skip, take, (err, reply) => {
           if (err) cb(err);
-          else cb(null, { total, items: items ?? [] });
+          else {
+            const items = (reply ?? []).map((message, index) => ({
+              sequenceId: skip + index,
+              message,
+            }));
+            cb(null, { total, items });
+          }
         });
     };
     async.waterfall(
@@ -218,9 +224,15 @@ export const getPaginatedSortedSetMessages = (
           items: [],
         });
       } else
-        getSortedSetMessages(client, key, skip, take, (err, items) => {
+        getSortedSetMessages(client, key, skip, take, (err, reply) => {
           if (err) cb(err);
-          else cb(null, { total, items: items ?? [] });
+          else {
+            const items = (reply ?? []).map((message, index) => ({
+              sequenceId: skip + index,
+              message,
+            }));
+            cb(null, { total, items });
+          }
         });
     };
     async.waterfall(

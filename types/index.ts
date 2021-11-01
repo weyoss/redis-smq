@@ -2,7 +2,6 @@ import { ServerOptions } from 'socket.io';
 import IORedis, { Redis, RedisOptions } from 'ioredis';
 import { Callback, ClientOpts, Multi, RedisClient as NodeRedis } from 'redis';
 import * as Logger from 'bunyan';
-import { RedisClient } from '../src/system/redis-client/redis-client';
 import { Message } from '../src/system/message';
 import { redisKeys } from '../src/system/common/redis-keys';
 
@@ -143,8 +142,10 @@ export type TAggregatedStatsQueueConsumer = {
 export type TAggregatedStatsQueue = {
   queueName: string;
   namespace: string;
-  erroredMessages: number;
-  size: number;
+  deadLetteredMessages: number;
+  acknowledgedMessages: number;
+  pendingMessages: number;
+  pendingMessagesWithPriority: number;
   producers?: {
     [producerId: string]: TAggregatedStatsQueueProducer;
   };
@@ -169,23 +170,13 @@ export type TAggregatedStats = {
 
 export type TPaginatedRedisQuery<T> = {
   total: number;
-  items: T[];
+  items: {
+    sequenceId: number;
+    message: T;
+  }[];
 };
 
-export type TPaginatedRedisQueryTotalItemsFn = (
-  redisClient: RedisClient,
-  cb: ICallback<number>,
-) => void;
-
-export type TPaginatedRedisQueryTransformFn<T> = (data: string) => T;
-
-export type TGetScheduledMessagesReply = TPaginatedRedisQuery<Message>;
-
-export type TGetAcknowledgedMessagesReply = TPaginatedRedisQuery<Message>;
-
-export type TGetDeadLetterMessagesReply = TPaginatedRedisQuery<Message>;
-
-export type TGetPendingMessagesReply = TPaginatedRedisQuery<Message>;
+export type TGetMessagesReply = TPaginatedRedisQuery<Message>;
 
 export type TInstanceRedisKeys = ReturnType<
   typeof redisKeys['getInstanceKeys']

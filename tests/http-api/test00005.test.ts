@@ -59,8 +59,10 @@ test('Check that stats are aggregated and published: Case 2', async () => {
     expect.arrayContaining([
       'queueName',
       'namespace',
-      'erroredMessages',
-      'size',
+      'deadLetteredMessages',
+      'acknowledgedMessages',
+      'pendingMessages',
+      'pendingMessagesWithPriority',
       'consumers',
       'producers',
     ]),

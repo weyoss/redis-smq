@@ -18,10 +18,36 @@ No public property exists.
 
 ## Public methods
 
-### MessageManager.prototype.getAcknowledgedMessages()
-### MessageManager.prototype.getDeadLetterMessages()
-### MessageManager.prototype.getPendingMessages()
+### MessageManager.prototype.getScheduledMessages()
+
+```javascript
+
+```
+
 ### MessageManager.prototype.getPendingMessagesWithPriority()
+
+```javascript
+
+```
+
+### MessageManager.prototype.getDeadLetterMessages()
+
+```javascript
+
+```
+
+### MessageManager.prototype.getPendingMessages()
+
+```javascript
+
+```
+
+### MessageManager.prototype.getAcknowledgedMessages()
+
+```javascript
+
+```
+
 ### MessageManager.prototype.getScheduledMessages()
 
 ```javascript
@@ -49,7 +75,29 @@ messageManager.getScheduledMessages(0, 25, (err, result) => {
 });
 ```
 
-### MessageManager.prototype.getMessageMetadata()
+### MessageManager.prototype.deletePendingMessageWithPriority()
+
+```javascript
+
+```
+
+### MessageManager.prototype.deleteDeadLetterMessage()
+
+```javascript
+
+```
+
+### MessageManager.prototype.deleteAcknowledgedMessage()
+
+```javascript
+
+```
+
+### MessageManager.prototype.deletePendingMessage()
+
+```javascript
+
+```
 
 ### MessageManager.prototype.deleteScheduledMessage()
 
@@ -71,9 +119,28 @@ messageManager.deleteScheduledMessage(queueName, messageId, (err, result) => {
    else console.log('Message has not been deleted');
 });
 ```
+### MessageManager.prototype.requeueMessageFromDLQueue()
+
+```javascript
+
+```
+
+### MessageManager.prototype.requeueMessageFromAcknowledgedQueue()
+
+```javascript
+
+```
 
 ### MessageManager.prototype.quit()
+
+```javascript
+
+```
 
 ## Public static methods
 
 ### MessageManager.getSingletonInstance()
+
+```javascript
+
+```

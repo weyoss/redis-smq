@@ -104,8 +104,10 @@ export class StatsWorker {
       this.data.queues[ns][queueName] = {
         queueName,
         namespace: ns,
-        erroredMessages: 0,
-        size: 0,
+        deadLetteredMessages: 0,
+        acknowledgedMessages: 0,
+        pendingMessages: 0,
+        pendingMessagesWithPriority: 0,
         consumers: {},
         producers: {},
       };
@@ -214,20 +216,25 @@ export class StatsWorker {
 
   protected getQueueSize = (queues: string[], cb: ICallback<void>): void => {
     if (queues && queues.length) {
+      let keys: string[] = [];
       const multi = this.redisClient.multi();
       const handleResult = (res: number[]) => {
         const instanceTypes = redisKeys.getTypes();
         async.eachOf(
           res,
           (size, index, done) => {
-            const extractedData = redisKeys.extractData(queues[+index]);
+            const extractedData = redisKeys.extractData(keys[+index]);
             if (extractedData) {
               const { ns, queueName, type } = extractedData;
               const queue = this.addQueueIfNotExists(ns, queueName);
               if (type === instanceTypes.KEY_QUEUE_DL) {
-                queue.erroredMessages = size;
+                queue.deadLetteredMessages = size;
+              } else if (type === instanceTypes.KEY_QUEUE) {
+                queue.pendingMessages = size;
+              } else if (type === instanceTypes.KEY_QUEUE_PRIORITY) {
+                queue.pendingMessagesWithPriority = size;
               } else {
-                queue.size = size;
+                queue.acknowledgedMessages = size;
               }
             }
             done();
@@ -238,7 +245,22 @@ export class StatsWorker {
       async.each(
         queues,
         (queue, done) => {
-          multi.llen(queue);
+          const {
+            keyQueue,
+            keyQueuePriority,
+            keyQueueDL,
+            keyQueueAcknowledgedMessages,
+          } = redisKeys.getKeys(queue);
+          multi.llen(keyQueue);
+          multi.zcard(keyQueuePriority);
+          multi.llen(keyQueueDL);
+          multi.llen(keyQueueAcknowledgedMessages);
+          keys = keys.concat([
+            keyQueue,
+            keyQueuePriority,
+            keyQueueDL,
+            keyQueueAcknowledgedMessages,
+          ]);
           done();
         },
         () => {
@@ -253,10 +275,6 @@ export class StatsWorker {
 
   protected getQueues = (cb: ICallback<string[]>): void => {
     this.queueManager.getMessageQueues(cb);
-  };
-
-  protected getDLQQueues = (cb: ICallback<string[]>): void => {
-    this.queueManager.getDeadLetterQueues(cb);
   };
 
   protected getConsumersHeartbeats = (cb: ICallback<void>): void => {
@@ -339,8 +357,6 @@ export class StatsWorker {
           this.getRates,
           this.getConsumersHeartbeats,
           this.getQueues,
-          this.getQueueSize,
-          this.getDLQQueues,
           this.getQueueSize,
           this.sanitizeData,
           this.publish,

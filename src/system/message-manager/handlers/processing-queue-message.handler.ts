@@ -6,7 +6,7 @@ import {
   ICallback,
 } from '../../../../types';
 import { redisKeys } from '../../common/redis-keys';
-import { deleteListMessageAtIndex } from '../common';
+import { deleteListMessageAtSequenceId } from '../common';
 
 export class ProcessingQueueMessageHandler {
   deleteDeadLetterMessage(
@@ -18,7 +18,7 @@ export class ProcessingQueueMessageHandler {
   ): void {
     const { keyQueueDL, keyLockDeleteDeadLetterMessage } =
       redisKeys.getKeys(queueName);
-    deleteListMessageAtIndex(
+    deleteListMessageAtSequenceId(
       redisClient,
       keyLockDeleteDeadLetterMessage,
       keyQueueDL,
@@ -37,7 +37,7 @@ export class ProcessingQueueMessageHandler {
   ): void {
     const { keyQueueAcknowledgedMessages, keyLockDeleteAcknowledgedMessage } =
       redisKeys.getKeys(queueName);
-    deleteListMessageAtIndex(
+    deleteListMessageAtSequenceId(
       redisClient,
       keyLockDeleteAcknowledgedMessage,
       keyQueueAcknowledgedMessages,

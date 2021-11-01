@@ -27,7 +27,7 @@ All consumers, producers, monitor and redis server are launched from the same ho
 
 ## Results
 
-| Scenario                                             | Producer rate (msg/sec) | Consumer rate (msg/sec) |
+| Scenario                                            | Producer rate (msg/sec) | Consumer rate (msg/sec) |
 |-----------------------------------------------------|-------------------------|-------------------------|
 | Run 1 producer instance                             | 23K+                    | 0                       |
 | Run 10 producer instances                           | 96K+                    | 0                       |
