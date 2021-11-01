@@ -11,11 +11,7 @@ can be also defined globally per consumer for all queue messages. See [Consumer 
 
 When defined, message instance properties always take precedence over consumer properties.
 
-## Public properties
-
-No public property exists.
-
-## Static properties
+## Public Static Properties
 
 ### Message.MessagePriority
 
@@ -32,7 +28,7 @@ Specifies a priority that can be applied to a message. Valid message priorities 
 
 To set a message priority use [setPriority()](#messageprototypesetpriority).
 
-## Methods
+## Public Methods
 
 ### Message.prototype.setScheduledPeriod()
 
@@ -362,7 +358,7 @@ console.log(anotherMessage.getMessageScheduledRepeat() === message.getMessageSch
 console.log(anotherMessage.getMessageScheduledRepeat() === message.getMessageScheduledRepeat()); // true
 ```
 
-## Other public methods
+### Other Methods
 
 These methods are used internally and should not be used in your application:
 

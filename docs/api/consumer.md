@@ -5,11 +5,7 @@ also be defined for a given message instance.
 
 When defined, message instance properties always takes precedence over consumer properties (options).
 
-## Public properties
-
-No public property exists.
-
-## Methods
+## Public Methods
 
 ### Consumer.prototype.constructor()
 
@@ -121,10 +117,8 @@ consumer.once('down', () => {
 })
 ```
 
-### Consumer.prototype.isRunning()
+### Other Methods
 
-Tell whether the consumer is running or not. `true` if the consumer is running otherwise `false`.
-
-### Consumer.prototype.getId()
-
-### Consumer.prototype.getQueueName()
+- Consumer.prototype.isRunning()
+- Consumer.prototype.getId()
+- Consumer.prototype.getQueueName()
