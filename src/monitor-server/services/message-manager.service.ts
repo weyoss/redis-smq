@@ -11,6 +11,10 @@ import { DeletePendingMessageRequestDTO } from '../controllers/messages/actions/
 import { DeleteAcknowledgedMessageRequestDTO } from '../controllers/messages/actions/delete-acknowledged-message/delete-acknowledged-message-request.DTO';
 import { DeleteDeadLetteredMessageRequestDTO } from '../controllers/messages/actions/delete-dead-lettered-message/delete-dead-lettered-message-request.DTO';
 import { DeletePendingMessageWithPriorityRequestDTO } from '../controllers/messages/actions/delete-pending-message-with-priority/delete-pending-message-with-priority-request.DTO';
+import { RequeueDeadLetteredMessageRequestDTO } from '../controllers/messages/actions/requeue-dead-lettered-message/requeue-dead-lettered-message-request.DTO';
+import { RequeueDeadLetteredMessageWithPriorityRequestDTO } from '../controllers/messages/actions/requeue-dead-lettered-message-with-priority/requeue-dead-lettered-message-with-priority-request.DTO';
+import { RequeueAcknowledgedMessageRequestDTO } from '../controllers/messages/actions/requeue-acknowledged-message/requeue-acknowledged-message-request.DTO';
+import { RequeueAcknowledgedMessageWithPriorityRequestDTO } from '../controllers/messages/actions/requeue-acknowledged-message-with-priority/requeue-acknowledged-message-with-priority-request.DTO';
 
 const messageManagerAsync = promisifyAll(MessageManager.prototype);
 
@@ -117,5 +121,57 @@ export class MessageManagerService {
   ): Promise<void> {
     const { id, sequenceId } = args;
     return this.messageManager.deleteScheduledMessageAsync(sequenceId, id);
+  }
+
+  async requeueDeadLetteredMessage(
+    args: RequeueDeadLetteredMessageRequestDTO,
+  ): Promise<void> {
+    const { queueName, id, sequenceId } = args;
+    return this.messageManager.requeueMessageFromDLQueueAsync(
+      queueName,
+      sequenceId,
+      id,
+      false,
+      undefined,
+    );
+  }
+
+  async requeueDeadLetteredMessageWithPriority(
+    args: RequeueDeadLetteredMessageWithPriorityRequestDTO,
+  ): Promise<void> {
+    const { queueName, id, sequenceId, priority } = args;
+    return this.messageManager.requeueMessageFromDLQueueAsync(
+      queueName,
+      sequenceId,
+      id,
+      true,
+      priority,
+    );
+  }
+
+  async requeueAcknowledgedMessage(
+    args: RequeueAcknowledgedMessageRequestDTO,
+  ): Promise<void> {
+    const { queueName, id, sequenceId } = args;
+    return this.messageManager.requeueMessageFromAcknowledgedQueueAsync(
+      queueName,
+      sequenceId,
+      id,
+      false,
+      undefined,
+    );
+  }
+
+  async requeueAcknowledgedMessageWithPriority(
+    args: RequeueAcknowledgedMessageWithPriorityRequestDTO,
+  ): Promise<void> {
+    const { queueName, id, sequenceId, priority } = args;
+    return this.messageManager.requeueMessageFromAcknowledgedQueueAsync(
+      queueName,
+      sequenceId,
+      id,
+      true,
+      priority,
+    );
   }
 }
