@@ -1,3 +1,3 @@
-import { PurgeQueueResponseDTO } from '../../common/purge-queue-response.DTO';
+import { NoContentHttpResponseDTO } from '../../common/no-content-http-response.DTO';
 
-export class PurgeScheduledMessagesResponseDTO extends PurgeQueueResponseDTO {}
+export class PurgeScheduledMessagesResponseDTO extends NoContentHttpResponseDTO {}

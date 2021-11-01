@@ -38,6 +38,18 @@ import { PurgePriorityMessagesResponseDTO } from './actions/purge-priority-messa
 import { PurgeDeadLetteredMessagesHandler } from './actions/purge-dead-letter-messages/purge-dead-lettered-messages.handler';
 import { PurgeDeadLetteredMessagesRequestDTO } from './actions/purge-dead-letter-messages/purge-dead-lettered-messages-request.DTO';
 import { PurgeDeadLetteredMessagesResponseDTO } from './actions/purge-dead-letter-messages/purge-dead-lettered-messages-response.DTO';
+import { RequeueDeadLetteredMessageHandler } from './actions/requeue-dead-lettered-message/requeue-dead-lettered-message.handler';
+import { RequeueDeadLetteredMessageRequestDTO } from './actions/requeue-dead-lettered-message/requeue-dead-lettered-message-request.DTO';
+import { RequeueDeadLetteredMessageResponseDTO } from './actions/requeue-dead-lettered-message/requeue-dead-lettered-message-response.DTO';
+import { RequeueDeadLetteredMessageWithPriorityHandler } from './actions/requeue-dead-lettered-message-with-priority/requeue-dead-lettered-message-with-priority.handler';
+import { RequeueDeadLetteredMessageWithPriorityRequestDTO } from './actions/requeue-dead-lettered-message-with-priority/requeue-dead-lettered-message-with-priority-request.DTO';
+import { RequeueDeadLetteredMessageWithPriorityResponseDTO } from './actions/requeue-dead-lettered-message-with-priority/requeue-dead-lettered-message-with-priority-response.DTO';
+import { RequeueAcknowledgedMessageHandler } from './actions/requeue-acknowledged-message/requeue-acknowledged-message.handler';
+import { RequeueAcknowledgedMessageRequestDTO } from './actions/requeue-acknowledged-message/requeue-acknowledged-message-request.DTO';
+import { RequeueAcknowledgedMessageResponseDTO } from './actions/requeue-acknowledged-message/requeue-acknowledged-message-response.DTO';
+import { RequeueAcknowledgedMessageWithPriorityHandler } from './actions/requeue-acknowledged-message-with-priority/requeue-acknowledged-message-with-priority.handler';
+import { RequeueAcknowledgedMessageWithPriorityRequestDTO } from './actions/requeue-acknowledged-message-with-priority/requeue-acknowledged-message-with-priority-request.DTO';
+import { RequeueAcknowledgedMessageWithPriorityResponseDTO } from './actions/requeue-acknowledged-message-with-priority/requeue-acknowledged-message-with-priority-response.DTO';
 
 export const messagesController: TRouteController = {
   prefix: '/queues/:queueName',
@@ -161,6 +173,50 @@ export const messagesController: TRouteController = {
       Handler: PurgeDeadLetteredMessagesHandler,
       RequestDTO: PurgeDeadLetteredMessagesRequestDTO,
       ResponseDTO: PurgeDeadLetteredMessagesResponseDTO,
+    },
+    {
+      path: '/dead-lettered-messages/:id/requeue',
+      method: ERouteControllerActionMethod.POST,
+      payload: [
+        ERouteControllerActionPayload.PATH,
+        ERouteControllerActionPayload.QUERY,
+      ],
+      Handler: RequeueDeadLetteredMessageHandler,
+      RequestDTO: RequeueDeadLetteredMessageRequestDTO,
+      ResponseDTO: RequeueDeadLetteredMessageResponseDTO,
+    },
+    {
+      path: '/dead-lettered-messages/:id/requeue-with-priority/:priority',
+      method: ERouteControllerActionMethod.POST,
+      payload: [
+        ERouteControllerActionPayload.PATH,
+        ERouteControllerActionPayload.QUERY,
+      ],
+      Handler: RequeueDeadLetteredMessageWithPriorityHandler,
+      RequestDTO: RequeueDeadLetteredMessageWithPriorityRequestDTO,
+      ResponseDTO: RequeueDeadLetteredMessageWithPriorityResponseDTO,
+    },
+    {
+      path: '/acknowledged-messages/:id/requeue',
+      method: ERouteControllerActionMethod.POST,
+      payload: [
+        ERouteControllerActionPayload.PATH,
+        ERouteControllerActionPayload.QUERY,
+      ],
+      Handler: RequeueAcknowledgedMessageHandler,
+      RequestDTO: RequeueAcknowledgedMessageRequestDTO,
+      ResponseDTO: RequeueAcknowledgedMessageResponseDTO,
+    },
+    {
+      path: '/acknowledged-messages/:id/requeue-with-priority/:priority',
+      method: ERouteControllerActionMethod.POST,
+      payload: [
+        ERouteControllerActionPayload.PATH,
+        ERouteControllerActionPayload.QUERY,
+      ],
+      Handler: RequeueAcknowledgedMessageWithPriorityHandler,
+      RequestDTO: RequeueAcknowledgedMessageWithPriorityRequestDTO,
+      ResponseDTO: RequeueAcknowledgedMessageWithPriorityResponseDTO,
     },
   ],
 };

@@ -1,6 +1,6 @@
 import { Equals, IsInt } from 'class-validator';
 
-export class PurgeQueueResponseDTO {
+export class NoContentHttpResponseDTO {
   @IsInt()
   @Equals(204)
   status!: number;

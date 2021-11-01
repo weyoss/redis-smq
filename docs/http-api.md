@@ -140,7 +140,38 @@ The HTTP API allows:
 
 ### POST /queues/:queueName/acknowledged-messages/:id/requeue
 
+**Path parameters**
+
+* `queueName` (string): Required. Queue name.
+* `id` (string): Required. Message ID.
+
+**Query parameters**
+
+* `sequenceId` (number): Required. Message sequence ID.
+
+**Response Body**
+
+```text
+204 No Content
+```
+
 ### POST /queues/:queueName/acknowledged-messages/:id/requeue-with-priority/:priority
+
+**Path parameters**
+
+* `queueName` (string): Required. Queue name.
+* `id` (string): Required. Message ID.
+* `priority` (number): Required. Message priority.
+
+**Query parameters**
+
+* `sequenceId` (number): Required. Message sequence ID.
+
+**Response Body**
+
+```text
+204 No Content
+```
 
 ## Dead-lettered Messages
 
@@ -216,7 +247,38 @@ The HTTP API allows:
 
 ### POST /queues/:queueName/dead-lettered-messages/:id/requeue
 
+**Path parameters**
+
+* `queueName` (string): Required. Queue name.
+* `id` (string): Required. Message ID.
+
+**Query parameters**
+
+* `sequenceId` (number): Required. Message sequence ID.
+
+**Response Body**
+
+```text
+204 No Content
+```
+
 ### POST /queues/:queueName/dead-lettered-messages/:id/requeue-with-priority/:priority
+
+**Path parameters**
+
+* `queueName` (string): Required. Queue name.
+* `id` (string): Required. Message ID.
+* `priority` (number): Required. Message priority.
+
+**Query parameters**
+
+* `sequenceId` (number): Required. Message sequence ID.
+
+**Response Body**
+
+```text
+204 No Content
+```
 
 ## Pending Messages
 

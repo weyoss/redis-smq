@@ -1,3 +1,3 @@
-import { DeleteMessageResponseDTO } from '../../../common/delete-message-response.DTO';
+import { NoContentHttpResponseDTO } from '../../../common/no-content-http-response.DTO';
 
-export class DeleteDeadLetteredMessageResponseDTO extends DeleteMessageResponseDTO {}
+export class DeleteDeadLetteredMessageResponseDTO extends NoContentHttpResponseDTO {}
