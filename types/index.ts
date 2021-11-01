@@ -75,7 +75,7 @@ export type TCompatibleRedisClient = (NodeRedis | Redis) & {
 
 export type TRedisClientMulti = Multi | IORedis.Pipeline;
 
-export type IRedisOptions = IORedisOptions | INodeRedisOptions;
+export type TRedisOptions = IORedisOptions | INodeRedisOptions;
 
 export interface IORedisOptions {
   client: RedisClientName.IOREDIS;
@@ -95,7 +95,7 @@ export interface IMonitorConfig {
 }
 
 export interface IConfig {
-  redis?: IRedisOptions;
+  redis?: TRedisOptions;
   namespace?: string;
   log?: {
     enabled?: boolean;

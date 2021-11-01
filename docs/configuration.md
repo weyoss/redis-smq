@@ -38,6 +38,13 @@ module.exports = {
         host: '127.0.0.1',
         port: 3000,
     },
+    priorityQueue: false,
+    message: {
+        consumeTimeout: 60000,
+        retryThreshold: 5,
+        retryDelay: 60000,
+        ttl: 120000,
+    }
 };
 ```
 
