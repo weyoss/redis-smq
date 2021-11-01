@@ -115,16 +115,7 @@ producer.produceMessage(message, (err) => {
 
 Tell whether the producer is running or not. `true` if the producer is running, otherwise `false`.
 
-## Other public methods
 
-- Producer.prototype.getId()
-- Producer.prototype.getConfig()
-- Producer.prototype.getQueueName()
-- Producer.prototype.getScheduler()
-- 
-These methods are used internally and should not be used in your application:
+### Producer.prototype.getId()
 
-- getInstanceRedisKeys()
-- getBroker()
-- getStatsProvider()
-- handleError()
+### Producer.prototype.getQueueName()

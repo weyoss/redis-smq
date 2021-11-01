@@ -13,7 +13,6 @@ enum ERedisKey {
   KEY_QUEUE_ACKNOWLEDGED_MESSAGES,
   KEY_QUEUE_UNACKNOWLEDGED_MESSAGES,
   KEY_INDEX_QUEUES, // Redis key for message queues
-  KEY_INDEX_DL_QUEUES, // Redis key for dead-letter queues
   KEY_INDEX_PROCESSING_QUEUES, // Redis key for all processing queues
   KEY_INDEX_QUEUE_MESSAGE_PROCESSING_QUEUES, // Redis key for processing queues of a given queue
   KEY_INDEX_RATES, // Redis key for rates from all producersand consumers
@@ -165,7 +164,6 @@ export const redisKeys = {
   getGlobalKeys() {
     const keys = {
       keyIndexQueue: ERedisKey.KEY_INDEX_QUEUES,
-      keyIndexDLQueues: ERedisKey.KEY_INDEX_DL_QUEUES,
       keyIndexRates: ERedisKey.KEY_INDEX_RATES,
       keyIndexProcessingQueues: ERedisKey.KEY_INDEX_PROCESSING_QUEUES,
       keyIndexHeartbeats: ERedisKey.KEY_INDEX_HEARTBEATS,

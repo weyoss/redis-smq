@@ -7,6 +7,7 @@ import { TApplication, TRequestContext } from '../types/common';
 export enum ERouteControllerActionPayload {
   QUERY = 'query',
   BODY = 'body',
+  PATH = 'path',
 }
 
 export enum ERouteControllerActionMethod {
@@ -22,7 +23,7 @@ export type TRouteControllerActionHandler = (
 export type TRouteControllerAction = {
   path: string;
   method: ERouteControllerActionMethod;
-  payload: ERouteControllerActionPayload;
+  payload: ERouteControllerActionPayload[];
   Handler: TRouteControllerActionHandler;
   RequestDTO: ClassConstructor<any>;
   ResponseDTO: ClassConstructor<any>;

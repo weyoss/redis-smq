@@ -14,7 +14,7 @@ test('Purging scheduled messages queue', async () => {
   const m = await messageManager.getScheduledMessagesAsync(0, 99);
 
   expect(m.total).toBe(1);
-  expect(m.items[0].getId()).toBe(msg.getId());
+  expect(m.items[0].message.getId()).toBe(msg.getId());
 
   const queueManager = promisifyAll(await getQueueManager());
   await queueManager.purgeScheduledMessagesQueueAsync();

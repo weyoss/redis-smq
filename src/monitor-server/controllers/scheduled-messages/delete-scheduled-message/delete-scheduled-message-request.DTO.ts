@@ -7,5 +7,5 @@ export class DeleteScheduledMessageRequestDTO {
 
   @IsInt()
   @Type(() => Number)
-  index!: number;
+  sequenceId!: number;
 }

@@ -17,7 +17,7 @@ test('Concurrent delete operation', async () => {
   );
 
   expect(res1.total).toBe(1);
-  expect(res1.items[0].getId()).toBe(msg.getId());
+  expect(res1.items[0].message.getId()).toBe(msg.getId());
 
   const queueManager = promisifyAll(await getQueueManager());
   const queueMetrics = await queueManager.getQueueMetricsAsync(

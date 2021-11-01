@@ -18,7 +18,9 @@ interface IResponse extends supertest.Response {
 test('Messages HTTP API: Case 3', async () => {
   await startMonitorServer();
   const request = supertest('http://127.0.0.1:3000');
-  const response1: IResponse = await request.get('/api/messages?skip=a');
+  const response1: IResponse = await request.get(
+    '/api/scheduled-messages?skip=a',
+  );
   expect(response1.statusCode).toBe(422);
   expect(response1.body.data).toBeUndefined();
   expect(response1.body.error).toBeDefined();

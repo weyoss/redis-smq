@@ -52,7 +52,7 @@ test('Combined test: Requeue a message from dead-letter queue with priority.  Ch
   const msg1 = Message.createFromMessage(msg).setPriority(
     Message.MessagePriority.NORMAL,
   );
-  expect(res2.items[0]).toEqual(msg1);
+  expect(res2.items[0].message).toEqual(msg1);
 
   const res3 = await messageManager.getDeadLetterMessagesAsync(
     producer.getQueueName(),

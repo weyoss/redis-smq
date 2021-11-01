@@ -12,7 +12,6 @@ import { QueueManager } from './queue-manager/queue-manager';
 import { RedisClient } from './redis-client/redis-client';
 import { MessageManager } from './message-manager/message-manager';
 import { Consumer } from './consumer/consumer';
-import { ScheduledMessagesHandler } from './message-manager/handlers/scheduled-messages.handler';
 
 export class Broker {
   protected config: IConfig;
@@ -20,6 +19,7 @@ export class Broker {
   protected powerManager: PowerManager;
   protected messageManager: MessageManager;
   protected queueManager: QueueManager;
+  protected priorityQueue: boolean;
 
   constructor(
     config: IConfig,
@@ -31,6 +31,11 @@ export class Broker {
     this.powerManager = new PowerManager();
     this.messageManager = messageManager;
     this.queueManager = queueManager;
+    this.priorityQueue = config.priorityQueue === true;
+  }
+
+  scheduleMessage(msg: Message, cb: ICallback<boolean>): void {
+    this.messageManager.scheduleMessage(msg, cb);
   }
 
   enqueueMessage(
@@ -38,9 +43,12 @@ export class Broker {
     message: Message,
     cb: ICallback<void>,
   ): void {
-    const withPriority = this.config.priorityQueue === true;
-    if (withPriority) message.getSetPriority(undefined);
-    this.messageManager.enqueueMessage(queueName, message, withPriority, cb);
+    this.messageManager.enqueueMessage(
+      queueName,
+      message,
+      this.priorityQueue,
+      cb,
+    );
   }
 
   dequeueMessage(
@@ -50,7 +58,7 @@ export class Broker {
   ): void {
     const { keyQueue, keyQueuePriority, keyQueueProcessing } =
       consumer.getRedisKeys();
-    if (this.config.priorityQueue === true) {
+    if (this.priorityQueue) {
       this.messageManager.dequeueMessageWithPriority(
         redisClient,
         keyQueuePriority,
@@ -110,8 +118,6 @@ export class Broker {
     unacknowledgedCause: EMessageUnacknowledgedCause,
     cb: ICallback<void>,
   ): void {
-    const withPriority = this.config.priorityQueue === true;
-    if (withPriority) message.getSetPriority(undefined);
     if (
       unacknowledgedCause === EMessageUnacknowledgedCause.TTL_EXPIRED ||
       message.hasExpired()
@@ -128,7 +134,7 @@ export class Broker {
         EMessageDeadLetterCause.TTL_EXPIRED,
         (err) => cb(err),
       );
-    } else if (ScheduledMessagesHandler.isPeriodic(message)) {
+    } else if (message.isPeriodic()) {
       this.logger.debug(
         `Message ID [${message.getId()}] is periodic. Moving it to DLQ...`,
       );
@@ -164,7 +170,7 @@ export class Broker {
           message,
           queueName,
           processingQueue,
-          withPriority,
+          this.priorityQueue,
           unacknowledgedCause,
           (err) => cb(err),
         );

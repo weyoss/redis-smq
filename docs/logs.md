@@ -16,7 +16,6 @@ $ node consumer | ./node_modules/.bin/bunyan
 
 ## Configuration
 
-
 ```javascript
 'use strict';
 

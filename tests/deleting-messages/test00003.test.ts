@@ -54,7 +54,7 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
     .setRetryThreshold(3)
     .setRetryDelay(0)
     .setConsumeTimeout(0);
-  expect(res2.items[0]).toEqual(msg1);
+  expect(res2.items[0].message).toEqual(msg1);
 
   const queueManager = promisifyAll(await getQueueManager());
   const queueMetrics = await queueManager.getQueueMetricsAsync(

@@ -54,7 +54,7 @@ test('Combined test: Dead-letter a message and requeue it. Check pending, acknow
     .setRetryDelay(0)
     .setConsumeTimeout(0)
     .setAttempts(2);
-  expect(res3.items[0]).toEqual(msg1);
+  expect(res3.items[0].message).toEqual(msg1);
 
   const queueManager = promisifyAll(await getQueueManager());
   const queueMetrics = await queueManager.getQueueMetricsAsync(
@@ -86,7 +86,7 @@ test('Combined test: Dead-letter a message and requeue it. Check pending, acknow
     .setRetryThreshold(3)
     .setRetryDelay(0)
     .setConsumeTimeout(0);
-  expect(res5.items[0]).toEqual(msg2);
+  expect(res5.items[0].message).toEqual(msg2);
 
   const res6 = await messageManager.getDeadLetterMessagesAsync(
     producer.getQueueName(),

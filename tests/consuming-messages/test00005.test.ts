@@ -44,5 +44,5 @@ test('Default message TTL: a message without TTL is not consumed and moved to DL
     100,
   );
   expect(list.total).toBe(1);
-  expect(list.items[0].getId()).toBe(msg.getId());
+  expect(list.items[0].message.getId()).toBe(msg.getId());
 });

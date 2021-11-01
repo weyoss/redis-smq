@@ -3,19 +3,30 @@ import { validateDTO } from '../utils/validate-dto';
 import { ERouteControllerActionPayload } from '../lib/routing';
 import { TMiddleware } from '../types/common';
 
-type TContext = {
-  query: Record<string, any>;
-  request: { body?: Record<string, any> };
-  state: { dto: Record<string, any> };
-};
-
 export function RequestValidator(
   dto: ClassConstructor<any>,
-  payload: ERouteControllerActionPayload,
+  payload: ERouteControllerActionPayload[],
 ): TMiddleware {
-  return async (ctx: TContext, next) => {
-    const plain: Record<string, any> =
-      (payload === 'query' ? ctx.query : ctx.request.body) ?? {};
+  return async (ctx, next) => {
+    let plain: Record<string, any> = {};
+    payload.forEach((i) => {
+      if (i === ERouteControllerActionPayload.PATH) {
+        plain = {
+          ...plain,
+          ...ctx.params,
+        };
+      } else if (i === ERouteControllerActionPayload.QUERY) {
+        plain = {
+          ...plain,
+          ...ctx.query,
+        };
+      } else if (i === ERouteControllerActionPayload.BODY) {
+        plain = {
+          ...plain,
+          ...ctx.body,
+        };
+      }
+    });
     ctx.state.dto = await validateDTO(dto, plain);
     await next();
   };
