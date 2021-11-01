@@ -7,16 +7,28 @@ import { ICallback, IConfig } from '../types';
 import { StatsWorker } from '../src/monitor-server/workers/stats.worker';
 import { QueueManager } from '../src/queue-manager';
 import { MessageManager } from '../src/message-manager';
+import * as supertest from 'supertest';
 
 type TMonitorServer = ReturnType<typeof MonitorServer>;
+
 type TGetConsumerArgs = {
   queueName?: string;
   cfg?: IConfig;
   consumeMock?: ((msg: Message, cb: ICallback<void>) => void) | null;
 };
 
-Message.setDefaultOptions(config.message);
+export interface ISuperTestResponse<TData> extends supertest.Response {
+  body: {
+    data?: TData;
+    error?: {
+      code: string;
+      message: string;
+      details: Record<string, any>;
+    };
+  };
+}
 
+Message.setDefaultOptions(config.message);
 const MessageManagerAsync = promisifyAll(MessageManager);
 const QueueManagerAsync = promisifyAll(QueueManager);
 
@@ -179,4 +191,68 @@ export async function untilConsumerEvent(
   event: string,
 ): Promise<void> {
   return consumerOnEvent(consumer, event);
+}
+
+export async function produceAndAcknowledgeMessage() {
+  const producer = getProducer();
+  const consumer = getConsumer({
+    consumeMock: jest.fn((msg, cb) => {
+      cb();
+    }),
+  });
+
+  const message = new Message();
+  message.setBody({ hello: 'world' });
+  await producer.produceMessageAsync(message);
+
+  consumer.run();
+  await untilConsumerIdle(consumer);
+  return { producer, consumer, message };
+}
+
+export async function produceAndDeadLetterMessage() {
+  const producer = getProducer();
+  const consumer = getConsumer({
+    consumeMock: jest.fn(() => {
+      throw new Error('Explicit error');
+    }),
+  });
+
+  const message = new Message();
+  message.setBody({ hello: 'world' });
+  await producer.produceMessageAsync(message);
+
+  consumer.run();
+  await untilConsumerIdle(consumer);
+  return { producer, consumer, message };
+}
+
+export async function produceMessage() {
+  const producer = getProducer();
+  const message = new Message();
+  message.setBody({ hello: 'world' });
+  await producer.produceMessageAsync(message);
+  return { producer, message };
+}
+
+export async function produceMessageWithPriority() {
+  const cfg = {
+    ...config,
+    priorityQueue: true,
+  };
+  const queueName = 'test_queue';
+  const producer = promisifyAll(getProducer(queueName, cfg));
+
+  const message = new Message();
+  message.setPriority(Message.MessagePriority.LOW);
+  await producer.produceMessageAsync(message);
+  return { message, producer };
+}
+
+export async function produceScheduledMessage() {
+  const producer = promisifyAll(getProducer());
+  const message = new Message();
+  message.setScheduledDelay(10000);
+  await producer.produceMessageAsync(message);
+  return { message, producer };
 }

@@ -50,6 +50,7 @@ import { RequeueAcknowledgedMessageResponseDTO } from './actions/requeue-acknowl
 import { RequeueAcknowledgedMessageWithPriorityHandler } from './actions/requeue-acknowledged-message-with-priority/requeue-acknowledged-message-with-priority.handler';
 import { RequeueAcknowledgedMessageWithPriorityRequestDTO } from './actions/requeue-acknowledged-message-with-priority/requeue-acknowledged-message-with-priority-request.DTO';
 import { RequeueAcknowledgedMessageWithPriorityResponseDTO } from './actions/requeue-acknowledged-message-with-priority/requeue-acknowledged-message-with-priority-response.DTO';
+import { GetPendingMessagesWithPriorityHandler } from './actions/get-pending-messages-with-priority/get-pending-messages-with-priority.handler';
 
 export const messagesController: TRouteController = {
   prefix: '/queues/:queueName',
@@ -83,7 +84,7 @@ export const messagesController: TRouteController = {
         ERouteControllerActionPayload.PATH,
         ERouteControllerActionPayload.QUERY,
       ],
-      Handler: GetPendingMessagesHandler,
+      Handler: GetPendingMessagesWithPriorityHandler,
       RequestDTO: GetPendingMessagesWithPriorityRequestDTO,
       ResponseDTO: GetPendingMessagesWithPriorityResponseDTO,
     },

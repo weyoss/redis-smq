@@ -29,6 +29,7 @@ For more details about RedisSMQ design see [https://medium.com/@weyoss/building-
  * **[JSON Logging](docs/logs.md)**: Supports JSON log format for troubleshooting and analytic purposes.
  * **Highly optimized**: No promises, no async/await, small memory footprint, no memory leaks. See [callbacks vs promises vs async/await benchmarks](http://bluebirdjs.com/docs/benchmarks.html).
  * **[Configurable](docs/configuration.md)**: Many options and features can be configured.
+ * **Rigorously tested**: With 79+ tests and code coverage no less than 80%.
  * **Supports both redis & ioredis**: RedisSMQ can be configured to use either `redis` or `ioredis` 
  to connect to Redis server.  
 

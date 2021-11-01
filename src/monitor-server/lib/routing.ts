@@ -49,6 +49,7 @@ export function getActionRouter(
         ctx.body = { data };
       } else {
         ctx.status = 204;
+        ctx.body = undefined;
       }
       await next();
     },

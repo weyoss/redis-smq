@@ -1,8 +1,10 @@
 import {
-  getConsumer,
   getProducer,
   getQueueManager,
-  untilConsumerIdle,
+  produceAndAcknowledgeMessage,
+  produceAndDeadLetterMessage,
+  produceMessage,
+  produceMessageWithPriority,
 } from '../common';
 import { Message } from '../../src/message';
 import { config } from '../config';
@@ -10,15 +12,9 @@ import { promisifyAll } from 'bluebird';
 
 describe('Queue metrics: check that queue metrics are valid', () => {
   test('Case 1', async () => {
-    const producer = getProducer();
-
-    const msg = new Message();
-    msg.setBody({ hello: 'world' });
-    await producer.produceMessageAsync(msg);
-
+    const { producer } = await produceMessage();
     const queueManager = promisifyAll(await getQueueManager());
     const m = await queueManager.getQueueMetricsAsync(producer.getQueueName());
-
     expect(m.pending).toBe(1);
     expect(m.pendingWithPriority).toBe(0);
     expect(m.acknowledged).toBe(0);
@@ -26,23 +22,9 @@ describe('Queue metrics: check that queue metrics are valid', () => {
   });
 
   test('Case 2', async () => {
-    const producer = getProducer();
-    const consumer = getConsumer({
-      consumeMock: jest.fn(() => {
-        throw new Error('Explicit error');
-      }),
-    });
-
-    const msg = new Message();
-    msg.setBody({ hello: 'world' });
-    await producer.produceMessageAsync(msg);
-
-    consumer.run();
-    await untilConsumerIdle(consumer);
-
+    const { producer } = await produceAndDeadLetterMessage();
     const queueManager = promisifyAll(await getQueueManager());
     const m = await queueManager.getQueueMetricsAsync(producer.getQueueName());
-
     expect(m.pending).toBe(0);
     expect(m.pendingWithPriority).toBe(0);
     expect(m.acknowledged).toBe(0);
@@ -50,23 +32,9 @@ describe('Queue metrics: check that queue metrics are valid', () => {
   });
 
   test('Case 3', async () => {
-    const producer = getProducer();
-    const consumer = getConsumer({
-      consumeMock: jest.fn((msg, cb) => {
-        cb();
-      }),
-    });
-
-    const msg = new Message();
-    msg.setBody({ hello: 'world' });
-    await producer.produceMessageAsync(msg);
-
-    consumer.run();
-    await untilConsumerIdle(consumer);
-
+    const { producer } = await produceAndAcknowledgeMessage();
     const queueManager = promisifyAll(await getQueueManager());
     const m = await queueManager.getQueueMetricsAsync(producer.getQueueName());
-
     expect(m.pending).toBe(0);
     expect(m.pendingWithPriority).toBe(0);
     expect(m.acknowledged).toBe(1);
@@ -90,20 +58,9 @@ describe('Queue metrics: check that queue metrics are valid', () => {
   });
 
   test('Case 5', async () => {
-    const cfg = {
-      ...config,
-      priorityQueue: true,
-    };
-    const queueName = 'test_queue';
-    const producer = promisifyAll(getProducer(queueName, cfg));
-
-    const msg = new Message();
-    msg.setPriority(Message.MessagePriority.LOW);
-    await producer.produceMessageAsync(msg);
-
+    const { producer } = await produceMessageWithPriority();
     const queueManager = promisifyAll(await getQueueManager());
     const m = await queueManager.getQueueMetricsAsync(producer.getQueueName());
-
     expect(m.pending).toBe(0);
     expect(m.pendingWithPriority).toBe(1);
     expect(m.acknowledged).toBe(0);

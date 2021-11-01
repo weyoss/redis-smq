@@ -1,7 +1,7 @@
 import { getRedisInstance, startStatsWorker } from '../common';
 import { TAggregatedStats } from '../../types';
 
-test('Check that stats are aggregated and published: Case 1', async () => {
+test('Validating published consumers, producers, and queues metrics: Case 1', async () => {
   await startStatsWorker();
 
   const subscribeClient = await getRedisInstance();

@@ -40,7 +40,7 @@ export type TRequestContext<
 > = ParameterizedContext<
   IContextState<DTO>,
   IContext,
-  IResponseBody<ResponseBody>
+  IResponseBody<ResponseBody> | undefined
 >;
 
 export type TMiddleware<DTO = Record<string, any>> = Koa.Middleware<

@@ -1,4 +1,4 @@
-import { IsString, ValidateNested } from 'class-validator';
+import { IsInt, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class GetQueuesResponseBodyDTO {
@@ -7,6 +7,9 @@ export class GetQueuesResponseBodyDTO {
 }
 
 export class GetQueuesResponseDTO {
+  @IsInt()
+  status!: number;
+
   @ValidateNested()
   @Type(() => GetQueuesResponseBodyDTO)
   body!: GetQueuesResponseBodyDTO;
