@@ -1,26 +1,8 @@
-import {
-  getConsumer,
-  getProducer,
-  getQueueManager,
-  untilConsumerIdle,
-} from '../common';
-import { Message } from '../../src/message';
+import { getQueueManager, produceAndAcknowledgeMessage } from '../common';
 import { promisifyAll } from 'bluebird';
 
 test('Purging acknowledged queue', async () => {
-  const producer = getProducer();
-  const consumer = getConsumer({
-    consumeMock: jest.fn((msg, cb) => {
-      cb();
-    }),
-  });
-
-  const msg = new Message();
-  msg.setBody({ hello: 'world' });
-  await producer.produceMessageAsync(msg);
-
-  consumer.run();
-  await untilConsumerIdle(consumer);
+  const { producer } = await produceAndAcknowledgeMessage();
 
   const queueManager = promisifyAll(await getQueueManager());
   const m = await queueManager.getQueueMetricsAsync(producer.getQueueName());

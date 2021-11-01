@@ -6,6 +6,9 @@ export async function validateDTO<T extends Record<string, any>>(
   plain: Record<string, any>,
 ): Promise<T> {
   const object = plainToClass(dto, plain);
+  if (!Object.keys(object).length) {
+    return object;
+  }
   const errors = await validate(object, {
     stopAtFirstError: true,
     forbidUnknownValues: true,

@@ -1,22 +1,9 @@
-import { getProducer, startMonitorServer } from '../common';
+import { getProducer, ISuperTestResponse, startMonitorServer } from '../common';
 import * as supertest from 'supertest';
 import { Message } from '../../src/message';
+import { GetMessagesResponseBodyDataDTO } from '../../src/monitor-server/controllers/common/get-messages-response-body.DTO';
 
-interface IResponse extends supertest.Response {
-  body: {
-    data?: {
-      items: { sequenceId: number; message: { uuid: string } }[];
-      total: number;
-    };
-    error?: {
-      code: string;
-      message: string;
-      details: Record<string, any>;
-    };
-  };
-}
-
-test('Messages HTTP API: Case 2', async () => {
+test('Fetching and deleting scheduled messages using the HTTP API: Case 2', async () => {
   await startMonitorServer();
   const producer = getProducer();
 
@@ -31,9 +18,8 @@ test('Messages HTTP API: Case 2', async () => {
   }
 
   const request = supertest('http://127.0.0.1:3000');
-  const response1: IResponse = await request.get(
-    '/api/scheduled-messages?skip=0&take=2',
-  );
+  const response1: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =
+    await request.get('/api/scheduled-messages?skip=0&take=2');
   expect(response1.statusCode).toBe(200);
   expect(response1.body.data).toBeDefined();
   expect(response1.body.data?.total).toBe(4);
@@ -43,9 +29,8 @@ test('Messages HTTP API: Case 2', async () => {
   expect(response1.body.data?.items[1].sequenceId).toBe(1);
   expect(response1.body.data?.items[1].message.uuid).toBe(messages[1].getId());
 
-  const response2: IResponse = await request.get(
-    '/api/scheduled-messages?skip=2&take=2',
-  );
+  const response2: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =
+    await request.get('/api/scheduled-messages?skip=2&take=2');
   expect(response2.statusCode).toBe(200);
   expect(response2.body.data).toBeDefined();
   expect(response2.body.data?.total).toBe(4);
@@ -55,9 +40,8 @@ test('Messages HTTP API: Case 2', async () => {
   expect(response2.body.data?.items[1].sequenceId).toBe(3);
   expect(response2.body.data?.items[1].message.uuid).toBe(messages[3].getId());
 
-  const response3: IResponse = await request.get(
-    '/api/scheduled-messages?skip=4&take=2',
-  );
+  const response3: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =
+    await request.get('/api/scheduled-messages?skip=4&take=2');
   expect(response3.statusCode).toBe(200);
   expect(response3.body.data).toBeDefined();
   expect(response3.body.data?.total).toBe(4);

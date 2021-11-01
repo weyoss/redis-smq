@@ -28,7 +28,7 @@ export class QueueManagerService {
     args: PurgeAcknowledgedMessagesRequestDTO,
   ): Promise<void> {
     const { queueName } = args;
-    return this.queueManager.purgeAcknowledgedMessagesQueueAsync(queueName);
+    return this.queueManager.purgeDeadLetterQueueAsync(queueName);
   }
 
   async purgePendingQueue(args: PurgePendingMessagesRequestDTO): Promise<void> {

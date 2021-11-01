@@ -7,7 +7,7 @@ import {
 } from '../common';
 import { TAggregatedStats } from '../../types';
 
-test('Check that stats are aggregated and published: Case 2', async () => {
+test('Validating published consumers, producers, and queues metrics: Case 2', async () => {
   const consumer = getConsumer();
   await consumer.runAsync();
 

@@ -3,6 +3,8 @@ import {
   getConsumer,
   getMessageManager,
   getProducer,
+  produceAndAcknowledgeMessage,
+  produceAndDeadLetterMessage,
   untilConsumerIdle,
 } from '../common';
 import { Message } from '../../src/message';
@@ -29,19 +31,7 @@ describe('MessageManager', () => {
   });
 
   test('Case 2', async () => {
-    const producer = getProducer();
-    const consumer = getConsumer({
-      consumeMock: jest.fn((msg, cb) => {
-        cb();
-      }),
-    });
-
-    const msg = new Message();
-    msg.setBody({ hello: 'world' });
-    await producer.produceMessageAsync(msg);
-
-    consumer.run();
-    await untilConsumerIdle(consumer);
+    const { producer, message } = await produceAndAcknowledgeMessage();
 
     const messageManager = promisifyAll(await getMessageManager());
     const res = await messageManager.getAcknowledgedMessagesAsync(
@@ -52,34 +42,20 @@ describe('MessageManager', () => {
 
     expect(res.total).toBe(1);
     expect(res.items[0].sequenceId).toBe(0);
-    expect(res.items[0].message.getId()).toBe(msg.getId());
+    expect(res.items[0].message.getId()).toBe(message.getId());
   });
 
   test('Case 3', async () => {
-    const producer = getProducer();
-    const consumer = getConsumer({
-      consumeMock: jest.fn(() => {
-        throw new Error('Explicit error');
-      }),
-    });
-
-    const msg = new Message();
-    msg.setBody({ hello: 'world' });
-    await producer.produceMessageAsync(msg);
-
-    consumer.run();
-    await untilConsumerIdle(consumer);
-
+    const { producer, message } = await produceAndDeadLetterMessage();
     const messageManager = promisifyAll(await getMessageManager());
     const res = await messageManager.getDeadLetterMessagesAsync(
       producer.getQueueName(),
       0,
       100,
     );
-
     expect(res.total).toBe(1);
     expect(res.items[0].sequenceId).toBe(0);
-    expect(res.items[0].message.getId()).toBe(msg.getId());
+    expect(res.items[0].message.getId()).toBe(message.getId());
   });
 
   test('Case 4', async () => {
