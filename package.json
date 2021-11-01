@@ -1,6 +1,6 @@
 {
   "name": "redis-smq",
-  "version": "3.3.0",
+  "version": "4.0.0",
   "description": "A simple high-performance Redis message queue for Node.js.",
   "author": "Weyoss <weyoss@protonmail.com>",
   "license": "MIT",
@@ -11,7 +11,9 @@
     "queue",
     "job queue",
     "jobs",
-    "redis-smq"
+    "redis-smq",
+    "priority",
+    "priority queue"
   ],
   "repository": {
     "type": "git",
@@ -33,7 +35,6 @@
     "class-transformer": "^0.4.0",
     "class-validator": "^0.13.1",
     "cron-parser": "^3.5.0",
-    "debug": "^4.3.2",
     "ioredis": "^4.28.0",
     "koa": "^2.13.3",
     "koa-bodyparser": "^4.3.0",

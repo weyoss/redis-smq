@@ -1,23 +1,22 @@
-import { getMessageManager, getProducer, getQueueManager } from '../common';
-import { Message } from '../../src/message';
-import { promisifyAll } from 'bluebird';
+import { getQueueManager, getRedisInstance, produceMessage } from '../common';
+import { delay, promisifyAll } from 'bluebird';
+import { MessageManager } from '../../src/system/message-manager/message-manager';
 
 test('Concurrent delete operation', async () => {
-  const producer = getProducer();
+  const { producer, message } = await produceMessage();
+  const redisClient1 = await getRedisInstance();
+  const messageManager1 = promisifyAll(new MessageManager(redisClient1));
+  const redisClient2 = promisifyAll(await getRedisInstance());
+  const messageManager2 = promisifyAll(new MessageManager(redisClient2));
 
-  const msg = new Message();
-  msg.setBody({ hello: 'world' });
-  await producer.produceMessageAsync(msg);
-
-  const messageManager = promisifyAll(await getMessageManager());
-  const res1 = await messageManager.getPendingMessagesAsync(
+  const res1 = await messageManager1.getPendingMessagesAsync(
     producer.getQueueName(),
     0,
     100,
   );
 
   expect(res1.total).toBe(1);
-  expect(res1.items[0].message.getId()).toBe(msg.getId());
+  expect(res1.items[0].message.getId()).toBe(message.getId());
 
   const queueManager = promisifyAll(await getQueueManager());
   const queueMetrics = await queueManager.getQueueMetricsAsync(
@@ -27,20 +26,20 @@ test('Concurrent delete operation', async () => {
 
   await expect(async () => {
     await Promise.all([
-      messageManager.deletePendingMessageAsync(
+      messageManager1.deletePendingMessageAsync(
         producer.getQueueName(),
         0,
-        msg.getId(),
+        message.getId(),
       ),
-      messageManager.deletePendingMessageAsync(
+      messageManager2.deletePendingMessageAsync(
         producer.getQueueName(),
         0,
-        msg.getId(),
+        message.getId(),
       ),
     ]);
   }).rejects.toThrow('Could not acquire a  lock. Try again later.');
-
-  const res2 = await messageManager.getPendingMessagesAsync(
+  await delay(5000);
+  const res2 = await messageManager1.getPendingMessagesAsync(
     producer.getQueueName(),
     0,
     100,
