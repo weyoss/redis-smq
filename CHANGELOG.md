@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 4.0.1 (2021-11-02)
+
+* Removed Scheduler class in favor of MessageManager.
+* Added QueueManager and MessageManager, allowing to fetch/delete/requeue messages from different queues.
+* Improved MQ performance by using background message processing with the help of workers.
+* MQ architecture tweaks and improvements.
+* Redis keys namespace bug fix.
+
 ## 3.3.0 (2021-10-07)
 
 - With the release of v3.3.0, reliable, persistent priority queues are now supported.
