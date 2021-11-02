@@ -57,16 +57,17 @@ For more details about RedisSMQ design see [https://medium.com/@weyoss/building-
 
 ## What's new?
 
+**2021.11.02**
+
+- v4.0.1 is out with significant performance improvements and new features including the ability to
+  fetch/delete/requeue messages from different queues using the `MessageManager`/`QueueManager` or with the help of
+  the HTTP API.
+
+- The next release will allow the message management features to be used from the `Web UI`.
+
 **2021.10.07**
 
 - With the release of v3.3.0, reliable, persistent priority queues are now supported.
-
-**2021.09.08**
-
-- A major release v3 is out. 
-- Upgrading your installation to the newest version should be straightforward as most APIs are compatible, [with some exceptions](docs/migrating-from-v2-to-v3.md).
-- The project's code base has been migrated to TypeScript to make use of strong typings. 
-- JavaScript's users are always first class citizens.
 
 See [CHANGELOG](CHANGELOG.md) for more details.
 
