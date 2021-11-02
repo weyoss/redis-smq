@@ -51,8 +51,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests with coverage
-        run: npm test --collectCoverage
+      - name: Run type coverage
+        run: npm run type-coverage
+
+      - name: Run tests and collect code coverage
+        run: npm test
+        if: success()
 
       - name: Coveralls
         uses: coverallsapp/github-action@master
