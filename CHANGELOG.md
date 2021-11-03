@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 4.0.2 (2021-11-03)
+
+* Updated docs.
+* Added current MQ architecture overview.
+
 ## 4.0.1 (2021-11-02)
 
 * Removed Scheduler class in favor of MessageManager.
