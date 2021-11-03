@@ -6,9 +6,23 @@
 [![NPM downloads](https://img.shields.io/npm/dm/redis-smq.svg)](https://npmjs.org/package/redis-smq)
 [![Code quality](https://img.shields.io/lgtm/grade/javascript/github/weyoss/redis-smq.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/weyoss/redis-smq/context:javascript)
 
-A simple high-performance Redis message queue for Node.js.
+RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing them asynchronously with consumers. Backed 
+by Redis, it allows scaling up your application with ease of use.
 
-For more details about RedisSMQ design see [https://medium.com/@weyoss/building-a-simple-message-queue-using-redis-server-and-node-js-964eda240a2a](https://medium.com/@weyoss/building-a-simple-message-queue-using-redis-server-and-node-js-964eda240a2a)
+For more details about initial RedisSMQ design and the motivation behind it see [https://medium.com/@weyoss/building-a-simple-message-queue-using-redis-server-and-node-js-964eda240a2a](https://medium.com/@weyoss/building-a-simple-message-queue-using-redis-server-and-node-js-964eda240a2a)
+
+## Current MQ Architecture Overview
+
+Highlevel overview of how RedisSMQ works:
+
+- An application publishes messages using a producer.
+- Consumers pull messages off queues and start processing.
+- If an error occurs, messages are unacknowledged. Otherwise, once acknowledged, messages are moved to the `acknowledged queue`.
+- Unacknowledged messages are re-queued with optional `retryDelay`. When `retryThreshold` exceeds, messages are put in the `deal-letter queue`.
+
+&nbsp;
+
+![RedisSMQ Architecture Overview](docs/mq-architecture-overview.png)
 
 ## Features
 
@@ -59,15 +73,16 @@ For more details about RedisSMQ design see [https://medium.com/@weyoss/building-
 
 **2021.11.02**
 
-- v4.0.1 is out with significant performance improvements and new features including the ability to
+- v4 is out with significant performance improvements and new features including the ability to
   fetch/delete/requeue messages from different queues using the `MessageManager`/`QueueManager` or with the help of
-  the HTTP API.
+  the HTTP API. If you are upgrading your installation, take a look at the [migration guide](docs/migrating-from-v3-to-v4.md) 
+  before proceeding.
 
 - The next release will allow the message management features to be used from the `Web UI`.
 
 **2021.10.07**
 
-- With the release of v3.3.0, reliable, persistent priority queues are now supported.
+- With the release of v3.3, reliable, persistent priority queues are now supported.
 
 See [CHANGELOG](CHANGELOG.md) for more details.
 
