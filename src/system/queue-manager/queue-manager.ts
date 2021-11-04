@@ -1,12 +1,11 @@
 import { RedisClient } from '../redis-client/redis-client';
-import { ICallback, IConfig, IQueueMetrics } from '../../../types';
+import { ICallback, IQueueMetrics } from '../../../types';
 import { redisKeys } from '../common/redis-keys';
 import { Base } from '../base';
 import { Consumer } from '../consumer/consumer';
 import * as async from 'async';
 
 export class QueueManager {
-  protected static instance: QueueManager | null = null;
   protected redisClient: RedisClient;
 
   constructor(redisClient: RedisClient) {
@@ -14,26 +13,6 @@ export class QueueManager {
   }
 
   ///
-
-  bootstrap(instance: Base, cb: ICallback<void>): void {
-    const multi = this.redisClient.multi();
-    const { keyIndexQueue } = instance.getRedisKeys();
-    multi.sadd(keyIndexQueue, instance.getQueueName());
-    if (instance instanceof Consumer) {
-      const {
-        keyQueueProcessing,
-        keyIndexProcessingQueues,
-        keyIndexQueueMessageProcessingQueues,
-      } = instance.getRedisKeys();
-      multi.hset(
-        keyIndexQueueMessageProcessingQueues,
-        keyQueueProcessing,
-        instance.getId(),
-      );
-      multi.sadd(keyIndexProcessingQueues, keyQueueProcessing);
-    }
-    this.redisClient.execMulti(multi, (err) => cb(err));
-  }
 
   deleteProcessingQueue(
     queueName: string,
@@ -152,20 +131,27 @@ export class QueueManager {
     );
   }
 
-  static getSingletonInstance(
-    config: IConfig,
-    cb: ICallback<QueueManager>,
+  static registerQueues(
+    instance: Base,
+    redisClient: RedisClient,
+    cb: ICallback<void>,
   ): void {
-    if (!QueueManager.instance) {
-      RedisClient.getNewInstance(config, (err, client) => {
-        if (err) cb(err);
-        else if (!client) cb(new Error(`Expected an instance of RedisClient`));
-        else {
-          const instance = new QueueManager(client);
-          QueueManager.instance = instance;
-          cb(null, instance);
-        }
-      });
-    } else cb(null, QueueManager.instance);
+    const multi = redisClient.multi();
+    const { keyIndexQueue } = instance.getRedisKeys();
+    multi.sadd(keyIndexQueue, instance.getQueueName());
+    if (instance instanceof Consumer) {
+      const {
+        keyQueueProcessing,
+        keyIndexProcessingQueues,
+        keyIndexQueueMessageProcessingQueues,
+      } = instance.getRedisKeys();
+      multi.hset(
+        keyIndexQueueMessageProcessingQueues,
+        keyQueueProcessing,
+        instance.getId(),
+      );
+      multi.sadd(keyIndexProcessingQueues, keyQueueProcessing);
+    }
+    redisClient.execMulti(multi, (err) => cb(err));
   }
 }

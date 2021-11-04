@@ -150,10 +150,17 @@ export class Heartbeat extends EventEmitter {
   }
 
   quit(cb: ICallback<void>): void {
-    this.ticker.once(events.DOWN, () =>
-      this.expireHeartbeat(this.redisClient, cb),
+    async.waterfall(
+      [
+        (cb: ICallback<void>) => {
+          this.ticker.once(events.DOWN, cb);
+          this.ticker.quit();
+        },
+        (cb: ICallback<void>) => this.expireHeartbeat(this.redisClient, cb),
+        (cb: ICallback<void>) => this.redisClient.halt(cb),
+      ],
+      cb,
     );
-    this.ticker.quit();
   }
 
   static getHeartbeatsByStatus(

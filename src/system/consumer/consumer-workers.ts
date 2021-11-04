@@ -6,6 +6,7 @@ import { redisKeys } from '../common/redis-keys';
 import { EventEmitter } from 'events';
 import { events } from '../common/events';
 import { ICallback, IConfig } from '../../../types';
+import * as async from 'async';
 
 export class ConsumerWorkers extends EventEmitter {
   protected ticker: Ticker;
@@ -13,6 +14,7 @@ export class ConsumerWorkers extends EventEmitter {
   protected lockerManager: LockManager;
   protected workerRunner: WorkerRunner;
   protected workersDir: string;
+  protected redisClient: RedisClient;
 
   constructor(
     workersDir: string,
@@ -23,6 +25,7 @@ export class ConsumerWorkers extends EventEmitter {
     super();
     this.workersDir = workersDir;
     this.config = config;
+    this.redisClient = redisClient;
     this.workerRunner = workerRunner;
     const { keyLockConsumerWorkersRunner } = redisKeys.getGlobalKeys();
     this.lockerManager = new LockManager(
@@ -50,11 +53,13 @@ export class ConsumerWorkers extends EventEmitter {
   };
 
   quit(cb: ICallback<void>): void {
-    this.ticker.once(events.DOWN, () => {
-      if (this.lockerManager.isLocked()) {
-        this.workerRunner.shutdown(() => this.lockerManager.quit(cb));
-      } else this.lockerManager.quit(cb);
-    });
-    this.ticker.quit();
+    const stopTicker = (cb: ICallback<void>) => {
+      this.ticker.once(events.DOWN, cb);
+      this.ticker.quit();
+    };
+    const shutdownWorkers = (cb: ICallback<void>) =>
+      this.workerRunner.shutdown(cb);
+    const releaseLock = (cb: ICallback<void>) => this.lockerManager.quit(cb);
+    async.waterfall([stopTicker, shutdownWorkers, releaseLock], cb);
   }
 }

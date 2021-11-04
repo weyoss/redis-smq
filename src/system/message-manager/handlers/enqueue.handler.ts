@@ -8,10 +8,10 @@ import {
   getPaginatedListMessages,
   getPaginatedSortedSetMessages,
 } from '../common';
+import { Handler } from './handler';
 
-export class EnqueueMessageHandler {
+export class EnqueueHandler extends Handler {
   getAcknowledgedMessages(
-    redisClient: RedisClient,
     queueName: string,
     skip: number,
     take: number,
@@ -19,7 +19,7 @@ export class EnqueueMessageHandler {
   ): void {
     const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName);
     getPaginatedListMessages(
-      redisClient,
+      this.redisClient,
       keyQueueAcknowledgedMessages,
       skip,
       take,

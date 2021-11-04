@@ -1,4 +1,3 @@
-import { RedisClient } from '../../redis-client/redis-client';
 import { Message } from '../../message';
 import {
   EMessageDeadLetterCause,
@@ -7,10 +6,10 @@ import {
 } from '../../../../types';
 import { redisKeys } from '../../common/redis-keys';
 import { deleteListMessageAtSequenceId } from '../common';
+import { Handler } from './handler';
 
-export class ProcessingQueueMessageHandler {
+export class ProcessingHandler extends Handler {
   deleteDeadLetterMessage(
-    redisClient: RedisClient,
     queueName: string,
     index: number,
     messageId: string,
@@ -19,7 +18,7 @@ export class ProcessingQueueMessageHandler {
     const { keyQueueDL, keyLockDeleteDeadLetterMessage } =
       redisKeys.getKeys(queueName);
     deleteListMessageAtSequenceId(
-      redisClient,
+      this.redisClient,
       keyLockDeleteDeadLetterMessage,
       keyQueueDL,
       index,
@@ -29,7 +28,6 @@ export class ProcessingQueueMessageHandler {
   }
 
   deleteAcknowledgedMessage(
-    redisClient: RedisClient,
     queueName: string,
     index: number,
     messageId: string,
@@ -38,7 +36,7 @@ export class ProcessingQueueMessageHandler {
     const { keyQueueAcknowledgedMessages, keyLockDeleteAcknowledgedMessage } =
       redisKeys.getKeys(queueName);
     deleteListMessageAtSequenceId(
-      redisClient,
+      this.redisClient,
       keyLockDeleteAcknowledgedMessage,
       keyQueueAcknowledgedMessages,
       index,
@@ -48,7 +46,6 @@ export class ProcessingQueueMessageHandler {
   }
 
   deadLetterMessage(
-    redisClient: RedisClient,
     message: Message,
     queueName: string,
     keyQueueProcessing: string,
@@ -57,21 +54,20 @@ export class ProcessingQueueMessageHandler {
     cb: ICallback<void>,
   ): void {
     const { keyQueueDL } = redisKeys.getKeys(queueName);
-    redisClient.rpoplpush(keyQueueProcessing, keyQueueDL, (err) => {
+    this.redisClient.rpoplpush(keyQueueProcessing, keyQueueDL, (err) => {
       if (err) cb(err);
       else cb();
     });
   }
 
   acknowledge(
-    redisClient: RedisClient,
     message: Message,
     queueName: string,
     keyQueueProcessing: string,
     cb: ICallback<void>,
   ): void {
     const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName);
-    redisClient.rpoplpush(
+    this.redisClient.rpoplpush(
       keyQueueProcessing,
       keyQueueAcknowledgedMessages,
       (err) => {
@@ -82,7 +78,6 @@ export class ProcessingQueueMessageHandler {
   }
 
   delayBeforeRequeue(
-    redisClient: RedisClient,
     message: Message,
     queueName: string,
     keyQueueProcessing: string,
@@ -90,11 +85,12 @@ export class ProcessingQueueMessageHandler {
     cb: ICallback<void>,
   ): void {
     const { keyQueueDelay } = redisKeys.getKeys(queueName);
-    redisClient.rpoplpush(keyQueueProcessing, keyQueueDelay, (err) => cb(err));
+    this.redisClient.rpoplpush(keyQueueProcessing, keyQueueDelay, (err) =>
+      cb(err),
+    );
   }
 
   requeue(
-    redisClient: RedisClient,
     message: Message,
     queueName: string,
     keyQueueProcessing: string,
@@ -103,7 +99,7 @@ export class ProcessingQueueMessageHandler {
     cb: ICallback<void>,
   ): void {
     const { keyQueueRequeue } = redisKeys.getKeys(queueName);
-    redisClient.rpoplpush(keyQueueProcessing, keyQueueRequeue, (err) =>
+    this.redisClient.rpoplpush(keyQueueProcessing, keyQueueRequeue, (err) =>
       cb(err),
     );
   }

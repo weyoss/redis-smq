@@ -1,12 +1,11 @@
 import { ICallback } from '../../../../types';
-import { RedisClient } from '../../redis-client/redis-client';
 import { redisKeys } from '../../common/redis-keys';
 import { getListMessageAtSequenceId } from '../common';
 import { Message } from '../../message';
+import { Handler } from './handler';
 
-export class RequeueMessageHandler {
+export class RequeueHandler extends Handler {
   protected requeueListMessage(
-    redisClient: RedisClient,
     queueName: string,
     from: string,
     index: number,
@@ -17,7 +16,7 @@ export class RequeueMessageHandler {
   ): void {
     const { keyQueuePriority, keyQueue } = redisKeys.getKeys(queueName);
     getListMessageAtSequenceId(
-      redisClient,
+      this.redisClient,
       from,
       index,
       messageId,
@@ -25,7 +24,7 @@ export class RequeueMessageHandler {
         if (err) cb(err);
         else if (!msg) cb(new Error('Expected an instance of Message'));
         else {
-          const multi = redisClient.multi();
+          const multi = this.redisClient.multi();
           multi.lrem(from, 1, JSON.stringify(msg));
           const message = Message.createFromMessage(msg, true, true);
           const msgPriority = withPriority
@@ -34,14 +33,13 @@ export class RequeueMessageHandler {
           if (typeof msgPriority === 'number')
             multi.zadd(keyQueuePriority, msgPriority, JSON.stringify(message));
           else multi.lpush(keyQueue, JSON.stringify(message));
-          redisClient.execMulti(multi, (err) => cb(err));
+          this.redisClient.execMulti(multi, (err) => cb(err));
         }
       },
     );
   }
 
   requeueMessageFromDLQueue(
-    redisClient: RedisClient,
     queueName: string,
     index: number,
     messageId: string,
@@ -51,7 +49,6 @@ export class RequeueMessageHandler {
   ): void {
     const { keyQueueDL } = redisKeys.getKeys(queueName);
     this.requeueListMessage(
-      redisClient,
       queueName,
       keyQueueDL,
       index,
@@ -63,7 +60,6 @@ export class RequeueMessageHandler {
   }
 
   requeueMessageFromAcknowledgedQueue(
-    redisClient: RedisClient,
     queueName: string,
     index: number,
     messageId: string,
@@ -73,7 +69,6 @@ export class RequeueMessageHandler {
   ): void {
     const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName);
     this.requeueListMessage(
-      redisClient,
       queueName,
       keyQueueAcknowledgedMessages,
       index,
