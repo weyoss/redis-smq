@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 4.0.3 (2021-11-04)
+
+* Minor refactoring and improvements.
+
 ## 4.0.2 (2021-11-03)
 
 * Updated docs.
