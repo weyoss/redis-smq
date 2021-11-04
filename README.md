@@ -13,12 +13,12 @@ For more details about initial RedisSMQ design and the motivation behind it see 
 
 ## Current MQ Architecture Overview
 
-Highlevel overview of how RedisSMQ works:
+High-level overview of how RedisSMQ works:
 
 - An application publishes messages using a producer.
 - Consumers pull messages off queues and start processing.
 - If an error occurs, messages are unacknowledged. Otherwise, once acknowledged, messages are moved to the `acknowledged queue`.
-- Unacknowledged messages are re-queued with optional `retryDelay`. When `retryThreshold` exceeds, messages are put in the `deal-letter queue`.
+- Unacknowledged messages are re-queued with optional `retryDelay`. When `retryThreshold` is exceeded, messages are put in the `deal-letter queue`.
 
 &nbsp;
 

@@ -8,17 +8,17 @@ import {
   deleteSortedSetMessageAtSequenceId,
   getPaginatedSortedSetMessages,
 } from '../common';
+import { Handler } from './handler';
 
-export class ScheduledMessagesHandler {
+export class ScheduleHandler extends Handler {
   getScheduledMessages(
-    redisClient: RedisClient,
     skip: number,
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
     const { keyQueueScheduled } = redisKeys.getGlobalKeys();
     getPaginatedSortedSetMessages(
-      redisClient,
+      this.redisClient,
       keyQueueScheduled,
       skip,
       take,
@@ -26,16 +26,11 @@ export class ScheduledMessagesHandler {
     );
   }
 
-  deleteScheduled(
-    redisClient: RedisClient,
-    index: number,
-    messageId: string,
-    cb: ICallback<void>,
-  ): void {
+  deleteScheduled(index: number, messageId: string, cb: ICallback<void>): void {
     const { keyQueueScheduled, keyLockDeleteScheduledMessage } =
       redisKeys.getGlobalKeys();
     deleteSortedSetMessageAtSequenceId(
-      redisClient,
+      this.redisClient,
       keyLockDeleteScheduledMessage,
       keyQueueScheduled,
       index,
@@ -44,16 +39,11 @@ export class ScheduledMessagesHandler {
     );
   }
 
-  schedule(
-    redisClient: RedisClient,
-    message: Message,
-    cb: ICallback<boolean>,
-  ): void {
-    const timestamp =
-      ScheduledMessagesHandler.getNextScheduledTimestamp(message) ?? 0;
+  schedule(message: Message, cb: ICallback<boolean>): void {
+    const timestamp = ScheduleHandler.getNextScheduledTimestamp(message) ?? 0;
     if (timestamp > 0) {
       const { keyQueueScheduled } = redisKeys.getGlobalKeys();
-      redisClient.zadd(
+      this.redisClient.zadd(
         keyQueueScheduled,
         timestamp,
         JSON.stringify(message),
@@ -91,7 +81,7 @@ export class ScheduledMessagesHandler {
               multi.lpush(keyQueue, JSON.stringify(message));
             }
             const nextScheduleTimestamp =
-              ScheduledMessagesHandler.getNextScheduledTimestamp(message);
+              ScheduleHandler.getNextScheduledTimestamp(message);
             if (nextScheduleTimestamp) {
               multi.zadd(
                 keyQueueScheduled,

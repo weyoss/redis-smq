@@ -16,13 +16,12 @@ import { ConsumerFrontend } from './consumer-frontend';
 
 export class Consumer extends Base {
   private consumerRedisClient: RedisClient | null = null;
-  private heartbeatRedisClient: RedisClient | null = null;
   private heartbeat: Heartbeat | null = null;
   private ratesProvider: ConsumerRatesProvider | null = null;
   private consumerWorkers: ConsumerWorkers | null = null;
   private consumerFrontend: ConsumerFrontend | null = null;
 
-  private getConsumerRedisClient(cb: TUnaryFunction<RedisClient>): void {
+  protected getConsumerRedisClient(cb: TUnaryFunction<RedisClient>): void {
     if (!this.consumerRedisClient)
       this.emit(events.ERROR, new Error('Expected an instance of RedisClient'));
     else cb(this.consumerRedisClient);
@@ -34,7 +33,7 @@ export class Consumer extends Base {
     else cb(this.heartbeat);
   }
 
-  private handleConsume(msg: Message): void {
+  protected handleConsume(msg: Message): void {
     if (!this.consumerFrontend || !this.consumerFrontend.consume) {
       throw new Error('Expected an instance of ConsumeHandler');
     }
@@ -94,27 +93,24 @@ export class Consumer extends Base {
     }
   }
 
-  private unacknowledgeMessage(
+  protected unacknowledgeMessage(
     msg: Message,
     cause: EMessageUnacknowledgedCause,
     err?: Error,
   ): void {
-    this.getConsumerRedisClient((client) => {
-      this.getBroker((broker) => {
-        const { keyQueueProcessing } = this.redisKeys;
-        broker.unacknowledgeMessage(
-          client,
-          this.queueName,
-          keyQueueProcessing,
-          msg,
-          cause,
-          err,
-          (err) => {
-            if (err) this.emit(events.ERROR, err);
-            else this.emit(events.MESSAGE_UNACKNOWLEDGED, msg, cause);
-          },
-        );
-      });
+    this.getBroker((broker) => {
+      const { keyQueueProcessing } = this.redisKeys;
+      broker.unacknowledgeMessage(
+        this.queueName,
+        keyQueueProcessing,
+        msg,
+        cause,
+        err,
+        (err) => {
+          if (err) this.emit(events.ERROR, err);
+          else this.emit(events.MESSAGE_UNACKNOWLEDGED, msg, cause);
+        },
+      );
     });
   }
 
@@ -126,7 +122,7 @@ export class Consumer extends Base {
         this.getConsumerRedisClient((client) => {
           this.logger.info('Waiting for new messages...');
           this.getBroker((broker) => {
-            broker.dequeueMessage(client, this, (err, msgStr) => {
+            broker.dequeueMessage(this, client, (err, msgStr) => {
               if (err) this.emit(events.ERROR, err);
               else if (!msgStr)
                 this.emit(
@@ -180,7 +176,6 @@ export class Consumer extends Base {
         if (err) cb(err);
         else if (!client) cb(new Error(`Expected an instance of RedisClient`));
         else {
-          this.heartbeatRedisClient = client;
           this.heartbeat = new Heartbeat(this, client);
           cb();
         }
@@ -206,6 +201,7 @@ export class Consumer extends Base {
   }
 
   protected goingDown(): TUnaryFunction<ICallback<void>>[] {
+    // return super.goingDown();
     const stopConsumerWorkers = (cb: ICallback<void>) => {
       this.consumerWorkers?.quit(() => {
         this.consumerWorkers = null;
@@ -215,18 +211,18 @@ export class Consumer extends Base {
     const stopHeartbeat = (cb: ICallback<void>) => {
       this.getHeartbeat((heartbeat) => {
         heartbeat.quit(() => {
-          this.heartbeatRedisClient?.halt(() => {
-            this.heartbeatRedisClient = null;
-            cb();
-          });
+          this.heartbeat = null;
+          cb();
         });
       });
     };
     const stopConsumerRedisClient = (cb: ICallback<void>) => {
-      this.consumerRedisClient?.halt(() => {
-        this.consumerRedisClient = null;
-        cb();
-      });
+      if (this.consumerRedisClient) {
+        this.consumerRedisClient.halt(() => {
+          this.consumerRedisClient = null;
+          cb();
+        });
+      } else cb();
     };
     return [stopConsumerWorkers, stopHeartbeat, stopConsumerRedisClient].concat(
       super.goingDown(),

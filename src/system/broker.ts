@@ -8,29 +8,22 @@ import { Message } from './message';
 import BLogger from 'bunyan';
 import { Logger } from './common/logger';
 import { PowerManager } from './common/power-manager';
-import { QueueManager } from './queue-manager/queue-manager';
-import { RedisClient } from './redis-client/redis-client';
 import { MessageManager } from './message-manager/message-manager';
 import { Consumer } from './consumer/consumer';
+import { RedisClient } from './redis-client/redis-client';
 
 export class Broker {
   protected config: IConfig;
   protected logger: BLogger;
   protected powerManager: PowerManager;
   protected messageManager: MessageManager;
-  protected queueManager: QueueManager;
   protected priorityQueue: boolean;
 
-  constructor(
-    config: IConfig,
-    messageManager: MessageManager,
-    queueManager: QueueManager,
-  ) {
+  constructor(config: IConfig, messageManager: MessageManager) {
     this.config = config;
     this.logger = Logger(`broker`, config.log);
     this.powerManager = new PowerManager();
     this.messageManager = messageManager;
-    this.queueManager = queueManager;
     this.priorityQueue = config.priorityQueue === true;
   }
 
@@ -52,8 +45,8 @@ export class Broker {
   }
 
   dequeueMessage(
-    redisClient: RedisClient,
     consumer: Consumer,
+    redisClient: RedisClient,
     cb: ICallback<string>,
   ): void {
     const { keyQueue, keyQueuePriority, keyQueueProcessing } =
@@ -85,7 +78,6 @@ export class Broker {
   }
 
   unacknowledgeMessage(
-    client: RedisClient,
     queueName: string,
     processingQueue: string,
     message: Message,
@@ -95,14 +87,7 @@ export class Broker {
   ): void {
     if (error) this.logger.error(error);
     this.logger.debug(`Unacknowledging message [${message.getId()}]...`);
-    this.retry(
-      client,
-      queueName,
-      processingQueue,
-      message,
-      unacknowledgedCause,
-      cb,
-    );
+    this.retry(queueName, processingQueue, message, unacknowledgedCause, cb);
   }
 
   /**
@@ -111,7 +96,6 @@ export class Broker {
    * messages are periodically scheduled for delivery.
    */
   retry(
-    client: RedisClient,
     queueName: string,
     processingQueue: string,
     message: Message,
@@ -188,5 +172,9 @@ export class Broker {
         (err) => cb(err),
       );
     }
+  }
+
+  quit(cb: ICallback<void>): void {
+    this.messageManager.quit(cb);
   }
 }

@@ -23,19 +23,15 @@ import { Message } from './message';
 import { loadScripts } from './redis-client/lua-scripts';
 
 export abstract class Base extends EventEmitter {
-  private broker: Broker | null = null;
-  private rates: Rates | null = null;
-  private messageManager: MessageManager | null = null;
-  private queueManager: QueueManager | null = null;
-  private sharedRedisClient: RedisClient | null = null;
-  private ratesRedisClient: RedisClient | null = null;
-
   protected readonly id: string;
   protected readonly queueName: string;
   protected readonly config: IConfig;
   protected readonly logger: BunyanLogger;
   protected readonly powerManager: PowerManager;
   protected readonly redisKeys: TInstanceRedisKeys;
+  protected broker: Broker | null = null;
+  protected rates: Rates | null = null;
+  protected sharedRedisClient: RedisClient | null = null;
 
   constructor(queueName: string, config: IConfig) {
     super();
@@ -72,59 +68,35 @@ export abstract class Base extends EventEmitter {
     });
   };
 
-  private setupStats = (cb: ICallback<void>): void => {
+  private setupRates = (cb: ICallback<void>): void => {
     const { monitor } = this.config;
     if (monitor && monitor.enabled) {
-      RedisClient.getNewInstance(this.config, (err, client) => {
-        if (err) cb(err);
-        else if (!client) cb(new Error(`Expected an instance of RedisClient`));
-        else {
-          this.rates = new Rates(this, client);
-          this.ratesRedisClient = client;
-          cb();
-        }
-      });
+      if (!this.sharedRedisClient)
+        cb(new Error(`Expected an instance of RedisClient`));
+      else {
+        this.rates = new Rates(this, this.sharedRedisClient);
+        cb();
+      }
     } else cb();
   };
 
-  private setupMessageManager = (
-    client: RedisClient,
-    cb: (
-      err?: Error | null,
-      client?: RedisClient,
-      messageManager?: MessageManager,
-    ) => void,
+  private registerQueues = (
+    messageManager: MessageManager,
+    cb: ICallback<void>,
   ): void => {
-    this.messageManager = new MessageManager(client);
-    cb(null, client, this.messageManager);
+    if (!this.sharedRedisClient)
+      cb(new Error(`Expected an instance of RedisClient`));
+    else QueueManager.registerQueues(this, this.sharedRedisClient, cb);
   };
 
-  private setupQueueManager = (
-    client: RedisClient,
-    messageManager: MessageManager,
-    cb: (
-      err?: Error | null,
-      client?: RedisClient,
-      messageManager?: MessageManager,
-      queueManager?: QueueManager,
-    ) => void,
-  ): void => {
-    const queueManager = new QueueManager(client);
-    this.queueManager = queueManager;
-    queueManager.bootstrap(this, (err) => {
-      if (err) cb(err);
-      else cb(null, client, messageManager, queueManager);
-    });
-  };
-
-  private setupBroker = (
-    client: RedisClient,
-    messageManager: MessageManager,
-    queueManager: QueueManager,
-    cb: ICallback<Broker>,
-  ): void => {
-    this.broker = new Broker(this.config, messageManager, queueManager);
-    cb();
+  private setupBroker = (cb: ICallback<Broker>): void => {
+    if (!this.sharedRedisClient)
+      cb(new Error(`Expected an instance of RedisClient`));
+    else {
+      const messageManager = new MessageManager(this.sharedRedisClient);
+      this.broker = new Broker(this.config, messageManager);
+      cb();
+    }
   };
 
   protected registerEventsHandlers(): void {
@@ -134,45 +106,44 @@ export abstract class Base extends EventEmitter {
   protected goingUp(): TFunction[] {
     return [
       this.setupSharedRedisClient,
-      this.setupMessageManager,
-      this.setupQueueManager,
+      this.registerQueues,
       this.setupBroker,
-      this.setupStats,
+      this.setupRates,
     ];
   }
 
   protected goingDown(): TUnaryFunction<ICallback<void>>[] {
-    const stopMessageManager = (cb: ICallback<void>) => {
-      if (this.messageManager) {
-        this.messageManager.quit(() => {
-          this.messageManager = null;
+    const stopSharedRedisClient = (cb: ICallback<void>) => {
+      if (this.sharedRedisClient) {
+        this.sharedRedisClient.halt(() => {
+          this.sharedRedisClient = null;
           cb();
         });
       } else cb();
     };
-    const stopStats = (cb: ICallback<void>) => {
+    const stopRates = (cb: ICallback<void>) => {
       if (this.rates) {
         this.rates.quit(() => {
           this.rates = null;
-          this.ratesRedisClient?.halt(() => {
-            this.ratesRedisClient = null;
-            cb();
-          });
+          cb();
         });
       } else cb();
     };
-    const stopSharedRedisClient = (cb: ICallback<void>) => {
-      this.sharedRedisClient?.halt(() => {
-        this.sharedRedisClient = null;
-        cb();
-      });
+    const stopBroker = (cb: ICallback<void>): void => {
+      if (this.broker) {
+        this.broker.quit(() => {
+          this.broker = null;
+          cb();
+        });
+      } else cb();
     };
-    const cleanUp = (cb: ICallback<void>): void => {
-      this.queueManager = null;
-      this.broker = null;
-      cb();
-    };
-    return [stopMessageManager, stopStats, stopSharedRedisClient, cleanUp];
+    return [stopBroker, stopRates, stopSharedRedisClient];
+  }
+
+  protected getSharedRedisClient(cb: TUnaryFunction<RedisClient>): void {
+    if (!this.sharedRedisClient)
+      this.emit(events.ERROR, new Error('Expected an instance of RedisClient'));
+    else cb(this.sharedRedisClient);
   }
 
   handleError(err: Error): void {
@@ -211,12 +182,6 @@ export abstract class Base extends EventEmitter {
     if (!this.broker)
       this.emit(events.ERROR, new Error('Expected an instance of Broker'));
     else cb(this.broker);
-  }
-
-  getSharedRedisClient(cb: TUnaryFunction<RedisClient>): void {
-    if (!this.sharedRedisClient)
-      this.emit(events.ERROR, new Error('Expected an instance of RedisClient'));
-    else cb(this.sharedRedisClient);
   }
 
   getId(): string {

@@ -2,23 +2,24 @@ import { ICallback } from '../../../../types';
 import { RedisClient } from '../../redis-client/redis-client';
 import { Ticker } from '../../common/ticker';
 import { events } from '../../common/events';
+import { Handler } from './handler';
 
-export class DequeueMessageHandler {
+export class DequeueHandler extends Handler {
   protected ticker: Ticker;
 
-  constructor() {
+  constructor(redisClient: RedisClient) {
+    super(redisClient);
     // A ticker is needed for pooling priority queues
     // Initialize a dummy ticker. nextTickFn will be used instead of nextTick
     this.ticker = new Ticker(() => void 0, 1000);
   }
 
   dequeueWithPriority(
-    redisClient: RedisClient,
     keyQueuePriority: string,
     keyQueueProcessing: string,
     cb: ICallback<string>,
   ): void {
-    redisClient.zpoprpush(
+    this.redisClient.zpoprpush(
       keyQueuePriority,
       keyQueueProcessing,
       (err, reply) => {
@@ -26,12 +27,7 @@ export class DequeueMessageHandler {
         else if (typeof reply === 'string') cb(null, reply);
         else {
           this.ticker.nextTickFn(() => {
-            this.dequeueWithPriority(
-              redisClient,
-              keyQueuePriority,
-              keyQueueProcessing,
-              cb,
-            );
+            this.dequeueWithPriority(keyQueuePriority, keyQueueProcessing, cb);
           });
         }
       },
@@ -39,12 +35,11 @@ export class DequeueMessageHandler {
   }
 
   dequeue(
-    redisClient: RedisClient,
     keyQueue: string,
     keyQueueProcessing: string,
     cb: ICallback<string>,
   ): void {
-    redisClient.brpoplpush(keyQueue, keyQueueProcessing, 0, cb);
+    this.redisClient.brpoplpush(keyQueue, keyQueueProcessing, 0, cb);
   }
 
   quit(cb: ICallback<void>): void {

@@ -6,31 +6,40 @@ import {
 } from '../../../types';
 import { RedisClient } from '../redis-client/redis-client';
 import { Message } from '../message';
-import { EnqueueMessageHandler } from './handlers/enqueue-message.handler';
-import { DequeueMessageHandler } from './handlers/dequeue-message.handler';
-import { ScheduledMessagesHandler } from './handlers/scheduled-messages.handler';
-import { ProcessingQueueMessageHandler } from './handlers/processing-queue-message.handler';
-import { DelayedMessagesHandler } from './handlers/delayed-messages.handler';
-import { RequeueMessageHandler } from './handlers/requeue-message.handler';
+import { EnqueueHandler } from './handlers/enqueue.handler';
+import { DequeueHandler } from './handlers/dequeue.handler';
+import { ScheduleHandler } from './handlers/schedule.handler';
+import { ProcessingHandler } from './handlers/processing.handler';
+import { DelayHandler } from './handlers/delay.handler';
+import { RequeueHandler } from './handlers/requeue.handler';
 
 export class MessageManager {
-  protected static instance: MessageManager | null = null;
   protected redisClient: RedisClient;
-  protected enqueueMessageHandler: EnqueueMessageHandler;
-  protected dequeueMessageHandler: DequeueMessageHandler;
-  protected processingQueueMessageHandler: ProcessingQueueMessageHandler;
-  protected scheduledMessageHandler: ScheduledMessagesHandler;
-  protected delayedMessagesHandler: DelayedMessagesHandler;
-  protected requeueMessageHandler: RequeueMessageHandler;
+  protected enqueueHandler: EnqueueHandler;
+  protected processingHandler: ProcessingHandler;
+  protected scheduleHandler: ScheduleHandler;
+  protected delayHandler: DelayHandler;
+  protected requeueHandler: RequeueHandler;
+
+  // DequeueHandler needs an exclusive redis client and it is initialized only on-demand
+  protected dequeueHandler: DequeueHandler | null = null;
 
   constructor(redisClient: RedisClient) {
     this.redisClient = redisClient;
-    this.enqueueMessageHandler = new EnqueueMessageHandler();
-    this.dequeueMessageHandler = new DequeueMessageHandler();
-    this.scheduledMessageHandler = new ScheduledMessagesHandler();
-    this.processingQueueMessageHandler = new ProcessingQueueMessageHandler();
-    this.delayedMessagesHandler = new DelayedMessagesHandler();
-    this.requeueMessageHandler = new RequeueMessageHandler();
+    this.enqueueHandler = new EnqueueHandler(redisClient);
+    this.delayHandler = new DelayHandler(redisClient);
+    this.requeueHandler = new RequeueHandler(redisClient);
+    this.scheduleHandler = new ScheduleHandler(redisClient);
+    this.processingHandler = new ProcessingHandler(redisClient);
+  }
+
+  ///
+
+  protected getDequeueHandler(redisClient: RedisClient): DequeueHandler {
+    if (!this.dequeueHandler) {
+      this.dequeueHandler = new DequeueHandler(redisClient);
+    }
+    return this.dequeueHandler;
   }
 
   ///
@@ -42,8 +51,7 @@ export class MessageManager {
     keyQueueProcessing: string,
     cb: ICallback<string>,
   ): void {
-    this.dequeueMessageHandler.dequeue(
-      redisClient,
+    this.getDequeueHandler(redisClient).dequeue(
       keyQueue,
       keyQueueProcessing,
       cb,
@@ -57,8 +65,7 @@ export class MessageManager {
     keyQueueProcessing: string,
     cb: ICallback<string>,
   ): void {
-    this.dequeueMessageHandler.dequeueWithPriority(
-      redisClient,
+    this.getDequeueHandler(redisClient).dequeueWithPriority(
       keyQueuePriority,
       keyQueueProcessing,
       cb,
@@ -73,7 +80,7 @@ export class MessageManager {
     withPriority: boolean,
     cb: ICallback<void>,
   ): void {
-    this.enqueueMessageHandler.enqueue(
+    this.enqueueHandler.enqueue(
       this.redisClient,
       queueName,
       message,
@@ -85,7 +92,7 @@ export class MessageManager {
   ///
 
   enqueueScheduledMessages(withPriority: boolean, cb: ICallback<void>): void {
-    this.scheduledMessageHandler.enqueueScheduledMessages(
+    this.scheduleHandler.enqueueScheduledMessages(
       this.redisClient,
       withPriority,
       cb,
@@ -93,7 +100,7 @@ export class MessageManager {
   }
 
   scheduleMessage(message: Message, cb: ICallback<boolean>): void {
-    this.scheduledMessageHandler.schedule(this.redisClient, message, cb);
+    this.scheduleHandler.schedule(message, cb);
   }
 
   ///
@@ -106,8 +113,7 @@ export class MessageManager {
     unacknowledgedCause: EMessageUnacknowledgedCause,
     cb: ICallback<void>,
   ): void {
-    this.processingQueueMessageHandler.requeue(
-      this.redisClient,
+    this.processingHandler.requeue(
       message,
       queueName,
       keyQueueProcessing,
@@ -118,7 +124,7 @@ export class MessageManager {
   }
 
   scheduleDelayedMessages(cb: ICallback<void>): void {
-    this.delayedMessagesHandler.schedule(this.redisClient, cb);
+    this.delayHandler.schedule(cb);
   }
 
   delayUnacknowledgedMessageBeforeRequeuing(
@@ -128,8 +134,7 @@ export class MessageManager {
     unacknowledgedCause: EMessageUnacknowledgedCause,
     cb: ICallback<void>,
   ): void {
-    this.processingQueueMessageHandler.delayBeforeRequeue(
-      this.redisClient,
+    this.processingHandler.delayBeforeRequeue(
       message,
       queueName,
       keyQueueProcessing,
@@ -144,8 +149,7 @@ export class MessageManager {
     keyQueueProcessing: string,
     cb: ICallback<void>,
   ): void {
-    this.processingQueueMessageHandler.acknowledge(
-      this.redisClient,
+    this.processingHandler.acknowledge(
       message,
       queueName,
       keyQueueProcessing,
@@ -161,8 +165,7 @@ export class MessageManager {
     deadLetterCause: EMessageDeadLetterCause,
     cb: ICallback<void>,
   ): void {
-    this.processingQueueMessageHandler.deadLetterMessage(
-      this.redisClient,
+    this.processingHandler.deadLetterMessage(
       message,
       queueName,
       keyQueueProcessing,
@@ -177,12 +180,7 @@ export class MessageManager {
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    this.scheduledMessageHandler.deleteScheduled(
-      this.redisClient,
-      sequenceId,
-      messageId,
-      cb,
-    );
+    this.scheduleHandler.deleteScheduled(sequenceId, messageId, cb);
   }
 
   deleteDeadLetterMessage(
@@ -191,8 +189,7 @@ export class MessageManager {
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    this.processingQueueMessageHandler.deleteDeadLetterMessage(
-      this.redisClient,
+    this.processingHandler.deleteDeadLetterMessage(
       queueName,
       sequenceId,
       messageId,
@@ -206,8 +203,7 @@ export class MessageManager {
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    this.processingQueueMessageHandler.deleteAcknowledgedMessage(
-      this.redisClient,
+    this.processingHandler.deleteAcknowledgedMessage(
       queueName,
       sequenceId,
       messageId,
@@ -221,7 +217,7 @@ export class MessageManager {
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    this.enqueueMessageHandler.deletePendingMessage(
+    this.enqueueHandler.deletePendingMessage(
       this.redisClient,
       queueName,
       sequenceId,
@@ -236,7 +232,7 @@ export class MessageManager {
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    this.enqueueMessageHandler.deletePendingMessageWithPriority(
+    this.enqueueHandler.deletePendingMessageWithPriority(
       this.redisClient,
       queueName,
       sequenceId,
@@ -255,8 +251,7 @@ export class MessageManager {
     priority: number | undefined,
     cb: ICallback<void>,
   ): void {
-    this.requeueMessageHandler.requeueMessageFromDLQueue(
-      this.redisClient,
+    this.requeueHandler.requeueMessageFromDLQueue(
       queueName,
       sequenceId,
       messageId,
@@ -274,8 +269,7 @@ export class MessageManager {
     priority: number | undefined,
     cb: ICallback<void>,
   ): void {
-    this.requeueMessageHandler.requeueMessageFromAcknowledgedQueue(
-      this.redisClient,
+    this.requeueHandler.requeueMessageFromAcknowledgedQueue(
       queueName,
       sequenceId,
       messageId,
@@ -293,13 +287,7 @@ export class MessageManager {
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    this.enqueueMessageHandler.getAcknowledgedMessages(
-      this.redisClient,
-      queueName,
-      skip,
-      take,
-      cb,
-    );
+    this.enqueueHandler.getAcknowledgedMessages(queueName, skip, take, cb);
   }
 
   getDeadLetteredMessages(
@@ -308,7 +296,7 @@ export class MessageManager {
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    this.enqueueMessageHandler.getDeadLetteredMessages(
+    this.enqueueHandler.getDeadLetteredMessages(
       this.redisClient,
       queueName,
       skip,
@@ -323,7 +311,7 @@ export class MessageManager {
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    this.enqueueMessageHandler.getPendingMessages(
+    this.enqueueHandler.getPendingMessages(
       this.redisClient,
       queueName,
       skip,
@@ -338,7 +326,7 @@ export class MessageManager {
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    this.enqueueMessageHandler.getPendingMessagesWithPriority(
+    this.enqueueHandler.getPendingMessagesWithPriority(
       this.redisClient,
       queueName,
       skip,
@@ -352,17 +340,17 @@ export class MessageManager {
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    this.scheduledMessageHandler.getScheduledMessages(
-      this.redisClient,
-      skip,
-      take,
-      cb,
-    );
+    this.scheduleHandler.getScheduledMessages(skip, take, cb);
   }
 
   ///
 
   quit(cb: ICallback<void>): void {
-    this.dequeueMessageHandler.quit(cb);
+    if (this.dequeueHandler) {
+      this.dequeueHandler.quit(() => {
+        this.dequeueHandler = null;
+        cb();
+      });
+    } else cb();
   }
 }

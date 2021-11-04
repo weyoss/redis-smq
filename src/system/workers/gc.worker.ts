@@ -82,7 +82,6 @@ export class GCWorker {
             `Fetched message ID [${msg.getId()}] from consumer [${consumerId}] processing queue [${processingQueue}].`,
           );
           this.broker.retry(
-            this.redisClient,
             queueName,
             processingQueue,
             msg,
@@ -179,8 +178,8 @@ process.on('message', (c: string) => {
     else if (!client) throw new Error(`Expected an instance of RedisClient`);
     else {
       const messageManager = new MessageManager(client);
+      const broker = new Broker(config, messageManager);
       const queueManager = new QueueManager(client);
-      const broker = new Broker(config, messageManager, queueManager);
       new GCWorker(config, client, broker, queueManager);
     }
   });
