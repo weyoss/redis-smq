@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 4.0.5 (2021-11-05)
+
+* Fixed outdated examples in the HTTP API reference
+
 ## 4.0.3 (2021-11-04)
 
 * Minor refactoring and improvements.
