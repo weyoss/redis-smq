@@ -55,7 +55,7 @@ The HTTP API allows:
 
 **Response body**
 
-```json
+```text
 {
   "total": 3,
   "items": [
@@ -81,31 +81,34 @@ The HTTP API allows:
 
 **Response Body**
 
-```json
+```text
 {
-  "total": 1,
-  "items": [
-    {
-      "body": { "hello": "world" },
-      "priority": null,
-      "scheduledCron": null,
-      "scheduledDelay": null,
-      "scheduledPeriod": null,
-      "scheduledRepeat": 0,
-      "scheduledCronFired": false,
-      "attempts": 0,
-      "scheduledRepeatCount": 0,
-      "delayed": false,
-      "expired": false,
-      "queueName": "test_queue",
-      "createdAt": 1635702165317,
-      "uuid": "9e7b8046-200c-48de-aa9f-2caf0a172a83",
-      "ttl": 0,
-      "retryDelay": 0,
-      "retryThreshold": 3,
-      "consumeTimeout": 0
-    }
-  ]
+   "total": 1,
+   "items": [
+      {
+         "sequenceId": 0,
+         "message": {
+            "body": { "hello": "world" },
+            "priority": null,
+            "scheduledCron": null,
+            "scheduledDelay": null,
+            "scheduledPeriod": null,
+            "scheduledRepeat": 0,
+            "scheduledCronFired": false,
+            "attempts": 0,
+            "scheduledRepeatCount": 0,
+            "delayed": false,
+            "expired": false,
+            "queueName": "test_queue",
+            "createdAt": 1635702165317,
+            "uuid": "9e7b8046-200c-48de-aa9f-2caf0a172a83",
+            "ttl": 0,
+            "retryDelay": 0,
+            "retryThreshold": 3,
+            "consumeTimeout": 0
+         }
+      }
+   ]
 }
 ```
 
@@ -188,31 +191,34 @@ The HTTP API allows:
 
 **Response Body**
 
-```json
+```text
 {
-  "total": 1,
-  "items": [
-    {
-      "body": { "hello": "world" },
-      "priority": null,
-      "scheduledCron": null,
-      "scheduledDelay": null,
-      "scheduledPeriod": null,
-      "scheduledRepeat": 0,
-      "scheduledCronFired": false,
-      "attempts": 2,
-      "scheduledRepeatCount": 0,
-      "delayed": false,
-      "expired": false,
-      "queueName": "test_queue",
-      "createdAt": 1635702165317,
-      "uuid": "9e7b8046-200c-48de-aa9f-2caf0a172a83",
-      "ttl": 0,
-      "retryDelay": 0,
-      "retryThreshold": 3,
-      "consumeTimeout": 0
-    }
-  ]
+   "total": 1,
+   "items": [
+      {
+         "sequenceId": 0,
+         "message": {
+            "body": { "hello": "world" },
+            "priority": null,
+            "scheduledCron": null,
+            "scheduledDelay": null,
+            "scheduledPeriod": null,
+            "scheduledRepeat": 0,
+            "scheduledCronFired": false,
+            "attempts": 2,
+            "scheduledRepeatCount": 0,
+            "delayed": false,
+            "expired": false,
+            "queueName": "test_queue",
+            "createdAt": 1635702165317,
+            "uuid": "9e7b8046-200c-48de-aa9f-2caf0a172a83",
+            "ttl": 0,
+            "retryDelay": 0,
+            "retryThreshold": 3,
+            "consumeTimeout": 0
+         }
+      }
+   ]
 }
 ```
 
@@ -296,31 +302,34 @@ The HTTP API allows:
 
 **Response Body**
 
-```json
+```text
 {
-  "total": 1,
-  "items": [
-    {
-      "body": { "hello": "world" },
-      "priority": null,
-      "scheduledCron": null,
-      "scheduledDelay": null,
-      "scheduledPeriod": null,
-      "scheduledRepeat": 0,
-      "scheduledCronFired": false,
-      "attempts": 0,
-      "scheduledRepeatCount": 0,
-      "delayed": false,
-      "expired": false,
-      "queueName": "test_queue",
-      "createdAt": 1635702165317,
-      "uuid": "9e7b8046-200c-48de-aa9f-2caf0a172a83",
-      "ttl": 0,
-      "retryDelay": 0,
-      "retryThreshold": 3,
-      "consumeTimeout": 0
-    }
-  ]
+   "total": 1,
+   "items": [
+      {
+         "sequenceId": 0,
+         "message": {
+            "body": { "hello": "world" },
+            "priority": null,
+            "scheduledCron": null,
+            "scheduledDelay": null,
+            "scheduledPeriod": null,
+            "scheduledRepeat": 0,
+            "scheduledCronFired": false,
+            "attempts": 0,
+            "scheduledRepeatCount": 0,
+            "delayed": false,
+            "expired": false,
+            "queueName": "test_queue",
+            "createdAt": 1635702165317,
+            "uuid": "9e7b8046-200c-48de-aa9f-2caf0a172a83",
+            "ttl": 0,
+            "retryDelay": 0,
+            "retryThreshold": 3,
+            "consumeTimeout": 0
+         }
+      }
+   ]
 }
 ```
 
@@ -368,31 +377,34 @@ The HTTP API allows:
 
 **Response Body**
 
-```json
+```text
 {
-  "total": 1,
-  "items": [
-    {
-      "body": { "hello": "world" },
-      "priority": null,
-      "scheduledCron": null,
-      "scheduledDelay": null,
-      "scheduledPeriod": null,
-      "scheduledRepeat": 0,
-      "scheduledCronFired": false,
-      "attempts": 0,
-      "scheduledRepeatCount": 0,
-      "delayed": false,
-      "expired": false,
-      "queueName": "test_queue",
-      "createdAt": 1635702165317,
-      "uuid": "9e7b8046-200c-48de-aa9f-2caf0a172a83",
-      "ttl": 0,
-      "retryDelay": 0,
-      "retryThreshold": 3,
-      "consumeTimeout": 0
-    }
-  ]
+   "total": 1,
+   "items": [
+      {
+         "sequenceId": 0,
+         "message": {
+            "body": { "hello": "world" },
+            "priority": 4,
+            "scheduledCron": null,
+            "scheduledDelay": null,
+            "scheduledPeriod": null,
+            "scheduledRepeat": 0,
+            "scheduledCronFired": false,
+            "attempts": 0,
+            "scheduledRepeatCount": 0,
+            "delayed": false,
+            "expired": false,
+            "queueName": "test_queue",
+            "createdAt": 1635702165317,
+            "uuid": "9e7b8046-200c-48de-aa9f-2caf0a172a83",
+            "ttl": 0,
+            "retryDelay": 0,
+            "retryThreshold": 3,
+            "consumeTimeout": 0
+         }
+      }
+   ]
 }
 ```
 
@@ -436,31 +448,34 @@ The HTTP API allows:
 
 **Response Body**
 
-```json
+```text
 {
-  "total": 1,
-  "items": [
-    {
-      "body": { "hello": "world" },
-      "priority": null,
-      "scheduledCron": null,
-      "scheduledDelay": null,
-      "scheduledPeriod": 10000,
-      "scheduledRepeat": 6,
-      "scheduledCronFired": false,
-      "attempts": 0,
-      "scheduledRepeatCount": 0,
-      "delayed": false,
-      "expired": false,
-      "queueName": "test_queue",
-      "createdAt": 1635702165317,
-      "uuid": "9e7b8046-200c-48de-aa9f-2caf0a172a83",
-      "ttl": 0,
-      "retryDelay": 0,
-      "retryThreshold": 3,
-      "consumeTimeout": 0
-    }
-  ]
+   "total": 1,
+   "items": [
+      {
+         "sequenceId": 0,
+         "message": {
+            "body": { "hello": "world" },
+            "priority": null,
+            "scheduledCron": null,
+            "scheduledDelay": null,
+            "scheduledPeriod": 10000,
+            "scheduledRepeat": 6,
+            "scheduledCronFired": false,
+            "attempts": 0,
+            "scheduledRepeatCount": 0,
+            "delayed": false,
+            "expired": false,
+            "queueName": "test_queue",
+            "createdAt": 1635702165317,
+            "uuid": "9e7b8046-200c-48de-aa9f-2caf0a172a83",
+            "ttl": 0,
+            "retryDelay": 0,
+            "retryThreshold": 3,
+            "consumeTimeout": 0
+         }
+      }
+   ]
 }
 ```
 
