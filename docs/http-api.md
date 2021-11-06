@@ -24,13 +24,11 @@ The HTTP API allows:
    2. [DELETE /queues/:queueName/acknowledged-messages/](#delete-queuesqueuenameacknowledged-messages)
    3. [DELETE /queues/:queueName/acknowledged-messages/:id](#delete-queuesqueuenameacknowledged-messagesid)
    4. [POST /queues/:queueName/acknowledged-messages/:id/requeue](#post-queuesqueuenameacknowledged-messagesidrequeue)
-   5. [POST /queues/:queueName/acknowledged-messages/:id/requeue-with-priority/:priority](#post-queuesqueuenameacknowledged-messagesidrequeue-with-prioritypriority)
 3. Dead-lettered Messages
    1. [GET /queues/:queueName/dead-lettered-messages/](#get-queuesqueuenamedead-lettered-messages)
    2. [DELETE /queues/:queueName/dead-lettered-messages](#delete-queuesqueuenamedead-lettered-messages)
    3. [DELETE /queues/:queueName/dead-lettered-messages/:id](#delete-queuesqueuenamedead-lettered-messagesid)
    4. [POST /queues/:queueName/dead-lettered-messages/:id/requeue](#post-queuesqueuenamedead-lettered-messagesidrequeue)
-   5. [POST /queues/:queueName/dead-lettered-messages/:id/requeue-with-priority/:priority](#post-queuesqueuenamedead-lettered-messagesidrequeue-with-prioritypriority)
 4. Pending Messages
    1. [GET /queues/:queueName/pending-messages/](#get-queuesqueuenamepending-messages)
    2. [DELETE /queues/:queueName/pending-messages/](#delete-queuesqueuenamepending-messages)
@@ -57,12 +55,21 @@ The HTTP API allows:
 
 ```text
 {
-  "total": 3,
-  "items": [
-    "notifications",
-    "orders",
-    "confirmation_emails"
-  ]
+   "total": 3,
+   "items": [
+      {
+         "ns": "my-application",
+         "name": "notifications"
+      },
+      {
+         "ns": "my-application",
+         "name": "orders"
+      },
+      {
+         "ns": "my-application",
+         "name": "confirmation_emails"
+      }
+   ]
 }
 ```
 
@@ -76,6 +83,7 @@ The HTTP API allows:
 
 **Query parameters**
 
+* `ns` (string): Required. Queue namespace.
 * `skip` (number): Optional. Offset from where messages should be taken. Starts from 0.
 * `take` (number): Optional. Max number of messages that should be taken. Starts from 1.
 
@@ -118,6 +126,10 @@ The HTTP API allows:
 
 * `queueName` (string): Required. Queue name.
 
+**Query parameters**
+
+* `ns` (string): Required. Queue namespace.
+
 **Response Body**
 
 ```text
@@ -133,6 +145,7 @@ The HTTP API allows:
 
 **Query parameters**
 
+* `ns` (string): Required. Queue namespace.
 * `sequenceId` (number): Required. Message sequence ID.
 
 **Response Body**
@@ -150,25 +163,9 @@ The HTTP API allows:
 
 **Query parameters**
 
+* `ns` (string): Required. Queue namespace.
 * `sequenceId` (number): Required. Message sequence ID.
-
-**Response Body**
-
-```text
-204 No Content
-```
-
-### POST /queues/:queueName/acknowledged-messages/:id/requeue-with-priority/:priority
-
-**Path parameters**
-
-* `queueName` (string): Required. Queue name.
-* `id` (string): Required. Message ID.
-* `priority` (number): Required. Message priority.
-
-**Query parameters**
-
-* `sequenceId` (number): Required. Message sequence ID.
+* `priority` (number): Optional. Message priority. When provided, the message will be re-queued with priority.
 
 **Response Body**
 
@@ -186,6 +183,7 @@ The HTTP API allows:
 
 **Query parameters**
 
+* `ns` (string): Required. Queue namespace.
 * `skip` (number): Optional. Offset from where messages should be taken. Starts from 0.
 * `take` (number): Optional. Max number of messages that should be taken. Starts from 1.
 
@@ -228,6 +226,10 @@ The HTTP API allows:
 
 * `queueName` (string): Required. Queue name.
 
+**Query parameters**
+
+* `ns` (string): Required. Queue namespace.
+
 **Response Body**
 
 ```text
@@ -243,6 +245,7 @@ The HTTP API allows:
 
 **Query parameters**
 
+* `ns` (string): Required. Queue namespace.
 * `sequenceId` (number): Required. Message sequence ID.
 
 **Response Body**
@@ -260,25 +263,9 @@ The HTTP API allows:
 
 **Query parameters**
 
+* `ns` (string): Required. Queue namespace.
 * `sequenceId` (number): Required. Message sequence ID.
-
-**Response Body**
-
-```text
-204 No Content
-```
-
-### POST /queues/:queueName/dead-lettered-messages/:id/requeue-with-priority/:priority
-
-**Path parameters**
-
-* `queueName` (string): Required. Queue name.
-* `id` (string): Required. Message ID.
-* `priority` (number): Required. Message priority.
-
-**Query parameters**
-
-* `sequenceId` (number): Required. Message sequence ID.
+* `priority` (number): Optional. Message priority. When provided, the message will be re-queued with priority.
 
 **Response Body**
 
@@ -297,6 +284,7 @@ The HTTP API allows:
 
 **Query parameters**
 
+* `ns` (string): Required. Queue namespace.
 * `skip` (number): Optional. Offset from where messages should be taken. Starts from 0.
 * `take` (number): Optional. Max number of messages that should be taken. Starts from 1.
 
@@ -339,6 +327,10 @@ The HTTP API allows:
 
 * `queueName` (string): Required. Queue name.
 
+**Query parameters**
+
+* `ns` (string): Required. Queue namespace.
+
 **Response Body**
 
 ```text
@@ -354,6 +346,7 @@ The HTTP API allows:
 
 **Query parameters**
 
+* `ns` (string): Required. Queue namespace.
 * `sequenceId` (number): Required. Message sequence ID.
 
 **Response Body**
@@ -372,6 +365,7 @@ The HTTP API allows:
 
 **Query parameters**
 
+* `ns` (string): Required. Queue namespace.
 * `skip` (number): Optional. Offset from where messages should be taken. Starts from 0.
 * `take` (number): Optional. Max number of messages that should be taken. Starts from 1.
 
@@ -414,6 +408,10 @@ The HTTP API allows:
 
 * `queueName` (string): Required. Queue name.
 
+**Query parameters**
+
+* `ns` (string): Required. Queue namespace.
+
 **Response Body**
 
 ```text
@@ -429,6 +427,7 @@ The HTTP API allows:
 
 **Query parameters**
 
+* `ns` (string): Required. Queue namespace.
 * `sequenceId` (number): Required. Message sequence ID.
 
 **Response Body**

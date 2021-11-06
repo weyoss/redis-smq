@@ -7,6 +7,7 @@ import {
 } from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
+import { redisKeys } from '../../src/system/common/redis-keys';
 
 test('Combined test. Requeue message from acknowledged queue. Check both pending and acknowledged messages. Check queue metrics.', async () => {
   const msg = new Message();
@@ -14,6 +15,8 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
 
   const producer = getProducer();
   await producer.produceMessageAsync(msg);
+  const queueName = producer.getQueueName();
+  const ns = redisKeys.getNamespace();
 
   const consumer = getConsumer({
     consumeMock: (m, cb) => {
@@ -26,7 +29,8 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
 
   const messageManager = promisifyAll(await getMessageManager());
   const res1 = await messageManager.getPendingMessagesAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
@@ -34,7 +38,8 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
   expect(res1.items.length).toBe(0);
 
   const res2 = await messageManager.getAcknowledgedMessagesAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
@@ -42,14 +47,13 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
   expect(res2.items.length).toBe(1);
 
   const queueManager = promisifyAll(await getQueueManager());
-  const queueMetrics = await queueManager.getQueueMetricsAsync(
-    producer.getQueueName(),
-  );
+  const queueMetrics = await queueManager.getQueueMetricsAsync(ns, queueName);
   expect(queueMetrics.pending).toBe(0);
   expect(queueMetrics.acknowledged).toBe(1);
 
   await messageManager.requeueMessageFromAcknowledgedQueueAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     msg.getId(),
     false,
@@ -57,7 +61,8 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
   );
 
   const res5 = await messageManager.getPendingMessagesAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
@@ -73,22 +78,22 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
   expect(res5.items[0].message).toEqual(msg2);
 
   const res6 = await messageManager.getAcknowledgedMessagesAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
   expect(res6.total).toBe(0);
   expect(res6.items.length).toBe(0);
 
-  const queueMetrics1 = await queueManager.getQueueMetricsAsync(
-    producer.getQueueName(),
-  );
+  const queueMetrics1 = await queueManager.getQueueMetricsAsync(ns, queueName);
   expect(queueMetrics1.acknowledged).toBe(0);
   expect(queueMetrics1.pending).toBe(1);
 
   await expect(async () => {
     await messageManager.requeueMessageFromAcknowledgedQueueAsync(
-      producer.getQueueName(),
+      ns,
+      queueName,
       0,
       msg.getId(),
       false,

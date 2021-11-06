@@ -1,6 +1,6 @@
 const nsPrefix = 'redis-smq';
-const globalNamespace = 'global-ns';
-let namespace = 'default-ns';
+const globalNamespace = 'global';
+let namespace = 'default';
 
 enum ERedisKey {
   KEY_QUEUE,
@@ -40,7 +40,7 @@ export const redisKeys = {
     };
   },
 
-  getKeys(queueName: string) {
+  getKeys(queueName: string, ns?: string) {
     const globalKeys = this.getGlobalKeys();
     const keys = {
       keyQueue: this.joinSegments(ERedisKey.KEY_QUEUE, queueName),
@@ -64,7 +64,7 @@ export const redisKeys = {
     };
     return {
       ...globalKeys,
-      ...this.makeNamespacedKeys(keys, namespace),
+      ...this.makeNamespacedKeys(keys, ns ?? namespace),
     };
   },
 
@@ -204,7 +204,14 @@ export const redisKeys = {
 
   setNamespace(ns: string): void {
     ns = this.validateRedisKey(ns);
+    if (ns === globalNamespace) {
+      throw new Error(`Namespace [${ns}] is reserved. Use another one.`);
+    }
     namespace = ns;
+  },
+
+  getNamespace(): string {
+    return namespace;
   },
 
   validateRedisKey(key: string): string {

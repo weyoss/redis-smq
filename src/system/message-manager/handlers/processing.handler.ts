@@ -10,13 +10,16 @@ import { Handler } from './handler';
 
 export class ProcessingHandler extends Handler {
   deleteDeadLetterMessage(
+    ns: string,
     queueName: string,
     index: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const { keyQueueDL, keyLockDeleteDeadLetterMessage } =
-      redisKeys.getKeys(queueName);
+    const { keyQueueDL, keyLockDeleteDeadLetterMessage } = redisKeys.getKeys(
+      queueName,
+      ns,
+    );
     deleteListMessageAtSequenceId(
       this.redisClient,
       keyLockDeleteDeadLetterMessage,
@@ -28,13 +31,14 @@ export class ProcessingHandler extends Handler {
   }
 
   deleteAcknowledgedMessage(
+    ns: string,
     queueName: string,
     index: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
     const { keyQueueAcknowledgedMessages, keyLockDeleteAcknowledgedMessage } =
-      redisKeys.getKeys(queueName);
+      redisKeys.getKeys(queueName, ns);
     deleteListMessageAtSequenceId(
       this.redisClient,
       keyLockDeleteAcknowledgedMessage,

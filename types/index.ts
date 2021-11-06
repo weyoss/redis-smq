@@ -202,3 +202,8 @@ export enum EMessageUnacknowledgedCause {
   RECOVERY = 'recovery',
   TTL_EXPIRED = 'ttl_expired',
 }
+
+export type TMessageQueue = {
+  name: string;
+  ns: string;
+};

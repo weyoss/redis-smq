@@ -4,6 +4,10 @@ import { Type } from 'class-transformer';
 export class GetMessagesRequestDTO {
   @IsString()
   @IsNotEmpty()
+  ns!: string;
+
+  @IsString()
+  @IsNotEmpty()
   queueName!: string;
 
   @IsInt()

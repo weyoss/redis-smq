@@ -1,18 +1,3 @@
-import { IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { Type } from 'class-transformer';
+import { GetMessagesRequestDTO } from '../../../common/get-messages-request.DTO';
 
-export class GetPendingMessagesWithPriorityRequestDTO {
-  @IsString()
-  @IsNotEmpty()
-  queueName!: string;
-
-  @IsInt()
-  @Type(() => Number)
-  @IsOptional()
-  skip?: number;
-
-  @IsInt()
-  @Type(() => Number)
-  @IsOptional()
-  take?: number;
-}
+export class GetPendingMessagesWithPriorityRequestDTO extends GetMessagesRequestDTO {}

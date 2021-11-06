@@ -41,15 +41,9 @@ import { PurgeDeadLetteredMessagesResponseDTO } from './actions/purge-dead-lette
 import { RequeueDeadLetteredMessageHandler } from './actions/requeue-dead-lettered-message/requeue-dead-lettered-message.handler';
 import { RequeueDeadLetteredMessageRequestDTO } from './actions/requeue-dead-lettered-message/requeue-dead-lettered-message-request.DTO';
 import { RequeueDeadLetteredMessageResponseDTO } from './actions/requeue-dead-lettered-message/requeue-dead-lettered-message-response.DTO';
-import { RequeueDeadLetteredMessageWithPriorityHandler } from './actions/requeue-dead-lettered-message-with-priority/requeue-dead-lettered-message-with-priority.handler';
-import { RequeueDeadLetteredMessageWithPriorityRequestDTO } from './actions/requeue-dead-lettered-message-with-priority/requeue-dead-lettered-message-with-priority-request.DTO';
-import { RequeueDeadLetteredMessageWithPriorityResponseDTO } from './actions/requeue-dead-lettered-message-with-priority/requeue-dead-lettered-message-with-priority-response.DTO';
 import { RequeueAcknowledgedMessageHandler } from './actions/requeue-acknowledged-message/requeue-acknowledged-message.handler';
 import { RequeueAcknowledgedMessageRequestDTO } from './actions/requeue-acknowledged-message/requeue-acknowledged-message-request.DTO';
 import { RequeueAcknowledgedMessageResponseDTO } from './actions/requeue-acknowledged-message/requeue-acknowledged-message-response.DTO';
-import { RequeueAcknowledgedMessageWithPriorityHandler } from './actions/requeue-acknowledged-message-with-priority/requeue-acknowledged-message-with-priority.handler';
-import { RequeueAcknowledgedMessageWithPriorityRequestDTO } from './actions/requeue-acknowledged-message-with-priority/requeue-acknowledged-message-with-priority-request.DTO';
-import { RequeueAcknowledgedMessageWithPriorityResponseDTO } from './actions/requeue-acknowledged-message-with-priority/requeue-acknowledged-message-with-priority-response.DTO';
 import { GetPendingMessagesWithPriorityHandler } from './actions/get-pending-messages-with-priority/get-pending-messages-with-priority.handler';
 
 export const messagesController: TRouteController = {
@@ -146,7 +140,10 @@ export const messagesController: TRouteController = {
     {
       path: '/pending-messages',
       method: ERouteControllerActionMethod.DELETE,
-      payload: [ERouteControllerActionPayload.PATH],
+      payload: [
+        ERouteControllerActionPayload.PATH,
+        ERouteControllerActionPayload.QUERY,
+      ],
       Handler: PurgePendingMessagesHandler,
       RequestDTO: PurgePendingMessagesRequestDTO,
       ResponseDTO: PurgePendingMessagesResponseDTO,
@@ -154,7 +151,10 @@ export const messagesController: TRouteController = {
     {
       path: '/acknowledged-messages',
       method: ERouteControllerActionMethod.DELETE,
-      payload: [ERouteControllerActionPayload.PATH],
+      payload: [
+        ERouteControllerActionPayload.PATH,
+        ERouteControllerActionPayload.QUERY,
+      ],
       Handler: PurgeAcknowledgedMessagesHandler,
       RequestDTO: PurgeAcknowledgedMessagesRequestDTO,
       ResponseDTO: PurgeAcknowledgedMessagesResponseDTO,
@@ -162,7 +162,10 @@ export const messagesController: TRouteController = {
     {
       path: '/pending-messages-with-priority',
       method: ERouteControllerActionMethod.DELETE,
-      payload: [ERouteControllerActionPayload.PATH],
+      payload: [
+        ERouteControllerActionPayload.PATH,
+        ERouteControllerActionPayload.QUERY,
+      ],
       Handler: PurgePriorityMessagesHandler,
       RequestDTO: PurgePriorityMessagesRequestDTO,
       ResponseDTO: PurgePriorityMessagesResponseDTO,
@@ -170,7 +173,10 @@ export const messagesController: TRouteController = {
     {
       path: '/dead-lettered-messages',
       method: ERouteControllerActionMethod.DELETE,
-      payload: [ERouteControllerActionPayload.PATH],
+      payload: [
+        ERouteControllerActionPayload.PATH,
+        ERouteControllerActionPayload.QUERY,
+      ],
       Handler: PurgeDeadLetteredMessagesHandler,
       RequestDTO: PurgeDeadLetteredMessagesRequestDTO,
       ResponseDTO: PurgeDeadLetteredMessagesResponseDTO,
@@ -187,17 +193,6 @@ export const messagesController: TRouteController = {
       ResponseDTO: RequeueDeadLetteredMessageResponseDTO,
     },
     {
-      path: '/dead-lettered-messages/:id/requeue-with-priority/:priority',
-      method: ERouteControllerActionMethod.POST,
-      payload: [
-        ERouteControllerActionPayload.PATH,
-        ERouteControllerActionPayload.QUERY,
-      ],
-      Handler: RequeueDeadLetteredMessageWithPriorityHandler,
-      RequestDTO: RequeueDeadLetteredMessageWithPriorityRequestDTO,
-      ResponseDTO: RequeueDeadLetteredMessageWithPriorityResponseDTO,
-    },
-    {
       path: '/acknowledged-messages/:id/requeue',
       method: ERouteControllerActionMethod.POST,
       payload: [
@@ -207,17 +202,6 @@ export const messagesController: TRouteController = {
       Handler: RequeueAcknowledgedMessageHandler,
       RequestDTO: RequeueAcknowledgedMessageRequestDTO,
       ResponseDTO: RequeueAcknowledgedMessageResponseDTO,
-    },
-    {
-      path: '/acknowledged-messages/:id/requeue-with-priority/:priority',
-      method: ERouteControllerActionMethod.POST,
-      payload: [
-        ERouteControllerActionPayload.PATH,
-        ERouteControllerActionPayload.QUERY,
-      ],
-      Handler: RequeueAcknowledgedMessageWithPriorityHandler,
-      RequestDTO: RequeueAcknowledgedMessageWithPriorityRequestDTO,
-      ResponseDTO: RequeueAcknowledgedMessageWithPriorityResponseDTO,
     },
   ],
 };

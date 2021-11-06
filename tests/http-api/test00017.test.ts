@@ -5,6 +5,7 @@ import {
 } from '../common';
 import * as supertest from 'supertest';
 import { GetMessagesResponseBodyDataDTO } from '../../src/monitor-server/controllers/common/get-messages-response-body.DTO';
+import { redisKeys } from '../../src/system/common/redis-keys';
 
 test('Requeuing an acknowledged message with priority', async () => {
   await startMonitorServer();
@@ -12,7 +13,9 @@ test('Requeuing an acknowledged message with priority', async () => {
   const request = supertest('http://127.0.0.1:3000');
   const response1: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =
     await request.post(
-      `/api/queues/${message.getQueue()}/acknowledged-messages/${message.getId()}/requeue-with-priority/4?sequenceId=0`,
+      `/api/queues/${
+        message.getQueue()?.name
+      }/acknowledged-messages/${message.getId()}/requeue?priority=4&sequenceId=0&ns=${redisKeys.getNamespace()}`,
     );
   expect(response1.statusCode).toBe(204);
   expect(response1.body).toEqual({});

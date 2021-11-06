@@ -1,5 +1,5 @@
 import { RedisClient } from '../redis-client/redis-client';
-import { ICallback, IQueueMetrics } from '../../../types';
+import { ICallback, IQueueMetrics, TMessageQueue } from '../../../types';
 import { redisKeys } from '../common/redis-keys';
 import { Base } from '../base';
 import { Consumer } from '../consumer/consumer';
@@ -36,23 +36,31 @@ export class QueueManager {
 
   ///
 
-  purgeDeadLetterQueue(queueName: string, cb: ICallback<void>): void {
-    const { keyQueueDL } = redisKeys.getKeys(queueName);
+  purgeDeadLetterQueue(
+    ns: string,
+    queueName: string,
+    cb: ICallback<void>,
+  ): void {
+    const { keyQueueDL } = redisKeys.getKeys(queueName, ns);
     this.redisClient.del(keyQueueDL, (err) => cb(err));
   }
 
-  purgeAcknowledgedMessagesQueue(queueName: string, cb: ICallback<void>): void {
-    const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName);
+  purgeAcknowledgedMessagesQueue(
+    ns: string,
+    queueName: string,
+    cb: ICallback<void>,
+  ): void {
+    const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName, ns);
     this.redisClient.del(keyQueueAcknowledgedMessages, (err) => cb(err));
   }
 
-  purgeQueue(queueName: string, cb: ICallback<void>): void {
-    const { keyQueue } = redisKeys.getKeys(queueName);
+  purgeQueue(ns: string, queueName: string, cb: ICallback<void>): void {
+    const { keyQueue } = redisKeys.getKeys(queueName, ns);
     this.redisClient.del(keyQueue, (err) => cb(err));
   }
 
-  purgePriorityQueue(queueName: string, cb: ICallback<void>): void {
-    const { keyQueuePriority } = redisKeys.getKeys(queueName);
+  purgePriorityQueue(ns: string, queueName: string, cb: ICallback<void>): void {
+    const { keyQueuePriority } = redisKeys.getKeys(queueName, ns);
     this.redisClient.del(keyQueuePriority, (err) => cb(err));
   }
 
@@ -67,12 +75,23 @@ export class QueueManager {
     this.redisClient.smembers(keyIndexProcessingQueues, cb);
   }
 
-  getMessageQueues(cb: ICallback<string[]>): void {
+  getMessageQueues(cb: ICallback<TMessageQueue[]>): void {
     const { keyIndexQueue } = redisKeys.getGlobalKeys();
-    this.redisClient.smembers(keyIndexQueue, cb);
+    this.redisClient.smembers(keyIndexQueue, (err, reply) => {
+      if (err) cb(err);
+      else if (!reply) cb(new Error('Expected an array reply'));
+      else {
+        const messageQueues: TMessageQueue[] = reply.map((i) => JSON.parse(i));
+        cb(null, messageQueues);
+      }
+    });
   }
 
-  getQueueMetrics(queueName: string, cb: ICallback<IQueueMetrics>): void {
+  getQueueMetrics(
+    ns: string,
+    queueName: string,
+    cb: ICallback<IQueueMetrics>,
+  ): void {
     const queueMetrics: IQueueMetrics = {
       acknowledged: 0,
       pendingWithPriority: 0,
@@ -84,7 +103,7 @@ export class QueueManager {
       keyQueuePriority,
       keyQueueDL,
       keyQueueAcknowledgedMessages,
-    } = redisKeys.getKeys(queueName);
+    } = redisKeys.getKeys(queueName, ns);
     async.waterfall(
       [
         (cb: ICallback<void>) => {
@@ -138,7 +157,11 @@ export class QueueManager {
   ): void {
     const multi = redisClient.multi();
     const { keyIndexQueue } = instance.getRedisKeys();
-    multi.sadd(keyIndexQueue, instance.getQueueName());
+    const queue: TMessageQueue = {
+      name: instance.getQueueName(),
+      ns: redisKeys.getNamespace(),
+    };
+    multi.sadd(keyIndexQueue, JSON.stringify(queue));
     if (instance instanceof Consumer) {
       const {
         keyQueueProcessing,

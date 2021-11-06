@@ -12,12 +12,13 @@ import { Handler } from './handler';
 
 export class EnqueueHandler extends Handler {
   getAcknowledgedMessages(
+    ns: string,
     queueName: string,
     skip: number,
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName);
+    const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName, ns);
     getPaginatedListMessages(
       this.redisClient,
       keyQueueAcknowledgedMessages,
@@ -28,37 +29,37 @@ export class EnqueueHandler extends Handler {
   }
 
   getDeadLetteredMessages(
-    redisClient: RedisClient,
+    ns: string,
     queueName: string,
     skip: number,
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    const { keyQueueDL } = redisKeys.getKeys(queueName);
-    getPaginatedListMessages(redisClient, keyQueueDL, skip, take, cb);
+    const { keyQueueDL } = redisKeys.getKeys(queueName, ns);
+    getPaginatedListMessages(this.redisClient, keyQueueDL, skip, take, cb);
   }
 
   getPendingMessages(
-    redisClient: RedisClient,
+    ns: string,
     queueName: string,
     skip: number,
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    const { keyQueue } = redisKeys.getKeys(queueName);
-    getPaginatedListMessages(redisClient, keyQueue, skip, take, cb);
+    const { keyQueue } = redisKeys.getKeys(queueName, ns);
+    getPaginatedListMessages(this.redisClient, keyQueue, skip, take, cb);
   }
 
   getPendingMessagesWithPriority(
-    redisClient: RedisClient,
+    ns: string,
     queueName: string,
     skip: number,
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    const { keyQueuePriority } = redisKeys.getKeys(queueName);
+    const { keyQueuePriority } = redisKeys.getKeys(queueName, ns);
     getPaginatedSortedSetMessages(
-      redisClient,
+      this.redisClient,
       keyQueuePriority,
       skip,
       take,
@@ -67,16 +68,18 @@ export class EnqueueHandler extends Handler {
   }
 
   deletePendingMessage(
-    redisClient: RedisClient,
+    ns: string,
     queueName: string,
     index: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const { keyQueue, keyLockDeletePendingMessage } =
-      redisKeys.getKeys(queueName);
+    const { keyQueue, keyLockDeletePendingMessage } = redisKeys.getKeys(
+      queueName,
+      ns,
+    );
     deleteListMessageAtSequenceId(
-      redisClient,
+      this.redisClient,
       keyLockDeletePendingMessage,
       keyQueue,
       index,
@@ -86,16 +89,16 @@ export class EnqueueHandler extends Handler {
   }
 
   deletePendingMessageWithPriority(
-    redisClient: RedisClient,
+    ns: string,
     queueName: string,
     index: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
     const { keyQueuePriority, keyLockDeletePendingMessageWithPriority } =
-      redisKeys.getKeys(queueName);
+      redisKeys.getKeys(queueName, ns);
     deleteSortedSetMessageAtSequenceId(
-      redisClient,
+      this.redisClient,
       keyLockDeletePendingMessageWithPriority,
       keyQueuePriority,
       index,

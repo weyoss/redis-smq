@@ -7,6 +7,7 @@ import {
 } from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
+import { redisKeys } from '../../src/system/common/redis-keys';
 
 test('Combined test: Delete a dead-letter message. Check pending, acknowledged, and dead-letter messages. Check queue metrics.', async () => {
   const msg = new Message();
@@ -14,6 +15,8 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
 
   const producer = getProducer();
   await producer.produceMessageAsync(msg);
+  const queueName = producer.getQueueName();
+  const ns = redisKeys.getNamespace();
 
   const consumer = getConsumer({
     consumeMock: (m, cb) => {
@@ -25,7 +28,8 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
 
   const messageManager = promisifyAll(await getMessageManager());
   const res1 = await messageManager.getPendingMessagesAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
@@ -33,7 +37,8 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(res1.items.length).toBe(0);
 
   const res2 = await messageManager.getAcknowledgedMessagesAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
@@ -41,7 +46,8 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(res2.items.length).toBe(0);
 
   const res3 = await messageManager.getDeadLetterMessagesAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
@@ -56,21 +62,21 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(res3.items[0].message).toEqual(msg1);
 
   const queueManager = promisifyAll(await getQueueManager());
-  const queueMetrics = await queueManager.getQueueMetricsAsync(
-    producer.getQueueName(),
-  );
+  const queueMetrics = await queueManager.getQueueMetricsAsync(ns, queueName);
   expect(queueMetrics.pending).toBe(0);
   expect(queueMetrics.acknowledged).toBe(0);
   expect(queueMetrics.deadLettered).toBe(1);
 
   await messageManager.deleteDeadLetterMessageAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     msg.getId(),
   );
 
   const res4 = await messageManager.getDeadLetterMessagesAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
@@ -78,14 +84,13 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(res4.total).toBe(0);
   expect(res4.items.length).toBe(0);
 
-  const queueMetrics1 = await queueManager.getQueueMetricsAsync(
-    producer.getQueueName(),
-  );
+  const queueMetrics1 = await queueManager.getQueueMetricsAsync(ns, queueName);
   expect(queueMetrics1.deadLettered).toBe(0);
 
   await expect(async () => {
     await messageManager.deleteDeadLetterMessageAsync(
-      producer.getQueueName(),
+      ns,
+      queueName,
       0,
       msg.getId(),
     );

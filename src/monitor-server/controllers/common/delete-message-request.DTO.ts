@@ -4,6 +4,10 @@ import { Type } from 'class-transformer';
 export class DeleteMessageRequestDTO {
   @IsString()
   @IsNotEmpty()
+  ns!: string;
+
+  @IsString()
+  @IsNotEmpty()
   queueName!: string;
 
   @IsUUID('4')

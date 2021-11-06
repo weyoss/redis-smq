@@ -12,9 +12,7 @@ import { DeleteAcknowledgedMessageRequestDTO } from '../controllers/messages/act
 import { DeleteDeadLetteredMessageRequestDTO } from '../controllers/messages/actions/delete-dead-lettered-message/delete-dead-lettered-message-request.DTO';
 import { DeletePendingMessageWithPriorityRequestDTO } from '../controllers/messages/actions/delete-pending-message-with-priority/delete-pending-message-with-priority-request.DTO';
 import { RequeueDeadLetteredMessageRequestDTO } from '../controllers/messages/actions/requeue-dead-lettered-message/requeue-dead-lettered-message-request.DTO';
-import { RequeueDeadLetteredMessageWithPriorityRequestDTO } from '../controllers/messages/actions/requeue-dead-lettered-message-with-priority/requeue-dead-lettered-message-with-priority-request.DTO';
 import { RequeueAcknowledgedMessageRequestDTO } from '../controllers/messages/actions/requeue-acknowledged-message/requeue-acknowledged-message-request.DTO';
-import { RequeueAcknowledgedMessageWithPriorityRequestDTO } from '../controllers/messages/actions/requeue-acknowledged-message-with-priority/requeue-acknowledged-message-with-priority-request.DTO';
 
 const messageManagerAsync = promisifyAll(MessageManager.prototype);
 
@@ -35,15 +33,21 @@ export class MessageManagerService {
   async getPendingMessages(
     args: GetPendingMessagesRequestDTO,
   ): Promise<TGetMessagesReply> {
-    const { queueName, skip = 0, take = 1 } = args;
-    return this.messageManager.getPendingMessagesAsync(queueName, skip, take);
+    const { ns, queueName, skip = 0, take = 1 } = args;
+    return this.messageManager.getPendingMessagesAsync(
+      ns,
+      queueName,
+      skip,
+      take,
+    );
   }
 
   async getAcknowledgedMessages(
     args: GetAcknowledgedMessagesRequestDTO,
   ): Promise<TGetMessagesReply> {
-    const { queueName, skip = 0, take = 1 } = args;
+    const { ns, queueName, skip = 0, take = 1 } = args;
     return this.messageManager.getAcknowledgedMessagesAsync(
+      ns,
       queueName,
       skip,
       take,
@@ -53,8 +57,9 @@ export class MessageManagerService {
   async getPendingMessagesWithPriority(
     args: GetPendingMessagesWithPriorityRequestDTO,
   ): Promise<TGetMessagesReply> {
-    const { queueName, skip = 0, take = 1 } = args;
+    const { ns, queueName, skip = 0, take = 1 } = args;
     return this.messageManager.getPendingMessagesWithPriorityAsync(
+      ns,
       queueName,
       skip,
       take,
@@ -64,8 +69,9 @@ export class MessageManagerService {
   async getDeadLetteredMessages(
     args: GetDeadLetteredMessagesRequestDTO,
   ): Promise<TGetMessagesReply> {
-    const { queueName, skip = 0, take = 1 } = args;
+    const { ns, queueName, skip = 0, take = 1 } = args;
     return this.messageManager.getDeadLetteredMessagesAsync(
+      ns,
       queueName,
       skip,
       take,
@@ -75,8 +81,9 @@ export class MessageManagerService {
   async deletePendingMessage(
     args: DeletePendingMessageRequestDTO,
   ): Promise<void> {
-    const { queueName, id, sequenceId } = args;
+    const { ns, queueName, id, sequenceId } = args;
     return this.messageManager.deletePendingMessageAsync(
+      ns,
       queueName,
       sequenceId,
       id,
@@ -86,8 +93,9 @@ export class MessageManagerService {
   async deletePendingMessageWithPriority(
     args: DeletePendingMessageWithPriorityRequestDTO,
   ): Promise<void> {
-    const { queueName, id, sequenceId } = args;
+    const { ns, queueName, id, sequenceId } = args;
     return this.messageManager.deletePendingMessageWithPriorityAsync(
+      ns,
       queueName,
       sequenceId,
       id,
@@ -97,8 +105,9 @@ export class MessageManagerService {
   async deleteAcknowledgedMessage(
     args: DeleteAcknowledgedMessageRequestDTO,
   ): Promise<void> {
-    const { queueName, id, sequenceId } = args;
+    const { ns, queueName, id, sequenceId } = args;
     return this.messageManager.deleteAcknowledgedMessageAsync(
+      ns,
       queueName,
       sequenceId,
       id,
@@ -108,8 +117,9 @@ export class MessageManagerService {
   async deleteDeadLetteredMessage(
     args: DeleteDeadLetteredMessageRequestDTO,
   ): Promise<void> {
-    const { queueName, id, sequenceId } = args;
+    const { ns, queueName, id, sequenceId } = args;
     return this.messageManager.deleteDeadLetterMessageAsync(
+      ns,
       queueName,
       sequenceId,
       id,
@@ -126,25 +136,13 @@ export class MessageManagerService {
   async requeueDeadLetteredMessage(
     args: RequeueDeadLetteredMessageRequestDTO,
   ): Promise<void> {
-    const { queueName, id, sequenceId } = args;
+    const { ns, queueName, id, sequenceId, priority } = args;
     return this.messageManager.requeueMessageFromDLQueueAsync(
+      ns,
       queueName,
       sequenceId,
       id,
-      false,
-      undefined,
-    );
-  }
-
-  async requeueDeadLetteredMessageWithPriority(
-    args: RequeueDeadLetteredMessageWithPriorityRequestDTO,
-  ): Promise<void> {
-    const { queueName, id, sequenceId, priority } = args;
-    return this.messageManager.requeueMessageFromDLQueueAsync(
-      queueName,
-      sequenceId,
-      id,
-      true,
+      typeof priority !== 'undefined',
       priority,
     );
   }
@@ -152,25 +150,13 @@ export class MessageManagerService {
   async requeueAcknowledgedMessage(
     args: RequeueAcknowledgedMessageRequestDTO,
   ): Promise<void> {
-    const { queueName, id, sequenceId } = args;
+    const { ns, queueName, id, sequenceId, priority } = args;
     return this.messageManager.requeueMessageFromAcknowledgedQueueAsync(
+      ns,
       queueName,
       sequenceId,
       id,
-      false,
-      undefined,
-    );
-  }
-
-  async requeueAcknowledgedMessageWithPriority(
-    args: RequeueAcknowledgedMessageWithPriorityRequestDTO,
-  ): Promise<void> {
-    const { queueName, id, sequenceId, priority } = args;
-    return this.messageManager.requeueMessageFromAcknowledgedQueueAsync(
-      queueName,
-      sequenceId,
-      id,
-      true,
+      typeof priority !== 'undefined',
       priority,
     );
   }
