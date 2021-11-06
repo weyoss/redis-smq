@@ -5,6 +5,7 @@ import {
   TAggregatedStatsQueueConsumer,
   ICallback,
   TAggregatedStatsQueueProducer,
+  TMessageQueue,
 } from '../../../types';
 import * as async from 'async';
 import { redisKeys } from '../../system/common/redis-keys';
@@ -214,7 +215,10 @@ export class StatsWorker {
     });
   };
 
-  protected getQueueSize = (queues: string[], cb: ICallback<void>): void => {
+  protected getQueueSize = (
+    queues: TMessageQueue[],
+    cb: ICallback<void>,
+  ): void => {
     if (queues && queues.length) {
       let keys: string[] = [];
       const multi = this.redisClient.multi();
@@ -250,7 +254,7 @@ export class StatsWorker {
             keyQueuePriority,
             keyQueueDL,
             keyQueueAcknowledgedMessages,
-          } = redisKeys.getKeys(queue);
+          } = redisKeys.getKeys(queue.name, queue.ns);
           multi.llen(keyQueue);
           multi.zcard(keyQueuePriority);
           multi.llen(keyQueueDL);
@@ -273,7 +277,7 @@ export class StatsWorker {
     } else cb();
   };
 
-  protected getQueues = (cb: ICallback<string[]>): void => {
+  protected getQueues = (cb: ICallback<TMessageQueue[]>): void => {
     this.queueManager.getMessageQueues(cb);
   };
 

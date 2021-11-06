@@ -5,7 +5,10 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  ValidateNested,
 } from 'class-validator';
+import { MessageQueueDTO } from './message-queue.DTO';
+import { Type } from 'class-transformer';
 
 export class MessageDTO {
   @IsUUID('4')
@@ -67,6 +70,7 @@ export class MessageDTO {
   @IsBoolean()
   expired!: boolean;
 
-  @IsString()
-  queueName!: string;
+  @ValidateNested()
+  @Type(() => MessageQueueDTO)
+  queue!: MessageQueueDTO;
 }

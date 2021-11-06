@@ -3,6 +3,7 @@ import { Message } from '../message';
 import { ProducerRatesProvider } from './producer-rates-provider';
 import { Base } from '../base';
 import { events } from '../common/events';
+import { redisKeys } from '../common/redis-keys';
 
 export class Producer extends Base {
   protected statsProvider: ProducerRatesProvider | null = null;
@@ -23,7 +24,7 @@ export class Producer extends Base {
     const message = !(msg instanceof Message)
       ? new Message().setBody(msg)
       : msg;
-    message.setQueue(this.queueName);
+    message.setQueue(redisKeys.getNamespace(), this.queueName);
     const callback: ICallback<boolean> = (err, reply) => {
       if (err) cb(err);
       else {

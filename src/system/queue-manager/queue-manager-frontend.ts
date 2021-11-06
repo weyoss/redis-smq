@@ -14,20 +14,28 @@ export class QueueManagerFrontend {
 
   ///
 
-  purgeDeadLetterQueue(queueName: string, cb: ICallback<void>): void {
-    this.queueManager.purgeDeadLetterQueue(queueName, cb);
+  purgeDeadLetterQueue(
+    ns: string,
+    queueName: string,
+    cb: ICallback<void>,
+  ): void {
+    this.queueManager.purgeDeadLetterQueue(ns, queueName, cb);
   }
 
-  purgeAcknowledgedMessagesQueue(queueName: string, cb: ICallback<void>): void {
-    this.queueManager.purgeAcknowledgedMessagesQueue(queueName, cb);
+  purgeAcknowledgedMessagesQueue(
+    ns: string,
+    queueName: string,
+    cb: ICallback<void>,
+  ): void {
+    this.queueManager.purgeAcknowledgedMessagesQueue(ns, queueName, cb);
   }
 
-  purgeQueue(queueName: string, cb: ICallback<void>): void {
-    this.queueManager.purgeQueue(queueName, cb);
+  purgeQueue(ns: string, queueName: string, cb: ICallback<void>): void {
+    this.queueManager.purgeQueue(ns, queueName, cb);
   }
 
-  purgePriorityQueue(queueName: string, cb: ICallback<void>): void {
-    this.queueManager.purgePriorityQueue(queueName, cb);
+  purgePriorityQueue(ns: string, queueName: string, cb: ICallback<void>): void {
+    this.queueManager.purgePriorityQueue(ns, queueName, cb);
   }
 
   purgeScheduledMessagesQueue(cb: ICallback<void>): void {
@@ -36,8 +44,12 @@ export class QueueManagerFrontend {
 
   ///
 
-  getQueueMetrics(queueName: string, cb: ICallback<IQueueMetrics>): void {
-    this.queueManager.getQueueMetrics(queueName, cb);
+  getQueueMetrics(
+    ns: string,
+    queueName: string,
+    cb: ICallback<IQueueMetrics>,
+  ): void {
+    this.queueManager.getQueueMetrics(ns, queueName, cb);
   }
 
   ///

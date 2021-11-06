@@ -7,6 +7,7 @@ import {
 } from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
+import { redisKeys } from '../../src/system/common/redis-keys';
 
 test(`Combined test: Dead-letter a message and requeue it with priority. Check pending, acknowledged and pending messages.`, async () => {
   const msg = new Message();
@@ -14,6 +15,8 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
 
   const producer = getProducer();
   await producer.produceMessageAsync(msg);
+  const queueName = producer.getQueueName();
+  const ns = redisKeys.getNamespace();
 
   const consumer = getConsumer({
     consumeMock: (m, cb) => {
@@ -26,7 +29,8 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
 
   const messageManager = promisifyAll(await getMessageManager());
   const res1 = await messageManager.getPendingMessagesAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
@@ -34,7 +38,8 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   expect(res1.items.length).toBe(0);
 
   const res2 = await messageManager.getAcknowledgedMessagesAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
@@ -42,7 +47,8 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   expect(res2.items.length).toBe(0);
 
   const res3 = await messageManager.getDeadLetterMessagesAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
@@ -57,16 +63,15 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   expect(res3.items[0].message).toEqual(msg1);
 
   const queueManager = promisifyAll(await getQueueManager());
-  const queueMetrics = await queueManager.getQueueMetricsAsync(
-    producer.getQueueName(),
-  );
+  const queueMetrics = await queueManager.getQueueMetricsAsync(ns, queueName);
   expect(queueMetrics.pendingWithPriority).toBe(0);
   expect(queueMetrics.pending).toBe(0);
   expect(queueMetrics.acknowledged).toBe(0);
   expect(queueMetrics.deadLettered).toBe(1);
 
   await messageManager.requeueMessageFromDLQueueAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     msg.getId(),
     true,
@@ -74,7 +79,8 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   );
 
   const res5 = await messageManager.getPendingMessagesAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
@@ -82,7 +88,8 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   expect(res5.items.length).toBe(0);
 
   const res6 = await messageManager.getPendingMessagesWithPriorityAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
@@ -98,23 +105,23 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   expect(res6.items[0].message).toEqual(msg2);
 
   const res7 = await messageManager.getDeadLetterMessagesAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
   expect(res7.total).toBe(0);
   expect(res7.items.length).toBe(0);
 
-  const queueMetrics1 = await queueManager.getQueueMetricsAsync(
-    producer.getQueueName(),
-  );
+  const queueMetrics1 = await queueManager.getQueueMetricsAsync(ns, queueName);
   expect(queueMetrics1.deadLettered).toBe(0);
   expect(queueMetrics1.pending).toBe(0);
   expect(queueMetrics1.pendingWithPriority).toBe(1);
 
   await expect(async () => {
     await messageManager.requeueMessageFromDLQueueAsync(
-      producer.getQueueName(),
+      ns,
+      queueName,
       0,
       msg.getId(),
       true,

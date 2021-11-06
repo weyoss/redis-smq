@@ -8,9 +8,12 @@ import {
 import { Message } from '../../src/message';
 import { events } from '../../src/system/common/events';
 import { config } from '../config';
+import { redisKeys } from '../../src/system/common/redis-keys';
 
 test('Default message TTL: a message without TTL is not consumed and moved to DLQ when default messageTTL is exceeded', async () => {
   const producer = getProducer('test_queue');
+  const queueName = producer.getQueueName();
+  const ns = redisKeys.getNamespace();
   const consumer = getConsumer({
     queueName: 'test_queue',
     cfg: {
@@ -38,11 +41,7 @@ test('Default message TTL: a message without TTL is not consumed and moved to DL
   expect(unacks).toBe(1);
 
   const m = promisifyAll(await getMessageManager());
-  const list = await m.getDeadLetterMessagesAsync(
-    producer.getQueueName(),
-    0,
-    100,
-  );
+  const list = await m.getDeadLetterMessagesAsync(ns, queueName, 0, 100);
   expect(list.total).toBe(1);
   expect(list.items[0].message.getId()).toBe(msg.getId());
 });

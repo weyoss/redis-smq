@@ -1,9 +1,9 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class PurgeQueueRequestDTO {
+export class MessageQueueDTO {
   @IsString()
   @IsNotEmpty()
-  queueName!: string;
+  name!: string;
 
   @IsString()
   @IsNotEmpty()

@@ -7,9 +7,12 @@ import {
 } from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
+import { redisKeys } from '../../src/system/common/redis-keys';
 
 test('Combined test: Requeue a message from dead-letter queue with priority.  Check both pending and acknowledged messages. Check queue metrics.', async () => {
   const producer = getProducer();
+  const queueName = producer.getQueueName();
+  const ns = redisKeys.getNamespace();
 
   const msg = new Message();
   msg.setBody({ hello: 'world' });
@@ -26,7 +29,8 @@ test('Combined test: Requeue a message from dead-letter queue with priority.  Ch
 
   const messageManager = promisifyAll(await getMessageManager());
   await messageManager.requeueMessageFromDLQueueAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     msg.getId(),
     true,
@@ -34,7 +38,8 @@ test('Combined test: Requeue a message from dead-letter queue with priority.  Ch
   );
 
   const res1 = await messageManager.getPendingMessagesAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
@@ -42,7 +47,8 @@ test('Combined test: Requeue a message from dead-letter queue with priority.  Ch
   expect(res1.items.length).toBe(0);
 
   const res2 = await messageManager.getPendingMessagesWithPriorityAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
@@ -55,7 +61,8 @@ test('Combined test: Requeue a message from dead-letter queue with priority.  Ch
   expect(res2.items[0].message).toEqual(msg1);
 
   const res3 = await messageManager.getDeadLetterMessagesAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
@@ -63,9 +70,7 @@ test('Combined test: Requeue a message from dead-letter queue with priority.  Ch
   expect(res3.items.length).toBe(0);
 
   const queueManager = promisifyAll(await getQueueManager());
-  const queueMetrics = await queueManager.getQueueMetricsAsync(
-    producer.getQueueName(),
-  );
+  const queueMetrics = await queueManager.getQueueMetricsAsync(ns, queueName);
   expect(queueMetrics.deadLettered).toBe(0);
   expect(queueMetrics.pending).toBe(0);
   expect(queueMetrics.pendingWithPriority).toBe(1);

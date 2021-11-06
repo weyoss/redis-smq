@@ -6,7 +6,6 @@ import { DeleteScheduledMessageRequestDTO } from '../scheduled-messages/delete-s
 import { DeleteMessageRequestDTO } from './delete-message-request.DTO';
 import { PurgeQueueRequestDTO } from './purge-queue-request.DTO';
 import { RequeueMessageRequestDTO } from './requeue-message-request.DTO';
-import { RequeueMessageWithPriorityRequestDTO } from './requeue-message-with-priority-request.DTO';
 
 export type TGetMessagesContext = TRequestContext<
   GetMessagesRequestDTO,
@@ -26,6 +25,3 @@ export type TDeleteScheduledMessageContext =
 export type TPurgeQueueContext = TRequestContext<PurgeQueueRequestDTO>;
 
 export type TRequeueMessageContext = TRequestContext<RequeueMessageRequestDTO>;
-
-export type TRequeueMessageWithPriorityContext =
-  TRequestContext<RequeueMessageWithPriorityRequestDTO>;

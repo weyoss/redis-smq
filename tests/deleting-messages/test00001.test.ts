@@ -1,9 +1,12 @@
 import { getMessageManager, getProducer, getQueueManager } from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
+import { redisKeys } from '../../src/system/common/redis-keys';
 
 test('Combined test: Delete a pending message. Check pending messages. Check queue metrics.', async () => {
   const producer = getProducer();
+  const queueName = producer.getQueueName();
+  const ns = redisKeys.getNamespace();
 
   const msg = new Message();
   msg.setBody({ hello: 'world' });
@@ -11,7 +14,8 @@ test('Combined test: Delete a pending message. Check pending messages. Check que
 
   const messageManager = promisifyAll(await getMessageManager());
   const res1 = await messageManager.getPendingMessagesAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
@@ -20,19 +24,14 @@ test('Combined test: Delete a pending message. Check pending messages. Check que
   expect(res1.items[0].message.getId()).toBe(msg.getId());
 
   const queueManager = promisifyAll(await getQueueManager());
-  const queueMetrics = await queueManager.getQueueMetricsAsync(
-    producer.getQueueName(),
-  );
+  const queueMetrics = await queueManager.getQueueMetricsAsync(ns, queueName);
   expect(queueMetrics.pending).toBe(1);
 
-  await messageManager.deletePendingMessageAsync(
-    producer.getQueueName(),
-    0,
-    msg.getId(),
-  );
+  await messageManager.deletePendingMessageAsync(ns, queueName, 0, msg.getId());
 
   const res2 = await messageManager.getPendingMessagesAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
@@ -40,14 +39,13 @@ test('Combined test: Delete a pending message. Check pending messages. Check que
   expect(res2.total).toBe(0);
   expect(res2.items.length).toBe(0);
 
-  const queueMetrics1 = await queueManager.getQueueMetricsAsync(
-    producer.getQueueName(),
-  );
+  const queueMetrics1 = await queueManager.getQueueMetricsAsync(ns, queueName);
   expect(queueMetrics1.pending).toBe(0);
 
   await expect(async () => {
     await messageManager.deletePendingMessageAsync(
-      producer.getQueueName(),
+      ns,
+      queueName,
       0,
       msg.getId(),
     );

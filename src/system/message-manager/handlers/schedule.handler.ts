@@ -67,9 +67,10 @@ export class ScheduleHandler extends Handler {
           messages,
           (msg, done) => {
             const message = Message.createFromMessage(msg);
-            const queueName = message.getQueue();
-            if (!queueName) throw new Error(`Got a message without queue name`);
-            const { keyQueuePriority, keyQueue } = redisKeys.getKeys(queueName);
+            const queue = message.getQueue();
+            if (!queue) throw new Error(`Got a message without a queue`);
+            const { name, ns } = queue;
+            const { keyQueuePriority, keyQueue } = redisKeys.getKeys(name, ns);
             const multi = redisClient.multi();
             multi.zrem(keyQueueScheduled, JSON.stringify(message));
             const priority = withPriority

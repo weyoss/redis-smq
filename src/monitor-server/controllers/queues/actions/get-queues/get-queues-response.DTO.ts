@@ -1,9 +1,12 @@
-import { IsInt, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsInt, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
+import { MessageQueueDTO } from '../../../common/message-queue.DTO';
 
 export class GetQueuesResponseBodyDTO {
-  @IsString({ each: true })
-  data!: string[];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MessageQueueDTO)
+  data!: MessageQueueDTO[];
 }
 
 export class GetQueuesResponseDTO {

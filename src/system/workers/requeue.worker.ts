@@ -28,9 +28,10 @@ export class RequeueWorker {
         const multi = this.redisClient.multi();
         const tasks = messages.map((i) => (cb: () => void) => {
           const message = Message.createFromMessage(i);
-          const queueName = message.getQueue();
-          if (!queueName) throw new Error('Got a message without queue name');
-          const { keyQueue, keyQueuePriority } = redisKeys.getKeys(queueName);
+          const queue = message.getQueue();
+          if (!queue) throw new Error('Got a message without a queue');
+          const { ns, name } = queue;
+          const { keyQueue, keyQueuePriority } = redisKeys.getKeys(name, ns);
           multi.lrem(keyQueueRequeue, 1, i);
           message.incrAttempts();
           if (this.withPriority) {

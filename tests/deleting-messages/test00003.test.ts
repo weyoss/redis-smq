@@ -7,6 +7,7 @@ import {
 } from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
+import { redisKeys } from '../../src/system/common/redis-keys';
 
 test('Combined test: Delete an acknowledged message. Check pending, acknowledged, and dead-letter messages. Check queue metrics.', async () => {
   const msg = new Message();
@@ -14,6 +15,8 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
 
   const producer = getProducer();
   await producer.produceMessageAsync(msg);
+  const queueName = producer.getQueueName();
+  const ns = redisKeys.getNamespace();
 
   const consumer = getConsumer({
     consumeMock: (m, cb) => {
@@ -26,7 +29,8 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   const messageManager = promisifyAll(await getMessageManager());
 
   const res0 = await messageManager.getDeadLetterMessagesAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
@@ -34,7 +38,8 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   expect(res0.items.length).toBe(0);
 
   const res1 = await messageManager.getPendingMessagesAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
@@ -42,7 +47,8 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   expect(res1.items.length).toBe(0);
 
   const res2 = await messageManager.getAcknowledgedMessagesAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
@@ -57,20 +63,20 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   expect(res2.items[0].message).toEqual(msg1);
 
   const queueManager = promisifyAll(await getQueueManager());
-  const queueMetrics = await queueManager.getQueueMetricsAsync(
-    producer.getQueueName(),
-  );
+  const queueMetrics = await queueManager.getQueueMetricsAsync(ns, queueName);
   expect(queueMetrics.pending).toBe(0);
   expect(queueMetrics.acknowledged).toBe(1);
 
   await messageManager.deleteAcknowledgedMessageAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     msg.getId(),
   );
 
   const res3 = await messageManager.getAcknowledgedMessagesAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
@@ -78,7 +84,8 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   expect(res3.items.length).toBe(0);
 
   const res4 = await messageManager.getPendingMessagesAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
@@ -86,7 +93,8 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   expect(res4.items.length).toBe(0);
 
   const res5 = await messageManager.getPendingMessagesWithPriorityAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
@@ -94,21 +102,21 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   expect(res5.items.length).toBe(0);
 
   const res6 = await messageManager.getDeadLetterMessagesAsync(
-    producer.getQueueName(),
+    ns,
+    queueName,
     0,
     100,
   );
   expect(res6.total).toBe(0);
   expect(res6.items.length).toBe(0);
 
-  const queueMetrics1 = await queueManager.getQueueMetricsAsync(
-    producer.getQueueName(),
-  );
+  const queueMetrics1 = await queueManager.getQueueMetricsAsync(ns, queueName);
   expect(queueMetrics1.acknowledged).toBe(0);
 
   await expect(async () => {
     await messageManager.deleteAcknowledgedMessageAsync(
-      producer.getQueueName(),
+      ns,
+      queueName,
       0,
       msg.getId(),
     );

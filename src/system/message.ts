@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import { parseExpression } from 'cron-parser';
-import { TMessageDefaultOptions } from '../../types';
+import { TMessageDefaultOptions, TMessageQueue } from '../../types';
 
 export class Message {
   protected static defaultOpts: TMessageDefaultOptions = {
@@ -58,7 +58,7 @@ export class Message {
 
   protected expired = false;
 
-  protected queueName: string | null = null;
+  protected queue: TMessageQueue | null = null;
 
   ///
 
@@ -194,13 +194,16 @@ export class Message {
     return this;
   }
 
-  setQueue(queueName: string): Message {
-    this.queueName = queueName;
+  setQueue(ns: string, name: string): Message {
+    this.queue = {
+      name,
+      ns,
+    };
     return this;
   }
 
-  getQueue(): string | null {
-    return this.queueName;
+  getQueue(): TMessageQueue | null {
+    return this.queue;
   }
 
   getPriority(): number | null {
