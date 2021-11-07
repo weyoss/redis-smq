@@ -26,12 +26,12 @@ test('Purging dead letter queue', async () => {
   await untilConsumerIdle(consumer);
 
   const queueManager = promisifyAll(await getQueueManager());
-  const m = await queueManager.getQueueMetricsAsync(ns, queueName);
+  const m = await queueManager.getQueueMetricsAsync(queueName, ns);
 
   expect(m.deadLettered).toBe(1);
 
-  await queueManager.purgeDeadLetterQueueAsync(ns, queueName);
+  await queueManager.purgeDeadLetterQueueAsync(queueName, ns);
 
-  const m2 = await queueManager.getQueueMetricsAsync(ns, queueName);
+  const m2 = await queueManager.getQueueMetricsAsync(queueName, ns);
   expect(m2.deadLettered).toBe(0);
 });

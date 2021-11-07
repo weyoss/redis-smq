@@ -22,26 +22,26 @@ export class QueueManagerService {
     args: PurgeAcknowledgedMessagesRequestDTO,
   ): Promise<void> {
     const { ns, queueName } = args;
-    return this.queueManager.purgeAcknowledgedMessagesQueueAsync(ns, queueName);
+    return this.queueManager.purgeAcknowledgedMessagesQueueAsync(queueName, ns);
   }
 
   async purgeDeadLetterQueue(
     args: PurgeAcknowledgedMessagesRequestDTO,
   ): Promise<void> {
     const { ns, queueName } = args;
-    return this.queueManager.purgeDeadLetterQueueAsync(ns, queueName);
+    return this.queueManager.purgeDeadLetterQueueAsync(queueName, ns);
   }
 
   async purgePendingQueue(args: PurgePendingMessagesRequestDTO): Promise<void> {
     const { ns, queueName } = args;
-    return this.queueManager.purgeQueueAsync(ns, queueName);
+    return this.queueManager.purgeQueueAsync(queueName, ns);
   }
 
   async purgePriorityQueue(
     args: PurgePriorityMessagesRequestDTO,
   ): Promise<void> {
     const { ns, queueName } = args;
-    return this.queueManager.purgePriorityQueueAsync(ns, queueName);
+    return this.queueManager.purgePriorityQueueAsync(queueName, ns);
   }
 
   async purgeScheduledMessagesQueue(): Promise<void> {

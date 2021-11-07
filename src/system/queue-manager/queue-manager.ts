@@ -37,8 +37,8 @@ export class QueueManager {
   ///
 
   purgeDeadLetterQueue(
-    ns: string,
     queueName: string,
+    ns: string | undefined,
     cb: ICallback<void>,
   ): void {
     const { keyQueueDL } = redisKeys.getKeys(queueName, ns);
@@ -46,20 +46,28 @@ export class QueueManager {
   }
 
   purgeAcknowledgedMessagesQueue(
-    ns: string,
     queueName: string,
+    ns: string | undefined,
     cb: ICallback<void>,
   ): void {
     const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName, ns);
     this.redisClient.del(keyQueueAcknowledgedMessages, (err) => cb(err));
   }
 
-  purgeQueue(ns: string, queueName: string, cb: ICallback<void>): void {
+  purgeQueue(
+    queueName: string,
+    ns: string | undefined,
+    cb: ICallback<void>,
+  ): void {
     const { keyQueue } = redisKeys.getKeys(queueName, ns);
     this.redisClient.del(keyQueue, (err) => cb(err));
   }
 
-  purgePriorityQueue(ns: string, queueName: string, cb: ICallback<void>): void {
+  purgePriorityQueue(
+    queueName: string,
+    ns: string | undefined,
+    cb: ICallback<void>,
+  ): void {
     const { keyQueuePriority } = redisKeys.getKeys(queueName, ns);
     this.redisClient.del(keyQueuePriority, (err) => cb(err));
   }
@@ -88,8 +96,8 @@ export class QueueManager {
   }
 
   getQueueMetrics(
-    ns: string,
     queueName: string,
+    ns: string | undefined,
     cb: ICallback<IQueueMetrics>,
   ): void {
     const queueMetrics: IQueueMetrics = {

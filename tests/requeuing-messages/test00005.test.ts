@@ -29,8 +29,8 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
 
   const messageManager = promisifyAll(await getMessageManager());
   const res1 = await messageManager.getPendingMessagesAsync(
-    ns,
     queueName,
+    ns,
     0,
     100,
   );
@@ -38,8 +38,8 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   expect(res1.items.length).toBe(0);
 
   const res2 = await messageManager.getAcknowledgedMessagesAsync(
-    ns,
     queueName,
+    ns,
     0,
     100,
   );
@@ -47,8 +47,8 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   expect(res2.items.length).toBe(0);
 
   const res3 = await messageManager.getDeadLetterMessagesAsync(
-    ns,
     queueName,
+    ns,
     0,
     100,
   );
@@ -63,15 +63,15 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   expect(res3.items[0].message).toEqual(msg1);
 
   const queueManager = promisifyAll(await getQueueManager());
-  const queueMetrics = await queueManager.getQueueMetricsAsync(ns, queueName);
+  const queueMetrics = await queueManager.getQueueMetricsAsync(queueName, ns);
   expect(queueMetrics.pendingWithPriority).toBe(0);
   expect(queueMetrics.pending).toBe(0);
   expect(queueMetrics.acknowledged).toBe(0);
   expect(queueMetrics.deadLettered).toBe(1);
 
   await messageManager.requeueMessageFromDLQueueAsync(
-    ns,
     queueName,
+    ns,
     0,
     msg.getId(),
     true,
@@ -79,8 +79,8 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   );
 
   const res5 = await messageManager.getPendingMessagesAsync(
-    ns,
     queueName,
+    ns,
     0,
     100,
   );
@@ -88,8 +88,8 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   expect(res5.items.length).toBe(0);
 
   const res6 = await messageManager.getPendingMessagesWithPriorityAsync(
-    ns,
     queueName,
+    ns,
     0,
     100,
   );
@@ -105,23 +105,23 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   expect(res6.items[0].message).toEqual(msg2);
 
   const res7 = await messageManager.getDeadLetterMessagesAsync(
-    ns,
     queueName,
+    ns,
     0,
     100,
   );
   expect(res7.total).toBe(0);
   expect(res7.items.length).toBe(0);
 
-  const queueMetrics1 = await queueManager.getQueueMetricsAsync(ns, queueName);
+  const queueMetrics1 = await queueManager.getQueueMetricsAsync(queueName, ns);
   expect(queueMetrics1.deadLettered).toBe(0);
   expect(queueMetrics1.pending).toBe(0);
   expect(queueMetrics1.pendingWithPriority).toBe(1);
 
   await expect(async () => {
     await messageManager.requeueMessageFromDLQueueAsync(
-      ns,
       queueName,
+      ns,
       0,
       msg.getId(),
       true,

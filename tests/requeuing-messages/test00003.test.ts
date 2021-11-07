@@ -30,8 +30,8 @@ test('Combined test: Requeue a message from acknowledged queue with priority. Ch
 
   const messageManager = promisifyAll(await getMessageManager());
   await messageManager.requeueMessageFromAcknowledgedQueueAsync(
-    ns,
     queueName,
+    ns,
     0,
     msg.getId(),
     true,
@@ -39,8 +39,8 @@ test('Combined test: Requeue a message from acknowledged queue with priority. Ch
   );
 
   const res5 = await messageManager.getPendingMessagesAsync(
-    ns,
     queueName,
+    ns,
     0,
     100,
   );
@@ -49,8 +49,8 @@ test('Combined test: Requeue a message from acknowledged queue with priority. Ch
   expect(res5.items.length).toBe(0);
 
   const res6 = await messageManager.getPendingMessagesWithPriorityAsync(
-    ns,
     queueName,
+    ns,
     0,
     100,
   );
@@ -65,8 +65,8 @@ test('Combined test: Requeue a message from acknowledged queue with priority. Ch
   expect(res6.items[0].message).toEqual(msg1);
 
   const res7 = await messageManager.getAcknowledgedMessagesAsync(
-    ns,
     queueName,
+    ns,
     0,
     100,
   );
@@ -74,15 +74,15 @@ test('Combined test: Requeue a message from acknowledged queue with priority. Ch
   expect(res7.items.length).toBe(0);
 
   const queueManager = promisifyAll(await getQueueManager());
-  const queueMetrics = await queueManager.getQueueMetricsAsync(ns, queueName);
+  const queueMetrics = await queueManager.getQueueMetricsAsync(queueName, ns);
   expect(queueMetrics.acknowledged).toBe(0);
   expect(queueMetrics.pending).toBe(0);
   expect(queueMetrics.pendingWithPriority).toBe(1);
 
   await expect(async () => {
     await messageManager.requeueMessageFromAcknowledgedQueueAsync(
-      ns,
       queueName,
+      ns,
       0,
       msg.getId(),
       true,

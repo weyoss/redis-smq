@@ -34,8 +34,8 @@ test('Message TTL: a message with TTL is not consumed and moved to DLQ when TTL 
 
   const messageManager = promisifyAll(await getMessageManager());
   const list = await messageManager.getDeadLetterMessagesAsync(
-    ns,
     queueName,
+    ns,
     0,
     100,
   );

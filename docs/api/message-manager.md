@@ -49,12 +49,14 @@ getScheduledMessages(skip, take, cb);
 ### MessageManager.prototype.getPendingMessagesWithPriority()
 
 ```javascript
-getPendingMessagesWithPriority(queueName, skip, take, cb);
+getPendingMessagesWithPriority(queueName, ns, skip, take, cb);
 ```
 
 **Parameters**
 
 - `queueName` *(string): Required.* Queue name.
+- `ns` *(string | undefined): Required.* Queue namespace. To use the default namespace or the namespace from your 
+  configuration object, set `ns` to `undefined`. Otherwise, provide a valid namespace.
 - `skip` *(number): Required.* Offset from where messages should be taken. Starts from 0.
 - `take` *(number): Required.* Max number of messages that should be taken. Starts from 1.
 - `cb(err, result)` *(Function): Required.* Callback function.
@@ -67,12 +69,14 @@ getPendingMessagesWithPriority(queueName, skip, take, cb);
 ### MessageManager.prototype.getDeadLetterMessages()
 
 ```javascript
-getDeadLetterMessages(queueName, skip, take, cb);
+getDeadLetterMessages(queueName, ns, skip, take, cb);
 ```
 
 **Parameters**
 
 - `queueName` *(string): Required.* Queue name.
+- `ns` *(string | undefined): Required.* Queue namespace. To use the default namespace or the namespace from your
+  configuration object, set `ns` to `undefined`. Otherwise, provide a valid namespace.
 - `skip` *(number): Required.* Offset from where messages should be taken. Starts from 0.
 - `take` *(number): Required.* Max number of messages that should be taken. Starts from 1.
 - `cb(err, result)` *(Function): Required.* Callback function.
@@ -85,12 +89,14 @@ getDeadLetterMessages(queueName, skip, take, cb);
 ### MessageManager.prototype.getPendingMessages()
 
 ```javascript
-getPendingMessages(queueName, skip, take, cb);
+getPendingMessages(queueName, ns, skip, take, cb);
 ```
 
 **Parameters**
 
 - `queueName` *(string): Required.* Queue name.
+- `ns` *(string | undefined): Required.* Queue namespace. To use the default namespace or the namespace from your
+  configuration object, set `ns` to `undefined`. Otherwise, provide a valid namespace.
 - `skip` *(number): Required.* Offset from where messages should be taken. Starts from 0.
 - `take` *(number): Required.* Max number of messages that should be taken. Starts from 1.
 - `cb(err, result)` *(Function): Required.* Callback function.
@@ -103,12 +109,14 @@ getPendingMessages(queueName, skip, take, cb);
 ### MessageManager.prototype.getAcknowledgedMessages()
 
 ```javascript
-getAcknowledgedMessages(queueName, skip, take, cb);
+getAcknowledgedMessages(queueName, ns, skip, take, cb);
 ```
 
 **Parameters**
 
 - `queueName` *(string): Required.* Queue name.
+- `ns` *(string | undefined): Required.* Queue namespace. To use the default namespace or the namespace from your
+  configuration object, set `ns` to `undefined`. Otherwise, provide a valid namespace.
 - `skip` *(number): Required.* Offset from where messages should be taken. Starts from 0.
 - `take` *(number): Required.* Max number of messages that should be taken. Starts from 1.
 - `cb(err, result)` *(Function): Required.* Callback function.
@@ -121,11 +129,13 @@ getAcknowledgedMessages(queueName, skip, take, cb);
 ### MessageManager.prototype.deletePendingMessageWithPriority()
 
 ```javascript
-deletePendingMessageWithPriority(queueName, sequenceId, messageId, cb);
+deletePendingMessageWithPriority(queueName, ns, sequenceId, messageId, cb);
 ```
 
 **Parameters**
 - `queueName` *(string): Required.* Queue name.
+- `ns` *(string | undefined): Required.* Queue namespace. To use the default namespace or the namespace from your
+  configuration object, set `ns` to `undefined`. Otherwise, provide a valid namespace.
 - `sequenceId` *(number): Required.* Message sequence ID.
 - `messageId` *(string): Required.* Message ID.
 - `cb(err)` *(Function): Required.* Callback function.
@@ -134,11 +144,13 @@ deletePendingMessageWithPriority(queueName, sequenceId, messageId, cb);
 ### MessageManager.prototype.deleteDeadLetterMessage()
 
 ```javascript
-deleteDeadLetterMessage(queueName, sequenceId, messageId, cb);
+deleteDeadLetterMessage(queueName, ns, sequenceId, messageId, cb);
 ```
 
 **Parameters**
 - `queueName` *(string): Required.* Queue name.
+- `ns` *(string | undefined): Required.* Queue namespace. To use the default namespace or the namespace from your
+  configuration object, set `ns` to `undefined`. Otherwise, provide a valid namespace.
 - `sequenceId` *(number): Required.* Message sequence ID.
 - `messageId` *(string): Required.* Message ID.
 - `cb(err)` *(Function): Required.* Callback function.
@@ -147,11 +159,13 @@ deleteDeadLetterMessage(queueName, sequenceId, messageId, cb);
 ### MessageManager.prototype.deleteAcknowledgedMessage()
 
 ```javascript
-deleteAcknowledgedMessage(queueName, sequenceId, messageId, cb);
+deleteAcknowledgedMessage(queueName, ns, sequenceId, messageId, cb);
 ```
 
 **Parameters**
 - `queueName` *(string): Required.* Queue name.
+- `ns` *(string | undefined): Required.* Queue namespace. To use the default namespace or the namespace from your
+  configuration object, set `ns` to `undefined`. Otherwise, provide a valid namespace.
 - `sequenceId` *(number): Required.* Message sequence ID.
 - `messageId` *(string): Required.* Message ID.
 - `cb(err)` *(Function): Required.* Callback function.
@@ -160,11 +174,13 @@ deleteAcknowledgedMessage(queueName, sequenceId, messageId, cb);
 ### MessageManager.prototype.deletePendingMessage()
 
 ```javascript
-deletePendingMessage(queueName, sequenceId, messageId, cb);
+deletePendingMessage(queueName, ns, sequenceId, messageId, cb);
 ```
 
 **Parameters**
 - `queueName` *(string): Required.* Queue name.
+- `ns` *(string | undefined): Required.* Queue namespace. To use the default namespace or the namespace from your
+  configuration object, set `ns` to `undefined`. Otherwise, provide a valid namespace.
 - `sequenceId` *(number): Required.* Message sequence ID.
 - `messageId` *(string): Required.* Message ID.
 - `cb(err)` *(Function): Required.* Callback function.
@@ -185,11 +201,13 @@ deleteScheduledMessage(sequenceId, messageId, cb);
 ### MessageManager.prototype.requeueMessageFromDLQueue()
 
 ```javascript
-requeueMessageFromDLQueue(queueName, sequenceId, messageId, withPriority, priority, cb);
+requeueMessageFromDLQueue(queueName, ns, sequenceId, messageId, withPriority, priority, cb);
 ```
 
 **Parameters**
 - `queueName` *(number): Required.* Queue name.
+- `ns` *(string | undefined): Required.* Queue namespace. To use the default namespace or the namespace from your
+  configuration object, set `ns` to `undefined`. Otherwise, provide a valid namespace.
 - `sequenceId` *(number): Required.* Message sequence ID.
 - `messageId` *(string): Required.* Message ID.
 - `withPriority` *(boolean): Required.* Whether to enqueue the message with priority.
@@ -200,11 +218,13 @@ requeueMessageFromDLQueue(queueName, sequenceId, messageId, withPriority, priori
 ### MessageManager.prototype.requeueMessageFromAcknowledgedQueue()
 
 ```javascript
-requeueMessageFromAcknowledgedQueue(queueName, sequenceId, messageId, withPriority, priority, cb);
+requeueMessageFromAcknowledgedQueue(queueName, ns, sequenceId, messageId, withPriority, priority, cb);
 ```
 
 **Parameters**
 - `queueName` *(number): Required.* Queue name.
+- `ns` *(string | undefined): Required.* Queue namespace. To use the default namespace or the namespace from your
+  configuration object, set `ns` to `undefined`. Otherwise, provide a valid namespace.
 - `sequenceId` *(number): Required.* Message sequence ID.
 - `messageId` *(string): Required.* Message ID.
 - `withPriority` *(boolean): Required.* Whether to enqueue the message with priority.

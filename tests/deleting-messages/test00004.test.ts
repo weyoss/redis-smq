@@ -28,8 +28,8 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
 
   const messageManager = promisifyAll(await getMessageManager());
   const res1 = await messageManager.getPendingMessagesAsync(
-    ns,
     queueName,
+    ns,
     0,
     100,
   );
@@ -37,8 +37,8 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(res1.items.length).toBe(0);
 
   const res2 = await messageManager.getAcknowledgedMessagesAsync(
-    ns,
     queueName,
+    ns,
     0,
     100,
   );
@@ -46,8 +46,8 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(res2.items.length).toBe(0);
 
   const res3 = await messageManager.getDeadLetterMessagesAsync(
-    ns,
     queueName,
+    ns,
     0,
     100,
   );
@@ -62,21 +62,21 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(res3.items[0].message).toEqual(msg1);
 
   const queueManager = promisifyAll(await getQueueManager());
-  const queueMetrics = await queueManager.getQueueMetricsAsync(ns, queueName);
+  const queueMetrics = await queueManager.getQueueMetricsAsync(queueName, ns);
   expect(queueMetrics.pending).toBe(0);
   expect(queueMetrics.acknowledged).toBe(0);
   expect(queueMetrics.deadLettered).toBe(1);
 
   await messageManager.deleteDeadLetterMessageAsync(
-    ns,
     queueName,
+    ns,
     0,
     msg.getId(),
   );
 
   const res4 = await messageManager.getDeadLetterMessagesAsync(
-    ns,
     queueName,
+    ns,
     0,
     100,
   );
@@ -84,13 +84,13 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(res4.total).toBe(0);
   expect(res4.items.length).toBe(0);
 
-  const queueMetrics1 = await queueManager.getQueueMetricsAsync(ns, queueName);
+  const queueMetrics1 = await queueManager.getQueueMetricsAsync(queueName, ns);
   expect(queueMetrics1.deadLettered).toBe(0);
 
   await expect(async () => {
     await messageManager.deleteDeadLetterMessageAsync(
-      ns,
       queueName,
+      ns,
       0,
       msg.getId(),
     );
