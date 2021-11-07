@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 4.0.7 (2021-11-08)
+
+* Made queue namespace optional for queue/message management. When not provided, the configuration namespace is used. If 
+the configuration namespace is not set, the default namespace is used.
+
 ## 4.0.6 (2021-11-07)
 
 * Fixed queues and messages management issues when using many namespaces.
