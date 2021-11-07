@@ -96,7 +96,9 @@ The HTTP API allows:
       {
          "sequenceId": 0,
          "message": {
-            "body": { "hello": "world" },
+            "body": {
+               "hello": "world"
+            },
             "priority": null,
             "scheduledCron": null,
             "scheduledDelay": null,
@@ -107,7 +109,10 @@ The HTTP API allows:
             "scheduledRepeatCount": 0,
             "delayed": false,
             "expired": false,
-            "queueName": "test_queue",
+            "queue": {
+               "ns": "my-application",
+               "name": "test_queue"
+            },
             "createdAt": 1635702165317,
             "uuid": "9e7b8046-200c-48de-aa9f-2caf0a172a83",
             "ttl": 0,
@@ -207,7 +212,10 @@ The HTTP API allows:
             "scheduledRepeatCount": 0,
             "delayed": false,
             "expired": false,
-            "queueName": "test_queue",
+            "queue": {
+               "ns": "my-application",
+               "name": "test_queue"
+            },
             "createdAt": 1635702165317,
             "uuid": "9e7b8046-200c-48de-aa9f-2caf0a172a83",
             "ttl": 0,
@@ -308,7 +316,10 @@ The HTTP API allows:
             "scheduledRepeatCount": 0,
             "delayed": false,
             "expired": false,
-            "queueName": "test_queue",
+            "queue": {
+               "ns": "my-application",
+               "name": "test_queue"
+            },
             "createdAt": 1635702165317,
             "uuid": "9e7b8046-200c-48de-aa9f-2caf0a172a83",
             "ttl": 0,
@@ -389,7 +400,10 @@ The HTTP API allows:
             "scheduledRepeatCount": 0,
             "delayed": false,
             "expired": false,
-            "queueName": "test_queue",
+            "queue": {
+               "ns": "my-application",
+               "name": "test_queue"
+            },
             "createdAt": 1635702165317,
             "uuid": "9e7b8046-200c-48de-aa9f-2caf0a172a83",
             "ttl": 0,
@@ -465,7 +479,10 @@ The HTTP API allows:
             "scheduledRepeatCount": 0,
             "delayed": false,
             "expired": false,
-            "queueName": "test_queue",
+            "queue": {
+               "ns": "my-application",
+               "name": "test_queue"
+            },
             "createdAt": 1635702165317,
             "uuid": "9e7b8046-200c-48de-aa9f-2caf0a172a83",
             "ttl": 0,
