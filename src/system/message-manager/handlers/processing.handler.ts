@@ -10,8 +10,8 @@ import { Handler } from './handler';
 
 export class ProcessingHandler extends Handler {
   deleteDeadLetterMessage(
-    ns: string,
     queueName: string,
+    ns: string | undefined,
     index: number,
     messageId: string,
     cb: ICallback<void>,
@@ -31,8 +31,8 @@ export class ProcessingHandler extends Handler {
   }
 
   deleteAcknowledgedMessage(
-    ns: string,
     queueName: string,
+    ns: string | undefined,
     index: number,
     messageId: string,
     cb: ICallback<void>,

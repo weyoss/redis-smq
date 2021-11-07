@@ -23,8 +23,8 @@ describe('MessageManager', () => {
 
     const messageManager = promisifyAll(await getMessageManager());
     const res = await messageManager.getPendingMessagesAsync(
-      ns,
       queueName,
+      ns,
       0,
       100,
     );
@@ -41,8 +41,8 @@ describe('MessageManager', () => {
 
     const messageManager = promisifyAll(await getMessageManager());
     const res = await messageManager.getAcknowledgedMessagesAsync(
-      ns,
       queueName,
+      ns,
       0,
       100,
     );
@@ -58,8 +58,8 @@ describe('MessageManager', () => {
     const ns = redisKeys.getNamespace();
     const messageManager = promisifyAll(await getMessageManager());
     const res = await messageManager.getDeadLetterMessagesAsync(
-      ns,
       queueName,
+      ns,
       0,
       100,
     );
@@ -83,8 +83,8 @@ describe('MessageManager', () => {
 
     const messageManager = promisifyAll(await getMessageManager());
     const res = await messageManager.getPendingMessagesWithPriorityAsync(
-      ns,
       queueName,
+      ns,
       0,
       100,
     );

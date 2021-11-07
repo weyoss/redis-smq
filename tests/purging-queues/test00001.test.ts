@@ -10,18 +10,18 @@ test('Purging pending queue', async () => {
 
   const queueManager = promisifyAll(await getQueueManager());
 
-  const m = await queueManager.getQueueMetricsAsync(ns, queueName);
+  const m = await queueManager.getQueueMetricsAsync(queueName, ns);
   expect(m.pending).toBe(0);
 
   const msg = new Message();
   msg.setBody({ hello: 'world' });
   await producer.produceMessageAsync(msg);
 
-  const m2 = await queueManager.getQueueMetricsAsync(ns, queueName);
+  const m2 = await queueManager.getQueueMetricsAsync(queueName, ns);
   expect(m2.pending).toBe(1);
 
-  await queueManager.purgeQueueAsync(ns, queueName);
+  await queueManager.purgeQueueAsync(queueName, ns);
 
-  const m3 = await queueManager.getQueueMetricsAsync(ns, queueName);
+  const m3 = await queueManager.getQueueMetricsAsync(queueName, ns);
   expect(m3.pending).toBe(0);
 });

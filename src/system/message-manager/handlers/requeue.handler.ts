@@ -6,8 +6,8 @@ import { Handler } from './handler';
 
 export class RequeueHandler extends Handler {
   protected requeueListMessage(
-    ns: string,
     queueName: string,
+    ns: string | undefined,
     from: string,
     index: number,
     messageId: string,
@@ -41,8 +41,8 @@ export class RequeueHandler extends Handler {
   }
 
   requeueMessageFromDLQueue(
-    ns: string,
     queueName: string,
+    ns: string | undefined,
     index: number,
     messageId: string,
     withPriority: boolean,
@@ -51,8 +51,8 @@ export class RequeueHandler extends Handler {
   ): void {
     const { keyQueueDL } = redisKeys.getKeys(queueName, ns);
     this.requeueListMessage(
-      ns,
       queueName,
+      ns,
       keyQueueDL,
       index,
       messageId,
@@ -63,8 +63,8 @@ export class RequeueHandler extends Handler {
   }
 
   requeueMessageFromAcknowledgedQueue(
-    ns: string,
     queueName: string,
+    ns: string | undefined,
     index: number,
     messageId: string,
     withPriority: boolean,
@@ -73,8 +73,8 @@ export class RequeueHandler extends Handler {
   ): void {
     const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName, ns);
     this.requeueListMessage(
-      ns,
       queueName,
+      ns,
       keyQueueAcknowledgedMessages,
       index,
       messageId,

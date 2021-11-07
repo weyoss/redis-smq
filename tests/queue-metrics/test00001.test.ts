@@ -17,7 +17,7 @@ describe('Queue metrics: check that queue metrics are valid', () => {
     const queueName = producer.getQueueName();
     const ns = redisKeys.getNamespace();
     const queueManager = promisifyAll(await getQueueManager());
-    const m = await queueManager.getQueueMetricsAsync(ns, queueName);
+    const m = await queueManager.getQueueMetricsAsync(queueName, ns);
     expect(m.pending).toBe(1);
     expect(m.pendingWithPriority).toBe(0);
     expect(m.acknowledged).toBe(0);
@@ -29,7 +29,7 @@ describe('Queue metrics: check that queue metrics are valid', () => {
     const queueName = producer.getQueueName();
     const ns = redisKeys.getNamespace();
     const queueManager = promisifyAll(await getQueueManager());
-    const m = await queueManager.getQueueMetricsAsync(ns, queueName);
+    const m = await queueManager.getQueueMetricsAsync(queueName, ns);
     expect(m.pending).toBe(0);
     expect(m.pendingWithPriority).toBe(0);
     expect(m.acknowledged).toBe(0);
@@ -41,7 +41,7 @@ describe('Queue metrics: check that queue metrics are valid', () => {
     const queueName = producer.getQueueName();
     const ns = redisKeys.getNamespace();
     const queueManager = promisifyAll(await getQueueManager());
-    const m = await queueManager.getQueueMetricsAsync(ns, queueName);
+    const m = await queueManager.getQueueMetricsAsync(queueName, ns);
     expect(m.pending).toBe(0);
     expect(m.pendingWithPriority).toBe(0);
     expect(m.acknowledged).toBe(1);
@@ -58,7 +58,7 @@ describe('Queue metrics: check that queue metrics are valid', () => {
     await producer.produceMessageAsync(msg);
 
     const queueManager = promisifyAll(await getQueueManager());
-    const m = await queueManager.getQueueMetricsAsync(ns, queueName);
+    const m = await queueManager.getQueueMetricsAsync(queueName, ns);
 
     expect(m.pending).toBe(0);
     expect(m.pendingWithPriority).toBe(0);
@@ -71,7 +71,7 @@ describe('Queue metrics: check that queue metrics are valid', () => {
     const queueName = producer.getQueueName();
     const ns = redisKeys.getNamespace();
     const queueManager = promisifyAll(await getQueueManager());
-    const m = await queueManager.getQueueMetricsAsync(ns, queueName);
+    const m = await queueManager.getQueueMetricsAsync(queueName, ns);
     expect(m.pending).toBe(0);
     expect(m.pendingWithPriority).toBe(1);
     expect(m.acknowledged).toBe(0);

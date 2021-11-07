@@ -8,12 +8,12 @@ test('Purging acknowledged queue', async () => {
   const ns = redisKeys.getNamespace();
 
   const queueManager = promisifyAll(await getQueueManager());
-  const m = await queueManager.getQueueMetricsAsync(ns, queueName);
+  const m = await queueManager.getQueueMetricsAsync(queueName, ns);
 
   expect(m.acknowledged).toBe(1);
 
-  await queueManager.purgeAcknowledgedMessagesQueueAsync(ns, queueName);
+  await queueManager.purgeAcknowledgedMessagesQueueAsync(queueName, ns);
 
-  const m2 = await queueManager.getQueueMetricsAsync(ns, queueName);
+  const m2 = await queueManager.getQueueMetricsAsync(queueName, ns);
   expect(m2.acknowledged).toBe(0);
 });

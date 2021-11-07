@@ -41,7 +41,7 @@ test('Default message TTL: a message without TTL is not consumed and moved to DL
   expect(unacks).toBe(1);
 
   const m = promisifyAll(await getMessageManager());
-  const list = await m.getDeadLetterMessagesAsync(ns, queueName, 0, 100);
+  const list = await m.getDeadLetterMessagesAsync(queueName, ns, 0, 100);
   expect(list.total).toBe(1);
   expect(list.items[0].message.getId()).toBe(msg.getId());
 });

@@ -29,8 +29,8 @@ test('Combined test: Requeue a message from dead-letter queue with priority.  Ch
 
   const messageManager = promisifyAll(await getMessageManager());
   await messageManager.requeueMessageFromDLQueueAsync(
-    ns,
     queueName,
+    ns,
     0,
     msg.getId(),
     true,
@@ -38,8 +38,8 @@ test('Combined test: Requeue a message from dead-letter queue with priority.  Ch
   );
 
   const res1 = await messageManager.getPendingMessagesAsync(
-    ns,
     queueName,
+    ns,
     0,
     100,
   );
@@ -47,8 +47,8 @@ test('Combined test: Requeue a message from dead-letter queue with priority.  Ch
   expect(res1.items.length).toBe(0);
 
   const res2 = await messageManager.getPendingMessagesWithPriorityAsync(
-    ns,
     queueName,
+    ns,
     0,
     100,
   );
@@ -61,8 +61,8 @@ test('Combined test: Requeue a message from dead-letter queue with priority.  Ch
   expect(res2.items[0].message).toEqual(msg1);
 
   const res3 = await messageManager.getDeadLetterMessagesAsync(
-    ns,
     queueName,
+    ns,
     0,
     100,
   );
@@ -70,7 +70,7 @@ test('Combined test: Requeue a message from dead-letter queue with priority.  Ch
   expect(res3.items.length).toBe(0);
 
   const queueManager = promisifyAll(await getQueueManager());
-  const queueMetrics = await queueManager.getQueueMetricsAsync(ns, queueName);
+  const queueMetrics = await queueManager.getQueueMetricsAsync(queueName, ns);
   expect(queueMetrics.deadLettered).toBe(0);
   expect(queueMetrics.pending).toBe(0);
   expect(queueMetrics.pendingWithPriority).toBe(1);

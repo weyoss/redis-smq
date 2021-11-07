@@ -35,8 +35,8 @@ export class MessageManagerService {
   ): Promise<TGetMessagesReply> {
     const { ns, queueName, skip = 0, take = 1 } = args;
     return this.messageManager.getPendingMessagesAsync(
-      ns,
       queueName,
+      ns,
       skip,
       take,
     );
@@ -47,8 +47,8 @@ export class MessageManagerService {
   ): Promise<TGetMessagesReply> {
     const { ns, queueName, skip = 0, take = 1 } = args;
     return this.messageManager.getAcknowledgedMessagesAsync(
-      ns,
       queueName,
+      ns,
       skip,
       take,
     );
@@ -59,8 +59,8 @@ export class MessageManagerService {
   ): Promise<TGetMessagesReply> {
     const { ns, queueName, skip = 0, take = 1 } = args;
     return this.messageManager.getPendingMessagesWithPriorityAsync(
-      ns,
       queueName,
+      ns,
       skip,
       take,
     );
@@ -71,8 +71,8 @@ export class MessageManagerService {
   ): Promise<TGetMessagesReply> {
     const { ns, queueName, skip = 0, take = 1 } = args;
     return this.messageManager.getDeadLetteredMessagesAsync(
-      ns,
       queueName,
+      ns,
       skip,
       take,
     );
@@ -83,8 +83,8 @@ export class MessageManagerService {
   ): Promise<void> {
     const { ns, queueName, id, sequenceId } = args;
     return this.messageManager.deletePendingMessageAsync(
-      ns,
       queueName,
+      ns,
       sequenceId,
       id,
     );
@@ -95,8 +95,8 @@ export class MessageManagerService {
   ): Promise<void> {
     const { ns, queueName, id, sequenceId } = args;
     return this.messageManager.deletePendingMessageWithPriorityAsync(
-      ns,
       queueName,
+      ns,
       sequenceId,
       id,
     );
@@ -107,8 +107,8 @@ export class MessageManagerService {
   ): Promise<void> {
     const { ns, queueName, id, sequenceId } = args;
     return this.messageManager.deleteAcknowledgedMessageAsync(
-      ns,
       queueName,
+      ns,
       sequenceId,
       id,
     );
@@ -119,8 +119,8 @@ export class MessageManagerService {
   ): Promise<void> {
     const { ns, queueName, id, sequenceId } = args;
     return this.messageManager.deleteDeadLetterMessageAsync(
-      ns,
       queueName,
+      ns,
       sequenceId,
       id,
     );
@@ -138,8 +138,8 @@ export class MessageManagerService {
   ): Promise<void> {
     const { ns, queueName, id, sequenceId, priority } = args;
     return this.messageManager.requeueMessageFromDLQueueAsync(
-      ns,
       queueName,
+      ns,
       sequenceId,
       id,
       typeof priority !== 'undefined',
@@ -152,8 +152,8 @@ export class MessageManagerService {
   ): Promise<void> {
     const { ns, queueName, id, sequenceId, priority } = args;
     return this.messageManager.requeueMessageFromAcknowledgedQueueAsync(
-      ns,
       queueName,
+      ns,
       sequenceId,
       id,
       typeof priority !== 'undefined',

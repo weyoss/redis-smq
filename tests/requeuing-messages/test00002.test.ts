@@ -29,8 +29,8 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
 
   const messageManager = promisifyAll(await getMessageManager());
   const res1 = await messageManager.getPendingMessagesAsync(
-    ns,
     queueName,
+    ns,
     0,
     100,
   );
@@ -38,8 +38,8 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
   expect(res1.items.length).toBe(0);
 
   const res2 = await messageManager.getAcknowledgedMessagesAsync(
-    ns,
     queueName,
+    ns,
     0,
     100,
   );
@@ -47,13 +47,13 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
   expect(res2.items.length).toBe(1);
 
   const queueManager = promisifyAll(await getQueueManager());
-  const queueMetrics = await queueManager.getQueueMetricsAsync(ns, queueName);
+  const queueMetrics = await queueManager.getQueueMetricsAsync(queueName, ns);
   expect(queueMetrics.pending).toBe(0);
   expect(queueMetrics.acknowledged).toBe(1);
 
   await messageManager.requeueMessageFromAcknowledgedQueueAsync(
-    ns,
     queueName,
+    ns,
     0,
     msg.getId(),
     false,
@@ -61,8 +61,8 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
   );
 
   const res5 = await messageManager.getPendingMessagesAsync(
-    ns,
     queueName,
+    ns,
     0,
     100,
   );
@@ -78,22 +78,22 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
   expect(res5.items[0].message).toEqual(msg2);
 
   const res6 = await messageManager.getAcknowledgedMessagesAsync(
-    ns,
     queueName,
+    ns,
     0,
     100,
   );
   expect(res6.total).toBe(0);
   expect(res6.items.length).toBe(0);
 
-  const queueMetrics1 = await queueManager.getQueueMetricsAsync(ns, queueName);
+  const queueMetrics1 = await queueManager.getQueueMetricsAsync(queueName, ns);
   expect(queueMetrics1.acknowledged).toBe(0);
   expect(queueMetrics1.pending).toBe(1);
 
   await expect(async () => {
     await messageManager.requeueMessageFromAcknowledgedQueueAsync(
-      ns,
       queueName,
+      ns,
       0,
       msg.getId(),
       false,

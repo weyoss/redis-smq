@@ -12,8 +12,8 @@ import { Handler } from './handler';
 
 export class EnqueueHandler extends Handler {
   getAcknowledgedMessages(
-    ns: string,
     queueName: string,
+    ns: string | undefined,
     skip: number,
     take: number,
     cb: ICallback<TGetMessagesReply>,
@@ -29,8 +29,8 @@ export class EnqueueHandler extends Handler {
   }
 
   getDeadLetteredMessages(
-    ns: string,
     queueName: string,
+    ns: string | undefined,
     skip: number,
     take: number,
     cb: ICallback<TGetMessagesReply>,
@@ -40,8 +40,8 @@ export class EnqueueHandler extends Handler {
   }
 
   getPendingMessages(
-    ns: string,
     queueName: string,
+    ns: string | undefined,
     skip: number,
     take: number,
     cb: ICallback<TGetMessagesReply>,
@@ -51,8 +51,8 @@ export class EnqueueHandler extends Handler {
   }
 
   getPendingMessagesWithPriority(
-    ns: string,
     queueName: string,
+    ns: string | undefined,
     skip: number,
     take: number,
     cb: ICallback<TGetMessagesReply>,
@@ -68,8 +68,8 @@ export class EnqueueHandler extends Handler {
   }
 
   deletePendingMessage(
-    ns: string,
     queueName: string,
+    ns: string | undefined,
     index: number,
     messageId: string,
     cb: ICallback<void>,
@@ -89,8 +89,8 @@ export class EnqueueHandler extends Handler {
   }
 
   deletePendingMessageWithPriority(
-    ns: string,
     queueName: string,
+    ns: string | undefined,
     index: number,
     messageId: string,
     cb: ICallback<void>,

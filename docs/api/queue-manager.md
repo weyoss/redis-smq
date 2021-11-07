@@ -32,44 +32,52 @@ getSingletonInstance(config, cb)
 ### QueueManager.prototype.purgeDeadLetterQueue
 
 ```javascript
-purgeDeadLetterQueue(queueName, cb);
+purgeDeadLetterQueue(queueName, ns, cb);
 ```
 
 **Parameters**
 - `queueName` *(string): Required.* Queue name.
+- `ns` *(string | undefined): Required.* Queue namespace. To use the default namespace or the namespace from your
+  configuration object, set `ns` to `undefined`. Otherwise, provide a valid namespace.
 - `cb(err)` *(Function): Required.* Callback function.
     - `err` *(Error | null | undefined).* Error object.
 
 ### QueueManager.prototype.purgeAcknowledgedMessagesQueue
 
 ```javascript
-purgeAcknowledgedMessagesQueue(queueName, cb);
+purgeAcknowledgedMessagesQueue(queueName, ns, cb);
 ```
 
 **Parameters**
 - `queueName` *(string): Required.* Queue name.
+- `ns` *(string | undefined): Required.* Queue namespace. To use the default namespace or the namespace from your
+  configuration object, set `ns` to `undefined`. Otherwise, provide a valid namespace.
 - `cb(err)` *(Function): Required.* Callback function.
     - `err` *(Error | null | undefined).* Error object.
 
 ### QueueManager.prototype.purgeQueue
 
 ```javascript
-purgeQueue(queueName, cb);
+purgeQueue(queueName, ns, cb);
 ```
 
 **Parameters**
 - `queueName` *(string): Required.* Queue name.
+- `ns` *(string | undefined): Required.* Queue namespace. To use the default namespace or the namespace from your
+  configuration object, set `ns` to `undefined`. Otherwise, provide a valid namespace.
 - `cb(err)` *(Function): Required.* Callback function.
     - `err` *(Error | null | undefined).* Error object.
 
 ### QueueManager.prototype.purgePriorityQueue
 
 ```javascript
-purgePriorityQueue(queueName, cb);
+purgePriorityQueue(queueName, ns, cb);
 ```
 
 **Parameters**
 - `queueName` *(string): Required.* Queue name.
+- `ns` *(string | undefined): Required.* Queue namespace. To use the default namespace or the namespace from your
+  configuration object, set `ns` to `undefined`. Otherwise, provide a valid namespace.
 - `cb(err)` *(Function): Required.* Callback function.
     - `err` *(Error | null | undefined).* Error object.
 
@@ -86,11 +94,13 @@ purgeScheduledMessagesQueue(cb);
 ### QueueManager.prototype.getQueueMetrics
 
 ```javascript
-getQueueMetrics(queueName, cb);
+getQueueMetrics(queueName, ns, cb);
 ```
 
 **Parameters**
 - `queueName` *(string): Required.* Queue name.
+- `ns` *(string | undefined): Required.* Queue namespace. To use the default namespace or the namespace from your
+  configuration object, set `ns` to `undefined`. Otherwise, provide a valid namespace.
 - `cb(err, queueMetrics)` *(Function): Required.* Callback function.
     - `err` *(Error | null | undefined).* Error object.
     - `queueMetrics` *(object).* Queue metrics.
