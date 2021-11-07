@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 4.0.6 (2021-11-07)
+
+* Fixed queues and messages management issues when using many namespaces.
+
 ## 4.0.5 (2021-11-05)
 
 * Fixed outdated examples in the HTTP API reference
