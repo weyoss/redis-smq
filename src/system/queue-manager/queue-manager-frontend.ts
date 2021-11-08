@@ -1,4 +1,9 @@
-import { ICallback, IConfig, IQueueMetrics } from '../../../types';
+import {
+  ICallback,
+  IConfig,
+  IQueueMetrics,
+  TMessageQueue,
+} from '../../../types';
 import { RedisClient } from '../redis-client/redis-client';
 import { QueueManager } from './queue-manager';
 
@@ -58,6 +63,10 @@ export class QueueManagerFrontend {
     cb: ICallback<IQueueMetrics>,
   ): void {
     this.queueManager.getQueueMetrics(queueName, ns, cb);
+  }
+
+  getMessageQueues(cb: ICallback<TMessageQueue[]>): void {
+    this.queueManager.getMessageQueues(cb);
   }
 
   ///
