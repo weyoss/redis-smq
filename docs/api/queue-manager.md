@@ -109,6 +109,19 @@ getQueueMetrics(queueName, ns, cb);
       - `queueMetrics.pending` *(number).* Pending messages count.
       - `queueMetrics.pendingWithPriority` *(number).* Pending messages with priority count.
 
+### QueueManager.prototype.getMessageQueues
+
+```javascript
+getMessageQueues(cb);
+```
+
+**Parameters**
+- `cb(err, messageQueues)` *(Function): Required.* Callback function.
+    - `err` *(Error | null | undefined).* Error object.
+    - `messageQueues` *(Array).*
+      - `messageQueues[*].ns` *(string).* Queue namespace.
+      - `messageQueues[*].name` *(string).* Queue name.
+
 ### QueueManager.prototype.quit
 
 ```javascript
