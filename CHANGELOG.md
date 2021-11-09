@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 4.0.8 (2021-11-09)
+
+* Improved debugging info.
+* Allowed listing message queues from QueueManagerFrontend.
+
 ## 4.0.7 (2021-11-08)
 
 * Made queue namespace optional for queue/message management. When not provided, the configuration namespace is used. If 
