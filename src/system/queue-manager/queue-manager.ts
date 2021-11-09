@@ -4,12 +4,15 @@ import { redisKeys } from '../common/redis-keys';
 import { Base } from '../base';
 import { Consumer } from '../consumer/consumer';
 import * as async from 'async';
+import BLogger from 'bunyan';
 
 export class QueueManager {
   protected redisClient: RedisClient;
+  protected logger: BLogger;
 
-  constructor(redisClient: RedisClient) {
+  constructor(redisClient: RedisClient, logger: BLogger) {
     this.redisClient = redisClient;
+    this.logger = logger.child({ child: QueueManager.name });
   }
 
   ///
@@ -19,6 +22,9 @@ export class QueueManager {
     processingQueueName: string,
     cb: ICallback<void>,
   ): void {
+    this.logger.debug(
+      `Deleting processing queue (${processingQueueName}) of (${queueName} from default namespace)...`,
+    );
     const multi = this.redisClient.multi();
     const { keyIndexProcessingQueues, keyIndexQueueMessageProcessingQueues } =
       redisKeys.getKeys(queueName);
@@ -41,6 +47,7 @@ export class QueueManager {
     ns: string | undefined,
     cb: ICallback<void>,
   ): void {
+    this.logger.debug(`Purging dead-letter queue of (${queueName}, ${ns})...`);
     const { keyQueueDL } = redisKeys.getKeys(queueName, ns);
     this.redisClient.del(keyQueueDL, (err) => cb(err));
   }
@@ -50,6 +57,7 @@ export class QueueManager {
     ns: string | undefined,
     cb: ICallback<void>,
   ): void {
+    this.logger.debug(`Purging dead-letter queue of (${queueName}, ${ns})...`);
     const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName, ns);
     this.redisClient.del(keyQueueAcknowledgedMessages, (err) => cb(err));
   }
@@ -59,6 +67,7 @@ export class QueueManager {
     ns: string | undefined,
     cb: ICallback<void>,
   ): void {
+    this.logger.debug(`Purging pending queue of (${queueName}, ${ns})...`);
     const { keyQueue } = redisKeys.getKeys(queueName, ns);
     this.redisClient.del(keyQueue, (err) => cb(err));
   }
@@ -68,11 +77,13 @@ export class QueueManager {
     ns: string | undefined,
     cb: ICallback<void>,
   ): void {
+    this.logger.debug(`Purging priority queue of (${queueName}, ${ns})...`);
     const { keyQueuePriority } = redisKeys.getKeys(queueName, ns);
     this.redisClient.del(keyQueuePriority, (err) => cb(err));
   }
 
   purgeScheduledMessagesQueue(cb: ICallback<void>): void {
+    this.logger.debug(`Purging scheduled messages queue...`);
     const { keyQueueScheduled } = redisKeys.getGlobalKeys();
     this.redisClient.del(keyQueueScheduled, (err) => cb(err));
   }
@@ -158,7 +169,7 @@ export class QueueManager {
     );
   }
 
-  static registerQueues(
+  static setUpMessageQueue(
     instance: Base,
     redisClient: RedisClient,
     cb: ICallback<void>,

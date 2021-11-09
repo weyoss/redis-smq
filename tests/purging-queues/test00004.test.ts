@@ -1,7 +1,7 @@
 import {
   getConsumer,
   getProducer,
-  getQueueManager,
+  getQueueManagerFrontend,
   untilConsumerIdle,
 } from '../common';
 import { Message } from '../../src/message';
@@ -25,7 +25,7 @@ test('Purging dead letter queue', async () => {
   consumer.run();
   await untilConsumerIdle(consumer);
 
-  const queueManager = promisifyAll(await getQueueManager());
+  const queueManager = promisifyAll(await getQueueManagerFrontend());
   const m = await queueManager.getQueueMetricsAsync(queueName, ns);
 
   expect(m.deadLettered).toBe(1);

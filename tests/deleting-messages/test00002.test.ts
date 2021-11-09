@@ -1,4 +1,8 @@
-import { getMessageManager, getProducer, getQueueManager } from '../common';
+import {
+  getMessageManager,
+  getProducer,
+  getQueueManagerFrontend,
+} from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
 import { redisKeys } from '../../src/system/common/redis-keys';
@@ -25,7 +29,7 @@ test('Combined test: Delete a pending message with priority. Check pending messa
   expect(res1.total).toBe(1);
   expect(res1.items[0].message.getId()).toBe(msg.getId());
 
-  const queueManager = promisifyAll(await getQueueManager());
+  const queueManager = promisifyAll(await getQueueManagerFrontend());
   const queueMetrics = await queueManager.getQueueMetricsAsync(queueName, ns);
   expect(queueMetrics.pendingWithPriority).toBe(1);
 

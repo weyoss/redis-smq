@@ -1,8 +1,9 @@
-import { IConfig } from '../../../types';
+import { TConsumerWorkerParameters } from '../../../types';
 import { Ticker } from '../common/ticker';
 import { MessageManager } from '../message-manager/message-manager';
 import { redisKeys } from '../common/redis-keys';
 import { RedisClient } from '../redis-client/redis-client';
+import { Logger } from '../common/logger';
 
 export class ScheduleWorker {
   protected messageManager: MessageManager;
@@ -29,7 +30,7 @@ export class ScheduleWorker {
 }
 
 process.on('message', (c: string) => {
-  const config: IConfig = JSON.parse(c);
+  const { config, consumerId }: TConsumerWorkerParameters = JSON.parse(c);
   if (config.namespace) {
     redisKeys.setNamespace(config.namespace);
   }
@@ -37,7 +38,14 @@ process.on('message', (c: string) => {
     if (err) throw err;
     else if (!client) throw new Error(`Expected an instance of RedisClient`);
     else {
-      const messageManager = new MessageManager(client);
+      const logger = Logger(ScheduleWorker.name, {
+        ...config.log,
+        options: {
+          ...config.log?.options,
+          consumerId,
+        },
+      });
+      const messageManager = new MessageManager(client, logger);
       new ScheduleWorker(messageManager, config.priorityQueue === true);
     }
   });

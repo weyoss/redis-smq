@@ -1,13 +1,13 @@
-import { ICallback, IRatesProvider } from '../../types';
+import { ICallback, IMessageRateProvider } from '../../types';
 import { Base } from './base';
 import { events } from './common/events';
 import { Ticker } from './common/ticker';
 import { RedisClient } from './redis-client/redis-client';
 import { EventEmitter } from 'events';
 
-export class Rates extends EventEmitter {
+export class MessageRate extends EventEmitter {
   protected instance: Base;
-  protected ratesProvider: IRatesProvider;
+  protected messageRateProvider: IMessageRateProvider;
   protected redisClient: RedisClient;
   protected ticker: Ticker;
 
@@ -15,7 +15,7 @@ export class Rates extends EventEmitter {
     super();
     this.instance = instance;
     this.redisClient = redisClient;
-    this.ratesProvider = instance.getStatsProvider();
+    this.messageRateProvider = instance.getMessageRateProvider();
     this.ticker = new Ticker(() => {
       this.onTick();
     }, 1000);
@@ -23,12 +23,12 @@ export class Rates extends EventEmitter {
   }
 
   protected onTick(): void {
-    const stats = this.ratesProvider.getRates();
+    const stats = this.messageRateProvider.getRates();
     this.publish(stats);
   }
 
   protected publish(stats: Record<string, any>): void {
-    const formatted = this.ratesProvider.format(stats);
+    const formatted = this.messageRateProvider.format(stats);
     const { keyIndexRates } = this.instance.getRedisKeys();
     this.redisClient.hmset(keyIndexRates, formatted, () => void 0);
   }

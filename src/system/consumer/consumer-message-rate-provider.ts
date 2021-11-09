@@ -1,8 +1,8 @@
 import { Consumer } from './consumer';
-import { IConsumerStats, IRatesProvider } from '../../../types';
+import { IConsumerStats, IMessageRateProvider } from '../../../types';
 import { events } from '../common/events';
 
-export class ConsumerRatesProvider implements IRatesProvider {
+export class ConsumerMessageRateProvider implements IMessageRateProvider {
   protected consumer: Consumer;
   protected keyConsumerRateProcessing: string;
   protected keyConsumerRateAcknowledged: string;

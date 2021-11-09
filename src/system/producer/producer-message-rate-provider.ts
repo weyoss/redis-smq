@@ -1,7 +1,7 @@
 import { Producer } from './producer';
-import { IProducerStats, IRatesProvider } from '../../../types';
+import { IProducerStats, IMessageRateProvider } from '../../../types';
 
-export class ProducerRatesProvider implements IRatesProvider {
+export class ProducerMessageRateProvider implements IMessageRateProvider {
   protected inputSlots: number[] = new Array(1000).fill(0);
   protected inputRate = 0;
   protected producer: Producer;

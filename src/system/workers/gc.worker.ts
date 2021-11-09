@@ -8,7 +8,7 @@ import { RedisClient } from '../redis-client/redis-client';
 import {
   EMessageUnacknowledgedCause,
   ICallback,
-  IConfig,
+  TConsumerWorkerParameters,
 } from '../../../types';
 import { redisKeys } from '../common/redis-keys';
 import BLogger from 'bunyan';
@@ -17,7 +17,7 @@ import { MessageManager } from '../message-manager/message-manager';
 import { QueueManager } from '../queue-manager/queue-manager';
 
 export class GCWorker {
-  protected config: IConfig;
+  protected consumerId: string;
   protected logger: BLogger;
   protected redisClient: RedisClient;
   protected ticker: Ticker;
@@ -25,16 +25,17 @@ export class GCWorker {
   protected queueManager: QueueManager;
 
   constructor(
-    config: IConfig,
     client: RedisClient,
     broker: Broker,
     queueManager: QueueManager,
+    logger: BLogger,
+    consumerId: string,
   ) {
-    this.config = config;
-    this.logger = Logger(`gc`, this.config.log);
+    this.logger = logger;
     this.redisClient = client;
     this.queueManager = queueManager;
     this.broker = broker;
+    this.consumerId = consumerId;
     this.ticker = new Ticker(() => {
       this.onTick();
     }, 1000);
@@ -53,7 +54,7 @@ export class GCWorker {
         if (err) cb(err);
         else {
           this.logger.debug(
-            `Processing queue [${processingQueueName}] deleted.`,
+            `Processing queue (${processingQueueName}) of (${queueName}) has been deleted.`,
           );
           cb();
         }
@@ -68,7 +69,7 @@ export class GCWorker {
     cb: ICallback<void>,
   ): void {
     this.logger.debug(
-      `Inspecting consumer [${consumerId}] processing queue [${processingQueue}] ...`,
+      `Inspecting processing queue (${processingQueue}) of consumer (ID ${consumerId})...`,
     );
     this.redisClient.lrange(
       processingQueue,
@@ -79,7 +80,7 @@ export class GCWorker {
         else if (range && range.length) {
           const msg = Message.createFromMessage(range[0]);
           this.logger.debug(
-            `Fetched message ID [${msg.getId()}] from consumer [${consumerId}] processing queue [${processingQueue}].`,
+            `Fetched message (ID ${msg.getId()}) from processing queue (${processingQueue}) of consumer (ID ${consumerId}).`,
           );
           this.broker.retry(
             queueName,
@@ -89,12 +90,17 @@ export class GCWorker {
             (err) => {
               if (err) cb(err);
               else {
-                this.logger.debug(`Message ID ${msg.getId()} collected.`);
+                this.logger.debug(
+                  `Message (ID ${msg.getId()}) has been collected.`,
+                );
                 this.destroyProcessingQueue(queueName, processingQueue, cb);
               }
             },
           );
-        } else this.destroyProcessingQueue(queueName, processingQueue, cb);
+        } else {
+          this.logger.debug(`Processing queue (${processingQueue}) is empty.`);
+          this.destroyProcessingQueue(queueName, processingQueue, cb);
+        }
       },
     );
   }
@@ -107,34 +113,41 @@ export class GCWorker {
       processingQueues,
       (processingQueue: string, cb) => {
         this.logger.debug(
-          `Inspecting processing queue [${processingQueue}]... `,
+          `Inspecting processing queue (${processingQueue})... `,
         );
         const extractedData = redisKeys.extractData(processingQueue);
         if (!extractedData || !extractedData.consumerId) {
           cb(new Error(`Expected a consumer ID`));
         } else {
           const { queueName, consumerId } = extractedData;
-          this.logger.debug(`Is consumer ID [${consumerId}] alive?`);
-          Heartbeat.isAlive(
-            { client: this.redisClient, queueName, id: consumerId },
-            (err, online) => {
-              if (err) cb(err);
-              else if (online) {
-                this.logger.debug(`Consumer [${consumerId}] is online.`);
-                cb();
-              } else {
-                this.logger.debug(
-                  `Consumer ID [${consumerId}] seems to be offline.`,
-                );
-                this.handleOfflineConsumer(
-                  consumerId,
-                  queueName,
-                  processingQueue,
-                  cb,
-                );
-              }
-            },
-          );
+          if (this.consumerId !== consumerId) {
+            this.logger.debug(`Is consumer (ID ${consumerId}) alive?`);
+            Heartbeat.isAlive(
+              { client: this.redisClient, queueName, id: consumerId },
+              (err, online) => {
+                if (err) cb(err);
+                else if (online) {
+                  this.logger.debug(`Consumer (ID ${consumerId}) is alive.`);
+                  cb();
+                } else {
+                  this.logger.debug(
+                    `Consumer (ID ${consumerId}) seems to be offline.`,
+                  );
+                  this.handleOfflineConsumer(
+                    consumerId,
+                    queueName,
+                    processingQueue,
+                    cb,
+                  );
+                }
+              },
+            );
+          } else {
+            this.logger.debug(
+              `Owner of processing queue (${processingQueue}) is consumer (ID ${consumerId}), which is my parent. Skipping... `,
+            );
+            cb();
+          }
         }
       },
       cb,
@@ -147,15 +160,13 @@ export class GCWorker {
       (e?: Error | null, result?: string[] | null) => {
         if (e) throw e;
         if (result && result.length) {
-          this.logger.debug(`Fetched [${result.length}] processing queues`);
+          this.logger.debug(`Got ${result.length} processing queue(s).`);
           this.handleProcessingQueues(result, (err) => {
             if (err) throw err;
             this.ticker.nextTick();
           });
         } else {
-          this.logger.debug(
-            'No processing queues found. Waiting for next tick...',
-          );
+          this.logger.debug('No processing queues found. Next tick...');
           this.ticker.nextTick();
         }
       },
@@ -169,7 +180,7 @@ export class GCWorker {
 }
 
 process.on('message', (c: string) => {
-  const config: IConfig = JSON.parse(c);
+  const { config, consumerId }: TConsumerWorkerParameters = JSON.parse(c);
   if (config.namespace) {
     redisKeys.setNamespace(config.namespace);
   }
@@ -177,10 +188,17 @@ process.on('message', (c: string) => {
     if (err) throw err;
     else if (!client) throw new Error(`Expected an instance of RedisClient`);
     else {
-      const messageManager = new MessageManager(client);
-      const broker = new Broker(config, messageManager);
-      const queueManager = new QueueManager(client);
-      new GCWorker(config, client, broker, queueManager);
+      const logger = Logger(GCWorker.name, {
+        ...config.log,
+        options: {
+          ...config.log?.options,
+          consumerId,
+        },
+      });
+      const messageManager = new MessageManager(client, logger);
+      const broker = new Broker(config, messageManager, logger);
+      const queueManager = new QueueManager(client, logger);
+      new GCWorker(client, broker, queueManager, logger, consumerId);
     }
   });
 });

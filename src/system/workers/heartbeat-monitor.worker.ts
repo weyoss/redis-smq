@@ -1,5 +1,5 @@
 import * as async from 'async';
-import { IConfig, ICallback } from '../../../types';
+import { ICallback, TConsumerWorkerParameters } from '../../../types';
 import { Ticker } from '../common/ticker';
 import { Heartbeat } from '../consumer/heartbeat';
 import { RedisClient } from '../redis-client/redis-client';
@@ -41,7 +41,7 @@ class HeartbeatMonitorWorker {
 }
 
 process.on('message', (payload: string) => {
-  const config: IConfig = JSON.parse(payload);
+  const { config }: TConsumerWorkerParameters = JSON.parse(payload);
   if (config.namespace) {
     redisKeys.setNamespace(config.namespace);
   }

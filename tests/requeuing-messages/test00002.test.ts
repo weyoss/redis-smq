@@ -2,7 +2,7 @@ import {
   getConsumer,
   getMessageManager,
   getProducer,
-  getQueueManager,
+  getQueueManagerFrontend,
   untilConsumerIdle,
 } from '../common';
 import { Message } from '../../src/message';
@@ -46,7 +46,7 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
   expect(res2.total).toBe(1);
   expect(res2.items.length).toBe(1);
 
-  const queueManager = promisifyAll(await getQueueManager());
+  const queueManager = promisifyAll(await getQueueManagerFrontend());
   const queueMetrics = await queueManager.getQueueMetricsAsync(queueName, ns);
   expect(queueMetrics.pending).toBe(0);
   expect(queueMetrics.acknowledged).toBe(1);

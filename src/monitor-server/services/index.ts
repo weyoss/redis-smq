@@ -5,13 +5,13 @@ import { QueueManagerService } from './queue-manager.service';
 import { QueueManager } from '../../system/queue-manager/queue-manager';
 
 export function Services(app: TApplication) {
-  const { redis } = app.context;
+  const { redis, logger } = app.context;
   let messageManagerServiceInstance: MessageManagerService | null = null;
   let queueManagerServiceInstance: QueueManagerService | null = null;
   return {
     get messageManagerService() {
       if (!messageManagerServiceInstance) {
-        const messageManager = new MessageManager(redis);
+        const messageManager = new MessageManager(redis, logger);
         messageManagerServiceInstance = new MessageManagerService(
           messageManager,
         );
@@ -20,7 +20,7 @@ export function Services(app: TApplication) {
     },
     get queueManagerService() {
       if (!queueManagerServiceInstance) {
-        const queueManager = new QueueManager(redis);
+        const queueManager = new QueueManager(redis, logger);
         queueManagerServiceInstance = new QueueManagerService(queueManager);
       }
       return queueManagerServiceInstance;

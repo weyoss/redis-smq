@@ -1,23 +1,23 @@
 import { IConfig, ICallback } from '../../../types';
 import { Message } from '../message';
-import { ProducerRatesProvider } from './producer-rates-provider';
+import { ProducerMessageRateProvider } from './producer-message-rate-provider';
 import { Base } from '../base';
 import { events } from '../common/events';
 import { redisKeys } from '../common/redis-keys';
 
 export class Producer extends Base {
-  protected statsProvider: ProducerRatesProvider | null = null;
+  protected messageRateProvider: ProducerMessageRateProvider | null = null;
 
   constructor(queueName: string, config: IConfig = {}) {
     super(queueName, config);
     this.run();
   }
 
-  getStatsProvider(): ProducerRatesProvider {
-    if (!this.statsProvider) {
-      this.statsProvider = new ProducerRatesProvider(this);
+  getMessageRateProvider(): ProducerMessageRateProvider {
+    if (!this.messageRateProvider) {
+      this.messageRateProvider = new ProducerMessageRateProvider(this);
     }
-    return this.statsProvider;
+    return this.messageRateProvider;
   }
 
   produceMessage(msg: unknown, cb: ICallback<boolean>): void {
@@ -28,7 +28,8 @@ export class Producer extends Base {
     const callback: ICallback<boolean> = (err, reply) => {
       if (err) cb(err);
       else {
-        if (this.statsProvider) this.statsProvider.incrementInputSlot();
+        if (this.messageRateProvider)
+          this.messageRateProvider.incrementInputSlot();
         this.emit(events.MESSAGE_PRODUCED, message);
         cb(null, reply);
       }
