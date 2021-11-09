@@ -1,15 +1,17 @@
 import { ICallback, IConfig, TGetMessagesReply } from '../../../types';
 import { RedisClient } from '../redis-client/redis-client';
 import { MessageManager } from './message-manager';
+import BLogger from 'bunyan';
+import { Logger } from '../common/logger';
 
 export class MessageManagerFrontend {
   private static instance: MessageManagerFrontend | null = null;
   private redisClient: RedisClient;
   private messageManager: MessageManager;
 
-  private constructor(redisClient: RedisClient) {
+  private constructor(redisClient: RedisClient, logger: BLogger) {
     this.redisClient = redisClient;
-    this.messageManager = new MessageManager(redisClient);
+    this.messageManager = new MessageManager(redisClient, logger);
   }
 
   ///
@@ -206,7 +208,8 @@ export class MessageManagerFrontend {
         if (err) cb(err);
         else if (!client) cb(new Error(`Expected an instance of RedisClient`));
         else {
-          const instance = new MessageManagerFrontend(client);
+          const logger = Logger(`${MessageManagerFrontend.name}`, config.log);
+          const instance = new MessageManagerFrontend(client, logger);
           MessageManagerFrontend.instance = instance;
           cb(null, instance);
         }

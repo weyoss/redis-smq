@@ -2,8 +2,9 @@ import { Ticker } from '../common/ticker';
 import { RedisClient } from '../redis-client/redis-client';
 import { redisKeys } from '../common/redis-keys';
 import { EventEmitter } from 'events';
-import { IConfig } from '../../../types';
+import { TConsumerWorkerParameters } from '../../../types';
 import { MessageManager } from '../message-manager/message-manager';
+import { Logger } from '../common/logger';
 
 export class DelayWorker extends EventEmitter {
   protected ticker: Ticker;
@@ -27,7 +28,7 @@ export class DelayWorker extends EventEmitter {
 }
 
 process.on('message', (c: string) => {
-  const config: IConfig = JSON.parse(c);
+  const { config, consumerId }: TConsumerWorkerParameters = JSON.parse(c);
   if (config.namespace) {
     redisKeys.setNamespace(config.namespace);
   }
@@ -35,7 +36,14 @@ process.on('message', (c: string) => {
     if (err) throw err;
     else if (!client) throw new Error(`Expected an instance of RedisClient`);
     else {
-      const messageManager = new MessageManager(client);
+      const logger = Logger(DelayWorker.name, {
+        ...config.log,
+        options: {
+          ...config.log?.options,
+          consumerId,
+        },
+      });
+      const messageManager = new MessageManager(client, logger);
       new DelayWorker(messageManager);
     }
   });

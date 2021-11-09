@@ -3,7 +3,7 @@ import { RedisClient } from '../redis-client/redis-client';
 import { redisKeys } from '../common/redis-keys';
 import { Message } from '../message';
 import * as async from 'async';
-import { IConfig } from '../../../types';
+import { TConsumerWorkerParameters } from '../../../types';
 
 export class RequeueWorker {
   protected ticker: Ticker;
@@ -52,7 +52,7 @@ export class RequeueWorker {
 }
 
 process.on('message', (c: string) => {
-  const config: IConfig = JSON.parse(c);
+  const { config }: TConsumerWorkerParameters = JSON.parse(c);
   if (config.namespace) {
     redisKeys.setNamespace(config.namespace);
   }

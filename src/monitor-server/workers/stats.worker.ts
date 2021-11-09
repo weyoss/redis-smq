@@ -16,6 +16,7 @@ import { Logger } from '../../system/common/logger';
 import { QueueManager } from '../../system/queue-manager/queue-manager';
 import { Ticker } from '../../system/common/ticker';
 import { events } from '../../system/common/events';
+import BLogger from 'bunyan';
 
 export class StatsWorker {
   protected keyIndexRates;
@@ -35,10 +36,14 @@ export class StatsWorker {
     queues: {},
   };
 
-  constructor(redisClient: RedisClient, config: IConfig) {
+  constructor(
+    queueManager: QueueManager,
+    redisClient: RedisClient,
+    logger: BLogger,
+  ) {
     const { keyIndexRates, keyLockWorkerStats } = redisKeys.getGlobalKeys();
     this.keyIndexRates = keyIndexRates;
-    this.logger = Logger(`monitor-server:stats-aggregator-thread`, config.log);
+    this.logger = logger;
     this.lockManager = new LockManager(
       redisClient,
       keyLockWorkerStats,
@@ -46,7 +51,7 @@ export class StatsWorker {
       true,
     );
     this.redisClient = redisClient;
-    this.queueManager = new QueueManager(redisClient);
+    this.queueManager = queueManager;
     this.ticker = new Ticker(this.run, 1000);
     this.ticker.nextTick();
   }
@@ -354,7 +359,7 @@ export class StatsWorker {
     this.logger.debug(`Acquiring lock...`);
     this.lockManager.acquireLock((err) => {
       if (err) throw err;
-      this.logger.debug(`Lock acquired. Processing stats...`);
+      this.logger.debug(`Lock acquired.`);
       async.waterfall(
         [
           this.reset,
@@ -387,6 +392,10 @@ process.on('message', (c: string) => {
   RedisClient.getNewInstance(config, (err, client) => {
     if (err) throw err;
     else if (!client) throw new Error(`Expected an instance of RedisClient`);
-    else new StatsWorker(client, config);
+    else {
+      const logger = Logger(StatsWorker.name, config.log);
+      const queueManager = new QueueManager(client, logger);
+      new StatsWorker(queueManager, client, logger);
+    }
   });
 });

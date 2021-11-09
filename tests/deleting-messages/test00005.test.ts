@@ -1,4 +1,9 @@
-import { getQueueManager, getRedisInstance, produceMessage } from '../common';
+import {
+  getLogger,
+  getQueueManagerFrontend,
+  getRedisInstance,
+  produceMessage,
+} from '../common';
 import { delay, promisifyAll } from 'bluebird';
 import { MessageManager } from '../../src/system/message-manager/message-manager';
 import { redisKeys } from '../../src/system/common/redis-keys';
@@ -6,9 +11,14 @@ import { redisKeys } from '../../src/system/common/redis-keys';
 test('Concurrent delete operation', async () => {
   const { producer, message } = await produceMessage();
   const redisClient1 = await getRedisInstance();
-  const messageManager1 = promisifyAll(new MessageManager(redisClient1));
+  const logger = getLogger();
+  const messageManager1 = promisifyAll(
+    new MessageManager(redisClient1, logger),
+  );
   const redisClient2 = promisifyAll(await getRedisInstance());
-  const messageManager2 = promisifyAll(new MessageManager(redisClient2));
+  const messageManager2 = promisifyAll(
+    new MessageManager(redisClient2, logger),
+  );
   const queueName = producer.getQueueName();
   const ns = redisKeys.getNamespace();
 
@@ -22,7 +32,7 @@ test('Concurrent delete operation', async () => {
   expect(res1.total).toBe(1);
   expect(res1.items[0].message.getId()).toBe(message.getId());
 
-  const queueManager = promisifyAll(await getQueueManager());
+  const queueManager = promisifyAll(await getQueueManagerFrontend());
   const queueMetrics = await queueManager.getQueueMetricsAsync(queueName, ns);
   expect(queueMetrics.pending).toBe(1);
 

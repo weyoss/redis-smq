@@ -1,4 +1,4 @@
-import { getProducer, getQueueManager } from '../common';
+import { getProducer, getQueueManagerFrontend } from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
 import { redisKeys } from '../../src/system/common/redis-keys';
@@ -8,7 +8,7 @@ test('Purging pending queue', async () => {
   const queueName = producer.getQueueName();
   const ns = redisKeys.getNamespace();
 
-  const queueManager = promisifyAll(await getQueueManager());
+  const queueManager = promisifyAll(await getQueueManagerFrontend());
 
   const m = await queueManager.getQueueMetricsAsync(queueName, ns);
   expect(m.pending).toBe(0);

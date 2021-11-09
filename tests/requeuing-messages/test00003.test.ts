@@ -2,7 +2,7 @@ import {
   getConsumer,
   getMessageManager,
   getProducer,
-  getQueueManager,
+  getQueueManagerFrontend,
   untilMessageAcknowledged,
 } from '../common';
 import { Message } from '../../src/message';
@@ -73,7 +73,7 @@ test('Combined test: Requeue a message from acknowledged queue with priority. Ch
   expect(res7.total).toBe(0);
   expect(res7.items.length).toBe(0);
 
-  const queueManager = promisifyAll(await getQueueManager());
+  const queueManager = promisifyAll(await getQueueManagerFrontend());
   const queueMetrics = await queueManager.getQueueMetricsAsync(queueName, ns);
   expect(queueMetrics.acknowledged).toBe(0);
   expect(queueMetrics.pending).toBe(0);

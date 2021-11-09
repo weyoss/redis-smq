@@ -5,7 +5,7 @@ import {
 } from '../../../types';
 import { Base } from '../base';
 import { Message } from '../message';
-import { ConsumerRatesProvider } from './consumer-rates-provider';
+import { ConsumerMessageRateProvider } from './consumer-message-rate-provider';
 import { events } from '../common/events';
 import { Heartbeat } from './heartbeat';
 import { RedisClient } from '../redis-client/redis-client';
@@ -17,7 +17,7 @@ import { ConsumerFrontend } from './consumer-frontend';
 export class Consumer extends Base {
   private consumerRedisClient: RedisClient | null = null;
   private heartbeat: Heartbeat | null = null;
-  private ratesProvider: ConsumerRatesProvider | null = null;
+  private messageRateProvider: ConsumerMessageRateProvider | null = null;
   private consumerWorkers: ConsumerWorkers | null = null;
   private consumerFrontend: ConsumerFrontend | null = null;
 
@@ -27,19 +27,13 @@ export class Consumer extends Base {
     else cb(this.consumerRedisClient);
   }
 
-  private getHeartbeat(cb: TUnaryFunction<Heartbeat>): void {
-    if (!this.heartbeat)
-      this.emit(events.ERROR, new Error('Expected an instance of Heartbeat'));
-    else cb(this.heartbeat);
-  }
-
   protected handleConsume(msg: Message): void {
     if (!this.consumerFrontend || !this.consumerFrontend.consume) {
       throw new Error('Expected an instance of ConsumeHandler');
     }
     let isTimeout = false;
     let timer: NodeJS.Timeout | null = null;
-    this.logger.info(`Processing message [${msg.getId()}]...`);
+    this.logger.info(`Processing message (ID ${msg.getId()})...`);
     try {
       const consumeTimeout = msg.getConsumeTimeout();
       if (consumeTimeout) {
@@ -67,12 +61,7 @@ export class Consumer extends Base {
                 msg,
                 (err) => {
                   if (err) this.emit(events.ERROR, err);
-                  else {
-                    this.logger.info(
-                      `Message [${msg.getId()}] successfully processed`,
-                    );
-                    this.emit(events.MESSAGE_ACKNOWLEDGED, msg);
-                  }
+                  else this.emit(events.MESSAGE_ACKNOWLEDGED, msg);
                 },
               );
             });
@@ -119,8 +108,8 @@ export class Consumer extends Base {
     this.on(events.UP, () => this.emit(events.MESSAGE_NEXT));
     this.on(events.MESSAGE_NEXT, () => {
       if (this.powerManager.isRunning()) {
+        this.logger.info('Waiting for new messages...');
         this.getConsumerRedisClient((client) => {
-          this.logger.info('Waiting for new messages...');
           this.getBroker((broker) => {
             broker.dequeueMessage(this, client, (err, msgStr) => {
               if (err) this.emit(events.ERROR, err);
@@ -133,35 +122,52 @@ export class Consumer extends Base {
             });
           });
         });
+      } else {
+        this.logger.info('Consumer is not running. End of cycle.');
       }
     });
-    this.on(events.MESSAGE_ACKNOWLEDGED, () => {
-      if (this.ratesProvider) this.ratesProvider.incrementAcknowledgedSlot();
+    this.on(events.MESSAGE_ACKNOWLEDGED, (msg: Message) => {
+      this.logger.info(`Message (ID ${msg.getId()}) has been acknowledged.`);
+      if (this.messageRateProvider)
+        this.messageRateProvider.incrementAcknowledgedSlot();
       this.emit(events.MESSAGE_NEXT);
     });
-    this.on(events.MESSAGE_UNACKNOWLEDGED, () => {
-      if (this.ratesProvider) this.ratesProvider.incrementUnacknowledgedSlot();
-      this.emit(events.MESSAGE_NEXT);
-    });
+    this.on(
+      events.MESSAGE_UNACKNOWLEDGED,
+      (msg: Message, cause: EMessageUnacknowledgedCause) => {
+        this.logger.info(
+          `Message (ID ${msg.getId()}) has been unacknowledged. Cause: ${cause}.`,
+        );
+        if (this.messageRateProvider)
+          this.messageRateProvider.incrementUnacknowledgedSlot();
+        this.emit(events.MESSAGE_NEXT);
+      },
+    );
   }
 
   protected handleReceivedMessage(json: string): void {
     const message = Message.createFromMessage(json);
+    this.logger.info(`Got a new message (ID ${message.getId()})...`);
     this.emit(events.MESSAGE_DEQUEUED, message);
     if (message.hasExpired()) {
+      this.logger.info(
+        `Message (ID ${message.getId()}) has expired. Unacknowledging...`,
+      );
       this.unacknowledgeMessage(
         message,
         EMessageUnacknowledgedCause.TTL_EXPIRED,
       );
     } else {
-      this.logger.info(`Consuming message [${message.getId()}] ...`);
-      if (this.ratesProvider) this.ratesProvider.incrementProcessingSlot();
+      this.logger.info(`Trying to consume message (ID ${message.getId()})...`);
+      if (this.messageRateProvider)
+        this.messageRateProvider.incrementProcessingSlot();
       this.handleConsume(message);
     }
   }
 
   protected goingUp(): TUnaryFunction<ICallback<void>>[] {
-    const setupConsumerRedisClient = (cb: ICallback<void>): void => {
+    const setUpConsumerRedisClient = (cb: ICallback<void>): void => {
+      this.logger.debug(`Set up consumer RedisClient instance...`);
       RedisClient.getNewInstance(this.config, (err, client) => {
         if (err) cb(err);
         else if (!client) cb(new Error(`Expected an instance of RedisClient`));
@@ -171,7 +177,8 @@ export class Consumer extends Base {
         }
       });
     };
-    const startHeartbeat = (cb: ICallback<void>) => {
+    const setUpHeartbeat = (cb: ICallback<void>) => {
+      this.logger.debug(`Set up consumer heartbeat...`);
       RedisClient.getNewInstance(this.config, (err, client) => {
         if (err) cb(err);
         else if (!client) cb(new Error(`Expected an instance of RedisClient`));
@@ -181,13 +188,16 @@ export class Consumer extends Base {
         }
       });
     };
-    const startConsumerWorkers = (cb: ICallback<void>) => {
+    const setUpConsumerWorkers = (cb: ICallback<void>) => {
+      this.logger.debug(`Set up consumer workers...`);
       this.getSharedRedisClient((client) => {
         this.consumerWorkers = new ConsumerWorkers(
+          this.id,
           resolve(`${__dirname}/../workers`),
           this.config,
           client,
           new WorkerRunner(),
+          this.logger,
         );
         this.consumerWorkers.on(events.ERROR, (err: Error) =>
           this.emit(events.ERROR, err),
@@ -197,43 +207,69 @@ export class Consumer extends Base {
     };
     return super
       .goingUp()
-      .concat([setupConsumerRedisClient, startHeartbeat, startConsumerWorkers]);
+      .concat([setUpConsumerRedisClient, setUpHeartbeat, setUpConsumerWorkers]);
   }
 
   protected goingDown(): TUnaryFunction<ICallback<void>>[] {
-    // return super.goingDown();
-    const stopConsumerWorkers = (cb: ICallback<void>) => {
-      this.consumerWorkers?.quit(() => {
-        this.consumerWorkers = null;
+    const tearDownConsumerWorkers = (cb: ICallback<void>) => {
+      this.logger.debug(`Tear down consumer workers...`);
+      if (this.consumerWorkers) {
+        this.consumerWorkers.quit(() => {
+          this.logger.debug(`Consumer workers has been torn down.`);
+          this.consumerWorkers = null;
+          cb();
+        });
+      } else {
+        this.logger.warn(
+          `This is not normal. [this.consumerWorkers] has not been set up. Ignoring...`,
+        );
         cb();
-      });
+      }
     };
-    const stopHeartbeat = (cb: ICallback<void>) => {
-      this.getHeartbeat((heartbeat) => {
-        heartbeat.quit(() => {
+    const tearDownHeartbeat = (cb: ICallback<void>) => {
+      this.logger.debug(`Tear down consumer heartbeat...`);
+      if (this.heartbeat) {
+        this.heartbeat.quit(() => {
+          this.logger.debug(`Consumer heartbeat has been torn down.`);
           this.heartbeat = null;
           cb();
         });
-      });
+      } else {
+        this.logger.warn(
+          `This is not normal. [this.heartbeat] has not been set up. Ignoring...`,
+        );
+        cb();
+      }
     };
-    const stopConsumerRedisClient = (cb: ICallback<void>) => {
+    const tearDownConsumerRedisClient = (cb: ICallback<void>) => {
+      this.logger.debug(`Tear down consumer RedisClient instance...`);
       if (this.consumerRedisClient) {
         this.consumerRedisClient.halt(() => {
+          this.logger.debug(
+            `Consumer RedisClient instance has been torn down.`,
+          );
           this.consumerRedisClient = null;
           cb();
         });
-      } else cb();
+      } else {
+        this.logger.warn(
+          `This is not normal. [this.consumerRedisClient] has not been set up. Ignoring...`,
+        );
+        cb();
+      }
     };
-    return [stopConsumerWorkers, stopHeartbeat, stopConsumerRedisClient].concat(
-      super.goingDown(),
-    );
+    return [
+      tearDownConsumerWorkers,
+      tearDownHeartbeat,
+      tearDownConsumerRedisClient,
+    ].concat(super.goingDown());
   }
 
-  getStatsProvider(): ConsumerRatesProvider {
-    if (!this.ratesProvider) {
-      this.ratesProvider = new ConsumerRatesProvider(this);
+  getMessageRateProvider(): ConsumerMessageRateProvider {
+    if (!this.messageRateProvider) {
+      this.messageRateProvider = new ConsumerMessageRateProvider(this);
     }
-    return this.ratesProvider;
+    return this.messageRateProvider;
   }
 
   setConsumerFrontend(consumerMessageHandler: ConsumerFrontend): Consumer {

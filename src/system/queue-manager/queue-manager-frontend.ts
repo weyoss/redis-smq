@@ -6,15 +6,17 @@ import {
 } from '../../../types';
 import { RedisClient } from '../redis-client/redis-client';
 import { QueueManager } from './queue-manager';
+import BLogger from 'bunyan';
+import { Logger } from '../common/logger';
 
 export class QueueManagerFrontend {
   private static instance: QueueManagerFrontend | null = null;
   private redisClient: RedisClient;
   private queueManager: QueueManager;
 
-  private constructor(redisClient: RedisClient) {
+  private constructor(redisClient: RedisClient, logger: BLogger) {
     this.redisClient = redisClient;
-    this.queueManager = new QueueManager(redisClient);
+    this.queueManager = new QueueManager(redisClient, logger);
   }
 
   ///
@@ -91,7 +93,8 @@ export class QueueManagerFrontend {
         if (err) cb(err);
         else if (!client) cb(new Error(`Expected an instance of RedisClient`));
         else {
-          const instance = new QueueManagerFrontend(client);
+          const logger = Logger(QueueManagerFrontend.name, config.log);
+          const instance = new QueueManagerFrontend(client, logger);
           QueueManagerFrontend.instance = instance;
           cb(null, instance);
         }

@@ -6,25 +6,26 @@ import {
 } from '../../types';
 import { Message } from './message';
 import BLogger from 'bunyan';
-import { Logger } from './common/logger';
 import { PowerManager } from './common/power-manager';
 import { MessageManager } from './message-manager/message-manager';
 import { Consumer } from './consumer/consumer';
 import { RedisClient } from './redis-client/redis-client';
 
 export class Broker {
-  protected config: IConfig;
   protected logger: BLogger;
   protected powerManager: PowerManager;
   protected messageManager: MessageManager;
   protected priorityQueue: boolean;
 
-  constructor(config: IConfig, messageManager: MessageManager) {
-    this.config = config;
-    this.logger = Logger(`broker`, config.log);
+  constructor(
+    config: IConfig,
+    messageManager: MessageManager,
+    logger: BLogger,
+  ) {
     this.powerManager = new PowerManager();
     this.messageManager = messageManager;
     this.priorityQueue = config.priorityQueue === true;
+    this.logger = logger.child({ child: Broker.name });
   }
 
   scheduleMessage(msg: Message, cb: ICallback<boolean>): void {
@@ -85,16 +86,13 @@ export class Broker {
     error: Error | undefined,
     cb: ICallback<void>,
   ): void {
-    if (error) this.logger.error(error);
-    this.logger.debug(`Unacknowledging message [${message.getId()}]...`);
+    if (error) this.logger.debug(error);
+    this.logger.debug(
+      `Determining if message (ID ${message.getId()}) can be re-queued...`,
+    );
     this.retry(queueName, processingQueue, message, unacknowledgedCause, cb);
   }
 
-  /**
-   * Move the message to dead-letter queue when max attempts threshold is reached or otherwise re-queue it again if
-   * configured to do so. Only non-periodic messages are re-queued. Failure of periodic messages is ignored since such
-   * messages are periodically scheduled for delivery.
-   */
   retry(
     queueName: string,
     processingQueue: string,
@@ -108,7 +106,7 @@ export class Broker {
     ) {
       //consumer.emit(events.MESSAGE_EXPIRED, message);
       this.logger.debug(
-        `Message ID [${message.getId()}] has expired. Moving it to DLQ...`,
+        `Message (ID ${message.getId()}) has expired. Moving it to dead-letter queue...`,
       );
       this.messageManager.deadLetterUnacknowledgedMessage(
         message,
@@ -119,8 +117,10 @@ export class Broker {
         (err) => cb(err),
       );
     } else if (message.isPeriodic()) {
+      // Only non-periodic messages are re-queued. Failure of periodic messages is ignored since such
+      // messages are periodically scheduled for delivery.
       this.logger.debug(
-        `Message ID [${message.getId()}] is periodic. Moving it to DLQ...`,
+        `Message (ID ${message.getId()}) is periodic. Moving it to dead-letter queue...`,
       );
       this.messageManager.deadLetterUnacknowledgedMessage(
         message,
@@ -132,12 +132,12 @@ export class Broker {
       );
     } else if (!message.hasRetryThresholdExceeded()) {
       this.logger.debug(
-        `Message ID [${message.getId()}] is valid (threshold not exceeded) for re-queuing...`,
+        `Retry threshold for message (ID ${message.getId()}) has not yet been exceeded. Checking message retryDelay...`,
       );
       const delay = message.getRetryDelay();
       if (delay) {
         this.logger.debug(
-          `Delaying message ID [${message.getId()}] before re-queuing...`,
+          `Message (ID ${message.getId()}) has a retryDelay. Delaying...`,
         );
         this.messageManager.delayUnacknowledgedMessageBeforeRequeuing(
           message,
@@ -147,9 +147,7 @@ export class Broker {
           (err) => cb(err),
         );
       } else {
-        this.logger.debug(
-          `Re-queuing message ID [${message.getId()}] for one more time...`,
-        );
+        this.logger.debug(`Re-queuing message (ID [${message.getId()})...`);
         this.messageManager.requeueUnacknowledgedMessage(
           message,
           queueName,
@@ -161,7 +159,7 @@ export class Broker {
       }
     } else {
       this.logger.debug(
-        `Message ID [${message.getId()}] retry threshold exceeded. Moving message to DLQ...`,
+        `Retry threshold for message (ID ${message.getId()}) has exceeded. Moving message to dead-letter queue...`,
       );
       this.messageManager.deadLetterUnacknowledgedMessage(
         message,

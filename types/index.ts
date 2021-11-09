@@ -27,7 +27,7 @@ export interface IProducerStats {
   inputRate: number;
 }
 
-export interface IRatesProvider<T = Record<string, any>> {
+export interface IMessageRateProvider<T = Record<string, any>> {
   getRates(): T;
   format(stats: Record<string, any>): string[];
 }
@@ -206,4 +206,9 @@ export enum EMessageUnacknowledgedCause {
 export type TMessageQueue = {
   name: string;
   ns: string;
+};
+
+export type TConsumerWorkerParameters = {
+  config: IConfig;
+  consumerId: string;
 };

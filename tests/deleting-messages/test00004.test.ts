@@ -2,7 +2,7 @@ import {
   getConsumer,
   getMessageManager,
   getProducer,
-  getQueueManager,
+  getQueueManagerFrontend,
   untilConsumerIdle,
 } from '../common';
 import { Message } from '../../src/message';
@@ -61,7 +61,7 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
     .setAttempts(2);
   expect(res3.items[0].message).toEqual(msg1);
 
-  const queueManager = promisifyAll(await getQueueManager());
+  const queueManager = promisifyAll(await getQueueManagerFrontend());
   const queueMetrics = await queueManager.getQueueMetricsAsync(queueName, ns);
   expect(queueMetrics.pending).toBe(0);
   expect(queueMetrics.acknowledged).toBe(0);

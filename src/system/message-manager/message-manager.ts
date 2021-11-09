@@ -12,6 +12,7 @@ import { ScheduleHandler } from './handlers/schedule.handler';
 import { ProcessingHandler } from './handlers/processing.handler';
 import { DelayHandler } from './handlers/delay.handler';
 import { RequeueHandler } from './handlers/requeue.handler';
+import BLogger from 'bunyan';
 
 export class MessageManager {
   protected redisClient: RedisClient;
@@ -20,17 +21,19 @@ export class MessageManager {
   protected scheduleHandler: ScheduleHandler;
   protected delayHandler: DelayHandler;
   protected requeueHandler: RequeueHandler;
+  protected logger: BLogger;
 
   // DequeueHandler needs an exclusive redis client and it is initialized only on-demand
   protected dequeueHandler: DequeueHandler | null = null;
 
-  constructor(redisClient: RedisClient) {
+  constructor(redisClient: RedisClient, logger: BLogger) {
     this.redisClient = redisClient;
     this.enqueueHandler = new EnqueueHandler(redisClient);
     this.delayHandler = new DelayHandler(redisClient);
     this.requeueHandler = new RequeueHandler(redisClient);
     this.scheduleHandler = new ScheduleHandler(redisClient);
     this.processingHandler = new ProcessingHandler(redisClient);
+    this.logger = logger.child({ child: MessageManager.name });
   }
 
   ///
@@ -51,6 +54,7 @@ export class MessageManager {
     keyQueueProcessing: string,
     cb: ICallback<string>,
   ): void {
+    this.logger.debug(`De-queuing...`);
     this.getDequeueHandler(redisClient).dequeue(
       keyQueue,
       keyQueueProcessing,
@@ -65,6 +69,7 @@ export class MessageManager {
     keyQueueProcessing: string,
     cb: ICallback<string>,
   ): void {
+    this.logger.debug(`De-queuing with priority...`);
     this.getDequeueHandler(redisClient).dequeueWithPriority(
       keyQueuePriority,
       keyQueueProcessing,
@@ -80,6 +85,9 @@ export class MessageManager {
     withPriority: boolean,
     cb: ICallback<void>,
   ): void {
+    this.logger.debug(
+      `Enqueuing message (ID ${message.getId()}), withPriority = ${withPriority})...`,
+    );
     this.enqueueHandler.enqueue(
       this.redisClient,
       queueName,
@@ -92,6 +100,9 @@ export class MessageManager {
   ///
 
   enqueueScheduledMessages(withPriority: boolean, cb: ICallback<void>): void {
+    this.logger.debug(
+      `Enqueuing scheduled messages (withPriority = ${withPriority})...`,
+    );
     this.scheduleHandler.enqueueScheduledMessages(
       this.redisClient,
       withPriority,
@@ -100,6 +111,7 @@ export class MessageManager {
   }
 
   scheduleMessage(message: Message, cb: ICallback<boolean>): void {
+    this.logger.debug(`Scheduling message (ID ${message.getId()})...`);
     this.scheduleHandler.schedule(message, cb);
   }
 
@@ -113,6 +125,9 @@ export class MessageManager {
     unacknowledgedCause: EMessageUnacknowledgedCause,
     cb: ICallback<void>,
   ): void {
+    this.logger.debug(
+      `Moving unacknowledged message (ID ${message.getId()}) to "re-queue" queue...`,
+    );
     this.processingHandler.requeue(
       message,
       queueName,
@@ -124,6 +139,9 @@ export class MessageManager {
   }
 
   scheduleDelayedMessages(cb: ICallback<void>): void {
+    this.logger.debug(
+      `Scheduling unacknowledged messages from the delay queue...`,
+    );
     this.delayHandler.schedule(cb);
   }
 
@@ -134,6 +152,9 @@ export class MessageManager {
     unacknowledgedCause: EMessageUnacknowledgedCause,
     cb: ICallback<void>,
   ): void {
+    this.logger.debug(
+      `Moving unacknowledged message (ID ${message.getId()}) to "delay" queue...`,
+    );
     this.processingHandler.delayBeforeRequeue(
       message,
       queueName,
@@ -149,6 +170,9 @@ export class MessageManager {
     keyQueueProcessing: string,
     cb: ICallback<void>,
   ): void {
+    this.logger.debug(
+      `Moving message (ID ${message.getId()}) to "acknowledged" queue...`,
+    );
     this.processingHandler.acknowledge(
       message,
       queueName,
@@ -165,6 +189,9 @@ export class MessageManager {
     deadLetterCause: EMessageDeadLetterCause,
     cb: ICallback<void>,
   ): void {
+    this.logger.debug(
+      `Moving unacknowledged message (ID ${message.getId()}) to dead-letter queue (unacknowledgedCause: ${unacknowledgedCause}, deadLetterCause: ${deadLetterCause})...`,
+    );
     this.processingHandler.deadLetterMessage(
       message,
       queueName,
@@ -180,6 +207,9 @@ export class MessageManager {
     messageId: string,
     cb: ICallback<void>,
   ): void {
+    this.logger.debug(
+      `Deleting scheduled message (ID ${messageId}, sequenceId ${sequenceId})...`,
+    );
     this.scheduleHandler.deleteScheduled(sequenceId, messageId, cb);
   }
 
@@ -190,6 +220,11 @@ export class MessageManager {
     messageId: string,
     cb: ICallback<void>,
   ): void {
+    this.logger.debug(
+      `Deleting dead-lettered message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${queueName}, ns ${
+        ns ?? 'NA'
+      })...`,
+    );
     this.processingHandler.deleteDeadLetterMessage(
       queueName,
       ns,
@@ -206,6 +241,11 @@ export class MessageManager {
     messageId: string,
     cb: ICallback<void>,
   ): void {
+    this.logger.debug(
+      `Deleting acknowledged message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${queueName}, ns ${
+        ns ?? 'NA'
+      })...`,
+    );
     this.processingHandler.deleteAcknowledgedMessage(
       queueName,
       ns,
@@ -222,6 +262,11 @@ export class MessageManager {
     messageId: string,
     cb: ICallback<void>,
   ): void {
+    this.logger.debug(
+      `Deleting pending message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${queueName}, ns ${
+        ns ?? 'NA'
+      })...`,
+    );
     this.enqueueHandler.deletePendingMessage(
       queueName,
       ns,
@@ -238,6 +283,11 @@ export class MessageManager {
     messageId: string,
     cb: ICallback<void>,
   ): void {
+    this.logger.debug(
+      `Deleting pending message with priority (ID ${messageId}, sequenceId ${sequenceId}, queueName ${queueName}, ns ${
+        ns ?? 'NA'
+      })...`,
+    );
     this.enqueueHandler.deletePendingMessageWithPriority(
       queueName,
       ns,
@@ -258,6 +308,11 @@ export class MessageManager {
     priority: number | undefined,
     cb: ICallback<void>,
   ): void {
+    this.logger.debug(
+      `Re-queuing dead-lettered message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${queueName}, ns ${
+        ns ?? 'NA'
+      }, withPriority ${withPriority})...`,
+    );
     this.requeueHandler.requeueMessageFromDLQueue(
       queueName,
       ns,
@@ -278,6 +333,11 @@ export class MessageManager {
     priority: number | undefined,
     cb: ICallback<void>,
   ): void {
+    this.logger.debug(
+      `Re-queuing acknowledged message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${queueName}, ns ${
+        ns ?? 'NA'
+      }, withPriority ${withPriority})...`,
+    );
     this.requeueHandler.requeueMessageFromAcknowledgedQueue(
       queueName,
       ns,

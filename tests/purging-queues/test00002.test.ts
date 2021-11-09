@@ -1,4 +1,4 @@
-import { getProducer, getQueueManager } from '../common';
+import { getProducer, getQueueManagerFrontend } from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
 import { config } from '../config';
@@ -12,7 +12,7 @@ test('Purging priority queue', async () => {
   const queueName = producer.getQueueName();
   const ns = redisKeys.getNamespace();
 
-  const queueManager = promisifyAll(await getQueueManager());
+  const queueManager = promisifyAll(await getQueueManagerFrontend());
 
   const m = await queueManager.getQueueMetricsAsync(queueName, ns);
   expect(m.pendingWithPriority).toBe(0);

@@ -1,4 +1,7 @@
-import { getQueueManager, produceAndAcknowledgeMessage } from '../common';
+import {
+  getQueueManagerFrontend,
+  produceAndAcknowledgeMessage,
+} from '../common';
 import { promisifyAll } from 'bluebird';
 import { redisKeys } from '../../src/system/common/redis-keys';
 
@@ -7,7 +10,7 @@ test('Purging acknowledged queue', async () => {
   const queueName = producer.getQueueName();
   const ns = redisKeys.getNamespace();
 
-  const queueManager = promisifyAll(await getQueueManager());
+  const queueManager = promisifyAll(await getQueueManagerFrontend());
   const m = await queueManager.getQueueMetricsAsync(queueName, ns);
 
   expect(m.acknowledged).toBe(1);

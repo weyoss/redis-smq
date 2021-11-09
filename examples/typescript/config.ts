@@ -12,7 +12,6 @@ export const config: IConfig = {
   log: {
     enabled: true,
     options: {
-      name: 'qqqq',
       level: 'trace',
       // streams: [
       //   {

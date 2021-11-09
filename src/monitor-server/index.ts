@@ -93,7 +93,7 @@ export function MonitorServer(config: IConfig = {}): IMonitorServer {
       powerManager.goingUp();
       apiServer = await bootstrap(config);
       const { app, socketIO, httpServer } = apiServer;
-      await workerRunner.runAsync(config, resolve(__dirname, './workers'));
+      await workerRunner.runAsync(resolve(__dirname, './workers'), config);
       subscribeClient = await RedisClientAsync.getNewInstanceAsync(config);
       subscribeClient.subscribe('stats');
       subscribeClient.on('message', (channel, message) => {

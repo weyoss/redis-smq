@@ -12,6 +12,9 @@ export const config: IConfig = {
       port: redisPort,
     },
   },
+  log: {
+    enabled: false,
+  },
   monitor: {
     enabled: true,
     host: '127.0.0.1',

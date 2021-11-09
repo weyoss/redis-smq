@@ -1,14 +1,14 @@
 import { ChildProcess, fork } from 'child_process';
 import { join } from 'path';
 import { readdir } from 'fs';
-import { ICallback, IConfig } from '../../../types';
+import { ICallback } from '../../../types';
 import { PowerManager } from './power-manager';
 
 export class WorkerRunner {
   protected powerManager = new PowerManager();
   protected workers: ChildProcess[] = [];
 
-  run(config: IConfig, dir: string, cb: ICallback<void>): void {
+  run(dir: string, params: Record<string, any>, cb: ICallback<void>): void {
     this.powerManager.goingUp();
     readdir(dir, undefined, (err, reply) => {
       if (err) cb(err);
@@ -39,7 +39,7 @@ export class WorkerRunner {
             process.on('exit', () => {
               this.workers.forEach((i) => i.kill());
             });
-            thread.send(JSON.stringify(config));
+            thread.send(JSON.stringify(params));
             this.workers.push(thread);
           });
         this.powerManager.commit();
