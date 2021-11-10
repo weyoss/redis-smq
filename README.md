@@ -1,4 +1,4 @@
-# RedisSMQ - Yet another simple Redis message queue
+# RedisSMQ - Yet another Redis simple message queue
 
 [![Tests](https://github.com/weyoss/redis-smq/actions/workflows/tests.yml/badge.svg)](https://github.com/weyoss/redis-smq/actions/workflows/tests.yml)
 [![Coverage Status](https://img.shields.io/coveralls/github/weyoss/redis-smq.svg)](https://coveralls.io/r/weyoss/redis-smq?branch=master)
