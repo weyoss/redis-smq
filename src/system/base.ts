@@ -59,7 +59,7 @@ export abstract class Base extends EventEmitter {
     Message.setDefaultOptions(config.message);
   }
 
-  private setupSharedRedisClient = (cb: ICallback<RedisClient>): void => {
+  private setUpSharedRedisClient = (cb: ICallback<RedisClient>): void => {
     this.logger.debug(`Set up shared RedisClient instance...`);
     RedisClient.getNewInstance(this.config, (err, client) => {
       if (err) cb(err);
@@ -75,7 +75,7 @@ export abstract class Base extends EventEmitter {
     });
   };
 
-  private setupMessageRate = (cb: ICallback<void>): void => {
+  private setUpMessageRate = (cb: ICallback<void>): void => {
     this.logger.debug(`Set up MessageRate...`);
     const { monitor } = this.config;
     if (monitor && monitor.enabled) {
@@ -101,8 +101,8 @@ export abstract class Base extends EventEmitter {
     else QueueManager.setUpMessageQueue(this, this.sharedRedisClient, cb);
   };
 
-  private setupBroker = (cb: ICallback<Broker>): void => {
-    this.logger.debug(`Broker instance setup...`);
+  private setUpBroker = (cb: ICallback<Broker>): void => {
+    this.logger.debug(`Set up Broker instance...`);
     if (!this.sharedRedisClient)
       cb(new Error(`Expected an instance of RedisClient`));
     else {
@@ -125,10 +125,10 @@ export abstract class Base extends EventEmitter {
 
   protected goingUp(): TFunction[] {
     return [
-      this.setupSharedRedisClient,
+      this.setUpSharedRedisClient,
       this.setUpMessageQueue,
-      this.setupBroker,
-      this.setupMessageRate,
+      this.setUpBroker,
+      this.setUpMessageRate,
     ];
   }
 

@@ -1,10 +1,5 @@
 # Consumer Class API
 
-Consumer properties like `messageConsumeTimeout`, `messageTTL`, `messageRetryThreshold` and `messageRetryDelay` can 
-also be defined for a given message instance.
-
-When defined, message instance properties always takes precedence over consumer properties (options).
-
 ## Public Methods
 
 ### Consumer.prototype.constructor()

@@ -1,15 +1,14 @@
 # Message Class API
 
-Message properties like:
+For each Message instance, properties like `ttl`, `retryThreshold`, `retryDelay`, `consumeTimeout` can be set up using:
 
-- message TTL
-- message retry threshold
-- message retry delay
-- message consume timeout
+- [setTTL()](#messageprototypesetttl)
+- [setRetryThreshold()](#messageprototypesetretrythreshold)
+- [setRetryDelay](#messageprototypesetretrydelay)
+- [setConsumeTimeout](#messageprototypesetconsumetimeout)
 
-can be also defined globally per consumer for all queue messages. See [Consumer Options](consumer.md#consumerprototypeconstructor) for more details. 
-
-When defined, message instance properties always take precedence over consumer properties.
+Optionally, to set up default values for these properties, for all Message instances, you can use your configuration
+object. See [Configuration](/docs/configuration.md) for more details. 
 
 ## Public Static Properties
 
