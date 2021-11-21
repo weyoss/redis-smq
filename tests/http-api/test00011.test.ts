@@ -13,9 +13,9 @@ test('Delete a pending message', async () => {
   const request = supertest('http://127.0.0.1:3000');
   const response1: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =
     await request.delete(
-      `/api/queues/${
+      `/api/ns/${redisKeys.getNamespace()}/queues/${
         message.getQueue()?.name
-      }/pending-messages/${message.getId()}?sequenceId=0&ns=${redisKeys.getNamespace()}`,
+      }/pending-messages/${message.getId()}?sequenceId=0`,
     );
   expect(response1.statusCode).toBe(204);
   expect(response1.body).toEqual({});

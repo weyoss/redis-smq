@@ -6,18 +6,19 @@ import {
   validateTime,
 } from '../common';
 import { Message } from '../../src/message';
-import { events } from '../../src/system/common/events';
+import { delay } from 'bluebird';
 
 test('Produce and consume a delayed message: Case 1', async () => {
-  let producedAt = 0;
   let callCount = 0;
+  const timestamps: number[] = [];
   const consumer = getConsumer({
     consumeMock: jest.fn((msg, cb) => {
       callCount += 1;
       if (callCount > 3) {
         throw new Error('Unexpected call');
       }
-      cb(null);
+      timestamps.push(msg.getPublishedAt() ?? 0);
+      cb();
     }),
   });
   consumer.run();
@@ -30,22 +31,24 @@ test('Produce and consume a delayed message: Case 1', async () => {
     .setBody({ hello: 'world' });
 
   const producer = getProducer();
-  producer.once(events.MESSAGE_PRODUCED, () => {
-    producedAt = Date.now();
-  });
   await producer.produceMessageAsync(msg);
+  const producedAt = Date.now();
 
   await untilMessageAcknowledged(consumer);
-  const diff1 = Date.now() - producedAt;
+  await untilMessageAcknowledged(consumer);
+  await untilMessageAcknowledged(consumer);
+
+  await delay(6000); // just to make sure no more messages are published
+
+  const diff1 = (timestamps[0] ?? 0) - producedAt;
   expect(validateTime(diff1, 10000)).toBe(true);
 
-  await untilMessageAcknowledged(consumer);
-  const diff2 = Date.now() - producedAt;
+  const diff2 = (timestamps[1] ?? 0) - producedAt;
   expect(validateTime(diff2, 13000)).toBe(true);
 
-  await untilMessageAcknowledged(consumer);
-  const diff3 = Date.now() - producedAt;
+  const diff3 = (timestamps[2] ?? 0) - producedAt;
   expect(validateTime(diff3, 16000)).toBe(true);
 
   await untilConsumerIdle(consumer);
+  expect(timestamps.length).toEqual(3);
 });

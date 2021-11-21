@@ -24,6 +24,7 @@ export class Producer extends Base {
     const message = !(msg instanceof Message)
       ? new Message().setBody(msg)
       : msg;
+    message.reset();
     message.setQueue(redisKeys.getNamespace(), this.queueName);
     const callback: ICallback<boolean> = (err, reply) => {
       if (err) cb(err);
@@ -39,14 +40,10 @@ export class Producer extends Base {
         if (message.isSchedulable()) {
           broker.scheduleMessage(message, callback);
         } else {
-          broker.enqueueMessage(
-            this.queueName,
-            message,
-            (err?: Error | null) => {
-              if (err) callback(err);
-              else callback(null, true);
-            },
-          );
+          broker.enqueueMessage(message, (err?: Error | null) => {
+            if (err) callback(err);
+            else callback(null, true);
+          });
         }
       });
     };

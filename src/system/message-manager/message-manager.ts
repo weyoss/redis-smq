@@ -3,6 +3,8 @@ import {
   EMessageUnacknowledgedCause,
   ICallback,
   TGetMessagesReply,
+  TGetPendingMessagesWithPriorityReply,
+  TGetScheduledMessagesReply,
 } from '../../../types';
 import { RedisClient } from '../redis-client/redis-client';
 import { Message } from '../message';
@@ -29,18 +31,29 @@ export class MessageManager {
   constructor(redisClient: RedisClient, logger: BLogger) {
     this.redisClient = redisClient;
     this.enqueueHandler = new EnqueueHandler(redisClient);
-    this.delayHandler = new DelayHandler(redisClient);
-    this.requeueHandler = new RequeueHandler(redisClient);
-    this.scheduleHandler = new ScheduleHandler(redisClient);
     this.processingHandler = new ProcessingHandler(redisClient);
+    this.requeueHandler = new RequeueHandler(redisClient, this.enqueueHandler);
+    this.scheduleHandler = new ScheduleHandler(
+      redisClient,
+      this.enqueueHandler,
+    );
+    this.delayHandler = new DelayHandler(redisClient, this.scheduleHandler);
     this.logger = logger.child({ child: MessageManager.name });
   }
 
   ///
 
-  protected getDequeueHandler(redisClient: RedisClient): DequeueHandler {
+  protected getDequeueHandler(
+    redisClient: RedisClient,
+    queueName: string,
+    keyQueueProcessing: string,
+  ): DequeueHandler {
     if (!this.dequeueHandler) {
-      this.dequeueHandler = new DequeueHandler(redisClient);
+      this.dequeueHandler = new DequeueHandler(
+        redisClient,
+        queueName,
+        keyQueueProcessing,
+      );
     }
     return this.dequeueHandler;
   }
@@ -50,14 +63,12 @@ export class MessageManager {
   // requires an exclusive redis client
   dequeueMessage(
     redisClient: RedisClient,
-    keyQueue: string,
+    queueName: string,
     keyQueueProcessing: string,
     cb: ICallback<string>,
   ): void {
     this.logger.debug(`De-queuing...`);
-    this.getDequeueHandler(redisClient).dequeue(
-      keyQueue,
-      keyQueueProcessing,
+    this.getDequeueHandler(redisClient, queueName, keyQueueProcessing).dequeue(
       cb,
     );
   }
@@ -65,22 +76,21 @@ export class MessageManager {
   // requires an exclusive redis client
   dequeueMessageWithPriority(
     redisClient: RedisClient,
-    keyQueuePriority: string,
+    queueName: string,
     keyQueueProcessing: string,
     cb: ICallback<string>,
   ): void {
     this.logger.debug(`De-queuing with priority...`);
-    this.getDequeueHandler(redisClient).dequeueWithPriority(
-      keyQueuePriority,
+    this.getDequeueHandler(
+      redisClient,
+      queueName,
       keyQueueProcessing,
-      cb,
-    );
+    ).dequeueWithPriority(cb);
   }
 
   ///
 
   enqueueMessage(
-    queueName: string,
     message: Message,
     withPriority: boolean,
     cb: ICallback<void>,
@@ -88,13 +98,7 @@ export class MessageManager {
     this.logger.debug(
       `Enqueuing message (ID ${message.getId()}), withPriority = ${withPriority})...`,
     );
-    this.enqueueHandler.enqueue(
-      this.redisClient,
-      queueName,
-      message,
-      withPriority,
-      cb,
-    );
+    this.enqueueHandler.enqueue(this.redisClient, message, withPriority, cb);
   }
 
   ///
@@ -112,7 +116,7 @@ export class MessageManager {
 
   scheduleMessage(message: Message, cb: ICallback<boolean>): void {
     this.logger.debug(`Scheduling message (ID ${message.getId()})...`);
-    this.scheduleHandler.schedule(message, cb);
+    this.scheduleHandler.schedule(message, undefined, cb);
   }
 
   ///
@@ -202,15 +206,9 @@ export class MessageManager {
     );
   }
 
-  deleteScheduledMessage(
-    sequenceId: number,
-    messageId: string,
-    cb: ICallback<void>,
-  ): void {
-    this.logger.debug(
-      `Deleting scheduled message (ID ${messageId}, sequenceId ${sequenceId})...`,
-    );
-    this.scheduleHandler.deleteScheduled(sequenceId, messageId, cb);
+  deleteScheduledMessage(messageId: string, cb: ICallback<void>): void {
+    this.logger.debug(`Deleting scheduled message ID ${messageId}}...`);
+    this.scheduleHandler.deleteScheduled(messageId, cb);
   }
 
   deleteDeadLetterMessage(
@@ -279,19 +277,17 @@ export class MessageManager {
   deletePendingMessageWithPriority(
     queueName: string,
     ns: string | undefined,
-    sequenceId: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
     this.logger.debug(
-      `Deleting pending message with priority (ID ${messageId}, sequenceId ${sequenceId}, queueName ${queueName}, ns ${
+      `Deleting pending message with priority (ID ${messageId}, queueName ${queueName}, ns ${
         ns ?? 'NA'
       })...`,
     );
     this.enqueueHandler.deletePendingMessageWithPriority(
       queueName,
       ns,
-      sequenceId,
       messageId,
       cb,
     );
@@ -386,7 +382,7 @@ export class MessageManager {
     ns: string | undefined,
     skip: number,
     take: number,
-    cb: ICallback<TGetMessagesReply>,
+    cb: ICallback<TGetPendingMessagesWithPriorityReply>,
   ): void {
     this.enqueueHandler.getPendingMessagesWithPriority(
       queueName,
@@ -400,9 +396,13 @@ export class MessageManager {
   getScheduledMessages(
     skip: number,
     take: number,
-    cb: ICallback<TGetMessagesReply>,
+    cb: ICallback<TGetScheduledMessagesReply>,
   ): void {
     this.scheduleHandler.getScheduledMessages(skip, take, cb);
+  }
+
+  getScheduledMessagesCount(cb: ICallback<number>): void {
+    this.scheduleHandler.getScheduledMessagesCount(cb);
   }
 
   ///

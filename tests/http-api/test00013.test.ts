@@ -13,7 +13,7 @@ test('Delete a dead-lettered messages', async () => {
   const request = supertest('http://127.0.0.1:3000');
   const response1: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =
     await request.delete(
-      `/api/queues/${producer.getQueueName()}/dead-lettered-messages/${message.getId()}?sequenceId=0&ns=${redisKeys.getNamespace()}`,
+      `/api/ns/${redisKeys.getNamespace()}/queues/${producer.getQueueName()}/dead-lettered-messages/${message.getId()}?sequenceId=0`,
     );
   expect(response1.statusCode).toBe(204);
   expect(response1.body).toEqual({});

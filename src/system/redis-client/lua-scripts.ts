@@ -5,6 +5,9 @@ import { RedisClient } from './redis-client';
 
 export enum ELuaScriptName {
   ZPOPRPUSH,
+  LPOPRPUSH,
+  ZPOPHGETRPUSH,
+  ZPUSHHSET,
 }
 
 ////
@@ -13,6 +16,16 @@ const scriptsMap = new Map<ELuaScriptName, { id?: string; content: string }>();
 scriptsMap.set(ELuaScriptName.ZPOPRPUSH, {
   content: fs.readFileSync(`${__dirname}/lua/zpoprpush.lua`).toString(),
 });
+scriptsMap.set(ELuaScriptName.ZPOPHGETRPUSH, {
+  content: fs.readFileSync(`${__dirname}/lua/zpophgetrpush.lua`).toString(),
+});
+scriptsMap.set(ELuaScriptName.ZPUSHHSET, {
+  content: fs.readFileSync(`${__dirname}/lua/zpushhset.lua`).toString(),
+});
+scriptsMap.set(ELuaScriptName.LPOPRPUSH, {
+  content: fs.readFileSync(`${__dirname}/lua/lpoprpush.lua`).toString(),
+});
+
 ///
 
 export const loadScripts = (

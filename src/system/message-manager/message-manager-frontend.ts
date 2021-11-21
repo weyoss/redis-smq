@@ -1,4 +1,10 @@
-import { ICallback, IConfig, TGetMessagesReply } from '../../../types';
+import {
+  ICallback,
+  IConfig,
+  TGetMessagesReply,
+  TGetPendingMessagesWithPriorityReply,
+  TGetScheduledMessagesReply,
+} from '../../../types';
 import { RedisClient } from '../redis-client/redis-client';
 import { MessageManager } from './message-manager';
 import BLogger from 'bunyan';
@@ -16,12 +22,8 @@ export class MessageManagerFrontend {
 
   ///
 
-  deleteScheduledMessage(
-    sequenceId: number,
-    messageId: string,
-    cb: ICallback<void>,
-  ): void {
-    this.messageManager.deleteScheduledMessage(sequenceId, messageId, cb);
+  deleteScheduledMessage(messageId: string, cb: ICallback<void>): void {
+    this.messageManager.deleteScheduledMessage(messageId, cb);
   }
 
   deleteDeadLetterMessage(
@@ -75,14 +77,12 @@ export class MessageManagerFrontend {
   deletePendingMessageWithPriority(
     queueName: string,
     ns: string | undefined,
-    sequenceId: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
     this.messageManager.deletePendingMessageWithPriority(
       queueName,
       ns,
-      sequenceId,
       messageId,
       cb,
     );
@@ -167,7 +167,7 @@ export class MessageManagerFrontend {
     ns: string | undefined,
     skip: number,
     take: number,
-    cb: ICallback<TGetMessagesReply>,
+    cb: ICallback<TGetPendingMessagesWithPriorityReply>,
   ): void {
     this.messageManager.getPendingMessagesWithPriority(
       queueName,
@@ -181,7 +181,7 @@ export class MessageManagerFrontend {
   getScheduledMessages(
     skip: number,
     take: number,
-    cb: ICallback<TGetMessagesReply>,
+    cb: ICallback<TGetScheduledMessagesReply>,
   ): void {
     this.messageManager.getScheduledMessages(skip, take, cb);
   }

@@ -1,12 +1,27 @@
 import { IsInt, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { GetMessagesResponseBodyDTO } from '../../../common/get-messages-response-body.DTO';
+import { MessageDTO } from '../../../common/message.DTO';
+
+export class GetPendingMessagesWithPriorityResponseBodyDataDTO {
+  @IsInt()
+  total!: number;
+
+  @ValidateNested()
+  @Type(() => MessageDTO)
+  items!: MessageDTO[];
+}
+
+export class GetPendingMessagesWithPriorityResponseBodyDTO {
+  @ValidateNested()
+  @Type(() => GetPendingMessagesWithPriorityResponseBodyDataDTO)
+  data!: GetPendingMessagesWithPriorityResponseBodyDataDTO;
+}
 
 export class GetPendingMessagesWithPriorityResponseDTO {
   @IsInt()
   status!: number;
 
   @ValidateNested()
-  @Type(() => GetMessagesResponseBodyDTO)
-  body!: GetMessagesResponseBodyDTO;
+  @Type(() => GetPendingMessagesWithPriorityResponseBodyDTO)
+  body!: GetPendingMessagesWithPriorityResponseBodyDTO;
 }

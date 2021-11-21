@@ -9,14 +9,14 @@ import { Message } from '../../src/message';
 import { events } from '../../src/system/common/events';
 
 test('Produce and consume a delayed message: Case 2', async () => {
-  let producedAt = 0;
   let callCount = 0;
-
+  const timestamps: number[] = [];
   const consumer = getConsumer({
     consumeMock: jest.fn((msg, cb) => {
       callCount += 1;
       if (callCount > 1) throw new Error('Unexpected call');
-      cb(null);
+      timestamps.push(msg.getPublishedAt() ?? 0);
+      cb();
     }),
   });
   consumer.run();
@@ -29,14 +29,10 @@ test('Produce and consume a delayed message: Case 2', async () => {
     .setBody({ hello: 'world' });
 
   const producer = getProducer();
-  producer.once(events.MESSAGE_PRODUCED, () => {
-    producedAt = Date.now();
-  });
   await producer.produceMessageAsync(msg);
+  const producedAt = Date.now();
 
   await untilMessageAcknowledged(consumer);
-  const diff = Date.now() - producedAt;
+  const diff = (timestamps[0] ?? 0) - producedAt;
   expect(validateTime(diff, 10000)).toBe(true);
-
-  await untilConsumerIdle(consumer);
 });

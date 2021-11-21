@@ -22,6 +22,14 @@ export class MessageDTO {
 
   @IsInt()
   @IsOptional()
+  publishedAt: number | null = null;
+
+  @IsInt()
+  @IsOptional()
+  scheduledAt: number | null = null;
+
+  @IsInt()
+  @IsOptional()
   ttl: number | null = null;
 
   @IsInt()

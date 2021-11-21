@@ -22,10 +22,6 @@ export class Message {
     HIGHEST: 0,
   };
 
-  protected uuid: string;
-
-  protected createdAt: number;
-
   protected ttl: number;
 
   protected retryThreshold: number;
@@ -46,7 +42,17 @@ export class Message {
 
   protected scheduledRepeat = 0;
 
-  ///
+  /// System parameters
+
+  protected readonly uuid: string;
+
+  protected readonly createdAt: number;
+
+  protected queue: TMessageQueue | null = null;
+
+  protected publishedAt: number | null = null;
+
+  protected scheduledAt: number | null = null;
 
   protected scheduledCronFired = false;
 
@@ -58,20 +64,32 @@ export class Message {
 
   protected expired = false;
 
-  protected queue: TMessageQueue | null = null;
-
   ///
 
   constructor() {
     this.createdAt = Date.now();
     this.uuid = uuid();
-    this.attempts = 0;
-    this.scheduledRepeatCount = 0;
-    this.delayed = false;
     this.ttl = Message.defaultOpts.ttl;
     this.retryDelay = Message.defaultOpts.retryDelay;
     this.retryThreshold = Message.defaultOpts.retryThreshold;
     this.consumeTimeout = Message.defaultOpts.consumeTimeout;
+  }
+
+  reset(): Message {
+    this.publishedAt = null;
+    this.scheduledAt = null;
+    this.attempts = 0;
+    this.expired = false;
+    this.delayed = false;
+    this.scheduledCronFired = false;
+    this.scheduledRepeatCount = 0;
+    this.queue = null;
+    return this;
+  }
+
+  setScheduledAt(timestamp: number): Message {
+    this.scheduledAt = timestamp;
+    return this;
   }
 
   /**
@@ -202,6 +220,11 @@ export class Message {
     return this;
   }
 
+  setPublishedAt(timestamp: number): Message {
+    this.publishedAt = timestamp;
+    return this;
+  }
+
   getQueue(): TMessageQueue | null {
     return this.queue;
   }
@@ -236,6 +259,14 @@ export class Message {
 
   getCreatedAt(): number {
     return this.createdAt;
+  }
+
+  getPublishedAt(): number | null {
+    return this.publishedAt;
+  }
+
+  getScheduledAt(): number | null {
+    return this.scheduledAt;
   }
 
   getAttempts(): number {
@@ -294,17 +325,6 @@ export class Message {
     return false;
   }
 
-  reset(hardReset = false): Message {
-    if (hardReset) {
-      this.delayed = false;
-      this.scheduledCronFired = false;
-      this.scheduledRepeatCount = 0;
-    }
-    this.attempts = 0;
-    this.expired = false;
-    return this;
-  }
-
   getSetPriority(priority: number | undefined): number {
     const defaultPriority = priority ?? Message.MessagePriority.NORMAL;
     if (!Object.values(Message.MessagePriority).includes(defaultPriority)) {
@@ -332,16 +352,14 @@ export class Message {
     );
   }
 
-  static createFromMessage(
-    message: string | Message,
-    reset = false,
-    hardReset = false,
-  ): Message {
+  static createFromMessage(message: string | Message, reset = false): Message {
     const messageJSON: Message =
       typeof message === 'string' ? JSON.parse(message) : message;
     const m = new Message();
     Object.assign(m, messageJSON);
-    if (reset) m.reset(hardReset);
+    if (reset) {
+      m.reset();
+    }
     return m;
   }
 

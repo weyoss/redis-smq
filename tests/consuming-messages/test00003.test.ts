@@ -7,8 +7,9 @@ test('Produce and consume 100 messages', async () => {
   const consume = jest.spyOn(consumer, 'consume');
   consumer.run();
 
+  const total = 100;
   const publishedMsg: Message[] = [];
-  for (let i = 0; i < 100; i += 1) {
+  for (let i = 0; i < total; i += 1) {
     const msg = new Message();
     msg.setBody({ hello: 'world' });
     await producer.produceMessageAsync(msg);
@@ -16,11 +17,12 @@ test('Produce and consume 100 messages', async () => {
   }
 
   await untilConsumerIdle(consumer);
-  expect(consume).toHaveBeenCalledTimes(100);
-  expect(consume.mock.calls[0][0].getId()).toStrictEqual(
-    publishedMsg[0].getId(),
+
+  expect(consume).toHaveBeenCalledTimes(total);
+  expect(publishedMsg[0].getId()).toStrictEqual(
+    consume.mock.calls[total - 1][0].getId(),
   );
-  expect(consume.mock.calls[0][0].getBody()).toStrictEqual(
-    publishedMsg[0].getBody(),
+  expect(publishedMsg[0].getBody()).toStrictEqual(
+    consume.mock.calls[total - 1][0].getBody(),
   );
 });

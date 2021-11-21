@@ -1,6 +1,6 @@
 import {
   getConsumer,
-  getMessageManager,
+  getMessageManagerFrontend,
   getProducer,
   getQueueManagerFrontend,
   untilConsumerIdle,
@@ -27,7 +27,7 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
   await untilConsumerIdle(consumer);
   await consumer.shutdownAsync();
 
-  const messageManager = promisifyAll(await getMessageManager());
+  const messageManager = promisifyAll(await getMessageManagerFrontend());
   const res1 = await messageManager.getPendingMessagesAsync(
     queueName,
     ns,
@@ -69,13 +69,7 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
 
   expect(res5.total).toBe(1);
   expect(res5.items.length).toBe(1);
-  // assign default consumer options
-  const msg2 = Message.createFromMessage(msg)
-    .setTTL(0)
-    .setRetryThreshold(3)
-    .setRetryDelay(0)
-    .setConsumeTimeout(0);
-  expect(res5.items[0].message).toEqual(msg2);
+  expect(res5.items[0].message.getId()).toEqual(msg.getId());
 
   const res6 = await messageManager.getAcknowledgedMessagesAsync(
     queueName,

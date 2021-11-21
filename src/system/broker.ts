@@ -32,17 +32,8 @@ export class Broker {
     this.messageManager.scheduleMessage(msg, cb);
   }
 
-  enqueueMessage(
-    queueName: string,
-    message: Message,
-    cb: ICallback<void>,
-  ): void {
-    this.messageManager.enqueueMessage(
-      queueName,
-      message,
-      this.priorityQueue,
-      cb,
-    );
+  enqueueMessage(message: Message, cb: ICallback<void>): void {
+    this.messageManager.enqueueMessage(message, this.priorityQueue, cb);
   }
 
   dequeueMessage(
@@ -50,19 +41,19 @@ export class Broker {
     redisClient: RedisClient,
     cb: ICallback<string>,
   ): void {
-    const { keyQueue, keyQueuePriority, keyQueueProcessing } =
-      consumer.getRedisKeys();
+    const queueName = consumer.getQueueName();
+    const { keyQueueProcessing } = consumer.getRedisKeys();
     if (this.priorityQueue) {
       this.messageManager.dequeueMessageWithPriority(
         redisClient,
-        keyQueuePriority,
+        queueName,
         keyQueueProcessing,
         cb,
       );
     } else {
       this.messageManager.dequeueMessage(
         redisClient,
-        keyQueue,
+        queueName,
         keyQueueProcessing,
         cb,
       );

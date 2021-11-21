@@ -1,7 +1,7 @@
 import { promisifyAll } from 'bluebird';
 import {
   getConsumer,
-  getMessageManager,
+  getMessageManagerFrontend,
   getProducer,
   produceAndAcknowledgeMessage,
   produceAndDeadLetterMessage,
@@ -21,7 +21,7 @@ describe('MessageManager', () => {
     msg.setBody({ hello: 'world' });
     await producer.produceMessageAsync(msg);
 
-    const messageManager = promisifyAll(await getMessageManager());
+    const messageManager = promisifyAll(await getMessageManagerFrontend());
     const res = await messageManager.getPendingMessagesAsync(
       queueName,
       ns,
@@ -39,7 +39,7 @@ describe('MessageManager', () => {
     const queueName = producer.getQueueName();
     const ns = redisKeys.getNamespace();
 
-    const messageManager = promisifyAll(await getMessageManager());
+    const messageManager = promisifyAll(await getMessageManagerFrontend());
     const res = await messageManager.getAcknowledgedMessagesAsync(
       queueName,
       ns,
@@ -56,7 +56,7 @@ describe('MessageManager', () => {
     const { producer, message } = await produceAndDeadLetterMessage();
     const queueName = producer.getQueueName();
     const ns = redisKeys.getNamespace();
-    const messageManager = promisifyAll(await getMessageManager());
+    const messageManager = promisifyAll(await getMessageManagerFrontend());
     const res = await messageManager.getDeadLetterMessagesAsync(
       queueName,
       ns,
@@ -81,7 +81,7 @@ describe('MessageManager', () => {
     msg.setPriority(Message.MessagePriority.LOW);
     await producer.produceMessageAsync(msg);
 
-    const messageManager = promisifyAll(await getMessageManager());
+    const messageManager = promisifyAll(await getMessageManagerFrontend());
     const res = await messageManager.getPendingMessagesWithPriorityAsync(
       queueName,
       ns,
@@ -90,8 +90,7 @@ describe('MessageManager', () => {
     );
 
     expect(res.total).toBe(1);
-    expect(res.items[0].sequenceId).toBe(0);
-    expect(res.items[0].message.getId()).toBe(msg.getId());
+    expect(res.items[0].getId()).toBe(msg.getId());
   });
 
   test('Case 5', async () => {
@@ -101,11 +100,10 @@ describe('MessageManager', () => {
     msg.setScheduledDelay(10000);
     await producer.produceMessageAsync(msg);
 
-    const messageManager = promisifyAll(await getMessageManager());
+    const messageManager = promisifyAll(await getMessageManagerFrontend());
     const res = await messageManager.getScheduledMessagesAsync(0, 100);
 
     expect(res.total).toBe(1);
-    expect(res.items[0].sequenceId).toBe(0);
-    expect(res.items[0].message.getId()).toBe(msg.getId());
+    expect(res.items[0].getId()).toBe(msg.getId());
   });
 });

@@ -5,6 +5,38 @@ import * as Logger from 'bunyan';
 import { Message } from '../src/system/message';
 import { redisKeys } from '../src/system/common/redis-keys';
 
+declare module 'redis' {
+  export interface Commands<R> {
+    // Overwrite bad declaration from @types/redis
+    info(cb?: Callback<string>): R;
+    info(section?: string | string[], cb?: Callback<string>): R;
+    INFO(cb?: Callback<string>): R;
+    INFO(section?: string | string[], cb?: Callback<string>): R;
+
+    // Add missing method
+    lmove(
+      source: string,
+      destination: string,
+      from: 'LEFT' | 'RIGHT',
+      to: 'LEFT' | 'RIGHT',
+      cb: ICallback<string>,
+    ): void;
+  }
+}
+
+declare module 'ioredis' {
+  export interface Commands {
+    // Add missing method
+    lmove(
+      source: string,
+      destination: string,
+      from: 'LEFT' | 'RIGHT',
+      to: 'LEFT' | 'RIGHT',
+      cb: ICallback<string>,
+    ): void;
+  }
+}
+
 export interface ICallback<T> {
   (err?: Error | null, reply?: T | null): void;
   (err: null | undefined, reply: T): void;
@@ -64,13 +96,15 @@ export type TCompatibleRedisClient = (NodeRedis | Redis) & {
   hdel(key: string, fields: string | string[], cb: ICallback<number>): void;
   hmset(key: string, args: string[], cb: ICallback<string>): void;
   lpush(key: string, element: string, cb: ICallback<number>): void;
+  rpush(key: string, element: string, cb: ICallback<number>): void;
   script(arg1: string, arg2: string, cb: ICallback<string>): void;
   eval: TFunction;
   evalsha: TFunction;
   watch(args: string[], cb: ICallback<string>): void;
-  set(key: string, value: string, cb: Callback<string>): void;
-  del(key: string, cb: Callback<number>): void;
-  zrem(key: string, value: string, cb: Callback<number>): void;
+  set(key: string, value: string, cb: ICallback<string>): void;
+  del(key: string, cb: ICallback<number>): void;
+  zrem(key: string, value: string, cb: ICallback<number>): void;
+  hmget(source: string, keys: string[], cb: ICallback<string[]>): void;
 };
 
 export type TRedisClientMulti = Multi | IORedis.Pipeline;
@@ -155,6 +189,7 @@ export type TAggregatedStatsQueue = {
 };
 
 export type TAggregatedStats = {
+  scheduledMessages: number;
   rates: {
     processing: number;
     acknowledged: number;
@@ -168,15 +203,19 @@ export type TAggregatedStats = {
   };
 };
 
-export type TPaginatedRedisQuery<T> = {
+export type TPaginatedResponse<T> = {
   total: number;
-  items: {
-    sequenceId: number;
-    message: T;
-  }[];
+  items: T[];
 };
 
-export type TGetMessagesReply = TPaginatedRedisQuery<Message>;
+export type TGetMessagesReply = TPaginatedResponse<{
+  sequenceId: number;
+  message: Message;
+}>;
+
+export type TGetScheduledMessagesReply = TPaginatedResponse<Message>;
+
+export type TGetPendingMessagesWithPriorityReply = TPaginatedResponse<Message>;
 
 export type TInstanceRedisKeys = ReturnType<
   typeof redisKeys['getInstanceKeys']

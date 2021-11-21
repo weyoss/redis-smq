@@ -1,6 +1,6 @@
 import {
   getConsumer,
-  getMessageManager,
+  getMessageManagerFrontend,
   getProducer,
   getQueueManagerFrontend,
   untilConsumerIdle,
@@ -26,7 +26,7 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   await consumer.runAsync();
   await untilConsumerIdle(consumer);
 
-  const messageManager = promisifyAll(await getMessageManager());
+  const messageManager = promisifyAll(await getMessageManagerFrontend());
   const res1 = await messageManager.getPendingMessagesAsync(
     queueName,
     ns,

@@ -47,7 +47,7 @@ import { RequeueAcknowledgedMessageResponseDTO } from './actions/requeue-acknowl
 import { GetPendingMessagesWithPriorityHandler } from './actions/get-pending-messages-with-priority/get-pending-messages-with-priority.handler';
 
 export const messagesController: TRouteController = {
-  prefix: '/queues/:queueName',
+  prefix: '/ns/:ns/queues/:queueName',
   actions: [
     {
       path: '/pending-messages',

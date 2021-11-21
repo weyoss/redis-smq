@@ -1,5 +1,9 @@
 import { promisifyAll } from 'bluebird';
-import { TGetMessagesReply } from '../../../types';
+import {
+  TGetMessagesReply,
+  TGetPendingMessagesWithPriorityReply,
+  TGetScheduledMessagesReply,
+} from '../../../types';
 import { GetScheduledMessagesRequestDTO as GetSchedulerMessagesDTO } from '../controllers/scheduled-messages/get-scheduled-messages/get-scheduled-messages-request.DTO';
 import { DeleteScheduledMessageRequestDTO as DeletedScheduledMessageDTO } from '../controllers/scheduled-messages/delete-scheduled-message/delete-scheduled-message-request.DTO';
 import { MessageManager } from '../../system/message-manager/message-manager';
@@ -25,7 +29,7 @@ export class MessageManagerService {
 
   async getScheduledMessages(
     args: GetSchedulerMessagesDTO,
-  ): Promise<TGetMessagesReply> {
+  ): Promise<TGetScheduledMessagesReply> {
     const { skip = 0, take = 1 } = args;
     return this.messageManager.getScheduledMessagesAsync(skip, take);
   }
@@ -56,7 +60,7 @@ export class MessageManagerService {
 
   async getPendingMessagesWithPriority(
     args: GetPendingMessagesWithPriorityRequestDTO,
-  ): Promise<TGetMessagesReply> {
+  ): Promise<TGetPendingMessagesWithPriorityReply> {
     const { ns, queueName, skip = 0, take = 1 } = args;
     return this.messageManager.getPendingMessagesWithPriorityAsync(
       queueName,
@@ -93,11 +97,10 @@ export class MessageManagerService {
   async deletePendingMessageWithPriority(
     args: DeletePendingMessageWithPriorityRequestDTO,
   ): Promise<void> {
-    const { ns, queueName, id, sequenceId } = args;
+    const { ns, queueName, id } = args;
     return this.messageManager.deletePendingMessageWithPriorityAsync(
       queueName,
       ns,
-      sequenceId,
       id,
     );
   }
@@ -129,8 +132,8 @@ export class MessageManagerService {
   async deleteScheduledMessage(
     args: DeletedScheduledMessageDTO,
   ): Promise<void> {
-    const { id, sequenceId } = args;
-    return this.messageManager.deleteScheduledMessageAsync(sequenceId, id);
+    const { id } = args;
+    return this.messageManager.deleteScheduledMessageAsync(id);
   }
 
   async requeueDeadLetteredMessage(

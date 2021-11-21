@@ -1,4 +1,4 @@
-import { getMessageManager, getProducer } from '../common';
+import { getMessageManagerFrontend, getProducer } from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
 
@@ -23,7 +23,7 @@ test('Schedule a message and check scheduled messages', async () => {
   const r3 = await producer.produceMessageAsync(msg3);
   expect(r3).toBe(true);
 
-  const messageManager = promisifyAll(await getMessageManager());
+  const messageManager = promisifyAll(await getMessageManagerFrontend());
 
   // Page 1
   const pageOne = await messageManager.getScheduledMessagesAsync(0, 2);
@@ -32,8 +32,8 @@ test('Schedule a message and check scheduled messages', async () => {
   }
   expect(pageOne.total).toEqual(3);
   expect(pageOne.items.length).toEqual(2);
-  expect(pageOne.items[0].message.getMessageScheduledDelay()).toEqual(30000);
-  expect(pageOne.items[1].message.getMessageScheduledDelay()).toEqual(60000);
+  expect(pageOne.items[0].getMessageScheduledDelay()).toEqual(30000);
+  expect(pageOne.items[1].getMessageScheduledDelay()).toEqual(60000);
 
   // Page 2
   const pageTwo = await messageManager.getScheduledMessagesAsync(2, 2);
@@ -42,5 +42,5 @@ test('Schedule a message and check scheduled messages', async () => {
   }
   expect(pageTwo.total).toEqual(3);
   expect(pageTwo.items.length).toEqual(1);
-  expect(pageTwo.items[0].message.getMessageScheduledDelay()).toEqual(90000);
+  expect(pageTwo.items[0].getMessageScheduledDelay()).toEqual(90000);
 });

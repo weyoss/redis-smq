@@ -1,3 +1,14 @@
-import { DeleteMessageRequestDTO } from '../../../common/delete-message-request.DTO';
+import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
-export class DeletePendingMessageWithPriorityRequestDTO extends DeleteMessageRequestDTO {}
+export class DeletePendingMessageWithPriorityRequestDTO {
+  @IsString()
+  @IsNotEmpty()
+  ns!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  queueName!: string;
+
+  @IsUUID('4')
+  id!: string;
+}

@@ -29,7 +29,7 @@ test('Validating published consumers, producers, and queues metrics: Case 2', as
   });
 
   expect(Object.keys(json)).toEqual(
-    expect.arrayContaining(['rates', 'queues']),
+    expect.arrayContaining(['rates', 'queues', 'scheduledMessages']),
   );
 
   expect(Object.keys(json.rates)).toEqual(

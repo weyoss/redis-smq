@@ -10,7 +10,7 @@ test('Schedule a message with a CRON expression and check that it is enqueued pe
   const timestamps: number[] = [];
   const consumer = getConsumer({
     consumeMock: jest.fn((msg, cb) => {
-      timestamps.push(Date.now());
+      timestamps.push(msg.getPublishedAt() ?? 0);
       cb(null);
     }),
   });

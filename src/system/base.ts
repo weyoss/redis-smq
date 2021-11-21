@@ -20,7 +20,6 @@ import { RedisClient } from './redis-client/redis-client';
 import { QueueManager } from './queue-manager/queue-manager';
 import { MessageManager } from './message-manager/message-manager';
 import { Message } from './message';
-import { loadScripts } from './redis-client/lua-scripts';
 
 export abstract class Base extends EventEmitter {
   protected readonly id: string;
@@ -66,11 +65,7 @@ export abstract class Base extends EventEmitter {
       else if (!client) cb(new Error(`Expected an instance of RedisClient`));
       else {
         this.sharedRedisClient = client;
-        this.logger.debug(`Load Lua scripts...`);
-        loadScripts(client, (err) => {
-          if (err) cb(err);
-          else cb(null, client);
-        });
+        cb(null, client);
       }
     });
   };

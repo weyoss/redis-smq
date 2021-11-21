@@ -1,10 +1,10 @@
---- KEYS[1] sorted set key
---- KEYS[2] list key
+--- KEYS[1] source list key
+--- KEYS[2] destination list key
 if redis.call("EXISTS", KEYS[1]) == 1 then
-    local result = redis.call("ZRANGE", KEYS[1], 0, 0)
+    local result = redis.call("LRANGE", KEYS[1], 0, 0)
     if #(result) then
         local message = result[1]
-        redis.call("ZREM", KEYS[1], message)
+        redis.call("LREM", KEYS[1], 1, message)
         redis.call("RPUSH", KEYS[2], message)
         return message
     end

@@ -19,6 +19,7 @@ import * as stoppable from 'stoppable';
 import { PowerManager } from '../system/common/power-manager';
 import { promisifyAll } from 'bluebird';
 import { WorkerRunner } from '../system/common/worker-runner';
+import * as cors from '@koa/cors';
 
 const RedisClientAsync = promisifyAll(RedisClient);
 
@@ -49,6 +50,11 @@ async function bootstrap(config: IConfig): Promise<TAPIServer> {
   app.context.logger = logger;
   app.context.redis = client;
   app.context.services = Services(app);
+  app.use(
+    cors({
+      origin: '*',
+    }),
+  );
   const router = getApplicationRouter(app, [
     queuesController,
     messagesController,

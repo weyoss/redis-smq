@@ -42,9 +42,6 @@ getScheduledMessages(skip, take, cb);
   - `err` *(Error | null | undefined).*
   - `result.total` *(number).* Total messages that has been scheduled so far.
   - `result.items` *(Array).* An array of scheduled messages.
-    - `result.items[*].sequenceId` *(number).* Message sequence ID.
-    - `result.items[*].message` *(Message).* The stored message at the sequence ID.
-
 
 ### MessageManager.prototype.getPendingMessagesWithPriority()
 
@@ -62,9 +59,7 @@ getPendingMessagesWithPriority(queueName, ns, skip, take, cb);
 - `cb(err, result)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).*
   - `result.total` *(number).* Total messages that has been scheduled so far.
-  - `result.items` *(Array).* An array of scheduled messages.
-    - `result.items[*].sequenceId` *(number).* Message sequence ID.
-    - `result.items[*].message` *(Message).* The stored message at the sequence ID.
+  - `result.items` *(Array).* An array of pending messages with priority.
 
 ### MessageManager.prototype.getDeadLetterMessages()
 
@@ -129,14 +124,13 @@ getAcknowledgedMessages(queueName, ns, skip, take, cb);
 ### MessageManager.prototype.deletePendingMessageWithPriority()
 
 ```javascript
-deletePendingMessageWithPriority(queueName, ns, sequenceId, messageId, cb);
+deletePendingMessageWithPriority(queueName, ns, messageId, cb);
 ```
 
 **Parameters**
 - `queueName` *(string): Required.* Queue name.
 - `ns` *(string | undefined): Required.* Queue namespace. To use the default namespace or the namespace from your
   configuration object, set `ns` to `undefined`. Otherwise, provide a valid namespace.
-- `sequenceId` *(number): Required.* Message sequence ID.
 - `messageId` *(string): Required.* Message ID.
 - `cb(err)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
@@ -189,11 +183,10 @@ deletePendingMessage(queueName, ns, sequenceId, messageId, cb);
 ### MessageManager.prototype.deleteScheduledMessage()
 
 ```javascript
-deleteScheduledMessage(sequenceId, messageId, cb);
+deleteScheduledMessage(messageId, cb);
 ```
 
 **Parameters**
-- `sequenceId` *(number): Required.* Message sequence ID.
 - `messageId` *(string): Required.* Message ID.
 - `cb(err)` *(Function): Required.* Callback function.
     - `err` *(Error | null | undefined).* Error object.

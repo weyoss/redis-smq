@@ -17,6 +17,7 @@ import { QueueManager } from '../../system/queue-manager/queue-manager';
 import { Ticker } from '../../system/common/ticker';
 import { events } from '../../system/common/events';
 import BLogger from 'bunyan';
+import { MessageManager } from '../../system/message-manager/message-manager';
 
 export class StatsWorker {
   protected keyIndexRates;
@@ -24,9 +25,11 @@ export class StatsWorker {
   protected lockManager: LockManager;
   protected redisClient: RedisClient;
   protected queueManager: QueueManager;
+  protected messageManager: MessageManager;
   protected ticker: Ticker;
   protected noop = (): void => void 0;
   protected data: TAggregatedStats = {
+    scheduledMessages: 0,
     rates: {
       input: 0,
       processing: 0,
@@ -38,6 +41,7 @@ export class StatsWorker {
 
   constructor(
     queueManager: QueueManager,
+    messageManager: MessageManager,
     redisClient: RedisClient,
     logger: BLogger,
   ) {
@@ -52,6 +56,7 @@ export class StatsWorker {
     );
     this.redisClient = redisClient;
     this.queueManager = queueManager;
+    this.messageManager = messageManager;
     this.ticker = new Ticker(this.run, 1000);
     this.ticker.nextTick();
   }
@@ -286,6 +291,16 @@ export class StatsWorker {
     this.queueManager.getMessageQueues(cb);
   };
 
+  protected getScheduledMessages = (cb: ICallback<void>): void => {
+    this.messageManager.getScheduledMessagesCount((err, count) => {
+      if (err) cb(err);
+      else {
+        this.data.scheduledMessages = count ?? 0;
+        cb();
+      }
+    });
+  };
+
   protected getConsumersHeartbeats = (cb: ICallback<void>): void => {
     Heartbeat.getHeartbeats(this.redisClient, (err, reply) => {
       if (err) cb(err);
@@ -344,6 +359,7 @@ export class StatsWorker {
 
   protected reset = (cb: ICallback<void>): void => {
     this.data = {
+      scheduledMessages: 0,
       rates: {
         processing: 0,
         acknowledged: 0,
@@ -363,6 +379,7 @@ export class StatsWorker {
       async.waterfall(
         [
           this.reset,
+          this.getScheduledMessages,
           this.getRates,
           this.getConsumersHeartbeats,
           this.getQueues,
@@ -395,7 +412,8 @@ process.on('message', (c: string) => {
     else {
       const logger = Logger(StatsWorker.name, config.log);
       const queueManager = new QueueManager(client, logger);
-      new StatsWorker(queueManager, client, logger);
+      const messageManager = new MessageManager(client, logger);
+      new StatsWorker(queueManager, messageManager, client, logger);
     }
   });
 });

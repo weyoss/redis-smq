@@ -6,7 +6,8 @@ import { config } from './config';
 import { ICallback, IConfig } from '../types';
 import { StatsWorker } from '../src/monitor-server/workers/stats.worker';
 import { QueueManagerFrontend } from '../src/system/queue-manager/queue-manager-frontend';
-import { MessageManager } from '../src/message-manager';
+import { MessageManagerFrontend } from '../src/system/message-manager/message-manager-frontend';
+import { MessageManager } from '../src/system/message-manager/message-manager';
 import * as supertest from 'supertest';
 import { Logger } from '../src/system/common/logger';
 import { QueueManager } from '../src/system/queue-manager/queue-manager';
@@ -31,7 +32,7 @@ export interface ISuperTestResponse<TData> extends supertest.Response {
 }
 
 Message.setDefaultOptions(config.message);
-const MessageManagerAsync = promisifyAll(MessageManager);
+const MessageManagerFrontendAsync = promisifyAll(MessageManagerFrontend);
 const QueueManagerFrontendAsync = promisifyAll(QueueManagerFrontend);
 
 class TestConsumer extends Consumer {
@@ -47,6 +48,7 @@ const producersList: Producer[] = [];
 let monitorServer: TMonitorServer | null = null;
 let statsWorker: StatsWorker | null = null;
 let messageManager: MessageManager | null = null;
+let messageManagerFrontend: MessageManagerFrontend | null = null;
 let queueManager: QueueManager | null = null;
 let queueManagerFrontend: QueueManagerFrontend | null = null;
 
@@ -79,6 +81,11 @@ export async function shutdown(): Promise<void> {
     const m = promisifyAll(messageManager);
     await m.quitAsync();
     messageManager = null;
+  }
+  if (messageManagerFrontend) {
+    const m = promisifyAll(messageManagerFrontend);
+    await m.quitAsync();
+    messageManagerFrontend = null;
   }
   if (queueManagerFrontend) {
     const q = promisifyAll(queueManagerFrontend);
@@ -113,11 +120,19 @@ export function getLogger() {
 
 export async function getMessageManager() {
   if (!messageManager) {
-    messageManager = await MessageManagerAsync.getSingletonInstanceAsync(
-      config,
-    );
+    const client = await getRedisInstance();
+    const logger = getLogger();
+    messageManager = new MessageManager(client, logger);
   }
   return messageManager;
+}
+
+export async function getMessageManagerFrontend() {
+  if (!messageManagerFrontend) {
+    messageManagerFrontend =
+      await MessageManagerFrontendAsync.getSingletonInstanceAsync(config);
+  }
+  return messageManagerFrontend;
 }
 
 export async function getQueueManagerFrontend() {
@@ -151,8 +166,14 @@ export async function stopMonitorServer(): Promise<void> {
 export async function startStatsWorker(): Promise<void> {
   const redisClient = await getRedisInstance();
   const queueManager = await getQueueManager();
+  const messageManager = await getMessageManager();
   const logger = getLogger();
-  statsWorker = new StatsWorker(queueManager, redisClient, logger);
+  statsWorker = new StatsWorker(
+    queueManager,
+    messageManager,
+    redisClient,
+    logger,
+  );
 }
 
 export async function stopStatsAggregator(): Promise<void> {

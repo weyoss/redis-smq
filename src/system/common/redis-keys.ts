@@ -3,7 +3,7 @@ const globalNamespace = 'global';
 let namespace = 'default';
 
 enum ERedisKey {
-  KEY_QUEUE,
+  KEY_QUEUE = 58,
   KEY_QUEUE_DL,
   KEY_QUEUE_DELAY,
   KEY_QUEUE_REQUEUE,
@@ -31,6 +31,8 @@ enum ERedisKey {
   KEY_LOCK_DELETE_DEAD_LETTER_MESSAGE,
   KEY_LOCK_DELETE_SCHEDULED_MESSAGE,
   KEY_HEARTBEAT,
+  KEY_SCHEDULED_MESSAGES,
+  KEY_PENDING_MESSAGES_WITH_PRIORITY,
 }
 
 export const redisKeys = {
@@ -59,6 +61,10 @@ export const redisKeys = {
       ),
       keyQueueUnacknowledgedMessages: this.joinSegments(
         ERedisKey.KEY_QUEUE_UNACKNOWLEDGED_MESSAGES,
+        queueName,
+      ),
+      keyPendingMessagesWithPriority: this.joinSegments(
+        ERedisKey.KEY_PENDING_MESSAGES_WITH_PRIORITY,
         queueName,
       ),
     };
@@ -183,6 +189,7 @@ export const redisKeys = {
       keyLockDeletePendingMessage: ERedisKey.KEY_LOCK_DELETE_PENDING_MESSAGE,
       keyLockDeletePendingMessageWithPriority:
         ERedisKey.KEY_LOCK_DELETE_PENDING_MESSAGE_WITH_PRIORITY,
+      keyScheduledMessages: ERedisKey.KEY_SCHEDULED_MESSAGES,
     };
     return this.makeNamespacedKeys(keys, globalNamespace);
   },

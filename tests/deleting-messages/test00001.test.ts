@@ -1,5 +1,5 @@
 import {
-  getMessageManager,
+  getMessageManagerFrontend,
   getProducer,
   getQueueManagerFrontend,
 } from '../common';
@@ -16,7 +16,7 @@ test('Combined test: Delete a pending message. Check pending messages. Check que
   msg.setBody({ hello: 'world' });
   await producer.produceMessageAsync(msg);
 
-  const messageManager = promisifyAll(await getMessageManager());
+  const messageManager = promisifyAll(await getMessageManagerFrontend());
   const res1 = await messageManager.getPendingMessagesAsync(
     queueName,
     ns,
