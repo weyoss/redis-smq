@@ -2,23 +2,40 @@ import { Message } from '../../message';
 import { redisKeys } from '../../common/redis-keys';
 import * as async from 'async';
 import { RedisClient } from '../../redis-client/redis-client';
-import { ICallback, TGetMessagesReply } from '../../../../types';
-import { parseExpression } from 'cron-parser';
 import {
-  deleteSortedSetMessageAtSequenceId,
-  getPaginatedSortedSetMessages,
-} from '../common';
+  ICallback,
+  TGetScheduledMessagesReply,
+  TRedisClientMulti,
+} from '../../../../types';
+import { parseExpression } from 'cron-parser';
+import { getPaginatedSortedSetMessages, getSortedSetSize } from '../common';
 import { Handler } from './handler';
+import { EnqueueHandler } from './enqueue.handler';
+import { LockManager } from '../../common/lock-manager';
 
 export class ScheduleHandler extends Handler {
+  protected enqueueHandler: EnqueueHandler;
+
+  constructor(redisClient: RedisClient, enqueueHandler: EnqueueHandler) {
+    super(redisClient);
+    this.enqueueHandler = enqueueHandler;
+  }
+
+  getScheduledMessagesCount(cb: ICallback<number>): void {
+    const { keyQueueScheduled } = redisKeys.getGlobalKeys();
+    getSortedSetSize(this.redisClient, keyQueueScheduled, cb);
+  }
+
   getScheduledMessages(
     skip: number,
     take: number,
-    cb: ICallback<TGetMessagesReply>,
+    cb: ICallback<TGetScheduledMessagesReply>,
   ): void {
-    const { keyQueueScheduled } = redisKeys.getGlobalKeys();
+    const { keyQueueScheduled, keyScheduledMessages } =
+      redisKeys.getGlobalKeys();
     getPaginatedSortedSetMessages(
       this.redisClient,
+      keyScheduledMessages,
       keyQueueScheduled,
       skip,
       take,
@@ -26,32 +43,57 @@ export class ScheduleHandler extends Handler {
     );
   }
 
-  deleteScheduled(index: number, messageId: string, cb: ICallback<void>): void {
-    const { keyQueueScheduled, keyLockDeleteScheduledMessage } =
-      redisKeys.getGlobalKeys();
-    deleteSortedSetMessageAtSequenceId(
+  deleteScheduled(messageId: string, cb: ICallback<void>): void {
+    const {
+      keyQueueScheduled,
+      keyScheduledMessages,
+      keyLockDeleteScheduledMessage,
+    } = redisKeys.getGlobalKeys();
+    LockManager.lockFN(
       this.redisClient,
       keyLockDeleteScheduledMessage,
-      keyQueueScheduled,
-      index,
-      messageId,
+      (cb) => {
+        // Not checking message existence.
+        // If the message exists it will be deleted.
+        // Otherwise, assuming that it has been already deleted
+        const multi = this.redisClient.multi();
+        multi.hdel(keyScheduledMessages, messageId);
+        multi.zrem(keyQueueScheduled, messageId);
+        this.redisClient.execMulti(multi, (err) => cb(err));
+      },
       cb,
     );
   }
 
-  schedule(message: Message, cb: ICallback<boolean>): void {
+  protected scheduleMessage(
+    multi: TRedisClientMulti,
+    message: Message,
+    timestamp: number,
+  ): void {
+    const { keyQueueScheduled, keyScheduledMessages } =
+      redisKeys.getGlobalKeys();
+    message.setScheduledAt(Date.now());
+    const messageId = message.getId();
+    multi.zadd(keyQueueScheduled, timestamp, messageId);
+    multi.hset(keyScheduledMessages, messageId, JSON.stringify(message));
+  }
+
+  schedule(
+    message: Message,
+    multi: TRedisClientMulti | undefined,
+    cb: ICallback<boolean> = () => void 0,
+  ): void {
     const timestamp = ScheduleHandler.getNextScheduledTimestamp(message) ?? 0;
     if (timestamp > 0) {
-      const { keyQueueScheduled } = redisKeys.getGlobalKeys();
-      this.redisClient.zadd(
-        keyQueueScheduled,
-        timestamp,
-        JSON.stringify(message),
-        (err) => {
+      if (multi) this.scheduleMessage(multi, message, timestamp);
+      else {
+        const multi = this.redisClient.multi();
+        this.scheduleMessage(multi, message, timestamp);
+        this.redisClient.execMulti(multi, (err) => {
           if (err) cb(err);
           else cb(null, true);
-        },
-      );
+        });
+      }
     } else cb(null, false);
   }
 
@@ -60,35 +102,29 @@ export class ScheduleHandler extends Handler {
     withPriority: boolean,
     cb: ICallback<void>,
   ): void {
-    const { keyQueueScheduled } = redisKeys.getGlobalKeys();
+    const { keyQueueScheduled, keyScheduledMessages } =
+      redisKeys.getGlobalKeys();
     const enqueue = (messages: string[], cb: ICallback<void>) => {
       if (messages.length) {
         async.each<string, Error>(
           messages,
           (msg, done) => {
             const message = Message.createFromMessage(msg);
-            const queue = message.getQueue();
-            if (!queue) throw new Error(`Got a message without a queue`);
-            const { name, ns } = queue;
-            const { keyQueuePriority, keyQueue } = redisKeys.getKeys(name, ns);
+            const messageId = message.getId();
             const multi = redisClient.multi();
-            multi.zrem(keyQueueScheduled, JSON.stringify(message));
-            const priority = withPriority
-              ? message.getSetPriority(undefined)
-              : null;
-            if (typeof priority === 'number') {
-              multi.zadd(keyQueuePriority, priority, JSON.stringify(message));
-            } else {
-              multi.lpush(keyQueue, JSON.stringify(message));
-            }
+            this.enqueueHandler.enqueue(multi, message, withPriority);
             const nextScheduleTimestamp =
               ScheduleHandler.getNextScheduledTimestamp(message);
             if (nextScheduleTimestamp) {
-              multi.zadd(
-                keyQueueScheduled,
-                nextScheduleTimestamp,
+              multi.zadd(keyQueueScheduled, nextScheduleTimestamp, messageId);
+              multi.hset(
+                keyScheduledMessages,
+                messageId,
                 JSON.stringify(message),
               );
+            } else {
+              multi.zrem(keyQueueScheduled, messageId);
+              multi.hdel(keyScheduledMessages, messageId);
             }
             redisClient.execMulti(multi, (err) => done(err));
           },
@@ -96,12 +132,12 @@ export class ScheduleHandler extends Handler {
         );
       } else cb();
     };
-    const fetch = (cb: ICallback<Message[]>) => {
-      redisClient.zrangebyscore(
-        keyQueueScheduled,
-        0,
-        Date.now(),
-        (err, reply) => {
+    const fetchIds = (cb: ICallback<string[]>) => {
+      redisClient.zrangebyscore(keyQueueScheduled, 0, Date.now(), cb);
+    };
+    const fetchMessages = (ids: string[], cb: ICallback<Message[]>) => {
+      if (ids.length) {
+        redisClient.hmget(keyScheduledMessages, ids, (err, reply) => {
           if (err) cb(err);
           else {
             const messages = (reply ?? []).map((i) =>
@@ -109,10 +145,10 @@ export class ScheduleHandler extends Handler {
             );
             cb(null, messages);
           }
-        },
-      );
+        });
+      } else cb(null, []);
     };
-    async.waterfall([fetch, enqueue], (err) => cb(err));
+    async.waterfall([fetchIds, fetchMessages, enqueue], (err) => cb(err));
   }
 
   static getNextScheduledTimestamp(message: Message): number {

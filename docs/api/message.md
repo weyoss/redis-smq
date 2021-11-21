@@ -236,13 +236,53 @@ message.getConsumeTimeout(); // 30000
 
 ### Message.prototype.getCreatedAt()
 
-Get message creation timestamp.
+Get message creation timestamp (in milliseconds).
 
 ```javascript
 const { Message } = require('redis-smq');
 
 const message = new Message();
-message.getCreatedAt(); // 1530613595087 (in milliseconds)
+message.getCreatedAt(); // 1530613595087 
+````
+
+### Message.prototype.getPublishedAt()
+
+Get the timestamp (in milliseconds) at which the message was enqueued.
+
+```javascript
+const { Message, Producer } = require('redis-smq');
+
+const message = new Message();
+message.getPublishedAt(); // null
+
+const producer = new Producer('test_queue');
+producer.produceMessage(message, (err) => {
+    if (err) console.log(err);
+    else {
+        message.getPublishedAt(); // 1530613595087
+    }
+});
+````
+
+### Message.prototype.getScheduledAt()
+
+Get the timestamp (in milliseconds) at which the message was scheduled.
+
+```javascript
+const { Message, Producer } = require('redis-smq');
+
+const message = new Message();
+message.setScheduledRepeat(6);
+message.getScheduledAt(); // null
+
+const producer = new Producer('test_queue');
+producer.produceMessage(message, (err) => {
+    if (err) console.log(err);
+    else {
+        message.getPublishedAt(); // null
+        message.getScheduledAt(); // 1530613595087
+    }
+});
 ````
 
 ### Message.prototype.getMessageScheduledRepeat()
@@ -371,3 +411,6 @@ These methods are used internally and should not be used in your application:
 - Message.prototype.incrMessageScheduledRepeatCount()
 - Message.prototype.setAttempts()
 - Message.prototype.setMessageDelayed()
+- Message.prototype.setPublishedAt()
+- Message.prototype.setScheduledAt()
+- Message.prototype.reset()

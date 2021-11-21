@@ -1,5 +1,5 @@
 import {
-  getMessageManager,
+  getMessageManagerFrontend,
   getProducer,
   getQueueManagerFrontend,
 } from '../common';
@@ -18,7 +18,7 @@ test('Combined test: Delete a pending message with priority. Check pending messa
   const queueName = producer.getQueueName();
   const ns = redisKeys.getNamespace();
 
-  const messageManager = promisifyAll(await getMessageManager());
+  const messageManager = promisifyAll(await getMessageManagerFrontend());
   const res1 = await messageManager.getPendingMessagesWithPriorityAsync(
     queueName,
     ns,
@@ -27,7 +27,7 @@ test('Combined test: Delete a pending message with priority. Check pending messa
   );
 
   expect(res1.total).toBe(1);
-  expect(res1.items[0].message.getId()).toBe(msg.getId());
+  expect(res1.items[0].getId()).toBe(msg.getId());
 
   const queueManager = promisifyAll(await getQueueManagerFrontend());
   const queueMetrics = await queueManager.getQueueMetricsAsync(queueName, ns);
@@ -36,7 +36,6 @@ test('Combined test: Delete a pending message with priority. Check pending messa
   await messageManager.deletePendingMessageWithPriorityAsync(
     queueName,
     ns,
-    0,
     msg.getId(),
   );
   const res2 = await messageManager.getPendingMessagesWithPriorityAsync(

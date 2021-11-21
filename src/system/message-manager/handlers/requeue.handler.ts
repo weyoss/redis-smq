@@ -3,8 +3,17 @@ import { redisKeys } from '../../common/redis-keys';
 import { getListMessageAtSequenceId } from '../common';
 import { Message } from '../../message';
 import { Handler } from './handler';
+import { EnqueueHandler } from './enqueue.handler';
+import { RedisClient } from '../../redis-client/redis-client';
 
 export class RequeueHandler extends Handler {
+  protected enqueueHandler: EnqueueHandler;
+
+  constructor(redisClient: RedisClient, enqueueHandler: EnqueueHandler) {
+    super(redisClient);
+    this.enqueueHandler = enqueueHandler;
+  }
+
   protected requeueListMessage(
     queueName: string,
     ns: string | undefined,
@@ -15,7 +24,6 @@ export class RequeueHandler extends Handler {
     priority: number | undefined,
     cb: ICallback<void>,
   ): void {
-    const { keyQueuePriority, keyQueue } = redisKeys.getKeys(queueName, ns);
     getListMessageAtSequenceId(
       this.redisClient,
       from,
@@ -27,13 +35,12 @@ export class RequeueHandler extends Handler {
         else {
           const multi = this.redisClient.multi();
           multi.lrem(from, 1, JSON.stringify(msg));
-          const message = Message.createFromMessage(msg, true, true);
-          const msgPriority = withPriority
-            ? message.getSetPriority(priority)
-            : null;
-          if (typeof msgPriority === 'number')
-            multi.zadd(keyQueuePriority, msgPriority, JSON.stringify(message));
-          else multi.lpush(keyQueue, JSON.stringify(message));
+          const message = Message.createFromMessage(msg, true); // resetting all system parameters
+          message.setQueue(ns ?? redisKeys.getNamespace(), queueName); // do not lose message queue
+          if (withPriority && typeof priority !== 'undefined') {
+            message.setPriority(priority);
+          }
+          this.enqueueHandler.enqueue(multi, message, withPriority);
           this.redisClient.execMulti(multi, (err) => cb(err));
         }
       },

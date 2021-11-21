@@ -13,9 +13,9 @@ test('Re-queuing an acknowledged message', async () => {
   const request = supertest('http://127.0.0.1:3000');
   const response1: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =
     await request.post(
-      `/api/queues/${
+      `/api/ns/${redisKeys.getNamespace()}/queues/${
         message.getQueue()?.name
-      }/acknowledged-messages/${message.getId()}/requeue?sequenceId=0&ns=${redisKeys.getNamespace()}`,
+      }/acknowledged-messages/${message.getId()}/requeue?sequenceId=0`,
     );
   expect(response1.statusCode).toBe(204);
   expect(response1.body).toEqual({});

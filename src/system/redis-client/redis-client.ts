@@ -8,7 +8,8 @@ import {
   TRedisClientMulti,
 } from '../../../types';
 import { EventEmitter } from 'events';
-import { ELuaScriptName, getScriptId } from './lua-scripts';
+import { ELuaScriptName, getScriptId, loadScripts } from './lua-scripts';
+import * as async from 'async';
 
 /**
  * client.end() does unregister all event listeners which causes the 'end' event not being emitted.
@@ -67,6 +68,9 @@ const patchedEnd = function (
 };
 
 export class RedisClient extends EventEmitter {
+  static redisServerVersion: number[] | null = null;
+  static scriptsLoaded = false;
+
   protected client: TCompatibleRedisClient;
 
   protected constructor(config: IConfig = {}) {
@@ -81,6 +85,21 @@ export class RedisClient extends EventEmitter {
     if (this.client instanceof NodeRedis) {
       this.client.end = patchedEnd;
     }
+  }
+
+  protected validateRedisVersion(
+    major: number,
+    feature = 0,
+    minor = 0,
+  ): boolean {
+    if (!RedisClient.redisServerVersion)
+      throw new Error('Unknown Redis server version.');
+    return (
+      RedisClient.redisServerVersion[0] > major ||
+      (RedisClient.redisServerVersion[0] === major &&
+        RedisClient.redisServerVersion[1] >= feature &&
+        RedisClient.redisServerVersion[2] >= minor)
+    );
   }
 
   protected getClient(config: IConfig): TCompatibleRedisClient {
@@ -250,6 +269,38 @@ export class RedisClient extends EventEmitter {
     );
   }
 
+  zpophgetrpush(
+    source: string,
+    sourceHash: string,
+    destination: string,
+    cb: ICallback<string>,
+  ): void {
+    this.evalsha(
+      getScriptId(ELuaScriptName.ZPOPHGETRPUSH),
+      [3, source, sourceHash, destination],
+      (err, res?: unknown) => {
+        if (err) cb(err);
+        else if (typeof res !== 'string') cb();
+        else cb(null, res);
+      },
+    );
+  }
+
+  zpushhset(
+    sortedSet: string,
+    hash: string,
+    score: number,
+    keyId: string,
+    keyValue: string,
+    cb: ICallback<void>,
+  ): void {
+    this.evalsha(
+      getScriptId(ELuaScriptName.ZPUSHHSET),
+      [5, sortedSet, hash, score, keyId, keyValue],
+      (err) => cb(err),
+    );
+  }
+
   zrem(key: string, value: string, cb: ICallback<string>): void {
     this.client.zrem(key, value, (err) => cb(err));
   }
@@ -260,6 +311,10 @@ export class RedisClient extends EventEmitter {
 
   lpush(key: string, element: string, cb: ICallback<number>): void {
     this.client.lpush(key, element, cb);
+  }
+
+  rpush(key: string, element: string, cb: ICallback<number>): void {
+    this.client.rpush(key, element, cb);
   }
 
   lrem(
@@ -317,6 +372,48 @@ export class RedisClient extends EventEmitter {
     this.client.llen(key, cb);
   }
 
+  lmove(
+    source: string,
+    destination: string,
+    from: 'LEFT' | 'RIGHT',
+    to: 'LEFT' | 'RIGHT',
+    cb: ICallback<string>,
+  ): void {
+    if (!this.validateRedisVersion(6, 2)) {
+      cb(
+        new Error(
+          'Command not supported by your Redis server. Minimal required Redis server version is 6.2.0.',
+        ),
+      );
+    } else {
+      this.client.lmove(source, destination, from, to, cb);
+    }
+  }
+
+  lpoprpush(source: string, destination: string, cb: ICallback<string>): void {
+    if (this.validateRedisVersion(6, 2)) {
+      this.lmove(source, destination, 'LEFT', 'RIGHT', cb);
+    } else {
+      this.evalsha(
+        getScriptId(ELuaScriptName.LPOPRPUSH),
+        [2, source, destination],
+        (err, res?: unknown) => {
+          if (err) cb(err);
+          else if (typeof res !== 'string') cb();
+          else cb(null, res);
+        },
+      );
+    }
+  }
+
+  zremrangebyscore(source: string, score: number, cb: ICallback<number>): void {
+    this.client.zremrangebyscore(source, score, score, cb);
+  }
+
+  hmget(source: string, keys: string[], cb: ICallback<string[]>): void {
+    this.client.hmget(source, keys, cb);
+  }
+
   halt(cb: ICallback<void>): void {
     this.client.once('end', cb);
     this.end(true);
@@ -334,11 +431,50 @@ export class RedisClient extends EventEmitter {
     this.client.quit(() => cb && cb());
   }
 
+  updateServerVersion(cb: ICallback<void>): void {
+    if (!RedisClient.redisServerVersion) {
+      this.client.info((err, res) => {
+        if (err) throw err;
+        else {
+          RedisClient.redisServerVersion = res
+            .split('\r\n')[1]
+            .split(':')[1]
+            .split('.')
+            .map((i) => Number(i));
+          cb();
+        }
+      });
+    } else cb();
+  }
+
+  loadScripts(cb: ICallback<void>): void {
+    if (!RedisClient.scriptsLoaded) {
+      loadScripts(this, (err) => {
+        if (err) cb(err);
+        else {
+          RedisClient.scriptsLoaded = true;
+          cb();
+        }
+      });
+    } else cb();
+  }
+
   static getNewInstance(
     config: IConfig = {},
     cb: ICallback<RedisClient>,
   ): void {
     const client = new RedisClient(config);
-    client.once('ready', () => cb(null, client));
+    client.once('ready', () => {
+      async.waterfall(
+        [
+          (cb: ICallback<void>) => client.updateServerVersion(cb),
+          (cb: ICallback<void>) => client.loadScripts(cb),
+        ],
+        (err) => {
+          if (err) throw err;
+          else cb(null, client);
+        },
+      );
+    });
   }
 }

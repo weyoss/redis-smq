@@ -1,6 +1,6 @@
 import {
   getConsumer,
-  getMessageManager,
+  getMessageManagerFrontend,
   getProducer,
   getQueueManagerFrontend,
   untilConsumerIdle,
@@ -27,7 +27,7 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   await untilConsumerIdle(consumer);
   await consumer.shutdownAsync();
 
-  const messageManager = promisifyAll(await getMessageManager());
+  const messageManager = promisifyAll(await getMessageManagerFrontend());
   const res1 = await messageManager.getPendingMessagesAsync(
     queueName,
     ns,
@@ -54,13 +54,8 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   );
   expect(res3.total).toBe(1);
   expect(res3.items.length).toBe(1);
-  const msg1 = Message.createFromMessage(msg)
-    .setTTL(0)
-    .setRetryThreshold(3)
-    .setRetryDelay(0)
-    .setConsumeTimeout(0)
-    .setAttempts(2);
-  expect(res3.items[0].message).toEqual(msg1);
+  expect(res3.items[0].message.getId()).toEqual(msg.getId());
+  expect(res3.items[0].message.getAttempts()).toEqual(2);
 
   const queueManager = promisifyAll(await getQueueManagerFrontend());
   const queueMetrics = await queueManager.getQueueMetricsAsync(queueName, ns);
@@ -95,14 +90,10 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   );
   expect(res6.total).toBe(1);
   expect(res6.items.length).toBe(1);
-  // assign default consumer options
-  const msg2 = Message.createFromMessage(msg)
-    .setTTL(0)
-    .setRetryThreshold(3)
-    .setRetryDelay(0)
-    .setConsumeTimeout(0)
-    .setPriority(Message.MessagePriority.NORMAL);
-  expect(res6.items[0].message).toEqual(msg2);
+
+  expect(res6.items[0].getId()).toEqual(msg.getId());
+  expect(res6.items[0].getPriority()).toEqual(Message.MessagePriority.NORMAL);
+  expect(res6.items[0].getAttempts()).toEqual(0);
 
   const res7 = await messageManager.getDeadLetterMessagesAsync(
     queueName,

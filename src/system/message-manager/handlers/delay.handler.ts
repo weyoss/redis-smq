@@ -4,10 +4,18 @@ import * as async from 'async';
 import { redisKeys } from '../../common/redis-keys';
 import { ICallback } from '../../../../types';
 import { Handler } from './handler';
+import { RedisClient } from '../../redis-client/redis-client';
 
 export class DelayHandler extends Handler {
+  protected scheduleHandler: ScheduleHandler;
+
+  constructor(redisClient: RedisClient, scheduleHandler: ScheduleHandler) {
+    super(redisClient);
+    this.scheduleHandler = scheduleHandler;
+  }
+
   schedule(cb: ICallback<void>): void {
-    const { keyQueueDelay, keyQueueScheduled } = redisKeys.getGlobalKeys();
+    const { keyQueueDelay } = redisKeys.getGlobalKeys();
     this.redisClient.lrange(keyQueueDelay, 0, 99, (err, reply) => {
       if (err) cb(err);
       else {
@@ -20,9 +28,7 @@ export class DelayHandler extends Handler {
             message.incrAttempts();
             const delay = message.getRetryDelay();
             message.setScheduledDelay(delay);
-            const timestamp =
-              ScheduleHandler.getNextScheduledTimestamp(message);
-            multi.zadd(keyQueueScheduled, timestamp, JSON.stringify(message));
+            this.scheduleHandler.schedule(message, multi);
             cb();
           });
           async.parallel(tasks, (err) => {

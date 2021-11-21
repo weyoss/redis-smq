@@ -1,7 +1,7 @@
 import { delay, promisifyAll } from 'bluebird';
 import {
   getConsumer,
-  getMessageManager,
+  getMessageManagerFrontend,
   getProducer,
   untilConsumerIdle,
 } from '../common';
@@ -40,7 +40,7 @@ test('Default message TTL: a message without TTL is not consumed and moved to DL
   expect(consume).toHaveBeenCalledTimes(0);
   expect(unacks).toBe(1);
 
-  const m = promisifyAll(await getMessageManager());
+  const m = promisifyAll(await getMessageManagerFrontend());
   const list = await m.getDeadLetterMessagesAsync(queueName, ns, 0, 100);
   expect(list.total).toBe(1);
   expect(list.items[0].message.getId()).toBe(msg.getId());

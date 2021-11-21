@@ -1,6 +1,6 @@
 import {
   getConsumer,
-  getMessageManager,
+  getMessageManagerFrontend,
   getProducer,
   untilConsumerIdle,
 } from '../common';
@@ -33,7 +33,7 @@ test('A consumer does re-queue a failed message when threshold is not exceeded, 
   await untilConsumerIdle(consumer);
   expect(unacknowledged).toBe(3);
 
-  const m = promisifyAll(await getMessageManager());
+  const m = promisifyAll(await getMessageManagerFrontend());
   const list = await m.getDeadLetterMessagesAsync(queueName, ns, 0, 100);
   expect(list.total).toBe(1);
   expect(list.items[0].message.getId()).toBe(msg.getId());

@@ -1,6 +1,6 @@
 import {
   getConsumer,
-  getMessageManager,
+  getMessageManagerFrontend,
   getProducer,
   getQueueManagerFrontend,
   untilConsumerIdle,
@@ -27,7 +27,7 @@ test('Combined test: Requeue a message from dead-letter queue with priority.  Ch
   await untilConsumerIdle(consumer);
   await consumer.shutdownAsync();
 
-  const messageManager = promisifyAll(await getMessageManager());
+  const messageManager = promisifyAll(await getMessageManagerFrontend());
   await messageManager.requeueMessageFromDLQueueAsync(
     queueName,
     ns,
@@ -54,11 +54,8 @@ test('Combined test: Requeue a message from dead-letter queue with priority.  Ch
   );
   expect(res2.total).toBe(1);
   expect(res2.items.length).toBe(1);
-  // assign default consumer options
-  const msg1 = Message.createFromMessage(msg).setPriority(
-    Message.MessagePriority.NORMAL,
-  );
-  expect(res2.items[0].message).toEqual(msg1);
+  expect(res2.items[0].getId()).toEqual(msg.getId());
+  expect(res2.items[0].getPriority()).toEqual(Message.MessagePriority.NORMAL);
 
   const res3 = await messageManager.getDeadLetterMessagesAsync(
     queueName,

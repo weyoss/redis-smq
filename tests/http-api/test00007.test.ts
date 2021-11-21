@@ -13,9 +13,9 @@ test('Fetching pending messages', async () => {
   const request = supertest('http://127.0.0.1:3000');
   const response1: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =
     await request.get(
-      `/api/queues/${
+      `/api/ns/${redisKeys.getNamespace()}/queues/${
         message.getQueue()?.name
-      }/pending-messages?skip=0&take=99&ns=${redisKeys.getNamespace()}`,
+      }/pending-messages?skip=0&take=99`,
     );
   expect(response1.statusCode).toBe(200);
   expect(response1.body.data).toBeDefined();

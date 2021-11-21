@@ -58,7 +58,7 @@ export class ProcessingHandler extends Handler {
     cb: ICallback<void>,
   ): void {
     const { keyQueueDL } = redisKeys.getKeys(queueName);
-    this.redisClient.rpoplpush(keyQueueProcessing, keyQueueDL, (err) => {
+    this.redisClient.lpoprpush(keyQueueProcessing, keyQueueDL, (err) => {
       if (err) cb(err);
       else cb();
     });
@@ -71,7 +71,7 @@ export class ProcessingHandler extends Handler {
     cb: ICallback<void>,
   ): void {
     const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName);
-    this.redisClient.rpoplpush(
+    this.redisClient.lpoprpush(
       keyQueueProcessing,
       keyQueueAcknowledgedMessages,
       (err) => {

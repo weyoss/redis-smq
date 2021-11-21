@@ -13,7 +13,7 @@ test('Purge acknowledged messages', async () => {
   const request = supertest('http://127.0.0.1:3000');
   const response1: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =
     await request.get(
-      `/api/queues/${producer.getQueueName()}/acknowledged-messages?skip=0&take=99&ns=${redisKeys.getNamespace()}`,
+      `/api/ns/${redisKeys.getNamespace()}/queues/${producer.getQueueName()}/acknowledged-messages?skip=0&take=99`,
     );
   expect(response1.statusCode).toBe(200);
   expect(response1.body.data).toBeDefined();
@@ -23,13 +23,13 @@ test('Purge acknowledged messages', async () => {
   expect(response1.body.data?.items[0].message.uuid).toBe(message.getId());
   const response2: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =
     await request.delete(
-      `/api/queues/${producer.getQueueName()}/acknowledged-messages?ns=${redisKeys.getNamespace()}`,
+      `/api/ns/${redisKeys.getNamespace()}/queues/${producer.getQueueName()}/acknowledged-messages`,
     );
   expect(response2.statusCode).toBe(204);
   expect(response2.body).toEqual({});
   const response3: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =
     await request.get(
-      `/api/queues/${producer.getQueueName()}/acknowledged-messages?skip=0&take=99&ns=${redisKeys.getNamespace()}`,
+      `/api/ns/${redisKeys.getNamespace()}/queues/${producer.getQueueName()}/acknowledged-messages?skip=0&take=99`,
     );
   expect(response3.statusCode).toBe(200);
   expect(response3.body.data).toBeDefined();

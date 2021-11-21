@@ -1,6 +1,6 @@
 import {
   getConsumer,
-  getMessageManager,
+  getMessageManagerFrontend,
   getProducer,
   getQueueManagerFrontend,
   untilMessageAcknowledged,
@@ -28,7 +28,7 @@ test('Combined test: Requeue a message from acknowledged queue with priority. Ch
   await untilMessageAcknowledged(consumer);
   await consumer.shutdownAsync();
 
-  const messageManager = promisifyAll(await getMessageManager());
+  const messageManager = promisifyAll(await getMessageManagerFrontend());
   await messageManager.requeueMessageFromAcknowledgedQueueAsync(
     queueName,
     ns,
@@ -59,10 +59,8 @@ test('Combined test: Requeue a message from acknowledged queue with priority. Ch
   expect(res6.items.length).toBe(1);
 
   // assign default consumer options
-  const msg1 = Message.createFromMessage(msg).setPriority(
-    Message.MessagePriority.NORMAL,
-  );
-  expect(res6.items[0].message).toEqual(msg1);
+  expect(res6.items[0].getId()).toEqual(msg.getId());
+  expect(res6.items[0].getPriority()).toEqual(Message.MessagePriority.NORMAL);
 
   const res7 = await messageManager.getAcknowledgedMessagesAsync(
     queueName,

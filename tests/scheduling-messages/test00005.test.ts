@@ -5,32 +5,27 @@ import {
   validateTime,
 } from '../common';
 import { Message } from '../../src/message';
-import { events } from '../../src/system/common/events';
 
 test('Schedule a message with a combination of CRON expression, repeat, period, and delay parameters. Check that it is enqueued periodically on time.', async () => {
   const timestamps: number[] = [];
   const consumer = getConsumer({
     consumeMock: jest.fn((msg, cb) => {
-      timestamps.push(Date.now());
+      timestamps.push(msg.getPublishedAt() ?? 0);
       cb(null);
     }),
   });
   consumer.run();
 
   const msg = new Message();
-  msg.setScheduledCron('*/20 * * * * *'); // Schedule message for each 30 seconds
+  msg.setScheduledCron('*/20 * * * * *'); // Schedule message for each 20 seconds
   msg.setScheduledRepeat(2); // repeat 2 times
   msg.setScheduledPeriod(5000); // 5 secs between each repeat
   msg.setScheduledDelay(15000); // this will first delay the message for 15 secs before cron/repeat scheduling
   msg.setBody({ hello: 'world' });
 
   const producer = getProducer();
-
-  let producedAt = 0;
-  producer.once(events.MESSAGE_PRODUCED, () => {
-    producedAt = Date.now();
-  });
   await producer.produceMessageAsync(msg);
+  const producedAt = Date.now();
 
   for (let i = 0; i < 8; i += 1) {
     await untilMessageAcknowledged(consumer);
