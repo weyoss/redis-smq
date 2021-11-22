@@ -17,7 +17,9 @@ test('Purge scheduled messages', async () => {
   expect(response1.body.data?.total).toBe(1);
   expect(response1.body.data?.items.length).toBe(1);
   expect(response1.body.data?.items[0].uuid).toBe(message.getId());
-  const response2 = await request.delete(`/api/scheduled-messages`);
+  const response2: ISuperTestResponse<void> = await request.delete(
+    `/api/scheduled-messages`,
+  );
   expect(response2.statusCode).toBe(204);
   expect(response2.body).toEqual({});
   const response3: ISuperTestResponse<GetScheduledMessagesResponseBodyDataDTO> =
