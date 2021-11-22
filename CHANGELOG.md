@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 5.0.1 (2021-11-22)
+
+* Fixed broken redis-smq-monitor package.
+
 ## 5.0.0 (2021-11-22)
 
 * Implemented message and queue management features in the Web UI.
