@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 4.0.9 (2021-11-10)
+
+* Fixed outdated Message API docs.
+
 ## 4.0.8 (2021-11-09)
 
 * Improved debugging info.
