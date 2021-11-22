@@ -41,7 +41,7 @@
     "koa-bodyparser": "^4.3.0",
     "lodash": "^4.17.21",
     "redis": "^3.1.2",
-    "redis-smq-monitor": "^5.0.0",
+    "redis-smq-monitor": "^5.0.1",
     "redlock": "^4.2.0",
     "reflect-metadata": "^0.1.13",
     "socket.io": "^4.2.0",
@@ -89,7 +89,8 @@
     "pretest": "npm run build",
     "test": "NODE_ENV=test jest --runInBand --verbose --collectCoverage",
     "precoverage": "npm run build",
-    "type-coverage": "type-coverage --strict --at-least 100 --ignore-files \"dist/**/*\""
+    "type-coverage": "type-coverage --strict --at-least 100 --ignore-files \"dist/**/*\"",
+    "prepublishOnly": "npm run build"
   },
   "husky": {
     "hooks": {
