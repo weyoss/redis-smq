@@ -1,10 +1,14 @@
-# RedisSMQ - Yet another Redis simple message queue
-
-[![Tests](https://github.com/weyoss/redis-smq/actions/workflows/tests.yml/badge.svg)](https://github.com/weyoss/redis-smq/actions/workflows/tests.yml)
-[![Coverage Status](https://img.shields.io/coveralls/github/weyoss/redis-smq.svg)](https://coveralls.io/r/weyoss/redis-smq?branch=master)
-[![NPM version](http://img.shields.io/npm/v/redis-smq.svg)](https://npmjs.org/package/redis-smq)
-[![NPM downloads](https://img.shields.io/npm/dm/redis-smq.svg)](https://npmjs.org/package/redis-smq)
-[![Code quality](https://img.shields.io/lgtm/grade/javascript/github/weyoss/redis-smq.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/weyoss/redis-smq/context:javascript)
+<div align="center" style="text-align: center">
+  <p><img alt="RedisSMQ" src="./logo.png" /></p>
+  <p>A simple high-performance Redis message queue for Node.js.</p>
+  <p>
+    <a href="https://github.com/weyoss/redis-smq/actions/workflows/tests.yml"><img src="https://github.com/weyoss/redis-smq/actions/workflows/tests.yml/badge.svg" alt="Tests" style="max-width:100%;" /></a>
+    <a href="https://coveralls.io/r/weyoss/redis-smq?branch=master" rel="nofollow"><img src="https://img.shields.io/coveralls/github/weyoss/redis-smq.svg" alt="Coverage Status" /></a>
+    <a href="https://npmjs.org/package/redis-smq" rel="nofollow"><img src="https://img.shields.io/npm/v/redis-smq.svg" alt="NPM version" /></a>
+    <a href="https://npmjs.org/package/redis-smq" rel="nofollow"><img src="https://img.shields.io/npm/dm/redis-smq.svg" alt="NPM downloads" /></a>
+    <a href="https://lgtm.com/projects/g/weyoss/redis-smq/context:javascript" rel="nofollow"><img src="https://img.shields.io/lgtm/grade/javascript/github/weyoss/redis-smq.svg?logo=lgtm&logoWidth=18" alt="Code quality" /></a>
+  </p>
+</div>
 
 RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing them asynchronously with consumers. Backed 
 by Redis, it allows scaling up your application with ease of use.
