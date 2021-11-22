@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 5.0.0 (2021-11-22)
+
+* Implemented message and queue management features in the Web UI.
+* Refactored the MQ to use LIFO queues.
+* Updated HTTP API endpoints.
+* Minor overall improvements and changes.
+
 ## 4.0.9 (2021-11-10)
 
 * Fixed outdated Message API docs.
