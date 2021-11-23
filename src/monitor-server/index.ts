@@ -20,12 +20,18 @@ import { PowerManager } from '../system/common/power-manager';
 import { promisifyAll } from 'bluebird';
 import { WorkerRunner } from '../system/common/worker-runner';
 import * as cors from '@koa/cors';
+import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 
 const RedisClientAsync = promisifyAll(RedisClient);
 
 type TAPIServer = {
   httpServer: ReturnType<typeof stoppable>;
-  socketIO: SocketIO;
+  socketIO: SocketIO<
+    DefaultEventsMap,
+    DefaultEventsMap,
+    DefaultEventsMap,
+    unknown
+  >;
   app: TApplication;
 };
 
@@ -63,7 +69,12 @@ async function bootstrap(config: IConfig): Promise<TAPIServer> {
   app.use(router.routes());
   app.use(router.allowedMethods());
   const httpServer = stoppable(createServer(app.callback()));
-  const socketIO = new SocketIO(httpServer, {
+  const socketIO = new SocketIO<
+    DefaultEventsMap,
+    DefaultEventsMap,
+    DefaultEventsMap,
+    unknown
+  >(httpServer, {
     ...socketOpts,
     cors: {
       origin: '*',
