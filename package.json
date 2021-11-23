@@ -76,7 +76,7 @@
     "supertest": "^6.1.6",
     "ts-jest": "^27.0.5",
     "ts-node": "^10.2.1",
-    "type-coverage": "^2.18.2",
+    "type-coverage": "^2.19.0",
     "typescript": "^4.4.3"
   },
   "scripts": {
@@ -89,7 +89,7 @@
     "pretest": "npm run build",
     "test": "NODE_ENV=test jest --runInBand --verbose --collectCoverage",
     "precoverage": "npm run build",
-    "type-coverage": "type-coverage --strict --at-least 100 --ignore-files \"dist/**/*\"",
+    "type-coverage": "type-coverage --strict --at-least 100  --ignore-files \"dist/**/*\"",
     "prepublishOnly": "npm run build"
   },
   "husky": {
