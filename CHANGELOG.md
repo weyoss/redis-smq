@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 5.0.3 (2021-11-23)
+
+* Updated RedisSMQ logo.
+
 ## 5.0.2 (2021-11-23)
 
 * Added RedisSMQ logo.
