@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 5.0.2 (2021-11-23)
+
+* Added RedisSMQ logo.
+* Bumped redis-smq-monitor to v5.0.2.
+* Bumped type-coverage to v2.19.0.
+
 ## 5.0.1 (2021-11-22)
 
 * Fixed broken redis-smq-monitor package.
