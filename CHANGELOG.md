@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 5.0.4 (2021-11-24)
+
+* Updated RedisSMQ logo.
+* Bumped redis-smq-monitor to v5.0.3.
+
 ## 5.0.3 (2021-11-23)
 
 * Updated RedisSMQ logo.
