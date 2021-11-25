@@ -1,23 +1,22 @@
 import { IConfig, ICallback } from '../../../types';
 import { Message } from '../message';
-import { ProducerMessageRateProvider } from './producer-message-rate-provider';
+import { ProducerMessageRate } from './producer-message-rate';
 import { Base } from '../base';
 import { events } from '../common/events';
 import { redisKeys } from '../common/redis-keys';
+import { RedisClient } from '../redis-client/redis-client';
 
-export class Producer extends Base {
-  protected messageRateProvider: ProducerMessageRateProvider | null = null;
-
+export class Producer extends Base<ProducerMessageRate> {
   constructor(queueName: string, config: IConfig = {}) {
     super(queueName, config);
     this.run();
   }
 
-  getMessageRateProvider(): ProducerMessageRateProvider {
-    if (!this.messageRateProvider) {
-      this.messageRateProvider = new ProducerMessageRateProvider(this);
+  getMessageRate(redisClient: RedisClient): ProducerMessageRate {
+    if (!this.messageRate) {
+      this.messageRate = new ProducerMessageRate(this, redisClient);
     }
-    return this.messageRateProvider;
+    return this.messageRate;
   }
 
   produceMessage(msg: unknown, cb: ICallback<boolean>): void {
@@ -29,8 +28,7 @@ export class Producer extends Base {
     const callback: ICallback<boolean> = (err, reply) => {
       if (err) cb(err);
       else {
-        if (this.messageRateProvider)
-          this.messageRateProvider.incrementInputSlot();
+        if (this.messageRate) this.messageRate.incrementInputSlot();
         this.emit(events.MESSAGE_PRODUCED, message);
         cb(null, reply);
       }

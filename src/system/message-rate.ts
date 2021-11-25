@@ -1,21 +1,19 @@
-import { ICallback, IMessageRateProvider } from '../../types';
-import { Base } from './base';
+import { ICallback } from '../../types';
 import { events } from './common/events';
 import { Ticker } from './common/ticker';
 import { RedisClient } from './redis-client/redis-client';
 import { EventEmitter } from 'events';
+import { redisKeys } from './common/redis-keys';
 
-export class MessageRate extends EventEmitter {
-  protected instance: Base;
-  protected messageRateProvider: IMessageRateProvider;
+export abstract class MessageRate<
+  TMessageRateFields extends Record<string, unknown> = Record<string, unknown>,
+> extends EventEmitter {
   protected redisClient: RedisClient;
   protected ticker: Ticker;
 
-  constructor(instance: Base, redisClient: RedisClient) {
+  constructor(redisClient: RedisClient) {
     super();
-    this.instance = instance;
     this.redisClient = redisClient;
-    this.messageRateProvider = instance.getMessageRateProvider();
     this.ticker = new Ticker(() => {
       this.onTick();
     }, 1000);
@@ -23,15 +21,18 @@ export class MessageRate extends EventEmitter {
   }
 
   protected onTick(): void {
-    const stats = this.messageRateProvider.getRates();
-    this.publish(stats);
+    const rates = this.getRateFields();
+    this.publish(this.formatRateFields(rates));
   }
 
-  protected publish(stats: Record<string, any>): void {
-    const formatted = this.messageRateProvider.format(stats);
-    const { keyIndexRates } = this.instance.getRedisKeys();
-    this.redisClient.hmset(keyIndexRates, formatted, () => void 0);
+  protected publish(data: string[]): void {
+    const { keyIndexRates } = redisKeys.getGlobalKeys();
+    this.redisClient.hmset(keyIndexRates, data, () => void 0);
   }
+
+  abstract getRateFields(): TMessageRateFields;
+
+  abstract formatRateFields(rates: TMessageRateFields): string[];
 
   quit(cb: ICallback<void>): void {
     this.ticker.once(events.DOWN, cb);

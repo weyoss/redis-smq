@@ -2,7 +2,6 @@ import { v4 as uuid } from 'uuid';
 import { EventEmitter } from 'events';
 import {
   IConfig,
-  IMessageRateProvider,
   ICallback,
   TInstanceRedisKeys,
   TUnaryFunction,
@@ -21,7 +20,9 @@ import { QueueManager } from './queue-manager/queue-manager';
 import { MessageManager } from './message-manager/message-manager';
 import { Message } from './message';
 
-export abstract class Base extends EventEmitter {
+export abstract class Base<
+  TMessageRate extends MessageRate,
+> extends EventEmitter {
   protected readonly id: string;
   protected readonly queueName: string;
   protected readonly config: IConfig;
@@ -29,8 +30,8 @@ export abstract class Base extends EventEmitter {
   protected readonly powerManager: PowerManager;
   protected readonly redisKeys: TInstanceRedisKeys;
   protected broker: Broker | null = null;
-  protected messageRate: MessageRate | null = null;
   protected sharedRedisClient: RedisClient | null = null;
+  protected messageRate: TMessageRate | null = null;
 
   constructor(queueName: string, config: IConfig) {
     super();
@@ -70,22 +71,6 @@ export abstract class Base extends EventEmitter {
     });
   };
 
-  private setUpMessageRate = (cb: ICallback<void>): void => {
-    this.logger.debug(`Set up MessageRate...`);
-    const { monitor } = this.config;
-    if (monitor && monitor.enabled) {
-      if (!this.sharedRedisClient)
-        cb(new Error(`Expected an instance of RedisClient`));
-      else {
-        this.messageRate = new MessageRate(this, this.sharedRedisClient);
-        cb();
-      }
-    } else {
-      this.logger.debug(`Skipping MessageRate setup as monitor not enabled...`);
-      cb();
-    }
-  };
-
   private setUpMessageQueue = (
     messageManager: MessageManager,
     cb: ICallback<void>,
@@ -93,7 +78,12 @@ export abstract class Base extends EventEmitter {
     this.logger.debug(`Set up message queue (${this.queueName})...`);
     if (!this.sharedRedisClient)
       cb(new Error(`Expected an instance of RedisClient`));
-    else QueueManager.setUpMessageQueue(this, this.sharedRedisClient, cb);
+    else
+      QueueManager.setUpMessageQueue(
+        this.queueName,
+        this.sharedRedisClient,
+        cb,
+      );
   };
 
   private setUpBroker = (cb: ICallback<Broker>): void => {
@@ -106,6 +96,22 @@ export abstract class Base extends EventEmitter {
         this.logger,
       );
       this.broker = new Broker(this.config, messageManager, this.logger);
+      cb();
+    }
+  };
+
+  private setUpMessageRate = (cb: ICallback<void>): void => {
+    this.logger.debug(`Set up MessageRate...`);
+    const { monitor } = this.config;
+    if (monitor && monitor.enabled) {
+      if (!this.sharedRedisClient)
+        cb(new Error(`Expected an instance of RedisClient`));
+      else {
+        this.messageRate = this.getMessageRate(this.sharedRedisClient);
+        cb();
+      }
+    } else {
+      this.logger.debug(`Skipping MessageRate setup as monitor not enabled...`);
       cb();
     }
   };
@@ -231,5 +237,5 @@ export abstract class Base extends EventEmitter {
     return this.redisKeys;
   }
 
-  abstract getMessageRateProvider(): IMessageRateProvider;
+  abstract getMessageRate(redisClient: RedisClient): TMessageRate;
 }

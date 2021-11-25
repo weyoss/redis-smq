@@ -48,20 +48,16 @@ export type TFunction<TReturn = void, TArgs = any> = (
   ...args: TArgs[]
 ) => TReturn;
 
-export interface IConsumerStats {
+export interface IConsumerMessageRateFields
+  extends Record<string, number | boolean> {
   acknowledgedRate: number;
   unacknowledgedRate: number;
   processingRate: number;
   isIdle: boolean;
 }
 
-export interface IProducerStats {
+export interface IProducerMessageRateFields extends Record<string, number> {
   inputRate: number;
-}
-
-export interface IMessageRateProvider<T = Record<string, any>> {
-  getRates(): T;
-  format(stats: Record<string, any>): string[];
 }
 
 export enum RedisClientName {

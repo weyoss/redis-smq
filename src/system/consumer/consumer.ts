@@ -5,7 +5,7 @@ import {
 } from '../../../types';
 import { Base } from '../base';
 import { Message } from '../message';
-import { ConsumerMessageRateProvider } from './consumer-message-rate-provider';
+import { ConsumerMessageRate } from './consumer-message-rate';
 import { events } from '../common/events';
 import { Heartbeat } from './heartbeat';
 import { RedisClient } from '../redis-client/redis-client';
@@ -13,11 +13,11 @@ import { resolve } from 'path';
 import { ConsumerWorkers } from './consumer-workers';
 import { WorkerRunner } from '../common/worker-runner';
 import { ConsumerFrontend } from './consumer-frontend';
+import { QueueManager } from '../queue-manager/queue-manager';
 
-export class Consumer extends Base {
+export class Consumer extends Base<ConsumerMessageRate> {
   private consumerRedisClient: RedisClient | null = null;
   private heartbeat: Heartbeat | null = null;
-  private messageRateProvider: ConsumerMessageRateProvider | null = null;
   private consumerWorkers: ConsumerWorkers | null = null;
   private consumerFrontend: ConsumerFrontend | null = null;
 
@@ -128,8 +128,7 @@ export class Consumer extends Base {
     });
     this.on(events.MESSAGE_ACKNOWLEDGED, (msg: Message) => {
       this.logger.info(`Message (ID ${msg.getId()}) has been acknowledged.`);
-      if (this.messageRateProvider)
-        this.messageRateProvider.incrementAcknowledgedSlot();
+      if (this.messageRate) this.messageRate.incrementAcknowledgedSlot();
       this.emit(events.MESSAGE_NEXT);
     });
     this.on(
@@ -138,8 +137,7 @@ export class Consumer extends Base {
         this.logger.info(
           `Message (ID ${msg.getId()}) has been unacknowledged. Cause: ${cause}.`,
         );
-        if (this.messageRateProvider)
-          this.messageRateProvider.incrementUnacknowledgedSlot();
+        if (this.messageRate) this.messageRate.incrementUnacknowledgedSlot();
         this.emit(events.MESSAGE_NEXT);
       },
     );
@@ -159,8 +157,7 @@ export class Consumer extends Base {
       );
     } else {
       this.logger.info(`Trying to consume message (ID ${message.getId()})...`);
-      if (this.messageRateProvider)
-        this.messageRateProvider.incrementProcessingSlot();
+      if (this.messageRate) this.messageRate.incrementProcessingSlot();
       this.handleConsume(message);
     }
   }
@@ -205,9 +202,20 @@ export class Consumer extends Base {
         cb();
       });
     };
+    const setUpConsumerProcessingQueue = (cb: ICallback<void>): void => {
+      this.logger.debug(`Set up consumer processing queue...`);
+      this.getSharedRedisClient((client) =>
+        QueueManager.setUpProcessingQueue(this, client, cb),
+      );
+    };
     return super
       .goingUp()
-      .concat([setUpConsumerRedisClient, setUpHeartbeat, setUpConsumerWorkers]);
+      .concat([
+        setUpConsumerRedisClient,
+        setUpHeartbeat,
+        setUpConsumerWorkers,
+        setUpConsumerProcessingQueue,
+      ]);
   }
 
   protected goingDown(): TUnaryFunction<ICallback<void>>[] {
@@ -265,15 +273,15 @@ export class Consumer extends Base {
     ].concat(super.goingDown());
   }
 
-  getMessageRateProvider(): ConsumerMessageRateProvider {
-    if (!this.messageRateProvider) {
-      this.messageRateProvider = new ConsumerMessageRateProvider(this);
-    }
-    return this.messageRateProvider;
-  }
-
   setConsumerFrontend(consumerMessageHandler: ConsumerFrontend): Consumer {
     this.consumerFrontend = consumerMessageHandler;
     return this;
+  }
+
+  getMessageRate(redisClient: RedisClient): ConsumerMessageRate {
+    if (!this.messageRate) {
+      this.messageRate = new ConsumerMessageRate(this, redisClient);
+    }
+    return this.messageRate;
   }
 }
