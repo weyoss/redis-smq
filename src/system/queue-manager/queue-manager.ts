@@ -1,7 +1,6 @@
 import { RedisClient } from '../redis-client/redis-client';
 import { ICallback, IQueueMetrics, TMessageQueue } from '../../../types';
 import { redisKeys } from '../common/redis-keys';
-import { Base } from '../base';
 import { Consumer } from '../consumer/consumer';
 import * as async from 'async';
 import BLogger from 'bunyan';
@@ -169,31 +168,37 @@ export class QueueManager {
     );
   }
 
-  static setUpMessageQueue(
-    instance: Base,
+  static setUpProcessingQueue(
+    consumer: Consumer,
     redisClient: RedisClient,
     cb: ICallback<void>,
   ): void {
+    const {
+      keyQueueProcessing,
+      keyIndexProcessingQueues,
+      keyIndexQueueMessageProcessingQueues,
+    } = consumer.getRedisKeys();
     const multi = redisClient.multi();
-    const { keyIndexQueue } = instance.getRedisKeys();
+    multi.hset(
+      keyIndexQueueMessageProcessingQueues,
+      keyQueueProcessing,
+      consumer.getId(),
+    );
+    multi.sadd(keyIndexProcessingQueues, keyQueueProcessing);
+    redisClient.execMulti(multi, (err) => cb(err));
+  }
+
+  static setUpMessageQueue(
+    queueName: string,
+    redisClient: RedisClient,
+    cb: ICallback<void>,
+  ): void {
+    const { keyIndexQueue } = redisKeys.getKeys(queueName);
     const queue: TMessageQueue = {
-      name: instance.getQueueName(),
+      name: queueName,
       ns: redisKeys.getNamespace(),
     };
-    multi.sadd(keyIndexQueue, JSON.stringify(queue));
-    if (instance instanceof Consumer) {
-      const {
-        keyQueueProcessing,
-        keyIndexProcessingQueues,
-        keyIndexQueueMessageProcessingQueues,
-      } = instance.getRedisKeys();
-      multi.hset(
-        keyIndexQueueMessageProcessingQueues,
-        keyQueueProcessing,
-        instance.getId(),
-      );
-      multi.sadd(keyIndexProcessingQueues, keyQueueProcessing);
-    }
-    redisClient.execMulti(multi, (err) => cb(err));
+    const str = JSON.stringify(queue);
+    redisClient.sadd(keyIndexQueue, str, (err) => cb(err));
   }
 }

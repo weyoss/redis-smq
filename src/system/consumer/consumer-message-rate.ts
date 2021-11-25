@@ -1,8 +1,10 @@
 import { Consumer } from './consumer';
-import { IConsumerStats, IMessageRateProvider } from '../../../types';
+import { IConsumerMessageRateFields } from '../../../types';
 import { events } from '../common/events';
+import { MessageRate } from '../message-rate';
+import { RedisClient } from '../redis-client/redis-client';
 
-export class ConsumerMessageRateProvider implements IMessageRateProvider {
+export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields> {
   protected consumer: Consumer;
   protected keyConsumerRateProcessing: string;
   protected keyConsumerRateAcknowledged: string;
@@ -19,7 +21,8 @@ export class ConsumerMessageRateProvider implements IMessageRateProvider {
   // inactive for the last 5 seconds
   protected isIdle = false;
 
-  constructor(consumer: Consumer) {
+  constructor(consumer: Consumer, redisClient: RedisClient) {
+    super(redisClient);
     this.consumer = consumer;
     const {
       keyRateConsumerProcessing,
@@ -31,7 +34,7 @@ export class ConsumerMessageRateProvider implements IMessageRateProvider {
     this.keyConsumerRateUnacknowledged = keyRateConsumerUnacknowledged;
   }
 
-  getRates() {
+  getRateFields(): IConsumerMessageRateFields {
     this.processingRate = this.processingSlots.reduce(
       (acc: number, cur: number) => acc + cur,
       0,
@@ -67,9 +70,9 @@ export class ConsumerMessageRateProvider implements IMessageRateProvider {
     };
   }
 
-  format(stats: IConsumerStats): string[] {
+  formatRateFields(rates: IConsumerMessageRateFields): string[] {
     const now = Date.now();
-    const { processingRate, acknowledgedRate, unacknowledgedRate } = stats;
+    const { processingRate, acknowledgedRate, unacknowledgedRate } = rates;
     return [
       this.keyConsumerRateProcessing,
       `${processingRate}|${now}`,
