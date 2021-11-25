@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 5.0.5 (2021-11-25)
+
+* Minor improvements: refactored and cleaned up MessageRate and QueueManager classes.
+
 ## 5.0.4 (2021-11-24)
 
 * Updated RedisSMQ logo.
