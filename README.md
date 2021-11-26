@@ -34,9 +34,9 @@ High-level overview of how RedisSMQ works:
  * **Scalable**: A queue can be consumed by multiple concurrent consumers, running on different hosts.
  * **Persistent**: Messages are not lost in case of consumer failures.
  * **Atomic**: A message can be delivered only to one consumer at a time.
- * **[Message expiration](docs/api/message.md)**: A message will not be delivered if it has been in a queue for longer 
+ * **[Message expiration](docs/api/message.md#messageprototypesetttl)**: A message will not be delivered if it has been in a queue for longer 
  than a given amount of time, called TTL (time-to-live).
- * **[Message consume timeout](docs/api/message.md)**: Timeout for a consumer to consume a message.
+ * **[Message consume timeout](docs/api/message.md#messageprototypesetconsumetimeout)**: Timeout for a consumer to consume a message.
  * **[Delaying and scheduling message delivery](docs/api/scheduler.md)**: Messages can be configured to be delayed, delivered 
    for N times with an optional period between deliveries, and to be scheduled using CRON expressions.
  * **[Reliable Priority Queues](docs/priority-queues.md)**: Supports priority messaging.
