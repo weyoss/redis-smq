@@ -2,15 +2,14 @@
 
 Starting with version 1.0.19, `Message Scheduler` enables you to schedule a one-time or repeating messages in your MQ server.
 
-To set up scheduling parameters for a specific message, the [Message API](docs/api/message.md) provides:
+To set up scheduling parameters for a given message, the [Message API](docs/api/message.md) provides:
 
 - [setScheduledPeriod()](message.md#messageprototypesetscheduledperiod)
 - [setScheduledDelay()](message.md#messageprototypesetscheduleddelay)
 - [setScheduledCron()](message.md#messageprototypesetscheduledcron)
 - [setScheduledRepeat()](message.md#messageprototypesetscheduledrepeat)
 
-Once ready, to schedule your message you can use, as usually you do for publishing any message, 
-[producer.produceMessage()](producer.md#producerprototypeproducemessage): 
+To schedule your message use [producer.produceMessage()](producer.md#producerprototypeproducemessage): 
 
 ```javascript
 'use strict';
@@ -38,3 +37,5 @@ For managing scheduled messages, the [Message Manager](message-manager.md) provi
 To purge clear all scheduled messages of a given queue, the [Queue Manager](queue-manager.md) provides:
 
 - [purgeScheduledMessagesQueue](queue-manager.md#queuemanagerprototypepurgescheduledmessagesqueue)
+
+Scheduled messages can be also managed using the [Web UI](/docs/web-ui.md).

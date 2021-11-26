@@ -1,10 +1,5 @@
 # Configuration
 
-Before running a Producer or a Consumer instance, an object containing the configuration parameters can be supplied
-to the class constructor in order to configure the message queue.
-
-A configuration object may look like:
-
 ```javascript
 'use strict';
 

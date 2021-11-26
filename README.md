@@ -31,21 +31,19 @@ High-level overview of how RedisSMQ works:
 ## Features
 
  * **[High-performance message processing](docs/performance.md)**
- * **Scalable**: A queue can be consumed by many concurrent consumers, running on the same or different hosts.
- * **Persistent**: No messages are lost in case of consumer failures.
+ * **Scalable**: A queue can be consumed by multiple concurrent consumers, running on different hosts.
+ * **Persistent**: Messages are not lost in case of consumer failures.
  * **Atomic**: A message can be delivered only to one consumer at a time.
- * **[Message expiration](docs/api/message.md)**: A message will expire and not be consumed if it has been in the queue for longer than the
- TTL (time-to-live).
- * **[Message consume timeout](docs/api/message.md)**: The amount of time for a consumer to consume a message. If the timeout exceeded,
- message processing is cancelled and the message is re-queued again.
+ * **[Message expiration](docs/api/message.md)**: A message will not be delivered if it has been in a queue for longer 
+ than a given amount of time, called TTL (time-to-live).
+ * **[Message consume timeout](docs/api/message.md)**: Timeout for a consumer to consume a message.
  * **[Delaying and scheduling message delivery](docs/api/scheduler.md)**: Messages can be configured to be delayed, delivered 
    for N times with an optional period between deliveries, and to be scheduled using CRON expressions.
  * **[Reliable Priority Queues](docs/priority-queues.md)**: Supports priority messaging.
  * **[HTTP API](docs/http-api.md)**: an HTTP interface is provided to interact with the MQ.
- * **[Web UI](docs/web-ui.md)**: The MQ state (input/processing/acks/unacks messages rates, online consumers, queues, etc.) is provided 
-   and updated in real-time. The Web UI allows monitoring and managing the MQ.
- * **[JSON Logging](docs/logs.md)**: Supports JSON log format for troubleshooting and analytic purposes.
- * **Highly optimized**: No promises, no async/await, small memory footprint, no memory leaks. See [callbacks vs promises vs async/await benchmarks](http://bluebirdjs.com/docs/benchmarks.html).
+ * **[Web UI](docs/web-ui.md)**: Using the Web UI you can monitor and manage the MQ is real-time.
+ * **[JSON Logging](docs/logs.md)**: Supports JSON log format for troubleshooting and debugging.
+ * **Highly optimized**: Implemented using pure callbacks, with small memory footprint and no memory leaks. See [callbacks vs promises vs async/await benchmarks](http://bluebirdjs.com/docs/benchmarks.html).
  * **[Configurable](docs/configuration.md)**: Many options and features can be configured.
  * **Rigorously tested**: With 79+ tests and code coverage no less than 80%.
  * **Supports both redis & ioredis**: RedisSMQ can be configured to use either `redis` or `ioredis` 
@@ -57,7 +55,7 @@ High-level overview of how RedisSMQ works:
 2. [Installation](#installation)
 3. [Configuration](#configuration)
 4. [Usage](#usage)
-   1. Basic
+   1. Basics
        1. [Message Class](#message-class)
        2. [Producer Class](#producer-class)
        3. [Consumer Class](#consumer-class)
@@ -109,23 +107,18 @@ See [Configuration](docs/configuration.md) for more details.
 
 ### Basics
 
-RedisSMQ provides 3 classes: Message, Producer and Consumer in order to work with the message queue.
+RedisSMQ provides 3 classes: `Message`, `Producer`, and `Consumer` in order to work with the message queue.
 
 #### Message Class
 
-Message class is the main component responsible for creating and handling messages. It encapsulates and provides all
-the required methods needed to construct and deal with messages.
+`Message` class is responsible for creating and manipulating messages.
 
 ```javascript
 const { Message } = require('redis-smq');
 const message = new Message();
 message
     .setBody({hello: 'world'})
-    .setTTL(3600000)
-    .setScheduledDelay(10000) // in millis
-    .setScheduledRepeat(6)
-    .setScheduledPeriod(60000)
-    .setScheduledCron('* 30 * * * *');
+    .setTTL(3600000); // in millis
 
 let messageTTL = message.getTTL();
 ```
@@ -134,10 +127,8 @@ See [Message Reference](docs/api/message.md) for more details.
 
 #### Producer Class
 
-Producer class is in turn responsible for producing messages. 
-
-Each producer instance has an associated message queue and provides `produceMessage()` method which handle the
-message and decides to either send it to the message queue scheduler or to immediately enqueue it for delivery.
+`Producer` class is in turn responsible for publishing messages. Each `Producer` instance is associated with a message 
+queue and provides the `produceMessage()` method to publish a message.
 
 ```javascript
 // filename: ./examples/javascript/ns1-test-queue-producer.js
@@ -162,12 +153,13 @@ See [Producer Reference](docs/api/producer.md) for more details.
 
 #### Consumer Class
 
-The Consumer class is the base class for all consumers. All consumers extends this base class and implements
-`consume()` method which got called once a message is received.
+The `Consumer` class is the parent class for all your consumers, which are required to implement the abstract method 
+`consume()` from the parent class. 
 
-Consumer classes are saved per files. Each consumer file represents a consumer class.
+Once a message is received, the `consume()` method get invoked with the received message as its first argument. 
 
-A consumer class may look like:
+In a typical scenario, consumers are saved per files, so that each file represents a consumer, which can be started 
+from CLI as shown in the example bellow.
 
 ```javascript
 // filename: ./examples/javascript/ns1-test-queue-consumer.js
@@ -186,22 +178,23 @@ const consumer = new TestQueueConsumer('test_queue');
 consumer.run();
 ```
 
-To start consuming messages, a consumer needs first to be launched from CLI to connect to the Redis server 
-and wait for messages: 
+Starting a consumer:
 
 ```text
 $ node ./examples/javascript/test-queue-consumer.js
 ```
 
-Once a message is received and processed the consumer should acknowledge the message by invoking the callback function
-without arguments.
+To acknowledge a received message, you invoke the callback function without arguments. 
 
 The message acknowledgment informs the MQ that the message has been successfully consumed.
 
-If an error occurs, the message should be unacknowledged and the error should be reported to the MQ by
-calling the callback function. Failed messages are re-queued and delivered again unless **message retry threshold** is
-exceeded. Then the messages are moved to **dead-letter queue (DLQ)**. Each message queue has a system generated
-corresponding queue called dead-letter queue where all failed messages are moved to.
+If an error occurred, the message is unacknowledged by passing the error to the callback function.
+
+By default, unacknowledged messages are re-queued and delivered again unless **message retry threshold** is exceeded. 
+Then the messages are moved to **dead-letter queue (DLQ)**. 
+
+Each message queue has a system generated corresponding queue called `dead-letter queue` that holds all messages 
+that couldn't be processed or can not be delivered to consumers.
 
 See [Consumer Reference](docs/api/consumer.md) for more details.
 

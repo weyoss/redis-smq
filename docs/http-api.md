@@ -2,8 +2,8 @@
 
 This is the backend part of the [Web UI](/docs/web-ui.md). 
 
-In contrast to system/core functionalities and features, which use pure callbacks for asynchronous tasks, the HTTP API 
-server has been implemented using async/await. 
+In contrast to system core features, which use pure callbacks for asynchronous tasks, the HTTP API server has been implemented 
+using async/await. 
 
 The HTTP API allows:
 
