@@ -1,14 +1,15 @@
 # Message Class API
 
-For a given `Message` instance, properties like `ttl`, `retryThreshold`, `retryDelay`, `consumeTimeout` are configured using:
+## Configuration
 
-- [setTTL()](#messageprototypesetttl)
-- [setRetryThreshold()](#messageprototypesetretrythreshold)
-- [setRetryDelay()](#messageprototypesetretrydelay)
-- [setConsumeTimeout()](#messageprototypesetconsumetimeout)
+For each new Message instance, the default values for the following properties are:
 
-Optionally, the default values for these properties, can be set using the MQ configuration. See [Configuration](/docs/configuration.md) 
-for more details. 
+- `Message TTL` - 0 (has no effect)
+- `Message retry threshold` - 3
+- `Message retry delay` - 60000
+- `Message consume timeout` - 0 (has no effect)
+
+You can overwrite these default values using the [configuration object](/docs/configuration.md).
 
 ## Public Static Properties
 
@@ -25,16 +26,16 @@ Message priority values that you can apply to a given message. Valid message pri
 - `Message.MessagePriority.VERY_HIGH`
 - `Message.MessagePriority.HIGHEST`
 
-You can set a priority for a given message using [setPriority()](#messageprototypesetpriority). Do not forget to 
+Message priority can be set using [setPriority()](#messageprototypesetpriority). Do not forget to 
 configure your producers and consumers to use [Priority queues](/docs/priority-queues.md).
 
 ## Public Methods
 
 ### Message.prototype.setScheduledPeriod()
 
-Set the time in seconds to wait after the start time to wait before scheduling the message again.
+Set the amount of time, in milliseconds, to wait for before enqueuing a given message.
 
-Message scheduled period can be configured together with [message scheduled repeat](#messageprototypesetscheduledrepeat).
+`Message scheduled period` only takes effect when combined with [message scheduled repeat](#messageprototypesetscheduledrepeat).
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -46,7 +47,7 @@ message.setScheduledPeriod(1000); // Wait for one second after each delivery
 
 ### Message.prototype.setScheduledDelay()
 
-Set the time, in milliseconds, that a message will wait before being scheduled for delivery.
+Set the amount of time, in milliseconds, to wait for before enqueuing a given message.
 
 `Delay scheduling`, when set, always takes priority over `CRON scheduling` or `repeat scheduling`.
 
@@ -75,7 +76,7 @@ message.setScheduledPeriod(10000); // in millis
 
 ### Message.prototype.setScheduledRepeat()
 
-Schedule a message to be delivered N times.
+Schedule a message to be enqueued N times.
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -86,7 +87,9 @@ message.setScheduledRepeat(6); // integer
 
 ### Message.prototype.setTTL()
 
-Set the amount of time, in milliseconds, for which the message can live in the message queue.
+Set the amount of time, called TTL (time-to-live), in milliseconds, for which the message can live in the message 
+queue. A message is guaranteed to not be delivered if it has been in the queue for longer than TTL. By 
+default, message TTL is not set.
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -97,7 +100,8 @@ message.setTTL(3600000); // in milliseconds
 
 ### Message.prototype.setRetryThreshold()
 
-Set the number of times the message can be re-queued after failure.
+Set the number of times the message can be re-queued and delivered again after a failure. By default, message retry 
+threshold is 3.
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -108,18 +112,21 @@ message.setRetryThreshold(10);
 
 ### Message.prototype.setRetryDelay()
 
-Set the amount of time, in milliseconds, to wait for before re-queuing a failed message.
+Set the amount of time, in milliseconds, to wait for before re-queuing a message after a failure. By default, message 
+retry delay is 60000 ms (1 minute). 
 
 ```javascript
 const { Message } = require('redis-smq');
 
 const message = new Message();
-message.setRetryDelay(60000); // 1 minute
+message.setRetryDelay(120000); // in millis
 ```
 
 ### Message.prototype.setConsumeTimeout()
 
-Set the amount of time, in milliseconds, for consuming a message.
+Set the amount of time, also called job timeout, in milliseconds before a consumer consuming a message times out. If the 
+consumer does not consume the message within the set time limit, the message consumption is automatically canceled. 
+By default, message consumption timeout is not set.
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -130,7 +137,7 @@ message.setConsumeTimeout(30000); // 30 seconds
 
 ### Message.prototype.setBody()
 
-Set the message payload. Message body type can be any valid JSON data type.
+Set the message payload. The message body type can be any valid JSON data type.
 
 ```javascript
 const { Message } = require('redis-smq');
