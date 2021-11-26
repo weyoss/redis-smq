@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 5.0.6 (2021-11-26)
+
+* Reviewed and updated documentation files.
+
 ## 5.0.5 (2021-11-25)
 
 * Minor improvements: refactored and cleaned up MessageRate and QueueManager classes.
