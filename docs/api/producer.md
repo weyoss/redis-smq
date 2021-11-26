@@ -1,5 +1,19 @@
 # Producer Class API
 
+```javascript
+const { Message, Producer } = require('redis-smq');
+
+const message = new Message();
+message.setBody({hello: 'world'});
+
+const producer = new Producer('test_queue');
+producer.produceMessage(message, (err) => {
+  if (err) console.log(err);
+  else console.log('Successfully produced')
+});
+
+```
+
 ## Public Methods
 
 ### Producer.prototype.constructor()
@@ -62,11 +76,7 @@ producer.produceMessage({hello: 'world'}, (err) => {
 
 ### Producer.prototype.shutdown()
 
-Gracefully shutdown the producer and disconnect from the redis server.
-
-This method should be used only in rare cases where we need to force the producer to terminate its work.
-
-Normally a producer should be kept always online.
+Gracefully shutdown the producer and disconnect from the Redis server.
 
 ```javascript
 producer.once('down', () => {
@@ -84,7 +94,7 @@ producer.produceMessage(message, (err) => {
 
 ### Producer.prototype.run()
 
-Start up a producer that was previously shutdown. 
+Start a producer that was previously shutdown. 
 
 This method should be ONLY used when you have manually called the `shutdown()` method. 
 

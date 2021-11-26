@@ -1,5 +1,22 @@
 # Consumer Class API
 
+```javascript
+// filename: ./examples/javascript/ns1-test-queue-consumer.js
+'use strict';
+
+const { Consumer } = require('redis-smq');
+
+class TestQueueConsumer extends Consumer {
+    consume(message, cb) {
+        console.log('Got a message to consume:', message);
+        cb();
+    }
+}
+
+const consumer = new TestQueueConsumer('test_queue');
+consumer.run();
+```
+
 ## Public Methods
 
 ### Consumer.prototype.constructor()
@@ -45,9 +62,6 @@ consumer.once('up', () => {
 ```
 
 ### Consumer.prototype.consume()
-
-Each consumer class is required override the `consume()` method of the base consumer which get called
-each time a message received.
 
 **Syntax**
 ```javascript
