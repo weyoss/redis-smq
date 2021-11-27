@@ -79,9 +79,6 @@ export class RedisClient extends EventEmitter {
     this.client.once('ready', () => {
       this.emit('ready');
     });
-    this.client.once('error', (err: Error) => {
-      throw err;
-    });
     if (this.client instanceof NodeRedis) {
       this.client.end = patchedEnd;
     }
@@ -463,6 +460,10 @@ export class RedisClient extends EventEmitter {
     config: IConfig = {},
     cb: ICallback<RedisClient>,
   ): void {
+    // Waiting until a connection is established and ready
+    // Do not return any error, and allow TCompatibleRedisClient (ioredis, node_redis)
+    // to reconnect in case of Redis server restart or not responding.
+    // An error will be thrown when max retries threshold is exceeded.
     const client = new RedisClient(config);
     client.once('ready', () => {
       async.waterfall(
