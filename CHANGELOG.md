@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 5.0.7 (2021-11-27)
+
+* Do not throw an error immediately and allow a compatible Redis client (ioredis, node_redis) to reconnect in case of 
+Redis server not responding or restarting.
+
 ## 5.0.6 (2021-11-26)
 
 * Reviewed and updated documentation files.
