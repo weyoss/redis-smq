@@ -26,7 +26,7 @@ High-level overview of how RedisSMQ works:
 
 &nbsp;
 
-![RedisSMQ Architecture Overview](docs/mq-architecture-overview.png)
+![RedisSMQ Architecture Overview](docs/redis-smq-architecture-overview.png)
 
 ## Features
 
