@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 5.0.8 (2021-12-01)
+
+* Updated architecture diagram.
+* Bumped redis-smq-monitor to v5.0.4
+
 ## 5.0.7 (2021-11-27)
 
 * Do not throw an error immediately and allow a compatible Redis client (ioredis, node_redis) to reconnect in case of 
