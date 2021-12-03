@@ -53,7 +53,6 @@ export interface IConsumerMessageRateFields
   acknowledgedRate: number;
   unacknowledgedRate: number;
   processingRate: number;
-  isIdle: boolean;
 }
 
 export interface IProducerMessageRateFields extends Record<string, number> {

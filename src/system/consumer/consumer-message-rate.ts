@@ -17,10 +17,6 @@ export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields>
   protected unacknowledgedRate = 0;
   protected idleStack: number[] = new Array(5).fill(0);
 
-  // When the idle status is true, it indicates that the consumer has been
-  // inactive for the last 5 seconds
-  protected isIdle = false;
-
   constructor(consumer: Consumer, redisClient: RedisClient) {
     super(redisClient);
     this.consumer = consumer;
@@ -32,6 +28,22 @@ export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields>
     this.keyConsumerRateProcessing = keyRateConsumerProcessing;
     this.keyConsumerRateAcknowledged = keyRateConsumerAcknowledged;
     this.keyConsumerRateUnacknowledged = keyRateConsumerUnacknowledged;
+  }
+
+  // Returns true if the consumer has been
+  // inactive for the last 5 seconds
+  isIdle(): boolean {
+    if (
+      this.processingRate === 0 &&
+      this.acknowledgedRate === 0 &&
+      this.unacknowledgedRate === 0
+    ) {
+      this.idleStack.push(1);
+    } else {
+      this.idleStack.push(0);
+    }
+    this.idleStack.shift();
+    return this.idleStack.find((i) => i === 0) === undefined;
   }
 
   getRateFields(): IConsumerMessageRateFields {
@@ -50,23 +62,13 @@ export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields>
       0,
     );
     this.unacknowledgedSlots.fill(0);
-    if (
-      this.processingRate === 0 &&
-      this.acknowledgedRate === 0 &&
-      this.unacknowledgedRate === 0
-    ) {
-      this.idleStack.push(1);
-    } else {
-      this.idleStack.push(0);
+    if (process.env.NODE_ENV === 'test' && this.isIdle()) {
+      this.consumer.emit(events.IDLE);
     }
-    this.idleStack.shift();
-    this.isIdle = this.idleStack.find((i) => i === 0) === undefined;
-    if (this.isIdle) this.consumer.emit(events.IDLE);
     return {
       processingRate: this.processingRate,
       acknowledgedRate: this.acknowledgedRate,
       unacknowledgedRate: this.unacknowledgedRate,
-      isIdle: this.isIdle,
     };
   }
 
