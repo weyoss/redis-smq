@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 5.0.9 (2021-12-03)
+
+* Calculate and emit "idle" event only when testing.
+
 ## 5.0.8 (2021-12-01)
 
 * Updated architecture diagram.
