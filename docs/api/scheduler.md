@@ -22,7 +22,7 @@ message
     .setBody({hello: 'world'})
     .setScheduledCron(`0 0 * * * *`);
 
-producer.produceMessage(message, (err) => {
+producer.produceMessage(message, (err, reply) => {
     if (err) console.log(err);
     else if (rely) console.log('Message has been successfully scheduled');
     else console.log('Message has not been scheduled');
