@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 5.0.10 (2021-12-04)
+
+* Bumped redis-smq-monitor to v5.0.6.
+* Updated scheduler.md.
+
 ## 5.0.9 (2021-12-03)
 
 * Calculate and emit "idle" event only when testing.
