@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 5.0.11 (2021-12-07)
+
+* Bumped redis-smq-monitor to v5.0.7.
+* Updated package.json to use strict package versioning.
+
 ## 5.0.10 (2021-12-04)
 
 * Bumped redis-smq-monitor to v5.0.6.
