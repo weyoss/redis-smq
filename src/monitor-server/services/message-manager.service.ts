@@ -4,8 +4,8 @@ import {
   TGetPendingMessagesWithPriorityReply,
   TGetScheduledMessagesReply,
 } from '../../../types';
-import { GetScheduledMessagesRequestDTO as GetSchedulerMessagesDTO } from '../controllers/scheduled-messages/get-scheduled-messages/get-scheduled-messages-request.DTO';
-import { DeleteScheduledMessageRequestDTO as DeletedScheduledMessageDTO } from '../controllers/scheduled-messages/delete-scheduled-message/delete-scheduled-message-request.DTO';
+import { GetScheduledMessagesRequestDTO } from '../controllers/scheduled-messages/get-scheduled-messages/get-scheduled-messages-request.DTO';
+import { DeleteScheduledMessageRequestDTO } from '../controllers/scheduled-messages/delete-scheduled-message/delete-scheduled-message-request.DTO';
 import { MessageManager } from '../../system/message-manager/message-manager';
 import { GetPendingMessagesRequestDTO } from '../controllers/messages/actions/get-pending-messages/get-pending-messages-request.DTO';
 import { GetAcknowledgedMessagesRequestDTO } from '../controllers/messages/actions/get-acknowledged-messages/get-acknowledged-messages-request.DTO';
@@ -28,7 +28,7 @@ export class MessageManagerService {
   }
 
   async getScheduledMessages(
-    args: GetSchedulerMessagesDTO,
+    args: GetScheduledMessagesRequestDTO,
   ): Promise<TGetScheduledMessagesReply> {
     const { skip = 0, take = 1 } = args;
     return this.messageManager.getScheduledMessagesAsync(skip, take);
@@ -130,7 +130,7 @@ export class MessageManagerService {
   }
 
   async deleteScheduledMessage(
-    args: DeletedScheduledMessageDTO,
+    args: DeleteScheduledMessageRequestDTO,
   ): Promise<void> {
     const { id } = args;
     return this.messageManager.deleteScheduledMessageAsync(id);

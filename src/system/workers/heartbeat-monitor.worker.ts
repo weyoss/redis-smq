@@ -1,9 +1,10 @@
 import * as async from 'async';
 import { ICallback, TConsumerWorkerParameters } from '../../../types';
-import { Ticker } from '../common/ticker';
+import { Ticker } from '../common/ticker/ticker';
 import { Heartbeat } from '../consumer/heartbeat';
 import { RedisClient } from '../redis-client/redis-client';
-import { redisKeys } from '../common/redis-keys';
+import { redisKeys } from '../common/redis-keys/redis-keys';
+import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 
 class HeartbeatMonitorWorker {
   protected redisClient: RedisClient;
@@ -47,7 +48,7 @@ process.on('message', (payload: string) => {
   }
   RedisClient.getNewInstance(config, (err, client) => {
     if (err) throw err;
-    else if (!client) throw new Error(`Expected an instance of RedisClient`);
+    else if (!client) throw new EmptyCallbackReplyError();
     else new HeartbeatMonitorWorker(client);
   });
 });

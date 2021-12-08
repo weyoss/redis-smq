@@ -1,3 +1,5 @@
+import { RedisKeysError } from './redis-keys.error';
+
 const nsPrefix = 'redis-smq';
 const globalNamespace = 'global';
 let namespace = 'default';
@@ -212,7 +214,9 @@ export const redisKeys = {
   setNamespace(ns: string): void {
     ns = this.validateRedisKey(ns);
     if (ns === globalNamespace) {
-      throw new Error(`Namespace [${ns}] is reserved. Use another one.`);
+      throw new RedisKeysError(
+        `Namespace [${ns}] is reserved. Use another one.`,
+      );
     }
     namespace = ns;
   },
@@ -223,13 +227,13 @@ export const redisKeys = {
 
   validateRedisKey(key: string): string {
     if (!key || !key.length) {
-      throw new Error(
+      throw new RedisKeysError(
         'Redis key validation error. Expected be a non empty string.',
       );
     }
     const filtered = key.toLowerCase().replace(/[^a-z0-9_-]/g, '');
     if (filtered.length !== key.length) {
-      throw new Error(
+      throw new RedisKeysError(
         'Redis key validation error. Expected only letters (a-z), numbers (0-9) and (-_)',
       );
     }

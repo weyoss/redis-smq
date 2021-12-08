@@ -7,7 +7,7 @@ import {
 } from '../common';
 import { Message } from '../../src/message';
 import { events } from '../../src/system/common/events';
-import { redisKeys } from '../../src/system/common/redis-keys';
+import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 
 test('Message TTL: a message with TTL is not consumed and moved to DLQ when TTL is exceeded', async () => {
   const producer = getProducer();

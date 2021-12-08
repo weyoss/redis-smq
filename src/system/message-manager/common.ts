@@ -7,11 +7,14 @@ import {
 } from '../../../types';
 import { Message } from '../message';
 import * as async from 'async';
-import { LockManager } from '../common/lock-manager';
+import { LockManager } from '../common/lock-manager/lock-manager';
+import { MessageNotFoundError } from './errors/message-not-found.error';
+import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
+import { ArgumentError } from '../common/errors/argument.error';
 
 export const validatePaginationParams = (skip: number, take: number) => {
   if (skip < 0 || take < 1) {
-    throw new Error(
+    throw new ArgumentError(
       `Parameter [skip] should be >= 0. Parameter [take] should be >= 1.`,
     );
   }
@@ -23,22 +26,27 @@ export const deleteListMessageAtSequenceId = (
   from: string,
   sequenceId: number,
   messageId: string,
+  queueName: string,
+  namespace: string,
   cb: ICallback<void>,
 ): void => {
   LockManager.lockFN(
     redisClient,
     lockKey,
     (cb) => {
-      redisClient.lrange(from, sequenceId, sequenceId, (err, reply) => {
-        if (err) cb(err);
-        else if (!reply || !reply.length) cb(new Error('Message not found'));
-        else {
-          const [msg] = reply;
-          const message = Message.createFromMessage(msg);
-          if (message.getId() !== messageId) cb(new Error('Message not found'));
-          else redisClient.lrem(from, 1, msg, (err) => cb(err));
-        }
-      });
+      getListMessageAtSequenceId(
+        redisClient,
+        from,
+        sequenceId,
+        messageId,
+        queueName,
+        namespace,
+        (err, message) => {
+          if (err) cb(err);
+          else if (!message) cb(new EmptyCallbackReplyError());
+          else redisClient.lrem(from, 1, message.toString(), (err) => cb(err));
+        },
+      );
     },
     cb,
   );
@@ -49,15 +57,21 @@ export const getListMessageAtSequenceId = (
   from: string,
   sequenceId: number,
   messageId: string,
+  queueName: string,
+  namespace: string,
   cb: ICallback<Message>,
 ): void => {
   redisClient.lrange(from, sequenceId, sequenceId, (err, reply) => {
     if (err) cb(err);
-    else if (!reply || !reply.length) cb(new Error('Message not found'));
+    else if (!reply || !reply.length)
+      cb(new MessageNotFoundError(messageId, queueName, namespace, sequenceId));
     else {
       const [msg] = reply;
       const message = Message.createFromMessage(msg);
-      if (message.getId() !== messageId) cb(new Error('Message not found'));
+      if (message.getId() !== messageId)
+        cb(
+          new MessageNotFoundError(messageId, queueName, namespace, sequenceId),
+        );
       else cb(null, message);
     }
   });

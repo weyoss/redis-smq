@@ -7,7 +7,7 @@ import {
 } from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
-import { redisKeys } from '../../src/system/common/redis-keys';
+import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 
 test('Combined test: Requeue a message from acknowledged queue with priority. Check both queue metadata and message metadata.  Check both pending and acknowledged messages. Check queue metrics.', async () => {
   const producer = getProducer();
@@ -86,5 +86,7 @@ test('Combined test: Requeue a message from acknowledged queue with priority. Ch
       true,
       undefined,
     );
-  }).rejects.toThrow('Message not found');
+  }).rejects.toThrow(
+    'Either message parameters are invalid or the message has been already deleted',
+  );
 });

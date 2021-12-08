@@ -16,10 +16,13 @@ import { scheduledMessagesController } from './controllers/scheduled-messages';
 import { queuesController } from './controllers/queues';
 import { IContext, TApplication } from './types/common';
 import * as stoppable from 'stoppable';
-import { PowerManager } from '../system/common/power-manager';
+import { PowerManager } from '../system/common/power-manager/power-manager';
 import { promisifyAll } from 'bluebird';
-import { WorkerRunner } from '../system/common/worker-runner';
+import { WorkerRunner } from '../system/common/worker-runner/worker-runner';
 import * as cors from '@koa/cors';
+import { ArgumentError } from '../system/common/errors/argument.error';
+import { ConfigurationError } from '../system/common/errors/configuration.error';
+import { PanicError } from '../system/common/errors/panic.error';
 
 const RedisClientAsync = promisifyAll(RedisClient);
 
@@ -31,13 +34,13 @@ type TAPIServer = {
 
 async function bootstrap(config: IConfig): Promise<TAPIServer> {
   if (!config) {
-    throw new Error('Configuration object is required.');
+    throw new ArgumentError('Configuration object is required.');
   }
   if (typeof config !== 'object') {
-    throw new Error('Invalid argument type');
+    throw new ArgumentError('Invalid argument type');
   }
   if (!config.monitor || !config.monitor.enabled) {
-    throw new Error('RedisSMQ monitor is not enabled. Exiting...');
+    throw new ConfigurationError('RedisSMQ monitor is not enabled. Exiting...');
   }
   const client = await RedisClientAsync.getNewInstanceAsync(config);
   const logger = Logger('monitor-server', config.log);
@@ -81,13 +84,13 @@ export function MonitorServer(config: IConfig = {}): IMonitorServer {
   const { host = '0.0.0.0', port = 7210 } = config.monitor || {};
   const getApiServer = () => {
     if (!apiServer) {
-      throw new Error(`Expected a non null value.`);
+      throw new PanicError(`Expected a non null value.`);
     }
     return apiServer;
   };
   const getSubscribeClient = () => {
     if (!subscribeClient) {
-      throw new Error(`Expected a non null value.`);
+      throw new PanicError(`Expected a non null value.`);
     }
     return subscribeClient;
   };

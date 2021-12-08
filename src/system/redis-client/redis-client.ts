@@ -10,6 +10,7 @@ import {
 import { EventEmitter } from 'events';
 import { ELuaScriptName, getScriptId, loadScripts } from './lua-scripts';
 import * as async from 'async';
+import { RedisClientError } from './redis-client.error';
 
 /**
  * client.end() does unregister all event listeners which causes the 'end' event not being emitted.
@@ -90,7 +91,7 @@ export class RedisClient extends EventEmitter {
     minor = 0,
   ): boolean {
     if (!RedisClient.redisServerVersion)
-      throw new Error('Unknown Redis server version.');
+      throw new RedisClientError('Unknown Redis server version.');
     return (
       RedisClient.redisServerVersion[0] > major ||
       (RedisClient.redisServerVersion[0] === major &&
@@ -103,7 +104,7 @@ export class RedisClient extends EventEmitter {
     if (config.redis) {
       // in javascript land, we can pass any value
       if (!Object.values(RedisClientName).includes(config.redis.client)) {
-        throw new Error('Invalid Redis driver name');
+        throw new RedisClientError('Invalid Redis driver name');
       }
       if (config.redis.client === RedisClientName.REDIS) {
         return createClient(config.redis.options);
@@ -148,7 +149,9 @@ export class RedisClient extends EventEmitter {
           }
           for (const i of reply ?? []) {
             if (!Array.isArray(i)) {
-              err = new Error('Expected an array reply from multi.exec()');
+              err = new RedisClientError(
+                'Expected an array reply from multi.exec()',
+              );
               break;
             }
             const [error, result] = i;
@@ -378,7 +381,7 @@ export class RedisClient extends EventEmitter {
   ): void {
     if (!this.validateRedisVersion(6, 2)) {
       cb(
-        new Error(
+        new RedisClientError(
           'Command not supported by your Redis server. Minimal required Redis server version is 6.2.0.',
         ),
       );

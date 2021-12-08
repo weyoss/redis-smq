@@ -6,7 +6,7 @@ import {
 } from '../common';
 import { delay, promisifyAll } from 'bluebird';
 import { MessageManager } from '../../src/system/message-manager/message-manager';
-import { redisKeys } from '../../src/system/common/redis-keys';
+import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 
 test('Concurrent delete operation', async () => {
   const { producer, message } = await produceMessage();

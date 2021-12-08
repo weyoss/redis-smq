@@ -1,9 +1,11 @@
-import { Ticker } from '../common/ticker';
+import { Ticker } from '../common/ticker/ticker';
 import { RedisClient } from '../redis-client/redis-client';
-import { redisKeys } from '../common/redis-keys';
+import { redisKeys } from '../common/redis-keys/redis-keys';
 import { Message } from '../message';
 import * as async from 'async';
 import { TConsumerWorkerParameters } from '../../../types';
+import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
+import { PanicError } from '../common/errors/panic.error';
 
 export class RequeueWorker {
   protected ticker: Ticker;
@@ -29,7 +31,7 @@ export class RequeueWorker {
         const tasks = messages.map((i) => (cb: () => void) => {
           const message = Message.createFromMessage(i);
           const queue = message.getQueue();
-          if (!queue) throw new Error('Got a message without a queue');
+          if (!queue) throw new PanicError('Got a message without a queue');
           const { ns, name } = queue;
           const { keyQueue, keyQueuePriority } = redisKeys.getKeys(name, ns);
           multi.lrem(keyQueueRequeue, 1, i);
@@ -58,7 +60,7 @@ process.on('message', (c: string) => {
   }
   RedisClient.getNewInstance(config, (err, client) => {
     if (err) throw err;
-    else if (!client) throw new Error(`Expected an instance of RedisClient`);
+    else if (!client) throw new EmptyCallbackReplyError();
     else {
       new RequeueWorker(client, config.priorityQueue === true);
     }

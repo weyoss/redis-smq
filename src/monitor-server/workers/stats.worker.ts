@@ -8,16 +8,17 @@ import {
   TMessageQueue,
 } from '../../../types';
 import * as async from 'async';
-import { redisKeys } from '../../system/common/redis-keys';
-import { LockManager } from '../../system/common/lock-manager';
+import { redisKeys } from '../../system/common/redis-keys/redis-keys';
+import { LockManager } from '../../system/common/lock-manager/lock-manager';
 import { RedisClient } from '../../system/redis-client/redis-client';
 import { Heartbeat } from '../../system/consumer/heartbeat';
 import { Logger } from '../../system/common/logger';
 import { QueueManager } from '../../system/queue-manager/queue-manager';
-import { Ticker } from '../../system/common/ticker';
+import { Ticker } from '../../system/common/ticker/ticker';
 import { events } from '../../system/common/events';
 import BLogger from 'bunyan';
 import { MessageManager } from '../../system/message-manager/message-manager';
+import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callback-reply.error';
 
 export class StatsWorker {
   protected keyIndexRates;
@@ -408,7 +409,7 @@ process.on('message', (c: string) => {
   }
   RedisClient.getNewInstance(config, (err, client) => {
     if (err) throw err;
-    else if (!client) throw new Error(`Expected an instance of RedisClient`);
+    else if (!client) throw new EmptyCallbackReplyError();
     else {
       const logger = Logger(StatsWorker.name, config.log);
       const queueManager = new QueueManager(client, logger);

@@ -1,12 +1,13 @@
 import * as os from 'os';
 import * as async from 'async';
 import { ICallback, IConfig } from '../../../types';
-import { Ticker } from '../common/ticker';
+import { Ticker } from '../common/ticker/ticker';
 import { events } from '../common/events';
 import { RedisClient } from '../redis-client/redis-client';
-import { redisKeys } from '../common/redis-keys';
+import { redisKeys } from '../common/redis-keys/redis-keys';
 import { Consumer } from './consumer';
 import { EventEmitter } from 'events';
+import { PanicError } from '../common/errors/panic.error';
 
 type TGetHeartbeatReply = Record<
   string,
@@ -250,7 +251,7 @@ export class Heartbeat extends EventEmitter {
                 JSON.parse(value);
               const extractedData = redisKeys.extractData(`${key}`);
               if (!extractedData || !extractedData.consumerId) {
-                done(new Error(`Invalid extracted consumer data`));
+                done(new PanicError(`Invalid extracted consumer data`));
               } else {
                 const { ns, queueName, consumerId } = extractedData;
                 result[consumerId] = { ns, queueName, consumerId, resources };

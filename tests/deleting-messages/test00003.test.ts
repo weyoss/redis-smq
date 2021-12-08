@@ -7,7 +7,7 @@ import {
 } from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
-import { redisKeys } from '../../src/system/common/redis-keys';
+import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 
 test('Combined test: Delete an acknowledged message. Check pending, acknowledged, and dead-letter messages. Check queue metrics.', async () => {
   const msg = new Message();
@@ -54,13 +54,7 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   );
   expect(res2.total).toBe(1);
   expect(res2.items.length).toBe(1);
-  // assign default consumer options
-  const msg1 = Message.createFromMessage(msg)
-    .setTTL(0)
-    .setRetryThreshold(3)
-    .setRetryDelay(0)
-    .setConsumeTimeout(0);
-  expect(res2.items[0].message).toEqual(msg1);
+  expect(res2.items[0].message).toEqual(msg);
 
   const queueManager = promisifyAll(await getQueueManagerFrontend());
   const queueMetrics = await queueManager.getQueueMetricsAsync(queueName, ns);
@@ -120,5 +114,7 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
       0,
       msg.getId(),
     );
-  }).rejects.toThrow('Message not found');
+  }).rejects.toThrow(
+    'Either message parameters are invalid or the message has been already deleted',
+  );
 });

@@ -1,8 +1,9 @@
 import { ChildProcess, fork } from 'child_process';
 import { join } from 'path';
 import { readdir } from 'fs';
-import { ICallback } from '../../../types';
-import { PowerManager } from './power-manager';
+import { ICallback } from '../../../../types';
+import { PowerManager } from '../power-manager/power-manager';
+import { WorkerRunnerError } from './worker-runner.error';
 
 export class WorkerRunner {
   protected powerManager = new PowerManager();
@@ -31,7 +32,7 @@ export class WorkerRunner {
                 this.powerManager.isGoingUp() ||
                 this.powerManager.isRunning()
               ) {
-                throw new Error(
+                throw new WorkerRunnerError(
                   `Thread [${filepath}] exited with code ${code} and signal ${signal}`,
                 );
               }

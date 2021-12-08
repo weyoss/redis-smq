@@ -1,9 +1,9 @@
 import { ICallback } from '../../../../types';
 import { RedisClient } from '../../redis-client/redis-client';
-import { Ticker } from '../../common/ticker';
+import { Ticker } from '../../common/ticker/ticker';
 import { events } from '../../common/events';
 import { Handler } from './handler';
-import { redisKeys } from '../../common/redis-keys';
+import { redisKeys } from '../../common/redis-keys/redis-keys';
 
 export class DequeueHandler extends Handler {
   protected ticker: Ticker;

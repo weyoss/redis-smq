@@ -1,6 +1,6 @@
 import * as async from 'async';
 import { Logger } from '../common/logger';
-import { Ticker } from '../common/ticker';
+import { Ticker } from '../common/ticker/ticker';
 import { events } from '../common/events';
 import { Message } from '../message';
 import { Heartbeat } from '../consumer/heartbeat';
@@ -10,11 +10,13 @@ import {
   ICallback,
   TConsumerWorkerParameters,
 } from '../../../types';
-import { redisKeys } from '../common/redis-keys';
+import { redisKeys } from '../common/redis-keys/redis-keys';
 import BLogger from 'bunyan';
 import { Broker } from '../broker';
 import { MessageManager } from '../message-manager/message-manager';
 import { QueueManager } from '../queue-manager/queue-manager';
+import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
+import { PanicError } from '../common/errors/panic.error';
 
 export class GCWorker {
   protected consumerId: string;
@@ -117,7 +119,7 @@ export class GCWorker {
         );
         const extractedData = redisKeys.extractData(processingQueue);
         if (!extractedData || !extractedData.consumerId) {
-          cb(new Error(`Expected a consumer ID`));
+          cb(new PanicError(`Expected a consumer ID`));
         } else {
           const { queueName, consumerId } = extractedData;
           if (this.consumerId !== consumerId) {
@@ -186,7 +188,7 @@ process.on('message', (c: string) => {
   }
   RedisClient.getNewInstance(config, (err, client) => {
     if (err) throw err;
-    else if (!client) throw new Error(`Expected an instance of RedisClient`);
+    else if (!client) throw new EmptyCallbackReplyError();
     else {
       const logger = Logger(GCWorker.name, {
         ...config.log,

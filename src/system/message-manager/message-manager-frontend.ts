@@ -9,6 +9,7 @@ import { RedisClient } from '../redis-client/redis-client';
 import { MessageManager } from './message-manager';
 import BLogger from 'bunyan';
 import { Logger } from '../common/logger';
+import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 
 export class MessageManagerFrontend {
   private static instance: MessageManagerFrontend | null = null;
@@ -206,7 +207,7 @@ export class MessageManagerFrontend {
     if (!MessageManagerFrontend.instance) {
       RedisClient.getNewInstance(config, (err, client) => {
         if (err) cb(err);
-        else if (!client) cb(new Error(`Expected an instance of RedisClient`));
+        else if (!client) cb(new EmptyCallbackReplyError());
         else {
           const logger = Logger(`${MessageManagerFrontend.name}`, config.log);
           const instance = new MessageManagerFrontend(client, logger);

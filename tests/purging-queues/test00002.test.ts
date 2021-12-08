@@ -2,7 +2,7 @@ import { getProducer, getQueueManagerFrontend } from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
 import { config } from '../config';
-import { redisKeys } from '../../src/system/common/redis-keys';
+import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 
 test('Purging priority queue', async () => {
   const producer = getProducer('test_queue', {

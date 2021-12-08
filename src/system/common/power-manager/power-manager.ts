@@ -1,3 +1,5 @@
+import { PowerManagerError } from './power-manager.error';
+
 enum TStates {
   UP,
   DOWN,
@@ -9,12 +11,12 @@ export class PowerManager {
 
   protected switchState(s: TStates): void {
     if (this.pendingState !== null) {
-      throw new Error(
+      throw new PowerManagerError(
         'Can not switch state while another state transition is in progress.',
       );
     }
     if (s === this.state) {
-      throw new Error('Can not switch to the same current state.');
+      throw new PowerManagerError('Can not switch to the same current state.');
     }
     this.pendingState = s;
   }
@@ -49,7 +51,7 @@ export class PowerManager {
 
   commit(): void {
     if (this.pendingState === null) {
-      throw new Error(`Expected a pending state`);
+      throw new PowerManagerError(`Expected a pending state`);
     }
     this.state = this.pendingState;
     this.pendingState = null;
@@ -57,7 +59,7 @@ export class PowerManager {
 
   rollback(): void {
     if (this.pendingState === null) {
-      throw new Error(`Expected a pending state`);
+      throw new PowerManagerError(`Expected a pending state`);
     }
     this.pendingState = null;
   }
