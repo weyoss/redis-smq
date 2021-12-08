@@ -228,13 +228,13 @@ export const redisKeys = {
   validateRedisKey(key: string): string {
     if (!key || !key.length) {
       throw new RedisKeysError(
-        'Redis key validation error. Expected be a non empty string.',
+        'Invalid Redis key. Expected be a non empty string.',
       );
     }
     const filtered = key.toLowerCase().replace(/[^a-z0-9_-]/g, '');
     if (filtered.length !== key.length) {
       throw new RedisKeysError(
-        'Redis key validation error. Expected only letters (a-z), numbers (0-9) and (-_)',
+        'Invalid Redis key. Only letters (a-z), numbers (0-9) and (-_) are allowed.',
       );
     }
     return filtered;
