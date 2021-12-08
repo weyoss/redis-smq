@@ -5,7 +5,7 @@ import {
   TGetPendingMessagesWithPriorityReply,
   TRedisClientMulti,
 } from '../../../../types';
-import { redisKeys } from '../../common/redis-keys';
+import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { RedisClient } from '../../redis-client/redis-client';
 import {
   deleteListMessageAtSequenceId,
@@ -13,7 +13,8 @@ import {
   getPaginatedSortedSetMessages,
 } from '../common';
 import { Handler } from './handler';
-import { LockManager } from '../../common/lock-manager';
+import { LockManager } from '../../common/lock-manager/lock-manager';
+import { PanicError } from '../../common/errors/panic.error';
 
 export class EnqueueHandler extends Handler {
   getAcknowledgedMessages(
@@ -77,20 +78,23 @@ export class EnqueueHandler extends Handler {
   deletePendingMessage(
     queueName: string,
     ns: string | undefined,
-    index: number,
+    sequenceId: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
+    const namespace = ns ?? redisKeys.getNamespace();
     const { keyQueue, keyLockDeletePendingMessage } = redisKeys.getKeys(
       queueName,
-      ns,
+      namespace,
     );
     deleteListMessageAtSequenceId(
       this.redisClient,
       keyLockDeletePendingMessage,
       keyQueue,
-      index,
+      sequenceId,
       messageId,
+      queueName,
+      namespace,
       cb,
     );
   }
@@ -169,12 +173,12 @@ export class EnqueueHandler extends Handler {
   ): void {
     const queue = message.getQueue();
     if (!queue)
-      throw new Error(`Can not enqueue a message without a queue name`);
+      throw new PanicError(`Can not enqueue a message without a queue name`);
     const { name, ns } = queue;
     const { keyQueue } = redisKeys.getKeys(name, ns);
     message.setPublishedAt(Date.now());
     if (redisClientOrMulti instanceof RedisClient) {
-      if (!cb) throw new Error('Callback function is required.');
+      if (!cb) throw new PanicError('A callback function is required.');
       if (withPriority) {
         this.enqueueMessageWithPriority(
           redisClientOrMulti,

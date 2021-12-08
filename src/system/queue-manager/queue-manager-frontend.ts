@@ -8,6 +8,7 @@ import { RedisClient } from '../redis-client/redis-client';
 import { QueueManager } from './queue-manager';
 import BLogger from 'bunyan';
 import { Logger } from '../common/logger';
+import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 
 export class QueueManagerFrontend {
   private static instance: QueueManagerFrontend | null = null;
@@ -91,7 +92,7 @@ export class QueueManagerFrontend {
     if (!QueueManagerFrontend.instance) {
       RedisClient.getNewInstance(config, (err, client) => {
         if (err) cb(err);
-        else if (!client) cb(new Error(`Expected an instance of RedisClient`));
+        else if (!client) cb(new EmptyCallbackReplyError());
         else {
           const logger = Logger(QueueManagerFrontend.name, config.log);
           const instance = new QueueManagerFrontend(client, logger);

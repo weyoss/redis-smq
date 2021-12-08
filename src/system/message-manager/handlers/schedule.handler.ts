@@ -1,5 +1,5 @@
 import { Message } from '../../message';
-import { redisKeys } from '../../common/redis-keys';
+import { redisKeys } from '../../common/redis-keys/redis-keys';
 import * as async from 'async';
 import { RedisClient } from '../../redis-client/redis-client';
 import {
@@ -11,7 +11,7 @@ import { parseExpression } from 'cron-parser';
 import { getPaginatedSortedSetMessages, getSortedSetSize } from '../common';
 import { Handler } from './handler';
 import { EnqueueHandler } from './enqueue.handler';
-import { LockManager } from '../../common/lock-manager';
+import { LockManager } from '../../common/lock-manager/lock-manager';
 
 export class ScheduleHandler extends Handler {
   protected enqueueHandler: EnqueueHandler;

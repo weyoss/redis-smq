@@ -1,9 +1,9 @@
 import { ICallback } from '../../types';
 import { events } from './common/events';
-import { Ticker } from './common/ticker';
+import { Ticker } from './common/ticker/ticker';
 import { RedisClient } from './redis-client/redis-client';
 import { EventEmitter } from 'events';
-import { redisKeys } from './common/redis-keys';
+import { redisKeys } from './common/redis-keys/redis-keys';
 
 export abstract class MessageRate<
   TMessageRateFields extends Record<string, unknown> = Record<string, unknown>,

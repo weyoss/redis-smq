@@ -1,10 +1,11 @@
 import { ICallback } from '../../../../types';
-import { redisKeys } from '../../common/redis-keys';
+import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { getListMessageAtSequenceId } from '../common';
 import { Message } from '../../message';
 import { Handler } from './handler';
 import { EnqueueHandler } from './enqueue.handler';
 import { RedisClient } from '../../redis-client/redis-client';
+import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
 
 export class RequeueHandler extends Handler {
   protected enqueueHandler: EnqueueHandler;
@@ -24,19 +25,22 @@ export class RequeueHandler extends Handler {
     priority: number | undefined,
     cb: ICallback<void>,
   ): void {
+    const namespace = ns ?? redisKeys.getNamespace();
     getListMessageAtSequenceId(
       this.redisClient,
       from,
       index,
       messageId,
+      queueName,
+      namespace,
       (err, msg) => {
         if (err) cb(err);
-        else if (!msg) cb(new Error('Expected an instance of Message'));
+        else if (!msg) cb(new EmptyCallbackReplyError());
         else {
           const multi = this.redisClient.multi();
           multi.lrem(from, 1, JSON.stringify(msg));
           const message = Message.createFromMessage(msg, true); // resetting all system parameters
-          message.setQueue(ns ?? redisKeys.getNamespace(), queueName); // do not lose message queue
+          message.setQueue(namespace, queueName); // do not lose message queue
           if (withPriority && typeof priority !== 'undefined') {
             message.setPriority(priority);
           }

@@ -8,17 +8,19 @@ import {
   TFunction,
 } from '../../types';
 import * as async from 'async';
-import { PowerManager } from './common/power-manager';
+import { PowerManager } from './common/power-manager/power-manager';
 import { Logger } from './common/logger';
 import * as BunyanLogger from 'bunyan';
 import { MessageRate } from './message-rate';
 import { events } from './common/events';
 import { Broker } from './broker';
-import { redisKeys } from './common/redis-keys';
+import { redisKeys } from './common/redis-keys/redis-keys';
 import { RedisClient } from './redis-client/redis-client';
 import { QueueManager } from './queue-manager/queue-manager';
 import { MessageManager } from './message-manager/message-manager';
 import { Message } from './message';
+import { EmptyCallbackReplyError } from './common/errors/empty-callback-reply.error';
+import { PanicError } from './common/errors/panic.error';
 
 export abstract class Base<
   TMessageRate extends MessageRate,
@@ -63,7 +65,7 @@ export abstract class Base<
     this.logger.debug(`Set up shared RedisClient instance...`);
     RedisClient.getNewInstance(this.config, (err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new Error(`Expected an instance of RedisClient`));
+      else if (!client) cb(new EmptyCallbackReplyError());
       else {
         this.sharedRedisClient = client;
         cb(null, client);
@@ -77,7 +79,7 @@ export abstract class Base<
   ): void => {
     this.logger.debug(`Set up message queue (${this.queueName})...`);
     if (!this.sharedRedisClient)
-      cb(new Error(`Expected an instance of RedisClient`));
+      cb(new PanicError(`Expected an instance of RedisClient`));
     else
       QueueManager.setUpMessageQueue(
         this.queueName,
@@ -89,7 +91,7 @@ export abstract class Base<
   private setUpBroker = (cb: ICallback<Broker>): void => {
     this.logger.debug(`Set up Broker instance...`);
     if (!this.sharedRedisClient)
-      cb(new Error(`Expected an instance of RedisClient`));
+      cb(new PanicError(`Expected an instance of RedisClient`));
     else {
       const messageManager = new MessageManager(
         this.sharedRedisClient,
@@ -105,7 +107,7 @@ export abstract class Base<
     const { monitor } = this.config;
     if (monitor && monitor.enabled) {
       if (!this.sharedRedisClient)
-        cb(new Error(`Expected an instance of RedisClient`));
+        cb(new PanicError(`Expected an instance of RedisClient`));
       else {
         this.messageRate = this.getMessageRate(this.sharedRedisClient);
         cb();
@@ -179,7 +181,10 @@ export abstract class Base<
 
   protected getSharedRedisClient(cb: TUnaryFunction<RedisClient>): void {
     if (!this.sharedRedisClient)
-      this.emit(events.ERROR, new Error('Expected an instance of RedisClient'));
+      this.emit(
+        events.ERROR,
+        new PanicError('Expected an instance of RedisClient'),
+      );
     else cb(this.sharedRedisClient);
   }
 
@@ -217,7 +222,7 @@ export abstract class Base<
 
   getBroker(cb: TUnaryFunction<Broker>): void {
     if (!this.broker)
-      this.emit(events.ERROR, new Error('Expected an instance of Broker'));
+      this.emit(events.ERROR, new PanicError('Expected an instance of Broker'));
     else cb(this.broker);
   }
 

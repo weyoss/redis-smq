@@ -3,7 +3,7 @@ import IORedis, { Redis, RedisOptions } from 'ioredis';
 import { Callback, ClientOpts, Multi, RedisClient as NodeRedis } from 'redis';
 import * as Logger from 'bunyan';
 import { Message } from '../src/system/message';
-import { redisKeys } from '../src/system/common/redis-keys';
+import { redisKeys } from '../src/system/common/redis-keys/redis-keys';
 
 declare module 'redis' {
   export interface Commands<R> {

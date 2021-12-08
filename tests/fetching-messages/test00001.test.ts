@@ -1,15 +1,13 @@
 import { promisifyAll } from 'bluebird';
 import {
-  getConsumer,
   getMessageManagerFrontend,
   getProducer,
   produceAndAcknowledgeMessage,
   produceAndDeadLetterMessage,
-  untilConsumerIdle,
 } from '../common';
 import { Message } from '../../src/message';
 import { config } from '../config';
-import { redisKeys } from '../../src/system/common/redis-keys';
+import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 
 describe('MessageManager', () => {
   test('Case 1', async () => {

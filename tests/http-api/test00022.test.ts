@@ -4,7 +4,7 @@ import {
   startMonitorServer,
 } from '../common';
 import * as supertest from 'supertest';
-import { redisKeys } from '../../src/system/common/redis-keys';
+import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 import { GetPendingMessagesWithPriorityResponseBodyDataDTO } from '../../src/monitor-server/controllers/messages/actions/get-pending-messages-with-priority/get-pending-messages-with-priority-response.DTO';
 
 test('Purge pending messages with priority', async () => {

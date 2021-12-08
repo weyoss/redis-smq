@@ -1,7 +1,8 @@
-import { TFunction } from '../../../types';
+import { TFunction } from '../../../../types';
 import { EventEmitter } from 'events';
-import { events } from './events';
-import { PowerManager } from './power-manager';
+import { events } from '../events';
+import { PowerManager } from '../power-manager/power-manager';
+import { TickerError } from './ticker.error';
 
 export class Ticker extends EventEmitter {
   protected powerManager = new PowerManager();
@@ -46,7 +47,7 @@ export class Ticker extends EventEmitter {
 
   nextTick(): void {
     if (this.timeout || this.interval) {
-      throw new Error('A timer is already running');
+      throw new TickerError('A timer is already running');
     }
     if (this.powerManager.isGoingUp() || this.powerManager.isRunning()) {
       if (this.powerManager.isGoingUp()) this.powerManager.commit();
@@ -64,7 +65,7 @@ export class Ticker extends EventEmitter {
 
   runTimer(): void {
     if (this.interval || this.timeout) {
-      throw new Error('A timer is already running');
+      throw new TickerError('A timer is already running');
     }
     if (this.powerManager.isGoingUp() || this.powerManager.isRunning()) {
       if (this.powerManager.isGoingUp()) this.powerManager.commit();

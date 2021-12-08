@@ -1,8 +1,8 @@
-import { Ticker } from '../common/ticker';
-import { LockManager } from '../common/lock-manager';
+import { Ticker } from '../common/ticker/ticker';
+import { LockManager } from '../common/lock-manager/lock-manager';
 import { RedisClient } from '../redis-client/redis-client';
-import { WorkerRunner } from '../common/worker-runner';
-import { redisKeys } from '../common/redis-keys';
+import { WorkerRunner } from '../common/worker-runner/worker-runner';
+import { redisKeys } from '../common/redis-keys/redis-keys';
 import { EventEmitter } from 'events';
 import { events } from '../common/events';
 import { ICallback, IConfig, TConsumerWorkerParameters } from '../../../types';

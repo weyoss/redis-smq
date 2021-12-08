@@ -1,10 +1,11 @@
-import { Ticker } from '../common/ticker';
+import { Ticker } from '../common/ticker/ticker';
 import { RedisClient } from '../redis-client/redis-client';
-import { redisKeys } from '../common/redis-keys';
+import { redisKeys } from '../common/redis-keys/redis-keys';
 import { EventEmitter } from 'events';
 import { TConsumerWorkerParameters } from '../../../types';
 import { MessageManager } from '../message-manager/message-manager';
 import { Logger } from '../common/logger';
+import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 
 export class DelayWorker extends EventEmitter {
   protected ticker: Ticker;
@@ -34,7 +35,7 @@ process.on('message', (c: string) => {
   }
   RedisClient.getNewInstance(config, (err, client) => {
     if (err) throw err;
-    else if (!client) throw new Error(`Expected an instance of RedisClient`);
+    else if (!client) throw new EmptyCallbackReplyError();
     else {
       const logger = Logger(DelayWorker.name, {
         ...config.log,

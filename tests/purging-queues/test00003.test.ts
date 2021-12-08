@@ -3,7 +3,7 @@ import {
   produceAndAcknowledgeMessage,
 } from '../common';
 import { promisifyAll } from 'bluebird';
-import { redisKeys } from '../../src/system/common/redis-keys';
+import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 
 test('Purging acknowledged queue', async () => {
   const { producer } = await produceAndAcknowledgeMessage();

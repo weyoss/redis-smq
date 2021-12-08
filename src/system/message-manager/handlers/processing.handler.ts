@@ -4,7 +4,7 @@ import {
   EMessageUnacknowledgedCause,
   ICallback,
 } from '../../../../types';
-import { redisKeys } from '../../common/redis-keys';
+import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { deleteListMessageAtSequenceId } from '../common';
 import { Handler } from './handler';
 
@@ -16,9 +16,10 @@ export class ProcessingHandler extends Handler {
     messageId: string,
     cb: ICallback<void>,
   ): void {
+    const namespace = ns ?? redisKeys.getNamespace();
     const { keyQueueDL, keyLockDeleteDeadLetterMessage } = redisKeys.getKeys(
       queueName,
-      ns,
+      namespace,
     );
     deleteListMessageAtSequenceId(
       this.redisClient,
@@ -26,6 +27,8 @@ export class ProcessingHandler extends Handler {
       keyQueueDL,
       index,
       messageId,
+      queueName,
+      namespace,
       cb,
     );
   }
@@ -37,14 +40,17 @@ export class ProcessingHandler extends Handler {
     messageId: string,
     cb: ICallback<void>,
   ): void {
+    const namespace = ns ?? redisKeys.getNamespace();
     const { keyQueueAcknowledgedMessages, keyLockDeleteAcknowledgedMessage } =
-      redisKeys.getKeys(queueName, ns);
+      redisKeys.getKeys(queueName, namespace);
     deleteListMessageAtSequenceId(
       this.redisClient,
       keyLockDeleteAcknowledgedMessage,
       keyQueueAcknowledgedMessages,
       index,
       messageId,
+      queueName,
+      namespace,
       cb,
     );
   }

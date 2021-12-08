@@ -3,8 +3,9 @@ import { Message } from '../message';
 import { ProducerMessageRate } from './producer-message-rate';
 import { Base } from '../base';
 import { events } from '../common/events';
-import { redisKeys } from '../common/redis-keys';
+import { redisKeys } from '../common/redis-keys/redis-keys';
 import { RedisClient } from '../redis-client/redis-client';
+import { PanicError } from '../common/errors/panic.error';
 
 export class Producer extends Base<ProducerMessageRate> {
   constructor(queueName: string, config: IConfig = {}) {
@@ -49,7 +50,7 @@ export class Producer extends Base<ProducerMessageRate> {
       if (this.powerManager.isGoingUp()) {
         this.once(events.UP, proceed);
       } else {
-        cb(new Error(`Producer ID ${this.getId()} is not running`));
+        cb(new PanicError(`Producer ID ${this.getId()} is not running`));
       }
     } else proceed();
   }

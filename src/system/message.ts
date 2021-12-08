@@ -1,6 +1,8 @@
 import { v4 as uuid } from 'uuid';
 import { parseExpression } from 'cron-parser';
 import { TMessageDefaultOptions, TMessageQueue } from '../../types';
+import { ArgumentError } from './common/errors/argument.error';
+import { ConfigurationError } from './common/errors/configuration.error';
 
 export class Message {
   protected static defaultOpts: TMessageDefaultOptions = {
@@ -97,7 +99,9 @@ export class Message {
    */
   setScheduledPeriod(period: number): Message {
     if (period < 1000)
-      throw new Error('Scheduling period should not be less than 1 second');
+      throw new ArgumentError(
+        'Scheduling period should not be less than 1 second',
+      );
     this.scheduledPeriod = period;
     return this;
   }
@@ -107,7 +111,9 @@ export class Message {
    */
   setScheduledDelay(delay: number): Message {
     if (delay < 1000) {
-      throw new Error('Scheduling delay should not be less than 1 second');
+      throw new ArgumentError(
+        'Scheduling delay should not be less than 1 second',
+      );
     }
     this.scheduledDelay = delay;
     this.delayed = false;
@@ -130,10 +136,10 @@ export class Message {
    * @param ttl In milliseconds
    */
   setTTL(ttl: number): Message {
-    if (ttl && ttl < 1000) {
-      throw new Error('TTL should not be less than 1 second');
+    if (ttl < 1000) {
+      throw new ArgumentError('TTL should not be less than 1 second');
     }
-    this.ttl = Number(ttl);
+    this.ttl = ttl;
     return this;
   }
 
@@ -141,10 +147,10 @@ export class Message {
    * @param timeout In milliseconds
    */
   setConsumeTimeout(timeout: number): Message {
-    if (timeout && timeout < 1000) {
-      throw new Error('Timeout should not be less than 1 second');
+    if (timeout < 1000) {
+      throw new ArgumentError('Timeout should not be less than 1 second');
     }
-    this.consumeTimeout = Number(timeout);
+    this.consumeTimeout = timeout;
     return this;
   }
 
@@ -157,10 +163,10 @@ export class Message {
    * @param delay In millis
    */
   setRetryDelay(delay: number): Message {
-    if (delay && delay < 1000) {
-      throw new Error('Delay should not be less than 1 second');
+    if (delay < 1000) {
+      throw new ArgumentError('Delay should not be less than 1 second');
     }
-    this.retryDelay = Number(delay);
+    this.retryDelay = delay;
     return this;
   }
 
@@ -206,7 +212,7 @@ export class Message {
 
   setPriority(priority: number): Message {
     if (!Object.values(Message.MessagePriority).includes(priority)) {
-      throw new Error('Invalid message priority.');
+      throw new ArgumentError('Invalid message priority.');
     }
     this.priority = priority;
     return this;
@@ -328,7 +334,7 @@ export class Message {
   getSetPriority(priority: number | undefined): number {
     const defaultPriority = priority ?? Message.MessagePriority.NORMAL;
     if (!Object.values(Message.MessagePriority).includes(defaultPriority)) {
-      throw new Error(`Invalid message priority`);
+      throw new ArgumentError(`Invalid message priority`);
     }
     const msgPriority = this.getPriority() ?? defaultPriority;
     if (msgPriority !== this.getPriority()) {
@@ -367,13 +373,17 @@ export class Message {
     options: Partial<TMessageDefaultOptions> = {},
   ): void {
     if (options.consumeTimeout && options.consumeTimeout < 1000) {
-      throw new Error('Timeout should not be less than 1 second');
+      throw new ConfigurationError(
+        'Consume timeout should not be less than 1 second',
+      );
     }
     if (options.retryDelay && options.retryDelay < 1000) {
-      throw new Error('Delay should not be less than 1 second');
+      throw new ConfigurationError(
+        'Retry delay should not be less than 1 second',
+      );
     }
     if (options.ttl && options.ttl < 1000) {
-      throw new Error('TTL should not be less than 1 second');
+      throw new ConfigurationError('TTL should not be less than 1 second');
     }
     Message.defaultOpts = {
       ...Message.defaultOpts,

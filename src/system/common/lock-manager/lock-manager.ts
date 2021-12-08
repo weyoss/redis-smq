@@ -1,6 +1,8 @@
-import { ICallback } from '../../../types';
-import { RedisClient } from '../redis-client/redis-client';
+import { ICallback } from '../../../../types';
+import { RedisClient } from '../../redis-client/redis-client';
 import * as Redlock from 'redlock';
+import { EmptyCallbackReplyError } from '../errors/empty-callback-reply.error';
+import { LockManagerError } from './lock-manager.error';
 
 export class LockManager {
   protected redlock: Redlock;
@@ -36,7 +38,7 @@ export class LockManager {
   acquireLock(cb: ICallback<boolean>): void {
     const handleRedlockReply = (err?: Error | null, lock?: Redlock.Lock) => {
       if (err) this.acquireLockRetryOnFail(err, cb);
-      else if (!lock) cb(new Error('Expected an instance of Redlock.Lock'));
+      else if (!lock) cb(new EmptyCallbackReplyError());
       else {
         this.acquiredLock = lock;
         cb(null, true);
@@ -47,7 +49,7 @@ export class LockManager {
     else {
       if (!this.redlock)
         cb(
-          new Error(
+          new LockManagerError(
             'Instance is no longer usable after calling quit(). Create a new instance.',
           ),
         );
@@ -98,7 +100,10 @@ export class LockManager {
               else cb();
             });
           });
-        } else cb(new Error('Could not acquire a  lock. Try again later.'));
+        } else
+          cb(
+            new LockManagerError('Could not acquire a  lock. Try again later.'),
+          );
       }
     });
   }

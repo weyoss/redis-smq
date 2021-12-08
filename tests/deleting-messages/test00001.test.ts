@@ -5,7 +5,7 @@ import {
 } from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
-import { redisKeys } from '../../src/system/common/redis-keys';
+import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 
 test('Combined test: Delete a pending message. Check pending messages. Check queue metrics.', async () => {
   const producer = getProducer();
@@ -53,5 +53,7 @@ test('Combined test: Delete a pending message. Check pending messages. Check que
       0,
       msg.getId(),
     );
-  }).rejects.toThrow('Message not found');
+  }).rejects.toThrow(
+    'Either message parameters are invalid or the message has been already deleted',
+  );
 });

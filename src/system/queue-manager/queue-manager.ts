@@ -1,9 +1,10 @@
 import { RedisClient } from '../redis-client/redis-client';
 import { ICallback, IQueueMetrics, TMessageQueue } from '../../../types';
-import { redisKeys } from '../common/redis-keys';
+import { redisKeys } from '../common/redis-keys/redis-keys';
 import { Consumer } from '../consumer/consumer';
 import * as async from 'async';
 import BLogger from 'bunyan';
+import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 
 export class QueueManager {
   protected redisClient: RedisClient;
@@ -97,7 +98,7 @@ export class QueueManager {
     const { keyIndexQueue } = redisKeys.getGlobalKeys();
     this.redisClient.smembers(keyIndexQueue, (err, reply) => {
       if (err) cb(err);
-      else if (!reply) cb(new Error('Expected an array reply'));
+      else if (!reply) cb(new EmptyCallbackReplyError());
       else {
         const messageQueues: TMessageQueue[] = reply.map((i) => JSON.parse(i));
         cb(null, messageQueues);

@@ -1,7 +1,7 @@
 import { Message } from '../../message';
 import { ScheduleHandler } from './schedule.handler';
 import * as async from 'async';
-import { redisKeys } from '../../common/redis-keys';
+import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { ICallback } from '../../../../types';
 import { Handler } from './handler';
 import { RedisClient } from '../../redis-client/redis-client';

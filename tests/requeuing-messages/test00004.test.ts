@@ -7,7 +7,7 @@ import {
 } from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
-import { redisKeys } from '../../src/system/common/redis-keys';
+import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 
 test('Combined test: Dead-letter a message and requeue it. Check pending, acknowledged, pending messages, and queue metrics.', async () => {
   const msg = new Message();
@@ -106,5 +106,7 @@ test('Combined test: Dead-letter a message and requeue it. Check pending, acknow
       false,
       undefined,
     );
-  }).rejects.toThrow('Message not found');
+  }).rejects.toThrow(
+    'Either message parameters are invalid or the message has been already deleted',
+  );
 });

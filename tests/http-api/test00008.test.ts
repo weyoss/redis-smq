@@ -5,7 +5,7 @@ import {
 } from '../common';
 import * as supertest from 'supertest';
 import { GetMessagesResponseBodyDataDTO } from '../../src/monitor-server/controllers/common/get-messages-response-body.DTO';
-import { redisKeys } from '../../src/system/common/redis-keys';
+import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 
 test('Fetching acknowledged messages', async () => {
   await startMonitorServer();

@@ -6,7 +6,7 @@ import {
 } from '../../types';
 import { Message } from './message';
 import BLogger from 'bunyan';
-import { PowerManager } from './common/power-manager';
+import { PowerManager } from './common/power-manager/power-manager';
 import { MessageManager } from './message-manager/message-manager';
 import { Consumer } from './consumer/consumer';
 import { RedisClient } from './redis-client/redis-client';

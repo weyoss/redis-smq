@@ -11,9 +11,12 @@ import { Heartbeat } from './heartbeat';
 import { RedisClient } from '../redis-client/redis-client';
 import { resolve } from 'path';
 import { ConsumerWorkers } from './consumer-workers';
-import { WorkerRunner } from '../common/worker-runner';
+import { WorkerRunner } from '../common/worker-runner/worker-runner';
 import { ConsumerFrontend } from './consumer-frontend';
 import { QueueManager } from '../queue-manager/queue-manager';
+import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
+import { ConsumerError } from './consumer.error';
+import { PanicError } from '../common/errors/panic.error';
 
 export class Consumer extends Base<ConsumerMessageRate> {
   private consumerRedisClient: RedisClient | null = null;
@@ -23,13 +26,16 @@ export class Consumer extends Base<ConsumerMessageRate> {
 
   protected getConsumerRedisClient(cb: TUnaryFunction<RedisClient>): void {
     if (!this.consumerRedisClient)
-      this.emit(events.ERROR, new Error('Expected an instance of RedisClient'));
+      this.emit(
+        events.ERROR,
+        new PanicError('Expected an instance of RedisClient'),
+      );
     else cb(this.consumerRedisClient);
   }
 
   protected handleConsume(msg: Message): void {
     if (!this.consumerFrontend || !this.consumerFrontend.consume) {
-      throw new Error('Expected an instance of ConsumeHandler');
+      throw new PanicError('Expected an instance of ConsumeHandler');
     }
     let isTimeout = false;
     let timer: NodeJS.Timeout | null = null;
@@ -73,7 +79,11 @@ export class Consumer extends Base<ConsumerMessageRate> {
       this.consumerFrontend.consume(Message.createFromMessage(msg), onConsumed);
     } catch (error: unknown) {
       const err =
-        error instanceof Error ? error : new Error(`Unexpected error`);
+        error instanceof Error
+          ? error
+          : new ConsumerError(
+              `An error occurred while processing message ID (${msg.getId()})`,
+            );
       this.unacknowledgeMessage(
         msg,
         EMessageUnacknowledgedCause.CAUGHT_ERROR,
@@ -114,10 +124,7 @@ export class Consumer extends Base<ConsumerMessageRate> {
             broker.dequeueMessage(this, client, (err, msgStr) => {
               if (err) this.emit(events.ERROR, err);
               else if (!msgStr)
-                this.emit(
-                  events.ERROR,
-                  new Error('Expected a non empty string'),
-                );
+                this.emit(events.ERROR, new EmptyCallbackReplyError());
               else this.handleReceivedMessage(msgStr);
             });
           });
@@ -167,7 +174,7 @@ export class Consumer extends Base<ConsumerMessageRate> {
       this.logger.debug(`Set up consumer RedisClient instance...`);
       RedisClient.getNewInstance(this.config, (err, client) => {
         if (err) cb(err);
-        else if (!client) cb(new Error(`Expected an instance of RedisClient`));
+        else if (!client) cb(new EmptyCallbackReplyError());
         else {
           this.consumerRedisClient = client;
           cb();
@@ -178,7 +185,7 @@ export class Consumer extends Base<ConsumerMessageRate> {
       this.logger.debug(`Set up consumer heartbeat...`);
       RedisClient.getNewInstance(this.config, (err, client) => {
         if (err) cb(err);
-        else if (!client) cb(new Error(`Expected an instance of RedisClient`));
+        else if (!client) cb(new EmptyCallbackReplyError());
         else {
           this.heartbeat = new Heartbeat(this, client);
           cb();

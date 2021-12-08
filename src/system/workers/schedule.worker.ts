@@ -1,9 +1,10 @@
 import { TConsumerWorkerParameters } from '../../../types';
-import { Ticker } from '../common/ticker';
+import { Ticker } from '../common/ticker/ticker';
 import { MessageManager } from '../message-manager/message-manager';
-import { redisKeys } from '../common/redis-keys';
+import { redisKeys } from '../common/redis-keys/redis-keys';
 import { RedisClient } from '../redis-client/redis-client';
 import { Logger } from '../common/logger';
+import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 
 export class ScheduleWorker {
   protected messageManager: MessageManager;
@@ -36,7 +37,7 @@ process.on('message', (c: string) => {
   }
   RedisClient.getNewInstance(config, (err, client) => {
     if (err) throw err;
-    else if (!client) throw new Error(`Expected an instance of RedisClient`);
+    else if (!client) throw new EmptyCallbackReplyError();
     else {
       const logger = Logger(ScheduleWorker.name, {
         ...config.log,

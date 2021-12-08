@@ -8,7 +8,7 @@ import {
 import { Message } from '../../src/message';
 import { events } from '../../src/system/common/events';
 import { config } from '../config';
-import { redisKeys } from '../../src/system/common/redis-keys';
+import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 
 test('Default message TTL: a message without TTL is not consumed and moved to DLQ when default messageTTL is exceeded', async () => {
   const producer = getProducer('test_queue');
