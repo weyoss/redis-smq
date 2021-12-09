@@ -15,6 +15,7 @@ import {
 import { Handler } from './handler';
 import { LockManager } from '../../common/lock-manager/lock-manager';
 import { PanicError } from '../../common/errors/panic.error';
+import { MessageNotFoundError } from '../errors/message-not-found.error';
 
 export class EnqueueHandler extends Handler {
   getAcknowledgedMessages(
@@ -95,7 +96,13 @@ export class EnqueueHandler extends Handler {
       messageId,
       queueName,
       namespace,
-      cb,
+      (err) => {
+        // In case the message does not exist
+        // we assume it was delivered or already deleted
+        const error = err instanceof MessageNotFoundError ? null : err;
+        if (error) cb(error);
+        else cb();
+      },
     );
   }
 
@@ -114,9 +121,8 @@ export class EnqueueHandler extends Handler {
       this.redisClient,
       keyLockDeletePendingMessageWithPriority,
       (cb) => {
-        // Not checking message existence.
-        // If the message exists it will be deleted.
-        // Otherwise, assuming that it has been already deleted
+        // Not verifying if the message exists.
+        // In case the message does not exist we assume it was delivered or already deleted
         const multi = this.redisClient.multi();
         multi.hdel(keyPendingMessagesWithPriority, messageId);
         multi.zrem(keyQueuePriority, messageId);
