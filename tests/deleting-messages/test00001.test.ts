@@ -46,14 +46,6 @@ test('Combined test: Delete a pending message. Check pending messages. Check que
   const queueMetrics1 = await queueManager.getQueueMetricsAsync(queueName, ns);
   expect(queueMetrics1.pending).toBe(0);
 
-  await expect(async () => {
-    await messageManager.deletePendingMessageAsync(
-      queueName,
-      ns,
-      0,
-      msg.getId(),
-    );
-  }).rejects.toThrow(
-    'Either message parameters are invalid or the message has been already deleted',
-  );
+  // Deleting a message that was already deleted should not throw an error
+  await messageManager.deletePendingMessageAsync(queueName, ns, 0, msg.getId());
 });
