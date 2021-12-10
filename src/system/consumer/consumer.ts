@@ -285,10 +285,14 @@ export class Consumer extends Base<ConsumerMessageRate> {
     return this;
   }
 
-  getMessageRate(redisClient: RedisClient): ConsumerMessageRate {
-    if (!this.messageRate) {
-      this.messageRate = new ConsumerMessageRate(this, redisClient);
-    }
-    return this.messageRate;
+  getMessageRate(
+    redisClient: RedisClient,
+    cb: ICallback<ConsumerMessageRate>,
+  ): void {
+    const messageRate = new ConsumerMessageRate(this, redisClient);
+    messageRate.init((err) => {
+      if (err) cb(err);
+      else cb(null, messageRate);
+    });
   }
 }
