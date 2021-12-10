@@ -35,6 +35,14 @@ enum ERedisKey {
   KEY_HEARTBEAT,
   KEY_SCHEDULED_MESSAGES,
   KEY_PENDING_MESSAGES_WITH_PRIORITY,
+  KEY_RATE_QUEUE_PROCESSING,
+  KEY_RATE_QUEUE_ACKNOWLEDGED,
+  KEY_RATE_QUEUE_UNACKNOWLEDGED,
+  KEY_RATE_QUEUE_INPUT,
+  KEY_RATE_GLOBAL_PROCESSING,
+  KEY_RATE_GLOBAL_ACKNOWLEDGED,
+  KEY_RATE_GLOBAL_UNACKNOWLEDGED,
+  KEY_RATE_GLOBAL_INPUT,
 }
 
 export const redisKeys = {
@@ -67,6 +75,22 @@ export const redisKeys = {
       ),
       keyPendingMessagesWithPriority: this.joinSegments(
         ERedisKey.KEY_PENDING_MESSAGES_WITH_PRIORITY,
+        queueName,
+      ),
+      keyRateQueueUnacknowledged: this.joinSegments(
+        ERedisKey.KEY_RATE_QUEUE_UNACKNOWLEDGED,
+        queueName,
+      ),
+      keyRateQueueAcknowledged: this.joinSegments(
+        ERedisKey.KEY_RATE_QUEUE_ACKNOWLEDGED,
+        queueName,
+      ),
+      keyRateQueueProcessing: this.joinSegments(
+        ERedisKey.KEY_RATE_QUEUE_PROCESSING,
+        queueName,
+      ),
+      keyRateQueueInput: this.joinSegments(
+        ERedisKey.KEY_RATE_QUEUE_INPUT,
         queueName,
       ),
     };
@@ -192,6 +216,10 @@ export const redisKeys = {
       keyLockDeletePendingMessageWithPriority:
         ERedisKey.KEY_LOCK_DELETE_PENDING_MESSAGE_WITH_PRIORITY,
       keyScheduledMessages: ERedisKey.KEY_SCHEDULED_MESSAGES,
+      keyRateGlobalUnacknowledged: ERedisKey.KEY_RATE_GLOBAL_UNACKNOWLEDGED,
+      keyRateGlobalAcknowledged: ERedisKey.KEY_RATE_GLOBAL_ACKNOWLEDGED,
+      keyRateGlobalProcessing: ERedisKey.KEY_RATE_GLOBAL_PROCESSING,
+      keyRateGlobalInput: ERedisKey.KEY_RATE_GLOBAL_INPUT,
     };
     return this.makeNamespacedKeys(keys, globalNamespace);
   },

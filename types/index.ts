@@ -48,8 +48,7 @@ export type TFunction<TReturn = void, TArgs = any> = (
   ...args: TArgs[]
 ) => TReturn;
 
-export interface IConsumerMessageRateFields
-  extends Record<string, number | boolean> {
+export interface IConsumerMessageRateFields extends Record<string, number> {
   acknowledgedRate: number;
   unacknowledgedRate: number;
   processingRate: number;
@@ -89,7 +88,7 @@ export type TCompatibleRedisClient = (NodeRedis | Redis) & {
   sadd(key: string, member: string, cb: ICallback<number>): void;
   hset(key: string, field: string, value: string, cb: ICallback<number>): void;
   hdel(key: string, fields: string | string[], cb: ICallback<number>): void;
-  hmset(key: string, args: string[], cb: ICallback<string>): void;
+  hmset(key: string, args: (string | number)[], cb: ICallback<string>): void;
   lpush(key: string, element: string, cb: ICallback<number>): void;
   rpush(key: string, element: string, cb: ICallback<number>): void;
   script(arg1: string, arg2: string, cb: ICallback<string>): void;
@@ -102,7 +101,9 @@ export type TCompatibleRedisClient = (NodeRedis | Redis) & {
   hmget(source: string, keys: string[], cb: ICallback<string[]>): void;
 };
 
-export type TRedisClientMulti = Multi | IORedis.Pipeline;
+export type TRedisClientMulti = (Multi | IORedis.Pipeline) & {
+  hmset(key: string, args: (string | number)[]): void;
+};
 
 export type TRedisOptions = IORedisOptions | INodeRedisOptions;
 

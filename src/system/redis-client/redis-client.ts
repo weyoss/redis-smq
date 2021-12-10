@@ -240,8 +240,17 @@ export class RedisClient extends EventEmitter {
     this.client.hkeys(key, cb);
   }
 
-  hmset(key: string, args: string[], cb: ICallback<string>): void {
+  hmset(key: string, args: (string | number)[], cb: ICallback<string>): void {
     this.client.hmset(key, args, cb);
+  }
+
+  hsetnx(
+    key: string,
+    field: string,
+    value: string,
+    cb: ICallback<number>,
+  ): void {
+    this.client.hsetnx(key, field, value, cb);
   }
 
   brpoplpush(

@@ -109,8 +109,13 @@ export abstract class Base<
       if (!this.sharedRedisClient)
         cb(new PanicError(`Expected an instance of RedisClient`));
       else {
-        this.messageRate = this.getMessageRate(this.sharedRedisClient);
-        cb();
+        this.getMessageRate(this.sharedRedisClient, (err, messageRate) => {
+          if (err) cb(err);
+          else if (!messageRate) cb(new EmptyCallbackReplyError());
+          else {
+            this.messageRate = messageRate;
+          }
+        });
       }
     } else {
       this.logger.debug(`Skipping MessageRate setup as monitor not enabled...`);
@@ -242,5 +247,8 @@ export abstract class Base<
     return this.redisKeys;
   }
 
-  abstract getMessageRate(redisClient: RedisClient): TMessageRate;
+  abstract getMessageRate(
+    redisClient: RedisClient,
+    cb: ICallback<TMessageRate>,
+  ): void;
 }
