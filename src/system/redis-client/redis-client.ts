@@ -196,8 +196,8 @@ export class RedisClient extends EventEmitter {
 
   zrangebyscore(
     key: string,
-    min: number,
-    max: number,
+    min: number | string,
+    max: number | string,
     cb: ICallback<string[]>,
   ): void {
     this.client.zrangebyscore(key, min, max, cb);
@@ -238,6 +238,10 @@ export class RedisClient extends EventEmitter {
 
   hkeys(key: string, cb: ICallback<string[]>): void {
     this.client.hkeys(key, cb);
+  }
+
+  hlen(key: string, cb: ICallback<number>): void {
+    this.client.hlen(key, cb);
   }
 
   hmset(key: string, args: (string | number)[], cb: ICallback<string>): void {
@@ -295,6 +299,36 @@ export class RedisClient extends EventEmitter {
     );
   }
 
+  zrevrangebyscore(
+    source: string,
+    max: number,
+    min: number,
+    cb: ICallback<Record<string, string>>,
+  ): void {
+    this.client.zrevrangebyscore(
+      source,
+      max,
+      min,
+      'WITHSCORES',
+      (err, reply) => {
+        if (err) cb(err);
+        else {
+          const replyRange = reply ?? [];
+          const range: Record<string, string> = {};
+          for (
+            let slice = replyRange.splice(0, 2);
+            slice.length > 0;
+            slice = replyRange.splice(0, 2)
+          ) {
+            const [member, score] = slice;
+            range[score] = member;
+          }
+          cb(null, range);
+        }
+      },
+    );
+  }
+
   zpushhset(
     sortedSet: string,
     hash: string,
@@ -310,7 +344,7 @@ export class RedisClient extends EventEmitter {
     );
   }
 
-  zrem(key: string, value: string, cb: ICallback<string>): void {
+  zrem(key: string, value: string | string[], cb: ICallback<string>): void {
     this.client.zrem(key, value, (err) => cb(err));
   }
 
@@ -415,8 +449,13 @@ export class RedisClient extends EventEmitter {
     }
   }
 
-  zremrangebyscore(source: string, score: number, cb: ICallback<number>): void {
-    this.client.zremrangebyscore(source, score, score, cb);
+  zremrangebyscore(
+    source: string,
+    min: number | string,
+    max: number | string,
+    cb: ICallback<number>,
+  ): void {
+    this.client.zremrangebyscore(source, min, max, cb);
   }
 
   hmget(source: string, keys: string[], cb: ICallback<string[]>): void {

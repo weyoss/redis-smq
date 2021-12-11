@@ -1,9 +1,7 @@
 import { Producer } from './producer';
-import { ICallback, IProducerMessageRateFields } from '../../../types';
+import { IProducerMessageRateFields } from '../../../types';
 import { MessageRate } from '../message-rate';
 import { RedisClient } from '../redis-client/redis-client';
-import { timeSeries } from '../common/time-series';
-import * as async from 'async';
 
 export class ProducerMessageRate extends MessageRate<IProducerMessageRateFields> {
   protected inputSlots: number[] = new Array(1000).fill(0);
@@ -31,44 +29,32 @@ export class ProducerMessageRate extends MessageRate<IProducerMessageRateFields>
     this.inputSlots[slot] += 1;
   }
 
-  mapFieldToGlobalKey(field: keyof IProducerMessageRateFields): string {
-    const { keyRateGlobalInput } = this.producer.getRedisKeys();
-    return keyRateGlobalInput;
+  mapFieldToGlobalKeys(field: keyof IProducerMessageRateFields): {
+    key: string;
+    keyIndex: string;
+  } {
+    const { keyRateGlobalInput, keyRateGlobalInputIndex } =
+      this.producer.getRedisKeys();
+    return {
+      key: keyRateGlobalInput,
+      keyIndex: keyRateGlobalInputIndex,
+    };
   }
 
-  mapFieldToQueueKey(field: keyof IProducerMessageRateFields): string {
-    const { keyRateQueueInput } = this.producer.getRedisKeys();
-    return keyRateQueueInput;
+  mapFieldToQueueKeys(field: keyof IProducerMessageRateFields): {
+    key: string;
+    keyIndex: string;
+  } {
+    const { keyRateQueueInput, keyRateQueueInputIndex } =
+      this.producer.getRedisKeys();
+    return {
+      key: keyRateQueueInput,
+      keyIndex: keyRateQueueInputIndex,
+    };
   }
 
   mapFieldToKey(field: keyof IProducerMessageRateFields): string {
     const { keyRateProducerInput } = this.producer.getRedisKeys();
     return keyRateProducerInput;
-  }
-
-  init(cb: ICallback<void>): void {
-    const { keyRateGlobalInput, keyRateQueueInput, keyRateProducerInput } =
-      this.producer.getRedisKeys();
-    const ts = timeSeries.getCurrentTimestamp();
-    async.waterfall(
-      [
-        (cb: ICallback<void>) => {
-          timeSeries.initHash(this.redisClient, keyRateGlobalInput, ts, cb);
-        },
-        (cb: ICallback<void>) => {
-          timeSeries.initHash(this.redisClient, keyRateQueueInput, ts, cb);
-        },
-        (cb: ICallback<void>) => {
-          timeSeries.initSortedSet(
-            this.redisClient,
-            keyRateProducerInput,
-            ts,
-            10,
-            cb,
-          );
-        },
-      ],
-      (err) => cb(err),
-    );
   }
 }
