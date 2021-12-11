@@ -3,8 +3,10 @@ import { events } from './common/events';
 import { Ticker } from './common/ticker/ticker';
 import { RedisClient } from './redis-client/redis-client';
 import { EventEmitter } from 'events';
-import { timeSeries } from './common/time-series';
 import * as async from 'async';
+import { HashTimeSeries } from './common/time-series/hash-time-series';
+import { SortedSetTimeSeries } from './common/time-series/sorted-set-time-series';
+import { TimeSeries } from './common/time-series/time-series';
 
 export abstract class MessageRate<
   TMessageRateFields extends Record<string, number> = Record<string, number>,
@@ -13,10 +15,14 @@ export abstract class MessageRate<
   protected readerTicker: Ticker;
   protected writerTicker: Ticker;
   protected rateStack: [number, TMessageRateFields][] = [];
+  protected hashTimeSeries: HashTimeSeries;
+  protected sortedSetTimeSeries: SortedSetTimeSeries;
 
   constructor(redisClient: RedisClient) {
     super();
     this.redisClient = redisClient;
+    this.hashTimeSeries = new HashTimeSeries();
+    this.sortedSetTimeSeries = new SortedSetTimeSeries();
     this.readerTicker = new Ticker(() => {
       this.onTick();
     }, 1000);
@@ -31,61 +37,55 @@ export abstract class MessageRate<
     const item = this.rateStack.shift();
     if (item) {
       const [ts, rates] = item;
-      const createdStatus: Record<string, boolean> = {};
-      const globalKeys: Record<string, string> = {};
-      const queueKeys: Record<string, string> = {};
+      const globalKeys: Record<string, { key: string; keyIndex: string }> = {};
+      const queueKeys: Record<string, { key: string; keyIndex: string }> = {};
       const keys: Record<string, string> = {};
       Object.keys(rates).forEach((field) => {
-        globalKeys[field] = this.mapFieldToGlobalKey(field);
-        queueKeys[field] = this.mapFieldToQueueKey(field);
+        globalKeys[field] = this.mapFieldToGlobalKeys(field);
+        queueKeys[field] = this.mapFieldToQueueKeys(field);
         keys[field] = this.mapFieldToKey(field);
       });
-      const tasks = Object.values(globalKeys)
-        .concat(Object.values(queueKeys))
-        .map((key) => (cb: ICallback<number>) => {
-          this.redisClient.hsetnx(key, String(ts), '0', (err, reply) => {
-            if (err) cb(err);
-            else {
-              createdStatus[key] = reply === 1;
-            }
-          });
+      const multi = this.redisClient.multi();
+      for (const field in rates) {
+        const value = rates[field];
+        const key = keys[field];
+        this.sortedSetTimeSeries.add(multi, ts, key, value, { expire: 10 });
+        const globalKey = globalKeys[field];
+        this.hashTimeSeries.add(multi, ts, globalKey.key, value, {
+          keyIndex: globalKey.keyIndex,
         });
-      async.waterfall(tasks, (err) => {
+        const queueKey = queueKeys[field];
+        this.hashTimeSeries.add(multi, ts, queueKey.key, value, {
+          keyIndex: queueKey.keyIndex,
+        });
+      }
+      this.redisClient.execMulti(multi, (err) => {
         if (err) throw err;
-        else {
-          const multi = this.redisClient.multi();
-          for (const field in rates) {
-            const value = rates[field];
-            const key = keys[field];
-            timeSeries.add(multi, ts, key, value, 5);
-            const globalKey = globalKeys[field];
-            timeSeries.incrBy(
-              multi,
-              ts,
-              globalKey,
-              value,
-              createdStatus[globalKey],
-            );
-            const queueKey = queueKeys[field];
-            timeSeries.incrBy(
-              multi,
-              ts,
-              queueKey,
-              value,
-              createdStatus[queueKey],
-            );
-          }
-          this.redisClient.execMulti(multi, (err) => {
-            if (err) throw err;
-            this.writerTicker.nextTickFn(() => this.updateTimeSeries());
-          });
+        for (const field in rates) {
+          const key = keys[field];
+          this.sortedSetTimeSeries.cleanUp(this.redisClient, ts, key);
+          const globalKey = globalKeys[field];
+          this.hashTimeSeries.cleanUp(
+            this.redisClient,
+            ts,
+            globalKey.key,
+            globalKey.keyIndex,
+          );
+          const queueKey = queueKeys[field];
+          this.hashTimeSeries.cleanUp(
+            this.redisClient,
+            ts,
+            queueKey.key,
+            queueKey.keyIndex,
+          );
         }
+        this.writerTicker.nextTickFn(() => this.updateTimeSeries());
       });
     } else this.writerTicker.nextTickFn(() => this.updateTimeSeries());
   }
 
   protected onTick(): void {
-    const ts = timeSeries.getCurrentTimestamp();
+    const ts = TimeSeries.getCurrentTimestamp();
     const rates = this.getRateFields();
     this.rateStack.push([ts, rates]);
   }
@@ -106,13 +106,17 @@ export abstract class MessageRate<
     );
   }
 
-  abstract init(cb: ICallback<void>): void;
-
   abstract getRateFields(): TMessageRateFields;
 
-  abstract mapFieldToGlobalKey(field: keyof TMessageRateFields): string;
+  abstract mapFieldToGlobalKeys(field: keyof TMessageRateFields): {
+    key: string;
+    keyIndex: string;
+  };
 
   abstract mapFieldToKey(field: keyof TMessageRateFields): string;
 
-  abstract mapFieldToQueueKey(field: keyof TMessageRateFields): string;
+  abstract mapFieldToQueueKeys(field: keyof TMessageRateFields): {
+    key: string;
+    keyIndex: string;
+  };
 }

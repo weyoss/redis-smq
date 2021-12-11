@@ -1,5 +1,5 @@
 import { ServerOptions } from 'socket.io';
-import IORedis, { Redis, RedisOptions } from 'ioredis';
+import IORedis, { KeyType, Redis, RedisOptions } from 'ioredis';
 import { Callback, ClientOpts, Multi, RedisClient as NodeRedis } from 'redis';
 import * as Logger from 'bunyan';
 import { Message } from '../src/system/message';
@@ -77,11 +77,18 @@ export type TCompatibleRedisClient = (NodeRedis | Redis) & {
     max: number,
     cb: ICallback<string[]>,
   ): void;
+  zrevrangebyscore(
+    key: KeyType,
+    max: number,
+    min: number,
+    withScores: 'WITHSCORES',
+    cb: ICallback<string[]>,
+  ): void;
   subscribe(channel: string): void;
   zrangebyscore(
     key: string,
-    min: number,
-    max: number,
+    min: number | string,
+    max: number | string,
     cb: ICallback<string[]>,
   ): void;
   smembers(key: string, cb: ICallback<string[]>): void;
@@ -97,7 +104,7 @@ export type TCompatibleRedisClient = (NodeRedis | Redis) & {
   watch(args: string[], cb: ICallback<string>): void;
   set(key: string, value: string, cb: ICallback<string>): void;
   del(key: string, cb: ICallback<number>): void;
-  zrem(key: string, value: string, cb: ICallback<number>): void;
+  zrem(key: string, value: string | string[], cb: ICallback<number>): void;
   hmget(source: string, keys: string[], cb: ICallback<string[]>): void;
 };
 

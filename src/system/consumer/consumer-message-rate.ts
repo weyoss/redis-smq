@@ -1,10 +1,8 @@
 import { Consumer } from './consumer';
-import { ICallback, IConsumerMessageRateFields } from '../../../types';
+import { IConsumerMessageRateFields } from '../../../types';
 import { events } from '../common/events';
 import { MessageRate } from '../message-rate';
 import { RedisClient } from '../redis-client/redis-client';
-import * as async from 'async';
-import { timeSeries } from '../common/time-series';
 
 export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields> {
   protected consumer: Consumer;
@@ -89,34 +87,64 @@ export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields>
     return keyRateConsumerProcessing;
   }
 
-  mapFieldToGlobalKey(key: keyof IConsumerMessageRateFields): string {
+  mapFieldToGlobalKeys(key: keyof IConsumerMessageRateFields): {
+    key: string;
+    keyIndex: string;
+  } {
     const {
       keyRateGlobalAcknowledged,
       keyRateGlobalUnacknowledged,
       keyRateGlobalProcessing,
+      keyRateGlobalAcknowledgedIndex,
+      keyRateGlobalUnacknowledgedIndex,
+      keyRateGlobalProcessingIndex,
     } = this.consumer.getRedisKeys();
     if (key === 'acknowledgedRate') {
-      return keyRateGlobalAcknowledged;
+      return {
+        key: keyRateGlobalAcknowledged,
+        keyIndex: keyRateGlobalAcknowledgedIndex,
+      };
     }
     if (key === 'unacknowledgedRate') {
-      return keyRateGlobalUnacknowledged;
+      return {
+        key: keyRateGlobalUnacknowledged,
+        keyIndex: keyRateGlobalUnacknowledgedIndex,
+      };
     }
-    return keyRateGlobalProcessing;
+    return {
+      key: keyRateGlobalProcessing,
+      keyIndex: keyRateGlobalProcessingIndex,
+    };
   }
 
-  mapFieldToQueueKey(key: keyof IConsumerMessageRateFields): string {
+  mapFieldToQueueKeys(key: keyof IConsumerMessageRateFields): {
+    key: string;
+    keyIndex: string;
+  } {
     const {
       keyRateQueueAcknowledged,
       keyRateQueueProcessing,
       keyRateQueueUnacknowledged,
+      keyRateQueueAcknowledgedIndex,
+      keyRateQueueProcessingIndex,
+      keyRateQueueUnacknowledgedIndex,
     } = this.consumer.getRedisKeys();
     if (key === 'acknowledgedRate') {
-      return keyRateQueueAcknowledged;
+      return {
+        key: keyRateQueueAcknowledged,
+        keyIndex: keyRateQueueAcknowledgedIndex,
+      };
     }
     if (key === 'unacknowledgedRate') {
-      return keyRateQueueUnacknowledged;
+      return {
+        key: keyRateQueueUnacknowledged,
+        keyIndex: keyRateQueueUnacknowledgedIndex,
+      };
     }
-    return keyRateQueueProcessing;
+    return {
+      key: keyRateQueueProcessing,
+      keyIndex: keyRateQueueProcessingIndex,
+    };
   }
 
   incrementProcessingSlot(): void {
@@ -132,92 +160,5 @@ export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields>
   incrementUnacknowledgedSlot(): void {
     const slot = new Date().getMilliseconds();
     this.unacknowledgedSlots[slot] += 1;
-  }
-
-  init(cb: ICallback<void>): void {
-    const {
-      keyRateGlobalAcknowledged,
-      keyRateGlobalProcessing,
-      keyRateGlobalUnacknowledged,
-      keyRateQueueProcessing,
-      keyRateQueueUnacknowledged,
-      keyRateQueueAcknowledged,
-    } = this.consumer.getRedisKeys();
-    const ts = timeSeries.getCurrentTimestamp();
-    async.waterfall(
-      [
-        (cb: ICallback<void>) => {
-          timeSeries.initHash(
-            this.redisClient,
-            keyRateGlobalAcknowledged,
-            ts,
-            cb,
-          );
-        },
-        (cb: ICallback<void>) => {
-          timeSeries.initHash(
-            this.redisClient,
-            keyRateGlobalProcessing,
-            ts,
-            cb,
-          );
-        },
-        (cb: ICallback<void>) => {
-          timeSeries.initHash(
-            this.redisClient,
-            keyRateGlobalUnacknowledged,
-            ts,
-            cb,
-          );
-        },
-        (cb: ICallback<void>) => {
-          timeSeries.initHash(
-            this.redisClient,
-            keyRateQueueAcknowledged,
-            ts,
-            cb,
-          );
-        },
-        (cb: ICallback<void>) => {
-          timeSeries.initHash(this.redisClient, keyRateQueueProcessing, ts, cb);
-        },
-        (cb: ICallback<void>) => {
-          timeSeries.initHash(
-            this.redisClient,
-            keyRateQueueUnacknowledged,
-            ts,
-            cb,
-          );
-        },
-        (cb: ICallback<void>) => {
-          timeSeries.initSortedSet(
-            this.redisClient,
-            this.keyConsumerRateAcknowledged,
-            ts,
-            10,
-            cb,
-          );
-        },
-        (cb: ICallback<void>) => {
-          timeSeries.initSortedSet(
-            this.redisClient,
-            this.keyConsumerRateProcessing,
-            ts,
-            10,
-            cb,
-          );
-        },
-        (cb: ICallback<void>) => {
-          timeSeries.initSortedSet(
-            this.redisClient,
-            this.keyConsumerRateUnacknowledged,
-            ts,
-            10,
-            cb,
-          );
-        },
-      ],
-      (err) => cb(err),
-    );
   }
 }

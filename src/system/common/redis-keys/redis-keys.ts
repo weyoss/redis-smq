@@ -36,13 +36,21 @@ enum ERedisKey {
   KEY_SCHEDULED_MESSAGES,
   KEY_PENDING_MESSAGES_WITH_PRIORITY,
   KEY_RATE_QUEUE_PROCESSING,
+  KEY_RATE_QUEUE_PROCESSING_INDEX,
   KEY_RATE_QUEUE_ACKNOWLEDGED,
+  KEY_RATE_QUEUE_ACKNOWLEDGED_INDEX,
   KEY_RATE_QUEUE_UNACKNOWLEDGED,
+  KEY_RATE_QUEUE_UNACKNOWLEDGED_INDEX,
   KEY_RATE_QUEUE_INPUT,
+  KEY_RATE_QUEUE_INPUT_INDEX,
   KEY_RATE_GLOBAL_PROCESSING,
+  KEY_RATE_GLOBAL_PROCESSING_INDEX,
   KEY_RATE_GLOBAL_ACKNOWLEDGED,
+  KEY_RATE_GLOBAL_ACKNOWLEDGED_INDEX,
   KEY_RATE_GLOBAL_UNACKNOWLEDGED,
+  KEY_RATE_GLOBAL_UNACKNOWLEDGED_INDEX,
   KEY_RATE_GLOBAL_INPUT,
+  KEY_RATE_GLOBAL_INPUT_INDEX,
 }
 
 export const redisKeys = {
@@ -91,6 +99,22 @@ export const redisKeys = {
       ),
       keyRateQueueInput: this.joinSegments(
         ERedisKey.KEY_RATE_QUEUE_INPUT,
+        queueName,
+      ),
+      keyRateQueueUnacknowledgedIndex: this.joinSegments(
+        ERedisKey.KEY_RATE_QUEUE_UNACKNOWLEDGED_INDEX,
+        queueName,
+      ),
+      keyRateQueueAcknowledgedIndex: this.joinSegments(
+        ERedisKey.KEY_RATE_QUEUE_ACKNOWLEDGED_INDEX,
+        queueName,
+      ),
+      keyRateQueueProcessingIndex: this.joinSegments(
+        ERedisKey.KEY_RATE_QUEUE_PROCESSING_INDEX,
+        queueName,
+      ),
+      keyRateQueueInputIndex: this.joinSegments(
+        ERedisKey.KEY_RATE_QUEUE_INPUT_INDEX,
         queueName,
       ),
     };
@@ -220,6 +244,12 @@ export const redisKeys = {
       keyRateGlobalAcknowledged: ERedisKey.KEY_RATE_GLOBAL_ACKNOWLEDGED,
       keyRateGlobalProcessing: ERedisKey.KEY_RATE_GLOBAL_PROCESSING,
       keyRateGlobalInput: ERedisKey.KEY_RATE_GLOBAL_INPUT,
+      keyRateGlobalUnacknowledgedIndex:
+        ERedisKey.KEY_RATE_GLOBAL_UNACKNOWLEDGED_INDEX,
+      keyRateGlobalAcknowledgedIndex:
+        ERedisKey.KEY_RATE_GLOBAL_ACKNOWLEDGED_INDEX,
+      keyRateGlobalProcessingIndex: ERedisKey.KEY_RATE_GLOBAL_PROCESSING_INDEX,
+      keyRateGlobalInputIndex: ERedisKey.KEY_RATE_GLOBAL_INPUT_INDEX,
     };
     return this.makeNamespacedKeys(keys, globalNamespace);
   },
