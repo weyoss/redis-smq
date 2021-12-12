@@ -1,50 +1,58 @@
-import { RedisClient } from '../../redis-client/redis-client';
 import { ICallback, TRedisClientMulti } from '../../../../types';
 import { TimeSeries } from './time-series';
+import { ArgumentError } from '../errors/argument.error';
 
-export class SortedSetTimeSeries extends TimeSeries<{ expire: number }> {
+export class SortedSetTimeSeries extends TimeSeries {
   add(
-    multi: TRedisClientMulti,
     ts: number,
-    key: string,
     value: number,
-    extra: { expire: number },
+    mixed: ICallback<void> | TRedisClientMulti,
   ): void {
-    multi.zremrangebyrank(key, 0, 0);
-    multi.zadd(key, ts, `${value}:${ts}`);
-    multi.expire(key, extra.expire);
+    const process = (multi: TRedisClientMulti) => {
+      multi.zremrangebyrank(this.key, 0, 0);
+      multi.zadd(this.key, ts, `${value}:${ts}`);
+      this.expireAfter && multi.expire(this.key, this.expireAfter);
+    };
+    if (typeof mixed === 'function') {
+      const multi = this.redisClient.multi();
+      process(multi);
+      this.redisClient.execMulti(multi, (err) => mixed(err));
+    } else process(mixed);
   }
 
-  cleanUp(redisClient: RedisClient, ts: number, key: string): void {
+  onCleanUp(cb: ICallback<void>): void {
+    const ts = TimeSeries.getCurrentTimestamp();
     const max = ts - this.retentionTime;
-    redisClient.zremrangebyscore(key, '-inf', `${max}`, (err, reply) => {
-      if (err) throw err;
-    });
+    this.redisClient.zremrangebyscore(this.key, '-inf', `${max}`, () => cb());
   }
 
-  getTimeRange(
-    redisClient: RedisClient,
-    key: string,
+  getRange(
     from: number,
     to: number,
     cb: ICallback<{ timestamp: number; value: number }[]>,
   ): void {
-    redisClient.zrevrangebyscore(key, from, to, (err, reply) => {
-      if (err) cb(err);
-      else {
-        const replyRange = reply ?? {};
-        const length = to - from;
-        const range = new Array(length)
-          .fill(0)
-          .map((_: number, index: number) => {
-            const timestamp = from + index;
-            return {
-              timestamp,
-              value: Number(replyRange[timestamp] ?? 0),
-            };
-          });
-        cb(null, range);
-      }
-    });
+    if (to <= from) {
+      cb(
+        new ArgumentError(`Expected parameter [to] to be greater than [from]`),
+      );
+    } else {
+      this.redisClient.zrevrangebyscore(this.key, to, from, (err, reply) => {
+        if (err) cb(err);
+        else {
+          const replyRange = reply ?? {};
+          const length = to - from;
+          const range = new Array(length)
+            .fill(0)
+            .map((_: number, index: number) => {
+              const timestamp = from + index;
+              return {
+                timestamp,
+                value: Number(replyRange[timestamp] ?? 0),
+              };
+            });
+          cb(null, range);
+        }
+      });
+    }
   }
 }

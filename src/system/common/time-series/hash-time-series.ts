@@ -1,60 +1,82 @@
 import { TimeSeries } from './time-series';
-import { RedisClient } from '../../redis-client/redis-client';
 import { ICallback, TRedisClientMulti } from '../../../../types';
+import { ArgumentError } from '../errors/argument.error';
+import { RedisClient } from '../../redis-client/redis-client';
 
-export class HashTimeSeries extends TimeSeries<{ keyIndex: string }> {
+export class HashTimeSeries extends TimeSeries {
+  protected indexKey: string;
+
+  constructor(
+    redisClient: RedisClient,
+    key: string,
+    indexKey: string,
+    expireAfter: number | null = null,
+    retentionTime = 24 * 60 * 60,
+  ) {
+    super(redisClient, key, expireAfter, retentionTime);
+    this.indexKey = indexKey;
+  }
+
   add(
-    multi: TRedisClientMulti,
     ts: number,
-    key: string,
     value: number,
-    extra: { keyIndex: string },
+    mixed: ICallback<void> | TRedisClientMulti,
   ): void {
-    multi.hincrby(key, String(ts), value);
-    multi.zadd(extra.keyIndex, ts, ts);
+    const process = (multi: TRedisClientMulti) => {
+      multi.hincrby(this.key, String(ts), value);
+      multi.zadd(this.indexKey, ts, ts);
+    };
+    if (typeof mixed === 'function') {
+      const multi = this.redisClient.multi();
+      process(multi);
+      this.redisClient.execMulti(multi, (err) => mixed(err));
+    } else process(mixed);
   }
 
-  cleanUp(
-    redisClient: RedisClient,
-    ts: number,
-    key: string,
-    keyIndex: string,
-  ): void {
+  onCleanUp(cb: ICallback<void>): void {
+    const ts = TimeSeries.getCurrentTimestamp();
     const max = ts - this.retentionTime;
-    redisClient.zrangebyscore(keyIndex, '-inf', `${max}`, (err, reply) => {
-      if (err) throw err;
-      if (reply && reply.length) {
-        const multi = redisClient.multi();
-        multi.zrem(keyIndex, ...reply);
-        multi.hdel(key, ...reply);
-        redisClient.execMulti(multi, (err) => {
-          if (err) throw err;
-        });
-      }
-    });
+    this.redisClient.zrangebyscore(
+      this.indexKey,
+      '-inf',
+      `${max}`,
+      (err, reply) => {
+        if (err) throw err;
+        if (reply && reply.length) {
+          const multi = this.redisClient.multi();
+          multi.zrem(this.indexKey, ...reply);
+          multi.hdel(this.key, ...reply);
+          this.redisClient.execMulti(multi, () => cb());
+        }
+      },
+    );
   }
 
-  getTimeRange(
-    redisClient: RedisClient,
-    key: string,
+  getRange(
     from: number,
     to: number,
     cb: ICallback<{ timestamp: number; value: number }[]>,
   ): void {
-    const length = to - from;
-    const timestamps = new Array(length)
-      .fill(0)
-      .map((_: number, index: number) => String(from + index));
-    redisClient.hmget(key, timestamps, (err, reply) => {
-      if (err) cb(err);
-      else {
-        const replyRange = reply ?? [];
-        const range = timestamps.map((i, index) => ({
-          timestamp: Number(i),
-          value: Number(replyRange[index] ?? 0),
-        }));
-        cb(null, range);
-      }
-    });
+    if (to <= from) {
+      cb(
+        new ArgumentError(`Expected parameter [to] to be greater than [from]`),
+      );
+    } else {
+      const length = to - from;
+      const timestamps = new Array(length)
+        .fill(0)
+        .map((_: number, index: number) => String(to - index));
+      this.redisClient.hmget(this.key, timestamps, (err, reply) => {
+        if (err) cb(err);
+        else {
+          const replyRange = reply ?? [];
+          const range = timestamps.map((i, index) => ({
+            timestamp: Number(i),
+            value: Number(replyRange[index] ?? 0),
+          }));
+          cb(null, range);
+        }
+      });
+    }
   }
 }

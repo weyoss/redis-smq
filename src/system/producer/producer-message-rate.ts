@@ -1,19 +1,43 @@
 import { Producer } from './producer';
-import { IProducerMessageRateFields } from '../../../types';
+import { ICallback, IProducerMessageRateFields } from '../../../types';
 import { MessageRate } from '../message-rate';
 import { RedisClient } from '../redis-client/redis-client';
+import { SortedSetTimeSeries } from '../common/time-series/sorted-set-time-series';
+import { HashTimeSeries } from '../common/time-series/hash-time-series';
+import * as async from 'async';
 
 export class ProducerMessageRate extends MessageRate<IProducerMessageRateFields> {
   protected inputSlots: number[] = new Array(1000).fill(0);
   protected inputRate = 0;
   protected producer: Producer;
-  protected keyProducerRateInput: string;
+  protected inputRateTimeSeries: SortedSetTimeSeries;
+  protected queueInputRateTimeSeries: HashTimeSeries;
+  protected globalInputRateTimeSeries: HashTimeSeries;
 
   constructor(producer: Producer, redisClient: RedisClient) {
     super(redisClient);
     this.producer = producer;
-    const { keyRateProducerInput } = this.producer.getRedisKeys();
-    this.keyProducerRateInput = keyRateProducerInput;
+    const {
+      keyRateProducerInput,
+      keyRateQueueInput,
+      keyRateQueueInputIndex,
+      keyRateGlobalInput,
+      keyRateGlobalInputIndex,
+    } = this.producer.getRedisKeys();
+    this.inputRateTimeSeries = new SortedSetTimeSeries(
+      redisClient,
+      keyRateProducerInput,
+    );
+    this.queueInputRateTimeSeries = new HashTimeSeries(
+      redisClient,
+      keyRateQueueInput,
+      keyRateQueueInputIndex,
+    );
+    this.globalInputRateTimeSeries = new HashTimeSeries(
+      redisClient,
+      keyRateGlobalInput,
+      keyRateGlobalInputIndex,
+    );
   }
 
   getRateFields(): IProducerMessageRateFields {
@@ -29,32 +53,28 @@ export class ProducerMessageRate extends MessageRate<IProducerMessageRateFields>
     this.inputSlots[slot] += 1;
   }
 
-  mapFieldToGlobalKeys(field: keyof IProducerMessageRateFields): {
-    key: string;
-    keyIndex: string;
-  } {
-    const { keyRateGlobalInput, keyRateGlobalInputIndex } =
-      this.producer.getRedisKeys();
-    return {
-      key: keyRateGlobalInput,
-      keyIndex: keyRateGlobalInputIndex,
-    };
+  onUpdate(
+    ts: number,
+    rates: IProducerMessageRateFields,
+    cb: ICallback<void>,
+  ): void {
+    const multi = this.redisClient.multi();
+    const { inputRate } = rates;
+    this.inputRateTimeSeries.add(ts, inputRate, multi);
+    this.queueInputRateTimeSeries.add(ts, inputRate, multi);
+    this.globalInputRateTimeSeries.add(ts, inputRate, multi);
+    this.redisClient.execMulti(multi, () => cb());
   }
 
-  mapFieldToQueueKeys(field: keyof IProducerMessageRateFields): {
-    key: string;
-    keyIndex: string;
-  } {
-    const { keyRateQueueInput, keyRateQueueInputIndex } =
-      this.producer.getRedisKeys();
-    return {
-      key: keyRateQueueInput,
-      keyIndex: keyRateQueueInputIndex,
-    };
-  }
-
-  mapFieldToKey(field: keyof IProducerMessageRateFields): string {
-    const { keyRateProducerInput } = this.producer.getRedisKeys();
-    return keyRateProducerInput;
+  quit(cb: ICallback<void>): void {
+    async.waterfall(
+      [
+        (cb: ICallback<void>) => super.quit(cb),
+        (cb: ICallback<void>) => this.inputRateTimeSeries.quit(cb),
+        (cb: ICallback<void>) => this.queueInputRateTimeSeries.quit(cb),
+        (cb: ICallback<void>) => this.globalInputRateTimeSeries.quit(cb),
+      ],
+      cb,
+    );
   }
 }
