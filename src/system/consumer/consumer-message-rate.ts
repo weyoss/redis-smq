@@ -1,14 +1,14 @@
 import { Consumer } from './consumer';
-import { IConsumerMessageRateFields } from '../../../types';
+import { ICallback, IConsumerMessageRateFields } from '../../../types';
 import { events } from '../common/events';
 import { MessageRate } from '../message-rate';
 import { RedisClient } from '../redis-client/redis-client';
+import { HashTimeSeries } from '../common/time-series/hash-time-series';
+import { SortedSetTimeSeries } from '../common/time-series/sorted-set-time-series';
+import * as async from 'async';
 
 export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields> {
   protected consumer: Consumer;
-  protected keyConsumerRateProcessing: string;
-  protected keyConsumerRateAcknowledged: string;
-  protected keyConsumerRateUnacknowledged: string;
   protected processingSlots: number[] = new Array(1000).fill(0);
   protected acknowledgedSlots: number[] = new Array(1000).fill(0);
   protected unacknowledgedSlots: number[] = new Array(1000).fill(0);
@@ -17,6 +17,16 @@ export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields>
   protected unacknowledgedRate = 0;
   protected idleStack: number[] = new Array(5).fill(0);
 
+  protected processingRateTimeSeries: SortedSetTimeSeries;
+  protected acknowledgedRateTimeSeries: SortedSetTimeSeries;
+  protected unacknowledgedRateTimeSeries: SortedSetTimeSeries;
+  protected queueProcessingRateTimeSeries: HashTimeSeries;
+  protected queueAcknowledgedRateTimeSeries: HashTimeSeries;
+  protected queueUnacknowledgedRateTimeSeries: HashTimeSeries;
+  protected globalProcessingRateTimeSeries: HashTimeSeries;
+  protected globalAcknowledgedRateTimeSeries: HashTimeSeries;
+  protected globalUnacknowledgedRateTimeSeries: HashTimeSeries;
+
   constructor(consumer: Consumer, redisClient: RedisClient) {
     super(redisClient);
     this.consumer = consumer;
@@ -24,10 +34,61 @@ export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields>
       keyRateConsumerProcessing,
       keyRateConsumerAcknowledged,
       keyRateConsumerUnacknowledged,
+      keyRateGlobalAcknowledged,
+      keyRateGlobalUnacknowledged,
+      keyRateGlobalProcessing,
+      keyRateGlobalAcknowledgedIndex,
+      keyRateGlobalUnacknowledgedIndex,
+      keyRateGlobalProcessingIndex,
+      keyRateQueueAcknowledged,
+      keyRateQueueProcessing,
+      keyRateQueueUnacknowledged,
+      keyRateQueueAcknowledgedIndex,
+      keyRateQueueProcessingIndex,
+      keyRateQueueUnacknowledgedIndex,
     } = consumer.getRedisKeys();
-    this.keyConsumerRateProcessing = keyRateConsumerProcessing;
-    this.keyConsumerRateAcknowledged = keyRateConsumerAcknowledged;
-    this.keyConsumerRateUnacknowledged = keyRateConsumerUnacknowledged;
+    this.processingRateTimeSeries = new SortedSetTimeSeries(
+      redisClient,
+      keyRateConsumerProcessing,
+    );
+    this.acknowledgedRateTimeSeries = new SortedSetTimeSeries(
+      redisClient,
+      keyRateConsumerAcknowledged,
+    );
+    this.unacknowledgedRateTimeSeries = new SortedSetTimeSeries(
+      redisClient,
+      keyRateConsumerUnacknowledged,
+    );
+    this.queueProcessingRateTimeSeries = new HashTimeSeries(
+      redisClient,
+      keyRateQueueProcessing,
+      keyRateQueueProcessingIndex,
+    );
+    this.queueAcknowledgedRateTimeSeries = new HashTimeSeries(
+      redisClient,
+      keyRateQueueAcknowledged,
+      keyRateQueueAcknowledgedIndex,
+    );
+    this.queueUnacknowledgedRateTimeSeries = new HashTimeSeries(
+      redisClient,
+      keyRateQueueUnacknowledged,
+      keyRateQueueUnacknowledgedIndex,
+    );
+    this.globalProcessingRateTimeSeries = new HashTimeSeries(
+      redisClient,
+      keyRateGlobalProcessing,
+      keyRateGlobalProcessingIndex,
+    );
+    this.globalAcknowledgedRateTimeSeries = new HashTimeSeries(
+      redisClient,
+      keyRateGlobalAcknowledged,
+      keyRateGlobalAcknowledgedIndex,
+    );
+    this.globalUnacknowledgedRateTimeSeries = new HashTimeSeries(
+      redisClient,
+      keyRateGlobalUnacknowledged,
+      keyRateGlobalUnacknowledgedIndex,
+    );
   }
 
   // Returns true if the consumer has been
@@ -72,81 +133,6 @@ export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields>
     };
   }
 
-  mapFieldToKey(key: keyof IConsumerMessageRateFields): string {
-    const {
-      keyRateConsumerProcessing,
-      keyRateConsumerAcknowledged,
-      keyRateConsumerUnacknowledged,
-    } = this.consumer.getRedisKeys();
-    if (key === 'acknowledgedRate') {
-      return keyRateConsumerAcknowledged;
-    }
-    if (key === 'unacknowledgedRate') {
-      return keyRateConsumerUnacknowledged;
-    }
-    return keyRateConsumerProcessing;
-  }
-
-  mapFieldToGlobalKeys(key: keyof IConsumerMessageRateFields): {
-    key: string;
-    keyIndex: string;
-  } {
-    const {
-      keyRateGlobalAcknowledged,
-      keyRateGlobalUnacknowledged,
-      keyRateGlobalProcessing,
-      keyRateGlobalAcknowledgedIndex,
-      keyRateGlobalUnacknowledgedIndex,
-      keyRateGlobalProcessingIndex,
-    } = this.consumer.getRedisKeys();
-    if (key === 'acknowledgedRate') {
-      return {
-        key: keyRateGlobalAcknowledged,
-        keyIndex: keyRateGlobalAcknowledgedIndex,
-      };
-    }
-    if (key === 'unacknowledgedRate') {
-      return {
-        key: keyRateGlobalUnacknowledged,
-        keyIndex: keyRateGlobalUnacknowledgedIndex,
-      };
-    }
-    return {
-      key: keyRateGlobalProcessing,
-      keyIndex: keyRateGlobalProcessingIndex,
-    };
-  }
-
-  mapFieldToQueueKeys(key: keyof IConsumerMessageRateFields): {
-    key: string;
-    keyIndex: string;
-  } {
-    const {
-      keyRateQueueAcknowledged,
-      keyRateQueueProcessing,
-      keyRateQueueUnacknowledged,
-      keyRateQueueAcknowledgedIndex,
-      keyRateQueueProcessingIndex,
-      keyRateQueueUnacknowledgedIndex,
-    } = this.consumer.getRedisKeys();
-    if (key === 'acknowledgedRate') {
-      return {
-        key: keyRateQueueAcknowledged,
-        keyIndex: keyRateQueueAcknowledgedIndex,
-      };
-    }
-    if (key === 'unacknowledgedRate') {
-      return {
-        key: keyRateQueueUnacknowledged,
-        keyIndex: keyRateQueueUnacknowledgedIndex,
-      };
-    }
-    return {
-      key: keyRateQueueProcessing,
-      keyIndex: keyRateQueueProcessingIndex,
-    };
-  }
-
   incrementProcessingSlot(): void {
     const slot = new Date().getMilliseconds();
     this.processingSlots[slot] += 1;
@@ -160,5 +146,50 @@ export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields>
   incrementUnacknowledgedSlot(): void {
     const slot = new Date().getMilliseconds();
     this.unacknowledgedSlots[slot] += 1;
+  }
+
+  onUpdate(
+    ts: number,
+    rates: IConsumerMessageRateFields,
+    cb: ICallback<void>,
+  ): void {
+    const multi = this.redisClient.multi();
+    for (const field in rates) {
+      const value = rates[field];
+      if (field === 'processingRate') {
+        this.processingRateTimeSeries.add(ts, value, multi);
+        this.queueProcessingRateTimeSeries.add(ts, value, multi);
+        this.globalProcessingRateTimeSeries.add(ts, value, multi);
+      } else if (field === 'acknowledgedRate') {
+        this.acknowledgedRateTimeSeries.add(ts, value, multi);
+        this.queueAcknowledgedRateTimeSeries.add(ts, value, multi);
+        this.globalAcknowledgedRateTimeSeries.add(ts, value, multi);
+      } else {
+        this.unacknowledgedRateTimeSeries.add(ts, value, multi);
+        this.queueUnacknowledgedRateTimeSeries.add(ts, value, multi);
+        this.globalUnacknowledgedRateTimeSeries.add(ts, value, multi);
+      }
+    }
+    this.redisClient.execMulti(multi, () => cb());
+  }
+
+  quit(cb: ICallback<void>): void {
+    async.waterfall(
+      [
+        (cb: ICallback<void>) => super.quit(cb),
+        (cb: ICallback<void>) => this.processingRateTimeSeries.quit(cb),
+        (cb: ICallback<void>) => this.queueProcessingRateTimeSeries.quit(cb),
+        (cb: ICallback<void>) => this.globalProcessingRateTimeSeries.quit(cb),
+        (cb: ICallback<void>) => this.acknowledgedRateTimeSeries.quit(cb),
+        (cb: ICallback<void>) => this.queueAcknowledgedRateTimeSeries.quit(cb),
+        (cb: ICallback<void>) => this.globalAcknowledgedRateTimeSeries.quit(cb),
+        (cb: ICallback<void>) => this.unacknowledgedRateTimeSeries.quit(cb),
+        (cb: ICallback<void>) =>
+          this.queueUnacknowledgedRateTimeSeries.quit(cb),
+        (cb: ICallback<void>) =>
+          this.globalUnacknowledgedRateTimeSeries.quit(cb),
+      ],
+      cb,
+    );
   }
 }
