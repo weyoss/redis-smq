@@ -1,25 +1,25 @@
 import { delay, promisifyAll } from 'bluebird';
 import { getRedisInstance } from '../common';
-import { HashTimeSeries } from '../../src/system/common/time-series/hash-time-series';
 import { TimeSeries } from '../../src/system/common/time-series/time-series';
+import { SortedSetTimeSeries } from '../../src/system/common/time-series/sorted-set-time-series';
 
-test('HashTimeSeries: Case 2', async () => {
+test('SortedSetTimeSeries: Case 2', async () => {
   const redisClient = await getRedisInstance();
-  const hashTimeSeries = promisifyAll(
-    new HashTimeSeries(redisClient, 'my-key', 'my-key-index', null, 5),
+  const sortedSetTimeSeries = promisifyAll(
+    new SortedSetTimeSeries(redisClient, 'my-key', null, 5),
   );
-  const multi = redisClient.multi();
   const ts = TimeSeries.getCurrentTimestamp();
   for (let i = 1; i <= 10; i += 1) {
-    hashTimeSeries.add(ts + i, i, multi);
+    await sortedSetTimeSeries.addAsync(ts + i, i);
   }
-  await redisClient.execMultiAsync(multi);
 
-  const range1 = await hashTimeSeries.getRangeAsync(ts, ts + 10);
+  const range1 = await sortedSetTimeSeries.getRangeAsync(ts, ts + 10);
+
   await delay(15000);
-  const range2 = await hashTimeSeries.getRangeAsync(ts, ts + 10);
+  const range2 = await sortedSetTimeSeries.getRangeAsync(ts, ts + 10);
+
   await delay(15000);
-  const range3 = await hashTimeSeries.getRangeAsync(ts, ts + 10);
+  const range3 = await sortedSetTimeSeries.getRangeAsync(ts, ts + 10);
 
   expect(range1[0]).toEqual({ timestamp: ts + 10, value: 10 });
   expect(range1[1]).toEqual({ timestamp: ts + 9, value: 9 });
@@ -39,5 +39,5 @@ test('HashTimeSeries: Case 2', async () => {
   expect(range3[3]).toEqual({ timestamp: ts + 7, value: 0 });
   expect(range3[4]).toEqual({ timestamp: ts + 6, value: 0 });
 
-  await hashTimeSeries.quitAsync();
+  await sortedSetTimeSeries.quitAsync();
 });
