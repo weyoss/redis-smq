@@ -1,4 +1,4 @@
-import { IConfig, ICallback } from '../../../types';
+import { IConfig, ICallback, TProducerRedisKeys } from '../../../types';
 import { Message } from '../message';
 import { ProducerMessageRate } from './producer-message-rate';
 import { Base } from '../base';
@@ -6,8 +6,9 @@ import { events } from '../common/events';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { RedisClient } from '../redis-client/redis-client';
 import { PanicError } from '../common/errors/panic.error';
+import { Heartbeat } from '../common/heartbeat';
 
-export class Producer extends Base<ProducerMessageRate> {
+export class Producer extends Base<ProducerMessageRate, TProducerRedisKeys> {
   constructor(queueName: string, config: IConfig = {}) {
     super(queueName, config);
     this.run();
@@ -53,5 +54,22 @@ export class Producer extends Base<ProducerMessageRate> {
         cb(new PanicError(`Producer ID ${this.getId()} is not running`));
       }
     } else proceed();
+  }
+
+  getRedisKeys(): TProducerRedisKeys {
+    if (!this.redisKeys) {
+      this.redisKeys = redisKeys.getProducerKeys(this.queueName, this.id);
+    }
+    return this.redisKeys;
+  }
+
+  static isAlive(
+    redisClient: RedisClient,
+    queueName: string,
+    id: string,
+    cb: ICallback<boolean>,
+  ): void {
+    const { keyHeartbeat } = redisKeys.getProducerKeys(queueName, id);
+    Heartbeat.isAlive(redisClient, keyHeartbeat, cb);
   }
 }

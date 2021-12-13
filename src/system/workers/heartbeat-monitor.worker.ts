@@ -1,7 +1,7 @@
 import * as async from 'async';
 import { ICallback, TConsumerWorkerParameters } from '../../../types';
 import { Ticker } from '../common/ticker/ticker';
-import { Heartbeat } from '../consumer/heartbeat';
+import { Heartbeat } from '../common/heartbeat';
 import { RedisClient } from '../redis-client/redis-client';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';

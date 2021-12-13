@@ -1,4 +1,4 @@
-import { Heartbeat } from '../../src/system/consumer/heartbeat';
+import { Heartbeat } from '../../src/system/common/heartbeat';
 import { getConsumer, getRedisInstance, untilConsumerIdle } from '../common';
 import { promisifyAll } from 'bluebird';
 import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';

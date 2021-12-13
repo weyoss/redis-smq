@@ -1,23 +1,11 @@
 import * as os from 'os';
 import * as async from 'async';
-import { ICallback, IConfig } from '../../../types';
-import { Ticker } from '../common/ticker/ticker';
-import { events } from '../common/events';
+import { ICallback } from '../../../types';
+import { Ticker } from './ticker/ticker';
+import { events } from './events';
 import { RedisClient } from '../redis-client/redis-client';
-import { redisKeys } from '../common/redis-keys/redis-keys';
-import { Consumer } from './consumer';
+import { redisKeys } from './redis-keys/redis-keys';
 import { EventEmitter } from 'events';
-import { PanicError } from '../common/errors/panic.error';
-
-type TGetHeartbeatReply = Record<
-  string,
-  {
-    ns: string;
-    queueName: string;
-    consumerId: string;
-    resources: Record<string, any>;
-  }
->;
 
 const IPAddresses = getIPAddresses();
 
@@ -72,43 +60,16 @@ function validateOnlineTimestamp(timestamp: number) {
   return now - timestamp <= 10000;
 }
 
-function fetchHeartbeats(
-  client: RedisClient,
-  cb: ICallback<Record<string, string>>,
-) {
-  const { keyIndexHeartbeats } = redisKeys.getGlobalKeys();
-  client.hgetall(keyIndexHeartbeats, cb);
-}
-
-function getConsumerHeartbeat(
-  client: RedisClient,
-  id: string,
-  queueName: string,
-  cb: ICallback<string>,
-) {
-  const { keyHeartbeat, keyIndexHeartbeats } = redisKeys.getInstanceKeys(
-    queueName,
-    id,
-  );
-  client.hget(keyIndexHeartbeats, keyHeartbeat, cb);
-}
-
 export class Heartbeat extends EventEmitter {
-  protected consumer: Consumer;
-  protected queueName: string;
-  protected consumerId: string;
-  protected config: IConfig;
-  protected redisKeys: ReturnType<typeof redisKeys['getInstanceKeys']>;
   protected redisClient: RedisClient;
   protected ticker: Ticker;
+  protected keyHeartbeat: string;
+  protected keyHeartbeatIndex: string;
 
-  constructor(consumer: Consumer, redisClient: RedisClient) {
+  constructor(keyHeartbeat: string, redisClient: RedisClient) {
     super();
-    this.consumer = consumer;
-    this.queueName = consumer.getQueueName();
-    this.consumerId = consumer.getId();
-    this.config = consumer.getConfig();
-    this.redisKeys = consumer.getRedisKeys();
+    this.keyHeartbeat = keyHeartbeat;
+    this.keyHeartbeatIndex = redisKeys.getGlobalKeys().keyIndexHeartbeats;
     this.redisClient = redisClient;
     this.ticker = new Ticker(() => {
       this.onTick();
@@ -133,21 +94,15 @@ export class Heartbeat extends EventEmitter {
       timestamp,
       usage,
     });
-    const { keyIndexHeartbeats, keyHeartbeat } = this.redisKeys;
     this.redisClient.hset(
-      keyIndexHeartbeats,
-      keyHeartbeat,
+      this.keyHeartbeatIndex,
+      this.keyHeartbeat,
       payload,
       (err?: Error | null) => {
-        if (err) this.consumer.emit(events.ERROR, err);
+        if (err) this.emit(events.ERROR, err);
         else this.ticker.nextTick();
       },
     );
-  }
-
-  protected expireHeartbeat(client: RedisClient, cb: ICallback<void>): void {
-    const { keyHeartbeat } = this.redisKeys;
-    Heartbeat.handleExpiredHeartbeats(client, [keyHeartbeat], (err) => cb(err));
   }
 
   quit(cb: ICallback<void>): void {
@@ -157,7 +112,12 @@ export class Heartbeat extends EventEmitter {
           this.ticker.once(events.DOWN, cb);
           this.ticker.quit();
         },
-        (cb: ICallback<void>) => this.expireHeartbeat(this.redisClient, cb),
+        (cb: ICallback<void>) =>
+          Heartbeat.handleExpiredHeartbeats(
+            this.redisClient,
+            [this.keyHeartbeat],
+            (err) => cb(err),
+          ),
         (cb: ICallback<void>) => this.redisClient.halt(cb),
       ],
       cb,
@@ -168,7 +128,8 @@ export class Heartbeat extends EventEmitter {
     client: RedisClient,
     cb: ICallback<{ valid: string[]; expired: string[] }>,
   ): void {
-    fetchHeartbeats(client, (err, data) => {
+    const { keyIndexHeartbeats } = redisKeys.getGlobalKeys();
+    client.hgetall(keyIndexHeartbeats, (err, data) => {
       if (err) cb(err);
       else {
         const valid: string[] = [];
@@ -200,26 +161,18 @@ export class Heartbeat extends EventEmitter {
   }
 
   static isAlive(
-    {
-      client,
-      queueName,
-      id,
-    }: {
-      client: RedisClient;
-      queueName: string;
-      id: string;
-    },
+    redisClient: RedisClient,
+    keyHeartbeat: string,
     cb: ICallback<boolean>,
   ): void {
-    getConsumerHeartbeat(client, id, queueName, (err, res) => {
+    const { keyIndexHeartbeats } = redisKeys.getGlobalKeys();
+    redisClient.hget(keyIndexHeartbeats, keyHeartbeat, (err, res) => {
       if (err) cb(err);
+      else if (!res) cb(null, false);
       else {
-        let online = false;
-        if (res) {
-          const { timestamp }: { timestamp: number } = JSON.parse(res);
-          online = validateOnlineTimestamp(timestamp);
-        }
-        cb(null, online);
+        const { timestamp }: { timestamp: number } = JSON.parse(res);
+        const isOnline = validateOnlineTimestamp(timestamp);
+        cb(null, isOnline);
       }
     });
   }
@@ -233,38 +186,5 @@ export class Heartbeat extends EventEmitter {
       const { keyIndexHeartbeats } = redisKeys.getGlobalKeys();
       client.hdel(keyIndexHeartbeats, heartbeats, cb);
     } else cb();
-  }
-
-  static getHeartbeats(
-    client: RedisClient,
-    cb: ICallback<TGetHeartbeatReply>,
-  ): void {
-    fetchHeartbeats(client, (err, data) => {
-      if (err) cb(err);
-      else {
-        const result: TGetHeartbeatReply = {};
-        if (data) {
-          async.eachOf(
-            data,
-            (value, key, done) => {
-              const { usage: resources }: { usage: Record<string, any> } =
-                JSON.parse(value);
-              const extractedData = redisKeys.extractData(`${key}`);
-              if (!extractedData || !extractedData.consumerId) {
-                done(new PanicError(`Invalid extracted consumer data`));
-              } else {
-                const { ns, queueName, consumerId } = extractedData;
-                result[consumerId] = { ns, queueName, consumerId, resources };
-                done();
-              }
-            },
-            (err) => {
-              if (err) cb(err);
-              else cb(null, result);
-            },
-          );
-        } else cb(null, result);
-      }
-    });
   }
 }

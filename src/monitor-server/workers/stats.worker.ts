@@ -11,7 +11,6 @@ import * as async from 'async';
 import { redisKeys } from '../../system/common/redis-keys/redis-keys';
 import { LockManager } from '../../system/common/lock-manager/lock-manager';
 import { RedisClient } from '../../system/redis-client/redis-client';
-import { Heartbeat } from '../../system/consumer/heartbeat';
 import { Logger } from '../../system/common/logger';
 import { QueueManager } from '../../system/queue-manager/queue-manager';
 import { Ticker } from '../../system/common/ticker/ticker';
@@ -302,25 +301,6 @@ export class StatsWorker {
     });
   };
 
-  protected getConsumersHeartbeats = (cb: ICallback<void>): void => {
-    Heartbeat.getHeartbeats(this.redisClient, (err, reply) => {
-      if (err) cb(err);
-      else {
-        for (const consumerId in reply) {
-          const { ns, queueName, resources } = reply[consumerId];
-          this.addQueueIfNotExists(ns, queueName);
-          const consumer = this.addConsumerIfNotExists(
-            ns,
-            queueName,
-            consumerId,
-          );
-          consumer.resources = resources;
-        }
-        cb();
-      }
-    });
-  };
-
   protected sanitizeData = (cb: ICallback<void>): void => {
     const handleConsumer = (
       consumer: TAggregatedStatsQueueConsumer,
@@ -382,7 +362,6 @@ export class StatsWorker {
           this.reset,
           this.getScheduledMessages,
           this.getRates,
-          this.getConsumersHeartbeats,
           this.getQueues,
           this.getQueueSize,
           this.sanitizeData,

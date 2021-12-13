@@ -18,7 +18,7 @@ enum ERedisKey {
   KEY_INDEX_PROCESSING_QUEUES, // Redis key for all processing queues
   KEY_INDEX_QUEUE_MESSAGE_PROCESSING_QUEUES, // Redis key for processing queues of a given queue
   KEY_INDEX_RATES, // Redis key for rates from all producersand consumers
-  KEY_INDEX_HEARTBEATS, // Redis key for consumers heartbeats
+  KEY_INDEX_HEARTBEATS, // Redis key for heartbeats
   KEY_LOCK_MESSAGE_MANAGER,
   KEY_LOCK_QUEUE_MANAGER,
   KEY_RATE_PRODUCER_INPUT,
@@ -32,7 +32,7 @@ enum ERedisKey {
   KEY_LOCK_DELETE_ACKNOWLEDGED_MESSAGE,
   KEY_LOCK_DELETE_DEAD_LETTER_MESSAGE,
   KEY_LOCK_DELETE_SCHEDULED_MESSAGE,
-  KEY_HEARTBEAT,
+  RESERVED, // Not used anymore. Will be removed in the next major releases.
   KEY_SCHEDULED_MESSAGES,
   KEY_PENDING_MESSAGES_WITH_PRIORITY,
   KEY_RATE_QUEUE_PROCESSING,
@@ -51,6 +51,8 @@ enum ERedisKey {
   KEY_RATE_GLOBAL_UNACKNOWLEDGED_INDEX,
   KEY_RATE_GLOBAL_INPUT,
   KEY_RATE_GLOBAL_INPUT_INDEX,
+  KEY_PRODUCER_HEARTBEAT,
+  KEY_CONSUMER_HEARTBEAT,
 }
 
 export const redisKeys = {
@@ -124,7 +126,7 @@ export const redisKeys = {
     };
   },
 
-  getInstanceKeys(queueName: string, instanceId: string) {
+  getConsumerKeys(queueName: string, instanceId: string) {
     const parentKeys = this.getKeys(queueName);
     const globalKeys = this.getGlobalKeys();
     const keys = {
@@ -139,7 +141,7 @@ export const redisKeys = {
         instanceId,
       ),
       keyHeartbeat: this.joinSegments(
-        ERedisKey.KEY_HEARTBEAT,
+        ERedisKey.KEY_CONSUMER_HEARTBEAT,
         queueName,
         instanceId,
       ),
@@ -150,6 +152,23 @@ export const redisKeys = {
       ),
       keyRateConsumerAcknowledged: this.joinSegments(
         ERedisKey.KEY_RATE_CONSUMER_ACKNOWLEDGED,
+        queueName,
+        instanceId,
+      ),
+    };
+    return {
+      ...parentKeys,
+      ...globalKeys,
+      ...this.makeNamespacedKeys(keys, namespace),
+    };
+  },
+
+  getProducerKeys(queueName: string, instanceId: string) {
+    const parentKeys = this.getKeys(queueName);
+    const globalKeys = this.getGlobalKeys();
+    const keys = {
+      keyHeartbeat: this.joinSegments(
+        ERedisKey.KEY_PRODUCER_HEARTBEAT,
         queueName,
         instanceId,
       ),
@@ -186,7 +205,7 @@ export const redisKeys = {
       type === ERedisKey.KEY_RATE_CONSUMER_PROCESSING ||
       type === ERedisKey.KEY_RATE_CONSUMER_ACKNOWLEDGED ||
       type === ERedisKey.KEY_RATE_CONSUMER_UNACKNOWLEDGED ||
-      type === ERedisKey.KEY_HEARTBEAT
+      type === ERedisKey.KEY_CONSUMER_HEARTBEAT
     ) {
       const [queueName, consumerId] = segments;
       return {
@@ -196,7 +215,10 @@ export const redisKeys = {
         consumerId,
       };
     }
-    if (type === ERedisKey.KEY_RATE_PRODUCER_INPUT) {
+    if (
+      type === ERedisKey.KEY_RATE_PRODUCER_INPUT ||
+      type === ERedisKey.KEY_PRODUCER_HEARTBEAT
+    ) {
       const [queueName, producerId] = segments;
       return {
         ns,
