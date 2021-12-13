@@ -25,6 +25,10 @@ export class HashTimeSeries extends TimeSeries {
     const process = (multi: TRedisClientMulti) => {
       multi.hincrby(this.key, String(ts), value);
       multi.zadd(this.indexKey, ts, ts);
+      if (this.expireAfter) {
+        multi.expire(this.key, this.expireAfter);
+        multi.expire(this.indexKey, this.expireAfter);
+      }
     };
     if (typeof mixed === 'function') {
       const multi = this.redisClient.multi();
