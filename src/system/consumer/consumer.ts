@@ -1,13 +1,13 @@
 import {
   EMessageUnacknowledgedCause,
   ICallback,
+  TConsumerRedisKeys,
   TUnaryFunction,
 } from '../../../types';
 import { Base } from '../base';
 import { Message } from '../message';
 import { ConsumerMessageRate } from './consumer-message-rate';
 import { events } from '../common/events';
-import { Heartbeat } from './heartbeat';
 import { RedisClient } from '../redis-client/redis-client';
 import { resolve } from 'path';
 import { ConsumerWorkers } from './consumer-workers';
@@ -17,10 +17,11 @@ import { QueueManager } from '../queue-manager/queue-manager';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { ConsumerError } from './consumer.error';
 import { PanicError } from '../common/errors/panic.error';
+import { redisKeys } from '../common/redis-keys/redis-keys';
+import { Heartbeat } from '../common/heartbeat';
 
-export class Consumer extends Base<ConsumerMessageRate> {
+export class Consumer extends Base<ConsumerMessageRate, TConsumerRedisKeys> {
   private consumerRedisClient: RedisClient | null = null;
-  private heartbeat: Heartbeat | null = null;
   private consumerWorkers: ConsumerWorkers | null = null;
   private consumerFrontend: ConsumerFrontend | null = null;
 
@@ -60,7 +61,7 @@ export class Consumer extends Base<ConsumerMessageRate> {
             );
           else
             this.getBroker((broker) => {
-              const { keyQueueProcessing } = this.redisKeys;
+              const { keyQueueProcessing } = this.getRedisKeys();
               broker.acknowledgeMessage(
                 this.queueName,
                 keyQueueProcessing,
@@ -98,7 +99,7 @@ export class Consumer extends Base<ConsumerMessageRate> {
     err?: Error,
   ): void {
     this.getBroker((broker) => {
-      const { keyQueueProcessing } = this.redisKeys;
+      const { keyQueueProcessing } = this.getRedisKeys();
       broker.unacknowledgeMessage(
         this.queueName,
         keyQueueProcessing,
@@ -181,17 +182,6 @@ export class Consumer extends Base<ConsumerMessageRate> {
         }
       });
     };
-    const setUpHeartbeat = (cb: ICallback<void>) => {
-      this.logger.debug(`Set up consumer heartbeat...`);
-      RedisClient.getNewInstance(this.config, (err, client) => {
-        if (err) cb(err);
-        else if (!client) cb(new EmptyCallbackReplyError());
-        else {
-          this.heartbeat = new Heartbeat(this, client);
-          cb();
-        }
-      });
-    };
     const setUpConsumerWorkers = (cb: ICallback<void>) => {
       this.logger.debug(`Set up consumer workers...`);
       this.getSharedRedisClient((client) => {
@@ -219,7 +209,6 @@ export class Consumer extends Base<ConsumerMessageRate> {
       .goingUp()
       .concat([
         setUpConsumerRedisClient,
-        setUpHeartbeat,
         setUpConsumerWorkers,
         setUpConsumerProcessingQueue,
       ]);
@@ -241,21 +230,6 @@ export class Consumer extends Base<ConsumerMessageRate> {
         cb();
       }
     };
-    const tearDownHeartbeat = (cb: ICallback<void>) => {
-      this.logger.debug(`Tear down consumer heartbeat...`);
-      if (this.heartbeat) {
-        this.heartbeat.quit(() => {
-          this.logger.debug(`Consumer heartbeat has been torn down.`);
-          this.heartbeat = null;
-          cb();
-        });
-      } else {
-        this.logger.warn(
-          `This is not normal. [this.heartbeat] has not been set up. Ignoring...`,
-        );
-        cb();
-      }
-    };
     const tearDownConsumerRedisClient = (cb: ICallback<void>) => {
       this.logger.debug(`Tear down consumer RedisClient instance...`);
       if (this.consumerRedisClient) {
@@ -273,11 +247,9 @@ export class Consumer extends Base<ConsumerMessageRate> {
         cb();
       }
     };
-    return [
-      tearDownConsumerWorkers,
-      tearDownHeartbeat,
-      tearDownConsumerRedisClient,
-    ].concat(super.goingDown());
+    return [tearDownConsumerWorkers, tearDownConsumerRedisClient].concat(
+      super.goingDown(),
+    );
   }
 
   setConsumerFrontend(consumerMessageHandler: ConsumerFrontend): Consumer {
@@ -287,5 +259,22 @@ export class Consumer extends Base<ConsumerMessageRate> {
 
   getMessageRate(redisClient: RedisClient): ConsumerMessageRate {
     return new ConsumerMessageRate(this, redisClient);
+  }
+
+  getRedisKeys(): TConsumerRedisKeys {
+    if (!this.redisKeys) {
+      this.redisKeys = redisKeys.getConsumerKeys(this.queueName, this.id);
+    }
+    return this.redisKeys;
+  }
+
+  static isAlive(
+    redisClient: RedisClient,
+    queueName: string,
+    id: string,
+    cb: ICallback<boolean>,
+  ): void {
+    const { keyHeartbeat } = redisKeys.getConsumerKeys(queueName, id);
+    Heartbeat.isAlive(redisClient, keyHeartbeat, cb);
   }
 }

@@ -220,8 +220,12 @@ export type TGetScheduledMessagesReply = TPaginatedResponse<Message>;
 
 export type TGetPendingMessagesWithPriorityReply = TPaginatedResponse<Message>;
 
-export type TInstanceRedisKeys = ReturnType<
-  typeof redisKeys['getInstanceKeys']
+export type TConsumerRedisKeys = ReturnType<
+  typeof redisKeys['getConsumerKeys']
+>;
+
+export type TProducerRedisKeys = ReturnType<
+  typeof redisKeys['getProducerKeys']
 >;
 
 export interface IQueueMetrics {

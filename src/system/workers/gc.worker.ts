@@ -3,7 +3,6 @@ import { Logger } from '../common/logger';
 import { Ticker } from '../common/ticker/ticker';
 import { events } from '../common/events';
 import { Message } from '../message';
-import { Heartbeat } from '../consumer/heartbeat';
 import { RedisClient } from '../redis-client/redis-client';
 import {
   EMessageUnacknowledgedCause,
@@ -17,6 +16,7 @@ import { MessageManager } from '../message-manager/message-manager';
 import { QueueManager } from '../queue-manager/queue-manager';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { PanicError } from '../common/errors/panic.error';
+import { Consumer } from '../consumer/consumer';
 
 export class GCWorker {
   protected consumerId: string;
@@ -124,8 +124,10 @@ export class GCWorker {
           const { queueName, consumerId } = extractedData;
           if (this.consumerId !== consumerId) {
             this.logger.debug(`Is consumer (ID ${consumerId}) alive?`);
-            Heartbeat.isAlive(
-              { client: this.redisClient, queueName, id: consumerId },
+            Consumer.isAlive(
+              this.redisClient,
+              queueName,
+              consumerId,
               (err, online) => {
                 if (err) cb(err);
                 else if (online) {

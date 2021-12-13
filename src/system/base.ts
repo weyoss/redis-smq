@@ -1,12 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import { EventEmitter } from 'events';
-import {
-  IConfig,
-  ICallback,
-  TInstanceRedisKeys,
-  TUnaryFunction,
-  TFunction,
-} from '../../types';
+import { IConfig, ICallback, TUnaryFunction, TFunction } from '../../types';
 import * as async from 'async';
 import { PowerManager } from './common/power-manager/power-manager';
 import { Logger } from './common/logger';
@@ -21,19 +15,22 @@ import { MessageManager } from './message-manager/message-manager';
 import { Message } from './message';
 import { EmptyCallbackReplyError } from './common/errors/empty-callback-reply.error';
 import { PanicError } from './common/errors/panic.error';
+import { Heartbeat } from './common/heartbeat';
 
 export abstract class Base<
   TMessageRate extends MessageRate,
+  TRedisKeys extends { keyHeartbeat: string },
 > extends EventEmitter {
   protected readonly id: string;
   protected readonly queueName: string;
   protected readonly config: IConfig;
   protected readonly logger: BunyanLogger;
   protected readonly powerManager: PowerManager;
-  protected readonly redisKeys: TInstanceRedisKeys;
+  protected redisKeys: TRedisKeys | null = null;
   protected broker: Broker | null = null;
   protected sharedRedisClient: RedisClient | null = null;
   protected messageRate: TMessageRate | null = null;
+  protected heartbeat: Heartbeat | null = null;
 
   constructor(queueName: string, config: IConfig) {
     super();
@@ -43,10 +40,6 @@ export abstract class Base<
     this.id = uuid();
     this.config = config;
     this.queueName = redisKeys.validateRedisKey(queueName);
-    this.redisKeys = redisKeys.getInstanceKeys(
-      this.getQueueName(),
-      this.getId(),
-    );
     this.powerManager = new PowerManager();
     this.logger = Logger(this.constructor.name, {
       ...this.config.log,
@@ -117,6 +110,19 @@ export abstract class Base<
     }
   };
 
+  private setUpHeartbeat = (cb: ICallback<void>) => {
+    this.logger.debug(`Set up consumer heartbeat...`);
+    RedisClient.getNewInstance(this.config, (err, client) => {
+      if (err) cb(err);
+      else if (!client) cb(new EmptyCallbackReplyError());
+      else {
+        const { keyHeartbeat } = this.getRedisKeys();
+        this.heartbeat = new Heartbeat(keyHeartbeat, client);
+        cb();
+      }
+    });
+  };
+
   protected registerEventsHandlers(): void {
     this.on(events.GOING_UP, () => this.logger.info(`Starting up...`));
     this.on(events.UP, () => this.logger.info(`Up and running...`));
@@ -129,6 +135,7 @@ export abstract class Base<
     return [
       this.setUpSharedRedisClient,
       this.setUpMessageQueue,
+      this.setUpHeartbeat,
       this.setUpBroker,
       this.setUpMessageRate,
     ];
@@ -175,7 +182,27 @@ export abstract class Base<
         cb();
       }
     };
-    return [tearDownBroker, tearDownMessageRate, tearDownSharedRedisClient];
+    const tearDownHeartbeat = (cb: ICallback<void>) => {
+      this.logger.debug(`Tear down consumer heartbeat...`);
+      if (this.heartbeat) {
+        this.heartbeat.quit(() => {
+          this.logger.debug(`Consumer heartbeat has been torn down.`);
+          this.heartbeat = null;
+          cb();
+        });
+      } else {
+        this.logger.warn(
+          `This is not normal. [this.heartbeat] has not been set up. Ignoring...`,
+        );
+        cb();
+      }
+    };
+    return [
+      tearDownHeartbeat,
+      tearDownBroker,
+      tearDownMessageRate,
+      tearDownSharedRedisClient,
+    ];
   }
 
   protected getSharedRedisClient(cb: TUnaryFunction<RedisClient>): void {
@@ -237,9 +264,7 @@ export abstract class Base<
     return this.queueName;
   }
 
-  getRedisKeys(): TInstanceRedisKeys {
-    return this.redisKeys;
-  }
+  abstract getRedisKeys(): TRedisKeys;
 
   abstract getMessageRate(redisClient: RedisClient): TMessageRate;
 }
