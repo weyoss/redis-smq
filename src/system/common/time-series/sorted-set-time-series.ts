@@ -39,7 +39,6 @@ export class SortedSetTimeSeries extends TimeSeries {
         if (err) cb(err);
         else {
           const replyRange = reply ?? {};
-          console.log('replyRange ', replyRange);
           const length = to - from;
           const range = new Array(length)
             .fill(0)
