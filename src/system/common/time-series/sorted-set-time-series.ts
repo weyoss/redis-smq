@@ -9,7 +9,6 @@ export class SortedSetTimeSeries extends TimeSeries {
     mixed: ICallback<void> | TRedisClientMulti,
   ): void {
     const process = (multi: TRedisClientMulti) => {
-      multi.zremrangebyrank(this.key, 0, 0);
       multi.zadd(this.key, ts, `${value}:${ts}`);
       this.expireAfter && multi.expire(this.key, this.expireAfter);
     };
@@ -40,14 +39,19 @@ export class SortedSetTimeSeries extends TimeSeries {
         if (err) cb(err);
         else {
           const replyRange = reply ?? {};
+          console.log('replyRange ', replyRange);
           const length = to - from;
           const range = new Array(length)
             .fill(0)
             .map((_: number, index: number) => {
-              const timestamp = from + index;
+              const timestamp = to - index;
+              const value =
+                typeof replyRange[timestamp] === 'string'
+                  ? Number(replyRange[timestamp].split(':')[0])
+                  : 0;
               return {
                 timestamp,
-                value: Number(replyRange[timestamp] ?? 0),
+                value,
               };
             });
           cb(null, range);
