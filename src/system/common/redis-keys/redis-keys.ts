@@ -17,7 +17,7 @@ enum ERedisKey {
   KEY_INDEX_QUEUES, // Redis key for message queues
   KEY_INDEX_PROCESSING_QUEUES, // Redis key for all processing queues
   KEY_INDEX_QUEUE_MESSAGE_PROCESSING_QUEUES, // Redis key for processing queues of a given queue
-  KEY_INDEX_RATES, // Redis key for rates from all producersand consumers
+  RESERVED, // Not used anymore. Will be removed in the next major releases.
   KEY_INDEX_HEARTBEATS, // Redis key for heartbeats
   KEY_LOCK_MESSAGE_MANAGER,
   KEY_LOCK_QUEUE_MANAGER,
@@ -32,7 +32,7 @@ enum ERedisKey {
   KEY_LOCK_DELETE_ACKNOWLEDGED_MESSAGE,
   KEY_LOCK_DELETE_DEAD_LETTER_MESSAGE,
   KEY_LOCK_DELETE_SCHEDULED_MESSAGE,
-  RESERVED, // Not used anymore. Will be removed in the next major releases.
+  RESERVED_2, // Not used anymore. Will be removed in the next major releases.
   KEY_SCHEDULED_MESSAGES,
   KEY_PENDING_MESSAGES_WITH_PRIORITY,
   KEY_RATE_QUEUE_PROCESSING,
@@ -243,7 +243,6 @@ export const redisKeys = {
   getGlobalKeys() {
     const keys = {
       keyIndexQueue: ERedisKey.KEY_INDEX_QUEUES,
-      keyIndexRates: ERedisKey.KEY_INDEX_RATES,
       keyIndexProcessingQueues: ERedisKey.KEY_INDEX_PROCESSING_QUEUES,
       keyIndexHeartbeats: ERedisKey.KEY_INDEX_HEARTBEATS,
       keyLockMessageManager: ERedisKey.KEY_LOCK_MESSAGE_MANAGER,

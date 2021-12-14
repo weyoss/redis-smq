@@ -4,7 +4,7 @@ import { RedisClient } from '../src/system/redis-client/redis-client';
 import { Producer, Message, MonitorServer, Consumer } from '../index';
 import { config } from './config';
 import { ICallback, IConfig } from '../types';
-import { StatsWorker } from '../src/monitor-server/workers/stats.worker';
+import { WebsocketMainStreamWorker } from '../src/monitor-server/workers/websocket-main-stream.worker';
 import { QueueManagerFrontend } from '../src/system/queue-manager/queue-manager-frontend';
 import { MessageManagerFrontend } from '../src/system/message-manager/message-manager-frontend';
 import { MessageManager } from '../src/system/message-manager/message-manager';
@@ -46,7 +46,7 @@ const redisClients: RedisClient[] = [];
 const consumersList: Consumer[] = [];
 const producersList: Producer[] = [];
 let monitorServer: TMonitorServer | null = null;
-let statsWorker: StatsWorker | null = null;
+let statsWorker: WebsocketMainStreamWorker | null = null;
 let messageManager: MessageManager | null = null;
 let messageManagerFrontend: MessageManagerFrontend | null = null;
 let queueManager: QueueManager | null = null;
@@ -168,7 +168,7 @@ export async function startStatsWorker(): Promise<void> {
   const queueManager = await getQueueManager();
   const messageManager = await getMessageManager();
   const logger = getLogger();
-  statsWorker = new StatsWorker(
+  statsWorker = new WebsocketMainStreamWorker(
     queueManager,
     messageManager,
     redisClient,
