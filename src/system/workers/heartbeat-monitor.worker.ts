@@ -16,24 +16,18 @@ class HeartbeatMonitorWorker {
   }
 
   protected onTick = () => {
-    const handleExpiredHeartbeats = (
-      heartbeats: string[],
-      cb: ICallback<number>,
-    ): void => {
-      Heartbeat.handleExpiredHeartbeats(this.redisClient, heartbeats, cb);
-    };
-    const getExpiredHeartbeats = (cb: ICallback<string[]>): void => {
-      Heartbeat.getHeartbeatsByStatus(this.redisClient, (err, result) => {
-        if (err) cb(err);
-        else {
-          const { expired = [] } = result ?? {};
-          cb(null, expired);
-        }
-      });
-    };
     async.waterfall(
-      [getExpiredHeartbeats, handleExpiredHeartbeats],
-      (err?: Error | null) => {
+      [
+        (cb: ICallback<string[]>): void =>
+          Heartbeat.getExpiredHeartbeatsKeys(this.redisClient, cb),
+        (heartbeats: string[], cb: ICallback<void>): void =>
+          Heartbeat.handleExpiredHeartbeatKeys(
+            this.redisClient,
+            heartbeats,
+            cb,
+          ),
+      ],
+      (err) => {
         if (err) throw err;
         this.ticker.nextTick();
       },

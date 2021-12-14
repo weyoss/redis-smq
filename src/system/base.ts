@@ -103,6 +103,7 @@ export abstract class Base<
         cb(new PanicError(`Expected an instance of RedisClient`));
       else {
         this.messageRate = this.getMessageRate(this.sharedRedisClient);
+        cb();
       }
     } else {
       this.logger.debug(`Skipping MessageRate setup as monitor not enabled...`);
@@ -118,6 +119,9 @@ export abstract class Base<
       else {
         const { keyHeartbeat } = this.getRedisKeys();
         this.heartbeat = new Heartbeat(keyHeartbeat, client);
+        this.heartbeat.on(events.ERROR, (err: Error) =>
+          this.emit(events.ERROR, err),
+        );
         cb();
       }
     });

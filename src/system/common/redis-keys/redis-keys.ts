@@ -53,6 +53,7 @@ enum ERedisKey {
   KEY_RATE_GLOBAL_INPUT_INDEX,
   KEY_PRODUCER_HEARTBEAT,
   KEY_CONSUMER_HEARTBEAT,
+  KEY_HEARTBEAT_TIMESTAMPS,
 }
 
 export const redisKeys = {
@@ -272,6 +273,7 @@ export const redisKeys = {
         ERedisKey.KEY_RATE_GLOBAL_ACKNOWLEDGED_INDEX,
       keyRateGlobalProcessingIndex: ERedisKey.KEY_RATE_GLOBAL_PROCESSING_INDEX,
       keyRateGlobalInputIndex: ERedisKey.KEY_RATE_GLOBAL_INPUT_INDEX,
+      keyHeartbeatTimestamps: ERedisKey.KEY_HEARTBEAT_TIMESTAMPS,
     };
     return this.makeNamespacedKeys(keys, globalNamespace);
   },
