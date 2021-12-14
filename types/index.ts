@@ -191,6 +191,26 @@ export type TAggregatedStatsQueue = {
   };
 };
 
+export type TWebsocketMainStreamPayload = {
+  scheduledMessages: number;
+  queues: {
+    [ns: string]: {
+      [queueName: string]: TWebsocketMainStreamPayloadQueue;
+    };
+  };
+};
+
+export type TWebsocketMainStreamPayloadQueue = {
+  queueName: string;
+  namespace: string;
+  deadLetteredMessages: number;
+  acknowledgedMessages: number;
+  pendingMessages: number;
+  pendingMessagesWithPriority: number;
+  producers: number;
+  consumers: number;
+};
+
 export type TAggregatedStats = {
   scheduledMessages: number;
   rates: {
