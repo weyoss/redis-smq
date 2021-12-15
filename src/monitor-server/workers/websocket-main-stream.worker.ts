@@ -27,7 +27,14 @@ export class WebsocketMainStreamWorker {
   protected ticker: Ticker;
   protected noop = (): void => void 0;
   protected data: TWebsocketMainStreamPayload = {
-    scheduledMessages: 0,
+    scheduledMessagesCount: 0,
+    deadLetteredMessagesCount: 0,
+    pendingMessagesCount: 0,
+    pendingMessagesWithPriorityCount: 0,
+    acknowledgedMessagesCount: 0,
+    producersCount: 0,
+    consumersCount: 0,
+    queuesCount: 0,
     queues: {},
   };
 
@@ -37,11 +44,11 @@ export class WebsocketMainStreamWorker {
     redisClient: RedisClient,
     logger: BLogger,
   ) {
-    const { keyLockWorkerStats } = redisKeys.getGlobalKeys();
+    const { keyMainStreamWorkerStats } = redisKeys.getGlobalKeys();
     this.logger = logger;
     this.lockManager = new LockManager(
       redisClient,
-      keyLockWorkerStats,
+      keyMainStreamWorkerStats,
       10000,
       true,
     );
@@ -60,15 +67,16 @@ export class WebsocketMainStreamWorker {
       this.data.queues[ns] = {};
     }
     if (!this.data.queues[ns][queueName]) {
+      this.data.queuesCount += 1;
       this.data.queues[ns][queueName] = {
         queueName,
         namespace: ns,
-        deadLetteredMessages: 0,
-        acknowledgedMessages: 0,
-        pendingMessages: 0,
-        pendingMessagesWithPriority: 0,
-        consumers: 0,
-        producers: 0,
+        deadLetteredMessagesCount: 0,
+        acknowledgedMessagesCount: 0,
+        pendingMessagesCount: 0,
+        pendingMessagesWithPriorityCount: 0,
+        consumersCount: 0,
+        producersCount: 0,
       };
     }
     return this.data.queues[ns][queueName];
@@ -91,13 +99,17 @@ export class WebsocketMainStreamWorker {
               const { ns, queueName, type } = extractedData;
               const queue = this.addQueue(ns, queueName);
               if (type === instanceTypes.KEY_QUEUE_DL) {
-                queue.deadLetteredMessages = size;
+                queue.deadLetteredMessagesCount = size;
+                this.data.deadLetteredMessagesCount += size;
               } else if (type === instanceTypes.KEY_QUEUE) {
-                queue.pendingMessages = size;
+                queue.pendingMessagesCount = size;
+                this.data.pendingMessagesCount += size;
               } else if (type === instanceTypes.KEY_QUEUE_PRIORITY) {
-                queue.pendingMessagesWithPriority = size;
+                queue.pendingMessagesWithPriorityCount = size;
+                this.data.pendingMessagesWithPriorityCount += size;
               } else {
-                queue.acknowledgedMessages = size;
+                queue.acknowledgedMessagesCount = size;
+                this.data.acknowledgedMessagesCount += size;
               }
             }
             done();
@@ -144,7 +156,7 @@ export class WebsocketMainStreamWorker {
     this.messageManager.getScheduledMessagesCount((err, count) => {
       if (err) cb(err);
       else {
-        this.data.scheduledMessages = count ?? 0;
+        this.data.scheduledMessagesCount = count ?? 0;
         cb();
       }
     });
@@ -161,8 +173,13 @@ export class WebsocketMainStreamWorker {
               redisKeys.extractData(key) ?? {};
             if (ns && queueName && (consumerId || producerId)) {
               const queue = this.addQueue(ns, queueName);
-              if (consumerId) queue.consumers += 1;
-              else queue.producers += 1;
+              if (consumerId) {
+                queue.consumersCount += 1;
+                this.data.consumersCount += 1;
+              } else {
+                queue.producersCount += 1;
+                this.data.producersCount += 1;
+              }
               done();
             } else done();
           },
@@ -179,7 +196,14 @@ export class WebsocketMainStreamWorker {
 
   protected reset = (cb: ICallback<void>): void => {
     this.data = {
-      scheduledMessages: 0,
+      scheduledMessagesCount: 0,
+      deadLetteredMessagesCount: 0,
+      pendingMessagesCount: 0,
+      pendingMessagesWithPriorityCount: 0,
+      acknowledgedMessagesCount: 0,
+      producersCount: 0,
+      consumersCount: 0,
+      queuesCount: 0,
       queues: {},
     };
     cb();

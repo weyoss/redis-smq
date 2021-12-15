@@ -2,19 +2,19 @@ import {
   getConsumer,
   getProducer,
   getRedisInstance,
-  startStatsWorker,
+  startWebsocketMainStreamWorker,
   untilConsumerIdle,
 } from '../common';
 import { TWebsocketMainStreamPayload } from '../../types';
 
-test('WsMainStreamWorker: Case 2', async () => {
+test('WebsocketMainStreamWorker: Case 2', async () => {
   const consumer = getConsumer();
   await consumer.runAsync();
 
   const producer = getProducer();
   await untilConsumerIdle(consumer);
 
-  await startStatsWorker();
+  await startWebsocketMainStreamWorker();
 
   const subscribeClient = await getRedisInstance();
   subscribeClient.subscribe('mainStream');
@@ -30,31 +30,28 @@ test('WsMainStreamWorker: Case 2', async () => {
     },
   );
 
-  expect(Object.keys(json)).toEqual(
-    expect.arrayContaining(['queues', 'scheduledMessages']),
-  );
-
-  expect(json.scheduledMessages).toBe(0);
-
-  expect(Object.keys(json.queues)).toEqual(expect.arrayContaining(['testing']));
-
-  expect(Object.keys(json.queues['testing'])).toEqual(
-    expect.arrayContaining(['test_queue']),
-  );
-
-  expect(Object.keys(json.queues['testing']['test_queue'])).toEqual(
-    expect.arrayContaining([
-      'queueName',
-      'namespace',
-      'deadLetteredMessages',
-      'acknowledgedMessages',
-      'pendingMessages',
-      'pendingMessagesWithPriority',
-      'consumers',
-      'producers',
-    ]),
-  );
-
-  expect(json.queues['testing']['test_queue']['consumers']).toEqual(1);
-  expect(json.queues['testing']['test_queue']['producers']).toEqual(1);
+  expect(json).toEqual({
+    scheduledMessagesCount: 0,
+    deadLetteredMessagesCount: 0,
+    pendingMessagesCount: 0,
+    pendingMessagesWithPriorityCount: 0,
+    acknowledgedMessagesCount: 0,
+    producersCount: 1,
+    consumersCount: 1,
+    queuesCount: 1,
+    queues: {
+      testing: {
+        test_queue: {
+          queueName: 'test_queue',
+          namespace: 'testing',
+          deadLetteredMessagesCount: 0,
+          acknowledgedMessagesCount: 0,
+          pendingMessagesCount: 0,
+          pendingMessagesWithPriorityCount: 0,
+          consumersCount: 1,
+          producersCount: 1,
+        },
+      },
+    },
+  });
 });

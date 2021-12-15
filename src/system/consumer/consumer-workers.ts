@@ -13,7 +13,7 @@ export class ConsumerWorkers extends EventEmitter {
   protected consumerId: string;
   protected ticker: Ticker;
   protected config: IConfig;
-  protected lockerManager: LockManager;
+  protected lockManager: LockManager;
   protected workerRunner: WorkerRunner;
   protected workersDir: string;
   protected redisClient: RedisClient;
@@ -38,7 +38,7 @@ export class ConsumerWorkers extends EventEmitter {
       child: ConsumerWorkers.name,
     });
     const { keyLockConsumerWorkersRunner } = redisKeys.getGlobalKeys();
-    this.lockerManager = new LockManager(
+    this.lockManager = new LockManager(
       redisClient,
       keyLockConsumerWorkersRunner,
       10000,
@@ -53,7 +53,7 @@ export class ConsumerWorkers extends EventEmitter {
   }
 
   protected onTick = (): void => {
-    this.lockerManager.acquireLock((err, locked) => {
+    this.lockManager.acquireLock((err, locked) => {
       if (err) this.emit(events.ERROR, err);
       else if (locked) {
         if (!this.workerRunner.isRunning()) {
@@ -78,7 +78,7 @@ export class ConsumerWorkers extends EventEmitter {
     };
     const shutdownWorkers = (cb: ICallback<void>) =>
       this.workerRunner.shutdown(cb);
-    const releaseLock = (cb: ICallback<void>) => this.lockerManager.quit(cb);
+    const releaseLock = (cb: ICallback<void>) => this.lockManager.quit(cb);
     this.logger.debug(`Tearing down consumer workers threads...`);
     async.waterfall([stopTicker, shutdownWorkers, releaseLock], cb);
   }

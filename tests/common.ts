@@ -11,6 +11,7 @@ import { MessageManager } from '../src/system/message-manager/message-manager';
 import * as supertest from 'supertest';
 import { Logger } from '../src/system/common/logger';
 import { QueueManager } from '../src/system/queue-manager/queue-manager';
+import { WebsocketRateStreamWorker } from '../src/monitor-server/workers/websocket-rate-stream.worker';
 
 type TMonitorServer = ReturnType<typeof MonitorServer>;
 
@@ -46,7 +47,8 @@ const redisClients: RedisClient[] = [];
 const consumersList: Consumer[] = [];
 const producersList: Producer[] = [];
 let monitorServer: TMonitorServer | null = null;
-let statsWorker: WebsocketMainStreamWorker | null = null;
+let websocketMainStreamWorker: WebsocketMainStreamWorker | null = null;
+let websocketRateStreamWorker: WebsocketRateStreamWorker | null = null;
 let messageManager: MessageManager | null = null;
 let messageManagerFrontend: MessageManagerFrontend | null = null;
 let queueManager: QueueManager | null = null;
@@ -93,7 +95,8 @@ export async function shutdown(): Promise<void> {
     queueManagerFrontend = null;
   }
   await stopMonitorServer();
-  await stopStatsAggregator();
+  await stopWebsocketMainStreamWorker();
+  await stopWebsocketRateStreamWorker();
 }
 
 export function getConsumer(args: TGetConsumerArgs = {}) {
@@ -160,15 +163,16 @@ export async function startMonitorServer(): Promise<void> {
 export async function stopMonitorServer(): Promise<void> {
   if (monitorServer) {
     await monitorServer.quit();
+    monitorServer = null;
   }
 }
 
-export async function startStatsWorker(): Promise<void> {
+export async function startWebsocketMainStreamWorker(): Promise<void> {
   const redisClient = await getRedisInstance();
   const queueManager = await getQueueManager();
   const messageManager = await getMessageManager();
   const logger = getLogger();
-  statsWorker = new WebsocketMainStreamWorker(
+  websocketMainStreamWorker = new WebsocketMainStreamWorker(
     queueManager,
     messageManager,
     redisClient,
@@ -176,11 +180,31 @@ export async function startStatsWorker(): Promise<void> {
   );
 }
 
-export async function stopStatsAggregator(): Promise<void> {
+export async function stopWebsocketMainStreamWorker(): Promise<void> {
   return new Promise<void>((resolve) => {
-    if (statsWorker) {
-      statsWorker.quit(() => {
-        monitorServer = null;
+    if (websocketMainStreamWorker) {
+      websocketMainStreamWorker.quit(() => {
+        websocketMainStreamWorker = null;
+        resolve();
+      });
+    } else resolve();
+  });
+}
+
+export async function startWebsocketRateStreamWorker(): Promise<void> {
+  const redisClient = await getRedisInstance();
+  const logger = getLogger();
+  websocketRateStreamWorker = new WebsocketRateStreamWorker(
+    redisClient,
+    logger,
+  );
+}
+
+export async function stopWebsocketRateStreamWorker(): Promise<void> {
+  return new Promise<void>((resolve) => {
+    if (websocketRateStreamWorker) {
+      websocketRateStreamWorker.quit(() => {
+        websocketRateStreamWorker = null;
         resolve();
       });
     } else resolve();

@@ -6,7 +6,13 @@ import { TimeSeries } from '../../src/system/common/time-series/time-series';
 test('HashTimeSeries: Case 1', async () => {
   const redisClient = await getRedisInstance();
   const hashTimeSeries = promisifyAll(
-    new HashTimeSeries(redisClient, 'my-key', 'my-key-index', 20),
+    new HashTimeSeries(
+      redisClient,
+      'my-key',
+      'my-key-index',
+      'my-key-lock',
+      20,
+    ),
   );
   const multi = redisClient.multi();
   const ts = TimeSeries.getCurrentTimestamp();

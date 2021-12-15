@@ -1,11 +1,20 @@
-import { Consumer } from './consumer';
-import { ICallback, IConsumerMessageRateFields } from '../../../types';
-import { events } from '../common/events';
-import { MessageRate } from '../message-rate';
-import { RedisClient } from '../redis-client/redis-client';
-import { HashTimeSeries } from '../common/time-series/hash-time-series';
-import { SortedSetTimeSeries } from '../common/time-series/sorted-set-time-series';
+import { Consumer } from '../consumer';
+import { ICallback, IConsumerMessageRateFields } from '../../../../types';
+import { events } from '../../common/events';
+import { MessageRate } from '../../message-rate';
+import { RedisClient } from '../../redis-client/redis-client';
 import * as async from 'async';
+import {
+  AcknowledgedRateTimeSeries,
+  GlobalAcknowledgedRateTimeSeries,
+  GlobalProcessingRateTimeSeries,
+  GlobalUnacknowledgedRateTimeSeries,
+  ProcessingRateTimeSeries,
+  QueueAcknowledgedRateTimeSeries,
+  QueueProcessingRateTimeSeries,
+  QueueUnacknowledgedRateTimeSeries,
+  UnacknowledgedRateTimeSeries,
+} from './consumer-message-rate-time-series';
 
 export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields> {
   protected consumer: Consumer;
@@ -17,77 +26,69 @@ export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields>
   protected unacknowledgedRate = 0;
   protected idleStack: number[] = new Array(5).fill(0);
 
-  protected processingRateTimeSeries: SortedSetTimeSeries;
-  protected acknowledgedRateTimeSeries: SortedSetTimeSeries;
-  protected unacknowledgedRateTimeSeries: SortedSetTimeSeries;
-  protected queueProcessingRateTimeSeries: HashTimeSeries;
-  protected queueAcknowledgedRateTimeSeries: HashTimeSeries;
-  protected queueUnacknowledgedRateTimeSeries: HashTimeSeries;
-  protected globalProcessingRateTimeSeries: HashTimeSeries;
-  protected globalAcknowledgedRateTimeSeries: HashTimeSeries;
-  protected globalUnacknowledgedRateTimeSeries: HashTimeSeries;
+  protected processingRateTimeSeries: ReturnType<
+    typeof ProcessingRateTimeSeries
+  >;
+  protected acknowledgedRateTimeSeries: ReturnType<
+    typeof AcknowledgedRateTimeSeries
+  >;
+  protected unacknowledgedRateTimeSeries: ReturnType<
+    typeof UnacknowledgedRateTimeSeries
+  >;
+  protected queueProcessingRateTimeSeries: ReturnType<
+    typeof QueueProcessingRateTimeSeries
+  >;
+  protected queueAcknowledgedRateTimeSeries: ReturnType<
+    typeof QueueAcknowledgedRateTimeSeries
+  >;
+  protected queueUnacknowledgedRateTimeSeries: ReturnType<
+    typeof QueueUnacknowledgedRateTimeSeries
+  >;
+  protected globalProcessingRateTimeSeries: ReturnType<
+    typeof GlobalProcessingRateTimeSeries
+  >;
+  protected globalAcknowledgedRateTimeSeries: ReturnType<
+    typeof GlobalAcknowledgedRateTimeSeries
+  >;
+  protected globalUnacknowledgedRateTimeSeries: ReturnType<
+    typeof GlobalUnacknowledgedRateTimeSeries
+  >;
 
   constructor(consumer: Consumer, redisClient: RedisClient) {
     super(redisClient);
     this.consumer = consumer;
-    const {
-      keyRateConsumerProcessing,
-      keyRateConsumerAcknowledged,
-      keyRateConsumerUnacknowledged,
-      keyRateGlobalAcknowledged,
-      keyRateGlobalUnacknowledged,
-      keyRateGlobalProcessing,
-      keyRateGlobalAcknowledgedIndex,
-      keyRateGlobalUnacknowledgedIndex,
-      keyRateGlobalProcessingIndex,
-      keyRateQueueAcknowledged,
-      keyRateQueueProcessing,
-      keyRateQueueUnacknowledged,
-      keyRateQueueAcknowledgedIndex,
-      keyRateQueueProcessingIndex,
-      keyRateQueueUnacknowledgedIndex,
-    } = consumer.getRedisKeys();
-    this.processingRateTimeSeries = new SortedSetTimeSeries(
+    this.globalProcessingRateTimeSeries =
+      GlobalProcessingRateTimeSeries(redisClient);
+    this.globalAcknowledgedRateTimeSeries =
+      GlobalAcknowledgedRateTimeSeries(redisClient);
+    this.globalUnacknowledgedRateTimeSeries =
+      GlobalUnacknowledgedRateTimeSeries(redisClient);
+    this.processingRateTimeSeries = ProcessingRateTimeSeries(
       redisClient,
-      keyRateConsumerProcessing,
+      consumer.getId(),
+      consumer.getQueueName(),
     );
-    this.acknowledgedRateTimeSeries = new SortedSetTimeSeries(
+    this.acknowledgedRateTimeSeries = AcknowledgedRateTimeSeries(
       redisClient,
-      keyRateConsumerAcknowledged,
+      consumer.getId(),
+      consumer.getQueueName(),
     );
-    this.unacknowledgedRateTimeSeries = new SortedSetTimeSeries(
+    this.unacknowledgedRateTimeSeries = UnacknowledgedRateTimeSeries(
       redisClient,
-      keyRateConsumerUnacknowledged,
+      consumer.getId(),
+      consumer.getQueueName(),
     );
-    this.queueProcessingRateTimeSeries = new HashTimeSeries(
+    this.queueProcessingRateTimeSeries = QueueProcessingRateTimeSeries(
       redisClient,
-      keyRateQueueProcessing,
-      keyRateQueueProcessingIndex,
+      consumer.getQueueName(),
     );
-    this.queueAcknowledgedRateTimeSeries = new HashTimeSeries(
+    this.queueAcknowledgedRateTimeSeries = QueueAcknowledgedRateTimeSeries(
       redisClient,
-      keyRateQueueAcknowledged,
-      keyRateQueueAcknowledgedIndex,
+      consumer.getQueueName(),
     );
-    this.queueUnacknowledgedRateTimeSeries = new HashTimeSeries(
+    this.queueUnacknowledgedRateTimeSeries = QueueUnacknowledgedRateTimeSeries(
       redisClient,
-      keyRateQueueUnacknowledged,
-      keyRateQueueUnacknowledgedIndex,
-    );
-    this.globalProcessingRateTimeSeries = new HashTimeSeries(
-      redisClient,
-      keyRateGlobalProcessing,
-      keyRateGlobalProcessingIndex,
-    );
-    this.globalAcknowledgedRateTimeSeries = new HashTimeSeries(
-      redisClient,
-      keyRateGlobalAcknowledged,
-      keyRateGlobalAcknowledgedIndex,
-    );
-    this.globalUnacknowledgedRateTimeSeries = new HashTimeSeries(
-      redisClient,
-      keyRateGlobalUnacknowledged,
-      keyRateGlobalUnacknowledgedIndex,
+      consumer.getQueueName(),
     );
   }
 

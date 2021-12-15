@@ -6,7 +6,7 @@ import {
 } from '../../../types';
 import { Base } from '../base';
 import { Message } from '../message';
-import { ConsumerMessageRate } from './consumer-message-rate';
+import { ConsumerMessageRate } from './consumer-message-rate/consumer-message-rate';
 import { events } from '../common/events';
 import { RedisClient } from '../redis-client/redis-client';
 import { resolve } from 'path';

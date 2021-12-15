@@ -1,31 +1,46 @@
-import { ICallback, TRedisClientMulti } from '../../../../types';
+import {
+  ICallback,
+  TRedisClientMulti,
+  TTimeSeriesRange,
+} from '../../../../types';
 import { RedisClient } from '../../redis-client/redis-client';
 import { Ticker } from '../ticker/ticker';
 import { events } from '../events';
+import { EventEmitter } from 'events';
 
-export abstract class TimeSeries {
+export abstract class TimeSeries extends EventEmitter {
   protected retentionTime: number;
   protected redisClient: RedisClient;
   protected expireAfter: number | null = null;
   protected key: string;
-  protected cleanUpTicker: Ticker;
+  protected ticker: Ticker | null = null;
+  protected windowSize: number;
 
   constructor(
     redisClient: RedisClient,
     key: string,
-    expireAfter: number | null = null,
+    expireAfter = 0,
     retentionTime = 24 * 60 * 60,
+    windowSize = 60,
+    readOnly = false,
   ) {
+    super();
     this.retentionTime = retentionTime;
     this.redisClient = redisClient;
     this.expireAfter = expireAfter;
+    this.windowSize = windowSize;
     this.key = key;
-    this.cleanUpTicker = new Ticker(() => this.cleanUp(), 10000);
-    this.cleanUpTicker.nextTick();
+    if (!readOnly) {
+      this.ticker = new Ticker(() => this.cleanUp(), 10000);
+      this.ticker.nextTick();
+    }
   }
 
   protected cleanUp(): void {
-    this.onCleanUp(() => this.cleanUpTicker.nextTick());
+    this.onCleanUp((err) => {
+      if (err) this.emit(events.ERROR, err);
+      this.ticker?.nextTick();
+    });
   }
 
   abstract add(
@@ -37,14 +52,22 @@ export abstract class TimeSeries {
   abstract getRange(
     from: number,
     to: number,
-    cb: ICallback<{ timestamp: number; value: number }[]>,
+    cb: ICallback<TTimeSeriesRange>,
   ): void;
 
   abstract onCleanUp(cb: ICallback<void>): void;
 
+  getRangeFrom(from: number, cb: ICallback<TTimeSeriesRange>): void {
+    const max = from;
+    const min = from - this.windowSize;
+    this.getRange(min, max, cb);
+  }
+
   quit(cb: ICallback<void>): void {
-    this.cleanUpTicker.on(events.DOWN, cb);
-    this.cleanUpTicker.quit();
+    if (this.ticker) {
+      this.ticker.on(events.DOWN, cb);
+      this.ticker.quit();
+    } else cb();
   }
 
   static getCurrentTimestamp(): number {

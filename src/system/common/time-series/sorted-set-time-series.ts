@@ -1,4 +1,8 @@
-import { ICallback, TRedisClientMulti } from '../../../../types';
+import {
+  ICallback,
+  TRedisClientMulti,
+  TTimeSeriesRange,
+} from '../../../../types';
 import { TimeSeries } from './time-series';
 import { ArgumentError } from '../errors/argument.error';
 
@@ -22,14 +26,12 @@ export class SortedSetTimeSeries extends TimeSeries {
   onCleanUp(cb: ICallback<void>): void {
     const ts = TimeSeries.getCurrentTimestamp();
     const max = ts - this.retentionTime;
-    this.redisClient.zremrangebyscore(this.key, '-inf', `${max}`, () => cb());
+    this.redisClient.zremrangebyscore(this.key, '-inf', `${max}`, (err) =>
+      cb(err),
+    );
   }
 
-  getRange(
-    from: number,
-    to: number,
-    cb: ICallback<{ timestamp: number; value: number }[]>,
-  ): void {
+  getRange(from: number, to: number, cb: ICallback<TTimeSeriesRange>): void {
     if (to <= from) {
       cb(
         new ArgumentError(`Expected parameter [to] to be greater than [from]`),

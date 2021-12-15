@@ -25,7 +25,7 @@ enum ERedisKey {
   KEY_RATE_CONSUMER_PROCESSING,
   KEY_RATE_CONSUMER_ACKNOWLEDGED,
   KEY_RATE_CONSUMER_UNACKNOWLEDGED,
-  KEY_LOCK_WORKER_STATS,
+  KEY_WEBSOCKET_MAIN_STREAM_WORKER,
   KEY_LOCK_CONSUMER_WORKERS_RUNNER,
   KEY_LOCK_DELETE_PENDING_MESSAGE,
   KEY_LOCK_DELETE_PENDING_MESSAGE_WITH_PRIORITY,
@@ -42,18 +42,27 @@ enum ERedisKey {
   KEY_RATE_QUEUE_UNACKNOWLEDGED,
   KEY_RATE_QUEUE_UNACKNOWLEDGED_INDEX,
   KEY_RATE_QUEUE_INPUT,
-  KEY_RATE_QUEUE_INPUT_INDEX,
+  KEY_RATE_QUEUE_PUBLISHED_INDEX,
   KEY_RATE_GLOBAL_PROCESSING,
   KEY_RATE_GLOBAL_PROCESSING_INDEX,
   KEY_RATE_GLOBAL_ACKNOWLEDGED,
   KEY_RATE_GLOBAL_ACKNOWLEDGED_INDEX,
   KEY_RATE_GLOBAL_UNACKNOWLEDGED,
   KEY_RATE_GLOBAL_UNACKNOWLEDGED_INDEX,
-  KEY_RATE_GLOBAL_INPUT,
-  KEY_RATE_GLOBAL_INPUT_INDEX,
+  KEY_RATE_GLOBAL_PUBLISHED,
+  KEY_RATE_GLOBAL_PUBLISHED_INDEX,
   KEY_PRODUCER_HEARTBEAT,
   KEY_CONSUMER_HEARTBEAT,
   KEY_HEARTBEAT_TIMESTAMPS,
+  KEY_WEBSOCKET_RATE_STREAM_WORKER,
+  KEY_RATE_GLOBAL_PUBLISHED_LOCK,
+  KEY_RATE_GLOBAL_PROCESSING_LOCK,
+  KEY_RATE_GLOBAL_ACKNOWLEDGED_LOCK,
+  KEY_RATE_GLOBAL_UNACKNOWLEDGED_LOCK,
+  KEY_RATE_QUEUE_PUBLISHED_LOCK,
+  KEY_RATE_QUEUE_PROCESSING_LOCK,
+  KEY_RATE_QUEUE_ACKNOWLEDGED_LOCK,
+  KEY_RATE_QUEUE_UNACKNOWLEDGED_LOCK,
 }
 
 export const redisKeys = {
@@ -116,8 +125,24 @@ export const redisKeys = {
         ERedisKey.KEY_RATE_QUEUE_PROCESSING_INDEX,
         queueName,
       ),
-      keyRateQueueInputIndex: this.joinSegments(
-        ERedisKey.KEY_RATE_QUEUE_INPUT_INDEX,
+      keyRateQueuePublishedIndex: this.joinSegments(
+        ERedisKey.KEY_RATE_QUEUE_PUBLISHED_INDEX,
+        queueName,
+      ),
+      keyRateQueuePublishedLock: this.joinSegments(
+        ERedisKey.KEY_RATE_QUEUE_PUBLISHED_LOCK,
+        queueName,
+      ),
+      keyRateQueueProcessingLock: this.joinSegments(
+        ERedisKey.KEY_RATE_QUEUE_PROCESSING_LOCK,
+        queueName,
+      ),
+      keyRateQueueAcknowledgedLock: this.joinSegments(
+        ERedisKey.KEY_RATE_QUEUE_ACKNOWLEDGED_LOCK,
+        queueName,
+      ),
+      keyRateQueueUnacknowledgedLock: this.joinSegments(
+        ERedisKey.KEY_RATE_QUEUE_UNACKNOWLEDGED_LOCK,
         queueName,
       ),
     };
@@ -127,9 +152,9 @@ export const redisKeys = {
     };
   },
 
-  getConsumerKeys(queueName: string, instanceId: string) {
-    const parentKeys = this.getKeys(queueName);
+  getConsumerKeys(queueName: string, instanceId: string, ns?: string) {
     const globalKeys = this.getGlobalKeys();
+    const parentKeys = this.getKeys(queueName, ns);
     const keys = {
       keyQueueProcessing: this.joinSegments(
         ERedisKey.KEY_QUEUE_PROCESSING,
@@ -160,12 +185,12 @@ export const redisKeys = {
     return {
       ...parentKeys,
       ...globalKeys,
-      ...this.makeNamespacedKeys(keys, namespace),
+      ...this.makeNamespacedKeys(keys, ns ?? namespace),
     };
   },
 
-  getProducerKeys(queueName: string, instanceId: string) {
-    const parentKeys = this.getKeys(queueName);
+  getProducerKeys(queueName: string, instanceId: string, ns?: string) {
+    const parentKeys = this.getKeys(queueName, ns);
     const globalKeys = this.getGlobalKeys();
     const keys = {
       keyHeartbeat: this.joinSegments(
@@ -182,7 +207,7 @@ export const redisKeys = {
     return {
       ...parentKeys,
       ...globalKeys,
-      ...this.makeNamespacedKeys(keys, namespace),
+      ...this.makeNamespacedKeys(keys, ns ?? namespace),
     };
   },
 
@@ -248,7 +273,8 @@ export const redisKeys = {
       keyLockMessageManager: ERedisKey.KEY_LOCK_MESSAGE_MANAGER,
       keyLockQueueManager: ERedisKey.KEY_LOCK_QUEUE_MANAGER,
       keyLockConsumerWorkersRunner: ERedisKey.KEY_LOCK_CONSUMER_WORKERS_RUNNER,
-      keyLockWorkerStats: ERedisKey.KEY_LOCK_WORKER_STATS,
+      keyMainStreamWorkerStats: ERedisKey.KEY_WEBSOCKET_MAIN_STREAM_WORKER,
+      keyRateStreamWorkerStats: ERedisKey.KEY_WEBSOCKET_RATE_STREAM_WORKER,
       keyQueueDelay: ERedisKey.KEY_QUEUE_DELAY,
       keyQueueRequeue: ERedisKey.KEY_QUEUE_REQUEUE,
       keyQueueScheduled: ERedisKey.KEY_QUEUE_SCHEDULED,
@@ -265,14 +291,20 @@ export const redisKeys = {
       keyRateGlobalUnacknowledged: ERedisKey.KEY_RATE_GLOBAL_UNACKNOWLEDGED,
       keyRateGlobalAcknowledged: ERedisKey.KEY_RATE_GLOBAL_ACKNOWLEDGED,
       keyRateGlobalProcessing: ERedisKey.KEY_RATE_GLOBAL_PROCESSING,
-      keyRateGlobalInput: ERedisKey.KEY_RATE_GLOBAL_INPUT,
+      keyRateGlobalPublished: ERedisKey.KEY_RATE_GLOBAL_PUBLISHED,
       keyRateGlobalUnacknowledgedIndex:
         ERedisKey.KEY_RATE_GLOBAL_UNACKNOWLEDGED_INDEX,
       keyRateGlobalAcknowledgedIndex:
         ERedisKey.KEY_RATE_GLOBAL_ACKNOWLEDGED_INDEX,
       keyRateGlobalProcessingIndex: ERedisKey.KEY_RATE_GLOBAL_PROCESSING_INDEX,
-      keyRateGlobalInputIndex: ERedisKey.KEY_RATE_GLOBAL_INPUT_INDEX,
+      keyRateGlobalInputIndex: ERedisKey.KEY_RATE_GLOBAL_PUBLISHED_INDEX,
       keyHeartbeatTimestamps: ERedisKey.KEY_HEARTBEAT_TIMESTAMPS,
+      keyRateGlobalPublishedLock: ERedisKey.KEY_RATE_GLOBAL_PUBLISHED_LOCK,
+      keyRateGlobalAcknowledgedLock:
+        ERedisKey.KEY_RATE_GLOBAL_ACKNOWLEDGED_LOCK,
+      keyRateGlobalUnacknowledgedLock:
+        ERedisKey.KEY_RATE_GLOBAL_UNACKNOWLEDGED_LOCK,
+      keyRateGlobalProcessingLock: ERedisKey.KEY_RATE_GLOBAL_PROCESSING_LOCK,
     };
     return this.makeNamespacedKeys(keys, globalNamespace);
   },
