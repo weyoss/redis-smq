@@ -1,19 +1,30 @@
 import { TimeSeries } from './time-series';
-import { ICallback, TRedisClientMulti } from '../../../../types';
+import {
+  ICallback,
+  TRedisClientMulti,
+  TTimeSeriesRange,
+} from '../../../../types';
 import { ArgumentError } from '../errors/argument.error';
 import { RedisClient } from '../../redis-client/redis-client';
+import { events } from '../events';
+import { LockManager } from '../lock-manager/lock-manager';
 
 export class HashTimeSeries extends TimeSeries {
   protected indexKey: string;
+  protected lockManager: LockManager | null = null;
 
   constructor(
     redisClient: RedisClient,
     key: string,
     indexKey: string,
-    expireAfter: number | null = null,
+    lockKey: string,
+    expireAfter = 0,
     retentionTime = 24 * 60 * 60,
+    windowSize = 60,
+    readonly = false,
   ) {
-    super(redisClient, key, expireAfter, retentionTime);
+    super(redisClient, key, expireAfter, retentionTime, windowSize, readonly);
+    this.lockManager = new LockManager(redisClient, lockKey, 60000);
     this.indexKey = indexKey;
   }
 
@@ -56,11 +67,17 @@ export class HashTimeSeries extends TimeSeries {
     );
   }
 
-  getRange(
-    from: number,
-    to: number,
-    cb: ICallback<{ timestamp: number; value: number }[]>,
-  ): void {
+  protected cleanUp(): void {
+    if (this.lockManager) {
+      this.lockManager.acquireLock((err, locked) => {
+        if (err) this.emit(events.ERROR, err);
+        else if (locked) super.cleanUp();
+        else this.ticker?.nextTick();
+      });
+    } else super.cleanUp();
+  }
+
+  getRange(from: number, to: number, cb: ICallback<TTimeSeriesRange>): void {
     if (to <= from) {
       cb(
         new ArgumentError(`Expected parameter [to] to be greater than [from]`),

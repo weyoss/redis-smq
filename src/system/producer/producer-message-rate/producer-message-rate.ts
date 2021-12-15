@@ -1,42 +1,40 @@
-import { Producer } from './producer';
-import { ICallback, IProducerMessageRateFields } from '../../../types';
-import { MessageRate } from '../message-rate';
-import { RedisClient } from '../redis-client/redis-client';
-import { SortedSetTimeSeries } from '../common/time-series/sorted-set-time-series';
-import { HashTimeSeries } from '../common/time-series/hash-time-series';
+import { Producer } from '../producer';
+import { ICallback, IProducerMessageRateFields } from '../../../../types';
+import { MessageRate } from '../../message-rate';
+import { RedisClient } from '../../redis-client/redis-client';
 import * as async from 'async';
+import {
+  GlobalPublishedRateTimeSeries,
+  PublishedRateTimeSeries,
+  QueuePublishedRateTimeSeries,
+} from './producer-message-rate-time-series';
 
 export class ProducerMessageRate extends MessageRate<IProducerMessageRateFields> {
   protected inputSlots: number[] = new Array(1000).fill(0);
   protected inputRate = 0;
   protected producer: Producer;
-  protected inputRateTimeSeries: SortedSetTimeSeries;
-  protected queueInputRateTimeSeries: HashTimeSeries;
-  protected globalInputRateTimeSeries: HashTimeSeries;
+  protected inputRateTimeSeries: ReturnType<typeof PublishedRateTimeSeries>;
+  protected queueInputRateTimeSeries: ReturnType<
+    typeof QueuePublishedRateTimeSeries
+  >;
+  protected globalInputRateTimeSeries: ReturnType<
+    typeof GlobalPublishedRateTimeSeries
+  >;
 
   constructor(producer: Producer, redisClient: RedisClient) {
     super(redisClient);
     this.producer = producer;
-    const {
-      keyRateProducerInput,
-      keyRateQueueInput,
-      keyRateQueueInputIndex,
-      keyRateGlobalInput,
-      keyRateGlobalInputIndex,
-    } = this.producer.getRedisKeys();
-    this.inputRateTimeSeries = new SortedSetTimeSeries(
+    this.inputRateTimeSeries = PublishedRateTimeSeries(
       redisClient,
-      keyRateProducerInput,
+      producer.getId(),
+      producer.getQueueName(),
     );
-    this.queueInputRateTimeSeries = new HashTimeSeries(
-      redisClient,
-      keyRateQueueInput,
-      keyRateQueueInputIndex,
+    this.queueInputRateTimeSeries = QueuePublishedRateTimeSeries(
+      this.redisClient,
+      producer.getQueueName(),
     );
-    this.globalInputRateTimeSeries = new HashTimeSeries(
-      redisClient,
-      keyRateGlobalInput,
-      keyRateGlobalInputIndex,
+    this.globalInputRateTimeSeries = GlobalPublishedRateTimeSeries(
+      this.redisClient,
     );
   }
 

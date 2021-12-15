@@ -1,6 +1,6 @@
 import { IConfig, ICallback, TProducerRedisKeys } from '../../../types';
 import { Message } from '../message';
-import { ProducerMessageRate } from './producer-message-rate';
+import { ProducerMessageRate } from './producer-message-rate/producer-message-rate';
 import { Base } from '../base';
 import { events } from '../common/events';
 import { redisKeys } from '../common/redis-keys/redis-keys';

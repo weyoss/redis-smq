@@ -1,8 +1,8 @@
-import { getRedisInstance, startStatsWorker } from '../common';
+import { getRedisInstance, startWebsocketMainStreamWorker } from '../common';
 import { TWebsocketMainStreamPayload } from '../../types';
 
-test('WsMainStreamWorker: Case 1', async () => {
-  await startStatsWorker();
+test('WebsocketMainStreamWorker: Case 1', async () => {
+  await startWebsocketMainStreamWorker();
 
   const subscribeClient = await getRedisInstance();
   subscribeClient.subscribe('mainStream');
@@ -18,9 +18,15 @@ test('WsMainStreamWorker: Case 1', async () => {
     },
   );
 
-  expect(Object.keys(json)).toEqual(
-    expect.arrayContaining(['queues', 'scheduledMessages']),
-  );
-  expect(typeof json.scheduledMessages).toBe('number');
-  expect(typeof json.queues).toEqual('object');
+  expect(json).toEqual({
+    scheduledMessagesCount: 0,
+    deadLetteredMessagesCount: 0,
+    pendingMessagesCount: 0,
+    pendingMessagesWithPriorityCount: 0,
+    acknowledgedMessagesCount: 0,
+    producersCount: 0,
+    consumersCount: 0,
+    queuesCount: 0,
+    queues: {},
+  });
 });

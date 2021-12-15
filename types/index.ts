@@ -192,7 +192,14 @@ export type TAggregatedStatsQueue = {
 };
 
 export type TWebsocketMainStreamPayload = {
-  scheduledMessages: number;
+  scheduledMessagesCount: number;
+  queuesCount: number;
+  deadLetteredMessagesCount: number;
+  acknowledgedMessagesCount: number;
+  pendingMessagesCount: number;
+  pendingMessagesWithPriorityCount: number;
+  producersCount: number;
+  consumersCount: number;
   queues: {
     [ns: string]: {
       [queueName: string]: TWebsocketMainStreamPayloadQueue;
@@ -203,13 +210,20 @@ export type TWebsocketMainStreamPayload = {
 export type TWebsocketMainStreamPayloadQueue = {
   queueName: string;
   namespace: string;
-  deadLetteredMessages: number;
-  acknowledgedMessages: number;
-  pendingMessages: number;
-  pendingMessagesWithPriority: number;
-  producers: number;
-  consumers: number;
+  deadLetteredMessagesCount: number;
+  acknowledgedMessagesCount: number;
+  pendingMessagesCount: number;
+  pendingMessagesWithPriorityCount: number;
+  producersCount: number;
+  consumersCount: number;
 };
+
+export type TTimeSeriesRange = ITimeSeriesRangeItem[];
+
+export interface ITimeSeriesRangeItem {
+  timestamp: number;
+  value: number;
+}
 
 export type TAggregatedStats = {
   scheduledMessages: number;
