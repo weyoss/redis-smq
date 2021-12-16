@@ -7,6 +7,7 @@ import {
 } from '../common';
 import { TTimeSeriesRange } from '../../types';
 import { delay } from 'bluebird';
+import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 
 test('WebsocketRateStreamWorker: Case 1', async () => {
   const consumer = getConsumer();
@@ -18,7 +19,9 @@ test('WebsocketRateStreamWorker: Case 1', async () => {
   await startWebsocketRateStreamWorker();
 
   const subscribeClient = await getRedisInstance();
-  subscribeClient.subscribe('queueAcknowledged');
+  subscribeClient.subscribe(
+    `queueAcknowledged:${redisKeys.getNamespace()}:${consumer.getQueueName()}`,
+  );
 
   const data: { ts: number; timeSeries: TTimeSeriesRange }[] = [];
   subscribeClient.on('message', (channel, message) => {
