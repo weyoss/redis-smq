@@ -358,7 +358,7 @@ export async function listenForWebsocketStreamEvents<
   subscribeClient.on('message', (channel, message) => {
     if (typeof message === 'string') {
       const json: TPayload = JSON.parse(message);
-      data.push({ ts: Math.ceil(Date.now() / 1000), payload: json });
+      data.push({ ts: Date.now(), payload: json });
     } else throw new Error('Expected a message payload');
   });
   for (; true; ) {

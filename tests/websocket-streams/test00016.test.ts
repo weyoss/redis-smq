@@ -1,15 +1,17 @@
 import {
-  getProducer,
+  getConsumer,
   listenForWebsocketStreamEvents,
   startWebsocketHeartbeatStreamWorker,
   validateTime,
 } from '../common';
 import { THeartbeatPayload } from '../../types';
 
-test('WebsocketHeartbeatStreamWorker: producerHeartbeat', async () => {
-  const producer = getProducer();
+test('WebsocketHeartbeatStreamWorker: consumerHeartbeat', async () => {
+  const consumer = getConsumer();
+  await consumer.runAsync();
+
   const data = await listenForWebsocketStreamEvents<THeartbeatPayload>(
-    `producerHeartbeat:${producer.getId()}`,
+    `consumerHeartbeat:${consumer.getId()}`,
     startWebsocketHeartbeatStreamWorker,
   );
   for (let i = 0; i < data.length; i += 1) {
