@@ -294,6 +294,11 @@ export type TConsumerWorkerParameters = {
 };
 
 export type THeartbeatPayload = {
+  timestamp: number;
+  data: THeartbeatPayloadData;
+};
+
+export type THeartbeatPayloadData = {
   ipAddress: string[];
   hostname: string;
   pid: number;

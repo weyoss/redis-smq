@@ -12,6 +12,7 @@ import * as supertest from 'supertest';
 import { Logger } from '../src/system/common/logger';
 import { QueueManager } from '../src/system/queue-manager/queue-manager';
 import { WebsocketRateStreamWorker } from '../src/monitor-server/workers/websocket-rate-stream.worker';
+import { WebsocketHeartbeatStreamWorker } from '../src/monitor-server/workers/websocket-heartbeat-stream.worker';
 
 type TMonitorServer = ReturnType<typeof MonitorServer>;
 
@@ -49,6 +50,8 @@ const producersList: Producer[] = [];
 let monitorServer: TMonitorServer | null = null;
 let websocketMainStreamWorker: WebsocketMainStreamWorker | null = null;
 let websocketRateStreamWorker: WebsocketRateStreamWorker | null = null;
+let websocketHeartbeatStreamWorker: WebsocketHeartbeatStreamWorker | null =
+  null;
 let messageManager: MessageManager | null = null;
 let messageManagerFrontend: MessageManagerFrontend | null = null;
 let queueManager: QueueManager | null = null;
@@ -97,6 +100,7 @@ export async function shutdown(): Promise<void> {
   await stopMonitorServer();
   await stopWebsocketMainStreamWorker();
   await stopWebsocketRateStreamWorker();
+  await stopWebsocketHeartbeatStreamWorker();
 }
 
 export function getConsumer(args: TGetConsumerArgs = {}) {
@@ -205,6 +209,26 @@ export async function stopWebsocketRateStreamWorker(): Promise<void> {
     if (websocketRateStreamWorker) {
       websocketRateStreamWorker.quit(() => {
         websocketRateStreamWorker = null;
+        resolve();
+      });
+    } else resolve();
+  });
+}
+
+export async function startWebsocketHeartbeatStreamWorker(): Promise<void> {
+  const redisClient = await getRedisInstance();
+  const logger = getLogger();
+  websocketHeartbeatStreamWorker = new WebsocketHeartbeatStreamWorker(
+    redisClient,
+    logger,
+  );
+}
+
+export async function stopWebsocketHeartbeatStreamWorker(): Promise<void> {
+  return new Promise<void>((resolve) => {
+    if (websocketHeartbeatStreamWorker) {
+      websocketHeartbeatStreamWorker.quit(() => {
+        websocketHeartbeatStreamWorker = null;
         resolve();
       });
     } else resolve();
@@ -321,15 +345,20 @@ export async function produceScheduledMessage() {
   return { message, producer };
 }
 
-export async function listenForWebsocketStreamEvents(streamName: string) {
-  await startWebsocketRateStreamWorker();
+export async function listenForWebsocketStreamEvents<
+  TPayload = TTimeSeriesRange,
+>(
+  streamName: string,
+  startFn: () => Promise<void> = startWebsocketRateStreamWorker,
+) {
+  await startFn();
   const subscribeClient = await getRedisInstance();
   subscribeClient.subscribe(streamName);
-  const data: { ts: number; timeSeries: TTimeSeriesRange }[] = [];
+  const data: { ts: number; payload: TPayload }[] = [];
   subscribeClient.on('message', (channel, message) => {
     if (typeof message === 'string') {
-      const json: TTimeSeriesRange = JSON.parse(message);
-      data.push({ ts: Math.ceil(Date.now() / 1000), timeSeries: json });
+      const json: TPayload = JSON.parse(message);
+      data.push({ ts: Math.ceil(Date.now() / 1000), payload: json });
     } else throw new Error('Expected a message payload');
   });
   for (; true; ) {
