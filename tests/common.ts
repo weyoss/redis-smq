@@ -1,9 +1,9 @@
-import { promisifyAll } from 'bluebird';
+import { delay, promisifyAll } from 'bluebird';
 import { events } from '../src/system/common/events';
 import { RedisClient } from '../src/system/redis-client/redis-client';
 import { Producer, Message, MonitorServer, Consumer } from '../index';
 import { config } from './config';
-import { ICallback, IConfig } from '../types';
+import { ICallback, IConfig, TTimeSeriesRange } from '../types';
 import { WebsocketMainStreamWorker } from '../src/monitor-server/workers/websocket-main-stream.worker';
 import { QueueManagerFrontend } from '../src/system/queue-manager/queue-manager-frontend';
 import { MessageManagerFrontend } from '../src/system/message-manager/message-manager-frontend';
@@ -319,4 +319,22 @@ export async function produceScheduledMessage() {
   message.setScheduledDelay(10000);
   await producer.produceMessageAsync(message);
   return { message, producer };
+}
+
+export async function listenForWebsocketStreamEvents(streamName: string) {
+  await startWebsocketRateStreamWorker();
+  const subscribeClient = await getRedisInstance();
+  subscribeClient.subscribe(streamName);
+  const data: { ts: number; timeSeries: TTimeSeriesRange }[] = [];
+  subscribeClient.on('message', (channel, message) => {
+    if (typeof message === 'string') {
+      const json: TTimeSeriesRange = JSON.parse(message);
+      data.push({ ts: Math.ceil(Date.now() / 1000), timeSeries: json });
+    } else throw new Error('Expected a message payload');
+  });
+  for (; true; ) {
+    if (data.length === 5) break;
+    else await delay(500);
+  }
+  return data;
 }
