@@ -32,7 +32,7 @@ export class WebsocketRateStreamWorker {
   protected lockManager: LockManager;
   protected ticker: Ticker;
   protected redisClient: RedisClient;
-  protected data: {
+  protected queueData: {
     [ns: string]: {
       [queueName: string]: {
         consumers: string[];
@@ -41,6 +41,7 @@ export class WebsocketRateStreamWorker {
     };
   } = {};
   protected tasks: ((cb: ICallback<void>) => void)[] = [];
+  protected noop = (): void => void 0;
 
   constructor(redisClient: RedisClient, logger: BLogger) {
     const { keyRateStreamWorkerStats } = redisKeys.getGlobalKeys();
@@ -50,14 +51,14 @@ export class WebsocketRateStreamWorker {
       redisClient,
       keyRateStreamWorkerStats,
       10000,
-      true,
+      false,
     );
     this.ticker = new Ticker(this.run, 1000);
     this.ticker.nextTick();
   }
 
   protected reset = (): void => {
-    this.data = {};
+    this.queueData = {};
     this.tasks = [];
   };
 
@@ -75,13 +76,15 @@ export class WebsocketRateStreamWorker {
         String(ns),
         true,
       ).getRangeFrom(ts, (err, reply) => {
-        if (err) cb(err);
-        else
+        if (err) throw err;
+        else {
           this.redisClient.publish(
             `consumerAcknowledged:${consumerId}`,
             JSON.stringify(reply),
-            (err) => cb(err),
+            this.noop,
           );
+          cb();
+        }
       }),
     );
     this.tasks.push((cb: ICallback<void>) =>
@@ -93,12 +96,14 @@ export class WebsocketRateStreamWorker {
         true,
       ).getRangeFrom(ts, (err, reply) => {
         if (err) cb(err);
-        else
+        else {
           this.redisClient.publish(
             `consumerUnacknowledged:${consumerId}`,
             JSON.stringify(reply),
-            (err) => cb(err),
+            this.noop,
           );
+          cb();
+        }
       }),
     );
     this.tasks.push((cb: ICallback<void>) =>
@@ -110,12 +115,14 @@ export class WebsocketRateStreamWorker {
         true,
       ).getRangeFrom(ts, (err, reply) => {
         if (err) cb(err);
-        else
+        else {
           this.redisClient.publish(
             `consumerProcessing:${consumerId}`,
             JSON.stringify(reply),
-            (err) => cb(err),
+            this.noop,
           );
+          cb();
+        }
       }),
     );
   };
@@ -133,12 +140,14 @@ export class WebsocketRateStreamWorker {
         true,
       ).getRangeFrom(ts, (err, reply) => {
         if (err) cb(err);
-        else
+        else {
           this.redisClient.publish(
-            'queueAcknowledged',
+            `queueAcknowledged:${ns}:${queueName}`,
             JSON.stringify(reply),
-            (err) => cb(err),
+            this.noop,
           );
+          cb();
+        }
       }),
     );
     this.tasks.push((cb: ICallback<void>) =>
@@ -149,12 +158,14 @@ export class WebsocketRateStreamWorker {
         true,
       ).getRangeFrom(ts, (err, reply) => {
         if (err) cb(err);
-        else
+        else {
           this.redisClient.publish(
-            'queueUnacknowledged',
+            `queueUnacknowledged:${ns}:${queueName}`,
             JSON.stringify(reply),
-            (err) => cb(err),
+            this.noop,
           );
+          cb();
+        }
       }),
     );
     this.tasks.push((cb: ICallback<void>) =>
@@ -165,12 +176,14 @@ export class WebsocketRateStreamWorker {
         true,
       ).getRangeFrom(ts, (err, reply) => {
         if (err) cb(err);
-        else
+        else {
           this.redisClient.publish(
-            'queueProcessing',
+            `queueProcessing:${ns}:${queueName}`,
             JSON.stringify(reply),
-            (err) => cb(err),
+            this.noop,
           );
+          cb();
+        }
       }),
     );
     this.tasks.push((cb: ICallback<void>) =>
@@ -181,12 +194,14 @@ export class WebsocketRateStreamWorker {
         true,
       ).getRangeFrom(ts, (err, reply) => {
         if (err) cb(err);
-        else
+        else {
           this.redisClient.publish(
-            'queuePublished',
+            `queuePublished:${ns}:${queueName}`,
             JSON.stringify(reply),
-            (err) => cb(err),
+            this.noop,
           );
+          cb();
+        }
       }),
     );
   };
@@ -206,12 +221,14 @@ export class WebsocketRateStreamWorker {
         true,
       ).getRangeFrom(ts, (err, reply) => {
         if (err) cb(err);
-        else
+        else {
           this.redisClient.publish(
             `producerPublished:${producerId}`,
             JSON.stringify(reply),
-            (err) => cb(err),
+            this.noop,
           );
+          cb();
+        }
       }),
     );
   };
@@ -222,12 +239,14 @@ export class WebsocketRateStreamWorker {
         ts,
         (err, reply) => {
           if (err) cb(err);
-          else
+          else {
             this.redisClient.publish(
               'globalAcknowledged',
               JSON.stringify(reply),
-              (err) => cb(err),
+              this.noop,
             );
+            cb();
+          }
         },
       ),
     );
@@ -236,12 +255,14 @@ export class WebsocketRateStreamWorker {
         ts,
         (err, reply) => {
           if (err) cb(err);
-          else
+          else {
             this.redisClient.publish(
               'globalUnacknowledged',
               JSON.stringify(reply),
-              (err) => cb(err),
+              this.noop,
             );
+            cb();
+          }
         },
       ),
     );
@@ -250,12 +271,14 @@ export class WebsocketRateStreamWorker {
         ts,
         (err, reply) => {
           if (err) cb(err);
-          else
+          else {
             this.redisClient.publish(
               'globalProcessing',
               JSON.stringify(reply),
-              (err) => cb(err),
+              this.noop,
             );
+            cb();
+          }
         },
       ),
     );
@@ -264,12 +287,14 @@ export class WebsocketRateStreamWorker {
         ts,
         (err, reply) => {
           if (err) cb(err);
-          else
+          else {
             this.redisClient.publish(
               'globalPublished',
               JSON.stringify(reply),
-              (err) => cb(err),
+              this.noop,
             );
+            cb();
+          }
         },
       ),
     );
@@ -279,16 +304,16 @@ export class WebsocketRateStreamWorker {
     ns: string,
     queueName: string,
   ): { consumers: string[]; producers: string[] } => {
-    if (!this.data[ns]) {
-      this.data[ns] = {};
+    if (!this.queueData[ns]) {
+      this.queueData[ns] = {};
     }
-    if (!this.data[ns][queueName]) {
-      this.data[ns][queueName] = {
+    if (!this.queueData[ns][queueName]) {
+      this.queueData[ns][queueName] = {
         consumers: [],
         producers: [],
       };
     }
-    return this.data[ns][queueName];
+    return this.queueData[ns][queueName];
   };
 
   protected handleQueueConsumers = (
@@ -347,7 +372,7 @@ export class WebsocketRateStreamWorker {
     const ts = TimeSeries.getCurrentTimestamp();
     this.addGlobalTasks(ts);
     async.eachOf(
-      this.data,
+      this.queueData,
       (queues, ns, done) => {
         async.eachOf(
           queues,
@@ -361,9 +386,9 @@ export class WebsocketRateStreamWorker {
     );
   };
 
-  protected publish = (cb: ICallback<void>): void => {
+  protected publish = (): void => {
     this.logger.debug(`Publishing...`);
-    async.waterfall(this.tasks, cb);
+    async.waterfall(this.tasks, this.noop);
   };
 
   protected getHeartbeatKeys = (cb: ICallback<void>): void => {
@@ -408,17 +433,20 @@ export class WebsocketRateStreamWorker {
 
   protected run = (): void => {
     this.logger.debug(`Acquiring lock...`);
-    this.lockManager.acquireLock((err) => {
+    this.lockManager.acquireLock((err, lock) => {
       if (err) throw err;
-      this.logger.debug(`Lock acquired.`);
-      this.reset();
-      async.waterfall(
-        [this.getQueues, this.getHeartbeatKeys, this.prepare, this.publish],
-        (err?: Error | null) => {
-          if (err) throw err;
-          this.ticker.nextTick();
-        },
-      );
+      if (lock) {
+        this.logger.debug(`Lock acquired.`);
+        this.reset();
+        async.waterfall(
+          [this.getQueues, this.getHeartbeatKeys, this.prepare],
+          (err?: Error | null) => {
+            if (err) throw err;
+            this.publish();
+            this.ticker.nextTick();
+          },
+        );
+      } else this.ticker.nextTick();
     });
   };
 

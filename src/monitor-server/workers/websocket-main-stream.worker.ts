@@ -50,7 +50,7 @@ export class WebsocketMainStreamWorker {
       redisClient,
       keyMainStreamWorkerStats,
       10000,
-      true,
+      false,
     );
     this.redisClient = redisClient;
     this.queueManager = queueManager;
@@ -189,12 +189,16 @@ export class WebsocketMainStreamWorker {
     });
   };
 
-  protected publish = (cb: ICallback<number>): void => {
+  protected publish = (): void => {
     this.logger.debug(`Publishing...`);
-    this.redisClient.publish('mainStream', JSON.stringify(this.data), cb);
+    this.redisClient.publish(
+      'mainStream',
+      JSON.stringify(this.data),
+      this.noop,
+    );
   };
 
-  protected reset = (cb: ICallback<void>): void => {
+  protected reset = (): void => {
     this.data = {
       scheduledMessagesCount: 0,
       deadLetteredMessagesCount: 0,
@@ -206,28 +210,29 @@ export class WebsocketMainStreamWorker {
       queuesCount: 0,
       queues: {},
     };
-    cb();
   };
 
   protected run = (): void => {
     this.logger.debug(`Acquiring lock...`);
-    this.lockManager.acquireLock((err) => {
+    this.lockManager.acquireLock((err, lock) => {
       if (err) throw err;
-      this.logger.debug(`Lock acquired.`);
-      async.waterfall(
-        [
-          this.reset,
-          this.getScheduledMessages,
-          this.getQueues,
-          this.getQueueSize,
-          this.processHeartbeats,
-          this.publish,
-        ],
-        (err?: Error | null) => {
-          if (err) throw err;
-          this.ticker.nextTick();
-        },
-      );
+      if (lock) {
+        this.logger.debug(`Lock acquired.`);
+        this.reset();
+        async.waterfall(
+          [
+            this.getScheduledMessages,
+            this.getQueues,
+            this.getQueueSize,
+            this.processHeartbeats,
+          ],
+          (err?: Error | null) => {
+            if (err) throw err;
+            this.publish();
+            this.ticker.nextTick();
+          },
+        );
+      } else this.ticker.nextTick();
     });
   };
 

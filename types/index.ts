@@ -292,3 +292,11 @@ export type TConsumerWorkerParameters = {
   config: IConfig;
   consumerId: string;
 };
+
+export type THeartbeatPayload = {
+  ipAddress: string[];
+  hostname: string;
+  pid: number;
+  ram: { usage: NodeJS.MemoryUsage; free: number; total: number };
+  cpu: { user: number; system: number; percentage: string };
+};

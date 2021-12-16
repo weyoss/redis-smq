@@ -1,6 +1,6 @@
 import * as os from 'os';
 import * as async from 'async';
-import { ICallback } from '../../../types';
+import { ICallback, THeartbeatPayload } from '../../../types';
 import { Ticker } from './ticker/ticker';
 import { events } from './events';
 import { RedisClient } from '../redis-client/redis-client';
@@ -82,7 +82,7 @@ export class Heartbeat extends EventEmitter {
   }
 
   protected onTick(): void {
-    const usage = {
+    const usage: THeartbeatPayload = {
       ipAddress: IPAddresses,
       hostname: os.hostname(),
       pid: process.pid,
@@ -128,10 +128,11 @@ export class Heartbeat extends EventEmitter {
 
   static getValidHeartbeats(
     redisClient: RedisClient,
+    transform: boolean,
     cb: ICallback<
       {
         key: string;
-        payload: string;
+        payload: THeartbeatPayload | string;
       }[]
     >,
   ): void {
@@ -149,11 +150,14 @@ export class Heartbeat extends EventEmitter {
             if (err) cb(err);
             else if (!res) cb(new EmptyCallbackReplyError());
             else {
-              const heartbeats = res.map((payload, index) => {
+              const heartbeats = res.map((payloadStr, index) => {
                 const key = reply[index];
+                const payload: THeartbeatPayload | string = transform
+                  ? JSON.parse(payloadStr)
+                  : payloadStr;
                 return {
                   key,
-                  payload: JSON.parse(payload),
+                  payload,
                 };
               });
               cb(null, heartbeats);
