@@ -56,7 +56,7 @@ export class WebsocketHeartbeatStreamWorker {
                     );
                   } else if (producerId) {
                     this.redisClient.publish(
-                      `producerHeartbeat:${consumerId}`,
+                      `producerHeartbeat:${producerId}`,
                       payload,
                       this.noop,
                     );

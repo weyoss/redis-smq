@@ -1,6 +1,10 @@
 import * as os from 'os';
 import * as async from 'async';
-import { ICallback, THeartbeatPayload } from '../../../types';
+import {
+  ICallback,
+  THeartbeatPayload,
+  THeartbeatPayloadData,
+} from '../../../types';
 import { Ticker } from './ticker/ticker';
 import { events } from './events';
 import { RedisClient } from '../redis-client/redis-client';
@@ -82,24 +86,24 @@ export class Heartbeat extends EventEmitter {
   }
 
   protected onTick(): void {
-    const usage: THeartbeatPayload = {
-      ipAddress: IPAddresses,
-      hostname: os.hostname(),
-      pid: process.pid,
-      ram: {
-        usage: process.memoryUsage(),
-        free: os.freemem(),
-        total: os.totalmem(),
-      },
-      cpu: cpuUsage(),
-    };
     const timestamp = Date.now();
-    const payload = JSON.stringify({
+    const payload: THeartbeatPayload = {
       timestamp,
-      usage,
-    });
+      data: {
+        ipAddress: IPAddresses,
+        hostname: os.hostname(),
+        pid: process.pid,
+        ram: {
+          usage: process.memoryUsage(),
+          free: os.freemem(),
+          total: os.totalmem(),
+        },
+        cpu: cpuUsage(),
+      },
+    };
+    const payloadStr = JSON.stringify(payload);
     const multi = this.redisClient.multi();
-    multi.hset(this.keyHeartbeatIndex, this.keyHeartbeat, payload);
+    multi.hset(this.keyHeartbeatIndex, this.keyHeartbeat, payloadStr);
     multi.zadd(this.keyHeartbeatTimestamps, timestamp, this.keyHeartbeat);
     this.redisClient.execMulti(multi, (err) => {
       if (err) this.emit(events.ERROR, err);
@@ -132,7 +136,7 @@ export class Heartbeat extends EventEmitter {
     cb: ICallback<
       {
         key: string;
-        payload: THeartbeatPayload | string;
+        payload: THeartbeatPayloadData | string;
       }[]
     >,
   ): void {
@@ -152,7 +156,7 @@ export class Heartbeat extends EventEmitter {
             else {
               const heartbeats = res.map((payloadStr, index) => {
                 const key = reply[index];
-                const payload: THeartbeatPayload | string = transform
+                const payload: THeartbeatPayloadData | string = transform
                   ? JSON.parse(payloadStr)
                   : payloadStr;
                 return {
