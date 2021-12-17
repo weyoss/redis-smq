@@ -1,6 +1,6 @@
 import { ISuperTestResponse, startMonitorServer } from '../common';
 import * as supertest from 'supertest';
-import { GetScheduledMessagesResponseBodyDataDTO } from '../../src/monitor-server/controllers/scheduled-messages/get-scheduled-messages/get-scheduled-messages-response.DTO';
+import { GetScheduledMessagesResponseBodyDataDTO } from '../../src/monitor-server/controllers/scheduled-messages/actions/get-scheduled-messages/get-scheduled-messages-response.DTO';
 
 test('Fetching and deleting scheduled messages using the HTTP API: Case 3', async () => {
   await startMonitorServer();

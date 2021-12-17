@@ -1,9 +1,9 @@
 import { TApplication } from '../../../../types/common';
-import { TGetMessagesContext } from '../../../common/context';
+import { TGetMessagesContext } from '../context';
 
 export function GetPendingMessagesHandler(app: TApplication) {
   return async (ctx: TGetMessagesContext) => {
-    const { messageManagerService } = app.context.services;
-    return messageManagerService.getPendingMessages(ctx.state.dto);
+    const { messagesService } = app.context.services;
+    return messagesService.getPendingMessages(ctx.state.dto);
   };
 }

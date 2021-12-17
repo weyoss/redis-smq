@@ -7,7 +7,7 @@ import { TMessageQueue } from '../../../types';
 
 const queueManagerAsync = promisifyAll(QueueManager.prototype);
 
-export class QueueManagerService {
+export class QueuesService {
   protected queueManager: typeof queueManagerAsync;
 
   constructor(queueManager: QueueManager) {

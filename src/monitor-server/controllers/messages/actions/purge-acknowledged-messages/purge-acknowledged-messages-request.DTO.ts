@@ -1,3 +1,3 @@
-import { PurgeQueueRequestDTO } from '../../../common/purge-queue-request.DTO';
+import { PurgeMessagesRequestDTO } from '../../common/purge-messages-request.DTO';
 
-export class PurgeAcknowledgedMessagesRequestDTO extends PurgeQueueRequestDTO {}
+export class PurgeAcknowledgedMessagesRequestDTO extends PurgeMessagesRequestDTO {}

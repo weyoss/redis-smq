@@ -2,40 +2,41 @@ import * as os from 'os';
 import * as async from 'async';
 import {
   ICallback,
+  THeartbeatParams,
   THeartbeatPayload,
   THeartbeatPayloadData,
-} from '../../../types';
-import { Ticker } from './ticker/ticker';
-import { events } from './events';
-import { RedisClient } from '../redis-client/redis-client';
-import { redisKeys } from './redis-keys/redis-keys';
+} from '../../../../types';
+import { Ticker } from '../ticker/ticker';
+import { events } from '../events';
+import { RedisClient } from '../../redis-client/redis-client';
+import { redisKeys } from '../redis-keys/redis-keys';
 import { EventEmitter } from 'events';
-import { EmptyCallbackReplyError } from './errors/empty-callback-reply.error';
+import { EmptyCallbackReplyError } from '../errors/empty-callback-reply.error';
+import { heartbeatRegistry } from './heartbeat-registry';
 
-const IPAddresses = getIPAddresses();
-
-const cpuUsageStats = {
+const cpuUsageStatsRef = {
   cpuUsage: process.cpuUsage(),
   time: process.hrtime(),
 };
 
-// convert hrtime to milliseconds
-function hrtime(time: number[]) {
-  return time[0] * 1e3 + time[1] / 1e6;
-}
-
-// convert (user/system) usage time from micro to milliseconds
-function usageTime(time: number) {
-  return time / 1000;
-}
-
 function cpuUsage() {
   const currentTimestamp = process.hrtime();
   const currentCPUUsage = process.cpuUsage();
-  const timestampDiff = process.hrtime(cpuUsageStats.time);
-  const cpuUsageDiff = process.cpuUsage(cpuUsageStats.cpuUsage);
-  cpuUsageStats.time = currentTimestamp;
-  cpuUsageStats.cpuUsage = currentCPUUsage;
+  const timestampDiff = process.hrtime(cpuUsageStatsRef.time);
+  const cpuUsageDiff = process.cpuUsage(cpuUsageStatsRef.cpuUsage);
+  cpuUsageStatsRef.time = currentTimestamp;
+  cpuUsageStatsRef.cpuUsage = currentCPUUsage;
+
+  // convert hrtime to milliseconds
+  const hrtime = (time: number[]) => {
+    return time[0] * 1e3 + time[1] / 1e6;
+  };
+
+  // convert (user/system) usage time from micro to milliseconds
+  const usageTime = (time: number) => {
+    return time / 1000;
+  };
+
   return {
     percentage: (
       (usageTime(cpuUsageDiff.user + cpuUsageDiff.system) /
@@ -46,35 +47,17 @@ function cpuUsage() {
   };
 }
 
-function getIPAddresses() {
-  const nets = os.networkInterfaces();
-  const addresses: string[] = [];
-  for (const netInterface in nets) {
-    const addr = nets[netInterface] ?? [];
-    for (const netAddr of addr) {
-      if (netAddr.family === 'IPv4' && !netAddr.internal) {
-        addresses.push(netAddr.address);
-      }
-    }
-  }
-  return addresses;
-}
-
-function validateOnlineTimestamp(timestamp: number) {
-  const now = Date.now();
-  return now - timestamp <= 10000;
-}
-
 export class Heartbeat extends EventEmitter {
   protected redisClient: RedisClient;
   protected ticker: Ticker;
-  protected keyHeartbeat: string;
   protected keyHeartbeatIndex: string;
   protected keyHeartbeatTimestamps: string;
+  protected isRegistered = false;
+  protected heartbeatParams: THeartbeatParams;
 
-  constructor(keyHeartbeat: string, redisClient: RedisClient) {
+  constructor(params: THeartbeatParams, redisClient: RedisClient) {
     super();
-    this.keyHeartbeat = keyHeartbeat;
+    this.heartbeatParams = params;
     this.keyHeartbeatIndex = redisKeys.getGlobalKeys().keyIndexHeartbeats;
     this.keyHeartbeatTimestamps =
       redisKeys.getGlobalKeys().keyHeartbeatTimestamps;
@@ -85,14 +68,11 @@ export class Heartbeat extends EventEmitter {
     this.ticker.nextTick();
   }
 
-  protected onTick(): void {
+  protected getPayload(): THeartbeatPayload {
     const timestamp = Date.now();
-    const payload: THeartbeatPayload = {
+    return {
       timestamp,
       data: {
-        ipAddress: IPAddresses,
-        hostname: os.hostname(),
-        pid: process.pid,
         ram: {
           usage: process.memoryUsage(),
           free: os.freemem(),
@@ -101,10 +81,28 @@ export class Heartbeat extends EventEmitter {
         cpu: cpuUsage(),
       },
     };
-    const payloadStr = JSON.stringify(payload);
+  }
+
+  protected onTick(): void {
+    const timestamp = Date.now();
+    const heartbeatPayload = this.getPayload();
+    const heartbeatPayloadStr = JSON.stringify(heartbeatPayload);
+    const heartbeatParamsStr = JSON.stringify(this.heartbeatParams);
     const multi = this.redisClient.multi();
-    multi.hset(this.keyHeartbeatIndex, this.keyHeartbeat, payloadStr);
-    multi.zadd(this.keyHeartbeatTimestamps, timestamp, this.keyHeartbeat);
+    if (!this.isRegistered) {
+      heartbeatRegistry.register(
+        multi,
+        this.heartbeatParams.keyInstanceRegistry,
+        this.heartbeatParams.instanceId,
+      );
+      this.isRegistered = true;
+    }
+    multi.hset(
+      this.keyHeartbeatIndex,
+      this.heartbeatParams.keyHeartbeat,
+      heartbeatPayloadStr,
+    );
+    multi.zadd(this.keyHeartbeatTimestamps, timestamp, heartbeatParamsStr);
     this.redisClient.execMulti(multi, (err) => {
       if (err) this.emit(events.ERROR, err);
       else this.ticker.nextTick();
@@ -121,7 +119,7 @@ export class Heartbeat extends EventEmitter {
         (cb: ICallback<void>) =>
           Heartbeat.handleExpiredHeartbeatKeys(
             this.redisClient,
-            [this.keyHeartbeat],
+            [this.heartbeatParams],
             (err) => cb(err),
           ),
         (cb: ICallback<void>) => this.redisClient.halt(cb),
@@ -150,12 +148,16 @@ export class Heartbeat extends EventEmitter {
       (err, reply) => {
         if (err) cb(err);
         else if (reply && reply.length) {
-          redisClient.hmget(keyIndexHeartbeats, reply, (err, res) => {
+          const keys = reply.map((i) => {
+            const { keyHeartbeat }: THeartbeatParams = JSON.parse(i);
+            return keyHeartbeat;
+          });
+          redisClient.hmget(keyIndexHeartbeats, keys, (err, res) => {
             if (err) cb(err);
             else if (!res) cb(new EmptyCallbackReplyError());
             else {
               const heartbeats = res.map((payloadStr, index) => {
-                const key = reply[index];
+                const key = keys[index];
                 const payload: THeartbeatPayloadData | string = transform
                   ? JSON.parse(payloadStr)
                   : payloadStr;
@@ -174,7 +176,8 @@ export class Heartbeat extends EventEmitter {
 
   static getValidHeartbeatKeys(
     redisClient: RedisClient,
-    cb: ICallback<string[]>,
+    parse: boolean,
+    cb: ICallback<(THeartbeatParams | string)[]>,
   ): void {
     const { keyHeartbeatTimestamps } = redisKeys.getGlobalKeys();
     const timestamp = Date.now() - 10 * 1000;
@@ -184,14 +187,19 @@ export class Heartbeat extends EventEmitter {
       '+inf',
       (err, reply) => {
         if (err) cb(err);
-        else cb(null, reply ?? []);
+        else {
+          const arr = reply ?? [];
+          const params = parse ? arr.map((i) => JSON.parse(i)) : arr;
+          cb(null, params);
+        }
       },
     );
   }
 
   static getExpiredHeartbeatsKeys(
     redisClient: RedisClient,
-    cb: ICallback<string[]>,
+    parse: boolean,
+    cb: ICallback<(THeartbeatParams | string)[]>,
   ): void {
     const { keyHeartbeatTimestamps } = redisKeys.getGlobalKeys();
     const timestamp = Date.now() - 10 * 1000;
@@ -201,40 +209,42 @@ export class Heartbeat extends EventEmitter {
       timestamp,
       (err, reply) => {
         if (err) cb(err);
-        else cb(null, reply ?? []);
+        else {
+          const arr = reply ?? [];
+          const params = parse ? arr.map((i) => JSON.parse(i)) : arr;
+          cb(null, params);
+        }
       },
     );
   }
 
-  static isAlive(
-    redisClient: RedisClient,
-    keyHeartbeat: string,
-    cb: ICallback<boolean>,
-  ): void {
-    const { keyIndexHeartbeats } = redisKeys.getGlobalKeys();
-    redisClient.hget(keyIndexHeartbeats, keyHeartbeat, (err, res) => {
-      if (err) cb(err);
-      else if (!res) cb(null, false);
-      else {
-        const { timestamp }: { timestamp: number } = JSON.parse(res);
-        const isOnline = validateOnlineTimestamp(timestamp);
-        cb(null, isOnline);
-      }
-    });
-  }
-
   static handleExpiredHeartbeatKeys(
     client: RedisClient,
-    heartbeats: string[],
+    keyHeartBeatParams: (THeartbeatParams | string)[],
     cb: ICallback<void>,
   ): void {
-    if (heartbeats.length) {
+    if (keyHeartBeatParams.length) {
       const { keyIndexHeartbeats, keyHeartbeatTimestamps } =
         redisKeys.getGlobalKeys();
       const multi = client.multi();
-      multi.hdel(keyIndexHeartbeats, ...heartbeats);
-      multi.zrem(keyHeartbeatTimestamps, ...heartbeats);
-      client.execMulti(multi, (err) => cb(err));
+      async.each(
+        keyHeartBeatParams,
+        (item, done) => {
+          const {
+            keyHeartbeat,
+            keyInstanceRegistry,
+            instanceId,
+          }: THeartbeatParams =
+            typeof item === 'string' ? JSON.parse(item) : item;
+          const paramsStr =
+            typeof item === 'string' ? item : JSON.stringify(item);
+          multi.hdel(keyIndexHeartbeats, keyHeartbeat);
+          multi.zrem(keyHeartbeatTimestamps, paramsStr);
+          heartbeatRegistry.unregister(multi, keyInstanceRegistry, instanceId);
+          done();
+        },
+        () => client.execMulti(multi, (err) => cb(err)),
+      );
     } else cb();
   }
 }

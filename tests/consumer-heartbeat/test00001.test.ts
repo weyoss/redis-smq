@@ -1,4 +1,4 @@
-import { Heartbeat } from '../../src/system/common/heartbeat';
+import { Heartbeat } from '../../src/system/common/heartbeat/heartbeat';
 import { getConsumer, getRedisInstance, untilConsumerIdle } from '../common';
 import { promisifyAll } from 'bluebird';
 import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
@@ -14,10 +14,14 @@ describe('Consumer heartbeat: check online/offline consumers', () => {
     //
     const validHeartbeatKeys = await HeartbeatAsync.getValidHeartbeatKeysAsync(
       redisClient,
+      true,
     );
     expect(validHeartbeatKeys.length).toBe(1);
-    const { consumerId: id1 } =
-      redisKeys.extractData(validHeartbeatKeys[0]) ?? {};
+    const key1 =
+      typeof validHeartbeatKeys[0] === 'string'
+        ? ''
+        : validHeartbeatKeys[0].keyHeartbeat;
+    const { consumerId: id1 } = redisKeys.extractData(key1) ?? {};
     expect(id1).toBe(consumer.getId());
 
     //
@@ -32,7 +36,7 @@ describe('Consumer heartbeat: check online/offline consumers', () => {
 
     //
     const expiredHeartbeatKeys =
-      await HeartbeatAsync.getExpiredHeartbeatsKeysAsync(redisClient);
+      await HeartbeatAsync.getExpiredHeartbeatsKeysAsync(redisClient, false);
     expect(expiredHeartbeatKeys.length).toBe(0);
 
     await consumer.shutdownAsync();
@@ -40,6 +44,7 @@ describe('Consumer heartbeat: check online/offline consumers', () => {
     //
     const validHeartbeatKeys2 = await HeartbeatAsync.getValidHeartbeatKeysAsync(
       redisClient,
+      false,
     );
     expect(validHeartbeatKeys2.length).toBe(0);
 
@@ -52,7 +57,7 @@ describe('Consumer heartbeat: check online/offline consumers', () => {
 
     //
     const expiredHeartbeatKeys2 =
-      await HeartbeatAsync.getExpiredHeartbeatsKeysAsync(redisClient);
+      await HeartbeatAsync.getExpiredHeartbeatsKeysAsync(redisClient, false);
     expect(expiredHeartbeatKeys2.length).toBe(0);
   });
 });

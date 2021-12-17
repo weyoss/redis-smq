@@ -4,8 +4,8 @@ import {
   TGetPendingMessagesWithPriorityReply,
   TGetScheduledMessagesReply,
 } from '../../../types';
-import { GetScheduledMessagesRequestDTO } from '../controllers/scheduled-messages/get-scheduled-messages/get-scheduled-messages-request.DTO';
-import { DeleteScheduledMessageRequestDTO } from '../controllers/scheduled-messages/delete-scheduled-message/delete-scheduled-message-request.DTO';
+import { GetScheduledMessagesRequestDTO } from '../controllers/scheduled-messages/actions/get-scheduled-messages/get-scheduled-messages-request.DTO';
+import { DeleteScheduledMessageRequestDTO } from '../controllers/scheduled-messages/actions/delete-scheduled-message/delete-scheduled-message-request.DTO';
 import { MessageManager } from '../../system/message-manager/message-manager';
 import { GetPendingMessagesRequestDTO } from '../controllers/messages/actions/get-pending-messages/get-pending-messages-request.DTO';
 import { GetAcknowledgedMessagesRequestDTO } from '../controllers/messages/actions/get-acknowledged-messages/get-acknowledged-messages-request.DTO';
@@ -20,7 +20,7 @@ import { RequeueAcknowledgedMessageRequestDTO } from '../controllers/messages/ac
 
 const messageManagerAsync = promisifyAll(MessageManager.prototype);
 
-export class MessageManagerService {
+export class MessagesService {
   protected messageManager: typeof messageManagerAsync;
 
   constructor(messageManager: MessageManager) {

@@ -1,11 +1,11 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class PurgeQueueRequestDTO {
-  @IsString()
-  @IsNotEmpty()
-  queueName!: string;
-
+export class QueueRequestDTO {
   @IsString()
   @IsNotEmpty()
   ns!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  queueName!: string;
 }

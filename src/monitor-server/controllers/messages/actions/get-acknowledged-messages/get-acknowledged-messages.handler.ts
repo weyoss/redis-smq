@@ -1,9 +1,9 @@
 import { TApplication } from '../../../../types/common';
-import { TGetMessagesContext } from '../../../common/context';
+import { TGetMessagesContext } from '../context';
 
 export function GetAcknowledgedMessagesHandler(app: TApplication) {
   return async (ctx: TGetMessagesContext) => {
-    const { messageManagerService } = app.context.services;
-    return messageManagerService.getAcknowledgedMessages(ctx.state.dto);
+    const { messagesService } = app.context.services;
+    return messagesService.getAcknowledgedMessages(ctx.state.dto);
   };
 }

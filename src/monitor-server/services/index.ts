@@ -1,29 +1,27 @@
-import { MessageManagerService } from './message-manager.service';
+import { MessagesService } from './messages.service';
 import { TApplication } from '../types/common';
 import { MessageManager } from '../../system/message-manager/message-manager';
-import { QueueManagerService } from './queue-manager.service';
+import { QueuesService } from './queues.service';
 import { QueueManager } from '../../system/queue-manager/queue-manager';
 
 export function Services(app: TApplication) {
   const { redis, logger } = app.context;
-  let messageManagerServiceInstance: MessageManagerService | null = null;
-  let queueManagerServiceInstance: QueueManagerService | null = null;
+  let messagesService: MessagesService | null = null;
+  let queuesService: QueuesService | null = null;
   return {
-    get messageManagerService() {
-      if (!messageManagerServiceInstance) {
+    get messagesService() {
+      if (!messagesService) {
         const messageManager = new MessageManager(redis, logger);
-        messageManagerServiceInstance = new MessageManagerService(
-          messageManager,
-        );
+        messagesService = new MessagesService(messageManager);
       }
-      return messageManagerServiceInstance;
+      return messagesService;
     },
-    get queueManagerService() {
-      if (!queueManagerServiceInstance) {
+    get queuesService() {
+      if (!queuesService) {
         const queueManager = new QueueManager(redis, logger);
-        queueManagerServiceInstance = new QueueManagerService(queueManager);
+        queuesService = new QueuesService(queueManager);
       }
-      return queueManagerServiceInstance;
+      return queuesService;
     },
   };
 }

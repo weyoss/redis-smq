@@ -293,15 +293,25 @@ export type TConsumerWorkerParameters = {
   consumerId: string;
 };
 
+export type THeartbeatRegistryPayload = {
+  ipAddress: string[];
+  hostname: string;
+  pid: number;
+  createdAt: number;
+};
+
+export type THeartbeatParams = {
+  keyHeartbeat: string;
+  keyInstanceRegistry: string;
+  instanceId: string;
+};
+
 export type THeartbeatPayload = {
   timestamp: number;
   data: THeartbeatPayloadData;
 };
 
 export type THeartbeatPayloadData = {
-  ipAddress: string[];
-  hostname: string;
-  pid: number;
   ram: { usage: NodeJS.MemoryUsage; free: number; total: number };
   cpu: { user: number; system: number; percentage: string };
 };

@@ -15,11 +15,11 @@ import { MessageManager } from './message-manager/message-manager';
 import { Message } from './message';
 import { EmptyCallbackReplyError } from './common/errors/empty-callback-reply.error';
 import { PanicError } from './common/errors/panic.error';
-import { Heartbeat } from './common/heartbeat';
+import { Heartbeat } from './common/heartbeat/heartbeat';
 
 export abstract class Base<
   TMessageRate extends MessageRate,
-  TRedisKeys extends { keyHeartbeat: string },
+  TRedisKeys extends Record<string, string>,
 > extends EventEmitter {
   protected readonly id: string;
   protected readonly queueName: string;
@@ -117,11 +117,7 @@ export abstract class Base<
       if (err) cb(err);
       else if (!client) cb(new EmptyCallbackReplyError());
       else {
-        const { keyHeartbeat } = this.getRedisKeys();
-        this.heartbeat = new Heartbeat(keyHeartbeat, client);
-        this.heartbeat.on(events.ERROR, (err: Error) =>
-          this.emit(events.ERROR, err),
-        );
+        this.heartbeat = this.getHeartbeat(client);
         cb();
       }
     });
@@ -271,4 +267,6 @@ export abstract class Base<
   abstract getRedisKeys(): TRedisKeys;
 
   abstract getMessageRate(redisClient: RedisClient): TMessageRate;
+
+  abstract getHeartbeat(redisClient: RedisClient): Heartbeat;
 }
