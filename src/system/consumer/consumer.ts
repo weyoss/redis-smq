@@ -2,6 +2,7 @@ import {
   EMessageUnacknowledgedCause,
   ICallback,
   TConsumerRedisKeys,
+  THeartbeatRegistryPayload,
   TUnaryFunction,
 } from '../../../types';
 import { Base } from '../base';
@@ -18,7 +19,8 @@ import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.e
 import { ConsumerError } from './consumer.error';
 import { PanicError } from '../common/errors/panic.error';
 import { redisKeys } from '../common/redis-keys/redis-keys';
-import { Heartbeat } from '../common/heartbeat';
+import { Heartbeat } from '../common/heartbeat/heartbeat';
+import { heartbeatRegistry } from '../common/heartbeat/heartbeat-registry';
 
 export class Consumer extends Base<ConsumerMessageRate, TConsumerRedisKeys> {
   private consumerRedisClient: RedisClient | null = null;
@@ -261,6 +263,20 @@ export class Consumer extends Base<ConsumerMessageRate, TConsumerRedisKeys> {
     return new ConsumerMessageRate(this, redisClient);
   }
 
+  getHeartbeat(redisClient: RedisClient): Heartbeat {
+    const { keyHeartbeatConsumer, keyQueueConsumers } = this.getRedisKeys();
+    const heartbeat = new Heartbeat(
+      {
+        keyHeartbeat: keyHeartbeatConsumer,
+        keyInstanceRegistry: keyQueueConsumers,
+        instanceId: this.getId(),
+      },
+      redisClient,
+    );
+    heartbeat.on(events.ERROR, (err: Error) => this.emit(events.ERROR, err));
+    return heartbeat;
+  }
+
   getRedisKeys(): TConsumerRedisKeys {
     if (!this.redisKeys) {
       this.redisKeys = redisKeys.getConsumerKeys(this.queueName, this.id);
@@ -274,7 +290,28 @@ export class Consumer extends Base<ConsumerMessageRate, TConsumerRedisKeys> {
     id: string,
     cb: ICallback<boolean>,
   ): void {
-    const { keyHeartbeat } = redisKeys.getConsumerKeys(queueName, id);
-    Heartbeat.isAlive(redisClient, keyHeartbeat, cb);
+    const { keyQueueConsumers } = redisKeys.getConsumerKeys(queueName, id);
+    heartbeatRegistry.exists(redisClient, keyQueueConsumers, id, cb);
+  }
+
+  static getOnlineConsumers(
+    redisClient: RedisClient,
+    queueName: string,
+    ns: string | undefined,
+    transform = false,
+    cb: ICallback<Record<string, THeartbeatRegistryPayload | string>>,
+  ): void {
+    const { keyQueueConsumers } = redisKeys.getKeys(queueName, ns);
+    heartbeatRegistry.getAll(redisClient, keyQueueConsumers, transform, cb);
+  }
+
+  static countOnlineConsumers(
+    redisClient: RedisClient,
+    queueName: string,
+    ns: string | undefined,
+    cb: ICallback<number>,
+  ): void {
+    const { keyQueueConsumers } = redisKeys.getKeys(queueName, ns);
+    heartbeatRegistry.count(redisClient, keyQueueConsumers, cb);
   }
 }

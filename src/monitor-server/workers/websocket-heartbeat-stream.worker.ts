@@ -8,7 +8,7 @@ import { LockManager } from '../../system/common/lock-manager/lock-manager';
 import { Ticker } from '../../system/common/ticker/ticker';
 import * as async from 'async';
 import { events } from '../../system/common/events';
-import { Heartbeat } from '../../system/common/heartbeat';
+import { Heartbeat } from '../../system/common/heartbeat/heartbeat';
 
 export class WebsocketHeartbeatStreamWorker {
   protected logger;
@@ -19,12 +19,12 @@ export class WebsocketHeartbeatStreamWorker {
   protected noop = (): void => void 0;
 
   constructor(redisClient: RedisClient, logger: BLogger) {
-    const { keyRateStreamWorkerStats } = redisKeys.getGlobalKeys();
+    const { keyLockWebsocketHeartbeatStreamWorker } = redisKeys.getGlobalKeys();
     this.logger = logger;
     this.redisClient = redisClient;
     this.lockManager = new LockManager(
       redisClient,
-      keyRateStreamWorkerStats,
+      keyLockWebsocketHeartbeatStreamWorker,
       10000,
       false,
     );

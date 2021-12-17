@@ -19,7 +19,7 @@ test('WebsocketHeartbeatStreamWorker: producerHeartbeat', async () => {
       expect.arrayContaining(['timestamp', 'data']),
     );
     expect(Object.keys(data[i].payload.data)).toEqual(
-      expect.arrayContaining(['ipAddress', 'hostname', 'pid', 'ram', 'cpu']),
+      expect.arrayContaining(['ram', 'cpu']),
     );
   }
 });

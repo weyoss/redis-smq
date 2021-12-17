@@ -1,9 +1,9 @@
 import { TApplication } from '../../../../types/common';
-import { TGetMessagesContext } from '../../../common/context';
+import { TGetMessagesContext } from '../context';
 
 export function GetDeadLetteredMessagesHandler(app: TApplication) {
   return async (ctx: TGetMessagesContext) => {
-    const { messageManagerService } = app.context.services;
-    return messageManagerService.getDeadLetteredMessages(ctx.state.dto);
+    const { messagesService } = app.context.services;
+    return messagesService.getDeadLetteredMessages(ctx.state.dto);
   };
 }

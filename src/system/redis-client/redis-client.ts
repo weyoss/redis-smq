@@ -462,6 +462,13 @@ export class RedisClient extends EventEmitter {
     this.client.hmget(source, keys, cb);
   }
 
+  hexists(source: string, key: string, cb: ICallback<boolean>): void {
+    this.client.hexists(source, key, (err, reply) => {
+      if (err) cb(err);
+      else cb(null, Boolean(reply));
+    });
+  }
+
   halt(cb: ICallback<void>): void {
     this.client.once('end', cb);
     this.end(true);

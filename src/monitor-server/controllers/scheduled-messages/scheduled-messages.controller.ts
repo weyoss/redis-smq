@@ -3,15 +3,15 @@ import {
   ERouteControllerActionPayload,
   TRouteController,
 } from '../../lib/routing';
-import { GetScheduledMessagesHandler } from './get-scheduled-messages/get-scheduled-messages.handler';
-import { GetScheduledMessagesResponseDTO } from './get-scheduled-messages/get-scheduled-messages-response.DTO';
-import { DeleteScheduledMessageRequestDTO } from './delete-scheduled-message/delete-scheduled-message-request.DTO';
-import { DeleteScheduledMessageHandler } from './delete-scheduled-message/delete-scheduled-message.handler';
-import { DeleteScheduledMessageResponseDTO } from './delete-scheduled-message/delete-scheduled-message-response.DTO';
-import { GetScheduledMessagesRequestDTO } from './get-scheduled-messages/get-scheduled-messages-request.DTO';
-import { PurgeScheduledMessagesHandler } from './purge-scheduled-messages/purge-scheduled-messages.handler';
-import { PurgeScheduledMessagesRequestDTO } from './purge-scheduled-messages/purge-scheduled-messages-request.DTO';
-import { PurgeScheduledMessagesResponseDTO } from './purge-scheduled-messages/purge-scheduled-messages-response.DTO';
+import { GetScheduledMessagesHandler } from './actions/get-scheduled-messages/get-scheduled-messages.handler';
+import { GetScheduledMessagesResponseDTO } from './actions/get-scheduled-messages/get-scheduled-messages-response.DTO';
+import { DeleteScheduledMessageRequestDTO } from './actions/delete-scheduled-message/delete-scheduled-message-request.DTO';
+import { DeleteScheduledMessageHandler } from './actions/delete-scheduled-message/delete-scheduled-message.handler';
+import { DeleteScheduledMessageResponseDTO } from './actions/delete-scheduled-message/delete-scheduled-message-response.DTO';
+import { GetScheduledMessagesRequestDTO } from './actions/get-scheduled-messages/get-scheduled-messages-request.DTO';
+import { PurgeScheduledMessagesHandler } from './actions/purge-scheduled-messages/purge-scheduled-messages.handler';
+import { PurgeScheduledMessagesRequestDTO } from './actions/purge-scheduled-messages/purge-scheduled-messages-request.DTO';
+import { PurgeScheduledMessagesResponseDTO } from './actions/purge-scheduled-messages/purge-scheduled-messages-response.DTO';
 
 export const scheduledMessagesController: TRouteController = {
   prefix: '/scheduled-messages',

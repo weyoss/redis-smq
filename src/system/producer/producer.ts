@@ -1,4 +1,9 @@
-import { IConfig, ICallback, TProducerRedisKeys } from '../../../types';
+import {
+  IConfig,
+  ICallback,
+  TProducerRedisKeys,
+  THeartbeatRegistryPayload,
+} from '../../../types';
 import { Message } from '../message';
 import { ProducerMessageRate } from './producer-message-rate/producer-message-rate';
 import { Base } from '../base';
@@ -6,7 +11,8 @@ import { events } from '../common/events';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { RedisClient } from '../redis-client/redis-client';
 import { PanicError } from '../common/errors/panic.error';
-import { Heartbeat } from '../common/heartbeat';
+import { Heartbeat } from '../common/heartbeat/heartbeat';
+import { heartbeatRegistry } from '../common/heartbeat/heartbeat-registry';
 
 export class Producer extends Base<ProducerMessageRate, TProducerRedisKeys> {
   constructor(queueName: string, config: IConfig = {}) {
@@ -63,13 +69,48 @@ export class Producer extends Base<ProducerMessageRate, TProducerRedisKeys> {
     return this.redisKeys;
   }
 
+  getHeartbeat(redisClient: RedisClient): Heartbeat {
+    const { keyHeartbeatProducer, keyQueueProducers } = this.getRedisKeys();
+    const heartbeat = new Heartbeat(
+      {
+        keyHeartbeat: keyHeartbeatProducer,
+        keyInstanceRegistry: keyQueueProducers,
+        instanceId: this.getId(),
+      },
+      redisClient,
+    );
+    heartbeat.on(events.ERROR, (err: Error) => this.emit(events.ERROR, err));
+    return heartbeat;
+  }
+
   static isAlive(
     redisClient: RedisClient,
     queueName: string,
     id: string,
     cb: ICallback<boolean>,
   ): void {
-    const { keyHeartbeat } = redisKeys.getProducerKeys(queueName, id);
-    Heartbeat.isAlive(redisClient, keyHeartbeat, cb);
+    const { keyQueueProducers } = redisKeys.getProducerKeys(queueName, id);
+    heartbeatRegistry.exists(redisClient, keyQueueProducers, id, cb);
+  }
+
+  static getOnlineProducers(
+    redisClient: RedisClient,
+    queueName: string,
+    ns: string | undefined,
+    transform = false,
+    cb: ICallback<Record<string, THeartbeatRegistryPayload | string>>,
+  ): void {
+    const { keyQueueProducers } = redisKeys.getKeys(queueName, ns);
+    heartbeatRegistry.getAll(redisClient, keyQueueProducers, transform, cb);
+  }
+
+  static countOnlineProducers(
+    redisClient: RedisClient,
+    queueName: string,
+    ns: string | undefined,
+    cb: ICallback<number>,
+  ): void {
+    const { keyQueueProducers } = redisKeys.getKeys(queueName, ns);
+    heartbeatRegistry.count(redisClient, keyQueueProducers, cb);
   }
 }

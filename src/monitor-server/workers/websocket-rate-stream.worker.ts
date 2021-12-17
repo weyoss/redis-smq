@@ -9,7 +9,7 @@ import { Ticker } from '../../system/common/ticker/ticker';
 import * as async from 'async';
 import { events } from '../../system/common/events';
 import { TimeSeries } from '../../system/common/time-series/time-series';
-import { Heartbeat } from '../../system/common/heartbeat';
+import { Heartbeat } from '../../system/common/heartbeat/heartbeat';
 import {
   AcknowledgedRateTimeSeries,
   GlobalAcknowledgedRateTimeSeries,
@@ -26,6 +26,7 @@ import {
   PublishedRateTimeSeries,
   QueuePublishedRateTimeSeries,
 } from '../../system/producer/producer-message-rate/producer-message-rate-time-series';
+import { InvalidCallbackReplyError } from '../../system/common/errors/invalid-callback-reply.error';
 
 export class WebsocketRateStreamWorker {
   protected logger;
@@ -44,12 +45,12 @@ export class WebsocketRateStreamWorker {
   protected noop = (): void => void 0;
 
   constructor(redisClient: RedisClient, logger: BLogger) {
-    const { keyRateStreamWorkerStats } = redisKeys.getGlobalKeys();
+    const { keyLockWebsocketRateStreamWorker } = redisKeys.getGlobalKeys();
     this.logger = logger;
     this.redisClient = redisClient;
     this.lockManager = new LockManager(
       redisClient,
-      keyRateStreamWorkerStats,
+      keyLockWebsocketRateStreamWorker,
       10000,
       false,
     );
@@ -392,14 +393,15 @@ export class WebsocketRateStreamWorker {
   };
 
   protected getHeartbeatKeys = (cb: ICallback<void>): void => {
-    Heartbeat.getValidHeartbeatKeys(this.redisClient, (err, reply) => {
+    Heartbeat.getValidHeartbeatKeys(this.redisClient, true, (err, reply) => {
       if (err) cb(err);
       else {
         async.each(
           reply ?? [],
-          (key, done) => {
+          (item, done) => {
+            if (typeof item === 'string') throw new InvalidCallbackReplyError();
             const { ns, queueName, consumerId, producerId } =
-              redisKeys.extractData(key) ?? {};
+              redisKeys.extractData(item.keyHeartbeat) ?? {};
             if (ns && queueName && (consumerId || producerId)) {
               const queue = this.addQueue(ns, queueName);
               if (consumerId) queue.consumers.push(consumerId);

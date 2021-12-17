@@ -2,13 +2,23 @@ import {
   Allow,
   IsBoolean,
   IsInt,
+  IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
   ValidateNested,
 } from 'class-validator';
-import { MessageQueueDTO } from './message-queue.DTO';
 import { Type } from 'class-transformer';
+
+export class MessageQueueDTO {
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  ns!: string;
+}
 
 export class MessageDTO {
   @IsUUID('4')

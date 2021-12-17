@@ -25,7 +25,7 @@ enum ERedisKey {
   KEY_RATE_CONSUMER_PROCESSING,
   KEY_RATE_CONSUMER_ACKNOWLEDGED,
   KEY_RATE_CONSUMER_UNACKNOWLEDGED,
-  KEY_WEBSOCKET_MAIN_STREAM_WORKER,
+  KEY_LOCK_WEBSOCKET_MAIN_STREAM_WORKER,
   KEY_LOCK_CONSUMER_WORKERS_RUNNER,
   KEY_LOCK_DELETE_PENDING_MESSAGE,
   KEY_LOCK_DELETE_PENDING_MESSAGE_WITH_PRIORITY,
@@ -51,10 +51,10 @@ enum ERedisKey {
   KEY_RATE_GLOBAL_UNACKNOWLEDGED_INDEX,
   KEY_RATE_GLOBAL_PUBLISHED,
   KEY_RATE_GLOBAL_PUBLISHED_INDEX,
-  KEY_PRODUCER_HEARTBEAT,
-  KEY_CONSUMER_HEARTBEAT,
+  KEY_HEARTBEAT_PRODUCER,
+  KEY_HEARTBEAT_CONSUMER,
   KEY_HEARTBEAT_TIMESTAMPS,
-  KEY_WEBSOCKET_RATE_STREAM_WORKER,
+  KEY_LOCK_WEBSOCKET_RATE_STREAM_WORKER,
   KEY_RATE_GLOBAL_PUBLISHED_LOCK,
   KEY_RATE_GLOBAL_PROCESSING_LOCK,
   KEY_RATE_GLOBAL_ACKNOWLEDGED_LOCK,
@@ -63,6 +63,10 @@ enum ERedisKey {
   KEY_RATE_QUEUE_PROCESSING_LOCK,
   KEY_RATE_QUEUE_ACKNOWLEDGED_LOCK,
   KEY_RATE_QUEUE_UNACKNOWLEDGED_LOCK,
+  KEY_QUEUE_CONSUMERS,
+  KEY_QUEUE_PRODUCERS,
+  KEY_LOCK_WEBSOCKET_HEARTBEAT_STREAM_WORKER,
+  KEY_LOCK_WEBSOCKET_ONLINE_STREAM_WORKER,
 }
 
 export const redisKeys = {
@@ -145,6 +149,14 @@ export const redisKeys = {
         ERedisKey.KEY_RATE_QUEUE_UNACKNOWLEDGED_LOCK,
         queueName,
       ),
+      keyQueueConsumers: this.joinSegments(
+        ERedisKey.KEY_QUEUE_CONSUMERS,
+        queueName,
+      ),
+      keyQueueProducers: this.joinSegments(
+        ERedisKey.KEY_QUEUE_PRODUCERS,
+        queueName,
+      ),
     };
     return {
       ...globalKeys,
@@ -166,8 +178,8 @@ export const redisKeys = {
         queueName,
         instanceId,
       ),
-      keyHeartbeat: this.joinSegments(
-        ERedisKey.KEY_CONSUMER_HEARTBEAT,
+      keyHeartbeatConsumer: this.joinSegments(
+        ERedisKey.KEY_HEARTBEAT_CONSUMER,
         queueName,
         instanceId,
       ),
@@ -193,8 +205,8 @@ export const redisKeys = {
     const parentKeys = this.getKeys(queueName, ns);
     const globalKeys = this.getGlobalKeys();
     const keys = {
-      keyHeartbeat: this.joinSegments(
-        ERedisKey.KEY_PRODUCER_HEARTBEAT,
+      keyHeartbeatProducer: this.joinSegments(
+        ERedisKey.KEY_HEARTBEAT_PRODUCER,
         queueName,
         instanceId,
       ),
@@ -231,7 +243,7 @@ export const redisKeys = {
       type === ERedisKey.KEY_RATE_CONSUMER_PROCESSING ||
       type === ERedisKey.KEY_RATE_CONSUMER_ACKNOWLEDGED ||
       type === ERedisKey.KEY_RATE_CONSUMER_UNACKNOWLEDGED ||
-      type === ERedisKey.KEY_CONSUMER_HEARTBEAT
+      type === ERedisKey.KEY_HEARTBEAT_CONSUMER
     ) {
       const [queueName, consumerId] = segments;
       return {
@@ -243,7 +255,7 @@ export const redisKeys = {
     }
     if (
       type === ERedisKey.KEY_RATE_PRODUCER_INPUT ||
-      type === ERedisKey.KEY_PRODUCER_HEARTBEAT
+      type === ERedisKey.KEY_HEARTBEAT_PRODUCER
     ) {
       const [queueName, producerId] = segments;
       return {
@@ -273,8 +285,14 @@ export const redisKeys = {
       keyLockMessageManager: ERedisKey.KEY_LOCK_MESSAGE_MANAGER,
       keyLockQueueManager: ERedisKey.KEY_LOCK_QUEUE_MANAGER,
       keyLockConsumerWorkersRunner: ERedisKey.KEY_LOCK_CONSUMER_WORKERS_RUNNER,
-      keyMainStreamWorkerStats: ERedisKey.KEY_WEBSOCKET_MAIN_STREAM_WORKER,
-      keyRateStreamWorkerStats: ERedisKey.KEY_WEBSOCKET_RATE_STREAM_WORKER,
+      keyLockWebsocketMainStreamWorker:
+        ERedisKey.KEY_LOCK_WEBSOCKET_MAIN_STREAM_WORKER,
+      keyLockWebsocketRateStreamWorker:
+        ERedisKey.KEY_LOCK_WEBSOCKET_RATE_STREAM_WORKER,
+      keyLockWebsocketHeartbeatStreamWorker:
+        ERedisKey.KEY_LOCK_WEBSOCKET_HEARTBEAT_STREAM_WORKER,
+      keyLockWebsocketOnlineStreamWorker:
+        ERedisKey.KEY_LOCK_WEBSOCKET_ONLINE_STREAM_WORKER,
       keyQueueDelay: ERedisKey.KEY_QUEUE_DELAY,
       keyQueueRequeue: ERedisKey.KEY_QUEUE_REQUEUE,
       keyQueueScheduled: ERedisKey.KEY_QUEUE_SCHEDULED,

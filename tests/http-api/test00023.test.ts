@@ -4,7 +4,7 @@ import {
   startMonitorServer,
 } from '../common';
 import * as supertest from 'supertest';
-import { GetScheduledMessagesResponseBodyDataDTO } from '../../src/monitor-server/controllers/scheduled-messages/get-scheduled-messages/get-scheduled-messages-response.DTO';
+import { GetScheduledMessagesResponseBodyDataDTO } from '../../src/monitor-server/controllers/scheduled-messages/actions/get-scheduled-messages/get-scheduled-messages-response.DTO';
 
 test('Purge scheduled messages', async () => {
   await startMonitorServer();

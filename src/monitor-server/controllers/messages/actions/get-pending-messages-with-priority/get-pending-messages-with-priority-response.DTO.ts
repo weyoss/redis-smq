@@ -1,6 +1,6 @@
 import { IsInt, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { MessageDTO } from '../../../common/message.DTO';
+import { MessageDTO } from '../../common/message.DTO';
 
 export class GetPendingMessagesWithPriorityResponseBodyDataDTO {
   @IsInt()

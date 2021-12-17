@@ -4,7 +4,7 @@ import {
   startMonitorServer,
 } from '../common';
 import * as supertest from 'supertest';
-import { GetMessagesResponseBodyDataDTO } from '../../src/monitor-server/controllers/common/get-messages-response-body.DTO';
+import { GetMessagesResponseBodyDataDTO } from '../../src/monitor-server/controllers/messages/common/get-messages-response-body.DTO';
 import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 
 test('Fetching dead-lettered messages', async () => {

@@ -16,7 +16,8 @@ import { events } from '../../system/common/events';
 import BLogger from 'bunyan';
 import { MessageManager } from '../../system/message-manager/message-manager';
 import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callback-reply.error';
-import { Heartbeat } from '../../system/common/heartbeat';
+import { Consumer } from '../../system/consumer/consumer';
+import { Producer } from '../../system/producer/producer';
 
 export class WebsocketMainStreamWorker {
   protected logger;
@@ -44,11 +45,11 @@ export class WebsocketMainStreamWorker {
     redisClient: RedisClient,
     logger: BLogger,
   ) {
-    const { keyMainStreamWorkerStats } = redisKeys.getGlobalKeys();
+    const { keyLockWebsocketMainStreamWorker } = redisKeys.getGlobalKeys();
     this.logger = logger;
     this.lockManager = new LockManager(
       redisClient,
-      keyMainStreamWorkerStats,
+      keyLockWebsocketMainStreamWorker,
       10000,
       false,
     );
@@ -152,7 +153,7 @@ export class WebsocketMainStreamWorker {
     this.queueManager.getMessageQueues(cb);
   };
 
-  protected getScheduledMessages = (cb: ICallback<void>): void => {
+  protected countScheduledMessages = (cb: ICallback<void>): void => {
     this.messageManager.getScheduledMessagesCount((err, count) => {
       if (err) cb(err);
       else {
@@ -162,31 +163,71 @@ export class WebsocketMainStreamWorker {
     });
   };
 
-  protected processHeartbeats = (cb: ICallback<void>): void => {
-    Heartbeat.getValidHeartbeatKeys(this.redisClient, (err, reply) => {
-      if (err) cb(err);
-      else {
-        async.each(
-          reply ?? [],
-          (key, done) => {
-            const { ns, queueName, consumerId, producerId } =
-              redisKeys.extractData(key) ?? {};
-            if (ns && queueName && (consumerId || producerId)) {
-              const queue = this.addQueue(ns, queueName);
-              if (consumerId) {
-                queue.consumersCount += 1;
-                this.data.consumersCount += 1;
-              } else {
-                queue.producersCount += 1;
-                this.data.producersCount += 1;
-              }
-              done();
-            } else done();
+  protected countQueueConsumers = (
+    ns: string,
+    queueName: string,
+    cb: ICallback<void>,
+  ): void => {
+    Consumer.countOnlineConsumers(
+      this.redisClient,
+      queueName,
+      ns,
+      (err, reply) => {
+        if (err) cb(err);
+        else {
+          const count = Number(reply);
+          this.data.consumersCount += count;
+          this.data.queues[ns][queueName].consumersCount = count;
+          cb();
+        }
+      },
+    );
+  };
+
+  protected countQueueProducers = (
+    ns: string,
+    queueName: string,
+    cb: ICallback<void>,
+  ): void => {
+    Producer.countOnlineProducers(
+      this.redisClient,
+      queueName,
+      ns,
+      (err, reply) => {
+        if (err) cb(err);
+        else {
+          const count = Number(reply);
+          this.data.producersCount += count;
+          this.data.queues[ns][queueName].producersCount = count;
+          cb();
+        }
+      },
+    );
+  };
+
+  protected updateOnlineInstances = (cb: ICallback<void>): void => {
+    async.eachOf(
+      this.data.queues,
+      (item, key, done) => {
+        async.eachOf(
+          item,
+          (item, key, done) => {
+            const { namespace, queueName } = item;
+            async.waterfall(
+              [
+                (done: ICallback<void>) =>
+                  this.countQueueConsumers(namespace, queueName, done),
+                (done: ICallback<void>) =>
+                  this.countQueueProducers(namespace, queueName, done),
+              ],
+              done,
+            );
           },
-          cb,
+          done,
         );
-      }
-    });
+      },
+      cb,
+    );
   };
 
   protected publish = (): void => {
@@ -221,10 +262,10 @@ export class WebsocketMainStreamWorker {
         this.reset();
         async.waterfall(
           [
-            this.getScheduledMessages,
+            this.countScheduledMessages,
             this.getQueues,
             this.getQueueSize,
-            this.processHeartbeats,
+            this.updateOnlineInstances,
           ],
           (err?: Error | null) => {
             if (err) throw err;

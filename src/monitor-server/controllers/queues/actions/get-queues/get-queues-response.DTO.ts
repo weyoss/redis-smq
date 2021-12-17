@@ -1,12 +1,27 @@
-import { IsArray, IsInt, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsInt,
+  IsNotEmpty,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
-import { MessageQueueDTO } from '../../../common/message-queue.DTO';
+
+export class GetQueuesResponseBodyQueueDTO {
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  ns!: string;
+}
 
 export class GetQueuesResponseBodyDTO {
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => MessageQueueDTO)
-  data!: MessageQueueDTO[];
+  @Type(() => GetQueuesResponseBodyQueueDTO)
+  data!: GetQueuesResponseBodyQueueDTO[];
 }
 
 export class GetQueuesResponseDTO {
