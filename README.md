@@ -45,7 +45,7 @@ High-level overview of how RedisSMQ works:
  * **[JSON Logging](docs/logs.md)**: Supports JSON log format for troubleshooting and debugging.
  * **Highly optimized**: Implemented using pure callbacks, with small memory footprint and no memory leaks. See [callbacks vs promises vs async/await benchmarks](http://bluebirdjs.com/docs/benchmarks.html).
  * **[Configurable](docs/configuration.md)**: Many options and features can be configured.
- * **Rigorously tested**: With 79+ tests and code coverage no less than 80%.
+ * **Rigorously tested**: With 100+ tests and code coverage no less than 80%.
  * **Supports both redis & ioredis**: RedisSMQ can be configured to use either `redis` or `ioredis` 
  to connect to Redis server.  
 

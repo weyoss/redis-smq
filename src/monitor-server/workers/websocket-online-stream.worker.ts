@@ -46,62 +46,68 @@ export class WebsocketOnlineStreamWorker {
       if (err) throw err;
       else if (lock) {
         this.logger.debug(`Lock acquired.`);
-        async.waterfall([
-          (cb: ICallback<TMessageQueue[]>) => {
-            this.queueManager.getMessageQueues(cb);
+        async.waterfall(
+          [
+            (cb: ICallback<TMessageQueue[]>) => {
+              this.queueManager.getMessageQueues(cb);
+            },
+            (queues: TMessageQueue[], cb: ICallback<void>) => {
+              async.each(
+                queues,
+                (item, done) => {
+                  async.waterfall(
+                    [
+                      (cb: ICallback<void>) => {
+                        Consumer.getOnlineConsumers(
+                          this.redisClient,
+                          item.name,
+                          item.ns,
+                          false,
+                          (err, reply) => {
+                            if (err) cb(err);
+                            else {
+                              this.redisClient.publish(
+                                `queueOnlineConsumers:${item.ns}:${item.name}`,
+                                JSON.stringify(reply ?? {}),
+                                this.noop,
+                              );
+                              cb();
+                            }
+                          },
+                        );
+                      },
+                      (cb: ICallback<void>) => {
+                        Producer.getOnlineProducers(
+                          this.redisClient,
+                          item.name,
+                          item.ns,
+                          false,
+                          (err, reply) => {
+                            if (err) cb(err);
+                            else {
+                              this.redisClient.publish(
+                                `queueOnlineProducers:${item.ns}:${item.name}`,
+                                JSON.stringify(reply ?? {}),
+                                this.noop,
+                              );
+                              cb();
+                            }
+                          },
+                        );
+                      },
+                    ],
+                    done,
+                  );
+                },
+                cb,
+              );
+            },
+          ],
+          (err) => {
+            if (err) throw err;
+            this.ticker.nextTick();
           },
-          (queues: TMessageQueue[], cb: ICallback<void>) => {
-            async.each(
-              queues,
-              (item, done) => {
-                async.waterfall(
-                  [
-                    (cb: ICallback<void>) => {
-                      Consumer.getOnlineConsumers(
-                        this.redisClient,
-                        item.name,
-                        item.ns,
-                        false,
-                        (err, reply) => {
-                          if (err) cb(err);
-                          else {
-                            this.redisClient.publish(
-                              `queueOnlineConsumers:${item.ns}:${item.name}`,
-                              JSON.stringify(reply ?? {}),
-                              this.noop,
-                            );
-                            cb();
-                          }
-                        },
-                      );
-                    },
-                    (cb: ICallback<void>) => {
-                      Producer.getOnlineProducers(
-                        this.redisClient,
-                        item.name,
-                        item.ns,
-                        false,
-                        (err, reply) => {
-                          if (err) cb(err);
-                          else {
-                            this.redisClient.publish(
-                              `queueOnlineProducers:${item.ns}:${item.name}`,
-                              JSON.stringify(reply ?? {}),
-                              this.noop,
-                            );
-                            cb();
-                          }
-                        },
-                      );
-                    },
-                  ],
-                  done,
-                );
-              },
-              cb,
-            );
-          },
-        ]);
+        );
       } else this.ticker.nextTick();
     });
   };

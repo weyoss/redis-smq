@@ -71,14 +71,18 @@ const patchedEnd = function (
 export class RedisClient extends EventEmitter {
   static redisServerVersion: number[] | null = null;
   static scriptsLoaded = false;
-
+  protected connectionClosed = true;
   protected client: TCompatibleRedisClient;
 
   protected constructor(config: IConfig = {}) {
     super();
     this.client = this.getClient(config);
     this.client.once('ready', () => {
+      this.connectionClosed = false;
       this.emit('ready');
+    });
+    this.client.once('end', () => {
+      this.connectionClosed = true;
     });
     if (this.client instanceof NodeRedis) {
       this.client.end = patchedEnd;
@@ -187,6 +191,10 @@ export class RedisClient extends EventEmitter {
 
   subscribe(channel: string): void {
     this.client.subscribe(channel);
+  }
+
+  unsubscribe(channel: string): void {
+    this.client.unsubscribe(channel);
   }
 
   on(event: string, listener: (...args: unknown[]) => void) {
@@ -470,20 +478,26 @@ export class RedisClient extends EventEmitter {
   }
 
   halt(cb: ICallback<void>): void {
-    this.client.once('end', cb);
-    this.end(true);
+    if (!this.connectionClosed) {
+      this.client.once('end', cb);
+      this.end(true);
+    } else cb();
   }
 
   end(flush: boolean): void {
-    if (this.client instanceof NodeRedis) {
-      this.client.end(flush);
-    } else {
-      this.client.disconnect(false);
+    if (!this.connectionClosed) {
+      if (this.client instanceof NodeRedis) {
+        this.client.end(flush);
+      } else {
+        this.client.disconnect(false);
+      }
     }
   }
 
-  quit(cb?: ICallback<void>): void {
-    this.client.quit(() => cb && cb());
+  quit(cb: ICallback<void> = () => void 0): void {
+    if (!this.connectionClosed) {
+      this.client.quit(() => cb());
+    } else cb();
   }
 
   updateServerVersion(cb: ICallback<void>): void {
