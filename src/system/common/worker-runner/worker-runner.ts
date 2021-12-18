@@ -69,4 +69,8 @@ export class WorkerRunner {
   isRunning(): boolean {
     return this.powerManager.isRunning();
   }
+
+  isDown(): boolean {
+    return this.powerManager.isDown() && !this.powerManager.isGoingUp();
+  }
 }

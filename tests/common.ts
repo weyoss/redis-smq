@@ -13,6 +13,7 @@ import { Logger } from '../src/system/common/logger';
 import { QueueManager } from '../src/system/queue-manager/queue-manager';
 import { WebsocketRateStreamWorker } from '../src/monitor-server/workers/websocket-rate-stream.worker';
 import { WebsocketHeartbeatStreamWorker } from '../src/monitor-server/workers/websocket-heartbeat-stream.worker';
+import { WebsocketOnlineStreamWorker } from '../src/monitor-server/workers/websocket-online-stream.worker';
 
 type TMonitorServer = ReturnType<typeof MonitorServer>;
 
@@ -52,6 +53,7 @@ let websocketMainStreamWorker: WebsocketMainStreamWorker | null = null;
 let websocketRateStreamWorker: WebsocketRateStreamWorker | null = null;
 let websocketHeartbeatStreamWorker: WebsocketHeartbeatStreamWorker | null =
   null;
+let websocketOnlineStreamWorker: WebsocketOnlineStreamWorker | null = null;
 let messageManager: MessageManager | null = null;
 let messageManagerFrontend: MessageManagerFrontend | null = null;
 let queueManager: QueueManager | null = null;
@@ -101,6 +103,7 @@ export async function shutdown(): Promise<void> {
   await stopWebsocketMainStreamWorker();
   await stopWebsocketRateStreamWorker();
   await stopWebsocketHeartbeatStreamWorker();
+  await stopWebsocketOnlineStreamWorker();
 }
 
 export function getConsumer(args: TGetConsumerArgs = {}) {
@@ -160,8 +163,10 @@ export async function getQueueManager() {
 }
 
 export async function startMonitorServer(): Promise<void> {
-  monitorServer = MonitorServer(config);
-  await monitorServer.listen();
+  if (!monitorServer) {
+    monitorServer = MonitorServer(config);
+    await monitorServer.listen();
+  }
 }
 
 export async function stopMonitorServer(): Promise<void> {
@@ -172,16 +177,18 @@ export async function stopMonitorServer(): Promise<void> {
 }
 
 export async function startWebsocketMainStreamWorker(): Promise<void> {
-  const redisClient = await getRedisInstance();
-  const queueManager = await getQueueManager();
-  const messageManager = await getMessageManager();
-  const logger = getLogger();
-  websocketMainStreamWorker = new WebsocketMainStreamWorker(
-    queueManager,
-    messageManager,
-    redisClient,
-    logger,
-  );
+  if (!websocketMainStreamWorker) {
+    const redisClient = await getRedisInstance();
+    const queueManager = await getQueueManager();
+    const messageManager = await getMessageManager();
+    const logger = getLogger();
+    websocketMainStreamWorker = new WebsocketMainStreamWorker(
+      queueManager,
+      messageManager,
+      redisClient,
+      logger,
+    );
+  }
 }
 
 export async function stopWebsocketMainStreamWorker(): Promise<void> {
@@ -196,12 +203,14 @@ export async function stopWebsocketMainStreamWorker(): Promise<void> {
 }
 
 export async function startWebsocketRateStreamWorker(): Promise<void> {
-  const redisClient = await getRedisInstance();
-  const logger = getLogger();
-  websocketRateStreamWorker = new WebsocketRateStreamWorker(
-    redisClient,
-    logger,
-  );
+  if (!websocketRateStreamWorker) {
+    const redisClient = await getRedisInstance();
+    const logger = getLogger();
+    websocketRateStreamWorker = new WebsocketRateStreamWorker(
+      redisClient,
+      logger,
+    );
+  }
 }
 
 export async function stopWebsocketRateStreamWorker(): Promise<void> {
@@ -216,12 +225,14 @@ export async function stopWebsocketRateStreamWorker(): Promise<void> {
 }
 
 export async function startWebsocketHeartbeatStreamWorker(): Promise<void> {
-  const redisClient = await getRedisInstance();
-  const logger = getLogger();
-  websocketHeartbeatStreamWorker = new WebsocketHeartbeatStreamWorker(
-    redisClient,
-    logger,
-  );
+  if (!websocketHeartbeatStreamWorker) {
+    const redisClient = await getRedisInstance();
+    const logger = getLogger();
+    websocketHeartbeatStreamWorker = new WebsocketHeartbeatStreamWorker(
+      redisClient,
+      logger,
+    );
+  }
 }
 
 export async function stopWebsocketHeartbeatStreamWorker(): Promise<void> {
@@ -229,6 +240,30 @@ export async function stopWebsocketHeartbeatStreamWorker(): Promise<void> {
     if (websocketHeartbeatStreamWorker) {
       websocketHeartbeatStreamWorker.quit(() => {
         websocketHeartbeatStreamWorker = null;
+        resolve();
+      });
+    } else resolve();
+  });
+}
+
+export async function startWebsocketOnlineStreamWorker(): Promise<void> {
+  if (!websocketOnlineStreamWorker) {
+    const redisClient = await getRedisInstance();
+    const logger = getLogger();
+    const queueManager = await getQueueManager();
+    websocketOnlineStreamWorker = new WebsocketOnlineStreamWorker(
+      redisClient,
+      queueManager,
+      logger,
+    );
+  }
+}
+
+export async function stopWebsocketOnlineStreamWorker(): Promise<void> {
+  return new Promise<void>((resolve) => {
+    if (websocketOnlineStreamWorker) {
+      websocketOnlineStreamWorker.quit(() => {
+        websocketOnlineStreamWorker = null;
         resolve();
       });
     } else resolve();
@@ -357,13 +392,15 @@ export async function listenForWebsocketStreamEvents<
   const data: { ts: number; payload: TPayload }[] = [];
   subscribeClient.on('message', (channel, message) => {
     if (typeof message === 'string') {
-      const json: TPayload = JSON.parse(message);
-      data.push({ ts: Date.now(), payload: json });
+      const payload: TPayload = JSON.parse(message);
+      data.push({ ts: Date.now(), payload });
     } else throw new Error('Expected a message payload');
   });
   for (; true; ) {
-    if (data.length === 5) break;
-    else await delay(500);
+    if (data.length === 5) {
+      subscribeClient.unsubscribe(streamName);
+      break;
+    } else await delay(500);
   }
   return data;
 }

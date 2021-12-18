@@ -189,7 +189,9 @@ export class Heartbeat extends EventEmitter {
         if (err) cb(err);
         else {
           const arr = reply ?? [];
-          const params = parse ? arr.map((i) => JSON.parse(i)) : arr;
+          const params: (THeartbeatParams | string)[] = parse
+            ? arr.map((i) => JSON.parse(i))
+            : arr;
           cb(null, params);
         }
       },
@@ -211,7 +213,9 @@ export class Heartbeat extends EventEmitter {
         if (err) cb(err);
         else {
           const arr = reply ?? [];
-          const params = parse ? arr.map((i) => JSON.parse(i)) : arr;
+          const params: (THeartbeatParams | string)[] = parse
+            ? arr.map((i) => JSON.parse(i))
+            : arr;
           cb(null, params);
         }
       },

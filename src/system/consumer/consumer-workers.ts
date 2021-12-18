@@ -56,7 +56,7 @@ export class ConsumerWorkers extends EventEmitter {
     this.lockManager.acquireLock((err, locked) => {
       if (err) this.emit(events.ERROR, err);
       else if (locked) {
-        if (!this.workerRunner.isRunning()) {
+        if (this.workerRunner.isDown()) {
           this.logger.debug(`Starting consumer workers threads...`);
           this.workerRunner.run(
             this.workersDir,
