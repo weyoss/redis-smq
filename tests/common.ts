@@ -81,7 +81,7 @@ export async function shutdown(): Promise<void> {
   while (redisClients.length) {
     const redisClient = redisClients.pop();
     if (redisClient) {
-      redisClient.end(true);
+      await promisifyAll(redisClient).haltAsync();
     }
   }
   if (messageManager) {
