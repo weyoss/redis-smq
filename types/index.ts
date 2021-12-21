@@ -55,7 +55,7 @@ export interface IConsumerMessageRateFields extends Record<string, number> {
 }
 
 export interface IProducerMessageRateFields extends Record<string, number> {
-  inputRate: number;
+  publishedRate: number;
 }
 
 export enum RedisClientName {

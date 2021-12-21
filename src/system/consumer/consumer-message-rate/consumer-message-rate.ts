@@ -1,6 +1,5 @@
 import { Consumer } from '../consumer';
 import { ICallback, IConsumerMessageRateFields } from '../../../../types';
-import { events } from '../../common/events';
 import { MessageRate } from '../../message-rate';
 import { RedisClient } from '../../redis-client/redis-client';
 import * as async from 'async';
@@ -18,9 +17,6 @@ import {
 
 export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields> {
   protected consumer: Consumer;
-  protected processingSlots: number[] = new Array(1000).fill(0);
-  protected acknowledgedSlots: number[] = new Array(1000).fill(0);
-  protected unacknowledgedSlots: number[] = new Array(1000).fill(0);
   protected processingRate = 0;
   protected acknowledgedRate = 0;
   protected unacknowledgedRate = 0;
@@ -109,44 +105,32 @@ export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields>
   }
 
   getRateFields(): IConsumerMessageRateFields {
-    this.processingRate = this.processingSlots.reduce(
-      (acc: number, cur: number) => acc + cur,
-      0,
-    );
-    this.processingSlots.fill(0);
-    this.acknowledgedRate = this.acknowledgedSlots.reduce(
-      (acc: number, cur: number) => acc + cur,
-      0,
-    );
-    this.acknowledgedSlots.fill(0);
-    this.unacknowledgedRate = this.unacknowledgedSlots.reduce(
-      (acc: number, cur: number) => acc + cur,
-      0,
-    );
-    this.unacknowledgedSlots.fill(0);
-    if (process.env.NODE_ENV === 'test' && this.isIdle()) {
-      this.consumer.emit(events.IDLE);
-    }
+    const processingRate = this.processingRate;
+    this.processingRate = 0;
+
+    const acknowledgedRate = this.acknowledgedRate;
+    this.acknowledgedRate = 0;
+
+    const unacknowledgedRate = this.unacknowledgedRate;
+    this.unacknowledgedRate = 0;
+
     return {
-      processingRate: this.processingRate,
-      acknowledgedRate: this.acknowledgedRate,
-      unacknowledgedRate: this.unacknowledgedRate,
+      processingRate,
+      acknowledgedRate,
+      unacknowledgedRate,
     };
   }
 
-  incrementProcessingSlot(): void {
-    const slot = new Date().getMilliseconds();
-    this.processingSlots[slot] += 1;
+  incrementProcessing(): void {
+    this.processingRate += 1;
   }
 
-  incrementAcknowledgedSlot(): void {
-    const slot = new Date().getMilliseconds();
-    this.acknowledgedSlots[slot] += 1;
+  incrementAcknowledged(): void {
+    this.acknowledgedRate += 1;
   }
 
-  incrementUnacknowledgedSlot(): void {
-    const slot = new Date().getMilliseconds();
-    this.unacknowledgedSlots[slot] += 1;
+  incrementUnacknowledged(): void {
+    this.unacknowledgedRate += 1;
   }
 
   onUpdate(
