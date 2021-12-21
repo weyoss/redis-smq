@@ -138,7 +138,7 @@ export class Consumer extends Base<ConsumerMessageRate, TConsumerRedisKeys> {
     });
     this.on(events.MESSAGE_ACKNOWLEDGED, (msg: Message) => {
       this.logger.info(`Message (ID ${msg.getId()}) has been acknowledged.`);
-      if (this.messageRate) this.messageRate.incrementAcknowledgedSlot();
+      if (this.messageRate) this.messageRate.incrementAcknowledged();
       this.emit(events.MESSAGE_NEXT);
     });
     this.on(
@@ -147,7 +147,7 @@ export class Consumer extends Base<ConsumerMessageRate, TConsumerRedisKeys> {
         this.logger.info(
           `Message (ID ${msg.getId()}) has been unacknowledged. Cause: ${cause}.`,
         );
-        if (this.messageRate) this.messageRate.incrementUnacknowledgedSlot();
+        if (this.messageRate) this.messageRate.incrementUnacknowledged();
         this.emit(events.MESSAGE_NEXT);
       },
     );
@@ -167,7 +167,7 @@ export class Consumer extends Base<ConsumerMessageRate, TConsumerRedisKeys> {
       );
     } else {
       this.logger.info(`Trying to consume message (ID ${message.getId()})...`);
-      if (this.messageRate) this.messageRate.incrementProcessingSlot();
+      if (this.messageRate) this.messageRate.incrementProcessing();
       this.handleConsume(message);
     }
   }

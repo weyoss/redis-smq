@@ -36,7 +36,7 @@ export class Producer extends Base<ProducerMessageRate, TProducerRedisKeys> {
     const callback: ICallback<boolean> = (err, reply) => {
       if (err) cb(err);
       else {
-        if (this.messageRate) this.messageRate.incrementInputSlot();
+        if (this.messageRate) this.messageRate.incrementPublished();
         this.emit(events.MESSAGE_PRODUCED, message);
         cb(null, reply);
       }

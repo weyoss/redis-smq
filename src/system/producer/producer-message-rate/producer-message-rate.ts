@@ -10,8 +10,7 @@ import {
 } from './producer-message-rate-time-series';
 
 export class ProducerMessageRate extends MessageRate<IProducerMessageRateFields> {
-  protected inputSlots: number[] = new Array(1000).fill(0);
-  protected inputRate = 0;
+  protected publishedRate = 0;
   protected producer: Producer;
   protected inputRateTimeSeries: ReturnType<typeof PublishedRateTimeSeries>;
   protected queueInputRateTimeSeries: ReturnType<
@@ -39,16 +38,15 @@ export class ProducerMessageRate extends MessageRate<IProducerMessageRateFields>
   }
 
   getRateFields(): IProducerMessageRateFields {
-    this.inputRate = this.inputSlots.reduce((acc, cur) => acc + cur, 0);
-    this.inputSlots.fill(0);
+    const publishedRate = this.publishedRate;
+    this.publishedRate = 0;
     return {
-      inputRate: this.inputRate,
+      publishedRate,
     };
   }
 
-  incrementInputSlot(): void {
-    const slot = new Date().getMilliseconds();
-    this.inputSlots[slot] += 1;
+  incrementPublished(): void {
+    this.publishedRate += 1;
   }
 
   onUpdate(
@@ -57,10 +55,10 @@ export class ProducerMessageRate extends MessageRate<IProducerMessageRateFields>
     cb: ICallback<void>,
   ): void {
     const multi = this.redisClient.multi();
-    const { inputRate } = rates;
-    this.inputRateTimeSeries.add(ts, inputRate, multi);
-    this.queueInputRateTimeSeries.add(ts, inputRate, multi);
-    this.globalInputRateTimeSeries.add(ts, inputRate, multi);
+    const { publishedRate } = rates;
+    this.inputRateTimeSeries.add(ts, publishedRate, multi);
+    this.queueInputRateTimeSeries.add(ts, publishedRate, multi);
+    this.globalInputRateTimeSeries.add(ts, publishedRate, multi);
     this.redisClient.execMulti(multi, () => cb());
   }
 
