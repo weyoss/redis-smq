@@ -17,7 +17,7 @@ test('WebsocketMainStreamWorker: Case 2', async () => {
   await startWebsocketMainStreamWorker();
 
   const subscribeClient = await getRedisInstance();
-  subscribeClient.subscribe('mainStream');
+  subscribeClient.subscribe('streamMain');
 
   const json = await new Promise<TWebsocketMainStreamPayload>(
     (resolve, reject) => {

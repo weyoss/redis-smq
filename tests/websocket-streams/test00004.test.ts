@@ -5,12 +5,12 @@ import {
 } from '../common';
 import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 
-test('WebsocketRateStreamWorker: queueProcessing', async () => {
+test('WebsocketRateStreamWorker: streamQueueProcessing', async () => {
   const consumer = getConsumer();
   await consumer.runAsync();
 
   const data = await listenForWebsocketStreamEvents(
-    `queueProcessing:${redisKeys.getNamespace()}:${consumer.getQueueName()}`,
+    `streamQueueProcessing:${redisKeys.getNamespace()}:${consumer.getQueueName()}`,
   );
 
   for (let i = 0; i < data.length; i += 1) {

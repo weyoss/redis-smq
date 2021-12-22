@@ -5,15 +5,13 @@ test('WebsocketMainStreamWorker: Case 1', async () => {
   await startWebsocketMainStreamWorker();
 
   const subscribeClient = await getRedisInstance();
-  subscribeClient.subscribe('mainStream');
+  subscribeClient.subscribe('streamMain');
 
   const json = await new Promise<TWebsocketMainStreamPayload>(
     (resolve, reject) => {
       subscribeClient.on('message', (channel, message) => {
-        if (typeof message === 'string') {
-          const json: TWebsocketMainStreamPayload = JSON.parse(message);
-          resolve(json);
-        } else reject(new Error('Expected a message payload'));
+        const json: TWebsocketMainStreamPayload = JSON.parse(message);
+        resolve(json);
       });
     },
   );

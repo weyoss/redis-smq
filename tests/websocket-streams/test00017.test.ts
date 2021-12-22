@@ -7,12 +7,12 @@ import {
 import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 import { THeartbeatRegistryPayload } from '../../types';
 
-test('WebsocketOnlineStreamWorker: queueOnlineConsumers/case 1', async () => {
+test('WebsocketOnlineStreamWorker: streamQueueOnlineConsumers/case 1', async () => {
   const consumer = getConsumer();
   await consumer.runAsync();
 
   const data = await listenForWebsocketStreamEvents<Record<string, string>>(
-    `queueOnlineConsumers:${redisKeys.getNamespace()}:${consumer.getQueueName()}`,
+    `streamQueueOnlineConsumers:${redisKeys.getNamespace()}:${consumer.getQueueName()}`,
     startWebsocketOnlineStreamWorker,
   );
   for (let i = 0; i < data.length; i += 1) {

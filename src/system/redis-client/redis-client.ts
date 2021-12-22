@@ -193,11 +193,15 @@ export class RedisClient extends EventEmitter {
     this.client.subscribe(channel);
   }
 
+  psubscribe(pattern: string): void {
+    this.client.psubscribe(pattern);
+  }
+
   unsubscribe(channel: string): void {
     this.client.unsubscribe(channel);
   }
 
-  on(event: string, listener: (...args: unknown[]) => void) {
+  on(event: string, listener: (...args: string[]) => void) {
     this.client.on(event, listener);
     return this;
   }

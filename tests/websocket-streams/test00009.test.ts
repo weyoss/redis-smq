@@ -1,7 +1,9 @@
 import { listenForWebsocketStreamEvents, validateTime } from '../common';
 
-test('WebsocketRateStreamWorker: globalUnacknowledged', async () => {
-  const data = await listenForWebsocketStreamEvents(`globalUnacknowledged`);
+test('WebsocketRateStreamWorker: streamGlobalUnacknowledged', async () => {
+  const data = await listenForWebsocketStreamEvents(
+    `streamGlobalUnacknowledged`,
+  );
 
   for (let i = 0; i < data.length; i += 1) {
     const diff = data[i].ts - data[0].ts;

@@ -233,7 +233,7 @@ export class WebsocketMainStreamWorker {
   protected publish = (): void => {
     this.logger.debug(`Publishing...`);
     this.redisClient.publish(
-      'mainStream',
+      'streamMain',
       JSON.stringify(this.data),
       this.noop,
     );

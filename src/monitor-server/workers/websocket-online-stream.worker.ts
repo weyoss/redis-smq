@@ -67,7 +67,7 @@ export class WebsocketOnlineStreamWorker {
                             if (err) cb(err);
                             else {
                               this.redisClient.publish(
-                                `queueOnlineConsumers:${item.ns}:${item.name}`,
+                                `streamQueueOnlineConsumers:${item.ns}:${item.name}`,
                                 JSON.stringify(reply ?? {}),
                                 this.noop,
                               );
@@ -86,7 +86,7 @@ export class WebsocketOnlineStreamWorker {
                             if (err) cb(err);
                             else {
                               this.redisClient.publish(
-                                `queueOnlineProducers:${item.ns}:${item.name}`,
+                                `streamQueueOnlineProducers:${item.ns}:${item.name}`,
                                 JSON.stringify(reply ?? {}),
                                 this.noop,
                               );
