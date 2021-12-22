@@ -86,7 +86,7 @@ export class HashTimeSeries extends TimeSeries {
       const length = to - from;
       const timestamps = new Array(length)
         .fill(0)
-        .map((_: number, index: number) => String(to - index));
+        .map((_: number, index: number) => String(from + index));
       this.redisClient.hmget(this.key, timestamps, (err, reply) => {
         if (err) cb(err);
         else {

@@ -37,27 +37,32 @@ export class SortedSetTimeSeries extends TimeSeries {
         new ArgumentError(`Expected parameter [to] to be greater than [from]`),
       );
     } else {
-      this.redisClient.zrevrangebyscore(this.key, to, from, (err, reply) => {
-        if (err) cb(err);
-        else {
-          const replyRange = reply ?? {};
-          const length = to - from;
-          const range = new Array(length)
-            .fill(0)
-            .map((_: number, index: number) => {
-              const timestamp = to - index;
-              const value =
-                typeof replyRange[timestamp] === 'string'
-                  ? Number(replyRange[timestamp].split(':')[0])
-                  : 0;
-              return {
-                timestamp,
-                value,
-              };
-            });
-          cb(null, range);
-        }
-      });
+      this.redisClient.zrangebyscorewithscores(
+        this.key,
+        to,
+        from,
+        (err, reply) => {
+          if (err) cb(err);
+          else {
+            const replyRange = reply ?? {};
+            const length = to - from;
+            const range = new Array(length)
+              .fill(0)
+              .map((_: number, index: number) => {
+                const timestamp = from + index;
+                const value =
+                  typeof replyRange[timestamp] === 'string'
+                    ? Number(replyRange[timestamp].split(':')[0])
+                    : 0;
+                return {
+                  timestamp,
+                  value,
+                };
+              });
+            cb(null, range);
+          }
+        },
+      );
     }
   }
 }

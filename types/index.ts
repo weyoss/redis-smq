@@ -77,18 +77,18 @@ export type TCompatibleRedisClient = (NodeRedis | Redis) & {
     max: number,
     cb: ICallback<string[]>,
   ): void;
-  zrevrangebyscore(
-    key: KeyType,
-    max: number,
-    min: number,
-    withScores: 'WITHSCORES',
-    cb: ICallback<string[]>,
-  ): void;
   subscribe(channel: string): void;
   zrangebyscore(
     key: string,
     min: number | string,
     max: number | string,
+    cb: ICallback<string[]>,
+  ): void;
+  zrangebyscore(
+    key: KeyType,
+    min: number | string,
+    max: number | string,
+    withScores: 'WITHSCORES',
     cb: ICallback<string[]>,
   ): void;
   smembers(key: string, cb: ICallback<string[]>): void;

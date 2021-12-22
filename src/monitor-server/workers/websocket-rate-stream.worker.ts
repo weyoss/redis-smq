@@ -370,7 +370,7 @@ export class WebsocketRateStreamWorker {
   };
 
   protected prepare = (cb: ICallback<void>): void => {
-    const ts = TimeSeries.getCurrentTimestamp();
+    const ts = TimeSeries.getCurrentTimestamp() - 10;
     this.addGlobalTasks(ts);
     async.eachOf(
       this.queueData,
