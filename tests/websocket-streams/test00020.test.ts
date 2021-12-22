@@ -7,12 +7,12 @@ import {
 import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 import { delay } from 'bluebird';
 
-test('WebsocketOnlineStreamWorker: queueOnlineProducers/case 2', async () => {
+test('WebsocketOnlineStreamWorker: streamQueueOnlineProducers/case 2', async () => {
   const producer = getProducer();
   await delay(5000);
 
   const data = await listenForWebsocketStreamEvents<Record<string, string>>(
-    `queueOnlineProducers:${redisKeys.getNamespace()}:${producer.getQueueName()}`,
+    `streamQueueOnlineProducers:${redisKeys.getNamespace()}:${producer.getQueueName()}`,
     startWebsocketOnlineStreamWorker,
   );
   for (let i = 0; i < data.length; i += 1) {
@@ -24,7 +24,7 @@ test('WebsocketOnlineStreamWorker: queueOnlineProducers/case 2', async () => {
   await producer.shutdownAsync();
 
   const data2 = await listenForWebsocketStreamEvents<Record<string, string>>(
-    `queueOnlineConsumers:${redisKeys.getNamespace()}:${producer.getQueueName()}`,
+    `streamQueueOnlineConsumers:${redisKeys.getNamespace()}:${producer.getQueueName()}`,
     startWebsocketOnlineStreamWorker,
   );
   for (let i = 0; i < data2.length; i += 1) {

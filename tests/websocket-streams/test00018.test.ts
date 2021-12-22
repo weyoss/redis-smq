@@ -8,12 +8,12 @@ import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 import { THeartbeatRegistryPayload } from '../../types';
 import { delay } from 'bluebird';
 
-test('WebsocketOnlineStreamWorker: queueOnlineProducers', async () => {
+test('WebsocketOnlineStreamWorker: streamQueueOnlineProducers', async () => {
   const producer = getProducer();
   await delay(5000);
 
   const data = await listenForWebsocketStreamEvents<Record<string, string>>(
-    `queueOnlineProducers:${redisKeys.getNamespace()}:${producer.getQueueName()}`,
+    `streamQueueOnlineProducers:${redisKeys.getNamespace()}:${producer.getQueueName()}`,
     startWebsocketOnlineStreamWorker,
   );
   for (let i = 0; i < data.length; i += 1) {

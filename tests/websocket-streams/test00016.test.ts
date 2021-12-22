@@ -6,12 +6,12 @@ import {
 } from '../common';
 import { THeartbeatPayload } from '../../types';
 
-test('WebsocketHeartbeatStreamWorker: consumerHeartbeat', async () => {
+test('WebsocketHeartbeatStreamWorker: streamConsumerHeartbeat', async () => {
   const consumer = getConsumer();
   await consumer.runAsync();
 
   const data = await listenForWebsocketStreamEvents<THeartbeatPayload>(
-    `consumerHeartbeat:${consumer.getId()}`,
+    `streamConsumerHeartbeat:${consumer.getId()}`,
     startWebsocketHeartbeatStreamWorker,
   );
   for (let i = 0; i < data.length; i += 1) {

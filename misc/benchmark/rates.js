@@ -16,7 +16,7 @@ RedisClient.getNewInstance(config, (_, client) => {
 });
 
 RedisClient.getNewInstance(config, (_, client) => {
-  client.subscribe(`queueAcknowledged:ns1:test_queue`);
+  client.subscribe(`streamGlobalAcknowledged`);
   client.on('message', (channel, message) => {
     const timeSeries = JSON.parse(message);
     console.log(timeSeries);

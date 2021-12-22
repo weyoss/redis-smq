@@ -80,7 +80,7 @@ export class WebsocketRateStreamWorker {
         if (err) throw err;
         else {
           this.redisClient.publish(
-            `consumerAcknowledged:${consumerId}`,
+            `streamConsumerAcknowledged:${consumerId}`,
             JSON.stringify(reply),
             this.noop,
           );
@@ -99,7 +99,7 @@ export class WebsocketRateStreamWorker {
         if (err) cb(err);
         else {
           this.redisClient.publish(
-            `consumerUnacknowledged:${consumerId}`,
+            `streamConsumerUnacknowledged:${consumerId}`,
             JSON.stringify(reply),
             this.noop,
           );
@@ -118,7 +118,7 @@ export class WebsocketRateStreamWorker {
         if (err) cb(err);
         else {
           this.redisClient.publish(
-            `consumerProcessing:${consumerId}`,
+            `streamConsumerProcessing:${consumerId}`,
             JSON.stringify(reply),
             this.noop,
           );
@@ -143,7 +143,7 @@ export class WebsocketRateStreamWorker {
         if (err) cb(err);
         else {
           this.redisClient.publish(
-            `queueAcknowledged:${ns}:${queueName}`,
+            `streamQueueAcknowledged:${ns}:${queueName}`,
             JSON.stringify(reply),
             this.noop,
           );
@@ -161,7 +161,7 @@ export class WebsocketRateStreamWorker {
         if (err) cb(err);
         else {
           this.redisClient.publish(
-            `queueUnacknowledged:${ns}:${queueName}`,
+            `streamQueueUnacknowledged:${ns}:${queueName}`,
             JSON.stringify(reply),
             this.noop,
           );
@@ -179,7 +179,7 @@ export class WebsocketRateStreamWorker {
         if (err) cb(err);
         else {
           this.redisClient.publish(
-            `queueProcessing:${ns}:${queueName}`,
+            `streamQueueProcessing:${ns}:${queueName}`,
             JSON.stringify(reply),
             this.noop,
           );
@@ -197,7 +197,7 @@ export class WebsocketRateStreamWorker {
         if (err) cb(err);
         else {
           this.redisClient.publish(
-            `queuePublished:${ns}:${queueName}`,
+            `streamQueuePublished:${ns}:${queueName}`,
             JSON.stringify(reply),
             this.noop,
           );
@@ -224,7 +224,7 @@ export class WebsocketRateStreamWorker {
         if (err) cb(err);
         else {
           this.redisClient.publish(
-            `producerPublished:${producerId}`,
+            `streamProducerPublished:${producerId}`,
             JSON.stringify(reply),
             this.noop,
           );
@@ -242,7 +242,7 @@ export class WebsocketRateStreamWorker {
           if (err) cb(err);
           else {
             this.redisClient.publish(
-              'globalAcknowledged',
+              'streamGlobalAcknowledged',
               JSON.stringify(reply),
               this.noop,
             );
@@ -258,7 +258,7 @@ export class WebsocketRateStreamWorker {
           if (err) cb(err);
           else {
             this.redisClient.publish(
-              'globalUnacknowledged',
+              'streamGlobalUnacknowledged',
               JSON.stringify(reply),
               this.noop,
             );
@@ -274,7 +274,7 @@ export class WebsocketRateStreamWorker {
           if (err) cb(err);
           else {
             this.redisClient.publish(
-              'globalProcessing',
+              'streamGlobalProcessing',
               JSON.stringify(reply),
               this.noop,
             );
@@ -290,7 +290,7 @@ export class WebsocketRateStreamWorker {
           if (err) cb(err);
           else {
             this.redisClient.publish(
-              'globalPublished',
+              'streamGlobalPublished',
               JSON.stringify(reply),
               this.noop,
             );

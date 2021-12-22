@@ -104,12 +104,9 @@ export function MonitorServer(config: IConfig = {}): IMonitorServer {
       const { app, socketIO, httpServer } = apiServer;
       await workerRunner.runAsync(resolve(__dirname, './workers'), config);
       subscribeClient = await RedisClientAsync.getNewInstanceAsync(config);
-      subscribeClient.subscribe('stats');
-      subscribeClient.on('message', (channel, message) => {
-        if (typeof message === 'string') {
-          const json = JSON.parse(message) as Record<string, any>;
-          socketIO.emit('stats', json);
-        }
+      subscribeClient.psubscribe('stream*');
+      subscribeClient.on('pmessage', (pattern, channel, message) => {
+        socketIO.emit(channel, JSON.parse(message));
       });
       httpServer.listen(port, host, () => {
         powerManager.commit();

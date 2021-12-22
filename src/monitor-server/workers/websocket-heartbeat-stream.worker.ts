@@ -50,13 +50,13 @@ export class WebsocketHeartbeatStreamWorker {
                   const payload = String(item.payload);
                   if (consumerId) {
                     this.redisClient.publish(
-                      `consumerHeartbeat:${consumerId}`,
+                      `streamConsumerHeartbeat:${consumerId}`,
                       payload,
                       this.noop,
                     );
                   } else if (producerId) {
                     this.redisClient.publish(
-                      `producerHeartbeat:${producerId}`,
+                      `streamProducerHeartbeat:${producerId}`,
                       payload,
                       this.noop,
                     );

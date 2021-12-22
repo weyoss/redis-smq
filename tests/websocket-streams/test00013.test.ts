@@ -4,12 +4,12 @@ import {
   validateTime,
 } from '../common';
 
-test('WebsocketRateStreamWorker: consumerProcessing', async () => {
+test('WebsocketRateStreamWorker: streamConsumerProcessing', async () => {
   const consumer = getConsumer();
   await consumer.runAsync();
 
   const data = await listenForWebsocketStreamEvents(
-    `consumerProcessing:${consumer.getId()}`,
+    `streamConsumerProcessing:${consumer.getId()}`,
   );
 
   for (let i = 0; i < data.length; i += 1) {

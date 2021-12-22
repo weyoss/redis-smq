@@ -4,12 +4,12 @@ import {
   validateTime,
 } from '../common';
 
-test('WebsocketRateStreamWorker: consumerAcknowledged', async () => {
+test('WebsocketRateStreamWorker: streamConsumerAcknowledged', async () => {
   const consumer = getConsumer();
   await consumer.runAsync();
 
   const data = await listenForWebsocketStreamEvents(
-    `consumerAcknowledged:${consumer.getId()}`,
+    `streamConsumerAcknowledged:${consumer.getId()}`,
   );
 
   for (let i = 0; i < data.length; i += 1) {

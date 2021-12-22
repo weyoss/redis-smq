@@ -4,11 +4,11 @@ import {
   validateTime,
 } from '../common';
 
-test('WebsocketRateStreamWorker: producerPublished', async () => {
+test('WebsocketRateStreamWorker: streamProducerPublished', async () => {
   const producer = getProducer();
 
   const data = await listenForWebsocketStreamEvents(
-    `producerPublished:${producer.getId()}`,
+    `streamProducerPublished:${producer.getId()}`,
   );
 
   for (let i = 0; i < data.length; i += 1) {
