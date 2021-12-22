@@ -10,9 +10,9 @@ import { TWebsocketMainStreamPayload } from '../../types';
 test('WebsocketMainStreamWorker: Case 2', async () => {
   const consumer = getConsumer();
   await consumer.runAsync();
+  await untilConsumerIdle(consumer);
 
   const producer = getProducer();
-  await untilConsumerIdle(consumer);
 
   await startWebsocketMainStreamWorker();
 
@@ -22,10 +22,8 @@ test('WebsocketMainStreamWorker: Case 2', async () => {
   const json = await new Promise<TWebsocketMainStreamPayload>(
     (resolve, reject) => {
       subscribeClient.on('message', (channel, message) => {
-        if (typeof message === 'string') {
-          const json: TWebsocketMainStreamPayload = JSON.parse(message);
-          resolve(json);
-        } else reject(new Error('Expected a message payload'));
+        const json: TWebsocketMainStreamPayload = JSON.parse(message);
+        resolve(json);
       });
     },
   );

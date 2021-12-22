@@ -311,34 +311,28 @@ export class RedisClient extends EventEmitter {
     );
   }
 
-  zrevrangebyscore(
+  zrangebyscorewithscores(
     source: string,
     max: number,
     min: number,
     cb: ICallback<Record<string, string>>,
   ): void {
-    this.client.zrevrangebyscore(
-      source,
-      max,
-      min,
-      'WITHSCORES',
-      (err, reply) => {
-        if (err) cb(err);
-        else {
-          const replyRange = reply ?? [];
-          const range: Record<string, string> = {};
-          for (
-            let slice = replyRange.splice(0, 2);
-            slice.length > 0;
-            slice = replyRange.splice(0, 2)
-          ) {
-            const [member, score] = slice;
-            range[score] = member;
-          }
-          cb(null, range);
+    this.client.zrangebyscore(source, min, max, 'WITHSCORES', (err, reply) => {
+      if (err) cb(err);
+      else {
+        const replyRange = reply ?? [];
+        const range: Record<string, string> = {};
+        for (
+          let slice = replyRange.splice(0, 2);
+          slice.length > 0;
+          slice = replyRange.splice(0, 2)
+        ) {
+          const [member, score] = slice;
+          range[score] = member;
         }
-      },
-    );
+        cb(null, range);
+      }
+    });
   }
 
   zpushhset(

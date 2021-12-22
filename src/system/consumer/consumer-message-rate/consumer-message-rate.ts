@@ -14,6 +14,7 @@ import {
   QueueUnacknowledgedRateTimeSeries,
   UnacknowledgedRateTimeSeries,
 } from './consumer-message-rate-time-series';
+import { events } from '../../common/events';
 
 export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields> {
   protected consumer: Consumer;
@@ -113,6 +114,10 @@ export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields>
 
     const unacknowledgedRate = this.unacknowledgedRate;
     this.unacknowledgedRate = 0;
+
+    if (process.env.NODE_ENV === 'test' && this.isIdle()) {
+      this.consumer.emit(events.IDLE);
+    }
 
     return {
       processingRate,
