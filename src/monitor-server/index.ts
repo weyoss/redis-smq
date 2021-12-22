@@ -23,6 +23,10 @@ import * as cors from '@koa/cors';
 import { ArgumentError } from '../system/common/errors/argument.error';
 import { ConfigurationError } from '../system/common/errors/configuration.error';
 import { PanicError } from '../system/common/errors/panic.error';
+import { producerTimeSeriesController } from './controllers/producer-time-series/producer-time-series.controller';
+import { consumerTimeSeriesController } from './controllers/consumer-time-series/consumer-time-series.controller';
+import { queueTimeSeriesController } from './controllers/queue-time-series/queue-time-series.controller';
+import { globalTimeSeriesController } from './controllers/global-time-series/global-time-series.controller';
 
 const RedisClientAsync = promisifyAll(RedisClient);
 
@@ -62,6 +66,10 @@ async function bootstrap(config: IConfig): Promise<TAPIServer> {
     queuesController,
     messagesController,
     scheduledMessagesController,
+    producerTimeSeriesController,
+    consumerTimeSeriesController,
+    queueTimeSeriesController,
+    globalTimeSeriesController,
   ]);
   app.use(router.routes());
   app.use(router.allowedMethods());

@@ -11,21 +11,21 @@ import { events } from '../../system/common/events';
 import { TimeSeries } from '../../system/common/time-series/time-series';
 import { Heartbeat } from '../../system/common/heartbeat/heartbeat';
 import {
-  AcknowledgedRateTimeSeries,
-  GlobalAcknowledgedRateTimeSeries,
-  GlobalProcessingRateTimeSeries,
-  GlobalUnacknowledgedRateTimeSeries,
-  ProcessingRateTimeSeries,
-  QueueAcknowledgedRateTimeSeries,
-  QueueProcessingRateTimeSeries,
-  QueueUnacknowledgedRateTimeSeries,
-  UnacknowledgedRateTimeSeries,
-} from '../../system/consumer/consumer-message-rate/consumer-message-rate-time-series';
+  AcknowledgedTimeSeries,
+  GlobalAcknowledgedTimeSeries,
+  GlobalProcessingTimeSeries,
+  GlobalUnacknowledgedTimeSeries,
+  ProcessingTimeSeries,
+  QueueAcknowledgedTimeSeries,
+  QueueProcessingTimeSeries,
+  QueueUnacknowledgedTimeSeries,
+  UnacknowledgedTimeSeries,
+} from '../../system/consumer/consumer-time-series';
 import {
-  GlobalPublishedRateTimeSeries,
-  PublishedRateTimeSeries,
-  QueuePublishedRateTimeSeries,
-} from '../../system/producer/producer-message-rate/producer-message-rate-time-series';
+  GlobalPublishedTimeSeries,
+  PublishedTimeSeries,
+  QueuePublishedTimeSeries,
+} from '../../system/producer/producer-time-series';
 import { InvalidCallbackReplyError } from '../../system/common/errors/invalid-callback-reply.error';
 
 export class WebsocketRateStreamWorker {
@@ -70,7 +70,7 @@ export class WebsocketRateStreamWorker {
     consumerId: string,
   ): void => {
     this.tasks.push((cb: ICallback<void>) =>
-      AcknowledgedRateTimeSeries(
+      AcknowledgedTimeSeries(
         this.redisClient,
         consumerId,
         String(queueName),
@@ -89,7 +89,7 @@ export class WebsocketRateStreamWorker {
       }),
     );
     this.tasks.push((cb: ICallback<void>) =>
-      UnacknowledgedRateTimeSeries(
+      UnacknowledgedTimeSeries(
         this.redisClient,
         consumerId,
         String(queueName),
@@ -108,7 +108,7 @@ export class WebsocketRateStreamWorker {
       }),
     );
     this.tasks.push((cb: ICallback<void>) =>
-      ProcessingRateTimeSeries(
+      ProcessingTimeSeries(
         this.redisClient,
         consumerId,
         String(queueName),
@@ -134,7 +134,7 @@ export class WebsocketRateStreamWorker {
     queueName: string,
   ): void => {
     this.tasks.push((cb: ICallback<void>) =>
-      QueueAcknowledgedRateTimeSeries(
+      QueueAcknowledgedTimeSeries(
         this.redisClient,
         String(queueName),
         String(ns),
@@ -152,7 +152,7 @@ export class WebsocketRateStreamWorker {
       }),
     );
     this.tasks.push((cb: ICallback<void>) =>
-      QueueUnacknowledgedRateTimeSeries(
+      QueueUnacknowledgedTimeSeries(
         this.redisClient,
         String(queueName),
         String(ns),
@@ -170,7 +170,7 @@ export class WebsocketRateStreamWorker {
       }),
     );
     this.tasks.push((cb: ICallback<void>) =>
-      QueueProcessingRateTimeSeries(
+      QueueProcessingTimeSeries(
         this.redisClient,
         String(queueName),
         String(ns),
@@ -188,7 +188,7 @@ export class WebsocketRateStreamWorker {
       }),
     );
     this.tasks.push((cb: ICallback<void>) =>
-      QueuePublishedRateTimeSeries(
+      QueuePublishedTimeSeries(
         this.redisClient,
         String(queueName),
         String(ns),
@@ -214,7 +214,7 @@ export class WebsocketRateStreamWorker {
     producerId: string,
   ): void => {
     this.tasks.push((cb: ICallback<void>) =>
-      PublishedRateTimeSeries(
+      PublishedTimeSeries(
         this.redisClient,
         producerId,
         String(queueName),
@@ -236,7 +236,7 @@ export class WebsocketRateStreamWorker {
 
   protected addGlobalTasks = (ts: number): void => {
     this.tasks.push((cb: ICallback<void>) =>
-      GlobalAcknowledgedRateTimeSeries(this.redisClient, true).getRangeFrom(
+      GlobalAcknowledgedTimeSeries(this.redisClient, true).getRangeFrom(
         ts,
         (err, reply) => {
           if (err) cb(err);
@@ -252,7 +252,7 @@ export class WebsocketRateStreamWorker {
       ),
     );
     this.tasks.push((cb: ICallback<void>) =>
-      GlobalUnacknowledgedRateTimeSeries(this.redisClient, true).getRangeFrom(
+      GlobalUnacknowledgedTimeSeries(this.redisClient, true).getRangeFrom(
         ts,
         (err, reply) => {
           if (err) cb(err);
@@ -268,7 +268,7 @@ export class WebsocketRateStreamWorker {
       ),
     );
     this.tasks.push((cb: ICallback<void>) =>
-      GlobalProcessingRateTimeSeries(this.redisClient, true).getRangeFrom(
+      GlobalProcessingTimeSeries(this.redisClient, true).getRangeFrom(
         ts,
         (err, reply) => {
           if (err) cb(err);
@@ -284,7 +284,7 @@ export class WebsocketRateStreamWorker {
       ),
     );
     this.tasks.push((cb: ICallback<void>) =>
-      GlobalPublishedRateTimeSeries(this.redisClient, true).getRangeFrom(
+      GlobalPublishedTimeSeries(this.redisClient, true).getRangeFrom(
         ts,
         (err, reply) => {
           if (err) cb(err);

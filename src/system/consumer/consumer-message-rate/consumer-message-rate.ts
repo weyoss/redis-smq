@@ -4,16 +4,16 @@ import { MessageRate } from '../../message-rate';
 import { RedisClient } from '../../redis-client/redis-client';
 import * as async from 'async';
 import {
-  AcknowledgedRateTimeSeries,
-  GlobalAcknowledgedRateTimeSeries,
-  GlobalProcessingRateTimeSeries,
-  GlobalUnacknowledgedRateTimeSeries,
-  ProcessingRateTimeSeries,
-  QueueAcknowledgedRateTimeSeries,
-  QueueProcessingRateTimeSeries,
-  QueueUnacknowledgedRateTimeSeries,
-  UnacknowledgedRateTimeSeries,
-} from './consumer-message-rate-time-series';
+  AcknowledgedTimeSeries,
+  GlobalAcknowledgedTimeSeries,
+  GlobalProcessingTimeSeries,
+  GlobalUnacknowledgedTimeSeries,
+  ProcessingTimeSeries,
+  QueueAcknowledgedTimeSeries,
+  QueueProcessingTimeSeries,
+  QueueUnacknowledgedTimeSeries,
+  UnacknowledgedTimeSeries,
+} from '../consumer-time-series';
 import { events } from '../../common/events';
 
 export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields> {
@@ -23,67 +23,65 @@ export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields>
   protected unacknowledgedRate = 0;
   protected idleStack: number[] = new Array(5).fill(0);
 
-  protected processingRateTimeSeries: ReturnType<
-    typeof ProcessingRateTimeSeries
-  >;
+  protected processingRateTimeSeries: ReturnType<typeof ProcessingTimeSeries>;
   protected acknowledgedRateTimeSeries: ReturnType<
-    typeof AcknowledgedRateTimeSeries
+    typeof AcknowledgedTimeSeries
   >;
   protected unacknowledgedRateTimeSeries: ReturnType<
-    typeof UnacknowledgedRateTimeSeries
+    typeof UnacknowledgedTimeSeries
   >;
   protected queueProcessingRateTimeSeries: ReturnType<
-    typeof QueueProcessingRateTimeSeries
+    typeof QueueProcessingTimeSeries
   >;
   protected queueAcknowledgedRateTimeSeries: ReturnType<
-    typeof QueueAcknowledgedRateTimeSeries
+    typeof QueueAcknowledgedTimeSeries
   >;
   protected queueUnacknowledgedRateTimeSeries: ReturnType<
-    typeof QueueUnacknowledgedRateTimeSeries
+    typeof QueueUnacknowledgedTimeSeries
   >;
   protected globalProcessingRateTimeSeries: ReturnType<
-    typeof GlobalProcessingRateTimeSeries
+    typeof GlobalProcessingTimeSeries
   >;
   protected globalAcknowledgedRateTimeSeries: ReturnType<
-    typeof GlobalAcknowledgedRateTimeSeries
+    typeof GlobalAcknowledgedTimeSeries
   >;
   protected globalUnacknowledgedRateTimeSeries: ReturnType<
-    typeof GlobalUnacknowledgedRateTimeSeries
+    typeof GlobalUnacknowledgedTimeSeries
   >;
 
   constructor(consumer: Consumer, redisClient: RedisClient) {
     super(redisClient);
     this.consumer = consumer;
     this.globalProcessingRateTimeSeries =
-      GlobalProcessingRateTimeSeries(redisClient);
+      GlobalProcessingTimeSeries(redisClient);
     this.globalAcknowledgedRateTimeSeries =
-      GlobalAcknowledgedRateTimeSeries(redisClient);
+      GlobalAcknowledgedTimeSeries(redisClient);
     this.globalUnacknowledgedRateTimeSeries =
-      GlobalUnacknowledgedRateTimeSeries(redisClient);
-    this.processingRateTimeSeries = ProcessingRateTimeSeries(
+      GlobalUnacknowledgedTimeSeries(redisClient);
+    this.processingRateTimeSeries = ProcessingTimeSeries(
       redisClient,
       consumer.getId(),
       consumer.getQueueName(),
     );
-    this.acknowledgedRateTimeSeries = AcknowledgedRateTimeSeries(
+    this.acknowledgedRateTimeSeries = AcknowledgedTimeSeries(
       redisClient,
       consumer.getId(),
       consumer.getQueueName(),
     );
-    this.unacknowledgedRateTimeSeries = UnacknowledgedRateTimeSeries(
+    this.unacknowledgedRateTimeSeries = UnacknowledgedTimeSeries(
       redisClient,
       consumer.getId(),
       consumer.getQueueName(),
     );
-    this.queueProcessingRateTimeSeries = QueueProcessingRateTimeSeries(
+    this.queueProcessingRateTimeSeries = QueueProcessingTimeSeries(
       redisClient,
       consumer.getQueueName(),
     );
-    this.queueAcknowledgedRateTimeSeries = QueueAcknowledgedRateTimeSeries(
+    this.queueAcknowledgedRateTimeSeries = QueueAcknowledgedTimeSeries(
       redisClient,
       consumer.getQueueName(),
     );
-    this.queueUnacknowledgedRateTimeSeries = QueueUnacknowledgedRateTimeSeries(
+    this.queueUnacknowledgedRateTimeSeries = QueueUnacknowledgedTimeSeries(
       redisClient,
       consumer.getQueueName(),
     );

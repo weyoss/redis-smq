@@ -4,35 +4,35 @@ import { MessageRate } from '../../message-rate';
 import { RedisClient } from '../../redis-client/redis-client';
 import * as async from 'async';
 import {
-  GlobalPublishedRateTimeSeries,
-  PublishedRateTimeSeries,
-  QueuePublishedRateTimeSeries,
-} from './producer-message-rate-time-series';
+  GlobalPublishedTimeSeries,
+  PublishedTimeSeries,
+  QueuePublishedTimeSeries,
+} from '../producer-time-series';
 
 export class ProducerMessageRate extends MessageRate<IProducerMessageRateFields> {
   protected publishedRate = 0;
   protected producer: Producer;
-  protected inputRateTimeSeries: ReturnType<typeof PublishedRateTimeSeries>;
+  protected inputRateTimeSeries: ReturnType<typeof PublishedTimeSeries>;
   protected queueInputRateTimeSeries: ReturnType<
-    typeof QueuePublishedRateTimeSeries
+    typeof QueuePublishedTimeSeries
   >;
   protected globalInputRateTimeSeries: ReturnType<
-    typeof GlobalPublishedRateTimeSeries
+    typeof GlobalPublishedTimeSeries
   >;
 
   constructor(producer: Producer, redisClient: RedisClient) {
     super(redisClient);
     this.producer = producer;
-    this.inputRateTimeSeries = PublishedRateTimeSeries(
+    this.inputRateTimeSeries = PublishedTimeSeries(
       redisClient,
       producer.getId(),
       producer.getQueueName(),
     );
-    this.queueInputRateTimeSeries = QueuePublishedRateTimeSeries(
+    this.queueInputRateTimeSeries = QueuePublishedTimeSeries(
       this.redisClient,
       producer.getQueueName(),
     );
-    this.globalInputRateTimeSeries = GlobalPublishedRateTimeSeries(
+    this.globalInputRateTimeSeries = GlobalPublishedTimeSeries(
       this.redisClient,
     );
   }
