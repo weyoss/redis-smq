@@ -17,6 +17,7 @@ class HeartbeatMonitorWorker {
   constructor(redisClient: RedisClient) {
     this.redisClient = redisClient;
     this.ticker = new Ticker(this.onTick, 1000);
+    this.ticker.nextTick();
   }
 
   protected onTick = () => {
@@ -27,12 +28,13 @@ class HeartbeatMonitorWorker {
         (
           heartbeats: (THeartbeatParams | string)[],
           cb: ICallback<void>,
-        ): void =>
+        ): void => {
           Heartbeat.handleExpiredHeartbeatKeys(
             this.redisClient,
             heartbeats,
             cb,
-          ),
+          );
+        },
       ],
       (err) => {
         if (err) throw err;
