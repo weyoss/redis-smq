@@ -21,11 +21,12 @@ test('HashTimeSeries: Case 1', async () => {
   hashTimeSeries.add(ts + 10, 70, multi);
   await redisClient.execMultiAsync(multi);
   const range = await hashTimeSeries.getRangeAsync(ts - 20, ts + 20);
+
   expect(range.length).toBe(40);
-  expect(range[0]).toEqual({ timestamp: ts + 20, value: 0 });
-  expect(range[10]).toEqual({ timestamp: ts + 10, value: 70 });
-  expect(range[17]).toEqual({ timestamp: ts + 3, value: 56 });
+  expect(range[0]).toEqual({ timestamp: ts - 20, value: 0 });
   expect(range[20]).toEqual({ timestamp: ts, value: 100 });
-  expect(range[39]).toEqual({ timestamp: ts - 20 + 1, value: 0 });
+  expect(range[23]).toEqual({ timestamp: ts + 3, value: 56 });
+  expect(range[30]).toEqual({ timestamp: ts + 10, value: 70 });
+  expect(range[39]).toEqual({ timestamp: ts + 20 - 1, value: 0 });
   await hashTimeSeries.quitAsync();
 });
