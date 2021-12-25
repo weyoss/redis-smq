@@ -78,12 +78,6 @@ export async function shutdown(): Promise<void> {
 
   await p(consumersList);
   await p(producersList);
-  while (redisClients.length) {
-    const redisClient = redisClients.pop();
-    if (redisClient) {
-      await promisifyAll(redisClient).haltAsync();
-    }
-  }
   if (messageManager) {
     const m = promisifyAll(messageManager);
     await m.quitAsync();
@@ -104,6 +98,15 @@ export async function shutdown(): Promise<void> {
   await stopWebsocketRateStreamWorker();
   await stopWebsocketHeartbeatStreamWorker();
   await stopWebsocketOnlineStreamWorker();
+
+  // Redis clients should be stopped in the last step, to avoid random errors from different
+  // dependant components.
+  while (redisClients.length) {
+    const redisClient = redisClients.pop();
+    if (redisClient) {
+      await promisifyAll(redisClient).haltAsync();
+    }
+  }
 }
 
 export function getConsumer(args: TGetConsumerArgs = {}) {
@@ -391,10 +394,8 @@ export async function listenForWebsocketStreamEvents<
   subscribeClient.subscribe(streamName);
   const data: { ts: number; payload: TPayload }[] = [];
   subscribeClient.on('message', (channel, message) => {
-    if (typeof message === 'string') {
-      const payload: TPayload = JSON.parse(message);
-      data.push({ ts: Date.now(), payload });
-    } else throw new Error('Expected a message payload');
+    const payload: TPayload = JSON.parse(message);
+    data.push({ ts: Date.now(), payload });
   });
   for (; true; ) {
     if (data.length === 5) {
