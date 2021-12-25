@@ -78,6 +78,13 @@ export async function shutdown(): Promise<void> {
 
   await p(consumersList);
   await p(producersList);
+
+  await stopMonitorServer();
+  await stopWebsocketMainStreamWorker();
+  await stopWebsocketRateStreamWorker();
+  await stopWebsocketHeartbeatStreamWorker();
+  await stopWebsocketOnlineStreamWorker();
+
   if (messageManager) {
     const m = promisifyAll(messageManager);
     await m.quitAsync();
@@ -93,11 +100,11 @@ export async function shutdown(): Promise<void> {
     await q.quitAsync();
     queueManagerFrontend = null;
   }
-  await stopMonitorServer();
-  await stopWebsocketMainStreamWorker();
-  await stopWebsocketRateStreamWorker();
-  await stopWebsocketHeartbeatStreamWorker();
-  await stopWebsocketOnlineStreamWorker();
+  if (queueManager) {
+    const q = promisifyAll(queueManager);
+    await q.quitAsync();
+    queueManager = null;
+  }
 
   // Redis clients should be stopped in the last step, to avoid random errors from different
   // dependant components.
