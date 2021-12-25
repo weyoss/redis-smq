@@ -20,7 +20,7 @@ test('HashTimeSeries: Case 4', async () => {
     await hashTimeSeries.addAsync(ts + i, i);
   }
 
-  await delay(5000);
+  await delay(15000);
 
   const range1 = await hashTimeSeries.getRangeAsync(ts, ts + 10);
   expect(range1.length).toEqual(10);
