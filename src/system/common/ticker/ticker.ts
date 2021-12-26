@@ -3,6 +3,7 @@ import { EventEmitter } from 'events';
 import { events } from '../events';
 import { PowerManager } from '../power-manager/power-manager';
 import { TickerError } from './ticker.error';
+import { PanicError } from '../errors/panic.error';
 
 export class Ticker extends EventEmitter {
   protected powerManager = new PowerManager();
@@ -21,17 +22,19 @@ export class Ticker extends EventEmitter {
   }
 
   protected shutdown(): void {
-    if (this.timeout) clearTimeout(this.timeout);
-    if (this.interval) clearInterval(this.interval);
     this.powerManager.commit();
     this.emit(events.DOWN);
   }
 
   protected onTick(): void {
-    if (this.powerManager.isRunning()) {
+    if (this.powerManager.isGoingDown()) {
+      this.shutdown();
+    } else if (this.powerManager.isRunning()) {
       const tickFn = this.onNextTickFn ?? this.onTickFn;
       this.onNextTickFn = null;
       tickFn();
+    } else {
+      this.emit(events.ERROR, new PanicError(`Unexpected call`));
     }
   }
 
@@ -41,7 +44,13 @@ export class Ticker extends EventEmitter {
       this.emit(events.DOWN);
     } else {
       this.powerManager.goingDown();
-      this.shutdown();
+      if (this.timeout) {
+        clearTimeout(this.timeout);
+        this.shutdown();
+      } else if (this.interval) {
+        clearInterval(this.interval);
+        this.shutdown();
+      }
     }
   }
 
@@ -49,12 +58,18 @@ export class Ticker extends EventEmitter {
     if (this.timeout || this.interval) {
       throw new TickerError('A timer is already running');
     }
-    if (this.powerManager.isGoingUp() || this.powerManager.isRunning()) {
-      if (this.powerManager.isGoingUp()) this.powerManager.commit();
-      this.timeout = setTimeout(() => {
-        this.timeout = null;
-        this.onTick();
-      }, this.time);
+    if (this.powerManager.isGoingDown()) {
+      this.shutdown();
+    } else {
+      if (this.powerManager.isGoingUp()) {
+        this.powerManager.commit();
+      }
+      if (this.powerManager.isRunning()) {
+        this.timeout = setTimeout(() => {
+          this.timeout = null;
+          this.onTick();
+        }, this.time);
+      }
     }
   }
 
@@ -67,8 +82,10 @@ export class Ticker extends EventEmitter {
     if (this.interval || this.timeout) {
       throw new TickerError('A timer is already running');
     }
-    if (this.powerManager.isGoingUp() || this.powerManager.isRunning()) {
-      if (this.powerManager.isGoingUp()) this.powerManager.commit();
+    if (this.powerManager.isGoingUp()) {
+      this.powerManager.commit();
+    }
+    if (this.powerManager.isRunning()) {
       this.interval = setInterval(() => this.onTick(), this.time);
     }
   }

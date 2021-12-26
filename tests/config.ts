@@ -10,6 +10,7 @@ export const config: IConfig = {
     options: {
       host: redisHost,
       port: redisPort,
+      showFriendlyErrorStack: true,
     },
   },
   log: {
