@@ -10,7 +10,7 @@ import { LockManager } from '../lock-manager/lock-manager';
 
 export class HashTimeSeries extends TimeSeries {
   protected indexKey: string;
-  protected lockManager: LockManager | null = null;
+  protected lockManager: LockManager;
 
   constructor(
     redisClient: RedisClient,
@@ -66,13 +66,11 @@ export class HashTimeSeries extends TimeSeries {
         },
       );
     };
-    if (this.lockManager) {
-      this.lockManager.acquireLock((err, locked) => {
-        if (err) cb(err);
-        else if (locked) process(cb);
-        else cb();
-      });
-    } else process(cb);
+    this.lockManager.acquireLock((err, locked) => {
+      if (err) cb(err);
+      else if (locked) process(cb);
+      else cb();
+    });
   }
 
   getRange(from: number, to: number, cb: ICallback<TTimeSeriesRange>): void {
