@@ -116,12 +116,13 @@ export function MonitorServer(config: IConfig = {}): IMonitorServer {
       subscribeClient.on('pmessage', (pattern, channel, message) => {
         socketIO.emit(channel, JSON.parse(message));
       });
-      httpServer.listen(port, host, () => {
-        powerManager.commit();
-        app.context.logger.info(
-          `Monitor server is running on ${host}:${port}...`,
-        );
+      await new Promise<void>((resolve) => {
+        httpServer.listen(port, host, resolve);
       });
+      powerManager.commit();
+      app.context.logger.info(
+        `Monitor server is running on ${host}:${port}...`,
+      );
     },
     async quit() {
       powerManager.goingDown();
