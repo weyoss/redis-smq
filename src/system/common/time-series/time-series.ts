@@ -9,11 +9,11 @@ import { events } from '../events';
 import { EventEmitter } from 'events';
 
 export abstract class TimeSeries extends EventEmitter {
+  private readonly ticker: Ticker | null = null;
   protected retentionTime: number;
   protected redisClient: RedisClient;
   protected expireAfter: number | null = null;
   protected key: string;
-  protected ticker: Ticker | null = null;
   protected windowSize: number;
 
   constructor(
@@ -31,15 +31,15 @@ export abstract class TimeSeries extends EventEmitter {
     this.windowSize = windowSize;
     this.key = key;
     if (!readOnly) {
-      this.ticker = new Ticker(() => this.cleanUp(), 10000);
+      this.ticker = new Ticker(() => this.onTick(), 10000);
       this.ticker.nextTick();
     }
   }
 
-  protected cleanUp(): void {
-    this.onCleanUp((err) => {
+  private onTick(): void {
+    this.cleanUp((err) => {
       if (err) this.emit(events.ERROR, err);
-      this.ticker?.nextTick();
+      else this.ticker?.nextTick();
     });
   }
 
@@ -55,7 +55,7 @@ export abstract class TimeSeries extends EventEmitter {
     cb: ICallback<TTimeSeriesRange>,
   ): void;
 
-  abstract onCleanUp(cb: ICallback<void>): void;
+  abstract cleanUp(cb: ICallback<void>): void;
 
   getRangeFrom(from: number, cb: ICallback<TTimeSeriesRange>): void {
     const max = from;

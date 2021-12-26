@@ -6,7 +6,6 @@ import {
 } from '../../../../types';
 import { ArgumentError } from '../errors/argument.error';
 import { RedisClient } from '../../redis-client/redis-client';
-import { events } from '../events';
 import { LockManager } from '../lock-manager/lock-manager';
 
 export class HashTimeSeries extends TimeSeries {
@@ -48,33 +47,32 @@ export class HashTimeSeries extends TimeSeries {
     } else process(mixed);
   }
 
-  onCleanUp(cb: ICallback<void>): void {
-    const ts = TimeSeries.getCurrentTimestamp();
-    const max = ts - this.retentionTime;
-    this.redisClient.zrangebyscore(
-      this.indexKey,
-      '-inf',
-      `${max}`,
-      (err, reply) => {
-        if (err) throw err;
-        if (reply && reply.length) {
-          const multi = this.redisClient.multi();
-          multi.zrem(this.indexKey, ...reply);
-          multi.hdel(this.key, ...reply);
-          this.redisClient.execMulti(multi, () => cb());
-        }
-      },
-    );
-  }
-
-  protected cleanUp(): void {
+  cleanUp(cb: ICallback<void>): void {
+    const process = (cb: ICallback<void>) => {
+      const ts = TimeSeries.getCurrentTimestamp();
+      const max = ts - this.retentionTime;
+      this.redisClient.zrangebyscore(
+        this.indexKey,
+        '-inf',
+        `${max}`,
+        (err, reply) => {
+          if (err) cb(err);
+          else if (reply && reply.length) {
+            const multi = this.redisClient.multi();
+            multi.zrem(this.indexKey, ...reply);
+            multi.hdel(this.key, ...reply);
+            this.redisClient.execMulti(multi, (err) => cb(err));
+          } else cb();
+        },
+      );
+    };
     if (this.lockManager) {
       this.lockManager.acquireLock((err, locked) => {
-        if (err) this.emit(events.ERROR, err);
-        else if (locked) super.cleanUp();
-        else this.ticker?.nextTick();
+        if (err) cb(err);
+        else if (locked) process(cb);
+        else cb();
       });
-    } else super.cleanUp();
+    } else process(cb);
   }
 
   getRange(from: number, to: number, cb: ICallback<TTimeSeriesRange>): void {

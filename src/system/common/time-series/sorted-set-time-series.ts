@@ -23,7 +23,7 @@ export class SortedSetTimeSeries extends TimeSeries {
     } else process(mixed);
   }
 
-  onCleanUp(cb: ICallback<void>): void {
+  cleanUp(cb: ICallback<void>): void {
     const ts = TimeSeries.getCurrentTimestamp();
     const max = ts - this.retentionTime;
     this.redisClient.zremrangebyscore(this.key, '-inf', `${max}`, (err) =>
