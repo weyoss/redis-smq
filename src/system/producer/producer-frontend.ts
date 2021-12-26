@@ -29,6 +29,22 @@ export class ProducerFrontend extends EventEmitter {
     this.producer.shutdown(cb);
   }
 
+  isGoingUp(): boolean {
+    return this.producer.isGoingUp();
+  }
+
+  isGoingDown(): boolean {
+    return this.producer.isGoingDown();
+  }
+
+  isUp(): boolean {
+    return this.producer.isUp();
+  }
+
+  isDown(): boolean {
+    return this.producer.isDown();
+  }
+
   isRunning(): boolean {
     return this.producer.isRunning();
   }

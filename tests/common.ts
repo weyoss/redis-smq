@@ -67,6 +67,11 @@ export async function startUp(): Promise<void> {
 export async function shutdown(): Promise<void> {
   const p = async (list: (Consumer | Producer)[]) => {
     for (const i of list) {
+      if (i.isGoingUp()) {
+        await new Promise((resolve) => {
+          i.once(events.UP, resolve);
+        });
+      }
       if (i.isRunning()) {
         // eslint-disable-next-line no-await-in-loop
         await new Promise((resolve) => {

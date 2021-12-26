@@ -37,6 +37,22 @@ export abstract class ConsumerFrontend extends EventEmitter {
     this.consumer.shutdown(cb);
   }
 
+  isGoingUp(): boolean {
+    return this.consumer.isGoingUp();
+  }
+
+  isGoingDown(): boolean {
+    return this.consumer.isGoingDown();
+  }
+
+  isUp(): boolean {
+    return this.consumer.isUp();
+  }
+
+  isDown(): boolean {
+    return this.consumer.isDown();
+  }
+
   isRunning(): boolean {
     return this.consumer.isRunning();
   }

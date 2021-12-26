@@ -128,8 +128,8 @@ export function MonitorServer(config: IConfig = {}): IMonitorServer {
       powerManager.goingDown();
       const { app, httpServer } = getApiServer();
       await new Promise((resolve) => httpServer.stop(resolve));
-      getSubscribeClient().end(true);
-      app.context.redis.end(true);
+      await promisifyAll(getSubscribeClient()).haltAsync();
+      await promisifyAll(app.context.redis).haltAsync();
       await workerRunner.shutdownAsync();
       powerManager.commit();
       apiServer = null;
