@@ -14,6 +14,7 @@ import { QueueManager } from '../src/system/queue-manager/queue-manager';
 import { WebsocketRateStreamWorker } from '../src/monitor-server/workers/websocket-rate-stream.worker';
 import { WebsocketHeartbeatStreamWorker } from '../src/monitor-server/workers/websocket-heartbeat-stream.worker';
 import { WebsocketOnlineStreamWorker } from '../src/monitor-server/workers/websocket-online-stream.worker';
+import { TimeSeriesResponseBodyDTO } from '../src/monitor-server/controllers/common/time-series/time-series-response.DTO';
 
 type TMonitorServer = ReturnType<typeof MonitorServer>;
 
@@ -416,4 +417,24 @@ export async function listenForWebsocketStreamEvents<
     } else await delay(500);
   }
   return data;
+}
+
+export async function validateTimeSeriesFrom(url: string) {
+  await startMonitorServer();
+  const request = supertest('http://127.0.0.1:3000');
+  const timestamp = Math.ceil(Date.now() / 1000);
+  const from = timestamp - 60;
+  const response1: ISuperTestResponse<TimeSeriesResponseBodyDTO['data']> =
+    await request.get(`${url}?from=${from}&to=${timestamp}`);
+  expect(response1.statusCode).toBe(200);
+  const data = response1.body.data ?? [];
+  expect(data.length).toEqual(60);
+  expect(data[0]).toEqual({
+    timestamp: from,
+    value: 0,
+  });
+  expect(data[59]).toEqual({
+    timestamp: timestamp - 1,
+    value: 0,
+  });
 }
