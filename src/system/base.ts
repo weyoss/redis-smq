@@ -246,6 +246,22 @@ export abstract class Base<
     return this.powerManager.isRunning();
   }
 
+  isGoingUp(): boolean {
+    return this.powerManager.isGoingUp();
+  }
+
+  isGoingDown(): boolean {
+    return this.powerManager.isGoingDown();
+  }
+
+  isUp(): boolean {
+    return this.powerManager.isUp();
+  }
+
+  isDown(): boolean {
+    return this.powerManager.isDown();
+  }
+
   getBroker(cb: TUnaryFunction<Broker>): void {
     if (!this.broker)
       this.emit(events.ERROR, new PanicError('Expected an instance of Broker'));
