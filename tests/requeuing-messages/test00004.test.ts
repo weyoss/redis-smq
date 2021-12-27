@@ -7,7 +7,6 @@ import {
 } from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
-import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 
 test('Combined test: Dead-letter a message and requeue it. Check pending, acknowledged, pending messages, and queue metrics.', async () => {
   const msg = new Message();
@@ -15,8 +14,7 @@ test('Combined test: Dead-letter a message and requeue it. Check pending, acknow
 
   const producer = getProducer();
   await producer.produceMessageAsync(msg);
-  const queueName = producer.getQueueName();
-  const ns = redisKeys.getNamespace();
+  const queue = producer.getQueue();
 
   const consumer = getConsumer({
     consumeMock: (m, cb) => {
@@ -28,79 +26,52 @@ test('Combined test: Dead-letter a message and requeue it. Check pending, acknow
   await consumer.shutdownAsync();
 
   const messageManager = promisifyAll(await getMessageManagerFrontend());
-  const res1 = await messageManager.getPendingMessagesAsync(
-    queueName,
-    ns,
-    0,
-    100,
-  );
+  const res1 = await messageManager.getPendingMessagesAsync(queue, 0, 100);
   expect(res1.total).toBe(0);
   expect(res1.items.length).toBe(0);
 
-  const res2 = await messageManager.getAcknowledgedMessagesAsync(
-    queueName,
-    ns,
-    0,
-    100,
-  );
+  const res2 = await messageManager.getAcknowledgedMessagesAsync(queue, 0, 100);
   expect(res2.total).toBe(0);
   expect(res2.items.length).toBe(0);
 
-  const res3 = await messageManager.getDeadLetterMessagesAsync(
-    queueName,
-    ns,
-    0,
-    100,
-  );
+  const res3 = await messageManager.getDeadLetterMessagesAsync(queue, 0, 100);
   expect(res3.total).toBe(1);
   expect(res3.items.length).toBe(1);
   expect(res3.items[0].message.getId()).toEqual(msg.getId());
   expect(res3.items[0].message.getAttempts()).toEqual(2);
 
   const queueManager = promisifyAll(await getQueueManagerFrontend());
-  const queueMetrics = await queueManager.getQueueMetricsAsync(queueName, ns);
+  const queueMetrics = await queueManager.getQueueMetricsAsync(queue);
   expect(queueMetrics.pending).toBe(0);
   expect(queueMetrics.acknowledged).toBe(0);
   expect(queueMetrics.deadLettered).toBe(1);
 
   await messageManager.requeueMessageFromDLQueueAsync(
-    queueName,
-    ns,
+    queue,
     0,
     msg.getId(),
     false,
     undefined,
   );
 
-  const res5 = await messageManager.getPendingMessagesAsync(
-    queueName,
-    ns,
-    0,
-    100,
-  );
+  const res5 = await messageManager.getPendingMessagesAsync(queue, 0, 100);
 
   expect(res5.total).toBe(1);
   expect(res5.items.length).toBe(1);
   expect(res5.items[0].message.getId()).toEqual(msg.getId());
   expect(res5.items[0].message.getAttempts()).toEqual(0);
 
-  const res6 = await messageManager.getDeadLetterMessagesAsync(
-    queueName,
-    ns,
-    0,
-    100,
-  );
+  const res6 = await messageManager.getDeadLetterMessagesAsync(queue, 0, 100);
   expect(res6.total).toBe(0);
   expect(res6.items.length).toBe(0);
 
-  const queueMetrics1 = await queueManager.getQueueMetricsAsync(queueName, ns);
+  const queueMetrics1 = await queueManager.getQueueMetricsAsync(queue);
   expect(queueMetrics1.deadLettered).toBe(0);
   expect(queueMetrics1.pending).toBe(1);
 
   await expect(async () => {
     await messageManager.requeueMessageFromDLQueueAsync(
-      queueName,
-      ns,
+      queue,
       0,
       msg.getId(),
       false,

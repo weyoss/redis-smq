@@ -1,5 +1,5 @@
 import { Producer } from './producer';
-import { ICallback, IConfig } from '../../../types';
+import { ICallback, IConfig, TQueueParams } from '../../../types';
 import { EventEmitter } from 'events';
 import { events } from '../common/events';
 
@@ -53,8 +53,8 @@ export class ProducerFrontend extends EventEmitter {
     return this.producer.getId();
   }
 
-  getQueueName(): string {
-    return this.producer.getQueueName();
+  getQueue(): TQueueParams {
+    return this.producer.getQueue();
   }
 
   produceMessage(msg: unknown, cb: ICallback<boolean>): void {

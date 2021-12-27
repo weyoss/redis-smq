@@ -1,8 +1,10 @@
 import {
+  EMessageDeadLetterCause,
   EMessageUnacknowledgedCause,
   ICallback,
   TConsumerRedisKeys,
   THeartbeatRegistryPayload,
+  TQueueParams,
   TUnaryFunction,
 } from '../../../types';
 import { Base } from '../base';
@@ -64,15 +66,10 @@ export class Consumer extends Base<ConsumerMessageRate, TConsumerRedisKeys> {
           else
             this.getBroker((broker) => {
               const { keyQueueProcessing } = this.getRedisKeys();
-              broker.acknowledgeMessage(
-                this.queueName,
-                keyQueueProcessing,
-                msg,
-                (err) => {
-                  if (err) this.emit(events.ERROR, err);
-                  else this.emit(events.MESSAGE_ACKNOWLEDGED, msg);
-                },
-              );
+              broker.acknowledgeMessage(keyQueueProcessing, msg, (err) => {
+                if (err) this.emit(events.ERROR, err);
+                else this.emit(events.MESSAGE_ACKNOWLEDGED, msg);
+              });
             });
         }
       };
@@ -103,14 +100,18 @@ export class Consumer extends Base<ConsumerMessageRate, TConsumerRedisKeys> {
     this.getBroker((broker) => {
       const { keyQueueProcessing } = this.getRedisKeys();
       broker.unacknowledgeMessage(
-        this.queueName,
         keyQueueProcessing,
         msg,
         cause,
         err,
-        (err) => {
+        (err, deadLetterCause) => {
           if (err) this.emit(events.ERROR, err);
-          else this.emit(events.MESSAGE_UNACKNOWLEDGED, msg, cause);
+          else {
+            this.emit(events.MESSAGE_UNACKNOWLEDGED, msg, cause);
+            if (deadLetterCause !== undefined) {
+              this.emit(events.MESSAGE_DEAD_LETTERED, msg, deadLetterCause);
+            }
+          }
         },
       );
     });
@@ -142,12 +143,20 @@ export class Consumer extends Base<ConsumerMessageRate, TConsumerRedisKeys> {
       this.emit(events.MESSAGE_NEXT);
     });
     this.on(
+      events.MESSAGE_DEAD_LETTERED,
+      (msg: Message, cause: EMessageDeadLetterCause) => {
+        this.logger.info(
+          `Message (ID ${msg.getId()}) has been dead-lettered. Cause: ${cause}.`,
+        );
+        if (this.messageRate) this.messageRate.incrementDeadLettered();
+      },
+    );
+    this.on(
       events.MESSAGE_UNACKNOWLEDGED,
       (msg: Message, cause: EMessageUnacknowledgedCause) => {
         this.logger.info(
           `Message (ID ${msg.getId()}) has been unacknowledged. Cause: ${cause}.`,
         );
-        if (this.messageRate) this.messageRate.incrementUnacknowledged();
         this.emit(events.MESSAGE_NEXT);
       },
     );
@@ -167,7 +176,6 @@ export class Consumer extends Base<ConsumerMessageRate, TConsumerRedisKeys> {
       );
     } else {
       this.logger.info(`Trying to consume message (ID ${message.getId()})...`);
-      if (this.messageRate) this.messageRate.incrementProcessing();
       this.handleConsume(message);
     }
   }
@@ -279,18 +287,26 @@ export class Consumer extends Base<ConsumerMessageRate, TConsumerRedisKeys> {
 
   getRedisKeys(): TConsumerRedisKeys {
     if (!this.redisKeys) {
-      this.redisKeys = redisKeys.getConsumerKeys(this.queueName, this.id);
+      this.redisKeys = redisKeys.getConsumerKeys(
+        this.queue.name,
+        this.id,
+        this.queue.ns,
+      );
     }
     return this.redisKeys;
   }
 
   static isAlive(
     redisClient: RedisClient,
-    queueName: string,
+    queue: TQueueParams,
     id: string,
     cb: ICallback<boolean>,
   ): void {
-    const { keyQueueConsumers } = redisKeys.getConsumerKeys(queueName, id);
+    const { keyQueueConsumers } = redisKeys.getConsumerKeys(
+      queue.name,
+      id,
+      queue.ns,
+    );
     heartbeatRegistry.exists(redisClient, keyQueueConsumers, id, cb);
   }
 

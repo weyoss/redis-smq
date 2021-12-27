@@ -41,19 +41,19 @@ export class Broker {
     redisClient: RedisClient,
     cb: ICallback<string>,
   ): void {
-    const queueName = consumer.getQueueName();
+    const queue = consumer.getQueue();
     const { keyQueueProcessing } = consumer.getRedisKeys();
     if (this.priorityQueue) {
       this.messageManager.dequeueMessageWithPriority(
         redisClient,
-        queueName,
+        queue,
         keyQueueProcessing,
         cb,
       );
     } else {
       this.messageManager.dequeueMessage(
         redisClient,
-        queueName,
+        queue,
         keyQueueProcessing,
         cb,
       );
@@ -61,35 +61,51 @@ export class Broker {
   }
 
   acknowledgeMessage(
-    queueName: string,
     processingQueue: string,
     msg: Message,
     cb: ICallback<void>,
   ): void {
-    this.messageManager.acknowledgeMessage(msg, queueName, processingQueue, cb);
+    this.messageManager.acknowledgeMessage(msg, processingQueue, cb);
   }
 
   unacknowledgeMessage(
-    queueName: string,
     processingQueue: string,
     message: Message,
     unacknowledgedCause: EMessageUnacknowledgedCause,
     error: Error | undefined,
-    cb: ICallback<void>,
+    cb: ICallback<EMessageDeadLetterCause>,
   ): void {
     if (error) this.logger.debug(error);
     this.logger.debug(
       `Determining if message (ID ${message.getId()}) can be re-queued...`,
     );
-    this.retry(queueName, processingQueue, message, unacknowledgedCause, cb);
+    this.retry(processingQueue, message, unacknowledgedCause, cb);
+  }
+
+  deadLetterMessage(
+    message: Message,
+    keyQueueProcessing: string,
+    unacknowledgedCause: EMessageUnacknowledgedCause,
+    deadLetterCause: EMessageDeadLetterCause,
+    cb: ICallback<EMessageDeadLetterCause>,
+  ): void {
+    this.messageManager.deadLetterUnacknowledgedMessage(
+      message,
+      keyQueueProcessing,
+      unacknowledgedCause,
+      EMessageDeadLetterCause.TTL_EXPIRED,
+      (err) => {
+        if (err) cb(err);
+        else cb(null, deadLetterCause);
+      },
+    );
   }
 
   retry(
-    queueName: string,
     processingQueue: string,
     message: Message,
     unacknowledgedCause: EMessageUnacknowledgedCause,
-    cb: ICallback<void>,
+    cb: ICallback<EMessageDeadLetterCause>,
   ): void {
     if (
       unacknowledgedCause === EMessageUnacknowledgedCause.TTL_EXPIRED ||
@@ -99,13 +115,12 @@ export class Broker {
       this.logger.debug(
         `Message (ID ${message.getId()}) has expired. Moving it to dead-letter queue...`,
       );
-      this.messageManager.deadLetterUnacknowledgedMessage(
+      this.deadLetterMessage(
         message,
-        queueName,
         processingQueue,
         unacknowledgedCause,
         EMessageDeadLetterCause.TTL_EXPIRED,
-        (err) => cb(err),
+        cb,
       );
     } else if (message.isPeriodic()) {
       // Only non-periodic messages are re-queued. Failure of periodic messages is ignored since such
@@ -113,13 +128,12 @@ export class Broker {
       this.logger.debug(
         `Message (ID ${message.getId()}) is periodic. Moving it to dead-letter queue...`,
       );
-      this.messageManager.deadLetterUnacknowledgedMessage(
+      this.deadLetterMessage(
         message,
-        queueName,
         processingQueue,
         unacknowledgedCause,
         EMessageDeadLetterCause.PERIODIC_MESSAGE,
-        (err) => cb(err),
+        cb,
       );
     } else if (!message.hasRetryThresholdExceeded()) {
       this.logger.debug(
@@ -132,7 +146,6 @@ export class Broker {
         );
         this.messageManager.delayUnacknowledgedMessageBeforeRequeuing(
           message,
-          queueName,
           processingQueue,
           unacknowledgedCause,
           (err) => cb(err),
@@ -141,7 +154,6 @@ export class Broker {
         this.logger.debug(`Re-queuing message (ID [${message.getId()})...`);
         this.messageManager.requeueUnacknowledgedMessage(
           message,
-          queueName,
           processingQueue,
           this.priorityQueue,
           unacknowledgedCause,
@@ -152,13 +164,12 @@ export class Broker {
       this.logger.debug(
         `Retry threshold for message (ID ${message.getId()}) has exceeded. Moving message to dead-letter queue...`,
       );
-      this.messageManager.deadLetterUnacknowledgedMessage(
+      this.deadLetterMessage(
         message,
-        queueName,
         processingQueue,
         unacknowledgedCause,
         EMessageDeadLetterCause.RETRY_THRESHOLD_EXCEEDED,
-        (err) => cb(err),
+        cb,
       );
     }
   }

@@ -5,7 +5,6 @@ import {
 } from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
-import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 
 test('Combined test: Delete a pending message with priority. Check pending messages. Check queue metrics.', async () => {
   const msg = new Message();
@@ -15,13 +14,11 @@ test('Combined test: Delete a pending message with priority. Check pending messa
     priorityQueue: true,
   });
   await producer.produceMessageAsync(msg);
-  const queueName = producer.getQueueName();
-  const ns = redisKeys.getNamespace();
+  const queue = producer.getQueue();
 
   const messageManager = promisifyAll(await getMessageManagerFrontend());
   const res1 = await messageManager.getPendingMessagesWithPriorityAsync(
-    queueName,
-    ns,
+    queue,
     0,
     100,
   );
@@ -30,30 +27,27 @@ test('Combined test: Delete a pending message with priority. Check pending messa
   expect(res1.items[0].getId()).toBe(msg.getId());
 
   const queueManager = promisifyAll(await getQueueManagerFrontend());
-  const queueMetrics = await queueManager.getQueueMetricsAsync(queueName, ns);
+  const queueMetrics = await queueManager.getQueueMetricsAsync(queue);
   expect(queueMetrics.pendingWithPriority).toBe(1);
 
   await messageManager.deletePendingMessageWithPriorityAsync(
-    queueName,
-    ns,
+    queue,
     msg.getId(),
   );
   const res2 = await messageManager.getPendingMessagesWithPriorityAsync(
-    queueName,
-    ns,
+    queue,
     0,
     100,
   );
   expect(res2.total).toBe(0);
   expect(res2.items.length).toBe(0);
 
-  const queueMetrics1 = await queueManager.getQueueMetricsAsync(queueName, ns);
+  const queueMetrics1 = await queueManager.getQueueMetricsAsync(queue);
   expect(queueMetrics1.pending).toBe(0);
 
   // Deleting a message that was already deleted should not throw an error
   await messageManager.deletePendingMessageWithPriorityAsync(
-    queueName,
-    ns,
+    queue,
     msg.getId(),
   );
 });

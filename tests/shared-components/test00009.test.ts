@@ -6,7 +6,7 @@ import { SortedSetTimeSeries } from '../../src/system/common/time-series/sorted-
 test('SortedSetTimeSeries: Case 3', async () => {
   const redisClient = await getRedisInstance();
   const sortedSetSeries = promisifyAll(
-    new SortedSetTimeSeries(redisClient, 'my-key', 5, 20),
+    new SortedSetTimeSeries(redisClient, 'my-key', 5, 20, undefined, true),
   );
   const ts = TimeSeries.getCurrentTimestamp();
   for (let i = 0; i < 10; i += 1) {

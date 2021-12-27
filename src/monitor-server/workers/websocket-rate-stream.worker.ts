@@ -1,4 +1,4 @@
-import { ICallback, IConfig, TMessageQueue } from '../../../types';
+import { ICallback, IConfig, TQueueParams } from '../../../types';
 import { redisKeys } from '../../system/common/redis-keys/redis-keys';
 import { RedisClient } from '../../system/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callback-reply.error';
@@ -12,14 +12,11 @@ import { TimeSeries } from '../../system/common/time-series/time-series';
 import { Heartbeat } from '../../system/common/heartbeat/heartbeat';
 import {
   AcknowledgedTimeSeries,
+  DeadLetteredTimeSeries,
   GlobalAcknowledgedTimeSeries,
-  GlobalProcessingTimeSeries,
-  GlobalUnacknowledgedTimeSeries,
-  ProcessingTimeSeries,
+  GlobalDeadLetteredTimeSeries,
   QueueAcknowledgedTimeSeries,
-  QueueProcessingTimeSeries,
-  QueueUnacknowledgedTimeSeries,
-  UnacknowledgedTimeSeries,
+  QueueDeadLetteredTimeSeries,
 } from '../../system/consumer/consumer-time-series';
 import {
   GlobalPublishedTimeSeries,
@@ -65,178 +62,120 @@ export class WebsocketRateStreamWorker {
 
   protected addConsumerTasks = (
     ts: number,
-    ns: string,
-    queueName: string,
+    queue: TQueueParams,
     consumerId: string,
   ): void => {
     this.tasks.push((cb: ICallback<void>) =>
-      AcknowledgedTimeSeries(
-        this.redisClient,
-        consumerId,
-        String(queueName),
-        String(ns),
-        true,
-      ).getRangeFrom(ts, (err, reply) => {
-        if (err) throw err;
-        else {
-          this.redisClient.publish(
-            `streamConsumerAcknowledged:${consumerId}`,
-            JSON.stringify(reply),
-            this.noop,
-          );
-          cb();
-        }
-      }),
+      AcknowledgedTimeSeries(this.redisClient, consumerId, queue).getRangeFrom(
+        ts,
+        (err, reply) => {
+          if (err) throw err;
+          else {
+            this.redisClient.publish(
+              `streamConsumerAcknowledged:${consumerId}`,
+              JSON.stringify(reply),
+              this.noop,
+            );
+            cb();
+          }
+        },
+      ),
     );
     this.tasks.push((cb: ICallback<void>) =>
-      UnacknowledgedTimeSeries(
-        this.redisClient,
-        consumerId,
-        String(queueName),
-        String(ns),
-        true,
-      ).getRangeFrom(ts, (err, reply) => {
-        if (err) cb(err);
-        else {
-          this.redisClient.publish(
-            `streamConsumerUnacknowledged:${consumerId}`,
-            JSON.stringify(reply),
-            this.noop,
-          );
-          cb();
-        }
-      }),
-    );
-    this.tasks.push((cb: ICallback<void>) =>
-      ProcessingTimeSeries(
-        this.redisClient,
-        consumerId,
-        String(queueName),
-        String(ns),
-        true,
-      ).getRangeFrom(ts, (err, reply) => {
-        if (err) cb(err);
-        else {
-          this.redisClient.publish(
-            `streamConsumerProcessing:${consumerId}`,
-            JSON.stringify(reply),
-            this.noop,
-          );
-          cb();
-        }
-      }),
+      DeadLetteredTimeSeries(this.redisClient, consumerId, queue).getRangeFrom(
+        ts,
+        (err, reply) => {
+          if (err) cb(err);
+          else {
+            this.redisClient.publish(
+              `streamConsumerUnacknowledged:${consumerId}`,
+              JSON.stringify(reply),
+              this.noop,
+            );
+            cb();
+          }
+        },
+      ),
     );
   };
 
-  protected addQueueTasks = (
-    ts: number,
-    ns: string,
-    queueName: string,
-  ): void => {
+  protected addQueueTasks = (ts: number, queue: TQueueParams): void => {
     this.tasks.push((cb: ICallback<void>) =>
-      QueueAcknowledgedTimeSeries(
-        this.redisClient,
-        String(queueName),
-        String(ns),
-        true,
-      ).getRangeFrom(ts, (err, reply) => {
-        if (err) cb(err);
-        else {
-          this.redisClient.publish(
-            `streamQueueAcknowledged:${ns}:${queueName}`,
-            JSON.stringify(reply),
-            this.noop,
-          );
-          cb();
-        }
-      }),
+      QueueAcknowledgedTimeSeries(this.redisClient, queue).getRangeFrom(
+        ts,
+        (err, reply) => {
+          if (err) cb(err);
+          else {
+            this.redisClient.publish(
+              `streamQueueAcknowledged:${queue.ns}:${queue.name}`,
+              JSON.stringify(reply),
+              this.noop,
+            );
+            cb();
+          }
+        },
+      ),
     );
     this.tasks.push((cb: ICallback<void>) =>
-      QueueUnacknowledgedTimeSeries(
-        this.redisClient,
-        String(queueName),
-        String(ns),
-        true,
-      ).getRangeFrom(ts, (err, reply) => {
-        if (err) cb(err);
-        else {
-          this.redisClient.publish(
-            `streamQueueUnacknowledged:${ns}:${queueName}`,
-            JSON.stringify(reply),
-            this.noop,
-          );
-          cb();
-        }
-      }),
+      QueueDeadLetteredTimeSeries(this.redisClient, queue).getRangeFrom(
+        ts,
+        (err, reply) => {
+          if (err) cb(err);
+          else {
+            this.redisClient.publish(
+              `streamQueueUnacknowledged:${queue.ns}:${queue.name}`,
+              JSON.stringify(reply),
+              this.noop,
+            );
+            cb();
+          }
+        },
+      ),
     );
     this.tasks.push((cb: ICallback<void>) =>
-      QueueProcessingTimeSeries(
-        this.redisClient,
-        String(queueName),
-        String(ns),
-        true,
-      ).getRangeFrom(ts, (err, reply) => {
-        if (err) cb(err);
-        else {
-          this.redisClient.publish(
-            `streamQueueProcessing:${ns}:${queueName}`,
-            JSON.stringify(reply),
-            this.noop,
-          );
-          cb();
-        }
-      }),
-    );
-    this.tasks.push((cb: ICallback<void>) =>
-      QueuePublishedTimeSeries(
-        this.redisClient,
-        String(queueName),
-        String(ns),
-        true,
-      ).getRangeFrom(ts, (err, reply) => {
-        if (err) cb(err);
-        else {
-          this.redisClient.publish(
-            `streamQueuePublished:${ns}:${queueName}`,
-            JSON.stringify(reply),
-            this.noop,
-          );
-          cb();
-        }
-      }),
+      QueuePublishedTimeSeries(this.redisClient, queue).getRangeFrom(
+        ts,
+        (err, reply) => {
+          if (err) cb(err);
+          else {
+            this.redisClient.publish(
+              `streamQueuePublished:${queue.ns}:${queue.name}`,
+              JSON.stringify(reply),
+              this.noop,
+            );
+            cb();
+          }
+        },
+      ),
     );
   };
 
   protected addProducerTasks = (
     ts: number,
-    ns: string,
-    queueName: string,
+    queue: TQueueParams,
     producerId: string,
   ): void => {
     this.tasks.push((cb: ICallback<void>) =>
-      PublishedTimeSeries(
-        this.redisClient,
-        producerId,
-        String(queueName),
-        String(ns),
-        true,
-      ).getRangeFrom(ts, (err, reply) => {
-        if (err) cb(err);
-        else {
-          this.redisClient.publish(
-            `streamProducerPublished:${producerId}`,
-            JSON.stringify(reply),
-            this.noop,
-          );
-          cb();
-        }
-      }),
+      PublishedTimeSeries(this.redisClient, producerId, queue).getRangeFrom(
+        ts,
+        (err, reply) => {
+          if (err) cb(err);
+          else {
+            this.redisClient.publish(
+              `streamProducerPublished:${producerId}`,
+              JSON.stringify(reply),
+              this.noop,
+            );
+            cb();
+          }
+        },
+      ),
     );
   };
 
   protected addGlobalTasks = (ts: number): void => {
     this.tasks.push((cb: ICallback<void>) =>
-      GlobalAcknowledgedTimeSeries(this.redisClient, true).getRangeFrom(
+      GlobalAcknowledgedTimeSeries(this.redisClient).getRangeFrom(
         ts,
         (err, reply) => {
           if (err) cb(err);
@@ -252,7 +191,7 @@ export class WebsocketRateStreamWorker {
       ),
     );
     this.tasks.push((cb: ICallback<void>) =>
-      GlobalUnacknowledgedTimeSeries(this.redisClient, true).getRangeFrom(
+      GlobalDeadLetteredTimeSeries(this.redisClient).getRangeFrom(
         ts,
         (err, reply) => {
           if (err) cb(err);
@@ -268,23 +207,7 @@ export class WebsocketRateStreamWorker {
       ),
     );
     this.tasks.push((cb: ICallback<void>) =>
-      GlobalProcessingTimeSeries(this.redisClient, true).getRangeFrom(
-        ts,
-        (err, reply) => {
-          if (err) cb(err);
-          else {
-            this.redisClient.publish(
-              'streamGlobalProcessing',
-              JSON.stringify(reply),
-              this.noop,
-            );
-            cb();
-          }
-        },
-      ),
-    );
-    this.tasks.push((cb: ICallback<void>) =>
-      GlobalPublishedTimeSeries(this.redisClient, true).getRangeFrom(
+      GlobalPublishedTimeSeries(this.redisClient).getRangeFrom(
         ts,
         (err, reply) => {
           if (err) cb(err);
@@ -302,32 +225,31 @@ export class WebsocketRateStreamWorker {
   };
 
   protected addQueue = (
-    ns: string,
-    queueName: string,
+    queue: TQueueParams,
   ): { consumers: string[]; producers: string[] } => {
+    const { ns, name } = queue;
     if (!this.queueData[ns]) {
       this.queueData[ns] = {};
     }
-    if (!this.queueData[ns][queueName]) {
-      this.queueData[ns][queueName] = {
+    if (!this.queueData[ns][name]) {
+      this.queueData[ns][name] = {
         consumers: [],
         producers: [],
       };
     }
-    return this.queueData[ns][queueName];
+    return this.queueData[ns][name];
   };
 
   protected handleQueueConsumers = (
     ts: number,
-    ns: string,
-    queueName: string,
+    queue: TQueueParams,
     consumers: string[],
     cb: () => void,
   ): void => {
     async.each(
       consumers,
       (consumerId, done) => {
-        this.addConsumerTasks(ts, ns, queueName, consumerId);
+        this.addConsumerTasks(ts, queue, consumerId);
         done();
       },
       cb,
@@ -336,15 +258,14 @@ export class WebsocketRateStreamWorker {
 
   protected handleQueueProducers = (
     ts: number,
-    ns: string,
-    queueName: string,
+    queue: TQueueParams,
     producers: string[],
     cb: () => void,
   ): void => {
     async.each(
       producers,
       (producerId, done) => {
-        this.addProducerTasks(ts, ns, queueName, producerId);
+        this.addProducerTasks(ts, queue, producerId);
         done();
       },
       cb,
@@ -353,17 +274,16 @@ export class WebsocketRateStreamWorker {
 
   protected handleQueue = (
     ts: number,
-    ns: string,
-    queueName: string,
-    queue: { consumers: string[]; producers: string[] },
+    queue: TQueueParams,
+    queueProperties: { consumers: string[]; producers: string[] },
     cb: () => void,
   ): void => {
-    const { consumers, producers } = queue;
-    this.addQueueTasks(ts, ns, queueName);
+    const { consumers, producers } = queueProperties;
+    this.addQueueTasks(ts, queue);
     async.parallel(
       [
-        (cb) => this.handleQueueConsumers(ts, ns, queueName, consumers, cb),
-        (cb) => this.handleQueueProducers(ts, ns, queueName, producers, cb),
+        (cb) => this.handleQueueConsumers(ts, queue, consumers, cb),
+        (cb) => this.handleQueueProducers(ts, queue, producers, cb),
       ],
       cb,
     );
@@ -378,7 +298,12 @@ export class WebsocketRateStreamWorker {
         async.eachOf(
           queues,
           (queue, queueName, done) => {
-            this.handleQueue(ts, String(ns), String(queueName), queue, done);
+            this.handleQueue(
+              ts,
+              { ns: String(ns), name: String(queueName) },
+              queue,
+              done,
+            );
           },
           done,
         );
@@ -403,7 +328,7 @@ export class WebsocketRateStreamWorker {
             const { ns, queueName, consumerId, producerId } =
               redisKeys.extractData(item.keyHeartbeat) ?? {};
             if (ns && queueName && (consumerId || producerId)) {
-              const queue = this.addQueue(ns, queueName);
+              const queue = this.addQueue({ ns, name: queueName });
               if (consumerId) queue.consumers.push(consumerId);
               else if (producerId) queue.producers.push(producerId);
             }
@@ -422,9 +347,9 @@ export class WebsocketRateStreamWorker {
       else {
         async.each(
           reply ?? [],
-          (queue, done) => {
-            const data: TMessageQueue = JSON.parse(queue);
-            this.addQueue(data.ns, data.name);
+          (queueStr, done) => {
+            const queue: TQueueParams = JSON.parse(queueStr);
+            this.addQueue(queue);
             done();
           },
           cb,

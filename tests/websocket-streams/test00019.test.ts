@@ -4,14 +4,14 @@ import {
   startWebsocketOnlineStreamWorker,
   validateTime,
 } from '../common';
-import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 
 test('WebsocketOnlineStreamWorker: streamQueueOnlineConsumers/case 2', async () => {
   const consumer = getConsumer();
+  const queue = consumer.getQueue();
   await consumer.runAsync();
 
   const data = await listenForWebsocketStreamEvents<Record<string, string>>(
-    `streamQueueOnlineConsumers:${redisKeys.getNamespace()}:${consumer.getQueueName()}`,
+    `streamQueueOnlineConsumers:${queue.ns}:${queue.name}`,
     startWebsocketOnlineStreamWorker,
   );
   for (let i = 0; i < data.length; i += 1) {
@@ -23,7 +23,7 @@ test('WebsocketOnlineStreamWorker: streamQueueOnlineConsumers/case 2', async () 
   await consumer.shutdownAsync();
 
   const data2 = await listenForWebsocketStreamEvents<Record<string, string>>(
-    `streamQueueOnlineConsumers:${redisKeys.getNamespace()}:${consumer.getQueueName()}`,
+    `streamQueueOnlineConsumers:${queue.ns}:${queue.name}`,
     startWebsocketOnlineStreamWorker,
   );
   for (let i = 0; i < data2.length; i += 1) {

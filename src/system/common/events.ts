@@ -12,4 +12,5 @@ export const events = {
   MESSAGE_DEQUEUED: 'message_dequeued',
   MESSAGE_ACKNOWLEDGED: 'message_acknowledged',
   MESSAGE_UNACKNOWLEDGED: 'message_unacknowledged',
+  MESSAGE_DEAD_LETTERED: 'message_dead_lettered',
 };

@@ -2,23 +2,23 @@ import { RedisClient } from '../../redis-client/redis-client';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { HashTimeSeries } from '../../common/time-series/hash-time-series';
 
-export const GlobalProcessingTimeSeries = (
+export const GlobalDeadLetteredTimeSeries = (
   redisClient: RedisClient,
-  readOnly?: boolean,
+  isMaster?: boolean,
 ) => {
   const {
-    keyRateGlobalProcessing,
-    keyRateGlobalProcessingIndex,
-    keyRateGlobalProcessingLock,
+    keyRateGlobalDeadLettered,
+    keyRateGlobalDeadLetteredIndex,
+    keyRateGlobalDeadLetteredLock,
   } = redisKeys.getGlobalKeys();
   return new HashTimeSeries(
     redisClient,
-    keyRateGlobalProcessing,
-    keyRateGlobalProcessingIndex,
-    keyRateGlobalProcessingLock,
+    keyRateGlobalDeadLettered,
+    keyRateGlobalDeadLetteredIndex,
+    keyRateGlobalDeadLetteredLock,
     undefined,
     undefined,
     undefined,
-    readOnly,
+    isMaster,
   );
 };

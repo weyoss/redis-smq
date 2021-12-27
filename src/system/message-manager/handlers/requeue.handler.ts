@@ -1,4 +1,4 @@
-import { ICallback } from '../../../../types';
+import { ICallback, TQueueParams } from '../../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { getListMessageAtSequenceId } from '../common';
 import { Message } from '../../message';
@@ -16,8 +16,7 @@ export class RequeueHandler extends Handler {
   }
 
   protected requeueListMessage(
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     from: string,
     index: number,
     messageId: string,
@@ -25,14 +24,12 @@ export class RequeueHandler extends Handler {
     priority: number | undefined,
     cb: ICallback<void>,
   ): void {
-    const namespace = ns ?? redisKeys.getNamespace();
     getListMessageAtSequenceId(
       this.redisClient,
       from,
       index,
       messageId,
-      queueName,
-      namespace,
+      queue,
       (err, msg) => {
         if (err) cb(err);
         else if (!msg) cb(new EmptyCallbackReplyError());
@@ -40,7 +37,7 @@ export class RequeueHandler extends Handler {
           const multi = this.redisClient.multi();
           multi.lrem(from, 1, JSON.stringify(msg));
           const message = Message.createFromMessage(msg, true); // resetting all system parameters
-          message.setQueue(namespace, queueName); // do not lose message queue
+          message.setQueue(queue); // do not lose message queue
           if (withPriority && typeof priority !== 'undefined') {
             message.setPriority(priority);
           }
@@ -52,18 +49,16 @@ export class RequeueHandler extends Handler {
   }
 
   requeueMessageFromDLQueue(
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     index: number,
     messageId: string,
     withPriority: boolean,
     priority: number | undefined,
     cb: ICallback<void>,
   ): void {
-    const { keyQueueDL } = redisKeys.getKeys(queueName, ns);
+    const { keyQueueDL } = redisKeys.getKeys(queue.name, queue.ns);
     this.requeueListMessage(
-      queueName,
-      ns,
+      queue,
       keyQueueDL,
       index,
       messageId,
@@ -74,18 +69,19 @@ export class RequeueHandler extends Handler {
   }
 
   requeueMessageFromAcknowledgedQueue(
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     index: number,
     messageId: string,
     withPriority: boolean,
     priority: number | undefined,
     cb: ICallback<void>,
   ): void {
-    const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName, ns);
+    const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(
+      queue.name,
+      queue.ns,
+    );
     this.requeueListMessage(
-      queueName,
-      ns,
+      queue,
       keyQueueAcknowledgedMessages,
       index,
       messageId,

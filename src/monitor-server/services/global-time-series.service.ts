@@ -3,8 +3,7 @@ import { promisifyAll } from 'bluebird';
 import { TimeSeriesRequestDTO } from '../controllers/common/time-series/time-series-request.DTO';
 import {
   GlobalAcknowledgedTimeSeries,
-  GlobalProcessingTimeSeries,
-  GlobalUnacknowledgedTimeSeries,
+  GlobalDeadLetteredTimeSeries,
 } from '../../system/consumer/consumer-time-series';
 import { GlobalPublishedTimeSeries } from '../../system/producer/producer-time-series';
 
@@ -17,23 +16,15 @@ export class GlobalTimeSeriesService {
   async acknowledged(args: TimeSeriesRequestDTO) {
     const { from, to } = args;
     const timeSeries = promisifyAll(
-      GlobalAcknowledgedTimeSeries(this.redisClient, true),
+      GlobalAcknowledgedTimeSeries(this.redisClient),
     );
     return timeSeries.getRangeAsync(from, to);
   }
 
-  async processing(args: TimeSeriesRequestDTO) {
+  async deadLettered(args: TimeSeriesRequestDTO) {
     const { from, to } = args;
     const timeSeries = promisifyAll(
-      GlobalProcessingTimeSeries(this.redisClient, true),
-    );
-    return timeSeries.getRangeAsync(from, to);
-  }
-
-  async unacknowledged(args: TimeSeriesRequestDTO) {
-    const { from, to } = args;
-    const timeSeries = promisifyAll(
-      GlobalUnacknowledgedTimeSeries(this.redisClient, true),
+      GlobalDeadLetteredTimeSeries(this.redisClient),
     );
     return timeSeries.getRangeAsync(from, to);
   }
@@ -41,7 +32,7 @@ export class GlobalTimeSeriesService {
   async published(args: TimeSeriesRequestDTO) {
     const { from, to } = args;
     const timeSeries = promisifyAll(
-      GlobalPublishedTimeSeries(this.redisClient, true),
+      GlobalPublishedTimeSeries(this.redisClient),
     );
     return timeSeries.getRangeAsync(from, to);
   }

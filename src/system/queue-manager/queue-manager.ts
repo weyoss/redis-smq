@@ -1,5 +1,5 @@
 import { RedisClient } from '../redis-client/redis-client';
-import { ICallback, IQueueMetrics, TMessageQueue } from '../../../types';
+import { ICallback, IQueueMetrics, TQueueParams } from '../../../types';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { Consumer } from '../consumer/consumer';
 import * as async from 'async';
@@ -18,16 +18,16 @@ export class QueueManager {
   ///
 
   deleteProcessingQueue(
-    queueName: string,
+    queue: TQueueParams,
     processingQueueName: string,
     cb: ICallback<void>,
   ): void {
     this.logger.debug(
-      `Deleting processing queue (${processingQueueName}) of (${queueName} from default namespace)...`,
+      `Deleting processing queue (${processingQueueName}) of (${queue.name} from ${queue.ns} namespace)...`,
     );
     const multi = this.redisClient.multi();
     const { keyIndexProcessingQueues, keyIndexQueueMessageProcessingQueues } =
-      redisKeys.getKeys(queueName);
+      redisKeys.getKeys(queue.name, queue.ns);
     multi.srem(keyIndexProcessingQueues, processingQueueName);
     multi.hdel(keyIndexQueueMessageProcessingQueues, processingQueueName);
     multi.del(processingQueueName);
@@ -42,43 +42,41 @@ export class QueueManager {
 
   ///
 
-  purgeDeadLetterQueue(
-    queueName: string,
-    ns: string | undefined,
-    cb: ICallback<void>,
-  ): void {
-    this.logger.debug(`Purging dead-letter queue of (${queueName}, ${ns})...`);
-    const { keyQueueDL } = redisKeys.getKeys(queueName, ns);
+  purgeDeadLetterQueue(queue: TQueueParams, cb: ICallback<void>): void {
+    this.logger.debug(
+      `Purging dead-letter queue of (${queue.name}, ${queue.ns})...`,
+    );
+    const { keyQueueDL } = redisKeys.getKeys(queue.name, queue.ns);
     this.redisClient.del(keyQueueDL, (err) => cb(err));
   }
 
   purgeAcknowledgedMessagesQueue(
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     cb: ICallback<void>,
   ): void {
-    this.logger.debug(`Purging dead-letter queue of (${queueName}, ${ns})...`);
-    const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName, ns);
+    this.logger.debug(
+      `Purging dead-letter queue of (${queue.name}, ${queue.ns})...`,
+    );
+    const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(
+      queue.name,
+      queue.ns,
+    );
     this.redisClient.del(keyQueueAcknowledgedMessages, (err) => cb(err));
   }
 
-  purgeQueue(
-    queueName: string,
-    ns: string | undefined,
-    cb: ICallback<void>,
-  ): void {
-    this.logger.debug(`Purging pending queue of (${queueName}, ${ns})...`);
-    const { keyQueue } = redisKeys.getKeys(queueName, ns);
+  purgeQueue(queue: TQueueParams, cb: ICallback<void>): void {
+    this.logger.debug(
+      `Purging pending queue of (${queue.name}, ${queue.ns})...`,
+    );
+    const { keyQueue } = redisKeys.getKeys(queue.name, queue.ns);
     this.redisClient.del(keyQueue, (err) => cb(err));
   }
 
-  purgePriorityQueue(
-    queueName: string,
-    ns: string | undefined,
-    cb: ICallback<void>,
-  ): void {
-    this.logger.debug(`Purging priority queue of (${queueName}, ${ns})...`);
-    const { keyQueuePriority } = redisKeys.getKeys(queueName, ns);
+  purgePriorityQueue(queue: TQueueParams, cb: ICallback<void>): void {
+    this.logger.debug(
+      `Purging priority queue of (${queue.name}, ${queue.ns})...`,
+    );
+    const { keyQueuePriority } = redisKeys.getKeys(queue.name, queue.ns);
     this.redisClient.del(keyQueuePriority, (err) => cb(err));
   }
 
@@ -94,23 +92,19 @@ export class QueueManager {
     this.redisClient.smembers(keyIndexProcessingQueues, cb);
   }
 
-  getMessageQueues(cb: ICallback<TMessageQueue[]>): void {
+  getMessageQueues(cb: ICallback<TQueueParams[]>): void {
     const { keyIndexQueue } = redisKeys.getGlobalKeys();
     this.redisClient.smembers(keyIndexQueue, (err, reply) => {
       if (err) cb(err);
       else if (!reply) cb(new EmptyCallbackReplyError());
       else {
-        const messageQueues: TMessageQueue[] = reply.map((i) => JSON.parse(i));
+        const messageQueues: TQueueParams[] = reply.map((i) => JSON.parse(i));
         cb(null, messageQueues);
       }
     });
   }
 
-  getQueueMetrics(
-    queueName: string,
-    ns: string | undefined,
-    cb: ICallback<IQueueMetrics>,
-  ): void {
+  getQueueMetrics(queue: TQueueParams, cb: ICallback<IQueueMetrics>): void {
     const queueMetrics: IQueueMetrics = {
       acknowledged: 0,
       pendingWithPriority: 0,
@@ -122,7 +116,7 @@ export class QueueManager {
       keyQueuePriority,
       keyQueueDL,
       keyQueueAcknowledgedMessages,
-    } = redisKeys.getKeys(queueName, ns);
+    } = redisKeys.getKeys(queue.name, queue.ns);
     async.waterfall(
       [
         (cb: ICallback<void>) => {
@@ -190,15 +184,11 @@ export class QueueManager {
   }
 
   static setUpMessageQueue(
-    queueName: string,
+    queue: TQueueParams,
     redisClient: RedisClient,
     cb: ICallback<void>,
   ): void {
-    const { keyIndexQueue } = redisKeys.getKeys(queueName);
-    const queue: TMessageQueue = {
-      name: queueName,
-      ns: redisKeys.getNamespace(),
-    };
+    const { keyIndexQueue } = redisKeys.getKeys(queue.name, queue.ns);
     const str = JSON.stringify(queue);
     redisClient.sadd(keyIndexQueue, str, (err) => cb(err));
   }

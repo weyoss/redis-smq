@@ -50,8 +50,7 @@ export type TFunction<TReturn = void, TArgs = any> = (
 
 export interface IConsumerMessageRateFields extends Record<string, number> {
   acknowledgedRate: number;
-  unacknowledgedRate: number;
-  processingRate: number;
+  deadLetteredRate: number;
 }
 
 export interface IProducerMessageRateFields extends Record<string, number> {
@@ -283,7 +282,7 @@ export enum EMessageUnacknowledgedCause {
   TTL_EXPIRED = 'ttl_expired',
 }
 
-export type TMessageQueue = {
+export type TQueueParams = {
   name: string;
   ns: string;
 };

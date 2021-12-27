@@ -13,6 +13,8 @@ test('HashTimeSeries: Case 4', async () => {
       'my-key-lock',
       5,
       20,
+      undefined,
+      true,
     ),
   );
   const ts = TimeSeries.getCurrentTimestamp();

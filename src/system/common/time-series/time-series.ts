@@ -22,7 +22,7 @@ export abstract class TimeSeries extends EventEmitter {
     expireAfter = 0,
     retentionTime = 24 * 60 * 60,
     windowSize = 60,
-    readOnly = false,
+    isMaster = false,
   ) {
     super();
     this.retentionTime = retentionTime;
@@ -30,7 +30,7 @@ export abstract class TimeSeries extends EventEmitter {
     this.expireAfter = expireAfter;
     this.windowSize = windowSize;
     this.key = key;
-    if (!readOnly) {
+    if (isMaster) {
       this.ticker = new Ticker(() => this.onTick(), 10000);
       this.ticker.nextTick();
     }

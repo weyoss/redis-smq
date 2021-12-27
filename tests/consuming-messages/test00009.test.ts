@@ -7,12 +7,10 @@ import {
 import { Message } from '../../src/message';
 import { events } from '../../src/system/common/events';
 import { promisifyAll } from 'bluebird';
-import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 
 test('A consumer does re-queue a failed message when threshold is not exceeded, otherwise it moves the message to DLQ (dead letter queue)', async () => {
   const producer = getProducer();
-  const queueName = producer.getQueueName();
-  const ns = redisKeys.getNamespace();
+  const queue = producer.getQueue();
   const consumer = getConsumer({
     consumeMock: jest.fn(() => {
       throw new Error('Explicit error');
@@ -34,7 +32,7 @@ test('A consumer does re-queue a failed message when threshold is not exceeded, 
   expect(unacknowledged).toBe(3);
 
   const m = promisifyAll(await getMessageManagerFrontend());
-  const list = await m.getDeadLetterMessagesAsync(queueName, ns, 0, 100);
+  const list = await m.getDeadLetterMessagesAsync(queue, 0, 100);
   expect(list.total).toBe(1);
   expect(list.items[0].message.getId()).toBe(msg.getId());
 });

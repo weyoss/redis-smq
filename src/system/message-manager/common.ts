@@ -4,6 +4,7 @@ import {
   TGetMessagesReply,
   TGetScheduledMessagesReply,
   TPaginatedResponse,
+  TQueueParams,
 } from '../../../types';
 import { Message } from '../message';
 import * as async from 'async';
@@ -26,8 +27,7 @@ export const deleteListMessageAtSequenceId = (
   from: string,
   sequenceId: number,
   messageId: string,
-  queueName: string,
-  namespace: string,
+  queue: TQueueParams,
   cb: ICallback<void>,
 ): void => {
   LockManager.lockFN(
@@ -39,8 +39,7 @@ export const deleteListMessageAtSequenceId = (
         from,
         sequenceId,
         messageId,
-        queueName,
-        namespace,
+        queue,
         (err, message) => {
           if (err) cb(err);
           else if (!message) cb(new EmptyCallbackReplyError());
@@ -57,21 +56,19 @@ export const getListMessageAtSequenceId = (
   from: string,
   sequenceId: number,
   messageId: string,
-  queueName: string,
-  namespace: string,
+  queue: TQueueParams,
   cb: ICallback<Message>,
 ): void => {
+  const { name, ns } = queue;
   redisClient.lrange(from, sequenceId, sequenceId, (err, reply) => {
     if (err) cb(err);
     else if (!reply || !reply.length)
-      cb(new MessageNotFoundError(messageId, queueName, namespace, sequenceId));
+      cb(new MessageNotFoundError(messageId, name, ns, sequenceId));
     else {
       const [msg] = reply;
       const message = Message.createFromMessage(msg);
       if (message.getId() !== messageId)
-        cb(
-          new MessageNotFoundError(messageId, queueName, namespace, sequenceId),
-        );
+        cb(new MessageNotFoundError(messageId, name, ns, sequenceId));
       else cb(null, message);
     }
   });
@@ -79,10 +76,10 @@ export const getListMessageAtSequenceId = (
 
 export const getSortedSetSize = (
   redisClient: RedisClient,
-  queue: string,
+  key: string,
   cb: ICallback<number>,
 ): void => {
-  redisClient.zcard(queue, (err, reply) => {
+  redisClient.zcard(key, (err, reply) => {
     if (err) cb(err);
     else cb(null, reply ?? 0);
   });
@@ -90,10 +87,10 @@ export const getSortedSetSize = (
 
 export const getListLength = (
   redisClient: RedisClient,
-  queue: string,
+  key: string,
   cb: ICallback<number>,
 ): void => {
-  redisClient.llen(queue, (err, reply) => {
+  redisClient.llen(key, (err, reply) => {
     if (err) cb(err);
     else cb(null, reply ?? 0);
   });

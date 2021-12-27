@@ -4,15 +4,15 @@ import {
   startWebsocketOnlineStreamWorker,
   validateTime,
 } from '../common';
-import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 import { delay } from 'bluebird';
 
 test('WebsocketOnlineStreamWorker: streamQueueOnlineProducers/case 2', async () => {
   const producer = getProducer();
+  const queue = producer.getQueue();
   await delay(5000);
 
   const data = await listenForWebsocketStreamEvents<Record<string, string>>(
-    `streamQueueOnlineProducers:${redisKeys.getNamespace()}:${producer.getQueueName()}`,
+    `streamQueueOnlineProducers:${queue.ns}:${queue.name}`,
     startWebsocketOnlineStreamWorker,
   );
   for (let i = 0; i < data.length; i += 1) {
@@ -24,7 +24,7 @@ test('WebsocketOnlineStreamWorker: streamQueueOnlineProducers/case 2', async () 
   await producer.shutdownAsync();
 
   const data2 = await listenForWebsocketStreamEvents<Record<string, string>>(
-    `streamQueueOnlineConsumers:${redisKeys.getNamespace()}:${producer.getQueueName()}`,
+    `streamQueueOnlineConsumers:${queue.ns}:${queue.name}`,
     startWebsocketOnlineStreamWorker,
   );
   for (let i = 0; i < data2.length; i += 1) {

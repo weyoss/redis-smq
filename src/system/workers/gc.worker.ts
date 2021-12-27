@@ -8,6 +8,7 @@ import {
   EMessageUnacknowledgedCause,
   ICallback,
   TConsumerWorkerParameters,
+  TQueueParams,
 } from '../../../types';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import BLogger from 'bunyan';
@@ -17,6 +18,11 @@ import { QueueManager } from '../queue-manager/queue-manager';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { PanicError } from '../common/errors/panic.error';
 import { Consumer } from '../consumer/consumer';
+import {
+  GlobalDeadLetteredTimeSeries,
+  QueueDeadLetteredTimeSeries,
+} from '../consumer/consumer-time-series';
+import { TimeSeries } from '../common/time-series/time-series';
 
 export class GCWorker {
   protected consumerId: string;
@@ -25,6 +31,9 @@ export class GCWorker {
   protected ticker: Ticker;
   protected broker: Broker;
   protected queueManager: QueueManager;
+  protected globalDeadLetteredTimeSeries: ReturnType<
+    typeof GlobalDeadLetteredTimeSeries
+  >;
 
   constructor(
     client: RedisClient,
@@ -38,6 +47,7 @@ export class GCWorker {
     this.queueManager = queueManager;
     this.broker = broker;
     this.consumerId = consumerId;
+    this.globalDeadLetteredTimeSeries = GlobalDeadLetteredTimeSeries(client);
     this.ticker = new Ticker(() => {
       this.onTick();
     }, 1000);
@@ -45,18 +55,18 @@ export class GCWorker {
   }
 
   protected destroyProcessingQueue(
-    queueName: string,
+    queue: TQueueParams,
     processingQueueName: string,
     cb: ICallback<void>,
   ): void {
     this.queueManager.deleteProcessingQueue(
-      queueName,
+      queue,
       processingQueueName,
       (err?: Error | null) => {
         if (err) cb(err);
         else {
           this.logger.debug(
-            `Processing queue (${processingQueueName}) of (${queueName}) has been deleted.`,
+            `Processing queue (${processingQueueName}) of (${queue.name}, ${queue.ns}) has been deleted.`,
           );
           cb();
         }
@@ -66,7 +76,7 @@ export class GCWorker {
 
   protected handleOfflineConsumer(
     consumerId: string,
-    queueName: string,
+    queue: TQueueParams,
     processingQueue: string,
     cb: ICallback<void>,
   ): void {
@@ -85,23 +95,39 @@ export class GCWorker {
             `Fetched message (ID ${msg.getId()}) from processing queue (${processingQueue}) of consumer (ID ${consumerId}).`,
           );
           this.broker.retry(
-            queueName,
             processingQueue,
             msg,
             EMessageUnacknowledgedCause.RECOVERY,
-            (err) => {
+            (err, deadLetteredCause) => {
               if (err) cb(err);
               else {
-                this.logger.debug(
-                  `Message (ID ${msg.getId()}) has been collected.`,
-                );
-                this.destroyProcessingQueue(queueName, processingQueue, cb);
+                if (deadLetteredCause) {
+                  this.logger.debug(
+                    `Message (ID ${msg.getId()}) has been dead-lettered.`,
+                  );
+                  const queueDeadLetteredTimeSeries =
+                    QueueDeadLetteredTimeSeries(this.redisClient, queue);
+                  const timestamp = TimeSeries.getCurrentTimestamp();
+                  const multi = this.redisClient.multi();
+                  this.globalDeadLetteredTimeSeries.add(timestamp, 1, multi);
+                  queueDeadLetteredTimeSeries.add(timestamp, 1, multi);
+                  this.redisClient.execMulti(multi, (err) => {
+                    if (err) cb(err);
+                    else
+                      this.destroyProcessingQueue(queue, processingQueue, cb);
+                  });
+                } else {
+                  this.logger.debug(
+                    `Message (ID ${msg.getId()}) has been recovered.`,
+                  );
+                  this.destroyProcessingQueue(queue, processingQueue, cb);
+                }
               }
             },
           );
         } else {
           this.logger.debug(`Processing queue (${processingQueue}) is empty.`);
-          this.destroyProcessingQueue(queueName, processingQueue, cb);
+          this.destroyProcessingQueue(queue, processingQueue, cb);
         }
       },
     );
@@ -121,12 +147,16 @@ export class GCWorker {
         if (!extractedData || !extractedData.consumerId) {
           cb(new PanicError(`Expected a consumer ID`));
         } else {
-          const { queueName, consumerId } = extractedData;
+          const { ns, queueName, consumerId } = extractedData;
+          const queue: TQueueParams = {
+            ns,
+            name: queueName,
+          };
           if (this.consumerId !== consumerId) {
             this.logger.debug(`Is consumer (ID ${consumerId}) alive?`);
             Consumer.isAlive(
               this.redisClient,
-              queueName,
+              queue,
               consumerId,
               (err, online) => {
                 if (err) cb(err);
@@ -139,7 +169,7 @@ export class GCWorker {
                   );
                   this.handleOfflineConsumer(
                     consumerId,
-                    queueName,
+                    queue,
                     processingQueue,
                     cb,
                   );

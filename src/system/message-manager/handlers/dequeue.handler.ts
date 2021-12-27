@@ -1,4 +1,4 @@
-import { ICallback } from '../../../../types';
+import { ICallback, TQueueParams } from '../../../../types';
 import { RedisClient } from '../../redis-client/redis-client';
 import { Ticker } from '../../common/ticker/ticker';
 import { events } from '../../common/events';
@@ -14,12 +14,12 @@ export class DequeueHandler extends Handler {
 
   constructor(
     redisClient: RedisClient,
-    queueName: string,
+    queue: TQueueParams,
     keyQueueProcessing: string,
   ) {
     super(redisClient);
     const { keyQueuePriority, keyQueue, keyPendingMessagesWithPriority } =
-      redisKeys.getKeys(queueName);
+      redisKeys.getKeys(queue.name, queue.ns);
     this.keyQueue = keyQueue;
     this.keyPendingMessagesWithPriority = keyPendingMessagesWithPriority;
     this.keyQueuePriority = keyQueuePriority;

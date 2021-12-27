@@ -1,3 +1,3 @@
 import { QueueTimeSeriesRequestDTO } from '../../common/queue-time-series-request.DTO';
 
-export class ProcessingRequestDTO extends QueueTimeSeriesRequestDTO {}
+export class DeadLetteredRequestDTO extends QueueTimeSeriesRequestDTO {}

@@ -2,8 +2,7 @@ import { QueueTimeSeriesRequestDTO } from '../controllers/queue-time-series/comm
 import { RedisClient } from '../../system/redis-client/redis-client';
 import {
   QueueAcknowledgedTimeSeries,
-  QueueProcessingTimeSeries,
-  QueueUnacknowledgedTimeSeries,
+  QueueDeadLetteredTimeSeries,
 } from '../../system/consumer/consumer-time-series';
 import { promisifyAll } from 'bluebird';
 import { QueuePublishedTimeSeries } from '../../system/producer/producer-time-series';
@@ -17,23 +16,21 @@ export class QueueTimeSeriesService {
   async acknowledged(args: QueueTimeSeriesRequestDTO) {
     const { ns, queueName, from, to } = args;
     const timeSeries = promisifyAll(
-      QueueAcknowledgedTimeSeries(this.redisClient, queueName, ns, true),
+      QueueAcknowledgedTimeSeries(this.redisClient, {
+        name: queueName,
+        ns,
+      }),
     );
     return timeSeries.getRangeAsync(from, to);
   }
 
-  async processing(args: QueueTimeSeriesRequestDTO) {
+  async deadLettered(args: QueueTimeSeriesRequestDTO) {
     const { ns, queueName, from, to } = args;
     const timeSeries = promisifyAll(
-      QueueProcessingTimeSeries(this.redisClient, queueName, ns, true),
-    );
-    return timeSeries.getRangeAsync(from, to);
-  }
-
-  async unacknowledged(args: QueueTimeSeriesRequestDTO) {
-    const { ns, queueName, from, to } = args;
-    const timeSeries = promisifyAll(
-      QueueUnacknowledgedTimeSeries(this.redisClient, queueName, ns, true),
+      QueueDeadLetteredTimeSeries(this.redisClient, {
+        name: queueName,
+        ns,
+      }),
     );
     return timeSeries.getRangeAsync(from, to);
   }
@@ -41,7 +38,10 @@ export class QueueTimeSeriesService {
   async published(args: QueueTimeSeriesRequestDTO) {
     const { ns, queueName, from, to } = args;
     const timeSeries = promisifyAll(
-      QueuePublishedTimeSeries(this.redisClient, queueName, ns, true),
+      QueuePublishedTimeSeries(this.redisClient, {
+        name: queueName,
+        ns,
+      }),
     );
     return timeSeries.getRangeAsync(from, to);
   }

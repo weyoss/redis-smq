@@ -4,7 +4,7 @@ import { HashTimeSeries } from '../../common/time-series/hash-time-series';
 
 export const GlobalAcknowledgedTimeSeries = (
   redisClient: RedisClient,
-  readOnly?: boolean,
+  isMaster?: boolean,
 ) => {
   const {
     keyRateGlobalAcknowledged,
@@ -19,6 +19,6 @@ export const GlobalAcknowledgedTimeSeries = (
     undefined,
     undefined,
     undefined,
-    readOnly,
+    isMaster,
   );
 };

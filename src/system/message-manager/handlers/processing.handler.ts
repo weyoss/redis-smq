@@ -3,23 +3,23 @@ import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgedCause,
   ICallback,
+  TQueueParams,
 } from '../../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { deleteListMessageAtSequenceId } from '../common';
 import { Handler } from './handler';
+import { PanicError } from '../../common/errors/panic.error';
 
 export class ProcessingHandler extends Handler {
   deleteDeadLetterMessage(
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     index: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const namespace = ns ?? redisKeys.getNamespace();
     const { keyQueueDL, keyLockDeleteDeadLetterMessage } = redisKeys.getKeys(
-      queueName,
-      namespace,
+      queue.name,
+      queue.ns,
     );
     deleteListMessageAtSequenceId(
       this.redisClient,
@@ -27,43 +27,42 @@ export class ProcessingHandler extends Handler {
       keyQueueDL,
       index,
       messageId,
-      queueName,
-      namespace,
+      queue,
       cb,
     );
   }
 
   deleteAcknowledgedMessage(
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     index: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const namespace = ns ?? redisKeys.getNamespace();
     const { keyQueueAcknowledgedMessages, keyLockDeleteAcknowledgedMessage } =
-      redisKeys.getKeys(queueName, namespace);
+      redisKeys.getKeys(queue.name, queue.ns);
     deleteListMessageAtSequenceId(
       this.redisClient,
       keyLockDeleteAcknowledgedMessage,
       keyQueueAcknowledgedMessages,
       index,
       messageId,
-      queueName,
-      namespace,
+      queue,
       cb,
     );
   }
 
   deadLetterMessage(
     message: Message,
-    queueName: string,
     keyQueueProcessing: string,
     unacknowledgedCause: EMessageUnacknowledgedCause,
     deadLetterCause: EMessageDeadLetterCause,
     cb: ICallback<void>,
   ): void {
-    const { keyQueueDL } = redisKeys.getKeys(queueName);
+    const queue = message.getQueue();
+    if (!queue) {
+      throw new PanicError(`Message parameters are required`);
+    }
+    const { keyQueueDL } = redisKeys.getKeys(queue.name, queue.ns);
     this.redisClient.lpoprpush(keyQueueProcessing, keyQueueDL, (err) => {
       if (err) cb(err);
       else cb();
@@ -72,11 +71,17 @@ export class ProcessingHandler extends Handler {
 
   acknowledge(
     message: Message,
-    queueName: string,
     keyQueueProcessing: string,
     cb: ICallback<void>,
   ): void {
-    const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName);
+    const queue = message.getQueue();
+    if (!queue) {
+      throw new PanicError(`Message queue parameters are required`);
+    }
+    const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(
+      queue.name,
+      queue.ns,
+    );
     this.redisClient.lpoprpush(
       keyQueueProcessing,
       keyQueueAcknowledgedMessages,
@@ -89,12 +94,15 @@ export class ProcessingHandler extends Handler {
 
   delayBeforeRequeue(
     message: Message,
-    queueName: string,
     keyQueueProcessing: string,
     unacknowledgedCause: EMessageUnacknowledgedCause,
     cb: ICallback<void>,
   ): void {
-    const { keyQueueDelay } = redisKeys.getKeys(queueName);
+    const queue = message.getQueue();
+    if (!queue) {
+      throw new PanicError(`Message queue parameters are required.`);
+    }
+    const { keyQueueDelay } = redisKeys.getKeys(queue.name, queue.ns);
     this.redisClient.rpoplpush(keyQueueProcessing, keyQueueDelay, (err) =>
       cb(err),
     );
@@ -102,13 +110,16 @@ export class ProcessingHandler extends Handler {
 
   requeue(
     message: Message,
-    queueName: string,
     keyQueueProcessing: string,
     withPriority: boolean,
     unacknowledgedCause: EMessageUnacknowledgedCause,
     cb: ICallback<void>,
   ): void {
-    const { keyQueueRequeue } = redisKeys.getKeys(queueName);
+    const queue = message.getQueue();
+    if (!queue) {
+      throw new PanicError(`Message parameters are required`);
+    }
+    const { keyQueueRequeue } = redisKeys.getKeys(queue.name, queue.ns);
     this.redisClient.rpoplpush(keyQueueProcessing, keyQueueRequeue, (err) =>
       cb(err),
     );

@@ -12,7 +12,10 @@ export class ProducerTimeSeriesService {
   async published(args: PublishedRequestDTO) {
     const { ns, queueName, from, to, producerId } = args;
     const timeSeries = promisifyAll(
-      PublishedTimeSeries(this.redisClient, producerId, queueName, ns, true),
+      PublishedTimeSeries(this.redisClient, producerId, {
+        name: queueName,
+        ns,
+      }),
     );
     return timeSeries.getRangeAsync(from, to);
   }
