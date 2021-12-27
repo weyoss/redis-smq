@@ -4,13 +4,13 @@ import {
   validateTime,
 } from '../common';
 
-test('WebsocketRateStreamWorker: streamQueueUnacknowledged', async () => {
+test('WebsocketRateStreamWorker: streamQueueDeadLettered', async () => {
   const consumer = getConsumer();
   const queue = consumer.getQueue();
   await consumer.runAsync();
 
   const data = await listenForWebsocketStreamEvents(
-    `streamQueueUnacknowledged:${queue.ns}:${queue.name}`,
+    `streamQueueDeadLettered:${queue.ns}:${queue.name}`,
   );
 
   for (let i = 0; i < data.length; i += 1) {
