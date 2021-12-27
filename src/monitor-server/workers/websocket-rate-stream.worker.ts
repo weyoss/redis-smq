@@ -88,7 +88,7 @@ export class WebsocketRateStreamWorker {
           if (err) cb(err);
           else {
             this.redisClient.publish(
-              `streamConsumerUnacknowledged:${consumerId}`,
+              `streamConsumerDeadLettered:${consumerId}`,
               JSON.stringify(reply),
               this.noop,
             );
@@ -123,7 +123,7 @@ export class WebsocketRateStreamWorker {
           if (err) cb(err);
           else {
             this.redisClient.publish(
-              `streamQueueUnacknowledged:${queue.ns}:${queue.name}`,
+              `streamQueueDeadLettered:${queue.ns}:${queue.name}`,
               JSON.stringify(reply),
               this.noop,
             );
@@ -197,7 +197,7 @@ export class WebsocketRateStreamWorker {
           if (err) cb(err);
           else {
             this.redisClient.publish(
-              'streamGlobalUnacknowledged',
+              'streamGlobalDeadLettered',
               JSON.stringify(reply),
               this.noop,
             );
