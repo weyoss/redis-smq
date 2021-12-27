@@ -312,22 +312,20 @@ export class Consumer extends Base<ConsumerMessageRate, TConsumerRedisKeys> {
 
   static getOnlineConsumers(
     redisClient: RedisClient,
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     transform = false,
     cb: ICallback<Record<string, THeartbeatRegistryPayload | string>>,
   ): void {
-    const { keyQueueConsumers } = redisKeys.getKeys(queueName, ns);
+    const { keyQueueConsumers } = redisKeys.getKeys(queue.name, queue.ns);
     heartbeatRegistry.getAll(redisClient, keyQueueConsumers, transform, cb);
   }
 
   static countOnlineConsumers(
     redisClient: RedisClient,
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     cb: ICallback<number>,
   ): void {
-    const { keyQueueConsumers } = redisKeys.getKeys(queueName, ns);
+    const { keyQueueConsumers } = redisKeys.getKeys(queue.name, queue.ns);
     heartbeatRegistry.count(redisClient, keyQueueConsumers, cb);
   }
 }

@@ -19,18 +19,18 @@ export class QueueManager {
 
   deleteProcessingQueue(
     queue: TQueueParams,
-    processingQueueName: string,
+    processingQueue: string,
     cb: ICallback<void>,
   ): void {
     this.logger.debug(
-      `Deleting processing queue (${processingQueueName}) of (${queue.name} from ${queue.ns} namespace)...`,
+      `Deleting processing queue (${processingQueue}) of (${queue.name} from ${queue.ns} namespace)...`,
     );
     const multi = this.redisClient.multi();
     const { keyIndexProcessingQueues, keyIndexQueueMessageProcessingQueues } =
       redisKeys.getKeys(queue.name, queue.ns);
-    multi.srem(keyIndexProcessingQueues, processingQueueName);
-    multi.hdel(keyIndexQueueMessageProcessingQueues, processingQueueName);
-    multi.del(processingQueueName);
+    multi.srem(keyIndexProcessingQueues, processingQueue);
+    multi.hdel(keyIndexQueueMessageProcessingQueues, processingQueue);
+    multi.del(processingQueue);
     multi.exec((err) => cb(err));
   }
 
