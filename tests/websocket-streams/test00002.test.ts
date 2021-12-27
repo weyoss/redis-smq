@@ -40,8 +40,8 @@ test('WebsocketMainStreamWorker: Case 2', async () => {
     queues: {
       testing: {
         test_queue: {
-          queueName: 'test_queue',
-          namespace: 'testing',
+          name: 'test_queue',
+          ns: 'testing',
           deadLetteredMessagesCount: 0,
           acknowledgedMessagesCount: 0,
           pendingMessagesCount: 0,
