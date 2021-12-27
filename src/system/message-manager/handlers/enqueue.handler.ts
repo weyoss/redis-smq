@@ -3,6 +3,7 @@ import {
   ICallback,
   TGetMessagesReply,
   TGetPendingMessagesWithPriorityReply,
+  TQueueParams,
   TRedisClientMulti,
 } from '../../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
@@ -19,13 +20,15 @@ import { MessageNotFoundError } from '../errors/message-not-found.error';
 
 export class EnqueueHandler extends Handler {
   getAcknowledgedMessages(
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     skip: number,
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(queueName, ns);
+    const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(
+      queue.name,
+      queue.ns,
+    );
     getPaginatedListMessages(
       this.redisClient,
       keyQueueAcknowledgedMessages,
@@ -36,36 +39,33 @@ export class EnqueueHandler extends Handler {
   }
 
   getDeadLetteredMessages(
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     skip: number,
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    const { keyQueueDL } = redisKeys.getKeys(queueName, ns);
+    const { keyQueueDL } = redisKeys.getKeys(queue.name, queue.ns);
     getPaginatedListMessages(this.redisClient, keyQueueDL, skip, take, cb);
   }
 
   getPendingMessages(
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     skip: number,
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    const { keyQueue } = redisKeys.getKeys(queueName, ns);
+    const { keyQueue } = redisKeys.getKeys(queue.name, queue.ns);
     getPaginatedListMessages(this.redisClient, keyQueue, skip, take, cb);
   }
 
   getPendingMessagesWithPriority(
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     skip: number,
     take: number,
     cb: ICallback<TGetPendingMessagesWithPriorityReply>,
   ): void {
     const { keyQueuePriority, keyPendingMessagesWithPriority } =
-      redisKeys.getKeys(queueName, ns);
+      redisKeys.getKeys(queue.name, queue.ns);
     getPaginatedSortedSetMessages(
       this.redisClient,
       keyPendingMessagesWithPriority,
@@ -77,16 +77,14 @@ export class EnqueueHandler extends Handler {
   }
 
   deletePendingMessage(
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     sequenceId: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const namespace = ns ?? redisKeys.getNamespace();
     const { keyQueue, keyLockDeletePendingMessage } = redisKeys.getKeys(
-      queueName,
-      namespace,
+      queue.name,
+      queue.ns,
     );
     deleteListMessageAtSequenceId(
       this.redisClient,
@@ -94,8 +92,7 @@ export class EnqueueHandler extends Handler {
       keyQueue,
       sequenceId,
       messageId,
-      queueName,
-      namespace,
+      queue,
       (err) => {
         // In case the message does not exist
         // we assume it was delivered or already deleted
@@ -107,8 +104,7 @@ export class EnqueueHandler extends Handler {
   }
 
   deletePendingMessageWithPriority(
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     messageId: string,
     cb: ICallback<void>,
   ): void {
@@ -116,7 +112,7 @@ export class EnqueueHandler extends Handler {
       keyQueuePriority,
       keyPendingMessagesWithPriority,
       keyLockDeletePendingMessageWithPriority,
-    } = redisKeys.getKeys(queueName, ns);
+    } = redisKeys.getKeys(queue.name, queue.ns);
     LockManager.lockFN(
       this.redisClient,
       keyLockDeletePendingMessageWithPriority,
@@ -134,14 +130,13 @@ export class EnqueueHandler extends Handler {
 
   protected enqueueMessageWithPriorityMulti(
     multi: TRedisClientMulti,
-    namespace: string,
-    queueName: string,
+    queue: TQueueParams,
     message: Message,
   ): void {
     const messageId = message.getId();
     const priority = message.getSetPriority(undefined);
     const { keyQueuePriority, keyPendingMessagesWithPriority } =
-      redisKeys.getKeys(queueName, namespace);
+      redisKeys.getKeys(queue.name, queue.ns);
     multi.hset(
       keyPendingMessagesWithPriority,
       messageId,
@@ -152,15 +147,14 @@ export class EnqueueHandler extends Handler {
 
   protected enqueueMessageWithPriority(
     redisClient: RedisClient,
-    namespace: string,
-    queueName: string,
+    queue: TQueueParams,
     message: Message,
     cb: ICallback<void>,
   ): void {
     const messageId = message.getId();
     const priority = message.getSetPriority(undefined);
     const { keyQueuePriority, keyPendingMessagesWithPriority } =
-      redisKeys.getKeys(queueName, namespace);
+      redisKeys.getKeys(queue.name, queue.ns);
     redisClient.zpushhset(
       keyQueuePriority,
       keyPendingMessagesWithPriority,
@@ -180,19 +174,12 @@ export class EnqueueHandler extends Handler {
     const queue = message.getQueue();
     if (!queue)
       throw new PanicError(`Can not enqueue a message without a queue name`);
-    const { name, ns } = queue;
-    const { keyQueue } = redisKeys.getKeys(name, ns);
+    const { keyQueue } = redisKeys.getKeys(queue.name, queue.ns);
     message.setPublishedAt(Date.now());
     if (redisClientOrMulti instanceof RedisClient) {
       if (!cb) throw new PanicError('A callback function is required.');
       if (withPriority) {
-        this.enqueueMessageWithPriority(
-          redisClientOrMulti,
-          ns,
-          name,
-          message,
-          cb,
-        );
+        this.enqueueMessageWithPriority(redisClientOrMulti, queue, message, cb);
       } else {
         redisClientOrMulti.rpush(keyQueue, JSON.stringify(message), (err) =>
           cb(err),
@@ -202,8 +189,7 @@ export class EnqueueHandler extends Handler {
       if (withPriority)
         this.enqueueMessageWithPriorityMulti(
           redisClientOrMulti,
-          ns,
-          name,
+          queue,
           message,
         );
       else redisClientOrMulti.rpush(keyQueue, JSON.stringify(message));

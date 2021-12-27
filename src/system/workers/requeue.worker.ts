@@ -31,7 +31,8 @@ export class RequeueWorker {
         const tasks = messages.map((i) => (cb: () => void) => {
           const message = Message.createFromMessage(i);
           const queue = message.getQueue();
-          if (!queue) throw new PanicError('Got a message without a queue');
+          if (!queue)
+            throw new PanicError('Message queue parameters are required');
           const { ns, name } = queue;
           const { keyQueue, keyQueuePriority } = redisKeys.getKeys(name, ns);
           multi.lrem(keyQueueRequeue, 1, i);

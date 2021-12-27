@@ -3,14 +3,14 @@ import {
   listenForWebsocketStreamEvents,
   validateTime,
 } from '../common';
-import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 
 test('WebsocketRateStreamWorker: streamQueueAcknowledged', async () => {
   const consumer = getConsumer();
+  const queue = consumer.getQueue();
   await consumer.runAsync();
 
   const data = await listenForWebsocketStreamEvents(
-    `streamQueueAcknowledged:${redisKeys.getNamespace()}:${consumer.getQueueName()}`,
+    `streamQueueAcknowledged:${queue.ns}:${queue.name}`,
   );
 
   for (let i = 0; i < data.length; i += 1) {

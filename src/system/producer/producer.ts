@@ -32,7 +32,7 @@ export class Producer extends Base<ProducerMessageRate, TProducerRedisKeys> {
       ? new Message().setBody(msg)
       : msg;
     message.reset();
-    message.setQueue(redisKeys.getNamespace(), this.queueName);
+    message.setQueue(this.queue);
     const callback: ICallback<boolean> = (err, reply) => {
       if (err) cb(err);
       else {
@@ -64,7 +64,11 @@ export class Producer extends Base<ProducerMessageRate, TProducerRedisKeys> {
 
   getRedisKeys(): TProducerRedisKeys {
     if (!this.redisKeys) {
-      this.redisKeys = redisKeys.getProducerKeys(this.queueName, this.id);
+      this.redisKeys = redisKeys.getProducerKeys(
+        this.queue.name,
+        this.id,
+        this.queue.ns,
+      );
     }
     return this.redisKeys;
   }

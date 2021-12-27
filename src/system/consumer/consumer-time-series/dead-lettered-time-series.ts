@@ -1,25 +1,25 @@
 import { RedisClient } from '../../redis-client/redis-client';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { SortedSetTimeSeries } from '../../common/time-series/sorted-set-time-series';
+import { TQueueParams } from '../../../../types';
 
-export const ProcessingTimeSeries = (
+export const DeadLetteredTimeSeries = (
   redisClient: RedisClient,
   consumerId: string,
-  queueName: string,
-  ns?: string,
-  readOnly?: boolean,
+  queue: TQueueParams,
+  isMaster?: boolean,
 ) => {
-  const { keyRateConsumerProcessing } = redisKeys.getConsumerKeys(
-    queueName,
+  const { keyRateConsumerDeadLettered } = redisKeys.getConsumerKeys(
+    queue.name,
     consumerId,
-    ns,
+    queue.ns,
   );
   return new SortedSetTimeSeries(
     redisClient,
-    keyRateConsumerProcessing,
+    keyRateConsumerDeadLettered,
     undefined,
     undefined,
     undefined,
-    readOnly,
+    isMaster,
   );
 };

@@ -5,6 +5,7 @@ import {
   TGetMessagesReply,
   TGetPendingMessagesWithPriorityReply,
   TGetScheduledMessagesReply,
+  TQueueParams,
 } from '../../../types';
 import { RedisClient } from '../redis-client/redis-client';
 import { Message } from '../message';
@@ -45,13 +46,13 @@ export class MessageManager {
 
   protected getDequeueHandler(
     redisClient: RedisClient,
-    queueName: string,
+    queue: TQueueParams,
     keyQueueProcessing: string,
   ): DequeueHandler {
     if (!this.dequeueHandler) {
       this.dequeueHandler = new DequeueHandler(
         redisClient,
-        queueName,
+        queue,
         keyQueueProcessing,
       );
     }
@@ -63,27 +64,25 @@ export class MessageManager {
   // requires an exclusive redis client
   dequeueMessage(
     redisClient: RedisClient,
-    queueName: string,
+    queue: TQueueParams,
     keyQueueProcessing: string,
     cb: ICallback<string>,
   ): void {
     this.logger.debug(`De-queuing...`);
-    this.getDequeueHandler(redisClient, queueName, keyQueueProcessing).dequeue(
-      cb,
-    );
+    this.getDequeueHandler(redisClient, queue, keyQueueProcessing).dequeue(cb);
   }
 
   // requires an exclusive redis client
   dequeueMessageWithPriority(
     redisClient: RedisClient,
-    queueName: string,
+    queue: TQueueParams,
     keyQueueProcessing: string,
     cb: ICallback<string>,
   ): void {
     this.logger.debug(`De-queuing with priority...`);
     this.getDequeueHandler(
       redisClient,
-      queueName,
+      queue,
       keyQueueProcessing,
     ).dequeueWithPriority(cb);
   }
@@ -123,7 +122,6 @@ export class MessageManager {
 
   requeueUnacknowledgedMessage(
     message: Message,
-    queueName: string,
     keyQueueProcessing: string,
     withPriority: boolean,
     unacknowledgedCause: EMessageUnacknowledgedCause,
@@ -134,7 +132,6 @@ export class MessageManager {
     );
     this.processingHandler.requeue(
       message,
-      queueName,
       keyQueueProcessing,
       withPriority,
       unacknowledgedCause,
@@ -151,7 +148,6 @@ export class MessageManager {
 
   delayUnacknowledgedMessageBeforeRequeuing(
     message: Message,
-    queueName: string,
     keyQueueProcessing: string,
     unacknowledgedCause: EMessageUnacknowledgedCause,
     cb: ICallback<void>,
@@ -161,7 +157,6 @@ export class MessageManager {
     );
     this.processingHandler.delayBeforeRequeue(
       message,
-      queueName,
       keyQueueProcessing,
       unacknowledgedCause,
       cb,
@@ -170,24 +165,17 @@ export class MessageManager {
 
   acknowledgeMessage(
     message: Message,
-    queueName: string,
     keyQueueProcessing: string,
     cb: ICallback<void>,
   ): void {
     this.logger.debug(
       `Moving message (ID ${message.getId()}) to "acknowledged" queue...`,
     );
-    this.processingHandler.acknowledge(
-      message,
-      queueName,
-      keyQueueProcessing,
-      cb,
-    );
+    this.processingHandler.acknowledge(message, keyQueueProcessing, cb);
   }
 
   deadLetterUnacknowledgedMessage(
     message: Message,
-    queueName: string,
     keyQueueProcessing: string,
     unacknowledgedCause: EMessageUnacknowledgedCause,
     deadLetterCause: EMessageDeadLetterCause,
@@ -198,7 +186,6 @@ export class MessageManager {
     );
     this.processingHandler.deadLetterMessage(
       message,
-      queueName,
       keyQueueProcessing,
       unacknowledgedCause,
       deadLetterCause,
@@ -212,20 +199,16 @@ export class MessageManager {
   }
 
   deleteDeadLetterMessage(
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     sequenceId: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
     this.logger.debug(
-      `Deleting dead-lettered message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${queueName}, ns ${
-        ns ?? 'NA'
-      })...`,
+      `Deleting dead-lettered message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${queue.name}, ns ${queue.ns})...`,
     );
     this.processingHandler.deleteDeadLetterMessage(
-      queueName,
-      ns,
+      queue,
       sequenceId,
       messageId,
       cb,
@@ -233,20 +216,16 @@ export class MessageManager {
   }
 
   deleteAcknowledgedMessage(
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     sequenceId: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
     this.logger.debug(
-      `Deleting acknowledged message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${queueName}, ns ${
-        ns ?? 'NA'
-      })...`,
+      `Deleting acknowledged message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${queue.name}, ns ${queue.ns})...`,
     );
     this.processingHandler.deleteAcknowledgedMessage(
-      queueName,
-      ns,
+      queue,
       sequenceId,
       messageId,
       cb,
@@ -254,50 +233,32 @@ export class MessageManager {
   }
 
   deletePendingMessage(
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     sequenceId: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
     this.logger.debug(
-      `Deleting pending message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${queueName}, ns ${
-        ns ?? 'NA'
-      })...`,
+      `Deleting pending message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${queue.name}, ns ${queue.ns})...`,
     );
-    this.enqueueHandler.deletePendingMessage(
-      queueName,
-      ns,
-      sequenceId,
-      messageId,
-      cb,
-    );
+    this.enqueueHandler.deletePendingMessage(queue, sequenceId, messageId, cb);
   }
 
   deletePendingMessageWithPriority(
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     messageId: string,
     cb: ICallback<void>,
   ): void {
     this.logger.debug(
-      `Deleting pending message with priority (ID ${messageId}, queueName ${queueName}, ns ${
-        ns ?? 'NA'
-      })...`,
+      `Deleting pending message with priority (ID ${messageId}, queueName ${queue.name}, ns ${queue.ns})...`,
     );
-    this.enqueueHandler.deletePendingMessageWithPriority(
-      queueName,
-      ns,
-      messageId,
-      cb,
-    );
+    this.enqueueHandler.deletePendingMessageWithPriority(queue, messageId, cb);
   }
 
   ///
 
   requeueMessageFromDLQueue(
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     sequenceId: number,
     messageId: string,
     withPriority: boolean,
@@ -305,13 +266,10 @@ export class MessageManager {
     cb: ICallback<void>,
   ): void {
     this.logger.debug(
-      `Re-queuing dead-lettered message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${queueName}, ns ${
-        ns ?? 'NA'
-      }, withPriority ${withPriority})...`,
+      `Re-queuing dead-lettered message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${queue.name}, ns ${queue.ns}, withPriority ${withPriority})...`,
     );
     this.requeueHandler.requeueMessageFromDLQueue(
-      queueName,
-      ns,
+      queue,
       sequenceId,
       messageId,
       withPriority,
@@ -321,8 +279,7 @@ export class MessageManager {
   }
 
   requeueMessageFromAcknowledgedQueue(
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     sequenceId: number,
     messageId: string,
     withPriority: boolean,
@@ -330,13 +287,10 @@ export class MessageManager {
     cb: ICallback<void>,
   ): void {
     this.logger.debug(
-      `Re-queuing acknowledged message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${queueName}, ns ${
-        ns ?? 'NA'
-      }, withPriority ${withPriority})...`,
+      `Re-queuing acknowledged message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${queue.name}, ns ${queue.ns}, withPriority ${withPriority})...`,
     );
     this.requeueHandler.requeueMessageFromAcknowledgedQueue(
-      queueName,
-      ns,
+      queue,
       sequenceId,
       messageId,
       withPriority,
@@ -348,49 +302,39 @@ export class MessageManager {
   ///
 
   getAcknowledgedMessages(
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     skip: number,
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    this.enqueueHandler.getAcknowledgedMessages(queueName, ns, skip, take, cb);
+    this.enqueueHandler.getAcknowledgedMessages(queue, skip, take, cb);
   }
 
   getDeadLetteredMessages(
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     skip: number,
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    this.enqueueHandler.getDeadLetteredMessages(queueName, ns, skip, take, cb);
+    this.enqueueHandler.getDeadLetteredMessages(queue, skip, take, cb);
   }
 
   getPendingMessages(
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     skip: number,
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    this.enqueueHandler.getPendingMessages(queueName, ns, skip, take, cb);
+    this.enqueueHandler.getPendingMessages(queue, skip, take, cb);
   }
 
   getPendingMessagesWithPriority(
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     skip: number,
     take: number,
     cb: ICallback<TGetPendingMessagesWithPriorityReply>,
   ): void {
-    this.enqueueHandler.getPendingMessagesWithPriority(
-      queueName,
-      ns,
-      skip,
-      take,
-      cb,
-    );
+    this.enqueueHandler.getPendingMessagesWithPriority(queue, skip, take, cb);
   }
 
   getScheduledMessages(

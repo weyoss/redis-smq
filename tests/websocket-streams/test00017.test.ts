@@ -4,15 +4,15 @@ import {
   startWebsocketOnlineStreamWorker,
   validateTime,
 } from '../common';
-import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 import { THeartbeatRegistryPayload } from '../../types';
 
 test('WebsocketOnlineStreamWorker: streamQueueOnlineConsumers/case 1', async () => {
   const consumer = getConsumer();
+  const queue = consumer.getQueue();
   await consumer.runAsync();
 
   const data = await listenForWebsocketStreamEvents<Record<string, string>>(
-    `streamQueueOnlineConsumers:${redisKeys.getNamespace()}:${consumer.getQueueName()}`,
+    `streamQueueOnlineConsumers:${queue.ns}:${queue.name}`,
     startWebsocketOnlineStreamWorker,
   );
   for (let i = 0; i < data.length; i += 1) {

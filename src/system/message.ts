@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import { parseExpression } from 'cron-parser';
-import { TMessageDefaultOptions, TMessageQueue } from '../../types';
+import { TMessageDefaultOptions, TQueueParams } from '../../types';
 import { ArgumentError } from './common/errors/argument.error';
 import { ConfigurationError } from './common/errors/configuration.error';
 
@@ -50,7 +50,7 @@ export class Message {
 
   protected readonly createdAt: number;
 
-  protected queue: TMessageQueue | null = null;
+  protected queue: TQueueParams | null = null;
 
   protected publishedAt: number | null = null;
 
@@ -218,11 +218,8 @@ export class Message {
     return this;
   }
 
-  setQueue(ns: string, name: string): Message {
-    this.queue = {
-      name,
-      ns,
-    };
+  setQueue(queue: TQueueParams): Message {
+    this.queue = queue;
     return this;
   }
 
@@ -231,7 +228,7 @@ export class Message {
     return this;
   }
 
-  getQueue(): TMessageQueue | null {
+  getQueue(): TQueueParams | null {
     return this.queue;
   }
 

@@ -1,6 +1,12 @@
 import { v4 as uuid } from 'uuid';
 import { EventEmitter } from 'events';
-import { IConfig, ICallback, TUnaryFunction, TFunction } from '../../types';
+import {
+  IConfig,
+  ICallback,
+  TUnaryFunction,
+  TFunction,
+  TQueueParams,
+} from '../../types';
 import * as async from 'async';
 import { PowerManager } from './common/power-manager/power-manager';
 import { Logger } from './common/logger';
@@ -22,7 +28,7 @@ export abstract class Base<
   TRedisKeys extends Record<string, string>,
 > extends EventEmitter {
   protected readonly id: string;
-  protected readonly queueName: string;
+  protected readonly queue: TQueueParams;
   protected readonly config: IConfig;
   protected readonly logger: BunyanLogger;
   protected readonly powerManager: PowerManager;
@@ -39,15 +45,18 @@ export abstract class Base<
     }
     this.id = uuid();
     this.config = config;
-    this.queueName = redisKeys.validateRedisKey(queueName);
+    this.queue = {
+      name: redisKeys.validateRedisKey(queueName),
+      ns: redisKeys.getNamespace(),
+    };
     this.powerManager = new PowerManager();
     this.logger = Logger(this.constructor.name, {
       ...this.config.log,
       options: {
         ...this.config.log?.options,
         consumerId: this.getId(),
-        queueName: this.getQueueName(),
-        ns: redisKeys.getNamespace(),
+        queueName: this.queue.name,
+        ns: this.queue.ns,
       },
     });
     this.registerEventsHandlers();
@@ -70,15 +79,12 @@ export abstract class Base<
     messageManager: MessageManager,
     cb: ICallback<void>,
   ): void => {
-    this.logger.debug(`Set up message queue (${this.queueName})...`);
+    this.logger.debug(
+      `Set up message queue (${this.queue}, ${this.queue.ns})...`,
+    );
     if (!this.sharedRedisClient)
       cb(new PanicError(`Expected an instance of RedisClient`));
-    else
-      QueueManager.setUpMessageQueue(
-        this.queueName,
-        this.sharedRedisClient,
-        cb,
-      );
+    else QueueManager.setUpMessageQueue(this.queue, this.sharedRedisClient, cb);
   };
 
   private setUpBroker = (cb: ICallback<Broker>): void => {
@@ -276,8 +282,8 @@ export abstract class Base<
     return this.config;
   }
 
-  getQueueName(): string {
-    return this.queueName;
+  getQueue(): TQueueParams {
+    return this.queue;
   }
 
   abstract getRedisKeys(): TRedisKeys;

@@ -26,14 +26,17 @@ export class ProducerMessageRate extends MessageRate<IProducerMessageRateFields>
     this.inputRateTimeSeries = PublishedTimeSeries(
       redisClient,
       producer.getId(),
-      producer.getQueueName(),
+      producer.getQueue(),
+      true,
     );
     this.queueInputRateTimeSeries = QueuePublishedTimeSeries(
       this.redisClient,
-      producer.getQueueName(),
+      producer.getQueue(),
+      true,
     );
     this.globalInputRateTimeSeries = GlobalPublishedTimeSeries(
       this.redisClient,
+      true,
     );
   }
 

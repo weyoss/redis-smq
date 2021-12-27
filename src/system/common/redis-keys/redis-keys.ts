@@ -21,10 +21,10 @@ enum ERedisKey {
   KEY_INDEX_HEARTBEATS, // Redis key for heartbeats
   KEY_LOCK_MESSAGE_MANAGER,
   KEY_LOCK_QUEUE_MANAGER,
-  KEY_RATE_PRODUCER_INPUT,
-  KEY_RATE_CONSUMER_PROCESSING,
+  KEY_RATE_PRODUCER_PUBLISHED,
+  RESERVED_3,
   KEY_RATE_CONSUMER_ACKNOWLEDGED,
-  KEY_RATE_CONSUMER_UNACKNOWLEDGED,
+  RESERVED_4,
   KEY_LOCK_WEBSOCKET_MAIN_STREAM_WORKER,
   KEY_LOCK_CONSUMER_WORKERS_RUNNER,
   KEY_LOCK_DELETE_PENDING_MESSAGE,
@@ -35,20 +35,16 @@ enum ERedisKey {
   RESERVED_2, // Not used anymore. Will be removed in the next major releases.
   KEY_SCHEDULED_MESSAGES,
   KEY_PENDING_MESSAGES_WITH_PRIORITY,
-  KEY_RATE_QUEUE_PROCESSING,
-  KEY_RATE_QUEUE_PROCESSING_INDEX,
   KEY_RATE_QUEUE_ACKNOWLEDGED,
   KEY_RATE_QUEUE_ACKNOWLEDGED_INDEX,
-  KEY_RATE_QUEUE_UNACKNOWLEDGED,
-  KEY_RATE_QUEUE_UNACKNOWLEDGED_INDEX,
-  KEY_RATE_QUEUE_INPUT,
+  KEY_RATE_QUEUE_DEAD_LETTERED,
+  KEY_RATE_QUEUE_DEAD_LETTERED_INDEX,
+  KEY_RATE_QUEUE_PUBLISHED,
   KEY_RATE_QUEUE_PUBLISHED_INDEX,
-  KEY_RATE_GLOBAL_PROCESSING,
-  KEY_RATE_GLOBAL_PROCESSING_INDEX,
   KEY_RATE_GLOBAL_ACKNOWLEDGED,
   KEY_RATE_GLOBAL_ACKNOWLEDGED_INDEX,
-  KEY_RATE_GLOBAL_UNACKNOWLEDGED,
-  KEY_RATE_GLOBAL_UNACKNOWLEDGED_INDEX,
+  KEY_RATE_GLOBAL_DEAD_LETTERED,
+  KEY_RATE_GLOBAL_DEAD_LETTERED_INDEX,
   KEY_RATE_GLOBAL_PUBLISHED,
   KEY_RATE_GLOBAL_PUBLISHED_INDEX,
   KEY_HEARTBEAT_PRODUCER,
@@ -56,17 +52,16 @@ enum ERedisKey {
   KEY_HEARTBEAT_TIMESTAMPS,
   KEY_LOCK_WEBSOCKET_RATE_STREAM_WORKER,
   KEY_RATE_GLOBAL_PUBLISHED_LOCK,
-  KEY_RATE_GLOBAL_PROCESSING_LOCK,
   KEY_RATE_GLOBAL_ACKNOWLEDGED_LOCK,
-  KEY_RATE_GLOBAL_UNACKNOWLEDGED_LOCK,
+  KEY_RATE_GLOBAL_DEAD_LETTERED_LOCK,
   KEY_RATE_QUEUE_PUBLISHED_LOCK,
-  KEY_RATE_QUEUE_PROCESSING_LOCK,
   KEY_RATE_QUEUE_ACKNOWLEDGED_LOCK,
-  KEY_RATE_QUEUE_UNACKNOWLEDGED_LOCK,
+  KEY_RATE_QUEUE_DEAD_LETTERED_LOCK,
   KEY_QUEUE_CONSUMERS,
   KEY_QUEUE_PRODUCERS,
   KEY_LOCK_WEBSOCKET_HEARTBEAT_STREAM_WORKER,
   KEY_LOCK_WEBSOCKET_ONLINE_STREAM_WORKER,
+  KEY_RATE_CONSUMER_DEAD_LETTERED,
 }
 
 export const redisKeys = {
@@ -76,7 +71,7 @@ export const redisKeys = {
     };
   },
 
-  getKeys(queueName: string, ns?: string) {
+  getKeys(queueName: string, ns?: string | null) {
     const globalKeys = this.getGlobalKeys();
     const keys = {
       keyQueue: this.joinSegments(ERedisKey.KEY_QUEUE, queueName),
@@ -101,32 +96,24 @@ export const redisKeys = {
         ERedisKey.KEY_PENDING_MESSAGES_WITH_PRIORITY,
         queueName,
       ),
-      keyRateQueueUnacknowledged: this.joinSegments(
-        ERedisKey.KEY_RATE_QUEUE_UNACKNOWLEDGED,
+      keyRateQueueDeadLettered: this.joinSegments(
+        ERedisKey.KEY_RATE_QUEUE_DEAD_LETTERED,
         queueName,
       ),
       keyRateQueueAcknowledged: this.joinSegments(
         ERedisKey.KEY_RATE_QUEUE_ACKNOWLEDGED,
         queueName,
       ),
-      keyRateQueueProcessing: this.joinSegments(
-        ERedisKey.KEY_RATE_QUEUE_PROCESSING,
+      keyRateQueuePublished: this.joinSegments(
+        ERedisKey.KEY_RATE_QUEUE_PUBLISHED,
         queueName,
       ),
-      keyRateQueueInput: this.joinSegments(
-        ERedisKey.KEY_RATE_QUEUE_INPUT,
-        queueName,
-      ),
-      keyRateQueueUnacknowledgedIndex: this.joinSegments(
-        ERedisKey.KEY_RATE_QUEUE_UNACKNOWLEDGED_INDEX,
+      keyRateQueueDeadLetteredIndex: this.joinSegments(
+        ERedisKey.KEY_RATE_QUEUE_DEAD_LETTERED_INDEX,
         queueName,
       ),
       keyRateQueueAcknowledgedIndex: this.joinSegments(
         ERedisKey.KEY_RATE_QUEUE_ACKNOWLEDGED_INDEX,
-        queueName,
-      ),
-      keyRateQueueProcessingIndex: this.joinSegments(
-        ERedisKey.KEY_RATE_QUEUE_PROCESSING_INDEX,
         queueName,
       ),
       keyRateQueuePublishedIndex: this.joinSegments(
@@ -137,16 +124,12 @@ export const redisKeys = {
         ERedisKey.KEY_RATE_QUEUE_PUBLISHED_LOCK,
         queueName,
       ),
-      keyRateQueueProcessingLock: this.joinSegments(
-        ERedisKey.KEY_RATE_QUEUE_PROCESSING_LOCK,
-        queueName,
-      ),
       keyRateQueueAcknowledgedLock: this.joinSegments(
         ERedisKey.KEY_RATE_QUEUE_ACKNOWLEDGED_LOCK,
         queueName,
       ),
-      keyRateQueueUnacknowledgedLock: this.joinSegments(
-        ERedisKey.KEY_RATE_QUEUE_UNACKNOWLEDGED_LOCK,
+      keyRateQueueDeadLetteredLock: this.joinSegments(
+        ERedisKey.KEY_RATE_QUEUE_DEAD_LETTERED_LOCK,
         queueName,
       ),
       keyQueueConsumers: this.joinSegments(
@@ -164,7 +147,7 @@ export const redisKeys = {
     };
   },
 
-  getConsumerKeys(queueName: string, instanceId: string, ns?: string) {
+  getConsumerKeys(queueName: string, instanceId: string, ns?: string | null) {
     const globalKeys = this.getGlobalKeys();
     const parentKeys = this.getKeys(queueName, ns);
     const keys = {
@@ -173,18 +156,13 @@ export const redisKeys = {
         queueName,
         instanceId,
       ),
-      keyRateConsumerUnacknowledged: this.joinSegments(
-        ERedisKey.KEY_RATE_CONSUMER_UNACKNOWLEDGED,
+      keyRateConsumerDeadLettered: this.joinSegments(
+        ERedisKey.KEY_RATE_CONSUMER_DEAD_LETTERED,
         queueName,
         instanceId,
       ),
       keyHeartbeatConsumer: this.joinSegments(
         ERedisKey.KEY_HEARTBEAT_CONSUMER,
-        queueName,
-        instanceId,
-      ),
-      keyRateConsumerProcessing: this.joinSegments(
-        ERedisKey.KEY_RATE_CONSUMER_PROCESSING,
         queueName,
         instanceId,
       ),
@@ -201,7 +179,7 @@ export const redisKeys = {
     };
   },
 
-  getProducerKeys(queueName: string, instanceId: string, ns?: string) {
+  getProducerKeys(queueName: string, instanceId: string, ns?: string | null) {
     const parentKeys = this.getKeys(queueName, ns);
     const globalKeys = this.getGlobalKeys();
     const keys = {
@@ -210,8 +188,8 @@ export const redisKeys = {
         queueName,
         instanceId,
       ),
-      keyRateProducerInput: this.joinSegments(
-        ERedisKey.KEY_RATE_PRODUCER_INPUT,
+      keyRateProducerPublished: this.joinSegments(
+        ERedisKey.KEY_RATE_PRODUCER_PUBLISHED,
         queueName,
         instanceId,
       ),
@@ -240,9 +218,8 @@ export const redisKeys = {
     }
     if (
       type === ERedisKey.KEY_QUEUE_PROCESSING ||
-      type === ERedisKey.KEY_RATE_CONSUMER_PROCESSING ||
       type === ERedisKey.KEY_RATE_CONSUMER_ACKNOWLEDGED ||
-      type === ERedisKey.KEY_RATE_CONSUMER_UNACKNOWLEDGED ||
+      type === ERedisKey.KEY_RATE_CONSUMER_DEAD_LETTERED ||
       type === ERedisKey.KEY_HEARTBEAT_CONSUMER
     ) {
       const [queueName, consumerId] = segments;
@@ -254,7 +231,7 @@ export const redisKeys = {
       };
     }
     if (
-      type === ERedisKey.KEY_RATE_PRODUCER_INPUT ||
+      type === ERedisKey.KEY_RATE_PRODUCER_PUBLISHED ||
       type === ERedisKey.KEY_HEARTBEAT_PRODUCER
     ) {
       const [queueName, producerId] = segments;
@@ -306,23 +283,20 @@ export const redisKeys = {
       keyLockDeletePendingMessageWithPriority:
         ERedisKey.KEY_LOCK_DELETE_PENDING_MESSAGE_WITH_PRIORITY,
       keyScheduledMessages: ERedisKey.KEY_SCHEDULED_MESSAGES,
-      keyRateGlobalUnacknowledged: ERedisKey.KEY_RATE_GLOBAL_UNACKNOWLEDGED,
+      keyRateGlobalDeadLettered: ERedisKey.KEY_RATE_GLOBAL_DEAD_LETTERED,
       keyRateGlobalAcknowledged: ERedisKey.KEY_RATE_GLOBAL_ACKNOWLEDGED,
-      keyRateGlobalProcessing: ERedisKey.KEY_RATE_GLOBAL_PROCESSING,
       keyRateGlobalPublished: ERedisKey.KEY_RATE_GLOBAL_PUBLISHED,
-      keyRateGlobalUnacknowledgedIndex:
-        ERedisKey.KEY_RATE_GLOBAL_UNACKNOWLEDGED_INDEX,
+      keyRateGlobalDeadLetteredIndex:
+        ERedisKey.KEY_RATE_GLOBAL_DEAD_LETTERED_INDEX,
       keyRateGlobalAcknowledgedIndex:
         ERedisKey.KEY_RATE_GLOBAL_ACKNOWLEDGED_INDEX,
-      keyRateGlobalProcessingIndex: ERedisKey.KEY_RATE_GLOBAL_PROCESSING_INDEX,
       keyRateGlobalInputIndex: ERedisKey.KEY_RATE_GLOBAL_PUBLISHED_INDEX,
       keyHeartbeatTimestamps: ERedisKey.KEY_HEARTBEAT_TIMESTAMPS,
       keyRateGlobalPublishedLock: ERedisKey.KEY_RATE_GLOBAL_PUBLISHED_LOCK,
       keyRateGlobalAcknowledgedLock:
         ERedisKey.KEY_RATE_GLOBAL_ACKNOWLEDGED_LOCK,
-      keyRateGlobalUnacknowledgedLock:
-        ERedisKey.KEY_RATE_GLOBAL_UNACKNOWLEDGED_LOCK,
-      keyRateGlobalProcessingLock: ERedisKey.KEY_RATE_GLOBAL_PROCESSING_LOCK,
+      keyRateGlobalDeadLetteredLock:
+        ERedisKey.KEY_RATE_GLOBAL_DEAD_LETTERED_LOCK,
     };
     return this.makeNamespacedKeys(keys, globalNamespace);
   },

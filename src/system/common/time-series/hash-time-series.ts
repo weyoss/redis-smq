@@ -20,9 +20,9 @@ export class HashTimeSeries extends TimeSeries {
     expireAfter = 0,
     retentionTime = 24 * 60 * 60,
     windowSize = 60,
-    readonly = false,
+    isMaster = false,
   ) {
-    super(redisClient, key, expireAfter, retentionTime, windowSize, readonly);
+    super(redisClient, key, expireAfter, retentionTime, windowSize, isMaster);
     this.lockManager = new LockManager(redisClient, lockKey, 60000);
     this.indexKey = indexKey;
   }

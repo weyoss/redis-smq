@@ -7,14 +7,12 @@ import {
 } from '../common';
 import { Message } from '../../src/message';
 import { events } from '../../src/system/common/events';
-import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
 
 test('Message TTL: a message with TTL is not consumed and moved to DLQ when TTL is exceeded', async () => {
   const producer = getProducer();
   const consumer = getConsumer();
   const consume = jest.spyOn(consumer, 'consume');
-  const queueName = producer.getQueueName();
-  const ns = redisKeys.getNamespace();
+  const queue = producer.getQueue();
 
   let unacknowledged = 0;
   consumer.on(events.MESSAGE_UNACKNOWLEDGED, () => {
@@ -33,12 +31,7 @@ test('Message TTL: a message with TTL is not consumed and moved to DLQ when TTL 
   expect(unacknowledged).toBe(1);
 
   const messageManager = promisifyAll(await getMessageManagerFrontend());
-  const list = await messageManager.getDeadLetterMessagesAsync(
-    queueName,
-    ns,
-    0,
-    100,
-  );
+  const list = await messageManager.getDeadLetterMessagesAsync(queue, 0, 100);
   expect(list.total).toBe(1);
   expect(list.items[0].message.getId()).toBe(msg.getId());
 });

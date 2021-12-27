@@ -1,4 +1,4 @@
-import { ICallback, IConfig, TMessageQueue } from '../../../types';
+import { ICallback, IConfig, TQueueParams } from '../../../types';
 import { redisKeys } from '../../system/common/redis-keys/redis-keys';
 import { RedisClient } from '../../system/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callback-reply.error';
@@ -48,10 +48,10 @@ export class WebsocketOnlineStreamWorker {
         this.logger.debug(`Lock acquired.`);
         async.waterfall(
           [
-            (cb: ICallback<TMessageQueue[]>) => {
+            (cb: ICallback<TQueueParams[]>) => {
               this.queueManager.getMessageQueues(cb);
             },
-            (queues: TMessageQueue[], cb: ICallback<void>) => {
+            (queues: TQueueParams[], cb: ICallback<void>) => {
               async.each(
                 queues,
                 (item, done) => {

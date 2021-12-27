@@ -1,5 +1,5 @@
 import { Message } from '../message';
-import { ICallback, IConfig } from '../../../types';
+import { ICallback, IConfig, TQueueParams } from '../../../types';
 import { EventEmitter } from 'events';
 import { Consumer } from './consumer';
 import { events } from '../common/events';
@@ -61,8 +61,8 @@ export abstract class ConsumerFrontend extends EventEmitter {
     return this.consumer.getId();
   }
 
-  getQueueName(): string {
-    return this.consumer.getQueueName();
+  getQueue(): TQueueParams {
+    return this.consumer.getQueue();
   }
 
   abstract consume(msg: Message, cb: ICallback<void>): void;

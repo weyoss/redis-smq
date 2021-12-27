@@ -13,6 +13,8 @@ test('HashTimeSeries: Case 2', async () => {
       'my-key-lock',
       undefined,
       5,
+      60,
+      true,
     ),
   );
   const multi = redisClient.multi();

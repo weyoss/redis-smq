@@ -2,7 +2,7 @@ import {
   ICallback,
   IConfig,
   IQueueMetrics,
-  TMessageQueue,
+  TQueueParams,
 } from '../../../types';
 import { RedisClient } from '../redis-client/redis-client';
 import { QueueManager } from './queue-manager';
@@ -22,36 +22,23 @@ export class QueueManagerFrontend {
 
   ///
 
-  purgeDeadLetterQueue(
-    queueName: string,
-    ns: string | undefined,
-    cb: ICallback<void>,
-  ): void {
-    this.queueManager.purgeDeadLetterQueue(queueName, ns, cb);
+  purgeDeadLetterQueue(queue: TQueueParams, cb: ICallback<void>): void {
+    this.queueManager.purgeDeadLetterQueue(queue, cb);
   }
 
   purgeAcknowledgedMessagesQueue(
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     cb: ICallback<void>,
   ): void {
-    this.queueManager.purgeAcknowledgedMessagesQueue(queueName, ns, cb);
+    this.queueManager.purgeAcknowledgedMessagesQueue(queue, cb);
   }
 
-  purgeQueue(
-    queueName: string,
-    ns: string | undefined,
-    cb: ICallback<void>,
-  ): void {
-    this.queueManager.purgeQueue(queueName, ns, cb);
+  purgeQueue(queue: TQueueParams, cb: ICallback<void>): void {
+    this.queueManager.purgeQueue(queue, cb);
   }
 
-  purgePriorityQueue(
-    queueName: string,
-    ns: string | undefined,
-    cb: ICallback<void>,
-  ): void {
-    this.queueManager.purgePriorityQueue(queueName, ns, cb);
+  purgePriorityQueue(queue: TQueueParams, cb: ICallback<void>): void {
+    this.queueManager.purgePriorityQueue(queue, cb);
   }
 
   purgeScheduledMessagesQueue(cb: ICallback<void>): void {
@@ -60,15 +47,11 @@ export class QueueManagerFrontend {
 
   ///
 
-  getQueueMetrics(
-    queueName: string,
-    ns: string | undefined,
-    cb: ICallback<IQueueMetrics>,
-  ): void {
-    this.queueManager.getQueueMetrics(queueName, ns, cb);
+  getQueueMetrics(queue: TQueueParams, cb: ICallback<IQueueMetrics>): void {
+    this.queueManager.getQueueMetrics(queue, cb);
   }
 
-  getMessageQueues(cb: ICallback<TMessageQueue[]>): void {
+  getMessageQueues(cb: ICallback<TQueueParams[]>): void {
     this.queueManager.getMessageQueues(cb);
   }
 

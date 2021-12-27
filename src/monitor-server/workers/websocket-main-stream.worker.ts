@@ -1,7 +1,7 @@
 import {
   IConfig,
   ICallback,
-  TMessageQueue,
+  TQueueParams,
   TWebsocketMainStreamPayload,
   TWebsocketMainStreamPayloadQueue,
 } from '../../../types';
@@ -84,7 +84,7 @@ export class WebsocketMainStreamWorker {
   };
 
   protected getQueueSize = (
-    queues: TMessageQueue[],
+    queues: TQueueParams[],
     cb: ICallback<void>,
   ): void => {
     if (queues && queues.length) {
@@ -149,7 +149,7 @@ export class WebsocketMainStreamWorker {
     } else cb();
   };
 
-  protected getQueues = (cb: ICallback<TMessageQueue[]>): void => {
+  protected getQueues = (cb: ICallback<TQueueParams[]>): void => {
     this.queueManager.getMessageQueues(cb);
   };
 
