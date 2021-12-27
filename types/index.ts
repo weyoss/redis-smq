@@ -154,42 +154,6 @@ export type TMessageDefaultOptions = {
   retryDelay: number;
 };
 
-export type TAggregatedStatsQueueProducer = {
-  id: string;
-  namespace: string;
-  queueName: string;
-  rates: {
-    input: number;
-  };
-};
-
-export type TAggregatedStatsQueueConsumer = {
-  id: string;
-  namespace: string;
-  queueName: string;
-  resources?: Record<string, any>;
-  rates?: {
-    processing: number;
-    acknowledged: number;
-    unacknowledged: number;
-  };
-};
-
-export type TAggregatedStatsQueue = {
-  queueName: string;
-  namespace: string;
-  deadLetteredMessages: number;
-  acknowledgedMessages: number;
-  pendingMessages: number;
-  pendingMessagesWithPriority: number;
-  producers?: {
-    [producerId: string]: TAggregatedStatsQueueProducer;
-  };
-  consumers?: {
-    [consumerId: string]: TAggregatedStatsQueueConsumer;
-  };
-};
-
 export type TWebsocketMainStreamPayload = {
   scheduledMessagesCount: number;
   queuesCount: number;
@@ -207,8 +171,8 @@ export type TWebsocketMainStreamPayload = {
 };
 
 export type TWebsocketMainStreamPayloadQueue = {
-  queueName: string;
-  namespace: string;
+  ns: string;
+  name: string;
   deadLetteredMessagesCount: number;
   acknowledgedMessagesCount: number;
   pendingMessagesCount: number;
@@ -223,21 +187,6 @@ export interface ITimeSeriesRangeItem {
   timestamp: number;
   value: number;
 }
-
-export type TAggregatedStats = {
-  scheduledMessages: number;
-  rates: {
-    processing: number;
-    acknowledged: number;
-    unacknowledged: number;
-    input: number;
-  };
-  queues: {
-    [ns: string]: {
-      [queueName: string]: TAggregatedStatsQueue;
-    };
-  };
-};
 
 export type TPaginatedResponse<T> = {
   total: number;

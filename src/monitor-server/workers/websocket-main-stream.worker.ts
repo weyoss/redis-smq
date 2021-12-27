@@ -70,8 +70,8 @@ export class WebsocketMainStreamWorker {
     if (!this.data.queues[ns][queueName]) {
       this.data.queuesCount += 1;
       this.data.queues[ns][queueName] = {
-        queueName,
-        namespace: ns,
+        name: queueName,
+        ns: ns,
         deadLetteredMessagesCount: 0,
         acknowledgedMessagesCount: 0,
         pendingMessagesCount: 0,
@@ -164,45 +164,35 @@ export class WebsocketMainStreamWorker {
   };
 
   protected countQueueConsumers = (
-    ns: string,
-    queueName: string,
+    queue: TQueueParams,
     cb: ICallback<void>,
   ): void => {
-    Consumer.countOnlineConsumers(
-      this.redisClient,
-      queueName,
-      ns,
-      (err, reply) => {
-        if (err) cb(err);
-        else {
-          const count = Number(reply);
-          this.data.consumersCount += count;
-          this.data.queues[ns][queueName].consumersCount = count;
-          cb();
-        }
-      },
-    );
+    Consumer.countOnlineConsumers(this.redisClient, queue, (err, reply) => {
+      if (err) cb(err);
+      else {
+        const { ns, name } = queue;
+        const count = Number(reply);
+        this.data.consumersCount += count;
+        this.data.queues[ns][name].consumersCount = count;
+        cb();
+      }
+    });
   };
 
   protected countQueueProducers = (
-    ns: string,
-    queueName: string,
+    queue: TQueueParams,
     cb: ICallback<void>,
   ): void => {
-    Producer.countOnlineProducers(
-      this.redisClient,
-      queueName,
-      ns,
-      (err, reply) => {
-        if (err) cb(err);
-        else {
-          const count = Number(reply);
-          this.data.producersCount += count;
-          this.data.queues[ns][queueName].producersCount = count;
-          cb();
-        }
-      },
-    );
+    Producer.countOnlineProducers(this.redisClient, queue, (err, reply) => {
+      if (err) cb(err);
+      else {
+        const { ns, name } = queue;
+        const count = Number(reply);
+        this.data.producersCount += count;
+        this.data.queues[ns][name].producersCount = count;
+        cb();
+      }
+    });
   };
 
   protected updateOnlineInstances = (cb: ICallback<void>): void => {
@@ -212,13 +202,10 @@ export class WebsocketMainStreamWorker {
         async.eachOf(
           item,
           (item, key, done) => {
-            const { namespace, queueName } = item;
             async.waterfall(
               [
-                (done: ICallback<void>) =>
-                  this.countQueueConsumers(namespace, queueName, done),
-                (done: ICallback<void>) =>
-                  this.countQueueProducers(namespace, queueName, done),
+                (done: ICallback<void>) => this.countQueueConsumers(item, done),
+                (done: ICallback<void>) => this.countQueueProducers(item, done),
               ],
               done,
             );

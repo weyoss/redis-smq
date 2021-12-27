@@ -56,17 +56,17 @@ export class GCWorker {
 
   protected destroyProcessingQueue(
     queue: TQueueParams,
-    processingQueueName: string,
+    processingQueue: string,
     cb: ICallback<void>,
   ): void {
     this.queueManager.deleteProcessingQueue(
       queue,
-      processingQueueName,
+      processingQueue,
       (err?: Error | null) => {
         if (err) cb(err);
         else {
           this.logger.debug(
-            `Processing queue (${processingQueueName}) of (${queue.name}, ${queue.ns}) has been deleted.`,
+            `Processing queue (${processingQueue}) of (${queue.name}, ${queue.ns}) has been deleted.`,
           );
           cb();
         }

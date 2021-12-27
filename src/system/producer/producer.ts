@@ -3,6 +3,7 @@ import {
   ICallback,
   TProducerRedisKeys,
   THeartbeatRegistryPayload,
+  TQueueParams,
 } from '../../../types';
 import { Message } from '../message';
 import { ProducerMessageRate } from './producer-message-rate/producer-message-rate';
@@ -99,22 +100,20 @@ export class Producer extends Base<ProducerMessageRate, TProducerRedisKeys> {
 
   static getOnlineProducers(
     redisClient: RedisClient,
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     transform = false,
     cb: ICallback<Record<string, THeartbeatRegistryPayload | string>>,
   ): void {
-    const { keyQueueProducers } = redisKeys.getKeys(queueName, ns);
+    const { keyQueueProducers } = redisKeys.getKeys(queue.name, queue.ns);
     heartbeatRegistry.getAll(redisClient, keyQueueProducers, transform, cb);
   }
 
   static countOnlineProducers(
     redisClient: RedisClient,
-    queueName: string,
-    ns: string | undefined,
+    queue: TQueueParams,
     cb: ICallback<number>,
   ): void {
-    const { keyQueueProducers } = redisKeys.getKeys(queueName, ns);
+    const { keyQueueProducers } = redisKeys.getKeys(queue.name, queue.ns);
     heartbeatRegistry.count(redisClient, keyQueueProducers, cb);
   }
 }

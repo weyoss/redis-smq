@@ -60,8 +60,7 @@ export class WebsocketOnlineStreamWorker {
                       (cb: ICallback<void>) => {
                         Consumer.getOnlineConsumers(
                           this.redisClient,
-                          item.name,
-                          item.ns,
+                          item,
                           false,
                           (err, reply) => {
                             if (err) cb(err);
@@ -79,8 +78,7 @@ export class WebsocketOnlineStreamWorker {
                       (cb: ICallback<void>) => {
                         Producer.getOnlineProducers(
                           this.redisClient,
-                          item.name,
-                          item.ns,
+                          item,
                           false,
                           (err, reply) => {
                             if (err) cb(err);
