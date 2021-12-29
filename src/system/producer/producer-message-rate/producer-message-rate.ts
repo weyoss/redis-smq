@@ -12,29 +12,29 @@ import {
 export class ProducerMessageRate extends MessageRate<IProducerMessageRateFields> {
   protected publishedRate = 0;
   protected producer: Producer;
-  protected inputRateTimeSeries: ReturnType<typeof PublishedTimeSeries>;
-  protected queueInputRateTimeSeries: ReturnType<
+  protected publishedTimeSeries: ReturnType<typeof PublishedTimeSeries>;
+  protected queuePublishedTimeSeries: ReturnType<
     typeof QueuePublishedTimeSeries
   >;
-  protected globalInputRateTimeSeries: ReturnType<
+  protected globalPublishedTimeSeries: ReturnType<
     typeof GlobalPublishedTimeSeries
   >;
 
   constructor(producer: Producer, redisClient: RedisClient) {
     super(redisClient);
     this.producer = producer;
-    this.inputRateTimeSeries = PublishedTimeSeries(
+    this.publishedTimeSeries = PublishedTimeSeries(
       redisClient,
       producer.getId(),
       producer.getQueue(),
       true,
     );
-    this.queueInputRateTimeSeries = QueuePublishedTimeSeries(
+    this.queuePublishedTimeSeries = QueuePublishedTimeSeries(
       this.redisClient,
       producer.getQueue(),
       true,
     );
-    this.globalInputRateTimeSeries = GlobalPublishedTimeSeries(
+    this.globalPublishedTimeSeries = GlobalPublishedTimeSeries(
       this.redisClient,
       true,
     );
@@ -59,9 +59,9 @@ export class ProducerMessageRate extends MessageRate<IProducerMessageRateFields>
   ): void {
     const multi = this.redisClient.multi();
     const { publishedRate } = rates;
-    this.inputRateTimeSeries.add(ts, publishedRate, multi);
-    this.queueInputRateTimeSeries.add(ts, publishedRate, multi);
-    this.globalInputRateTimeSeries.add(ts, publishedRate, multi);
+    this.publishedTimeSeries.add(ts, publishedRate, multi);
+    this.queuePublishedTimeSeries.add(ts, publishedRate, multi);
+    this.globalPublishedTimeSeries.add(ts, publishedRate, multi);
     this.redisClient.execMulti(multi, () => cb());
   }
 
@@ -69,9 +69,9 @@ export class ProducerMessageRate extends MessageRate<IProducerMessageRateFields>
     async.waterfall(
       [
         (cb: ICallback<void>) => super.quit(cb),
-        (cb: ICallback<void>) => this.inputRateTimeSeries.quit(cb),
-        (cb: ICallback<void>) => this.queueInputRateTimeSeries.quit(cb),
-        (cb: ICallback<void>) => this.globalInputRateTimeSeries.quit(cb),
+        (cb: ICallback<void>) => this.publishedTimeSeries.quit(cb),
+        (cb: ICallback<void>) => this.queuePublishedTimeSeries.quit(cb),
+        (cb: ICallback<void>) => this.globalPublishedTimeSeries.quit(cb),
       ],
       cb,
     );

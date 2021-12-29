@@ -7,7 +7,7 @@ import * as async from 'async';
 import { TimeSeries } from './common/time-series/time-series';
 
 export abstract class MessageRate<
-  TMessageRateFields extends Record<string, number> = Record<string, number>,
+  TMessageRateFields extends Record<string, any> = Record<string, number>,
 > extends EventEmitter {
   protected redisClient: RedisClient;
   protected readerTicker: Ticker;

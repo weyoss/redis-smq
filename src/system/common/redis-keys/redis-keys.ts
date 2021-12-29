@@ -62,6 +62,9 @@ enum ERedisKey {
   KEY_LOCK_WEBSOCKET_HEARTBEAT_STREAM_WORKER,
   KEY_LOCK_WEBSOCKET_ONLINE_STREAM_WORKER,
   KEY_RATE_CONSUMER_DEAD_LETTERED,
+  KEY_HEARTBEAT_MULTI_QUEUE_PRODUCER,
+  KEY_RATE_MULTI_QUEUE_PRODUCER_PUBLISHED,
+  KEY_MULTI_QUEUE_PRODUCERS,
 }
 
 export const redisKeys = {
@@ -201,6 +204,24 @@ export const redisKeys = {
     };
   },
 
+  getMultiQueueProducerKeys(instanceId: string) {
+    const globalKeys = this.getGlobalKeys();
+    const keys = {
+      keyHeartbeatMultiQueueProducer: this.joinSegments(
+        ERedisKey.KEY_HEARTBEAT_MULTI_QUEUE_PRODUCER,
+        instanceId,
+      ),
+      keyRateMultiQueueProducerPublished: this.joinSegments(
+        ERedisKey.KEY_RATE_MULTI_QUEUE_PRODUCER_PUBLISHED,
+        instanceId,
+      ),
+    };
+    return {
+      ...globalKeys,
+      ...this.makeNamespacedKeys(keys, globalNamespace),
+    };
+  },
+
   extractData(key: string) {
     const { ns, type, segments } = this.getSegments(key);
     if (
@@ -297,6 +318,7 @@ export const redisKeys = {
         ERedisKey.KEY_RATE_GLOBAL_ACKNOWLEDGED_LOCK,
       keyRateGlobalDeadLetteredLock:
         ERedisKey.KEY_RATE_GLOBAL_DEAD_LETTERED_LOCK,
+      keyMultiQueueProducers: ERedisKey.KEY_MULTI_QUEUE_PRODUCERS,
     };
     return this.makeNamespacedKeys(keys, globalNamespace);
   },
