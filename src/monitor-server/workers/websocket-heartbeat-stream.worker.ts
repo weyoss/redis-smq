@@ -45,8 +45,8 @@ export class WebsocketHeartbeatStreamWorker {
               (item, done) => {
                 const { ns, queueName, consumerId, producerId } =
                   redisKeys.extractData(item.key) ?? {};
+                const payload = String(item.payload);
                 if (ns && queueName && (consumerId || producerId)) {
-                  const payload = String(item.payload);
                   if (consumerId) {
                     this.redisClient.publish(
                       `streamConsumerHeartbeat:${consumerId}`,
@@ -60,6 +60,13 @@ export class WebsocketHeartbeatStreamWorker {
                       this.noop,
                     );
                   }
+                } else if (producerId) {
+                  // multi queue producer
+                  this.redisClient.publish(
+                    `streamMultiQueueProducerHeartbeat:${producerId}`,
+                    payload,
+                    this.noop,
+                  );
                 }
                 done();
               },
