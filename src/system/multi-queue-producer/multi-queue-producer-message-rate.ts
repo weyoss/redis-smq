@@ -8,7 +8,7 @@ import {
   QueuePublishedTimeSeries,
 } from './producer-time-series';
 
-interface IMultiQueueProducerMessageRateFields {
+export interface IMultiQueueProducerMessageRateFields {
   publishedRate: number;
   queuePublishedRate: Record<string, number>;
 }

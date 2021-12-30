@@ -1,7 +1,7 @@
-import { Consumer } from '../consumer';
-import { ICallback, IConsumerMessageRateFields } from '../../../../types';
-import { MessageRate } from '../../message-rate';
-import { RedisClient } from '../../redis-client/redis-client';
+import { Consumer } from './consumer';
+import { ICallback, IConsumerMessageRateFields } from '../../../types';
+import { MessageRate } from '../message-rate';
+import { RedisClient } from '../redis-client/redis-client';
 import * as async from 'async';
 import {
   AcknowledgedTimeSeries,
@@ -10,8 +10,8 @@ import {
   QueueAcknowledgedTimeSeries,
   QueueDeadLetteredTimeSeries,
   DeadLetteredTimeSeries,
-} from '../consumer-time-series';
-import { events } from '../../common/events';
+} from './consumer-time-series';
+import { events } from '../common/events';
 
 export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields> {
   protected consumer: Consumer;

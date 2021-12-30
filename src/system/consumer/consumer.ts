@@ -7,9 +7,8 @@ import {
   TQueueParams,
   TUnaryFunction,
 } from '../../../types';
-import { Base } from '../base';
 import { Message } from '../message';
-import { ConsumerMessageRate } from './consumer-message-rate/consumer-message-rate';
+import { ConsumerMessageRate } from './consumer-message-rate';
 import { events } from '../common/events';
 import { RedisClient } from '../redis-client/redis-client';
 import { resolve } from 'path';
@@ -23,8 +22,12 @@ import { PanicError } from '../common/errors/panic.error';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { Heartbeat } from '../common/heartbeat/heartbeat';
 import { heartbeatRegistry } from '../common/heartbeat/heartbeat-registry';
+import { ExtendedBase } from '../extended-base';
 
-export class Consumer extends Base<ConsumerMessageRate, TConsumerRedisKeys> {
+export class Consumer extends ExtendedBase<
+  ConsumerMessageRate,
+  TConsumerRedisKeys
+> {
   private consumerRedisClient: RedisClient | null = null;
   private consumerWorkers: ConsumerWorkers | null = null;
   private consumerFrontend: ConsumerFrontend | null = null;
@@ -180,86 +183,90 @@ export class Consumer extends Base<ConsumerMessageRate, TConsumerRedisKeys> {
     }
   }
 
-  protected goingUp(): TUnaryFunction<ICallback<void>>[] {
-    const setUpConsumerRedisClient = (cb: ICallback<void>): void => {
-      this.logger.debug(`Set up consumer RedisClient instance...`);
-      RedisClient.getNewInstance(this.config, (err, client) => {
-        if (err) cb(err);
-        else if (!client) cb(new EmptyCallbackReplyError());
-        else {
-          this.consumerRedisClient = client;
-          cb();
-        }
-      });
-    };
-    const setUpConsumerWorkers = (cb: ICallback<void>) => {
-      this.logger.debug(`Set up consumer workers...`);
-      this.getSharedRedisClient((client) => {
-        this.consumerWorkers = new ConsumerWorkers(
-          this.id,
-          resolve(`${__dirname}/../workers`),
-          this.config,
-          client,
-          new WorkerRunner(),
-          this.logger,
-        );
-        this.consumerWorkers.on(events.ERROR, (err: Error) =>
-          this.emit(events.ERROR, err),
-        );
+  protected setUpConsumerRedisClient = (cb: ICallback<void>): void => {
+    this.logger.debug(`Set up consumer RedisClient instance...`);
+    RedisClient.getNewInstance(this.config, (err, client) => {
+      if (err) cb(err);
+      else if (!client) cb(new EmptyCallbackReplyError());
+      else {
+        this.consumerRedisClient = client;
         cb();
-      });
-    };
-    const setUpConsumerProcessingQueue = (cb: ICallback<void>): void => {
-      this.logger.debug(`Set up consumer processing queue...`);
-      this.getSharedRedisClient((client) =>
-        QueueManager.setUpProcessingQueue(this, client, cb),
+      }
+    });
+  };
+
+  protected setUpConsumerWorkers = (cb: ICallback<void>) => {
+    this.logger.debug(`Set up consumer workers...`);
+    this.getSharedRedisClient((client) => {
+      this.consumerWorkers = new ConsumerWorkers(
+        this.id,
+        resolve(`${__dirname}/../workers`),
+        this.config,
+        client,
+        new WorkerRunner(),
+        this.logger,
       );
-    };
+      this.consumerWorkers.on(events.ERROR, (err: Error) =>
+        this.emit(events.ERROR, err),
+      );
+      cb();
+    });
+  };
+
+  protected setUpConsumerProcessingQueue = (cb: ICallback<void>): void => {
+    this.logger.debug(`Set up consumer processing queue...`);
+    this.getSharedRedisClient((client) =>
+      QueueManager.setUpProcessingQueue(this, client, cb),
+    );
+  };
+
+  protected goingUp(): TUnaryFunction<ICallback<void>>[] {
     return super
       .goingUp()
       .concat([
-        setUpConsumerRedisClient,
-        setUpConsumerWorkers,
-        setUpConsumerProcessingQueue,
+        this.setUpConsumerRedisClient,
+        this.setUpConsumerWorkers,
+        this.setUpConsumerProcessingQueue,
       ]);
   }
 
+  protected tearDownConsumerWorkers = (cb: ICallback<void>): void => {
+    this.logger.debug(`Tear down consumer workers...`);
+    if (this.consumerWorkers) {
+      this.consumerWorkers.quit(() => {
+        this.logger.debug(`Consumer workers has been torn down.`);
+        this.consumerWorkers = null;
+        cb();
+      });
+    } else {
+      this.logger.warn(
+        `This is not normal. [this.consumerWorkers] has not been set up. Ignoring...`,
+      );
+      cb();
+    }
+  };
+
+  protected tearDownConsumerRedisClient = (cb: ICallback<void>): void => {
+    this.logger.debug(`Tear down consumer RedisClient instance...`);
+    if (this.consumerRedisClient) {
+      this.consumerRedisClient.halt(() => {
+        this.logger.debug(`Consumer RedisClient instance has been torn down.`);
+        this.consumerRedisClient = null;
+        cb();
+      });
+    } else {
+      this.logger.warn(
+        `This is not normal. [this.consumerRedisClient] has not been set up. Ignoring...`,
+      );
+      cb();
+    }
+  };
+
   protected goingDown(): TUnaryFunction<ICallback<void>>[] {
-    const tearDownConsumerWorkers = (cb: ICallback<void>) => {
-      this.logger.debug(`Tear down consumer workers...`);
-      if (this.consumerWorkers) {
-        this.consumerWorkers.quit(() => {
-          this.logger.debug(`Consumer workers has been torn down.`);
-          this.consumerWorkers = null;
-          cb();
-        });
-      } else {
-        this.logger.warn(
-          `This is not normal. [this.consumerWorkers] has not been set up. Ignoring...`,
-        );
-        cb();
-      }
-    };
-    const tearDownConsumerRedisClient = (cb: ICallback<void>) => {
-      this.logger.debug(`Tear down consumer RedisClient instance...`);
-      if (this.consumerRedisClient) {
-        this.consumerRedisClient.halt(() => {
-          this.logger.debug(
-            `Consumer RedisClient instance has been torn down.`,
-          );
-          this.consumerRedisClient = null;
-          cb();
-        });
-      } else {
-        this.logger.warn(
-          `This is not normal. [this.consumerRedisClient] has not been set up. Ignoring...`,
-        );
-        cb();
-      }
-    };
-    return [tearDownConsumerWorkers, tearDownConsumerRedisClient].concat(
-      super.goingDown(),
-    );
+    return [
+      this.tearDownConsumerWorkers,
+      this.tearDownConsumerRedisClient,
+    ].concat(super.goingDown());
   }
 
   setConsumerFrontend(consumerMessageHandler: ConsumerFrontend): Consumer {
@@ -267,11 +274,12 @@ export class Consumer extends Base<ConsumerMessageRate, TConsumerRedisKeys> {
     return this;
   }
 
-  getMessageRate(redisClient: RedisClient): ConsumerMessageRate {
-    return new ConsumerMessageRate(this, redisClient);
+  initMessageRateInstance(redisClient: RedisClient, cb: ICallback<void>): void {
+    this.messageRate = new ConsumerMessageRate(this, redisClient);
+    cb();
   }
 
-  getHeartbeat(redisClient: RedisClient): Heartbeat {
+  initHeartbeatInstance(redisClient: RedisClient, cb: ICallback<void>): void {
     const { keyHeartbeatConsumer, keyQueueConsumers } = this.getRedisKeys();
     const heartbeat = new Heartbeat(
       {
@@ -282,7 +290,8 @@ export class Consumer extends Base<ConsumerMessageRate, TConsumerRedisKeys> {
       redisClient,
     );
     heartbeat.on(events.ERROR, (err: Error) => this.emit(events.ERROR, err));
-    return heartbeat;
+    this.heartbeat = heartbeat;
+    cb();
   }
 
   getRedisKeys(): TConsumerRedisKeys {
