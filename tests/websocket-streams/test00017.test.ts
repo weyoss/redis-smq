@@ -6,13 +6,13 @@ import {
 } from '../common';
 import { THeartbeatRegistryPayload } from '../../types';
 
-test('WebsocketOnlineStreamWorker: streamQueueOnlineConsumers/case 1', async () => {
+test('WebsocketOnlineStreamWorker: streamOnlineQueueConsumers/case 1', async () => {
   const consumer = getConsumer();
   const queue = consumer.getQueue();
   await consumer.runAsync();
 
   const data = await listenForWebsocketStreamEvents<Record<string, string>>(
-    `streamQueueOnlineConsumers:${queue.ns}:${queue.name}`,
+    `streamOnlineQueueConsumers:${queue.ns}:${queue.name}`,
     startWebsocketOnlineStreamWorker,
   );
   for (let i = 0; i < data.length; i += 1) {
