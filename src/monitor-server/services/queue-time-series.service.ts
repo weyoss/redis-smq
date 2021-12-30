@@ -1,11 +1,9 @@
 import { QueueTimeSeriesRequestDTO } from '../controllers/queue-time-series/common/queue-time-series-request.DTO';
 import { RedisClient } from '../../system/redis-client/redis-client';
-import {
-  QueueAcknowledgedTimeSeries,
-  QueueDeadLetteredTimeSeries,
-} from '../../system/consumer/consumer-time-series';
+import { QueueAcknowledgedTimeSeries } from '../../system/time-series/queue-acknowledged-time-series';
+import { QueueDeadLetteredTimeSeries } from '../../system/time-series/queue-dead-lettered-time-series';
+import { QueuePublishedTimeSeries } from '../../system/time-series/queue-published-time-series';
 import { promisifyAll } from 'bluebird';
-import { QueuePublishedTimeSeries } from '../../system/producer/producer-time-series';
 
 export class QueueTimeSeriesService {
   protected redisClient: RedisClient;
