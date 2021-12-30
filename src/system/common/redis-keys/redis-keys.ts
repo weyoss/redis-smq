@@ -263,6 +263,16 @@ export const redisKeys = {
         producerId,
       };
     }
+    if (
+      type === ERedisKey.KEY_RATE_MULTI_QUEUE_PRODUCER_PUBLISHED ||
+      type === ERedisKey.KEY_HEARTBEAT_MULTI_QUEUE_PRODUCER
+    ) {
+      const [producerId] = segments;
+      return {
+        type,
+        producerId,
+      };
+    }
     return null;
   },
 
