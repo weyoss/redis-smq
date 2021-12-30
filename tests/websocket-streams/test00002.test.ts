@@ -36,6 +36,7 @@ test('WebsocketMainStreamWorker: Case 2', async () => {
     acknowledgedMessagesCount: 0,
     producersCount: 1,
     consumersCount: 1,
+    multiQueueProducersCount: 0,
     queuesCount: 1,
     queues: {
       testing: {
