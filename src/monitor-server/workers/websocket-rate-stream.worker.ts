@@ -8,22 +8,18 @@ import { LockManager } from '../../system/common/lock-manager/lock-manager';
 import { Ticker } from '../../system/common/ticker/ticker';
 import * as async from 'async';
 import { events } from '../../system/common/events';
-import { TimeSeries } from '../../system/common/time-series/time-series';
 import { Heartbeat } from '../../system/common/heartbeat/heartbeat';
-import {
-  AcknowledgedTimeSeries,
-  DeadLetteredTimeSeries,
-  GlobalAcknowledgedTimeSeries,
-  GlobalDeadLetteredTimeSeries,
-  QueueAcknowledgedTimeSeries,
-  QueueDeadLetteredTimeSeries,
-} from '../../system/consumer/consumer-time-series';
-import {
-  GlobalPublishedTimeSeries,
-  PublishedTimeSeries,
-  QueuePublishedTimeSeries,
-} from '../../system/producer/producer-time-series';
+import { TimeSeries } from '../../system/common/time-series/time-series';
 import { InvalidCallbackReplyError } from '../../system/common/errors/invalid-callback-reply.error';
+import { QueuePublishedTimeSeries } from '../../system/time-series/queue-published-time-series';
+import { QueueDeadLetteredTimeSeries } from '../../system/time-series/queue-dead-lettered-time-series';
+import { QueueAcknowledgedTimeSeries } from '../../system/time-series/queue-acknowledged-time-series';
+import { GlobalPublishedTimeSeries } from '../../system/time-series/global-published-time-series';
+import { GlobalAcknowledgedTimeSeries } from '../../system/time-series/global-acknowledged-time-series';
+import { GlobalDeadLetteredTimeSeries } from '../../system/time-series/global-dead-lettered-time-series';
+import { ConsumerAcknowledgedTimeSeries } from '../../system/time-series/consumer-acknowledged-time-series';
+import { ConsumerDeadLetteredTimeSeries } from '../../system/time-series/consumer-dead-lettered-time-series';
+import { ProducerPublishedTimeSeries } from '../../system/time-series/producer-published-time-series';
 
 export class WebsocketRateStreamWorker {
   protected logger;
@@ -66,36 +62,38 @@ export class WebsocketRateStreamWorker {
     consumerId: string,
   ): void => {
     this.tasks.push((cb: ICallback<void>) =>
-      AcknowledgedTimeSeries(this.redisClient, consumerId, queue).getRangeFrom(
-        ts,
-        (err, reply) => {
-          if (err) throw err;
-          else {
-            this.redisClient.publish(
-              `streamConsumerAcknowledged:${consumerId}`,
-              JSON.stringify(reply),
-              this.noop,
-            );
-            cb();
-          }
-        },
-      ),
+      ConsumerAcknowledgedTimeSeries(
+        this.redisClient,
+        consumerId,
+        queue,
+      ).getRangeFrom(ts, (err, reply) => {
+        if (err) throw err;
+        else {
+          this.redisClient.publish(
+            `streamConsumerAcknowledged:${consumerId}`,
+            JSON.stringify(reply),
+            this.noop,
+          );
+          cb();
+        }
+      }),
     );
     this.tasks.push((cb: ICallback<void>) =>
-      DeadLetteredTimeSeries(this.redisClient, consumerId, queue).getRangeFrom(
-        ts,
-        (err, reply) => {
-          if (err) cb(err);
-          else {
-            this.redisClient.publish(
-              `streamConsumerDeadLettered:${consumerId}`,
-              JSON.stringify(reply),
-              this.noop,
-            );
-            cb();
-          }
-        },
-      ),
+      ConsumerDeadLetteredTimeSeries(
+        this.redisClient,
+        consumerId,
+        queue,
+      ).getRangeFrom(ts, (err, reply) => {
+        if (err) cb(err);
+        else {
+          this.redisClient.publish(
+            `streamConsumerDeadLettered:${consumerId}`,
+            JSON.stringify(reply),
+            this.noop,
+          );
+          cb();
+        }
+      }),
     );
   };
 
@@ -156,20 +154,21 @@ export class WebsocketRateStreamWorker {
     producerId: string,
   ): void => {
     this.tasks.push((cb: ICallback<void>) =>
-      PublishedTimeSeries(this.redisClient, producerId, queue).getRangeFrom(
-        ts,
-        (err, reply) => {
-          if (err) cb(err);
-          else {
-            this.redisClient.publish(
-              `streamProducerPublished:${producerId}`,
-              JSON.stringify(reply),
-              this.noop,
-            );
-            cb();
-          }
-        },
-      ),
+      ProducerPublishedTimeSeries(
+        this.redisClient,
+        producerId,
+        queue,
+      ).getRangeFrom(ts, (err, reply) => {
+        if (err) cb(err);
+        else {
+          this.redisClient.publish(
+            `streamProducerPublished:${producerId}`,
+            JSON.stringify(reply),
+            this.noop,
+          );
+          cb();
+        }
+      }),
     );
   };
 

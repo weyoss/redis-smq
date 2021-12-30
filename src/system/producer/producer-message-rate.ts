@@ -6,15 +6,13 @@ import {
 import { MessageRate } from '../message-rate';
 import { RedisClient } from '../redis-client/redis-client';
 import * as async from 'async';
-import {
-  GlobalPublishedTimeSeries,
-  PublishedTimeSeries,
-  QueuePublishedTimeSeries,
-} from './producer-time-series';
+import { GlobalPublishedTimeSeries } from '../time-series/global-published-time-series';
+import { ProducerPublishedTimeSeries } from '../time-series/producer-published-time-series';
+import { QueuePublishedTimeSeries } from '../time-series/queue-published-time-series';
 
 export class ProducerMessageRate extends MessageRate<IProducerMessageRateFields> {
   protected publishedRate = 0;
-  protected publishedTimeSeries: ReturnType<typeof PublishedTimeSeries>;
+  protected publishedTimeSeries: ReturnType<typeof ProducerPublishedTimeSeries>;
   protected queuePublishedTimeSeries: ReturnType<
     typeof QueuePublishedTimeSeries
   >;
@@ -28,7 +26,7 @@ export class ProducerMessageRate extends MessageRate<IProducerMessageRateFields>
     redisClient: RedisClient,
   ) {
     super(redisClient);
-    this.publishedTimeSeries = PublishedTimeSeries(
+    this.publishedTimeSeries = ProducerPublishedTimeSeries(
       redisClient,
       producerId,
       queue,

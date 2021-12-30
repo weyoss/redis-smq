@@ -3,14 +3,12 @@ import { ICallback, IConsumerMessageRateFields } from '../../../types';
 import { MessageRate } from '../message-rate';
 import { RedisClient } from '../redis-client/redis-client';
 import * as async from 'async';
-import {
-  AcknowledgedTimeSeries,
-  GlobalAcknowledgedTimeSeries,
-  GlobalDeadLetteredTimeSeries,
-  QueueAcknowledgedTimeSeries,
-  QueueDeadLetteredTimeSeries,
-  DeadLetteredTimeSeries,
-} from './consumer-time-series';
+import { GlobalAcknowledgedTimeSeries } from '../time-series/global-acknowledged-time-series';
+import { GlobalDeadLetteredTimeSeries } from '../time-series/global-dead-lettered-time-series';
+import { QueueAcknowledgedTimeSeries } from '../time-series/queue-acknowledged-time-series';
+import { QueueDeadLetteredTimeSeries } from '../time-series/queue-dead-lettered-time-series';
+import { ConsumerAcknowledgedTimeSeries } from '../time-series/consumer-acknowledged-time-series';
+import { ConsumerDeadLetteredTimeSeries } from '../time-series/consumer-dead-lettered-time-series';
 import { events } from '../common/events';
 
 export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields> {
@@ -19,8 +17,12 @@ export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields>
   protected deadLetteredRate = 0;
   protected idleStack: number[] = new Array(5).fill(0);
 
-  protected acknowledgedTimeSeries: ReturnType<typeof AcknowledgedTimeSeries>;
-  protected deadLetteredTimeSeries: ReturnType<typeof DeadLetteredTimeSeries>;
+  protected acknowledgedTimeSeries: ReturnType<
+    typeof ConsumerAcknowledgedTimeSeries
+  >;
+  protected deadLetteredTimeSeries: ReturnType<
+    typeof ConsumerDeadLetteredTimeSeries
+  >;
   protected queueAcknowledgedRateTimeSeries: ReturnType<
     typeof QueueAcknowledgedTimeSeries
   >;
@@ -45,13 +47,13 @@ export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields>
       redisClient,
       true,
     );
-    this.acknowledgedTimeSeries = AcknowledgedTimeSeries(
+    this.acknowledgedTimeSeries = ConsumerAcknowledgedTimeSeries(
       redisClient,
       consumer.getId(),
       consumer.getQueue(),
       true,
     );
-    this.deadLetteredTimeSeries = DeadLetteredTimeSeries(
+    this.deadLetteredTimeSeries = ConsumerDeadLetteredTimeSeries(
       redisClient,
       consumer.getId(),
       consumer.getQueue(),

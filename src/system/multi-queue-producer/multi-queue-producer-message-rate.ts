@@ -2,11 +2,9 @@ import { ICallback, TQueueParams } from '../../../types';
 import { MessageRate } from '../message-rate';
 import { RedisClient } from '../redis-client/redis-client';
 import * as async from 'async';
-import {
-  GlobalPublishedTimeSeries,
-  PublishedTimeSeries,
-  QueuePublishedTimeSeries,
-} from './producer-time-series';
+import { GlobalPublishedTimeSeries } from '../time-series/global-published-time-series';
+import { MultiQueueProducerPublishedTimeSeries } from '../time-series/multi-queue-producer-published-time-series';
+import { QueuePublishedTimeSeries } from '../time-series/queue-published-time-series';
 
 export interface IMultiQueueProducerMessageRateFields {
   publishedRate: number;
@@ -15,7 +13,9 @@ export interface IMultiQueueProducerMessageRateFields {
 
 export class MultiQueueProducerMessageRate extends MessageRate<IMultiQueueProducerMessageRateFields> {
   protected publishedRate = 0;
-  protected publishedTimeSeries: ReturnType<typeof PublishedTimeSeries>;
+  protected publishedTimeSeries: ReturnType<
+    typeof MultiQueueProducerPublishedTimeSeries
+  >;
   protected globalPublishedTimeSeries: ReturnType<
     typeof GlobalPublishedTimeSeries
   >;
@@ -31,7 +31,7 @@ export class MultiQueueProducerMessageRate extends MessageRate<IMultiQueueProduc
       redisClient,
       true,
     );
-    this.publishedTimeSeries = PublishedTimeSeries(
+    this.publishedTimeSeries = MultiQueueProducerPublishedTimeSeries(
       redisClient,
       producerId,
       true,

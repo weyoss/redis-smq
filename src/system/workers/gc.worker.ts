@@ -18,10 +18,8 @@ import { QueueManager } from '../queue-manager/queue-manager';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { PanicError } from '../common/errors/panic.error';
 import { Consumer } from '../consumer/consumer';
-import {
-  GlobalDeadLetteredTimeSeries,
-  QueueDeadLetteredTimeSeries,
-} from '../consumer/consumer-time-series';
+import { QueueDeadLetteredTimeSeries } from '../time-series/queue-dead-lettered-time-series';
+import { GlobalDeadLetteredTimeSeries } from '../time-series/global-dead-lettered-time-series';
 import { TimeSeries } from '../common/time-series/time-series';
 
 export class GCWorker {
