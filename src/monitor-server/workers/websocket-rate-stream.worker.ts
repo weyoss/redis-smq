@@ -20,6 +20,7 @@ import { GlobalDeadLetteredTimeSeries } from '../../system/time-series/global-de
 import { ConsumerAcknowledgedTimeSeries } from '../../system/time-series/consumer-acknowledged-time-series';
 import { ConsumerDeadLetteredTimeSeries } from '../../system/time-series/consumer-dead-lettered-time-series';
 import { ProducerPublishedTimeSeries } from '../../system/time-series/producer-published-time-series';
+import { MultiQueueProducerPublishedTimeSeries } from '../../system/time-series/multi-queue-producer-published-time-series';
 
 export class WebsocketRateStreamWorker {
   protected logger;
@@ -34,6 +35,7 @@ export class WebsocketRateStreamWorker {
       };
     };
   } = {};
+  protected multiQueueProducers: string[] = [];
   protected tasks: ((cb: ICallback<void>) => void)[] = [];
   protected noop = (): void => void 0;
 
@@ -54,6 +56,7 @@ export class WebsocketRateStreamWorker {
   protected reset = (): void => {
     this.queueData = {};
     this.tasks = [];
+    this.multiQueueProducers = [];
   };
 
   protected addConsumerTasks = (
@@ -169,6 +172,35 @@ export class WebsocketRateStreamWorker {
           cb();
         }
       }),
+    );
+  };
+
+  protected addMultiQueueProducerTasks = (
+    ts: number,
+    cb: ICallback<void>,
+  ): void => {
+    async.each(
+      this.multiQueueProducers,
+      (producerId, done) => {
+        this.tasks.push((cb: ICallback<void>) =>
+          MultiQueueProducerPublishedTimeSeries(
+            this.redisClient,
+            producerId,
+          ).getRangeFrom(ts, (err, reply) => {
+            if (err) cb(err);
+            else {
+              this.redisClient.publish(
+                `multiQueueProducerPublished:${producerId}`,
+                JSON.stringify(reply),
+                this.noop,
+              );
+              cb();
+            }
+          }),
+        );
+        done();
+      },
+      cb,
     );
   };
 
@@ -291,24 +323,26 @@ export class WebsocketRateStreamWorker {
   protected prepare = (cb: ICallback<void>): void => {
     const ts = TimeSeries.getCurrentTimestamp() - 10;
     this.addGlobalTasks(ts);
-    async.eachOf(
-      this.queueData,
-      (queues, ns, done) => {
-        async.eachOf(
-          queues,
-          (queue, queueName, done) => {
-            this.handleQueue(
-              ts,
-              { ns: String(ns), name: String(queueName) },
-              queue,
-              done,
-            );
-          },
-          done,
-        );
-      },
-      cb,
-    );
+    this.addMultiQueueProducerTasks(ts, () => {
+      async.eachOf(
+        this.queueData,
+        (queues, ns, done) => {
+          async.eachOf(
+            queues,
+            (queue, queueName, done) => {
+              this.handleQueue(
+                ts,
+                { ns: String(ns), name: String(queueName) },
+                queue,
+                done,
+              );
+            },
+            done,
+          );
+        },
+        cb,
+      );
+    });
   };
 
   protected publish = (): void => {
@@ -330,6 +364,9 @@ export class WebsocketRateStreamWorker {
               const queue = this.addQueue({ ns, name: queueName });
               if (consumerId) queue.consumers.push(consumerId);
               else if (producerId) queue.producers.push(producerId);
+            } else if (producerId) {
+              // multi queue producer
+              this.multiQueueProducers.push(producerId);
             }
             done();
           },
