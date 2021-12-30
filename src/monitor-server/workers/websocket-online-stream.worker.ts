@@ -49,6 +49,23 @@ export class WebsocketOnlineStreamWorker {
         this.logger.debug(`Lock acquired.`);
         async.waterfall(
           [
+            (cb: ICallback<void>) => {
+              MultiQueueProducer.getOnlineProducers(
+                this.redisClient,
+                false,
+                (err, reply) => {
+                  if (err) cb(err);
+                  else {
+                    this.redisClient.publish(
+                      `streamOnlineMultiQueueProducers`,
+                      JSON.stringify(reply ?? {}),
+                      this.noop,
+                    );
+                    cb();
+                  }
+                },
+              );
+            },
             (cb: ICallback<TQueueParams[]>) => {
               this.queueManager.getMessageQueues(cb);
             },
@@ -86,23 +103,6 @@ export class WebsocketOnlineStreamWorker {
                             else {
                               this.redisClient.publish(
                                 `streamOnlineQueueProducers:${item.ns}:${item.name}`,
-                                JSON.stringify(reply ?? {}),
-                                this.noop,
-                              );
-                              cb();
-                            }
-                          },
-                        );
-                      },
-                      (cb: ICallback<void>) => {
-                        MultiQueueProducer.getOnlineProducers(
-                          this.redisClient,
-                          false,
-                          (err, reply) => {
-                            if (err) cb(err);
-                            else {
-                              this.redisClient.publish(
-                                `streamOnlineMultiQueueProducers`,
                                 JSON.stringify(reply ?? {}),
                                 this.noop,
                               );

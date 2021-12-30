@@ -190,7 +190,7 @@ export class WebsocketRateStreamWorker {
             if (err) cb(err);
             else {
               this.redisClient.publish(
-                `multiQueueProducerPublished:${producerId}`,
+                `streamMultiQueueProducerPublished:${producerId}`,
                 JSON.stringify(reply),
                 this.noop,
               );
