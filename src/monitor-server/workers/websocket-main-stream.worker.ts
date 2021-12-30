@@ -18,6 +18,7 @@ import { MessageManager } from '../../system/message-manager/message-manager';
 import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callback-reply.error';
 import { Consumer } from '../../system/consumer/consumer';
 import { Producer } from '../../system/producer/producer';
+import { MultiQueueProducer } from '../../system/multi-queue-producer/multi-queue-producer';
 
 export class WebsocketMainStreamWorker {
   protected logger;
@@ -35,6 +36,7 @@ export class WebsocketMainStreamWorker {
     acknowledgedMessagesCount: 0,
     producersCount: 0,
     consumersCount: 0,
+    multiQueueProducersCount: 0,
     queuesCount: 0,
     queues: {},
   };
@@ -197,6 +199,16 @@ export class WebsocketMainStreamWorker {
     });
   };
 
+  protected countMultiQueueProducers = (cb: ICallback<void>): void => {
+    MultiQueueProducer.countOnlineProducers(this.redisClient, (err, reply) => {
+      if (err) cb(err);
+      else {
+        this.data.multiQueueProducersCount = Number(reply);
+        cb();
+      }
+    });
+  };
+
   protected updateOnlineInstances = (cb: ICallback<void>): void => {
     async.eachOf(
       this.data.queues,
@@ -237,6 +249,7 @@ export class WebsocketMainStreamWorker {
       acknowledgedMessagesCount: 0,
       producersCount: 0,
       consumersCount: 0,
+      multiQueueProducersCount: 0,
       queuesCount: 0,
       queues: {},
     };
@@ -255,6 +268,7 @@ export class WebsocketMainStreamWorker {
             this.getQueues,
             this.getQueueSize,
             this.updateOnlineInstances,
+            this.countMultiQueueProducers,
           ],
           (err?: Error | null) => {
             if (err) throw err;

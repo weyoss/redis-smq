@@ -163,6 +163,7 @@ export type TWebsocketMainStreamPayload = {
   pendingMessagesWithPriorityCount: number;
   producersCount: number;
   consumersCount: number;
+  multiQueueProducersCount: number;
   queues: {
     [ns: string]: {
       [queueName: string]: TWebsocketMainStreamPayloadQueue;

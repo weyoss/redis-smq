@@ -8,6 +8,7 @@ import { RedisClient } from '../redis-client/redis-client';
 import { Heartbeat } from '../common/heartbeat/heartbeat';
 import { QueueManager } from '../queue-manager/queue-manager';
 import { Base } from '../base';
+import { heartbeatRegistry } from '../common/heartbeat/heartbeat-registry';
 
 export class MultiQueueProducer extends Base<MultiQueueProducerMessageRate> {
   protected queues = new Set<string>();
@@ -92,5 +93,13 @@ export class MultiQueueProducer extends Base<MultiQueueProducerMessageRate> {
         cb(new PanicError(`Producer ID ${this.getId()} is not running`));
       }
     } else setUpQueue();
+  }
+
+  static countOnlineProducers(
+    redisClient: RedisClient,
+    cb: ICallback<number>,
+  ): void {
+    const { keyMultiQueueProducers } = redisKeys.getGlobalKeys();
+    heartbeatRegistry.count(redisClient, keyMultiQueueProducers, cb);
   }
 }
