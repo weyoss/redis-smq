@@ -1,17 +1,19 @@
-import { Producer } from '../producer';
-import { ICallback, IProducerMessageRateFields } from '../../../../types';
-import { MessageRate } from '../../message-rate';
-import { RedisClient } from '../../redis-client/redis-client';
+import {
+  ICallback,
+  IProducerMessageRateFields,
+  TQueueParams,
+} from '../../../types';
+import { MessageRate } from '../message-rate';
+import { RedisClient } from '../redis-client/redis-client';
 import * as async from 'async';
 import {
   GlobalPublishedTimeSeries,
   PublishedTimeSeries,
   QueuePublishedTimeSeries,
-} from '../producer-time-series';
+} from './producer-time-series';
 
 export class ProducerMessageRate extends MessageRate<IProducerMessageRateFields> {
   protected publishedRate = 0;
-  protected producer: Producer;
   protected publishedTimeSeries: ReturnType<typeof PublishedTimeSeries>;
   protected queuePublishedTimeSeries: ReturnType<
     typeof QueuePublishedTimeSeries
@@ -20,18 +22,21 @@ export class ProducerMessageRate extends MessageRate<IProducerMessageRateFields>
     typeof GlobalPublishedTimeSeries
   >;
 
-  constructor(producer: Producer, redisClient: RedisClient) {
+  constructor(
+    queue: TQueueParams,
+    producerId: string,
+    redisClient: RedisClient,
+  ) {
     super(redisClient);
-    this.producer = producer;
     this.publishedTimeSeries = PublishedTimeSeries(
       redisClient,
-      producer.getId(),
-      producer.getQueue(),
+      producerId,
+      queue,
       true,
     );
     this.queuePublishedTimeSeries = QueuePublishedTimeSeries(
       this.redisClient,
-      producer.getQueue(),
+      queue,
       true,
     );
     this.globalPublishedTimeSeries = GlobalPublishedTimeSeries(

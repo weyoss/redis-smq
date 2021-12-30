@@ -6,26 +6,46 @@ import {
   TQueueParams,
 } from '../../../types';
 import { Message } from '../message';
-import { ProducerMessageRate } from './producer-message-rate/producer-message-rate';
-import { Base } from '../base';
+import { ProducerMessageRate } from './producer-message-rate';
 import { events } from '../common/events';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { RedisClient } from '../redis-client/redis-client';
 import { PanicError } from '../common/errors/panic.error';
 import { Heartbeat } from '../common/heartbeat/heartbeat';
 import { heartbeatRegistry } from '../common/heartbeat/heartbeat-registry';
+import { ExtendedBase } from '../extended-base';
 
-export class Producer extends Base<ProducerMessageRate, TProducerRedisKeys> {
+export class Producer extends ExtendedBase<
+  ProducerMessageRate,
+  TProducerRedisKeys
+> {
   constructor(queueName: string, config: IConfig = {}) {
     super(queueName, config);
     this.run();
   }
 
-  getMessageRate(redisClient: RedisClient): ProducerMessageRate {
-    if (!this.messageRate) {
-      this.messageRate = new ProducerMessageRate(this, redisClient);
-    }
-    return this.messageRate;
+  initMessageRateInstance(redisClient: RedisClient, cb: ICallback<void>): void {
+    this.messageRate = new ProducerMessageRate(
+      this.queue,
+      this.id,
+      redisClient,
+    );
+    cb();
+  }
+
+  initHeartbeatInstance(redisClient: RedisClient, cb: ICallback<void>): void {
+    const { keyHeartbeatProducer, keyQueueProducers } = this.getRedisKeys();
+    const heartbeat = new Heartbeat(
+      {
+        keyHeartbeat: keyHeartbeatProducer,
+        keyInstanceRegistry: keyQueueProducers,
+        instanceId: this.getId(),
+      },
+      redisClient,
+    );
+    heartbeat.on(events.ERROR, (err: Error) => this.emit(events.ERROR, err));
+    this.heartbeat = heartbeat;
+    cb();
   }
 
   produceMessage(msg: unknown, cb: ICallback<boolean>): void {
@@ -72,20 +92,6 @@ export class Producer extends Base<ProducerMessageRate, TProducerRedisKeys> {
       );
     }
     return this.redisKeys;
-  }
-
-  getHeartbeat(redisClient: RedisClient): Heartbeat {
-    const { keyHeartbeatProducer, keyQueueProducers } = this.getRedisKeys();
-    const heartbeat = new Heartbeat(
-      {
-        keyHeartbeat: keyHeartbeatProducer,
-        keyInstanceRegistry: keyQueueProducers,
-        instanceId: this.getId(),
-      },
-      redisClient,
-    );
-    heartbeat.on(events.ERROR, (err: Error) => this.emit(events.ERROR, err));
-    return heartbeat;
   }
 
   static isAlive(
