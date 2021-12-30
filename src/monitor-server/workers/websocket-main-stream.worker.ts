@@ -98,19 +98,21 @@ export class WebsocketMainStreamWorker {
             const extractedData = redisKeys.extractData(keys[+index]);
             if (extractedData) {
               const { ns, queueName, type } = extractedData;
-              const queue = this.addQueue(ns, queueName);
-              if (type === instanceTypes.KEY_QUEUE_DL) {
-                queue.deadLetteredMessagesCount = size;
-                this.data.deadLetteredMessagesCount += size;
-              } else if (type === instanceTypes.KEY_QUEUE) {
-                queue.pendingMessagesCount = size;
-                this.data.pendingMessagesCount += size;
-              } else if (type === instanceTypes.KEY_QUEUE_PRIORITY) {
-                queue.pendingMessagesWithPriorityCount = size;
-                this.data.pendingMessagesWithPriorityCount += size;
-              } else {
-                queue.acknowledgedMessagesCount = size;
-                this.data.acknowledgedMessagesCount += size;
+              if (ns && queueName && type) {
+                const queue = this.addQueue(ns, queueName);
+                if (type === instanceTypes.KEY_QUEUE_DL) {
+                  queue.deadLetteredMessagesCount = size;
+                  this.data.deadLetteredMessagesCount += size;
+                } else if (type === instanceTypes.KEY_QUEUE) {
+                  queue.pendingMessagesCount = size;
+                  this.data.pendingMessagesCount += size;
+                } else if (type === instanceTypes.KEY_QUEUE_PRIORITY) {
+                  queue.pendingMessagesWithPriorityCount = size;
+                  this.data.pendingMessagesWithPriorityCount += size;
+                } else {
+                  queue.acknowledgedMessagesCount = size;
+                  this.data.acknowledgedMessagesCount += size;
+                }
               }
             }
             done();
