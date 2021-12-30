@@ -1,4 +1,9 @@
-import { ICallback, IConfig, TQueueParams } from '../../../types';
+import {
+  ICallback,
+  IConfig,
+  THeartbeatRegistryPayload,
+  TQueueParams,
+} from '../../../types';
 import { Message } from '../message';
 import { events } from '../common/events';
 import { PanicError } from '../common/errors/panic.error';
@@ -101,5 +106,19 @@ export class MultiQueueProducer extends Base<MultiQueueProducerMessageRate> {
   ): void {
     const { keyMultiQueueProducers } = redisKeys.getGlobalKeys();
     heartbeatRegistry.count(redisClient, keyMultiQueueProducers, cb);
+  }
+
+  static getOnlineProducers(
+    redisClient: RedisClient,
+    transform = false,
+    cb: ICallback<Record<string, THeartbeatRegistryPayload | string>>,
+  ): void {
+    const { keyMultiQueueProducers } = redisKeys.getGlobalKeys();
+    heartbeatRegistry.getAll(
+      redisClient,
+      keyMultiQueueProducers,
+      transform,
+      cb,
+    );
   }
 }

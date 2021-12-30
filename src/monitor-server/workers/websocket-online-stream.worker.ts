@@ -11,6 +11,7 @@ import { events } from '../../system/common/events';
 import { QueueManager } from '../../system/queue-manager/queue-manager';
 import { Consumer } from '../../system/consumer/consumer';
 import { Producer } from '../../system/producer/producer';
+import { MultiQueueProducer } from '../../system/multi-queue-producer/multi-queue-producer';
 
 export class WebsocketOnlineStreamWorker {
   protected logger;
@@ -66,7 +67,7 @@ export class WebsocketOnlineStreamWorker {
                             if (err) cb(err);
                             else {
                               this.redisClient.publish(
-                                `streamQueueOnlineConsumers:${item.ns}:${item.name}`,
+                                `streamOnlineQueueConsumers:${item.ns}:${item.name}`,
                                 JSON.stringify(reply ?? {}),
                                 this.noop,
                               );
@@ -84,7 +85,24 @@ export class WebsocketOnlineStreamWorker {
                             if (err) cb(err);
                             else {
                               this.redisClient.publish(
-                                `streamQueueOnlineProducers:${item.ns}:${item.name}`,
+                                `streamOnlineQueueProducers:${item.ns}:${item.name}`,
+                                JSON.stringify(reply ?? {}),
+                                this.noop,
+                              );
+                              cb();
+                            }
+                          },
+                        );
+                      },
+                      (cb: ICallback<void>) => {
+                        MultiQueueProducer.getOnlineProducers(
+                          this.redisClient,
+                          false,
+                          (err, reply) => {
+                            if (err) cb(err);
+                            else {
+                              this.redisClient.publish(
+                                `streamOnlineMultiQueueProducers`,
                                 JSON.stringify(reply ?? {}),
                                 this.noop,
                               );

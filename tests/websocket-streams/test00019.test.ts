@@ -5,13 +5,13 @@ import {
   validateTime,
 } from '../common';
 
-test('WebsocketOnlineStreamWorker: streamQueueOnlineConsumers/case 2', async () => {
+test('WebsocketOnlineStreamWorker: streamOnlineQueueConsumers/case 2', async () => {
   const consumer = getConsumer();
   const queue = consumer.getQueue();
   await consumer.runAsync();
 
   const data = await listenForWebsocketStreamEvents<Record<string, string>>(
-    `streamQueueOnlineConsumers:${queue.ns}:${queue.name}`,
+    `streamOnlineQueueConsumers:${queue.ns}:${queue.name}`,
     startWebsocketOnlineStreamWorker,
   );
   for (let i = 0; i < data.length; i += 1) {
@@ -23,7 +23,7 @@ test('WebsocketOnlineStreamWorker: streamQueueOnlineConsumers/case 2', async () 
   await consumer.shutdownAsync();
 
   const data2 = await listenForWebsocketStreamEvents<Record<string, string>>(
-    `streamQueueOnlineConsumers:${queue.ns}:${queue.name}`,
+    `streamOnlineQueueConsumers:${queue.ns}:${queue.name}`,
     startWebsocketOnlineStreamWorker,
   );
   for (let i = 0; i < data2.length; i += 1) {

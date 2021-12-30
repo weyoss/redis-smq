@@ -7,13 +7,13 @@ import {
 import { THeartbeatRegistryPayload } from '../../types';
 import { delay } from 'bluebird';
 
-test('WebsocketOnlineStreamWorker: streamQueueOnlineProducers', async () => {
+test('WebsocketOnlineStreamWorker: streamOnlineQueueProducers', async () => {
   const producer = getProducer();
   const queue = producer.getQueue();
   await delay(5000);
 
   const data = await listenForWebsocketStreamEvents<Record<string, string>>(
-    `streamQueueOnlineProducers:${queue.ns}:${queue.name}`,
+    `streamOnlineQueueProducers:${queue.ns}:${queue.name}`,
     startWebsocketOnlineStreamWorker,
   );
   for (let i = 0; i < data.length; i += 1) {

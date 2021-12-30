@@ -15,7 +15,6 @@ export class WebsocketHeartbeatStreamWorker {
   protected lockManager: LockManager;
   protected ticker: Ticker;
   protected redisClient: RedisClient;
-  protected tasks: ((cb: ICallback<void>) => void)[] = [];
   protected noop = (): void => void 0;
 
   constructor(redisClient: RedisClient, logger: BLogger) {
