@@ -7,6 +7,7 @@ import { ProducerTimeSeriesService } from './producer-time-series.service';
 import { ConsumerTimeSeriesService } from './consumer-time-series.service';
 import { QueueTimeSeriesService } from './queue-time-series.service';
 import { GlobalTimeSeriesService } from './global-time-series.service';
+import { MultiQueueProducerTimeSeriesService } from './multi-queue-producer-time-series.service';
 
 export function Services(app: TApplication) {
   const { redis, logger } = app.context;
@@ -16,6 +17,9 @@ export function Services(app: TApplication) {
   let consumerTimeSeriesService: ConsumerTimeSeriesService | null = null;
   let queueTimeSeriesService: QueueTimeSeriesService | null = null;
   let globalTimeSeriesService: GlobalTimeSeriesService | null = null;
+  let multiQueueProducerTimeSeriesService: MultiQueueProducerTimeSeriesService | null =
+    null;
+
   return {
     get messagesService() {
       if (!messagesService) {
@@ -54,6 +58,13 @@ export function Services(app: TApplication) {
         globalTimeSeriesService = new GlobalTimeSeriesService(redis);
       }
       return globalTimeSeriesService;
+    },
+    get multiQueueProducerTimeSeriesService() {
+      if (!multiQueueProducerTimeSeriesService) {
+        multiQueueProducerTimeSeriesService =
+          new MultiQueueProducerTimeSeriesService(redis);
+      }
+      return multiQueueProducerTimeSeriesService;
     },
   };
 }
