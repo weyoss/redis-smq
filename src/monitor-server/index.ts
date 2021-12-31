@@ -27,6 +27,7 @@ import { producerTimeSeriesController } from './controllers/producer-time-series
 import { consumerTimeSeriesController } from './controllers/consumer-time-series/consumer-time-series.controller';
 import { queueTimeSeriesController } from './controllers/queue-time-series/queue-time-series.controller';
 import { globalTimeSeriesController } from './controllers/global-time-series/global-time-series.controller';
+import { multiQueueProducerTimeSeriesController } from './controllers/multi-queue-producer-time-series/multi-queue-producer-time-series.controller';
 
 const RedisClientAsync = promisifyAll(RedisClient);
 
@@ -70,6 +71,7 @@ async function bootstrap(config: IConfig): Promise<TAPIServer> {
     consumerTimeSeriesController,
     queueTimeSeriesController,
     globalTimeSeriesController,
+    multiQueueProducerTimeSeriesController,
   ]);
   app.use(router.routes());
   app.use(router.allowedMethods());
