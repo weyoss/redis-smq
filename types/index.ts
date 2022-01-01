@@ -264,3 +264,9 @@ export type THeartbeatPayloadData = {
   ram: { usage: NodeJS.MemoryUsage; free: number; total: number };
   cpu: { user: number; system: number; percentage: string };
 };
+
+export type TWebsocketHeartbeatOnlineIdsStreamPayload = {
+  producers: string[];
+  consumers: string[];
+  multiQueueProducers: string[];
+};
