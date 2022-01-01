@@ -9,6 +9,7 @@ import { QueueManager } from './queue-manager';
 import BLogger from 'bunyan';
 import { Logger } from '../common/logger';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
+import { redisKeys } from '../common/redis-keys/redis-keys';
 
 export class QueueManagerFrontend {
   private static instance: QueueManagerFrontend | null = null;
@@ -22,22 +23,51 @@ export class QueueManagerFrontend {
 
   ///
 
-  purgeDeadLetterQueue(queue: TQueueParams, cb: ICallback<void>): void {
+  purgeDeadLetterQueue(
+    queueName: string,
+    namespace: string | undefined,
+    cb: ICallback<void>,
+  ): void {
+    const queue: TQueueParams = {
+      name: queueName,
+      ns: namespace ?? redisKeys.getNamespace(),
+    };
     this.queueManager.purgeDeadLetterQueue(queue, cb);
   }
 
   purgeAcknowledgedMessagesQueue(
-    queue: TQueueParams,
+    queueName: string,
+    namespace: string | undefined,
     cb: ICallback<void>,
   ): void {
+    const queue: TQueueParams = {
+      name: queueName,
+      ns: namespace ?? redisKeys.getNamespace(),
+    };
     this.queueManager.purgeAcknowledgedMessagesQueue(queue, cb);
   }
 
-  purgeQueue(queue: TQueueParams, cb: ICallback<void>): void {
+  purgeQueue(
+    queueName: string,
+    namespace: string | undefined,
+    cb: ICallback<void>,
+  ): void {
+    const queue: TQueueParams = {
+      name: queueName,
+      ns: namespace ?? redisKeys.getNamespace(),
+    };
     this.queueManager.purgeQueue(queue, cb);
   }
 
-  purgePriorityQueue(queue: TQueueParams, cb: ICallback<void>): void {
+  purgePriorityQueue(
+    queueName: string,
+    namespace: string | undefined,
+    cb: ICallback<void>,
+  ): void {
+    const queue: TQueueParams = {
+      name: queueName,
+      ns: namespace ?? redisKeys.getNamespace(),
+    };
     this.queueManager.purgePriorityQueue(queue, cb);
   }
 
@@ -47,7 +77,15 @@ export class QueueManagerFrontend {
 
   ///
 
-  getQueueMetrics(queue: TQueueParams, cb: ICallback<IQueueMetrics>): void {
+  getQueueMetrics(
+    queueName: string,
+    namespace: string | undefined,
+    cb: ICallback<IQueueMetrics>,
+  ): void {
+    const queue: TQueueParams = {
+      name: queueName,
+      ns: namespace ?? redisKeys.getNamespace(),
+    };
     this.queueManager.getQueueMetrics(queue, cb);
   }
 
