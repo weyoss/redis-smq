@@ -11,14 +11,14 @@ import { config } from '../config';
 describe('MessageManager', () => {
   test('Case 1', async () => {
     const producer = getProducer();
-    const queue = producer.getQueue();
+    const { ns, name } = producer.getQueue();
 
     const msg = new Message();
     msg.setBody({ hello: 'world' });
     await producer.produceMessageAsync(msg);
 
     const messageManager = promisifyAll(await getMessageManagerFrontend());
-    const res = await messageManager.getPendingMessagesAsync(queue, 0, 100);
+    const res = await messageManager.getPendingMessagesAsync(name, ns, 0, 100);
 
     expect(res.total).toBe(1);
     expect(res.items[0].sequenceId).toBe(0);
@@ -27,11 +27,12 @@ describe('MessageManager', () => {
 
   test('Case 2', async () => {
     const { producer, message } = await produceAndAcknowledgeMessage();
-    const queue = producer.getQueue();
+    const { ns, name } = producer.getQueue();
 
     const messageManager = promisifyAll(await getMessageManagerFrontend());
     const res = await messageManager.getAcknowledgedMessagesAsync(
-      queue,
+      name,
+      ns,
       0,
       100,
     );
@@ -43,10 +44,15 @@ describe('MessageManager', () => {
 
   test('Case 3', async () => {
     const { producer, message } = await produceAndDeadLetterMessage();
-    const queue = producer.getQueue();
+    const { ns, name } = producer.getQueue();
 
     const messageManager = promisifyAll(await getMessageManagerFrontend());
-    const res = await messageManager.getDeadLetterMessagesAsync(queue, 0, 100);
+    const res = await messageManager.getDeadLetterMessagesAsync(
+      name,
+      ns,
+      0,
+      100,
+    );
     expect(res.total).toBe(1);
     expect(res.items[0].sequenceId).toBe(0);
     expect(res.items[0].message.getId()).toBe(message.getId());
@@ -58,7 +64,7 @@ describe('MessageManager', () => {
       priorityQueue: true,
     };
     const producer = promisifyAll(getProducer(undefined, cfg));
-    const queue = producer.getQueue();
+    const { ns, name } = producer.getQueue();
 
     const msg = new Message();
     msg.setPriority(Message.MessagePriority.LOW);
@@ -66,7 +72,8 @@ describe('MessageManager', () => {
 
     const messageManager = promisifyAll(await getMessageManagerFrontend());
     const res = await messageManager.getPendingMessagesWithPriorityAsync(
-      queue,
+      name,
+      ns,
       0,
       100,
     );

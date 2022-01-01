@@ -9,7 +9,7 @@ import { promisifyAll } from 'bluebird';
 
 test('Purging dead letter queue', async () => {
   const producer = getProducer();
-  const queue = producer.getQueue();
+  const { ns, name } = producer.getQueue();
 
   const consumer = getConsumer({
     consumeMock: jest.fn(() => {
@@ -25,12 +25,12 @@ test('Purging dead letter queue', async () => {
   await untilConsumerIdle(consumer);
 
   const queueManager = promisifyAll(await getQueueManagerFrontend());
-  const m = await queueManager.getQueueMetricsAsync(queue);
+  const m = await queueManager.getQueueMetricsAsync(name, ns);
 
   expect(m.deadLettered).toBe(1);
 
-  await queueManager.purgeDeadLetterQueueAsync(queue);
+  await queueManager.purgeDeadLetterQueueAsync(name, ns);
 
-  const m2 = await queueManager.getQueueMetricsAsync(queue);
+  const m2 = await queueManager.getQueueMetricsAsync(name, ns);
   expect(m2.deadLettered).toBe(0);
 });

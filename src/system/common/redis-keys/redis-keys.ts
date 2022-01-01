@@ -17,8 +17,8 @@ enum ERedisKey {
   KEY_INDEX_QUEUES, // Redis key for message queues
   KEY_INDEX_PROCESSING_QUEUES, // Redis key for all processing queues
   KEY_INDEX_QUEUE_MESSAGE_PROCESSING_QUEUES, // Redis key for processing queues of a given queue
-  RESERVED, // Not used anymore. Will be removed in the next major releases.
-  KEY_INDEX_HEARTBEATS, // Redis key for heartbeats
+  RESERVED, // Will be removed in the next major releases.
+  RESERVED_5, // Will be removed in the next major releases.
   KEY_LOCK_MESSAGE_MANAGER,
   KEY_LOCK_QUEUE_MANAGER,
   KEY_RATE_PRODUCER_PUBLISHED,
@@ -32,9 +32,10 @@ enum ERedisKey {
   KEY_LOCK_DELETE_ACKNOWLEDGED_MESSAGE,
   KEY_LOCK_DELETE_DEAD_LETTER_MESSAGE,
   KEY_LOCK_DELETE_SCHEDULED_MESSAGE,
-  RESERVED_2, // Not used anymore. Will be removed in the next major releases.
+  RESERVED_2, // Will be removed in the next major releases.
   KEY_SCHEDULED_MESSAGES,
   KEY_PENDING_MESSAGES_WITH_PRIORITY,
+  KEY_INDEX_HEARTBEATS,
   KEY_RATE_QUEUE_ACKNOWLEDGED,
   KEY_RATE_QUEUE_ACKNOWLEDGED_INDEX,
   KEY_RATE_QUEUE_DEAD_LETTERED,
