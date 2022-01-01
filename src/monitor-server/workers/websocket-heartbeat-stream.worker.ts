@@ -1,4 +1,8 @@
-import { ICallback, IConfig } from '../../../types';
+import {
+  ICallback,
+  IConfig,
+  TWebsocketHeartbeatOnlineIdsStreamPayload,
+} from '../../../types';
 import { redisKeys } from '../../system/common/redis-keys/redis-keys';
 import { RedisClient } from '../../system/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callback-reply.error';
@@ -37,6 +41,11 @@ export class WebsocketHeartbeatStreamWorker {
       if (err) throw err;
       else if (lock) {
         this.logger.debug(`Lock acquired.`);
+        const onlineIds: TWebsocketHeartbeatOnlineIdsStreamPayload = {
+          producers: [],
+          consumers: [],
+          multiQueueProducers: [],
+        };
         Heartbeat.getValidHeartbeats(this.redisClient, false, (err, reply) => {
           if (err) throw err;
           else {
@@ -48,12 +57,14 @@ export class WebsocketHeartbeatStreamWorker {
                 const payload = String(item.payload);
                 if (ns && queueName && (consumerId || producerId)) {
                   if (consumerId) {
+                    onlineIds.consumers.push(consumerId);
                     this.redisClient.publish(
                       `streamConsumerHeartbeat:${consumerId}`,
                       payload,
                       this.noop,
                     );
                   } else if (producerId) {
+                    onlineIds.producers.push(producerId);
                     this.redisClient.publish(
                       `streamProducerHeartbeat:${producerId}`,
                       payload,
@@ -62,6 +73,7 @@ export class WebsocketHeartbeatStreamWorker {
                   }
                 } else if (producerId) {
                   // multi queue producer
+                  onlineIds.multiQueueProducers.push(producerId);
                   this.redisClient.publish(
                     `streamMultiQueueProducerHeartbeat:${producerId}`,
                     payload,
@@ -70,7 +82,14 @@ export class WebsocketHeartbeatStreamWorker {
                 }
                 done();
               },
-              () => this.ticker.nextTick(),
+              () => {
+                this.redisClient.publish(
+                  `streamHeartbeatOnlineIds`,
+                  JSON.stringify(onlineIds),
+                  this.noop,
+                );
+                this.ticker.nextTick();
+              },
             );
           }
         });
