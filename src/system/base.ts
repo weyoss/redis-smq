@@ -29,7 +29,7 @@ export abstract class Base<
   protected messageRate: TMessageRate | null = null;
   protected heartbeat: Heartbeat | null = null;
 
-  constructor(config: IConfig) {
+  constructor(config: IConfig = {}) {
     super();
     if (config.namespace) {
       redisKeys.setNamespace(config.namespace);

@@ -1,19 +1,14 @@
 import { getConsumer, getProducer, untilConsumerIdle } from '../common';
 import { promisifyAll } from 'bluebird';
-import { config } from '../config';
 import { Message } from '../../src/message';
 
 describe('Priority queue: check that messages are consumed with respect to their priority', () => {
   test('Case 1', async () => {
-    const cfg = {
-      ...config,
-      priorityQueue: true,
-    };
     const queueName = 'test_queue';
     const consumer = promisifyAll(
       getConsumer({
         queueName,
-        cfg,
+        enablePriorityQueuing: true,
       }),
     );
 
@@ -22,16 +17,12 @@ describe('Priority queue: check that messages are consumed with respect to their
   });
 
   test('Case 2', async () => {
-    const cfg = {
-      ...config,
-      priorityQueue: true,
-    };
     const queueName = 'test_queue';
     const consumedMessages: Message[] = [];
     const consumer = promisifyAll(
       getConsumer({
         queueName,
-        cfg,
+        enablePriorityQueuing: true,
         consumeMock: jest.fn((msg, cb) => {
           consumedMessages.push(msg);
           cb(null);
@@ -39,7 +30,7 @@ describe('Priority queue: check that messages are consumed with respect to their
       }),
     );
 
-    const producer = promisifyAll(getProducer(queueName, cfg));
+    const producer = promisifyAll(getProducer());
 
     // message 1
     const msg1 = new Message();

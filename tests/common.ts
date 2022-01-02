@@ -21,6 +21,7 @@ type TMonitorServer = ReturnType<typeof MonitorServer>;
 type TGetConsumerArgs = {
   queueName?: string;
   cfg?: IConfig;
+  enablePriorityQueuing?: boolean;
   consumeMock?: ((msg: Message, cb: ICallback<void>) => void) | null;
 };
 
@@ -123,8 +124,13 @@ export async function shutdown(): Promise<void> {
 }
 
 export function getConsumer(args: TGetConsumerArgs = {}) {
-  const { queueName = 'test_queue', cfg = config, consumeMock = null } = args;
-  const consumer = new TestConsumer(queueName, cfg);
+  const {
+    queueName = 'test_queue',
+    cfg = config,
+    consumeMock = null,
+    enablePriorityQueuing,
+  } = args;
+  const consumer = new TestConsumer(queueName, cfg, enablePriorityQueuing);
   if (consumeMock) {
     consumer.consume = consumeMock;
   }
@@ -375,12 +381,8 @@ export async function produceMessage() {
 }
 
 export async function produceMessageWithPriority() {
-  const cfg = {
-    ...config,
-    priorityQueue: true,
-  };
   const queueName = 'test_queue';
-  const producer = promisifyAll(getProducer(queueName, cfg));
+  const producer = promisifyAll(getProducer(queueName, config));
 
   const message = new Message();
   message.setPriority(Message.MessagePriority.LOW);

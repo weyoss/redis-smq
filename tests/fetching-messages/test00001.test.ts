@@ -59,11 +59,7 @@ describe('MessageManager', () => {
   });
 
   test('Case 4', async () => {
-    const cfg = {
-      ...config,
-      priorityQueue: true,
-    };
-    const producer = promisifyAll(getProducer(undefined, cfg));
+    const producer = promisifyAll(getProducer());
     const { ns, name } = producer.getQueue();
 
     const msg = new Message();

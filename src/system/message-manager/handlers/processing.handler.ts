@@ -111,7 +111,6 @@ export class ProcessingHandler extends Handler {
   requeue(
     message: Message,
     keyQueueProcessing: string,
-    withPriority: boolean,
     unacknowledgedCause: EMessageUnacknowledgedCause,
     cb: ICallback<void>,
   ): void {

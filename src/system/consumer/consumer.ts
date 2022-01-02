@@ -2,6 +2,7 @@ import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgedCause,
   ICallback,
+  IConfig,
   TConsumerRedisKeys,
   THeartbeatRegistryPayload,
   TQueueParams,
@@ -28,9 +29,19 @@ export class Consumer extends ExtendedBase<
   ConsumerMessageRate,
   TConsumerRedisKeys
 > {
+  private priorityQueueEnabled: boolean;
   private consumerRedisClient: RedisClient | null = null;
   private consumerWorkers: ConsumerWorkers | null = null;
   private consumerFrontend: ConsumerFrontend | null = null;
+
+  constructor(
+    queueName: string,
+    config: IConfig = {},
+    enablePriorityQueue = false,
+  ) {
+    super(queueName, config);
+    this.priorityQueueEnabled = enablePriorityQueue;
+  }
 
   protected getConsumerRedisClient(cb: TUnaryFunction<RedisClient>): void {
     if (!this.consumerRedisClient)
@@ -303,6 +314,10 @@ export class Consumer extends ExtendedBase<
       );
     }
     return this.redisKeys;
+  }
+
+  isPriorityQueuingEnabled(): boolean {
+    return this.priorityQueueEnabled;
   }
 
   static isAlive(

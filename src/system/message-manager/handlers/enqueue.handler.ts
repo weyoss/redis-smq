@@ -134,7 +134,9 @@ export class EnqueueHandler extends Handler {
     message: Message,
   ): void {
     const messageId = message.getId();
-    const priority = message.getSetPriority(undefined);
+    const priority = message.getPriority();
+    if (priority === null)
+      throw new PanicError(`Expected a non-empty priority value`);
     const { keyQueuePriority, keyPendingMessagesWithPriority } =
       redisKeys.getKeys(queue.name, queue.ns);
     multi.hset(
@@ -152,7 +154,9 @@ export class EnqueueHandler extends Handler {
     cb: ICallback<void>,
   ): void {
     const messageId = message.getId();
-    const priority = message.getSetPriority(undefined);
+    const priority = message.getPriority();
+    if (priority === null)
+      throw new PanicError(`Expected a non-empty priority value`);
     const { keyQueuePriority, keyPendingMessagesWithPriority } =
       redisKeys.getKeys(queue.name, queue.ns);
     redisClient.zpushhset(
@@ -168,7 +172,6 @@ export class EnqueueHandler extends Handler {
   enqueue(
     redisClientOrMulti: RedisClient | TRedisClientMulti,
     message: Message,
-    withPriority: boolean,
     cb?: ICallback<void>,
   ): void {
     const queue = message.getQueue();
@@ -178,7 +181,7 @@ export class EnqueueHandler extends Handler {
     message.setPublishedAt(Date.now());
     if (redisClientOrMulti instanceof RedisClient) {
       if (!cb) throw new PanicError('A callback function is required.');
-      if (withPriority) {
+      if (message.isPriorityQueuingEnabled()) {
         this.enqueueMessageWithPriority(redisClientOrMulti, queue, message, cb);
       } else {
         redisClientOrMulti.rpush(keyQueue, JSON.stringify(message), (err) =>
@@ -186,7 +189,7 @@ export class EnqueueHandler extends Handler {
         );
       }
     } else {
-      if (withPriority)
+      if (message.isPriorityQueuingEnabled())
         this.enqueueMessageWithPriorityMulti(
           redisClientOrMulti,
           queue,

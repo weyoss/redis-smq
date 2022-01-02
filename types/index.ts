@@ -138,7 +138,6 @@ export interface IConfig {
     options?: Partial<Logger.LoggerOptions>;
   };
   monitor?: IMonitorConfig;
-  priorityQueue?: boolean;
   message?: Partial<TMessageDefaultOptions>;
 }
 

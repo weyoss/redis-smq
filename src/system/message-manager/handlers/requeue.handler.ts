@@ -38,10 +38,11 @@ export class RequeueHandler extends Handler {
           multi.lrem(from, 1, JSON.stringify(msg));
           const message = Message.createFromMessage(msg, true); // resetting all system parameters
           message.setQueue(queue); // do not lose message queue
-          if (withPriority && typeof priority !== 'undefined') {
-            message.setPriority(priority);
-          }
-          this.enqueueHandler.enqueue(multi, message, withPriority);
+          if (withPriority) {
+            const prty = priority ?? Message.MessagePriority.NORMAL;
+            message.setPriority(prty);
+          } else message.disablePriorityQueuing();
+          this.enqueueHandler.enqueue(multi, message);
           this.redisClient.execMulti(multi, (err) => cb(err));
         }
       },

@@ -7,9 +7,13 @@ import { events } from '../common/events';
 export abstract class ConsumerFrontend extends EventEmitter {
   private consumer: Consumer;
 
-  constructor(queueName: string, config: IConfig = {}) {
+  constructor(
+    queueName: string,
+    config: IConfig = {},
+    enablePriorityQueue = false,
+  ) {
     super();
-    this.consumer = new Consumer(queueName, config);
+    this.consumer = new Consumer(queueName, config, enablePriorityQueue);
     this.registerEvents();
   }
 
