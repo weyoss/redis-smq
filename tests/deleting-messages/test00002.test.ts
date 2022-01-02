@@ -9,10 +9,9 @@ import { promisifyAll } from 'bluebird';
 test('Combined test: Delete a pending message with priority. Check pending messages. Check queue metrics.', async () => {
   const msg = new Message();
   msg.setBody({ hello: 'world' });
+  msg.setPriority(Message.MessagePriority.HIGHEST);
 
-  const producer = getProducer('test_queue', {
-    priorityQueue: true,
-  });
+  const producer = getProducer('test_queue');
   await producer.produceMessageAsync(msg);
   const { ns, name } = producer.getQueue();
 

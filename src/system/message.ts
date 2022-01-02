@@ -66,6 +66,8 @@ export class Message {
 
   protected expired = false;
 
+  protected priorityQueuingEnabled = false;
+
   ///
 
   constructor() {
@@ -86,6 +88,7 @@ export class Message {
     this.scheduledCronFired = false;
     this.scheduledRepeatCount = 0;
     this.queue = null;
+    this.priorityQueuingEnabled = this.priority !== null;
     return this;
   }
 
@@ -215,6 +218,7 @@ export class Message {
       throw new ArgumentError('Invalid message priority.');
     }
     this.priority = priority;
+    this.enablePriorityQueuing();
     return this;
   }
 
@@ -226,6 +230,21 @@ export class Message {
   setPublishedAt(timestamp: number): Message {
     this.publishedAt = timestamp;
     return this;
+  }
+
+  enablePriorityQueuing(): Message {
+    this.priorityQueuingEnabled = true;
+    return this;
+  }
+
+  disablePriorityQueuing(): Message {
+    this.priorityQueuingEnabled = false;
+    this.priority = null;
+    return this;
+  }
+
+  isPriorityQueuingEnabled(): boolean {
+    return this.priorityQueuingEnabled;
   }
 
   getQueue(): TQueueParams | null {
@@ -326,18 +345,6 @@ export class Message {
       return this.getAttempts() + 1 >= threshold;
     }
     return false;
-  }
-
-  getSetPriority(priority: number | undefined): number {
-    const defaultPriority = priority ?? Message.MessagePriority.NORMAL;
-    if (!Object.values(Message.MessagePriority).includes(defaultPriority)) {
-      throw new ArgumentError(`Invalid message priority`);
-    }
-    const msgPriority = this.getPriority() ?? defaultPriority;
-    if (msgPriority !== this.getPriority()) {
-      this.setPriority(msgPriority);
-    }
-    return msgPriority;
   }
 
   isSchedulable(): boolean {

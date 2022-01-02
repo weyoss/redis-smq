@@ -99,7 +99,6 @@ export class ScheduleHandler extends Handler {
 
   enqueueScheduledMessages(
     redisClient: RedisClient,
-    withPriority: boolean,
     cb: ICallback<void>,
   ): void {
     const { keyQueueScheduled, keyScheduledMessages } =
@@ -112,7 +111,7 @@ export class ScheduleHandler extends Handler {
             const message = Message.createFromMessage(msg);
             const messageId = message.getId();
             const multi = redisClient.multi();
-            this.enqueueHandler.enqueue(multi, message, withPriority);
+            this.enqueueHandler.enqueue(multi, message);
             const nextScheduleTimestamp =
               ScheduleHandler.getNextScheduledTimestamp(message);
             if (nextScheduleTimestamp) {

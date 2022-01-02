@@ -9,21 +9,15 @@ import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.e
 export class ScheduleWorker {
   protected messageManager: MessageManager;
   protected ticker: Ticker;
-  protected withPriority: boolean;
 
-  constructor(
-    messageManager: MessageManager,
-    withPriority: boolean,
-    tickPeriod = 1000,
-  ) {
+  constructor(messageManager: MessageManager, tickPeriod = 1000) {
     this.messageManager = messageManager;
-    this.withPriority = withPriority;
     this.ticker = new Ticker(this.onTick, tickPeriod);
     this.ticker.nextTick();
   }
 
   onTick = (): void => {
-    this.messageManager.enqueueScheduledMessages(this.withPriority, (err) => {
+    this.messageManager.enqueueScheduledMessages((err) => {
       if (err) throw err;
       this.ticker.nextTick();
     });
@@ -47,7 +41,7 @@ process.on('message', (c: string) => {
         },
       });
       const messageManager = new MessageManager(client, logger);
-      new ScheduleWorker(messageManager, config.priorityQueue === true);
+      new ScheduleWorker(messageManager);
     }
   });
 });

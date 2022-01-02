@@ -89,28 +89,16 @@ export class MessageManager {
 
   ///
 
-  enqueueMessage(
-    message: Message,
-    withPriority: boolean,
-    cb: ICallback<void>,
-  ): void {
-    this.logger.debug(
-      `Enqueuing message (ID ${message.getId()}), withPriority = ${withPriority})...`,
-    );
-    this.enqueueHandler.enqueue(this.redisClient, message, withPriority, cb);
+  enqueueMessage(message: Message, cb: ICallback<void>): void {
+    this.logger.debug(`Enqueuing message (ID ${message.getId()})...`);
+    this.enqueueHandler.enqueue(this.redisClient, message, cb);
   }
 
   ///
 
-  enqueueScheduledMessages(withPriority: boolean, cb: ICallback<void>): void {
-    this.logger.debug(
-      `Enqueuing scheduled messages (withPriority = ${withPriority})...`,
-    );
-    this.scheduleHandler.enqueueScheduledMessages(
-      this.redisClient,
-      withPriority,
-      cb,
-    );
+  enqueueScheduledMessages(cb: ICallback<void>): void {
+    this.logger.debug(`Enqueuing scheduled messages ...`);
+    this.scheduleHandler.enqueueScheduledMessages(this.redisClient, cb);
   }
 
   scheduleMessage(message: Message, cb: ICallback<boolean>): void {
@@ -123,7 +111,6 @@ export class MessageManager {
   requeueUnacknowledgedMessage(
     message: Message,
     keyQueueProcessing: string,
-    withPriority: boolean,
     unacknowledgedCause: EMessageUnacknowledgedCause,
     cb: ICallback<void>,
   ): void {
@@ -133,7 +120,6 @@ export class MessageManager {
     this.processingHandler.requeue(
       message,
       keyQueueProcessing,
-      withPriority,
       unacknowledgedCause,
       cb,
     );

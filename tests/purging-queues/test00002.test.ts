@@ -4,10 +4,7 @@ import { promisifyAll } from 'bluebird';
 import { config } from '../config';
 
 test('Purging priority queue', async () => {
-  const producer = getProducer('test_queue', {
-    ...config,
-    priorityQueue: true,
-  });
+  const producer = getProducer('test_queue');
   const { ns, name } = producer.getQueue();
 
   const queueManager = promisifyAll(await getQueueManagerFrontend());
@@ -16,7 +13,7 @@ test('Purging priority queue', async () => {
   expect(m.pendingWithPriority).toBe(0);
 
   const msg = new Message();
-  msg.setBody({ hello: 'world' });
+  msg.setBody({ hello: 'world' }).setPriority(Message.MessagePriority.NORMAL);
   await producer.produceMessageAsync(msg);
 
   const m2 = await queueManager.getQueueMetricsAsync(name, ns);

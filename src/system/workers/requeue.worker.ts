@@ -11,13 +11,11 @@ export class RequeueWorker {
   protected ticker: Ticker;
   protected redisClient: RedisClient;
   protected redisKeys: ReturnType<typeof redisKeys['getGlobalKeys']>;
-  protected withPriority: boolean;
 
-  constructor(redisClient: RedisClient, withPriority: boolean) {
+  constructor(redisClient: RedisClient) {
     this.ticker = new Ticker(this.onTick, 1000);
     this.redisClient = redisClient;
     this.redisKeys = redisKeys.getGlobalKeys();
-    this.withPriority = withPriority;
     this.ticker.nextTick();
   }
 
@@ -37,8 +35,12 @@ export class RequeueWorker {
           const { keyQueue, keyQueuePriority } = redisKeys.getKeys(name, ns);
           multi.lrem(keyQueueRequeue, 1, i);
           message.incrAttempts();
-          if (this.withPriority) {
-            const priority = message.getSetPriority(undefined);
+          if (message.isPriorityQueuingEnabled()) {
+            const priority = message.getPriority();
+            if (priority === null)
+              throw new PanicError(
+                `Expected a non-empty message priority value`,
+              );
             multi.zadd(keyQueuePriority, priority, JSON.stringify(message));
           } else multi.lpush(keyQueue, JSON.stringify(message));
           cb();
@@ -63,7 +65,7 @@ process.on('message', (c: string) => {
     if (err) throw err;
     else if (!client) throw new EmptyCallbackReplyError();
     else {
-      new RequeueWorker(client, config.priorityQueue === true);
+      new RequeueWorker(client);
     }
   });
 });

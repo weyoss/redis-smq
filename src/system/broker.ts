@@ -15,7 +15,6 @@ export class Broker {
   protected logger: BLogger;
   protected powerManager: PowerManager;
   protected messageManager: MessageManager;
-  protected priorityQueue: boolean;
 
   constructor(
     config: IConfig,
@@ -24,7 +23,6 @@ export class Broker {
   ) {
     this.powerManager = new PowerManager();
     this.messageManager = messageManager;
-    this.priorityQueue = config.priorityQueue === true;
     this.logger = logger.child({ child: Broker.name });
   }
 
@@ -33,7 +31,7 @@ export class Broker {
   }
 
   enqueueMessage(message: Message, cb: ICallback<void>): void {
-    this.messageManager.enqueueMessage(message, this.priorityQueue, cb);
+    this.messageManager.enqueueMessage(message, cb);
   }
 
   dequeueMessage(
@@ -43,7 +41,7 @@ export class Broker {
   ): void {
     const queue = consumer.getQueue();
     const { keyQueueProcessing } = consumer.getRedisKeys();
-    if (this.priorityQueue) {
+    if (consumer.isPriorityQueuingEnabled()) {
       this.messageManager.dequeueMessageWithPriority(
         redisClient,
         queue,
@@ -155,7 +153,6 @@ export class Broker {
         this.messageManager.requeueUnacknowledgedMessage(
           message,
           processingQueue,
-          this.priorityQueue,
           unacknowledgedCause,
           (err) => cb(err),
         );

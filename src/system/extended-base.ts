@@ -12,7 +12,7 @@ export abstract class ExtendedBase<
   protected readonly queue: TQueueParams;
   protected redisKeys: TRedisKeys | null = null;
 
-  constructor(queueName: string, config: IConfig) {
+  constructor(queueName: string, config: IConfig = {}) {
     super(config);
     this.queue = {
       name: redisKeys.validateRedisKey(queueName),

@@ -91,4 +91,7 @@ export class MessageDTO {
   @ValidateNested()
   @Type(() => MessageQueueDTO)
   queue!: MessageQueueDTO;
+
+  @IsBoolean()
+  priorityQueuingEnabled!: boolean;
 }
