@@ -1,5 +1,15 @@
 # CHANGELOG
 
+### 6.0.0-rc.0 (2022-01-03)
+
+* Implement MultiQueueProducer for publishing messages to multiple queues using a single producer instance.
+* Implement rates time series for queues, producers and consumers, allowing to move the chart to the left or the right
+in order to scan the timeline.
+* Refactor MessageManager and QueueManager API
+* Add new WebSocket streams for heartbeats, rates, queues, consumers, and producers.
+* Refactored Web UI.
+* Overall improvements and minor bug fixes.
+
 ## 5.0.11 (2021-12-07)
 
 * Bumped redis-smq-monitor to v5.0.7.

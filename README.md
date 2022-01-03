@@ -74,17 +74,16 @@ High-level overview of how RedisSMQ works:
 
 ## What's new?
 
+**2022.01.03**
+
+- Release v6 is almost ready. This release includes new features such as multi-queue producers, rates time series, 
+complete integration with the Web UI, as well as many improvements and bug fixes. If you are upgrading your 
+installation, take a look at the [migration guide](docs/migrating-from-v5-to-v6.md) before proceeding.
+
 **2021.11.22**
 
 - Starting with RedisSMQ v5, you can now manage your queues and messages from the Web UI. Also, many changes and improvements 
-has been made, allowing for better user experience and system stability. If you are upgrading your installation, take a 
-look at the [migration guide](docs/migrating-from-v4-to-v5.md) before proceeding.
-
-**2021.11.02**
-
-- v4 is out with significant performance improvements and new features including the ability to
-  fetch/delete/requeue messages from different queues using the `MessageManager`/`QueueManager` or with the help of
-  the HTTP API.
+has been made, allowing for better user experience and system stability. 
 
 See [CHANGELOG](CHANGELOG.md) for more details.
 
