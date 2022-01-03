@@ -30,7 +30,7 @@ test('A consumer does re-queue and consume again a failed message when threshold
   const msg = new Message();
   msg.setBody({ hello: 'world' });
 
-  await producer.produceMessageAsync(msg);
+  await producer.produceAsync(msg);
   consumer.run();
 
   await delay(10000);

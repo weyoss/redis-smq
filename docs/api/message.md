@@ -242,13 +242,13 @@ message.getCreatedAt(); // 1530613595087, in millis
 ### Message.prototype.getPublishedAt()
 
 ```javascript
-const { Message, Producer } = require('redis-smq');
+const {Message, Producer} = require('redis-smq');
 
 const message = new Message();
 message.getPublishedAt(); // null
 
 const producer = new Producer('test_queue');
-producer.produceMessage(message, (err) => {
+producer.produce(message, (err) => {
     if (err) console.log(err);
     else {
         message.getPublishedAt(); // 1530613595087, in millis
@@ -259,14 +259,14 @@ producer.produceMessage(message, (err) => {
 ### Message.prototype.getScheduledAt()
 
 ```javascript
-const { Message, Producer } = require('redis-smq');
+const {Message, Producer} = require('redis-smq');
 
 const message = new Message();
 message.setScheduledRepeat(6);
 message.getScheduledAt(); // null
 
 const producer = new Producer('test_queue');
-producer.produceMessage(message, (err) => {
+producer.produce(message, (err) => {
     if (err) console.log(err);
     else {
         message.getPublishedAt(); // null

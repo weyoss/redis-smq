@@ -11,13 +11,13 @@ export const QueueDeadLetteredTimeSeries = (
   const {
     keyRateQueueDeadLettered,
     keyRateQueueDeadLetteredIndex,
-    keyRateQueueDeadLetteredLock,
+    keyLockRateQueueDeadLettered,
   } = redisKeys.getKeys(queue.name, queue.ns);
   return new HashTimeSeries(
     redisClient,
     keyRateQueueDeadLettered,
     keyRateQueueDeadLetteredIndex,
-    keyRateQueueDeadLetteredLock,
+    keyLockRateQueueDeadLettered,
     undefined,
     undefined,
     undefined,

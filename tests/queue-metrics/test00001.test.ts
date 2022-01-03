@@ -12,10 +12,10 @@ import { promisifyAll } from 'bluebird';
 describe('Queue metrics: check that queue metrics are valid', () => {
   test('Case 1', async () => {
     const { producer } = await produceMessage();
-    const { ns, name } = producer.getQueue();
+    const queue = producer.getQueue();
 
     const queueManager = promisifyAll(await getQueueManagerFrontend());
-    const m = await queueManager.getQueueMetricsAsync(name, ns);
+    const m = await queueManager.getQueueMetricsAsync(queue);
     expect(m.pending).toBe(1);
     expect(m.pendingWithPriority).toBe(0);
     expect(m.acknowledged).toBe(0);
@@ -24,10 +24,10 @@ describe('Queue metrics: check that queue metrics are valid', () => {
 
   test('Case 2', async () => {
     const { producer } = await produceAndDeadLetterMessage();
-    const { ns, name } = producer.getQueue();
+    const queue = producer.getQueue();
 
     const queueManager = promisifyAll(await getQueueManagerFrontend());
-    const m = await queueManager.getQueueMetricsAsync(name, ns);
+    const m = await queueManager.getQueueMetricsAsync(queue);
     expect(m.pending).toBe(0);
     expect(m.pendingWithPriority).toBe(0);
     expect(m.acknowledged).toBe(0);
@@ -36,10 +36,10 @@ describe('Queue metrics: check that queue metrics are valid', () => {
 
   test('Case 3', async () => {
     const { producer } = await produceAndAcknowledgeMessage();
-    const { ns, name } = producer.getQueue();
+    const queue = producer.getQueue();
 
     const queueManager = promisifyAll(await getQueueManagerFrontend());
-    const m = await queueManager.getQueueMetricsAsync(name, ns);
+    const m = await queueManager.getQueueMetricsAsync(queue);
     expect(m.pending).toBe(0);
     expect(m.pendingWithPriority).toBe(0);
     expect(m.acknowledged).toBe(1);
@@ -48,14 +48,14 @@ describe('Queue metrics: check that queue metrics are valid', () => {
 
   test('Case 4', async () => {
     const producer = getProducer();
-    const { ns, name } = producer.getQueue();
+    const queue = producer.getQueue();
 
     const msg = new Message();
     msg.setScheduledDelay(10000);
-    await producer.produceMessageAsync(msg);
+    await producer.produceAsync(msg);
 
     const queueManager = promisifyAll(await getQueueManagerFrontend());
-    const m = await queueManager.getQueueMetricsAsync(name, ns);
+    const m = await queueManager.getQueueMetricsAsync(queue);
 
     expect(m.pending).toBe(0);
     expect(m.pendingWithPriority).toBe(0);
@@ -65,10 +65,10 @@ describe('Queue metrics: check that queue metrics are valid', () => {
 
   test('Case 5', async () => {
     const { producer } = await produceMessageWithPriority();
-    const { ns, name } = producer.getQueue();
+    const queue = producer.getQueue();
 
     const queueManager = promisifyAll(await getQueueManagerFrontend());
-    const m = await queueManager.getQueueMetricsAsync(name, ns);
+    const m = await queueManager.getQueueMetricsAsync(queue);
     expect(m.pending).toBe(0);
     expect(m.pendingWithPriority).toBe(1);
     expect(m.acknowledged).toBe(0);

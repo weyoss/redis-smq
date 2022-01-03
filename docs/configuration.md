@@ -33,7 +33,6 @@ module.exports = {
         host: '127.0.0.1',
         port: 3000,
     },
-    priorityQueue: false,
     message: {
         consumeTimeout: 60000,
         retryThreshold: 5,
@@ -59,8 +58,6 @@ module.exports = {
 - `log` *(Object): Optional.* See [Logs Configuration](logs.md#configuration) for more details.
 
 - `monitor` *(Object): Optional.* See [Web UI Configuration](web-ui.md#configuration) for more details.
-
-- `priorityQueue` *(Boolean): Optional.*  See [Priority Queues Configuration](priority-queues.md#configuration) for more details.
 
 - `message` *(object): Optional.* Default message parameters. These parameters can be overwritten for a given message 
 instance using the [Message API](api/message.md). 

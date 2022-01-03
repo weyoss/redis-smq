@@ -9,18 +9,18 @@ test('Schedule a message and check scheduled messages', async () => {
   const msg1 = new Message();
   msg1.setScheduledDelay(30000);
   msg1.setScheduledCron('0 * * * * *').setBody({ hello: 'world1' });
-  await producer.produceMessageAsync(msg1);
+  await producer.produceAsync(msg1);
 
   // Message 2
   const msg2 = new Message();
   msg2.setScheduledDelay(60000).setBody({ hello: 'world2' });
-  const r1 = await producer.produceMessageAsync(msg2);
+  const r1 = await producer.produceAsync(msg2);
   expect(r1).toBe(true);
 
   // Message 3
   const msg3 = new Message();
   msg3.setScheduledDelay(90000).setBody({ hello: 'world3' });
-  const r3 = await producer.produceMessageAsync(msg3);
+  const r3 = await producer.produceAsync(msg3);
   expect(r3).toBe(true);
 
   const messageManager = promisifyAll(await getMessageManagerFrontend());

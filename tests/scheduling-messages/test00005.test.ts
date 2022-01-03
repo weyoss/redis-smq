@@ -24,7 +24,7 @@ test('Schedule a message with a combination of CRON expression, repeat, period, 
   msg.setBody({ hello: 'world' });
 
   const producer = getProducer();
-  await producer.produceMessageAsync(msg);
+  await producer.produceAsync(msg);
   const producedAt = Date.now();
 
   for (let i = 0; i < 8; i += 1) {

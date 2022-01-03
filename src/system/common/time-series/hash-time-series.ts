@@ -17,12 +17,19 @@ export class HashTimeSeries extends TimeSeries {
     key: string,
     indexKey: string,
     lockKey: string,
-    expireAfter = 0,
-    retentionTime = 24 * 60 * 60,
-    windowSize = 60,
+    expireAfterInSeconds = 0,
+    retentionTimeInSeconds = 24 * 60 * 60,
+    windowSizeInSeconds = 60,
     isMaster = false,
   ) {
-    super(redisClient, key, expireAfter, retentionTime, windowSize, isMaster);
+    super(
+      redisClient,
+      key,
+      expireAfterInSeconds,
+      retentionTimeInSeconds,
+      windowSizeInSeconds,
+      isMaster,
+    );
     this.lockManager = new LockManager(redisClient, lockKey, 60000);
     this.indexKey = indexKey;
   }

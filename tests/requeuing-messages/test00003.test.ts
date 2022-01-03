@@ -10,11 +10,11 @@ import { promisifyAll } from 'bluebird';
 
 test('Combined test: Requeue a message from acknowledged queue with priority. Check both queue metadata and message metadata.  Check both pending and acknowledged messages. Check queue metrics.', async () => {
   const producer = getProducer();
-  const { ns, name } = producer.getQueue();
+  const queue = producer.getQueue();
 
   const msg = new Message();
   msg.setBody({ hello: 'world' });
-  await producer.produceMessageAsync(msg);
+  await producer.produceAsync(msg);
 
   const consumer = getConsumer({
     consumeMock: (m, cb) => {
@@ -28,22 +28,19 @@ test('Combined test: Requeue a message from acknowledged queue with priority. Ch
 
   const messageManager = promisifyAll(await getMessageManagerFrontend());
   await messageManager.requeueMessageFromAcknowledgedQueueAsync(
-    name,
-    ns,
+    queue,
     0,
     msg.getId(),
-    true,
-    undefined,
+    Message.MessagePriority.HIGHEST,
   );
 
-  const res5 = await messageManager.getPendingMessagesAsync(name, ns, 0, 100);
+  const res5 = await messageManager.getPendingMessagesAsync(queue, 0, 100);
 
   expect(res5.total).toBe(0);
   expect(res5.items.length).toBe(0);
 
   const res6 = await messageManager.getPendingMessagesWithPriorityAsync(
-    name,
-    ns,
+    queue,
     0,
     100,
   );
@@ -53,31 +50,24 @@ test('Combined test: Requeue a message from acknowledged queue with priority. Ch
 
   // assign default consumer options
   expect(res6.items[0].getId()).toEqual(msg.getId());
-  expect(res6.items[0].getPriority()).toEqual(Message.MessagePriority.NORMAL);
+  expect(res6.items[0].getPriority()).toEqual(Message.MessagePriority.HIGHEST);
 
-  const res7 = await messageManager.getAcknowledgedMessagesAsync(
-    name,
-    ns,
-    0,
-    100,
-  );
+  const res7 = await messageManager.getAcknowledgedMessagesAsync(queue, 0, 100);
   expect(res7.total).toBe(0);
   expect(res7.items.length).toBe(0);
 
   const queueManager = promisifyAll(await getQueueManagerFrontend());
-  const queueMetrics = await queueManager.getQueueMetricsAsync(name, ns);
+  const queueMetrics = await queueManager.getQueueMetricsAsync(queue);
   expect(queueMetrics.acknowledged).toBe(0);
   expect(queueMetrics.pending).toBe(0);
   expect(queueMetrics.pendingWithPriority).toBe(1);
 
   await expect(async () => {
     await messageManager.requeueMessageFromAcknowledgedQueueAsync(
-      name,
-      ns,
+      queue,
       0,
       msg.getId(),
-      true,
-      undefined,
+      Message.MessagePriority.HIGHEST,
     );
   }).rejects.toThrow(
     'Either message parameters are invalid or the message has been already deleted',

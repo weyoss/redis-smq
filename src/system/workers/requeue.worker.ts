@@ -32,17 +32,20 @@ export class RequeueWorker {
           if (!queue)
             throw new PanicError('Message queue parameters are required');
           const { ns, name } = queue;
-          const { keyQueue, keyQueuePriority } = redisKeys.getKeys(name, ns);
+          const { keyQueuePending, keyQueuePriority } = redisKeys.getKeys(
+            name,
+            ns,
+          );
           multi.lrem(keyQueueRequeue, 1, i);
           message.incrAttempts();
-          if (message.isPriorityQueuingEnabled()) {
+          if (message.isWithPriority()) {
             const priority = message.getPriority();
             if (priority === null)
               throw new PanicError(
                 `Expected a non-empty message priority value`,
               );
             multi.zadd(keyQueuePriority, priority, JSON.stringify(message));
-          } else multi.lpush(keyQueue, JSON.stringify(message));
+          } else multi.lpush(keyQueuePending, JSON.stringify(message));
           cb();
         });
         async.parallel(tasks, () => {

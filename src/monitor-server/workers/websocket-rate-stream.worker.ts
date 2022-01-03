@@ -377,8 +377,8 @@ export class WebsocketRateStreamWorker {
   };
 
   protected getQueues = (cb: ICallback<void>): void => {
-    const { keyIndexQueue } = redisKeys.getGlobalKeys();
-    this.redisClient.smembers(keyIndexQueue, (err, reply) => {
+    const { keyQueues } = redisKeys.getGlobalKeys();
+    this.redisClient.smembers(keyQueues, (err, reply) => {
       if (err) cb(err);
       else {
         async.each(

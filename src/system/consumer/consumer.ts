@@ -29,7 +29,7 @@ export class Consumer extends ExtendedBase<
   ConsumerMessageRate,
   TConsumerRedisKeys
 > {
-  private priorityQueueEnabled: boolean;
+  private readonly usingPriorityQueuing: boolean;
   private consumerRedisClient: RedisClient | null = null;
   private consumerWorkers: ConsumerWorkers | null = null;
   private consumerFrontend: ConsumerFrontend | null = null;
@@ -37,10 +37,10 @@ export class Consumer extends ExtendedBase<
   constructor(
     queueName: string,
     config: IConfig = {},
-    enablePriorityQueue = false,
+    usePriorityQueuing = false,
   ) {
     super(queueName, config);
-    this.priorityQueueEnabled = enablePriorityQueue;
+    this.usingPriorityQueuing = usePriorityQueuing;
   }
 
   protected getConsumerRedisClient(cb: TUnaryFunction<RedisClient>): void {
@@ -316,8 +316,8 @@ export class Consumer extends ExtendedBase<
     return this.redisKeys;
   }
 
-  isPriorityQueuingEnabled(): boolean {
-    return this.priorityQueueEnabled;
+  isUsingPriorityQueuing(): boolean {
+    return this.usingPriorityQueuing;
   }
 
   static isAlive(

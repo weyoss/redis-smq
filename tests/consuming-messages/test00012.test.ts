@@ -43,7 +43,7 @@ test('A consumer delays a failed message before re-queuing it again, given messa
   msg.setBody({ hello: 'world' });
 
   const producer = getProducer('test_queue');
-  await producer.produceMessageAsync(msg);
+  await producer.produceAsync(msg);
   consumer.run();
 
   await untilMessageAcknowledged(consumer);

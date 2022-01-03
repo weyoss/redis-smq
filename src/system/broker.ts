@@ -41,7 +41,7 @@ export class Broker {
   ): void {
     const queue = consumer.getQueue();
     const { keyQueueProcessing } = consumer.getRedisKeys();
-    if (consumer.isPriorityQueuingEnabled()) {
+    if (consumer.isUsingPriorityQueuing()) {
       this.messageManager.dequeueMessageWithPriority(
         redisClient,
         queue,

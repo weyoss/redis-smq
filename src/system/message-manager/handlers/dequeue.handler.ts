@@ -18,10 +18,10 @@ export class DequeueHandler extends Handler {
     keyQueueProcessing: string,
   ) {
     super(redisClient);
-    const { keyQueuePriority, keyQueue, keyPendingMessagesWithPriority } =
+    const { keyQueuePriority, keyQueuePending, keyQueuePendingWithPriority } =
       redisKeys.getKeys(queue.name, queue.ns);
-    this.keyQueue = keyQueue;
-    this.keyPendingMessagesWithPriority = keyPendingMessagesWithPriority;
+    this.keyQueue = keyQueuePending;
+    this.keyPendingMessagesWithPriority = keyQueuePendingWithPriority;
     this.keyQueuePriority = keyQueuePriority;
     this.keyQueueProcessing = keyQueueProcessing;
 

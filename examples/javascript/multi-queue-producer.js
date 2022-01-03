@@ -1,5 +1,5 @@
-import { config } from './config';
-import { MultiQueueProducer, Message } from '../..'; // from 'redis-smq'
+const config = require('./config');
+const { MultiQueueProducer, Message } = require('../..'); // from 'redis-smq'
 
 const producer = new MultiQueueProducer(config);
 

@@ -21,7 +21,7 @@ test('Produce and consume a delayed message', async () => {
   msg.setScheduledDelay(10000).setBody({ hello: 'world' }); // seconds
 
   const producer = getProducer();
-  await producer.produceMessageAsync(msg);
+  await producer.produceAsync(msg);
 
   await untilMessageAcknowledged(consumer);
   await untilConsumerIdle(consumer);

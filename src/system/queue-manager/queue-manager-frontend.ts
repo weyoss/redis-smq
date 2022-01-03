@@ -24,51 +24,53 @@ export class QueueManagerFrontend {
   ///
 
   purgeDeadLetterQueue(
-    queueName: string,
-    namespace: string | undefined,
+    queue: string | TQueueParams,
     cb: ICallback<void>,
   ): void {
-    const queue: TQueueParams = {
-      name: queueName,
-      ns: namespace ?? redisKeys.getNamespace(),
-    };
-    this.queueManager.purgeDeadLetterQueue(queue, cb);
+    const queueParams: TQueueParams =
+      typeof queue === 'string'
+        ? {
+            name: queue,
+            ns: redisKeys.getNamespace(),
+          }
+        : queue;
+    this.queueManager.purgeDeadLetterQueue(queueParams, cb);
   }
 
   purgeAcknowledgedMessagesQueue(
-    queueName: string,
-    namespace: string | undefined,
+    queue: string | TQueueParams,
     cb: ICallback<void>,
   ): void {
-    const queue: TQueueParams = {
-      name: queueName,
-      ns: namespace ?? redisKeys.getNamespace(),
-    };
-    this.queueManager.purgeAcknowledgedMessagesQueue(queue, cb);
+    const queueParams: TQueueParams =
+      typeof queue === 'string'
+        ? {
+            name: queue,
+            ns: redisKeys.getNamespace(),
+          }
+        : queue;
+    this.queueManager.purgeAcknowledgedMessagesQueue(queueParams, cb);
   }
 
-  purgeQueue(
-    queueName: string,
-    namespace: string | undefined,
-    cb: ICallback<void>,
-  ): void {
-    const queue: TQueueParams = {
-      name: queueName,
-      ns: namespace ?? redisKeys.getNamespace(),
-    };
-    this.queueManager.purgeQueue(queue, cb);
+  purgeQueue(queue: string | TQueueParams, cb: ICallback<void>): void {
+    const queueParams: TQueueParams =
+      typeof queue === 'string'
+        ? {
+            name: queue,
+            ns: redisKeys.getNamespace(),
+          }
+        : queue;
+    this.queueManager.purgeQueue(queueParams, cb);
   }
 
-  purgePriorityQueue(
-    queueName: string,
-    namespace: string | undefined,
-    cb: ICallback<void>,
-  ): void {
-    const queue: TQueueParams = {
-      name: queueName,
-      ns: namespace ?? redisKeys.getNamespace(),
-    };
-    this.queueManager.purgePriorityQueue(queue, cb);
+  purgePriorityQueue(queue: string | TQueueParams, cb: ICallback<void>): void {
+    const queueParams: TQueueParams =
+      typeof queue === 'string'
+        ? {
+            name: queue,
+            ns: redisKeys.getNamespace(),
+          }
+        : queue;
+    this.queueManager.purgePriorityQueue(queueParams, cb);
   }
 
   purgeScheduledMessagesQueue(cb: ICallback<void>): void {
@@ -78,15 +80,17 @@ export class QueueManagerFrontend {
   ///
 
   getQueueMetrics(
-    queueName: string,
-    namespace: string | undefined,
+    queue: string | TQueueParams,
     cb: ICallback<IQueueMetrics>,
   ): void {
-    const queue: TQueueParams = {
-      name: queueName,
-      ns: namespace ?? redisKeys.getNamespace(),
-    };
-    this.queueManager.getQueueMetrics(queue, cb);
+    const queueParams: TQueueParams =
+      typeof queue === 'string'
+        ? {
+            name: queue,
+            ns: redisKeys.getNamespace(),
+          }
+        : queue;
+    this.queueManager.getQueueMetrics(queueParams, cb);
   }
 
   getMessageQueues(cb: ICallback<TQueueParams[]>): void {

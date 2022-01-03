@@ -13,7 +13,7 @@ test('Fetching and deleting scheduled messages using the HTTP API: Case 2', asyn
     msg
       .setScheduledDelay(60000 * (i + 1))
       .setBody({ hello: `world ${msg.getId()}` });
-    await producer.produceMessageAsync(msg);
+    await producer.produceAsync(msg);
     messages.push(msg);
   }
 

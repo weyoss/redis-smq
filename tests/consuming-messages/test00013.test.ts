@@ -63,7 +63,7 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
   msg.setBody({ hello: 'world' });
 
   const queueAProducer = getProducer('queue_a');
-  await queueAProducer.produceMessageAsync(msg);
+  await queueAProducer.produceAsync(msg);
 
   /**
    * Produce a message to QUEUE B
@@ -72,7 +72,7 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
   anotherMsg.setBody({ id: 'b' });
 
   const queueBProducer = getProducer('queue_b');
-  await queueBProducer.produceMessageAsync(anotherMsg);
+  await queueBProducer.produceAsync(anotherMsg);
 
   /**
    * Wait 10s

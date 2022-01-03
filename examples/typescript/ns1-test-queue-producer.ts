@@ -4,9 +4,9 @@ import { Producer, Message } from '../..'; // from 'redis-smq'
 const producer = new Producer('test_queue', config);
 
 const msg = new Message();
-msg.setBody({ hello: 123 });
+msg.setBody({ ts: `Current time is ${Date.now()}` });
 
-producer.produceMessage(msg, (err) => {
+producer.produce(msg, (err) => {
   if (err) throw err;
   else {
     console.log(`Successfully produced. Going down...`);
