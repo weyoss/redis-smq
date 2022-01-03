@@ -12,7 +12,7 @@ test('Produce and consume 100 messages', async () => {
   for (let i = 0; i < total; i += 1) {
     const msg = new Message();
     msg.setBody({ hello: 'world' });
-    await producer.produceMessageAsync(msg);
+    await producer.produceAsync(msg);
     publishedMsg.push(msg);
   }
 

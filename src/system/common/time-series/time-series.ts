@@ -19,16 +19,16 @@ export abstract class TimeSeries extends EventEmitter {
   constructor(
     redisClient: RedisClient,
     key: string,
-    expireAfter = 0,
-    retentionTime = 24 * 60 * 60,
-    windowSize = 60,
+    expireAfterInSeconds = 0,
+    retentionTimeInSeconds = 24 * 60 * 60,
+    windowSizeInSeconds = 60,
     isMaster = false,
   ) {
     super();
-    this.retentionTime = retentionTime;
+    this.retentionTime = retentionTimeInSeconds;
     this.redisClient = redisClient;
-    this.expireAfter = expireAfter;
-    this.windowSize = windowSize;
+    this.expireAfter = expireAfterInSeconds;
+    this.windowSize = windowSizeInSeconds;
     this.key = key;
     if (isMaster) {
       this.ticker = new Ticker(() => this.onTick(), 10000);

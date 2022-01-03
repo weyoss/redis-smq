@@ -48,7 +48,7 @@ export class Producer extends ExtendedBase<
     cb();
   }
 
-  produceMessage(msg: unknown, cb: ICallback<boolean>): void {
+  produce(msg: unknown, cb: ICallback<boolean>): void {
     const message = !(msg instanceof Message)
       ? new Message().setBody(msg)
       : msg;

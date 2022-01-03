@@ -22,7 +22,7 @@ test('Schedule a message with a combination of CRON expression, repeat and perio
   msg.setScheduledPeriod(5000); // 5 secs between each repeat
 
   const producer = getProducer();
-  await producer.produceMessageAsync(msg);
+  await producer.produceAsync(msg);
 
   for (let i = 0; i < 7; i += 1) {
     await untilMessageAcknowledged(consumer);

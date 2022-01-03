@@ -1,12 +1,10 @@
 import {
   getConsumer,
   getProducer,
-  untilConsumerIdle,
   untilMessageAcknowledged,
   validateTime,
 } from '../common';
 import { Message } from '../../src/message';
-import { events } from '../../src/system/common/events';
 
 test('Produce and consume a delayed message: Case 2', async () => {
   let callCount = 0;
@@ -29,7 +27,7 @@ test('Produce and consume a delayed message: Case 2', async () => {
     .setBody({ hello: 'world' });
 
   const producer = getProducer();
-  await producer.produceMessageAsync(msg);
+  await producer.produceAsync(msg);
   const producedAt = Date.now();
 
   await untilMessageAcknowledged(consumer);

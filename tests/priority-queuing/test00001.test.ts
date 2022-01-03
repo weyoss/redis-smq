@@ -36,31 +36,31 @@ describe('Priority queue: check that messages are consumed with respect to their
     const msg1 = new Message();
     msg1.setBody({ testing: 'message with low priority' });
     msg1.setPriority(Message.MessagePriority.LOW);
-    await producer.produceMessageAsync(msg1);
+    await producer.produceAsync(msg1);
 
     // message 2
     const msg2 = new Message();
     msg2.setBody({ testing: 'a message with very low priority' });
     msg2.setPriority(Message.MessagePriority.VERY_LOW);
-    await producer.produceMessageAsync(msg2);
+    await producer.produceAsync(msg2);
 
     // message 3
     const msg3 = new Message();
     msg3.setBody({ testing: 'a message with above normal priority' });
     msg3.setPriority(Message.MessagePriority.ABOVE_NORMAL);
-    await producer.produceMessageAsync(msg3);
+    await producer.produceAsync(msg3);
 
     // message 4
     const msg4 = new Message();
     msg4.setBody({ testing: 'a message with normal priority' });
     msg4.setPriority(Message.MessagePriority.NORMAL);
-    await producer.produceMessageAsync(msg4);
+    await producer.produceAsync(msg4);
 
     // message 5
     const msg5 = new Message();
     msg5.setBody({ testing: 'a message with high priority' });
     msg5.setPriority(Message.MessagePriority.HIGH);
-    await producer.produceMessageAsync(msg5);
+    await producer.produceAsync(msg5);
 
     await consumer.runAsync();
     await untilConsumerIdle(consumer);

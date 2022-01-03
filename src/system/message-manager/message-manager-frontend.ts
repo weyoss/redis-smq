@@ -30,18 +30,20 @@ export class MessageManagerFrontend {
   }
 
   deleteDeadLetterMessage(
-    queueName: string,
-    namespace: string | undefined,
+    queue: string | TQueueParams,
     sequenceId: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const queue: TQueueParams = {
-      name: queueName,
-      ns: namespace ?? redisKeys.getNamespace(),
-    };
+    const queueParams: TQueueParams =
+      typeof queue === 'string'
+        ? {
+            name: queue,
+            ns: redisKeys.getNamespace(),
+          }
+        : queue;
     this.messageManager.deleteDeadLetterMessage(
-      queue,
+      queueParams,
       sequenceId,
       messageId,
       cb,
@@ -49,18 +51,20 @@ export class MessageManagerFrontend {
   }
 
   deleteAcknowledgedMessage(
-    queueName: string,
-    namespace: string | undefined,
+    queue: string | TQueueParams,
     sequenceId: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const queue: TQueueParams = {
-      name: queueName,
-      ns: namespace ?? redisKeys.getNamespace(),
-    };
+    const queueParams: TQueueParams =
+      typeof queue === 'string'
+        ? {
+            name: queue,
+            ns: redisKeys.getNamespace(),
+          }
+        : queue;
     this.messageManager.deleteAcknowledgedMessage(
-      queue,
+      queueParams,
       sequenceId,
       messageId,
       cb,
@@ -68,75 +72,88 @@ export class MessageManagerFrontend {
   }
 
   deletePendingMessage(
-    queueName: string,
-    namespace: string | undefined,
+    queue: string | TQueueParams,
     sequenceId: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const queue: TQueueParams = {
-      name: queueName,
-      ns: namespace ?? redisKeys.getNamespace(),
-    };
-    this.messageManager.deletePendingMessage(queue, sequenceId, messageId, cb);
+    const queueParams: TQueueParams =
+      typeof queue === 'string'
+        ? {
+            name: queue,
+            ns: redisKeys.getNamespace(),
+          }
+        : queue;
+    this.messageManager.deletePendingMessage(
+      queueParams,
+      sequenceId,
+      messageId,
+      cb,
+    );
   }
 
   deletePendingMessageWithPriority(
-    queueName: string,
-    namespace: string | undefined,
+    queue: string | TQueueParams,
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const queue: TQueueParams = {
-      name: queueName,
-      ns: namespace ?? redisKeys.getNamespace(),
-    };
-    this.messageManager.deletePendingMessageWithPriority(queue, messageId, cb);
+    const queueParams: TQueueParams =
+      typeof queue === 'string'
+        ? {
+            name: queue,
+            ns: redisKeys.getNamespace(),
+          }
+        : queue;
+    this.messageManager.deletePendingMessageWithPriority(
+      queueParams,
+      messageId,
+      cb,
+    );
   }
 
   ///
 
   requeueMessageFromDLQueue(
-    queueName: string,
-    namespace: string | undefined,
+    queue: string | TQueueParams,
     sequenceId: number,
     messageId: string,
-    withPriority: boolean,
     priority: number | undefined,
     cb: ICallback<void>,
   ): void {
-    const queue: TQueueParams = {
-      name: queueName,
-      ns: namespace ?? redisKeys.getNamespace(),
-    };
+    const queueParams: TQueueParams =
+      typeof queue === 'string'
+        ? {
+            name: queue,
+            ns: redisKeys.getNamespace(),
+          }
+        : queue;
     this.messageManager.requeueMessageFromDLQueue(
-      queue,
+      queueParams,
       sequenceId,
       messageId,
-      withPriority,
       priority,
       cb,
     );
   }
 
   requeueMessageFromAcknowledgedQueue(
-    queueName: string,
-    namespace: string | undefined,
+    queue: string | TQueueParams,
     sequenceId: number,
     messageId: string,
-    withPriority: boolean,
     priority: number | undefined,
     cb: ICallback<void>,
   ): void {
-    const queue: TQueueParams = {
-      name: queueName,
-      ns: namespace ?? redisKeys.getNamespace(),
-    };
+    const queueParams: TQueueParams =
+      typeof queue === 'string'
+        ? {
+            name: queue,
+            ns: redisKeys.getNamespace(),
+          }
+        : queue;
     this.messageManager.requeueMessageFromAcknowledgedQueue(
-      queue,
+      queueParams,
       sequenceId,
       messageId,
-      withPriority,
       priority,
       cb,
     );
@@ -145,59 +162,72 @@ export class MessageManagerFrontend {
   ///
 
   getAcknowledgedMessages(
-    queueName: string,
-    namespace: string | undefined,
+    queue: string | TQueueParams,
     skip: number,
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    const queue: TQueueParams = {
-      name: queueName,
-      ns: namespace ?? redisKeys.getNamespace(),
-    };
-    this.messageManager.getAcknowledgedMessages(queue, skip, take, cb);
+    const queueParams: TQueueParams =
+      typeof queue === 'string'
+        ? {
+            name: queue,
+            ns: redisKeys.getNamespace(),
+          }
+        : queue;
+    this.messageManager.getAcknowledgedMessages(queueParams, skip, take, cb);
   }
 
   getDeadLetterMessages(
-    queueName: string,
-    namespace: string | undefined,
+    queue: string | TQueueParams,
     skip: number,
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    const queue: TQueueParams = {
-      name: queueName,
-      ns: namespace ?? redisKeys.getNamespace(),
-    };
-    this.messageManager.getDeadLetteredMessages(queue, skip, take, cb);
+    const queueParams: TQueueParams =
+      typeof queue === 'string'
+        ? {
+            name: queue,
+            ns: redisKeys.getNamespace(),
+          }
+        : queue;
+    this.messageManager.getDeadLetteredMessages(queueParams, skip, take, cb);
   }
 
   getPendingMessages(
-    queueName: string,
-    namespace: string | undefined,
+    queue: string | TQueueParams,
     skip: number,
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    const queue: TQueueParams = {
-      name: queueName,
-      ns: namespace ?? redisKeys.getNamespace(),
-    };
-    this.messageManager.getPendingMessages(queue, skip, take, cb);
+    const queueParams: TQueueParams =
+      typeof queue === 'string'
+        ? {
+            name: queue,
+            ns: redisKeys.getNamespace(),
+          }
+        : queue;
+    this.messageManager.getPendingMessages(queueParams, skip, take, cb);
   }
 
   getPendingMessagesWithPriority(
-    queueName: string,
-    namespace: string | undefined,
+    queue: string | TQueueParams,
     skip: number,
     take: number,
     cb: ICallback<TGetPendingMessagesWithPriorityReply>,
   ): void {
-    const queue: TQueueParams = {
-      name: queueName,
-      ns: namespace ?? redisKeys.getNamespace(),
-    };
-    this.messageManager.getPendingMessagesWithPriority(queue, skip, take, cb);
+    const queueParams: TQueueParams =
+      typeof queue === 'string'
+        ? {
+            name: queue,
+            ns: redisKeys.getNamespace(),
+          }
+        : queue;
+    this.messageManager.getPendingMessagesWithPriority(
+      queueParams,
+      skip,
+      take,
+      cb,
+    );
   }
 
   getScheduledMessages(

@@ -83,6 +83,7 @@ export class RedisClient extends EventEmitter {
     });
     this.client.once('end', () => {
       this.connectionClosed = true;
+      this.emit('end');
     });
     if (this.client instanceof NodeRedis) {
       this.client.end = patchedEnd;

@@ -1,6 +1,6 @@
 # Web UI
 
-![RedisSMQ Monitor Home](https://raw.githubusercontent.com/weyoss/redis-smq-monitor/master/screenshots/screenshot-00001.png)
+![RedisSMQ Monitor Home](https://raw.githubusercontent.com/weyoss/redis-smq-monitor/master/screenshots/screenshot-00002.png)
 
 ![RedisSMQ Monitor Acknowledged messages](https://raw.githubusercontent.com/weyoss/redis-smq-monitor/master/screenshots/screenshot-00004.png)
 

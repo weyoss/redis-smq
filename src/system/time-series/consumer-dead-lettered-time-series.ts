@@ -17,7 +17,7 @@ export const ConsumerDeadLetteredTimeSeries = (
   return new SortedSetTimeSeries(
     redisClient,
     keyRateConsumerDeadLettered,
-    undefined,
+    10000,
     undefined,
     undefined,
     isMaster,

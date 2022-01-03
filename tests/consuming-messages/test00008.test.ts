@@ -31,7 +31,7 @@ test('Async exceptions are caught when consuming a message', async () => {
   const msg = new Message();
   msg.setBody({ hello: 'world' });
 
-  await producer.produceMessageAsync(msg);
+  await producer.produceAsync(msg);
   consumer.run();
 
   await untilConsumerIdle(consumer);

@@ -38,12 +38,12 @@ export class ProcessingHandler extends Handler {
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const { keyQueueAcknowledgedMessages, keyLockDeleteAcknowledgedMessage } =
+    const { keyQueueAcknowledged, keyLockDeleteAcknowledgedMessage } =
       redisKeys.getKeys(queue.name, queue.ns);
     deleteListMessageAtSequenceId(
       this.redisClient,
       keyLockDeleteAcknowledgedMessage,
-      keyQueueAcknowledgedMessages,
+      keyQueueAcknowledged,
       index,
       messageId,
       queue,
@@ -78,13 +78,10 @@ export class ProcessingHandler extends Handler {
     if (!queue) {
       throw new PanicError(`Message queue parameters are required`);
     }
-    const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(
-      queue.name,
-      queue.ns,
-    );
+    const { keyQueueAcknowledged } = redisKeys.getKeys(queue.name, queue.ns);
     this.redisClient.lpoprpush(
       keyQueueProcessing,
-      keyQueueAcknowledgedMessages,
+      keyQueueAcknowledged,
       (err) => {
         if (err) cb(err);
         else cb();

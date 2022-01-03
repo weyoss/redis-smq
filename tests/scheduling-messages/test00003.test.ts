@@ -20,7 +20,7 @@ test('Schedule a message with a CRON expression and check that it is enqueued pe
   msg.setScheduledCron('*/3 * * * * *').setBody({ hello: 'world' });
 
   const producer = getProducer();
-  await producer.produceMessageAsync(msg);
+  await producer.produceAsync(msg);
 
   for (let i = 0; i < 5; i += 1) {
     await untilMessageAcknowledged(consumer);

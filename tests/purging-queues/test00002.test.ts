@@ -1,26 +1,25 @@
 import { getProducer, getQueueManagerFrontend } from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
-import { config } from '../config';
 
 test('Purging priority queue', async () => {
   const producer = getProducer('test_queue');
-  const { ns, name } = producer.getQueue();
+  const queue = producer.getQueue();
 
   const queueManager = promisifyAll(await getQueueManagerFrontend());
 
-  const m = await queueManager.getQueueMetricsAsync(name, ns);
+  const m = await queueManager.getQueueMetricsAsync(queue);
   expect(m.pendingWithPriority).toBe(0);
 
   const msg = new Message();
   msg.setBody({ hello: 'world' }).setPriority(Message.MessagePriority.NORMAL);
-  await producer.produceMessageAsync(msg);
+  await producer.produceAsync(msg);
 
-  const m2 = await queueManager.getQueueMetricsAsync(name, ns);
+  const m2 = await queueManager.getQueueMetricsAsync(queue);
   expect(m2.pendingWithPriority).toBe(1);
 
-  await queueManager.purgePriorityQueueAsync(name, ns);
+  await queueManager.purgePriorityQueueAsync(queue);
 
-  const m3 = await queueManager.getQueueMetricsAsync(name, ns);
+  const m3 = await queueManager.getQueueMetricsAsync(queue);
   expect(m3.pendingWithPriority).toBe(0);
 });

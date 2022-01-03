@@ -20,7 +20,6 @@ export class RequeueHandler extends Handler {
     from: string,
     index: number,
     messageId: string,
-    withPriority: boolean,
     priority: number | undefined,
     cb: ICallback<void>,
   ): void {
@@ -38,10 +37,9 @@ export class RequeueHandler extends Handler {
           multi.lrem(from, 1, JSON.stringify(msg));
           const message = Message.createFromMessage(msg, true); // resetting all system parameters
           message.setQueue(queue); // do not lose message queue
-          if (withPriority) {
-            const prty = priority ?? Message.MessagePriority.NORMAL;
-            message.setPriority(prty);
-          } else message.disablePriorityQueuing();
+          if (priority !== undefined) {
+            message.setPriority(priority);
+          } else message.disablePriority();
           this.enqueueHandler.enqueue(multi, message);
           this.redisClient.execMulti(multi, (err) => cb(err));
         }
@@ -53,40 +51,26 @@ export class RequeueHandler extends Handler {
     queue: TQueueParams,
     index: number,
     messageId: string,
-    withPriority: boolean,
     priority: number | undefined,
     cb: ICallback<void>,
   ): void {
     const { keyQueueDL } = redisKeys.getKeys(queue.name, queue.ns);
-    this.requeueListMessage(
-      queue,
-      keyQueueDL,
-      index,
-      messageId,
-      withPriority,
-      priority,
-      cb,
-    );
+    this.requeueListMessage(queue, keyQueueDL, index, messageId, priority, cb);
   }
 
   requeueMessageFromAcknowledgedQueue(
     queue: TQueueParams,
     index: number,
     messageId: string,
-    withPriority: boolean,
     priority: number | undefined,
     cb: ICallback<void>,
   ): void {
-    const { keyQueueAcknowledgedMessages } = redisKeys.getKeys(
-      queue.name,
-      queue.ns,
-    );
+    const { keyQueueAcknowledged } = redisKeys.getKeys(queue.name, queue.ns);
     this.requeueListMessage(
       queue,
-      keyQueueAcknowledgedMessages,
+      keyQueueAcknowledged,
       index,
       messageId,
-      withPriority,
       priority,
       cb,
     );

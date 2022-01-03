@@ -163,7 +163,6 @@ export class MessagesService {
       },
       sequenceId,
       id,
-      typeof priority !== 'undefined',
       priority,
     );
   }
@@ -179,7 +178,6 @@ export class MessagesService {
       },
       sequenceId,
       id,
-      typeof priority !== 'undefined',
       priority,
     );
   }

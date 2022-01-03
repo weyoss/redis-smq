@@ -6,19 +6,18 @@ import {
   produceAndDeadLetterMessage,
 } from '../common';
 import { Message } from '../../src/message';
-import { config } from '../config';
 
 describe('MessageManager', () => {
   test('Case 1', async () => {
     const producer = getProducer();
-    const { ns, name } = producer.getQueue();
+    const queue = producer.getQueue();
 
     const msg = new Message();
     msg.setBody({ hello: 'world' });
-    await producer.produceMessageAsync(msg);
+    await producer.produceAsync(msg);
 
     const messageManager = promisifyAll(await getMessageManagerFrontend());
-    const res = await messageManager.getPendingMessagesAsync(name, ns, 0, 100);
+    const res = await messageManager.getPendingMessagesAsync(queue, 0, 100);
 
     expect(res.total).toBe(1);
     expect(res.items[0].sequenceId).toBe(0);
@@ -27,12 +26,11 @@ describe('MessageManager', () => {
 
   test('Case 2', async () => {
     const { producer, message } = await produceAndAcknowledgeMessage();
-    const { ns, name } = producer.getQueue();
+    const queue = producer.getQueue();
 
     const messageManager = promisifyAll(await getMessageManagerFrontend());
     const res = await messageManager.getAcknowledgedMessagesAsync(
-      name,
-      ns,
+      queue,
       0,
       100,
     );
@@ -44,15 +42,10 @@ describe('MessageManager', () => {
 
   test('Case 3', async () => {
     const { producer, message } = await produceAndDeadLetterMessage();
-    const { ns, name } = producer.getQueue();
+    const queue = producer.getQueue();
 
     const messageManager = promisifyAll(await getMessageManagerFrontend());
-    const res = await messageManager.getDeadLetterMessagesAsync(
-      name,
-      ns,
-      0,
-      100,
-    );
+    const res = await messageManager.getDeadLetterMessagesAsync(queue, 0, 100);
     expect(res.total).toBe(1);
     expect(res.items[0].sequenceId).toBe(0);
     expect(res.items[0].message.getId()).toBe(message.getId());
@@ -60,16 +53,15 @@ describe('MessageManager', () => {
 
   test('Case 4', async () => {
     const producer = promisifyAll(getProducer());
-    const { ns, name } = producer.getQueue();
+    const queue = producer.getQueue();
 
     const msg = new Message();
     msg.setPriority(Message.MessagePriority.LOW);
-    await producer.produceMessageAsync(msg);
+    await producer.produceAsync(msg);
 
     const messageManager = promisifyAll(await getMessageManagerFrontend());
     const res = await messageManager.getPendingMessagesWithPriorityAsync(
-      name,
-      ns,
+      queue,
       0,
       100,
     );
@@ -83,7 +75,7 @@ describe('MessageManager', () => {
 
     const msg = new Message();
     msg.setScheduledDelay(10000);
-    await producer.produceMessageAsync(msg);
+    await producer.produceAsync(msg);
 
     const messageManager = promisifyAll(await getMessageManagerFrontend());
     const res = await messageManager.getScheduledMessagesAsync(0, 100);

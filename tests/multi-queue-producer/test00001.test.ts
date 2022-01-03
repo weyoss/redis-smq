@@ -14,35 +14,35 @@ test('MultiQueueProducer: Case 1', async () => {
   }
   await mProducer.shutdownAsync();
   const metrics = promisifyAll(await getQueueManagerFrontend());
-  const m1 = await metrics.getQueueMetricsAsync('queue_0', 'testing');
+  const m1 = await metrics.getQueueMetricsAsync('queue_0');
   expect(m1).toEqual({
     acknowledged: 0,
     deadLettered: 0,
     pending: 1,
     pendingWithPriority: 0,
   });
-  const m2 = await metrics.getQueueMetricsAsync('queue_1', 'testing');
+  const m2 = await metrics.getQueueMetricsAsync('queue_1');
   expect(m2).toEqual({
     acknowledged: 0,
     deadLettered: 0,
     pending: 1,
     pendingWithPriority: 0,
   });
-  const m3 = await metrics.getQueueMetricsAsync('queue_2', 'testing');
+  const m3 = await metrics.getQueueMetricsAsync('queue_2');
   expect(m3).toEqual({
     acknowledged: 0,
     deadLettered: 0,
     pending: 1,
     pendingWithPriority: 0,
   });
-  const m4 = await metrics.getQueueMetricsAsync('queue_3', 'testing');
+  const m4 = await metrics.getQueueMetricsAsync('queue_3');
   expect(m4).toEqual({
     acknowledged: 0,
     deadLettered: 0,
     pending: 1,
     pendingWithPriority: 0,
   });
-  const m5 = await metrics.getQueueMetricsAsync('queue_4', 'testing');
+  const m5 = await metrics.getQueueMetricsAsync('queue_4');
   expect(m5).toEqual({
     acknowledged: 0,
     deadLettered: 0,

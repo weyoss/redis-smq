@@ -58,7 +58,7 @@ export class Heartbeat extends EventEmitter {
   constructor(params: THeartbeatParams, redisClient: RedisClient) {
     super();
     this.heartbeatParams = params;
-    this.keyHeartbeatIndex = redisKeys.getGlobalKeys().keyIndexHeartbeats;
+    this.keyHeartbeatIndex = redisKeys.getGlobalKeys().keyHeartbeats;
     this.keyHeartbeatTimestamps =
       redisKeys.getGlobalKeys().keyHeartbeatTimestamps;
     this.redisClient = redisClient;
@@ -138,8 +138,7 @@ export class Heartbeat extends EventEmitter {
       }[]
     >,
   ): void {
-    const { keyHeartbeatTimestamps, keyIndexHeartbeats } =
-      redisKeys.getGlobalKeys();
+    const { keyHeartbeatTimestamps, keyHeartbeats } = redisKeys.getGlobalKeys();
     const timestamp = Date.now() - 10 * 1000;
     redisClient.zrangebyscore(
       keyHeartbeatTimestamps,
@@ -152,7 +151,7 @@ export class Heartbeat extends EventEmitter {
             const { keyHeartbeat }: THeartbeatParams = JSON.parse(i);
             return keyHeartbeat;
           });
-          redisClient.hmget(keyIndexHeartbeats, keys, (err, res) => {
+          redisClient.hmget(keyHeartbeats, keys, (err, res) => {
             if (err) cb(err);
             else if (!res) cb(new EmptyCallbackReplyError());
             else {
@@ -228,7 +227,7 @@ export class Heartbeat extends EventEmitter {
     cb: ICallback<void>,
   ): void {
     if (keyHeartBeatParams.length) {
-      const { keyIndexHeartbeats, keyHeartbeatTimestamps } =
+      const { keyHeartbeats, keyHeartbeatTimestamps } =
         redisKeys.getGlobalKeys();
       const multi = client.multi();
       async.each(
@@ -242,7 +241,7 @@ export class Heartbeat extends EventEmitter {
             typeof item === 'string' ? JSON.parse(item) : item;
           const paramsStr =
             typeof item === 'string' ? item : JSON.stringify(item);
-          multi.hdel(keyIndexHeartbeats, keyHeartbeat);
+          multi.hdel(keyHeartbeats, keyHeartbeat);
           multi.zrem(keyHeartbeatTimestamps, paramsStr);
           heartbeatRegistry.unregister(multi, keyInstanceRegistry, instanceId);
           done();

@@ -1,13 +1,13 @@
 # Producer Class API
 
 ```javascript
-const { Message, Producer } = require('redis-smq');
+const {Message, Producer} = require('redis-smq');
 
 const message = new Message();
 message.setBody({hello: 'world'});
 
 const producer = new Producer('test_queue');
-producer.produceMessage(message, (err) => {
+producer.produce(message, (err) => {
   if (err) console.log(err);
   else console.log('Successfully produced')
 });
@@ -36,12 +36,12 @@ const { Producer } = require('redis-smq');
 const producer = new Producer('test_queue', {namespace: 'test_project'});
 ```
 
-### Producer.prototype.produceMessage()
+### Producer.prototype.produce()
 
 **Syntax**
 
 ```javascript
-producer.produceMessage(message, cb);
+producer.produce(message, cb);
 ```
 
 **Parameters**
@@ -50,25 +50,24 @@ producer.produceMessage(message, cb);
 
 - `cb(err)` *(function): Required.* Callback function.
 
-
 ```javascript
-const { Message, Producer } = require('redis-smq');
+const {Message, Producer} = require('redis-smq');
 
 const message = new Message();
 
 message
-    .setBody({hello: 'world'})
-    .setTTL(3600000)
-    .setScheduledDelay(10000); // in millis
+        .setBody({hello: 'world'})
+        .setTTL(3600000)
+        .setScheduledDelay(10000); // in millis
 
 const producer = new Producer('test_queue');
-producer.produceMessage(message, (err) => {
-   if (err) console.log(err);
-   else console.log('Successfully produced')
+producer.produce(message, (err) => {
+  if (err) console.log(err);
+  else console.log('Successfully produced')
 });
 
 // OR
-producer.produceMessage({hello: 'world'}, (err) => {
+producer.produce({hello: 'world'}, (err) => {
   if (err) console.log(err);
   else console.log('Successfully produced')
 });
@@ -83,12 +82,12 @@ producer.once('down', () => {
   console.log(`Producer ID ${producer.getId()} has gone down.`);
 });
 
-producer.produceMessage(message, (err) => {
-    if (err) console.log(err);
-    else {
-      console.log('Successfully published!');
-      producer.shutdown(); // Shutdown the producer and disconnect from the Redis server.   
-    }
+producer.produce(message, (err) => {
+  if (err) console.log(err);
+  else {
+    console.log('Successfully published!');
+    producer.shutdown(); // Shutdown the producer and disconnect from the Redis server.   
+  }
 });
 ```
 
@@ -96,7 +95,7 @@ producer.produceMessage(message, (err) => {
 
 Start a producer that was previously shutdown. 
 
-This method should be ONLY used when you have manually called the `shutdown()` method. 
+This method should be ONLY used when you have manually called the `shutdown()` method.
 
 ```javascript
 producer.once('down', () => {
@@ -108,17 +107,21 @@ producer.once('up', () => {
   console.log(`Producer ID ${producer.getId()} is running.`);
 })
 
-producer.produceMessage(message, (err) => {
-    if (err) console.log(err);
-    else {
-      console.log('Successfully published!');
-      producer.shutdown(); // Shutdown the producer and disconnect from the Redis server.   
-    }
+producer.produce(message, (err) => {
+  if (err) console.log(err);
+  else {
+    console.log('Successfully published!');
+    producer.shutdown(); // Shutdown the producer and disconnect from the Redis server.   
+  }
 });
 ```
 
 ### Other Methods
 
+- Producer.prototype.isGoingUp()
+- Producer.prototype.isGoingDown()
+- Producer.prototype.isUp()
+- Producer.prototype.isDown()
 - Producer.prototype.isRunning()
 - Producer.prototype.getId()
-- Producer.prototype.getQueueName()
+- Producer.prototype.getQueue()

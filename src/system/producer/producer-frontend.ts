@@ -57,7 +57,7 @@ export class ProducerFrontend extends EventEmitter {
     return this.producer.getQueue();
   }
 
-  produceMessage(msg: unknown, cb: ICallback<boolean>): void {
-    this.producer.produceMessage(msg, cb);
+  produce(msg: unknown, cb: ICallback<boolean>): void {
+    this.producer.produce(msg, cb);
   }
 }

@@ -348,7 +348,7 @@ export async function produceAndAcknowledgeMessage() {
 
   const message = new Message();
   message.setBody({ hello: 'world' });
-  await producer.produceMessageAsync(message);
+  await producer.produceAsync(message);
 
   consumer.run();
   await untilConsumerIdle(consumer);
@@ -365,7 +365,7 @@ export async function produceAndDeadLetterMessage() {
 
   const message = new Message();
   message.setBody({ hello: 'world' });
-  await producer.produceMessageAsync(message);
+  await producer.produceAsync(message);
 
   consumer.run();
   await untilConsumerIdle(consumer);
@@ -376,7 +376,7 @@ export async function produceMessage() {
   const producer = getProducer();
   const message = new Message();
   message.setBody({ hello: 'world' });
-  await producer.produceMessageAsync(message);
+  await producer.produceAsync(message);
   return { producer, message };
 }
 
@@ -386,7 +386,7 @@ export async function produceMessageWithPriority() {
 
   const message = new Message();
   message.setPriority(Message.MessagePriority.LOW);
-  await producer.produceMessageAsync(message);
+  await producer.produceAsync(message);
   return { message, producer };
 }
 
@@ -394,7 +394,7 @@ export async function produceScheduledMessage() {
   const producer = promisifyAll(getProducer());
   const message = new Message();
   message.setScheduledDelay(10000);
-  await producer.produceMessageAsync(message);
+  await producer.produceAsync(message);
   return { message, producer };
 }
 

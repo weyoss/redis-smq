@@ -32,52 +32,56 @@ getSingletonInstance(config, cb)
 ### QueueManager.prototype.purgeDeadLetterQueue
 
 ```javascript
-purgeDeadLetterQueue(queueName, ns, cb);
+purgeDeadLetterQueue(queue, cb);
 ```
 
 **Parameters**
-- `queueName` *(string): Required.* Queue name.
-- `ns` *(string | undefined): Required.* Queue namespace. To use the default namespace or the namespace from your
-  configuration object, set `ns` to `undefined`. Otherwise, provide a valid namespace.
+- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used. 
+Otherwise, you can explicity provide an object which has the following signature:
+  - `queue.name` *(string): Required.* Queue name.
+  - `queue.ns` *(string): Required.* Queue namespace.
 - `cb(err)` *(Function): Required.* Callback function.
     - `err` *(Error | null | undefined).* Error object.
 
 ### QueueManager.prototype.purgeAcknowledgedMessagesQueue
 
 ```javascript
-purgeAcknowledgedMessagesQueue(queueName, ns, cb);
+purgeAcknowledgedMessagesQueue(queue, cb);
 ```
 
 **Parameters**
-- `queueName` *(string): Required.* Queue name.
-- `ns` *(string | undefined): Required.* Queue namespace. To use the default namespace or the namespace from your
-  configuration object, set `ns` to `undefined`. Otherwise, provide a valid namespace.
+- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used. 
+Otherwise, you can explicity provide an object which has the following signature:
+  - `queue.name` *(string): Required.* Queue name.
+  - `queue.ns` *(string): Required.* Queue namespace.
 - `cb(err)` *(Function): Required.* Callback function.
     - `err` *(Error | null | undefined).* Error object.
 
 ### QueueManager.prototype.purgeQueue
 
 ```javascript
-purgeQueue(queueName, ns, cb);
+purgeQueue(queue, cb);
 ```
 
 **Parameters**
-- `queueName` *(string): Required.* Queue name.
-- `ns` *(string | undefined): Required.* Queue namespace. To use the default namespace or the namespace from your
-  configuration object, set `ns` to `undefined`. Otherwise, provide a valid namespace.
+- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used. 
+Otherwise, you can explicity provide an object which has the following signature:
+  - `queue.name` *(string): Required.* Queue name.
+  - `queue.ns` *(string): Required.* Queue namespace.
 - `cb(err)` *(Function): Required.* Callback function.
     - `err` *(Error | null | undefined).* Error object.
 
 ### QueueManager.prototype.purgePriorityQueue
 
 ```javascript
-purgePriorityQueue(queueName, ns, cb);
+purgePriorityQueue(queue, cb);
 ```
 
 **Parameters**
-- `queueName` *(string): Required.* Queue name.
-- `ns` *(string | undefined): Required.* Queue namespace. To use the default namespace or the namespace from your
-  configuration object, set `ns` to `undefined`. Otherwise, provide a valid namespace.
+- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used. 
+Otherwise, you can explicity provide an object which has the following signature:
+  - `queue.name` *(string): Required.* Queue name.
+  - `queue.ns` *(string): Required.* Queue namespace.
 - `cb(err)` *(Function): Required.* Callback function.
     - `err` *(Error | null | undefined).* Error object.
 
@@ -94,13 +98,14 @@ purgeScheduledMessagesQueue(cb);
 ### QueueManager.prototype.getQueueMetrics
 
 ```javascript
-getQueueMetrics(queueName, ns, cb);
+getQueueMetrics(queue, cb);
 ```
 
 **Parameters**
-- `queueName` *(string): Required.* Queue name.
-- `ns` *(string | undefined): Required.* Queue namespace. To use the default namespace or the namespace from your
-  configuration object, set `ns` to `undefined`. Otherwise, provide a valid namespace.
+- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used. 
+Otherwise, you can explicity provide an object which has the following signature:
+  - `queue.name` *(string): Required.* Queue name.
+  - `queue.ns` *(string): Required.* Queue namespace.
 - `cb(err, queueMetrics)` *(Function): Required.* Callback function.
     - `err` *(Error | null | undefined).* Error object.
     - `queueMetrics` *(object).* Queue metrics.

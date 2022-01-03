@@ -31,7 +31,7 @@ test('Produce and consume a delayed message: Case 1', async () => {
     .setBody({ hello: 'world' });
 
   const producer = getProducer();
-  await producer.produceMessageAsync(msg);
+  await producer.produceAsync(msg);
   const producedAt = Date.now();
 
   await untilMessageAcknowledged(consumer);

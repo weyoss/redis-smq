@@ -56,7 +56,7 @@ test('A message is delivered only once to one consumer', async () => {
   msg.setBody({ hello: 'world' });
 
   const producer = getProducer();
-  await producer.produceMessageAsync(msg);
+  await producer.produceAsync(msg);
 
   /**
    *

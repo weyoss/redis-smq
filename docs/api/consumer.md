@@ -24,14 +24,17 @@ consumer.run();
 **Syntax**
 
 ```javascript
-const testQueueConsumer = new TestQueueConsumer(queueName , config)
+const testQueueConsumer = new TestQueueConsumer(queueName , config, usePriorityQueuing)
 ```
 
 **Parameters**
+
 - `queueName` *(string): Required.* The name of the queue where produced messages are queued. It can be composed
   only of letters (a-z), numbers (0-9) and (-_) characters.
 
 - `config` *(object): Optional.* Configuration parameters. See [configuration](https://github.com/weyoss/redis-smq#configuration).
+
+- `usePriorityQueuing` *(boolean): Optional.*  When `true`, the consumer will dequeue messages using priority queuing.
 
 ### Consumer.prototype.run()
 
@@ -128,6 +131,10 @@ consumer.once('down', () => {
 
 ### Other Methods
 
+- Consumer.prototype.isGoingUp()
+- Consumer.prototype.isGoingDown()
+- Consumer.prototype.isUp()
+- Consumer.prototype.isDown()
 - Consumer.prototype.isRunning()
 - Consumer.prototype.getId()
-- Consumer.prototype.getQueueName()
+- Consumer.prototype.getQueue()

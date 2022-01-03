@@ -247,18 +247,18 @@ export class MessageManager {
     queue: TQueueParams,
     sequenceId: number,
     messageId: string,
-    withPriority: boolean,
     priority: number | undefined,
     cb: ICallback<void>,
   ): void {
     this.logger.debug(
-      `Re-queuing dead-lettered message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${queue.name}, ns ${queue.ns}, withPriority ${withPriority})...`,
+      `Re-queuing dead-lettered message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${
+        queue.name
+      }, ns ${queue.ns}, priority ${priority ?? 'without priority'})...`,
     );
     this.requeueHandler.requeueMessageFromDLQueue(
       queue,
       sequenceId,
       messageId,
-      withPriority,
       priority,
       cb,
     );
@@ -268,18 +268,18 @@ export class MessageManager {
     queue: TQueueParams,
     sequenceId: number,
     messageId: string,
-    withPriority: boolean,
     priority: number | undefined,
     cb: ICallback<void>,
   ): void {
     this.logger.debug(
-      `Re-queuing acknowledged message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${queue.name}, ns ${queue.ns}, withPriority ${withPriority})...`,
+      `Re-queuing acknowledged message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${
+        queue.name
+      }, ns ${queue.ns}, priority ${priority ?? 'without priority'})...`,
     );
     this.requeueHandler.requeueMessageFromAcknowledgedQueue(
       queue,
       sequenceId,
       messageId,
-      withPriority,
       priority,
       cb,
     );

@@ -8,7 +8,7 @@ test('A message is not lost in case of a consumer crash', async () => {
   const msg = new Message();
   msg.setBody({ hello: 'world' });
 
-  await producer.produceMessageAsync(msg);
+  await producer.produceAsync(msg);
 
   /**
    * Consumer1 tries to consume a message but "crushes" (stops)

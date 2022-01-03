@@ -105,7 +105,7 @@ export class WebsocketMainStreamWorker {
                 if (type === instanceTypes.KEY_QUEUE_DL) {
                   queue.deadLetteredMessagesCount = size;
                   this.data.deadLetteredMessagesCount += size;
-                } else if (type === instanceTypes.KEY_QUEUE) {
+                } else if (type === instanceTypes.KEY_QUEUE_PENDING) {
                   queue.pendingMessagesCount = size;
                   this.data.pendingMessagesCount += size;
                 } else if (type === instanceTypes.KEY_QUEUE_PRIORITY) {
@@ -126,20 +126,20 @@ export class WebsocketMainStreamWorker {
         queues,
         (queue, done) => {
           const {
-            keyQueue,
+            keyQueuePending,
             keyQueuePriority,
             keyQueueDL,
-            keyQueueAcknowledgedMessages,
+            keyQueueAcknowledged,
           } = redisKeys.getKeys(queue.name, queue.ns);
-          multi.llen(keyQueue);
+          multi.llen(keyQueuePending);
           multi.zcard(keyQueuePriority);
           multi.llen(keyQueueDL);
-          multi.llen(keyQueueAcknowledgedMessages);
+          multi.llen(keyQueueAcknowledged);
           keys = keys.concat([
-            keyQueue,
+            keyQueuePending,
             keyQueuePriority,
             keyQueueDL,
-            keyQueueAcknowledgedMessages,
+            keyQueueAcknowledged,
           ]);
           done();
         },

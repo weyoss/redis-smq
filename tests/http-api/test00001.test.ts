@@ -9,7 +9,7 @@ test('Fetching and deleting scheduled messages using the HTTP API: Case 1', asyn
 
   const msg1 = new Message();
   msg1.setScheduledCron('0 * * * * *').setBody({ hello: 'world1' });
-  await producer.produceMessageAsync(msg1);
+  await producer.produceAsync(msg1);
 
   const request = supertest('http://127.0.0.1:3000');
 

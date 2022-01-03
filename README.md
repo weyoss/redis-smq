@@ -37,7 +37,7 @@ High-level overview of how RedisSMQ works:
  * **[Message expiration](docs/api/message.md#messageprototypesetttl)**: A message will not be delivered if it has been in a queue for longer 
  than a given amount of time, called TTL (time-to-live).
  * **[Message consume timeout](docs/api/message.md#messageprototypesetconsumetimeout)**: Timeout for a consumer to consume a message.
- * **[Delaying and scheduling message delivery](docs/api/scheduler.md)**: Messages can be configured to be delayed, delivered 
+ * **[Delaying and scheduling message delivery](docs/scheduling-messages.md)**: Messages can be configured to be delayed, delivered 
    for N times with an optional period between deliveries, and to be scheduled using CRON expressions.
  * **[Reliable Priority Queues](docs/priority-queues.md)**: Supports priority messaging.
  * **[HTTP API](docs/http-api.md)**: an HTTP interface is provided to interact with the MQ.
@@ -60,13 +60,14 @@ High-level overview of how RedisSMQ works:
        2. [Producer Class](#producer-class)
        3. [Consumer Class](#consumer-class)
    2. Advanced Topics
-      1. [Message Scheduler](docs/api/scheduler.md)
-      2. [Priority Queues](docs/priority-queues.md)
-      3. [Message Manager](docs/api/message-manager.md)
-      4. [Queue Manager](docs/api/queue-manager.md)
-      5. [HTTP API](docs/http-api.md)
-      6. [Web UI](docs/web-ui.md)
-      7. [Logs](docs/logs.md)
+      1. [MultiQueueProducer](docs/api/multi-queue-producer.md)
+      2. [Scheduling Messages](docs/scheduling-messages.md)
+      3. [Priority Queues](docs/priority-queues.md)
+      4. [Message Manager](docs/api/message-manager.md)
+      5. [Queue Manager](docs/api/queue-manager.md)
+      6. [HTTP API](docs/http-api.md)
+      7. [Web UI](docs/web-ui.md)
+      8. [Logs](docs/logs.md)
 5. [Performance](#performance)
 6. [Contributing](#contributing)
 7. [License](#license)
@@ -128,13 +129,13 @@ See [Message Reference](docs/api/message.md) for more details.
 #### Producer Class
 
 `Producer` class is in turn responsible for publishing messages. Each `Producer` instance is associated with a message 
-queue and provides the `produceMessage()` method to publish a message.
+queue and provides the `produce()` method to publish a message.
 
 ```javascript
 // filename: ./examples/javascript/ns1-test-queue-producer.js
 
 'use strict';
-const { Message, Producer } = require('redis-smq');
+const {Message, Producer} = require('redis-smq');
 
 const message = new Message();
 
@@ -143,13 +144,16 @@ message
     .setTTL(3600000);
 
 const producer = new Producer('test_queue');
-producer.produceMessage(message, (err) => {
-   if (err) console.log(err);
-   else console.log('Successfully produced')
+producer.produce(message, (err) => {
+    if (err) console.log(err);
+    else console.log('Successfully produced')
 });
 ```
 
 See [Producer Reference](docs/api/producer.md) for more details.
+
+RedisSMQ also provides [MultiQueueProducer](docs/api/multi-queue-producer.md) for publishing messages to multiple 
+queues from a single producer.
 
 #### Consumer Class
 
@@ -200,7 +204,9 @@ See [Consumer Reference](docs/api/consumer.md) for more details.
 
 ### Advanced Topics
 
-* [Scheduler](docs/api/scheduler.md)
+* [MultiQueueProducer](docs/api/multi-queue-producer.md)
+
+* [Scheduling Messages](docs/scheduling-messages.md)
 
 * [Priority Queues](docs/priority-queues.md)
   

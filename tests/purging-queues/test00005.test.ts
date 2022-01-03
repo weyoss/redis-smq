@@ -12,7 +12,7 @@ test('Purging scheduled messages queue', async () => {
   const msg = new Message()
     .setScheduledDelay(10000)
     .setBody({ hello: 'world' });
-  await producer.produceMessageAsync(msg);
+  await producer.produceAsync(msg);
 
   const messageManager = promisifyAll(await getMessageManagerFrontend());
   const m = await messageManager.getScheduledMessagesAsync(0, 99);
