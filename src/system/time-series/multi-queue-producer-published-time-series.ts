@@ -12,7 +12,7 @@ export const MultiQueueProducerPublishedTimeSeries = (
   return new SortedSetTimeSeries(
     redisClient,
     keyRateMultiQueueProducerPublished,
-    10000,
+    30,
     undefined,
     undefined,
     isMaster,

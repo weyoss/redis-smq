@@ -17,7 +17,7 @@ export const ConsumerAcknowledgedTimeSeries = (
   return new SortedSetTimeSeries(
     redisClient,
     keyRateConsumerAcknowledged,
-    10000,
+    30,
     undefined,
     undefined,
     isMaster,

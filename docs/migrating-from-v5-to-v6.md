@@ -3,7 +3,7 @@
 Before upgrading, if your have any important data (messages) existing in the MQ, you should first make a backup or finish your data 
 processing.
 
-To avoid conflicts, and to prevent loosing your data, the Redis keys "version" has been bumped up. So your existing 
+To avoid conflicts and to prevent data lost, the Redis keys "version" has been bumped up. So your existing 
 data would not be touched.
 
 Upgrading your installation to the newest version should be straightforward as most APIs are compatible, with some
@@ -77,8 +77,8 @@ const consumer = new MyConsumer('test_queue', config);
 const consumer = new MyConsumer('test_queue', config, true);
 ```
 
-- Updated MessageManager and QueueManager API: Methods that accepts `queue name` and `namespace` is now accepting a 
-single argument with can be either a `queue name` or an object which holds the `queue name` and `namespace`.
+- Updated MessageManager and QueueManager API: Methods that accept `queue name` and `namespace` are now accepting a 
+single argument which can be either a `queue name` (string) or an object holding the `queue name` and `namespace`.
 
 ```javascript
 // Before 
