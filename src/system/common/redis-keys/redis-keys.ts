@@ -1,11 +1,14 @@
 import { RedisKeysError } from './redis-keys.error';
 
-const nsPrefix = 'redis-smq';
+// Namespace prefix
+const nsPrefix = 'redis-smq-v6';
+
+// Namespaces
 const globalNamespace = 'global';
 let namespace = 'default';
 
 enum ERedisKey {
-  KEY_QUEUE_PENDING = 119,
+  KEY_QUEUE_PENDING = 1,
   KEY_QUEUE_PENDING_WITH_PRIORITY,
   KEY_QUEUE_DL,
   KEY_QUEUE_DELAY,
@@ -63,8 +66,8 @@ enum ERedisKey {
   KEY_SCHEDULED_MESSAGES,
   KEY_HEARTBEATS,
   KEY_MULTI_QUEUE_PRODUCERS,
-  KEY_QUEUES, // Redis key for message queues
-  KEY_PROCESSING_QUEUES, // Redis key for all processing queues
+  KEY_QUEUES,
+  KEY_PROCESSING_QUEUES,
 }
 
 export const redisKeys = {

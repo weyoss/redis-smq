@@ -1,7 +1,6 @@
 # Migrating from RedisSMQ v5.x.x to v6.x.x
 
-Before upgrading, if your have any important data (messages) existing in the MQ, you should first make a backup or finish your data 
-processing.
+> Before upgrading, you should make a backup or finish processing your messages in case you have if you any important data.
 
 To avoid conflicts and to prevent data lost, the Redis keys "version" has been bumped up. So your existing 
 data would not be touched.
@@ -9,15 +8,19 @@ data would not be touched.
 Upgrading your installation to the newest version should be straightforward as most APIs are compatible, with some
 exceptions:
 
-- To publish a message, use the `produce()` method of your producer (`produceMessage()` has been renamed).
 
-- A producer is now able to publish priority messages and non-priority messages, without the need to create a 
-separate producer with priority queuing enabled for priority messages.
+**1. To publish a message, use the `produce()` method of your producer (`produceMessage()` has been renamed).**
 
-- When setting up a priority for a given message, `priority queuing` for the message will be 
-enabled, and the message will be published to its priority queue.
+**2. From single producer instance you are now able to publish priority messages and non-priority messages, without the 
+need to create a separate producer with priority queuing enabled for priority messages.**
 
-- Removed `priorityQueue` parameter from the configuration parameters.
+**3. When setting up a priority for a given message, `priority queuing` for the message will be 
+enabled, and the message will be published to its priority queue (you don't need anymore to enable priority queuing in 
+your configuration object).**
+
+**4. Removed `priorityQueue` parameter from the configuration parameters.**
+
+Before: 
 
 ```javascript
 // Before
@@ -34,8 +37,11 @@ producer.produceMessage(msg, () => {
     // The message priority will be ignored as priority queuing for the given producer is not enabled.
     // ...
 });
+```
 
-// Now
+Now:
+
+```javascript
 const config = {
     namespace: 'my-namespace',
     // priorityQueue has been removed from the configuration object
@@ -61,8 +67,10 @@ producer.produce(anotherMsg, () => {
 });
 ```
 
-- To consume messages with priority, you should enable priority queuing for a given consumer instance. 
-See [Consumer Reference API](/docs/api/consumer.md#consumerprototypeconstructor) for more details.
+**5. To consume messages with priority, you should enable priority queuing for a given consumer instance. 
+See [Consumer Reference API](/docs/api/consumer.md#consumerprototypeconstructor) for more details.**
+
+Before:
 
 ```javascript
 // Before
@@ -71,20 +79,27 @@ const config = {
     priorityQueue: true,
 }
 const consumer = new MyConsumer('test_queue', config);
+```
 
-// Now
+Now:
+
+```javascript
 // Priority queuing is enabled for MyConsumer instance using the third constructor argument
 const consumer = new MyConsumer('test_queue', config, true);
 ```
 
-- Updated MessageManager and QueueManager API: Methods that accept `queue name` and `namespace` are now accepting a 
-single argument which can be either a `queue name` (string) or an object holding the `queue name` and `namespace`.
+**6. Updated MessageManager and QueueManager API: Methods that accept `queue name` and `namespace` are now accepting a 
+single argument which can be either a `queue name` (string) or an object holding the `queue name` and `namespace`.**
+
+Before:
 
 ```javascript
-// Before 
 getPendingMessages(queueName, ns, skip, take, cb);
+```
 
-// Now
+Now:
+
+```javascript
 // Argument [queue] can be of a string type like 'test_queue' or an object like { name: 'test_queue', ns: 'testing' } 
 // When queue is of a string type the default namespace will be used.
 getPendingMessages(queue, skip, take, cb);
@@ -92,25 +107,33 @@ getPendingMessages(queue, skip, take, cb);
 
 See [MessageManager API](/docs/api/message-manager.md) and [QueueManager API](/docs/api/queue-manager.md) for more details.
 
-- `MessageManager.prototype.requeueMessageFromAcknowledgedQueue()` now accepts 5 arguments:
+**7. `MessageManager.prototype.requeueMessageFromAcknowledgedQueue()` now accepts 5 arguments.**
+
+Before:
 
 ```javascript
-// Before
 requeueMessageFromAcknowledgedQueue(queue, sequenceId, messageId, withPriority, priority, cb)
+```
 
-// Now
+Now:
+
+```javascript
 // When requeuing a message with priority, the priority argument should not be empty. Otherwise, set its value 
 // to undefined.
 requeueMessageFromAcknowledgedQueue(queue, sequenceId, messageId, priority, cb)
 ```
 
-- `MessageManager.prototype.requeueMessageFromDLQueue();` now accepts 5 arguments:
+**8. `MessageManager.prototype.requeueMessageFromDLQueue()` now accepts 5 arguments.**
+
+Before:
 
 ```javascript
-// Before
 requeueMessageFromDLQueue(queue, sequenceId, messageId, withPriority, priority, cb)
+```
 
-// Now
+Now:
+
+```javascript
 // When requeuing a message with priority, the priority argument should not be empty. Otherwise, set its value 
 // to undefined.
 requeueMessageFromDLQueue(queue, sequenceId, messageId, priority, cb)
