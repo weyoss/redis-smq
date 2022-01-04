@@ -9,16 +9,24 @@ Upgrading your installation to the newest version should be straightforward as m
 exceptions:
 
 
-**1. To publish a message, use the `produce()` method of your producer (`produceMessage()` has been renamed).**
+**1. Publishing a message**
 
-**2. From single producer instance you are now able to publish priority messages and non-priority messages, without the 
-need to create a separate producer with priority queuing enabled for priority messages.**
+To publish a message, use the `produce()` method of your producer (`produceMessage()` has been renamed).
 
-**3. When setting up a priority for a given message, `priority queuing` for the message will be 
-enabled, and the message will be published to its priority queue (you don't need anymore to enable priority queuing in 
-your configuration object).**
+**2. Publishing priority messages**
 
-**4. Removed `priorityQueue` parameter from the configuration parameters.**
+From single producer instance you are now able to publish priority messages and non-priority messages, without the
+need to create a separate producer with priority queuing enabled for priority messages.
+
+**3. Priority queuing**
+
+When setting up a priority for a given message, `priority queuing` for the message will be
+enabled, and the message will be published to its priority queue (you don't need anymore to enable priority queuing in
+your configuration object).
+
+**4. Configuration**
+
+Removed `priorityQueue` parameter from the configuration parameters.
 
 Before: 
 
@@ -67,8 +75,10 @@ producer.produce(anotherMsg, () => {
 });
 ```
 
-**5. To consume messages with priority, you should enable priority queuing for a given consumer instance. 
-See [Consumer Reference API](/docs/api/consumer.md#consumerprototypeconstructor) for more details.**
+**5. Consuming priority messages**
+
+To consume messages with priority, you should enable priority queuing for a given consumer instance.
+See [Consumer Reference API](/docs/api/consumer.md#consumerprototypeconstructor) for more details.
 
 Before:
 
@@ -88,8 +98,10 @@ Now:
 const consumer = new MyConsumer('test_queue', config, true);
 ```
 
-**6. Updated MessageManager and QueueManager API: Methods that accept `queue name` and `namespace` are now accepting a 
-single argument which can be either a `queue name` (string) or an object holding the `queue name` and `namespace`.**
+**6. MessageManager and QueueManager API**
+
+For MessageManager and QueueManager, methods that accept `queue name` and `namespace` are now accepting a
+single argument which can be either a `queue name` (string) or an object holding the `queue name` and `namespace`.
 
 Before:
 
@@ -107,7 +119,9 @@ getPendingMessages(queue, skip, take, cb);
 
 See [MessageManager API](/docs/api/message-manager.md) and [QueueManager API](/docs/api/queue-manager.md) for more details.
 
-**7. `MessageManager.prototype.requeueMessageFromAcknowledgedQueue()` now accepts 5 arguments.**
+**7. MessageManager.prototype.requeueMessageFromAcknowledgedQueue()**
+
+`MessageManager.prototype.requeueMessageFromAcknowledgedQueue()` now accepts 5 arguments.
 
 Before:
 
@@ -123,7 +137,9 @@ Now:
 requeueMessageFromAcknowledgedQueue(queue, sequenceId, messageId, priority, cb)
 ```
 
-**8. `MessageManager.prototype.requeueMessageFromDLQueue()` now accepts 5 arguments.**
+**8. MessageManager.prototype.requeueMessageFromDLQueue()**
+
+`MessageManager.prototype.requeueMessageFromDLQueue()` now accepts 5 arguments.
 
 Before:
 
