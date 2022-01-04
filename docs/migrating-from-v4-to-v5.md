@@ -8,7 +8,7 @@ Many internal data structures of the MQ has been refactored to use `LIFO` queues
 if your have any important data (messages) existing in the MQ, you should first make a backup or finish your data 
 processing.
 
-To avoid conflicts, and to prevent loosing your data, the Redis keys "version" has been bumped up. So your existing 
+To avoid conflicts and to prevent data lost, the Redis keys "version" has been bumped up. So your existing 
 data would not be touched.
 
 Finally, HTTP API endpoints has been also updated. Please referer to [HTTP API Reference](/docs/http-api.md) for more details.

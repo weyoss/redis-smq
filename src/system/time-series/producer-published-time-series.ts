@@ -17,7 +17,7 @@ export const ProducerPublishedTimeSeries = (
   return new SortedSetTimeSeries(
     redisClient,
     keyRateProducerPublished,
-    10000,
+    30,
     undefined,
     undefined,
     isMaster,
