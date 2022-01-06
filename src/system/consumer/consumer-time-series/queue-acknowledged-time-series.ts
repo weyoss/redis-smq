@@ -1,7 +1,7 @@
-import { RedisClient } from '../redis-client/redis-client';
-import { redisKeys } from '../common/redis-keys/redis-keys';
-import { HashTimeSeries } from '../common/time-series/hash-time-series';
-import { TQueueParams } from '../../../types';
+import { RedisClient } from '../../redis-client/redis-client';
+import { redisKeys } from '../../common/redis-keys/redis-keys';
+import { HashTimeSeries } from '../../common/time-series/hash-time-series';
+import { TQueueParams } from '../../../../types';
 
 export const QueueAcknowledgedTimeSeries = (
   redisClient: RedisClient,

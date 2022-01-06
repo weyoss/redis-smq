@@ -15,6 +15,7 @@ import { Message } from './message';
 import { EmptyCallbackReplyError } from './common/errors/empty-callback-reply.error';
 import { PanicError } from './common/errors/panic.error';
 import { Heartbeat } from './common/heartbeat/heartbeat';
+import { MessageRateWriter } from './common/message-rate-writer';
 
 export abstract class Base<
   TMessageRate extends MessageRate,
@@ -27,6 +28,8 @@ export abstract class Base<
   protected broker: Broker | null = null;
   protected sharedRedisClient: RedisClient | null = null;
   protected messageRate: TMessageRate | null = null;
+  protected messageRateWriter: MessageRateWriter | null = null;
+
   protected heartbeat: Heartbeat | null = null;
 
   constructor(config: IConfig = {}) {
@@ -80,7 +83,10 @@ export abstract class Base<
     if (monitor && monitor.enabled) {
       if (!this.sharedRedisClient)
         cb(new PanicError(`Expected an instance of RedisClient`));
-      else this.initMessageRateInstance(this.sharedRedisClient, cb);
+      else {
+        this.initMessageRateInstance(this.sharedRedisClient);
+        cb();
+      }
     } else {
       this.logger.debug(`Skipping MessageRate setup as monitor not enabled...`);
       cb();
@@ -92,7 +98,10 @@ export abstract class Base<
     RedisClient.getNewInstance(this.config, (err, redisClient) => {
       if (err) cb(err);
       else if (!redisClient) cb(new EmptyCallbackReplyError());
-      else this.initHeartbeatInstance(redisClient, cb);
+      else {
+        this.initHeartbeatInstance(redisClient);
+        cb();
+      }
     });
   };
 
@@ -114,13 +123,29 @@ export abstract class Base<
 
   protected tearDownMessageRate = (cb: ICallback<void>): void => {
     this.logger.debug(`Tear down MessageRate...`);
-    if (this.messageRate) {
-      this.messageRate.quit(() => {
-        this.logger.debug(`MessageRate has been torn down.`);
-        this.messageRate = null;
-        cb();
-      });
-    } else cb();
+    async.waterfall(
+      [
+        (cb: ICallback<void>) => {
+          if (this.messageRate) {
+            this.messageRate.quit(() => {
+              this.logger.debug(`MessageRate has been torn down.`);
+              this.messageRate = null;
+              cb();
+            });
+          } else cb();
+        },
+        (cb: ICallback<void>) => {
+          if (this.messageRateWriter) {
+            this.messageRateWriter.quit(() => {
+              this.logger.debug(`MessageRateWriter has been torn down.`);
+              this.messageRateWriter = null;
+              cb();
+            });
+          } else cb();
+        },
+      ],
+      cb,
+    );
   };
 
   protected tearDownBroker = (cb: ICallback<void>): void => {
@@ -252,13 +277,7 @@ export abstract class Base<
     return this.config;
   }
 
-  abstract initMessageRateInstance(
-    redisClient: RedisClient,
-    cb: ICallback<void>,
-  ): void;
+  abstract initMessageRateInstance(redisClient: RedisClient): void;
 
-  abstract initHeartbeatInstance(
-    redisClient: RedisClient,
-    cb: ICallback<void>,
-  ): void;
+  abstract initHeartbeatInstance(redisClient: RedisClient): void;
 }

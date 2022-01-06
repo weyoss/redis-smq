@@ -1,20 +1,45 @@
-import { MultiQueueProducerMessageRate } from '../../src/system/multi-queue-producer/multi-queue-producer-message-rate';
+import {
+  IMultiQueueProducerMessageRateFields,
+  MultiQueueProducerMessageRate,
+} from '../../src/system/multi-queue-producer/multi-queue-producer-message-rate';
 import { promisifyAll } from 'bluebird';
-import { getRedisInstance } from '../common';
-import { TimeSeries } from '../../src/system/common/time-series/time-series';
+import { events } from '../../src/system/common/events';
 
 test('MultiQueueProducer: Case 3', async () => {
-  const redisClient = await getRedisInstance();
-  const messageRate = promisifyAll(
-    new MultiQueueProducerMessageRate(`ID_${Date.now()}`, redisClient),
-  );
-  const ts1 = TimeSeries.getCurrentTimestamp();
-  const rateFields1 = messageRate.getRateFields();
-  await messageRate.onUpdateAsync(ts1, rateFields1);
+  const messageRate = promisifyAll(new MultiQueueProducerMessageRate());
+
+  const rateFields1 = await new Promise<{
+    ts: number;
+    rateFields: IMultiQueueProducerMessageRateFields;
+  }>((resolve) => {
+    messageRate.once(
+      events.RATE_TICK,
+      (ts: number, rateFields: IMultiQueueProducerMessageRateFields) => {
+        resolve({ ts, rateFields });
+      },
+    );
+  });
+  expect(typeof rateFields1.ts).toBe('number');
+  expect(typeof rateFields1.rateFields.publishedRate).toBe('number');
+  expect(rateFields1.rateFields.queuePublishedRate).toEqual({});
 
   messageRate.incrementPublished({ ns: 'testing', name: 'queue_1' });
-  const rateFields2 = messageRate.getRateFields();
-  const ts2 = TimeSeries.getCurrentTimestamp();
-  await messageRate.onUpdateAsync(ts2, rateFields2);
+  const rateFields2 = await new Promise<{
+    ts: number;
+    rateFields: IMultiQueueProducerMessageRateFields;
+  }>((resolve) => {
+    messageRate.once(
+      events.RATE_TICK,
+      (ts: number, rateFields: IMultiQueueProducerMessageRateFields) => {
+        resolve({ ts, rateFields });
+      },
+    );
+  });
+  expect(typeof rateFields2.ts).toBe('number');
+  expect(typeof rateFields2.rateFields.publishedRate).toBe('number');
+  expect(
+    typeof rateFields2.rateFields.queuePublishedRate[`testing:queue_1`],
+  ).toEqual('number');
+
   await messageRate.quitAsync();
 });

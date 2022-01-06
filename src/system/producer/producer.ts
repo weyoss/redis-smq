@@ -14,6 +14,7 @@ import { PanicError } from '../common/errors/panic.error';
 import { Heartbeat } from '../common/heartbeat/heartbeat';
 import { heartbeatRegistry } from '../common/heartbeat/heartbeat-registry';
 import { ExtendedBase } from '../extended-base';
+import { ProducerMessageRateWriter } from './producer-message-rate-writer';
 
 export class Producer extends ExtendedBase<
   ProducerMessageRate,
@@ -24,16 +25,17 @@ export class Producer extends ExtendedBase<
     this.run();
   }
 
-  initMessageRateInstance(redisClient: RedisClient, cb: ICallback<void>): void {
-    this.messageRate = new ProducerMessageRate(
+  initMessageRateInstance(redisClient: RedisClient): void {
+    this.messageRate = new ProducerMessageRate();
+    this.messageRateWriter = new ProducerMessageRateWriter(
+      redisClient,
       this.queue,
       this.id,
-      redisClient,
+      this.messageRate,
     );
-    cb();
   }
 
-  initHeartbeatInstance(redisClient: RedisClient, cb: ICallback<void>): void {
+  initHeartbeatInstance(redisClient: RedisClient): void {
     const { keyHeartbeatProducer, keyQueueProducers } = this.getRedisKeys();
     const heartbeat = new Heartbeat(
       {
@@ -45,7 +47,6 @@ export class Producer extends ExtendedBase<
     );
     heartbeat.on(events.ERROR, (err: Error) => this.emit(events.ERROR, err));
     this.heartbeat = heartbeat;
-    cb();
   }
 
   produce(msg: unknown, cb: ICallback<boolean>): void {

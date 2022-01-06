@@ -14,6 +14,7 @@ import { Heartbeat } from '../common/heartbeat/heartbeat';
 import { QueueManager } from '../queue-manager/queue-manager';
 import { Base } from '../base';
 import { heartbeatRegistry } from '../common/heartbeat/heartbeat-registry';
+import { MultiQueueProducerMessageRateWriter } from './multi-queue-producer-message-rate-writer';
 
 export class MultiQueueProducer extends Base<MultiQueueProducerMessageRate> {
   protected queues = new Set<string>();
@@ -23,15 +24,16 @@ export class MultiQueueProducer extends Base<MultiQueueProducerMessageRate> {
     this.run();
   }
 
-  initMessageRateInstance(redisClient: RedisClient, cb: ICallback<void>): void {
-    this.messageRate = new MultiQueueProducerMessageRate(
-      this.getId(),
+  initMessageRateInstance(redisClient: RedisClient): void {
+    this.messageRate = new MultiQueueProducerMessageRate();
+    this.messageRateWriter = new MultiQueueProducerMessageRateWriter(
       redisClient,
+      this.id,
+      this.messageRate,
     );
-    cb();
   }
 
-  initHeartbeatInstance(redisClient: RedisClient, cb: ICallback<void>): void {
+  initHeartbeatInstance(redisClient: RedisClient): void {
     const { keyHeartbeatMultiQueueProducer, keyMultiQueueProducers } =
       redisKeys.getMultiQueueProducerKeys(this.getId());
     const heartbeat = new Heartbeat(
@@ -44,7 +46,6 @@ export class MultiQueueProducer extends Base<MultiQueueProducerMessageRate> {
     );
     heartbeat.on(events.ERROR, (err: Error) => this.emit(events.ERROR, err));
     this.heartbeat = heartbeat;
-    cb();
   }
 
   produce(queueName: string, msg: unknown, cb: ICallback<boolean>): void {
