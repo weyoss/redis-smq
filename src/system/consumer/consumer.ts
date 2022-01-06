@@ -24,6 +24,7 @@ import { redisKeys } from '../common/redis-keys/redis-keys';
 import { Heartbeat } from '../common/heartbeat/heartbeat';
 import { heartbeatRegistry } from '../common/heartbeat/heartbeat-registry';
 import { ExtendedBase } from '../extended-base';
+import { ConsumerMessageRateWriter } from './consumer-message-rate-writer';
 
 export class Consumer extends ExtendedBase<
   ConsumerMessageRate,
@@ -285,12 +286,17 @@ export class Consumer extends ExtendedBase<
     return this;
   }
 
-  initMessageRateInstance(redisClient: RedisClient, cb: ICallback<void>): void {
-    this.messageRate = new ConsumerMessageRate(this, redisClient);
-    cb();
+  initMessageRateInstance(redisClient: RedisClient): void {
+    this.messageRate = new ConsumerMessageRate();
+    this.messageRate.on(events.IDLE, () => this.emit(events.IDLE));
+    this.messageRateWriter = new ConsumerMessageRateWriter(
+      redisClient,
+      this,
+      this.messageRate,
+    );
   }
 
-  initHeartbeatInstance(redisClient: RedisClient, cb: ICallback<void>): void {
+  initHeartbeatInstance(redisClient: RedisClient): void {
     const { keyHeartbeatConsumer, keyQueueConsumers } = this.getRedisKeys();
     const heartbeat = new Heartbeat(
       {
@@ -302,7 +308,6 @@ export class Consumer extends ExtendedBase<
     );
     heartbeat.on(events.ERROR, (err: Error) => this.emit(events.ERROR, err));
     this.heartbeat = heartbeat;
-    cb();
   }
 
   getRedisKeys(): TConsumerRedisKeys {

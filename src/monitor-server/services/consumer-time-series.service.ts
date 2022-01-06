@@ -1,6 +1,6 @@
 import { RedisClient } from '../../system/redis-client/redis-client';
-import { ConsumerDeadLetteredTimeSeries } from '../../system/time-series/consumer-dead-lettered-time-series';
-import { ConsumerAcknowledgedTimeSeries } from '../../system/time-series/consumer-acknowledged-time-series';
+import { ConsumerDeadLetteredTimeSeries } from '../../system/consumer/consumer-time-series/consumer-dead-lettered-time-series';
+import { ConsumerAcknowledgedTimeSeries } from '../../system/consumer/consumer-time-series/consumer-acknowledged-time-series';
 import { promisifyAll } from 'bluebird';
 import { AcknowledgedRequestDTO } from '../controllers/consumer-time-series/actions/acknowledged/acknowledged-request.DTO';
 import { DeadLetteredRequestDTO } from '../controllers/consumer-time-series/actions/dead-lettered/dead-lettered-request.DTO';

@@ -1,6 +1,6 @@
 import { RedisClient } from '../../system/redis-client/redis-client';
 import { promisifyAll } from 'bluebird';
-import { MultiQueueProducerPublishedTimeSeries } from '../../system/time-series/multi-queue-producer-published-time-series';
+import { MultiQueueProducerPublishedTimeSeries } from '../../system/multi-queue-producer/multi-queue-producer-time-series/multi-queue-producer-published-time-series';
 import { MultiQueueProducerTimeSeriesRequestDTO } from '../controllers/multi-queue-producer-time-series/common/multi-queue-producer-time-series-request.DTO';
 
 export class MultiQueueProducerTimeSeriesService {

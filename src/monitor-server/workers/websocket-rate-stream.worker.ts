@@ -11,16 +11,16 @@ import { events } from '../../system/common/events';
 import { Heartbeat } from '../../system/common/heartbeat/heartbeat';
 import { TimeSeries } from '../../system/common/time-series/time-series';
 import { InvalidCallbackReplyError } from '../../system/common/errors/invalid-callback-reply.error';
-import { QueuePublishedTimeSeries } from '../../system/time-series/queue-published-time-series';
-import { QueueDeadLetteredTimeSeries } from '../../system/time-series/queue-dead-lettered-time-series';
-import { QueueAcknowledgedTimeSeries } from '../../system/time-series/queue-acknowledged-time-series';
-import { GlobalPublishedTimeSeries } from '../../system/time-series/global-published-time-series';
-import { GlobalAcknowledgedTimeSeries } from '../../system/time-series/global-acknowledged-time-series';
-import { GlobalDeadLetteredTimeSeries } from '../../system/time-series/global-dead-lettered-time-series';
-import { ConsumerAcknowledgedTimeSeries } from '../../system/time-series/consumer-acknowledged-time-series';
-import { ConsumerDeadLetteredTimeSeries } from '../../system/time-series/consumer-dead-lettered-time-series';
-import { ProducerPublishedTimeSeries } from '../../system/time-series/producer-published-time-series';
-import { MultiQueueProducerPublishedTimeSeries } from '../../system/time-series/multi-queue-producer-published-time-series';
+import { QueuePublishedTimeSeries } from '../../system/producer/producer-time-series/queue-published-time-series';
+import { QueueDeadLetteredTimeSeries } from '../../system/consumer/consumer-time-series/queue-dead-lettered-time-series';
+import { QueueAcknowledgedTimeSeries } from '../../system/consumer/consumer-time-series/queue-acknowledged-time-series';
+import { GlobalPublishedTimeSeries } from '../../system/producer/producer-time-series/global-published-time-series';
+import { GlobalAcknowledgedTimeSeries } from '../../system/consumer/consumer-time-series/global-acknowledged-time-series';
+import { GlobalDeadLetteredTimeSeries } from '../../system/consumer/consumer-time-series/global-dead-lettered-time-series';
+import { ConsumerAcknowledgedTimeSeries } from '../../system/consumer/consumer-time-series/consumer-acknowledged-time-series';
+import { ConsumerDeadLetteredTimeSeries } from '../../system/consumer/consumer-time-series/consumer-dead-lettered-time-series';
+import { ProducerPublishedTimeSeries } from '../../system/producer/producer-time-series/producer-published-time-series';
+import { MultiQueueProducerPublishedTimeSeries } from '../../system/multi-queue-producer/multi-queue-producer-time-series/multi-queue-producer-published-time-series';
 
 export class WebsocketRateStreamWorker {
   protected logger;
