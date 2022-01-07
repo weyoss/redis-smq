@@ -1,10 +1,8 @@
 import { Ticker } from './ticker/ticker';
-import { ICallback } from '../../../types';
+import { ICallback, TMessageRateFields } from '../../../types';
 import { MessageRate } from '../message-rate';
 import { events } from './events';
 import * as async from 'async';
-
-type TMessageRateFields = Record<string, any>;
 
 export abstract class MessageRateWriter {
   protected writerTicker: Ticker;

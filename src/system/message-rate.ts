@@ -1,11 +1,11 @@
-import { ICallback } from '../../types';
+import { ICallback, TMessageRateFields } from '../../types';
 import { events } from './common/events';
 import { Ticker } from './common/ticker/ticker';
 import { EventEmitter } from 'events';
 import { TimeSeries } from './common/time-series/time-series';
 
 export abstract class MessageRate<
-  TMessageRateFields extends Record<string, any> = Record<string, any>,
+  MessageRateFields extends TMessageRateFields = TMessageRateFields,
 > extends EventEmitter {
   protected readerTicker: Ticker;
 
@@ -28,5 +28,5 @@ export abstract class MessageRate<
     this.readerTicker.quit();
   }
 
-  abstract getRateFields(): TMessageRateFields;
+  abstract getRateFields(): MessageRateFields;
 }

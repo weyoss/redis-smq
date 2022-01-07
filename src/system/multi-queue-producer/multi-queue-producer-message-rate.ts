@@ -1,10 +1,8 @@
-import { TQueueParams } from '../../../types';
+import {
+  IMultiQueueProducerMessageRateFields,
+  TQueueParams,
+} from '../../../types';
 import { MessageRate } from '../message-rate';
-
-export interface IMultiQueueProducerMessageRateFields {
-  publishedRate: number;
-  queuePublishedRate: Record<string, number>;
-}
 
 export class MultiQueueProducerMessageRate extends MessageRate<IMultiQueueProducerMessageRateFields> {
   protected publishedRate = 0;
