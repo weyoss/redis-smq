@@ -48,13 +48,21 @@ export type TFunction<TReturn = void, TArgs = any> = (
   ...args: TArgs[]
 ) => TReturn;
 
-export interface IConsumerMessageRateFields extends Record<string, number> {
+export type TMessageRateFields = Record<string, any>;
+
+export interface IConsumerMessageRateFields extends TMessageRateFields {
   acknowledgedRate: number;
   deadLetteredRate: number;
 }
 
-export interface IProducerMessageRateFields extends Record<string, number> {
+export interface IProducerMessageRateFields extends TMessageRateFields {
   publishedRate: number;
+}
+
+export interface IMultiQueueProducerMessageRateFields
+  extends TMessageRateFields {
+  publishedRate: number;
+  queuePublishedRate: Record<string, number>;
 }
 
 export enum RedisClientName {
