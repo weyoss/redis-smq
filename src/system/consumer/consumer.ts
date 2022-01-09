@@ -291,7 +291,8 @@ export class Consumer extends ExtendedBase<
     this.messageRate.on(events.IDLE, () => this.emit(events.IDLE));
     this.messageRateWriter = new ConsumerMessageRateWriter(
       redisClient,
-      this,
+      this.queue,
+      this.id,
       this.messageRate,
     );
   }

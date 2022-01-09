@@ -5,9 +5,12 @@ import { QueueAcknowledgedTimeSeries } from './consumer-time-series/queue-acknow
 import { QueueDeadLetteredTimeSeries } from './consumer-time-series/queue-dead-lettered-time-series';
 import { GlobalAcknowledgedTimeSeries } from './consumer-time-series/global-acknowledged-time-series';
 import { GlobalDeadLetteredTimeSeries } from './consumer-time-series/global-dead-lettered-time-series';
-import { Consumer } from './consumer';
 import { RedisClient } from '../redis-client/redis-client';
-import { ICallback, IConsumerMessageRateFields } from '../../../types';
+import {
+  ICallback,
+  IConsumerMessageRateFields,
+  TQueueParams,
+} from '../../../types';
 import * as async from 'async';
 import { MessageRateWriter } from '../common/message-rate-writer';
 
@@ -33,7 +36,8 @@ export class ConsumerMessageRateWriter extends MessageRateWriter {
   >;
   constructor(
     redisClient: RedisClient,
-    consumer: Consumer,
+    queue: TQueueParams,
+    consumerId: string,
     consumerMessageRate: ConsumerMessageRate,
   ) {
     super(consumerMessageRate);
@@ -48,24 +52,24 @@ export class ConsumerMessageRateWriter extends MessageRateWriter {
     );
     this.acknowledgedTimeSeries = ConsumerAcknowledgedTimeSeries(
       redisClient,
-      consumer.getId(),
-      consumer.getQueue(),
+      consumerId,
+      queue,
       true,
     );
     this.deadLetteredTimeSeries = ConsumerDeadLetteredTimeSeries(
       redisClient,
-      consumer.getId(),
-      consumer.getQueue(),
+      consumerId,
+      queue,
       true,
     );
     this.queueAcknowledgedRateTimeSeries = QueueAcknowledgedTimeSeries(
       redisClient,
-      consumer.getQueue(),
+      queue,
       true,
     );
     this.queueDeadLetteredTimeSeries = QueueDeadLetteredTimeSeries(
       redisClient,
-      consumer.getQueue(),
+      queue,
       true,
     );
   }
