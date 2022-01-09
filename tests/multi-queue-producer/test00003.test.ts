@@ -1,9 +1,7 @@
-import {
-  IMultiQueueProducerMessageRateFields,
-  MultiQueueProducerMessageRate,
-} from '../../src/system/multi-queue-producer/multi-queue-producer-message-rate';
+import { MultiQueueProducerMessageRate } from '../../src/system/multi-queue-producer/multi-queue-producer-message-rate';
 import { promisifyAll } from 'bluebird';
 import { events } from '../../src/system/common/events';
+import { IMultiQueueProducerMessageRateFields } from '../../types';
 
 test('MultiQueueProducer: Case 3', async () => {
   const messageRate = promisifyAll(new MultiQueueProducerMessageRate());
