@@ -1,13 +1,12 @@
 # CHANGELOG
 
-
-### 6.0.0-rc.1 (2022-01-04)
+## 6.0.0-rc.1 (2022-01-04)
 
 * Expire consumers and producers time series after 30s of inactivity.
 * Improve redisKeys versioning strategy, update docs.
 * Improve migration guide.
 
-### 6.0.0-rc.0 (2022-01-03)
+## 6.0.0-rc.0 (2022-01-03)
 
 * Implement MultiQueueProducer for publishing messages to multiple queues using a single producer instance.
 * Implement rates time series for queues, producers and consumers, allowing to move the chart to the left or the right
