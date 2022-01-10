@@ -98,12 +98,12 @@ export class MessageManager {
 
   enqueueScheduledMessages(cb: ICallback<void>): void {
     this.logger.debug(`Enqueuing scheduled messages ...`);
-    this.scheduleHandler.enqueueScheduledMessages(this.redisClient, cb);
+    this.scheduleHandler.enqueueScheduledMessages(cb);
   }
 
   scheduleMessage(message: Message, cb: ICallback<boolean>): void {
     this.logger.debug(`Scheduling message (ID ${message.getId()})...`);
-    this.scheduleHandler.schedule(message, undefined, cb);
+    this.scheduleHandler.schedule(message, cb);
   }
 
   ///

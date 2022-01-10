@@ -22,19 +22,22 @@ export class DelayHandler extends Handler {
         const messages = reply ?? [];
         if (messages.length) {
           const multi = this.redisClient.multi();
-          const tasks = messages.map((i) => (cb: () => void) => {
-            multi.lrem(keyQueueDelay, 1, i);
-            const message = Message.createFromMessage(i);
-            message.incrAttempts();
-            const delay = message.getRetryDelay();
-            message.setScheduledDelay(delay);
-            this.scheduleHandler.schedule(message, multi);
-            cb();
-          });
-          async.parallel(tasks, (err) => {
-            if (err) cb(err);
-            else this.redisClient.execMulti(multi, (err) => cb(err));
-          });
+          async.each(
+            messages,
+            (i, done) => {
+              multi.lrem(keyQueueDelay, 1, i);
+              const message = Message.createFromMessage(i);
+              message.incrAttempts();
+              const delay = message.getRetryDelay();
+              message.setScheduledDelay(delay);
+              this.scheduleHandler.schedule(message, multi);
+              done();
+            },
+            (err) => {
+              if (err) cb(err);
+              else this.redisClient.execMulti(multi, (err) => cb(err));
+            },
+          );
         } else cb();
       }
     });

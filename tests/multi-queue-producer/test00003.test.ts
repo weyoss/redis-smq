@@ -3,7 +3,7 @@ import { promisifyAll } from 'bluebird';
 import { events } from '../../src/system/common/events';
 import { IMultiQueueProducerMessageRateFields } from '../../types';
 
-test('MultiQueueProducer: Case 3', async () => {
+test('MultiQueueProducerMessageRate', async () => {
   const messageRate = promisifyAll(new MultiQueueProducerMessageRate());
 
   const rateFields1 = await new Promise<{
