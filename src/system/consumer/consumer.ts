@@ -180,7 +180,7 @@ export class Consumer extends ExtendedBase<
   protected handleReceivedMessage(json: string): void {
     const message = Message.createFromMessage(json);
     this.logger.info(`Got a new message (ID ${message.getId()})...`);
-    this.emit(events.MESSAGE_DEQUEUED, message);
+    this.emit(events.MESSAGE_RECEIVED, message);
     if (message.hasExpired()) {
       this.logger.info(
         `Message (ID ${message.getId()}) has expired. Unacknowledging...`,

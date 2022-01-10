@@ -9,7 +9,7 @@ export const events = {
 
   MESSAGE_PRODUCED: 'message_produced',
   MESSAGE_NEXT: 'message_next',
-  MESSAGE_DEQUEUED: 'message_dequeued',
+  MESSAGE_RECEIVED: 'message_received',
   MESSAGE_ACKNOWLEDGED: 'message_acknowledged',
   MESSAGE_UNACKNOWLEDGED: 'message_unacknowledged',
   MESSAGE_DEAD_LETTERED: 'message_dead_lettered',

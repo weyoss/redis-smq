@@ -28,8 +28,8 @@ export abstract class ConsumerFrontend extends EventEmitter {
       .on(events.MESSAGE_ACKNOWLEDGED, (...args: unknown[]) =>
         this.emit(events.MESSAGE_ACKNOWLEDGED, ...args),
       )
-      .on(events.MESSAGE_DEQUEUED, (...args: unknown[]) =>
-        this.emit(events.MESSAGE_DEQUEUED, ...args),
+      .on(events.MESSAGE_RECEIVED, (...args: unknown[]) =>
+        this.emit(events.MESSAGE_RECEIVED, ...args),
       );
   }
 
