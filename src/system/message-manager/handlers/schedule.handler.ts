@@ -21,6 +21,73 @@ export class ScheduleHandler extends Handler {
     this.enqueueHandler = enqueueHandler;
   }
 
+  protected scheduleMessage(
+    multi: TRedisClientMulti,
+    message: Message,
+    timestamp: number,
+  ): void {
+    const { keyQueueScheduled, keyScheduledMessages } =
+      redisKeys.getGlobalKeys();
+    message.setScheduledAt(Date.now());
+    const messageId = message.getId();
+    multi.zadd(keyQueueScheduled, timestamp, messageId);
+    multi.hset(keyScheduledMessages, messageId, JSON.stringify(message));
+  }
+
+  protected enqueueMessages = (
+    messages: Message[],
+    cb: ICallback<void>,
+  ): void => {
+    if (messages.length) {
+      const { keyQueueScheduled, keyScheduledMessages } =
+        redisKeys.getGlobalKeys();
+      async.each<Message, Error>(
+        messages,
+        (msg, done) => {
+          const message = Message.createFromMessage(msg);
+          const messageId = message.getId();
+          const multi = this.redisClient.multi();
+          this.enqueueHandler.enqueue(multi, message);
+          const nextScheduleTimestamp =
+            ScheduleHandler.getNextScheduledTimestamp(message);
+          if (nextScheduleTimestamp) {
+            multi.zadd(keyQueueScheduled, nextScheduleTimestamp, messageId);
+            multi.hset(
+              keyScheduledMessages,
+              messageId,
+              JSON.stringify(message),
+            );
+          } else {
+            multi.zrem(keyQueueScheduled, messageId);
+            multi.hdel(keyScheduledMessages, messageId);
+          }
+          this.redisClient.execMulti(multi, (err) => done(err));
+        },
+        cb,
+      );
+    } else cb();
+  };
+
+  protected fetchMessages = (ids: string[], cb: ICallback<Message[]>): void => {
+    if (ids.length) {
+      const { keyScheduledMessages } = redisKeys.getGlobalKeys();
+      this.redisClient.hmget(keyScheduledMessages, ids, (err, reply) => {
+        if (err) cb(err);
+        else {
+          const messages = (reply ?? []).map((i) =>
+            Message.createFromMessage(i),
+          );
+          cb(null, messages);
+        }
+      });
+    } else cb(null, []);
+  };
+
+  protected fetchMessageIds = (cb: ICallback<string[]>): void => {
+    const { keyQueueScheduled } = redisKeys.getGlobalKeys();
+    this.redisClient.zrangebyscore(keyQueueScheduled, 0, Date.now(), cb);
+  };
+
   getScheduledMessagesCount(cb: ICallback<number>): void {
     const { keyQueueScheduled } = redisKeys.getGlobalKeys();
     getSortedSetSize(this.redisClient, keyQueueScheduled, cb);
@@ -65,89 +132,40 @@ export class ScheduleHandler extends Handler {
     );
   }
 
-  protected scheduleMessage(
-    multi: TRedisClientMulti,
-    message: Message,
-    timestamp: number,
-  ): void {
-    const { keyQueueScheduled, keyScheduledMessages } =
-      redisKeys.getGlobalKeys();
-    message.setScheduledAt(Date.now());
-    const messageId = message.getId();
-    multi.zadd(keyQueueScheduled, timestamp, messageId);
-    multi.hset(keyScheduledMessages, messageId, JSON.stringify(message));
-  }
-
   schedule(
     message: Message,
-    multi: TRedisClientMulti | undefined,
-    cb: ICallback<boolean> = () => void 0,
+    mixed: TRedisClientMulti | ICallback<boolean>,
   ): void {
     const timestamp = ScheduleHandler.getNextScheduledTimestamp(message) ?? 0;
     if (timestamp > 0) {
-      if (multi) this.scheduleMessage(multi, message, timestamp);
-      else {
+      if (typeof mixed === 'function') {
         const multi = this.redisClient.multi();
         this.scheduleMessage(multi, message, timestamp);
         this.redisClient.execMulti(multi, (err) => {
-          if (err) cb(err);
-          else cb(null, true);
+          if (err) mixed(err);
+          else mixed(null, true);
         });
+      } else {
+        this.scheduleMessage(mixed, message, timestamp);
       }
-    } else cb(null, false);
+    } else if (typeof mixed === 'function') mixed(null, false);
   }
 
-  enqueueScheduledMessages(
-    redisClient: RedisClient,
-    cb: ICallback<void>,
-  ): void {
-    const { keyQueueScheduled, keyScheduledMessages } =
-      redisKeys.getGlobalKeys();
-    const enqueue = (messages: string[], cb: ICallback<void>) => {
-      if (messages.length) {
-        async.each<string, Error>(
-          messages,
-          (msg, done) => {
-            const message = Message.createFromMessage(msg);
-            const messageId = message.getId();
-            const multi = redisClient.multi();
-            this.enqueueHandler.enqueue(multi, message);
-            const nextScheduleTimestamp =
-              ScheduleHandler.getNextScheduledTimestamp(message);
-            if (nextScheduleTimestamp) {
-              multi.zadd(keyQueueScheduled, nextScheduleTimestamp, messageId);
-              multi.hset(
-                keyScheduledMessages,
-                messageId,
-                JSON.stringify(message),
-              );
-            } else {
-              multi.zrem(keyQueueScheduled, messageId);
-              multi.hdel(keyScheduledMessages, messageId);
-            }
-            redisClient.execMulti(multi, (err) => done(err));
-          },
-          cb,
-        );
-      } else cb();
-    };
-    const fetchIds = (cb: ICallback<string[]>) => {
-      redisClient.zrangebyscore(keyQueueScheduled, 0, Date.now(), cb);
-    };
-    const fetchMessages = (ids: string[], cb: ICallback<Message[]>) => {
-      if (ids.length) {
-        redisClient.hmget(keyScheduledMessages, ids, (err, reply) => {
-          if (err) cb(err);
-          else {
-            const messages = (reply ?? []).map((i) =>
-              Message.createFromMessage(i),
-            );
-            cb(null, messages);
-          }
-        });
-      } else cb(null, []);
-    };
-    async.waterfall([fetchIds, fetchMessages, enqueue], (err) => cb(err));
+  enqueueScheduledMessages(cb: ICallback<void>): void {
+    async.waterfall(
+      [
+        (cb: ICallback<string[]>) => {
+          this.fetchMessageIds(cb);
+        },
+        (ids: string[], cb: ICallback<Message[]>) => {
+          this.fetchMessages(ids, cb);
+        },
+        (messages: Message[], cb: ICallback<void>) => {
+          this.enqueueMessages(messages, cb);
+        },
+      ],
+      (err) => cb(err),
+    );
   }
 
   static getNextScheduledTimestamp(message: Message): number {

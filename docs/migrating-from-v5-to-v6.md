@@ -15,7 +15,7 @@ To publish a message, use the `produce()` method of your producer (`produceMessa
 
 **2. Publishing priority messages**
 
-From single producer instance you are now able to publish priority messages and non-priority messages, without the
+From a single producer instance you are now able to publish priority messages and non-priority messages, without the
 need to create a separate producer with priority queuing enabled for priority messages.
 
 **3. Priority queuing**

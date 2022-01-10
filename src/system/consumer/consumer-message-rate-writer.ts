@@ -81,7 +81,7 @@ export class ConsumerMessageRateWriter extends MessageRateWriter {
   ): void {
     const multi = this.redisClient.multi();
     for (const field in rates) {
-      const value = rates[field];
+      const value: number = rates[field];
       if (field === 'acknowledgedRate') {
         this.acknowledgedTimeSeries.add(ts, value, multi);
         this.queueAcknowledgedRateTimeSeries.add(ts, value, multi);

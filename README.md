@@ -152,7 +152,7 @@ producer.produce(message, (err) => {
 See [Producer Reference](docs/api/producer.md) for more details.
 
 RedisSMQ also provides [MultiQueueProducer](docs/api/multi-queue-producer.md) for publishing messages to multiple 
-queues from a single producer.
+queues from a single producer instance.
 
 #### Consumer Class
 
