@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 6.0.0-rc.2 (2022-01-11)
+
+* Optimize npm package size, update docs.
+* Rename event MESSAGE_DEQUEUED to MESSAGE_RECEIVED.
+* Update ConsumerMessageRateWriter constructor signature
+* Increase code coverage.
+* Small cleanup and improvements. 
+
 ## 6.0.0-rc.1 (2022-01-04)
 
 * Expire consumers and producers time series after 30s of inactivity.
