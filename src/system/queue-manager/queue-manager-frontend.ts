@@ -34,7 +34,7 @@ export class QueueManagerFrontend {
     this.queueManager.deleteMessageQueue(queueParams, cb);
   }
 
-  purgeDeadLetterQueue(
+  purgeDeadLetteredQueue(
     queue: string | TQueueParams,
     cb: ICallback<void>,
   ): void {
@@ -45,10 +45,10 @@ export class QueueManagerFrontend {
             ns: redisKeys.getNamespace(),
           }
         : queue;
-    this.queueManager.purgeDeadLetterQueue(queueParams, cb);
+    this.queueManager.purgeDeadLetteredQueue(queueParams, cb);
   }
 
-  purgeAcknowledgedMessagesQueue(
+  purgeAcknowledgedQueue(
     queue: string | TQueueParams,
     cb: ICallback<void>,
   ): void {
@@ -59,10 +59,10 @@ export class QueueManagerFrontend {
             ns: redisKeys.getNamespace(),
           }
         : queue;
-    this.queueManager.purgeAcknowledgedMessagesQueue(queueParams, cb);
+    this.queueManager.purgeAcknowledgedQueue(queueParams, cb);
   }
 
-  purgeQueue(queue: string | TQueueParams, cb: ICallback<void>): void {
+  purgePendingQueue(queue: string | TQueueParams, cb: ICallback<void>): void {
     const queueParams: TQueueParams =
       typeof queue === 'string'
         ? {
@@ -70,7 +70,7 @@ export class QueueManagerFrontend {
             ns: redisKeys.getNamespace(),
           }
         : queue;
-    this.queueManager.purgeQueue(queueParams, cb);
+    this.queueManager.purgePendingQueue(queueParams, cb);
   }
 
   purgePriorityQueue(queue: string | TQueueParams, cb: ICallback<void>): void {
@@ -84,8 +84,8 @@ export class QueueManagerFrontend {
     this.queueManager.purgePriorityQueue(queueParams, cb);
   }
 
-  purgeScheduledMessagesQueue(cb: ICallback<void>): void {
-    this.queueManager.purgeScheduledMessagesQueue(cb);
+  purgeScheduledMessages(cb: ICallback<void>): void {
+    this.queueManager.purgeScheduledMessages(cb);
   }
 
   ///

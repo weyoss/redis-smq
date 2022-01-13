@@ -29,10 +29,10 @@ getSingletonInstance(config, cb)
 
 ## Public Methods
 
-### QueueManager.prototype.purgeDeadLetterQueue
+### QueueManager.prototype.purgeDeadLetteredQueue
 
 ```javascript
-purgeDeadLetterQueue(queue, cb);
+purgeDeadLetteredQueue(queue, cb);
 ```
 
 **Parameters**
@@ -43,10 +43,10 @@ Otherwise, you can explicity provide an object which has the following signature
 - `cb(err)` *(Function): Required.* Callback function.
     - `err` *(Error | null | undefined).* Error object.
 
-### QueueManager.prototype.purgeAcknowledgedMessagesQueue
+### QueueManager.prototype.purgeAcknowledgedQueue
 
 ```javascript
-purgeAcknowledgedMessagesQueue(queue, cb);
+purgeAcknowledgedQueue(queue, cb);
 ```
 
 **Parameters**
@@ -57,10 +57,10 @@ Otherwise, you can explicity provide an object which has the following signature
 - `cb(err)` *(Function): Required.* Callback function.
     - `err` *(Error | null | undefined).* Error object.
 
-### QueueManager.prototype.purgeQueue
+### QueueManager.prototype.purgePendingQueue
 
 ```javascript
-purgeQueue(queue, cb);
+purgePendingQueue(queue, cb);
 ```
 
 **Parameters**
@@ -85,10 +85,10 @@ Otherwise, you can explicity provide an object which has the following signature
 - `cb(err)` *(Function): Required.* Callback function.
     - `err` *(Error | null | undefined).* Error object.
 
-### QueueManager.prototype.purgeScheduledMessagesQueue
+### QueueManager.prototype.purgeScheduledMessages
 
 ```javascript
-purgeScheduledMessagesQueue(cb);
+purgeScheduledMessages(cb);
 ```
 
 **Parameters**

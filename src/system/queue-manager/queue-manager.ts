@@ -218,7 +218,7 @@ export class QueueManager {
 
   ///
 
-  purgeDeadLetterQueue(queue: TQueueParams, cb: ICallback<void>): void {
+  purgeDeadLetteredQueue(queue: TQueueParams, cb: ICallback<void>): void {
     this.logger.debug(
       `Purging dead-letter queue of (${queue.name}, ${queue.ns})...`,
     );
@@ -226,10 +226,7 @@ export class QueueManager {
     this.redisClient.del(keyQueueDL, (err) => cb(err));
   }
 
-  purgeAcknowledgedMessagesQueue(
-    queue: TQueueParams,
-    cb: ICallback<void>,
-  ): void {
+  purgeAcknowledgedQueue(queue: TQueueParams, cb: ICallback<void>): void {
     this.logger.debug(
       `Purging dead-letter queue of (${queue.name}, ${queue.ns})...`,
     );
@@ -237,7 +234,7 @@ export class QueueManager {
     this.redisClient.del(keyQueueAcknowledged, (err) => cb(err));
   }
 
-  purgeQueue(queue: TQueueParams, cb: ICallback<void>): void {
+  purgePendingQueue(queue: TQueueParams, cb: ICallback<void>): void {
     this.logger.debug(
       `Purging pending queue of (${queue.name}, ${queue.ns})...`,
     );
@@ -253,11 +250,12 @@ export class QueueManager {
     this.redisClient.del(keyQueuePriority, (err) => cb(err));
   }
 
-  purgeScheduledMessagesQueue(cb: ICallback<void>): void {
+  purgeScheduledMessages(cb: ICallback<void>): void {
     this.logger.debug(`Purging scheduled messages queue...`);
     const { keyScheduledMessages } = redisKeys.getGlobalKeys();
     this.redisClient.del(keyScheduledMessages, (err) => cb(err));
   }
+
   ///
 
   getQueueProcessingQueues(

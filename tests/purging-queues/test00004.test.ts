@@ -29,7 +29,7 @@ test('Purging dead letter queue', async () => {
 
   expect(m.deadLettered).toBe(1);
 
-  await queueManager.purgeDeadLetterQueueAsync(queue);
+  await queueManager.purgeDeadLetteredQueueAsync(queue);
 
   const m2 = await queueManager.getQueueMetricsAsync(queue);
   expect(m2.deadLettered).toBe(0);
