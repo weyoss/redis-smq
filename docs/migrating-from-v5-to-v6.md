@@ -154,3 +154,10 @@ Now:
 // to undefined.
 requeueMessageFromDLQueue(queue, sequenceId, messageId, priority, cb)
 ```
+
+**9. QueueManager API methods renaming**
+
+1. purgeDeadLetterQueue() -> purgeDeadLetteredQueue()
+2. purgeAcknowledgedMessagesQueue() -> purgeAcknowledgedQueue()
+3. purgeQueue() -> purgePendingQueue()
+4. purgeScheduledMessagesQueue() -> purgeScheduledMessages()

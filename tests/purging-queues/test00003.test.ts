@@ -13,7 +13,7 @@ test('Purging acknowledged queue', async () => {
 
   expect(m.acknowledged).toBe(1);
 
-  await queueManager.purgeAcknowledgedMessagesQueueAsync(queue);
+  await queueManager.purgeAcknowledgedQueueAsync(queue);
 
   const m2 = await queueManager.getQueueMetricsAsync(queue);
   expect(m2.acknowledged).toBe(0);

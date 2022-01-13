@@ -18,7 +18,7 @@ test('Purging pending queue', async () => {
   const m2 = await queueManager.getQueueMetricsAsync(queue);
   expect(m2.pending).toBe(1);
 
-  await queueManager.purgeQueueAsync(queue);
+  await queueManager.purgePendingQueueAsync(queue);
 
   const m3 = await queueManager.getQueueMetricsAsync(queue);
   expect(m3.pending).toBe(0);
