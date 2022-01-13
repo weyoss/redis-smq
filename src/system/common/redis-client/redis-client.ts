@@ -6,7 +6,7 @@ import {
   RedisClientName,
   TCompatibleRedisClient,
   TRedisClientMulti,
-} from '../../../types';
+} from '../../../../types';
 import { EventEmitter } from 'events';
 import { ELuaScriptName, getScriptId, loadScripts } from './lua-scripts';
 import * as async from 'async';
@@ -171,6 +171,13 @@ export class RedisClient extends EventEmitter {
         }
       });
     }
+  }
+
+  exists(key: string, cb: ICallback<boolean>): void {
+    this.client.exists(key, (err, reply) => {
+      if (err) cb(err);
+      else cb(null, Boolean(reply));
+    });
   }
 
   zcard(key: string, cb: ICallback<number>): void {
@@ -465,7 +472,11 @@ export class RedisClient extends EventEmitter {
     this.client.zremrangebyscore(source, min, max, cb);
   }
 
-  hmget(source: string, keys: string[], cb: ICallback<string[]>): void {
+  hmget(
+    source: string,
+    keys: string[],
+    cb: ICallback<(string | null)[]>,
+  ): void {
     this.client.hmget(source, keys, cb);
   }
 

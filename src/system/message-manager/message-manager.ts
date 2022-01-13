@@ -7,7 +7,7 @@ import {
   TGetScheduledMessagesReply,
   TQueueParams,
 } from '../../../types';
-import { RedisClient } from '../redis-client/redis-client';
+import { RedisClient } from '../common/redis-client/redis-client';
 import { Message } from '../message';
 import { EnqueueHandler } from './handlers/enqueue.handler';
 import { DequeueHandler } from './handlers/dequeue.handler';

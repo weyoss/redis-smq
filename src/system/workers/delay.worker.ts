@@ -1,5 +1,5 @@
 import { Ticker } from '../common/ticker/ticker';
-import { RedisClient } from '../redis-client/redis-client';
+import { RedisClient } from '../common/redis-client/redis-client';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { EventEmitter } from 'events';
 import { TConsumerWorkerParameters } from '../../../types';

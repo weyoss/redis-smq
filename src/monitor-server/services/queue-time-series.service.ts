@@ -1,5 +1,5 @@
 import { QueueTimeSeriesRequestDTO } from '../controllers/queue-time-series/common/queue-time-series-request.DTO';
-import { RedisClient } from '../../system/redis-client/redis-client';
+import { RedisClient } from '../../system/common/redis-client/redis-client';
 import { QueueAcknowledgedTimeSeries } from '../../system/consumer/consumer-time-series/queue-acknowledged-time-series';
 import { QueueDeadLetteredTimeSeries } from '../../system/consumer/consumer-time-series/queue-dead-lettered-time-series';
 import { QueuePublishedTimeSeries } from '../../system/producer/producer-time-series/queue-published-time-series';

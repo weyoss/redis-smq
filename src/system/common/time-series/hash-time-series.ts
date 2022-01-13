@@ -5,7 +5,7 @@ import {
   TTimeSeriesRange,
 } from '../../../../types';
 import { ArgumentError } from '../errors/argument.error';
-import { RedisClient } from '../../redis-client/redis-client';
+import { RedisClient } from '../redis-client/redis-client';
 import { LockManager } from '../lock-manager/lock-manager';
 
 export class HashTimeSeries extends TimeSeries {

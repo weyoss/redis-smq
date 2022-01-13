@@ -3,7 +3,7 @@ import { Logger } from '../common/logger';
 import { Ticker } from '../common/ticker/ticker';
 import { events } from '../common/events';
 import { Message } from '../message';
-import { RedisClient } from '../redis-client/redis-client';
+import { RedisClient } from '../common/redis-client/redis-client';
 import {
   EMessageUnacknowledgedCause,
   ICallback,

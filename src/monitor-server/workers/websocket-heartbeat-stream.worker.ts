@@ -4,7 +4,7 @@ import {
   TWebsocketHeartbeatOnlineIdsStreamPayload,
 } from '../../../types';
 import { redisKeys } from '../../system/common/redis-keys/redis-keys';
-import { RedisClient } from '../../system/redis-client/redis-client';
+import { RedisClient } from '../../system/common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callback-reply.error';
 import { Logger } from '../../system/common/logger';
 import BLogger from 'bunyan';

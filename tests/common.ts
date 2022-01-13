@@ -1,6 +1,6 @@
 import { delay, promisifyAll } from 'bluebird';
 import { events } from '../src/system/common/events';
-import { RedisClient } from '../src/system/redis-client/redis-client';
+import { RedisClient } from '../src/system/common/redis-client/redis-client';
 import { Producer, Message, MonitorServer, Consumer } from '../index';
 import { config } from './config';
 import { ICallback, IConfig, TTimeSeriesRange } from '../types';

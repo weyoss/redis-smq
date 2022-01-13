@@ -4,7 +4,7 @@ import {
   IMultiQueueProducerMessageRateFields,
 } from '../../../types';
 import * as async from 'async';
-import { RedisClient } from '../redis-client/redis-client';
+import { RedisClient } from '../common/redis-client/redis-client';
 import { QueuePublishedTimeSeries } from '../producer/producer-time-series/queue-published-time-series';
 import { GlobalPublishedTimeSeries } from '../producer/producer-time-series/global-published-time-series';
 import { MultiQueueProducerPublishedTimeSeries } from './multi-queue-producer-time-series/multi-queue-producer-published-time-series';

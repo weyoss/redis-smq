@@ -9,7 +9,7 @@ import BLogger from 'bunyan';
 import { PowerManager } from './common/power-manager/power-manager';
 import { MessageManager } from './message-manager/message-manager';
 import { Consumer } from './consumer/consumer';
-import { RedisClient } from './redis-client/redis-client';
+import { RedisClient } from './common/redis-client/redis-client';
 
 export class Broker {
   protected logger: BLogger;

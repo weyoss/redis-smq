@@ -1,6 +1,6 @@
 import * as Koa from 'koa';
 import { IConfig } from '../../../types';
-import { RedisClient } from '../../system/redis-client/redis-client';
+import { RedisClient } from '../../system/common/redis-client/redis-client';
 import { Services } from '../services';
 import { ParameterizedContext } from 'koa';
 import Logger from 'bunyan';

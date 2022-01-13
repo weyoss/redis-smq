@@ -11,7 +11,7 @@ import {
 import { Message } from '../message';
 import { ConsumerMessageRate } from './consumer-message-rate';
 import { events } from '../common/events';
-import { RedisClient } from '../redis-client/redis-client';
+import { RedisClient } from '../common/redis-client/redis-client';
 import { resolve } from 'path';
 import { ConsumerWorkers } from './consumer-workers';
 import { WorkerRunner } from '../common/worker-runner/worker-runner';
@@ -348,6 +348,15 @@ export class Consumer extends ExtendedBase<
   ): void {
     const { keyQueueConsumers } = redisKeys.getKeys(queue.name, queue.ns);
     heartbeatRegistry.getAll(redisClient, keyQueueConsumers, transform, cb);
+  }
+
+  static getOnlineConsumerIds(
+    redisClient: RedisClient,
+    queue: TQueueParams,
+    cb: ICallback<string[]>,
+  ): void {
+    const { keyQueueConsumers } = redisKeys.getKeys(queue.name, queue.ns);
+    heartbeatRegistry.getIds(redisClient, keyQueueConsumers, cb);
   }
 
   static countOnlineConsumers(

@@ -1,4 +1,4 @@
-import { RedisClient } from '../redis-client/redis-client';
+import { RedisClient } from '../common/redis-client/redis-client';
 import {
   ICallback,
   TGetMessagesReply,
@@ -169,10 +169,26 @@ export const getPaginatedSortedSetMessages = (
       redisClient.hmget(keyMessages, reply.items, (err, msg) => {
         if (err) cb(err);
         else {
-          cb(null, {
-            total: reply.total,
-            items: (msg ?? []).map((i) => Message.createFromMessage(i)),
-          });
+          const messages: Message[] = [];
+          async.eachOf(
+            msg ?? [],
+            (item, index, done) => {
+              if (!item) done(new EmptyCallbackReplyError());
+              else {
+                messages.push(Message.createFromMessage(item));
+                done();
+              }
+            },
+            (err) => {
+              if (err) cb(err);
+              else {
+                cb(null, {
+                  total: reply.total,
+                  items: messages,
+                });
+              }
+            },
+          );
         }
       });
     }

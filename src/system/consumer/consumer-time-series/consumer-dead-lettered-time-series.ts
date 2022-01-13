@@ -1,4 +1,4 @@
-import { RedisClient } from '../../redis-client/redis-client';
+import { RedisClient } from '../../common/redis-client/redis-client';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { SortedSetTimeSeries } from '../../common/time-series/sorted-set-time-series';
 import { TQueueParams } from '../../../../types';

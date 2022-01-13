@@ -9,7 +9,7 @@ import { Message } from '../message';
 import { ProducerMessageRate } from './producer-message-rate';
 import { events } from '../common/events';
 import { redisKeys } from '../common/redis-keys/redis-keys';
-import { RedisClient } from '../redis-client/redis-client';
+import { RedisClient } from '../common/redis-client/redis-client';
 import { PanicError } from '../common/errors/panic.error';
 import { Heartbeat } from '../common/heartbeat/heartbeat';
 import { heartbeatRegistry } from '../common/heartbeat/heartbeat-registry';
@@ -113,6 +113,15 @@ export class Producer extends ExtendedBase<
   ): void {
     const { keyQueueProducers } = redisKeys.getKeys(queue.name, queue.ns);
     heartbeatRegistry.getAll(redisClient, keyQueueProducers, transform, cb);
+  }
+
+  static getOnlineProducerIds(
+    redisClient: RedisClient,
+    queue: TQueueParams,
+    cb: ICallback<string[]>,
+  ): void {
+    const { keyQueueProducers } = redisKeys.getKeys(queue.name, queue.ns);
+    heartbeatRegistry.getIds(redisClient, keyQueueProducers, cb);
   }
 
   static countOnlineProducers(

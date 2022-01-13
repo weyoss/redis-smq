@@ -1,10 +1,14 @@
-import { RedisClient } from '../redis-client/redis-client';
+import { RedisClient } from '../common/redis-client/redis-client';
 import { ICallback, IQueueMetrics, TQueueParams } from '../../../types';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { Consumer } from '../consumer/consumer';
 import * as async from 'async';
 import BLogger from 'bunyan';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
+import { Producer } from '../producer/producer';
+import { Heartbeat } from '../common/heartbeat/heartbeat';
+import { GenericError } from '../common/errors/generic.error';
+import { LockManager } from '../common/lock-manager/lock-manager';
 
 export class QueueManager {
   protected redisClient: RedisClient;
@@ -16,6 +20,173 @@ export class QueueManager {
   }
 
   ///
+
+  protected validateMessageQueueDeletion = (
+    queue: TQueueParams,
+    cb: ICallback<void>,
+  ): void => {
+    const verifyHeartbeats = (heartbeatKeys: string[], cb: ICallback<void>) => {
+      if (heartbeatKeys.length) {
+        Heartbeat.validateHeartbeatsOf(
+          this.redisClient,
+          heartbeatKeys,
+          (err, reply) => {
+            if (err) cb(err);
+            else {
+              const r = reply ?? {};
+              const onlineArr = Object.keys(r).filter((id) => r[id]);
+              if (onlineArr.length)
+                cb(
+                  new GenericError(
+                    `The queue is currently in use. Before deleting a queue, shutdown all its consumers and producers.`,
+                  ),
+                );
+            }
+          },
+        );
+      } else cb();
+    };
+    const getOnlineConsumers = (cb: ICallback<string[]>): void => {
+      Consumer.getOnlineConsumerIds(this.redisClient, queue, (err, reply) => {
+        if (err) cb(err);
+        else {
+          const heartbeatKeys = (reply ?? []).map((id) => {
+            const { keyHeartbeatConsumer } = redisKeys.getConsumerKeys(
+              queue.name,
+              id,
+              queue.ns,
+            );
+            return keyHeartbeatConsumer;
+          });
+          cb(null, heartbeatKeys);
+        }
+      });
+    };
+    const getOnlineProducers = (cb: ICallback<string[]>): void => {
+      Producer.getOnlineProducerIds(this.redisClient, queue, (err, reply) => {
+        if (err) cb(err);
+        else {
+          const heartbeatKeys = (reply ?? []).map((id) => {
+            const { keyHeartbeatProducer } = redisKeys.getProducerKeys(
+              queue.name,
+              id,
+              queue.ns,
+            );
+            return keyHeartbeatProducer;
+          });
+          cb(null, heartbeatKeys);
+        }
+      });
+    };
+    async.waterfall(
+      [
+        getOnlineConsumers,
+        verifyHeartbeats,
+        getOnlineProducers,
+        verifyHeartbeats,
+      ],
+      (err) => cb(err),
+    );
+  };
+
+  protected lockQueue = (
+    queue: TQueueParams,
+    cb: ICallback<LockManager>,
+  ): void => {
+    const { keyLockQueue } = redisKeys.getKeys(queue.name, queue.ns);
+    const lockManager = new LockManager(
+      this.redisClient,
+      keyLockQueue,
+      30000,
+      false,
+    );
+    lockManager.acquireLock((err, locked) => {
+      if (err) cb(err);
+      else if (!locked)
+        cb(new GenericError(`Could not acquire a lock. Try again later.`));
+      else cb(null, lockManager);
+    });
+  };
+
+  /**
+   * When deleting a message queue, all queue's related queues and data will be deleted from the system. If the given
+   * queue has an online consumer/producer, an error will be returned. For determining if consumer/producer is online,
+   * an additional heartbeat check is performed, so that crushed consumers/producers would not block queue deletion.
+   */
+  deleteMessageQueue(queue: TQueueParams, cb: ICallback<void>): void {
+    this.lockQueue(queue, (err) => {
+      if (err) cb(err);
+      else {
+        const {
+          keyQueuePending,
+          keyQueueDL,
+          keyQueueProcessingQueues,
+          keyQueuePriority,
+          keyQueueAcknowledged,
+          keyQueuePendingWithPriority,
+          keyRateQueueDeadLettered,
+          keyRateQueueAcknowledged,
+          keyRateQueuePublished,
+          keyRateQueueDeadLetteredIndex,
+          keyRateQueueAcknowledgedIndex,
+          keyRateQueuePublishedIndex,
+          keyLockRateQueuePublished,
+          keyLockRateQueueAcknowledged,
+          keyLockRateQueueDeadLettered,
+          keyQueueConsumers,
+          keyQueueProducers,
+          keyProcessingQueues,
+          keyQueues,
+        } = redisKeys.getKeys(queue.name, queue.ns);
+        const keys: string[] = [
+          keyQueuePending,
+          keyQueueDL,
+          keyQueueProcessingQueues,
+          keyQueuePriority,
+          keyQueueAcknowledged,
+          keyQueuePendingWithPriority,
+          keyRateQueueDeadLettered,
+          keyRateQueueAcknowledged,
+          keyRateQueuePublished,
+          keyRateQueueDeadLetteredIndex,
+          keyRateQueueAcknowledgedIndex,
+          keyRateQueuePublishedIndex,
+          keyLockRateQueuePublished,
+          keyLockRateQueueAcknowledged,
+          keyLockRateQueueDeadLettered,
+          keyQueueConsumers,
+          keyQueueProducers,
+        ];
+        const multi = this.redisClient.multi();
+        multi.srem(keyQueues, JSON.stringify(queue));
+        const handleProcessingQueues = (cb: ICallback<void>): void =>
+          this.getQueueProcessingQueues(queue, (err, reply) => {
+            if (err) cb(err);
+            else {
+              const pQueues = Object.keys(reply ?? {});
+              keys.push(...pQueues);
+              multi.srem(keyProcessingQueues, ...pQueues);
+              cb();
+            }
+          });
+        async.waterfall(
+          [
+            (cb: ICallback<void>): void =>
+              this.validateMessageQueueDeletion(queue, cb),
+            handleProcessingQueues,
+            (cb: ICallback<void>): void => {
+              multi.del(...keys);
+              cb();
+            },
+          ],
+          (err) => {
+            if (err) cb(err);
+            else this.redisClient.execMulti(multi, (err) => cb(err));
+          },
+        );
+      }
+    });
+  }
 
   deleteProcessingQueue(
     queue: TQueueParams,
@@ -81,10 +252,21 @@ export class QueueManager {
 
   purgeScheduledMessagesQueue(cb: ICallback<void>): void {
     this.logger.debug(`Purging scheduled messages queue...`);
-    const { keyQueueScheduled } = redisKeys.getGlobalKeys();
-    this.redisClient.del(keyQueueScheduled, (err) => cb(err));
+    const { keyScheduledMessages } = redisKeys.getGlobalKeys();
+    this.redisClient.del(keyScheduledMessages, (err) => cb(err));
   }
   ///
+
+  getQueueProcessingQueues(
+    queue: TQueueParams,
+    cb: ICallback<Record<string, string>>,
+  ): void {
+    const { keyQueueProcessingQueues } = redisKeys.getKeys(
+      queue.name,
+      queue.ns,
+    );
+    this.redisClient.hgetall(keyQueueProcessingQueues, cb);
+  }
 
   getProcessingQueues(cb: ICallback<string[]>): void {
     const { keyProcessingQueues } = redisKeys.getGlobalKeys();
@@ -162,20 +344,43 @@ export class QueueManager {
     );
   }
 
+  protected static checkQueueLock = (
+    redisClient: RedisClient,
+    queue: TQueueParams,
+    cb: ICallback<boolean>,
+  ): void => {
+    const { keyLockQueue } = redisKeys.getKeys(queue.name, queue.ns);
+    redisClient.exists(keyLockQueue, (err, reply) => {
+      if (err) cb(err);
+      else if (reply) cb(new GenericError(`Queue is currently locked`));
+      else cb();
+    });
+  };
+
   static setUpProcessingQueue(
     consumer: Consumer,
     redisClient: RedisClient,
     cb: ICallback<void>,
   ): void {
-    const {
-      keyQueueProcessing,
-      keyProcessingQueues,
-      keyQueueProcessingQueues,
-    } = consumer.getRedisKeys();
-    const multi = redisClient.multi();
-    multi.hset(keyQueueProcessingQueues, keyQueueProcessing, consumer.getId());
-    multi.sadd(keyProcessingQueues, keyQueueProcessing);
-    redisClient.execMulti(multi, (err) => cb(err));
+    const queue = consumer.getQueue();
+    QueueManager.checkQueueLock(redisClient, queue, (err) => {
+      if (err) cb(err);
+      else {
+        const {
+          keyQueueProcessing,
+          keyProcessingQueues,
+          keyQueueProcessingQueues,
+        } = consumer.getRedisKeys();
+        const multi = redisClient.multi();
+        multi.hset(
+          keyQueueProcessingQueues,
+          keyQueueProcessing,
+          consumer.getId(),
+        );
+        multi.sadd(keyProcessingQueues, keyQueueProcessing);
+        redisClient.execMulti(multi, (err) => cb(err));
+      }
+    });
   }
 
   static setUpMessageQueue(
@@ -183,8 +388,13 @@ export class QueueManager {
     redisClient: RedisClient,
     cb: ICallback<void>,
   ): void {
-    const { keyQueues } = redisKeys.getKeys(queue.name, queue.ns);
-    const str = JSON.stringify(queue);
-    redisClient.sadd(keyQueues, str, (err) => cb(err));
+    QueueManager.checkQueueLock(redisClient, queue, (err) => {
+      if (err) cb(err);
+      else {
+        const { keyQueues } = redisKeys.getKeys(queue.name, queue.ns);
+        const str = JSON.stringify(queue);
+        redisClient.sadd(keyQueues, str, (err) => cb(err));
+      }
+    });
   }
 }

@@ -4,7 +4,7 @@ import {
   IQueueMetrics,
   TQueueParams,
 } from '../../../types';
-import { RedisClient } from '../redis-client/redis-client';
+import { RedisClient } from '../common/redis-client/redis-client';
 import { QueueManager } from './queue-manager';
 import BLogger from 'bunyan';
 import { Logger } from '../common/logger';
@@ -22,6 +22,17 @@ export class QueueManagerFrontend {
   }
 
   ///
+
+  deleteMessageQueue(queue: string | TQueueParams, cb: ICallback<void>): void {
+    const queueParams: TQueueParams =
+      typeof queue === 'string'
+        ? {
+            name: queue,
+            ns: redisKeys.getNamespace(),
+          }
+        : queue;
+    this.queueManager.deleteMessageQueue(queueParams, cb);
+  }
 
   purgeDeadLetterQueue(
     queue: string | TQueueParams,

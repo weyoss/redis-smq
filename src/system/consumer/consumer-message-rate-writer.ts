@@ -5,7 +5,7 @@ import { QueueAcknowledgedTimeSeries } from './consumer-time-series/queue-acknow
 import { QueueDeadLetteredTimeSeries } from './consumer-time-series/queue-dead-lettered-time-series';
 import { GlobalAcknowledgedTimeSeries } from './consumer-time-series/global-acknowledged-time-series';
 import { GlobalDeadLetteredTimeSeries } from './consumer-time-series/global-dead-lettered-time-series';
-import { RedisClient } from '../redis-client/redis-client';
+import { RedisClient } from '../common/redis-client/redis-client';
 import {
   ICallback,
   IConsumerMessageRateFields,
