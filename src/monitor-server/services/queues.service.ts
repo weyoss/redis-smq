@@ -22,7 +22,7 @@ export class QueuesService {
     args: PurgeAcknowledgedMessagesRequestDTO,
   ): Promise<void> {
     const { ns, queueName } = args;
-    return this.queueManager.purgeAcknowledgedMessagesQueueAsync({
+    return this.queueManager.purgeAcknowledgedQueueAsync({
       name: queueName,
       ns,
     });
@@ -32,7 +32,7 @@ export class QueuesService {
     args: PurgeAcknowledgedMessagesRequestDTO,
   ): Promise<void> {
     const { ns, queueName } = args;
-    return this.queueManager.purgeDeadLetterQueueAsync({
+    return this.queueManager.purgeDeadLetteredQueueAsync({
       name: queueName,
       ns,
     });
@@ -40,7 +40,7 @@ export class QueuesService {
 
   async purgePendingQueue(args: PurgePendingMessagesRequestDTO): Promise<void> {
     const { ns, queueName } = args;
-    return this.queueManager.purgeQueueAsync({
+    return this.queueManager.purgePendingQueueAsync({
       name: queueName,
       ns,
     });
@@ -57,6 +57,6 @@ export class QueuesService {
   }
 
   async purgeScheduledMessagesQueue(): Promise<void> {
-    return this.queueManager.purgeScheduledMessagesQueueAsync();
+    return this.queueManager.purgeScheduledMessagesAsync();
   }
 }
