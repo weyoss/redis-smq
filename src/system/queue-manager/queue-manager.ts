@@ -114,8 +114,9 @@ export class QueueManager {
    * an additional heartbeat check is performed, so that crushed consumers/producers would not block queue deletion.
    */
   deleteMessageQueue(queue: TQueueParams, cb: ICallback<void>): void {
-    this.lockQueue(queue, (err) => {
+    this.lockQueue(queue, (err, lockManager) => {
       if (err) cb(err);
+      else if (!lockManager) cb(new EmptyCallbackReplyError());
       else {
         const {
           keyQueuePending,
@@ -178,10 +179,12 @@ export class QueueManager {
               multi.del(...keys);
               cb();
             },
+            (cb: ICallback<void>): void => {
+              this.redisClient.execMulti(multi, (err) => cb(err));
+            },
           ],
           (err) => {
-            if (err) cb(err);
-            else this.redisClient.execMulti(multi, (err) => cb(err));
+            lockManager.releaseLock(() => cb(err)); // ignore lock errors
           },
         );
       }
