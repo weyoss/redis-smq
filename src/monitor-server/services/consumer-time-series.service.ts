@@ -1,4 +1,4 @@
-import { RedisClient } from '../../system/redis-client/redis-client';
+import { RedisClient } from '../../system/common/redis-client/redis-client';
 import { ConsumerDeadLetteredTimeSeries } from '../../system/consumer/consumer-time-series/consumer-dead-lettered-time-series';
 import { ConsumerAcknowledgedTimeSeries } from '../../system/consumer/consumer-time-series/consumer-acknowledged-time-series';
 import { promisifyAll } from 'bluebird';

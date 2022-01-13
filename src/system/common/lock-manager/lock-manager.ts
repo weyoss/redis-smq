@@ -1,5 +1,5 @@
 import { ICallback } from '../../../../types';
-import { RedisClient } from '../../redis-client/redis-client';
+import { RedisClient } from '../redis-client/redis-client';
 import * as Redlock from 'redlock';
 import { EmptyCallbackReplyError } from '../errors/empty-callback-reply.error';
 import { LockManagerError } from './lock-manager.error';

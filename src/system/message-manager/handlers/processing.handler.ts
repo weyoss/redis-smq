@@ -99,8 +99,8 @@ export class ProcessingHandler extends Handler {
     if (!queue) {
       throw new PanicError(`Message queue parameters are required.`);
     }
-    const { keyQueueDelay } = redisKeys.getKeys(queue.name, queue.ns);
-    this.redisClient.rpoplpush(keyQueueProcessing, keyQueueDelay, (err) =>
+    const { keyDelayedMessages } = redisKeys.getKeys(queue.name, queue.ns);
+    this.redisClient.rpoplpush(keyQueueProcessing, keyDelayedMessages, (err) =>
       cb(err),
     );
   }
@@ -115,8 +115,8 @@ export class ProcessingHandler extends Handler {
     if (!queue) {
       throw new PanicError(`Message parameters are required`);
     }
-    const { keyQueueRequeue } = redisKeys.getKeys(queue.name, queue.ns);
-    this.redisClient.rpoplpush(keyQueueProcessing, keyQueueRequeue, (err) =>
+    const { keyMessagesRequeue } = redisKeys.getKeys(queue.name, queue.ns);
+    this.redisClient.rpoplpush(keyQueueProcessing, keyMessagesRequeue, (err) =>
       cb(err),
     );
   }

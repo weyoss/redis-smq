@@ -9,7 +9,7 @@ import { MessageRate } from './message-rate';
 import { events } from './common/events';
 import { Broker } from './broker';
 import { redisKeys } from './common/redis-keys/redis-keys';
-import { RedisClient } from './redis-client/redis-client';
+import { RedisClient } from './common/redis-client/redis-client';
 import { MessageManager } from './message-manager/message-manager';
 import { Message } from './message';
 import { EmptyCallbackReplyError } from './common/errors/empty-callback-reply.error';

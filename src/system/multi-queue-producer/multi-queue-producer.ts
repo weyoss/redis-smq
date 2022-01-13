@@ -9,7 +9,7 @@ import { events } from '../common/events';
 import { PanicError } from '../common/errors/panic.error';
 import { MultiQueueProducerMessageRate } from './multi-queue-producer-message-rate';
 import { redisKeys } from '../common/redis-keys/redis-keys';
-import { RedisClient } from '../redis-client/redis-client';
+import { RedisClient } from '../common/redis-client/redis-client';
 import { Heartbeat } from '../common/heartbeat/heartbeat';
 import { QueueManager } from '../queue-manager/queue-manager';
 import { Base } from '../base';

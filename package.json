@@ -83,7 +83,7 @@
     "build:clean": "rimraf dist",
     "prebuild": "npm run build:clean",
     "build": "tsc",
-    "postbuild": "cp -r src/system/redis-client/lua dist/src/system/redis-client/",
+    "postbuild": "cp -r src/system/common/redis-client/lua dist/src/system/common/redis-client/",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
     "lint": "eslint \"{src,tests,types}/**/*.ts\" --fix",
     "pretest": "npm run build",

@@ -1,5 +1,5 @@
 import { Ticker } from '../common/ticker/ticker';
-import { RedisClient } from '../redis-client/redis-client';
+import { RedisClient } from '../common/redis-client/redis-client';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { Message } from '../message';
 import * as async from 'async';
@@ -20,8 +20,8 @@ export class RequeueWorker {
   }
 
   onTick = (): void => {
-    const { keyQueueRequeue } = this.redisKeys;
-    this.redisClient.lrange(keyQueueRequeue, 0, 99, (err, reply) => {
+    const { keyMessagesRequeue } = this.redisKeys;
+    this.redisClient.lrange(keyMessagesRequeue, 0, 99, (err, reply) => {
       if (err) throw err;
       const messages = reply ?? [];
       if (messages.length) {
@@ -36,7 +36,7 @@ export class RequeueWorker {
             name,
             ns,
           );
-          multi.lrem(keyQueueRequeue, 1, i);
+          multi.lrem(keyMessagesRequeue, 1, i);
           message.incrAttempts();
           if (message.isWithPriority()) {
             const priority = message.getPriority();

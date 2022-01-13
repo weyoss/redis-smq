@@ -2,7 +2,7 @@ import { TConsumerWorkerParameters } from '../../../types';
 import { Ticker } from '../common/ticker/ticker';
 import { MessageManager } from '../message-manager/message-manager';
 import { redisKeys } from '../common/redis-keys/redis-keys';
-import { RedisClient } from '../redis-client/redis-client';
+import { RedisClient } from '../common/redis-client/redis-client';
 import { Logger } from '../common/logger';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 

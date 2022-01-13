@@ -4,7 +4,7 @@ import { getListMessageAtSequenceId } from '../common';
 import { Message } from '../../message';
 import { Handler } from './handler';
 import { EnqueueHandler } from './enqueue.handler';
-import { RedisClient } from '../../redis-client/redis-client';
+import { RedisClient } from '../../common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
 
 export class RequeueHandler extends Handler {

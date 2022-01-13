@@ -6,7 +6,7 @@ import {
 } from '../../../types';
 import { Ticker } from '../common/ticker/ticker';
 import { Heartbeat } from '../common/heartbeat/heartbeat';
-import { RedisClient } from '../redis-client/redis-client';
+import { RedisClient } from '../common/redis-client/redis-client';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 

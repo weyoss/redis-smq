@@ -1,4 +1,4 @@
-import { RedisClient } from '../../system/redis-client/redis-client';
+import { RedisClient } from '../../system/common/redis-client/redis-client';
 import { promisifyAll } from 'bluebird';
 import { TimeSeriesRequestDTO } from '../controllers/common/time-series/time-series-request.DTO';
 import { GlobalDeadLetteredTimeSeries } from '../../system/consumer/consumer-time-series/global-dead-lettered-time-series';

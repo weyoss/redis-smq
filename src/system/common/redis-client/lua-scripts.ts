@@ -1,8 +1,8 @@
 import * as fs from 'fs';
-import { ICallback } from '../../../types';
+import { ICallback } from '../../../../types';
 import * as async from 'async';
 import { RedisClient } from './redis-client';
-import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
+import { EmptyCallbackReplyError } from '../errors/empty-callback-reply.error';
 import { RedisClientError } from './redis-client.error';
 
 export enum ELuaScriptName {

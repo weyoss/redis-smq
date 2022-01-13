@@ -1,5 +1,5 @@
 import { ICallback, TQueueParams } from '../../../../types';
-import { RedisClient } from '../../redis-client/redis-client';
+import { RedisClient } from '../../common/redis-client/redis-client';
 import { Ticker } from '../../common/ticker/ticker';
 import { events } from '../../common/events';
 import { Handler } from './handler';

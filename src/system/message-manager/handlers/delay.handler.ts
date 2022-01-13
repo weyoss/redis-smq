@@ -4,7 +4,7 @@ import * as async from 'async';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { ICallback } from '../../../../types';
 import { Handler } from './handler';
-import { RedisClient } from '../../redis-client/redis-client';
+import { RedisClient } from '../../common/redis-client/redis-client';
 
 export class DelayHandler extends Handler {
   protected scheduleHandler: ScheduleHandler;
@@ -15,8 +15,8 @@ export class DelayHandler extends Handler {
   }
 
   schedule(cb: ICallback<void>): void {
-    const { keyQueueDelay } = redisKeys.getGlobalKeys();
-    this.redisClient.lrange(keyQueueDelay, 0, 99, (err, reply) => {
+    const { keyDelayedMessages } = redisKeys.getGlobalKeys();
+    this.redisClient.lrange(keyDelayedMessages, 0, 99, (err, reply) => {
       if (err) cb(err);
       else {
         const messages = reply ?? [];
@@ -25,7 +25,7 @@ export class DelayHandler extends Handler {
           async.each(
             messages,
             (i, done) => {
-              multi.lrem(keyQueueDelay, 1, i);
+              multi.lrem(keyDelayedMessages, 1, i);
               const message = Message.createFromMessage(i);
               message.incrAttempts();
               const delay = message.getRetryDelay();

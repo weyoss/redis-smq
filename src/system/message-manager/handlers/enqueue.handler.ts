@@ -7,7 +7,7 @@ import {
   TRedisClientMulti,
 } from '../../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { RedisClient } from '../../redis-client/redis-client';
+import { RedisClient } from '../../common/redis-client/redis-client';
 import {
   deleteListMessageAtSequenceId,
   getPaginatedListMessages,

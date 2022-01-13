@@ -8,7 +8,7 @@ import * as async from 'async';
 import { ProducerPublishedTimeSeries } from './producer-time-series/producer-published-time-series';
 import { QueuePublishedTimeSeries } from './producer-time-series/queue-published-time-series';
 import { GlobalPublishedTimeSeries } from './producer-time-series/global-published-time-series';
-import { RedisClient } from '../redis-client/redis-client';
+import { RedisClient } from '../common/redis-client/redis-client';
 import { ProducerMessageRate } from './producer-message-rate';
 
 export class ProducerMessageRateWriter extends MessageRateWriter {

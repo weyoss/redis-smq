@@ -1,6 +1,6 @@
 import { Ticker } from '../common/ticker/ticker';
 import { LockManager } from '../common/lock-manager/lock-manager';
-import { RedisClient } from '../redis-client/redis-client';
+import { RedisClient } from '../common/redis-client/redis-client';
 import { WorkerRunner } from '../common/worker-runner/worker-runner';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { EventEmitter } from 'events';

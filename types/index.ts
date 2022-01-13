@@ -112,7 +112,8 @@ export type TCompatibleRedisClient = (NodeRedis | Redis) & {
   set(key: string, value: string, cb: ICallback<string>): void;
   del(key: string, cb: ICallback<number>): void;
   zrem(key: string, value: string | string[], cb: ICallback<number>): void;
-  hmget(source: string, keys: string[], cb: ICallback<string[]>): void;
+  hmget(source: string, keys: string[], cb: ICallback<(string | null)[]>): void;
+  exists(key: string, cb: ICallback<number>): void;
 };
 
 export type TRedisClientMulti = (Multi | IORedis.Pipeline) & {

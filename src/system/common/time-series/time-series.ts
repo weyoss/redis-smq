@@ -3,7 +3,7 @@ import {
   TRedisClientMulti,
   TTimeSeriesRange,
 } from '../../../../types';
-import { RedisClient } from '../../redis-client/redis-client';
+import { RedisClient } from '../redis-client/redis-client';
 import { Ticker } from '../ticker/ticker';
 import { events } from '../events';
 import { EventEmitter } from 'events';

@@ -11,13 +11,13 @@ enum ERedisKey {
   KEY_QUEUE_PENDING = 1,
   KEY_QUEUE_PENDING_WITH_PRIORITY,
   KEY_QUEUE_DL,
-  KEY_QUEUE_DELAY,
-  KEY_QUEUE_REQUEUE,
-  KEY_QUEUE_SCHEDULED,
+  KEY_DELAYED_MESSAGES,
+  KEY_MESSAGES_REQUEUE,
+  KEY_SCHEDULED_MESSAGES,
   KEY_QUEUE_PRIORITY,
   KEY_QUEUE_PROCESSING,
   KEY_QUEUE_ACKNOWLEDGED,
-  KEY_QUEUE_UNACKNOWLEDGED,
+  RESERVED,
   KEY_QUEUE_CONSUMERS,
   KEY_QUEUE_PRODUCERS,
   KEY_QUEUE_PROCESSING_QUEUES, // Redis key for processing queues of a given queue
@@ -63,11 +63,12 @@ enum ERedisKey {
   KEY_HEARTBEAT_TIMESTAMPS,
   KEY_HEARTBEAT_MULTI_QUEUE_PRODUCER,
 
-  KEY_SCHEDULED_MESSAGES,
+  KEY_SCHEDULED_MESSAGES_INDEX,
   KEY_HEARTBEATS,
   KEY_MULTI_QUEUE_PRODUCERS,
   KEY_QUEUES,
   KEY_PROCESSING_QUEUES,
+  KEY_LOCK_QUEUE,
 }
 
 export const redisKeys = {
@@ -95,10 +96,6 @@ export const redisKeys = {
       ),
       keyQueueAcknowledged: this.joinSegments(
         ERedisKey.KEY_QUEUE_ACKNOWLEDGED,
-        queueName,
-      ),
-      keyQueueUnacknowledged: this.joinSegments(
-        ERedisKey.KEY_QUEUE_UNACKNOWLEDGED,
         queueName,
       ),
       keyQueuePendingWithPriority: this.joinSegments(
@@ -149,6 +146,7 @@ export const redisKeys = {
         ERedisKey.KEY_QUEUE_PRODUCERS,
         queueName,
       ),
+      keyLockQueue: this.joinSegments(ERedisKey.KEY_LOCK_QUEUE, queueName),
     };
     return {
       ...globalKeys,
@@ -307,9 +305,10 @@ export const redisKeys = {
         ERedisKey.KEY_LOCK_WEBSOCKET_HEARTBEAT_STREAM_WORKER,
       keyLockWebsocketOnlineStreamWorker:
         ERedisKey.KEY_LOCK_WEBSOCKET_ONLINE_STREAM_WORKER,
-      keyQueueDelay: ERedisKey.KEY_QUEUE_DELAY,
-      keyQueueRequeue: ERedisKey.KEY_QUEUE_REQUEUE,
-      keyQueueScheduled: ERedisKey.KEY_QUEUE_SCHEDULED,
+      keyDelayedMessages: ERedisKey.KEY_DELAYED_MESSAGES,
+      keyMessagesRequeue: ERedisKey.KEY_MESSAGES_REQUEUE,
+      keyScheduledMessages: ERedisKey.KEY_SCHEDULED_MESSAGES,
+      keyScheduledMessagesIndex: ERedisKey.KEY_SCHEDULED_MESSAGES_INDEX,
       keyLockDeleteAcknowledgedMessage:
         ERedisKey.KEY_LOCK_DELETE_ACKNOWLEDGED_MESSAGE,
       keyLockDeleteDeadLetterMessage:
@@ -319,7 +318,6 @@ export const redisKeys = {
       keyLockDeletePendingMessage: ERedisKey.KEY_LOCK_DELETE_PENDING_MESSAGE,
       keyLockDeletePendingMessageWithPriority:
         ERedisKey.KEY_LOCK_DELETE_PENDING_MESSAGE_WITH_PRIORITY,
-      keyScheduledMessages: ERedisKey.KEY_SCHEDULED_MESSAGES,
       keyRateGlobalDeadLettered: ERedisKey.KEY_RATE_GLOBAL_DEAD_LETTERED,
       keyRateGlobalAcknowledged: ERedisKey.KEY_RATE_GLOBAL_ACKNOWLEDGED,
       keyRateGlobalPublished: ERedisKey.KEY_RATE_GLOBAL_PUBLISHED,

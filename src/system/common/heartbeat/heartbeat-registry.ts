@@ -3,7 +3,7 @@ import {
   THeartbeatRegistryPayload,
   TRedisClientMulti,
 } from '../../../../types';
-import { RedisClient } from '../../redis-client/redis-client';
+import { RedisClient } from '../redis-client/redis-client';
 import * as os from 'os';
 import * as async from 'async';
 
@@ -75,6 +75,14 @@ export const heartbeatRegistry = {
         } else cb(null, reply ?? {});
       }
     });
+  },
+
+  getIds(
+    client: RedisClient,
+    keyRegistry: string,
+    cb: ICallback<string[]>,
+  ): void {
+    client.hkeys(keyRegistry, cb);
   },
 
   count(client: RedisClient, keyRegistry: string, cb: ICallback<number>): void {

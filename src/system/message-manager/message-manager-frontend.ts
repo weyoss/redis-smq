@@ -6,7 +6,7 @@ import {
   TGetScheduledMessagesReply,
   TQueueParams,
 } from '../../../types';
-import { RedisClient } from '../redis-client/redis-client';
+import { RedisClient } from '../common/redis-client/redis-client';
 import { MessageManager } from './message-manager';
 import BLogger from 'bunyan';
 import { Logger } from '../common/logger';

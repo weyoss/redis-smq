@@ -8,11 +8,13 @@ import {
 } from '../../../../types';
 import { Ticker } from '../ticker/ticker';
 import { events } from '../events';
-import { RedisClient } from '../../redis-client/redis-client';
+import { RedisClient } from '../redis-client/redis-client';
 import { redisKeys } from '../redis-keys/redis-keys';
 import { EventEmitter } from 'events';
 import { EmptyCallbackReplyError } from '../errors/empty-callback-reply.error';
 import { heartbeatRegistry } from './heartbeat-registry';
+import { InvalidCallbackReplyError } from '../errors/invalid-callback-reply.error';
+import { PanicError } from '../errors/panic.error';
 
 const cpuUsageStatsRef = {
   cpuUsage: process.cpuUsage(),
@@ -128,6 +130,37 @@ export class Heartbeat extends EventEmitter {
     );
   }
 
+  static validateHeartbeatsOf(
+    redisClient: RedisClient,
+    heartbeatKeys: string[],
+    cb: ICallback<Record<string, boolean>>,
+  ): void {
+    const keyHeartbeatIndex = redisKeys.getGlobalKeys().keyHeartbeats;
+    redisClient.hmget(keyHeartbeatIndex, heartbeatKeys, (err, reply) => {
+      if (err) cb(err);
+      else if (!reply || reply.length !== heartbeatKeys.length)
+        cb(new InvalidCallbackReplyError());
+      else {
+        const r: Record<string, boolean> = {};
+        async.eachOf(
+          heartbeatKeys,
+          (item, index, done) => {
+            const idx = Number(index);
+            const payload = reply[idx];
+            if (payload) {
+              const { timestamp: heartbeatTimestamp }: THeartbeatPayload =
+                JSON.parse(payload);
+              const timestamp = Date.now() - 10 * 1000;
+              r[heartbeatKeys[idx]] = heartbeatTimestamp > timestamp;
+            } else r[heartbeatKeys[idx]] = false;
+            done();
+          },
+          () => cb(null, r),
+        );
+      }
+    });
+  }
+
   static getValidHeartbeats(
     redisClient: RedisClient,
     transform: boolean,
@@ -153,19 +186,36 @@ export class Heartbeat extends EventEmitter {
           });
           redisClient.hmget(keyHeartbeats, keys, (err, res) => {
             if (err) cb(err);
-            else if (!res) cb(new EmptyCallbackReplyError());
+            else if (!res || res.length !== keys.length)
+              cb(new EmptyCallbackReplyError());
             else {
-              const heartbeats = res.map((payloadStr, index) => {
-                const key = keys[index];
-                const payload: THeartbeatPayloadData | string = transform
-                  ? JSON.parse(payloadStr)
-                  : payloadStr;
-                return {
-                  key,
-                  payload,
-                };
-              });
-              cb(null, heartbeats);
+              const heartbeats: {
+                key: string;
+                payload: THeartbeatPayloadData | string;
+              }[] = [];
+              async.eachOf(
+                res,
+                (payloadStr, index, done) => {
+                  const idx = Number(index);
+                  if (!payloadStr) {
+                    done(new PanicError(`Expected a non-empty string`));
+                  } else {
+                    const key = keys[idx];
+                    const payload: THeartbeatPayloadData | string = transform
+                      ? JSON.parse(payloadStr)
+                      : payloadStr;
+                    heartbeats.push({
+                      key,
+                      payload,
+                    });
+                    done();
+                  }
+                },
+                (err) => {
+                  if (err) cb(err);
+                  else cb(null, heartbeats);
+                },
+              );
             }
           });
         } else cb(null, []);
