@@ -98,10 +98,10 @@ Otherwise, you can explicity provide an object which has the following signature
 - `cb(err)` *(Function): Required.* Callback function.
     - `err` *(Error | null | undefined).* Error object.
 
-### QueueManager.prototype.purgeScheduledMessages
+### QueueManager.prototype.purgeScheduledQueue
 
 ```javascript
-purgeScheduledMessages(cb);
+purgeScheduledQueue(cb);
 ```
 
 **Parameters**

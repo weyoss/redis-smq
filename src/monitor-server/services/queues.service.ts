@@ -56,7 +56,7 @@ export class QueuesService {
     });
   }
 
-  async purgeScheduledMessagesQueue(): Promise<void> {
-    return this.queueManager.purgeScheduledMessagesAsync();
+  async purgeScheduledQueue(): Promise<void> {
+    return this.queueManager.purgeScheduledQueueAsync();
   }
 }
