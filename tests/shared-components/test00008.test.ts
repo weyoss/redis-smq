@@ -11,7 +11,7 @@ test('HashTimeSeries: Case 4', async () => {
       'my-key',
       'my-key-index',
       'my-key-lock',
-      5,
+      5, // data will expire after 5s of inactivity
       20,
       undefined,
       true,
@@ -22,7 +22,9 @@ test('HashTimeSeries: Case 4', async () => {
     await hashTimeSeries.addAsync(ts + i, i);
   }
 
-  await delay(15000);
+  // Retention time is 20 but as data will be expired after 5s
+  // we just wait 10 seconds. After which, we expect time series data filled with 0 values.
+  await delay(10000);
 
   const range1 = await hashTimeSeries.getRangeAsync(ts, ts + 10);
   expect(range1.length).toEqual(10);

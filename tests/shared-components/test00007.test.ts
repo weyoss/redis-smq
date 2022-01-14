@@ -22,11 +22,13 @@ test('SortedSetTimeSeries: Case 2', async () => {
 
   const range1 = await sortedSetTimeSeries.getRangeAsync(ts, ts + 10);
 
-  await delay(15000);
+  // Time series cleanup ticker run once each 10s.
+  // It needs 2 rounds to clean up data (saved 10 seconds time range).
+  // In each round, data older than 5 seconds from run time, get deleted.
+  // Waiting extra 10 seconds to exclude errors due to javascript time drift.
+  // In the end, we expect that range2 is filled with 0 values (after 30s all data should be expired and deleted)
+  await delay(30000);
   const range2 = await sortedSetTimeSeries.getRangeAsync(ts, ts + 10);
-
-  await delay(15000);
-  const range3 = await sortedSetTimeSeries.getRangeAsync(ts, ts + 10);
 
   expect(range1.length).toEqual(10);
   expect(range1[0]).toEqual({ timestamp: ts, value: 0 });
@@ -47,22 +49,10 @@ test('SortedSetTimeSeries: Case 2', async () => {
   expect(range2[3]).toEqual({ timestamp: ts + 3, value: 0 });
   expect(range2[4]).toEqual({ timestamp: ts + 4, value: 0 });
   expect(range2[5]).toEqual({ timestamp: ts + 5, value: 0 });
-  expect(range2[6]).toEqual({ timestamp: ts + 6, value: 6 });
-  expect(range2[7]).toEqual({ timestamp: ts + 7, value: 7 });
-  expect(range2[8]).toEqual({ timestamp: ts + 8, value: 8 });
-  expect(range2[9]).toEqual({ timestamp: ts + 9, value: 9 });
-
-  expect(range3.length).toEqual(10);
-  expect(range3[0]).toEqual({ timestamp: ts, value: 0 });
-  expect(range3[1]).toEqual({ timestamp: ts + 1, value: 0 });
-  expect(range3[2]).toEqual({ timestamp: ts + 2, value: 0 });
-  expect(range3[3]).toEqual({ timestamp: ts + 3, value: 0 });
-  expect(range3[4]).toEqual({ timestamp: ts + 4, value: 0 });
-  expect(range3[5]).toEqual({ timestamp: ts + 5, value: 0 });
-  expect(range3[6]).toEqual({ timestamp: ts + 6, value: 0 });
-  expect(range3[7]).toEqual({ timestamp: ts + 7, value: 0 });
-  expect(range3[8]).toEqual({ timestamp: ts + 8, value: 0 });
-  expect(range3[9]).toEqual({ timestamp: ts + 9, value: 0 });
+  expect(range2[6]).toEqual({ timestamp: ts + 6, value: 0 });
+  expect(range2[7]).toEqual({ timestamp: ts + 7, value: 0 });
+  expect(range2[8]).toEqual({ timestamp: ts + 8, value: 0 });
+  expect(range2[9]).toEqual({ timestamp: ts + 9, value: 0 });
 
   await sortedSetTimeSeries.quitAsync();
 });
