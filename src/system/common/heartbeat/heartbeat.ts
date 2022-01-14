@@ -14,7 +14,6 @@ import { EventEmitter } from 'events';
 import { EmptyCallbackReplyError } from '../errors/empty-callback-reply.error';
 import { heartbeatRegistry } from './heartbeat-registry';
 import { InvalidCallbackReplyError } from '../errors/invalid-callback-reply.error';
-import { PanicError } from '../errors/panic.error';
 
 const cpuUsageStatsRef = {
   cpuUsage: process.cpuUsage(),
@@ -204,10 +203,10 @@ export class Heartbeat extends EventEmitter {
               async.eachOf(
                 res,
                 (payloadStr, index, done) => {
-                  const idx = Number(index);
-                  if (!payloadStr) {
-                    done(new PanicError(`Expected a non-empty string`));
-                  } else {
+                  // A consumer/producer could go offline at the time while we are processing heartbeats
+                  // If a heartbeat is not found, do not return an error. Just skip it.
+                  if (payloadStr) {
+                    const idx = Number(index);
                     const key = keys[idx];
                     const payload: THeartbeatPayloadData | string = transform
                       ? JSON.parse(payloadStr)
@@ -217,7 +216,7 @@ export class Heartbeat extends EventEmitter {
                       payload,
                     });
                     done();
-                  }
+                  } else done();
                 },
                 (err) => {
                   if (err) cb(err);
