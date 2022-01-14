@@ -4,8 +4,6 @@ import { Message } from '../../index';
 test('Produce and consume 100 messages', async () => {
   const producer = getProducer();
   const consumer = getConsumer();
-  const consume = jest.spyOn(consumer, 'consume');
-  consumer.run();
 
   const total = 100;
   const publishedMsg: Message[] = [];
@@ -16,13 +14,18 @@ test('Produce and consume 100 messages', async () => {
     publishedMsg.push(msg);
   }
 
+  const deliveredMessages: Message[] = [];
+  consumer.consume = (msg, cb) => {
+    deliveredMessages.push(msg);
+    cb();
+  };
+  await consumer.runAsync();
   await untilConsumerIdle(consumer);
 
-  expect(consume).toHaveBeenCalledTimes(total);
-  expect(publishedMsg[0].getId()).toStrictEqual(
-    consume.mock.calls[total - 1][0].getId(),
-  );
-  expect(publishedMsg[0].getBody()).toStrictEqual(
-    consume.mock.calls[total - 1][0].getBody(),
-  );
+  expect(deliveredMessages.length).toEqual(publishedMsg.length);
+  for (let i = 0; i < total; i += 1) {
+    expect(publishedMsg[i].getId()).toStrictEqual(
+      deliveredMessages[total - i - 1].getId(),
+    );
+  }
 });
