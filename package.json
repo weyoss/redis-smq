@@ -1,6 +1,6 @@
 {
   "name": "redis-smq",
-  "version": "6.0.0-rc.2",
+  "version": "6.0.0-rc.3",
   "description": "A simple high-performance Redis message queue for Node.js.",
   "author": "Weyoss <weyoss@protonmail.com>",
   "license": "MIT",
@@ -53,9 +53,9 @@
     "@types/debug": "4.1.7",
     "@types/jest": "27.0.2",
     "@types/koa": "2.13.4",
-    "@types/koa-bodyparser": "4.3.3",
     "@types/koa__cors": "3.0.3",
     "@types/koa__router": "8.0.8",
+    "@types/koa-bodyparser": "4.3.3",
     "@types/lodash": "4.14.175",
     "@types/node": "16.10.2",
     "@types/redlock": "4.0.2",

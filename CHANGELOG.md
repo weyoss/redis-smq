@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## 6.0.0-rc.3 (2022-01-14)
+
+* Allow to delete a message queue alongside with its related data.
+* Make sure to release queue lock before returning.
+* Improve QueueManager API method names, update docs.
+* Update QueueManager API reference (add deleteMessageQueue() method).
+* Fix QueueManager broken method references in the Web UI.
+* Rename purgeScheduledMessages() to purgeScheduledQueue().
+* Test deleting queues, wait for a heartbeat before returning during startup.
+* Update QueueManager API reference.
+* Fix random errors from tests/consuming-messages/test00003.
+* Fix random test errors due to javascript time drift.
+* Do not return an error if a heartbeat is not found. Just skip it.
+
 ## 6.0.0-rc.2 (2022-01-11)
 
 * Optimize npm package size, update docs.
