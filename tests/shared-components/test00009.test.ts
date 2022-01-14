@@ -6,14 +6,24 @@ import { SortedSetTimeSeries } from '../../src/system/common/time-series/sorted-
 test('SortedSetTimeSeries: Case 3', async () => {
   const redisClient = await getRedisInstance();
   const sortedSetSeries = promisifyAll(
-    new SortedSetTimeSeries(redisClient, 'my-key', 5, 20, undefined, true),
+    new SortedSetTimeSeries(
+      redisClient,
+      'my-key',
+      5, // data will expire after 5s of inactivity
+      20,
+      undefined,
+      true,
+    ),
   );
+
   const ts = TimeSeries.getCurrentTimestamp();
   for (let i = 0; i < 10; i += 1) {
     await sortedSetSeries.addAsync(ts + i, i);
   }
 
-  await delay(15000);
+  // Retention time is 20 but as data will be expired after 5s
+  // we just wait 10 seconds. After which, we expect time series data filled with 0 values.
+  await delay(10000);
 
   const range1 = await sortedSetSeries.getRangeAsync(ts, ts + 10);
   expect(range1.length).toEqual(10);
