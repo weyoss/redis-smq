@@ -225,10 +225,17 @@ export abstract class Base<
     this.powerManager.goingUp();
     this.emit(events.GOING_UP);
     const tasks = this.goingUp();
-    async.waterfall(tasks, () => {
-      this.powerManager.commit();
-      this.emit(events.UP);
-      cb && cb();
+    async.waterfall(tasks, (err) => {
+      if (err) {
+        if (cb) cb(err);
+        else this.emit(events.ERROR, err);
+      } else {
+        this.heartbeat?.once(events.HEARTBEAT_TICK, () => {
+          this.powerManager.commit();
+          this.emit(events.UP);
+          cb && cb();
+        });
+      }
     });
   }
 
@@ -237,6 +244,7 @@ export abstract class Base<
     this.emit(events.GOING_DOWN);
     const tasks = this.goingDown();
     async.waterfall(tasks, () => {
+      // ignoring shutdown errors
       this.powerManager.commit();
       this.emit(events.DOWN);
       cb && cb();

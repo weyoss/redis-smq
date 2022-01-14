@@ -107,7 +107,15 @@ export class Heartbeat extends EventEmitter {
     multi.zadd(this.keyHeartbeatTimestamps, timestamp, heartbeatParamsStr);
     this.redisClient.execMulti(multi, (err) => {
       if (err) this.emit(events.ERROR, err);
-      else this.ticker.nextTick();
+      else {
+        this.emit(
+          events.HEARTBEAT_TICK,
+          timestamp,
+          this.heartbeatParams,
+          heartbeatPayload,
+        );
+        this.ticker.nextTick();
+      }
     });
   }
 

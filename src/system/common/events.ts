@@ -15,4 +15,5 @@ export const events = {
   MESSAGE_DEAD_LETTERED: 'message_dead_lettered',
 
   RATE_TICK: 'rate_tick',
+  HEARTBEAT_TICK: 'heartbeat_tick',
 };

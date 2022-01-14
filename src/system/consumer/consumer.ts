@@ -299,7 +299,7 @@ export class Consumer extends ExtendedBase<
 
   initHeartbeatInstance(redisClient: RedisClient): void {
     const { keyHeartbeatConsumer, keyQueueConsumers } = this.getRedisKeys();
-    const heartbeat = new Heartbeat(
+    this.heartbeat = new Heartbeat(
       {
         keyHeartbeat: keyHeartbeatConsumer,
         keyInstanceRegistry: keyQueueConsumers,
@@ -307,8 +307,9 @@ export class Consumer extends ExtendedBase<
       },
       redisClient,
     );
-    heartbeat.on(events.ERROR, (err: Error) => this.emit(events.ERROR, err));
-    this.heartbeat = heartbeat;
+    this.heartbeat.on(events.ERROR, (err: Error) =>
+      this.emit(events.ERROR, err),
+    );
   }
 
   getRedisKeys(): TConsumerRedisKeys {

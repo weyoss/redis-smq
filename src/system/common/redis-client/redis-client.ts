@@ -173,6 +173,10 @@ export class RedisClient extends EventEmitter {
     }
   }
 
+  sismember(key: string, member: string, cb: ICallback<number>): void {
+    this.client.sismember(key, member, cb);
+  }
+
   exists(key: string, cb: ICallback<boolean>): void {
     this.client.exists(key, (err, reply) => {
       if (err) cb(err);
