@@ -36,7 +36,7 @@ export class MultiQueueProducer extends Base<MultiQueueProducerMessageRate> {
   initHeartbeatInstance(redisClient: RedisClient): void {
     const { keyHeartbeatMultiQueueProducer, keyMultiQueueProducers } =
       redisKeys.getMultiQueueProducerKeys(this.getId());
-    const heartbeat = new Heartbeat(
+    this.heartbeat = new Heartbeat(
       {
         keyHeartbeat: keyHeartbeatMultiQueueProducer,
         keyInstanceRegistry: keyMultiQueueProducers,
@@ -44,8 +44,9 @@ export class MultiQueueProducer extends Base<MultiQueueProducerMessageRate> {
       },
       redisClient,
     );
-    heartbeat.on(events.ERROR, (err: Error) => this.emit(events.ERROR, err));
-    this.heartbeat = heartbeat;
+    this.heartbeat.on(events.ERROR, (err: Error) =>
+      this.emit(events.ERROR, err),
+    );
   }
 
   produce(queueName: string, msg: unknown, cb: ICallback<boolean>): void {

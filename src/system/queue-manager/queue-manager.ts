@@ -108,6 +108,19 @@ export class QueueManager {
     });
   };
 
+  protected queueExists = (queue: TQueueParams, cb: ICallback<void>): void => {
+    const { keyQueues } = redisKeys.getGlobalKeys();
+    this.redisClient.sismember(
+      keyQueues,
+      JSON.stringify(queue),
+      (err, reply) => {
+        if (err) cb(err);
+        else if (!reply) cb(new GenericError(`Queue does not exist`));
+        else cb();
+      },
+    );
+  };
+
   /**
    * When deleting a message queue, all queue's related queues and data will be deleted from the system. If the given
    * queue has an online consumer/producer, an error will be returned. For determining if consumer/producer is online,
@@ -165,13 +178,16 @@ export class QueueManager {
             if (err) cb(err);
             else {
               const pQueues = Object.keys(reply ?? {});
-              keys.push(...pQueues);
-              multi.srem(keyProcessingQueues, ...pQueues);
+              if (pQueues.length) {
+                keys.push(...pQueues);
+                multi.srem(keyProcessingQueues, ...pQueues);
+              }
               cb();
             }
           });
         async.waterfall(
           [
+            (cb: ICallback<void>): void => this.queueExists(queue, cb),
             (cb: ICallback<void>): void =>
               this.validateMessageQueueDeletion(queue, cb),
             handleProcessingQueues,

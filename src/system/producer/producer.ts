@@ -37,7 +37,7 @@ export class Producer extends ExtendedBase<
 
   initHeartbeatInstance(redisClient: RedisClient): void {
     const { keyHeartbeatProducer, keyQueueProducers } = this.getRedisKeys();
-    const heartbeat = new Heartbeat(
+    this.heartbeat = new Heartbeat(
       {
         keyHeartbeat: keyHeartbeatProducer,
         keyInstanceRegistry: keyQueueProducers,
@@ -45,8 +45,9 @@ export class Producer extends ExtendedBase<
       },
       redisClient,
     );
-    heartbeat.on(events.ERROR, (err: Error) => this.emit(events.ERROR, err));
-    this.heartbeat = heartbeat;
+    this.heartbeat.on(events.ERROR, (err: Error) =>
+      this.emit(events.ERROR, err),
+    );
   }
 
   produce(msg: unknown, cb: ICallback<boolean>): void {
