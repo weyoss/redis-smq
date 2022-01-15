@@ -6,23 +6,23 @@ export const errorHandler: TMiddleware = async (ctx, next) => {
     await next();
   } catch (e: unknown) {
     ctx.logger.error(e);
-    if (e instanceof ValidationError) {
-      ctx.status = 422;
-      ctx.body = {
-        error: {
-          code: 422,
-          message: 'Validation error',
-          details: e,
-        },
-      };
-    } else {
-      ctx.status = 500;
-      ctx.body = {
-        error: {
-          code: 500,
-          message: 'Internal server error',
-        },
-      };
-    }
+    ctx.status = e instanceof ValidationError ? 422 : 500;
+    ctx.body = {
+      error: {
+        code: ctx.status,
+        message:
+          (e instanceof ValidationError && 'Validation error') ||
+          (e instanceof Error && e.message) ||
+          'Internal server error',
+        details:
+          (e instanceof ValidationError && e) ||
+          (e instanceof Error && {
+            message: e.message,
+            name: e.name,
+            stack: e.stack,
+          }) ||
+          {},
+      },
+    };
   }
 };
