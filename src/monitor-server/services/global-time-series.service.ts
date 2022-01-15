@@ -1,6 +1,6 @@
 import { RedisClient } from '../../system/common/redis-client/redis-client';
 import { promisifyAll } from 'bluebird';
-import { TimeSeriesRequestDTO } from '../controllers/common/time-series/time-series-request.DTO';
+import { TimeSeriesRequestDTO } from '../controllers/common/dto/time-series/time-series-request.DTO';
 import { GlobalDeadLetteredTimeSeries } from '../../system/consumer/consumer-time-series/global-dead-lettered-time-series';
 import { GlobalPublishedTimeSeries } from '../../system/producer/producer-time-series/global-published-time-series';
 import { GlobalAcknowledgedTimeSeries } from '../../system/consumer/consumer-time-series/global-acknowledged-time-series';

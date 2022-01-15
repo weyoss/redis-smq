@@ -11,8 +11,8 @@ test('Consumer dead-lettered time series', async () => {
   await untilConsumerIdle(consumer);
   const queue = consumer.getQueue();
   await validateTimeSeriesFrom(
-    `/api/ns/${queue.ns}/queues/${
-      queue.name
-    }/consumers/${consumer.getId()}/dead-lettered-time-series`,
+    `/api/queues/${queue.name}/ns/${
+      queue.ns
+    }/consumers/${consumer.getId()}/time-series/dead-lettered`,
   );
 });

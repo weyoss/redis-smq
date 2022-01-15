@@ -4,8 +4,7 @@ import {
   startMonitorServer,
 } from '../common';
 import * as supertest from 'supertest';
-import { GetMessagesResponseBodyDataDTO } from '../../src/monitor-server/controllers/messages/common/get-messages-response-body.DTO';
-import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
+import { GetMessagesResponseBodyDataDTO } from '../../src/monitor-server/controllers/common/dto/queues/get-messages-response-body.DTO';
 
 test('Fetching acknowledged messages', async () => {
   await startMonitorServer();
@@ -14,8 +13,8 @@ test('Fetching acknowledged messages', async () => {
   const request = supertest('http://127.0.0.1:3000');
   const response1: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =
     await request.get(
-      `/api/ns/${redisKeys.getNamespace()}/queues/${
-        message.getQueue()?.name
+      `/api/queues/${message.getQueue()?.name}/ns/${
+        message.getQueue()?.ns
       }/acknowledged-messages?skip=0&take=99`,
     );
 

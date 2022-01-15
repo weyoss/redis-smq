@@ -6,8 +6,8 @@ test('Producer published time series', async () => {
   const queue = producer.getQueue();
   await delay(5000);
   await validateTimeSeriesFrom(
-    `/api/ns/${queue.ns}/queues/${
-      queue.name
-    }/producers/${producer.getId()}/published-time-series`,
+    `/api/queues/${queue.name}/ns/${
+      queue.ns
+    }/producers/${producer.getId()}/time-series/published`,
   );
 });

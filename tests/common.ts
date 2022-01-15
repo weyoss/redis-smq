@@ -14,7 +14,7 @@ import { QueueManager } from '../src/system/queue-manager/queue-manager';
 import { WebsocketRateStreamWorker } from '../src/monitor-server/workers/websocket-rate-stream.worker';
 import { WebsocketHeartbeatStreamWorker } from '../src/monitor-server/workers/websocket-heartbeat-stream.worker';
 import { WebsocketOnlineStreamWorker } from '../src/monitor-server/workers/websocket-online-stream.worker';
-import { TimeSeriesResponseBodyDTO } from '../src/monitor-server/controllers/common/time-series/time-series-response.DTO';
+import { TimeSeriesResponseBodyDTO } from '../src/monitor-server/controllers/common/dto/time-series/time-series-response.DTO';
 
 type TMonitorServer = ReturnType<typeof MonitorServer>;
 

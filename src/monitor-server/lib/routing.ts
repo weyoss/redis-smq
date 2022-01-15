@@ -3,6 +3,7 @@ import { ClassConstructor } from 'class-transformer';
 import { RequestValidator } from '../middlewares/request-validator';
 import { ResponseValidator } from '../middlewares/response-validator';
 import { TApplication, TRequestContext } from '../types/common';
+import { posix } from 'path';
 
 export enum ERouteControllerActionPayload {
   QUERY = 'query',
@@ -29,12 +30,18 @@ export type TRouteControllerAction = {
   ResponseDTO: ClassConstructor<any>;
 };
 
-export type TRouteController = {
-  prefix: string;
-  actions: TRouteControllerAction[];
-};
+export interface IRouteController {
+  path: string;
+  actions: (IRouteController | TRouteControllerAction)[];
+}
 
-export function getActionRouter(
+function isRouteController(
+  object: IRouteController | TRouteControllerAction,
+): object is IRouteController {
+  return object.hasOwnProperty('actions');
+}
+
+export function getControllerActionRouter(
   app: TApplication,
   action: TRouteControllerAction,
 ): Router {
@@ -58,30 +65,39 @@ export function getActionRouter(
   return router;
 }
 
-export function getControllerRouter(
+export function registerControllerRoutes(
   app: TApplication,
-  controller: TRouteController,
-): Router {
-  const controllerRouter = new Router({ prefix: controller.prefix });
-  controller.actions.forEach((action) => {
-    const router = getActionRouter(app, action);
-    controllerRouter.use(router.routes(), router.allowedMethods());
-  });
-  return controllerRouter;
+  controller: IRouteController,
+  mainRouter: Router,
+  path = '/',
+): void {
+  for (const item of controller.actions) {
+    if (isRouteController(item)) {
+      registerControllerRoutes(
+        app,
+        item,
+        mainRouter,
+        posix.join(path, item.path),
+      );
+    } else {
+      const router = getControllerActionRouter(app, item);
+      mainRouter.use(path, router.routes());
+    }
+  }
 }
 
 export function getApplicationRouter(
   app: TApplication,
-  controllers: TRouteController[],
-  prefix = '/api',
+  controllers: IRouteController[],
 ): Router {
-  const applicationRouter = new Router({ prefix });
-  controllers.forEach((controller) => {
-    const controllerRouter = getControllerRouter(app, controller);
-    applicationRouter.use(
-      controllerRouter.routes(),
-      controllerRouter.allowedMethods(),
+  const applicationRouter = new Router();
+  for (const controller of controllers) {
+    registerControllerRoutes(
+      app,
+      controller,
+      applicationRouter,
+      controller.path,
     );
-  });
+  }
   return applicationRouter;
 }

@@ -2,8 +2,8 @@ import { RedisClient } from '../../system/common/redis-client/redis-client';
 import { ConsumerDeadLetteredTimeSeries } from '../../system/consumer/consumer-time-series/consumer-dead-lettered-time-series';
 import { ConsumerAcknowledgedTimeSeries } from '../../system/consumer/consumer-time-series/consumer-acknowledged-time-series';
 import { promisifyAll } from 'bluebird';
-import { AcknowledgedRequestDTO } from '../controllers/consumer-time-series/actions/acknowledged/acknowledged-request.DTO';
-import { DeadLetteredRequestDTO } from '../controllers/consumer-time-series/actions/dead-lettered/dead-lettered-request.DTO';
+import { GetConsumerAcknowledgedRequestDTO } from '../controllers/api/queues/queue/consumer/time-series/get-consumer-acknowledged/get-consumer-acknowledged.request.DTO';
+import { GetConsumerDeadLetteredRequestDTO } from '../controllers/api/queues/queue/consumer/time-series/get-consumer-dead-lettered/get-consumer-dead-lettered.request.DTO';
 
 export class ConsumerTimeSeriesService {
   protected redisClient: RedisClient;
@@ -11,7 +11,7 @@ export class ConsumerTimeSeriesService {
     this.redisClient = redisClient;
   }
 
-  async acknowledged(args: AcknowledgedRequestDTO) {
+  async acknowledged(args: GetConsumerAcknowledgedRequestDTO) {
     const { ns, queueName, from, to, consumerId } = args;
     const timeSeries = promisifyAll(
       ConsumerAcknowledgedTimeSeries(this.redisClient, consumerId, {
@@ -22,7 +22,7 @@ export class ConsumerTimeSeriesService {
     return timeSeries.getRangeAsync(from, to);
   }
 
-  async deadLettered(args: DeadLetteredRequestDTO) {
+  async deadLettered(args: GetConsumerDeadLetteredRequestDTO) {
     const { ns, queueName, from, to, consumerId } = args;
     const timeSeries = promisifyAll(
       ConsumerDeadLetteredTimeSeries(this.redisClient, consumerId, {
