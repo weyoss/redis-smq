@@ -19,23 +19,23 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
    1. [GET /api/queues](#get-apiqueues)
    2. [DELETE /api/queues/:queueName/ns/:ns](#delete-apiqueuesqueuenamensns)
 2. Acknowledged Messages
-   1. [GET /api/queues/:queueName/ns/:ns/acknowledged-messages/](#get-apiqueuesqueuenamensnsacknowledged-messages)
-   2. [DELETE /api/queues/:queueName/ns/:ns/acknowledged-messages/](#delete-apiqueuesqueuenamensnsacknowledged-messages)
+   1. [GET /api/queues/:queueName/ns/:ns/acknowledged-messages](#get-apiqueuesqueuenamensnsacknowledged-messages)
+   2. [DELETE /api/queues/:queueName/ns/:ns/acknowledged-messages](#delete-apiqueuesqueuenamensnsacknowledged-messages)
    3. [DELETE /api/queues/:queueName/ns/:ns/acknowledged-messages/:id](#delete-apiqueuesqueuenamensnsacknowledged-messagesid)
    4. [POST /api/queues/:queueName/ns/:ns/acknowledged-messages/:id/requeue](#post-apiqueuesqueuenamensnsacknowledged-messagesidrequeue)
 3. Dead-lettered Messages
-   1. [GET /api/queues/:queueName/ns/:ns/dead-lettered-messages/](#get-apiqueuesqueuenamensnsdead-lettered-messages)
+   1. [GET /api/queues/:queueName/ns/:ns/dead-lettered-messages](#get-apiqueuesqueuenamensnsdead-lettered-messages)
    2. [DELETE /api/queues/:queueName/ns/:ns/dead-lettered-messages](#delete-apiqueuesqueuenamensnsdead-lettered-messages)
    3. [DELETE /api/queues/:queueName/ns/:ns/dead-lettered-messages/:id](#delete-apiqueuesqueuenamensnsdead-lettered-messagesid)
    4. [POST /api/queues/:queueName/ns/:ns/dead-lettered-messages/:id/requeue](#post-apiqueuesqueuenamensnsdead-lettered-messagesidrequeue)
 4. Pending Messages
-   1. [GET /api/queues/:queueName/ns/:ns/pending-messages/](#delete-apiqueuesqueuenamensnspending-messages)
-   2. [DELETE /api/queues/:queueName/ns/:ns/pending-messages/](#delete-apiqueuesqueuenamensnspending-messages)
+   1. [GET /api/queues/:queueName/ns/:ns/pending-messages](#delete-apiqueuesqueuenamensnspending-messages)
+   2. [DELETE /api/queues/:queueName/ns/:ns/pending-messages](#delete-apiqueuesqueuenamensnspending-messages)
    3. [DELETE /api/queues/:queueName/ns/:ns/pending-messages/:id](#delete-apiqueuesqueuenamensnspending-messagesid)
 5. Pending Messages with Priority
-   1. [GET /api/queues/:queueName/ns/:ns/pending-priority-messages/](#get-apiqueuesqueuenamensnspending-priority-messages)
-   2. [DELETE /api/queues/:queueName/ns/:ns/pending-priority-messages/](#delete-apiqueuesqueuenamensnspending-priority-messages)
-   3. [DELETE /api/queues/:queueName/ns/:ns/pending-priority-messages/:id](#delete-apiqueuesqueuenamensnspending-priority-messagesid)
+   1. [GET /api/queues/:queueName/ns/:ns/pending-messages-with-priority](#get-apiqueuesqueuenamensnspending-messages-with-priority)
+   2. [DELETE /api/queues/:queueName/ns/:ns/pending-messages-with-priority](#delete-apiqueuesqueuenamensnspending-messages-with-priority)
+   3. [DELETE /api/queues/:queueName/ns/:ns/pending-messages-with-priority/:id](#delete-apiqueuesqueuenamensnspending-messages-with-priorityid)
 6. Scheduled Messages
    1. [GET /api/main/scheduled-messages](#get-apimainscheduled-messages)
    2. [DELETE /api/main/scheduled-messages](#delete-apimainscheduled-messages)
@@ -372,7 +372,7 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 
 ## Pending Messages with Priority
 
-### GET /api/queues/:queueName/ns/:ns/pending-priority-messages
+### GET /api/queues/:queueName/ns/:ns/pending-messages-with-priority
 
 **Path parameters**
 
@@ -419,7 +419,7 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 }
 ```
 
-### DELETE /api/queues/:queueName/ns/:ns/pending-priority-messages
+### DELETE /api/queues/:queueName/ns/:ns/pending-messages-with-priority
 
 **Path parameters**
 
@@ -432,7 +432,7 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 204 No Content
 ```
 
-### DELETE /api/queues/:queueName/ns/:ns/pending-priority-messages/:id
+### DELETE /api/queues/:queueName/ns/:ns/pending-messages-with-priority/:id
 
 **Path parameters**
 
