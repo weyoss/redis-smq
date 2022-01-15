@@ -1,8 +1,9 @@
 import { promisifyAll } from 'bluebird';
 import { QueueManager } from '../../system/queue-manager/queue-manager';
-import { PurgeAcknowledgedMessagesRequestDTO } from '../controllers/messages/actions/purge-acknowledged-messages/purge-acknowledged-messages-request.DTO';
-import { PurgePendingMessagesRequestDTO } from '../controllers/messages/actions/purge-pending-messages/purge-pending-messages-request.DTO';
-import { PurgePriorityMessagesRequestDTO } from '../controllers/messages/actions/purge-priority-messages/purge-priority-messages-request.DTO';
+import { PurgeAcknowledgedMessagesRequestDTO } from '../controllers/api/queues/queue/acknowledged-messages/purge-acknowledged-messages/purge-acknowledged-messages.request.DTO';
+import { PurgePendingMessagesRequestDTO } from '../controllers/api/queues/queue/pending-messages/purge-pending-messages/purge-pending-messages.request.DTO';
+import { PurgePendingMessagesWithPriorityRequestDTO } from '../controllers/api/queues/queue/pending-messages-with-priority/purge-pending-messages-with-priority/purge-pending-messages-with-priority.request.DTO';
+import { PurgeDeadLetteredMessagesRequestDTO } from '../controllers/api/queues/queue/dead-lettered-messages/purge-dead-lettered-messages/purge-dead-lettered-messages.request.DTO';
 import { TQueueParams } from '../../../types';
 
 const queueManagerAsync = promisifyAll(QueueManager.prototype);
@@ -29,7 +30,7 @@ export class QueuesService {
   }
 
   async purgeDeadLetterQueue(
-    args: PurgeAcknowledgedMessagesRequestDTO,
+    args: PurgeDeadLetteredMessagesRequestDTO,
   ): Promise<void> {
     const { ns, queueName } = args;
     return this.queueManager.purgeDeadLetteredQueueAsync({
@@ -47,7 +48,7 @@ export class QueuesService {
   }
 
   async purgePriorityQueue(
-    args: PurgePriorityMessagesRequestDTO,
+    args: PurgePendingMessagesWithPriorityRequestDTO,
   ): Promise<void> {
     const { ns, queueName } = args;
     return this.queueManager.purgePriorityQueueAsync({

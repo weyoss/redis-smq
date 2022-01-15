@@ -11,9 +11,6 @@ import { errorHandler } from './middlewares/error-handler';
 import { Services } from './services';
 import { resolve } from 'path';
 import { getApplicationRouter } from './lib/routing';
-import { messagesController } from './controllers/messages/messages.controller';
-import { scheduledMessagesController } from './controllers/scheduled-messages/scheduled-messages.controller';
-import { queuesController } from './controllers/queues/queues.controller';
 import { IContext, TApplication } from './types/common';
 import * as stoppable from 'stoppable';
 import { PowerManager } from '../system/common/power-manager/power-manager';
@@ -23,11 +20,7 @@ import * as cors from '@koa/cors';
 import { ArgumentError } from '../system/common/errors/argument.error';
 import { ConfigurationError } from '../system/common/errors/configuration.error';
 import { PanicError } from '../system/common/errors/panic.error';
-import { producerTimeSeriesController } from './controllers/producer-time-series/producer-time-series.controller';
-import { consumerTimeSeriesController } from './controllers/consumer-time-series/consumer-time-series.controller';
-import { queueTimeSeriesController } from './controllers/queue-time-series/queue-time-series.controller';
-import { globalTimeSeriesController } from './controllers/global-time-series/global-time-series.controller';
-import { multiQueueProducerTimeSeriesController } from './controllers/multi-queue-producer-time-series/multi-queue-producer-time-series.controller';
+import { apiController } from './controllers/api/api-controller';
 
 const RedisClientAsync = promisifyAll(RedisClient);
 
@@ -63,16 +56,7 @@ async function bootstrap(config: IConfig): Promise<TAPIServer> {
       origin: '*',
     }),
   );
-  const router = getApplicationRouter(app, [
-    queuesController,
-    messagesController,
-    scheduledMessagesController,
-    producerTimeSeriesController,
-    consumerTimeSeriesController,
-    queueTimeSeriesController,
-    globalTimeSeriesController,
-    multiQueueProducerTimeSeriesController,
-  ]);
+  const router = getApplicationRouter(app, [apiController]);
   app.use(router.routes());
   app.use(router.allowedMethods());
   const httpServer = stoppable(createServer(app.callback()));

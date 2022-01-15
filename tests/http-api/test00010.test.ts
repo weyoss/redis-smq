@@ -4,8 +4,7 @@ import {
   startMonitorServer,
 } from '../common';
 import * as supertest from 'supertest';
-import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
-import { GetPendingMessagesWithPriorityResponseBodyDataDTO } from '../../src/monitor-server/controllers/messages/actions/get-pending-messages-with-priority/get-pending-messages-with-priority-response.DTO';
+import { GetPendingMessagesWithPriorityResponseBodyDataDTO } from '../../src/monitor-server/controllers/api/queues/queue/pending-messages-with-priority/get-pending-messages-with-priority/get-pending-messages-with-priority.response.DTO';
 
 test('Fetching pending messages with priority', async () => {
   await startMonitorServer();
@@ -14,8 +13,8 @@ test('Fetching pending messages with priority', async () => {
   const request = supertest('http://127.0.0.1:3000');
   const response1: ISuperTestResponse<GetPendingMessagesWithPriorityResponseBodyDataDTO> =
     await request.get(
-      `/api/ns/${redisKeys.getNamespace()}/queues/${
-        message.getQueue()?.name
+      `/api/queues/${message.getQueue()?.name}/ns/${
+        message.getQueue()?.ns
       }/pending-messages-with-priority?skip=0&take=99`,
     );
 

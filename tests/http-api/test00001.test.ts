@@ -1,7 +1,7 @@
 import { getProducer, ISuperTestResponse, startMonitorServer } from '../common';
 import * as supertest from 'supertest';
 import { Message } from '../../src/message';
-import { GetScheduledMessagesResponseBodyDataDTO } from '../../src/monitor-server/controllers/scheduled-messages/actions/get-scheduled-messages/get-scheduled-messages-response.DTO';
+import { GetScheduledMessagesResponseBodyDataDTO } from '../../src/monitor-server/controllers/api/main/scheduled-messages/get-scheduled-messages/get-scheduled-messages.response.DTO';
 
 test('Fetching and deleting scheduled messages using the HTTP API: Case 1', async () => {
   await startMonitorServer();
@@ -15,7 +15,7 @@ test('Fetching and deleting scheduled messages using the HTTP API: Case 1', asyn
 
   //
   const response1: ISuperTestResponse<GetScheduledMessagesResponseBodyDataDTO> =
-    await request.get('/api/scheduled-messages?skip=0&take=100');
+    await request.get('/api/main/scheduled-messages?skip=0&take=100');
   expect(response1.statusCode).toBe(200);
   expect(response1.body.data).toBeDefined();
   expect(response1.body.data?.total).toBe(1);
@@ -24,14 +24,14 @@ test('Fetching and deleting scheduled messages using the HTTP API: Case 1', asyn
 
   //
   const response2: ISuperTestResponse<void> = await request.delete(
-    `/api/scheduled-messages/${msg1.getId()}`,
+    `/api/main/scheduled-messages/${msg1.getId()}`,
   );
   expect(response2.statusCode).toBe(204);
   expect(response2.body).toEqual({});
 
   //
   const response3: ISuperTestResponse<GetScheduledMessagesResponseBodyDataDTO> =
-    await request.get('/api/scheduled-messages?skip=0&take=100');
+    await request.get('/api/main/scheduled-messages?skip=0&take=100');
   expect(response3.statusCode).toBe(200);
   expect(response3.body.data).toBeDefined();
   expect(response3.body.data?.total).toBe(0);

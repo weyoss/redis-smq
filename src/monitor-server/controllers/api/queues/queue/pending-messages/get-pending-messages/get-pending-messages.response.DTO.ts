@@ -1,0 +1,12 @@
+import { IsInt, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { GetMessagesResponseBodyDTO } from '../../../../../common/dto/queues/get-messages-response-body.DTO';
+
+export class GetPendingMessagesResponseDTO {
+  @IsInt()
+  status!: number;
+
+  @ValidateNested()
+  @Type(() => GetMessagesResponseBodyDTO)
+  body!: GetMessagesResponseBodyDTO;
+}

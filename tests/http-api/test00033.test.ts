@@ -7,7 +7,7 @@ test('MultiQueueProducer published time series', async () => {
   const producer = promisifyAll(new MultiQueueProducer(config));
   await delay(5000);
   await validateTimeSeriesFrom(
-    `/api/multi-queue-producers/${producer.getId()}/published-time-series`,
+    `/api/main/multi-queue-producers/${producer.getId()}/time-series/published`,
   );
   await producer.shutdownAsync();
 });

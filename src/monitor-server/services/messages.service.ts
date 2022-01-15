@@ -4,19 +4,18 @@ import {
   TGetPendingMessagesWithPriorityReply,
   TGetScheduledMessagesReply,
 } from '../../../types';
-import { GetScheduledMessagesRequestDTO } from '../controllers/scheduled-messages/actions/get-scheduled-messages/get-scheduled-messages-request.DTO';
-import { DeleteScheduledMessageRequestDTO } from '../controllers/scheduled-messages/actions/delete-scheduled-message/delete-scheduled-message-request.DTO';
 import { MessageManager } from '../../system/message-manager/message-manager';
-import { GetPendingMessagesRequestDTO } from '../controllers/messages/actions/get-pending-messages/get-pending-messages-request.DTO';
-import { GetAcknowledgedMessagesRequestDTO } from '../controllers/messages/actions/get-acknowledged-messages/get-acknowledged-messages-request.DTO';
-import { GetPendingMessagesWithPriorityRequestDTO } from '../controllers/messages/actions/get-pending-messages-with-priority/get-pending-messages-with-priority-request.DTO';
-import { GetDeadLetteredMessagesRequestDTO } from '../controllers/messages/actions/get-dead-lettered-messages/get-dead-lettered-messages-request.DTO';
-import { DeletePendingMessageRequestDTO } from '../controllers/messages/actions/delete-pending-message/delete-pending-message-request.DTO';
-import { DeleteAcknowledgedMessageRequestDTO } from '../controllers/messages/actions/delete-acknowledged-message/delete-acknowledged-message-request.DTO';
-import { DeleteDeadLetteredMessageRequestDTO } from '../controllers/messages/actions/delete-dead-lettered-message/delete-dead-lettered-message-request.DTO';
-import { DeletePendingMessageWithPriorityRequestDTO } from '../controllers/messages/actions/delete-pending-message-with-priority/delete-pending-message-with-priority-request.DTO';
-import { RequeueDeadLetteredMessageRequestDTO } from '../controllers/messages/actions/requeue-dead-lettered-message/requeue-dead-lettered-message-request.DTO';
-import { RequeueAcknowledgedMessageRequestDTO } from '../controllers/messages/actions/requeue-acknowledged-message/requeue-acknowledged-message-request.DTO';
+import { GetScheduledMessagesRequestDTO } from '../controllers/api/main/scheduled-messages/get-scheduled-messages/get-scheduled-messages.request.DTO';
+import { GetPendingMessagesRequestDTO } from '../controllers/api/queues/queue/pending-messages/get-pending-messages/get-pending-messages.request.DTO';
+import { GetAcknowledgedMessagesRequestDTO } from '../controllers/api/queues/queue/acknowledged-messages/get-acknowledged-messages/get-acknowledged-messages.request.DTO';
+import { GetDeadLetteredMessagesRequestDTO } from '../controllers/api/queues/queue/dead-lettered-messages/get-dead-lettered-messages/get-dead-lettered-messages.request.DTO';
+import { DeletePendingMessageRequestDTO } from '../controllers/api/queues/queue/pending-messages/delete-pending-message/delete-pending-message.request.DTO';
+import { DeletePendingMessageWithPriorityRequestDTO } from '../controllers/api/queues/queue/pending-messages-with-priority/delete-pending-message-with-priority/delete-pending-message-with-priority.request.DTO';
+import { DeleteAcknowledgedMessageRequestDTO } from '../controllers/api/queues/queue/acknowledged-messages/delete-acknowledged-message/delete-acknowledged-message.request.DTO';
+import { DeleteDeadLetteredMessageRequestDTO } from '../controllers/api/queues/queue/dead-lettered-messages/delete-dead-lettered-message/delete-dead-lettered-message.request.DTO';
+import { DeleteScheduledMessageRequestDTO } from '../controllers/api/main/scheduled-messages/delete-scheduled-message/delete-scheduled-message-request.DTO';
+import { RequeueDeadLetteredMessageRequestDTO } from '../controllers/api/queues/queue/dead-lettered-messages/requeue-dead-lettered-message/requeue-dead-lettered-message.request.DTO';
+import { RequeueAcknowledgedMessageRequestDTO } from '../controllers/api/queues/queue/acknowledged-messages/requeue-acknowledged-message/requeue-acknowledged-message.request.DTO';
 
 const messageManagerAsync = promisifyAll(MessageManager.prototype);
 
@@ -63,7 +62,7 @@ export class MessagesService {
   }
 
   async getPendingMessagesWithPriority(
-    args: GetPendingMessagesWithPriorityRequestDTO,
+    args: GetPendingMessagesRequestDTO,
   ): Promise<TGetPendingMessagesWithPriorityReply> {
     const { ns, queueName, skip = 0, take = 1 } = args;
     return this.messageManager.getPendingMessagesWithPriorityAsync(

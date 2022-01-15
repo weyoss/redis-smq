@@ -1,7 +1,7 @@
 import { RedisClient } from '../../system/common/redis-client/redis-client';
 import { promisifyAll } from 'bluebird';
 import { ProducerPublishedTimeSeries } from '../../system/producer/producer-time-series/producer-published-time-series';
-import { PublishedRequestDTO } from '../controllers/producer-time-series/actions/published/published-request.DTO';
+import { GetProducerPublishedRequestDTO } from '../controllers/api/queues/queue/producer/time-series/get-producer-published/get-producer-published.request.DTO';
 
 export class ProducerTimeSeriesService {
   protected redisClient: RedisClient;
@@ -9,7 +9,7 @@ export class ProducerTimeSeriesService {
     this.redisClient = redisClient;
   }
 
-  async published(args: PublishedRequestDTO) {
+  async published(args: GetProducerPublishedRequestDTO) {
     const { ns, queueName, from, to, producerId } = args;
     const timeSeries = promisifyAll(
       ProducerPublishedTimeSeries(this.redisClient, producerId, {
