@@ -69,7 +69,16 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 
 ### DELETE /api/queues/:queueName/ns/:ns
 
-TODO
+**Path parameters**
+
+* `ns` (string): Required. Queue namespace.
+* `queueName` (string): Required. Queue name.
+
+**Response Body**
+
+```text
+204 No Content
+```
 
 ## Acknowledged Messages
 

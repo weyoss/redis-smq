@@ -1,5 +1,6 @@
 import {
   ERouteControllerActionMethod,
+  ERouteControllerActionPayload,
   IRouteController,
 } from '../../../lib/routing';
 import { GetQueuesHandler } from './get-queues/get-queues.handler';
@@ -13,6 +14,9 @@ import { controller as queuePendingMessagesController } from './queue/pending-me
 import { controller as queueTimeSeriesController } from './queue/time-series/controller';
 import { controller as queueProducerTimeSeriesController } from './queue/producer/time-series/controller';
 import { controller as queueConsumerTimeSeriesController } from './queue/consumer/time-series/controller';
+import { DeleteQueueHandler } from './queue/delete-queue/delete-queue.handler';
+import { DeleteQueueRequestDTO } from './queue/delete-queue/delete-queue.request.DTO';
+import { DeleteQueueResponseDTO } from './queue/delete-queue/delete-queue.response.DTO';
 
 export const queuesController: IRouteController = {
   path: '/queues',
@@ -28,6 +32,14 @@ export const queuesController: IRouteController = {
     {
       path: '/:queueName/ns/:ns',
       actions: [
+        {
+          path: '/',
+          method: ERouteControllerActionMethod.DELETE,
+          payload: [ERouteControllerActionPayload.PATH],
+          Handler: DeleteQueueHandler,
+          RequestDTO: DeleteQueueRequestDTO,
+          ResponseDTO: DeleteQueueResponseDTO,
+        },
         queueDeadLetteredMessagesController,
         queueAcknowledgedMessagesController,
         queuePendingMessagesWithPriorityController,
