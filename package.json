@@ -90,13 +90,8 @@
     "test": "NODE_ENV=test jest --runInBand --verbose --collectCoverage",
     "precoverage": "npm run build",
     "type-coverage": "type-coverage --strict --at-least 100  --ignore-files \"dist/**/*\"",
-    "prepublishOnly": "npm run build"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged",
-      "pre-push": "npm run type-coverage && npm run build"
-    }
+    "prepublishOnly": "npm run build",
+    "prepare": "husky install"
   },
   "lint-staged": {
     "*.(ts)": [

@@ -19,3 +19,4 @@ docs/**/*
 misc/**/*
 tsconfig.tsbuildinfo
 logo.png
+.husky
