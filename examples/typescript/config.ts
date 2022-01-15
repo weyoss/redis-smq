@@ -12,7 +12,7 @@ export const config: IConfig = {
   log: {
     enabled: true,
     options: {
-      level: 'trace',
+      level: 'info',
       // streams: [
       //   {
       //     path: path.normalize(`${__dirname}/logs/redis-smq.log`),
