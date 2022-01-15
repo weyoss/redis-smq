@@ -5,6 +5,7 @@ import { PurgePendingMessagesRequestDTO } from '../controllers/api/queues/queue/
 import { PurgePendingMessagesWithPriorityRequestDTO } from '../controllers/api/queues/queue/pending-messages-with-priority/purge-pending-messages-with-priority/purge-pending-messages-with-priority.request.DTO';
 import { PurgeDeadLetteredMessagesRequestDTO } from '../controllers/api/queues/queue/dead-lettered-messages/purge-dead-lettered-messages/purge-dead-lettered-messages.request.DTO';
 import { TQueueParams } from '../../../types';
+import { DeleteQueueRequestDTO } from '../controllers/api/queues/queue/delete-queue/delete-queue.request.DTO';
 
 const queueManagerAsync = promisifyAll(QueueManager.prototype);
 
@@ -17,6 +18,14 @@ export class QueuesService {
 
   async getQueues(): Promise<TQueueParams[]> {
     return this.queueManager.getMessageQueuesAsync();
+  }
+
+  async deleteQueue(args: DeleteQueueRequestDTO): Promise<void> {
+    const { ns, queueName } = args;
+    return this.queueManager.deleteMessageQueueAsync({
+      name: queueName,
+      ns,
+    });
   }
 
   async purgeAcknowledgedQueue(
