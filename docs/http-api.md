@@ -16,33 +16,34 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 ## Table of Content
 
 1. Queues
-   1. [GET /queues](#get-queues)
+   1. [GET /api/queues](#get-apiqueues)
+   2. [DELETE /api/queues/:queueName/ns/:ns](#delete-apiqueuesqueuenamensns)
 2. Acknowledged Messages
-   1. [GET /ns/:ns/queues/:queueName/acknowledged-messages/](#get-nsnsqueuesqueuenameacknowledged-messages)
-   2. [DELETE /ns/:ns/queues/:queueName/acknowledged-messages/](#delete-nsnsqueuesqueuenameacknowledged-messages)
-   3. [DELETE /ns/:ns/queues/:queueName/acknowledged-messages/:id](#delete-nsnsqueuesqueuenameacknowledged-messagesid)
-   4. [POST /ns/:ns/queues/:queueName/acknowledged-messages/:id/requeue](#post-nsnsqueuesqueuenameacknowledged-messagesidrequeue)
+   1. [GET /api/queues/:queueName/ns/:ns/acknowledged-messages/](#get-apiqueuesqueuenamensnsacknowledged-messages)
+   2. [DELETE /api/queues/:queueName/ns/:ns/acknowledged-messages/](#delete-apiqueuesqueuenamensnsacknowledged-messages)
+   3. [DELETE /api/queues/:queueName/ns/:ns/acknowledged-messages/:id](#delete-apiqueuesqueuenamensnsacknowledged-messagesid)
+   4. [POST /api/queues/:queueName/ns/:ns/acknowledged-messages/:id/requeue](#post-apiqueuesqueuenamensnsacknowledged-messagesidrequeue)
 3. Dead-lettered Messages
-   1. [GET /ns/:ns/queues/:queueName/dead-lettered-messages/](#get-nsnsqueuesqueuenamedead-lettered-messages)
-   2. [DELETE /ns/:ns/queues/:queueName/dead-lettered-messages](#delete-nsnsqueuesqueuenamedead-lettered-messages)
-   3. [DELETE /ns/:ns/queues/:queueName/dead-lettered-messages/:id](#delete-nsnsqueuesqueuenamedead-lettered-messagesid)
-   4. [POST /ns/:ns/queues/:queueName/dead-lettered-messages/:id/requeue](#post-nsnsqueuesqueuenamedead-lettered-messagesidrequeue)
+   1. [GET /api/queues/:queueName/ns/:ns/dead-lettered-messages/](#get-apiqueuesqueuenamensnsdead-lettered-messages)
+   2. [DELETE /api/queues/:queueName/ns/:ns/dead-lettered-messages](#delete-apiqueuesqueuenamensnsdead-lettered-messages)
+   3. [DELETE /api/queues/:queueName/ns/:ns/dead-lettered-messages/:id](#delete-apiqueuesqueuenamensnsdead-lettered-messagesid)
+   4. [POST /api/queues/:queueName/ns/:ns/dead-lettered-messages/:id/requeue](#post-apiqueuesqueuenamensnsdead-lettered-messagesidrequeue)
 4. Pending Messages
-   1. [GET /ns/:ns/queues/:queueName/pending-messages/](#delete-nsnsqueuesqueuenamepending-messages)
-   2. [DELETE /ns/:ns/queues/:queueName/pending-messages/](#delete-nsnsqueuesqueuenamepending-messages)
-   3. [DELETE /ns/:ns/queues/:queueName/pending-messages/:id](#delete-nsnsqueuesqueuenamepending-messagesid)
+   1. [GET /api/queues/:queueName/ns/:ns/pending-messages/](#delete-apiqueuesqueuenamensnspending-messages)
+   2. [DELETE /api/queues/:queueName/ns/:ns/pending-messages/](#delete-apiqueuesqueuenamensnspending-messages)
+   3. [DELETE /api/queues/:queueName/ns/:ns/pending-messages/:id](#delete-apiqueuesqueuenamensnspending-messagesid)
 5. Pending Messages with Priority
-   1. [GET /ns/:ns/queues/:queueName/pending-priority-messages/](#get-nsnsqueuesqueuenamepending-priority-messages)
-   2. [DELETE /ns/:ns/queues/:queueName/pending-priority-messages/](#delete-nsnsqueuesqueuenamepending-priority-messages)
-   3. [DELETE /ns/:ns/queues/:queueName/pending-priority-messages/:id](#delete-nsnsqueuesqueuenamepending-priority-messagesid)
+   1. [GET /api/queues/:queueName/ns/:ns/pending-priority-messages/](#get-apiqueuesqueuenamensnspending-priority-messages)
+   2. [DELETE /api/queues/:queueName/ns/:ns/pending-priority-messages/](#delete-apiqueuesqueuenamensnspending-priority-messages)
+   3. [DELETE /api/queues/:queueName/ns/:ns/pending-priority-messages/:id](#delete-apiqueuesqueuenamensnspending-priority-messagesid)
 6. Scheduled Messages
-   1. [GET /scheduled-messages](#get-scheduled-messages)
-   2. [DELETE /scheduled-messages](#delete-scheduled-messages)
-   3. [DELETE /scheduled-messages/:id](#delete-scheduled-messagesid)
+   1. [GET /api/main/scheduled-messages](#get-apimainscheduled-messages)
+   2. [DELETE /api/main/scheduled-messages](#delete-apimainscheduled-messages)
+   3. [DELETE /api/main/scheduled-messages/:id](#delete-apimainscheduled-messagesid)
    
 ## Queues
 
-### GET /queues
+### GET /api/queues
 
 **Response body**
 
@@ -66,9 +67,13 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 }
 ```
 
+### DELETE /api/queues/:queueName/ns/:ns
+
+TODO
+
 ## Acknowledged Messages
 
-### GET /ns/:ns/queues/:queueName/acknowledged-messages
+### GET /api/queues/:queueName/ns/:ns/acknowledged-messages
 
 **Path parameters**
 
@@ -120,7 +125,7 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 }
 ```
 
-### DELETE /ns/:ns/queues/:queueName/acknowledged-messages
+### DELETE /api/queues/:queueName/ns/:ns/acknowledged-messages
 
 **Path parameters**
 
@@ -133,7 +138,7 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 204 No Content
 ```
 
-### DELETE /ns/:ns/queues/:queueName/acknowledged-messages/:id
+### DELETE /api/queues/:queueName/ns/:ns/acknowledged-messages/:id
 
 **Path parameters**
 
@@ -151,7 +156,7 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 204 No Content
 ```
 
-### POST /ns/:ns/queues/:queueName/acknowledged-messages/:id/requeue
+### POST /api/queues/:queueName/ns/:ns/acknowledged-messages/:id/requeue
 
 **Path parameters**
 
@@ -172,7 +177,7 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 
 ## Dead-lettered Messages
 
-### GET /ns/:ns/queues/:queueName/dead-lettered-messages
+### GET /api/queues/:queueName/ns/:ns/dead-lettered-messages
 
 **Path parameters**
 
@@ -222,7 +227,7 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 }
 ```
 
-### DELETE /ns/:ns/queues/:queueName/dead-lettered-messages
+### DELETE /api/queues/:queueName/ns/:ns/dead-lettered-messages
 
 **Path parameters**
 
@@ -235,7 +240,7 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 204 No Content
 ```
 
-### DELETE /ns/:ns/queues/:queueName/dead-lettered-messages/:id
+### DELETE /api/queues/:queueName/ns/:ns/dead-lettered-messages/:id
 
 **Path parameters**
 
@@ -253,7 +258,7 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 204 No Content
 ```
 
-### POST /ns/:ns/queues/:queueName/dead-lettered-messages/:id/requeue
+### POST /api/queues/:queueName/ns/:ns/dead-lettered-messages/:id/requeue
 
 **Path parameters**
 
@@ -274,7 +279,7 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 
 ## Pending Messages
 
-### GET /ns/:ns/queues/:queueName/pending-messages
+### GET /api/queues/:queueName/ns/:ns/pending-messages
 
 
 **Path parameters**
@@ -325,7 +330,7 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 }
 ```
 
-### DELETE /ns/:ns/queues/:queueName/pending-messages
+### DELETE /api/queues/:queueName/ns/:ns/pending-messages
 
 **Path parameters**
 
@@ -338,7 +343,7 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 204 No Content
 ```
 
-### DELETE /ns/:ns/queues/:queueName/pending-messages/:id
+### DELETE /api/queues/:queueName/ns/:ns/pending-messages/:id
 
 **Path parameters**
 
@@ -358,7 +363,7 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 
 ## Pending Messages with Priority
 
-### GET /ns/:ns/queues/:queueName/pending-priority-messages
+### GET /api/queues/:queueName/ns/:ns/pending-priority-messages
 
 **Path parameters**
 
@@ -405,7 +410,7 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 }
 ```
 
-### DELETE /ns/:ns/queues/:queueName/pending-priority-messages
+### DELETE /api/queues/:queueName/ns/:ns/pending-priority-messages
 
 **Path parameters**
 
@@ -418,7 +423,7 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 204 No Content
 ```
 
-### DELETE /ns/:ns/queues/:queueName/pending-priority-messages/:id
+### DELETE /api/queues/:queueName/ns/:ns/pending-priority-messages/:id
 
 **Path parameters**
 
@@ -434,7 +439,7 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 
 ## Scheduled Messages
 
-### GET /scheduled-messages
+### GET /api/main/scheduled-messages
 
 **Query parameters**
 
@@ -476,7 +481,7 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 }
 ```
 
-### DELETE /scheduled-messages
+### DELETE /api/main/scheduled-messages
 
 **Path parameters**
 
@@ -488,7 +493,7 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 204 No Content
 ```
 
-### DELETE /scheduled-messages/:id
+### DELETE /api/main/scheduled-messages/:id
 
 **Path parameters**
 
