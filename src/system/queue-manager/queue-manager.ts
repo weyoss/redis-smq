@@ -35,12 +35,13 @@ export class QueueManager {
             else {
               const r = reply ?? {};
               const onlineArr = Object.keys(r).filter((id) => r[id]);
-              if (onlineArr.length)
+              if (onlineArr.length) {
                 cb(
                   new GenericError(
                     `The queue is currently in use. Before deleting a queue, shutdown all its consumers and producers.`,
                   ),
                 );
+              } else cb();
             }
           },
         );
@@ -108,7 +109,7 @@ export class QueueManager {
     });
   };
 
-  protected queueExists = (queue: TQueueParams, cb: ICallback<void>): void => {
+  queueExists = (queue: TQueueParams, cb: ICallback<void>): void => {
     const { keyQueues } = redisKeys.getGlobalKeys();
     this.redisClient.sismember(
       keyQueues,
@@ -173,7 +174,7 @@ export class QueueManager {
         ];
         const multi = this.redisClient.multi();
         multi.srem(keyQueues, JSON.stringify(queue));
-        const handleProcessingQueues = (cb: ICallback<void>): void =>
+        const handleProcessingQueues = (cb: ICallback<void>): void => {
           this.getQueueProcessingQueues(queue, (err, reply) => {
             if (err) cb(err);
             else {
@@ -185,6 +186,7 @@ export class QueueManager {
               cb();
             }
           });
+        };
         async.waterfall(
           [
             (cb: ICallback<void>): void => this.queueExists(queue, cb),
