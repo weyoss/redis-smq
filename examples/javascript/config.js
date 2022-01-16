@@ -13,8 +13,7 @@ module.exports = {
   log: {
     enabled: false,
     options: {
-      name: 'qqqq',
-      level: 'trace',
+      level: 'info',
       // streams: [
       //   {
       //     path: path.normalize(`${__dirname}/logs/redis-smq.log`),

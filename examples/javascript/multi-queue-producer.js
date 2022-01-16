@@ -8,10 +8,10 @@ msg.setBody({ ts: `Current time is ${Date.now()}` });
 
 producer.produce('queue_A', msg, (err) => {
   if (err) throw err;
-  else {
-    producer.produce('queue_B', msg, (err) => {
-      if (err) throw err;
-      else producer.shutdown();
-    });
-  }
+  else console.log(`Successfully published`);
+});
+
+producer.produce('queue_B', msg, (err) => {
+  if (err) throw err;
+  else console.log(`Successfully published`);
 });
