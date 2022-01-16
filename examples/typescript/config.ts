@@ -10,7 +10,7 @@ export const config: IConfig = {
     },
   },
   log: {
-    enabled: true,
+    enabled: false,
     options: {
       level: 'info',
       // streams: [

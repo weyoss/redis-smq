@@ -9,10 +9,7 @@ const msg = new Message()
   .setScheduledCron('*/20 * * * * *')
   .setBody({ hello: 'World!' });
 
-producer.produceMessage(msg, (err) => {
+producer.produce(msg, (err) => {
   if (err) throw err;
-  else {
-    console.log(`Successfully produced. Going down...`);
-    producer.shutdown();
-  }
+  else console.log(`Successfully published`);
 });

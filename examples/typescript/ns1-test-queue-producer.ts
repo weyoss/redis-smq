@@ -8,8 +8,5 @@ msg.setBody({ ts: `Current time is ${Date.now()}` });
 
 producer.produce(msg, (err) => {
   if (err) throw err;
-  else {
-    console.log(`Successfully produced. Going down...`);
-    producer.shutdown();
-  }
+  else console.log(`Successfully published`);
 });
