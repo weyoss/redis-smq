@@ -89,7 +89,7 @@ export class ProcessingHandler extends Handler {
     );
   }
 
-  delayBeforeRequeue(
+  delayUnacknowledgedMessageBeforeRequeuing(
     message: Message,
     keyQueueProcessing: string,
     unacknowledgedCause: EMessageUnacknowledgedCause,

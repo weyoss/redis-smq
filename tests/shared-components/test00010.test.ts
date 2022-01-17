@@ -9,7 +9,6 @@ import { promisifyAll } from 'bluebird';
 import { DelayHandler } from '../../src/system/message-manager/handlers/delay.handler';
 import { EMessageUnacknowledgedCause } from '../../types';
 import { Message } from '../../src/system/message';
-import { EnqueueHandler } from '../../src/system/message-manager/handlers/enqueue.handler';
 import { ScheduleHandler } from '../../src/system/message-manager/handlers/schedule.handler';
 import { config } from '../config';
 import { redisKeys } from '../../src/system/common/redis-keys/redis-keys';
@@ -17,8 +16,7 @@ import { events } from '../../src/system/common/events';
 
 test('MessageManager/DelayHandler', async () => {
   const redisClient = await getRedisInstance();
-  const enq = new EnqueueHandler(redisClient);
-  const sch = new ScheduleHandler(redisClient, enq);
+  const sch = new ScheduleHandler(redisClient);
   const delayHandler = promisifyAll(new DelayHandler(redisClient, sch));
   await delayHandler.scheduleAsync();
 
