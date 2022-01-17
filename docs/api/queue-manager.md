@@ -55,7 +55,7 @@ deleteMessageQueue(queue, cb);
 - `cb(err)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
 
-Before deleting a message queue, make sure that the given queue is being in use. Otherwise, an error will be returned.
+Before deleting a message queue, make sure that the given queue is not being in use. Otherwise, an error will be returned.
 
 ### QueueManager.prototype.getQueueMetrics
 
