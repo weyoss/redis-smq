@@ -34,10 +34,7 @@ export class MessageManager {
     this.enqueueHandler = new EnqueueHandler(redisClient);
     this.processingHandler = new ProcessingHandler(redisClient);
     this.requeueHandler = new RequeueHandler(redisClient, this.enqueueHandler);
-    this.scheduleHandler = new ScheduleHandler(
-      redisClient,
-      this.enqueueHandler,
-    );
+    this.scheduleHandler = new ScheduleHandler(redisClient);
     this.delayHandler = new DelayHandler(redisClient, this.scheduleHandler);
     this.logger = logger.child({ child: MessageManager.name });
   }
@@ -141,7 +138,7 @@ export class MessageManager {
     this.logger.debug(
       `Moving unacknowledged message (ID ${message.getId()}) to "delay" queue...`,
     );
-    this.processingHandler.delayBeforeRequeue(
+    this.processingHandler.delayUnacknowledgedMessageBeforeRequeuing(
       message,
       keyQueueProcessing,
       unacknowledgedCause,

@@ -467,6 +467,21 @@ export class RedisClient extends EventEmitter {
     }
   }
 
+  runScript(
+    scriptName: ELuaScriptName,
+    params: (string | number)[],
+    cb: ICallback<unknown>,
+  ): void {
+    this.evalsha(
+      getScriptId(scriptName),
+      [params.length, ...params],
+      (err, res?: unknown) => {
+        if (err) cb(err);
+        else cb(null, res);
+      },
+    );
+  }
+
   zremrangebyscore(
     source: string,
     min: number | string,

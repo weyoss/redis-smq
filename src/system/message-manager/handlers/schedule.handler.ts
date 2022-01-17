@@ -1,7 +1,6 @@
 import { Message } from '../../message';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import * as async from 'async';
-import { RedisClient } from '../../common/redis-client/redis-client';
 import {
   ICallback,
   TGetScheduledMessagesReply,
@@ -10,18 +9,12 @@ import {
 import { parseExpression } from 'cron-parser';
 import { getPaginatedSortedSetMessages, getSortedSetSize } from '../common';
 import { Handler } from './handler';
-import { EnqueueHandler } from './enqueue.handler';
 import { LockManager } from '../../common/lock-manager/lock-manager';
 import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
+import { PanicError } from '../../common/errors/panic.error';
+import { ELuaScriptName } from '../../common/redis-client/lua-scripts';
 
 export class ScheduleHandler extends Handler {
-  protected enqueueHandler: EnqueueHandler;
-
-  constructor(redisClient: RedisClient, enqueueHandler: EnqueueHandler) {
-    super(redisClient);
-    this.enqueueHandler = enqueueHandler;
-  }
-
   protected scheduleMessage(
     multi: TRedisClientMulti,
     message: Message,
@@ -40,29 +33,44 @@ export class ScheduleHandler extends Handler {
     cb: ICallback<void>,
   ): void => {
     if (messages.length) {
-      const { keyScheduledMessages, keyScheduledMessagesIndex } =
-        redisKeys.getGlobalKeys();
       async.each<Message, Error>(
         messages,
         (msg, done) => {
           const message = Message.createFromMessage(msg);
-          const messageId = message.getId();
-          const multi = this.redisClient.multi();
-          this.enqueueHandler.enqueue(multi, message);
+          const queue = message.getQueue();
+          if (!queue) {
+            throw new PanicError(
+              `Expected a message with a non-empty queue value`,
+            );
+          }
+          const {
+            keyQueues,
+            keyQueuePending,
+            keyQueuePendingWithPriority,
+            keyQueuePriority,
+            keyScheduledMessages,
+            keyScheduledMessagesIndex,
+          } = redisKeys.getKeys(queue.name, queue.ns);
           const nextScheduleTimestamp =
             ScheduleHandler.getNextScheduledTimestamp(message);
-          if (nextScheduleTimestamp) {
-            multi.zadd(keyScheduledMessages, nextScheduleTimestamp, messageId);
-            multi.hset(
-              keyScheduledMessagesIndex,
-              messageId,
+          message.setPublishedAt(Date.now());
+          this.redisClient.runScript(
+            ELuaScriptName.ENQUEUE_SCHEDULED_MESSAGE,
+            [
+              keyQueues,
+              JSON.stringify(queue),
+              message.getId(),
               JSON.stringify(message),
-            );
-          } else {
-            multi.zrem(keyScheduledMessages, messageId);
-            multi.hdel(keyScheduledMessagesIndex, messageId);
-          }
-          this.redisClient.execMulti(multi, (err) => done(err));
+              message.getPriority() ?? '',
+              keyQueuePendingWithPriority,
+              keyQueuePriority,
+              keyQueuePending,
+              `${nextScheduleTimestamp}`,
+              keyScheduledMessages,
+              keyScheduledMessagesIndex,
+            ],
+            (err) => done(err),
+          );
         },
         cb,
       );
