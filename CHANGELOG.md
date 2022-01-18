@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## 6.0.0-rc.4 (2022-01-18)
+
+* Bump redis-smq-monitor to v6.1.0 (930aa95)
+* Improve error message (443794b)
+* Make MultiQueueProducer publish a message as a single atomic operation (19cfb2f)
+* Always invoke setUpMessageQueue() when publishing a message (502a4cb)
+* Test scheduled messages publication when dst queue is deleted (41055f9)
+* Make sure scheduled messages aren't published if dst queue is deleted (cda411a)
+* Fix a typo (af5c310)
+* Fix delete queue validation bug causing request to hang forever (c14488a)
+* Update typescript/javascript examples (f595bb1)
+* Update queue-manager.md (461ae0b)
+* Update HTTP API endpoints documentation (5da7777)
+* Improve HTTP API error handling (c90473a)
+* Allow to delete a message queue from HTTP API, test, update docs (a3087a2)
+* Fix husky v7 setup (3fa4f2f)
+* Update HTTP API reference (688a028)
+* Fix npm vulnerability warnings (7ad221b)
+* Refactor monitor server HTTP API routing (2fec7c3)
+
 ## 6.0.0-rc.3 (2022-01-14)
 
 * Allow to delete a message queue alongside with its related data.
