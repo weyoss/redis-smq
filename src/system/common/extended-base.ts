@@ -26,13 +26,7 @@ export abstract class ExtendedBase<
     );
     if (!this.sharedRedisClient)
       cb(new PanicError(`Expected an instance of RedisClient`));
-    else
-      QueueManager.setUpMessageQueue(
-        this.queue,
-        this.sharedRedisClient,
-        true,
-        cb,
-      );
+    else QueueManager.setUpMessageQueue(this.queue, this.sharedRedisClient, cb);
   };
 
   protected goingUp(): TFunction[] {
