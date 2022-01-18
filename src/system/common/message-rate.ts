@@ -1,8 +1,8 @@
-import { ICallback, TMessageRateFields } from '../../types';
-import { events } from './common/events';
-import { Ticker } from './common/ticker/ticker';
+import { ICallback, TMessageRateFields } from '../../../types';
+import { events } from './events';
+import { Ticker } from './ticker/ticker';
 import { EventEmitter } from 'events';
-import { TimeSeries } from './common/time-series/time-series';
+import { TimeSeries } from './time-series/time-series';
 
 export abstract class MessageRate<
   MessageRateFields extends TMessageRateFields = TMessageRateFields,

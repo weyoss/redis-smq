@@ -405,15 +405,21 @@ export class QueueManager {
   static setUpMessageQueue(
     queue: TQueueParams,
     redisClient: RedisClient,
+    checkLock: boolean,
     cb: ICallback<void>,
   ): void {
-    QueueManager.checkQueueLock(redisClient, queue, (err) => {
-      if (err) cb(err);
-      else {
-        const { keyQueues } = redisKeys.getKeys(queue.name, queue.ns);
-        const str = JSON.stringify(queue);
-        redisClient.sadd(keyQueues, str, (err) => cb(err));
-      }
-    });
+    if (!checkLock) {
+      const { keyQueues } = redisKeys.getKeys(queue.name, queue.ns);
+      const str = JSON.stringify(queue);
+      redisClient.sadd(keyQueues, str, (err) => cb(err));
+    } else
+      QueueManager.checkQueueLock(redisClient, queue, (err) => {
+        if (err) cb(err);
+        else {
+          const { keyQueues } = redisKeys.getKeys(queue.name, queue.ns);
+          const str = JSON.stringify(queue);
+          redisClient.sadd(keyQueues, str, (err) => cb(err));
+        }
+      });
   }
 }

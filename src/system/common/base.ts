@@ -1,21 +1,21 @@
 import { v4 as uuid } from 'uuid';
 import { EventEmitter } from 'events';
-import { IConfig, ICallback, TUnaryFunction, TFunction } from '../../types';
+import { IConfig, ICallback, TUnaryFunction, TFunction } from '../../../types';
 import * as async from 'async';
-import { PowerManager } from './common/power-manager/power-manager';
-import { Logger } from './common/logger';
+import { PowerManager } from './power-manager/power-manager';
+import { Logger } from './logger';
 import * as BunyanLogger from 'bunyan';
 import { MessageRate } from './message-rate';
-import { events } from './common/events';
+import { events } from './events';
 import { Broker } from './broker';
-import { redisKeys } from './common/redis-keys/redis-keys';
-import { RedisClient } from './common/redis-client/redis-client';
-import { MessageManager } from './message-manager/message-manager';
-import { Message } from './message';
-import { EmptyCallbackReplyError } from './common/errors/empty-callback-reply.error';
-import { PanicError } from './common/errors/panic.error';
-import { Heartbeat } from './common/heartbeat/heartbeat';
-import { MessageRateWriter } from './common/message-rate-writer';
+import { redisKeys } from './redis-keys/redis-keys';
+import { RedisClient } from './redis-client/redis-client';
+import { MessageManager } from '../message-manager/message-manager';
+import { Message } from '../message';
+import { EmptyCallbackReplyError } from './errors/empty-callback-reply.error';
+import { PanicError } from './errors/panic.error';
+import { Heartbeat } from './heartbeat/heartbeat';
+import { MessageRateWriter } from './message-rate-writer';
 
 export abstract class Base<
   TMessageRate extends MessageRate,

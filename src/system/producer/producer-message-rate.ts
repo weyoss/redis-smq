@@ -1,5 +1,5 @@
 import { IProducerMessageRateFields } from '../../../types';
-import { MessageRate } from '../message-rate';
+import { MessageRate } from '../common/message-rate';
 
 export class ProducerMessageRate extends MessageRate<IProducerMessageRateFields> {
   protected publishedRate = 0;

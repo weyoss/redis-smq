@@ -1,8 +1,8 @@
-import { IConfig, ICallback, TFunction, TQueueParams } from '../../types';
+import { IConfig, ICallback, TFunction, TQueueParams } from '../../../types';
 import { MessageRate } from './message-rate';
-import { redisKeys } from './common/redis-keys/redis-keys';
-import { QueueManager } from './queue-manager/queue-manager';
-import { PanicError } from './common/errors/panic.error';
+import { redisKeys } from './redis-keys/redis-keys';
+import { QueueManager } from '../queue-manager/queue-manager';
+import { PanicError } from './errors/panic.error';
 import { Base } from './base';
 
 export abstract class ExtendedBase<
@@ -26,7 +26,13 @@ export abstract class ExtendedBase<
     );
     if (!this.sharedRedisClient)
       cb(new PanicError(`Expected an instance of RedisClient`));
-    else QueueManager.setUpMessageQueue(this.queue, this.sharedRedisClient, cb);
+    else
+      QueueManager.setUpMessageQueue(
+        this.queue,
+        this.sharedRedisClient,
+        true,
+        cb,
+      );
   };
 
   protected goingUp(): TFunction[] {

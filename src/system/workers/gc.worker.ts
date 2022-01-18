@@ -12,7 +12,7 @@ import {
 } from '../../../types';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import BLogger from 'bunyan';
-import { Broker } from '../broker';
+import { Broker } from '../common/broker';
 import { MessageManager } from '../message-manager/message-manager';
 import { QueueManager } from '../queue-manager/queue-manager';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';

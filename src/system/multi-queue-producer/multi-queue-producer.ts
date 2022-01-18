@@ -12,13 +12,11 @@ import { redisKeys } from '../common/redis-keys/redis-keys';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { Heartbeat } from '../common/heartbeat/heartbeat';
 import { QueueManager } from '../queue-manager/queue-manager';
-import { Base } from '../base';
+import { Base } from '../common/base';
 import { heartbeatRegistry } from '../common/heartbeat/heartbeat-registry';
 import { MultiQueueProducerMessageRateWriter } from './multi-queue-producer-message-rate-writer';
 
 export class MultiQueueProducer extends Base<MultiQueueProducerMessageRate> {
-  protected queues = new Set<string>();
-
   constructor(config: IConfig) {
     super(config);
     this.run();
@@ -80,18 +78,12 @@ export class MultiQueueProducer extends Base<MultiQueueProducerMessageRate> {
       });
     };
     const setUpQueue = (): void => {
-      const queueId = `${queue.ns}:${queue.name}`;
-      if (!this.queues.has(queueId)) {
-        this.getSharedRedisClient((redisClient) => {
-          QueueManager.setUpMessageQueue(queue, redisClient, (err) => {
-            if (err) cb(err);
-            else {
-              this.queues.add(queueId);
-              proceed();
-            }
-          });
+      this.getSharedRedisClient((redisClient) => {
+        QueueManager.setUpMessageQueue(queue, redisClient, false, (err) => {
+          if (err) cb(err);
+          else proceed();
         });
-      } else proceed();
+      });
     };
     if (!this.powerManager.isUp()) {
       if (this.powerManager.isGoingUp()) {

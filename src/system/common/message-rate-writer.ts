@@ -1,6 +1,6 @@
 import { Ticker } from './ticker/ticker';
 import { ICallback, TMessageRateFields } from '../../../types';
-import { MessageRate } from '../message-rate';
+import { MessageRate } from './message-rate';
 import { events } from './events';
 import * as async from 'async';
 
