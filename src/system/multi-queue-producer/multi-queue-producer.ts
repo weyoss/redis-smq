@@ -11,10 +11,10 @@ import { MultiQueueProducerMessageRate } from './multi-queue-producer-message-ra
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { Heartbeat } from '../common/heartbeat/heartbeat';
-import { QueueManager } from '../queue-manager/queue-manager';
 import { Base } from '../common/base';
 import { heartbeatRegistry } from '../common/heartbeat/heartbeat-registry';
 import { MultiQueueProducerMessageRateWriter } from './multi-queue-producer-message-rate-writer';
+import { ELuaScriptName } from '../common/redis-client/lua-scripts';
 
 export class MultiQueueProducer extends Base<MultiQueueProducerMessageRate> {
   constructor(config: IConfig) {
@@ -70,28 +70,41 @@ export class MultiQueueProducer extends Base<MultiQueueProducerMessageRate> {
         if (message.isSchedulable()) {
           broker.scheduleMessage(message, callback);
         } else {
-          broker.enqueueMessage(message, (err?: Error | null) => {
-            if (err) callback(err);
-            else callback(null, true);
+          this.getSharedRedisClient((client) => {
+            const {
+              keyQueues,
+              keyQueuePendingWithPriority,
+              keyQueuePriority,
+              keyQueuePending,
+            } = redisKeys.getKeys(queueName);
+            client.runScript(
+              ELuaScriptName.PUBLISH_MESSAGE,
+              [
+                keyQueues,
+                JSON.stringify(queue),
+                message.getId(),
+                JSON.stringify(message),
+                message.getPriority() ?? '',
+                keyQueuePendingWithPriority,
+                keyQueuePriority,
+                keyQueuePending,
+              ],
+              (err) => {
+                if (err) cb(err);
+                else cb(null, true);
+              },
+            );
           });
         }
       });
     };
-    const setUpQueue = (): void => {
-      this.getSharedRedisClient((redisClient) => {
-        QueueManager.setUpMessageQueue(queue, redisClient, false, (err) => {
-          if (err) cb(err);
-          else proceed();
-        });
-      });
-    };
     if (!this.powerManager.isUp()) {
       if (this.powerManager.isGoingUp()) {
-        this.once(events.UP, setUpQueue);
+        this.once(events.UP, proceed);
       } else {
         cb(new PanicError(`Producer ID ${this.getId()} is not running`));
       }
-    } else setUpQueue();
+    } else proceed();
   }
 
   static countOnlineProducers(
