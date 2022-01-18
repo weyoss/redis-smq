@@ -49,7 +49,7 @@ export class MultiQueueProducer extends Base<MultiQueueProducerMessageRate> {
 
   produce(queueName: string, msg: unknown, cb: ICallback<boolean>): void {
     const queue: TQueueParams = {
-      name: queueName,
+      name: redisKeys.validateRedisKey(queueName),
       ns: redisKeys.getNamespace(),
     };
     const message = !(msg instanceof Message)
@@ -76,7 +76,7 @@ export class MultiQueueProducer extends Base<MultiQueueProducerMessageRate> {
               keyQueuePendingWithPriority,
               keyQueuePriority,
               keyQueuePending,
-            } = redisKeys.getKeys(queueName);
+            } = redisKeys.getKeys(queue.name);
             client.runScript(
               ELuaScriptName.PUBLISH_MESSAGE,
               [
