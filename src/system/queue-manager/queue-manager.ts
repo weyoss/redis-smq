@@ -38,7 +38,7 @@ export class QueueManager {
               if (onlineArr.length) {
                 cb(
                   new GenericError(
-                    `The queue is currently in use. Before deleting a queue, shutdown all its consumers and producers.`,
+                    `The queue is currently in use. Before deleting a queue, shutdown all its consumers and producers. After shutting down all instances, wait a few seconds and try again.`,
                   ),
                 );
               } else cb();
