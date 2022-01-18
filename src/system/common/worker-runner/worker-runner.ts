@@ -9,8 +9,13 @@ export class WorkerRunner {
   protected powerManager = new PowerManager();
   protected workers: ChildProcess[] = [];
 
+  protected onProcessExit = (): void => {
+    this.workers.forEach((i) => i.kill());
+  };
+
   run(dir: string, params: Record<string, any>, cb: ICallback<void>): void {
     this.powerManager.goingUp();
+    process.once('exit', this.onProcessExit);
     readdir(dir, undefined, (err, reply) => {
       if (err) cb(err);
       else {
@@ -37,9 +42,6 @@ export class WorkerRunner {
                 );
               }
             });
-            process.on('exit', () => {
-              this.workers.forEach((i) => i.kill());
-            });
             thread.send(JSON.stringify(params));
             this.workers.push(thread);
           });
@@ -56,6 +58,7 @@ export class WorkerRunner {
         worker.once('exit', shutdownFn);
         worker.kill('SIGHUP');
       } else {
+        process.removeListener('exit', this.onProcessExit);
         this.powerManager.commit();
         cb();
       }
