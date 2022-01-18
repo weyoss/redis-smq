@@ -13,7 +13,7 @@ import { RedisClient } from '../common/redis-client/redis-client';
 import { PanicError } from '../common/errors/panic.error';
 import { Heartbeat } from '../common/heartbeat/heartbeat';
 import { heartbeatRegistry } from '../common/heartbeat/heartbeat-registry';
-import { ExtendedBase } from '../extended-base';
+import { ExtendedBase } from '../common/extended-base';
 import { ProducerMessageRateWriter } from './producer-message-rate-writer';
 
 export class Producer extends ExtendedBase<

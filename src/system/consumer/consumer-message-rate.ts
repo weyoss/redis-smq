@@ -1,5 +1,5 @@
 import { IConsumerMessageRateFields } from '../../../types';
-import { MessageRate } from '../message-rate';
+import { MessageRate } from '../common/message-rate';
 import { events } from '../common/events';
 
 export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields> {

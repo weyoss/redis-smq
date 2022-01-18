@@ -23,7 +23,7 @@ import { PanicError } from '../common/errors/panic.error';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { Heartbeat } from '../common/heartbeat/heartbeat';
 import { heartbeatRegistry } from '../common/heartbeat/heartbeat-registry';
-import { ExtendedBase } from '../extended-base';
+import { ExtendedBase } from '../common/extended-base';
 import { ConsumerMessageRateWriter } from './consumer-message-rate-writer';
 
 export class Consumer extends ExtendedBase<
