@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 6.0.0-rc.5 (2022-01-18)
+
+* Fix a possible EventEmitter memory leak in WorkerRunner (4d3a066)
+* Fix MultiQueueProducer bug with queueName not being validated, test (c4cbc7d)
+
 ## 6.0.0-rc.4 (2022-01-18)
 
 * Bump redis-smq-monitor to v6.1.0 (930aa95)
