@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 6.0.0-rc.6 (2022-01-20)
+
+* Bump up redis-smq-monitor to v6.1.0 (83107be)
+* Update README.md (0ce39bd)
+* Make Producer stateless, drop MultiQueueProducer, refactor, clean up (7597762)
+
 ## 6.0.0-rc.5 (2022-01-18)
 
 * Fix a possible EventEmitter memory leak in WorkerRunner (4d3a066)
