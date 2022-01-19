@@ -31,7 +31,7 @@ High-level overview of how RedisSMQ works:
 ## Features
 
  * **[High-performance message processing](docs/performance.md)**
- * **Scalable**: A queue can be consumed by multiple concurrent consumers, running on different hosts.
+ * **Scalable**: You can run multiple instances concurrently in the same host, or in different hosts.
  * **Persistent**: Messages are not lost in case of consumer failures.
  * **Atomic**: A message can be delivered only to one consumer at a time.
  * **[Message expiration](docs/api/message.md#messageprototypesetttl)**: A message will not be delivered if it has been in a queue for longer 
@@ -41,7 +41,7 @@ High-level overview of how RedisSMQ works:
    for N times with an optional period between deliveries, and to be scheduled using CRON expressions.
  * **[Reliable Priority Queues](docs/priority-queues.md)**: Supports priority messaging.
  * **[HTTP API](docs/http-api.md)**: an HTTP interface is provided to interact with the MQ.
- * **[Web UI](docs/web-ui.md)**: Using the Web UI you can monitor and manage the MQ is real-time.
+ * **[Web UI](docs/web-ui.md)**: Using the Web UI you also can monitor and manage the MQ is real-time.
  * **[JSON Logging](docs/logs.md)**: Supports JSON log format for troubleshooting and debugging.
  * **Highly optimized**: Implemented using pure callbacks, with small memory footprint and no memory leaks. See [callbacks vs promises vs async/await benchmarks](http://bluebirdjs.com/docs/benchmarks.html).
  * **[Configurable](docs/configuration.md)**: Many options and features can be configured.
@@ -60,7 +60,6 @@ High-level overview of how RedisSMQ works:
        2. [Producer Class](#producer-class)
        3. [Consumer Class](#consumer-class)
    2. Advanced Topics
-      1. [MultiQueueProducer](docs/api/multi-queue-producer.md)
       2. [Scheduling Messages](docs/scheduling-messages.md)
       3. [Priority Queues](docs/priority-queues.md)
       4. [Message Manager](docs/api/message-manager.md)
@@ -118,7 +117,8 @@ const { Message } = require('redis-smq');
 const message = new Message();
 message
     .setBody({hello: 'world'})
-    .setTTL(3600000); // in millis
+    .setTTL(3600000) // in millis
+    .setQueue('test_queue');
 
 let messageTTL = message.getTTL();
 ```
@@ -127,8 +127,14 @@ See [Message Reference](docs/api/message.md) for more details.
 
 #### Producer Class
 
-`Producer` class is in turn responsible for publishing messages. Each `Producer` instance is associated with a message 
-queue and provides the `produce()` method to publish a message.
+`Producer` class is in turn responsible for publishing messages. 
+
+~~Each `Producer` instance is associated with a message queue and provides the `produce()` method to publish a message.~~
+
+Starting with v6, your can use the same producer instance to publish messages to multiple queues. The same producer
+instance can also produce messages with priority. 
+
+Such features are useful when, for example, developing microservices using RedisSMQ as a message broker.
 
 ```javascript
 // filename: ./examples/javascript/ns1-test-queue-producer.js
@@ -140,9 +146,10 @@ const message = new Message();
 
 message
     .setBody({hello: 'world'})
-    .setTTL(3600000);
+    .setTTL(3600000)
+    .setQueue('test_queue');
 
-const producer = new Producer('test_queue');
+const producer = new Producer();
 producer.produce(message, (err) => {
     if (err) console.log(err);
     else console.log('Successfully produced')
@@ -151,18 +158,12 @@ producer.produce(message, (err) => {
 
 See [Producer Reference](docs/api/producer.md) for more details.
 
-RedisSMQ also provides [MultiQueueProducer](docs/api/multi-queue-producer.md) for publishing messages to multiple 
-queues from a single producer instance.
-
 #### Consumer Class
 
 The `Consumer` class is the parent class for all your consumers, which are required to implement the abstract method 
 `consume()` from the parent class. 
 
-Once a message is received, the `consume()` method get invoked with the received message as its first argument. 
-
-In a typical scenario, consumers are saved per files, so that each file represents a consumer, which can be started 
-from CLI as shown in the example bellow.
+Once a message is received, the `consume()` method get invoked with the received message as its first argument.
 
 ```javascript
 // filename: ./examples/javascript/ns1-test-queue-consumer.js
@@ -202,8 +203,6 @@ that couldn't be processed or can not be delivered to consumers.
 See [Consumer Reference](docs/api/consumer.md) for more details.
 
 ### Advanced Topics
-
-* [MultiQueueProducer](docs/api/multi-queue-producer.md)
 
 * [Scheduling Messages](docs/scheduling-messages.md)
 

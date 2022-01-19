@@ -19,7 +19,7 @@ enum ERedisKey {
   KEY_QUEUE_ACKNOWLEDGED,
   RESERVED,
   KEY_QUEUE_CONSUMERS,
-  KEY_QUEUE_PRODUCERS,
+  RESERVED_6,
   KEY_QUEUE_PROCESSING_QUEUES, // Redis key for processing queues of a given queue
 
   KEY_LOCK_CONSUMER_WORKERS_RUNNER,
@@ -41,7 +41,7 @@ enum ERedisKey {
   KEY_LOCK_RATE_QUEUE_ACKNOWLEDGED,
   KEY_LOCK_RATE_QUEUE_DEAD_LETTERED,
 
-  KEY_RATE_PRODUCER_PUBLISHED,
+  RESERVED_4,
   KEY_RATE_CONSUMER_ACKNOWLEDGED,
   KEY_RATE_QUEUE_ACKNOWLEDGED,
   KEY_RATE_QUEUE_ACKNOWLEDGED_INDEX,
@@ -56,16 +56,16 @@ enum ERedisKey {
   KEY_RATE_GLOBAL_PUBLISHED,
   KEY_RATE_GLOBAL_PUBLISHED_INDEX,
   KEY_RATE_CONSUMER_DEAD_LETTERED,
-  KEY_RATE_MULTI_QUEUE_PRODUCER_PUBLISHED,
+  RESERVED_1,
 
-  KEY_HEARTBEAT_PRODUCER,
+  RESERVED_5,
   KEY_HEARTBEAT_CONSUMER,
   KEY_HEARTBEAT_TIMESTAMPS,
-  KEY_HEARTBEAT_MULTI_QUEUE_PRODUCER,
+  RESERVED_2,
 
   KEY_SCHEDULED_MESSAGES_INDEX,
   KEY_HEARTBEATS,
-  KEY_MULTI_QUEUE_PRODUCERS,
+  RESERVED_3,
   KEY_QUEUES,
   KEY_PROCESSING_QUEUES,
   KEY_LOCK_QUEUE,
@@ -142,10 +142,6 @@ export const redisKeys = {
         ERedisKey.KEY_QUEUE_CONSUMERS,
         queueName,
       ),
-      keyQueueProducers: this.joinSegments(
-        ERedisKey.KEY_QUEUE_PRODUCERS,
-        queueName,
-      ),
       keyLockQueue: this.joinSegments(ERedisKey.KEY_LOCK_QUEUE, queueName),
     };
     return {
@@ -186,46 +182,6 @@ export const redisKeys = {
     };
   },
 
-  getProducerKeys(queueName: string, instanceId: string, ns?: string | null) {
-    const parentKeys = this.getKeys(queueName, ns);
-    const globalKeys = this.getGlobalKeys();
-    const keys = {
-      keyHeartbeatProducer: this.joinSegments(
-        ERedisKey.KEY_HEARTBEAT_PRODUCER,
-        queueName,
-        instanceId,
-      ),
-      keyRateProducerPublished: this.joinSegments(
-        ERedisKey.KEY_RATE_PRODUCER_PUBLISHED,
-        queueName,
-        instanceId,
-      ),
-    };
-    return {
-      ...parentKeys,
-      ...globalKeys,
-      ...this.makeNamespacedKeys(keys, ns ?? namespace),
-    };
-  },
-
-  getMultiQueueProducerKeys(instanceId: string) {
-    const globalKeys = this.getGlobalKeys();
-    const keys = {
-      keyHeartbeatMultiQueueProducer: this.joinSegments(
-        ERedisKey.KEY_HEARTBEAT_MULTI_QUEUE_PRODUCER,
-        instanceId,
-      ),
-      keyRateMultiQueueProducerPublished: this.joinSegments(
-        ERedisKey.KEY_RATE_MULTI_QUEUE_PRODUCER_PUBLISHED,
-        instanceId,
-      ),
-    };
-    return {
-      ...globalKeys,
-      ...this.makeNamespacedKeys(keys, globalNamespace),
-    };
-  },
-
   extractData(key: string) {
     const { ns, type, segments } = this.getSegments(key);
     if (
@@ -253,28 +209,6 @@ export const redisKeys = {
         queueName,
         type,
         consumerId,
-      };
-    }
-    if (
-      type === ERedisKey.KEY_RATE_PRODUCER_PUBLISHED ||
-      type === ERedisKey.KEY_HEARTBEAT_PRODUCER
-    ) {
-      const [queueName, producerId] = segments;
-      return {
-        ns,
-        type,
-        queueName,
-        producerId,
-      };
-    }
-    if (
-      type === ERedisKey.KEY_RATE_MULTI_QUEUE_PRODUCER_PUBLISHED ||
-      type === ERedisKey.KEY_HEARTBEAT_MULTI_QUEUE_PRODUCER
-    ) {
-      const [producerId] = segments;
-      return {
-        type,
-        producerId,
       };
     }
     return null;
@@ -332,7 +266,6 @@ export const redisKeys = {
         ERedisKey.KEY_LOCK_RATE_GLOBAL_ACKNOWLEDGED,
       keyLockRateGlobalDeadLettered:
         ERedisKey.KEY_LOCK_RATE_GLOBAL_DEAD_LETTERED,
-      keyMultiQueueProducers: ERedisKey.KEY_MULTI_QUEUE_PRODUCERS,
     };
     return this.makeNamespacedKeys(keys, globalNamespace);
   },

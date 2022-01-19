@@ -8,12 +8,12 @@ import { GetMessagesResponseBodyDataDTO } from '../../src/monitor-server/control
 
 test('Re-queuing an acknowledged message', async () => {
   await startMonitorServer();
-  const { message } = await produceAndAcknowledgeMessage();
+  const { message, queue } = await produceAndAcknowledgeMessage();
   const request = supertest('http://127.0.0.1:3000');
   const response1: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =
     await request.post(
-      `/api/queues/${message.getQueue()?.name}/ns/${
-        message.getQueue()?.ns
+      `/api/queues/${queue.name}/ns/${
+        queue.ns
       }/acknowledged-messages/${message.getId()}/requeue?sequenceId=0`,
     );
   expect(response1.statusCode).toBe(204);

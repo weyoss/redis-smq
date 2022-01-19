@@ -8,10 +8,42 @@ data would not be touched.
 Upgrading your installation to the newest version should be straightforward as most APIs are compatible, with some
 exceptions:
 
-
 **1. Publishing a message**
 
-To publish a message, use the `produce()` method of your producer (`produceMessage()` has been renamed).
+Before:
+
+```javascript
+const producer = new MyProducer('test_queue', config);
+
+const msg = new Message();
+msg.setPriority(Message.MessagePriority.HIGHEST).setBody('Some data');
+producer.produceMessage(msg, () => {
+    // The message priority will be ignored as priority queuing for the given producer is not enabled.
+    // ...
+});
+
+//OR
+producer.produceMessage('Some data', () => {
+  // The message priority will be ignored as priority queuing for the given producer is not enabled.
+  // ...
+});
+```
+
+Now:
+
+```javascript
+const producer = new MyProducer('test_queue', config);
+
+const msg = new Message()
+msg.setBody('Some data').setQueue('test_queue');
+producer.produce(msg, () => {
+  // The message priority will be ignored as priority queuing for the given producer is not enabled.
+  // ...
+});
+```
+
+Using the same producer instance, you can now produce multiple messages to different queues. Do not forget to set up 
+the message queue (`setQueue()`). Otherwise, an error will be returned.
 
 **2. Publishing priority messages**
 
@@ -57,18 +89,20 @@ const config = {
 }
 
 // Using this Producer instance we can publish priority and non-priority messages
-const producer = new MyProducer('test_queue');
+const producer = new MyProducer();
 
 const msg = new Message();
-msg.setPriority(Message.MessagePriority.HIGHEST);
-msg.setBody('Some data');
+msg
+  .setPriority(Message.MessagePriority.HIGHEST)
+  .setBody('Some data')
+  .setQueue('test_queue');
 producer.produce(msg, () => {
     // As the message priority has been set, the message will be published using priority queuing
     // ...
 });
 
 const anotherMsg = new Message();
-msg.setBody('payload');
+msg.setBody('payload').setQueue('another_queue');
 producer.produce(anotherMsg, () => {
     // The message has been published without priority queuing 
     // ...
@@ -161,3 +195,7 @@ requeueMessageFromDLQueue(queue, sequenceId, messageId, priority, cb)
 2. purgeAcknowledgedMessagesQueue() -> purgeAcknowledgedQueue()
 3. purgeQueue() -> purgePendingQueue()
 4. purgeScheduledMessagesQueue() -> purgeScheduledQueue()
+
+**10. Updated HTTP API endpoints**
+
+See [HTTP API Reference](http-api.md) for more details.

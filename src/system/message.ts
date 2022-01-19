@@ -3,6 +3,7 @@ import { parseExpression } from 'cron-parser';
 import { TMessageDefaultOptions, TQueueParams } from '../../types';
 import { ArgumentError } from './common/errors/argument.error';
 import { ConfigurationError } from './common/errors/configuration.error';
+import { QueueManager } from './queue-manager/queue-manager';
 
 export class Message {
   protected static defaultOpts: TMessageDefaultOptions = {
@@ -23,6 +24,8 @@ export class Message {
     VERY_HIGH: 1,
     HIGHEST: 0,
   };
+
+  protected queue: TQueueParams | null = null;
 
   protected ttl: number;
 
@@ -49,8 +52,6 @@ export class Message {
   protected readonly uuid: string;
 
   protected readonly createdAt: number;
-
-  protected queue: TQueueParams | null = null;
 
   protected publishedAt: number | null = null;
 
@@ -85,7 +86,6 @@ export class Message {
     this.delayed = false;
     this.scheduledCronFired = false;
     this.scheduledRepeatCount = 0;
-    this.queue = null;
     return this;
   }
 
@@ -218,8 +218,8 @@ export class Message {
     return this;
   }
 
-  setQueue(queue: TQueueParams): Message {
-    this.queue = queue;
+  setQueue(queue: string | TQueueParams): Message {
+    this.queue = QueueManager.getQueueParams(queue);
     return this;
   }
 

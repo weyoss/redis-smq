@@ -19,8 +19,6 @@ import { GlobalAcknowledgedTimeSeries } from '../../system/consumer/consumer-tim
 import { GlobalDeadLetteredTimeSeries } from '../../system/consumer/consumer-time-series/global-dead-lettered-time-series';
 import { ConsumerAcknowledgedTimeSeries } from '../../system/consumer/consumer-time-series/consumer-acknowledged-time-series';
 import { ConsumerDeadLetteredTimeSeries } from '../../system/consumer/consumer-time-series/consumer-dead-lettered-time-series';
-import { ProducerPublishedTimeSeries } from '../../system/producer/producer-time-series/producer-published-time-series';
-import { MultiQueueProducerPublishedTimeSeries } from '../../system/multi-queue-producer/multi-queue-producer-time-series/multi-queue-producer-published-time-series';
 
 export class WebsocketRateStreamWorker {
   protected logger;
@@ -31,11 +29,9 @@ export class WebsocketRateStreamWorker {
     [ns: string]: {
       [queueName: string]: {
         consumers: string[];
-        producers: string[];
       };
     };
   } = {};
-  protected multiQueueProducers: string[] = [];
   protected tasks: ((cb: ICallback<void>) => void)[] = [];
   protected noop = (): void => void 0;
 
@@ -56,7 +52,6 @@ export class WebsocketRateStreamWorker {
   protected reset = (): void => {
     this.queueData = {};
     this.tasks = [];
-    this.multiQueueProducers = [];
   };
 
   protected addConsumerTasks = (
@@ -151,59 +146,6 @@ export class WebsocketRateStreamWorker {
     );
   };
 
-  protected addProducerTasks = (
-    ts: number,
-    queue: TQueueParams,
-    producerId: string,
-  ): void => {
-    this.tasks.push((cb: ICallback<void>) =>
-      ProducerPublishedTimeSeries(
-        this.redisClient,
-        producerId,
-        queue,
-      ).getRangeFrom(ts, (err, reply) => {
-        if (err) cb(err);
-        else {
-          this.redisClient.publish(
-            `streamProducerPublished:${producerId}`,
-            JSON.stringify(reply),
-            this.noop,
-          );
-          cb();
-        }
-      }),
-    );
-  };
-
-  protected addMultiQueueProducerTasks = (
-    ts: number,
-    cb: ICallback<void>,
-  ): void => {
-    async.each(
-      this.multiQueueProducers,
-      (producerId, done) => {
-        this.tasks.push((cb: ICallback<void>) =>
-          MultiQueueProducerPublishedTimeSeries(
-            this.redisClient,
-            producerId,
-          ).getRangeFrom(ts, (err, reply) => {
-            if (err) cb(err);
-            else {
-              this.redisClient.publish(
-                `streamMultiQueueProducerPublished:${producerId}`,
-                JSON.stringify(reply),
-                this.noop,
-              );
-              cb();
-            }
-          }),
-        );
-        done();
-      },
-      cb,
-    );
-  };
-
   protected addGlobalTasks = (ts: number): void => {
     this.tasks.push((cb: ICallback<void>) =>
       GlobalAcknowledgedTimeSeries(this.redisClient).getRangeFrom(
@@ -255,9 +197,7 @@ export class WebsocketRateStreamWorker {
     );
   };
 
-  protected addQueue = (
-    queue: TQueueParams,
-  ): { consumers: string[]; producers: string[] } => {
+  protected addQueue = (queue: TQueueParams): { consumers: string[] } => {
     const { ns, name } = queue;
     if (!this.queueData[ns]) {
       this.queueData[ns] = {};
@@ -265,7 +205,6 @@ export class WebsocketRateStreamWorker {
     if (!this.queueData[ns][name]) {
       this.queueData[ns][name] = {
         consumers: [],
-        producers: [],
       };
     }
     return this.queueData[ns][name];
@@ -287,62 +226,38 @@ export class WebsocketRateStreamWorker {
     );
   };
 
-  protected handleQueueProducers = (
-    ts: number,
-    queue: TQueueParams,
-    producers: string[],
-    cb: () => void,
-  ): void => {
-    async.each(
-      producers,
-      (producerId, done) => {
-        this.addProducerTasks(ts, queue, producerId);
-        done();
-      },
-      cb,
-    );
-  };
-
   protected handleQueue = (
     ts: number,
     queue: TQueueParams,
-    queueProperties: { consumers: string[]; producers: string[] },
+    queueProperties: { consumers: string[] },
     cb: () => void,
   ): void => {
-    const { consumers, producers } = queueProperties;
+    const { consumers } = queueProperties;
     this.addQueueTasks(ts, queue);
-    async.parallel(
-      [
-        (cb) => this.handleQueueConsumers(ts, queue, consumers, cb),
-        (cb) => this.handleQueueProducers(ts, queue, producers, cb),
-      ],
-      cb,
-    );
+    this.handleQueueConsumers(ts, queue, consumers, cb);
   };
 
   protected prepare = (cb: ICallback<void>): void => {
     const ts = TimeSeries.getCurrentTimestamp() - 10;
     this.addGlobalTasks(ts);
-    this.addMultiQueueProducerTasks(ts, () => {
-      async.eachOf(
-        this.queueData,
-        (queues, ns, done) => {
-          async.eachOf(
-            queues,
-            (queue, queueName, done) => {
-              this.handleQueue(
-                ts,
-                { ns: String(ns), name: String(queueName) },
-                queue,
-                done,
-              );
-            },
-            done,
-          );
-        },
-        cb,
-      );
-    });
+    async.eachOf(
+      this.queueData,
+      (queues, ns, done) => {
+        async.eachOf(
+          queues,
+          (queue, queueName, done) => {
+            this.handleQueue(
+              ts,
+              { ns: String(ns), name: String(queueName) },
+              queue,
+              done,
+            );
+          },
+          done,
+        );
+      },
+      cb,
+    );
   };
 
   protected publish = (): void => {
@@ -358,15 +273,11 @@ export class WebsocketRateStreamWorker {
           reply ?? [],
           (item, done) => {
             if (typeof item === 'string') throw new InvalidCallbackReplyError();
-            const { ns, queueName, consumerId, producerId } =
+            const { ns, queueName, consumerId } =
               redisKeys.extractData(item.keyHeartbeat) ?? {};
-            if (ns && queueName && (consumerId || producerId)) {
+            if (ns && queueName && consumerId) {
               const queue = this.addQueue({ ns, name: queueName });
-              if (consumerId) queue.consumers.push(consumerId);
-              else if (producerId) queue.producers.push(producerId);
-            } else if (producerId) {
-              // multi queue producer
-              this.multiQueueProducers.push(producerId);
+              queue.consumers.push(consumerId);
             }
             done();
           },

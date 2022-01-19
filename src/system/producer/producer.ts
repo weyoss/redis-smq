@@ -1,27 +1,16 @@
-import {
-  IConfig,
-  ICallback,
-  TProducerRedisKeys,
-  THeartbeatRegistryPayload,
-  TQueueParams,
-} from '../../../types';
+import { ICallback, IConfig } from '../../../types';
 import { Message } from '../message';
-import { ProducerMessageRate } from './producer-message-rate';
 import { events } from '../common/events';
-import { redisKeys } from '../common/redis-keys/redis-keys';
-import { RedisClient } from '../common/redis-client/redis-client';
 import { PanicError } from '../common/errors/panic.error';
-import { Heartbeat } from '../common/heartbeat/heartbeat';
-import { heartbeatRegistry } from '../common/heartbeat/heartbeat-registry';
-import { ExtendedBase } from '../common/extended-base';
+import { ProducerMessageRate } from './producer-message-rate';
+import { RedisClient } from '../common/redis-client/redis-client';
+import { Base } from '../common/base';
 import { ProducerMessageRateWriter } from './producer-message-rate-writer';
+import { ArgumentError } from '../common/errors/argument.error';
 
-export class Producer extends ExtendedBase<
-  ProducerMessageRate,
-  TProducerRedisKeys
-> {
-  constructor(queueName: string, config: IConfig = {}) {
-    super(queueName, config);
+export class Producer extends Base<ProducerMessageRate> {
+  constructor(config: IConfig) {
+    super(config);
     this.run();
   }
 
@@ -29,108 +18,45 @@ export class Producer extends ExtendedBase<
     this.messageRate = new ProducerMessageRate();
     this.messageRateWriter = new ProducerMessageRateWriter(
       redisClient,
-      this.queue,
       this.id,
       this.messageRate,
     );
   }
 
-  initHeartbeatInstance(redisClient: RedisClient): void {
-    const { keyHeartbeatProducer, keyQueueProducers } = this.getRedisKeys();
-    this.heartbeat = new Heartbeat(
-      {
-        keyHeartbeat: keyHeartbeatProducer,
-        keyInstanceRegistry: keyQueueProducers,
-        instanceId: this.getId(),
-      },
-      redisClient,
-    );
-    this.heartbeat.on(events.ERROR, (err: Error) =>
-      this.emit(events.ERROR, err),
-    );
-  }
-
-  produce(msg: unknown, cb: ICallback<boolean>): void {
-    const message = !(msg instanceof Message)
-      ? new Message().setBody(msg)
-      : msg;
-    message.reset();
-    message.setQueue(this.queue);
-    const callback: ICallback<boolean> = (err, reply) => {
-      if (err) cb(err);
-      else {
-        if (this.messageRate) this.messageRate.incrementPublished();
-        this.emit(events.MESSAGE_PRODUCED, message);
-        cb(null, reply);
-      }
-    };
-    const proceed = () => {
-      this.getBroker((broker) => {
-        if (message.isSchedulable()) {
-          broker.scheduleMessage(message, callback);
-        } else {
-          broker.enqueueMessage(message, (err?: Error | null) => {
-            if (err) callback(err);
-            else callback(null, true);
-          });
-        }
-      });
-    };
-    if (!this.powerManager.isUp()) {
-      if (this.powerManager.isGoingUp()) {
-        this.once(events.UP, proceed);
-      } else {
-        cb(new PanicError(`Producer ID ${this.getId()} is not running`));
-      }
-    } else proceed();
-  }
-
-  getRedisKeys(): TProducerRedisKeys {
-    if (!this.redisKeys) {
-      this.redisKeys = redisKeys.getProducerKeys(
-        this.queue.name,
-        this.id,
-        this.queue.ns,
+  produce(message: Message, cb: ICallback<boolean>): void {
+    const queue = message.getQueue();
+    if (!queue) {
+      cb(
+        new ArgumentError('Can not publish a message without a message queue'),
       );
+    } else {
+      message.reset();
+      const callback: ICallback<boolean> = (err, reply) => {
+        if (err) cb(err);
+        else {
+          if (this.messageRate) this.messageRate.incrementPublished(queue);
+          this.emit(events.MESSAGE_PRODUCED, message);
+          cb(null, reply);
+        }
+      };
+      const proceed = () => {
+        this.getBroker((broker) => {
+          if (message.isSchedulable()) {
+            broker.scheduleMessage(message, callback);
+          } else
+            broker.enqueueMessage(message, (err) => {
+              if (err) cb(err);
+              else callback(null, true);
+            });
+        });
+      };
+      if (!this.powerManager.isUp()) {
+        if (this.powerManager.isGoingUp()) {
+          this.once(events.UP, proceed);
+        } else {
+          cb(new PanicError(`Producer ID ${this.getId()} is not running`));
+        }
+      } else proceed();
     }
-    return this.redisKeys;
-  }
-
-  static isAlive(
-    redisClient: RedisClient,
-    queueName: string,
-    id: string,
-    cb: ICallback<boolean>,
-  ): void {
-    const { keyQueueProducers } = redisKeys.getProducerKeys(queueName, id);
-    heartbeatRegistry.exists(redisClient, keyQueueProducers, id, cb);
-  }
-
-  static getOnlineProducers(
-    redisClient: RedisClient,
-    queue: TQueueParams,
-    transform = false,
-    cb: ICallback<Record<string, THeartbeatRegistryPayload | string>>,
-  ): void {
-    const { keyQueueProducers } = redisKeys.getKeys(queue.name, queue.ns);
-    heartbeatRegistry.getAll(redisClient, keyQueueProducers, transform, cb);
-  }
-
-  static getOnlineProducerIds(
-    redisClient: RedisClient,
-    queue: TQueueParams,
-    cb: ICallback<string[]>,
-  ): void {
-    const { keyQueueProducers } = redisKeys.getKeys(queue.name, queue.ns);
-    heartbeatRegistry.getIds(redisClient, keyQueueProducers, cb);
-  }
-
-  static countOnlineProducers(
-    redisClient: RedisClient,
-    queue: TQueueParams,
-    cb: ICallback<number>,
-  ): void {
-    const { keyQueueProducers } = redisKeys.getKeys(queue.name, queue.ns);
-    heartbeatRegistry.count(redisClient, keyQueueProducers, cb);
   }
 }

@@ -8,9 +8,8 @@ import { GetMessagesResponseBodyDataDTO } from '../../src/monitor-server/control
 
 test('Fetching dead-lettered messages', async () => {
   await startMonitorServer();
-  const { producer, message } = await produceAndDeadLetterMessage();
+  const { message, queue } = await produceAndDeadLetterMessage();
   const request = supertest('http://127.0.0.1:3000');
-  const queue = producer.getQueue();
   const response1: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =
     await request.get(
       `/api/queues/${queue.name}/ns/${queue.ns}/dead-lettered-messages?skip=0&take=99`,

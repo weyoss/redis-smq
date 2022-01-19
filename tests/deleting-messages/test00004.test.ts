@@ -1,28 +1,13 @@
 import {
-  getConsumer,
   getMessageManagerFrontend,
-  getProducer,
   getQueueManagerFrontend,
-  untilConsumerIdle,
+  produceAndDeadLetterMessage,
 } from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
 
 test('Combined test: Delete a dead-letter message. Check pending, acknowledged, and dead-letter messages. Check queue metrics.', async () => {
-  const msg = new Message();
-  msg.setBody({ hello: 'world' });
-
-  const producer = getProducer();
-  await producer.produceAsync(msg);
-  const queue = producer.getQueue();
-
-  const consumer = getConsumer({
-    consumeMock: (m, cb) => {
-      throw new Error();
-    },
-  });
-  await consumer.runAsync();
-  await untilConsumerIdle(consumer);
+  const { queue, message } = await produceAndDeadLetterMessage();
 
   const messageManager = promisifyAll(await getMessageManagerFrontend());
   const res1 = await messageManager.getPendingMessagesAsync(queue, 0, 100);
@@ -36,7 +21,7 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   const res3 = await messageManager.getDeadLetterMessagesAsync(queue, 0, 100);
   expect(res3.total).toBe(1);
   expect(res3.items.length).toBe(1);
-  const msg1 = Message.createFromMessage(msg).setAttempts(2);
+  const msg1 = Message.createFromMessage(message).setAttempts(2);
   expect(res3.items[0].message).toEqual(msg1);
 
   const queueManager = promisifyAll(await getQueueManagerFrontend());
@@ -45,7 +30,7 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(queueMetrics.acknowledged).toBe(0);
   expect(queueMetrics.deadLettered).toBe(1);
 
-  await messageManager.deleteDeadLetterMessageAsync(queue, 0, msg.getId());
+  await messageManager.deleteDeadLetterMessageAsync(queue, 0, message.getId());
 
   const res4 = await messageManager.getDeadLetterMessagesAsync(queue, 0, 100);
 
@@ -56,7 +41,11 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(queueMetrics1.deadLettered).toBe(0);
 
   await expect(async () => {
-    await messageManager.deleteDeadLetterMessageAsync(queue, 0, msg.getId());
+    await messageManager.deleteDeadLetterMessageAsync(
+      queue,
+      0,
+      message.getId(),
+    );
   }).rejects.toThrow(
     'Either message parameters are invalid or the message has been already deleted',
   );

@@ -1,4 +1,9 @@
-import { getProducer, ISuperTestResponse, startMonitorServer } from '../common';
+import {
+  defaultQueue,
+  getProducer,
+  ISuperTestResponse,
+  startMonitorServer,
+} from '../common';
 import * as supertest from 'supertest';
 import { Message } from '../../src/message';
 import { GetScheduledMessagesResponseBodyDataDTO } from '../../src/monitor-server/controllers/api/main/scheduled-messages/get-scheduled-messages/get-scheduled-messages.response.DTO';
@@ -8,7 +13,10 @@ test('Fetching and deleting scheduled messages using the HTTP API: Case 1', asyn
   const producer = getProducer();
 
   const msg1 = new Message();
-  msg1.setScheduledCron('0 * * * * *').setBody({ hello: 'world1' });
+  msg1
+    .setScheduledCron('0 * * * * *')
+    .setBody({ hello: 'world1' })
+    .setQueue(defaultQueue);
   await producer.produceAsync(msg1);
 
   const request = supertest('http://127.0.0.1:3000');

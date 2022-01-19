@@ -3,11 +3,12 @@
 const config = require('./config');
 const { Producer, Message } = require('../..'); // require('redis-smq');
 
-const producer = new Producer('test_queue', config);
+const producer = new Producer(config);
 
 const msg = new Message()
   .setScheduledCron('*/20 * * * * *')
-  .setBody({ hello: 'World!' });
+  .setBody({ hello: 'World!' })
+  .setQueue('test_queue');
 
 producer.produce(msg, (err) => {
   if (err) throw err;

@@ -1,28 +1,12 @@
 import {
-  getConsumer,
   getMessageManagerFrontend,
-  getProducer,
   getQueueManagerFrontend,
-  untilConsumerIdle,
+  produceAndAcknowledgeMessage,
 } from '../common';
-import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
 
 test('Combined test: Delete an acknowledged message. Check pending, acknowledged, and dead-letter messages. Check queue metrics.', async () => {
-  const msg = new Message();
-  msg.setBody({ hello: 'world' });
-
-  const producer = getProducer();
-  await producer.produceAsync(msg);
-  const queue = producer.getQueue();
-
-  const consumer = getConsumer({
-    consumeMock: (m, cb) => {
-      cb();
-    },
-  });
-  await consumer.runAsync();
-  await untilConsumerIdle(consumer);
+  const { queue, message } = await produceAndAcknowledgeMessage();
 
   const messageManager = promisifyAll(await getMessageManagerFrontend());
 
@@ -37,14 +21,18 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   const res2 = await messageManager.getAcknowledgedMessagesAsync(queue, 0, 100);
   expect(res2.total).toBe(1);
   expect(res2.items.length).toBe(1);
-  expect(res2.items[0].message).toEqual(msg);
+  expect(res2.items[0].message).toEqual(message);
 
   const queueManager = promisifyAll(await getQueueManagerFrontend());
   const queueMetrics = await queueManager.getQueueMetricsAsync(queue);
   expect(queueMetrics.pending).toBe(0);
   expect(queueMetrics.acknowledged).toBe(1);
 
-  await messageManager.deleteAcknowledgedMessageAsync(queue, 0, msg.getId());
+  await messageManager.deleteAcknowledgedMessageAsync(
+    queue,
+    0,
+    message.getId(),
+  );
 
   const res3 = await messageManager.getAcknowledgedMessagesAsync(queue, 0, 100);
   expect(res3.total).toBe(0);
@@ -70,7 +58,11 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   expect(queueMetrics1.acknowledged).toBe(0);
 
   await expect(async () => {
-    await messageManager.deleteAcknowledgedMessageAsync(queue, 0, msg.getId());
+    await messageManager.deleteAcknowledgedMessageAsync(
+      queue,
+      0,
+      message.getId(),
+    );
   }).rejects.toThrow(
     'Either message parameters are invalid or the message has been already deleted',
   );

@@ -1,35 +1,20 @@
 import {
-  getConsumer,
   getMessageManagerFrontend,
-  getProducer,
   getQueueManagerFrontend,
-  untilConsumerIdle,
+  produceAndDeadLetterMessage,
 } from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
 
 test('Combined test: Requeue a message from dead-letter queue with priority.  Check both pending and acknowledged messages. Check queue metrics.', async () => {
-  const producer = getProducer();
-  const queue = producer.getQueue();
-
-  const msg = new Message();
-  msg.setBody({ hello: 'world' });
-  await producer.produceAsync(msg);
-
-  const consumer = getConsumer({
-    consumeMock: (m, cb) => {
-      throw new Error();
-    },
-  });
-  await consumer.runAsync();
-  await untilConsumerIdle(consumer);
+  const { message, queue, consumer } = await produceAndDeadLetterMessage();
   await consumer.shutdownAsync();
 
   const messageManager = promisifyAll(await getMessageManagerFrontend());
   await messageManager.requeueMessageFromDLQueueAsync(
     queue,
     0,
-    msg.getId(),
+    message.getId(),
     Message.MessagePriority.HIGHEST,
   );
 
@@ -44,7 +29,7 @@ test('Combined test: Requeue a message from dead-letter queue with priority.  Ch
   );
   expect(res2.total).toBe(1);
   expect(res2.items.length).toBe(1);
-  expect(res2.items[0].getId()).toEqual(msg.getId());
+  expect(res2.items[0].getId()).toEqual(message.getId());
   expect(res2.items[0].getPriority()).toEqual(Message.MessagePriority.HIGHEST);
 
   const res3 = await messageManager.getDeadLetterMessagesAsync(queue, 0, 100);

@@ -1,4 +1,9 @@
-import { getConsumer, getProducer, untilConsumerIdle } from '../common';
+import {
+  defaultQueue,
+  getConsumer,
+  getProducer,
+  untilConsumerIdle,
+} from '../common';
 import { Message } from '../../src/message';
 import { events } from '../../src/system/common/events';
 
@@ -29,7 +34,7 @@ test('Async exceptions are caught when consuming a message', async () => {
   });
 
   const msg = new Message();
-  msg.setBody({ hello: 'world' });
+  msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
 
   await producer.produceAsync(msg);
   consumer.run();

@@ -1,28 +1,12 @@
 import {
-  getConsumer,
   getMessageManagerFrontend,
-  getProducer,
   getQueueManagerFrontend,
-  untilConsumerIdle,
+  produceAndDeadLetterMessage,
 } from '../common';
-import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
 
 test('Combined test: Dead-letter a message and requeue it. Check pending, acknowledged, pending messages, and queue metrics.', async () => {
-  const msg = new Message();
-  msg.setBody({ hello: 'world' });
-
-  const producer = getProducer();
-  await producer.produceAsync(msg);
-  const queue = producer.getQueue();
-
-  const consumer = getConsumer({
-    consumeMock: (m, cb) => {
-      throw new Error();
-    },
-  });
-  await consumer.runAsync();
-  await untilConsumerIdle(consumer);
+  const { queue, message, consumer } = await produceAndDeadLetterMessage();
   await consumer.shutdownAsync();
 
   const messageManager = promisifyAll(await getMessageManagerFrontend());
@@ -37,7 +21,7 @@ test('Combined test: Dead-letter a message and requeue it. Check pending, acknow
   const res3 = await messageManager.getDeadLetterMessagesAsync(queue, 0, 100);
   expect(res3.total).toBe(1);
   expect(res3.items.length).toBe(1);
-  expect(res3.items[0].message.getId()).toEqual(msg.getId());
+  expect(res3.items[0].message.getId()).toEqual(message.getId());
   expect(res3.items[0].message.getAttempts()).toEqual(2);
 
   const queueManager = promisifyAll(await getQueueManagerFrontend());
@@ -49,7 +33,7 @@ test('Combined test: Dead-letter a message and requeue it. Check pending, acknow
   await messageManager.requeueMessageFromDLQueueAsync(
     queue,
     0,
-    msg.getId(),
+    message.getId(),
     undefined,
   );
 
@@ -57,7 +41,7 @@ test('Combined test: Dead-letter a message and requeue it. Check pending, acknow
 
   expect(res5.total).toBe(1);
   expect(res5.items.length).toBe(1);
-  expect(res5.items[0].message.getId()).toEqual(msg.getId());
+  expect(res5.items[0].message.getId()).toEqual(message.getId());
   expect(res5.items[0].message.getAttempts()).toEqual(0);
 
   const res6 = await messageManager.getDeadLetterMessagesAsync(queue, 0, 100);
@@ -72,7 +56,7 @@ test('Combined test: Dead-letter a message and requeue it. Check pending, acknow
     await messageManager.requeueMessageFromDLQueueAsync(
       queue,
       0,
-      msg.getId(),
+      message.getId(),
       undefined,
     );
   }).rejects.toThrow(

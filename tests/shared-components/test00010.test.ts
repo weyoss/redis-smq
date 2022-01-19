@@ -1,4 +1,5 @@
 import {
+  defaultQueue,
   getConsumer,
   getMessageManager,
   getProducer,
@@ -20,11 +21,9 @@ test('MessageManager/DelayHandler', async () => {
   const delayHandler = promisifyAll(new DelayHandler(redisClient, sch));
   await delayHandler.scheduleAsync();
 
-  const queueName = 'test_queue';
   let message: Message | null = null;
 
   const consumer = getConsumer({
-    queueName,
     cfg: config,
     consumeMock: jest.fn((msg) => {
       message = msg;
@@ -32,15 +31,18 @@ test('MessageManager/DelayHandler', async () => {
     }),
   });
 
-  const producer = getProducer(queueName);
+  const producer = getProducer();
   await producer.produceAsync(
-    new Message().setRetryDelay(10000).setBody('message body'),
+    new Message()
+      .setRetryDelay(10000)
+      .setBody('message body')
+      .setQueue(defaultQueue),
   );
 
   const { keyQueueProcessing } = redisKeys.getConsumerKeys(
-    queueName,
+    defaultQueue.name,
     consumer.getId(),
-    'testing',
+    defaultQueue.ns,
   );
 
   consumer.run();

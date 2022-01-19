@@ -5,8 +5,8 @@ import {
 import { promisifyAll } from 'bluebird';
 
 test('Purging acknowledged queue', async () => {
-  const { producer } = await produceAndAcknowledgeMessage();
-  const queue = producer.getQueue();
+  const { queue, consumer } = await produceAndAcknowledgeMessage();
+  await consumer.shutdownAsync();
 
   const queueManager = promisifyAll(await getQueueManagerFrontend());
   const m = await queueManager.getQueueMetricsAsync(queue);

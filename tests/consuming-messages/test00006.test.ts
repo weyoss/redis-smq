@@ -1,15 +1,19 @@
-import { getConsumer, getProducer, untilConsumerIdle } from '../common';
+import {
+  defaultQueue,
+  getConsumer,
+  getProducer,
+  untilConsumerIdle,
+} from '../common';
 import { Message } from '../../src/message';
 import { events } from '../../src/system/common/events';
 import { ICallback } from '../../types';
 import { config } from '../config';
 
 test('When consuming a message, a consumer does time out after messageConsumeTimeout exceeds and re-queues the message to be consumed again', async () => {
-  const producer = getProducer('test_queue');
+  const producer = getProducer();
 
   let consumeCount = 0;
   const consumer = getConsumer({
-    queueName: 'test_queue',
     cfg: {
       ...config,
       message: {
@@ -34,7 +38,7 @@ test('When consuming a message, a consumer does time out after messageConsumeTim
     acknowledged += 1;
   });
   const msg = new Message();
-  msg.setBody({ hello: 'world' });
+  msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
 
   await producer.produceAsync(msg);
   consumer.run();

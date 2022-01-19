@@ -12,6 +12,8 @@ export enum ELuaScriptName {
   ZPUSHHSET,
   ENQUEUE_SCHEDULED_MESSAGE,
   PUBLISH_MESSAGE,
+  REQUEUE_MESSAGE,
+  SCHEDULE_MESSAGE,
 }
 
 ////
@@ -36,6 +38,12 @@ scriptsMap.set(ELuaScriptName.ENQUEUE_SCHEDULED_MESSAGE, {
 });
 scriptsMap.set(ELuaScriptName.PUBLISH_MESSAGE, {
   content: fs.readFileSync(`${__dirname}/lua/publish-message.lua`).toString(),
+});
+scriptsMap.set(ELuaScriptName.REQUEUE_MESSAGE, {
+  content: fs.readFileSync(`${__dirname}/lua/requeue-message.lua`).toString(),
+});
+scriptsMap.set(ELuaScriptName.SCHEDULE_MESSAGE, {
+  content: fs.readFileSync(`${__dirname}/lua/schedule-message.lua`).toString(),
 });
 ///
 

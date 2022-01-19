@@ -8,12 +8,12 @@ export abstract class ConsumerFrontend extends EventEmitter {
   private consumer: Consumer;
 
   constructor(
-    queueName: string,
+    queue: string | TQueueParams,
     config: IConfig = {},
     enablePriorityQueue = false,
   ) {
     super();
-    this.consumer = new Consumer(queueName, config, enablePriorityQueue);
+    this.consumer = new Consumer(queue, config, enablePriorityQueue);
     this.registerEvents();
   }
 

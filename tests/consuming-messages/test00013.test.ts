@@ -15,7 +15,7 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
     acks: 0,
   };
   const queueAConsumer1 = getConsumer({
-    queueName: 'queue_a',
+    queue: 'queue_a',
     consumeMock: jest.fn((msg: Message, cb: ICallback<void>) => {
       // do not acknowledge/unacknowledge the message
       queueAMetrics.receivedMessages.push(msg);
@@ -30,7 +30,7 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
   });
 
   const queueAConsumer2 = getConsumer({
-    queueName: 'queue_a',
+    queue: 'queue_a',
     consumeMock: jest.fn((msg: Message, cb: ICallback<void>) => {
       queueAMetrics.receivedMessages.push(msg);
       cb();
@@ -45,7 +45,7 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
     acks: 0,
   };
   const queueBConsumer1 = getConsumer({
-    queueName: 'queue_b',
+    queue: 'queue_b',
     consumeMock: jest.fn((msg: Message, cb: ICallback<void>) => {
       queueBMetrics.receivedMessages.push(msg);
       cb(null);
@@ -56,23 +56,21 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
   });
   queueBConsumer1.run();
 
+  const producer = getProducer();
+
   /**
    * Produce a message to QUEUE A
    */
   const msg = new Message();
-  msg.setBody({ hello: 'world' });
-
-  const queueAProducer = getProducer('queue_a');
-  await queueAProducer.produceAsync(msg);
+  msg.setBody({ hello: 'world' }).setQueue('queue_a');
+  await producer.produceAsync(msg);
 
   /**
    * Produce a message to QUEUE B
    */
   const anotherMsg = new Message();
-  anotherMsg.setBody({ id: 'b' });
-
-  const queueBProducer = getProducer('queue_b');
-  await queueBProducer.produceAsync(anotherMsg);
+  anotherMsg.setBody({ id: 'b' }).setQueue('queue_b');
+  await producer.produceAsync(anotherMsg);
 
   /**
    * Wait 10s

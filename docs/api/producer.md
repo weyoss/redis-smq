@@ -4,9 +4,9 @@
 const {Message, Producer} = require('redis-smq');
 
 const message = new Message();
-message.setBody({hello: 'world'});
+message.setBody({hello: 'world'}).setQueue('test_queue');
 
-const producer = new Producer('test_queue');
+const producer = new Producer();
 producer.produce(message, (err) => {
   if (err) console.log(err);
   else console.log('Successfully produced')
@@ -21,19 +21,16 @@ producer.produce(message, (err) => {
 **Syntax**
 
 ```javascript
-const producer = new Producer(queueName, config)
+const producer = new Producer(config)
 ```
 
 **Parameters**
-  
-- `queueName` *(string): Required.* The name of the queue where produced messages are queued. It can be composed 
-  only of letters (a-z), numbers (0-9) and (-_) characters.
 
 - `config` *(object): Optional.* Configuration parameters. See [configuration](https://github.com/weyoss/redis-smq#configuration).
 
 ```javascript
 const { Producer } = require('redis-smq');
-const producer = new Producer('test_queue', {namespace: 'test_project'});
+const producer = new Producer({namespace: 'test_project'});
 ```
 
 ### Producer.prototype.produce()
@@ -46,8 +43,7 @@ producer.produce(message, cb);
 
 **Parameters**
 
-- `message` *(mixed): Required.* Can be a Message instance or any valid JavaScript data type that represents the Message body.    
-
+- `message` *(Message): Required.* Message instance.
 - `cb(err)` *(function): Required.* Callback function.
 
 ```javascript
@@ -56,18 +52,13 @@ const {Message, Producer} = require('redis-smq');
 const message = new Message();
 
 message
-        .setBody({hello: 'world'})
-        .setTTL(3600000)
-        .setScheduledDelay(10000); // in millis
+    .setBody({hello: 'world'})
+    .setTTL(3600000)
+    .setScheduledDelay(10000) // in millis
+    .setQueue('test_queue');
 
-const producer = new Producer('test_queue');
+const producer = new Producer();
 producer.produce(message, (err) => {
-  if (err) console.log(err);
-  else console.log('Successfully produced')
-});
-
-// OR
-producer.produce({hello: 'world'}, (err) => {
   if (err) console.log(err);
   else console.log('Successfully produced')
 });
@@ -124,4 +115,3 @@ producer.produce(message, (err) => {
 - Producer.prototype.isDown()
 - Producer.prototype.isRunning()
 - Producer.prototype.getId()
-- Producer.prototype.getQueue()

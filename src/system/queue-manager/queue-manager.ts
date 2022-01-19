@@ -5,7 +5,6 @@ import { Consumer } from '../consumer/consumer';
 import * as async from 'async';
 import BLogger from 'bunyan';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
-import { Producer } from '../producer/producer';
 import { Heartbeat } from '../common/heartbeat/heartbeat';
 import { GenericError } from '../common/errors/generic.error';
 import { LockManager } from '../common/lock-manager/lock-manager';
@@ -38,7 +37,7 @@ export class QueueManager {
               if (onlineArr.length) {
                 cb(
                   new GenericError(
-                    `The queue is currently in use. Before deleting a queue, shutdown all its consumers and producers. After shutting down all instances, wait a few seconds and try again.`,
+                    `The queue is currently in use. Before deleting a queue, shutdown all its consumers. After shutting down all instances, wait a few seconds and try again.`,
                   ),
                 );
               } else cb();
@@ -63,31 +62,7 @@ export class QueueManager {
         }
       });
     };
-    const getOnlineProducers = (cb: ICallback<string[]>): void => {
-      Producer.getOnlineProducerIds(this.redisClient, queue, (err, reply) => {
-        if (err) cb(err);
-        else {
-          const heartbeatKeys = (reply ?? []).map((id) => {
-            const { keyHeartbeatProducer } = redisKeys.getProducerKeys(
-              queue.name,
-              id,
-              queue.ns,
-            );
-            return keyHeartbeatProducer;
-          });
-          cb(null, heartbeatKeys);
-        }
-      });
-    };
-    async.waterfall(
-      [
-        getOnlineConsumers,
-        verifyHeartbeats,
-        getOnlineProducers,
-        verifyHeartbeats,
-      ],
-      (err) => cb(err),
-    );
+    async.waterfall([getOnlineConsumers, verifyHeartbeats], (err) => cb(err));
   };
 
   protected lockQueue = (
@@ -149,7 +124,6 @@ export class QueueManager {
           keyLockRateQueueAcknowledged,
           keyLockRateQueueDeadLettered,
           keyQueueConsumers,
-          keyQueueProducers,
           keyProcessingQueues,
           keyQueues,
         } = redisKeys.getKeys(queue.name, queue.ns);
@@ -170,7 +144,6 @@ export class QueueManager {
           keyLockRateQueueAcknowledged,
           keyLockRateQueueDeadLettered,
           keyQueueConsumers,
-          keyQueueProducers,
         ];
         const multi = this.redisClient.multi();
         multi.srem(keyQueues, JSON.stringify(queue));
@@ -402,18 +375,30 @@ export class QueueManager {
     });
   }
 
-  static setUpMessageQueue(
-    queue: TQueueParams,
-    redisClient: RedisClient,
-    cb: ICallback<void>,
-  ): void {
-    QueueManager.checkQueueLock(redisClient, queue, (err) => {
+  setUpMessageQueue(queue: TQueueParams, cb: ICallback<void>): void {
+    QueueManager.checkQueueLock(this.redisClient, queue, (err) => {
       if (err) cb(err);
       else {
         const { keyQueues } = redisKeys.getKeys(queue.name, queue.ns);
         const str = JSON.stringify(queue);
-        redisClient.sadd(keyQueues, str, (err) => cb(err));
+        this.redisClient.sadd(keyQueues, str, (err) => cb(err));
       }
     });
+  }
+
+  static getQueueParams(queue: string | TQueueParams): TQueueParams {
+    const queueParams: TQueueParams =
+      typeof queue === 'string'
+        ? {
+            name: queue,
+            ns: redisKeys.getNamespace(),
+          }
+        : queue;
+    const name = redisKeys.validateRedisKey(queueParams.name);
+    const ns = redisKeys.validateRedisKey(queueParams.ns);
+    return {
+      name,
+      ns,
+    };
   }
 }

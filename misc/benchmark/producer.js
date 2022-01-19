@@ -3,11 +3,11 @@
 const config = require('./config');
 const { Producer, Message } = require('../..'); // require('redis-smq');
 
-const producer = new Producer('test_queue', config);
+const producer = new Producer(config);
 
 function produceInfinitely(sequence, cb) {
   const message = new Message();
-  message.setBody(`Payload sample ${sequence++}`);
+  message.setBody(`Payload sample ${sequence++}`).setQueue('test_queue');
   producer.produce(message, (err) => {
     if (err) cb(err);
     else produceInfinitely(sequence, cb);

@@ -12,7 +12,6 @@ import { controller as queueAcknowledgedMessagesController } from './queue/ackno
 import { controller as queuePendingMessagesWithPriorityController } from './queue/pending-messages-with-priority/controller';
 import { controller as queuePendingMessagesController } from './queue/pending-messages/controller';
 import { controller as queueTimeSeriesController } from './queue/time-series/controller';
-import { controller as queueProducerTimeSeriesController } from './queue/producer/time-series/controller';
 import { controller as queueConsumerTimeSeriesController } from './queue/consumer/time-series/controller';
 import { DeleteQueueHandler } from './queue/delete-queue/delete-queue.handler';
 import { DeleteQueueRequestDTO } from './queue/delete-queue/delete-queue.request.DTO';
@@ -45,7 +44,6 @@ export const queuesController: IRouteController = {
         queuePendingMessagesWithPriorityController,
         queuePendingMessagesController,
         queueTimeSeriesController,
-        queueProducerTimeSeriesController,
         queueConsumerTimeSeriesController,
       ],
     },

@@ -1,5 +1,5 @@
 import { TApplication } from '../../../../../types/common';
-import { TTimeSeriesRequestContext } from '../../../queues/queue/producer/time-series/context';
+import { TTimeSeriesRequestContext } from '../../../queues/queue/time-series/context';
 
 export function GetPublishedHandler(app: TApplication) {
   return async (ctx: TTimeSeriesRequestContext) => {

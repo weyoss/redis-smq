@@ -1,4 +1,5 @@
 import {
+  defaultQueue,
   getConsumer,
   getProducer,
   untilConsumerIdle,
@@ -13,7 +14,6 @@ test('A consumer delays a failed message before re-queuing it again, given messa
   const timestamps: number[] = [];
   let callCount = 0;
   const consumer = getConsumer({
-    queueName: 'test_queue',
     cfg: {
       ...config,
       message: { retryDelay: 10000, retryThreshold: 5 },
@@ -30,7 +30,7 @@ test('A consumer delays a failed message before re-queuing it again, given messa
   });
 
   let unacks = 0;
-  consumer.on(events.MESSAGE_UNACKNOWLEDGED, (msg: Message) => {
+  consumer.on(events.MESSAGE_UNACKNOWLEDGED, () => {
     unacks += 1;
   });
 
@@ -40,9 +40,9 @@ test('A consumer delays a failed message before re-queuing it again, given messa
   });
 
   const msg = new Message();
-  msg.setBody({ hello: 'world' });
+  msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
 
-  const producer = getProducer('test_queue');
+  const producer = getProducer();
   await producer.produceAsync(msg);
   consumer.run();
 

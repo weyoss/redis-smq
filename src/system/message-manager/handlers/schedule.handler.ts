@@ -13,6 +13,7 @@ import { LockManager } from '../../common/lock-manager/lock-manager';
 import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
 import { PanicError } from '../../common/errors/panic.error';
 import { ELuaScriptName } from '../../common/redis-client/lua-scripts';
+import { ArgumentError } from '../../common/errors/argument.error';
 
 export class ScheduleHandler extends Handler {
   protected scheduleMessage(
@@ -150,6 +151,38 @@ export class ScheduleHandler extends Handler {
       },
       cb,
     );
+  }
+
+  // This method is used exclusively from the producer.
+  // It registers the message queue and then schedules the message.
+  xSchedule(message: Message, cb: ICallback<boolean>): void {
+    const timestamp = ScheduleHandler.getNextScheduledTimestamp(message) ?? 0;
+    if (timestamp > 0) {
+      const queue = message.getQueue();
+      if (!queue) cb(new ArgumentError('Message queue is required'));
+      else {
+        const { keyQueues, keyScheduledMessages, keyScheduledMessagesIndex } =
+          redisKeys.getKeys(queue.name, queue.ns);
+        message.setScheduledAt(Date.now());
+        const messageId = message.getId();
+        this.redisClient.runScript(
+          ELuaScriptName.SCHEDULE_MESSAGE,
+          [
+            keyQueues,
+            JSON.stringify(queue),
+            messageId,
+            JSON.stringify(message),
+            `${timestamp}`,
+            keyScheduledMessages,
+            keyScheduledMessagesIndex,
+          ],
+          (err) => {
+            if (err) cb(err);
+            else cb(null, true);
+          },
+        );
+      }
+    } else cb(null, false);
   }
 
   schedule(

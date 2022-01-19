@@ -1,28 +1,12 @@
 import {
-  getConsumer,
   getMessageManagerFrontend,
-  getProducer,
   getQueueManagerFrontend,
-  untilConsumerIdle,
+  produceAndAcknowledgeMessage,
 } from '../common';
-import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
 
 test('Combined test. Requeue message from acknowledged queue. Check both pending and acknowledged messages. Check queue metrics.', async () => {
-  const msg = new Message();
-  msg.setBody({ hello: 'world' });
-
-  const producer = getProducer();
-  await producer.produceAsync(msg);
-  const queue = producer.getQueue();
-
-  const consumer = getConsumer({
-    consumeMock: (m, cb) => {
-      cb();
-    },
-  });
-  await consumer.runAsync();
-  await untilConsumerIdle(consumer);
+  const { consumer, queue, message } = await produceAndAcknowledgeMessage();
   await consumer.shutdownAsync();
 
   const messageManager = promisifyAll(await getMessageManagerFrontend());
@@ -42,7 +26,7 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
   await messageManager.requeueMessageFromAcknowledgedQueueAsync(
     queue,
     0,
-    msg.getId(),
+    message.getId(),
     undefined,
   );
 
@@ -50,7 +34,7 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
 
   expect(res5.total).toBe(1);
   expect(res5.items.length).toBe(1);
-  expect(res5.items[0].message.getId()).toEqual(msg.getId());
+  expect(res5.items[0].message.getId()).toEqual(message.getId());
 
   const res6 = await messageManager.getAcknowledgedMessagesAsync(queue, 0, 100);
   expect(res6.total).toBe(0);
@@ -64,7 +48,7 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
     await messageManager.requeueMessageFromAcknowledgedQueueAsync(
       queue,
       0,
-      msg.getId(),
+      message.getId(),
       undefined,
     );
   }).rejects.toThrow(

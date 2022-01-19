@@ -8,14 +8,12 @@ import { GetPendingMessagesWithPriorityResponseBodyDataDTO } from '../../src/mon
 
 test('Fetching pending messages with priority', async () => {
   await startMonitorServer();
-  const { message } = await produceMessageWithPriority();
+  const { message, queue } = await produceMessageWithPriority();
 
   const request = supertest('http://127.0.0.1:3000');
   const response1: ISuperTestResponse<GetPendingMessagesWithPriorityResponseBodyDataDTO> =
     await request.get(
-      `/api/queues/${message.getQueue()?.name}/ns/${
-        message.getQueue()?.ns
-      }/pending-messages-with-priority?skip=0&take=99`,
+      `/api/queues/${queue.name}/ns/${queue.ns}/pending-messages-with-priority?skip=0&take=99`,
     );
 
   expect(response1.statusCode).toBe(200);

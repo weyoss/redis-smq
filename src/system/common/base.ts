@@ -14,8 +14,8 @@ import { MessageManager } from '../message-manager/message-manager';
 import { Message } from '../message';
 import { EmptyCallbackReplyError } from './errors/empty-callback-reply.error';
 import { PanicError } from './errors/panic.error';
-import { Heartbeat } from './heartbeat/heartbeat';
 import { MessageRateWriter } from './message-rate-writer';
+import { QueueManager } from '../queue-manager/queue-manager';
 
 export abstract class Base<
   TMessageRate extends MessageRate,
@@ -29,8 +29,6 @@ export abstract class Base<
   protected sharedRedisClient: RedisClient | null = null;
   protected messageRate: TMessageRate | null = null;
   protected messageRateWriter: MessageRateWriter | null = null;
-
-  protected heartbeat: Heartbeat | null = null;
 
   constructor(config: IConfig = {}) {
     super();
@@ -72,7 +70,11 @@ export abstract class Base<
         this.sharedRedisClient,
         this.logger,
       );
-      this.broker = new Broker(this.config, messageManager, this.logger);
+      const queueManager = new QueueManager(
+        this.sharedRedisClient,
+        this.logger,
+      );
+      this.broker = new Broker(messageManager, queueManager, this.logger);
       cb();
     }
   };
@@ -91,18 +93,6 @@ export abstract class Base<
       this.logger.debug(`Skipping MessageRate setup as monitor not enabled...`);
       cb();
     }
-  };
-
-  protected setUpHeartbeat = (cb: ICallback<void>): void => {
-    this.logger.debug(`Set up consumer heartbeat...`);
-    RedisClient.getNewInstance(this.config, (err, redisClient) => {
-      if (err) cb(err);
-      else if (!redisClient) cb(new EmptyCallbackReplyError());
-      else {
-        this.initHeartbeatInstance(redisClient);
-        cb();
-      }
-    });
   };
 
   protected tearDownSharedRedisClient = (cb: ICallback<void>): void => {
@@ -164,22 +154,6 @@ export abstract class Base<
     }
   };
 
-  protected tearDownHeartbeat = (cb: ICallback<void>): void => {
-    this.logger.debug(`Tear down consumer heartbeat...`);
-    if (this.heartbeat) {
-      this.heartbeat.quit(() => {
-        this.logger.debug(`Consumer heartbeat has been torn down.`);
-        this.heartbeat = null;
-        cb();
-      });
-    } else {
-      this.logger.warn(
-        `This is not normal. [this.heartbeat] has not been set up. Ignoring...`,
-      );
-      cb();
-    }
-  };
-
   protected registerEventsHandlers(): void {
     this.on(events.GOING_UP, () => this.logger.info(`Starting up...`));
     this.on(events.UP, () => this.logger.info(`Up and running...`));
@@ -191,19 +165,29 @@ export abstract class Base<
   protected goingUp(): TFunction[] {
     return [
       this.setUpSharedRedisClient,
-      this.setUpHeartbeat,
       this.setUpBroker,
       this.setUpMessageRate,
     ];
   }
 
+  protected up(cb?: ICallback<void>): void {
+    this.powerManager.commit();
+    this.emit(events.UP);
+    cb && cb();
+  }
+
   protected goingDown(): TUnaryFunction<ICallback<void>>[] {
     return [
-      this.tearDownHeartbeat,
       this.tearDownBroker,
       this.tearDownMessageRate,
       this.tearDownSharedRedisClient,
     ];
+  }
+
+  protected down(cb?: ICallback<void>): void {
+    this.powerManager.commit();
+    this.emit(events.DOWN);
+    cb && cb();
   }
 
   protected getSharedRedisClient(cb: TUnaryFunction<RedisClient>): void {
@@ -229,13 +213,7 @@ export abstract class Base<
       if (err) {
         if (cb) cb(err);
         else this.emit(events.ERROR, err);
-      } else {
-        this.heartbeat?.once(events.HEARTBEAT_TICK, () => {
-          this.powerManager.commit();
-          this.emit(events.UP);
-          cb && cb();
-        });
-      }
+      } else this.up(cb);
     });
   }
 
@@ -245,9 +223,7 @@ export abstract class Base<
     const tasks = this.goingDown();
     async.waterfall(tasks, () => {
       // ignoring shutdown errors
-      this.powerManager.commit();
-      this.emit(events.DOWN);
-      cb && cb();
+      this.down(cb);
     });
   }
 
@@ -286,6 +262,4 @@ export abstract class Base<
   }
 
   abstract initMessageRateInstance(redisClient: RedisClient): void;
-
-  abstract initHeartbeatInstance(redisClient: RedisClient): void;
 }

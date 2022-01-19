@@ -1,12 +1,11 @@
 import {
-  getProducer,
   listenForWebsocketStreamEvents,
+  produceAndAcknowledgeMessage,
   validateTime,
 } from '../common';
 
 test('WebsocketRateStreamWorker: streamQueuePublished', async () => {
-  const producer = getProducer();
-  const queue = producer.getQueue();
+  const { queue } = await produceAndAcknowledgeMessage();
 
   const data = await listenForWebsocketStreamEvents(
     `streamQueuePublished:${queue.ns}:${queue.name}`,

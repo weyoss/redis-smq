@@ -98,9 +98,9 @@ export class MessageManager {
     this.scheduleHandler.enqueueScheduledMessages(cb);
   }
 
-  scheduleMessage(message: Message, cb: ICallback<boolean>): void {
+  xScheduleMessage(message: Message, cb: ICallback<boolean>): void {
     this.logger.debug(`Scheduling message (ID ${message.getId()})...`);
-    this.scheduleHandler.schedule(message, cb);
+    this.scheduleHandler.xSchedule(message, cb);
   }
 
   ///

@@ -1,4 +1,8 @@
-import { getMessageManagerFrontend, getProducer } from '../common';
+import {
+  defaultQueue,
+  getMessageManagerFrontend,
+  getProducer,
+} from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
 
@@ -8,18 +12,27 @@ test('Schedule a message and check scheduled messages', async () => {
   // Message 1
   const msg1 = new Message();
   msg1.setScheduledDelay(30000);
-  msg1.setScheduledCron('0 * * * * *').setBody({ hello: 'world1' });
+  msg1
+    .setScheduledCron('0 * * * * *')
+    .setBody({ hello: 'world1' })
+    .setQueue(defaultQueue);
   await producer.produceAsync(msg1);
 
   // Message 2
   const msg2 = new Message();
-  msg2.setScheduledDelay(60000).setBody({ hello: 'world2' });
+  msg2
+    .setScheduledDelay(60000)
+    .setBody({ hello: 'world2' })
+    .setQueue(defaultQueue);
   const r1 = await producer.produceAsync(msg2);
   expect(r1).toBe(true);
 
   // Message 3
   const msg3 = new Message();
-  msg3.setScheduledDelay(90000).setBody({ hello: 'world3' });
+  msg3
+    .setScheduledDelay(90000)
+    .setBody({ hello: 'world3' })
+    .setQueue(defaultQueue);
   const r3 = await producer.produceAsync(msg3);
   expect(r3).toBe(true);
 
