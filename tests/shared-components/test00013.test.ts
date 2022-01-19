@@ -1,10 +1,10 @@
-import { MultiQueueProducerMessageRate } from '../../src/system/multi-queue-producer/multi-queue-producer-message-rate';
+import { ProducerMessageRate } from '../../src/system/producer/producer-message-rate';
 import { promisifyAll } from 'bluebird';
 import { events } from '../../src/system/common/events';
 import { IMultiQueueProducerMessageRateFields } from '../../types';
 
-test('MultiQueueProducerMessageRate', async () => {
-  const messageRate = promisifyAll(new MultiQueueProducerMessageRate());
+test('ProducerMessageRate', async () => {
+  const messageRate = promisifyAll(new ProducerMessageRate());
 
   const rateFields1 = await new Promise<{
     ts: number;

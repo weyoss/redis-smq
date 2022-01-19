@@ -10,18 +10,19 @@ To set up scheduling parameters for a given message, the [Message API](api/messa
 - [setScheduledRepeat()](api/message.md#messageprototypesetscheduledrepeat)
 
 To schedule your message, you can publish it, as any other message, from your [Producer](api/producer.md#producerprototypeproduce) 
-or [MultiQueueProducer](api/multi-queue-producer.md#multiqueueproducerprototypeproduce) using the `produce()` method.
+using the `produce()` method.
 
 ```javascript
 'use strict';
 const {Message, Producer} = require('redis-smq');
 
-const producer = new Producer('test_queue');
+const producer = new Producer();
 
 const message = new Message();
 message
     .setBody({hello: 'world'})
-    .setScheduledCron(`0 0 * * * *`);
+    .setScheduledCron(`0 0 * * * *`)
+    .setQueue('test_queue');
 
 producer.produce(message, (err, reply) => {
     if (err) console.log(err);

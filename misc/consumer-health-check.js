@@ -3,6 +3,7 @@
 const config = require('./benchmark/config');
 const { events } = require('../dist/src/system/common/events');
 const { Consumer } = require('..');
+const async = require('async');
 
 class Ns1TestQueueConsumer extends Consumer {
   /**
@@ -41,23 +42,19 @@ consumer.on(events.GOING_DOWN, () => {
   console.log('GOING DOWN');
 });
 
-console.log('start');
-consumer.run(() => {
-  console.log('a');
-  consumer.shutdown(() => {
-    console.log('b');
-    consumer.run(() => {
-      console.log('c');
-      consumer.shutdown(() => {
-        console.log('d');
-        consumer.run(() => {
-          console.log('e');
-          consumer.shutdown(() => {
-            console.log('f');
-            console.log('Done.');
-          });
-        });
-      });
-    });
-  });
-});
+async.waterfall(
+  [
+    (cb) => consumer.run(cb),
+    (cb) => consumer.shutdown(cb),
+    (cb) => consumer.run(cb),
+    (cb) => consumer.shutdown(cb),
+    (cb) => consumer.run(cb),
+    (cb) => consumer.shutdown(cb),
+    (cb) => consumer.run(cb),
+    (cb) => consumer.shutdown(cb),
+  ],
+  (err) => {
+    if (err) console.log(err);
+    else console.log('done!');
+  },
+);

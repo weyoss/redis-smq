@@ -1,10 +1,8 @@
-import { MultiQueueProducer } from '../..';
-import { config } from '../config';
-import { promisifyAll } from 'bluebird';
 import { events } from '../../src/system/common/events';
+import { getProducer } from '../common';
 
-test('MultiQueueProducer: Case 2', async () => {
-  const mProducer = promisifyAll(new MultiQueueProducer(config));
+test('Producer: isRunning, isGoingUp, isGoingDown, isUp, isDown', async () => {
+  const mProducer = getProducer();
   expect(typeof mProducer.getId()).toBe('string');
   if (mProducer.isGoingUp()) {
     await new Promise((resolve) => {

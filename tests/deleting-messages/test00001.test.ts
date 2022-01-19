@@ -1,30 +1,24 @@
 import {
   getMessageManagerFrontend,
-  getProducer,
   getQueueManagerFrontend,
+  produceMessage,
 } from '../common';
-import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
 
 test('Combined test: Delete a pending message. Check pending messages. Check queue metrics.', async () => {
-  const producer = getProducer();
-  const queue = producer.getQueue();
-
-  const msg = new Message();
-  msg.setBody({ hello: 'world' });
-  await producer.produceAsync(msg);
+  const { queue, message } = await produceMessage();
 
   const messageManager = promisifyAll(await getMessageManagerFrontend());
   const res1 = await messageManager.getPendingMessagesAsync(queue, 0, 100);
 
   expect(res1.total).toBe(1);
-  expect(res1.items[0].message.getId()).toBe(msg.getId());
+  expect(res1.items[0].message.getId()).toBe(message.getId());
 
   const queueManager = promisifyAll(await getQueueManagerFrontend());
   const queueMetrics = await queueManager.getQueueMetricsAsync(queue);
   expect(queueMetrics.pending).toBe(1);
 
-  await messageManager.deletePendingMessageAsync(queue, 0, msg.getId());
+  await messageManager.deletePendingMessageAsync(queue, 0, message.getId());
 
   const res2 = await messageManager.getPendingMessagesAsync(queue, 0, 100);
 
@@ -35,5 +29,5 @@ test('Combined test: Delete a pending message. Check pending messages. Check que
   expect(queueMetrics1.pending).toBe(0);
 
   // Deleting a message that was already deleted should not throw an error
-  await messageManager.deletePendingMessageAsync(queue, 0, msg.getId());
+  await messageManager.deletePendingMessageAsync(queue, 0, message.getId());
 });

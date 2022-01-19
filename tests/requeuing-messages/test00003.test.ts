@@ -1,36 +1,20 @@
 import {
-  getConsumer,
   getMessageManagerFrontend,
-  getProducer,
   getQueueManagerFrontend,
-  untilMessageAcknowledged,
+  produceAndAcknowledgeMessage,
 } from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
 
 test('Combined test: Requeue a message from acknowledged queue with priority. Check both queue metadata and message metadata.  Check both pending and acknowledged messages. Check queue metrics.', async () => {
-  const producer = getProducer();
-  const queue = producer.getQueue();
-
-  const msg = new Message();
-  msg.setBody({ hello: 'world' });
-  await producer.produceAsync(msg);
-
-  const consumer = getConsumer({
-    consumeMock: (m, cb) => {
-      cb();
-    },
-  });
-  await consumer.runAsync();
-
-  await untilMessageAcknowledged(consumer);
+  const { queue, message, consumer } = await produceAndAcknowledgeMessage();
   await consumer.shutdownAsync();
 
   const messageManager = promisifyAll(await getMessageManagerFrontend());
   await messageManager.requeueMessageFromAcknowledgedQueueAsync(
     queue,
     0,
-    msg.getId(),
+    message.getId(),
     Message.MessagePriority.HIGHEST,
   );
 
@@ -49,7 +33,7 @@ test('Combined test: Requeue a message from acknowledged queue with priority. Ch
   expect(res6.items.length).toBe(1);
 
   // assign default consumer options
-  expect(res6.items[0].getId()).toEqual(msg.getId());
+  expect(res6.items[0].getId()).toEqual(message.getId());
   expect(res6.items[0].getPriority()).toEqual(Message.MessagePriority.HIGHEST);
 
   const res7 = await messageManager.getAcknowledgedMessagesAsync(queue, 0, 100);
@@ -66,7 +50,7 @@ test('Combined test: Requeue a message from acknowledged queue with priority. Ch
     await messageManager.requeueMessageFromAcknowledgedQueueAsync(
       queue,
       0,
-      msg.getId(),
+      message.getId(),
       Message.MessagePriority.HIGHEST,
     );
   }).rejects.toThrow(

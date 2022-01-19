@@ -1,26 +1,23 @@
-import { MultiQueueProducer } from '../..';
-import { config } from '../config';
 import { promisifyAll } from 'bluebird';
 import { Message } from '../../src/system/message';
 import {
   getConsumer,
+  getProducer,
   getQueueManagerFrontend,
   untilConsumerEvent,
 } from '../common';
 import { events } from '../../src/system/common/events';
 
-test('MultiQueueProducer: Case 7', async () => {
-  const mProducer = promisifyAll(new MultiQueueProducer(config));
+test('Consume messages produced to different queues using a single producer instance', async () => {
+  const producer = getProducer();
   for (let i = 0; i < 5; i += 1) {
     const message = new Message();
-    message.setBody(`Message ${i}`);
     // queue name should be normalized to lowercase
-    const r = await mProducer.produceAsync(`QuEue_${i}`, message);
+    message.setBody(`Message ${i}`).setQueue(`QuEue_${i}`);
+    const r = await producer.produceAsync(message);
     expect(r).toBe(true);
   }
-  await mProducer.shutdownAsync();
   const metrics = promisifyAll(await getQueueManagerFrontend());
-
   for (let i = 0; i < 5; i += 1) {
     // Be carefull here: queue name is always in lowercase. Otherwise it will be not normalized
     const m1 = await metrics.getQueueMetricsAsync(`queue_${i}`);
@@ -32,7 +29,7 @@ test('MultiQueueProducer: Case 7', async () => {
     });
 
     // queue name should be normalized to lowercase
-    const consumer = getConsumer({ queueName: `queUE_${i}` });
+    const consumer = getConsumer({ queue: `queUE_${i}` });
     await consumer.runAsync();
     await untilConsumerEvent(consumer, events.MESSAGE_ACKNOWLEDGED);
     await consumer.shutdownAsync();

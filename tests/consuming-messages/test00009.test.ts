@@ -1,4 +1,5 @@
 import {
+  defaultQueue,
   getConsumer,
   getMessageManagerFrontend,
   getProducer,
@@ -10,7 +11,6 @@ import { promisifyAll } from 'bluebird';
 
 test('A consumer does re-queue a failed message when threshold is not exceeded, otherwise it moves the message to DLQ (dead letter queue)', async () => {
   const producer = getProducer();
-  const queue = producer.getQueue();
   const consumer = getConsumer({
     consumeMock: jest.fn(() => {
       throw new Error('Explicit error');
@@ -23,7 +23,7 @@ test('A consumer does re-queue a failed message when threshold is not exceeded, 
   });
 
   const msg = new Message();
-  msg.setBody({ hello: 'world' });
+  msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
 
   await producer.produceAsync(msg);
   consumer.run();
@@ -32,7 +32,7 @@ test('A consumer does re-queue a failed message when threshold is not exceeded, 
   expect(unacknowledged).toBe(3);
 
   const m = promisifyAll(await getMessageManagerFrontend());
-  const list = await m.getDeadLetterMessagesAsync(queue, 0, 100);
+  const list = await m.getDeadLetterMessagesAsync(defaultQueue, 0, 100);
   expect(list.total).toBe(1);
   expect(list.items[0].message.getId()).toBe(msg.getId());
 });

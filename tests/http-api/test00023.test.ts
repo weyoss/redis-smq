@@ -1,6 +1,6 @@
 import {
   ISuperTestResponse,
-  produceScheduledMessage,
+  scheduleMessage,
   startMonitorServer,
 } from '../common';
 import * as supertest from 'supertest';
@@ -8,7 +8,7 @@ import { GetScheduledMessagesResponseBodyDataDTO } from '../../src/monitor-serve
 
 test('Purge scheduled messages', async () => {
   await startMonitorServer();
-  const { message } = await produceScheduledMessage();
+  const { message } = await scheduleMessage();
   const request = supertest('http://127.0.0.1:3000');
   const response1: ISuperTestResponse<GetScheduledMessagesResponseBodyDataDTO> =
     await request.get(`/api/main/scheduled-messages?skip=0&take=99`);

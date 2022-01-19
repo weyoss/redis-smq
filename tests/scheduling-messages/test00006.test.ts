@@ -1,4 +1,5 @@
 import {
+  defaultQueue,
   getConsumer,
   getProducer,
   untilConsumerIdle,
@@ -28,7 +29,8 @@ test('Produce and consume a delayed message: Case 1', async () => {
     .setScheduledDelay(10000)
     .setScheduledRepeat(3)
     .setScheduledPeriod(3000)
-    .setBody({ hello: 'world' });
+    .setBody({ hello: 'world' })
+    .setQueue(defaultQueue);
 
   const producer = getProducer();
   await producer.produceAsync(msg);

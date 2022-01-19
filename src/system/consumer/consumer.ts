@@ -36,11 +36,11 @@ export class Consumer extends ExtendedBase<
   private consumerFrontend: ConsumerFrontend | null = null;
 
   constructor(
-    queueName: string,
+    queue: string | TQueueParams,
     config: IConfig = {},
     usePriorityQueuing = false,
   ) {
-    super(queueName, config);
+    super(queue, config);
     this.usingPriorityQueuing = usePriorityQueuing;
   }
 

@@ -17,8 +17,6 @@ import BLogger from 'bunyan';
 import { MessageManager } from '../../system/message-manager/message-manager';
 import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callback-reply.error';
 import { Consumer } from '../../system/consumer/consumer';
-import { Producer } from '../../system/producer/producer';
-import { MultiQueueProducer } from '../../system/multi-queue-producer/multi-queue-producer';
 
 export class WebsocketMainStreamWorker {
   protected logger;
@@ -34,9 +32,7 @@ export class WebsocketMainStreamWorker {
     pendingMessagesCount: 0,
     pendingMessagesWithPriorityCount: 0,
     acknowledgedMessagesCount: 0,
-    producersCount: 0,
     consumersCount: 0,
-    multiQueueProducersCount: 0,
     queuesCount: 0,
     queues: {},
   };
@@ -79,7 +75,6 @@ export class WebsocketMainStreamWorker {
         pendingMessagesCount: 0,
         pendingMessagesWithPriorityCount: 0,
         consumersCount: 0,
-        producersCount: 0,
       };
     }
     return this.data.queues[ns][queueName];
@@ -183,46 +178,14 @@ export class WebsocketMainStreamWorker {
     });
   };
 
-  protected countQueueProducers = (
-    queue: TQueueParams,
-    cb: ICallback<void>,
-  ): void => {
-    Producer.countOnlineProducers(this.redisClient, queue, (err, reply) => {
-      if (err) cb(err);
-      else {
-        const { ns, name } = queue;
-        const count = Number(reply);
-        this.data.producersCount += count;
-        this.data.queues[ns][name].producersCount = count;
-        cb();
-      }
-    });
-  };
-
-  protected countMultiQueueProducers = (cb: ICallback<void>): void => {
-    MultiQueueProducer.countOnlineProducers(this.redisClient, (err, reply) => {
-      if (err) cb(err);
-      else {
-        this.data.multiQueueProducersCount = Number(reply);
-        cb();
-      }
-    });
-  };
-
   protected updateOnlineInstances = (cb: ICallback<void>): void => {
-    async.eachOf(
+    async.eachOf<Record<string, TWebsocketMainStreamPayloadQueue>>(
       this.data.queues,
       (item, key, done) => {
         async.eachOf(
           item,
           (item, key, done) => {
-            async.waterfall(
-              [
-                (done: ICallback<void>) => this.countQueueConsumers(item, done),
-                (done: ICallback<void>) => this.countQueueProducers(item, done),
-              ],
-              done,
-            );
+            this.countQueueConsumers(item, done);
           },
           done,
         );
@@ -247,9 +210,7 @@ export class WebsocketMainStreamWorker {
       pendingMessagesCount: 0,
       pendingMessagesWithPriorityCount: 0,
       acknowledgedMessagesCount: 0,
-      producersCount: 0,
       consumersCount: 0,
-      multiQueueProducersCount: 0,
       queuesCount: 0,
       queues: {},
     };
@@ -268,7 +229,6 @@ export class WebsocketMainStreamWorker {
             this.getQueues,
             this.getQueueSize,
             this.updateOnlineInstances,
-            this.countMultiQueueProducers,
           ],
           (err?: Error | null) => {
             if (err) throw err;

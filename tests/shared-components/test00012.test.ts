@@ -1,19 +1,15 @@
-import { MultiQueueProducerMessageRate } from '../../src/system/multi-queue-producer/multi-queue-producer-message-rate';
+import { ProducerMessageRate } from '../../src/system/producer/producer-message-rate';
 import { promisifyAll } from 'bluebird';
-import { MultiQueueProducerMessageRateWriter } from '../../src/system/multi-queue-producer/multi-queue-producer-message-rate-writer';
+import { ProducerMessageRateWriter } from '../../src/system/producer/producer-message-rate-writer';
 import { getRedisInstance } from '../common';
 import { TimeSeries } from '../../src/system/common/time-series/time-series';
 
-test('MultiQueueProducerMessageRateWriter', async () => {
+test('ProducerMessageRateWriter', async () => {
   const redisClient = await getRedisInstance();
-  const messageRate = promisifyAll(new MultiQueueProducerMessageRate());
+  const messageRate = promisifyAll(new ProducerMessageRate());
 
   const messageRateWriter = promisifyAll(
-    new MultiQueueProducerMessageRateWriter(
-      redisClient,
-      `ID_${Date.now()}`,
-      messageRate,
-    ),
+    new ProducerMessageRateWriter(redisClient, `ID_${Date.now()}`, messageRate),
   );
 
   const ts1 = TimeSeries.getCurrentTimestamp();

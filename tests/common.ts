@@ -3,7 +3,7 @@ import { events } from '../src/system/common/events';
 import { RedisClient } from '../src/system/common/redis-client/redis-client';
 import { Producer, Message, MonitorServer, Consumer } from '../index';
 import { config } from './config';
-import { ICallback, IConfig, TTimeSeriesRange } from '../types';
+import { ICallback, IConfig, TQueueParams, TTimeSeriesRange } from '../types';
 import { WebsocketMainStreamWorker } from '../src/monitor-server/workers/websocket-main-stream.worker';
 import { QueueManagerFrontend } from '../src/system/queue-manager/queue-manager-frontend';
 import { MessageManagerFrontend } from '../src/system/message-manager/message-manager-frontend';
@@ -15,11 +15,12 @@ import { WebsocketRateStreamWorker } from '../src/monitor-server/workers/websock
 import { WebsocketHeartbeatStreamWorker } from '../src/monitor-server/workers/websocket-heartbeat-stream.worker';
 import { WebsocketOnlineStreamWorker } from '../src/monitor-server/workers/websocket-online-stream.worker';
 import { TimeSeriesResponseBodyDTO } from '../src/monitor-server/controllers/common/dto/time-series/time-series-response.DTO';
+import { redisKeys } from '../src/system/common/redis-keys/redis-keys';
 
 type TMonitorServer = ReturnType<typeof MonitorServer>;
 
 type TGetConsumerArgs = {
-  queueName?: string;
+  queue?: string | TQueueParams;
   cfg?: IConfig;
   enablePriorityQueuing?: boolean;
   consumeMock?: ((msg: Message, cb: ICallback<void>) => void) | null;
@@ -47,6 +48,13 @@ class TestConsumer extends Consumer {
   }
 }
 
+const defaultNamespace = config.namespace ?? 'testing';
+redisKeys.setNamespace(defaultNamespace);
+
+export const defaultQueue: TQueueParams = {
+  name: 'test_queue',
+  ns: defaultNamespace,
+};
 const redisClients: RedisClient[] = [];
 const consumersList: Consumer[] = [];
 const producersList: Producer[] = [];
@@ -125,12 +133,12 @@ export async function shutdown(): Promise<void> {
 
 export function getConsumer(args: TGetConsumerArgs = {}) {
   const {
-    queueName = 'test_queue',
+    queue = defaultQueue,
     cfg = config,
     consumeMock = null,
     enablePriorityQueuing,
   } = args;
-  const consumer = new TestConsumer(queueName, cfg, enablePriorityQueuing);
+  const consumer = new TestConsumer(queue, cfg, enablePriorityQueuing);
   if (consumeMock) {
     consumer.consume = consumeMock;
   }
@@ -139,8 +147,8 @@ export function getConsumer(args: TGetConsumerArgs = {}) {
   return c;
 }
 
-export function getProducer(queueName = 'test_queue', cfg = config) {
-  const producer = new Producer(queueName, cfg);
+export function getProducer(cfg = config) {
+  const producer = new Producer(cfg);
   const p = promisifyAll(producer);
   producersList.push(p);
   return p;
@@ -338,64 +346,70 @@ export async function untilConsumerEvent(
   return consumerOnEvent(consumer, event);
 }
 
-export async function produceAndAcknowledgeMessage() {
+export async function produceAndAcknowledgeMessage(
+  queue: TQueueParams = defaultQueue,
+) {
   const producer = getProducer();
   const consumer = getConsumer({
+    queue,
     consumeMock: jest.fn((msg, cb) => {
       cb();
     }),
   });
 
   const message = new Message();
-  message.setBody({ hello: 'world' });
+  message.setBody({ hello: 'world' }).setQueue(queue);
   await producer.produceAsync(message);
 
   consumer.run();
-  await untilConsumerIdle(consumer);
-  return { producer, consumer, message };
+  await untilConsumerEvent(consumer, events.MESSAGE_ACKNOWLEDGED);
+  return { producer, consumer, queue, message };
 }
 
-export async function produceAndDeadLetterMessage() {
+export async function produceAndDeadLetterMessage(
+  queue: TQueueParams = defaultQueue,
+) {
   const producer = getProducer();
   const consumer = getConsumer({
+    queue,
     consumeMock: jest.fn(() => {
       throw new Error('Explicit error');
     }),
   });
 
   const message = new Message();
-  message.setBody({ hello: 'world' });
+  message.setBody({ hello: 'world' }).setQueue(queue);
   await producer.produceAsync(message);
 
   consumer.run();
   await untilConsumerIdle(consumer);
-  return { producer, consumer, message };
+  return { producer, consumer, message, queue };
 }
 
-export async function produceMessage() {
+export async function produceMessage(queue: TQueueParams = defaultQueue) {
   const producer = getProducer();
   const message = new Message();
-  message.setBody({ hello: 'world' });
+  message.setBody({ hello: 'world' }).setQueue(queue);
   await producer.produceAsync(message);
-  return { producer, message };
+  return { producer, message, queue };
 }
 
-export async function produceMessageWithPriority() {
-  const queueName = 'test_queue';
-  const producer = promisifyAll(getProducer(queueName, config));
-
+export async function produceMessageWithPriority(
+  queue: TQueueParams = defaultQueue,
+) {
+  const producer = promisifyAll(getProducer(config));
   const message = new Message();
-  message.setPriority(Message.MessagePriority.LOW);
+  message.setPriority(Message.MessagePriority.LOW).setQueue(queue);
   await producer.produceAsync(message);
-  return { message, producer };
+  return { message, producer, queue };
 }
 
-export async function produceScheduledMessage() {
+export async function scheduleMessage(queue: TQueueParams = defaultQueue) {
   const producer = promisifyAll(getProducer());
   const message = new Message();
-  message.setScheduledDelay(10000);
+  message.setScheduledDelay(10000).setQueue(queue);
   await producer.produceAsync(message);
-  return { message, producer };
+  return { message, producer, queue };
 }
 
 export async function listenForWebsocketStreamEvents<

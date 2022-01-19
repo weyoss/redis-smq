@@ -1,9 +1,14 @@
 import { delay } from 'bluebird';
-import { getConsumer, getProducer, untilConsumerIdle } from '../common';
+import {
+  defaultQueue,
+  getConsumer,
+  getProducer,
+  untilConsumerIdle,
+} from '../common';
 import { Message } from '../../src/message';
 import { events } from '../../src/system/common/events';
 
-test('A message is delivered only once to one consumer', async () => {
+test('Given many consumers, a message is delivered only to one consumer', async () => {
   const consumer1 = getConsumer({
     consumeMock: jest.fn((msg, cb) => {
       cb(null);
@@ -53,7 +58,7 @@ test('A message is delivered only once to one consumer', async () => {
    *
    */
   const msg = new Message();
-  msg.setBody({ hello: 'world' });
+  msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
 
   const producer = getProducer();
   await producer.produceAsync(msg);

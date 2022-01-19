@@ -17,6 +17,7 @@ import { Handler } from './handler';
 import { LockManager } from '../../common/lock-manager/lock-manager';
 import { PanicError } from '../../common/errors/panic.error';
 import { MessageNotFoundError } from '../errors/message-not-found.error';
+import { ELuaScriptName } from '../../common/redis-client/lua-scripts';
 
 export class EnqueueHandler extends Handler {
   getAcknowledgedMessages(
@@ -169,34 +170,33 @@ export class EnqueueHandler extends Handler {
   }
 
   enqueue(
-    redisClientOrMulti: RedisClient | TRedisClientMulti,
+    redisClient: RedisClient,
     message: Message,
-    cb?: ICallback<void>,
+    cb: ICallback<void>,
   ): void {
     const queue = message.getQueue();
     if (!queue)
       throw new PanicError(`Can not enqueue a message without a queue name`);
-    const { keyQueuePending } = redisKeys.getKeys(queue.name, queue.ns);
     message.setPublishedAt(Date.now());
-    if (redisClientOrMulti instanceof RedisClient) {
-      if (!cb) throw new PanicError('A callback function is required.');
-      if (message.isWithPriority()) {
-        this.enqueueMessageWithPriority(redisClientOrMulti, queue, message, cb);
-      } else {
-        redisClientOrMulti.rpush(
-          keyQueuePending,
-          JSON.stringify(message),
-          (err) => cb(err),
-        );
-      }
-    } else {
-      if (message.isWithPriority())
-        this.enqueueMessageWithPriorityMulti(
-          redisClientOrMulti,
-          queue,
-          message,
-        );
-      else redisClientOrMulti.rpush(keyQueuePending, JSON.stringify(message));
-    }
+    const {
+      keyQueues,
+      keyQueuePendingWithPriority,
+      keyQueuePriority,
+      keyQueuePending,
+    } = redisKeys.getKeys(queue.name, queue.ns);
+    this.redisClient.runScript(
+      ELuaScriptName.PUBLISH_MESSAGE,
+      [
+        keyQueues,
+        JSON.stringify(queue),
+        message.getId(),
+        JSON.stringify(message),
+        message.getPriority() ?? '',
+        keyQueuePendingWithPriority,
+        keyQueuePriority,
+        keyQueuePending,
+      ],
+      (err) => cb(err),
+    );
   }
 }

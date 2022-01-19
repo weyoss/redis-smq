@@ -28,9 +28,9 @@ Priority messages can be published the same way as normal messages (messages wit
 const {Message, Producer} = require('redis-smq');
 
 const msg1 = new Message();
-msg1.setPriority(Message.MessagePriority.HIGH);
+msg1.setPriority(Message.MessagePriority.HIGH).setQueue('test_queue');
 
-const producer = new Producer('test_queue');
+const producer = new Producer();
 producer.produce(msg1, (err) => {
     if (err) console.log(err);
     else console.log('Successfully produced')
@@ -38,6 +38,7 @@ producer.produce(msg1, (err) => {
 
 const msg2 = new Message();
 msg2.setPriority(Message.MessagePriority.LOWEST);
+msg2.setQueue('another_queue');
 producer.produce(msg2, (err) => {
     if (err) console.log(err);
     else console.log('Successfully produced')

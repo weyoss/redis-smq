@@ -1,14 +1,15 @@
-import { Producer } from './producer';
-import { ICallback, IConfig, TQueueParams } from '../../../types';
+import { ICallback, IConfig } from '../../../types';
 import { EventEmitter } from 'events';
 import { events } from '../common/events';
+import { Producer } from './producer';
+import { Message } from '../message';
 
 export class ProducerFrontend extends EventEmitter {
   private producer: Producer;
 
-  constructor(queueName: string, config: IConfig = {}) {
+  constructor(config: IConfig = {}) {
     super();
-    this.producer = new Producer(queueName, config);
+    this.producer = new Producer(config);
     this.registerEvents();
   }
 
@@ -53,11 +54,7 @@ export class ProducerFrontend extends EventEmitter {
     return this.producer.getId();
   }
 
-  getQueue(): TQueueParams {
-    return this.producer.getQueue();
-  }
-
-  produce(msg: unknown, cb: ICallback<boolean>): void {
+  produce(msg: Message, cb: ICallback<boolean>): void {
     this.producer.produce(msg, cb);
   }
 }

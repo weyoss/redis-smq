@@ -169,9 +169,7 @@ export type TWebsocketMainStreamPayload = {
   acknowledgedMessagesCount: number;
   pendingMessagesCount: number;
   pendingMessagesWithPriorityCount: number;
-  producersCount: number;
   consumersCount: number;
-  multiQueueProducersCount: number;
   queues: {
     [ns: string]: {
       [queueName: string]: TWebsocketMainStreamPayloadQueue;
@@ -186,7 +184,6 @@ export type TWebsocketMainStreamPayloadQueue = {
   acknowledgedMessagesCount: number;
   pendingMessagesCount: number;
   pendingMessagesWithPriorityCount: number;
-  producersCount: number;
   consumersCount: number;
 };
 
@@ -213,10 +210,6 @@ export type TGetPendingMessagesWithPriorityReply = TPaginatedResponse<Message>;
 
 export type TConsumerRedisKeys = ReturnType<
   typeof redisKeys['getConsumerKeys']
->;
-
-export type TProducerRedisKeys = ReturnType<
-  typeof redisKeys['getProducerKeys']
 >;
 
 export interface IQueueMetrics {
@@ -274,7 +267,5 @@ export type THeartbeatPayloadData = {
 };
 
 export type TWebsocketHeartbeatOnlineIdsStreamPayload = {
-  producers: string[];
   consumers: string[];
-  multiQueueProducers: string[];
 };

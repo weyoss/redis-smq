@@ -1,14 +1,8 @@
-import { getConsumer, getProducer, untilConsumerEvent } from '../common';
-import { Message } from '../../src/message';
+import { getConsumer, produceMessage, untilConsumerEvent } from '../common';
 import { events } from '../../src/system/common/events';
 
 test('A message is not lost in case of a consumer crash', async () => {
-  const producer = getProducer();
-
-  const msg = new Message();
-  msg.setBody({ hello: 'world' });
-
-  await producer.produceAsync(msg);
+  await produceMessage();
 
   /**
    * Consumer1 tries to consume a message but "crushes" (stops)

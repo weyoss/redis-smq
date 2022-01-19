@@ -8,8 +8,7 @@ import { GetMessagesResponseBodyDataDTO } from '../../src/monitor-server/control
 
 test('Purge pending messages', async () => {
   await startMonitorServer();
-  const { producer, message } = await produceMessage();
-  const queue = producer.getQueue();
+  const { message, queue } = await produceMessage();
   const request = supertest('http://127.0.0.1:3000');
   const response1: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =
     await request.get(

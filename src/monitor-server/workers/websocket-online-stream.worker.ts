@@ -10,15 +10,12 @@ import * as async from 'async';
 import { events } from '../../system/common/events';
 import { QueueManager } from '../../system/queue-manager/queue-manager';
 import { Consumer } from '../../system/consumer/consumer';
-import { Producer } from '../../system/producer/producer';
-import { MultiQueueProducer } from '../../system/multi-queue-producer/multi-queue-producer';
 
 export class WebsocketOnlineStreamWorker {
   protected logger;
   protected lockManager: LockManager;
   protected ticker: Ticker;
   protected redisClient: RedisClient;
-  protected tasks: ((cb: ICallback<void>) => void)[] = [];
   protected noop = (): void => void 0;
   protected queueManager: QueueManager;
 
@@ -49,70 +46,28 @@ export class WebsocketOnlineStreamWorker {
         this.logger.debug(`Lock acquired.`);
         async.waterfall(
           [
-            (cb: ICallback<void>) => {
-              MultiQueueProducer.getOnlineProducers(
-                this.redisClient,
-                false,
-                (err, reply) => {
-                  if (err) cb(err);
-                  else {
-                    this.redisClient.publish(
-                      `streamOnlineMultiQueueProducers`,
-                      JSON.stringify(reply ?? {}),
-                      this.noop,
-                    );
-                    cb();
-                  }
-                },
-              );
-            },
             (cb: ICallback<TQueueParams[]>) => {
               this.queueManager.getMessageQueues(cb);
             },
             (queues: TQueueParams[], cb: ICallback<void>) => {
-              async.each(
+              async.each<TQueueParams, Error>(
                 queues,
                 (item, done) => {
-                  async.waterfall(
-                    [
-                      (cb: ICallback<void>) => {
-                        Consumer.getOnlineConsumers(
-                          this.redisClient,
-                          item,
-                          false,
-                          (err, reply) => {
-                            if (err) cb(err);
-                            else {
-                              this.redisClient.publish(
-                                `streamOnlineQueueConsumers:${item.ns}:${item.name}`,
-                                JSON.stringify(reply ?? {}),
-                                this.noop,
-                              );
-                              cb();
-                            }
-                          },
+                  Consumer.getOnlineConsumers(
+                    this.redisClient,
+                    item,
+                    false,
+                    (err, reply) => {
+                      if (err) done(err);
+                      else {
+                        this.redisClient.publish(
+                          `streamOnlineQueueConsumers:${item.ns}:${item.name}`,
+                          JSON.stringify(reply ?? {}),
+                          this.noop,
                         );
-                      },
-                      (cb: ICallback<void>) => {
-                        Producer.getOnlineProducers(
-                          this.redisClient,
-                          item,
-                          false,
-                          (err, reply) => {
-                            if (err) cb(err);
-                            else {
-                              this.redisClient.publish(
-                                `streamOnlineQueueProducers:${item.ns}:${item.name}`,
-                                JSON.stringify(reply ?? {}),
-                                this.noop,
-                              );
-                              cb();
-                            }
-                          },
-                        );
-                      },
-                    ],
-                    done,
+                        done();
+                      }
+                    },
                   );
                 },
                 cb,

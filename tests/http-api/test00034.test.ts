@@ -8,9 +8,7 @@ import { GetMessagesResponseBodyDataDTO } from '../../src/monitor-server/control
 
 test('Delete a message queue', async () => {
   await startMonitorServer();
-  const { producer } = await produceMessage();
-  await producer.shutdownAsync();
-  const queue = producer.getQueue();
+  const { queue } = await produceMessage();
   const request = supertest('http://127.0.0.1:3000');
   const response1: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =
     await request.delete(`/api/queues/${queue.name}/ns/${queue.ns}`);

@@ -2,7 +2,7 @@ import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgedCause,
   ICallback,
-  IConfig,
+  TQueueParams,
 } from '../../../types';
 import { Message } from '../message';
 import BLogger from 'bunyan';
@@ -10,24 +10,37 @@ import { PowerManager } from './power-manager/power-manager';
 import { MessageManager } from '../message-manager/message-manager';
 import { Consumer } from '../consumer/consumer';
 import { RedisClient } from './redis-client/redis-client';
+import { QueueManager } from '../queue-manager/queue-manager';
+import { ArgumentError } from './errors/argument.error';
 
 export class Broker {
   protected logger: BLogger;
   protected powerManager: PowerManager;
   protected messageManager: MessageManager;
+  protected queueManager: QueueManager;
 
   constructor(
-    config: IConfig,
     messageManager: MessageManager,
+    queueManager: QueueManager,
     logger: BLogger,
   ) {
-    this.powerManager = new PowerManager();
     this.messageManager = messageManager;
+    this.queueManager = queueManager;
     this.logger = logger.child({ child: Broker.name });
+    this.powerManager = new PowerManager();
+  }
+
+  setUpMessageQueue(queue: TQueueParams, cb: ICallback<void>): void {
+    this.queueManager.setUpMessageQueue(queue, cb);
   }
 
   scheduleMessage(msg: Message, cb: ICallback<boolean>): void {
-    this.messageManager.scheduleMessage(msg, cb);
+    const queue = msg.getQueue();
+    if (!queue) {
+      cb(new ArgumentError("Can't schedule a message without a message queue"));
+    } else {
+      this.messageManager.xScheduleMessage(msg, cb);
+    }
   }
 
   enqueueMessage(message: Message, cb: ICallback<void>): void {

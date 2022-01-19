@@ -8,7 +8,7 @@ import { delay, promisifyAll } from 'bluebird';
 import { MessageManager } from '../../src/system/message-manager/message-manager';
 
 test('Concurrent delete operation', async () => {
-  const { producer, message } = await produceMessage();
+  const { message, queue } = await produceMessage();
   const redisClient1 = await getRedisInstance();
   const logger = getLogger();
   const messageManager1 = promisifyAll(
@@ -18,7 +18,6 @@ test('Concurrent delete operation', async () => {
   const messageManager2 = promisifyAll(
     new MessageManager(redisClient2, logger),
   );
-  const queue = producer.getQueue();
 
   const res1 = await messageManager1.getPendingMessagesAsync(queue, 0, 100);
 

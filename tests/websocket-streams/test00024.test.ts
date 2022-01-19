@@ -1,24 +1,14 @@
 import {
   getConsumer,
-  getProducer,
   listenForWebsocketStreamEvents,
   startWebsocketHeartbeatStreamWorker,
   validateTime,
 } from '../common';
 import { TWebsocketHeartbeatOnlineIdsStreamPayload } from '../../types';
-import { delay, promisifyAll } from 'bluebird';
-import { MultiQueueProducer } from '../../src/multi-queue-producer';
-import { config } from '../config';
 
 test('WebsocketHeartbeatStreamWorker: streamHeartbeatOnlineIds', async () => {
   const consumer = getConsumer();
   await consumer.runAsync();
-
-  const producer = getProducer();
-  await delay(5000);
-
-  const mProducer = promisifyAll(new MultiQueueProducer(config));
-  await delay(5000);
 
   const data =
     await listenForWebsocketStreamEvents<TWebsocketHeartbeatOnlineIdsStreamPayload>(
@@ -30,9 +20,6 @@ test('WebsocketHeartbeatStreamWorker: streamHeartbeatOnlineIds', async () => {
     expect(validateTime(diff, 1000 * i)).toBe(true);
     expect(data[i].payload).toEqual({
       consumers: [consumer.getId()],
-      producers: [producer.getId()],
-      multiQueueProducers: [mProducer.getId()],
     });
   }
-  await mProducer.shutdownAsync();
 });

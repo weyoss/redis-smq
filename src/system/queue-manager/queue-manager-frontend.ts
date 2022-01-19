@@ -9,7 +9,6 @@ import { QueueManager } from './queue-manager';
 import BLogger from 'bunyan';
 import { Logger } from '../common/logger';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
-import { redisKeys } from '../common/redis-keys/redis-keys';
 
 export class QueueManagerFrontend {
   private static instance: QueueManagerFrontend | null = null;
@@ -24,13 +23,7 @@ export class QueueManagerFrontend {
   ///
 
   deleteMessageQueue(queue: string | TQueueParams, cb: ICallback<void>): void {
-    const queueParams: TQueueParams =
-      typeof queue === 'string'
-        ? {
-            name: queue,
-            ns: redisKeys.getNamespace(),
-          }
-        : queue;
+    const queueParams = QueueManager.getQueueParams(queue);
     this.queueManager.deleteMessageQueue(queueParams, cb);
   }
 
@@ -38,13 +31,7 @@ export class QueueManagerFrontend {
     queue: string | TQueueParams,
     cb: ICallback<void>,
   ): void {
-    const queueParams: TQueueParams =
-      typeof queue === 'string'
-        ? {
-            name: queue,
-            ns: redisKeys.getNamespace(),
-          }
-        : queue;
+    const queueParams = QueueManager.getQueueParams(queue);
     this.queueManager.purgeDeadLetteredQueue(queueParams, cb);
   }
 
@@ -52,35 +39,17 @@ export class QueueManagerFrontend {
     queue: string | TQueueParams,
     cb: ICallback<void>,
   ): void {
-    const queueParams: TQueueParams =
-      typeof queue === 'string'
-        ? {
-            name: queue,
-            ns: redisKeys.getNamespace(),
-          }
-        : queue;
+    const queueParams = QueueManager.getQueueParams(queue);
     this.queueManager.purgeAcknowledgedQueue(queueParams, cb);
   }
 
   purgePendingQueue(queue: string | TQueueParams, cb: ICallback<void>): void {
-    const queueParams: TQueueParams =
-      typeof queue === 'string'
-        ? {
-            name: queue,
-            ns: redisKeys.getNamespace(),
-          }
-        : queue;
+    const queueParams = QueueManager.getQueueParams(queue);
     this.queueManager.purgePendingQueue(queueParams, cb);
   }
 
   purgePriorityQueue(queue: string | TQueueParams, cb: ICallback<void>): void {
-    const queueParams: TQueueParams =
-      typeof queue === 'string'
-        ? {
-            name: queue,
-            ns: redisKeys.getNamespace(),
-          }
-        : queue;
+    const queueParams = QueueManager.getQueueParams(queue);
     this.queueManager.purgePriorityQueue(queueParams, cb);
   }
 
@@ -94,13 +63,7 @@ export class QueueManagerFrontend {
     queue: string | TQueueParams,
     cb: ICallback<IQueueMetrics>,
   ): void {
-    const queueParams: TQueueParams =
-      typeof queue === 'string'
-        ? {
-            name: queue,
-            ns: redisKeys.getNamespace(),
-          }
-        : queue;
+    const queueParams = QueueManager.getQueueParams(queue);
     this.queueManager.getQueueMetrics(queueParams, cb);
   }
 

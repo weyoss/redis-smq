@@ -8,12 +8,12 @@ import { GetMessagesResponseBodyDataDTO } from '../../src/monitor-server/control
 
 test('Delete a pending message', async () => {
   await startMonitorServer();
-  const { message } = await produceMessage();
+  const { message, queue } = await produceMessage();
   const request = supertest('http://127.0.0.1:3000');
   const response1: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =
     await request.delete(
-      `/api/queues/${message.getQueue()?.name}/ns/${
-        message.getQueue()?.ns
+      `/api/queues/${queue.name}/ns/${
+        queue.ns
       }/pending-messages/${message.getId()}?sequenceId=0`,
     );
   expect(response1.statusCode).toBe(204);

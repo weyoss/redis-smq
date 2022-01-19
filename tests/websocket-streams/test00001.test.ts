@@ -7,14 +7,12 @@ test('WebsocketMainStreamWorker: Case 1', async () => {
   const subscribeClient = await getRedisInstance();
   subscribeClient.subscribe('streamMain');
 
-  const json = await new Promise<TWebsocketMainStreamPayload>(
-    (resolve, reject) => {
-      subscribeClient.on('message', (channel, message) => {
-        const json: TWebsocketMainStreamPayload = JSON.parse(message);
-        resolve(json);
-      });
-    },
-  );
+  const json = await new Promise<TWebsocketMainStreamPayload>((resolve) => {
+    subscribeClient.on('message', (channel, message) => {
+      const json: TWebsocketMainStreamPayload = JSON.parse(message);
+      resolve(json);
+    });
+  });
 
   expect(json).toEqual({
     scheduledMessagesCount: 0,
@@ -22,9 +20,7 @@ test('WebsocketMainStreamWorker: Case 1', async () => {
     pendingMessagesCount: 0,
     pendingMessagesWithPriorityCount: 0,
     acknowledgedMessagesCount: 0,
-    producersCount: 0,
     consumersCount: 0,
-    multiQueueProducersCount: 0,
     queuesCount: 0,
     queues: {},
   });

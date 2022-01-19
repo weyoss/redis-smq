@@ -1,11 +1,12 @@
 import { ICallback, TQueueParams } from '../../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { getListMessageAtSequenceId } from '../common';
-import { Message } from '../../message';
 import { Handler } from './handler';
 import { EnqueueHandler } from './enqueue.handler';
 import { RedisClient } from '../../common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
+import { ELuaScriptName } from '../../common/redis-client/lua-scripts';
+import { Message } from '../../message';
 
 export class RequeueHandler extends Handler {
   protected enqueueHandler: EnqueueHandler;
@@ -33,15 +34,32 @@ export class RequeueHandler extends Handler {
         if (err) cb(err);
         else if (!msg) cb(new EmptyCallbackReplyError());
         else {
-          const multi = this.redisClient.multi();
-          multi.lrem(from, 1, JSON.stringify(msg));
           const message = Message.createFromMessage(msg, true); // resetting all system parameters
-          message.setQueue(queue); // do not lose message queue
           if (priority !== undefined) {
             message.setPriority(priority);
           } else message.disablePriority();
-          this.enqueueHandler.enqueue(multi, message);
-          this.redisClient.execMulti(multi, (err) => cb(err));
+          const {
+            keyQueues,
+            keyQueuePending,
+            keyQueuePriority,
+            keyQueuePendingWithPriority,
+          } = redisKeys.getKeys(queue.name, queue.ns);
+          this.redisClient.runScript(
+            ELuaScriptName.REQUEUE_MESSAGE,
+            [
+              keyQueues,
+              JSON.stringify(queue),
+              message.getId(),
+              JSON.stringify(message),
+              message.getPriority() ?? '',
+              keyQueuePendingWithPriority,
+              keyQueuePriority,
+              keyQueuePending,
+              from,
+              JSON.stringify(msg),
+            ],
+            (err) => cb(err),
+          );
         }
       },
     );

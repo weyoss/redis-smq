@@ -1,4 +1,5 @@
 import {
+  defaultQueue,
   getConsumer,
   getProducer,
   untilMessageAcknowledged,
@@ -20,7 +21,7 @@ test('Schedule a message with a combination of CRON expression, repeat and perio
   msg.setScheduledCron('*/20 * * * * *'); // Schedule message for each 30 seconds
   msg.setScheduledRepeat(2); // repeat 2 times
   msg.setScheduledPeriod(5000); // 5 secs between each repeat
-
+  msg.setQueue(defaultQueue);
   const producer = getProducer();
   await producer.produceAsync(msg);
 

@@ -1,4 +1,9 @@
-import { getConsumer, getProducer, untilConsumerIdle } from '../common';
+import {
+  defaultQueue,
+  getConsumer,
+  getProducer,
+  untilConsumerIdle,
+} from '../common';
 import { Message } from '../../index';
 
 test('Produce and consume 1 message', async () => {
@@ -7,7 +12,7 @@ test('Produce and consume 1 message', async () => {
   const consume = jest.spyOn(consumer, 'consume');
 
   const msg = new Message();
-  msg.setBody({ hello: 'world' });
+  msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
 
   await producer.produceAsync(msg);
   consumer.run();

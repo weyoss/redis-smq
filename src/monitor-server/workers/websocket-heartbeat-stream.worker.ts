@@ -42,9 +42,7 @@ export class WebsocketHeartbeatStreamWorker {
       else if (lock) {
         this.logger.debug(`Lock acquired.`);
         const onlineIds: TWebsocketHeartbeatOnlineIdsStreamPayload = {
-          producers: [],
           consumers: [],
-          multiQueueProducers: [],
         };
         Heartbeat.getValidHeartbeats(this.redisClient, false, (err, reply) => {
           if (err) throw err;
@@ -52,30 +50,13 @@ export class WebsocketHeartbeatStreamWorker {
             async.each(
               reply ?? [],
               (item, done) => {
-                const { ns, queueName, consumerId, producerId } =
+                const { ns, queueName, consumerId } =
                   redisKeys.extractData(item.key) ?? {};
                 const payload = String(item.payload);
-                if (ns && queueName && (consumerId || producerId)) {
-                  if (consumerId) {
-                    onlineIds.consumers.push(consumerId);
-                    this.redisClient.publish(
-                      `streamConsumerHeartbeat:${consumerId}`,
-                      payload,
-                      this.noop,
-                    );
-                  } else if (producerId) {
-                    onlineIds.producers.push(producerId);
-                    this.redisClient.publish(
-                      `streamProducerHeartbeat:${producerId}`,
-                      payload,
-                      this.noop,
-                    );
-                  }
-                } else if (producerId) {
-                  // multi queue producer
-                  onlineIds.multiQueueProducers.push(producerId);
+                if (ns && queueName && consumerId) {
+                  onlineIds.consumers.push(consumerId);
                   this.redisClient.publish(
-                    `streamMultiQueueProducerHeartbeat:${producerId}`,
+                    `streamConsumerHeartbeat:${consumerId}`,
                     payload,
                     this.noop,
                   );

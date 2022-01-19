@@ -1,4 +1,5 @@
 import {
+  defaultQueue,
   getConsumer,
   getProducer,
   untilMessageAcknowledged,
@@ -17,7 +18,10 @@ test('Schedule a message with a CRON expression and check that it is enqueued pe
   consumer.run();
 
   const msg = new Message();
-  msg.setScheduledCron('*/3 * * * * *').setBody({ hello: 'world' });
+  msg
+    .setScheduledCron('*/3 * * * * *')
+    .setBody({ hello: 'world' })
+    .setQueue(defaultQueue);
 
   const producer = getProducer();
   await producer.produceAsync(msg);

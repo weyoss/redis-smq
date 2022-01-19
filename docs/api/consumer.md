@@ -24,17 +24,21 @@ consumer.run();
 **Syntax**
 
 ```javascript
-const testQueueConsumer = new TestQueueConsumer(queueName , config, usePriorityQueuing)
+const testQueueConsumer = new TestQueueConsumer(queue , config, usePriorityQueuing)
 ```
 
 **Parameters**
 
-- `queueName` *(string): Required.* The name of the queue where produced messages are queued. It can be composed
-  only of letters (a-z), numbers (0-9) and (-_) characters.
-
+- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
+  Otherwise, you can explicity provide an object which has the following signature:
+    - `queue.name` *(string): Required.* Queue name.
+    - `queue.ns` *(string): Required.* Queue namespace.
+    
 - `config` *(object): Optional.* Configuration parameters. See [configuration](https://github.com/weyoss/redis-smq#configuration).
 
 - `usePriorityQueuing` *(boolean): Optional.*  When `true`, the consumer will dequeue messages using priority queuing.
+
+The queue name can be composed only of letters (a-z), numbers (0-9) and (-_) characters.
 
 ### Consumer.prototype.run()
 

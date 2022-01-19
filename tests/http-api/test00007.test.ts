@@ -8,13 +8,11 @@ import { GetMessagesResponseBodyDataDTO } from '../../src/monitor-server/control
 
 test('Fetching pending messages', async () => {
   await startMonitorServer();
-  const { message } = await produceMessage();
+  const { message, queue } = await produceMessage();
   const request = supertest('http://127.0.0.1:3000');
   const response1: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =
     await request.get(
-      `/api/queues/${message.getQueue()?.name}/ns/${
-        message.getQueue()?.ns
-      }/pending-messages?skip=0&take=99`,
+      `/api/queues/${queue.name}/ns/${queue.ns}/pending-messages?skip=0&take=99`,
     );
   expect(response1.statusCode).toBe(200);
   expect(response1.body.data).toBeDefined();

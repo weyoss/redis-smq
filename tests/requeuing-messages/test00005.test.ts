@@ -1,28 +1,13 @@
 import {
-  getConsumer,
   getMessageManagerFrontend,
-  getProducer,
   getQueueManagerFrontend,
-  untilConsumerIdle,
+  produceAndDeadLetterMessage,
 } from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
 
 test(`Combined test: Dead-letter a message and requeue it with priority. Check pending, acknowledged and pending messages.`, async () => {
-  const msg = new Message();
-  msg.setBody({ hello: 'world' });
-
-  const producer = getProducer();
-  await producer.produceAsync(msg);
-  const queue = producer.getQueue();
-
-  const consumer = getConsumer({
-    consumeMock: (m, cb) => {
-      throw new Error();
-    },
-  });
-  await consumer.runAsync();
-  await untilConsumerIdle(consumer);
+  const { queue, message, consumer } = await produceAndDeadLetterMessage();
   await consumer.shutdownAsync();
 
   const messageManager = promisifyAll(await getMessageManagerFrontend());
@@ -37,7 +22,7 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   const res3 = await messageManager.getDeadLetterMessagesAsync(queue, 0, 100);
   expect(res3.total).toBe(1);
   expect(res3.items.length).toBe(1);
-  expect(res3.items[0].message.getId()).toEqual(msg.getId());
+  expect(res3.items[0].message.getId()).toEqual(message.getId());
   expect(res3.items[0].message.getAttempts()).toEqual(2);
 
   const queueManager = promisifyAll(await getQueueManagerFrontend());
@@ -50,7 +35,7 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   await messageManager.requeueMessageFromDLQueueAsync(
     queue,
     0,
-    msg.getId(),
+    message.getId(),
     Message.MessagePriority.HIGHEST,
   );
 
@@ -66,7 +51,7 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   expect(res6.total).toBe(1);
   expect(res6.items.length).toBe(1);
 
-  expect(res6.items[0].getId()).toEqual(msg.getId());
+  expect(res6.items[0].getId()).toEqual(message.getId());
   expect(res6.items[0].getPriority()).toEqual(Message.MessagePriority.HIGHEST);
   expect(res6.items[0].getAttempts()).toEqual(0);
 
@@ -83,7 +68,7 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
     await messageManager.requeueMessageFromDLQueueAsync(
       queue,
       0,
-      msg.getId(),
+      message.getId(),
       Message.MessagePriority.HIGHEST,
     );
   }).rejects.toThrow(

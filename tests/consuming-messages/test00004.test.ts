@@ -1,5 +1,6 @@
 import { delay, promisifyAll } from 'bluebird';
 import {
+  defaultQueue,
   getConsumer,
   getMessageManagerFrontend,
   getProducer,
@@ -12,7 +13,6 @@ test('Message TTL: a message with TTL is not consumed and moved to DLQ when TTL 
   const producer = getProducer();
   const consumer = getConsumer();
   const consume = jest.spyOn(consumer, 'consume');
-  const queue = producer.getQueue();
 
   let unacknowledged = 0;
   consumer.on(events.MESSAGE_UNACKNOWLEDGED, () => {
@@ -20,7 +20,7 @@ test('Message TTL: a message with TTL is not consumed and moved to DLQ when TTL 
   });
 
   const msg = new Message();
-  msg.setBody({ hello: 'world' }).setTTL(3000);
+  msg.setBody({ hello: 'world' }).setTTL(3000).setQueue(defaultQueue);
 
   await producer.produceAsync(msg);
   await delay(5000);
@@ -31,7 +31,11 @@ test('Message TTL: a message with TTL is not consumed and moved to DLQ when TTL 
   expect(unacknowledged).toBe(1);
 
   const messageManager = promisifyAll(await getMessageManagerFrontend());
-  const list = await messageManager.getDeadLetterMessagesAsync(queue, 0, 100);
+  const list = await messageManager.getDeadLetterMessagesAsync(
+    defaultQueue,
+    0,
+    100,
+  );
   expect(list.total).toBe(1);
   expect(list.items[0].message.getId()).toBe(msg.getId());
 });
