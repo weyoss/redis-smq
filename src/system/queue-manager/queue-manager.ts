@@ -225,12 +225,6 @@ export class QueueManager {
     this.redisClient.del(keyQueuePriority, (err) => cb(err));
   }
 
-  purgeScheduledQueue(cb: ICallback<void>): void {
-    this.logger.debug(`Purging scheduled messages queue...`);
-    const { keyScheduledMessages } = redisKeys.getGlobalKeys();
-    this.redisClient.del(keyScheduledMessages, (err) => cb(err));
-  }
-
   ///
 
   getQueueProcessingQueues(

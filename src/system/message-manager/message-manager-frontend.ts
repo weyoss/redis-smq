@@ -141,6 +141,10 @@ export class MessageManagerFrontend {
     this.messageManager.purgeAcknowledgedMessages(queueParams, cb);
   }
 
+  purgeScheduledMessages(cb: ICallback<void>): void {
+    this.messageManager.purgeScheduledMessages(cb);
+  }
+
   ///
 
   getAcknowledgedMessages(

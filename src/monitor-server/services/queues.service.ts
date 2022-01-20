@@ -43,8 +43,4 @@ export class QueuesService {
       ns,
     });
   }
-
-  async purgeScheduledQueue(): Promise<void> {
-    return this.queueManager.purgeScheduledQueueAsync();
-  }
 }
