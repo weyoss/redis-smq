@@ -16,6 +16,7 @@ import { DeleteDeadLetteredMessageRequestDTO } from '../controllers/api/queues/q
 import { DeleteScheduledMessageRequestDTO } from '../controllers/api/main/scheduled-messages/delete-scheduled-message/delete-scheduled-message-request.DTO';
 import { RequeueDeadLetteredMessageRequestDTO } from '../controllers/api/queues/queue/dead-lettered-messages/requeue-dead-lettered-message/requeue-dead-lettered-message.request.DTO';
 import { RequeueAcknowledgedMessageRequestDTO } from '../controllers/api/queues/queue/acknowledged-messages/requeue-acknowledged-message/requeue-acknowledged-message.request.DTO';
+import { PurgeDeadLetteredMessagesRequestDTO } from '../controllers/api/queues/queue/dead-lettered-messages/purge-dead-lettered-messages/purge-dead-lettered-messages.request.DTO';
 
 const messageManagerAsync = promisifyAll(MessageManager.prototype);
 
@@ -179,5 +180,15 @@ export class MessagesService {
       id,
       priority,
     );
+  }
+
+  async purgeDeadLetteredMessages(
+    args: PurgeDeadLetteredMessagesRequestDTO,
+  ): Promise<void> {
+    const { ns, queueName } = args;
+    return this.messageManager.purgeDeadLetteredMessagesAsync({
+      name: queueName,
+      ns,
+    });
   }
 }

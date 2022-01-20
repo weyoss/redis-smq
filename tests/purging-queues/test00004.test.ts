@@ -1,4 +1,5 @@
 import {
+  getMessageManagerFrontend,
   getQueueManagerFrontend,
   produceAndDeadLetterMessage,
 } from '../common';
@@ -12,7 +13,8 @@ test('Purging dead letter queue', async () => {
   const m = await queueManager.getQueueMetricsAsync(queue);
   expect(m.deadLettered).toBe(1);
 
-  await queueManager.purgeDeadLetteredQueueAsync(queue);
+  const messageManager = promisifyAll(await getMessageManagerFrontend());
+  await messageManager.purgeDeadLetteredMessagesAsync(queue);
 
   const m2 = await queueManager.getQueueMetricsAsync(queue);
   expect(m2.deadLettered).toBe(0);
