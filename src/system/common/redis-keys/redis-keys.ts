@@ -245,7 +245,7 @@ export const redisKeys = {
       keyScheduledMessagesIndex: ERedisKey.KEY_SCHEDULED_MESSAGES_INDEX,
       keyLockDeleteAcknowledgedMessage:
         ERedisKey.KEY_LOCK_DELETE_ACKNOWLEDGED_MESSAGE,
-      keyLockDeleteDeadLetterMessage:
+      keyLockdeleteDeadLetteredMessage:
         ERedisKey.KEY_LOCK_DELETE_DEAD_LETTER_MESSAGE,
       keyLockDeleteScheduledMessage:
         ERedisKey.KEY_LOCK_DELETE_SCHEDULED_MESSAGE,

@@ -181,7 +181,7 @@ export class MessageManager {
     this.scheduleHandler.deleteScheduled(messageId, cb);
   }
 
-  deleteDeadLetterMessage(
+  deleteDeadLetteredMessage(
     queue: TQueueParams,
     sequenceId: number,
     messageId: string,
@@ -190,7 +190,7 @@ export class MessageManager {
     this.logger.debug(
       `Deleting dead-lettered message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${queue.name}, ns ${queue.ns})...`,
     );
-    this.processingHandler.deleteDeadLetterMessage(
+    this.processingHandler.deleteDeadLetteredMessage(
       queue,
       sequenceId,
       messageId,

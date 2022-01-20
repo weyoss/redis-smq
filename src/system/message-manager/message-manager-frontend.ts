@@ -29,14 +29,14 @@ export class MessageManagerFrontend {
     this.messageManager.deleteScheduledMessage(messageId, cb);
   }
 
-  deleteDeadLetterMessage(
+  deleteDeadLetteredMessage(
     queue: string | TQueueParams,
     sequenceId: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
     const queueParams = QueueManager.getQueueParams(queue);
-    this.messageManager.deleteDeadLetterMessage(
+    this.messageManager.deleteDeadLetteredMessage(
       queueParams,
       sequenceId,
       messageId,

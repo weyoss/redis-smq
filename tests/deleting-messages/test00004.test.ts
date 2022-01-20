@@ -30,7 +30,11 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(queueMetrics.acknowledged).toBe(0);
   expect(queueMetrics.deadLettered).toBe(1);
 
-  await messageManager.deleteDeadLetterMessageAsync(queue, 0, message.getId());
+  await messageManager.deleteDeadLetteredMessageAsync(
+    queue,
+    0,
+    message.getId(),
+  );
 
   const res4 = await messageManager.getDeadLetteredMessagesAsync(queue, 0, 100);
 
@@ -41,7 +45,7 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(queueMetrics1.deadLettered).toBe(0);
 
   await expect(async () => {
-    await messageManager.deleteDeadLetterMessageAsync(
+    await messageManager.deleteDeadLetteredMessageAsync(
       queue,
       0,
       message.getId(),

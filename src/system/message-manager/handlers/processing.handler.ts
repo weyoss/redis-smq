@@ -11,19 +11,19 @@ import { Handler } from './handler';
 import { PanicError } from '../../common/errors/panic.error';
 
 export class ProcessingHandler extends Handler {
-  deleteDeadLetterMessage(
+  deleteDeadLetteredMessage(
     queue: TQueueParams,
     index: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const { keyQueueDL, keyLockDeleteDeadLetterMessage } = redisKeys.getKeys(
+    const { keyQueueDL, keyLockdeleteDeadLetteredMessage } = redisKeys.getKeys(
       queue.name,
       queue.ns,
     );
     deleteListMessageAtSequenceId(
       this.redisClient,
-      keyLockDeleteDeadLetterMessage,
+      keyLockdeleteDeadLetteredMessage,
       keyQueueDL,
       index,
       messageId,
