@@ -68,6 +68,17 @@ getScheduledMessages(skip, take, cb);
   - `result.total` *(number).* Total messages that has been scheduled so far.
   - `result.items` *(Array).* An array of scheduled messages.
 
+### MessageManager.prototype.deleteScheduledMessage()
+
+```javascript
+deleteScheduledMessage(messageId, cb);
+```
+
+**Parameters**
+- `messageId` *(string): Required.* Message ID.
+- `cb(err)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+
 ### MessageManager.prototype.getPendingMessages()
 
 ```javascript
@@ -89,6 +100,22 @@ getPendingMessages(queue, skip, take, cb);
     - `result.items[*].sequenceId` *(number).* Message sequence ID.
     - `result.items[*].message` *(Message).* The stored message at the sequence ID.
 
+### MessageManager.prototype.deletePendingMessage()
+
+```javascript
+deletePendingMessage(queue, sequenceId, messageId, cb);
+```
+
+**Parameters**
+- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
+  Otherwise, you can explicity provide an object which has the following signature:
+  - `queue.name` *(string): Required.* Queue name.
+  - `queue.ns` *(string): Required.* Queue namespace.
+- `sequenceId` *(number): Required.* Message sequence ID.
+- `messageId` *(string): Required.* Message ID.
+- `cb(err)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+
 ### MessageManager.prototype.getPendingMessagesWithPriority()
 
 ```javascript
@@ -107,6 +134,75 @@ Otherwise, you can explicity provide an object which has the following signature
   - `err` *(Error | null | undefined).*
   - `result.total` *(number).* Total messages that has been scheduled so far.
   - `result.items` *(Array).* An array of pending messages with priority.
+
+### MessageManager.prototype.deletePendingMessageWithPriority()
+
+```javascript
+deletePendingMessageWithPriority(queue, messageId, cb);
+```
+
+**Parameters**
+- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
+  Otherwise, you can explicity provide an object which has the following signature:
+  - `queue.name` *(string): Required.* Queue name.
+  - `queue.ns` *(string): Required.* Queue namespace.
+- `messageId` *(string): Required.* Message ID.
+- `cb(err)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+
+### MessageManager.prototype.getAcknowledgedMessages()
+
+```javascript
+getAcknowledgedMessages(queue, skip, take, cb);
+```
+
+**Parameters**
+
+- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
+  Otherwise, you can explicity provide an object which has the following signature:
+  - `queue.name` *(string): Required.* Queue name.
+  - `queue.ns` *(string): Required.* Queue namespace.
+- `skip` *(number): Required.* Offset from where messages should be taken. Starts from 0.
+- `take` *(number): Required.* Max number of messages that should be taken. Starts from 1.
+- `cb(err, result)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).*
+  - `result.total` *(number).* Total messages that has been scheduled so far.
+  - `result.items` *(Array).* An array of scheduled messages.
+    - `result.items[*].sequenceId` *(number).* Message sequence ID.
+    - `result.items[*].message` *(Message).* The stored message at the sequence ID.
+
+### MessageManager.prototype.requeueAcknowledgedMessage()
+
+```javascript
+requeueAcknowledgedMessage(queue, sequenceId, messageId, priority, cb);
+```
+
+**Parameters**
+- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
+  Otherwise, you can explicity provide an object which has the following signature:
+  - `queue.name` *(string): Required.* Queue name.
+  - `queue.ns` *(string): Required.* Queue namespace.
+- `sequenceId` *(number): Required.* Message sequence ID.
+- `messageId` *(string): Required.* Message ID.
+- `priority` *(number|undefined): Required.* Message priority.
+- `cb(err)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+
+### MessageManager.prototype.deleteAcknowledgedMessage()
+
+```javascript
+deleteAcknowledgedMessage(queue, sequenceId, messageId, cb);
+```
+
+**Parameters**
+- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
+  Otherwise, you can explicity provide an object which has the following signature:
+  - `queue.name` *(string): Required.* Queue name.
+  - `queue.ns` *(string): Required.* Queue namespace.
+- `sequenceId` *(number): Required.* Message sequence ID.
+- `messageId` *(string): Required.* Message ID.
+- `cb(err)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
 
 ### MessageManager.prototype.getDeadLetteredMessages()
 
@@ -128,101 +224,6 @@ Otherwise, you can explicity provide an object which has the following signature
   - `result.items` *(Array).* An array of scheduled messages.
     - `result.items[*].sequenceId` *(number).* Message sequence ID.
     - `result.items[*].message` *(Message).* The stored message at the sequence ID.
-    
-### MessageManager.prototype.getAcknowledgedMessages()
-
-```javascript
-getAcknowledgedMessages(queue, skip, take, cb);
-```
-
-**Parameters**
-
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used. 
-Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
-- `skip` *(number): Required.* Offset from where messages should be taken. Starts from 0.
-- `take` *(number): Required.* Max number of messages that should be taken. Starts from 1.
-- `cb(err, result)` *(Function): Required.* Callback function.
-  - `err` *(Error | null | undefined).*
-  - `result.total` *(number).* Total messages that has been scheduled so far.
-  - `result.items` *(Array).* An array of scheduled messages.
-    - `result.items[*].sequenceId` *(number).* Message sequence ID.
-    - `result.items[*].message` *(Message).* The stored message at the sequence ID.
-
-### MessageManager.prototype.deleteScheduledMessage()
-
-```javascript
-deleteScheduledMessage(messageId, cb);
-```
-
-**Parameters**
-- `messageId` *(string): Required.* Message ID.
-- `cb(err)` *(Function): Required.* Callback function.
-  - `err` *(Error | null | undefined).* Error object.
-
-### MessageManager.prototype.deletePendingMessage()
-
-```javascript
-deletePendingMessage(queue, sequenceId, messageId, cb);
-```
-
-**Parameters**
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
-  Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
-- `sequenceId` *(number): Required.* Message sequence ID.
-- `messageId` *(string): Required.* Message ID.
-- `cb(err)` *(Function): Required.* Callback function.
-  - `err` *(Error | null | undefined).* Error object.
-
-### MessageManager.prototype.deletePendingMessageWithPriority()
-
-```javascript
-deletePendingMessageWithPriority(queue, messageId, cb);
-```
-
-**Parameters**
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used. 
-Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
-- `messageId` *(string): Required.* Message ID.
-- `cb(err)` *(Function): Required.* Callback function.
-  - `err` *(Error | null | undefined).* Error object.
-
-### MessageManager.prototype.deleteDeadLetteredMessage()
-
-```javascript
-deleteDeadLetteredMessage(queue, sequenceId, messageId, cb);
-```
-
-**Parameters**
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used. 
-Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
-- `sequenceId` *(number): Required.* Message sequence ID.
-- `messageId` *(string): Required.* Message ID.
-- `cb(err)` *(Function): Required.* Callback function.
-  - `err` *(Error | null | undefined).* Error object.
-
-### MessageManager.prototype.deleteAcknowledgedMessage()
-
-```javascript
-deleteAcknowledgedMessage(queue, sequenceId, messageId, cb);
-```
-
-**Parameters**
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used. 
-Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
-- `sequenceId` *(number): Required.* Message sequence ID.
-- `messageId` *(string): Required.* Message ID.
-- `cb(err)` *(Function): Required.* Callback function.
-  - `err` *(Error | null | undefined).* Error object.
 
 ### MessageManager.prototype.requeueDeadLetteredMessage()
 
@@ -241,23 +242,22 @@ requeueDeadLetteredMessage(queue, sequenceId, messageId, priority, cb);
 - `cb(err)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
 
-### MessageManager.prototype.requeueAcknowledgedMessage()
+### MessageManager.prototype.deleteDeadLetteredMessage()
 
 ```javascript
-requeueAcknowledgedMessage(queue, sequenceId, messageId, priority, cb);
+deleteDeadLetteredMessage(queue, sequenceId, messageId, cb);
 ```
 
 **Parameters**
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
-  Otherwise, you can explicity provide an object which has the following signature:
+- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used. 
+Otherwise, you can explicity provide an object which has the following signature:
   - `queue.name` *(string): Required.* Queue name.
   - `queue.ns` *(string): Required.* Queue namespace.
 - `sequenceId` *(number): Required.* Message sequence ID.
 - `messageId` *(string): Required.* Message ID.
-- `priority` *(number|undefined): Required.* Message priority.
 - `cb(err)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
-
+  
 ### MessageManager.prototype.quit()
 
 ```javascript
