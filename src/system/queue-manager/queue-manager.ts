@@ -209,14 +209,6 @@ export class QueueManager {
 
   ///
 
-  purgeDeadLetteredQueue(queue: TQueueParams, cb: ICallback<void>): void {
-    this.logger.debug(
-      `Purging dead-letter queue of (${queue.name}, ${queue.ns})...`,
-    );
-    const { keyQueueDL } = redisKeys.getKeys(queue.name, queue.ns);
-    this.redisClient.del(keyQueueDL, (err) => cb(err));
-  }
-
   purgeAcknowledgedQueue(queue: TQueueParams, cb: ICallback<void>): void {
     this.logger.debug(
       `Purging dead-letter queue of (${queue.name}, ${queue.ns})...`,

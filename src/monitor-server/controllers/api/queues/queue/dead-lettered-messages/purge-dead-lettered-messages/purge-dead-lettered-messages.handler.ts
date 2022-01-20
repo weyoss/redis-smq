@@ -3,7 +3,7 @@ import { TPurgeQueueContext } from '../../context';
 
 export function PurgeDeadLetteredMessagesHandler(app: TApplication) {
   return async (ctx: TPurgeQueueContext) => {
-    const { queuesService } = app.context.services;
-    return queuesService.purgeDeadLetterQueue(ctx.state.dto);
+    const { messagesService } = app.context.services;
+    return messagesService.purgeDeadLetteredMessages(ctx.state.dto);
   };
 }

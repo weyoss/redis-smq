@@ -27,14 +27,6 @@ export class QueueManagerFrontend {
     this.queueManager.deleteMessageQueue(queueParams, cb);
   }
 
-  purgeDeadLetteredQueue(
-    queue: string | TQueueParams,
-    cb: ICallback<void>,
-  ): void {
-    const queueParams = QueueManager.getQueueParams(queue);
-    this.queueManager.purgeDeadLetteredQueue(queueParams, cb);
-  }
-
   purgeAcknowledgedQueue(
     queue: string | TQueueParams,
     cb: ICallback<void>,

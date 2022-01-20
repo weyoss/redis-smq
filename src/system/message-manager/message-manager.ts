@@ -16,6 +16,7 @@ import { ProcessingHandler } from './handlers/processing.handler';
 import { DelayHandler } from './handlers/delay.handler';
 import { RequeueHandler } from './handlers/requeue.handler';
 import BLogger from 'bunyan';
+import { redisKeys } from '../common/redis-keys/redis-keys';
 
 export class MessageManager {
   protected redisClient: RedisClient;
@@ -280,6 +281,16 @@ export class MessageManager {
       priority,
       cb,
     );
+  }
+
+  ///
+
+  purgeDeadLetteredMessages(queue: TQueueParams, cb: ICallback<void>): void {
+    this.logger.debug(
+      `Purging dead-letter queue of (${queue.name}, ${queue.ns})...`,
+    );
+    const { keyQueueDL } = redisKeys.getKeys(queue.name, queue.ns);
+    this.redisClient.del(keyQueueDL, (err) => cb(err));
   }
 
   ///

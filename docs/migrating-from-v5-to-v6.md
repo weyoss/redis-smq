@@ -134,77 +134,24 @@ Now:
 const consumer = new MyConsumer('test_queue', config, true);
 ```
 
-**6. MessageManager and QueueManager API**
+**6. Refactored MessageManager API**
 
-For MessageManager and QueueManager, methods that accept `queue name` and `namespace` are now accepting a
-single argument which can be either a `queue name` (string) or an object holding the `queue name` and `namespace`.
-
-Before:
-
-```javascript
-getPendingMessages(queueName, ns, skip, take, cb);
-```
-
-Now:
-
-```javascript
-// Argument [queue] can be of a string type like 'test_queue' or an object like { name: 'test_queue', ns: 'testing' } 
-// When queue is of a string type the default namespace will be used.
-getPendingMessages(queue, skip, take, cb);
-```
+Refactoring includes: 
+- Method renaming
+- Method signature changes
+- New methods migrated from QueueManager
 
 See [MessageManager API](/docs/api/message-manager.md) and [QueueManager API](/docs/api/queue-manager.md) for more details.
 
-**7. MessageManager.prototype.requeueAcknowledgedMessage()**
+**6. Refactored QueueManager API**
 
-`MessageManager.prototype.requeueAcknowledgedMessage()` now accepts 5 arguments.
+Refactoring includes:
+- Method renaming
+- Method signature changes
+- Some methods have been migrated to MessageManager
 
-Before:
+See [MessageManager API](/docs/api/message-manager.md) and [QueueManager API](/docs/api/queue-manager.md) for more details.
 
-```javascript
-requeueAcknowledgedMessage(queue, sequenceId, messageId, withPriority, priority, cb)
-```
-
-Now:
-
-```javascript
-// When requeuing a message with priority, the priority argument should not be empty. Otherwise, set its value 
-// to undefined.
-requeueAcknowledgedMessage(queue, sequenceId, messageId, priority, cb)
-```
-
-**8. MessageManager.prototype.requeueDeadLetteredMessage()**
-
-`MessageManager.prototype.requeueDeadLetteredMessage()` now accepts 5 arguments.
-
-Before:
-
-```javascript
-requeueDeadLetteredMessage(queue, sequenceId, messageId, withPriority, priority, cb)
-```
-
-Now:
-
-```javascript
-// When requeuing a message with priority, the priority argument should not be empty. Otherwise, set its value 
-// to undefined.
-requeueDeadLetteredMessage(queue, sequenceId, messageId, priority, cb)
-```
-
-**9. QueueManager API methods renaming**
-
-1. purgeDeadLetterQueue() -> purgeDeadLetteredQueue()
-2. purgeAcknowledgedMessagesQueue() -> purgeAcknowledgedQueue()
-3. purgeQueue() -> purgePendingQueue()
-4. purgeScheduledMessagesQueue() -> purgeScheduledQueue()
-
-**10. MessageManager API methods renaming**
-
-1. getDeadLetterMessages() -> getDeadLetteredMessages()
-2. deleteDeadLetterMessage() -> deleteDeadLetteredMessage()
-3. requeueMessageFromAcknowledgedQueue() -> requeueAcknowledgedMessage()
-4. requeueMessageFromDLQueue() -> requeueDeadLetteredMessage()
-
-**11. Updated HTTP API endpoints**
+**7. Updated HTTP API endpoints**
 
 See [HTTP API Reference](http-api.md) for more details.

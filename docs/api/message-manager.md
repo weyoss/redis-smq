@@ -35,6 +35,7 @@ MessageManager.getSingletonInstance(config, (err, messageManager) => {
    1. [MessageManager.prototype.getDeadLetteredMessages()](#messagemanagerprototypegetdeadletteredmessages)
    2. [MessageManager.prototype.requeueDeadLetteredMessage()](#messagemanagerprototyperequeuedeadletteredmessage)
    3. [MessageManager.prototype.deleteDeadLetteredMessage()](#messagemanagerprototypedeletedeadletteredmessage)
+   4. [MessageManager.prototype.purgeDeadLetteredMessages()](#messagemanagerprototypepurgedeadletteredmessages)
 7. [MessageManager.prototype.quit()](#messagemanagerprototypequit)
    
 ## Public Static Methods
@@ -257,7 +258,21 @@ Otherwise, you can explicity provide an object which has the following signature
 - `messageId` *(string): Required.* Message ID.
 - `cb(err)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
-  
+
+### MessageManager.prototype.purgeDeadLetteredMessages
+
+```javascript
+purgeDeadLetteredMessages(queue, cb);
+```
+
+**Parameters**
+- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
+  Otherwise, you can explicity provide an object which has the following signature:
+  - `queue.name` *(string): Required.* Queue name.
+  - `queue.ns` *(string): Required.* Queue namespace.
+- `cb(err)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+
 ### MessageManager.prototype.quit()
 
 ```javascript

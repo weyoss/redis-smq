@@ -125,6 +125,16 @@ export class MessageManagerFrontend {
 
   ///
 
+  purgeDeadLetteredMessages(
+    queue: string | TQueueParams,
+    cb: ICallback<void>,
+  ): void {
+    const queueParams = QueueManager.getQueueParams(queue);
+    this.messageManager.purgeDeadLetteredMessages(queueParams, cb);
+  }
+
+  ///
+
   getAcknowledgedMessages(
     queue: string | TQueueParams,
     skip: number,
