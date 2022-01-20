@@ -209,14 +209,6 @@ export class QueueManager {
 
   ///
 
-  purgePendingQueue(queue: TQueueParams, cb: ICallback<void>): void {
-    this.logger.debug(
-      `Purging pending queue of (${queue.name}, ${queue.ns})...`,
-    );
-    const { keyQueuePending } = redisKeys.getKeys(queue.name, queue.ns);
-    this.redisClient.del(keyQueuePending, (err) => cb(err));
-  }
-
   purgePriorityQueue(queue: TQueueParams, cb: ICallback<void>): void {
     this.logger.debug(
       `Purging priority queue of (${queue.name}, ${queue.ns})...`,

@@ -1,6 +1,5 @@
 import { promisifyAll } from 'bluebird';
 import { QueueManager } from '../../system/queue-manager/queue-manager';
-import { PurgePendingMessagesRequestDTO } from '../controllers/api/queues/queue/pending-messages/purge-pending-messages/purge-pending-messages.request.DTO';
 import { PurgePendingMessagesWithPriorityRequestDTO } from '../controllers/api/queues/queue/pending-messages-with-priority/purge-pending-messages-with-priority/purge-pending-messages-with-priority.request.DTO';
 import { TQueueParams } from '../../../types';
 import { DeleteQueueRequestDTO } from '../controllers/api/queues/queue/delete-queue/delete-queue.request.DTO';
@@ -21,14 +20,6 @@ export class QueuesService {
   async deleteQueue(args: DeleteQueueRequestDTO): Promise<void> {
     const { ns, queueName } = args;
     return this.queueManager.deleteMessageQueueAsync({
-      name: queueName,
-      ns,
-    });
-  }
-
-  async purgePendingQueue(args: PurgePendingMessagesRequestDTO): Promise<void> {
-    const { ns, queueName } = args;
-    return this.queueManager.purgePendingQueueAsync({
       name: queueName,
       ns,
     });
