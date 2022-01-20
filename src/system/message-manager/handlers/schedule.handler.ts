@@ -131,6 +131,15 @@ export class ScheduleHandler extends Handler {
     );
   }
 
+  purgeScheduledMessages(cb: ICallback<void>): void {
+    const { keyScheduledMessages, keyScheduledMessagesIndex } =
+      redisKeys.getGlobalKeys();
+    const multi = this.redisClient.multi();
+    multi.del(keyScheduledMessagesIndex);
+    multi.del(keyScheduledMessages);
+    this.redisClient.execMulti(multi, (err) => cb(err));
+  }
+
   deleteScheduled(messageId: string, cb: ICallback<void>): void {
     const {
       keyScheduledMessages,

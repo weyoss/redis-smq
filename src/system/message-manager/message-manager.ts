@@ -16,7 +16,6 @@ import { ProcessingHandler } from './handlers/processing.handler';
 import { DelayHandler } from './handlers/delay.handler';
 import { RequeueHandler } from './handlers/requeue.handler';
 import BLogger from 'bunyan';
-import { redisKeys } from '../common/redis-keys/redis-keys';
 
 export class MessageManager {
   protected redisClient: RedisClient;
@@ -289,24 +288,21 @@ export class MessageManager {
     this.logger.debug(
       `Purging dead-lettered messages from (${queue.name}, ${queue.ns})...`,
     );
-    const { keyQueueDL } = redisKeys.getKeys(queue.name, queue.ns);
-    this.redisClient.del(keyQueueDL, (err) => cb(err));
+    this.enqueueHandler.purgeDeadLetteredMessages(queue, cb);
   }
 
   purgeAcknowledgedMessages(queue: TQueueParams, cb: ICallback<void>): void {
     this.logger.debug(
       `Purging acknowledged messages from (${queue.name}, ${queue.ns})...`,
     );
-    const { keyQueueAcknowledged } = redisKeys.getKeys(queue.name, queue.ns);
-    this.redisClient.del(keyQueueAcknowledged, (err) => cb(err));
+    this.enqueueHandler.purgeAcknowledgedMessages(queue, cb);
   }
 
   purgePendingMessages(queue: TQueueParams, cb: ICallback<void>): void {
     this.logger.debug(
       `Purging pending messages of (${queue.name}, ${queue.ns})...`,
     );
-    const { keyQueuePending } = redisKeys.getKeys(queue.name, queue.ns);
-    this.redisClient.del(keyQueuePending, (err) => cb(err));
+    this.enqueueHandler.purgePendingMessages(queue, cb);
   }
 
   purgePendingMessagesWithPriority(
@@ -316,14 +312,12 @@ export class MessageManager {
     this.logger.debug(
       `Purging pending messages with priority of (${queue.name}, ${queue.ns})...`,
     );
-    const { keyQueuePriority } = redisKeys.getKeys(queue.name, queue.ns);
-    this.redisClient.del(keyQueuePriority, (err) => cb(err));
+    this.enqueueHandler.purgePendingMessagesWithPriority(queue, cb);
   }
 
   purgeScheduledMessages(cb: ICallback<void>): void {
     this.logger.debug(`Purging scheduled messages...`);
-    const { keyScheduledMessages } = redisKeys.getGlobalKeys();
-    this.redisClient.del(keyScheduledMessages, (err) => cb(err));
+    this.scheduleHandler.purgeScheduledMessages(cb);
   }
 
   ///
