@@ -30,7 +30,7 @@ test('Combined test: Dead-letter a message and requeue it. Check pending, acknow
   expect(queueMetrics.acknowledged).toBe(0);
   expect(queueMetrics.deadLettered).toBe(1);
 
-  await messageManager.requeueMessageFromDLQueueAsync(
+  await messageManager.requeueDeadLetteredMessageAsync(
     queue,
     0,
     message.getId(),
@@ -53,7 +53,7 @@ test('Combined test: Dead-letter a message and requeue it. Check pending, acknow
   expect(queueMetrics1.pending).toBe(1);
 
   await expect(async () => {
-    await messageManager.requeueMessageFromDLQueueAsync(
+    await messageManager.requeueDeadLetteredMessageAsync(
       queue,
       0,
       message.getId(),

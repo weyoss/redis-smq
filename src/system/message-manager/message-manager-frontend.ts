@@ -89,7 +89,7 @@ export class MessageManagerFrontend {
 
   ///
 
-  requeueMessageFromDLQueue(
+  requeueDeadLetteredMessage(
     queue: string | TQueueParams,
     sequenceId: number,
     messageId: string,
@@ -97,7 +97,7 @@ export class MessageManagerFrontend {
     cb: ICallback<void>,
   ): void {
     const queueParams = QueueManager.getQueueParams(queue);
-    this.messageManager.requeueMessageFromDLQueue(
+    this.messageManager.requeueDeadLetteredMessage(
       queueParams,
       sequenceId,
       messageId,

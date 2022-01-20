@@ -155,7 +155,7 @@ export class MessagesService {
     args: RequeueDeadLetteredMessageRequestDTO,
   ): Promise<void> {
     const { ns, queueName, id, sequenceId, priority } = args;
-    return this.messageManager.requeueMessageFromDLQueueAsync(
+    return this.messageManager.requeueDeadLetteredMessageAsync(
       {
         name: queueName,
         ns,

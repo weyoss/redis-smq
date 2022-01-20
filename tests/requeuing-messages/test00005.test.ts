@@ -32,7 +32,7 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   expect(queueMetrics.acknowledged).toBe(0);
   expect(queueMetrics.deadLettered).toBe(1);
 
-  await messageManager.requeueMessageFromDLQueueAsync(
+  await messageManager.requeueDeadLetteredMessageAsync(
     queue,
     0,
     message.getId(),
@@ -65,7 +65,7 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   expect(queueMetrics1.pendingWithPriority).toBe(1);
 
   await expect(async () => {
-    await messageManager.requeueMessageFromDLQueueAsync(
+    await messageManager.requeueDeadLetteredMessageAsync(
       queue,
       0,
       message.getId(),

@@ -15,12 +15,15 @@ MessageManager.getSingletonInstance(config, (err, messageManager) => {
 ## Table of Content
 
 1. [MessageManager.getSingletonInstance()](#messagemanagergetsingletoninstance)
+
 2. Scheduled Messages
    1. [MessageManager.prototype.getScheduledMessages()](#messagemanagerprototypegetscheduledmessages)
    2. [MessageManager.prototype.deleteScheduledMessage()](#messagemanagerprototypedeletescheduledmessage)
+   
 3. Pending Messages
    1. [MessageManager.prototype.getPendingMessages()](#messagemanagerprototypegetpendingmessages)
    2. [MessageManager.prototype.deletePendingMessage()](#messagemanagerprototypedeletependingmessage)
+
 4. Pending Messages with Priority
    1. [MessageManager.prototype.getPendingMessagesWithPriority()](#messagemanagerprototypegetpendingmessageswithpriority)
    2. [MessageManager.prototype.deletePendingMessageWithPriority()](#messagemanagerprototypedeletependingmessagewithpriority)
@@ -30,7 +33,7 @@ MessageManager.getSingletonInstance(config, (err, messageManager) => {
    3. [MessageManager.prototype.deleteAcknowledgedMessage()](#messagemanagerprototypedeleteacknowledgedmessage)
 6. Dead-Lettered Messages
    1. [MessageManager.prototype.getDeadLetteredMessages()](#messagemanagerprototypegetdeadletteredmessages)
-   2. [MessageManager.prototype.requeueMessageFromDLQueue()](#messagemanagerprototyperequeuemessagefromdlqueue)
+   2. [MessageManager.prototype.requeueDeadLetteredMessage()](#messagemanagerprototyperequeuedeadletteredmessage)
    3. [MessageManager.prototype.deleteDeadLetteredMessage()](#messagemanagerprototypedeletedeadletteredmessage)
 7. [MessageManager.prototype.quit()](#messagemanagerprototypequit)
    
@@ -221,10 +224,10 @@ Otherwise, you can explicity provide an object which has the following signature
 - `cb(err)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
 
-### MessageManager.prototype.requeueMessageFromDLQueue()
+### MessageManager.prototype.requeueDeadLetteredMessage()
 
 ```javascript
-requeueMessageFromDLQueue(queue, sequenceId, messageId, priority, cb);
+requeueDeadLetteredMessage(queue, sequenceId, messageId, priority, cb);
 ```
 
 **Parameters**
