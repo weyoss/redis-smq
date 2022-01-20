@@ -261,7 +261,7 @@ export class MessageManager {
     );
   }
 
-  requeueMessageFromAcknowledgedQueue(
+  requeueAcknowledgedMessage(
     queue: TQueueParams,
     sequenceId: number,
     messageId: string,
@@ -273,7 +273,7 @@ export class MessageManager {
         queue.name
       }, ns ${queue.ns}, priority ${priority ?? 'without priority'})...`,
     );
-    this.requeueHandler.requeueMessageFromAcknowledgedQueue(
+    this.requeueHandler.requeueAcknowledgedMessage(
       queue,
       sequenceId,
       messageId,

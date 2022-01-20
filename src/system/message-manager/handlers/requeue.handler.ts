@@ -76,7 +76,7 @@ export class RequeueHandler extends Handler {
     this.requeueListMessage(queue, keyQueueDL, index, messageId, priority, cb);
   }
 
-  requeueMessageFromAcknowledgedQueue(
+  requeueAcknowledgedMessage(
     queue: TQueueParams,
     index: number,
     messageId: string,

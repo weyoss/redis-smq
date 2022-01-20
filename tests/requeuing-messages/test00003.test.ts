@@ -11,7 +11,7 @@ test('Combined test: Requeue a message from acknowledged queue with priority. Ch
   await consumer.shutdownAsync();
 
   const messageManager = promisifyAll(await getMessageManagerFrontend());
-  await messageManager.requeueMessageFromAcknowledgedQueueAsync(
+  await messageManager.requeueAcknowledgedMessageAsync(
     queue,
     0,
     message.getId(),
@@ -47,7 +47,7 @@ test('Combined test: Requeue a message from acknowledged queue with priority. Ch
   expect(queueMetrics.pendingWithPriority).toBe(1);
 
   await expect(async () => {
-    await messageManager.requeueMessageFromAcknowledgedQueueAsync(
+    await messageManager.requeueAcknowledgedMessageAsync(
       queue,
       0,
       message.getId(),

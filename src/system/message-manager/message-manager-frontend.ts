@@ -106,7 +106,7 @@ export class MessageManagerFrontend {
     );
   }
 
-  requeueMessageFromAcknowledgedQueue(
+  requeueAcknowledgedMessage(
     queue: string | TQueueParams,
     sequenceId: number,
     messageId: string,
@@ -114,7 +114,7 @@ export class MessageManagerFrontend {
     cb: ICallback<void>,
   ): void {
     const queueParams = QueueManager.getQueueParams(queue);
-    this.messageManager.requeueMessageFromAcknowledgedQueue(
+    this.messageManager.requeueAcknowledgedMessage(
       queueParams,
       sequenceId,
       messageId,
