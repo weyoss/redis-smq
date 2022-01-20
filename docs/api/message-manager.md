@@ -16,34 +16,28 @@ MessageManager.getSingletonInstance(config, (err, messageManager) => {
 
 1. Obtaining a MessageManager instance
    1. [MessageManager.getSingletonInstance()](#messagemanagergetsingletoninstance)
-
 2. Managing Scheduled Messages
    1. [MessageManager.prototype.getScheduledMessages()](#messagemanagerprototypegetscheduledmessages)
    2. [MessageManager.prototype.deleteScheduledMessage()](#messagemanagerprototypedeletescheduledmessage)
    3. [MessageManager.prototype.purgeScheduledMessages()](#messagemanagerprototypepurgescheduledmessages)
-   
 3. Managing Pending Messages
    1. [MessageManager.prototype.getPendingMessages()](#messagemanagerprototypegetpendingmessages)
    2. [MessageManager.prototype.deletePendingMessage()](#messagemanagerprototypedeletependingmessage)
    3. [MessageManager.prototype.purgePendingMessages()](#messagemanagerprototypepurgependingmessages)
-
 4. Managing Pending Messages with Priority
    1. [MessageManager.prototype.getPendingMessagesWithPriority()](#messagemanagerprototypegetpendingmessageswithpriority)
    2. [MessageManager.prototype.deletePendingMessageWithPriority()](#messagemanagerprototypedeletependingmessagewithpriority)
    3. [MessageManager.prototype.purgePendingMessagesWithPriority()](#messagemanagerprototypepurgependingmessageswithpriority)
-   
 5. Managing Acknowledged Messages
    1. [MessageManager.prototype.getAcknowledgedMessages()](#messagemanagerprototypegetacknowledgedmessages)
    2. [MessageManager.prototype.requeueAcknowledgedMessage()](#messagemanagerprototyperequeueacknowledgedmessage)
    3. [MessageManager.prototype.deleteAcknowledgedMessage()](#messagemanagerprototypedeleteacknowledgedmessage)
    4. [MessageManager.prototype.purgeAcknowledgedMessages()](#messagemanagerprototypepurgeacknowledgedmessages)
-   
 6. Managing Dead-Lettered Messages
    1. [MessageManager.prototype.getDeadLetteredMessages()](#messagemanagerprototypegetdeadletteredmessages)
    2. [MessageManager.prototype.requeueDeadLetteredMessage()](#messagemanagerprototyperequeuedeadletteredmessage)
    3. [MessageManager.prototype.deleteDeadLetteredMessage()](#messagemanagerprototypedeletedeadletteredmessage)
    4. [MessageManager.prototype.purgeDeadLetteredMessages()](#messagemanagerprototypepurgedeadletteredmessages)
-   
 7. Shutting down and disconnecting from Redis server
    1. [MessageManager.prototype.quit()](#messagemanagerprototypequit)
    
