@@ -82,7 +82,7 @@ installation, take a look at the [migration guide](docs/migrating-from-v5-to-v6.
 **2021.11.22**
 
 - Starting with RedisSMQ v5, you can now manage your queues and messages from the Web UI. Also, many changes and improvements 
-has been made, allowing for better user experience and system stability. 
+have been made, allowing for better user experience and system stability. 
 
 See [CHANGELOG](CHANGELOG.md) for more details.
 
