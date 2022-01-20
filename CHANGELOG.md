@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## 6.0.0-rc.7 (2022-01-21)
+
+* Update package.json keywords (e84d4cf)
+* Remove extra spacing in message-manager.md (b87ac3d)
+* Update QueueManager API reference (832b090)
+* Move purge operations to handlers (5345dc3)
+* Rename and move purgePendingMessagesWithPriority to MessageManager (e959d7b)
+* Rename and move purgePendingMessages to MessageManager (3804122)
+* Rename and move purgeScheduledMessages to MessageManager (78ba9ac)
+* Rename and move purgeAcknowledgedMessages to MessageManager (febcd9c)
+* Rename and move purgeDeadLetteredMessages to MessageManager (cf07797)
+* Update message-manager.md (8b5fec1)
+* Rename requeueMessageFromDLQueue to requeueDeadLetteredMessage (2d4df08)
+* Rename requeueMessageFromAcknowledgedQueue to requeueAcknowledgedMessage (59f446e)
+* Rename deleteDeadLetterMessage to deleteDeadLetteredMessage (f99dd09)
+* Rename getDeadLetterMessages to getDeadLetteredMessages (3172c20)
+* Update migration guide (837da04)
+
 ## 6.0.0-rc.6 (2022-01-20)
 
 * Bump up redis-smq-monitor to v6.1.0 (83107be)
