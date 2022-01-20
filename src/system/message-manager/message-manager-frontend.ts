@@ -149,6 +149,14 @@ export class MessageManagerFrontend {
     this.messageManager.purgePendingMessages(queueParams, cb);
   }
 
+  purgePendingMessagesWithPriority(
+    queue: string | TQueueParams,
+    cb: ICallback<void>,
+  ): void {
+    const queueParams = QueueManager.getQueueParams(queue);
+    this.messageManager.purgePendingMessagesWithPriority(queueParams, cb);
+  }
+
   purgeScheduledMessages(cb: ICallback<void>): void {
     this.messageManager.purgeScheduledMessages(cb);
   }

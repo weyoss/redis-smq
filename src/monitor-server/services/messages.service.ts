@@ -19,6 +19,7 @@ import { RequeueAcknowledgedMessageRequestDTO } from '../controllers/api/queues/
 import { PurgeDeadLetteredMessagesRequestDTO } from '../controllers/api/queues/queue/dead-lettered-messages/purge-dead-lettered-messages/purge-dead-lettered-messages.request.DTO';
 import { PurgeAcknowledgedMessagesRequestDTO } from '../controllers/api/queues/queue/acknowledged-messages/purge-acknowledged-messages/purge-acknowledged-messages.request.DTO';
 import { PurgePendingMessagesRequestDTO } from '../controllers/api/queues/queue/pending-messages/purge-pending-messages/purge-pending-messages.request.DTO';
+import { PurgePendingMessagesWithPriorityRequestDTO } from '../controllers/api/queues/queue/pending-messages-with-priority/purge-pending-messages-with-priority/purge-pending-messages-with-priority.request.DTO';
 
 const messageManagerAsync = promisifyAll(MessageManager.prototype);
 
@@ -209,6 +210,16 @@ export class MessagesService {
   ): Promise<void> {
     const { ns, queueName } = args;
     return this.messageManager.purgePendingMessagesAsync({
+      name: queueName,
+      ns,
+    });
+  }
+
+  async purgePendingMessagesWithPriority(
+    args: PurgePendingMessagesWithPriorityRequestDTO,
+  ): Promise<void> {
+    const { ns, queueName } = args;
+    return this.messageManager.purgePendingMessagesWithPriorityAsync({
       name: queueName,
       ns,
     });

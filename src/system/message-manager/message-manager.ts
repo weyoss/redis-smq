@@ -309,6 +309,17 @@ export class MessageManager {
     this.redisClient.del(keyQueuePending, (err) => cb(err));
   }
 
+  purgePendingMessagesWithPriority(
+    queue: TQueueParams,
+    cb: ICallback<void>,
+  ): void {
+    this.logger.debug(
+      `Purging pending messages with priority of (${queue.name}, ${queue.ns})...`,
+    );
+    const { keyQueuePriority } = redisKeys.getKeys(queue.name, queue.ns);
+    this.redisClient.del(keyQueuePriority, (err) => cb(err));
+  }
+
   purgeScheduledMessages(cb: ICallback<void>): void {
     this.logger.debug(`Purging scheduled messages...`);
     const { keyScheduledMessages } = redisKeys.getGlobalKeys();

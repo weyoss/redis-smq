@@ -76,20 +76,6 @@ getQueueMetrics(queue, cb);
     - `queueMetrics.pending` *(number).* Pending messages count.
     - `queueMetrics.pendingWithPriority` *(number).* Pending messages with priority count.
 
-### QueueManager.prototype.purgePriorityQueue
-
-```javascript
-purgePriorityQueue(queue, cb);
-```
-
-**Parameters**
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used. 
-Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
-- `cb(err)` *(Function): Required.* Callback function.
-    - `err` *(Error | null | undefined).* Error object.
-
 ### QueueManager.prototype.quit
 
 ```javascript
