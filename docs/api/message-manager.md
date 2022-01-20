@@ -26,7 +26,7 @@ MessageManager.getSingletonInstance(config, (err, messageManager) => {
    2. [MessageManager.prototype.deletePendingMessageWithPriority()](#messagemanagerprototypedeletependingmessagewithpriority)
 5. Acknowledged Messages
    1. [MessageManager.prototype.getAcknowledgedMessages()](#messagemanagerprototypegetacknowledgedmessages)
-   2. [MessageManager.prototype.requeueMessageFromAcknowledgedQueue()](#messagemanagerprototyperequeuemessagefromacknowledgedqueue)
+   2. [MessageManager.prototype.requeueAcknowledgedMessage()](#messagemanagerprototyperequeueacknowledgedmessage)
    3. [MessageManager.prototype.deleteAcknowledgedMessage()](#messagemanagerprototypedeleteacknowledgedmessage)
 6. Dead-Lettered Messages
    1. [MessageManager.prototype.getDeadLetteredMessages()](#messagemanagerprototypegetdeadletteredmessages)
@@ -238,10 +238,10 @@ requeueMessageFromDLQueue(queue, sequenceId, messageId, priority, cb);
 - `cb(err)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
 
-### MessageManager.prototype.requeueMessageFromAcknowledgedQueue()
+### MessageManager.prototype.requeueAcknowledgedMessage()
 
 ```javascript
-requeueMessageFromAcknowledgedQueue(queue, sequenceId, messageId, priority, cb);
+requeueAcknowledgedMessage(queue, sequenceId, messageId, priority, cb);
 ```
 
 **Parameters**

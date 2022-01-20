@@ -170,7 +170,7 @@ export class MessagesService {
     args: RequeueAcknowledgedMessageRequestDTO,
   ): Promise<void> {
     const { ns, queueName, id, sequenceId, priority } = args;
-    return this.messageManager.requeueMessageFromAcknowledgedQueueAsync(
+    return this.messageManager.requeueAcknowledgedMessageAsync(
       {
         name: queueName,
         ns,

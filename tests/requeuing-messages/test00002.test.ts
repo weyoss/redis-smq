@@ -23,7 +23,7 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
   expect(queueMetrics.pending).toBe(0);
   expect(queueMetrics.acknowledged).toBe(1);
 
-  await messageManager.requeueMessageFromAcknowledgedQueueAsync(
+  await messageManager.requeueAcknowledgedMessageAsync(
     queue,
     0,
     message.getId(),
@@ -45,7 +45,7 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
   expect(queueMetrics1.pending).toBe(1);
 
   await expect(async () => {
-    await messageManager.requeueMessageFromAcknowledgedQueueAsync(
+    await messageManager.requeueAcknowledgedMessageAsync(
       queue,
       0,
       message.getId(),
