@@ -104,16 +104,6 @@ Otherwise, you can explicity provide an object which has the following signature
 - `cb(err)` *(Function): Required.* Callback function.
     - `err` *(Error | null | undefined).* Error object.
 
-### QueueManager.prototype.purgeScheduledQueue
-
-```javascript
-purgeScheduledQueue(cb);
-```
-
-**Parameters**
-- `cb(err)` *(Function): Required.* Callback function.
-    - `err` *(Error | null | undefined).* Error object.
-
 ### QueueManager.prototype.quit
 
 ```javascript

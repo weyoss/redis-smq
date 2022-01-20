@@ -35,9 +35,6 @@ For managing scheduled messages, the [Message Manager](api/message-manager.md) p
 
 - [getScheduledMessages()](api/message-manager.md#messagemanagerprototypegetscheduledmessages)
 - [deleteScheduledMessage()](api/message-manager.md#messagemanagerprototypedeletescheduledmessage)
-
-To purge clear all scheduled messages of a given queue, the [Queue Manager](api/queue-manager.md) provides:
-
-- [purgeScheduledQueue](api/queue-manager.md#queuemanagerprototypepurgescheduledqueue)
+- [purgeScheduledMessages()](api/message-manager.md#messagemanagerprototypepurgescheduledmessages)
 
 Scheduled messages can be also managed using the [Web UI](/docs/web-ui.md).

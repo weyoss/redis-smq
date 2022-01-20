@@ -1,8 +1,4 @@
-import {
-  getMessageManagerFrontend,
-  getQueueManagerFrontend,
-  scheduleMessage,
-} from '../common';
+import { getMessageManagerFrontend, scheduleMessage } from '../common';
 import { promisifyAll } from 'bluebird';
 
 test('Purging scheduled messages queue', async () => {
@@ -14,9 +10,7 @@ test('Purging scheduled messages queue', async () => {
   expect(m.total).toBe(1);
   expect(m.items[0].getId()).toBe(message.getId());
 
-  const queueManager = promisifyAll(await getQueueManagerFrontend());
-  await queueManager.purgeScheduledQueueAsync();
-
+  await messageManager.purgeScheduledMessagesAsync();
   const m2 = await messageManager.getScheduledMessagesAsync(0, 99);
   expect(m2.total).toBe(0);
   expect(m2.items.length).toBe(0);

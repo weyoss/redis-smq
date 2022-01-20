@@ -202,4 +202,8 @@ export class MessagesService {
       ns,
     });
   }
+
+  async purgeScheduledMessages(): Promise<void> {
+    return this.messageManager.purgeScheduledMessagesAsync();
+  }
 }

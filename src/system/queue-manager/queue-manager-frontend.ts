@@ -37,10 +37,6 @@ export class QueueManagerFrontend {
     this.queueManager.purgePriorityQueue(queueParams, cb);
   }
 
-  purgeScheduledQueue(cb: ICallback<void>): void {
-    this.queueManager.purgeScheduledQueue(cb);
-  }
-
   ///
 
   getQueueMetrics(

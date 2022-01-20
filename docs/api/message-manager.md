@@ -20,6 +20,7 @@ MessageManager.getSingletonInstance(config, (err, messageManager) => {
 2. Managing Scheduled Messages
    1. [MessageManager.prototype.getScheduledMessages()](#messagemanagerprototypegetscheduledmessages)
    2. [MessageManager.prototype.deleteScheduledMessage()](#messagemanagerprototypedeletescheduledmessage)
+   3. [MessageManager.prototype.purgeScheduledMessages()](#messagemanagerprototypepurgescheduledmessages)
    
 3. Managing Pending Messages
    1. [MessageManager.prototype.getPendingMessages()](#messagemanagerprototypegetpendingmessages)
@@ -83,6 +84,16 @@ deleteScheduledMessage(messageId, cb);
 
 **Parameters**
 - `messageId` *(string): Required.* Message ID.
+- `cb(err)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+
+### MessageManager.prototype.purgeScheduledMessages
+
+```javascript
+purgeScheduledMessages(cb);
+```
+
+**Parameters**
 - `cb(err)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
 
