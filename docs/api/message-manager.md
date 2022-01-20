@@ -25,6 +25,7 @@ MessageManager.getSingletonInstance(config, (err, messageManager) => {
 3. Managing Pending Messages
    1. [MessageManager.prototype.getPendingMessages()](#messagemanagerprototypegetpendingmessages)
    2. [MessageManager.prototype.deletePendingMessage()](#messagemanagerprototypedeletependingmessage)
+   3. [MessageManager.prototype.purgePendingMessages()](#messagemanagerprototypepurgependingmessages)
 
 4. Managing Pending Messages with Priority
    1. [MessageManager.prototype.getPendingMessagesWithPriority()](#messagemanagerprototypegetpendingmessageswithpriority)
@@ -87,7 +88,7 @@ deleteScheduledMessage(messageId, cb);
 - `cb(err)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
 
-### MessageManager.prototype.purgeScheduledMessages
+### MessageManager.prototype.purgeScheduledMessages()
 
 ```javascript
 purgeScheduledMessages(cb);
@@ -131,6 +132,20 @@ deletePendingMessage(queue, sequenceId, messageId, cb);
   - `queue.ns` *(string): Required.* Queue namespace.
 - `sequenceId` *(number): Required.* Message sequence ID.
 - `messageId` *(string): Required.* Message ID.
+- `cb(err)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+
+### MessageManager.prototype.purgePendingMessages()
+
+```javascript
+purgePendingMessages(queue, cb);
+```
+
+**Parameters**
+- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
+  Otherwise, you can explicity provide an object which has the following signature:
+  - `queue.name` *(string): Required.* Queue name.
+  - `queue.ns` *(string): Required.* Queue namespace.
 - `cb(err)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
 
@@ -222,7 +237,7 @@ deleteAcknowledgedMessage(queue, sequenceId, messageId, cb);
 - `cb(err)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
 
-### MessageManager.prototype.purgeAcknowledgedMessages
+### MessageManager.prototype.purgeAcknowledgedMessages()
 
 ```javascript
 purgeAcknowledgedMessages(queue, cb);
@@ -290,7 +305,7 @@ Otherwise, you can explicity provide an object which has the following signature
 - `cb(err)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
 
-### MessageManager.prototype.purgeDeadLetteredMessages
+### MessageManager.prototype.purgeDeadLetteredMessages()
 
 ```javascript
 purgeDeadLetteredMessages(queue, cb);

@@ -301,6 +301,14 @@ export class MessageManager {
     this.redisClient.del(keyQueueAcknowledged, (err) => cb(err));
   }
 
+  purgePendingMessages(queue: TQueueParams, cb: ICallback<void>): void {
+    this.logger.debug(
+      `Purging pending messages of (${queue.name}, ${queue.ns})...`,
+    );
+    const { keyQueuePending } = redisKeys.getKeys(queue.name, queue.ns);
+    this.redisClient.del(keyQueuePending, (err) => cb(err));
+  }
+
   purgeScheduledMessages(cb: ICallback<void>): void {
     this.logger.debug(`Purging scheduled messages...`);
     const { keyScheduledMessages } = redisKeys.getGlobalKeys();
