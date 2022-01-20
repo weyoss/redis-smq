@@ -287,10 +287,18 @@ export class MessageManager {
 
   purgeDeadLetteredMessages(queue: TQueueParams, cb: ICallback<void>): void {
     this.logger.debug(
-      `Purging dead-letter queue of (${queue.name}, ${queue.ns})...`,
+      `Purging dead-lettered messages from (${queue.name}, ${queue.ns})...`,
     );
     const { keyQueueDL } = redisKeys.getKeys(queue.name, queue.ns);
     this.redisClient.del(keyQueueDL, (err) => cb(err));
+  }
+
+  purgeAcknowledgedMessages(queue: TQueueParams, cb: ICallback<void>): void {
+    this.logger.debug(
+      `Purging acknowledged messages from (${queue.name}, ${queue.ns})...`,
+    );
+    const { keyQueueAcknowledged } = redisKeys.getKeys(queue.name, queue.ns);
+    this.redisClient.del(keyQueueAcknowledged, (err) => cb(err));
   }
 
   ///
