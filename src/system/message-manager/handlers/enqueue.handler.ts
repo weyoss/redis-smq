@@ -36,6 +36,11 @@ export class EnqueueHandler extends Handler {
     );
   }
 
+  purgeAcknowledgedMessages(queue: TQueueParams, cb: ICallback<void>): void {
+    const { keyQueueAcknowledged } = redisKeys.getKeys(queue.name, queue.ns);
+    this.redisClient.del(keyQueueAcknowledged, (err) => cb(err));
+  }
+
   getDeadLetteredMessages(
     queue: TQueueParams,
     skip: number,
@@ -46,6 +51,11 @@ export class EnqueueHandler extends Handler {
     getPaginatedListMessages(this.redisClient, keyQueueDL, skip, take, cb);
   }
 
+  purgeDeadLetteredMessages(queue: TQueueParams, cb: ICallback<void>): void {
+    const { keyQueueDL } = redisKeys.getKeys(queue.name, queue.ns);
+    this.redisClient.del(keyQueueDL, (err) => cb(err));
+  }
+
   getPendingMessages(
     queue: TQueueParams,
     skip: number,
@@ -54,6 +64,11 @@ export class EnqueueHandler extends Handler {
   ): void {
     const { keyQueuePending } = redisKeys.getKeys(queue.name, queue.ns);
     getPaginatedListMessages(this.redisClient, keyQueuePending, skip, take, cb);
+  }
+
+  purgePendingMessages(queue: TQueueParams, cb: ICallback<void>): void {
+    const { keyQueuePending } = redisKeys.getKeys(queue.name, queue.ns);
+    this.redisClient.del(keyQueuePending, (err) => cb(err));
   }
 
   getPendingMessagesWithPriority(
@@ -74,6 +89,20 @@ export class EnqueueHandler extends Handler {
       take,
       cb,
     );
+  }
+
+  purgePendingMessagesWithPriority(
+    queue: TQueueParams,
+    cb: ICallback<void>,
+  ): void {
+    const { keyQueuePriority, keyQueuePendingWithPriority } = redisKeys.getKeys(
+      queue.name,
+      queue.ns,
+    );
+    const multi = this.redisClient.multi();
+    multi.del(keyQueuePendingWithPriority);
+    multi.del(keyQueuePriority);
+    this.redisClient.execMulti(multi, (err) => cb(err));
   }
 
   deletePendingMessage(
