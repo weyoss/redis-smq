@@ -27,11 +27,6 @@ export class QueueManagerFrontend {
     this.queueManager.deleteMessageQueue(queueParams, cb);
   }
 
-  purgePriorityQueue(queue: string | TQueueParams, cb: ICallback<void>): void {
-    const queueParams = QueueManager.getQueueParams(queue);
-    this.queueManager.purgePriorityQueue(queueParams, cb);
-  }
-
   ///
 
   getQueueMetrics(

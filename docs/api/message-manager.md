@@ -30,6 +30,7 @@ MessageManager.getSingletonInstance(config, (err, messageManager) => {
 4. Managing Pending Messages with Priority
    1. [MessageManager.prototype.getPendingMessagesWithPriority()](#messagemanagerprototypegetpendingmessageswithpriority)
    2. [MessageManager.prototype.deletePendingMessageWithPriority()](#messagemanagerprototypedeletependingmessagewithpriority)
+   3. [MessageManager.prototype.purgePendingMessagesWithPriority()](#messagemanagerprototypepurgependingmessageswithpriority)
    
 5. Managing Acknowledged Messages
    1. [MessageManager.prototype.getAcknowledgedMessages()](#messagemanagerprototypegetacknowledgedmessages)
@@ -182,6 +183,20 @@ deletePendingMessageWithPriority(queue, messageId, cb);
 - `messageId` *(string): Required.* Message ID.
 - `cb(err)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
+
+### MessageManager.prototype.purgePendingMessagesWithPriority()
+
+```javascript
+purgePendingMessagesWithPriority(queue, cb);
+```
+
+**Parameters**
+- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
+  Otherwise, you can explicity provide an object which has the following signature:
+    - `queue.name` *(string): Required.* Queue name.
+    - `queue.ns` *(string): Required.* Queue namespace.
+- `cb(err)` *(Function): Required.* Callback function.
+    - `err` *(Error | null | undefined).* Error object.
 
 ### MessageManager.prototype.getAcknowledgedMessages()
 
