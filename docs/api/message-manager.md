@@ -12,6 +12,28 @@ MessageManager.getSingletonInstance(config, (err, messageManager) => {
 })
 ```
 
+## Table of Content
+
+1. [MessageManager.getSingletonInstance()](#messagemanagergetsingletoninstance)
+2. Scheduled Messages
+   1. [MessageManager.prototype.getScheduledMessages()](#messagemanagerprototypegetscheduledmessages)
+   2. [MessageManager.prototype.deleteScheduledMessage()](#messagemanagerprototypedeletescheduledmessage)
+3. Pending Messages
+   1. [MessageManager.prototype.getPendingMessages()](#messagemanagerprototypegetpendingmessages)
+   2. [MessageManager.prototype.deletePendingMessage()](#messagemanagerprototypedeletependingmessage)
+4. Pending Messages with Priority
+   1. [MessageManager.prototype.getPendingMessagesWithPriority()](#messagemanagerprototypegetpendingmessageswithpriority)
+   2. [MessageManager.prototype.deletePendingMessageWithPriority()](#messagemanagerprototypedeletependingmessagewithpriority)
+5. Acknowledged Messages
+   1. [MessageManager.prototype.getAcknowledgedMessages()](#messagemanagerprototypegetacknowledgedmessages)
+   2. [MessageManager.prototype.requeueMessageFromAcknowledgedQueue()](#messagemanagerprototyperequeuemessagefromacknowledgedqueue)
+   3. [MessageManager.prototype.deleteAcknowledgedMessage()](#messagemanagerprototypedeleteacknowledgedmessage)
+6. Dead-Lettered Messages
+   1. [MessageManager.prototype.getDeadLetteredMessages()](#messagemanagerprototypegetdeadletteredmessages)
+   2. [MessageManager.prototype.requeueMessageFromDLQueue()](#messagemanagerprototyperequeuemessagefromdlqueue)
+   3. [MessageManager.prototype.deleteDeadLetteredMessage()](#messagemanagerprototypedeletedeadletteredmessage)
+7. [MessageManager.prototype.quit()](#messagemanagerprototypequit)
+   
 ## Public Static Methods
 
 ### MessageManager.getSingletonInstance()
@@ -42,6 +64,27 @@ getScheduledMessages(skip, take, cb);
   - `err` *(Error | null | undefined).*
   - `result.total` *(number).* Total messages that has been scheduled so far.
   - `result.items` *(Array).* An array of scheduled messages.
+
+### MessageManager.prototype.getPendingMessages()
+
+```javascript
+getPendingMessages(queue, skip, take, cb);
+```
+
+**Parameters**
+
+- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
+  Otherwise, you can explicity provide an object which has the following signature:
+  - `queue.name` *(string): Required.* Queue name.
+  - `queue.ns` *(string): Required.* Queue namespace.
+- `skip` *(number): Required.* Offset from where messages should be taken. Starts from 0.
+- `take` *(number): Required.* Max number of messages that should be taken. Starts from 1.
+- `cb(err, result)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).*
+  - `result.total` *(number).* Total messages that has been scheduled so far.
+  - `result.items` *(Array).* An array of scheduled messages.
+    - `result.items[*].sequenceId` *(number).* Message sequence ID.
+    - `result.items[*].message` *(Message).* The stored message at the sequence ID.
 
 ### MessageManager.prototype.getPendingMessagesWithPriority()
 
@@ -82,28 +125,7 @@ Otherwise, you can explicity provide an object which has the following signature
   - `result.items` *(Array).* An array of scheduled messages.
     - `result.items[*].sequenceId` *(number).* Message sequence ID.
     - `result.items[*].message` *(Message).* The stored message at the sequence ID.
-
-### MessageManager.prototype.getPendingMessages()
-
-```javascript
-getPendingMessages(queue, skip, take, cb);
-```
-
-**Parameters**
-
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used. 
-Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
-- `skip` *(number): Required.* Offset from where messages should be taken. Starts from 0.
-- `take` *(number): Required.* Max number of messages that should be taken. Starts from 1.
-- `cb(err, result)` *(Function): Required.* Callback function.
-  - `err` *(Error | null | undefined).*
-  - `result.total` *(number).* Total messages that has been scheduled so far.
-  - `result.items` *(Array).* An array of scheduled messages.
-    - `result.items[*].sequenceId` *(number).* Message sequence ID.
-    - `result.items[*].message` *(Message).* The stored message at the sequence ID.
-
+    
 ### MessageManager.prototype.getAcknowledgedMessages()
 
 ```javascript
@@ -125,6 +147,33 @@ Otherwise, you can explicity provide an object which has the following signature
     - `result.items[*].sequenceId` *(number).* Message sequence ID.
     - `result.items[*].message` *(Message).* The stored message at the sequence ID.
 
+### MessageManager.prototype.deleteScheduledMessage()
+
+```javascript
+deleteScheduledMessage(messageId, cb);
+```
+
+**Parameters**
+- `messageId` *(string): Required.* Message ID.
+- `cb(err)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+
+### MessageManager.prototype.deletePendingMessage()
+
+```javascript
+deletePendingMessage(queue, sequenceId, messageId, cb);
+```
+
+**Parameters**
+- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
+  Otherwise, you can explicity provide an object which has the following signature:
+  - `queue.name` *(string): Required.* Queue name.
+  - `queue.ns` *(string): Required.* Queue namespace.
+- `sequenceId` *(number): Required.* Message sequence ID.
+- `messageId` *(string): Required.* Message ID.
+- `cb(err)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+
 ### MessageManager.prototype.deletePendingMessageWithPriority()
 
 ```javascript
@@ -140,10 +189,10 @@ Otherwise, you can explicity provide an object which has the following signature
 - `cb(err)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
 
-### MessageManager.prototype.deleteDeadLetterMessage()
+### MessageManager.prototype.deleteDeadLetteredMessage()
 
 ```javascript
-deleteDeadLetterMessage(queue, sequenceId, messageId, cb);
+deleteDeadLetteredMessage(queue, sequenceId, messageId, cb);
 ```
 
 **Parameters**
@@ -171,33 +220,6 @@ Otherwise, you can explicity provide an object which has the following signature
 - `messageId` *(string): Required.* Message ID.
 - `cb(err)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
-
-### MessageManager.prototype.deletePendingMessage()
-
-```javascript
-deletePendingMessage(queue, sequenceId, messageId, cb);
-```
-
-**Parameters**
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used. 
-Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
-- `sequenceId` *(number): Required.* Message sequence ID.
-- `messageId` *(string): Required.* Message ID.
-- `cb(err)` *(Function): Required.* Callback function.
-  - `err` *(Error | null | undefined).* Error object.
-
-### MessageManager.prototype.deleteScheduledMessage()
-
-```javascript
-deleteScheduledMessage(messageId, cb);
-```
-
-**Parameters**
-- `messageId` *(string): Required.* Message ID.
-- `cb(err)` *(Function): Required.* Callback function.
-    - `err` *(Error | null | undefined).* Error object.
 
 ### MessageManager.prototype.requeueMessageFromDLQueue()
 

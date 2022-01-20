@@ -134,7 +134,7 @@ export class MessagesService {
     args: DeleteDeadLetteredMessageRequestDTO,
   ): Promise<void> {
     const { ns, queueName, id, sequenceId } = args;
-    return this.messageManager.deleteDeadLetterMessageAsync(
+    return this.messageManager.deleteDeadLetteredMessageAsync(
       {
         name: queueName,
         ns,
