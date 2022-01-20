@@ -14,29 +14,35 @@ MessageManager.getSingletonInstance(config, (err, messageManager) => {
 
 ## Table of Content
 
-1. [MessageManager.getSingletonInstance()](#messagemanagergetsingletoninstance)
+1. Obtaining a MessageManager instance
+   1. [MessageManager.getSingletonInstance()](#messagemanagergetsingletoninstance)
 
-2. Scheduled Messages
+2. Managing Scheduled Messages
    1. [MessageManager.prototype.getScheduledMessages()](#messagemanagerprototypegetscheduledmessages)
    2. [MessageManager.prototype.deleteScheduledMessage()](#messagemanagerprototypedeletescheduledmessage)
    
-3. Pending Messages
+3. Managing Pending Messages
    1. [MessageManager.prototype.getPendingMessages()](#messagemanagerprototypegetpendingmessages)
    2. [MessageManager.prototype.deletePendingMessage()](#messagemanagerprototypedeletependingmessage)
 
-4. Pending Messages with Priority
+4. Managing Pending Messages with Priority
    1. [MessageManager.prototype.getPendingMessagesWithPriority()](#messagemanagerprototypegetpendingmessageswithpriority)
    2. [MessageManager.prototype.deletePendingMessageWithPriority()](#messagemanagerprototypedeletependingmessagewithpriority)
-5. Acknowledged Messages
+   
+5. Managing Acknowledged Messages
    1. [MessageManager.prototype.getAcknowledgedMessages()](#messagemanagerprototypegetacknowledgedmessages)
    2. [MessageManager.prototype.requeueAcknowledgedMessage()](#messagemanagerprototyperequeueacknowledgedmessage)
    3. [MessageManager.prototype.deleteAcknowledgedMessage()](#messagemanagerprototypedeleteacknowledgedmessage)
-6. Dead-Lettered Messages
+   4. [MessageManager.prototype.purgeAcknowledgedMessages()](#messagemanagerprototypepurgeacknowledgedmessages)
+   
+6. Managing Dead-Lettered Messages
    1. [MessageManager.prototype.getDeadLetteredMessages()](#messagemanagerprototypegetdeadletteredmessages)
    2. [MessageManager.prototype.requeueDeadLetteredMessage()](#messagemanagerprototyperequeuedeadletteredmessage)
    3. [MessageManager.prototype.deleteDeadLetteredMessage()](#messagemanagerprototypedeletedeadletteredmessage)
    4. [MessageManager.prototype.purgeDeadLetteredMessages()](#messagemanagerprototypepurgedeadletteredmessages)
-7. [MessageManager.prototype.quit()](#messagemanagerprototypequit)
+   
+7. Shutting down and disconnecting from Redis server
+   1. [MessageManager.prototype.quit()](#messagemanagerprototypequit)
    
 ## Public Static Methods
 
@@ -202,6 +208,20 @@ deleteAcknowledgedMessage(queue, sequenceId, messageId, cb);
   - `queue.ns` *(string): Required.* Queue namespace.
 - `sequenceId` *(number): Required.* Message sequence ID.
 - `messageId` *(string): Required.* Message ID.
+- `cb(err)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+
+### MessageManager.prototype.purgeAcknowledgedMessages
+
+```javascript
+purgeAcknowledgedMessages(queue, cb);
+```
+
+**Parameters**
+- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
+  Otherwise, you can explicity provide an object which has the following signature:
+  - `queue.name` *(string): Required.* Queue name.
+  - `queue.ns` *(string): Required.* Queue namespace.
 - `cb(err)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
 

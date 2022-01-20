@@ -1,4 +1,5 @@
 import {
+  getMessageManagerFrontend,
   getQueueManagerFrontend,
   produceAndAcknowledgeMessage,
 } from '../common';
@@ -13,7 +14,8 @@ test('Purging acknowledged queue', async () => {
 
   expect(m.acknowledged).toBe(1);
 
-  await queueManager.purgeAcknowledgedQueueAsync(queue);
+  const messageManager = promisifyAll(await getMessageManagerFrontend());
+  await messageManager.purgeAcknowledgedMessagesAsync(queue);
 
   const m2 = await queueManager.getQueueMetricsAsync(queue);
   expect(m2.acknowledged).toBe(0);

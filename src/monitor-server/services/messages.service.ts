@@ -17,6 +17,7 @@ import { DeleteScheduledMessageRequestDTO } from '../controllers/api/main/schedu
 import { RequeueDeadLetteredMessageRequestDTO } from '../controllers/api/queues/queue/dead-lettered-messages/requeue-dead-lettered-message/requeue-dead-lettered-message.request.DTO';
 import { RequeueAcknowledgedMessageRequestDTO } from '../controllers/api/queues/queue/acknowledged-messages/requeue-acknowledged-message/requeue-acknowledged-message.request.DTO';
 import { PurgeDeadLetteredMessagesRequestDTO } from '../controllers/api/queues/queue/dead-lettered-messages/purge-dead-lettered-messages/purge-dead-lettered-messages.request.DTO';
+import { PurgeAcknowledgedMessagesRequestDTO } from '../controllers/api/queues/queue/acknowledged-messages/purge-acknowledged-messages/purge-acknowledged-messages.request.DTO';
 
 const messageManagerAsync = promisifyAll(MessageManager.prototype);
 
@@ -187,6 +188,16 @@ export class MessagesService {
   ): Promise<void> {
     const { ns, queueName } = args;
     return this.messageManager.purgeDeadLetteredMessagesAsync({
+      name: queueName,
+      ns,
+    });
+  }
+
+  async purgeAcknowledgedMessages(
+    args: PurgeAcknowledgedMessagesRequestDTO,
+  ): Promise<void> {
+    const { ns, queueName } = args;
+    return this.messageManager.purgeAcknowledgedMessagesAsync({
       name: queueName,
       ns,
     });

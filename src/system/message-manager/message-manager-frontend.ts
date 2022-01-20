@@ -133,6 +133,14 @@ export class MessageManagerFrontend {
     this.messageManager.purgeDeadLetteredMessages(queueParams, cb);
   }
 
+  purgeAcknowledgedMessages(
+    queue: string | TQueueParams,
+    cb: ICallback<void>,
+  ): void {
+    const queueParams = QueueManager.getQueueParams(queue);
+    this.messageManager.purgeAcknowledgedMessages(queueParams, cb);
+  }
+
   ///
 
   getAcknowledgedMessages(
