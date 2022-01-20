@@ -32,12 +32,14 @@ producer.produceMessage('Some data', () => {
 Now:
 
 ```javascript
-const producer = new MyProducer('test_queue', config);
+const producer = new MyProducer(config);
 
-const msg = new Message()
-msg.setBody('Some data').setQueue('test_queue');
+const msg = new Message();
+msg
+    .setPriority(Message.MessagePriority.HIGHEST)
+    .setBody('Some data')
+    .setQueue('test_queue');
 producer.produce(msg, () => {
-  // The message priority will be ignored as priority queuing for the given producer is not enabled.
   // ...
 });
 ```
