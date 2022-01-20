@@ -10,7 +10,7 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
 
   const messageManager = promisifyAll(await getMessageManagerFrontend());
 
-  const res0 = await messageManager.getDeadLetterMessagesAsync(queue, 0, 100);
+  const res0 = await messageManager.getDeadLetteredMessagesAsync(queue, 0, 100);
   expect(res0.total).toBe(0);
   expect(res0.items.length).toBe(0);
 
@@ -50,7 +50,7 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   expect(res5.total).toBe(0);
   expect(res5.items.length).toBe(0);
 
-  const res6 = await messageManager.getDeadLetterMessagesAsync(queue, 0, 100);
+  const res6 = await messageManager.getDeadLetteredMessagesAsync(queue, 0, 100);
   expect(res6.total).toBe(0);
   expect(res6.items.length).toBe(0);
 

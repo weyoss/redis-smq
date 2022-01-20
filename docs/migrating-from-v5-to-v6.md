@@ -198,6 +198,10 @@ requeueMessageFromDLQueue(queue, sequenceId, messageId, priority, cb)
 3. purgeQueue() -> purgePendingQueue()
 4. purgeScheduledMessagesQueue() -> purgeScheduledQueue()
 
-**10. Updated HTTP API endpoints**
+**10. MessageManager API methods renaming**
+
+1. getDeadLetterMessages() -> getDeadLetteredMessages()
+
+**11. Updated HTTP API endpoints**
 
 See [HTTP API Reference](http-api.md) for more details.

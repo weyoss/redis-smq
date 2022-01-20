@@ -39,7 +39,11 @@ describe('MessageManager', () => {
     const { queue, message } = await produceAndDeadLetterMessage();
 
     const messageManager = promisifyAll(await getMessageManagerFrontend());
-    const res = await messageManager.getDeadLetterMessagesAsync(queue, 0, 100);
+    const res = await messageManager.getDeadLetteredMessagesAsync(
+      queue,
+      0,
+      100,
+    );
     expect(res.total).toBe(1);
     expect(res.items[0].sequenceId).toBe(0);
     expect(res.items[0].message.getId()).toBe(message.getId());

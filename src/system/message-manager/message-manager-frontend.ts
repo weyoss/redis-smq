@@ -135,7 +135,7 @@ export class MessageManagerFrontend {
     this.messageManager.getAcknowledgedMessages(queueParams, skip, take, cb);
   }
 
-  getDeadLetterMessages(
+  getDeadLetteredMessages(
     queue: string | TQueueParams,
     skip: number,
     take: number,
