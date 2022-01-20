@@ -11,7 +11,7 @@ test('Combined test: Requeue a message from dead-letter queue with priority.  Ch
   await consumer.shutdownAsync();
 
   const messageManager = promisifyAll(await getMessageManagerFrontend());
-  await messageManager.requeueMessageFromDLQueueAsync(
+  await messageManager.requeueDeadLetteredMessageAsync(
     queue,
     0,
     message.getId(),

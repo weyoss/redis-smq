@@ -65,7 +65,7 @@ export class RequeueHandler extends Handler {
     );
   }
 
-  requeueMessageFromDLQueue(
+  requeueDeadLetteredMessage(
     queue: TQueueParams,
     index: number,
     messageId: string,

@@ -173,14 +173,14 @@ Now:
 requeueAcknowledgedMessage(queue, sequenceId, messageId, priority, cb)
 ```
 
-**8. MessageManager.prototype.requeueMessageFromDLQueue()**
+**8. MessageManager.prototype.requeueDeadLetteredMessage()**
 
-`MessageManager.prototype.requeueMessageFromDLQueue()` now accepts 5 arguments.
+`MessageManager.prototype.requeueDeadLetteredMessage()` now accepts 5 arguments.
 
 Before:
 
 ```javascript
-requeueMessageFromDLQueue(queue, sequenceId, messageId, withPriority, priority, cb)
+requeueDeadLetteredMessage(queue, sequenceId, messageId, withPriority, priority, cb)
 ```
 
 Now:
@@ -188,7 +188,7 @@ Now:
 ```javascript
 // When requeuing a message with priority, the priority argument should not be empty. Otherwise, set its value 
 // to undefined.
-requeueMessageFromDLQueue(queue, sequenceId, messageId, priority, cb)
+requeueDeadLetteredMessage(queue, sequenceId, messageId, priority, cb)
 ```
 
 **9. QueueManager API methods renaming**
@@ -203,6 +203,7 @@ requeueMessageFromDLQueue(queue, sequenceId, messageId, priority, cb)
 1. getDeadLetterMessages() -> getDeadLetteredMessages()
 2. deleteDeadLetterMessage() -> deleteDeadLetteredMessage()
 3. requeueMessageFromAcknowledgedQueue() -> requeueAcknowledgedMessage()
+4. requeueMessageFromDLQueue() -> requeueDeadLetteredMessage()
 
 **11. Updated HTTP API endpoints**
 

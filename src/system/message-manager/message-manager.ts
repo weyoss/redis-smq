@@ -240,7 +240,7 @@ export class MessageManager {
 
   ///
 
-  requeueMessageFromDLQueue(
+  requeueDeadLetteredMessage(
     queue: TQueueParams,
     sequenceId: number,
     messageId: string,
@@ -252,7 +252,7 @@ export class MessageManager {
         queue.name
       }, ns ${queue.ns}, priority ${priority ?? 'without priority'})...`,
     );
-    this.requeueHandler.requeueMessageFromDLQueue(
+    this.requeueHandler.requeueDeadLetteredMessage(
       queue,
       sequenceId,
       messageId,
