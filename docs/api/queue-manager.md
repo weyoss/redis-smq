@@ -12,6 +12,14 @@ QueueManager.getSingletonInstance(config, (err, queueManager) => {
 })
 ```
 
+## Table of Content
+
+1. [QueueManager.getSingletonInstance()](#queuemanagergetsingletoninstance)
+2. [QueueManager.prototype.getMessageQueues()](#queuemanagerprototypegetmessagequeues)
+3. [QueueManager.prototype.getQueueMetrics()](#queuemanagerprototypegetqueuemetrics)
+4. [QueueManager.prototype.deleteMessageQueue()](#queuemanagerprototypedeletemessagequeue)
+5. [QueueManager.prototype.quit()](#queuemanagerprototypequit)
+
 ## Public Static Methods
 
 ### QueueManager.getSingletonInstance()
@@ -28,7 +36,7 @@ getSingletonInstance(config, cb)
 
 ## Public Methods
 
-### QueueManager.prototype.getMessageQueues
+### QueueManager.prototype.getMessageQueues()
 
 ```javascript
 getMessageQueues(cb);
@@ -41,23 +49,7 @@ getMessageQueues(cb);
     - `messageQueues[*].ns` *(string).* Queue namespace.
     - `messageQueues[*].name` *(string).* Queue name.
 
-### QueueManager.prototype.deleteMessageQueue
-
-```javascript
-deleteMessageQueue(queue, cb);
-```
-
-**Parameters**
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
-  Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
-- `cb(err)` *(Function): Required.* Callback function.
-  - `err` *(Error | null | undefined).* Error object.
-
-Before deleting a message queue, make sure that the given queue is not being in use. Otherwise, an error will be returned.
-
-### QueueManager.prototype.getQueueMetrics
+### QueueManager.prototype.getQueueMetrics()
 
 ```javascript
 getQueueMetrics(queue, cb);
@@ -76,7 +68,23 @@ getQueueMetrics(queue, cb);
     - `queueMetrics.pending` *(number).* Pending messages count.
     - `queueMetrics.pendingWithPriority` *(number).* Pending messages with priority count.
 
-### QueueManager.prototype.quit
+### QueueManager.prototype.deleteMessageQueue()
+
+```javascript
+deleteMessageQueue(queue, cb);
+```
+
+**Parameters**
+- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
+  Otherwise, you can explicity provide an object which has the following signature:
+  - `queue.name` *(string): Required.* Queue name.
+  - `queue.ns` *(string): Required.* Queue namespace.
+- `cb(err)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+
+Before deleting a message queue, make sure that the given queue is not being in use. Otherwise, an error will be returned.
+
+### QueueManager.prototype.quit()
 
 ```javascript
 quit(cb);
