@@ -62,10 +62,10 @@ Otherwise, you can explicity provide an object which has the following signature
   - `result.total` *(number).* Total messages that has been scheduled so far.
   - `result.items` *(Array).* An array of pending messages with priority.
 
-### MessageManager.prototype.getDeadLetterMessages()
+### MessageManager.prototype.getDeadLetteredMessages()
 
 ```javascript
-getDeadLetterMessages(queue, skip, take, cb);
+getDeadLetteredMessages(queue, skip, take, cb);
 ```
 
 **Parameters**
