@@ -254,6 +254,10 @@ export class Consumer extends Base {
     return this.redisKeys;
   }
 
+  getQueues(): TQueueParams[] {
+    return this.messageHandlers.map((i) => i.queue);
+  }
+
   static isAlive(
     redisClient: RedisClient,
     queue: TQueueParams,
