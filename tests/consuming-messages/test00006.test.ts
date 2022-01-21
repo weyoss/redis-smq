@@ -20,7 +20,7 @@ test('When consuming a message, a consumer does time out after messageConsumeTim
         consumeTimeout: 2000,
       },
     },
-    consumeMock: jest.fn((msg: unknown, cb: ICallback<void>) => {
+    messageHandler: jest.fn((msg: unknown, cb: ICallback<void>) => {
       if (consumeCount === 0) setTimeout(cb, 5000);
       else if (consumeCount === 1) cb(null);
       else throw new Error('Unexpected call');

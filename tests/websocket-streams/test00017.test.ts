@@ -1,4 +1,5 @@
 import {
+  defaultQueue,
   getConsumer,
   listenForWebsocketStreamEvents,
   startWebsocketOnlineStreamWorker,
@@ -8,11 +9,10 @@ import { THeartbeatRegistryPayload } from '../../types';
 
 test('WebsocketOnlineStreamWorker: streamOnlineQueueConsumers/case 1', async () => {
   const consumer = getConsumer();
-  const queue = consumer.getQueue();
   await consumer.runAsync();
 
   const data = await listenForWebsocketStreamEvents<Record<string, string>>(
-    `streamOnlineQueueConsumers:${queue.ns}:${queue.name}`,
+    `streamOnlineQueueConsumers:${defaultQueue.ns}:${defaultQueue.name}`,
     startWebsocketOnlineStreamWorker,
   );
   for (let i = 0; i < data.length; i += 1) {

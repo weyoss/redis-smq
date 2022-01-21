@@ -2,9 +2,13 @@ import { ProducerMessageRate } from '../../src/system/producer/producer-message-
 import { promisifyAll } from 'bluebird';
 import { events } from '../../src/system/common/events';
 import { IMultiQueueProducerMessageRateFields } from '../../types';
+import { ProducerMessageRateWriter } from '../../src/system/producer/producer-message-rate-writer';
+import { getRedisInstance } from '../common';
 
 test('ProducerMessageRate', async () => {
-  const messageRate = promisifyAll(new ProducerMessageRate());
+  const redisClient = await getRedisInstance();
+  const messageRateWriter = new ProducerMessageRateWriter(redisClient);
+  const messageRate = promisifyAll(new ProducerMessageRate(messageRateWriter));
 
   const rateFields1 = await new Promise<{
     ts: number;

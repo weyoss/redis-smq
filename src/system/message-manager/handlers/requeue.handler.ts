@@ -43,7 +43,7 @@ export class RequeueHandler extends Handler {
             keyQueuePending,
             keyQueuePriority,
             keyQueuePendingWithPriority,
-          } = redisKeys.getKeys(queue.name, queue.ns);
+          } = redisKeys.getQueueKeys(queue.name, queue.ns);
           this.redisClient.runScript(
             ELuaScriptName.REQUEUE_MESSAGE,
             [
@@ -72,7 +72,7 @@ export class RequeueHandler extends Handler {
     priority: number | undefined,
     cb: ICallback<void>,
   ): void {
-    const { keyQueueDL } = redisKeys.getKeys(queue.name, queue.ns);
+    const { keyQueueDL } = redisKeys.getQueueKeys(queue.name, queue.ns);
     this.requeueListMessage(queue, keyQueueDL, index, messageId, priority, cb);
   }
 
@@ -83,7 +83,10 @@ export class RequeueHandler extends Handler {
     priority: number | undefined,
     cb: ICallback<void>,
   ): void {
-    const { keyQueueAcknowledged } = redisKeys.getKeys(queue.name, queue.ns);
+    const { keyQueueAcknowledged } = redisKeys.getQueueKeys(
+      queue.name,
+      queue.ns,
+    );
     this.requeueListMessage(
       queue,
       keyQueueAcknowledged,

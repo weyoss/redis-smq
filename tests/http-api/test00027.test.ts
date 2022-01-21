@@ -1,4 +1,5 @@
 import {
+  defaultQueue,
   getConsumer,
   untilConsumerIdle,
   validateTimeSeriesFrom,
@@ -9,10 +10,9 @@ test('Consumer acknowledged time series', async () => {
   const consumer = promisifyAll(getConsumer());
   await consumer.runAsync();
   await untilConsumerIdle(consumer);
-  const queue = consumer.getQueue();
   await validateTimeSeriesFrom(
-    `/api/queues/${queue.name}/ns/${
-      queue.ns
+    `/api/queues/${defaultQueue.name}/ns/${
+      defaultQueue.ns
     }/consumers/${consumer.getId()}/time-series/acknowledged`,
   );
 });

@@ -11,15 +11,15 @@ import { ICallback } from '../../types';
 
 test('A consumer does re-queue and consume again a failed message when threshold not exceeded', async () => {
   const producer = getProducer();
-  const consumer = getConsumer();
 
   let callCount = 0;
-
-  consumer.consume = jest.fn((msg: Message, cb: ICallback<void>) => {
-    callCount += 1;
-    if (callCount === 1) throw new Error('Explicit error');
-    else if (callCount === 2) cb(null);
-    else throw new Error('Unexpected call');
+  const consumer = getConsumer({
+    messageHandler: jest.fn((msg: Message, cb: ICallback<void>) => {
+      callCount += 1;
+      if (callCount === 1) throw new Error('Explicit error');
+      else if (callCount === 2) cb(null);
+      else throw new Error('Unexpected call');
+    }),
   });
 
   let unacknowledged = 0;

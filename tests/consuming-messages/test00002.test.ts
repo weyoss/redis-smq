@@ -8,8 +8,11 @@ import { Message } from '../../index';
 
 test('Produce and consume 1 message', async () => {
   const producer = getProducer();
-  const consumer = getConsumer();
-  const consume = jest.spyOn(consumer, 'consume');
+
+  const messageHandler = jest.fn();
+  const consumer = getConsumer({
+    messageHandler,
+  });
 
   const msg = new Message();
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
@@ -18,8 +21,8 @@ test('Produce and consume 1 message', async () => {
   consumer.run();
 
   await untilConsumerIdle(consumer);
-  const receivedMsg = consume.mock.calls[0][0];
+  const receivedMsg = messageHandler.mock.calls[0][0];
   expect(receivedMsg.getId()).toStrictEqual(msg.getId());
   expect(receivedMsg.getBody()).toStrictEqual({ hello: 'world' });
-  expect(consume).toHaveBeenCalledTimes(1);
+  expect(messageHandler).toHaveBeenCalledTimes(1);
 });

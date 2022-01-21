@@ -1,16 +1,15 @@
-import { ProducerMessageRate } from '../../src/system/producer/producer-message-rate';
 import { promisifyAll } from 'bluebird';
 import { ProducerMessageRateWriter } from '../../src/system/producer/producer-message-rate-writer';
 import { getRedisInstance } from '../common';
 import { TimeSeries } from '../../src/system/common/time-series/time-series';
+import { ProducerMessageRate } from '../../src/system/producer/producer-message-rate';
 
 test('ProducerMessageRateWriter', async () => {
   const redisClient = await getRedisInstance();
-  const messageRate = promisifyAll(new ProducerMessageRate());
-
   const messageRateWriter = promisifyAll(
-    new ProducerMessageRateWriter(redisClient, `ID_${Date.now()}`, messageRate),
+    new ProducerMessageRateWriter(redisClient),
   );
+  const messageRate = promisifyAll(new ProducerMessageRate(messageRateWriter));
 
   const ts1 = TimeSeries.getCurrentTimestamp();
   const rateFields1 = await messageRate.getRateFields();

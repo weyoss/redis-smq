@@ -8,7 +8,6 @@ import { Message } from '../../index';
 
 test('Produce and consume 100 messages', async () => {
   const producer = getProducer();
-  const consumer = getConsumer();
 
   const total = 100;
   const publishedMsg: Message[] = [];
@@ -20,10 +19,12 @@ test('Produce and consume 100 messages', async () => {
   }
 
   const deliveredMessages: Message[] = [];
-  consumer.consume = (msg, cb) => {
-    deliveredMessages.push(msg);
-    cb();
-  };
+  const consumer = getConsumer({
+    messageHandler: (msg, cb) => {
+      deliveredMessages.push(msg);
+      cb();
+    },
+  });
   await consumer.runAsync();
   await untilConsumerIdle(consumer);
 

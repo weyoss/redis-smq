@@ -1,11 +1,7 @@
 import * as async from 'async';
-import {
-  ICallback,
-  TConsumerWorkerParameters,
-  THeartbeatParams,
-} from '../../../types';
+import { ICallback, TConsumerWorkerParameters } from '../../../types';
 import { Ticker } from '../common/ticker/ticker';
-import { Heartbeat } from '../common/heartbeat/heartbeat';
+import { ConsumerHeartbeat } from '../consumer/consumer-heartbeat';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
@@ -23,15 +19,12 @@ class HeartbeatMonitorWorker {
   protected onTick = () => {
     async.waterfall(
       [
-        (cb: ICallback<(THeartbeatParams | string)[]>): void =>
-          Heartbeat.getExpiredHeartbeatsKeys(this.redisClient, false, cb),
-        (
-          heartbeats: (THeartbeatParams | string)[],
-          cb: ICallback<void>,
-        ): void => {
-          Heartbeat.handleExpiredHeartbeatKeys(
+        (cb: ICallback<string[]>): void =>
+          ConsumerHeartbeat.getExpiredHeartbeatIds(this.redisClient, cb),
+        (consumerIds: string[], cb: ICallback<void>): void => {
+          ConsumerHeartbeat.handleExpiredHeartbeatIds(
             this.redisClient,
-            heartbeats,
+            consumerIds,
             cb,
           );
         },

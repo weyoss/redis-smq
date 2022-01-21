@@ -10,7 +10,7 @@ import { Message } from '../../src/message';
 test('Schedule a message with a combination of CRON expression, repeat, period, and delay parameters. Check that it is enqueued periodically on time.', async () => {
   const timestamps: number[] = [];
   const consumer = getConsumer({
-    consumeMock: jest.fn((msg, cb) => {
+    messageHandler: jest.fn((msg, cb) => {
       timestamps.push(msg.getPublishedAt() ?? 0);
       cb(null);
     }),

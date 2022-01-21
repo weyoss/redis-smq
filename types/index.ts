@@ -212,6 +212,10 @@ export type TConsumerRedisKeys = ReturnType<
   typeof redisKeys['getConsumerKeys']
 >;
 
+export type TQueueConsumerRedisKeys = ReturnType<
+  typeof redisKeys['getQueueConsumerKeys']
+>;
+
 export interface IQueueMetrics {
   acknowledged: number;
   deadLettered: number;
@@ -252,8 +256,8 @@ export type THeartbeatRegistryPayload = {
 
 export type THeartbeatParams = {
   keyHeartbeat: string;
-  keyInstanceRegistry: string;
   instanceId: string;
+  queues: TQueueParams[];
 };
 
 export type THeartbeatPayload = {
@@ -268,4 +272,15 @@ export type THeartbeatPayloadData = {
 
 export type TWebsocketHeartbeatOnlineIdsStreamPayload = {
   consumers: string[];
+};
+
+export type TConsumerMessageHandler = (
+  msg: Message,
+  cb: ICallback<void>,
+) => void;
+
+export type TConsumerMessageHandlerParams = {
+  queue: TQueueParams;
+  messageHandler: TConsumerMessageHandler;
+  usePriorityQueuing: boolean;
 };

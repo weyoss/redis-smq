@@ -12,7 +12,7 @@ test('Async exceptions are caught when consuming a message', async () => {
 
   let callCount = 0;
   const consumer = getConsumer({
-    consumeMock: jest.fn((msg, cb) => {
+    messageHandler: jest.fn((msg, cb) => {
       callCount += 1;
       if (callCount === 1) {
         setTimeout(() => {

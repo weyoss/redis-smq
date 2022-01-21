@@ -11,7 +11,7 @@ test('Produce and consume a delayed message: Case 2', async () => {
   let callCount = 0;
   const timestamps: number[] = [];
   const consumer = getConsumer({
-    consumeMock: jest.fn((msg, cb) => {
+    messageHandler: jest.fn((msg, cb) => {
       callCount += 1;
       if (callCount > 1) throw new Error('Unexpected call');
       timestamps.push(msg.getPublishedAt() ?? 0);

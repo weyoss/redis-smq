@@ -9,7 +9,7 @@ export const ConsumerDeadLetteredTimeSeries = (
   queue: TQueueParams,
   isMaster?: boolean,
 ) => {
-  const { keyRateConsumerDeadLettered } = redisKeys.getConsumerKeys(
+  const { keyRateConsumerDeadLettered } = redisKeys.getQueueConsumerKeys(
     queue.name,
     consumerId,
     queue.ns,

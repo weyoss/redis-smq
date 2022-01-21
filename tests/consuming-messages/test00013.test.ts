@@ -16,7 +16,7 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
   };
   const queueAConsumer1 = getConsumer({
     queue: 'queue_a',
-    consumeMock: jest.fn((msg: Message, cb: ICallback<void>) => {
+    messageHandler: jest.fn((msg: Message, cb: ICallback<void>) => {
       // do not acknowledge/unacknowledge the message
       queueAMetrics.receivedMessages.push(msg);
       queueAConsumer1.shutdown();
@@ -31,7 +31,7 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
 
   const queueAConsumer2 = getConsumer({
     queue: 'queue_a',
-    consumeMock: jest.fn((msg: Message, cb: ICallback<void>) => {
+    messageHandler: jest.fn((msg: Message, cb: ICallback<void>) => {
       queueAMetrics.receivedMessages.push(msg);
       cb();
     }),
@@ -46,7 +46,7 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
   };
   const queueBConsumer1 = getConsumer({
     queue: 'queue_b',
-    consumeMock: jest.fn((msg: Message, cb: ICallback<void>) => {
+    messageHandler: jest.fn((msg: Message, cb: ICallback<void>) => {
       queueBMetrics.receivedMessages.push(msg);
       cb(null);
     }),

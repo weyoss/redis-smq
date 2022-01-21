@@ -8,7 +8,7 @@ test('A message is not lost in case of a consumer crash', async () => {
    * Consumer1 tries to consume a message but "crushes" (stops)
    */
   const consumer1 = getConsumer({
-    consumeMock: jest.fn(() => {
+    messageHandler: jest.fn(() => {
       // do not acknowledge/unacknowledge the message
       consumer1.shutdown();
     }),
@@ -22,7 +22,7 @@ test('A message is not lost in case of a consumer crash', async () => {
    * Consumer2 re-queues failed message and consume it!
    */
   const consumer2 = getConsumer({
-    consumeMock: jest.fn((msg, cb) => {
+    messageHandler: jest.fn((msg, cb) => {
       cb(null);
     }),
   });

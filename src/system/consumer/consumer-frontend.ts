@@ -1,19 +1,19 @@
-import { Message } from '../message';
-import { ICallback, IConfig, TQueueParams } from '../../../types';
+import {
+  ICallback,
+  IConfig,
+  TConsumerMessageHandler,
+  TQueueParams,
+} from '../../../types';
 import { EventEmitter } from 'events';
 import { Consumer } from './consumer';
 import { events } from '../common/events';
 
-export abstract class ConsumerFrontend extends EventEmitter {
+export class ConsumerFrontend extends EventEmitter {
   private consumer: Consumer;
 
-  constructor(
-    queue: string | TQueueParams,
-    config: IConfig = {},
-    enablePriorityQueue = false,
-  ) {
+  constructor(config: IConfig = {}) {
     super();
-    this.consumer = new Consumer(queue, config, enablePriorityQueue);
+    this.consumer = new Consumer(config);
     this.registerEvents();
   }
 
@@ -33,8 +33,17 @@ export abstract class ConsumerFrontend extends EventEmitter {
       );
   }
 
+  consume(
+    queue: string | TQueueParams,
+    usePriorityQueuing: boolean,
+    messageHandler: TConsumerMessageHandler,
+    cb: ICallback<boolean>,
+  ): void {
+    return this.consumer.consume(queue, usePriorityQueuing, messageHandler, cb);
+  }
+
   run(cb?: ICallback<void>): void {
-    this.consumer.setConsumerFrontend(this).run(cb);
+    this.consumer.run(cb);
   }
 
   shutdown(cb?: ICallback<void>): void {
@@ -64,10 +73,4 @@ export abstract class ConsumerFrontend extends EventEmitter {
   getId(): string {
     return this.consumer.getId();
   }
-
-  getQueue(): TQueueParams {
-    return this.consumer.getQueue();
-  }
-
-  abstract consume(msg: Message, cb: ICallback<void>): void;
 }
