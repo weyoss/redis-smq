@@ -25,11 +25,11 @@ export class QueueManager {
     queue: TQueueParams,
     cb: ICallback<void>,
   ): void => {
-    const verifyHeartbeats = (heartbeatKeys: string[], cb: ICallback<void>) => {
-      if (heartbeatKeys.length) {
+    const verifyHeartbeats = (consumerIds: string[], cb: ICallback<void>) => {
+      if (consumerIds.length) {
         ConsumerHeartbeat.validateHeartbeatsOf(
           this.redisClient,
-          heartbeatKeys,
+          consumerIds,
           (err, reply) => {
             if (err) cb(err);
             else {
@@ -48,20 +48,7 @@ export class QueueManager {
       } else cb();
     };
     const getOnlineConsumers = (cb: ICallback<string[]>): void => {
-      Consumer.getOnlineConsumerIds(this.redisClient, queue, (err, reply) => {
-        if (err) cb(err);
-        else {
-          const heartbeatKeys = (reply ?? []).map((id) => {
-            const { keyHeartbeatConsumer } = redisKeys.getQueueConsumerKeys(
-              queue.name,
-              id,
-              queue.ns,
-            );
-            return keyHeartbeatConsumer;
-          });
-          cb(null, heartbeatKeys);
-        }
-      });
+      Consumer.getOnlineConsumerIds(this.redisClient, queue, cb);
     };
     async.waterfall([getOnlineConsumers, verifyHeartbeats], (err) => cb(err));
   };

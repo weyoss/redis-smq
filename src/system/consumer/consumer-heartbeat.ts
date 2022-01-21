@@ -52,7 +52,6 @@ export class ConsumerHeartbeat extends EventEmitter {
   protected redisClient: RedisClient;
   protected ticker: Ticker;
   protected keyHeartbeats: string;
-  protected keyHeartbeatKey: string;
   protected keyHeartbeatTimestamps: string;
   protected consumerId: string;
 
@@ -60,9 +59,8 @@ export class ConsumerHeartbeat extends EventEmitter {
     super();
     this.redisClient = redisClient;
     this.consumerId = consumer.getId();
-    const { keyHeartbeats, keyHeartbeatConsumer } = consumer.getRedisKeys();
+    const { keyHeartbeats } = consumer.getRedisKeys();
     this.keyHeartbeats = keyHeartbeats;
-    this.keyHeartbeatKey = keyHeartbeatConsumer;
     this.keyHeartbeatTimestamps =
       redisKeys.getGlobalKeys().keyHeartbeatTimestamps;
     this.ticker = new Ticker(() => {
@@ -128,18 +126,18 @@ export class ConsumerHeartbeat extends EventEmitter {
 
   static validateHeartbeatsOf(
     redisClient: RedisClient,
-    heartbeatKeys: string[],
+    consumerIds: string[],
     cb: ICallback<Record<string, boolean>>,
   ): void {
-    const keyHeartbeatIndex = redisKeys.getGlobalKeys().keyHeartbeats;
-    redisClient.hmget(keyHeartbeatIndex, heartbeatKeys, (err, reply) => {
+    const keyHeartbeats = redisKeys.getGlobalKeys().keyHeartbeats;
+    redisClient.hmget(keyHeartbeats, consumerIds, (err, reply) => {
       if (err) cb(err);
-      else if (!reply || reply.length !== heartbeatKeys.length)
+      else if (!reply || reply.length !== consumerIds.length)
         cb(new InvalidCallbackReplyError());
       else {
         const r: Record<string, boolean> = {};
         async.eachOf(
-          heartbeatKeys,
+          consumerIds,
           (item, index, done) => {
             const idx = Number(index);
             const payload = reply[idx];
@@ -147,8 +145,8 @@ export class ConsumerHeartbeat extends EventEmitter {
               const { timestamp: heartbeatTimestamp }: THeartbeatPayload =
                 JSON.parse(payload);
               const timestamp = Date.now() - 10 * 1000;
-              r[heartbeatKeys[idx]] = heartbeatTimestamp > timestamp;
-            } else r[heartbeatKeys[idx]] = false;
+              r[consumerIds[idx]] = heartbeatTimestamp > timestamp;
+            } else r[consumerIds[idx]] = false;
             done();
           },
           () => cb(null, r),
