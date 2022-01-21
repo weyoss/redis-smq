@@ -59,7 +59,7 @@ enum ERedisKey {
   RESERVED_1,
 
   RESERVED_5,
-  KEY_HEARTBEAT_CONSUMER,
+  RESERVED_7,
   KEY_HEARTBEAT_TIMESTAMPS,
   RESERVED_2,
 
@@ -154,10 +154,6 @@ export const redisKeys = {
   getConsumerKeys(instanceId: string) {
     const globalKeys = this.getGlobalKeys();
     const keys = {
-      keyHeartbeatConsumer: this.joinSegments(
-        ERedisKey.KEY_HEARTBEAT_CONSUMER,
-        instanceId,
-      ),
       keyConsumerQueues: this.joinSegments(
         ERedisKey.KEY_CONSUMER_QUEUES,
         instanceId,
@@ -204,25 +200,7 @@ export const redisKeys = {
 
   extractData(key: string) {
     const { ns, type, segments } = this.getSegments(key);
-    if (
-      type === ERedisKey.KEY_QUEUE_PENDING ||
-      type === ERedisKey.KEY_QUEUE_PRIORITY ||
-      type === ERedisKey.KEY_QUEUE_ACKNOWLEDGED ||
-      type === ERedisKey.KEY_QUEUE_DL
-    ) {
-      const [queueName] = segments;
-      return {
-        ns,
-        type,
-        queueName,
-      };
-    }
-    if (
-      type === ERedisKey.KEY_QUEUE_PROCESSING ||
-      type === ERedisKey.KEY_RATE_CONSUMER_ACKNOWLEDGED ||
-      type === ERedisKey.KEY_RATE_CONSUMER_DEAD_LETTERED ||
-      type === ERedisKey.KEY_HEARTBEAT_CONSUMER
-    ) {
+    if (type === ERedisKey.KEY_QUEUE_PROCESSING) {
       const [queueName, consumerId] = segments;
       return {
         ns,

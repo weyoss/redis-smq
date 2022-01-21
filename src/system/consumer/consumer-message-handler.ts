@@ -50,13 +50,13 @@ export class ConsumerMessageHandler extends EventEmitter {
     this.logger = logger;
     this.broker = broker;
     this.redisClient = redisClient;
+    this.usingPriorityQueuing = usePriorityQueuing;
     this.redisKeys = redisKeys.getQueueConsumerKeys(
       this.queue.name,
       this.consumerId,
       this.queue.ns,
     );
     this.powerManager = new PowerManager();
-    this.usingPriorityQueuing = usePriorityQueuing;
     this.registerEventsHandlers();
     if (messageRate) {
       this.messageRate = messageRate;

@@ -53,17 +53,13 @@ export class WebsocketHeartbeatStreamWorker {
               async.each(
                 reply ?? [],
                 (item, done) => {
-                  const { ns, queueName, consumerId } =
-                    redisKeys.extractData(item.consumerId) ?? {};
                   const payload = String(item.payload);
-                  if (ns && queueName && consumerId) {
-                    onlineIds.consumers.push(consumerId);
-                    this.redisClient.publish(
-                      `streamConsumerHeartbeat:${consumerId}`,
-                      payload,
-                      this.noop,
-                    );
-                  }
+                  onlineIds.consumers.push(item.consumerId);
+                  this.redisClient.publish(
+                    `streamConsumerHeartbeat:${item.consumerId}`,
+                    payload,
+                    this.noop,
+                  );
                   done();
                 },
                 () => {

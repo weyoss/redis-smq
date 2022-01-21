@@ -85,32 +85,27 @@ export class WebsocketMainStreamWorker {
     cb: ICallback<void>,
   ): void => {
     if (queues && queues.length) {
-      let keys: string[] = [];
+      const keyTypes = redisKeys.getTypes();
+      const keys: { type: number; name: string; ns: string }[] = [];
       const multi = this.redisClient.multi();
       const handleResult = (res: number[]) => {
-        const instanceTypes = redisKeys.getTypes();
         async.eachOf(
           res,
           (size, index, done) => {
-            const extractedData = redisKeys.extractData(keys[+index]);
-            if (extractedData) {
-              const { ns, queueName, type } = extractedData;
-              if (ns && queueName && type) {
-                const queue = this.addQueue(ns, queueName);
-                if (type === instanceTypes.KEY_QUEUE_DL) {
-                  queue.deadLetteredMessagesCount = size;
-                  this.data.deadLetteredMessagesCount += size;
-                } else if (type === instanceTypes.KEY_QUEUE_PENDING) {
-                  queue.pendingMessagesCount = size;
-                  this.data.pendingMessagesCount += size;
-                } else if (type === instanceTypes.KEY_QUEUE_PRIORITY) {
-                  queue.pendingMessagesWithPriorityCount = size;
-                  this.data.pendingMessagesWithPriorityCount += size;
-                } else {
-                  queue.acknowledgedMessagesCount = size;
-                  this.data.acknowledgedMessagesCount += size;
-                }
-              }
+            const { ns, name, type } = keys[+index];
+            const queue = this.addQueue(ns, name);
+            if (type === keyTypes.KEY_QUEUE_DL) {
+              queue.deadLetteredMessagesCount = size;
+              this.data.deadLetteredMessagesCount += size;
+            } else if (type === keyTypes.KEY_QUEUE_PENDING) {
+              queue.pendingMessagesCount = size;
+              this.data.pendingMessagesCount += size;
+            } else if (type === keyTypes.KEY_QUEUE_PRIORITY) {
+              queue.pendingMessagesWithPriorityCount = size;
+              this.data.pendingMessagesWithPriorityCount += size;
+            } else {
+              queue.acknowledgedMessagesCount = size;
+              this.data.acknowledgedMessagesCount += size;
             }
             done();
           },
@@ -130,12 +125,28 @@ export class WebsocketMainStreamWorker {
           multi.zcard(keyQueuePriority);
           multi.llen(keyQueueDL);
           multi.llen(keyQueueAcknowledged);
-          keys = keys.concat([
-            keyQueuePending,
-            keyQueuePriority,
-            keyQueueDL,
-            keyQueueAcknowledged,
-          ]);
+          keys.push(
+            {
+              type: keyTypes.KEY_QUEUE_PENDING,
+              name: queue.name,
+              ns: queue.ns,
+            },
+            {
+              type: keyTypes.KEY_QUEUE_PRIORITY,
+              name: queue.name,
+              ns: queue.ns,
+            },
+            {
+              type: keyTypes.KEY_QUEUE_DL,
+              name: queue.name,
+              ns: queue.ns,
+            },
+            {
+              type: keyTypes.KEY_QUEUE_ACKNOWLEDGED,
+              name: queue.name,
+              ns: queue.ns,
+            },
+          );
           done();
         },
         () => {
