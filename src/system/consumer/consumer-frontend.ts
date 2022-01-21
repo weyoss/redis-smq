@@ -73,4 +73,8 @@ export class ConsumerFrontend extends EventEmitter {
   getId(): string {
     return this.consumer.getId();
   }
+
+  getQueues(): TQueueParams[] {
+    return this.consumer.getQueues();
+  }
 }

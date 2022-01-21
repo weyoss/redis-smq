@@ -1,5 +1,7 @@
-import { config } from './config';
-import { Consumer } from '../..'; // from 'redis-smq'
+'use strict';
+
+const config = require('./config');
+const { Consumer } = require('../..'); // require('redis-smq);
 
 const consumer = new Consumer(config);
 
