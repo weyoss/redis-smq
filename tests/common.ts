@@ -3,7 +3,12 @@ import { events } from '../src/system/common/events';
 import { RedisClient } from '../src/system/common/redis-client/redis-client';
 import { Producer, Message, MonitorServer, Consumer } from '../index';
 import { config } from './config';
-import { ICallback, IConfig, TQueueParams, TTimeSeriesRange } from '../types';
+import {
+  IConfig,
+  TConsumerMessageHandler,
+  TQueueParams,
+  TTimeSeriesRange,
+} from '../types';
 import { WebsocketMainStreamWorker } from '../src/monitor-server/workers/websocket-main-stream.worker';
 import { QueueManagerFrontend } from '../src/system/queue-manager/queue-manager-frontend';
 import { MessageManagerFrontend } from '../src/system/message-manager/message-manager-frontend';
@@ -23,7 +28,7 @@ type TGetConsumerArgs = {
   queue?: string | TQueueParams;
   cfg?: IConfig;
   enablePriorityQueuing?: boolean;
-  consumeMock?: ((msg: Message, cb: ICallback<void>) => void) | null;
+  messageHandler?: TConsumerMessageHandler;
 };
 
 export interface ISuperTestResponse<TData> extends supertest.Response {
@@ -40,13 +45,6 @@ export interface ISuperTestResponse<TData> extends supertest.Response {
 Message.setDefaultOptions(config.message);
 const MessageManagerFrontendAsync = promisifyAll(MessageManagerFrontend);
 const QueueManagerFrontendAsync = promisifyAll(QueueManagerFrontend);
-
-class TestConsumer extends Consumer {
-  // eslint-disable-next-line class-methods-use-this
-  consume(message: Message, cb: ICallback<void>) {
-    cb(null);
-  }
-}
 
 const defaultNamespace = config.namespace ?? 'testing';
 redisKeys.setNamespace(defaultNamespace);
@@ -135,16 +133,13 @@ export function getConsumer(args: TGetConsumerArgs = {}) {
   const {
     queue = defaultQueue,
     cfg = config,
-    consumeMock = null,
-    enablePriorityQueuing,
+    messageHandler = (msg, cb) => cb(),
+    enablePriorityQueuing = false,
   } = args;
-  const consumer = new TestConsumer(queue, cfg, enablePriorityQueuing);
-  if (consumeMock) {
-    consumer.consume = consumeMock;
-  }
-  const c = promisifyAll(consumer);
-  consumersList.push(c);
-  return c;
+  const consumer = promisifyAll(new Consumer(cfg));
+  consumer.consume(queue, enablePriorityQueuing, messageHandler, () => void 0);
+  consumersList.push(consumer);
+  return consumer;
 }
 
 export function getProducer(cfg = config) {
@@ -352,7 +347,7 @@ export async function produceAndAcknowledgeMessage(
   const producer = getProducer();
   const consumer = getConsumer({
     queue,
-    consumeMock: jest.fn((msg, cb) => {
+    messageHandler: jest.fn((msg, cb) => {
       cb();
     }),
   });
@@ -372,7 +367,7 @@ export async function produceAndDeadLetterMessage(
   const producer = getProducer();
   const consumer = getConsumer({
     queue,
-    consumeMock: jest.fn(() => {
+    messageHandler: jest.fn(() => {
       throw new Error('Explicit error');
     }),
   });

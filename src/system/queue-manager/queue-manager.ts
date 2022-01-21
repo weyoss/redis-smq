@@ -5,9 +5,10 @@ import { Consumer } from '../consumer/consumer';
 import * as async from 'async';
 import BLogger from 'bunyan';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
-import { Heartbeat } from '../common/heartbeat/heartbeat';
+import { ConsumerHeartbeat } from '../consumer/consumer-heartbeat';
 import { GenericError } from '../common/errors/generic.error';
 import { LockManager } from '../common/lock-manager/lock-manager';
+import { ConsumerMessageHandler } from '../consumer/consumer-message-handler';
 
 export class QueueManager {
   protected redisClient: RedisClient;
@@ -26,7 +27,7 @@ export class QueueManager {
   ): void => {
     const verifyHeartbeats = (heartbeatKeys: string[], cb: ICallback<void>) => {
       if (heartbeatKeys.length) {
-        Heartbeat.validateHeartbeatsOf(
+        ConsumerHeartbeat.validateHeartbeatsOf(
           this.redisClient,
           heartbeatKeys,
           (err, reply) => {
@@ -51,7 +52,7 @@ export class QueueManager {
         if (err) cb(err);
         else {
           const heartbeatKeys = (reply ?? []).map((id) => {
-            const { keyHeartbeatConsumer } = redisKeys.getConsumerKeys(
+            const { keyHeartbeatConsumer } = redisKeys.getQueueConsumerKeys(
               queue.name,
               id,
               queue.ns,
@@ -69,7 +70,7 @@ export class QueueManager {
     queue: TQueueParams,
     cb: ICallback<LockManager>,
   ): void => {
-    const { keyLockQueue } = redisKeys.getKeys(queue.name, queue.ns);
+    const { keyLockQueue } = redisKeys.getQueueKeys(queue.name, queue.ns);
     const lockManager = new LockManager(
       this.redisClient,
       keyLockQueue,
@@ -126,7 +127,7 @@ export class QueueManager {
           keyQueueConsumers,
           keyProcessingQueues,
           keyQueues,
-        } = redisKeys.getKeys(queue.name, queue.ns);
+        } = redisKeys.getQueueKeys(queue.name, queue.ns);
         const keys: string[] = [
           keyQueuePending,
           keyQueueDL,
@@ -191,10 +192,8 @@ export class QueueManager {
       `Deleting processing queue (${processingQueue}) of (${queue.name} from ${queue.ns} namespace)...`,
     );
     const multi = this.redisClient.multi();
-    const { keyProcessingQueues, keyQueueProcessingQueues } = redisKeys.getKeys(
-      queue.name,
-      queue.ns,
-    );
+    const { keyProcessingQueues, keyQueueProcessingQueues } =
+      redisKeys.getQueueKeys(queue.name, queue.ns);
     multi.srem(keyProcessingQueues, processingQueue);
     multi.hdel(keyQueueProcessingQueues, processingQueue);
     multi.del(processingQueue);
@@ -213,7 +212,7 @@ export class QueueManager {
     queue: TQueueParams,
     cb: ICallback<Record<string, string>>,
   ): void {
-    const { keyQueueProcessingQueues } = redisKeys.getKeys(
+    const { keyQueueProcessingQueues } = redisKeys.getQueueKeys(
       queue.name,
       queue.ns,
     );
@@ -249,7 +248,7 @@ export class QueueManager {
       keyQueuePriority,
       keyQueueDL,
       keyQueueAcknowledged,
-    } = redisKeys.getKeys(queue.name, queue.ns);
+    } = redisKeys.getQueueKeys(queue.name, queue.ns);
     async.waterfall(
       [
         (cb: ICallback<void>) => {
@@ -301,7 +300,7 @@ export class QueueManager {
     queue: TQueueParams,
     cb: ICallback<boolean>,
   ): void => {
-    const { keyLockQueue } = redisKeys.getKeys(queue.name, queue.ns);
+    const { keyLockQueue } = redisKeys.getQueueKeys(queue.name, queue.ns);
     redisClient.exists(keyLockQueue, (err, reply) => {
       if (err) cb(err);
       else if (reply) cb(new GenericError(`Queue is currently locked`));
@@ -310,11 +309,11 @@ export class QueueManager {
   };
 
   static setUpProcessingQueue(
-    consumer: Consumer,
+    consumerHandler: ConsumerMessageHandler,
     redisClient: RedisClient,
     cb: ICallback<void>,
   ): void {
-    const queue = consumer.getQueue();
+    const queue = consumerHandler.getQueue();
     QueueManager.checkQueueLock(redisClient, queue, (err) => {
       if (err) cb(err);
       else {
@@ -322,12 +321,12 @@ export class QueueManager {
           keyQueueProcessing,
           keyProcessingQueues,
           keyQueueProcessingQueues,
-        } = consumer.getRedisKeys();
+        } = consumerHandler.getRedisKeys();
         const multi = redisClient.multi();
         multi.hset(
           keyQueueProcessingQueues,
           keyQueueProcessing,
-          consumer.getId(),
+          consumerHandler.getConsumerId(),
         );
         multi.sadd(keyProcessingQueues, keyQueueProcessing);
         redisClient.execMulti(multi, (err) => cb(err));
@@ -339,7 +338,7 @@ export class QueueManager {
     QueueManager.checkQueueLock(this.redisClient, queue, (err) => {
       if (err) cb(err);
       else {
-        const { keyQueues } = redisKeys.getKeys(queue.name, queue.ns);
+        const { keyQueues } = redisKeys.getQueueKeys(queue.name, queue.ns);
         const str = JSON.stringify(queue);
         this.redisClient.sadd(keyQueues, str, (err) => cb(err));
       }

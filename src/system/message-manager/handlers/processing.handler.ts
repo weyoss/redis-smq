@@ -17,10 +17,8 @@ export class ProcessingHandler extends Handler {
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const { keyQueueDL, keyLockdeleteDeadLetteredMessage } = redisKeys.getKeys(
-      queue.name,
-      queue.ns,
-    );
+    const { keyQueueDL, keyLockdeleteDeadLetteredMessage } =
+      redisKeys.getQueueKeys(queue.name, queue.ns);
     deleteListMessageAtSequenceId(
       this.redisClient,
       keyLockdeleteDeadLetteredMessage,
@@ -39,7 +37,7 @@ export class ProcessingHandler extends Handler {
     cb: ICallback<void>,
   ): void {
     const { keyQueueAcknowledged, keyLockDeleteAcknowledgedMessage } =
-      redisKeys.getKeys(queue.name, queue.ns);
+      redisKeys.getQueueKeys(queue.name, queue.ns);
     deleteListMessageAtSequenceId(
       this.redisClient,
       keyLockDeleteAcknowledgedMessage,
@@ -62,7 +60,7 @@ export class ProcessingHandler extends Handler {
     if (!queue) {
       throw new PanicError(`Message parameters are required`);
     }
-    const { keyQueueDL } = redisKeys.getKeys(queue.name, queue.ns);
+    const { keyQueueDL } = redisKeys.getQueueKeys(queue.name, queue.ns);
     this.redisClient.lpoprpush(keyQueueProcessing, keyQueueDL, (err) => {
       if (err) cb(err);
       else cb();
@@ -78,7 +76,10 @@ export class ProcessingHandler extends Handler {
     if (!queue) {
       throw new PanicError(`Message queue parameters are required`);
     }
-    const { keyQueueAcknowledged } = redisKeys.getKeys(queue.name, queue.ns);
+    const { keyQueueAcknowledged } = redisKeys.getQueueKeys(
+      queue.name,
+      queue.ns,
+    );
     this.redisClient.lpoprpush(
       keyQueueProcessing,
       keyQueueAcknowledged,
@@ -99,7 +100,7 @@ export class ProcessingHandler extends Handler {
     if (!queue) {
       throw new PanicError(`Message queue parameters are required.`);
     }
-    const { keyDelayedMessages } = redisKeys.getKeys(queue.name, queue.ns);
+    const { keyDelayedMessages } = redisKeys.getQueueKeys(queue.name, queue.ns);
     this.redisClient.rpoplpush(keyQueueProcessing, keyDelayedMessages, (err) =>
       cb(err),
     );
@@ -115,7 +116,7 @@ export class ProcessingHandler extends Handler {
     if (!queue) {
       throw new PanicError(`Message parameters are required`);
     }
-    const { keyMessagesRequeue } = redisKeys.getKeys(queue.name, queue.ns);
+    const { keyMessagesRequeue } = redisKeys.getQueueKeys(queue.name, queue.ns);
     this.redisClient.rpoplpush(keyQueueProcessing, keyMessagesRequeue, (err) =>
       cb(err),
     );

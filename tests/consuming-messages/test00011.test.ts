@@ -10,7 +10,7 @@ import { events } from '../../src/system/common/events';
 
 test('Given many consumers, a message is delivered only to one consumer', async () => {
   const consumer1 = getConsumer({
-    consumeMock: jest.fn((msg, cb) => {
+    messageHandler: jest.fn((msg, cb) => {
       cb(null);
     }),
   });
@@ -28,7 +28,7 @@ test('Given many consumers, a message is delivered only to one consumer', async 
    *
    */
   const consumer2 = getConsumer({
-    consumeMock: jest.fn((msg, cb) => {
+    messageHandler: jest.fn((msg, cb) => {
       cb(null);
     }),
   });

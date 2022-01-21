@@ -51,7 +51,7 @@ export class ScheduleHandler extends Handler {
             keyQueuePriority,
             keyScheduledMessages,
             keyScheduledMessagesIndex,
-          } = redisKeys.getKeys(queue.name, queue.ns);
+          } = redisKeys.getQueueKeys(queue.name, queue.ns);
           const nextScheduleTimestamp =
             ScheduleHandler.getNextScheduledTimestamp(message);
           message.setPublishedAt(Date.now());
@@ -171,7 +171,7 @@ export class ScheduleHandler extends Handler {
       if (!queue) cb(new ArgumentError('Message queue is required'));
       else {
         const { keyQueues, keyScheduledMessages, keyScheduledMessagesIndex } =
-          redisKeys.getKeys(queue.name, queue.ns);
+          redisKeys.getQueueKeys(queue.name, queue.ns);
         message.setScheduledAt(Date.now());
         const messageId = message.getId();
         this.redisClient.runScript(

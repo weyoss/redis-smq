@@ -2,18 +2,18 @@ import * as os from 'os';
 import * as async from 'async';
 import {
   ICallback,
-  THeartbeatParams,
   THeartbeatPayload,
   THeartbeatPayloadData,
-} from '../../../../types';
-import { Ticker } from '../ticker/ticker';
-import { events } from '../events';
-import { RedisClient } from '../redis-client/redis-client';
-import { redisKeys } from '../redis-keys/redis-keys';
+} from '../../../types';
+import { Ticker } from '../common/ticker/ticker';
+import { events } from '../common/events';
+import { RedisClient } from '../common/redis-client/redis-client';
+import { redisKeys } from '../common/redis-keys/redis-keys';
 import { EventEmitter } from 'events';
-import { EmptyCallbackReplyError } from '../errors/empty-callback-reply.error';
-import { heartbeatRegistry } from './heartbeat-registry';
-import { InvalidCallbackReplyError } from '../errors/invalid-callback-reply.error';
+import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
+import { InvalidCallbackReplyError } from '../common/errors/invalid-callback-reply.error';
+import { consumerQueues } from './consumer-queues';
+import { Consumer } from './consumer';
 
 const cpuUsageStatsRef = {
   cpuUsage: process.cpuUsage(),
@@ -48,21 +48,23 @@ function cpuUsage() {
   };
 }
 
-export class Heartbeat extends EventEmitter {
+export class ConsumerHeartbeat extends EventEmitter {
   protected redisClient: RedisClient;
   protected ticker: Ticker;
-  protected keyHeartbeatIndex: string;
+  protected keyHeartbeats: string;
+  protected keyHeartbeatKey: string;
   protected keyHeartbeatTimestamps: string;
-  protected isRegistered = false;
-  protected heartbeatParams: THeartbeatParams;
+  protected consumerId: string;
 
-  constructor(params: THeartbeatParams, redisClient: RedisClient) {
+  constructor(consumer: Consumer, redisClient: RedisClient) {
     super();
-    this.heartbeatParams = params;
-    this.keyHeartbeatIndex = redisKeys.getGlobalKeys().keyHeartbeats;
+    this.redisClient = redisClient;
+    this.consumerId = consumer.getId();
+    const { keyHeartbeats, keyHeartbeatConsumer } = consumer.getRedisKeys();
+    this.keyHeartbeats = keyHeartbeats;
+    this.keyHeartbeatKey = keyHeartbeatConsumer;
     this.keyHeartbeatTimestamps =
       redisKeys.getGlobalKeys().keyHeartbeatTimestamps;
-    this.redisClient = redisClient;
     this.ticker = new Ticker(() => {
       this.onTick();
     }, 1000);
@@ -88,29 +90,16 @@ export class Heartbeat extends EventEmitter {
     const timestamp = Date.now();
     const heartbeatPayload = this.getPayload();
     const heartbeatPayloadStr = JSON.stringify(heartbeatPayload);
-    const heartbeatParamsStr = JSON.stringify(this.heartbeatParams);
     const multi = this.redisClient.multi();
-    if (!this.isRegistered) {
-      heartbeatRegistry.register(
-        multi,
-        this.heartbeatParams.keyInstanceRegistry,
-        this.heartbeatParams.instanceId,
-      );
-      this.isRegistered = true;
-    }
-    multi.hset(
-      this.keyHeartbeatIndex,
-      this.heartbeatParams.keyHeartbeat,
-      heartbeatPayloadStr,
-    );
-    multi.zadd(this.keyHeartbeatTimestamps, timestamp, heartbeatParamsStr);
+    multi.hset(this.keyHeartbeats, this.consumerId, heartbeatPayloadStr);
+    multi.zadd(this.keyHeartbeatTimestamps, timestamp, this.consumerId);
     this.redisClient.execMulti(multi, (err) => {
       if (err) this.emit(events.ERROR, err);
       else {
         this.emit(
           events.HEARTBEAT_TICK,
           timestamp,
-          this.heartbeatParams,
+          this.consumerId,
           heartbeatPayload,
         );
         this.ticker.nextTick();
@@ -126,9 +115,9 @@ export class Heartbeat extends EventEmitter {
           this.ticker.quit();
         },
         (cb: ICallback<void>) =>
-          Heartbeat.handleExpiredHeartbeatKeys(
+          ConsumerHeartbeat.handleExpiredHeartbeatIds(
             this.redisClient,
-            [this.heartbeatParams],
+            [this.consumerId],
             (err) => cb(err),
           ),
         (cb: ICallback<void>) => this.redisClient.halt(cb),
@@ -173,7 +162,7 @@ export class Heartbeat extends EventEmitter {
     transform: boolean,
     cb: ICallback<
       {
-        key: string;
+        consumerId: string;
         payload: THeartbeatPayloadData | string;
       }[]
     >,
@@ -184,20 +173,16 @@ export class Heartbeat extends EventEmitter {
       keyHeartbeatTimestamps,
       timestamp,
       '+inf',
-      (err, reply) => {
+      (err, consumerIds) => {
         if (err) cb(err);
-        else if (reply && reply.length) {
-          const keys = reply.map((i) => {
-            const { keyHeartbeat }: THeartbeatParams = JSON.parse(i);
-            return keyHeartbeat;
-          });
-          redisClient.hmget(keyHeartbeats, keys, (err, res) => {
+        else if (consumerIds && consumerIds.length) {
+          redisClient.hmget(keyHeartbeats, consumerIds, (err, res) => {
             if (err) cb(err);
-            else if (!res || res.length !== keys.length)
+            else if (!res || res.length !== consumerIds.length)
               cb(new EmptyCallbackReplyError());
             else {
               const heartbeats: {
-                key: string;
+                consumerId: string;
                 payload: THeartbeatPayloadData | string;
               }[] = [];
               async.eachOf(
@@ -207,12 +192,12 @@ export class Heartbeat extends EventEmitter {
                   // If a heartbeat is not found, do not return an error. Just skip it.
                   if (payloadStr) {
                     const idx = Number(index);
-                    const key = keys[idx];
+                    const consumerId = consumerIds[idx];
                     const payload: THeartbeatPayloadData | string = transform
                       ? JSON.parse(payloadStr)
                       : payloadStr;
                     heartbeats.push({
-                      key,
+                      consumerId,
                       payload,
                     });
                     done();
@@ -230,10 +215,9 @@ export class Heartbeat extends EventEmitter {
     );
   }
 
-  static getValidHeartbeatKeys(
+  static getValidHeartbeatIds(
     redisClient: RedisClient,
-    parse: boolean,
-    cb: ICallback<(THeartbeatParams | string)[]>,
+    cb: ICallback<string[]>,
   ): void {
     const { keyHeartbeatTimestamps } = redisKeys.getGlobalKeys();
     const timestamp = Date.now() - 10 * 1000;
@@ -241,23 +225,16 @@ export class Heartbeat extends EventEmitter {
       keyHeartbeatTimestamps,
       timestamp,
       '+inf',
-      (err, reply) => {
+      (err, consumerIds) => {
         if (err) cb(err);
-        else {
-          const arr = reply ?? [];
-          const params: (THeartbeatParams | string)[] = parse
-            ? arr.map((i) => JSON.parse(i))
-            : arr;
-          cb(null, params);
-        }
+        else cb(null, consumerIds ?? []);
       },
     );
   }
 
-  static getExpiredHeartbeatsKeys(
+  static getExpiredHeartbeatIds(
     redisClient: RedisClient,
-    parse: boolean,
-    cb: ICallback<(THeartbeatParams | string)[]>,
+    cb: ICallback<string[]>,
   ): void {
     const { keyHeartbeatTimestamps } = redisKeys.getGlobalKeys();
     const timestamp = Date.now() - 10 * 1000;
@@ -265,43 +242,31 @@ export class Heartbeat extends EventEmitter {
       keyHeartbeatTimestamps,
       '-inf',
       timestamp,
-      (err, reply) => {
+      (err, consumerIds) => {
         if (err) cb(err);
-        else {
-          const arr = reply ?? [];
-          const params: (THeartbeatParams | string)[] = parse
-            ? arr.map((i) => JSON.parse(i))
-            : arr;
-          cb(null, params);
-        }
+        else cb(null, consumerIds ?? []);
       },
     );
   }
 
-  static handleExpiredHeartbeatKeys(
+  static handleExpiredHeartbeatIds(
     client: RedisClient,
-    keyHeartBeatParams: (THeartbeatParams | string)[],
+    consumerIds: string[],
     cb: ICallback<void>,
   ): void {
-    if (keyHeartBeatParams.length) {
+    if (consumerIds.length) {
       const { keyHeartbeats, keyHeartbeatTimestamps } =
         redisKeys.getGlobalKeys();
       const multi = client.multi();
       async.each(
-        keyHeartBeatParams,
-        (item, done) => {
-          const {
-            keyHeartbeat,
-            keyInstanceRegistry,
-            instanceId,
-          }: THeartbeatParams =
-            typeof item === 'string' ? JSON.parse(item) : item;
-          const paramsStr =
-            typeof item === 'string' ? item : JSON.stringify(item);
-          multi.hdel(keyHeartbeats, keyHeartbeat);
-          multi.zrem(keyHeartbeatTimestamps, paramsStr);
-          heartbeatRegistry.unregister(multi, keyInstanceRegistry, instanceId);
-          done();
+        consumerIds,
+        (consumerId, done) => {
+          consumerQueues.getConsumerQueues(client, consumerId, (err, reply) => {
+            consumerQueues.removeConsumer(multi, consumerId, reply ?? []);
+            multi.hdel(keyHeartbeats, consumerId);
+            multi.zrem(keyHeartbeatTimestamps, consumerId);
+            done();
+          });
         },
         () => client.execMulti(multi, (err) => cb(err)),
       );

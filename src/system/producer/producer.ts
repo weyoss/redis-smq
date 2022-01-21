@@ -1,26 +1,56 @@
-import { ICallback, IConfig } from '../../../types';
+import { ICallback, IConfig, TFunction, TUnaryFunction } from '../../../types';
 import { Message } from '../message';
 import { events } from '../common/events';
 import { PanicError } from '../common/errors/panic.error';
 import { ProducerMessageRate } from './producer-message-rate';
-import { RedisClient } from '../common/redis-client/redis-client';
 import { Base } from '../common/base';
 import { ProducerMessageRateWriter } from './producer-message-rate-writer';
 import { ArgumentError } from '../common/errors/argument.error';
 
-export class Producer extends Base<ProducerMessageRate> {
+export class Producer extends Base {
+  protected messageRate: ProducerMessageRate | null = null;
+
   constructor(config: IConfig) {
     super(config);
     this.run();
   }
 
-  initMessageRateInstance(redisClient: RedisClient): void {
-    this.messageRate = new ProducerMessageRate();
-    this.messageRateWriter = new ProducerMessageRateWriter(
-      redisClient,
-      this.id,
-      this.messageRate,
-    );
+  protected setUpMessageRate = (cb: ICallback<void>): void => {
+    this.logger.debug(`Set up MessageRate...`);
+    const { monitor } = this.config;
+    if (monitor && monitor.enabled) {
+      if (!this.sharedRedisClient)
+        cb(new PanicError(`Expected an instance of RedisClient`));
+      else {
+        const messageRateWriter = new ProducerMessageRateWriter(
+          this.sharedRedisClient,
+        );
+        this.messageRate = new ProducerMessageRate(messageRateWriter);
+        cb();
+      }
+    } else {
+      this.logger.debug(`Skipping MessageRate setup as monitor not enabled...`);
+      cb();
+    }
+  };
+
+  protected tearDownMessageRate = (cb: ICallback<void>): void => {
+    this.logger.debug(`Tear down MessageRate...`);
+    if (this.messageRate) {
+      this.messageRate.quit(() => {
+        this.logger.debug(`MessageRate has been torn down.`);
+        this.messageRate = null;
+        cb();
+      });
+    } else cb();
+  };
+
+  protected goingUp(): TFunction[] {
+    return super.goingUp().concat([this.setUpMessageRate]);
+  }
+
+  protected goingDown(): TUnaryFunction<ICallback<void>>[] {
+    return [this.tearDownMessageRate].concat(super.goingDown());
   }
 
   produce(message: Message, cb: ICallback<boolean>): void {

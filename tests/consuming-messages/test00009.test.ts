@@ -12,7 +12,7 @@ import { promisifyAll } from 'bluebird';
 test('A consumer does re-queue a failed message when threshold is not exceeded, otherwise it moves the message to DLQ (dead letter queue)', async () => {
   const producer = getProducer();
   const consumer = getConsumer({
-    consumeMock: jest.fn(() => {
+    messageHandler: jest.fn(() => {
       throw new Error('Explicit error');
     }),
   });

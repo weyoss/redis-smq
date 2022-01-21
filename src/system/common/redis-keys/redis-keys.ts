@@ -69,6 +69,7 @@ enum ERedisKey {
   KEY_QUEUES,
   KEY_PROCESSING_QUEUES,
   KEY_LOCK_QUEUE,
+  KEY_CONSUMER_QUEUES,
 }
 
 export const redisKeys = {
@@ -78,7 +79,7 @@ export const redisKeys = {
     };
   },
 
-  getKeys(queueName: string, ns?: string | null) {
+  getQueueKeys(queueName: string, ns?: string | null) {
     const globalKeys = this.getGlobalKeys();
     const keys = {
       keyQueuePending: this.joinSegments(
@@ -150,9 +151,32 @@ export const redisKeys = {
     };
   },
 
-  getConsumerKeys(queueName: string, instanceId: string, ns?: string | null) {
+  getConsumerKeys(instanceId: string) {
     const globalKeys = this.getGlobalKeys();
-    const parentKeys = this.getKeys(queueName, ns);
+    const keys = {
+      keyHeartbeatConsumer: this.joinSegments(
+        ERedisKey.KEY_HEARTBEAT_CONSUMER,
+        instanceId,
+      ),
+      keyConsumerQueues: this.joinSegments(
+        ERedisKey.KEY_CONSUMER_QUEUES,
+        instanceId,
+      ),
+    };
+    return {
+      ...globalKeys,
+      ...this.makeNamespacedKeys(keys, namespace),
+    };
+  },
+
+  getQueueConsumerKeys(
+    queueName: string,
+    instanceId: string,
+    ns?: string | null,
+  ) {
+    const globalKeys = this.getGlobalKeys();
+    const queueKeys = this.getQueueKeys(queueName, ns);
+    const consumerKeys = this.getConsumerKeys(instanceId);
     const keys = {
       keyQueueProcessing: this.joinSegments(
         ERedisKey.KEY_QUEUE_PROCESSING,
@@ -164,11 +188,6 @@ export const redisKeys = {
         queueName,
         instanceId,
       ),
-      keyHeartbeatConsumer: this.joinSegments(
-        ERedisKey.KEY_HEARTBEAT_CONSUMER,
-        queueName,
-        instanceId,
-      ),
       keyRateConsumerAcknowledged: this.joinSegments(
         ERedisKey.KEY_RATE_CONSUMER_ACKNOWLEDGED,
         queueName,
@@ -176,7 +195,8 @@ export const redisKeys = {
       ),
     };
     return {
-      ...parentKeys,
+      ...queueKeys,
+      ...consumerKeys,
       ...globalKeys,
       ...this.makeNamespacedKeys(keys, ns ?? namespace),
     };

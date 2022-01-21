@@ -18,7 +18,7 @@ test('A consumer delays a failed message before re-queuing it again, given messa
       ...config,
       message: { retryDelay: 10000, retryThreshold: 5 },
     },
-    consumeMock: jest.fn((msg, cb) => {
+    messageHandler: jest.fn((msg, cb) => {
       timestamps.push(Date.now());
       callCount += 1;
       if (callCount < 5) {

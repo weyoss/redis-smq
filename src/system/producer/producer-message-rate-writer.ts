@@ -7,7 +7,6 @@ import * as async from 'async';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { QueuePublishedTimeSeries } from './producer-time-series/queue-published-time-series';
 import { GlobalPublishedTimeSeries } from './producer-time-series/global-published-time-series';
-import { ProducerMessageRate } from './producer-message-rate';
 
 export class ProducerMessageRateWriter extends MessageRateWriter {
   protected redisClient: RedisClient;
@@ -19,12 +18,8 @@ export class ProducerMessageRateWriter extends MessageRateWriter {
     ReturnType<typeof QueuePublishedTimeSeries>
   > = {};
 
-  constructor(
-    redisClient: RedisClient,
-    producerId: string,
-    multiQueueProducerMessageRate: ProducerMessageRate,
-  ) {
-    super(multiQueueProducerMessageRate);
+  constructor(redisClient: RedisClient) {
+    super();
     this.redisClient = redisClient;
     this.globalPublishedTimeSeries = GlobalPublishedTimeSeries(
       redisClient,

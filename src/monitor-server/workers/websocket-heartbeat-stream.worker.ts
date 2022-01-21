@@ -12,7 +12,7 @@ import { LockManager } from '../../system/common/lock-manager/lock-manager';
 import { Ticker } from '../../system/common/ticker/ticker';
 import * as async from 'async';
 import { events } from '../../system/common/events';
-import { Heartbeat } from '../../system/common/heartbeat/heartbeat';
+import { ConsumerHeartbeat } from '../../system/consumer/consumer-heartbeat';
 
 export class WebsocketHeartbeatStreamWorker {
   protected logger;
@@ -44,36 +44,40 @@ export class WebsocketHeartbeatStreamWorker {
         const onlineIds: TWebsocketHeartbeatOnlineIdsStreamPayload = {
           consumers: [],
         };
-        Heartbeat.getValidHeartbeats(this.redisClient, false, (err, reply) => {
-          if (err) throw err;
-          else {
-            async.each(
-              reply ?? [],
-              (item, done) => {
-                const { ns, queueName, consumerId } =
-                  redisKeys.extractData(item.key) ?? {};
-                const payload = String(item.payload);
-                if (ns && queueName && consumerId) {
-                  onlineIds.consumers.push(consumerId);
+        ConsumerHeartbeat.getValidHeartbeats(
+          this.redisClient,
+          false,
+          (err, reply) => {
+            if (err) throw err;
+            else {
+              async.each(
+                reply ?? [],
+                (item, done) => {
+                  const { ns, queueName, consumerId } =
+                    redisKeys.extractData(item.consumerId) ?? {};
+                  const payload = String(item.payload);
+                  if (ns && queueName && consumerId) {
+                    onlineIds.consumers.push(consumerId);
+                    this.redisClient.publish(
+                      `streamConsumerHeartbeat:${consumerId}`,
+                      payload,
+                      this.noop,
+                    );
+                  }
+                  done();
+                },
+                () => {
                   this.redisClient.publish(
-                    `streamConsumerHeartbeat:${consumerId}`,
-                    payload,
+                    `streamHeartbeatOnlineIds`,
+                    JSON.stringify(onlineIds),
                     this.noop,
                   );
-                }
-                done();
-              },
-              () => {
-                this.redisClient.publish(
-                  `streamHeartbeatOnlineIds`,
-                  JSON.stringify(onlineIds),
-                  this.noop,
-                );
-                this.ticker.nextTick();
-              },
-            );
-          }
-        });
+                  this.ticker.nextTick();
+                },
+              );
+            }
+          },
+        );
       } else this.ticker.nextTick();
     });
   };

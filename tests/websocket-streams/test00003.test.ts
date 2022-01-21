@@ -1,4 +1,5 @@
 import {
+  defaultQueue,
   getConsumer,
   listenForWebsocketStreamEvents,
   validateTime,
@@ -6,11 +7,10 @@ import {
 
 test('WebsocketRateStreamWorker: streamQueueAcknowledged', async () => {
   const consumer = getConsumer();
-  const queue = consumer.getQueue();
   await consumer.runAsync();
 
   const data = await listenForWebsocketStreamEvents(
-    `streamQueueAcknowledged:${queue.ns}:${queue.name}`,
+    `streamQueueAcknowledged:${defaultQueue.ns}:${defaultQueue.name}`,
   );
 
   for (let i = 0; i < data.length; i += 1) {

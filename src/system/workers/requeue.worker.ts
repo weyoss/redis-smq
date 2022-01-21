@@ -32,7 +32,7 @@ export class RequeueWorker {
           if (!queue)
             throw new PanicError('Message queue parameters are required');
           const { ns, name } = queue;
-          const { keyQueuePending, keyQueuePriority } = redisKeys.getKeys(
+          const { keyQueuePending, keyQueuePriority } = redisKeys.getQueueKeys(
             name,
             ns,
           );

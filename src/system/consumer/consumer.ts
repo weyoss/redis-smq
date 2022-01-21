@@ -1,213 +1,93 @@
 import {
-  EMessageDeadLetterCause,
-  EMessageUnacknowledgedCause,
   ICallback,
   IConfig,
+  TConsumerMessageHandler,
+  TConsumerMessageHandlerParams,
   TConsumerRedisKeys,
   THeartbeatRegistryPayload,
   TQueueParams,
   TUnaryFunction,
 } from '../../../types';
-import { Message } from '../message';
 import { ConsumerMessageRate } from './consumer-message-rate';
 import { events } from '../common/events';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { resolve } from 'path';
 import { ConsumerWorkers } from './consumer-workers';
 import { WorkerRunner } from '../common/worker-runner/worker-runner';
-import { ConsumerFrontend } from './consumer-frontend';
-import { QueueManager } from '../queue-manager/queue-manager';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
-import { ConsumerError } from './consumer.error';
-import { PanicError } from '../common/errors/panic.error';
 import { redisKeys } from '../common/redis-keys/redis-keys';
-import { Heartbeat } from '../common/heartbeat/heartbeat';
-import { heartbeatRegistry } from '../common/heartbeat/heartbeat-registry';
-import { ExtendedBase } from '../common/extended-base';
+import { ConsumerHeartbeat } from './consumer-heartbeat';
 import { ConsumerMessageRateWriter } from './consumer-message-rate-writer';
+import { Base } from '../common/base';
+import { ConsumerMessageHandler } from './consumer-message-handler';
+import * as async from 'async';
+import { consumerQueues } from './consumer-queues';
+import { QueueManager } from '../queue-manager/queue-manager';
 
-export class Consumer extends ExtendedBase<
-  ConsumerMessageRate,
-  TConsumerRedisKeys
-> {
-  private readonly usingPriorityQueuing: boolean;
-  private consumerRedisClient: RedisClient | null = null;
+export class Consumer extends Base {
+  private heartbeat: ConsumerHeartbeat | null = null;
   private consumerWorkers: ConsumerWorkers | null = null;
-  private consumerFrontend: ConsumerFrontend | null = null;
+  private messageHandlerInstances: ConsumerMessageHandler[] = [];
+  private messageHandlers: TConsumerMessageHandlerParams[] = [];
+  private redisKeys: TConsumerRedisKeys;
 
-  constructor(
-    queue: string | TQueueParams,
-    config: IConfig = {},
-    usePriorityQueuing = false,
-  ) {
-    super(queue, config);
-    this.usingPriorityQueuing = usePriorityQueuing;
+  constructor(config: IConfig = {}) {
+    super(config);
+    this.redisKeys = redisKeys.getConsumerKeys(this.getId());
   }
 
-  protected getConsumerRedisClient(cb: TUnaryFunction<RedisClient>): void {
-    if (!this.consumerRedisClient)
-      this.emit(
-        events.ERROR,
-        new PanicError('Expected an instance of RedisClient'),
-      );
-    else cb(this.consumerRedisClient);
-  }
-
-  protected handleConsume(msg: Message): void {
-    if (!this.consumerFrontend || !this.consumerFrontend.consume) {
-      throw new PanicError('Expected an instance of ConsumeHandler');
-    }
-    let isTimeout = false;
-    let timer: NodeJS.Timeout | null = null;
-    this.logger.info(`Processing message (ID ${msg.getId()})...`);
-    try {
-      const consumeTimeout = msg.getConsumeTimeout();
-      if (consumeTimeout) {
-        timer = setTimeout(() => {
-          isTimeout = true;
-          timer = null;
-          this.unacknowledgeMessage(msg, EMessageUnacknowledgedCause.TIMEOUT);
-        }, consumeTimeout);
-      }
-      const onConsumed = (err?: Error | null) => {
-        if (this.powerManager.isRunning() && !isTimeout) {
-          if (timer) clearTimeout(timer);
-          if (err)
-            this.unacknowledgeMessage(
-              msg,
-              EMessageUnacknowledgedCause.UNACKNOWLEDGED,
-              err,
-            );
-          else
-            this.getBroker((broker) => {
-              const { keyQueueProcessing } = this.getRedisKeys();
-              broker.acknowledgeMessage(keyQueueProcessing, msg, (err) => {
-                if (err) this.emit(events.ERROR, err);
-                else this.emit(events.MESSAGE_ACKNOWLEDGED, msg);
-              });
-            });
-        }
-      };
-
-      // As a safety measure, in case if we mess with message system
-      // properties, only a clone of the message is actually given
-      this.consumerFrontend.consume(Message.createFromMessage(msg), onConsumed);
-    } catch (error: unknown) {
-      const err =
-        error instanceof Error
-          ? error
-          : new ConsumerError(
-              `An error occurred while processing message ID (${msg.getId()})`,
-            );
-      this.unacknowledgeMessage(
-        msg,
-        EMessageUnacknowledgedCause.CAUGHT_ERROR,
-        err,
-      );
-    }
-  }
-
-  protected unacknowledgeMessage(
-    msg: Message,
-    cause: EMessageUnacknowledgedCause,
-    err?: Error,
-  ): void {
-    this.getBroker((broker) => {
-      const { keyQueueProcessing } = this.getRedisKeys();
-      broker.unacknowledgeMessage(
-        keyQueueProcessing,
-        msg,
-        cause,
-        err,
-        (err, deadLetterCause) => {
-          if (err) this.emit(events.ERROR, err);
-          else {
-            this.emit(events.MESSAGE_UNACKNOWLEDGED, msg, cause);
-            if (deadLetterCause !== undefined) {
-              this.emit(events.MESSAGE_DEAD_LETTERED, msg, deadLetterCause);
-            }
-          }
-        },
-      );
-    });
-  }
-
-  protected registerEventsHandlers(): void {
-    super.registerEventsHandlers();
-    this.on(events.UP, () => this.emit(events.MESSAGE_NEXT));
-    this.on(events.MESSAGE_NEXT, () => {
-      if (this.powerManager.isRunning()) {
-        this.logger.info('Waiting for new messages...');
-        this.getConsumerRedisClient((client) => {
-          this.getBroker((broker) => {
-            broker.dequeueMessage(this, client, (err, msgStr) => {
-              if (err) this.emit(events.ERROR, err);
-              else if (!msgStr)
-                this.emit(events.ERROR, new EmptyCallbackReplyError());
-              else this.handleReceivedMessage(msgStr);
-            });
-          });
-        });
-      } else {
-        this.logger.info('Consumer is not running. End of cycle.');
-      }
-    });
-    this.on(events.MESSAGE_ACKNOWLEDGED, (msg: Message) => {
-      this.logger.info(`Message (ID ${msg.getId()}) has been acknowledged.`);
-      if (this.messageRate) this.messageRate.incrementAcknowledged();
-      this.emit(events.MESSAGE_NEXT);
-    });
-    this.on(
-      events.MESSAGE_DEAD_LETTERED,
-      (msg: Message, cause: EMessageDeadLetterCause) => {
-        this.logger.info(
-          `Message (ID ${msg.getId()}) has been dead-lettered. Cause: ${cause}.`,
-        );
-        if (this.messageRate) this.messageRate.incrementDeadLettered();
-      },
+  protected registerMessageHandlerEvents = (
+    messageHandler: ConsumerMessageHandler,
+  ): void => {
+    messageHandler.on(events.ERROR, (...args: unknown[]) =>
+      this.emit(events.ERROR, ...args),
     );
-    this.on(
-      events.MESSAGE_UNACKNOWLEDGED,
-      (msg: Message, cause: EMessageUnacknowledgedCause) => {
-        this.logger.info(
-          `Message (ID ${msg.getId()}) has been unacknowledged. Cause: ${cause}.`,
-        );
-        this.emit(events.MESSAGE_NEXT);
-      },
+    messageHandler.on(events.IDLE, (...args: unknown[]) =>
+      this.emit(events.IDLE, ...args),
     );
-  }
+    messageHandler.on(events.MESSAGE_UNACKNOWLEDGED, (...args: unknown[]) =>
+      this.emit(events.MESSAGE_UNACKNOWLEDGED, ...args),
+    );
+    messageHandler.on(events.MESSAGE_DEAD_LETTERED, (...args: unknown[]) =>
+      this.emit(events.MESSAGE_DEAD_LETTERED, ...args),
+    );
+    messageHandler.on(events.MESSAGE_ACKNOWLEDGED, (...args: unknown[]) =>
+      this.emit(events.MESSAGE_ACKNOWLEDGED, ...args),
+    );
+  };
 
-  protected handleReceivedMessage(json: string): void {
-    const message = Message.createFromMessage(json);
-    this.logger.info(`Got a new message (ID ${message.getId()})...`);
-    this.emit(events.MESSAGE_RECEIVED, message);
-    if (message.hasExpired()) {
-      this.logger.info(
-        `Message (ID ${message.getId()}) has expired. Unacknowledging...`,
-      );
-      this.unacknowledgeMessage(
-        message,
-        EMessageUnacknowledgedCause.TTL_EXPIRED,
-      );
-    } else {
-      this.logger.info(`Trying to consume message (ID ${message.getId()})...`);
-      this.handleConsume(message);
-    }
-  }
-
-  protected setUpConsumerRedisClient = (cb: ICallback<void>): void => {
-    this.logger.debug(`Set up consumer RedisClient instance...`);
-    RedisClient.getNewInstance(this.config, (err, client) => {
+  protected setUpHeartbeat = (cb: ICallback<void>): void => {
+    this.logger.debug(`Set up consumer heartbeat...`);
+    RedisClient.getNewInstance(this.config, (err, redisClient) => {
       if (err) cb(err);
-      else if (!client) cb(new EmptyCallbackReplyError());
+      else if (!redisClient) cb(new EmptyCallbackReplyError());
       else {
-        this.consumerRedisClient = client;
+        this.heartbeat = new ConsumerHeartbeat(this, redisClient);
+        this.heartbeat.on(events.ERROR, (err: Error) =>
+          this.emit(events.ERROR, err),
+        );
         cb();
       }
     });
   };
 
-  protected setUpConsumerWorkers = (cb: ICallback<void>) => {
+  protected tearDownHeartbeat = (cb: ICallback<void>): void => {
+    this.logger.debug(`Tear down consumer heartbeat...`);
+    if (this.heartbeat) {
+      this.heartbeat.quit(() => {
+        this.logger.debug(`Consumer heartbeat has been torn down.`);
+        this.heartbeat = null;
+        cb();
+      });
+    } else {
+      this.logger.warn(
+        `This is not normal. [this.heartbeat] has not been set up. Ignoring...`,
+      );
+      cb();
+    }
+  };
+
+  protected setUpConsumerWorkers = (cb: ICallback<void>): void => {
     this.logger.debug(`Set up consumer workers...`);
     this.getSharedRedisClient((client) => {
       this.consumerWorkers = new ConsumerWorkers(
@@ -225,23 +105,6 @@ export class Consumer extends ExtendedBase<
     });
   };
 
-  protected setUpConsumerProcessingQueue = (cb: ICallback<void>): void => {
-    this.logger.debug(`Set up consumer processing queue...`);
-    this.getSharedRedisClient((client) =>
-      QueueManager.setUpProcessingQueue(this, client, cb),
-    );
-  };
-
-  protected goingUp(): TUnaryFunction<ICallback<void>>[] {
-    return super
-      .goingUp()
-      .concat([
-        this.setUpConsumerRedisClient,
-        this.setUpConsumerWorkers,
-        this.setUpConsumerProcessingQueue,
-      ]);
-  }
-
   protected tearDownConsumerWorkers = (cb: ICallback<void>): void => {
     this.logger.debug(`Tear down consumer workers...`);
     if (this.consumerWorkers) {
@@ -258,73 +121,137 @@ export class Consumer extends ExtendedBase<
     }
   };
 
-  protected tearDownConsumerRedisClient = (cb: ICallback<void>): void => {
-    this.logger.debug(`Tear down consumer RedisClient instance...`);
-    if (this.consumerRedisClient) {
-      this.consumerRedisClient.halt(() => {
-        this.logger.debug(`Consumer RedisClient instance has been torn down.`);
-        this.consumerRedisClient = null;
-        cb();
+  protected runMessageHandler = (
+    handlerParams: TConsumerMessageHandlerParams,
+    cb: ICallback<void>,
+  ) => {
+    this.getBroker((broker) => {
+      RedisClient.getNewInstance(this.config, (err, redisClient) => {
+        if (err) cb(err);
+        else if (!redisClient) cb(new EmptyCallbackReplyError());
+        else {
+          this.getSharedRedisClient((sharedRedisClient) => {
+            const { queue, usePriorityQueuing, messageHandler } = handlerParams;
+            const messageRate = this.config.monitor?.enabled
+              ? this.getMessageRateInstance(queue, sharedRedisClient)
+              : null;
+            const handler = new ConsumerMessageHandler(
+              this.id,
+              queue,
+              this.logger,
+              messageHandler,
+              broker,
+              usePriorityQueuing,
+              redisClient,
+              messageRate,
+            );
+            this.messageHandlerInstances.push(handler);
+            this.registerMessageHandlerEvents(handler);
+            handler.run(cb);
+          });
+        }
       });
-    } else {
-      this.logger.warn(
-        `This is not normal. [this.consumerRedisClient] has not been set up. Ignoring...`,
-      );
-      cb();
-    }
+    });
   };
+
+  protected setUpMessageHandlerInstances = (cb: ICallback<void>): void => {
+    async.each(
+      this.messageHandlers,
+      (handlerParams, done) => {
+        this.runMessageHandler(handlerParams, done);
+      },
+      (err) => cb(err),
+    );
+  };
+
+  protected tearDownMessageHandlerInstances = (cb: ICallback<void>): void => {
+    async.eachOf<ConsumerMessageHandler, Error>(
+      this.messageHandlerInstances,
+      (handler, queue, done) => {
+        handler.shutdown(done);
+      },
+      (err) => {
+        if (err) cb(err);
+        else {
+          this.messageHandlerInstances = [];
+          cb();
+        }
+      },
+    );
+  };
+
+  protected getMessageRateInstance = (
+    queue: TQueueParams,
+    redisClient: RedisClient,
+  ): ConsumerMessageRate => {
+    const messageRateWriter = new ConsumerMessageRateWriter(
+      redisClient,
+      queue,
+      this.id,
+    );
+    return new ConsumerMessageRate(messageRateWriter);
+  };
+
+  protected goingUp(): TUnaryFunction<ICallback<void>>[] {
+    return super
+      .goingUp()
+      .concat([
+        this.setUpMessageHandlerInstances,
+        this.setUpConsumerWorkers,
+        this.setUpHeartbeat,
+      ]);
+  }
 
   protected goingDown(): TUnaryFunction<ICallback<void>>[] {
     return [
       this.tearDownConsumerWorkers,
-      this.tearDownConsumerRedisClient,
+      this.tearDownMessageHandlerInstances,
+      this.tearDownHeartbeat,
     ].concat(super.goingDown());
   }
 
-  setConsumerFrontend(consumerMessageHandler: ConsumerFrontend): Consumer {
-    this.consumerFrontend = consumerMessageHandler;
-    return this;
+  protected up(cb?: ICallback<void>): void {
+    this.heartbeat?.once(events.HEARTBEAT_TICK, () => {
+      super.up(cb);
+    });
   }
 
-  initMessageRateInstance(redisClient: RedisClient): void {
-    this.messageRate = new ConsumerMessageRate();
-    this.messageRate.on(events.IDLE, () => this.emit(events.IDLE));
-    this.messageRateWriter = new ConsumerMessageRateWriter(
-      redisClient,
-      this.queue,
-      this.id,
-      this.messageRate,
+  protected addMessageHandler(
+    handlerParams: TConsumerMessageHandlerParams,
+  ): void {
+    const { queue } = handlerParams;
+    this.messageHandlers = this.messageHandlers.filter(
+      (i) => !(i.queue.name === queue.name && i.queue.ns === queue.ns),
     );
+    this.messageHandlers.push(handlerParams);
   }
 
-  initHeartbeatInstance(redisClient: RedisClient): void {
-    const { keyHeartbeatConsumer, keyQueueConsumers } = this.getRedisKeys();
-    this.heartbeat = new Heartbeat(
-      {
-        keyHeartbeat: keyHeartbeatConsumer,
-        keyInstanceRegistry: keyQueueConsumers,
-        instanceId: this.getId(),
-      },
-      redisClient,
-    );
-    this.heartbeat.on(events.ERROR, (err: Error) =>
-      this.emit(events.ERROR, err),
-    );
+  consume(
+    queue: string | TQueueParams,
+    usePriorityQueuing: boolean,
+    messageHandler: TConsumerMessageHandler,
+    cb: ICallback<boolean>,
+  ): void {
+    const queueParams = QueueManager.getQueueParams(queue);
+    const handlerParams = {
+      queue: queueParams,
+      usePriorityQueuing,
+      messageHandler,
+    };
+    const setup = () => {
+      this.addMessageHandler(handlerParams);
+      this.runMessageHandler(handlerParams, () => cb(null, true));
+    };
+    if (this.isRunning()) setup();
+    else if (this.isGoingUp()) this.once(events.UP, setup);
+    else {
+      this.addMessageHandler(handlerParams);
+      cb(null, false);
+    }
   }
 
   getRedisKeys(): TConsumerRedisKeys {
-    if (!this.redisKeys) {
-      this.redisKeys = redisKeys.getConsumerKeys(
-        this.queue.name,
-        this.id,
-        this.queue.ns,
-      );
-    }
     return this.redisKeys;
-  }
-
-  isUsingPriorityQueuing(): boolean {
-    return this.usingPriorityQueuing;
   }
 
   static isAlive(
@@ -333,12 +260,12 @@ export class Consumer extends ExtendedBase<
     id: string,
     cb: ICallback<boolean>,
   ): void {
-    const { keyQueueConsumers } = redisKeys.getConsumerKeys(
+    const { keyQueueConsumers } = redisKeys.getQueueConsumerKeys(
       queue.name,
       id,
       queue.ns,
     );
-    heartbeatRegistry.exists(redisClient, keyQueueConsumers, id, cb);
+    consumerQueues.exists(redisClient, keyQueueConsumers, id, cb);
   }
 
   static getOnlineConsumers(
@@ -347,8 +274,7 @@ export class Consumer extends ExtendedBase<
     transform = false,
     cb: ICallback<Record<string, THeartbeatRegistryPayload | string>>,
   ): void {
-    const { keyQueueConsumers } = redisKeys.getKeys(queue.name, queue.ns);
-    heartbeatRegistry.getAll(redisClient, keyQueueConsumers, transform, cb);
+    consumerQueues.getQueueConsumers(redisClient, queue, transform, cb);
   }
 
   static getOnlineConsumerIds(
@@ -356,8 +282,7 @@ export class Consumer extends ExtendedBase<
     queue: TQueueParams,
     cb: ICallback<string[]>,
   ): void {
-    const { keyQueueConsumers } = redisKeys.getKeys(queue.name, queue.ns);
-    heartbeatRegistry.getIds(redisClient, keyQueueConsumers, cb);
+    consumerQueues.getQueueConsumerIds(redisClient, queue, cb);
   }
 
   static countOnlineConsumers(
@@ -365,7 +290,6 @@ export class Consumer extends ExtendedBase<
     queue: TQueueParams,
     cb: ICallback<number>,
   ): void {
-    const { keyQueueConsumers } = redisKeys.getKeys(queue.name, queue.ns);
-    heartbeatRegistry.count(redisClient, keyQueueConsumers, cb);
+    consumerQueues.countQueueConsumers(redisClient, queue, cb);
   }
 }

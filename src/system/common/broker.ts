@@ -8,10 +8,10 @@ import { Message } from '../message';
 import BLogger from 'bunyan';
 import { PowerManager } from './power-manager/power-manager';
 import { MessageManager } from '../message-manager/message-manager';
-import { Consumer } from '../consumer/consumer';
 import { RedisClient } from './redis-client/redis-client';
 import { QueueManager } from '../queue-manager/queue-manager';
 import { ArgumentError } from './errors/argument.error';
+import { ConsumerMessageHandler } from '../consumer/consumer-message-handler';
 
 export class Broker {
   protected logger: BLogger;
@@ -48,13 +48,13 @@ export class Broker {
   }
 
   dequeueMessage(
-    consumer: Consumer,
+    consumerHandler: ConsumerMessageHandler,
     redisClient: RedisClient,
     cb: ICallback<string>,
   ): void {
-    const queue = consumer.getQueue();
-    const { keyQueueProcessing } = consumer.getRedisKeys();
-    if (consumer.isUsingPriorityQueuing()) {
+    const queue = consumerHandler.getQueue();
+    const { keyQueueProcessing } = consumerHandler.getRedisKeys();
+    if (consumerHandler.isUsingPriorityQueuing()) {
       this.messageManager.dequeueMessageWithPriority(
         redisClient,
         queue,

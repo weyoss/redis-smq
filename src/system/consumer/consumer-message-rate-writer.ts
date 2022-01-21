@@ -1,4 +1,3 @@
-import { ConsumerMessageRate } from './consumer-message-rate';
 import { ConsumerAcknowledgedTimeSeries } from './consumer-time-series/consumer-acknowledged-time-series';
 import { ConsumerDeadLetteredTimeSeries } from './consumer-time-series/consumer-dead-lettered-time-series';
 import { QueueAcknowledgedTimeSeries } from './consumer-time-series/queue-acknowledged-time-series';
@@ -38,9 +37,8 @@ export class ConsumerMessageRateWriter extends MessageRateWriter {
     redisClient: RedisClient,
     queue: TQueueParams,
     consumerId: string,
-    consumerMessageRate: ConsumerMessageRate,
   ) {
-    super(consumerMessageRate);
+    super();
     this.redisClient = redisClient;
     this.globalAcknowledgedRateTimeSeries = GlobalAcknowledgedTimeSeries(
       redisClient,

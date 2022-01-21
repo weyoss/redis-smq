@@ -9,7 +9,7 @@ export const ConsumerAcknowledgedTimeSeries = (
   queue: TQueueParams,
   isMaster?: boolean,
 ) => {
-  const { keyRateConsumerAcknowledged } = redisKeys.getConsumerKeys(
+  const { keyRateConsumerAcknowledged } = redisKeys.getQueueConsumerKeys(
     queue.name,
     consumerId,
     queue.ns,

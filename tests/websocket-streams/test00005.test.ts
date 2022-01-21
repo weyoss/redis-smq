@@ -1,4 +1,5 @@
 import {
+  defaultQueue,
   getConsumer,
   listenForWebsocketStreamEvents,
   validateTime,
@@ -6,11 +7,10 @@ import {
 
 test('WebsocketRateStreamWorker: streamQueueDeadLettered', async () => {
   const consumer = getConsumer();
-  const queue = consumer.getQueue();
   await consumer.runAsync();
 
   const data = await listenForWebsocketStreamEvents(
-    `streamQueueDeadLettered:${queue.ns}:${queue.name}`,
+    `streamQueueDeadLettered:${defaultQueue.ns}:${defaultQueue.name}`,
   );
 
   for (let i = 0; i < data.length; i += 1) {

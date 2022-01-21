@@ -5,7 +5,6 @@ import * as async from 'async';
 import { PowerManager } from './power-manager/power-manager';
 import { Logger } from './logger';
 import * as BunyanLogger from 'bunyan';
-import { MessageRate } from './message-rate';
 import { events } from './events';
 import { Broker } from './broker';
 import { redisKeys } from './redis-keys/redis-keys';
@@ -14,12 +13,9 @@ import { MessageManager } from '../message-manager/message-manager';
 import { Message } from '../message';
 import { EmptyCallbackReplyError } from './errors/empty-callback-reply.error';
 import { PanicError } from './errors/panic.error';
-import { MessageRateWriter } from './message-rate-writer';
 import { QueueManager } from '../queue-manager/queue-manager';
 
-export abstract class Base<
-  TMessageRate extends MessageRate,
-> extends EventEmitter {
+export abstract class Base extends EventEmitter {
   protected readonly id: string;
   protected readonly config: IConfig;
   protected readonly logger: BunyanLogger;
@@ -27,8 +23,6 @@ export abstract class Base<
 
   protected broker: Broker | null = null;
   protected sharedRedisClient: RedisClient | null = null;
-  protected messageRate: TMessageRate | null = null;
-  protected messageRateWriter: MessageRateWriter | null = null;
 
   constructor(config: IConfig = {}) {
     super();
@@ -79,22 +73,6 @@ export abstract class Base<
     }
   };
 
-  protected setUpMessageRate = (cb: ICallback<void>): void => {
-    this.logger.debug(`Set up MessageRate...`);
-    const { monitor } = this.config;
-    if (monitor && monitor.enabled) {
-      if (!this.sharedRedisClient)
-        cb(new PanicError(`Expected an instance of RedisClient`));
-      else {
-        this.initMessageRateInstance(this.sharedRedisClient);
-        cb();
-      }
-    } else {
-      this.logger.debug(`Skipping MessageRate setup as monitor not enabled...`);
-      cb();
-    }
-  };
-
   protected tearDownSharedRedisClient = (cb: ICallback<void>): void => {
     this.logger.debug(`Tear down shared RedisClient instance...`);
     if (this.sharedRedisClient) {
@@ -109,33 +87,6 @@ export abstract class Base<
       );
       cb();
     }
-  };
-
-  protected tearDownMessageRate = (cb: ICallback<void>): void => {
-    this.logger.debug(`Tear down MessageRate...`);
-    async.waterfall(
-      [
-        (cb: ICallback<void>) => {
-          if (this.messageRate) {
-            this.messageRate.quit(() => {
-              this.logger.debug(`MessageRate has been torn down.`);
-              this.messageRate = null;
-              cb();
-            });
-          } else cb();
-        },
-        (cb: ICallback<void>) => {
-          if (this.messageRateWriter) {
-            this.messageRateWriter.quit(() => {
-              this.logger.debug(`MessageRateWriter has been torn down.`);
-              this.messageRateWriter = null;
-              cb();
-            });
-          } else cb();
-        },
-      ],
-      cb,
-    );
   };
 
   protected tearDownBroker = (cb: ICallback<void>): void => {
@@ -163,11 +114,7 @@ export abstract class Base<
   }
 
   protected goingUp(): TFunction[] {
-    return [
-      this.setUpSharedRedisClient,
-      this.setUpBroker,
-      this.setUpMessageRate,
-    ];
+    return [this.setUpSharedRedisClient, this.setUpBroker];
   }
 
   protected up(cb?: ICallback<void>): void {
@@ -177,11 +124,7 @@ export abstract class Base<
   }
 
   protected goingDown(): TUnaryFunction<ICallback<void>>[] {
-    return [
-      this.tearDownBroker,
-      this.tearDownMessageRate,
-      this.tearDownSharedRedisClient,
-    ];
+    return [this.tearDownBroker, this.tearDownSharedRedisClient];
   }
 
   protected down(cb?: ICallback<void>): void {
@@ -260,6 +203,4 @@ export abstract class Base<
   getConfig(): IConfig {
     return this.config;
   }
-
-  abstract initMessageRateInstance(redisClient: RedisClient): void;
 }

@@ -11,7 +11,7 @@ import { Message } from '../../src/message';
 test('Produce and consume a delayed message', async () => {
   const consumedMessages: Message[] = [];
   const consumer = getConsumer({
-    consumeMock: jest.fn((msg, cb) => {
+    messageHandler: jest.fn((msg, cb) => {
       consumedMessages.push(msg);
       cb();
     }),

@@ -8,9 +8,8 @@ import { LockManager } from '../../system/common/lock-manager/lock-manager';
 import { Ticker } from '../../system/common/ticker/ticker';
 import * as async from 'async';
 import { events } from '../../system/common/events';
-import { Heartbeat } from '../../system/common/heartbeat/heartbeat';
+import { ConsumerHeartbeat } from '../../system/consumer/consumer-heartbeat';
 import { TimeSeries } from '../../system/common/time-series/time-series';
-import { InvalidCallbackReplyError } from '../../system/common/errors/invalid-callback-reply.error';
 import { QueuePublishedTimeSeries } from '../../system/producer/producer-time-series/queue-published-time-series';
 import { QueueDeadLetteredTimeSeries } from '../../system/consumer/consumer-time-series/queue-dead-lettered-time-series';
 import { QueueAcknowledgedTimeSeries } from '../../system/consumer/consumer-time-series/queue-acknowledged-time-series';
@@ -19,6 +18,7 @@ import { GlobalAcknowledgedTimeSeries } from '../../system/consumer/consumer-tim
 import { GlobalDeadLetteredTimeSeries } from '../../system/consumer/consumer-time-series/global-dead-lettered-time-series';
 import { ConsumerAcknowledgedTimeSeries } from '../../system/consumer/consumer-time-series/consumer-acknowledged-time-series';
 import { ConsumerDeadLetteredTimeSeries } from '../../system/consumer/consumer-time-series/consumer-dead-lettered-time-series';
+import { consumerQueues } from '../../system/consumer/consumer-queues';
 
 export class WebsocketRateStreamWorker {
   protected logger;
@@ -265,21 +265,31 @@ export class WebsocketRateStreamWorker {
     async.waterfall(this.tasks, this.noop);
   };
 
-  protected getHeartbeatKeys = (cb: ICallback<void>): void => {
-    Heartbeat.getValidHeartbeatKeys(this.redisClient, true, (err, reply) => {
+  protected consumersCount = (cb: ICallback<void>): void => {
+    ConsumerHeartbeat.getValidHeartbeatIds(this.redisClient, (err, reply) => {
       if (err) cb(err);
       else {
-        async.each(
+        async.each<string, Error>(
           reply ?? [],
-          (item, done) => {
-            if (typeof item === 'string') throw new InvalidCallbackReplyError();
-            const { ns, queueName, consumerId } =
-              redisKeys.extractData(item.keyHeartbeat) ?? {};
-            if (ns && queueName && consumerId) {
-              const queue = this.addQueue({ ns, name: queueName });
-              queue.consumers.push(consumerId);
-            }
-            done();
+          (consumerId, done) => {
+            consumerQueues.getConsumerQueues(
+              this.redisClient,
+              consumerId,
+              (err, queues) => {
+                if (err) done(err);
+                else {
+                  async.each(
+                    queues ?? [],
+                    (queueParams, done) => {
+                      const queue = this.addQueue(queueParams);
+                      queue.consumers.push(consumerId);
+                      done();
+                    },
+                    done,
+                  );
+                }
+              },
+            );
           },
           cb,
         );
@@ -313,7 +323,7 @@ export class WebsocketRateStreamWorker {
         this.logger.debug(`Lock acquired.`);
         this.reset();
         async.waterfall(
-          [this.getQueues, this.getHeartbeatKeys, this.prepare],
+          [this.getQueues, this.consumersCount, this.prepare],
           (err?: Error | null) => {
             if (err) throw err;
             this.publish();

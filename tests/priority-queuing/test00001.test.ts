@@ -24,7 +24,7 @@ describe('Priority queue: check that messages are consumed with respect to their
     const consumer = promisifyAll(
       getConsumer({
         enablePriorityQueuing: true,
-        consumeMock: jest.fn((msg, cb) => {
+        messageHandler: jest.fn((msg, cb) => {
           consumedMessages.push(msg);
           cb(null);
         }),

@@ -25,7 +25,7 @@ test('MessageManager/DelayHandler', async () => {
 
   const consumer = getConsumer({
     cfg: config,
-    consumeMock: jest.fn((msg) => {
+    messageHandler: jest.fn((msg) => {
       message = msg;
       consumer.shutdown();
     }),
@@ -39,7 +39,7 @@ test('MessageManager/DelayHandler', async () => {
       .setQueue(defaultQueue),
   );
 
-  const { keyQueueProcessing } = redisKeys.getConsumerKeys(
+  const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
     defaultQueue.name,
     consumer.getId(),
     defaultQueue.ns,
