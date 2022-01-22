@@ -5,11 +5,15 @@ import {
   untilConsumerIdle,
 } from '../common';
 import { Message } from '../../index';
+import { ICallback, TConsumerMessageHandler } from '../../types';
 
 test('Produce and consume 1 message', async () => {
   const producer = getProducer();
 
-  const messageHandler = jest.fn();
+  const messageHandler: jest.Mock<
+    TConsumerMessageHandler,
+    [Message, ICallback<void>]
+  > = jest.fn();
   const consumer = getConsumer({
     messageHandler,
   });

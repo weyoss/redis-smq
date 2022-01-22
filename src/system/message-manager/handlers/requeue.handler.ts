@@ -41,8 +41,8 @@ export class RequeueHandler extends Handler {
           const {
             keyQueues,
             keyQueuePending,
-            keyQueuePriority,
-            keyQueuePendingWithPriority,
+            keyQueuePendingPriorityMessageIds,
+            keyQueuePendingPriorityMessages,
           } = redisKeys.getQueueKeys(queue.name, queue.ns);
           this.redisClient.runScript(
             ELuaScriptName.REQUEUE_MESSAGE,
@@ -52,8 +52,8 @@ export class RequeueHandler extends Handler {
               message.getId(),
               JSON.stringify(message),
               message.getPriority() ?? '',
-              keyQueuePendingWithPriority,
-              keyQueuePriority,
+              keyQueuePendingPriorityMessages,
+              keyQueuePendingPriorityMessageIds,
               keyQueuePending,
               from,
               JSON.stringify(msg),

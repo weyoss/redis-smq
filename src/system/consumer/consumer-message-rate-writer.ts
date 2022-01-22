@@ -13,7 +13,7 @@ import {
 import * as async from 'async';
 import { MessageRateWriter } from '../common/message-rate-writer';
 
-export class ConsumerMessageRateWriter extends MessageRateWriter {
+export class ConsumerMessageRateWriter extends MessageRateWriter<IConsumerMessageRateFields> {
   protected redisClient: RedisClient;
   protected acknowledgedTimeSeries: ReturnType<
     typeof ConsumerAcknowledgedTimeSeries

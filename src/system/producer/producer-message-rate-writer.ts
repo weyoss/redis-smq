@@ -1,14 +1,11 @@
 import { MessageRateWriter } from '../common/message-rate-writer';
-import {
-  ICallback,
-  IMultiQueueProducerMessageRateFields,
-} from '../../../types';
+import { ICallback, IProducerMessageRateFields } from '../../../types';
 import * as async from 'async';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { QueuePublishedTimeSeries } from './producer-time-series/queue-published-time-series';
 import { GlobalPublishedTimeSeries } from './producer-time-series/global-published-time-series';
 
-export class ProducerMessageRateWriter extends MessageRateWriter {
+export class ProducerMessageRateWriter extends MessageRateWriter<IProducerMessageRateFields> {
   protected redisClient: RedisClient;
   protected globalPublishedTimeSeries: ReturnType<
     typeof GlobalPublishedTimeSeries
@@ -29,7 +26,7 @@ export class ProducerMessageRateWriter extends MessageRateWriter {
 
   onUpdate(
     ts: number,
-    rates: IMultiQueueProducerMessageRateFields,
+    rates: IProducerMessageRateFields,
     cb: ICallback<void>,
   ): void {
     const { publishedRate, queuePublishedRate } = rates;

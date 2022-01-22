@@ -5,15 +5,14 @@ const { Producer, Message } = require('../..'); // require('redis-smq');
 
 const producer = new Producer(config);
 
-function produceInfinitely(sequence, cb) {
+let sequence = Date.now();
+const produceForever = () => {
   const message = new Message();
   message.setBody(`Payload sample ${sequence++}`).setQueue('test_queue');
   producer.produce(message, (err) => {
-    if (err) cb(err);
-    else produceInfinitely(sequence, cb);
+    if (err) throw err;
+    else produceForever();
   });
-}
+};
 
-produceInfinitely(Date.now(), (err) => {
-  if (err) throw err;
-});
+produceForever();

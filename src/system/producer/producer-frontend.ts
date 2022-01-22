@@ -22,11 +22,11 @@ export class ProducerFrontend extends EventEmitter {
       );
   }
 
-  run(cb?: ICallback<void>): void {
+  run(cb?: ICallback<boolean>): void {
     this.producer.run(cb);
   }
 
-  shutdown(cb?: ICallback<void>): void {
+  shutdown(cb?: ICallback<boolean>): void {
     this.producer.shutdown(cb);
   }
 

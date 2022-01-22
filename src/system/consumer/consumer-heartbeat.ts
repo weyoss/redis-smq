@@ -62,7 +62,7 @@ export class ConsumerHeartbeat extends EventEmitter {
     const { keyHeartbeats } = consumer.getRedisKeys();
     this.keyHeartbeats = keyHeartbeats;
     this.keyHeartbeatTimestamps =
-      redisKeys.getGlobalKeys().keyHeartbeatTimestamps;
+      redisKeys.getMainKeys().keyHeartbeatInstanceIds;
     this.ticker = new Ticker(() => {
       this.onTick();
     }, 1000);
@@ -129,7 +129,7 @@ export class ConsumerHeartbeat extends EventEmitter {
     consumerIds: string[],
     cb: ICallback<Record<string, boolean>>,
   ): void {
-    const keyHeartbeats = redisKeys.getGlobalKeys().keyHeartbeats;
+    const keyHeartbeats = redisKeys.getMainKeys().keyHeartbeats;
     redisClient.hmget(keyHeartbeats, consumerIds, (err, reply) => {
       if (err) cb(err);
       else if (!reply || reply.length !== consumerIds.length)
@@ -165,10 +165,10 @@ export class ConsumerHeartbeat extends EventEmitter {
       }[]
     >,
   ): void {
-    const { keyHeartbeatTimestamps, keyHeartbeats } = redisKeys.getGlobalKeys();
+    const { keyHeartbeatInstanceIds, keyHeartbeats } = redisKeys.getMainKeys();
     const timestamp = Date.now() - 10 * 1000;
     redisClient.zrangebyscore(
-      keyHeartbeatTimestamps,
+      keyHeartbeatInstanceIds,
       timestamp,
       '+inf',
       (err, consumerIds) => {
@@ -217,10 +217,10 @@ export class ConsumerHeartbeat extends EventEmitter {
     redisClient: RedisClient,
     cb: ICallback<string[]>,
   ): void {
-    const { keyHeartbeatTimestamps } = redisKeys.getGlobalKeys();
+    const { keyHeartbeatInstanceIds } = redisKeys.getMainKeys();
     const timestamp = Date.now() - 10 * 1000;
     redisClient.zrangebyscore(
-      keyHeartbeatTimestamps,
+      keyHeartbeatInstanceIds,
       timestamp,
       '+inf',
       (err, consumerIds) => {
@@ -234,10 +234,10 @@ export class ConsumerHeartbeat extends EventEmitter {
     redisClient: RedisClient,
     cb: ICallback<string[]>,
   ): void {
-    const { keyHeartbeatTimestamps } = redisKeys.getGlobalKeys();
+    const { keyHeartbeatInstanceIds } = redisKeys.getMainKeys();
     const timestamp = Date.now() - 10 * 1000;
     redisClient.zrangebyscore(
-      keyHeartbeatTimestamps,
+      keyHeartbeatInstanceIds,
       '-inf',
       timestamp,
       (err, consumerIds) => {
@@ -253,8 +253,8 @@ export class ConsumerHeartbeat extends EventEmitter {
     cb: ICallback<void>,
   ): void {
     if (consumerIds.length) {
-      const { keyHeartbeats, keyHeartbeatTimestamps } =
-        redisKeys.getGlobalKeys();
+      const { keyHeartbeats, keyHeartbeatInstanceIds } =
+        redisKeys.getMainKeys();
       const multi = client.multi();
       async.each(
         consumerIds,
@@ -262,7 +262,7 @@ export class ConsumerHeartbeat extends EventEmitter {
           consumerQueues.getConsumerQueues(client, consumerId, (err, reply) => {
             consumerQueues.removeConsumer(multi, consumerId, reply ?? []);
             multi.hdel(keyHeartbeats, consumerId);
-            multi.zrem(keyHeartbeatTimestamps, consumerId);
+            multi.zrem(keyHeartbeatInstanceIds, consumerId);
             done();
           });
         },

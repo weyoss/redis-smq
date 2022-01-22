@@ -1,10 +1,7 @@
-import {
-  IMultiQueueProducerMessageRateFields,
-  TQueueParams,
-} from '../../../types';
+import { IProducerMessageRateFields, TQueueParams } from '../../../types';
 import { MessageRate } from '../common/message-rate';
 
-export class ProducerMessageRate extends MessageRate<IMultiQueueProducerMessageRateFields> {
+export class ProducerMessageRate extends MessageRate<IProducerMessageRateFields> {
   protected publishedRate = 0;
   protected queuePublishedRate: Record<string, number> = {};
 
@@ -17,7 +14,7 @@ export class ProducerMessageRate extends MessageRate<IMultiQueueProducerMessageR
     this.publishedRate += 1;
   }
 
-  getRateFields(): IMultiQueueProducerMessageRateFields {
+  getRateFields(): IProducerMessageRateFields {
     const publishedRate = this.publishedRate;
     this.publishedRate = 0;
     const queuePublishedRate = {

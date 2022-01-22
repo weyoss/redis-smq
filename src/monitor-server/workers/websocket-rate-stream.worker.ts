@@ -36,7 +36,7 @@ export class WebsocketRateStreamWorker {
   protected noop = (): void => void 0;
 
   constructor(redisClient: RedisClient, logger: BLogger) {
-    const { keyLockWebsocketRateStreamWorker } = redisKeys.getGlobalKeys();
+    const { keyLockWebsocketRateStreamWorker } = redisKeys.getMainKeys();
     this.logger = logger;
     this.redisClient = redisClient;
     this.lockManager = new LockManager(
@@ -298,7 +298,7 @@ export class WebsocketRateStreamWorker {
   };
 
   protected getQueues = (cb: ICallback<void>): void => {
-    const { keyQueues } = redisKeys.getGlobalKeys();
+    const { keyQueues } = redisKeys.getMainKeys();
     this.redisClient.smembers(keyQueues, (err, reply) => {
       if (err) cb(err);
       else {

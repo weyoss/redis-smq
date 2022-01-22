@@ -24,7 +24,7 @@ export class WebsocketOnlineStreamWorker {
     queueManager: QueueManager,
     logger: BLogger,
   ) {
-    const { keyLockWebsocketOnlineStreamWorker } = redisKeys.getGlobalKeys();
+    const { keyLockWebsocketOnlineStreamWorker } = redisKeys.getMainKeys();
     this.logger = logger;
     this.redisClient = redisClient;
     this.queueManager = queueManager;

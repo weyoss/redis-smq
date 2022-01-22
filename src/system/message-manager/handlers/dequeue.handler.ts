@@ -18,11 +18,14 @@ export class DequeueHandler extends Handler {
     keyQueueProcessing: string,
   ) {
     super(redisClient);
-    const { keyQueuePriority, keyQueuePending, keyQueuePendingWithPriority } =
-      redisKeys.getQueueKeys(queue.name, queue.ns);
+    const {
+      keyQueuePendingPriorityMessageIds,
+      keyQueuePending,
+      keyQueuePendingPriorityMessages,
+    } = redisKeys.getQueueKeys(queue.name, queue.ns);
     this.keyQueue = keyQueuePending;
-    this.keyPendingMessagesWithPriority = keyQueuePendingWithPriority;
-    this.keyQueuePriority = keyQueuePriority;
+    this.keyPendingMessagesWithPriority = keyQueuePendingPriorityMessages;
+    this.keyQueuePriority = keyQueuePendingPriorityMessageIds;
     this.keyQueueProcessing = keyQueueProcessing;
 
     // A ticker is needed for pooling priority queues

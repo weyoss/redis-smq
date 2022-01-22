@@ -15,7 +15,7 @@ export class DelayHandler extends Handler {
   }
 
   schedule(cb: ICallback<void>): void {
-    const { keyDelayedMessages } = redisKeys.getGlobalKeys();
+    const { keyDelayedMessages } = redisKeys.getMainKeys();
     this.redisClient.lrange(keyDelayedMessages, 0, 99, (err, reply) => {
       if (err) cb(err);
       else {

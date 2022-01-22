@@ -84,6 +84,7 @@ export class ConsumerMessageHandler extends EventEmitter {
   };
 
   protected registerEventsHandlers(): void {
+    this.on(events.UP, () => this.emit(events.MESSAGE_NEXT));
     this.on(events.MESSAGE_NEXT, () => {
       if (this.powerManager.isRunning()) {
         this.logger.info('Waiting for new messages...');
@@ -217,15 +218,15 @@ export class ConsumerMessageHandler extends EventEmitter {
     this.powerManager.goingUp();
     async.waterfall(
       [
-        (cb: ICallback<void>) => this.setUpMessageQueue((err) => cb(err)),
+        (cb: ICallback<void>) => this.setUpMessageQueue(cb),
         (cb: ICallback<void>) => this.addQueueConsumer(cb),
-        (cb: ICallback<void>) => this.setUpProcessingQueue((err) => cb(err)),
+        (cb: ICallback<void>) => this.setUpProcessingQueue(cb),
       ],
       (err) => {
         if (err) cb(err);
         else {
           this.powerManager.commit();
-          this.emit(events.MESSAGE_NEXT);
+          this.emit(events.UP);
           cb();
         }
       },
@@ -233,23 +234,28 @@ export class ConsumerMessageHandler extends EventEmitter {
   };
 
   shutdown = (cb: ICallback<void>): void => {
-    this.powerManager.goingDown();
-    async.waterfall(
-      [
-        (cb: ICallback<void>) => {
-          if (this.messageRate) this.messageRate.quit(cb);
-          else cb();
+    const goDown = () => {
+      this.powerManager.goingDown();
+      async.waterfall(
+        [
+          (cb: ICallback<void>) => {
+            if (this.messageRate) this.messageRate.quit(cb);
+            else cb();
+          },
+          (cb: ICallback<void>) => this.redisClient.halt(cb),
+        ],
+        (err) => {
+          if (err) cb(err);
+          else {
+            this.powerManager.commit();
+            this.emit(events.DOWN);
+            cb();
+          }
         },
-        (cb: ICallback<void>) => this.redisClient.halt(cb),
-      ],
-      (err) => {
-        if (err) cb(err);
-        else {
-          this.powerManager.commit();
-          cb();
-        }
-      },
-    );
+      );
+    };
+    if (this.powerManager.isGoingUp()) this.once(events.UP, goDown);
+    else goDown();
   };
 
   isUsingPriorityQueuing(): boolean {
