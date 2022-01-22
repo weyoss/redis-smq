@@ -39,9 +39,12 @@ export class DequeueHandler extends Handler {
       this.keyPendingMessagesWithPriority,
       this.keyQueueProcessing,
       (err, reply) => {
-        if (err) cb(err);
-        else if (typeof reply === 'string') cb(null, reply);
-        else {
+        if (err) {
+          this.ticker.abort();
+          cb(err);
+        } else if (typeof reply === 'string') {
+          cb(null, reply);
+        } else {
           this.ticker.nextTickFn(() => {
             this.dequeueWithPriority(cb);
           });
@@ -51,7 +54,17 @@ export class DequeueHandler extends Handler {
   }
 
   dequeue(cb: ICallback<string>): void {
-    this.redisClient.brpoplpush(this.keyQueue, this.keyQueueProcessing, 0, cb);
+    this.redisClient.brpoplpush(
+      this.keyQueue,
+      this.keyQueueProcessing,
+      0,
+      (err, reply) => {
+        if (err) {
+          this.ticker.abort();
+          cb(err);
+        } else cb(null, reply);
+      },
+    );
   }
 
   quit(cb: ICallback<void>): void {
