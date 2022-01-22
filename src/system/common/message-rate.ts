@@ -10,9 +10,9 @@ export abstract class MessageRate<
   MessageRateFields extends TMessageRateFields = TMessageRateFields,
 > extends EventEmitter {
   protected readerTicker: Ticker;
-  protected messageRateWriter: MessageRateWriter;
+  protected messageRateWriter: MessageRateWriter<MessageRateFields>;
 
-  constructor(messageRateWriter: MessageRateWriter) {
+  constructor(messageRateWriter: MessageRateWriter<MessageRateFields>) {
     super();
     this.readerTicker = new Ticker(() => {
       this.onTick();

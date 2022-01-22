@@ -3,11 +3,13 @@
 const config = require('./config');
 const { Consumer } = require('../..'); // require('redis-smq);
 
-class MyConsumer extends Consumer {
-  consume(message, cb) {
-    cb();
-  }
-}
+const consumer = new Consumer(config);
 
-const consumer = new MyConsumer('test_queue', config);
+consumer.consume(
+  'test_queue',
+  false,
+  (msg, cb) => cb(),
+  () => void 0,
+);
+
 consumer.run();

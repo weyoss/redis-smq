@@ -31,7 +31,7 @@ export abstract class Base extends EventEmitter {
     }
     this.id = uuid();
     this.config = config;
-    this.powerManager = new PowerManager();
+    this.powerManager = new PowerManager(false);
     this.logger = Logger(this.constructor.name, {
       ...this.config.log,
       options: {
@@ -117,20 +117,20 @@ export abstract class Base extends EventEmitter {
     return [this.setUpSharedRedisClient, this.setUpBroker];
   }
 
-  protected up(cb?: ICallback<void>): void {
+  protected up(cb?: ICallback<boolean>): void {
     this.powerManager.commit();
     this.emit(events.UP);
-    cb && cb();
+    cb && cb(null, true);
   }
 
   protected goingDown(): TUnaryFunction<ICallback<void>>[] {
     return [this.tearDownBroker, this.tearDownSharedRedisClient];
   }
 
-  protected down(cb?: ICallback<void>): void {
+  protected down(cb?: ICallback<boolean>): void {
     this.powerManager.commit();
     this.emit(events.DOWN);
-    cb && cb();
+    cb && cb(null, true);
   }
 
   protected getSharedRedisClient(cb: TUnaryFunction<RedisClient>): void {
@@ -148,26 +148,32 @@ export abstract class Base extends EventEmitter {
     }
   }
 
-  run(cb?: ICallback<void>): void {
-    this.powerManager.goingUp();
-    this.emit(events.GOING_UP);
-    const tasks = this.goingUp();
-    async.waterfall(tasks, (err) => {
-      if (err) {
-        if (cb) cb(err);
-        else this.emit(events.ERROR, err);
-      } else this.up(cb);
-    });
+  run(cb?: ICallback<boolean>): void {
+    const r = this.powerManager.goingUp();
+    if (r) {
+      this.emit(events.GOING_UP);
+      const tasks = this.goingUp();
+      async.waterfall(tasks, (err) => {
+        if (err) {
+          if (cb) cb(err);
+          else this.emit(events.ERROR, err);
+        } else this.up(cb);
+      });
+    } else {
+      cb && cb(null, r);
+    }
   }
 
-  shutdown(cb?: ICallback<void>): void {
-    this.powerManager.goingDown();
-    this.emit(events.GOING_DOWN);
-    const tasks = this.goingDown();
-    async.waterfall(tasks, () => {
-      // ignoring shutdown errors
-      this.down(cb);
-    });
+  shutdown(cb?: ICallback<boolean>): void {
+    const r = this.powerManager.goingDown();
+    if (r) {
+      this.emit(events.GOING_DOWN);
+      const tasks = this.goingDown();
+      async.waterfall(tasks, () => {
+        // ignoring shutdown errors
+        this.down(cb);
+      });
+    } else cb && cb(null, r);
   }
 
   isRunning(): boolean {

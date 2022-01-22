@@ -10,18 +10,18 @@ import { PanicError } from '../common/errors/panic.error';
 export class RequeueWorker {
   protected ticker: Ticker;
   protected redisClient: RedisClient;
-  protected redisKeys: ReturnType<typeof redisKeys['getGlobalKeys']>;
+  protected redisKeys: ReturnType<typeof redisKeys['getMainKeys']>;
 
   constructor(redisClient: RedisClient) {
     this.ticker = new Ticker(this.onTick, 1000);
     this.redisClient = redisClient;
-    this.redisKeys = redisKeys.getGlobalKeys();
+    this.redisKeys = redisKeys.getMainKeys();
     this.ticker.nextTick();
   }
 
   onTick = (): void => {
-    const { keyMessagesRequeue } = this.redisKeys;
-    this.redisClient.lrange(keyMessagesRequeue, 0, 99, (err, reply) => {
+    const { keyRequeueMessages } = this.redisKeys;
+    this.redisClient.lrange(keyRequeueMessages, 0, 99, (err, reply) => {
       if (err) throw err;
       const messages = reply ?? [];
       if (messages.length) {
@@ -32,11 +32,9 @@ export class RequeueWorker {
           if (!queue)
             throw new PanicError('Message queue parameters are required');
           const { ns, name } = queue;
-          const { keyQueuePending, keyQueuePriority } = redisKeys.getQueueKeys(
-            name,
-            ns,
-          );
-          multi.lrem(keyMessagesRequeue, 1, i);
+          const { keyQueuePending, keyQueuePendingPriorityMessageIds } =
+            redisKeys.getQueueKeys(name, ns);
+          multi.lrem(keyRequeueMessages, 1, i);
           message.incrAttempts();
           if (message.isWithPriority()) {
             const priority = message.getPriority();
@@ -44,7 +42,11 @@ export class RequeueWorker {
               throw new PanicError(
                 `Expected a non-empty message priority value`,
               );
-            multi.zadd(keyQueuePriority, priority, JSON.stringify(message));
+            multi.zadd(
+              keyQueuePendingPriorityMessageIds,
+              priority,
+              JSON.stringify(message),
+            );
           } else multi.lpush(keyQueuePending, JSON.stringify(message));
           cb();
         });

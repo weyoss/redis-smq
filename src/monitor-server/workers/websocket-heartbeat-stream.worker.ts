@@ -22,7 +22,7 @@ export class WebsocketHeartbeatStreamWorker {
   protected noop = (): void => void 0;
 
   constructor(redisClient: RedisClient, logger: BLogger) {
-    const { keyLockWebsocketHeartbeatStreamWorker } = redisKeys.getGlobalKeys();
+    const { keyLockWebsocketHeartbeatStreamWorker } = redisKeys.getMainKeys();
     this.logger = logger;
     this.redisClient = redisClient;
     this.lockManager = new LockManager(

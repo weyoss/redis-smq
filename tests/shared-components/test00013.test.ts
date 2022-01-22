@@ -1,25 +1,23 @@
 import { ProducerMessageRate } from '../../src/system/producer/producer-message-rate';
 import { promisifyAll } from 'bluebird';
-import { events } from '../../src/system/common/events';
-import { IMultiQueueProducerMessageRateFields } from '../../types';
 import { ProducerMessageRateWriter } from '../../src/system/producer/producer-message-rate-writer';
 import { getRedisInstance } from '../common';
+import { IProducerMessageRateFields } from '../../types';
 
-test('ProducerMessageRate', async () => {
+test('ProducerMessageRate/ProducerMessageRateWriter: case 2', async () => {
   const redisClient = await getRedisInstance();
   const messageRateWriter = new ProducerMessageRateWriter(redisClient);
   const messageRate = promisifyAll(new ProducerMessageRate(messageRateWriter));
 
   const rateFields1 = await new Promise<{
     ts: number;
-    rateFields: IMultiQueueProducerMessageRateFields;
+    rateFields: IProducerMessageRateFields;
   }>((resolve) => {
-    messageRate.once(
-      events.RATE_TICK,
-      (ts: number, rateFields: IMultiQueueProducerMessageRateFields) => {
-        resolve({ ts, rateFields });
-      },
-    );
+    const orig = messageRateWriter.onRateTick;
+    messageRateWriter.onRateTick = (ts, rateFields) => {
+      messageRateWriter.onRateTick = orig;
+      resolve({ ts, rateFields });
+    };
   });
   expect(typeof rateFields1.ts).toBe('number');
   expect(typeof rateFields1.rateFields.publishedRate).toBe('number');
@@ -28,14 +26,13 @@ test('ProducerMessageRate', async () => {
   messageRate.incrementPublished({ ns: 'testing', name: 'queue_1' });
   const rateFields2 = await new Promise<{
     ts: number;
-    rateFields: IMultiQueueProducerMessageRateFields;
+    rateFields: IProducerMessageRateFields;
   }>((resolve) => {
-    messageRate.once(
-      events.RATE_TICK,
-      (ts: number, rateFields: IMultiQueueProducerMessageRateFields) => {
-        resolve({ ts, rateFields });
-      },
-    );
+    const orig = messageRateWriter.onRateTick;
+    messageRateWriter.onRateTick = (ts, rateFields) => {
+      messageRateWriter.onRateTick = orig;
+      resolve({ ts, rateFields });
+    };
   });
   expect(typeof rateFields2.ts).toBe('number');
   expect(typeof rateFields2.rateFields.publishedRate).toBe('number');

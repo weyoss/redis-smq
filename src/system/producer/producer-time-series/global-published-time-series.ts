@@ -10,7 +10,7 @@ export const GlobalPublishedTimeSeries = (
     keyRateGlobalPublished,
     keyRateGlobalInputIndex,
     keyLockRateGlobalPublished,
-  } = redisKeys.getGlobalKeys();
+  } = redisKeys.getMainKeys();
   return new HashTimeSeries(
     redisClient,
     keyRateGlobalPublished,

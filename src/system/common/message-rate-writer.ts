@@ -3,7 +3,9 @@ import { ICallback, TMessageRateFields } from '../../../types';
 import { events } from './events';
 import * as async from 'async';
 
-export abstract class MessageRateWriter {
+export abstract class MessageRateWriter<
+  TRateFields extends TMessageRateFields,
+> {
   protected writerTicker: Ticker;
   protected rateStack: [number, TMessageRateFields][] = [];
 
@@ -32,7 +34,7 @@ export abstract class MessageRateWriter {
 
   abstract onQuit(cb: ICallback<void>): void;
 
-  onRateTick = (ts: number, rates: TMessageRateFields): void => {
+  onRateTick = (ts: number, rates: TRateFields): void => {
     this.rateStack.push([ts, rates]);
   };
 

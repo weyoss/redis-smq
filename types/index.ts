@@ -57,11 +57,6 @@ export interface IConsumerMessageRateFields extends TMessageRateFields {
 
 export interface IProducerMessageRateFields extends TMessageRateFields {
   publishedRate: number;
-}
-
-export interface IMultiQueueProducerMessageRateFields
-  extends TMessageRateFields {
-  publishedRate: number;
   queuePublishedRate: Record<string, number>;
 }
 

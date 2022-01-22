@@ -73,7 +73,7 @@ export class QueueManager {
   };
 
   queueExists = (queue: TQueueParams, cb: ICallback<void>): void => {
-    const { keyQueues } = redisKeys.getGlobalKeys();
+    const { keyQueues } = redisKeys.getMainKeys();
     this.redisClient.sismember(
       keyQueues,
       JSON.stringify(queue),
@@ -99,9 +99,9 @@ export class QueueManager {
           keyQueuePending,
           keyQueueDL,
           keyQueueProcessingQueues,
-          keyQueuePriority,
+          keyQueuePendingPriorityMessageIds,
           keyQueueAcknowledged,
-          keyQueuePendingWithPriority,
+          keyQueuePendingPriorityMessages,
           keyRateQueueDeadLettered,
           keyRateQueueAcknowledged,
           keyRateQueuePublished,
@@ -119,9 +119,9 @@ export class QueueManager {
           keyQueuePending,
           keyQueueDL,
           keyQueueProcessingQueues,
-          keyQueuePriority,
+          keyQueuePendingPriorityMessageIds,
           keyQueueAcknowledged,
-          keyQueuePendingWithPriority,
+          keyQueuePendingPriorityMessages,
           keyRateQueueDeadLettered,
           keyRateQueueAcknowledged,
           keyRateQueuePublished,
@@ -207,12 +207,12 @@ export class QueueManager {
   }
 
   getProcessingQueues(cb: ICallback<string[]>): void {
-    const { keyProcessingQueues } = redisKeys.getGlobalKeys();
+    const { keyProcessingQueues } = redisKeys.getMainKeys();
     this.redisClient.smembers(keyProcessingQueues, cb);
   }
 
   getMessageQueues(cb: ICallback<TQueueParams[]>): void {
-    const { keyQueues } = redisKeys.getGlobalKeys();
+    const { keyQueues } = redisKeys.getMainKeys();
     this.redisClient.smembers(keyQueues, (err, reply) => {
       if (err) cb(err);
       else if (!reply) cb(new EmptyCallbackReplyError());
@@ -232,7 +232,7 @@ export class QueueManager {
     };
     const {
       keyQueuePending,
-      keyQueuePriority,
+      keyQueuePendingPriorityMessageIds,
       keyQueueDL,
       keyQueueAcknowledged,
     } = redisKeys.getQueueKeys(queue.name, queue.ns);
@@ -266,13 +266,16 @@ export class QueueManager {
           });
         },
         (cb: ICallback<void>) => {
-          this.redisClient.zcard(keyQueuePriority, (err, reply) => {
-            if (err) cb(err);
-            else {
-              queueMetrics.pendingWithPriority = reply ?? 0;
-              cb();
-            }
-          });
+          this.redisClient.zcard(
+            keyQueuePendingPriorityMessageIds,
+            (err, reply) => {
+              if (err) cb(err);
+              else {
+                queueMetrics.pendingWithPriority = reply ?? 0;
+                cb();
+              }
+            },
+          );
         },
       ],
       (err) => {

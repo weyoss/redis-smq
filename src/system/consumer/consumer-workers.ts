@@ -37,7 +37,7 @@ export class ConsumerWorkers extends EventEmitter {
     this.logger = logger.child({
       child: ConsumerWorkers.name,
     });
-    const { keyLockConsumerWorkersRunner } = redisKeys.getGlobalKeys();
+    const { keyLockConsumerWorkersRunner } = redisKeys.getMainKeys();
     this.lockManager = new LockManager(
       redisClient,
       keyLockConsumerWorkersRunner,

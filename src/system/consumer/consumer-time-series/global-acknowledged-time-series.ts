@@ -10,7 +10,7 @@ export const GlobalAcknowledgedTimeSeries = (
     keyRateGlobalAcknowledged,
     keyRateGlobalAcknowledgedIndex,
     keyLockRateGlobalAcknowledged,
-  } = redisKeys.getGlobalKeys();
+  } = redisKeys.getMainKeys();
   return new HashTimeSeries(
     redisClient,
     keyRateGlobalAcknowledged,

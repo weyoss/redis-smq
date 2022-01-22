@@ -6,19 +6,35 @@ enum TStates {
 }
 
 export class PowerManager {
+  protected throwExceptionOnError: boolean;
   protected state: TStates = TStates.DOWN;
   protected pendingState: TStates | null = null;
 
-  protected switchState(s: TStates): void {
+  constructor(throwExceptionOnError = true) {
+    this.throwExceptionOnError = throwExceptionOnError;
+  }
+
+  protected switchState(s: TStates): boolean {
     if (this.pendingState !== null) {
-      throw new PowerManagerError(
-        'Can not switch state while another state transition is in progress.',
-      );
+      if (this.throwExceptionOnError) {
+        throw new PowerManagerError(
+          'Can not switch state while another state transition is in progress.',
+        );
+      }
+      return false;
     }
+
     if (s === this.state) {
-      throw new PowerManagerError('Can not switch to the same current state.');
+      if (this.throwExceptionOnError) {
+        throw new PowerManagerError(
+          'Can not switch to the same current state.',
+        );
+      }
+      return false;
     }
+
     this.pendingState = s;
+    return true;
   }
 
   isUp(): boolean {
@@ -41,12 +57,12 @@ export class PowerManager {
     return this.isUp() && !this.pendingState;
   }
 
-  goingUp(): void {
-    this.switchState(TStates.UP);
+  goingUp(): boolean {
+    return this.switchState(TStates.UP);
   }
 
-  goingDown(): void {
-    this.switchState(TStates.DOWN);
+  goingDown(): boolean {
+    return this.switchState(TStates.DOWN);
   }
 
   commit(): void {

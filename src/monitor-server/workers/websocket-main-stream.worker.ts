@@ -43,7 +43,7 @@ export class WebsocketMainStreamWorker {
     redisClient: RedisClient,
     logger: BLogger,
   ) {
-    const { keyLockWebsocketMainStreamWorker } = redisKeys.getGlobalKeys();
+    const { keyLockWebsocketMainStreamWorker } = redisKeys.getMainKeys();
     this.logger = logger;
     this.lockManager = new LockManager(
       redisClient,
@@ -85,7 +85,7 @@ export class WebsocketMainStreamWorker {
     cb: ICallback<void>,
   ): void => {
     if (queues && queues.length) {
-      const keyTypes = redisKeys.getTypes();
+      const keyTypes = redisKeys.getKeyTypes();
       const keys: { type: number; name: string; ns: string }[] = [];
       const multi = this.redisClient.multi();
       const handleResult = (res: number[]) => {
@@ -100,7 +100,9 @@ export class WebsocketMainStreamWorker {
             } else if (type === keyTypes.KEY_QUEUE_PENDING) {
               queue.pendingMessagesCount = size;
               this.data.pendingMessagesCount += size;
-            } else if (type === keyTypes.KEY_QUEUE_PRIORITY) {
+            } else if (
+              type === keyTypes.KEY_QUEUE_PENDING_PRIORITY_MESSAGE_IDS
+            ) {
               queue.pendingMessagesWithPriorityCount = size;
               this.data.pendingMessagesWithPriorityCount += size;
             } else {
@@ -117,12 +119,12 @@ export class WebsocketMainStreamWorker {
         (queue, done) => {
           const {
             keyQueuePending,
-            keyQueuePriority,
+            keyQueuePendingPriorityMessageIds,
             keyQueueDL,
             keyQueueAcknowledged,
           } = redisKeys.getQueueKeys(queue.name, queue.ns);
           multi.llen(keyQueuePending);
-          multi.zcard(keyQueuePriority);
+          multi.zcard(keyQueuePendingPriorityMessageIds);
           multi.llen(keyQueueDL);
           multi.llen(keyQueueAcknowledged);
           keys.push(
@@ -132,7 +134,7 @@ export class WebsocketMainStreamWorker {
               ns: queue.ns,
             },
             {
-              type: keyTypes.KEY_QUEUE_PRIORITY,
+              type: keyTypes.KEY_QUEUE_PENDING_PRIORITY_MESSAGE_IDS,
               name: queue.name,
               ns: queue.ns,
             },

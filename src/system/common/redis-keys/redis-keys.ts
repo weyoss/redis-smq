@@ -1,7 +1,10 @@
 import { RedisKeysError } from './redis-keys.error';
 
-// Namespace prefix
-const nsPrefix = 'redis-smq-v6';
+//
+const keySegmentSeparator = '.';
+
+// Keys prefix
+const nsPrefix = 'redis-smq-v600rc7';
 
 // Namespaces
 const globalNamespace = 'global';
@@ -9,17 +12,12 @@ let namespace = 'default';
 
 enum ERedisKey {
   KEY_QUEUE_PENDING = 1,
-  KEY_QUEUE_PENDING_WITH_PRIORITY,
+  KEY_QUEUE_PENDING_PRIORITY_MESSAGES,
+  KEY_QUEUE_PENDING_PRIORITY_MESSAGE_IDS,
   KEY_QUEUE_DL,
-  KEY_DELAYED_MESSAGES,
-  KEY_MESSAGES_REQUEUE,
-  KEY_SCHEDULED_MESSAGES,
-  KEY_QUEUE_PRIORITY,
   KEY_QUEUE_PROCESSING,
   KEY_QUEUE_ACKNOWLEDGED,
-  RESERVED,
   KEY_QUEUE_CONSUMERS,
-  RESERVED_6,
   KEY_QUEUE_PROCESSING_QUEUES, // Redis key for processing queues of a given queue
 
   KEY_LOCK_CONSUMER_WORKERS_RUNNER,
@@ -41,7 +39,6 @@ enum ERedisKey {
   KEY_LOCK_RATE_QUEUE_ACKNOWLEDGED,
   KEY_LOCK_RATE_QUEUE_DEAD_LETTERED,
 
-  RESERVED_4,
   KEY_RATE_CONSUMER_ACKNOWLEDGED,
   KEY_RATE_QUEUE_ACKNOWLEDGED,
   KEY_RATE_QUEUE_ACKNOWLEDGED_INDEX,
@@ -56,16 +53,13 @@ enum ERedisKey {
   KEY_RATE_GLOBAL_PUBLISHED,
   KEY_RATE_GLOBAL_PUBLISHED_INDEX,
   KEY_RATE_CONSUMER_DEAD_LETTERED,
-  RESERVED_1,
 
-  RESERVED_5,
-  RESERVED_7,
-  KEY_HEARTBEAT_TIMESTAMPS,
-  RESERVED_2,
-
-  KEY_SCHEDULED_MESSAGES_INDEX,
+  KEY_DELAYED_MESSAGES,
+  KEY_REQUEUE_MESSAGES,
+  KEY_SCHEDULED_MESSAGES,
+  KEY_SCHEDULED_MESSAGE_IDS,
   KEY_HEARTBEATS,
-  RESERVED_3,
+  KEY_HEARTBEAT_INSTANCE_IDS,
   KEY_QUEUES,
   KEY_PROCESSING_QUEUES,
   KEY_LOCK_QUEUE,
@@ -73,159 +67,84 @@ enum ERedisKey {
 }
 
 export const redisKeys = {
-  getTypes() {
+  getKeyTypes() {
     return {
       ...ERedisKey,
     };
   },
 
-  getQueueKeys(queueName: string, ns?: string | null) {
-    const globalKeys = this.getGlobalKeys();
-    const keys = {
-      keyQueuePending: this.joinSegments(
-        ERedisKey.KEY_QUEUE_PENDING,
-        queueName,
-      ),
-      keyQueueDL: this.joinSegments(ERedisKey.KEY_QUEUE_DL, queueName),
-      keyQueueProcessingQueues: this.joinSegments(
-        ERedisKey.KEY_QUEUE_PROCESSING_QUEUES,
-        queueName,
-      ),
-      keyQueuePriority: this.joinSegments(
-        ERedisKey.KEY_QUEUE_PRIORITY,
-        queueName,
-      ),
-      keyQueueAcknowledged: this.joinSegments(
-        ERedisKey.KEY_QUEUE_ACKNOWLEDGED,
-        queueName,
-      ),
-      keyQueuePendingWithPriority: this.joinSegments(
-        ERedisKey.KEY_QUEUE_PENDING_WITH_PRIORITY,
-        queueName,
-      ),
-      keyRateQueueDeadLettered: this.joinSegments(
-        ERedisKey.KEY_RATE_QUEUE_DEAD_LETTERED,
-        queueName,
-      ),
-      keyRateQueueAcknowledged: this.joinSegments(
-        ERedisKey.KEY_RATE_QUEUE_ACKNOWLEDGED,
-        queueName,
-      ),
-      keyRateQueuePublished: this.joinSegments(
-        ERedisKey.KEY_RATE_QUEUE_PUBLISHED,
-        queueName,
-      ),
-      keyRateQueueDeadLetteredIndex: this.joinSegments(
+  getQueueKeys(queueName: string, ns: string = namespace) {
+    const mainKeys = this.getMainKeys();
+    const queueKeys = {
+      keyQueuePending: ERedisKey.KEY_QUEUE_PENDING,
+      keyQueueDL: ERedisKey.KEY_QUEUE_DL,
+      keyQueueProcessingQueues: ERedisKey.KEY_QUEUE_PROCESSING_QUEUES,
+      keyQueueAcknowledged: ERedisKey.KEY_QUEUE_ACKNOWLEDGED,
+      keyQueuePendingPriorityMessageIds:
+        ERedisKey.KEY_QUEUE_PENDING_PRIORITY_MESSAGE_IDS,
+      keyQueuePendingPriorityMessages:
+        ERedisKey.KEY_QUEUE_PENDING_PRIORITY_MESSAGES,
+      keyRateQueueDeadLettered: ERedisKey.KEY_RATE_QUEUE_DEAD_LETTERED,
+      keyRateQueueAcknowledged: ERedisKey.KEY_RATE_QUEUE_ACKNOWLEDGED,
+      keyRateQueuePublished: ERedisKey.KEY_RATE_QUEUE_PUBLISHED,
+      keyRateQueueDeadLetteredIndex:
         ERedisKey.KEY_RATE_QUEUE_DEAD_LETTERED_INDEX,
-        queueName,
-      ),
-      keyRateQueueAcknowledgedIndex: this.joinSegments(
+      keyRateQueueAcknowledgedIndex:
         ERedisKey.KEY_RATE_QUEUE_ACKNOWLEDGED_INDEX,
-        queueName,
-      ),
-      keyRateQueuePublishedIndex: this.joinSegments(
-        ERedisKey.KEY_RATE_QUEUE_PUBLISHED_INDEX,
-        queueName,
-      ),
-      keyLockRateQueuePublished: this.joinSegments(
-        ERedisKey.KEY_LOCK_RATE_QUEUE_PUBLISHED,
-        queueName,
-      ),
-      keyLockRateQueueAcknowledged: this.joinSegments(
-        ERedisKey.KEY_LOCK_RATE_QUEUE_ACKNOWLEDGED,
-        queueName,
-      ),
-      keyLockRateQueueDeadLettered: this.joinSegments(
-        ERedisKey.KEY_LOCK_RATE_QUEUE_DEAD_LETTERED,
-        queueName,
-      ),
-      keyQueueConsumers: this.joinSegments(
-        ERedisKey.KEY_QUEUE_CONSUMERS,
-        queueName,
-      ),
-      keyLockQueue: this.joinSegments(ERedisKey.KEY_LOCK_QUEUE, queueName),
+      keyRateQueuePublishedIndex: ERedisKey.KEY_RATE_QUEUE_PUBLISHED_INDEX,
+      keyLockRateQueuePublished: ERedisKey.KEY_LOCK_RATE_QUEUE_PUBLISHED,
+      keyLockRateQueueAcknowledged: ERedisKey.KEY_LOCK_RATE_QUEUE_ACKNOWLEDGED,
+      keyLockRateQueueDeadLettered: ERedisKey.KEY_LOCK_RATE_QUEUE_DEAD_LETTERED,
+      keyQueueConsumers: ERedisKey.KEY_QUEUE_CONSUMERS,
+      keyLockQueue: ERedisKey.KEY_LOCK_QUEUE,
     };
     return {
-      ...globalKeys,
-      ...this.makeNamespacedKeys(keys, ns ?? namespace),
+      ...mainKeys,
+      ...queueKeys,
+      ...this.makeNamespacedKeys(queueKeys, ns, queueName),
     };
   },
 
   getConsumerKeys(instanceId: string) {
-    const globalKeys = this.getGlobalKeys();
-    const keys = {
-      keyConsumerQueues: this.joinSegments(
-        ERedisKey.KEY_CONSUMER_QUEUES,
-        instanceId,
-      ),
+    const mainKeys = this.getMainKeys();
+    const consumerKeys = {
+      keyConsumerQueues: ERedisKey.KEY_CONSUMER_QUEUES,
     };
     return {
-      ...globalKeys,
-      ...this.makeNamespacedKeys(keys, namespace),
+      ...mainKeys,
+      ...this.makeNamespacedKeys(consumerKeys, globalNamespace, instanceId),
     };
   },
 
   getQueueConsumerKeys(
     queueName: string,
     instanceId: string,
-    ns?: string | null,
+    ns: string = namespace,
   ) {
-    const globalKeys = this.getGlobalKeys();
+    const mainKeys = this.getMainKeys();
     const queueKeys = this.getQueueKeys(queueName, ns);
     const consumerKeys = this.getConsumerKeys(instanceId);
-    const keys = {
-      keyQueueProcessing: this.joinSegments(
-        ERedisKey.KEY_QUEUE_PROCESSING,
-        queueName,
-        instanceId,
-      ),
-      keyRateConsumerDeadLettered: this.joinSegments(
-        ERedisKey.KEY_RATE_CONSUMER_DEAD_LETTERED,
-        queueName,
-        instanceId,
-      ),
-      keyRateConsumerAcknowledged: this.joinSegments(
-        ERedisKey.KEY_RATE_CONSUMER_ACKNOWLEDGED,
-        queueName,
-        instanceId,
-      ),
+    const consumerQueuekeys = {
+      keyQueueProcessing: ERedisKey.KEY_QUEUE_PROCESSING,
+      keyRateConsumerDeadLettered: ERedisKey.KEY_RATE_CONSUMER_DEAD_LETTERED,
+      keyRateConsumerAcknowledged: ERedisKey.KEY_RATE_CONSUMER_ACKNOWLEDGED,
     };
     return {
       ...queueKeys,
       ...consumerKeys,
-      ...globalKeys,
-      ...this.makeNamespacedKeys(keys, ns ?? namespace),
+      ...mainKeys,
+      ...this.makeNamespacedKeys(consumerQueuekeys, ns, queueName, instanceId),
     };
   },
 
-  extractData(key: string) {
-    const { ns, type, segments } = this.getSegments(key);
-    if (type === ERedisKey.KEY_QUEUE_PROCESSING) {
-      const [queueName, consumerId] = segments;
-      return {
-        ns,
-        queueName,
-        type,
-        consumerId,
-      };
-    }
-    return null;
-  },
-
-  getSegments(key: string) {
-    const [, ns, type, ...segments] = key.split('|');
-    return {
-      ns,
-      type: Number(type),
-      segments,
-    };
-  },
-
-  getGlobalKeys() {
-    const keys = {
+  getMainKeys() {
+    const mainKeys = {
       keyQueues: ERedisKey.KEY_QUEUES,
       keyProcessingQueues: ERedisKey.KEY_PROCESSING_QUEUES,
       keyHeartbeats: ERedisKey.KEY_HEARTBEATS,
+      keyHeartbeatInstanceIds: ERedisKey.KEY_HEARTBEAT_INSTANCE_IDS,
+      keyScheduledMessages: ERedisKey.KEY_SCHEDULED_MESSAGES,
+      keyScheduledMessageIds: ERedisKey.KEY_SCHEDULED_MESSAGE_IDS,
       keyLockMessageManager: ERedisKey.KEY_LOCK_MESSAGE_MANAGER,
       keyLockQueueManager: ERedisKey.KEY_LOCK_QUEUE_MANAGER,
       keyLockConsumerWorkersRunner: ERedisKey.KEY_LOCK_CONSUMER_WORKERS_RUNNER,
@@ -238,12 +157,10 @@ export const redisKeys = {
       keyLockWebsocketOnlineStreamWorker:
         ERedisKey.KEY_LOCK_WEBSOCKET_ONLINE_STREAM_WORKER,
       keyDelayedMessages: ERedisKey.KEY_DELAYED_MESSAGES,
-      keyMessagesRequeue: ERedisKey.KEY_MESSAGES_REQUEUE,
-      keyScheduledMessages: ERedisKey.KEY_SCHEDULED_MESSAGES,
-      keyScheduledMessagesIndex: ERedisKey.KEY_SCHEDULED_MESSAGES_INDEX,
+      keyRequeueMessages: ERedisKey.KEY_REQUEUE_MESSAGES,
       keyLockDeleteAcknowledgedMessage:
         ERedisKey.KEY_LOCK_DELETE_ACKNOWLEDGED_MESSAGE,
-      keyLockdeleteDeadLetteredMessage:
+      keyLockDeleteDeadLetteredMessage:
         ERedisKey.KEY_LOCK_DELETE_DEAD_LETTER_MESSAGE,
       keyLockDeleteScheduledMessage:
         ERedisKey.KEY_LOCK_DELETE_SCHEDULED_MESSAGE,
@@ -258,29 +175,27 @@ export const redisKeys = {
       keyRateGlobalAcknowledgedIndex:
         ERedisKey.KEY_RATE_GLOBAL_ACKNOWLEDGED_INDEX,
       keyRateGlobalInputIndex: ERedisKey.KEY_RATE_GLOBAL_PUBLISHED_INDEX,
-      keyHeartbeatTimestamps: ERedisKey.KEY_HEARTBEAT_TIMESTAMPS,
       keyLockRateGlobalPublished: ERedisKey.KEY_LOCK_RATE_GLOBAL_PUBLISHED,
       keyLockRateGlobalAcknowledged:
         ERedisKey.KEY_LOCK_RATE_GLOBAL_ACKNOWLEDGED,
       keyLockRateGlobalDeadLettered:
         ERedisKey.KEY_LOCK_RATE_GLOBAL_DEAD_LETTERED,
     };
-    return this.makeNamespacedKeys(keys, globalNamespace);
+    return this.makeNamespacedKeys(mainKeys, globalNamespace);
   },
 
-  joinSegments(...segments: (string | number)[]): string {
-    return segments.join('|');
-  },
-
-  makeNamespacedKeys<T extends Record<string, string | number>>(
-    keys: T,
-    namespace: string,
-  ): Record<Extract<keyof T, string>, string> {
-    const result: Record<string, string> = {};
-    for (const k in keys) {
-      result[k] = this.joinSegments(nsPrefix, namespace, keys[k]);
+  extractData(key: string) {
+    const { ns, type, segments } = this.getSegments(key);
+    if (type === ERedisKey.KEY_QUEUE_PROCESSING) {
+      const [queueName, consumerId] = segments;
+      return {
+        ns,
+        queueName,
+        type,
+        consumerId,
+      };
     }
-    return result;
+    return null;
   },
 
   setNamespace(ns: string): void {
@@ -310,5 +225,32 @@ export const redisKeys = {
       );
     }
     return filtered;
+  },
+
+  makeNamespacedKeys<T extends Record<string, ERedisKey>>(
+    keys: T,
+    namespace: string,
+    ...rest: string[]
+  ): Record<Extract<keyof T, string>, string> {
+    const result: Record<string, string> = {};
+    for (const k in keys) {
+      result[k] = [nsPrefix, namespace, keys[k], ...rest].join(
+        keySegmentSeparator,
+      );
+    }
+    return result;
+  },
+
+  getSegments(key: string): {
+    ns: string;
+    type: ERedisKey;
+    segments: string[];
+  } {
+    const [, ns, type, ...segments] = key.split(keySegmentSeparator);
+    return {
+      ns,
+      type: Number(type),
+      segments,
+    };
   },
 };

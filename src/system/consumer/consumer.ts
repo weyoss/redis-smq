@@ -23,6 +23,7 @@ import { ConsumerMessageHandler } from './consumer-message-handler';
 import * as async from 'async';
 import { consumerQueues } from './consumer-queues';
 import { QueueManager } from '../queue-manager/queue-manager';
+import { GenericError } from '../common/errors/generic.error';
 
 export class Consumer extends Base {
   private heartbeat: ConsumerHeartbeat | null = null;
@@ -34,6 +35,11 @@ export class Consumer extends Base {
   constructor(config: IConfig = {}) {
     super(config);
     this.redisKeys = redisKeys.getConsumerKeys(this.getId());
+    this.on(events.UP, () => {
+      this.consumeMessages((err) => {
+        if (err) this.emit(events.ERROR, err);
+      });
+    });
   }
 
   protected registerMessageHandlerEvents = (
@@ -154,13 +160,13 @@ export class Consumer extends Base {
     });
   };
 
-  protected setUpMessageHandlerInstances = (cb: ICallback<void>): void => {
-    async.each(
+  protected consumeMessages = (cb: ICallback<void>): void => {
+    async.each<TConsumerMessageHandlerParams, Error>(
       this.messageHandlers,
       (handlerParams, done) => {
         this.runMessageHandler(handlerParams, done);
       },
-      (err) => cb(err),
+      cb,
     );
   };
 
@@ -195,11 +201,7 @@ export class Consumer extends Base {
   protected goingUp(): TUnaryFunction<ICallback<void>>[] {
     return super
       .goingUp()
-      .concat([
-        this.setUpMessageHandlerInstances,
-        this.setUpConsumerWorkers,
-        this.setUpHeartbeat,
-      ]);
+      .concat([this.setUpConsumerWorkers, this.setUpHeartbeat]);
   }
 
   protected goingDown(): TUnaryFunction<ICallback<void>>[] {
@@ -210,7 +212,7 @@ export class Consumer extends Base {
     ].concat(super.goingDown());
   }
 
-  protected up(cb?: ICallback<void>): void {
+  protected up(cb?: ICallback<boolean>): void {
     this.heartbeat?.once(events.HEARTBEAT_TICK, () => {
       super.up(cb);
     });
@@ -218,12 +220,14 @@ export class Consumer extends Base {
 
   protected addMessageHandler(
     handlerParams: TConsumerMessageHandlerParams,
-  ): void {
+  ): boolean {
     const { queue } = handlerParams;
-    this.messageHandlers = this.messageHandlers.filter(
-      (i) => !(i.queue.name === queue.name && i.queue.ns === queue.ns),
+    const existing = this.messageHandlers.find(
+      (i) => i.queue.name === queue.name && i.queue.ns === queue.ns,
     );
+    if (existing) return false;
     this.messageHandlers.push(handlerParams);
+    return true;
   }
 
   consume(
@@ -238,15 +242,22 @@ export class Consumer extends Base {
       usePriorityQueuing,
       messageHandler,
     };
-    const setup = () => {
-      this.addMessageHandler(handlerParams);
-      this.runMessageHandler(handlerParams, () => cb(null, true));
-    };
-    if (this.isRunning()) setup();
-    else if (this.isGoingUp()) this.once(events.UP, setup);
+    const r = this.addMessageHandler(handlerParams);
+    if (!r)
+      cb(
+        new GenericError(
+          `Queue [${JSON.stringify(
+            queueParams,
+          )}] has already a message handler`,
+        ),
+      );
     else {
-      this.addMessageHandler(handlerParams);
-      cb(null, false);
+      if (this.isRunning())
+        this.runMessageHandler(handlerParams, (err) => {
+          if (err) cb(err);
+          else cb(null, true);
+        });
+      else cb(null, false);
     }
   }
 

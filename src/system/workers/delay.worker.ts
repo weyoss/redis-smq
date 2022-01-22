@@ -10,13 +10,13 @@ import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.e
 export class DelayWorker extends EventEmitter {
   protected ticker: Ticker;
   protected messageManager: MessageManager;
-  protected redisKeys: ReturnType<typeof redisKeys['getGlobalKeys']>;
+  protected redisKeys: ReturnType<typeof redisKeys['getMainKeys']>;
 
   constructor(messageManager: MessageManager) {
     super();
     this.ticker = new Ticker(this.onTick, 1000);
     this.messageManager = messageManager;
-    this.redisKeys = redisKeys.getGlobalKeys();
+    this.redisKeys = redisKeys.getMainKeys();
     this.ticker.nextTick();
   }
 

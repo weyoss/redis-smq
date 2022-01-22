@@ -10,7 +10,7 @@ export const GlobalDeadLetteredTimeSeries = (
     keyRateGlobalDeadLettered,
     keyRateGlobalDeadLetteredIndex,
     keyLockRateGlobalDeadLettered,
-  } = redisKeys.getGlobalKeys();
+  } = redisKeys.getMainKeys();
   return new HashTimeSeries(
     redisClient,
     keyRateGlobalDeadLettered,

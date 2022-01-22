@@ -42,11 +42,11 @@ export class ConsumerFrontend extends EventEmitter {
     return this.consumer.consume(queue, usePriorityQueuing, messageHandler, cb);
   }
 
-  run(cb?: ICallback<void>): void {
+  run(cb?: ICallback<boolean>): void {
     this.consumer.run(cb);
   }
 
-  shutdown(cb?: ICallback<void>): void {
+  shutdown(cb?: ICallback<boolean>): void {
     this.consumer.shutdown(cb);
   }
 
