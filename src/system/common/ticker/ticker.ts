@@ -13,6 +13,8 @@ export class Ticker extends EventEmitter {
 
   protected timeout: NodeJS.Timeout | null = null;
   protected interval: NodeJS.Timer | null = null;
+  protected shutdownTimeout: NodeJS.Timeout | null = null;
+  protected aborted = false;
 
   constructor(onTickFn: TFunction, time: number) {
     super();
@@ -22,6 +24,9 @@ export class Ticker extends EventEmitter {
   }
 
   protected shutdown(): void {
+    if (this.shutdownTimeout) {
+      clearTimeout(this.shutdownTimeout);
+    }
     this.powerManager.commit();
     this.emit(events.DOWN);
   }
@@ -38,9 +43,19 @@ export class Ticker extends EventEmitter {
     }
   }
 
+  abort(): void {
+    if (!this.aborted) {
+      this.aborted = true;
+      if (this.powerManager.isGoingDown()) this.shutdown();
+      else this.quit();
+    }
+  }
+
   quit(): void {
     if (this.powerManager.isGoingUp()) {
       this.powerManager.rollback();
+      this.emit(events.DOWN);
+    } else if (this.aborted && this.powerManager.isDown()) {
       this.emit(events.DOWN);
     } else {
       this.powerManager.goingDown();
@@ -50,6 +65,15 @@ export class Ticker extends EventEmitter {
       } else if (this.interval) {
         clearInterval(this.interval);
         this.shutdown();
+      } else if (this.aborted) {
+        this.shutdown();
+      } else {
+        // waiting 1 min for nextTick()
+        this.shutdownTimeout = setTimeout(() => {
+          if (this.powerManager.isGoingDown()) {
+            this.shutdown();
+          }
+        }, 60000);
       }
     }
   }
