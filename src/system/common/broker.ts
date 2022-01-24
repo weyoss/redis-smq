@@ -6,12 +6,11 @@ import {
 } from '../../../types';
 import { Message } from '../message';
 import BLogger from 'bunyan';
+import * as async from 'async';
 import { PowerManager } from './power-manager/power-manager';
 import { MessageManager } from '../message-manager/message-manager';
-import { RedisClient } from './redis-client/redis-client';
 import { QueueManager } from '../queue-manager/queue-manager';
 import { ArgumentError } from './errors/argument.error';
-import { ConsumerMessageHandler } from '../consumer/consumer-message-handler';
 
 export class Broker {
   protected logger: BLogger;
@@ -45,30 +44,6 @@ export class Broker {
 
   enqueueMessage(message: Message, cb: ICallback<void>): void {
     this.messageManager.enqueueMessage(message, cb);
-  }
-
-  dequeueMessage(
-    consumerHandler: ConsumerMessageHandler,
-    redisClient: RedisClient,
-    cb: ICallback<string>,
-  ): void {
-    const queue = consumerHandler.getQueue();
-    const { keyQueueProcessing } = consumerHandler.getRedisKeys();
-    if (consumerHandler.isUsingPriorityQueuing()) {
-      this.messageManager.dequeueMessageWithPriority(
-        redisClient,
-        queue,
-        keyQueueProcessing,
-        cb,
-      );
-    } else {
-      this.messageManager.dequeueMessage(
-        redisClient,
-        queue,
-        keyQueueProcessing,
-        cb,
-      );
-    }
   }
 
   acknowledgeMessage(
@@ -185,6 +160,12 @@ export class Broker {
   }
 
   quit(cb: ICallback<void>): void {
-    this.messageManager.quit(cb);
+    async.waterfall(
+      [
+        (cb: ICallback<void>) => this.messageManager.quit(cb),
+        (cb: ICallback<void>) => this.queueManager.quit(cb),
+      ],
+      cb,
+    );
   }
 }

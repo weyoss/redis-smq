@@ -42,6 +42,14 @@ export class ConsumerFrontend extends EventEmitter {
     return this.consumer.consume(queue, usePriorityQueuing, messageHandler, cb);
   }
 
+  cancel(
+    queue: string | TQueueParams,
+    usePriority: boolean,
+    cb: ICallback<void>,
+  ): void {
+    this.consumer.cancel(queue, usePriority, cb);
+  }
+
   run(cb?: ICallback<boolean>): void {
     this.consumer.run(cb);
   }
@@ -74,7 +82,7 @@ export class ConsumerFrontend extends EventEmitter {
     return this.consumer.getId();
   }
 
-  getQueues(): TQueueParams[] {
+  getQueues(): { queue: TQueueParams; usingPriorityQueuing: boolean }[] {
     return this.consumer.getQueues();
   }
 }

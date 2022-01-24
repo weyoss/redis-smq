@@ -20,6 +20,8 @@ import { ConsumerMessageRate } from './consumer-message-rate';
 import { QueueManager } from '../queue-manager/queue-manager';
 import * as async from 'async';
 import { consumerQueues } from './consumer-queues';
+import { DequeueHandler } from '../message-manager/handlers/dequeue.handler';
+import { MessageManager } from '../message-manager/message-manager';
 
 export class ConsumerMessageHandler extends EventEmitter {
   protected consumerId: string;
@@ -32,6 +34,7 @@ export class ConsumerMessageHandler extends EventEmitter {
   protected powerManager: PowerManager;
   protected messageRate: ConsumerMessageRate | null = null;
   protected usingPriorityQueuing: boolean;
+  protected dequeueHandler: DequeueHandler | null = null;
 
   constructor(
     consumerId: string,
@@ -60,7 +63,9 @@ export class ConsumerMessageHandler extends EventEmitter {
     this.registerEventsHandlers();
     if (messageRate) {
       this.messageRate = messageRate;
-      messageRate.on(events.IDLE, () => this.emit(events.IDLE));
+      messageRate.on(events.IDLE, () => {
+        this.emit(events.IDLE, this.queue);
+      });
     }
   }
 
@@ -83,14 +88,29 @@ export class ConsumerMessageHandler extends EventEmitter {
     );
   };
 
+  protected getDequeueHandler = (): DequeueHandler => {
+    if (!this.dequeueHandler) {
+      const { keyQueueProcessing } = this.redisKeys;
+      this.dequeueHandler = MessageManager.getDequeueHandler(
+        this.redisClient,
+        this.queue,
+        keyQueueProcessing,
+        this.usingPriorityQueuing,
+      );
+    }
+    return this.dequeueHandler;
+  };
+
   protected registerEventsHandlers(): void {
     this.on(events.UP, () => this.emit(events.MESSAGE_NEXT));
     this.on(events.MESSAGE_NEXT, () => {
       if (this.powerManager.isRunning()) {
         this.logger.info('Waiting for new messages...');
-        this.broker.dequeueMessage(this, this.redisClient, (err, msgStr) => {
-          if (err) this.emit(events.ERROR, err);
-          else if (!msgStr)
+        this.getDequeueHandler().dequeueMessage((err, msgStr) => {
+          if (err) {
+            if (this.powerManager.isRunning() || this.powerManager.isGoingUp())
+              this.emit(events.ERROR, err);
+          } else if (!msgStr)
             this.emit(events.ERROR, new EmptyCallbackReplyError());
           else this.handleReceivedMessage(msgStr);
         });
@@ -239,6 +259,14 @@ export class ConsumerMessageHandler extends EventEmitter {
       async.waterfall(
         [
           (cb: ICallback<void>) => {
+            if (this.dequeueHandler) {
+              this.dequeueHandler.quit(() => {
+                this.dequeueHandler = null;
+                cb();
+              });
+            } else cb();
+          },
+          (cb: ICallback<void>) => {
             if (this.messageRate) this.messageRate.quit(cb);
             else cb();
           },
@@ -258,12 +286,12 @@ export class ConsumerMessageHandler extends EventEmitter {
     else goDown();
   };
 
-  isUsingPriorityQueuing(): boolean {
-    return this.usingPriorityQueuing;
-  }
-
   getQueue(): TQueueParams {
     return this.queue;
+  }
+
+  isUsingPriorityQueuing(): boolean {
+    return this.usingPriorityQueuing;
   }
 
   getConsumerId(): string {
