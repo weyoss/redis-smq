@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## 6.0.0-rc.8 (2022-01-24)
+
+* Update migration guide (545932a)
+* Test multi-queue consumer, update docs (70209a0)
+* Fix ticker waitlock issue (fca5bd1)
+* Handle gracefully run/shutdown call errors, fix test errors, clean up (779c562)
+* Clean up (4dc6ce5)
+* Update examples (38064d0)
+* Implement multi-queue consumers, refactor and clean up (9c2fefb)
+* Fix typo in README.md (e0ca944)
+
 ## 6.0.0-rc.7 (2022-01-21)
 
 * Update package.json keywords (e84d4cf)
