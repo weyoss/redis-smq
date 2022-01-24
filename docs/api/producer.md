@@ -64,48 +64,37 @@ producer.produce(message, (err) => {
 });
 ```
 
-### Producer.prototype.shutdown()
-
-Gracefully shutdown the producer and disconnect from the Redis server.
-
-```javascript
-producer.once('down', () => {
-  console.log(`Producer ID ${producer.getId()} has gone down.`);
-});
-
-producer.produce(message, (err) => {
-  if (err) console.log(err);
-  else {
-    console.log('Successfully published!');
-    producer.shutdown(); // Shutdown the producer and disconnect from the Redis server.   
-  }
-});
-```
-
 ### Producer.prototype.run()
 
-Start a producer that was previously shutdown. 
+Start your producer instance. No connection to Redis server is opened until this method is called.
 
-This method should be ONLY used when you have manually called the `shutdown()` method.
+Contrary to consumer instances, producer instances are automatically started upon creation.
+
+**Syntax**
 
 ```javascript
-producer.once('down', () => {
-  console.log(`Producer ID ${producer.getId()} has gone down.`);
-  producer.run();
-})
-
-producer.once('up', () => {
-  console.log(`Producer ID ${producer.getId()} is running.`);
-})
-
-producer.produce(message, (err) => {
-  if (err) console.log(err);
-  else {
-    console.log('Successfully published!');
-    producer.shutdown(); // Shutdown the producer and disconnect from the Redis server.   
-  }
-});
+run(cb);
 ```
+
+**Parameters**
+- `cb(err, status)` *(function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+  - `status` *(boolean).* Indicate whether the operation completed successfully.
+
+### Producer.prototype.shutdown()
+
+Gracefully shut down your producer instance and go offline.
+
+**Syntax**
+
+```javascript
+shutdown(cb);
+```
+
+**Parameters**
+- `cb(err, status)` *(function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+  - `status` *(boolean).* Indicate whether the operation completed successfully.
 
 ### Other Methods
 

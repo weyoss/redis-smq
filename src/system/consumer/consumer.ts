@@ -30,16 +30,11 @@ export class Consumer extends Base {
   private consumerWorkers: ConsumerWorkers | null = null;
   private messageHandlerInstances: ConsumerMessageHandler[] = [];
   private messageHandlers: TConsumerMessageHandlerParams[] = [];
-  private redisKeys: TConsumerRedisKeys;
+  private readonly redisKeys: TConsumerRedisKeys;
 
   constructor(config: IConfig = {}) {
     super(config);
     this.redisKeys = redisKeys.getConsumerKeys(this.getId());
-    this.on(events.UP, () => {
-      this.consumeMessages((err) => {
-        if (err) this.emit(events.ERROR, err);
-      });
-    });
   }
 
   protected registerMessageHandlerEvents = (
@@ -72,7 +67,7 @@ export class Consumer extends Base {
         this.heartbeat.on(events.ERROR, (err: Error) =>
           this.emit(events.ERROR, err),
         );
-        cb();
+        this.heartbeat.once(events.HEARTBEAT_TICK, () => cb());
       }
     });
   };
@@ -120,9 +115,7 @@ export class Consumer extends Base {
         cb();
       });
     } else {
-      this.logger.warn(
-        `This is not normal. [this.consumerWorkers] has not been set up. Ignoring...`,
-      );
+      this.logger.warn(`this.consumerWorkers has not been set up. Ignoring...`);
       cb();
     }
   };
@@ -151,8 +144,8 @@ export class Consumer extends Base {
               redisClient,
               messageRate,
             );
-            this.messageHandlerInstances.push(handler);
             this.registerMessageHandlerEvents(handler);
+            this.messageHandlerInstances.push(handler);
             handler.run(cb);
           });
         }
@@ -201,7 +194,11 @@ export class Consumer extends Base {
   protected goingUp(): TUnaryFunction<ICallback<void>>[] {
     return super
       .goingUp()
-      .concat([this.setUpConsumerWorkers, this.setUpHeartbeat]);
+      .concat([
+        this.setUpHeartbeat,
+        this.consumeMessages,
+        this.setUpConsumerWorkers,
+      ]);
   }
 
   protected goingDown(): TUnaryFunction<ICallback<void>>[] {
@@ -212,23 +209,72 @@ export class Consumer extends Base {
     ].concat(super.goingDown());
   }
 
-  protected up(cb?: ICallback<boolean>): void {
-    this.heartbeat?.once(events.HEARTBEAT_TICK, () => {
-      super.up(cb);
-    });
+  protected getMessageHandler(
+    queue: TQueueParams,
+    usePriorityQueuing: boolean,
+  ): TConsumerMessageHandlerParams | undefined {
+    return this.messageHandlers.find(
+      (i) =>
+        i.queue.name === queue.name &&
+        i.queue.ns === queue.ns &&
+        i.usePriorityQueuing === usePriorityQueuing,
+    );
   }
 
   protected addMessageHandler(
     handlerParams: TConsumerMessageHandlerParams,
+    usePriorityQueuing: boolean,
   ): boolean {
     const { queue } = handlerParams;
-    const existing = this.messageHandlers.find(
-      (i) => i.queue.name === queue.name && i.queue.ns === queue.ns,
-    );
-    if (existing) return false;
+    const handler = this.getMessageHandler(queue, usePriorityQueuing);
+    if (handler) return false;
     this.messageHandlers.push(handlerParams);
     return true;
   }
+
+  protected getMessageHandlerInstance = (
+    queue: TQueueParams,
+    usePriorityQueuing: boolean,
+  ): ConsumerMessageHandler | undefined => {
+    return this.messageHandlerInstances.find((i) => {
+      const q = i.getQueue();
+      const p = i.isUsingPriorityQueuing();
+      return (
+        q.name === queue.name && q.ns === queue.ns && p === usePriorityQueuing
+      );
+    });
+  };
+
+  protected removeMessageHandlerInstance = (
+    queue: TQueueParams,
+    usePriorityQueuing: boolean,
+  ): void => {
+    this.messageHandlerInstances = this.messageHandlerInstances.filter(
+      (handler) => {
+        const q = handler.getQueue();
+        const p = handler.isUsingPriorityQueuing();
+        return !(
+          q.name === queue.name &&
+          q.ns === queue.ns &&
+          p === usePriorityQueuing
+        );
+      },
+    );
+  };
+
+  protected removeMessageHandler = (
+    queue: TQueueParams,
+    usePriorityQueuing: boolean,
+  ): void => {
+    this.messageHandlers = this.messageHandlers.filter((handler) => {
+      const q = handler.queue;
+      return !(
+        q.name === queue.name &&
+        q.ns === queue.ns &&
+        usePriorityQueuing === handler.usePriorityQueuing
+      );
+    });
+  };
 
   consume(
     queue: string | TQueueParams,
@@ -242,11 +288,11 @@ export class Consumer extends Base {
       usePriorityQueuing,
       messageHandler,
     };
-    const r = this.addMessageHandler(handlerParams);
+    const r = this.addMessageHandler(handlerParams, usePriorityQueuing);
     if (!r)
       cb(
         new GenericError(
-          `Queue [${JSON.stringify(
+          `${usePriorityQueuing ? 'Priority ' : ''}Queue [${JSON.stringify(
             queueParams,
           )}] has already a message handler`,
         ),
@@ -261,12 +307,46 @@ export class Consumer extends Base {
     }
   }
 
+  cancel(
+    queue: string | TQueueParams,
+    usePriorityQueuing: boolean,
+    cb: ICallback<void>,
+  ): void {
+    const queueParams = QueueManager.getQueueParams(queue);
+    const handler = this.getMessageHandler(queueParams, usePriorityQueuing);
+    if (!handler) {
+      cb(
+        new GenericError(
+          `Message handler for ${
+            usePriorityQueuing ? 'priority ' : ''
+          }queue [${JSON.stringify(queueParams)}] does not exist`,
+        ),
+      );
+    } else {
+      this.removeMessageHandler(queueParams, usePriorityQueuing);
+      const handlerInstance = this.getMessageHandlerInstance(
+        queueParams,
+        usePriorityQueuing,
+      );
+      if (handlerInstance) {
+        handlerInstance.shutdown(() => {
+          // ignoring errors
+          this.removeMessageHandlerInstance(queueParams, usePriorityQueuing);
+          cb();
+        });
+      } else cb();
+    }
+  }
+
   getRedisKeys(): TConsumerRedisKeys {
     return this.redisKeys;
   }
 
-  getQueues(): TQueueParams[] {
-    return this.messageHandlers.map((i) => i.queue);
+  getQueues(): { queue: TQueueParams; usingPriorityQueuing: boolean }[] {
+    return this.messageHandlers.map((i) => ({
+      queue: i.queue,
+      usingPriorityQueuing: i.usePriorityQueuing,
+    }));
   }
 
   static isAlive(

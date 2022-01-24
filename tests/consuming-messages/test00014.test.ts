@@ -4,9 +4,8 @@ import {
   getConsumer,
   getProducer,
   getQueueManagerFrontend,
-  untilConsumerEvent,
+  untilMessageAcknowledged,
 } from '../common';
-import { events } from '../../src/system/common/events';
 
 test('Consume messages produced to different queues using a single producer instance', async () => {
   const producer = getProducer();
@@ -31,7 +30,7 @@ test('Consume messages produced to different queues using a single producer inst
     // queue name should be normalized to lowercase
     const consumer = getConsumer({ queue: `queUE_${i}` });
     await consumer.runAsync();
-    await untilConsumerEvent(consumer, events.MESSAGE_ACKNOWLEDGED);
+    await untilMessageAcknowledged(consumer);
     await consumer.shutdownAsync();
 
     //

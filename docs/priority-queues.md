@@ -2,14 +2,15 @@
 
 Starting with version 3.3.0, reliable priority queues are supported.
 
-By default, messages are produced and consumed from a `LIFO queue`. In a `LIFO queue` newer queue messages are always 
-delivered first, before earlier messages. `LIFO queues` use [brpoplpush](https://redis.io/commands/brpoplpush) which 
-blocks the connection until a message is received. `LIFO queues` can be used in most use cases where delivery priority 
-of the queue messages is not critical to the operation of the application.
+By default, messages are produced and consumed from a `LIFO queue`. In a `LIFO queue` newer queue messages are always delivered first, before earlier messages. 
+
+`LIFO queues` use [brpoplpush](https://redis.io/commands/brpoplpush) which blocks the connection to the Redis server until a message is received. 
+
+`LIFO queues` can be used in most use cases where delivery priority of the messages is not critical to the operation of your application.
 
 When `Priority queues` are enabled, messages with higher priority are always delivered first before messages with lower priority. 
-`Priority queues` use pooling and lua scripting, which introduce a little of overhead on the MQ and 
-therefore `priority queues` are less performant than `LIFO queues`. 
+
+`Priority queues` use pooling and lua scripting, which introduce a little of overhead on the MQ and therefore `priority queues` are less performant than `LIFO queues`. 
 
 ## Usage
 
@@ -48,7 +49,8 @@ producer.produce(msg2, (err) => {
 
 ***Consuming messages from a priority queue***
 
-To consume priority messages, you need at least one consumer with `priority queuing` enabled for a given queue.
+To consume priority messages from a given queue, you need at least one consumer having a `message handler` with `priority queuing` enabled.
+
 See [Consumer API Reference](/docs/api/consumer.md) for more details.
 
 ```javascript
@@ -57,15 +59,16 @@ See [Consumer API Reference](/docs/api/consumer.md) for more details.
 const { Consumer } = require('redis-smq');
 const config = require('./config');
 
-class TestQueueConsumer extends Consumer {
-    consume(message, cb) {
-        console.log('Got a message to consume:', message);
-        cb();
-    }
-}
 
-// The third parameter is set to true for enabling priority queuing 
-const consumer = new TestQueueConsumer('test_queue', config, true);
+const consumer = new Consumer(config);
+
+// The second argument is for enabling priority queuing 
+consumer.consume('test_queue', true, (msg, cb) => { cb(); }, (err, isRunning) => {
+  if (err) console.log(error);
+  else console.log(`Message handler successfully registered. Currently it is ${isRunning? '': 'not '}running.`);
+})
+
+
 consumer.run();
 ```
 

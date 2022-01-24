@@ -313,31 +313,49 @@ export async function getRedisInstance() {
   return c;
 }
 
-export async function consumerOnEvent(
+export async function consumerOnEvent<T extends Array<any>>(
   consumer: Consumer,
   event: string,
-): Promise<void> {
-  return new Promise<void>((resolve) => {
-    consumer.once(event, () => {
-      resolve();
+) {
+  return new Promise<T>((resolve) => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    consumer.once(event, (...args: T) => {
+      resolve(args);
     });
   });
 }
 
-export async function untilConsumerIdle(consumer: Consumer): Promise<void> {
-  return consumerOnEvent(consumer, events.IDLE);
+export async function untilConsumerIdle(
+  consumer: Consumer,
+  queueParams?: TQueueParams,
+): Promise<void> {
+  const [queue] = await consumerOnEvent<[TQueueParams]>(consumer, events.IDLE);
+  if (
+    queueParams &&
+    !(queueParams.name === queue.name && queueParams.ns === queue.ns)
+  ) {
+    await untilConsumerIdle(consumer, queueParams);
+  }
 }
 
 export async function untilMessageAcknowledged(
   consumer: Consumer,
+  msg?: Message,
 ): Promise<void> {
-  return consumerOnEvent(consumer, events.MESSAGE_ACKNOWLEDGED);
+  const [message] = await consumerOnEvent<[Message]>(
+    consumer,
+    events.MESSAGE_ACKNOWLEDGED,
+  );
+  if (msg && msg.getId() !== message.getId()) {
+    await untilMessageAcknowledged(consumer, msg);
+  }
 }
 
 export async function untilConsumerEvent(
   consumer: Consumer,
   event: string,
-): Promise<void> {
+): Promise<unknown[]> {
   return consumerOnEvent(consumer, event);
 }
 
@@ -357,7 +375,7 @@ export async function produceAndAcknowledgeMessage(
   await producer.produceAsync(message);
 
   consumer.run();
-  await untilConsumerEvent(consumer, events.MESSAGE_ACKNOWLEDGED);
+  await untilMessageAcknowledged(consumer);
   return { producer, consumer, queue, message };
 }
 

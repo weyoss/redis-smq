@@ -1,4 +1,8 @@
-import { getConsumer, produceMessage, untilConsumerEvent } from '../common';
+import {
+  getConsumer,
+  produceMessage,
+  untilMessageAcknowledged,
+} from '../common';
 import { events } from '../../src/system/common/events';
 
 test('A message is not lost in case of a consumer crash', async () => {
@@ -28,5 +32,5 @@ test('A message is not lost in case of a consumer crash', async () => {
   });
 
   consumer1.run();
-  await untilConsumerEvent(consumer2, events.MESSAGE_ACKNOWLEDGED);
+  await untilMessageAcknowledged(consumer2);
 });

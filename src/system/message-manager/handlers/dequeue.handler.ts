@@ -11,11 +11,13 @@ export class DequeueHandler extends Handler {
   protected keyQueuePriority: string;
   protected keyPendingMessagesWithPriority: string;
   protected keyQueueProcessing: string;
+  protected usingPriorityQueuing: boolean;
 
   constructor(
     redisClient: RedisClient,
     queue: TQueueParams,
     keyQueueProcessing: string,
+    usePriorityQueuing: boolean,
   ) {
     super(redisClient);
     const {
@@ -27,13 +29,14 @@ export class DequeueHandler extends Handler {
     this.keyPendingMessagesWithPriority = keyQueuePendingPriorityMessages;
     this.keyQueuePriority = keyQueuePendingPriorityMessageIds;
     this.keyQueueProcessing = keyQueueProcessing;
+    this.usingPriorityQueuing = usePriorityQueuing;
 
     // A ticker is needed for pooling priority queues
     // Initialize a dummy ticker. nextTickFn will be used instead of nextTick
     this.ticker = new Ticker(() => void 0, 1000);
   }
 
-  dequeueWithPriority(cb: ICallback<string>): void {
+  protected dequeueWithPriority(cb: ICallback<string>): void {
     this.redisClient.zpophgetrpush(
       this.keyQueuePriority,
       this.keyPendingMessagesWithPriority,
@@ -53,7 +56,7 @@ export class DequeueHandler extends Handler {
     );
   }
 
-  dequeue(cb: ICallback<string>): void {
+  protected dequeue(cb: ICallback<string>): void {
     this.redisClient.brpoplpush(
       this.keyQueue,
       this.keyQueueProcessing,
@@ -65,6 +68,11 @@ export class DequeueHandler extends Handler {
         } else cb(null, reply);
       },
     );
+  }
+
+  dequeueMessage(cb: ICallback<string>): void {
+    if (this.usingPriorityQueuing) this.dequeueWithPriority(cb);
+    else this.dequeue(cb);
   }
 
   quit(cb: ICallback<void>): void {

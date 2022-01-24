@@ -10,44 +10,29 @@
   </p>
 </div>
 
-RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing them asynchronously with consumers. Backed 
-by Redis, it allows scaling up your application with ease of use.
-
-For more details about initial RedisSMQ design and the motivation behind it see [https://medium.com/@weyoss/building-a-simple-message-queue-using-redis-server-and-node-js-964eda240a2a](https://medium.com/@weyoss/building-a-simple-message-queue-using-redis-server-and-node-js-964eda240a2a)
-
-## Current MQ Architecture Overview
-
-High-level overview of how RedisSMQ works:
-
-- An application publishes messages using a producer.
-- Consumers pull messages off queues and start processing.
-- If an error occurs, messages are unacknowledged. Otherwise, once acknowledged, messages are moved to the `acknowledged queue`.
-- Unacknowledged messages are re-queued with optional `retryDelay`. When `retryThreshold` is exceeded, messages are put in the `deal-letter queue`.
-
-&nbsp;
-
-![RedisSMQ Architecture Overview](docs/redis-smq-architecture-overview.png)
+RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing them asynchronously with consumers. Backed by Redis, it allows scaling up your application with ease of use.
 
 ## Features
 
- * **[High-performance message processing](docs/performance.md)**
- * **Scalable**: You can run multiple instances concurrently in the same host, or in different hosts.
- * **Persistent**: Messages are not lost in case of consumer failures.
- * **Atomic**: A message can be delivered only to one consumer at a time.
- * **[Message expiration](docs/api/message.md#messageprototypesetttl)**: A message will not be delivered if it has been in a queue for longer 
- than a given amount of time, called TTL (time-to-live).
- * **[Message consume timeout](docs/api/message.md#messageprototypesetconsumetimeout)**: Timeout for a consumer to consume a message.
- * **[Delaying and scheduling message delivery](docs/scheduling-messages.md)**: Messages can be configured to be delayed, delivered 
-   for N times with an optional period between deliveries, and to be scheduled using CRON expressions.
- * **[Reliable Priority Queues](docs/priority-queues.md)**: Supports priority messaging.
- * **[HTTP API](docs/http-api.md)**: an HTTP interface is provided to interact with the MQ.
- * **[Web UI](docs/web-ui.md)**: Using the Web UI you also can monitor and manage the MQ is real-time.
- * **[JSON Logging](docs/logs.md)**: Supports JSON log format for troubleshooting and debugging.
- * **Highly optimized**: Implemented using pure callbacks, with small memory footprint and no memory leaks. See [callbacks vs promises vs async/await benchmarks](http://bluebirdjs.com/docs/benchmarks.html).
- * **[Configurable](docs/configuration.md)**: Many options and features can be configured.
- * **Rigorously tested**: With 100+ tests and code coverage no less than 80%.
- * **Supports both redis & ioredis**: RedisSMQ can be configured to use either `redis` or `ioredis` 
- to connect to Redis server.  
+* **[High-performance message processing](docs/performance.md)**
+* **Single-Consumer-Multi-Queue & Single-Producer-Multi-Queue models**: Offering very flexible models which make RedisSMQ an ideal message broker for your microservices. 
+* **Scalable**: You can run multiple Consumer/Producer instances concurrently in the same host, or in different hosts.
+* **Supporting both at-least-once/at-most-once delivery**: In case of failures, while delivering or processing a message, RedisSMQ can guaranty that the message will be not lost and redelivered again. When configured to do so, RedisSMQ can ensure that the message is delivered at-most-once.
+* **[Message expiration](docs/api/message.md#messageprototypesetttl)**: A message will not be delivered if it has been in a queue for longer than a given amount of time, called TTL (time-to-live).
+* **[Message consume timeout](docs/api/message.md#messageprototypesetconsumetimeout)**: Timeout for consuming messages.
+* **[Delaying and scheduling message delivery](docs/scheduling-messages.md)**: Messages can be configured to be delayed, delivered for N times with an optional period between deliveries, and to be scheduled using CRON expressions.
+* **[Reliable Priority Queues](docs/priority-queues.md)**: Supports priority messaging.
+* **[HTTP API](docs/http-api.md)**: an HTTP interface is provided to interact with the MQ.
+* **[Web UI](docs/web-ui.md)**: RedisSMQ can be managed also from your web browser.
+* **[JSON Logging](docs/logs.md)**: Supports JSON log format for troubleshooting and debugging.
+* **Highly optimized**: Strongly-typed and implemented using pure callbacks, with small memory footprint and no memory leaks. See [callbacks vs promises vs async/await benchmarks](http://bluebirdjs.com/docs/benchmarks.html).
+* **[Configurable](docs/configuration.md)**: Many options and features can be configured.
+* **Rigorously tested**: With 100+ tests and code coverage no less than 80%.
+* **Supports both redis & ioredis**: RedisSMQ can be configured to use either `redis` or `ioredis` to connect to Redis server.
+
+&nbsp;
+
+![RedisSMQ Overview](docs/redis-smq-overview.png)
 
 ## Table of content
 
@@ -67,22 +52,20 @@ High-level overview of how RedisSMQ works:
       5. [HTTP API](docs/http-api.md)
       6. [Web UI](docs/web-ui.md)
       7. [Logs](docs/logs.md)
-5. [Performance](#performance)
-6. [Contributing](#contributing)
-7. [License](#license)
+5. [RedisSMQ Architecture](docs/redis-smq-architecture.md)
+6. [Performance](#performance)
+7. [Contributing](#contributing)
+8. [License](#license)
 
 ## What's new?
 
 **2022.01.03**
 
-- Release v6 is almost ready. This release includes new features such as multi-queue producers, rates time series, 
-complete integration with the Web UI, as well as many improvements and bug fixes. If you are upgrading your 
-installation, take a look at the [migration guide](docs/migrating-from-v5-to-v6.md) before proceeding.
+- Release v6 is almost ready. This release includes new features such as multi-queue consumers and multi-queue producers, message rate time series, complete integration with the Web UI, as well as many improvements and bug fixes. If you are upgrading your installation, take a look at the [migration guide](docs/migrating-from-v5-to-v6.md) before proceeding.
 
 **2021.11.22**
 
-- Starting with RedisSMQ v5, you can now manage your queues and messages from the Web UI. Also, many changes and improvements 
-have been made, allowing for better user experience and system stability. 
+- Starting with RedisSMQ v5, you can now manage your queues and messages from the Web UI. Also, many changes and improvements have been made, allowing for better user experience and system stability. 
 
 See [CHANGELOG](CHANGELOG.md) for more details.
 
@@ -94,8 +77,7 @@ npm install redis-smq --save
 
 Considerations:
 
-- RedisSMQ is targeted to be used in production environments. Therefore, only active LTS and maintenance LTS Node.js 
-  releases (v12, v14, and v16) are supported. The latest stable Node.js version is recommended.
+- RedisSMQ is targeted to be used in production environments. Therefore, only active LTS and maintenance LTS Node.js releases (v12, v14, and v16) are supported. The latest stable Node.js version is recommended.
 - Minimal Redis server version is 2.6.12. The latest stable Redis version is recommended.
 
 ## Configuration
@@ -129,15 +111,10 @@ See [Message Reference](docs/api/message.md) for more details.
 
 `Producer` class is in turn responsible for publishing messages. 
 
-~~Each `Producer` instance is associated with a message queue and provides the `produce()` method to publish a message.~~
-
-Starting with v6, your can use the same producer instance to publish messages to multiple queues. The same producer
-instance can also produce messages with priority. 
-
-Such features are useful when, for example, developing microservices using RedisSMQ as a message broker.
+Starting with v6, your can use the same producer instance to publish messages to multiple queues. The same producer instance can also produce messages with priority. 
 
 ```javascript
-// filename: ./examples/javascript/ns1-test-queue-producer.js
+// filename: ./examples/javascript/producer.js
 
 'use strict';
 const {Message, Producer} = require('redis-smq');
@@ -160,45 +137,51 @@ See [Producer Reference](docs/api/producer.md) for more details.
 
 #### Consumer Class
 
-The `Consumer` class is the parent class for all your consumers, which are required to implement the abstract method 
-`consume()` from the parent class. 
+Starting with v6, your can use the same consumer instance to consume messages from different queues, including messages from priority queues.
 
-Once a message is received, the `consume()` method get invoked with the received message as its first argument.
+To consume messages from a given queue, you need to define and register a `message handler`. 
+
+A `message handler` is a function which get called once a message is received. Each queue can have only 2 message handlers. One for consuming messages without priority, and the second one for consuming messages with priority.
+
+To register a message handler, the `consume()` method is provided and can be used as shown in the example bellow. Message handlers can be registered at any time, before or after you have started your consumer using the `consumer.run()` method.
+
+To shut down and remove a `message handler` from your consumer, use the `cancel()` method. 
+
+To shut down completely your consumer, use the `shutdown()` method.
+
 
 ```javascript
-// filename: ./examples/javascript/ns1-test-queue-consumer.js
+// filename: ./examples/javascript/consumer.js
 'use strict';
 
 const { Consumer } = require('redis-smq');
 
-class TestQueueConsumer extends Consumer {
-    consume(message, cb) {
-        console.log('Got a message to consume:', message);
-        cb();
-    }
-}
+const consumer = new Consumer();
 
-const consumer = new TestQueueConsumer('test_queue');
+consumer.consume('test_queue', false, (msg, cb) => {
+  const payload = msg.getBody();
+  console.log('Message payload', payload);
+  cb(); // acknowledging the message
+});
+
+consumer.consume('another_queue', true, (msg, cb) => {
+   const payload = msg.getBody();
+   console.log('Message payload', payload);
+   cb(); // acknowledging the message
+});
+
 consumer.run();
 ```
 
-Starting a consumer:
+When a `message handler` receives a message, in order to acknowledge it, you invoke the callback function, without arguments (see the example above). 
 
-```text
-$ node ./examples/javascript/test-queue-consumer.js
-```
+Message acknowledgment informs the MQ that a given message has been successfully consumed.
 
-To acknowledge a received message, you invoke the callback function without arguments. 
+If an error occurred while processing a message, it can be unacknowledged by passing the error to the callback function.
 
-The message acknowledgment informs the MQ that the message has been successfully consumed.
+By default, unacknowledged messages are re-queued and delivered again unless **message retry threshold** is exceeded. Then the messages are moved to **dead-letter queue (DLQ)**. 
 
-If an error occurred, the message is unacknowledged by passing the error to the callback function.
-
-By default, unacknowledged messages are re-queued and delivered again unless **message retry threshold** is exceeded. 
-Then the messages are moved to **dead-letter queue (DLQ)**. 
-
-Each message queue has a system generated corresponding queue called `dead-letter queue` that holds all messages 
-that couldn't be processed or can not be delivered to consumers.
+A `dead-letter queue` is a system generated queue that holds all messages that couldn't be processed or can not be delivered to consumers.
 
 See [Consumer Reference](docs/api/consumer.md) for more details.
 
@@ -217,6 +200,10 @@ See [Consumer Reference](docs/api/consumer.md) for more details.
 * [Web UI](docs/web-ui.md)
 
 * [Logs](docs/logs.md)
+
+## RedisSMQ Architecture
+
+* See [Architecture Overview](docs/redis-smq-architecture.md).
 
 ## Performance
 

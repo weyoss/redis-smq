@@ -26,9 +26,6 @@ export class MessageManager {
   protected requeueHandler: RequeueHandler;
   protected logger: BLogger;
 
-  // DequeueHandler needs an exclusive redis client and it is initialized only on-demand
-  protected dequeueHandler: DequeueHandler | null = null;
-
   constructor(redisClient: RedisClient, logger: BLogger) {
     this.redisClient = redisClient;
     this.enqueueHandler = new EnqueueHandler(redisClient);
@@ -37,51 +34,6 @@ export class MessageManager {
     this.scheduleHandler = new ScheduleHandler(redisClient);
     this.delayHandler = new DelayHandler(redisClient, this.scheduleHandler);
     this.logger = logger.child({ child: MessageManager.name });
-  }
-
-  ///
-
-  protected getDequeueHandler(
-    redisClient: RedisClient,
-    queue: TQueueParams,
-    keyQueueProcessing: string,
-  ): DequeueHandler {
-    if (!this.dequeueHandler) {
-      this.dequeueHandler = new DequeueHandler(
-        redisClient,
-        queue,
-        keyQueueProcessing,
-      );
-    }
-    return this.dequeueHandler;
-  }
-
-  ///
-
-  // requires an exclusive redis client
-  dequeueMessage(
-    redisClient: RedisClient,
-    queue: TQueueParams,
-    keyQueueProcessing: string,
-    cb: ICallback<string>,
-  ): void {
-    this.logger.debug(`De-queuing...`);
-    this.getDequeueHandler(redisClient, queue, keyQueueProcessing).dequeue(cb);
-  }
-
-  // requires an exclusive redis client
-  dequeueMessageWithPriority(
-    redisClient: RedisClient,
-    queue: TQueueParams,
-    keyQueueProcessing: string,
-    cb: ICallback<string>,
-  ): void {
-    this.logger.debug(`De-queuing with priority...`);
-    this.getDequeueHandler(
-      redisClient,
-      queue,
-      keyQueueProcessing,
-    ).dequeueWithPriority(cb);
   }
 
   ///
@@ -370,14 +322,24 @@ export class MessageManager {
     this.scheduleHandler.getScheduledMessagesCount(cb);
   }
 
+  static getDequeueHandler(
+    redisClient: RedisClient,
+    queue: TQueueParams,
+    keyQueueProcessing: string,
+    usePriorityQueuing: boolean,
+  ): DequeueHandler {
+    return new DequeueHandler(
+      redisClient,
+      queue,
+      keyQueueProcessing,
+      usePriorityQueuing,
+    );
+  }
+
   ///
 
   quit(cb: ICallback<void>): void {
-    if (this.dequeueHandler) {
-      this.dequeueHandler.quit(() => {
-        this.dequeueHandler = null;
-        cb();
-      });
-    } else cb();
+    // Keeping this method although no work is needed for now
+    cb();
   }
 }
