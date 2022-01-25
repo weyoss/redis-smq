@@ -15,7 +15,7 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 ## Features
 
 * **[High-performance message processing](docs/performance.md)**
-* **Single-Consumer-Multi-Queue & Single-Producer-Multi-Queue models**: Offering very flexible models which make RedisSMQ an ideal message broker for your microservices. 
+* **Multi-Queue Producers & Consumers**: Offering very flexible models which make RedisSMQ an ideal message broker for your microservices. 
 * **Scalable**: You can run multiple Consumer/Producer instances concurrently in the same host, or in different hosts.
 * **Supporting both at-least-once/at-most-once delivery**: In case of failures, while delivering or processing a message, RedisSMQ can guaranty that the message will be not lost and redelivered again. When configured to do so, RedisSMQ can ensure that the message is delivered at-most-once.
 * **[Message expiration](docs/api/message.md#messageprototypesetttl)**: A message will not be delivered if it has been in a queue for longer than a given amount of time, called TTL (time-to-live).
@@ -30,11 +30,13 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 * **Rigorously tested**: With 100+ tests and code coverage no less than 80%.
 * **Supports both redis & ioredis**: RedisSMQ can be configured to use either `redis` or `ioredis` to connect to Redis server.
 
+### RedisSMQ Use Case: Multi-Queue Producers & Consumers
+
 &nbsp;
 
 ![RedisSMQ Overview](docs/redis-smq-overview.png)
 
-## Table of content
+## Table of Content
 
 1. [What's new?](#whats-new)
 2. [Installation](#installation)
@@ -111,7 +113,7 @@ See [Message Reference](docs/api/message.md) for more details.
 
 `Producer` class is in turn responsible for publishing messages. 
 
-Starting with v6, your can use the same producer instance to publish messages to multiple queues. The same producer instance can also produce messages with priority. 
+Starting with v6, you can use the same producer instance to publish messages to multiple queues. The same producer instance can also produce messages with priority. 
 
 ```javascript
 // filename: ./examples/javascript/producer.js
@@ -137,7 +139,7 @@ See [Producer Reference](docs/api/producer.md) for more details.
 
 #### Consumer Class
 
-Starting with v6, your can use the same consumer instance to consume messages from different queues, including messages from priority queues.
+Starting with v6, you can use the same consumer instance to consume messages from different queues, including messages from priority queues.
 
 To consume messages from a given queue, you need to define and register a `message handler`. 
 
