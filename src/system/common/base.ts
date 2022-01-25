@@ -63,6 +63,7 @@ export abstract class Base extends EventEmitter {
       const messageManager = new MessageManager(
         this.sharedRedisClient,
         this.logger,
+        this.config,
       );
       const queueManager = new QueueManager(
         this.sharedRedisClient,

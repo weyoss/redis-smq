@@ -270,7 +270,7 @@ process.on('message', (c: string) => {
     else {
       const logger = Logger(WebsocketMainStreamWorker.name, config.log);
       const queueManager = new QueueManager(client, logger);
-      const messageManager = new MessageManager(client, logger);
+      const messageManager = new MessageManager(client, logger, {});
       new WebsocketMainStreamWorker(
         queueManager,
         messageManager,

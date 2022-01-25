@@ -2,6 +2,7 @@ import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgedCause,
   ICallback,
+  IConfig,
   TGetMessagesReply,
   TGetPendingMessagesWithPriorityReply,
   TGetScheduledMessagesReply,
@@ -25,11 +26,16 @@ export class MessageManager {
   protected delayHandler: DelayHandler;
   protected requeueHandler: RequeueHandler;
   protected logger: BLogger;
+  protected config: IConfig;
 
-  constructor(redisClient: RedisClient, logger: BLogger) {
+  constructor(redisClient: RedisClient, logger: BLogger, config: IConfig) {
     this.redisClient = redisClient;
+    this.config = config;
     this.enqueueHandler = new EnqueueHandler(redisClient);
-    this.processingHandler = new ProcessingHandler(redisClient);
+    this.processingHandler = new ProcessingHandler(
+      redisClient,
+      config.storeMessages,
+    );
     this.requeueHandler = new RequeueHandler(redisClient, this.enqueueHandler);
     this.scheduleHandler = new ScheduleHandler(redisClient);
     this.delayHandler = new DelayHandler(redisClient, this.scheduleHandler);

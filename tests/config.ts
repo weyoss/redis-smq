@@ -24,4 +24,5 @@ export const config: IConfig = {
   message: {
     retryDelay: 0,
   },
+  storeMessages: true,
 };
