@@ -157,7 +157,7 @@ export async function getMessageManager() {
   if (!messageManager) {
     const client = await getRedisInstance();
     const logger = getLogger();
-    messageManager = new MessageManager(client, logger);
+    messageManager = new MessageManager(client, logger, config);
   }
   return messageManager;
 }
@@ -361,10 +361,12 @@ export async function untilConsumerEvent(
 
 export async function produceAndAcknowledgeMessage(
   queue: TQueueParams = defaultQueue,
+  cfg: IConfig = config,
 ) {
-  const producer = getProducer();
+  const producer = getProducer(cfg);
   const consumer = getConsumer({
     queue,
+    cfg,
     messageHandler: jest.fn((msg, cb) => {
       cb();
     }),
@@ -381,10 +383,12 @@ export async function produceAndAcknowledgeMessage(
 
 export async function produceAndDeadLetterMessage(
   queue: TQueueParams = defaultQueue,
+  cfg: IConfig = config,
 ) {
-  const producer = getProducer();
+  const producer = getProducer(cfg);
   const consumer = getConsumer({
     queue,
+    cfg,
     messageHandler: jest.fn(() => {
       throw new Error('Explicit error');
     }),

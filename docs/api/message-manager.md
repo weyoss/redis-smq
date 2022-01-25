@@ -1,5 +1,7 @@
 # Message Manager API
 
+> ☝ ️By default, acknowledged and dead-lettered messages are not stored. If you need such feature, you can enable it from your [configuration](/docs/configuration.md) object.
+
 ```javascript
 const { MessageManager } = require('redis-smq');
 const config = require('./config');

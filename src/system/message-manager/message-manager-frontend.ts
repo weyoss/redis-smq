@@ -18,9 +18,13 @@ export class MessageManagerFrontend {
   private redisClient: RedisClient;
   private messageManager: MessageManager;
 
-  private constructor(redisClient: RedisClient, logger: BLogger) {
+  private constructor(
+    redisClient: RedisClient,
+    logger: BLogger,
+    config: IConfig,
+  ) {
     this.redisClient = redisClient;
-    this.messageManager = new MessageManager(redisClient, logger);
+    this.messageManager = new MessageManager(redisClient, logger, config);
   }
 
   ///
@@ -239,7 +243,7 @@ export class MessageManagerFrontend {
         else if (!client) cb(new EmptyCallbackReplyError());
         else {
           const logger = Logger(`${MessageManagerFrontend.name}`, config.log);
-          const instance = new MessageManagerFrontend(client, logger);
+          const instance = new MessageManagerFrontend(client, logger, config);
           MessageManagerFrontend.instance = instance;
           cb(null, instance);
         }

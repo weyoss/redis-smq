@@ -227,7 +227,7 @@ process.on('message', (c: string) => {
           consumerId,
         },
       });
-      const messageManager = new MessageManager(client, logger);
+      const messageManager = new MessageManager(client, logger, config);
       const queueManager = new QueueManager(client, logger);
       const broker = new Broker(messageManager, queueManager, logger);
       new GCWorker(client, broker, queueManager, logger, consumerId);

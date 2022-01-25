@@ -18,7 +18,7 @@ export function Services(app: TApplication) {
   return {
     get messagesService() {
       if (!messagesService) {
-        const messageManager = new MessageManager(redis, logger);
+        const messageManager = new MessageManager(redis, logger, {});
         messagesService = new MessagesService(messageManager);
       }
       return messagesService;

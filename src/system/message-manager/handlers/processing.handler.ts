@@ -9,8 +9,16 @@ import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { deleteListMessageAtSequenceId } from '../common';
 import { Handler } from './handler';
 import { PanicError } from '../../common/errors/panic.error';
+import { RedisClient } from '../../common/redis-client/redis-client';
 
 export class ProcessingHandler extends Handler {
+  protected storeMessages: boolean;
+
+  constructor(redisClient: RedisClient, storeMessages = false) {
+    super(redisClient);
+    this.storeMessages = storeMessages;
+  }
+
   deleteDeadLetteredMessage(
     queue: TQueueParams,
     index: number,
@@ -60,11 +68,15 @@ export class ProcessingHandler extends Handler {
     if (!queue) {
       throw new PanicError(`Message parameters are required`);
     }
-    const { keyQueueDL } = redisKeys.getQueueKeys(queue.name, queue.ns);
-    this.redisClient.lpoprpush(keyQueueProcessing, keyQueueDL, (err) => {
-      if (err) cb(err);
-      else cb();
-    });
+    if (this.storeMessages) {
+      const { keyQueueDL } = redisKeys.getQueueKeys(queue.name, queue.ns);
+      this.redisClient.lpoprpush(keyQueueProcessing, keyQueueDL, (err) => {
+        if (err) cb(err);
+        else cb();
+      });
+    } else {
+      this.redisClient.rpop(keyQueueProcessing, (err) => cb(err));
+    }
   }
 
   acknowledge(
@@ -76,18 +88,22 @@ export class ProcessingHandler extends Handler {
     if (!queue) {
       throw new PanicError(`Message queue parameters are required`);
     }
-    const { keyQueueAcknowledged } = redisKeys.getQueueKeys(
-      queue.name,
-      queue.ns,
-    );
-    this.redisClient.lpoprpush(
-      keyQueueProcessing,
-      keyQueueAcknowledged,
-      (err) => {
-        if (err) cb(err);
-        else cb();
-      },
-    );
+    if (this.storeMessages) {
+      const { keyQueueAcknowledged } = redisKeys.getQueueKeys(
+        queue.name,
+        queue.ns,
+      );
+      this.redisClient.lpoprpush(
+        keyQueueProcessing,
+        keyQueueAcknowledged,
+        (err) => {
+          if (err) cb(err);
+          else cb();
+        },
+      );
+    } else {
+      this.redisClient.rpop(keyQueueProcessing, (err) => cb(err));
+    }
   }
 
   delayUnacknowledgedMessageBeforeRequeuing(

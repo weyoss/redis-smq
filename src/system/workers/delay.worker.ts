@@ -44,7 +44,7 @@ process.on('message', (c: string) => {
           consumerId,
         },
       });
-      const messageManager = new MessageManager(client, logger);
+      const messageManager = new MessageManager(client, logger, config);
       new DelayWorker(messageManager);
     }
   });

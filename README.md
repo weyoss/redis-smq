@@ -185,6 +185,8 @@ By default, unacknowledged messages are re-queued and delivered again unless **m
 
 A `dead-letter queue` is a system generated queue that holds all messages that couldn't be processed or can not be delivered to consumers.
 
+By default, RedisSMQ does not store acknowledged and dead-lettered message to save disk space, memory usage, and also to increase message processing performance. If you need such feature, you can enable it from your [configuration](/docs/configuration.md) object.
+
 See [Consumer Reference](docs/api/consumer.md) for more details.
 
 ### Advanced Topics

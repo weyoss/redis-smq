@@ -143,6 +143,7 @@ export interface IConfig {
   };
   monitor?: IMonitorConfig;
   message?: Partial<TMessageDefaultOptions>;
+  storeMessages?: boolean;
 }
 
 export interface IMonitorServer {
