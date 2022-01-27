@@ -49,7 +49,9 @@ export class QueueManagerFrontend {
 
   quit(cb: ICallback<void>): void {
     this.redisClient.halt(() => {
-      QueueManagerFrontend.instance = null;
+      if (QueueManagerFrontend.instance === this) {
+        QueueManagerFrontend.instance = null;
+      }
       cb();
     });
   }
