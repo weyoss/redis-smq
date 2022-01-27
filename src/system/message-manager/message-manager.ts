@@ -447,7 +447,9 @@ export class MessageManager {
 
   quit(cb: ICallback<void>): void {
     this.redisClient.halt(() => {
-      MessageManager.instance = null;
+      if (MessageManager.instance === this) {
+        MessageManager.instance = null;
+      }
       cb();
     });
   }
