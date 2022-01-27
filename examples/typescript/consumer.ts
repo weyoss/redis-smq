@@ -1,7 +1,17 @@
 import { config } from './config';
-import { Consumer } from '../..'; // from 'redis-smq'
+import { Consumer, setLogger } from '../..';
+import { setConfiguration } from '../../src/system/common/configuration'; // from 'redis-smq'
 
-const consumer = new Consumer(config);
+// Applying system-wide configuration
+// This setup should be done during your application bootstrap
+// Throws an error if the configuration has been already set up
+setConfiguration(config);
+
+// Setting up a custom logger
+// This step should be also done from your application bootstrap
+setLogger(console);
+
+const consumer = new Consumer();
 
 consumer.consume(
   'test_queue', // using the default namespace

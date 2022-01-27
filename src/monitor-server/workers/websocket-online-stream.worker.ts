@@ -1,33 +1,24 @@
-import { ICallback, IConfig, TQueueParams } from '../../../types';
+import { ICallback, IRequiredConfig, TQueueParams } from '../../../types';
 import { redisKeys } from '../../system/common/redis-keys/redis-keys';
 import { RedisClient } from '../../system/common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callback-reply.error';
-import { Logger } from '../../system/common/logger';
-import BLogger from 'bunyan';
 import { LockManager } from '../../system/common/lock-manager/lock-manager';
 import { Ticker } from '../../system/common/ticker/ticker';
 import * as async from 'async';
 import { events } from '../../system/common/events';
-import { QueueManager } from '../../system/queue-manager/queue-manager';
 import { Consumer } from '../../system/consumer/consumer';
+import { queueManager } from '../../system/queue-manager/queue-manager';
+import { setConfiguration } from '../../system/common/configuration';
 
 export class WebsocketOnlineStreamWorker {
-  protected logger;
   protected lockManager: LockManager;
   protected ticker: Ticker;
   protected redisClient: RedisClient;
   protected noop = (): void => void 0;
-  protected queueManager: QueueManager;
 
-  constructor(
-    redisClient: RedisClient,
-    queueManager: QueueManager,
-    logger: BLogger,
-  ) {
+  constructor(redisClient: RedisClient) {
     const { keyLockWebsocketOnlineStreamWorker } = redisKeys.getMainKeys();
-    this.logger = logger;
     this.redisClient = redisClient;
-    this.queueManager = queueManager;
     this.lockManager = new LockManager(
       redisClient,
       keyLockWebsocketOnlineStreamWorker,
@@ -39,15 +30,13 @@ export class WebsocketOnlineStreamWorker {
   }
 
   protected run = (): void => {
-    this.logger.debug(`Acquiring lock...`);
     this.lockManager.acquireLock((err, lock) => {
       if (err) throw err;
       else if (lock) {
-        this.logger.debug(`Lock acquired.`);
         async.waterfall(
           [
             (cb: ICallback<TQueueParams[]>) => {
-              this.queueManager.getMessageQueues(cb);
+              queueManager.getMessageQueues(this.redisClient, cb);
             },
             (queues: TQueueParams[], cb: ICallback<void>) => {
               async.each<TQueueParams, Error>(
@@ -90,17 +79,11 @@ export class WebsocketOnlineStreamWorker {
 }
 
 process.on('message', (c: string) => {
-  const config: IConfig = JSON.parse(c);
-  if (config.namespace) {
-    redisKeys.setNamespace(config.namespace);
-  }
-  RedisClient.getNewInstance(config, (err, client) => {
+  const config: IRequiredConfig = JSON.parse(c);
+  setConfiguration(config);
+  RedisClient.getNewInstance((err, client) => {
     if (err) throw err;
     else if (!client) throw new EmptyCallbackReplyError();
-    else {
-      const logger = Logger(WebsocketOnlineStreamWorker.name, config.log);
-      const queueManager = new QueueManager(client, logger);
-      new WebsocketOnlineStreamWorker(client, queueManager, logger);
-    }
+    else new WebsocketOnlineStreamWorker(client);
   });
 });

@@ -1,5 +1,5 @@
 import {
-  getMessageManagerFrontend,
+  getMessageManager,
   getQueueManagerFrontend,
   produceAndDeadLetterMessage,
 } from '../common';
@@ -9,7 +9,7 @@ test('Combined test: Dead-letter a message and requeue it. Check pending, acknow
   const { queue, message, consumer } = await produceAndDeadLetterMessage();
   await consumer.shutdownAsync();
 
-  const messageManager = promisifyAll(await getMessageManagerFrontend());
+  const messageManager = promisifyAll(await getMessageManager());
   const res1 = await messageManager.getPendingMessagesAsync(queue, 0, 100);
   expect(res1.total).toBe(0);
   expect(res1.items.length).toBe(0);

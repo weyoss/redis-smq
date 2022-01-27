@@ -21,16 +21,7 @@ producer.produce(message, (err) => {
 **Syntax**
 
 ```javascript
-const producer = new Producer(config)
-```
-
-**Parameters**
-
-- `config` *(object): Optional.* Configuration parameters. See [configuration](https://github.com/weyoss/redis-smq#configuration).
-
-```javascript
-const { Producer } = require('redis-smq');
-const producer = new Producer({namespace: 'test_project'});
+const producer = new Producer()
 ```
 
 ### Producer.prototype.produce()

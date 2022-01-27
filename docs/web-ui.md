@@ -40,16 +40,32 @@ module.exports = {
 
 ## Usage 
 
-`RedisSMQ Monitor` can be launched and used as shown in the example bellow:
+The Web UI can be launched and used as shown in the example bellow:
 
 ```javascript
 // filename: ./examples/javascript/monitor.js
 'use strict';
-
 const config = require('./config');
-const { MonitorServer } = require('redis-smq');
+const { MonitorServer, setLogger, setConfiguration } = require('../..'); // require('redis-smq');
 
-MonitorServer(config).listen().then(() => {
-    console.log('The server is up and running...')
-});
+// Applying system-wide configuration
+// This setup should be done during your application bootstrap
+// Throws an error if the configuration has been already set up
+setConfiguration(config);
+setLogger(console);
+
+const server = new MonitorServer();
+server.listen();
+
+// Shutting down the server after 10s
+setTimeout(() => server.quit(), 10000);
+```
+
+When running the example above, the expected output should be:
+
+```text
+[MonitorServer] Going up...
+[MonitorServer] Up and running on 127.0.0.1:3000...
+[MonitorServer] Going down...
+[MonitorServer] Down.
 ```

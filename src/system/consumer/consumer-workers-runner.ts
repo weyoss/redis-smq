@@ -5,38 +5,36 @@ import { WorkerRunner } from '../common/worker-runner/worker-runner';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { EventEmitter } from 'events';
 import { events } from '../common/events';
-import { ICallback, IConfig, TConsumerWorkerParameters } from '../../../types';
+import {
+  ICallback,
+  ICompatibleLogger,
+  TConsumerWorkerParameters,
+} from '../../../types';
 import * as async from 'async';
-import BLogger from 'bunyan';
+import { getConfiguration } from '../common/configuration';
+import { getLogger } from '../common/logger';
 
-export class ConsumerWorkers extends EventEmitter {
+export class ConsumerWorkersRunner extends EventEmitter {
   protected consumerId: string;
   protected ticker: Ticker;
-  protected config: IConfig;
   protected lockManager: LockManager;
   protected workerRunner: WorkerRunner;
   protected workersDir: string;
   protected redisClient: RedisClient;
-  protected logger: BLogger;
   protected workerParameters: TConsumerWorkerParameters;
+  protected logger: ICompatibleLogger;
 
   constructor(
     consumerId: string,
     workersDir: string,
-    config: IConfig,
     redisClient: RedisClient,
     workerRunner: WorkerRunner,
-    logger: BLogger,
   ) {
     super();
     this.consumerId = consumerId;
     this.workersDir = workersDir;
-    this.config = config;
     this.redisClient = redisClient;
     this.workerRunner = workerRunner;
-    this.logger = logger.child({
-      child: ConsumerWorkers.name,
-    });
     const { keyLockConsumerWorkersRunner } = redisKeys.getMainKeys();
     this.lockManager = new LockManager(
       redisClient,
@@ -45,9 +43,10 @@ export class ConsumerWorkers extends EventEmitter {
       false,
     );
     this.workerParameters = {
-      config: this.config,
+      config: getConfiguration(),
       consumerId: this.consumerId,
     };
+    this.logger = getLogger();
     this.ticker = new Ticker(this.onTick, 1000);
     this.ticker.nextTick();
   }
@@ -57,13 +56,15 @@ export class ConsumerWorkers extends EventEmitter {
       if (err) this.emit(events.ERROR, err);
       else if (locked) {
         if (this.workerRunner.isDown()) {
-          this.logger.debug(`Starting consumer workers threads...`);
           this.workerRunner.run(
             this.workersDir,
             this.workerParameters,
             (err) => {
               if (err) this.emit(events.ERROR, err);
-              else this.ticker.nextTick();
+              else {
+                this.emit(events.CONSUMER_WORKERS_STARTED);
+                this.ticker.nextTick();
+              }
             },
           );
         } else this.ticker.nextTick();
@@ -79,7 +80,6 @@ export class ConsumerWorkers extends EventEmitter {
     const shutdownWorkers = (cb: ICallback<void>) =>
       this.workerRunner.shutdown(cb);
     const releaseLock = (cb: ICallback<void>) => this.lockManager.quit(cb);
-    this.logger.debug(`Tearing down consumer workers threads...`);
     async.waterfall([stopTicker, shutdownWorkers, releaseLock], cb);
   }
 }

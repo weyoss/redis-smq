@@ -48,11 +48,10 @@ MessageManager.getSingletonInstance(config, (err, messageManager) => {
 ### MessageManager.getSingletonInstance()
 
 ```javascript
-getSingletonInstance(config, cb)
+getSingletonInstance(cb)
 ```
 
 **Parameters**
-- `config` *(number): Required.* configuration object.
 - `cb(err, messageManager)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
   - `messageManager` *(MessageManager).* MessageManager instance.

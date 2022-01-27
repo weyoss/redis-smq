@@ -1,9 +1,17 @@
 'use strict';
-
 const config = require('./config');
-const { Consumer } = require('../..'); // require('redis-smq);
+const { Consumer, setConfiguration, setLogger } = require('../..'); // require('redis-smq);
 
-const consumer = new Consumer(config);
+// Applying system-wide configuration
+// This setup should be done during your application bootstrap
+// Throws an error if the configuration has been already set up
+setConfiguration(config);
+
+// Setting up a custom logger
+// This step should be also done from your application bootstrap
+setLogger(console);
+
+const consumer = new Consumer();
 
 consumer.consume(
   'test_queue', // using the default namespace

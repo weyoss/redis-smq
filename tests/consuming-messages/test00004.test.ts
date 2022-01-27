@@ -2,7 +2,7 @@ import { delay, promisifyAll } from 'bluebird';
 import {
   defaultQueue,
   getConsumer,
-  getMessageManagerFrontend,
+  getMessageManager,
   getProducer,
   untilConsumerIdle,
 } from '../common';
@@ -30,7 +30,7 @@ test('Message TTL: a message with TTL is not consumed and moved to DLQ when TTL 
   expect(consume).toHaveBeenCalledTimes(0);
   expect(unacknowledged).toBe(1);
 
-  const messageManager = promisifyAll(await getMessageManagerFrontend());
+  const messageManager = promisifyAll(await getMessageManager());
   const list = await messageManager.getDeadLetteredMessagesAsync(
     defaultQueue,
     0,

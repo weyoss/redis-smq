@@ -1,29 +1,25 @@
 import {
-  IConfig,
   ICallback,
   TQueueParams,
   TWebsocketMainStreamPayload,
   TWebsocketMainStreamPayloadQueue,
+  IRequiredConfig,
 } from '../../../types';
 import * as async from 'async';
 import { redisKeys } from '../../system/common/redis-keys/redis-keys';
 import { LockManager } from '../../system/common/lock-manager/lock-manager';
 import { RedisClient } from '../../system/common/redis-client/redis-client';
-import { Logger } from '../../system/common/logger';
-import { QueueManager } from '../../system/queue-manager/queue-manager';
 import { Ticker } from '../../system/common/ticker/ticker';
 import { events } from '../../system/common/events';
-import BLogger from 'bunyan';
 import { MessageManager } from '../../system/message-manager/message-manager';
 import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callback-reply.error';
 import { Consumer } from '../../system/consumer/consumer';
+import { queueManager } from '../../system/queue-manager/queue-manager';
+import { setConfiguration } from '../../system/common/configuration';
 
 export class WebsocketMainStreamWorker {
-  protected logger;
   protected lockManager: LockManager;
   protected redisClient: RedisClient;
-  protected queueManager: QueueManager;
-  protected messageManager: MessageManager;
   protected ticker: Ticker;
   protected noop = (): void => void 0;
   protected data: TWebsocketMainStreamPayload = {
@@ -37,14 +33,8 @@ export class WebsocketMainStreamWorker {
     queues: {},
   };
 
-  constructor(
-    queueManager: QueueManager,
-    messageManager: MessageManager,
-    redisClient: RedisClient,
-    logger: BLogger,
-  ) {
+  constructor(redisClient: RedisClient) {
     const { keyLockWebsocketMainStreamWorker } = redisKeys.getMainKeys();
-    this.logger = logger;
     this.lockManager = new LockManager(
       redisClient,
       keyLockWebsocketMainStreamWorker,
@@ -52,8 +42,6 @@ export class WebsocketMainStreamWorker {
       false,
     );
     this.redisClient = redisClient;
-    this.queueManager = queueManager;
-    this.messageManager = messageManager;
     this.ticker = new Ticker(this.run, 1000);
     this.ticker.nextTick();
   }
@@ -162,11 +150,11 @@ export class WebsocketMainStreamWorker {
   };
 
   protected getQueues = (cb: ICallback<TQueueParams[]>): void => {
-    this.queueManager.getMessageQueues(cb);
+    queueManager.getMessageQueues(this.redisClient, cb);
   };
 
   protected countScheduledMessages = (cb: ICallback<void>): void => {
-    this.messageManager.getScheduledMessagesCount((err, count) => {
+    MessageManager.getScheduledMessagesCount(this.redisClient, (err, count) => {
       if (err) cb(err);
       else {
         this.data.scheduledMessagesCount = count ?? 0;
@@ -208,7 +196,6 @@ export class WebsocketMainStreamWorker {
   };
 
   protected publish = (): void => {
-    this.logger.debug(`Publishing...`);
     this.redisClient.publish(
       'streamMain',
       JSON.stringify(this.data),
@@ -230,11 +217,9 @@ export class WebsocketMainStreamWorker {
   };
 
   protected run = (): void => {
-    this.logger.debug(`Acquiring lock...`);
     this.lockManager.acquireLock((err, lock) => {
       if (err) throw err;
       if (lock) {
-        this.logger.debug(`Lock acquired.`);
         this.reset();
         async.waterfall(
           [
@@ -260,23 +245,11 @@ export class WebsocketMainStreamWorker {
 }
 
 process.on('message', (c: string) => {
-  const config: IConfig = JSON.parse(c);
-  if (config.namespace) {
-    redisKeys.setNamespace(config.namespace);
-  }
-  RedisClient.getNewInstance(config, (err, client) => {
+  const config: IRequiredConfig = JSON.parse(c);
+  setConfiguration(config);
+  RedisClient.getNewInstance((err, client) => {
     if (err) throw err;
     else if (!client) throw new EmptyCallbackReplyError();
-    else {
-      const logger = Logger(WebsocketMainStreamWorker.name, config.log);
-      const queueManager = new QueueManager(client, logger);
-      const messageManager = new MessageManager(client, logger, {});
-      new WebsocketMainStreamWorker(
-        queueManager,
-        messageManager,
-        client,
-        logger,
-      );
-    }
+    else new WebsocketMainStreamWorker(client);
   });
 });

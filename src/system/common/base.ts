@@ -1,51 +1,40 @@
 import { v4 as uuid } from 'uuid';
 import { EventEmitter } from 'events';
-import { IConfig, ICallback, TUnaryFunction, TFunction } from '../../../types';
+import {
+  ICallback,
+  TUnaryFunction,
+  TFunction,
+  IRequiredConfig,
+  ICompatibleLogger,
+} from '../../../types';
 import * as async from 'async';
 import { PowerManager } from './power-manager/power-manager';
-import { Logger } from './logger';
-import * as BunyanLogger from 'bunyan';
 import { events } from './events';
-import { Broker } from './broker';
-import { redisKeys } from './redis-keys/redis-keys';
 import { RedisClient } from './redis-client/redis-client';
-import { MessageManager } from '../message-manager/message-manager';
-import { Message } from '../message';
 import { EmptyCallbackReplyError } from './errors/empty-callback-reply.error';
 import { PanicError } from './errors/panic.error';
-import { QueueManager } from '../queue-manager/queue-manager';
+import { getConfiguration, setConfigurationIfNotExists } from './configuration';
+import { getNamespacedLogger } from './logger';
 
 export abstract class Base extends EventEmitter {
   protected readonly id: string;
-  protected readonly config: IConfig;
-  protected readonly logger: BunyanLogger;
   protected readonly powerManager: PowerManager;
-
-  protected broker: Broker | null = null;
   protected sharedRedisClient: RedisClient | null = null;
+  protected logger: ICompatibleLogger;
 
-  constructor(config: IConfig = {}) {
+  constructor() {
     super();
-    if (config.namespace) {
-      redisKeys.setNamespace(config.namespace);
-    }
+    setConfigurationIfNotExists();
     this.id = uuid();
-    this.config = config;
     this.powerManager = new PowerManager(false);
-    this.logger = Logger(this.constructor.name, {
-      ...this.config.log,
-      options: {
-        ...this.config.log?.options,
-        [this.constructor.name]: this.getId(),
-      },
-    });
+    this.logger = getNamespacedLogger(
+      `${this.constructor.name}/${this.getId()}`,
+    );
     this.registerEventsHandlers();
-    Message.setDefaultOptions(config.message);
   }
 
   protected setUpSharedRedisClient = (cb: ICallback<void>): void => {
-    this.logger.debug(`Set up shared RedisClient instance...`);
-    RedisClient.getNewInstance(this.config, (err, client) => {
+    RedisClient.getNewInstance((err, client) => {
       if (err) cb(err);
       else if (!client) cb(new EmptyCallbackReplyError());
       else {
@@ -55,67 +44,25 @@ export abstract class Base extends EventEmitter {
     });
   };
 
-  protected setUpBroker = (cb: ICallback<void>): void => {
-    this.logger.debug(`Set up Broker instance...`);
-    if (!this.sharedRedisClient)
-      cb(new PanicError(`Expected an instance of RedisClient`));
-    else {
-      const messageManager = new MessageManager(
-        this.sharedRedisClient,
-        this.logger,
-        this.config,
-      );
-      const queueManager = new QueueManager(
-        this.sharedRedisClient,
-        this.logger,
-      );
-      this.broker = new Broker(messageManager, queueManager, this.logger);
-      cb();
-    }
-  };
-
   protected tearDownSharedRedisClient = (cb: ICallback<void>): void => {
-    this.logger.debug(`Tear down shared RedisClient instance...`);
     if (this.sharedRedisClient) {
       this.sharedRedisClient.halt(() => {
-        this.logger.debug(`Shared RedisClient instance has been torn down.`);
         this.sharedRedisClient = null;
         cb();
       });
-    } else {
-      this.logger.warn(
-        `This is not normal. [this.sharedRedisClient] has not been set up. Ignoring...`,
-      );
-      cb();
-    }
-  };
-
-  protected tearDownBroker = (cb: ICallback<void>): void => {
-    this.logger.debug(`Tear down Broker instance...`);
-    if (this.broker) {
-      this.broker.quit(() => {
-        this.logger.debug(`Broker instance has been torn down.`);
-        this.broker = null;
-        cb();
-      });
-    } else {
-      this.logger.warn(
-        `This is not normal. [this.broker] has not been set up. Ignoring...`,
-      );
-      cb();
-    }
+    } else cb();
   };
 
   protected registerEventsHandlers(): void {
-    this.on(events.GOING_UP, () => this.logger.info(`Starting up...`));
-    this.on(events.UP, () => this.logger.info(`Up and running...`));
-    this.on(events.GOING_DOWN, () => this.logger.info(`Shutting down...`));
-    this.on(events.DOWN, () => this.logger.info(`Shutdown.`));
+    this.on(events.GOING_UP, () => this.logger.info(`Going up...`));
+    this.on(events.GOING_UP, () => this.logger.info(`Up and running...`));
+    this.on(events.GOING_DOWN, () => this.logger.info(`Going down...`));
+    this.on(events.GOING_DOWN, () => this.logger.info(`Down.`));
     this.on(events.ERROR, (err: Error) => this.handleError(err));
   }
 
   protected goingUp(): TFunction[] {
-    return [this.setUpSharedRedisClient, this.setUpBroker];
+    return [this.setUpSharedRedisClient];
   }
 
   protected up(cb?: ICallback<boolean>): void {
@@ -125,7 +72,7 @@ export abstract class Base extends EventEmitter {
   }
 
   protected goingDown(): TUnaryFunction<ICallback<void>>[] {
-    return [this.tearDownBroker, this.tearDownSharedRedisClient];
+    return [this.tearDownSharedRedisClient];
   }
 
   protected down(cb?: ICallback<boolean>): void {
@@ -197,17 +144,11 @@ export abstract class Base extends EventEmitter {
     return this.powerManager.isDown();
   }
 
-  getBroker(cb: TUnaryFunction<Broker>): void {
-    if (!this.broker)
-      this.emit(events.ERROR, new PanicError('Expected an instance of Broker'));
-    else cb(this.broker);
-  }
-
   getId(): string {
     return this.id;
   }
 
-  getConfig(): IConfig {
-    return this.config;
+  getConfig(): IRequiredConfig {
+    return getConfiguration();
   }
 }

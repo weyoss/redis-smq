@@ -1,5 +1,5 @@
 import {
-  getMessageManagerFrontend,
+  getMessageManager,
   getQueueManagerFrontend,
   produceMessage,
 } from '../common';
@@ -8,7 +8,7 @@ import { promisifyAll } from 'bluebird';
 test('Combined test: Delete a pending message. Check pending messages. Check queue metrics.', async () => {
   const { queue, message } = await produceMessage();
 
-  const messageManager = promisifyAll(await getMessageManagerFrontend());
+  const messageManager = promisifyAll(await getMessageManager());
   const res1 = await messageManager.getPendingMessagesAsync(queue, 0, 100);
 
   expect(res1.total).toBe(1);

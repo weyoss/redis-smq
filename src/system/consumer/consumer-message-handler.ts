@@ -2,64 +2,80 @@ import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgedCause,
   ICallback,
+  ICompatibleLogger,
   TConsumerMessageHandler,
   TQueueConsumerRedisKeys,
   TQueueParams,
 } from '../../../types';
+import { v4 as uuid } from 'uuid';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { Message } from '../message';
 import { events } from '../common/events';
 import { ConsumerError } from './consumer.error';
-import BLogger from 'bunyan';
-import { Broker } from '../common/broker';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { EventEmitter } from 'events';
 import { PowerManager } from '../common/power-manager/power-manager';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { ConsumerMessageRate } from './consumer-message-rate';
-import { QueueManager } from '../queue-manager/queue-manager';
 import * as async from 'async';
 import { consumerQueues } from './consumer-queues';
-import { DequeueHandler } from '../message-manager/handlers/dequeue.handler';
-import { MessageManager } from '../message-manager/message-manager';
+import { broker } from '../common/broker';
+import { queueManager } from '../queue-manager/queue-manager';
+import { Ticker } from '../common/ticker/ticker';
+import { getNamespacedLogger } from '../common/logger';
 
 export class ConsumerMessageHandler extends EventEmitter {
+  protected id: string;
   protected consumerId: string;
   protected queue: TQueueParams;
   protected handler: TConsumerMessageHandler;
-  protected logger: BLogger;
-  protected broker: Broker;
   protected redisClient: RedisClient;
   protected redisKeys: TQueueConsumerRedisKeys;
   protected powerManager: PowerManager;
   protected messageRate: ConsumerMessageRate | null = null;
   protected usingPriorityQueuing: boolean;
-  protected dequeueHandler: DequeueHandler | null = null;
+  protected storeMessages: boolean;
+  protected keyQueue: string;
+  protected keyQueuePriority: string;
+  protected keyPendingMessagesWithPriority: string;
+  protected keyQueueProcessing: string;
+  protected ticker: Ticker;
+  protected logger: ICompatibleLogger;
 
   constructor(
     consumerId: string,
     queue: TQueueParams,
-    logger: BLogger,
     handler: TConsumerMessageHandler,
-    broker: Broker,
     usePriorityQueuing: boolean,
+    storeMessages: boolean,
     redisClient: RedisClient,
     messageRate: ConsumerMessageRate | null = null,
   ) {
     super();
+    this.id = uuid();
     this.consumerId = consumerId;
-    this.queue = QueueManager.getQueueParams(queue);
+    this.queue = queueManager.getQueueParams(queue);
     this.handler = handler;
-    this.logger = logger;
-    this.broker = broker;
     this.redisClient = redisClient;
     this.usingPriorityQueuing = usePriorityQueuing;
+    this.storeMessages = storeMessages;
     this.redisKeys = redisKeys.getQueueConsumerKeys(
       this.queue.name,
       this.consumerId,
       this.queue.ns,
     );
+    const {
+      keyQueuePendingPriorityMessageIds,
+      keyQueuePending,
+      keyQueuePendingPriorityMessages,
+      keyQueueProcessing,
+    } = this.redisKeys;
+    this.keyQueue = keyQueuePending;
+    this.keyPendingMessagesWithPriority = keyQueuePendingPriorityMessages;
+    this.keyQueuePriority = keyQueuePendingPriorityMessageIds;
+    this.keyQueueProcessing = keyQueueProcessing;
     this.powerManager = new PowerManager();
+    this.logger = getNamespacedLogger(`MessageHandler/${this.id}`);
     this.registerEventsHandlers();
     if (messageRate) {
       this.messageRate = messageRate;
@@ -67,16 +83,20 @@ export class ConsumerMessageHandler extends EventEmitter {
         this.emit(events.IDLE, this.queue);
       });
     }
+
+    // A ticker is needed for pooling priority queues
+    // Initialize a dummy ticker. nextTickFn will be used instead of nextTick
+    this.ticker = new Ticker(() => void 0, 1000);
   }
 
   protected setUpMessageQueue = (cb: ICallback<void>): void => {
-    this.logger.debug(`Set up message queue (${this.queue})...`);
-    this.broker.setUpMessageQueue(this.queue, (err) => cb(err));
+    queueManager.setUpMessageQueue(this.redisClient, this.queue, (err) =>
+      cb(err),
+    );
   };
 
   protected setUpProcessingQueue = (cb: ICallback<void>): void => {
-    this.logger.debug(`Set up consumer processing queue...`);
-    QueueManager.setUpProcessingQueue(this, this.redisClient, cb);
+    queueManager.setUpProcessingQueue(this, this.redisClient, cb);
   };
 
   protected addQueueConsumer = (cb: ICallback<void>): void => {
@@ -88,59 +108,51 @@ export class ConsumerMessageHandler extends EventEmitter {
     );
   };
 
-  protected getDequeueHandler = (): DequeueHandler => {
-    if (!this.dequeueHandler) {
-      const { keyQueueProcessing } = this.redisKeys;
-      this.dequeueHandler = MessageManager.getDequeueHandler(
-        this.redisClient,
-        this.queue,
-        keyQueueProcessing,
-        this.usingPriorityQueuing,
-      );
-    }
-    return this.dequeueHandler;
-  };
-
   protected registerEventsHandlers(): void {
-    this.on(events.UP, () => this.emit(events.MESSAGE_NEXT));
+    this.on(events.UP, () => {
+      this.logger.info('Up and running...');
+      this.emit(events.MESSAGE_NEXT);
+    });
     this.on(events.MESSAGE_NEXT, () => {
       if (this.powerManager.isRunning()) {
-        this.logger.info('Waiting for new messages...');
-        this.getDequeueHandler().dequeueMessage((err, msgStr) => {
+        this.dequeue((err, msgStr) => {
           if (err) {
-            if (this.powerManager.isRunning() || this.powerManager.isGoingUp())
+            if (
+              this.powerManager.isRunning() ||
+              this.powerManager.isGoingUp()
+            ) {
               this.emit(events.ERROR, err);
+            }
           } else if (!msgStr)
             this.emit(events.ERROR, new EmptyCallbackReplyError());
           else this.handleReceivedMessage(msgStr);
         });
-      } else {
-        this.logger.info('Consumer is not running. End of cycle.');
       }
     });
     this.on(events.MESSAGE_ACKNOWLEDGED, (msg: Message) => {
-      this.logger.info(`Message (ID ${msg.getId()}) has been acknowledged.`);
       if (this.messageRate) this.messageRate.incrementAcknowledged();
+      this.logger.info(`Message (ID ${msg.getId()}) acknowledged`);
       this.emit(events.MESSAGE_NEXT);
     });
     this.on(
       events.MESSAGE_DEAD_LETTERED,
       (msg: Message, cause: EMessageDeadLetterCause) => {
-        this.logger.info(
-          `Message (ID ${msg.getId()}) has been dead-lettered. Cause: ${cause}.`,
-        );
         if (this.messageRate) this.messageRate.incrementDeadLettered();
+        this.logger.info(
+          `Message (ID ${msg.getId()}) dead-lettered (cause ${cause})`,
+        );
       },
     );
     this.on(
       events.MESSAGE_UNACKNOWLEDGED,
       (msg: Message, cause: EMessageUnacknowledgedCause) => {
-        this.logger.info(
-          `Message (ID ${msg.getId()}) has been unacknowledged. Cause: ${cause}.`,
-        );
         this.emit(events.MESSAGE_NEXT);
+        this.logger.info(
+          `Message (ID ${msg.getId()}) unacknowledged (cause ${cause})`,
+        );
       },
     );
+    this.on(events.DOWN, () => this.logger.info('Down.'));
   }
 
   protected unacknowledgeMessage(
@@ -148,12 +160,15 @@ export class ConsumerMessageHandler extends EventEmitter {
     cause: EMessageUnacknowledgedCause,
     err?: Error,
   ): void {
+    if (err) {
+      // ...
+    }
     const { keyQueueProcessing } = this.redisKeys;
-    this.broker.unacknowledgeMessage(
+    broker.retry(
+      this.redisClient,
       keyQueueProcessing,
       msg,
       cause,
-      err,
       (err, deadLetterCause) => {
         if (err) this.emit(events.ERROR, err);
         else {
@@ -168,27 +183,22 @@ export class ConsumerMessageHandler extends EventEmitter {
 
   protected handleReceivedMessage(json: string): void {
     const message = Message.createFromMessage(json);
-    this.logger.info(`Got a new message (ID ${message.getId()})...`);
     this.emit(events.MESSAGE_RECEIVED, message);
     if (message.hasExpired()) {
-      this.logger.info(
-        `Message (ID ${message.getId()}) has expired. Unacknowledging...`,
-      );
       this.unacknowledgeMessage(
         message,
         EMessageUnacknowledgedCause.TTL_EXPIRED,
       );
-    } else {
-      this.logger.info(`Trying to consume message (ID ${message.getId()})...`);
-      this.handleConsume(message);
-    }
+    } else this.handleConsume(message);
   }
 
   protected handleConsume(msg: Message): void {
     let isTimeout = false;
     let timer: NodeJS.Timeout | null = null;
-    this.logger.info(`Processing message (ID ${msg.getId()})...`);
     try {
+      this.logger.info(
+        `Consuming message (ID ${msg.getId()}) with properties (${msg.toString()})`,
+      );
       const consumeTimeout = msg.getConsumeTimeout();
       if (consumeTimeout) {
         timer = setTimeout(() => {
@@ -208,10 +218,16 @@ export class ConsumerMessageHandler extends EventEmitter {
             );
           else {
             const { keyQueueProcessing } = this.redisKeys;
-            this.broker.acknowledgeMessage(keyQueueProcessing, msg, (err) => {
-              if (err) this.emit(events.ERROR, err);
-              else this.emit(events.MESSAGE_ACKNOWLEDGED, msg);
-            });
+            broker.acknowledgeMessage(
+              this.redisClient,
+              msg,
+              keyQueueProcessing,
+              this.storeMessages,
+              (err) => {
+                if (err) this.emit(events.ERROR, err);
+                else this.emit(events.MESSAGE_ACKNOWLEDGED, msg);
+              },
+            );
           }
         }
       };
@@ -232,6 +248,45 @@ export class ConsumerMessageHandler extends EventEmitter {
         err,
       );
     }
+  }
+
+  protected dequeueMessageWithPriority(cb: ICallback<string>): void {
+    this.redisClient.zpophgetrpush(
+      this.keyQueuePriority,
+      this.keyPendingMessagesWithPriority,
+      this.keyQueueProcessing,
+      (err, reply) => {
+        if (err) {
+          this.ticker.abort();
+          cb(err);
+        } else if (typeof reply === 'string') {
+          cb(null, reply);
+        } else {
+          this.ticker.nextTickFn(() => {
+            this.dequeueMessageWithPriority(cb);
+          });
+        }
+      },
+    );
+  }
+
+  protected dequeueMessage(cb: ICallback<string>): void {
+    this.redisClient.brpoplpush(
+      this.keyQueue,
+      this.keyQueueProcessing,
+      0,
+      (err, reply) => {
+        if (err) {
+          this.ticker.abort();
+          cb(err);
+        } else cb(null, reply);
+      },
+    );
+  }
+
+  protected dequeue(cb: ICallback<string>): void {
+    if (this.usingPriorityQueuing) this.dequeueMessageWithPriority(cb);
+    else this.dequeueMessage(cb);
   }
 
   run = (cb: ICallback<void>): void => {
@@ -259,12 +314,8 @@ export class ConsumerMessageHandler extends EventEmitter {
       async.waterfall(
         [
           (cb: ICallback<void>) => {
-            if (this.dequeueHandler) {
-              this.dequeueHandler.quit(() => {
-                this.dequeueHandler = null;
-                cb();
-              });
-            } else cb();
+            this.ticker.once(events.DOWN, cb);
+            this.ticker.quit();
           },
           (cb: ICallback<void>) => {
             if (this.messageRate) this.messageRate.quit(cb);
@@ -300,5 +351,9 @@ export class ConsumerMessageHandler extends EventEmitter {
 
   getRedisKeys(): TQueueConsumerRedisKeys {
     return this.redisKeys;
+  }
+
+  getId(): string {
+    return this.id;
   }
 }

@@ -1,6 +1,5 @@
 import {
   ICallback,
-  IConfig,
   TConsumerMessageHandler,
   TConsumerMessageHandlerParams,
   TConsumerRedisKeys,
@@ -12,7 +11,7 @@ import { ConsumerMessageRate } from './consumer-message-rate';
 import { events } from '../common/events';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { resolve } from 'path';
-import { ConsumerWorkers } from './consumer-workers';
+import { ConsumerWorkersRunner } from './consumer-workers-runner';
 import { WorkerRunner } from '../common/worker-runner/worker-runner';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { redisKeys } from '../common/redis-keys/redis-keys';
@@ -22,18 +21,18 @@ import { Base } from '../common/base';
 import { ConsumerMessageHandler } from './consumer-message-handler';
 import * as async from 'async';
 import { consumerQueues } from './consumer-queues';
-import { QueueManager } from '../queue-manager/queue-manager';
 import { GenericError } from '../common/errors/generic.error';
+import { queueManager } from '../queue-manager/queue-manager';
 
 export class Consumer extends Base {
   private heartbeat: ConsumerHeartbeat | null = null;
-  private consumerWorkers: ConsumerWorkers | null = null;
+  private consumerWorkers: ConsumerWorkersRunner | null = null;
   private messageHandlerInstances: ConsumerMessageHandler[] = [];
   private messageHandlers: TConsumerMessageHandlerParams[] = [];
   private readonly redisKeys: TConsumerRedisKeys;
 
-  constructor(config: IConfig = {}) {
-    super(config);
+  constructor() {
+    super();
     this.redisKeys = redisKeys.getConsumerKeys(this.getId());
   }
 
@@ -58,8 +57,7 @@ export class Consumer extends Base {
   };
 
   protected setUpHeartbeat = (cb: ICallback<void>): void => {
-    this.logger.debug(`Set up consumer heartbeat...`);
-    RedisClient.getNewInstance(this.config, (err, redisClient) => {
+    RedisClient.getNewInstance((err, redisClient) => {
       if (err) cb(err);
       else if (!redisClient) cb(new EmptyCallbackReplyError());
       else {
@@ -73,83 +71,75 @@ export class Consumer extends Base {
   };
 
   protected tearDownHeartbeat = (cb: ICallback<void>): void => {
-    this.logger.debug(`Tear down consumer heartbeat...`);
     if (this.heartbeat) {
       this.heartbeat.quit(() => {
-        this.logger.debug(`Consumer heartbeat has been torn down.`);
         this.heartbeat = null;
         cb();
       });
-    } else {
-      this.logger.warn(
-        `This is not normal. [this.heartbeat] has not been set up. Ignoring...`,
-      );
-      cb();
-    }
+    } else cb();
   };
 
   protected setUpConsumerWorkers = (cb: ICallback<void>): void => {
-    this.logger.debug(`Set up consumer workers...`);
     this.getSharedRedisClient((client) => {
-      this.consumerWorkers = new ConsumerWorkers(
+      this.consumerWorkers = new ConsumerWorkersRunner(
         this.id,
         resolve(`${__dirname}/../workers`),
-        this.config,
         client,
         new WorkerRunner(),
-        this.logger,
       );
       this.consumerWorkers.on(events.ERROR, (err: Error) =>
         this.emit(events.ERROR, err),
+      );
+      this.consumerWorkers.on(events.CONSUMER_WORKERS_STARTED, () =>
+        this.logger.info(
+          `Workers are exclusively running from this consumer instance.`,
+        ),
       );
       cb();
     });
   };
 
   protected tearDownConsumerWorkers = (cb: ICallback<void>): void => {
-    this.logger.debug(`Tear down consumer workers...`);
     if (this.consumerWorkers) {
       this.consumerWorkers.quit(() => {
-        this.logger.debug(`Consumer workers has been torn down.`);
         this.consumerWorkers = null;
         cb();
       });
-    } else {
-      this.logger.warn(`this.consumerWorkers has not been set up. Ignoring...`);
-      cb();
-    }
+    } else cb();
   };
 
   protected runMessageHandler = (
     handlerParams: TConsumerMessageHandlerParams,
     cb: ICallback<void>,
   ) => {
-    this.getBroker((broker) => {
-      RedisClient.getNewInstance(this.config, (err, redisClient) => {
-        if (err) cb(err);
-        else if (!redisClient) cb(new EmptyCallbackReplyError());
-        else {
-          this.getSharedRedisClient((sharedRedisClient) => {
-            const { queue, usePriorityQueuing, messageHandler } = handlerParams;
-            const messageRate = this.config.monitor?.enabled
-              ? this.getMessageRateInstance(queue, sharedRedisClient)
-              : null;
-            const handler = new ConsumerMessageHandler(
-              this.id,
-              queue,
-              this.logger,
-              messageHandler,
-              broker,
-              usePriorityQueuing,
-              redisClient,
-              messageRate,
-            );
-            this.registerMessageHandlerEvents(handler);
-            this.messageHandlerInstances.push(handler);
-            handler.run(cb);
-          });
-        }
-      });
+    RedisClient.getNewInstance((err, redisClient) => {
+      if (err) cb(err);
+      else if (!redisClient) cb(new EmptyCallbackReplyError());
+      else {
+        this.getSharedRedisClient((sharedRedisClient) => {
+          const { queue, usePriorityQueuing, messageHandler } = handlerParams;
+          const messageRate = this.getConfig().monitor.enabled
+            ? this.getMessageRateInstance(queue, sharedRedisClient)
+            : null;
+          const handler = new ConsumerMessageHandler(
+            this.id,
+            queue,
+            messageHandler,
+            usePriorityQueuing,
+            this.getConfig().storeMessages,
+            redisClient,
+            messageRate,
+          );
+          this.registerMessageHandlerEvents(handler);
+          this.messageHandlerInstances.push(handler);
+          this.logger.info(
+            `Created a new instance (ID: ${handler.getId()}) for MessageHandler (${JSON.stringify(
+              handlerParams,
+            )}).`,
+          );
+          handler.run(cb);
+        });
+      }
     });
   };
 
@@ -229,6 +219,11 @@ export class Consumer extends Base {
     const handler = this.getMessageHandler(queue, usePriorityQueuing);
     if (handler) return false;
     this.messageHandlers.push(handlerParams);
+    this.logger.info(
+      `Message handler with parameters (${JSON.stringify(
+        handlerParams,
+      )}) has been registered.`,
+    );
     return true;
   }
 
@@ -274,6 +269,11 @@ export class Consumer extends Base {
         usePriorityQueuing === handler.usePriorityQueuing
       );
     });
+    this.logger.info(
+      `Message handler with parameters (${JSON.stringify(
+        queue,
+      )}) has been canceled.`,
+    );
   };
 
   consume(
@@ -282,7 +282,7 @@ export class Consumer extends Base {
     messageHandler: TConsumerMessageHandler,
     cb: ICallback<boolean>,
   ): void {
-    const queueParams = QueueManager.getQueueParams(queue);
+    const queueParams = queueManager.getQueueParams(queue);
     const handlerParams = {
       queue: queueParams,
       usePriorityQueuing,
@@ -312,7 +312,7 @@ export class Consumer extends Base {
     usePriorityQueuing: boolean,
     cb: ICallback<void>,
   ): void {
-    const queueParams = QueueManager.getQueueParams(queue);
+    const queueParams = queueManager.getQueueParams(queue);
     const handler = this.getMessageHandler(queueParams, usePriorityQueuing);
     if (!handler) {
       cb(

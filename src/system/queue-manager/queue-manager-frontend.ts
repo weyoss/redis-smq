@@ -1,70 +1,69 @@
 import {
   ICallback,
-  IConfig,
+  ICompatibleLogger,
   IQueueMetrics,
   TQueueParams,
 } from '../../../types';
 import { RedisClient } from '../common/redis-client/redis-client';
-import { QueueManager } from './queue-manager';
-import BLogger from 'bunyan';
-import { Logger } from '../common/logger';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
+import { queueManager } from './queue-manager';
+import { setConfigurationIfNotExists } from '../common/configuration';
+import { getNamespacedLogger } from '../common/logger';
 
 export class QueueManagerFrontend {
   private static instance: QueueManagerFrontend | null = null;
   private redisClient: RedisClient;
-  private queueManager: QueueManager;
+  private logger: ICompatibleLogger;
 
-  private constructor(redisClient: RedisClient, logger: BLogger) {
+  constructor(redisClient: RedisClient) {
     this.redisClient = redisClient;
-    this.queueManager = new QueueManager(redisClient, logger);
+    this.logger = getNamespacedLogger('QueueManager');
   }
-
-  ///
 
   deleteMessageQueue(queue: string | TQueueParams, cb: ICallback<void>): void {
-    const queueParams = QueueManager.getQueueParams(queue);
-    this.queueManager.deleteMessageQueue(queueParams, cb);
+    const queueParams = queueManager.getQueueParams(queue);
+    queueManager.deleteMessageQueue(this.redisClient, queueParams, (err) => {
+      if (err) cb(err);
+      else {
+        this.logger.info(
+          `Message queue (${JSON.stringify(
+            queue,
+          )}) has been deleted alongside with its data and messages`,
+        );
+        cb();
+      }
+    });
   }
-
-  ///
 
   getQueueMetrics(
     queue: string | TQueueParams,
     cb: ICallback<IQueueMetrics>,
   ): void {
-    const queueParams = QueueManager.getQueueParams(queue);
-    this.queueManager.getQueueMetrics(queueParams, cb);
+    const queueParams = queueManager.getQueueParams(queue);
+    queueManager.getQueueMetrics(this.redisClient, queueParams, cb);
   }
 
   getMessageQueues(cb: ICallback<TQueueParams[]>): void {
-    this.queueManager.getMessageQueues(cb);
+    queueManager.getMessageQueues(this.redisClient, cb);
   }
 
-  ///
-
   quit(cb: ICallback<void>): void {
-    this.queueManager.quit(() => {
-      this.redisClient.halt(() => {
-        QueueManagerFrontend.instance = null;
-        cb();
-      });
+    this.redisClient.halt(() => {
+      QueueManagerFrontend.instance = null;
+      cb();
     });
   }
 
   ///
 
-  static getSingletonInstance(
-    config: IConfig,
-    cb: ICallback<QueueManagerFrontend>,
-  ): void {
+  static getSingletonInstance(cb: ICallback<QueueManagerFrontend>): void {
     if (!QueueManagerFrontend.instance) {
-      RedisClient.getNewInstance(config, (err, client) => {
+      setConfigurationIfNotExists();
+      RedisClient.getNewInstance((err, client) => {
         if (err) cb(err);
         else if (!client) cb(new EmptyCallbackReplyError());
         else {
-          const logger = Logger(QueueManagerFrontend.name, config.log);
-          const instance = new QueueManagerFrontend(client, logger);
+          const instance = new QueueManagerFrontend(client);
           QueueManagerFrontend.instance = instance;
           cb(null, instance);
         }

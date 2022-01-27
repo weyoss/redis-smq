@@ -1,9 +1,8 @@
 import { promisifyAll } from 'bluebird';
 import { Consumer } from '../../src/consumer';
-import { config } from '../config';
 
 test('Multi queue consumer: case 1', async () => {
-  const consumer = promisifyAll(new Consumer(config));
+  const consumer = promisifyAll(new Consumer());
 
   expect(consumer.getQueues()).toEqual([]);
 

@@ -2,22 +2,21 @@ import {
   defaultQueue,
   getConsumer,
   getProducer,
+  mockConfiguration,
   untilConsumerIdle,
   untilMessageAcknowledged,
   validateTime,
 } from '../common';
 import { Message } from '../../src/message';
 import { events } from '../../src/system/common/events';
-import { config } from '../config';
 
 test('A consumer delays a failed message before re-queuing it again, given messageRetryThreshold is not exceeded', async () => {
+  mockConfiguration({
+    message: { retryDelay: 10000, retryThreshold: 5 },
+  });
   const timestamps: number[] = [];
   let callCount = 0;
   const consumer = getConsumer({
-    cfg: {
-      ...config,
-      message: { retryDelay: 10000, retryThreshold: 5 },
-    },
     messageHandler: jest.fn((msg, cb) => {
       timestamps.push(Date.now());
       callCount += 1;

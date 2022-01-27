@@ -2,7 +2,6 @@ import IORedis from 'ioredis';
 import { createClient, Multi, RedisClient as NodeRedis } from 'redis';
 import {
   ICallback,
-  IConfig,
   RedisClientName,
   TCompatibleRedisClient,
   TRedisClientMulti,
@@ -11,6 +10,7 @@ import { EventEmitter } from 'events';
 import { ELuaScriptName, getScriptId, loadScripts } from './lua-scripts';
 import * as async from 'async';
 import { RedisClientError } from './redis-client.error';
+import { getConfiguration } from '../configuration';
 
 /**
  * client.end() does unregister all event listeners which causes the 'end' event not being emitted.
@@ -74,9 +74,9 @@ export class RedisClient extends EventEmitter {
   protected connectionClosed = true;
   protected client: TCompatibleRedisClient;
 
-  protected constructor(config: IConfig = {}) {
+  protected constructor() {
     super();
-    this.client = this.getClient(config);
+    this.client = this.getClient();
     this.client.once('ready', () => {
       this.connectionClosed = false;
       this.emit('ready');
@@ -105,7 +105,8 @@ export class RedisClient extends EventEmitter {
     );
   }
 
-  protected getClient(config: IConfig): TCompatibleRedisClient {
+  protected getClient(): TCompatibleRedisClient {
+    const config = getConfiguration();
     if (config.redis) {
       // in javascript land, we can pass any value
       if (!Object.values(RedisClientName).includes(config.redis.client)) {
@@ -557,15 +558,12 @@ export class RedisClient extends EventEmitter {
     } else cb();
   }
 
-  static getNewInstance(
-    config: IConfig = {},
-    cb: ICallback<RedisClient>,
-  ): void {
+  static getNewInstance(cb: ICallback<RedisClient>): void {
     // Waiting until a connection is established and ready
     // Do not return any error, and allow TCompatibleRedisClient (ioredis, node_redis)
     // to reconnect in case of Redis server restart or not responding.
     // An error will be thrown when max retries threshold is exceeded.
-    const client = new RedisClient(config);
+    const client = new RedisClient();
     client.once('ready', () => {
       async.waterfall(
         [

@@ -2,92 +2,148 @@ import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgedCause,
   ICallback,
-  TQueueParams,
+  TRedisClientMulti,
 } from '../../../types';
 import { Message } from '../message';
-import BLogger from 'bunyan';
-import * as async from 'async';
-import { PowerManager } from './power-manager/power-manager';
-import { MessageManager } from '../message-manager/message-manager';
-import { QueueManager } from '../queue-manager/queue-manager';
+import { RedisClient } from './redis-client/redis-client';
+import { PanicError } from './errors/panic.error';
+import { redisKeys } from './redis-keys/redis-keys';
 import { ArgumentError } from './errors/argument.error';
+import { ELuaScriptName } from './redis-client/lua-scripts';
+import { getConfiguration } from './configuration';
 
-export class Broker {
-  protected logger: BLogger;
-  protected powerManager: PowerManager;
-  protected messageManager: MessageManager;
-  protected queueManager: QueueManager;
-
-  constructor(
-    messageManager: MessageManager,
-    queueManager: QueueManager,
-    logger: BLogger,
-  ) {
-    this.messageManager = messageManager;
-    this.queueManager = queueManager;
-    this.logger = logger.child({ child: Broker.name });
-    this.powerManager = new PowerManager();
+function deadLetterMessage(
+  redisClient: RedisClient,
+  message: Message,
+  keyQueueProcessing: string,
+  unacknowledgedCause: EMessageUnacknowledgedCause,
+  deadLetterCause: EMessageDeadLetterCause,
+  cb: ICallback<void>,
+): void {
+  const queue = message.getQueue();
+  if (!queue) {
+    throw new PanicError(`Message parameters are required`);
   }
-
-  setUpMessageQueue(queue: TQueueParams, cb: ICallback<void>): void {
-    this.queueManager.setUpMessageQueue(queue, cb);
+  const { storeMessages } = getConfiguration();
+  if (storeMessages) {
+    const { keyQueueDL } = redisKeys.getQueueKeys(queue.name, queue.ns);
+    redisClient.lpoprpush(keyQueueProcessing, keyQueueDL, (err) => {
+      if (err) cb(err);
+      else cb();
+    });
+  } else {
+    redisClient.rpop(keyQueueProcessing, (err) => cb(err));
   }
+}
 
-  scheduleMessage(msg: Message, cb: ICallback<boolean>): void {
-    const queue = msg.getQueue();
-    if (!queue) {
-      cb(new ArgumentError("Can't schedule a message without a message queue"));
-    } else {
-      this.messageManager.xScheduleMessage(msg, cb);
+function delayUnacknowledgedMessageBeforeRequeuing(
+  redisClient: RedisClient,
+  message: Message,
+  keyQueueProcessing: string,
+  unacknowledgedCause: EMessageUnacknowledgedCause,
+  cb: ICallback<void>,
+): void {
+  const queue = message.getQueue();
+  if (!queue) {
+    throw new PanicError(`Message queue parameters are required.`);
+  }
+  const { keyDelayedMessages } = redisKeys.getQueueKeys(queue.name, queue.ns);
+  redisClient.rpoplpush(keyQueueProcessing, keyDelayedMessages, (err) =>
+    cb(err),
+  );
+}
+
+function requeueUnacknowledgedMessage(
+  redisClient: RedisClient,
+  message: Message,
+  keyQueueProcessing: string,
+  unacknowledgedCause: EMessageUnacknowledgedCause,
+  cb: ICallback<void>,
+): void {
+  const queue = message.getQueue();
+  if (!queue) {
+    throw new PanicError(`Message parameters are required`);
+  }
+  const { keyRequeueMessages } = redisKeys.getQueueKeys(queue.name, queue.ns);
+  redisClient.rpoplpush(keyQueueProcessing, keyRequeueMessages, (err) =>
+    cb(err),
+  );
+}
+
+export const broker = {
+  schedule(multi: TRedisClientMulti, message: Message): void {
+    const timestamp = message.getNextScheduledTimestamp();
+    if (timestamp > 0) {
+      const { keyScheduledMessageIds, keyScheduledMessages } =
+        redisKeys.getMainKeys();
+      message.setScheduledAt(Date.now());
+      const messageId = message.getId();
+      multi.zadd(keyScheduledMessageIds, timestamp, messageId);
+      multi.hset(keyScheduledMessages, messageId, JSON.stringify(message));
     }
-  }
+  },
 
-  enqueueMessage(message: Message, cb: ICallback<void>): void {
-    this.messageManager.enqueueMessage(message, cb);
-  }
+  scheduleMessage(
+    redisClient: RedisClient,
+    message: Message,
+    cb: ICallback<boolean>,
+  ): void {
+    const timestamp = message.getNextScheduledTimestamp();
+    if (timestamp > 0) {
+      const queue = message.getQueue();
+      if (!queue) cb(new ArgumentError('Message queue is required'));
+      else {
+        const { keyQueues, keyScheduledMessageIds, keyScheduledMessages } =
+          redisKeys.getQueueKeys(queue.name, queue.ns);
+        message.setScheduledAt(Date.now());
+        const messageId = message.getId();
+        redisClient.runScript(
+          ELuaScriptName.SCHEDULE_MESSAGE,
+          [
+            keyQueues,
+            JSON.stringify(queue),
+            messageId,
+            JSON.stringify(message),
+            `${timestamp}`,
+            keyScheduledMessageIds,
+            keyScheduledMessages,
+          ],
+          (err) => {
+            if (err) cb(err);
+            else cb(null, true);
+          },
+        );
+      }
+    } else cb(null, false);
+  },
 
   acknowledgeMessage(
-    processingQueue: string,
-    msg: Message,
-    cb: ICallback<void>,
-  ): void {
-    this.messageManager.acknowledgeMessage(msg, processingQueue, cb);
-  }
-
-  unacknowledgeMessage(
-    processingQueue: string,
-    message: Message,
-    unacknowledgedCause: EMessageUnacknowledgedCause,
-    error: Error | undefined,
-    cb: ICallback<EMessageDeadLetterCause>,
-  ): void {
-    if (error) this.logger.debug(error);
-    this.logger.debug(
-      `Determining if message (ID ${message.getId()}) can be re-queued...`,
-    );
-    this.retry(processingQueue, message, unacknowledgedCause, cb);
-  }
-
-  deadLetterMessage(
+    redisClient: RedisClient,
     message: Message,
     keyQueueProcessing: string,
-    unacknowledgedCause: EMessageUnacknowledgedCause,
-    deadLetterCause: EMessageDeadLetterCause,
-    cb: ICallback<EMessageDeadLetterCause>,
+    storeMessages: boolean,
+    cb: ICallback<void>,
   ): void {
-    this.messageManager.deadLetterUnacknowledgedMessage(
-      message,
-      keyQueueProcessing,
-      unacknowledgedCause,
-      EMessageDeadLetterCause.TTL_EXPIRED,
-      (err) => {
+    const queue = message.getQueue();
+    if (!queue) {
+      throw new PanicError(`Message queue parameters are required`);
+    }
+    if (storeMessages) {
+      const { keyQueueAcknowledged } = redisKeys.getQueueKeys(
+        queue.name,
+        queue.ns,
+      );
+      redisClient.lpoprpush(keyQueueProcessing, keyQueueAcknowledged, (err) => {
         if (err) cb(err);
-        else cb(null, deadLetterCause);
-      },
-    );
-  }
+        else cb();
+      });
+    } else {
+      redisClient.rpop(keyQueueProcessing, (err) => cb(err));
+    }
+  },
 
   retry(
+    redisClient: RedisClient,
     processingQueue: string,
     message: Message,
     unacknowledgedCause: EMessageUnacknowledgedCause,
@@ -98,47 +154,44 @@ export class Broker {
       message.hasExpired()
     ) {
       //consumer.emit(events.MESSAGE_EXPIRED, message);
-      this.logger.debug(
-        `Message (ID ${message.getId()}) has expired. Moving it to dead-letter queue...`,
-      );
-      this.deadLetterMessage(
+      deadLetterMessage(
+        redisClient,
         message,
         processingQueue,
         unacknowledgedCause,
         EMessageDeadLetterCause.TTL_EXPIRED,
-        cb,
+        (err) => {
+          if (err) cb(err);
+          else cb(null, EMessageDeadLetterCause.TTL_EXPIRED);
+        },
       );
     } else if (message.isPeriodic()) {
       // Only non-periodic messages are re-queued. Failure of periodic messages is ignored since such
       // messages are periodically scheduled for delivery.
-      this.logger.debug(
-        `Message (ID ${message.getId()}) is periodic. Moving it to dead-letter queue...`,
-      );
-      this.deadLetterMessage(
+      deadLetterMessage(
+        redisClient,
         message,
         processingQueue,
         unacknowledgedCause,
         EMessageDeadLetterCause.PERIODIC_MESSAGE,
-        cb,
+        (err) => {
+          if (err) cb(err);
+          else cb(null, EMessageDeadLetterCause.PERIODIC_MESSAGE);
+        },
       );
     } else if (!message.hasRetryThresholdExceeded()) {
-      this.logger.debug(
-        `Retry threshold for message (ID ${message.getId()}) has not yet been exceeded. Checking message retryDelay...`,
-      );
       const delay = message.getRetryDelay();
       if (delay) {
-        this.logger.debug(
-          `Message (ID ${message.getId()}) has a retryDelay. Delaying...`,
-        );
-        this.messageManager.delayUnacknowledgedMessageBeforeRequeuing(
+        delayUnacknowledgedMessageBeforeRequeuing(
+          redisClient,
           message,
           processingQueue,
           unacknowledgedCause,
           (err) => cb(err),
         );
       } else {
-        this.logger.debug(`Re-queuing message (ID [${message.getId()})...`);
-        this.messageManager.requeueUnacknowledgedMessage(
+        requeueUnacknowledgedMessage(
+          redisClient,
           message,
           processingQueue,
           unacknowledgedCause,
@@ -146,26 +199,17 @@ export class Broker {
         );
       }
     } else {
-      this.logger.debug(
-        `Retry threshold for message (ID ${message.getId()}) has exceeded. Moving message to dead-letter queue...`,
-      );
-      this.deadLetterMessage(
+      deadLetterMessage(
+        redisClient,
         message,
         processingQueue,
         unacknowledgedCause,
         EMessageDeadLetterCause.RETRY_THRESHOLD_EXCEEDED,
-        cb,
+        (err) => {
+          if (err) cb(err);
+          else cb(null, EMessageDeadLetterCause.RETRY_THRESHOLD_EXCEEDED);
+        },
       );
     }
-  }
-
-  quit(cb: ICallback<void>): void {
-    async.waterfall(
-      [
-        (cb: ICallback<void>) => this.messageManager.quit(cb),
-        (cb: ICallback<void>) => this.queueManager.quit(cb),
-      ],
-      cb,
-    );
-  }
-}
+  },
+};

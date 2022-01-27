@@ -25,11 +25,10 @@ QueueManager.getSingletonInstance(config, (err, queueManager) => {
 ### QueueManager.getSingletonInstance()
 
 ```javascript
-getSingletonInstance(config, cb)
+getSingletonInstance(cb)
 ```
 
 **Parameters**
-- `config` *(number): Required.* configuration object.
 - `cb(err, queueManager)` *(Function): Required.* Callback function.
     - `err` *(Error | null | undefined).* Error object.
     - `queueManager` *(QueueManager).* QueueManager instance.

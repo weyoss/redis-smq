@@ -13,7 +13,7 @@ export const config: IConfig = {
       showFriendlyErrorStack: true,
     },
   },
-  log: {
+  logger: {
     enabled: false,
   },
   monitor: {

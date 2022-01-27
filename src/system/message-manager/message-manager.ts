@@ -1,319 +1,429 @@
 import {
-  EMessageDeadLetterCause,
-  EMessageUnacknowledgedCause,
   ICallback,
-  IConfig,
+  ICompatibleLogger,
   TGetMessagesReply,
   TGetPendingMessagesWithPriorityReply,
   TGetScheduledMessagesReply,
   TQueueParams,
 } from '../../../types';
 import { RedisClient } from '../common/redis-client/redis-client';
-import { Message } from '../message';
-import { EnqueueHandler } from './handlers/enqueue.handler';
-import { DequeueHandler } from './handlers/dequeue.handler';
-import { ScheduleHandler } from './handlers/schedule.handler';
-import { ProcessingHandler } from './handlers/processing.handler';
-import { DelayHandler } from './handlers/delay.handler';
-import { RequeueHandler } from './handlers/requeue.handler';
-import BLogger from 'bunyan';
+import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
+import { queueManager } from '../queue-manager/queue-manager';
+import { redisKeys } from '../common/redis-keys/redis-keys';
+import {
+  deleteListMessageAtSequenceId,
+  getPaginatedListMessages,
+  getPaginatedSortedSetMessages,
+  getSortedSetSize,
+  requeueListMessage,
+} from './common';
+import { MessageNotFoundError } from './errors/message-not-found.error';
+import { LockManager } from '../common/lock-manager/lock-manager';
+import { setConfigurationIfNotExists } from '../common/configuration';
+import { getNamespacedLogger } from '../common/logger';
 
 export class MessageManager {
-  protected redisClient: RedisClient;
-  protected enqueueHandler: EnqueueHandler;
-  protected processingHandler: ProcessingHandler;
-  protected scheduleHandler: ScheduleHandler;
-  protected delayHandler: DelayHandler;
-  protected requeueHandler: RequeueHandler;
-  protected logger: BLogger;
-  protected config: IConfig;
+  private static instance: MessageManager | null = null;
+  private redisClient: RedisClient;
+  private logger: ICompatibleLogger;
 
-  constructor(redisClient: RedisClient, logger: BLogger, config: IConfig) {
+  constructor(redisClient: RedisClient) {
     this.redisClient = redisClient;
-    this.config = config;
-    this.enqueueHandler = new EnqueueHandler(redisClient);
-    this.processingHandler = new ProcessingHandler(
-      redisClient,
-      config.storeMessages,
-    );
-    this.requeueHandler = new RequeueHandler(redisClient, this.enqueueHandler);
-    this.scheduleHandler = new ScheduleHandler(redisClient);
-    this.delayHandler = new DelayHandler(redisClient, this.scheduleHandler);
-    this.logger = logger.child({ child: MessageManager.name });
+    this.logger = getNamespacedLogger('MessageManager');
   }
 
   ///
-
-  enqueueMessage(message: Message, cb: ICallback<void>): void {
-    this.logger.debug(`Enqueuing message (ID ${message.getId()})...`);
-    this.enqueueHandler.enqueue(this.redisClient, message, cb);
-  }
-
-  ///
-
-  enqueueScheduledMessages(cb: ICallback<void>): void {
-    this.logger.debug(`Enqueuing scheduled messages ...`);
-    this.scheduleHandler.enqueueScheduledMessages(cb);
-  }
-
-  xScheduleMessage(message: Message, cb: ICallback<boolean>): void {
-    this.logger.debug(`Scheduling message (ID ${message.getId()})...`);
-    this.scheduleHandler.xSchedule(message, cb);
-  }
-
-  ///
-
-  requeueUnacknowledgedMessage(
-    message: Message,
-    keyQueueProcessing: string,
-    unacknowledgedCause: EMessageUnacknowledgedCause,
-    cb: ICallback<void>,
-  ): void {
-    this.logger.debug(
-      `Moving unacknowledged message (ID ${message.getId()}) to "re-queue" queue...`,
-    );
-    this.processingHandler.requeue(
-      message,
-      keyQueueProcessing,
-      unacknowledgedCause,
-      cb,
-    );
-  }
-
-  scheduleDelayedMessages(cb: ICallback<void>): void {
-    this.logger.debug(
-      `Scheduling unacknowledged messages from the delay queue...`,
-    );
-    this.delayHandler.schedule(cb);
-  }
-
-  delayUnacknowledgedMessageBeforeRequeuing(
-    message: Message,
-    keyQueueProcessing: string,
-    unacknowledgedCause: EMessageUnacknowledgedCause,
-    cb: ICallback<void>,
-  ): void {
-    this.logger.debug(
-      `Moving unacknowledged message (ID ${message.getId()}) to "delay" queue...`,
-    );
-    this.processingHandler.delayUnacknowledgedMessageBeforeRequeuing(
-      message,
-      keyQueueProcessing,
-      unacknowledgedCause,
-      cb,
-    );
-  }
-
-  acknowledgeMessage(
-    message: Message,
-    keyQueueProcessing: string,
-    cb: ICallback<void>,
-  ): void {
-    this.logger.debug(
-      `Moving message (ID ${message.getId()}) to "acknowledged" queue...`,
-    );
-    this.processingHandler.acknowledge(message, keyQueueProcessing, cb);
-  }
-
-  deadLetterUnacknowledgedMessage(
-    message: Message,
-    keyQueueProcessing: string,
-    unacknowledgedCause: EMessageUnacknowledgedCause,
-    deadLetterCause: EMessageDeadLetterCause,
-    cb: ICallback<void>,
-  ): void {
-    this.logger.debug(
-      `Moving unacknowledged message (ID ${message.getId()}) to dead-letter queue (unacknowledgedCause: ${unacknowledgedCause}, deadLetterCause: ${deadLetterCause})...`,
-    );
-    this.processingHandler.deadLetterMessage(
-      message,
-      keyQueueProcessing,
-      unacknowledgedCause,
-      deadLetterCause,
-      cb,
-    );
-  }
 
   deleteScheduledMessage(messageId: string, cb: ICallback<void>): void {
-    this.logger.debug(`Deleting scheduled message ID ${messageId}}...`);
-    this.scheduleHandler.deleteScheduled(messageId, cb);
+    const {
+      keyScheduledMessageIds,
+      keyScheduledMessages,
+      keyLockDeleteScheduledMessage,
+    } = redisKeys.getMainKeys();
+    LockManager.lockFN(
+      this.redisClient,
+      keyLockDeleteScheduledMessage,
+      (cb) => {
+        // Not checking message existence.
+        // If the message exists it will be deleted.
+        // Otherwise, assuming that it has been already deleted
+        const multi = this.redisClient.multi();
+        multi.hdel(keyScheduledMessages, messageId);
+        multi.zrem(keyScheduledMessageIds, messageId);
+        this.redisClient.execMulti(multi, (err) => {
+          if (err) cb(err);
+          else {
+            this.logger.info(
+              `Scheduled message (ID ${messageId}) has been deleted`,
+            );
+            cb();
+          }
+        });
+      },
+      cb,
+    );
   }
 
   deleteDeadLetteredMessage(
-    queue: TQueueParams,
+    queue: string | TQueueParams,
     sequenceId: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    this.logger.debug(
-      `Deleting dead-lettered message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${queue.name}, ns ${queue.ns})...`,
-    );
-    this.processingHandler.deleteDeadLetteredMessage(
-      queue,
+    const queueParams = queueManager.getQueueParams(queue);
+    const { keyQueueDL, keyLockDeleteDeadLetteredMessage } =
+      redisKeys.getQueueKeys(queueParams.name, queueParams.ns);
+    deleteListMessageAtSequenceId(
+      this.redisClient,
+      keyLockDeleteDeadLetteredMessage,
+      keyQueueDL,
       sequenceId,
       messageId,
-      cb,
+      queueParams,
+      (err) => {
+        if (err) cb(err);
+        else {
+          this.logger.info(
+            `Dead-lettered message (ID ${messageId}) has been deleted`,
+          );
+          cb();
+        }
+      },
     );
   }
 
   deleteAcknowledgedMessage(
-    queue: TQueueParams,
+    queue: string | TQueueParams,
     sequenceId: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    this.logger.debug(
-      `Deleting acknowledged message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${queue.name}, ns ${queue.ns})...`,
-    );
-    this.processingHandler.deleteAcknowledgedMessage(
-      queue,
+    const queueParams = queueManager.getQueueParams(queue);
+    const { keyQueueAcknowledged, keyLockDeleteAcknowledgedMessage } =
+      redisKeys.getQueueKeys(queueParams.name, queueParams.ns);
+    deleteListMessageAtSequenceId(
+      this.redisClient,
+      keyLockDeleteAcknowledgedMessage,
+      keyQueueAcknowledged,
       sequenceId,
       messageId,
-      cb,
+      queueParams,
+      (err) => {
+        if (err) cb(err);
+        else {
+          this.logger.info(
+            `Acknowledged message (ID ${messageId}) has been deleted`,
+          );
+          cb();
+        }
+      },
     );
   }
 
   deletePendingMessage(
-    queue: TQueueParams,
+    queue: string | TQueueParams,
     sequenceId: number,
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    this.logger.debug(
-      `Deleting pending message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${queue.name}, ns ${queue.ns})...`,
+    const queueParams = queueManager.getQueueParams(queue);
+    const { keyQueuePending, keyLockDeletePendingMessage } =
+      redisKeys.getQueueKeys(queueParams.name, queueParams.ns);
+    deleteListMessageAtSequenceId(
+      this.redisClient,
+      keyLockDeletePendingMessage,
+      keyQueuePending,
+      sequenceId,
+      messageId,
+      queueParams,
+      (err) => {
+        // In case the message does not exist
+        // we assume it was delivered or already deleted
+        const error = err instanceof MessageNotFoundError ? null : err;
+        if (error) cb(error);
+        else {
+          this.logger.info(
+            `Pending message (ID ${messageId}) has been deleted`,
+          );
+          cb();
+        }
+      },
     );
-    this.enqueueHandler.deletePendingMessage(queue, sequenceId, messageId, cb);
   }
 
   deletePendingMessageWithPriority(
-    queue: TQueueParams,
+    queue: string | TQueueParams,
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    this.logger.debug(
-      `Deleting pending message with priority (ID ${messageId}, queueName ${queue.name}, ns ${queue.ns})...`,
+    const queueParams = queueManager.getQueueParams(queue);
+    const {
+      keyQueuePendingPriorityMessageIds,
+      keyQueuePendingPriorityMessages,
+      keyLockDeletePendingMessageWithPriority,
+    } = redisKeys.getQueueKeys(queueParams.name, queueParams.ns);
+    LockManager.lockFN(
+      this.redisClient,
+      keyLockDeletePendingMessageWithPriority,
+      (cb) => {
+        // Not verifying if the message exists.
+        // In case the message does not exist we assume it was delivered or already deleted
+        const multi = this.redisClient.multi();
+        multi.hdel(keyQueuePendingPriorityMessages, messageId);
+        multi.zrem(keyQueuePendingPriorityMessageIds, messageId);
+        this.redisClient.execMulti(multi, (err) => {
+          if (err) cb(err);
+          else {
+            this.logger.info(
+              `Pending message with priority (ID ${messageId}) has been deleted`,
+            );
+            cb();
+          }
+        });
+      },
+      cb,
     );
-    this.enqueueHandler.deletePendingMessageWithPriority(queue, messageId, cb);
   }
 
   ///
 
   requeueDeadLetteredMessage(
-    queue: TQueueParams,
+    queue: string | TQueueParams,
     sequenceId: number,
     messageId: string,
     priority: number | undefined,
     cb: ICallback<void>,
   ): void {
-    this.logger.debug(
-      `Re-queuing dead-lettered message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${
-        queue.name
-      }, ns ${queue.ns}, priority ${priority ?? 'without priority'})...`,
+    const queueParams = queueManager.getQueueParams(queue);
+    const { keyQueueDL } = redisKeys.getQueueKeys(
+      queueParams.name,
+      queueParams.ns,
     );
-    this.requeueHandler.requeueDeadLetteredMessage(
-      queue,
+    requeueListMessage(
+      this.redisClient,
+      queueParams,
+      keyQueueDL,
       sequenceId,
       messageId,
       priority,
-      cb,
+      (err) => {
+        if (err) cb(err);
+        else {
+          this.logger.info(
+            `Dead-lettered message (ID ${messageId}) has been re-queued`,
+          );
+          cb();
+        }
+      },
     );
   }
 
   requeueAcknowledgedMessage(
-    queue: TQueueParams,
+    queue: string | TQueueParams,
     sequenceId: number,
     messageId: string,
     priority: number | undefined,
     cb: ICallback<void>,
   ): void {
-    this.logger.debug(
-      `Re-queuing acknowledged message (ID ${messageId}, sequenceId ${sequenceId}, queueName ${
-        queue.name
-      }, ns ${queue.ns}, priority ${priority ?? 'without priority'})...`,
+    const queueParams = queueManager.getQueueParams(queue);
+    const { keyQueueAcknowledged } = redisKeys.getQueueKeys(
+      queueParams.name,
+      queueParams.ns,
     );
-    this.requeueHandler.requeueAcknowledgedMessage(
-      queue,
+    requeueListMessage(
+      this.redisClient,
+      queueParams,
+      keyQueueAcknowledged,
       sequenceId,
       messageId,
       priority,
-      cb,
+      (err) => {
+        if (err) cb(err);
+        else {
+          this.logger.info(
+            `Acknowledged message (ID ${messageId}) has been re-queued`,
+          );
+          cb();
+        }
+      },
     );
   }
 
   ///
 
-  purgeDeadLetteredMessages(queue: TQueueParams, cb: ICallback<void>): void {
-    this.logger.debug(
-      `Purging dead-lettered messages from (${queue.name}, ${queue.ns})...`,
+  purgeDeadLetteredMessages(
+    queue: string | TQueueParams,
+    cb: ICallback<void>,
+  ): void {
+    const queueParams = queueManager.getQueueParams(queue);
+    const { keyQueueDL } = redisKeys.getQueueKeys(
+      queueParams.name,
+      queueParams.ns,
     );
-    this.enqueueHandler.purgeDeadLetteredMessages(queue, cb);
+    this.redisClient.del(keyQueueDL, (err) => {
+      if (err) cb(err);
+      else {
+        this.logger.info(
+          `Queue (${JSON.stringify(
+            queue,
+          )}) dead-lettered messages have been deleted`,
+        );
+        cb();
+      }
+    });
   }
 
-  purgeAcknowledgedMessages(queue: TQueueParams, cb: ICallback<void>): void {
-    this.logger.debug(
-      `Purging acknowledged messages from (${queue.name}, ${queue.ns})...`,
+  purgeAcknowledgedMessages(
+    queue: string | TQueueParams,
+    cb: ICallback<void>,
+  ): void {
+    const queueParams = queueManager.getQueueParams(queue);
+    const { keyQueueAcknowledged } = redisKeys.getQueueKeys(
+      queueParams.name,
+      queueParams.ns,
     );
-    this.enqueueHandler.purgeAcknowledgedMessages(queue, cb);
+    this.redisClient.del(keyQueueAcknowledged, (err) => {
+      if (err) cb(err);
+      else {
+        this.logger.info(
+          `Queue (${JSON.stringify(
+            queue,
+          )}) acknowledged messages have been deleted`,
+        );
+        cb();
+      }
+    });
   }
 
-  purgePendingMessages(queue: TQueueParams, cb: ICallback<void>): void {
-    this.logger.debug(
-      `Purging pending messages of (${queue.name}, ${queue.ns})...`,
+  purgePendingMessages(
+    queue: string | TQueueParams,
+    cb: ICallback<void>,
+  ): void {
+    const queueParams = queueManager.getQueueParams(queue);
+    const { keyQueuePending } = redisKeys.getQueueKeys(
+      queueParams.name,
+      queueParams.ns,
     );
-    this.enqueueHandler.purgePendingMessages(queue, cb);
+    this.redisClient.del(keyQueuePending, (err) => {
+      if (err) cb(err);
+      else {
+        this.logger.info(
+          `Queue (${JSON.stringify(queue)}) pending messages have been deleted`,
+        );
+        cb();
+      }
+    });
   }
 
   purgePendingMessagesWithPriority(
-    queue: TQueueParams,
+    queue: string | TQueueParams,
     cb: ICallback<void>,
   ): void {
-    this.logger.debug(
-      `Purging pending messages with priority of (${queue.name}, ${queue.ns})...`,
-    );
-    this.enqueueHandler.purgePendingMessagesWithPriority(queue, cb);
+    const queueParams = queueManager.getQueueParams(queue);
+    const {
+      keyQueuePendingPriorityMessageIds,
+      keyQueuePendingPriorityMessages,
+    } = redisKeys.getQueueKeys(queueParams.name, queueParams.ns);
+    const multi = this.redisClient.multi();
+    multi.del(keyQueuePendingPriorityMessages);
+    multi.del(keyQueuePendingPriorityMessageIds);
+    this.redisClient.execMulti(multi, (err) => {
+      if (err) cb(err);
+      else {
+        this.logger.info(
+          `Queue (${JSON.stringify(
+            queue,
+          )}) pending messages with priority have been deleted`,
+        );
+        cb();
+      }
+    });
   }
 
   purgeScheduledMessages(cb: ICallback<void>): void {
-    this.logger.debug(`Purging scheduled messages...`);
-    this.scheduleHandler.purgeScheduledMessages(cb);
+    const { keyScheduledMessageIds, keyScheduledMessages } =
+      redisKeys.getMainKeys();
+    const multi = this.redisClient.multi();
+    multi.del(keyScheduledMessages);
+    multi.del(keyScheduledMessageIds);
+    this.redisClient.execMulti(multi, (err) => {
+      if (err) cb(err);
+      else {
+        this.logger.info(`Scheduled messages have been deleted`);
+        cb();
+      }
+    });
   }
 
   ///
 
   getAcknowledgedMessages(
-    queue: TQueueParams,
+    queue: string | TQueueParams,
     skip: number,
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    this.enqueueHandler.getAcknowledgedMessages(queue, skip, take, cb);
+    const queueParams = queueManager.getQueueParams(queue);
+    const { keyQueueAcknowledged } = redisKeys.getQueueKeys(
+      queueParams.name,
+      queueParams.ns,
+    );
+    getPaginatedListMessages(
+      this.redisClient,
+      keyQueueAcknowledged,
+      skip,
+      take,
+      cb,
+    );
   }
 
   getDeadLetteredMessages(
-    queue: TQueueParams,
+    queue: string | TQueueParams,
     skip: number,
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    this.enqueueHandler.getDeadLetteredMessages(queue, skip, take, cb);
+    const queueParams = queueManager.getQueueParams(queue);
+    const { keyQueueDL } = redisKeys.getQueueKeys(
+      queueParams.name,
+      queueParams.ns,
+    );
+    getPaginatedListMessages(this.redisClient, keyQueueDL, skip, take, cb);
   }
 
   getPendingMessages(
-    queue: TQueueParams,
+    queue: string | TQueueParams,
     skip: number,
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    this.enqueueHandler.getPendingMessages(queue, skip, take, cb);
+    const queueParams = queueManager.getQueueParams(queue);
+    const { keyQueuePending } = redisKeys.getQueueKeys(
+      queueParams.name,
+      queueParams.ns,
+    );
+    getPaginatedListMessages(this.redisClient, keyQueuePending, skip, take, cb);
   }
 
   getPendingMessagesWithPriority(
-    queue: TQueueParams,
+    queue: string | TQueueParams,
     skip: number,
     take: number,
     cb: ICallback<TGetPendingMessagesWithPriorityReply>,
   ): void {
-    this.enqueueHandler.getPendingMessagesWithPriority(queue, skip, take, cb);
+    const queueParams = queueManager.getQueueParams(queue);
+    const {
+      keyQueuePendingPriorityMessageIds,
+      keyQueuePendingPriorityMessages,
+    } = redisKeys.getQueueKeys(queueParams.name, queueParams.ns);
+    getPaginatedSortedSetMessages(
+      this.redisClient,
+      keyQueuePendingPriorityMessages,
+      keyQueuePendingPriorityMessageIds,
+      skip,
+      take,
+      cb,
+    );
   }
 
   getScheduledMessages(
@@ -321,31 +431,49 @@ export class MessageManager {
     take: number,
     cb: ICallback<TGetScheduledMessagesReply>,
   ): void {
-    this.scheduleHandler.getScheduledMessages(skip, take, cb);
-  }
-
-  getScheduledMessagesCount(cb: ICallback<number>): void {
-    this.scheduleHandler.getScheduledMessagesCount(cb);
-  }
-
-  static getDequeueHandler(
-    redisClient: RedisClient,
-    queue: TQueueParams,
-    keyQueueProcessing: string,
-    usePriorityQueuing: boolean,
-  ): DequeueHandler {
-    return new DequeueHandler(
-      redisClient,
-      queue,
-      keyQueueProcessing,
-      usePriorityQueuing,
+    const { keyScheduledMessageIds, keyScheduledMessages } =
+      redisKeys.getMainKeys();
+    getPaginatedSortedSetMessages(
+      this.redisClient,
+      keyScheduledMessages,
+      keyScheduledMessageIds,
+      skip,
+      take,
+      cb,
     );
   }
 
   ///
 
   quit(cb: ICallback<void>): void {
-    // Keeping this method although no work is needed for now
-    cb();
+    this.redisClient.halt(() => {
+      MessageManager.instance = null;
+      cb();
+    });
+  }
+
+  ///
+
+  static getScheduledMessagesCount(
+    redisClient: RedisClient,
+    cb: ICallback<number>,
+  ): void {
+    const { keyScheduledMessageIds } = redisKeys.getMainKeys();
+    getSortedSetSize(redisClient, keyScheduledMessageIds, cb);
+  }
+
+  static getSingletonInstance(cb: ICallback<MessageManager>): void {
+    if (!MessageManager.instance) {
+      setConfigurationIfNotExists();
+      RedisClient.getNewInstance((err, client) => {
+        if (err) cb(err);
+        else if (!client) cb(new EmptyCallbackReplyError());
+        else {
+          const instance = new MessageManager(client);
+          MessageManager.instance = instance;
+          cb(null, instance);
+        }
+      });
+    } else cb(null, MessageManager.instance);
   }
 }

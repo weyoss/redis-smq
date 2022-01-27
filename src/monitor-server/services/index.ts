@@ -2,13 +2,13 @@ import { MessagesService } from './messages.service';
 import { TApplication } from '../types/common';
 import { MessageManager } from '../../system/message-manager/message-manager';
 import { QueuesService } from './queues.service';
-import { QueueManager } from '../../system/queue-manager/queue-manager';
 import { ConsumerTimeSeriesService } from './consumer-time-series.service';
 import { QueueTimeSeriesService } from './queue-time-series.service';
 import { GlobalTimeSeriesService } from './global-time-series.service';
+import { QueueManager } from '../../queue-manager';
 
 export function Services(app: TApplication) {
-  const { redis, logger } = app.context;
+  const { redis } = app.context;
   let messagesService: MessagesService | null = null;
   let queuesService: QueuesService | null = null;
   let consumerTimeSeriesService: ConsumerTimeSeriesService | null = null;
@@ -18,14 +18,14 @@ export function Services(app: TApplication) {
   return {
     get messagesService() {
       if (!messagesService) {
-        const messageManager = new MessageManager(redis, logger, {});
+        const messageManager = new MessageManager(redis);
         messagesService = new MessagesService(messageManager);
       }
       return messagesService;
     },
     get queuesService() {
       if (!queuesService) {
-        const queueManager = new QueueManager(redis, logger);
+        const queueManager = new QueueManager(redis);
         queuesService = new QueuesService(queueManager);
       }
       return queuesService;

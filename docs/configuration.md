@@ -1,8 +1,27 @@
 # Configuration
 
 ```javascript
+// filename: ./examples/javascript/consumer.js
 'use strict';
+const config = require('./config');
+const { Consumer, setConfiguration } = require('redis-smq');
 
+// Applying system-wide configuration
+// This setup should be done during your application bootstrap
+// Throws an error if the configuration has been already set up
+setConfiguration(config);
+
+// ...
+```
+
+You can configure many of RedisSMQ features using a configuration object that you can pass to `setConfiguration()` method from the main package, before starting and using any component.
+
+RedisSMQ accepts a one-time configuration setup which can take place, usually, during your application bootstrap. 
+
+## Configuration parameters
+
+```javascript
+'use strict';
 const path = require('path');
 
 module.exports = {
@@ -15,10 +34,10 @@ module.exports = {
             connect_timeout: 3600000,
         },
     },
-    log: {
-        enabled: 0,
+    logger: {
+        enabled: true,
         options: {
-            level: 'trace',
+            level: 'info',
             /*
             streams: [
                 {
@@ -56,7 +75,7 @@ module.exports = {
    - See https://github.com/NodeRedis/node_redis#options-object-properties for all valid parameters for `redis` client.
    - See https://github.com/luin/ioredis/blob/master/API.md#new_Redis for all valid `ioredis` parameters.
 
-- `log` *(object): Optional.* See [Logs Configuration](logs.md#configuration) for more details.
+- `logger` *(object): Optional.* See [Logs Configuration](logs.md#configuration) for more details.
 
 - `monitor` *(object): Optional.* See [Web UI Configuration](web-ui.md#configuration) for more details.
 

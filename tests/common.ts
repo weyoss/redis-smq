@@ -2,7 +2,7 @@ import { delay, promisifyAll } from 'bluebird';
 import { events } from '../src/system/common/events';
 import { RedisClient } from '../src/system/common/redis-client/redis-client';
 import { Producer, Message, MonitorServer, Consumer } from '../index';
-import { config } from './config';
+import { config as testConfig } from './config';
 import {
   IConfig,
   TConsumerMessageHandler,
@@ -11,22 +11,20 @@ import {
 } from '../types';
 import { WebsocketMainStreamWorker } from '../src/monitor-server/workers/websocket-main-stream.worker';
 import { QueueManagerFrontend } from '../src/system/queue-manager/queue-manager-frontend';
-import { MessageManagerFrontend } from '../src/system/message-manager/message-manager-frontend';
 import { MessageManager } from '../src/system/message-manager/message-manager';
 import * as supertest from 'supertest';
-import { Logger } from '../src/system/common/logger';
-import { QueueManager } from '../src/system/queue-manager/queue-manager';
 import { WebsocketRateStreamWorker } from '../src/monitor-server/workers/websocket-rate-stream.worker';
 import { WebsocketHeartbeatStreamWorker } from '../src/monitor-server/workers/websocket-heartbeat-stream.worker';
 import { WebsocketOnlineStreamWorker } from '../src/monitor-server/workers/websocket-online-stream.worker';
 import { TimeSeriesResponseBodyDTO } from '../src/monitor-server/controllers/common/dto/time-series/time-series-response.DTO';
-import { redisKeys } from '../src/system/common/redis-keys/redis-keys';
+import * as configuration from '../src/system/common/configuration';
 
-type TMonitorServer = ReturnType<typeof MonitorServer>;
+export const config = configuration.setConfiguration(testConfig);
+
+//setLogger(console);
 
 type TGetConsumerArgs = {
   queue?: string | TQueueParams;
-  cfg?: IConfig;
   enablePriorityQueuing?: boolean;
   messageHandler?: TConsumerMessageHandler;
 };
@@ -42,34 +40,29 @@ export interface ISuperTestResponse<TData> extends supertest.Response {
   };
 }
 
-Message.setDefaultOptions(config.message);
-const MessageManagerFrontendAsync = promisifyAll(MessageManagerFrontend);
 const QueueManagerFrontendAsync = promisifyAll(QueueManagerFrontend);
-
-const defaultNamespace = config.namespace ?? 'testing';
-redisKeys.setNamespace(defaultNamespace);
 
 export const defaultQueue: TQueueParams = {
   name: 'test_queue',
-  ns: defaultNamespace,
+  ns: config.namespace,
 };
 const redisClients: RedisClient[] = [];
 const consumersList: Consumer[] = [];
 const producersList: Producer[] = [];
-let monitorServer: TMonitorServer | null = null;
+const getConfigurationOrig = configuration.getConfiguration;
+let monitorServer: MonitorServer | null = null;
 let websocketMainStreamWorker: WebsocketMainStreamWorker | null = null;
 let websocketRateStreamWorker: WebsocketRateStreamWorker | null = null;
 let websocketHeartbeatStreamWorker: WebsocketHeartbeatStreamWorker | null =
   null;
 let websocketOnlineStreamWorker: WebsocketOnlineStreamWorker | null = null;
 let messageManager: MessageManager | null = null;
-let messageManagerFrontend: MessageManagerFrontend | null = null;
-let queueManager: QueueManager | null = null;
 let queueManagerFrontend: QueueManagerFrontend | null = null;
 
 export async function startUp(): Promise<void> {
   const redisClient = await getRedisInstance();
   await redisClient.flushallAsync();
+  restoreConfiguration();
 }
 
 export async function shutdown(): Promise<void> {
@@ -103,20 +96,10 @@ export async function shutdown(): Promise<void> {
     await m.quitAsync();
     messageManager = null;
   }
-  if (messageManagerFrontend) {
-    const m = promisifyAll(messageManagerFrontend);
-    await m.quitAsync();
-    messageManagerFrontend = null;
-  }
   if (queueManagerFrontend) {
     const q = promisifyAll(queueManagerFrontend);
     await q.quitAsync();
     queueManagerFrontend = null;
-  }
-  if (queueManager) {
-    const q = promisifyAll(queueManager);
-    await q.quitAsync();
-    queueManager = null;
   }
 
   // Redis clients should be stopped in the last step, to avoid random errors from different
@@ -129,67 +112,61 @@ export async function shutdown(): Promise<void> {
   }
 }
 
+export function restoreConfiguration(): void {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  configuration.getConfiguration = getConfigurationOrig;
+}
+
+export function mockConfiguration(config: IConfig): void {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  configuration.getConfiguration = () => {
+    return {
+      ...getConfigurationOrig(),
+      ...config,
+    };
+  };
+}
+
 export function getConsumer(args: TGetConsumerArgs = {}) {
   const {
     queue = defaultQueue,
-    cfg = config,
     messageHandler = (msg, cb) => cb(),
     enablePriorityQueuing = false,
   } = args;
-  const consumer = promisifyAll(new Consumer(cfg));
+  const consumer = promisifyAll(new Consumer());
   consumer.consume(queue, enablePriorityQueuing, messageHandler, () => void 0);
   consumersList.push(consumer);
   return consumer;
 }
 
-export function getProducer(cfg = config) {
-  const producer = new Producer(cfg);
+export function getProducer() {
+  const producer = new Producer();
   const p = promisifyAll(producer);
   producersList.push(p);
   return p;
 }
 
-export function getLogger() {
-  return Logger('testsRunner', config.log);
-}
-
 export async function getMessageManager() {
   if (!messageManager) {
     const client = await getRedisInstance();
-    const logger = getLogger();
-    messageManager = new MessageManager(client, logger, config);
+    messageManager = new MessageManager(client);
   }
   return messageManager;
-}
-
-export async function getMessageManagerFrontend() {
-  if (!messageManagerFrontend) {
-    messageManagerFrontend =
-      await MessageManagerFrontendAsync.getSingletonInstanceAsync(config);
-  }
-  return messageManagerFrontend;
 }
 
 export async function getQueueManagerFrontend() {
   if (!queueManagerFrontend) {
     queueManagerFrontend =
-      await QueueManagerFrontendAsync.getSingletonInstanceAsync(config);
+      await QueueManagerFrontendAsync.getSingletonInstanceAsync();
   }
   return queueManagerFrontend;
 }
 
-export async function getQueueManager() {
-  if (!queueManager) {
-    const redisClient = await getRedisInstance();
-    const logger = getLogger();
-    queueManager = new QueueManager(redisClient, logger);
-  }
-  return queueManager;
-}
-
 export async function startMonitorServer(): Promise<void> {
   if (!monitorServer) {
-    monitorServer = MonitorServer(config);
+    monitorServer = new MonitorServer();
     await monitorServer.listen();
   }
 }
@@ -204,15 +181,7 @@ export async function stopMonitorServer(): Promise<void> {
 export async function startWebsocketMainStreamWorker(): Promise<void> {
   if (!websocketMainStreamWorker) {
     const redisClient = await getRedisInstance();
-    const queueManager = await getQueueManager();
-    const messageManager = await getMessageManager();
-    const logger = getLogger();
-    websocketMainStreamWorker = new WebsocketMainStreamWorker(
-      queueManager,
-      messageManager,
-      redisClient,
-      logger,
-    );
+    websocketMainStreamWorker = new WebsocketMainStreamWorker(redisClient);
   }
 }
 
@@ -230,11 +199,7 @@ export async function stopWebsocketMainStreamWorker(): Promise<void> {
 export async function startWebsocketRateStreamWorker(): Promise<void> {
   if (!websocketRateStreamWorker) {
     const redisClient = await getRedisInstance();
-    const logger = getLogger();
-    websocketRateStreamWorker = new WebsocketRateStreamWorker(
-      redisClient,
-      logger,
-    );
+    websocketRateStreamWorker = new WebsocketRateStreamWorker(redisClient);
   }
 }
 
@@ -252,10 +217,8 @@ export async function stopWebsocketRateStreamWorker(): Promise<void> {
 export async function startWebsocketHeartbeatStreamWorker(): Promise<void> {
   if (!websocketHeartbeatStreamWorker) {
     const redisClient = await getRedisInstance();
-    const logger = getLogger();
     websocketHeartbeatStreamWorker = new WebsocketHeartbeatStreamWorker(
       redisClient,
-      logger,
     );
   }
 }
@@ -274,13 +237,7 @@ export async function stopWebsocketHeartbeatStreamWorker(): Promise<void> {
 export async function startWebsocketOnlineStreamWorker(): Promise<void> {
   if (!websocketOnlineStreamWorker) {
     const redisClient = await getRedisInstance();
-    const logger = getLogger();
-    const queueManager = await getQueueManager();
-    websocketOnlineStreamWorker = new WebsocketOnlineStreamWorker(
-      redisClient,
-      queueManager,
-      logger,
-    );
+    websocketOnlineStreamWorker = new WebsocketOnlineStreamWorker(redisClient);
   }
 }
 
@@ -308,7 +265,7 @@ export function validateTime(
 
 export async function getRedisInstance() {
   const RedisClientAsync = promisifyAll(RedisClient);
-  const c = promisifyAll(await RedisClientAsync.getNewInstanceAsync(config));
+  const c = promisifyAll(await RedisClientAsync.getNewInstanceAsync());
   redisClients.push(c);
   return c;
 }
@@ -361,12 +318,10 @@ export async function untilConsumerEvent(
 
 export async function produceAndAcknowledgeMessage(
   queue: TQueueParams = defaultQueue,
-  cfg: IConfig = config,
 ) {
-  const producer = getProducer(cfg);
+  const producer = getProducer();
   const consumer = getConsumer({
     queue,
-    cfg,
     messageHandler: jest.fn((msg, cb) => {
       cb();
     }),
@@ -383,12 +338,10 @@ export async function produceAndAcknowledgeMessage(
 
 export async function produceAndDeadLetterMessage(
   queue: TQueueParams = defaultQueue,
-  cfg: IConfig = config,
 ) {
-  const producer = getProducer(cfg);
+  const producer = getProducer();
   const consumer = getConsumer({
     queue,
-    cfg,
     messageHandler: jest.fn(() => {
       throw new Error('Explicit error');
     }),
@@ -414,7 +367,7 @@ export async function produceMessage(queue: TQueueParams = defaultQueue) {
 export async function produceMessageWithPriority(
   queue: TQueueParams = defaultQueue,
 ) {
-  const producer = promisifyAll(getProducer(config));
+  const producer = promisifyAll(getProducer());
   const message = new Message();
   message.setPriority(Message.MessagePriority.LOW).setQueue(queue);
   await producer.produceAsync(message);

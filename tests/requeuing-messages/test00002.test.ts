@@ -1,5 +1,5 @@
 import {
-  getMessageManagerFrontend,
+  getMessageManager,
   getQueueManagerFrontend,
   produceAndAcknowledgeMessage,
 } from '../common';
@@ -9,7 +9,7 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
   const { consumer, queue, message } = await produceAndAcknowledgeMessage();
   await consumer.shutdownAsync();
 
-  const messageManager = promisifyAll(await getMessageManagerFrontend());
+  const messageManager = promisifyAll(await getMessageManager());
   const res1 = await messageManager.getPendingMessagesAsync(queue, 0, 100);
   expect(res1.total).toBe(0);
   expect(res1.items.length).toBe(0);

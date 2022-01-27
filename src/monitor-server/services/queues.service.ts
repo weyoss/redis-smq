@@ -1,7 +1,7 @@
 import { promisifyAll } from 'bluebird';
-import { QueueManager } from '../../system/queue-manager/queue-manager';
 import { TQueueParams } from '../../../types';
 import { DeleteQueueRequestDTO } from '../controllers/api/queues/queue/delete-queue/delete-queue.request.DTO';
+import { QueueManager } from '../../queue-manager';
 
 const queueManagerAsync = promisifyAll(QueueManager.prototype);
 
