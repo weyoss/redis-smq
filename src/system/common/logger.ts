@@ -34,18 +34,22 @@ export function getLogger(): ICompatibleLogger {
 }
 
 export function getNamespacedLogger(namespace: string): ICompatibleLogger {
-  const logger = getLogger();
-  const log =
+  const { logger } = getConfiguration();
+  const instance = getLogger();
+  if (!logger.enabled) {
+    return instance;
+  }
+  const wrap =
     (key: keyof ICompatibleLogger) =>
     (message: unknown, ...params: unknown[]): void => {
       const msg =
         typeof message === 'string' ? `[${namespace}] ${message}` : message;
-      return logger[key](msg, ...params);
+      return instance[key](msg, ...params);
     };
   return {
-    info: log('info'),
-    warn: log('warn'),
-    debug: log('debug'),
-    error: log('error'),
+    info: wrap('info'),
+    warn: wrap('warn'),
+    debug: wrap('debug'),
+    error: wrap('error'),
   };
 }
