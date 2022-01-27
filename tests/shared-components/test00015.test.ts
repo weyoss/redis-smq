@@ -9,11 +9,10 @@ import {
 import { delay, promisifyAll } from 'bluebird';
 import { Message } from '../../src/system/message';
 import { events } from '../../src/system/common/events';
-import { DelayWorker } from '../../src/system/workers/delay.worker';
 import { GCWorker } from '../../src/system/workers/gc.worker';
-import { ScheduleWorker } from '../../src/system/workers/schedule.worker';
+import { RequeueWorker } from '../../src/system/workers/requeue.worker';
 
-test('GCWorker -> DelayWorker -> ScheduleWorker', async () => {
+test('GCWorker -> RequeueWorker', async () => {
   let message: Message | null = null;
   const consumer = getConsumer({
     messageHandler: jest.fn((msg) => {
@@ -25,7 +24,7 @@ test('GCWorker -> DelayWorker -> ScheduleWorker', async () => {
   const producer = getProducer();
   await producer.produceAsync(
     new Message()
-      .setRetryDelay(10000)
+      .setRetryDelay(0)
       .setBody('message body')
       .setQueue(defaultQueue),
   );
@@ -43,22 +42,11 @@ test('GCWorker -> DelayWorker -> ScheduleWorker', async () => {
   await delay(5000);
 
   // should move from delay queue to scheduled queue
-  const delayHandler = promisifyAll(new DelayWorker(redisClient));
-  delayHandler.run();
+  const requeueWorker = promisifyAll(new RequeueWorker(redisClient));
+  requeueWorker.run();
   await delay(5000);
 
   const messageManager = promisifyAll(await getMessageManager());
-  const res = await messageManager.getScheduledMessagesAsync(0, 99);
-  expect(res.total).toBe(1);
-
-  // should move from delay queue to scheduled queue
-  const scheduleWorker = promisifyAll(new ScheduleWorker(redisClient));
-  scheduleWorker.run();
-  await delay(15000);
-
-  const res2 = await messageManager.getScheduledMessagesAsync(0, 99);
-  expect(res2.total).toBe(0);
-
   const res3 = await messageManager.getPendingMessagesAsync(
     defaultQueue,
     0,
@@ -66,7 +54,6 @@ test('GCWorker -> DelayWorker -> ScheduleWorker', async () => {
   );
   expect(res3.total).toBe(1);
 
-  await delayHandler.quitAsync();
+  await requeueWorker.quitAsync();
   await gcWorker.quitAsync();
-  await scheduleWorker.quitAsync();
 });

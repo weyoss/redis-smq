@@ -1,1 +1,1 @@
-export { MessageManagerFrontend as MessageManager } from './system/message-manager/message-manager-frontend';
+export { MessageManager } from './system/message-manager/message-manager';

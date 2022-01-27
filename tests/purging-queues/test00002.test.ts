@@ -1,5 +1,5 @@
 import {
-  getMessageManagerFrontend,
+  getMessageManager,
   getQueueManagerFrontend,
   produceMessageWithPriority,
 } from '../common';
@@ -12,7 +12,7 @@ test('Purging priority queue', async () => {
   const m2 = await queueManager.getQueueMetricsAsync(queue);
   expect(m2.pendingWithPriority).toBe(1);
 
-  const messageManager = promisifyAll(await getMessageManagerFrontend());
+  const messageManager = promisifyAll(await getMessageManager());
   await messageManager.purgePendingMessagesWithPriorityAsync(queue);
 
   const m3 = await queueManager.getQueueMetricsAsync(queue);

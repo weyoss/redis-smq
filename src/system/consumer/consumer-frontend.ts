@@ -1,6 +1,5 @@
 import {
   ICallback,
-  IConfig,
   TConsumerMessageHandler,
   TQueueParams,
 } from '../../../types';
@@ -11,9 +10,9 @@ import { events } from '../common/events';
 export class ConsumerFrontend extends EventEmitter {
   private consumer: Consumer;
 
-  constructor(config: IConfig = {}) {
+  constructor() {
     super();
-    this.consumer = new Consumer(config);
+    this.consumer = new Consumer();
     this.registerEvents();
   }
 

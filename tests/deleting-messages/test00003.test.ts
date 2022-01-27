@@ -1,5 +1,5 @@
 import {
-  getMessageManagerFrontend,
+  getMessageManager,
   getQueueManagerFrontend,
   produceAndAcknowledgeMessage,
 } from '../common';
@@ -8,7 +8,7 @@ import { promisifyAll } from 'bluebird';
 test('Combined test: Delete an acknowledged message. Check pending, acknowledged, and dead-letter messages. Check queue metrics.', async () => {
   const { queue, message } = await produceAndAcknowledgeMessage();
 
-  const messageManager = promisifyAll(await getMessageManagerFrontend());
+  const messageManager = promisifyAll(await getMessageManager());
 
   const res0 = await messageManager.getDeadLetteredMessagesAsync(queue, 0, 100);
   expect(res0.total).toBe(0);

@@ -12,6 +12,8 @@ import { LockManager } from '../common/lock-manager/lock-manager';
 import { MessageNotFoundError } from './errors/message-not-found.error';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { ArgumentError } from '../common/errors/argument.error';
+import { redisKeys } from '../common/redis-keys/redis-keys';
+import { ELuaScriptName } from '../common/redis-client/lua-scripts';
 
 export const validatePaginationParams = (skip: number, take: number) => {
   if (skip < 0 || take < 1) {
@@ -207,3 +209,53 @@ export const getPaginatedSortedSetMessages = (
   };
   async.waterfall([getTotalItems, getMessageIds, getMessages], cb);
 };
+
+export function requeueListMessage(
+  redisClient: RedisClient,
+  queue: TQueueParams,
+  from: string,
+  index: number,
+  messageId: string,
+  priority: number | undefined,
+  cb: ICallback<void>,
+): void {
+  getListMessageAtSequenceId(
+    redisClient,
+    from,
+    index,
+    messageId,
+    queue,
+    (err, msg) => {
+      if (err) cb(err);
+      else if (!msg) cb(new EmptyCallbackReplyError());
+      else {
+        const message = Message.createFromMessage(msg, true); // resetting all system parameters
+        if (priority !== undefined) {
+          message.setPriority(priority);
+        } else message.disablePriority();
+        const {
+          keyQueues,
+          keyQueuePending,
+          keyQueuePendingPriorityMessageIds,
+          keyQueuePendingPriorityMessages,
+        } = redisKeys.getQueueKeys(queue.name, queue.ns);
+        redisClient.runScript(
+          ELuaScriptName.REQUEUE_MESSAGE,
+          [
+            keyQueues,
+            JSON.stringify(queue),
+            message.getId(),
+            JSON.stringify(message),
+            message.getPriority() ?? '',
+            keyQueuePendingPriorityMessages,
+            keyQueuePendingPriorityMessageIds,
+            keyQueuePending,
+            from,
+            JSON.stringify(msg),
+          ],
+          (err) => cb(err),
+        );
+      }
+    },
+  );
+}

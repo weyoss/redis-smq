@@ -10,8 +10,8 @@ module.exports = {
       port: 6379,
     },
   },
-  log: {
-    enabled: false,
+  logger: {
+    enabled: true,
     options: {
       level: 'info',
       // streams: [

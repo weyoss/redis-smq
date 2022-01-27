@@ -1,8 +1,4 @@
-import {
-  defaultQueue,
-  getMessageManagerFrontend,
-  getProducer,
-} from '../common';
+import { defaultQueue, getMessageManager, getProducer } from '../common';
 import { Message } from '../../src/message';
 import { promisifyAll } from 'bluebird';
 
@@ -36,7 +32,7 @@ test('Schedule a message and check scheduled messages', async () => {
   const r3 = await producer.produceAsync(msg3);
   expect(r3).toBe(true);
 
-  const messageManager = promisifyAll(await getMessageManagerFrontend());
+  const messageManager = promisifyAll(await getMessageManager());
 
   // Page 1
   const pageOne = await messageManager.getScheduledMessagesAsync(0, 2);

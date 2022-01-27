@@ -24,7 +24,7 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 * **[Reliable Priority Queues](docs/priority-queues.md)**: Supports priority messaging.
 * **[HTTP API](docs/http-api.md)**: an HTTP interface is provided to interact with the MQ.
 * **[Web UI](docs/web-ui.md)**: RedisSMQ can be managed also from your web browser.
-* **[JSON Logging](docs/logs.md)**: Supports JSON log format for troubleshooting and debugging.
+* **[Logging](docs/logs.md)**: Comes with a built-in JSON logger. But you can also use your own logger instance.
 * **Highly optimized**: Strongly-typed and implemented using pure callbacks, with small memory footprint and no memory leaks. See [callbacks vs promises vs async/await benchmarks](http://bluebirdjs.com/docs/benchmarks.html).
 * **[Configurable](docs/configuration.md)**: Many options and features can be configured.
 * **Rigorously tested**: With 100+ tests and code coverage no less than 80%.

@@ -57,10 +57,9 @@ See [Consumer API Reference](/docs/api/consumer.md) for more details.
 'use strict';
 
 const { Consumer } = require('redis-smq');
-const config = require('./config');
 
 
-const consumer = new Consumer(config);
+const consumer = new Consumer();
 
 // The second argument is for enabling priority queuing 
 consumer.consume('test_queue', true, (msg, cb) => { cb(); }, (err, isRunning) => {

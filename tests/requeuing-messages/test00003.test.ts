@@ -1,5 +1,5 @@
 import {
-  getMessageManagerFrontend,
+  getMessageManager,
   getQueueManagerFrontend,
   produceAndAcknowledgeMessage,
 } from '../common';
@@ -10,7 +10,7 @@ test('Combined test: Requeue a message from acknowledged queue with priority. Ch
   const { queue, message, consumer } = await produceAndAcknowledgeMessage();
   await consumer.shutdownAsync();
 
-  const messageManager = promisifyAll(await getMessageManagerFrontend());
+  const messageManager = promisifyAll(await getMessageManager());
   await messageManager.requeueAcknowledgedMessageAsync(
     queue,
     0,

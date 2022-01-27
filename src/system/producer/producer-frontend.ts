@@ -1,4 +1,4 @@
-import { ICallback, IConfig } from '../../../types';
+import { ICallback } from '../../../types';
 import { EventEmitter } from 'events';
 import { events } from '../common/events';
 import { Producer } from './producer';
@@ -7,9 +7,9 @@ import { Message } from '../message';
 export class ProducerFrontend extends EventEmitter {
   private producer: Producer;
 
-  constructor(config: IConfig = {}) {
+  constructor() {
     super();
-    this.producer = new Producer(config);
+    this.producer = new Producer();
     this.registerEvents();
   }
 
@@ -17,8 +17,8 @@ export class ProducerFrontend extends EventEmitter {
     this.producer
       .on(events.UP, (...args: unknown[]) => this.emit(events.UP, ...args))
       .on(events.DOWN, (...args: unknown[]) => this.emit(events.DOWN, ...args))
-      .on(events.MESSAGE_PRODUCED, (...args: unknown[]) =>
-        this.emit(events.MESSAGE_PRODUCED, ...args),
+      .on(events.MESSAGE_PUBLISHED, (...args: unknown[]) =>
+        this.emit(events.MESSAGE_PUBLISHED, ...args),
       );
   }
 

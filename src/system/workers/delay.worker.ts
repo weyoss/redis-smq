@@ -1,51 +1,57 @@
-import { Ticker } from '../common/ticker/ticker';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { redisKeys } from '../common/redis-keys/redis-keys';
-import { EventEmitter } from 'events';
-import { TConsumerWorkerParameters } from '../../../types';
-import { MessageManager } from '../message-manager/message-manager';
-import { Logger } from '../common/logger';
+import { ICallback, TConsumerWorkerParameters } from '../../../types';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
+import * as async from 'async';
+import { Message } from '../message';
+import { broker } from '../common/broker';
+import { ConsumerWorker } from '../consumer/consumer-worker';
+import { setConfiguration } from '../common/configuration';
 
-export class DelayWorker extends EventEmitter {
-  protected ticker: Ticker;
-  protected messageManager: MessageManager;
+export class DelayWorker extends ConsumerWorker {
   protected redisKeys: ReturnType<typeof redisKeys['getMainKeys']>;
 
-  constructor(messageManager: MessageManager) {
-    super();
-    this.ticker = new Ticker(this.onTick, 1000);
-    this.messageManager = messageManager;
+  constructor(redisClient: RedisClient) {
+    super(redisClient);
     this.redisKeys = redisKeys.getMainKeys();
-    this.ticker.nextTick();
   }
 
-  onTick = (): void => {
-    this.messageManager.scheduleDelayedMessages((err) => {
-      if (err) throw err;
-      this.ticker.nextTick();
+  work = (cb: ICallback<void>): void => {
+    const { keyDelayedMessages } = redisKeys.getMainKeys();
+    this.redisClient.lrange(keyDelayedMessages, 0, 99, (err, reply) => {
+      if (err) cb(err);
+      else {
+        const messages = reply ?? [];
+        if (messages.length) {
+          const multi = this.redisClient.multi();
+          async.each(
+            messages,
+            (i, done) => {
+              multi.lrem(keyDelayedMessages, 1, i);
+              const message = Message.createFromMessage(i);
+              message.incrAttempts();
+              const delay = message.getRetryDelay();
+              message.setScheduledDelay(delay);
+              broker.schedule(multi, message);
+              done();
+            },
+            (err) => {
+              if (err) cb(err);
+              else this.redisClient.execMulti(multi, (err) => cb(err));
+            },
+          );
+        } else cb();
+      }
     });
   };
 }
 
 process.on('message', (c: string) => {
-  const { config, consumerId }: TConsumerWorkerParameters = JSON.parse(c);
-  if (config.namespace) {
-    redisKeys.setNamespace(config.namespace);
-  }
-  RedisClient.getNewInstance(config, (err, client) => {
+  const { config }: TConsumerWorkerParameters = JSON.parse(c);
+  setConfiguration(config);
+  RedisClient.getNewInstance((err, client) => {
     if (err) throw err;
     else if (!client) throw new EmptyCallbackReplyError();
-    else {
-      const logger = Logger(DelayWorker.name, {
-        ...config.log,
-        options: {
-          ...config.log?.options,
-          consumerId,
-        },
-      });
-      const messageManager = new MessageManager(client, logger, config);
-      new DelayWorker(messageManager);
-    }
+    else new DelayWorker(client).run();
   });
 });

@@ -128,7 +128,7 @@ export interface INodeRedisOptions {
 }
 
 export interface IMonitorConfig {
-  enabled?: boolean;
+  enabled: boolean;
   port?: number;
   host?: string;
   socketOpts?: ServerOptions;
@@ -137,13 +137,25 @@ export interface IMonitorConfig {
 export interface IConfig {
   redis?: TRedisOptions;
   namespace?: string;
-  log?: {
-    enabled?: boolean;
+  logger?: {
+    enabled: boolean;
     options?: Partial<Logger.LoggerOptions>;
   };
   monitor?: IMonitorConfig;
   message?: Partial<TMessageDefaultOptions>;
   storeMessages?: boolean;
+}
+
+export interface IRequiredConfig extends IConfig {
+  namespace: string;
+  storeMessages: boolean;
+  message: TMessageDefaultOptions;
+  monitor: IConfig['monitor'] & {
+    enabled: boolean;
+  };
+  logger: IConfig['logger'] & {
+    enabled: boolean;
+  };
 }
 
 export interface IMonitorServer {
@@ -239,7 +251,7 @@ export type TQueueParams = {
 };
 
 export type TConsumerWorkerParameters = {
-  config: IConfig;
+  config: IRequiredConfig;
   consumerId: string;
 };
 
@@ -280,3 +292,10 @@ export type TConsumerMessageHandlerParams = {
   messageHandler: TConsumerMessageHandler;
   usePriorityQueuing: boolean;
 };
+
+export interface ICompatibleLogger {
+  info(message: unknown, ...params: unknown[]): void;
+  warn(message: unknown, ...params: unknown[]): void;
+  error(message: unknown, ...params: unknown[]): void;
+  debug(message: unknown, ...params: unknown[]): void;
+}

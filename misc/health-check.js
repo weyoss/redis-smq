@@ -1,12 +1,10 @@
 'use strict';
-
-const config = require('./benchmark/config');
 const { events } = require('../dist/src/system/common/events');
 const { Consumer, Producer, Message } = require('..');
 const async = require('async');
 
 const queue = 'test_queue';
-const producer = new Producer(config);
+const producer = new Producer();
 
 const produceForever = () => {
   if (producer.isGoingUp() || producer.isRunning()) {
@@ -19,7 +17,7 @@ const produceForever = () => {
   }
 };
 
-const consumer = new Consumer(config);
+const consumer = new Consumer();
 
 consumer.consume(
   queue, // using the default namespace

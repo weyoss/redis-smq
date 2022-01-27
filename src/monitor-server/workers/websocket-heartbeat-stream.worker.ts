@@ -1,29 +1,26 @@
 import {
   ICallback,
-  IConfig,
+  IRequiredConfig,
   TWebsocketHeartbeatOnlineIdsStreamPayload,
 } from '../../../types';
 import { redisKeys } from '../../system/common/redis-keys/redis-keys';
 import { RedisClient } from '../../system/common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callback-reply.error';
-import { Logger } from '../../system/common/logger';
-import BLogger from 'bunyan';
 import { LockManager } from '../../system/common/lock-manager/lock-manager';
 import { Ticker } from '../../system/common/ticker/ticker';
 import * as async from 'async';
 import { events } from '../../system/common/events';
 import { ConsumerHeartbeat } from '../../system/consumer/consumer-heartbeat';
+import { setConfiguration } from '../../system/common/configuration';
 
 export class WebsocketHeartbeatStreamWorker {
-  protected logger;
   protected lockManager: LockManager;
   protected ticker: Ticker;
   protected redisClient: RedisClient;
   protected noop = (): void => void 0;
 
-  constructor(redisClient: RedisClient, logger: BLogger) {
+  constructor(redisClient: RedisClient) {
     const { keyLockWebsocketHeartbeatStreamWorker } = redisKeys.getMainKeys();
-    this.logger = logger;
     this.redisClient = redisClient;
     this.lockManager = new LockManager(
       redisClient,
@@ -36,11 +33,9 @@ export class WebsocketHeartbeatStreamWorker {
   }
 
   protected run = (): void => {
-    this.logger.debug(`Acquiring lock...`);
     this.lockManager.acquireLock((err, lock) => {
       if (err) throw err;
       else if (lock) {
-        this.logger.debug(`Lock acquired.`);
         const onlineIds: TWebsocketHeartbeatOnlineIdsStreamPayload = {
           consumers: [],
         };
@@ -85,16 +80,13 @@ export class WebsocketHeartbeatStreamWorker {
 }
 
 process.on('message', (c: string) => {
-  const config: IConfig = JSON.parse(c);
-  if (config.namespace) {
-    redisKeys.setNamespace(config.namespace);
-  }
-  RedisClient.getNewInstance(config, (err, client) => {
+  const config: IRequiredConfig = JSON.parse(c);
+  setConfiguration(config);
+  RedisClient.getNewInstance((err, client) => {
     if (err) throw err;
     else if (!client) throw new EmptyCallbackReplyError();
     else {
-      const logger = Logger(WebsocketHeartbeatStreamWorker.name, config.log);
-      new WebsocketHeartbeatStreamWorker(client, logger);
+      new WebsocketHeartbeatStreamWorker(client);
     }
   });
 });

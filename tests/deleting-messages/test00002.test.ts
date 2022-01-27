@@ -1,5 +1,5 @@
 import {
-  getMessageManagerFrontend,
+  getMessageManager,
   getQueueManagerFrontend,
   produceMessageWithPriority,
 } from '../common';
@@ -8,7 +8,7 @@ import { promisifyAll } from 'bluebird';
 test('Combined test: Delete a pending message with priority. Check pending messages. Check queue metrics.', async () => {
   const { message, queue } = await produceMessageWithPriority();
 
-  const messageManager = promisifyAll(await getMessageManagerFrontend());
+  const messageManager = promisifyAll(await getMessageManager());
   const res1 = await messageManager.getPendingMessagesWithPriorityAsync(
     queue,
     0,

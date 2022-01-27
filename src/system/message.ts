@@ -1,18 +1,11 @@
 import { v4 as uuid } from 'uuid';
 import { parseExpression } from 'cron-parser';
-import { TMessageDefaultOptions, TQueueParams } from '../../types';
+import { TQueueParams } from '../../types';
 import { ArgumentError } from './common/errors/argument.error';
-import { ConfigurationError } from './common/errors/configuration.error';
-import { QueueManager } from './queue-manager/queue-manager';
+import { queueManager } from './queue-manager/queue-manager';
+import { getConfiguration } from './common/configuration';
 
 export class Message {
-  protected static defaultOpts: TMessageDefaultOptions = {
-    consumeTimeout: 0,
-    retryThreshold: 3,
-    retryDelay: 60000,
-    ttl: 0,
-  };
-
   // Do not forget about javascript users. Using an object map instead of enum
   static readonly MessagePriority = {
     LOWEST: 7,
@@ -27,13 +20,13 @@ export class Message {
 
   protected queue: TQueueParams | null = null;
 
-  protected ttl: number;
+  protected ttl = 0;
 
-  protected retryThreshold: number;
+  protected retryThreshold = 3;
 
-  protected retryDelay: number;
+  protected retryDelay = 60000;
 
-  protected consumeTimeout: number;
+  protected consumeTimeout = 0;
 
   protected body: unknown = null;
 
@@ -72,10 +65,11 @@ export class Message {
   constructor() {
     this.createdAt = Date.now();
     this.uuid = uuid();
-    this.ttl = Message.defaultOpts.ttl;
-    this.retryDelay = Message.defaultOpts.retryDelay;
-    this.retryThreshold = Message.defaultOpts.retryThreshold;
-    this.consumeTimeout = Message.defaultOpts.consumeTimeout;
+    const { message } = getConfiguration();
+    this.setConsumeTimeout(message.consumeTimeout);
+    this.setRetryDelay(message.retryDelay);
+    this.setTTL(message.ttl);
+    this.setRetryThreshold(message.retryThreshold);
   }
 
   reset(): Message {
@@ -136,8 +130,10 @@ export class Message {
    * @param ttl In milliseconds
    */
   setTTL(ttl: number): Message {
-    if (ttl < 1000) {
-      throw new ArgumentError('TTL should not be less than 1 second');
+    if (ttl < 0) {
+      throw new ArgumentError(
+        'Expected a positive integer value in milliseconds',
+      );
     }
     this.ttl = ttl;
     return this;
@@ -147,8 +143,10 @@ export class Message {
    * @param timeout In milliseconds
    */
   setConsumeTimeout(timeout: number): Message {
-    if (timeout < 1000) {
-      throw new ArgumentError('Timeout should not be less than 1 second');
+    if (timeout < 0) {
+      throw new ArgumentError(
+        'Expected a positive integer value in milliseconds',
+      );
     }
     this.consumeTimeout = timeout;
     return this;
@@ -163,8 +161,8 @@ export class Message {
    * @param delay In millis
    */
   setRetryDelay(delay: number): Message {
-    if (delay < 1000) {
-      throw new ArgumentError('Delay should not be less than 1 second');
+    if (delay < 0) {
+      throw new ArgumentError('Delay should not be a negative number');
     }
     this.retryDelay = delay;
     return this;
@@ -219,7 +217,7 @@ export class Message {
   }
 
   setQueue(queue: string | TQueueParams): Message {
-    this.queue = QueueManager.getQueueParams(queue);
+    this.queue = queueManager.getQueueParams(queue);
     return this;
   }
 
@@ -305,6 +303,63 @@ export class Message {
     return this.scheduledDelay;
   }
 
+  getNextScheduledTimestamp(): number {
+    if (this.isSchedulable()) {
+      // Delay
+      const msgScheduledDelay = this.getMessageScheduledDelay();
+      if (msgScheduledDelay && !this.isDelayed()) {
+        this.setMessageDelayed(true);
+        return Date.now() + msgScheduledDelay;
+      }
+
+      // CRON
+      const msgScheduledCron = this.getMessageScheduledCRON();
+      const cronTimestamp = msgScheduledCron
+        ? parseExpression(msgScheduledCron).next().getTime()
+        : 0;
+
+      // Repeat
+      const msgScheduledRepeat = this.getMessageScheduledRepeat();
+      let repeatTimestamp = 0;
+      if (msgScheduledRepeat) {
+        const newCount = this.getMessageScheduledRepeatCount() + 1;
+        if (newCount <= msgScheduledRepeat) {
+          const msgScheduledPeriod = this.getMessageScheduledPeriod();
+          const now = Date.now();
+          if (msgScheduledPeriod) {
+            repeatTimestamp = now + msgScheduledPeriod;
+          } else {
+            repeatTimestamp = now;
+          }
+        }
+      }
+
+      if (repeatTimestamp && cronTimestamp) {
+        if (repeatTimestamp < cronTimestamp && this.hasScheduledCronFired()) {
+          this.incrMessageScheduledRepeatCount();
+          return repeatTimestamp;
+        }
+      }
+
+      if (cronTimestamp) {
+        // reset repeat count on each cron tick
+        this.resetMessageScheduledRepeatCount();
+
+        // if the message has also a repeat scheduling then the first time it will fires only
+        // after CRON scheduling has been fired
+        this.setMessageScheduledCronFired(true);
+
+        return cronTimestamp;
+      }
+
+      if (repeatTimestamp) {
+        this.incrMessageScheduledRepeatCount();
+        return repeatTimestamp;
+      }
+    }
+    return 0;
+  }
+
   isDelayed(): boolean {
     return this.delayed;
   }
@@ -361,27 +416,5 @@ export class Message {
       m.reset();
     }
     return m;
-  }
-
-  static setDefaultOptions(
-    options: Partial<TMessageDefaultOptions> = {},
-  ): void {
-    if (options.consumeTimeout && options.consumeTimeout < 1000) {
-      throw new ConfigurationError(
-        'Consume timeout should not be less than 1 second',
-      );
-    }
-    if (options.retryDelay && options.retryDelay < 1000) {
-      throw new ConfigurationError(
-        'Retry delay should not be less than 1 second',
-      );
-    }
-    if (options.ttl && options.ttl < 1000) {
-      throw new ConfigurationError('TTL should not be less than 1 second');
-    }
-    Message.defaultOpts = {
-      ...Message.defaultOpts,
-      ...options,
-    };
   }
 }

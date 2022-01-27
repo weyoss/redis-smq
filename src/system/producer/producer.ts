@@ -1,4 +1,4 @@
-import { ICallback, IConfig, TFunction, TUnaryFunction } from '../../../types';
+import { ICallback, TFunction, TUnaryFunction } from '../../../types';
 import { Message } from '../message';
 import { events } from '../common/events';
 import { PanicError } from '../common/errors/panic.error';
@@ -6,18 +6,22 @@ import { ProducerMessageRate } from './producer-message-rate';
 import { Base } from '../common/base';
 import { ProducerMessageRateWriter } from './producer-message-rate-writer';
 import { ArgumentError } from '../common/errors/argument.error';
+import { RedisClient } from '../common/redis-client/redis-client';
+import { redisKeys } from '../common/redis-keys/redis-keys';
+import { ELuaScriptName } from '../common/redis-client/lua-scripts';
+import { broker } from '../common/broker';
+import { getConfiguration } from '../common/configuration';
 
 export class Producer extends Base {
   protected messageRate: ProducerMessageRate | null = null;
 
-  constructor(config: IConfig) {
-    super(config);
+  constructor() {
+    super();
     this.run();
   }
 
   protected setUpMessageRate = (cb: ICallback<void>): void => {
-    this.logger.debug(`Set up MessageRate...`);
-    const { monitor } = this.config;
+    const { monitor } = getConfiguration();
     if (monitor && monitor.enabled) {
       if (!this.sharedRedisClient)
         cb(new PanicError(`Expected an instance of RedisClient`));
@@ -28,17 +32,12 @@ export class Producer extends Base {
         this.messageRate = new ProducerMessageRate(messageRateWriter);
         cb();
       }
-    } else {
-      this.logger.debug(`Skipping MessageRate setup as monitor not enabled...`);
-      cb();
-    }
+    } else cb();
   };
 
   protected tearDownMessageRate = (cb: ICallback<void>): void => {
-    this.logger.debug(`Tear down MessageRate...`);
     if (this.messageRate) {
       this.messageRate.quit(() => {
-        this.logger.debug(`MessageRate has been torn down.`);
         this.messageRate = null;
         cb();
       });
@@ -53,6 +52,37 @@ export class Producer extends Base {
     return [this.tearDownMessageRate].concat(super.goingDown());
   }
 
+  protected enqueue(
+    redisClient: RedisClient,
+    message: Message,
+    cb: ICallback<void>,
+  ): void {
+    const queue = message.getQueue();
+    if (!queue)
+      throw new PanicError(`Can not enqueue a message without a queue name`);
+    message.setPublishedAt(Date.now());
+    const {
+      keyQueues,
+      keyQueuePendingPriorityMessages,
+      keyQueuePendingPriorityMessageIds,
+      keyQueuePending,
+    } = redisKeys.getQueueKeys(queue.name, queue.ns);
+    redisClient.runScript(
+      ELuaScriptName.PUBLISH_MESSAGE,
+      [
+        keyQueues,
+        JSON.stringify(queue),
+        message.getId(),
+        JSON.stringify(message),
+        message.getPriority() ?? '',
+        keyQueuePendingPriorityMessages,
+        keyQueuePendingPriorityMessageIds,
+        keyQueuePending,
+      ],
+      (err) => cb(err),
+    );
+  }
+
   produce(message: Message, cb: ICallback<boolean>): void {
     const queue = message.getQueue();
     if (!queue) {
@@ -65,19 +95,34 @@ export class Producer extends Base {
         if (err) cb(err);
         else {
           if (this.messageRate) this.messageRate.incrementPublished(queue);
-          this.emit(events.MESSAGE_PRODUCED, message);
+          this.emit(events.MESSAGE_PUBLISHED, message);
           cb(null, reply);
         }
       };
       const proceed = () => {
-        this.getBroker((broker) => {
+        this.getSharedRedisClient((client) => {
           if (message.isSchedulable()) {
-            broker.scheduleMessage(message, callback);
-          } else
-            broker.enqueueMessage(message, (err) => {
-              if (err) cb(err);
-              else callback(null, true);
+            broker.scheduleMessage(client, message, (err, reply) => {
+              if (err) callback(err);
+              else {
+                if (reply)
+                  this.logger.info(
+                    `Message (ID ${message.getId()}) has been scheduled.`,
+                  );
+                callback(null, reply);
+              }
             });
+          } else {
+            this.enqueue(client, message, (err) => {
+              if (err) cb(err);
+              else {
+                this.logger.info(
+                  `Message (ID ${message.getId()}) has been enqueued.`,
+                );
+                callback(null, true);
+              }
+            });
+          }
         });
       };
       if (!this.powerManager.isUp()) {

@@ -1,5 +1,5 @@
 import {
-  getMessageManagerFrontend,
+  getMessageManager,
   getQueueManagerFrontend,
   produceAndDeadLetterMessage,
 } from '../common';
@@ -10,7 +10,7 @@ test('Combined test: Requeue a message from dead-letter queue with priority.  Ch
   const { message, queue, consumer } = await produceAndDeadLetterMessage();
   await consumer.shutdownAsync();
 
-  const messageManager = promisifyAll(await getMessageManagerFrontend());
+  const messageManager = promisifyAll(await getMessageManager());
   await messageManager.requeueDeadLetteredMessageAsync(
     queue,
     0,

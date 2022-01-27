@@ -1,9 +1,11 @@
 # Performance
 
-One key indicator about how RedisSMQ is fast and performant is Message throughput. Message throughput is the number of
-messages per second that the message queue can process.
+> ☝ ️Out-of-box RedisSMQ is optimized for performance. But if you are using a custom configuration, you should consider disabling the following features, in your production environment: logging, monitor server, storing acknowledged & dead-lettered messages.
+
 
 ## Scenarios
+
+One key indicator about how RedisSMQ is fast and performant is Message throughput. Message throughput is the number of messages per second that the message queue can process.
 
 We can measure the Producer throughput and the Consumer throughput. The benchmark is composed of:
 
@@ -13,17 +15,15 @@ We can measure the Producer throughput and the Consumer throughput. The benchmar
 
 In all scenarios messages are produced and consumed as fast as possible.
 
-
 ## Environment
 
-The benchmark was performed on a KVM virtual machine (4 CPU cores, 8GB RAM) hosted on a desktop computer
-(CPU AMD FX8350, RAM 32GB) running Debian 8.
+The benchmark was performed on a KVM virtual machine (4 CPU cores, 8GB RAM) hosted on a desktop computer (CPU AMD FX8350, RAM 32 GB) running Debian 8.
 
-No performance tuning was performed for the VM, neither for Redis server. Default parameters were used out of box.
+No performance tuning was performed for the VM, neither for Redis server.
 
-The virtual machine was setup to run a single instance of Redis (Redis is single threaded, so more instances can boost performance).
+The virtual machine was set up to run a single instance of Redis (Redis is single threaded, so more instances can boost performance).
 
-All consumers, producers, monitor and redis server are launched from the same host.
+All consumers/producers instances and Redis server are launched from the same host.
 
 ## Results
 

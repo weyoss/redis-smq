@@ -1,9 +1,7 @@
-import { ICallback, IConfig, TQueueParams } from '../../../types';
+import { ICallback, IRequiredConfig, TQueueParams } from '../../../types';
 import { redisKeys } from '../../system/common/redis-keys/redis-keys';
 import { RedisClient } from '../../system/common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callback-reply.error';
-import { Logger } from '../../system/common/logger';
-import BLogger from 'bunyan';
 import { LockManager } from '../../system/common/lock-manager/lock-manager';
 import { Ticker } from '../../system/common/ticker/ticker';
 import * as async from 'async';
@@ -19,9 +17,9 @@ import { GlobalDeadLetteredTimeSeries } from '../../system/consumer/consumer-tim
 import { ConsumerAcknowledgedTimeSeries } from '../../system/consumer/consumer-time-series/consumer-acknowledged-time-series';
 import { ConsumerDeadLetteredTimeSeries } from '../../system/consumer/consumer-time-series/consumer-dead-lettered-time-series';
 import { consumerQueues } from '../../system/consumer/consumer-queues';
+import { setConfiguration } from '../../system/common/configuration';
 
 export class WebsocketRateStreamWorker {
-  protected logger;
   protected lockManager: LockManager;
   protected ticker: Ticker;
   protected redisClient: RedisClient;
@@ -35,9 +33,8 @@ export class WebsocketRateStreamWorker {
   protected tasks: ((cb: ICallback<void>) => void)[] = [];
   protected noop = (): void => void 0;
 
-  constructor(redisClient: RedisClient, logger: BLogger) {
+  constructor(redisClient: RedisClient) {
     const { keyLockWebsocketRateStreamWorker } = redisKeys.getMainKeys();
-    this.logger = logger;
     this.redisClient = redisClient;
     this.lockManager = new LockManager(
       redisClient,
@@ -261,7 +258,6 @@ export class WebsocketRateStreamWorker {
   };
 
   protected publish = (): void => {
-    this.logger.debug(`Publishing...`);
     async.waterfall(this.tasks, this.noop);
   };
 
@@ -316,11 +312,9 @@ export class WebsocketRateStreamWorker {
   };
 
   protected run = (): void => {
-    this.logger.debug(`Acquiring lock...`);
     this.lockManager.acquireLock((err, lock) => {
       if (err) throw err;
       if (lock) {
-        this.logger.debug(`Lock acquired.`);
         this.reset();
         async.waterfall(
           [this.getQueues, this.consumersCount, this.prepare],
@@ -341,16 +335,13 @@ export class WebsocketRateStreamWorker {
 }
 
 process.on('message', (c: string) => {
-  const config: IConfig = JSON.parse(c);
-  if (config.namespace) {
-    redisKeys.setNamespace(config.namespace);
-  }
-  RedisClient.getNewInstance(config, (err, client) => {
+  const config: IRequiredConfig = JSON.parse(c);
+  setConfiguration(config);
+  RedisClient.getNewInstance((err, client) => {
     if (err) throw err;
     else if (!client) throw new EmptyCallbackReplyError();
     else {
-      const logger = Logger(WebsocketRateStreamWorker.name, config.log);
-      new WebsocketRateStreamWorker(client, logger);
+      new WebsocketRateStreamWorker(client);
     }
   });
 });

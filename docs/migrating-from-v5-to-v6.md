@@ -2,11 +2,10 @@
 
 > Before upgrading, you should make a backup or finish processing your messages in case you have if you any important data.
 
-To avoid conflicts and to prevent data lost, the Redis keys "version" has been bumped up. So your existing 
-data would not be touched.
+To avoid conflicts and to prevent data lost, the Redis keys "version" has been bumped up. So your existing data would not be touched.
 
-Upgrading your installation to the newest version should be straightforward as most APIs are compatible, with some
-exceptions:
+Upgrading your installation to the newest version should be straightforward as most APIs are compatible, with some exceptions:
+
 
 **1. Publishing a message**
 
@@ -29,7 +28,11 @@ See [Consumer API Reference](/docs/api/consumer.md) for more details.
 
 **3. Configuration**
 
-Removed `priorityQueue` parameter from the configuration parameters.
+- Consumer, Producer, MessageManager.getSingletonInstance(), and QueueManager.getSingletonInstance() no more accept a configuration object as the first argument. You can configure RedisSMQ globally using `setConfiguration()` from `redis-smq` package. 
+- Removed `priorityQueue` parameter from the configuration parameters.
+- Renamed `log` parameter to `logger`.
+
+See [Configuration](/docs/configuration.md) for more details. 
 
 **4. Refactored MessageManager API**
 

@@ -32,12 +32,8 @@ consumer.consume('test_queue', false, (msg, cb) => {
 **Syntax**
 
 ```javascript
-const consumer = new Consumer(config)
+const consumer = new Consumer()
 ```
-
-**Parameters**
-
-- `config` *(object): Optional.* Configuration parameters. See [configuration](https://github.com/weyoss/redis-smq#configuration).
 
 ### Consumer.prototype.consume()
 

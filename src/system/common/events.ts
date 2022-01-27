@@ -7,7 +7,7 @@ export const events = {
   IDLE: 'idle',
   SHUTDOWN_READY: 'shutdown_ready',
 
-  MESSAGE_PRODUCED: 'message_produced',
+  MESSAGE_PUBLISHED: 'message_produced',
   MESSAGE_NEXT: 'message_next',
   MESSAGE_RECEIVED: 'message_received',
   MESSAGE_ACKNOWLEDGED: 'message_acknowledged',
@@ -16,4 +16,5 @@ export const events = {
 
   RATE_TICK: 'rate_tick',
   HEARTBEAT_TICK: 'heartbeat_tick',
+  CONSUMER_WORKERS_STARTED: 'consumer_workers_started',
 };

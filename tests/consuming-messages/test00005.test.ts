@@ -2,24 +2,22 @@ import { delay, promisifyAll } from 'bluebird';
 import {
   defaultQueue,
   getConsumer,
-  getMessageManagerFrontend,
+  getMessageManager,
   getProducer,
+  mockConfiguration,
   untilConsumerIdle,
 } from '../common';
 import { Message } from '../../src/message';
 import { events } from '../../src/system/common/events';
-import { config } from '../config';
 
 test('Default message TTL: a message without TTL is not consumed and moved to DLQ when default messageTTL is exceeded', async () => {
-  const producer = getProducer();
-  const consumer = getConsumer({
-    cfg: {
-      ...config,
-      message: {
-        ttl: 2000,
-      },
+  mockConfiguration({
+    message: {
+      ttl: 2000,
     },
   });
+  const producer = getProducer();
+  const consumer = getConsumer();
   const consume = jest.spyOn(consumer, 'consume');
 
   let unacks = 0;
@@ -37,7 +35,7 @@ test('Default message TTL: a message without TTL is not consumed and moved to DL
   expect(consume).toHaveBeenCalledTimes(0);
   expect(unacks).toBe(1);
 
-  const m = promisifyAll(await getMessageManagerFrontend());
+  const m = promisifyAll(await getMessageManager());
   const list = await m.getDeadLetteredMessagesAsync(defaultQueue, 0, 100);
   expect(list.total).toBe(1);
   expect(list.items[0].message.getId()).toBe(msg.getId());
