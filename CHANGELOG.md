@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 6.0.0-rc.9 (2022-01-27)
+
+* Check object reference equality before clearing singleton instance (88e35ad)
+* Improve namespaced  logger (9acf9e9)
+* Support external loggers, use system-wide config, refactor codebase (eaf9c14)
+* Make storing acknowledged & dead-lettered messages optional (96b8be3)
+* Fix typos and update readme (21b2e9a)
+
 ## 6.0.0-rc.8 (2022-01-24)
 
 * Update migration guide (545932a)
