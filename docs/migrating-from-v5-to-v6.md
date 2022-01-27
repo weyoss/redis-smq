@@ -55,3 +55,7 @@ See [MessageManager API](/docs/api/message-manager.md) and [QueueManager API](/d
 **6. Updated HTTP API endpoints**
 
 See [HTTP API Reference](http-api.md) for more details.
+
+**7. Updated MonitorServer API**
+
+See [Web UI](web-ui.md) for more details.
