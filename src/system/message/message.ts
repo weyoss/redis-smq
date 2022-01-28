@@ -451,11 +451,7 @@ export class Message {
   }
 
   isSchedulable(): boolean {
-    return (
-      this.hasNextDelay() ||
-      this.getMessageScheduledCRON() !== null ||
-      this.getMessageScheduledRepeat() > 0
-    );
+    return this.hasNextDelay() || this.isPeriodic();
   }
 
   isPeriodic(): boolean {
