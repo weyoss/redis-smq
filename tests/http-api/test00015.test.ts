@@ -14,7 +14,7 @@ test('Re-queuing an acknowledged message', async () => {
     await request.post(
       `/api/queues/${queue.name}/ns/${
         queue.ns
-      }/acknowledged-messages/${message.getId()}/requeue?sequenceId=0`,
+      }/acknowledged-messages/${message.getRequiredId()}/requeue?sequenceId=0`,
     );
   expect(response1.statusCode).toBe(204);
   expect(response1.body).toEqual({});

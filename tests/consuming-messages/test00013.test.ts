@@ -89,8 +89,14 @@ test('Given many queues, a message is not lost and re-queued to its origin queue
   expect(queueAMetrics.acks).toBe(1);
   expect(queueBMetrics.acks).toBe(1);
   expect(queueAMetrics.receivedMessages.length).toBe(2);
-  expect(queueAMetrics.receivedMessages[0].getId()).toBe(msg.getId());
-  expect(queueAMetrics.receivedMessages[1].getId()).toBe(msg.getId());
+  expect(queueAMetrics.receivedMessages[0].getRequiredId()).toBe(
+    msg.getRequiredId(),
+  );
+  expect(queueAMetrics.receivedMessages[1].getRequiredId()).toBe(
+    msg.getRequiredId(),
+  );
   expect(queueBMetrics.receivedMessages.length).toBe(1);
-  expect(queueBMetrics.receivedMessages[0].getId()).toBe(anotherMsg.getId());
+  expect(queueBMetrics.receivedMessages[0].getRequiredId()).toBe(
+    anotherMsg.getRequiredId(),
+  );
 });

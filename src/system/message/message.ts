@@ -1,9 +1,10 @@
-import { v4 as uuid } from 'uuid';
 import { parseExpression } from 'cron-parser';
-import { TQueueParams } from '../../types';
-import { ArgumentError } from './common/errors/argument.error';
-import { queueManager } from './queue-manager/queue-manager';
-import { getConfiguration } from './common/configuration';
+import { TQueueParams } from '../../../types';
+import { ArgumentError } from '../common/errors/argument.error';
+import { queueManager } from '../queue-manager/queue-manager';
+import { getConfiguration } from '../common/configuration';
+import { MessageMetadata } from './message-metadata';
+import { PanicError } from '../common/errors/panic.error';
 
 export class Message {
   // Do not forget about javascript users. Using an object map instead of enum
@@ -17,6 +18,8 @@ export class Message {
     VERY_HIGH: 1,
     HIGHEST: 0,
   };
+
+  protected readonly createdAt: number;
 
   protected queue: TQueueParams | null = null;
 
@@ -40,31 +43,12 @@ export class Message {
 
   protected scheduledRepeat = 0;
 
-  /// System parameters
-
-  protected readonly uuid: string;
-
-  protected readonly createdAt: number;
-
-  protected publishedAt: number | null = null;
-
-  protected scheduledAt: number | null = null;
-
-  protected scheduledCronFired = false;
-
-  protected attempts = 0;
-
-  protected scheduledRepeatCount = 0;
-
-  protected delayed = false;
-
-  protected expired = false;
+  protected metadata: MessageMetadata | null = null;
 
   ///
 
   constructor() {
     this.createdAt = Date.now();
-    this.uuid = uuid();
     const { message } = getConfiguration();
     this.setConsumeTimeout(message.consumeTimeout);
     this.setRetryDelay(message.retryDelay);
@@ -72,19 +56,142 @@ export class Message {
     this.setRetryThreshold(message.retryThreshold);
   }
 
-  reset(): Message {
-    this.publishedAt = null;
-    this.scheduledAt = null;
-    this.attempts = 0;
-    this.expired = false;
-    this.delayed = false;
-    this.scheduledCronFired = false;
-    this.scheduledRepeatCount = 0;
+  getMetadata(): MessageMetadata | null {
+    return this.metadata;
+  }
+
+  getSetMetadata(): MessageMetadata {
+    if (!this.metadata) {
+      this.metadata = new MessageMetadata();
+      if (this.scheduledDelay) {
+        this.metadata.setNextScheduledDelay(this.scheduledDelay);
+      }
+    }
+    return this.metadata;
+  }
+
+  setPublishedAt(timestamp: number): Message {
+    if (!this.metadata) {
+      throw new PanicError(`Message has not yet been published`);
+    }
+    this.metadata.setPublishedAt(timestamp);
+    return this;
+  }
+
+  ///
+
+  getPublishedAt(): number | null {
+    if (this.metadata) {
+      return this.metadata.getPublishedAt();
+    }
+    return null;
+  }
+
+  getScheduledAt(): number | null {
+    if (this.metadata) {
+      return this.metadata.getScheduledAt();
+    }
+    return null;
+  }
+
+  getAttempts(): number {
+    if (this.metadata) {
+      return this.metadata.getAttempts();
+    }
+    return 0;
+  }
+
+  getMessageScheduledRepeatCount(): number {
+    if (this.metadata) {
+      return this.metadata.getMessageScheduledRepeatCount();
+    }
+    return 0;
+  }
+
+  getId(): string | null {
+    if (this.metadata) {
+      return this.metadata.getId();
+    }
+    return null;
+  }
+
+  getRequiredId(): string {
+    if (!this.metadata) {
+      throw new PanicError(`Message has not yet been published`);
+    }
+    return this.metadata.getId();
+  }
+
+  hasScheduledCronFired(): boolean {
+    if (this.metadata) {
+      return this.metadata.hasScheduledCronFired();
+    }
+    return false;
+  }
+
+  getSetExpired(): boolean {
+    if (!this.metadata) {
+      throw new PanicError(`Message has not yet been published`);
+    }
+    if (!this.metadata.hasExpired()) {
+      const messageTTL = this.getTTL();
+      if (messageTTL) {
+        const curTime = new Date().getTime();
+        const createdAt = this.getCreatedAt();
+        const expired = createdAt + messageTTL - curTime <= 0;
+        this.metadata.setExpired(expired);
+        return expired;
+      }
+      return false;
+    }
+    return true;
+  }
+
+  ///
+
+  incrMessageScheduledRepeatCount(): number {
+    if (!this.metadata) {
+      throw new PanicError(`Message has not yet been published`);
+    }
+    return this.metadata.incrMessageScheduledRepeatCount();
+  }
+
+  incrAttempts(): number {
+    if (!this.metadata) {
+      throw new PanicError(`Message has not yet been published`);
+    }
+    return this.metadata.incrAttempts();
+  }
+
+  setAttempts(attempts: number): Message {
+    if (!this.metadata) {
+      throw new PanicError(`Message has not yet been published`);
+    }
+    this.metadata.setAttempts(attempts);
     return this;
   }
 
   setScheduledAt(timestamp: number): Message {
-    this.scheduledAt = timestamp;
+    if (!this.metadata) {
+      throw new PanicError(`Message has not yet been published`);
+    }
+    this.metadata.setScheduledAt(timestamp);
+    return this;
+  }
+
+  resetMessageScheduledRepeatCount(): Message {
+    if (!this.metadata) {
+      throw new PanicError(`Message has not yet been published`);
+    }
+    this.metadata.resetMessageScheduledRepeatCount();
+    return this;
+  }
+
+  setMessageScheduledCronFired(fired: boolean): Message {
+    if (!this.metadata) {
+      throw new PanicError(`Message has not yet been published`);
+    }
+    this.metadata.setMessageScheduledCronFired(fired);
     return this;
   }
 
@@ -92,9 +199,9 @@ export class Message {
    * @param period In millis
    */
   setScheduledPeriod(period: number): Message {
-    if (period < 1000)
+    if (period < 0)
       throw new ArgumentError(
-        'Scheduling period should not be less than 1 second',
+        'Expected a positive integer value in milliseconds',
       );
     this.scheduledPeriod = period;
     return this;
@@ -104,13 +211,12 @@ export class Message {
    * @param delay In millis
    */
   setScheduledDelay(delay: number): Message {
-    if (delay < 1000) {
+    if (delay < 0) {
       throw new ArgumentError(
-        'Scheduling delay should not be less than 1 second',
+        'Expected a positive integer value in milliseconds',
       );
     }
     this.scheduledDelay = delay;
-    this.delayed = false;
     return this;
   }
 
@@ -168,43 +274,8 @@ export class Message {
     return this;
   }
 
-  setAttempts(attempts: number): Message {
-    this.attempts = attempts;
-    return this;
-  }
-
-  incrAttempts(): number {
-    this.setAttempts(this.attempts + 1);
-    return this.attempts;
-  }
-
   setBody(body: unknown): Message {
     this.body = body;
-    return this;
-  }
-
-  setMessageScheduledRepeatCount(count: number): Message {
-    this.scheduledRepeatCount = count;
-    return this;
-  }
-
-  setMessageScheduledCronFired(fired: boolean): Message {
-    this.scheduledCronFired = fired;
-    return this;
-  }
-
-  incrMessageScheduledRepeatCount(): number {
-    this.scheduledRepeatCount += 1;
-    return this.scheduledRepeatCount;
-  }
-
-  resetMessageScheduledRepeatCount(): Message {
-    this.scheduledRepeatCount = 0;
-    return this;
-  }
-
-  setMessageDelayed(delayed: boolean): Message {
-    this.delayed = delayed;
     return this;
   }
 
@@ -218,11 +289,6 @@ export class Message {
 
   setQueue(queue: string | TQueueParams): Message {
     this.queue = queueManager.getQueueParams(queue);
-    return this;
-  }
-
-  setPublishedAt(timestamp: number): Message {
-    this.publishedAt = timestamp;
     return this;
   }
 
@@ -247,10 +313,6 @@ export class Message {
     return this.body;
   }
 
-  getId(): string {
-    return this.uuid;
-  }
-
   getTTL(): number {
     return this.ttl;
   }
@@ -271,24 +333,8 @@ export class Message {
     return this.createdAt;
   }
 
-  getPublishedAt(): number | null {
-    return this.publishedAt;
-  }
-
-  getScheduledAt(): number | null {
-    return this.scheduledAt;
-  }
-
-  getAttempts(): number {
-    return this.attempts;
-  }
-
   getMessageScheduledRepeat(): number {
     return this.scheduledRepeat;
-  }
-
-  getMessageScheduledRepeatCount(): number {
-    return this.scheduledRepeatCount;
   }
 
   getMessageScheduledPeriod(): number | null {
@@ -303,13 +349,41 @@ export class Message {
     return this.scheduledDelay;
   }
 
+  setNextRetryDelay(delay: number): Message {
+    if (!this.metadata) {
+      throw new PanicError(`Message has not yet been published`);
+    }
+    this.metadata.setNextRetryDelay(delay);
+    return this;
+  }
+
+  getSetNextDelay(): number {
+    if (this.metadata) {
+      const retryDelay = this.metadata.getSetNextRetryDelay();
+      if (retryDelay) {
+        return retryDelay;
+      }
+      const scheduledDelay = this.metadata.getSetNextScheduledDelay();
+      if (scheduledDelay) {
+        return scheduledDelay;
+      }
+    }
+    return 0;
+  }
+
+  hasNextDelay(): boolean {
+    if (this.metadata) {
+      return this.metadata.hasDelay();
+    }
+    return !!this.getMessageScheduledDelay();
+  }
+
   getNextScheduledTimestamp(): number {
     if (this.isSchedulable()) {
       // Delay
-      const msgScheduledDelay = this.getMessageScheduledDelay();
-      if (msgScheduledDelay && !this.isDelayed()) {
-        this.setMessageDelayed(true);
-        return Date.now() + msgScheduledDelay;
+      const delay = this.getSetNextDelay();
+      if (delay) {
+        return Date.now() + delay;
       }
 
       // CRON
@@ -360,42 +434,26 @@ export class Message {
     return 0;
   }
 
-  isDelayed(): boolean {
-    return this.delayed;
-  }
-
   toString(): string {
     return JSON.stringify(this);
   }
 
-  hasScheduledCronFired(): boolean {
-    return this.scheduledCronFired;
-  }
-
-  hasExpired(): boolean {
-    if (!this.expired) {
-      const messageTTL = this.getTTL();
-      if (messageTTL) {
-        const curTime = new Date().getTime();
-        const createdAt = this.getCreatedAt();
-        this.expired = createdAt + messageTTL - curTime <= 0;
-      }
-    }
-    return this.expired;
-  }
-
   hasRetryThresholdExceeded(): boolean {
+    const metadata = this.getMetadata();
+    if (!metadata) {
+      return false;
+    }
     const threshold = this.getRetryThreshold();
     if (threshold) {
-      return this.getAttempts() + 1 >= threshold;
+      return metadata.getAttempts() + 1 >= threshold;
     }
     return false;
   }
 
   isSchedulable(): boolean {
     return (
+      this.hasNextDelay() ||
       this.getMessageScheduledCRON() !== null ||
-      this.getMessageScheduledDelay() !== null ||
       this.getMessageScheduledRepeat() > 0
     );
   }
@@ -411,9 +469,16 @@ export class Message {
     const messageJSON: Message =
       typeof message === 'string' ? JSON.parse(message) : message;
     const m = new Message();
-    Object.assign(m, messageJSON);
+    Object.assign(m, messageJSON, {
+      metadata: messageJSON.metadata
+        ? Object.assign(new MessageMetadata(), messageJSON.metadata)
+        : null,
+    });
     if (reset) {
-      m.reset();
+      const metadata = m.getMetadata();
+      if (metadata) {
+        metadata.reset();
+      }
     }
     return m;
   }

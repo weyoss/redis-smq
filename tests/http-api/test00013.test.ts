@@ -14,7 +14,7 @@ test('Delete a dead-lettered messages', async () => {
     await request.delete(
       `/api/queues/${queue.name}/ns/${
         queue.ns
-      }/dead-lettered-messages/${message.getId()}?sequenceId=0`,
+      }/dead-lettered-messages/${message.getRequiredId()}?sequenceId=0`,
     );
   expect(response1.statusCode).toBe(204);
   expect(response1.body).toEqual({});

@@ -2,7 +2,7 @@ import { ICallback } from '../../../types';
 import { EventEmitter } from 'events';
 import { events } from '../common/events';
 import { Producer } from './producer';
-import { Message } from '../message';
+import { Message } from '../message/message';
 
 export class ProducerFrontend extends EventEmitter {
   private producer: Producer;

@@ -3,7 +3,7 @@ import { redisKeys } from '../common/redis-keys/redis-keys';
 import { ICallback, TConsumerWorkerParameters } from '../../../types';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import * as async from 'async';
-import { Message } from '../message';
+import { Message } from '../message/message';
 import { broker } from '../common/broker';
 import { ConsumerWorker } from '../consumer/consumer-worker';
 import { setConfiguration } from '../common/configuration';
@@ -31,7 +31,7 @@ export class DelayWorker extends ConsumerWorker {
               const message = Message.createFromMessage(i);
               message.incrAttempts();
               const delay = message.getRetryDelay();
-              message.setScheduledDelay(delay);
+              message.setNextRetryDelay(delay);
               broker.schedule(multi, message);
               done();
             },

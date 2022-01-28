@@ -7,7 +7,7 @@ import {
   untilConsumerEvent,
 } from '../common';
 import { delay, promisifyAll } from 'bluebird';
-import { Message } from '../../src/system/message';
+import { Message } from '../../src/system/message/message';
 import { events } from '../../src/system/common/events';
 import { GCWorker } from '../../src/system/workers/gc.worker';
 import { RequeueWorker } from '../../src/system/workers/requeue.worker';

@@ -22,7 +22,7 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   const res3 = await messageManager.getDeadLetteredMessagesAsync(queue, 0, 100);
   expect(res3.total).toBe(1);
   expect(res3.items.length).toBe(1);
-  expect(res3.items[0].message.getId()).toEqual(message.getId());
+  expect(res3.items[0].message.getId()).toEqual(message.getRequiredId());
   expect(res3.items[0].message.getAttempts()).toEqual(2);
 
   const queueManager = promisifyAll(await getQueueManagerFrontend());
@@ -35,7 +35,7 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   await messageManager.requeueDeadLetteredMessageAsync(
     queue,
     0,
-    message.getId(),
+    message.getRequiredId(),
     Message.MessagePriority.HIGHEST,
   );
 
@@ -51,7 +51,7 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   expect(res6.total).toBe(1);
   expect(res6.items.length).toBe(1);
 
-  expect(res6.items[0].getId()).toEqual(message.getId());
+  expect(res6.items[0].getId()).toEqual(message.getRequiredId());
   expect(res6.items[0].getPriority()).toEqual(Message.MessagePriority.HIGHEST);
   expect(res6.items[0].getAttempts()).toEqual(0);
 
@@ -68,7 +68,7 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
     await messageManager.requeueDeadLetteredMessageAsync(
       queue,
       0,
-      message.getId(),
+      message.getRequiredId(),
       Message.MessagePriority.HIGHEST,
     );
   }).rejects.toThrow(

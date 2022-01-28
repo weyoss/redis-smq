@@ -14,7 +14,7 @@ test('Requeuing with priority an acknowledged message', async () => {
     await request.post(
       `/api/queues/${queue.name}/ns/${
         queue.ns
-      }/acknowledged-messages/${message.getId()}/requeue?priority=4&sequenceId=0`,
+      }/acknowledged-messages/${message.getRequiredId()}/requeue?priority=4&sequenceId=0`,
     );
   expect(response1.statusCode).toBe(204);
   expect(response1.body).toEqual({});

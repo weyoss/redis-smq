@@ -6,7 +6,7 @@ import {
   TPaginatedResponse,
   TQueueParams,
 } from '../../../types';
-import { Message } from '../message';
+import { Message } from '../message/message';
 import * as async from 'async';
 import { LockManager } from '../common/lock-manager/lock-manager';
 import { MessageNotFoundError } from './errors/message-not-found.error';
@@ -69,7 +69,7 @@ export const getListMessageAtSequenceId = (
     else {
       const [msg] = reply;
       const message = Message.createFromMessage(msg);
-      if (message.getId() !== messageId)
+      if (message.getRequiredId() !== messageId)
         cb(new MessageNotFoundError(messageId, name, ns, sequenceId));
       else cb(null, message);
     }
@@ -244,7 +244,7 @@ export function requeueListMessage(
           [
             keyQueues,
             JSON.stringify(queue),
-            message.getId(),
+            message.getRequiredId(),
             JSON.stringify(message),
             message.getPriority() ?? '',
             keyQueuePendingPriorityMessages,

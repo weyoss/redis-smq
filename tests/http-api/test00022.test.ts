@@ -18,7 +18,9 @@ test('Purge pending messages with priority', async () => {
   expect(response1.body.data).toBeDefined();
   expect(response1.body.data?.total).toBe(1);
   expect(response1.body.data?.items.length).toBe(1);
-  expect(response1.body.data?.items[0].uuid).toBe(message.getId());
+  expect(response1.body.data?.items[0].metadata.uuid).toBe(
+    message.getRequiredId(),
+  );
   const response2: ISuperTestResponse<void> = await request.delete(
     `/api/queues/${queue.name}/ns/${queue.ns}/pending-messages-with-priority`,
   );

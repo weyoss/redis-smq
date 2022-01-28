@@ -46,8 +46,8 @@ test('A consumer delays a failed message before re-queuing it again, given messa
   consumer.run();
 
   await untilMessageAcknowledged(consumer);
-
   await untilConsumerIdle(consumer);
+
   expect(unacks).toBe(4);
   expect(acks).toBe(1);
 

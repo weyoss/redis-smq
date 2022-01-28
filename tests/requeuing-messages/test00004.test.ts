@@ -21,7 +21,7 @@ test('Combined test: Dead-letter a message and requeue it. Check pending, acknow
   const res3 = await messageManager.getDeadLetteredMessagesAsync(queue, 0, 100);
   expect(res3.total).toBe(1);
   expect(res3.items.length).toBe(1);
-  expect(res3.items[0].message.getId()).toEqual(message.getId());
+  expect(res3.items[0].message.getId()).toEqual(message.getRequiredId());
   expect(res3.items[0].message.getAttempts()).toEqual(2);
 
   const queueManager = promisifyAll(await getQueueManagerFrontend());
@@ -33,7 +33,7 @@ test('Combined test: Dead-letter a message and requeue it. Check pending, acknow
   await messageManager.requeueDeadLetteredMessageAsync(
     queue,
     0,
-    message.getId(),
+    message.getRequiredId(),
     undefined,
   );
 
@@ -41,7 +41,7 @@ test('Combined test: Dead-letter a message and requeue it. Check pending, acknow
 
   expect(res5.total).toBe(1);
   expect(res5.items.length).toBe(1);
-  expect(res5.items[0].message.getId()).toEqual(message.getId());
+  expect(res5.items[0].message.getId()).toEqual(message.getRequiredId());
   expect(res5.items[0].message.getAttempts()).toEqual(0);
 
   const res6 = await messageManager.getDeadLetteredMessagesAsync(queue, 0, 100);
@@ -56,7 +56,7 @@ test('Combined test: Dead-letter a message and requeue it. Check pending, acknow
     await messageManager.requeueDeadLetteredMessageAsync(
       queue,
       0,
-      message.getId(),
+      message.getRequiredId(),
       undefined,
     );
   }).rejects.toThrow(

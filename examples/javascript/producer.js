@@ -1,7 +1,6 @@
 'use strict';
 const config = require('./config');
-const { Producer, Message } = require('../..');
-const { setConfiguration } = require('../..'); // require('redis-smq');
+const { Producer, Message, setConfiguration } = require('../..'); // require('redis-smq');
 
 // Applying system-wide configuration
 // This setup should be done during your application bootstrap

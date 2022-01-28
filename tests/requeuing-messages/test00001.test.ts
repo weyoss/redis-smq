@@ -14,7 +14,7 @@ test('Combined test: Requeue a message from dead-letter queue with priority.  Ch
   await messageManager.requeueDeadLetteredMessageAsync(
     queue,
     0,
-    message.getId(),
+    message.getRequiredId(),
     Message.MessagePriority.HIGHEST,
   );
 
@@ -29,7 +29,7 @@ test('Combined test: Requeue a message from dead-letter queue with priority.  Ch
   );
   expect(res2.total).toBe(1);
   expect(res2.items.length).toBe(1);
-  expect(res2.items[0].getId()).toEqual(message.getId());
+  expect(res2.items[0].getId()).toEqual(message.getRequiredId());
   expect(res2.items[0].getPriority()).toEqual(Message.MessagePriority.HIGHEST);
 
   const res3 = await messageManager.getDeadLetteredMessagesAsync(queue, 0, 100);

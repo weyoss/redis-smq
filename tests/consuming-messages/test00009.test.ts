@@ -34,5 +34,5 @@ test('A consumer does re-queue a failed message when threshold is not exceeded, 
   const m = promisifyAll(await getMessageManager());
   const list = await m.getDeadLetteredMessagesAsync(defaultQueue, 0, 100);
   expect(list.total).toBe(1);
-  expect(list.items[0].message.getId()).toBe(msg.getId());
+  expect(list.items[0].message.getId()).toBe(msg.getRequiredId());
 });

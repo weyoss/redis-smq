@@ -1,16 +1,16 @@
 import { ICallback, TFunction, TUnaryFunction } from '../../../types';
-import { Message } from '../message';
+import { Message } from '../message/message';
 import { events } from '../common/events';
 import { PanicError } from '../common/errors/panic.error';
 import { ProducerMessageRate } from './producer-message-rate';
 import { Base } from '../common/base';
 import { ProducerMessageRateWriter } from './producer-message-rate-writer';
-import { ArgumentError } from '../common/errors/argument.error';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { ELuaScriptName } from '../common/redis-client/lua-scripts';
 import { broker } from '../common/broker';
 import { getConfiguration } from '../common/configuration';
+import { MessageError } from '../common/errors/message.error';
 
 export class Producer extends Base {
   protected messageRate: ProducerMessageRate | null = null;
@@ -57,6 +57,7 @@ export class Producer extends Base {
     message: Message,
     cb: ICallback<void>,
   ): void {
+    const metadata = message.getSetMetadata();
     const queue = message.getQueue();
     if (!queue)
       throw new PanicError(`Can not enqueue a message without a queue name`);
@@ -72,7 +73,7 @@ export class Producer extends Base {
       [
         keyQueues,
         JSON.stringify(queue),
-        message.getId(),
+        metadata.getId(),
         JSON.stringify(message),
         message.getPriority() ?? '',
         keyQueuePendingPriorityMessages,
@@ -86,11 +87,15 @@ export class Producer extends Base {
   produce(message: Message, cb: ICallback<boolean>): void {
     const queue = message.getQueue();
     if (!queue) {
+      cb(new MessageError('Can not publish a message without a message queue'));
+    } else if (message.getMetadata()) {
       cb(
-        new ArgumentError('Can not publish a message without a message queue'),
+        new MessageError(
+          'Can not publish with a message with a metadata instance. Either you have already published the message or you have called the getSetMetadata() method.',
+        ),
       );
     } else {
-      message.reset();
+      message.getSetMetadata();
       const callback: ICallback<boolean> = (err, reply) => {
         if (err) cb(err);
         else {
@@ -107,7 +112,7 @@ export class Producer extends Base {
               else {
                 if (reply)
                   this.logger.info(
-                    `Message (ID ${message.getId()}) has been scheduled.`,
+                    `Message (ID ${message.getRequiredId()}) has been scheduled.`,
                   );
                 callback(null, reply);
               }
@@ -117,7 +122,7 @@ export class Producer extends Base {
               if (err) cb(err);
               else {
                 this.logger.info(
-                  `Message (ID ${message.getId()}) has been enqueued.`,
+                  `Message (ID ${message.getRequiredId()}) has been enqueued.`,
                 );
                 callback(null, true);
               }

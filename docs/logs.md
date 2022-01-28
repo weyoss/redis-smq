@@ -8,7 +8,7 @@ RedisSMQ comes with a built-in JSON logger using [Bunyan](https://github.com/tre
 
 You can make use of the built-in RedisSMQ logger by enabled it and also setting up its configuration parameters. 
 
-When using the build-in logger, you can use bunyan utility to pretty format the output:
+When the built-in logger is used, you can make use of the bunyan utility to pretty format the output:
 
 ```text
 $ node consumer | ./node_modules/.bin/bunyan

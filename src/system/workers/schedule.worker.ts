@@ -3,7 +3,7 @@ import { redisKeys } from '../common/redis-keys/redis-keys';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import * as async from 'async';
-import { Message } from '../message';
+import { Message } from '../message/message';
 import { PanicError } from '../common/errors/panic.error';
 import { ELuaScriptName } from '../common/redis-client/lua-scripts';
 import { ConsumerWorker } from '../consumer/consumer-worker';
@@ -71,7 +71,7 @@ export class ScheduleWorker extends ConsumerWorker {
             [
               keyQueues,
               JSON.stringify(queue),
-              message.getId(),
+              message.getRequiredId(),
               JSON.stringify(message),
               message.getPriority() ?? '',
               keyQueuePendingPriorityMessages,

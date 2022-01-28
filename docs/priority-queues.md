@@ -2,7 +2,7 @@
 
 Starting with version 3.3.0, reliable priority queues are supported.
 
-By default, messages are produced and consumed from a `LIFO queue`. In a `LIFO queue` newer queue messages are always delivered first, before earlier messages. 
+By default, messages are produced and consumed to/from a `LIFO queue`. In a `LIFO queue` newer queue messages are always delivered first, before earlier messages. 
 
 `LIFO queues` use [brpoplpush](https://redis.io/commands/brpoplpush) which blocks the connection to the Redis server until a message is received. 
 

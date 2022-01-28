@@ -9,7 +9,7 @@ import {
 } from '../../../types';
 import { v4 as uuid } from 'uuid';
 import { RedisClient } from '../common/redis-client/redis-client';
-import { Message } from '../message';
+import { Message } from '../message/message';
 import { events } from '../common/events';
 import { ConsumerError } from './consumer.error';
 import { redisKeys } from '../common/redis-keys/redis-keys';
@@ -131,7 +131,7 @@ export class ConsumerMessageHandler extends EventEmitter {
     });
     this.on(events.MESSAGE_ACKNOWLEDGED, (msg: Message) => {
       if (this.messageRate) this.messageRate.incrementAcknowledged();
-      this.logger.info(`Message (ID ${msg.getId()}) acknowledged`);
+      this.logger.info(`Message (ID ${msg.getRequiredId()}) acknowledged`);
       this.emit(events.MESSAGE_NEXT);
     });
     this.on(
@@ -139,7 +139,7 @@ export class ConsumerMessageHandler extends EventEmitter {
       (msg: Message, cause: EMessageDeadLetterCause) => {
         if (this.messageRate) this.messageRate.incrementDeadLettered();
         this.logger.info(
-          `Message (ID ${msg.getId()}) dead-lettered (cause ${cause})`,
+          `Message (ID ${msg.getRequiredId()}) dead-lettered (cause ${cause})`,
         );
       },
     );
@@ -148,7 +148,7 @@ export class ConsumerMessageHandler extends EventEmitter {
       (msg: Message, cause: EMessageUnacknowledgedCause) => {
         this.emit(events.MESSAGE_NEXT);
         this.logger.info(
-          `Message (ID ${msg.getId()}) unacknowledged (cause ${cause})`,
+          `Message (ID ${msg.getRequiredId()}) unacknowledged (cause ${cause})`,
         );
       },
     );
@@ -184,7 +184,7 @@ export class ConsumerMessageHandler extends EventEmitter {
   protected handleReceivedMessage(json: string): void {
     const message = Message.createFromMessage(json);
     this.emit(events.MESSAGE_RECEIVED, message);
-    if (message.hasExpired()) {
+    if (message.getSetExpired()) {
       this.unacknowledgeMessage(
         message,
         EMessageUnacknowledgedCause.TTL_EXPIRED,
@@ -197,7 +197,7 @@ export class ConsumerMessageHandler extends EventEmitter {
     let timer: NodeJS.Timeout | null = null;
     try {
       this.logger.info(
-        `Consuming message (ID ${msg.getId()}) with properties (${msg.toString()})`,
+        `Consuming message (ID ${msg.getRequiredId()}) with properties (${msg.toString()})`,
       );
       const consumeTimeout = msg.getConsumeTimeout();
       if (consumeTimeout) {
@@ -240,7 +240,7 @@ export class ConsumerMessageHandler extends EventEmitter {
         error instanceof Error
           ? error
           : new ConsumerError(
-              `An error occurred while processing message ID (${msg.getId()})`,
+              `An error occurred while processing message ID (${msg.getRequiredId()})`,
             );
       this.unacknowledgeMessage(
         msg,
