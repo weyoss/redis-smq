@@ -4,7 +4,7 @@ import { RedisKeysError } from './redis-keys.error';
 const keySegmentSeparator = '.';
 
 // Keys prefix
-const nsPrefix = 'redis-smq-v600rc7';
+const nsPrefix = 'redis-smq-v600rc10';
 
 // Namespaces
 const globalNamespace = 'global';
