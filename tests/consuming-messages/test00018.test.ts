@@ -1,0 +1,13 @@
+import { mockConfiguration, produceMessage } from '../common';
+
+test('Producing a message multiple times', async () => {
+  mockConfiguration({
+    storeMessages: false,
+  });
+  const { producer, message } = await produceMessage();
+  await expect(async () => {
+    await producer.produceAsync(message);
+  }).rejects.toThrow(
+    'Can not publish a message with a metadata instance. Either you have already published the message or you have called the getSetMetadata() method.',
+  );
+});

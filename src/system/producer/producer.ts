@@ -57,7 +57,6 @@ export class Producer extends Base {
     message: Message,
     cb: ICallback<void>,
   ): void {
-    const metadata = message.getSetMetadata();
     const queue = message.getQueue();
     if (!queue)
       throw new PanicError(`Can not enqueue a message without a queue name`);
@@ -73,7 +72,7 @@ export class Producer extends Base {
       [
         keyQueues,
         JSON.stringify(queue),
-        metadata.getId(),
+        message.getRequiredId(),
         JSON.stringify(message),
         message.getPriority() ?? '',
         keyQueuePendingPriorityMessages,
@@ -91,11 +90,11 @@ export class Producer extends Base {
     } else if (message.getMetadata()) {
       cb(
         new MessageError(
-          'Can not publish with a message with a metadata instance. Either you have already published the message or you have called the getSetMetadata() method.',
+          'Can not publish a message with a metadata instance. Either you have already published the message or you have called the getSetMetadata() method.',
         ),
       );
     } else {
-      message.getSetMetadata();
+      const messageId = message.getSetMetadata().getId();
       const callback: ICallback<boolean> = (err, reply) => {
         if (err) cb(err);
         else {
@@ -112,7 +111,7 @@ export class Producer extends Base {
               else {
                 if (reply)
                   this.logger.info(
-                    `Message (ID ${message.getRequiredId()}) has been scheduled.`,
+                    `Message (ID ${messageId}) has been scheduled.`,
                   );
                 callback(null, reply);
               }
@@ -122,7 +121,7 @@ export class Producer extends Base {
               if (err) cb(err);
               else {
                 this.logger.info(
-                  `Message (ID ${message.getRequiredId()}) has been enqueued.`,
+                  `Message (ID ${messageId}) has been enqueued.`,
                 );
                 callback(null, true);
               }
