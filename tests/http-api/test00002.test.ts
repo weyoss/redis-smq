@@ -17,7 +17,7 @@ test('Fetching and deleting scheduled messages using the HTTP API: Case 2', asyn
     const msg = new Message();
     msg
       .setScheduledDelay(60000 * (i + 1))
-      .setBody({ hello: `world ${msg.getId()}` })
+      .setBody({ hello: `world ${i}` })
       .setQueue(defaultQueue);
     await producer.produceAsync(msg);
     messages.push(msg);
@@ -30,8 +30,12 @@ test('Fetching and deleting scheduled messages using the HTTP API: Case 2', asyn
   expect(response1.body.data).toBeDefined();
   expect(response1.body.data?.total).toBe(4);
   expect(response1.body.data?.items.length).toBe(2);
-  expect(response1.body.data?.items[0].uuid).toBe(messages[0].getId());
-  expect(response1.body.data?.items[1].uuid).toBe(messages[1].getId());
+  expect(response1.body.data?.items[0].metadata.uuid).toBe(
+    messages[0].getRequiredId(),
+  );
+  expect(response1.body.data?.items[1].metadata.uuid).toBe(
+    messages[1].getRequiredId(),
+  );
 
   const response2: ISuperTestResponse<GetScheduledMessagesResponseBodyDataDTO> =
     await request.get('/api/main/scheduled-messages?skip=2&take=2');
@@ -39,8 +43,12 @@ test('Fetching and deleting scheduled messages using the HTTP API: Case 2', asyn
   expect(response2.body.data).toBeDefined();
   expect(response2.body.data?.total).toBe(4);
   expect(response2.body.data?.items.length).toBe(2);
-  expect(response2.body.data?.items[0].uuid).toBe(messages[2].getId());
-  expect(response2.body.data?.items[1].uuid).toBe(messages[3].getId());
+  expect(response2.body.data?.items[0].metadata.uuid).toBe(
+    messages[2].getRequiredId(),
+  );
+  expect(response2.body.data?.items[1].metadata.uuid).toBe(
+    messages[3].getRequiredId(),
+  );
 
   const response3: ISuperTestResponse<GetScheduledMessagesResponseBodyDataDTO> =
     await request.get('/api/main/scheduled-messages?skip=4&take=2');

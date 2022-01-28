@@ -191,10 +191,21 @@ message.getBody(); // 123
 ### Message.prototype.getId()
 
 ```javascript
-const { Message } = require('redis-smq');
+const { Message, Producer } = require('redis-smq');
 
 const message = new Message();
-message.getId(); // c53d1766-0e56-4362-8aab-ef70c4eb03ad
+message.setQueue('test_queue').setBody('some data');
+message.getId(); // null
+
+
+new Producer().produce(message, (err) => {
+  if (err) console.log(err);
+  else {
+    const messageId = message.getId(); // c53d1766-0e56-4362-8aab-ef70c4eb03ad
+    console.log('Message ID is ', messageId);
+  }
+})
+
 ````
 
 ### Message.prototype.getTTL()

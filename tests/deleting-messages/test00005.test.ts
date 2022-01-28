@@ -16,7 +16,7 @@ test('Concurrent delete operation', async () => {
   const res1 = await messageManager1.getPendingMessagesAsync(queue, 0, 100);
 
   expect(res1.total).toBe(1);
-  expect(res1.items[0].message.getId()).toBe(message.getId());
+  expect(res1.items[0].message.getId()).toBe(message.getRequiredId());
 
   const queueManager = promisifyAll(await getQueueManagerFrontend());
   const queueMetrics = await queueManager.getQueueMetricsAsync(queue);
@@ -24,8 +24,16 @@ test('Concurrent delete operation', async () => {
 
   await expect(async () => {
     await Promise.all([
-      messageManager1.deletePendingMessageAsync(queue, 0, message.getId()),
-      messageManager2.deletePendingMessageAsync(queue, 0, message.getId()),
+      messageManager1.deletePendingMessageAsync(
+        queue,
+        0,
+        message.getRequiredId(),
+      ),
+      messageManager2.deletePendingMessageAsync(
+        queue,
+        0,
+        message.getRequiredId(),
+      ),
     ]);
   }).rejects.toThrow('Could not acquire a  lock. Try again later.');
   await delay(5000);

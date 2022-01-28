@@ -28,11 +28,13 @@ test('Fetching and deleting scheduled messages using the HTTP API: Case 1', asyn
   expect(response1.body.data).toBeDefined();
   expect(response1.body.data?.total).toBe(1);
   expect(response1.body.data?.items.length).toBe(1);
-  expect(response1.body.data?.items[0].uuid).toBe(msg1.getId());
+  expect(response1.body.data?.items[0].metadata.uuid).toBe(
+    msg1.getRequiredId(),
+  );
 
   //
   const response2: ISuperTestResponse<void> = await request.delete(
-    `/api/main/scheduled-messages/${msg1.getId()}`,
+    `/api/main/scheduled-messages/${msg1.getRequiredId()}`,
   );
   expect(response2.statusCode).toBe(204);
   expect(response2.body).toEqual({});

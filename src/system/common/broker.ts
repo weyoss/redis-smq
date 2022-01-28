@@ -4,7 +4,7 @@ import {
   ICallback,
   TRedisClientMulti,
 } from '../../../types';
-import { Message } from '../message';
+import { Message } from '../message/message';
 import { RedisClient } from './redis-client/redis-client';
 import { PanicError } from './errors/panic.error';
 import { redisKeys } from './redis-keys/redis-keys';
@@ -77,7 +77,7 @@ export const broker = {
       const { keyScheduledMessageIds, keyScheduledMessages } =
         redisKeys.getMainKeys();
       message.setScheduledAt(Date.now());
-      const messageId = message.getId();
+      const messageId = message.getRequiredId();
       multi.zadd(keyScheduledMessageIds, timestamp, messageId);
       multi.hset(keyScheduledMessages, messageId, JSON.stringify(message));
     }
@@ -96,7 +96,7 @@ export const broker = {
         const { keyQueues, keyScheduledMessageIds, keyScheduledMessages } =
           redisKeys.getQueueKeys(queue.name, queue.ns);
         message.setScheduledAt(Date.now());
-        const messageId = message.getId();
+        const messageId = message.getRequiredId();
         redisClient.runScript(
           ELuaScriptName.SCHEDULE_MESSAGE,
           [
@@ -151,7 +151,7 @@ export const broker = {
   ): void {
     if (
       unacknowledgedCause === EMessageUnacknowledgedCause.TTL_EXPIRED ||
-      message.hasExpired()
+      message.getSetExpired()
     ) {
       //consumer.emit(events.MESSAGE_EXPIRED, message);
       deadLetterMessage(

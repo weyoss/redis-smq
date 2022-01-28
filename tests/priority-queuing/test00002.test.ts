@@ -60,9 +60,9 @@ test('Priority queuing: case 2', async () => {
   await untilConsumerIdle(consumer);
 
   expect(consumedMessages.length).toBe(5);
-  expect(consumedMessages[0].getId()).toBe(msg5.getId());
-  expect(consumedMessages[1].getId()).toBe(msg3.getId());
-  expect(consumedMessages[2].getId()).toBe(msg4.getId());
-  expect(consumedMessages[3].getId()).toBe(msg1.getId());
-  expect(consumedMessages[4].getId()).toBe(msg2.getId());
+  expect(consumedMessages[0].getRequiredId()).toBe(msg5.getRequiredId());
+  expect(consumedMessages[1].getRequiredId()).toBe(msg3.getRequiredId());
+  expect(consumedMessages[2].getRequiredId()).toBe(msg4.getRequiredId());
+  expect(consumedMessages[3].getRequiredId()).toBe(msg1.getRequiredId());
+  expect(consumedMessages[4].getRequiredId()).toBe(msg2.getRequiredId());
 });

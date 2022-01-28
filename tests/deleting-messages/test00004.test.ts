@@ -33,7 +33,7 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   await messageManager.deleteDeadLetteredMessageAsync(
     queue,
     0,
-    message.getId(),
+    message.getRequiredId(),
   );
 
   const res4 = await messageManager.getDeadLetteredMessagesAsync(queue, 0, 100);
@@ -48,7 +48,7 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
     await messageManager.deleteDeadLetteredMessageAsync(
       queue,
       0,
-      message.getId(),
+      message.getRequiredId(),
     );
   }).rejects.toThrow(
     'Either message parameters are invalid or the message has been already deleted',

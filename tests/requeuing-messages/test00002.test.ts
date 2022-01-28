@@ -26,7 +26,7 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
   await messageManager.requeueAcknowledgedMessageAsync(
     queue,
     0,
-    message.getId(),
+    message.getRequiredId(),
     undefined,
   );
 
@@ -34,7 +34,7 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
 
   expect(res5.total).toBe(1);
   expect(res5.items.length).toBe(1);
-  expect(res5.items[0].message.getId()).toEqual(message.getId());
+  expect(res5.items[0].message.getId()).toEqual(message.getRequiredId());
 
   const res6 = await messageManager.getAcknowledgedMessagesAsync(queue, 0, 100);
   expect(res6.total).toBe(0);
@@ -48,7 +48,7 @@ test('Combined test. Requeue message from acknowledged queue. Check both pending
     await messageManager.requeueAcknowledgedMessageAsync(
       queue,
       0,
-      message.getId(),
+      message.getRequiredId(),
       undefined,
     );
   }).rejects.toThrow(

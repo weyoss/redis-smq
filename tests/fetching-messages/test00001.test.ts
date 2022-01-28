@@ -17,7 +17,7 @@ describe('MessageManager', () => {
 
     expect(res.total).toBe(1);
     expect(res.items[0].sequenceId).toBe(0);
-    expect(res.items[0].message.getId()).toBe(message.getId());
+    expect(res.items[0].message.getId()).toBe(message.getRequiredId());
   });
 
   test('Case 2', async () => {
@@ -32,7 +32,7 @@ describe('MessageManager', () => {
 
     expect(res.total).toBe(1);
     expect(res.items[0].sequenceId).toBe(0);
-    expect(res.items[0].message.getId()).toBe(message.getId());
+    expect(res.items[0].message.getId()).toBe(message.getRequiredId());
   });
 
   test('Case 3', async () => {
@@ -46,7 +46,7 @@ describe('MessageManager', () => {
     );
     expect(res.total).toBe(1);
     expect(res.items[0].sequenceId).toBe(0);
-    expect(res.items[0].message.getId()).toBe(message.getId());
+    expect(res.items[0].message.getId()).toBe(message.getRequiredId());
   });
 
   test('Case 4', async () => {
@@ -60,7 +60,7 @@ describe('MessageManager', () => {
     );
 
     expect(res.total).toBe(1);
-    expect(res.items[0].getId()).toBe(message.getId());
+    expect(res.items[0].getId()).toBe(message.getRequiredId());
   });
 
   test('Case 5', async () => {
@@ -70,6 +70,6 @@ describe('MessageManager', () => {
     const res = await messageManager.getScheduledMessagesAsync(0, 100);
 
     expect(res.total).toBe(1);
-    expect(res.items[0].getId()).toBe(message.getId());
+    expect(res.items[0].getId()).toBe(message.getRequiredId());
   });
 });

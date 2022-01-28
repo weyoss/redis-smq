@@ -113,7 +113,7 @@ See [Message Reference](docs/api/message.md) for more details.
 
 `Producer` class is in turn responsible for publishing messages. 
 
-Starting with v6, you can use the same producer instance to publish messages to multiple queues. The same producer instance can also produce messages with priority. 
+You can use the same producer instance for publishing messages to multiple queues. The same producer instance can also produce messages with priority. 
 
 ```javascript
 // filename: ./examples/javascript/producer.js
@@ -128,10 +128,15 @@ message
     .setTTL(3600000)
     .setQueue('test_queue');
 
+message.getId() // null
+
 const producer = new Producer();
 producer.produce(message, (err) => {
     if (err) console.log(err);
-    else console.log('Successfully produced')
+    else {
+      const msgId = message.getId(); // string
+      console.log('Successfully produced. Message ID is ', msgId);
+    }
 });
 ```
 
@@ -139,13 +144,13 @@ See [Producer Reference](docs/api/producer.md) for more details.
 
 #### Consumer Class
 
-Starting with v6, you can use the same consumer instance to consume messages from different queues, including messages from priority queues.
+In the same manner as a producer, you can use a single consumer instance to consume messages from different queues, including messages from priority queues.
 
 To consume messages from a given queue, you need to define and register a `message handler`. 
 
-A `message handler` is a function which get called once a message is received. Each queue can have only 2 message handlers. One for consuming messages without priority, and the second one for consuming messages with priority.
+A `message handler` is a function which get called once a message is received. For a given consumer, a queue can have only 2 message handlers. One for consuming messages without priority, and the second one for consuming messages with priority.
 
-To register a message handler, the `consume()` method is provided and can be used as shown in the example bellow. Message handlers can be registered at any time, before or after you have started your consumer using the `consumer.run()` method.
+To register a message handler, the `consume()` method is provided and can be used as shown in the example bellow. Message handlers can be registered at any time, before or after you have started your consumers. A consumer can be started using the `consumer.run()` method.
 
 To shut down and remove a `message handler` from your consumer, use the `cancel()` method. 
 
@@ -175,17 +180,17 @@ consumer.consume('another_queue', true, (msg, cb) => {
 consumer.run();
 ```
 
-When a `message handler` receives a message, in order to acknowledge it, you invoke the callback function, without arguments (see the example above). 
+From your `message handler`, when you receive a message, in order to acknowledge it, you can invoke the callback function, without arguments as shown the example above. 
 
 Message acknowledgment informs the MQ that a given message has been successfully consumed.
 
-If an error occurred while processing a message, it can be unacknowledged by passing the error to the callback function.
+If an error occurred while processing a message, you can unacknowledge it by passing the error to the callback function.
 
 By default, unacknowledged messages are re-queued and delivered again unless **message retry threshold** is exceeded. Then the messages are moved to **dead-letter queue (DLQ)**. 
 
 A `dead-letter queue` is a system generated queue that holds all messages that couldn't be processed or can not be delivered to consumers.
 
-By default, RedisSMQ does not store acknowledged and dead-lettered message to save disk space, memory usage, and also to increase message processing performance. If you need such feature, you can enable it from your [configuration](/docs/configuration.md) object.
+By default, RedisSMQ does not store acknowledged and dead-lettered messages for saving disk and memory space, and also to increase message processing performance. If you need such feature, you can enable it from your [configuration](/docs/configuration.md) object.
 
 See [Consumer Reference](docs/api/consumer.md) for more details.
 

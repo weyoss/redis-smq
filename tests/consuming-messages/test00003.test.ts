@@ -30,8 +30,8 @@ test('Produce and consume 100 messages', async () => {
 
   expect(deliveredMessages.length).toEqual(publishedMsg.length);
   for (let i = 0; i < total; i += 1) {
-    expect(publishedMsg[i].getId()).toStrictEqual(
-      deliveredMessages[total - i - 1].getId(),
+    expect(publishedMsg[i].getRequiredId()).toStrictEqual(
+      deliveredMessages[total - i - 1].getRequiredId(),
     );
   }
 });

@@ -14,7 +14,7 @@ test('Delete an acknowledged message', async () => {
     await request.delete(
       `/api/queues/${queue.name}/ns/${
         queue.ns
-      }/acknowledged-messages/${message.getId()}?sequenceId=0`,
+      }/acknowledged-messages/${message.getRequiredId()}?sequenceId=0`,
     );
   expect(response1.statusCode).toBe(204);
   expect(response1.body).toEqual({});

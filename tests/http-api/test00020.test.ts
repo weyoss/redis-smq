@@ -19,7 +19,9 @@ test('Purge acknowledged messages', async () => {
   expect(response1.body.data?.total).toBe(1);
   expect(response1.body.data?.items.length).toBe(1);
   expect(response1.body.data?.items[0].sequenceId).toBe(0);
-  expect(response1.body.data?.items[0].message.uuid).toBe(message.getId());
+  expect(response1.body.data?.items[0].message.metadata.uuid).toBe(
+    message.getRequiredId(),
+  );
   const response2: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =
     await request.delete(
       `/api/queues/${queue.name}/ns/${queue.ns}/acknowledged-messages`,

@@ -14,7 +14,7 @@ test('Combined test: Requeue a message from acknowledged queue with priority. Ch
   await messageManager.requeueAcknowledgedMessageAsync(
     queue,
     0,
-    message.getId(),
+    message.getRequiredId(),
     Message.MessagePriority.HIGHEST,
   );
 
@@ -33,7 +33,7 @@ test('Combined test: Requeue a message from acknowledged queue with priority. Ch
   expect(res6.items.length).toBe(1);
 
   // assign default consumer options
-  expect(res6.items[0].getId()).toEqual(message.getId());
+  expect(res6.items[0].getId()).toEqual(message.getRequiredId());
   expect(res6.items[0].getPriority()).toEqual(Message.MessagePriority.HIGHEST);
 
   const res7 = await messageManager.getAcknowledgedMessagesAsync(queue, 0, 100);
@@ -50,7 +50,7 @@ test('Combined test: Requeue a message from acknowledged queue with priority. Ch
     await messageManager.requeueAcknowledgedMessageAsync(
       queue,
       0,
-      message.getId(),
+      message.getRequiredId(),
       Message.MessagePriority.HIGHEST,
     );
   }).rejects.toThrow(

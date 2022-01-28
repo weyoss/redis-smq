@@ -20,15 +20,9 @@ export class MessageQueueDTO {
   ns!: string;
 }
 
-export class MessageDTO {
+export class MessageMetadataDTO {
   @IsUUID('4')
   uuid!: string;
-
-  @IsInt()
-  attempts!: number;
-
-  @IsInt()
-  createdAt!: number;
 
   @IsInt()
   @IsOptional()
@@ -37,6 +31,29 @@ export class MessageDTO {
   @IsInt()
   @IsOptional()
   scheduledAt: number | null = null;
+
+  @IsBoolean()
+  scheduledCronFired!: boolean;
+
+  @IsInt()
+  scheduledRepeatCount!: number;
+
+  @IsInt()
+  attempts!: number;
+
+  @IsInt()
+  nextScheduledDelay!: number;
+
+  @IsInt()
+  nextRetryDelay!: number;
+
+  @IsBoolean()
+  expired!: boolean;
+}
+
+export class MessageDTO {
+  @IsInt()
+  createdAt!: number;
 
   @IsInt()
   @IsOptional()
@@ -61,9 +78,6 @@ export class MessageDTO {
   @IsOptional()
   scheduledCron: string | null = null;
 
-  @IsBoolean()
-  scheduledCronFired!: boolean;
-
   @IsInt()
   @IsOptional()
   scheduledDelay: number | null = null;
@@ -76,19 +90,14 @@ export class MessageDTO {
   scheduledRepeat!: number;
 
   @IsInt()
-  scheduledRepeatCount!: number;
-
-  @IsBoolean()
-  delayed!: boolean;
-
-  @IsInt()
   @IsOptional()
   priority: number | null = null;
-
-  @IsBoolean()
-  expired!: boolean;
 
   @ValidateNested()
   @Type(() => MessageQueueDTO)
   queue!: MessageQueueDTO;
+
+  @ValidateNested()
+  @Type(() => MessageMetadataDTO)
+  metadata!: MessageMetadataDTO;
 }

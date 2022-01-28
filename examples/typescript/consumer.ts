@@ -1,6 +1,5 @@
 import { config } from './config';
-import { Consumer, setLogger } from '../..';
-import { setConfiguration } from '../../src/system/common/configuration'; // from 'redis-smq'
+import { Consumer, setLogger, setConfiguration } from '../..'; // from 'redis-smq'
 
 // Applying system-wide configuration
 // This setup should be done during your application bootstrap

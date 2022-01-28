@@ -1,5 +1,5 @@
 import * as async from 'async';
-import { Message } from '../message';
+import { Message } from '../message/message';
 import { RedisClient } from '../common/redis-client/redis-client';
 import {
   EMessageUnacknowledgedCause,

@@ -1,6 +1,6 @@
 import { RedisClient } from '../common/redis-client/redis-client';
 import { redisKeys } from '../common/redis-keys/redis-keys';
-import { Message } from '../message';
+import { Message } from '../message/message';
 import * as async from 'async';
 import { ICallback, TConsumerWorkerParameters } from '../../../types';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';

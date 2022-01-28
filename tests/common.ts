@@ -1,7 +1,13 @@
 import { delay, promisifyAll } from 'bluebird';
 import { events } from '../src/system/common/events';
 import { RedisClient } from '../src/system/common/redis-client/redis-client';
-import { Producer, Message, MonitorServer, Consumer } from '../index';
+import {
+  Producer,
+  Message,
+  MonitorServer,
+  Consumer,
+  setLogger,
+} from '../index';
 import { config as testConfig } from './config';
 import {
   IConfig,
@@ -21,7 +27,7 @@ import * as configuration from '../src/system/common/configuration';
 
 export const config = configuration.setConfiguration(testConfig);
 
-//setLogger(console);
+setLogger(console);
 
 type TGetConsumerArgs = {
   queue?: string | TQueueParams;
@@ -304,7 +310,7 @@ export async function untilMessageAcknowledged(
     consumer,
     events.MESSAGE_ACKNOWLEDGED,
   );
-  if (msg && msg.getId() !== message.getId()) {
+  if (msg && msg.getRequiredId() !== message.getRequiredId()) {
     await untilMessageAcknowledged(consumer, msg);
   }
 }

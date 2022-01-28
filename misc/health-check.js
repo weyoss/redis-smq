@@ -23,7 +23,7 @@ consumer.consume(
   queue, // using the default namespace
   false,
   (message, cb) => {
-    console.log(`Message ${message.getId()} consumed`);
+    console.log(`Message ${message.getRequiredId()} consumed`);
     cb();
   },
   () => void 0,

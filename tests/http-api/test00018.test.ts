@@ -14,7 +14,7 @@ test('Requeuing with priority a dead-lettered messages', async () => {
     await request.post(
       `/api/queues/${queue.name}/ns/${
         queue.ns
-      }/dead-lettered-messages/${message.getId()}/requeue?priority=3&sequenceId=0`,
+      }/dead-lettered-messages/${message.getRequiredId()}/requeue?priority=3&sequenceId=0`,
     );
   expect(response1.statusCode).toBe(204);
   expect(response1.body).toEqual({});

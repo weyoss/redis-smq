@@ -16,7 +16,7 @@ test('Combined test: Delete a pending message with priority. Check pending messa
   );
 
   expect(res1.total).toBe(1);
-  expect(res1.items[0].getId()).toBe(message.getId());
+  expect(res1.items[0].getId()).toBe(message.getRequiredId());
 
   const queueManager = promisifyAll(await getQueueManagerFrontend());
   const queueMetrics = await queueManager.getQueueMetricsAsync(queue);
@@ -24,7 +24,7 @@ test('Combined test: Delete a pending message with priority. Check pending messa
 
   await messageManager.deletePendingMessageWithPriorityAsync(
     queue,
-    message.getId(),
+    message.getRequiredId(),
   );
   const res2 = await messageManager.getPendingMessagesWithPriorityAsync(
     queue,
@@ -40,6 +40,6 @@ test('Combined test: Delete a pending message with priority. Check pending messa
   // Deleting a message that was already deleted should not throw an error
   await messageManager.deletePendingMessageWithPriorityAsync(
     queue,
-    message.getId(),
+    message.getRequiredId(),
   );
 });
