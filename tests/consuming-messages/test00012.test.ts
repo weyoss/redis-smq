@@ -51,20 +51,22 @@ test('A consumer delays a failed message before re-queuing it again, given messa
   expect(unacks).toBe(4);
   expect(acks).toBe(1);
 
-  // DelayWorker's ticker runs at each 1000 ms, to schedule delayed messages
-  // An additional 1000ms is taken for each iteration
   for (let i = 0; i < timestamps.length; i += 1) {
     const diff = timestamps[i] - timestamps[0];
     if (i === 0) {
       expect(validateTime(diff, 0)).toBe(true);
     } else if (i === 1) {
-      expect(validateTime(diff, 11000)).toBe(true);
+      // adjusted
+      expect(validateTime(diff, 16000)).toBe(true);
     } else if (i === 2) {
-      expect(validateTime(diff, 22000)).toBe(true);
+      // adjusted
+      expect(validateTime(diff, 31000)).toBe(true);
     } else if (i === 3) {
-      expect(validateTime(diff, 33000)).toBe(true);
+      // adjusted
+      expect(validateTime(diff, 46000)).toBe(true);
     } else {
-      expect(validateTime(diff, 44000)).toBe(true);
+      // adjusted
+      expect(validateTime(diff, 61000)).toBe(true);
     }
   }
 });

@@ -3,6 +3,7 @@ import {
   TConsumerMessageHandler,
   TConsumerMessageHandlerParams,
   TConsumerRedisKeys,
+  IConsumerWorkerParameters,
   THeartbeatRegistryPayload,
   TQueueParams,
   TUnaryFunction,
@@ -11,7 +12,6 @@ import { ConsumerMessageRate } from './consumer-message-rate';
 import { events } from '../common/events';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { resolve } from 'path';
-import { ConsumerWorkersRunner } from './consumer-workers-runner';
 import { WorkerRunner } from '../common/worker-runner/worker-runner';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { redisKeys } from '../common/redis-keys/redis-keys';
@@ -23,10 +23,11 @@ import * as async from 'async';
 import { consumerQueues } from './consumer-queues';
 import { GenericError } from '../common/errors/generic.error';
 import { queueManager } from '../queue-manager/queue-manager';
+import { WorkerPool } from '../common/worker-runner/worker-pool';
 
 export class Consumer extends Base {
   private heartbeat: ConsumerHeartbeat | null = null;
-  private consumerWorkers: ConsumerWorkersRunner | null = null;
+  private workerRunner: WorkerRunner<IConsumerWorkerParameters> | null = null;
   private messageHandlerInstances: ConsumerMessageHandler[] = [];
   private messageHandlers: TConsumerMessageHandlerParams[] = [];
   private readonly redisKeys: TConsumerRedisKeys;
@@ -81,28 +82,35 @@ export class Consumer extends Base {
 
   protected setUpConsumerWorkers = (cb: ICallback<void>): void => {
     this.getSharedRedisClient((client) => {
-      this.consumerWorkers = new ConsumerWorkersRunner(
-        this.id,
-        resolve(`${__dirname}/../workers`),
+      const { keyLockConsumerWorkersRunner } = this.getRedisKeys();
+      this.workerRunner = new WorkerRunner<IConsumerWorkerParameters>(
         client,
-        new WorkerRunner(),
+        resolve(`${__dirname}/../workers`),
+        keyLockConsumerWorkersRunner,
+        {
+          consumerId: this.id,
+          timeout: 1000,
+          config: this.getConfig(),
+        },
+        new WorkerPool(),
       );
-      this.consumerWorkers.on(events.ERROR, (err: Error) =>
+      this.workerRunner.on(events.ERROR, (err: Error) =>
         this.emit(events.ERROR, err),
       );
-      this.consumerWorkers.on(events.CONSUMER_WORKERS_STARTED, () =>
+      this.workerRunner.on(events.WORKER_RUNNER_WORKERS_STARTED, () =>
         this.logger.info(
           `Workers are exclusively running from this consumer instance.`,
         ),
       );
+      this.workerRunner.run();
       cb();
     });
   };
 
   protected tearDownConsumerWorkers = (cb: ICallback<void>): void => {
-    if (this.consumerWorkers) {
-      this.consumerWorkers.quit(() => {
-        this.consumerWorkers = null;
+    if (this.workerRunner) {
+      this.workerRunner.quit(() => {
+        this.workerRunner = null;
         cb();
       });
     } else cb();

@@ -1,11 +1,8 @@
-import { ICallback, IRequiredConfig, TQueueParams } from '../../../types';
+import { ICallback, TQueueParams, TWorkerParameters } from '../../../types';
 import { redisKeys } from '../../system/common/redis-keys/redis-keys';
 import { RedisClient } from '../../system/common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callback-reply.error';
-import { LockManager } from '../../system/common/lock-manager/lock-manager';
-import { Ticker } from '../../system/common/ticker/ticker';
 import * as async from 'async';
-import { events } from '../../system/common/events';
 import { ConsumerHeartbeat } from '../../system/consumer/consumer-heartbeat';
 import { TimeSeries } from '../../system/common/time-series/time-series';
 import { QueuePublishedTimeSeries } from '../../system/producer/producer-time-series/queue-published-time-series';
@@ -18,11 +15,9 @@ import { ConsumerAcknowledgedTimeSeries } from '../../system/consumer/consumer-t
 import { ConsumerDeadLetteredTimeSeries } from '../../system/consumer/consumer-time-series/consumer-dead-lettered-time-series';
 import { consumerQueues } from '../../system/consumer/consumer-queues';
 import { setConfiguration } from '../../system/common/configuration';
+import { Worker } from '../../system/common/worker';
 
-export class WebsocketRateStreamWorker {
-  protected lockManager: LockManager;
-  protected ticker: Ticker;
-  protected redisClient: RedisClient;
+export class WebsocketRateStreamWorker extends Worker {
   protected queueData: {
     [ns: string]: {
       [queueName: string]: {
@@ -32,19 +27,6 @@ export class WebsocketRateStreamWorker {
   } = {};
   protected tasks: ((cb: ICallback<void>) => void)[] = [];
   protected noop = (): void => void 0;
-
-  constructor(redisClient: RedisClient) {
-    const { keyLockWebsocketRateStreamWorker } = redisKeys.getMainKeys();
-    this.redisClient = redisClient;
-    this.lockManager = new LockManager(
-      redisClient,
-      keyLockWebsocketRateStreamWorker,
-      10000,
-      false,
-    );
-    this.ticker = new Ticker(this.run, 1000);
-    this.ticker.nextTick();
-  }
 
   protected reset = (): void => {
     this.queueData = {};
@@ -62,7 +44,7 @@ export class WebsocketRateStreamWorker {
         consumerId,
         queue,
       ).getRangeFrom(ts, (err, reply) => {
-        if (err) throw err;
+        if (err) cb(err);
         else {
           this.redisClient.publish(
             `streamConsumerAcknowledged:${consumerId}`,
@@ -311,37 +293,31 @@ export class WebsocketRateStreamWorker {
     });
   };
 
-  protected run = (): void => {
-    this.lockManager.acquireLock((err, lock) => {
-      if (err) throw err;
-      if (lock) {
-        this.reset();
-        async.waterfall(
-          [this.getQueues, this.consumersCount, this.prepare],
-          (err?: Error | null) => {
-            if (err) throw err;
-            this.publish();
-            this.ticker.nextTick();
-          },
-        );
-      } else this.ticker.nextTick();
-    });
+  work = (cb: ICallback<void>): void => {
+    this.reset();
+    async.waterfall(
+      [this.getQueues, this.consumersCount, this.prepare],
+      (err?: Error | null) => {
+        if (err) cb(err);
+        else {
+          this.publish();
+          cb();
+        }
+      },
+    );
   };
-
-  quit(cb: ICallback<void>): void {
-    this.ticker.once(events.DOWN, cb);
-    this.ticker.quit();
-  }
 }
 
-process.on('message', (c: string) => {
-  const config: IRequiredConfig = JSON.parse(c);
-  setConfiguration(config);
+export default WebsocketRateStreamWorker;
+
+process.on('message', (payload: string) => {
+  const params: TWorkerParameters = JSON.parse(payload);
+  setConfiguration(params.config);
   RedisClient.getNewInstance((err, client) => {
     if (err) throw err;
     else if (!client) throw new EmptyCallbackReplyError();
     else {
-      new WebsocketRateStreamWorker(client);
+      new WebsocketRateStreamWorker(client, params).run();
     }
   });
 });

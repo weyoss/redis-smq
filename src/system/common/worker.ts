@@ -1,18 +1,19 @@
-import { Ticker } from '../common/ticker/ticker';
-import { RedisClient } from '../common/redis-client/redis-client';
-import { ICallback } from '../../../types';
-import { events } from '../common/events';
+import { Ticker } from './ticker/ticker';
+import { RedisClient } from './redis-client/redis-client';
+import { ICallback, TWorkerParameters } from '../../../types';
+import { events } from './events';
 
-export abstract class ConsumerWorker {
-  protected ticker: Ticker;
+export abstract class Worker<T extends TWorkerParameters = TWorkerParameters> {
+  private ticker: Ticker;
   protected redisClient: RedisClient;
 
-  constructor(redisClient: RedisClient) {
+  constructor(redisClient: RedisClient, params: T) {
     this.redisClient = redisClient;
-    this.ticker = new Ticker(this.onTick, 1000);
+    const { timeout = 1000 } = params;
+    this.ticker = new Ticker(this.onTick, timeout);
   }
 
-  protected onTick = (): void => {
+  private onTick = (): void => {
     this.work((err) => {
       if (err) throw err;
       this.ticker.nextTick();

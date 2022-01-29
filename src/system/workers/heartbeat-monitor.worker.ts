@@ -1,12 +1,12 @@
 import * as async from 'async';
-import { ICallback, TConsumerWorkerParameters } from '../../../types';
+import { ICallback, IConsumerWorkerParameters } from '../../../types';
 import { ConsumerHeartbeat } from '../consumer/consumer-heartbeat';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
-import { ConsumerWorker } from '../consumer/consumer-worker';
+import { Worker } from '../common/worker';
 import { setConfiguration } from '../common/configuration';
 
-class HeartbeatMonitorWorker extends ConsumerWorker {
+class HeartbeatMonitorWorker extends Worker<IConsumerWorkerParameters> {
   work = (cb: ICallback<void>): void => {
     async.waterfall(
       [
@@ -25,12 +25,14 @@ class HeartbeatMonitorWorker extends ConsumerWorker {
   };
 }
 
+export default HeartbeatMonitorWorker;
+
 process.on('message', (payload: string) => {
-  const { config }: TConsumerWorkerParameters = JSON.parse(payload);
-  setConfiguration(config);
+  const params: IConsumerWorkerParameters = JSON.parse(payload);
+  setConfiguration(params.config);
   RedisClient.getNewInstance((err, client) => {
     if (err) throw err;
     else if (!client) throw new EmptyCallbackReplyError();
-    else new HeartbeatMonitorWorker(client);
+    else new HeartbeatMonitorWorker(client, params);
   });
 });

@@ -34,5 +34,6 @@ test('Produce and consume a delayed message: Case 2', async () => {
 
   await untilMessageAcknowledged(consumer);
   const diff = (timestamps[0] ?? 0) - producedAt;
-  expect(validateTime(diff, 10000)).toBe(true);
+  // adjusted
+  expect(validateTime(diff, 12000)).toBe(true);
 });

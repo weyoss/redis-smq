@@ -187,7 +187,11 @@ export async function stopMonitorServer(): Promise<void> {
 export async function startWebsocketMainStreamWorker(): Promise<void> {
   if (!websocketMainStreamWorker) {
     const redisClient = await getRedisInstance();
-    websocketMainStreamWorker = new WebsocketMainStreamWorker(redisClient);
+    websocketMainStreamWorker = new WebsocketMainStreamWorker(redisClient, {
+      timeout: 1000,
+      config,
+    });
+    websocketMainStreamWorker.run();
   }
 }
 
@@ -205,7 +209,11 @@ export async function stopWebsocketMainStreamWorker(): Promise<void> {
 export async function startWebsocketRateStreamWorker(): Promise<void> {
   if (!websocketRateStreamWorker) {
     const redisClient = await getRedisInstance();
-    websocketRateStreamWorker = new WebsocketRateStreamWorker(redisClient);
+    websocketRateStreamWorker = new WebsocketRateStreamWorker(redisClient, {
+      timeout: 1000,
+      config,
+    });
+    websocketRateStreamWorker.run();
   }
 }
 
@@ -225,7 +233,12 @@ export async function startWebsocketHeartbeatStreamWorker(): Promise<void> {
     const redisClient = await getRedisInstance();
     websocketHeartbeatStreamWorker = new WebsocketHeartbeatStreamWorker(
       redisClient,
+      {
+        timeout: 1000,
+        config,
+      },
     );
+    websocketHeartbeatStreamWorker.run();
   }
 }
 
@@ -243,7 +256,11 @@ export async function stopWebsocketHeartbeatStreamWorker(): Promise<void> {
 export async function startWebsocketOnlineStreamWorker(): Promise<void> {
   if (!websocketOnlineStreamWorker) {
     const redisClient = await getRedisInstance();
-    websocketOnlineStreamWorker = new WebsocketOnlineStreamWorker(redisClient);
+    websocketOnlineStreamWorker = new WebsocketOnlineStreamWorker(redisClient, {
+      timeout: 1000,
+      config,
+    });
+    websocketOnlineStreamWorker.run();
   }
 }
 
@@ -358,7 +375,7 @@ export async function produceAndDeadLetterMessage(
   await producer.produceAsync(message);
 
   consumer.run();
-  await untilConsumerIdle(consumer);
+  await untilConsumerEvent(consumer, events.MESSAGE_DEAD_LETTERED);
   return { producer, consumer, message, queue };
 }
 

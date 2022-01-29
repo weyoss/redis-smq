@@ -2,17 +2,17 @@ import { RedisClient } from '../common/redis-client/redis-client';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { Message } from '../message/message';
 import * as async from 'async';
-import { ICallback, TConsumerWorkerParameters } from '../../../types';
+import { ICallback, IConsumerWorkerParameters } from '../../../types';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { PanicError } from '../common/errors/panic.error';
-import { ConsumerWorker } from '../consumer/consumer-worker';
+import { Worker } from '../common/worker';
 import { setConfiguration } from '../common/configuration';
 
-export class RequeueWorker extends ConsumerWorker {
+export class RequeueWorker extends Worker<IConsumerWorkerParameters> {
   protected redisKeys: ReturnType<typeof redisKeys['getMainKeys']>;
 
-  constructor(redisClient: RedisClient) {
-    super(redisClient);
+  constructor(redisClient: RedisClient, params: IConsumerWorkerParameters) {
+    super(redisClient, params);
     this.redisKeys = redisKeys.getMainKeys();
   }
 
@@ -40,14 +40,18 @@ export class RequeueWorker extends ConsumerWorker {
                 if (message.isWithPriority()) {
                   const priority = message.getPriority();
                   if (priority === null)
-                    throw new PanicError(
-                      `Expected a non-empty message priority value`,
+                    done(
+                      new PanicError(
+                        `Expected a non-empty message priority value`,
+                      ),
                     );
-                  multi.zadd(
-                    keyQueuePendingPriorityMessageIds,
-                    priority,
-                    JSON.stringify(message),
-                  );
+                  else {
+                    multi.zadd(
+                      keyQueuePendingPriorityMessageIds,
+                      priority,
+                      JSON.stringify(message),
+                    );
+                  }
                 } else multi.lpush(keyQueuePending, JSON.stringify(message));
                 done();
               }
@@ -63,12 +67,14 @@ export class RequeueWorker extends ConsumerWorker {
   };
 }
 
-process.on('message', (c: string) => {
-  const { config }: TConsumerWorkerParameters = JSON.parse(c);
-  setConfiguration(config);
+export default RequeueWorker;
+
+process.on('message', (payload: string) => {
+  const params: IConsumerWorkerParameters = JSON.parse(payload);
+  setConfiguration(params.config);
   RedisClient.getNewInstance((err, client) => {
     if (err) throw err;
     else if (!client) throw new EmptyCallbackReplyError();
-    else new RequeueWorker(client).run();
+    else new RequeueWorker(client, params).run();
   });
 });

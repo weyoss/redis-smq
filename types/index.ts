@@ -4,6 +4,8 @@ import { Callback, ClientOpts, Multi, RedisClient as NodeRedis } from 'redis';
 import * as Logger from 'bunyan';
 import { Message } from '../src/system/message/message';
 import { redisKeys } from '../src/system/common/redis-keys/redis-keys';
+import { Worker } from '../src/system/common/worker';
+import { RedisClient } from '../src/system/common/redis-client/redis-client';
 
 declare module 'redis' {
   export interface Commands<R> {
@@ -250,9 +252,17 @@ export type TQueueParams = {
   ns: string;
 };
 
-export type TConsumerWorkerParameters = {
+export type TWorkerParameters = {
   config: IRequiredConfig;
+  timeout?: number;
+};
+
+export interface IConsumerWorkerParameters extends TWorkerParameters {
   consumerId: string;
+}
+
+export type TWorkerClassConstructor<T extends TWorkerParameters> = {
+  new (redisClient: RedisClient, params: T): Worker<T>;
 };
 
 export type THeartbeatRegistryPayload = {

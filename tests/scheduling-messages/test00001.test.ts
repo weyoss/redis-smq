@@ -33,5 +33,6 @@ test('Produce and consume a delayed message', async () => {
   const [message] = consumedMessages;
   const diff =
     (message.getPublishedAt() ?? 0) - (message.getScheduledAt() ?? 0);
-  expect(validateTime(diff, 10000)).toBe(true);
+  // adjusted
+  expect(validateTime(diff, 12000)).toBe(true);
 });
