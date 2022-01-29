@@ -4,7 +4,7 @@ import { RedisClient } from '../common/redis-client/redis-client';
 import {
   EMessageUnacknowledgedCause,
   ICallback,
-  TConsumerWorkerParameters,
+  IConsumerWorkerParameters,
   TQueueParams,
 } from '../../../types';
 import { redisKeys } from '../common/redis-keys/redis-keys';
@@ -16,17 +16,18 @@ import { GlobalDeadLetteredTimeSeries } from '../consumer/consumer-time-series/g
 import { TimeSeries } from '../common/time-series/time-series';
 import { broker } from '../common/broker';
 import { queueManager } from '../queue-manager/queue-manager';
-import { ConsumerWorker } from '../consumer/consumer-worker';
+import { Worker } from '../common/worker';
 import { setConfiguration } from '../common/configuration';
 
-export class GCWorker extends ConsumerWorker {
+export class GCWorker extends Worker<IConsumerWorkerParameters> {
   protected consumerId: string;
   protected globalDeadLetteredTimeSeries: ReturnType<
     typeof GlobalDeadLetteredTimeSeries
   >;
 
-  constructor(client: RedisClient, consumerId: string) {
-    super(client);
+  constructor(client: RedisClient, params: IConsumerWorkerParameters) {
+    super(client, params);
+    const { consumerId } = params;
     this.consumerId = consumerId;
     this.globalDeadLetteredTimeSeries = GlobalDeadLetteredTimeSeries(client);
   }
@@ -145,12 +146,14 @@ export class GCWorker extends ConsumerWorker {
   };
 }
 
-process.on('message', (c: string) => {
-  const { config, consumerId }: TConsumerWorkerParameters = JSON.parse(c);
-  setConfiguration(config);
+export default GCWorker;
+
+process.on('message', (payload: string) => {
+  const params: IConsumerWorkerParameters = JSON.parse(payload);
+  setConfiguration(params.config);
   RedisClient.getNewInstance((err, client) => {
     if (err) throw err;
     else if (!client) throw new EmptyCallbackReplyError();
-    else new GCWorker(client, consumerId).run();
+    else new GCWorker(client, params).run();
   });
 });

@@ -3,11 +3,11 @@ import {
   getConsumer,
   getProducer,
   mockConfiguration,
-  untilConsumerIdle,
 } from '../common';
 import { Message } from '../../src/message';
 import { events } from '../../src/system/common/events';
 import { ICallback } from '../../types';
+import { delay } from 'bluebird';
 
 test('When consuming a message, a consumer does time out after messageConsumeTimeout exceeds and re-queues the message to be consumed again', async () => {
   mockConfiguration({
@@ -41,7 +41,7 @@ test('When consuming a message, a consumer does time out after messageConsumeTim
   await producer.produceAsync(msg);
   consumer.run();
 
-  await untilConsumerIdle(consumer);
+  await delay(15000);
   expect(unacknowledged).toBe(1);
   expect(acknowledged).toBe(1);
 });

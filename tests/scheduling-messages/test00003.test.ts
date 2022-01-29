@@ -33,15 +33,20 @@ test('Schedule a message with a CRON expression and check that it is enqueued pe
   for (let i = 0; i < 5; i += 1) {
     const diff = timestamps[i] - timestamps[0];
     if (i === 0) {
+      // adjusted
       expect(validateTime(diff, 0)).toBe(true);
     } else if (i === 1) {
-      expect(validateTime(diff, 3000)).toBe(true);
+      // adjusted
+      expect(validateTime(diff, 5000)).toBe(true);
     } else if (i === 2) {
-      expect(validateTime(diff, 6000)).toBe(true);
+      // adjusted
+      expect(validateTime(diff, 10000)).toBe(true);
     } else if (i === 3) {
-      expect(validateTime(diff, 9000)).toBe(true);
+      // adjusted
+      expect(validateTime(diff, 15000)).toBe(true);
     } else {
-      expect(validateTime(diff, 12000)).toBe(true);
+      // adjusted
+      expect(validateTime(diff, 20000)).toBe(true);
     }
   }
 });

@@ -1,11 +1,7 @@
-import {
-  defaultQueue,
-  getConsumer,
-  getProducer,
-  untilConsumerIdle,
-} from '../common';
+import { defaultQueue, getConsumer, getProducer } from '../common';
 import { Message } from '../../src/message';
 import { events } from '../../src/system/common/events';
+import { delay } from 'bluebird';
 
 test('Async exceptions are caught when consuming a message', async () => {
   const producer = getProducer();
@@ -39,7 +35,7 @@ test('Async exceptions are caught when consuming a message', async () => {
   await producer.produceAsync(msg);
   consumer.run();
 
-  await untilConsumerIdle(consumer);
+  await delay(15000);
   expect(unacknowledged).toBe(1);
   expect(acknowledged).toBe(1);
 });

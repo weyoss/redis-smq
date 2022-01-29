@@ -1,4 +1,4 @@
-import { ICallback, TConsumerWorkerParameters } from '../../../types';
+import { ICallback, IConsumerWorkerParameters } from '../../../types';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
@@ -6,10 +6,10 @@ import * as async from 'async';
 import { Message } from '../message/message';
 import { PanicError } from '../common/errors/panic.error';
 import { ELuaScriptName } from '../common/redis-client/lua-scripts';
-import { ConsumerWorker } from '../consumer/consumer-worker';
+import { Worker } from '../common/worker';
 import { setConfiguration } from '../common/configuration';
 
-export class ScheduleWorker extends ConsumerWorker {
+export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
   protected fetchMessages = (ids: string[], cb: ICallback<Message[]>): void => {
     if (ids.length) {
       const { keyScheduledMessages } = redisKeys.getMainKeys();
@@ -52,37 +52,38 @@ export class ScheduleWorker extends ConsumerWorker {
           const message = Message.createFromMessage(msg);
           const queue = message.getQueue();
           if (!queue) {
-            throw new PanicError(
-              `Expected a message with a non-empty queue value`,
+            done(
+              new PanicError(`Expected a message with a non-empty queue value`),
             );
-          }
-          const {
-            keyQueues,
-            keyQueuePending,
-            keyQueuePendingPriorityMessages,
-            keyQueuePendingPriorityMessageIds,
-            keyScheduledMessageIds,
-            keyScheduledMessages,
-          } = redisKeys.getQueueKeys(queue.name, queue.ns);
-          const nextScheduleTimestamp = message.getNextScheduledTimestamp();
-          message.setPublishedAt(Date.now());
-          this.redisClient.runScript(
-            ELuaScriptName.ENQUEUE_SCHEDULED_MESSAGE,
-            [
+          } else {
+            const {
               keyQueues,
-              JSON.stringify(queue),
-              message.getRequiredId(),
-              JSON.stringify(message),
-              message.getPriority() ?? '',
+              keyQueuePending,
               keyQueuePendingPriorityMessages,
               keyQueuePendingPriorityMessageIds,
-              keyQueuePending,
-              `${nextScheduleTimestamp}`,
               keyScheduledMessageIds,
               keyScheduledMessages,
-            ],
-            (err) => done(err),
-          );
+            } = redisKeys.getQueueKeys(queue.name, queue.ns);
+            const nextScheduleTimestamp = message.getNextScheduledTimestamp();
+            message.setPublishedAt(Date.now());
+            this.redisClient.runScript(
+              ELuaScriptName.ENQUEUE_SCHEDULED_MESSAGE,
+              [
+                keyQueues,
+                JSON.stringify(queue),
+                message.getRequiredId(),
+                JSON.stringify(message),
+                message.getPriority() ?? '',
+                keyQueuePendingPriorityMessages,
+                keyQueuePendingPriorityMessageIds,
+                keyQueuePending,
+                `${nextScheduleTimestamp}`,
+                keyScheduledMessageIds,
+                keyScheduledMessages,
+              ],
+              (err) => done(err),
+            );
+          }
         },
         cb,
       );
@@ -107,12 +108,14 @@ export class ScheduleWorker extends ConsumerWorker {
   };
 }
 
-process.on('message', (c: string) => {
-  const { config }: TConsumerWorkerParameters = JSON.parse(c);
-  setConfiguration(config);
+export default ScheduleWorker;
+
+process.on('message', (payload: string) => {
+  const params: IConsumerWorkerParameters = JSON.parse(payload);
+  setConfiguration(params.config);
   RedisClient.getNewInstance((err, client) => {
     if (err) throw err;
     else if (!client) throw new EmptyCallbackReplyError();
-    else new ScheduleWorker(client).run();
+    else new ScheduleWorker(client, params).run();
   });
 });

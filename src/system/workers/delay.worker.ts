@@ -1,18 +1,18 @@
 import { RedisClient } from '../common/redis-client/redis-client';
 import { redisKeys } from '../common/redis-keys/redis-keys';
-import { ICallback, TConsumerWorkerParameters } from '../../../types';
+import { ICallback, IConsumerWorkerParameters } from '../../../types';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import * as async from 'async';
 import { Message } from '../message/message';
 import { broker } from '../common/broker';
-import { ConsumerWorker } from '../consumer/consumer-worker';
+import { Worker } from '../common/worker';
 import { setConfiguration } from '../common/configuration';
 
-export class DelayWorker extends ConsumerWorker {
+export class DelayWorker extends Worker<IConsumerWorkerParameters> {
   protected redisKeys: ReturnType<typeof redisKeys['getMainKeys']>;
 
-  constructor(redisClient: RedisClient) {
-    super(redisClient);
+  constructor(redisClient: RedisClient, params: IConsumerWorkerParameters) {
+    super(redisClient, params);
     this.redisKeys = redisKeys.getMainKeys();
   }
 
@@ -46,12 +46,14 @@ export class DelayWorker extends ConsumerWorker {
   };
 }
 
-process.on('message', (c: string) => {
-  const { config }: TConsumerWorkerParameters = JSON.parse(c);
-  setConfiguration(config);
+export default DelayWorker;
+
+process.on('message', (payload: string) => {
+  const params: IConsumerWorkerParameters = JSON.parse(payload);
+  setConfiguration(params.config);
   RedisClient.getNewInstance((err, client) => {
     if (err) throw err;
     else if (!client) throw new EmptyCallbackReplyError();
-    else new DelayWorker(client).run();
+    else new DelayWorker(client, params).run();
   });
 });

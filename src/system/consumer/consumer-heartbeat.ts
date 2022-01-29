@@ -49,6 +49,8 @@ function cpuUsage() {
 }
 
 export class ConsumerHeartbeat extends EventEmitter {
+  protected static readonly heartbeatTTL = 10 * 1000; // 10 sec
+
   protected redisClient: RedisClient;
   protected ticker: Ticker;
   protected keyHeartbeats: string;
@@ -144,7 +146,7 @@ export class ConsumerHeartbeat extends EventEmitter {
             if (payload) {
               const { timestamp: heartbeatTimestamp }: THeartbeatPayload =
                 JSON.parse(payload);
-              const timestamp = Date.now() - 10 * 1000;
+              const timestamp = Date.now() - ConsumerHeartbeat.heartbeatTTL;
               r[consumerIds[idx]] = heartbeatTimestamp > timestamp;
             } else r[consumerIds[idx]] = false;
             done();
@@ -166,7 +168,7 @@ export class ConsumerHeartbeat extends EventEmitter {
     >,
   ): void {
     const { keyHeartbeatInstanceIds, keyHeartbeats } = redisKeys.getMainKeys();
-    const timestamp = Date.now() - 10 * 1000;
+    const timestamp = Date.now() - ConsumerHeartbeat.heartbeatTTL;
     redisClient.zrangebyscore(
       keyHeartbeatInstanceIds,
       timestamp,
@@ -218,7 +220,7 @@ export class ConsumerHeartbeat extends EventEmitter {
     cb: ICallback<string[]>,
   ): void {
     const { keyHeartbeatInstanceIds } = redisKeys.getMainKeys();
-    const timestamp = Date.now() - 10 * 1000;
+    const timestamp = Date.now() - ConsumerHeartbeat.heartbeatTTL;
     redisClient.zrangebyscore(
       keyHeartbeatInstanceIds,
       timestamp,
@@ -235,7 +237,7 @@ export class ConsumerHeartbeat extends EventEmitter {
     cb: ICallback<string[]>,
   ): void {
     const { keyHeartbeatInstanceIds } = redisKeys.getMainKeys();
-    const timestamp = Date.now() - 10 * 1000;
+    const timestamp = Date.now() - ConsumerHeartbeat.heartbeatTTL;
     redisClient.zrangebyscore(
       keyHeartbeatInstanceIds,
       '-inf',

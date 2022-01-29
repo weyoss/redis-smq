@@ -36,7 +36,8 @@ test('Schedule a message with a combination of CRON expression, repeat, period, 
     if (i === 0) {
       // verify that the message was first delayed
       const diff = timestamps[i] - producedAt;
-      expect(validateTime(diff, 15000)).toBe(true);
+      // adjusted
+      expect(validateTime(diff, 17000)).toBe(true);
       continue;
     }
 

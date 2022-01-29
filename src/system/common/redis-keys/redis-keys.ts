@@ -28,10 +28,7 @@ enum ERedisKey {
   KEY_LOCK_DELETE_SCHEDULED_MESSAGE,
   KEY_LOCK_MESSAGE_MANAGER,
   KEY_LOCK_QUEUE_MANAGER,
-  KEY_LOCK_WEBSOCKET_MAIN_STREAM_WORKER,
-  KEY_LOCK_WEBSOCKET_HEARTBEAT_STREAM_WORKER,
-  KEY_LOCK_WEBSOCKET_ONLINE_STREAM_WORKER,
-  KEY_LOCK_WEBSOCKET_RATE_STREAM_WORKER,
+  KEY_LOCK_MONITOR_SERVER_WORKERS,
   KEY_LOCK_RATE_GLOBAL_PUBLISHED,
   KEY_LOCK_RATE_GLOBAL_ACKNOWLEDGED,
   KEY_LOCK_RATE_GLOBAL_DEAD_LETTERED,
@@ -148,14 +145,7 @@ export const redisKeys = {
       keyLockMessageManager: ERedisKey.KEY_LOCK_MESSAGE_MANAGER,
       keyLockQueueManager: ERedisKey.KEY_LOCK_QUEUE_MANAGER,
       keyLockConsumerWorkersRunner: ERedisKey.KEY_LOCK_CONSUMER_WORKERS_RUNNER,
-      keyLockWebsocketMainStreamWorker:
-        ERedisKey.KEY_LOCK_WEBSOCKET_MAIN_STREAM_WORKER,
-      keyLockWebsocketRateStreamWorker:
-        ERedisKey.KEY_LOCK_WEBSOCKET_RATE_STREAM_WORKER,
-      keyLockWebsocketHeartbeatStreamWorker:
-        ERedisKey.KEY_LOCK_WEBSOCKET_HEARTBEAT_STREAM_WORKER,
-      keyLockWebsocketOnlineStreamWorker:
-        ERedisKey.KEY_LOCK_WEBSOCKET_ONLINE_STREAM_WORKER,
+      keyLockMonitorServerWorkers: ERedisKey.KEY_LOCK_MONITOR_SERVER_WORKERS,
       keyDelayedMessages: ERedisKey.KEY_DELAYED_MESSAGES,
       keyRequeueMessages: ERedisKey.KEY_REQUEUE_MESSAGES,
       keyLockDeleteAcknowledgedMessage:

@@ -4,6 +4,7 @@ import * as Koa from 'koa';
 import { Server as SocketIO } from 'socket.io';
 import * as KoaBodyParser from 'koa-bodyparser';
 import { Middleware } from 'redis-smq-monitor';
+import { v4 as uuid } from 'uuid';
 import { RedisClient } from '../system/common/redis-client/redis-client';
 import { errorHandler } from './middlewares/error-handler';
 import { Services } from './services';
@@ -22,6 +23,9 @@ import {
   setConfigurationIfNotExists,
 } from '../system/common/configuration';
 import { getNamespacedLogger } from '../system/common/logger';
+import { redisKeys } from '../system/common/redis-keys/redis-keys';
+import { WorkerPool } from '../system/common/worker-runner/worker-pool';
+import { events } from '../system/common/events';
 
 type TBootstrapped = {
   httpServer: ReturnType<typeof stoppable>;
@@ -34,19 +38,21 @@ const RedisClientPrototypeAsync = promisifyAll(RedisClient.prototype);
 type TRedisClientAsync = typeof RedisClientPrototypeAsync;
 
 export class MonitorServer {
+  private instanceId: string;
   protected config;
   protected powerManager;
   protected logger;
-  protected workerRunner;
+  protected workerRunner: WorkerRunner | null = null;
   protected application: TBootstrapped | null = null;
+  protected redisClient: TRedisClientAsync | null = null;
   protected subscribeClient: TRedisClientAsync | null = null;
 
   constructor() {
     setConfigurationIfNotExists();
+    this.instanceId = uuid();
     this.config = getConfiguration();
     this.powerManager = new PowerManager(false);
-    this.logger = getNamespacedLogger('MonitorServer');
-    this.workerRunner = promisifyAll(new WorkerRunner());
+    this.logger = getNamespacedLogger(`MonitorServer/${this.instanceId}`);
   }
 
   protected getApplication(): TBootstrapped {
@@ -63,8 +69,24 @@ export class MonitorServer {
     return this.subscribeClient;
   }
 
+  protected getRedisClient(): TRedisClientAsync {
+    if (!this.redisClient) {
+      throw new PanicError(`Expected a non null value.`);
+    }
+    return this.redisClient;
+  }
+
+  protected getWorkerRunner(): WorkerRunner {
+    if (!this.workerRunner) {
+      throw new PanicError(`Expected a non null value.`);
+    }
+    return this.workerRunner;
+  }
+
   protected async bootstrap(): Promise<TBootstrapped> {
-    const client = await RedisClientAsync.getNewInstanceAsync();
+    this.redisClient = promisifyAll(
+      await RedisClientAsync.getNewInstanceAsync(),
+    );
     const { socketOpts = {} } = this.config.monitor;
     const app = new Koa<Koa.DefaultState, IContext>();
     app.use(errorHandler);
@@ -72,7 +94,7 @@ export class MonitorServer {
     app.use(KoaBodyParser());
     app.context.config = this.config;
     app.context.logger = this.logger;
-    app.context.redis = client;
+    app.context.redis = this.redisClient;
     app.context.services = Services(app);
     app.use(
       cors({
@@ -108,10 +130,26 @@ export class MonitorServer {
   }
 
   protected async runWorkers(): Promise<void> {
-    await this.workerRunner.runAsync(
+    const { keyLockMonitorServerWorkers } = redisKeys.getMainKeys();
+    this.workerRunner = new WorkerRunner(
+      this.getRedisClient(),
       resolve(__dirname, './workers'),
-      getConfiguration(),
+      keyLockMonitorServerWorkers,
+      {
+        config: this.config,
+        timeout: 1000,
+      },
+      new WorkerPool(),
     );
+    this.workerRunner.on(events.ERROR, (err: Error) => {
+      throw err;
+    });
+    this.workerRunner.once(events.WORKER_RUNNER_WORKERS_STARTED, () => {
+      this.logger.info(
+        `Workers are running exclusively from this monitor server instance.`,
+      );
+    });
+    this.workerRunner.run();
   }
 
   async listen(): Promise<boolean> {
@@ -133,6 +171,7 @@ export class MonitorServer {
         httpServer.listen(port, host, resolve);
       });
       this.powerManager.commit();
+      this.logger.info(`Instance ID is ${this.instanceId}.`);
       this.logger.info(`Up and running on ${host}:${port}...`);
       return true;
     }
@@ -143,14 +182,14 @@ export class MonitorServer {
     const r = this.powerManager.goingDown();
     if (r) {
       this.logger.info('Going down...');
-      const { app, httpServer } = this.getApplication();
+      const { httpServer } = this.getApplication();
       await new Promise((resolve) => httpServer.stop(resolve));
-      const subscribeClient = this.getSubscribeClient();
-      await subscribeClient.haltAsync();
-      await promisifyAll(app.context.redis).haltAsync();
-      await this.workerRunner.shutdownAsync();
-      this.powerManager.commit();
+      await this.getSubscribeClient().haltAsync();
+      await this.getRedisClient().haltAsync();
+      await promisifyAll(this.getWorkerRunner()).quitAsync();
+      this.workerRunner = null;
       this.application = null;
+      this.powerManager.commit();
       this.logger.info('Down.');
       return true;
     }

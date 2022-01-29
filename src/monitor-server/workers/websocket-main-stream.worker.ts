@@ -3,24 +3,19 @@ import {
   TQueueParams,
   TWebsocketMainStreamPayload,
   TWebsocketMainStreamPayloadQueue,
-  IRequiredConfig,
+  TWorkerParameters,
 } from '../../../types';
 import * as async from 'async';
 import { redisKeys } from '../../system/common/redis-keys/redis-keys';
-import { LockManager } from '../../system/common/lock-manager/lock-manager';
 import { RedisClient } from '../../system/common/redis-client/redis-client';
-import { Ticker } from '../../system/common/ticker/ticker';
-import { events } from '../../system/common/events';
 import { MessageManager } from '../../system/message-manager/message-manager';
 import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callback-reply.error';
 import { Consumer } from '../../system/consumer/consumer';
 import { queueManager } from '../../system/queue-manager/queue-manager';
 import { setConfiguration } from '../../system/common/configuration';
+import { Worker } from '../../system/common/worker';
 
-export class WebsocketMainStreamWorker {
-  protected lockManager: LockManager;
-  protected redisClient: RedisClient;
-  protected ticker: Ticker;
+export class WebsocketMainStreamWorker extends Worker {
   protected noop = (): void => void 0;
   protected data: TWebsocketMainStreamPayload = {
     scheduledMessagesCount: 0,
@@ -32,19 +27,6 @@ export class WebsocketMainStreamWorker {
     queuesCount: 0,
     queues: {},
   };
-
-  constructor(redisClient: RedisClient) {
-    const { keyLockWebsocketMainStreamWorker } = redisKeys.getMainKeys();
-    this.lockManager = new LockManager(
-      redisClient,
-      keyLockWebsocketMainStreamWorker,
-      10000,
-      false,
-    );
-    this.redisClient = redisClient;
-    this.ticker = new Ticker(this.run, 1000);
-    this.ticker.nextTick();
-  }
 
   protected addQueue = (
     ns: string,
@@ -216,40 +198,34 @@ export class WebsocketMainStreamWorker {
     };
   };
 
-  protected run = (): void => {
-    this.lockManager.acquireLock((err, lock) => {
-      if (err) throw err;
-      if (lock) {
-        this.reset();
-        async.waterfall(
-          [
-            this.countScheduledMessages,
-            this.getQueues,
-            this.getQueueSize,
-            this.updateOnlineInstances,
-          ],
-          (err?: Error | null) => {
-            if (err) throw err;
-            this.publish();
-            this.ticker.nextTick();
-          },
-        );
-      } else this.ticker.nextTick();
-    });
+  work = (cb: ICallback<void>): void => {
+    this.reset();
+    async.waterfall(
+      [
+        this.countScheduledMessages,
+        this.getQueues,
+        this.getQueueSize,
+        this.updateOnlineInstances,
+      ],
+      (err?: Error | null) => {
+        if (err) cb(err);
+        else {
+          this.publish();
+          cb();
+        }
+      },
+    );
   };
-
-  quit(cb: ICallback<void>): void {
-    this.ticker.once(events.DOWN, cb);
-    this.ticker.quit();
-  }
 }
 
-process.on('message', (c: string) => {
-  const config: IRequiredConfig = JSON.parse(c);
-  setConfiguration(config);
+export default WebsocketMainStreamWorker;
+
+process.on('message', (payload: string) => {
+  const params: TWorkerParameters = JSON.parse(payload);
+  setConfiguration(params.config);
   RedisClient.getNewInstance((err, client) => {
     if (err) throw err;
     else if (!client) throw new EmptyCallbackReplyError();
-    else new WebsocketMainStreamWorker(client);
+    else new WebsocketMainStreamWorker(client, params).run();
   });
 });

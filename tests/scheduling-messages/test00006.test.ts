@@ -43,13 +43,16 @@ test('Produce and consume a delayed message: Case 1', async () => {
   await delay(6000); // just to make sure no more messages are published
 
   const diff1 = (timestamps[0] ?? 0) - producedAt;
-  expect(validateTime(diff1, 10000)).toBe(true);
+  // adjusted
+  expect(validateTime(diff1, 12000)).toBe(true);
 
   const diff2 = (timestamps[1] ?? 0) - producedAt;
-  expect(validateTime(diff2, 13000)).toBe(true);
+  // adjusted
+  expect(validateTime(diff2, 17000)).toBe(true);
 
   const diff3 = (timestamps[2] ?? 0) - producedAt;
-  expect(validateTime(diff3, 16000)).toBe(true);
+  // adjusted
+  expect(validateTime(diff3, 22000)).toBe(true);
 
   await untilConsumerIdle(consumer);
   expect(timestamps.length).toEqual(3);

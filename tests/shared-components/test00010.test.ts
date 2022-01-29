@@ -12,6 +12,7 @@ import { events } from '../../src/system/common/events';
 import { DelayWorker } from '../../src/system/workers/delay.worker';
 import { GCWorker } from '../../src/system/workers/gc.worker';
 import { ScheduleWorker } from '../../src/system/workers/schedule.worker';
+import { config } from '../common';
 
 test('GCWorker -> DelayWorker -> ScheduleWorker', async () => {
   let message: Message | null = null;
@@ -38,12 +39,19 @@ test('GCWorker -> DelayWorker -> ScheduleWorker', async () => {
   const redisClient = await getRedisInstance();
 
   // should move message from processing queue to delay queue
-  const gcWorker = promisifyAll(new GCWorker(redisClient, 'abc'));
+  const gcWorker = promisifyAll(
+    new GCWorker(redisClient, {
+      config,
+      consumerId: 'abc',
+    }),
+  );
   gcWorker.run();
   await delay(5000);
 
   // should move from delay queue to scheduled queue
-  const delayHandler = promisifyAll(new DelayWorker(redisClient));
+  const delayHandler = promisifyAll(
+    new DelayWorker(redisClient, { config, consumerId: 'abc' }),
+  );
   delayHandler.run();
   await delay(5000);
 
@@ -52,7 +60,12 @@ test('GCWorker -> DelayWorker -> ScheduleWorker', async () => {
   expect(res.total).toBe(1);
 
   // should move from delay queue to scheduled queue
-  const scheduleWorker = promisifyAll(new ScheduleWorker(redisClient));
+  const scheduleWorker = promisifyAll(
+    new ScheduleWorker(redisClient, {
+      config,
+      consumerId: 'abc',
+    }),
+  );
   scheduleWorker.run();
   await delay(15000);
 
