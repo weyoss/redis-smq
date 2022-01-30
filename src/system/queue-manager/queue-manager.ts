@@ -1,7 +1,6 @@
 import { RedisClient } from '../common/redis-client/redis-client';
 import { ICallback, IQueueMetrics, TQueueParams } from '../../../types';
 import { redisKeys } from '../common/redis-keys/redis-keys';
-import * as async from 'async';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { GenericError } from '../common/errors/generic.error';
 import { ConsumerMessageHandler } from '../consumer/consumer-message-handler';
@@ -10,6 +9,7 @@ import {
   lockQueue,
   validateMessageQueueDeletion,
 } from './common';
+import { waterfall } from '../lib/async';
 
 export const queueManager = {
   queueExists(
@@ -92,7 +92,7 @@ export const queueManager = {
             }
           });
         };
-        async.waterfall(
+        waterfall(
           [
             (cb: ICallback<void>): void =>
               this.queueExists(redisClient, queue, cb),
@@ -161,7 +161,7 @@ export const queueManager = {
       keyQueueDL,
       keyQueueAcknowledged,
     } = redisKeys.getQueueKeys(queue.name, queue.ns);
-    async.waterfall(
+    waterfall(
       [
         (cb: ICallback<void>) => {
           redisClient.llen(keyQueuePending, (err, reply) => {

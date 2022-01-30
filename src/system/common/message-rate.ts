@@ -4,7 +4,7 @@ import { Ticker } from './ticker/ticker';
 import { EventEmitter } from 'events';
 import { TimeSeries } from './time-series/time-series';
 import { MessageRateWriter } from './message-rate-writer';
-import * as async from 'async';
+import { waterfall } from '../lib/async';
 
 export abstract class MessageRate<
   MessageRateFields extends TMessageRateFields = TMessageRateFields,
@@ -28,7 +28,7 @@ export abstract class MessageRate<
   }
 
   quit(cb: ICallback<void>): void {
-    async.waterfall(
+    waterfall(
       [
         (cb: ICallback<void>) => {
           this.readerTicker.once(events.DOWN, cb);

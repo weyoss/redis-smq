@@ -2,12 +2,12 @@ import { ICallback, IConsumerWorkerParameters } from '../../../types';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
-import * as async from 'async';
 import { Message } from '../message/message';
 import { PanicError } from '../common/errors/panic.error';
 import { ELuaScriptName } from '../common/redis-client/lua-scripts';
-import { Worker } from '../common/worker';
+import { Worker } from '../common/worker/worker';
 import { setConfiguration } from '../common/configuration';
+import { each, waterfall } from '../lib/async';
 
 export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
   protected fetchMessages = (ids: string[], cb: ICallback<Message[]>): void => {
@@ -17,9 +17,9 @@ export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
         if (err) cb(err);
         else {
           const messages: Message[] = [];
-          async.each(
+          each(
             reply ?? [],
-            (item, done) => {
+            (item, _, done) => {
               if (!item) done(new EmptyCallbackReplyError());
               else {
                 messages.push(Message.createFromMessage(item));
@@ -46,9 +46,9 @@ export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
     cb: ICallback<void>,
   ): void => {
     if (messages.length) {
-      async.each<Message, Error>(
+      each(
         messages,
-        (msg, done) => {
+        (msg, _, done) => {
           const message = Message.createFromMessage(msg);
           const queue = message.getQueue();
           if (!queue) {
@@ -91,7 +91,7 @@ export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
   };
 
   work = (cb: ICallback<void>): void => {
-    async.waterfall(
+    waterfall(
       [
         (cb: ICallback<string[]>) => {
           this.fetchMessageIds(cb);
@@ -116,6 +116,6 @@ process.on('message', (payload: string) => {
   RedisClient.getNewInstance((err, client) => {
     if (err) throw err;
     else if (!client) throw new EmptyCallbackReplyError();
-    else new ScheduleWorker(client, params).run();
+    else new ScheduleWorker(client, params, false).run();
   });
 });

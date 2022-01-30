@@ -12,7 +12,8 @@
     "incremental": true,
     "strict": true,
     "skipLibCheck": true,
-    "strictPropertyInitialization": true
+    "strictPropertyInitialization": true,
+    "noImplicitOverride": true
   },
   "exclude": ["node_modules", "dist", "**/*.js"]
 }

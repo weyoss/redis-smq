@@ -40,17 +40,21 @@ test('GCWorker -> DelayWorker -> ScheduleWorker', async () => {
 
   // should move message from processing queue to delay queue
   const gcWorker = promisifyAll(
-    new GCWorker(redisClient, {
-      config,
-      consumerId: 'abc',
-    }),
+    new GCWorker(
+      redisClient,
+      {
+        config,
+        consumerId: 'abc',
+      },
+      false,
+    ),
   );
   gcWorker.run();
   await delay(5000);
 
   // should move from delay queue to scheduled queue
   const delayHandler = promisifyAll(
-    new DelayWorker(redisClient, { config, consumerId: 'abc' }),
+    new DelayWorker(redisClient, { config, consumerId: 'abc' }, false),
   );
   delayHandler.run();
   await delay(5000);
@@ -61,10 +65,14 @@ test('GCWorker -> DelayWorker -> ScheduleWorker', async () => {
 
   // should move from delay queue to scheduled queue
   const scheduleWorker = promisifyAll(
-    new ScheduleWorker(redisClient, {
-      config,
-      consumerId: 'abc',
-    }),
+    new ScheduleWorker(
+      redisClient,
+      {
+        config,
+        consumerId: 'abc',
+      },
+      false,
+    ),
   );
   scheduleWorker.run();
   await delay(15000);

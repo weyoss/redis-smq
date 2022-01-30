@@ -6,20 +6,20 @@ import {
   ICompatibleLogger,
   TWorkerClassConstructor,
   TWorkerParameters,
-} from '../../../../types';
-import { PowerManager } from '../power-manager/power-manager';
+} from '../../../../../types';
+import { PowerManager } from '../../power-manager/power-manager';
 import { WorkerRunnerError } from './worker-runner.error';
 import { EventEmitter } from 'events';
-import { Ticker } from '../ticker/ticker';
-import { LockManager } from '../lock-manager/lock-manager';
-import { RedisClient } from '../redis-client/redis-client';
-import { getNamespacedLogger } from '../logger';
-import { events } from '../events';
-import * as async from 'async';
+import { Ticker } from '../../ticker/ticker';
+import { LockManager } from '../../lock-manager/lock-manager';
+import { RedisClient } from '../../redis-client/redis-client';
+import { getNamespacedLogger } from '../../logger';
+import { events } from '../../events';
 import { WorkerPool } from './worker-pool';
-import { EmptyCallbackReplyError } from '../errors/empty-callback-reply.error';
+import { EmptyCallbackReplyError } from '../../errors/empty-callback-reply.error';
 import { Worker } from '../worker';
-import { PanicError } from '../errors/panic.error';
+import { PanicError } from '../../errors/panic.error';
+import { each, waterfall } from '../../../lib/async';
 
 export class WorkerRunner<
   WorkerParameters extends TWorkerParameters = TWorkerParameters,
@@ -29,7 +29,7 @@ export class WorkerRunner<
   private readonly powerManager: PowerManager;
   private readonly ticker: Ticker;
   private readonly lockManager: LockManager;
-  private readonly workers: ChildProcess[] = [];
+  private readonly workerThreads: ChildProcess[] = [];
   private readonly redisClient: RedisClient;
   private readonly logger: ICompatibleLogger;
   private readonly workerPool: WorkerPool | null = null;
@@ -79,7 +79,7 @@ export class WorkerRunner<
   };
 
   private onProcessExit = (): void => {
-    this.workers.forEach((i) => i.kill());
+    this.workerThreads.forEach((i) => i.kill());
     if (this.workerPool) this.workerPool.clear(() => void 0);
   };
 
@@ -87,9 +87,9 @@ export class WorkerRunner<
     readdir(this.workersDir, undefined, (err, reply) => {
       if (err) cb(err);
       else {
-        async.each<string, Error>(
+        each(
           reply ?? [],
-          (filename: string, done) => {
+          (filename: string, _, done) => {
             if (filename.match(/\.worker\.js$/)) {
               if (this.workerPool) this.addToWorkerPool(filename, done);
               else {
@@ -105,29 +105,30 @@ export class WorkerRunner<
   };
 
   private addToWorkerPool = (filename: string, cb: ICallback<void>): void => {
-    this.getWorkerInstance(filename, (err, worker) => {
+    this.createWorkerInstance(filename, (err, instance) => {
       if (err) cb(err);
-      else if (!worker) cb(new EmptyCallbackReplyError());
+      else if (!instance) cb(new EmptyCallbackReplyError());
       else if (!this.workerPool)
         cb(new PanicError(`Expected an instance of WorkerPool`));
       else {
-        this.workerPool.add(worker);
+        this.workerPool.add(instance);
         cb();
       }
     });
   };
 
-  private getWorkerInstance = (
+  private createWorkerInstance = (
     filename: string,
-    cb: ICallback<Worker<WorkerParameters>>,
+    cb: ICallback<Worker>,
   ): void => {
     const filepath = join(this.workersDir, filename);
     import(filepath)
       .then(
-        (module: { default: TWorkerClassConstructor<WorkerParameters> }) => {
+        (module: { default: TWorkerClassConstructor<TWorkerParameters> }) => {
           const worker = new module.default(
             this.redisClient,
             this.workerParameters,
+            true,
           );
           cb(null, worker);
         },
@@ -154,14 +155,14 @@ export class WorkerRunner<
       }
     });
     thread.send(JSON.stringify(this.workerParameters));
-    this.workers.push(thread);
+    this.workerThreads.push(thread);
   };
 
-  private shutdownWorkers = (cb: ICallback<void>): void => {
-    const worker = this.workers.pop();
-    if (worker) {
-      worker.once('exit', () => this.shutdownWorkers(cb));
-      worker.kill('SIGHUP');
+  private shutdownWorkerThreads = (cb: ICallback<void>): void => {
+    const thread = this.workerThreads.pop();
+    if (thread) {
+      thread.once('exit', () => this.shutdownWorkerThreads(cb));
+      thread.kill('SIGHUP');
     } else cb();
   };
 
@@ -189,10 +190,10 @@ export class WorkerRunner<
 
   quit = (cb: ICallback<void>): void => {
     this.powerManager.goingDown();
-    async.waterfall(
+    waterfall(
       [
         this.stopTicker,
-        this.shutdownWorkers,
+        this.shutdownWorkerThreads,
         this.clearWorkerPool,
         this.releaseLock,
       ],

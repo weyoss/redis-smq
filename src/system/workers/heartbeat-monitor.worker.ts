@@ -1,14 +1,14 @@
-import * as async from 'async';
 import { ICallback, IConsumerWorkerParameters } from '../../../types';
 import { ConsumerHeartbeat } from '../consumer/consumer-heartbeat';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
-import { Worker } from '../common/worker';
+import { Worker } from '../common/worker/worker';
 import { setConfiguration } from '../common/configuration';
+import { waterfall } from '../lib/async';
 
 class HeartbeatMonitorWorker extends Worker<IConsumerWorkerParameters> {
   work = (cb: ICallback<void>): void => {
-    async.waterfall(
+    waterfall(
       [
         (cb: ICallback<string[]>): void =>
           ConsumerHeartbeat.getExpiredHeartbeatIds(this.redisClient, cb),
@@ -33,6 +33,6 @@ process.on('message', (payload: string) => {
   RedisClient.getNewInstance((err, client) => {
     if (err) throw err;
     else if (!client) throw new EmptyCallbackReplyError();
-    else new HeartbeatMonitorWorker(client, params);
+    else new HeartbeatMonitorWorker(client, params, false);
   });
 });

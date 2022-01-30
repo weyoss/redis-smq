@@ -39,20 +39,28 @@ test('GCWorker -> RequeueWorker', async () => {
 
   // should move message from processing queue to delay queue
   const gcWorker = promisifyAll(
-    new GCWorker(redisClient, {
-      config,
-      consumerId: 'abc',
-    }),
+    new GCWorker(
+      redisClient,
+      {
+        config,
+        consumerId: 'abc',
+      },
+      false,
+    ),
   );
   gcWorker.run();
   await delay(5000);
 
   // should move from delay queue to scheduled queue
   const requeueWorker = promisifyAll(
-    new RequeueWorker(redisClient, {
-      config,
-      consumerId: 'abc',
-    }),
+    new RequeueWorker(
+      redisClient,
+      {
+        config,
+        consumerId: 'abc',
+      },
+      false,
+    ),
   );
   requeueWorker.run();
   await delay(5000);

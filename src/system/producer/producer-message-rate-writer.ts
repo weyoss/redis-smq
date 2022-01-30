@@ -1,9 +1,9 @@
 import { MessageRateWriter } from '../common/message-rate-writer';
 import { ICallback, IProducerMessageRateFields } from '../../../types';
-import * as async from 'async';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { QueuePublishedTimeSeries } from './producer-time-series/queue-published-time-series';
 import { GlobalPublishedTimeSeries } from './producer-time-series/global-published-time-series';
+import { each, waterfall } from '../lib/async';
 
 export class ProducerMessageRateWriter extends MessageRateWriter<IProducerMessageRateFields> {
   protected redisClient: RedisClient;
@@ -53,11 +53,11 @@ export class ProducerMessageRateWriter extends MessageRateWriter<IProducerMessag
   }
 
   onQuit(cb: ICallback<void>): void {
-    async.waterfall(
+    waterfall(
       [
         (cb: ICallback<void>) => this.globalPublishedTimeSeries.quit(cb),
         (cb: ICallback<void>) => {
-          async.eachOf(
+          each(
             this.queuePublishedTimeSeries,
             (item, key, done) => {
               item.quit(() => done());

@@ -7,7 +7,6 @@ import {
   IRequiredConfig,
   ICompatibleLogger,
 } from '../../../types';
-import * as async from 'async';
 import { PowerManager } from './power-manager/power-manager';
 import { events } from './events';
 import { RedisClient } from './redis-client/redis-client';
@@ -15,6 +14,7 @@ import { EmptyCallbackReplyError } from './errors/empty-callback-reply.error';
 import { PanicError } from './errors/panic.error';
 import { getConfiguration, setConfigurationIfNotExists } from './configuration';
 import { getNamespacedLogger } from './logger';
+import { waterfall } from '../lib/async';
 
 export abstract class Base extends EventEmitter {
   protected readonly id: string;
@@ -101,7 +101,7 @@ export abstract class Base extends EventEmitter {
     if (r) {
       this.emit(events.GOING_UP);
       const tasks = this.goingUp();
-      async.waterfall(tasks, (err) => {
+      waterfall(tasks, (err) => {
         if (err) {
           if (cb) cb(err);
           else this.emit(events.ERROR, err);
@@ -117,7 +117,7 @@ export abstract class Base extends EventEmitter {
     if (r) {
       this.emit(events.GOING_DOWN);
       const tasks = this.goingDown();
-      async.waterfall(tasks, () => {
+      waterfall(tasks, () => {
         // ignoring shutdown errors
         this.down(cb);
       });

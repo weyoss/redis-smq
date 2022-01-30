@@ -17,12 +17,12 @@ import { EventEmitter } from 'events';
 import { PowerManager } from '../common/power-manager/power-manager';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { ConsumerMessageRate } from './consumer-message-rate';
-import * as async from 'async';
 import { consumerQueues } from './consumer-queues';
 import { broker } from '../common/broker';
 import { queueManager } from '../queue-manager/queue-manager';
 import { Ticker } from '../common/ticker/ticker';
 import { getNamespacedLogger } from '../common/logger';
+import { waterfall } from '../lib/async';
 
 export class ConsumerMessageHandler extends EventEmitter {
   protected id: string;
@@ -291,7 +291,7 @@ export class ConsumerMessageHandler extends EventEmitter {
 
   run = (cb: ICallback<void>): void => {
     this.powerManager.goingUp();
-    async.waterfall(
+    waterfall(
       [
         (cb: ICallback<void>) => this.setUpMessageQueue(cb),
         (cb: ICallback<void>) => this.addQueueConsumer(cb),
@@ -311,7 +311,7 @@ export class ConsumerMessageHandler extends EventEmitter {
   shutdown = (cb: ICallback<void>): void => {
     const goDown = () => {
       this.powerManager.goingDown();
-      async.waterfall(
+      waterfall(
         [
           (cb: ICallback<void>) => {
             this.ticker.once(events.DOWN, cb);
@@ -321,7 +321,9 @@ export class ConsumerMessageHandler extends EventEmitter {
             if (this.messageRate) this.messageRate.quit(cb);
             else cb();
           },
-          (cb: ICallback<void>) => this.redisClient.halt(cb),
+          (cb: ICallback<void>) => {
+            this.redisClient.halt(cb);
+          },
         ],
         (err) => {
           if (err) cb(err);

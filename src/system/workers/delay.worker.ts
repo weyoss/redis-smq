@@ -2,17 +2,21 @@ import { RedisClient } from '../common/redis-client/redis-client';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { ICallback, IConsumerWorkerParameters } from '../../../types';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
-import * as async from 'async';
 import { Message } from '../message/message';
 import { broker } from '../common/broker';
-import { Worker } from '../common/worker';
+import { Worker } from '../common/worker/worker';
 import { setConfiguration } from '../common/configuration';
+import { each } from '../lib/async';
 
 export class DelayWorker extends Worker<IConsumerWorkerParameters> {
   protected redisKeys: ReturnType<typeof redisKeys['getMainKeys']>;
 
-  constructor(redisClient: RedisClient, params: IConsumerWorkerParameters) {
-    super(redisClient, params);
+  constructor(
+    redisClient: RedisClient,
+    params: IConsumerWorkerParameters,
+    managed: boolean,
+  ) {
+    super(redisClient, params, managed);
     this.redisKeys = redisKeys.getMainKeys();
   }
 
@@ -24,9 +28,9 @@ export class DelayWorker extends Worker<IConsumerWorkerParameters> {
         const messages = reply ?? [];
         if (messages.length) {
           const multi = this.redisClient.multi();
-          async.each(
+          each(
             messages,
-            (i, done) => {
+            (i, _, done) => {
               multi.lrem(keyDelayedMessages, 1, i);
               const message = Message.createFromMessage(i);
               message.incrAttempts();
@@ -54,6 +58,6 @@ process.on('message', (payload: string) => {
   RedisClient.getNewInstance((err, client) => {
     if (err) throw err;
     else if (!client) throw new EmptyCallbackReplyError();
-    else new DelayWorker(client, params).run();
+    else new DelayWorker(client, params, false).run();
   });
 });

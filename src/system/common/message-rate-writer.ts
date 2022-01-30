@@ -1,7 +1,7 @@
 import { Ticker } from './ticker/ticker';
 import { ICallback, TMessageRateFields } from '../../../types';
 import { events } from './events';
-import * as async from 'async';
+import { waterfall } from '../lib/async';
 
 export abstract class MessageRateWriter<
   TRateFields extends TMessageRateFields,
@@ -39,7 +39,7 @@ export abstract class MessageRateWriter<
   };
 
   quit(cb: ICallback<void>): void {
-    async.waterfall(
+    waterfall(
       [
         (cb: ICallback<void>) => {
           this.writerTicker.on(events.DOWN, cb);

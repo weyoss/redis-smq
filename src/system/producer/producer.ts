@@ -44,11 +44,11 @@ export class Producer extends Base {
     } else cb();
   };
 
-  protected goingUp(): TFunction[] {
+  protected override goingUp(): TFunction[] {
     return super.goingUp().concat([this.setUpMessageRate]);
   }
 
-  protected goingDown(): TUnaryFunction<ICallback<void>>[] {
+  protected override goingDown(): TUnaryFunction<ICallback<void>>[] {
     return [this.tearDownMessageRate].concat(super.goingDown());
   }
 

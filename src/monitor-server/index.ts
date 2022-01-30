@@ -14,7 +14,7 @@ import { IContext, TApplication } from './types/common';
 import * as stoppable from 'stoppable';
 import { PowerManager } from '../system/common/power-manager/power-manager';
 import { promisifyAll } from 'bluebird';
-import { WorkerRunner } from '../system/common/worker-runner/worker-runner';
+import { WorkerRunner } from '../system/common/worker/worker-runner/worker-runner';
 import * as cors from '@koa/cors';
 import { PanicError } from '../system/common/errors/panic.error';
 import { apiController } from './controllers/api/api-controller';
@@ -24,7 +24,7 @@ import {
 } from '../system/common/configuration';
 import { getNamespacedLogger } from '../system/common/logger';
 import { redisKeys } from '../system/common/redis-keys/redis-keys';
-import { WorkerPool } from '../system/common/worker-runner/worker-pool';
+import { WorkerPool } from '../system/common/worker/worker-runner/worker-pool';
 import { events } from '../system/common/events';
 
 type TBootstrapped = {

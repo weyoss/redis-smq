@@ -1,18 +1,22 @@
 import { RedisClient } from '../common/redis-client/redis-client';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { Message } from '../message/message';
-import * as async from 'async';
 import { ICallback, IConsumerWorkerParameters } from '../../../types';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { PanicError } from '../common/errors/panic.error';
-import { Worker } from '../common/worker';
+import { Worker } from '../common/worker/worker';
 import { setConfiguration } from '../common/configuration';
+import { each } from '../lib/async';
 
 export class RequeueWorker extends Worker<IConsumerWorkerParameters> {
   protected redisKeys: ReturnType<typeof redisKeys['getMainKeys']>;
 
-  constructor(redisClient: RedisClient, params: IConsumerWorkerParameters) {
-    super(redisClient, params);
+  constructor(
+    redisClient: RedisClient,
+    params: IConsumerWorkerParameters,
+    managed: boolean,
+  ) {
+    super(redisClient, params, managed);
     this.redisKeys = redisKeys.getMainKeys();
   }
 
@@ -24,9 +28,9 @@ export class RequeueWorker extends Worker<IConsumerWorkerParameters> {
         const messages = reply ?? [];
         if (messages.length) {
           const multi = this.redisClient.multi();
-          async.each(
+          each(
             messages,
-            (messageStr, done) => {
+            (messageStr, _, done) => {
               const message = Message.createFromMessage(messageStr);
               const queue = message.getQueue();
               if (!queue)
@@ -75,6 +79,6 @@ process.on('message', (payload: string) => {
   RedisClient.getNewInstance((err, client) => {
     if (err) throw err;
     else if (!client) throw new EmptyCallbackReplyError();
-    else new RequeueWorker(client, params).run();
+    else new RequeueWorker(client, params, false).run();
   });
 });

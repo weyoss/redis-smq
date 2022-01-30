@@ -113,16 +113,4 @@ export class Ticker extends EventEmitter {
       this.interval = setInterval(() => this.onTick(), this.time);
     }
   }
-
-  isUp(): boolean {
-    return this.powerManager.isUp();
-  }
-
-  isDown(): boolean {
-    return this.powerManager.isDown();
-  }
-
-  isRunning(): boolean {
-    return this.powerManager.isRunning();
-  }
 }

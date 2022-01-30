@@ -40,7 +40,7 @@ export class MessageManager {
       keyScheduledMessages,
       keyLockDeleteScheduledMessage,
     } = redisKeys.getMainKeys();
-    LockManager.lockFN(
+    LockManager.exclusiveRun(
       this.redisClient,
       keyLockDeleteScheduledMessage,
       (cb) => {
@@ -162,7 +162,7 @@ export class MessageManager {
       keyQueuePendingPriorityMessages,
       keyLockDeletePendingMessageWithPriority,
     } = redisKeys.getQueueKeys(queueParams.name, queueParams.ns);
-    LockManager.lockFN(
+    LockManager.exclusiveRun(
       this.redisClient,
       keyLockDeletePendingMessageWithPriority,
       (cb) => {
