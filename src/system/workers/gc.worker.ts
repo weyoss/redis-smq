@@ -1,4 +1,3 @@
-import * as async from 'async';
 import { Message } from '../message/message';
 import { RedisClient } from '../common/redis-client/redis-client';
 import {
@@ -16,8 +15,9 @@ import { GlobalDeadLetteredTimeSeries } from '../consumer/consumer-time-series/g
 import { TimeSeries } from '../common/time-series/time-series';
 import { broker } from '../common/broker';
 import { queueManager } from '../queue-manager/queue-manager';
-import { Worker } from '../common/worker';
+import { Worker } from '../common/worker/worker';
 import { setConfiguration } from '../common/configuration';
+import { each } from '../lib/async';
 
 export class GCWorker extends Worker<IConsumerWorkerParameters> {
   protected consumerId: string;
@@ -25,8 +25,12 @@ export class GCWorker extends Worker<IConsumerWorkerParameters> {
     typeof GlobalDeadLetteredTimeSeries
   >;
 
-  constructor(client: RedisClient, params: IConsumerWorkerParameters) {
-    super(client, params);
+  constructor(
+    client: RedisClient,
+    params: IConsumerWorkerParameters,
+    managed: boolean,
+  ) {
+    super(client, params, managed);
     const { consumerId } = params;
     this.consumerId = consumerId;
     this.globalDeadLetteredTimeSeries = GlobalDeadLetteredTimeSeries(client);
@@ -96,9 +100,9 @@ export class GCWorker extends Worker<IConsumerWorkerParameters> {
     processingQueues: string[],
     cb: ICallback<void>,
   ): void {
-    async.each<string, Error>(
+    each(
       processingQueues,
-      (processingQueue: string, cb) => {
+      (processingQueue: string, _, cb) => {
         const extractedData = redisKeys.extractData(processingQueue);
         if (!extractedData || !extractedData.consumerId) {
           cb(new PanicError(`Expected a consumer ID`));
@@ -154,6 +158,6 @@ process.on('message', (payload: string) => {
   RedisClient.getNewInstance((err, client) => {
     if (err) throw err;
     else if (!client) throw new EmptyCallbackReplyError();
-    else new GCWorker(client, params).run();
+    else new GCWorker(client, params, false).run();
   });
 });

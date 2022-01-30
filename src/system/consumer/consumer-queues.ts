@@ -1,5 +1,4 @@
 import * as os from 'os';
-import * as async from 'async';
 import {
   ICallback,
   THeartbeatRegistryPayload,
@@ -8,6 +7,7 @@ import {
 } from '../../../types';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { redisKeys } from '../common/redis-keys/redis-keys';
+import { each } from '../lib/async';
 
 const IPAddresses = (() => {
   const nets = os.networkInterfaces();
@@ -49,9 +49,9 @@ export const consumerQueues = {
     consumerId: string,
     queues: TQueueParams[],
   ): void {
-    async.each(
+    each(
       queues,
-      (queue, done) => {
+      (queue, _, done) => {
         const { keyQueueConsumers } = redisKeys.getQueueKeys(
           queue.name,
           queue.ns,
@@ -84,7 +84,7 @@ export const consumerQueues = {
       else {
         if (transform) {
           const data: Record<string | number, THeartbeatRegistryPayload> = {};
-          async.eachOf(
+          each(
             reply ?? {},
             (item, key, done) => {
               data[key] = JSON.parse(item);

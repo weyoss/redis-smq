@@ -5,7 +5,6 @@ import {
   TWebsocketMainStreamPayloadQueue,
   TWorkerParameters,
 } from '../../../types';
-import * as async from 'async';
 import { redisKeys } from '../../system/common/redis-keys/redis-keys';
 import { RedisClient } from '../../system/common/redis-client/redis-client';
 import { MessageManager } from '../../system/message-manager/message-manager';
@@ -13,10 +12,10 @@ import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callba
 import { Consumer } from '../../system/consumer/consumer';
 import { queueManager } from '../../system/queue-manager/queue-manager';
 import { setConfiguration } from '../../system/common/configuration';
-import { Worker } from '../../system/common/worker';
+import { Worker } from '../../system/common/worker/worker';
+import { each, waterfall } from '../../system/lib/async';
 
 export class WebsocketMainStreamWorker extends Worker {
-  protected noop = (): void => void 0;
   protected data: TWebsocketMainStreamPayload = {
     scheduledMessagesCount: 0,
     deadLetteredMessagesCount: 0,
@@ -59,7 +58,7 @@ export class WebsocketMainStreamWorker extends Worker {
       const keys: { type: number; name: string; ns: string }[] = [];
       const multi = this.redisClient.multi();
       const handleResult = (res: number[]) => {
-        async.eachOf(
+        each(
           res,
           (size, index, done) => {
             const { ns, name, type } = keys[+index];
@@ -84,9 +83,9 @@ export class WebsocketMainStreamWorker extends Worker {
           cb,
         );
       };
-      async.each(
+      each(
         queues,
-        (queue, done) => {
+        (queue, _, done) => {
           const {
             keyQueuePending,
             keyQueuePendingPriorityMessageIds,
@@ -162,10 +161,10 @@ export class WebsocketMainStreamWorker extends Worker {
   };
 
   protected updateOnlineInstances = (cb: ICallback<void>): void => {
-    async.eachOf<Record<string, TWebsocketMainStreamPayloadQueue>>(
+    each(
       this.data.queues,
       (item, key, done) => {
-        async.eachOf(
+        each(
           item,
           (item, key, done) => {
             this.countQueueConsumers(item, done);
@@ -177,11 +176,9 @@ export class WebsocketMainStreamWorker extends Worker {
     );
   };
 
-  protected publish = (): void => {
-    this.redisClient.publish(
-      'streamMain',
-      JSON.stringify(this.data),
-      this.noop,
+  protected publish = (cb: ICallback<void>): void => {
+    this.redisClient.publish('streamMain', JSON.stringify(this.data), () =>
+      cb(),
     );
   };
 
@@ -200,18 +197,17 @@ export class WebsocketMainStreamWorker extends Worker {
 
   work = (cb: ICallback<void>): void => {
     this.reset();
-    async.waterfall(
+    waterfall(
       [
         this.countScheduledMessages,
         this.getQueues,
         this.getQueueSize,
         this.updateOnlineInstances,
       ],
-      (err?: Error | null) => {
+      (err) => {
         if (err) cb(err);
         else {
-          this.publish();
-          cb();
+          this.publish(cb);
         }
       },
     );
@@ -226,6 +222,6 @@ process.on('message', (payload: string) => {
   RedisClient.getNewInstance((err, client) => {
     if (err) throw err;
     else if (!client) throw new EmptyCallbackReplyError();
-    else new WebsocketMainStreamWorker(client, params).run();
+    else new WebsocketMainStreamWorker(client, params, false).run();
   });
 });

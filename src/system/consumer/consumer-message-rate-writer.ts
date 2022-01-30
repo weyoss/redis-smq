@@ -10,8 +10,8 @@ import {
   IConsumerMessageRateFields,
   TQueueParams,
 } from '../../../types';
-import * as async from 'async';
 import { MessageRateWriter } from '../common/message-rate-writer';
+import { waterfall } from '../lib/async';
 
 export class ConsumerMessageRateWriter extends MessageRateWriter<IConsumerMessageRateFields> {
   protected redisClient: RedisClient;
@@ -94,7 +94,7 @@ export class ConsumerMessageRateWriter extends MessageRateWriter<IConsumerMessag
   }
 
   onQuit(cb: ICallback<void>): void {
-    async.waterfall(
+    waterfall(
       [
         (cb: ICallback<void>) => this.acknowledgedTimeSeries.quit(cb),
         (cb: ICallback<void>) => this.queueAcknowledgedRateTimeSeries.quit(cb),

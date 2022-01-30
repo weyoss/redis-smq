@@ -1,6 +1,6 @@
 import { Worker } from '../worker';
-import { ICallback } from '../../../../types';
-import * as async from 'async';
+import { ICallback } from '../../../../../types';
+import { each } from '../../../lib/async';
 
 export class WorkerPool {
   private pool: Worker[] = [];
@@ -35,9 +35,9 @@ export class WorkerPool {
   };
 
   clear = (cb: ICallback<void>): void => {
-    async.each<Worker, Error>(
+    each(
       this.pool,
-      (worker, done) => {
+      (worker, _, done) => {
         worker.quit(done);
       },
       () => {

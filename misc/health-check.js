@@ -1,7 +1,7 @@
 'use strict';
 const { events } = require('../dist/src/system/common/events');
 const { Consumer, Producer, Message } = require('..');
-const async = require('async');
+const { waterfall } = require('../dist/src/system/lib/async');
 
 const queue = 'test_queue';
 const producer = new Producer();
@@ -38,7 +38,7 @@ consumer.on(events.DOWN, () => {
 });
 
 const serialOnOff = (cb) =>
-  async.waterfall(
+  waterfall(
     [
       (cb) => consumer.run(() => cb()), // not return the status to the next
       (cb) => consumer.shutdown(() => cb()),
@@ -54,31 +54,13 @@ const serialOnOff = (cb) =>
     cb,
   );
 
-const concurrentOnOff = (cb) =>
-  async.parallel(
-    [
-      (cb) => consumer.run(cb),
-      (cb) => consumer.shutdown(cb),
-      (cb) => consumer.run(cb),
-      (cb) => consumer.shutdown(cb),
-      (cb) => consumer.run(cb),
-      (cb) => consumer.shutdown(cb),
-      (cb) => consumer.run(cb),
-      (cb) => consumer.shutdown(cb),
-      (cb) => consumer.run(cb),
-      (cb) => consumer.shutdown(cb),
-    ],
-    cb,
-  );
-
-async.waterfall(
+waterfall(
   [
     (cb) => {
       produceForever();
       cb();
     },
     serialOnOff,
-    concurrentOnOff,
   ],
   (err) => {
     if (err) console.log(err);

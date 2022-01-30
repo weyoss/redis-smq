@@ -187,10 +187,14 @@ export async function stopMonitorServer(): Promise<void> {
 export async function startWebsocketMainStreamWorker(): Promise<void> {
   if (!websocketMainStreamWorker) {
     const redisClient = await getRedisInstance();
-    websocketMainStreamWorker = new WebsocketMainStreamWorker(redisClient, {
-      timeout: 1000,
-      config,
-    });
+    websocketMainStreamWorker = new WebsocketMainStreamWorker(
+      redisClient,
+      {
+        timeout: 1000,
+        config,
+      },
+      false,
+    );
     websocketMainStreamWorker.run();
   }
 }
@@ -209,10 +213,14 @@ export async function stopWebsocketMainStreamWorker(): Promise<void> {
 export async function startWebsocketRateStreamWorker(): Promise<void> {
   if (!websocketRateStreamWorker) {
     const redisClient = await getRedisInstance();
-    websocketRateStreamWorker = new WebsocketRateStreamWorker(redisClient, {
-      timeout: 1000,
-      config,
-    });
+    websocketRateStreamWorker = new WebsocketRateStreamWorker(
+      redisClient,
+      {
+        timeout: 1000,
+        config,
+      },
+      false,
+    );
     websocketRateStreamWorker.run();
   }
 }
@@ -237,6 +245,7 @@ export async function startWebsocketHeartbeatStreamWorker(): Promise<void> {
         timeout: 1000,
         config,
       },
+      false,
     );
     websocketHeartbeatStreamWorker.run();
   }
@@ -256,10 +265,14 @@ export async function stopWebsocketHeartbeatStreamWorker(): Promise<void> {
 export async function startWebsocketOnlineStreamWorker(): Promise<void> {
   if (!websocketOnlineStreamWorker) {
     const redisClient = await getRedisInstance();
-    websocketOnlineStreamWorker = new WebsocketOnlineStreamWorker(redisClient, {
-      timeout: 1000,
-      config,
-    });
+    websocketOnlineStreamWorker = new WebsocketOnlineStreamWorker(
+      redisClient,
+      {
+        timeout: 1000,
+        config,
+      },
+      false,
+    );
     websocketOnlineStreamWorker.run();
   }
 }

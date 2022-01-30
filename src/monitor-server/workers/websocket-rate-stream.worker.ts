@@ -2,7 +2,6 @@ import { ICallback, TQueueParams, TWorkerParameters } from '../../../types';
 import { redisKeys } from '../../system/common/redis-keys/redis-keys';
 import { RedisClient } from '../../system/common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callback-reply.error';
-import * as async from 'async';
 import { ConsumerHeartbeat } from '../../system/consumer/consumer-heartbeat';
 import { TimeSeries } from '../../system/common/time-series/time-series';
 import { QueuePublishedTimeSeries } from '../../system/producer/producer-time-series/queue-published-time-series';
@@ -15,7 +14,8 @@ import { ConsumerAcknowledgedTimeSeries } from '../../system/consumer/consumer-t
 import { ConsumerDeadLetteredTimeSeries } from '../../system/consumer/consumer-time-series/consumer-dead-lettered-time-series';
 import { consumerQueues } from '../../system/consumer/consumer-queues';
 import { setConfiguration } from '../../system/common/configuration';
-import { Worker } from '../../system/common/worker';
+import { Worker } from '../../system/common/worker/worker';
+import { each, waterfall } from '../../system/lib/async';
 
 export class WebsocketRateStreamWorker extends Worker {
   protected queueData: {
@@ -26,7 +26,6 @@ export class WebsocketRateStreamWorker extends Worker {
     };
   } = {};
   protected tasks: ((cb: ICallback<void>) => void)[] = [];
-  protected noop = (): void => void 0;
 
   protected reset = (): void => {
     this.queueData = {};
@@ -49,9 +48,8 @@ export class WebsocketRateStreamWorker extends Worker {
           this.redisClient.publish(
             `streamConsumerAcknowledged:${consumerId}`,
             JSON.stringify(reply),
-            this.noop,
+            () => cb(),
           );
-          cb();
         }
       }),
     );
@@ -66,9 +64,8 @@ export class WebsocketRateStreamWorker extends Worker {
           this.redisClient.publish(
             `streamConsumerDeadLettered:${consumerId}`,
             JSON.stringify(reply),
-            this.noop,
+            () => cb(),
           );
-          cb();
         }
       }),
     );
@@ -84,9 +81,8 @@ export class WebsocketRateStreamWorker extends Worker {
             this.redisClient.publish(
               `streamQueueAcknowledged:${queue.ns}:${queue.name}`,
               JSON.stringify(reply),
-              this.noop,
+              () => cb(),
             );
-            cb();
           }
         },
       ),
@@ -100,9 +96,8 @@ export class WebsocketRateStreamWorker extends Worker {
             this.redisClient.publish(
               `streamQueueDeadLettered:${queue.ns}:${queue.name}`,
               JSON.stringify(reply),
-              this.noop,
+              () => cb(),
             );
-            cb();
           }
         },
       ),
@@ -116,9 +111,8 @@ export class WebsocketRateStreamWorker extends Worker {
             this.redisClient.publish(
               `streamQueuePublished:${queue.ns}:${queue.name}`,
               JSON.stringify(reply),
-              this.noop,
+              () => cb(),
             );
-            cb();
           }
         },
       ),
@@ -135,9 +129,8 @@ export class WebsocketRateStreamWorker extends Worker {
             this.redisClient.publish(
               'streamGlobalAcknowledged',
               JSON.stringify(reply),
-              this.noop,
+              () => cb(),
             );
-            cb();
           }
         },
       ),
@@ -151,9 +144,8 @@ export class WebsocketRateStreamWorker extends Worker {
             this.redisClient.publish(
               'streamGlobalDeadLettered',
               JSON.stringify(reply),
-              this.noop,
+              () => cb(),
             );
-            cb();
           }
         },
       ),
@@ -167,9 +159,8 @@ export class WebsocketRateStreamWorker extends Worker {
             this.redisClient.publish(
               'streamGlobalPublished',
               JSON.stringify(reply),
-              this.noop,
+              () => cb(),
             );
-            cb();
           }
         },
       ),
@@ -193,11 +184,11 @@ export class WebsocketRateStreamWorker extends Worker {
     ts: number,
     queue: TQueueParams,
     consumers: string[],
-    cb: () => void,
+    cb: ICallback<void>,
   ): void => {
-    async.each(
+    each(
       consumers,
-      (consumerId, done) => {
+      (consumerId, _, done) => {
         this.addConsumerTasks(ts, queue, consumerId);
         done();
       },
@@ -209,7 +200,7 @@ export class WebsocketRateStreamWorker extends Worker {
     ts: number,
     queue: TQueueParams,
     queueProperties: { consumers: string[] },
-    cb: () => void,
+    cb: ICallback<void>,
   ): void => {
     const { consumers } = queueProperties;
     this.addQueueTasks(ts, queue);
@@ -219,10 +210,10 @@ export class WebsocketRateStreamWorker extends Worker {
   protected prepare = (cb: ICallback<void>): void => {
     const ts = TimeSeries.getCurrentTimestamp() - 10;
     this.addGlobalTasks(ts);
-    async.eachOf(
+    each(
       this.queueData,
       (queues, ns, done) => {
-        async.eachOf(
+        each(
           queues,
           (queue, queueName, done) => {
             this.handleQueue(
@@ -239,26 +230,26 @@ export class WebsocketRateStreamWorker extends Worker {
     );
   };
 
-  protected publish = (): void => {
-    async.waterfall(this.tasks, this.noop);
+  protected publish = (cb: ICallback<void>): void => {
+    waterfall(this.tasks, cb);
   };
 
   protected consumersCount = (cb: ICallback<void>): void => {
     ConsumerHeartbeat.getValidHeartbeatIds(this.redisClient, (err, reply) => {
       if (err) cb(err);
       else {
-        async.each<string, Error>(
+        each(
           reply ?? [],
-          (consumerId, done) => {
+          (consumerId, _, done) => {
             consumerQueues.getConsumerQueues(
               this.redisClient,
               consumerId,
               (err, queues) => {
                 if (err) done(err);
                 else {
-                  async.each(
+                  each(
                     queues ?? [],
-                    (queueParams, done) => {
+                    (queueParams, _, done) => {
                       const queue = this.addQueue(queueParams);
                       queue.consumers.push(consumerId);
                       done();
@@ -280,9 +271,9 @@ export class WebsocketRateStreamWorker extends Worker {
     this.redisClient.smembers(keyQueues, (err, reply) => {
       if (err) cb(err);
       else {
-        async.each(
+        each(
           reply ?? [],
-          (queueStr, done) => {
+          (queueStr, index, done) => {
             const queue: TQueueParams = JSON.parse(queueStr);
             this.addQueue(queue);
             done();
@@ -295,15 +286,9 @@ export class WebsocketRateStreamWorker extends Worker {
 
   work = (cb: ICallback<void>): void => {
     this.reset();
-    async.waterfall(
-      [this.getQueues, this.consumersCount, this.prepare],
-      (err?: Error | null) => {
-        if (err) cb(err);
-        else {
-          this.publish();
-          cb();
-        }
-      },
+    waterfall(
+      [this.getQueues, this.consumersCount, this.prepare, this.publish],
+      cb,
     );
   };
 }
@@ -317,7 +302,7 @@ process.on('message', (payload: string) => {
     if (err) throw err;
     else if (!client) throw new EmptyCallbackReplyError();
     else {
-      new WebsocketRateStreamWorker(client, params).run();
+      new WebsocketRateStreamWorker(client, params, false).run();
     }
   });
 });

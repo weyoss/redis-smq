@@ -4,7 +4,7 @@ import { Callback, ClientOpts, Multi, RedisClient as NodeRedis } from 'redis';
 import * as Logger from 'bunyan';
 import { Message } from '../src/system/message/message';
 import { redisKeys } from '../src/system/common/redis-keys/redis-keys';
-import { Worker } from '../src/system/common/worker';
+import { Worker } from '../src/system/common/worker/worker';
 import { RedisClient } from '../src/system/common/redis-client/redis-client';
 
 declare module 'redis' {
@@ -160,11 +160,6 @@ export interface IRequiredConfig extends IConfig {
   };
 }
 
-export interface IMonitorServer {
-  listen: () => Promise<void>;
-  quit: () => Promise<void>;
-}
-
 export type TMessageDefaultOptions = {
   consumeTimeout: number;
   ttl: number;
@@ -262,7 +257,7 @@ export interface IConsumerWorkerParameters extends TWorkerParameters {
 }
 
 export type TWorkerClassConstructor<T extends TWorkerParameters> = {
-  new (redisClient: RedisClient, params: T): Worker<T>;
+  new (redisClient: RedisClient, params: T, managed: boolean): Worker<T>;
 };
 
 export type THeartbeatRegistryPayload = {
@@ -270,12 +265,6 @@ export type THeartbeatRegistryPayload = {
   hostname: string;
   pid: number;
   createdAt: number;
-};
-
-export type THeartbeatParams = {
-  keyHeartbeat: string;
-  instanceId: string;
-  queues: TQueueParams[];
 };
 
 export type THeartbeatPayload = {

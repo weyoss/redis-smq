@@ -7,13 +7,13 @@ import {
   TQueueParams,
 } from '../../../types';
 import { Message } from '../message/message';
-import * as async from 'async';
 import { LockManager } from '../common/lock-manager/lock-manager';
 import { MessageNotFoundError } from './errors/message-not-found.error';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { ArgumentError } from '../common/errors/argument.error';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { ELuaScriptName } from '../common/redis-client/lua-scripts';
+import { each, waterfall } from '../lib/async';
 
 export const validatePaginationParams = (skip: number, take: number) => {
   if (skip < 0 || take < 1) {
@@ -32,7 +32,7 @@ export const deleteListMessageAtSequenceId = (
   queue: TQueueParams,
   cb: ICallback<void>,
 ): void => {
-  LockManager.lockFN(
+  LockManager.exclusiveRun(
     redisClient,
     lockKey,
     (cb) => {
@@ -142,13 +142,7 @@ export const getPaginatedListMessages = (
         }
       });
   };
-  async.waterfall(
-    [getTotalItems, getItems],
-    (err?: Error | null, result?: TGetMessagesReply) => {
-      if (err) cb(err);
-      else cb(null, result);
-    },
-  );
+  waterfall([getTotalItems, getItems], cb);
 };
 
 export const getPaginatedSortedSetMessages = (
@@ -172,7 +166,7 @@ export const getPaginatedSortedSetMessages = (
         if (err) cb(err);
         else {
           const messages: Message[] = [];
-          async.eachOf(
+          each(
             msg ?? [],
             (item, index, done) => {
               if (!item) done(new EmptyCallbackReplyError());
@@ -207,7 +201,7 @@ export const getPaginatedSortedSetMessages = (
       });
     }
   };
-  async.waterfall([getTotalItems, getMessageIds, getMessages], cb);
+  waterfall([getTotalItems, getMessageIds, getMessages], cb);
 };
 
 export function requeueListMessage(

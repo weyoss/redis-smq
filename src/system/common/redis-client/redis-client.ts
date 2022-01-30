@@ -8,9 +8,9 @@ import {
 } from '../../../../types';
 import { EventEmitter } from 'events';
 import { ELuaScriptName, getScriptId, loadScripts } from './lua-scripts';
-import * as async from 'async';
 import { RedisClientError } from './redis-client.error';
 import { getConfiguration } from '../configuration';
+import { waterfall } from '../../lib/async';
 
 /**
  * client.end() does unregister all event listeners which causes the 'end' event not being emitted.
@@ -214,7 +214,7 @@ export class RedisClient extends EventEmitter {
     this.client.unsubscribe(channel);
   }
 
-  on(event: string, listener: (...args: string[]) => void) {
+  override on(event: string, listener: (...args: string[]) => void) {
     this.client.on(event, listener);
     return this;
   }
@@ -565,7 +565,7 @@ export class RedisClient extends EventEmitter {
     // An error will be thrown when max retries threshold is exceeded.
     const client = new RedisClient();
     client.once('ready', () => {
-      async.waterfall(
+      waterfall(
         [
           (cb: ICallback<void>) => client.updateServerVersion(cb),
           (cb: ICallback<void>) => client.loadScripts(cb),

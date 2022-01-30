@@ -12,18 +12,18 @@ import { ConsumerMessageRate } from './consumer-message-rate';
 import { events } from '../common/events';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { resolve } from 'path';
-import { WorkerRunner } from '../common/worker-runner/worker-runner';
+import { WorkerRunner } from '../common/worker/worker-runner/worker-runner';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { ConsumerHeartbeat } from './consumer-heartbeat';
 import { ConsumerMessageRateWriter } from './consumer-message-rate-writer';
 import { Base } from '../common/base';
 import { ConsumerMessageHandler } from './consumer-message-handler';
-import * as async from 'async';
 import { consumerQueues } from './consumer-queues';
 import { GenericError } from '../common/errors/generic.error';
 import { queueManager } from '../queue-manager/queue-manager';
-import { WorkerPool } from '../common/worker-runner/worker-pool';
+import { WorkerPool } from '../common/worker/worker-runner/worker-pool';
+import { each } from '../lib/async';
 
 export class Consumer extends Base {
   private heartbeat: ConsumerHeartbeat | null = null;
@@ -152,9 +152,9 @@ export class Consumer extends Base {
   };
 
   protected consumeMessages = (cb: ICallback<void>): void => {
-    async.each<TConsumerMessageHandlerParams, Error>(
+    each(
       this.messageHandlers,
-      (handlerParams, done) => {
+      (handlerParams, _, done) => {
         this.runMessageHandler(handlerParams, done);
       },
       cb,
@@ -162,7 +162,7 @@ export class Consumer extends Base {
   };
 
   protected tearDownMessageHandlerInstances = (cb: ICallback<void>): void => {
-    async.eachOf<ConsumerMessageHandler, Error>(
+    each(
       this.messageHandlerInstances,
       (handler, queue, done) => {
         handler.shutdown(done);
@@ -189,7 +189,7 @@ export class Consumer extends Base {
     return new ConsumerMessageRate(messageRateWriter);
   };
 
-  protected goingUp(): TUnaryFunction<ICallback<void>>[] {
+  protected override goingUp(): TUnaryFunction<ICallback<void>>[] {
     return super
       .goingUp()
       .concat([
@@ -199,7 +199,7 @@ export class Consumer extends Base {
       ]);
   }
 
-  protected goingDown(): TUnaryFunction<ICallback<void>>[] {
+  protected override goingDown(): TUnaryFunction<ICallback<void>>[] {
     return [
       this.tearDownConsumerWorkers,
       this.tearDownMessageHandlerInstances,

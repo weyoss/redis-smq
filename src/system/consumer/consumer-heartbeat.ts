@@ -1,5 +1,4 @@
 import * as os from 'os';
-import * as async from 'async';
 import {
   ICallback,
   THeartbeatPayload,
@@ -14,6 +13,7 @@ import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.e
 import { InvalidCallbackReplyError } from '../common/errors/invalid-callback-reply.error';
 import { consumerQueues } from './consumer-queues';
 import { Consumer } from './consumer';
+import { each, waterfall } from '../lib/async';
 
 const cpuUsageStatsRef = {
   cpuUsage: process.cpuUsage(),
@@ -108,7 +108,7 @@ export class ConsumerHeartbeat extends EventEmitter {
   }
 
   quit(cb: ICallback<void>): void {
-    async.waterfall(
+    waterfall(
       [
         (cb: ICallback<void>) => {
           this.ticker.once(events.DOWN, cb);
@@ -138,7 +138,7 @@ export class ConsumerHeartbeat extends EventEmitter {
         cb(new InvalidCallbackReplyError());
       else {
         const r: Record<string, boolean> = {};
-        async.eachOf(
+        each(
           consumerIds,
           (item, index, done) => {
             const idx = Number(index);
@@ -185,7 +185,7 @@ export class ConsumerHeartbeat extends EventEmitter {
                 consumerId: string;
                 payload: THeartbeatPayloadData | string;
               }[] = [];
-              async.eachOf(
+              each(
                 res,
                 (payloadStr, index, done) => {
                   // A consumer/producer could go offline at the time while we are processing heartbeats
@@ -258,9 +258,9 @@ export class ConsumerHeartbeat extends EventEmitter {
       const { keyHeartbeats, keyHeartbeatInstanceIds } =
         redisKeys.getMainKeys();
       const multi = client.multi();
-      async.each(
+      each(
         consumerIds,
-        (consumerId, done) => {
+        (consumerId, _, done) => {
           consumerQueues.getConsumerQueues(client, consumerId, (err, reply) => {
             consumerQueues.removeConsumer(multi, consumerId, reply ?? []);
             multi.hdel(keyHeartbeats, consumerId);

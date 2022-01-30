@@ -83,7 +83,7 @@ export class LockManager {
     return this.acquiredLock !== null;
   }
 
-  static lockFN(
+  static exclusiveRun(
     redisClient: RedisClient,
     key: string,
     fn: (cb: ICallback<void>) => void,

@@ -3,9 +3,9 @@ import { ICallback, TQueueParams } from '../../../types';
 import { ConsumerHeartbeat } from '../consumer/consumer-heartbeat';
 import { GenericError } from '../common/errors/generic.error';
 import { Consumer } from '../consumer/consumer';
-import * as async from 'async';
 import { LockManager } from '../common/lock-manager/lock-manager';
 import { redisKeys } from '../common/redis-keys/redis-keys';
+import { waterfall } from '../lib/async';
 
 export function validateMessageQueueDeletion(
   redisClient: RedisClient,
@@ -37,7 +37,7 @@ export function validateMessageQueueDeletion(
   const getOnlineConsumers = (cb: ICallback<string[]>): void => {
     Consumer.getOnlineConsumerIds(redisClient, queue, cb);
   };
-  async.waterfall([getOnlineConsumers, verifyHeartbeats], (err) => cb(err));
+  waterfall([getOnlineConsumers, verifyHeartbeats], (err) => cb(err));
 }
 
 export function lockQueue(
