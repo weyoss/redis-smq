@@ -1,23 +1,14 @@
 import {
   defaultQueue,
-  getConsumer,
+  getMessageManager,
   getProducer,
-  untilConsumerIdle,
-  untilMessageAcknowledged,
+  startScheduleWorker,
   validateTime,
 } from '../common';
 import { Message } from '../../src/message';
+import { delay, promisifyAll } from 'bluebird';
 
-test('Produce and consume a delayed message', async () => {
-  const consumedMessages: Message[] = [];
-  const consumer = getConsumer({
-    messageHandler: jest.fn((msg, cb) => {
-      consumedMessages.push(msg);
-      cb();
-    }),
-  });
-  consumer.run();
-
+test('Schedule a message: DELAY', async () => {
   const msg = new Message();
   msg
     .setScheduledDelay(10000)
@@ -26,13 +17,15 @@ test('Produce and consume a delayed message', async () => {
 
   const producer = getProducer();
   await producer.produceAsync(msg);
+  const producedAt = Date.now();
 
-  await untilMessageAcknowledged(consumer);
-  await untilConsumerIdle(consumer);
+  await startScheduleWorker();
+  await delay(30000);
 
-  const [message] = consumedMessages;
-  const diff =
-    (message.getPublishedAt() ?? 0) - (message.getScheduledAt() ?? 0);
-  // adjusted
-  expect(validateTime(diff, 12000)).toBe(true);
+  const m = promisifyAll(await getMessageManager());
+  const r = await m.getPendingMessagesAsync(defaultQueue, 0, 99);
+  expect(r.items.length).toBe(1);
+
+  const diff = (r.items[0].message.getPublishedAt() ?? 0) - producedAt;
+  expect(validateTime(diff, 10000)).toBe(true);
 });

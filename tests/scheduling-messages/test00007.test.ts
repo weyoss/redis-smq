@@ -1,25 +1,14 @@
 import {
   defaultQueue,
-  getConsumer,
+  getMessageManager,
   getProducer,
-  untilMessageAcknowledged,
+  startScheduleWorker,
   validateTime,
 } from '../common';
 import { Message } from '../../src/message';
+import { delay, promisifyAll } from 'bluebird';
 
-test('Produce and consume a delayed message: Case 2', async () => {
-  let callCount = 0;
-  const timestamps: number[] = [];
-  const consumer = getConsumer({
-    messageHandler: jest.fn((msg, cb) => {
-      callCount += 1;
-      if (callCount > 1) throw new Error('Unexpected call');
-      timestamps.push(msg.getPublishedAt() ?? 0);
-      cb();
-    }),
-  });
-  consumer.run();
-
+test('Schedule a message: combine REPEAT, REPEAT PERIOD, DELAY. Case 2', async () => {
   const msg = new Message();
   msg
     .setScheduledDelay(10000)
@@ -32,8 +21,13 @@ test('Produce and consume a delayed message: Case 2', async () => {
   await producer.produceAsync(msg);
   const producedAt = Date.now();
 
-  await untilMessageAcknowledged(consumer);
-  const diff = (timestamps[0] ?? 0) - producedAt;
-  // adjusted
-  expect(validateTime(diff, 12000)).toBe(true);
+  await startScheduleWorker();
+  await delay(30000);
+
+  const m = promisifyAll(await getMessageManager());
+  const r = await m.getPendingMessagesAsync(defaultQueue, 0, 99);
+  expect(r.items.length).toBe(1);
+
+  const diff = (r.items[0].message.getPublishedAt() ?? 0) - producedAt;
+  expect(validateTime(diff, 10000)).toBe(true);
 });

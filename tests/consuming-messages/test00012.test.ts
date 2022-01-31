@@ -10,7 +10,7 @@ import {
 import { Message } from '../../src/message';
 import { events } from '../../src/system/common/events';
 
-test('A consumer delays a failed message before re-queuing it again, given messageRetryThreshold is not exceeded', async () => {
+test('A message is delayed before being re-queued, given messageRetryDelay > 0 and messageRetryThreshold > 0 and is not exceeded', async () => {
   mockConfiguration({
     message: { retryDelay: 10000, retryThreshold: 5 },
   });
@@ -51,22 +51,20 @@ test('A consumer delays a failed message before re-queuing it again, given messa
   expect(unacks).toBe(4);
   expect(acks).toBe(1);
 
+  // consumer workers are run each ~ 5 sec
   for (let i = 0; i < timestamps.length; i += 1) {
-    const diff = timestamps[i] - timestamps[0];
     if (i === 0) {
-      expect(validateTime(diff, 0)).toBe(true);
-    } else if (i === 1) {
-      // adjusted
-      expect(validateTime(diff, 16000)).toBe(true);
+      continue;
+    }
+    const diff = timestamps[i] - timestamps[i - 1];
+    if (i === 1) {
+      expect(validateTime(diff, 15000)).toBe(true);
     } else if (i === 2) {
-      // adjusted
-      expect(validateTime(diff, 31000)).toBe(true);
+      expect(validateTime(diff, 15000)).toBe(true);
     } else if (i === 3) {
-      // adjusted
-      expect(validateTime(diff, 46000)).toBe(true);
+      expect(validateTime(diff, 15000)).toBe(true);
     } else {
-      // adjusted
-      expect(validateTime(diff, 61000)).toBe(true);
+      expect(validateTime(diff, 15000)).toBe(true);
     }
   }
 });
