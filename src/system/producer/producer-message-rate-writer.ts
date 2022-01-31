@@ -1,5 +1,9 @@
 import { MessageRateWriter } from '../common/message-rate-writer';
-import { ICallback, IProducerMessageRateFields } from '../../../types';
+import {
+  ICallback,
+  IProducerMessageRateFields,
+  TRedisClientMulti,
+} from '../../../types';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { QueuePublishedTimeSeries } from './producer-time-series/queue-published-time-series';
 import { GlobalPublishedTimeSeries } from './producer-time-series/global-published-time-series';
@@ -31,24 +35,26 @@ export class ProducerMessageRateWriter extends MessageRateWriter<IProducerMessag
   ): void {
     const { publishedRate, queuePublishedRate } = rates;
     if (Object.keys(queuePublishedRate).length) {
-      const multi = this.redisClient.multi();
-      this.globalPublishedTimeSeries.add(ts, publishedRate, multi);
-      for (const key in queuePublishedRate) {
-        if (!this.queuePublishedTimeSeries[key]) {
-          const [ns, name] = key.split(':');
-          this.queuePublishedTimeSeries[key] = QueuePublishedTimeSeries(
-            this.redisClient,
-            { ns, name },
-            true,
-          );
+      let multi: TRedisClientMulti | null = null;
+      if (publishedRate) {
+        multi = multi ?? this.redisClient.multi();
+        this.globalPublishedTimeSeries.add(ts, publishedRate, multi);
+        for (const key in queuePublishedRate) {
+          const value = queuePublishedRate[key];
+          if (value) {
+            if (!this.queuePublishedTimeSeries[key]) {
+              const [ns, name] = key.split(':');
+              this.queuePublishedTimeSeries[key] = QueuePublishedTimeSeries(
+                this.redisClient,
+                { ns, name },
+                true,
+              );
+            }
+            this.queuePublishedTimeSeries[key].add(ts, value, multi);
+          }
         }
-        this.queuePublishedTimeSeries[key].add(
-          ts,
-          queuePublishedRate[key],
-          multi,
-        );
-      }
-      this.redisClient.execMulti(multi, () => cb());
+        this.redisClient.execMulti(multi, () => cb());
+      } else cb();
     } else cb();
   }
 

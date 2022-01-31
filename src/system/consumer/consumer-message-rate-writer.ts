@@ -9,6 +9,7 @@ import {
   ICallback,
   IConsumerMessageRateFields,
   TQueueParams,
+  TRedisClientMulti,
 } from '../../../types';
 import { MessageRateWriter } from '../common/message-rate-writer';
 import { waterfall } from '../lib/async';
@@ -77,20 +78,24 @@ export class ConsumerMessageRateWriter extends MessageRateWriter<IConsumerMessag
     rates: IConsumerMessageRateFields,
     cb: ICallback<void>,
   ): void {
-    const multi = this.redisClient.multi();
+    let multi: TRedisClientMulti | null = null;
     for (const field in rates) {
+      multi = multi ?? this.redisClient.multi();
       const value: number = rates[field];
-      if (field === 'acknowledgedRate') {
-        this.acknowledgedTimeSeries.add(ts, value, multi);
-        this.queueAcknowledgedRateTimeSeries.add(ts, value, multi);
-        this.globalAcknowledgedRateTimeSeries.add(ts, value, multi);
-      } else {
-        this.deadLetteredTimeSeries.add(ts, value, multi);
-        this.queueDeadLetteredTimeSeries.add(ts, value, multi);
-        this.globalDeadLetteredTimeSeries.add(ts, value, multi);
+      if (value) {
+        if (field === 'acknowledgedRate') {
+          this.acknowledgedTimeSeries.add(ts, value, multi);
+          this.queueAcknowledgedRateTimeSeries.add(ts, value, multi);
+          this.globalAcknowledgedRateTimeSeries.add(ts, value, multi);
+        } else {
+          this.deadLetteredTimeSeries.add(ts, value, multi);
+          this.queueDeadLetteredTimeSeries.add(ts, value, multi);
+          this.globalDeadLetteredTimeSeries.add(ts, value, multi);
+        }
       }
     }
-    this.redisClient.execMulti(multi, () => cb());
+    if (multi) this.redisClient.execMulti(multi, () => cb());
+    else cb();
   }
 
   onQuit(cb: ICallback<void>): void {

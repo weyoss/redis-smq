@@ -433,7 +433,7 @@ export async function listenForWebsocketStreamEvents<
     data.push({ ts: Date.now(), payload });
   });
   for (; true; ) {
-    if (data.length === 5) {
+    if (data.length === 10) {
       subscribeClient.unsubscribe(streamName);
       break;
     } else await delay(500);
