@@ -444,10 +444,7 @@ export class Message {
       return false;
     }
     const threshold = this.getRetryThreshold();
-    if (threshold) {
-      return metadata.getAttempts() + 1 >= threshold;
-    }
-    return false;
+    return metadata.getAttempts() + 1 >= threshold;
   }
 
   isSchedulable(): boolean {
