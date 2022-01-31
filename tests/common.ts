@@ -24,6 +24,7 @@ import { WebsocketHeartbeatStreamWorker } from '../src/monitor-server/workers/we
 import { WebsocketOnlineStreamWorker } from '../src/monitor-server/workers/websocket-online-stream.worker';
 import { TimeSeriesResponseBodyDTO } from '../src/monitor-server/controllers/common/dto/time-series/time-series-response.DTO';
 import * as configuration from '../src/system/common/configuration';
+import ScheduleWorker from '../src/system/workers/schedule.worker';
 
 export const config = configuration.setConfiguration(testConfig);
 
@@ -62,6 +63,7 @@ let websocketRateStreamWorker: WebsocketRateStreamWorker | null = null;
 let websocketHeartbeatStreamWorker: WebsocketHeartbeatStreamWorker | null =
   null;
 let websocketOnlineStreamWorker: WebsocketOnlineStreamWorker | null = null;
+let scheduleWorker: ScheduleWorker | null = null;
 let messageManager: MessageManager | null = null;
 let queueManagerFrontend: QueueManagerFrontend | null = null;
 
@@ -96,6 +98,7 @@ export async function shutdown(): Promise<void> {
   await stopWebsocketRateStreamWorker();
   await stopWebsocketHeartbeatStreamWorker();
   await stopWebsocketOnlineStreamWorker();
+  await stopScheduleWorker();
 
   if (messageManager) {
     const m = promisifyAll(messageManager);
@@ -204,6 +207,33 @@ export async function stopWebsocketMainStreamWorker(): Promise<void> {
     if (websocketMainStreamWorker) {
       websocketMainStreamWorker.quit(() => {
         websocketMainStreamWorker = null;
+        resolve();
+      });
+    } else resolve();
+  });
+}
+
+export async function startScheduleWorker(): Promise<void> {
+  if (!scheduleWorker) {
+    const redisClient = await getRedisInstance();
+    scheduleWorker = new ScheduleWorker(
+      redisClient,
+      {
+        timeout: 1000,
+        config,
+        consumerId: 'abc',
+      },
+      false,
+    );
+    scheduleWorker.run();
+  }
+}
+
+export async function stopScheduleWorker(): Promise<void> {
+  return new Promise<void>((resolve) => {
+    if (scheduleWorker) {
+      scheduleWorker.quit(() => {
+        scheduleWorker = null;
         resolve();
       });
     } else resolve();

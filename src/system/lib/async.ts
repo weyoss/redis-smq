@@ -11,13 +11,13 @@ import { ICallback, TFunction } from '../../../types';
 
 export const eachOf = <T>(
   collection: T[],
-  iterator: (item: T, key: number, callback: ICallback<void>) => void,
+  iteratee: (item: T, key: number, callback: ICallback<void>) => void,
   callback: ICallback<void>,
 ): void => {
   if (collection.length) {
     let idx = 0;
     const iterate = () => {
-      iterator(collection[idx], idx, (err) => {
+      iteratee(collection[idx], idx, (err) => {
         idx += 1;
         if (err || idx >= collection.length) callback(err);
         else iterate();
@@ -31,7 +31,7 @@ export const eachOf = <T>(
 
 export const eachIn = <T>(
   collection: Record<string, T>,
-  iterator: (item: T, key: string, callback: ICallback<void>) => void,
+  iteratee: (item: T, key: string, callback: ICallback<void>) => void,
   callback: ICallback<void>,
 ): void => {
   const keys = Object.keys(collection);
@@ -39,7 +39,7 @@ export const eachIn = <T>(
     let idx = 0;
     const iterate = () => {
       const key = keys[idx];
-      iterator(collection[key], key, (err) => {
+      iteratee(collection[key], key, (err) => {
         idx += 1;
         if (err || idx >= keys.length) callback(err);
         else iterate();
@@ -51,11 +51,11 @@ export const eachIn = <T>(
 
 export const each = <T>(
   collection: T[] | Record<string, T>,
-  iterator: (item: T, key: number | string, callback: ICallback<void>) => void,
+  iteratee: (item: T, key: number | string, callback: ICallback<void>) => void,
   callback: ICallback<void>,
 ): void => {
-  if (Array.isArray(collection)) eachOf(collection, iterator, callback);
-  else eachIn(collection, iterator, callback);
+  if (Array.isArray(collection)) eachOf(collection, iteratee, callback);
+  else eachIn(collection, iteratee, callback);
 };
 
 export const waterfall = <T>(

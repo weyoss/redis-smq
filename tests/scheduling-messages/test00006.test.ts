@@ -1,29 +1,14 @@
 import {
   defaultQueue,
-  getConsumer,
+  getMessageManager,
   getProducer,
-  untilConsumerIdle,
-  untilMessageAcknowledged,
+  startScheduleWorker,
   validateTime,
 } from '../common';
 import { Message } from '../../src/message';
-import { delay } from 'bluebird';
+import { delay, promisifyAll } from 'bluebird';
 
-test('Produce and consume a delayed message: Case 1', async () => {
-  let callCount = 0;
-  const timestamps: number[] = [];
-  const consumer = getConsumer({
-    messageHandler: jest.fn((msg, cb) => {
-      callCount += 1;
-      if (callCount > 3) {
-        throw new Error('Unexpected call');
-      }
-      timestamps.push(msg.getPublishedAt() ?? 0);
-      cb();
-    }),
-  });
-  consumer.run();
-
+test('Schedule a message: combine REPEAT, REPEAT PERIOD, DELAY. Case 1', async () => {
   const msg = new Message();
   msg
     .setScheduledDelay(10000)
@@ -36,24 +21,22 @@ test('Produce and consume a delayed message: Case 1', async () => {
   await producer.produceAsync(msg);
   const producedAt = Date.now();
 
-  await untilMessageAcknowledged(consumer);
-  await untilMessageAcknowledged(consumer);
-  await untilMessageAcknowledged(consumer);
+  await startScheduleWorker();
+  await delay(30000);
 
-  await delay(6000); // just to make sure no more messages are published
+  const m = promisifyAll(await getMessageManager());
+  const r = await m.getPendingMessagesAsync(defaultQueue, 0, 99);
+  expect(r.items.length).toBe(4);
 
-  const diff1 = (timestamps[0] ?? 0) - producedAt;
-  // adjusted
-  expect(validateTime(diff1, 12000)).toBe(true);
+  const diff1 = (r.items[0].message.getPublishedAt() ?? 0) - producedAt;
+  expect(validateTime(diff1, 10000)).toBe(true);
 
-  const diff2 = (timestamps[1] ?? 0) - producedAt;
-  // adjusted
-  expect(validateTime(diff2, 17000)).toBe(true);
+  const diff2 = (r.items[1].message.getPublishedAt() ?? 0) - producedAt;
+  expect(validateTime(diff2, 13000)).toBe(true);
 
-  const diff3 = (timestamps[2] ?? 0) - producedAt;
-  // adjusted
-  expect(validateTime(diff3, 22000)).toBe(true);
+  const diff3 = (r.items[2].message.getPublishedAt() ?? 0) - producedAt;
+  expect(validateTime(diff3, 16000)).toBe(true);
 
-  await untilConsumerIdle(consumer);
-  expect(timestamps.length).toEqual(3);
+  const diff4 = (r.items[3].message.getPublishedAt() ?? 0) - producedAt;
+  expect(validateTime(diff4, 19000)).toBe(true);
 });

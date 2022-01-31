@@ -1,22 +1,14 @@
 import {
   defaultQueue,
-  getConsumer,
+  getMessageManager,
   getProducer,
-  untilMessageAcknowledged,
+  startScheduleWorker,
   validateTime,
 } from '../common';
 import { Message } from '../../src/message';
+import { delay, promisifyAll } from 'bluebird';
 
-test('Schedule a message with a combination of CRON expression, repeat, period, and delay parameters. Check that it is enqueued periodically on time.', async () => {
-  const timestamps: number[] = [];
-  const consumer = getConsumer({
-    messageHandler: jest.fn((msg, cb) => {
-      timestamps.push(msg.getPublishedAt() ?? 0);
-      cb(null);
-    }),
-  });
-  consumer.run();
-
+test('Schedule a message: combine CRON, REPEAT, REPEAT PERIOD, DELAY', async () => {
   const msg = new Message();
   msg.setScheduledCron('*/20 * * * * *'); // Schedule message for each 20 seconds
   msg.setScheduledRepeat(2); // repeat 2 times
@@ -28,26 +20,30 @@ test('Schedule a message with a combination of CRON expression, repeat, period, 
   await producer.produceAsync(msg);
   const producedAt = Date.now();
 
-  for (let i = 0; i < 8; i += 1) {
-    await untilMessageAcknowledged(consumer);
-  }
+  await startScheduleWorker();
+  await delay(60000);
 
-  for (let i = 0; i < 8; i += 1) {
+  const m = promisifyAll(await getMessageManager());
+  const r = await m.getPendingMessagesAsync(defaultQueue, 0, 99);
+  expect(r.items.length > 4).toBe(true);
+
+  for (let i = 0; i < r.items.length; i += 1) {
     if (i === 0) {
       // verify that the message was first delayed
-      const diff = timestamps[i] - producedAt;
-      // adjusted
-      expect(validateTime(diff, 17000)).toBe(true);
+      const diff = (r.items[i].message.getPublishedAt() ?? 0) - producedAt;
+      expect(validateTime(diff, 15000)).toBe(true);
       continue;
     }
 
     if (i === 1) {
-      // we can't predict the timestamps[1] - timestamps[0]
-      // considering that the first message is delayed
+      // we can't predict the diff
+      // considering that the first message was delayed
       continue;
     }
 
-    const diff = timestamps[i] - timestamps[1];
+    const diff =
+      (r.items[i].message.getPublishedAt() ?? 0) -
+      (r.items[1].message.getPublishedAt() ?? 0);
 
     if (i === 2) {
       expect(validateTime(diff, 5000)).toBe(true);
