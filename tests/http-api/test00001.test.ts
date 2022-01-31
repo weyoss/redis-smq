@@ -14,7 +14,7 @@ test('Fetching and deleting scheduled messages using the HTTP API: Case 1', asyn
 
   const msg1 = new Message();
   msg1
-    .setScheduledCron('0 * * * * *')
+    .setScheduledCRON('0 * * * * *')
     .setBody({ hello: 'world1' })
     .setQueue(defaultQueue);
   await producer.produceAsync(msg1);

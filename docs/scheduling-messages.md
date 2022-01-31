@@ -6,7 +6,7 @@ To set up scheduling parameters for a given message, the [Message API](api/messa
 
 - [setScheduledPeriod()](api/message.md#messageprototypesetscheduledperiod)
 - [setScheduledDelay()](api/message.md#messageprototypesetscheduleddelay)
-- [setScheduledCron()](api/message.md#messageprototypesetscheduledcron)
+- [setScheduledCRON()](api/message.md#messageprototypesetscheduledcron)
 - [setScheduledRepeat()](api/message.md#messageprototypesetscheduledrepeat)
 
 To schedule your message, you can publish it, as any other message, from your [Producer](api/producer.md#producerprototypeproduce) 
@@ -14,20 +14,20 @@ using the `produce()` method.
 
 ```javascript
 'use strict';
-const {Message, Producer} = require('redis-smq');
+const { Message, Producer } = require('redis-smq');
 
 const producer = new Producer();
 
 const message = new Message();
 message
-    .setBody({hello: 'world'})
-    .setScheduledCron(`0 0 * * * *`)
-    .setQueue('test_queue');
+  .setBody({ hello: 'world' })
+  .setScheduledCRON(`0 0 * * * *`)
+  .setQueue('test_queue');
 
 producer.produce(message, (err, reply) => {
-    if (err) console.log(err);
-    else if (rely) console.log('Message has been successfully scheduled');
-    else console.log('Message has not been scheduled');
+  if (err) console.log(err);
+  else if (rely) console.log('Message has been successfully scheduled');
+  else console.log('Message has not been scheduled');
 })
 ```
 

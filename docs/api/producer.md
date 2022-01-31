@@ -38,15 +38,15 @@ producer.produce(message, cb);
 - `cb(err)` *(function): Required.* Callback function.
 
 ```javascript
-const {Message, Producer} = require('redis-smq');
+const { Message, Producer } = require('redis-smq');
 
 const message = new Message();
 
 message
-    .setBody({hello: 'world'})
-    .setTTL(3600000)
-    .setScheduledDelay(10000) // in millis
-    .setQueue('test_queue');
+        .setBody({ hello: 'world' })
+        .setTTL(3600000)
+        .setScheduledDelay(10000) // in millis
+        .setQueue('test_queue');
 
 const producer = new Producer();
 producer.produce(message, (err) => {

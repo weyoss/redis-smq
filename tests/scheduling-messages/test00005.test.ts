@@ -10,7 +10,7 @@ import { delay, promisifyAll } from 'bluebird';
 
 test('Schedule a message: combine CRON, REPEAT, REPEAT PERIOD, DELAY', async () => {
   const msg = new Message();
-  msg.setScheduledCron('*/20 * * * * *'); // Schedule message for each 20 seconds
+  msg.setScheduledCRON('*/20 * * * * *'); // Schedule message for each 20 seconds
   msg.setScheduledRepeat(2); // repeat 2 times
   msg.setScheduledPeriod(5000); // 5 secs between each repeat
   msg.setScheduledDelay(15000); // this will first delay the message for 15 secs before cron/repeat scheduling

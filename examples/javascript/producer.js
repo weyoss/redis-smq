@@ -10,7 +10,7 @@ setConfiguration(config);
 const producer = new Producer();
 
 const msg = new Message()
-  .setScheduledCron('*/20 * * * * *')
+  .setScheduledCRON('*/20 * * * * *')
   .setBody({ hello: 'World!' })
   .setQueue('test_queue');
 

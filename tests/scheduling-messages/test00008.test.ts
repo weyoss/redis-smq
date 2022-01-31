@@ -10,7 +10,7 @@ import { delay, promisifyAll } from 'bluebird';
 test("Make sure scheduled messages aren't published if destination queue is deleted", async () => {
   const msg = new Message();
   msg
-    .setScheduledCron('*/3 * * * * *')
+    .setScheduledCRON('*/3 * * * * *')
     .setBody({ hello: 'world' })
     .setQueue('some_queue');
 

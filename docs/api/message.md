@@ -1,5 +1,46 @@
 # Message Class API
 
+1. [Configuration](#configuration)
+2. [Public Static Properties](#public-static-properties)
+3. Public Methods
+   1. General methods
+      1. [Message.prototype.getId()](#messageprototypegetid)
+      2. [Message.prototype.getCreatedAt()](#messageprototypegetcreatedat)
+      3. [Message.prototype.getPublishedAt()](#messageprototypegetpublishedat)
+   2. Message queue
+      1. [Message.prototype.setQueue()](#messageprototypesetqueue)
+      2. [Message.prototype.getQueue()](#messageprototypegetqueue)
+   3. Message payload
+      1. [Message.prototype.setBody()](#messageprototypesetbody)
+      2. [Message.prototype.getBody()](#messageprototypegetbody)
+   4. Consuming parameters
+      1. [Message.prototype.setConsumeTimeout()](#messageprototypesetconsumetimeout)
+      2. [Message.prototype.getConsumeTimeout()](#messageprototypegetconsumetimeout)
+      3. [Message.prototype.setRetryDelay()](#messageprototypesetretrydelay)
+      4. [Message.prototype.getRetryDelay()](#messageprototypegetretrydelay)
+      5. [Message.prototype.setTTL()](#messageprototypesetttl)
+      6. [Message.prototype.getTTL()](#messageprototypegetttl)
+      7. [Message.prototype.setRetryThreshold()](#messageprototypesetretrythreshold)
+      8. [Message.prototype.getRetryThreshold()](#messageprototypegetretrythreshold)
+   5. Scheduling parameters
+      1. [Message.prototype.setScheduledRepeat()](#messageprototypesetscheduledrepeat)      
+      2. [Message.prototype.setScheduledPeriod()](#messageprototypesetscheduledperiod)
+      3. [Message.prototype.getScheduledPeriod()](#messageprototypegetscheduledperiod)
+      4. [Message.prototype.getScheduledRepeat()](#messageprototypegetscheduledrepeat)
+      5. [Message.prototype.setScheduledCRON()](#messageprototypesetscheduledcron)
+      6. [Message.prototype.getScheduledCRON()](#messageprototypegetscheduledcron)
+      7. [Message.prototype.setScheduledDelay()](#messageprototypesetscheduleddelay)
+      8. [Message.prototype.getScheduledAt()](#messageprototypegetscheduledat)
+      9. [Message.prototype.isPeriodic()](#messageprototypeisperiodic)
+      10. [Message.prototype.isSchedulable()](#messageprototypeisschedulable)
+   6. Message priority parameters
+      1. [Message.prototype.getPriority()](#messageprototypegetpriority)
+      2. [Message.prototype.setPriority()](#messageprototypesetpriority)
+      3. [Message.prototype.hasPriority()](#messageprototypehaspriority)
+      4. [Message.prototype.disablePriority()](#messageprototypedisablepriority)
+   7. [Other Methods](#other-methods)
+
+
 ## Configuration
 
 For each new Message instance, the default values for the following properties are:
@@ -45,6 +86,18 @@ setQueue(queue);
     - `queue.ns` *(string): Required.* Queue namespace.
 
 The queue name can be composed only of letters (a-z), numbers (0-9) and (-_) characters.
+
+### Message.prototype.getQueue()
+
+```javascript
+const { Message } = require('redis-smq');
+
+const message = new Message();
+message.getQueue() // null;
+
+message.setQueue('test_queue');
+message.getQueue(); // { name: 'test_queue', ns: 'default' }
+```
 
 ### Message.prototype.setBody()
 
@@ -137,7 +190,7 @@ const message = new Message();
 message.setScheduledDelay(60000); // in millis
 ```
 
-### Message.prototype.setScheduledCron()
+### Message.prototype.setScheduledCRON()
 
 Schedule a message using a CRON expression.
 
@@ -148,7 +201,7 @@ Schedule a message using a CRON expression.
 const { Message } = require('redis-smq');
 
 const message = new Message();
-message.setScheduledCron('0 0 * * * *');  // Schedule message for delivery every hour
+message.setScheduledCRON('0 0 * * * *');  // Schedule message for delivery every hour
 message.setScheduledRepeat(5);
 message.setScheduledPeriod(10000); // in millis
 ```
@@ -176,6 +229,25 @@ const { Message } = require('redis-smq');
 const message = new Message();
 message.setScheduledRepeat(6); // Schedule the message for delivery 6 times
 message.setScheduledPeriod(1000); // Wait for one second after each delivery
+```
+
+### Message.prototype.isPeriodic()
+
+```javascript
+const { Message } = require('redis-smq');
+
+const msg = new Message();
+msg.isPeriodic(); // false
+msg.setScheduledCRON('*/6 * * * * *');
+msg.isPeriodic(); // true
+
+const msg2 = new Message();
+msg2.setScheduledDelay();
+msg2.isPeriodic(); // false
+
+const msg3 = new Message();
+msg3.setScheduledRepeat(3);
+msg3.isPeriodic(); // true
 ```
 
 ### Message.prototype.getBody()
@@ -304,17 +376,17 @@ producer.produce(message, (err) => {
 });
 ````
 
-### Message.prototype.getMessageScheduledRepeat()
+### Message.prototype.getScheduledRepeat()
 
 ```javascript
 const { Message } = require('redis-smq');
 
 const message = new Message();
-message.setScheduledRepeat(6); 
-message.getMessageScheduledRepeat(); // 6
+message.setScheduledRepeat(6);
+message.getScheduledRepeat(); // 6
 ````
 
-### Message.prototype.getMessageScheduledPeriod()
+### Message.prototype.getScheduledPeriod()
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -322,17 +394,36 @@ const { Message } = require('redis-smq');
 const message = new Message();
 message.setScheduledRepeat(6); // Schedule the message for delivery 6 times
 message.setScheduledPeriod(1000); // Wait for one second after each delivery
-message.getMessageScheduledPeriod(); // 1000, in millis
+message.getScheduledPeriod(); // 1000, in millis
 ```
 
-### Message.prototype.getMessageScheduledCRON()
+### Message.prototype.getScheduledCRON()
 
 ```javascript
 const { Message } = require('redis-smq');
 
 const message = new Message();
-message.setScheduledCron('*/10 * * * * *');  // Schedule message for delivery each 10 seconds
-message.getMessageScheduledCRON(); // '*/10 * * * * *'
+message.setScheduledCRON('*/10 * * * * *');  // Schedule message for delivery each 10 seconds
+message.getScheduledCRON(); // '*/10 * * * * *'
+```
+
+### Message.prototype.isSchedulable()
+
+```javascript
+const { Message } = require('redis-smq');
+
+const msg1 = new Message();
+msg1.isSchedulable(); // false
+msg1.setScheduledDelay(1000);
+msg1.isSchedulable(); // true;
+
+const msg2 = new Message()
+msg2.setScheduledCRON('*/10 * * * * *')
+msg2.isSchedulable(); // true;
+
+const msg3 = new Message()
+msg3.setScheduledRepeat(6)
+msg3.isSchedulable(); // true;
 ```
 
 ### Message.prototype.getPriority()
@@ -346,23 +437,45 @@ msg.setPriority(Message.MessagePriority.ABOVE_NORMAL);
 msg.getPriority() // Message.MessagePriority.ABOVE_NORMAL
 ```
 
+### Message.prototype.hasPriority()
+
+```javascript
+const { Message } = require('redis-smq');
+
+const msg = new Message();
+msg.hasPriority(); // false
+
+msg.setPriority(Message.MessagePriority.ABOVE_NORMAL);
+msg.hasPriority() // true
+```
+
+### Message.prototype.disablePriority()
+
+```javascript
+const { Message } = require('redis-smq');
+
+const msg = new Message();
+msg.setPriority(Message.MessagePriority.ABOVE_NORMAL);
+msg.hasPriority() // true
+
+msg.disablePriority();
+msg.hasPriority(); // false
+```
+
 ### Other Methods
 
 These methods are used internally and should not be used in your application:
 
-- Message.prototype.getMessageScheduledDelay()
-- Message.prototype.getMessageScheduledRepeatCount()
-- Message.prototype.getAttempts()
-- Message.prototype.incrAttempts()
-- Message.prototype.resetMessageScheduledRepeatCount()
-- Message.prototype.setMessageScheduledRepeatCount()
-- Message.prototype.setMessageScheduledCronFired()
-- Message.prototype.incrMessageScheduledRepeatCount()
-- Message.prototype.setAttempts()
-- Message.prototype.setMessageDelayed()
-- Message.prototype.setPublishedAt()
-- Message.prototype.setScheduledAt()
-- Message.prototype.reset()
-- Message.prototype.isDelayed()
-- Message.createFromMessage()
+- Message.prototype.getRequiredQueue()
+- Message.prototype.getRequiredMetadata()
+- Message.prototype.getMetadata()
+- Message.prototype.hasRetryThresholdExceeded()
+- Message.prototype.getSetMetadata()
+- Message.prototype.getSetExpired()
+- Message.prototype.getNextScheduledTimestamp()
+- Message.prototype.hasNextDelay()
+- Message.prototype.getRequiredId()
 - Message.prototype.toString()
+- Message.prototype.createFromMessage()
+
+

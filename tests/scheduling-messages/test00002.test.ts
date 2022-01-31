@@ -7,7 +7,7 @@ test('Schedule a message: messageManager.getScheduledMessages()', async () => {
   const msg1 = new Message();
   msg1.setScheduledDelay(30000);
   msg1
-    .setScheduledCron('0 * * * * *')
+    .setScheduledCRON('0 * * * * *')
     .setBody({ hello: 'world1' })
     .setQueue(defaultQueue);
   await producer.produceAsync(msg1);
