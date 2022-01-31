@@ -3,7 +3,7 @@ import { Message } from '../../src/system/message/message';
 import { getProducer, untilMessageAcknowledged } from '../common';
 import { Consumer } from '../../src/consumer';
 
-test('Multi queue consumer: case 1', async () => {
+test('Consume messages from different queues using a single consumer instance: case 2', async () => {
   const consumer = promisifyAll(new Consumer());
   await consumer.consumeAsync('test_queue', false, (msg, cb) => {
     cb();

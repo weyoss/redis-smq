@@ -40,8 +40,8 @@ export class RequeueWorker extends Worker<IConsumerWorkerParameters> {
                 const { keyQueuePending, keyQueuePendingPriorityMessageIds } =
                   redisKeys.getQueueKeys(name, ns);
                 multi.lrem(keyRequeueMessages, 1, messageStr);
-                message.incrAttempts();
-                if (message.isWithPriority()) {
+                message.getRequiredMetadata().incrAttempts();
+                if (message.hasPriority()) {
                   const priority = message.getPriority();
                   if (priority === null)
                     done(

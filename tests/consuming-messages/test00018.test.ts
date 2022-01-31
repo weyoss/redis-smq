@@ -1,6 +1,6 @@
 import { mockConfiguration, produceMessage } from '../common';
 
-test('Producing a message multiple times', async () => {
+test('Producing duplicate messages', async () => {
   mockConfiguration({
     storeMessages: false,
   });

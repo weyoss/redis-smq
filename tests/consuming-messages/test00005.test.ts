@@ -10,7 +10,7 @@ import {
 import { Message } from '../../src/message';
 import { events } from '../../src/system/common/events';
 
-test('Default message TTL: a message without TTL is not consumed and moved to DLQ when default messageTTL is exceeded', async () => {
+test('Setting default message TTL from configuration', async () => {
   mockConfiguration({
     message: {
       ttl: 2000,

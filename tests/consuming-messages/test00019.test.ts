@@ -10,7 +10,7 @@ import { Message } from '../../index';
 import { events } from '../../src/system/common/events';
 import { promisifyAll } from 'bluebird';
 
-test('A failed message is dead-lettered and not re-queued, when retryThreshold is 0', async () => {
+test('An unacknowledged message is dead-lettered and not delivered again, given retryThreshold is 0', async () => {
   mockConfiguration({
     message: {
       retryThreshold: 0,

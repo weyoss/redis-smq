@@ -1,7 +1,7 @@
 import { promisifyAll } from 'bluebird';
 import { Consumer } from '../../src/consumer';
 
-test('Multi queue consumer: case 1', async () => {
+test('Consume messages from different queues using a single consumer instance: case 1', async () => {
   const consumer = promisifyAll(new Consumer());
 
   expect(consumer.getQueues()).toEqual([]);

@@ -14,7 +14,7 @@ export const config: IConfig = {
     },
   },
   logger: {
-    enabled: true,
+    enabled: false,
   },
   monitor: {
     enabled: true,

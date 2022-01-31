@@ -133,4 +133,30 @@ export class MessageMetadata {
   hasExpired(): boolean {
     return this.expired;
   }
+
+  getSetExpired(ttl: number, createdAt: number): boolean {
+    if (!this.hasExpired()) {
+      const messageTTL = ttl;
+      if (messageTTL) {
+        const curTime = new Date().getTime();
+        const expired = createdAt + messageTTL - curTime <= 0;
+        this.setExpired(expired);
+        return expired;
+      }
+      return false;
+    }
+    return true;
+  }
+
+  getSetNextDelay(): number {
+    const retryDelay = this.getSetNextRetryDelay();
+    if (retryDelay) {
+      return retryDelay;
+    }
+    const scheduledDelay = this.getSetNextScheduledDelay();
+    if (scheduledDelay) {
+      return scheduledDelay;
+    }
+    return 0;
+  }
 }

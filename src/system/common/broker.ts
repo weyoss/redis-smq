@@ -76,7 +76,7 @@ export const broker = {
     if (timestamp > 0) {
       const { keyScheduledMessageIds, keyScheduledMessages } =
         redisKeys.getMainKeys();
-      message.setScheduledAt(Date.now());
+      message.getRequiredMetadata().setScheduledAt(Date.now());
       const messageId = message.getRequiredId();
       multi.zadd(keyScheduledMessageIds, timestamp, messageId);
       multi.hset(keyScheduledMessages, messageId, JSON.stringify(message));
@@ -95,7 +95,7 @@ export const broker = {
       else {
         const { keyQueues, keyScheduledMessageIds, keyScheduledMessages } =
           redisKeys.getQueueKeys(queue.name, queue.ns);
-        message.setScheduledAt(Date.now());
+        message.getRequiredMetadata().setScheduledAt(Date.now());
         const messageId = message.getRequiredId();
         redisClient.runScript(
           ELuaScriptName.SCHEDULE_MESSAGE,
