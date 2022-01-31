@@ -9,7 +9,7 @@ import { Message } from '../../src/message';
 import { events } from '../../src/system/common/events';
 import { ICallback } from '../../types';
 
-test('A consumer does re-queue and consume again a failed message when threshold not exceeded', async () => {
+test('Unacknowledged messages are re-queued when messageRetryThreshold is not exceeded', async () => {
   const producer = getProducer();
 
   let callCount = 0;

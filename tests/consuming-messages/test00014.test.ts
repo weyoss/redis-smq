@@ -7,7 +7,7 @@ import {
   untilMessageAcknowledged,
 } from '../common';
 
-test('Consume messages produced to different queues using a single producer instance', async () => {
+test('Consume messages from different queues and published by a single producer instance', async () => {
   const producer = getProducer();
   for (let i = 0; i < 5; i += 1) {
     const message = new Message();

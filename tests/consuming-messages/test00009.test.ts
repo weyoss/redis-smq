@@ -8,7 +8,7 @@ import { Message } from '../../src/message';
 import { events } from '../../src/system/common/events';
 import { delay, promisifyAll } from 'bluebird';
 
-test('A consumer does re-queue a failed message when threshold is not exceeded, otherwise it moves the message to DLQ (dead letter queue)', async () => {
+test('A message is dead-lettered when messageRetryThreshold is exceeded', async () => {
   const producer = getProducer();
   const consumer = getConsumer({
     messageHandler: jest.fn(() => {

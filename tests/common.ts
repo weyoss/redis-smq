@@ -25,6 +25,7 @@ import { WebsocketOnlineStreamWorker } from '../src/monitor-server/workers/webso
 import { TimeSeriesResponseBodyDTO } from '../src/monitor-server/controllers/common/dto/time-series/time-series-response.DTO';
 import * as configuration from '../src/system/common/configuration';
 import ScheduleWorker from '../src/system/workers/schedule.worker';
+import { merge } from 'lodash';
 
 export const config = configuration.setConfiguration(testConfig);
 
@@ -131,10 +132,7 @@ export function mockConfiguration(config: IConfig): void {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   configuration.getConfiguration = () => {
-    return {
-      ...getConfigurationOrig(),
-      ...config,
-    };
+    return merge({}, getConfigurationOrig(), config);
   };
 }
 

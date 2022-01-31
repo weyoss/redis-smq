@@ -1,6 +1,6 @@
 import { getConsumer, untilConsumerIdle } from '../common';
 
-test('A consumer is idle given no messages are produced', async () => {
+test('Wait until a consumer is idle', async () => {
   const consumer = getConsumer();
   const consume = jest.spyOn(consumer, 'consume');
   consumer.run();

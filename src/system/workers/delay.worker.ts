@@ -33,9 +33,9 @@ export class DelayWorker extends Worker<IConsumerWorkerParameters> {
             (i, _, done) => {
               multi.lrem(keyDelayedMessages, 1, i);
               const message = Message.createFromMessage(i);
-              message.incrAttempts();
+              message.getRequiredMetadata().incrAttempts();
               const delay = message.getRetryDelay();
-              message.setNextRetryDelay(delay);
+              message.getRequiredMetadata().setNextRetryDelay(delay);
               broker.schedule(multi, message);
               done();
             },

@@ -10,7 +10,7 @@ import {
 import { Message } from '../../src/message';
 import { events } from '../../src/system/common/events';
 
-test('A message is delayed before being re-queued, given messageRetryDelay > 0 and messageRetryThreshold > 0 and is not exceeded', async () => {
+test('An unacknowledged message is delayed given messageRetryDelay > 0 and messageRetryThreshold > 0 and is not exceeded', async () => {
   mockConfiguration({
     message: { retryDelay: 10000, retryThreshold: 5 },
   });

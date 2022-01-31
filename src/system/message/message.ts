@@ -60,6 +60,15 @@ export class Message {
     return this.metadata;
   }
 
+  getRequiredMetadata(): MessageMetadata {
+    if (!this.metadata) {
+      throw new PanicError(
+        `Expected an instance of MessageMetadata. Probably the message has not yet been published`,
+      );
+    }
+    return this.metadata;
+  }
+
   getSetMetadata(): MessageMetadata {
     if (!this.metadata) {
       this.metadata = new MessageMetadata();
@@ -68,14 +77,6 @@ export class Message {
       }
     }
     return this.metadata;
-  }
-
-  setPublishedAt(timestamp: number): Message {
-    if (!this.metadata) {
-      throw new PanicError(`Message has not yet been published`);
-    }
-    this.metadata.setPublishedAt(timestamp);
-    return this;
   }
 
   ///
@@ -94,20 +95,6 @@ export class Message {
     return null;
   }
 
-  getAttempts(): number {
-    if (this.metadata) {
-      return this.metadata.getAttempts();
-    }
-    return 0;
-  }
-
-  getMessageScheduledRepeatCount(): number {
-    if (this.metadata) {
-      return this.metadata.getMessageScheduledRepeatCount();
-    }
-    return 0;
-  }
-
   getId(): string | null {
     if (this.metadata) {
       return this.metadata.getId();
@@ -122,88 +109,28 @@ export class Message {
     return this.metadata.getId();
   }
 
-  hasScheduledCronFired(): boolean {
-    if (this.metadata) {
-      return this.metadata.hasScheduledCronFired();
-    }
-    return false;
-  }
-
   getSetExpired(): boolean {
-    if (!this.metadata) {
-      throw new PanicError(`Message has not yet been published`);
-    }
-    if (!this.metadata.hasExpired()) {
-      const messageTTL = this.getTTL();
-      if (messageTTL) {
-        const curTime = new Date().getTime();
-        const createdAt = this.getCreatedAt();
-        const expired = createdAt + messageTTL - curTime <= 0;
-        this.metadata.setExpired(expired);
-        return expired;
-      }
-      return false;
-    }
-    return true;
+    return this.getRequiredMetadata().getSetExpired(
+      this.getTTL(),
+      this.getCreatedAt(),
+    );
   }
 
   ///
-
-  incrMessageScheduledRepeatCount(): number {
-    if (!this.metadata) {
-      throw new PanicError(`Message has not yet been published`);
-    }
-    return this.metadata.incrMessageScheduledRepeatCount();
-  }
-
-  incrAttempts(): number {
-    if (!this.metadata) {
-      throw new PanicError(`Message has not yet been published`);
-    }
-    return this.metadata.incrAttempts();
-  }
-
-  setAttempts(attempts: number): Message {
-    if (!this.metadata) {
-      throw new PanicError(`Message has not yet been published`);
-    }
-    this.metadata.setAttempts(attempts);
-    return this;
-  }
-
-  setScheduledAt(timestamp: number): Message {
-    if (!this.metadata) {
-      throw new PanicError(`Message has not yet been published`);
-    }
-    this.metadata.setScheduledAt(timestamp);
-    return this;
-  }
-
-  resetMessageScheduledRepeatCount(): Message {
-    if (!this.metadata) {
-      throw new PanicError(`Message has not yet been published`);
-    }
-    this.metadata.resetMessageScheduledRepeatCount();
-    return this;
-  }
-
-  setMessageScheduledCronFired(fired: boolean): Message {
-    if (!this.metadata) {
-      throw new PanicError(`Message has not yet been published`);
-    }
-    this.metadata.setMessageScheduledCronFired(fired);
-    return this;
-  }
 
   /**
    * @param period In millis
    */
   setScheduledPeriod(period: number): Message {
-    if (period < 0)
+    // JavaScript users do not have type checking
+    // So just make sure that we have an integer value
+    const value = Number(period);
+    if (isNaN(value) || value < 0) {
       throw new ArgumentError(
         'Expected a positive integer value in milliseconds',
       );
-    this.scheduledPeriod = period;
+    }
+    this.scheduledPeriod = value;
     return this;
   }
 
@@ -211,12 +138,15 @@ export class Message {
    * @param delay In millis
    */
   setScheduledDelay(delay: number): Message {
-    if (delay < 0) {
+    // JavaScript users do not have type checking
+    // So just make sure that we have an integer value
+    const value = Number(delay);
+    if (isNaN(value) || value < 0) {
       throw new ArgumentError(
         'Expected a positive integer value in milliseconds',
       );
     }
-    this.scheduledDelay = delay;
+    this.scheduledDelay = value;
     return this;
   }
 
@@ -228,7 +158,13 @@ export class Message {
   }
 
   setScheduledRepeat(repeat: number): Message {
-    this.scheduledRepeat = Number(repeat);
+    // JavaScript users do not have type checking
+    // So just make sure that we have an integer value
+    const value = Number(repeat);
+    if (isNaN(value) || value < 0) {
+      throw new ArgumentError('Expected a positive integer value');
+    }
+    this.scheduledRepeat = value;
     return this;
   }
 
@@ -236,12 +172,15 @@ export class Message {
    * @param ttl In milliseconds
    */
   setTTL(ttl: number): Message {
-    if (ttl < 0) {
+    // JavaScript users do not have type checking
+    // So just make sure that we have an integer value
+    const value = Number(ttl);
+    if (isNaN(value) || value < 0) {
       throw new ArgumentError(
         'Expected a positive integer value in milliseconds',
       );
     }
-    this.ttl = ttl;
+    this.ttl = value;
     return this;
   }
 
@@ -249,17 +188,26 @@ export class Message {
    * @param timeout In milliseconds
    */
   setConsumeTimeout(timeout: number): Message {
-    if (timeout < 0) {
+    // JavaScript users do not have type checking
+    // So just make sure that we have an integer value
+    const value = Number(timeout);
+    if (isNaN(value) || value < 0) {
       throw new ArgumentError(
         'Expected a positive integer value in milliseconds',
       );
     }
-    this.consumeTimeout = timeout;
+    this.consumeTimeout = value;
     return this;
   }
 
   setRetryThreshold(threshold: number): Message {
-    this.retryThreshold = Number(threshold);
+    // JavaScript users do not have type checking
+    // So just make sure that we have an integer value
+    const value = Number(threshold);
+    if (isNaN(value) || value < 0) {
+      throw new ArgumentError('Retry threshold should be a number >= 0');
+    }
+    this.retryThreshold = value;
     return this;
   }
 
@@ -267,10 +215,13 @@ export class Message {
    * @param delay In millis
    */
   setRetryDelay(delay: number): Message {
-    if (delay < 0) {
-      throw new ArgumentError('Delay should not be a negative number');
+    // JavaScript users do not have type checking
+    // So just make sure that we have an integer value
+    const value = Number(delay);
+    if (isNaN(value) || value < 0) {
+      throw new ArgumentError('Retry delay should be a number >= 0 in millis');
     }
-    this.retryDelay = delay;
+    this.retryDelay = value;
     return this;
   }
 
@@ -297,7 +248,7 @@ export class Message {
     return this;
   }
 
-  isWithPriority(): boolean {
+  hasPriority(): boolean {
     return this.priority !== null;
   }
 
@@ -349,28 +300,6 @@ export class Message {
     return this.scheduledDelay;
   }
 
-  setNextRetryDelay(delay: number): Message {
-    if (!this.metadata) {
-      throw new PanicError(`Message has not yet been published`);
-    }
-    this.metadata.setNextRetryDelay(delay);
-    return this;
-  }
-
-  getSetNextDelay(): number {
-    if (this.metadata) {
-      const retryDelay = this.metadata.getSetNextRetryDelay();
-      if (retryDelay) {
-        return retryDelay;
-      }
-      const scheduledDelay = this.metadata.getSetNextScheduledDelay();
-      if (scheduledDelay) {
-        return scheduledDelay;
-      }
-    }
-    return 0;
-  }
-
   hasNextDelay(): boolean {
     if (this.metadata) {
       return this.metadata.hasDelay();
@@ -380,8 +309,10 @@ export class Message {
 
   getNextScheduledTimestamp(): number {
     if (this.isSchedulable()) {
+      const metadata = this.getRequiredMetadata();
+
       // Delay
-      const delay = this.getSetNextDelay();
+      const delay = metadata.getSetNextDelay();
       if (delay) {
         return Date.now() + delay;
       }
@@ -396,7 +327,7 @@ export class Message {
       const msgScheduledRepeat = this.getMessageScheduledRepeat();
       let repeatTimestamp = 0;
       if (msgScheduledRepeat) {
-        const newCount = this.getMessageScheduledRepeatCount() + 1;
+        const newCount = metadata.getMessageScheduledRepeatCount() + 1;
         if (newCount <= msgScheduledRepeat) {
           const msgScheduledPeriod = this.getMessageScheduledPeriod();
           const now = Date.now();
@@ -409,25 +340,28 @@ export class Message {
       }
 
       if (repeatTimestamp && cronTimestamp) {
-        if (repeatTimestamp < cronTimestamp && this.hasScheduledCronFired()) {
-          this.incrMessageScheduledRepeatCount();
+        if (
+          repeatTimestamp < cronTimestamp &&
+          metadata.hasScheduledCronFired()
+        ) {
+          metadata.incrMessageScheduledRepeatCount();
           return repeatTimestamp;
         }
       }
 
       if (cronTimestamp) {
         // reset repeat count on each cron tick
-        this.resetMessageScheduledRepeatCount();
+        metadata.resetMessageScheduledRepeatCount();
 
         // if the message has also a repeat scheduling then the first time it will fires only
         // after CRON scheduling has been fired
-        this.setMessageScheduledCronFired(true);
+        metadata.setMessageScheduledCronFired(true);
 
         return cronTimestamp;
       }
 
       if (repeatTimestamp) {
-        this.incrMessageScheduledRepeatCount();
+        metadata.incrMessageScheduledRepeatCount();
         return repeatTimestamp;
       }
     }
