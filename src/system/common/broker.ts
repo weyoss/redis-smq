@@ -6,9 +6,7 @@ import {
 } from '../../../types';
 import { Message } from '../message/message';
 import { RedisClient } from './redis-client/redis-client';
-import { PanicError } from './errors/panic.error';
 import { redisKeys } from './redis-keys/redis-keys';
-import { ArgumentError } from './errors/argument.error';
 import { ELuaScriptName } from './redis-client/lua-scripts';
 import { getConfiguration } from './configuration';
 
@@ -20,10 +18,7 @@ function deadLetterMessage(
   deadLetterCause: EMessageDeadLetterCause,
   cb: ICallback<void>,
 ): void {
-  const queue = message.getQueue();
-  if (!queue) {
-    throw new PanicError(`Message parameters are required`);
-  }
+  const queue = message.getRequiredQueue();
   const { storeMessages } = getConfiguration();
   if (storeMessages) {
     const { keyQueueDL } = redisKeys.getQueueKeys(queue.name, queue.ns);
@@ -43,10 +38,7 @@ function delayUnacknowledgedMessageBeforeRequeuing(
   unacknowledgedCause: EMessageUnacknowledgedCause,
   cb: ICallback<void>,
 ): void {
-  const queue = message.getQueue();
-  if (!queue) {
-    throw new PanicError(`Message queue parameters are required.`);
-  }
+  const queue = message.getRequiredQueue();
   const { keyDelayedMessages } = redisKeys.getQueueKeys(queue.name, queue.ns);
   redisClient.rpoplpush(keyQueueProcessing, keyDelayedMessages, (err) =>
     cb(err),
@@ -60,10 +52,7 @@ function requeueUnacknowledgedMessage(
   unacknowledgedCause: EMessageUnacknowledgedCause,
   cb: ICallback<void>,
 ): void {
-  const queue = message.getQueue();
-  if (!queue) {
-    throw new PanicError(`Message parameters are required`);
-  }
+  const queue = message.getRequiredQueue();
   const { keyRequeueMessages } = redisKeys.getQueueKeys(queue.name, queue.ns);
   redisClient.rpoplpush(keyQueueProcessing, keyRequeueMessages, (err) =>
     cb(err),
@@ -90,30 +79,27 @@ export const broker = {
   ): void {
     const timestamp = message.getNextScheduledTimestamp();
     if (timestamp > 0) {
-      const queue = message.getQueue();
-      if (!queue) cb(new ArgumentError('Message queue is required'));
-      else {
-        const { keyQueues, keyScheduledMessageIds, keyScheduledMessages } =
-          redisKeys.getQueueKeys(queue.name, queue.ns);
-        message.getRequiredMetadata().setScheduledAt(Date.now());
-        const messageId = message.getRequiredId();
-        redisClient.runScript(
-          ELuaScriptName.SCHEDULE_MESSAGE,
-          [
-            keyQueues,
-            JSON.stringify(queue),
-            messageId,
-            JSON.stringify(message),
-            `${timestamp}`,
-            keyScheduledMessageIds,
-            keyScheduledMessages,
-          ],
-          (err) => {
-            if (err) cb(err);
-            else cb(null, true);
-          },
-        );
-      }
+      const queue = message.getRequiredQueue();
+      const { keyQueues, keyScheduledMessageIds, keyScheduledMessages } =
+        redisKeys.getQueueKeys(queue.name, queue.ns);
+      message.getRequiredMetadata().setScheduledAt(Date.now());
+      const messageId = message.getRequiredId();
+      redisClient.runScript(
+        ELuaScriptName.SCHEDULE_MESSAGE,
+        [
+          keyQueues,
+          JSON.stringify(queue),
+          messageId,
+          JSON.stringify(message),
+          `${timestamp}`,
+          keyScheduledMessageIds,
+          keyScheduledMessages,
+        ],
+        (err) => {
+          if (err) cb(err);
+          else cb(null, true);
+        },
+      );
     } else cb(null, false);
   },
 
@@ -124,10 +110,7 @@ export const broker = {
     storeMessages: boolean,
     cb: ICallback<void>,
   ): void {
-    const queue = message.getQueue();
-    if (!queue) {
-      throw new PanicError(`Message queue parameters are required`);
-    }
+    const queue = message.getRequiredQueue();
     if (storeMessages) {
       const { keyQueueAcknowledged } = redisKeys.getQueueKeys(
         queue.name,

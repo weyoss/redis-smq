@@ -57,9 +57,7 @@ export class Producer extends Base {
     message: Message,
     cb: ICallback<void>,
   ): void {
-    const queue = message.getQueue();
-    if (!queue)
-      throw new PanicError(`Can not enqueue a message without a queue name`);
+    const queue = message.getRequiredQueue();
     message.getRequiredMetadata().setPublishedAt(Date.now());
     const {
       keyQueues,

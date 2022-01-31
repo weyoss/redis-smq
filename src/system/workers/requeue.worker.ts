@@ -32,33 +32,29 @@ export class RequeueWorker extends Worker<IConsumerWorkerParameters> {
             messages,
             (messageStr, _, done) => {
               const message = Message.createFromMessage(messageStr);
-              const queue = message.getQueue();
-              if (!queue)
-                done(new PanicError('Message queue parameters are required'));
-              else {
-                const { ns, name } = queue;
-                const { keyQueuePending, keyQueuePendingPriorityMessageIds } =
-                  redisKeys.getQueueKeys(name, ns);
-                multi.lrem(keyRequeueMessages, 1, messageStr);
-                message.getRequiredMetadata().incrAttempts();
-                if (message.hasPriority()) {
-                  const priority = message.getPriority();
-                  if (priority === null)
-                    done(
-                      new PanicError(
-                        `Expected a non-empty message priority value`,
-                      ),
-                    );
-                  else {
-                    multi.zadd(
-                      keyQueuePendingPriorityMessageIds,
-                      priority,
-                      JSON.stringify(message),
-                    );
-                  }
-                } else multi.lpush(keyQueuePending, JSON.stringify(message));
-                done();
-              }
+              const queue = message.getRequiredQueue();
+              const { ns, name } = queue;
+              const { keyQueuePending, keyQueuePendingPriorityMessageIds } =
+                redisKeys.getQueueKeys(name, ns);
+              multi.lrem(keyRequeueMessages, 1, messageStr);
+              message.getRequiredMetadata().incrAttempts();
+              if (message.hasPriority()) {
+                const priority = message.getPriority();
+                if (priority === null)
+                  done(
+                    new PanicError(
+                      `Expected a non-empty message priority value`,
+                    ),
+                  );
+                else {
+                  multi.zadd(
+                    keyQueuePendingPriorityMessageIds,
+                    priority,
+                    JSON.stringify(message),
+                  );
+                }
+              } else multi.lpush(keyQueuePending, JSON.stringify(message));
+              done();
             },
             (err) => {
               if (err) cb(err);

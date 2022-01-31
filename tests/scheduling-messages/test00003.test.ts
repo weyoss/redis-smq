@@ -11,7 +11,7 @@ import { delay, promisifyAll } from 'bluebird';
 test('Schedule a message: CRON', async () => {
   const msg = new Message();
   msg
-    .setScheduledCron('*/6 * * * * *')
+    .setScheduledCRON('*/6 * * * * *')
     .setBody({ hello: 'world' })
     .setQueue(defaultQueue);
 

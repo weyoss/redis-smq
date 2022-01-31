@@ -3,7 +3,6 @@ import { redisKeys } from '../common/redis-keys/redis-keys';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { Message } from '../message/message';
-import { PanicError } from '../common/errors/panic.error';
 import { ELuaScriptName } from '../common/redis-client/lua-scripts';
 import { Worker } from '../common/worker/worker';
 import { setConfiguration } from '../common/configuration';
@@ -50,40 +49,34 @@ export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
         messages,
         (msg, _, done) => {
           const message = Message.createFromMessage(msg);
-          const queue = message.getQueue();
-          if (!queue) {
-            done(
-              new PanicError(`Expected a message with a non-empty queue value`),
-            );
-          } else {
-            const {
+          const queue = message.getRequiredQueue();
+          const {
+            keyQueues,
+            keyQueuePending,
+            keyQueuePendingPriorityMessages,
+            keyQueuePendingPriorityMessageIds,
+            keyScheduledMessageIds,
+            keyScheduledMessages,
+          } = redisKeys.getQueueKeys(queue.name, queue.ns);
+          const nextScheduleTimestamp = message.getNextScheduledTimestamp();
+          message.getRequiredMetadata().setPublishedAt(Date.now());
+          this.redisClient.runScript(
+            ELuaScriptName.ENQUEUE_SCHEDULED_MESSAGE,
+            [
               keyQueues,
-              keyQueuePending,
+              JSON.stringify(queue),
+              message.getRequiredId(),
+              JSON.stringify(message),
+              message.getPriority() ?? '',
               keyQueuePendingPriorityMessages,
               keyQueuePendingPriorityMessageIds,
+              keyQueuePending,
+              `${nextScheduleTimestamp}`,
               keyScheduledMessageIds,
               keyScheduledMessages,
-            } = redisKeys.getQueueKeys(queue.name, queue.ns);
-            const nextScheduleTimestamp = message.getNextScheduledTimestamp();
-            message.getRequiredMetadata().setPublishedAt(Date.now());
-            this.redisClient.runScript(
-              ELuaScriptName.ENQUEUE_SCHEDULED_MESSAGE,
-              [
-                keyQueues,
-                JSON.stringify(queue),
-                message.getRequiredId(),
-                JSON.stringify(message),
-                message.getPriority() ?? '',
-                keyQueuePendingPriorityMessages,
-                keyQueuePendingPriorityMessageIds,
-                keyQueuePending,
-                `${nextScheduleTimestamp}`,
-                keyScheduledMessageIds,
-                keyScheduledMessages,
-              ],
-              (err) => done(err),
-            );
-          }
+            ],
+            (err) => done(err),
+          );
         },
         cb,
       );

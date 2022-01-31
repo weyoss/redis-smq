@@ -150,7 +150,7 @@ export class Message {
     return this;
   }
 
-  setScheduledCron(cron: string): Message {
+  setScheduledCRON(cron: string): Message {
     // it throws an exception for an invalid value
     parseExpression(cron);
     this.scheduledCron = cron;
@@ -256,6 +256,13 @@ export class Message {
     return this.queue;
   }
 
+  getRequiredQueue(): TQueueParams {
+    if (!this.queue) {
+      throw new PanicError(`Expected queue parameters to be not empty`);
+    }
+    return this.queue;
+  }
+
   getPriority(): number | null {
     return this.priority;
   }
@@ -284,15 +291,15 @@ export class Message {
     return this.createdAt;
   }
 
-  getMessageScheduledRepeat(): number {
+  getScheduledRepeat(): number {
     return this.scheduledRepeat;
   }
 
-  getMessageScheduledPeriod(): number | null {
+  getScheduledPeriod(): number | null {
     return this.scheduledPeriod;
   }
 
-  getMessageScheduledCRON(): string | null {
+  getScheduledCRON(): string | null {
     return this.scheduledCron;
   }
 
@@ -318,18 +325,18 @@ export class Message {
       }
 
       // CRON
-      const msgScheduledCron = this.getMessageScheduledCRON();
+      const msgScheduledCron = this.getScheduledCRON();
       const cronTimestamp = msgScheduledCron
         ? parseExpression(msgScheduledCron).next().getTime()
         : 0;
 
       // Repeat
-      const msgScheduledRepeat = this.getMessageScheduledRepeat();
+      const msgScheduledRepeat = this.getScheduledRepeat();
       let repeatTimestamp = 0;
       if (msgScheduledRepeat) {
         const newCount = metadata.getMessageScheduledRepeatCount() + 1;
         if (newCount <= msgScheduledRepeat) {
-          const msgScheduledPeriod = this.getMessageScheduledPeriod();
+          const msgScheduledPeriod = this.getScheduledPeriod();
           const now = Date.now();
           if (msgScheduledPeriod) {
             repeatTimestamp = now + msgScheduledPeriod;
@@ -386,10 +393,7 @@ export class Message {
   }
 
   isPeriodic(): boolean {
-    return (
-      this.getMessageScheduledCRON() !== null ||
-      this.getMessageScheduledRepeat() > 0
-    );
+    return this.getScheduledCRON() !== null || this.getScheduledRepeat() > 0;
   }
 
   static createFromMessage(message: string | Message, reset = false): Message {
