@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## 6.0.0-rc.10 (2022-02-01)
+
+* Improve locking mechanisms, remove redlock package, refactor (8f5d9b2)
+* Continue Message class refactoring, update docs and examples (d25f370)
+* Fix consuming-messages/test00006 test errors, refactor Message class (efa1163)
+* Fix at-most-once message delivery (eb4e6fa)
+* Update tests (6f9d07e)
+* Bump up redis-smq-monitor to v6.3.0 (ec518fc)
+* Update time series data only when message rate > 0 (748bc7f)
+* Remove dependency on async package and clean up (76698b2)
+* Use worker pool for system workers and monitor-server workers (8bee7ec)
+* Test producing duplicate messages (a260fd7)
+* Remove redundant code related to message.isSchedulable() (34f25cc)
+* Update Redis keys prefix (0914c99)
+* Forbid producing a message more than once, introduce MessageMetadata (eebab36)
+
 ## 6.0.0-rc.9 (2022-01-27)
 
 * Check object reference equality before clearing singleton instance (88e35ad)
