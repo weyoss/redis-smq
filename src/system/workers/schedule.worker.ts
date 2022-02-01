@@ -2,7 +2,7 @@ import { ICallback, IConsumerWorkerParameters } from '../../../types';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
-import { Message } from '../message/message';
+import { Message } from '../app/message/message';
 import { ELuaScriptName } from '../common/redis-client/lua-scripts';
 import { Worker } from '../common/worker/worker';
 import { setConfiguration } from '../common/configuration';

@@ -1,6 +1,6 @@
-import { ProducerMessageRate } from '../../src/system/producer/producer-message-rate';
+import { ProducerMessageRate } from '../../src/system/app/producer/producer-message-rate';
 import { promisifyAll } from 'bluebird';
-import { ProducerMessageRateWriter } from '../../src/system/producer/producer-message-rate-writer';
+import { ProducerMessageRateWriter } from '../../src/system/app/producer/producer-message-rate-writer';
 import { getRedisInstance } from '../common';
 import { IProducerMessageRateFields } from '../../types';
 

@@ -2,7 +2,7 @@ import { ServerOptions } from 'socket.io';
 import IORedis, { KeyType, Redis, RedisOptions } from 'ioredis';
 import { Callback, ClientOpts, Multi, RedisClient as NodeRedis } from 'redis';
 import * as Logger from 'bunyan';
-import { Message } from '../src/system/message/message';
+import { Message } from '../src/system/app/message/message';
 import { redisKeys } from '../src/system/common/redis-keys/redis-keys';
 import { Worker } from '../src/system/common/worker/worker';
 import { RedisClient } from '../src/system/common/redis-client/redis-client';
@@ -107,6 +107,22 @@ export type TCompatibleRedisClient = (NodeRedis | Redis) & {
   evalsha: TFunction;
   watch(args: string[], cb: ICallback<string>): void;
   set(key: string, value: string, cb: ICallback<string>): void;
+  set(key: string, value: string, flag: string, cb: ICallback<string>): void;
+  set(
+    key: string,
+    value: string,
+    mode: string,
+    duration: number,
+    cb: ICallback<string>,
+  ): void;
+  set(
+    key: string,
+    value: string,
+    mode: string,
+    duration: number,
+    flag: string,
+    cb: ICallback<string>,
+  ): void;
   del(key: string, cb: ICallback<number>): void;
   zrem(key: string, value: string | string[], cb: ICallback<number>): void;
   hmget(source: string, keys: string[], cb: ICallback<(string | null)[]>): void;

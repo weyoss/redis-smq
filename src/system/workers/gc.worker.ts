@@ -1,4 +1,4 @@
-import { Message } from '../message/message';
+import { Message } from '../app/message/message';
 import { RedisClient } from '../common/redis-client/redis-client';
 import {
   EMessageUnacknowledgedCause,
@@ -9,12 +9,12 @@ import {
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { PanicError } from '../common/errors/panic.error';
-import { Consumer } from '../consumer/consumer';
-import { QueueDeadLetteredTimeSeries } from '../consumer/consumer-time-series/queue-dead-lettered-time-series';
-import { GlobalDeadLetteredTimeSeries } from '../consumer/consumer-time-series/global-dead-lettered-time-series';
+import { Consumer } from '../app/consumer/consumer';
+import { QueueDeadLetteredTimeSeries } from '../app/consumer/consumer-time-series/queue-dead-lettered-time-series';
+import { GlobalDeadLetteredTimeSeries } from '../app/consumer/consumer-time-series/global-dead-lettered-time-series';
 import { TimeSeries } from '../common/time-series/time-series';
 import { broker } from '../common/broker';
-import { queueManager } from '../queue-manager/queue-manager';
+import { queueManager } from '../app/queue-manager/queue-manager';
 import { Worker } from '../common/worker/worker';
 import { setConfiguration } from '../common/configuration';
 import { each } from '../lib/async';

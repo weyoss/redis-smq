@@ -1,4 +1,4 @@
-import { ConsumerHeartbeat } from '../../src/system/consumer/consumer-heartbeat';
+import { ConsumerHeartbeat } from '../../src/system/app/consumer/consumer-heartbeat';
 import { getConsumer, getRedisInstance, untilConsumerIdle } from '../common';
 import { promisifyAll } from 'bluebird';
 

@@ -1,5 +1,5 @@
 import { promisifyAll } from 'bluebird';
-import { Message } from '../../src/system/message/message';
+import { Message } from '../../src/system/app/message/message';
 import {
   getConsumer,
   getProducer,

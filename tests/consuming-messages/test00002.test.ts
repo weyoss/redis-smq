@@ -6,7 +6,7 @@ import {
 } from '../common';
 import { Message } from '../../index';
 import { ICallback, TConsumerMessageHandler } from '../../types';
-import { MessageMetadata } from '../../src/system/message/message-metadata';
+import { MessageMetadata } from '../../src/system/app/message/message-metadata';
 
 test('Produce and consume 1 message', async () => {
   const producer = getProducer();

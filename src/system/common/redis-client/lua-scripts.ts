@@ -14,6 +14,8 @@ export enum ELuaScriptName {
   PUBLISH_MESSAGE,
   REQUEUE_MESSAGE,
   SCHEDULE_MESSAGE,
+  RELEASE_LOCK,
+  EXTEND_LOCK,
 }
 
 ////
@@ -44,6 +46,12 @@ scriptsMap.set(ELuaScriptName.REQUEUE_MESSAGE, {
 });
 scriptsMap.set(ELuaScriptName.SCHEDULE_MESSAGE, {
   content: fs.readFileSync(`${__dirname}/lua/schedule-message.lua`).toString(),
+});
+scriptsMap.set(ELuaScriptName.RELEASE_LOCK, {
+  content: fs.readFileSync(`${__dirname}/lua/release-lock.lua`).toString(),
+});
+scriptsMap.set(ELuaScriptName.EXTEND_LOCK, {
+  content: fs.readFileSync(`${__dirname}/lua/extend-lock.lua`).toString(),
 });
 ///
 
