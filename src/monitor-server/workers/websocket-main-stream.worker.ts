@@ -7,10 +7,10 @@ import {
 } from '../../../types';
 import { redisKeys } from '../../system/common/redis-keys/redis-keys';
 import { RedisClient } from '../../system/common/redis-client/redis-client';
-import { MessageManager } from '../../system/message-manager/message-manager';
+import { MessageManager } from '../../system/app/message-manager/message-manager';
 import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callback-reply.error';
-import { Consumer } from '../../system/consumer/consumer';
-import { queueManager } from '../../system/queue-manager/queue-manager';
+import { Consumer } from '../../system/app/consumer/consumer';
+import { queueManager } from '../../system/app/queue-manager/queue-manager';
 import { setConfiguration } from '../../system/common/configuration';
 import { Worker } from '../../system/common/worker/worker';
 import { each, waterfall } from '../../system/lib/async';

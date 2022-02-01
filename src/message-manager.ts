@@ -1,1 +1,1 @@
-export { MessageManager } from './system/message-manager/message-manager';
+export { MessageManager } from './system/app/message-manager/message-manager';

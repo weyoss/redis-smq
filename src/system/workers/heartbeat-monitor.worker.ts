@@ -1,5 +1,5 @@
 import { ICallback, IConsumerWorkerParameters } from '../../../types';
-import { ConsumerHeartbeat } from '../consumer/consumer-heartbeat';
+import { ConsumerHeartbeat } from '../app/consumer/consumer-heartbeat';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { Worker } from '../common/worker/worker';

@@ -1,1 +1,1 @@
-export { ConsumerFrontend as Consumer } from './system/consumer/consumer-frontend';
+export { ConsumerFrontend as Consumer } from './system/app/consumer/consumer-frontend';

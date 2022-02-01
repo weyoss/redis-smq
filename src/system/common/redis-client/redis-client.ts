@@ -139,21 +139,26 @@ export class RedisClient extends EventEmitter {
     this.client.watch(args, cb);
   }
 
+  unwatch(cb: ICallback<string>): void {
+    this.client.unwatch(cb);
+  }
+
   execMulti<T>(multi: TRedisClientMulti, cb: ICallback<T[]>): void {
     if (multi instanceof Multi) {
       multi.exec(cb);
     } else {
       multi.exec((err?: Error | null, reply?: Array<[Error | null, T]>) => {
         if (err) cb(err);
+        else if (!reply)
+          cb(
+            new RedisClientError(
+              `Redis transaction has been abandoned. Try again.`,
+            ),
+          );
         else {
           const lengths: T[] = [];
           let err: Error | null = null;
-          if (reply === null) {
-            console.log(
-              'Exec multi has been abandoned due to a concurrency issue',
-            );
-          }
-          for (const i of reply ?? []) {
+          for (const i of reply) {
             if (!Array.isArray(i)) {
               err = new RedisClientError(
                 'Expected an array reply from multi.exec()',
@@ -422,8 +427,21 @@ export class RedisClient extends EventEmitter {
     this.client.get(key, cb);
   }
 
-  set(key: string, value: string, cb: ICallback<void>): void {
-    this.client.set(key, value, (err) => cb(err));
+  set(
+    key: string,
+    value: string,
+    expiryMode: 'EX' | 'PX' | undefined,
+    time: number | undefined,
+    flag: string | undefined,
+    cb: ICallback<string>,
+  ): void {
+    if (flag && expiryMode && time) {
+      this.client.set(key, value, expiryMode, time, flag, cb);
+    } else if (expiryMode && time) {
+      this.client.set(key, value, expiryMode, time, cb);
+    } else {
+      this.client.set(key, value, cb);
+    }
   }
 
   del(key: string, cb: ICallback<number>): void {

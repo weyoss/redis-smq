@@ -21,11 +21,6 @@ enum ERedisKey {
   KEY_QUEUE_PROCESSING_QUEUES, // Redis key for processing queues of a given queue
 
   KEY_LOCK_CONSUMER_WORKERS_RUNNER,
-  KEY_LOCK_DELETE_PENDING_MESSAGE,
-  KEY_LOCK_DELETE_PENDING_MESSAGE_WITH_PRIORITY,
-  KEY_LOCK_DELETE_ACKNOWLEDGED_MESSAGE,
-  KEY_LOCK_DELETE_DEAD_LETTER_MESSAGE,
-  KEY_LOCK_DELETE_SCHEDULED_MESSAGE,
   KEY_LOCK_MESSAGE_MANAGER,
   KEY_LOCK_QUEUE_MANAGER,
   KEY_LOCK_MONITOR_SERVER_WORKERS,
@@ -59,7 +54,6 @@ enum ERedisKey {
   KEY_HEARTBEAT_INSTANCE_IDS,
   KEY_QUEUES,
   KEY_PROCESSING_QUEUES,
-  KEY_LOCK_QUEUE,
   KEY_CONSUMER_QUEUES,
 }
 
@@ -93,7 +87,6 @@ export const redisKeys = {
       keyLockRateQueueAcknowledged: ERedisKey.KEY_LOCK_RATE_QUEUE_ACKNOWLEDGED,
       keyLockRateQueueDeadLettered: ERedisKey.KEY_LOCK_RATE_QUEUE_DEAD_LETTERED,
       keyQueueConsumers: ERedisKey.KEY_QUEUE_CONSUMERS,
-      keyLockQueue: ERedisKey.KEY_LOCK_QUEUE,
     };
     return {
       ...mainKeys,
@@ -148,15 +141,6 @@ export const redisKeys = {
       keyLockMonitorServerWorkers: ERedisKey.KEY_LOCK_MONITOR_SERVER_WORKERS,
       keyDelayedMessages: ERedisKey.KEY_DELAYED_MESSAGES,
       keyRequeueMessages: ERedisKey.KEY_REQUEUE_MESSAGES,
-      keyLockDeleteAcknowledgedMessage:
-        ERedisKey.KEY_LOCK_DELETE_ACKNOWLEDGED_MESSAGE,
-      keyLockDeleteDeadLetteredMessage:
-        ERedisKey.KEY_LOCK_DELETE_DEAD_LETTER_MESSAGE,
-      keyLockDeleteScheduledMessage:
-        ERedisKey.KEY_LOCK_DELETE_SCHEDULED_MESSAGE,
-      keyLockDeletePendingMessage: ERedisKey.KEY_LOCK_DELETE_PENDING_MESSAGE,
-      keyLockDeletePendingMessageWithPriority:
-        ERedisKey.KEY_LOCK_DELETE_PENDING_MESSAGE_WITH_PRIORITY,
       keyRateGlobalDeadLettered: ERedisKey.KEY_RATE_GLOBAL_DEAD_LETTERED,
       keyRateGlobalAcknowledged: ERedisKey.KEY_RATE_GLOBAL_ACKNOWLEDGED,
       keyRateGlobalPublished: ERedisKey.KEY_RATE_GLOBAL_PUBLISHED,

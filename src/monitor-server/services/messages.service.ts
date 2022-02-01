@@ -4,7 +4,7 @@ import {
   TGetPendingMessagesWithPriorityReply,
   TGetScheduledMessagesReply,
 } from '../../../types';
-import { MessageManager } from '../../system/message-manager/message-manager';
+import { MessageManager } from '../../system/app/message-manager/message-manager';
 import { GetScheduledMessagesRequestDTO } from '../controllers/api/main/scheduled-messages/get-scheduled-messages/get-scheduled-messages.request.DTO';
 import { GetPendingMessagesRequestDTO } from '../controllers/api/queues/queue/pending-messages/get-pending-messages/get-pending-messages.request.DTO';
 import { GetAcknowledgedMessagesRequestDTO } from '../controllers/api/queues/queue/acknowledged-messages/get-acknowledged-messages/get-acknowledged-messages.request.DTO';

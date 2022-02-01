@@ -48,13 +48,13 @@
     "lodash": "4.17.21",
     "redis": "3.1.2",
     "redis-smq-monitor": "6.3.0",
-    "redlock": "4.2.0",
     "reflect-metadata": "0.1.13",
     "socket.io": "4.2.0",
     "stoppable": "1.1.0",
     "uuid": "8.3.2"
   },
   "devDependencies": {
+    "@types/bluebird": "^3.5.36",
     "@types/debug": "4.1.7",
     "@types/jest": "27.0.2",
     "@types/koa": "2.13.4",
@@ -63,7 +63,6 @@
     "@types/koa-bodyparser": "4.3.3",
     "@types/lodash": "4.14.175",
     "@types/node": "16.10.2",
-    "@types/redlock": "4.0.2",
     "@types/stoppable": "1.1.1",
     "@types/supertest": "2.0.11",
     "@types/uuid": "8.3.1",

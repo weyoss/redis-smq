@@ -4,7 +4,7 @@ import {
   ICallback,
   TRedisClientMulti,
 } from '../../../types';
-import { Message } from '../message/message';
+import { Message } from '../app/message/message';
 import { RedisClient } from './redis-client/redis-client';
 import { redisKeys } from './redis-keys/redis-keys';
 import { ELuaScriptName } from './redis-client/lua-scripts';

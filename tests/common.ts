@@ -16,8 +16,8 @@ import {
   TTimeSeriesRange,
 } from '../types';
 import { WebsocketMainStreamWorker } from '../src/monitor-server/workers/websocket-main-stream.worker';
-import { QueueManagerFrontend } from '../src/system/queue-manager/queue-manager-frontend';
-import { MessageManager } from '../src/system/message-manager/message-manager';
+import { QueueManagerFrontend } from '../src/system/app/queue-manager/queue-manager-frontend';
+import { MessageManager } from '../src/system/app/message-manager/message-manager';
 import * as supertest from 'supertest';
 import { WebsocketRateStreamWorker } from '../src/monitor-server/workers/websocket-rate-stream.worker';
 import { WebsocketHeartbeatStreamWorker } from '../src/monitor-server/workers/websocket-heartbeat-stream.worker';

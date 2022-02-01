@@ -1,16 +1,18 @@
 import { ICallback } from '../../../../types';
 import { RedisClient } from '../redis-client/redis-client';
-import * as Redlock from 'redlock';
-import { EmptyCallbackReplyError } from '../errors/empty-callback-reply.error';
 import { LockManagerError } from './lock-manager.error';
+import { v4 as uuid } from 'uuid';
+import { ELuaScriptName } from '../redis-client/lua-scripts';
 
 export class LockManager {
-  protected redlock: Redlock;
   protected lockKey: string;
-  protected acquiredLock: Redlock.Lock | null = null;
+  protected lockId: string;
+  protected isLocked = false;
   protected timer: NodeJS.Timeout | null = null;
   protected retryOnFail: boolean;
   protected ttl: number;
+  protected redisClient: RedisClient;
+  protected isRunning = true;
 
   constructor(
     redisClient: RedisClient,
@@ -21,64 +23,104 @@ export class LockManager {
     this.lockKey = lockKey;
     this.ttl = ttl;
     this.retryOnFail = retryOnFail;
-    this.redlock = new Redlock([redisClient], { retryCount: 0 });
+    this.lockId = uuid();
+    this.redisClient = redisClient;
   }
 
-  protected acquireLockRetryOnFail(err: Error, cb: ICallback<boolean>): void {
-    if (err.name === 'LockError') {
-      if (this.retryOnFail) {
-        this.acquiredLock = null;
-        this.timer = setTimeout(() => {
-          this.acquireLock(cb);
-        }, 1000);
-      } else cb(null, false);
-    } else cb(err);
+  protected lock(cb: ICallback<string>): void {
+    this.redisClient.set(this.lockKey, this.lockId, 'PX', this.ttl, 'NX', cb);
+  }
+
+  protected extend(cb: ICallback<boolean>): void {
+    this.redisClient.runScript(
+      ELuaScriptName.EXTEND_LOCK,
+      [this.lockKey, this.lockId, this.ttl],
+      (err, reply) => {
+        if (err) cb(err);
+        else cb(null, !!reply);
+      },
+    );
+  }
+
+  protected release(cb: ICallback<boolean>): void {
+    this.redisClient.runScript(
+      ELuaScriptName.RELEASE_LOCK,
+      [this.lockKey, this.lockId],
+      (err, reply) => {
+        if (err) cb(err);
+        else cb(null, !!reply);
+      },
+    );
   }
 
   acquireLock(cb: ICallback<boolean>): void {
-    const handleRedlockReply = (err?: Error | null, lock?: Redlock.Lock) => {
-      if (err) this.acquireLockRetryOnFail(err, cb);
-      else if (!lock) cb(new EmptyCallbackReplyError());
-      else {
-        this.acquiredLock = lock;
-        cb(null, true);
-      }
-    };
-    if (this.acquiredLock)
-      this.acquiredLock.extend(this.ttl, handleRedlockReply);
-    else {
-      if (!this.redlock)
-        cb(
-          new LockManagerError(
-            'Instance is no longer usable after calling quit(). Create a new instance.',
-          ),
-        );
-      else this.redlock.lock(this.lockKey, this.ttl, handleRedlockReply);
-    }
-  }
-
-  releaseLock(cb: ICallback<void>): void {
-    if (this.timer) clearTimeout(this.timer);
-    if (!this.acquiredLock) cb();
-    else {
-      this.acquiredLock.unlock((err?: Error | null) => {
-        if (err && err.name !== 'LockError') cb(err);
-        else {
-          this.acquiredLock = null;
-          cb();
+    if (!this.isRunning) {
+      cb(
+        new LockManagerError(
+          'Instance is no longer usable after calling quit(). Create a new instance.',
+        ),
+      );
+    } else if (this.isLocked) {
+      this.extend((err, reply) => {
+        if (err) cb(err);
+        else if (!reply) {
+          this.isLocked = false;
+          cb(
+            new LockManagerError(
+              `Could not extend the acquired lock with ID ${this.lockId}`,
+            ),
+          );
+        } else cb(null, true);
+      });
+    } else {
+      this.lock((err, reply) => {
+        if (err) cb(err);
+        else if (!reply) {
+          if (this.retryOnFail) {
+            this.timer = setTimeout(() => {
+              this.acquireLock(cb);
+            }, 1000);
+          } else cb(null, false);
+        } else {
+          this.isLocked = true;
+          cb(null, this.isLocked);
         }
       });
     }
   }
 
-  quit(cb?: ICallback<void>): void {
-    if (!this.redlock) cb && cb();
-    else {
-      const callback = cb ?? (() => void 0);
-      this.releaseLock(callback);
+  releaseLock(cb: ICallback<void>): void {
+    const done: ICallback<boolean> = (err) => {
+      if (err) cb(err);
+      else {
+        // ignoring release status
+        this.isLocked = false;
+        cb();
+      }
+    };
+    if (!this.isRunning) {
+      cb(
+        new LockManagerError(
+          `Instance is no longer usable after calling quit(). Create a new instance.`,
+        ),
+      );
+    } else {
+      if (this.timer) clearTimeout(this.timer);
+      if (!this.isLocked) done();
+      else this.release(done);
     }
   }
 
+  quit(cb: ICallback<void>): void {
+    if (!this.isRunning) cb();
+    else
+      this.releaseLock((err) => {
+        this.isRunning = false;
+        cb(err);
+      });
+  }
+
+  /*
   isLocked(): boolean {
     return this.acquiredLock !== null;
   }
@@ -102,9 +144,10 @@ export class LockManager {
           });
         } else
           cb(
-            new LockManagerError('Could not acquire a  lock. Try again later.'),
+            new LockManagerError('Could not acquire a lock. Try again later.'),
           );
       }
     });
   }
+   */
 }

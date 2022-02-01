@@ -2,7 +2,7 @@ import { RedisClient } from '../common/redis-client/redis-client';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { ICallback, IConsumerWorkerParameters } from '../../../types';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
-import { Message } from '../message/message';
+import { Message } from '../app/message/message';
 import { broker } from '../common/broker';
 import { Worker } from '../common/worker/worker';
 import { setConfiguration } from '../common/configuration';

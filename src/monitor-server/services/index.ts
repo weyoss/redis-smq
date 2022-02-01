@@ -1,6 +1,6 @@
 import { MessagesService } from './messages.service';
 import { TApplication } from '../types/common';
-import { MessageManager } from '../../system/message-manager/message-manager';
+import { MessageManager } from '../../system/app/message-manager/message-manager';
 import { QueuesService } from './queues.service';
 import { ConsumerTimeSeriesService } from './consumer-time-series.service';
 import { QueueTimeSeriesService } from './queue-time-series.service';

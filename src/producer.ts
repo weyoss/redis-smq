@@ -1,1 +1,1 @@
-export { ProducerFrontend as Producer } from './system/producer/producer-frontend';
+export { ProducerFrontend as Producer } from './system/app/producer/producer-frontend';
