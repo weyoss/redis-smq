@@ -76,7 +76,7 @@ export const queueManager = {
       keyQueueConsumers,
     ];
     redisClient.watch(
-      [keyQueues, keyQueueConsumers, keyProcessingQueues],
+      [keyQueues, keyQueueConsumers, keyQueueProcessingQueues],
       (err) => {
         if (err) cb(err);
         else {
