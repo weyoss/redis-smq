@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 6.0.0-rc.11 (2022-02-02)
+
+* Fix tests/purging-queues/test00007 (88e1d3a)
+* Update pre-push hook (8594e6a)
+* Clean up (63ca899)
+* Fix broken pre-release v6.0.0-rc.10 due to missing dependency (9739115)
+
 ## 6.0.0-rc.10 (2022-02-01)
 
 * Improve locking mechanisms, remove redlock package, refactor (8f5d9b2)
