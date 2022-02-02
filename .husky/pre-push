@@ -6,3 +6,4 @@ export NVM_DIR="$HOME/.nvm"
 
 npm run type-coverage
 npm run build
+npm run benchmark
