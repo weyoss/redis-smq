@@ -75,49 +75,46 @@ export const queueManager = {
       keyLockRateQueueDeadLettered,
       keyQueueConsumers,
     ];
-    redisClient.watch(
-      [keyQueues, keyQueueConsumers, keyQueueProcessingQueues],
-      (err) => {
-        if (err) cb(err);
-        else {
-          waterfall(
-            [
-              (cb: ICallback<void>): void =>
-                this.queueExists(redisClient, queue, cb),
-              (cb: ICallback<void>): void =>
-                validateMessageQueueDeletion(redisClient, queue, cb),
-              (cb: ICallback<string[]>) => {
-                this.getQueueProcessingQueues(
-                  redisClient,
-                  queue,
-                  (err, reply) => {
-                    if (err) cb(err);
-                    else {
-                      const pQueues = Object.keys(reply ?? {});
-                      cb(null, pQueues);
-                    }
-                  },
-                );
-              },
-            ],
-            (err?: Error | null, processingQueues?: string[] | null) => {
-              if (err) redisClient.unwatch(() => cb(err));
-              else {
-                const multi = redisClient.multi();
-                multi.srem(keyQueues, JSON.stringify(queue));
-                const pQueues = processingQueues ?? [];
-                if (pQueues.length) {
-                  keys.push(...pQueues);
-                  multi.srem(keyProcessingQueues, ...pQueues);
-                }
-                multi.del(...keys);
-                redisClient.execMulti(multi, (err) => cb(err));
-              }
+    redisClient.watch([keyQueueConsumers, keyQueueProcessingQueues], (err) => {
+      if (err) cb(err);
+      else {
+        waterfall(
+          [
+            (cb: ICallback<void>): void =>
+              this.queueExists(redisClient, queue, cb),
+            (cb: ICallback<void>): void =>
+              validateMessageQueueDeletion(redisClient, queue, cb),
+            (cb: ICallback<string[]>) => {
+              this.getQueueProcessingQueues(
+                redisClient,
+                queue,
+                (err, reply) => {
+                  if (err) cb(err);
+                  else {
+                    const pQueues = Object.keys(reply ?? {});
+                    cb(null, pQueues);
+                  }
+                },
+              );
             },
-          );
-        }
-      },
-    );
+          ],
+          (err?: Error | null, processingQueues?: string[] | null) => {
+            if (err) redisClient.unwatch(() => cb(err));
+            else {
+              const multi = redisClient.multi();
+              multi.srem(keyQueues, JSON.stringify(queue));
+              const pQueues = processingQueues ?? [];
+              if (pQueues.length) {
+                keys.push(...pQueues);
+                multi.srem(keyProcessingQueues, ...pQueues);
+              }
+              multi.del(...keys);
+              redisClient.execMulti(multi, (err) => cb(err));
+            }
+          },
+        );
+      }
+    });
   },
 
   deleteProcessingQueue(
