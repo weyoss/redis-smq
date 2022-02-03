@@ -1,8 +1,8 @@
 --- KEYS[1] sorted set key
 --- KEYS[2] hash key
---- KEYS[3] score key
---- KEYS[4] message id key
---- KEYS[5] message key
-redis.call("ZADD", KEYS[1], KEYS[3], KEYS[4])
-redis.call("HSET", KEYS[2], KEYS[4], KEYS[5])
+--- ARGV[1] score key
+--- ARGV[2] message id key
+--- ARGV[3] message key
+redis.call("ZADD", KEYS[1], ARGV[1], ARGV[2])
+redis.call("HSET", KEYS[2], ARGV[2], ARGV[3])
 return 1

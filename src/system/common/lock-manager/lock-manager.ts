@@ -34,7 +34,8 @@ export class LockManager {
   protected extend(cb: ICallback<boolean>): void {
     this.redisClient.runScript(
       ELuaScriptName.EXTEND_LOCK,
-      [this.lockKey, this.lockId, this.ttl],
+      [this.lockKey],
+      [this.lockId, this.ttl],
       (err, reply) => {
         if (err) cb(err);
         else cb(null, !!reply);
@@ -45,7 +46,8 @@ export class LockManager {
   protected release(cb: ICallback<boolean>): void {
     this.redisClient.runScript(
       ELuaScriptName.RELEASE_LOCK,
-      [this.lockKey, this.lockId],
+      [this.lockKey],
+      [this.lockId],
       (err, reply) => {
         if (err) cb(err);
         else cb(null, !!reply);

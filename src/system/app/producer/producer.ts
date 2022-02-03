@@ -69,13 +69,15 @@ export class Producer extends Base {
       ELuaScriptName.PUBLISH_MESSAGE,
       [
         keyQueues,
+        keyQueuePendingPriorityMessages,
+        keyQueuePendingPriorityMessageIds,
+        keyQueuePending,
+      ],
+      [
         JSON.stringify(queue),
         message.getRequiredId(),
         JSON.stringify(message),
         message.getPriority() ?? '',
-        keyQueuePendingPriorityMessages,
-        keyQueuePendingPriorityMessageIds,
-        keyQueuePending,
       ],
       (err) => cb(err),
     );
