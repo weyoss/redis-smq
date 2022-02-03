@@ -15,9 +15,9 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 ## Features
 
 * **[High-performance message processing](docs/performance.md)**
-* **Multi-Queue Producers & Consumers**: Offering very flexible models which make RedisSMQ an ideal message broker for your microservices. 
+* **[Multi-Queue Producers](#producer-class) & [Multi-Queue Consumers](#consumer-class)**: Offering very flexible models which make RedisSMQ an ideal message broker for your microservices. 
 * **Scalable**: You can run multiple Consumer/Producer instances concurrently in the same host, or in different hosts.
-* **Supporting both at-least-once/at-most-once delivery**: In case of failures, while delivering or processing a message, RedisSMQ can guaranty that the message will be not lost and redelivered again. When configured to do so, RedisSMQ can ensure that the message is delivered at-most-once.
+* **Supporting both [at-least-once/at-most-once delivery](/docs/api/message.md#messageprototypesetretrythreshold)**: In case of failures, while delivering or processing a message, RedisSMQ can guaranty that the message will be not lost and redelivered again. When configured to do so, RedisSMQ can ensure that the message is delivered at-most-once.
 * **[Message expiration](docs/api/message.md#messageprototypesetttl)**: A message will not be delivered if it has been in a queue for longer than a given amount of time, called TTL (time-to-live).
 * **[Message consume timeout](docs/api/message.md#messageprototypesetconsumetimeout)**: Timeout for consuming messages.
 * **[Delaying and scheduling message delivery](docs/scheduling-messages.md)**: Messages can be configured to be delayed, delivered for N times with an optional period between deliveries, and to be scheduled using CRON expressions.
@@ -30,7 +30,7 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 * **Rigorously tested**: With 100+ tests and code coverage no less than 80%.
 * **Supports both redis & ioredis**: RedisSMQ can be configured to use either `redis` or `ioredis` to connect to Redis server.
 
-### RedisSMQ Use Case: Multi-Queue Producers & Consumers
+### RedisSMQ Use Case: Multi-Queue Producers & Multi-Queue Consumers
 
 &nbsp;
 
