@@ -111,10 +111,9 @@ export const redisKeys = {
     instanceId: string,
     ns: string = namespace,
   ) {
-    const mainKeys = this.getMainKeys();
     const queueKeys = this.getQueueKeys(queueName, ns);
     const consumerKeys = this.getConsumerKeys(instanceId);
-    const consumerQueuekeys = {
+    const consumerQueueKeys = {
       keyQueueProcessing: ERedisKey.KEY_QUEUE_PROCESSING,
       keyRateConsumerDeadLettered: ERedisKey.KEY_RATE_CONSUMER_DEAD_LETTERED,
       keyRateConsumerAcknowledged: ERedisKey.KEY_RATE_CONSUMER_ACKNOWLEDGED,
@@ -122,8 +121,7 @@ export const redisKeys = {
     return {
       ...queueKeys,
       ...consumerKeys,
-      ...mainKeys,
-      ...this.makeNamespacedKeys(consumerQueuekeys, ns, queueName, instanceId),
+      ...this.makeNamespacedKeys(consumerQueueKeys, ns, queueName, instanceId),
     };
   },
 
