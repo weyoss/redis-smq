@@ -33,6 +33,6 @@ process.on('message', (payload: string) => {
   RedisClient.getNewInstance((err, client) => {
     if (err) throw err;
     else if (!client) throw new EmptyCallbackReplyError();
-    else new HeartbeatMonitorWorker(client, params, false);
+    else new HeartbeatMonitorWorker(client, params, false).run();
   });
 });
