@@ -86,14 +86,12 @@ export const broker = {
       const messageId = message.getRequiredId();
       redisClient.runScript(
         ELuaScriptName.SCHEDULE_MESSAGE,
+        [keyQueues, keyScheduledMessageIds, keyScheduledMessages],
         [
-          keyQueues,
           JSON.stringify(queue),
           messageId,
           JSON.stringify(message),
           `${timestamp}`,
-          keyScheduledMessageIds,
-          keyScheduledMessages,
         ],
         (err) => {
           if (err) cb(err);

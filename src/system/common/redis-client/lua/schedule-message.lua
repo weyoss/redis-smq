@@ -1,12 +1,11 @@
 --- KEYS[1] keyQueues (set)
---- KEYS[2] queue
---- KEYS[3] message id
---- KEYS[4] message
-
---- KEYS[5] scheduleTimestamp
---- KEYS[6] keyScheduledMessages (sorted set)
---- KEYS[7] keyScheduledMessagesIndex (hash)
-redis.call("SADD", KEYS[1], KEYS[2])
-redis.call("ZADD", KEYS[6], KEYS[5], KEYS[3])
-redis.call("HSET", KEYS[7], KEYS[3], KEYS[4])
+--- KEYS[2] keyScheduledMessages (sorted set)
+--- KEYS[3] keyScheduledMessagesIndex (hash)
+--- ARGV[1] queue
+--- ARGV[2] message id
+--- ARGV[3] message
+--- ARGV[4] scheduleTimestamp
+redis.call("SADD", KEYS[1], ARGV[1])
+redis.call("ZADD", KEYS[2], ARGV[4], ARGV[2])
+redis.call("HSET", KEYS[3], ARGV[2], ARGV[3])
 return 1

@@ -301,9 +301,10 @@ export class RedisClient extends EventEmitter {
   }
 
   zpoprpush(source: string, destination: string, cb: ICallback<string>): void {
-    this.evalsha(
-      getScriptId(ELuaScriptName.ZPOPRPUSH),
-      [2, source, destination],
+    this.runScript(
+      ELuaScriptName.ZPOPRPUSH,
+      [source, destination],
+      [],
       (err, res?: unknown) => {
         if (err) cb(err);
         else if (typeof res !== 'string') cb();
@@ -318,9 +319,10 @@ export class RedisClient extends EventEmitter {
     destination: string,
     cb: ICallback<string>,
   ): void {
-    this.evalsha(
-      getScriptId(ELuaScriptName.ZPOPHGETRPUSH),
-      [3, source, sourceHash, destination],
+    this.runScript(
+      ELuaScriptName.ZPOPHGETRPUSH,
+      [source, sourceHash, destination],
+      [],
       (err, res?: unknown) => {
         if (err) cb(err);
         else if (typeof res !== 'string') cb();
@@ -361,9 +363,10 @@ export class RedisClient extends EventEmitter {
     keyValue: string,
     cb: ICallback<void>,
   ): void {
-    this.evalsha(
-      getScriptId(ELuaScriptName.ZPUSHHSET),
-      [5, sortedSet, hash, score, keyId, keyValue],
+    this.runScript(
+      ELuaScriptName.ZPUSHHSET,
+      [sortedSet, hash],
+      [score, keyId, keyValue],
       (err) => cb(err),
     );
   }
@@ -474,9 +477,10 @@ export class RedisClient extends EventEmitter {
     if (this.validateRedisVersion(6, 2)) {
       this.lmove(source, destination, 'LEFT', 'RIGHT', cb);
     } else {
-      this.evalsha(
-        getScriptId(ELuaScriptName.LPOPRPUSH),
-        [2, source, destination],
+      this.runScript(
+        ELuaScriptName.LPOPRPUSH,
+        [source, destination],
+        [],
         (err, res?: unknown) => {
           if (err) cb(err);
           else if (typeof res !== 'string') cb();
@@ -488,12 +492,13 @@ export class RedisClient extends EventEmitter {
 
   runScript(
     scriptName: ELuaScriptName,
-    params: (string | number)[],
+    keys: string[],
+    args: (string | number)[],
     cb: ICallback<unknown>,
   ): void {
     this.evalsha(
       getScriptId(scriptName),
-      [params.length, ...params],
+      [keys.length, ...keys, ...args],
       (err, res?: unknown) => {
         if (err) cb(err);
         else cb(null, res);

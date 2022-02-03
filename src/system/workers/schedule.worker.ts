@@ -64,16 +64,18 @@ export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
             ELuaScriptName.ENQUEUE_SCHEDULED_MESSAGE,
             [
               keyQueues,
+              keyQueuePendingPriorityMessages,
+              keyQueuePendingPriorityMessageIds,
+              keyQueuePending,
+              keyScheduledMessageIds,
+              keyScheduledMessages,
+            ],
+            [
               JSON.stringify(queue),
               message.getRequiredId(),
               JSON.stringify(message),
               message.getPriority() ?? '',
-              keyQueuePendingPriorityMessages,
-              keyQueuePendingPriorityMessageIds,
-              keyQueuePending,
               `${nextScheduleTimestamp}`,
-              keyScheduledMessageIds,
-              keyScheduledMessages,
             ],
             (err) => done(err),
           );
