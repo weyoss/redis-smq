@@ -23,10 +23,10 @@
       7. [Message.prototype.setRetryThreshold()](#messageprototypesetretrythreshold)
       8. [Message.prototype.getRetryThreshold()](#messageprototypegetretrythreshold)
    5. Scheduling parameters
-      1. [Message.prototype.setScheduledRepeat()](#messageprototypesetscheduledrepeat)      
-      2. [Message.prototype.setScheduledPeriod()](#messageprototypesetscheduledperiod)
-      3. [Message.prototype.getScheduledPeriod()](#messageprototypegetscheduledperiod)
-      4. [Message.prototype.getScheduledRepeat()](#messageprototypegetscheduledrepeat)
+      1. [Message.prototype.setScheduledRepeat()](#messageprototypesetscheduledrepeat)
+      2. [Message.prototype.getScheduledRepeat()](#messageprototypegetscheduledrepeat)
+      3. [Message.prototype.setScheduledRepeatPeriod()](#messageprototypesetscheduledrepeatperiod)
+      4. [Message.prototype.getScheduledRepeatPeriod()](#messageprototypegetscheduledrepeatperiod)
       5. [Message.prototype.setScheduledCRON()](#messageprototypesetscheduledcron)
       6. [Message.prototype.getScheduledCRON()](#messageprototypegetscheduledcron)
       7. [Message.prototype.setScheduledDelay()](#messageprototypesetscheduleddelay)
@@ -203,7 +203,7 @@ const { Message } = require('redis-smq');
 const message = new Message();
 message.setScheduledCRON('0 0 * * * *');  // Schedule message for delivery every hour
 message.setScheduledRepeat(5);
-message.setScheduledPeriod(10000); // in millis
+message.setScheduledRepeatPeriod(10000); // in millis
 ```
 
 ### Message.prototype.setScheduledRepeat()
@@ -217,18 +217,18 @@ const message = new Message();
 message.setScheduledRepeat(6); // integer
 ```
 
-### Message.prototype.setScheduledPeriod()
+### Message.prototype.setScheduledRepeatPeriod()
 
-Set the amount of time, in milliseconds, to wait for before enqueuing a given message.
+Set the amount of time, in milliseconds, to wait for before the next scheduled repeat.
 
-`Message scheduled period` only takes effect when combined with [message scheduled repeat](#messageprototypesetscheduledrepeat).
+`repeat period` only takes effect when combined with [message scheduled repeat](#messageprototypesetscheduledrepeat).
 
 ```javascript
 const { Message } = require('redis-smq');
 
 const message = new Message();
 message.setScheduledRepeat(6); // Schedule the message for delivery 6 times
-message.setScheduledPeriod(1000); // Wait for one second after each delivery
+message.setScheduledRepeatPeriod(1000); // Wait for one second after each delivery
 ```
 
 ### Message.prototype.isPeriodic()
@@ -386,15 +386,15 @@ message.setScheduledRepeat(6);
 message.getScheduledRepeat(); // 6
 ````
 
-### Message.prototype.getScheduledPeriod()
+### Message.prototype.getScheduledRepeatPeriod()
 
 ```javascript
 const { Message } = require('redis-smq');
 
 const message = new Message();
 message.setScheduledRepeat(6); // Schedule the message for delivery 6 times
-message.setScheduledPeriod(1000); // Wait for one second after each delivery
-message.getScheduledPeriod(); // 1000, in millis
+message.setScheduledRepeatPeriod(1000); // Wait for one second after each delivery
+message.getScheduledRepeatPeriod(); // 1000, in millis
 ```
 
 ### Message.prototype.getScheduledCRON()

@@ -12,7 +12,7 @@ test('Schedule a message: combine CRON, REPEAT, REPEAT PERIOD, DELAY', async () 
   const msg = new Message();
   msg.setScheduledCRON('*/20 * * * * *'); // Schedule message for each 20 seconds
   msg.setScheduledRepeat(2); // repeat 2 times
-  msg.setScheduledPeriod(5000); // 5 secs between each repeat
+  msg.setScheduledRepeatPeriod(5000); // 5 secs between each repeat
   msg.setScheduledDelay(15000); // this will first delay the message for 15 secs before cron/repeat scheduling
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
 

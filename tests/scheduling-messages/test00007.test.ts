@@ -13,7 +13,7 @@ test('Schedule a message: combine REPEAT, REPEAT PERIOD, DELAY. Case 2', async (
   msg
     .setScheduledDelay(10000)
     .setScheduledRepeat(0) // should not be repeated
-    .setScheduledPeriod(3000)
+    .setScheduledRepeatPeriod(3000)
     .setBody({ hello: 'world' })
     .setQueue(defaultQueue);
 

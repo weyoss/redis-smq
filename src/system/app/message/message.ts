@@ -39,7 +39,7 @@ export class Message {
 
   protected scheduledDelay: number | null = null;
 
-  protected scheduledPeriod: number | null = null;
+  protected scheduledRepeatPeriod: number | null = null;
 
   protected scheduledRepeat = 0;
 
@@ -121,7 +121,7 @@ export class Message {
   /**
    * @param period In millis
    */
-  setScheduledPeriod(period: number): Message {
+  setScheduledRepeatPeriod(period: number): Message {
     // JavaScript users do not have type checking
     // So just make sure that we have an integer value
     const value = Number(period);
@@ -130,7 +130,7 @@ export class Message {
         'Expected a positive integer value in milliseconds',
       );
     }
-    this.scheduledPeriod = value;
+    this.scheduledRepeatPeriod = value;
     return this;
   }
 
@@ -295,8 +295,8 @@ export class Message {
     return this.scheduledRepeat;
   }
 
-  getScheduledPeriod(): number | null {
-    return this.scheduledPeriod;
+  getScheduledRepeatPeriod(): number | null {
+    return this.scheduledRepeatPeriod;
   }
 
   getScheduledCRON(): string | null {
@@ -336,10 +336,10 @@ export class Message {
       if (msgScheduledRepeat) {
         const newCount = metadata.getMessageScheduledRepeatCount() + 1;
         if (newCount <= msgScheduledRepeat) {
-          const msgScheduledPeriod = this.getScheduledPeriod();
+          const scheduledRepeatPeriod = this.getScheduledRepeatPeriod();
           const now = Date.now();
-          if (msgScheduledPeriod) {
-            repeatTimestamp = now + msgScheduledPeriod;
+          if (scheduledRepeatPeriod) {
+            repeatTimestamp = now + scheduledRepeatPeriod;
           } else {
             repeatTimestamp = now;
           }

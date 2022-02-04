@@ -84,7 +84,7 @@ export class MessageDTO {
 
   @IsInt()
   @IsOptional()
-  scheduledPeriod: number | null = null;
+  scheduledRepeatPeriod: number | null = null;
 
   @IsInt()
   scheduledRepeat!: number;
