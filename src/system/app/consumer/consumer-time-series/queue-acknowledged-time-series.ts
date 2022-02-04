@@ -12,7 +12,7 @@ export const QueueAcknowledgedTimeSeries = (
     keyRateQueueAcknowledged,
     keyRateQueueAcknowledgedIndex,
     keyLockRateQueueAcknowledged,
-  } = redisKeys.getQueueKeys(queue.name, queue.ns);
+  } = redisKeys.getQueueKeys(queue);
   return new HashTimeSeries(
     redisClient,
     keyRateQueueAcknowledged,

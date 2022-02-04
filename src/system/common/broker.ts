@@ -21,7 +21,7 @@ function deadLetterMessage(
   const queue = message.getRequiredQueue();
   const { storeMessages } = getConfiguration();
   if (storeMessages) {
-    const { keyQueueDL } = redisKeys.getQueueKeys(queue.name, queue.ns);
+    const { keyQueueDL } = redisKeys.getQueueKeys(queue);
     redisClient.lpoprpush(keyQueueProcessing, keyQueueDL, (err) => {
       if (err) cb(err);
       else cb();
@@ -39,7 +39,7 @@ function delayUnacknowledgedMessageBeforeRequeuing(
   cb: ICallback<void>,
 ): void {
   const queue = message.getRequiredQueue();
-  const { keyDelayedMessages } = redisKeys.getQueueKeys(queue.name, queue.ns);
+  const { keyDelayedMessages } = redisKeys.getQueueKeys(queue);
   redisClient.rpoplpush(keyQueueProcessing, keyDelayedMessages, (err) =>
     cb(err),
   );
@@ -53,7 +53,7 @@ function requeueUnacknowledgedMessage(
   cb: ICallback<void>,
 ): void {
   const queue = message.getRequiredQueue();
-  const { keyRequeueMessages } = redisKeys.getQueueKeys(queue.name, queue.ns);
+  const { keyRequeueMessages } = redisKeys.getQueueKeys(queue);
   redisClient.rpoplpush(keyQueueProcessing, keyRequeueMessages, (err) =>
     cb(err),
   );
@@ -81,7 +81,7 @@ export const broker = {
     if (timestamp > 0) {
       const queue = message.getRequiredQueue();
       const { keyQueues, keyScheduledMessageIds, keyScheduledMessages } =
-        redisKeys.getQueueKeys(queue.name, queue.ns);
+        redisKeys.getQueueKeys(queue);
       message.getRequiredMetadata().setScheduledAt(Date.now());
       const messageId = message.getRequiredId();
       redisClient.runScript(
@@ -110,10 +110,7 @@ export const broker = {
   ): void {
     const queue = message.getRequiredQueue();
     if (storeMessages) {
-      const { keyQueueAcknowledged } = redisKeys.getQueueKeys(
-        queue.name,
-        queue.ns,
-      );
+      const { keyQueueAcknowledged } = redisKeys.getQueueKeys(queue);
       redisClient.lpoprpush(keyQueueProcessing, keyQueueAcknowledged, (err) => {
         if (err) cb(err);
         else cb();

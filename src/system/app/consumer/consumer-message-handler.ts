@@ -60,9 +60,8 @@ export class ConsumerMessageHandler extends EventEmitter {
     this.usingPriorityQueuing = usePriorityQueuing;
     this.storeMessages = storeMessages;
     this.redisKeys = redisKeys.getQueueConsumerKeys(
-      this.queue.name,
+      this.queue,
       this.consumerId,
-      this.queue.ns,
     );
     const {
       keyQueuePendingPriorityMessageIds,

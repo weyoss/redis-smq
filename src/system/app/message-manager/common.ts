@@ -223,7 +223,7 @@ export function requeueListMessage(
           keyQueuePending,
           keyQueuePendingPriorityMessageIds,
           keyQueuePendingPriorityMessages,
-        } = redisKeys.getQueueKeys(queue.name, queue.ns);
+        } = redisKeys.getQueueKeys(queue);
         redisClient.runScript(
           ELuaScriptName.REQUEUE_MESSAGE,
           [

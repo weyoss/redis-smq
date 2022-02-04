@@ -1,9 +1,10 @@
 import { RedisKeysError } from './redis-keys.error';
+import { TQueueParams } from '../../../../types';
 
-//
+// Key segments separator
 const keySegmentSeparator = '.';
 
-// Keys prefix
+// Key prefix
 const nsPrefix = 'redis-smq-v600rc10';
 
 // Namespaces
@@ -18,7 +19,7 @@ enum ERedisKey {
   KEY_QUEUE_PROCESSING,
   KEY_QUEUE_ACKNOWLEDGED,
   KEY_QUEUE_CONSUMERS,
-  KEY_QUEUE_PROCESSING_QUEUES, // Redis key for processing queues of a given queue
+  KEY_QUEUE_PROCESSING_QUEUES,
 
   KEY_LOCK_CONSUMER_WORKERS_RUNNER,
   KEY_LOCK_MESSAGE_MANAGER,
@@ -64,7 +65,7 @@ export const redisKeys = {
     };
   },
 
-  getQueueKeys(queueName: string, ns: string = namespace) {
+  getQueueKeys(queueParams: TQueueParams) {
     const mainKeys = this.getMainKeys();
     const queueKeys = {
       keyQueuePending: ERedisKey.KEY_QUEUE_PENDING,
@@ -91,7 +92,7 @@ export const redisKeys = {
     return {
       ...mainKeys,
       ...queueKeys,
-      ...this.makeNamespacedKeys(queueKeys, ns, queueName),
+      ...this.makeNamespacedKeys(queueKeys, queueParams.ns, queueParams.name),
     };
   },
 
@@ -106,12 +107,8 @@ export const redisKeys = {
     };
   },
 
-  getQueueConsumerKeys(
-    queueName: string,
-    instanceId: string,
-    ns: string = namespace,
-  ) {
-    const queueKeys = this.getQueueKeys(queueName, ns);
+  getQueueConsumerKeys(queueParams: TQueueParams, instanceId: string) {
+    const queueKeys = this.getQueueKeys(queueParams);
     const consumerKeys = this.getConsumerKeys(instanceId);
     const consumerQueueKeys = {
       keyQueueProcessing: ERedisKey.KEY_QUEUE_PROCESSING,
@@ -121,7 +118,12 @@ export const redisKeys = {
     return {
       ...queueKeys,
       ...consumerKeys,
-      ...this.makeNamespacedKeys(consumerQueueKeys, ns, queueName, instanceId),
+      ...this.makeNamespacedKeys(
+        consumerQueueKeys,
+        queueParams.ns,
+        queueParams.name,
+        instanceId,
+      ),
     };
   },
 

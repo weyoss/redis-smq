@@ -12,7 +12,7 @@ export const QueuePublishedTimeSeries = (
     keyRateQueuePublished,
     keyRateQueuePublishedIndex,
     keyLockRateQueuePublished,
-  } = redisKeys.getQueueKeys(queue.name, queue.ns);
+  } = redisKeys.getQueueKeys(queue);
   return new HashTimeSeries(
     redisClient,
     keyRateQueuePublished,
