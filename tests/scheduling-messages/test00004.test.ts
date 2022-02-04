@@ -12,7 +12,7 @@ test('Schedule a message: combine CRON, REPEAT, REPEAT PERIOD', async () => {
   const msg = new Message();
   msg.setScheduledCRON('*/20 * * * * *'); // Schedule message for each 30 seconds
   msg.setScheduledRepeat(2); // repeat 2 times
-  msg.setScheduledPeriod(5000); // 5 secs between each repeat
+  msg.setScheduledRepeatPeriod(5000); // 5 secs between each repeat
   msg.setQueue(defaultQueue);
   const producer = getProducer();
   await producer.produceAsync(msg);

@@ -4,10 +4,10 @@ Starting with version 1.0.19, RedisSMQ enables you to schedule a one-time or rep
 
 To set up scheduling parameters for a given message, the [Message API](api/message.md) provides:
 
-- [setScheduledPeriod()](api/message.md#messageprototypesetscheduledperiod)
 - [setScheduledDelay()](api/message.md#messageprototypesetscheduleddelay)
 - [setScheduledCRON()](api/message.md#messageprototypesetscheduledcron)
 - [setScheduledRepeat()](api/message.md#messageprototypesetscheduledrepeat)
+- [setScheduledRepeatPeriod()](api/message.md#messageprototypesetscheduledrepeatperiod)
 
 To schedule your message, you can publish it, as any other message, from your [Producer](api/producer.md#producerprototypeproduce) 
 using the `produce()` method.
