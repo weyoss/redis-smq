@@ -10,9 +10,8 @@ export const ConsumerAcknowledgedTimeSeries = (
   isMaster?: boolean,
 ) => {
   const { keyRateConsumerAcknowledged } = redisKeys.getQueueConsumerKeys(
-    queue.name,
+    queue,
     consumerId,
-    queue.ns,
   );
   return new SortedSetTimeSeries(
     redisClient,

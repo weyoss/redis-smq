@@ -56,7 +56,7 @@ export const queueManager = {
       keyQueueConsumers,
       keyProcessingQueues,
       keyQueues,
-    } = redisKeys.getQueueKeys(queue.name, queue.ns);
+    } = redisKeys.getQueueKeys(queue);
     const keys: string[] = [
       keyQueuePending,
       keyQueueDL,
@@ -125,7 +125,7 @@ export const queueManager = {
   ): void {
     const multi = redisClient.multi();
     const { keyProcessingQueues, keyQueueProcessingQueues } =
-      redisKeys.getQueueKeys(queue.name, queue.ns);
+      redisKeys.getQueueKeys(queue);
     multi.srem(keyProcessingQueues, processingQueue);
     multi.hdel(keyQueueProcessingQueues, processingQueue);
     multi.del(processingQueue);
@@ -139,10 +139,7 @@ export const queueManager = {
     queue: TQueueParams,
     cb: ICallback<Record<string, string>>,
   ): void {
-    const { keyQueueProcessingQueues } = redisKeys.getQueueKeys(
-      queue.name,
-      queue.ns,
-    );
+    const { keyQueueProcessingQueues } = redisKeys.getQueueKeys(queue);
     redisClient.hgetall(keyQueueProcessingQueues, cb);
   },
 
@@ -162,7 +159,7 @@ export const queueManager = {
       keyQueuePendingPriorityMessageIds,
       keyQueueDL,
       keyQueueAcknowledged,
-    } = redisKeys.getQueueKeys(queue.name, queue.ns);
+    } = redisKeys.getQueueKeys(queue);
     waterfall(
       [
         (cb: ICallback<void>) => {
@@ -247,7 +244,7 @@ export const queueManager = {
   },
 
   setUpMessageQueue(multi: TRedisClientMulti, queue: TQueueParams): void {
-    const { keyQueues } = redisKeys.getQueueKeys(queue.name, queue.ns);
+    const { keyQueues } = redisKeys.getQueueKeys(queue);
     const str = JSON.stringify(queue);
     multi.sadd(keyQueues, str);
   },

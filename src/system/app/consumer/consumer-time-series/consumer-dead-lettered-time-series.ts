@@ -10,9 +10,8 @@ export const ConsumerDeadLetteredTimeSeries = (
   isMaster?: boolean,
 ) => {
   const { keyRateConsumerDeadLettered } = redisKeys.getQueueConsumerKeys(
-    queue.name,
+    queue,
     consumerId,
-    queue.ns,
   );
   return new SortedSetTimeSeries(
     redisClient,

@@ -363,11 +363,7 @@ export class Consumer extends Base {
     id: string,
     cb: ICallback<boolean>,
   ): void {
-    const { keyQueueConsumers } = redisKeys.getQueueConsumerKeys(
-      queue.name,
-      id,
-      queue.ns,
-    );
+    const { keyQueueConsumers } = redisKeys.getQueueConsumerKeys(queue, id);
     consumerQueues.exists(redisClient, keyQueueConsumers, id, cb);
   }
 

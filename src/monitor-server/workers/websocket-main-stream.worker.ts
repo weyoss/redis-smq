@@ -91,7 +91,7 @@ export class WebsocketMainStreamWorker extends Worker {
             keyQueuePendingPriorityMessageIds,
             keyQueueDL,
             keyQueueAcknowledged,
-          } = redisKeys.getQueueKeys(queue.name, queue.ns);
+          } = redisKeys.getQueueKeys(queue);
           multi.llen(keyQueuePending);
           multi.zcard(keyQueuePendingPriorityMessageIds);
           multi.llen(keyQueueDL);

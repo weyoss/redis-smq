@@ -64,7 +64,7 @@ export class Producer extends Base {
       keyQueuePendingPriorityMessages,
       keyQueuePendingPriorityMessageIds,
       keyQueuePending,
-    } = redisKeys.getQueueKeys(queue.name, queue.ns);
+    } = redisKeys.getQueueKeys(queue);
     redisClient.runScript(
       ELuaScriptName.PUBLISH_MESSAGE,
       [

@@ -36,7 +36,7 @@ export const consumerQueues = {
       createdAt: Date.now(),
     };
     const { keyQueueConsumers, keyConsumerQueues } =
-      redisKeys.getQueueConsumerKeys(queue.name, instanceId, queue.ns);
+      redisKeys.getQueueConsumerKeys(queue, instanceId);
     multi.sadd(keyConsumerQueues, JSON.stringify(queue));
     multi.hset(keyQueueConsumers, instanceId, JSON.stringify(data));
   },
@@ -49,10 +49,7 @@ export const consumerQueues = {
     each(
       queues,
       (queue, _, done) => {
-        const { keyQueueConsumers } = redisKeys.getQueueKeys(
-          queue.name,
-          queue.ns,
-        );
+        const { keyQueueConsumers } = redisKeys.getQueueKeys(queue);
         multi.hdel(keyQueueConsumers, consumerId);
         done();
       },
@@ -75,7 +72,7 @@ export const consumerQueues = {
     transform: boolean,
     cb: ICallback<Record<string, THeartbeatRegistryPayload | string>>,
   ): void {
-    const { keyQueueConsumers } = redisKeys.getQueueKeys(queue.name, queue.ns);
+    const { keyQueueConsumers } = redisKeys.getQueueKeys(queue);
     client.hgetall(keyQueueConsumers, (err, reply) => {
       if (err) cb(err);
       else {
@@ -99,7 +96,7 @@ export const consumerQueues = {
     queue: TQueueParams,
     cb: ICallback<string[]>,
   ): void {
-    const { keyQueueConsumers } = redisKeys.getQueueKeys(queue.name, queue.ns);
+    const { keyQueueConsumers } = redisKeys.getQueueKeys(queue);
     client.hkeys(keyQueueConsumers, cb);
   },
 
@@ -108,7 +105,7 @@ export const consumerQueues = {
     queue: TQueueParams,
     cb: ICallback<number>,
   ): void {
-    const { keyQueueConsumers } = redisKeys.getQueueKeys(queue.name, queue.ns);
+    const { keyQueueConsumers } = redisKeys.getQueueKeys(queue);
     client.hlen(keyQueueConsumers, cb);
   },
 
