@@ -28,7 +28,7 @@ test('Fetching and deleting scheduled messages using the HTTP API: Case 1', asyn
   expect(response1.body.data).toBeDefined();
   expect(response1.body.data?.total).toBe(1);
   expect(response1.body.data?.items.length).toBe(1);
-  expect(response1.body.data?.items[0].metadata.uuid).toBe(
+  expect(response1.body.data?.items[0].metadata?.uuid).toBe(
     msg1.getRequiredId(),
   );
 

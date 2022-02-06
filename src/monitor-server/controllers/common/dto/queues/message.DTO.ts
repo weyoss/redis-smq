@@ -56,20 +56,16 @@ export class MessageDTO {
   createdAt!: number;
 
   @IsInt()
-  @IsOptional()
-  ttl: number | null = null;
+  ttl!: number;
 
   @IsInt()
-  @IsOptional()
-  retryThreshold: number | null = null;
+  retryThreshold!: number;
 
   @IsInt()
-  @IsOptional()
-  retryDelay: number | null = null;
+  retryDelay!: number;
 
   @IsInt()
-  @IsOptional()
-  consumeTimeout: number | null = null;
+  consumeTimeout!: number;
 
   @Allow()
   body: unknown = null;
@@ -95,9 +91,9 @@ export class MessageDTO {
 
   @ValidateNested()
   @Type(() => MessageQueueDTO)
-  queue!: MessageQueueDTO;
+  queue: MessageQueueDTO | undefined | null;
 
   @ValidateNested()
   @Type(() => MessageMetadataDTO)
-  metadata!: MessageMetadataDTO;
+  metadata: MessageMetadataDTO | undefined | null;
 }

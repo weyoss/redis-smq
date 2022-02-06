@@ -30,10 +30,10 @@ test('Fetching and deleting scheduled messages using the HTTP API: Case 2', asyn
   expect(response1.body.data).toBeDefined();
   expect(response1.body.data?.total).toBe(4);
   expect(response1.body.data?.items.length).toBe(2);
-  expect(response1.body.data?.items[0].metadata.uuid).toBe(
+  expect(response1.body.data?.items[0].metadata?.uuid).toBe(
     messages[0].getRequiredId(),
   );
-  expect(response1.body.data?.items[1].metadata.uuid).toBe(
+  expect(response1.body.data?.items[1].metadata?.uuid).toBe(
     messages[1].getRequiredId(),
   );
 
@@ -43,10 +43,10 @@ test('Fetching and deleting scheduled messages using the HTTP API: Case 2', asyn
   expect(response2.body.data).toBeDefined();
   expect(response2.body.data?.total).toBe(4);
   expect(response2.body.data?.items.length).toBe(2);
-  expect(response2.body.data?.items[0].metadata.uuid).toBe(
+  expect(response2.body.data?.items[0].metadata?.uuid).toBe(
     messages[2].getRequiredId(),
   );
-  expect(response2.body.data?.items[1].metadata.uuid).toBe(
+  expect(response2.body.data?.items[1].metadata?.uuid).toBe(
     messages[3].getRequiredId(),
   );
 

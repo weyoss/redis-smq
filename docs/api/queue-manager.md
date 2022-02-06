@@ -15,10 +15,13 @@ QueueManager.getSingletonInstance(config, (err, queueManager) => {
 ## Table of Content
 
 1. [QueueManager.getSingletonInstance()](#queuemanagergetsingletoninstance)
-2. [QueueManager.prototype.getMessageQueues()](#queuemanagerprototypegetmessagequeues)
-3. [QueueManager.prototype.getQueueMetrics()](#queuemanagerprototypegetqueuemetrics)
-4. [QueueManager.prototype.deleteMessageQueue()](#queuemanagerprototypedeletemessagequeue)
-5. [QueueManager.prototype.quit()](#queuemanagerprototypequit)
+2. [QueueManager.prototype.getQueues()](#queuemanagerprototypegetqueues)
+3. [QueueManager.prototype.getNamespaces()](#queuemanagerprototypegetnamespaces)
+4. [QueueManager.prototype.getNamespaceQueues()]()
+5. [QueueManager.prototype.getQueueMetrics()](#queuemanagerprototypegetqueuemetrics)
+6. [QueueManager.prototype.deleteQueue()](#queuemanagerprototypedeletequeue)
+7. [QueueManager.prototype.deleteNamespace()](#queuemanagerprototypedeletenamespace)
+8. [QueueManager.prototype.quit()](#queuemanagerprototypequit)
 
 ## Public Static Methods
 
@@ -35,13 +38,39 @@ getSingletonInstance(cb)
 
 ## Public Methods
 
-### QueueManager.prototype.getMessageQueues()
+### QueueManager.prototype.getQueues()
 
 ```javascript
-getMessageQueues(cb);
+getQueues(cb);
 ```
 
 **Parameters**
+- `cb(err, messageQueues)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+  - `messageQueues` *(Array).*
+    - `messageQueues[*].ns` *(string).* Queue namespace.
+    - `messageQueues[*].name` *(string).* Queue name.
+
+### QueueManager.prototype.getNamespaces()
+
+```javascript
+getQueues(cb);
+```
+
+**Parameters**
+- `cb(err, namespaces)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+  - `namespaces` *(Array).* Namespaces.
+
+### QueueManager.prototype.getNamespaceQueues()
+
+```javascript
+getNamespaceQueues(ns, cb);
+```
+
+**Parameters**
+
+- `ns` *(string): Required.* Namespace.
 - `cb(err, messageQueues)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
   - `messageQueues` *(Array).*
@@ -67,10 +96,10 @@ getQueueMetrics(queue, cb);
     - `queueMetrics.pending` *(number).* Pending messages count.
     - `queueMetrics.pendingWithPriority` *(number).* Pending messages with priority count.
 
-### QueueManager.prototype.deleteMessageQueue()
+### QueueManager.prototype.deleteQueue()
 
 ```javascript
-deleteMessageQueue(queue, cb);
+deleteQueue(queue, cb);
 ```
 
 **Parameters**
@@ -82,6 +111,20 @@ deleteMessageQueue(queue, cb);
   - `err` *(Error | null | undefined).* Error object.
 
 Before deleting a message queue, make sure that the given queue is not being in use. Otherwise, an error will be returned.
+
+### QueueManager.prototype.deleteNamespace()
+
+```javascript
+deleteNamespace(ns, cb);
+```
+
+**Parameters**
+
+- `ns` *(string): Required.* Namespace.
+- `cb(err)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+
+Before deleting a namespace, make sure that all queues from the given namespace are not being in use. Otherwise, an error will be returned.
 
 ### QueueManager.prototype.quit()
 

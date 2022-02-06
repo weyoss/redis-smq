@@ -314,3 +314,31 @@ export interface ICompatibleLogger {
   error(message: unknown, ...params: unknown[]): void;
   debug(message: unknown, ...params: unknown[]): void;
 }
+
+export type TMessageJSON = {
+  createdAt: number;
+  queue: TQueueParams | null;
+  ttl: number;
+  retryThreshold: number;
+  retryDelay: number;
+  consumeTimeout: number;
+  body: unknown;
+  priority: number | null;
+  scheduledCron: string | null;
+  scheduledDelay: number | null;
+  scheduledRepeatPeriod: number | null;
+  scheduledRepeat: number;
+  metadata: TMessageMetadataJSON | null;
+};
+
+export type TMessageMetadataJSON = {
+  uuid: string;
+  publishedAt: number | null;
+  scheduledAt: number | null;
+  scheduledCronFired: boolean;
+  attempts: number;
+  scheduledRepeatCount: number;
+  expired: boolean;
+  nextScheduledDelay: number;
+  nextRetryDelay: number;
+};

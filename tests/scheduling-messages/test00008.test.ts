@@ -23,7 +23,7 @@ test("Make sure scheduled messages aren't published if destination queue is dele
   expect(s1.total).toBe(1);
 
   const queueManager = promisifyAll(await getQueueManagerFrontend());
-  await queueManager.deleteMessageQueueAsync('some_queue');
+  await queueManager.deleteQueueAsync('some_queue');
 
   await startScheduleWorker();
   await delay(20000);

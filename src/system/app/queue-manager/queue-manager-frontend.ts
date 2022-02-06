@@ -20,9 +20,9 @@ export class QueueManagerFrontend {
     this.logger = getNamespacedLogger('QueueManager');
   }
 
-  deleteMessageQueue(queue: string | TQueueParams, cb: ICallback<void>): void {
+  deleteQueue(queue: string | TQueueParams, cb: ICallback<void>): void {
     const queueParams = queueManager.getQueueParams(queue);
-    queueManager.deleteMessageQueue(this.redisClient, queueParams, (err) => {
+    queueManager.deleteQueue(this.redisClient, queueParams, (err) => {
       if (err) cb(err);
       else {
         this.logger.info(
@@ -35,6 +35,26 @@ export class QueueManagerFrontend {
     });
   }
 
+  getNamespaceQueues(ns: string, cb: ICallback<TQueueParams[]>): void {
+    queueManager.getNamespaceQueues(this.redisClient, ns, cb);
+  }
+
+  deleteNamespace(ns: string, cb: ICallback<void>): void {
+    queueManager.deleteNamespace(this.redisClient, ns, (err) => {
+      if (err) cb(err);
+      else {
+        this.logger.info(
+          `The namespace (${ns}) alongside with its message queues has been successfully deleted.`,
+        );
+        cb();
+      }
+    });
+  }
+
+  getNamespaces(cb: ICallback<string[]>): void {
+    queueManager.getNamespaces(this.redisClient, cb);
+  }
+
   getQueueMetrics(
     queue: string | TQueueParams,
     cb: ICallback<IQueueMetrics>,
@@ -43,8 +63,8 @@ export class QueueManagerFrontend {
     queueManager.getQueueMetrics(this.redisClient, queueParams, cb);
   }
 
-  getMessageQueues(cb: ICallback<TQueueParams[]>): void {
-    queueManager.getMessageQueues(this.redisClient, cb);
+  getQueues(cb: ICallback<TQueueParams[]>): void {
+    queueManager.getQueues(this.redisClient, cb);
   }
 
   quit(cb: ICallback<void>): void {

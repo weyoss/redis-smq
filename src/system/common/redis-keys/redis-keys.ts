@@ -5,7 +5,7 @@ import { TQueueParams } from '../../../../types';
 const keySegmentSeparator = '.';
 
 // Key prefix
-const nsPrefix = 'redis-smq-v600rc10';
+const nsPrefix = 'redis-smq-v600rc12';
 
 // Namespaces
 const globalNamespace = 'global';
@@ -56,6 +56,8 @@ enum ERedisKey {
   KEY_QUEUES,
   KEY_PROCESSING_QUEUES,
   KEY_CONSUMER_QUEUES,
+  KEY_NS_QUEUES,
+  KEY_NAMESPACES,
 }
 
 export const redisKeys = {
@@ -65,8 +67,20 @@ export const redisKeys = {
     };
   },
 
-  getQueueKeys(queueParams: TQueueParams) {
+  getNsKeys(ns: string) {
     const mainKeys = this.getMainKeys();
+    const keys = {
+      keyNsQueues: ERedisKey.KEY_NS_QUEUES,
+    };
+    return {
+      ...mainKeys,
+      ...keys,
+      ...this.makeNamespacedKeys(keys, ns),
+    };
+  },
+
+  getQueueKeys(queueParams: TQueueParams) {
+    const nsKeys = this.getNsKeys(queueParams.ns);
     const queueKeys = {
       keyQueuePending: ERedisKey.KEY_QUEUE_PENDING,
       keyQueueDL: ERedisKey.KEY_QUEUE_DL,
@@ -90,7 +104,7 @@ export const redisKeys = {
       keyQueueConsumers: ERedisKey.KEY_QUEUE_CONSUMERS,
     };
     return {
-      ...mainKeys,
+      ...nsKeys,
       ...queueKeys,
       ...this.makeNamespacedKeys(queueKeys, queueParams.ns, queueParams.name),
     };
@@ -154,6 +168,7 @@ export const redisKeys = {
         ERedisKey.KEY_LOCK_RATE_GLOBAL_ACKNOWLEDGED,
       keyLockRateGlobalDeadLettered:
         ERedisKey.KEY_LOCK_RATE_GLOBAL_DEAD_LETTERED,
+      keyNamespaces: ERedisKey.KEY_NAMESPACES,
     };
     return this.makeNamespacedKeys(mainKeys, globalNamespace);
   },

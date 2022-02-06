@@ -21,9 +21,9 @@ test('Concurrently deleting a message queue and starting a consumer', async () =
     pending: 1,
   });
 
-  // queueManagerInstance.deleteMessageQueue() calls queueManager.getQueueProcessingQueues() after validation is passed.
+  // queueManagerInstance.deleteQueue() calls queueManager.getQueueProcessingQueues() after validation is passed.
   // Within getQueueProcessingQueues() method, we can take more time than usual to return a response, to allow the
-  // consumer to start up. queueManagerInstance.deleteMessageQueue() should detect that a consumer has been started and
+  // consumer to start up. queueManagerInstance.deleteQueue() should detect that a consumer has been started and
   // the operation should be cancelled.
   const originalMethod = queueManager.getQueueProcessingQueues;
   queueManager.getQueueProcessingQueues = (
@@ -40,7 +40,7 @@ test('Concurrently deleting a message queue and starting a consumer', async () =
 
   await expect(async () => {
     await Promise.all([
-      queueManagerInstance.deleteMessageQueueAsync(queue),
+      queueManagerInstance.deleteQueueAsync(queue),
       consumer.runAsync(),
     ]);
   }).rejects.toThrow('Redis transaction has been abandoned. Try again.');
