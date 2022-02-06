@@ -1,4 +1,5 @@
 import { v4 as uuid } from 'uuid';
+import { TMessageMetadataJSON } from '../../../../types';
 
 export class MessageMetadata {
   protected readonly uuid: string;
@@ -158,5 +159,19 @@ export class MessageMetadata {
       return scheduledDelay;
     }
     return 0;
+  }
+
+  toJSON(): TMessageMetadataJSON {
+    return {
+      uuid: this.uuid,
+      publishedAt: this.publishedAt,
+      scheduledAt: this.scheduledAt,
+      scheduledCronFired: this.scheduledCronFired,
+      attempts: this.attempts,
+      scheduledRepeatCount: this.scheduledRepeatCount,
+      expired: this.expired,
+      nextScheduledDelay: this.nextScheduledDelay,
+      nextRetryDelay: this.nextRetryDelay,
+    };
   }
 }

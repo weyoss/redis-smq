@@ -10,7 +10,7 @@ import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-repl
 import { GenericError } from '../../common/errors/generic.error';
 import { ConsumerMessageHandler } from '../consumer/consumer-message-handler';
 import { validateMessageQueueDeletion } from './common';
-import { waterfall } from '../../lib/async';
+import { eachOf, waterfall } from '../../lib/async';
 
 export const queueManager = {
   queueExists(
@@ -26,16 +26,11 @@ export const queueManager = {
     });
   },
 
-  /**
-   * When deleting a message queue, all queue's related queues and data will be deleted from the system. If the given
-   * queue has an online consumer, an error will be returned. To make sure that a consumer is online,
-   * an additional heartbeat check is performed, so that crushed consumers would not block queue deletion for a certain
-   * time.
-   */
-  deleteMessageQueue(
+  deleteQueueTransaction(
     redisClient: RedisClient,
     queue: TQueueParams,
-    cb: ICallback<void>,
+    multi: TRedisClientMulti | undefined,
+    cb: ICallback<TRedisClientMulti>,
   ): void {
     const {
       keyQueuePending,
@@ -56,6 +51,7 @@ export const queueManager = {
       keyQueueConsumers,
       keyProcessingQueues,
       keyQueues,
+      keyNsQueues,
     } = redisKeys.getQueueKeys(queue);
     const keys: string[] = [
       keyQueuePending,
@@ -101,19 +97,71 @@ export const queueManager = {
           (err?: Error | null, processingQueues?: string[] | null) => {
             if (err) redisClient.unwatch(() => cb(err));
             else {
-              const multi = redisClient.multi();
-              multi.srem(keyQueues, JSON.stringify(queue));
+              const tx = multi || redisClient.multi();
+              const str = JSON.stringify(queue);
+              tx.srem(keyQueues, str);
+              tx.srem(keyNsQueues, str);
               const pQueues = processingQueues ?? [];
               if (pQueues.length) {
                 keys.push(...pQueues);
-                multi.srem(keyProcessingQueues, ...pQueues);
+                tx.srem(keyProcessingQueues, ...pQueues);
               }
-              multi.del(...keys);
-              redisClient.execMulti(multi, (err) => cb(err));
+              tx.del(...keys);
+              cb(null, tx);
             }
           },
         );
       }
+    });
+  },
+
+  deleteNamespace(
+    redisClient: RedisClient,
+    ns: string,
+    cb: ICallback<void>,
+  ): void {
+    this.getNamespaceQueues(redisClient, ns, (err, reply) => {
+      if (err) cb(err);
+      else {
+        const queues = reply ?? [];
+        if (queues.length) {
+          const multi = redisClient.multi();
+          eachOf(
+            queues,
+            (queue, _, done) => {
+              this.deleteQueueTransaction(redisClient, queue, multi, (err) =>
+                done(err),
+              );
+            },
+            (err) => {
+              if (err) cb(err);
+              else {
+                const { keyNamespaces } = redisKeys.getMainKeys();
+                multi.srem(keyNamespaces, ns);
+                redisClient.execMulti(multi, (err) => cb(err));
+              }
+            },
+          );
+        } else cb();
+      }
+    });
+  },
+
+  /**
+   * When deleting a message queue, all queue's related queues and data will be deleted from the system. If the given
+   * queue has an online consumer, an error will be returned. To make sure that a consumer is online,
+   * an additional heartbeat check is performed, so that crushed consumers would not block queue deletion for a certain
+   * time.
+   */
+  deleteQueue(
+    redisClient: RedisClient,
+    queue: TQueueParams,
+    cb: ICallback<void>,
+  ): void {
+    this.deleteQueueTransaction(redisClient, queue, undefined, (err, multi) => {
+      if (err) cb(err);
+      else if (!multi) cb(new EmptyCallbackReplyError());
+      else redisClient.execMulti(multi, (err) => cb(err));
     });
   },
 
@@ -206,10 +254,32 @@ export const queueManager = {
     );
   },
 
-  getMessageQueues(
+  getNamespaces(redisClient: RedisClient, cb: ICallback<string[]>): void {
+    const { keyNamespaces } = redisKeys.getMainKeys();
+    redisClient.smembers(keyNamespaces, (err, reply) => {
+      if (err) cb(err);
+      else if (!reply) cb(new EmptyCallbackReplyError());
+      else cb(null, reply ?? []);
+    });
+  },
+
+  getNamespaceQueues(
     redisClient: RedisClient,
+    namespace: string,
     cb: ICallback<TQueueParams[]>,
   ): void {
+    const { keyNsQueues } = redisKeys.getNsKeys(namespace);
+    redisClient.smembers(keyNsQueues, (err, reply) => {
+      if (err) cb(err);
+      else if (!reply) cb(new EmptyCallbackReplyError());
+      else {
+        const messageQueues: TQueueParams[] = reply.map((i) => JSON.parse(i));
+        cb(null, messageQueues);
+      }
+    });
+  },
+
+  getQueues(redisClient: RedisClient, cb: ICallback<TQueueParams[]>): void {
     const { keyQueues } = redisKeys.getMainKeys();
     redisClient.smembers(keyQueues, (err, reply) => {
       if (err) cb(err);
@@ -244,9 +314,12 @@ export const queueManager = {
   },
 
   setUpMessageQueue(multi: TRedisClientMulti, queue: TQueueParams): void {
-    const { keyQueues } = redisKeys.getQueueKeys(queue);
+    const { keyQueues, keyNsQueues, keyNamespaces } =
+      redisKeys.getQueueKeys(queue);
     const str = JSON.stringify(queue);
     multi.sadd(keyQueues, str);
+    multi.sadd(keyNsQueues, str);
+    multi.sadd(keyNamespaces, queue.ns);
   },
 
   getQueueParams(queue: string | TQueueParams): TQueueParams {

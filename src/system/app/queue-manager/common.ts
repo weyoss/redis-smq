@@ -23,7 +23,7 @@ export function validateMessageQueueDeletion(
             if (onlineArr.length) {
               cb(
                 new GenericError(
-                  `The queue is currently in use. Before deleting a queue, shutdown all its consumers. After shutting down all instances, wait a few seconds and try again.`,
+                  `Before deleting a queue/namespace, make sure it is not used by a message handler. After shutting down all message handlers, wait a few seconds and try again.`,
                 ),
               );
             } else cb();

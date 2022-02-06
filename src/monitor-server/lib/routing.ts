@@ -2,8 +2,14 @@ import * as Router from '@koa/router';
 import { ClassConstructor } from 'class-transformer';
 import { RequestValidator } from '../middlewares/request-validator';
 import { ResponseValidator } from '../middlewares/response-validator';
-import { TApplication, TRequestContext } from '../types/common';
+import {
+  IContext,
+  IContextState,
+  IResponseBody,
+  TApplication,
+} from '../types/common';
 import { posix } from 'path';
+import { Next, ParameterizedContext } from 'koa';
 
 export enum ERouteControllerActionPayload {
   QUERY = 'query',
@@ -17,47 +23,73 @@ export enum ERouteControllerActionMethod {
   DELETE = 'delete',
 }
 
-export type TRouteControllerActionHandler = (
-  app: TApplication,
-) => (ctx: TRequestContext<any, any>) => Promise<Record<any, any> | void>;
+export type TRequestContext<
+  RequestDTO,
+  ResponseDTO extends TResponseDTO,
+> = ParameterizedContext<
+  IContextState<RequestDTO>,
+  IContext,
+  ResponseDTO['body']
+>;
 
-export type TRouteControllerAction = {
+export type TResponseDTO<Body = any> = {
+  status: number;
+  body: IResponseBody<Body> | void;
+};
+
+export class CRequestDTO {}
+
+export type TRouteControllerActionHandler<
+  RequestDTO extends CRequestDTO,
+  ResponseDTO extends TResponseDTO,
+> = (
+  app: TApplication,
+) => (
+  ctx: TRequestContext<RequestDTO, ResponseDTO>,
+) => Promise<
+  ResponseDTO['body'] extends Record<any, any>
+    ? ResponseDTO['body']['data']
+    : void
+>;
+
+export type TRouteControllerAction<
+  RequestDTO extends CRequestDTO,
+  ResponseDTO extends TResponseDTO,
+> = {
   path: string;
   method: ERouteControllerActionMethod;
   payload: ERouteControllerActionPayload[];
-  Handler: TRouteControllerActionHandler;
+  Handler: TRouteControllerActionHandler<RequestDTO, ResponseDTO>;
   RequestDTO: ClassConstructor<any>;
   ResponseDTO: ClassConstructor<any>;
 };
 
 export interface IRouteController {
   path: string;
-  actions: (IRouteController | TRouteControllerAction)[];
+  actions: (IRouteController | TRouteControllerAction<any, any>)[];
 }
 
 function isRouteController(
-  object: IRouteController | TRouteControllerAction,
+  object: IRouteController | TRouteControllerAction<any, any>,
 ): object is IRouteController {
   return object.hasOwnProperty('actions');
 }
 
-export function getControllerActionRouter(
+export function getControllerActionRouter<
+  RequestDTO extends CRequestDTO,
+  ResponseDTO extends TResponseDTO,
+>(
   app: TApplication,
-  action: TRouteControllerAction,
+  action: TRouteControllerAction<RequestDTO, ResponseDTO>,
 ): Router {
   const router = new Router();
   router[action.method](
     action.path,
     RequestValidator(action.RequestDTO, action.payload),
-    async (ctx: TRequestContext<any>, next) => {
+    async (ctx: TRequestContext<RequestDTO, ResponseDTO>, next: Next) => {
       const data = await action.Handler(app)(ctx);
-      if (data) {
-        ctx.status = 200;
-        ctx.body = { data };
-      } else {
-        ctx.status = 204;
-        ctx.body = undefined;
-      }
+      ctx.status = data ? 200 : 204;
+      ctx.body = data ? { data } : data;
       await next();
     },
     ResponseValidator(action.ResponseDTO),
@@ -77,7 +109,7 @@ export function registerControllerRoutes(
         app,
         item,
         mainRouter,
-        posix.join(path, item.path),
+        item.path === '/' ? path : posix.join(path, item.path),
       );
     } else {
       const router = getControllerActionRouter(app, item);

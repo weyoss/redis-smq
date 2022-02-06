@@ -1,5 +1,5 @@
 import { parseExpression } from 'cron-parser';
-import { TQueueParams } from '../../../../types';
+import { TMessageJSON, TQueueParams } from '../../../../types';
 import { ArgumentError } from '../../common/errors/argument.error';
 import { queueManager } from '../queue-manager/queue-manager';
 import { getConfiguration } from '../../common/configuration';
@@ -377,6 +377,24 @@ export class Message {
 
   toString(): string {
     return JSON.stringify(this);
+  }
+
+  toJSON(): TMessageJSON {
+    return {
+      createdAt: this.createdAt,
+      queue: this.queue,
+      ttl: this.ttl,
+      retryThreshold: this.retryThreshold,
+      retryDelay: this.retryDelay,
+      consumeTimeout: this.consumeTimeout,
+      body: this.body,
+      priority: this.priority,
+      scheduledCron: this.scheduledCron,
+      scheduledDelay: this.scheduledDelay,
+      scheduledRepeatPeriod: this.scheduledRepeatPeriod,
+      scheduledRepeat: this.scheduledRepeat,
+      metadata: this.metadata ? this.metadata.toJSON() : null,
+    };
   }
 
   hasRetryThresholdExceeded(): boolean {

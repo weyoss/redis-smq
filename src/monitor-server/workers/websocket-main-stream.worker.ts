@@ -131,7 +131,7 @@ export class WebsocketMainStreamWorker extends Worker {
   };
 
   protected getQueues = (cb: ICallback<TQueueParams[]>): void => {
-    queueManager.getMessageQueues(this.redisClient, cb);
+    queueManager.getQueues(this.redisClient, cb);
   };
 
   protected countScheduledMessages = (cb: ICallback<void>): void => {

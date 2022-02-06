@@ -12,7 +12,7 @@ export class WebsocketOnlineStreamWorker extends Worker {
     waterfall(
       [
         (cb: ICallback<TQueueParams[]>) => {
-          queueManager.getMessageQueues(this.redisClient, cb);
+          queueManager.getQueues(this.redisClient, cb);
         },
         (queues: TQueueParams[], done: ICallback<void>) => {
           each(

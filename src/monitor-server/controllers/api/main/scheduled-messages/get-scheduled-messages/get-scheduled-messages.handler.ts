@@ -1,9 +1,13 @@
-import { TApplication } from '../../../../../types/common';
-import { TGetScheduledMessagesContext } from '../context';
+import { TRouteControllerActionHandler } from '../../../../../lib/routing';
+import { GetScheduledMessagesRequestDTO } from './get-scheduled-messages.request.DTO';
+import { GetScheduledMessagesResponseDTO } from './get-scheduled-messages.response.DTO';
 
-export function GetScheduledMessagesHandler(app: TApplication) {
-  return async (ctx: TGetScheduledMessagesContext) => {
+export const GetScheduledMessagesHandler: TRouteControllerActionHandler<
+  GetScheduledMessagesRequestDTO,
+  GetScheduledMessagesResponseDTO
+> = (app) => {
+  return async (ctx) => {
     const { messagesService } = app.context.services;
     return messagesService.getScheduledMessages(ctx.state.dto);
   };
-}
+};

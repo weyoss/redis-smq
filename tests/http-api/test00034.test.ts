@@ -11,7 +11,7 @@ test('Delete a message queue', async () => {
   const { queue } = await produceMessage();
   const request = supertest('http://127.0.0.1:3000');
   const response1: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =
-    await request.delete(`/api/queues/${queue.name}/ns/${queue.ns}`);
+    await request.delete(`/api/ns/${queue.ns}/queues/${queue.name}`);
   expect(response1.statusCode).toBe(204);
   expect(response1.body).toEqual({});
 });

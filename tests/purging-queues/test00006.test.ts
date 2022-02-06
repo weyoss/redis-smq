@@ -13,18 +13,18 @@ test('Deleting a message queue with all of its data', async () => {
   expect(m1.acknowledged).toBe(1);
 
   await expect(async () => {
-    await queueManager.deleteMessageQueueAsync(queue);
+    await queueManager.deleteQueueAsync(queue);
   }).rejects.toThrow(
-    'The queue is currently in use. Before deleting a queue, shutdown all its consumers.',
+    'Before deleting a queue/namespace, make sure it is not used by a message handler',
   );
 
   await consumer.shutdownAsync();
-  await queueManager.deleteMessageQueueAsync(queue);
+  await queueManager.deleteQueueAsync(queue);
 
   const m2 = await queueManager.getQueueMetricsAsync(queue);
   expect(m2.acknowledged).toBe(0);
 
   await expect(async () => {
-    await queueManager.deleteMessageQueueAsync(queue);
+    await queueManager.deleteQueueAsync(queue);
   }).rejects.toThrow('Queue does not exist');
 });

@@ -1,9 +1,13 @@
-import { TApplication } from '../../../../../types/common';
-import { TTimeSeriesRequestContext } from '../../../queues/queue/time-series/context';
+import { TRouteControllerActionHandler } from '../../../../../lib/routing';
+import { GetPublishedRequestDTO } from './get-published.request.DTO';
+import { GetPublishedResponseDTO } from './get-published.response.DTO';
 
-export function GetPublishedHandler(app: TApplication) {
-  return async (ctx: TTimeSeriesRequestContext) => {
+export const GetPublishedHandler: TRouteControllerActionHandler<
+  GetPublishedRequestDTO,
+  GetPublishedResponseDTO
+> = (app) => {
+  return async (ctx) => {
     const { globalTimeSeriesService } = app.context.services;
     return globalTimeSeriesService.published(ctx.state.dto);
   };
-}
+};

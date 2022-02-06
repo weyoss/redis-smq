@@ -11,8 +11,8 @@ test('Consumer acknowledged time series', async () => {
   await consumer.runAsync();
   await untilConsumerIdle(consumer);
   await validateTimeSeriesFrom(
-    `/api/queues/${defaultQueue.name}/ns/${
-      defaultQueue.ns
+    `/api/ns/${defaultQueue.ns}/queues/${
+      defaultQueue.name
     }/consumers/${consumer.getId()}/time-series/acknowledged`,
   );
 });

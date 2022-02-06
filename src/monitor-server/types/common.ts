@@ -2,12 +2,11 @@ import * as Koa from 'koa';
 import { ICompatibleLogger, IConfig } from '../../../types';
 import { RedisClient } from '../../system/common/redis-client/redis-client';
 import { Services } from '../services';
-import { ParameterizedContext } from 'koa';
 
 export interface IResponseBodyError {
   code: number;
   message: string;
-  details?: Record<any, any>;
+  details?: Record<string, any>;
 }
 
 export interface IResponseBody<Data = Record<string, any>> {
@@ -32,15 +31,6 @@ export interface IContext extends Koa.DefaultContext {
 }
 
 export type TApplication = Koa<Koa.DefaultState, IContext>;
-
-export type TRequestContext<
-  DTO,
-  ResponseBody = Record<any, any>,
-> = ParameterizedContext<
-  IContextState<DTO>,
-  IContext,
-  IResponseBody<ResponseBody> | undefined
->;
 
 export type TMiddleware<DTO = Record<string, any>> = Koa.Middleware<
   IContextState<DTO>,

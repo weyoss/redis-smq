@@ -12,8 +12,8 @@ test('Delete an acknowledged message', async () => {
   const request = supertest('http://127.0.0.1:3000');
   const response1: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =
     await request.delete(
-      `/api/queues/${queue.name}/ns/${
-        queue.ns
+      `/api/ns/${queue.ns}/queues/${
+        queue.name
       }/acknowledged-messages/${message.getRequiredId()}?sequenceId=0`,
     );
   expect(response1.statusCode).toBe(204);

@@ -2,6 +2,6 @@ import { validateTimeSeriesFrom } from '../common';
 
 test('Queue published time series', async () => {
   await validateTimeSeriesFrom(
-    `/api/queues/test_queue/ns/testing/time-series/published`,
+    `/api/ns/testing/queues/test_queue/time-series/published`,
   );
 });

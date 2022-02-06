@@ -96,7 +96,7 @@
 * Allow to delete a message queue alongside with its related data.
 * Make sure to release queue lock before returning.
 * Improve QueueManager API method names, update docs.
-* Update QueueManager API reference (add deleteMessageQueue() method).
+* Update QueueManager API reference (add deleteQueue() method).
 * Fix QueueManager broken method references in the Web UI.
 * Rename purgeScheduledMessages() to purgeScheduledQueue().
 * Test deleting queues, wait for a heartbeat before returning during startup.
