@@ -80,14 +80,26 @@ export const broker = {
     const timestamp = message.getNextScheduledTimestamp();
     if (timestamp > 0) {
       const queue = message.getRequiredQueue();
-      const { keyQueues, keyScheduledMessageIds, keyScheduledMessages } =
-        redisKeys.getQueueKeys(queue);
+      const {
+        keyNamespaces,
+        keyNsQueues,
+        keyQueues,
+        keyScheduledMessageIds,
+        keyScheduledMessages,
+      } = redisKeys.getQueueKeys(queue);
       message.getRequiredMetadata().setScheduledAt(Date.now());
       const messageId = message.getRequiredId();
       redisClient.runScript(
         ELuaScriptName.SCHEDULE_MESSAGE,
-        [keyQueues, keyScheduledMessageIds, keyScheduledMessages],
         [
+          keyNamespaces,
+          keyNsQueues,
+          keyQueues,
+          keyScheduledMessageIds,
+          keyScheduledMessages,
+        ],
+        [
+          queue.ns,
           JSON.stringify(queue),
           messageId,
           JSON.stringify(message),
