@@ -51,4 +51,8 @@ test('Combined: Fetching namespaces, deleting a namespace with its message queue
 
   const m5 = await queueManager.getNamespacesAsync();
   expect(m5).toEqual([]);
+
+  await expect(async () => {
+    await queueManager.deleteNamespaceAsync(ns);
+  }).rejects.toThrow(`Namespace (${ns}) does not exist`);
 });
