@@ -11,6 +11,7 @@ import { GenericError } from '../../common/errors/generic.error';
 import { ConsumerMessageHandler } from '../consumer/consumer-message-handler';
 import { validateMessageQueueDeletion } from './common';
 import { eachOf, waterfall } from '../../lib/async';
+import { NamespaceNotFoundError } from './errors/namespace-not-found.error';
 
 export const queueManager = {
   queueExists(
@@ -120,31 +121,46 @@ export const queueManager = {
     ns: string,
     cb: ICallback<void>,
   ): void {
-    this.getNamespaceQueues(redisClient, ns, (err, reply) => {
-      if (err) cb(err);
-      else {
-        const queues = reply ?? [];
-        if (queues.length) {
-          const multi = redisClient.multi();
-          eachOf(
-            queues,
-            (queue, _, done) => {
-              this.deleteQueueTransaction(redisClient, queue, multi, (err) =>
-                done(err),
+    const { keyNamespaces } = redisKeys.getMainKeys();
+    waterfall(
+      [
+        (cb: ICallback<void>) => {
+          redisClient.sismember(keyNamespaces, ns, (err, isMember) => {
+            if (err) cb(err);
+            else if (!isMember) cb(new NamespaceNotFoundError(ns));
+            else cb();
+          });
+        },
+      ],
+      (err) => {
+        if (err) cb(err);
+        else {
+          this.getNamespaceQueues(redisClient, ns, (err, reply) => {
+            if (err) cb(err);
+            else {
+              const queues = reply ?? [];
+              const multi = redisClient.multi();
+              multi.srem(keyNamespaces, ns);
+              eachOf(
+                queues,
+                (queue, _, done) => {
+                  this.deleteQueueTransaction(
+                    redisClient,
+                    queue,
+                    multi,
+                    (err) => done(err),
+                  );
+                },
+                (err) => {
+                  if (err) cb(err);
+                  else redisClient.execMulti(multi, (err) => cb(err));
+                },
               );
-            },
-            (err) => {
-              if (err) cb(err);
-              else {
-                const { keyNamespaces } = redisKeys.getMainKeys();
-                multi.srem(keyNamespaces, ns);
-                redisClient.execMulti(multi, (err) => cb(err));
-              }
-            },
-          );
-        } else cb();
-      }
-    });
+            }
+          });
+        }
+      },
+    );
   },
 
   /**
