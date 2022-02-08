@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 6.0.0 (2022-02-08)
+
+* Bump up redis-smq-monitor version to 6.4.0 (71ceb45)
+* Implement TimeSeriesWorker (a5c404e)
+* When deleting a namespace throw an error if it does not exist (28d0be0)
+* Fix schedule-message.lua parameters (15708c4)
+* Allow managing namespaces, update HTTP API, test (b0c265c)
+* Rename setScheduledPeriod() to setScheduledRepeatPeriod() (d6e3376)
+* Improve Redis keys handling (d9c50f3)
+* Improve LUA scripts parameters handling (5aaa893)
+* Remove redundant call to this.getMainKeys() (f3b1f1f)
+* Update docs (31c81ca)
+
 ## 6.0.0-rc.11 (2022-02-02)
 
 * Fix tests/purging-queues/test00007 (88e1d3a)
