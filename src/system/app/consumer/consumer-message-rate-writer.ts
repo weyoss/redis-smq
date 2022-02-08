@@ -12,7 +12,6 @@ import {
   TRedisClientMulti,
 } from '../../../../types';
 import { MessageRateWriter } from '../../common/message-rate-writer';
-import { waterfall } from '../../lib/async';
 
 export class ConsumerMessageRateWriter extends MessageRateWriter<IConsumerMessageRateFields> {
   protected redisClient: RedisClient;
@@ -41,35 +40,27 @@ export class ConsumerMessageRateWriter extends MessageRateWriter<IConsumerMessag
   ) {
     super();
     this.redisClient = redisClient;
-    this.globalAcknowledgedRateTimeSeries = GlobalAcknowledgedTimeSeries(
-      redisClient,
-      true,
-    );
-    this.globalDeadLetteredTimeSeries = GlobalDeadLetteredTimeSeries(
-      redisClient,
-      true,
-    );
+    this.globalAcknowledgedRateTimeSeries =
+      GlobalAcknowledgedTimeSeries(redisClient);
+    this.globalDeadLetteredTimeSeries =
+      GlobalDeadLetteredTimeSeries(redisClient);
     this.acknowledgedTimeSeries = ConsumerAcknowledgedTimeSeries(
       redisClient,
       consumerId,
       queue,
-      true,
     );
     this.deadLetteredTimeSeries = ConsumerDeadLetteredTimeSeries(
       redisClient,
       consumerId,
       queue,
-      true,
     );
     this.queueAcknowledgedRateTimeSeries = QueueAcknowledgedTimeSeries(
       redisClient,
       queue,
-      true,
     );
     this.queueDeadLetteredTimeSeries = QueueDeadLetteredTimeSeries(
       redisClient,
       queue,
-      true,
     );
   }
 
@@ -96,19 +87,5 @@ export class ConsumerMessageRateWriter extends MessageRateWriter<IConsumerMessag
     }
     if (multi) this.redisClient.execMulti(multi, () => cb());
     else cb();
-  }
-
-  onQuit(cb: ICallback<void>): void {
-    waterfall(
-      [
-        (cb: ICallback<void>) => this.acknowledgedTimeSeries.quit(cb),
-        (cb: ICallback<void>) => this.queueAcknowledgedRateTimeSeries.quit(cb),
-        (cb: ICallback<void>) => this.globalAcknowledgedRateTimeSeries.quit(cb),
-        (cb: ICallback<void>) => this.deadLetteredTimeSeries.quit(cb),
-        (cb: ICallback<void>) => this.queueDeadLetteredTimeSeries.quit(cb),
-        (cb: ICallback<void>) => this.globalDeadLetteredTimeSeries.quit(cb),
-      ],
-      cb,
-    );
   }
 }

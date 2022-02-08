@@ -1,36 +1,19 @@
 import { TimeSeries } from './time-series';
 import {
   ICallback,
+  IHashTimeSeriesParams,
   TRedisClientMulti,
   TTimeSeriesRange,
 } from '../../../../types';
 import { ArgumentError } from '../errors/argument.error';
 import { RedisClient } from '../redis-client/redis-client';
-import { LockManager } from '../lock-manager/lock-manager';
 
-export class HashTimeSeries extends TimeSeries {
+export class HashTimeSeries extends TimeSeries<IHashTimeSeriesParams> {
   protected indexKey: string;
-  protected lockManager: LockManager;
 
-  constructor(
-    redisClient: RedisClient,
-    key: string,
-    indexKey: string,
-    lockKey: string,
-    expireAfterInSeconds = 0,
-    retentionTimeInSeconds = 24 * 60 * 60,
-    windowSizeInSeconds = 60,
-    isMaster = false,
-  ) {
-    super(
-      redisClient,
-      key,
-      expireAfterInSeconds,
-      retentionTimeInSeconds,
-      windowSizeInSeconds,
-      isMaster,
-    );
-    this.lockManager = new LockManager(redisClient, lockKey, 60000);
+  constructor(redisClient: RedisClient, params: IHashTimeSeriesParams) {
+    super(redisClient, params);
+    const { indexKey } = params;
     this.indexKey = indexKey;
   }
 
@@ -55,29 +38,22 @@ export class HashTimeSeries extends TimeSeries {
   }
 
   cleanUp(cb: ICallback<void>): void {
-    const process = (cb: ICallback<void>) => {
-      const ts = TimeSeries.getCurrentTimestamp();
-      const max = ts - this.retentionTime;
-      this.redisClient.zrangebyscore(
-        this.indexKey,
-        '-inf',
-        `${max}`,
-        (err, reply) => {
-          if (err) cb(err);
-          else if (reply && reply.length) {
-            const multi = this.redisClient.multi();
-            multi.zrem(this.indexKey, ...reply);
-            multi.hdel(this.key, ...reply);
-            this.redisClient.execMulti(multi, (err) => cb(err));
-          } else cb();
-        },
-      );
-    };
-    this.lockManager.acquireLock((err, locked) => {
-      if (err) cb(err);
-      else if (locked) process(cb);
-      else cb();
-    });
+    const ts = TimeSeries.getCurrentTimestamp();
+    const max = ts - this.retentionTime;
+    this.redisClient.zrangebyscore(
+      this.indexKey,
+      '-inf',
+      `${max}`,
+      (err, reply) => {
+        if (err) cb(err);
+        else if (reply && reply.length) {
+          const multi = this.redisClient.multi();
+          multi.zrem(this.indexKey, ...reply);
+          multi.hdel(this.key, ...reply);
+          this.redisClient.execMulti(multi, (err) => cb(err));
+        } else cb();
+      },
+    );
   }
 
   getRange(from: number, to: number, cb: ICallback<TTimeSeriesRange>): void {

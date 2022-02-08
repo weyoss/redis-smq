@@ -6,16 +6,12 @@ import { TimeSeries } from '../../src/system/common/time-series/time-series';
 test('HashTimeSeries: Case 2', async () => {
   const redisClient = await getRedisInstance();
   const hashTimeSeries = promisifyAll(
-    new HashTimeSeries(
-      redisClient,
-      'my-key',
-      'my-key-index',
-      'my-key-lock',
-      undefined,
-      5,
-      60,
-      true,
-    ),
+    new HashTimeSeries(redisClient, {
+      key: 'key-123',
+      indexKey: 'key-index-123',
+      retentionTimeInSeconds: 5,
+      windowSizeInSeconds: 60,
+    }),
   );
   const multi = redisClient.multi();
   const ts = TimeSeries.getCurrentTimestamp();
@@ -26,12 +22,9 @@ test('HashTimeSeries: Case 2', async () => {
 
   const range1 = await hashTimeSeries.getRangeAsync(ts, ts + 10);
 
-  // Time series cleanup ticker run once each 10s.
-  // It needs 2 rounds to clean up data (saved 10 seconds time range).
-  // In each round, data older than 5 seconds from run time, get deleted.
-  // Waiting extra 10 seconds to exclude errors due to javascript time drift.
-  // In the end, we expect that range2 is filled with 0 values (after 30s all data should be expired and deleted)
-  await delay(30000);
+  // extra 5s to exclude js time drift related errors
+  await delay(15000);
+  await hashTimeSeries.cleanUpAsync();
   const range2 = await hashTimeSeries.getRangeAsync(ts, ts + 10);
 
   expect(range1.length).toEqual(10);
@@ -57,6 +50,4 @@ test('HashTimeSeries: Case 2', async () => {
   expect(range2[7]).toEqual({ timestamp: ts + 7, value: 0 });
   expect(range2[8]).toEqual({ timestamp: ts + 8, value: 0 });
   expect(range2[9]).toEqual({ timestamp: ts + 9, value: 0 });
-
-  await hashTimeSeries.quitAsync();
 });

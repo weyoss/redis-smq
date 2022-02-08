@@ -1,12 +1,13 @@
 import {
   ICallback,
   TRedisClientMulti,
+  TTimeSeriesParams,
   TTimeSeriesRange,
 } from '../../../../types';
 import { TimeSeries } from './time-series';
 import { ArgumentError } from '../errors/argument.error';
 
-export class SortedSetTimeSeries extends TimeSeries {
+export class SortedSetTimeSeries extends TimeSeries<TTimeSeriesParams> {
   add(
     ts: number,
     value: number,

@@ -6,21 +6,11 @@ import { TQueueParams } from '../../../../../types';
 export const QueueDeadLetteredTimeSeries = (
   redisClient: RedisClient,
   queue: TQueueParams,
-  isMaster?: boolean,
 ) => {
-  const {
-    keyRateQueueDeadLettered,
-    keyRateQueueDeadLetteredIndex,
-    keyLockRateQueueDeadLettered,
-  } = redisKeys.getQueueKeys(queue);
-  return new HashTimeSeries(
-    redisClient,
-    keyRateQueueDeadLettered,
-    keyRateQueueDeadLetteredIndex,
-    keyLockRateQueueDeadLettered,
-    undefined,
-    undefined,
-    undefined,
-    isMaster,
-  );
+  const { keyRateQueueDeadLettered, keyRateQueueDeadLetteredIndex } =
+    redisKeys.getQueueKeys(queue);
+  return new HashTimeSeries(redisClient, {
+    key: keyRateQueueDeadLettered,
+    indexKey: keyRateQueueDeadLetteredIndex,
+  });
 };

@@ -275,7 +275,7 @@ export const queueManager = {
     redisClient.smembers(keyNamespaces, (err, reply) => {
       if (err) cb(err);
       else if (!reply) cb(new EmptyCallbackReplyError());
-      else cb(null, reply ?? []);
+      else cb(null, reply);
     });
   },
 

@@ -25,7 +25,9 @@ import { WebsocketOnlineStreamWorker } from '../src/monitor-server/workers/webso
 import { TimeSeriesResponseBodyDTO } from '../src/monitor-server/controllers/common/dto/time-series/time-series-response.DTO';
 import * as configuration from '../src/system/common/configuration';
 import ScheduleWorker from '../src/system/workers/schedule.worker';
+import TimeSeriesWorker from '../src/system/workers/time-series.worker';
 import { merge } from 'lodash';
+import { queueManager } from '../src/system/app/queue-manager/queue-manager';
 
 export const config = configuration.setConfiguration(testConfig);
 
@@ -65,6 +67,7 @@ let websocketHeartbeatStreamWorker: WebsocketHeartbeatStreamWorker | null =
   null;
 let websocketOnlineStreamWorker: WebsocketOnlineStreamWorker | null = null;
 let scheduleWorker: ScheduleWorker | null = null;
+let timeSeriesWorker: TimeSeriesWorker | null = null;
 let messageManager: MessageManager | null = null;
 let queueManagerFrontend: QueueManagerFrontend | null = null;
 
@@ -100,6 +103,7 @@ export async function shutdown(): Promise<void> {
   await stopWebsocketHeartbeatStreamWorker();
   await stopWebsocketOnlineStreamWorker();
   await stopScheduleWorker();
+  await stopTimeSeriesWorker();
 
   if (messageManager) {
     const m = promisifyAll(messageManager);
@@ -232,6 +236,33 @@ export async function stopScheduleWorker(): Promise<void> {
     if (scheduleWorker) {
       scheduleWorker.quit(() => {
         scheduleWorker = null;
+        resolve();
+      });
+    } else resolve();
+  });
+}
+
+export async function startTimeSeriesWorker(): Promise<void> {
+  if (!timeSeriesWorker) {
+    const redisClient = await getRedisInstance();
+    timeSeriesWorker = new TimeSeriesWorker(
+      redisClient,
+      {
+        timeout: 1000,
+        config,
+        consumerId: 'abc',
+      },
+      false,
+    );
+    timeSeriesWorker.run();
+  }
+}
+
+export async function stopTimeSeriesWorker(): Promise<void> {
+  return new Promise<void>((resolve) => {
+    if (timeSeriesWorker) {
+      timeSeriesWorker.quit(() => {
+        timeSeriesWorker = null;
         resolve();
       });
     } else resolve();
@@ -487,4 +518,12 @@ export async function validateTimeSeriesFrom(url: string) {
     timestamp: timestamp - 1,
     value: 0,
   });
+}
+
+export async function setUpMessageQueue(queue: TQueueParams = defaultQueue) {
+  const qm = promisifyAll(queueManager);
+  const redisClient = await getRedisInstance();
+  const multi = redisClient.multi();
+  qm.setUpMessageQueue(multi, queue);
+  await redisClient.execMultiAsync(multi);
 }

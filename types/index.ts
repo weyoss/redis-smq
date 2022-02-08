@@ -342,3 +342,14 @@ export type TMessageMetadataJSON = {
   nextScheduledDelay: number;
   nextRetryDelay: number;
 };
+
+export type TTimeSeriesParams = {
+  key: string;
+  expireAfterInSeconds?: number;
+  retentionTimeInSeconds?: number;
+  windowSizeInSeconds?: number;
+};
+
+export interface IHashTimeSeriesParams extends TTimeSeriesParams {
+  indexKey: string;
+}
