@@ -1,19 +1,16 @@
 import { delay, promisifyAll } from 'bluebird';
-import { getRedisInstance } from '../common';
+import { getRedisInstance, startTimeSeriesWorker } from '../common';
 import { TimeSeries } from '../../src/system/common/time-series/time-series';
 import { SortedSetTimeSeries } from '../../src/system/common/time-series/sorted-set-time-series';
 
 test('SortedSetTimeSeries: Case 2', async () => {
+  await startTimeSeriesWorker();
   const redisClient = await getRedisInstance();
   const sortedSetTimeSeries = promisifyAll(
-    new SortedSetTimeSeries(
-      redisClient,
-      'my-key',
-      undefined,
-      5,
-      undefined,
-      true,
-    ),
+    new SortedSetTimeSeries(redisClient, {
+      key: 'my-key',
+      retentionTimeInSeconds: 5,
+    }),
   );
   const ts = TimeSeries.getCurrentTimestamp();
   for (let i = 0; i < 10; i += 1) {
@@ -22,12 +19,9 @@ test('SortedSetTimeSeries: Case 2', async () => {
 
   const range1 = await sortedSetTimeSeries.getRangeAsync(ts, ts + 10);
 
-  // Time series cleanup ticker run once each 10s.
-  // It needs 2 rounds to clean up data (saved 10 seconds time range).
-  // In each round, data older than 5 seconds from run time, get deleted.
-  // Waiting extra 10 seconds to exclude errors due to javascript time drift.
-  // In the end, we expect that range2 is filled with 0 values (after 30s all data should be expired and deleted)
-  await delay(30000);
+  // extra 5s to exclude js time drift related errors
+  await delay(15000);
+  await sortedSetTimeSeries.cleanUpAsync();
   const range2 = await sortedSetTimeSeries.getRangeAsync(ts, ts + 10);
 
   expect(range1.length).toEqual(10);
@@ -53,6 +47,4 @@ test('SortedSetTimeSeries: Case 2', async () => {
   expect(range2[7]).toEqual({ timestamp: ts + 7, value: 0 });
   expect(range2[8]).toEqual({ timestamp: ts + 8, value: 0 });
   expect(range2[9]).toEqual({ timestamp: ts + 9, value: 0 });
-
-  await sortedSetTimeSeries.quitAsync();
 });

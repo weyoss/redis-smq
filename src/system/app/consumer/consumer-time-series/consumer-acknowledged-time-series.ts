@@ -7,18 +7,13 @@ export const ConsumerAcknowledgedTimeSeries = (
   redisClient: RedisClient,
   consumerId: string,
   queue: TQueueParams,
-  isMaster?: boolean,
 ) => {
   const { keyRateConsumerAcknowledged } = redisKeys.getQueueConsumerKeys(
     queue,
     consumerId,
   );
-  return new SortedSetTimeSeries(
-    redisClient,
-    keyRateConsumerAcknowledged,
-    30,
-    undefined,
-    undefined,
-    isMaster,
-  );
+  return new SortedSetTimeSeries(redisClient, {
+    key: keyRateConsumerAcknowledged,
+    expireAfterInSeconds: 30,
+  });
 };

@@ -1,5 +1,4 @@
 'use strict';
-const path = require('path');
 
 module.exports = {
   namespace: 'ns1',

@@ -1,7 +1,6 @@
 import { Ticker } from './ticker/ticker';
 import { ICallback, TMessageRateFields } from '../../../types';
 import { events } from './events';
-import { waterfall } from '../lib/async';
 
 export abstract class MessageRateWriter<
   TRateFields extends TMessageRateFields,
@@ -32,22 +31,12 @@ export abstract class MessageRateWriter<
     cb: ICallback<void>,
   ): void;
 
-  abstract onQuit(cb: ICallback<void>): void;
-
   onRateTick = (ts: number, rates: TRateFields): void => {
     this.rateStack.push([ts, rates]);
   };
 
   quit(cb: ICallback<void>): void {
-    waterfall(
-      [
-        (cb: ICallback<void>) => {
-          this.writerTicker.on(events.DOWN, cb);
-          this.writerTicker.quit();
-        },
-        (cb: ICallback<void>) => this.onQuit(cb),
-      ],
-      cb,
-    );
+    this.writerTicker.on(events.DOWN, cb);
+    this.writerTicker.quit();
   }
 }

@@ -7,7 +7,6 @@ import {
 import { RedisClient } from '../../common/redis-client/redis-client';
 import { QueuePublishedTimeSeries } from './producer-time-series/queue-published-time-series';
 import { GlobalPublishedTimeSeries } from './producer-time-series/global-published-time-series';
-import { each, waterfall } from '../../lib/async';
 
 export class ProducerMessageRateWriter extends MessageRateWriter<IProducerMessageRateFields> {
   protected redisClient: RedisClient;
@@ -22,10 +21,7 @@ export class ProducerMessageRateWriter extends MessageRateWriter<IProducerMessag
   constructor(redisClient: RedisClient) {
     super();
     this.redisClient = redisClient;
-    this.globalPublishedTimeSeries = GlobalPublishedTimeSeries(
-      redisClient,
-      true,
-    );
+    this.globalPublishedTimeSeries = GlobalPublishedTimeSeries(redisClient);
   }
 
   onUpdate(
@@ -35,9 +31,8 @@ export class ProducerMessageRateWriter extends MessageRateWriter<IProducerMessag
   ): void {
     const { publishedRate, queuePublishedRate } = rates;
     if (Object.keys(queuePublishedRate).length) {
-      let multi: TRedisClientMulti | null = null;
       if (publishedRate) {
-        multi = multi ?? this.redisClient.multi();
+        const multi = this.redisClient.multi();
         this.globalPublishedTimeSeries.add(ts, publishedRate, multi);
         for (const key in queuePublishedRate) {
           const value = queuePublishedRate[key];
@@ -47,7 +42,6 @@ export class ProducerMessageRateWriter extends MessageRateWriter<IProducerMessag
               this.queuePublishedTimeSeries[key] = QueuePublishedTimeSeries(
                 this.redisClient,
                 { ns, name },
-                true,
               );
             }
             this.queuePublishedTimeSeries[key].add(ts, value, multi);
@@ -56,23 +50,5 @@ export class ProducerMessageRateWriter extends MessageRateWriter<IProducerMessag
         this.redisClient.execMulti(multi, () => cb());
       } else cb();
     } else cb();
-  }
-
-  onQuit(cb: ICallback<void>): void {
-    waterfall(
-      [
-        (cb: ICallback<void>) => this.globalPublishedTimeSeries.quit(cb),
-        (cb: ICallback<void>) => {
-          each(
-            this.queuePublishedTimeSeries,
-            (item, key, done) => {
-              item.quit(() => done());
-            },
-            cb,
-          );
-        },
-      ],
-      cb,
-    );
   }
 }

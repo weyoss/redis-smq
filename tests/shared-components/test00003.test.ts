@@ -6,16 +6,11 @@ import { TimeSeries } from '../../src/system/common/time-series/time-series';
 test('HashTimeSeries: Case 1', async () => {
   const redisClient = await getRedisInstance();
   const hashTimeSeries = promisifyAll(
-    new HashTimeSeries(
-      redisClient,
-      'my-key',
-      'my-key-index',
-      'my-key-lock',
-      20,
-      undefined,
-      undefined,
-      true,
-    ),
+    new HashTimeSeries(redisClient, {
+      key: 'my-key',
+      indexKey: 'my-key-index',
+      expireAfterInSeconds: 20,
+    }),
   );
   const multi = redisClient.multi();
   const ts = TimeSeries.getCurrentTimestamp();
@@ -31,5 +26,4 @@ test('HashTimeSeries: Case 1', async () => {
   expect(range[23]).toEqual({ timestamp: ts + 3, value: 56 });
   expect(range[30]).toEqual({ timestamp: ts + 10, value: 70 });
   expect(range[39]).toEqual({ timestamp: ts + 20 - 1, value: 0 });
-  await hashTimeSeries.quitAsync();
 });

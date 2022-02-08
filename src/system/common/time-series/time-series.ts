@@ -1,46 +1,65 @@
 import {
   ICallback,
   TRedisClientMulti,
+  TTimeSeriesParams,
   TTimeSeriesRange,
 } from '../../../../types';
 import { RedisClient } from '../redis-client/redis-client';
-import { Ticker } from '../ticker/ticker';
-import { events } from '../events';
 import { EventEmitter } from 'events';
+import { ArgumentError } from '../errors/argument.error';
 
-export abstract class TimeSeries extends EventEmitter {
-  private readonly ticker: Ticker | null = null;
-  protected retentionTime: number;
+export abstract class TimeSeries<
+  TimeSeriesParams extends TTimeSeriesParams,
+> extends EventEmitter {
+  protected retentionTime = 24 * 60 * 60;
+  protected expireAfter = 0;
+  protected windowSize = 60;
   protected redisClient: RedisClient;
-  protected expireAfter: number | null = null;
   protected key: string;
-  protected windowSize: number;
 
-  constructor(
-    redisClient: RedisClient,
-    key: string,
-    expireAfterInSeconds = 0,
-    retentionTimeInSeconds = 24 * 60 * 60,
-    windowSizeInSeconds = 60,
-    isMaster = false,
-  ) {
+  constructor(redisClient: RedisClient, params: TimeSeriesParams) {
     super();
-    this.retentionTime = retentionTimeInSeconds;
+    const {
+      key,
+      expireAfterInSeconds,
+      retentionTimeInSeconds,
+      windowSizeInSeconds,
+    } = params;
     this.redisClient = redisClient;
-    this.expireAfter = expireAfterInSeconds;
-    this.windowSize = windowSizeInSeconds;
+    if (expireAfterInSeconds !== undefined)
+      this.setExpiration(expireAfterInSeconds);
+    if (retentionTimeInSeconds !== undefined)
+      this.setRetentionTime(retentionTimeInSeconds);
+    if (windowSizeInSeconds !== undefined)
+      this.setWindowSize(windowSizeInSeconds);
     this.key = key;
-    if (isMaster) {
-      this.ticker = new Ticker(() => this.onTick(), 10000);
-      this.ticker.nextTick();
-    }
   }
 
-  private onTick(): void {
-    this.cleanUp((err) => {
-      if (err) this.emit(events.ERROR, err);
-      else this.ticker?.nextTick();
-    });
+  setWindowSize(windowSizeInSeconds: number): void {
+    if (windowSizeInSeconds < 1) {
+      throw new ArgumentError(
+        'Expected a positive integer value in milliseconds >= 1',
+      );
+    }
+    this.windowSize = windowSizeInSeconds;
+  }
+
+  setRetentionTime(retentionTimeInSeconds: number): void {
+    if (retentionTimeInSeconds < 1) {
+      throw new ArgumentError(
+        'Expected a positive integer value in milliseconds >= 1',
+      );
+    }
+    this.retentionTime = retentionTimeInSeconds;
+  }
+
+  setExpiration(expireAfterInSeconds: number): void {
+    if (expireAfterInSeconds < 0) {
+      throw new ArgumentError(
+        'Expected a positive integer value in milliseconds',
+      );
+    }
+    this.expireAfter = expireAfterInSeconds;
   }
 
   abstract add(
@@ -61,13 +80,6 @@ export abstract class TimeSeries extends EventEmitter {
     const max = from;
     const min = from - this.windowSize;
     this.getRange(min, max, cb);
-  }
-
-  quit(cb: ICallback<void>): void {
-    if (this.ticker) {
-      this.ticker.on(events.DOWN, cb);
-      this.ticker.quit();
-    } else cb();
   }
 
   static getCurrentTimestamp(): number {

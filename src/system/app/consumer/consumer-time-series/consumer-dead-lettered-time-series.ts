@@ -7,18 +7,13 @@ export const ConsumerDeadLetteredTimeSeries = (
   redisClient: RedisClient,
   consumerId: string,
   queue: TQueueParams,
-  isMaster?: boolean,
 ) => {
   const { keyRateConsumerDeadLettered } = redisKeys.getQueueConsumerKeys(
     queue,
     consumerId,
   );
-  return new SortedSetTimeSeries(
-    redisClient,
-    keyRateConsumerDeadLettered,
-    30,
-    undefined,
-    undefined,
-    isMaster,
-  );
+  return new SortedSetTimeSeries(redisClient, {
+    key: keyRateConsumerDeadLettered,
+    expireAfterInSeconds: 30,
+  });
 };

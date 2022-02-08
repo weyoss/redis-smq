@@ -6,14 +6,10 @@ import { SortedSetTimeSeries } from '../../src/system/common/time-series/sorted-
 test('SortedSetTimeSeries: Case 1', async () => {
   const redisClient = await getRedisInstance();
   const sortedSetTimeSeries = promisifyAll(
-    new SortedSetTimeSeries(
-      redisClient,
-      'my-key',
-      undefined,
-      20,
-      undefined,
-      true,
-    ),
+    new SortedSetTimeSeries(redisClient, {
+      key: 'my-key',
+      retentionTimeInSeconds: 20,
+    }),
   );
   const multi = redisClient.multi();
   const ts = TimeSeries.getCurrentTimestamp();
@@ -29,5 +25,4 @@ test('SortedSetTimeSeries: Case 1', async () => {
   expect(range[23]).toEqual({ timestamp: ts + 3, value: 56 });
   expect(range[30]).toEqual({ timestamp: ts + 10, value: 70 });
   expect(range[39]).toEqual({ timestamp: ts + 20 - 1, value: 0 });
-  await sortedSetTimeSeries.quitAsync();
 });

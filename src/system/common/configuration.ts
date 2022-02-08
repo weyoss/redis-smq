@@ -27,7 +27,7 @@ export function setConfiguration(configuration: IConfig = {}): IRequiredConfig {
     throw new ConfigurationError(
       'Configuration has been already initialized. Possible configuration overwrite.',
     );
-  currentConfig = merge(currentConfig ?? {}, defaultConfig, configuration);
+  currentConfig = merge({}, defaultConfig, configuration);
   redisKeys.setNamespace(currentConfig.namespace);
   return currentConfig;
 }
