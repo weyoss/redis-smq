@@ -48,7 +48,7 @@
     "koa-bodyparser": "4.3.0",
     "lodash": "4.17.21",
     "redis": "3.1.2",
-    "redis-smq-monitor": "6.3.0",
+    "redis-smq-monitor": "6.4.0",
     "reflect-metadata": "0.1.13",
     "socket.io": "4.2.0",
     "stoppable": "1.1.0",
