@@ -4,23 +4,18 @@ import { each } from '../../../lib/async';
 
 export class WorkerPool {
   private pool: Worker[] = [];
-  private currentIndex = 0;
+  private index = 0;
 
   private getCurrentPoolItem = (): Worker | null => {
     if (this.pool.length) {
-      const index = this.getSetIndex();
-      return this.pool[index];
+      const worker = this.pool[this.index];
+      this.index += 1;
+      if (this.index >= this.pool.length) {
+        this.index = 0;
+      }
+      return worker;
     }
     return null;
-  };
-
-  private getSetIndex = (): number => {
-    const index = this.currentIndex;
-    this.currentIndex += 1;
-    if (this.currentIndex === this.pool.length) {
-      this.currentIndex = 0;
-    }
-    return index;
   };
 
   work = (cb: ICallback<void>): void => {
@@ -42,6 +37,7 @@ export class WorkerPool {
       },
       () => {
         this.pool = [];
+        this.index = 0;
         cb();
       },
     );
