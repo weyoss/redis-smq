@@ -1,18 +1,7 @@
 # Consumer Class API
 
 ```javascript
-// filename: ./examples/javascript/consumer.js
-'use strict';
-
 const { Consumer } = require('redis-smq');
-
-const consumer = new Consumer();
-
-consumer.consume('test_queue', false, (msg, cb) => {
-  const payload = msg.getBody();
-  console.log('Message payload', payload);
-  cb(); // acknowledging the message
-});
 ```
 
 ## Table of Content
@@ -48,7 +37,7 @@ consume(queue, usePriorityQueuing, messageHandler, cb);
 - `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used. Otherwise, you can explicity provide an object which has the following signature:
    - `queue.name` *(string): Required.* Queue name.
    - `queue.ns` *(string): Required.* Queue namespace.
-- `usePriorityQueuing` *(boolean): Optional.*  When `true`, the message handler will dequeue messages using priority queuing.
+- `usePriorityQueuing` *(boolean): Required.*  When `true`, the message handler will dequeue messages using priority queuing.
 - `messageHandler(message, cb)` *(function): Required.* 
   - `message` *(mixed): Required.* A message instance.
   - `cb(err)` *(function): Required.* Callback function. If the message has successfully processed, you can acknowledge it by calling the callback function without arguments. Otherwise, if any error has occurred, the message is unacknowledged by returning the error as the first argument of the callback function.

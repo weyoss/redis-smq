@@ -2,14 +2,6 @@
 
 ```javascript
 const { QueueManager } = require('redis-smq');
-const config = require('./config');
-
-QueueManager.getSingletonInstance(config, (err, queueManager) => {
-  if (err) console.log(err);
-  else {
-    // ...
-  }
-})
 ```
 
 ## Table of Content
@@ -36,6 +28,19 @@ getSingletonInstance(cb)
     - `err` *(Error | null | undefined).* Error object.
     - `queueManager` *(QueueManager).* QueueManager instance.
 
+**Example**
+
+```javascript
+const { QueueManager } = require('redis-smq');
+
+QueueManager.getSingletonInstance((err, queueManager) => {
+  if (err) console.log(err);
+  else {
+    // ...
+  }
+})
+```
+
 ## Public Methods
 
 ### QueueManager.prototype.getQueues()
@@ -54,7 +59,7 @@ getQueues(cb);
 ### QueueManager.prototype.getNamespaces()
 
 ```javascript
-getQueues(cb);
+getNamespaces(cb);
 ```
 
 **Parameters**

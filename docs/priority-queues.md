@@ -62,7 +62,7 @@ const { Consumer } = require('redis-smq');
 const consumer = new Consumer();
 
 // The second argument is for enabling priority queuing 
-consumer.consume('test_queue', true, (msg, cb) => { cb(); }, (err, isRunning) => {
+consumer.consume('test_queue', true, (msg, cb) => cb(), (err, isRunning) => {
   if (err) console.log(error);
   else console.log(`Message handler successfully registered. Currently it is ${isRunning? '': 'not '}running.`);
 })

@@ -86,11 +86,13 @@ See [Configuration](docs/configuration.md) for more details.
 
 ### Basics
 
-RedisSMQ provides 3 classes: `Message`, `Producer`, and `Consumer` in order to work with the message queue.
+RedisSMQ provides 3 classes in order to work with the message queue: `Message`, `Producer`, and `Consumer`.
 
 #### Message Class
 
-`Message` class is responsible for creating and manipulating messages.
+`Message` class is responsible for creating messages that may be published. A message represents your application data, sometime referred as `message payload`, which can be of different types. 
+
+A `Message` instance can be constructed and used as shown in the next examples.
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -103,13 +105,17 @@ message
 let messageTTL = message.getTTL();
 ```
 
+The `Message` class provides many methods for setting up different message parameters such as message body, message priority, message TTL, etc. 
+
 See [Message Reference](docs/api/message.md) for more details.
 
 #### Producer Class
 
-`Producer` class is in turn responsible for publishing messages. 
+`Producer` class allows you to publish a message to a queue. 
 
-You can use the same producer instance for publishing messages to multiple queues. The same producer instance can also produce messages with priority. 
+You can use a single `Producer` instance to produce messages, including messages with priority, to multiple queues.
+
+Before publishing a message do not forget to set a destination queue using the [setQueue()](/docs/api/message.md#messageprototypesetqueue) method, otherwise an error will be returned.
 
 ```javascript
 // filename: ./examples/javascript/producer.js
@@ -121,7 +127,7 @@ const message = new Message();
 
 message
     .setBody({hello: 'world'})
-    .setTTL(3600000)
+    .setTTL(3600000) // in millis
     .setQueue('test_queue');
 
 message.getId() // null
@@ -140,18 +146,21 @@ See [Producer Reference](docs/api/producer.md) for more details.
 
 #### Consumer Class
 
-In the same manner as a producer, you can use a single consumer instance to consume messages from different queues, including messages from priority queues.
+`Consumer` class can be used to receive and consume messages from a queue.
 
-To consume messages from a given queue, you need to define and register a `message handler`. 
+Similarly to a `Producer` instance, a `Consumer` instance can consume messages from multiple queues.
 
-A `message handler` is a function which get called once a message is received. For a given consumer, a queue can have only 2 message handlers. One for consuming messages without priority, and the second one for consuming messages with priority.
+For consuming messages from a queue, the `Consumer` class provides the [consume()](/docs/api/consumer.md#consumerprototypeconsume) method which allows you to register a `message handler`. 
 
-To register a message handler, the `consume()` method is provided and can be used as shown in the example bellow. Message handlers can be registered at any time, before or after you have started your consumers. A consumer can be started using the `consumer.run()` method.
+A `message handler` is a function which get called once a message is received. 
 
-To shut down and remove a `message handler` from your consumer, use the `cancel()` method. 
+Message handlers can be registered at any time, before or after you have started your consumer. 
 
-To shut down completely your consumer, use the `shutdown()` method.
+A consumer can be started using the [run()](/docs/api/consumer.md#consumerprototyperun) method.
 
+To shut down and remove a given `message handler` from your consumer, use the [cancel()](/docs/api/consumer.md#consumerprototypecancel) method. 
+
+To shut down completely your consumer and tear down all message handlers, use the [shutdown()](/docs/api/consumer.md#consumerprototypeshutdown) method.
 
 ```javascript
 // filename: ./examples/javascript/consumer.js
@@ -161,28 +170,39 @@ const { Consumer } = require('redis-smq');
 
 const consumer = new Consumer();
 
-consumer.consume('test_queue', false, (msg, cb) => {
-  const payload = msg.getBody();
-  console.log('Message payload', payload);
-  cb(); // acknowledging the message
-});
-
-consumer.consume('another_queue', true, (msg, cb) => {
+const messageHandler = (msg, cb) => {
    const payload = msg.getBody();
    console.log('Message payload', payload);
    cb(); // acknowledging the message
+};
+
+// the second parameter is for enabling priority queuing
+consumer.consume('test_queue', false, messageHandler, (err, isRunning) => {
+   if (err) console.error(err);
+   // the message handler will be started only if the consumer is running
+   else console.log(`Message handler has been registered. Running status: ${isRunning}`); // isRunning === false
+});
+
+const anotherMessageHandler = (msg, cb) => {
+   const payload = msg.getBody();
+   // ...
+   cb();
+};
+
+consumer.consume('another_queue', false, anotherMessageHandler, (err, isRunning) => {
+   if (err) console.error(err);
 });
 
 consumer.run();
 ```
 
-From your `message handler`, when you receive a message, in order to acknowledge it, you can invoke the callback function, without arguments as shown the example above. 
+Once a message is received, to acknowledge it, you invoke the callback function without arguments, as shown in the example above. 
 
-Message acknowledgment informs the MQ that a given message has been successfully consumed.
+Message acknowledgment informs the MQ that a message has been successfully consumed.
 
-If an error occurred while processing a message, you can unacknowledge it by passing the error to the callback function.
+If an error occurred while processing a message, you can unacknowledge the message by passing the error to the callback function.
 
-By default, unacknowledged messages are re-queued and delivered again unless **message retry threshold** is exceeded. Then the messages are moved to **dead-letter queue (DLQ)**. 
+By default, unacknowledged messages are re-queued and delivered again unless **message retry threshold** is exceeded. Then the messages are moved to a **dead-letter queue (DLQ)**. 
 
 A `dead-letter queue` is a system generated queue that holds all messages that couldn't be processed or can not be delivered to consumers.
 
