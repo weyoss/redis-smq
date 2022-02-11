@@ -1,17 +1,7 @@
 # Producer Class API
 
 ```javascript
-const {Message, Producer} = require('redis-smq');
-
-const message = new Message();
-message.setBody({hello: 'world'}).setQueue('test_queue');
-
-const producer = new Producer();
-producer.produce(message, (err) => {
-  if (err) console.log(err);
-  else console.log('Successfully produced')
-});
-
+const { Producer } = require('redis-smq');
 ```
 
 ## Public Methods

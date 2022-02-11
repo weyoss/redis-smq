@@ -1,5 +1,11 @@
 # Message Class API
 
+```javascript
+const { Message } = require('redis-smq');
+```
+
+## Table of Content
+
 1. [Configuration](#configuration)
 2. [Public Static Properties](#public-static-properties)
 3. Public Methods

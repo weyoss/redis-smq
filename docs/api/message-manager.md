@@ -4,14 +4,6 @@
 
 ```javascript
 const { MessageManager } = require('redis-smq');
-const config = require('./config');
-
-MessageManager.getSingletonInstance(config, (err, messageManager) => {
-  if (err) console.log(err);
-  else {
-    // ...
-  }
-})
 ```
 
 ## Table of Content
@@ -55,6 +47,18 @@ getSingletonInstance(cb)
 - `cb(err, messageManager)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
   - `messageManager` *(MessageManager).* MessageManager instance.
+
+**Example**
+```javascript
+const { MessageManager } = require('redis-smq');
+
+MessageManager.getSingletonInstance((err, messageManager) => {
+  if (err) console.log(err);
+  else {
+    // ...
+  }
+})
+```
 
 ## Public Methods
 
