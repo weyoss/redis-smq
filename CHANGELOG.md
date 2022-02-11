@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 6.0.1 (2022-02-11)
+
+* Update docs (78fef2e)
+* Clean up WorkerPool class (b4dae38)
+
 ## 6.0.0 (2022-02-08)
 
 * Bump up redis-smq-monitor version to 6.4.0 (71ceb45)
