@@ -10,11 +10,11 @@ import { delay, promisifyAll } from 'bluebird';
 import { Message } from '../../src/system/app/message/message';
 import { events } from '../../src/system/common/events';
 import { DelayWorker } from '../../src/system/workers/delay.worker';
-import { GCWorker } from '../../src/system/workers/gc.worker';
 import { ScheduleWorker } from '../../src/system/workers/schedule.worker';
 import { config } from '../common';
+import { HeartbeatMonitorWorker } from '../../src/system/workers/heartbeat-monitor.worker';
 
-test('GCWorker -> DelayWorker -> ScheduleWorker', async () => {
+test('HeartbeatMonitorWorker -> DelayWorker -> ScheduleWorker', async () => {
   let message: Message | null = null;
   const consumer = getConsumer({
     messageHandler: jest.fn((msg) => {
@@ -39,8 +39,8 @@ test('GCWorker -> DelayWorker -> ScheduleWorker', async () => {
   const redisClient = await getRedisInstance();
 
   // should move message from processing queue to delay queue
-  const gcWorker = promisifyAll(
-    new GCWorker(
+  const heartbeatMonitor = promisifyAll(
+    new HeartbeatMonitorWorker(
       redisClient,
       {
         config,
@@ -49,7 +49,7 @@ test('GCWorker -> DelayWorker -> ScheduleWorker', async () => {
       false,
     ),
   );
-  gcWorker.run();
+  heartbeatMonitor.run();
   await delay(5000);
 
   // should move from delay queue to scheduled queue
@@ -88,6 +88,6 @@ test('GCWorker -> DelayWorker -> ScheduleWorker', async () => {
   expect(res3.total).toBe(1);
 
   await delayHandler.quitAsync();
-  await gcWorker.quitAsync();
+  await heartbeatMonitor.quitAsync();
   await scheduleWorker.quitAsync();
 });

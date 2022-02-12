@@ -11,7 +11,6 @@ import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { EventEmitter } from 'events';
 import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
 import { InvalidCallbackReplyError } from '../../common/errors/invalid-callback-reply.error';
-import { consumerQueues } from './consumer-queues';
 import { Consumer } from './consumer';
 import { each, waterfall } from '../../lib/async';
 
@@ -250,25 +249,22 @@ export class ConsumerHeartbeat extends EventEmitter {
   }
 
   static handleExpiredHeartbeatIds(
-    client: RedisClient,
+    redisClient: RedisClient,
     consumerIds: string[],
     cb: ICallback<void>,
   ): void {
     if (consumerIds.length) {
       const { keyHeartbeats, keyHeartbeatInstanceIds } =
         redisKeys.getMainKeys();
-      const multi = client.multi();
+      const multi = redisClient.multi();
       each(
         consumerIds,
         (consumerId, _, done) => {
-          consumerQueues.getConsumerQueues(client, consumerId, (err, reply) => {
-            consumerQueues.removeConsumer(multi, consumerId, reply ?? []);
-            multi.hdel(keyHeartbeats, consumerId);
-            multi.zrem(keyHeartbeatInstanceIds, consumerId);
-            done();
-          });
+          multi.hdel(keyHeartbeats, consumerId);
+          multi.zrem(keyHeartbeatInstanceIds, consumerId);
+          Consumer.handleOfflineConsumer(multi, redisClient, consumerId, done);
         },
-        () => client.execMulti(multi, (err) => cb(err)),
+        () => redisClient.execMulti(multi, (err) => cb(err)),
       );
     } else cb();
   }

@@ -7,6 +7,8 @@ import {
   THeartbeatRegistryPayload,
   TQueueParams,
   TUnaryFunction,
+  TRedisClientMulti,
+  EMessageUnacknowledgedCause,
 } from '../../../../types';
 import { ConsumerMessageRate } from './consumer-message-rate';
 import { events } from '../../common/events';
@@ -23,7 +25,12 @@ import { consumerQueues } from './consumer-queues';
 import { GenericError } from '../../common/errors/generic.error';
 import { queueManager } from '../queue-manager/queue-manager';
 import { WorkerPool } from '../../common/worker/worker-runner/worker-pool';
-import { each } from '../../lib/async';
+import { each, waterfall } from '../../lib/async';
+import { Message } from '../message/message';
+import { broker } from '../../common/broker';
+import { TimeSeries } from '../../common/time-series/time-series';
+import { GlobalDeadLetteredTimeSeries } from './consumer-time-series/global-dead-lettered-time-series';
+import { QueueDeadLetteredTimeSeries } from './consumer-time-series/queue-dead-lettered-time-series';
 
 export class Consumer extends Base {
   private heartbeat: ConsumerHeartbeat | null = null;
@@ -357,16 +364,6 @@ export class Consumer extends Base {
     }));
   }
 
-  static isAlive(
-    redisClient: RedisClient,
-    queue: TQueueParams,
-    id: string,
-    cb: ICallback<boolean>,
-  ): void {
-    const { keyQueueConsumers } = redisKeys.getQueueConsumerKeys(queue, id);
-    consumerQueues.exists(redisClient, keyQueueConsumers, id, cb);
-  }
-
   static getOnlineConsumers(
     redisClient: RedisClient,
     queue: TQueueParams,
@@ -390,5 +387,120 @@ export class Consumer extends Base {
     cb: ICallback<number>,
   ): void {
     consumerQueues.countQueueConsumers(redisClient, queue, cb);
+  }
+
+  static handleOfflineConsumer(
+    multi: TRedisClientMulti, // pending transaction
+    redisClient: RedisClient, // for readonly operations
+    consumerId: string,
+    cb: ICallback<void>,
+  ): void {
+    waterfall(
+      [
+        (cb: ICallback<TQueueParams[]>) =>
+          consumerQueues.getConsumerQueues(redisClient, consumerId, cb),
+        (queues: TQueueParams[], cb: ICallback<TQueueParams[]>) => {
+          each(
+            queues,
+            (queue, _, done) => {
+              Consumer.handleConsumerProcessingQueue(
+                multi,
+                redisClient,
+                consumerId,
+                queue,
+                done,
+              );
+            },
+            (err) => {
+              if (err) cb(err);
+              else cb(null, queues);
+            },
+          );
+        },
+        (queues: TQueueParams[], cb: ICallback<void>) => {
+          if (queues.length)
+            consumerQueues.removeConsumer(multi, consumerId, queues);
+          cb();
+        },
+      ],
+      cb,
+    );
+  }
+
+  protected static fetchProcessingQueueMessage(
+    redisClient: RedisClient,
+    consumerId: string,
+    keyQueueProcessing: string,
+    cb: ICallback<Message>,
+  ): void {
+    redisClient.lrange(
+      keyQueueProcessing,
+      0,
+      0,
+      (err?: Error | null, range?: string[] | null) => {
+        if (err) cb(err);
+        else if (range && range.length) {
+          const msg = Message.createFromMessage(range[0]);
+          cb(null, msg);
+        } else cb();
+      },
+    );
+  }
+
+  protected static handleConsumerProcessingQueue(
+    multi: TRedisClientMulti,
+    redisClient: RedisClient,
+    consumerId: string,
+    queue: TQueueParams,
+    cb: ICallback<void>,
+  ): void {
+    const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
+      queue,
+      consumerId,
+    );
+    waterfall(
+      [
+        (cb: ICallback<void>) => {
+          Consumer.fetchProcessingQueueMessage(
+            redisClient,
+            consumerId,
+            keyQueueProcessing,
+            (err, msg) => {
+              if (err) cb(err);
+              else if (msg) {
+                broker.retry(
+                  multi,
+                  keyQueueProcessing,
+                  msg,
+                  EMessageUnacknowledgedCause.RECOVERY,
+                  (err, deadLetteredCause) => {
+                    if (err) cb(err);
+                    else if (deadLetteredCause) {
+                      const timestamp = TimeSeries.getCurrentTimestamp();
+                      GlobalDeadLetteredTimeSeries(redisClient).add(
+                        timestamp,
+                        1,
+                        multi,
+                      );
+                      QueueDeadLetteredTimeSeries(redisClient, queue).add(
+                        timestamp,
+                        1,
+                        multi,
+                      );
+                      cb();
+                    } else cb();
+                  },
+                );
+              } else cb();
+            },
+          );
+        },
+        (cb: ICallback<void>) => {
+          queueManager.deleteProcessingQueue(multi, queue, keyQueueProcessing);
+          cb();
+        },
+      ],
+      cb,
+    );
   }
 }
