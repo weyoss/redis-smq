@@ -6,7 +6,7 @@ import { Worker } from '../common/worker/worker';
 import { setConfiguration } from '../common/configuration';
 import { waterfall } from '../lib/async';
 
-class HeartbeatMonitorWorker extends Worker<IConsumerWorkerParameters> {
+export class HeartbeatMonitorWorker extends Worker<IConsumerWorkerParameters> {
   work = (cb: ICallback<void>): void => {
     waterfall(
       [

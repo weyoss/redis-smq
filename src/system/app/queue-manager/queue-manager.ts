@@ -182,18 +182,15 @@ export const queueManager = {
   },
 
   deleteProcessingQueue(
-    redisClient: RedisClient,
+    multi: TRedisClientMulti,
     queue: TQueueParams,
     processingQueue: string,
-    cb: ICallback<void>,
   ): void {
-    const multi = redisClient.multi();
     const { keyProcessingQueues, keyQueueProcessingQueues } =
       redisKeys.getQueueKeys(queue);
     multi.srem(keyProcessingQueues, processingQueue);
     multi.hdel(keyQueueProcessingQueues, processingQueue);
     multi.del(processingQueue);
-    multi.exec((err) => cb(err));
   },
 
   ///

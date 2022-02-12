@@ -11,7 +11,7 @@ import { ELuaScriptName } from './redis-client/lua-scripts';
 import { getConfiguration } from './configuration';
 
 function deadLetterMessage(
-  redisClient: RedisClient,
+  mixed: RedisClient | TRedisClientMulti,
   message: Message,
   keyQueueProcessing: string,
   unacknowledgedCause: EMessageUnacknowledgedCause,
@@ -20,19 +20,29 @@ function deadLetterMessage(
 ): void {
   const queue = message.getRequiredQueue();
   const { storeMessages } = getConfiguration();
-  if (storeMessages) {
-    const { keyQueueDL } = redisKeys.getQueueKeys(queue);
-    redisClient.lpoprpush(keyQueueProcessing, keyQueueDL, (err) => {
-      if (err) cb(err);
-      else cb();
-    });
+  const { keyQueueDL } = redisKeys.getQueueKeys(queue);
+  if (mixed instanceof RedisClient) {
+    if (storeMessages) {
+      mixed.lpoprpush(keyQueueProcessing, keyQueueDL, (err) => {
+        if (err) cb(err);
+        else cb();
+      });
+    } else {
+      mixed.rpop(keyQueueProcessing, (err) => cb(err));
+    }
   } else {
-    redisClient.rpop(keyQueueProcessing, (err) => cb(err));
+    if (storeMessages) {
+      mixed.lpop(keyQueueProcessing);
+      mixed.rpush(keyQueueDL, JSON.stringify(message));
+    } else {
+      mixed.rpop(keyQueueProcessing);
+    }
+    cb();
   }
 }
 
-function delayUnacknowledgedMessageBeforeRequeuing(
-  redisClient: RedisClient,
+function delayMessageBeforeRequeuing(
+  mixed: RedisClient | TRedisClientMulti,
   message: Message,
   keyQueueProcessing: string,
   unacknowledgedCause: EMessageUnacknowledgedCause,
@@ -40,13 +50,16 @@ function delayUnacknowledgedMessageBeforeRequeuing(
 ): void {
   const queue = message.getRequiredQueue();
   const { keyDelayedMessages } = redisKeys.getQueueKeys(queue);
-  redisClient.rpoplpush(keyQueueProcessing, keyDelayedMessages, (err) =>
-    cb(err),
-  );
+  if (mixed instanceof RedisClient) {
+    mixed.rpoplpush(keyQueueProcessing, keyDelayedMessages, (err) => cb(err));
+  } else {
+    mixed.rpoplpush(keyQueueProcessing, keyDelayedMessages);
+    cb();
+  }
 }
 
-function requeueUnacknowledgedMessage(
-  redisClient: RedisClient,
+function requeueMessage(
+  mixed: RedisClient | TRedisClientMulti,
   message: Message,
   keyQueueProcessing: string,
   unacknowledgedCause: EMessageUnacknowledgedCause,
@@ -54,9 +67,12 @@ function requeueUnacknowledgedMessage(
 ): void {
   const queue = message.getRequiredQueue();
   const { keyRequeueMessages } = redisKeys.getQueueKeys(queue);
-  redisClient.rpoplpush(keyQueueProcessing, keyRequeueMessages, (err) =>
-    cb(err),
-  );
+  if (mixed instanceof RedisClient) {
+    mixed.rpoplpush(keyQueueProcessing, keyRequeueMessages, (err) => cb(err));
+  } else {
+    mixed.rpoplpush(keyQueueProcessing, keyRequeueMessages);
+    cb();
+  }
 }
 
 export const broker = {
@@ -133,7 +149,7 @@ export const broker = {
   },
 
   retry(
-    redisClient: RedisClient,
+    mixed: RedisClient | TRedisClientMulti,
     processingQueue: string,
     message: Message,
     unacknowledgedCause: EMessageUnacknowledgedCause,
@@ -145,7 +161,7 @@ export const broker = {
     ) {
       //consumer.emit(events.MESSAGE_EXPIRED, message);
       deadLetterMessage(
-        redisClient,
+        mixed,
         message,
         processingQueue,
         unacknowledgedCause,
@@ -159,7 +175,7 @@ export const broker = {
       // Only non-periodic messages are re-queued. Failure of periodic messages is ignored since such
       // messages are periodically scheduled for delivery.
       deadLetterMessage(
-        redisClient,
+        mixed,
         message,
         processingQueue,
         unacknowledgedCause,
@@ -172,16 +188,16 @@ export const broker = {
     } else if (!message.hasRetryThresholdExceeded()) {
       const delay = message.getRetryDelay();
       if (delay) {
-        delayUnacknowledgedMessageBeforeRequeuing(
-          redisClient,
+        delayMessageBeforeRequeuing(
+          mixed,
           message,
           processingQueue,
           unacknowledgedCause,
           (err) => cb(err),
         );
       } else {
-        requeueUnacknowledgedMessage(
-          redisClient,
+        requeueMessage(
+          mixed,
           message,
           processingQueue,
           unacknowledgedCause,
@@ -190,7 +206,7 @@ export const broker = {
       }
     } else {
       deadLetterMessage(
-        redisClient,
+        mixed,
         message,
         processingQueue,
         unacknowledgedCause,
