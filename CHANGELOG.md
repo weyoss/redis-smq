@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 6.0.2 (2022-02-12)
+
+* Update architecture overview diagram (e8f77a8)
+* Improve offline consumers handling & message recovery strategy (4072939)
+* Fix typos and update README.md (b73bd37)
+
 ## 6.0.1 (2022-02-11)
 
 * Update docs (78fef2e)
