@@ -90,9 +90,11 @@ RedisSMQ provides 3 classes in order to work with the message queue: `Message`, 
 
 #### Message Class
 
-`Message` class is responsible for creating messages that may be published. A message represents your application data, sometime referred as `message payload`, which can be of different types. 
+`Message` class is responsible for creating messages that may be published. 
 
-A `Message` instance can be constructed and used as shown in the next examples.
+A message can carry your application data, sometimes referred to as `message payload`, which may be delivered to a consumer to be processed asynchronously.  
+
+The message payload can be of any valid JSON data type. It may be a simple text message like `Hello world` or a complex data type like `{hello: 'world'}`.
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -115,7 +117,7 @@ See [Message Reference](docs/api/message.md) for more details.
 
 You can use a single `Producer` instance to produce messages, including messages with priority, to multiple queues.
 
-Before publishing a message do not forget to set a destination queue using the [setQueue()](/docs/api/message.md#messageprototypesetqueue) method, otherwise an error will be returned.
+Before publishing a message do not forget to set the destination queue of the message using the [setQueue()](/docs/api/message.md#messageprototypesetqueue) method, otherwise an error will be returned.
 
 ```javascript
 // filename: ./examples/javascript/producer.js
