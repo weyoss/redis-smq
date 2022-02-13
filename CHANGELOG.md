@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.0.3 (2022-02-13)
+
+* Increase code coverage (ec839a1)
+
 ## 6.0.2 (2022-02-12)
 
 * Update architecture overview diagram (e8f77a8)
