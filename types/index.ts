@@ -1,5 +1,5 @@
 import { ServerOptions } from 'socket.io';
-import IORedis, { KeyType, Redis, RedisOptions } from 'ioredis';
+import { KeyType, Pipeline, Redis, RedisOptions } from 'ioredis';
 import { Callback, ClientOpts, Multi, RedisClient as NodeRedis } from 'redis';
 import * as Logger from 'bunyan';
 import { Message } from '../src/system/app/message/message';
@@ -129,7 +129,7 @@ export type TCompatibleRedisClient = (NodeRedis | Redis) & {
   exists(key: string, cb: ICallback<number>): void;
 };
 
-export type TRedisClientMulti = (Multi | IORedis.Pipeline) & {
+export type TRedisClientMulti = (Multi | Pipeline) & {
   hmset(key: string, args: (string | number)[]): void;
 };
 

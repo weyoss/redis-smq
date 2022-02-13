@@ -3,12 +3,23 @@ import { getConfiguration } from './configuration';
 import { ICompatibleLogger } from '../../../types';
 import { LoggerError } from './errors/logger.error';
 
+const noop = () => void 0;
+const dummyLogger = {
+  debug: noop,
+  warn: noop,
+  info: noop,
+  error: noop,
+};
+
 let loggerInstance: ICompatibleLogger | null = null;
 
-export function setUpDefaultLogger(): ICompatibleLogger {
+function createDefaultLogger(): ICompatibleLogger {
   const cfg = getConfiguration().logger;
-  loggerInstance = createLogger({ ...(cfg.options ?? {}), name: 'redis-smq' });
-  return loggerInstance;
+  return createLogger({ ...(cfg.options ?? {}), name: 'redis-smq' });
+}
+
+export function reset(): void {
+  loggerInstance = null;
 }
 
 export function setLogger<T extends ICompatibleLogger>(logger: T): void {
@@ -19,18 +30,14 @@ export function setLogger<T extends ICompatibleLogger>(logger: T): void {
 }
 
 export function getLogger(): ICompatibleLogger {
-  const { logger } = getConfiguration();
-  if (!logger.enabled) {
-    const noop = () => void 0;
-    return {
-      debug: noop,
-      warn: noop,
-      info: noop,
-      error: noop,
-    };
+  const cfg = getConfiguration().logger;
+  if (!cfg.enabled) {
+    return dummyLogger;
   }
-  if (loggerInstance) return loggerInstance;
-  return setUpDefaultLogger();
+  if (!loggerInstance) {
+    loggerInstance = createDefaultLogger();
+  }
+  return loggerInstance;
 }
 
 export function getNamespacedLogger(namespace: string): ICompatibleLogger {
