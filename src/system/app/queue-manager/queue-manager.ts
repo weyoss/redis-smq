@@ -304,11 +304,6 @@ export const queueManager = {
     });
   },
 
-  getProcessingQueues(redisClient: RedisClient, cb: ICallback<string[]>): void {
-    const { keyProcessingQueues } = redisKeys.getMainKeys();
-    redisClient.smembers(keyProcessingQueues, cb);
-  },
-
   setUpProcessingQueue(
     multi: TRedisClientMulti,
     consumerHandler: ConsumerMessageHandler,

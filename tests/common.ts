@@ -28,10 +28,9 @@ import ScheduleWorker from '../src/system/workers/schedule.worker';
 import TimeSeriesWorker from '../src/system/workers/time-series.worker';
 import { merge } from 'lodash';
 import { queueManager } from '../src/system/app/queue-manager/queue-manager';
+import { reset } from '../src/system/common/logger';
 
 export const config = configuration.setConfiguration(testConfig);
-
-setLogger(console);
 
 type TGetConsumerArgs = {
   queue?: string | TQueueParams;
@@ -75,6 +74,8 @@ export async function startUp(): Promise<void> {
   const redisClient = await getRedisInstance();
   await redisClient.flushallAsync();
   restoreConfiguration();
+  reset();
+  setLogger(console);
 }
 
 export async function shutdown(): Promise<void> {

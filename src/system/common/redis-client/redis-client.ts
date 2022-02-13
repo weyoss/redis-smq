@@ -1,4 +1,4 @@
-import IORedis from 'ioredis';
+import * as IORedis from 'ioredis';
 import { createClient, Multi, RedisClient as NodeRedis } from 'redis';
 import {
   ICallback,
