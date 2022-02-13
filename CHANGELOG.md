@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.0.4 (2022-02-13)
+
+* Fix missing type definition for koa-bodyparser (4b8a11e)
+
 ## 6.0.3 (2022-02-13)
 
 * Increase code coverage (ec839a1)
