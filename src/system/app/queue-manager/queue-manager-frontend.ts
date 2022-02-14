@@ -7,7 +7,7 @@ import {
 import { RedisClient } from '../../common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
 import { queueManager } from './queue-manager';
-import { setConfigurationIfNotExists } from '../../common/configuration';
+import { setConfigurationIfNotExists } from '../../common/configuration/configuration';
 import { getNamespacedLogger } from '../../common/logger';
 
 export class QueueManagerFrontend {

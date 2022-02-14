@@ -5,7 +5,7 @@ import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.e
 import { Message } from '../app/message/message';
 import { ELuaScriptName } from '../common/redis-client/lua-scripts';
 import { Worker } from '../common/worker/worker';
-import { setConfiguration } from '../common/configuration';
+import { setConfiguration } from '../common/configuration/configuration';
 import { each, waterfall } from '../lib/async';
 
 export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {

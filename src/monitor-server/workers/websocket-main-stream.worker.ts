@@ -11,7 +11,7 @@ import { MessageManager } from '../../system/app/message-manager/message-manager
 import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callback-reply.error';
 import { Consumer } from '../../system/app/consumer/consumer';
 import { queueManager } from '../../system/app/queue-manager/queue-manager';
-import { setConfiguration } from '../../system/common/configuration';
+import { setConfiguration } from '../../system/common/configuration/configuration';
 import { Worker } from '../../system/common/worker/worker';
 import { each, waterfall } from '../../system/lib/async';
 

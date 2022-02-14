@@ -2,7 +2,7 @@ import { parseExpression } from 'cron-parser';
 import { TMessageJSON, TQueueParams } from '../../../../types';
 import { ArgumentError } from '../../common/errors/argument.error';
 import { queueManager } from '../queue-manager/queue-manager';
-import { getConfiguration } from '../../common/configuration';
+import { getConfiguration } from '../../common/configuration/configuration';
 import { MessageMetadata } from './message-metadata';
 import { PanicError } from '../../common/errors/panic.error';
 

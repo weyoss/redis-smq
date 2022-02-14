@@ -21,7 +21,7 @@ import { apiController } from './controllers/api/api-controller';
 import {
   getConfiguration,
   setConfigurationIfNotExists,
-} from '../system/common/configuration';
+} from '../system/common/configuration/configuration';
 import { getNamespacedLogger } from '../system/common/logger';
 import { redisKeys } from '../system/common/redis-keys/redis-keys';
 import { WorkerPool } from '../system/common/worker/worker-runner/worker-pool';

@@ -1,5 +1,5 @@
 import { createLogger } from 'bunyan';
-import { getConfiguration } from './configuration';
+import { getConfiguration } from './configuration/configuration';
 import { ICompatibleLogger } from '../../../types';
 import { LoggerError } from './errors/logger.error';
 

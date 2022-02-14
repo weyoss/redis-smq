@@ -18,7 +18,7 @@ import { PowerManager } from '../../common/power-manager/power-manager';
 import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
 import { ConsumerMessageRate } from './consumer-message-rate';
 import { consumerQueues } from './consumer-queues';
-import { broker } from '../../common/broker';
+import { broker } from '../../common/broker/broker';
 import { queueManager } from '../queue-manager/queue-manager';
 import { Ticker } from '../../common/ticker/ticker';
 import { getNamespacedLogger } from '../../common/logger';
@@ -34,7 +34,6 @@ export class ConsumerMessageHandler extends EventEmitter {
   protected powerManager: PowerManager;
   protected messageRate: ConsumerMessageRate | null = null;
   protected usingPriorityQueuing: boolean;
-  protected storeMessages: boolean;
   protected keyQueue: string;
   protected keyQueuePriority: string;
   protected keyPendingMessagesWithPriority: string;
@@ -47,7 +46,6 @@ export class ConsumerMessageHandler extends EventEmitter {
     queue: TQueueParams,
     handler: TConsumerMessageHandler,
     usePriorityQueuing: boolean,
-    storeMessages: boolean,
     redisClient: RedisClient,
     messageRate: ConsumerMessageRate | null = null,
   ) {
@@ -58,7 +56,6 @@ export class ConsumerMessageHandler extends EventEmitter {
     this.handler = handler;
     this.redisClient = redisClient;
     this.usingPriorityQueuing = usePriorityQueuing;
-    this.storeMessages = storeMessages;
     this.redisKeys = redisKeys.getQueueConsumerKeys(
       this.queue,
       this.consumerId,
@@ -141,7 +138,7 @@ export class ConsumerMessageHandler extends EventEmitter {
     err?: Error,
   ): void {
     if (err) {
-      // ...
+      // log error
     }
     const { keyQueueProcessing } = this.redisKeys;
     broker.retry(
@@ -202,7 +199,6 @@ export class ConsumerMessageHandler extends EventEmitter {
               this.redisClient,
               msg,
               keyQueueProcessing,
-              this.storeMessages,
               (err) => {
                 if (err) this.emit(events.ERROR, err);
                 else this.emit(events.MESSAGE_ACKNOWLEDGED, msg);

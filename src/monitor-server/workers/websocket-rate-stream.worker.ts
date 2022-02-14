@@ -13,7 +13,7 @@ import { GlobalDeadLetteredTimeSeries } from '../../system/app/consumer/consumer
 import { ConsumerAcknowledgedTimeSeries } from '../../system/app/consumer/consumer-time-series/consumer-acknowledged-time-series';
 import { ConsumerDeadLetteredTimeSeries } from '../../system/app/consumer/consumer-time-series/consumer-dead-lettered-time-series';
 import { consumerQueues } from '../../system/app/consumer/consumer-queues';
-import { setConfiguration } from '../../system/common/configuration';
+import { setConfiguration } from '../../system/common/configuration/configuration';
 import { Worker } from '../../system/common/worker/worker';
 import { each, waterfall } from '../../system/lib/async';
 

@@ -7,9 +7,12 @@ import {
 } from '../common';
 import { promisifyAll } from 'bluebird';
 
-test('Message storage: storeMessages = false', async () => {
+test('Message storage: acknowledged = false, deadLettered = true', async () => {
   mockConfiguration({
-    storeMessages: false,
+    storeMessages: {
+      acknowledged: false,
+      deadLettered: true,
+    },
   });
   const { producer, consumer } = await produceAndDeadLetterMessage();
   await producer.shutdownAsync();
@@ -21,8 +24,8 @@ test('Message storage: storeMessages = false', async () => {
     0,
     100,
   );
-  expect(res1.total).toBe(0);
-  expect(res1.items.length).toBe(0);
+  expect(res1.total).toBe(1);
+  expect(res1.items.length).toBe(1);
 
   const { producer: p, consumer: c } = await produceAndAcknowledgeMessage();
 

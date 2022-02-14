@@ -5,7 +5,7 @@ import { ICallback, IConsumerWorkerParameters } from '../../../types';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { PanicError } from '../common/errors/panic.error';
 import { Worker } from '../common/worker/worker';
-import { setConfiguration } from '../common/configuration';
+import { setConfiguration } from '../common/configuration/configuration';
 import { each } from '../lib/async';
 
 export class RequeueWorker extends Worker<IConsumerWorkerParameters> {

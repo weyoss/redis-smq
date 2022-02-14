@@ -20,6 +20,8 @@ RedisSMQ accepts a one-time configuration setup which can take place, usually, d
 
 ## Configuration parameters
 
+**Configuration Example**
+
 ```javascript
 'use strict';
 const path = require('path');
@@ -86,4 +88,65 @@ instance using the [Message API](api/message.md).
   - `message.retryThreshold` *(Integer): Optional.* Message retry threshold. See [setRetryThreshold()](/docs/api/message.md#messageprototypesetretrythreshold).
   - `message.retryDelay` *(Integer): Optional.* In milliseconds. Message retry delay. See [setRetryDelay()](/docs/api/message.md#messageprototypesetretrydelay).
 
-- `storeMessages` *(boolean): Optional.* By default, RedisSMQ does not store acknowledged and dead-lettered messages. If you need to keep messages after being consumed and also to keep track of dead-lettered messages then you should set this option to `true`. When enabling this option, keep in mind that storing messages may require more disk space and increase memory usage. 
+- `storeMessages` *(boolean | object): Optional.* Whether to store acknowledged and/or dead-lettered messages. By default, acknowledged and dead-lettered messages are not stored. Keep in mind that storing messages affects performance.
+  - `storeMessages` *(boolean): Optional.*
+    - `storeMessages = false` - Do not store acknowledged and dead-lettered messages. 
+    - `storeMessages = true` - Store acknowledged and dead-lettered messages.
+  - `storeMessages` *(object): Optional.*
+    - `storeMessages.acknowledged` *(boolean | object): Optional.*
+      - `storeMessages.acknowledged` *(boolean): Optional.*
+        - `storeMessages.acknowledged = true`: Store acknowledged messages.
+        - `storeMessages.acknowledged = false`: Do not store acknowledged messages.
+      - `storeMessages.acknowledged` *(object): Optional.*
+        - `storeMessages.acknowledged.queueSize` *(number): Optional.* Store a maximum of N acknowledged messages. Older messages get deleted when the maximum size is reached.
+        - `storeMessages.acknowledged.expire` *(number): Optional.* Store acknowledged messages for N milliseconds. Each time a new message is saved the expiration is updated.
+    - `storeMessages.deadLettered` *(boolean | object): Optional.*
+      - `storeMessages.deadLettered` *(boolean): Optional.*
+        - `storeMessages.deadLettered = true`: Store dead-lettered messages.
+        - `storeMessages.deadLettered = false`: Do not store dead-lettered messages.
+      - `storeMessages.deadLettered` *(object): Optional.*
+        - `storeMessages.deadLettered.queueSize` *(number): Optional.* Store a maximum of N dead-lettered messages. Older messages get deleted when the maximum size is reached.
+        - `storeMessages.deadLettered.expire` *(number): Optional.* Store dead-lettered messages for N milliseconds. Each time a new message is saved the expiration is updated.
+
+  
+**storeMessages Usage Examples**
+
+- Only storing dead-lettered messages:
+
+```javascript
+const config = {
+  storeMessages: {
+    deadLettered: true,
+  }
+}
+```
+
+- Storing acknowledged messages without any limitation, and storing 100000 dead-lettered messages for a maximum retention time of 1 day:
+
+```javascript
+const config = {
+  storeMessages: {
+    acknowledged: true,
+    deadLettered: {
+      queueSize: 100000,
+      expire: 24 * 60 * 60 * 1000 // 1 day in millis
+    },
+  }
+}
+```
+
+- Storing acknowledged messages up to 5000 messages, and storing a maximum of 5000 dead-lettered messages with a retention time of 1 day:
+
+```javascript
+const config = {
+  storeMessages: {
+    acknowledged: {
+      queueSize: 5000,
+    },
+    deadLettered: {
+      queueSize: 5000,
+      expire: 24 * 60 * 60 * 1000
+    },
+  }
+}
+```

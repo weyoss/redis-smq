@@ -27,7 +27,7 @@ import { queueManager } from '../queue-manager/queue-manager';
 import { WorkerPool } from '../../common/worker/worker-runner/worker-pool';
 import { each, waterfall } from '../../lib/async';
 import { Message } from '../message/message';
-import { broker } from '../../common/broker';
+import { broker } from '../../common/broker/broker';
 import { TimeSeries } from '../../common/time-series/time-series';
 import { GlobalDeadLetteredTimeSeries } from './consumer-time-series/global-dead-lettered-time-series';
 import { QueueDeadLetteredTimeSeries } from './consumer-time-series/queue-dead-lettered-time-series';
@@ -141,7 +141,6 @@ export class Consumer extends Base {
             queue,
             messageHandler,
             usePriorityQueuing,
-            this.getConfig().storeMessages,
             redisClient,
             messageRate,
           );
@@ -468,29 +467,26 @@ export class Consumer extends Base {
             (err, msg) => {
               if (err) cb(err);
               else if (msg) {
-                broker.retry(
+                const deadLettered = broker.retry(
                   multi,
                   keyQueueProcessing,
                   msg,
                   EMessageUnacknowledgedCause.RECOVERY,
-                  (err, deadLetteredCause) => {
-                    if (err) cb(err);
-                    else if (deadLetteredCause) {
-                      const timestamp = TimeSeries.getCurrentTimestamp();
-                      GlobalDeadLetteredTimeSeries(redisClient).add(
-                        timestamp,
-                        1,
-                        multi,
-                      );
-                      QueueDeadLetteredTimeSeries(redisClient, queue).add(
-                        timestamp,
-                        1,
-                        multi,
-                      );
-                      cb();
-                    } else cb();
-                  },
                 );
+                if (typeof deadLettered === 'string') {
+                  const timestamp = TimeSeries.getCurrentTimestamp();
+                  GlobalDeadLetteredTimeSeries(redisClient).add(
+                    timestamp,
+                    1,
+                    multi,
+                  );
+                  QueueDeadLetteredTimeSeries(redisClient, queue).add(
+                    timestamp,
+                    1,
+                    multi,
+                  );
+                }
+                cb();
               } else cb();
             },
           );

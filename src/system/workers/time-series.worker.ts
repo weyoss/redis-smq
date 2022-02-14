@@ -6,7 +6,7 @@ import {
 } from '../../../types';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { Worker } from '../common/worker/worker';
-import { setConfiguration } from '../common/configuration';
+import { setConfiguration } from '../common/configuration/configuration';
 import { queueManager } from '../app/queue-manager/queue-manager';
 import { eachOf, waterfall } from '../lib/async';
 import { QueueAcknowledgedTimeSeries } from '../app/consumer/consumer-time-series/queue-acknowledged-time-series';
