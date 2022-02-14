@@ -16,6 +16,7 @@ export enum ELuaScriptName {
   SCHEDULE_MESSAGE,
   RELEASE_LOCK,
   EXTEND_LOCK,
+  LPOPRPUSHEXTRA,
 }
 
 ////
@@ -52,6 +53,9 @@ scriptsMap.set(ELuaScriptName.RELEASE_LOCK, {
 });
 scriptsMap.set(ELuaScriptName.EXTEND_LOCK, {
   content: fs.readFileSync(`${__dirname}/lua/extend-lock.lua`).toString(),
+});
+scriptsMap.set(ELuaScriptName.LPOPRPUSHEXTRA, {
+  content: fs.readFileSync(`${__dirname}/lua/lpoprpushextra.lua`).toString(),
 });
 ///
 

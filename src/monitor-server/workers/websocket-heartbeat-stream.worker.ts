@@ -6,7 +6,7 @@ import {
 import { RedisClient } from '../../system/common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callback-reply.error';
 import { ConsumerHeartbeat } from '../../system/app/consumer/consumer-heartbeat';
-import { setConfiguration } from '../../system/common/configuration';
+import { setConfiguration } from '../../system/common/configuration/configuration';
 import { Worker } from '../../system/common/worker/worker';
 import { each } from '../../system/lib/async';
 

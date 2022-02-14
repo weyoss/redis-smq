@@ -1,11 +1,86 @@
-import { ServerOptions } from 'socket.io';
 import { KeyType, Pipeline, Redis, RedisOptions } from 'ioredis';
 import { Callback, ClientOpts, Multi, RedisClient as NodeRedis } from 'redis';
-import * as Logger from 'bunyan';
 import { Message } from '../src/system/app/message/message';
 import { redisKeys } from '../src/system/common/redis-keys/redis-keys';
 import { Worker } from '../src/system/common/worker/worker';
 import { RedisClient } from '../src/system/common/redis-client/redis-client';
+import { ServerOptions } from 'socket.io';
+import * as Logger from 'bunyan';
+
+///////////
+
+export interface IORedisOptions {
+  client: RedisClientName.IOREDIS;
+  options?: RedisOptions;
+}
+
+export enum RedisClientName {
+  REDIS = 'redis',
+  IOREDIS = 'ioredis',
+}
+
+export interface INodeRedisOptions {
+  client: RedisClientName.REDIS;
+  options?: ClientOpts;
+}
+
+export type TRedisOptions = IORedisOptions | INodeRedisOptions;
+
+export interface IMonitorConfig {
+  enabled: boolean;
+  port?: number;
+  host?: string;
+  socketOpts?: ServerOptions;
+}
+
+export type TMessageDefaultOptions = {
+  consumeTimeout: number;
+  ttl: number;
+  retryThreshold: number;
+  retryDelay: number;
+};
+
+export interface IStoreMessagesParams {
+  queueSize?: number;
+  expire?: number;
+}
+
+export interface IStoreMessagesConfig {
+  acknowledged?: boolean | IStoreMessagesParams;
+  deadLettered?: boolean | IStoreMessagesParams;
+}
+
+export interface IConfig {
+  redis?: TRedisOptions;
+  namespace?: string;
+  logger?: {
+    enabled: boolean;
+    options?: Partial<Logger.LoggerOptions>;
+  };
+  monitor?: IMonitorConfig;
+  message?: Partial<TMessageDefaultOptions>;
+  storeMessages?: boolean | IStoreMessagesConfig;
+}
+
+///////////
+
+export interface IRequiredStoreMessagesParams
+  extends Required<IStoreMessagesParams> {
+  store: boolean;
+}
+
+export interface IRequiredStoreMessagesConfig {
+  acknowledged: IRequiredStoreMessagesParams;
+  deadLettered: IRequiredStoreMessagesParams;
+}
+
+export interface IRequiredConfig
+  extends Required<Omit<IConfig, 'storeMessages'>> {
+  message: Required<TMessageDefaultOptions>;
+  storeMessages: IRequiredStoreMessagesConfig;
+}
+
+///////////
 
 declare module 'redis' {
   export interface Commands<R> {
@@ -60,11 +135,6 @@ export interface IConsumerMessageRateFields extends TMessageRateFields {
 export interface IProducerMessageRateFields extends TMessageRateFields {
   publishedRate: number;
   queuePublishedRate: Record<string, number>;
-}
-
-export enum RedisClientName {
-  REDIS = 'redis',
-  IOREDIS = 'ioredis',
 }
 
 export type TCompatibleRedisClient = (NodeRedis | Redis) & {
@@ -131,56 +201,6 @@ export type TCompatibleRedisClient = (NodeRedis | Redis) & {
 
 export type TRedisClientMulti = (Multi | Pipeline) & {
   hmset(key: string, args: (string | number)[]): void;
-};
-
-export type TRedisOptions = IORedisOptions | INodeRedisOptions;
-
-export interface IORedisOptions {
-  client: RedisClientName.IOREDIS;
-  options?: RedisOptions;
-}
-
-export interface INodeRedisOptions {
-  client: RedisClientName.REDIS;
-  options?: ClientOpts;
-}
-
-export interface IMonitorConfig {
-  enabled: boolean;
-  port?: number;
-  host?: string;
-  socketOpts?: ServerOptions;
-}
-
-export interface IConfig {
-  redis?: TRedisOptions;
-  namespace?: string;
-  logger?: {
-    enabled: boolean;
-    options?: Partial<Logger.LoggerOptions>;
-  };
-  monitor?: IMonitorConfig;
-  message?: Partial<TMessageDefaultOptions>;
-  storeMessages?: boolean;
-}
-
-export interface IRequiredConfig extends IConfig {
-  namespace: string;
-  storeMessages: boolean;
-  message: TMessageDefaultOptions;
-  monitor: IConfig['monitor'] & {
-    enabled: boolean;
-  };
-  logger: IConfig['logger'] & {
-    enabled: boolean;
-  };
-}
-
-export type TMessageDefaultOptions = {
-  consumeTimeout: number;
-  ttl: number;
-  retryThreshold: number;
-  retryDelay: number;
 };
 
 export type TWebsocketMainStreamPayload = {

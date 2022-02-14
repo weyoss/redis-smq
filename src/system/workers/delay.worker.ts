@@ -3,9 +3,9 @@ import { redisKeys } from '../common/redis-keys/redis-keys';
 import { ICallback, IConsumerWorkerParameters } from '../../../types';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { Message } from '../app/message/message';
-import { broker } from '../common/broker';
+import { broker } from '../common/broker/broker';
 import { Worker } from '../common/worker/worker';
-import { setConfiguration } from '../common/configuration';
+import { setConfiguration } from '../common/configuration/configuration';
 import { each } from '../lib/async';
 
 export class DelayWorker extends Worker<IConsumerWorkerParameters> {
@@ -36,7 +36,7 @@ export class DelayWorker extends Worker<IConsumerWorkerParameters> {
               message.getRequiredMetadata().incrAttempts();
               const delay = message.getRetryDelay();
               message.getRequiredMetadata().setNextRetryDelay(delay);
-              broker.schedule(multi, message);
+              broker.scheduleMessage(multi, message);
               done();
             },
             (err) => {

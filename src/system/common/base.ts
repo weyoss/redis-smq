@@ -12,7 +12,10 @@ import { events } from './events';
 import { RedisClient } from './redis-client/redis-client';
 import { EmptyCallbackReplyError } from './errors/empty-callback-reply.error';
 import { PanicError } from './errors/panic.error';
-import { getConfiguration, setConfigurationIfNotExists } from './configuration';
+import {
+  getConfiguration,
+  setConfigurationIfNotExists,
+} from './configuration/configuration';
 import { getNamespacedLogger } from './logger';
 import { waterfall } from '../lib/async';
 

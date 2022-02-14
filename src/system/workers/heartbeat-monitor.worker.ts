@@ -3,7 +3,7 @@ import { ConsumerHeartbeat } from '../app/consumer/consumer-heartbeat';
 import { RedisClient } from '../common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { Worker } from '../common/worker/worker';
-import { setConfiguration } from '../common/configuration';
+import { setConfiguration } from '../common/configuration/configuration';
 import { waterfall } from '../lib/async';
 
 export class HeartbeatMonitorWorker extends Worker<IConsumerWorkerParameters> {

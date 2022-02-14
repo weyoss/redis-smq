@@ -8,8 +8,8 @@ import { ProducerMessageRateWriter } from './producer-message-rate-writer';
 import { RedisClient } from '../../common/redis-client/redis-client';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { ELuaScriptName } from '../../common/redis-client/lua-scripts';
-import { broker } from '../../common/broker';
-import { getConfiguration } from '../../common/configuration';
+import { broker } from '../../common/broker/broker';
+import { getConfiguration } from '../../common/configuration/configuration';
 import { MessageError } from '../../common/errors/message.error';
 
 export class Producer extends Base {

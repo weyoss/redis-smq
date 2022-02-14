@@ -9,7 +9,7 @@ import {
 import { EventEmitter } from 'events';
 import { ELuaScriptName, getScriptId, loadScripts } from './lua-scripts';
 import { RedisClientError } from './redis-client.error';
-import { getConfiguration } from '../configuration';
+import { getConfiguration } from '../configuration/configuration';
 import { waterfall } from '../../lib/async';
 
 /**
@@ -107,19 +107,14 @@ export class RedisClient extends EventEmitter {
 
   protected getClient(): TCompatibleRedisClient {
     const config = getConfiguration();
-    if (config.redis) {
-      // in javascript land, we can pass any value
-      if (!Object.values(RedisClientName).includes(config.redis.client)) {
-        throw new RedisClientError('Invalid Redis driver name');
-      }
-      if (config.redis.client === RedisClientName.REDIS) {
-        return createClient(config.redis.options);
-      }
-      if (config.redis.client === RedisClientName.IOREDIS) {
-        return new IORedis(config.redis.options);
-      }
+    // in the javascript land, we can pass any value
+    if (!Object.values(RedisClientName).includes(config.redis.client)) {
+      throw new RedisClientError('Invalid Redis driver name');
     }
-    return createClient();
+    if (config.redis.client === RedisClientName.REDIS) {
+      return createClient(config.redis.options);
+    }
+    return new IORedis(config.redis.options);
   }
 
   zadd(
@@ -471,6 +466,25 @@ export class RedisClient extends EventEmitter {
     } else {
       this.client.lmove(source, destination, from, to, cb);
     }
+  }
+
+  lpoprpushextra(
+    source: string,
+    destination: string,
+    listSize: number,
+    expire: number,
+    cb: ICallback<string>,
+  ): void {
+    this.runScript(
+      ELuaScriptName.LPOPRPUSHEXTRA,
+      [source, destination],
+      [listSize, expire],
+      (err, res?: unknown) => {
+        if (err) cb(err);
+        else if (typeof res !== 'string') cb();
+        else cb(null, res);
+      },
+    );
   }
 
   lpoprpush(source: string, destination: string, cb: ICallback<string>): void {

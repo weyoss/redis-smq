@@ -23,12 +23,13 @@ import { WebsocketRateStreamWorker } from '../src/monitor-server/workers/websock
 import { WebsocketHeartbeatStreamWorker } from '../src/monitor-server/workers/websocket-heartbeat-stream.worker';
 import { WebsocketOnlineStreamWorker } from '../src/monitor-server/workers/websocket-online-stream.worker';
 import { TimeSeriesResponseBodyDTO } from '../src/monitor-server/controllers/common/dto/time-series/time-series-response.DTO';
-import * as configuration from '../src/system/common/configuration';
+import * as configuration from '../src/system/common/configuration/configuration';
 import ScheduleWorker from '../src/system/workers/schedule.worker';
 import TimeSeriesWorker from '../src/system/workers/time-series.worker';
 import { merge } from 'lodash';
 import { queueManager } from '../src/system/app/queue-manager/queue-manager';
 import { reset } from '../src/system/common/logger';
+import { getRequiredMessageStorageConfig } from '../src/system/common/configuration/message-storage';
 
 export const config = configuration.setConfiguration(testConfig);
 
@@ -134,10 +135,16 @@ export function restoreConfiguration(): void {
 }
 
 export function mockConfiguration(config: IConfig): void {
+  const messageStorage =
+    config.storeMessages !== undefined
+      ? getRequiredMessageStorageConfig(config)
+      : {};
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   configuration.getConfiguration = () => {
-    return merge({}, getConfigurationOrig(), config);
+    return merge({}, getConfigurationOrig(), config, {
+      storeMessages: messageStorage,
+    });
   };
 }
 
