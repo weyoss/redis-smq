@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.1.0 (2022-02-14)
+
+* Allow configuring which messages to store with extended parameters (7bd37a1)
+
 ## 6.0.4 (2022-02-13)
 
 * Fix missing type definition for koa-bodyparser (4b8a11e)
