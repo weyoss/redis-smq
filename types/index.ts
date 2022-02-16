@@ -193,7 +193,7 @@ export type TCompatibleRedisClient = (NodeRedis | Redis) & {
     flag: string,
     cb: ICallback<string>,
   ): void;
-  del(key: string, cb: ICallback<number>): void;
+  del(key: string | string[], cb: ICallback<number>): void;
   zrem(key: string, value: string | string[], cb: ICallback<number>): void;
   hmget(source: string, keys: string[], cb: ICallback<(string | null)[]>): void;
   exists(key: string, cb: ICallback<number>): void;
@@ -281,6 +281,11 @@ export enum EMessageUnacknowledgedCause {
 export type TQueueParams = {
   name: string;
   ns: string;
+};
+
+export type TQueueRateLimit = {
+  limit: number;
+  interval: number;
 };
 
 export type TWorkerParameters = {
