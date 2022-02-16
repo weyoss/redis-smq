@@ -442,7 +442,7 @@ export class RedisClient extends EventEmitter {
     }
   }
 
-  del(key: string, cb: ICallback<number>): void {
+  del(key: string | string[], cb: ICallback<number>): void {
     this.client.del(key, cb);
   }
 

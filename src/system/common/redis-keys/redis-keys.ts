@@ -58,6 +58,8 @@ enum ERedisKey {
   KEY_CONSUMER_QUEUES,
   KEY_NS_QUEUES,
   KEY_NAMESPACES,
+  KEY_QUEUE_RATE_LIMIT,
+  KEY_QUEUE_RATE_LIMIT_COUNTER,
 }
 
 export const redisKeys = {
@@ -102,6 +104,8 @@ export const redisKeys = {
       keyLockRateQueueAcknowledged: ERedisKey.KEY_LOCK_RATE_QUEUE_ACKNOWLEDGED,
       keyLockRateQueueDeadLettered: ERedisKey.KEY_LOCK_RATE_QUEUE_DEAD_LETTERED,
       keyQueueConsumers: ERedisKey.KEY_QUEUE_CONSUMERS,
+      keyQueueRateLimit: ERedisKey.KEY_QUEUE_RATE_LIMIT,
+      keyQueueRateLimitCounter: ERedisKey.KEY_QUEUE_RATE_LIMIT_COUNTER,
     };
     return {
       ...nsKeys,

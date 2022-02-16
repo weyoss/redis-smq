@@ -3,6 +3,7 @@ import {
   ICallback,
   IQueueMetrics,
   TQueueParams,
+  TQueueRateLimit,
   TRedisClientMulti,
 } from '../../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
@@ -12,6 +13,8 @@ import { ConsumerMessageHandler } from '../consumer/consumer-message-handler';
 import { validateMessageQueueDeletion } from './common';
 import { eachOf, waterfall } from '../../lib/async';
 import { NamespaceNotFoundError } from './errors/namespace-not-found.error';
+import { ELuaScriptName } from '../../common/redis-client/lua-scripts';
+import { QueueRateLimitError } from './errors/queue-rate-limit.error';
 
 export const queueManager = {
   queueExists(
@@ -53,6 +56,8 @@ export const queueManager = {
       keyProcessingQueues,
       keyQueues,
       keyNsQueues,
+      keyQueueRateLimit,
+      keyQueueRateLimitCounter,
     } = redisKeys.getQueueKeys(queue);
     const keys: string[] = [
       keyQueuePending,
@@ -71,49 +76,54 @@ export const queueManager = {
       keyLockRateQueueAcknowledged,
       keyLockRateQueueDeadLettered,
       keyQueueConsumers,
+      keyQueueRateLimit,
+      keyQueueRateLimitCounter,
     ];
-    redisClient.watch([keyQueueConsumers, keyQueueProcessingQueues], (err) => {
-      if (err) cb(err);
-      else {
-        waterfall(
-          [
-            (cb: ICallback<void>): void =>
-              this.queueExists(redisClient, queue, cb),
-            (cb: ICallback<void>): void =>
-              validateMessageQueueDeletion(redisClient, queue, cb),
-            (cb: ICallback<string[]>) => {
-              this.getQueueProcessingQueues(
-                redisClient,
-                queue,
-                (err, reply) => {
-                  if (err) cb(err);
-                  else {
-                    const pQueues = Object.keys(reply ?? {});
-                    cb(null, pQueues);
-                  }
-                },
-              );
-            },
-          ],
-          (err?: Error | null, processingQueues?: string[] | null) => {
-            if (err) redisClient.unwatch(() => cb(err));
-            else {
-              const tx = multi || redisClient.multi();
-              const str = JSON.stringify(queue);
-              tx.srem(keyQueues, str);
-              tx.srem(keyNsQueues, str);
-              const pQueues = processingQueues ?? [];
-              if (pQueues.length) {
-                keys.push(...pQueues);
-                tx.srem(keyProcessingQueues, ...pQueues);
+    redisClient.watch(
+      [keyQueueConsumers, keyQueueProcessingQueues, keyQueueRateLimit],
+      (err) => {
+        if (err) cb(err);
+        else {
+          waterfall(
+            [
+              (cb: ICallback<void>): void =>
+                this.queueExists(redisClient, queue, cb),
+              (cb: ICallback<void>): void =>
+                validateMessageQueueDeletion(redisClient, queue, cb),
+              (cb: ICallback<string[]>) => {
+                this.getQueueProcessingQueues(
+                  redisClient,
+                  queue,
+                  (err, reply) => {
+                    if (err) cb(err);
+                    else {
+                      const pQueues = Object.keys(reply ?? {});
+                      cb(null, pQueues);
+                    }
+                  },
+                );
+              },
+            ],
+            (err?: Error | null, processingQueues?: string[] | null) => {
+              if (err) redisClient.unwatch(() => cb(err));
+              else {
+                const tx = multi || redisClient.multi();
+                const str = JSON.stringify(queue);
+                tx.srem(keyQueues, str);
+                tx.srem(keyNsQueues, str);
+                const pQueues = processingQueues ?? [];
+                if (pQueues.length) {
+                  keys.push(...pQueues);
+                  tx.srem(keyProcessingQueues, ...pQueues);
+                }
+                tx.del(...keys);
+                cb(null, tx);
               }
-              tx.del(...keys);
-              cb(null, tx);
-            }
-          },
-        );
-      }
-    });
+            },
+          );
+        }
+      },
+    );
   },
 
   deleteNamespace(
@@ -191,6 +201,91 @@ export const queueManager = {
     multi.srem(keyProcessingQueues, processingQueue);
     multi.hdel(keyQueueProcessingQueues, processingQueue);
     multi.del(processingQueue);
+  },
+
+  clearQueueRateLimit(
+    redisClient: RedisClient,
+    queue: TQueueParams,
+    cb: ICallback<void>,
+  ): void {
+    const { keyQueueRateLimit, keyQueueRateLimitCounter } =
+      redisKeys.getQueueKeys(queue);
+    redisClient.del([keyQueueRateLimit, keyQueueRateLimitCounter], (err) =>
+      cb(err),
+    );
+  },
+
+  setQueueRateLimit(
+    redisClient: RedisClient,
+    queue: TQueueParams,
+    rateLimit: TQueueRateLimit,
+    cb: ICallback<void>,
+  ): void {
+    // validating rateLimit params from a javascript client
+    const limit = Number(rateLimit.limit);
+    if (isNaN(limit) || limit <= 0) {
+      cb(
+        new QueueRateLimitError(
+          `Invalid rateLimit.limit. Expected a positive integer > 0`,
+        ),
+      );
+    }
+    const interval = Number(rateLimit.interval);
+    if (isNaN(interval) || interval <= 1000) {
+      cb(
+        new QueueRateLimitError(
+          `Invalid rateLimit.interval. Expected a positive integer > 1000`,
+        ),
+      );
+    }
+    const validatedRateLimit: TQueueRateLimit = { interval, limit };
+    const { keyQueueRateLimit } = redisKeys.getQueueKeys(queue);
+    redisClient.set(
+      keyQueueRateLimit,
+      JSON.stringify(validatedRateLimit),
+      undefined,
+      undefined,
+      undefined,
+      (err) => cb(err),
+    );
+  },
+
+  getQueueRateLimit(
+    redisClient: RedisClient,
+    queue: TQueueParams,
+    cb: ICallback<TQueueRateLimit>,
+  ): void {
+    const { keyQueueRateLimitCounter } = redisKeys.getQueueKeys(queue);
+    redisClient.get(keyQueueRateLimitCounter, (err, reply) => {
+      if (err) cb(err);
+      else if (!reply) cb();
+      else {
+        const rateLimit: TQueueRateLimit = JSON.parse(reply);
+        cb(null, rateLimit);
+      }
+    });
+  },
+
+  hasQueueRateLimitExceeded(
+    redisClient: RedisClient,
+    queue: Required<TQueueParams>,
+    rateLimit: TQueueRateLimit,
+    cb: ICallback<boolean>,
+  ): void {
+    const { limit, interval } = rateLimit;
+    const { keyQueueRateLimitCounter } = redisKeys.getQueueKeys(queue);
+    redisClient.runScript(
+      ELuaScriptName.HAS_QUEUE_RATE_EXCEEDED,
+      [keyQueueRateLimitCounter],
+      [limit, interval],
+      (err, reply) => {
+        if (err) cb(err);
+        else {
+          const hasExceeded = Boolean(reply);
+          cb(null, hasExceeded);
+        }
+      },
+    );
   },
 
   ///

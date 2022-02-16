@@ -6,6 +6,7 @@ import {
   TConsumerMessageHandler,
   TQueueConsumerRedisKeys,
   TQueueParams,
+  TQueueRateLimit,
 } from '../../../../types';
 import { v4 as uuid } from 'uuid';
 import { RedisClient } from '../../common/redis-client/redis-client';
@@ -40,6 +41,7 @@ export class ConsumerMessageHandler extends EventEmitter {
   protected keyQueueProcessing: string;
   protected ticker: Ticker;
   protected logger: ICompatibleLogger;
+  protected queueRateLimit: TQueueRateLimit | null = null;
 
   constructor(
     consumerId: string,
@@ -231,54 +233,80 @@ export class ConsumerMessageHandler extends EventEmitter {
       this.keyQueuePriority,
       this.keyPendingMessagesWithPriority,
       this.keyQueueProcessing,
-      (err, reply) => {
-        if (err) {
-          this.ticker.abort();
-          cb(err);
-        } else if (typeof reply === 'string') {
-          cb(null, reply);
-        } else {
-          this.ticker.nextTickFn(() => {
-            this.dequeueMessageWithPriority(cb);
-          });
-        }
-      },
+      cb,
     );
+  }
+
+  protected waitForMessage(cb: ICallback<string>): void {
+    this.redisClient.brpoplpush(this.keyQueue, this.keyQueueProcessing, 0, cb);
   }
 
   protected dequeueMessage(cb: ICallback<string>): void {
-    this.redisClient.brpoplpush(
-      this.keyQueue,
-      this.keyQueueProcessing,
-      0,
-      (err, reply) => {
-        if (err) {
-          this.ticker.abort();
-          cb(err);
-        } else cb(null, reply);
-      },
-    );
+    this.redisClient.rpoplpush(this.keyQueue, this.keyQueueProcessing, cb);
   }
 
   protected dequeue(cb: ICallback<string>): void {
-    if (this.usingPriorityQueuing) this.dequeueMessageWithPriority(cb);
-    else this.dequeueMessage(cb);
+    const callback: ICallback<string> = (err, reply) => {
+      if (err) {
+        this.ticker.abort();
+        cb(err);
+      } else if (typeof reply === 'string') {
+        cb(null, reply);
+      } else {
+        this.ticker.nextTickFn(() => {
+          this.dequeue(cb);
+        });
+      }
+    };
+    if (this.queueRateLimit) {
+      queueManager.hasQueueRateLimitExceeded(
+        this.redisClient,
+        this.queue,
+        this.queueRateLimit,
+        (err, isExceeded) => {
+          if (err) cb(err);
+          else if (!isExceeded) {
+            if (this.usingPriorityQueuing)
+              this.dequeueMessageWithPriority(callback);
+            else this.dequeueMessage(callback);
+          } else {
+            this.ticker.nextTickFn(() => {
+              this.dequeue(cb);
+            });
+          }
+        },
+      );
+    } else if (this.usingPriorityQueuing) {
+      this.dequeueMessageWithPriority(callback);
+    } else {
+      this.waitForMessage(callback);
+    }
   }
 
   run = (cb: ICallback<void>): void => {
     this.powerManager.goingUp();
-    const multi = this.redisClient.multi();
-    queueManager.setUpMessageQueue(multi, this.queue);
-    consumerQueues.addConsumer(multi, this.queue, this.consumerId);
-    queueManager.setUpProcessingQueue(multi, this);
-    this.redisClient.execMulti(multi, (err) => {
-      if (err) cb(err);
-      else {
-        this.powerManager.commit();
-        this.emit(events.UP);
-        cb();
-      }
-    });
+    queueManager.getQueueRateLimit(
+      this.redisClient,
+      this.queue,
+      (err, rateLimit) => {
+        if (err) cb(err);
+        else {
+          this.queueRateLimit = rateLimit ?? null;
+          const multi = this.redisClient.multi();
+          queueManager.setUpMessageQueue(multi, this.queue);
+          consumerQueues.addConsumer(multi, this.queue, this.consumerId);
+          queueManager.setUpProcessingQueue(multi, this);
+          this.redisClient.execMulti(multi, (err) => {
+            if (err) cb(err);
+            else {
+              this.powerManager.commit();
+              this.emit(events.UP);
+              cb();
+            }
+          });
+        }
+      },
+    );
   };
 
   shutdown = (cb: ICallback<void>): void => {

@@ -3,6 +3,7 @@ import {
   ICompatibleLogger,
   IQueueMetrics,
   TQueueParams,
+  TQueueRateLimit,
 } from '../../../../types';
 import { RedisClient } from '../../common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
@@ -18,6 +19,22 @@ export class QueueManagerFrontend {
   constructor(redisClient: RedisClient) {
     this.redisClient = redisClient;
     this.logger = getNamespacedLogger('QueueManager');
+  }
+
+  clearQueueRateLimit(queue: TQueueParams, cb: ICallback<void>): void {
+    queueManager.clearQueueRateLimit(this.redisClient, queue, cb);
+  }
+
+  setQueueRateLimit(
+    queue: TQueueParams,
+    rateLimit: TQueueRateLimit,
+    cb: ICallback<void>,
+  ): void {
+    queueManager.setQueueRateLimit(this.redisClient, queue, rateLimit, cb);
+  }
+
+  getQueueRateLimit(queue: TQueueParams, cb: ICallback<TQueueRateLimit>): void {
+    queueManager.getQueueRateLimit(this.redisClient, queue, cb);
   }
 
   deleteQueue(queue: string | TQueueParams, cb: ICallback<void>): void {
