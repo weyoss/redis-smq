@@ -37,4 +37,4 @@ For managing scheduled messages, the [Message Manager](api/message-manager.md) p
 - [deleteScheduledMessage()](api/message-manager.md#messagemanagerprototypedeletescheduledmessage)
 - [purgeScheduledMessages()](api/message-manager.md#messagemanagerprototypepurgescheduledmessages)
 
-Scheduled messages can be also managed using the [Web UI](/docs/web-ui.md).
+Scheduled messages can be also managed using the [HTTP API Interface](/docs/http-api.md) or from your browser with the help of the [Web UI](/docs/web-ui.md).

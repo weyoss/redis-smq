@@ -1,7 +1,5 @@
 # HTTP API Reference
 
-This is the backend part of the [Web UI](/docs/web-ui.md). 
-
 In contrast to system core features, which use pure callbacks for asynchronous tasks, the HTTP API server has been implemented 
 using async/await. 
 
@@ -43,6 +41,10 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
    1. [GET /api/main/scheduled-messages](#get-apimainscheduled-messages)
    2. [DELETE /api/main/scheduled-messages](#delete-apimainscheduled-messages)
    3. [DELETE /api/main/scheduled-messages/:id](#delete-apimainscheduled-messagesid)
+7. Queue Rate limiting
+   1. [POST /api/ns/:ns/queues/:queueName/rate-limit](#post-apinsnsqueuesqueuenamerate-limit)
+   2. [GET /api/ns/:ns/queues/:queueName/rate-limit](#get-apinsnsqueuesqueuenamerate-limit)
+   3. [DELETE /api/ns/:ns/queues/:queueName/rate-limit](#delete-apinsnsqueuesqueuenamerate-limit)
    
 ## Queues
 
@@ -572,6 +574,76 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 **Path parameters**
 
 * `id` (string): Required. Message ID.
+
+**Response Body**
+
+```text
+204 No Content
+```
+
+## Queue Rate Limiting
+
+### POST /api/ns/:ns/queues/:queueName/rate-limit
+
+**Path parameters**
+
+* `ns` (string): Required. Queue namespace.
+* `queueName` (string): Required. Queue name.
+
+**JSON Body properties**
+
+* `limit` *(number): Required.* The maximum number of messages within an `interval`.
+* `interval` *(number): Required.* The timespan for `limit` in milliseconds.
+
+Example:
+
+```json
+{
+   "interval": 10000,
+   "limit": 15
+}
+```
+
+**Response Body**
+
+```text
+204 No Content
+```
+
+### GET /api/ns/:ns/queues/:queueName/rate-limit
+
+**Path parameters**
+
+* `ns` (string): Required. Queue namespace.
+* `queueName` (string): Required. Queue name.
+
+**Response Body**
+
+If a rate limit exists:
+
+```text
+{
+   "data": {
+      "interval": 10000,
+      "limit": 15
+   }
+}
+```
+
+Otherwise:
+
+```text
+{
+   "data": null
+}
+```
+
+### DELETE /api/ns/:ns/queues/:queueName/rate-limit
+
+**Path parameters**
+
+* `ns` (string): Required. Queue namespace.
+* `queueName` (string): Required. Queue name.
 
 **Response Body**
 

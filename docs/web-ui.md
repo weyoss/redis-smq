@@ -2,9 +2,7 @@
 
 ![RedisSMQ Monitor Home](https://raw.githubusercontent.com/weyoss/redis-smq-monitor/master/screenshots/screenshot-00002.png)
 
-![RedisSMQ Monitor Acknowledged messages](https://raw.githubusercontent.com/weyoss/redis-smq-monitor/master/screenshots/screenshot-00004.png)
-
-[RedisSMQ Monitor](https://github.com/weyoss/redis-smq-monitor) Web UI is an interface which let you monitor, debug, and manage your RedisSMQ server from a web browser in
+[RedisSMQ Monitor](https://github.com/weyoss/redis-smq-monitor) Web UI is an interface which lets you monitor, debug, and manage your RedisSMQ server from a web browser in
 real-time.
 
 ## Configuration
