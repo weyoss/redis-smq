@@ -12,6 +12,7 @@ import { controller as queuePendingMessagesWithPriorityController } from './pend
 import { controller as queuePendingMessagesController } from './pending-messages/controller';
 import { controller as queueTimeSeriesController } from './time-series/controller';
 import { controller as queueConsumerTimeSeriesController } from './consumer/time-series/controller';
+import { controller as queueRateLimitingController } from './rate-limiting/controller';
 
 export const queueController: IRouteController = {
   path: '/:queueName',
@@ -30,5 +31,6 @@ export const queueController: IRouteController = {
     queuePendingMessagesController,
     queueTimeSeriesController,
     queueConsumerTimeSeriesController,
+    queueRateLimitingController,
   ],
 };
