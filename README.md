@@ -16,19 +16,20 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 
 * **[High-performance message processing](docs/performance.md)**
 * **[Multi-Queue Producers](#producer-class) & [Multi-Queue Consumers](#consumer-class)**: Offering very flexible models which make RedisSMQ an ideal message broker for your microservices. 
-* **Scalable**: You can run multiple Consumer/Producer instances concurrently in the same host, or in different hosts.
-* **Supporting both [at-least-once/at-most-once delivery](/docs/api/message.md#messageprototypesetretrythreshold)**: In case of failures, while delivering or processing a message, RedisSMQ can guaranty that the message will be not lost and redelivered again. When configured to do so, RedisSMQ can ensure that the message is delivered at-most-once.
-* **[Message expiration](docs/api/message.md#messageprototypesetttl)**: A message will not be delivered if it has been in a queue for longer than a given amount of time, called TTL (time-to-live).
-* **[Message consume timeout](docs/api/message.md#messageprototypesetconsumetimeout)**: Timeout for consuming messages.
-* **[Delaying and scheduling message delivery](docs/scheduling-messages.md)**: Messages can be configured to be delayed, delivered for N times with an optional period between deliveries, and to be scheduled using CRON expressions.
+* **[Supporting both at-least-once/at-most-once delivery](/docs/api/message.md#messageprototypesetretrythreshold)**: In case of failures, while delivering or processing a message, RedisSMQ can guaranty that the message will be not lost and redelivered again. When configured to do so, RedisSMQ can also ensure that the message is delivered at-most-once.
+* **[Message Expiration](docs/api/message.md#messageprototypesetttl)**: A message will not be delivered if it has been in a queue for longer than a given amount of time, called TTL (time-to-live).
+* **[Message Consumption Timeout](docs/api/message.md#messageprototypesetconsumetimeout)**: Timeout for consuming messages.
+* **[Queue Rate Limiting](docs/queue-rate-limiting.md)**: Allowing you to control the rate at which the messages are consumed from a given queue.
+* **[Scheduling Messages](docs/scheduling-messages.md)**: Messages can be configured to be delayed, delivered for N times with an optional period between deliveries, and to be scheduled using CRON expressions.
 * **[Reliable Priority Queues](docs/priority-queues.md)**: Supports priority messaging.
 * **[HTTP API](docs/http-api.md)**: an HTTP interface is provided to interact with the MQ.
 * **[Web UI](docs/web-ui.md)**: RedisSMQ can be managed also from your web browser.
 * **[Logging](docs/logs.md)**: Comes with a built-in JSON logger. But you can also use your own logger instance.
-* **Highly optimized**: Strongly-typed and implemented using pure callbacks, with small memory footprint and no memory leaks. See [callbacks vs promises vs async/await benchmarks](http://bluebirdjs.com/docs/benchmarks.html).
 * **[Configurable](docs/configuration.md)**: Many options and features can be configured.
+* **Both redis & ioredis clients are supported**: RedisSMQ can be configured to use either `redis` or `ioredis` to connect to Redis server.
 * **Rigorously tested**: With 100+ tests and code coverage no less than 80%.
-* **Supports both redis & ioredis**: RedisSMQ can be configured to use either `redis` or `ioredis` to connect to Redis server.
+* **Highly optimized**: Strongly-typed and implemented using pure callbacks, with small memory footprint and no memory leaks. See [callbacks vs promises vs async/await benchmarks](http://bluebirdjs.com/docs/benchmarks.html).
+
 
 ### RedisSMQ Use Case: Multi-Queue Producers & Multi-Queue Consumers
 
@@ -49,11 +50,12 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
    2. Advanced Topics
       1. [Scheduling Messages](docs/scheduling-messages.md)
       2. [Priority Queues](docs/priority-queues.md)
-      3. [Message Manager](docs/api/message-manager.md)
-      4. [Queue Manager](docs/api/queue-manager.md)
-      5. [HTTP API](docs/http-api.md)
-      6. [Web UI](docs/web-ui.md)
-      7. [Logs](docs/logs.md)
+      3. [Queue Rate Limiting](docs/queue-rate-limiting.md)
+      4. [Message Manager](docs/api/message-manager.md)
+      5. [Queue Manager](docs/api/queue-manager.md)
+      6. [HTTP API](docs/http-api.md)
+      7. [Web UI](docs/web-ui.md)
+      8. [Logs](docs/logs.md)
 5. [RedisSMQ Architecture](docs/redis-smq-architecture.md)
 6. [Performance](#performance)
 7. [Contributing](#contributing)
@@ -178,7 +180,9 @@ const messageHandler = (msg, cb) => {
    cb(); // acknowledging the message
 };
 
-// the second parameter is for enabling priority queuing
+// The second parameter is for enabling priority queuing for the message handler
+// If you are willing to consume messages with priority, do not forget to set a priority for your messages
+// See Reliable Priority Queues for more details
 consumer.consume('test_queue', false, messageHandler, (err, isRunning) => {
    if (err) console.error(err);
    // the message handler will be started only if the consumer is running
@@ -217,6 +221,8 @@ See [Consumer Reference](docs/api/consumer.md) for more details.
 * [Scheduling Messages](docs/scheduling-messages.md)
 
 * [Priority Queues](docs/priority-queues.md)
+
+* [Queue Rate Limiting](docs/queue-rate-limiting.md)
   
 * [Message Manager](docs/api/message-manager.md)
 

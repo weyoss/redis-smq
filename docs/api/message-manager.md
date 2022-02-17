@@ -106,10 +106,11 @@ getPendingMessages(queue, skip, take, cb);
 
 **Parameters**
 
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
-  Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
+- `queue` *(string|object): Required.*  
+  - `queue` *(string): Required.* Queue name. Default namespace will be used.
+  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+    - `queue.name` *(string): Required.* Queue name.
+    - `queue.ns` *(string): Required.* Queue namespace.
 - `skip` *(number): Required.* Offset from where messages should be taken. Starts from 0.
 - `take` *(number): Required.* Max number of messages that should be taken. Starts from 1.
 - `cb(err, result)` *(Function): Required.* Callback function.
@@ -126,10 +127,11 @@ deletePendingMessage(queue, sequenceId, messageId, cb);
 ```
 
 **Parameters**
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
-  Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
+- `queue` *(string|object): Required.*  
+  - `queue` *(string): Required.* Queue name. Default namespace will be used.
+  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+    - `queue.name` *(string): Required.* Queue name.
+    - `queue.ns` *(string): Required.* Queue namespace.
 - `sequenceId` *(number): Required.* Message sequence ID.
 - `messageId` *(string): Required.* Message ID.
 - `cb(err)` *(Function): Required.* Callback function.
@@ -142,10 +144,11 @@ purgePendingMessages(queue, cb);
 ```
 
 **Parameters**
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
-  Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
+- `queue` *(string|object): Required.*  
+  - `queue` *(string): Required.* Queue name. Default namespace will be used.
+  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+    - `queue.name` *(string): Required.* Queue name.
+    - `queue.ns` *(string): Required.* Queue namespace.
 - `cb(err)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
 
@@ -157,10 +160,11 @@ getPendingMessagesWithPriority(queue, skip, take, cb);
 
 **Parameters**
 
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used. 
-Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
+- `queue` *(string|object): Required.*
+  - `queue` *(string): Required.* Queue name. Default namespace will be used.
+  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+    - `queue.name` *(string): Required.* Queue name.
+    - `queue.ns` *(string): Required.* Queue namespace.
 - `skip` *(number): Required.* Offset from where messages should be taken. Starts from 0.
 - `take` *(number): Required.* Max number of messages that should be taken. Starts from 1.
 - `cb(err, result)` *(Function): Required.* Callback function.
@@ -175,10 +179,11 @@ deletePendingMessageWithPriority(queue, messageId, cb);
 ```
 
 **Parameters**
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
-  Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
+- `queue` *(string|object): Required.*  
+  - `queue` *(string): Required.* Queue name. Default namespace will be used.
+  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+    - `queue.name` *(string): Required.* Queue name.
+    - `queue.ns` *(string): Required.* Queue namespace.
 - `messageId` *(string): Required.* Message ID.
 - `cb(err)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
@@ -190,8 +195,9 @@ purgePendingMessagesWithPriority(queue, cb);
 ```
 
 **Parameters**
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
-  Otherwise, you can explicity provide an object which has the following signature:
+- `queue` *(string|object): Required.*
+  - `queue` *(string): Required.* Queue name. Default namespace will be used.
+  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
     - `queue.name` *(string): Required.* Queue name.
     - `queue.ns` *(string): Required.* Queue namespace.
 - `cb(err)` *(Function): Required.* Callback function.
@@ -205,10 +211,11 @@ getAcknowledgedMessages(queue, skip, take, cb);
 
 **Parameters**
 
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
-  Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
+- `queue` *(string|object): Required.*  
+  - `queue` *(string): Required.* Queue name. Default namespace will be used.
+  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+    - `queue.name` *(string): Required.* Queue name.
+    - `queue.ns` *(string): Required.* Queue namespace.
 - `skip` *(number): Required.* Offset from where messages should be taken. Starts from 0.
 - `take` *(number): Required.* Max number of messages that should be taken. Starts from 1.
 - `cb(err, result)` *(Function): Required.* Callback function.
@@ -225,10 +232,11 @@ requeueAcknowledgedMessage(queue, sequenceId, messageId, priority, cb);
 ```
 
 **Parameters**
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
-  Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
+- `queue` *(string|object): Required.*  
+  - `queue` *(string): Required.* Queue name. Default namespace will be used.
+  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+    - `queue.name` *(string): Required.* Queue name.
+    - `queue.ns` *(string): Required.* Queue namespace.
 - `sequenceId` *(number): Required.* Message sequence ID.
 - `messageId` *(string): Required.* Message ID.
 - `priority` *(number|undefined): Required.* Message priority.
@@ -242,10 +250,11 @@ deleteAcknowledgedMessage(queue, sequenceId, messageId, cb);
 ```
 
 **Parameters**
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
-  Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
+- `queue` *(string|object): Required.*  
+  - `queue` *(string): Required.* Queue name. Default namespace will be used.
+  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+    - `queue.name` *(string): Required.* Queue name.
+    - `queue.ns` *(string): Required.* Queue namespace.
 - `sequenceId` *(number): Required.* Message sequence ID.
 - `messageId` *(string): Required.* Message ID.
 - `cb(err)` *(Function): Required.* Callback function.
@@ -258,10 +267,11 @@ purgeAcknowledgedMessages(queue, cb);
 ```
 
 **Parameters**
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
-  Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
+- `queue` *(string|object): Required.*  
+  - `queue` *(string): Required.* Queue name. Default namespace will be used.
+  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+    - `queue.name` *(string): Required.* Queue name.
+    - `queue.ns` *(string): Required.* Queue namespace.
 - `cb(err)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
 
@@ -273,10 +283,11 @@ getDeadLetteredMessages(queue, skip, take, cb);
 
 **Parameters**
 
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used. 
-Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
+- `queue` *(string|object): Required.*
+  - `queue` *(string): Required.* Queue name. Default namespace will be used.
+  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+    - `queue.name` *(string): Required.* Queue name.
+    - `queue.ns` *(string): Required.* Queue namespace.
 - `skip` *(number): Required.* Offset from where messages should be taken. Starts from 0.
 - `take` *(number): Required.* Max number of messages that should be taken. Starts from 1.
 - `cb(err, result)` *(Function): Required.* Callback function.
@@ -293,10 +304,11 @@ requeueDeadLetteredMessage(queue, sequenceId, messageId, priority, cb);
 ```
 
 **Parameters**
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
-  Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
+- `queue` *(string|object): Required.*  
+  - `queue` *(string): Required.* Queue name. Default namespace will be used.
+  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+    - `queue.name` *(string): Required.* Queue name.
+    - `queue.ns` *(string): Required.* Queue namespace.
 - `sequenceId` *(number): Required.* Message sequence ID.
 - `messageId` *(string): Required.* Message ID.
 - `priority` *(number|undefined): Required.* Message priority.
@@ -310,10 +322,11 @@ deleteDeadLetteredMessage(queue, sequenceId, messageId, cb);
 ```
 
 **Parameters**
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used. 
-Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
+- `queue` *(string|object): Required.*
+  - `queue` *(string): Required.* Queue name. Default namespace will be used.
+  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+    - `queue.name` *(string): Required.* Queue name.
+    - `queue.ns` *(string): Required.* Queue namespace.
 - `sequenceId` *(number): Required.* Message sequence ID.
 - `messageId` *(string): Required.* Message ID.
 - `cb(err)` *(Function): Required.* Callback function.
@@ -326,10 +339,11 @@ purgeDeadLetteredMessages(queue, cb);
 ```
 
 **Parameters**
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
-  Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
+- `queue` *(string|object): Required.*  
+  - `queue` *(string): Required.* Queue name. Default namespace will be used.
+  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+    - `queue.name` *(string): Required.* Queue name.
+    - `queue.ns` *(string): Required.* Queue namespace.
 - `cb(err)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
 

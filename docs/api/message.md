@@ -86,10 +86,11 @@ setQueue(queue);
 
 **Parameters**
 
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
-  Otherwise, you can explicity provide an object which has the following signature:
-    - `queue.name` *(string): Required.* Queue name.
-    - `queue.ns` *(string): Required.* Queue namespace.
+- `queue` *(string|object): Required.*
+   - `queue` *(string): Required.* Queue name. Default namespace will be used.
+   - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+      - `queue.name` *(string): Required.* Queue name.
+      - `queue.ns` *(string): Required.* Queue namespace.
 
 The queue name can be composed only of letters (a-z), numbers (0-9) and (-_) characters.
 

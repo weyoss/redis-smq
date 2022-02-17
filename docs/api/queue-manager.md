@@ -13,7 +13,10 @@ const { QueueManager } = require('redis-smq');
 5. [QueueManager.prototype.getQueueMetrics()](#queuemanagerprototypegetqueuemetrics)
 6. [QueueManager.prototype.deleteQueue()](#queuemanagerprototypedeletequeue)
 7. [QueueManager.prototype.deleteNamespace()](#queuemanagerprototypedeletenamespace)
-8. [QueueManager.prototype.quit()](#queuemanagerprototypequit)
+8. [QueueManager.prototype.setQueueRateLimit()](#queuemanagerprototypesetqueueratelimit)
+9. [QueueManager.prototype.clearQueueRateLimit()](#queuemanagerprototypeclearqueueratelimit)
+10. [QueueManager.prototype.getQueueRateLimit()](#queuemanagerprototypegetqueueratelimit)
+11. [QueueManager.prototype.quit()](#queuemanagerprototypequit)
 
 ## Public Static Methods
 
@@ -89,10 +92,11 @@ getQueueMetrics(queue, cb);
 ```
 
 **Parameters**
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
-  Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
+- `queue` *(string|object): Required.*  
+  - `queue` *(string): Required.* Queue name. Default namespace will be used.
+  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+    - `queue.name` *(string): Required.* Queue name.
+    - `queue.ns` *(string): Required.* Queue namespace.
 - `cb(err, queueMetrics)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
   - `queueMetrics` *(object).* Queue metrics.
@@ -108,10 +112,11 @@ deleteQueue(queue, cb);
 ```
 
 **Parameters**
-- `queue` *(string|object): Required.* Queue parameters. When you provide the queue name then the default namespace will be used.
-  Otherwise, you can explicity provide an object which has the following signature:
-  - `queue.name` *(string): Required.* Queue name.
-  - `queue.ns` *(string): Required.* Queue namespace.
+- `queue` *(string|object): Required.*  
+  - `queue` *(string): Required.* Queue name. Default namespace will be used.
+  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+    - `queue.name` *(string): Required.* Queue name.
+    - `queue.ns` *(string): Required.* Queue namespace.
 - `cb(err)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
 
@@ -130,6 +135,57 @@ deleteNamespace(ns, cb);
   - `err` *(Error | null | undefined).* Error object.
 
 Before deleting a namespace, make sure that all queues from the given namespace are not being in use. Otherwise, an error will be returned.
+
+### QueueManager.prototype.setQueueRateLimit()
+
+```javascript
+setQueueRateLimit(queue, rateLimit, cb);
+```
+
+**Parameters**
+- `queue` *(string|object): Required.*  
+  - `queue` *(string): Required.* Queue name. Default namespace will be used.
+  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+    - `queue.name` *(string): Required.* Queue name.
+    - `queue.ns` *(string): Required.* Queue namespace.
+- `rateLimit` *(object): Required.*
+  - `rateLimit.limit` *(number): Required.* The maximum number of messages within an `interval`.
+  - `rateLimit.interval` *(number): Required.* The timespan for `limit` in milliseconds.
+- `cb(err)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+
+### QueueManager.prototype.clearQueueRateLimit()
+
+```javascript
+clearQueueRateLimit(queue, cb);
+```
+
+**Parameters**
+- `queue` *(string|object): Required.*  
+  - `queue` *(string): Required.* Queue name. Default namespace will be used.
+  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+    - `queue.name` *(string): Required.* Queue name.
+    - `queue.ns` *(string): Required.* Queue namespace.
+- `cb(err)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+
+### QueueManager.prototype.getQueueRateLimit()
+
+```javascript
+getQueueRateLimit(queue, cb);
+```
+
+**Parameters**
+- `queue` *(string|object): Required.*  
+  - `queue` *(string): Required.* Queue name. Default namespace will be used.
+  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+    - `queue.name` *(string): Required.* Queue name.
+    - `queue.ns` *(string): Required.* Queue namespace.
+- `cb(err, rateLimit)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+  - `rateLimit` *(object): Required.*
+    - `rateLimit.limit` *(number): Required.* The maximum number of messages within an `interval`.
+    - `rateLimit.interval` *(number): Required.* The timespan for `limit` in milliseconds.
 
 ### QueueManager.prototype.quit()
 
