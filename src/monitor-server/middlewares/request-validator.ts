@@ -23,7 +23,7 @@ export function RequestValidator(
       } else if (i === ERouteControllerActionPayload.BODY) {
         plain = {
           ...plain,
-          ...ctx.body,
+          ...ctx.request.body,
         };
       }
     });

@@ -90,8 +90,8 @@ export class MonitorServer {
     const { socketOpts = {} } = this.config.monitor;
     const app = new Koa<Koa.DefaultState, IContext>();
     app.use(errorHandler);
-    app.use(Middleware(['/api/', '/socket.io/']));
     app.use(KoaBodyParser());
+    app.use(Middleware(['/api/', '/socket.io/']));
     app.context.config = this.config;
     app.context.logger = this.logger;
     app.context.redis = this.redisClient;

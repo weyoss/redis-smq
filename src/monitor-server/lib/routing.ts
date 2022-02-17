@@ -88,8 +88,13 @@ export function getControllerActionRouter<
     RequestValidator(action.RequestDTO, action.payload),
     async (ctx: TRequestContext<RequestDTO, ResponseDTO>, next: Next) => {
       const data = await action.Handler(app)(ctx);
-      ctx.status = data ? 200 : 204;
-      ctx.body = data ? { data } : data;
+      if (data !== undefined) {
+        ctx.status = 200;
+        ctx.body = { data };
+      } else {
+        ctx.status = 204;
+        ctx.body = undefined;
+      }
       await next();
     },
     ResponseValidator(action.ResponseDTO),
