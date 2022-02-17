@@ -231,10 +231,10 @@ export const queueManager = {
       );
     }
     const interval = Number(rateLimit.interval);
-    if (isNaN(interval) || interval <= 1000) {
+    if (isNaN(interval) || interval < 1000) {
       cb(
         new QueueRateLimitError(
-          `Invalid rateLimit.interval. Expected a positive integer > 1000`,
+          `Invalid rateLimit.interval. Expected a positive integer >= 1000`,
         ),
       );
     }
@@ -255,10 +255,10 @@ export const queueManager = {
     queue: TQueueParams,
     cb: ICallback<TQueueRateLimit>,
   ): void {
-    const { keyQueueRateLimitCounter } = redisKeys.getQueueKeys(queue);
-    redisClient.get(keyQueueRateLimitCounter, (err, reply) => {
+    const { keyQueueRateLimit } = redisKeys.getQueueKeys(queue);
+    redisClient.get(keyQueueRateLimit, (err, reply) => {
       if (err) cb(err);
-      else if (!reply) cb();
+      else if (!reply) cb(null, null);
       else {
         const rateLimit: TQueueRateLimit = JSON.parse(reply);
         cb(null, rateLimit);
