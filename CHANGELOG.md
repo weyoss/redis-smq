@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 6.2.0 (2022-02-19)
+
+* Bump up redis-smq-monitor to v6.5.1 (c543c55)
+* Improve consumer message rate time series handling (7d51bb3)
+* Update docs (ef21b39)
+* Allow configuring queue rate limiting from the HTTP API (ec2bc52)
+* Test message consumption rate limiting (62e5b1f)
+* Implement message consumption rate limiting (1c87ec0)
+
 ## 6.1.0 (2022-02-14)
 
 * Allow configuring which messages to store with extended parameters (7bd37a1)
