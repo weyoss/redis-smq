@@ -4,9 +4,7 @@ import {
   IConsumerWorkerParameters,
   TQueueParams,
 } from '../../../types';
-import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { Worker } from '../common/worker/worker';
-import { setConfiguration } from '../common/configuration/configuration';
 import { queueManager } from '../app/queue-manager/queue-manager';
 import { eachOf, waterfall } from '../lib/async';
 import { QueueAcknowledgedTimeSeries } from '../app/consumer/consumer-time-series/queue-acknowledged-time-series';
@@ -139,13 +137,3 @@ export class TimeSeriesWorker extends Worker<IConsumerWorkerParameters> {
 }
 
 export default TimeSeriesWorker;
-
-process.on('message', (payload: string) => {
-  const params: IConsumerWorkerParameters = JSON.parse(payload);
-  setConfiguration(params.config);
-  RedisClient.getNewInstance((err, client) => {
-    if (err) throw err;
-    else if (!client) throw new EmptyCallbackReplyError();
-    else new TimeSeriesWorker(client, params, false).run();
-  });
-});

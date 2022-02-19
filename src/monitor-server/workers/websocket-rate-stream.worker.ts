@@ -1,7 +1,5 @@
-import { ICallback, TQueueParams, TWorkerParameters } from '../../../types';
+import { ICallback, TQueueParams } from '../../../types';
 import { redisKeys } from '../../system/common/redis-keys/redis-keys';
-import { RedisClient } from '../../system/common/redis-client/redis-client';
-import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callback-reply.error';
 import { ConsumerHeartbeat } from '../../system/app/consumer/consumer-heartbeat';
 import { TimeSeries } from '../../system/common/time-series/time-series';
 import { QueuePublishedTimeSeries } from '../../system/app/producer/producer-time-series/queue-published-time-series';
@@ -13,7 +11,6 @@ import { GlobalDeadLetteredTimeSeries } from '../../system/app/consumer/consumer
 import { ConsumerAcknowledgedTimeSeries } from '../../system/app/consumer/consumer-time-series/consumer-acknowledged-time-series';
 import { ConsumerDeadLetteredTimeSeries } from '../../system/app/consumer/consumer-time-series/consumer-dead-lettered-time-series';
 import { consumerQueues } from '../../system/app/consumer/consumer-queues';
-import { setConfiguration } from '../../system/common/configuration/configuration';
 import { Worker } from '../../system/common/worker/worker';
 import { each, waterfall } from '../../system/lib/async';
 
@@ -292,15 +289,3 @@ export class WebsocketRateStreamWorker extends Worker {
 }
 
 export default WebsocketRateStreamWorker;
-
-process.on('message', (payload: string) => {
-  const params: TWorkerParameters = JSON.parse(payload);
-  setConfiguration(params.config);
-  RedisClient.getNewInstance((err, client) => {
-    if (err) throw err;
-    else if (!client) throw new EmptyCallbackReplyError();
-    else {
-      new WebsocketRateStreamWorker(client, params, false).run();
-    }
-  });
-});

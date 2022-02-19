@@ -1,11 +1,9 @@
 import { RedisClient } from '../common/redis-client/redis-client';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { ICallback, IConsumerWorkerParameters } from '../../../types';
-import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { Message } from '../app/message/message';
 import { broker } from '../common/broker/broker';
 import { Worker } from '../common/worker/worker';
-import { setConfiguration } from '../common/configuration/configuration';
 import { each } from '../lib/async';
 
 export class DelayWorker extends Worker<IConsumerWorkerParameters> {
@@ -51,13 +49,3 @@ export class DelayWorker extends Worker<IConsumerWorkerParameters> {
 }
 
 export default DelayWorker;
-
-process.on('message', (payload: string) => {
-  const params: IConsumerWorkerParameters = JSON.parse(payload);
-  setConfiguration(params.config);
-  RedisClient.getNewInstance((err, client) => {
-    if (err) throw err;
-    else if (!client) throw new EmptyCallbackReplyError();
-    else new DelayWorker(client, params, false).run();
-  });
-});

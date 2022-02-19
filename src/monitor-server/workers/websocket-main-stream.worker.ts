@@ -3,15 +3,11 @@ import {
   TQueueParams,
   TWebsocketMainStreamPayload,
   TWebsocketMainStreamPayloadQueue,
-  TWorkerParameters,
 } from '../../../types';
 import { redisKeys } from '../../system/common/redis-keys/redis-keys';
-import { RedisClient } from '../../system/common/redis-client/redis-client';
 import { MessageManager } from '../../system/app/message-manager/message-manager';
-import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callback-reply.error';
 import { Consumer } from '../../system/app/consumer/consumer';
 import { queueManager } from '../../system/app/queue-manager/queue-manager';
-import { setConfiguration } from '../../system/common/configuration/configuration';
 import { Worker } from '../../system/common/worker/worker';
 import { each, waterfall } from '../../system/lib/async';
 
@@ -215,13 +211,3 @@ export class WebsocketMainStreamWorker extends Worker {
 }
 
 export default WebsocketMainStreamWorker;
-
-process.on('message', (payload: string) => {
-  const params: TWorkerParameters = JSON.parse(payload);
-  setConfiguration(params.config);
-  RedisClient.getNewInstance((err, client) => {
-    if (err) throw err;
-    else if (!client) throw new EmptyCallbackReplyError();
-    else new WebsocketMainStreamWorker(client, params, false).run();
-  });
-});
