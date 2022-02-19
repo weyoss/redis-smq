@@ -1,11 +1,9 @@
 import { ICallback, IConsumerWorkerParameters } from '../../../types';
 import { redisKeys } from '../common/redis-keys/redis-keys';
-import { RedisClient } from '../common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { Message } from '../app/message/message';
 import { ELuaScriptName } from '../common/redis-client/lua-scripts';
 import { Worker } from '../common/worker/worker';
-import { setConfiguration } from '../common/configuration/configuration';
 import { each, waterfall } from '../lib/async';
 
 export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
@@ -104,13 +102,3 @@ export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
 }
 
 export default ScheduleWorker;
-
-process.on('message', (payload: string) => {
-  const params: IConsumerWorkerParameters = JSON.parse(payload);
-  setConfiguration(params.config);
-  RedisClient.getNewInstance((err, client) => {
-    if (err) throw err;
-    else if (!client) throw new EmptyCallbackReplyError();
-    else new ScheduleWorker(client, params, false).run();
-  });
-});

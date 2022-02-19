@@ -2,10 +2,8 @@ import { RedisClient } from '../common/redis-client/redis-client';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { Message } from '../app/message/message';
 import { ICallback, IConsumerWorkerParameters } from '../../../types';
-import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { PanicError } from '../common/errors/panic.error';
 import { Worker } from '../common/worker/worker';
-import { setConfiguration } from '../common/configuration/configuration';
 import { each } from '../lib/async';
 
 export class RequeueWorker extends Worker<IConsumerWorkerParameters> {
@@ -67,13 +65,3 @@ export class RequeueWorker extends Worker<IConsumerWorkerParameters> {
 }
 
 export default RequeueWorker;
-
-process.on('message', (payload: string) => {
-  const params: IConsumerWorkerParameters = JSON.parse(payload);
-  setConfiguration(params.config);
-  RedisClient.getNewInstance((err, client) => {
-    if (err) throw err;
-    else if (!client) throw new EmptyCallbackReplyError();
-    else new RequeueWorker(client, params, false).run();
-  });
-});

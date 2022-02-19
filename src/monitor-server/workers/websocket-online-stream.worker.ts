@@ -1,9 +1,6 @@
-import { ICallback, TQueueParams, TWorkerParameters } from '../../../types';
-import { RedisClient } from '../../system/common/redis-client/redis-client';
-import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callback-reply.error';
+import { ICallback, TQueueParams } from '../../../types';
 import { Consumer } from '../../system/app/consumer/consumer';
 import { queueManager } from '../../system/app/queue-manager/queue-manager';
-import { setConfiguration } from '../../system/common/configuration/configuration';
 import { Worker } from '../../system/common/worker/worker';
 import { each, waterfall } from '../../system/lib/async';
 
@@ -44,13 +41,3 @@ export class WebsocketOnlineStreamWorker extends Worker {
 }
 
 export default WebsocketOnlineStreamWorker;
-
-process.on('message', (payload: string) => {
-  const params: TWorkerParameters = JSON.parse(payload);
-  setConfiguration(params.config);
-  RedisClient.getNewInstance((err, client) => {
-    if (err) throw err;
-    else if (!client) throw new EmptyCallbackReplyError();
-    else new WebsocketOnlineStreamWorker(client, params, false).run();
-  });
-});

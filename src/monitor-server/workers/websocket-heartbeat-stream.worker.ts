@@ -1,12 +1,8 @@
 import {
   ICallback,
   TWebsocketHeartbeatOnlineIdsStreamPayload,
-  TWorkerParameters,
 } from '../../../types';
-import { RedisClient } from '../../system/common/redis-client/redis-client';
-import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callback-reply.error';
 import { ConsumerHeartbeat } from '../../system/app/consumer/consumer-heartbeat';
-import { setConfiguration } from '../../system/common/configuration/configuration';
 import { Worker } from '../../system/common/worker/worker';
 import { each } from '../../system/lib/async';
 
@@ -47,15 +43,3 @@ export class WebsocketHeartbeatStreamWorker extends Worker {
 }
 
 export default WebsocketHeartbeatStreamWorker;
-
-process.on('message', (payload: string) => {
-  const params: TWorkerParameters = JSON.parse(payload);
-  setConfiguration(params.config);
-  RedisClient.getNewInstance((err, client) => {
-    if (err) throw err;
-    else if (!client) throw new EmptyCallbackReplyError();
-    else {
-      new WebsocketHeartbeatStreamWorker(client, params, false).run();
-    }
-  });
-});
