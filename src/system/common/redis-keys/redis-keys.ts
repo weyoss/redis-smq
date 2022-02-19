@@ -118,6 +118,8 @@ export const redisKeys = {
     const mainKeys = this.getMainKeys();
     const consumerKeys = {
       keyConsumerQueues: ERedisKey.KEY_CONSUMER_QUEUES,
+      keyRateConsumerDeadLettered: ERedisKey.KEY_RATE_CONSUMER_DEAD_LETTERED,
+      keyRateConsumerAcknowledged: ERedisKey.KEY_RATE_CONSUMER_ACKNOWLEDGED,
     };
     return {
       ...mainKeys,
@@ -130,8 +132,6 @@ export const redisKeys = {
     const consumerKeys = this.getConsumerKeys(instanceId);
     const consumerQueueKeys = {
       keyQueueProcessing: ERedisKey.KEY_QUEUE_PROCESSING,
-      keyRateConsumerDeadLettered: ERedisKey.KEY_RATE_CONSUMER_DEAD_LETTERED,
-      keyRateConsumerAcknowledged: ERedisKey.KEY_RATE_CONSUMER_ACKNOWLEDGED,
     };
     return {
       ...queueKeys,

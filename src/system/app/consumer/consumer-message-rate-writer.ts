@@ -47,12 +47,10 @@ export class ConsumerMessageRateWriter extends MessageRateWriter<IConsumerMessag
     this.acknowledgedTimeSeries = ConsumerAcknowledgedTimeSeries(
       redisClient,
       consumerId,
-      queue,
     );
     this.deadLetteredTimeSeries = ConsumerDeadLetteredTimeSeries(
       redisClient,
       consumerId,
-      queue,
     );
     this.queueAcknowledgedRateTimeSeries = QueueAcknowledgedTimeSeries(
       redisClient,

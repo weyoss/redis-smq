@@ -2,8 +2,8 @@ import { RedisClient } from '../../system/common/redis-client/redis-client';
 import { ConsumerDeadLetteredTimeSeries } from '../../system/app/consumer/consumer-time-series/consumer-dead-lettered-time-series';
 import { ConsumerAcknowledgedTimeSeries } from '../../system/app/consumer/consumer-time-series/consumer-acknowledged-time-series';
 import { promisifyAll } from 'bluebird';
-import { GetConsumerAcknowledgedRequestDTO } from '../controllers/api/namespaces/queue/consumer/time-series/get-consumer-acknowledged/get-consumer-acknowledged.request.DTO';
-import { GetConsumerDeadLetteredRequestDTO } from '../controllers/api/namespaces/queue/consumer/time-series/get-consumer-dead-lettered/get-consumer-dead-lettered.request.DTO';
+import { GetConsumerAcknowledgedRequestDTO } from '../controllers/api/consumers/consumer/time-series/get-consumer-acknowledged/get-consumer-acknowledged.request.DTO';
+import { GetConsumerDeadLetteredRequestDTO } from '../controllers/api/consumers/consumer/time-series/get-consumer-dead-lettered/get-consumer-dead-lettered.request.DTO';
 
 export class ConsumerTimeSeriesService {
   protected redisClient: RedisClient;
@@ -12,23 +12,17 @@ export class ConsumerTimeSeriesService {
   }
 
   async acknowledged(args: GetConsumerAcknowledgedRequestDTO) {
-    const { ns, queueName, from, to, consumerId } = args;
+    const { from, to, consumerId } = args;
     const timeSeries = promisifyAll(
-      ConsumerAcknowledgedTimeSeries(this.redisClient, consumerId, {
-        name: queueName,
-        ns,
-      }),
+      ConsumerAcknowledgedTimeSeries(this.redisClient, consumerId),
     );
     return timeSeries.getRangeAsync(from, to);
   }
 
   async deadLettered(args: GetConsumerDeadLetteredRequestDTO) {
-    const { ns, queueName, from, to, consumerId } = args;
+    const { from, to, consumerId } = args;
     const timeSeries = promisifyAll(
-      ConsumerDeadLetteredTimeSeries(this.redisClient, consumerId, {
-        name: queueName,
-        ns,
-      }),
+      ConsumerDeadLetteredTimeSeries(this.redisClient, consumerId),
     );
     return timeSeries.getRangeAsync(from, to);
   }

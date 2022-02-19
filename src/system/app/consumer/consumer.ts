@@ -31,6 +31,8 @@ import { broker } from '../../common/broker/broker';
 import { TimeSeries } from '../../common/time-series/time-series';
 import { GlobalDeadLetteredTimeSeries } from './consumer-time-series/global-dead-lettered-time-series';
 import { QueueDeadLetteredTimeSeries } from './consumer-time-series/queue-dead-lettered-time-series';
+import { deleteConsumerAcknowledgedTimeSeries } from './consumer-time-series/consumer-acknowledged-time-series';
+import { deleteConsumerDeadLetteredTimeSeries } from './consumer-time-series/consumer-dead-lettered-time-series';
 
 export class Consumer extends Base {
   private heartbeat: ConsumerHeartbeat | null = null;
@@ -394,6 +396,8 @@ export class Consumer extends Base {
     consumerId: string,
     cb: ICallback<void>,
   ): void {
+    deleteConsumerAcknowledgedTimeSeries(multi, consumerId);
+    deleteConsumerDeadLetteredTimeSeries(multi, consumerId);
     waterfall(
       [
         (cb: ICallback<TQueueParams[]>) =>

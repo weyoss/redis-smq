@@ -82,13 +82,11 @@ export class TimeSeriesWorker extends Worker<IConsumerWorkerParameters> {
               ConsumerAcknowledgedTimeSeries(
                 this.redisClient,
                 consumerId,
-                queue,
               ).cleanUp(cb),
             (cb: ICallback<void>) =>
               ConsumerDeadLetteredTimeSeries(
                 this.redisClient,
                 consumerId,
-                queue,
               ).cleanUp(cb),
           ],
           done,
