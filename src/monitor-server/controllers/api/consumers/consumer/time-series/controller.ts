@@ -2,7 +2,7 @@ import {
   ERouteControllerActionMethod,
   ERouteControllerActionPayload,
   IRouteController,
-} from '../../../../../../lib/routing';
+} from '../../../../../lib/routing';
 import { GetConsumerAcknowledgedHandler } from './get-consumer-acknowledged/get-consumer-acknowledged.handler';
 import { GetConsumerAcknowledgedRequestDTO } from './get-consumer-acknowledged/get-consumer-acknowledged.request.DTO';
 import { GetConsumerAcknowledgedResponseDTO } from './get-consumer-acknowledged/get-consumer-acknowledged.response.DTO';
@@ -11,7 +11,7 @@ import { GetConsumerDeadLetteredRequestDTO } from './get-consumer-dead-lettered/
 import { GetConsumerDeadLetteredResponseDTO } from './get-consumer-dead-lettered/get-consumer-dead-lettered.response.DTO';
 
 export const controller: IRouteController = {
-  path: '/consumers/:consumerId',
+  path: '/:consumerId',
   actions: [
     {
       path: '/time-series',

@@ -38,36 +38,34 @@ export class WebsocketRateStreamWorker extends Worker {
     consumerId: string,
   ): void => {
     this.tasks.push((cb: ICallback<void>) =>
-      ConsumerAcknowledgedTimeSeries(
-        this.redisClient,
-        consumerId,
-        queue,
-      ).getRangeFrom(ts, (err, reply) => {
-        if (err) cb(err);
-        else {
-          this.redisClient.publish(
-            `streamConsumerAcknowledged:${consumerId}`,
-            JSON.stringify(reply),
-            () => cb(),
-          );
-        }
-      }),
+      ConsumerAcknowledgedTimeSeries(this.redisClient, consumerId).getRangeFrom(
+        ts,
+        (err, reply) => {
+          if (err) cb(err);
+          else {
+            this.redisClient.publish(
+              `streamConsumerAcknowledged:${consumerId}`,
+              JSON.stringify(reply),
+              () => cb(),
+            );
+          }
+        },
+      ),
     );
     this.tasks.push((cb: ICallback<void>) =>
-      ConsumerDeadLetteredTimeSeries(
-        this.redisClient,
-        consumerId,
-        queue,
-      ).getRangeFrom(ts, (err, reply) => {
-        if (err) cb(err);
-        else {
-          this.redisClient.publish(
-            `streamConsumerDeadLettered:${consumerId}`,
-            JSON.stringify(reply),
-            () => cb(),
-          );
-        }
-      }),
+      ConsumerDeadLetteredTimeSeries(this.redisClient, consumerId).getRangeFrom(
+        ts,
+        (err, reply) => {
+          if (err) cb(err);
+          else {
+            this.redisClient.publish(
+              `streamConsumerDeadLettered:${consumerId}`,
+              JSON.stringify(reply),
+              () => cb(),
+            );
+          }
+        },
+      ),
     );
   };
 

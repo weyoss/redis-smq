@@ -21,9 +21,11 @@ export function RequestValidator(
           ...ctx.query,
         };
       } else if (i === ERouteControllerActionPayload.BODY) {
+        const body: Record<string | number, any> =
+          typeof ctx.request['body'] === 'object' ? ctx.request['body'] : {};
         plain = {
           ...plain,
-          ...ctx.request.body,
+          ...body,
         };
       }
     });

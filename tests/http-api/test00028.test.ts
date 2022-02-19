@@ -1,5 +1,4 @@
 import {
-  defaultQueue,
   getConsumer,
   untilConsumerIdle,
   validateTimeSeriesFrom,
@@ -11,8 +10,6 @@ test('Consumer dead-lettered time series', async () => {
   await consumer.runAsync();
   await untilConsumerIdle(consumer);
   await validateTimeSeriesFrom(
-    `/api/ns/${defaultQueue.ns}/queues/${
-      defaultQueue.name
-    }/consumers/${consumer.getId()}/time-series/dead-lettered`,
+    `/api/consumers/${consumer.getId()}/time-series/dead-lettered`,
   );
 });

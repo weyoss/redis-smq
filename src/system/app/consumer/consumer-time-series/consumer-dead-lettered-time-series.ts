@@ -1,19 +1,22 @@
 import { RedisClient } from '../../../common/redis-client/redis-client';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { SortedSetTimeSeries } from '../../../common/time-series/sorted-set-time-series';
-import { TQueueParams } from '../../../../../types';
+import { TRedisClientMulti } from '../../../../../types';
 
 export const ConsumerDeadLetteredTimeSeries = (
   redisClient: RedisClient,
   consumerId: string,
-  queue: TQueueParams,
 ) => {
-  const { keyRateConsumerDeadLettered } = redisKeys.getQueueConsumerKeys(
-    queue,
-    consumerId,
-  );
+  const { keyRateConsumerDeadLettered } = redisKeys.getConsumerKeys(consumerId);
   return new SortedSetTimeSeries(redisClient, {
     key: keyRateConsumerDeadLettered,
-    expireAfterInSeconds: 30,
   });
+};
+
+export const deleteConsumerDeadLetteredTimeSeries = (
+  multi: TRedisClientMulti,
+  consumerId: string,
+) => {
+  const { keyRateConsumerDeadLettered } = redisKeys.getConsumerKeys(consumerId);
+  multi.del(keyRateConsumerDeadLettered);
 };
