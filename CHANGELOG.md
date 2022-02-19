@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.2.1 (2022-02-19)
+
+* Remove unused code (475fa3d)
+
 ## 6.2.0 (2022-02-19)
 
 * Bump up redis-smq-monitor to v6.5.1 (c543c55)
