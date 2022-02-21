@@ -89,22 +89,22 @@ instance using the [Message API](api/message.md).
   - `message.retryDelay` *(Integer): Optional.* In milliseconds. Message retry delay. See [setRetryDelay()](/docs/api/message.md#messageprototypesetretrydelay).
 
 - `storeMessages` *(boolean | object): Optional.* Whether to store acknowledged and/or dead-lettered messages. By default, acknowledged and dead-lettered messages are not stored. Keep in mind that storing messages affects performance.
-  - `storeMessages` *(boolean): Optional.*
+  - `storeMessages` *(boolean)*
     - `storeMessages = false` - Do not store acknowledged and dead-lettered messages. 
     - `storeMessages = true` - Store acknowledged and dead-lettered messages.
-  - `storeMessages` *(object): Optional.*
+  - `storeMessages` *(object)*
     - `storeMessages.acknowledged` *(boolean | object): Optional.*
-      - `storeMessages.acknowledged` *(boolean): Optional.*
+      - `storeMessages.acknowledged` *(boolean)*
         - `storeMessages.acknowledged = true`: Store acknowledged messages.
         - `storeMessages.acknowledged = false`: Do not store acknowledged messages.
-      - `storeMessages.acknowledged` *(object): Optional.*
+      - `storeMessages.acknowledged` *(object)*
         - `storeMessages.acknowledged.queueSize` *(number): Optional.* Store a maximum of N acknowledged messages. Older messages get deleted when the maximum size is reached.
         - `storeMessages.acknowledged.expire` *(number): Optional.* Store acknowledged messages for N milliseconds. Each time a new message is saved the expiration is updated.
     - `storeMessages.deadLettered` *(boolean | object): Optional.*
-      - `storeMessages.deadLettered` *(boolean): Optional.*
+      - `storeMessages.deadLettered` *(boolean)*
         - `storeMessages.deadLettered = true`: Store dead-lettered messages.
         - `storeMessages.deadLettered = false`: Do not store dead-lettered messages.
-      - `storeMessages.deadLettered` *(object): Optional.*
+      - `storeMessages.deadLettered` *(object)*
         - `storeMessages.deadLettered.queueSize` *(number): Optional.* Store a maximum of N dead-lettered messages. Older messages get deleted when the maximum size is reached.
         - `storeMessages.deadLettered.expire` *(number): Optional.* Store dead-lettered messages for N milliseconds. Each time a new message is saved the expiration is updated.
 

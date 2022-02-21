@@ -87,8 +87,8 @@ setQueue(queue);
 **Parameters**
 
 - `queue` *(string|object): Required.*
-   - `queue` *(string): Required.* Queue name. Default namespace will be used.
-   - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+   - `queue` *(string)*. Queue name. Default namespace will be used.
+   - `queue` *(object)*. You can also provide a queue name and a namespace.
       - `queue.name` *(string): Required.* Queue name.
       - `queue.ns` *(string): Required.* Queue namespace.
 
