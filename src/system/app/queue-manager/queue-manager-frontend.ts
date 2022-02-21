@@ -21,20 +21,31 @@ export class QueueManagerFrontend {
     this.logger = getNamespacedLogger('QueueManager');
   }
 
-  clearQueueRateLimit(queue: TQueueParams, cb: ICallback<void>): void {
-    queueManager.clearQueueRateLimit(this.redisClient, queue, cb);
+  clearQueueRateLimit(queue: string | TQueueParams, cb: ICallback<void>): void {
+    const queueParams = queueManager.getQueueParams(queue);
+    queueManager.clearQueueRateLimit(this.redisClient, queueParams, cb);
   }
 
   setQueueRateLimit(
-    queue: TQueueParams,
+    queue: string | TQueueParams,
     rateLimit: TQueueRateLimit,
     cb: ICallback<void>,
   ): void {
-    queueManager.setQueueRateLimit(this.redisClient, queue, rateLimit, cb);
+    const queueParams = queueManager.getQueueParams(queue);
+    queueManager.setQueueRateLimit(
+      this.redisClient,
+      queueParams,
+      rateLimit,
+      cb,
+    );
   }
 
-  getQueueRateLimit(queue: TQueueParams, cb: ICallback<TQueueRateLimit>): void {
-    queueManager.getQueueRateLimit(this.redisClient, queue, cb);
+  getQueueRateLimit(
+    queue: string | TQueueParams,
+    cb: ICallback<TQueueRateLimit>,
+  ): void {
+    const queueParams = queueManager.getQueueParams(queue);
+    queueManager.getQueueRateLimit(this.redisClient, queueParams, cb);
   }
 
   deleteQueue(queue: string | TQueueParams, cb: ICallback<void>): void {
