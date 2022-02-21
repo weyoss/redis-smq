@@ -93,8 +93,8 @@ getQueueMetrics(queue, cb);
 
 **Parameters**
 - `queue` *(string|object): Required.*  
-  - `queue` *(string): Required.* Queue name. Default namespace will be used.
-  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+  - `queue` *(string)*. Queue name. Default namespace will be used.
+  - `queue` *(object)*. You can also provide a queue name and a namespace.
     - `queue.name` *(string): Required.* Queue name.
     - `queue.ns` *(string): Required.* Queue namespace.
 - `cb(err, queueMetrics)` *(Function): Required.* Callback function.
@@ -113,8 +113,8 @@ deleteQueue(queue, cb);
 
 **Parameters**
 - `queue` *(string|object): Required.*  
-  - `queue` *(string): Required.* Queue name. Default namespace will be used.
-  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+  - `queue` *(string)*. Queue name. Default namespace will be used.
+  - `queue` *(object)*. You can also provide a queue name and a namespace.
     - `queue.name` *(string): Required.* Queue name.
     - `queue.ns` *(string): Required.* Queue namespace.
 - `cb(err)` *(Function): Required.* Callback function.
@@ -144,8 +144,8 @@ setQueueRateLimit(queue, rateLimit, cb);
 
 **Parameters**
 - `queue` *(string|object): Required.*  
-  - `queue` *(string): Required.* Queue name. Default namespace will be used.
-  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+  - `queue` *(string)*. Queue name. Default namespace will be used.
+  - `queue` *(object)*. You can also provide a queue name and a namespace.
     - `queue.name` *(string): Required.* Queue name.
     - `queue.ns` *(string): Required.* Queue namespace.
 - `rateLimit` *(object): Required.*
@@ -162,8 +162,8 @@ clearQueueRateLimit(queue, cb);
 
 **Parameters**
 - `queue` *(string|object): Required.*  
-  - `queue` *(string): Required.* Queue name. Default namespace will be used.
-  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+  - `queue` *(string)* Queue name. Default namespace will be used.
+  - `queue` *(object)* You can also provide a queue name and a namespace.
     - `queue.name` *(string): Required.* Queue name.
     - `queue.ns` *(string): Required.* Queue namespace.
 - `cb(err)` *(Function): Required.* Callback function.
@@ -177,15 +177,17 @@ getQueueRateLimit(queue, cb);
 
 **Parameters**
 - `queue` *(string|object): Required.*  
-  - `queue` *(string): Required.* Queue name. Default namespace will be used.
-  - `queue` *(object): Required.* You can also provide a queue name and a namespace.
+  - `queue` *(string)*. Queue name. Default namespace will be used.
+  - `queue` *(object)*. You can also provide a queue name and a namespace.
     - `queue.name` *(string): Required.* Queue name.
     - `queue.ns` *(string): Required.* Queue namespace.
 - `cb(err, rateLimit)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
-  - `rateLimit` *(object): Required.*
-    - `rateLimit.limit` *(number): Required.* The maximum number of messages within an `interval`.
-    - `rateLimit.interval` *(number): Required.* The timespan for `limit` in milliseconds.
+  - `rateLimit` *(object|null): Required.*
+    - `rateLimit` *(null)* Rate limit is not set.
+    - `rateLimit` *(object)* Existing rate limit.
+      - `rateLimit.limit` *(number): Required.* The maximum number of messages within an `interval`.
+      - `rateLimit.interval` *(number): Required.* The timespan for `limit` in milliseconds.
 
 ### QueueManager.prototype.quit()
 
