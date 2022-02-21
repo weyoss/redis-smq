@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 6.2.2 (2022-02-21)
+
+* Fix a queue rate limiting bug allowing to save invalid Redis keys (1dc91aa)
+* Bump up redis-smq-monitor to v6.5.2 (e192db0)
+* Update docs (5a6469e)
+
 ## 6.2.1 (2022-02-19)
 
 * Remove unused code (475fa3d)
