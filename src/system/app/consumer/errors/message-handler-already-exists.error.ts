@@ -6,7 +6,7 @@ export class MessageHandlerAlreadyExistsError extends ConsumerError {
     super(
       `A message handler for ${
         usingPriorityQueuing ? 'priority ' : ''
-      } queue [${JSON.stringify(queue)}] already exists`,
+      }queue [${JSON.stringify(queue)}] already exists`,
     );
   }
 }
