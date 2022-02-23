@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 6.2.3 (2022-02-23)
+
+* Bump up redis-smq-monitor to v6.5.3 (4e845d0)
+* Remove gracefully a message handler (a4402b7)
+* Add MessageHandlerAlreadyExistsError custom error (65882ed)
+
 ## 6.2.2 (2022-02-21)
 
 * Fix a queue rate limiting bug allowing to save invalid Redis keys (1dc91aa)
