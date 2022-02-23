@@ -22,7 +22,6 @@ import { ConsumerMessageRateWriter } from './consumer-message-rate-writer';
 import { Base } from '../../common/base';
 import { ConsumerMessageHandler } from './consumer-message-handler';
 import { consumerQueues } from './consumer-queues';
-import { GenericError } from '../../common/errors/generic.error';
 import { queueManager } from '../queue-manager/queue-manager';
 import { WorkerPool } from '../../common/worker/worker-runner/worker-pool';
 import { each, waterfall } from '../../lib/async';
@@ -325,15 +324,8 @@ export class Consumer extends Base {
   ): void {
     const queueParams = queueManager.getQueueParams(queue);
     const handler = this.getMessageHandler(queueParams, usePriorityQueuing);
-    if (!handler) {
-      cb(
-        new GenericError(
-          `Message handler for ${
-            usePriorityQueuing ? 'priority ' : ''
-          }queue [${JSON.stringify(queueParams)}] does not exist`,
-        ),
-      );
-    } else {
+    if (!handler) cb();
+    else {
       this.removeMessageHandler(queueParams, usePriorityQueuing);
       const handlerInstance = this.getMessageHandlerInstance(
         queueParams,
