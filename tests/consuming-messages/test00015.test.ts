@@ -23,10 +23,10 @@ test('Consume messages from different queues using a single consumer instance: c
   expect(async () => {
     await consumer.consumeAsync('another_queue', false, (msg, cb) => cb());
   }).rejects.toThrow(
-    `Queue [${JSON.stringify({
+    `A message handler for queue [${JSON.stringify({
       name: 'another_queue',
       ns: 'testing',
-    })}] has already a message handler`,
+    })}] already exists`,
   );
 
   expect(consumer.getQueues()).toEqual([
@@ -68,12 +68,15 @@ test('Consume messages from different queues using a single consumer instance: c
   expect(async () => {
     await consumer.consumeAsync('another_queue', false, (msg, cb) => cb());
   }).rejects.toThrow(
-    `Queue [${JSON.stringify({
+    `A message handler for queue [${JSON.stringify({
       name: 'another_queue',
       ns: 'testing',
-    })}] has already a message handler`,
+    })}] already exists`,
   );
 
+  await consumer.cancelAsync('another_queue', false);
+
+  // does not throw an error
   await consumer.cancelAsync('another_queue', false);
 
   expect(consumer.getQueues()).toEqual([
