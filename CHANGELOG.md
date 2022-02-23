@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.2.4 (2022-02-23)
+
+* Fix consuming-messages/test00015 error (c5c365a)
+
 ## 6.2.3 (2022-02-23)
 
 * Bump up redis-smq-monitor to v6.5.3 (4e845d0)
