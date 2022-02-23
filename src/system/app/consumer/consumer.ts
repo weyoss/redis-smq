@@ -33,6 +33,7 @@ import { GlobalDeadLetteredTimeSeries } from './consumer-time-series/global-dead
 import { QueueDeadLetteredTimeSeries } from './consumer-time-series/queue-dead-lettered-time-series';
 import { deleteConsumerAcknowledgedTimeSeries } from './consumer-time-series/consumer-acknowledged-time-series';
 import { deleteConsumerDeadLetteredTimeSeries } from './consumer-time-series/consumer-dead-lettered-time-series';
+import { MessageHandlerAlreadyExistsError } from './errors/message-handler-already-exists.error';
 
 export class Consumer extends Base {
   private heartbeat: ConsumerHeartbeat | null = null;
@@ -306,13 +307,7 @@ export class Consumer extends Base {
     };
     const r = this.addMessageHandler(handlerParams, usePriorityQueuing);
     if (!r)
-      cb(
-        new GenericError(
-          `${usePriorityQueuing ? 'Priority ' : ''}Queue [${JSON.stringify(
-            queueParams,
-          )}] has already a message handler`,
-        ),
-      );
+      cb(new MessageHandlerAlreadyExistsError(queueParams, usePriorityQueuing));
     else {
       if (this.isRunning())
         this.runMessageHandler(handlerParams, (err) => {
