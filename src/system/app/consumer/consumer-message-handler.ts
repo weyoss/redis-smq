@@ -12,7 +12,7 @@ import { v4 as uuid } from 'uuid';
 import { RedisClient } from '../../common/redis-client/redis-client';
 import { Message } from '../message/message';
 import { events } from '../../common/events';
-import { ConsumerError } from './consumer.error';
+import { ConsumerError } from './errors/consumer.error';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { EventEmitter } from 'events';
 import { PowerManager } from '../../common/power-manager/power-manager';
