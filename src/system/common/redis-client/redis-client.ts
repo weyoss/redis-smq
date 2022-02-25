@@ -563,7 +563,8 @@ export class RedisClient extends EventEmitter {
 
   quit(cb: ICallback<void> = () => void 0): void {
     if (!this.connectionClosed) {
-      this.client.quit(() => cb());
+      this.client.once('end', cb);
+      this.client.quit();
     } else cb();
   }
 

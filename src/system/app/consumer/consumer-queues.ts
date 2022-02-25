@@ -24,10 +24,21 @@ const IPAddresses = (() => {
 })();
 
 export const consumerQueues = {
+  removeConsumer(
+    multi: TRedisClientMulti,
+    queue: TQueueParams,
+    consumerId: string,
+  ): void {
+    const { keyQueueConsumers, keyConsumerQueues } =
+      redisKeys.getQueueConsumerKeys(queue, consumerId);
+    multi.hdel(keyQueueConsumers, consumerId);
+    multi.srem(keyConsumerQueues, JSON.stringify(queue));
+  },
+
   addConsumer(
     multi: TRedisClientMulti,
     queue: TQueueParams,
-    instanceId: string,
+    consumerId: string,
   ): void {
     const data: THeartbeatRegistryPayload = {
       ipAddress: IPAddresses,
@@ -36,34 +47,9 @@ export const consumerQueues = {
       createdAt: Date.now(),
     };
     const { keyQueueConsumers, keyConsumerQueues } =
-      redisKeys.getQueueConsumerKeys(queue, instanceId);
+      redisKeys.getQueueConsumerKeys(queue, consumerId);
     multi.sadd(keyConsumerQueues, JSON.stringify(queue));
-    multi.hset(keyQueueConsumers, instanceId, JSON.stringify(data));
-  },
-
-  removeConsumer(
-    multi: TRedisClientMulti,
-    consumerId: string,
-    queues: TQueueParams[],
-  ): void {
-    each(
-      queues,
-      (queue, _, done) => {
-        const { keyQueueConsumers } = redisKeys.getQueueKeys(queue);
-        multi.hdel(keyQueueConsumers, consumerId);
-        done();
-      },
-      () => void 0,
-    );
-  },
-
-  exists(
-    client: RedisClient,
-    keyRegistry: string,
-    instanceId: string,
-    cb: ICallback<boolean>,
-  ): void {
-    client.hexists(keyRegistry, instanceId, cb);
+    multi.hset(keyQueueConsumers, consumerId, JSON.stringify(data));
   },
 
   getQueueConsumers(

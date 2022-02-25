@@ -7,25 +7,27 @@ import {
   TQueueConsumerRedisKeys,
   TQueueParams,
   TQueueRateLimit,
-} from '../../../../types';
+  TRedisClientMulti,
+} from '../../../../../types';
 import { v4 as uuid } from 'uuid';
-import { RedisClient } from '../../common/redis-client/redis-client';
-import { Message } from '../message/message';
-import { events } from '../../common/events';
-import { ConsumerError } from './errors/consumer.error';
-import { redisKeys } from '../../common/redis-keys/redis-keys';
+import { RedisClient } from '../../../common/redis-client/redis-client';
+import { Message } from '../../message/message';
+import { events } from '../../../common/events';
+import { ConsumerError } from '../errors/consumer.error';
+import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { EventEmitter } from 'events';
-import { PowerManager } from '../../common/power-manager/power-manager';
-import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
-import { ConsumerMessageRate } from './consumer-message-rate';
-import { consumerQueues } from './consumer-queues';
-import { broker } from '../../common/broker/broker';
-import { queueManager } from '../queue-manager/queue-manager';
-import { Ticker } from '../../common/ticker/ticker';
-import { getNamespacedLogger } from '../../common/logger';
-import { waterfall } from '../../lib/async';
+import { PowerManager } from '../../../common/power-manager/power-manager';
+import { EmptyCallbackReplyError } from '../../../common/errors/empty-callback-reply.error';
+import { ConsumerMessageRate } from '../consumer-message-rate';
+import { consumerQueues } from '../consumer-queues';
+import { broker } from '../../../common/broker/broker';
+import { queueManager } from '../../queue-manager/queue-manager';
+import { Ticker } from '../../../common/ticker/ticker';
+import { getNamespacedLogger } from '../../../common/logger';
+import { waterfall } from '../../../lib/async';
+import { processingQueue } from './processing-queue';
 
-export class ConsumerMessageHandler extends EventEmitter {
+export class MessageHandler extends EventEmitter {
   protected id: string;
   protected consumerId: string;
   protected queue: TQueueParams;
@@ -295,7 +297,11 @@ export class ConsumerMessageHandler extends EventEmitter {
           const multi = this.redisClient.multi();
           queueManager.setUpMessageQueue(multi, this.queue);
           consumerQueues.addConsumer(multi, this.queue, this.consumerId);
-          queueManager.setUpProcessingQueue(multi, this);
+          processingQueue.setUpProcessingQueue(
+            multi,
+            this.queue,
+            this.consumerId,
+          );
           this.redisClient.execMulti(multi, (err) => {
             if (err) cb(err);
             else {
@@ -309,7 +315,9 @@ export class ConsumerMessageHandler extends EventEmitter {
     );
   };
 
-  shutdown = (cb: ICallback<void>): void => {
+  // The message handler could be blocking its redis connection when waiting for new messages using brpoplpush
+  // Therefore, once the handler is up and running, no other redis commands can be executed
+  shutdown = (redisClient: RedisClient, cb: ICallback<void>): void => {
     const goDown = () => {
       this.powerManager.goingDown();
       waterfall(
@@ -321,6 +329,15 @@ export class ConsumerMessageHandler extends EventEmitter {
           (cb: ICallback<void>) => {
             if (this.messageRate) this.messageRate.quit(cb);
             else cb();
+          },
+          (cb: ICallback<void>) => {
+            MessageHandler.cleanUp(
+              redisClient,
+              this.consumerId,
+              this.queue,
+              undefined,
+              cb,
+            );
           },
           (cb: ICallback<void>) => {
             this.redisClient.halt(cb);
@@ -358,5 +375,37 @@ export class ConsumerMessageHandler extends EventEmitter {
 
   getId(): string {
     return this.id;
+  }
+
+  static cleanUp(
+    redisClient: RedisClient,
+    consumerId: string,
+    queue: TQueueParams,
+    pendingMulti: TRedisClientMulti | undefined,
+    cb: ICallback<void>,
+  ): void {
+    const multi = pendingMulti ?? redisClient.multi();
+    waterfall(
+      [
+        (cb: ICallback<void>) => {
+          processingQueue.cleanUpProcessingQueue(
+            redisClient,
+            consumerId,
+            queue,
+            multi,
+            cb,
+          );
+        },
+        (cb: ICallback<void>) => {
+          consumerQueues.removeConsumer(multi, queue, consumerId);
+          cb();
+        },
+      ],
+      (err) => {
+        if (err) cb(err);
+        else if (pendingMulti) cb();
+        else redisClient.execMulti(multi, (err) => cb(err));
+      },
+    );
   }
 }

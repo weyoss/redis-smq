@@ -9,7 +9,6 @@ import {
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
 import { GenericError } from '../../common/errors/generic.error';
-import { ConsumerMessageHandler } from '../consumer/consumer-message-handler';
 import { validateMessageQueueDeletion } from './common';
 import { eachOf, waterfall } from '../../lib/async';
 import { NamespaceNotFoundError } from './errors/namespace-not-found.error';
@@ -189,18 +188,6 @@ export const queueManager = {
       else if (!multi) cb(new EmptyCallbackReplyError());
       else redisClient.execMulti(multi, (err) => cb(err));
     });
-  },
-
-  deleteProcessingQueue(
-    multi: TRedisClientMulti,
-    queue: TQueueParams,
-    processingQueue: string,
-  ): void {
-    const { keyProcessingQueues, keyQueueProcessingQueues } =
-      redisKeys.getQueueKeys(queue);
-    multi.srem(keyProcessingQueues, processingQueue);
-    multi.hdel(keyQueueProcessingQueues, processingQueue);
-    multi.del(processingQueue);
   },
 
   clearQueueRateLimit(
@@ -397,23 +384,6 @@ export const queueManager = {
         cb(null, messageQueues);
       }
     });
-  },
-
-  setUpProcessingQueue(
-    multi: TRedisClientMulti,
-    consumerHandler: ConsumerMessageHandler,
-  ): void {
-    const {
-      keyQueueProcessing,
-      keyProcessingQueues,
-      keyQueueProcessingQueues,
-    } = consumerHandler.getRedisKeys();
-    multi.hset(
-      keyQueueProcessingQueues,
-      keyQueueProcessing,
-      consumerHandler.getConsumerId(),
-    );
-    multi.sadd(keyProcessingQueues, keyQueueProcessing);
   },
 
   setUpMessageQueue(multi: TRedisClientMulti, queue: TQueueParams): void {

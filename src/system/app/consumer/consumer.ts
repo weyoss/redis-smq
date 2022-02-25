@@ -8,7 +8,6 @@ import {
   TQueueParams,
   TUnaryFunction,
   TRedisClientMulti,
-  EMessageUnacknowledgedCause,
 } from '../../../../types';
 import { ConsumerMessageRate } from './consumer-message-rate';
 import { events } from '../../common/events';
@@ -20,16 +19,11 @@ import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { ConsumerHeartbeat } from './consumer-heartbeat';
 import { ConsumerMessageRateWriter } from './consumer-message-rate-writer';
 import { Base } from '../../common/base';
-import { ConsumerMessageHandler } from './consumer-message-handler';
+import { MessageHandler } from './consumer-message-handler/message-handler';
 import { consumerQueues } from './consumer-queues';
 import { queueManager } from '../queue-manager/queue-manager';
 import { WorkerPool } from '../../common/worker/worker-runner/worker-pool';
 import { each, waterfall } from '../../lib/async';
-import { Message } from '../message/message';
-import { broker } from '../../common/broker/broker';
-import { TimeSeries } from '../../common/time-series/time-series';
-import { GlobalDeadLetteredTimeSeries } from './consumer-time-series/global-dead-lettered-time-series';
-import { QueueDeadLetteredTimeSeries } from './consumer-time-series/queue-dead-lettered-time-series';
 import { deleteConsumerAcknowledgedTimeSeries } from './consumer-time-series/consumer-acknowledged-time-series';
 import { deleteConsumerDeadLetteredTimeSeries } from './consumer-time-series/consumer-dead-lettered-time-series';
 import { MessageHandlerAlreadyExistsError } from './errors/message-handler-already-exists.error';
@@ -37,7 +31,7 @@ import { MessageHandlerAlreadyExistsError } from './errors/message-handler-alrea
 export class Consumer extends Base {
   private heartbeat: ConsumerHeartbeat | null = null;
   private workerRunner: WorkerRunner<IConsumerWorkerParameters> | null = null;
-  private messageHandlerInstances: ConsumerMessageHandler[] = [];
+  private messageHandlerInstances: MessageHandler[] = [];
   private messageHandlers: TConsumerMessageHandlerParams[] = [];
   private readonly redisKeys: TConsumerRedisKeys;
 
@@ -47,7 +41,7 @@ export class Consumer extends Base {
   }
 
   protected registerMessageHandlerEvents = (
-    messageHandler: ConsumerMessageHandler,
+    messageHandler: MessageHandler,
   ): void => {
     messageHandler.on(events.ERROR, (...args: unknown[]) =>
       this.emit(events.ERROR, ...args),
@@ -138,7 +132,7 @@ export class Consumer extends Base {
           const messageRate = this.getConfig().monitor.enabled
             ? this.createMessageRateInstance(queue, sharedRedisClient)
             : null;
-          const handler = new ConsumerMessageHandler(
+          const handler = new MessageHandler(
             this.id,
             queue,
             messageHandler,
@@ -170,19 +164,21 @@ export class Consumer extends Base {
   };
 
   protected tearDownMessageHandlerInstances = (cb: ICallback<void>): void => {
-    each(
-      this.messageHandlerInstances,
-      (handler, queue, done) => {
-        handler.shutdown(done);
-      },
-      (err) => {
-        if (err) cb(err);
-        else {
-          this.messageHandlerInstances = [];
-          cb();
-        }
-      },
-    );
+    this.getSharedRedisClient((client: RedisClient) => {
+      each(
+        this.messageHandlerInstances,
+        (handler, queue, done) => {
+          handler.shutdown(client, done);
+        },
+        (err) => {
+          if (err) cb(err);
+          else {
+            this.messageHandlerInstances = [];
+            cb();
+          }
+        },
+      );
+    });
   };
 
   protected createMessageRateInstance = (
@@ -246,7 +242,7 @@ export class Consumer extends Base {
   protected getMessageHandlerInstance = (
     queue: TQueueParams,
     usePriorityQueuing: boolean,
-  ): ConsumerMessageHandler | undefined => {
+  ): MessageHandler | undefined => {
     return this.messageHandlerInstances.find((i) => {
       const q = i.getQueue();
       const p = i.isUsingPriorityQueuing();
@@ -292,6 +288,7 @@ export class Consumer extends Base {
     );
   };
 
+  // todo one queue -> one message handler
   consume(
     queue: string | TQueueParams,
     usePriorityQueuing: boolean,
@@ -332,10 +329,12 @@ export class Consumer extends Base {
         usePriorityQueuing,
       );
       if (handlerInstance) {
-        handlerInstance.shutdown(() => {
-          // ignoring errors
-          this.removeMessageHandlerInstance(queueParams, usePriorityQueuing);
-          cb();
+        this.getSharedRedisClient((client) => {
+          handlerInstance.shutdown(client, () => {
+            // ignoring errors
+            this.removeMessageHandlerInstance(queueParams, usePriorityQueuing);
+            cb();
+          });
         });
       } else cb();
     }
@@ -389,102 +388,20 @@ export class Consumer extends Base {
       [
         (cb: ICallback<TQueueParams[]>) =>
           consumerQueues.getConsumerQueues(redisClient, consumerId, cb),
-        (queues: TQueueParams[], cb: ICallback<TQueueParams[]>) => {
+        (queues: TQueueParams[], cb: ICallback<void>) => {
           each(
             queues,
             (queue, _, done) => {
-              Consumer.handleConsumerProcessingQueue(
-                multi,
+              MessageHandler.cleanUp(
                 redisClient,
                 consumerId,
                 queue,
+                multi,
                 done,
               );
             },
-            (err) => {
-              if (err) cb(err);
-              else cb(null, queues);
-            },
+            cb,
           );
-        },
-        (queues: TQueueParams[], cb: ICallback<void>) => {
-          if (queues.length)
-            consumerQueues.removeConsumer(multi, consumerId, queues);
-          cb();
-        },
-      ],
-      cb,
-    );
-  }
-
-  protected static fetchProcessingQueueMessage(
-    redisClient: RedisClient,
-    consumerId: string,
-    keyQueueProcessing: string,
-    cb: ICallback<Message>,
-  ): void {
-    redisClient.lrange(
-      keyQueueProcessing,
-      0,
-      0,
-      (err?: Error | null, range?: string[] | null) => {
-        if (err) cb(err);
-        else if (range && range.length) {
-          const msg = Message.createFromMessage(range[0]);
-          cb(null, msg);
-        } else cb();
-      },
-    );
-  }
-
-  protected static handleConsumerProcessingQueue(
-    multi: TRedisClientMulti,
-    redisClient: RedisClient,
-    consumerId: string,
-    queue: TQueueParams,
-    cb: ICallback<void>,
-  ): void {
-    const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
-      queue,
-      consumerId,
-    );
-    waterfall(
-      [
-        (cb: ICallback<void>) => {
-          Consumer.fetchProcessingQueueMessage(
-            redisClient,
-            consumerId,
-            keyQueueProcessing,
-            (err, msg) => {
-              if (err) cb(err);
-              else if (msg) {
-                const deadLettered = broker.retry(
-                  multi,
-                  keyQueueProcessing,
-                  msg,
-                  EMessageUnacknowledgedCause.RECOVERY,
-                );
-                if (typeof deadLettered === 'string') {
-                  const timestamp = TimeSeries.getCurrentTimestamp();
-                  GlobalDeadLetteredTimeSeries(redisClient).add(
-                    timestamp,
-                    1,
-                    multi,
-                  );
-                  QueueDeadLetteredTimeSeries(redisClient, queue).add(
-                    timestamp,
-                    1,
-                    multi,
-                  );
-                }
-                cb();
-              } else cb();
-            },
-          );
-        },
-        (cb: ICallback<void>) => {
-          queueManager.deleteProcessingQueue(multi, queue, keyQueueProcessing);
-          cb();
         },
       ],
       cb,
