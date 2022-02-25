@@ -9,7 +9,7 @@ type TQueueMetrics = {
   acks: number;
 };
 
-test('A message is recovered from a consumer crash and re-queued to its origin queue when having many queues', async () => {
+test('Given many queues, a message is recovered from a consumer crash and re-queued to its origin queue', async () => {
   const queueAMetrics: TQueueMetrics = {
     receivedMessages: [],
     acks: 0,

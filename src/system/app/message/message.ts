@@ -162,7 +162,7 @@ export class Message {
     // So just make sure that we have an integer value
     const value = Number(repeat);
     if (isNaN(value) || value < 0) {
-      throw new ArgumentError('Expected a positive integer value');
+      throw new ArgumentError('Expected a positive integer value >= 0');
     }
     this.scheduledRepeat = value;
     return this;
@@ -177,7 +177,7 @@ export class Message {
     const value = Number(ttl);
     if (isNaN(value) || value < 0) {
       throw new ArgumentError(
-        'Expected a positive integer value in milliseconds',
+        'Expected a positive integer value in milliseconds >= 0',
       );
     }
     this.ttl = value;
@@ -193,7 +193,7 @@ export class Message {
     const value = Number(timeout);
     if (isNaN(value) || value < 0) {
       throw new ArgumentError(
-        'Expected a positive integer value in milliseconds',
+        'Expected a positive integer value in milliseconds >= 0',
       );
     }
     this.consumeTimeout = value;
@@ -205,7 +205,9 @@ export class Message {
     // So just make sure that we have an integer value
     const value = Number(threshold);
     if (isNaN(value) || value < 0) {
-      throw new ArgumentError('Retry threshold should be a number >= 0');
+      throw new ArgumentError(
+        'Retry threshold should be a positive integer >= 0',
+      );
     }
     this.retryThreshold = value;
     return this;
@@ -219,7 +221,9 @@ export class Message {
     // So just make sure that we have an integer value
     const value = Number(delay);
     if (isNaN(value) || value < 0) {
-      throw new ArgumentError('Retry delay should be a number >= 0 in millis');
+      throw new ArgumentError(
+        'Expected a positive integer in milliseconds >= 0',
+      );
     }
     this.retryDelay = value;
     return this;
