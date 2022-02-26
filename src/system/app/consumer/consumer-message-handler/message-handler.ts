@@ -83,10 +83,7 @@ export class MessageHandler extends EventEmitter {
         this.emit(events.IDLE, this.queue);
       });
     }
-
-    // A ticker is needed for pooling priority queues
-    // Initialize a dummy ticker. nextTickFn will be used instead of nextTick
-    this.ticker = new Ticker(() => void 0, 1000);
+    this.ticker = new Ticker();
   }
 
   protected registerEventsHandlers(): void {

@@ -16,7 +16,7 @@ export class Ticker extends EventEmitter {
   protected shutdownTimeout: NodeJS.Timeout | null = null;
   protected aborted = false;
 
-  constructor(onTickFn: TFunction, time: number) {
+  constructor(onTickFn: TFunction = () => void 0, time = 1000) {
     super();
     this.onTickFn = onTickFn;
     this.time = time;

@@ -64,9 +64,7 @@ export class ConsumerHeartbeat extends EventEmitter {
     this.keyHeartbeats = keyHeartbeats;
     this.keyHeartbeatTimestamps =
       redisKeys.getMainKeys().keyHeartbeatInstanceIds;
-    this.ticker = new Ticker(() => {
-      this.onTick();
-    }, 1000);
+    this.ticker = new Ticker(this.onTick);
     this.ticker.nextTick();
   }
 
@@ -85,7 +83,7 @@ export class ConsumerHeartbeat extends EventEmitter {
     };
   }
 
-  protected onTick(): void {
+  protected onTick = (): void => {
     const timestamp = Date.now();
     const heartbeatPayload = this.getPayload();
     const heartbeatPayloadStr = JSON.stringify(heartbeatPayload);
@@ -104,7 +102,7 @@ export class ConsumerHeartbeat extends EventEmitter {
         this.ticker.nextTick();
       }
     });
-  }
+  };
 
   quit(cb: ICallback<void>): void {
     waterfall(

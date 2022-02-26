@@ -46,7 +46,7 @@ export class WorkerRunner<
     this.workerParameters = workerParameters;
     this.logger = getNamespacedLogger(this.constructor.name);
     this.lockManager = new LockManager(redisClient, keyLock, 10000, false);
-    this.ticker = new Ticker(this.onTick, 1000);
+    this.ticker = new Ticker(this.onTick);
     this.workerPool = workerPool;
   }
 

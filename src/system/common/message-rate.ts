@@ -14,18 +14,16 @@ export abstract class MessageRate<
 
   constructor(messageRateWriter: MessageRateWriter<MessageRateFields>) {
     super();
-    this.readerTicker = new Ticker(() => {
-      this.onTick();
-    }, 1000);
+    this.readerTicker = new Ticker(this.onTick);
     this.readerTicker.runTimer();
     this.messageRateWriter = messageRateWriter;
   }
 
-  protected onTick(): void {
+  protected onTick = (): void => {
     const ts = TimeSeries.getCurrentTimestamp();
     const rates = this.getRateFields();
     this.messageRateWriter.onRateTick(ts, rates);
-  }
+  };
 
   quit(cb: ICallback<void>): void {
     waterfall(
