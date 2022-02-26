@@ -9,21 +9,19 @@ export abstract class MessageRateWriter<
   protected rateStack: [number, TMessageRateFields][] = [];
 
   constructor() {
-    this.writerTicker = new Ticker(() => void 0, 1000);
-    this.writerTicker.nextTickFn(() => {
-      this.updateTimeSeries();
-    });
+    this.writerTicker = new Ticker(this.updateTimeSeries);
+    this.writerTicker.nextTick();
   }
 
-  protected updateTimeSeries(): void {
+  protected updateTimeSeries = (): void => {
     const item = this.rateStack.shift();
     if (item) {
       const [ts, rates] = item;
       this.onUpdate(ts, rates, () => {
-        this.writerTicker.nextTickFn(() => this.updateTimeSeries());
+        this.writerTicker.nextTick();
       });
-    } else this.writerTicker.nextTickFn(() => this.updateTimeSeries());
-  }
+    } else this.writerTicker.nextTick();
+  };
 
   abstract onUpdate(
     ts: number,
