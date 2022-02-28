@@ -213,22 +213,17 @@ export class Consumer extends Base {
 
   protected getMessageHandler(
     queue: TQueueParams,
-    usePriorityQueuing: boolean,
   ): TConsumerMessageHandlerParams | undefined {
     return this.messageHandlers.find(
-      (i) =>
-        i.queue.name === queue.name &&
-        i.queue.ns === queue.ns &&
-        i.usePriorityQueuing === usePriorityQueuing,
+      (i) => i.queue.name === queue.name && i.queue.ns === queue.ns,
     );
   }
 
   protected addMessageHandler(
     handlerParams: TConsumerMessageHandlerParams,
-    usePriorityQueuing: boolean,
   ): boolean {
     const { queue } = handlerParams;
-    const handler = this.getMessageHandler(queue, usePriorityQueuing);
+    const handler = this.getMessageHandler(queue);
     if (handler) return false;
     this.messageHandlers.push(handlerParams);
     this.logger.info(
@@ -241,45 +236,26 @@ export class Consumer extends Base {
 
   protected getMessageHandlerInstance = (
     queue: TQueueParams,
-    usePriorityQueuing: boolean,
   ): MessageHandler | undefined => {
     return this.messageHandlerInstances.find((i) => {
       const q = i.getQueue();
-      const p = i.isUsingPriorityQueuing();
-      return (
-        q.name === queue.name && q.ns === queue.ns && p === usePriorityQueuing
-      );
+      return q.name === queue.name && q.ns === queue.ns;
     });
   };
 
-  protected removeMessageHandlerInstance = (
-    queue: TQueueParams,
-    usePriorityQueuing: boolean,
-  ): void => {
+  protected removeMessageHandlerInstance = (queue: TQueueParams): void => {
     this.messageHandlerInstances = this.messageHandlerInstances.filter(
       (handler) => {
         const q = handler.getQueue();
-        const p = handler.isUsingPriorityQueuing();
-        return !(
-          q.name === queue.name &&
-          q.ns === queue.ns &&
-          p === usePriorityQueuing
-        );
+        return !(q.name === queue.name && q.ns === queue.ns);
       },
     );
   };
 
-  protected removeMessageHandler = (
-    queue: TQueueParams,
-    usePriorityQueuing: boolean,
-  ): void => {
+  protected removeMessageHandler = (queue: TQueueParams): void => {
     this.messageHandlers = this.messageHandlers.filter((handler) => {
       const q = handler.queue;
-      return !(
-        q.name === queue.name &&
-        q.ns === queue.ns &&
-        usePriorityQueuing === handler.usePriorityQueuing
-      );
+      return !(q.name === queue.name && q.ns === queue.ns);
     });
     this.logger.info(
       `Message handler with parameters (${JSON.stringify(
@@ -288,9 +264,8 @@ export class Consumer extends Base {
     );
   };
 
-  // todo one queue -> one message handler
   consume(
-    queue: string | TQueueParams,
+    queue: TQueueParams,
     usePriorityQueuing: boolean,
     messageHandler: TConsumerMessageHandler,
     cb: ICallback<boolean>,
@@ -301,9 +276,8 @@ export class Consumer extends Base {
       usePriorityQueuing,
       messageHandler,
     };
-    const r = this.addMessageHandler(handlerParams, usePriorityQueuing);
-    if (!r)
-      cb(new MessageHandlerAlreadyExistsError(queueParams, usePriorityQueuing));
+    const r = this.addMessageHandler(handlerParams);
+    if (!r) cb(new MessageHandlerAlreadyExistsError(queueParams));
     else {
       if (this.isRunning())
         this.runMessageHandler(handlerParams, (err) => {
@@ -314,25 +288,17 @@ export class Consumer extends Base {
     }
   }
 
-  cancel(
-    queue: string | TQueueParams,
-    usePriorityQueuing: boolean,
-    cb: ICallback<void>,
-  ): void {
-    const queueParams = queueManager.getQueueParams(queue);
-    const handler = this.getMessageHandler(queueParams, usePriorityQueuing);
+  cancel(queue: TQueueParams, cb: ICallback<void>): void {
+    const handler = this.getMessageHandler(queue);
     if (!handler) cb();
     else {
-      this.removeMessageHandler(queueParams, usePriorityQueuing);
-      const handlerInstance = this.getMessageHandlerInstance(
-        queueParams,
-        usePriorityQueuing,
-      );
+      this.removeMessageHandler(queue);
+      const handlerInstance = this.getMessageHandlerInstance(queue);
       if (handlerInstance) {
         this.getSharedRedisClient((client) => {
           handlerInstance.shutdown(client, () => {
             // ignoring errors
-            this.removeMessageHandlerInstance(queueParams, usePriorityQueuing);
+            this.removeMessageHandlerInstance(queue);
             cb();
           });
         });
