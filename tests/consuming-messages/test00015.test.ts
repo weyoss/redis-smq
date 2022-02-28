@@ -21,7 +21,7 @@ test('Consume messages from different queues using a single consumer instance: c
   expect(isRunning2).toBe(false);
 
   expect(async () => {
-    await consumer.consumeAsync('another_queue', false, (msg, cb) => cb());
+    await consumer.consumeAsync('another_queue', true, (msg, cb) => cb());
   }).rejects.toThrow(
     `A message handler for queue [${JSON.stringify({
       name: 'another_queue',
@@ -40,7 +40,20 @@ test('Consume messages from different queues using a single consumer instance: c
     },
   ]);
 
-  await consumer.cancelAsync('another_queue', false);
+  await expect(async () => {
+    return new Promise<void>(() => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      consumer.cancel('another_queue', true);
+    });
+  }).rejects.toThrow('Invalid arguments provided');
+
+  await new Promise<void>((resolve, reject) => {
+    consumer.cancel('another_queue', (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
 
   expect(consumer.getQueues()).toEqual([
     {
@@ -104,10 +117,14 @@ test('Consume messages from different queues using a single consumer instance: c
   );
   expect(isRunning3).toBe(true);
 
-  const isRunning4 = await consumer.consumeAsync('queue_a', true, (msg, cb) =>
-    cb(),
+  await expect(async () => {
+    await consumer.consumeAsync('queue_a', true, (msg, cb) => cb());
+  }).rejects.toThrow(
+    `A message handler for queue [${JSON.stringify({
+      name: 'queue_a',
+      ns: 'testing',
+    })}] already exists`,
   );
-  expect(isRunning4).toBe(true);
 
   expect(consumer.getQueues()).toEqual([
     {
@@ -121,10 +138,6 @@ test('Consume messages from different queues using a single consumer instance: c
     {
       queue: { name: 'queue_a', ns: 'testing' },
       usingPriorityQueuing: false,
-    },
-    {
-      queue: { name: 'queue_a', ns: 'testing' },
-      usingPriorityQueuing: true,
     },
   ]);
 

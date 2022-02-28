@@ -6,6 +6,8 @@ import {
 import { EventEmitter } from 'events';
 import { Consumer } from './consumer';
 import { events } from '../../common/events';
+import { ArgumentError } from '../../common/errors/argument.error';
+import { queueManager } from '../queue-manager/queue-manager';
 
 export class ConsumerFrontend extends EventEmitter {
   private consumer: Consumer;
@@ -41,15 +43,41 @@ export class ConsumerFrontend extends EventEmitter {
     messageHandler: TConsumerMessageHandler,
     cb: ICallback<boolean>,
   ): void {
-    return this.consumer.consume(queue, usePriorityQueuing, messageHandler, cb);
+    const queueParams = queueManager.getQueueParams(queue);
+    return this.consumer.consume(
+      queueParams,
+      usePriorityQueuing,
+      messageHandler,
+      cb,
+    );
   }
+
+  cancel(queue: string | TQueueParams, cb: ICallback<void>): void;
+
+  /**
+   * @deprecated
+   *
+   * This method signature has been deprecated and exists only for keeping compatibility with v6 release API. It will be removed in the next major release.
+   * Use cancel(queue, cb) instead.
+   */
+  cancel(
+    queue: string | TQueueParams,
+    usePriorityQueuing: boolean,
+    cb: ICallback<void>,
+  ): void;
 
   cancel(
     queue: string | TQueueParams,
-    usePriority: boolean,
-    cb: ICallback<void>,
+    mixed: boolean | ICallback<void>,
+    cb?: ICallback<void>,
   ): void {
-    this.consumer.cancel(queue, usePriority, cb);
+    const callback: ICallback<void> = (() => {
+      if (typeof mixed === 'function') return mixed;
+      if (typeof mixed === 'boolean' && typeof cb === 'function') return cb;
+      throw new ArgumentError('Invalid arguments provided');
+    })();
+    const queueParams = queueManager.getQueueParams(queue);
+    this.consumer.cancel(queueParams, callback);
   }
 
   run(cb?: ICallback<boolean>): void {
