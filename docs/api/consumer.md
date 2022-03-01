@@ -52,7 +52,7 @@ The queue name can be composed only of letters (a-z), numbers (0-9) and (-_) cha
 ### Consumer.prototype.cancel()
 
 ```javascript
-cancel(queue, usePriorityQueuing, cb);
+cancel(queue, cb);
 ```
 
 **Parameters**
@@ -62,7 +62,6 @@ cancel(queue, usePriorityQueuing, cb);
   - `queue` *(object)*. You can also provide a queue name and a namespace.
     - `queue.name` *(string): Required.* Queue name.
     - `queue.ns` *(string): Required.* Queue namespace.
-- `usePriorityQueuing` *(boolean): Optional.*  Whether the queue message handler is using priority queuing.
 - `cb(err)` *(function): Required.* Callback function.
 
 ### Consumer.prototype.getQueues()
