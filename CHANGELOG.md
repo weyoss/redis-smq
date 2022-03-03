@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 6.2.5 (2022-03-03)
+
+* Update Consumer API docs (8580f4a)
+* Do not consume messages with and without priority from the same queue (84130bf)
+* Use default parameters when creating a Ticker instance (db9feb0)
+* Update consumer queue list upon shutting down a message handler (14519e2)
+
 ## 6.2.4 (2022-02-23)
 
 * Fix consuming-messages/test00015 error (c5c365a)
