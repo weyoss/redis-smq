@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 6.2.6 (2022-03-04)
+
+* Clean up (2837cc6)
+* Implement MessageHandlerRunner (cfba094)
+
 ## 6.2.5 (2022-03-03)
 
 * Update Consumer API docs (8580f4a)
