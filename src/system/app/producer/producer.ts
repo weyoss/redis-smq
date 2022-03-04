@@ -109,30 +109,27 @@ export class Producer extends Base {
         }
       };
       const proceed = () => {
-        this.getSharedRedisClient((client) => {
-          if (message.isSchedulable()) {
-            broker.scheduleMessage(client, message, (err, reply) => {
-              if (err) callback(err);
-              else {
-                if (reply)
-                  this.logger.info(
-                    `Message (ID ${messageId}) has been scheduled.`,
-                  );
-                callback(null, reply);
-              }
-            });
-          } else {
-            this.enqueue(client, message, (err) => {
-              if (err) cb(err);
-              else {
+        const redisClient = this.getSharedRedisClient();
+        if (message.isSchedulable()) {
+          broker.scheduleMessage(redisClient, message, (err, reply) => {
+            if (err) callback(err);
+            else {
+              if (reply)
                 this.logger.info(
-                  `Message (ID ${messageId}) has been enqueued.`,
+                  `Message (ID ${messageId}) has been scheduled.`,
                 );
-                callback(null, true);
-              }
-            });
-          }
-        });
+              callback(null, reply);
+            }
+          });
+        } else {
+          this.enqueue(redisClient, message, (err) => {
+            if (err) cb(err);
+            else {
+              this.logger.info(`Message (ID ${messageId}) has been enqueued.`);
+              callback(null, true);
+            }
+          });
+        }
       };
       if (!this.powerManager.isUp()) {
         if (this.powerManager.isGoingUp()) {

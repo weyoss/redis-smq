@@ -60,30 +60,29 @@ export class Consumer extends Base {
   };
 
   protected setUpConsumerWorkers = (cb: ICallback<void>): void => {
-    this.getSharedRedisClient((client) => {
-      const { keyLockConsumerWorkersRunner } = this.getRedisKeys();
-      this.workerRunner = new WorkerRunner<IConsumerWorkerParameters>(
-        client,
-        resolve(`${__dirname}/../../workers`),
-        keyLockConsumerWorkersRunner,
-        {
-          consumerId: this.id,
-          timeout: 1000,
-          config: this.getConfig(),
-        },
-        new WorkerPool(),
-      );
-      this.workerRunner.on(events.ERROR, (err: Error) =>
-        this.emit(events.ERROR, err),
-      );
-      this.workerRunner.on(events.WORKER_RUNNER_WORKERS_STARTED, () =>
-        this.logger.info(
-          `Workers are exclusively running from this consumer instance.`,
-        ),
-      );
-      this.workerRunner.run();
-      cb();
-    });
+    const redisClient = this.getSharedRedisClient();
+    const { keyLockConsumerWorkersRunner } = this.getRedisKeys();
+    this.workerRunner = new WorkerRunner<IConsumerWorkerParameters>(
+      redisClient,
+      resolve(`${__dirname}/../../workers`),
+      keyLockConsumerWorkersRunner,
+      {
+        consumerId: this.id,
+        timeout: 1000,
+        config: this.getConfig(),
+      },
+      new WorkerPool(),
+    );
+    this.workerRunner.on(events.ERROR, (err: Error) =>
+      this.emit(events.ERROR, err),
+    );
+    this.workerRunner.on(events.WORKER_RUNNER_WORKERS_STARTED, () =>
+      this.logger.info(
+        `Workers are exclusively running from this consumer instance.`,
+      ),
+    );
+    this.workerRunner.run();
+    cb();
   };
 
   protected tearDownConsumerWorkers = (cb: ICallback<void>): void => {
@@ -96,9 +95,8 @@ export class Consumer extends Base {
   };
 
   protected runMessageHandlers = (cb: ICallback<void>): void => {
-    this.getSharedRedisClient((redisClient) => {
-      this.messageHandlerRunner.run(redisClient, cb);
-    });
+    const redisClient = this.getSharedRedisClient();
+    this.messageHandlerRunner.run(redisClient, cb);
   };
 
   protected shutdownMessageHandlers = (cb: ICallback<void>): void => {
