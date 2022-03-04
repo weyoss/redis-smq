@@ -49,7 +49,6 @@ function cpuUsage() {
 
 export class ConsumerHeartbeat extends EventEmitter {
   protected static readonly heartbeatTTL = 10 * 1000; // 10 sec
-
   protected redisClient: RedisClient;
   protected ticker: Ticker;
   protected keyHeartbeats: string;

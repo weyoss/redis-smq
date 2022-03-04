@@ -84,13 +84,10 @@ export abstract class Base extends EventEmitter {
     cb && cb(null, true);
   }
 
-  protected getSharedRedisClient(cb: TUnaryFunction<RedisClient>): void {
+  protected getSharedRedisClient(): RedisClient {
     if (!this.sharedRedisClient)
-      this.emit(
-        events.ERROR,
-        new PanicError('Expected an instance of RedisClient'),
-      );
-    else cb(this.sharedRedisClient);
+      throw new PanicError('Expected an instance of RedisClient');
+    return this.sharedRedisClient;
   }
 
   handleError(err: Error): void {
