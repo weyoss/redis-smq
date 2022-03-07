@@ -20,11 +20,11 @@ import { MessageHandlerAlreadyExistsError } from '../errors/message-handler-alre
 import { PanicError } from '../../../common/errors/panic.error';
 
 export class MessageHandlerRunner {
-  private readonly consumer: Consumer;
-  private redisClient: RedisClient | null = null;
-  private messageHandlerInstances: MessageHandler[] = [];
-  private messageHandlers: TConsumerMessageHandlerParams[] = [];
-  private config: IRequiredConfig;
+  protected consumer: Consumer;
+  protected sharedRedisClient: RedisClient | null = null;
+  protected messageHandlerInstances: MessageHandler[] = [];
+  protected messageHandlers: TConsumerMessageHandlerParams[] = [];
+  protected config: IRequiredConfig;
   protected logger: ICompatibleLogger;
 
   constructor(consumer: Consumer) {
@@ -84,6 +84,33 @@ export class MessageHandlerRunner {
     return new ConsumerMessageRate(messageRateWriter);
   };
 
+  protected createMessageHandlerInstance = (
+    redisClient: RedisClient,
+    handlerParams: TConsumerMessageHandlerParams,
+  ): MessageHandler => {
+    const sharedRedisClient = this.getSharedRedisClient();
+    const { queue, usePriorityQueuing, messageHandler } = handlerParams;
+    const messageRate = this.config.monitor.enabled
+      ? this.createMessageRateInstance(queue, sharedRedisClient)
+      : null;
+    const instance = new MessageHandler(
+      this.consumer.getId(),
+      queue,
+      messageHandler,
+      usePriorityQueuing,
+      redisClient,
+      messageRate,
+    );
+    this.registerMessageHandlerEvents(instance);
+    this.messageHandlerInstances.push(instance);
+    this.logger.info(
+      `Created a new instance (ID: ${instance.getId()}) for MessageHandler (${JSON.stringify(
+        handlerParams,
+      )}).`,
+    );
+    return instance;
+  };
+
   protected runMessageHandler = (
     handlerParams: TConsumerMessageHandlerParams,
     cb: ICallback<void>,
@@ -92,25 +119,9 @@ export class MessageHandlerRunner {
       if (err) cb(err);
       else if (!client) cb(new EmptyCallbackReplyError());
       else {
-        const redisClient = this.getRedisClient();
-        const { queue, usePriorityQueuing, messageHandler } = handlerParams;
-        const messageRate = this.config.monitor.enabled
-          ? this.createMessageRateInstance(queue, redisClient)
-          : null;
-        const handler = new MessageHandler(
-          this.consumer.getId(),
-          queue,
-          messageHandler,
-          usePriorityQueuing,
+        const handler = this.createMessageHandlerInstance(
           client,
-          messageRate,
-        );
-        this.registerMessageHandlerEvents(handler);
-        this.messageHandlerInstances.push(handler);
-        this.logger.info(
-          `Created a new instance (ID: ${handler.getId()}) for MessageHandler (${JSON.stringify(
-            handlerParams,
-          )}).`,
+          handlerParams,
         );
         handler.run(cb);
       }
@@ -122,7 +133,7 @@ export class MessageHandlerRunner {
     cb: ICallback<void>,
   ): void => {
     const queue = messageHandler.getQueue();
-    const redisClient = this.getRedisClient();
+    const redisClient = this.getSharedRedisClient();
     // ignoring errors
     messageHandler.shutdown(redisClient, () => {
       this.messageHandlerInstances = this.messageHandlerInstances.filter(
@@ -135,15 +146,15 @@ export class MessageHandlerRunner {
     });
   };
 
-  protected getRedisClient(): RedisClient {
-    if (!this.redisClient) {
+  protected getSharedRedisClient(): RedisClient {
+    if (!this.sharedRedisClient) {
       throw new PanicError('Expected a non-empty value');
     }
-    return this.redisClient;
+    return this.sharedRedisClient;
   }
 
   run = (redisClient: RedisClient, cb: ICallback<void>): void => {
-    this.redisClient = redisClient;
+    this.sharedRedisClient = redisClient;
     each(
       this.messageHandlers,
       (handlerParams, _, done) => {
@@ -162,7 +173,7 @@ export class MessageHandlerRunner {
       (err) => {
         if (err) cb(err);
         else {
-          this.redisClient = null;
+          this.sharedRedisClient = null;
           cb();
         }
       },

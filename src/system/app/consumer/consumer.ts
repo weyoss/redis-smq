@@ -100,8 +100,9 @@ export class Consumer extends Base {
   };
 
   protected shutdownMessageHandlers = (cb: ICallback<void>): void => {
-    if (this.messageHandlerRunner) this.messageHandlerRunner.shutdown(cb);
-    else cb();
+    if (this.messageHandlerRunner) {
+      this.messageHandlerRunner.shutdown(cb);
+    } else cb();
   };
 
   protected override goingUp(): TUnaryFunction<ICallback<void>>[] {

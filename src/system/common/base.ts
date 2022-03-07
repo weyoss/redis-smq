@@ -58,9 +58,9 @@ export abstract class Base extends EventEmitter {
 
   protected registerEventsHandlers(): void {
     this.on(events.GOING_UP, () => this.logger.info(`Going up...`));
-    this.on(events.GOING_UP, () => this.logger.info(`Up and running...`));
+    this.on(events.UP, () => this.logger.info(`Up and running...`));
     this.on(events.GOING_DOWN, () => this.logger.info(`Going down...`));
-    this.on(events.GOING_DOWN, () => this.logger.info(`Down.`));
+    this.on(events.DOWN, () => this.logger.info(`Down.`));
     this.on(events.ERROR, (err: Error) => this.handleError(err));
   }
 
