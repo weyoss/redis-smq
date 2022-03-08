@@ -23,6 +23,7 @@ import { each, waterfall } from '../../lib/async';
 import { deleteConsumerAcknowledgedTimeSeries } from './consumer-time-series/consumer-acknowledged-time-series';
 import { deleteConsumerDeadLetteredTimeSeries } from './consumer-time-series/consumer-dead-lettered-time-series';
 import { MessageHandlerRunner } from './consumer-message-handler/message-handler-runner';
+import { MultiplexedMessageHandlerRunner } from './consumer-message-handler/multiplexed-message-handler/multiplexed-message-handler-runner';
 
 export class Consumer extends Base {
   private readonly redisKeys: TConsumerRedisKeys;
@@ -30,9 +31,11 @@ export class Consumer extends Base {
   private heartbeat: ConsumerHeartbeat | null = null;
   private workerRunner: WorkerRunner<IConsumerWorkerParameters> | null = null;
 
-  constructor() {
+  constructor(isMultiplexed = false) {
     super();
-    this.messageHandlerRunner = new MessageHandlerRunner(this);
+    this.messageHandlerRunner = isMultiplexed
+      ? new MultiplexedMessageHandlerRunner(this)
+      : new MessageHandlerRunner(this);
     this.redisKeys = redisKeys.getConsumerKeys(this.getId());
   }
 
