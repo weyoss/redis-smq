@@ -13,6 +13,7 @@ export const events = {
   MESSAGE_ACKNOWLEDGED: 'message_acknowledged',
   MESSAGE_UNACKNOWLEDGED: 'message_unacknowledged',
   MESSAGE_DEAD_LETTERED: 'message_dead_lettered',
+  MESSAGE_MULTIPLEXER_NEXT: 'message_multiplexer_next',
 
   RATE_TICK: 'rate_tick',
   HEARTBEAT_TICK: 'heartbeat_tick',
