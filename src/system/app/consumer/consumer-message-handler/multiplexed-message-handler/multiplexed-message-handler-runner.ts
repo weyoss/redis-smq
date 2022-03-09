@@ -20,17 +20,17 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
 
   constructor(consumer: Consumer) {
     super(consumer);
-    this.ticker = new Ticker(this.dequeue);
+    this.ticker = new Ticker(() => this.dequeue());
   }
 
-  protected override registerMessageHandlerEvents = (
+  protected override registerMessageHandlerEvents(
     messageHandler: MessageHandler,
-  ): void => {
+  ): void {
     super.registerMessageHandlerEvents(messageHandler);
     messageHandler.on(events.MESSAGE_MULTIPLEXER_NEXT, () =>
       this.ticker.nextTick(),
     );
-  };
+  }
 
   protected getNextMessageHandler(): MessageHandler | undefined {
     if (this.index >= this.messageHandlerInstances.length) {
@@ -43,17 +43,17 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
     return messageHandler;
   }
 
-  protected dequeue = (): void => {
+  protected dequeue(): void {
     this.activeMessageHandler = this.getNextMessageHandler();
     if (this.activeMessageHandler) {
       this.activeMessageHandler.dequeue();
     }
-  };
+  }
 
-  protected override createMessageHandlerInstance = (
+  protected override createMessageHandlerInstance(
     redisClient: RedisClient,
     handlerParams: TConsumerMessageHandlerParams,
-  ): MessageHandler => {
+  ): MessageHandler {
     const sharedRedisClient = this.getSharedRedisClient();
     const { queue, usePriorityQueuing, messageHandler } = handlerParams;
     const messageRate = this.config.monitor.enabled
@@ -75,21 +75,21 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
       )}).`,
     );
     return instance;
-  };
+  }
 
-  protected override shutdownMessageHandler = (
+  protected override shutdownMessageHandler(
     messageHandler: MessageHandler,
     cb: ICallback<void>,
-  ): void => {
+  ): void {
     super.shutdownMessageHandler(messageHandler, () => {
       if (messageHandler === this.activeMessageHandler) {
         this.dequeue();
       }
       cb();
     });
-  };
+  }
 
-  override run = (redisClient: RedisClient, cb: ICallback<void>): void => {
+  override run(redisClient: RedisClient, cb: ICallback<void>): void {
     waterfall(
       [
         (cb: ICallback<void>) => {
@@ -114,9 +114,9 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
         }
       },
     );
-  };
+  }
 
-  override shutdown = (cb: ICallback<void>): void => {
+  override shutdown(cb: ICallback<void>): void {
     waterfall(
       [
         (cb: ICallback<void>) => {
@@ -131,5 +131,5 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
       ],
       cb,
     );
-  };
+  }
 }

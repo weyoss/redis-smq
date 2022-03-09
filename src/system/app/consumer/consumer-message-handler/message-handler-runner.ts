@@ -35,9 +35,7 @@ export class MessageHandlerRunner {
     );
   }
 
-  protected registerMessageHandlerEvents = (
-    messageHandler: MessageHandler,
-  ): void => {
+  protected registerMessageHandlerEvents(messageHandler: MessageHandler): void {
     messageHandler.on(events.ERROR, (...args: unknown[]) =>
       this.consumer.emit(events.ERROR, ...args),
     );
@@ -53,16 +51,16 @@ export class MessageHandlerRunner {
     messageHandler.on(events.MESSAGE_ACKNOWLEDGED, (...args: unknown[]) =>
       this.consumer.emit(events.MESSAGE_ACKNOWLEDGED, ...args),
     );
-  };
+  }
 
-  protected getMessageHandlerInstance = (
+  protected getMessageHandlerInstance(
     queue: TQueueParams,
-  ): MessageHandler | undefined => {
+  ): MessageHandler | undefined {
     return this.messageHandlerInstances.find((i) => {
       const q = i.getQueue();
       return q.name === queue.name && q.ns === queue.ns;
     });
-  };
+  }
 
   protected getMessageHandler(
     queue: TQueueParams,
@@ -72,22 +70,22 @@ export class MessageHandlerRunner {
     );
   }
 
-  protected createMessageRateInstance = (
+  protected createMessageRateInstance(
     queue: TQueueParams,
     redisClient: RedisClient,
-  ): ConsumerMessageRate => {
+  ): ConsumerMessageRate {
     const messageRateWriter = new ConsumerMessageRateWriter(
       redisClient,
       queue,
       this.consumer.getId(),
     );
     return new ConsumerMessageRate(messageRateWriter);
-  };
+  }
 
-  protected createMessageHandlerInstance = (
+  protected createMessageHandlerInstance(
     redisClient: RedisClient,
     handlerParams: TConsumerMessageHandlerParams,
-  ): MessageHandler => {
+  ): MessageHandler {
     const sharedRedisClient = this.getSharedRedisClient();
     const { queue, usePriorityQueuing, messageHandler } = handlerParams;
     const messageRate = this.config.monitor.enabled
@@ -109,12 +107,12 @@ export class MessageHandlerRunner {
       )}).`,
     );
     return instance;
-  };
+  }
 
-  protected runMessageHandler = (
+  protected runMessageHandler(
     handlerParams: TConsumerMessageHandlerParams,
     cb: ICallback<void>,
-  ): void => {
+  ): void {
     RedisClient.getNewInstance((err, client) => {
       if (err) cb(err);
       else if (!client) cb(new EmptyCallbackReplyError());
@@ -126,12 +124,12 @@ export class MessageHandlerRunner {
         handler.run(cb);
       }
     });
-  };
+  }
 
-  protected shutdownMessageHandler = (
+  protected shutdownMessageHandler(
     messageHandler: MessageHandler,
     cb: ICallback<void>,
-  ): void => {
+  ): void {
     const queue = messageHandler.getQueue();
     const redisClient = this.getSharedRedisClient();
     // ignoring errors
@@ -144,7 +142,7 @@ export class MessageHandlerRunner {
       );
       cb();
     });
-  };
+  }
 
   protected getSharedRedisClient(): RedisClient {
     if (!this.sharedRedisClient) {
@@ -153,7 +151,7 @@ export class MessageHandlerRunner {
     return this.sharedRedisClient;
   }
 
-  run = (redisClient: RedisClient, cb: ICallback<void>): void => {
+  run(redisClient: RedisClient, cb: ICallback<void>): void {
     this.sharedRedisClient = redisClient;
     each(
       this.messageHandlers,
@@ -162,9 +160,9 @@ export class MessageHandlerRunner {
       },
       cb,
     );
-  };
+  }
 
-  shutdown = (cb: ICallback<void>): void => {
+  shutdown(cb: ICallback<void>): void {
     each(
       this.messageHandlerInstances,
       (handler, queue, done) => {
@@ -178,9 +176,9 @@ export class MessageHandlerRunner {
         }
       },
     );
-  };
+  }
 
-  removeMessageHandler = (queue: TQueueParams, cb: ICallback<void>): void => {
+  removeMessageHandler(queue: TQueueParams, cb: ICallback<void>): void {
     const handler = this.getMessageHandler(queue);
     if (!handler) cb();
     else {
@@ -197,14 +195,14 @@ export class MessageHandlerRunner {
       if (handlerInstance) this.shutdownMessageHandler(handlerInstance, cb);
       else cb();
     }
-  };
+  }
 
-  addMessageHandler = (
+  addMessageHandler(
     queue: TQueueParams,
     usePriorityQueuing: boolean,
     messageHandler: TConsumerMessageHandler,
     cb: ICallback<boolean>,
-  ): void => {
+  ): void {
     const handler = this.getMessageHandler(queue);
     if (handler) cb(new MessageHandlerAlreadyExistsError(queue));
     else {
@@ -226,12 +224,12 @@ export class MessageHandlerRunner {
         });
       else cb(null, false);
     }
-  };
+  }
 
-  getQueues = (): { queue: TQueueParams; usingPriorityQueuing: boolean }[] => {
+  getQueues(): { queue: TQueueParams; usingPriorityQueuing: boolean }[] {
     return this.messageHandlers.map((i) => ({
       queue: i.queue,
       usingPriorityQueuing: i.usePriorityQueuing,
     }));
-  };
+  }
 }

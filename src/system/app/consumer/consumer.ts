@@ -31,7 +31,7 @@ export class Consumer extends Base {
   private heartbeat: ConsumerHeartbeat | null = null;
   private workerRunner: WorkerRunner<IConsumerWorkerParameters> | null = null;
 
-  constructor(isMultiplexed = false) {
+  constructor(isMultiplexed = true) {
     super();
     this.messageHandlerRunner = isMultiplexed
       ? new MultiplexedMessageHandlerRunner(this)
