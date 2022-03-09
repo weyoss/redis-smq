@@ -107,17 +107,17 @@ export class MessageHandler extends EventEmitter {
     this.on(events.DOWN, () => this.logger.info('Down.'));
   }
 
-  handleError = (err: Error): void => {
+  handleError(err: Error): void {
     if (this.powerManager.isRunning() || this.powerManager.isGoingUp()) {
       this.emit(events.ERROR, err);
     }
-  };
+  }
 
-  dequeue = (): void => {
+  dequeue(): void {
     this.dequeueMessage.dequeue();
-  };
+  }
 
-  run = (cb: ICallback<void>): void => {
+  run(cb: ICallback<void>): void {
     this.powerManager.goingUp();
     this.dequeueMessage.run((err) => {
       if (err) cb(err);
@@ -127,11 +127,11 @@ export class MessageHandler extends EventEmitter {
         cb();
       }
     });
-  };
+  }
 
   // The message handler could be blocking its redis connection when waiting for new messages using brpoplpush
   // Therefore, once the handler is up and running, no other redis commands can be executed
-  shutdown = (redisClient: RedisClient, cb: ICallback<void>): void => {
+  shutdown(redisClient: RedisClient, cb: ICallback<void>): void {
     const goDown = () => {
       this.powerManager.goingDown();
       waterfall(
@@ -168,7 +168,7 @@ export class MessageHandler extends EventEmitter {
     };
     if (this.powerManager.isGoingUp()) this.once(events.UP, goDown);
     else goDown();
-  };
+  }
 
   getQueue(): TQueueParams {
     return this.queue;

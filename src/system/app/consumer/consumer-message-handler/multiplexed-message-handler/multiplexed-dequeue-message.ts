@@ -5,7 +5,7 @@ import { events } from '../../../../common/events';
 import { queueManager } from '../../../queue-manager/queue-manager';
 
 export class MultiplexedDequeueMessage extends DequeueMessage {
-  override dequeue = (): void => {
+  override dequeue(): void {
     const cb: ICallback<string> = (err, reply) => {
       if (err) {
         this.ticker.abort();
@@ -33,5 +33,5 @@ export class MultiplexedDequeueMessage extends DequeueMessage {
         },
       );
     } else deq();
-  };
+  }
 }

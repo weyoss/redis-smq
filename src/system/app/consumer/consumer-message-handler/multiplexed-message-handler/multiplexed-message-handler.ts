@@ -44,7 +44,7 @@ export class MultiplexedMessageHandler extends MessageHandler {
     });
   }
 
-  override shutdown = (redisClient: RedisClient, cb: ICallback<void>): void => {
+  override shutdown(redisClient: RedisClient, cb: ICallback<void>): void {
     const goDown = () => {
       this.powerManager.goingDown();
       waterfall(
@@ -78,5 +78,5 @@ export class MultiplexedMessageHandler extends MessageHandler {
     };
     if (this.powerManager.isGoingUp()) this.once(events.UP, goDown);
     else goDown();
-  };
+  }
 }

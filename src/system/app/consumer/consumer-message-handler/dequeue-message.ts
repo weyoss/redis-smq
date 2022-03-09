@@ -38,7 +38,7 @@ export class DequeueMessage {
     this.keyQueuePriority = keyQueuePendingPriorityMessageIds;
     this.keyQueueProcessing = keyQueueProcessing;
     this.usingPriorityQueuing = messageHandler.isUsingPriorityQueuing();
-    this.ticker = new Ticker(this.dequeue);
+    this.ticker = new Ticker(() => this.dequeue());
   }
 
   protected dequeueMessageWithPriority(cb: ICallback<string>): void {
@@ -67,7 +67,7 @@ export class DequeueMessage {
     );
   }
 
-  dequeue = (): void => {
+  dequeue(): void {
     const cb: ICallback<string> = (err, reply) => {
       if (err) {
         this.ticker.abort();
@@ -99,9 +99,9 @@ export class DequeueMessage {
     } else {
       this.waitForMessage(cb);
     }
-  };
+  }
 
-  run = (cb: ICallback<void>): void => {
+  run(cb: ICallback<void>): void {
     queueManager.getQueueRateLimit(
       this.redisClient,
       this.queue,
@@ -121,10 +121,10 @@ export class DequeueMessage {
         }
       },
     );
-  };
+  }
 
-  quit = (cb: ICallback<void>): void => {
+  quit(cb: ICallback<void>): void {
     this.ticker.once(events.DOWN, cb);
     this.ticker.quit();
-  };
+  }
 }

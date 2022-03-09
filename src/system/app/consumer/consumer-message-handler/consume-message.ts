@@ -51,7 +51,7 @@ export class ConsumeMessage {
     );
   }
 
-  protected consumeMessage = (msg: Message): void => {
+  protected consumeMessage(msg: Message): void {
     let isTimeout = false;
     let timer: NodeJS.Timeout | null = null;
     try {
@@ -105,7 +105,7 @@ export class ConsumeMessage {
         err,
       );
     }
-  };
+  }
 
   handleReceivedMessage(message: Message): void {
     if (message.getSetExpired()) {
