@@ -32,15 +32,10 @@ export class MultiplexedMessageHandler extends MessageHandler {
 
   protected override registerEventsHandlers(): void {
     super.registerEventsHandlers();
+    this.removeAllListeners(events.MESSAGE_NEXT);
     this.removeAllListeners(events.UP);
     this.on(events.UP, () => {
       this.logger.info('Up and running...');
-    });
-    this.removeAllListeners(events.MESSAGE_NEXT);
-    this.on(events.MESSAGE_NEXT, () => {
-      if (this.powerManager.isRunning()) {
-        this.emit(events.MESSAGE_MULTIPLEXER_NEXT);
-      }
     });
   }
 

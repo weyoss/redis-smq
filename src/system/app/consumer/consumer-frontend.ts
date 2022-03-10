@@ -12,9 +12,9 @@ import { queueManager } from '../queue-manager/queue-manager';
 export class ConsumerFrontend extends EventEmitter {
   private consumer: Consumer;
 
-  constructor() {
+  constructor(useMultiplexing = false) {
     super();
-    this.consumer = new Consumer();
+    this.consumer = new Consumer(useMultiplexing);
     this.registerEvents();
   }
 

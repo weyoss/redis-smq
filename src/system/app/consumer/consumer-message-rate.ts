@@ -20,13 +20,13 @@ export class ConsumerMessageRate extends MessageRate<IConsumerMessageRateFields>
   }
 
   getRateFields(): IConsumerMessageRateFields {
-    const acknowledgedRate = this.acknowledgedRate;
-    this.acknowledgedRate = 0;
-    const deadLetteredRate = this.deadLetteredRate;
-    this.deadLetteredRate = 0;
     if (process.env.NODE_ENV === 'test' && this.isIdle()) {
       this.emit(events.IDLE);
     }
+    const acknowledgedRate = this.acknowledgedRate;
+    const deadLetteredRate = this.deadLetteredRate;
+    this.acknowledgedRate = 0;
+    this.deadLetteredRate = 0;
     return {
       acknowledgedRate,
       deadLetteredRate,

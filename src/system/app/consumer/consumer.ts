@@ -31,9 +31,9 @@ export class Consumer extends Base {
   private heartbeat: ConsumerHeartbeat | null = null;
   private workerRunner: WorkerRunner<IConsumerWorkerParameters> | null = null;
 
-  constructor(isMultiplexed = true) {
+  constructor(useMultiplexing = false) {
     super();
-    this.messageHandlerRunner = isMultiplexed
+    this.messageHandlerRunner = useMultiplexing
       ? new MultiplexedMessageHandlerRunner(this)
       : new MessageHandlerRunner(this);
     this.redisKeys = redisKeys.getConsumerKeys(this.getId());
