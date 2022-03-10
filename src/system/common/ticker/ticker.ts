@@ -78,8 +78,12 @@ export class Ticker extends EventEmitter {
     }
   }
 
+  isTicking(): boolean {
+    return !!(this.timeout || this.interval);
+  }
+
   nextTick(): void {
-    if (this.timeout || this.interval) {
+    if (this.isTicking()) {
       throw new TickerError('A timer is already running');
     }
     if (this.powerManager.isGoingDown()) {
@@ -103,7 +107,7 @@ export class Ticker extends EventEmitter {
   }
 
   runTimer(): void {
-    if (this.interval || this.timeout) {
+    if (this.isTicking()) {
       throw new TickerError('A timer is already running');
     }
     if (this.powerManager.isGoingUp()) {

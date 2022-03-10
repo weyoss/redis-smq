@@ -11,6 +11,7 @@ import { EmptyCallbackReplyError } from '../../../../common/errors/empty-callbac
 import { waterfall } from '../../../../lib/async';
 import { events } from '../../../../common/events';
 import { MultiplexedMessageHandler } from './multiplexed-message-handler';
+import { PanicError } from '../../../../common/errors/panic.error';
 
 export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   protected muxRedisClient: RedisClient | null = null;
@@ -23,13 +24,18 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
     this.ticker = new Ticker(() => this.dequeue());
   }
 
+  protected nextTick(): void {
+    if (!this.ticker.isTicking()) {
+      this.activeMessageHandler = null;
+      this.ticker.nextTick();
+    }
+  }
+
   protected override registerMessageHandlerEvents(
     messageHandler: MessageHandler,
   ): void {
     super.registerMessageHandlerEvents(messageHandler);
-    messageHandler.on(events.MESSAGE_MULTIPLEXER_NEXT, () =>
-      this.ticker.nextTick(),
-    );
+    messageHandler.on(events.MESSAGE_NEXT, () => this.nextTick());
   }
 
   protected getNextMessageHandler(): MessageHandler | undefined {
@@ -47,6 +53,8 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
     this.activeMessageHandler = this.getNextMessageHandler();
     if (this.activeMessageHandler) {
       this.activeMessageHandler.dequeue();
+    } else {
+      this.nextTick();
     }
   }
 
@@ -77,13 +85,29 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
     return instance;
   }
 
+  protected override runMessageHandler(
+    handlerParams: TConsumerMessageHandlerParams,
+    cb: ICallback<void>,
+  ): void {
+    const client = this.getMuxRedisClient();
+    const handler = this.createMessageHandlerInstance(client, handlerParams);
+    handler.run(cb);
+  }
+
+  protected getMuxRedisClient(): RedisClient {
+    if (!this.muxRedisClient) {
+      throw new PanicError('Expected a non-empty value');
+    }
+    return this.muxRedisClient;
+  }
+
   protected override shutdownMessageHandler(
     messageHandler: MessageHandler,
     cb: ICallback<void>,
   ): void {
     super.shutdownMessageHandler(messageHandler, () => {
       if (messageHandler === this.activeMessageHandler) {
-        this.dequeue();
+        this.nextTick();
       }
       cb();
     });

@@ -74,7 +74,9 @@ export class MessageHandler extends EventEmitter {
       }
     });
     this.on(events.MESSAGE_ACKNOWLEDGED, (msg: Message) => {
-      if (this.messageRate) this.messageRate.incrementAcknowledged();
+      if (this.messageRate) {
+        this.messageRate.incrementAcknowledged();
+      }
       this.logger.info(`Message (ID ${msg.getRequiredId()}) acknowledged`);
       this.emit(events.MESSAGE_NEXT);
     });
