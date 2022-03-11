@@ -6,7 +6,6 @@ import {
 import { EventEmitter } from 'events';
 import { Consumer } from './consumer';
 import { events } from '../../common/events';
-import { ArgumentError } from '../../common/errors/argument.error';
 import { queueManager } from '../queue-manager/queue-manager';
 
 export class ConsumerFrontend extends EventEmitter {
@@ -52,32 +51,9 @@ export class ConsumerFrontend extends EventEmitter {
     );
   }
 
-  cancel(queue: string | TQueueParams, cb: ICallback<void>): void;
-
-  /**
-   * @deprecated
-   *
-   * This method signature has been deprecated and exists only for keeping compatibility with v6 release API. It will be removed in the next major release.
-   * Use cancel(queue, cb) instead.
-   */
-  cancel(
-    queue: string | TQueueParams,
-    usePriorityQueuing: boolean,
-    cb: ICallback<void>,
-  ): void;
-
-  cancel(
-    queue: string | TQueueParams,
-    mixed: boolean | ICallback<void>,
-    cb?: ICallback<void>,
-  ): void {
-    const callback: ICallback<void> = (() => {
-      if (typeof mixed === 'function') return mixed;
-      if (typeof mixed === 'boolean' && typeof cb === 'function') return cb;
-      throw new ArgumentError('Invalid arguments provided');
-    })();
+  cancel(queue: string | TQueueParams, cb: ICallback<void>): void {
     const queueParams = queueManager.getQueueParams(queue);
-    this.consumer.cancel(queueParams, callback);
+    this.consumer.cancel(queueParams, cb);
   }
 
   run(cb?: ICallback<boolean>): void {

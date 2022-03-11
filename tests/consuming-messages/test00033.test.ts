@@ -1,80 +1,100 @@
-import { promisifyAll } from 'bluebird';
+import { delay, promisifyAll } from 'bluebird';
 import { Consumer } from '../../src/consumer';
-import { defaultQueue, getRedisInstance } from '../common';
-import { consumerQueues } from '../../src/system/app/consumer/consumer-queues';
+import { getProducer } from '../common';
+import { Message } from '../../src/system/app/message/message';
 
-test('Consume messages from different queues using a single consumer instance: case 3', async () => {
-  const consumer = promisifyAll(new Consumer());
+test('Consume messages from different queues using a single consumer instance: case 4', async () => {
+  const messages: Message[] = [];
+  const consumer = promisifyAll(new Consumer(true));
+
+  await consumer.consumeAsync('test1', false, (msg, cb) => {
+    messages.push(msg);
+    cb();
+  });
+  await consumer.consumeAsync('test2', false, (msg, cb) => {
+    messages.push(msg);
+    cb();
+  });
+  await consumer.consumeAsync('test3', false, (msg, cb) => {
+    messages.push(msg);
+    cb();
+  });
+
   await consumer.runAsync();
 
-  const redisClient = await getRedisInstance();
-  const consumerQueuesAsync = promisifyAll(consumerQueues);
+  await consumer.consumeAsync('test4', false, (msg, cb) => {
+    messages.push(msg);
+    cb();
+  });
+  await consumer.consumeAsync('test5', false, (msg, cb) => {
+    messages.push(msg);
+    cb();
+  });
 
-  const a = await consumerQueuesAsync.getConsumerQueuesAsync(
-    redisClient,
-    consumer.getId(),
+  const queues = consumer.getQueues();
+  expect(queues.map((i) => i.queue.name)).toEqual([
+    'test1',
+    'test2',
+    'test3',
+    'test4',
+    'test5',
+  ]);
+
+  const producer = getProducer();
+  for (let i = 0; i < 5; i += 1) {
+    await producer.produceAsync(
+      new Message().setQueue(`test${i + 1}`).setBody(`body ${i + 1}`),
+    );
+  }
+
+  await delay(10000);
+  expect(messages.length).toBe(5);
+  expect(messages.map((i) => i.getQueue()?.name).sort()).toEqual([
+    'test1',
+    'test2',
+    'test3',
+    'test4',
+    'test5',
+  ]);
+  expect(messages.map((i) => i.getBody()).sort()).toEqual([
+    'body 1',
+    'body 2',
+    'body 3',
+    'body 4',
+    'body 5',
+  ]);
+
+  await consumer.cancelAsync('test4');
+  expect(consumer.getQueues().map((i) => i.queue.name)).toEqual([
+    'test1',
+    'test2',
+    'test3',
+    'test5',
+  ]);
+
+  await consumer.consumeAsync('test6', false, (msg, cb) => {
+    messages.push(msg);
+    cb();
+  });
+  await producer.produceAsync(
+    new Message().setQueue(`test6`).setBody(`body 6`),
   );
-  expect(a).toEqual([]);
-
-  const a1 = await consumerQueuesAsync.getQueueConsumersAsync(
-    redisClient,
-    defaultQueue,
-    true,
-  );
-  expect(Object.keys(a1)).toEqual([]);
-
-  const a2 = await consumerQueuesAsync.getQueueConsumersAsync(
-    redisClient,
-    defaultQueue,
-    false,
-  );
-  expect(Object.keys(a2)).toEqual([]);
-
-  await consumer.consumeAsync(defaultQueue, false, (msg, cb) => cb());
-
-  const b = await consumerQueuesAsync.getConsumerQueuesAsync(
-    redisClient,
-    consumer.getId(),
-  );
-  expect(b).toEqual([defaultQueue]);
-
-  const b1 = await consumerQueuesAsync.getQueueConsumersAsync(
-    redisClient,
-    defaultQueue,
-    true,
-  );
-  expect(Object.keys(b1)).toEqual([consumer.getId()]);
-
-  const b2 = await consumerQueuesAsync.getQueueConsumersAsync(
-    redisClient,
-    defaultQueue,
-    false,
-  );
-  expect(Object.keys(b2)).toEqual([consumer.getId()]);
-
-  await consumer.cancelAsync(defaultQueue, false);
-
-  const c = await consumerQueuesAsync.getConsumerQueuesAsync(
-    redisClient,
-    consumer.getId(),
-  );
-  expect(c).toEqual([]);
-
-  const c1 = await consumerQueuesAsync.getQueueConsumersAsync(
-    redisClient,
-    defaultQueue,
-    true,
-  );
-  expect(Object.keys(c1)).toEqual([]);
-
-  await consumer.consumeAsync(defaultQueue, true, (msg, cb) => cb());
-
-  const c2 = await consumerQueuesAsync.getQueueConsumersAsync(
-    redisClient,
-    defaultQueue,
-    true,
-  );
-  expect(Object.keys(c2)).toEqual([consumer.getId()]);
+  await delay(10000);
+  expect(messages.map((i) => i.getQueue()?.name).sort()).toEqual([
+    'test1',
+    'test2',
+    'test3',
+    'test4',
+    'test5',
+    'test6',
+  ]);
+  expect(consumer.getQueues().map((i) => i.queue.name)).toEqual([
+    'test1',
+    'test2',
+    'test3',
+    'test5',
+    'test6',
+  ]);
 
   await consumer.shutdownAsync();
 });

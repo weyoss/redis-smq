@@ -52,7 +52,7 @@ test('Consume messages from different queues using a single consumer instance: c
   );
   expect(Object.keys(b2)).toEqual([consumer.getId()]);
 
-  await consumer.cancelAsync(defaultQueue, false);
+  await consumer.cancelAsync(defaultQueue);
 
   const c = await consumerQueuesAsync.getConsumerQueuesAsync(
     redisClient,
