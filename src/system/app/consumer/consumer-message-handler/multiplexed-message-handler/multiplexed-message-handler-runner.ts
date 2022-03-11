@@ -18,6 +18,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   protected ticker: Ticker;
   protected index = 0;
   protected activeMessageHandler: MessageHandler | null | undefined = null;
+  protected multiplexingDelay = true;
 
   constructor(consumer: Consumer) {
     super(consumer);
@@ -35,7 +36,14 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
     messageHandler: MessageHandler,
   ): void {
     super.registerMessageHandlerEvents(messageHandler);
-    messageHandler.on(events.MESSAGE_NEXT, () => this.nextTick());
+    messageHandler.on(events.MESSAGE_NEXT, () => {
+      if (this.multiplexingDelay) this.nextTick();
+      else this.dequeue();
+    });
+    messageHandler.on(
+      events.MESSAGE_RECEIVED,
+      () => (this.multiplexingDelay = false),
+    );
   }
 
   protected getNextMessageHandler(): MessageHandler | undefined {
@@ -52,6 +60,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   protected dequeue(): void {
     this.activeMessageHandler = this.getNextMessageHandler();
     if (this.activeMessageHandler) {
+      this.multiplexingDelay = true;
       this.activeMessageHandler.dequeue();
     } else {
       this.nextTick();
