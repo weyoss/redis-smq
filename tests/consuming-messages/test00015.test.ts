@@ -40,20 +40,7 @@ test('Consume messages from different queues using a single consumer instance: c
     },
   ]);
 
-  await expect(async () => {
-    return new Promise<void>(() => {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      consumer.cancel('another_queue', true);
-    });
-  }).rejects.toThrow('Invalid arguments provided');
-
-  await new Promise<void>((resolve, reject) => {
-    consumer.cancel('another_queue', (err) => {
-      if (err) reject(err);
-      else resolve();
-    });
-  });
+  await consumer.cancelAsync('another_queue');
 
   expect(consumer.getQueues()).toEqual([
     {
@@ -87,10 +74,10 @@ test('Consume messages from different queues using a single consumer instance: c
     })}] already exists`,
   );
 
-  await consumer.cancelAsync('another_queue', false);
+  await consumer.cancelAsync('another_queue');
 
   // does not throw an error
-  await consumer.cancelAsync('another_queue', false);
+  await consumer.cancelAsync('another_queue');
 
   expect(consumer.getQueues()).toEqual([
     {
