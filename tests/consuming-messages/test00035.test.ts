@@ -18,7 +18,7 @@ test('Consume messages from different queues using a single consumer instance: c
   consumer.once(events.MESSAGE_RECEIVED, () => {
     setTimeout(() => {
       // cancelling a queue when a message handler is active
-      consumer.cancelAsync('test0').catch((e) => {
+      consumer.cancelAsync('test0').catch((e: unknown) => {
         console.log(e);
       });
     }, 1000);
