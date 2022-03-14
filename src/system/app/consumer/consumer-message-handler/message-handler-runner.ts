@@ -51,6 +51,9 @@ export class MessageHandlerRunner {
     messageHandler.on(events.MESSAGE_ACKNOWLEDGED, (...args: unknown[]) =>
       this.consumer.emit(events.MESSAGE_ACKNOWLEDGED, ...args),
     );
+    messageHandler.on(events.MESSAGE_RECEIVED, (...args: unknown[]) =>
+      this.consumer.emit(events.MESSAGE_RECEIVED, ...args),
+    );
   }
 
   protected getMessageHandlerInstance(
