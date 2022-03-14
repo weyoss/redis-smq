@@ -2,10 +2,10 @@ import { RedisKeysError } from './redis-keys.error';
 import { TQueueParams } from '../../../../types';
 
 // Key segments separator
-const keySegmentSeparator = '.';
+const keySegmentSeparator = ':';
 
 // Key prefix
-const nsPrefix = 'redis-smq-v600rc12';
+const nsPrefix = 'redis-smq-v630';
 
 // Namespaces
 const globalNamespace = 'global';
