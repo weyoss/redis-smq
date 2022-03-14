@@ -21,8 +21,11 @@ const { Consumer } = require('redis-smq');
 **Syntax**
 
 ```javascript
-const consumer = new Consumer()
+constructor(useMultiplexing)
 ```
+
+**Parameters**
+- `useMultiplexing` *(boolean): Optional.*  Enables multiplexing for the given consumer instance. See [Multiplexing](docs/multiplexing.md) for more details. By default, multiplexing is not enabled.
 
 ### Consumer.prototype.consume()
 
