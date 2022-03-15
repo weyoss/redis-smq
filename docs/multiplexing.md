@@ -7,12 +7,12 @@ In normal operation mode, each message handler creates and uses its own redis co
 
 On the other hand, multiplexing allows many message handlers to share a single Redis connection. While this may sound counterproductive, it gives your applications some obvious advantages.
 
-One of them is that consumers using multiplexing can handle a large number of message queues without creating a significant load on your system. The number of Redis connections does not grow linearly, and it is reduced to only one shared connection for all your message handlers. 
+One of them is that consumers using multiplexing can handle a large number of message queues without creating a significant load on your system. The number of Redis connections does not grow linearly as the number of queues grows, and it is reduced to only one shared connection for all your message handlers. 
 
 Multiplexing does not come without a cost. Here are some of its disadvantages:
 
 - Messages, from multiple queues, can not be dequeued and consumed in parallel. In fact, message handlers are run sequentially one after another, and sometimes a multiplexing delay is applied before dequeuing a message from the next queue.
-- A message handler may consume a message for a long time, which blocks the rest of your message handlers.
+- A message handler may take a long time to consume a message and thus not giving back control to other message handlers for dequeuing messages. This may not be desirable if you are expecting messages to be consumed as soon as they are published.
 
 So, before deciding whether to use multiplexing, it is important to know what you are dealing with, considering all the advantages and the disadvantages that it implies.
 

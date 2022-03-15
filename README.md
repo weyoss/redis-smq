@@ -22,7 +22,7 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 * **[Queue Rate Limiting](docs/queue-rate-limiting.md)**: Allowing you to control the rate at which the messages are consumed from a given queue.
 * **[Scheduling Messages](docs/scheduling-messages.md)**: Messages can be configured to be delayed, delivered for N times with an optional period between deliveries, and to be scheduled using CRON expressions.
 * **[Reliable Priority Queues](docs/priority-queues.md)**: Supports priority messaging.
-* **[Multiplexing](docs/multiplexing.md)**: It's great feature which allows message handlers to use a single redis connection to dequeue and consume messages.  
+* **[Multiplexing](docs/multiplexing.md)**: A feature which allows message handlers to use a single redis connection to dequeue and consume messages.  
 * **[HTTP API](docs/http-api.md)**: an HTTP interface is provided to interact with the MQ.
 * **[Web UI](docs/web-ui.md)**: RedisSMQ can be managed also from your web browser.
 * **[Logging](docs/logs.md)**: Comes with a built-in JSON logger. But you can also use your own logger instance.
