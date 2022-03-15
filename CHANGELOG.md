@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## 6.3.0 (2022-03-15)
+
+* Update docs (3ad938a)
+* Use colons instead of dots for joining Redis key segments (75dbcb6)
+* Continue testing consumer message multiplexing (17c9659)
+* Improve multiplexing delay when dequeuing messages (a635c8a)
+* Remove deprecated consumer.cancel(queue,priority,cb), add new tests (4a2d458)
+* Fix test errors, clean up (09feb9c)
+* Prefer method definition over arrow function property (5d7e664)
+* Implement MultiplexedMessageHandlerRunner (6980cbf)
+* Refactor MessageHandler to allow more modular structures (b079244)
+
 ## 6.2.6 (2022-03-04)
 
 * Clean up (2837cc6)
