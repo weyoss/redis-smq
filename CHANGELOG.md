@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 6.3.1 (2022-03-15)
+
+* Fix typos (a5db76a)
+
 ## 6.3.0 (2022-03-15)
 
 * Update docs (3ad938a)
