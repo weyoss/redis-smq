@@ -8,7 +8,6 @@ import {
 import { RedisClient } from '../../common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
 import { queueManager } from './queue-manager';
-import { setConfigurationIfNotExists } from '../../common/configuration/configuration';
 import { getNamespacedLogger } from '../../common/logger';
 
 export class QueueManagerFrontend {
@@ -108,7 +107,6 @@ export class QueueManagerFrontend {
 
   static getSingletonInstance(cb: ICallback<QueueManagerFrontend>): void {
     if (!QueueManagerFrontend.instance) {
-      setConfigurationIfNotExists();
       RedisClient.getNewInstance((err, client) => {
         if (err) cb(err);
         else if (!client) cb(new EmptyCallbackReplyError());

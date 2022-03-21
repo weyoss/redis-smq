@@ -12,4 +12,4 @@ const server = new MonitorServer();
 server.listen();
 
 // Shutting down the server after 10s
-setTimeout(() => server.quit(), 10000);
+// setTimeout(() => server.quit(), 10000);

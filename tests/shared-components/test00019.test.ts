@@ -1,8 +1,8 @@
-import { getRequiredMessageStorageConfig } from '../../src/system/common/configuration/message-storage';
+import MessageStorage from '../../src/system/common/configuration/message-storage';
 
 test('Configuration: storeMessages', async () => {
   expect(() => {
-    getRequiredMessageStorageConfig({
+    MessageStorage({
       storeMessages: {
         acknowledged: {
           queueSize: -11,
@@ -12,7 +12,7 @@ test('Configuration: storeMessages', async () => {
   }).toThrow(`Parameter [queueSize] should be >= 0`);
 
   expect(() => {
-    getRequiredMessageStorageConfig({
+    MessageStorage({
       storeMessages: {
         acknowledged: {
           expire: -7,
@@ -21,7 +21,7 @@ test('Configuration: storeMessages', async () => {
     });
   }).toThrow(`Parameter [expire] should be >= 0`);
 
-  const config = getRequiredMessageStorageConfig({});
+  const config = MessageStorage({});
   expect(config.deadLettered.store).toEqual(false);
   expect(config.deadLettered.expire).toEqual(0);
   expect(config.deadLettered.queueSize).toEqual(0);
@@ -29,7 +29,7 @@ test('Configuration: storeMessages', async () => {
   expect(config.acknowledged.expire).toEqual(0);
   expect(config.acknowledged.queueSize).toEqual(0);
 
-  const config2 = getRequiredMessageStorageConfig({ storeMessages: false });
+  const config2 = MessageStorage({ storeMessages: false });
   expect(config2.deadLettered.store).toEqual(false);
   expect(config2.deadLettered.expire).toEqual(0);
   expect(config2.deadLettered.queueSize).toEqual(0);
@@ -37,7 +37,7 @@ test('Configuration: storeMessages', async () => {
   expect(config2.acknowledged.expire).toEqual(0);
   expect(config2.acknowledged.queueSize).toEqual(0);
 
-  const config3 = getRequiredMessageStorageConfig({ storeMessages: true });
+  const config3 = MessageStorage({ storeMessages: true });
   expect(config3.deadLettered.store).toEqual(true);
   expect(config3.deadLettered.expire).toEqual(0);
   expect(config3.deadLettered.queueSize).toEqual(0);
@@ -45,7 +45,7 @@ test('Configuration: storeMessages', async () => {
   expect(config3.acknowledged.expire).toEqual(0);
   expect(config3.acknowledged.queueSize).toEqual(0);
 
-  const config4 = getRequiredMessageStorageConfig({ storeMessages: {} });
+  const config4 = MessageStorage({ storeMessages: {} });
   expect(config4.deadLettered.store).toEqual(false);
   expect(config4.deadLettered.expire).toEqual(0);
   expect(config4.deadLettered.queueSize).toEqual(0);
@@ -53,7 +53,7 @@ test('Configuration: storeMessages', async () => {
   expect(config4.acknowledged.expire).toEqual(0);
   expect(config4.acknowledged.queueSize).toEqual(0);
 
-  const config5 = getRequiredMessageStorageConfig({
+  const config5 = MessageStorage({
     storeMessages: { acknowledged: false },
   });
   expect(config5.deadLettered.store).toEqual(false);
@@ -63,7 +63,7 @@ test('Configuration: storeMessages', async () => {
   expect(config5.acknowledged.expire).toEqual(0);
   expect(config5.acknowledged.queueSize).toEqual(0);
 
-  const config6 = getRequiredMessageStorageConfig({
+  const config6 = MessageStorage({
     storeMessages: { acknowledged: true },
   });
   expect(config6.deadLettered.store).toEqual(false);
@@ -73,7 +73,7 @@ test('Configuration: storeMessages', async () => {
   expect(config6.acknowledged.expire).toEqual(0);
   expect(config6.acknowledged.queueSize).toEqual(0);
 
-  const config7 = getRequiredMessageStorageConfig({
+  const config7 = MessageStorage({
     storeMessages: { acknowledged: true, deadLettered: false },
   });
   expect(config7.deadLettered.store).toEqual(false);
@@ -83,7 +83,7 @@ test('Configuration: storeMessages', async () => {
   expect(config7.acknowledged.expire).toEqual(0);
   expect(config7.acknowledged.queueSize).toEqual(0);
 
-  const config8 = getRequiredMessageStorageConfig({
+  const config8 = MessageStorage({
     storeMessages: { acknowledged: true, deadLettered: true },
   });
   expect(config8.deadLettered.store).toEqual(true);
@@ -93,7 +93,7 @@ test('Configuration: storeMessages', async () => {
   expect(config8.acknowledged.expire).toEqual(0);
   expect(config8.acknowledged.queueSize).toEqual(0);
 
-  const config9 = getRequiredMessageStorageConfig({
+  const config9 = MessageStorage({
     storeMessages: { acknowledged: {}, deadLettered: true },
   });
   expect(config9.deadLettered.store).toEqual(true);
@@ -103,7 +103,7 @@ test('Configuration: storeMessages', async () => {
   expect(config9.acknowledged.expire).toEqual(0);
   expect(config9.acknowledged.queueSize).toEqual(0);
 
-  const config10 = getRequiredMessageStorageConfig({
+  const config10 = MessageStorage({
     storeMessages: {
       acknowledged: {
         expire: 90000,
@@ -118,7 +118,7 @@ test('Configuration: storeMessages', async () => {
   expect(config10.acknowledged.expire).toEqual(90000);
   expect(config10.acknowledged.queueSize).toEqual(0);
 
-  const config11 = getRequiredMessageStorageConfig({
+  const config11 = MessageStorage({
     storeMessages: {
       acknowledged: {
         expire: 90000,
