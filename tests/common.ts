@@ -29,7 +29,7 @@ import TimeSeriesWorker from '../src/system/workers/time-series.worker';
 import { merge } from 'lodash';
 import { queueManager } from '../src/system/app/queue-manager/queue-manager';
 import { reset } from '../src/system/common/logger';
-import { getRequiredMessageStorageConfig } from '../src/system/common/configuration/message-storage';
+import MessageStorage from '../src/system/common/configuration/message-storage';
 
 export const config = configuration.setConfiguration(testConfig);
 
@@ -136,9 +136,7 @@ export function restoreConfiguration(): void {
 
 export function mockConfiguration(config: IConfig): void {
   const messageStorage =
-    config.storeMessages !== undefined
-      ? getRequiredMessageStorageConfig(config)
-      : {};
+    config.storeMessages !== undefined ? MessageStorage(config) : {};
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   configuration.getConfiguration = () => {

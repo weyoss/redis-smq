@@ -1,9 +1,11 @@
 import { IConfig, IRequiredConfig } from '../../../../types';
-import { merge } from 'lodash';
-import { redisKeys } from '../redis-keys/redis-keys';
 import { ConfigurationError } from './configuration.error';
-import { defaultConfiguration } from './default-configuration';
-import { getRequiredMessageStorageConfig } from './message-storage';
+import Namespace from './namespace';
+import Redis from './redis';
+import Logger from './logger';
+import Message from './message';
+import MessageStorage from './message-storage';
+import Monitor from './monitor';
 
 let currentConfig: IRequiredConfig | null = null;
 
@@ -12,26 +14,17 @@ export function setConfiguration(config: IConfig = {}): IRequiredConfig {
     throw new ConfigurationError(
       'Configuration has been already initialized. Possible configuration overwrite.',
     );
-  const userConfiguration = {
-    ...config,
+  currentConfig = {
+    namespace: Namespace(config),
+    redis: Redis(config),
+    logger: Logger(config),
+    message: Message(config),
+    storeMessages: MessageStorage(config),
+    monitor: Monitor(config),
   };
-  const storeMessages = getRequiredMessageStorageConfig(userConfiguration);
-  delete userConfiguration.storeMessages;
-  currentConfig = merge({}, defaultConfiguration, userConfiguration, {
-    storeMessages,
-  });
-  redisKeys.setNamespace(currentConfig.namespace);
   return currentConfig;
 }
 
-export function setConfigurationIfNotExists(): boolean {
-  if (!currentConfig) {
-    setConfiguration();
-    return true;
-  }
-  return false;
-}
-
 export function getConfiguration(): IRequiredConfig {
-  return currentConfig ?? defaultConfiguration;
+  return currentConfig ?? setConfiguration();
 }

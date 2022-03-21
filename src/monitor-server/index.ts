@@ -18,10 +18,7 @@ import { WorkerRunner } from '../system/common/worker/worker-runner/worker-runne
 import * as cors from '@koa/cors';
 import { PanicError } from '../system/common/errors/panic.error';
 import { apiController } from './controllers/api/api-controller';
-import {
-  getConfiguration,
-  setConfigurationIfNotExists,
-} from '../system/common/configuration/configuration';
+import { getConfiguration } from '../system/common/configuration/configuration';
 import { getNamespacedLogger } from '../system/common/logger';
 import { redisKeys } from '../system/common/redis-keys/redis-keys';
 import { WorkerPool } from '../system/common/worker/worker-runner/worker-pool';
@@ -38,17 +35,16 @@ const RedisClientPrototypeAsync = promisifyAll(RedisClient.prototype);
 type TRedisClientAsync = typeof RedisClientPrototypeAsync;
 
 export class MonitorServer {
-  private instanceId: string;
   protected config;
   protected powerManager;
   protected logger;
+  protected instanceId: string;
   protected workerRunner: WorkerRunner | null = null;
   protected application: TBootstrapped | null = null;
   protected redisClient: TRedisClientAsync | null = null;
   protected subscribeClient: TRedisClientAsync | null = null;
 
   constructor() {
-    setConfigurationIfNotExists();
     this.instanceId = uuid();
     this.config = getConfiguration();
     this.powerManager = new PowerManager(false);
@@ -87,11 +83,11 @@ export class MonitorServer {
     this.redisClient = promisifyAll(
       await RedisClientAsync.getNewInstanceAsync(),
     );
-    const { socketOpts = {} } = this.config.monitor;
+    const { socketOpts = {}, basePath } = this.config.monitor;
     const app = new Koa<Koa.DefaultState, IContext>();
     app.use(errorHandler);
     app.use(KoaBodyParser());
-    app.use(Middleware(['/api/', '/socket.io/']));
+    app.use(Middleware(['/api/', '/socket.io/'], basePath));
     app.context.config = this.config;
     app.context.logger = this.logger;
     app.context.redis = this.redisClient;
@@ -153,11 +149,7 @@ export class MonitorServer {
   }
 
   async listen(): Promise<boolean> {
-    const {
-      enabled,
-      host = '0.0.0.0',
-      port = 7210,
-    } = getConfiguration().monitor;
+    const { enabled, host = '0.0.0.0', port = 7210 } = this.config.monitor;
     if (!enabled) {
       throw new PanicError('Monitor server is not enabled. Enable it first.');
     }

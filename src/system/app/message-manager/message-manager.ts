@@ -18,7 +18,6 @@ import {
   requeueListMessage,
 } from './common';
 import { MessageNotFoundError } from './errors/message-not-found.error';
-import { setConfigurationIfNotExists } from '../../common/configuration/configuration';
 import { getNamespacedLogger } from '../../common/logger';
 
 export class MessageManager {
@@ -417,7 +416,6 @@ export class MessageManager {
 
   static getSingletonInstance(cb: ICallback<MessageManager>): void {
     if (!MessageManager.instance) {
-      setConfigurationIfNotExists();
       RedisClient.getNewInstance((err, client) => {
         if (err) cb(err);
         else if (!client) cb(new EmptyCallbackReplyError());

@@ -12,10 +12,7 @@ import { events } from './events';
 import { RedisClient } from './redis-client/redis-client';
 import { EmptyCallbackReplyError } from './errors/empty-callback-reply.error';
 import { PanicError } from './errors/panic.error';
-import {
-  getConfiguration,
-  setConfigurationIfNotExists,
-} from './configuration/configuration';
+import { getConfiguration } from './configuration/configuration';
 import { getNamespacedLogger } from './logger';
 import { waterfall } from '../lib/async';
 
@@ -27,7 +24,6 @@ export abstract class Base extends EventEmitter {
 
   constructor() {
     super();
-    setConfigurationIfNotExists();
     this.id = uuid();
     this.powerManager = new PowerManager(false);
     this.logger = getNamespacedLogger(

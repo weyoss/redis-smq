@@ -31,6 +31,7 @@ export interface IMonitorConfig {
   port?: number;
   host?: string;
   socketOpts?: ServerOptions;
+  basePath?: string;
 }
 
 export type TMessageDefaultOptions = {
@@ -74,10 +75,16 @@ export interface IRequiredStoreMessagesConfig {
   deadLettered: IRequiredStoreMessagesParams;
 }
 
+export interface IRequiredMonitorConfig extends IMonitorConfig {
+  enabled: boolean;
+  basePath: string;
+}
+
 export interface IRequiredConfig
   extends Required<Omit<IConfig, 'storeMessages'>> {
-  message: Required<TMessageDefaultOptions>;
+  message: TMessageDefaultOptions;
   storeMessages: IRequiredStoreMessagesConfig;
+  monitor: IRequiredMonitorConfig;
 }
 
 ///////////

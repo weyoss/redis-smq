@@ -50,7 +50,7 @@ function getMessageStorageParams(
   };
 }
 
-export function getRequiredMessageStorageConfig(
+export default function MessageStorage(
   config: IConfig,
 ): IRequiredStoreMessagesConfig {
   return {
