@@ -32,7 +32,7 @@ module.exports = {
 
 - `monitor.port` *(Integer): Optional.* Port of the monitor server. By default, `7210`.
 
-- `monitor.basePath` *(String): Optional.* Let the Web UI know that it is running behind a reverse proxy server and use a base path (for example `/monitor`) to render links and redirects correctly. See [Running the Web UI behind a reverse proxy](docs/web-ui.md#running-the-web-ui-behind-a-reverse-proxy). 
+- `monitor.basePath` *(String): Optional.* Let the Web UI know that it is running behind a reverse proxy server and use a base path (for example `/monitor`) to render links and redirects correctly. See [Running the Web UI behind a reverse proxy](#running-the-web-ui-behind-a-reverse-proxy). 
 
 - `monitor.socketOpts` *(Object): Optional.* WebSocket parameters for `socket.io`. See [https://socket.io/docs/v4/server-api/#new-serverport-options](https://socket.io/docs/v4/server-api/#new-serverport-options) for more details.
 
