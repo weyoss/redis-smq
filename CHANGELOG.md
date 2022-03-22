@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 6.4.1 (2022-03-22)
+
+* Fix fsevents not accessible from jest-haste-map (482cb11)
+* Fix broken url in the Web UI docs (02e08d7)
+
 ## 6.4.0 (2022-03-22)
 
 * Update Web UI docs (ed63186)
