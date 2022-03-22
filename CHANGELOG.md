@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 6.4.0 (2022-03-22)
+
+* Update Web UI docs (ed63186)
+* Bump up redis-smq-monitor to v6.5.5 (3179f85)
+* Test monitor.basePath configuration (00c680d)
+* Support basePath when running web ui from behind a reverse proxy (ea17ffe)
+
 ## 6.3.1 (2022-03-15)
 
 * Fix typos (a5db76a)
