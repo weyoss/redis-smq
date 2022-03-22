@@ -10,8 +10,6 @@ real-time.
 ```javascript
 'use strict';
 
-const path = require('path');
-
 module.exports = {
     monitor: {
         enabled: true,
@@ -33,6 +31,8 @@ module.exports = {
 - `monitor.host` *(String): Optional.* IP address of the monitor server. By default, `0.0.0.0`.
 
 - `monitor.port` *(Integer): Optional.* Port of the monitor server. By default, `7210`.
+
+- `monitor.basePath` *(String): Optional.* Let the Web UI know that it is running behind a reverse proxy server and use a base path (for example `/monitor`) to render links and redirects correctly. See [Running the Web UI behind a reverse proxy](docs/web-ui.md#running-the-web-ui-behind-a-reverse-proxy). 
 
 - `monitor.socketOpts` *(Object): Optional.* WebSocket parameters for `socket.io`. See [https://socket.io/docs/v4/server-api/#new-serverport-options](https://socket.io/docs/v4/server-api/#new-serverport-options) for more details.
 
@@ -67,3 +67,80 @@ When running the example above, the expected output should be:
 [MonitorServer] Going down...
 [MonitorServer] Down.
 ```
+
+### Running the Web UI behind a reverse proxy
+
+To run the Web UI behind a reverse proxy server you need first to configure correctly your server.
+
+Depending on your setup, some extra steps may be required. The easiest way to start with is to serve the Web UI using a transparent proxy.
+
+I am using Nginx as a proxy server, but you can use any other server depending on your preferences.
+
+#### Transparent reverse proxy
+
+Sample Nginx configuration:
+
+```text
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    '' close;
+}
+upstream redis-smq {
+    server 127.0.0.1:3000;
+}
+server {
+    listen       5000;
+    listen  [::]:5000;
+    location / {
+        proxy_pass http://redis-smq;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+    }
+}
+```
+
+No additional configuration is required.
+
+#### Reverse proxy with URL rewrite
+
+Sample Nginx configuration:
+
+```text
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    '' close;
+}
+upstream redis-smq {
+    server 127.0.0.1:3000;
+}
+server {
+    listen       5000;
+    listen  [::]:5000;
+    location /monitor {
+        proxy_pass http://redis-smq;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        rewrite  ^/monitor/(.*)  /$1 break;
+    }
+}
+```
+
+Additionally, you need to configure the Web UI.
+
+Sample RedisSMQ configuration:
+
+```javascript
+'use strict';
+
+module.exports = {
+    monitor: {
+        enabled: true,
+        host: '127.0.0.1',
+        port: 3000,
+        basePath: '/monitor' // <-- using the base path
+    },
+};
+```
+
