@@ -7,7 +7,7 @@ import { Middleware } from 'redis-smq-monitor';
 import { v4 as uuid } from 'uuid';
 import { RedisClient } from '../system/common/redis-client/redis-client';
 import { errorHandler } from './middlewares/error-handler';
-import { Services } from './services';
+import { initServices } from './services';
 import { resolve } from 'path';
 import { getApplicationRouter } from './lib/routing';
 import { IContext, TApplication } from './types/common';
@@ -91,7 +91,7 @@ export class MonitorServer {
     app.context.config = this.config;
     app.context.logger = this.logger;
     app.context.redis = this.redisClient;
-    app.context.services = Services(app);
+    initServices(this.redisClient);
     app.use(
       cors({
         origin: '*',

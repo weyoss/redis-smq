@@ -1,13 +1,13 @@
 import { TRouteControllerActionHandler } from '../../../../../../lib/routing';
 import { PurgePendingMessagesRequestDTO } from './purge-pending-messages.request.DTO';
 import { PurgePendingMessagesResponseDTO } from './purge-pending-messages.response.DTO';
+import { messagesServiceInstance } from '../../../../../../services';
 
 export const PurgePendingMessagesHandler: TRouteControllerActionHandler<
   PurgePendingMessagesRequestDTO,
   PurgePendingMessagesResponseDTO
-> = (app) => {
+> = () => {
   return async (ctx) => {
-    const { messagesService } = app.context.services;
-    return messagesService.purgePendingMessages(ctx.state.dto);
+    return messagesServiceInstance().purgePendingMessages(ctx.state.dto);
   };
 };
