@@ -39,7 +39,7 @@ export class Consumer extends Base {
     this.redisKeys = redisKeys.getConsumerKeys(this.getId());
   }
 
-  protected setUpHeartbeat = (cb: ICallback<void>): void => {
+  private setUpHeartbeat = (cb: ICallback<void>): void => {
     RedisClient.getNewInstance((err, redisClient) => {
       if (err) cb(err);
       else if (!redisClient) cb(new EmptyCallbackReplyError());
@@ -53,7 +53,7 @@ export class Consumer extends Base {
     });
   };
 
-  protected tearDownHeartbeat = (cb: ICallback<void>): void => {
+  private tearDownHeartbeat = (cb: ICallback<void>): void => {
     if (this.heartbeat) {
       this.heartbeat.quit(() => {
         this.heartbeat = null;
@@ -62,7 +62,7 @@ export class Consumer extends Base {
     } else cb();
   };
 
-  protected setUpConsumerWorkers = (cb: ICallback<void>): void => {
+  private setUpConsumerWorkers = (cb: ICallback<void>): void => {
     const redisClient = this.getSharedRedisClient();
     const { keyLockConsumerWorkersRunner } = this.getRedisKeys();
     this.workerRunner = new WorkerRunner<IConsumerWorkerParameters>(
@@ -88,7 +88,7 @@ export class Consumer extends Base {
     cb();
   };
 
-  protected tearDownConsumerWorkers = (cb: ICallback<void>): void => {
+  private tearDownConsumerWorkers = (cb: ICallback<void>): void => {
     if (this.workerRunner) {
       this.workerRunner.quit(() => {
         this.workerRunner = null;
@@ -97,12 +97,12 @@ export class Consumer extends Base {
     } else cb();
   };
 
-  protected runMessageHandlers = (cb: ICallback<void>): void => {
+  private runMessageHandlers = (cb: ICallback<void>): void => {
     const redisClient = this.getSharedRedisClient();
     this.messageHandlerRunner.run(redisClient, cb);
   };
 
-  protected shutdownMessageHandlers = (cb: ICallback<void>): void => {
+  private shutdownMessageHandlers = (cb: ICallback<void>): void => {
     if (this.messageHandlerRunner) {
       this.messageHandlerRunner.shutdown(cb);
     } else cb();

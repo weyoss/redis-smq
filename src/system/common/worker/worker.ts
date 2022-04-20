@@ -8,7 +8,7 @@ import { PanicError } from '../errors/panic.error';
 export abstract class Worker<T extends TWorkerParameters = TWorkerParameters> {
   private readonly ticker: Ticker | null = null;
   private readonly powerManager: PowerManager | null = null;
-  private managed: boolean;
+  private readonly managed: boolean;
   protected readonly redisClient: RedisClient;
 
   constructor(redisClient: RedisClient, params: T, managed: boolean) {

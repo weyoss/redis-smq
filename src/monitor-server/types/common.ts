@@ -1,7 +1,6 @@
 import * as Koa from 'koa';
 import { ICompatibleLogger, IConfig } from '../../../types';
 import { RedisClient } from '../../system/common/redis-client/redis-client';
-import { Services } from '../services';
 
 export interface IResponseBodyError {
   code: number;
@@ -26,7 +25,6 @@ export interface IContextState<DTO> extends Koa.DefaultState {
 export interface IContext extends Koa.DefaultContext {
   config: IConfig;
   redis: RedisClient;
-  services: ReturnType<typeof Services>;
   logger: ICompatibleLogger;
 }
 
