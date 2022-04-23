@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 6.4.2 (2022-04-23)
+
+* Test expired locks (367660e)
+* Do not throw an exception and try to acquire again an expired lock (b7f7d36)
+* Bump up redis-smq-monitor to v6.5.6 (c31cd2e)
+* Fix NPM security vulnerabilities (3900ddf)
+* Clean up monitor-server services (954d856)
+
 ## 6.4.1 (2022-03-22)
 
 * Fix fsevents not accessible from jest-haste-map (482cb11)
