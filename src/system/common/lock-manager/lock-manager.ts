@@ -1,18 +1,25 @@
 import { ICallback } from '../../../../types';
 import { RedisClient } from '../redis-client/redis-client';
-import { LockManagerError } from './lock-manager.error';
 import { v4 as uuid } from 'uuid';
 import { ELuaScriptName } from '../redis-client/lua-scripts';
+import { LockManagerError } from './lock-manager.error';
+
+enum ELockStatus {
+  unlocked,
+  locking,
+  locked,
+  unlocking,
+}
 
 export class LockManager {
-  protected lockKey: string;
-  protected lockId: string;
-  protected isLocked = false;
+  protected readonly lockId: string;
+  protected readonly lockKey: string;
+  protected readonly retryOnFail: boolean;
+  protected readonly ttl: number;
+  protected readonly redisClient: RedisClient;
+
+  protected status: ELockStatus = ELockStatus.unlocked;
   protected timer: NodeJS.Timeout | null = null;
-  protected retryOnFail: boolean;
-  protected ttl: number;
-  protected redisClient: RedisClient;
-  protected isRunning = true;
 
   constructor(
     redisClient: RedisClient,
@@ -27,8 +34,29 @@ export class LockManager {
     this.redisClient = redisClient;
   }
 
-  protected lock(cb: ICallback<string>): void {
-    this.redisClient.set(this.lockKey, this.lockId, 'PX', this.ttl, 'NX', cb);
+  protected retry(cb: ICallback<boolean>): void {
+    this.timer = setTimeout(() => {
+      this.lock(cb);
+    }, 1000);
+  }
+
+  protected lock(cb: ICallback<boolean>): void {
+    if (this.status === ELockStatus.locking) {
+      this.redisClient.set(
+        this.lockKey,
+        this.lockId,
+        'PX',
+        this.ttl,
+        'NX',
+        (err, reply) => {
+          if (err) cb(err);
+          else if (!reply) {
+            if (this.retryOnFail) this.retry(cb);
+            else cb(null, false);
+          } else cb(null, true);
+        },
+      );
+    } else cb(null, false);
   }
 
   protected extend(cb: ICallback<boolean>): void {
@@ -38,7 +66,8 @@ export class LockManager {
       [this.lockId, this.ttl],
       (err, reply) => {
         if (err) cb(err);
-        else cb(null, !!reply);
+        else if (!!reply) cb(null, true);
+        else this.lock(cb);
       },
     );
   }
@@ -56,100 +85,39 @@ export class LockManager {
   }
 
   acquireLock(cb: ICallback<boolean>): void {
-    if (!this.isRunning) {
+    const status = this.status;
+    if (status === ELockStatus.unlocking || status === ELockStatus.locking) {
       cb(
         new LockManagerError(
-          'Instance is no longer usable after calling quit(). Create a new instance.',
+          `Can not acquire lock while a acquireLock() or releaseLock() call is pending`,
         ),
       );
-    } else if (this.isLocked) {
-      this.extend((err, reply) => {
-        if (err) cb(err);
-        else if (!reply) {
-          this.isLocked = false;
-          cb(
-            new LockManagerError(
-              `Could not extend the acquired lock with ID ${this.lockId}`,
-            ),
-          );
-        } else cb(null, true);
-      });
     } else {
-      this.lock((err, reply) => {
-        if (err) cb(err);
-        else if (!reply) {
-          if (this.retryOnFail) {
-            this.timer = setTimeout(() => {
-              this.acquireLock(cb);
-            }, 1000);
-          } else cb(null, false);
-        } else {
-          this.isLocked = true;
-          cb(null, this.isLocked);
-        }
-      });
+      const done: ICallback<boolean> = (err, status) => {
+        this.status = status ? ELockStatus.locked : ELockStatus.unlocked;
+        cb(err, status);
+      };
+      this.status = ELockStatus.locking;
+      if (status === ELockStatus.locked) this.extend(done);
+      else this.lock(done);
     }
   }
 
   releaseLock(cb: ICallback<void>): void {
-    const done: ICallback<boolean> = (err) => {
-      if (err) cb(err);
-      else {
-        // ignoring release status
-        this.isLocked = false;
-        cb();
-      }
-    };
-    if (!this.isRunning) {
-      cb(
-        new LockManagerError(
-          `Instance is no longer usable after calling quit(). Create a new instance.`,
-        ),
-      );
-    } else {
+    const status = this.status;
+    if (status === ELockStatus.unlocking)
+      cb(new LockManagerError('releaseLock() has been already called'));
+    else if (status === ELockStatus.unlocked) cb();
+    else {
+      this.status = ELockStatus.unlocking;
       if (this.timer) clearTimeout(this.timer);
-      if (!this.isLocked) done();
-      else this.release(done);
+      this.release((err) => {
+        if (err) cb(err);
+        else {
+          this.status = ELockStatus.unlocked;
+          cb();
+        }
+      });
     }
   }
-
-  quit(cb: ICallback<void>): void {
-    if (!this.isRunning) cb();
-    else
-      this.releaseLock((err) => {
-        this.isRunning = false;
-        cb(err);
-      });
-  }
-
-  /*
-  isLocked(): boolean {
-    return this.acquiredLock !== null;
-  }
-
-  static exclusiveRun(
-    redisClient: RedisClient,
-    key: string,
-    fn: (cb: ICallback<void>) => void,
-    cb: ICallback<void>,
-  ): void {
-    const lockManager = new LockManager(redisClient, key, 10000, false);
-    lockManager.acquireLock((err, locked) => {
-      if (err) cb(err);
-      else {
-        if (locked) {
-          fn((err) => {
-            lockManager.quit(() => {
-              if (err) cb(err);
-              else cb();
-            });
-          });
-        } else
-          cb(
-            new LockManagerError('Could not acquire a lock. Try again later.'),
-          );
-      }
-    });
-  }
-   */
 }

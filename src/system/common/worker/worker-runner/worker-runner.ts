@@ -133,7 +133,7 @@ export class WorkerRunner<
   };
 
   private releaseLock = (cb: ICallback<void>) => {
-    this.lockManager.quit(cb);
+    this.lockManager.releaseLock(cb);
   };
 
   run = (): void => {
