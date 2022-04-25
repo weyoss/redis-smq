@@ -30,7 +30,6 @@ export class WorkerRunner<
   private readonly redisClient: RedisClient;
   private readonly logger: ICompatibleLogger;
   private readonly workerPool: WorkerPool;
-  private initialized = false;
 
   constructor(
     redisClient: RedisClient,
@@ -45,32 +44,42 @@ export class WorkerRunner<
     this.workersDir = workersDir;
     this.workerParameters = workerParameters;
     this.logger = getNamespacedLogger(this.constructor.name);
-    this.lockManager = new LockManager(redisClient, keyLock, 10000, false);
+    this.lockManager = new LockManager(
+      redisClient,
+      keyLock,
+      10000,
+      false,
+      true,
+    );
     this.ticker = new Ticker(this.onTick);
     this.workerPool = workerPool;
   }
 
   private onTick = (): void => {
-    this.lockManager.acquireLock((err, locked) => {
-      if (err) this.emit(events.ERROR, err);
-      else if (locked) {
-        if (!this.initialized)
-          this.init((err) => {
-            if (err) this.emit(events.ERROR, err);
-            else {
-              this.initialized = true;
-              this.emit(events.WORKER_RUNNER_WORKERS_STARTED);
-              this.ticker.nextTick();
-            }
-          });
-        else if (this.workerPool)
-          this.workerPool.work((err) => {
-            if (err) this.emit(events.ERROR, err);
-            else this.ticker.nextTick();
-          });
+    waterfall(
+      [
+        (cb: ICallback<boolean>) => {
+          if (!this.lockManager.isLocked()) {
+            this.lockManager.acquireLock((err, status) => {
+              if (status) {
+                this.logger.info(
+                  `Workers are exclusively running from this instance (Lock ID ${this.lockManager.getId()}).`,
+                );
+              }
+              cb(err, status);
+            });
+          } else cb(null, true);
+        },
+        (status: boolean, cb: ICallback<void>) => {
+          if (status) this.workerPool.work(cb);
+          else cb();
+        },
+      ],
+      (err) => {
+        if (err) this.emit(events.ERROR, err);
         else this.ticker.nextTick();
-      } else this.ticker.nextTick();
-    });
+      },
+    );
   };
 
   private init = (cb: ICallback<void>): void => {
@@ -123,8 +132,7 @@ export class WorkerRunner<
   };
 
   private clearWorkerPool = (cb: ICallback<void>): void => {
-    if (this.workerPool) this.workerPool.clear(cb);
-    else cb();
+    this.workerPool.clear(cb);
   };
 
   private stopTicker = (cb: ICallback<void>) => {
@@ -138,15 +146,19 @@ export class WorkerRunner<
 
   run = (): void => {
     this.powerManager.goingUp();
-    this.ticker.nextTick();
-    this.powerManager.commit();
-    this.emit(events.UP);
+    this.init((err) => {
+      if (err) this.emit(events.ERROR, err);
+      else {
+        this.powerManager.commit();
+        this.emit(events.UP);
+        this.ticker.nextTick();
+      }
+    });
   };
 
   quit = (cb: ICallback<void>): void => {
     this.powerManager.goingDown();
     waterfall([this.stopTicker, this.clearWorkerPool, this.releaseLock], () => {
-      this.initialized = false;
       this.powerManager.commit();
       this.emit(events.DOWN);
       cb();

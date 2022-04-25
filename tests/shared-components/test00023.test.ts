@@ -1,39 +1,30 @@
-import { delay, promisifyAll } from 'bluebird';
+import { promisifyAll } from 'bluebird';
 import { getRedisInstance } from '../common';
 import { LockManager } from '../../src/system/common/lock-manager/lock-manager';
-import { ICallback } from '../../types';
 
-// Making extend() and lock() methods public so we can spy on them
-class TestLockManager extends LockManager {
-  public override extend(cb: ICallback<boolean>) {
-    super.extend(cb);
-  }
-  public override lock(cb: ICallback<boolean>) {
-    super.lock(cb);
-  }
-}
-
-test('LockManager:  Do not throw an exception and try to acquire again an expired lock ', async () => {
+test('LockManager: retryOnFail', async () => {
   const redisClient = await getRedisInstance();
   const lockManager = promisifyAll(
-    new TestLockManager(redisClient, 'key1', 10000, false),
+    new LockManager(redisClient, 'key1', 20000, false),
   );
 
-  const r1 = await lockManager.acquireLockAsync();
-  expect(r1).toBe(true);
+  const r = await lockManager.acquireLockAsync();
+  expect(r).toBe(true);
 
-  const mockExtend: jest.SpyInstance<void, [cb: ICallback<boolean>]> =
-    jest.spyOn(lockManager, 'extend');
-
-  const mockLock: jest.SpyInstance<void, [cb: ICallback<boolean>]> = jest.spyOn(
-    lockManager,
-    'lock',
+  const lockManager2 = promisifyAll(
+    new LockManager(redisClient, 'key1', 10000, false),
   );
 
-  await delay(15000);
-  const r2 = await lockManager.acquireLockAsync();
-  expect(r2).toBe(true);
+  const r1 = await lockManager2.acquireLockAsync();
+  expect(r1).toBe(false);
 
-  expect(mockExtend).toHaveBeenCalledTimes(1);
-  expect(mockLock).toHaveBeenCalledTimes(1);
+  const lockManager3 = promisifyAll(
+    new LockManager(redisClient, 'key1', 10000, true),
+  );
+
+  const r3 = await lockManager3.acquireLockAsync();
+  expect(r3).toBe(true);
+
+  const r4 = await lockManager3.extendLockAsync();
+  expect(r4).toBe(true);
 });

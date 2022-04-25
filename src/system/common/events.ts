@@ -16,5 +16,4 @@ export const events = {
 
   RATE_TICK: 'rate_tick',
   HEARTBEAT_TICK: 'heartbeat_tick',
-  WORKER_RUNNER_WORKERS_STARTED: 'worker_runner_workers_started',
 };
