@@ -93,31 +93,39 @@ export abstract class Base extends EventEmitter {
   }
 
   run(cb?: ICallback<boolean>): void {
-    const r = this.powerManager.goingUp();
-    if (r) {
-      this.emit(events.GOING_UP);
-      const tasks = this.goingUp();
-      waterfall(tasks, (err) => {
-        if (err) {
-          if (cb) cb(err);
-          else this.emit(events.ERROR, err);
-        } else this.up(cb);
-      });
+    if (this.powerManager.isGoingDown()) {
+      this.once(events.DOWN, () => this.run(cb));
     } else {
-      cb && cb(null, r);
+      const r = this.powerManager.goingUp();
+      if (r) {
+        this.emit(events.GOING_UP);
+        const tasks = this.goingUp();
+        waterfall(tasks, (err) => {
+          if (err) {
+            if (cb) cb(err);
+            else this.emit(events.ERROR, err);
+          } else this.up(cb);
+        });
+      } else {
+        cb && cb(null, r);
+      }
     }
   }
 
   shutdown(cb?: ICallback<boolean>): void {
-    const r = this.powerManager.goingDown();
-    if (r) {
-      this.emit(events.GOING_DOWN);
-      const tasks = this.goingDown();
-      waterfall(tasks, () => {
-        // ignoring shutdown errors
-        this.down(cb);
-      });
-    } else cb && cb(null, r);
+    if (this.powerManager.isGoingUp()) {
+      this.once(events.UP, () => this.shutdown(cb));
+    } else {
+      const r = this.powerManager.goingDown();
+      if (r) {
+        this.emit(events.GOING_DOWN);
+        const tasks = this.goingDown();
+        waterfall(tasks, () => {
+          // ignoring shutdown errors
+          this.down(cb);
+        });
+      } else cb && cb(null, r);
+    }
   }
 
   isRunning(): boolean {

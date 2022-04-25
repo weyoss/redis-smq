@@ -140,12 +140,10 @@ export class MonitorServer {
     this.workerRunner.on(events.ERROR, (err: Error) => {
       throw err;
     });
-    this.workerRunner.once(events.WORKER_RUNNER_WORKERS_STARTED, () => {
-      this.logger.info(
-        `Workers are running exclusively from this monitor server instance.`,
-      );
+    await new Promise((resolve) => {
+      this.workerRunner?.once(events.UP, resolve);
+      this.workerRunner?.run();
     });
-    this.workerRunner.run();
   }
 
   async listen(): Promise<boolean> {
