@@ -18,6 +18,7 @@ import { EmptyCallbackReplyError } from '../../errors/empty-callback-reply.error
 import { Worker } from '../worker';
 import { PanicError } from '../../errors/panic.error';
 import { each, waterfall } from '../../../lib/async';
+import { LockManagerAcquireError } from '../../lock-manager/errors/lock-manager-acquire.error';
 
 export class WorkerRunner<
   WorkerParameters extends TWorkerParameters = TWorkerParameters,
@@ -58,26 +59,26 @@ export class WorkerRunner<
   private onTick = (): void => {
     waterfall(
       [
-        (cb: ICallback<boolean>) => {
+        (cb: ICallback<void>) => {
           if (!this.lockManager.isLocked()) {
-            this.lockManager.acquireLock((err, status) => {
-              if (status) {
+            this.lockManager.acquireLock((err) => {
+              if (!err) {
                 this.logger.info(
                   `Workers are exclusively running from this instance (Lock ID ${this.lockManager.getId()}).`,
                 );
               }
-              cb(err, status);
+              cb(err);
             });
-          } else cb(null, true);
+          } else cb();
         },
-        (status: boolean, cb: ICallback<void>) => {
-          if (status) this.workerPool.work(cb);
-          else cb();
+        (cb: ICallback<void>) => {
+          this.workerPool.work(cb);
         },
       ],
       (err) => {
-        if (err) this.emit(events.ERROR, err);
-        else this.ticker.nextTick();
+        if (!err || err instanceof LockManagerAcquireError)
+          this.ticker.nextTick();
+        else this.emit(events.ERROR, err);
       },
     );
   };

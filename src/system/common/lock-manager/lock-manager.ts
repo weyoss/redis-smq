@@ -2,7 +2,10 @@ import { ICallback } from '../../../../types';
 import { RedisClient } from '../redis-client/redis-client';
 import { v4 as uuid } from 'uuid';
 import { ELuaScriptName } from '../redis-client/lua-scripts';
-import { LockManagerError } from './lock-manager.error';
+import { LockManagerError } from './errors/lock-manager.error';
+import { LockManagerAbortError } from './errors/lock-manager-abort.error';
+import { LockManagerExtendError } from './errors/lock-manager-extend.error';
+import { LockManagerAcquireError } from './errors/lock-manager-acquire.error';
 
 enum ELockStatus {
   unlocked,
@@ -62,7 +65,7 @@ export class LockManager {
     }
   }
 
-  protected extend(cb: ICallback<boolean>): void {
+  protected extend(cb: ICallback<void>): void {
     if (this.status !== ELockStatus.locked) {
       cb(
         new LockManagerError(
@@ -79,16 +82,15 @@ export class LockManager {
           if (err) cb(err);
           else {
             if (this.status === ELockStatus.extending) {
-              const extended = !!reply;
-              if (extended) this.setLocked();
-              else this.setUnlocked();
-              cb(null, extended);
+              if (!reply) {
+                this.setUnlocked();
+                cb(new LockManagerExtendError());
+              } else {
+                this.setLocked();
+                cb();
+              }
             } else {
-              cb(
-                new LockManagerError(
-                  `releaseLock() may have been called. Abandoning.`,
-                ),
-              );
+              cb(new LockManagerAbortError());
             }
           }
         },
@@ -100,14 +102,15 @@ export class LockManager {
     const ms = Math.ceil(this.ttl / 2);
     this.autoExtendTimer = setTimeout(
       () =>
-        this.extend((err, locked) => {
-          if (err) if (locked) this.runAutoExtendTimer();
+        this.extend((err) => {
+          if (!err) this.runAutoExtendTimer();
+          else if (!(err instanceof LockManagerAbortError)) throw err;
         }),
       ms,
     );
   }
 
-  acquireLock(cb: ICallback<boolean>): void {
+  acquireLock(cb: ICallback<void>): void {
     if (this.status !== ELockStatus.unlocked) {
       cb(
         new LockManagerError(
@@ -132,34 +135,26 @@ export class LockManager {
                     this.lockingTimer = setTimeout(lock, 1000);
                   else {
                     this.setUnlocked();
-                    cb(null, false);
+                    cb(new LockManagerAcquireError());
                   }
                 } else {
                   this.setLocked(true);
-                  cb(null, true);
+                  cb();
                 }
               } else {
-                cb(
-                  new LockManagerError(
-                    `releaseLock() may have been called. Abandoning.`,
-                  ),
-                );
+                cb(new LockManagerAbortError());
               }
             },
           );
         } else {
-          cb(
-            new LockManagerError(
-              `releaseLock() may have been called. Abandoning.`,
-            ),
-          );
+          cb(new LockManagerAbortError());
         }
       };
       lock();
     }
   }
 
-  extendLock(cb: ICallback<boolean>): void {
+  extendLock(cb: ICallback<void>): void {
     if (this.autoExtend) {
       cb(
         new LockManagerError(
