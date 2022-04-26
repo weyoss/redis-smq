@@ -8,23 +8,21 @@ test('LockManager: retryOnFail', async () => {
     new LockManager(redisClient, 'key1', 20000, false),
   );
 
-  const r = await lockManager.acquireLockAsync();
-  expect(r).toBe(true);
+  await lockManager.acquireLockAsync();
 
   const lockManager2 = promisifyAll(
     new LockManager(redisClient, 'key1', 10000, false),
   );
 
-  const r1 = await lockManager2.acquireLockAsync();
-  expect(r1).toBe(false);
+  await expect(lockManager2.acquireLockAsync()).rejects.toThrow(
+    `Could not acquire a lock`,
+  );
 
   const lockManager3 = promisifyAll(
     new LockManager(redisClient, 'key1', 10000, true),
   );
 
-  const r3 = await lockManager3.acquireLockAsync();
-  expect(r3).toBe(true);
+  await lockManager3.acquireLockAsync();
 
-  const r4 = await lockManager3.extendLockAsync();
-  expect(r4).toBe(true);
+  await lockManager3.extendLockAsync();
 });

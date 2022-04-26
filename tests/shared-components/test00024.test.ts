@@ -8,8 +8,7 @@ test('LockManager: autoExtend', async () => {
     new LockManager(redisClient, 'key1', 10000, false, true),
   );
 
-  const r = await lockManager.acquireLockAsync();
-  expect(r).toBe(true);
+  await lockManager.acquireLockAsync();
 
   await expect(lockManager.extendLockAsync()).rejects.toThrow(
     `Can not extend a lock when autoExtend is enabled`,
@@ -21,8 +20,9 @@ test('LockManager: autoExtend', async () => {
     new LockManager(redisClient, 'key1', 10000, false),
   );
 
-  const r2 = await lockManager2.acquireLockAsync();
-  expect(r2).toBe(false);
+  await expect(lockManager2.acquireLockAsync()).rejects.toThrow(
+    `Could not acquire a lock`,
+  );
 
   await lockManager.releaseLockAsync();
   await lockManager2.releaseLockAsync();
