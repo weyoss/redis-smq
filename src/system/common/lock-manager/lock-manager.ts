@@ -2,13 +2,17 @@ import { ICallback } from '../../../../types';
 import { RedisClient } from '../redis-client/redis-client';
 import { v4 as uuid } from 'uuid';
 import { ELuaScriptName } from '../redis-client/lua-scripts';
-import { LockManagerError } from './lock-manager.error';
+import { LockManagerError } from './errors/lock-manager.error';
+import { LockManagerAbortError } from './errors/lock-manager-abort.error';
+import { LockManagerExtendError } from './errors/lock-manager-extend.error';
+import { LockManagerAcquireError } from './errors/lock-manager-acquire.error';
 
 enum ELockStatus {
   unlocked,
   locking,
   locked,
-  unlocking,
+  releasing,
+  extending,
 }
 
 export class LockManager {
@@ -17,107 +21,180 @@ export class LockManager {
   protected readonly retryOnFail: boolean;
   protected readonly ttl: number;
   protected readonly redisClient: RedisClient;
+  protected readonly autoExtend: boolean;
 
   protected status: ELockStatus = ELockStatus.unlocked;
-  protected timer: NodeJS.Timeout | null = null;
+  protected lockingTimer: NodeJS.Timeout | null = null;
+  protected autoExtendTimer: NodeJS.Timeout | null = null;
 
   constructor(
     redisClient: RedisClient,
     lockKey: string,
     ttl: number,
     retryOnFail = false,
+    autoExtend = false,
   ) {
     this.lockKey = lockKey;
     this.ttl = ttl;
     this.retryOnFail = retryOnFail;
     this.lockId = uuid();
     this.redisClient = redisClient;
+    this.autoExtend = autoExtend;
   }
 
-  protected retry(cb: ICallback<boolean>): void {
-    this.timer = setTimeout(() => {
-      this.lock(cb);
-    }, 1000);
+  protected resetTimers(): void {
+    if (this.lockingTimer) {
+      clearTimeout(this.lockingTimer);
+      this.lockingTimer = null;
+    }
+    if (this.autoExtendTimer) {
+      clearTimeout(this.autoExtendTimer);
+      this.autoExtendTimer = null;
+    }
   }
 
-  protected lock(cb: ICallback<boolean>): void {
-    if (this.status === ELockStatus.locking) {
-      this.redisClient.set(
-        this.lockKey,
-        this.lockId,
-        'PX',
-        this.ttl,
-        'NX',
-        (err, reply) => {
-          if (err) cb(err);
-          else if (!reply) {
-            if (this.retryOnFail) this.retry(cb);
-            else cb(null, false);
-          } else cb(null, true);
-        },
-      );
-    } else cb(null, false);
+  protected setUnlocked(): void {
+    this.status = ELockStatus.unlocked;
+    this.resetTimers();
   }
 
-  protected extend(cb: ICallback<boolean>): void {
-    this.redisClient.runScript(
-      ELuaScriptName.EXTEND_LOCK,
-      [this.lockKey],
-      [this.lockId, this.ttl],
-      (err, reply) => {
-        if (err) cb(err);
-        else if (!!reply) cb(null, true);
-        else this.lock(cb);
-      },
-    );
+  protected setLocked(firstTime = false): void {
+    this.status = ELockStatus.locked;
+    if (firstTime && this.autoExtend) {
+      this.runAutoExtendTimer();
+    }
   }
 
-  protected release(cb: ICallback<boolean>): void {
-    this.redisClient.runScript(
-      ELuaScriptName.RELEASE_LOCK,
-      [this.lockKey],
-      [this.lockId],
-      (err, reply) => {
-        if (err) cb(err);
-        else cb(null, !!reply);
-      },
-    );
-  }
-
-  acquireLock(cb: ICallback<boolean>): void {
-    const status = this.status;
-    if (status === ELockStatus.unlocking || status === ELockStatus.locking) {
+  protected extend(cb: ICallback<void>): void {
+    if (this.status !== ELockStatus.locked) {
       cb(
         new LockManagerError(
-          `Can not acquire lock while a acquireLock() or releaseLock() call is pending`,
+          'The lock is currently not acquired or a pending operation is in progress',
         ),
       );
     } else {
-      const done: ICallback<boolean> = (err, status) => {
-        this.status = status ? ELockStatus.locked : ELockStatus.unlocked;
-        cb(err, status);
-      };
-      this.status = ELockStatus.locking;
-      if (status === ELockStatus.locked) this.extend(done);
-      else this.lock(done);
+      this.status = ELockStatus.extending;
+      this.redisClient.runScript(
+        ELuaScriptName.EXTEND_LOCK,
+        [this.lockKey],
+        [this.lockId, this.ttl],
+        (err, reply) => {
+          if (err) cb(err);
+          else {
+            if (this.status === ELockStatus.extending) {
+              if (!reply) {
+                this.setUnlocked();
+                cb(new LockManagerExtendError());
+              } else {
+                this.setLocked();
+                cb();
+              }
+            } else {
+              cb(new LockManagerAbortError());
+            }
+          }
+        },
+      );
     }
+  }
+
+  protected runAutoExtendTimer(): void {
+    const ms = Math.ceil(this.ttl / 2);
+    this.autoExtendTimer = setTimeout(
+      () =>
+        this.extend((err) => {
+          if (!err) this.runAutoExtendTimer();
+          else if (!(err instanceof LockManagerAbortError)) throw err;
+        }),
+      ms,
+    );
+  }
+
+  acquireLock(cb: ICallback<void>): void {
+    if (this.status !== ELockStatus.unlocked) {
+      cb(
+        new LockManagerError(
+          `The lock is currently not released or a pending operation is in progress`,
+        ),
+      );
+    } else {
+      this.status = ELockStatus.locking;
+      const lock = () => {
+        if (this.status === ELockStatus.locking) {
+          this.redisClient.set(
+            this.lockKey,
+            this.lockId,
+            'PX',
+            this.ttl,
+            'NX',
+            (err, reply) => {
+              if (err) cb(err);
+              else if (this.status === ELockStatus.locking) {
+                if (!reply) {
+                  if (this.retryOnFail)
+                    this.lockingTimer = setTimeout(lock, 1000);
+                  else {
+                    this.setUnlocked();
+                    cb(new LockManagerAcquireError());
+                  }
+                } else {
+                  this.setLocked(true);
+                  cb();
+                }
+              } else {
+                cb(new LockManagerAbortError());
+              }
+            },
+          );
+        } else {
+          cb(new LockManagerAbortError());
+        }
+      };
+      lock();
+    }
+  }
+
+  extendLock(cb: ICallback<void>): void {
+    if (this.autoExtend) {
+      cb(
+        new LockManagerError(
+          `Can not extend a lock when autoExtend is enabled`,
+        ),
+      );
+    } else this.extend(cb);
   }
 
   releaseLock(cb: ICallback<void>): void {
     const status = this.status;
-    if (status === ELockStatus.unlocking)
-      cb(new LockManagerError('releaseLock() has been already called'));
+    if (status === ELockStatus.releasing)
+      cb(new LockManagerError('A pending releaseLock() call is in progress'));
     else if (status === ELockStatus.unlocked) cb();
     else {
-      this.status = ELockStatus.unlocking;
-      if (this.timer) clearTimeout(this.timer);
-      this.release((err) => {
-        if (err) cb(err);
-        else {
-          this.status = ELockStatus.unlocked;
-          cb();
-        }
-      });
+      this.resetTimers();
+      this.status = ELockStatus.releasing;
+      this.redisClient.runScript(
+        ELuaScriptName.RELEASE_LOCK,
+        [this.lockKey],
+        [this.lockId],
+        (err) => {
+          if (err) cb(err);
+          else {
+            this.setUnlocked();
+            cb();
+          }
+        },
+      );
     }
+  }
+
+  isLocked(): boolean {
+    return (
+      this.status === ELockStatus.locked ||
+      this.status === ELockStatus.extending
+    );
+  }
+
+  getId(): string {
+    return this.lockId;
   }
 }
