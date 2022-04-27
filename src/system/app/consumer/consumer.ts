@@ -79,13 +79,8 @@ export class Consumer extends Base {
     this.workerRunner.on(events.ERROR, (err: Error) =>
       this.emit(events.ERROR, err),
     );
-    this.workerRunner.on(events.WORKER_RUNNER_WORKERS_STARTED, () =>
-      this.logger.info(
-        `Workers are exclusively running from this consumer instance.`,
-      ),
-    );
+    this.workerRunner.once(events.UP, cb);
     this.workerRunner.run();
-    cb();
   };
 
   private tearDownConsumerWorkers = (cb: ICallback<void>): void => {
