@@ -28,7 +28,15 @@ test('Consume messages from different queues and published by a single producer 
     });
 
     // queue name should be normalized to lowercase
-    const consumer = getConsumer({ queue: `queUE_${i}` });
+    const consumer = getConsumer({
+      queue: `queUE_${i}`,
+      messageHandler: (msg, cb) => {
+        // message handlers start consuming messages once started and before the consumer is fully started (when events.UP is emitted)
+        // untilMessageAcknowledged() may miss acknowledged events
+        // As a workaround, adding a delay before acknowledging a message
+        setTimeout(cb, 10000);
+      },
+    });
     await consumer.runAsync();
     await untilMessageAcknowledged(consumer);
     await consumer.shutdownAsync();
