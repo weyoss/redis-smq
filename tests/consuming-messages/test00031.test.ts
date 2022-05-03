@@ -29,19 +29,17 @@ test('Set a rate limit for a queue and consume messages using many consumers', a
     );
   }
 
-  await delay(25000);
-  await expect(messages.length).toBe(9);
+  await delay(30000);
 
-  for (let i = 0, j = 0; i < messages.length; i += 1, j += 1) {
+  for (let i = 0; i < messages.length; i += 1) {
     if (i === 0) {
       continue;
     }
     const diff = messages[i].ts - messages[i - 1].ts;
-    if (j >= 3) {
-      j = 0;
+    if (i % 3 === 0) {
       expect(validateTime(diff, 10000)).toBe(true);
     } else {
-      expect(validateTime(diff, 0)).toBe(true);
+      expect(validateTime(diff, 1)).toBe(true);
     }
   }
 });
