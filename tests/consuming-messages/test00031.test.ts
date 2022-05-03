@@ -30,6 +30,7 @@ test('Set a rate limit for a queue and consume messages using many consumers', a
   }
 
   await delay(30000);
+  expect(messages.length > 6).toBe(true);
 
   for (let i = 0; i < messages.length; i += 1) {
     if (i === 0) {
