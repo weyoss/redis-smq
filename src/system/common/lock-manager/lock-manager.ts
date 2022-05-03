@@ -55,14 +55,10 @@ export class LockManager {
 
   protected setUnlocked(): void {
     this.status = ELockStatus.unlocked;
-    this.resetTimers();
   }
 
-  protected setLocked(firstTime = false): void {
+  protected setLocked(): void {
     this.status = ELockStatus.locked;
-    if (firstTime && this.autoExtend) {
-      this.runAutoExtendTimer();
-    }
   }
 
   protected extend(cb: ICallback<void>): void {
@@ -138,7 +134,10 @@ export class LockManager {
                     cb(new LockManagerAcquireError());
                   }
                 } else {
-                  this.setLocked(true);
+                  this.setLocked();
+                  if (this.autoExtend) {
+                    this.runAutoExtendTimer();
+                  }
                   cb();
                 }
               } else {
