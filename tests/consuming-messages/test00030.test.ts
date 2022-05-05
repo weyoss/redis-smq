@@ -54,7 +54,13 @@ test('Rate limit a priority queue and check message rate', async () => {
   const messages: { ts: number; msg: Message }[] = [];
   const consumer = await getConsumer();
   await consumer.cancelAsync(defaultQueue);
-  await consumer.consumeAsync(defaultQueue, true, (msg, cb) => cb());
+  await consumer.consumeAsync(
+    {
+      ...defaultQueue,
+      priorityQueuing: true,
+    },
+    (msg, cb) => cb(),
+  );
 
   consumer.on(events.MESSAGE_ACKNOWLEDGED, (msg: Message) => {
     messages.push({ ts: Date.now(), msg });

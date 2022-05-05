@@ -290,6 +290,14 @@ export type TQueueParams = {
   ns: string;
 };
 
+export interface IPartialConsumerQueueParams {
+  name: string;
+  ns?: string;
+  priorityQueuing?: boolean;
+}
+
+export type TConsumerQueueParams = Required<IPartialConsumerQueueParams>;
+
 export type TQueueRateLimit = {
   limit: number;
   interval: number;
@@ -335,9 +343,8 @@ export type TConsumerMessageHandler = (
 ) => void;
 
 export type TConsumerMessageHandlerParams = {
-  queue: TQueueParams;
+  queue: TConsumerQueueParams;
   messageHandler: TConsumerMessageHandler;
-  usePriorityQueuing: boolean;
 };
 
 export interface ICompatibleLogger {

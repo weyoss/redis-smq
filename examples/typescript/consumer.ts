@@ -14,7 +14,6 @@ const consumer = new Consumer();
 
 consumer.consume(
   'test_queue', // using the default namespace
-  false,
   (message, cb) => {
     /* eslint class-methods-use-this: 0 */
     //  console.log(`Got message to consume: `, JSON.stringify(message));
@@ -42,9 +41,8 @@ consumer.run((err) => {
     consumer.consume(
       {
         name: 'another_queue',
-        ns: 'ns2',
+        priorityQueuing: true,
       },
-      true,
       (message, cb) => {
         /* eslint class-methods-use-this: 0 */
         //  console.log(`Got message to consume: `, JSON.stringify(message));

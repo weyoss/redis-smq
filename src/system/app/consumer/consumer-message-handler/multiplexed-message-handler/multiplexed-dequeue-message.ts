@@ -18,7 +18,7 @@ export class MultiplexedDequeueMessage extends DequeueMessage {
       }
     };
     const deq = () => {
-      if (this.usingPriorityQueuing) this.dequeueMessageWithPriority(cb);
+      if (this.queue.priorityQueuing) this.dequeueMessageWithPriority(cb);
       else this.dequeueMessage(cb);
     };
     if (this.queueRateLimit) {

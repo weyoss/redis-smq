@@ -5,6 +5,7 @@ import {
   ICallback,
   ICompatibleLogger,
   IRequiredConfig,
+  TConsumerQueueParams,
   TConsumerMessageHandler,
   TConsumerMessageHandlerParams,
   TQueueParams,
@@ -90,7 +91,7 @@ export class MessageHandlerRunner {
     handlerParams: TConsumerMessageHandlerParams,
   ): MessageHandler {
     const sharedRedisClient = this.getSharedRedisClient();
-    const { queue, usePriorityQueuing, messageHandler } = handlerParams;
+    const { queue, messageHandler } = handlerParams;
     const messageRate = this.config.monitor.enabled
       ? this.createMessageRateInstance(queue, sharedRedisClient)
       : null;
@@ -98,7 +99,6 @@ export class MessageHandlerRunner {
       this.consumer.getId(),
       queue,
       messageHandler,
-      usePriorityQueuing,
       redisClient,
       messageRate,
     );
@@ -201,8 +201,7 @@ export class MessageHandlerRunner {
   }
 
   addMessageHandler(
-    queue: TQueueParams,
-    usePriorityQueuing: boolean,
+    queue: TConsumerQueueParams,
     messageHandler: TConsumerMessageHandler,
     cb: ICallback<boolean>,
   ): void {
@@ -211,7 +210,6 @@ export class MessageHandlerRunner {
     else {
       const handlerParams = {
         queue,
-        usePriorityQueuing,
         messageHandler,
       };
       this.messageHandlers.push(handlerParams);
@@ -229,10 +227,7 @@ export class MessageHandlerRunner {
     }
   }
 
-  getQueues(): { queue: TQueueParams; usingPriorityQueuing: boolean }[] {
-    return this.messageHandlers.map((i) => ({
-      queue: i.queue,
-      usingPriorityQueuing: i.usePriorityQueuing,
-    }));
+  getQueues(): TConsumerQueueParams[] {
+    return this.messageHandlers.map((i) => i.queue);
   }
 }

@@ -11,7 +11,10 @@ test('Priority queuing: case 2', async () => {
   const consumedMessages: Message[] = [];
   const consumer = promisifyAll(
     getConsumer({
-      enablePriorityQueuing: true,
+      queue: {
+        ...defaultQueue,
+        priorityQueuing: true,
+      },
       messageHandler: jest.fn((msg, cb) => {
         consumedMessages.push(msg);
         cb(null);

@@ -1,4 +1,8 @@
-import { ICallback, TQueueParams, TQueueRateLimit } from '../../../../../types';
+import {
+  ICallback,
+  TConsumerQueueParams,
+  TQueueRateLimit,
+} from '../../../../../types';
 import { queueManager } from '../../queue-manager/queue-manager';
 import { RedisClient } from '../../../common/redis-client/redis-client';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
@@ -11,13 +15,12 @@ import { MessageHandler } from './message-handler';
 
 export class DequeueMessage {
   protected redisClient: RedisClient;
-  protected queue: TQueueParams;
+  protected queue: TConsumerQueueParams;
   protected consumerId: string;
   protected keyQueuePending: string;
   protected keyQueuePriority: string;
   protected keyPendingMessagesWithPriority: string;
   protected keyQueueProcessing: string;
-  protected usingPriorityQueuing: boolean;
   protected queueRateLimit: TQueueRateLimit | null = null;
   protected ticker: Ticker;
   protected messageHandler: MessageHandler;
@@ -37,7 +40,6 @@ export class DequeueMessage {
     this.keyPendingMessagesWithPriority = keyQueuePendingPriorityMessages;
     this.keyQueuePriority = keyQueuePendingPriorityMessageIds;
     this.keyQueueProcessing = keyQueueProcessing;
-    this.usingPriorityQueuing = messageHandler.isUsingPriorityQueuing();
     this.ticker = new Ticker(() => this.dequeue());
   }
 
@@ -80,10 +82,10 @@ export class DequeueMessage {
       }
     };
     const deq = () => {
-      if (this.usingPriorityQueuing) this.dequeueMessageWithPriority(cb);
+      if (this.queue.priorityQueuing) this.dequeueMessageWithPriority(cb);
       else this.dequeueMessage(cb);
     };
-    if (this.usingPriorityQueuing || this.queueRateLimit) {
+    if (this.queue.priorityQueuing || this.queueRateLimit) {
       if (this.queueRateLimit) {
         queueManager.hasQueueRateLimitExceeded(
           this.redisClient,

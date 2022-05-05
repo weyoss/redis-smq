@@ -13,7 +13,7 @@ test('Consume messages from different queues using a single consumer instance: c
   await delay(5000);
 
   // will do nothing when a message is received
-  await consumer.consumeAsync('test0', false, () => void 0);
+  await consumer.consumeAsync('test0', () => void 0);
 
   consumer.once(events.MESSAGE_RECEIVED, () => {
     setTimeout(() => {
@@ -30,26 +30,56 @@ test('Consume messages from different queues using a single consumer instance: c
   await delay(10000);
   expect(consumer.getQueues()).toEqual([]);
 
-  await consumer.consumeAsync('test1', true, (msg, cb) => {
-    messages.push(msg);
-    cb();
-  });
-  await consumer.consumeAsync('test2', true, (msg, cb) => {
-    messages.push(msg);
-    cb();
-  });
-  await consumer.consumeAsync('test3', true, (msg, cb) => {
-    messages.push(msg);
-    cb();
-  });
-  await consumer.consumeAsync('test4', true, (msg, cb) => {
-    messages.push(msg);
-    cb();
-  });
-  await consumer.consumeAsync('test5', true, (msg, cb) => {
-    messages.push(msg);
-    cb();
-  });
+  await consumer.consumeAsync(
+    {
+      name: 'test1',
+      priorityQueuing: true,
+    },
+    (msg, cb) => {
+      messages.push(msg);
+      cb();
+    },
+  );
+  await consumer.consumeAsync(
+    {
+      name: 'test2',
+      priorityQueuing: true,
+    },
+    (msg, cb) => {
+      messages.push(msg);
+      cb();
+    },
+  );
+  await consumer.consumeAsync(
+    {
+      name: 'test3',
+      priorityQueuing: true,
+    },
+    (msg, cb) => {
+      messages.push(msg);
+      cb();
+    },
+  );
+  await consumer.consumeAsync(
+    {
+      name: 'test4',
+      priorityQueuing: true,
+    },
+    (msg, cb) => {
+      messages.push(msg);
+      cb();
+    },
+  );
+  await consumer.consumeAsync(
+    {
+      name: 'test5',
+      priorityQueuing: true,
+    },
+    (msg, cb) => {
+      messages.push(msg);
+      cb();
+    },
+  );
 
   for (let i = 0; i < 5; i += 1) {
     await producer.produceAsync(
