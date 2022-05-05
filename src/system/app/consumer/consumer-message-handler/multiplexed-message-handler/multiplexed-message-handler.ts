@@ -3,8 +3,8 @@ import { events } from '../../../../common/events';
 import { RedisClient } from '../../../../common/redis-client/redis-client';
 import {
   ICallback,
+  TConsumerQueueParams,
   TConsumerMessageHandler,
-  TQueueParams,
 } from '../../../../../../types';
 import { waterfall } from '../../../../lib/async';
 import { MultiplexedDequeueMessage } from './multiplexed-dequeue-message';
@@ -13,20 +13,12 @@ import { ConsumerMessageRate } from '../../consumer-message-rate';
 export class MultiplexedMessageHandler extends MessageHandler {
   constructor(
     consumerId: string,
-    queue: TQueueParams,
+    queue: TConsumerQueueParams,
     handler: TConsumerMessageHandler,
-    usePriorityQueuing: boolean,
     redisClient: RedisClient,
     messageRate: ConsumerMessageRate | null = null,
   ) {
-    super(
-      consumerId,
-      queue,
-      handler,
-      usePriorityQueuing,
-      redisClient,
-      messageRate,
-    );
+    super(consumerId, queue, handler, redisClient, messageRate);
     this.dequeueMessage = new MultiplexedDequeueMessage(this, redisClient);
   }
 

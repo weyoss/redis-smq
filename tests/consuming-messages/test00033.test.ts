@@ -7,32 +7,32 @@ test('Consume messages from different queues using a single consumer instance: c
   const messages: Message[] = [];
   const consumer = promisifyAll(new Consumer(true));
 
-  await consumer.consumeAsync('test1', false, (msg, cb) => {
+  await consumer.consumeAsync('test1', (msg, cb) => {
     messages.push(msg);
     cb();
   });
-  await consumer.consumeAsync('test2', false, (msg, cb) => {
+  await consumer.consumeAsync('test2', (msg, cb) => {
     messages.push(msg);
     cb();
   });
-  await consumer.consumeAsync('test3', false, (msg, cb) => {
+  await consumer.consumeAsync('test3', (msg, cb) => {
     messages.push(msg);
     cb();
   });
 
   await consumer.runAsync();
 
-  await consumer.consumeAsync('test4', false, (msg, cb) => {
+  await consumer.consumeAsync('test4', (msg, cb) => {
     messages.push(msg);
     cb();
   });
-  await consumer.consumeAsync('test5', false, (msg, cb) => {
+  await consumer.consumeAsync('test5', (msg, cb) => {
     messages.push(msg);
     cb();
   });
 
   const queues = consumer.getQueues();
-  expect(queues.map((i) => i.queue.name)).toEqual([
+  expect(queues.map((i) => i.name)).toEqual([
     'test1',
     'test2',
     'test3',
@@ -65,14 +65,14 @@ test('Consume messages from different queues using a single consumer instance: c
   ]);
 
   await consumer.cancelAsync('test4');
-  expect(consumer.getQueues().map((i) => i.queue.name)).toEqual([
+  expect(consumer.getQueues().map((i) => i.name)).toEqual([
     'test1',
     'test2',
     'test3',
     'test5',
   ]);
 
-  await consumer.consumeAsync('test6', false, (msg, cb) => {
+  await consumer.consumeAsync('test6', (msg, cb) => {
     messages.push(msg);
     cb();
   });
@@ -88,7 +88,7 @@ test('Consume messages from different queues using a single consumer instance: c
     'test5',
     'test6',
   ]);
-  expect(consumer.getQueues().map((i) => i.queue.name)).toEqual([
+  expect(consumer.getQueues().map((i) => i.name)).toEqual([
     'test1',
     'test2',
     'test3',

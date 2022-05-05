@@ -3,6 +3,7 @@ import {
   EMessageUnacknowledgedCause,
   ICallback,
   ICompatibleLogger,
+  TConsumerQueueParams,
   TConsumerMessageHandler,
   TQueueParams,
   TRedisClientMulti,
@@ -15,7 +16,6 @@ import { EventEmitter } from 'events';
 import { PowerManager } from '../../../common/power-manager/power-manager';
 import { ConsumerMessageRate } from '../consumer-message-rate';
 import { consumerQueues } from '../consumer-queues';
-import { queueManager } from '../../queue-manager/queue-manager';
 import { getNamespacedLogger } from '../../../common/logger';
 import { waterfall } from '../../../lib/async';
 import { processingQueue } from './processing-queue';
@@ -25,11 +25,10 @@ import { ConsumeMessage } from './consume-message';
 export class MessageHandler extends EventEmitter {
   protected id: string;
   protected consumerId: string;
-  protected queue: TQueueParams;
+  protected queue: TConsumerQueueParams;
   protected redisClient: RedisClient;
   protected powerManager: PowerManager;
   protected messageRate: ConsumerMessageRate | null = null;
-  protected usingPriorityQueuing: boolean;
   protected logger: ICompatibleLogger;
   protected dequeueMessage: DequeueMessage;
   protected consumeMessage: ConsumeMessage;
@@ -37,18 +36,16 @@ export class MessageHandler extends EventEmitter {
 
   constructor(
     consumerId: string,
-    queue: TQueueParams,
+    queue: TConsumerQueueParams,
     handler: TConsumerMessageHandler,
-    usePriorityQueuing: boolean,
     redisClient: RedisClient,
     messageRate: ConsumerMessageRate | null = null,
   ) {
     super();
     this.id = uuid();
     this.consumerId = consumerId;
-    this.queue = queueManager.getQueueParams(queue);
+    this.queue = queue;
     this.redisClient = redisClient;
-    this.usingPriorityQueuing = usePriorityQueuing;
     this.handler = handler;
     this.powerManager = new PowerManager();
     this.logger = getNamespacedLogger(`MessageHandler/${this.id}`);
@@ -172,12 +169,8 @@ export class MessageHandler extends EventEmitter {
     else goDown();
   }
 
-  getQueue(): TQueueParams {
+  getQueue(): TConsumerQueueParams {
     return this.queue;
-  }
-
-  isUsingPriorityQueuing(): boolean {
-    return this.usingPriorityQueuing;
   }
 
   getConsumerId(): string {

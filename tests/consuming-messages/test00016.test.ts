@@ -5,10 +5,10 @@ import { Consumer } from '../../src/consumer';
 
 test('Consume messages from different queues using a single consumer instance: case 2', async () => {
   const consumer = promisifyAll(new Consumer());
-  await consumer.consumeAsync('test_queue', false, (msg, cb) => {
+  await consumer.consumeAsync('test_queue', (msg, cb) => {
     cb();
   });
-  await consumer.consumeAsync('another_queue', false, (msg, cb) => {
+  await consumer.consumeAsync('another_queue', (msg, cb) => {
     cb();
   });
   await consumer.runAsync();

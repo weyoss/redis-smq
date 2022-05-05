@@ -1,6 +1,7 @@
 import * as os from 'os';
 import {
   ICallback,
+  TConsumerQueueParams,
   THeartbeatRegistryPayload,
   TQueueParams,
   TRedisClientMulti,
@@ -37,7 +38,7 @@ export const consumerQueues = {
 
   addConsumer(
     multi: TRedisClientMulti,
-    queue: TQueueParams,
+    queue: TConsumerQueueParams,
     consumerId: string,
   ): void {
     const data: THeartbeatRegistryPayload = {

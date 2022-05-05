@@ -11,6 +11,7 @@ import {
 import { config as testConfig } from './config';
 import {
   IConfig,
+  IPartialConsumerQueueParams,
   TConsumerMessageHandler,
   TQueueParams,
   TTimeSeriesRange,
@@ -34,8 +35,7 @@ import MessageStorage from '../src/system/common/configuration/message-storage';
 export const config = configuration.setConfiguration(testConfig);
 
 type TGetConsumerArgs = {
-  queue?: string | TQueueParams;
-  enablePriorityQueuing?: boolean;
+  queue?: string | IPartialConsumerQueueParams;
   messageHandler?: TConsumerMessageHandler;
 };
 
@@ -147,13 +147,9 @@ export function mockConfiguration(config: IConfig): void {
 }
 
 export function getConsumer(args: TGetConsumerArgs = {}) {
-  const {
-    queue = defaultQueue,
-    messageHandler = (msg, cb) => cb(),
-    enablePriorityQueuing = false,
-  } = args;
+  const { queue = defaultQueue, messageHandler = (msg, cb) => cb() } = args;
   const consumer = promisifyAll(new Consumer());
-  consumer.consume(queue, enablePriorityQueuing, messageHandler, () => void 0);
+  consumer.consume(queue, messageHandler, () => void 0);
   consumersList.push(consumer);
   return consumer;
 }

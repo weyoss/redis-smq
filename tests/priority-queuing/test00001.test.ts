@@ -1,10 +1,13 @@
-import { getConsumer, untilConsumerIdle } from '../common';
+import { defaultQueue, getConsumer, untilConsumerIdle } from '../common';
 import { promisifyAll } from 'bluebird';
 
 test('Priority queuing: case 1', async () => {
   const consumer = promisifyAll(
     getConsumer({
-      enablePriorityQueuing: true,
+      queue: {
+        ...defaultQueue,
+        priorityQueuing: true,
+      },
     }),
   );
   await consumer.runAsync();

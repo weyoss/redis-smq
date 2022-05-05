@@ -389,14 +389,17 @@ export const queueManager = {
   setUpMessageQueue(multi: TRedisClientMulti, queue: TQueueParams): void {
     const { keyQueues, keyNsQueues, keyNamespaces } =
       redisKeys.getQueueKeys(queue);
-    const str = JSON.stringify(queue);
+    const str = JSON.stringify({
+      name: queue.name,
+      ns: queue.ns,
+    });
     multi.sadd(keyQueues, str);
     multi.sadd(keyNsQueues, str);
     multi.sadd(keyNamespaces, queue.ns);
   },
 
-  getQueueParams(queue: string | TQueueParams): TQueueParams {
-    const queueParams: TQueueParams =
+  getQueueParams(queue: string | Partial<TQueueParams>): TQueueParams {
+    const queueParams =
       typeof queue === 'string'
         ? {
             name: queue,
@@ -404,7 +407,9 @@ export const queueManager = {
           }
         : queue;
     const name = redisKeys.validateRedisKey(queueParams.name);
-    const ns = redisKeys.validateRedisKey(queueParams.ns);
+    const ns = queueParams.ns
+      ? redisKeys.validateRedisKey(queueParams.ns)
+      : redisKeys.getNamespace();
     return {
       name,
       ns,

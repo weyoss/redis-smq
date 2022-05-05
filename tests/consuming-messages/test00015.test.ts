@@ -6,72 +6,53 @@ test('Consume messages from different queues using a single consumer instance: c
 
   expect(consumer.getQueues()).toEqual([]);
 
-  const isRunning1 = await consumer.consumeAsync(
-    'test_queue',
-    false,
-    (msg, cb) => cb(),
+  const isRunning1 = await consumer.consumeAsync('test_queue', (msg, cb) =>
+    cb(),
   );
   expect(isRunning1).toBe(false);
 
-  const isRunning2 = await consumer.consumeAsync(
-    'another_queue',
-    false,
-    (msg, cb) => cb(),
+  const isRunning2 = await consumer.consumeAsync('another_queue', (msg, cb) =>
+    cb(),
   );
   expect(isRunning2).toBe(false);
 
   expect(async () => {
-    await consumer.consumeAsync('another_queue', true, (msg, cb) => cb());
+    await consumer.consumeAsync(
+      {
+        name: 'another_queue',
+        priorityQueuing: true,
+      },
+      (msg, cb) => cb(),
+    );
   }).rejects.toThrow(
-    `A message handler for queue [${JSON.stringify({
-      name: 'another_queue',
-      ns: 'testing',
-    })}] already exists`,
+    `A message handler for queue [another_queue@testing] already exists`,
   );
 
   expect(consumer.getQueues()).toEqual([
-    {
-      queue: { name: 'test_queue', ns: 'testing' },
-      usingPriorityQueuing: false,
-    },
-    {
-      queue: { name: 'another_queue', ns: 'testing' },
-      usingPriorityQueuing: false,
-    },
+    { name: 'test_queue', ns: 'testing', priorityQueuing: false },
+    { name: 'another_queue', ns: 'testing', priorityQueuing: false },
   ]);
 
   await consumer.cancelAsync('another_queue');
 
   expect(consumer.getQueues()).toEqual([
-    {
-      queue: { name: 'test_queue', ns: 'testing' },
-      usingPriorityQueuing: false,
-    },
+    { name: 'test_queue', ns: 'testing', priorityQueuing: false },
   ]);
 
-  await consumer.consumeAsync('another_queue', false, (msg, cb) => cb());
+  await consumer.consumeAsync('another_queue', (msg, cb) => cb());
 
   expect(consumer.getQueues()).toEqual([
-    {
-      queue: { name: 'test_queue', ns: 'testing' },
-      usingPriorityQueuing: false,
-    },
-    {
-      queue: { name: 'another_queue', ns: 'testing' },
-      usingPriorityQueuing: false,
-    },
+    { name: 'test_queue', ns: 'testing', priorityQueuing: false },
+    { name: 'another_queue', ns: 'testing', priorityQueuing: false },
   ]);
 
   const res = await consumer.runAsync();
   expect(res).toBe(true);
 
   expect(async () => {
-    await consumer.consumeAsync('another_queue', false, (msg, cb) => cb());
+    await consumer.consumeAsync('another_queue', (msg, cb) => cb());
   }).rejects.toThrow(
-    `A message handler for queue [${JSON.stringify({
-      name: 'another_queue',
-      ns: 'testing',
-    })}] already exists`,
+    `A message handler for queue [another_queue@testing] already exists`,
   );
 
   await consumer.cancelAsync('another_queue');
@@ -80,52 +61,35 @@ test('Consume messages from different queues using a single consumer instance: c
   await consumer.cancelAsync('another_queue');
 
   expect(consumer.getQueues()).toEqual([
-    {
-      queue: { name: 'test_queue', ns: 'testing' },
-      usingPriorityQueuing: false,
-    },
+    { name: 'test_queue', ns: 'testing', priorityQueuing: false },
   ]);
 
-  await consumer.consumeAsync('another_queue', false, (msg, cb) => cb());
+  await consumer.consumeAsync('another_queue', (msg, cb) => cb());
 
   expect(consumer.getQueues()).toEqual([
-    {
-      queue: { name: 'test_queue', ns: 'testing' },
-      usingPriorityQueuing: false,
-    },
-    {
-      queue: { name: 'another_queue', ns: 'testing' },
-      usingPriorityQueuing: false,
-    },
+    { name: 'test_queue', ns: 'testing', priorityQueuing: false },
+    { name: 'another_queue', ns: 'testing', priorityQueuing: false },
   ]);
 
-  const isRunning3 = await consumer.consumeAsync('queue_a', false, (msg, cb) =>
-    cb(),
-  );
+  const isRunning3 = await consumer.consumeAsync('queue_a', (msg, cb) => cb());
   expect(isRunning3).toBe(true);
 
   await expect(async () => {
-    await consumer.consumeAsync('queue_a', true, (msg, cb) => cb());
+    await consumer.consumeAsync(
+      {
+        name: 'queue_a',
+        priorityQueuing: true,
+      },
+      (msg, cb) => cb(),
+    );
   }).rejects.toThrow(
-    `A message handler for queue [${JSON.stringify({
-      name: 'queue_a',
-      ns: 'testing',
-    })}] already exists`,
+    `A message handler for queue [queue_a@testing] already exists`,
   );
 
   expect(consumer.getQueues()).toEqual([
-    {
-      queue: { name: 'test_queue', ns: 'testing' },
-      usingPriorityQueuing: false,
-    },
-    {
-      queue: { name: 'another_queue', ns: 'testing' },
-      usingPriorityQueuing: false,
-    },
-    {
-      queue: { name: 'queue_a', ns: 'testing' },
-      usingPriorityQueuing: false,
-    },
+    { name: 'test_queue', ns: 'testing', priorityQueuing: false },
+    { name: 'another_queue', ns: 'testing', priorityQueuing: false },
+    { name: 'queue_a', ns: 'testing', priorityQueuing: false },
   ]);
 
   await consumer.shutdownAsync();

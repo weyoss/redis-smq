@@ -205,7 +205,7 @@ export const redisKeys = {
     return namespace;
   },
 
-  validateRedisKey(key: string): string {
+  validateRedisKey(key?: string): string {
     if (!key || !key.length) {
       throw new RedisKeysError(
         'Invalid Redis key. Expected be a non empty string.',

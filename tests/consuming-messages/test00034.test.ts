@@ -10,7 +10,7 @@ test('Consume messages from different queues using a single consumer instance: c
   const messages: Message[] = [];
   const consumer = promisifyAll(new Consumer(true));
 
-  await consumer.consumeAsync(defaultQueue, false, (msg, cb) => {
+  await consumer.consumeAsync(defaultQueue, (msg, cb) => {
     messages.push(msg);
     cb();
   });

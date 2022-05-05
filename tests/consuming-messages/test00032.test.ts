@@ -30,13 +30,13 @@ test('Consume messages from different queues using a single consumer instance: c
   );
   expect(Object.keys(a2)).toEqual([]);
 
-  await consumer.consumeAsync(defaultQueue, false, (msg, cb) => cb());
+  await consumer.consumeAsync(defaultQueue, (msg, cb) => cb());
 
   const b = await consumerQueuesAsync.getConsumerQueuesAsync(
     redisClient,
     consumer.getId(),
   );
-  expect(b).toEqual([defaultQueue]);
+  expect(b).toEqual([{ ...defaultQueue, priorityQueuing: false }]);
 
   const b1 = await consumerQueuesAsync.getQueueConsumersAsync(
     redisClient,
@@ -67,7 +67,13 @@ test('Consume messages from different queues using a single consumer instance: c
   );
   expect(Object.keys(c1)).toEqual([]);
 
-  await consumer.consumeAsync(defaultQueue, true, (msg, cb) => cb());
+  await consumer.consumeAsync(
+    {
+      ...defaultQueue,
+      priorityQueuing: true,
+    },
+    (msg, cb) => cb(),
+  );
 
   const c2 = await consumerQueuesAsync.getQueueConsumersAsync(
     redisClient,

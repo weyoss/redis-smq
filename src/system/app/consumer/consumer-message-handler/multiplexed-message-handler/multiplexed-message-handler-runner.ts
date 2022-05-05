@@ -72,7 +72,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
     handlerParams: TConsumerMessageHandlerParams,
   ): MessageHandler {
     const sharedRedisClient = this.getSharedRedisClient();
-    const { queue, usePriorityQueuing, messageHandler } = handlerParams;
+    const { queue, messageHandler } = handlerParams;
     const messageRate = this.config.monitor.enabled
       ? this.createMessageRateInstance(queue, sharedRedisClient)
       : null;
@@ -80,7 +80,6 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
       this.consumer.getId(),
       queue,
       messageHandler,
-      usePriorityQueuing,
       redisClient,
       messageRate,
     );

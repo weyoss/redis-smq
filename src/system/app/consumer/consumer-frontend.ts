@@ -1,5 +1,7 @@
 import {
   ICallback,
+  IPartialConsumerQueueParams,
+  TConsumerQueueParams,
   TConsumerMessageHandler,
   TQueueParams,
 } from '../../../../types';
@@ -37,15 +39,15 @@ export class ConsumerFrontend extends EventEmitter {
   }
 
   consume(
-    queue: string | TQueueParams,
-    usePriorityQueuing: boolean,
+    queue: string | IPartialConsumerQueueParams,
     messageHandler: TConsumerMessageHandler,
     cb: ICallback<boolean>,
   ): void {
     const queueParams = queueManager.getQueueParams(queue);
+    const priorityQueuing =
+      typeof queue === 'string' ? false : !!queue.priorityQueuing;
     return this.consumer.consume(
-      queueParams,
-      usePriorityQueuing,
+      { ...queueParams, priorityQueuing },
       messageHandler,
       cb,
     );
@@ -88,7 +90,7 @@ export class ConsumerFrontend extends EventEmitter {
     return this.consumer.getId();
   }
 
-  getQueues(): { queue: TQueueParams; usingPriorityQueuing: boolean }[] {
+  getQueues(): TConsumerQueueParams[] {
     return this.consumer.getQueues();
   }
 }

@@ -7,6 +7,7 @@ import {
   TQueueParams,
   TUnaryFunction,
   TRedisClientMulti,
+  TConsumerQueueParams,
 } from '../../../../types';
 import { events } from '../../common/events';
 import { RedisClient } from '../../common/redis-client/redis-client';
@@ -122,24 +123,18 @@ export class Consumer extends Base {
   }
 
   consume(
-    queue: TQueueParams,
-    usePriorityQueuing: boolean,
+    queue: TConsumerQueueParams,
     messageHandler: TConsumerMessageHandler,
     cb: ICallback<boolean>,
   ): void {
-    this.messageHandlerRunner.addMessageHandler(
-      queue,
-      usePriorityQueuing,
-      messageHandler,
-      cb,
-    );
+    this.messageHandlerRunner.addMessageHandler(queue, messageHandler, cb);
   }
 
   cancel(queue: TQueueParams, cb: ICallback<void>): void {
     this.messageHandlerRunner.removeMessageHandler(queue, cb);
   }
 
-  getQueues(): { queue: TQueueParams; usingPriorityQueuing: boolean }[] {
+  getQueues(): TConsumerQueueParams[] {
     return this.messageHandlerRunner.getQueues();
   }
 
