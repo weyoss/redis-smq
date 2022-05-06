@@ -1,10 +1,10 @@
 import { parseExpression } from 'cron-parser';
 import { TMessageJSON, TQueueParams } from '../../../../types';
 import { ArgumentError } from '../../common/errors/argument.error';
-import { queueManager } from '../queue-manager/queue-manager';
 import { getConfiguration } from '../../common/configuration/configuration';
 import { MessageMetadata } from './message-metadata';
 import { PanicError } from '../../common/errors/panic.error';
+import { getQueueParams } from '../queue-manager/queue';
 
 export class Message {
   // Do not forget about javascript users. Using an object map instead of enum
@@ -243,7 +243,7 @@ export class Message {
   }
 
   setQueue(queue: string | TQueueParams): Message {
-    this.queue = queueManager.getQueueParams(queue);
+    this.queue = getQueueParams(queue);
     return this;
   }
 

@@ -1,61 +1,75 @@
+import * as os from 'os';
 import {
   ICallback,
-  TConsumerQueueParams,
+  TConsumerInfo,
+  TQueueParams,
   TQueueRateLimit,
 } from '../../../../../types';
-import { queueManager } from '../../queue-manager/queue-manager';
 import { RedisClient } from '../../../common/redis-client/redis-client';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { Ticker } from '../../../common/ticker/ticker';
 import { events } from '../../../common/events';
-import { consumerQueues } from '../consumer-queues';
-import { processingQueue } from './processing-queue';
 import { Message } from '../../message/message';
 import { MessageHandler } from './message-handler';
+import {
+  getQueueRateLimit,
+  hasQueueRateLimitExceeded,
+} from '../../queue-manager/queue-rate-limit';
+import { waterfall } from '../../../lib/async';
+import { getQueue } from '../../queue-manager/queue';
+import { EmptyCallbackReplyError } from '../../../common/errors/empty-callback-reply.error';
+import { ELuaScriptName } from '../../../common/redis-client/lua-scripts';
+import { QueueNotFoundError } from '../../queue-manager/errors/queue-not-found.error';
+
+const IPAddresses = (() => {
+  const nets = os.networkInterfaces();
+  const addresses: string[] = [];
+  for (const netInterface in nets) {
+    const addr = nets[netInterface] ?? [];
+    for (const netAddr of addr) {
+      if (netAddr.family === 'IPv4' && !netAddr.internal) {
+        addresses.push(netAddr.address);
+      }
+    }
+  }
+  return addresses;
+})();
 
 export class DequeueMessage {
   protected redisClient: RedisClient;
-  protected queue: TConsumerQueueParams;
+  protected queue: TQueueParams;
   protected consumerId: string;
-  protected keyQueuePending: string;
-  protected keyQueuePriority: string;
-  protected keyPendingMessagesWithPriority: string;
-  protected keyQueueProcessing: string;
+  protected redisKeys: ReturnType<typeof redisKeys['getQueueConsumerKeys']>;
   protected queueRateLimit: TQueueRateLimit | null = null;
   protected ticker: Ticker;
   protected messageHandler: MessageHandler;
+  protected priorityQueuing = false;
 
   constructor(messageHandler: MessageHandler, redisClient: RedisClient) {
     this.messageHandler = messageHandler;
     this.redisClient = redisClient;
     this.queue = messageHandler.getQueue();
     this.consumerId = messageHandler.getConsumerId();
-    const {
-      keyQueuePendingPriorityMessageIds,
-      keyQueuePending,
-      keyQueuePendingPriorityMessages,
-      keyQueueProcessing,
-    } = redisKeys.getQueueConsumerKeys(this.queue, this.consumerId);
-    this.keyQueuePending = keyQueuePending;
-    this.keyPendingMessagesWithPriority = keyQueuePendingPriorityMessages;
-    this.keyQueuePriority = keyQueuePendingPriorityMessageIds;
-    this.keyQueueProcessing = keyQueueProcessing;
+    this.redisKeys = redisKeys.getQueueConsumerKeys(
+      this.queue,
+      this.consumerId,
+    );
     this.ticker = new Ticker(() => this.dequeue());
   }
 
   protected dequeueMessageWithPriority(cb: ICallback<string>): void {
     this.redisClient.zpophgetrpush(
-      this.keyQueuePriority,
-      this.keyPendingMessagesWithPriority,
-      this.keyQueueProcessing,
+      this.redisKeys.keyQueuePendingPriorityMessageIds,
+      this.redisKeys.keyQueuePendingPriorityMessages,
+      this.redisKeys.keyQueueProcessing,
       cb,
     );
   }
 
   protected waitForMessage(cb: ICallback<string>): void {
     this.redisClient.brpoplpush(
-      this.keyQueuePending,
-      this.keyQueueProcessing,
+      this.redisKeys.keyQueuePending,
+      this.redisKeys.keyQueueProcessing,
       0,
       cb,
     );
@@ -63,8 +77,8 @@ export class DequeueMessage {
 
   protected dequeueMessage(cb: ICallback<string>): void {
     this.redisClient.rpoplpush(
-      this.keyQueuePending,
-      this.keyQueueProcessing,
+      this.redisKeys.keyQueuePending,
+      this.redisKeys.keyQueueProcessing,
       cb,
     );
   }
@@ -82,12 +96,12 @@ export class DequeueMessage {
       }
     };
     const deq = () => {
-      if (this.queue.priorityQueuing) this.dequeueMessageWithPriority(cb);
+      if (this.priorityQueuing) this.dequeueMessageWithPriority(cb);
       else this.dequeueMessage(cb);
     };
-    if (this.queue.priorityQueuing || this.queueRateLimit) {
+    if (this.priorityQueuing || this.queueRateLimit) {
       if (this.queueRateLimit) {
-        queueManager.hasQueueRateLimitExceeded(
+        hasQueueRateLimitExceeded(
           this.redisClient,
           this.queue,
           this.queueRateLimit,
@@ -104,24 +118,63 @@ export class DequeueMessage {
   }
 
   run(cb: ICallback<void>): void {
-    queueManager.getQueueRateLimit(
-      this.redisClient,
-      this.queue,
-      (err, rateLimit) => {
-        if (err) cb(err);
-        else {
-          this.queueRateLimit = rateLimit ?? null;
-          const multi = this.redisClient.multi();
-          queueManager.setUpMessageQueue(multi, this.queue);
-          consumerQueues.addConsumer(multi, this.queue, this.consumerId);
-          processingQueue.setUpProcessingQueue(
-            multi,
-            this.queue,
-            this.consumerId,
+    waterfall(
+      [
+        (cb: ICallback<void>) => {
+          const {
+            keyQueues,
+            keyQueueConsumers,
+            keyConsumerQueues,
+            keyQueueProcessing,
+            keyProcessingQueues,
+            keyQueueProcessingQueues,
+          } = this.redisKeys;
+          const consumerInfo: TConsumerInfo = {
+            ipAddress: IPAddresses,
+            hostname: os.hostname(),
+            pid: process.pid,
+            createdAt: Date.now(),
+          };
+          this.redisClient.runScript(
+            ELuaScriptName.INIT_CONSUMER_QUEUE,
+            [
+              keyQueues,
+              keyQueueConsumers,
+              keyConsumerQueues,
+              keyProcessingQueues,
+              keyQueueProcessingQueues,
+            ],
+            [
+              this.consumerId,
+              JSON.stringify(consumerInfo),
+              JSON.stringify(this.queue),
+              keyQueueProcessing,
+            ],
+            (err, reply) => {
+              if (err) cb(err);
+              else if (!reply) cb(new QueueNotFoundError());
+              else cb();
+            },
           );
-          this.redisClient.execMulti(multi, (err) => cb(err));
-        }
-      },
+        },
+        (cb: ICallback<void>) => {
+          getQueue(this.redisClient, this.queue, (err, reply) => {
+            if (err) cb(err);
+            else if (!reply) cb(new EmptyCallbackReplyError());
+            else {
+              this.priorityQueuing = reply.priorityQueuing;
+              cb();
+            }
+          });
+        },
+        (cb: ICallback<void>) => {
+          getQueueRateLimit(this.redisClient, this.queue, (err, rateLimit) => {
+            if (err) cb(err);
+            else this.queueRateLimit = rateLimit ?? null;
+          });
+        },
+      ],
+      cb,
     );
   }
 

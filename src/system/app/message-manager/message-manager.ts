@@ -8,7 +8,6 @@ import {
 } from '../../../../types';
 import { RedisClient } from '../../common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
-import { queueManager } from '../queue-manager/queue-manager';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import {
   deleteListMessageAtSequenceId,
@@ -19,6 +18,7 @@ import {
 } from './common';
 import { MessageNotFoundError } from './errors/message-not-found.error';
 import { getNamespacedLogger } from '../../common/logger';
+import { getQueueParams } from '../queue-manager/queue';
 
 export class MessageManager {
   private static instance: MessageManager | null = null;
@@ -58,7 +58,7 @@ export class MessageManager {
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const queueParams = queueManager.getQueueParams(queue);
+    const queueParams = getQueueParams(queue);
     const { keyQueueDL } = redisKeys.getQueueKeys(queueParams);
     deleteListMessageAtSequenceId(
       this.redisClient,
@@ -84,7 +84,7 @@ export class MessageManager {
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const queueParams = queueManager.getQueueParams(queue);
+    const queueParams = getQueueParams(queue);
     const { keyQueueAcknowledged } = redisKeys.getQueueKeys(queueParams);
     deleteListMessageAtSequenceId(
       this.redisClient,
@@ -110,7 +110,7 @@ export class MessageManager {
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const queueParams = queueManager.getQueueParams(queue);
+    const queueParams = getQueueParams(queue);
     const { keyQueuePending } = redisKeys.getQueueKeys(queueParams);
     deleteListMessageAtSequenceId(
       this.redisClient,
@@ -138,7 +138,7 @@ export class MessageManager {
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const queueParams = queueManager.getQueueParams(queue);
+    const queueParams = getQueueParams(queue);
     const {
       keyQueuePendingPriorityMessageIds,
       keyQueuePendingPriorityMessages,
@@ -168,7 +168,7 @@ export class MessageManager {
     priority: number | undefined,
     cb: ICallback<void>,
   ): void {
-    const queueParams = queueManager.getQueueParams(queue);
+    const queueParams = getQueueParams(queue);
     const { keyQueueDL } = redisKeys.getQueueKeys(queueParams);
     requeueListMessage(
       this.redisClient,
@@ -196,7 +196,7 @@ export class MessageManager {
     priority: number | undefined,
     cb: ICallback<void>,
   ): void {
-    const queueParams = queueManager.getQueueParams(queue);
+    const queueParams = getQueueParams(queue);
     const { keyQueueAcknowledged } = redisKeys.getQueueKeys(queueParams);
     requeueListMessage(
       this.redisClient,
@@ -223,7 +223,7 @@ export class MessageManager {
     queue: string | TQueueParams,
     cb: ICallback<void>,
   ): void {
-    const queueParams = queueManager.getQueueParams(queue);
+    const queueParams = getQueueParams(queue);
     const { keyQueueDL } = redisKeys.getQueueKeys(queueParams);
     this.redisClient.del(keyQueueDL, (err) => {
       if (err) cb(err);
@@ -242,7 +242,7 @@ export class MessageManager {
     queue: string | TQueueParams,
     cb: ICallback<void>,
   ): void {
-    const queueParams = queueManager.getQueueParams(queue);
+    const queueParams = getQueueParams(queue);
     const { keyQueueAcknowledged } = redisKeys.getQueueKeys(queueParams);
     this.redisClient.del(keyQueueAcknowledged, (err) => {
       if (err) cb(err);
@@ -261,7 +261,7 @@ export class MessageManager {
     queue: string | TQueueParams,
     cb: ICallback<void>,
   ): void {
-    const queueParams = queueManager.getQueueParams(queue);
+    const queueParams = getQueueParams(queue);
     const { keyQueuePending } = redisKeys.getQueueKeys(queueParams);
     this.redisClient.del(keyQueuePending, (err) => {
       if (err) cb(err);
@@ -278,7 +278,7 @@ export class MessageManager {
     queue: string | TQueueParams,
     cb: ICallback<void>,
   ): void {
-    const queueParams = queueManager.getQueueParams(queue);
+    const queueParams = getQueueParams(queue);
     const {
       keyQueuePendingPriorityMessageIds,
       keyQueuePendingPriorityMessages,
@@ -322,7 +322,7 @@ export class MessageManager {
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    const queueParams = queueManager.getQueueParams(queue);
+    const queueParams = getQueueParams(queue);
     const { keyQueueAcknowledged } = redisKeys.getQueueKeys(queueParams);
     getPaginatedListMessages(
       this.redisClient,
@@ -339,7 +339,7 @@ export class MessageManager {
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    const queueParams = queueManager.getQueueParams(queue);
+    const queueParams = getQueueParams(queue);
     const { keyQueueDL } = redisKeys.getQueueKeys(queueParams);
     getPaginatedListMessages(this.redisClient, keyQueueDL, skip, take, cb);
   }
@@ -350,7 +350,7 @@ export class MessageManager {
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    const queueParams = queueManager.getQueueParams(queue);
+    const queueParams = getQueueParams(queue);
     const { keyQueuePending } = redisKeys.getQueueKeys(queueParams);
     getPaginatedListMessages(this.redisClient, keyQueuePending, skip, take, cb);
   }
@@ -361,7 +361,7 @@ export class MessageManager {
     take: number,
     cb: ICallback<TGetPendingMessagesWithPriorityReply>,
   ): void {
-    const queueParams = queueManager.getQueueParams(queue);
+    const queueParams = getQueueParams(queue);
     const {
       keyQueuePendingPriorityMessageIds,
       keyQueuePendingPriorityMessages,

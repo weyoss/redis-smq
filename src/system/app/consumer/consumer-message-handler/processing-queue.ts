@@ -113,4 +113,13 @@ export const processingQueue = {
     multi.hset(keyQueueProcessingQueues, keyQueueProcessing, consumerId);
     multi.sadd(keyProcessingQueues, keyQueueProcessing);
   },
+
+  getQueueProcessingQueues(
+    redisClient: RedisClient,
+    queue: TQueueParams,
+    cb: ICallback<Record<string, string>>,
+  ): void {
+    const { keyQueueProcessingQueues } = redisKeys.getQueueKeys(queue);
+    redisClient.hgetall(keyQueueProcessingQueues, cb);
+  },
 };

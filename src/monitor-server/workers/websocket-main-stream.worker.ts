@@ -7,9 +7,9 @@ import {
 import { redisKeys } from '../../system/common/redis-keys/redis-keys';
 import { MessageManager } from '../../system/app/message-manager/message-manager';
 import { Consumer } from '../../system/app/consumer/consumer';
-import { queueManager } from '../../system/app/queue-manager/queue-manager';
 import { Worker } from '../../system/common/worker/worker';
 import { each, waterfall } from '../../system/lib/async';
+import { listQueues } from '../../system/app/queue-manager/queue';
 
 export class WebsocketMainStreamWorker extends Worker {
   protected data: TWebsocketMainStreamPayload = {
@@ -127,7 +127,7 @@ export class WebsocketMainStreamWorker extends Worker {
   };
 
   protected getQueues = (cb: ICallback<TQueueParams[]>): void => {
-    queueManager.getQueues(this.redisClient, cb);
+    listQueues(this.redisClient, cb);
   };
 
   protected countScheduledMessages = (cb: ICallback<void>): void => {

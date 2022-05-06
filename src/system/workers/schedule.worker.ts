@@ -49,7 +49,8 @@ export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
           const message = Message.createFromMessage(msg);
           const queue = message.getRequiredQueue();
           const {
-            keyQueues,
+            keyQueueSettings,
+            keyQueueSettingsPriorityQueuing,
             keyQueuePending,
             keyQueuePendingPriorityMessages,
             keyQueuePendingPriorityMessageIds,
@@ -61,7 +62,8 @@ export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
           this.redisClient.runScript(
             ELuaScriptName.ENQUEUE_SCHEDULED_MESSAGE,
             [
-              keyQueues,
+              keyQueueSettings,
+              keyQueueSettingsPriorityQueuing,
               keyQueuePendingPriorityMessages,
               keyQueuePendingPriorityMessageIds,
               keyQueuePending,

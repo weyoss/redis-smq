@@ -3,7 +3,6 @@ import {
   EMessageUnacknowledgedCause,
   ICallback,
   ICompatibleLogger,
-  TConsumerQueueParams,
   TConsumerMessageHandler,
   TQueueParams,
   TRedisClientMulti,
@@ -25,7 +24,7 @@ import { ConsumeMessage } from './consume-message';
 export class MessageHandler extends EventEmitter {
   protected id: string;
   protected consumerId: string;
-  protected queue: TConsumerQueueParams;
+  protected queue: TQueueParams;
   protected redisClient: RedisClient;
   protected powerManager: PowerManager;
   protected messageRate: ConsumerMessageRate | null = null;
@@ -36,7 +35,7 @@ export class MessageHandler extends EventEmitter {
 
   constructor(
     consumerId: string,
-    queue: TConsumerQueueParams,
+    queue: TQueueParams,
     handler: TConsumerMessageHandler,
     redisClient: RedisClient,
     messageRate: ConsumerMessageRate | null = null,
@@ -169,7 +168,7 @@ export class MessageHandler extends EventEmitter {
     else goDown();
   }
 
-  getQueue(): TConsumerQueueParams {
+  getQueue(): TQueueParams {
     return this.queue;
   }
 

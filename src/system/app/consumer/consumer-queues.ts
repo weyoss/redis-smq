@@ -1,28 +1,12 @@
-import * as os from 'os';
 import {
   ICallback,
-  TConsumerQueueParams,
-  THeartbeatRegistryPayload,
+  TConsumerInfo,
   TQueueParams,
   TRedisClientMulti,
 } from '../../../../types';
 import { RedisClient } from '../../common/redis-client/redis-client';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { each } from '../../lib/async';
-
-const IPAddresses = (() => {
-  const nets = os.networkInterfaces();
-  const addresses: string[] = [];
-  for (const netInterface in nets) {
-    const addr = nets[netInterface] ?? [];
-    for (const netAddr of addr) {
-      if (netAddr.family === 'IPv4' && !netAddr.internal) {
-        addresses.push(netAddr.address);
-      }
-    }
-  }
-  return addresses;
-})();
 
 export const consumerQueues = {
   removeConsumer(
@@ -36,35 +20,18 @@ export const consumerQueues = {
     multi.srem(keyConsumerQueues, JSON.stringify(queue));
   },
 
-  addConsumer(
-    multi: TRedisClientMulti,
-    queue: TConsumerQueueParams,
-    consumerId: string,
-  ): void {
-    const data: THeartbeatRegistryPayload = {
-      ipAddress: IPAddresses,
-      hostname: os.hostname(),
-      pid: process.pid,
-      createdAt: Date.now(),
-    };
-    const { keyQueueConsumers, keyConsumerQueues } =
-      redisKeys.getQueueConsumerKeys(queue, consumerId);
-    multi.sadd(keyConsumerQueues, JSON.stringify(queue));
-    multi.hset(keyQueueConsumers, consumerId, JSON.stringify(data));
-  },
-
   getQueueConsumers(
     client: RedisClient,
     queue: TQueueParams,
     transform: boolean,
-    cb: ICallback<Record<string, THeartbeatRegistryPayload | string>>,
+    cb: ICallback<Record<string, TConsumerInfo | string>>,
   ): void {
     const { keyQueueConsumers } = redisKeys.getQueueKeys(queue);
     client.hgetall(keyQueueConsumers, (err, reply) => {
       if (err) cb(err);
       else {
         if (transform) {
-          const data: Record<string | number, THeartbeatRegistryPayload> = {};
+          const data: Record<string | number, TConsumerInfo> = {};
           each(
             reply ?? {},
             (item, key, done) => {
