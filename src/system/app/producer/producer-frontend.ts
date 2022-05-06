@@ -54,7 +54,7 @@ export class ProducerFrontend extends EventEmitter {
     return this.producer.getId();
   }
 
-  produce(msg: Message, cb: ICallback<boolean>): void {
+  produce(msg: Message, cb: ICallback<void>): void {
     this.producer.produce(msg, cb);
   }
 }

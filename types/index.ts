@@ -290,14 +290,6 @@ export type TQueueParams = {
   ns: string;
 };
 
-export interface IPartialConsumerQueueParams {
-  name: string;
-  ns?: string;
-  priorityQueuing?: boolean;
-}
-
-export type TConsumerQueueParams = Required<IPartialConsumerQueueParams>;
-
 export type TQueueRateLimit = {
   limit: number;
   interval: number;
@@ -316,7 +308,7 @@ export type TWorkerClassConstructor<T extends TWorkerParameters> = {
   new (redisClient: RedisClient, params: T, managed: boolean): Worker<T>;
 };
 
-export type THeartbeatRegistryPayload = {
+export type TConsumerInfo = {
   ipAddress: string[];
   hostname: string;
   pid: number;
@@ -343,7 +335,7 @@ export type TConsumerMessageHandler = (
 ) => void;
 
 export type TConsumerMessageHandlerParams = {
-  queue: TConsumerQueueParams;
+  queue: TQueueParams;
   messageHandler: TConsumerMessageHandler;
 };
 

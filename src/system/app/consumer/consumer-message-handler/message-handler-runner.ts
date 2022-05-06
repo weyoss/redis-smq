@@ -5,7 +5,6 @@ import {
   ICallback,
   ICompatibleLogger,
   IRequiredConfig,
-  TConsumerQueueParams,
   TConsumerMessageHandler,
   TConsumerMessageHandlerParams,
   TQueueParams,
@@ -201,7 +200,7 @@ export class MessageHandlerRunner {
   }
 
   addMessageHandler(
-    queue: TConsumerQueueParams,
+    queue: TQueueParams,
     messageHandler: TConsumerMessageHandler,
     cb: ICallback<boolean>,
   ): void {
@@ -227,7 +226,7 @@ export class MessageHandlerRunner {
     }
   }
 
-  getQueues(): TConsumerQueueParams[] {
+  getQueues(): TQueueParams[] {
     return this.messageHandlers.map((i) => i.queue);
   }
 }

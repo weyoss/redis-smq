@@ -18,6 +18,8 @@ export enum ELuaScriptName {
   EXTEND_LOCK,
   LPOPRPUSHEXTRA,
   HAS_QUEUE_RATE_EXCEEDED,
+  CREATE_QUEUE,
+  INIT_CONSUMER_QUEUE,
 }
 
 ////
@@ -61,6 +63,14 @@ scriptsMap.set(ELuaScriptName.LPOPRPUSHEXTRA, {
 scriptsMap.set(ELuaScriptName.HAS_QUEUE_RATE_EXCEEDED, {
   content: fs
     .readFileSync(`${__dirname}/lua/has-queue-rate-exceeded.lua`)
+    .toString(),
+});
+scriptsMap.set(ELuaScriptName.CREATE_QUEUE, {
+  content: fs.readFileSync(`${__dirname}/lua/create-queue.lua`).toString(),
+});
+scriptsMap.set(ELuaScriptName.INIT_CONSUMER_QUEUE, {
+  content: fs
+    .readFileSync(`${__dirname}/lua/init-consumer-queue.lua`)
     .toString(),
 });
 ///

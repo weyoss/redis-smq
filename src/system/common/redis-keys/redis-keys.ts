@@ -58,8 +58,10 @@ enum ERedisKey {
   KEY_CONSUMER_QUEUES,
   KEY_NS_QUEUES,
   KEY_NAMESPACES,
-  KEY_QUEUE_RATE_LIMIT,
   KEY_QUEUE_RATE_LIMIT_COUNTER,
+  KEY_QUEUE_SETTINGS,
+  KEY_QUEUE_SETTINGS_RATE_LIMIT,
+  KEY_QUEUE_SETTINGS_PRIORITY_QUEUING,
 }
 
 export const redisKeys = {
@@ -104,8 +106,8 @@ export const redisKeys = {
       keyLockRateQueueAcknowledged: ERedisKey.KEY_LOCK_RATE_QUEUE_ACKNOWLEDGED,
       keyLockRateQueueDeadLettered: ERedisKey.KEY_LOCK_RATE_QUEUE_DEAD_LETTERED,
       keyQueueConsumers: ERedisKey.KEY_QUEUE_CONSUMERS,
-      keyQueueRateLimit: ERedisKey.KEY_QUEUE_RATE_LIMIT,
       keyQueueRateLimitCounter: ERedisKey.KEY_QUEUE_RATE_LIMIT_COUNTER,
+      keyQueueSettings: ERedisKey.KEY_QUEUE_SETTINGS,
     };
     return {
       ...nsKeys,
@@ -173,6 +175,9 @@ export const redisKeys = {
       keyLockRateGlobalDeadLettered:
         ERedisKey.KEY_LOCK_RATE_GLOBAL_DEAD_LETTERED,
       keyNamespaces: ERedisKey.KEY_NAMESPACES,
+      keyQueueSettingsRateLimit: ERedisKey.KEY_QUEUE_SETTINGS_RATE_LIMIT,
+      keyQueueSettingsPriorityQueuing:
+        ERedisKey.KEY_QUEUE_SETTINGS_PRIORITY_QUEUING,
     };
     return this.makeNamespacedKeys(mainKeys, globalNamespace);
   },

@@ -1,4 +1,4 @@
-import { MonitorServer, setConfiguration, setLogger } from '../..'; // from 'redis-smq';
+import { MonitorServer, setConfiguration, setLogger } from '../../..'; // from 'redis-smq';
 import { config } from './config';
 
 // Applying system-wide configuration

@@ -1,14 +1,12 @@
 import {
   ICallback,
-  IPartialConsumerQueueParams,
-  TConsumerQueueParams,
   TConsumerMessageHandler,
   TQueueParams,
 } from '../../../../types';
 import { EventEmitter } from 'events';
 import { Consumer } from './consumer';
 import { events } from '../../common/events';
-import { queueManager } from '../queue-manager/queue-manager';
+import { getQueueParams } from '../queue-manager/queue';
 
 export class ConsumerFrontend extends EventEmitter {
   private consumer: Consumer;
@@ -39,22 +37,16 @@ export class ConsumerFrontend extends EventEmitter {
   }
 
   consume(
-    queue: string | IPartialConsumerQueueParams,
+    queue: string | TQueueParams,
     messageHandler: TConsumerMessageHandler,
     cb: ICallback<boolean>,
   ): void {
-    const queueParams = queueManager.getQueueParams(queue);
-    const priorityQueuing =
-      typeof queue === 'string' ? false : !!queue.priorityQueuing;
-    return this.consumer.consume(
-      { ...queueParams, priorityQueuing },
-      messageHandler,
-      cb,
-    );
+    const queueParams = getQueueParams(queue);
+    return this.consumer.consume(queueParams, messageHandler, cb);
   }
 
   cancel(queue: string | TQueueParams, cb: ICallback<void>): void {
-    const queueParams = queueManager.getQueueParams(queue);
+    const queueParams = getQueueParams(queue);
     this.consumer.cancel(queueParams, cb);
   }
 
@@ -90,7 +82,7 @@ export class ConsumerFrontend extends EventEmitter {
     return this.consumer.getId();
   }
 
-  getQueues(): TConsumerQueueParams[] {
+  getQueues(): TQueueParams[] {
     return this.consumer.getQueues();
   }
 }

@@ -3,11 +3,10 @@ import {
   TConsumerMessageHandler,
   TConsumerRedisKeys,
   IConsumerWorkerParameters,
-  THeartbeatRegistryPayload,
+  TConsumerInfo,
   TQueueParams,
   TUnaryFunction,
   TRedisClientMulti,
-  TConsumerQueueParams,
 } from '../../../../types';
 import { events } from '../../common/events';
 import { RedisClient } from '../../common/redis-client/redis-client';
@@ -123,7 +122,7 @@ export class Consumer extends Base {
   }
 
   consume(
-    queue: TConsumerQueueParams,
+    queue: TQueueParams,
     messageHandler: TConsumerMessageHandler,
     cb: ICallback<boolean>,
   ): void {
@@ -134,7 +133,7 @@ export class Consumer extends Base {
     this.messageHandlerRunner.removeMessageHandler(queue, cb);
   }
 
-  getQueues(): TConsumerQueueParams[] {
+  getQueues(): TQueueParams[] {
     return this.messageHandlerRunner.getQueues();
   }
 
@@ -146,7 +145,7 @@ export class Consumer extends Base {
     redisClient: RedisClient,
     queue: TQueueParams,
     transform = false,
-    cb: ICallback<Record<string, THeartbeatRegistryPayload | string>>,
+    cb: ICallback<Record<string, TConsumerInfo | string>>,
   ): void {
     consumerQueues.getQueueConsumers(redisClient, queue, transform, cb);
   }
