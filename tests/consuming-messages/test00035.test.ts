@@ -1,10 +1,12 @@
 import { delay, promisifyAll } from 'bluebird';
 import { Consumer } from '../../src/consumer';
-import { getProducer } from '../common';
+import { getProducer, getQueueManager } from '../common';
 import { Message } from '../../src/system/app/message/message';
 import { events } from '../../src/system/common/events';
 
 test('Consume messages from different queues using a single consumer instance: case 6', async () => {
+  const qm = promisifyAll(await getQueueManager());
+
   const messages: Message[] = [];
   const consumer = promisifyAll(new Consumer(true));
   await consumer.runAsync();
@@ -12,7 +14,7 @@ test('Consume messages from different queues using a single consumer instance: c
   // running without message handlers
   await delay(5000);
 
-  // will do nothing when a message is received
+  await qm.createQueueAsync('test0', false);
   await consumer.consumeAsync('test0', () => void 0);
 
   consumer.once(events.MESSAGE_RECEIVED, () => {
@@ -30,56 +32,35 @@ test('Consume messages from different queues using a single consumer instance: c
   await delay(10000);
   expect(consumer.getQueues()).toEqual([]);
 
-  await consumer.consumeAsync(
-    {
-      name: 'test1',
-      priorityQueuing: true,
-    },
-    (msg, cb) => {
-      messages.push(msg);
-      cb();
-    },
-  );
-  await consumer.consumeAsync(
-    {
-      name: 'test2',
-      priorityQueuing: true,
-    },
-    (msg, cb) => {
-      messages.push(msg);
-      cb();
-    },
-  );
-  await consumer.consumeAsync(
-    {
-      name: 'test3',
-      priorityQueuing: true,
-    },
-    (msg, cb) => {
-      messages.push(msg);
-      cb();
-    },
-  );
-  await consumer.consumeAsync(
-    {
-      name: 'test4',
-      priorityQueuing: true,
-    },
-    (msg, cb) => {
-      messages.push(msg);
-      cb();
-    },
-  );
-  await consumer.consumeAsync(
-    {
-      name: 'test5',
-      priorityQueuing: true,
-    },
-    (msg, cb) => {
-      messages.push(msg);
-      cb();
-    },
-  );
+  await qm.createQueueAsync('test1', true);
+  await consumer.consumeAsync('test1', (msg, cb) => {
+    messages.push(msg);
+    cb();
+  });
+
+  await qm.createQueueAsync('test2', true);
+  await consumer.consumeAsync('test2', (msg, cb) => {
+    messages.push(msg);
+    cb();
+  });
+
+  await qm.createQueueAsync('test3', true);
+  await consumer.consumeAsync('test3', (msg, cb) => {
+    messages.push(msg);
+    cb();
+  });
+
+  await qm.createQueueAsync('test4', true);
+  await consumer.consumeAsync('test4', (msg, cb) => {
+    messages.push(msg);
+    cb();
+  });
+
+  await qm.createQueueAsync('test5', true);
+  await consumer.consumeAsync('test5', (msg, cb) => {
+    messages.push(msg);
+    cb();
+  });
 
   for (let i = 0; i < 5; i += 1) {
     await producer.produceAsync(

@@ -1,6 +1,6 @@
 import {
   getMessageManager,
-  getQueueManagerFrontend,
+  getQueueManager,
   produceAndDeadLetterMessage,
 } from '../common';
 import { promisifyAll } from 'bluebird';
@@ -9,7 +9,7 @@ test('Purging dead letter queue', async () => {
   const { queue, consumer } = await produceAndDeadLetterMessage();
   await consumer.shutdownAsync();
 
-  const queueManager = promisifyAll(await getQueueManagerFrontend());
+  const queueManager = promisifyAll(await getQueueManager());
   const m = await queueManager.getQueueMetricsAsync(queue);
   expect(m.deadLettered).toBe(1);
 

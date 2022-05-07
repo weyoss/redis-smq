@@ -1,7 +1,7 @@
 import {
   getMessageManager,
   getProducer,
-  getQueueManagerFrontend,
+  getQueueManager,
   startScheduleWorker,
 } from '../common';
 import { Message } from '../../src/message';
@@ -22,7 +22,7 @@ test("Make sure scheduled messages aren't published if destination queue is dele
   const s1 = await messageManager.getScheduledMessagesAsync(0, 99);
   expect(s1.total).toBe(1);
 
-  const queueManager = promisifyAll(await getQueueManagerFrontend());
+  const queueManager = promisifyAll(await getQueueManager());
   await queueManager.deleteQueueAsync('some_queue');
 
   await startScheduleWorker();

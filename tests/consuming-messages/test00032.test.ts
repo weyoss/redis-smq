@@ -1,9 +1,12 @@
 import { promisifyAll } from 'bluebird';
 import { Consumer } from '../../src/consumer';
-import { defaultQueue, getRedisInstance } from '../common';
+import { defaultQueue, getQueueManager, getRedisInstance } from '../common';
 import { consumerQueues } from '../../src/system/app/consumer/consumer-queues';
 
 test('Consume messages from different queues using a single consumer instance: case 3', async () => {
+  const qm = promisifyAll(await getQueueManager());
+  await qm.createQueueAsync(defaultQueue, false);
+
   const consumer = promisifyAll(new Consumer());
   await consumer.runAsync();
 
@@ -36,7 +39,7 @@ test('Consume messages from different queues using a single consumer instance: c
     redisClient,
     consumer.getId(),
   );
-  expect(b).toEqual([{ ...defaultQueue, priorityQueuing: false }]);
+  expect(b).toEqual([defaultQueue]);
 
   const b1 = await consumerQueuesAsync.getQueueConsumersAsync(
     redisClient,
@@ -66,21 +69,6 @@ test('Consume messages from different queues using a single consumer instance: c
     true,
   );
   expect(Object.keys(c1)).toEqual([]);
-
-  await consumer.consumeAsync(
-    {
-      ...defaultQueue,
-      priorityQueuing: true,
-    },
-    (msg, cb) => cb(),
-  );
-
-  const c2 = await consumerQueuesAsync.getQueueConsumersAsync(
-    redisClient,
-    defaultQueue,
-    true,
-  );
-  expect(Object.keys(c2)).toEqual([consumer.getId()]);
 
   await consumer.shutdownAsync();
 });

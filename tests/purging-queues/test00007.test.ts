@@ -1,9 +1,9 @@
 import { getConsumer, getRedisInstance, produceMessage } from '../common';
 import { promisifyAll } from 'bluebird';
 import { QueueManager } from '../../src/queue-manager';
-import { queueManager } from '../../src/system/app/queue-manager/queue-manager';
 import { RedisClient } from '../../src/system/common/redis-client/redis-client';
 import { ICallback, TQueueParams } from '../../types';
+import { processingQueue } from '../../src/system/app/consumer/consumer-message-handler/processing-queue';
 
 test('Concurrently deleting a message queue and starting a consumer', async () => {
   const { queue } = await produceMessage();
@@ -25,8 +25,8 @@ test('Concurrently deleting a message queue and starting a consumer', async () =
   // Within getQueueProcessingQueues() method, we can take more time than usual to return a response, to allow the
   // consumer to start up. queueManagerInstance.deleteQueue() should detect that a consumer has been started and
   // the operation should be cancelled.
-  const originalMethod = queueManager.getQueueProcessingQueues;
-  queueManager.getQueueProcessingQueues = (
+  const originalMethod = processingQueue.getQueueProcessingQueues;
+  processingQueue.getQueueProcessingQueues = (
     ...args: [
       redisClient: RedisClient,
       queue: TQueueParams,
@@ -54,5 +54,5 @@ test('Concurrently deleting a message queue and starting a consumer', async () =
   });
 
   // restore
-  queueManager.getQueueProcessingQueues = originalMethod;
+  processingQueue.getQueueProcessingQueues = originalMethod;
 });

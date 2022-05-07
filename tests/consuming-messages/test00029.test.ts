@@ -2,7 +2,7 @@ import {
   defaultQueue,
   getConsumer,
   getProducer,
-  getQueueManagerFrontend,
+  getQueueManager,
   validateTime,
 } from '../common';
 import { delay, promisifyAll } from 'bluebird';
@@ -10,7 +10,7 @@ import { Message } from '../../src/system/app/message/message';
 import { events } from '../../src/system/common/events';
 
 test('Rate limit a queue without priority and check message rate', async () => {
-  const qm = promisifyAll(await getQueueManagerFrontend());
+  const qm = promisifyAll(await getQueueManager());
   await qm.setQueueRateLimitAsync(defaultQueue, { limit: 3, interval: 10000 });
 
   const producer = await getProducer();

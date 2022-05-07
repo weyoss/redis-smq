@@ -1,8 +1,8 @@
-import { defaultQueue, getQueueManagerFrontend } from '../common';
+import { defaultQueue, getQueueManager } from '../common';
 import { promisifyAll } from 'bluebird';
 
 test('SetQueueRateLimit()/GetQueueRateLimit()/ClearQueueRateLimit()', async () => {
-  const qm = promisifyAll(await getQueueManagerFrontend());
+  const qm = promisifyAll(await getQueueManager());
   await qm.setQueueRateLimitAsync(defaultQueue, { limit: 5, interval: 1000 });
 
   const rateLimit = await qm.getQueueRateLimitAsync(defaultQueue);

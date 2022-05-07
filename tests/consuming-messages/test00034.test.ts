@@ -1,10 +1,10 @@
 import { delay, promisifyAll } from 'bluebird';
 import { Consumer } from '../../src/consumer';
-import { defaultQueue, getProducer, getQueueManagerFrontend } from '../common';
+import { defaultQueue, getProducer, getQueueManager } from '../common';
 import { Message } from '../../src/system/app/message/message';
 
 test('Consume messages from different queues using a single consumer instance: case 5', async () => {
-  const qm = promisifyAll(await getQueueManagerFrontend());
+  const qm = promisifyAll(await getQueueManager());
   await qm.setQueueRateLimitAsync(defaultQueue, { limit: 3, interval: 5000 });
 
   const messages: Message[] = [];

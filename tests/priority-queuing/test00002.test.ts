@@ -2,6 +2,7 @@ import {
   defaultQueue,
   getConsumer,
   getProducer,
+  getQueueManager,
   untilConsumerIdle,
 } from '../common';
 import { promisifyAll } from 'bluebird';
@@ -9,12 +10,13 @@ import { Message } from '../../src/message';
 
 test('Priority queuing: case 2', async () => {
   const consumedMessages: Message[] = [];
+
+  const qm = promisifyAll(await getQueueManager());
+  await qm.createQueueAsync(defaultQueue, true);
+
   const consumer = promisifyAll(
     getConsumer({
-      queue: {
-        ...defaultQueue,
-        priorityQueuing: true,
-      },
+      queue: defaultQueue,
       messageHandler: jest.fn((msg, cb) => {
         consumedMessages.push(msg);
         cb(null);

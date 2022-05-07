@@ -1,6 +1,6 @@
 import {
   getMessageManager,
-  getQueueManagerFrontend,
+  getQueueManager,
   produceAndAcknowledgeMessage,
 } from '../common';
 import { promisifyAll } from 'bluebird';
@@ -23,7 +23,7 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   expect(res2.items.length).toBe(1);
   expect(res2.items[0].message).toEqual(message);
 
-  const queueManager = promisifyAll(await getQueueManagerFrontend());
+  const queueManager = promisifyAll(await getQueueManager());
   const queueMetrics = await queueManager.getQueueMetricsAsync(queue);
   expect(queueMetrics.pending).toBe(0);
   expect(queueMetrics.acknowledged).toBe(1);
