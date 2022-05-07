@@ -5,7 +5,7 @@ import {
   startWebsocketOnlineStreamWorker,
   validateTime,
 } from '../common';
-import { THeartbeatRegistryPayload } from '../../types';
+import { TConsumerInfo } from '../../types';
 
 test('WebsocketOnlineStreamWorker: streamOnlineQueueConsumers/case 1', async () => {
   const consumer = getConsumer();
@@ -19,7 +19,7 @@ test('WebsocketOnlineStreamWorker: streamOnlineQueueConsumers/case 1', async () 
     const diff = data[i].ts - data[0].ts;
     expect(validateTime(diff, 1000 * i)).toBe(true);
     expect(Object.keys(data[i].payload)).toEqual([consumer.getId()]);
-    const payload: THeartbeatRegistryPayload = JSON.parse(
+    const payload: TConsumerInfo = JSON.parse(
       data[i].payload[consumer.getId()],
     );
     expect(Object.keys(payload)).toEqual([

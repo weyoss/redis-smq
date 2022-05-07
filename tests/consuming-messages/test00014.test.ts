@@ -3,7 +3,7 @@ import { Message } from '../../src/system/app/message/message';
 import {
   getConsumer,
   getProducer,
-  getQueueManagerFrontend,
+  getQueueManager,
   untilMessageAcknowledged,
 } from '../common';
 
@@ -16,7 +16,7 @@ test('Consume messages from different queues and published by a single producer 
     const r = await producer.produceAsync(message);
     expect(r).toBe(true);
   }
-  const metrics = promisifyAll(await getQueueManagerFrontend());
+  const metrics = promisifyAll(await getQueueManager());
   for (let i = 0; i < 5; i += 1) {
     // Be carefull here: queue name is always in lowercase. Otherwise it will be not normalized
     const m1 = await metrics.getQueueMetricsAsync(`queue_${i}`);

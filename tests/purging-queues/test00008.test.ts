@@ -1,7 +1,4 @@
-import {
-  getQueueManagerFrontend,
-  produceAndAcknowledgeMessage,
-} from '../common';
+import { getQueueManager, produceAndAcknowledgeMessage } from '../common';
 import { promisifyAll } from 'bluebird';
 
 test('Combined: Fetching namespaces, deleting a namespace with its message queues', async () => {
@@ -16,7 +13,7 @@ test('Combined: Fetching namespaces, deleting a namespace with its message queue
     name: 'queue_b',
   });
 
-  const queueManager = promisifyAll(await getQueueManagerFrontend());
+  const queueManager = promisifyAll(await getQueueManager());
 
   const m0 = await queueManager.getNamespacesAsync();
   expect(m0).toEqual([ns]);

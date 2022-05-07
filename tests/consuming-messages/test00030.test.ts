@@ -2,7 +2,7 @@ import {
   defaultQueue,
   getConsumer,
   getProducer,
-  getQueueManagerFrontend,
+  getQueueManager,
   validateTime,
 } from '../common';
 import { delay, promisifyAll } from 'bluebird';
@@ -10,7 +10,9 @@ import { Message } from '../../src/system/app/message/message';
 import { events } from '../../src/system/common/events';
 
 test('Rate limit a priority queue and check message rate', async () => {
-  const qm = promisifyAll(await getQueueManagerFrontend());
+  const qm = promisifyAll(await getQueueManager());
+  await qm.createQueueAsync(defaultQueue, true);
+
   await qm.setQueueRateLimitAsync(defaultQueue, { limit: 3, interval: 10000 });
 
   const producer = await getProducer();
@@ -54,13 +56,7 @@ test('Rate limit a priority queue and check message rate', async () => {
   const messages: { ts: number; msg: Message }[] = [];
   const consumer = await getConsumer();
   await consumer.cancelAsync(defaultQueue);
-  await consumer.consumeAsync(
-    {
-      ...defaultQueue,
-      priorityQueuing: true,
-    },
-    (msg, cb) => cb(),
-  );
+  await consumer.consumeAsync(defaultQueue, (msg, cb) => cb());
 
   consumer.on(events.MESSAGE_ACKNOWLEDGED, (msg: Message) => {
     messages.push({ ts: Date.now(), msg });

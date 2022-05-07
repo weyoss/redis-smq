@@ -1,6 +1,6 @@
 import {
   getMessageManager,
-  getQueueManagerFrontend,
+  getQueueManager,
   produceAndDeadLetterMessage,
 } from '../common';
 import { Message } from '../../src/message';
@@ -25,7 +25,7 @@ test(`Combined test: Dead-letter a message and requeue it with priority. Check p
   expect(res3.items[0].message.getId()).toEqual(message.getRequiredId());
   expect(res3.items[0].message.getRequiredMetadata().getAttempts()).toEqual(2);
 
-  const queueManager = promisifyAll(await getQueueManagerFrontend());
+  const queueManager = promisifyAll(await getQueueManager());
   const queueMetrics = await queueManager.getQueueMetricsAsync(queue);
   expect(queueMetrics.pendingWithPriority).toBe(0);
   expect(queueMetrics.pending).toBe(0);

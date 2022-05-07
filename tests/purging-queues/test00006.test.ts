@@ -1,13 +1,10 @@
-import {
-  getQueueManagerFrontend,
-  produceAndAcknowledgeMessage,
-} from '../common';
+import { getQueueManager, produceAndAcknowledgeMessage } from '../common';
 import { promisifyAll } from 'bluebird';
 
 test('Deleting a message queue with all of its data', async () => {
   const { consumer, queue } = await produceAndAcknowledgeMessage();
 
-  const queueManager = promisifyAll(await getQueueManagerFrontend());
+  const queueManager = promisifyAll(await getQueueManager());
 
   const m1 = await queueManager.getQueueMetricsAsync(queue);
   expect(m1.acknowledged).toBe(1);

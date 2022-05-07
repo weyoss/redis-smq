@@ -11,13 +11,12 @@ import {
 import { config as testConfig } from './config';
 import {
   IConfig,
-  IPartialConsumerQueueParams,
   TConsumerMessageHandler,
   TQueueParams,
   TTimeSeriesRange,
 } from '../types';
 import { WebsocketMainStreamWorker } from '../src/monitor-server/workers/websocket-main-stream.worker';
-import { QueueManagerFrontend } from '../src/system/app/queue-manager/queue-manager-frontend';
+import { QueueManager } from '../src/system/app/queue-manager/queue-manager';
 import { MessageManager } from '../src/system/app/message-manager/message-manager';
 import * as supertest from 'supertest';
 import { WebsocketRateStreamWorker } from '../src/monitor-server/workers/websocket-rate-stream.worker';
@@ -28,14 +27,13 @@ import * as configuration from '../src/system/common/configuration/configuration
 import ScheduleWorker from '../src/system/workers/schedule.worker';
 import TimeSeriesWorker from '../src/system/workers/time-series.worker';
 import { merge } from 'lodash';
-import { queueManager } from '../src/system/app/queue-manager/queue-manager';
 import { reset } from '../src/system/common/logger';
 import MessageStorage from '../src/system/common/configuration/message-storage';
 
 export const config = configuration.setConfiguration(testConfig);
 
 type TGetConsumerArgs = {
-  queue?: string | IPartialConsumerQueueParams;
+  queue?: string | TQueueParams;
   messageHandler?: TConsumerMessageHandler;
 };
 
@@ -50,7 +48,7 @@ export interface ISuperTestResponse<TData> extends supertest.Response {
   };
 }
 
-const QueueManagerFrontendAsync = promisifyAll(QueueManagerFrontend);
+const QueueManagerAsync = promisifyAll(QueueManager);
 
 export const defaultQueue: TQueueParams = {
   name: 'test_queue',
@@ -69,7 +67,7 @@ let websocketOnlineStreamWorker: WebsocketOnlineStreamWorker | null = null;
 let scheduleWorker: ScheduleWorker | null = null;
 let timeSeriesWorker: TimeSeriesWorker | null = null;
 let messageManager: MessageManager | null = null;
-let queueManagerFrontend: QueueManagerFrontend | null = null;
+let queueManager: QueueManager | null = null;
 
 export async function startUp(): Promise<void> {
   const redisClient = await getRedisInstance();
@@ -112,10 +110,10 @@ export async function shutdown(): Promise<void> {
     await m.quitAsync();
     messageManager = null;
   }
-  if (queueManagerFrontend) {
-    const q = promisifyAll(queueManagerFrontend);
+  if (queueManager) {
+    const q = promisifyAll(queueManager);
     await q.quitAsync();
-    queueManagerFrontend = null;
+    queueManager = null;
   }
 
   // Redis clients should be stopped in the last step, to avoid random errors from different
@@ -169,12 +167,11 @@ export async function getMessageManager() {
   return messageManager;
 }
 
-export async function getQueueManagerFrontend() {
-  if (!queueManagerFrontend) {
-    queueManagerFrontend =
-      await QueueManagerFrontendAsync.getSingletonInstanceAsync();
+export async function getQueueManager() {
+  if (!queueManager) {
+    queueManager = await QueueManagerAsync.getSingletonInstanceAsync();
   }
-  return queueManagerFrontend;
+  return queueManager;
 }
 
 export async function startMonitorServer(): Promise<void> {
@@ -520,12 +517,4 @@ export async function validateTimeSeriesFrom(url: string) {
     timestamp: timestamp - 1,
     value: 0,
   });
-}
-
-export async function setUpMessageQueue(queue: TQueueParams = defaultQueue) {
-  const qm = promisifyAll(queueManager);
-  const redisClient = await getRedisInstance();
-  const multi = redisClient.multi();
-  qm.setUpMessageQueue(multi, queue);
-  await redisClient.execMultiAsync(multi);
 }
