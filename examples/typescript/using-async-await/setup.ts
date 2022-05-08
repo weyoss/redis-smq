@@ -20,9 +20,11 @@ export async function init(): Promise<void> {
     await QueueManagerAsync.getSingletonInstanceAsync(),
   );
 
+  const queueAsync = promisifyAll(queueManager.queue);
+
   // Creating a normal queue (a LIFO queue)
-  await queueManager.createQueueAsync('test_queue', false);
+  await queueAsync.createQueueAsync('test_queue', false);
 
   // Creating a priority queue
-  await queueManager.createQueueAsync('another_queue', true);
+  await queueAsync.createQueueAsync('another_queue', true);
 }

@@ -18,6 +18,6 @@ export function init(cb: ICallback<void>): void {
     if (err) throw err;
     else if (!queueManager)
       throw new Error('Expected an instance of QueueManager');
-    else queueManager.createQueue('test_queue', false, cb);
+    else queueManager.queue.createQueue('test_queue', false, cb);
   });
 }

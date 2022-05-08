@@ -11,15 +11,12 @@ import { Ticker } from '../../../common/ticker/ticker';
 import { events } from '../../../common/events';
 import { Message } from '../../message/message';
 import { MessageHandler } from './message-handler';
-import {
-  getQueueRateLimit,
-  hasQueueRateLimitExceeded,
-} from '../../queue-manager/queue-rate-limit';
+import { QueueRateLimit } from '../../queue-manager/queue-rate-limit';
 import { waterfall } from '../../../lib/async';
-import { getQueue } from '../../queue-manager/queue';
 import { EmptyCallbackReplyError } from '../../../common/errors/empty-callback-reply.error';
 import { ELuaScriptName } from '../../../common/redis-client/lua-scripts';
 import { QueueNotFoundError } from '../../queue-manager/errors/queue-not-found.error';
+import { Queue } from '../../queue-manager/queue';
 
 const IPAddresses = (() => {
   const nets = os.networkInterfaces();
@@ -101,7 +98,7 @@ export class DequeueMessage {
     };
     if (this.priorityQueuing || this.queueRateLimit) {
       if (this.queueRateLimit) {
-        hasQueueRateLimitExceeded(
+        QueueRateLimit.hasQueueRateLimitExceeded(
           this.redisClient,
           this.queue,
           this.queueRateLimit,
@@ -158,7 +155,7 @@ export class DequeueMessage {
           );
         },
         (cb: ICallback<void>) => {
-          getQueue(this.redisClient, this.queue, (err, reply) => {
+          Queue.getQueue(this.redisClient, this.queue, (err, reply) => {
             if (err) cb(err);
             else if (!reply) cb(new EmptyCallbackReplyError());
             else {
@@ -168,10 +165,14 @@ export class DequeueMessage {
           });
         },
         (cb: ICallback<void>) => {
-          getQueueRateLimit(this.redisClient, this.queue, (err, rateLimit) => {
-            if (err) cb(err);
-            else this.queueRateLimit = rateLimit ?? null;
-          });
+          QueueRateLimit.getQueueRateLimit(
+            this.redisClient,
+            this.queue,
+            (err, rateLimit) => {
+              if (err) cb(err);
+              else this.queueRateLimit = rateLimit ?? null;
+            },
+          );
         },
       ],
       cb,

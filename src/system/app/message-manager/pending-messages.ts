@@ -1,12 +1,12 @@
 import { ICallback, TGetMessagesReply, TQueueParams } from '../../../../types';
-import { getQueueParams } from '../queue-manager/queue';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { MessageNotFoundError } from './errors/message-not-found.error';
 import { List } from './message-storage/list';
+import { Queue } from '../queue-manager/queue';
 
 export class PendingMessages extends List {
   purge(queue: string | TQueueParams, cb: ICallback<void>): void {
-    const queueParams = getQueueParams(queue);
+    const queueParams = Queue.getQueueParams(queue);
     const { keyQueuePending } = redisKeys.getQueueKeys(queueParams);
     this.purgeMessages({ keyMessages: keyQueuePending }, (err) => {
       if (err) cb(err);
@@ -27,7 +27,7 @@ export class PendingMessages extends List {
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const queueParams = getQueueParams(queue);
+    const queueParams = Queue.getQueueParams(queue);
     const { keyQueuePending } = redisKeys.getQueueKeys(queueParams);
     this.deleteMessage(
       { keyMessages: keyQueuePending },
@@ -53,7 +53,7 @@ export class PendingMessages extends List {
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    const queueParams = getQueueParams(queue);
+    const queueParams = Queue.getQueueParams(queue);
     const { keyQueuePending } = redisKeys.getQueueKeys(queueParams);
     this.fetchMessages({ keyMessages: keyQueuePending }, skip, take, cb);
   }

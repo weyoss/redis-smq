@@ -1,7 +1,7 @@
 import { ICallback, TGetMessagesReply, TQueueParams } from '../../../../types';
-import { getQueueParams } from '../queue-manager/queue';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { List } from './message-storage/list';
+import { Queue } from '../queue-manager/queue';
 
 export class AcknowledgedMessages extends List {
   list(
@@ -10,13 +10,13 @@ export class AcknowledgedMessages extends List {
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    const queueParams = getQueueParams(queue);
+    const queueParams = Queue.getQueueParams(queue);
     const { keyQueueAcknowledged } = redisKeys.getQueueKeys(queueParams);
     this.fetchMessages({ keyMessages: keyQueueAcknowledged }, skip, take, cb);
   }
 
   purge(queue: string | TQueueParams, cb: ICallback<void>): void {
-    const queueParams = getQueueParams(queue);
+    const queueParams = Queue.getQueueParams(queue);
     const { keyQueueAcknowledged } = redisKeys.getQueueKeys(queueParams);
     this.purgeMessages({ keyMessages: keyQueueAcknowledged }, (err) => {
       if (err) cb(err);
@@ -37,7 +37,7 @@ export class AcknowledgedMessages extends List {
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const queueParams = getQueueParams(queue);
+    const queueParams = Queue.getQueueParams(queue);
     const { keyQueueAcknowledged } = redisKeys.getQueueKeys(queueParams);
     this.requeueMessage(keyQueueAcknowledged, sequenceId, messageId, (err) => {
       if (err) cb(err);
@@ -56,7 +56,7 @@ export class AcknowledgedMessages extends List {
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const queueParams = getQueueParams(queue);
+    const queueParams = Queue.getQueueParams(queue);
     const { keyQueueAcknowledged } = redisKeys.getQueueKeys(queueParams);
     this.deleteMessage(
       { keyMessages: keyQueueAcknowledged },

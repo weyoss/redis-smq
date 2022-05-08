@@ -3,7 +3,7 @@ import {
   TGetPendingMessagesWithPriorityReply,
   TQueueParams,
 } from '../../../../types';
-import { getQueueParams } from '../queue-manager/queue';
+import { Queue } from '../queue-manager/queue';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { SortedSet } from './message-storage/sorted-set';
 
@@ -13,7 +13,7 @@ export class PriorityMessages extends SortedSet {
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const queueParams = getQueueParams(queue);
+    const queueParams = Queue.getQueueParams(queue);
     const {
       keyQueuePendingPriorityMessageIds,
       keyQueuePendingPriorityMessages,
@@ -37,7 +37,7 @@ export class PriorityMessages extends SortedSet {
   }
 
   purge(queue: string | TQueueParams, cb: ICallback<void>): void {
-    const queueParams = getQueueParams(queue);
+    const queueParams = Queue.getQueueParams(queue);
     const {
       keyQueuePendingPriorityMessageIds,
       keyQueuePendingPriorityMessages,
@@ -67,7 +67,7 @@ export class PriorityMessages extends SortedSet {
     take: number,
     cb: ICallback<TGetPendingMessagesWithPriorityReply>,
   ): void {
-    const queueParams = getQueueParams(queue);
+    const queueParams = Queue.getQueueParams(queue);
     const {
       keyQueuePendingPriorityMessageIds,
       keyQueuePendingPriorityMessages,
