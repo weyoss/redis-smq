@@ -2,7 +2,7 @@ import { DequeueMessage } from '../dequeue-message';
 import { ICallback } from '../../../../../../types';
 import { Message } from '../../../message/message';
 import { events } from '../../../../common/events';
-import { hasQueueRateLimitExceeded } from '../../../queue-manager/queue-rate-limit';
+import { QueueRateLimit } from '../../../queue-manager/queue-rate-limit';
 
 export class MultiplexedDequeueMessage extends DequeueMessage {
   override dequeue(): void {
@@ -22,7 +22,7 @@ export class MultiplexedDequeueMessage extends DequeueMessage {
       else this.dequeueMessage(cb);
     };
     if (this.queueRateLimit) {
-      hasQueueRateLimitExceeded(
+      QueueRateLimit.hasQueueRateLimitExceeded(
         this.redisClient,
         this.queue,
         this.queueRateLimit,

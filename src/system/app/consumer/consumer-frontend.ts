@@ -6,7 +6,7 @@ import {
 import { EventEmitter } from 'events';
 import { Consumer } from './consumer';
 import { events } from '../../common/events';
-import { getQueueParams } from '../queue-manager/queue';
+import { Queue } from '../queue-manager/queue';
 
 export class ConsumerFrontend extends EventEmitter {
   private consumer: Consumer;
@@ -41,12 +41,12 @@ export class ConsumerFrontend extends EventEmitter {
     messageHandler: TConsumerMessageHandler,
     cb: ICallback<boolean>,
   ): void {
-    const queueParams = getQueueParams(queue);
+    const queueParams = Queue.getQueueParams(queue);
     return this.consumer.consume(queueParams, messageHandler, cb);
   }
 
   cancel(queue: string | TQueueParams, cb: ICallback<void>): void {
-    const queueParams = getQueueParams(queue);
+    const queueParams = Queue.getQueueParams(queue);
     this.consumer.cancel(queueParams, cb);
   }
 

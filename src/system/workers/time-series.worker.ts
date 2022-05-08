@@ -15,7 +15,7 @@ import { GlobalDeadLetteredTimeSeries } from '../app/consumer/consumer-time-seri
 import { consumerQueues } from '../app/consumer/consumer-queues';
 import { ConsumerAcknowledgedTimeSeries } from '../app/consumer/consumer-time-series/consumer-acknowledged-time-series';
 import { ConsumerDeadLetteredTimeSeries } from '../app/consumer/consumer-time-series/consumer-dead-lettered-time-series';
-import { listQueues } from '../app/queue-manager/queue';
+import { Queue } from '../app/queue-manager/queue';
 
 export class TimeSeriesWorker extends Worker<IConsumerWorkerParameters> {
   protected enabled: boolean;
@@ -100,7 +100,7 @@ export class TimeSeriesWorker extends Worker<IConsumerWorkerParameters> {
         [
           (cb: ICallback<void>) => this.cleanUpGlobalTimeSeries(cb),
           (cb: ICallback<TQueueParams[]>) =>
-            listQueues(this.redisClient, (err, reply) => {
+            Queue.listQueues(this.redisClient, (err, reply) => {
               if (err) cb(err);
               else {
                 const queues = reply ?? [];

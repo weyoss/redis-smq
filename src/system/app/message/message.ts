@@ -4,7 +4,7 @@ import { ArgumentError } from '../../common/errors/argument.error';
 import { getConfiguration } from '../../common/configuration/configuration';
 import { MessageMetadata } from './message-metadata';
 import { PanicError } from '../../common/errors/panic.error';
-import { getQueueParams } from '../queue-manager/queue';
+import { Queue } from '../queue-manager/queue';
 
 export class Message {
   // Do not forget about javascript users. Using an object map instead of enum
@@ -243,7 +243,7 @@ export class Message {
   }
 
   setQueue(queue: string | TQueueParams): Message {
-    this.queue = getQueueParams(queue);
+    this.queue = Queue.getQueueParams(queue);
     return this;
   }
 

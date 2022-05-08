@@ -2,14 +2,14 @@ import { ICallback, TQueueParams } from '../../../types';
 import { Consumer } from '../../system/app/consumer/consumer';
 import { Worker } from '../../system/common/worker/worker';
 import { each, waterfall } from '../../system/lib/async';
-import { listQueues } from '../../system/app/queue-manager/queue';
+import { Queue } from '../../system/app/queue-manager/queue';
 
 export class WebsocketOnlineStreamWorker extends Worker {
   work = (cb: ICallback<void>): void => {
     waterfall(
       [
         (cb: ICallback<TQueueParams[]>) => {
-          listQueues(this.redisClient, cb);
+          Queue.listQueues(this.redisClient, cb);
         },
         (queues: TQueueParams[], done: ICallback<void>) => {
           each(
