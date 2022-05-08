@@ -5,11 +5,11 @@ import {
   TWebsocketMainStreamPayloadQueue,
 } from '../../../types';
 import { redisKeys } from '../../system/common/redis-keys/redis-keys';
-import { MessageManager } from '../../system/app/message-manager/message-manager';
 import { Consumer } from '../../system/app/consumer/consumer';
 import { Worker } from '../../system/common/worker/worker';
 import { each, waterfall } from '../../system/lib/async';
 import { listQueues } from '../../system/app/queue-manager/queue';
+import { ScheduledMessages } from '../../system/app/message-manager/scheduled-messages';
 
 export class WebsocketMainStreamWorker extends Worker {
   protected data: TWebsocketMainStreamPayload = {
@@ -131,7 +131,7 @@ export class WebsocketMainStreamWorker extends Worker {
   };
 
   protected countScheduledMessages = (cb: ICallback<void>): void => {
-    MessageManager.getScheduledMessagesCount(this.redisClient, (err, count) => {
+    ScheduledMessages.count(this.redisClient, (err, count) => {
       if (err) cb(err);
       else {
         this.data.scheduledMessagesCount = count ?? 0;

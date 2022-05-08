@@ -1,5 +1,4 @@
 import { promisifyAll } from 'bluebird';
-import { MessageManager } from '../../system/app/message-manager/message-manager';
 import { GetScheduledMessagesRequestDTO } from '../controllers/api/main/scheduled-messages/get-scheduled-messages/get-scheduled-messages.request.DTO';
 import { GetPendingMessagesRequestDTO } from '../controllers/api/namespaces/queue/pending-messages/get-pending-messages/get-pending-messages.request.DTO';
 import { GetAcknowledgedMessagesRequestDTO } from '../controllers/api/namespaces/queue/acknowledged-messages/get-acknowledged-messages/get-acknowledged-messages.request.DTO';
@@ -15,19 +14,35 @@ import { PurgeDeadLetteredMessagesRequestDTO } from '../controllers/api/namespac
 import { PurgeAcknowledgedMessagesRequestDTO } from '../controllers/api/namespaces/queue/acknowledged-messages/purge-acknowledged-messages/purge-acknowledged-messages.request.DTO';
 import { PurgePendingMessagesRequestDTO } from '../controllers/api/namespaces/queue/pending-messages/purge-pending-messages/purge-pending-messages.request.DTO';
 import { PurgePendingMessagesWithPriorityRequestDTO } from '../controllers/api/namespaces/queue/pending-messages-with-priority/purge-pending-messages-with-priority/purge-pending-messages-with-priority.request.DTO';
-
-const messageManagerAsync = promisifyAll(MessageManager.prototype);
+import { RedisClient } from '../../system/common/redis-client/redis-client';
+import { ScheduledMessages } from '../../system/app/message-manager/scheduled-messages';
+import { AcknowledgedMessages } from '../../system/app/message-manager/acknowledged-messages';
+import { PendingMessages } from '../../system/app/message-manager/pending-messages';
+import { PriorityMessages } from '../../system/app/message-manager/priority-messages';
+import { DeadLetteredMessages } from '../../system/app/message-manager/dead-lettered-messages';
 
 export class MessagesService {
-  protected messageManager: typeof messageManagerAsync;
+  protected scheduledMessages;
+  protected acknowledgedMessages;
+  protected pendingMessages;
+  protected priorityMessages;
+  protected deadLetteredMessages;
 
-  constructor(messageManager: MessageManager) {
-    this.messageManager = promisifyAll(messageManager);
+  constructor(redisClient: RedisClient) {
+    this.scheduledMessages = promisifyAll(new ScheduledMessages(redisClient));
+    this.acknowledgedMessages = promisifyAll(
+      new AcknowledgedMessages(redisClient),
+    );
+    this.pendingMessages = promisifyAll(new PendingMessages(redisClient));
+    this.priorityMessages = promisifyAll(new PriorityMessages(redisClient));
+    this.deadLetteredMessages = promisifyAll(
+      new DeadLetteredMessages(redisClient),
+    );
   }
 
   async getScheduledMessages(args: GetScheduledMessagesRequestDTO) {
     const { skip = 0, take = 1 } = args;
-    const r = await this.messageManager.getScheduledMessagesAsync(skip, take);
+    const r = await this.scheduledMessages.listAsync(skip, take);
     return {
       ...r,
       items: r.items.map((i) => i.toJSON()),
@@ -36,7 +51,7 @@ export class MessagesService {
 
   async getPendingMessages(args: GetPendingMessagesRequestDTO) {
     const { ns, queueName, skip = 0, take = 1 } = args;
-    const r = await this.messageManager.getPendingMessagesAsync(
+    const r = await this.pendingMessages.listAsync(
       {
         name: queueName,
         ns,
@@ -52,7 +67,7 @@ export class MessagesService {
 
   async getAcknowledgedMessages(args: GetAcknowledgedMessagesRequestDTO) {
     const { ns, queueName, skip = 0, take = 1 } = args;
-    const r = await this.messageManager.getAcknowledgedMessagesAsync(
+    const r = await this.acknowledgedMessages.listAsync(
       {
         name: queueName,
         ns,
@@ -68,7 +83,7 @@ export class MessagesService {
 
   async getPendingMessagesWithPriority(args: GetPendingMessagesRequestDTO) {
     const { ns, queueName, skip = 0, take = 1 } = args;
-    const r = await this.messageManager.getPendingMessagesWithPriorityAsync(
+    const r = await this.priorityMessages.listAsync(
       {
         name: queueName,
         ns,
@@ -84,7 +99,7 @@ export class MessagesService {
 
   async getDeadLetteredMessages(args: GetDeadLetteredMessagesRequestDTO) {
     const { ns, queueName, skip = 0, take = 1 } = args;
-    const r = await this.messageManager.getDeadLetteredMessagesAsync(
+    const r = await this.deadLetteredMessages.listAsync(
       {
         name: queueName,
         ns,
@@ -102,7 +117,7 @@ export class MessagesService {
     args: DeletePendingMessageRequestDTO,
   ): Promise<void> {
     const { ns, queueName, id, sequenceId } = args;
-    return this.messageManager.deletePendingMessageAsync(
+    return this.pendingMessages.deleteAsync(
       {
         name: queueName,
         ns,
@@ -116,7 +131,7 @@ export class MessagesService {
     args: DeletePendingMessageWithPriorityRequestDTO,
   ): Promise<void> {
     const { ns, queueName, id } = args;
-    return this.messageManager.deletePendingMessageWithPriorityAsync(
+    return this.priorityMessages.deleteAsync(
       {
         name: queueName,
         ns,
@@ -129,7 +144,7 @@ export class MessagesService {
     args: DeleteAcknowledgedMessageRequestDTO,
   ): Promise<void> {
     const { ns, queueName, id, sequenceId } = args;
-    return this.messageManager.deleteAcknowledgedMessageAsync(
+    return this.acknowledgedMessages.deleteAsync(
       {
         name: queueName,
         ns,
@@ -143,7 +158,7 @@ export class MessagesService {
     args: DeleteDeadLetteredMessageRequestDTO,
   ): Promise<void> {
     const { ns, queueName, id, sequenceId } = args;
-    return this.messageManager.deleteDeadLetteredMessageAsync(
+    return this.deadLetteredMessages.deleteAsync(
       {
         name: queueName,
         ns,
@@ -157,36 +172,34 @@ export class MessagesService {
     args: DeleteScheduledMessageRequestDTO,
   ): Promise<void> {
     const { id } = args;
-    return this.messageManager.deleteScheduledMessageAsync(id);
+    return this.scheduledMessages.deleteAsync(id);
   }
 
   async requeueDeadLetteredMessage(
     args: RequeueDeadLetteredMessageRequestDTO,
   ): Promise<void> {
-    const { ns, queueName, id, sequenceId, priority } = args;
-    return this.messageManager.requeueDeadLetteredMessageAsync(
+    const { ns, queueName, id, sequenceId } = args;
+    return this.deadLetteredMessages.requeueAsync(
       {
         name: queueName,
         ns,
       },
       sequenceId,
       id,
-      priority,
     );
   }
 
   async requeueAcknowledgedMessage(
     args: RequeueAcknowledgedMessageRequestDTO,
   ): Promise<void> {
-    const { ns, queueName, id, sequenceId, priority } = args;
-    return this.messageManager.requeueAcknowledgedMessageAsync(
+    const { ns, queueName, id, sequenceId } = args;
+    return this.acknowledgedMessages.requeueAsync(
       {
         name: queueName,
         ns,
       },
       sequenceId,
       id,
-      priority,
     );
   }
 
@@ -194,7 +207,7 @@ export class MessagesService {
     args: PurgeDeadLetteredMessagesRequestDTO,
   ): Promise<void> {
     const { ns, queueName } = args;
-    return this.messageManager.purgeDeadLetteredMessagesAsync({
+    return this.deadLetteredMessages.purgeAsync({
       name: queueName,
       ns,
     });
@@ -204,7 +217,7 @@ export class MessagesService {
     args: PurgeAcknowledgedMessagesRequestDTO,
   ): Promise<void> {
     const { ns, queueName } = args;
-    return this.messageManager.purgeAcknowledgedMessagesAsync({
+    return this.acknowledgedMessages.purgeAsync({
       name: queueName,
       ns,
     });
@@ -214,7 +227,7 @@ export class MessagesService {
     args: PurgePendingMessagesRequestDTO,
   ): Promise<void> {
     const { ns, queueName } = args;
-    return this.messageManager.purgePendingMessagesAsync({
+    return this.pendingMessages.purgeAsync({
       name: queueName,
       ns,
     });
@@ -224,13 +237,13 @@ export class MessagesService {
     args: PurgePendingMessagesWithPriorityRequestDTO,
   ): Promise<void> {
     const { ns, queueName } = args;
-    return this.messageManager.purgePendingMessagesWithPriorityAsync({
+    return this.priorityMessages.purgeAsync({
       name: queueName,
       ns,
     });
   }
 
   async purgeScheduledMessages(): Promise<void> {
-    return this.messageManager.purgeScheduledMessagesAsync();
+    return this.scheduledMessages.purgeAsync();
   }
 }
