@@ -9,7 +9,7 @@ import { ELuaScriptName } from '../../../common/redis-client/lua-scripts';
 
 type TFetchMessagesReply = { sequenceId: number; message: Message };
 
-export class List extends AbstractMessageStorage<
+export abstract class List extends AbstractMessageStorage<
   { keyMessages: string },
   {
     messageId: string;

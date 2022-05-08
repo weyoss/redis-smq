@@ -42,9 +42,8 @@ export function scheduleMessage(
     if (timestamp > 0) {
       const queue = message.getRequiredQueue();
       const {
-        keyNamespaces,
-        keyNsQueues,
-        keyQueues,
+        keyQueueSettings,
+        keyQueueSettingsPriorityQueuing,
         keyScheduledMessageIds,
         keyScheduledMessages,
       } = redisKeys.getQueueKeys(queue);
@@ -53,18 +52,16 @@ export function scheduleMessage(
       mixed.runScript(
         ELuaScriptName.SCHEDULE_MESSAGE,
         [
-          keyNamespaces,
-          keyNsQueues,
-          keyQueues,
+          keyQueueSettings,
+          keyQueueSettingsPriorityQueuing,
           keyScheduledMessageIds,
           keyScheduledMessages,
         ],
         [
-          queue.ns,
-          JSON.stringify(queue),
           messageId,
           JSON.stringify(message),
           `${timestamp}`,
+          `${message.getPriority() ?? ''}`,
         ],
         (err) => {
           if (err) cb(err);

@@ -4,7 +4,7 @@ import { Message } from '../../message/message';
 import { each, waterfall } from '../../../lib/async';
 import { EmptyCallbackReplyError } from '../../../common/errors/empty-callback-reply.error';
 
-export class SortedSet extends AbstractMessageStorage<
+export abstract class SortedSet extends AbstractMessageStorage<
   {
     keyMessages: string;
     keyMessagesWeight: string;
