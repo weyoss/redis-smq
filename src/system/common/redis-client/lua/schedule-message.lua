@@ -1,23 +1,15 @@
---- KEYS[1] keyNamespaces
---- KEYS[2] keyNsQueues
---- KEYS[3] keyQueues (set)
---- KEYS[4] keyScheduledMessages (sorted set)
---- KEYS[5] keyScheduledMessagesIndex (hash)
---- ARGV[1] namespace
---- ARGV[2] queue
---- ARGV[3] message id
---- ARGV[4] message
---- ARGV[5] scheduleTimestamp
-
-if redis.call("SISMEMBER", KEYS[1], ARGV[1]) == 0 then
-    redis.call("SADD", KEYS[1], ARGV[1])
+--- KEYS[1] keyQueueSettings
+--- KEYS[2] keyQueueSettingsPriorityQueuing
+--- KEYS[3] keyScheduledMessages (sorted set)
+--- KEYS[4] keyScheduledMessagesIndex (hash)
+--- ARGV[1] message id
+--- ARGV[2] message
+--- ARGV[3] scheduleTimestamp
+--- ARGV[4] message priority
+local priorityQueuing = redis.call("HGET", KEYS[1], KEYS[2])
+if (priorityQueuing == 'true' and not(ARGV[4] == nil or ARGV[4] == '')) or (priorityQueuing == 'false' and (ARGV[4] == nil or ARGV[4] == '')) then
+    redis.call("ZADD", KEYS[3], ARGV[3], ARGV[1])
+    redis.call("HSET", KEYS[4], ARGV[1], ARGV[2])
+    return 1
 end
-if redis.call("SISMEMBER", KEYS[2], ARGV[2]) == 0 then
-    redis.call("SADD", KEYS[2], ARGV[2])
-end
-if redis.call("SISMEMBER", KEYS[3], ARGV[2]) == 0 then
-    redis.call("SADD", KEYS[3], ARGV[2])
-end
-redis.call("ZADD", KEYS[4], ARGV[5], ARGV[3])
-redis.call("HSET", KEYS[5], ARGV[3], ARGV[4])
-return 1
+return 0
