@@ -6,7 +6,7 @@
 --- ARGV[1] message id
 --- ARGV[2] message
 --- ARGV[3] messagePriority
-local priorityQueuing = redis.call("HGET", KEYS[1], ARGV[3])
+local priorityQueuing = redis.call("HGET", KEYS[1], KEYS[2])
 if priorityQueuing == 'true' and not(ARGV[3] == nil or ARGV[3] == '') then
     redis.call("HSET", KEYS[3], ARGV[1], ARGV[2])
     redis.call("ZADD", KEYS[4], ARGV[3], ARGV[1])

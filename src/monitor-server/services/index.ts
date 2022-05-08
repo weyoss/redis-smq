@@ -1,5 +1,4 @@
 import { MessagesService } from './messages.service';
-import { MessageManager } from '../../system/app/message-manager/message-manager';
 import { QueuesService } from './queues.service';
 import { ConsumerTimeSeriesService } from './consumer-time-series.service';
 import { QueueTimeSeriesService } from './queue-time-series.service';
@@ -31,8 +30,7 @@ export function initServices(client: RedisClient) {
 export function messagesServiceInstance() {
   if (!messagesService) {
     const redisClient = getRedisClient();
-    const messageManager = new MessageManager(redisClient);
-    messagesService = new MessagesService(messageManager);
+    messagesService = new MessagesService(redisClient);
   }
   return messagesService;
 }
