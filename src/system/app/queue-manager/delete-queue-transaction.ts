@@ -98,7 +98,9 @@ export function initDeleteQueueTransaction(
         waterfall(
           [
             (cb: ICallback<void>): void =>
-              Queue.getQueue(redisClient, queueParams, (err) => cb(err)),
+              Queue.getQueueSettings(redisClient, queueParams, (err) =>
+                cb(err),
+              ),
             (cb: ICallback<void>): void =>
               validateMessageQueueDeletion(redisClient, queueParams, cb),
             (cb: ICallback<string[]>) => {

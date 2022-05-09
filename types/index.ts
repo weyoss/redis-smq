@@ -295,6 +295,11 @@ export type TQueueRateLimit = {
   interval: number;
 };
 
+export type TQueueSettings = {
+  priorityQueuing: boolean;
+  rateLimit?: TQueueRateLimit | null;
+};
+
 export type TWorkerParameters = {
   config: IRequiredConfig;
   timeout?: number;
