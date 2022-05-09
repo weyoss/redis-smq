@@ -71,15 +71,7 @@ export class Queue {
   }
 
   listQueues(cb: ICallback<TQueueParams[]>): void {
-    const { keyQueues } = redisKeys.getMainKeys();
-    this.redisClient.smembers(keyQueues, (err, reply) => {
-      if (err) cb(err);
-      else if (!reply) cb(new EmptyCallbackReplyError());
-      else {
-        const messageQueues: TQueueParams[] = reply.map((i) => JSON.parse(i));
-        cb(null, messageQueues);
-      }
-    });
+    Queue.listQueues(this.redisClient, cb);
   }
 
   deleteQueue(queue: string | TQueueParams, cb: ICallback<void>): void {
