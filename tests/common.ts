@@ -49,6 +49,7 @@ export interface ISuperTestResponse<TData> extends supertest.Response {
 }
 
 const QueueManagerAsync = promisifyAll(QueueManager);
+const MessageManagerAsync = promisifyAll(MessageManager);
 
 export const defaultQueue: TQueueParams = {
   name: 'test_queue',
@@ -106,8 +107,7 @@ export async function shutdown(): Promise<void> {
   await stopTimeSeriesWorker();
 
   if (messageManager) {
-    const m = promisifyAll(messageManager);
-    await m.quitAsync();
+    await promisifyAll(messageManager).quitAsync();
     messageManager = null;
   }
   if (queueManager) {
@@ -161,17 +161,31 @@ export function getProducer() {
 
 export async function getMessageManager() {
   if (!messageManager) {
-    const client = await getRedisInstance();
-    messageManager = new MessageManager(client);
+    messageManager = await MessageManagerAsync.getSingletonInstanceAsync();
   }
-  return messageManager;
+  return {
+    deadLetteredMessages: promisifyAll(messageManager.deadLetteredMessages),
+    acknowledgedMessages: promisifyAll(messageManager.acknowledgedMessages),
+    pendingMessages: promisifyAll(messageManager.pendingMessages),
+    priorityMessages: promisifyAll(messageManager.priorityMessages),
+    scheduledMessages: promisifyAll(messageManager.scheduledMessages),
+  };
 }
 
 export async function getQueueManager() {
   if (!queueManager) {
     queueManager = await QueueManagerAsync.getSingletonInstanceAsync();
   }
-  return queueManager;
+  const queue = promisifyAll(queueManager.queue);
+  const namespace = promisifyAll(queueManager.namespace);
+  const queueRateLimit = promisifyAll(queueManager.queueRateLimit);
+  const queueMetrics = promisifyAll(queueManager.queueMetrics);
+  return {
+    queue,
+    namespace,
+    queueRateLimit,
+    queueMetrics,
+  };
 }
 
 export async function startMonitorServer(): Promise<void> {

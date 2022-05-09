@@ -1,4 +1,3 @@
-import { promisifyAll } from 'bluebird';
 import { Message } from '../../src/system/app/message/message';
 import {
   getConsumer,
@@ -16,10 +15,10 @@ test('Consume messages from different queues and published by a single producer 
     const r = await producer.produceAsync(message);
     expect(r).toBe(true);
   }
-  const metrics = promisifyAll(await getQueueManager());
+  const metrics = await getQueueManager();
   for (let i = 0; i < 5; i += 1) {
     // Be carefull here: queue name is always in lowercase. Otherwise it will be not normalized
-    const m1 = await metrics.getQueueMetricsAsync(`queue_${i}`);
+    const m1 = await metrics.queueMetrics.getQueueMetricsAsync(`queue_${i}`);
     expect(m1).toEqual({
       acknowledged: 0,
       deadLettered: 0,
@@ -42,7 +41,7 @@ test('Consume messages from different queues and published by a single producer 
     await consumer.shutdownAsync();
 
     //
-    const m2 = await metrics.getQueueMetricsAsync(`queue_${i}`);
+    const m2 = await metrics.queueMetrics.getQueueMetricsAsync(`queue_${i}`);
     expect(m2).toEqual({
       acknowledged: 1,
       deadLettered: 0,

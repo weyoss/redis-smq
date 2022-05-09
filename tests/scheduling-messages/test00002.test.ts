@@ -1,6 +1,5 @@
 import { defaultQueue, getMessageManager, getProducer } from '../common';
 import { Message } from '../../src/message';
-import { promisifyAll } from 'bluebird';
 
 test('Schedule a message: messageManager.getScheduledMessages()', async () => {
   const producer = getProducer();
@@ -28,17 +27,17 @@ test('Schedule a message: messageManager.getScheduledMessages()', async () => {
   const r3 = await producer.produceAsync(msg3);
   expect(r3).toBe(true);
 
-  const messageManager = promisifyAll(await getMessageManager());
+  const messageManager = await getMessageManager();
 
   // Page 1
-  const pageOne = await messageManager.getScheduledMessagesAsync(0, 2);
+  const pageOne = await messageManager.scheduledMessages.listAsync(0, 2);
   expect(pageOne.total).toEqual(3);
   expect(pageOne.items.length).toEqual(2);
   expect(pageOne.items[0].getId()).toEqual(msg1.getMetadata()?.getId());
   expect(pageOne.items[1].getId()).toEqual(msg2.getMetadata()?.getId());
 
   // Page 2
-  const pageTwo = await messageManager.getScheduledMessagesAsync(2, 2);
+  const pageTwo = await messageManager.scheduledMessages.listAsync(2, 2);
   expect(pageTwo.total).toEqual(3);
   expect(pageTwo.items.length).toEqual(1);
   expect(pageTwo.items[0].getId()).toEqual(msg3.getMetadata()?.getId());

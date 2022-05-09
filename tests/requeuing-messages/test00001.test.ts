@@ -3,42 +3,40 @@ import {
   getQueueManager,
   produceAndDeadLetterMessage,
 } from '../common';
-import { Message } from '../../src/message';
-import { promisifyAll } from 'bluebird';
 
-test('Combined test: Requeue a message from dead-letter queue with priority.  Check both pending and acknowledged messages. Check queue metrics.', async () => {
+test('Combined test: Requeue a message from dead-letter queue. Check queue metrics.', async () => {
   const { message, queue, consumer } = await produceAndDeadLetterMessage();
   await consumer.shutdownAsync();
 
-  const messageManager = promisifyAll(await getMessageManager());
-  await messageManager.requeueDeadLetteredMessageAsync(
+  const messageManager = await getMessageManager();
+  await messageManager.deadLetteredMessages.requeueAsync(
     queue,
     0,
     message.getRequiredId(),
-    Message.MessagePriority.HIGHEST,
   );
 
-  const res1 = await messageManager.getPendingMessagesAsync(queue, 0, 100);
+  const res1 = await messageManager.priorityMessages.listAsync(queue, 0, 100);
   expect(res1.total).toBe(0);
   expect(res1.items.length).toBe(0);
 
-  const res2 = await messageManager.getPendingMessagesWithPriorityAsync(
+  const res2 = await messageManager.pendingMessages.listAsync(queue, 0, 100);
+  expect(res2.total).toBe(1);
+  expect(res2.items.length).toBe(1);
+  expect(res2.items[0].message.getId()).toEqual(message.getRequiredId());
+
+  const res3 = await messageManager.deadLetteredMessages.listAsync(
     queue,
     0,
     100,
   );
-  expect(res2.total).toBe(1);
-  expect(res2.items.length).toBe(1);
-  expect(res2.items[0].getId()).toEqual(message.getRequiredId());
-  expect(res2.items[0].getPriority()).toEqual(Message.MessagePriority.HIGHEST);
-
-  const res3 = await messageManager.getDeadLetteredMessagesAsync(queue, 0, 100);
   expect(res3.total).toBe(0);
   expect(res3.items.length).toBe(0);
 
-  const queueManager = promisifyAll(await getQueueManager());
-  const queueMetrics = await queueManager.getQueueMetricsAsync(queue);
+  const queueManager = await getQueueManager();
+  const queueMetrics = await queueManager.queueMetrics.getQueueMetricsAsync(
+    queue,
+  );
   expect(queueMetrics.deadLettered).toBe(0);
-  expect(queueMetrics.pending).toBe(0);
-  expect(queueMetrics.pendingWithPriority).toBe(1);
+  expect(queueMetrics.pending).toBe(1);
+  expect(queueMetrics.pendingWithPriority).toBe(0);
 });

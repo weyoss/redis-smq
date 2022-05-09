@@ -1,4 +1,4 @@
-import { delay, promisifyAll } from 'bluebird';
+import { delay } from 'bluebird';
 import {
   defaultQueue,
   getConsumer,
@@ -34,9 +34,12 @@ test('Setting default message TTL from configuration', async () => {
   await untilConsumerIdle(consumer);
   expect(consume).toHaveBeenCalledTimes(0);
   expect(unacks).toBe(1);
-
-  const m = promisifyAll(await getMessageManager());
-  const list = await m.getDeadLetteredMessagesAsync(defaultQueue, 0, 100);
+  const messageManager = await getMessageManager();
+  const list = await messageManager.deadLetteredMessages.listAsync(
+    defaultQueue,
+    0,
+    100,
+  );
   expect(list.total).toBe(1);
   expect(list.items[0].message.getId()).toBe(msg.getRequiredId());
 });

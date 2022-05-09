@@ -11,8 +11,8 @@ import { Message } from '../../src/message';
 test('Priority queuing: case 2', async () => {
   const consumedMessages: Message[] = [];
 
-  const qm = promisifyAll(await getQueueManager());
-  await qm.createQueueAsync(defaultQueue, true);
+  const qm = await getQueueManager();
+  await qm.queue.createQueueAsync(defaultQueue, true);
 
   const consumer = promisifyAll(
     getConsumer({

@@ -1,6 +1,4 @@
-import { getConsumer, getRedisInstance, produceMessage } from '../common';
-import { promisifyAll } from 'bluebird';
-import { QueueManager } from '../../src/queue-manager';
+import { getConsumer, getQueueManager, produceMessage } from '../common';
 import { RedisClient } from '../../src/system/common/redis-client/redis-client';
 import { ICallback, TQueueParams } from '../../types';
 import { processingQueue } from '../../src/system/app/consumer/consumer-message-handler/processing-queue';
@@ -8,12 +6,11 @@ import { processingQueue } from '../../src/system/app/consumer/consumer-message-
 test('Concurrently deleting a message queue and starting a consumer', async () => {
   const { queue } = await produceMessage();
 
-  const redisClient1 = await getRedisInstance();
-  const queueManagerInstance = promisifyAll(new QueueManager(redisClient1));
+  const queueManager = await getQueueManager();
 
   const consumer = getConsumer();
 
-  const m1 = await queueManagerInstance.getQueueMetricsAsync(queue);
+  const m1 = await queueManager.queueMetrics.getQueueMetricsAsync(queue);
   expect(m1).toEqual({
     acknowledged: 0,
     pendingWithPriority: 0,
@@ -40,12 +37,12 @@ test('Concurrently deleting a message queue and starting a consumer', async () =
 
   await expect(async () => {
     await Promise.all([
-      queueManagerInstance.deleteQueueAsync(queue),
+      queueManager.queue.deleteQueueAsync(queue),
       consumer.runAsync(),
     ]);
   }).rejects.toThrow('Redis transaction has been abandoned. Try again.');
 
-  const m2 = await queueManagerInstance.getQueueMetricsAsync(queue);
+  const m2 = await queueManager.queueMetrics.getQueueMetricsAsync(queue);
   expect(m2).toEqual({
     acknowledged: 1,
     pendingWithPriority: 0,

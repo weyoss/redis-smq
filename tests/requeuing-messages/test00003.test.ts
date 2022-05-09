@@ -1,57 +1,87 @@
 import {
+  defaultQueue,
+  getConsumer,
   getMessageManager,
+  getProducer,
   getQueueManager,
-  produceAndAcknowledgeMessage,
+  untilMessageAcknowledged,
 } from '../common';
-import { Message } from '../../src/message';
-import { promisifyAll } from 'bluebird';
+import { Message } from '../../src/system/app/message/message';
 
-test('Combined test: Requeue a message from acknowledged queue with priority. Check both queue metadata and message metadata.  Check both pending and acknowledged messages. Check queue metrics.', async () => {
-  const { queue, message, consumer } = await produceAndAcknowledgeMessage();
-  await consumer.shutdownAsync();
+test('Combined test. Requeue a priority message from acknowledged queue. Check queue metrics.', async () => {
+  const queueManager = await getQueueManager();
+  await queueManager.queue.createQueueAsync(defaultQueue, true);
 
-  const messageManager = promisifyAll(await getMessageManager());
-  await messageManager.requeueAcknowledgedMessageAsync(
-    queue,
-    0,
-    message.getRequiredId(),
-    Message.MessagePriority.HIGHEST,
-  );
+  const consumer = getConsumer({
+    queue: defaultQueue,
+    messageHandler: jest.fn((msg, cb) => {
+      setTimeout(cb, 5000);
+    }),
+  });
 
-  const res5 = await messageManager.getPendingMessagesAsync(queue, 0, 100);
+  const message = new Message();
+  message
+    .setBody({ hello: 'world' })
+    .setQueue(defaultQueue)
+    .setPriority(Message.MessagePriority.ABOVE_NORMAL);
 
-  expect(res5.total).toBe(0);
-  expect(res5.items.length).toBe(0);
+  const producer = getProducer();
+  await producer.produceAsync(message);
 
-  const res6 = await messageManager.getPendingMessagesWithPriorityAsync(
-    queue,
+  consumer.run();
+  await untilMessageAcknowledged(consumer);
+
+  const messageManager = await getMessageManager();
+  const res2 = await messageManager.acknowledgedMessages.listAsync(
+    defaultQueue,
     0,
     100,
   );
+  expect(res2.total).toBe(1);
+  expect(res2.items.length).toBe(1);
 
-  expect(res6.total).toBe(1);
-  expect(res6.items.length).toBe(1);
-
-  // assign default consumer options
-  expect(res6.items[0].getId()).toEqual(message.getRequiredId());
-  expect(res6.items[0].getPriority()).toEqual(Message.MessagePriority.HIGHEST);
-
-  const res7 = await messageManager.getAcknowledgedMessagesAsync(queue, 0, 100);
-  expect(res7.total).toBe(0);
-  expect(res7.items.length).toBe(0);
-
-  const queueManager = promisifyAll(await getQueueManager());
-  const queueMetrics = await queueManager.getQueueMetricsAsync(queue);
-  expect(queueMetrics.acknowledged).toBe(0);
+  const queueMetrics = await queueManager.queueMetrics.getQueueMetricsAsync(
+    defaultQueue,
+  );
   expect(queueMetrics.pending).toBe(0);
-  expect(queueMetrics.pendingWithPriority).toBe(1);
+  expect(queueMetrics.acknowledged).toBe(1);
+
+  await messageManager.acknowledgedMessages.requeueAsync(
+    defaultQueue,
+    0,
+    message.getRequiredId(),
+  );
+
+  const res5 = await messageManager.pendingMessages.listAsync(
+    defaultQueue,
+    0,
+    100,
+  );
+  expect(res5.total).toBe(0);
+  expect(res5.items.length).toBe(0);
+
+  const res6 = await messageManager.acknowledgedMessages.listAsync(
+    defaultQueue,
+    0,
+    100,
+  );
+  expect(res6.total).toBe(0);
+  expect(res6.items.length).toBe(0);
+
+  const res7 = await messageManager.priorityMessages.listAsync(
+    defaultQueue,
+    0,
+    100,
+  );
+  expect(res7.total).toBe(1);
+  expect(res7.items.length).toBe(1);
+  expect(res7.items[0].getId()).toEqual(message.getRequiredId());
 
   await expect(async () => {
-    await messageManager.requeueAcknowledgedMessageAsync(
-      queue,
+    await messageManager.acknowledgedMessages.requeueAsync(
+      defaultQueue,
       0,
       message.getRequiredId(),
-      Message.MessagePriority.HIGHEST,
     );
   }).rejects.toThrow(
     'Either message parameters are invalid or the message has been already deleted',

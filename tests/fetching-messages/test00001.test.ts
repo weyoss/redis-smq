@@ -1,4 +1,3 @@
-import { promisifyAll } from 'bluebird';
 import {
   getMessageManager,
   produceAndAcknowledgeMessage,
@@ -11,9 +10,8 @@ import {
 describe('MessageManager', () => {
   test('Case 1', async () => {
     const { message, queue } = await produceMessage();
-
-    const messageManager = promisifyAll(await getMessageManager());
-    const res = await messageManager.getPendingMessagesAsync(queue, 0, 100);
+    const messageManager = await getMessageManager();
+    const res = await messageManager.pendingMessages.listAsync(queue, 0, 100);
 
     expect(res.total).toBe(1);
     expect(res.items[0].sequenceId).toBe(0);
@@ -23,8 +21,8 @@ describe('MessageManager', () => {
   test('Case 2', async () => {
     const { queue, message } = await produceAndAcknowledgeMessage();
 
-    const messageManager = promisifyAll(await getMessageManager());
-    const res = await messageManager.getAcknowledgedMessagesAsync(
+    const messageManager = await getMessageManager();
+    const res = await messageManager.acknowledgedMessages.listAsync(
       queue,
       0,
       100,
@@ -37,9 +35,8 @@ describe('MessageManager', () => {
 
   test('Case 3', async () => {
     const { queue, message } = await produceAndDeadLetterMessage();
-
-    const messageManager = promisifyAll(await getMessageManager());
-    const res = await messageManager.getDeadLetteredMessagesAsync(
+    const messageManager = await getMessageManager();
+    const res = await messageManager.deadLetteredMessages.listAsync(
       queue,
       0,
       100,
@@ -51,13 +48,8 @@ describe('MessageManager', () => {
 
   test('Case 4', async () => {
     const { queue, message } = await produceMessageWithPriority();
-
-    const messageManager = promisifyAll(await getMessageManager());
-    const res = await messageManager.getPendingMessagesWithPriorityAsync(
-      queue,
-      0,
-      100,
-    );
+    const messageManager = await getMessageManager();
+    const res = await messageManager.priorityMessages.listAsync(queue, 0, 100);
 
     expect(res.total).toBe(1);
     expect(res.items[0].getId()).toBe(message.getRequiredId());
@@ -65,9 +57,8 @@ describe('MessageManager', () => {
 
   test('Case 5', async () => {
     const { message } = await scheduleMessage();
-
-    const messageManager = promisifyAll(await getMessageManager());
-    const res = await messageManager.getScheduledMessagesAsync(0, 100);
+    const messageManager = await getMessageManager();
+    const res = await messageManager.scheduledMessages.listAsync(0, 100);
 
     expect(res.total).toBe(1);
     expect(res.items[0].getId()).toBe(message.getRequiredId());

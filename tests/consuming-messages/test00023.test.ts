@@ -5,7 +5,6 @@ import {
   getProducer,
   untilConsumerEvent,
 } from '../common';
-import { promisifyAll } from 'bluebird';
 import { Message } from '../../src/system/app/message/message';
 import { events } from '../../src/system/common/events';
 
@@ -27,9 +26,8 @@ test('Periodic scheduled messages upon consume failures are dead-lettered withou
 
   consumer.run();
   await untilConsumerEvent(consumer, events.MESSAGE_DEAD_LETTERED);
-
-  const messageManager = promisifyAll(await getMessageManager());
-  const res = await messageManager.getDeadLetteredMessagesAsync(
+  const messageManager = await getMessageManager();
+  const res = await messageManager.deadLetteredMessages.listAsync(
     defaultQueue,
     0,
     99,

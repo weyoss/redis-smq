@@ -4,7 +4,7 @@ import {
   mockConfiguration,
   produceAndAcknowledgeMessage,
 } from '../common';
-import { delay, promisifyAll } from 'bluebird';
+import { delay } from 'bluebird';
 
 test('Message storage: acknowledged.expire = 10000', async () => {
   mockConfiguration({
@@ -15,13 +15,13 @@ test('Message storage: acknowledged.expire = 10000', async () => {
     },
   });
 
-  const messageManager = promisifyAll(await getMessageManager());
+  const messageManager = await getMessageManager();
   const { producer: p, consumer: c } = await produceAndAcknowledgeMessage();
 
   await p.shutdownAsync();
   await c.shutdownAsync();
 
-  const res1 = await messageManager.getAcknowledgedMessagesAsync(
+  const res1 = await messageManager.acknowledgedMessages.listAsync(
     defaultQueue,
     0,
     100,
@@ -31,7 +31,7 @@ test('Message storage: acknowledged.expire = 10000', async () => {
 
   await delay(20000);
 
-  const res2 = await messageManager.getAcknowledgedMessagesAsync(
+  const res2 = await messageManager.acknowledgedMessages.listAsync(
     defaultQueue,
     0,
     100,

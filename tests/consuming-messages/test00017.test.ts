@@ -5,7 +5,6 @@ import {
   produceAndAcknowledgeMessage,
   produceAndDeadLetterMessage,
 } from '../common';
-import { promisifyAll } from 'bluebird';
 
 test('Message storage: storeMessages = false', async () => {
   mockConfiguration({
@@ -14,9 +13,8 @@ test('Message storage: storeMessages = false', async () => {
   const { producer, consumer } = await produceAndDeadLetterMessage();
   await producer.shutdownAsync();
   await consumer.shutdownAsync();
-
-  const messageManager = promisifyAll(await getMessageManager());
-  const res1 = await messageManager.getDeadLetteredMessagesAsync(
+  const messageManager = await getMessageManager();
+  const res1 = await messageManager.deadLetteredMessages.listAsync(
     defaultQueue,
     0,
     100,
@@ -29,7 +27,7 @@ test('Message storage: storeMessages = false', async () => {
   await p.shutdownAsync();
   await c.shutdownAsync();
 
-  const res2 = await messageManager.getAcknowledgedMessagesAsync(
+  const res2 = await messageManager.acknowledgedMessages.listAsync(
     defaultQueue,
     0,
     100,

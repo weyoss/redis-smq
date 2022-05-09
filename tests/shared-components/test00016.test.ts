@@ -1,4 +1,4 @@
-import { delay, promisifyAll } from 'bluebird';
+import { delay } from 'bluebird';
 import {
   defaultQueue,
   getConsumer,
@@ -9,8 +9,8 @@ import {
 test('TimeSeriesWorker', async () => {
   await startTimeSeriesWorker();
   await delay(5000);
-  const queueManager = promisifyAll(await getQueueManager());
-  queueManager.createQueueAsync(defaultQueue, false);
+  const queueManager = await getQueueManager();
+  queueManager.queue.createQueueAsync(defaultQueue, false);
   await delay(5000);
   const consumer = await getConsumer({ queue: defaultQueue });
   await consumer.runAsync();
