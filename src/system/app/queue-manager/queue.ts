@@ -1,4 +1,9 @@
-import { ICallback, ICompatibleLogger, TQueueParams } from '../../../../types';
+import {
+  ICallback,
+  ICompatibleLogger,
+  TQueueParams,
+  TQueueSettings,
+} from '../../../../types';
 import { RedisClient } from '../../common/redis-client/redis-client';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
@@ -7,10 +12,6 @@ import { QueueExistsError } from './errors/queue-exists.error';
 import { QueueNotFoundError } from './errors/queue-not-found.error';
 import { getNamespacedLogger } from '../../common/logger';
 import { initDeleteQueueTransaction } from './delete-queue-transaction';
-
-export interface IQueueInfo {
-  priorityQueuing: boolean;
-}
 
 export class Queue {
   protected redisClient: RedisClient;
@@ -53,11 +54,11 @@ export class Queue {
     );
   }
 
-  getQueue(
+  getQueueSettings(
     queue: string | Partial<TQueueParams>,
-    cb: ICallback<IQueueInfo>,
+    cb: ICallback<TQueueSettings>,
   ): void {
-    Queue.getQueue(this.redisClient, queue, cb);
+    Queue.getQueueSettings(this.redisClient, queue, cb);
   }
 
   queueExists(queue: TQueueParams, cb: ICallback<boolean>): void {
@@ -106,18 +107,33 @@ export class Queue {
     };
   }
 
-  static getQueue(
+  static getQueueSettings(
     redisClient: RedisClient,
     queue: string | Partial<TQueueParams>,
-    cb: ICallback<IQueueInfo>,
+    cb: ICallback<TQueueSettings>,
   ): void {
     const queueParams = Queue.getQueueParams(queue);
-    const { keyQueues } = redisKeys.getMainKeys();
-    const queueIndex = JSON.stringify(queueParams);
-    redisClient.hget(keyQueues, queueIndex, (err, reply) => {
+    const {
+      keyQueueSettings,
+      keyQueueSettingsPriorityQueuing,
+      keyQueueSettingsRateLimit,
+    } = redisKeys.getQueueKeys(queueParams);
+    redisClient.hgetall(keyQueueSettings, (err, reply) => {
       if (err) cb(err);
       else if (!reply) cb(new QueueNotFoundError());
-      else cb(null, JSON.parse(reply));
+      else {
+        // default settings
+        const queueSettings: TQueueSettings = { priorityQueuing: false };
+        for (const key in reply) {
+          if (key === keyQueueSettingsPriorityQueuing) {
+            queueSettings.priorityQueuing = JSON.parse(reply[key]);
+          }
+          if (key === keyQueueSettingsRateLimit) {
+            queueSettings.rateLimit = JSON.parse(reply[key]);
+          }
+        }
+        cb(null, queueSettings);
+      }
     });
   }
 

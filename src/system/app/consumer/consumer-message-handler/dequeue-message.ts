@@ -155,24 +155,15 @@ export class DequeueMessage {
           );
         },
         (cb: ICallback<void>) => {
-          Queue.getQueue(this.redisClient, this.queue, (err, reply) => {
+          Queue.getQueueSettings(this.redisClient, this.queue, (err, reply) => {
             if (err) cb(err);
             else if (!reply) cb(new EmptyCallbackReplyError());
             else {
               this.priorityQueuing = reply.priorityQueuing;
+              this.queueRateLimit = reply.rateLimit ?? null;
               cb();
             }
           });
-        },
-        (cb: ICallback<void>) => {
-          QueueRateLimit.getQueueRateLimit(
-            this.redisClient,
-            this.queue,
-            (err, rateLimit) => {
-              if (err) cb(err);
-              else this.queueRateLimit = rateLimit ?? null;
-            },
-          );
         },
       ],
       cb,
