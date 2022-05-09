@@ -1,4 +1,4 @@
-import { delay, promisifyAll } from 'bluebird';
+import { delay } from 'bluebird';
 import {
   defaultQueue,
   getConsumer,
@@ -29,9 +29,8 @@ test('A message is dead-lettered and not delivered when messageTTL is exceeded',
   await untilConsumerIdle(consumer);
   expect(consume).toHaveBeenCalledTimes(0);
   expect(unacknowledged).toBe(1);
-
-  const messageManager = promisifyAll(await getMessageManager());
-  const list = await messageManager.getDeadLetteredMessagesAsync(
+  const messageManager = await getMessageManager();
+  const list = await messageManager.deadLetteredMessages.listAsync(
     defaultQueue,
     0,
     100,

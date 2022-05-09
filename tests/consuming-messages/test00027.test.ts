@@ -4,7 +4,6 @@ import {
   mockConfiguration,
   produceAndAcknowledgeMessage,
 } from '../common';
-import { promisifyAll } from 'bluebird';
 
 test('Message storage: acknowledged.queueSize = 3', async () => {
   mockConfiguration({
@@ -15,12 +14,12 @@ test('Message storage: acknowledged.queueSize = 3', async () => {
     },
   });
 
-  const messageManager = promisifyAll(await getMessageManager());
+  const messageManager = await getMessageManager();
   const { consumer: c1, producer: p1 } = await produceAndAcknowledgeMessage();
   await c1.shutdownAsync();
   await p1.shutdownAsync();
 
-  const res1 = await messageManager.getAcknowledgedMessagesAsync(
+  const res1 = await messageManager.acknowledgedMessages.listAsync(
     defaultQueue,
     0,
     100,
@@ -32,7 +31,7 @@ test('Message storage: acknowledged.queueSize = 3', async () => {
   await c2.shutdownAsync();
   await p2.shutdownAsync();
 
-  const res2 = await messageManager.getAcknowledgedMessagesAsync(
+  const res2 = await messageManager.acknowledgedMessages.listAsync(
     defaultQueue,
     0,
     100,
@@ -44,7 +43,7 @@ test('Message storage: acknowledged.queueSize = 3', async () => {
   await c3.shutdownAsync();
   await p3.shutdownAsync();
 
-  const res3 = await messageManager.getAcknowledgedMessagesAsync(
+  const res3 = await messageManager.acknowledgedMessages.listAsync(
     defaultQueue,
     0,
     100,
@@ -56,7 +55,7 @@ test('Message storage: acknowledged.queueSize = 3', async () => {
   await c4.shutdownAsync();
   await p4.shutdownAsync();
 
-  const res4 = await messageManager.getAcknowledgedMessagesAsync(
+  const res4 = await messageManager.acknowledgedMessages.listAsync(
     defaultQueue,
     0,
     100,

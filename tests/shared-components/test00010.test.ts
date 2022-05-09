@@ -59,8 +59,8 @@ test('HeartbeatMonitorWorker -> DelayWorker -> ScheduleWorker', async () => {
   delayHandler.run();
   await delay(5000);
 
-  const messageManager = promisifyAll(await getMessageManager());
-  const res = await messageManager.getScheduledMessagesAsync(0, 99);
+  const messageManager = await getMessageManager();
+  const res = await messageManager.scheduledMessages.listAsync(0, 99);
   expect(res.total).toBe(1);
 
   // should move from delay queue to scheduled queue
@@ -77,10 +77,10 @@ test('HeartbeatMonitorWorker -> DelayWorker -> ScheduleWorker', async () => {
   scheduleWorker.run();
   await delay(15000);
 
-  const res2 = await messageManager.getScheduledMessagesAsync(0, 99);
+  const res2 = await messageManager.scheduledMessages.listAsync(0, 99);
   expect(res2.total).toBe(0);
 
-  const res3 = await messageManager.getPendingMessagesAsync(
+  const res3 = await messageManager.pendingMessages.listAsync(
     defaultQueue,
     0,
     99,

@@ -6,7 +6,7 @@ import {
   validateTime,
 } from '../common';
 import { Message } from '../../src/message';
-import { delay, promisifyAll } from 'bluebird';
+import { delay } from 'bluebird';
 
 test('Schedule a message: DELAY', async () => {
   const msg = new Message();
@@ -22,8 +22,8 @@ test('Schedule a message: DELAY', async () => {
   await startScheduleWorker();
   await delay(30000);
 
-  const m = promisifyAll(await getMessageManager());
-  const r = await m.getPendingMessagesAsync(defaultQueue, 0, 99);
+  const messageManager = await getMessageManager();
+  const r = await messageManager.pendingMessages.listAsync(defaultQueue, 0, 99);
   expect(r.items.length).toBe(1);
 
   const diff = (r.items[0].message.getPublishedAt() ?? 0) - producedAt;

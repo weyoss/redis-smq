@@ -65,8 +65,8 @@ test('HeartbeatMonitorWorker -> RequeueWorker', async () => {
   requeueWorker.run();
   await delay(5000);
 
-  const messageManager = promisifyAll(await getMessageManager());
-  const res3 = await messageManager.getPendingMessagesAsync(
+  const messageManager = await getMessageManager();
+  const res3 = await messageManager.pendingMessages.listAsync(
     defaultQueue,
     0,
     99,

@@ -5,7 +5,7 @@ import { Message } from '../../src/system/app/message/message';
 import { events } from '../../src/system/common/events';
 
 test('Consume messages from different queues using a single consumer instance: case 6', async () => {
-  const qm = promisifyAll(await getQueueManager());
+  const qm = await getQueueManager();
 
   const messages: Message[] = [];
   const consumer = promisifyAll(new Consumer(true));
@@ -14,7 +14,7 @@ test('Consume messages from different queues using a single consumer instance: c
   // running without message handlers
   await delay(5000);
 
-  await qm.createQueueAsync('test0', false);
+  await qm.queue.createQueueAsync('test0', false);
   await consumer.consumeAsync('test0', () => void 0);
 
   consumer.once(events.MESSAGE_RECEIVED, () => {
@@ -32,31 +32,31 @@ test('Consume messages from different queues using a single consumer instance: c
   await delay(10000);
   expect(consumer.getQueues()).toEqual([]);
 
-  await qm.createQueueAsync('test1', true);
+  await qm.queue.createQueueAsync('test1', true);
   await consumer.consumeAsync('test1', (msg, cb) => {
     messages.push(msg);
     cb();
   });
 
-  await qm.createQueueAsync('test2', true);
+  await qm.queue.createQueueAsync('test2', true);
   await consumer.consumeAsync('test2', (msg, cb) => {
     messages.push(msg);
     cb();
   });
 
-  await qm.createQueueAsync('test3', true);
+  await qm.queue.createQueueAsync('test3', true);
   await consumer.consumeAsync('test3', (msg, cb) => {
     messages.push(msg);
     cb();
   });
 
-  await qm.createQueueAsync('test4', true);
+  await qm.queue.createQueueAsync('test4', true);
   await consumer.consumeAsync('test4', (msg, cb) => {
     messages.push(msg);
     cb();
   });
 
-  await qm.createQueueAsync('test5', true);
+  await qm.queue.createQueueAsync('test5', true);
   await consumer.consumeAsync('test5', (msg, cb) => {
     messages.push(msg);
     cb();

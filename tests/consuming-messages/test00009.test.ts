@@ -6,7 +6,7 @@ import {
 } from '../common';
 import { Message } from '../../src/message';
 import { events } from '../../src/system/common/events';
-import { delay, promisifyAll } from 'bluebird';
+import { delay } from 'bluebird';
 
 test('A message is dead-lettered when messageRetryThreshold is exceeded', async () => {
   const producer = getProducer();
@@ -29,9 +29,12 @@ test('A message is dead-lettered when messageRetryThreshold is exceeded', async 
 
   await delay(30000);
   expect(unacknowledged).toBe(3);
-
-  const m = promisifyAll(await getMessageManager());
-  const list = await m.getDeadLetteredMessagesAsync(defaultQueue, 0, 100);
+  const messageManager = await getMessageManager();
+  const list = await messageManager.deadLetteredMessages.listAsync(
+    defaultQueue,
+    0,
+    100,
+  );
   expect(list.total).toBe(1);
   expect(list.items[0].message.getId()).toBe(msg.getRequiredId());
 });

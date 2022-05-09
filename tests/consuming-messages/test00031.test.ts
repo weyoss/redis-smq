@@ -5,13 +5,16 @@ import {
   getQueueManager,
   validateTime,
 } from '../common';
-import { delay, promisifyAll } from 'bluebird';
+import { delay } from 'bluebird';
 import { Message } from '../../src/system/app/message/message';
 import { events } from '../../src/system/common/events';
 
 test('Set a rate limit for a queue and consume messages using many consumers', async () => {
-  const qm = promisifyAll(await getQueueManager());
-  await qm.setQueueRateLimitAsync(defaultQueue, { limit: 3, interval: 10000 });
+  const qm = await getQueueManager();
+  await qm.queueRateLimit.setQueueRateLimitAsync(defaultQueue, {
+    limit: 3,
+    interval: 10000,
+  });
 
   const messages: { ts: number; msg: Message }[] = [];
   for (let i = 0; i < 6; i += 1) {

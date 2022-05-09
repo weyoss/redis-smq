@@ -4,8 +4,8 @@ import { defaultQueue, getQueueManager, getRedisInstance } from '../common';
 import { consumerQueues } from '../../src/system/app/consumer/consumer-queues';
 
 test('Consume messages from different queues using a single consumer instance: case 3', async () => {
-  const qm = promisifyAll(await getQueueManager());
-  await qm.createQueueAsync(defaultQueue, false);
+  const qm = await getQueueManager();
+  await qm.queue.createQueueAsync(defaultQueue, false);
 
   const consumer = promisifyAll(new Consumer());
   await consumer.runAsync();

@@ -1,16 +1,14 @@
 import { getMessageManager, getQueueManager, produceMessage } from '../common';
-import { promisifyAll } from 'bluebird';
 
 test('Purging pending queue', async () => {
   const { queue } = await produceMessage();
-  const queueManager = promisifyAll(await getQueueManager());
+  const queueManager = await getQueueManager();
 
-  const m2 = await queueManager.getQueueMetricsAsync(queue);
+  const m2 = await queueManager.queueMetrics.getQueueMetricsAsync(queue);
   expect(m2.pending).toBe(1);
+  const messageManager = await getMessageManager();
+  await messageManager.pendingMessages.purgeAsync(queue);
 
-  const messageManager = promisifyAll(await getMessageManager());
-  await messageManager.purgePendingMessagesAsync(queue);
-
-  const m3 = await queueManager.getQueueMetricsAsync(queue);
+  const m3 = await queueManager.queueMetrics.getQueueMetricsAsync(queue);
   expect(m3.pending).toBe(0);
 });
