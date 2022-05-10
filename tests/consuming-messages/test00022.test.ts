@@ -1,4 +1,5 @@
 import {
+  createQueue,
   defaultQueue,
   getConsumer,
   getMessageManager,
@@ -9,6 +10,8 @@ import { Message } from '../../src/system/app/message/message';
 import { events } from '../../src/system/common/events';
 
 test('Shutdown a consumer when consuming a message with retryThreshold = 0: expect the message to be dead-lettered', async () => {
+  await createQueue(defaultQueue, false);
+
   const consumer = getConsumer({
     messageHandler: jest.fn(() => {
       consumer.shutdown();

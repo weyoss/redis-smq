@@ -1,4 +1,6 @@
 import {
+  createQueue,
+  defaultQueue,
   getConsumer,
   getRedisInstance,
   startWebsocketMainStreamWorker,
@@ -7,6 +9,7 @@ import {
 import { TWebsocketMainStreamPayload } from '../../types';
 
 test('WebsocketMainStreamWorker: Case 2', async () => {
+  await createQueue(defaultQueue, false);
   const consumer = getConsumer();
   await consumer.runAsync();
   await untilConsumerIdle(consumer);

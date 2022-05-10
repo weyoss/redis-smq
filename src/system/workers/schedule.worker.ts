@@ -71,7 +71,6 @@ export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
               keyScheduledMessages,
             ],
             [
-              JSON.stringify(queue),
               message.getRequiredId(),
               JSON.stringify(message),
               message.getPriority() ?? '',

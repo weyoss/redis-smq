@@ -1,4 +1,5 @@
 import {
+  createQueue,
   defaultQueue,
   getMessageManager,
   mockConfiguration,
@@ -15,6 +16,7 @@ test('Message storage: acknowledged.queueSize = 3', async () => {
   });
 
   const messageManager = await getMessageManager();
+  await createQueue(defaultQueue, false);
   const { consumer: c1, producer: p1 } = await produceAndAcknowledgeMessage();
   await c1.shutdownAsync();
   await p1.shutdownAsync();

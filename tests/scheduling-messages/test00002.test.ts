@@ -1,7 +1,14 @@
-import { defaultQueue, getMessageManager, getProducer } from '../common';
+import {
+  createQueue,
+  defaultQueue,
+  getMessageManager,
+  getProducer,
+} from '../common';
 import { Message } from '../../src/message';
 
 test('Schedule a message: messageManager.getScheduledMessages()', async () => {
+  await createQueue(defaultQueue, false);
+
   const producer = getProducer();
   const msg1 = new Message();
   msg1.setScheduledDelay(30000);
@@ -16,16 +23,14 @@ test('Schedule a message: messageManager.getScheduledMessages()', async () => {
     .setScheduledDelay(60000)
     .setBody({ hello: 'world2' })
     .setQueue(defaultQueue);
-  const r1 = await producer.produceAsync(msg2);
-  expect(r1).toBe(true);
+  await producer.produceAsync(msg2);
 
   const msg3 = new Message();
   msg3
     .setScheduledDelay(90000)
     .setBody({ hello: 'world3' })
     .setQueue(defaultQueue);
-  const r3 = await producer.produceAsync(msg3);
-  expect(r3).toBe(true);
+  await producer.produceAsync(msg3);
 
   const messageManager = await getMessageManager();
 

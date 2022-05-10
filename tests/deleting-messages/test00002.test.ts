@@ -1,10 +1,13 @@
 import {
+  createQueue,
+  defaultQueue,
   getMessageManager,
   getQueueManager,
   produceMessageWithPriority,
 } from '../common';
 
 test('Combined test: Delete a pending message with priority. Check pending messages. Check queue metrics.', async () => {
+  await createQueue(defaultQueue, true);
   const { message, queue } = await produceMessageWithPriority();
   const messageManager = await getMessageManager();
   const res1 = await messageManager.priorityMessages.listAsync(queue, 0, 100);

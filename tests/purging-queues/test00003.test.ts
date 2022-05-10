@@ -1,10 +1,13 @@
 import {
+  createQueue,
+  defaultQueue,
   getMessageManager,
   getQueueManager,
   produceAndAcknowledgeMessage,
 } from '../common';
 
 test('Purging acknowledged queue', async () => {
+  await createQueue(defaultQueue, false);
   const { queue, consumer } = await produceAndAcknowledgeMessage();
   await consumer.shutdownAsync();
 

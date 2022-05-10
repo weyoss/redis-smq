@@ -1,9 +1,16 @@
-import { getConsumer, getQueueManager, produceMessage } from '../common';
+import {
+  createQueue,
+  defaultQueue,
+  getConsumer,
+  getQueueManager,
+  produceMessage,
+} from '../common';
 import { RedisClient } from '../../src/system/common/redis-client/redis-client';
 import { ICallback, TQueueParams } from '../../types';
 import { processingQueue } from '../../src/system/app/consumer/consumer-message-handler/processing-queue';
 
 test('Concurrently deleting a message queue and starting a consumer', async () => {
+  await createQueue(defaultQueue, false);
   const { queue } = await produceMessage();
 
   const queueManager = await getQueueManager();

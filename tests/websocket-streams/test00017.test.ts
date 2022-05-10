@@ -1,4 +1,5 @@
 import {
+  createQueue,
   defaultQueue,
   getConsumer,
   listenForWebsocketStreamEvents,
@@ -8,6 +9,7 @@ import {
 import { TConsumerInfo } from '../../types';
 
 test('WebsocketOnlineStreamWorker: streamOnlineQueueConsumers/case 1', async () => {
+  await createQueue(defaultQueue, false);
   const consumer = getConsumer();
   await consumer.runAsync();
 

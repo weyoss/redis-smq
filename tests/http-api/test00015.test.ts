@@ -1,4 +1,6 @@
 import {
+  createQueue,
+  defaultQueue,
   ISuperTestResponse,
   produceAndAcknowledgeMessage,
   startMonitorServer,
@@ -8,6 +10,7 @@ import { GetMessagesResponseBodyDataDTO } from '../../src/monitor-server/control
 
 test('Re-queuing an acknowledged message', async () => {
   await startMonitorServer();
+  await createQueue(defaultQueue, false);
   const { message, queue } = await produceAndAcknowledgeMessage();
   const request = supertest('http://127.0.0.1:3000');
   const response1: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =

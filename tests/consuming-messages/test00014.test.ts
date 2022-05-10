@@ -1,5 +1,6 @@
 import { Message } from '../../src/system/app/message/message';
 import {
+  createQueue,
   getConsumer,
   getProducer,
   getQueueManager,
@@ -9,11 +10,13 @@ import {
 test('Consume messages from different queues and published by a single producer instance', async () => {
   const producer = getProducer();
   for (let i = 0; i < 5; i += 1) {
+    const queue = `QuEue_${i}`;
+    await createQueue(queue, false);
+
     const message = new Message();
     // queue name should be normalized to lowercase
-    message.setBody(`Message ${i}`).setQueue(`QuEue_${i}`);
-    const r = await producer.produceAsync(message);
-    expect(r).toBe(true);
+    message.setBody(`Message ${i}`).setQueue(queue);
+    await producer.produceAsync(message);
   }
   const metrics = await getQueueManager();
   for (let i = 0; i < 5; i += 1) {

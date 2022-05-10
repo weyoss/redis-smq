@@ -1,4 +1,5 @@
 import {
+  createQueue,
   defaultQueue,
   getConsumer,
   getProducer,
@@ -10,6 +11,8 @@ import { Message } from '../../src/system/app/message/message';
 import { events } from '../../src/system/common/events';
 
 test('Set a rate limit for a queue and consume messages using many consumers', async () => {
+  await createQueue(defaultQueue, false);
+
   const qm = await getQueueManager();
   await qm.queueRateLimit.setQueueRateLimitAsync(defaultQueue, {
     limit: 3,

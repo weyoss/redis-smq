@@ -1,4 +1,5 @@
 import {
+  createQueue,
   defaultQueue,
   getMessageManager,
   mockConfiguration,
@@ -13,6 +14,7 @@ test('Message storage: acknowledged = false, deadLettered = true', async () => {
       deadLettered: true,
     },
   });
+  await createQueue(defaultQueue, false);
   const { producer, consumer } = await produceAndDeadLetterMessage();
   await producer.shutdownAsync();
   await consumer.shutdownAsync();

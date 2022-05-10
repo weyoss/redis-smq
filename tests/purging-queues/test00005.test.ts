@@ -1,6 +1,12 @@
-import { getMessageManager, scheduleMessage } from '../common';
+import {
+  createQueue,
+  defaultQueue,
+  getMessageManager,
+  scheduleMessage,
+} from '../common';
 
 test('Purging scheduled messages queue', async () => {
+  await createQueue(defaultQueue, false);
   const { message } = await scheduleMessage();
 
   const messageManager = await getMessageManager();

@@ -1,5 +1,6 @@
 import { delay } from 'bluebird';
 import {
+  createQueue,
   defaultQueue,
   getConsumer,
   getMessageManager,
@@ -16,6 +17,8 @@ test('Setting default message TTL from configuration', async () => {
       ttl: 2000,
     },
   });
+  await createQueue(defaultQueue, false);
+
   const producer = getProducer();
   const consumer = getConsumer();
   const consume = jest.spyOn(consumer, 'consume');

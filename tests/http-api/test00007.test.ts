@@ -1,4 +1,6 @@
 import {
+  createQueue,
+  defaultQueue,
   ISuperTestResponse,
   produceMessage,
   startMonitorServer,
@@ -8,6 +10,7 @@ import { GetMessagesResponseBodyDataDTO } from '../../src/monitor-server/control
 
 test('Fetching pending messages', async () => {
   await startMonitorServer();
+  await createQueue(defaultQueue, false);
   const { message, queue } = await produceMessage();
   const request = supertest('http://127.0.0.1:3000');
   const response1: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =

@@ -1,4 +1,5 @@
 import {
+  createQueue,
   defaultQueue,
   getProducer,
   ISuperTestResponse,
@@ -9,6 +10,8 @@ import { Message } from '../../src/message';
 import { GetScheduledMessagesResponseBodyDataDTO } from '../../src/monitor-server/controllers/api/main/scheduled-messages/get-scheduled-messages/get-scheduled-messages.response.DTO';
 
 test('Fetching and deleting scheduled messages using the HTTP API: Case 1', async () => {
+  await createQueue(defaultQueue, false);
+
   await startMonitorServer();
   const producer = getProducer();
 

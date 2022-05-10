@@ -1,4 +1,6 @@
 import {
+  createQueue,
+  defaultQueue,
   ISuperTestResponse,
   produceMessage,
   startMonitorServer,
@@ -8,6 +10,7 @@ import { TQueueParams } from '../../types';
 
 test('Fetching queues, namespaces, queue namespaces, deleting namespace', async () => {
   await startMonitorServer();
+  await createQueue(defaultQueue, false);
   const { message } = await produceMessage();
   const request = supertest('http://127.0.0.1:3000');
 

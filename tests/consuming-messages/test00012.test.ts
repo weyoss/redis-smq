@@ -1,4 +1,5 @@
 import {
+  createQueue,
   defaultQueue,
   getConsumer,
   getProducer,
@@ -14,6 +15,8 @@ test('An unacknowledged message is delayed given messageRetryDelay > 0 and messa
   mockConfiguration({
     message: { retryDelay: 10000, retryThreshold: 5 },
   });
+  await createQueue(defaultQueue, false);
+
   const timestamps: number[] = [];
   let callCount = 0;
   const consumer = getConsumer({

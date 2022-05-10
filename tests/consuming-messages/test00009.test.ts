@@ -1,4 +1,5 @@
 import {
+  createQueue,
   defaultQueue,
   getConsumer,
   getMessageManager,
@@ -9,6 +10,7 @@ import { events } from '../../src/system/common/events';
 import { delay } from 'bluebird';
 
 test('A message is dead-lettered when messageRetryThreshold is exceeded', async () => {
+  await createQueue(defaultQueue, false);
   const producer = getProducer();
   const consumer = getConsumer({
     messageHandler: jest.fn(() => {

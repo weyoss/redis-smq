@@ -1,9 +1,12 @@
 import { promisifyAll } from 'bluebird';
 import { Message } from '../../src/system/app/message/message';
-import { getProducer, untilMessageAcknowledged } from '../common';
+import { createQueue, getProducer, untilMessageAcknowledged } from '../common';
 import { Consumer } from '../../src/consumer';
 
 test('Consume messages from different queues using a single consumer instance: case 2', async () => {
+  await createQueue('test_queue', false);
+  await createQueue('another_queue', false);
+
   const consumer = promisifyAll(new Consumer());
   await consumer.consumeAsync('test_queue', (msg, cb) => {
     cb();

@@ -1,4 +1,6 @@
 import {
+  createQueue,
+  defaultQueue,
   listenForWebsocketStreamEvents,
   produceMessage,
   validateTime,
@@ -6,6 +8,7 @@ import {
 import { ITimeSeriesRangeItem } from '../../types';
 
 test('WebsocketRateStreamWorker: streamGlobalPublished', async () => {
+  await createQueue(defaultQueue, false);
   await produceMessage();
 
   const data = await listenForWebsocketStreamEvents(`streamGlobalPublished`);

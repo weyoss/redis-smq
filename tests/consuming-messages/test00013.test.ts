@@ -1,4 +1,9 @@
-import { getConsumer, getProducer, untilConsumerIdle } from '../common';
+import {
+  createQueue,
+  getConsumer,
+  getProducer,
+  untilConsumerIdle,
+} from '../common';
 import { Message } from '../../src/message';
 import { delay } from 'bluebird';
 import { ICallback } from '../../types';
@@ -10,6 +15,9 @@ type TQueueMetrics = {
 };
 
 test('Given many queues, a message is recovered from a consumer crash and re-queued to its origin queue', async () => {
+  await createQueue('queue_a', false);
+  await createQueue('queue_b', false);
+
   const queueAMetrics: TQueueMetrics = {
     receivedMessages: [],
     acks: 0,

@@ -1,10 +1,13 @@
 import {
+  createQueue,
+  defaultQueue,
   getMessageManager,
   getQueueManager,
   produceAndAcknowledgeMessage,
 } from '../common';
 
 test('Combined test. Requeue a message from acknowledged queue. Check queue metrics.', async () => {
+  await createQueue(defaultQueue, false);
   const { consumer, queue, message } = await produceAndAcknowledgeMessage();
   await consumer.shutdownAsync();
   const messageManager = await getMessageManager();

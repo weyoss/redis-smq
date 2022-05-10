@@ -1,4 +1,6 @@
 import {
+  createQueue,
+  defaultQueue,
   getMessageManager,
   produceAndAcknowledgeMessage,
   produceAndDeadLetterMessage,
@@ -9,6 +11,7 @@ import {
 
 describe('MessageManager', () => {
   test('Case 1', async () => {
+    await createQueue(defaultQueue, false);
     const { message, queue } = await produceMessage();
     const messageManager = await getMessageManager();
     const res = await messageManager.pendingMessages.listAsync(queue, 0, 100);
@@ -19,6 +22,7 @@ describe('MessageManager', () => {
   });
 
   test('Case 2', async () => {
+    await createQueue(defaultQueue, false);
     const { queue, message } = await produceAndAcknowledgeMessage();
 
     const messageManager = await getMessageManager();
@@ -34,6 +38,7 @@ describe('MessageManager', () => {
   });
 
   test('Case 3', async () => {
+    await createQueue(defaultQueue, false);
     const { queue, message } = await produceAndDeadLetterMessage();
     const messageManager = await getMessageManager();
     const res = await messageManager.deadLetteredMessages.listAsync(
@@ -47,6 +52,7 @@ describe('MessageManager', () => {
   });
 
   test('Case 4', async () => {
+    await createQueue(defaultQueue, true);
     const { queue, message } = await produceMessageWithPriority();
     const messageManager = await getMessageManager();
     const res = await messageManager.priorityMessages.listAsync(queue, 0, 100);
@@ -56,6 +62,7 @@ describe('MessageManager', () => {
   });
 
   test('Case 5', async () => {
+    await createQueue(defaultQueue, false);
     const { message } = await scheduleMessage();
     const messageManager = await getMessageManager();
     const res = await messageManager.scheduledMessages.listAsync(0, 100);

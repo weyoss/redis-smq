@@ -1,6 +1,13 @@
-import { getMessageManager, getQueueManager, produceMessage } from '../common';
+import {
+  createQueue,
+  defaultQueue,
+  getMessageManager,
+  getQueueManager,
+  produceMessage,
+} from '../common';
 
 test('Purging pending queue', async () => {
+  await createQueue(defaultQueue, false);
   const { queue } = await produceMessage();
   const queueManager = await getQueueManager();
 

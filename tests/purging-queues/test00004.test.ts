@@ -1,10 +1,13 @@
 import {
+  createQueue,
+  defaultQueue,
   getMessageManager,
   getQueueManager,
   produceAndDeadLetterMessage,
 } from '../common';
 
 test('Purging dead letter queue', async () => {
+  await createQueue(defaultQueue, false);
   const { queue, consumer } = await produceAndDeadLetterMessage();
   await consumer.shutdownAsync();
 
