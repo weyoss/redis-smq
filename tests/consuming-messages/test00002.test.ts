@@ -1,4 +1,5 @@
 import {
+  createQueue,
   defaultQueue,
   getConsumer,
   getProducer,
@@ -9,6 +10,8 @@ import { ICallback, TConsumerMessageHandler } from '../../types';
 import { MessageMetadata } from '../../src/system/app/message/message-metadata';
 
 test('Produce and consume 1 message', async () => {
+  await createQueue(defaultQueue, false);
+
   const producer = getProducer();
 
   const messageHandler: jest.Mock<

@@ -1,4 +1,5 @@
 import {
+  createQueue,
   defaultQueue,
   getConsumer,
   getProducer,
@@ -16,6 +17,8 @@ test('A message is unacknowledged when messageConsumeTimeout is exceeded', async
       retryDelay: 6000,
     },
   });
+  await createQueue(defaultQueue, false);
+
   const producer = getProducer();
   let consumeCount = 0;
   const consumer = getConsumer({

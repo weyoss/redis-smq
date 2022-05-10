@@ -1,5 +1,6 @@
 import { delay } from 'bluebird';
 import {
+  createQueue,
   defaultQueue,
   getConsumer,
   getProducer,
@@ -9,6 +10,8 @@ import { Message } from '../../src/message';
 import { events } from '../../src/system/common/events';
 
 test('Given many consumers, a message is delivered only to one consumer', async () => {
+  await createQueue(defaultQueue, false);
+
   const consumer1 = getConsumer({
     messageHandler: jest.fn((msg, cb) => {
       cb(null);

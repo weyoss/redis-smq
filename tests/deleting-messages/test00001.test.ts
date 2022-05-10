@@ -1,6 +1,14 @@
-import { getMessageManager, getQueueManager, produceMessage } from '../common';
+import {
+  createQueue,
+  defaultQueue,
+  getMessageManager,
+  getQueueManager,
+  produceMessage,
+} from '../common';
 
 test('Combined test: Delete a pending message. Check pending messages. Check queue metrics.', async () => {
+  await createQueue(defaultQueue, false);
+
   const { queue, message } = await produceMessage();
   const messageManager = await getMessageManager();
   const res1 = await messageManager.pendingMessages.listAsync(queue, 0, 100);

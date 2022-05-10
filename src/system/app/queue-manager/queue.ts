@@ -55,20 +55,14 @@ export class Queue {
   }
 
   getQueueSettings(
-    queue: string | Partial<TQueueParams>,
+    queue: string | TQueueParams,
     cb: ICallback<TQueueSettings>,
   ): void {
     Queue.getQueueSettings(this.redisClient, queue, cb);
   }
 
-  queueExists(queue: TQueueParams, cb: ICallback<boolean>): void {
-    const queueParams = Queue.getQueueParams(queue);
-    const { keyQueues } = redisKeys.getMainKeys();
-    const queueIndex = JSON.stringify(queueParams);
-    this.redisClient.hexists(keyQueues, queueIndex, (err, reply) => {
-      if (err) cb(err);
-      else cb(null, !!reply);
-    });
+  queueExists(queue: string | TQueueParams, cb: ICallback<boolean>): void {
+    Queue.queueExists(this.redisClient, queue, cb);
   }
 
   listQueues(cb: ICallback<TQueueParams[]>): void {
@@ -120,7 +114,8 @@ export class Queue {
     } = redisKeys.getQueueKeys(queueParams);
     redisClient.hgetall(keyQueueSettings, (err, reply) => {
       if (err) cb(err);
-      else if (!reply) cb(new QueueNotFoundError());
+      else if (!reply || !Object.keys(reply).length)
+        cb(new QueueNotFoundError());
       else {
         // default settings
         const queueSettings: TQueueSettings = { priorityQueuing: false };
@@ -150,5 +145,22 @@ export class Queue {
         cb(null, messageQueues);
       }
     });
+  }
+
+  static queueExists(
+    redisClient: RedisClient,
+    queue: string | TQueueParams,
+    cb: ICallback<boolean>,
+  ): void {
+    const queueParams = Queue.getQueueParams(queue);
+    const { keyQueues } = redisKeys.getMainKeys();
+    redisClient.sismember(
+      keyQueues,
+      JSON.stringify(queueParams),
+      (err, reply) => {
+        if (err) cb(err);
+        else cb(null, !!reply);
+      },
+    );
   }
 }

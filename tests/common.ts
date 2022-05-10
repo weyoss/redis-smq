@@ -532,3 +532,11 @@ export async function validateTimeSeriesFrom(url: string) {
     value: 0,
   });
 }
+
+export async function createQueue(
+  queue: string | TQueueParams,
+  priorityQueuing: boolean,
+) {
+  const qm = await getQueueManager();
+  await qm.queue.createQueueAsync(queue, priorityQueuing);
+}

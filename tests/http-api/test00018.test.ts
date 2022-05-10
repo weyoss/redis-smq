@@ -1,4 +1,6 @@
 import {
+  createQueue,
+  defaultQueue,
   ISuperTestResponse,
   produceAndDeadLetterMessage,
   startMonitorServer,
@@ -8,6 +10,7 @@ import { GetMessagesResponseBodyDataDTO } from '../../src/monitor-server/control
 
 test('Requeuing with priority a dead-lettered messages', async () => {
   await startMonitorServer();
+  await createQueue(defaultQueue, false);
   const { queue, message } = await produceAndDeadLetterMessage();
   const request = supertest('http://127.0.0.1:3000');
   const response1: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =

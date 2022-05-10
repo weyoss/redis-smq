@@ -1,4 +1,5 @@
 import {
+  createQueue,
   getMessageManager,
   getProducer,
   getQueueManager,
@@ -8,6 +9,8 @@ import { Message } from '../../src/message';
 import { delay } from 'bluebird';
 
 test("Make sure scheduled messages aren't published if destination queue is deleted", async () => {
+  await createQueue('some_queue', false);
+
   const msg = new Message();
   msg
     .setScheduledCRON('*/3 * * * * *')
@@ -15,8 +18,7 @@ test("Make sure scheduled messages aren't published if destination queue is dele
     .setQueue('some_queue');
 
   const producer = getProducer();
-  const r = await producer.produceAsync(msg);
-  expect(r).toBe(true);
+  await producer.produceAsync(msg);
 
   const messageManager = await getMessageManager();
   const s1 = await messageManager.scheduledMessages.listAsync(0, 99);

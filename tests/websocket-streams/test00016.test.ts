@@ -1,4 +1,6 @@
 import {
+  createQueue,
+  defaultQueue,
   getConsumer,
   listenForWebsocketStreamEvents,
   startWebsocketHeartbeatStreamWorker,
@@ -7,6 +9,7 @@ import {
 import { THeartbeatPayload } from '../../types';
 
 test('WebsocketHeartbeatStreamWorker: streamConsumerHeartbeat', async () => {
+  await createQueue(defaultQueue, false);
   const consumer = getConsumer();
   await consumer.runAsync();
 

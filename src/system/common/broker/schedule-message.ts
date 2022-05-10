@@ -63,9 +63,9 @@ export function scheduleMessage(
           `${timestamp}`,
           `${message.getPriority() ?? ''}`,
         ],
-        (err) => {
+        (err, reply) => {
           if (err) cb(err);
-          else cb(null, true);
+          else cb(null, !!reply);
         },
       );
     } else cb(null, false);

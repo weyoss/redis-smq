@@ -1,4 +1,4 @@
-import { defaultQueue, getProducer } from '../common';
+import { createQueue, defaultQueue, getProducer } from '../common';
 import { Message } from '../../index';
 import { delay } from 'bluebird';
 
@@ -6,6 +6,7 @@ test('Shutdown a producer and try to produce a message', async () => {
   const producer = getProducer();
   await delay(5000);
   await producer.shutdownAsync();
+  await createQueue(defaultQueue, false);
 
   const msg = new Message();
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue);

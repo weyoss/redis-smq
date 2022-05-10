@@ -1,4 +1,5 @@
 import {
+  createQueue,
   defaultQueue,
   getConsumer,
   getProducer,
@@ -7,6 +8,8 @@ import {
 import { Message } from '../../index';
 
 test('Produce and consume 100 messages', async () => {
+  await createQueue(defaultQueue, false);
+
   const producer = getProducer();
 
   const total = 100;

@@ -1,10 +1,13 @@
 import {
+  createQueue,
+  defaultQueue,
   getMessageManager,
   getQueueManager,
   produceAndDeadLetterMessage,
 } from '../common';
 
 test('Combined test: Requeue a message from dead-letter queue. Check queue metrics.', async () => {
+  await createQueue(defaultQueue, false);
   const { message, queue, consumer } = await produceAndDeadLetterMessage();
   await consumer.shutdownAsync();
 

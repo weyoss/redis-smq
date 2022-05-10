@@ -1,4 +1,6 @@
 import {
+  createQueue,
+  defaultQueue,
   listenForWebsocketStreamEvents,
   produceAndDeadLetterMessage,
   validateTime,
@@ -6,6 +8,7 @@ import {
 import { ITimeSeriesRangeItem } from '../../types';
 
 test('WebsocketRateStreamWorker: streamGlobalDeadLettered', async () => {
+  await createQueue(defaultQueue, false);
   await produceAndDeadLetterMessage();
 
   const data = await listenForWebsocketStreamEvents(`streamGlobalDeadLettered`);

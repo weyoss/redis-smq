@@ -1,5 +1,6 @@
 import { delay } from 'bluebird';
 import {
+  createQueue,
   defaultQueue,
   getConsumer,
   getMessageManager,
@@ -10,6 +11,8 @@ import { Message } from '../../src/message';
 import { events } from '../../src/system/common/events';
 
 test('A message is dead-lettered and not delivered when messageTTL is exceeded', async () => {
+  await createQueue(defaultQueue, false);
+
   const producer = getProducer();
   const consumer = getConsumer();
   const consume = jest.spyOn(consumer, 'consume');

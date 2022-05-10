@@ -1,12 +1,14 @@
 import {
+  createQueue,
+  defaultQueue,
   getConsumer,
   untilConsumerIdle,
   validateTimeSeriesFrom,
 } from '../common';
-import { promisifyAll } from 'bluebird';
 
 test('Consumer acknowledged time series', async () => {
-  const consumer = promisifyAll(getConsumer());
+  await createQueue(defaultQueue, false);
+  const consumer = getConsumer();
   await consumer.runAsync();
   await untilConsumerIdle(consumer);
   await validateTimeSeriesFrom(

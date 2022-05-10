@@ -1,5 +1,6 @@
 import {
   config,
+  createQueue,
   defaultQueue,
   getConsumer,
   getMessageManager,
@@ -14,6 +15,8 @@ import { RequeueWorker } from '../../src/system/workers/requeue.worker';
 import { HeartbeatMonitorWorker } from '../../src/system/workers/heartbeat-monitor.worker';
 
 test('HeartbeatMonitorWorker -> RequeueWorker', async () => {
+  await createQueue(defaultQueue, false);
+
   let message: Message | null = null;
   const consumer = getConsumer({
     messageHandler: jest.fn((msg) => {

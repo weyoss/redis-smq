@@ -7,6 +7,7 @@ import { ConsumerHeartbeat } from '../consumer/consumer-heartbeat';
 import { GenericError } from '../../common/errors/generic.error';
 import { Consumer } from '../consumer/consumer';
 import { Queue } from './queue';
+import { QueueNotFoundError } from './errors/queue-not-found.error';
 
 function validateMessageQueueDeletion(
   redisClient: RedisClient,
@@ -98,9 +99,11 @@ export function initDeleteQueueTransaction(
         waterfall(
           [
             (cb: ICallback<void>): void =>
-              Queue.getQueueSettings(redisClient, queueParams, (err) =>
-                cb(err),
-              ),
+              Queue.queueExists(redisClient, queueParams, (err, reply) => {
+                if (err) cb(err);
+                else if (!reply) cb(new QueueNotFoundError());
+                else cb();
+              }),
             (cb: ICallback<void>): void =>
               validateMessageQueueDeletion(redisClient, queueParams, cb),
             (cb: ICallback<string[]>) => {

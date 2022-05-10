@@ -1,4 +1,5 @@
 import {
+  createQueue,
   defaultQueue,
   getConsumer,
   getMessageManager,
@@ -15,6 +16,7 @@ test('An unacknowledged message is dead-lettered and not delivered again, given 
       retryThreshold: 0,
     },
   });
+  await createQueue(defaultQueue, false);
 
   const producer = getProducer();
   const consumer = getConsumer({

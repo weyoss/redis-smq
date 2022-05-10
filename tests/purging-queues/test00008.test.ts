@@ -1,21 +1,33 @@
-import { getQueueManager, produceAndAcknowledgeMessage } from '../common';
+import {
+  createQueue,
+  getQueueManager,
+  produceAndAcknowledgeMessage,
+} from '../common';
+import { TQueueParams } from '../../types';
 
 test('Combined: Fetching namespaces, deleting a namespace with its message queues', async () => {
-  const ns = 'ns1';
-  const { consumer: c1, queue: q1 } = await produceAndAcknowledgeMessage({
-    ns,
+  const queueA: TQueueParams = {
     name: 'queue_a',
-  });
+    ns: 'ns1',
+  };
+  await createQueue(queueA, false);
+  const { consumer: c1, queue: q1 } = await produceAndAcknowledgeMessage(
+    queueA,
+  );
 
-  const { consumer: c2, queue: q2 } = await produceAndAcknowledgeMessage({
-    ns,
+  const queueB: TQueueParams = {
     name: 'queue_b',
-  });
+    ns: 'ns1',
+  };
+  await createQueue(queueB, false);
+  const { consumer: c2, queue: q2 } = await produceAndAcknowledgeMessage(
+    queueB,
+  );
 
   const queueManager = await getQueueManager();
 
   const m0 = await queueManager.namespace.getNamespacesAsync();
-  expect(m0).toEqual([ns]);
+  expect(m0).toEqual(['ns1']);
 
   const m1 = await queueManager.queueMetrics.getQueueMetricsAsync(q1);
   expect(m1.acknowledged).toBe(1);
@@ -24,20 +36,20 @@ test('Combined: Fetching namespaces, deleting a namespace with its message queue
   expect(m2.acknowledged).toBe(1);
 
   await expect(async () => {
-    await queueManager.namespace.deleteNamespaceAsync(ns);
+    await queueManager.namespace.deleteNamespaceAsync('ns1');
   }).rejects.toThrow(
     'Before deleting a queue/namespace, make sure it is not used by a message handler',
   );
 
   await c1.shutdownAsync();
   await expect(async () => {
-    await queueManager.namespace.deleteNamespaceAsync(ns);
+    await queueManager.namespace.deleteNamespaceAsync('ns1');
   }).rejects.toThrow(
     'Before deleting a queue/namespace, make sure it is not used by a message handler',
   );
 
   await c2.shutdownAsync();
-  await queueManager.namespace.deleteNamespaceAsync(ns);
+  await queueManager.namespace.deleteNamespaceAsync('ns1');
 
   const m3 = await queueManager.queueMetrics.getQueueMetricsAsync(q1);
   expect(m3.acknowledged).toBe(0);
@@ -49,6 +61,6 @@ test('Combined: Fetching namespaces, deleting a namespace with its message queue
   expect(m5).toEqual([]);
 
   await expect(async () => {
-    await queueManager.namespace.deleteNamespaceAsync(ns);
-  }).rejects.toThrow(`Namespace (${ns}) does not exist`);
+    await queueManager.namespace.deleteNamespaceAsync('ns1');
+  }).rejects.toThrow(`Namespace (ns1) does not exist`);
 });

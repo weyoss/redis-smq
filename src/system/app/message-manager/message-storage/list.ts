@@ -6,6 +6,7 @@ import { MessageNotFoundError } from '../errors/message-not-found.error';
 import { EmptyCallbackReplyError } from '../../../common/errors/empty-callback-reply.error';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { ELuaScriptName } from '../../../common/redis-client/lua-scripts';
+import { MessageRequeueError } from '../errors/message-requeue.error';
 
 type TFetchMessagesReply = { sequenceId: number; message: Message };
 
@@ -17,19 +18,6 @@ export abstract class List extends AbstractMessageStorage<
   },
   TFetchMessagesReply
 > {
-  protected getMessageBySequenceId(
-    key: string,
-    sequenceId: number,
-    messageId: string,
-    cb: ICallback<void>,
-  ): void {
-    this.getMessageById(key, sequenceId, messageId, (err, message) => {
-      if (err) cb(err);
-      else if (!message) cb(new EmptyCallbackReplyError());
-      else this.redisClient.lrem(key, 1, message.toString(), (err) => cb(err));
-    });
-  }
-
   protected getMessageById(
     key: string,
     sequenceId: number,
@@ -55,7 +43,7 @@ export abstract class List extends AbstractMessageStorage<
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    this.getMessageBySequenceId(key, sequenceId, messageId, (err, msg) => {
+    this.getMessageById(key, sequenceId, messageId, (err, msg) => {
       if (err) cb(err);
       else if (!msg) cb(new EmptyCallbackReplyError());
       else {
@@ -85,7 +73,11 @@ export abstract class List extends AbstractMessageStorage<
             message.getPriority() ?? '',
             JSON.stringify(msg),
           ],
-          (err) => cb(err),
+          (err, reply) => {
+            if (err) cb(err);
+            else if (!reply) cb(new MessageRequeueError());
+            else cb();
+          },
         );
       }
     });

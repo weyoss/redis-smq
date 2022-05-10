@@ -1,5 +1,6 @@
 import { delay } from 'bluebird';
 import {
+  createQueue,
   defaultQueue,
   getConsumer,
   getProducer,
@@ -11,6 +12,7 @@ import { ICallback } from '../../types';
 
 test('Unacknowledged messages are re-queued when messageRetryThreshold is not exceeded', async () => {
   const producer = getProducer();
+  await createQueue(defaultQueue, false);
 
   let callCount = 0;
   const consumer = getConsumer({

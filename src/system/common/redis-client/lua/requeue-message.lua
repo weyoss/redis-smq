@@ -1,7 +1,7 @@
 --- KEYS[1] keyQueueSettings (hash)
 --- KEYS[2] keyQueueSettingsPriorityQueuing 
 --- KEYS[3] keyQueuePendingWithPriority (hash)
---- KEYS[3] keyQueuePriority (sorted set)
+--- KEYS[4] keyQueuePriority (sorted set)
 --- KEYS[5] keyQueuePending (list)
 --- KEYS[6] from (list)
 --- ARGV[1] message id
@@ -21,5 +21,3 @@ if result then
     end
 end
 return 0
-
-

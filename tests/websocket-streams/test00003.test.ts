@@ -1,4 +1,6 @@
 import {
+  createQueue,
+  defaultQueue,
   listenForWebsocketStreamEvents,
   produceAndAcknowledgeMessage,
   validateTime,
@@ -6,6 +8,7 @@ import {
 import { ITimeSeriesRangeItem } from '../../types';
 
 test('WebsocketRateStreamWorker: streamQueueAcknowledged', async () => {
+  await createQueue(defaultQueue, false);
   const { queue } = await produceAndAcknowledgeMessage();
 
   const data = await listenForWebsocketStreamEvents(

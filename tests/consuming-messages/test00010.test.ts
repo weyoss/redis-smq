@@ -1,4 +1,6 @@
 import {
+  createQueue,
+  defaultQueue,
   getConsumer,
   produceMessage,
   untilMessageAcknowledged,
@@ -6,6 +8,8 @@ import {
 import { events } from '../../src/system/common/events';
 
 test('A message is not lost in case of a consumer crash', async () => {
+  await createQueue(defaultQueue, false);
+
   await produceMessage();
 
   /**

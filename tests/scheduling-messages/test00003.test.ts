@@ -1,4 +1,5 @@
 import {
+  createQueue,
   defaultQueue,
   getMessageManager,
   getProducer,
@@ -9,6 +10,8 @@ import { Message } from '../../src/message';
 import { delay } from 'bluebird';
 
 test('Schedule a message: CRON', async () => {
+  await createQueue(defaultQueue, false);
+
   const msg = new Message();
   msg
     .setScheduledCRON('*/6 * * * * *')

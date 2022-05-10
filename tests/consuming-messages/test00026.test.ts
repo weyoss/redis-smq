@@ -1,4 +1,5 @@
 import {
+  createQueue,
   defaultQueue,
   getMessageManager,
   mockConfiguration,
@@ -16,6 +17,7 @@ test('Message storage: acknowledged.expire = 10000', async () => {
   });
 
   const messageManager = await getMessageManager();
+  await createQueue(defaultQueue, false);
   const { producer: p, consumer: c } = await produceAndAcknowledgeMessage();
 
   await p.shutdownAsync();

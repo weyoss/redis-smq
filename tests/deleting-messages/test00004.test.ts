@@ -1,4 +1,6 @@
 import {
+  createQueue,
+  defaultQueue,
   getMessageManager,
   getQueueManager,
   produceAndDeadLetterMessage,
@@ -6,6 +8,7 @@ import {
 import { Message } from '../../src/message';
 
 test('Combined test: Delete a dead-letter message. Check pending, acknowledged, and dead-letter messages. Check queue metrics.', async () => {
+  await createQueue(defaultQueue, false);
   const { queue, message } = await produceAndDeadLetterMessage();
   const messageManager = await getMessageManager();
 

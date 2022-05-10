@@ -1,4 +1,5 @@
 import {
+  createQueue,
   defaultQueue,
   getConsumer,
   getMessageManager,
@@ -9,6 +10,8 @@ import { Message } from '../../src/system/app/message/message';
 import { events } from '../../src/system/common/events';
 
 test('Periodic scheduled messages upon consume failures are dead-lettered without being re-queued', async () => {
+  await createQueue(defaultQueue, false);
+
   const consumer = getConsumer({
     messageHandler: jest.fn(() => {
       throw new Error();

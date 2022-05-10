@@ -1,4 +1,6 @@
 import {
+  createQueue,
+  defaultQueue,
   ISuperTestResponse,
   produceMessageWithPriority,
   startMonitorServer,
@@ -8,6 +10,7 @@ import { GetPendingMessagesWithPriorityResponseBodyDataDTO } from '../../src/mon
 
 test('Fetching pending messages with priority', async () => {
   await startMonitorServer();
+  await createQueue(defaultQueue, true);
   const { message, queue } = await produceMessageWithPriority();
 
   const request = supertest('http://127.0.0.1:3000');
