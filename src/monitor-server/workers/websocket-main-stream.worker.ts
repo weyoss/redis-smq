@@ -1,22 +1,26 @@
 import {
   ICallback,
   TQueueParams,
+  TQueueSettings,
   TWebsocketMainStreamPayload,
   TWebsocketMainStreamPayloadQueue,
 } from '../../../types';
-import { redisKeys } from '../../system/common/redis-keys/redis-keys';
 import { Consumer } from '../../system/app/consumer/consumer';
 import { Worker } from '../../system/common/worker/worker';
 import { each, waterfall } from '../../system/lib/async';
 import { ScheduledMessages } from '../../system/app/message-manager/scheduled-messages';
 import { Queue } from '../../system/app/queue-manager/queue';
+import { EmptyCallbackReplyError } from '../../system/common/errors/empty-callback-reply.error';
+import { PendingPriorityMessages } from '../../system/app/message-manager/pending-priority-messages';
+import { PendingLifoMessages } from '../../system/app/message-manager/pending-lifo-messages';
+import { DeadLetteredMessages } from '../../system/app/message-manager/dead-lettered-messages';
+import { AcknowledgedMessages } from '../../system/app/message-manager/acknowledged-messages';
 
 export class WebsocketMainStreamWorker extends Worker {
   protected data: TWebsocketMainStreamPayload = {
     scheduledMessagesCount: 0,
     deadLetteredMessagesCount: 0,
     pendingMessagesCount: 0,
-    pendingMessagesWithPriorityCount: 0,
     acknowledgedMessagesCount: 0,
     consumersCount: 0,
     queuesCount: 0,
@@ -24,106 +28,125 @@ export class WebsocketMainStreamWorker extends Worker {
   };
 
   protected addQueue = (
-    ns: string,
-    queueName: string,
+    queue: TQueueParams,
+    settings: TQueueSettings,
   ): TWebsocketMainStreamPayloadQueue => {
+    const { ns, name } = queue;
+    const { priorityQueuing, rateLimit } = settings;
     if (!this.data.queues[ns]) {
       this.data.queues[ns] = {};
     }
-    if (!this.data.queues[ns][queueName]) {
+    if (!this.data.queues[ns][name]) {
       this.data.queuesCount += 1;
-      this.data.queues[ns][queueName] = {
-        name: queueName,
-        ns: ns,
+      this.data.queues[ns][name] = {
+        name,
+        ns,
+        priorityQueuing,
+        rateLimit: rateLimit ?? null,
         deadLetteredMessagesCount: 0,
         acknowledgedMessagesCount: 0,
         pendingMessagesCount: 0,
-        pendingMessagesWithPriorityCount: 0,
         consumersCount: 0,
       };
     }
-    return this.data.queues[ns][queueName];
+    return this.data.queues[ns][name];
   };
 
   protected getQueueSize = (
     queues: TQueueParams[],
     cb: ICallback<void>,
   ): void => {
-    if (queues && queues.length) {
-      const keyTypes = redisKeys.getKeyTypes();
-      const keys: { type: number; name: string; ns: string }[] = [];
-      const multi = this.redisClient.multi();
-      const handleResult = (res: number[]) => {
-        each(
-          res,
-          (size, index, done) => {
-            const { ns, name, type } = keys[+index];
-            const queue = this.addQueue(ns, name);
-            if (type === keyTypes.KEY_QUEUE_DL) {
-              queue.deadLetteredMessagesCount = size;
-              this.data.deadLetteredMessagesCount += size;
-            } else if (type === keyTypes.KEY_QUEUE_PENDING) {
-              queue.pendingMessagesCount = size;
-              this.data.pendingMessagesCount += size;
-            } else if (
-              type === keyTypes.KEY_QUEUE_PENDING_PRIORITY_MESSAGE_IDS
-            ) {
-              queue.pendingMessagesWithPriorityCount = size;
-              this.data.pendingMessagesWithPriorityCount += size;
-            } else {
-              queue.acknowledgedMessagesCount = size;
-              this.data.acknowledgedMessagesCount += size;
-            }
-            done();
-          },
-          cb,
+    each(
+      queues,
+      (queueParams, _, done) => {
+        waterfall(
+          [
+            (cb: ICallback<TWebsocketMainStreamPayloadQueue>) => {
+              Queue.getQueueSettings(
+                this.redisClient,
+                queueParams,
+                (err, settings) => {
+                  if (err) done(err);
+                  else if (!settings) cb(new EmptyCallbackReplyError());
+                  else {
+                    const queue = this.addQueue(queueParams, settings);
+                    cb(null, queue);
+                  }
+                },
+              );
+            },
+            (
+              queue: TWebsocketMainStreamPayloadQueue,
+              cb: ICallback<TWebsocketMainStreamPayloadQueue>,
+            ) => {
+              if (queue.priorityQueuing) {
+                PendingPriorityMessages.count(
+                  this.redisClient,
+                  queueParams,
+                  (err, count) => {
+                    if (err) cb(err);
+                    else {
+                      queue.pendingMessagesCount = Number(count);
+                      this.data.pendingMessagesCount +=
+                        queue.pendingMessagesCount;
+                    }
+                  },
+                );
+              } else {
+                PendingLifoMessages.count(
+                  this.redisClient,
+                  queueParams,
+                  (err, count) => {
+                    if (err) cb(err);
+                    else {
+                      queue.pendingMessagesCount = Number(count);
+                      this.data.pendingMessagesCount +=
+                        queue.pendingMessagesCount;
+                      cb(null, queue);
+                    }
+                  },
+                );
+              }
+            },
+            (
+              queue: TWebsocketMainStreamPayloadQueue,
+              cb: ICallback<TWebsocketMainStreamPayloadQueue>,
+            ) => {
+              DeadLetteredMessages.count(
+                this.redisClient,
+                queueParams,
+                (err, count) => {
+                  if (err) cb(err);
+                  else {
+                    queue.deadLetteredMessagesCount = Number(count);
+                    this.data.deadLetteredMessagesCount +=
+                      queue.deadLetteredMessagesCount;
+                    cb(null, queue);
+                  }
+                },
+              );
+            },
+            (queue: TWebsocketMainStreamPayloadQueue, cb: ICallback<void>) => {
+              AcknowledgedMessages.count(
+                this.redisClient,
+                queueParams,
+                (err, count) => {
+                  if (err) cb(err);
+                  else {
+                    queue.acknowledgedMessagesCount = Number(count);
+                    this.data.acknowledgedMessagesCount +=
+                      queue.acknowledgedMessagesCount;
+                    cb();
+                  }
+                },
+              );
+            },
+          ],
+          done,
         );
-      };
-      each(
-        queues,
-        (queue, _, done) => {
-          const {
-            keyQueuePending,
-            keyQueuePendingPriorityMessageIds,
-            keyQueueDL,
-            keyQueueAcknowledged,
-          } = redisKeys.getQueueKeys(queue);
-          multi.llen(keyQueuePending);
-          multi.zcard(keyQueuePendingPriorityMessageIds);
-          multi.llen(keyQueueDL);
-          multi.llen(keyQueueAcknowledged);
-          keys.push(
-            {
-              type: keyTypes.KEY_QUEUE_PENDING,
-              name: queue.name,
-              ns: queue.ns,
-            },
-            {
-              type: keyTypes.KEY_QUEUE_PENDING_PRIORITY_MESSAGE_IDS,
-              name: queue.name,
-              ns: queue.ns,
-            },
-            {
-              type: keyTypes.KEY_QUEUE_DL,
-              name: queue.name,
-              ns: queue.ns,
-            },
-            {
-              type: keyTypes.KEY_QUEUE_ACKNOWLEDGED,
-              name: queue.name,
-              ns: queue.ns,
-            },
-          );
-          done();
-        },
-        () => {
-          this.redisClient.execMulti<number>(multi, (err, res) => {
-            if (err) cb(err);
-            else handleResult(res ?? []);
-          });
-        },
-      );
-    } else cb();
+      },
+      cb,
+    );
   };
 
   protected getQueues = (cb: ICallback<TQueueParams[]>): void => {
@@ -183,7 +206,6 @@ export class WebsocketMainStreamWorker extends Worker {
       scheduledMessagesCount: 0,
       deadLetteredMessagesCount: 0,
       pendingMessagesCount: 0,
-      pendingMessagesWithPriorityCount: 0,
       acknowledgedMessagesCount: 0,
       consumersCount: 0,
       queuesCount: 0,

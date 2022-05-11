@@ -2,6 +2,7 @@ import { ICallback, TGetMessagesReply, TQueueParams } from '../../../../types';
 import { Queue } from '../queue-manager/queue';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { SortedSet } from './message-storage/sorted-set';
+import { RedisClient } from '../../common/redis-client/redis-client';
 
 export class PendingPriorityMessages extends SortedSet {
   delete(
@@ -77,5 +78,19 @@ export class PendingPriorityMessages extends SortedSet {
       take,
       cb,
     );
+  }
+
+  static count(
+    redisClient: RedisClient,
+    queue: TQueueParams,
+    cb: ICallback<number>,
+  ): void {
+    const queueParams = Queue.getQueueParams(queue);
+    const { keyQueuePendingPriorityMessageIds } =
+      redisKeys.getQueueKeys(queueParams);
+    redisClient.zcard(keyQueuePendingPriorityMessageIds, (err, reply) => {
+      if (err) cb(err);
+      else cb(null, reply ?? 0);
+    });
   }
 }
