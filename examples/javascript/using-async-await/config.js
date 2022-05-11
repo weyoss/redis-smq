@@ -1,11 +1,9 @@
-'use strict';
-
 module.exports = {
   namespace: 'ns1',
   redis: {
     client: 'ioredis',
     options: {
-      host: 'localhost',
+      host: '127.0.0.1',
       port: 6379,
     },
   },
