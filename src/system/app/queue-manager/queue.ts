@@ -83,7 +83,7 @@ export class Queue {
     );
   }
 
-  static getQueueParams(queue: string | Partial<TQueueParams>): TQueueParams {
+  static getQueueParams(queue: string | TQueueParams): TQueueParams {
     const queueParams =
       typeof queue === 'string'
         ? {
@@ -103,7 +103,7 @@ export class Queue {
 
   static getQueueSettings(
     redisClient: RedisClient,
-    queue: string | Partial<TQueueParams>,
+    queue: string | TQueueParams,
     cb: ICallback<TQueueSettings>,
   ): void {
     const queueParams = Queue.getQueueParams(queue);
