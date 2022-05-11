@@ -51,11 +51,13 @@ test('Combined: Fetching namespaces, deleting a namespace with its message queue
   await c2.shutdownAsync();
   await queueManager.namespace.deleteNamespaceAsync('ns1');
 
-  const m3 = await queueManager.queueMetrics.getQueueMetricsAsync(q1);
-  expect(m3.acknowledged).toBe(0);
+  await expect(
+    queueManager.queueMetrics.getQueueMetricsAsync(q1),
+  ).rejects.toThrow('Queue does not exist');
 
-  const m4 = await queueManager.queueMetrics.getQueueMetricsAsync(q2);
-  expect(m4.acknowledged).toBe(0);
+  await expect(
+    queueManager.queueMetrics.getQueueMetricsAsync(q2),
+  ).rejects.toThrow('Queue does not exist');
 
   const m5 = await queueManager.namespace.getNamespacesAsync();
   expect(m5).toEqual([]);

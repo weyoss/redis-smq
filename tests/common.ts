@@ -167,7 +167,6 @@ export async function getMessageManager() {
     deadLetteredMessages: promisifyAll(messageManager.deadLetteredMessages),
     acknowledgedMessages: promisifyAll(messageManager.acknowledgedMessages),
     pendingMessages: promisifyAll(messageManager.pendingMessages),
-    priorityMessages: promisifyAll(messageManager.priorityMessages),
     scheduledMessages: promisifyAll(messageManager.scheduledMessages),
   };
 }

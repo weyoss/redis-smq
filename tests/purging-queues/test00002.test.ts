@@ -12,11 +12,11 @@ test('Purging priority queue', async () => {
   const queueManager = await getQueueManager();
 
   const m2 = await queueManager.queueMetrics.getQueueMetricsAsync(queue);
-  expect(m2.pendingWithPriority).toBe(1);
+  expect(m2.pending).toBe(1);
 
   const messageManager = await getMessageManager();
-  await messageManager.priorityMessages.purgeAsync(queue);
+  await messageManager.pendingMessages.purgeAsync(queue);
 
   const m3 = await queueManager.queueMetrics.getQueueMetricsAsync(queue);
-  expect(m3.pendingWithPriority).toBe(0);
+  expect(m3.pending).toBe(0);
 });

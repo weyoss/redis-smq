@@ -16,7 +16,6 @@ describe('Queue metrics: check that queue metrics are valid', () => {
     const queueManager = await getQueueManager();
     const m = await queueManager.queueMetrics.getQueueMetricsAsync(queue);
     expect(m.pending).toBe(1);
-    expect(m.pendingWithPriority).toBe(0);
     expect(m.acknowledged).toBe(0);
     expect(m.deadLettered).toBe(0);
   });
@@ -27,7 +26,6 @@ describe('Queue metrics: check that queue metrics are valid', () => {
     const queueManager = await getQueueManager();
     const m = await queueManager.queueMetrics.getQueueMetricsAsync(queue);
     expect(m.pending).toBe(0);
-    expect(m.pendingWithPriority).toBe(0);
     expect(m.acknowledged).toBe(0);
     expect(m.deadLettered).toBe(1);
   });
@@ -38,7 +36,6 @@ describe('Queue metrics: check that queue metrics are valid', () => {
     const queueManager = await getQueueManager();
     const m = await queueManager.queueMetrics.getQueueMetricsAsync(queue);
     expect(m.pending).toBe(0);
-    expect(m.pendingWithPriority).toBe(0);
     expect(m.acknowledged).toBe(1);
     expect(m.deadLettered).toBe(0);
   });
@@ -49,7 +46,6 @@ describe('Queue metrics: check that queue metrics are valid', () => {
     const queueManager = await getQueueManager();
     const m = await queueManager.queueMetrics.getQueueMetricsAsync(queue);
     expect(m.pending).toBe(0);
-    expect(m.pendingWithPriority).toBe(0);
     expect(m.acknowledged).toBe(0);
     expect(m.deadLettered).toBe(0);
   });
@@ -59,8 +55,7 @@ describe('Queue metrics: check that queue metrics are valid', () => {
     const { queue } = await produceMessageWithPriority();
     const queueManager = await getQueueManager();
     const m = await queueManager.queueMetrics.getQueueMetricsAsync(queue);
-    expect(m.pending).toBe(0);
-    expect(m.pendingWithPriority).toBe(1);
+    expect(m.pending).toBe(1);
     expect(m.acknowledged).toBe(0);
     expect(m.deadLettered).toBe(0);
   });

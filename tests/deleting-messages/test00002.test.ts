@@ -10,22 +10,23 @@ test('Combined test: Delete a pending message with priority. Check pending messa
   await createQueue(defaultQueue, true);
   const { message, queue } = await produceMessageWithPriority();
   const messageManager = await getMessageManager();
-  const res1 = await messageManager.priorityMessages.listAsync(queue, 0, 100);
+  const res1 = await messageManager.pendingMessages.listAsync(queue, 0, 100);
 
   expect(res1.total).toBe(1);
-  expect(res1.items[0].getId()).toBe(message.getRequiredId());
+  expect(res1.items[0].message.getId()).toBe(message.getRequiredId());
 
   const queueManager = await getQueueManager();
   const queueMetrics = await queueManager.queueMetrics.getQueueMetricsAsync(
     queue,
   );
-  expect(queueMetrics.pendingWithPriority).toBe(1);
+  expect(queueMetrics.pending).toBe(1);
 
-  await messageManager.priorityMessages.deleteAsync(
+  await messageManager.pendingMessages.deleteAsync(
     queue,
     message.getRequiredId(),
+    0,
   );
-  const res2 = await messageManager.priorityMessages.listAsync(queue, 0, 100);
+  const res2 = await messageManager.pendingMessages.listAsync(queue, 0, 100);
   expect(res2.total).toBe(0);
   expect(res2.items.length).toBe(0);
 
@@ -35,8 +36,9 @@ test('Combined test: Delete a pending message with priority. Check pending messa
   expect(queueMetrics1.pending).toBe(0);
 
   // Deleting a message that was already deleted should not throw an error
-  await messageManager.priorityMessages.deleteAsync(
+  await messageManager.pendingMessages.deleteAsync(
     queue,
     message.getRequiredId(),
+    0,
   );
 });

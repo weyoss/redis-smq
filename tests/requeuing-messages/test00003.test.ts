@@ -52,14 +52,6 @@ test('Combined test. Requeue a priority message from acknowledged queue. Check q
     message.getRequiredId(),
   );
 
-  const res5 = await messageManager.pendingMessages.listAsync(
-    defaultQueue,
-    0,
-    100,
-  );
-  expect(res5.total).toBe(0);
-  expect(res5.items.length).toBe(0);
-
   const res6 = await messageManager.acknowledgedMessages.listAsync(
     defaultQueue,
     0,
@@ -68,14 +60,14 @@ test('Combined test. Requeue a priority message from acknowledged queue. Check q
   expect(res6.total).toBe(0);
   expect(res6.items.length).toBe(0);
 
-  const res7 = await messageManager.priorityMessages.listAsync(
+  const res7 = await messageManager.pendingMessages.listAsync(
     defaultQueue,
     0,
     100,
   );
   expect(res7.total).toBe(1);
   expect(res7.items.length).toBe(1);
-  expect(res7.items[0].getId()).toEqual(message.getRequiredId());
+  expect(res7.items[0].message.getId()).toEqual(message.getRequiredId());
 
   await expect(async () => {
     await messageManager.acknowledgedMessages.requeueAsync(

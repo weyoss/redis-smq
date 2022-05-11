@@ -26,7 +26,6 @@ test('Consume messages from different queues and published by a single producer 
       acknowledged: 0,
       deadLettered: 0,
       pending: 1,
-      pendingWithPriority: 0,
     });
 
     // queue name should be normalized to lowercase
@@ -49,7 +48,6 @@ test('Consume messages from different queues and published by a single producer 
       acknowledged: 1,
       deadLettered: 0,
       pending: 0,
-      pendingWithPriority: 0,
     });
   }
 });
