@@ -8,4 +8,4 @@ async function main(): Promise<void> {
   await consume();
 }
 
-main().catch((err) => console.log(err));
+main().catch((err: Error) => console.log(err));
