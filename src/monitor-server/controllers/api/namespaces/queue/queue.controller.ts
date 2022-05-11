@@ -8,7 +8,6 @@ import { DeleteQueueRequestDTO } from './delete-queue/delete-queue.request.DTO';
 import { DeleteQueueResponseDTO } from './delete-queue/delete-queue.response.DTO';
 import { controller as queueDeadLetteredMessagesController } from './dead-lettered-messages/controller';
 import { controller as queueAcknowledgedMessagesController } from './acknowledged-messages/controller';
-import { controller as queuePendingMessagesWithPriorityController } from './pending-messages-with-priority/controller';
 import { controller as queuePendingMessagesController } from './pending-messages/controller';
 import { controller as queueTimeSeriesController } from './time-series/controller';
 import { controller as queueRateLimitingController } from './rate-limiting/controller';
@@ -26,7 +25,6 @@ export const queueController: IRouteController = {
     },
     queueDeadLetteredMessagesController,
     queueAcknowledgedMessagesController,
-    queuePendingMessagesWithPriorityController,
     queuePendingMessagesController,
     queueTimeSeriesController,
     queueRateLimitingController,

@@ -1,27 +1,12 @@
 import { IsInt, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { MessageDTO } from '../../../../common/dto/queues/message.DTO';
-
-export class GetScheduledMessagesResponseBodyDataDTO {
-  @IsInt()
-  total!: number;
-
-  @ValidateNested()
-  @Type(() => MessageDTO)
-  items!: MessageDTO[];
-}
-
-export class GetScheduledMessagesResponseBodyDTO {
-  @ValidateNested()
-  @Type(() => GetScheduledMessagesResponseBodyDataDTO)
-  data!: GetScheduledMessagesResponseBodyDataDTO;
-}
+import { GetMessagesResponseBodyDTO } from '../../../../common/dto/queues/get-messages-response-body.DTO';
 
 export class GetScheduledMessagesResponseDTO {
   @IsInt()
   status!: number;
 
   @ValidateNested()
-  @Type(() => GetScheduledMessagesResponseBodyDTO)
-  body!: GetScheduledMessagesResponseBodyDTO;
+  @Type(() => GetMessagesResponseBodyDTO)
+  body!: GetMessagesResponseBodyDTO;
 }

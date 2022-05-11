@@ -1,17 +1,13 @@
 import {
   ICallback,
   ICompatibleLogger,
-  TPaginatedResponse,
+  TGetMessagesReply,
 } from '../../../../../types';
 import { RedisClient } from '../../../common/redis-client/redis-client';
 import { ArgumentError } from '../../../common/errors/argument.error';
 import { getNamespacedLogger } from '../../../common/logger';
 
-export abstract class AbstractMessageStorage<
-  StorageParams,
-  MessageItemParams,
-  FetchMessagesReply,
-> {
+export abstract class AbstractMessageStorage<StorageParams, MessageItemParams> {
   protected redisClient: RedisClient;
   protected logger: ICompatibleLogger;
 
@@ -38,7 +34,7 @@ export abstract class AbstractMessageStorage<
     key: StorageParams,
     skip: number,
     take: number,
-    cb: ICallback<TPaginatedResponse<FetchMessagesReply>>,
+    cb: ICallback<TGetMessagesReply>,
   ): void;
 
   protected abstract purgeMessages(

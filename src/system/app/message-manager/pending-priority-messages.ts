@@ -1,13 +1,9 @@
-import {
-  ICallback,
-  TGetPendingMessagesWithPriorityReply,
-  TQueueParams,
-} from '../../../../types';
+import { ICallback, TGetMessagesReply, TQueueParams } from '../../../../types';
 import { Queue } from '../queue-manager/queue';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { SortedSet } from './message-storage/sorted-set';
 
-export class PriorityMessages extends SortedSet {
+export class PendingPriorityMessages extends SortedSet {
   delete(
     queue: string | TQueueParams,
     messageId: string,
@@ -65,7 +61,7 @@ export class PriorityMessages extends SortedSet {
     queue: string | TQueueParams,
     skip: number,
     take: number,
-    cb: ICallback<TGetPendingMessagesWithPriorityReply>,
+    cb: ICallback<TGetMessagesReply>,
   ): void {
     const queueParams = Queue.getQueueParams(queue);
     const {

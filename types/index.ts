@@ -252,10 +252,6 @@ export type TGetMessagesReply = TPaginatedResponse<{
   message: Message;
 }>;
 
-export type TGetScheduledMessagesReply = TPaginatedResponse<Message>;
-
-export type TGetPendingMessagesWithPriorityReply = TPaginatedResponse<Message>;
-
 export type TConsumerRedisKeys = ReturnType<
   typeof redisKeys['getConsumerKeys']
 >;
@@ -268,7 +264,6 @@ export interface IQueueMetrics {
   acknowledged: number;
   deadLettered: number;
   pending: number;
-  pendingWithPriority: number;
 }
 
 export enum EMessageDeadLetterCause {

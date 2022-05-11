@@ -1,4 +1,4 @@
-import { ICallback, TGetScheduledMessagesReply } from '../../../../types';
+import { ICallback, TGetMessagesReply } from '../../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { RedisClient } from '../../common/redis-client/redis-client';
 import { SortedSet } from './message-storage/sorted-set';
@@ -43,11 +43,7 @@ export class ScheduledMessages extends SortedSet {
     );
   }
 
-  list(
-    skip: number,
-    take: number,
-    cb: ICallback<TGetScheduledMessagesReply>,
-  ): void {
+  list(skip: number, take: number, cb: ICallback<TGetMessagesReply>): void {
     const { keyScheduledMessageIds, keyScheduledMessages } =
       redisKeys.getMainKeys();
     this.fetchMessages(

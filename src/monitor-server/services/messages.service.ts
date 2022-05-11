@@ -4,7 +4,6 @@ import { GetPendingMessagesRequestDTO } from '../controllers/api/namespaces/queu
 import { GetAcknowledgedMessagesRequestDTO } from '../controllers/api/namespaces/queue/acknowledged-messages/get-acknowledged-messages/get-acknowledged-messages.request.DTO';
 import { GetDeadLetteredMessagesRequestDTO } from '../controllers/api/namespaces/queue/dead-lettered-messages/get-dead-lettered-messages/get-dead-lettered-messages.request.DTO';
 import { DeletePendingMessageRequestDTO } from '../controllers/api/namespaces/queue/pending-messages/delete-pending-message/delete-pending-message.request.DTO';
-import { DeletePendingMessageWithPriorityRequestDTO } from '../controllers/api/namespaces/queue/pending-messages-with-priority/delete-pending-message-with-priority/delete-pending-message-with-priority.request.DTO';
 import { DeleteAcknowledgedMessageRequestDTO } from '../controllers/api/namespaces/queue/acknowledged-messages/delete-acknowledged-message/delete-acknowledged-message.request.DTO';
 import { DeleteDeadLetteredMessageRequestDTO } from '../controllers/api/namespaces/queue/dead-lettered-messages/delete-dead-lettered-message/delete-dead-lettered-message.request.DTO';
 import { DeleteScheduledMessageRequestDTO } from '../controllers/api/main/scheduled-messages/delete-scheduled-message/delete-scheduled-message-request.DTO';
@@ -13,19 +12,16 @@ import { RequeueAcknowledgedMessageRequestDTO } from '../controllers/api/namespa
 import { PurgeDeadLetteredMessagesRequestDTO } from '../controllers/api/namespaces/queue/dead-lettered-messages/purge-dead-lettered-messages/purge-dead-lettered-messages.request.DTO';
 import { PurgeAcknowledgedMessagesRequestDTO } from '../controllers/api/namespaces/queue/acknowledged-messages/purge-acknowledged-messages/purge-acknowledged-messages.request.DTO';
 import { PurgePendingMessagesRequestDTO } from '../controllers/api/namespaces/queue/pending-messages/purge-pending-messages/purge-pending-messages.request.DTO';
-import { PurgePendingMessagesWithPriorityRequestDTO } from '../controllers/api/namespaces/queue/pending-messages-with-priority/purge-pending-messages-with-priority/purge-pending-messages-with-priority.request.DTO';
 import { RedisClient } from '../../system/common/redis-client/redis-client';
 import { ScheduledMessages } from '../../system/app/message-manager/scheduled-messages';
 import { AcknowledgedMessages } from '../../system/app/message-manager/acknowledged-messages';
-import { PendingMessages } from '../../system/app/message-manager/pending-messages';
-import { PriorityMessages } from '../../system/app/message-manager/priority-messages';
 import { DeadLetteredMessages } from '../../system/app/message-manager/dead-lettered-messages';
+import { PendingMessages } from '../../system/app/message-manager/pending-messages';
 
 export class MessagesService {
   protected scheduledMessages;
   protected acknowledgedMessages;
   protected pendingMessages;
-  protected priorityMessages;
   protected deadLetteredMessages;
 
   constructor(redisClient: RedisClient) {
@@ -34,7 +30,6 @@ export class MessagesService {
       new AcknowledgedMessages(redisClient),
     );
     this.pendingMessages = promisifyAll(new PendingMessages(redisClient));
-    this.priorityMessages = promisifyAll(new PriorityMessages(redisClient));
     this.deadLetteredMessages = promisifyAll(
       new DeadLetteredMessages(redisClient),
     );
@@ -45,7 +40,7 @@ export class MessagesService {
     const r = await this.scheduledMessages.listAsync(skip, take);
     return {
       ...r,
-      items: r.items.map((i) => i.toJSON()),
+      items: r.items.map((i) => ({ ...i, message: i.message.toJSON() })),
     };
   }
 
@@ -81,22 +76,6 @@ export class MessagesService {
     };
   }
 
-  async getPendingMessagesWithPriority(args: GetPendingMessagesRequestDTO) {
-    const { ns, queueName, skip = 0, take = 1 } = args;
-    const r = await this.priorityMessages.listAsync(
-      {
-        name: queueName,
-        ns,
-      },
-      skip,
-      take,
-    );
-    return {
-      ...r,
-      items: r.items.map((i) => i.toJSON()),
-    };
-  }
-
   async getDeadLetteredMessages(args: GetDeadLetteredMessagesRequestDTO) {
     const { ns, queueName, skip = 0, take = 1 } = args;
     const r = await this.deadLetteredMessages.listAsync(
@@ -122,21 +101,8 @@ export class MessagesService {
         name: queueName,
         ns,
       },
+      id,
       sequenceId,
-      id,
-    );
-  }
-
-  async deletePendingMessageWithPriority(
-    args: DeletePendingMessageWithPriorityRequestDTO,
-  ): Promise<void> {
-    const { ns, queueName, id } = args;
-    return this.priorityMessages.deleteAsync(
-      {
-        name: queueName,
-        ns,
-      },
-      id,
     );
   }
 
@@ -228,16 +194,6 @@ export class MessagesService {
   ): Promise<void> {
     const { ns, queueName } = args;
     return this.pendingMessages.purgeAsync({
-      name: queueName,
-      ns,
-    });
-  }
-
-  async purgePendingMessagesWithPriority(
-    args: PurgePendingMessagesWithPriorityRequestDTO,
-  ): Promise<void> {
-    const { ns, queueName } = args;
-    return this.priorityMessages.purgeAsync({
       name: queueName,
       ns,
     });

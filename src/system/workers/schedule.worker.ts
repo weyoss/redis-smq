@@ -7,6 +7,11 @@ import { Worker } from '../common/worker/worker';
 import { each, waterfall } from '../lib/async';
 
 export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
+  protected fetchMessageIds = (cb: ICallback<string[]>): void => {
+    const { keyScheduledMessageIds } = redisKeys.getMainKeys();
+    this.redisClient.zrangebyscore(keyScheduledMessageIds, 0, Date.now(), cb);
+  };
+
   protected fetchMessages = (ids: string[], cb: ICallback<Message[]>): void => {
     if (ids.length) {
       const { keyScheduledMessages } = redisKeys.getMainKeys();
@@ -31,11 +36,6 @@ export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
         }
       });
     } else cb(null, []);
-  };
-
-  protected fetchMessageIds = (cb: ICallback<string[]>): void => {
-    const { keyScheduledMessageIds } = redisKeys.getMainKeys();
-    this.redisClient.zrangebyscore(keyScheduledMessageIds, 0, Date.now(), cb);
   };
 
   protected enqueueMessages = (
@@ -86,17 +86,7 @@ export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
 
   work = (cb: ICallback<void>): void => {
     waterfall(
-      [
-        (cb: ICallback<string[]>) => {
-          this.fetchMessageIds(cb);
-        },
-        (ids: string[], cb: ICallback<Message[]>) => {
-          this.fetchMessages(ids, cb);
-        },
-        (messages: Message[], cb: ICallback<void>) => {
-          this.enqueueMessages(messages, cb);
-        },
-      ],
+      [this.fetchMessageIds, this.fetchMessages, this.enqueueMessages],
       cb,
     );
   };
