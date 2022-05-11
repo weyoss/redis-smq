@@ -2,6 +2,7 @@ import { ICallback, TGetMessagesReply, TQueueParams } from '../../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { List } from './message-storage/list';
 import { Queue } from '../queue-manager/queue';
+import { RedisClient } from '../../common/redis-client/redis-client';
 
 export class AcknowledgedMessages extends List {
   list(
@@ -71,5 +72,18 @@ export class AcknowledgedMessages extends List {
         }
       },
     );
+  }
+
+  static count(
+    redisClient: RedisClient,
+    queue: TQueueParams,
+    cb: ICallback<number>,
+  ): void {
+    const queueParams = Queue.getQueueParams(queue);
+    const { keyQueueAcknowledged } = redisKeys.getQueueKeys(queueParams);
+    redisClient.llen(keyQueueAcknowledged, (err, reply) => {
+      if (err) cb(err);
+      else cb(null, reply ?? 0);
+    });
   }
 }

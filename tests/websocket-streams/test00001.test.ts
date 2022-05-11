@@ -18,7 +18,6 @@ test('WebsocketMainStreamWorker: Case 1', async () => {
     scheduledMessagesCount: 0,
     deadLetteredMessagesCount: 0,
     pendingMessagesCount: 0,
-    pendingMessagesWithPriorityCount: 0,
     acknowledgedMessagesCount: 0,
     consumersCount: 0,
     queuesCount: 0,

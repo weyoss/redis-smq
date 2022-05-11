@@ -2,6 +2,7 @@ import { ICallback, TGetMessagesReply, TQueueParams } from '../../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { List } from './message-storage/list';
 import { Queue } from '../queue-manager/queue';
+import { RedisClient } from '../../common/redis-client/redis-client';
 
 export class DeadLetteredMessages extends List {
   purge(queue: string | TQueueParams, cb: ICallback<void>): void {
@@ -71,5 +72,18 @@ export class DeadLetteredMessages extends List {
     const queueParams = Queue.getQueueParams(queue);
     const { keyQueueDL } = redisKeys.getQueueKeys(queueParams);
     this.fetchMessages({ keyMessages: keyQueueDL }, skip, take, cb);
+  }
+
+  static count(
+    redisClient: RedisClient,
+    queue: TQueueParams,
+    cb: ICallback<number>,
+  ): void {
+    const queueParams = Queue.getQueueParams(queue);
+    const { keyQueueDL } = redisKeys.getQueueKeys(queueParams);
+    redisClient.llen(keyQueueDL, (err, reply) => {
+      if (err) cb(err);
+      else cb(null, reply ?? 0);
+    });
   }
 }
