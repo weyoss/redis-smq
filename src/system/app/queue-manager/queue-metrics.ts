@@ -9,6 +9,7 @@ import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { waterfall } from '../../lib/async';
 import { getNamespacedLogger } from '../../common/logger';
 import { Queue } from './queue';
+import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
 
 export class QueueMetrics {
   protected redisClient: RedisClient;
@@ -26,7 +27,6 @@ export class QueueMetrics {
     const queueParams = Queue.getQueueParams(queue);
     const queueMetrics: IQueueMetrics = {
       acknowledged: 0,
-      pendingWithPriority: 0,
       deadLettered: 0,
       pending: 0,
     };
@@ -38,14 +38,37 @@ export class QueueMetrics {
     } = redisKeys.getQueueKeys(queueParams);
     waterfall(
       [
-        (cb: ICallback<void>) => {
-          this.redisClient.llen(keyQueuePending, (err, reply) => {
-            if (err) cb(err);
-            else {
-              queueMetrics.pending = reply ?? 0;
-              cb();
-            }
-          });
+        (cb: ICallback<boolean>) =>
+          Queue.getQueueSettings(
+            this.redisClient,
+            queueParams,
+            (err, settings) => {
+              if (err) cb(err);
+              if (!settings) cb(new EmptyCallbackReplyError());
+              else cb(null, settings.priorityQueuing);
+            },
+          ),
+        (priorityQueuing: boolean, cb: ICallback<void>) => {
+          if (priorityQueuing) {
+            this.redisClient.zcard(
+              keyQueuePendingPriorityMessageIds,
+              (err, reply) => {
+                if (err) cb(err);
+                else {
+                  queueMetrics.pending = reply ?? 0;
+                  cb();
+                }
+              },
+            );
+          } else {
+            this.redisClient.llen(keyQueuePending, (err, reply) => {
+              if (err) cb(err);
+              else {
+                queueMetrics.pending = reply ?? 0;
+                cb();
+              }
+            });
+          }
         },
         (cb: ICallback<void>) => {
           this.redisClient.llen(keyQueueDL, (err, reply) => {
@@ -64,18 +87,6 @@ export class QueueMetrics {
               cb();
             }
           });
-        },
-        (cb: ICallback<void>) => {
-          this.redisClient.zcard(
-            keyQueuePendingPriorityMessageIds,
-            (err, reply) => {
-              if (err) cb(err);
-              else {
-                queueMetrics.pendingWithPriority = reply ?? 0;
-                cb();
-              }
-            },
-          );
         },
       ],
       (err) => {

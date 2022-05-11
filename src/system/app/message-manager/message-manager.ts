@@ -5,7 +5,6 @@ import { ScheduledMessages } from './scheduled-messages';
 import { AcknowledgedMessages } from './acknowledged-messages';
 import { DeadLetteredMessages } from './dead-lettered-messages';
 import { PendingMessages } from './pending-messages';
-import { PriorityMessages } from './priority-messages';
 
 export class MessageManager {
   private static messageManagerInstance: MessageManager | null = null;
@@ -13,7 +12,6 @@ export class MessageManager {
   public readonly acknowledgedMessages;
   public readonly deadLetteredMessages;
   public readonly pendingMessages;
-  public readonly priorityMessages;
   public readonly scheduledMessages;
 
   private constructor(redisClient: RedisClient) {
@@ -21,7 +19,6 @@ export class MessageManager {
     this.acknowledgedMessages = new AcknowledgedMessages(redisClient);
     this.deadLetteredMessages = new DeadLetteredMessages(redisClient);
     this.pendingMessages = new PendingMessages(redisClient);
-    this.priorityMessages = new PriorityMessages(redisClient);
     this.scheduledMessages = new ScheduledMessages(redisClient);
   }
 

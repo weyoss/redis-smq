@@ -1,50 +1,30 @@
+import { RedisClient } from '../../common/redis-client/redis-client';
 import { ICallback, TGetMessagesReply, TQueueParams } from '../../../../types';
-import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { MessageNotFoundError } from './errors/message-not-found.error';
-import { List } from './message-storage/list';
 import { Queue } from '../queue-manager/queue';
+import { PendingPriorityMessages } from './pending-priority-messages';
+import { PendingLifoMessages } from './pending-lifo-messages';
 
-export class PendingMessages extends List {
-  purge(queue: string | TQueueParams, cb: ICallback<void>): void {
-    const queueParams = Queue.getQueueParams(queue);
-    const { keyQueuePending } = redisKeys.getQueueKeys(queueParams);
-    this.purgeMessages({ keyMessages: keyQueuePending }, (err) => {
-      if (err) cb(err);
-      else {
-        this.logger.info(
-          `Pending messages from queue (${JSON.stringify(
-            queue,
-          )})  have been deleted`,
-        );
-        cb();
-      }
-    });
+export class PendingMessages {
+  protected redisClient: RedisClient;
+  protected pendingPriorityMessages: PendingPriorityMessages;
+  protected pendingLifoMessages: PendingLifoMessages;
+
+  constructor(redisClient: RedisClient) {
+    this.redisClient = redisClient;
+    this.pendingLifoMessages = new PendingLifoMessages(redisClient);
+    this.pendingPriorityMessages = new PendingPriorityMessages(redisClient);
   }
 
-  delete(
-    queue: string | TQueueParams,
-    sequenceId: number,
-    messageId: string,
-    cb: ICallback<void>,
-  ): void {
+  purge(queue: string | TQueueParams, cb: ICallback<void>): void {
     const queueParams = Queue.getQueueParams(queue);
-    const { keyQueuePending } = redisKeys.getQueueKeys(queueParams);
-    this.deleteMessage(
-      { keyMessages: keyQueuePending },
-      { sequenceId, messageId },
-      (err) => {
-        // In case the message does not exist
-        // we assume it was delivered or already deleted
-        const error = err instanceof MessageNotFoundError ? null : err;
-        if (error) cb(error);
-        else {
-          this.logger.info(
-            `Pending message (ID ${messageId}) has been deleted`,
-          );
-          cb();
-        }
-      },
-    );
+    Queue.getQueueSettings(this.redisClient, queueParams, (err, settings) => {
+      if (err) cb(err);
+      else if (settings?.priorityQueuing) {
+        this.pendingPriorityMessages.purge(queueParams, cb);
+      } else {
+        this.pendingLifoMessages.purge(queueParams, cb);
+      }
+    });
   }
 
   list(
@@ -54,7 +34,30 @@ export class PendingMessages extends List {
     cb: ICallback<TGetMessagesReply>,
   ): void {
     const queueParams = Queue.getQueueParams(queue);
-    const { keyQueuePending } = redisKeys.getQueueKeys(queueParams);
-    this.fetchMessages({ keyMessages: keyQueuePending }, skip, take, cb);
+    Queue.getQueueSettings(this.redisClient, queueParams, (err, settings) => {
+      if (err) cb(err);
+      else if (settings?.priorityQueuing) {
+        this.pendingPriorityMessages.list(queueParams, skip, take, cb);
+      } else {
+        this.pendingLifoMessages.list(queueParams, skip, take, cb);
+      }
+    });
+  }
+
+  delete(
+    queue: string | TQueueParams,
+    messageId: string,
+    sequenceId: number,
+    cb: ICallback<void>,
+  ): void {
+    const queueParams = Queue.getQueueParams(queue);
+    Queue.getQueueSettings(this.redisClient, queueParams, (err, settings) => {
+      if (err) cb(err);
+      else if (settings?.priorityQueuing) {
+        this.pendingPriorityMessages.delete(queueParams, messageId, cb);
+      } else {
+        this.pendingLifoMessages.delete(queueParams, sequenceId, messageId, cb);
+      }
+    });
   }
 }

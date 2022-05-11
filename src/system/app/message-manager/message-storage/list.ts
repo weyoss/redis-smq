@@ -15,8 +15,7 @@ export abstract class List extends AbstractMessageStorage<
   {
     messageId: string;
     sequenceId: number;
-  },
-  TFetchMessagesReply
+  }
 > {
   protected getMessageById(
     key: string,
