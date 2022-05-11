@@ -30,8 +30,9 @@ test("Make sure scheduled messages aren't published if destination queue is dele
   await startScheduleWorker();
   await delay(20000);
 
-  const m2 = await queueManager.queueMetrics.getQueueMetricsAsync('some_queue');
-  expect(m2.pending).toBe(0);
+  await expect(
+    queueManager.queueMetrics.getQueueMetricsAsync('some_queue'),
+  ).rejects.toThrow('Queue does not exist');
 
   const s2 = await messageManager.scheduledMessages.listAsync(0, 99);
   expect(s2.total).toBe(0);

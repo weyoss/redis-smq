@@ -21,8 +21,9 @@ test('Deleting a message queue with all of its data', async () => {
   await consumer.shutdownAsync();
   await queueManager.queue.deleteQueueAsync(queue);
 
-  const m2 = await queueManager.queueMetrics.getQueueMetricsAsync(queue);
-  expect(m2.acknowledged).toBe(0);
+  await expect(
+    queueManager.queueMetrics.getQueueMetricsAsync(queue),
+  ).rejects.toThrow('Queue does not exist');
 
   await expect(queueManager.queue.deleteQueueAsync(queue)).rejects.toThrow(
     'Queue does not exist',

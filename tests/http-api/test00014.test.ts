@@ -17,7 +17,7 @@ test('Deleting a pending messages with priority', async () => {
     await request.delete(
       `/api/ns/${queue.ns}/queues/${
         queue.name
-      }/pending-messages-with-priority/${message.getRequiredId()}`,
+      }/pending-messages/${message.getRequiredId()}?sequenceId=0`,
     );
   expect(response1.statusCode).toBe(204);
   expect(response1.body).toEqual({});

@@ -1,11 +1,11 @@
 import { ISuperTestResponse, startMonitorServer } from '../common';
 import * as supertest from 'supertest';
-import { GetScheduledMessagesResponseBodyDataDTO } from '../../src/monitor-server/controllers/api/main/scheduled-messages/get-scheduled-messages/get-scheduled-messages.response.DTO';
+import { GetMessagesResponseBodyDataDTO } from '../../src/monitor-server/controllers/common/dto/queues/get-messages-response-body.DTO';
 
 test('Fetching and deleting scheduled messages using the HTTP API: Case 3', async () => {
   await startMonitorServer();
   const request = supertest('http://127.0.0.1:3000');
-  const response1: ISuperTestResponse<GetScheduledMessagesResponseBodyDataDTO> =
+  const response1: ISuperTestResponse<GetMessagesResponseBodyDataDTO> =
     await request.get('/api/main/scheduled-messages?skip=a');
   expect(response1.statusCode).toBe(422);
   expect(response1.body.data).toBeUndefined();

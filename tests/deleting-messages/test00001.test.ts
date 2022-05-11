@@ -24,8 +24,8 @@ test('Combined test: Delete a pending message. Check pending messages. Check que
 
   await messageManager.pendingMessages.deleteAsync(
     queue,
-    0,
     message.getRequiredId(),
+    0,
   );
 
   const res2 = await messageManager.pendingMessages.listAsync(queue, 0, 100);
@@ -41,7 +41,7 @@ test('Combined test: Delete a pending message. Check pending messages. Check que
   // Deleting a message that was already deleted should not throw an error
   await messageManager.pendingMessages.deleteAsync(
     queue,
-    0,
     message.getRequiredId(),
+    0,
   );
 });

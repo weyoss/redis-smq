@@ -55,10 +55,10 @@ describe('MessageManager', () => {
     await createQueue(defaultQueue, true);
     const { queue, message } = await produceMessageWithPriority();
     const messageManager = await getMessageManager();
-    const res = await messageManager.priorityMessages.listAsync(queue, 0, 100);
+    const res = await messageManager.pendingMessages.listAsync(queue, 0, 100);
 
     expect(res.total).toBe(1);
-    expect(res.items[0].getId()).toBe(message.getRequiredId());
+    expect(res.items[0].message.getId()).toBe(message.getRequiredId());
   });
 
   test('Case 5', async () => {
@@ -68,6 +68,6 @@ describe('MessageManager', () => {
     const res = await messageManager.scheduledMessages.listAsync(0, 100);
 
     expect(res.total).toBe(1);
-    expect(res.items[0].getId()).toBe(message.getRequiredId());
+    expect(res.items[0].message.getId()).toBe(message.getRequiredId());
   });
 });

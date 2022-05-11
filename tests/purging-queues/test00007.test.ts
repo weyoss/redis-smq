@@ -20,7 +20,6 @@ test('Concurrently deleting a message queue and starting a consumer', async () =
   const m1 = await queueManager.queueMetrics.getQueueMetricsAsync(queue);
   expect(m1).toEqual({
     acknowledged: 0,
-    pendingWithPriority: 0,
     deadLettered: 0,
     pending: 1,
   });
@@ -52,7 +51,6 @@ test('Concurrently deleting a message queue and starting a consumer', async () =
   const m2 = await queueManager.queueMetrics.getQueueMetricsAsync(queue);
   expect(m2).toEqual({
     acknowledged: 1,
-    pendingWithPriority: 0,
     deadLettered: 0,
     pending: 0,
   });

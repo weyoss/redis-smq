@@ -56,7 +56,7 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   expect(res4.total).toBe(0);
   expect(res4.items.length).toBe(0);
 
-  const res5 = await messageManager.priorityMessages.listAsync(queue, 0, 100);
+  const res5 = await messageManager.pendingMessages.listAsync(queue, 0, 100);
   expect(res5.total).toBe(0);
   expect(res5.items.length).toBe(0);
 
