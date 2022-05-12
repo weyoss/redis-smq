@@ -11,9 +11,9 @@ import { events } from '../../src/system/common/events';
 
 test('Rate limit a priority queue and check message rate', async () => {
   const qm = await getQueueManager();
-  await qm.queue.createQueueAsync(defaultQueue, true);
+  await qm.queue.createAsync(defaultQueue, true);
 
-  await qm.queueRateLimit.setQueueRateLimitAsync(defaultQueue, {
+  await qm.queueRateLimit.setAsync(defaultQueue, {
     limit: 3,
     interval: 10000,
   });

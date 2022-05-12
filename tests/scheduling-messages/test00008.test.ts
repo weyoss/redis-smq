@@ -25,13 +25,13 @@ test("Make sure scheduled messages aren't published if destination queue is dele
   expect(s1.total).toBe(1);
 
   const queueManager = await getQueueManager();
-  await queueManager.queue.deleteQueueAsync('some_queue');
+  await queueManager.queue.deleteAsync('some_queue');
 
   await startScheduleWorker();
   await delay(20000);
 
   await expect(
-    queueManager.queueMetrics.getQueueMetricsAsync('some_queue'),
+    queueManager.queueMetrics.getMetricsAsync('some_queue'),
   ).rejects.toThrow('Queue does not exist');
 
   const s2 = await messageManager.scheduledMessages.listAsync(0, 99);

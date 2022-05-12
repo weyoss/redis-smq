@@ -36,9 +36,7 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(res3.items[0].message).toEqual(msg1);
 
   const queueManager = await getQueueManager();
-  const queueMetrics = await queueManager.queueMetrics.getQueueMetricsAsync(
-    queue,
-  );
+  const queueMetrics = await queueManager.queueMetrics.getMetricsAsync(queue);
   expect(queueMetrics.pending).toBe(0);
   expect(queueMetrics.acknowledged).toBe(0);
   expect(queueMetrics.deadLettered).toBe(1);
@@ -58,9 +56,7 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(res4.total).toBe(0);
   expect(res4.items.length).toBe(0);
 
-  const queueMetrics1 = await queueManager.queueMetrics.getQueueMetricsAsync(
-    queue,
-  );
+  const queueMetrics1 = await queueManager.queueMetrics.getMetricsAsync(queue);
   expect(queueMetrics1.deadLettered).toBe(0);
 
   await expect(async () => {

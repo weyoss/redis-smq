@@ -14,7 +14,7 @@ describe('Queue metrics: check that queue metrics are valid', () => {
     await createQueue(defaultQueue, false);
     const { queue } = await produceMessage();
     const queueManager = await getQueueManager();
-    const m = await queueManager.queueMetrics.getQueueMetricsAsync(queue);
+    const m = await queueManager.queueMetrics.getMetricsAsync(queue);
     expect(m.pending).toBe(1);
     expect(m.acknowledged).toBe(0);
     expect(m.deadLettered).toBe(0);
@@ -24,7 +24,7 @@ describe('Queue metrics: check that queue metrics are valid', () => {
     await createQueue(defaultQueue, false);
     const { queue } = await produceAndDeadLetterMessage();
     const queueManager = await getQueueManager();
-    const m = await queueManager.queueMetrics.getQueueMetricsAsync(queue);
+    const m = await queueManager.queueMetrics.getMetricsAsync(queue);
     expect(m.pending).toBe(0);
     expect(m.acknowledged).toBe(0);
     expect(m.deadLettered).toBe(1);
@@ -34,7 +34,7 @@ describe('Queue metrics: check that queue metrics are valid', () => {
     await createQueue(defaultQueue, false);
     const { queue } = await produceAndAcknowledgeMessage();
     const queueManager = await getQueueManager();
-    const m = await queueManager.queueMetrics.getQueueMetricsAsync(queue);
+    const m = await queueManager.queueMetrics.getMetricsAsync(queue);
     expect(m.pending).toBe(0);
     expect(m.acknowledged).toBe(1);
     expect(m.deadLettered).toBe(0);
@@ -44,7 +44,7 @@ describe('Queue metrics: check that queue metrics are valid', () => {
     await createQueue(defaultQueue, false);
     const { queue } = await scheduleMessage();
     const queueManager = await getQueueManager();
-    const m = await queueManager.queueMetrics.getQueueMetricsAsync(queue);
+    const m = await queueManager.queueMetrics.getMetricsAsync(queue);
     expect(m.pending).toBe(0);
     expect(m.acknowledged).toBe(0);
     expect(m.deadLettered).toBe(0);
@@ -54,7 +54,7 @@ describe('Queue metrics: check that queue metrics are valid', () => {
     await createQueue(defaultQueue, true);
     const { queue } = await produceMessageWithPriority();
     const queueManager = await getQueueManager();
-    const m = await queueManager.queueMetrics.getQueueMetricsAsync(queue);
+    const m = await queueManager.queueMetrics.getMetricsAsync(queue);
     expect(m.pending).toBe(1);
     expect(m.acknowledged).toBe(0);
     expect(m.deadLettered).toBe(0);

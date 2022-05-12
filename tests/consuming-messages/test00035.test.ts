@@ -14,7 +14,7 @@ test('Consume messages from different queues using a single consumer instance: c
   // running without message handlers
   await delay(5000);
 
-  await qm.queue.createQueueAsync('test0', false);
+  await qm.queue.createAsync('test0', false);
   await consumer.consumeAsync('test0', () => void 0);
 
   consumer.once(events.MESSAGE_RECEIVED, () => {
@@ -32,31 +32,31 @@ test('Consume messages from different queues using a single consumer instance: c
   await delay(10000);
   expect(consumer.getQueues()).toEqual([]);
 
-  await qm.queue.createQueueAsync('test1', true);
+  await qm.queue.createAsync('test1', true);
   await consumer.consumeAsync('test1', (msg, cb) => {
     messages.push(msg);
     cb();
   });
 
-  await qm.queue.createQueueAsync('test2', true);
+  await qm.queue.createAsync('test2', true);
   await consumer.consumeAsync('test2', (msg, cb) => {
     messages.push(msg);
     cb();
   });
 
-  await qm.queue.createQueueAsync('test3', true);
+  await qm.queue.createAsync('test3', true);
   await consumer.consumeAsync('test3', (msg, cb) => {
     messages.push(msg);
     cb();
   });
 
-  await qm.queue.createQueueAsync('test4', true);
+  await qm.queue.createAsync('test4', true);
   await consumer.consumeAsync('test4', (msg, cb) => {
     messages.push(msg);
     cb();
   });
 
-  await qm.queue.createQueueAsync('test5', true);
+  await qm.queue.createAsync('test5', true);
   await consumer.consumeAsync('test5', (msg, cb) => {
     messages.push(msg);
     cb();

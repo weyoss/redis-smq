@@ -32,9 +32,7 @@ test('Combined test: Requeue a message from dead-letter queue. Check queue metri
   expect(res3.items.length).toBe(0);
 
   const queueManager = await getQueueManager();
-  const queueMetrics = await queueManager.queueMetrics.getQueueMetricsAsync(
-    queue,
-  );
+  const queueMetrics = await queueManager.queueMetrics.getMetricsAsync(queue);
   expect(queueMetrics.deadLettered).toBe(0);
   expect(queueMetrics.pending).toBe(1);
 });

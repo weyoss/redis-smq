@@ -10,7 +10,7 @@ test('TimeSeriesWorker', async () => {
   await startTimeSeriesWorker();
   await delay(5000);
   const queueManager = await getQueueManager();
-  queueManager.queue.createQueueAsync(defaultQueue, false);
+  queueManager.queue.createAsync(defaultQueue, false);
   await delay(5000);
   const consumer = await getConsumer({ queue: defaultQueue });
   await consumer.runAsync();

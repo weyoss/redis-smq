@@ -17,9 +17,7 @@ test('Combined test: Delete a pending message. Check pending messages. Check que
   expect(res1.items[0].message.getId()).toBe(message.getRequiredId());
 
   const queueManager = await getQueueManager();
-  const queueMetrics = await queueManager.queueMetrics.getQueueMetricsAsync(
-    queue,
-  );
+  const queueMetrics = await queueManager.queueMetrics.getMetricsAsync(queue);
   expect(queueMetrics.pending).toBe(1);
 
   await messageManager.pendingMessages.deleteAsync(
@@ -33,9 +31,7 @@ test('Combined test: Delete a pending message. Check pending messages. Check que
   expect(res2.total).toBe(0);
   expect(res2.items.length).toBe(0);
 
-  const queueMetrics1 = await queueManager.queueMetrics.getQueueMetricsAsync(
-    queue,
-  );
+  const queueMetrics1 = await queueManager.queueMetrics.getMetricsAsync(queue);
   expect(queueMetrics1.pending).toBe(0);
 
   // Deleting a message that was already deleted should not throw an error

@@ -12,7 +12,7 @@ test('Priority queuing: case 2', async () => {
   const consumedMessages: Message[] = [];
 
   const qm = await getQueueManager();
-  await qm.queue.createQueueAsync(defaultQueue, true);
+  await qm.queue.createAsync(defaultQueue, true);
 
   const consumer = promisifyAll(
     getConsumer({

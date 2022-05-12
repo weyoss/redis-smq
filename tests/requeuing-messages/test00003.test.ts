@@ -10,7 +10,7 @@ import { Message } from '../../src/system/app/message/message';
 
 test('Combined test. Requeue a priority message from acknowledged queue. Check queue metrics.', async () => {
   const queueManager = await getQueueManager();
-  await queueManager.queue.createQueueAsync(defaultQueue, true);
+  await queueManager.queue.createAsync(defaultQueue, true);
 
   const consumer = getConsumer({
     queue: defaultQueue,
@@ -40,7 +40,7 @@ test('Combined test. Requeue a priority message from acknowledged queue. Check q
   expect(res2.total).toBe(1);
   expect(res2.items.length).toBe(1);
 
-  const queueMetrics = await queueManager.queueMetrics.getQueueMetricsAsync(
+  const queueMetrics = await queueManager.queueMetrics.getMetricsAsync(
     defaultQueue,
   );
   expect(queueMetrics.pending).toBe(0);

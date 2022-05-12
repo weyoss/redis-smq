@@ -14,7 +14,7 @@ test('Set a rate limit for a queue and consume messages using many consumers', a
   await createQueue(defaultQueue, false);
 
   const qm = await getQueueManager();
-  await qm.queueRateLimit.setQueueRateLimitAsync(defaultQueue, {
+  await qm.queueRateLimit.setAsync(defaultQueue, {
     limit: 3,
     interval: 10000,
   });
