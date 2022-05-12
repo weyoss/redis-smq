@@ -6,6 +6,24 @@
 const { MessageManager } = require('redis-smq');
 ```
 
+## Table of Content
+
+1. [Public Static Methods](#public-static-methods) 
+   1. [MessageManager.getSingletonInstance()](#messagemanagergetsingletoninstance)
+2. [Public Properties](#public-properties)
+   1. [Properties](#properties)
+      1. [MessageManager.prototype.scheduledMessages](#messagemanagerprototypescheduledmessages)
+      2. [MessageManager.prototype.pendingMessages](#messagemanagerprototypependingmessages)
+      3. [MessageManager.prototype.acknowledgedMessages](#messagemanagerprototypeacknowledgedmessages)
+      4. [MessageManager.prototype.deadLetteredMessages](#messagemanagerprototypedeadletteredmessages) 
+   2. [Methods Description](#methods-description) 
+      1. [list()](#list)
+      2. [delete()](#delete)
+      3. [purge()](#purge)
+      4. [requeue()](#requeue)
+3. [Public Methods](#public-methods) 
+   1. [MessageManager.prototype.quit()](#messagemanagerprototypequit)     
+   
 ## Public Static Methods
 
 ### MessageManager.getSingletonInstance()
@@ -33,37 +51,39 @@ MessageManager.getSingletonInstance((err, messageManager) => {
 })
 ```
 
-## Public properties
+## Public Properties
 
-### MessageManager.prototype.scheduledMessages
+### Properties
+
+#### MessageManager.prototype.scheduledMessages
 
 * [MessageManager.prototype.scheduledMessages.list()](#list)
 * [MessageManager.prototype.scheduledMessages.delete()](#delete)
 * [MessageManager.prototype.scheduledMessages.purge()](#purge)
 
-### MessageManager.prototype.pendingMessages
+#### MessageManager.prototype.pendingMessages
 
 * [MessageManager.prototype.pendingMessages.list()](#list)
 * [MessageManager.prototype.pendingMessages.delete()](#delete)
 * [MessageManager.prototype.pendingMessages.purge()](#purge)
 
-### MessageManager.prototype.acknowledgedMessages
+#### MessageManager.prototype.acknowledgedMessages
 
 * [MessageManager.prototype.acknowledgedMessages.list()](#list)
 * [MessageManager.prototype.acknowledgedMessages.delete()](#delete)
 * [MessageManager.prototype.acknowledgedMessages.purge()](#purge)
 * [MessageManager.prototype.acknowledgedMessages.requeue()](#requeue)
 
-### MessageManager.prototype.deadLetteredMessages
+#### MessageManager.prototype.deadLetteredMessages
 
 * [MessageManager.prototype.deadLetteredMessages.list()](#list)
 * [MessageManager.prototype.deadLetteredMessages.delete()](#delete)
 * [MessageManager.prototype.deadLetteredMessages.purge()](#purge)
 * [MessageManager.prototype.deadLetteredMessages.requeue()](#requeue)
 
-## Methods Description
+### Methods Description
 
-### list()
+#### list()
 
 ```javascript
 list( queue, skip, take, cb);
@@ -84,7 +104,7 @@ list( queue, skip, take, cb);
     - `result.items[*].sequenceId` *(number).* Message sequence ID.
     - `result.items[*].message` *(Message).* The stored message at the sequence ID.
 
-### delete()
+#### delete()
 
 ```javascript
 delete(queue, messageId, sequenceId, cb);
@@ -101,7 +121,7 @@ delete(queue, messageId, sequenceId, cb);
 - `cb(err)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
 
-### purge()
+#### purge()
 
 ```javascript
 purge(queue, cb);
@@ -117,10 +137,10 @@ purge(queue, cb);
   - `err` *(Error | null | undefined).* Error object.
 
 
-### requeue()
+#### requeue()
 
 ```javascript
-requeue(queue, messageId, sequenceId, priority, cb);
+requeue(queue, messageId, sequenceId, cb);
 ```
 
 **Parameters**
@@ -131,7 +151,6 @@ requeue(queue, messageId, sequenceId, priority, cb);
     - `queue.ns` *(string): Required.* Queue namespace.
 - `messageId` *(string): Required.* Message ID.
 - `sequenceId` *(number): Required.* Message sequence ID.
-- `priority` *(number|undefined): Required.* Message priority.
 - `cb(err)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
 

@@ -135,8 +135,6 @@ You can use a single `Producer` instance to produce messages, including messages
 Before publishing a message do not forget to set the destination queue of the message using the [setQueue()](/docs/api/message.md#messageprototypesetqueue) method, otherwise an error will be returned.
 
 ```javascript
-// filename: ./examples/javascript/producer.js
-
 'use strict';
 const {Message, Producer} = require('redis-smq');
 
@@ -180,7 +178,6 @@ To shut down and remove a given `message handler` from your consumer, use the [c
 To shut down completely your consumer and tear down all message handlers, use the [shutdown()](/docs/api/consumer.md#consumerprototypeshutdown) method.
 
 ```javascript
-// filename: ./examples/javascript/consumer.js
 'use strict';
 
 const { Consumer } = require('redis-smq');
@@ -197,16 +194,6 @@ consumer.consume('test_queue', messageHandler, (err, isRunning) => {
    if (err) console.error(err);
    // the message handler will be started only if the consumer is running
    else console.log(`Message handler has been registered. Running status: ${isRunning}`); // isRunning === false
-});
-
-const anotherMessageHandler = (msg, cb) => {
-   const payload = msg.getBody();
-   // ...
-   cb();
-};
-
-consumer.consume('another_queue', anotherMessageHandler, (err, isRunning) => {
-   if (err) console.error(err);
 });
 
 consumer.run();
