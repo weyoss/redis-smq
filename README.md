@@ -88,6 +88,19 @@ See [Configuration](docs/configuration.md) for more details.
 
 ## Usage
 
+Before producing/consuming a message to/from a queue, such queue needs first to be created.
+
+```javascript
+const { QueueManager } = require('redis-smq');
+
+QueueManager.getSingletonInstance((err, queueManager) => {
+  if (err) console.log(err);
+  else queueManager.queue.create('test_queue', false, (err) => console.log(err));
+})
+```
+
+See [QueueManager.prototype.queue.create()](/docs/api/queue-manager.md#queuemanagerprototypequeuecreate) for more details.
+
 ### Basics
 
 RedisSMQ provides 3 classes in order to work with the message queue: `Message`, `Producer`, and `Consumer`.
@@ -107,8 +120,6 @@ message
     .setBody({hello: 'world'})
     .setTTL(3600000) // in millis
     .setQueue('test_queue');
-
-let messageTTL = message.getTTL();
 ```
 
 The `Message` class provides many methods for setting up different message parameters such as message body, message priority, message TTL, etc. 
@@ -182,10 +193,7 @@ const messageHandler = (msg, cb) => {
    cb(); // acknowledging the message
 };
 
-// The second parameter is for enabling priority queuing for the message handler
-// If you are willing to consume messages with priority, do not forget to set a priority for your messages
-// See Reliable Priority Queues for more details
-consumer.consume('test_queue', false, messageHandler, (err, isRunning) => {
+consumer.consume('test_queue', messageHandler, (err, isRunning) => {
    if (err) console.error(err);
    // the message handler will be started only if the consumer is running
    else console.log(`Message handler has been registered. Running status: ${isRunning}`); // isRunning === false
@@ -197,7 +205,7 @@ const anotherMessageHandler = (msg, cb) => {
    cb();
 };
 
-consumer.consume('another_queue', false, anotherMessageHandler, (err, isRunning) => {
+consumer.consume('another_queue', anotherMessageHandler, (err, isRunning) => {
    if (err) console.error(err);
 });
 

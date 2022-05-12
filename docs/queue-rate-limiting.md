@@ -11,9 +11,9 @@ RedisSMQ allows you, in such cases, to control the rate at which the messages ar
 
 To configure and view rate limiting parameters for a queue, the [QueueManager](/docs/api/queue-manager.md) provides the following methods:
 
-- [setQueueRateLimit()](/docs/api/queue-manager.md#queuemanagerprototypesetqueueratelimit)
-- [clearQueueRateLimit()](/docs/api/queue-manager.md#queuemanagerprototypeclearqueueratelimit)
-- [getQueueRateLimit()](/docs/api/queue-manager.md#queuemanagerprototypegetqueueratelimit)
+- [QueueManager.prototype.queueRateLimit.set()](/docs/api/queue-manager.md#queuemanagerprototypequeueratelimitset)
+- [QueueManager.prototype.queueRateLimit.clear()](/docs/api/queue-manager.md#queuemanagerprototypequeueratelimitclear)
+- [QueueManager.prototype.queueRateLimit.get()](/docs/api/queue-manager.md#queuemanagerprototypequeueratelimitget)
 
 **Example**
 
@@ -24,7 +24,7 @@ QueueManager.getSingletonInstance((err, queueManager) => {
   if (err) console.log(err);
   else {
     // Setting a rate limit of 200 msg/min for the 'notofications' queue
-    queueManager.setQueueRateLimit('notifications', { limit: 200, interval: 60000 }, (err) => {
+    queueManager.queueRateLimit.set('notifications', { limit: 200, interval: 60000 }, (err) => {
       // ...
     })
   }

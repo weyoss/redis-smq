@@ -14,16 +14,31 @@ When `Priority queues` are enabled, messages with higher priority are always del
 
 ## Usage
 
+### Creating a Priority Queue
+
+To create a priority queue use the [QueueManager.prototype.queue.create()](/docs/api/queue-manager.md#queuemanagerprototypequeuecreate) method.
+
+```javascript
+const { QueueManager } = require('redis-smq');
+
+QueueManager.getSingletonInstance((err, queueManager) => {
+  if (err) console.log(err);
+  else queueManager.queue.create('test_queue', true, (err) => console.log(err));
+})
+```
+
+### Setting Up a Message Priority
+
 To set up a message priority, the [Message API](/docs/api/message.md) provides the following methods:
 
-* [setPriority()](api/message.md#messageprototypesetpriority)
-* [getPriority()](api/message.md#messageprototypegetpriority)
+* [Message.prototype.setPriority()](api/message.md#messageprototypesetpriority)
+* [Message.prototype.getPriority()](api/message.md#messageprototypegetpriority)
 
 See [Message Priority](api/message.md#messagemessagepriority) for more details.
 
-***Producing messages with different priorities***
+### Producing Messages
 
-Priority messages can be published the same way as normal messages (messages without a priority) using a producer.
+Before producing a message with a priority, make sure that queue of the message is a priority queue. Otherwise, an error will be returned.
 
 ```javascript
 const {Message, Producer} = require('redis-smq');
@@ -36,38 +51,21 @@ producer.produce(msg1, (err) => {
     if (err) console.log(err);
     else console.log('Successfully produced')
 });
-
-const msg2 = new Message();
-msg2.setPriority(Message.MessagePriority.LOWEST);
-msg2.setQueue('another_queue');
-producer.produce(msg2, (err) => {
-    if (err) console.log(err);
-    else console.log('Successfully produced')
-});
-
 ```
 
-***Consuming messages from a priority queue***
+### Consuming Messages
 
-To consume priority messages from a given queue, you need at least one consumer having a `message handler` with `priority queuing` enabled.
-
-See [Consumer API Reference](/docs/api/consumer.md) for more details.
+Consuming messages from a priority queue works as usually without any extra settings.
 
 ```javascript
 'use strict';
-
 const { Consumer } = require('redis-smq');
 
-
 const consumer = new Consumer();
-
-// The second argument is for enabling priority queuing 
-consumer.consume('test_queue', true, (msg, cb) => cb(), (err, isRunning) => {
+consumer.consume('test_queue', (msg, cb) => cb(), (err, isRunning) => {
   if (err) console.log(error);
   else console.log(`Message handler successfully registered. Currently it is ${isRunning? '': 'not '}running.`);
 })
-
-
 consumer.run();
 ```
 

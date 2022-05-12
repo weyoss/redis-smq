@@ -32,7 +32,7 @@ constructor(useMultiplexing)
 **Syntax**
 
 ```javascript
-consume(queue, usePriorityQueuing, messageHandler, cb);
+consume(queue, messageHandler, cb);
 ```
 
 **Parameters**
@@ -42,16 +42,13 @@ consume(queue, usePriorityQueuing, messageHandler, cb);
   - `queue` *(object)*. You can also provide a queue name and a namespace.
     - `queue.name` *(string): Required.* Queue name.
     - `queue.ns` *(string): Required.* Queue namespace.
-- `usePriorityQueuing` *(boolean): Required.*  When `true`, the message handler will dequeue messages using priority queuing.
 - `messageHandler(message, cb)` *(function): Required.* 
   - `message` *(mixed): Required.* A message instance.
   - `cb(err)` *(function): Required.* Callback function. If the message has successfully processed, you can acknowledge it by calling the callback function without arguments. Otherwise, if any error has occurred, the message is unacknowledged by returning the error as the first argument of the callback function.
 - `cb(err, isRunning)` *(function): Required.* Callback function. 
   - `err` *(Error | null | undefined).* Error object.
   - `isRunning` *(boolean): Required.* Indicates whether the message handler is currently running. If your consumer is up and running, then the message handler will be started after being registered.
-
-The queue name can be composed only of letters (a-z), numbers (0-9) and (-_) characters.
-
+  
 ### Consumer.prototype.cancel()
 
 ```javascript
