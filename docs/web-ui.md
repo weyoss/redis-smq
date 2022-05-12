@@ -41,7 +41,6 @@ module.exports = {
 The Web UI can be launched and used as shown in the example bellow:
 
 ```javascript
-// filename: ./examples/javascript/monitor.js
 'use strict';
 const config = require('./config');
 const { MonitorServer, setLogger, setConfiguration } = require('../..'); // require('redis-smq');

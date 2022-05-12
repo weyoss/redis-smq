@@ -1,7 +1,6 @@
 # Configuration
 
 ```javascript
-// filename: ./examples/javascript/consumer.js
 'use strict';
 const config = require('./config');
 const { Consumer, setConfiguration } = require('redis-smq');

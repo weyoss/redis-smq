@@ -4,6 +4,30 @@
 const { QueueManager } = require('redis-smq');
 ```
 
+## Table of Content
+
+1. [Public Static Methods](#public-static-methods)
+   1. [QueueManager.getSingletonInstance()](#queuemanagergetsingletoninstance)
+2. [Public Properties](#public-properties)
+   1. [QueueManager.prototype.namespace](#queuemanagerprototypenamespace)
+      1. [QueueManager.prototype.namespace.list()](#queuemanagerprototypenamespacelist)
+      2. [QueueManager.prototype.namespace.getQueues()](#queuemanagerprototypenamespacegetqueues)
+      3. [QueueManager.prototype.namespace.delete()](#queuemanagerprototypenamespacedelete)
+   2. [QueueManager.prototype.queue](#queuemanagerprototypequeue)
+      1. [QueueManager.prototype.queue.create()](#queuemanagerprototypequeuecreate)
+      2. [QueueManager.prototype.queue.list()](#queuemanagerprototypequeuelist)
+      3. [QueueManager.prototype.queue.delete()](#queuemanagerprototypequeuedelete)
+      4. [QueueManager.prototype.queue.exists()](#queuemanagerprototypequeueexists)
+      5. [QueueManager.prototype.queue.getSettings()](#queuemanagerprototypequeuegetsettings)
+   3. [QueueManager.prototype.queueRateLimit](#queuemanagerprototypequeueratelimit)
+      1. [QueueManager.prototype.queueRateLimit.set()](#queuemanagerprototypequeueratelimitset)
+      2. [QueueManager.prototype.queueRateLimit.clear()](#queuemanagerprototypequeueratelimitclear)
+      3. [QueueManager.prototype.queueRateLimit.get()](#queuemanagerprototypequeueratelimitget)
+   4. [QueueManager.prototype.queueMetrics](#queuemanagerprototypequeuemetrics)
+      1. [QueueManager.prototype.queueMetrics.getMetrics()](#queuemanagerprototypequeuemetricsgetmetrics)
+3. [Public Methods](#public-methods)
+   1. [QueueManager.prototype.quit()](#queuemanagerprototypequit)
+
 ## Public Static Methods
 
 ### QueueManager.getSingletonInstance()
@@ -124,6 +148,44 @@ delete(queue, cb);
 
 Before deleting a message queue, make sure that the given queue is not being in use. Otherwise, an error will be returned.
 
+#### QueueManager.prototype.queue.exists()
+
+```javascript
+exists(queue, cb);
+```
+
+**Parameters**
+- `queue` *(string|object): Required.*
+  - `queue` *(string)*. Queue name. Default namespace will be used.
+  - `queue` *(object)*. You can also provide a queue name and a namespace.
+    - `queue.name` *(string): Required.* Queue name.
+    - `queue.ns` *(string): Required.* Queue namespace.
+- `cb(err, reply)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+  - `reply` *(boolean)*
+
+#### QueueManager.prototype.queue.getSettings()
+
+```javascript
+getSettings(queue, cb);
+```
+
+**Parameters**
+- `queue` *(string|object): Required.*
+  - `queue` *(string)*. Queue name. Default namespace will be used.
+  - `queue` *(object)*. You can also provide a queue name and a namespace.
+    - `queue.name` *(string): Required.* Queue name.
+    - `queue.ns` *(string): Required.* Queue namespace.
+- `cb(err, settings)` *(Function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+  - `settings` *(object)*
+    - `settings.priorityQueuing` *(boolean)*. Whether priority queuing is enabled.
+    - `settings.rateLimit` *(object|null|undefined)*. Queue rate limit.
+      - `settings.rateLimit` *(null|undefined)* Rate limit is not set.
+      - `settings.rateLimit` *(object)* Existing rate limit.
+        - `settings.rateLimit.limit` *(number): Required.* The maximum number of messages within an `interval`.
+        - `settings.rateLimit.interval` *(number): Required.* The timespan for `limit` in milliseconds.
+
 ### QueueManager.prototype.queueRateLimit
 
 #### QueueManager.prototype.queueRateLimit.set()
@@ -199,7 +261,6 @@ getMetrics(queue, cb);
     - `queueMetrics.acknowledged` *(number).* Acknowledged messages count.
     - `queueMetrics.deadLettered` *(number).* Dead-lettered messages count.
     - `queueMetrics.pending` *(number).* Pending messages count.
-    - `queueMetrics.pendingWithPriority` *(number).* Pending messages with priority count.
 
 ## Public Methods
 
