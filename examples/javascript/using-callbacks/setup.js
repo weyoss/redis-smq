@@ -17,6 +17,6 @@ exports.init = function init(cb) {
     if (err) throw err;
     else if (!queueManager)
       throw new Error('Expected an instance of QueueManager');
-    else queueManager.queue.createQueue('test_queue', false, cb);
+    else queueManager.queue.create('test_queue', false, cb);
   });
 };

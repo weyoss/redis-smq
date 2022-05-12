@@ -22,7 +22,7 @@ export class MultiplexedDequeueMessage extends DequeueMessage {
       else this.dequeueMessage(cb);
     };
     if (this.queueRateLimit) {
-      QueueRateLimit.hasQueueRateLimitExceeded(
+      QueueRateLimit.hasExceeded(
         this.redisClient,
         this.queue,
         this.queueRateLimit,

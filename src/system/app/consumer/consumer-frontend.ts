@@ -41,12 +41,12 @@ export class ConsumerFrontend extends EventEmitter {
     messageHandler: TConsumerMessageHandler,
     cb: ICallback<boolean>,
   ): void {
-    const queueParams = Queue.getQueueParams(queue);
+    const queueParams = Queue.getParams(queue);
     return this.consumer.consume(queueParams, messageHandler, cb);
   }
 
   cancel(queue: string | TQueueParams, cb: ICallback<void>): void {
-    const queueParams = Queue.getQueueParams(queue);
+    const queueParams = Queue.getParams(queue);
     this.consumer.cancel(queueParams, cb);
   }
 

@@ -100,7 +100,7 @@ export class TimeSeriesWorker extends Worker<IConsumerWorkerParameters> {
         [
           (cb: ICallback<void>) => this.cleanUpGlobalTimeSeries(cb),
           (cb: ICallback<TQueueParams[]>) =>
-            Queue.listQueues(this.redisClient, (err, reply) => {
+            Queue.list(this.redisClient, (err, reply) => {
               if (err) cb(err);
               else {
                 const queues = reply ?? [];

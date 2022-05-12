@@ -20,28 +20,28 @@ export class QueuesService {
   }
 
   async getNamespaces(): Promise<string[]> {
-    return this.namespace.getNamespacesAsync();
+    return this.namespace.listAsync();
   }
 
   async getNamespaceQueues(
     args: GetNamespaceQueuesRequestDTO,
   ): Promise<TQueueParams[]> {
     const { ns } = args;
-    return this.namespace.getNamespaceQueuesAsync(ns);
+    return this.namespace.getQueuesAsync(ns);
   }
 
   async deleteNamespace(args: DeleteNamespaceRequestDTO): Promise<void> {
     const { ns } = args;
-    return this.namespace.deleteNamespaceAsync(ns);
+    return this.namespace.deleteAsync(ns);
   }
 
   async getQueues(): Promise<TQueueParams[]> {
-    return this.queue.listQueuesAsync();
+    return this.queue.listAsync();
   }
 
   async deleteQueue(args: DeleteQueueRequestDTO): Promise<void> {
     const { ns, queueName } = args;
-    return this.queue.deleteQueueAsync({
+    return this.queue.deleteAsync({
       name: queueName,
       ns,
     });
@@ -49,7 +49,7 @@ export class QueuesService {
 
   async setQueueRateLimit(args: SetRateLimitRequestDTO) {
     const { ns, queueName, interval, limit } = args;
-    return this.queueRateLimit.setQueueRateLimitAsync(
+    return this.queueRateLimit.setAsync(
       { name: queueName, ns },
       { interval, limit },
     );
@@ -57,7 +57,7 @@ export class QueuesService {
 
   async clearQueueRateLimit(args: ClearRateLimitRequestDTO) {
     const { ns, queueName } = args;
-    return this.queueRateLimit.clearQueueRateLimitAsync({
+    return this.queueRateLimit.clearAsync({
       name: queueName,
       ns,
     });
@@ -65,6 +65,6 @@ export class QueuesService {
 
   async getQueueRateLimit(args: GetRateLimitRequestDTO) {
     const { ns, queueName } = args;
-    return this.queueRateLimit.getQueueRateLimitAsync({ name: queueName, ns });
+    return this.queueRateLimit.getAsync({ name: queueName, ns });
   }
 }

@@ -20,11 +20,8 @@ export class QueueMetrics {
     this.logger = getNamespacedLogger(this.constructor.name);
   }
 
-  getQueueMetrics(
-    queue: string | TQueueParams,
-    cb: ICallback<IQueueMetrics>,
-  ): void {
-    const queueParams = Queue.getQueueParams(queue);
+  getMetrics(queue: string | TQueueParams, cb: ICallback<IQueueMetrics>): void {
+    const queueParams = Queue.getParams(queue);
     const queueMetrics: IQueueMetrics = {
       acknowledged: 0,
       deadLettered: 0,
@@ -39,15 +36,11 @@ export class QueueMetrics {
     waterfall(
       [
         (cb: ICallback<boolean>) =>
-          Queue.getQueueSettings(
-            this.redisClient,
-            queueParams,
-            (err, settings) => {
-              if (err) cb(err);
-              if (!settings) cb(new EmptyCallbackReplyError());
-              else cb(null, settings.priorityQueuing);
-            },
-          ),
+          Queue.getSettings(this.redisClient, queueParams, (err, settings) => {
+            if (err) cb(err);
+            if (!settings) cb(new EmptyCallbackReplyError());
+            else cb(null, settings.priorityQueuing);
+          }),
         (priorityQueuing: boolean, cb: ICallback<void>) => {
           if (priorityQueuing) {
             this.redisClient.zcard(

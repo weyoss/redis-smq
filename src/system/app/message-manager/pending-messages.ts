@@ -16,8 +16,8 @@ export class PendingMessages {
   }
 
   purge(queue: string | TQueueParams, cb: ICallback<void>): void {
-    const queueParams = Queue.getQueueParams(queue);
-    Queue.getQueueSettings(this.redisClient, queueParams, (err, settings) => {
+    const queueParams = Queue.getParams(queue);
+    Queue.getSettings(this.redisClient, queueParams, (err, settings) => {
       if (err) cb(err);
       else if (settings?.priorityQueuing) {
         this.pendingPriorityMessages.purge(queueParams, cb);
@@ -33,8 +33,8 @@ export class PendingMessages {
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    const queueParams = Queue.getQueueParams(queue);
-    Queue.getQueueSettings(this.redisClient, queueParams, (err, settings) => {
+    const queueParams = Queue.getParams(queue);
+    Queue.getSettings(this.redisClient, queueParams, (err, settings) => {
       if (err) cb(err);
       else if (settings?.priorityQueuing) {
         this.pendingPriorityMessages.list(queueParams, skip, take, cb);
@@ -50,8 +50,8 @@ export class PendingMessages {
     sequenceId: number,
     cb: ICallback<void>,
   ): void {
-    const queueParams = Queue.getQueueParams(queue);
-    Queue.getQueueSettings(this.redisClient, queueParams, (err, settings) => {
+    const queueParams = Queue.getParams(queue);
+    Queue.getSettings(this.redisClient, queueParams, (err, settings) => {
       if (err) cb(err);
       else if (settings?.priorityQueuing) {
         this.pendingPriorityMessages.delete(queueParams, messageId, cb);

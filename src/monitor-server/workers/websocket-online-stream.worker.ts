@@ -9,7 +9,7 @@ export class WebsocketOnlineStreamWorker extends Worker {
     waterfall(
       [
         (cb: ICallback<TQueueParams[]>) => {
-          Queue.listQueues(this.redisClient, cb);
+          Queue.list(this.redisClient, cb);
         },
         (queues: TQueueParams[], done: ICallback<void>) => {
           each(

@@ -16,7 +16,7 @@ export class Namespace {
     this.logger = getNamespacedLogger(this.constructor.name);
   }
 
-  getNamespaces(cb: ICallback<string[]>): void {
+  list(cb: ICallback<string[]>): void {
     const { keyNamespaces } = redisKeys.getMainKeys();
     this.redisClient.smembers(keyNamespaces, (err, reply) => {
       if (err) cb(err);
@@ -25,7 +25,7 @@ export class Namespace {
     });
   }
 
-  getNamespaceQueues(namespace: string, cb: ICallback<TQueueParams[]>): void {
+  getQueues(namespace: string, cb: ICallback<TQueueParams[]>): void {
     const { keyNsQueues } = redisKeys.getNsKeys(namespace);
     this.redisClient.smembers(keyNsQueues, (err, reply) => {
       if (err) cb(err);
@@ -37,7 +37,7 @@ export class Namespace {
     });
   }
 
-  deleteNamespace(ns: string, cb: ICallback<void>): void {
+  delete(ns: string, cb: ICallback<void>): void {
     const { keyNamespaces } = redisKeys.getMainKeys();
     waterfall(
       [
@@ -52,7 +52,7 @@ export class Namespace {
       (err) => {
         if (err) cb(err);
         else {
-          this.getNamespaceQueues(ns, (err, reply) => {
+          this.getQueues(ns, (err, reply) => {
             if (err) cb(err);
             else {
               const queues = reply ?? [];

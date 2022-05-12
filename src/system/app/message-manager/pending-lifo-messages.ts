@@ -7,7 +7,7 @@ import { RedisClient } from '../../common/redis-client/redis-client';
 
 export class PendingLifoMessages extends List {
   purge(queue: string | TQueueParams, cb: ICallback<void>): void {
-    const queueParams = Queue.getQueueParams(queue);
+    const queueParams = Queue.getParams(queue);
     const { keyQueuePending } = redisKeys.getQueueKeys(queueParams);
     this.purgeMessages({ keyMessages: keyQueuePending }, (err) => {
       if (err) cb(err);
@@ -29,7 +29,7 @@ export class PendingLifoMessages extends List {
     sequenceId: number,
     cb: ICallback<void>,
   ): void {
-    const queueParams = Queue.getQueueParams(queue);
+    const queueParams = Queue.getParams(queue);
     const { keyQueuePending } = redisKeys.getQueueKeys(queueParams);
     this.deleteMessage(
       { keyMessages: keyQueuePending },
@@ -55,7 +55,7 @@ export class PendingLifoMessages extends List {
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    const queueParams = Queue.getQueueParams(queue);
+    const queueParams = Queue.getParams(queue);
     const { keyQueuePending } = redisKeys.getQueueKeys(queueParams);
     this.fetchMessages({ keyMessages: keyQueuePending }, skip, take, cb);
   }
@@ -65,7 +65,7 @@ export class PendingLifoMessages extends List {
     queue: TQueueParams,
     cb: ICallback<number>,
   ): void {
-    const queueParams = Queue.getQueueParams(queue);
+    const queueParams = Queue.getParams(queue);
     const { keyQueuePending } = redisKeys.getQueueKeys(queueParams);
     redisClient.llen(keyQueuePending, (err, reply) => {
       if (err) cb(err);
