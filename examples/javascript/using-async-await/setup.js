@@ -23,8 +23,8 @@ exports.init = async function init() {
   const queueAsync = promisifyAll(queueManager.queue);
 
   // Creating a normal queue (a LIFO queue)
-  await queueAsync.createQueueAsync('test_queue', false);
+  await queueAsync.createAsync('test_queue', false);
 
   // Creating a priority queue
-  await queueAsync.createQueueAsync('another_queue', true);
+  await queueAsync.createAsync('another_queue', true);
 };

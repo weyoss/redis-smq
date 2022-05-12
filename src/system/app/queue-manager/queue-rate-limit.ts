@@ -20,8 +20,8 @@ export class QueueRateLimit {
     this.logger = getNamespacedLogger(this.constructor.name);
   }
 
-  clearQueueRateLimit(queue: string | TQueueParams, cb: ICallback<void>): void {
-    const queueParams = Queue.getQueueParams(queue);
+  clear(queue: string | TQueueParams, cb: ICallback<void>): void {
+    const queueParams = Queue.getParams(queue);
     const {
       keyQueueSettings,
       keyQueueSettingsRateLimit,
@@ -33,12 +33,12 @@ export class QueueRateLimit {
     this.redisClient.execMulti(multi, (err) => cb(err));
   }
 
-  setQueueRateLimit(
+  set(
     queue: string | TQueueParams,
     rateLimit: TQueueRateLimit,
     cb: ICallback<void>,
   ): void {
-    const queueParams = Queue.getQueueParams(queue);
+    const queueParams = Queue.getParams(queue);
 
     // validating rateLimit params from a javascript client
     const limit = Number(rateLimit.limit);
@@ -68,14 +68,11 @@ export class QueueRateLimit {
     );
   }
 
-  getQueueRateLimit(
-    queue: string | TQueueParams,
-    cb: ICallback<TQueueRateLimit>,
-  ): void {
-    QueueRateLimit.getQueueRateLimit(this.redisClient, queue, cb);
+  get(queue: string | TQueueParams, cb: ICallback<TQueueRateLimit>): void {
+    QueueRateLimit.get(this.redisClient, queue, cb);
   }
 
-  static hasQueueRateLimitExceeded(
+  static hasExceeded(
     redisClient: RedisClient,
     queue: TQueueParams,
     rateLimit: TQueueRateLimit,
@@ -97,12 +94,12 @@ export class QueueRateLimit {
     );
   }
 
-  static getQueueRateLimit(
+  static get(
     redisClient: RedisClient,
     queue: string | TQueueParams,
     cb: ICallback<TQueueRateLimit>,
   ): void {
-    const queueParams = Queue.getQueueParams(queue);
+    const queueParams = Queue.getParams(queue);
     const { keyQueueSettings, keyQueueSettingsRateLimit } =
       redisKeys.getQueueKeys(queueParams);
     redisClient.hget(

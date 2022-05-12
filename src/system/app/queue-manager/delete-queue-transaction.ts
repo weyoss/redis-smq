@@ -99,7 +99,7 @@ export function initDeleteQueueTransaction(
         waterfall(
           [
             (cb: ICallback<void>): void =>
-              Queue.queueExists(redisClient, queueParams, (err, reply) => {
+              Queue.exists(redisClient, queueParams, (err, reply) => {
                 if (err) cb(err);
                 else if (!reply) cb(new QueueNotFoundError());
                 else cb();

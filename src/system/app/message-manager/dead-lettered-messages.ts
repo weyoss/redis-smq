@@ -6,7 +6,7 @@ import { RedisClient } from '../../common/redis-client/redis-client';
 
 export class DeadLetteredMessages extends List {
   purge(queue: string | TQueueParams, cb: ICallback<void>): void {
-    const queueParams = Queue.getQueueParams(queue);
+    const queueParams = Queue.getParams(queue);
     const { keyQueueDL } = redisKeys.getQueueKeys(queueParams);
     this.purgeMessages({ keyMessages: keyQueueDL }, (err) => {
       if (err) cb(err);
@@ -27,7 +27,7 @@ export class DeadLetteredMessages extends List {
     sequenceId: number,
     cb: ICallback<void>,
   ): void {
-    const queueParams = Queue.getQueueParams(queue);
+    const queueParams = Queue.getParams(queue);
     const { keyQueueDL } = redisKeys.getQueueKeys(queueParams);
     this.requeueMessage(
       { keyMessages: keyQueueDL },
@@ -50,7 +50,7 @@ export class DeadLetteredMessages extends List {
     sequenceId: number,
     cb: ICallback<void>,
   ): void {
-    const queueParams = Queue.getQueueParams(queue);
+    const queueParams = Queue.getParams(queue);
     const { keyQueueDL } = redisKeys.getQueueKeys(queueParams);
     this.deleteMessage(
       { keyMessages: keyQueueDL },
@@ -73,7 +73,7 @@ export class DeadLetteredMessages extends List {
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    const queueParams = Queue.getQueueParams(queue);
+    const queueParams = Queue.getParams(queue);
     const { keyQueueDL } = redisKeys.getQueueKeys(queueParams);
     this.fetchMessages({ keyMessages: keyQueueDL }, skip, take, cb);
   }
@@ -83,7 +83,7 @@ export class DeadLetteredMessages extends List {
     queue: TQueueParams,
     cb: ICallback<number>,
   ): void {
-    const queueParams = Queue.getQueueParams(queue);
+    const queueParams = Queue.getParams(queue);
     const { keyQueueDL } = redisKeys.getQueueKeys(queueParams);
     redisClient.llen(keyQueueDL, (err, reply) => {
       if (err) cb(err);

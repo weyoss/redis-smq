@@ -62,7 +62,7 @@ export class WebsocketMainStreamWorker extends Worker {
         waterfall(
           [
             (cb: ICallback<TWebsocketMainStreamPayloadQueue>) => {
-              Queue.getQueueSettings(
+              Queue.getSettings(
                 this.redisClient,
                 queueParams,
                 (err, settings) => {
@@ -150,7 +150,7 @@ export class WebsocketMainStreamWorker extends Worker {
   };
 
   protected getQueues = (cb: ICallback<TQueueParams[]>): void => {
-    Queue.listQueues(this.redisClient, cb);
+    Queue.list(this.redisClient, cb);
   };
 
   protected countScheduledMessages = (cb: ICallback<void>): void => {

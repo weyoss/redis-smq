@@ -243,7 +243,7 @@ export class Message {
   }
 
   setQueue(queue: string | TQueueParams): Message {
-    this.queue = Queue.getQueueParams(queue);
+    this.queue = Queue.getParams(queue);
     return this;
   }
 

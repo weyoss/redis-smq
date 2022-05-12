@@ -98,7 +98,7 @@ export class DequeueMessage {
     };
     if (this.priorityQueuing || this.queueRateLimit) {
       if (this.queueRateLimit) {
-        QueueRateLimit.hasQueueRateLimitExceeded(
+        QueueRateLimit.hasExceeded(
           this.redisClient,
           this.queue,
           this.queueRateLimit,
@@ -155,7 +155,7 @@ export class DequeueMessage {
           );
         },
         (cb: ICallback<void>) => {
-          Queue.getQueueSettings(this.redisClient, this.queue, (err, reply) => {
+          Queue.getSettings(this.redisClient, this.queue, (err, reply) => {
             if (err) cb(err);
             else if (!reply) cb(new EmptyCallbackReplyError());
             else {

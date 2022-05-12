@@ -22,12 +22,12 @@ export class Queue {
     this.logger = getNamespacedLogger(this.constructor.name);
   }
 
-  createQueue(
+  create(
     queue: string | TQueueParams,
     priorityQueuing: boolean,
     cb: ICallback<void>,
   ): void {
-    const queueParams = Queue.getQueueParams(queue);
+    const queueParams = Queue.getParams(queue);
     const {
       keyQueues,
       keyNsQueues,
@@ -54,23 +54,23 @@ export class Queue {
     );
   }
 
-  getQueueSettings(
+  getSettings(
     queue: string | TQueueParams,
     cb: ICallback<TQueueSettings>,
   ): void {
-    Queue.getQueueSettings(this.redisClient, queue, cb);
+    Queue.getSettings(this.redisClient, queue, cb);
   }
 
-  queueExists(queue: string | TQueueParams, cb: ICallback<boolean>): void {
-    Queue.queueExists(this.redisClient, queue, cb);
+  exists(queue: string | TQueueParams, cb: ICallback<boolean>): void {
+    Queue.exists(this.redisClient, queue, cb);
   }
 
-  listQueues(cb: ICallback<TQueueParams[]>): void {
-    Queue.listQueues(this.redisClient, cb);
+  list(cb: ICallback<TQueueParams[]>): void {
+    Queue.list(this.redisClient, cb);
   }
 
-  deleteQueue(queue: string | TQueueParams, cb: ICallback<void>): void {
-    const queueParams = Queue.getQueueParams(queue);
+  delete(queue: string | TQueueParams, cb: ICallback<void>): void {
+    const queueParams = Queue.getParams(queue);
     initDeleteQueueTransaction(
       this.redisClient,
       queueParams,
@@ -83,7 +83,7 @@ export class Queue {
     );
   }
 
-  static getQueueParams(queue: string | TQueueParams): TQueueParams {
+  static getParams(queue: string | TQueueParams): TQueueParams {
     const queueParams =
       typeof queue === 'string'
         ? {
@@ -101,12 +101,12 @@ export class Queue {
     };
   }
 
-  static getQueueSettings(
+  static getSettings(
     redisClient: RedisClient,
     queue: string | TQueueParams,
     cb: ICallback<TQueueSettings>,
   ): void {
-    const queueParams = Queue.getQueueParams(queue);
+    const queueParams = Queue.getParams(queue);
     const {
       keyQueueSettings,
       keyQueueSettingsPriorityQueuing,
@@ -132,10 +132,7 @@ export class Queue {
     });
   }
 
-  static listQueues(
-    redisClient: RedisClient,
-    cb: ICallback<TQueueParams[]>,
-  ): void {
+  static list(redisClient: RedisClient, cb: ICallback<TQueueParams[]>): void {
     const { keyQueues } = redisKeys.getMainKeys();
     redisClient.smembers(keyQueues, (err, reply) => {
       if (err) cb(err);
@@ -147,12 +144,12 @@ export class Queue {
     });
   }
 
-  static queueExists(
+  static exists(
     redisClient: RedisClient,
     queue: string | TQueueParams,
     cb: ICallback<boolean>,
   ): void {
-    const queueParams = Queue.getQueueParams(queue);
+    const queueParams = Queue.getParams(queue);
     const { keyQueues } = redisKeys.getMainKeys();
     redisClient.sismember(
       keyQueues,
