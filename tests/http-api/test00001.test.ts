@@ -37,7 +37,9 @@ test('Fetching and deleting scheduled messages using the HTTP API: Case 1', asyn
 
   //
   const response2: ISuperTestResponse<void> = await request.delete(
-    `/api/main/scheduled-messages/${msg1.getRequiredId()}`,
+    `/api/main/scheduled-messages/${msg1.getRequiredId()}?sequenceId=${
+      response1.body.data?.items[0].sequenceId
+    }`,
   );
   expect(response2.statusCode).toBe(204);
   expect(response2.body).toEqual({});

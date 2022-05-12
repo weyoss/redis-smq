@@ -34,34 +34,40 @@ export class AcknowledgedMessages extends List {
 
   requeue(
     queue: string | TQueueParams,
-    sequenceId: number,
+
     messageId: string,
+    sequenceId: number,
     cb: ICallback<void>,
   ): void {
     const queueParams = Queue.getQueueParams(queue);
     const { keyQueueAcknowledged } = redisKeys.getQueueKeys(queueParams);
-    this.requeueMessage(keyQueueAcknowledged, sequenceId, messageId, (err) => {
-      if (err) cb(err);
-      else {
-        this.logger.info(
-          `Acknowledged message (ID ${messageId}) has been re-queued`,
-        );
-        cb();
-      }
-    });
+    this.requeueMessage(
+      { keyMessages: keyQueueAcknowledged },
+      { sequenceId, messageId },
+      (err) => {
+        if (err) cb(err);
+        else {
+          this.logger.info(
+            `Acknowledged message (ID ${messageId}) has been re-queued`,
+          );
+          cb();
+        }
+      },
+    );
   }
 
   delete(
     queue: string | TQueueParams,
-    sequenceId: number,
+
     messageId: string,
+    sequenceId: number,
     cb: ICallback<void>,
   ): void {
     const queueParams = Queue.getQueueParams(queue);
     const { keyQueueAcknowledged } = redisKeys.getQueueKeys(queueParams);
     this.deleteMessage(
       { keyMessages: keyQueueAcknowledged },
-      { sequenceId, messageId },
+      { messageId, sequenceId },
       (err) => {
         if (err) cb(err);
         else {

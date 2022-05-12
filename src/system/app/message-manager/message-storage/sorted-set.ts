@@ -3,19 +3,24 @@ import { ICallback, TGetMessagesReply } from '../../../../../types';
 import { Message } from '../../message/message';
 import { each, waterfall } from '../../../lib/async';
 import { EmptyCallbackReplyError } from '../../../common/errors/empty-callback-reply.error';
+import { MessageNotFoundError } from '../errors/message-not-found.error';
+
+type TSortedSetKeyMessagesParams = {
+  keyMessages: string;
+  keyMessagesWeight: string;
+};
+
+type TSortedSetMessageIdParams = {
+  messageId: string;
+};
 
 export abstract class SortedSet extends AbstractMessageStorage<
-  {
-    keyMessages: string;
-    keyMessagesWeight: string;
-  },
-  {
-    messageId: string;
-  }
+  TSortedSetKeyMessagesParams,
+  TSortedSetMessageIdParams
 > {
   protected override deleteMessage(
-    key: { keyMessages: string; keyMessagesWeight: string },
-    id: { messageId: string },
+    key: TSortedSetKeyMessagesParams,
+    id: TSortedSetMessageIdParams,
     cb: ICallback<void>,
   ): void {
     const { keyMessages, keyMessagesWeight } = key;
@@ -30,7 +35,7 @@ export abstract class SortedSet extends AbstractMessageStorage<
   }
 
   protected override fetchMessages(
-    key: { keyMessages: string; keyMessagesWeight: string },
+    key: TSortedSetKeyMessagesParams,
     skip: number,
     take: number,
     cb: ICallback<TGetMessagesReply>,
@@ -100,7 +105,7 @@ export abstract class SortedSet extends AbstractMessageStorage<
   }
 
   protected override purgeMessages(
-    key: { keyMessages: string; keyMessagesWeight: string },
+    key: TSortedSetKeyMessagesParams,
     cb: ICallback<void>,
   ): void {
     const { keyMessages, keyMessagesWeight } = key;
@@ -108,5 +113,19 @@ export abstract class SortedSet extends AbstractMessageStorage<
     multi.del(keyMessages);
     multi.del(keyMessagesWeight);
     this.redisClient.execMulti(multi, (err) => cb(err));
+  }
+
+  protected override getMessageById(
+    key: TSortedSetKeyMessagesParams,
+    id: TSortedSetMessageIdParams,
+    cb: ICallback<Message>,
+  ): void {
+    const { keyMessages } = key;
+    const { messageId } = id;
+    this.redisClient.hget(keyMessages, messageId, (err, reply) => {
+      if (err) cb(err);
+      else if (!reply) cb(new MessageNotFoundError());
+      else cb(null, Message.createFromMessage(reply));
+    });
   }
 }

@@ -48,8 +48,8 @@ test('Combined test. Requeue a priority message from acknowledged queue. Check q
 
   await messageManager.acknowledgedMessages.requeueAsync(
     defaultQueue,
-    0,
     message.getRequiredId(),
+    0,
   );
 
   const res6 = await messageManager.acknowledgedMessages.listAsync(
@@ -72,8 +72,8 @@ test('Combined test. Requeue a priority message from acknowledged queue. Check q
   await expect(async () => {
     await messageManager.acknowledgedMessages.requeueAsync(
       defaultQueue,
-      0,
       message.getRequiredId(),
+      0,
     );
   }).rejects.toThrow(
     'Either message parameters are invalid or the message has been already deleted',

@@ -23,34 +23,38 @@ export class DeadLetteredMessages extends List {
 
   requeue(
     queue: string | TQueueParams,
-    sequenceId: number,
     messageId: string,
+    sequenceId: number,
     cb: ICallback<void>,
   ): void {
     const queueParams = Queue.getQueueParams(queue);
     const { keyQueueDL } = redisKeys.getQueueKeys(queueParams);
-    this.requeueMessage(keyQueueDL, sequenceId, messageId, (err) => {
-      if (err) cb(err);
-      else {
-        this.logger.info(
-          `Dead-lettered message (ID ${messageId}) has been re-queued`,
-        );
-        cb();
-      }
-    });
+    this.requeueMessage(
+      { keyMessages: keyQueueDL },
+      { sequenceId, messageId },
+      (err) => {
+        if (err) cb(err);
+        else {
+          this.logger.info(
+            `Dead-lettered message (ID ${messageId}) has been re-queued`,
+          );
+          cb();
+        }
+      },
+    );
   }
 
   delete(
     queue: string | TQueueParams,
-    sequenceId: number,
     messageId: string,
+    sequenceId: number,
     cb: ICallback<void>,
   ): void {
     const queueParams = Queue.getQueueParams(queue);
     const { keyQueueDL } = redisKeys.getQueueKeys(queueParams);
     this.deleteMessage(
       { keyMessages: keyQueueDL },
-      { sequenceId, messageId },
+      { messageId, sequenceId },
       (err) => {
         if (err) cb(err);
         else {

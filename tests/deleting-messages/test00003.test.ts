@@ -40,8 +40,8 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
 
   await messageManager.acknowledgedMessages.deleteAsync(
     queue,
-    0,
     message.getRequiredId(),
+    0,
   );
 
   const res3 = await messageManager.acknowledgedMessages.listAsync(
@@ -76,8 +76,8 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   await expect(async () => {
     await messageManager.acknowledgedMessages.deleteAsync(
       queue,
-      0,
       message.getRequiredId(),
+      0,
     );
   }).rejects.toThrow(
     'Either message parameters are invalid or the message has been already deleted',

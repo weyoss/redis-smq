@@ -1,6 +1,3 @@
-import { IsUUID } from 'class-validator';
+import { DeleteMessageRequestDTO } from '../../../../common/dto/queues/delete-message-request.DTO';
 
-export class DeleteScheduledMessageRequestDTO {
-  @IsUUID('4')
-  id!: string;
-}
+export class DeleteScheduledMessageRequestDTO extends DeleteMessageRequestDTO {}
