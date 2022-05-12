@@ -6,8 +6,12 @@ import {
 import { RedisClient } from '../../../common/redis-client/redis-client';
 import { ArgumentError } from '../../../common/errors/argument.error';
 import { getNamespacedLogger } from '../../../common/logger';
+import { Message } from '../../message/message';
 
-export abstract class AbstractMessageStorage<StorageParams, MessageItemParams> {
+export abstract class AbstractMessageStorage<
+  KeyParams extends { keyMessages: string },
+  IdParams extends { messageId: string },
+> {
   protected redisClient: RedisClient;
   protected logger: ICompatibleLogger;
 
@@ -24,21 +28,24 @@ export abstract class AbstractMessageStorage<StorageParams, MessageItemParams> {
     }
   }
 
+  protected abstract getMessageById(
+    key: KeyParams,
+    id: IdParams,
+    cb: ICallback<Message>,
+  ): void;
+
   protected abstract deleteMessage(
-    key: StorageParams,
-    id: MessageItemParams,
+    key: KeyParams,
+    id: IdParams,
     cb: ICallback<void>,
   ): void;
 
   protected abstract fetchMessages(
-    key: StorageParams,
+    key: KeyParams,
     skip: number,
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void;
 
-  protected abstract purgeMessages(
-    key: StorageParams,
-    cb: ICallback<void>,
-  ): void;
+  protected abstract purgeMessages(key: KeyParams, cb: ICallback<void>): void;
 }

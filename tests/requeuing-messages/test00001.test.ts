@@ -14,8 +14,8 @@ test('Combined test: Requeue a message from dead-letter queue. Check queue metri
   const messageManager = await getMessageManager();
   await messageManager.deadLetteredMessages.requeueAsync(
     queue,
-    0,
     message.getRequiredId(),
+    0,
   );
 
   const res2 = await messageManager.pendingMessages.listAsync(queue, 0, 100);

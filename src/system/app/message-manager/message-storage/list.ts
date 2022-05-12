@@ -10,42 +10,54 @@ import { MessageRequeueError } from '../errors/message-requeue.error';
 
 type TFetchMessagesReply = { sequenceId: number; message: Message };
 
+type TListKeyMessagesParams = {
+  keyMessages: string;
+};
+
+type TListMessageIdParams = {
+  messageId: string;
+  sequenceId: number;
+};
+
 export abstract class List extends AbstractMessageStorage<
-  { keyMessages: string },
-  {
-    messageId: string;
-    sequenceId: number;
-  }
+  TListKeyMessagesParams,
+  TListMessageIdParams
 > {
   protected getMessageById(
-    key: string,
-    sequenceId: number,
-    messageId: string,
+    key: TListKeyMessagesParams,
+    id: TListMessageIdParams,
     cb: ICallback<Message>,
   ): void {
-    this.redisClient.lrange(key, sequenceId, sequenceId, (err, reply) => {
-      if (err) cb(err);
-      else if (!reply || !reply.length) cb(new MessageNotFoundError());
-      else {
-        const [msg] = reply;
-        const message = Message.createFromMessage(msg);
-        if (message.getRequiredId() !== messageId)
-          cb(new MessageNotFoundError());
-        else cb(null, message);
-      }
-    });
+    const { keyMessages } = key;
+    const { messageId, sequenceId } = id;
+    this.redisClient.lrange(
+      keyMessages,
+      sequenceId,
+      sequenceId,
+      (err, reply) => {
+        if (err) cb(err);
+        else if (!reply || !reply.length) cb(new MessageNotFoundError());
+        else {
+          const [msg] = reply;
+          const message = Message.createFromMessage(msg);
+          if (message.getRequiredId() !== messageId)
+            cb(new MessageNotFoundError());
+          else cb(null, message);
+        }
+      },
+    );
   }
 
   protected requeueMessage(
-    key: string,
-    sequenceId: number,
-    messageId: string,
+    key: TListKeyMessagesParams,
+    id: TListMessageIdParams,
     cb: ICallback<void>,
   ): void {
-    this.getMessageById(key, sequenceId, messageId, (err, msg) => {
+    this.getMessageById(key, id, (err, msg) => {
       if (err) cb(err);
       else if (!msg) cb(new EmptyCallbackReplyError());
       else {
+        const { keyMessages } = key;
         const message = Message.createFromMessage(msg, false);
         const queue = message.getRequiredQueue();
         message.getRequiredMetadata().reset(); // resetting all system parameters
@@ -64,7 +76,7 @@ export abstract class List extends AbstractMessageStorage<
             keyQueuePendingPriorityMessages,
             keyQueuePendingPriorityMessageIds,
             keyQueuePending,
-            key,
+            keyMessages,
           ],
           [
             message.getRequiredId(),
@@ -83,24 +95,24 @@ export abstract class List extends AbstractMessageStorage<
   }
 
   protected override deleteMessage(
-    key: { keyMessages: string },
-    id: { messageId: string; sequenceId: number },
+    key: TListKeyMessagesParams,
+    id: TListMessageIdParams,
     cb: ICallback<void>,
   ): void {
-    const { keyMessages } = key;
-    const { messageId, sequenceId } = id;
-    this.getMessageById(keyMessages, sequenceId, messageId, (err, message) => {
+    this.getMessageById(key, id, (err, message) => {
       if (err) cb(err);
       else if (!message) cb(new EmptyCallbackReplyError());
-      else
+      else {
+        const { keyMessages } = key;
         this.redisClient.lrem(keyMessages, 1, message.toString(), (err) =>
           cb(err),
         );
+      }
     });
   }
 
   protected override fetchMessages(
-    key: { keyMessages: string },
+    key: TListKeyMessagesParams,
     skip: number,
     take: number,
     cb: ICallback<TPaginatedResponse<TFetchMessagesReply>>,
@@ -145,7 +157,7 @@ export abstract class List extends AbstractMessageStorage<
   }
 
   protected override purgeMessages(
-    key: { keyMessages: string },
+    key: TListKeyMessagesParams,
     cb: ICallback<void>,
   ): void {
     const { keyMessages } = key;

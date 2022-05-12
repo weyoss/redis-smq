@@ -32,8 +32,8 @@ test('Combined test. Requeue a message from acknowledged queue. Check queue metr
 
   await messageManager.acknowledgedMessages.requeueAsync(
     queue,
-    0,
     message.getRequiredId(),
+    0,
   );
 
   const res5 = await messageManager.pendingMessages.listAsync(queue, 0, 100);
@@ -59,8 +59,8 @@ test('Combined test. Requeue a message from acknowledged queue. Check queue metr
   await expect(async () => {
     await messageManager.acknowledgedMessages.requeueAsync(
       queue,
-      0,
       message.getRequiredId(),
+      0,
     );
   }).rejects.toThrow(
     'Either message parameters are invalid or the message has been already deleted',

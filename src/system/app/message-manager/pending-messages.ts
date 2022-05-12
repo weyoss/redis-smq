@@ -56,7 +56,7 @@ export class PendingMessages {
       else if (settings?.priorityQueuing) {
         this.pendingPriorityMessages.delete(queueParams, messageId, cb);
       } else {
-        this.pendingLifoMessages.delete(queueParams, sequenceId, messageId, cb);
+        this.pendingLifoMessages.delete(queueParams, messageId, sequenceId, cb);
       }
     });
   }

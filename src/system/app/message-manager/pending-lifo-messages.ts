@@ -24,15 +24,16 @@ export class PendingLifoMessages extends List {
 
   delete(
     queue: string | TQueueParams,
-    sequenceId: number,
+
     messageId: string,
+    sequenceId: number,
     cb: ICallback<void>,
   ): void {
     const queueParams = Queue.getQueueParams(queue);
     const { keyQueuePending } = redisKeys.getQueueKeys(queueParams);
     this.deleteMessage(
       { keyMessages: keyQueuePending },
-      { sequenceId, messageId },
+      { messageId, sequenceId },
       (err) => {
         // In case the message does not exist
         // we assume it was delivered or already deleted

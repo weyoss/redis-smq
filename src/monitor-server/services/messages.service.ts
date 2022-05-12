@@ -115,8 +115,8 @@ export class MessagesService {
         name: queueName,
         ns,
       },
-      sequenceId,
       id,
+      sequenceId,
     );
   }
 
@@ -129,8 +129,8 @@ export class MessagesService {
         name: queueName,
         ns,
       },
-      sequenceId,
       id,
+      sequenceId,
     );
   }
 
@@ -150,8 +150,8 @@ export class MessagesService {
         name: queueName,
         ns,
       },
-      sequenceId,
       id,
+      sequenceId,
     );
   }
 
@@ -164,8 +164,8 @@ export class MessagesService {
         name: queueName,
         ns,
       },
-      sequenceId,
       id,
+      sequenceId,
     );
   }
 

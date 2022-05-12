@@ -45,8 +45,8 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
 
   await messageManager.deadLetteredMessages.deleteAsync(
     queue,
-    0,
     message.getRequiredId(),
+    0,
   );
 
   const res4 = await messageManager.deadLetteredMessages.listAsync(
@@ -66,8 +66,8 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   await expect(async () => {
     await messageManager.deadLetteredMessages.deleteAsync(
       queue,
-      0,
       message.getRequiredId(),
+      0,
     );
   }).rejects.toThrow(
     'Either message parameters are invalid or the message has been already deleted',
