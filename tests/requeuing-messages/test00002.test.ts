@@ -24,9 +24,7 @@ test('Combined test. Requeue a message from acknowledged queue. Check queue metr
   expect(res2.items.length).toBe(1);
 
   const queueManager = await getQueueManager();
-  const queueMetrics = await queueManager.queueMetrics.getQueueMetricsAsync(
-    queue,
-  );
+  const queueMetrics = await queueManager.queueMetrics.getMetricsAsync(queue);
   expect(queueMetrics.pending).toBe(0);
   expect(queueMetrics.acknowledged).toBe(1);
 
@@ -50,9 +48,7 @@ test('Combined test. Requeue a message from acknowledged queue. Check queue metr
   expect(res6.total).toBe(0);
   expect(res6.items.length).toBe(0);
 
-  const queueMetrics1 = await queueManager.queueMetrics.getQueueMetricsAsync(
-    queue,
-  );
+  const queueMetrics1 = await queueManager.queueMetrics.getMetricsAsync(queue);
   expect(queueMetrics1.acknowledged).toBe(0);
   expect(queueMetrics1.pending).toBe(1);
 

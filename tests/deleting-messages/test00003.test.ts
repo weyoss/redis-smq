@@ -32,9 +32,7 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   expect(res2.items[0].message).toEqual(message);
 
   const queueManager = await getQueueManager();
-  const queueMetrics = await queueManager.queueMetrics.getQueueMetricsAsync(
-    queue,
-  );
+  const queueMetrics = await queueManager.queueMetrics.getMetricsAsync(queue);
   expect(queueMetrics.pending).toBe(0);
   expect(queueMetrics.acknowledged).toBe(1);
 
@@ -68,9 +66,7 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   expect(res6.total).toBe(0);
   expect(res6.items.length).toBe(0);
 
-  const queueMetrics1 = await queueManager.queueMetrics.getQueueMetricsAsync(
-    queue,
-  );
+  const queueMetrics1 = await queueManager.queueMetrics.getMetricsAsync(queue);
   expect(queueMetrics1.acknowledged).toBe(0);
 
   await expect(async () => {

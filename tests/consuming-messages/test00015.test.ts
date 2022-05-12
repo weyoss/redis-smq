@@ -8,13 +8,13 @@ test('Consume messages from different queues using a single consumer instance: c
 
   expect(consumer.getQueues()).toEqual([]);
 
-  await queueManager.queue.createQueueAsync('test_queue', false);
+  await queueManager.queue.createAsync('test_queue', false);
   const isRunning1 = await consumer.consumeAsync('test_queue', (msg, cb) =>
     cb(),
   );
   expect(isRunning1).toBe(false);
 
-  await queueManager.queue.createQueueAsync('another_queue', false);
+  await queueManager.queue.createAsync('another_queue', false);
   const isRunning2 = await consumer.consumeAsync('another_queue', (msg, cb) =>
     cb(),
   );
@@ -65,7 +65,7 @@ test('Consume messages from different queues using a single consumer instance: c
     { name: 'another_queue', ns: 'testing' },
   ]);
 
-  await queueManager.queue.createQueueAsync('queue_a', true);
+  await queueManager.queue.createAsync('queue_a', true);
   const isRunning3 = await consumer.consumeAsync('queue_a', (msg, cb) => cb());
   expect(isRunning3).toBe(true);
 

@@ -537,5 +537,5 @@ export async function createQueue(
   priorityQueuing: boolean,
 ) {
   const qm = await getQueueManager();
-  await qm.queue.createQueueAsync(queue, priorityQueuing);
+  await qm.queue.createAsync(queue, priorityQueuing);
 }

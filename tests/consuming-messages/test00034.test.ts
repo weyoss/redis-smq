@@ -12,7 +12,7 @@ test('Consume messages from different queues using a single consumer instance: c
   await createQueue(defaultQueue, false);
 
   const qm = await getQueueManager();
-  await qm.queueRateLimit.setQueueRateLimitAsync(defaultQueue, {
+  await qm.queueRateLimit.setAsync(defaultQueue, {
     limit: 3,
     interval: 5000,
   });

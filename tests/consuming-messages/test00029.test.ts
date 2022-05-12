@@ -14,7 +14,7 @@ test('Rate limit a queue without priority and check message rate', async () => {
   await createQueue(defaultQueue, false);
 
   const qm = await getQueueManager();
-  await qm.queueRateLimit.setQueueRateLimitAsync(defaultQueue, {
+  await qm.queueRateLimit.setAsync(defaultQueue, {
     limit: 3,
     interval: 10000,
   });

@@ -26,43 +26,43 @@ test('Combined: Fetching namespaces, deleting a namespace with its message queue
 
   const queueManager = await getQueueManager();
 
-  const m0 = await queueManager.namespace.getNamespacesAsync();
+  const m0 = await queueManager.namespace.listAsync();
   expect(m0).toEqual(['ns1']);
 
-  const m1 = await queueManager.queueMetrics.getQueueMetricsAsync(q1);
+  const m1 = await queueManager.queueMetrics.getMetricsAsync(q1);
   expect(m1.acknowledged).toBe(1);
 
-  const m2 = await queueManager.queueMetrics.getQueueMetricsAsync(q2);
+  const m2 = await queueManager.queueMetrics.getMetricsAsync(q2);
   expect(m2.acknowledged).toBe(1);
 
   await expect(async () => {
-    await queueManager.namespace.deleteNamespaceAsync('ns1');
+    await queueManager.namespace.deleteAsync('ns1');
   }).rejects.toThrow(
     'Before deleting a queue/namespace, make sure it is not used by a message handler',
   );
 
   await c1.shutdownAsync();
   await expect(async () => {
-    await queueManager.namespace.deleteNamespaceAsync('ns1');
+    await queueManager.namespace.deleteAsync('ns1');
   }).rejects.toThrow(
     'Before deleting a queue/namespace, make sure it is not used by a message handler',
   );
 
   await c2.shutdownAsync();
-  await queueManager.namespace.deleteNamespaceAsync('ns1');
+  await queueManager.namespace.deleteAsync('ns1');
 
-  await expect(
-    queueManager.queueMetrics.getQueueMetricsAsync(q1),
-  ).rejects.toThrow('Queue does not exist');
+  await expect(queueManager.queueMetrics.getMetricsAsync(q1)).rejects.toThrow(
+    'Queue does not exist',
+  );
 
-  await expect(
-    queueManager.queueMetrics.getQueueMetricsAsync(q2),
-  ).rejects.toThrow('Queue does not exist');
+  await expect(queueManager.queueMetrics.getMetricsAsync(q2)).rejects.toThrow(
+    'Queue does not exist',
+  );
 
-  const m5 = await queueManager.namespace.getNamespacesAsync();
+  const m5 = await queueManager.namespace.listAsync();
   expect(m5).toEqual([]);
 
   await expect(async () => {
-    await queueManager.namespace.deleteNamespaceAsync('ns1');
+    await queueManager.namespace.deleteAsync('ns1');
   }).rejects.toThrow(`Namespace (ns1) does not exist`);
 });
