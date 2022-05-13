@@ -27,19 +27,19 @@ const consumer = new Consumer(true);
 Once created, you can use your consumer instance as usually:
 
 ```javascript
-consumer.consume('queue1', false, (e) => { 
+consumer.consume('queue1', (e) => { 
   //... 
 });
 
-consumer.consume('queue2', false, (e) => {
+consumer.consume('queue2', (e) => {
   //... 
 });
 
-consumer.consume('queue3', false, (e) => {
+consumer.consume('queue3', (e) => {
   //... 
 });
 
-consumer.consume('queue4', false, (e) => {
+consumer.consume('queue4', (e) => {
   //... 
 });
 ```
