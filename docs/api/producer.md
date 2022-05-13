@@ -27,14 +27,6 @@ producer.produce(message, cb);
 - `message` *(Message): Required.* Message instance.
 - `cb(err)` *(function): Required.* Callback function.
 
-Before publishing a message, make sure that:
-
-- The queue of the message does exist.
-- Messages with a priority are published to a priority queue.
-- Messages without priority are published to a LIFO queue. 
-
-Otherwise, an error will be returned.
-
 ```javascript
 const { Message, Producer } = require('redis-smq');
 
@@ -52,6 +44,14 @@ producer.produce(message, (err) => {
   else console.log('Successfully produced')
 });
 ```
+
+Before publishing a message, make sure that:
+
+- The queue of the message does exist.
+- Messages with a priority are published to a priority queue.
+- Messages without priority are published to a LIFO queue.
+
+Otherwise, an error will be returned.
 
 ### Producer.prototype.run()
 
