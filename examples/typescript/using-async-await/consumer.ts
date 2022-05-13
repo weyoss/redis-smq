@@ -24,12 +24,7 @@ export async function consume(): Promise<void> {
   );
   console.log(`Is running? ${r1}`); // false
 
-  // running the consumer
+  // Starting the consumer.
+  // The consumer can also be started before registering message handlers (before calling consumer.consumeAsync())
   await consumer.runAsync();
-
-  // At this time the message handler is expected to be running
-  const r2 = await consumer.consumeAsync('another_queue', (message, cb) => {
-    cb();
-  });
-  console.log(`Is running? ${r2}`); // true
 }

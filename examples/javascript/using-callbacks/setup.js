@@ -11,8 +11,7 @@ setConfiguration(config);
 setLogger(console);
 
 exports.init = function init(cb) {
-  // Before producing and consuming messages to/from a given queue, we need to make sure that such exists
-  // We are going to create all the queues needed for this example
+  // Before producing and consuming messages to/from a given queue, we need to make sure that such queue exists
   QueueManager.getSingletonInstance((err, queueManager) => {
     if (err) throw err;
     else if (!queueManager)
