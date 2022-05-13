@@ -4,6 +4,7 @@ import { redisKeys } from '../redis-keys/redis-keys';
 import { RedisClient } from '../redis-client/redis-client';
 import { ELuaScriptName } from '../redis-client/lua-scripts';
 import { PanicError } from '../errors/panic.error';
+import { MessageNotScheduledError } from '../../app/producer/errors/message-not-scheduled.error';
 
 function scheduleMessageTransaction(
   multi: TRedisClientMulti,
@@ -29,12 +30,12 @@ export function scheduleMessage(
 export function scheduleMessage(
   mixed: RedisClient,
   message: Message,
-  cb: ICallback<boolean>,
+  cb: ICallback<void>,
 ): void;
 export function scheduleMessage(
   mixed: RedisClient | TRedisClientMulti,
   message: Message,
-  cb?: ICallback<boolean>,
+  cb?: ICallback<void>,
 ): void | boolean {
   if (mixed instanceof RedisClient) {
     if (!cb) throw new PanicError(`Expected a callback function`);
@@ -65,10 +66,12 @@ export function scheduleMessage(
         ],
         (err, reply) => {
           if (err) cb(err);
-          else cb(null, !!reply);
+          else if (reply !== 'OK')
+            cb(new MessageNotScheduledError(String(reply)));
+          else cb();
         },
       );
-    } else cb(null, false);
+    } else cb(new MessageNotScheduledError('INVALID_SCHEDULING_PARAMETERS'));
   } else {
     return scheduleMessageTransaction(mixed, message);
   }
