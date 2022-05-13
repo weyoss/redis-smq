@@ -7,13 +7,20 @@
 --- ARGV[2] message
 --- ARGV[3] messagePriority
 local priorityQueuing = redis.call("HGET", KEYS[1], KEYS[2])
-if priorityQueuing == 'true' and not(ARGV[3] == nil or ARGV[3] == '') then
+if priorityQueuing == false then
+    return 'QUEUE_NOT_FOUND'
+end
+if priorityQueuing == 'true' then
+    if ARGV[3] == nil or ARGV[3] == '' then
+        return 'MESSAGE_PRIORITY_REQUIRED'
+    end
     redis.call("HSET", KEYS[3], ARGV[1], ARGV[2])
     redis.call("ZADD", KEYS[4], ARGV[3], ARGV[1])
-    return 1
-elseif priorityQueuing == 'false' and (ARGV[3] == nil or ARGV[3] == '') then
-    redis.call("RPUSH", KEYS[5], ARGV[2])
-    return 1
+    return 'OK'
 end
-return 0
+if not(ARGV[3] == nil or ARGV[3] == '') then
+   return 'PRIORITY_QUEUING_NOT_ENABLED'
+end
+redis.call("RPUSH", KEYS[5], ARGV[2])
+return 'OK'
 

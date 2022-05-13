@@ -12,7 +12,6 @@ import { broker } from '../../common/broker/broker';
 import { getConfiguration } from '../../common/configuration/configuration';
 import { MessageError } from '../../common/errors/message.error';
 import { MessageNotPublishedError } from './errors/message-not-published.error';
-import { MessageNotScheduledError } from './errors/message-not-scheduled.error';
 
 export class Producer extends Base {
   protected messageRate: ProducerMessageRate | null = null;
@@ -57,7 +56,7 @@ export class Producer extends Base {
   protected enqueue(
     redisClient: RedisClient,
     message: Message,
-    cb: ICallback<boolean>,
+    cb: ICallback<void>,
   ): void {
     const queue = message.getRequiredQueue();
     message.getRequiredMetadata().setPublishedAt(Date.now());
@@ -84,7 +83,9 @@ export class Producer extends Base {
       ],
       (err, reply) => {
         if (err) cb(err);
-        else cb(null, !!reply);
+        else if (reply !== 'OK')
+          cb(new MessageNotPublishedError(String(reply)));
+        else cb();
       },
     );
   }
@@ -112,28 +113,16 @@ export class Producer extends Base {
       const proceed = () => {
         const redisClient = this.getSharedRedisClient();
         if (message.isSchedulable()) {
-          broker.scheduleMessage(redisClient, message, (err, reply) => {
+          broker.scheduleMessage(redisClient, message, (err) => {
             if (err) callback(err);
-            else if (!reply)
-              callback(
-                new MessageNotScheduledError(
-                  `Message has not been published. Make sure that the scheduling parameters are valid.`,
-                ),
-              );
             else {
               this.logger.info(`Message (ID ${messageId}) has been scheduled.`);
               callback();
             }
           });
         } else {
-          this.enqueue(redisClient, message, (err, reply) => {
-            if (err) cb(err);
-            else if (!reply)
-              callback(
-                new MessageNotPublishedError(
-                  `Message has not been published. Make sure that the queue exists. Also note that messages with priority can only published to priority queues.`,
-                ),
-              );
+          this.enqueue(redisClient, message, (err) => {
+            if (err) callback(err);
             else {
               this.logger.info(`Message (ID ${messageId}) has been published.`);
               callback();
