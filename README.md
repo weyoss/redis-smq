@@ -65,11 +65,11 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 
 ## What's new?
 
-**2022.02.08**
+**2022.05.13**
 
-- :rocket: Release v6 is finally ready. This release includes new features such as multi-queue consumers and multi-queue producers, message rate time series, complete integration with the Web UI, as well as many improvements and bug fixes. If you are upgrading your installation, take a look at the [migration guide](docs/migrating-from-v5-to-v6.md) before proceeding.
-
-See [CHANGELOG](CHANGELOG.md) for more details.
+:rocket: Release 7.0.0-rc.0 is ready! The RedisSMQ v7 is a refinement release with many improvements toward making 
+things more simple to use and removing any confusions that can occur while working with the message queue. If you are 
+upgrading your installation, take a look at the [migration guide](docs/migrating-from-v6-to-v7.md).
 
 ## Installation
 
