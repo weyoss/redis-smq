@@ -15,16 +15,12 @@ const QueueManagerAsync = promisifyAll(QueueManager);
 
 export async function init(): Promise<void> {
   // Before producing and consuming messages to/from a given queue, we need to make sure that such queue exists
-  // We are going to create all the queues needed for this example using the QueueManager
   const queueManager = promisifyAll(
     await QueueManagerAsync.getSingletonInstanceAsync(),
   );
 
   const queueAsync = promisifyAll(queueManager.queue);
 
-  // Creating a normal queue (a LIFO queue)
+  // Creating a queue (a LIFO queue)
   await queueAsync.createAsync('test_queue', false);
-
-  // Creating a priority queue
-  await queueAsync.createAsync('another_queue', true);
 }
