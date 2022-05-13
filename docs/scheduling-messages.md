@@ -4,10 +4,10 @@ Starting with version 1.0.19, RedisSMQ enables you to schedule a one-time or rep
 
 To set up scheduling parameters for a given message, the [Message API](api/message.md) provides:
 
-- [setScheduledDelay()](api/message.md#messageprototypesetscheduleddelay)
-- [setScheduledCRON()](api/message.md#messageprototypesetscheduledcron)
-- [setScheduledRepeat()](api/message.md#messageprototypesetscheduledrepeat)
-- [setScheduledRepeatPeriod()](api/message.md#messageprototypesetscheduledrepeatperiod)
+* [Message.prototype.setScheduledCRON()](api/message.md#messageprototypesetscheduledcron)
+* [Message.prototype.setScheduledDelay()](api/message.md#messageprototypesetscheduleddelay)
+* [Message.prototype.setScheduledRepeat()](api/message.md#messageprototypesetscheduledrepeat)
+* [Message.prototype.setScheduledRepeatPeriod()](api/message.md#messageprototypesetscheduledrepeatperiod)
 
 To schedule your message, you can publish it, as any other message, from your [Producer](api/producer.md#producerprototypeproduce) 
 using the `produce()` method.
@@ -33,8 +33,8 @@ producer.produce(message, (err, reply) => {
 
 For managing scheduled messages, the [Message Manager](api/message-manager.md) provides:
 
-- [getScheduledMessages()](api/message-manager.md#messagemanagerprototypegetscheduledmessages)
-- [deleteScheduledMessage()](api/message-manager.md#messagemanagerprototypedeletescheduledmessage)
-- [purgeScheduledMessages()](api/message-manager.md#messagemanagerprototypepurgescheduledmessages)
+* [MessageManager.prototype.scheduledMessages.list()](api/message-manager.md#list)
+* [MessageManager.prototype.scheduledMessages.delete()](api/message-manager.md#delete)
+* [MessageManager.prototype.scheduledMessages.purge()](api/message-manager.md#purge)
 
 Scheduled messages can be also managed using the [HTTP API Interface](/docs/http-api.md) or from your browser with the help of the [Web UI](/docs/web-ui.md).

@@ -88,7 +88,9 @@ See [Configuration](docs/configuration.md) for more details.
 
 ## Usage
 
-Before producing/consuming a message to/from a queue, such queue needs first to be created.
+Before producing/consuming a message to/from a queue, make sure that such queue exists. 
+
+You can create a queue, view existing queues, or delete a queue using the [QueueManager](/docs/api/queue-manager.md).
 
 ```javascript
 const { QueueManager } = require('redis-smq');
@@ -98,8 +100,6 @@ QueueManager.getSingletonInstance((err, queueManager) => {
   else queueManager.queue.create('test_queue', false, (err) => console.log(err));
 })
 ```
-
-See [QueueManager.prototype.queue.create()](/docs/api/queue-manager.md#queuemanagerprototypequeuecreate) for more details.
 
 ### Basics
 
@@ -193,7 +193,7 @@ const messageHandler = (msg, cb) => {
 consumer.consume('test_queue', messageHandler, (err, isRunning) => {
    if (err) console.error(err);
    // the message handler will be started only if the consumer is running
-   else console.log(`Message handler has been registered. Running status: ${isRunning}`); // isRunning === false
+   else console.log(`Message handler has been registered. Running status: ${isRunning}`);
 });
 
 consumer.run();
