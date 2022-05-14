@@ -3,7 +3,6 @@ import { QueuesService } from './queues.service';
 import { ConsumerTimeSeriesService } from './consumer-time-series.service';
 import { QueueTimeSeriesService } from './queue-time-series.service';
 import { GlobalTimeSeriesService } from './global-time-series.service';
-import { QueueManager } from '../../queue-manager';
 import { RedisClient } from '../../system/common/redis-client/redis-client';
 import { PanicError } from '../../system/common/errors/panic.error';
 
@@ -38,8 +37,7 @@ export function messagesServiceInstance() {
 export function queuesServiceInstance() {
   if (!queuesService) {
     const redisClient = getRedisClient();
-    const queueManager = new QueueManager(redisClient);
-    queuesService = new QueuesService(queueManager);
+    queuesService = new QueuesService(redisClient);
   }
   return queuesService;
 }

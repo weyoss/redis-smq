@@ -14,7 +14,7 @@ export class QueueManager {
   public readonly queueRateLimit: QueueRateLimit;
   public readonly queueMetrics: QueueMetrics;
 
-  constructor(redisClient: RedisClient) {
+  private constructor(redisClient: RedisClient) {
     this.redisClient = redisClient;
     this.namespace = new Namespace(redisClient);
     this.queue = new Queue(redisClient);
