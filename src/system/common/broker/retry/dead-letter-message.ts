@@ -18,7 +18,7 @@ function deadLetterMessageTransaction(
   const queue = message.getRequiredQueue();
   const { keyQueueDL } = redisKeys.getQueueKeys(queue);
   const { store, expire, queueSize } =
-    getConfiguration().storeMessages.deadLettered;
+    getConfiguration().messages.store.deadLettered;
   if (store) {
     mixed.lpop(keyQueueProcessing);
     mixed.rpush(keyQueueDL, JSON.stringify(message));
@@ -61,7 +61,7 @@ export function deadLetterMessage(
     const queue = message.getRequiredQueue();
     const { keyQueueDL } = redisKeys.getQueueKeys(queue);
     const { store, expire, queueSize } =
-      getConfiguration().storeMessages.deadLettered;
+      getConfiguration().messages.store.deadLettered;
     if (store) {
       if (expire || queueSize) {
         mixed.lpoprpushextra(
