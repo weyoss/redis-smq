@@ -45,9 +45,8 @@ consume(queue, messageHandler, cb);
 - `messageHandler(message, cb)` *(function): Required.* 
   - `message` *(mixed): Required.* A message instance.
   - `cb(err)` *(function): Required.* Callback function. If the message has successfully processed, you can acknowledge it by calling the callback function without arguments. Otherwise, if any error has occurred, the message is unacknowledged by returning the error as the first argument of the callback function.
-- `cb(err, isRunning)` *(function): Required.* Callback function. 
+- `cb(err)` *(function): Required.* Callback function. 
   - `err` *(Error | null | undefined).* Error object.
-  - `isRunning` *(boolean): Required.* Indicates whether the message handler is currently running. If your consumer is up and running, then the message handler will be started after being registered.
   
 Before consuming messages from a queue, make sure that such queue exists.
 

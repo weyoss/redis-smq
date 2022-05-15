@@ -190,10 +190,8 @@ const messageHandler = (msg, cb) => {
    cb(); // acknowledging the message
 };
 
-consumer.consume('test_queue', messageHandler, (err, isRunning) => {
+consumer.consume('test_queue', messageHandler, (err) => {
    if (err) console.error(err);
-   // the message handler will be started only if the consumer is running
-   else console.log(`Message handler has been registered. Running status: ${isRunning}`);
 });
 
 consumer.run();
