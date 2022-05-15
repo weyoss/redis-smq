@@ -53,13 +53,16 @@ module.exports = {
         host: '127.0.0.1',
         port: 3000,
     },
-    message: {
+    messages: {
+      consumeOptions: {
         consumeTimeout: 60000,
         retryThreshold: 5,
         retryDelay: 60000,
         ttl: 120000,
+      },
+      store: false,
     },
-    storeMessages: false,
+    
 };
 ```
 
@@ -80,42 +83,45 @@ module.exports = {
 
 - `monitor` *(object): Optional.* See [Web UI Configuration](web-ui.md#configuration) for more details.
 
-- `message` *(object): Optional.* Default message parameters. These parameters can be overwritten for a given message 
-instance using the [Message API](api/message.md). 
-  - `message.consumeTimeout` *(Integer): Optional.* In milliseconds. Message consumption timeout. See [setConsumeTimeout()](/docs/api/message.md#messageprototypesetconsumetimeout).
-  - `message.ttl` *(Integer): Optional.* In milliseconds. Message TTL. See [setTTL()](/docs/api/message.md#messageprototypesetttl).
-  - `message.retryThreshold` *(Integer): Optional.* Message retry threshold. See [setRetryThreshold()](/docs/api/message.md#messageprototypesetretrythreshold).
-  - `message.retryDelay` *(Integer): Optional.* In milliseconds. Message retry delay. See [setRetryDelay()](/docs/api/message.md#messageprototypesetretrydelay).
+- `messages` *(object): Optional.* Message options
 
-- `storeMessages` *(boolean | object): Optional.* Whether to store acknowledged and/or dead-lettered messages. By default, acknowledged and dead-lettered messages are not stored. Keep in mind that storing messages affects performance.
-  - `storeMessages` *(boolean)*
-    - `storeMessages = false` - Do not store acknowledged and dead-lettered messages. 
-    - `storeMessages = true` - Store acknowledged and dead-lettered messages.
-  - `storeMessages` *(object)*
-    - `storeMessages.acknowledged` *(boolean | object): Optional.*
-      - `storeMessages.acknowledged` *(boolean)*
-        - `storeMessages.acknowledged = true`: Store acknowledged messages.
-        - `storeMessages.acknowledged = false`: Do not store acknowledged messages.
-      - `storeMessages.acknowledged` *(object)*
-        - `storeMessages.acknowledged.queueSize` *(number): Optional.* Store a maximum of N acknowledged messages. Older messages get deleted when the maximum size is reached.
-        - `storeMessages.acknowledged.expire` *(number): Optional.* Store acknowledged messages for N milliseconds. Each time a new message is saved the expiration is updated.
-    - `storeMessages.deadLettered` *(boolean | object): Optional.*
-      - `storeMessages.deadLettered` *(boolean)*
-        - `storeMessages.deadLettered = true`: Store dead-lettered messages.
-        - `storeMessages.deadLettered = false`: Do not store dead-lettered messages.
-      - `storeMessages.deadLettered` *(object)*
-        - `storeMessages.deadLettered.queueSize` *(number): Optional.* Store a maximum of N dead-lettered messages. Older messages get deleted when the maximum size is reached.
-        - `storeMessages.deadLettered.expire` *(number): Optional.* Store dead-lettered messages for N milliseconds. Each time a new message is saved the expiration is updated.
+  - `messages.consumeOptions` *(object): Optional.* Default message parameters. These parameters can be overwritten for a given message instance using the [Message API](api/message.md). 
+    - `messages.consumeOptions.consumeTimeout` *(Integer): Optional.* In milliseconds. Message consumption timeout. See [setConsumeTimeout()](/docs/api/message.md#messageprototypesetconsumetimeout).
+    - `messages.consumeOptions.ttl` *(Integer): Optional.* In milliseconds. Message TTL. See [setTTL()](/docs/api/message.md#messageprototypesetttl).
+    - `messages.consumeOptions.retryThreshold` *(Integer): Optional.* Message retry threshold. See [setRetryThreshold()](/docs/api/message.md#messageprototypesetretrythreshold).
+    - `messages.consumeOptions.retryDelay` *(Integer): Optional.* In milliseconds. Message retry delay. See [setRetryDelay()](/docs/api/message.md#messageprototypesetretrydelay).
+
+  - `messages.store` *(boolean | object): Optional.* Whether to store acknowledged and/or dead-lettered messages. By default, acknowledged and dead-lettered messages are not stored. Keep in mind that storing messages affects performance.
+    - `messages.store` *(boolean)*
+      - `messages.store = false` - Do not store acknowledged and dead-lettered messages. 
+      - `messages.store = true` - Store acknowledged and dead-lettered messages.
+    - `messages.store` *(object)*
+      - `messages.store.acknowledged` *(boolean | object): Optional.*
+        - `messages.store.acknowledged` *(boolean)*
+          - `messages.store.acknowledged = true`: Store acknowledged messages.
+          - `messages.store.acknowledged = false`: Do not store acknowledged messages.
+        - `messages.store.acknowledged` *(object)*
+          - `messages.store.acknowledged.queueSize` *(number): Optional.* Store a maximum of N acknowledged messages. Older messages get deleted when the maximum size is reached.
+          - `messages.store.acknowledged.expire` *(number): Optional.* Store acknowledged messages for N milliseconds. Each time a new message is saved the expiration is updated.
+      - `messages.store.deadLettered` *(boolean | object): Optional.*
+        - `messages.store.deadLettered` *(boolean)*
+          - `messages.store.deadLettered = true`: Store dead-lettered messages.
+          - `messages.store.deadLettered = false`: Do not store dead-lettered messages.
+        - `messages.store.deadLettered` *(object)*
+          - `messages.store.deadLettered.queueSize` *(number): Optional.* Store a maximum of N dead-lettered messages. Older messages get deleted when the maximum size is reached.
+          - `messages.store.deadLettered.expire` *(number): Optional.* Store dead-lettered messages for N milliseconds. Each time a new message is saved the expiration is updated.
 
   
-**storeMessages Usage Examples**
+**messages.store Usage Examples**
 
 - Only storing dead-lettered messages:
 
 ```javascript
 const config = {
-  storeMessages: {
-    deadLettered: true,
+  messages: {
+    store: {
+      deadLettered: true,
+    }
   }
 }
 ```
@@ -124,12 +130,14 @@ const config = {
 
 ```javascript
 const config = {
-  storeMessages: {
-    acknowledged: true,
-    deadLettered: {
-      queueSize: 100000,
-      expire: 24 * 60 * 60 * 1000 // 1 day in millis
-    },
+  messages: {
+    store: {
+      acknowledged: true,
+      deadLettered: {
+        queueSize: 100000,
+        expire: 24 * 60 * 60 * 1000 // 1 day in millis
+      },
+    }
   }
 }
 ```
@@ -138,14 +146,16 @@ const config = {
 
 ```javascript
 const config = {
-  storeMessages: {
-    acknowledged: {
-      queueSize: 5000,
-    },
-    deadLettered: {
-      queueSize: 5000,
-      expire: 24 * 60 * 60 * 1000
-    },
+  messages: {
+    store: {
+      acknowledged: {
+        queueSize: 5000,
+      },
+      deadLettered: {
+        queueSize: 5000,
+        expire: 24 * 60 * 60 * 1000
+      },
+    }
   }
 }
 ```
