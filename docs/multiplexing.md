@@ -18,13 +18,13 @@ So, before deciding whether to use multiplexing, it is important to know what yo
 
 ## Enabling multiplexing
 
-Before creating a consumer instance, the [Consumer class constructor](/docs/api/consumer.md#consumerprototypeconstructor) accepts a boolean as its first argument for enabling multiplexing:
+The [Consumer class constructor](/docs/api/consumer.md#consumerprototypeconstructor) accepts a boolean as its first argument for enabling multiplexing:
 
 ```javascript
 const consumer = new Consumer(true);
 ```
 
-Once created, you can use your consumer instance as usually:
+Once created, you can your consumer instance can be used as usually:
 
 ```javascript
 consumer.consume('queue1', messageHandler1, (e) => { 

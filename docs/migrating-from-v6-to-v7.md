@@ -32,7 +32,8 @@ producer.produce(msg, (err) => {
 })
 ```
 
-- When registering a message handler, the `consumer.consume()` method is now accepting 3 arguments: queue, messageHandler, and a callback.
+- When registering a message handler, the `consumer.consume()` method is now accepting 3 arguments: queue, messageHandler, and a callback. 
+  The callback function now has a single argument (err).
 
 Before
 
@@ -45,7 +46,7 @@ consumer.consume(queue, priorityQueuing, messageHandler, (err, status) => {
 Now:
 
 ```javascript
-consumer.consume(queue, messageHandler, (err, status) => {
+consumer.consume(queue, messageHandler, (err) => {
   //
 })
 ```
