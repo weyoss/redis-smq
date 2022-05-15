@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 7.0.0-rc.1 (2022-05-15)
+
+* Update docs (41ee4bf)
+* Fix consuming-messages/test00015 test (8b3072a)
+* Clean up and simplify the consumer.consume() callback argument (bd98b65)
+* Update docs (9ede0f6)
+* Update tests (b1772aa)
+* Refactor configuration object (2ebe1ba)
+* Make QueueManager constructor private (c55cdad)
+* Update redisKeys version (add3e8d)
+* Update scheduling-messages.md (4b2bb2d)
+* Update multiplexing.md (f36f712)
+
 ## 7.0.0-rc.0 (2022-05-13)
 
 * Update LICENSE (2ef31db)
