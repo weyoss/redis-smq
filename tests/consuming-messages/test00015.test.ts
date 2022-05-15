@@ -9,16 +9,10 @@ test('Consume messages from different queues using a single consumer instance: c
   expect(consumer.getQueues()).toEqual([]);
 
   await queueManager.queue.createAsync('test_queue', false);
-  const isRunning1 = await consumer.consumeAsync('test_queue', (msg, cb) =>
-    cb(),
-  );
-  expect(isRunning1).toBe(false);
+  await consumer.consumeAsync('test_queue', (msg, cb) => cb());
 
   await queueManager.queue.createAsync('another_queue', false);
-  const isRunning2 = await consumer.consumeAsync('another_queue', (msg, cb) =>
-    cb(),
-  );
-  expect(isRunning2).toBe(false);
+  await consumer.consumeAsync('another_queue', (msg, cb) => cb());
 
   expect(
     consumer.consumeAsync('another_queue', (msg, cb) => cb()),
@@ -66,8 +60,7 @@ test('Consume messages from different queues using a single consumer instance: c
   ]);
 
   await queueManager.queue.createAsync('queue_a', true);
-  const isRunning3 = await consumer.consumeAsync('queue_a', (msg, cb) => cb());
-  expect(isRunning3).toBe(true);
+  await consumer.consumeAsync('queue_a', (msg, cb) => cb());
 
   expect(consumer.consumeAsync('queue_a', (msg, cb) => cb())).rejects.toThrow(
     `A message handler for queue [queue_a@testing] already exists`,
