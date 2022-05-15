@@ -13,8 +13,10 @@ import { events } from '../../src/system/common/events';
 
 test('Setting default message TTL from configuration', async () => {
   mockConfiguration({
-    message: {
-      ttl: 2000,
+    messages: {
+      consumeOptions: {
+        ttl: 2000,
+      },
     },
   });
   await createQueue(defaultQueue, false);

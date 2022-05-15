@@ -9,9 +9,11 @@ import {
 
 test('Message storage: acknowledged = true, deadLettered = false', async () => {
   mockConfiguration({
-    storeMessages: {
-      acknowledged: true,
-      deadLettered: false,
+    messages: {
+      store: {
+        acknowledged: true,
+        deadLettered: false,
+      },
     },
   });
   await createQueue(defaultQueue, false);

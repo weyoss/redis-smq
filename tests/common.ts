@@ -28,7 +28,7 @@ import ScheduleWorker from '../src/system/workers/schedule.worker';
 import TimeSeriesWorker from '../src/system/workers/time-series.worker';
 import { merge } from 'lodash';
 import { reset } from '../src/system/common/logger';
-import MessageStorage from '../src/system/common/configuration/message-storage';
+import Store from '../src/system/common/configuration/messages/store';
 
 export const config = configuration.setConfiguration(testConfig);
 
@@ -133,13 +133,14 @@ export function restoreConfiguration(): void {
 }
 
 export function mockConfiguration(config: IConfig): void {
-  const messageStorage =
-    config.storeMessages !== undefined ? MessageStorage(config) : {};
+  const store = config.messages?.store !== undefined ? Store(config) : {};
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   configuration.getConfiguration = () => {
     return merge({}, getConfigurationOrig(), config, {
-      storeMessages: messageStorage,
+      messages: {
+        store,
+      },
     });
   };
 }

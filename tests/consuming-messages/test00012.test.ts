@@ -13,7 +13,7 @@ import { events } from '../../src/system/common/events';
 
 test('An unacknowledged message is delayed given messageRetryDelay > 0 and messageRetryThreshold > 0 and is not exceeded', async () => {
   mockConfiguration({
-    message: { retryDelay: 10000, retryThreshold: 5 },
+    messages: { consumeOptions: { retryDelay: 10000, retryThreshold: 5 } },
   });
   await createQueue(defaultQueue, false);
 

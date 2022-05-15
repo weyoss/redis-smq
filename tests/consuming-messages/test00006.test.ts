@@ -12,9 +12,11 @@ import { ICallback } from '../../types';
 
 test('A message is unacknowledged when messageConsumeTimeout is exceeded', async () => {
   mockConfiguration({
-    message: {
-      consumeTimeout: 2000,
-      retryDelay: 6000,
+    messages: {
+      consumeOptions: {
+        consumeTimeout: 2000,
+        retryDelay: 6000,
+      },
     },
   });
   await createQueue(defaultQueue, false);
