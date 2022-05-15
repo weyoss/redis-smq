@@ -124,7 +124,7 @@ export class Consumer extends Base {
   consume(
     queue: TQueueParams,
     messageHandler: TConsumerMessageHandler,
-    cb: ICallback<boolean>,
+    cb: ICallback<void>,
   ): void {
     this.messageHandlerRunner.addMessageHandler(queue, messageHandler, cb);
   }

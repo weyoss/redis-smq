@@ -202,7 +202,7 @@ export class MessageHandlerRunner {
   addMessageHandler(
     queue: TQueueParams,
     messageHandler: TConsumerMessageHandler,
-    cb: ICallback<boolean>,
+    cb: ICallback<void>,
   ): void {
     const handler = this.getMessageHandler(queue);
     if (handler) cb(new MessageHandlerAlreadyExistsError(queue));
@@ -217,12 +217,8 @@ export class MessageHandlerRunner {
           handlerParams,
         )}) has been registered.`,
       );
-      if (this.consumer.isRunning())
-        this.runMessageHandler(handlerParams, (err) => {
-          if (err) cb(err);
-          else cb(null, true);
-        });
-      else cb(null, false);
+      if (this.consumer.isRunning()) this.runMessageHandler(handlerParams, cb);
+      else cb();
     }
   }
 

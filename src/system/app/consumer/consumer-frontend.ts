@@ -39,7 +39,7 @@ export class ConsumerFrontend extends EventEmitter {
   consume(
     queue: string | TQueueParams,
     messageHandler: TConsumerMessageHandler,
-    cb: ICallback<boolean>,
+    cb: ICallback<void>,
   ): void {
     const queueParams = Queue.getParams(queue);
     return this.consumer.consume(queueParams, messageHandler, cb);

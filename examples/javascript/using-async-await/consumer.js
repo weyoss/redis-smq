@@ -4,9 +4,8 @@ const { promisifyAll } = require('bluebird');
 const consumer = promisifyAll(new Consumer());
 
 exports.consume = async function consume() {
-  // As the consumer is not running, the message handler does not run immediately
-  // At this time the message handler is just registered
-  const r1 = await consumer.consumeAsync(
+  // registering the message handler
+  await consumer.consumeAsync(
     // Using the default namespace from the config
     // Same as { name: 'test_queue', ns: 'ns1' })
     'test_queue',
@@ -22,7 +21,6 @@ exports.consume = async function consume() {
       cb();
     },
   );
-  console.log(`Is running? ${r1}`); // false
 
   // Starting the consumer.
   // The consumer can also be started before registering message handlers (before calling consumer.consumeAsync())

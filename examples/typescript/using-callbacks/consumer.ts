@@ -23,13 +23,7 @@ export function consume(cb: ICallback<void>): void {
           //  }, timeout);
           cb();
         },
-        (err, isRunning) => {
-          if (err) console.log(err);
-          else {
-            console.log(`Is running? ${isRunning}`); // true
-            cb();
-          }
-        },
+        (err) => cb(err),
       );
   });
 
@@ -39,12 +33,9 @@ export function consume(cb: ICallback<void>): void {
   // consumer.consume(
   //   'test_queue',
   //   (message, cb) => cb(),
-  //   (err, isRunning) => {
+  //   (err) => {
   //     if (err) console.log(err);
-  //     else {
-  //       console.log(`Is running? ${isRunning}`); // false
-  //       consumer.run(cb);
-  //     }
+  //     else consumer.run(cb);
   //   },
   // );
 }
