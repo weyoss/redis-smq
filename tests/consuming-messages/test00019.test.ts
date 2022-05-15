@@ -12,8 +12,10 @@ import { events } from '../../src/system/common/events';
 
 test('An unacknowledged message is dead-lettered and not delivered again, given retryThreshold is 0', async () => {
   mockConfiguration({
-    message: {
-      retryThreshold: 0,
+    messages: {
+      consumeOptions: {
+        retryThreshold: 0,
+      },
     },
   });
   await createQueue(defaultQueue, false);

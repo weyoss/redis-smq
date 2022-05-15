@@ -8,9 +8,11 @@ import {
 
 test('Message storage: acknowledged.queueSize = 3', async () => {
   mockConfiguration({
-    storeMessages: {
-      acknowledged: {
-        queueSize: 3,
+    messages: {
+      store: {
+        acknowledged: {
+          queueSize: 3,
+        },
       },
     },
   });

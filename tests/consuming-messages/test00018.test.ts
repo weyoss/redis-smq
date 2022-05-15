@@ -1,14 +1,6 @@
-import {
-  createQueue,
-  defaultQueue,
-  mockConfiguration,
-  produceMessage,
-} from '../common';
+import { createQueue, defaultQueue, produceMessage } from '../common';
 
 test('Producing duplicate messages', async () => {
-  mockConfiguration({
-    storeMessages: false,
-  });
   await createQueue(defaultQueue, false);
   const { producer, message } = await produceMessage();
   await expect(async () => {

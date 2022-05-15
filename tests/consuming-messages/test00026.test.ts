@@ -9,9 +9,11 @@ import { delay } from 'bluebird';
 
 test('Message storage: acknowledged.expire = 10000', async () => {
   mockConfiguration({
-    storeMessages: {
-      acknowledged: {
-        expire: 20000,
+    messages: {
+      store: {
+        acknowledged: {
+          expire: 20000,
+        },
       },
     },
   });

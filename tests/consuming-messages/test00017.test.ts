@@ -9,7 +9,9 @@ import {
 
 test('Message storage: storeMessages = false', async () => {
   mockConfiguration({
-    storeMessages: false,
+    messages: {
+      store: false,
+    },
   });
   await createQueue(defaultQueue, false);
   const { producer, consumer } = await produceAndDeadLetterMessage();
