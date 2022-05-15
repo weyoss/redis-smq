@@ -49,6 +49,8 @@ consume(queue, messageHandler, cb);
   - `err` *(Error | null | undefined).* Error object.
   - `isRunning` *(boolean): Required.* Indicates whether the message handler is currently running. If your consumer is up and running, then the message handler will be started after being registered.
   
+Before consuming messages from a queue, make sure that such queue exists.
+
 ### Consumer.prototype.cancel()
 
 ```javascript

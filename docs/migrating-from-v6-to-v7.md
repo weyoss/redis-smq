@@ -50,4 +50,40 @@ consumer.consume(queue, messageHandler, (err, status) => {
 })
 ```
 
+- Removed `message` and `storeMessages` entries from the configuration object and introduced the `messages` entry. 
+
+Before:
+
+```javascript
+const config = {
+  message: {
+    consumeTimeout: 60000,
+    retryThreshold: 5,
+    retryDelay: 60000,
+    ttl: 120000,
+  },
+  storeMessages: false,
+}
+```
+
+Now:
+
+```javascript
+const config = {
+  messages: {
+    consumeOptions: {
+      consumeTimeout: 60000,
+      retryThreshold: 5,
+      retryDelay: 60000,
+      ttl: 120000,
+    },
+    store: false,
+  },
+}
+```
+
+  See [Configuration Reference](/docs/configuration.md) for more details.
+
 - Refactored and improved different APIs, mainly QueueManager API and MessageManager API.
+
+See [MessageManager API](/docs/api/message-manager.md) and [QueueManager API](/docs/api/queue-manager.md).
