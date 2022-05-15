@@ -1,7 +1,6 @@
 import { ICallback, TQueueParams } from '../../../types';
 import { redisKeys } from '../../system/common/redis-keys/redis-keys';
 import { ConsumerHeartbeat } from '../../system/app/consumer/consumer-heartbeat';
-import { TimeSeries } from '../../system/common/time-series/time-series';
 import { QueuePublishedTimeSeries } from '../../system/app/producer/producer-time-series/queue-published-time-series';
 import { QueueDeadLetteredTimeSeries } from '../../system/app/consumer/consumer-time-series/queue-dead-lettered-time-series';
 import { QueueAcknowledgedTimeSeries } from '../../system/app/consumer/consumer-time-series/queue-acknowledged-time-series';
@@ -15,221 +14,152 @@ import { Worker } from '../../system/common/worker/worker';
 import { each, waterfall } from '../../system/lib/async';
 
 export class WebsocketRateStreamWorker extends Worker {
-  protected queueData: {
-    [ns: string]: {
-      [queueName: string]: {
-        consumers: string[];
-      };
-    };
-  } = {};
-  protected tasks: ((cb: ICallback<void>) => void)[] = [];
+  protected timestamp = 0;
 
-  protected reset = (): void => {
-    this.queueData = {};
-    this.tasks = [];
-  };
-
-  protected addConsumerTasks = (
-    ts: number,
+  protected publishConsumerTimeSeries = (
     queue: TQueueParams,
     consumerId: string,
-  ): void => {
-    this.tasks.push((cb: ICallback<void>) =>
-      ConsumerAcknowledgedTimeSeries(this.redisClient, consumerId).getRangeFrom(
-        ts,
-        (err, reply) => {
-          if (err) cb(err);
-          else {
-            this.redisClient.publish(
-              `streamConsumerAcknowledged:${consumerId}`,
-              JSON.stringify(reply),
-              () => cb(),
-            );
-          }
-        },
-      ),
-    );
-    this.tasks.push((cb: ICallback<void>) =>
-      ConsumerDeadLetteredTimeSeries(this.redisClient, consumerId).getRangeFrom(
-        ts,
-        (err, reply) => {
-          if (err) cb(err);
-          else {
-            this.redisClient.publish(
-              `streamConsumerDeadLettered:${consumerId}`,
-              JSON.stringify(reply),
-              () => cb(),
-            );
-          }
-        },
-      ),
-    );
-  };
-
-  protected addQueueTasks = (ts: number, queue: TQueueParams): void => {
-    this.tasks.push((cb: ICallback<void>) =>
-      QueueAcknowledgedTimeSeries(this.redisClient, queue).getRangeFrom(
-        ts,
-        (err, reply) => {
-          if (err) cb(err);
-          else {
-            this.redisClient.publish(
-              `streamQueueAcknowledged:${queue.ns}:${queue.name}`,
-              JSON.stringify(reply),
-              () => cb(),
-            );
-          }
-        },
-      ),
-    );
-    this.tasks.push((cb: ICallback<void>) =>
-      QueueDeadLetteredTimeSeries(this.redisClient, queue).getRangeFrom(
-        ts,
-        (err, reply) => {
-          if (err) cb(err);
-          else {
-            this.redisClient.publish(
-              `streamQueueDeadLettered:${queue.ns}:${queue.name}`,
-              JSON.stringify(reply),
-              () => cb(),
-            );
-          }
-        },
-      ),
-    );
-    this.tasks.push((cb: ICallback<void>) =>
-      QueuePublishedTimeSeries(this.redisClient, queue).getRangeFrom(
-        ts,
-        (err, reply) => {
-          if (err) cb(err);
-          else {
-            this.redisClient.publish(
-              `streamQueuePublished:${queue.ns}:${queue.name}`,
-              JSON.stringify(reply),
-              () => cb(),
-            );
-          }
-        },
-      ),
-    );
-  };
-
-  protected addGlobalTasks = (ts: number): void => {
-    this.tasks.push((cb: ICallback<void>) =>
-      GlobalAcknowledgedTimeSeries(this.redisClient).getRangeFrom(
-        ts,
-        (err, reply) => {
-          if (err) cb(err);
-          else {
-            this.redisClient.publish(
-              'streamGlobalAcknowledged',
-              JSON.stringify(reply),
-              () => cb(),
-            );
-          }
-        },
-      ),
-    );
-    this.tasks.push((cb: ICallback<void>) =>
-      GlobalDeadLetteredTimeSeries(this.redisClient).getRangeFrom(
-        ts,
-        (err, reply) => {
-          if (err) cb(err);
-          else {
-            this.redisClient.publish(
-              'streamGlobalDeadLettered',
-              JSON.stringify(reply),
-              () => cb(),
-            );
-          }
-        },
-      ),
-    );
-    this.tasks.push((cb: ICallback<void>) =>
-      GlobalPublishedTimeSeries(this.redisClient).getRangeFrom(
-        ts,
-        (err, reply) => {
-          if (err) cb(err);
-          else {
-            this.redisClient.publish(
-              'streamGlobalPublished',
-              JSON.stringify(reply),
-              () => cb(),
-            );
-          }
-        },
-      ),
-    );
-  };
-
-  protected addQueue = (queue: TQueueParams): { consumers: string[] } => {
-    const { ns, name } = queue;
-    if (!this.queueData[ns]) {
-      this.queueData[ns] = {};
-    }
-    if (!this.queueData[ns][name]) {
-      this.queueData[ns][name] = {
-        consumers: [],
-      };
-    }
-    return this.queueData[ns][name];
-  };
-
-  protected handleQueueConsumers = (
-    ts: number,
-    queue: TQueueParams,
-    consumers: string[],
     cb: ICallback<void>,
   ): void => {
-    each(
-      consumers,
-      (consumerId, _, done) => {
-        this.addConsumerTasks(ts, queue, consumerId);
-        done();
-      },
+    waterfall(
+      [
+        (cb: ICallback<void>) =>
+          ConsumerAcknowledgedTimeSeries(
+            this.redisClient,
+            consumerId,
+          ).getRangeFrom(this.timestamp, (err, reply) => {
+            if (err) cb(err);
+            else {
+              this.redisClient.publish(
+                `streamConsumerAcknowledged:${consumerId}`,
+                JSON.stringify(reply),
+                () => cb(),
+              );
+            }
+          }),
+        (cb: ICallback<void>) =>
+          ConsumerDeadLetteredTimeSeries(
+            this.redisClient,
+            consumerId,
+          ).getRangeFrom(this.timestamp, (err, reply) => {
+            if (err) cb(err);
+            else {
+              this.redisClient.publish(
+                `streamConsumerDeadLettered:${consumerId}`,
+                JSON.stringify(reply),
+                () => cb(),
+              );
+            }
+          }),
+      ],
       cb,
     );
   };
 
-  protected handleQueue = (
-    ts: number,
+  protected publishQueueTimeSeries = (
     queue: TQueueParams,
-    queueProperties: { consumers: string[] },
     cb: ICallback<void>,
   ): void => {
-    const { consumers } = queueProperties;
-    this.addQueueTasks(ts, queue);
-    this.handleQueueConsumers(ts, queue, consumers, cb);
-  };
-
-  protected prepare = (cb: ICallback<void>): void => {
-    const ts = TimeSeries.getCurrentTimestamp();
-    this.addGlobalTasks(ts);
-    each(
-      this.queueData,
-      (queues, ns, done) => {
-        each(
-          queues,
-          (queue, queueName, done) => {
-            this.handleQueue(
-              ts,
-              { ns: String(ns), name: String(queueName) },
-              queue,
-              done,
-            );
-          },
-          done,
-        );
-      },
+    waterfall(
+      [
+        (cb: ICallback<void>) =>
+          QueueAcknowledgedTimeSeries(this.redisClient, queue).getRangeFrom(
+            this.timestamp,
+            (err, reply) => {
+              if (err) cb(err);
+              else {
+                this.redisClient.publish(
+                  `streamQueueAcknowledged:${queue.ns}:${queue.name}`,
+                  JSON.stringify(reply),
+                  () => cb(),
+                );
+              }
+            },
+          ),
+        (cb: ICallback<void>) =>
+          QueueDeadLetteredTimeSeries(this.redisClient, queue).getRangeFrom(
+            this.timestamp,
+            (err, reply) => {
+              if (err) cb(err);
+              else {
+                this.redisClient.publish(
+                  `streamQueueDeadLettered:${queue.ns}:${queue.name}`,
+                  JSON.stringify(reply),
+                  () => cb(),
+                );
+              }
+            },
+          ),
+        (cb: ICallback<void>) =>
+          QueuePublishedTimeSeries(this.redisClient, queue).getRangeFrom(
+            this.timestamp,
+            (err, reply) => {
+              if (err) cb(err);
+              else {
+                this.redisClient.publish(
+                  `streamQueuePublished:${queue.ns}:${queue.name}`,
+                  JSON.stringify(reply),
+                  () => cb(),
+                );
+              }
+            },
+          ),
+      ],
       cb,
     );
   };
 
-  protected publish = (cb: ICallback<void>): void => {
-    waterfall(this.tasks, cb);
+  protected handleGlobalTimeSeries = (cb: ICallback<void>): void => {
+    waterfall(
+      [
+        (cb: ICallback<void>) =>
+          GlobalAcknowledgedTimeSeries(this.redisClient).getRangeFrom(
+            this.timestamp,
+            (err, reply) => {
+              if (err) cb(err);
+              else {
+                this.redisClient.publish(
+                  'streamGlobalAcknowledged',
+                  JSON.stringify(reply),
+                  () => cb(),
+                );
+              }
+            },
+          ),
+        (cb: ICallback<void>) =>
+          GlobalDeadLetteredTimeSeries(this.redisClient).getRangeFrom(
+            this.timestamp,
+            (err, reply) => {
+              if (err) cb(err);
+              else {
+                this.redisClient.publish(
+                  'streamGlobalDeadLettered',
+                  JSON.stringify(reply),
+                  () => cb(),
+                );
+              }
+            },
+          ),
+        (cb: ICallback<void>) =>
+          GlobalPublishedTimeSeries(this.redisClient).getRangeFrom(
+            this.timestamp,
+            (err, reply) => {
+              if (err) cb(err);
+              else {
+                this.redisClient.publish(
+                  'streamGlobalPublished',
+                  JSON.stringify(reply),
+                  () => cb(),
+                );
+              }
+            },
+          ),
+      ],
+      cb,
+    );
   };
 
-  protected consumersCount = (cb: ICallback<void>): void => {
+  protected handleConsumersTimeSeries = (cb: ICallback<void>): void => {
     ConsumerHeartbeat.getValidHeartbeatIds(this.redisClient, (err, reply) => {
       if (err) cb(err);
       else {
@@ -245,9 +175,11 @@ export class WebsocketRateStreamWorker extends Worker {
                   each(
                     queues ?? [],
                     (queueParams, _, done) => {
-                      const queue = this.addQueue(queueParams);
-                      queue.consumers.push(consumerId);
-                      done();
+                      this.publishConsumerTimeSeries(
+                        queueParams,
+                        consumerId,
+                        done,
+                      );
                     },
                     done,
                   );
@@ -261,7 +193,7 @@ export class WebsocketRateStreamWorker extends Worker {
     });
   };
 
-  protected getQueues = (cb: ICallback<void>): void => {
+  protected handleQueuesTimeSeries = (cb: ICallback<void>): void => {
     const { keyQueues } = redisKeys.getMainKeys();
     this.redisClient.smembers(keyQueues, (err, reply) => {
       if (err) cb(err);
@@ -270,8 +202,7 @@ export class WebsocketRateStreamWorker extends Worker {
           reply ?? [],
           (queueStr, index, done) => {
             const queue: TQueueParams = JSON.parse(queueStr);
-            this.addQueue(queue);
-            done();
+            this.publishQueueTimeSeries(queue, done);
           },
           cb,
         );
@@ -280,9 +211,16 @@ export class WebsocketRateStreamWorker extends Worker {
   };
 
   work = (cb: ICallback<void>): void => {
-    this.reset();
+    if (!this.timestamp)
+      // in secs
+      this.timestamp = Math.ceil(Date.now() / 1000);
+    else this.timestamp += 1;
     waterfall(
-      [this.getQueues, this.consumersCount, this.prepare, this.publish],
+      [
+        this.handleGlobalTimeSeries,
+        this.handleQueuesTimeSeries,
+        this.handleConsumersTimeSeries,
+      ],
       cb,
     );
   };
