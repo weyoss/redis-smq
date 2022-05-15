@@ -49,11 +49,13 @@ export class Message {
 
   constructor() {
     this.createdAt = Date.now();
-    const { message } = getConfiguration();
-    this.setConsumeTimeout(message.consumeTimeout);
-    this.setRetryDelay(message.retryDelay);
-    this.setTTL(message.ttl);
-    this.setRetryThreshold(message.retryThreshold);
+    const { messages } = getConfiguration();
+    const { consumeTimeout, retryDelay, ttl, retryThreshold } =
+      messages.consumeOptions;
+    this.setConsumeTimeout(consumeTimeout);
+    this.setRetryDelay(retryDelay);
+    this.setTTL(ttl);
+    this.setRetryThreshold(retryThreshold);
   }
 
   getMetadata(): MessageMetadata | null {

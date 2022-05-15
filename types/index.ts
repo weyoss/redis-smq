@@ -34,21 +34,26 @@ export interface IMonitorConfig {
   basePath?: string;
 }
 
-export type TMessageDefaultOptions = {
-  consumeTimeout: number;
-  ttl: number;
-  retryThreshold: number;
-  retryDelay: number;
-};
+export interface IMessageConfigConsumeOptions {
+  consumeTimeout?: number;
+  ttl?: number;
+  retryThreshold?: number;
+  retryDelay?: number;
+}
 
-export interface IStoreMessagesParams {
+export interface IMessagesConfig {
+  consumeOptions?: IMessageConfigConsumeOptions;
+  store?: boolean | IMessagesConfigStore;
+}
+
+export interface IMessagesConfigStoreOptions {
   queueSize?: number;
   expire?: number;
 }
 
-export interface IStoreMessagesConfig {
-  acknowledged?: boolean | IStoreMessagesParams;
-  deadLettered?: boolean | IStoreMessagesParams;
+export interface IMessagesConfigStore {
+  acknowledged?: boolean | IMessagesConfigStoreOptions;
+  deadLettered?: boolean | IMessagesConfigStoreOptions;
 }
 
 export interface IConfig {
@@ -59,18 +64,20 @@ export interface IConfig {
     options?: Partial<Logger.LoggerOptions>;
   };
   monitor?: IMonitorConfig;
-  message?: Partial<TMessageDefaultOptions>;
-  storeMessages?: boolean | IStoreMessagesConfig;
+  messages?: IMessagesConfig;
 }
 
 ///////////
 
+export type TRequiredMessagesConfigConsumeOptions =
+  Required<IMessageConfigConsumeOptions>;
+
 export interface IRequiredStoreMessagesParams
-  extends Required<IStoreMessagesParams> {
+  extends Required<IMessagesConfigStoreOptions> {
   store: boolean;
 }
 
-export interface IRequiredStoreMessagesConfig {
+export interface IRequiredMessagesConfigStore {
   acknowledged: IRequiredStoreMessagesParams;
   deadLettered: IRequiredStoreMessagesParams;
 }
@@ -80,10 +87,11 @@ export interface IRequiredMonitorConfig extends IMonitorConfig {
   basePath: string;
 }
 
-export interface IRequiredConfig
-  extends Required<Omit<IConfig, 'storeMessages'>> {
-  message: TMessageDefaultOptions;
-  storeMessages: IRequiredStoreMessagesConfig;
+export interface IRequiredConfig extends Required<IConfig> {
+  messages: {
+    consumeOptions: TRequiredMessagesConfigConsumeOptions;
+    store: IRequiredMessagesConfigStore;
+  };
   monitor: IRequiredMonitorConfig;
 }
 

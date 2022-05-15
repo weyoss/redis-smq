@@ -3,9 +3,8 @@ import { ConfigurationError } from './configuration.error';
 import Namespace from './namespace';
 import Redis from './redis';
 import Logger from './logger';
-import Message from './message';
-import MessageStorage from './message-storage';
 import Monitor from './monitor';
+import Messages from './messages/messages';
 
 let currentConfig: IRequiredConfig | null = null;
 
@@ -18,8 +17,7 @@ export function setConfiguration(config: IConfig = {}): IRequiredConfig {
     namespace: Namespace(config),
     redis: Redis(config),
     logger: Logger(config),
-    message: Message(config),
-    storeMessages: MessageStorage(config),
+    messages: Messages(config),
     monitor: Monitor(config),
   };
   return currentConfig;

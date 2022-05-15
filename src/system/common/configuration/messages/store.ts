@@ -1,31 +1,28 @@
 import {
   IConfig,
-  IStoreMessagesParams,
-  IRequiredStoreMessagesConfig,
+  IMessagesConfigStoreOptions,
+  IRequiredMessagesConfigStore,
   IRequiredStoreMessagesParams,
-  IStoreMessagesConfig,
-} from '../../../../types';
-import { ConfigurationError } from './configuration.error';
+  IMessagesConfigStore,
+} from '../../../../../types';
+import { ConfigurationError } from '../configuration.error';
 
 function getMessageStorageConfig(
   config: IConfig,
-  key: keyof IStoreMessagesConfig,
-): boolean | IStoreMessagesParams {
-  const { storeMessages } = config;
-  if (
-    typeof storeMessages === 'undefined' ||
-    typeof storeMessages === 'boolean'
-  ) {
-    return Boolean(storeMessages);
+  key: keyof IMessagesConfigStore,
+): boolean | IMessagesConfigStoreOptions {
+  const { store } = config.messages ?? {};
+  if (typeof store === 'undefined' || typeof store === 'boolean') {
+    return Boolean(store);
   }
-  const params = storeMessages[key];
+  const params = store[key];
   if (params) return params;
   return false;
 }
 
 function getMessageStorageParams(
   config: IConfig,
-  key: keyof IStoreMessagesConfig,
+  key: keyof IMessagesConfigStore,
 ): IRequiredStoreMessagesParams {
   const params = getMessageStorageConfig(config, key);
   if (typeof params === 'boolean') {
@@ -50,9 +47,7 @@ function getMessageStorageParams(
   };
 }
 
-export default function MessageStorage(
-  config: IConfig,
-): IRequiredStoreMessagesConfig {
+export default function Store(config: IConfig): IRequiredMessagesConfigStore {
   return {
     acknowledged: getMessageStorageParams(config, 'acknowledged'),
     deadLettered: getMessageStorageParams(config, 'deadLettered'),

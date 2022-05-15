@@ -19,7 +19,7 @@ export const broker = {
   ): void {
     const queue = message.getRequiredQueue();
     const { store, queueSize, expire } =
-      getConfiguration().storeMessages.acknowledged;
+      getConfiguration().messages.store.acknowledged;
     if (store) {
       const { keyQueueAcknowledged } = redisKeys.getQueueKeys(queue);
       if (queueSize || expire) {
