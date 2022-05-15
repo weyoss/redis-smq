@@ -22,13 +22,7 @@ exports.consume = function consume(cb) {
           //  }, timeout);
           cb();
         },
-        (err, isRunning) => {
-          if (err) console.log(err);
-          else {
-            console.log(`Is running? ${isRunning}`); // true
-            cb();
-          }
-        },
+        cb,
       );
   });
 
@@ -38,12 +32,9 @@ exports.consume = function consume(cb) {
   // consumer.consume(
   //   'test_queue',
   //   (message, cb) => cb(),
-  //   (err, isRunning) => {
+  //   (err) => {
   //     if (err) console.log(err);
-  //     else {
-  //       console.log(`Is running? ${isRunning}`); // false
-  //       consumer.run(cb);
-  //     }
+  //     else consumer.run(cb);
   //   },
   // );
 };
