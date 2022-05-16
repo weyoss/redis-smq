@@ -62,10 +62,7 @@ Consuming messages from a priority queue works as usually without any extra sett
 const { Consumer } = require('redis-smq');
 
 const consumer = new Consumer();
-consumer.consume('test_queue', (msg, cb) => cb(), (err, isRunning) => {
-  if (err) console.log(error);
-  else console.log(`Message handler successfully registered. Currently it is ${isRunning? '': 'not '}running.`);
-})
+consumer.consume('test_queue', (msg, cb) => cb(), (err) => console.log(error));
 consumer.run();
 ```
 

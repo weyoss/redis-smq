@@ -24,7 +24,7 @@ message
   .setScheduledCRON(`0 0 * * * *`)
   .setQueue('test_queue');
 
-producer.produce(message, (err, reply) => {
+producer.produce(message, (err) => {
   if (err) console.log(err);
   else console.log('Message has been successfully scheduled');
 })
