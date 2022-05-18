@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 7.0.0-rc.2 (2022-05-18)
+
+* Fix typo (8002616)
+* Update docs (d40b1c2)
+* Update misc scripts (bde5171)
+* Clean up WebsocketRateStreamWorker, use incremental timestamp (918fac0)
+
 ## 7.0.0-rc.1 (2022-05-15)
 
 * Update docs (41ee4bf)
