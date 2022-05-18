@@ -33,15 +33,11 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
    1. [GET /api/ns/:ns/queues/:queueName/pending-messages](#delete-apinsnsqueuesqueuenamepending-messages)
    2. [DELETE /api/ns/:ns/queues/:queueName/pending-messages](#delete-apinsnsqueuesqueuenamepending-messages)
    3. [DELETE /api/ns/:ns/queues/:queueName/pending-messages/:id](#delete-apinsnsqueuesqueuenamepending-messagesid)
-5. Pending Messages with Priority
-   1. [GET /api/ns/:ns/queues/:queueName/pending-messages-with-priority](#get-apinsnsqueuesqueuenamepending-messages-with-priority)
-   2. [DELETE /api/ns/:ns/queues/:queueName/pending-messages-with-priority](#delete-apinsnsqueuesqueuenamepending-messages-with-priority)
-   3. [DELETE /api/ns/:ns/queues/:queueName/pending-messages-with-priority/:id](#delete-apinsnsqueuesqueuenamepending-messages-with-priorityid)
-6. Scheduled Messages
+5. Scheduled Messages
    1. [GET /api/main/scheduled-messages](#get-apimainscheduled-messages)
    2. [DELETE /api/main/scheduled-messages](#delete-apimainscheduled-messages)
    3. [DELETE /api/main/scheduled-messages/:id](#delete-apimainscheduled-messagesid)
-7. Queue Rate limiting
+6. Queue Rate limiting
    1. [POST /api/ns/:ns/queues/:queueName/rate-limit](#post-apinsnsqueuesqueuenamerate-limit)
    2. [GET /api/ns/:ns/queues/:queueName/rate-limit](#get-apinsnsqueuesqueuenamerate-limit)
    3. [DELETE /api/ns/:ns/queues/:queueName/rate-limit](#delete-apinsnsqueuesqueuenamerate-limit)
@@ -235,7 +231,6 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 **Query parameters**
 
 * `sequenceId` (number): Required. Message sequence ID.
-* `priority` (number): Optional. Message priority. When provided, the message will be re-queued with priority.
 
 **Response Body**
 
@@ -433,84 +428,6 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 204 No Content
 ```
 
-## Pending Messages with Priority
-
-### GET /api/ns/:ns/queues/:queueName/pending-messages-with-priority
-
-**Path parameters**
-
-* `ns` (string): Required. Queue namespace.
-* `queueName` (string): Required. Queue name.
-
-**Query parameters**
-
-* `skip` (number): Optional. Offset from where messages should be taken. Starts from 0.
-* `take` (number): Optional. Max number of messages that should be taken. Starts from 1.
-
-**Response Body**
-
-```text
-{
-   "data": {
-      "total": 1,
-      "items": [
-         {
-            "body": { "hello": "world" },
-            "priority": 4,
-            "scheduledCron": null,
-            "scheduledDelay": null,
-            "scheduledRepeatPeriod": null,
-            "scheduledRepeat": 0,
-            "scheduledCronFired": false,
-            "attempts": 0,
-            "scheduledRepeatCount": 0,
-            "delayed": false,
-            "expired": false,
-            "queue": {
-               "ns": "my-application",
-               "name": "test_queue"
-            },
-            "createdAt": 1635702165317,
-            "publishedAt": 1635702167654,
-            "scheduledAt": null,
-            "uuid": "9e7b8046-200c-48de-aa9f-2caf0a172a83",
-            "ttl": 0,
-            "retryDelay": 0,
-            "retryThreshold": 3,
-            "consumeTimeout": 0
-         }
-      ]
-   }
-}
-```
-
-### DELETE /api/ns/:ns/queues/:queueName/pending-messages-with-priority
-
-**Path parameters**
-
-* `ns` (string): Required. Queue namespace.
-* `queueName` (string): Required. Queue name.
-
-**Response Body**
-
-```text
-204 No Content
-```
-
-### DELETE /api/ns/:ns/queues/:queueName/pending-messages-with-priority/:id
-
-**Path parameters**
-
-* `ns` (string): Required. Queue namespace.
-* `queueName` (string): Required. Queue name.
-* `id` (string): Required. Message ID.
-
-**Response Body**
-
-```text
-204 No Content
-```
-
 ## Scheduled Messages
 
 ### GET /api/main/scheduled-messages
@@ -528,29 +445,32 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
       "total": 1,
       "items": [
          {
-            "body": { "hello": "world" },
-            "priority": null,
-            "scheduledCron": null,
-            "scheduledDelay": null,
-            "scheduledRepeatPeriod": 10000,
-            "scheduledRepeat": 6,
-            "scheduledCronFired": false,
-            "attempts": 0,
-            "scheduledRepeatCount": 0,
-            "delayed": false,
-            "expired": false,
-            "queue": {
-               "ns": "my-application",
-               "name": "test_queue"
-            },
-            "createdAt": 1635702165317,
-            "publishedAt": null,
-            "scheduledAt": 1635702163487,
-            "uuid": "9e7b8046-200c-48de-aa9f-2caf0a172a83",
-            "ttl": 0,
-            "retryDelay": 0,
-            "retryThreshold": 3,
-            "consumeTimeout": 0
+            "sequenceId": 0,
+            "message": {
+               "body": { "hello": "world" },
+               "priority": null,
+               "scheduledCron": null,
+               "scheduledDelay": null,
+               "scheduledRepeatPeriod": 10000,
+               "scheduledRepeat": 6,
+               "scheduledCronFired": false,
+               "attempts": 0,
+               "scheduledRepeatCount": 0,
+               "delayed": false,
+               "expired": false,
+               "queue": {
+                  "ns": "my-application",
+                  "name": "test_queue"
+               },
+               "createdAt": 1635702165317,
+               "publishedAt": null,
+               "scheduledAt": 1635702163487,
+               "uuid": "9e7b8046-200c-48de-aa9f-2caf0a172a83",
+               "ttl": 0,
+               "retryDelay": 0,
+               "retryThreshold": 3,
+               "consumeTimeout": 0
+            }
          }
       ]
    }
@@ -574,6 +494,10 @@ To start using the HTTP API, you should first [configure and launch the Web UI](
 **Path parameters**
 
 * `id` (string): Required. Message ID.
+
+**Query parameters**
+
+* `sequenceId` (number): Required. Message sequence ID.
 
 **Response Body**
 
