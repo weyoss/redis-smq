@@ -1,6 +1,6 @@
 import { KeyType, Pipeline, Redis, RedisOptions } from 'ioredis';
 import { Callback, ClientOpts, Multi, RedisClient as NodeRedis } from 'redis';
-import { Message } from '../src/app/message/message';
+import { Message } from '../src/lib/message/message';
 import { redisKeys } from '../src/common/redis-keys/redis-keys';
 import { Worker } from '../src/common/worker/worker';
 import { RedisClient } from '../src/common/redis-client/redis-client';

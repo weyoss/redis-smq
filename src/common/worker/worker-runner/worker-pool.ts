@@ -1,6 +1,6 @@
 import { Worker } from '../worker';
 import { ICallback } from '../../../../types';
-import { each } from '../../../lib/async';
+import { each } from '../../../util/async';
 
 export class WorkerPool {
   private pool: Worker[] = [];

@@ -1,6 +1,6 @@
 import { ICallback, TQueueParams, TRedisClientMulti } from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { waterfall } from '../../lib/async';
+import { waterfall } from '../../util/async';
 import { processingQueue } from '../consumer/consumer-message-handler/processing-queue';
 import { RedisClient } from '../../common/redis-client/redis-client';
 import { ConsumerHeartbeat } from '../consumer/consumer-heartbeat';

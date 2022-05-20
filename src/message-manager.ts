@@ -1,1 +1,1 @@
-export { MessageManager } from './app/message-manager/message-manager';
+export { MessageManager } from './lib/message-manager/message-manager';

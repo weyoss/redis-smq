@@ -6,7 +6,7 @@ import {
   getProducer,
   untilConsumerEvent,
 } from '../common';
-import { Message } from '../../src/app/message/message';
+import { Message } from '../../src/lib/message/message';
 import { events } from '../../src/common/events';
 
 test('Shutdown a consumer when consuming a message with retryThreshold = 0: expect the message to be dead-lettered', async () => {

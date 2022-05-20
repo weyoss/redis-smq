@@ -10,7 +10,7 @@ import { EventEmitter } from 'events';
 import { ELuaScriptName, getScriptId, loadScripts } from './lua-scripts';
 import { RedisClientError } from './redis-client.error';
 import { getConfiguration } from '../configuration/configuration';
-import { waterfall } from '../../lib/async';
+import { waterfall } from '../../util/async';
 
 /**
  * client.end() does unregister all event listeners which causes the 'end' event not being emitted.

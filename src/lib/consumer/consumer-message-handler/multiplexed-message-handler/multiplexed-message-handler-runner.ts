@@ -5,7 +5,7 @@ import { ICallback, TConsumerMessageHandlerParams } from '../../../../../types';
 import { Consumer } from '../../consumer';
 import { RedisClient } from '../../../../common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../../../../common/errors/empty-callback-reply.error';
-import { waterfall } from '../../../../lib/async';
+import { waterfall } from '../../../../util/async';
 import { events } from '../../../../common/events';
 import { MultiplexedMessageHandler } from './multiplexed-message-handler';
 import { PanicError } from '../../../../common/errors/panic.error';

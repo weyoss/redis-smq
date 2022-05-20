@@ -6,7 +6,7 @@ import {
 } from '../../../../types';
 import { deadLetterMessage } from './dead-letter-message';
 import { requeueMessage } from './requeue-message';
-import { Message } from '../../../app/message/message';
+import { Message } from '../../../lib/message/message';
 import { RedisClient } from '../../redis-client/redis-client';
 import { PanicError } from '../../errors/panic.error';
 import { delayMessage } from './delay-message';

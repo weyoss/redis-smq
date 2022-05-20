@@ -7,7 +7,7 @@ import {
 } from '../common';
 import { RedisClient } from '../../src/common/redis-client/redis-client';
 import { ICallback, TQueueParams } from '../../types';
-import { processingQueue } from '../../src/app/consumer/consumer-message-handler/processing-queue';
+import { processingQueue } from '../../src/lib/consumer/consumer-message-handler/processing-queue';
 
 test('Concurrently deleting a message queue and starting a consumer', async () => {
   await createQueue(defaultQueue, false);

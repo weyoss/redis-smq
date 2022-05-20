@@ -17,7 +17,7 @@ import { WorkerPool } from './worker-pool';
 import { EmptyCallbackReplyError } from '../../errors/empty-callback-reply.error';
 import { Worker } from '../worker';
 import { PanicError } from '../../errors/panic.error';
-import { each, waterfall } from '../../../lib/async';
+import { each, waterfall } from '../../../util/async';
 import { LockManagerAcquireError } from '../../lock-manager/errors/lock-manager-acquire.error';
 
 export class WorkerRunner<

@@ -6,7 +6,7 @@ import {
   TRedisClientMulti,
 } from '../../../../types';
 import { Message } from '../../message/message';
-import { waterfall } from '../../../lib/async';
+import { waterfall } from '../../../util/async';
 import { broker } from '../../../common/broker/broker';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 

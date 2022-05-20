@@ -1,10 +1,10 @@
 import { ICallback, IConsumerWorkerParameters } from '../../types';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
-import { Message } from '../app/message/message';
+import { Message } from '../lib/message/message';
 import { ELuaScriptName } from '../common/redis-client/lua-scripts';
 import { Worker } from '../common/worker/worker';
-import { each, waterfall } from '../lib/async';
+import { each, waterfall } from '../util/async';
 
 export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
   protected fetchMessageIds = (cb: ICallback<string[]>): void => {

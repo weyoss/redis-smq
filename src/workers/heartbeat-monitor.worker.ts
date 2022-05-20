@@ -1,7 +1,7 @@
 import { ICallback, IConsumerWorkerParameters } from '../../types';
-import { ConsumerHeartbeat } from '../app/consumer/consumer-heartbeat';
+import { ConsumerHeartbeat } from '../lib/consumer/consumer-heartbeat';
 import { Worker } from '../common/worker/worker';
-import { waterfall } from '../lib/async';
+import { waterfall } from '../util/async';
 
 export class HeartbeatMonitorWorker extends Worker<IConsumerWorkerParameters> {
   work = (cb: ICallback<void>): void => {

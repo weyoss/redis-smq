@@ -7,7 +7,7 @@ import {
 } from '../common';
 import { Message } from '../../index';
 import { ICallback, TConsumerMessageHandler } from '../../types';
-import { MessageMetadata } from '../../src/app/message/message-metadata';
+import { MessageMetadata } from '../../src/lib/message/message-metadata';
 
 test('Produce and consume 1 message', async () => {
   await createQueue(defaultQueue, false);

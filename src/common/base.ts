@@ -14,7 +14,7 @@ import { EmptyCallbackReplyError } from './errors/empty-callback-reply.error';
 import { PanicError } from './errors/panic.error';
 import { getConfiguration } from './configuration/configuration';
 import { getNamespacedLogger } from './logger';
-import { waterfall } from '../lib/async';
+import { waterfall } from '../util/async';
 
 export abstract class Base extends EventEmitter {
   protected readonly id: string;

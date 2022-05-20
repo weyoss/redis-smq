@@ -11,7 +11,7 @@ import {
 } from '../../../../types';
 import { RedisClient } from '../../../common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../../../common/errors/empty-callback-reply.error';
-import { each } from '../../../lib/async';
+import { each } from '../../../util/async';
 import { getConfiguration } from '../../../common/configuration/configuration';
 import { getNamespacedLogger } from '../../../common/logger';
 import { MessageHandlerAlreadyExistsError } from '../errors/message-handler-already-exists.error';
