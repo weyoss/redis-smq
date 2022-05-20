@@ -12,7 +12,7 @@ import { events } from '../../../common/events';
 import { Message } from '../../message/message';
 import { MessageHandler } from './message-handler';
 import { QueueRateLimit } from '../../queue-manager/queue-rate-limit';
-import { waterfall } from '../../../lib/async';
+import { waterfall } from '../../../util/async';
 import { EmptyCallbackReplyError } from '../../../common/errors/empty-callback-reply.error';
 import { ELuaScriptName } from '../../../common/redis-client/lua-scripts';
 import { QueueNotFoundError } from '../../queue-manager/errors/queue-not-found.error';

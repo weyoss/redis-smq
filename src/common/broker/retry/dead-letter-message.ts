@@ -4,7 +4,7 @@ import {
   ICallback,
   TRedisClientMulti,
 } from '../../../../types';
-import { Message } from '../../../app/message/message';
+import { Message } from '../../../lib/message/message';
 import { redisKeys } from '../../redis-keys/redis-keys';
 import { getConfiguration } from '../../configuration/configuration';
 import { RedisClient } from '../../redis-client/redis-client';

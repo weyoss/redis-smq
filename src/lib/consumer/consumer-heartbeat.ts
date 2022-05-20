@@ -12,7 +12,7 @@ import { EventEmitter } from 'events';
 import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
 import { InvalidCallbackReplyError } from '../../common/errors/invalid-callback-reply.error';
 import { Consumer } from './consumer';
-import { each, waterfall } from '../../lib/async';
+import { each, waterfall } from '../../util/async';
 
 const cpuUsageStatsRef = {
   cpuUsage: process.cpuUsage(),

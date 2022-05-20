@@ -1,4 +1,4 @@
-import { Message } from '../../src/app/message/message';
+import { Message } from '../../src/lib/message/message';
 import {
   createQueue,
   getConsumer,

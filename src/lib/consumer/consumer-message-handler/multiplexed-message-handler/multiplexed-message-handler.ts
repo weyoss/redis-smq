@@ -6,7 +6,7 @@ import {
   TConsumerMessageHandler,
   TQueueParams,
 } from '../../../../../types';
-import { waterfall } from '../../../../lib/async';
+import { waterfall } from '../../../../util/async';
 import { MultiplexedDequeueMessage } from './multiplexed-dequeue-message';
 
 export class MultiplexedMessageHandler extends MessageHandler {

@@ -1,10 +1,10 @@
 import { ICallback, TRedisClientMulti } from '../../../types';
-import { Message } from '../../app/message/message';
+import { Message } from '../../lib/message/message';
 import { redisKeys } from '../redis-keys/redis-keys';
 import { RedisClient } from '../redis-client/redis-client';
 import { ELuaScriptName } from '../redis-client/lua-scripts';
 import { PanicError } from '../errors/panic.error';
-import { MessageNotScheduledError } from '../../app/producer/errors/message-not-scheduled.error';
+import { MessageNotScheduledError } from '../../lib/producer/errors/message-not-scheduled.error';
 
 function scheduleMessageTransaction(
   multi: TRedisClientMulti,

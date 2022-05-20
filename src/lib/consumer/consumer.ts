@@ -19,7 +19,7 @@ import { Base } from '../../common/base';
 import { MessageHandler } from './consumer-message-handler/message-handler';
 import { consumerQueues } from './consumer-queues';
 import { WorkerPool } from '../../common/worker/worker-runner/worker-pool';
-import { each, waterfall } from '../../lib/async';
+import { each, waterfall } from '../../util/async';
 import { MessageHandlerRunner } from './consumer-message-handler/message-handler-runner';
 import { MultiplexedMessageHandlerRunner } from './consumer-message-handler/multiplexed-message-handler/multiplexed-message-handler-runner';
 

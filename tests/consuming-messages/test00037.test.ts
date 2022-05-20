@@ -1,6 +1,6 @@
 import { getProducer, getQueueManager } from '../common';
-import { Message } from '../../src/app/message/message';
-import { MessageNotScheduledError } from '../../src/app/producer/errors/message-not-scheduled.error';
+import { Message } from '../../src/lib/message/message';
+import { MessageNotScheduledError } from '../../src/lib/producer/errors/message-not-scheduled.error';
 
 test('Scheduling a message and expecting different kind of failures', async () => {
   const qm = await getQueueManager();

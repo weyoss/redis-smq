@@ -15,7 +15,7 @@ import { EventEmitter } from 'events';
 import { PowerManager } from '../../../common/power-manager/power-manager';
 import { consumerQueues } from '../consumer-queues';
 import { getNamespacedLogger } from '../../../common/logger';
-import { waterfall } from '../../../lib/async';
+import { waterfall } from '../../../util/async';
 import { processingQueue } from './processing-queue';
 import { DequeueMessage } from './dequeue-message';
 import { ConsumeMessage } from './consume-message';

@@ -1,4 +1,4 @@
-import { Message } from '../../src/app/message/message';
+import { Message } from '../../src/lib/message/message';
 
 test('Message: validations', async () => {
   const msg = new Message();

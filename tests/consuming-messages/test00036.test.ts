@@ -1,6 +1,6 @@
 import { getProducer, getQueueManager } from '../common';
-import { Message } from '../../src/app/message/message';
-import { MessageNotPublishedError } from '../../src/app/producer/errors/message-not-published.error';
+import { Message } from '../../src/lib/message/message';
+import { MessageNotPublishedError } from '../../src/lib/producer/errors/message-not-published.error';
 
 test('Producing a message and expecting different kind of failures', async () => {
   const qm = await getQueueManager();

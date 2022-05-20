@@ -3,7 +3,7 @@ import { ICallback } from '../../../types';
 import { RedisClient } from './redis-client';
 import { EmptyCallbackReplyError } from '../errors/empty-callback-reply.error';
 import { RedisClientError } from './redis-client.error';
-import { waterfall } from '../../lib/async';
+import { waterfall } from '../../util/async';
 
 export enum ELuaScriptName {
   ZPOPRPUSH,

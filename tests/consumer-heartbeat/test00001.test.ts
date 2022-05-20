@@ -1,4 +1,4 @@
-import { ConsumerHeartbeat } from '../../src/app/consumer/consumer-heartbeat';
+import { ConsumerHeartbeat } from '../../src/lib/consumer/consumer-heartbeat';
 import {
   createQueue,
   defaultQueue,

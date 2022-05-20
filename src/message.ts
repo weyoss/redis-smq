@@ -1,1 +1,1 @@
-export { Message } from './app/message/message';
+export { Message } from './lib/message/message';
