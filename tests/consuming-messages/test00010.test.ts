@@ -5,7 +5,7 @@ import {
   produceMessage,
   untilMessageAcknowledged,
 } from '../common';
-import { events } from '../../src/system/common/events';
+import { events } from '../../src/common/events';
 
 test('A message is not lost in case of a consumer crash', async () => {
   await createQueue(defaultQueue, false);
@@ -31,7 +31,7 @@ test('A message is not lost in case of a consumer crash', async () => {
    */
   const consumer2 = getConsumer({
     messageHandler: jest.fn((msg, cb) => {
-      cb(null);
+      cb();
     }),
   });
 

@@ -5,10 +5,10 @@ import {
   getConsumer,
   getMessageManager,
   getProducer,
-  untilConsumerIdle,
+  untilConsumerEvent,
 } from '../common';
 import { Message } from '../../src/message';
-import { events } from '../../src/system/common/events';
+import { events } from '../../src/common/events';
 
 test('A message is dead-lettered and not delivered when messageTTL is exceeded', async () => {
   await createQueue(defaultQueue, false);
@@ -29,7 +29,7 @@ test('A message is dead-lettered and not delivered when messageTTL is exceeded',
   await delay(5000);
   consumer.run();
 
-  await untilConsumerIdle(consumer);
+  await untilConsumerEvent(consumer, events.MESSAGE_DEAD_LETTERED);
   expect(consume).toHaveBeenCalledTimes(0);
   expect(unacknowledged).toBe(1);
   const messageManager = await getMessageManager();

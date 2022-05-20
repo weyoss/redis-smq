@@ -1,6 +1,6 @@
 import { createQueue, defaultQueue, getConsumer, getProducer } from '../common';
 import { Message } from '../../src/message';
-import { events } from '../../src/system/common/events';
+import { events } from '../../src/common/events';
 import { delay } from 'bluebird';
 
 test('Async exceptions are caught when consuming a message', async () => {
@@ -15,7 +15,7 @@ test('Async exceptions are caught when consuming a message', async () => {
         setTimeout(() => {
           cb(new Error('Async error'));
         }, 2000);
-      } else if (callCount === 2) cb(null);
+      } else if (callCount === 2) cb();
       else throw new Error('Unexpected call');
     }),
   });

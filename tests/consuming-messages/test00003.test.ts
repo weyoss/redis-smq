@@ -1,11 +1,6 @@
-import {
-  createQueue,
-  defaultQueue,
-  getConsumer,
-  getProducer,
-  untilConsumerIdle,
-} from '../common';
+import { createQueue, defaultQueue, getConsumer, getProducer } from '../common';
 import { Message } from '../../index';
+import { delay } from 'bluebird';
 
 test('Produce and consume 100 messages', async () => {
   await createQueue(defaultQueue, false);
@@ -29,7 +24,7 @@ test('Produce and consume 100 messages', async () => {
     },
   });
   await consumer.runAsync();
-  await untilConsumerIdle(consumer);
+  await delay(20000);
 
   expect(deliveredMessages.length).toEqual(publishedMsg.length);
   for (let i = 0; i < total; i += 1) {

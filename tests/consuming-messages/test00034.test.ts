@@ -6,7 +6,7 @@ import {
   getProducer,
   getQueueManager,
 } from '../common';
-import { Message } from '../../src/system/app/message/message';
+import { Message } from '../../src/app/message/message';
 
 test('Consume messages from different queues using a single consumer instance: case 5', async () => {
   await createQueue(defaultQueue, false);

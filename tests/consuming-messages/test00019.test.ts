@@ -8,7 +8,7 @@ import {
   untilConsumerEvent,
 } from '../common';
 import { Message } from '../../index';
-import { events } from '../../src/system/common/events';
+import { events } from '../../src/common/events';
 
 test('An unacknowledged message is dead-lettered and not delivered again, given retryThreshold is 0', async () => {
   mockConfiguration({

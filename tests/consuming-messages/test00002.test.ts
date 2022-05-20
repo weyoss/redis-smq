@@ -3,11 +3,11 @@ import {
   defaultQueue,
   getConsumer,
   getProducer,
-  untilConsumerIdle,
+  untilMessageAcknowledged,
 } from '../common';
 import { Message } from '../../index';
 import { ICallback, TConsumerMessageHandler } from '../../types';
-import { MessageMetadata } from '../../src/system/app/message/message-metadata';
+import { MessageMetadata } from '../../src/app/message/message-metadata';
 
 test('Produce and consume 1 message', async () => {
   await createQueue(defaultQueue, false);
@@ -35,7 +35,7 @@ test('Produce and consume 1 message', async () => {
 
   consumer.run();
 
-  await untilConsumerIdle(consumer);
+  await untilMessageAcknowledged(consumer, msg);
   const receivedMsg = messageHandler.mock.calls[0][0];
   expect(receivedMsg.getRequiredId()).toStrictEqual(msg.getRequiredId());
   expect(receivedMsg.getBody()).toStrictEqual({ hello: 'world' });

@@ -3,7 +3,7 @@ import {
   getNamespacedLogger,
   reset,
   setLogger,
-} from '../../src/system/common/logger';
+} from '../../src/common/logger';
 import { mockConfiguration } from '../common';
 import * as Logger from 'bunyan';
 

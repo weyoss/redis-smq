@@ -1,13 +1,8 @@
-import {
-  createQueue,
-  getConsumer,
-  getProducer,
-  untilConsumerIdle,
-} from '../common';
+import { createQueue, getConsumer, getProducer } from '../common';
 import { Message } from '../../src/message';
 import { delay } from 'bluebird';
 import { ICallback } from '../../types';
-import { events } from '../../src/system/common/events';
+import { events } from '../../src/common/events';
 
 type TQueueMetrics = {
   receivedMessages: Message[];
@@ -24,7 +19,7 @@ test('Given many queues, a message is recovered from a consumer crash and re-que
   };
   const queueAConsumer1 = getConsumer({
     queue: 'queue_a',
-    messageHandler: (msg: Message, cb: ICallback<void>) => {
+    messageHandler: (msg: Message) => {
       // do not acknowledge/unacknowledge the message
       queueAMetrics.receivedMessages.push(msg);
       queueAConsumer1.shutdown();
@@ -56,7 +51,7 @@ test('Given many queues, a message is recovered from a consumer crash and re-que
     queue: 'queue_b',
     messageHandler: (msg: Message, cb: ICallback<void>) => {
       queueBMetrics.receivedMessages.push(msg);
-      cb(null);
+      cb();
     },
   });
   queueBConsumer1.on(events.MESSAGE_ACKNOWLEDGED, () => {
@@ -81,15 +76,9 @@ test('Given many queues, a message is recovered from a consumer crash and re-que
   await producer.produceAsync(anotherMsg);
 
   /**
-   * Wait 10s
+   * Wait 20s
    */
-  await delay(10000);
-
-  /**
-   *  Wait until consumers are idle
-   */
-  await untilConsumerIdle(queueAConsumer2);
-  await untilConsumerIdle(queueBConsumer1);
+  await delay(20000);
 
   /**
    * Check

@@ -1,13 +1,12 @@
-import { delay } from 'bluebird';
 import {
   createQueue,
   defaultQueue,
   getConsumer,
   getProducer,
-  untilConsumerIdle,
+  untilMessageAcknowledged,
 } from '../common';
 import { Message } from '../../src/message';
-import { events } from '../../src/system/common/events';
+import { events } from '../../src/common/events';
 import { ICallback } from '../../types';
 
 test('Unacknowledged messages are re-queued when messageRetryThreshold is not exceeded', async () => {
@@ -19,7 +18,7 @@ test('Unacknowledged messages are re-queued when messageRetryThreshold is not ex
     messageHandler: jest.fn((msg: Message, cb: ICallback<void>) => {
       callCount += 1;
       if (callCount === 1) throw new Error('Explicit error');
-      else if (callCount === 2) cb(null);
+      else if (callCount === 2) cb();
       else throw new Error('Unexpected call');
     }),
   });
@@ -40,9 +39,8 @@ test('Unacknowledged messages are re-queued when messageRetryThreshold is not ex
   await producer.produceAsync(msg);
   consumer.run();
 
-  await delay(10000);
+  await untilMessageAcknowledged(consumer);
 
-  await untilConsumerIdle(consumer);
   expect(unacknowledged).toBe(1);
   expect(acknowledged).toBe(1);
 });
