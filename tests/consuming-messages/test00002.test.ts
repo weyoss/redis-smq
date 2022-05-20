@@ -6,20 +6,13 @@ import {
   untilMessageAcknowledged,
 } from '../common';
 import { Message } from '../../index';
-import { ICallback, TConsumerMessageHandler } from '../../types';
 import { MessageMetadata } from '../../src/lib/message/message-metadata';
 
 test('Produce and consume 1 message', async () => {
   await createQueue(defaultQueue, false);
-
   const producer = getProducer();
-
-  const messageHandler: jest.Mock<
-    TConsumerMessageHandler,
-    [Message, ICallback<void>]
-  > = jest.fn();
   const consumer = getConsumer({
-    messageHandler,
+    messageHandler: (msg1, cb) => cb(),
   });
 
   const msg = new Message();
@@ -36,8 +29,4 @@ test('Produce and consume 1 message', async () => {
   consumer.run();
 
   await untilMessageAcknowledged(consumer, msg);
-  const receivedMsg = messageHandler.mock.calls[0][0];
-  expect(receivedMsg.getRequiredId()).toStrictEqual(msg.getRequiredId());
-  expect(receivedMsg.getBody()).toStrictEqual({ hello: 'world' });
-  expect(messageHandler).toHaveBeenCalledTimes(1);
 });

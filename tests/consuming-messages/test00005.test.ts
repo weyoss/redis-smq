@@ -36,7 +36,7 @@ test('Setting default message TTL from configuration', async () => {
   await delay(5000);
   consumer.run();
 
-  untilConsumerEvent(consumer, events.MESSAGE_DEAD_LETTERED);
+  await untilConsumerEvent(consumer, events.MESSAGE_DEAD_LETTERED);
 
   expect(consume).toHaveBeenCalledTimes(0);
   expect(unacks).toBe(1);

@@ -5,6 +5,7 @@ import {
 } from '../../../types';
 import { EventEmitter } from 'events';
 import { Consumer } from './consumer';
+import { events } from '../../common/events';
 import { Queue } from '../queue-manager/queue';
 
 export class ConsumerFrontend extends EventEmitter {
@@ -13,6 +14,25 @@ export class ConsumerFrontend extends EventEmitter {
   constructor(useMultiplexing = false) {
     super();
     this.consumer = new Consumer(useMultiplexing);
+    this.registerEvents();
+  }
+
+  private registerEvents() {
+    this.consumer
+      .on(events.UP, (...args: unknown[]) => this.emit(events.UP, ...args))
+      .on(events.DOWN, (...args: unknown[]) => this.emit(events.DOWN, ...args))
+      .on(events.MESSAGE_UNACKNOWLEDGED, (...args: unknown[]) =>
+        this.emit(events.MESSAGE_UNACKNOWLEDGED, ...args),
+      )
+      .on(events.MESSAGE_ACKNOWLEDGED, (...args: unknown[]) =>
+        this.emit(events.MESSAGE_ACKNOWLEDGED, ...args),
+      )
+      .on(events.MESSAGE_DEAD_LETTERED, (...args: unknown[]) =>
+        this.emit(events.MESSAGE_DEAD_LETTERED, ...args),
+      )
+      .on(events.MESSAGE_RECEIVED, (...args: unknown[]) =>
+        this.emit(events.MESSAGE_RECEIVED, ...args),
+      );
   }
 
   consume(
