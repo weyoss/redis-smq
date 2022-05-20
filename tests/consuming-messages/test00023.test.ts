@@ -6,8 +6,8 @@ import {
   getProducer,
   untilConsumerEvent,
 } from '../common';
-import { Message } from '../../src/system/app/message/message';
-import { events } from '../../src/system/common/events';
+import { Message } from '../../src/app/message/message';
+import { events } from '../../src/common/events';
 
 test('Periodic scheduled messages upon consume failures are dead-lettered without being re-queued', async () => {
   await createQueue(defaultQueue, false);

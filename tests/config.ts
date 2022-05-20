@@ -16,11 +16,6 @@ export const config: IConfig = {
   logger: {
     enabled: false,
   },
-  monitor: {
-    enabled: true,
-    host: '127.0.0.1',
-    port: 3000,
-  },
   messages: {
     consumeOptions: {
       retryDelay: 0,

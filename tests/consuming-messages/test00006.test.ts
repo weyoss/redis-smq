@@ -7,7 +7,7 @@ import {
   untilConsumerEvent,
 } from '../common';
 import { Message } from '../../src/message';
-import { events } from '../../src/system/common/events';
+import { events } from '../../src/common/events';
 import { ICallback } from '../../types';
 
 test('A message is unacknowledged when messageConsumeTimeout is exceeded', async () => {
@@ -26,7 +26,7 @@ test('A message is unacknowledged when messageConsumeTimeout is exceeded', async
   const consumer = getConsumer({
     messageHandler: jest.fn((msg: unknown, cb: ICallback<void>) => {
       if (consumeCount === 0) setTimeout(cb, 5000);
-      else if (consumeCount === 1) cb(null);
+      else if (consumeCount === 1) cb();
       else throw new Error('Unexpected call');
       consumeCount += 1;
     }),

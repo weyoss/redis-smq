@@ -1,6 +1,6 @@
 import { Producer, Consumer, QueueManager, Message } from '../..';
-import { events } from '../../src/system/common/events';
-import { waterfall } from '../../src/system/lib/async';
+import { events } from '../../src/common/events';
+import { waterfall } from '../../src/lib/async';
 import { ICallback } from '../../types';
 
 const queue = `queue_${Date.now()}`;

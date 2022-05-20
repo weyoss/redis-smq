@@ -8,12 +8,12 @@ import {
   untilConsumerEvent,
 } from '../common';
 import { delay, promisifyAll } from 'bluebird';
-import { Message } from '../../src/system/app/message/message';
-import { events } from '../../src/system/common/events';
-import { DelayWorker } from '../../src/system/workers/delay.worker';
-import { ScheduleWorker } from '../../src/system/workers/schedule.worker';
+import { Message } from '../../src/app/message/message';
+import { events } from '../../src/common/events';
+import { DelayWorker } from '../../src/workers/delay.worker';
+import { ScheduleWorker } from '../../src/workers/schedule.worker';
 import { config } from '../common';
-import { HeartbeatMonitorWorker } from '../../src/system/workers/heartbeat-monitor.worker';
+import { HeartbeatMonitorWorker } from '../../src/workers/heartbeat-monitor.worker';
 
 test('HeartbeatMonitorWorker -> DelayWorker -> ScheduleWorker', async () => {
   await createQueue(defaultQueue, false);

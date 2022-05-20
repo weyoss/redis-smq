@@ -1,20 +1,14 @@
 import { delay } from 'bluebird';
-import {
-  createQueue,
-  defaultQueue,
-  getConsumer,
-  getProducer,
-  untilConsumerIdle,
-} from '../common';
+import { createQueue, defaultQueue, getConsumer, getProducer } from '../common';
 import { Message } from '../../src/message';
-import { events } from '../../src/system/common/events';
+import { events } from '../../src/common/events';
 
 test('Given many consumers, a message is delivered only to one consumer', async () => {
   await createQueue(defaultQueue, false);
 
   const consumer1 = getConsumer({
     messageHandler: jest.fn((msg, cb) => {
-      cb(null);
+      cb();
     }),
   });
   let unacks1 = 0;
@@ -32,7 +26,7 @@ test('Given many consumers, a message is delivered only to one consumer', async 
    */
   const consumer2 = getConsumer({
     messageHandler: jest.fn((msg, cb) => {
-      cb(null);
+      cb();
     }),
   });
   let unacks2 = 0;
@@ -45,17 +39,8 @@ test('Given many consumers, a message is delivered only to one consumer', async 
       acks2 += 1;
     });
 
-  /**
-   *
-   */
-  consumer1.run();
-  consumer2.run();
-
-  /**
-   *
-   */
-  await untilConsumerIdle(consumer1);
-  await untilConsumerIdle(consumer2);
+  await consumer1.runAsync();
+  await consumer2.runAsync();
 
   /**
    *
@@ -69,13 +54,7 @@ test('Given many consumers, a message is delivered only to one consumer', async 
   /**
    *
    */
-  await delay(10000);
-
-  /**
-   *
-   */
-  await untilConsumerIdle(consumer1);
-  await untilConsumerIdle(consumer2);
+  await delay(20000);
 
   /**
    *

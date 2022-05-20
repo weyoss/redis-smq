@@ -3,9 +3,8 @@ import {
   getConsumer,
   getProducer,
   getQueueManager,
-  untilConsumerIdle,
 } from '../common';
-import { promisifyAll } from 'bluebird';
+import { delay, promisifyAll } from 'bluebird';
 import { Message } from '../../src/message';
 
 test('Priority queuing: case 2', async () => {
@@ -19,7 +18,7 @@ test('Priority queuing: case 2', async () => {
       queue: defaultQueue,
       messageHandler: jest.fn((msg, cb) => {
         consumedMessages.push(msg);
-        cb(null);
+        cb();
       }),
     }),
   );
@@ -62,7 +61,7 @@ test('Priority queuing: case 2', async () => {
   await producer.produceAsync(msg5);
 
   await consumer.runAsync();
-  await untilConsumerIdle(consumer);
+  await delay(10000);
 
   expect(consumedMessages.length).toBe(5);
   expect(consumedMessages[0].getRequiredId()).toBe(msg5.getRequiredId());

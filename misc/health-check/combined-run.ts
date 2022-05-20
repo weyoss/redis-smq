@@ -1,7 +1,6 @@
 import {
   Consumer,
   Producer,
-  MonitorServer,
   setConfiguration,
   setLogger,
   QueueManager,
@@ -11,10 +10,6 @@ import {
 setConfiguration({
   logger: {
     enabled: false,
-  },
-  monitor: {
-    enabled: true,
-    basePath: '/',
   },
   messages: {
     store: true,
@@ -27,9 +22,6 @@ const producer = new Producer();
 
 const consumer = new Consumer();
 consumer.run();
-
-const monitorServer = new MonitorServer();
-monitorServer.listen().catch((err: unknown) => console.log(err));
 
 const produce = (err?: Error | null) => {
   if (err) console.log(err);

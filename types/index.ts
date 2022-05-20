@@ -1,10 +1,9 @@
 import { KeyType, Pipeline, Redis, RedisOptions } from 'ioredis';
 import { Callback, ClientOpts, Multi, RedisClient as NodeRedis } from 'redis';
-import { Message } from '../src/system/app/message/message';
-import { redisKeys } from '../src/system/common/redis-keys/redis-keys';
-import { Worker } from '../src/system/common/worker/worker';
-import { RedisClient } from '../src/system/common/redis-client/redis-client';
-import { ServerOptions } from 'socket.io';
+import { Message } from '../src/app/message/message';
+import { redisKeys } from '../src/common/redis-keys/redis-keys';
+import { Worker } from '../src/common/worker/worker';
+import { RedisClient } from '../src/common/redis-client/redis-client';
 import * as Logger from 'bunyan';
 
 ///////////
@@ -25,14 +24,6 @@ export interface INodeRedisOptions {
 }
 
 export type TRedisOptions = IORedisOptions | INodeRedisOptions;
-
-export interface IMonitorConfig {
-  enabled: boolean;
-  port?: number;
-  host?: string;
-  socketOpts?: ServerOptions;
-  basePath?: string;
-}
 
 export interface IMessageConfigConsumeOptions {
   consumeTimeout?: number;
@@ -63,7 +54,6 @@ export interface IConfig {
     enabled: boolean;
     options?: Partial<Logger.LoggerOptions>;
   };
-  monitor?: IMonitorConfig;
   messages?: IMessagesConfig;
 }
 
@@ -82,17 +72,11 @@ export interface IRequiredMessagesConfigStore {
   deadLettered: IRequiredStoreMessagesParams;
 }
 
-export interface IRequiredMonitorConfig extends IMonitorConfig {
-  enabled: boolean;
-  basePath: string;
-}
-
 export interface IRequiredConfig extends Required<IConfig> {
   messages: {
     consumeOptions: TRequiredMessagesConfigConsumeOptions;
     store: IRequiredMessagesConfigStore;
   };
-  monitor: IRequiredMonitorConfig;
 }
 
 ///////////
@@ -303,8 +287,8 @@ export type TQueueSettings = {
   rateLimit?: TQueueRateLimit | null;
 };
 
-export type TWorkerParameters = {
-  config: IRequiredConfig;
+export type TWorkerParameters<T = IRequiredConfig> = {
+  config: T;
   timeout?: number;
 };
 

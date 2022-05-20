@@ -6,10 +6,10 @@ import {
   getMessageManager,
   getProducer,
   mockConfiguration,
-  untilConsumerIdle,
+  untilConsumerEvent,
 } from '../common';
 import { Message } from '../../src/message';
-import { events } from '../../src/system/common/events';
+import { events } from '../../src/common/events';
 
 test('Setting default message TTL from configuration', async () => {
   mockConfiguration({
@@ -36,7 +36,8 @@ test('Setting default message TTL from configuration', async () => {
   await delay(5000);
   consumer.run();
 
-  await untilConsumerIdle(consumer);
+  untilConsumerEvent(consumer, events.MESSAGE_DEAD_LETTERED);
+
   expect(consume).toHaveBeenCalledTimes(0);
   expect(unacks).toBe(1);
   const messageManager = await getMessageManager();

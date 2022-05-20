@@ -1,7 +1,7 @@
 import { promisifyAll } from 'bluebird';
 import { Consumer } from '../../src/consumer';
 import { defaultQueue, getQueueManager, getRedisInstance } from '../common';
-import { consumerQueues } from '../../src/system/app/consumer/consumer-queues';
+import { consumerQueues } from '../../src/app/consumer/consumer-queues';
 
 test('Consume messages from different queues using a single consumer instance: case 3', async () => {
   const qm = await getQueueManager();

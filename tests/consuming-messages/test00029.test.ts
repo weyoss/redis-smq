@@ -7,8 +7,8 @@ import {
   validateTime,
 } from '../common';
 import { delay } from 'bluebird';
-import { Message } from '../../src/system/app/message/message';
-import { events } from '../../src/system/common/events';
+import { Message } from '../../src/app/message/message';
+import { events } from '../../src/common/events';
 
 test('Rate limit a queue without priority and check message rate', async () => {
   await createQueue(defaultQueue, false);

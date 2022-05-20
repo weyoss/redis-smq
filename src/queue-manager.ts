@@ -1,1 +1,1 @@
-export { QueueManager } from './system/app/queue-manager/queue-manager';
+export { QueueManager } from './app/queue-manager/queue-manager';

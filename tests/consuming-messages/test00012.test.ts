@@ -4,12 +4,11 @@ import {
   getConsumer,
   getProducer,
   mockConfiguration,
-  untilConsumerIdle,
   untilMessageAcknowledged,
   validateTime,
 } from '../common';
 import { Message } from '../../src/message';
-import { events } from '../../src/system/common/events';
+import { events } from '../../src/common/events';
 
 test('An unacknowledged message is delayed given messageRetryDelay > 0 and messageRetryThreshold > 0 and is not exceeded', async () => {
   mockConfiguration({
@@ -49,7 +48,6 @@ test('An unacknowledged message is delayed given messageRetryDelay > 0 and messa
   consumer.run();
 
   await untilMessageAcknowledged(consumer);
-  await untilConsumerIdle(consumer);
 
   expect(unacks).toBe(4);
   expect(acks).toBe(1);

@@ -9,10 +9,10 @@ import {
   untilConsumerEvent,
 } from '../common';
 import { delay, promisifyAll } from 'bluebird';
-import { Message } from '../../src/system/app/message/message';
-import { events } from '../../src/system/common/events';
-import { RequeueWorker } from '../../src/system/workers/requeue.worker';
-import { HeartbeatMonitorWorker } from '../../src/system/workers/heartbeat-monitor.worker';
+import { Message } from '../../src/app/message/message';
+import { events } from '../../src/common/events';
+import { RequeueWorker } from '../../src/workers/requeue.worker';
+import { HeartbeatMonitorWorker } from '../../src/workers/heartbeat-monitor.worker';
 
 test('HeartbeatMonitorWorker -> RequeueWorker', async () => {
   await createQueue(defaultQueue, false);

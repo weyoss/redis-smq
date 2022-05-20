@@ -1,10 +1,9 @@
-import { ConsumerHeartbeat } from '../../src/system/app/consumer/consumer-heartbeat';
+import { ConsumerHeartbeat } from '../../src/app/consumer/consumer-heartbeat';
 import {
   createQueue,
   defaultQueue,
   getConsumer,
   getRedisInstance,
-  untilConsumerIdle,
 } from '../common';
 import { promisifyAll } from 'bluebird';
 
@@ -15,7 +14,6 @@ describe('Consumer heartbeat: check online/offline consumers', () => {
     await createQueue(defaultQueue, false);
     const consumer = getConsumer();
     await consumer.runAsync();
-    await untilConsumerIdle(consumer);
 
     //
     const validHeartbeatIds = await HeartbeatAsync.getValidHeartbeatIdsAsync(
