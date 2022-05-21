@@ -3,6 +3,7 @@ import {
   EMessageUnacknowledgedCause,
   ICallback,
   ICompatibleLogger,
+  IPlugin,
   TConsumerMessageHandler,
   TQueueParams,
   TRedisClientMulti,
@@ -15,39 +16,48 @@ import { EventEmitter } from 'events';
 import { PowerManager } from '../../../common/power-manager/power-manager';
 import { consumerQueues } from '../consumer-queues';
 import { getNamespacedLogger } from '../../../common/logger';
-import { waterfall } from '../../../util/async';
+import { each, waterfall } from '../../../util/async';
 import { processingQueue } from './processing-queue';
 import { DequeueMessage } from './dequeue-message';
 import { ConsumeMessage } from './consume-message';
+import { getConsumerPlugins } from '../../../plugins/plugins';
+import { Consumer } from '../consumer';
 
 export class MessageHandler extends EventEmitter {
   protected id: string;
+  protected consumer: Consumer;
   protected consumerId: string;
   protected queue: TQueueParams;
-  protected redisClient: RedisClient;
+  protected dequeueRedisClient: RedisClient;
+  protected sharedRedisClient: RedisClient;
   protected powerManager: PowerManager;
   protected logger: ICompatibleLogger;
   protected dequeueMessage: DequeueMessage;
   protected consumeMessage: ConsumeMessage;
   protected handler: TConsumerMessageHandler;
+  protected plugins: IPlugin[] = [];
 
   constructor(
-    consumerId: string,
+    consumer: Consumer,
     queue: TQueueParams,
     handler: TConsumerMessageHandler,
-    redisClient: RedisClient,
+    dequeueRedisClient: RedisClient,
+    sharedRedisClient: RedisClient,
   ) {
     super();
     this.id = uuid();
-    this.consumerId = consumerId;
+    this.consumer = consumer;
+    this.consumerId = consumer.getId();
     this.queue = queue;
-    this.redisClient = redisClient;
+    this.dequeueRedisClient = dequeueRedisClient;
+    this.sharedRedisClient = sharedRedisClient;
     this.handler = handler;
     this.powerManager = new PowerManager();
     this.logger = getNamespacedLogger(`MessageHandler/${this.id}`);
-    this.dequeueMessage = new DequeueMessage(this, redisClient);
-    this.consumeMessage = new ConsumeMessage(this, redisClient);
+    this.dequeueMessage = new DequeueMessage(this, dequeueRedisClient);
+    this.consumeMessage = new ConsumeMessage(this, dequeueRedisClient);
     this.registerEventsHandlers();
+    this.initPlugins();
   }
 
   protected registerEventsHandlers(): void {
@@ -92,6 +102,17 @@ export class MessageHandler extends EventEmitter {
     this.on(events.DOWN, () => this.logger.info('Down.'));
   }
 
+  protected initPlugins(): void {
+    getConsumerPlugins().forEach((ctor) => {
+      const plugin = new ctor(
+        this.sharedRedisClient,
+        this.queue,
+        this.consumer,
+      );
+      this.plugins.push(plugin);
+    });
+  }
+
   handleError(err: Error): void {
     if (this.powerManager.isRunning() || this.powerManager.isGoingUp()) {
       this.emit(events.ERROR, err);
@@ -114,9 +135,7 @@ export class MessageHandler extends EventEmitter {
     });
   }
 
-  // The message handler could be blocking its redis connection when waiting for new messages using brpoplpush
-  // Therefore, once the handler is up and running, no other redis commands can be executed
-  shutdown(redisClient: RedisClient, cb: ICallback<void>): void {
+  shutdown(cb: ICallback<void>): void {
     const goDown = () => {
       this.powerManager.goingDown();
       waterfall(
@@ -125,8 +144,21 @@ export class MessageHandler extends EventEmitter {
             this.dequeueMessage.quit(cb);
           },
           (cb: ICallback<void>) => {
+            each(
+              this.plugins,
+              (plugin, index, done) => plugin.quit(done),
+              (err) => {
+                if (err) cb(err);
+                else {
+                  this.plugins = [];
+                  cb();
+                }
+              },
+            );
+          },
+          (cb: ICallback<void>) => {
             MessageHandler.cleanUp(
-              redisClient,
+              this.sharedRedisClient,
               this.consumerId,
               this.queue,
               undefined,
@@ -134,7 +166,7 @@ export class MessageHandler extends EventEmitter {
             );
           },
           (cb: ICallback<void>) => {
-            this.redisClient.halt(cb);
+            this.dequeueRedisClient.halt(cb);
           },
         ],
         (err) => {

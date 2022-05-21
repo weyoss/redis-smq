@@ -5,6 +5,8 @@ import { redisKeys } from '../src/common/redis-keys/redis-keys';
 import { Worker } from '../src/common/worker/worker';
 import { RedisClient } from '../src/common/redis-client/redis-client';
 import * as Logger from 'bunyan';
+import { Consumer } from '../src/lib/consumer/consumer';
+import { Producer } from '../src/lib/producer/producer';
 
 ///////////
 
@@ -124,18 +126,6 @@ export type TFunction<TReturn = void, TArgs = any> = (
   ...args: TArgs[]
 ) => TReturn;
 
-export type TMessageRateFields = Record<string, any>;
-
-export interface IConsumerMessageRateFields extends TMessageRateFields {
-  acknowledgedRate: number;
-  deadLetteredRate: number;
-}
-
-export interface IProducerMessageRateFields extends TMessageRateFields {
-  publishedRate: number;
-  queuePublishedRate: Record<string, number>;
-}
-
 export type TCompatibleRedisClient = (NodeRedis | Redis) & {
   zadd(
     key: string,
@@ -202,38 +192,6 @@ export type TRedisClientMulti = (Multi | Pipeline) & {
   hmset(key: string, args: (string | number)[]): void;
 };
 
-export type TWebsocketMainStreamPayload = {
-  scheduledMessagesCount: number;
-  queuesCount: number;
-  deadLetteredMessagesCount: number;
-  acknowledgedMessagesCount: number;
-  pendingMessagesCount: number;
-  consumersCount: number;
-  queues: {
-    [ns: string]: {
-      [queueName: string]: TWebsocketMainStreamPayloadQueue;
-    };
-  };
-};
-
-export type TWebsocketMainStreamPayloadQueue = {
-  ns: string;
-  name: string;
-  priorityQueuing: boolean;
-  rateLimit: TQueueRateLimit | null;
-  deadLetteredMessagesCount: number;
-  acknowledgedMessagesCount: number;
-  pendingMessagesCount: number;
-  consumersCount: number;
-};
-
-export type TTimeSeriesRange = ITimeSeriesRangeItem[];
-
-export interface ITimeSeriesRangeItem {
-  timestamp: number;
-  value: number;
-}
-
 export type TPaginatedResponse<T> = {
   total: number;
   items: T[];
@@ -287,12 +245,12 @@ export type TQueueSettings = {
   rateLimit?: TQueueRateLimit | null;
 };
 
-export type TWorkerParameters<T = IRequiredConfig> = {
-  config: T;
+export type TWorkerParameters = {
   timeout?: number;
 };
 
 export interface IConsumerWorkerParameters extends TWorkerParameters {
+  config: IRequiredConfig;
   consumerId: string;
 }
 
@@ -315,10 +273,6 @@ export type THeartbeatPayload = {
 export type THeartbeatPayloadData = {
   ram: { usage: NodeJS.MemoryUsage; free: number; total: number };
   cpu: { user: number; system: number; percentage: string };
-};
-
-export type TWebsocketHeartbeatOnlineIdsStreamPayload = {
-  consumers: string[];
 };
 
 export type TConsumerMessageHandler = (
@@ -366,13 +320,19 @@ export type TMessageMetadataJSON = {
   nextRetryDelay: number;
 };
 
-export type TTimeSeriesParams = {
-  key: string;
-  expireAfterInSeconds?: number;
-  retentionTimeInSeconds?: number;
-  windowSizeInSeconds?: number;
-};
+///
 
-export interface IHashTimeSeriesParams extends TTimeSeriesParams {
-  indexKey: string;
+export interface IPlugin {
+  quit(cb: ICallback<void>): void;
 }
+
+export type TConsumerPluginConstructor = new (
+  redisClient: RedisClient,
+  queue: TQueueParams,
+  consumer: Consumer,
+) => IPlugin;
+
+export type TProducerPluginConstructor = new (
+  redisClient: RedisClient,
+  producer: Producer,
+) => IPlugin;

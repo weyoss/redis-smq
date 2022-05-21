@@ -22,6 +22,7 @@ import { WorkerPool } from '../../common/worker/worker-runner/worker-pool';
 import { each, waterfall } from '../../util/async';
 import { MessageHandlerRunner } from './consumer-message-handler/message-handler-runner';
 import { MultiplexedMessageHandlerRunner } from './consumer-message-handler/multiplexed-message-handler/multiplexed-message-handler-runner';
+import { Queue } from '../queue-manager/queue';
 
 export class Consumer extends Base {
   private readonly redisKeys: TConsumerRedisKeys;
@@ -120,15 +121,21 @@ export class Consumer extends Base {
   }
 
   consume(
-    queue: TQueueParams,
+    queue: string | TQueueParams,
     messageHandler: TConsumerMessageHandler,
     cb: ICallback<void>,
   ): void {
-    this.messageHandlerRunner.addMessageHandler(queue, messageHandler, cb);
+    const queueParams = Queue.getParams(queue);
+    this.messageHandlerRunner.addMessageHandler(
+      queueParams,
+      messageHandler,
+      cb,
+    );
   }
 
-  cancel(queue: TQueueParams, cb: ICallback<void>): void {
-    this.messageHandlerRunner.removeMessageHandler(queue, cb);
+  cancel(queue: string | TQueueParams, cb: ICallback<void>): void {
+    const queueParams = Queue.getParams(queue);
+    this.messageHandlerRunner.removeMessageHandler(queueParams, cb);
   }
 
   getQueues(): TQueueParams[] {

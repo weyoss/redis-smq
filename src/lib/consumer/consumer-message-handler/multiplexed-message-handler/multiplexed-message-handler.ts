@@ -6,18 +6,23 @@ import {
   TConsumerMessageHandler,
   TQueueParams,
 } from '../../../../../types';
-import { waterfall } from '../../../../util/async';
+import { each, waterfall } from '../../../../util/async';
 import { MultiplexedDequeueMessage } from './multiplexed-dequeue-message';
+import { Consumer } from '../../consumer';
 
 export class MultiplexedMessageHandler extends MessageHandler {
   constructor(
-    consumerId: string,
+    consumer: Consumer,
     queue: TQueueParams,
     handler: TConsumerMessageHandler,
-    redisClient: RedisClient,
+    dequeueRedisClient: RedisClient,
+    sharedRedisClient: RedisClient,
   ) {
-    super(consumerId, queue, handler, redisClient);
-    this.dequeueMessage = new MultiplexedDequeueMessage(this, redisClient);
+    super(consumer, queue, handler, dequeueRedisClient, sharedRedisClient);
+    this.dequeueMessage = new MultiplexedDequeueMessage(
+      this,
+      dequeueRedisClient,
+    );
   }
 
   protected override registerEventsHandlers(): void {
@@ -29,7 +34,7 @@ export class MultiplexedMessageHandler extends MessageHandler {
     });
   }
 
-  override shutdown(redisClient: RedisClient, cb: ICallback<void>): void {
+  override shutdown(cb: ICallback<void>): void {
     const goDown = () => {
       this.powerManager.goingDown();
       waterfall(
@@ -38,8 +43,21 @@ export class MultiplexedMessageHandler extends MessageHandler {
             this.dequeueMessage.quit(cb);
           },
           (cb: ICallback<void>) => {
+            each(
+              this.plugins,
+              (plugin, index, done) => plugin.quit(done),
+              (err) => {
+                if (err) cb(err);
+                else {
+                  this.plugins = [];
+                  cb();
+                }
+              },
+            );
+          },
+          (cb: ICallback<void>) => {
             MessageHandler.cleanUp(
-              redisClient,
+              this.sharedRedisClient,
               this.consumerId,
               this.queue,
               undefined,

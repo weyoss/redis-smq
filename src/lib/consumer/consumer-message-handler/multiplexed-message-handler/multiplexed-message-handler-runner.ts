@@ -68,12 +68,14 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
     redisClient: RedisClient,
     handlerParams: TConsumerMessageHandlerParams,
   ): MessageHandler {
+    const sharedRedisClient = this.getSharedRedisClient();
     const { queue, messageHandler } = handlerParams;
     const instance = new MultiplexedMessageHandler(
-      this.consumer.getId(),
+      this.consumer,
       queue,
       messageHandler,
       redisClient,
+      sharedRedisClient,
     );
     this.registerMessageHandlerEvents(instance);
     this.messageHandlerInstances.push(instance);
