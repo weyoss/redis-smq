@@ -7,7 +7,7 @@ import {
   validateTime,
 } from '../common';
 import { delay } from 'bluebird';
-import { Message } from '../../src/lib/message/message';
+import { Message } from '../..';
 import { events } from '../../src/common/events';
 
 test('Set a rate limit for a queue and consume messages using many consumers', async () => {

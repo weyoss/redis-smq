@@ -7,7 +7,7 @@ import {
   untilMessageAcknowledged,
   validateTime,
 } from '../common';
-import { Message } from '../../src/message';
+import { Message } from '../..';
 import { events } from '../../src/common/events';
 
 test('An unacknowledged message is delayed given messageRetryDelay > 0 and messageRetryThreshold > 0 and is not exceeded', async () => {

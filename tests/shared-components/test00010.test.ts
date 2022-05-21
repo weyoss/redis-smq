@@ -8,7 +8,7 @@ import {
   untilConsumerEvent,
 } from '../common';
 import { delay, promisifyAll } from 'bluebird';
-import { Message } from '../../src/lib/message/message';
+import { Message } from '../..';
 import { events } from '../../src/common/events';
 import { DelayWorker } from '../../src/workers/delay.worker';
 import { ScheduleWorker } from '../../src/workers/schedule.worker';

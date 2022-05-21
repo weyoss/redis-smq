@@ -7,7 +7,7 @@ import {
   getProducer,
   untilConsumerEvent,
 } from '../common';
-import { Message } from '../../src/message';
+import { Message } from '../..';
 import { events } from '../../src/common/events';
 
 test('A message is dead-lettered and not delivered when messageTTL is exceeded', async () => {

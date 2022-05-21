@@ -1,5 +1,5 @@
 import { createQueue, getConsumer, getProducer } from '../common';
-import { Message } from '../../src/message';
+import { Message } from '../..';
 import { delay } from 'bluebird';
 import { ICallback } from '../../types';
 import { events } from '../../src/common/events';

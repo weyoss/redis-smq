@@ -4,7 +4,7 @@ import {
   getMessageManager,
   getProducer,
 } from '../common';
-import { Message } from '../../src/message';
+import { Message } from '../..';
 
 test('Schedule a message: messageManager.getScheduledMessages()', async () => {
   await createQueue(defaultQueue, false);

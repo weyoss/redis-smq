@@ -1,6 +1,6 @@
 import { delay } from 'bluebird';
 import { createQueue, defaultQueue, getConsumer, getProducer } from '../common';
-import { Message } from '../../src/message';
+import { Message } from '../..';
 import { events } from '../../src/common/events';
 
 test('Given many consumers, a message is delivered only to one consumer', async () => {

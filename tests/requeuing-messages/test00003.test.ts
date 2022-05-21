@@ -6,7 +6,7 @@ import {
   getQueueManager,
   untilMessageAcknowledged,
 } from '../common';
-import { Message } from '../../src/lib/message/message';
+import { Message } from '../..';
 
 test('Combined test. Requeue a priority message from acknowledged queue. Check queue metrics.', async () => {
   const queueManager = await getQueueManager();
