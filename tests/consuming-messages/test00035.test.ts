@@ -1,7 +1,7 @@
 import { delay, promisifyAll } from 'bluebird';
-import { Consumer } from '../../src/consumer';
+import { Consumer } from '../..';
 import { getProducer, getQueueManager } from '../common';
-import { Message } from '../../src/lib/message/message';
+import { Message } from '../..';
 import { events } from '../../src/common/events';
 
 test('Consume messages from different queues using a single consumer instance: case 6', async () => {

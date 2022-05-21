@@ -5,7 +5,7 @@ import {
   getQueueManager,
   produceAndDeadLetterMessage,
 } from '../common';
-import { Message } from '../../src/message';
+import { Message } from '../..';
 
 test('Combined test: Delete a dead-letter message. Check pending, acknowledged, and dead-letter messages. Check queue metrics.', async () => {
   await createQueue(defaultQueue, false);

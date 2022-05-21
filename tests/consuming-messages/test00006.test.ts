@@ -6,7 +6,7 @@ import {
   mockConfiguration,
   untilConsumerEvent,
 } from '../common';
-import { Message } from '../../src/message';
+import { Message } from '../..';
 import { events } from '../../src/common/events';
 import { ICallback } from '../../types';
 

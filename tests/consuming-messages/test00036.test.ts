@@ -1,5 +1,5 @@
 import { getProducer, getQueueManager } from '../common';
-import { Message } from '../../src/lib/message/message';
+import { Message } from '../..';
 import { MessageNotPublishedError } from '../../src/lib/producer/errors/message-not-published.error';
 
 test('Producing a message and expecting different kind of failures', async () => {

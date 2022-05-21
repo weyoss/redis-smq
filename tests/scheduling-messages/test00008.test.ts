@@ -5,7 +5,7 @@ import {
   getQueueManager,
   startScheduleWorker,
 } from '../common';
-import { Message } from '../../src/message';
+import { Message } from '../..';
 import { delay } from 'bluebird';
 
 test("Make sure scheduled messages aren't published if destination queue is deleted", async () => {
