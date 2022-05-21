@@ -15,6 +15,7 @@ import { PanicError } from './errors/panic.error';
 import { getConfiguration } from './configuration/configuration';
 import { getNamespacedLogger } from './logger';
 import { waterfall } from '../util/async';
+import { disablePluginRegistration } from '../plugins/plugins';
 
 export abstract class Base extends EventEmitter {
   protected readonly id: string;
@@ -30,6 +31,7 @@ export abstract class Base extends EventEmitter {
       `${this.constructor.name}/${this.getId()}`,
     );
     this.registerEventsHandlers();
+    disablePluginRegistration();
   }
 
   protected setUpSharedRedisClient = (cb: ICallback<void>): void => {

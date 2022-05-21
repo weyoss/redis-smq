@@ -1,4 +1,4 @@
-import { ICallback } from '../../../types';
+import { ICallback, IPlugin, TUnaryFunction } from '../../../types';
 import { Message } from '../message/message';
 import { events } from '../../common/events';
 import { PanicError } from '../../common/errors/panic.error';
@@ -9,11 +9,44 @@ import { ELuaScriptName } from '../../common/redis-client/lua-scripts';
 import { broker } from '../../common/broker/broker';
 import { MessageError } from '../../common/errors/message.error';
 import { MessageNotPublishedError } from './errors/message-not-published.error';
+import { getProducerPlugins } from '../../plugins/plugins';
+import { each } from '../../util/async';
 
 export class Producer extends Base {
+  protected plugins: IPlugin[] = [];
+
   constructor() {
     super();
     this.run();
+  }
+
+  protected initPlugins = (cb: ICallback<void>): void => {
+    const sharedRedisClient = this.getSharedRedisClient();
+    getProducerPlugins().forEach((ctor) =>
+      this.plugins.push(new ctor(sharedRedisClient, this)),
+    );
+    cb();
+  };
+
+  protected override goingUp(): TUnaryFunction<ICallback<void>>[] {
+    return super.goingUp().concat([this.initPlugins]);
+  }
+
+  protected override goingDown(): TUnaryFunction<ICallback<void>>[] {
+    return [
+      (cb: ICallback<void>): void =>
+        each(
+          this.plugins,
+          (plugin, idx, done) => plugin.quit(done),
+          (err) => {
+            if (err) cb(err);
+            else {
+              this.plugins = [];
+              cb();
+            }
+          },
+        ),
+    ].concat(super.goingDown());
   }
 
   protected enqueue(

@@ -69,15 +69,17 @@ export class MessageHandlerRunner {
   }
 
   protected createMessageHandlerInstance(
-    redisClient: RedisClient,
+    dequeueRedisClient: RedisClient,
     handlerParams: TConsumerMessageHandlerParams,
   ): MessageHandler {
+    const sharedRedisClient = this.getSharedRedisClient();
     const { queue, messageHandler } = handlerParams;
     const instance = new MessageHandler(
-      this.consumer.getId(),
+      this.consumer,
       queue,
       messageHandler,
-      redisClient,
+      dequeueRedisClient,
+      sharedRedisClient,
     );
     this.registerMessageHandlerEvents(instance);
     this.messageHandlerInstances.push(instance);
@@ -111,9 +113,8 @@ export class MessageHandlerRunner {
     cb: ICallback<void>,
   ): void {
     const queue = messageHandler.getQueue();
-    const redisClient = this.getSharedRedisClient();
     // ignoring errors
-    messageHandler.shutdown(redisClient, () => {
+    messageHandler.shutdown(() => {
       this.messageHandlerInstances = this.messageHandlerInstances.filter(
         (handler) => {
           const q = handler.getQueue();
