@@ -5,7 +5,7 @@ import {
   getQueueManager,
 } from '../common';
 import { delay, promisifyAll } from 'bluebird';
-import { Message } from '../..';
+import { Message } from '../../src/lib/message/message';
 
 test('Priority queuing: case 2', async () => {
   const consumedMessages: Message[] = [];

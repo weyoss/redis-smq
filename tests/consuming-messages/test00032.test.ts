@@ -1,5 +1,5 @@
 import { promisifyAll } from 'bluebird';
-import { Consumer } from '../..';
+import { Consumer } from '../../src/lib/consumer/consumer';
 import { defaultQueue, getQueueManager, getRedisInstance } from '../common';
 import { consumerQueues } from '../../src/lib/consumer/consumer-queues';
 

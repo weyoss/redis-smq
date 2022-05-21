@@ -6,7 +6,7 @@ import {
   validateTime,
 } from '../common';
 import { delay } from 'bluebird';
-import { Message } from '../..';
+import { Message } from '../../src/lib/message/message';
 import { events } from '../../src/common/events';
 
 test('Rate limit a priority queue and check message rate', async () => {

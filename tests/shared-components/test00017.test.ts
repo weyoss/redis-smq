@@ -1,5 +1,5 @@
 import { promisifyAll } from 'bluebird';
-import { MessageManager } from '../..';
+import { MessageManager } from '../../src/lib/message-manager/message-manager';
 
 test('MessageManager: getSingletonInstance()/quit()', async () => {
   const m = await promisifyAll(MessageManager);

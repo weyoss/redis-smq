@@ -6,7 +6,7 @@ import {
   startScheduleWorker,
   validateTime,
 } from '../common';
-import { Message } from '../..';
+import { Message } from '../../src/lib/message/message';
 import { delay } from 'bluebird';
 
 test('Schedule a message: combine CRON, REPEAT, REPEAT PERIOD, DELAY', async () => {

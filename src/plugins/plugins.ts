@@ -2,7 +2,7 @@ import {
   TConsumerPluginConstructor,
   TProducerPluginConstructor,
 } from '../../types';
-import { PluginError } from './errors/plugin-error';
+import { PluginRegistrationNotAllowedError } from './errors/plugin-registration-not-allowed-error';
 
 let disabledPluginRegistration = false;
 const consumerPlugins = new Set<TConsumerPluginConstructor>();
@@ -12,9 +12,7 @@ export function registerConsumerPlugin(
   PluginConstructor: TConsumerPluginConstructor,
 ): void {
   if (disabledPluginRegistration) {
-    throw new PluginError(
-      `Plugin registration is allowed before starting a consumer or producer`,
-    );
+    throw new PluginRegistrationNotAllowedError();
   }
   consumerPlugins.add(PluginConstructor);
 }
@@ -23,9 +21,7 @@ export function registerProducerPlugin(
   PluginConstructor: TProducerPluginConstructor,
 ): void {
   if (disabledPluginRegistration) {
-    throw new PluginError(
-      `Plugin registration is allowed before starting a consumer or producer`,
-    );
+    throw new PluginRegistrationNotAllowedError();
   }
   producerPlugins.add(PluginConstructor);
 }
