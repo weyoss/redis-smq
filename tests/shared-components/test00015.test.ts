@@ -9,7 +9,7 @@ import {
   untilConsumerEvent,
 } from '../common';
 import { delay, promisifyAll } from 'bluebird';
-import { Message } from '../..';
+import { Message } from '../../src/lib/message/message';
 import { events } from '../../src/common/events';
 import { RequeueWorker } from '../../src/workers/requeue.worker';
 import { HeartbeatMonitorWorker } from '../../src/workers/heartbeat-monitor.worker';
