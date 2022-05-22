@@ -56,7 +56,7 @@ export class DequeueMessage {
 
   protected dequeueMessageWithPriority(cb: ICallback<string>): void {
     this.redisClient.zpophgetrpush(
-      this.redisKeys.keyQueuePendingPriorityMessageIds,
+      this.redisKeys.keyQueuePendingPriorityMessageWeight,
       this.redisKeys.keyQueuePendingPriorityMessages,
       this.redisKeys.keyQueueProcessing,
       cb,

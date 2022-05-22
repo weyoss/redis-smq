@@ -65,7 +65,7 @@ export abstract class List extends AbstractMessageStorage<
           keyQueueSettings,
           keyQueueSettingsPriorityQueuing,
           keyQueuePending,
-          keyQueuePendingPriorityMessageIds,
+          keyQueuePendingPriorityMessageWeight,
           keyQueuePendingPriorityMessages,
         } = redisKeys.getQueueKeys(queue);
         this.redisClient.runScript(
@@ -74,7 +74,7 @@ export abstract class List extends AbstractMessageStorage<
             keyQueueSettings,
             keyQueueSettingsPriorityQueuing,
             keyQueuePendingPriorityMessages,
-            keyQueuePendingPriorityMessageIds,
+            keyQueuePendingPriorityMessageWeight,
             keyQueuePending,
             keyMessages,
           ],

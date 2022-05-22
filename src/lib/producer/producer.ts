@@ -60,7 +60,7 @@ export class Producer extends Base {
       keyQueueSettings,
       keyQueueSettingsPriorityQueuing,
       keyQueuePendingPriorityMessages,
-      keyQueuePendingPriorityMessageIds,
+      keyQueuePendingPriorityMessageWeight,
       keyQueuePending,
     } = redisKeys.getQueueKeys(queue);
     redisClient.runScript(
@@ -69,7 +69,7 @@ export class Producer extends Base {
         keyQueueSettings,
         keyQueueSettingsPriorityQueuing,
         keyQueuePendingPriorityMessages,
-        keyQueuePendingPriorityMessageIds,
+        keyQueuePendingPriorityMessageWeight,
         keyQueuePending,
       ],
       [

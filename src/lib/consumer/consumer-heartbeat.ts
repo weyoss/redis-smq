@@ -62,7 +62,7 @@ export class ConsumerHeartbeat extends EventEmitter {
     const { keyHeartbeats } = consumer.getRedisKeys();
     this.keyHeartbeats = keyHeartbeats;
     this.keyHeartbeatTimestamps =
-      redisKeys.getMainKeys().keyHeartbeatInstanceIds;
+      redisKeys.getMainKeys().keyHeartbeatConsumerWeight;
     this.ticker = new Ticker(() => this.onTick());
     this.ticker.nextTick();
   }
@@ -163,10 +163,11 @@ export class ConsumerHeartbeat extends EventEmitter {
       }[]
     >,
   ): void {
-    const { keyHeartbeatInstanceIds, keyHeartbeats } = redisKeys.getMainKeys();
+    const { keyHeartbeatConsumerWeight, keyHeartbeats } =
+      redisKeys.getMainKeys();
     const timestamp = Date.now() - ConsumerHeartbeat.heartbeatTTL;
     redisClient.zrangebyscore(
-      keyHeartbeatInstanceIds,
+      keyHeartbeatConsumerWeight,
       timestamp,
       '+inf',
       (err, consumerIds) => {
@@ -215,10 +216,10 @@ export class ConsumerHeartbeat extends EventEmitter {
     redisClient: RedisClient,
     cb: ICallback<string[]>,
   ): void {
-    const { keyHeartbeatInstanceIds } = redisKeys.getMainKeys();
+    const { keyHeartbeatConsumerWeight } = redisKeys.getMainKeys();
     const timestamp = Date.now() - ConsumerHeartbeat.heartbeatTTL;
     redisClient.zrangebyscore(
-      keyHeartbeatInstanceIds,
+      keyHeartbeatConsumerWeight,
       timestamp,
       '+inf',
       (err, consumerIds) => {
@@ -232,10 +233,10 @@ export class ConsumerHeartbeat extends EventEmitter {
     redisClient: RedisClient,
     cb: ICallback<string[]>,
   ): void {
-    const { keyHeartbeatInstanceIds } = redisKeys.getMainKeys();
+    const { keyHeartbeatConsumerWeight } = redisKeys.getMainKeys();
     const timestamp = Date.now() - ConsumerHeartbeat.heartbeatTTL;
     redisClient.zrangebyscore(
-      keyHeartbeatInstanceIds,
+      keyHeartbeatConsumerWeight,
       '-inf',
       timestamp,
       (err, consumerIds) => {
@@ -251,14 +252,14 @@ export class ConsumerHeartbeat extends EventEmitter {
     cb: ICallback<void>,
   ): void {
     if (consumerIds.length) {
-      const { keyHeartbeats, keyHeartbeatInstanceIds } =
+      const { keyHeartbeats, keyHeartbeatConsumerWeight } =
         redisKeys.getMainKeys();
       const multi = redisClient.multi();
       each(
         consumerIds,
         (consumerId, _, done) => {
           multi.hdel(keyHeartbeats, consumerId);
-          multi.zrem(keyHeartbeatInstanceIds, consumerId);
+          multi.zrem(keyHeartbeatConsumerWeight, consumerId);
           Consumer.handleOfflineConsumer(multi, redisClient, consumerId, done);
         },
         () => redisClient.execMulti(multi, (err) => cb(err)),

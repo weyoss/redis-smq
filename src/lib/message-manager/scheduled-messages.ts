@@ -5,12 +5,12 @@ import { SortedSet } from './message-storage/sorted-set';
 
 export class ScheduledMessages extends SortedSet {
   delete(messageId: string, cb: ICallback<void>): void {
-    const { keyScheduledMessages, keyScheduledMessageIds } =
+    const { keyScheduledMessages, keyScheduledMessageWeight } =
       redisKeys.getMainKeys();
     this.deleteMessage(
       {
         keyMessages: keyScheduledMessages,
-        keyMessagesWeight: keyScheduledMessageIds,
+        keyMessagesWeight: keyScheduledMessageWeight,
       },
       { messageId },
       (err) => {
@@ -26,12 +26,12 @@ export class ScheduledMessages extends SortedSet {
   }
 
   purge(cb: ICallback<void>): void {
-    const { keyScheduledMessageIds, keyScheduledMessages } =
+    const { keyScheduledMessageWeight, keyScheduledMessages } =
       redisKeys.getMainKeys();
     this.purgeMessages(
       {
         keyMessages: keyScheduledMessages,
-        keyMessagesWeight: keyScheduledMessageIds,
+        keyMessagesWeight: keyScheduledMessageWeight,
       },
       (err) => {
         if (err) cb(err);
@@ -44,12 +44,12 @@ export class ScheduledMessages extends SortedSet {
   }
 
   list(skip: number, take: number, cb: ICallback<TGetMessagesReply>): void {
-    const { keyScheduledMessageIds, keyScheduledMessages } =
+    const { keyScheduledMessageWeight, keyScheduledMessages } =
       redisKeys.getMainKeys();
     this.fetchMessages(
       {
         keyMessages: keyScheduledMessages,
-        keyMessagesWeight: keyScheduledMessageIds,
+        keyMessagesWeight: keyScheduledMessageWeight,
       },
       skip,
       take,
@@ -58,8 +58,8 @@ export class ScheduledMessages extends SortedSet {
   }
 
   static count(redisClient: RedisClient, cb: ICallback<number>): void {
-    const { keyScheduledMessageIds } = redisKeys.getMainKeys();
-    redisClient.zcard(keyScheduledMessageIds, (err, reply) => {
+    const { keyScheduledMessageWeight } = redisKeys.getMainKeys();
+    redisClient.zcard(keyScheduledMessageWeight, (err, reply) => {
       if (err) cb(err);
       else cb(null, reply ?? 0);
     });

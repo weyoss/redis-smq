@@ -26,7 +26,7 @@ export class Namespace {
   }
 
   getQueues(namespace: string, cb: ICallback<TQueueParams[]>): void {
-    const { keyNsQueues } = redisKeys.getNsKeys(namespace);
+    const { keyNsQueues } = redisKeys.getNamespaceKeys(namespace);
     this.redisClient.smembers(keyNsQueues, (err, reply) => {
       if (err) cb(err);
       else if (!reply) cb(new EmptyCallbackReplyError());
