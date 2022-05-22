@@ -29,7 +29,7 @@ export class QueueMetrics {
     };
     const {
       keyQueuePending,
-      keyQueuePendingPriorityMessageIds,
+      keyQueuePendingPriorityMessageWeight,
       keyQueueDL,
       keyQueueAcknowledged,
     } = redisKeys.getQueueKeys(queueParams);
@@ -44,7 +44,7 @@ export class QueueMetrics {
         (priorityQueuing: boolean, cb: ICallback<void>) => {
           if (priorityQueuing) {
             this.redisClient.zcard(
-              keyQueuePendingPriorityMessageIds,
+              keyQueuePendingPriorityMessageWeight,
               (err, reply) => {
                 if (err) cb(err);
                 else {

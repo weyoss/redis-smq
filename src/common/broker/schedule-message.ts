@@ -12,11 +12,11 @@ function scheduleMessageTransaction(
 ): boolean {
   const timestamp = message.getNextScheduledTimestamp();
   if (timestamp > 0) {
-    const { keyScheduledMessageIds, keyScheduledMessages } =
+    const { keyScheduledMessageWeight, keyScheduledMessages } =
       redisKeys.getMainKeys();
     message.getRequiredMetadata().setScheduledAt(Date.now());
     const messageId = message.getRequiredId();
-    multi.zadd(keyScheduledMessageIds, timestamp, messageId);
+    multi.zadd(keyScheduledMessageWeight, timestamp, messageId);
     multi.hset(keyScheduledMessages, messageId, JSON.stringify(message));
     return true;
   }
@@ -45,7 +45,7 @@ export function scheduleMessage(
       const {
         keyQueueSettings,
         keyQueueSettingsPriorityQueuing,
-        keyScheduledMessageIds,
+        keyScheduledMessageWeight,
         keyScheduledMessages,
       } = redisKeys.getQueueKeys(queue);
       message.getRequiredMetadata().setScheduledAt(Date.now());
@@ -55,7 +55,7 @@ export function scheduleMessage(
         [
           keyQueueSettings,
           keyQueueSettingsPriorityQueuing,
-          keyScheduledMessageIds,
+          keyScheduledMessageWeight,
           keyScheduledMessages,
         ],
         [

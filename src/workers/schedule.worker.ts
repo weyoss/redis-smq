@@ -8,8 +8,13 @@ import { each, waterfall } from '../util/async';
 
 export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
   protected fetchMessageIds = (cb: ICallback<string[]>): void => {
-    const { keyScheduledMessageIds } = redisKeys.getMainKeys();
-    this.redisClient.zrangebyscore(keyScheduledMessageIds, 0, Date.now(), cb);
+    const { keyScheduledMessageWeight } = redisKeys.getMainKeys();
+    this.redisClient.zrangebyscore(
+      keyScheduledMessageWeight,
+      0,
+      Date.now(),
+      cb,
+    );
   };
 
   protected fetchMessages = (ids: string[], cb: ICallback<Message[]>): void => {
@@ -53,8 +58,8 @@ export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
             keyQueueSettingsPriorityQueuing,
             keyQueuePending,
             keyQueuePendingPriorityMessages,
-            keyQueuePendingPriorityMessageIds,
-            keyScheduledMessageIds,
+            keyQueuePendingPriorityMessageWeight,
+            keyScheduledMessageWeight,
             keyScheduledMessages,
           } = redisKeys.getQueueKeys(queue);
           const nextScheduleTimestamp = message.getNextScheduledTimestamp();
@@ -65,9 +70,9 @@ export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
               keyQueueSettings,
               keyQueueSettingsPriorityQueuing,
               keyQueuePendingPriorityMessages,
-              keyQueuePendingPriorityMessageIds,
+              keyQueuePendingPriorityMessageWeight,
               keyQueuePending,
-              keyScheduledMessageIds,
+              keyScheduledMessageWeight,
               keyScheduledMessages,
             ],
             [

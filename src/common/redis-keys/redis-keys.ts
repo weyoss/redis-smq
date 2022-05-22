@@ -14,7 +14,7 @@ let namespace = 'default';
 enum ERedisKey {
   KEY_QUEUE_PENDING = 1,
   KEY_QUEUE_PENDING_PRIORITY_MESSAGES,
-  KEY_QUEUE_PENDING_PRIORITY_MESSAGE_IDS,
+  KEY_QUEUE_PENDING_PRIORITY_MESSAGE_WEIGHT,
   KEY_QUEUE_DL,
   KEY_QUEUE_PROCESSING,
   KEY_QUEUE_ACKNOWLEDGED,
@@ -22,37 +22,13 @@ enum ERedisKey {
   KEY_QUEUE_PROCESSING_QUEUES,
 
   KEY_LOCK_CONSUMER_WORKERS_RUNNER,
-  KEY_LOCK_MESSAGE_MANAGER,
-  KEY_LOCK_QUEUE_MANAGER,
-  KEY_LOCK_MONITOR_SERVER_WORKERS,
-  KEY_LOCK_RATE_GLOBAL_PUBLISHED,
-  KEY_LOCK_RATE_GLOBAL_ACKNOWLEDGED,
-  KEY_LOCK_RATE_GLOBAL_DEAD_LETTERED,
-  KEY_LOCK_RATE_QUEUE_PUBLISHED,
-  KEY_LOCK_RATE_QUEUE_ACKNOWLEDGED,
-  KEY_LOCK_RATE_QUEUE_DEAD_LETTERED,
-
-  KEY_RATE_CONSUMER_ACKNOWLEDGED,
-  KEY_RATE_QUEUE_ACKNOWLEDGED,
-  KEY_RATE_QUEUE_ACKNOWLEDGED_INDEX,
-  KEY_RATE_QUEUE_DEAD_LETTERED,
-  KEY_RATE_QUEUE_DEAD_LETTERED_INDEX,
-  KEY_RATE_QUEUE_PUBLISHED,
-  KEY_RATE_QUEUE_PUBLISHED_INDEX,
-  KEY_RATE_GLOBAL_ACKNOWLEDGED,
-  KEY_RATE_GLOBAL_ACKNOWLEDGED_INDEX,
-  KEY_RATE_GLOBAL_DEAD_LETTERED,
-  KEY_RATE_GLOBAL_DEAD_LETTERED_INDEX,
-  KEY_RATE_GLOBAL_PUBLISHED,
-  KEY_RATE_GLOBAL_PUBLISHED_INDEX,
-  KEY_RATE_CONSUMER_DEAD_LETTERED,
 
   KEY_DELAYED_MESSAGES,
   KEY_REQUEUE_MESSAGES,
   KEY_SCHEDULED_MESSAGES,
-  KEY_SCHEDULED_MESSAGE_IDS,
+  KEY_SCHEDULED_MESSAGE_WEIGHT,
   KEY_HEARTBEATS,
-  KEY_HEARTBEAT_INSTANCE_IDS,
+  KEY_HEARTBEAT_CONSUMER_WEIGHT,
   KEY_QUEUES,
   KEY_PROCESSING_QUEUES,
   KEY_CONSUMER_QUEUES,
@@ -64,55 +40,50 @@ enum ERedisKey {
   KEY_QUEUE_SETTINGS_PRIORITY_QUEUING,
 }
 
-export const redisKeys = {
-  getKeyTypes() {
-    return {
-      ...ERedisKey,
-    };
-  },
+function makeNamespacedKeys<T extends Record<string, ERedisKey>>(
+  keys: T,
+  namespace: string,
+  ...rest: string[]
+): Record<Extract<keyof T, string>, string> {
+  const result: Record<string, string> = {};
+  for (const k in keys) {
+    result[k] = [nsPrefix, namespace, keys[k], ...rest].join(
+      keySegmentSeparator,
+    );
+  }
+  return result;
+}
 
-  getNsKeys(ns: string) {
+export const redisKeys = {
+  getNamespaceKeys(ns: string) {
     const mainKeys = this.getMainKeys();
     const keys = {
       keyNsQueues: ERedisKey.KEY_NS_QUEUES,
     };
     return {
       ...mainKeys,
-      ...keys,
-      ...this.makeNamespacedKeys(keys, ns),
+      ...makeNamespacedKeys(keys, ns),
     };
   },
 
   getQueueKeys(queueParams: TQueueParams) {
-    const nsKeys = this.getNsKeys(queueParams.ns);
+    const nsKeys = this.getNamespaceKeys(queueParams.ns);
     const queueKeys = {
       keyQueuePending: ERedisKey.KEY_QUEUE_PENDING,
       keyQueueDL: ERedisKey.KEY_QUEUE_DL,
       keyQueueProcessingQueues: ERedisKey.KEY_QUEUE_PROCESSING_QUEUES,
       keyQueueAcknowledged: ERedisKey.KEY_QUEUE_ACKNOWLEDGED,
-      keyQueuePendingPriorityMessageIds:
-        ERedisKey.KEY_QUEUE_PENDING_PRIORITY_MESSAGE_IDS,
+      keyQueuePendingPriorityMessageWeight:
+        ERedisKey.KEY_QUEUE_PENDING_PRIORITY_MESSAGE_WEIGHT,
       keyQueuePendingPriorityMessages:
         ERedisKey.KEY_QUEUE_PENDING_PRIORITY_MESSAGES,
-      keyRateQueueDeadLettered: ERedisKey.KEY_RATE_QUEUE_DEAD_LETTERED,
-      keyRateQueueAcknowledged: ERedisKey.KEY_RATE_QUEUE_ACKNOWLEDGED,
-      keyRateQueuePublished: ERedisKey.KEY_RATE_QUEUE_PUBLISHED,
-      keyRateQueueDeadLetteredIndex:
-        ERedisKey.KEY_RATE_QUEUE_DEAD_LETTERED_INDEX,
-      keyRateQueueAcknowledgedIndex:
-        ERedisKey.KEY_RATE_QUEUE_ACKNOWLEDGED_INDEX,
-      keyRateQueuePublishedIndex: ERedisKey.KEY_RATE_QUEUE_PUBLISHED_INDEX,
-      keyLockRateQueuePublished: ERedisKey.KEY_LOCK_RATE_QUEUE_PUBLISHED,
-      keyLockRateQueueAcknowledged: ERedisKey.KEY_LOCK_RATE_QUEUE_ACKNOWLEDGED,
-      keyLockRateQueueDeadLettered: ERedisKey.KEY_LOCK_RATE_QUEUE_DEAD_LETTERED,
       keyQueueConsumers: ERedisKey.KEY_QUEUE_CONSUMERS,
       keyQueueRateLimitCounter: ERedisKey.KEY_QUEUE_RATE_LIMIT_COUNTER,
       keyQueueSettings: ERedisKey.KEY_QUEUE_SETTINGS,
     };
     return {
       ...nsKeys,
-      ...queueKeys,
-      ...this.makeNamespacedKeys(queueKeys, queueParams.ns, queueParams.name),
+      ...makeNamespacedKeys(queueKeys, queueParams.ns, queueParams.name),
     };
   },
 
@@ -120,12 +91,10 @@ export const redisKeys = {
     const mainKeys = this.getMainKeys();
     const consumerKeys = {
       keyConsumerQueues: ERedisKey.KEY_CONSUMER_QUEUES,
-      keyRateConsumerDeadLettered: ERedisKey.KEY_RATE_CONSUMER_DEAD_LETTERED,
-      keyRateConsumerAcknowledged: ERedisKey.KEY_RATE_CONSUMER_ACKNOWLEDGED,
     };
     return {
       ...mainKeys,
-      ...this.makeNamespacedKeys(consumerKeys, globalNamespace, instanceId),
+      ...makeNamespacedKeys(consumerKeys, globalNamespace, instanceId),
     };
   },
 
@@ -138,7 +107,7 @@ export const redisKeys = {
     return {
       ...queueKeys,
       ...consumerKeys,
-      ...this.makeNamespacedKeys(
+      ...makeNamespacedKeys(
         consumerQueueKeys,
         queueParams.ns,
         queueParams.name,
@@ -152,48 +121,18 @@ export const redisKeys = {
       keyQueues: ERedisKey.KEY_QUEUES,
       keyProcessingQueues: ERedisKey.KEY_PROCESSING_QUEUES,
       keyHeartbeats: ERedisKey.KEY_HEARTBEATS,
-      keyHeartbeatInstanceIds: ERedisKey.KEY_HEARTBEAT_INSTANCE_IDS,
+      keyHeartbeatConsumerWeight: ERedisKey.KEY_HEARTBEAT_CONSUMER_WEIGHT,
       keyScheduledMessages: ERedisKey.KEY_SCHEDULED_MESSAGES,
-      keyScheduledMessageIds: ERedisKey.KEY_SCHEDULED_MESSAGE_IDS,
-      keyLockMessageManager: ERedisKey.KEY_LOCK_MESSAGE_MANAGER,
-      keyLockQueueManager: ERedisKey.KEY_LOCK_QUEUE_MANAGER,
+      keyScheduledMessageWeight: ERedisKey.KEY_SCHEDULED_MESSAGE_WEIGHT,
       keyLockConsumerWorkersRunner: ERedisKey.KEY_LOCK_CONSUMER_WORKERS_RUNNER,
-      keyLockMonitorServerWorkers: ERedisKey.KEY_LOCK_MONITOR_SERVER_WORKERS,
       keyDelayedMessages: ERedisKey.KEY_DELAYED_MESSAGES,
       keyRequeueMessages: ERedisKey.KEY_REQUEUE_MESSAGES,
-      keyRateGlobalDeadLettered: ERedisKey.KEY_RATE_GLOBAL_DEAD_LETTERED,
-      keyRateGlobalAcknowledged: ERedisKey.KEY_RATE_GLOBAL_ACKNOWLEDGED,
-      keyRateGlobalPublished: ERedisKey.KEY_RATE_GLOBAL_PUBLISHED,
-      keyRateGlobalDeadLetteredIndex:
-        ERedisKey.KEY_RATE_GLOBAL_DEAD_LETTERED_INDEX,
-      keyRateGlobalAcknowledgedIndex:
-        ERedisKey.KEY_RATE_GLOBAL_ACKNOWLEDGED_INDEX,
-      keyRateGlobalInputIndex: ERedisKey.KEY_RATE_GLOBAL_PUBLISHED_INDEX,
-      keyLockRateGlobalPublished: ERedisKey.KEY_LOCK_RATE_GLOBAL_PUBLISHED,
-      keyLockRateGlobalAcknowledged:
-        ERedisKey.KEY_LOCK_RATE_GLOBAL_ACKNOWLEDGED,
-      keyLockRateGlobalDeadLettered:
-        ERedisKey.KEY_LOCK_RATE_GLOBAL_DEAD_LETTERED,
       keyNamespaces: ERedisKey.KEY_NAMESPACES,
       keyQueueSettingsRateLimit: ERedisKey.KEY_QUEUE_SETTINGS_RATE_LIMIT,
       keyQueueSettingsPriorityQueuing:
         ERedisKey.KEY_QUEUE_SETTINGS_PRIORITY_QUEUING,
     };
-    return this.makeNamespacedKeys(mainKeys, globalNamespace);
-  },
-
-  extractData(key: string) {
-    const { ns, type, segments } = this.getSegments(key);
-    if (type === ERedisKey.KEY_QUEUE_PROCESSING) {
-      const [queueName, consumerId] = segments;
-      return {
-        ns,
-        queueName,
-        type,
-        consumerId,
-      };
-    }
-    return null;
+    return makeNamespacedKeys(mainKeys, globalNamespace);
   },
 
   setNamespace(ns: string): void {
@@ -223,32 +162,5 @@ export const redisKeys = {
       );
     }
     return filtered;
-  },
-
-  makeNamespacedKeys<T extends Record<string, ERedisKey>>(
-    keys: T,
-    namespace: string,
-    ...rest: string[]
-  ): Record<Extract<keyof T, string>, string> {
-    const result: Record<string, string> = {};
-    for (const k in keys) {
-      result[k] = [nsPrefix, namespace, keys[k], ...rest].join(
-        keySegmentSeparator,
-      );
-    }
-    return result;
-  },
-
-  getSegments(key: string): {
-    ns: string;
-    type: ERedisKey;
-    segments: string[];
-  } {
-    const [, ns, type, ...segments] = key.split(keySegmentSeparator);
-    return {
-      ns,
-      type: Number(type),
-      segments,
-    };
   },
 };

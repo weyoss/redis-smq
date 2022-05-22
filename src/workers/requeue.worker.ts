@@ -31,7 +31,7 @@ export class RequeueWorker extends Worker<IConsumerWorkerParameters> {
             (messageStr, _, done) => {
               const message = Message.createFromMessage(messageStr);
               const queue = message.getRequiredQueue();
-              const { keyQueuePending, keyQueuePendingPriorityMessageIds } =
+              const { keyQueuePending, keyQueuePendingPriorityMessageWeight } =
                 redisKeys.getQueueKeys(queue);
               multi.lrem(keyRequeueMessages, 1, messageStr);
               message.getRequiredMetadata().incrAttempts();
@@ -45,7 +45,7 @@ export class RequeueWorker extends Worker<IConsumerWorkerParameters> {
                   );
                 else {
                   multi.zadd(
-                    keyQueuePendingPriorityMessageIds,
+                    keyQueuePendingPriorityMessageWeight,
                     priority,
                     JSON.stringify(message),
                   );

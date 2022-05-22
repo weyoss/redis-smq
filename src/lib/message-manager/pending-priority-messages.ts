@@ -12,13 +12,13 @@ export class PendingPriorityMessages extends SortedSet {
   ): void {
     const queueParams = Queue.getParams(queue);
     const {
-      keyQueuePendingPriorityMessageIds,
+      keyQueuePendingPriorityMessageWeight,
       keyQueuePendingPriorityMessages,
     } = redisKeys.getQueueKeys(queueParams);
     this.deleteMessage(
       {
         keyMessages: keyQueuePendingPriorityMessages,
-        keyMessagesWeight: keyQueuePendingPriorityMessageIds,
+        keyMessagesWeight: keyQueuePendingPriorityMessageWeight,
       },
       { messageId },
       (err) => {
@@ -36,13 +36,13 @@ export class PendingPriorityMessages extends SortedSet {
   purge(queue: string | TQueueParams, cb: ICallback<void>): void {
     const queueParams = Queue.getParams(queue);
     const {
-      keyQueuePendingPriorityMessageIds,
+      keyQueuePendingPriorityMessageWeight,
       keyQueuePendingPriorityMessages,
     } = redisKeys.getQueueKeys(queueParams);
     this.purgeMessages(
       {
         keyMessages: keyQueuePendingPriorityMessages,
-        keyMessagesWeight: keyQueuePendingPriorityMessageIds,
+        keyMessagesWeight: keyQueuePendingPriorityMessageWeight,
       },
       (err) => {
         if (err) cb(err);
@@ -66,13 +66,13 @@ export class PendingPriorityMessages extends SortedSet {
   ): void {
     const queueParams = Queue.getParams(queue);
     const {
-      keyQueuePendingPriorityMessageIds,
+      keyQueuePendingPriorityMessageWeight,
       keyQueuePendingPriorityMessages,
     } = redisKeys.getQueueKeys(queueParams);
     this.fetchMessages(
       {
         keyMessages: keyQueuePendingPriorityMessages,
-        keyMessagesWeight: keyQueuePendingPriorityMessageIds,
+        keyMessagesWeight: keyQueuePendingPriorityMessageWeight,
       },
       skip,
       take,
@@ -86,9 +86,9 @@ export class PendingPriorityMessages extends SortedSet {
     cb: ICallback<number>,
   ): void {
     const queueParams = Queue.getParams(queue);
-    const { keyQueuePendingPriorityMessageIds } =
+    const { keyQueuePendingPriorityMessageWeight } =
       redisKeys.getQueueKeys(queueParams);
-    redisClient.zcard(keyQueuePendingPriorityMessageIds, (err, reply) => {
+    redisClient.zcard(keyQueuePendingPriorityMessageWeight, (err, reply) => {
       if (err) cb(err);
       else cb(null, reply ?? 0);
     });
