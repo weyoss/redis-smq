@@ -6,7 +6,7 @@ import {
   getProducer,
 } from '../common';
 import { Message } from '../../src/lib/message/message';
-import { events } from '../../src/common/events';
+import { events } from '../../src/common/events/events';
 import { delay } from 'bluebird';
 
 test('A message is dead-lettered when messageRetryThreshold is exceeded', async () => {

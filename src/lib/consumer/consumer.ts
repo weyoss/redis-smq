@@ -8,18 +8,18 @@ import {
   TUnaryFunction,
   TRedisClientMulti,
 } from '../../../types';
-import { events } from '../../common/events';
+import { events } from '../../common/events/events';
 import { RedisClient } from '../../common/redis-client/redis-client';
 import { resolve } from 'path';
 import { WorkerRunner } from '../../common/worker/worker-runner/worker-runner';
 import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { ConsumerHeartbeat } from './consumer-heartbeat';
-import { Base } from '../../common/base';
+import { Base } from '../base';
 import { MessageHandler } from './consumer-message-handler/message-handler';
 import { consumerQueues } from './consumer-queues';
 import { WorkerPool } from '../../common/worker/worker-runner/worker-pool';
-import { each, waterfall } from '../../util/async';
+import { each, waterfall } from '../../common/async/async';
 import { MessageHandlerRunner } from './consumer-message-handler/message-handler-runner';
 import { MultiplexedMessageHandlerRunner } from './consumer-message-handler/multiplexed-message-handler/multiplexed-message-handler-runner';
 import { Queue } from '../queue-manager/queue';

@@ -4,11 +4,11 @@ import {
   ICallback,
   TRedisClientMulti,
 } from '../../../../types';
-import { Message } from '../../../lib/message/message';
-import { redisKeys } from '../../redis-keys/redis-keys';
-import { getConfiguration } from '../../configuration/configuration';
-import { RedisClient } from '../../redis-client/redis-client';
-import { PanicError } from '../../errors/panic.error';
+import { Message } from '../../message/message';
+import { redisKeys } from '../../../common/redis-keys/redis-keys';
+import { getConfiguration } from '../../../config/configuration';
+import { RedisClient } from '../../../common/redis-client/redis-client';
+import { PanicError } from '../../../common/errors/panic.error';
 
 function deadLetterMessageTransaction(
   mixed: TRedisClientMulti,

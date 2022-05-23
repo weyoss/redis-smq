@@ -1,8 +1,8 @@
 import { ICallback } from '../../../types';
-import { Message } from '../../lib/message/message';
-import { RedisClient } from '../redis-client/redis-client';
-import { redisKeys } from '../redis-keys/redis-keys';
-import { getConfiguration } from '../configuration/configuration';
+import { Message } from '../message/message';
+import { RedisClient } from '../../common/redis-client/redis-client';
+import { redisKeys } from '../../common/redis-keys/redis-keys';
+import { getConfiguration } from '../../config/configuration';
 import { retry } from './retry/retry';
 import { scheduleMessage } from './schedule-message';
 

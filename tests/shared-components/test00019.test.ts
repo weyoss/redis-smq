@@ -1,4 +1,4 @@
-import Store from '../../src/common/configuration/messages/store';
+import Store from '../../src/config/messages/store';
 
 test('Configuration: storeMessages', async () => {
   expect(() => {

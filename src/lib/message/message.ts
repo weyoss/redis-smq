@@ -1,7 +1,7 @@
 import { parseExpression } from 'cron-parser';
 import { TMessageJSON, TQueueParams } from '../../../types';
 import { ArgumentError } from '../../common/errors/argument.error';
-import { getConfiguration } from '../../common/configuration/configuration';
+import { getConfiguration } from '../../config/configuration';
 import { MessageMetadata } from './message-metadata';
 import { PanicError } from '../../common/errors/panic.error';
 import { Queue } from '../queue-manager/queue';

@@ -1,7 +1,7 @@
 import { createLogger } from 'bunyan';
-import { getConfiguration } from './configuration/configuration';
-import { ICompatibleLogger } from '../../types';
-import { LoggerError } from './errors/logger.error';
+import { getConfiguration } from '../../config/configuration';
+import { ICompatibleLogger } from '../../../types';
+import { LoggerError } from './logger.error';
 
 const noop = () => void 0;
 const dummyLogger = {

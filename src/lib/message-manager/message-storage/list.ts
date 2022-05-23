@@ -1,7 +1,7 @@
 import { AbstractMessageStorage } from './abstract-message-storage';
 import { ICallback, TPaginatedResponse } from '../../../../types';
 import { Message } from '../../message/message';
-import { waterfall } from '../../../util/async';
+import { waterfall } from '../../../common/async/async';
 import { MessageNotFoundError } from '../errors/message-not-found.error';
 import { EmptyCallbackReplyError } from '../../../common/errors/empty-callback-reply.error';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';

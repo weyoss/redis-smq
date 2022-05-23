@@ -1,5 +1,5 @@
-import { IConfig } from '../../../types';
-import { redisKeys } from '../redis-keys/redis-keys';
+import { IConfig } from '../../types';
+import { redisKeys } from '../common/redis-keys/redis-keys';
 
 const defaultNamespace = 'default';
 

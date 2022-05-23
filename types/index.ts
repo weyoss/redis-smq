@@ -49,13 +49,15 @@ export interface IMessagesConfigStore {
   deadLettered?: boolean | IMessagesConfigStoreOptions;
 }
 
+export type TLoggerConfig = {
+  enabled: boolean;
+  options?: Partial<Logger.LoggerOptions>;
+};
+
 export interface IConfig {
   redis?: TRedisOptions;
   namespace?: string;
-  logger?: {
-    enabled: boolean;
-    options?: Partial<Logger.LoggerOptions>;
-  };
+  logger?: TLoggerConfig;
   messages?: IMessagesConfig;
 }
 

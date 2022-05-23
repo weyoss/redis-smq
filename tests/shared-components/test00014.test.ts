@@ -1,4 +1,4 @@
-import { events } from '../../src/common/events';
+import { events } from '../../src/common/events/events';
 import { getProducer } from '../common';
 
 test('Producer: isRunning, isGoingUp, isGoingDown, isUp, isDown', async () => {

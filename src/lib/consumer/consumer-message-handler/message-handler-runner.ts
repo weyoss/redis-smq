@@ -1,6 +1,6 @@
 import { Consumer } from '../consumer';
 import { MessageHandler } from './message-handler';
-import { events } from '../../../common/events';
+import { events } from '../../../common/events/events';
 import {
   ICallback,
   ICompatibleLogger,
@@ -11,9 +11,9 @@ import {
 } from '../../../../types';
 import { RedisClient } from '../../../common/redis-client/redis-client';
 import { EmptyCallbackReplyError } from '../../../common/errors/empty-callback-reply.error';
-import { each } from '../../../util/async';
-import { getConfiguration } from '../../../common/configuration/configuration';
-import { getNamespacedLogger } from '../../../common/logger';
+import { each } from '../../../common/async/async';
+import { getConfiguration } from '../../../config/configuration';
+import { getNamespacedLogger } from '../../../common/logger/logger';
 import { MessageHandlerAlreadyExistsError } from '../errors/message-handler-already-exists.error';
 import { PanicError } from '../../../common/errors/panic.error';
 

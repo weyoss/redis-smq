@@ -1,6 +1,6 @@
 import { TFunction } from '../../../types';
 import { EventEmitter } from 'events';
-import { events } from '../events';
+import { events } from '../events/events';
 import { PowerManager } from '../power-manager/power-manager';
 import { TickerError } from './ticker.error';
 import { PanicError } from '../errors/panic.error';

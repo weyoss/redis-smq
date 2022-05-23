@@ -1,4 +1,4 @@
-import { IConfig, IRequiredConfig, RedisClientName } from '../../../types';
+import { IConfig, IRequiredConfig, RedisClientName } from '../../types';
 import { merge } from 'lodash';
 
 const defaultConfig: IRequiredConfig['redis'] = {

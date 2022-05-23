@@ -8,7 +8,7 @@ import {
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { QueueRateLimitError } from './errors/queue-rate-limit.error';
 import { ELuaScriptName } from '../../common/redis-client/lua-scripts';
-import { getNamespacedLogger } from '../../common/logger';
+import { getNamespacedLogger } from '../../common/logger/logger';
 import { Queue } from './queue';
 
 export class QueueRateLimit {

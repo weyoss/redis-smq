@@ -1,7 +1,7 @@
 import { DequeueMessage } from '../dequeue-message';
 import { ICallback } from '../../../../../types';
 import { Message } from '../../../message/message';
-import { events } from '../../../../common/events';
+import { events } from '../../../../common/events/events';
 import { QueueRateLimit } from '../../../queue-manager/queue-rate-limit';
 
 export class MultiplexedDequeueMessage extends DequeueMessage {

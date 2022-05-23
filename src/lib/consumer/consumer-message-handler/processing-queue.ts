@@ -6,8 +6,8 @@ import {
   TRedisClientMulti,
 } from '../../../../types';
 import { Message } from '../../message/message';
-import { waterfall } from '../../../util/async';
-import { broker } from '../../../common/broker/broker';
+import { waterfall } from '../../../common/async/async';
+import { broker } from '../../broker/broker';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 
 function fetchProcessingQueueMessage(

@@ -7,14 +7,14 @@ import {
   IRequiredConfig,
   ICompatibleLogger,
 } from '../../types';
-import { PowerManager } from './power-manager/power-manager';
-import { events } from './events';
-import { RedisClient } from './redis-client/redis-client';
-import { EmptyCallbackReplyError } from './errors/empty-callback-reply.error';
-import { PanicError } from './errors/panic.error';
-import { getConfiguration } from './configuration/configuration';
-import { getNamespacedLogger } from './logger';
-import { waterfall } from '../util/async';
+import { PowerManager } from '../common/power-manager/power-manager';
+import { events } from '../common/events/events';
+import { RedisClient } from '../common/redis-client/redis-client';
+import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
+import { PanicError } from '../common/errors/panic.error';
+import { getConfiguration } from '../config/configuration';
+import { getNamespacedLogger } from '../common/logger/logger';
+import { waterfall } from '../common/async/async';
 import { disablePluginRegistration } from '../plugins/plugins';
 
 export abstract class Base extends EventEmitter {

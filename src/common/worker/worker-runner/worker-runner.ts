@@ -11,13 +11,13 @@ import { EventEmitter } from 'events';
 import { Ticker } from '../../ticker/ticker';
 import { LockManager } from '../../lock-manager/lock-manager';
 import { RedisClient } from '../../redis-client/redis-client';
-import { getNamespacedLogger } from '../../logger';
-import { events } from '../../events';
+import { getNamespacedLogger } from '../../logger/logger';
+import { events } from '../../events/events';
 import { WorkerPool } from './worker-pool';
 import { EmptyCallbackReplyError } from '../../errors/empty-callback-reply.error';
 import { Worker } from '../worker';
 import { PanicError } from '../../errors/panic.error';
-import { each, waterfall } from '../../../util/async';
+import { each, waterfall } from '../../async/async';
 import { LockManagerAcquireError } from '../../lock-manager/errors/lock-manager-acquire.error';
 
 export class WorkerRunner<

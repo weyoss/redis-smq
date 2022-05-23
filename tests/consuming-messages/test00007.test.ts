@@ -6,7 +6,7 @@ import {
   untilMessageAcknowledged,
 } from '../common';
 import { Message } from '../../src/lib/message/message';
-import { events } from '../../src/common/events';
+import { events } from '../../src/common/events/events';
 import { ICallback } from '../../types';
 
 test('Unacknowledged messages are re-queued when messageRetryThreshold is not exceeded', async () => {

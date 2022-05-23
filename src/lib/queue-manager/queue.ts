@@ -10,7 +10,7 @@ import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-repl
 import { ELuaScriptName } from '../../common/redis-client/lua-scripts';
 import { QueueExistsError } from './errors/queue-exists.error';
 import { QueueNotFoundError } from './errors/queue-not-found.error';
-import { getNamespacedLogger } from '../../common/logger';
+import { getNamespacedLogger } from '../../common/logger/logger';
 import { initDeleteQueueTransaction } from './delete-queue-transaction';
 
 export class Queue {
