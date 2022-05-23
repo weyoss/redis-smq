@@ -1,7 +1,7 @@
 import { Message } from '../../message/message';
 import { EMessageUnacknowledgedCause } from '../../../../types';
-import { broker } from '../../../common/broker/broker';
-import { events } from '../../../common/events';
+import { broker } from '../../broker/broker';
+import { events } from '../../../common/events/events';
 import { ConsumerError } from '../errors/consumer.error';
 import { RedisClient } from '../../../common/redis-client/redis-client';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';

@@ -1,5 +1,5 @@
 import { promisifyAll } from 'bluebird';
-import { events } from '../src/common/events';
+import { events } from '../src/common/events/events';
 import { RedisClient } from '../src/common/redis-client/redis-client';
 import { Producer, Message, Consumer, setLogger } from '../index';
 import { config as testConfig } from './config';
@@ -7,11 +7,11 @@ import { IConfig, TConsumerMessageHandler, TQueueParams } from '../types';
 import { QueueManager } from '../src/lib/queue-manager/queue-manager';
 import { MessageManager } from '../src/lib/message-manager/message-manager';
 import * as supertest from 'supertest';
-import * as configuration from '../src/common/configuration/configuration';
+import * as configuration from '../src/config/configuration';
 import ScheduleWorker from '../src/workers/schedule.worker';
 import { merge } from 'lodash';
-import { reset } from '../src/common/logger';
-import Store from '../src/common/configuration/messages/store';
+import { reset } from '../src/common/logger/logger';
+import Store from '../src/config/messages/store';
 
 export const config = configuration.setConfiguration(testConfig);
 

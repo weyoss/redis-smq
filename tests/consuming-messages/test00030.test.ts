@@ -7,7 +7,7 @@ import {
 } from '../common';
 import { delay } from 'bluebird';
 import { Message } from '../../src/lib/message/message';
-import { events } from '../../src/common/events';
+import { events } from '../../src/common/events/events';
 
 test('Rate limit a priority queue and check message rate', async () => {
   const qm = await getQueueManager();

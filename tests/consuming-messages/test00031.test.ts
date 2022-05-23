@@ -8,7 +8,7 @@ import {
 } from '../common';
 import { delay } from 'bluebird';
 import { Message } from '../../src/lib/message/message';
-import { events } from '../../src/common/events';
+import { events } from '../../src/common/events/events';
 
 test('Set a rate limit for a queue and consume messages using many consumers', async () => {
   await createQueue(defaultQueue, false);

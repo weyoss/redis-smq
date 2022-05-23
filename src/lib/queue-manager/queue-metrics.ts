@@ -6,8 +6,8 @@ import {
   TQueueParams,
 } from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { waterfall } from '../../util/async';
-import { getNamespacedLogger } from '../../common/logger';
+import { waterfall } from '../../common/async/async';
+import { getNamespacedLogger } from '../../common/logger/logger';
 import { Queue } from './queue';
 import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
 

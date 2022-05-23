@@ -2,9 +2,9 @@ import { RedisClient } from '../../common/redis-client/redis-client';
 import { ICallback, ICompatibleLogger, TQueueParams } from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
-import { eachOf, waterfall } from '../../util/async';
+import { eachOf, waterfall } from '../../common/async/async';
 import { NamespaceNotFoundError } from './errors/namespace-not-found.error';
-import { getNamespacedLogger } from '../../common/logger';
+import { getNamespacedLogger } from '../../common/logger/logger';
 import { initDeleteQueueTransaction } from './delete-queue-transaction';
 
 export class Namespace {

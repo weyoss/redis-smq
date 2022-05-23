@@ -1,7 +1,7 @@
 import { AbstractMessageStorage } from './abstract-message-storage';
 import { ICallback, TGetMessagesReply } from '../../../../types';
 import { Message } from '../../message/message';
-import { each, waterfall } from '../../../util/async';
+import { each, waterfall } from '../../../common/async/async';
 import { EmptyCallbackReplyError } from '../../../common/errors/empty-callback-reply.error';
 import { MessageNotFoundError } from '../errors/message-not-found.error';
 

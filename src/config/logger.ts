@@ -1,4 +1,4 @@
-import { IConfig, IRequiredConfig } from '../../../types';
+import { IConfig, IRequiredConfig } from '../../types';
 import { merge } from 'lodash';
 
 const defaultConfig: IRequiredConfig['logger'] = {

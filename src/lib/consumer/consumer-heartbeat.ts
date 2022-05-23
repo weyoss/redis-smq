@@ -5,14 +5,14 @@ import {
   THeartbeatPayloadData,
 } from '../../../types';
 import { Ticker } from '../../common/ticker/ticker';
-import { events } from '../../common/events';
+import { events } from '../../common/events/events';
 import { RedisClient } from '../../common/redis-client/redis-client';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { EventEmitter } from 'events';
 import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
 import { InvalidCallbackReplyError } from '../../common/errors/invalid-callback-reply.error';
 import { Consumer } from './consumer';
-import { each, waterfall } from '../../util/async';
+import { each, waterfall } from '../../common/async/async';
 
 const cpuUsageStatsRef = {
   cpuUsage: process.cpuUsage(),

@@ -6,7 +6,7 @@ import {
 } from '../../../types';
 import { RedisClient } from '../../common/redis-client/redis-client';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { each } from '../../util/async';
+import { each } from '../../common/async/async';
 
 export const consumerQueues = {
   removeConsumer(

@@ -4,7 +4,7 @@ import { Message } from '../lib/message/message';
 import { ICallback, IConsumerWorkerParameters } from '../../types';
 import { PanicError } from '../common/errors/panic.error';
 import { Worker } from '../common/worker/worker';
-import { each } from '../util/async';
+import { each } from '../common/async/async';
 
 export class RequeueWorker extends Worker<IConsumerWorkerParameters> {
   protected redisKeys: ReturnType<typeof redisKeys['getMainKeys']>;

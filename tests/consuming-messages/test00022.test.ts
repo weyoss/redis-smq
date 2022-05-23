@@ -7,7 +7,7 @@ import {
   untilConsumerEvent,
 } from '../common';
 import { Message } from '../../src/lib/message/message';
-import { events } from '../../src/common/events';
+import { events } from '../../src/common/events/events';
 
 test('Shutdown a consumer when consuming a message with retryThreshold = 0: expect the message to be dead-lettered', async () => {
   await createQueue(defaultQueue, false);

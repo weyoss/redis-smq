@@ -1,12 +1,12 @@
-import { RedisClient } from '../../redis-client/redis-client';
+import { RedisClient } from '../../../common/redis-client/redis-client';
 import {
   EMessageUnacknowledgedCause,
   ICallback,
   TRedisClientMulti,
 } from '../../../../types';
-import { Message } from '../../../lib/message/message';
-import { redisKeys } from '../../redis-keys/redis-keys';
-import { PanicError } from '../../errors/panic.error';
+import { Message } from '../../message/message';
+import { redisKeys } from '../../../common/redis-keys/redis-keys';
+import { PanicError } from '../../../common/errors/panic.error';
 
 export function delayMessageTransaction(
   mixed: TRedisClientMulti,

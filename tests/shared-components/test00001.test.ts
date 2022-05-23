@@ -1,4 +1,4 @@
-import { events } from '../../src/common/events';
+import { events } from '../../src/common/events/events';
 import { Ticker } from '../../src/common/ticker/ticker';
 import { delay } from 'bluebird';
 

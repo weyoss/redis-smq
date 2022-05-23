@@ -1,4 +1,4 @@
-import { IConfig, IRequiredConfig } from '../../../../types';
+import { IConfig, IRequiredConfig } from '../../../types';
 import { merge } from 'lodash';
 import Store from './store';
 import ConsumeOptions from './consume-options';

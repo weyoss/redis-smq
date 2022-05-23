@@ -5,7 +5,7 @@ import {
   produceMessage,
   untilMessageAcknowledged,
 } from '../common';
-import { events } from '../../src/common/events';
+import { events } from '../../src/common/events/events';
 
 test('A message is not lost in case of a consumer crash', async () => {
   await createQueue(defaultQueue, false);

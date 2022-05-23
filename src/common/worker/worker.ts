@@ -1,7 +1,7 @@
 import { Ticker } from '../ticker/ticker';
 import { RedisClient } from '../redis-client/redis-client';
 import { ICallback, TWorkerParameters } from '../../../types';
-import { events } from '../events';
+import { events } from '../events/events';
 import { PowerManager } from '../power-manager/power-manager';
 import { PanicError } from '../errors/panic.error';
 

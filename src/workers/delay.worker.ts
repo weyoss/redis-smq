@@ -2,9 +2,9 @@ import { RedisClient } from '../common/redis-client/redis-client';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { ICallback, IConsumerWorkerParameters } from '../../types';
 import { Message } from '../lib/message/message';
-import { broker } from '../common/broker/broker';
+import { broker } from '../lib/broker/broker';
 import { Worker } from '../common/worker/worker';
-import { each } from '../util/async';
+import { each } from '../common/async/async';
 
 export class DelayWorker extends Worker<IConsumerWorkerParameters> {
   protected redisKeys: ReturnType<typeof redisKeys['getMainKeys']>;

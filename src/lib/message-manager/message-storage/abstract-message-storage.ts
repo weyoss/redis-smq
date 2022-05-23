@@ -5,7 +5,7 @@ import {
 } from '../../../../types';
 import { RedisClient } from '../../../common/redis-client/redis-client';
 import { ArgumentError } from '../../../common/errors/argument.error';
-import { getNamespacedLogger } from '../../../common/logger';
+import { getNamespacedLogger } from '../../../common/logger/logger';
 import { Message } from '../../message/message';
 
 export abstract class AbstractMessageStorage<

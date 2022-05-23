@@ -4,7 +4,7 @@ import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.e
 import { Message } from '../lib/message/message';
 import { ELuaScriptName } from '../common/redis-client/lua-scripts';
 import { Worker } from '../common/worker/worker';
-import { each, waterfall } from '../util/async';
+import { each, waterfall } from '../common/async/async';
 
 export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
   protected fetchMessageIds = (cb: ICallback<string[]>): void => {

@@ -1,16 +1,17 @@
 import { ICallback, IPlugin, TUnaryFunction } from '../../../types';
 import { Message } from '../message/message';
-import { events } from '../../common/events';
+import { events } from '../../common/events/events';
 import { PanicError } from '../../common/errors/panic.error';
-import { Base } from '../../common/base';
+import { Base } from '../base';
 import { RedisClient } from '../../common/redis-client/redis-client';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { ELuaScriptName } from '../../common/redis-client/lua-scripts';
-import { broker } from '../../common/broker/broker';
-import { MessageError } from '../../common/errors/message.error';
+import { broker } from '../broker/broker';
 import { MessageNotPublishedError } from './errors/message-not-published.error';
 import { getProducerPlugins } from '../../plugins/plugins';
-import { each } from '../../util/async';
+import { each } from '../../common/async/async';
+import { MessageQueueRequiredError } from './errors/message-queue-required.error';
+import { MessageAlreadyPublishedError } from './errors/message-already-published.error';
 
 export class Producer extends Base {
   protected plugins: IPlugin[] = [];
@@ -89,13 +90,9 @@ export class Producer extends Base {
   produce(message: Message, cb: ICallback<void>): void {
     const queue = message.getQueue();
     if (!queue) {
-      cb(new MessageError('Can not publish a message without a message queue'));
+      cb(new MessageQueueRequiredError());
     } else if (message.getMetadata()) {
-      cb(
-        new MessageError(
-          'Can not publish a message with a metadata instance. Either you have already published the message or you have called the getSetMetadata() method.',
-        ),
-      );
+      cb(new MessageAlreadyPublishedError());
     } else {
       const messageId = message.getSetMetadata().getId();
       const callback: ICallback<void> = (err) => {

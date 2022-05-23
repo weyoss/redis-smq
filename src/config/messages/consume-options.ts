@@ -1,4 +1,4 @@
-import { IConfig, IMessagesConfig } from '../../../../types';
+import { IConfig, IMessagesConfig } from '../../../types';
 import { merge } from 'lodash';
 
 const defaultConfig: Required<IMessagesConfig['consumeOptions']> = {

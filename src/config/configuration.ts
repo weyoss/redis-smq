@@ -1,4 +1,4 @@
-import { IConfig, IRequiredConfig } from '../../../types';
+import { IConfig, IRequiredConfig } from '../../types';
 import { ConfigurationError } from './configuration.error';
 import Namespace from './namespace';
 import Redis from './redis';

@@ -11,12 +11,12 @@ import {
 import { v4 as uuid } from 'uuid';
 import { RedisClient } from '../../../common/redis-client/redis-client';
 import { Message } from '../../message/message';
-import { events } from '../../../common/events';
+import { events } from '../../../common/events/events';
 import { EventEmitter } from 'events';
 import { PowerManager } from '../../../common/power-manager/power-manager';
 import { consumerQueues } from '../consumer-queues';
-import { getNamespacedLogger } from '../../../common/logger';
-import { each, waterfall } from '../../../util/async';
+import { getNamespacedLogger } from '../../../common/logger/logger';
+import { each, waterfall } from '../../../common/async/async';
 import { processingQueue } from './processing-queue';
 import { DequeueMessage } from './dequeue-message';
 import { ConsumeMessage } from './consume-message';

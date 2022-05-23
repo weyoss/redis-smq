@@ -4,7 +4,7 @@ import {
   IRequiredMessagesConfigStore,
   IRequiredStoreMessagesParams,
   IMessagesConfigStore,
-} from '../../../../types';
+} from '../../../types';
 import { ConfigurationError } from '../configuration.error';
 
 function getMessageStorageConfig(

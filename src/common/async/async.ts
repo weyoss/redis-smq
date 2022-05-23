@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { ICallback, TFunction } from '../../types';
+import { ICallback, TFunction } from '../../../types';
 
 export const eachOf = <T>(
   collection: T[],

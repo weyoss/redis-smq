@@ -1,12 +1,12 @@
 import { MessageHandler } from '../message-handler';
-import { events } from '../../../../common/events';
+import { events } from '../../../../common/events/events';
 import { RedisClient } from '../../../../common/redis-client/redis-client';
 import {
   ICallback,
   TConsumerMessageHandler,
   TQueueParams,
 } from '../../../../../types';
-import { each, waterfall } from '../../../../util/async';
+import { each, waterfall } from '../../../../common/async/async';
 import { MultiplexedDequeueMessage } from './multiplexed-dequeue-message';
 import { Consumer } from '../../consumer';
 
