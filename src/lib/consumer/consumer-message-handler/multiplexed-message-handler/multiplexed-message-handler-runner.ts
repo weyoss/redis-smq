@@ -1,14 +1,12 @@
 import { MessageHandler } from '../message-handler';
 import { MessageHandlerRunner } from '../message-handler-runner';
-import { Ticker } from '../../../../common/ticker/ticker';
-import { ICallback, TConsumerMessageHandlerParams } from '../../../../../types';
+import { async, errors, RedisClient, Ticker } from 'redis-smq-common';
+import { TConsumerMessageHandlerParams } from '../../../../../types';
 import { Consumer } from '../../consumer';
-import { RedisClient } from '../../../../common/redis-client/redis-client';
-import { EmptyCallbackReplyError } from '../../../../common/errors/empty-callback-reply.error';
-import { waterfall } from '../../../../common/async/async';
 import { events } from '../../../../common/events/events';
 import { MultiplexedMessageHandler } from './multiplexed-message-handler';
-import { PanicError } from '../../../../common/errors/panic.error';
+import { ICallback, ICompatibleLogger } from 'redis-smq-common/dist/types';
+import { getConfiguration } from '../../../../config/configuration';
 
 export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   protected muxRedisClient: RedisClient | null = null;
@@ -17,8 +15,8 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   protected activeMessageHandler: MessageHandler | null | undefined = null;
   protected multiplexingDelay = true;
 
-  constructor(consumer: Consumer) {
-    super(consumer);
+  constructor(consumer: Consumer, logger: ICompatibleLogger) {
+    super(consumer, logger);
     this.ticker = new Ticker(() => this.dequeue());
   }
 
@@ -76,6 +74,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
       messageHandler,
       redisClient,
       sharedRedisClient,
+      this.logger,
     );
     this.registerMessageHandlerEvents(instance);
     this.messageHandlerInstances.push(instance);
@@ -98,7 +97,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
 
   protected getMuxRedisClient(): RedisClient {
     if (!this.muxRedisClient) {
-      throw new PanicError('Expected a non-empty value');
+      throw new errors.PanicError('Expected a non-empty value');
     }
     return this.muxRedisClient;
   }
@@ -116,12 +115,13 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   }
 
   override run(redisClient: RedisClient, cb: ICallback<void>): void {
-    waterfall(
+    async.waterfall(
       [
         (cb: ICallback<void>) => {
-          RedisClient.getNewInstance((err, client) => {
+          const { redis } = getConfiguration();
+          RedisClient.getNewInstance(redis, (err, client) => {
             if (err) cb(err);
-            else if (!client) cb(new EmptyCallbackReplyError());
+            else if (!client) cb(new errors.EmptyCallbackReplyError());
             else {
               this.muxRedisClient = client;
               cb();
@@ -143,7 +143,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   }
 
   override shutdown(cb: ICallback<void>): void {
-    waterfall(
+    async.waterfall(
       [
         (cb: ICallback<void>) => {
           this.ticker.once(events.DOWN, cb);

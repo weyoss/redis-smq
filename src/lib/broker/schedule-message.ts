@@ -1,10 +1,9 @@
-import { ICallback, TRedisClientMulti } from '../../../types';
 import { Message } from '../message/message';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { RedisClient } from '../../common/redis-client/redis-client';
-import { ELuaScriptName } from '../../common/redis-client/lua-scripts';
-import { PanicError } from '../../common/errors/panic.error';
 import { MessageNotScheduledError } from '../producer/errors/message-not-scheduled.error';
+import { ICallback, TRedisClientMulti } from 'redis-smq-common/dist/types';
+import { errors, RedisClient } from 'redis-smq-common';
+import { ELuaScriptName } from '../../common/redis-client/redis-client';
 
 function scheduleMessageTransaction(
   multi: TRedisClientMulti,
@@ -38,7 +37,7 @@ export function scheduleMessage(
   cb?: ICallback<void>,
 ): void | boolean {
   if (mixed instanceof RedisClient) {
-    if (!cb) throw new PanicError(`Expected a callback function`);
+    if (!cb) throw new errors.PanicError(`Expected a callback function`);
     const timestamp = message.getNextScheduledTimestamp();
     if (timestamp > 0) {
       const queue = message.getRequiredQueue();

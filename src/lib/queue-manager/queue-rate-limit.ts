@@ -1,23 +1,18 @@
-import { RedisClient } from '../../common/redis-client/redis-client';
-import {
-  ICallback,
-  ICompatibleLogger,
-  TQueueParams,
-  TQueueRateLimit,
-} from '../../../types';
+import { TQueueParams, TQueueRateLimit } from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { QueueRateLimitError } from './errors/queue-rate-limit.error';
-import { ELuaScriptName } from '../../common/redis-client/lua-scripts';
-import { getNamespacedLogger } from '../../common/logger/logger';
 import { Queue } from './queue';
+import { RedisClient } from 'redis-smq-common';
+import { ICallback, ICompatibleLogger } from 'redis-smq-common/dist/types';
+import { ELuaScriptName } from '../../common/redis-client/redis-client';
 
 export class QueueRateLimit {
   protected redisClient: RedisClient;
   protected logger: ICompatibleLogger;
 
-  constructor(redisClient: RedisClient) {
+  constructor(redisClient: RedisClient, logger: ICompatibleLogger) {
     this.redisClient = redisClient;
-    this.logger = getNamespacedLogger(this.constructor.name);
+    this.logger = logger;
   }
 
   clear(queue: string | TQueueParams, cb: ICallback<void>): void {

@@ -8,7 +8,7 @@ import {
 } from '../common';
 import { Message } from '../../src/lib/message/message';
 import { events } from '../../src/common/events/events';
-import { ICallback } from '../../types';
+import { ICallback } from 'redis-smq-common/dist/types';
 
 test('A message is unacknowledged when messageConsumeTimeout is exceeded', async () => {
   mockConfiguration({

@@ -1,10 +1,10 @@
-import { ICallback } from '../../../types';
 import { Message } from '../message/message';
-import { RedisClient } from '../../common/redis-client/redis-client';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { getConfiguration } from '../../config/configuration';
 import { retry } from './retry/retry';
 import { scheduleMessage } from './schedule-message';
+import { RedisClient } from 'redis-smq-common';
+import { ICallback } from 'redis-smq-common/dist/types';
 
 export const broker = {
   retry,

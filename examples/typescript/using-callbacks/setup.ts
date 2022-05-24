@@ -1,6 +1,6 @@
 import { config } from './config';
 import { setLogger, setConfiguration, QueueManager } from '../../..'; // from 'redis-smq'
-import { ICallback } from '../../../types';
+import { ICallback } from 'redis-smq-common/dist/types';
 
 // Applying system-wide configuration
 // This setup should be done during your application bootstrap

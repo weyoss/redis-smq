@@ -1,12 +1,7 @@
-import {
-  ICallback,
-  TConsumerInfo,
-  TQueueParams,
-  TRedisClientMulti,
-} from '../../../types';
-import { RedisClient } from '../../common/redis-client/redis-client';
+import { TConsumerInfo, TQueueParams } from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { each } from '../../common/async/async';
+import { async, RedisClient } from 'redis-smq-common';
+import { ICallback, TRedisClientMulti } from 'redis-smq-common/dist/types';
 
 export const consumerQueues = {
   removeConsumer(
@@ -32,7 +27,7 @@ export const consumerQueues = {
       else {
         if (transform) {
           const data: Record<string | number, TConsumerInfo> = {};
-          each(
+          async.each(
             reply ?? {},
             (item, key, done) => {
               data[key] = JSON.parse(item);

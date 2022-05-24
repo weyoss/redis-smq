@@ -1,12 +1,8 @@
-import { RedisClient } from '../../../common/redis-client/redis-client';
-import {
-  EMessageUnacknowledgedCause,
-  ICallback,
-  TRedisClientMulti,
-} from '../../../../types';
+import { EMessageUnacknowledgedCause } from '../../../../types';
 import { Message } from '../../message/message';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
-import { PanicError } from '../../../common/errors/panic.error';
+import { ICallback, TRedisClientMulti } from 'redis-smq-common/dist/types';
+import { errors, RedisClient } from 'redis-smq-common';
 
 export function delayMessageTransaction(
   mixed: TRedisClientMulti,
@@ -39,7 +35,7 @@ export function delayMessage(
   cb?: ICallback<void>,
 ): void {
   if (mixed instanceof RedisClient) {
-    if (!cb) throw new PanicError(`Expected a callback function`);
+    if (!cb) throw new errors.PanicError(`Expected a callback function`);
     const queue = message.getRequiredQueue();
     const { keyDelayedMessages } = redisKeys.getQueueKeys(queue);
     mixed.rpoplpush(keyQueueProcessing, keyDelayedMessages, (err) => cb(err));

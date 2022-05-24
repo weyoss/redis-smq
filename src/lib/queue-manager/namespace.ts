@@ -1,26 +1,24 @@
-import { RedisClient } from '../../common/redis-client/redis-client';
-import { ICallback, ICompatibleLogger, TQueueParams } from '../../../types';
+import { TQueueParams } from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
-import { eachOf, waterfall } from '../../common/async/async';
+import { async, errors, RedisClient } from 'redis-smq-common';
 import { NamespaceNotFoundError } from './errors/namespace-not-found.error';
-import { getNamespacedLogger } from '../../common/logger/logger';
 import { initDeleteQueueTransaction } from './delete-queue-transaction';
+import { ICallback, ICompatibleLogger } from 'redis-smq-common/dist/types';
 
 export class Namespace {
   protected redisClient: RedisClient;
   protected logger: ICompatibleLogger;
 
-  constructor(redisClient: RedisClient) {
+  constructor(redisClient: RedisClient, logger: ICompatibleLogger) {
     this.redisClient = redisClient;
-    this.logger = getNamespacedLogger(this.constructor.name);
+    this.logger = logger;
   }
 
   list(cb: ICallback<string[]>): void {
     const { keyNamespaces } = redisKeys.getMainKeys();
     this.redisClient.smembers(keyNamespaces, (err, reply) => {
       if (err) cb(err);
-      else if (!reply) cb(new EmptyCallbackReplyError());
+      else if (!reply) cb(new errors.EmptyCallbackReplyError());
       else cb(null, reply);
     });
   }
@@ -29,7 +27,7 @@ export class Namespace {
     const { keyNsQueues } = redisKeys.getNamespaceKeys(namespace);
     this.redisClient.smembers(keyNsQueues, (err, reply) => {
       if (err) cb(err);
-      else if (!reply) cb(new EmptyCallbackReplyError());
+      else if (!reply) cb(new errors.EmptyCallbackReplyError());
       else {
         const messageQueues: TQueueParams[] = reply.map((i) => JSON.parse(i));
         cb(null, messageQueues);
@@ -39,7 +37,7 @@ export class Namespace {
 
   delete(ns: string, cb: ICallback<void>): void {
     const { keyNamespaces } = redisKeys.getMainKeys();
-    waterfall(
+    async.waterfall(
       [
         (cb: ICallback<void>) => {
           this.redisClient.sismember(keyNamespaces, ns, (err, isMember) => {
@@ -58,7 +56,7 @@ export class Namespace {
               const queues = reply ?? [];
               const multi = this.redisClient.multi();
               multi.srem(keyNamespaces, ns);
-              eachOf(
+              async.eachOf(
                 queues,
                 (queueParams, _, done) => {
                   initDeleteQueueTransaction(

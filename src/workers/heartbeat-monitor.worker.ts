@@ -1,11 +1,11 @@
-import { ICallback, IConsumerWorkerParameters } from '../../types';
+import { IConsumerWorkerParameters } from '../../types';
 import { ConsumerHeartbeat } from '../lib/consumer/consumer-heartbeat';
-import { Worker } from '../common/worker/worker';
-import { waterfall } from '../common/async/async';
+import { async, Worker } from 'redis-smq-common';
+import { ICallback } from 'redis-smq-common/dist/types';
 
 export class HeartbeatMonitorWorker extends Worker<IConsumerWorkerParameters> {
   work = (cb: ICallback<void>): void => {
-    waterfall(
+    async.waterfall(
       [
         (cb: ICallback<string[]>): void =>
           ConsumerHeartbeat.getExpiredHeartbeatIds(this.redisClient, cb),

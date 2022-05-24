@@ -1,12 +1,12 @@
 import { AbstractMessageStorage } from './abstract-message-storage';
-import { ICallback, TPaginatedResponse } from '../../../../types';
+import { TPaginatedResponse } from '../../../../types';
 import { Message } from '../../message/message';
-import { waterfall } from '../../../common/async/async';
+import { async, errors } from 'redis-smq-common';
 import { MessageNotFoundError } from '../errors/message-not-found.error';
-import { EmptyCallbackReplyError } from '../../../common/errors/empty-callback-reply.error';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
-import { ELuaScriptName } from '../../../common/redis-client/lua-scripts';
 import { MessageRequeueError } from '../errors/message-requeue.error';
+import { ELuaScriptName } from '../../../common/redis-client/redis-client';
+import { ICallback } from 'redis-smq-common/dist/types';
 
 type TFetchMessagesReply = { sequenceId: number; message: Message };
 
@@ -55,7 +55,7 @@ export abstract class List extends AbstractMessageStorage<
   ): void {
     this.getMessageById(key, id, (err, msg) => {
       if (err) cb(err);
-      else if (!msg) cb(new EmptyCallbackReplyError());
+      else if (!msg) cb(new errors.EmptyCallbackReplyError());
       else {
         const { keyMessages } = key;
         const message = Message.createFromMessage(msg, false);
@@ -101,7 +101,7 @@ export abstract class List extends AbstractMessageStorage<
   ): void {
     this.getMessageById(key, id, (err, message) => {
       if (err) cb(err);
-      else if (!message) cb(new EmptyCallbackReplyError());
+      else if (!message) cb(new errors.EmptyCallbackReplyError());
       else {
         const { keyMessages } = key;
         this.redisClient.lrem(keyMessages, 1, message.toString(), (err) =>
@@ -153,7 +153,7 @@ export abstract class List extends AbstractMessageStorage<
           },
         );
     };
-    waterfall([getTotalItems, getItems], cb);
+    async.waterfall([getTotalItems, getItems], cb);
   }
 
   protected override purgeMessages(

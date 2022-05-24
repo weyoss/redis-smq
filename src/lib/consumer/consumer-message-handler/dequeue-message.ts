@@ -1,22 +1,20 @@
 import * as os from 'os';
 import {
-  ICallback,
   TConsumerInfo,
   TQueueParams,
   TQueueRateLimit,
 } from '../../../../types';
-import { RedisClient } from '../../../common/redis-client/redis-client';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
-import { Ticker } from '../../../common/ticker/ticker';
+import { RedisClient, Ticker } from 'redis-smq-common';
 import { events } from '../../../common/events/events';
 import { Message } from '../../message/message';
 import { MessageHandler } from './message-handler';
 import { QueueRateLimit } from '../../queue-manager/queue-rate-limit';
-import { waterfall } from '../../../common/async/async';
-import { EmptyCallbackReplyError } from '../../../common/errors/empty-callback-reply.error';
-import { ELuaScriptName } from '../../../common/redis-client/lua-scripts';
-import { QueueNotFoundError } from '../../queue-manager/errors/queue-not-found.error';
+import { async, errors } from 'redis-smq-common';
 import { Queue } from '../../queue-manager/queue';
+import { ELuaScriptName } from '../../../common/redis-client/redis-client';
+import { QueueNotFoundError } from '../../queue-manager/errors/queue-not-found.error';
+import { ICallback } from 'redis-smq-common/dist/types';
 
 const IPAddresses = (() => {
   const nets = os.networkInterfaces();
@@ -115,7 +113,7 @@ export class DequeueMessage {
   }
 
   run(cb: ICallback<void>): void {
-    waterfall(
+    async.waterfall(
       [
         (cb: ICallback<void>) => {
           const {
@@ -157,7 +155,7 @@ export class DequeueMessage {
         (cb: ICallback<void>) => {
           Queue.getSettings(this.redisClient, this.queue, (err, reply) => {
             if (err) cb(err);
-            else if (!reply) cb(new EmptyCallbackReplyError());
+            else if (!reply) cb(new errors.EmptyCallbackReplyError());
             else {
               this.priorityQueuing = reply.priorityQueuing;
               this.queueRateLimit = reply.rateLimit ?? null;

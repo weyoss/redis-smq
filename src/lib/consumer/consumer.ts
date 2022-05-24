@@ -1,28 +1,34 @@
 import {
-  ICallback,
   TConsumerMessageHandler,
   TConsumerRedisKeys,
   IConsumerWorkerParameters,
   TConsumerInfo,
   TQueueParams,
-  TUnaryFunction,
-  TRedisClientMulti,
 } from '../../../types';
 import { events } from '../../common/events/events';
-import { RedisClient } from '../../common/redis-client/redis-client';
 import { resolve } from 'path';
-import { WorkerRunner } from '../../common/worker/worker-runner/worker-runner';
-import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { ConsumerHeartbeat } from './consumer-heartbeat';
 import { Base } from '../base';
 import { MessageHandler } from './consumer-message-handler/message-handler';
 import { consumerQueues } from './consumer-queues';
-import { WorkerPool } from '../../common/worker/worker-runner/worker-pool';
-import { each, waterfall } from '../../common/async/async';
 import { MessageHandlerRunner } from './consumer-message-handler/message-handler-runner';
 import { MultiplexedMessageHandlerRunner } from './consumer-message-handler/multiplexed-message-handler/multiplexed-message-handler-runner';
 import { Queue } from '../queue-manager/queue';
+import {
+  errors,
+  RedisClient,
+  WorkerRunner,
+  WorkerPool,
+  logger,
+  async,
+} from 'redis-smq-common';
+import { getConfiguration } from '../../config/configuration';
+import {
+  ICallback,
+  TRedisClientMulti,
+  TUnaryFunction,
+} from 'redis-smq-common/dist/types';
 
 export class Consumer extends Base {
   private readonly redisKeys: TConsumerRedisKeys;
@@ -32,22 +38,28 @@ export class Consumer extends Base {
 
   constructor(useMultiplexing = false) {
     super();
+    const { logger: loggerCfg } = getConfiguration();
+    const nsLogger = logger.getNamespacedLogger(
+      loggerCfg,
+      `consumer:${this.id}:message-handler`,
+    );
     this.messageHandlerRunner = useMultiplexing
-      ? new MultiplexedMessageHandlerRunner(this)
-      : new MessageHandlerRunner(this);
+      ? new MultiplexedMessageHandlerRunner(this, nsLogger)
+      : new MessageHandlerRunner(this, nsLogger);
     this.redisKeys = redisKeys.getConsumerKeys(this.getId());
   }
 
   private setUpHeartbeat = (cb: ICallback<void>): void => {
-    RedisClient.getNewInstance((err, redisClient) => {
+    const { redis } = getConfiguration();
+    RedisClient.getNewInstance(redis, (err, redisClient) => {
       if (err) cb(err);
-      else if (!redisClient) cb(new EmptyCallbackReplyError());
+      else if (!redisClient) cb(new errors.EmptyCallbackReplyError());
       else {
         this.heartbeat = new ConsumerHeartbeat(this, redisClient);
         this.heartbeat.on(events.ERROR, (err: Error) =>
           this.emit(events.ERROR, err),
         );
-        this.heartbeat.once(events.HEARTBEAT_TICK, () => cb());
+        this.heartbeat.once(events.TICK, () => cb());
       }
     });
   };
@@ -64,6 +76,11 @@ export class Consumer extends Base {
   private setUpConsumerWorkers = (cb: ICallback<void>): void => {
     const redisClient = this.getSharedRedisClient();
     const { keyLockConsumerWorkersRunner } = this.getRedisKeys();
+    const { logger: loggerCfg } = getConfiguration();
+    const nsLogger = logger.getNamespacedLogger(
+      loggerCfg,
+      `consumer:${this.id}:worker-runner`,
+    );
     this.workerRunner = new WorkerRunner<IConsumerWorkerParameters>(
       redisClient,
       resolve(`${__dirname}/../../workers`),
@@ -74,6 +91,7 @@ export class Consumer extends Base {
         config: this.getConfig(),
       },
       new WorkerPool(),
+      nsLogger,
     );
     this.workerRunner.on(events.ERROR, (err: Error) =>
       this.emit(events.ERROR, err),
@@ -177,12 +195,12 @@ export class Consumer extends Base {
     consumerId: string,
     cb: ICallback<void>,
   ): void {
-    waterfall(
+    async.waterfall(
       [
         (cb: ICallback<TQueueParams[]>) =>
           consumerQueues.getConsumerQueues(redisClient, consumerId, cb),
         (queues: TQueueParams[], cb: ICallback<void>) => {
-          each(
+          async.each(
             queues,
             (queue, _, done) => {
               MessageHandler.cleanUp(

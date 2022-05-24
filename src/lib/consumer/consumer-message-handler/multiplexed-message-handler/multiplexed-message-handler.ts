@@ -1,14 +1,10 @@
 import { MessageHandler } from '../message-handler';
 import { events } from '../../../../common/events/events';
-import { RedisClient } from '../../../../common/redis-client/redis-client';
-import {
-  ICallback,
-  TConsumerMessageHandler,
-  TQueueParams,
-} from '../../../../../types';
-import { each, waterfall } from '../../../../common/async/async';
+import { TConsumerMessageHandler, TQueueParams } from '../../../../../types';
 import { MultiplexedDequeueMessage } from './multiplexed-dequeue-message';
 import { Consumer } from '../../consumer';
+import { async, RedisClient } from 'redis-smq-common';
+import { ICallback, ICompatibleLogger } from 'redis-smq-common/dist/types';
 
 export class MultiplexedMessageHandler extends MessageHandler {
   constructor(
@@ -17,8 +13,16 @@ export class MultiplexedMessageHandler extends MessageHandler {
     handler: TConsumerMessageHandler,
     dequeueRedisClient: RedisClient,
     sharedRedisClient: RedisClient,
+    logger: ICompatibleLogger,
   ) {
-    super(consumer, queue, handler, dequeueRedisClient, sharedRedisClient);
+    super(
+      consumer,
+      queue,
+      handler,
+      dequeueRedisClient,
+      sharedRedisClient,
+      logger,
+    );
     this.dequeueMessage = new MultiplexedDequeueMessage(
       this,
       dequeueRedisClient,
@@ -37,13 +41,13 @@ export class MultiplexedMessageHandler extends MessageHandler {
   override shutdown(cb: ICallback<void>): void {
     const goDown = () => {
       this.powerManager.goingDown();
-      waterfall(
+      async.waterfall(
         [
           (cb: ICallback<void>) => {
             this.dequeueMessage.quit(cb);
           },
           (cb: ICallback<void>) => {
-            each(
+            async.each(
               this.plugins,
               (plugin, index, done) => plugin.quit(done),
               (err) => {

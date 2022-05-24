@@ -1,18 +1,12 @@
 import * as os from 'os';
-import {
-  ICallback,
-  THeartbeatPayload,
-  THeartbeatPayloadData,
-} from '../../../types';
-import { Ticker } from '../../common/ticker/ticker';
+import { THeartbeatPayload, THeartbeatPayloadData } from '../../../types';
+import { RedisClient, Ticker } from 'redis-smq-common';
 import { events } from '../../common/events/events';
-import { RedisClient } from '../../common/redis-client/redis-client';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { EventEmitter } from 'events';
-import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
-import { InvalidCallbackReplyError } from '../../common/errors/invalid-callback-reply.error';
+import { errors, async } from 'redis-smq-common';
 import { Consumer } from './consumer';
-import { each, waterfall } from '../../common/async/async';
+import { ICallback } from 'redis-smq-common/dist/types';
 
 const cpuUsageStatsRef = {
   cpuUsage: process.cpuUsage(),
@@ -92,19 +86,14 @@ export class ConsumerHeartbeat extends EventEmitter {
     this.redisClient.execMulti(multi, (err) => {
       if (err) this.emit(events.ERROR, err);
       else {
-        this.emit(
-          events.HEARTBEAT_TICK,
-          timestamp,
-          this.consumerId,
-          heartbeatPayload,
-        );
+        this.emit(events.TICK, timestamp, this.consumerId, heartbeatPayload);
         this.ticker.nextTick();
       }
     });
   }
 
   quit(cb: ICallback<void>): void {
-    waterfall(
+    async.waterfall(
       [
         (cb: ICallback<void>) => {
           this.ticker.once(events.DOWN, cb);
@@ -131,10 +120,10 @@ export class ConsumerHeartbeat extends EventEmitter {
     redisClient.hmget(keyHeartbeats, consumerIds, (err, reply) => {
       if (err) cb(err);
       else if (!reply || reply.length !== consumerIds.length)
-        cb(new InvalidCallbackReplyError());
+        cb(new errors.InvalidCallbackReplyError());
       else {
         const r: Record<string, boolean> = {};
-        each(
+        async.each(
           consumerIds,
           (item, index, done) => {
             const idx = Number(index);
@@ -176,13 +165,13 @@ export class ConsumerHeartbeat extends EventEmitter {
           redisClient.hmget(keyHeartbeats, consumerIds, (err, res) => {
             if (err) cb(err);
             else if (!res || res.length !== consumerIds.length)
-              cb(new EmptyCallbackReplyError());
+              cb(new errors.EmptyCallbackReplyError());
             else {
               const heartbeats: {
                 consumerId: string;
                 payload: THeartbeatPayloadData | string;
               }[] = [];
-              each(
+              async.each(
                 res,
                 (payloadStr, index, done) => {
                   // A consumer/producer could go offline at the time while we are processing heartbeats
@@ -255,7 +244,7 @@ export class ConsumerHeartbeat extends EventEmitter {
       const { keyHeartbeats, keyHeartbeatConsumerWeight } =
         redisKeys.getMainKeys();
       const multi = redisClient.multi();
-      each(
+      async.each(
         consumerIds,
         (consumerId, _, done) => {
           multi.hdel(keyHeartbeats, consumerId);

@@ -1,10 +1,9 @@
-import { ICallback, IConsumerWorkerParameters } from '../../types';
+import { IConsumerWorkerParameters } from '../../types';
 import { redisKeys } from '../common/redis-keys/redis-keys';
-import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
 import { Message } from '../lib/message/message';
-import { ELuaScriptName } from '../common/redis-client/lua-scripts';
-import { Worker } from '../common/worker/worker';
-import { each, waterfall } from '../common/async/async';
+import { async, errors, Worker } from 'redis-smq-common';
+import { ELuaScriptName } from '../common/redis-client/redis-client';
+import { ICallback } from 'redis-smq-common/dist/types';
 
 export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
   protected fetchMessageIds = (cb: ICallback<string[]>): void => {
@@ -24,10 +23,10 @@ export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
         if (err) cb(err);
         else {
           const messages: Message[] = [];
-          each(
+          async.each(
             reply ?? [],
             (item, _, done) => {
-              if (!item) done(new EmptyCallbackReplyError());
+              if (!item) done(new errors.EmptyCallbackReplyError());
               else {
                 messages.push(Message.createFromMessage(item));
                 done();
@@ -48,7 +47,7 @@ export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
     cb: ICallback<void>,
   ): void => {
     if (messages.length) {
-      each(
+      async.each(
         messages,
         (msg, _, done) => {
           const message = Message.createFromMessage(msg);
@@ -90,7 +89,7 @@ export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
   };
 
   work = (cb: ICallback<void>): void => {
-    waterfall(
+    async.waterfall(
       [this.fetchMessageIds, this.fetchMessages, this.enqueueMessages],
       cb,
     );

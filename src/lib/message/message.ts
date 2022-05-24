@@ -1,10 +1,9 @@
 import { parseExpression } from 'cron-parser';
 import { TMessageJSON, TQueueParams } from '../../../types';
-import { ArgumentError } from '../../common/errors/argument.error';
 import { getConfiguration } from '../../config/configuration';
 import { MessageMetadata } from './message-metadata';
-import { PanicError } from '../../common/errors/panic.error';
 import { Queue } from '../queue-manager/queue';
+import { errors } from 'redis-smq-common';
 
 export class Message {
   // Do not forget about javascript users. Using an object map instead of enum
@@ -64,7 +63,7 @@ export class Message {
 
   getRequiredMetadata(): MessageMetadata {
     if (!this.metadata) {
-      throw new PanicError(
+      throw new errors.PanicError(
         `Expected an instance of MessageMetadata. Probably the message has not yet been published`,
       );
     }
@@ -106,7 +105,7 @@ export class Message {
 
   getRequiredId(): string {
     if (!this.metadata) {
-      throw new PanicError(`Message has not yet been published`);
+      throw new errors.PanicError(`Message has not yet been published`);
     }
     return this.metadata.getId();
   }
@@ -128,7 +127,7 @@ export class Message {
     // So just make sure that we have an integer value
     const value = Number(period);
     if (isNaN(value) || value < 0) {
-      throw new ArgumentError(
+      throw new errors.ArgumentError(
         'Expected a positive integer value in milliseconds',
       );
     }
@@ -144,7 +143,7 @@ export class Message {
     // So just make sure that we have an integer value
     const value = Number(delay);
     if (isNaN(value) || value < 0) {
-      throw new ArgumentError(
+      throw new errors.ArgumentError(
         'Expected a positive integer value in milliseconds',
       );
     }
@@ -164,7 +163,7 @@ export class Message {
     // So just make sure that we have an integer value
     const value = Number(repeat);
     if (isNaN(value) || value < 0) {
-      throw new ArgumentError('Expected a positive integer value >= 0');
+      throw new errors.ArgumentError('Expected a positive integer value >= 0');
     }
     this.scheduledRepeat = value;
     return this;
@@ -178,7 +177,7 @@ export class Message {
     // So just make sure that we have an integer value
     const value = Number(ttl);
     if (isNaN(value) || value < 0) {
-      throw new ArgumentError(
+      throw new errors.ArgumentError(
         'Expected a positive integer value in milliseconds >= 0',
       );
     }
@@ -194,7 +193,7 @@ export class Message {
     // So just make sure that we have an integer value
     const value = Number(timeout);
     if (isNaN(value) || value < 0) {
-      throw new ArgumentError(
+      throw new errors.ArgumentError(
         'Expected a positive integer value in milliseconds >= 0',
       );
     }
@@ -207,7 +206,7 @@ export class Message {
     // So just make sure that we have an integer value
     const value = Number(threshold);
     if (isNaN(value) || value < 0) {
-      throw new ArgumentError(
+      throw new errors.ArgumentError(
         'Retry threshold should be a positive integer >= 0',
       );
     }
@@ -223,7 +222,7 @@ export class Message {
     // So just make sure that we have an integer value
     const value = Number(delay);
     if (isNaN(value) || value < 0) {
-      throw new ArgumentError(
+      throw new errors.ArgumentError(
         'Expected a positive integer in milliseconds >= 0',
       );
     }
@@ -238,7 +237,7 @@ export class Message {
 
   setPriority(priority: number): Message {
     if (!Object.values(Message.MessagePriority).includes(priority)) {
-      throw new ArgumentError('Invalid message priority.');
+      throw new errors.ArgumentError('Invalid message priority.');
     }
     this.priority = priority;
     return this;
@@ -264,7 +263,7 @@ export class Message {
 
   getRequiredQueue(): TQueueParams {
     if (!this.queue) {
-      throw new PanicError(`Expected queue parameters to be not empty`);
+      throw new errors.PanicError(`Expected queue parameters to be not empty`);
     }
     return this.queue;
   }

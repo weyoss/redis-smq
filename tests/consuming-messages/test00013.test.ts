@@ -1,8 +1,8 @@
 import { createQueue, getConsumer, getProducer } from '../common';
 import { Message } from '../../src/lib/message/message';
 import { delay } from 'bluebird';
-import { ICallback } from '../../types';
 import { events } from '../../src/common/events/events';
+import { ICallback } from 'redis-smq-common/dist/types';
 
 type TQueueMetrics = {
   receivedMessages: Message[];

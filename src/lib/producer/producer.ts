@@ -1,17 +1,16 @@
-import { ICallback, IPlugin, TUnaryFunction } from '../../../types';
+import { IPlugin } from '../../../types';
 import { Message } from '../message/message';
 import { events } from '../../common/events/events';
-import { PanicError } from '../../common/errors/panic.error';
 import { Base } from '../base';
-import { RedisClient } from '../../common/redis-client/redis-client';
+import { RedisClient, errors, async } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { ELuaScriptName } from '../../common/redis-client/lua-scripts';
 import { broker } from '../broker/broker';
 import { MessageNotPublishedError } from './errors/message-not-published.error';
 import { getProducerPlugins } from '../../plugins/plugins';
-import { each } from '../../common/async/async';
 import { MessageQueueRequiredError } from './errors/message-queue-required.error';
 import { MessageAlreadyPublishedError } from './errors/message-already-published.error';
+import { ELuaScriptName } from '../../common/redis-client/redis-client';
+import { ICallback, TUnaryFunction } from 'redis-smq-common/dist/types';
 
 export class Producer extends Base {
   protected plugins: IPlugin[] = [];
@@ -36,7 +35,7 @@ export class Producer extends Base {
   protected override goingDown(): TUnaryFunction<ICallback<void>>[] {
     return [
       (cb: ICallback<void>): void =>
-        each(
+        async.each(
           this.plugins,
           (plugin, idx, done) => plugin.quit(done),
           (err) => {
@@ -126,7 +125,9 @@ export class Producer extends Base {
         if (this.powerManager.isGoingUp()) {
           this.once(events.UP, proceed);
         } else {
-          cb(new PanicError(`Producer ID ${this.getId()} is not running`));
+          cb(
+            new errors.PanicError(`Producer ID ${this.getId()} is not running`),
+          );
         }
       } else proceed();
     }

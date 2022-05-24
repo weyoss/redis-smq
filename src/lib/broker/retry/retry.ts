@@ -1,15 +1,13 @@
 import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgedCause,
-  ICallback,
-  TRedisClientMulti,
 } from '../../../../types';
 import { deadLetterMessage } from './dead-letter-message';
 import { requeueMessage } from './requeue-message';
 import { Message } from '../../message/message';
-import { RedisClient } from '../../../common/redis-client/redis-client';
-import { PanicError } from '../../../common/errors/panic.error';
 import { delayMessage } from './delay-message';
+import { ICallback, TRedisClientMulti } from 'redis-smq-common/dist/types';
+import { errors, RedisClient } from 'redis-smq-common';
 
 enum EValidateAction {
   DEAD_LETTER,
@@ -112,7 +110,7 @@ export function retry(
   cb?: ICallback<EMessageDeadLetterCause | void>,
 ): void | EMessageDeadLetterCause {
   if (mixed instanceof RedisClient) {
-    if (!cb) throw new PanicError(`Expected a callback function`);
+    if (!cb) throw new errors.PanicError(`Expected a callback function`);
     const r = getRetryAction(message, unacknowledgedCause);
     if (r.action === EValidateAction.DEAD_LETTER) {
       return deadLetterMessage(

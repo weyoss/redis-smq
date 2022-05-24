@@ -1,3 +1,3 @@
-import { RedisSMQError } from '../../../common/errors/redis-smq.error';
+import { errors } from 'redis-smq-common';
 
-export class MessageNotScheduledError extends RedisSMQError {}
+export class MessageNotScheduledError extends errors.RedisSMQError {}

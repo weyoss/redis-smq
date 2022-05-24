@@ -5,9 +5,10 @@ import {
   getQueueManager,
   produceMessage,
 } from '../common';
-import { RedisClient } from '../../src/common/redis-client/redis-client';
-import { ICallback, TQueueParams } from '../../types';
+import { TQueueParams } from '../../types';
 import { processingQueue } from '../../src/lib/consumer/consumer-message-handler/processing-queue';
+import { RedisClient } from 'redis-smq-common';
+import { ICallback } from 'redis-smq-common/dist/types';
 
 test('Concurrently deleting a message queue and starting a consumer', async () => {
   await createQueue(defaultQueue, false);
