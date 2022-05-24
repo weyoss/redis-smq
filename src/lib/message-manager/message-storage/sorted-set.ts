@@ -1,9 +1,9 @@
 import { AbstractMessageStorage } from './abstract-message-storage';
-import { ICallback, TGetMessagesReply } from '../../../../types';
+import { TGetMessagesReply } from '../../../../types';
 import { Message } from '../../message/message';
-import { each, waterfall } from '../../../common/async/async';
-import { EmptyCallbackReplyError } from '../../../common/errors/empty-callback-reply.error';
+import { async, errors } from 'redis-smq-common';
 import { MessageNotFoundError } from '../errors/message-not-found.error';
+import { ICallback } from 'redis-smq-common/dist/types';
 
 type TSortedSetKeyMessagesParams = {
   keyMessages: string;
@@ -58,10 +58,10 @@ export abstract class SortedSet extends AbstractMessageStorage<
           if (err) cb(err);
           else {
             const items: TGetMessagesReply['items'] = [];
-            each(
+            async.each(
               msg ?? [],
               (item, index, done) => {
-                if (!item) done(new EmptyCallbackReplyError());
+                if (!item) done(new errors.EmptyCallbackReplyError());
                 else {
                   items.push({
                     sequenceId: skip + Number(index),
@@ -101,7 +101,7 @@ export abstract class SortedSet extends AbstractMessageStorage<
         );
       }
     };
-    waterfall([getTotalItems, getMessageIds, getMessages], cb);
+    async.waterfall([getTotalItems, getMessageIds, getMessages], cb);
   }
 
   protected override purgeMessages(

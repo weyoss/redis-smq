@@ -2,20 +2,15 @@ import { Consumer } from '../consumer';
 import { MessageHandler } from './message-handler';
 import { events } from '../../../common/events/events';
 import {
-  ICallback,
-  ICompatibleLogger,
   IRequiredConfig,
   TConsumerMessageHandler,
   TConsumerMessageHandlerParams,
   TQueueParams,
 } from '../../../../types';
-import { RedisClient } from '../../../common/redis-client/redis-client';
-import { EmptyCallbackReplyError } from '../../../common/errors/empty-callback-reply.error';
-import { each } from '../../../common/async/async';
+import { async, errors, RedisClient } from 'redis-smq-common';
 import { getConfiguration } from '../../../config/configuration';
-import { getNamespacedLogger } from '../../../common/logger/logger';
 import { MessageHandlerAlreadyExistsError } from '../errors/message-handler-already-exists.error';
-import { PanicError } from '../../../common/errors/panic.error';
+import { ICallback, ICompatibleLogger } from 'redis-smq-common/dist/types';
 
 export class MessageHandlerRunner {
   protected consumer: Consumer;
@@ -25,12 +20,10 @@ export class MessageHandlerRunner {
   protected config: IRequiredConfig;
   protected logger: ICompatibleLogger;
 
-  constructor(consumer: Consumer) {
+  constructor(consumer: Consumer, logger: ICompatibleLogger) {
     this.consumer = consumer;
     this.config = getConfiguration();
-    this.logger = getNamespacedLogger(
-      `${consumer.constructor.name}/${consumer.getId()}/MessageHandlerRunner`,
-    );
+    this.logger = logger;
   }
 
   protected registerMessageHandlerEvents(messageHandler: MessageHandler): void {
@@ -80,6 +73,7 @@ export class MessageHandlerRunner {
       messageHandler,
       dequeueRedisClient,
       sharedRedisClient,
+      this.logger,
     );
     this.registerMessageHandlerEvents(instance);
     this.messageHandlerInstances.push(instance);
@@ -95,9 +89,10 @@ export class MessageHandlerRunner {
     handlerParams: TConsumerMessageHandlerParams,
     cb: ICallback<void>,
   ): void {
-    RedisClient.getNewInstance((err, client) => {
+    const { redis } = getConfiguration();
+    RedisClient.getNewInstance(redis, (err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new EmptyCallbackReplyError());
+      else if (!client) cb(new errors.EmptyCallbackReplyError());
       else {
         const handler = this.createMessageHandlerInstance(
           client,
@@ -127,14 +122,14 @@ export class MessageHandlerRunner {
 
   protected getSharedRedisClient(): RedisClient {
     if (!this.sharedRedisClient) {
-      throw new PanicError('Expected a non-empty value');
+      throw new errors.PanicError('Expected a non-empty value');
     }
     return this.sharedRedisClient;
   }
 
   run(redisClient: RedisClient, cb: ICallback<void>): void {
     this.sharedRedisClient = redisClient;
-    each(
+    async.each(
       this.messageHandlers,
       (handlerParams, _, done) => {
         this.runMessageHandler(handlerParams, done);
@@ -144,7 +139,7 @@ export class MessageHandlerRunner {
   }
 
   shutdown(cb: ICallback<void>): void {
-    each(
+    async.each(
       this.messageHandlerInstances,
       (handler, queue, done) => {
         this.shutdownMessageHandler(handler, done);

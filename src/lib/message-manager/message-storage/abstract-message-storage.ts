@@ -1,12 +1,7 @@
-import {
-  ICallback,
-  ICompatibleLogger,
-  TGetMessagesReply,
-} from '../../../../types';
-import { RedisClient } from '../../../common/redis-client/redis-client';
-import { ArgumentError } from '../../../common/errors/argument.error';
-import { getNamespacedLogger } from '../../../common/logger/logger';
+import { TGetMessagesReply } from '../../../../types';
 import { Message } from '../../message/message';
+import { RedisClient, errors } from 'redis-smq-common';
+import { ICallback, ICompatibleLogger } from 'redis-smq-common/dist/types';
 
 export abstract class AbstractMessageStorage<
   KeyParams extends { keyMessages: string },
@@ -15,14 +10,14 @@ export abstract class AbstractMessageStorage<
   protected redisClient: RedisClient;
   protected logger: ICompatibleLogger;
 
-  constructor(redisClient: RedisClient) {
+  constructor(redisClient: RedisClient, logger: ICompatibleLogger) {
     this.redisClient = redisClient;
-    this.logger = getNamespacedLogger(this.constructor.name);
+    this.logger = logger;
   }
 
   protected validatePaginationParams(skip: number, take: number): void {
     if (skip < 0 || take < 1) {
-      throw new ArgumentError(
+      throw new errors.ArgumentError(
         `Parameter [skip] should be >= 0. Parameter [take] should be >= 1.`,
       );
     }

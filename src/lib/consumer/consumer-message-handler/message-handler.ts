@@ -1,27 +1,26 @@
 import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgedCause,
-  ICallback,
-  ICompatibleLogger,
   IPlugin,
   TConsumerMessageHandler,
   TQueueParams,
-  TRedisClientMulti,
 } from '../../../../types';
 import { v4 as uuid } from 'uuid';
-import { RedisClient } from '../../../common/redis-client/redis-client';
 import { Message } from '../../message/message';
 import { events } from '../../../common/events/events';
 import { EventEmitter } from 'events';
-import { PowerManager } from '../../../common/power-manager/power-manager';
 import { consumerQueues } from '../consumer-queues';
-import { getNamespacedLogger } from '../../../common/logger/logger';
-import { each, waterfall } from '../../../common/async/async';
 import { processingQueue } from './processing-queue';
 import { DequeueMessage } from './dequeue-message';
 import { ConsumeMessage } from './consume-message';
 import { getConsumerPlugins } from '../../../plugins/plugins';
 import { Consumer } from '../consumer';
+import { async, PowerManager, RedisClient } from 'redis-smq-common';
+import {
+  ICallback,
+  ICompatibleLogger,
+  TRedisClientMulti,
+} from 'redis-smq-common/dist/types';
 
 export class MessageHandler extends EventEmitter {
   protected id: string;
@@ -43,6 +42,7 @@ export class MessageHandler extends EventEmitter {
     handler: TConsumerMessageHandler,
     dequeueRedisClient: RedisClient,
     sharedRedisClient: RedisClient,
+    logger: ICompatibleLogger,
   ) {
     super();
     this.id = uuid();
@@ -53,7 +53,7 @@ export class MessageHandler extends EventEmitter {
     this.sharedRedisClient = sharedRedisClient;
     this.handler = handler;
     this.powerManager = new PowerManager();
-    this.logger = getNamespacedLogger(`MessageHandler/${this.id}`);
+    this.logger = logger;
     this.dequeueMessage = new DequeueMessage(this, dequeueRedisClient);
     this.consumeMessage = new ConsumeMessage(this, dequeueRedisClient);
     this.registerEventsHandlers();
@@ -138,13 +138,13 @@ export class MessageHandler extends EventEmitter {
   shutdown(cb: ICallback<void>): void {
     const goDown = () => {
       this.powerManager.goingDown();
-      waterfall(
+      async.waterfall(
         [
           (cb: ICallback<void>) => {
             this.dequeueMessage.quit(cb);
           },
           (cb: ICallback<void>) => {
-            each(
+            async.each(
               this.plugins,
               (plugin, index, done) => plugin.quit(done),
               (err) => {
@@ -211,7 +211,7 @@ export class MessageHandler extends EventEmitter {
     cb: ICallback<void>,
   ): void {
     const multi = pendingMulti ?? redisClient.multi();
-    waterfall(
+    async.waterfall(
       [
         (cb: ICallback<void>) => {
           processingQueue.cleanUpProcessingQueue(

@@ -1,8 +1,9 @@
-import { ICallback, TGetMessagesReply, TQueueParams } from '../../../types';
+import { TGetMessagesReply, TQueueParams } from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { List } from './message-storage/list';
 import { Queue } from '../queue-manager/queue';
-import { RedisClient } from '../../common/redis-client/redis-client';
+import { RedisClient } from 'redis-smq-common';
+import { ICallback } from 'redis-smq-common/dist/types';
 
 export class DeadLetteredMessages extends List {
   purge(queue: string | TQueueParams, cb: ICallback<void>): void {

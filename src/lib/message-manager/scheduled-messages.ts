@@ -1,7 +1,8 @@
-import { ICallback, TGetMessagesReply } from '../../../types';
+import { TGetMessagesReply } from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { RedisClient } from '../../common/redis-client/redis-client';
+import { RedisClient } from 'redis-smq-common';
 import { SortedSet } from './message-storage/sorted-set';
+import { ICallback } from 'redis-smq-common/dist/types';
 
 export class ScheduledMessages extends SortedSet {
   delete(messageId: string, cb: ICallback<void>): void {

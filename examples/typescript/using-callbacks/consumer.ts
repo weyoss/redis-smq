@@ -1,5 +1,5 @@
+import { ICallback } from 'redis-smq-common/dist/types';
 import { Consumer } from '../../..';
-import { ICallback } from '../../../types'; // from 'redis-smq'
 
 const consumer = new Consumer();
 

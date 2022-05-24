@@ -1,25 +1,19 @@
-import {
-  ICallback,
-  ICompatibleLogger,
-  TQueueParams,
-  TQueueSettings,
-} from '../../../types';
-import { RedisClient } from '../../common/redis-client/redis-client';
+import { TQueueParams, TQueueSettings } from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
-import { ELuaScriptName } from '../../common/redis-client/lua-scripts';
 import { QueueExistsError } from './errors/queue-exists.error';
 import { QueueNotFoundError } from './errors/queue-not-found.error';
-import { getNamespacedLogger } from '../../common/logger/logger';
 import { initDeleteQueueTransaction } from './delete-queue-transaction';
+import { errors, RedisClient } from 'redis-smq-common';
+import { ELuaScriptName } from '../../common/redis-client/redis-client';
+import { ICallback, ICompatibleLogger } from 'redis-smq-common/dist/types';
 
 export class Queue {
   protected redisClient: RedisClient;
   protected logger: ICompatibleLogger;
 
-  constructor(redisClient: RedisClient) {
+  constructor(redisClient: RedisClient, logger: ICompatibleLogger) {
     this.redisClient = redisClient;
-    this.logger = getNamespacedLogger(this.constructor.name);
+    this.logger = logger;
   }
 
   create(
@@ -77,7 +71,7 @@ export class Queue {
       undefined,
       (err, multi) => {
         if (err) cb(err);
-        else if (!multi) cb(new EmptyCallbackReplyError());
+        else if (!multi) cb(new errors.EmptyCallbackReplyError());
         else this.redisClient.execMulti(multi, (err) => cb(err));
       },
     );
@@ -136,7 +130,7 @@ export class Queue {
     const { keyQueues } = redisKeys.getMainKeys();
     redisClient.smembers(keyQueues, (err, reply) => {
       if (err) cb(err);
-      else if (!reply) cb(new EmptyCallbackReplyError());
+      else if (!reply) cb(new errors.EmptyCallbackReplyError());
       else {
         const messageQueues: TQueueParams[] = reply.map((i) => JSON.parse(i));
         cb(null, messageQueues);

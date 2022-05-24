@@ -1,14 +1,9 @@
-import { RedisClient } from '../../../common/redis-client/redis-client';
-import {
-  EMessageUnacknowledgedCause,
-  ICallback,
-  TQueueParams,
-  TRedisClientMulti,
-} from '../../../../types';
+import { EMessageUnacknowledgedCause, TQueueParams } from '../../../../types';
 import { Message } from '../../message/message';
-import { waterfall } from '../../../common/async/async';
+import { async, RedisClient } from 'redis-smq-common';
 import { broker } from '../../broker/broker';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
+import { ICallback, TRedisClientMulti } from 'redis-smq-common/dist/types';
 
 function fetchProcessingQueueMessage(
   redisClient: RedisClient,
@@ -54,7 +49,7 @@ export const processingQueue = {
       queue,
       consumerId,
     );
-    waterfall(
+    async.waterfall(
       [
         (cb: ICallback<void>) => {
           fetchProcessingQueueMessage(

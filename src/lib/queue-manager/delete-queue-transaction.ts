@@ -1,13 +1,12 @@
-import { ICallback, TQueueParams, TRedisClientMulti } from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { waterfall } from '../../common/async/async';
+import { async, errors, RedisClient } from 'redis-smq-common';
 import { processingQueue } from '../consumer/consumer-message-handler/processing-queue';
-import { RedisClient } from '../../common/redis-client/redis-client';
 import { ConsumerHeartbeat } from '../consumer/consumer-heartbeat';
-import { GenericError } from '../../common/errors/generic.error';
 import { Consumer } from '../consumer/consumer';
 import { Queue } from './queue';
 import { QueueNotFoundError } from './errors/queue-not-found.error';
+import { ICallback, TRedisClientMulti } from 'redis-smq-common/dist/types';
+import { TQueueParams } from '../../../types';
 
 function validateMessageQueueDeletion(
   redisClient: RedisClient,
@@ -26,7 +25,7 @@ function validateMessageQueueDeletion(
             const onlineArr = Object.keys(r).filter((id) => r[id]);
             if (onlineArr.length) {
               cb(
-                new GenericError(
+                new errors.GenericError(
                   `Before deleting a queue/namespace, make sure it is not used by a message handler. After shutting down all message handlers, wait a few seconds and try again.`,
                 ),
               );
@@ -39,7 +38,7 @@ function validateMessageQueueDeletion(
   const getOnlineConsumers = (cb: ICallback<string[]>): void => {
     Consumer.getOnlineConsumerIds(redisClient, queue, cb);
   };
-  waterfall([getOnlineConsumers, verifyHeartbeats], (err) => cb(err));
+  async.waterfall([getOnlineConsumers, verifyHeartbeats], (err) => cb(err));
 }
 
 export function initDeleteQueueTransaction(
@@ -78,7 +77,7 @@ export function initDeleteQueueTransaction(
     (err) => {
       if (err) cb(err);
       else {
-        waterfall(
+        async.waterfall(
           [
             (cb: ICallback<void>): void =>
               Queue.exists(redisClient, queueParams, (err, reply) => {

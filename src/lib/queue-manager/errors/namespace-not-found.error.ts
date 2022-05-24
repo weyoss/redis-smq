@@ -1,6 +1,6 @@
-import { RedisSMQError } from '../../../common/errors/redis-smq.error';
+import { errors } from 'redis-smq-common';
 
-export class NamespaceNotFoundError extends RedisSMQError {
+export class NamespaceNotFoundError extends errors.RedisSMQError {
   constructor(namespace: string) {
     super(`Namespace (${namespace}) does not exist`);
   }

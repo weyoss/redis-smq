@@ -1,10 +1,9 @@
-import { RedisClient } from '../common/redis-client/redis-client';
 import { redisKeys } from '../common/redis-keys/redis-keys';
-import { ICallback, IConsumerWorkerParameters } from '../../types';
+import { IConsumerWorkerParameters } from '../../types';
 import { Message } from '../lib/message/message';
 import { broker } from '../lib/broker/broker';
-import { Worker } from '../common/worker/worker';
-import { each } from '../common/async/async';
+import { async, RedisClient, Worker } from 'redis-smq-common';
+import { ICallback } from 'redis-smq-common/dist/types';
 
 export class DelayWorker extends Worker<IConsumerWorkerParameters> {
   protected redisKeys: ReturnType<typeof redisKeys['getMainKeys']>;
@@ -26,7 +25,7 @@ export class DelayWorker extends Worker<IConsumerWorkerParameters> {
         const messages = reply ?? [];
         if (messages.length) {
           const multi = this.redisClient.multi();
-          each(
+          async.each(
             messages,
             (i, _, done) => {
               multi.lrem(keyDelayedMessages, 1, i);

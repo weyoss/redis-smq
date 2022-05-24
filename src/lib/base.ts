@@ -1,21 +1,22 @@
 import { v4 as uuid } from 'uuid';
 import { EventEmitter } from 'events';
+import { IRequiredConfig } from '../../types';
+import { events } from '../common/events/events';
+import { getConfiguration } from '../config/configuration';
+import {
+  async,
+  errors,
+  logger,
+  PowerManager,
+  RedisClient,
+} from 'redis-smq-common';
+import { disablePluginRegistration } from '../plugins/plugins';
 import {
   ICallback,
-  TUnaryFunction,
-  TFunction,
-  IRequiredConfig,
   ICompatibleLogger,
-} from '../../types';
-import { PowerManager } from '../common/power-manager/power-manager';
-import { events } from '../common/events/events';
-import { RedisClient } from '../common/redis-client/redis-client';
-import { EmptyCallbackReplyError } from '../common/errors/empty-callback-reply.error';
-import { PanicError } from '../common/errors/panic.error';
-import { getConfiguration } from '../config/configuration';
-import { getNamespacedLogger } from '../common/logger/logger';
-import { waterfall } from '../common/async/async';
-import { disablePluginRegistration } from '../plugins/plugins';
+  TFunction,
+  TUnaryFunction,
+} from 'redis-smq-common/dist/types';
 
 export abstract class Base extends EventEmitter {
   protected readonly id: string;
@@ -27,17 +28,20 @@ export abstract class Base extends EventEmitter {
     super();
     this.id = uuid();
     this.powerManager = new PowerManager(false);
-    this.logger = getNamespacedLogger(
-      `${this.constructor.name}/${this.getId()}`,
+    const { logger: loggerCfg } = getConfiguration();
+    this.logger = logger.getNamespacedLogger(
+      loggerCfg,
+      `${this.constructor.name.toLowerCase()}:${this.id}`,
     );
     this.registerEventsHandlers();
     disablePluginRegistration();
   }
 
   protected setUpSharedRedisClient = (cb: ICallback<void>): void => {
-    RedisClient.getNewInstance((err, client) => {
+    const { redis } = getConfiguration();
+    RedisClient.getNewInstance(redis, (err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new EmptyCallbackReplyError());
+      else if (!client) cb(new errors.EmptyCallbackReplyError());
       else {
         this.sharedRedisClient = client;
         cb();
@@ -84,7 +88,7 @@ export abstract class Base extends EventEmitter {
 
   protected getSharedRedisClient(): RedisClient {
     if (!this.sharedRedisClient)
-      throw new PanicError('Expected an instance of RedisClient');
+      throw new errors.PanicError('Expected an instance of RedisClient');
     return this.sharedRedisClient;
   }
 
@@ -102,7 +106,7 @@ export abstract class Base extends EventEmitter {
       if (r) {
         this.emit(events.GOING_UP);
         const tasks = this.goingUp();
-        waterfall(tasks, (err) => {
+        async.waterfall(tasks, (err) => {
           if (err) {
             if (cb) cb(err);
             else this.emit(events.ERROR, err);
@@ -122,7 +126,7 @@ export abstract class Base extends EventEmitter {
       if (r) {
         this.emit(events.GOING_DOWN);
         const tasks = this.goingDown();
-        waterfall(tasks, () => {
+        async.waterfall(tasks, () => {
           // ignoring shutdown errors
           this.down(cb);
         });

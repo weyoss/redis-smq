@@ -1,18 +1,22 @@
-import { RedisClient } from '../../common/redis-client/redis-client';
-import { ICallback, TGetMessagesReply, TQueueParams } from '../../../types';
+import { RedisClient } from 'redis-smq-common';
+import { TGetMessagesReply, TQueueParams } from '../../../types';
 import { Queue } from '../queue-manager/queue';
 import { PendingPriorityMessages } from './pending-priority-messages';
 import { PendingLifoMessages } from './pending-lifo-messages';
+import { ICallback, ICompatibleLogger } from 'redis-smq-common/dist/types';
 
 export class PendingMessages {
   protected redisClient: RedisClient;
   protected pendingPriorityMessages: PendingPriorityMessages;
   protected pendingLifoMessages: PendingLifoMessages;
 
-  constructor(redisClient: RedisClient) {
+  constructor(redisClient: RedisClient, logger: ICompatibleLogger) {
     this.redisClient = redisClient;
-    this.pendingLifoMessages = new PendingLifoMessages(redisClient);
-    this.pendingPriorityMessages = new PendingPriorityMessages(redisClient);
+    this.pendingLifoMessages = new PendingLifoMessages(redisClient, logger);
+    this.pendingPriorityMessages = new PendingPriorityMessages(
+      redisClient,
+      logger,
+    );
   }
 
   purge(queue: string | TQueueParams, cb: ICallback<void>): void {

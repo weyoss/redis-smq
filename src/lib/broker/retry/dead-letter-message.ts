@@ -1,14 +1,12 @@
 import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgedCause,
-  ICallback,
-  TRedisClientMulti,
 } from '../../../../types';
 import { Message } from '../../message/message';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { getConfiguration } from '../../../config/configuration';
-import { RedisClient } from '../../../common/redis-client/redis-client';
-import { PanicError } from '../../../common/errors/panic.error';
+import { ICallback, TRedisClientMulti } from 'redis-smq-common/dist/types';
+import { errors, RedisClient } from 'redis-smq-common';
 
 function deadLetterMessageTransaction(
   mixed: TRedisClientMulti,
@@ -57,7 +55,7 @@ export function deadLetterMessage(
   cb?: ICallback<void>,
 ): void {
   if (mixed instanceof RedisClient) {
-    if (!cb) throw new PanicError(`Expected a callback function`);
+    if (!cb) throw new errors.PanicError(`Expected a callback function`);
     const queue = message.getRequiredQueue();
     const { keyQueueDL } = redisKeys.getQueueKeys(queue);
     const { store, expire, queueSize } =

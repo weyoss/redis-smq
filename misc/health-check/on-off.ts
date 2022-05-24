@@ -1,7 +1,7 @@
+import { async } from 'redis-smq-common';
+import { ICallback } from 'redis-smq-common/dist/types';
 import { Producer, Consumer, QueueManager, Message } from '../..';
 import { events } from '../../src/common/events/events';
-import { waterfall } from '../../src/common/async/async';
-import { ICallback } from '../../types';
 
 const queue = `queue_${Date.now()}`;
 const producer = new Producer();
@@ -33,7 +33,7 @@ consumer.on(events.DOWN, () => {
 });
 
 const serialOnOff = (cb: ICallback<void>) =>
-  waterfall(
+  async.waterfall(
     [
       (cb: ICallback<void>) => consumer.run((err) => cb(err)),
       (cb: ICallback<void>) => consumer.shutdown((err) => cb(err)),
@@ -49,7 +49,7 @@ const serialOnOff = (cb: ICallback<void>) =>
     cb,
   );
 
-waterfall(
+async.waterfall(
   [
     (cb: ICallback<void>) =>
       QueueManager.getSingletonInstance((err, queueManager) => {

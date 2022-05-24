@@ -1,5 +1,5 @@
-import { Producer, Message } from '../../..'; // from 'redis-smq'
-import { ICallback } from '../../../types';
+import { Producer, Message } from '../../..';
+import { ICallback } from 'redis-smq-common/dist/types';
 
 const producer = new Producer();
 

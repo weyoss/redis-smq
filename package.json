@@ -33,15 +33,10 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@types/bunyan": "1.8.7",
-    "@types/ioredis": "4.28.1",
-    "@types/redis": "2.8.32",
     "bluebird": "3.7.2",
-    "bunyan": "1.8.15",
     "cron-parser": "3.5.0",
-    "ioredis": "4.28.0",
     "lodash": "4.17.21",
-    "redis": "3.1.2",
+    "redis-smq-common": "1.0.0-rc.1",
     "uuid": "8.3.2"
   },
   "devDependencies": {

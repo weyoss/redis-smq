@@ -1,6 +1,5 @@
 import { promisifyAll } from 'bluebird';
 import { events } from '../src/common/events/events';
-import { RedisClient } from '../src/common/redis-client/redis-client';
 import { Producer, Message, Consumer, setLogger } from '../index';
 import { config as testConfig } from './config';
 import { IConfig, TConsumerMessageHandler, TQueueParams } from '../types';
@@ -10,8 +9,8 @@ import * as supertest from 'supertest';
 import * as configuration from '../src/config/configuration';
 import ScheduleWorker from '../src/workers/schedule.worker';
 import { merge } from 'lodash';
-import { reset } from '../src/common/logger/logger';
 import Store from '../src/config/messages/store';
+import { RedisClient, logger } from 'redis-smq-common';
 
 export const config = configuration.setConfiguration(testConfig);
 
@@ -50,7 +49,7 @@ export async function startUp(): Promise<void> {
   const redisClient = await getRedisInstance();
   await redisClient.flushallAsync();
   restoreConfiguration();
-  reset();
+  logger.reset();
   setLogger(console);
 }
 
@@ -198,7 +197,9 @@ export function validateTime(
 
 export async function getRedisInstance() {
   const RedisClientAsync = promisifyAll(RedisClient);
-  const c = promisifyAll(await RedisClientAsync.getNewInstanceAsync());
+  const c = promisifyAll(
+    await RedisClientAsync.getNewInstanceAsync(config.redis),
+  );
   redisClients.push(c);
   return c;
 }

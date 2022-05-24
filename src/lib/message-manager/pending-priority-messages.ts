@@ -1,8 +1,9 @@
-import { ICallback, TGetMessagesReply, TQueueParams } from '../../../types';
+import { TGetMessagesReply, TQueueParams } from '../../../types';
 import { Queue } from '../queue-manager/queue';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { SortedSet } from './message-storage/sorted-set';
-import { RedisClient } from '../../common/redis-client/redis-client';
+import { RedisClient } from 'redis-smq-common';
+import { ICallback } from 'redis-smq-common/dist/types';
 
 export class PendingPriorityMessages extends SortedSet {
   delete(

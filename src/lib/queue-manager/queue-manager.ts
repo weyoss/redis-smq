@@ -1,10 +1,10 @@
-import { ICallback } from '../../../types';
-import { RedisClient } from '../../common/redis-client/redis-client';
-import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
 import { QueueRateLimit } from './queue-rate-limit';
 import { Namespace } from './namespace';
 import { QueueMetrics } from './queue-metrics';
 import { Queue } from './queue';
+import { errors, logger, RedisClient } from 'redis-smq-common';
+import { ICallback } from 'redis-smq-common/dist/types';
+import { getConfiguration } from '../../config/configuration';
 
 export class QueueManager {
   private static instance: QueueManager | null = null;
@@ -16,10 +16,12 @@ export class QueueManager {
 
   private constructor(redisClient: RedisClient) {
     this.redisClient = redisClient;
-    this.namespace = new Namespace(redisClient);
-    this.queue = new Queue(redisClient);
-    this.queueRateLimit = new QueueRateLimit(redisClient);
-    this.queueMetrics = new QueueMetrics(redisClient);
+    const loggerCfg = getConfiguration().logger;
+    const nsLogger = logger.getNamespacedLogger(loggerCfg, 'queue-manager');
+    this.namespace = new Namespace(redisClient, nsLogger);
+    this.queue = new Queue(redisClient, nsLogger);
+    this.queueRateLimit = new QueueRateLimit(redisClient, nsLogger);
+    this.queueMetrics = new QueueMetrics(redisClient, nsLogger);
   }
 
   quit(cb: ICallback<void>): void {
@@ -33,9 +35,10 @@ export class QueueManager {
 
   static getSingletonInstance(cb: ICallback<QueueManager>): void {
     if (!QueueManager.instance) {
-      RedisClient.getNewInstance((err, client) => {
+      const redis = getConfiguration().redis;
+      RedisClient.getNewInstance(redis, (err, client) => {
         if (err) cb(err);
-        else if (!client) cb(new EmptyCallbackReplyError());
+        else if (!client) cb(new errors.EmptyCallbackReplyError());
         else {
           const instance = new QueueManager(client);
           QueueManager.instance = instance;

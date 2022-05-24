@@ -1,23 +1,16 @@
-import { RedisClient } from '../../common/redis-client/redis-client';
-import {
-  ICallback,
-  ICompatibleLogger,
-  IQueueMetrics,
-  TQueueParams,
-} from '../../../types';
+import { IQueueMetrics, TQueueParams } from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { waterfall } from '../../common/async/async';
-import { getNamespacedLogger } from '../../common/logger/logger';
+import { async, errors, RedisClient } from 'redis-smq-common';
 import { Queue } from './queue';
-import { EmptyCallbackReplyError } from '../../common/errors/empty-callback-reply.error';
+import { ICallback, ICompatibleLogger } from 'redis-smq-common/dist/types';
 
 export class QueueMetrics {
   protected redisClient: RedisClient;
   protected logger: ICompatibleLogger;
 
-  constructor(redisClient: RedisClient) {
+  constructor(redisClient: RedisClient, logger: ICompatibleLogger) {
     this.redisClient = redisClient;
-    this.logger = getNamespacedLogger(this.constructor.name);
+    this.logger = logger;
   }
 
   getMetrics(queue: string | TQueueParams, cb: ICallback<IQueueMetrics>): void {
@@ -33,12 +26,12 @@ export class QueueMetrics {
       keyQueueDL,
       keyQueueAcknowledged,
     } = redisKeys.getQueueKeys(queueParams);
-    waterfall(
+    async.waterfall(
       [
         (cb: ICallback<boolean>) =>
           Queue.getSettings(this.redisClient, queueParams, (err, settings) => {
             if (err) cb(err);
-            if (!settings) cb(new EmptyCallbackReplyError());
+            if (!settings) cb(new errors.EmptyCallbackReplyError());
             else cb(null, settings.priorityQueuing);
           }),
         (priorityQueuing: boolean, cb: ICallback<void>) => {

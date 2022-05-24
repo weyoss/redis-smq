@@ -1,10 +1,8 @@
-import { RedisClient } from '../common/redis-client/redis-client';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { Message } from '../lib/message/message';
-import { ICallback, IConsumerWorkerParameters } from '../../types';
-import { PanicError } from '../common/errors/panic.error';
-import { Worker } from '../common/worker/worker';
-import { each } from '../common/async/async';
+import { IConsumerWorkerParameters } from '../../types';
+import { async, errors, RedisClient, Worker } from 'redis-smq-common';
+import { ICallback } from 'redis-smq-common/dist/types';
 
 export class RequeueWorker extends Worker<IConsumerWorkerParameters> {
   protected redisKeys: ReturnType<typeof redisKeys['getMainKeys']>;
@@ -26,7 +24,7 @@ export class RequeueWorker extends Worker<IConsumerWorkerParameters> {
         const messages = reply ?? [];
         if (messages.length) {
           const multi = this.redisClient.multi();
-          each(
+          async.each(
             messages,
             (messageStr, _, done) => {
               const message = Message.createFromMessage(messageStr);
@@ -39,7 +37,7 @@ export class RequeueWorker extends Worker<IConsumerWorkerParameters> {
                 const priority = message.getPriority();
                 if (priority === null)
                   done(
-                    new PanicError(
+                    new errors.PanicError(
                       `Expected a non-empty message priority value`,
                     ),
                   );

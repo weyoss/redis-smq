@@ -1,3 +1,3 @@
-import { RedisSMQError } from '../errors/redis-smq.error';
+import { errors } from 'redis-smq-common';
 
-export class RedisKeysError extends RedisSMQError {}
+export class RedisKeysError extends errors.RedisSMQError {}

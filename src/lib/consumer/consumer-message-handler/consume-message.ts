@@ -3,9 +3,9 @@ import { EMessageUnacknowledgedCause } from '../../../../types';
 import { broker } from '../../broker/broker';
 import { events } from '../../../common/events/events';
 import { ConsumerError } from '../errors/consumer.error';
-import { RedisClient } from '../../../common/redis-client/redis-client';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { MessageHandler } from './message-handler';
+import { RedisClient } from 'redis-smq-common';
 
 export class ConsumeMessage {
   protected keyQueueProcessing: string;
