@@ -61,6 +61,7 @@ export class MultiplexedMessageHandler extends MessageHandler {
           },
           (cb: ICallback<void>) => {
             MessageHandler.cleanUp(
+              this.getConfig(),
               this.sharedRedisClient,
               this.consumerId,
               this.queue,

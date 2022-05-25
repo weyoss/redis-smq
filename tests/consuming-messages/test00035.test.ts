@@ -3,12 +3,13 @@ import { Consumer } from '../../src/lib/consumer/consumer';
 import { getProducer, getQueueManager } from '../common';
 import { Message } from '../../src/lib/message/message';
 import { events } from '../../src/common/events/events';
+import { config } from '../config';
 
 test('Consume messages from different queues using a single consumer instance: case 6', async () => {
   const qm = await getQueueManager();
 
   const messages: Message[] = [];
-  const consumer = promisifyAll(new Consumer(true));
+  const consumer = promisifyAll(new Consumer(config, true));
   await consumer.runAsync();
 
   // running without message handlers

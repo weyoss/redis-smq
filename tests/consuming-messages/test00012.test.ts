@@ -3,7 +3,6 @@ import {
   defaultQueue,
   getConsumer,
   getProducer,
-  mockConfiguration,
   untilMessageAcknowledged,
   validateTime,
 } from '../common';
@@ -11,9 +10,6 @@ import { Message } from '../../src/lib/message/message';
 import { events } from '../../src/common/events/events';
 
 test('An unacknowledged message is delayed given messageRetryDelay > 0 and messageRetryThreshold > 0 and is not exceeded', async () => {
-  mockConfiguration({
-    messages: { consumeOptions: { retryDelay: 10000, retryThreshold: 5 } },
-  });
   await createQueue(defaultQueue, false);
 
   const timestamps: number[] = [];
@@ -41,7 +37,11 @@ test('An unacknowledged message is delayed given messageRetryDelay > 0 and messa
   });
 
   const msg = new Message();
-  msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
+  msg
+    .setBody({ hello: 'world' })
+    .setQueue(defaultQueue)
+    .setRetryDelay(10000)
+    .setRetryThreshold(5);
 
   const producer = getProducer();
   await producer.produceAsync(msg);

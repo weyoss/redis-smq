@@ -18,9 +18,6 @@ export const config: IConfig = {
     enabled: false,
   },
   messages: {
-    consumeOptions: {
-      retryDelay: 0,
-    },
     store: true,
   },
 };

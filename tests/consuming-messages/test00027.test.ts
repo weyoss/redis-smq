@@ -2,12 +2,13 @@ import {
   createQueue,
   defaultQueue,
   getMessageManager,
-  mockConfiguration,
   produceAndAcknowledgeMessage,
 } from '../common';
+import { merge } from 'lodash';
+import { config } from '../config';
 
 test('Message storage: acknowledged.queueSize = 3', async () => {
-  mockConfiguration({
+  const cfg = merge(config, {
     messages: {
       store: {
         acknowledged: {
@@ -19,7 +20,10 @@ test('Message storage: acknowledged.queueSize = 3', async () => {
 
   const messageManager = await getMessageManager();
   await createQueue(defaultQueue, false);
-  const { consumer: c1, producer: p1 } = await produceAndAcknowledgeMessage();
+  const { consumer: c1, producer: p1 } = await produceAndAcknowledgeMessage(
+    defaultQueue,
+    cfg,
+  );
   await c1.shutdownAsync();
   await p1.shutdownAsync();
 
@@ -31,7 +35,10 @@ test('Message storage: acknowledged.queueSize = 3', async () => {
   expect(res1.total).toBe(1);
   expect(res1.items.length).toBe(1);
 
-  const { consumer: c2, producer: p2 } = await produceAndAcknowledgeMessage();
+  const { consumer: c2, producer: p2 } = await produceAndAcknowledgeMessage(
+    defaultQueue,
+    cfg,
+  );
   await c2.shutdownAsync();
   await p2.shutdownAsync();
 
@@ -43,7 +50,10 @@ test('Message storage: acknowledged.queueSize = 3', async () => {
   expect(res2.total).toBe(2);
   expect(res2.items.length).toBe(2);
 
-  const { consumer: c3, producer: p3 } = await produceAndAcknowledgeMessage();
+  const { consumer: c3, producer: p3 } = await produceAndAcknowledgeMessage(
+    defaultQueue,
+    cfg,
+  );
   await c3.shutdownAsync();
   await p3.shutdownAsync();
 
@@ -55,7 +65,10 @@ test('Message storage: acknowledged.queueSize = 3', async () => {
   expect(res3.total).toBe(3);
   expect(res3.items.length).toBe(3);
 
-  const { consumer: c4, producer: p4 } = await produceAndAcknowledgeMessage();
+  const { consumer: c4, producer: p4 } = await produceAndAcknowledgeMessage(
+    defaultQueue,
+    cfg,
+  );
   await c4.shutdownAsync();
   await p4.shutdownAsync();
 

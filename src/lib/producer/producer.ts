@@ -1,22 +1,23 @@
-import { IPlugin } from '../../../types';
+import { IConfig, IPlugin } from '../../../types';
 import { Message } from '../message/message';
 import { events } from '../../common/events/events';
 import { Base } from '../base';
 import { RedisClient, errors, async } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { broker } from '../broker/broker';
 import { MessageNotPublishedError } from './errors/message-not-published.error';
 import { getProducerPlugins } from '../../plugins/plugins';
 import { MessageQueueRequiredError } from './errors/message-queue-required.error';
 import { MessageAlreadyPublishedError } from './errors/message-already-published.error';
 import { ELuaScriptName } from '../../common/redis-client/redis-client';
 import { ICallback, TUnaryFunction } from 'redis-smq-common/dist/types';
+import { scheduleMessage } from '../broker/schedule-message';
+import { Queue } from '../queue-manager/queue';
 
 export class Producer extends Base {
   protected plugins: IPlugin[] = [];
 
-  constructor() {
-    super();
+  constructor(config: IConfig = {}) {
+    super(config);
     this.run();
   }
 
@@ -93,6 +94,8 @@ export class Producer extends Base {
     } else if (message.getMetadata()) {
       cb(new MessageAlreadyPublishedError());
     } else {
+      const queueParams = Queue.getParams(this.config, queue);
+      message.setQueue(queueParams);
       const messageId = message.getSetMetadata().getId();
       const callback: ICallback<void> = (err) => {
         if (err) cb(err);
@@ -104,7 +107,7 @@ export class Producer extends Base {
       const proceed = () => {
         const redisClient = this.getSharedRedisClient();
         if (message.isSchedulable()) {
-          broker.scheduleMessage(redisClient, message, (err) => {
+          scheduleMessage(redisClient, message, (err) => {
             if (err) callback(err);
             else {
               this.logger.info(`Message (ID ${messageId}) has been scheduled.`);

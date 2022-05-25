@@ -4,53 +4,65 @@ import { AcknowledgedMessages } from './acknowledged-messages';
 import { DeadLetteredMessages } from './dead-lettered-messages';
 import { PendingMessages } from './pending-messages';
 import { getConfiguration } from '../../config/configuration';
-import { ICallback, ICompatibleLogger } from 'redis-smq-common/dist/types';
+import { ICallback } from 'redis-smq-common/dist/types';
+import { IConfig } from '../../../types';
 
 export class MessageManager {
-  private static messageManagerInstance: MessageManager | null = null;
   private readonly redisClient;
   public readonly acknowledgedMessages;
   public readonly deadLetteredMessages;
   public readonly pendingMessages;
   public readonly scheduledMessages;
 
-  private constructor(redisClient: RedisClient, logger: ICompatibleLogger) {
+  private constructor(
+    redisClient: RedisClient,
+    acknowledgedMessages: AcknowledgedMessages,
+    deadLetteredMessages: DeadLetteredMessages,
+    pendingMessages: PendingMessages,
+    scheduledMessages: ScheduledMessages,
+  ) {
     this.redisClient = redisClient;
-    this.acknowledgedMessages = new AcknowledgedMessages(redisClient, logger);
-    this.deadLetteredMessages = new DeadLetteredMessages(redisClient, logger);
-    this.pendingMessages = new PendingMessages(redisClient, logger);
-    this.scheduledMessages = new ScheduledMessages(redisClient, logger);
+    this.acknowledgedMessages = acknowledgedMessages;
+    this.deadLetteredMessages = deadLetteredMessages;
+    this.pendingMessages = pendingMessages;
+    this.scheduledMessages = scheduledMessages;
   }
 
   quit(cb: ICallback<void>): void {
-    this.redisClient.halt((err) => {
-      if (err) cb(err);
-      else {
-        MessageManager.messageManagerInstance = null;
-        cb();
-      }
-    });
+    this.redisClient.halt(cb);
   }
 
-  static getSingletonInstance(cb: ICallback<MessageManager>): void {
-    if (!MessageManager.messageManagerInstance) {
-      const { redis } = getConfiguration();
-      RedisClient.getNewInstance(redis, (err, client) => {
-        if (err) cb(err);
-        else if (!client) cb(new errors.EmptyCallbackReplyError());
-        else {
-          const { logger: loggerCfg } = getConfiguration();
-          const nsLogger = logger.getNamespacedLogger(
-            loggerCfg,
-            'message-manager',
-          );
-          MessageManager.messageManagerInstance = new MessageManager(
-            client,
-            nsLogger,
-          );
-          cb(null, MessageManager.messageManagerInstance);
-        }
-      });
-    } else cb(null, MessageManager.messageManagerInstance);
+  static createInstance(config: IConfig, cb: ICallback<MessageManager>): void {
+    const cfg = getConfiguration(config);
+    RedisClient.getNewInstance(cfg.redis, (err, client) => {
+      if (err) cb(err);
+      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else {
+        const nsLogger = logger.getNamespacedLogger(
+          cfg.logger,
+          'message-manager',
+        );
+        const acknowledgedMessages = new AcknowledgedMessages(
+          cfg,
+          client,
+          nsLogger,
+        );
+        const deadLetteredMessages = new DeadLetteredMessages(
+          cfg,
+          client,
+          nsLogger,
+        );
+        const pendingMessages = new PendingMessages(cfg, client, nsLogger);
+        const scheduledMessages = new ScheduledMessages(cfg, client, nsLogger);
+        const messageManager = new MessageManager(
+          client,
+          acknowledgedMessages,
+          deadLetteredMessages,
+          pendingMessages,
+          scheduledMessages,
+        );
+        cb(null, messageManager);
+      }
+    });
   }
 }

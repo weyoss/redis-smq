@@ -11,15 +11,7 @@ import { RedisClient } from 'redis-smq-common';
 
 ///////////
 
-export interface IMessageConfigConsumeOptions {
-  consumeTimeout?: number;
-  ttl?: number;
-  retryThreshold?: number;
-  retryDelay?: number;
-}
-
 export interface IMessagesConfig {
-  consumeOptions?: IMessageConfigConsumeOptions;
   store?: boolean | IMessagesConfigStore;
 }
 
@@ -42,9 +34,6 @@ export interface IConfig {
 
 ///////////
 
-export type TRequiredMessagesConfigConsumeOptions =
-  Required<IMessageConfigConsumeOptions>;
-
 export interface IRequiredStoreMessagesParams
   extends Required<IMessagesConfigStoreOptions> {
   store: boolean;
@@ -57,7 +46,6 @@ export interface IRequiredMessagesConfigStore {
 
 export interface IRequiredConfig extends Required<IConfig> {
   messages: {
-    consumeOptions: TRequiredMessagesConfigConsumeOptions;
     store: IRequiredMessagesConfigStore;
   };
 }
@@ -197,3 +185,12 @@ export type TProducerPluginConstructor = new (
   redisClient: RedisClient,
   producer: Producer,
 ) => IPlugin;
+
+///
+
+export type TMessageConsumeOptions = {
+  ttl: number;
+  retryThreshold: number;
+  retryDelay: number;
+  consumeTimeout: number;
+};

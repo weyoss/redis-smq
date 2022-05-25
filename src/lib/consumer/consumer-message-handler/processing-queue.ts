@@ -1,9 +1,13 @@
-import { EMessageUnacknowledgedCause, TQueueParams } from '../../../../types';
+import {
+  EMessageUnacknowledgedCause,
+  IRequiredConfig,
+  TQueueParams,
+} from '../../../../types';
 import { Message } from '../../message/message';
 import { async, RedisClient } from 'redis-smq-common';
-import { broker } from '../../broker/broker';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { ICallback, TRedisClientMulti } from 'redis-smq-common/dist/types';
+import { retryMessage } from '../../broker/retry-message';
 
 function fetchProcessingQueueMessage(
   redisClient: RedisClient,
@@ -39,6 +43,7 @@ function deleteProcessingQueue(
 
 export const processingQueue = {
   cleanUpProcessingQueue(
+    config: IRequiredConfig,
     redisClient: RedisClient,
     consumerId: string,
     queue: TQueueParams,
@@ -59,7 +64,8 @@ export const processingQueue = {
             (err, msg) => {
               if (err) cb(err);
               else if (msg) {
-                const deadLettered = broker.retry(
+                const deadLettered = retryMessage(
+                  config,
                   multi,
                   keyQueueProcessing,
                   msg,

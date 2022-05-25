@@ -1,4 +1,4 @@
-import { TGetMessagesReply } from '../../../../types';
+import { IRequiredConfig, TGetMessagesReply } from '../../../../types';
 import { Message } from '../../message/message';
 import { RedisClient, errors } from 'redis-smq-common';
 import { ICallback, ICompatibleLogger } from 'redis-smq-common/dist/types';
@@ -9,10 +9,16 @@ export abstract class AbstractMessageStorage<
 > {
   protected redisClient: RedisClient;
   protected logger: ICompatibleLogger;
+  protected config: IRequiredConfig;
 
-  constructor(redisClient: RedisClient, logger: ICompatibleLogger) {
+  constructor(
+    config: IRequiredConfig,
+    redisClient: RedisClient,
+    logger: ICompatibleLogger,
+  ) {
     this.redisClient = redisClient;
     this.logger = logger;
+    this.config = config;
   }
 
   protected validatePaginationParams(skip: number, take: number): void {

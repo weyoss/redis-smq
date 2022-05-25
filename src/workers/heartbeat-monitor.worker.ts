@@ -10,7 +10,9 @@ export class HeartbeatMonitorWorker extends Worker<IConsumerWorkerParameters> {
         (cb: ICallback<string[]>): void =>
           ConsumerHeartbeat.getExpiredHeartbeatIds(this.redisClient, cb),
         (consumerIds: string[], cb: ICallback<void>): void => {
+          const config = this.params.config;
           ConsumerHeartbeat.handleExpiredHeartbeatIds(
+            config,
             this.redisClient,
             consumerIds,
             cb,

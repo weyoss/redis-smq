@@ -4,6 +4,8 @@ import {
   IConsumerWorkerParameters,
   TConsumerInfo,
   TQueueParams,
+  IConfig,
+  IRequiredConfig,
 } from '../../../types';
 import { events } from '../../common/events/events';
 import { resolve } from 'path';
@@ -23,7 +25,6 @@ import {
   logger,
   async,
 } from 'redis-smq-common';
-import { getConfiguration } from '../../config/configuration';
 import {
   ICallback,
   TRedisClientMulti,
@@ -36,11 +37,10 @@ export class Consumer extends Base {
   private heartbeat: ConsumerHeartbeat | null = null;
   private workerRunner: WorkerRunner<IConsumerWorkerParameters> | null = null;
 
-  constructor(useMultiplexing = false) {
-    super();
-    const { logger: loggerCfg } = getConfiguration();
+  constructor(config: IConfig = {}, useMultiplexing = false) {
+    super(config);
     const nsLogger = logger.getNamespacedLogger(
-      loggerCfg,
+      this.config.logger,
       `consumer:${this.id}:message-handler`,
     );
     this.messageHandlerRunner = useMultiplexing
@@ -50,8 +50,7 @@ export class Consumer extends Base {
   }
 
   private setUpHeartbeat = (cb: ICallback<void>): void => {
-    const { redis } = getConfiguration();
-    RedisClient.getNewInstance(redis, (err, redisClient) => {
+    RedisClient.getNewInstance(this.config.redis, (err, redisClient) => {
       if (err) cb(err);
       else if (!redisClient) cb(new errors.EmptyCallbackReplyError());
       else {
@@ -76,9 +75,8 @@ export class Consumer extends Base {
   private setUpConsumerWorkers = (cb: ICallback<void>): void => {
     const redisClient = this.getSharedRedisClient();
     const { keyLockConsumerWorkersRunner } = this.getRedisKeys();
-    const { logger: loggerCfg } = getConfiguration();
     const nsLogger = logger.getNamespacedLogger(
-      loggerCfg,
+      this.config.logger,
       `consumer:${this.id}:worker-runner`,
     );
     this.workerRunner = new WorkerRunner<IConsumerWorkerParameters>(
@@ -143,7 +141,7 @@ export class Consumer extends Base {
     messageHandler: TConsumerMessageHandler,
     cb: ICallback<void>,
   ): void {
-    const queueParams = Queue.getParams(queue);
+    const queueParams = Queue.getParams(this.config, queue);
     this.messageHandlerRunner.addMessageHandler(
       queueParams,
       messageHandler,
@@ -152,7 +150,7 @@ export class Consumer extends Base {
   }
 
   cancel(queue: string | TQueueParams, cb: ICallback<void>): void {
-    const queueParams = Queue.getParams(queue);
+    const queueParams = Queue.getParams(this.config, queue);
     this.messageHandlerRunner.removeMessageHandler(queueParams, cb);
   }
 
@@ -190,6 +188,7 @@ export class Consumer extends Base {
   }
 
   static handleOfflineConsumer(
+    config: IRequiredConfig,
     multi: TRedisClientMulti, // pending transaction
     redisClient: RedisClient, // for readonly operations
     consumerId: string,
@@ -204,6 +203,7 @@ export class Consumer extends Base {
             queues,
             (queue, _, done) => {
               MessageHandler.cleanUp(
+                config,
                 redisClient,
                 consumerId,
                 queue,

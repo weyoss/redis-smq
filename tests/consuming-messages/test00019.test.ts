@@ -4,20 +4,12 @@ import {
   getConsumer,
   getMessageManager,
   getProducer,
-  mockConfiguration,
   untilConsumerEvent,
 } from '../common';
 import { Message } from '../../index';
 import { events } from '../../src/common/events/events';
 
 test('An unacknowledged message is dead-lettered and not delivered again, given retryThreshold is 0', async () => {
-  mockConfiguration({
-    messages: {
-      consumeOptions: {
-        retryThreshold: 0,
-      },
-    },
-  });
   await createQueue(defaultQueue, false);
 
   const producer = getProducer();
@@ -28,7 +20,7 @@ test('An unacknowledged message is dead-lettered and not delivered again, given 
   });
 
   const msg = new Message();
-  msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
+  msg.setBody({ hello: 'world' }).setQueue(defaultQueue).setRetryThreshold(0);
 
   expect(msg.getMetadata()).toBe(null);
   expect(msg.getId()).toBe(null);

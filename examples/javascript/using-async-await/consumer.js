@@ -1,7 +1,8 @@
 const { Consumer } = require('../../..');
 const { promisifyAll } = require('bluebird');
+const config = require('./config');
 
-const consumer = promisifyAll(new Consumer());
+const consumer = promisifyAll(new Consumer(config));
 
 exports.consume = async function consume() {
   // registering the message handler

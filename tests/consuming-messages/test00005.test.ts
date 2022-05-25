@@ -5,20 +5,12 @@ import {
   getConsumer,
   getMessageManager,
   getProducer,
-  mockConfiguration,
   untilConsumerEvent,
 } from '../common';
 import { Message } from '../../src/lib/message/message';
 import { events } from '../../src/common/events/events';
 
 test('Setting default message TTL from configuration', async () => {
-  mockConfiguration({
-    messages: {
-      consumeOptions: {
-        ttl: 2000,
-      },
-    },
-  });
   await createQueue(defaultQueue, false);
 
   const producer = getProducer();
@@ -30,7 +22,7 @@ test('Setting default message TTL from configuration', async () => {
     unacks += 1;
   });
   const msg = new Message();
-  msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
+  msg.setBody({ hello: 'world' }).setQueue(defaultQueue).setTTL(2000);
 
   await producer.produceAsync(msg);
   await delay(5000);

@@ -3,7 +3,6 @@ import {
   defaultQueue,
   getConsumer,
   getProducer,
-  mockConfiguration,
   untilConsumerEvent,
 } from '../common';
 import { Message } from '../../src/lib/message/message';
@@ -11,14 +10,6 @@ import { events } from '../../src/common/events/events';
 import { ICallback } from 'redis-smq-common/dist/types';
 
 test('A message is unacknowledged when messageConsumeTimeout is exceeded', async () => {
-  mockConfiguration({
-    messages: {
-      consumeOptions: {
-        consumeTimeout: 2000,
-        retryDelay: 6000,
-      },
-    },
-  });
   await createQueue(defaultQueue, false);
 
   const producer = getProducer();
@@ -33,7 +24,11 @@ test('A message is unacknowledged when messageConsumeTimeout is exceeded', async
   });
 
   const msg = new Message();
-  msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
+  msg
+    .setBody({ hello: 'world' })
+    .setQueue(defaultQueue)
+    .setConsumeTimeout(2000)
+    .setRetryDelay(6000);
 
   await producer.produceAsync(msg);
   consumer.run();

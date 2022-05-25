@@ -1,6 +1,7 @@
 const { Consumer } = require('../../..'); // require('redis-smq')
+const config = require('config');
 
-const consumer = new Consumer();
+const consumer = new Consumer(config);
 
 exports.consume = function consume(cb) {
   // starting the consumer and then registering a message handler

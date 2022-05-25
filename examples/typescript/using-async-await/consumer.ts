@@ -1,7 +1,8 @@
 import { Consumer } from '../../..';
 import { promisifyAll } from 'bluebird';
+import { config } from './config';
 
-const consumer = promisifyAll(new Consumer());
+const consumer = promisifyAll(new Consumer(config));
 
 export async function consume(): Promise<void> {
   // starting the consumer and then registering a message handler

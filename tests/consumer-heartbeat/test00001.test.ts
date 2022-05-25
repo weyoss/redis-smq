@@ -19,6 +19,7 @@ describe('Consumer heartbeat: check online/offline consumers', () => {
     const validHeartbeatIds = await HeartbeatAsync.getValidHeartbeatIdsAsync(
       redisClient,
     );
+
     expect(validHeartbeatIds.length).toBe(1);
     expect(validHeartbeatIds[0]).toBe(consumer.getId());
 

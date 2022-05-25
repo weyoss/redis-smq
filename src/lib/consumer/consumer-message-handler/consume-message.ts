@@ -1,11 +1,12 @@
 import { Message } from '../../message/message';
 import { EMessageUnacknowledgedCause } from '../../../../types';
-import { broker } from '../../broker/broker';
 import { events } from '../../../common/events/events';
 import { ConsumerError } from '../errors/consumer.error';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { MessageHandler } from './message-handler';
 import { RedisClient } from 'redis-smq-common';
+import { retryMessage } from '../../broker/retry-message';
+import { acknowledgeMessage } from '../../broker/acknowledge-message';
 
 export class ConsumeMessage {
   protected keyQueueProcessing: string;
@@ -30,7 +31,8 @@ export class ConsumeMessage {
     if (err) {
       // log error
     }
-    broker.retry(
+    retryMessage(
+      this.messageHandler.getConfig(),
       this.redisClient,
       this.keyQueueProcessing,
       msg,
@@ -73,7 +75,8 @@ export class ConsumeMessage {
               err,
             );
           else {
-            broker.acknowledgeMessage(
+            acknowledgeMessage(
+              this.messageHandler.getConfig(),
               this.redisClient,
               msg,
               this.keyQueueProcessing,

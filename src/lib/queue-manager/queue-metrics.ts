@@ -1,4 +1,4 @@
-import { IQueueMetrics, TQueueParams } from '../../../types';
+import { IQueueMetrics, IRequiredConfig, TQueueParams } from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { async, errors, RedisClient } from 'redis-smq-common';
 import { Queue } from './queue';
@@ -7,14 +7,20 @@ import { ICallback, ICompatibleLogger } from 'redis-smq-common/dist/types';
 export class QueueMetrics {
   protected redisClient: RedisClient;
   protected logger: ICompatibleLogger;
+  protected config: IRequiredConfig;
 
-  constructor(redisClient: RedisClient, logger: ICompatibleLogger) {
+  constructor(
+    config: IRequiredConfig,
+    redisClient: RedisClient,
+    logger: ICompatibleLogger,
+  ) {
     this.redisClient = redisClient;
     this.logger = logger;
+    this.config = config;
   }
 
   getMetrics(queue: string | TQueueParams, cb: ICallback<IQueueMetrics>): void {
-    const queueParams = Queue.getParams(queue);
+    const queueParams = Queue.getParams(this.config, queue);
     const queueMetrics: IQueueMetrics = {
       acknowledged: 0,
       deadLettered: 0,
@@ -29,11 +35,16 @@ export class QueueMetrics {
     async.waterfall(
       [
         (cb: ICallback<boolean>) =>
-          Queue.getSettings(this.redisClient, queueParams, (err, settings) => {
-            if (err) cb(err);
-            if (!settings) cb(new errors.EmptyCallbackReplyError());
-            else cb(null, settings.priorityQueuing);
-          }),
+          Queue.getSettings(
+            this.config,
+            this.redisClient,
+            queueParams,
+            (err, settings) => {
+              if (err) cb(err);
+              if (!settings) cb(new errors.EmptyCallbackReplyError());
+              else cb(null, settings.priorityQueuing);
+            },
+          ),
         (priorityQueuing: boolean, cb: ICallback<void>) => {
           if (priorityQueuing) {
             this.redisClient.zcard(

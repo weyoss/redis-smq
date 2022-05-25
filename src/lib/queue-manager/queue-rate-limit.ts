@@ -1,4 +1,4 @@
-import { TQueueParams, TQueueRateLimit } from '../../../types';
+import { IRequiredConfig, TQueueParams, TQueueRateLimit } from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { QueueRateLimitError } from './errors/queue-rate-limit.error';
 import { Queue } from './queue';
@@ -9,14 +9,20 @@ import { ELuaScriptName } from '../../common/redis-client/redis-client';
 export class QueueRateLimit {
   protected redisClient: RedisClient;
   protected logger: ICompatibleLogger;
+  protected config: IRequiredConfig;
 
-  constructor(redisClient: RedisClient, logger: ICompatibleLogger) {
+  constructor(
+    config: IRequiredConfig,
+    redisClient: RedisClient,
+    logger: ICompatibleLogger,
+  ) {
     this.redisClient = redisClient;
     this.logger = logger;
+    this.config = config;
   }
 
   clear(queue: string | TQueueParams, cb: ICallback<void>): void {
-    const queueParams = Queue.getParams(queue);
+    const queueParams = Queue.getParams(this.config, queue);
     const {
       keyQueueSettings,
       keyQueueSettingsRateLimit,
@@ -33,7 +39,7 @@ export class QueueRateLimit {
     rateLimit: TQueueRateLimit,
     cb: ICallback<void>,
   ): void {
-    const queueParams = Queue.getParams(queue);
+    const queueParams = Queue.getParams(this.config, queue);
 
     // validating rateLimit params from a javascript client
     const limit = Number(rateLimit.limit);
@@ -64,7 +70,7 @@ export class QueueRateLimit {
   }
 
   get(queue: string | TQueueParams, cb: ICallback<TQueueRateLimit>): void {
-    QueueRateLimit.get(this.redisClient, queue, cb);
+    QueueRateLimit.get(this.config, this.redisClient, queue, cb);
   }
 
   static hasExceeded(
@@ -90,11 +96,12 @@ export class QueueRateLimit {
   }
 
   static get(
+    config: IRequiredConfig,
     redisClient: RedisClient,
     queue: string | TQueueParams,
     cb: ICallback<TQueueRateLimit>,
   ): void {
-    const queueParams = Queue.getParams(queue);
+    const queueParams = Queue.getParams(config, queue);
     const { keyQueueSettings, keyQueueSettingsRateLimit } =
       redisKeys.getQueueKeys(queueParams);
     redisClient.hget(

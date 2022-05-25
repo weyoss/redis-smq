@@ -9,7 +9,6 @@ const nsPrefix = 'redis-smq-v700-rc0';
 
 // Namespaces
 const globalNamespace = 'global';
-let namespace = 'default';
 
 enum ERedisKey {
   KEY_QUEUE_PENDING = 1,
@@ -135,18 +134,14 @@ export const redisKeys = {
     return makeNamespacedKeys(mainKeys, globalNamespace);
   },
 
-  setNamespace(ns: string): void {
+  validateNamespace(ns: string): string {
     ns = this.validateRedisKey(ns);
     if (ns === globalNamespace) {
       throw new RedisKeysError(
         `Namespace [${ns}] is reserved. Use another one.`,
       );
     }
-    namespace = ns;
-  },
-
-  getNamespace(): string {
-    return namespace;
+    return ns;
   },
 
   validateRedisKey(key?: string): string {

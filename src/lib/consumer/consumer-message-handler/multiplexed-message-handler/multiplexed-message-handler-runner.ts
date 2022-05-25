@@ -6,7 +6,6 @@ import { Consumer } from '../../consumer';
 import { events } from '../../../../common/events/events';
 import { MultiplexedMessageHandler } from './multiplexed-message-handler';
 import { ICallback, ICompatibleLogger } from 'redis-smq-common/dist/types';
-import { getConfiguration } from '../../../../config/configuration';
 
 export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   protected muxRedisClient: RedisClient | null = null;
@@ -118,7 +117,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
     async.waterfall(
       [
         (cb: ICallback<void>) => {
-          const { redis } = getConfiguration();
+          const { redis } = this.config;
           RedisClient.getNewInstance(redis, (err, client) => {
             if (err) cb(err);
             else if (!client) cb(new errors.EmptyCallbackReplyError());

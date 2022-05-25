@@ -1,5 +1,9 @@
 import * as os from 'os';
-import { THeartbeatPayload, THeartbeatPayloadData } from '../../../types';
+import {
+  IRequiredConfig,
+  THeartbeatPayload,
+  THeartbeatPayloadData,
+} from '../../../types';
 import { RedisClient, Ticker } from 'redis-smq-common';
 import { events } from '../../common/events/events';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
@@ -47,12 +51,12 @@ export class ConsumerHeartbeat extends EventEmitter {
   protected ticker: Ticker;
   protected keyHeartbeats: string;
   protected keyHeartbeatTimestamps: string;
-  protected consumerId: string;
+  protected consumer: Consumer;
 
   constructor(consumer: Consumer, redisClient: RedisClient) {
     super();
     this.redisClient = redisClient;
-    this.consumerId = consumer.getId();
+    this.consumer = consumer;
     const { keyHeartbeats } = consumer.getRedisKeys();
     this.keyHeartbeats = keyHeartbeats;
     this.keyHeartbeatTimestamps =
@@ -81,12 +85,17 @@ export class ConsumerHeartbeat extends EventEmitter {
     const heartbeatPayload = this.getPayload();
     const heartbeatPayloadStr = JSON.stringify(heartbeatPayload);
     const multi = this.redisClient.multi();
-    multi.hset(this.keyHeartbeats, this.consumerId, heartbeatPayloadStr);
-    multi.zadd(this.keyHeartbeatTimestamps, timestamp, this.consumerId);
+    multi.hset(this.keyHeartbeats, this.consumer.getId(), heartbeatPayloadStr);
+    multi.zadd(this.keyHeartbeatTimestamps, timestamp, this.consumer.getId());
     this.redisClient.execMulti(multi, (err) => {
       if (err) this.emit(events.ERROR, err);
       else {
-        this.emit(events.TICK, timestamp, this.consumerId, heartbeatPayload);
+        this.emit(
+          events.TICK,
+          timestamp,
+          this.consumer.getId(),
+          heartbeatPayload,
+        );
         this.ticker.nextTick();
       }
     });
@@ -101,8 +110,9 @@ export class ConsumerHeartbeat extends EventEmitter {
         },
         (cb: ICallback<void>) =>
           ConsumerHeartbeat.handleExpiredHeartbeatIds(
+            this.consumer.getConfig(),
             this.redisClient,
-            [this.consumerId],
+            [this.consumer.getId()],
             (err) => cb(err),
           ),
         (cb: ICallback<void>) => this.redisClient.halt(cb),
@@ -236,6 +246,7 @@ export class ConsumerHeartbeat extends EventEmitter {
   }
 
   static handleExpiredHeartbeatIds(
+    config: IRequiredConfig,
     redisClient: RedisClient,
     consumerIds: string[],
     cb: ICallback<void>,
@@ -249,7 +260,13 @@ export class ConsumerHeartbeat extends EventEmitter {
         (consumerId, _, done) => {
           multi.hdel(keyHeartbeats, consumerId);
           multi.zrem(keyHeartbeatConsumerWeight, consumerId);
-          Consumer.handleOfflineConsumer(multi, redisClient, consumerId, done);
+          Consumer.handleOfflineConsumer(
+            config,
+            multi,
+            redisClient,
+            consumerId,
+            done,
+          );
         },
         () => redisClient.execMulti(multi, (err) => cb(err)),
       );
