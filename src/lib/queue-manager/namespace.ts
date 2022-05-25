@@ -1,4 +1,4 @@
-import { TQueueParams } from '../../../types';
+import { IRequiredConfig, TQueueParams } from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { async, errors, RedisClient } from 'redis-smq-common';
 import { NamespaceNotFoundError } from './errors/namespace-not-found.error';
@@ -8,10 +8,16 @@ import { ICallback, ICompatibleLogger } from 'redis-smq-common/dist/types';
 export class Namespace {
   protected redisClient: RedisClient;
   protected logger: ICompatibleLogger;
+  protected config: IRequiredConfig;
 
-  constructor(redisClient: RedisClient, logger: ICompatibleLogger) {
+  constructor(
+    config: IRequiredConfig,
+    redisClient: RedisClient,
+    logger: ICompatibleLogger,
+  ) {
     this.redisClient = redisClient;
     this.logger = logger;
+    this.config = config;
   }
 
   list(cb: ICallback<string[]>): void {
@@ -60,6 +66,7 @@ export class Namespace {
                 queues,
                 (queueParams, _, done) => {
                   initDeleteQueueTransaction(
+                    this.config,
                     this.redisClient,
                     queueParams,
                     multi,

@@ -2,6 +2,7 @@ import { delay, promisifyAll } from 'bluebird';
 import { Consumer } from '../../src/lib/consumer/consumer';
 import { createQueue, getProducer } from '../common';
 import { Message } from '../../src/lib/message/message';
+import { config } from '../config';
 
 test('Consume messages from different queues using a single consumer instance: case 4', async () => {
   await createQueue('test1', false);
@@ -12,7 +13,7 @@ test('Consume messages from different queues using a single consumer instance: c
   await createQueue('test6', false);
 
   const messages: Message[] = [];
-  const consumer = promisifyAll(new Consumer(true));
+  const consumer = promisifyAll(new Consumer(config, true));
 
   await consumer.consumeAsync('test1', (msg, cb) => {
     messages.push(msg);
@@ -56,7 +57,7 @@ test('Consume messages from different queues using a single consumer instance: c
 
   await delay(10000);
   expect(messages.length).toBe(5);
-  expect(messages.map((i) => i.getQueue()?.name).sort()).toEqual([
+  expect(messages.map((i) => i.getRequiredQueue().name).sort()).toEqual([
     'test1',
     'test2',
     'test3',
@@ -87,7 +88,7 @@ test('Consume messages from different queues using a single consumer instance: c
     new Message().setQueue(`test6`).setBody(`body 6`),
   );
   await delay(10000);
-  expect(messages.map((i) => i.getQueue()?.name).sort()).toEqual([
+  expect(messages.map((i) => i.getRequiredQueue().name).sort()).toEqual([
     'test1',
     'test2',
     'test3',

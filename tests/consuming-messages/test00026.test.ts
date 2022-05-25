@@ -2,13 +2,14 @@ import {
   createQueue,
   defaultQueue,
   getMessageManager,
-  mockConfiguration,
   produceAndAcknowledgeMessage,
 } from '../common';
 import { delay } from 'bluebird';
+import { merge } from 'lodash';
+import { config } from '../config';
 
 test('Message storage: acknowledged.expire = 10000', async () => {
-  mockConfiguration({
+  const cfg = merge(config, {
     messages: {
       store: {
         acknowledged: {
@@ -20,7 +21,10 @@ test('Message storage: acknowledged.expire = 10000', async () => {
 
   const messageManager = await getMessageManager();
   await createQueue(defaultQueue, false);
-  const { producer: p, consumer: c } = await produceAndAcknowledgeMessage();
+  const { producer: p, consumer: c } = await produceAndAcknowledgeMessage(
+    defaultQueue,
+    cfg,
+  );
 
   await p.shutdownAsync();
   await c.shutdownAsync();

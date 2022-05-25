@@ -1,7 +1,8 @@
 import { ICallback } from 'redis-smq-common/dist/types';
 import { Consumer } from '../../..';
+import { config } from './config';
 
-const consumer = new Consumer();
+const consumer = new Consumer(config);
 
 export function consume(cb: ICallback<void>): void {
   // starting the consumer and then registering a message handler

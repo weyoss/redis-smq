@@ -1,9 +1,12 @@
 import { parseExpression } from 'cron-parser';
-import { TMessageJSON, TQueueParams } from '../../../types';
-import { getConfiguration } from '../../config/configuration';
+import {
+  TMessageConsumeOptions,
+  TMessageJSON,
+  TQueueParams,
+} from '../../../types';
 import { MessageMetadata } from './message-metadata';
-import { Queue } from '../queue-manager/queue';
 import { errors } from 'redis-smq-common';
+import { redisKeys } from '../../common/redis-keys/redis-keys';
 
 export class Message {
   // Do not forget about javascript users. Using an object map instead of enum
@@ -18,9 +21,16 @@ export class Message {
     HIGHEST: 0,
   };
 
+  protected static defaultConsumeOptions: TMessageConsumeOptions = {
+    ttl: 0,
+    retryThreshold: 3,
+    retryDelay: 60000,
+    consumeTimeout: 0,
+  };
+
   protected readonly createdAt: number;
 
-  protected queue: TQueueParams | null = null;
+  protected queue: string | TQueueParams | null = null;
 
   protected ttl = 0;
 
@@ -44,13 +54,10 @@ export class Message {
 
   protected metadata: MessageMetadata | null = null;
 
-  ///
-
   constructor() {
     this.createdAt = Date.now();
-    const { messages } = getConfiguration();
     const { consumeTimeout, retryDelay, ttl, retryThreshold } =
-      messages.consumeOptions;
+      Message.defaultConsumeOptions;
     this.setConsumeTimeout(consumeTimeout);
     this.setRetryDelay(retryDelay);
     this.setTTL(ttl);
@@ -173,15 +180,7 @@ export class Message {
    * @param ttl In milliseconds
    */
   setTTL(ttl: number): Message {
-    // JavaScript users do not have type checking
-    // So just make sure that we have an integer value
-    const value = Number(ttl);
-    if (isNaN(value) || value < 0) {
-      throw new errors.ArgumentError(
-        'Expected a positive integer value in milliseconds >= 0',
-      );
-    }
-    this.ttl = value;
+    this.ttl = Message.validateTTL(ttl);
     return this;
   }
 
@@ -189,28 +188,12 @@ export class Message {
    * @param timeout In milliseconds
    */
   setConsumeTimeout(timeout: number): Message {
-    // JavaScript users do not have type checking
-    // So just make sure that we have an integer value
-    const value = Number(timeout);
-    if (isNaN(value) || value < 0) {
-      throw new errors.ArgumentError(
-        'Expected a positive integer value in milliseconds >= 0',
-      );
-    }
-    this.consumeTimeout = value;
+    this.consumeTimeout = Message.validateConsumeTimeout(timeout);
     return this;
   }
 
   setRetryThreshold(threshold: number): Message {
-    // JavaScript users do not have type checking
-    // So just make sure that we have an integer value
-    const value = Number(threshold);
-    if (isNaN(value) || value < 0) {
-      throw new errors.ArgumentError(
-        'Retry threshold should be a positive integer >= 0',
-      );
-    }
-    this.retryThreshold = value;
+    this.retryThreshold = Message.validateRetryThreshold(threshold);
     return this;
   }
 
@@ -218,15 +201,7 @@ export class Message {
    * @param delay In millis
    */
   setRetryDelay(delay: number): Message {
-    // JavaScript users do not have type checking
-    // So just make sure that we have an integer value
-    const value = Number(delay);
-    if (isNaN(value) || value < 0) {
-      throw new errors.ArgumentError(
-        'Expected a positive integer in milliseconds >= 0',
-      );
-    }
-    this.retryDelay = value;
+    this.retryDelay = Message.validateRetryDelay(delay);
     return this;
   }
 
@@ -244,7 +219,13 @@ export class Message {
   }
 
   setQueue(queue: string | TQueueParams): Message {
-    this.queue = Queue.getParams(queue);
+    this.queue =
+      typeof queue === 'string'
+        ? redisKeys.validateRedisKey(queue)
+        : {
+            name: redisKeys.validateRedisKey(queue.name),
+            ns: redisKeys.validateNamespace(queue.ns),
+          };
     return this;
   }
 
@@ -257,13 +238,18 @@ export class Message {
     return this.priority !== null;
   }
 
-  getQueue(): TQueueParams | null {
+  getQueue(): TQueueParams | string | null {
     return this.queue;
   }
 
   getRequiredQueue(): TQueueParams {
     if (!this.queue) {
       throw new errors.PanicError(`Expected queue parameters to be not empty`);
+    }
+    if (typeof this.queue === 'string') {
+      throw new errors.PanicError(
+        `Expected queue parameters to be not a string`,
+      );
     }
     return this.queue;
   }
@@ -387,7 +373,7 @@ export class Message {
   toJSON(): TMessageJSON {
     return {
       createdAt: this.createdAt,
-      queue: this.queue,
+      queue: typeof this.queue === 'string' ? null : this.queue,
       ttl: this.ttl,
       retryThreshold: this.retryThreshold,
       retryDelay: this.retryDelay,
@@ -419,6 +405,53 @@ export class Message {
     return this.getScheduledCRON() !== null || this.getScheduledRepeat() > 0;
   }
 
+  protected static validateRetryDelay(delay: number): number {
+    // JavaScript users do not have type checking
+    // So just make sure that we have an integer value
+    const value = Number(delay);
+    if (isNaN(value) || value < 0) {
+      throw new errors.ArgumentError(
+        'Expected a positive integer in milliseconds >= 0',
+      );
+    }
+    return value;
+  }
+  protected static validateTTL(ttl: unknown): number {
+    // JavaScript users do not have type checking
+    // So just make sure that we have an integer value
+    const value = Number(ttl);
+    if (isNaN(value) || value < 0) {
+      throw new errors.ArgumentError(
+        'Expected a positive integer value in milliseconds >= 0',
+      );
+    }
+    return value;
+  }
+
+  protected static validateConsumeTimeout(timeout: unknown): number {
+    // JavaScript users do not have type checking
+    // So just make sure that we have an integer value
+    const value = Number(timeout);
+    if (isNaN(value) || value < 0) {
+      throw new errors.ArgumentError(
+        'Expected a positive integer value in milliseconds >= 0',
+      );
+    }
+    return value;
+  }
+
+  protected static validateRetryThreshold(threshold: unknown): number {
+    // JavaScript users do not have type checking
+    // So just make sure that we have an integer value
+    const value = Number(threshold);
+    if (isNaN(value) || value < 0) {
+      throw new errors.ArgumentError(
+        'Retry threshold should be a positive integer >= 0',
+      );
+    }
+    return value;
+  }
+
   static createFromMessage(message: string | Message, reset = false): Message {
     const messageJSON: Message =
       typeof message === 'string' ? JSON.parse(message) : message;
@@ -435,5 +468,31 @@ export class Message {
       }
     }
     return m;
+  }
+
+  static setDefaultConsumeOptions(
+    consumeOptions: Partial<TMessageConsumeOptions>,
+  ): void {
+    const {
+      ttl = null,
+      retryThreshold = null,
+      retryDelay = null,
+      consumeTimeout = null,
+    } = consumeOptions;
+
+    if (ttl !== null)
+      Message.defaultConsumeOptions.ttl = Message.validateTTL(ttl);
+
+    if (retryDelay !== null)
+      Message.defaultConsumeOptions.retryDelay =
+        Message.validateRetryDelay(retryDelay);
+
+    if (retryThreshold !== null)
+      Message.defaultConsumeOptions.retryThreshold =
+        Message.validateRetryThreshold(retryThreshold);
+
+    if (consumeTimeout !== null)
+      Message.defaultConsumeOptions.consumeTimeout =
+        Message.validateConsumeTimeout(consumeTimeout);
   }
 }

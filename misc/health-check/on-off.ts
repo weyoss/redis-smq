@@ -52,7 +52,7 @@ const serialOnOff = (cb: ICallback<void>) =>
 async.waterfall(
   [
     (cb: ICallback<void>) =>
-      QueueManager.getSingletonInstance((err, queueManager) => {
+      QueueManager.createInstance({}, (err, queueManager) => {
         if (err) cb(err);
         else queueManager?.queue.create(queue, false, cb);
       }),
@@ -66,7 +66,7 @@ async.waterfall(
     else {
       producer.shutdown();
       consumer.shutdown();
-      QueueManager.getSingletonInstance((err, queueManager) =>
+      QueueManager.createInstance({}, (err, queueManager) =>
         queueManager?.quit(() => void 0),
       );
     }

@@ -8,15 +8,16 @@ import { MessageManager } from '../src/lib/message-manager/message-manager';
 import * as supertest from 'supertest';
 import * as configuration from '../src/config/configuration';
 import ScheduleWorker from '../src/workers/schedule.worker';
-import { merge } from 'lodash';
-import Store from '../src/config/messages/store';
 import { RedisClient, logger } from 'redis-smq-common';
 
-export const config = configuration.setConfiguration(testConfig);
+export const config = configuration.getConfiguration(testConfig);
+
+Message.setDefaultConsumeOptions({ retryDelay: 0 });
 
 type TGetConsumerArgs = {
   queue?: string | TQueueParams;
   messageHandler?: TConsumerMessageHandler;
+  cfg?: IConfig;
 };
 
 export interface ISuperTestResponse<TData> extends supertest.Response {
@@ -40,7 +41,6 @@ export const defaultQueue: TQueueParams = {
 const redisClients: RedisClient[] = [];
 const consumersList: Consumer[] = [];
 const producersList: Producer[] = [];
-const getConfigurationOrig = configuration.getConfiguration;
 let scheduleWorker: ScheduleWorker | null = null;
 let messageManager: MessageManager | null = null;
 let queueManager: QueueManager | null = null;
@@ -48,7 +48,6 @@ let queueManager: QueueManager | null = null;
 export async function startUp(): Promise<void> {
   const redisClient = await getRedisInstance();
   await redisClient.flushallAsync();
-  restoreConfiguration();
   logger.reset();
   setLogger(console);
 }
@@ -95,43 +94,28 @@ export async function shutdown(): Promise<void> {
   }
 }
 
-export function restoreConfiguration(): void {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  configuration.getConfiguration = getConfigurationOrig;
-}
-
-export function mockConfiguration(config: IConfig): void {
-  const store = config.messages?.store !== undefined ? Store(config) : {};
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  configuration.getConfiguration = () => {
-    return merge({}, getConfigurationOrig(), config, {
-      messages: {
-        store,
-      },
-    });
-  };
-}
-
 export function getConsumer(args: TGetConsumerArgs = {}) {
-  const { queue = defaultQueue, messageHandler = (msg, cb) => cb() } = args;
-  const consumer = promisifyAll(new Consumer());
+  const {
+    queue = defaultQueue,
+    messageHandler = (msg, cb) => cb(),
+    cfg = config,
+  } = args;
+  const consumer = promisifyAll(new Consumer(cfg));
   consumer.consume(queue, messageHandler, () => void 0);
   consumersList.push(consumer);
   return consumer;
 }
 
-export function getProducer() {
-  const producer = new Producer();
+export function getProducer(cfg: IConfig = config) {
+  const producer = new Producer(cfg);
   const p = promisifyAll(producer);
   producersList.push(p);
   return p;
 }
 
-export async function getMessageManager() {
+export async function getMessageManager(cfg: IConfig = config) {
   if (!messageManager) {
-    messageManager = await MessageManagerAsync.getSingletonInstanceAsync();
+    messageManager = await MessageManagerAsync.createInstanceAsync(cfg);
   }
   return {
     deadLetteredMessages: promisifyAll(messageManager.deadLetteredMessages),
@@ -141,9 +125,9 @@ export async function getMessageManager() {
   };
 }
 
-export async function getQueueManager() {
+export async function getQueueManager(cfg: IConfig = config) {
   if (!queueManager) {
-    queueManager = await QueueManagerAsync.getSingletonInstanceAsync();
+    queueManager = await QueueManagerAsync.createInstanceAsync(cfg);
   }
   const queue = promisifyAll(queueManager.queue);
   const namespace = promisifyAll(queueManager.namespace);
@@ -239,9 +223,11 @@ export async function untilConsumerEvent(
 
 export async function produceAndAcknowledgeMessage(
   queue: TQueueParams = defaultQueue,
+  cfg: IConfig = config,
 ) {
-  const producer = getProducer();
+  const producer = getProducer(cfg);
   const consumer = getConsumer({
+    cfg,
     queue,
     messageHandler: jest.fn((msg, cb) => {
       cb();
@@ -259,9 +245,11 @@ export async function produceAndAcknowledgeMessage(
 
 export async function produceAndDeadLetterMessage(
   queue: TQueueParams = defaultQueue,
+  cfg: IConfig = config,
 ) {
-  const producer = getProducer();
+  const producer = getProducer(cfg);
   const consumer = getConsumer({
+    cfg,
     queue,
     messageHandler: jest.fn(() => {
       throw new Error('Explicit error');
@@ -277,8 +265,11 @@ export async function produceAndDeadLetterMessage(
   return { producer, consumer, message, queue };
 }
 
-export async function produceMessage(queue: TQueueParams = defaultQueue) {
-  const producer = getProducer();
+export async function produceMessage(
+  queue: TQueueParams = defaultQueue,
+  cfg: IConfig = config,
+) {
+  const producer = getProducer(cfg);
   const message = new Message();
   message.setBody({ hello: 'world' }).setQueue(queue);
   await producer.produceAsync(message);
@@ -287,16 +278,20 @@ export async function produceMessage(queue: TQueueParams = defaultQueue) {
 
 export async function produceMessageWithPriority(
   queue: TQueueParams = defaultQueue,
+  cfg: IConfig = config,
 ) {
-  const producer = promisifyAll(getProducer());
+  const producer = promisifyAll(getProducer(cfg));
   const message = new Message();
   message.setPriority(Message.MessagePriority.LOW).setQueue(queue);
   await producer.produceAsync(message);
   return { message, producer, queue };
 }
 
-export async function scheduleMessage(queue: TQueueParams = defaultQueue) {
-  const producer = promisifyAll(getProducer());
+export async function scheduleMessage(
+  queue: TQueueParams = defaultQueue,
+  cfg: IConfig = config,
+) {
+  const producer = promisifyAll(getProducer(cfg));
   const message = new Message();
   message.setScheduledDelay(10000).setQueue(queue);
   await producer.produceAsync(message);

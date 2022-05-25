@@ -6,7 +6,7 @@ import { Consumer } from '../consumer/consumer';
 import { Queue } from './queue';
 import { QueueNotFoundError } from './errors/queue-not-found.error';
 import { ICallback, TRedisClientMulti } from 'redis-smq-common/dist/types';
-import { TQueueParams } from '../../../types';
+import { IRequiredConfig, TQueueParams } from '../../../types';
 
 function validateMessageQueueDeletion(
   redisClient: RedisClient,
@@ -42,6 +42,7 @@ function validateMessageQueueDeletion(
 }
 
 export function initDeleteQueueTransaction(
+  config: IRequiredConfig,
   redisClient: RedisClient,
   queueParams: TQueueParams,
   multi: TRedisClientMulti | undefined,
@@ -80,7 +81,7 @@ export function initDeleteQueueTransaction(
         async.waterfall(
           [
             (cb: ICallback<void>): void =>
-              Queue.exists(redisClient, queueParams, (err, reply) => {
+              Queue.exists(config, redisClient, queueParams, (err, reply) => {
                 if (err) cb(err);
                 else if (!reply) cb(new QueueNotFoundError());
                 else cb();

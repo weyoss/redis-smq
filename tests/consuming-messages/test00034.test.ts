@@ -7,6 +7,7 @@ import {
   getQueueManager,
 } from '../common';
 import { Message } from '../../src/lib/message/message';
+import { config } from '../config';
 
 test('Consume messages from different queues using a single consumer instance: case 5', async () => {
   await createQueue(defaultQueue, false);
@@ -18,7 +19,7 @@ test('Consume messages from different queues using a single consumer instance: c
   });
 
   const messages: Message[] = [];
-  const consumer = promisifyAll(new Consumer(true));
+  const consumer = promisifyAll(new Consumer(config, true));
 
   await consumer.consumeAsync(defaultQueue, (msg, cb) => {
     messages.push(msg);

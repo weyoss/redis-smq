@@ -95,7 +95,7 @@ You can create a queue, view existing queues, or delete a queue using the [Queue
 ```javascript
 const { QueueManager } = require('redis-smq');
 
-QueueManager.getSingletonInstance((err, queueManager) => {
+QueueManager.createInstance((err, queueManager) => {
   if (err) console.log(err);
   else queueManager.queue.create('test_queue', false, (err) => console.log(err));
 })

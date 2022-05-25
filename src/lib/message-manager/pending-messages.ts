@@ -1,5 +1,9 @@
 import { RedisClient } from 'redis-smq-common';
-import { TGetMessagesReply, TQueueParams } from '../../../types';
+import {
+  IRequiredConfig,
+  TGetMessagesReply,
+  TQueueParams,
+} from '../../../types';
 import { Queue } from '../queue-manager/queue';
 import { PendingPriorityMessages } from './pending-priority-messages';
 import { PendingLifoMessages } from './pending-lifo-messages';
@@ -9,26 +13,42 @@ export class PendingMessages {
   protected redisClient: RedisClient;
   protected pendingPriorityMessages: PendingPriorityMessages;
   protected pendingLifoMessages: PendingLifoMessages;
+  protected config: IRequiredConfig;
 
-  constructor(redisClient: RedisClient, logger: ICompatibleLogger) {
+  constructor(
+    config: IRequiredConfig,
+    redisClient: RedisClient,
+    logger: ICompatibleLogger,
+  ) {
     this.redisClient = redisClient;
-    this.pendingLifoMessages = new PendingLifoMessages(redisClient, logger);
+    this.config = config;
+    this.pendingLifoMessages = new PendingLifoMessages(
+      config,
+      redisClient,
+      logger,
+    );
     this.pendingPriorityMessages = new PendingPriorityMessages(
+      config,
       redisClient,
       logger,
     );
   }
 
   purge(queue: string | TQueueParams, cb: ICallback<void>): void {
-    const queueParams = Queue.getParams(queue);
-    Queue.getSettings(this.redisClient, queueParams, (err, settings) => {
-      if (err) cb(err);
-      else if (settings?.priorityQueuing) {
-        this.pendingPriorityMessages.purge(queueParams, cb);
-      } else {
-        this.pendingLifoMessages.purge(queueParams, cb);
-      }
-    });
+    const queueParams = Queue.getParams(this.config, queue);
+    Queue.getSettings(
+      this.config,
+      this.redisClient,
+      queueParams,
+      (err, settings) => {
+        if (err) cb(err);
+        else if (settings?.priorityQueuing) {
+          this.pendingPriorityMessages.purge(queueParams, cb);
+        } else {
+          this.pendingLifoMessages.purge(queueParams, cb);
+        }
+      },
+    );
   }
 
   list(
@@ -37,13 +57,12 @@ export class PendingMessages {
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    const queueParams = Queue.getParams(queue);
-    Queue.getSettings(this.redisClient, queueParams, (err, settings) => {
+    Queue.getSettings(this.config, this.redisClient, queue, (err, settings) => {
       if (err) cb(err);
       else if (settings?.priorityQueuing) {
-        this.pendingPriorityMessages.list(queueParams, skip, take, cb);
+        this.pendingPriorityMessages.list(queue, skip, take, cb);
       } else {
-        this.pendingLifoMessages.list(queueParams, skip, take, cb);
+        this.pendingLifoMessages.list(queue, skip, take, cb);
       }
     });
   }
@@ -54,13 +73,12 @@ export class PendingMessages {
     sequenceId: number,
     cb: ICallback<void>,
   ): void {
-    const queueParams = Queue.getParams(queue);
-    Queue.getSettings(this.redisClient, queueParams, (err, settings) => {
+    Queue.getSettings(this.config, this.redisClient, queue, (err, settings) => {
       if (err) cb(err);
       else if (settings?.priorityQueuing) {
-        this.pendingPriorityMessages.delete(queueParams, messageId, cb);
+        this.pendingPriorityMessages.delete(queue, messageId, cb);
       } else {
-        this.pendingLifoMessages.delete(queueParams, messageId, sequenceId, cb);
+        this.pendingLifoMessages.delete(queue, messageId, sequenceId, cb);
       }
     });
   }

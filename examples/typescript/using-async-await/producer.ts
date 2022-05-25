@@ -1,7 +1,8 @@
 import { Producer, Message } from '../../..'; // from 'redis-smq'
 import { promisifyAll } from 'bluebird';
+import { config } from './config';
 
-const producer = promisifyAll(new Producer());
+const producer = promisifyAll(new Producer(config));
 
 export async function produce(): Promise<void> {
   const msg = new Message();

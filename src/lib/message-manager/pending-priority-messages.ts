@@ -11,7 +11,7 @@ export class PendingPriorityMessages extends SortedSet {
     messageId: string,
     cb: ICallback<void>,
   ): void {
-    const queueParams = Queue.getParams(queue);
+    const queueParams = Queue.getParams(this.config, queue);
     const {
       keyQueuePendingPriorityMessageWeight,
       keyQueuePendingPriorityMessages,
@@ -35,7 +35,7 @@ export class PendingPriorityMessages extends SortedSet {
   }
 
   purge(queue: string | TQueueParams, cb: ICallback<void>): void {
-    const queueParams = Queue.getParams(queue);
+    const queueParams = Queue.getParams(this.config, queue);
     const {
       keyQueuePendingPriorityMessageWeight,
       keyQueuePendingPriorityMessages,
@@ -65,7 +65,7 @@ export class PendingPriorityMessages extends SortedSet {
     take: number,
     cb: ICallback<TGetMessagesReply>,
   ): void {
-    const queueParams = Queue.getParams(queue);
+    const queueParams = Queue.getParams(this.config, queue);
     const {
       keyQueuePendingPriorityMessageWeight,
       keyQueuePendingPriorityMessages,
@@ -86,9 +86,8 @@ export class PendingPriorityMessages extends SortedSet {
     queue: TQueueParams,
     cb: ICallback<number>,
   ): void {
-    const queueParams = Queue.getParams(queue);
     const { keyQueuePendingPriorityMessageWeight } =
-      redisKeys.getQueueKeys(queueParams);
+      redisKeys.getQueueKeys(queue);
     redisClient.zcard(keyQueuePendingPriorityMessageWeight, (err, reply) => {
       if (err) cb(err);
       else cb(null, reply ?? 0);

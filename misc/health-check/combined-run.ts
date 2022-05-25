@@ -1,26 +1,20 @@
-import {
-  Consumer,
-  Producer,
-  setConfiguration,
-  setLogger,
-  QueueManager,
-  Message,
-} from '../..';
+import { Consumer, Producer, setLogger, QueueManager, Message } from '../..';
+import { IConfig } from '../../types';
 
-setConfiguration({
+setLogger(console);
+
+const config: IConfig = {
   logger: {
     enabled: false,
   },
   messages: {
     store: true,
   },
-});
+};
 
-setLogger(console);
+const producer = new Producer(config);
 
-const producer = new Producer();
-
-const consumer = new Consumer();
+const consumer = new Consumer(config);
 consumer.run();
 
 const produce = (err?: Error | null) => {
@@ -34,7 +28,7 @@ const produce = (err?: Error | null) => {
 };
 
 const queue = `queue_${Date.now()}`;
-QueueManager.getSingletonInstance((err, queueManager) => {
+QueueManager.createInstance(config, (err, queueManager) => {
   if (err) console.log(err);
   else {
     queueManager?.queue.create(queue, false, (err) => {

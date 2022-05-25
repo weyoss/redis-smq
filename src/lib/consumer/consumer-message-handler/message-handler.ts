@@ -2,6 +2,7 @@ import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgedCause,
   IPlugin,
+  IRequiredConfig,
   TConsumerMessageHandler,
   TQueueParams,
 } from '../../../../types';
@@ -158,6 +159,7 @@ export class MessageHandler extends EventEmitter {
           },
           (cb: ICallback<void>) => {
             MessageHandler.cleanUp(
+              this.getConfig(),
               this.sharedRedisClient,
               this.consumerId,
               this.queue,
@@ -195,6 +197,10 @@ export class MessageHandler extends EventEmitter {
     return this.id;
   }
 
+  getConfig(): IRequiredConfig {
+    return this.consumer.getConfig();
+  }
+
   isRunning(): boolean {
     return this.powerManager.isRunning();
   }
@@ -204,6 +210,7 @@ export class MessageHandler extends EventEmitter {
   }
 
   static cleanUp(
+    config: IRequiredConfig,
     redisClient: RedisClient,
     consumerId: string,
     queue: TQueueParams,
@@ -215,6 +222,7 @@ export class MessageHandler extends EventEmitter {
       [
         (cb: ICallback<void>) => {
           processingQueue.cleanUpProcessingQueue(
+            config,
             redisClient,
             consumerId,
             queue,

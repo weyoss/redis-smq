@@ -1,7 +1,8 @@
 const { Producer, Message } = require('../../..'); //  require('redis-smq')
 const { promisifyAll } = require('bluebird');
+const config = require('./config');
 
-const producer = promisifyAll(new Producer());
+const producer = promisifyAll(new Producer(config));
 
 exports.produce = async function produce() {
   const msg = new Message();

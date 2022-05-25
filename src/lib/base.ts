@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import { EventEmitter } from 'events';
-import { IRequiredConfig } from '../../types';
+import { IConfig, IRequiredConfig } from '../../types';
 import { events } from '../common/events/events';
 import { getConfiguration } from '../config/configuration';
 import {
@@ -23,14 +23,15 @@ export abstract class Base extends EventEmitter {
   protected readonly powerManager: PowerManager;
   protected sharedRedisClient: RedisClient | null = null;
   protected logger: ICompatibleLogger;
+  protected config: IRequiredConfig;
 
-  constructor() {
+  constructor(config: IConfig) {
     super();
     this.id = uuid();
     this.powerManager = new PowerManager(false);
-    const { logger: loggerCfg } = getConfiguration();
+    this.config = getConfiguration(config);
     this.logger = logger.getNamespacedLogger(
-      loggerCfg,
+      this.config.logger,
       `${this.constructor.name.toLowerCase()}:${this.id}`,
     );
     this.registerEventsHandlers();
@@ -38,8 +39,7 @@ export abstract class Base extends EventEmitter {
   }
 
   protected setUpSharedRedisClient = (cb: ICallback<void>): void => {
-    const { redis } = getConfiguration();
-    RedisClient.getNewInstance(redis, (err, client) => {
+    RedisClient.getNewInstance(this.config.redis, (err, client) => {
       if (err) cb(err);
       else if (!client) cb(new errors.EmptyCallbackReplyError());
       else {
@@ -159,6 +159,6 @@ export abstract class Base extends EventEmitter {
   }
 
   getConfig(): IRequiredConfig {
-    return getConfiguration();
+    return this.config;
   }
 }

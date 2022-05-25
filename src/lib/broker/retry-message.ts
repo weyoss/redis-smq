@@ -1,10 +1,11 @@
 import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgedCause,
-} from '../../../../types';
+  IRequiredConfig,
+} from '../../../types';
 import { deadLetterMessage } from './dead-letter-message';
 import { requeueMessage } from './requeue-message';
-import { Message } from '../../message/message';
+import { Message } from '../message/message';
 import { delayMessage } from './delay-message';
 import { ICallback, TRedisClientMulti } from 'redis-smq-common/dist/types';
 import { errors, RedisClient } from 'redis-smq-common';
@@ -67,6 +68,7 @@ function getRetryAction(
 }
 
 function retryTransaction(
+  config: IRequiredConfig,
   mixed: TRedisClientMulti,
   processingQueue: string,
   message: Message,
@@ -75,6 +77,7 @@ function retryTransaction(
   const r = getRetryAction(message, unacknowledgedCause);
   if (r.action === EValidateAction.DEAD_LETTER) {
     deadLetterMessage(
+      config,
       mixed,
       message,
       processingQueue,
@@ -89,20 +92,23 @@ function retryTransaction(
   return delayMessage(mixed, message, processingQueue, unacknowledgedCause);
 }
 
-export function retry(
+export function retryMessage(
+  config: IRequiredConfig,
   mixed: TRedisClientMulti,
   processingQueue: string,
   message: Message,
   unacknowledgedCause: EMessageUnacknowledgedCause,
 ): EMessageDeadLetterCause | void;
-export function retry(
+export function retryMessage(
+  config: IRequiredConfig,
   mixed: RedisClient,
   processingQueue: string,
   message: Message,
   unacknowledgedCause: EMessageUnacknowledgedCause,
   cb: ICallback<EMessageDeadLetterCause | void>,
 ): void;
-export function retry(
+export function retryMessage(
+  config: IRequiredConfig,
   mixed: RedisClient | TRedisClientMulti,
   processingQueue: string,
   message: Message,
@@ -114,6 +120,7 @@ export function retry(
     const r = getRetryAction(message, unacknowledgedCause);
     if (r.action === EValidateAction.DEAD_LETTER) {
       return deadLetterMessage(
+        config,
         mixed,
         message,
         processingQueue,
@@ -143,6 +150,7 @@ export function retry(
     );
   } else {
     return retryTransaction(
+      config,
       mixed,
       processingQueue,
       message,

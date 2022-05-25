@@ -2,13 +2,14 @@ import {
   createQueue,
   defaultQueue,
   getMessageManager,
-  mockConfiguration,
   produceAndAcknowledgeMessage,
   produceAndDeadLetterMessage,
 } from '../common';
+import { merge } from 'lodash';
+import { config } from '../config';
 
 test('Message storage: acknowledged = true, deadLettered = false', async () => {
-  mockConfiguration({
+  const cfg = merge(config, {
     messages: {
       store: {
         acknowledged: true,
@@ -17,7 +18,10 @@ test('Message storage: acknowledged = true, deadLettered = false', async () => {
     },
   });
   await createQueue(defaultQueue, false);
-  const { producer, consumer } = await produceAndDeadLetterMessage();
+  const { producer, consumer } = await produceAndDeadLetterMessage(
+    defaultQueue,
+    cfg,
+  );
   await producer.shutdownAsync();
   await consumer.shutdownAsync();
   const messageManager = await getMessageManager();
@@ -29,7 +33,10 @@ test('Message storage: acknowledged = true, deadLettered = false', async () => {
   expect(res1.total).toBe(0);
   expect(res1.items.length).toBe(0);
 
-  const { producer: p, consumer: c } = await produceAndAcknowledgeMessage();
+  const { producer: p, consumer: c } = await produceAndAcknowledgeMessage(
+    defaultQueue,
+    cfg,
+  );
 
   await p.shutdownAsync();
   await c.shutdownAsync();

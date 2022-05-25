@@ -1,22 +1,22 @@
 import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgedCause,
-} from '../../../../types';
-import { Message } from '../../message/message';
-import { redisKeys } from '../../../common/redis-keys/redis-keys';
-import { getConfiguration } from '../../../config/configuration';
+  IRequiredConfig,
+} from '../../../types';
+import { Message } from '../message/message';
+import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { ICallback, TRedisClientMulti } from 'redis-smq-common/dist/types';
 import { errors, RedisClient } from 'redis-smq-common';
 
 function deadLetterMessageTransaction(
+  config: IRequiredConfig,
   mixed: TRedisClientMulti,
   message: Message,
   keyQueueProcessing: string,
 ): void {
   const queue = message.getRequiredQueue();
   const { keyQueueDL } = redisKeys.getQueueKeys(queue);
-  const { store, expire, queueSize } =
-    getConfiguration().messages.store.deadLettered;
+  const { store, expire, queueSize } = config.messages.store.deadLettered;
   if (store) {
     mixed.lpop(keyQueueProcessing);
     mixed.rpush(keyQueueDL, JSON.stringify(message));
@@ -32,6 +32,7 @@ function deadLetterMessageTransaction(
 }
 
 export function deadLetterMessage(
+  config: IRequiredConfig,
   mixed: TRedisClientMulti,
   message: Message,
   keyQueueProcessing: string,
@@ -39,6 +40,7 @@ export function deadLetterMessage(
   deadLetterCause: EMessageDeadLetterCause,
 ): void;
 export function deadLetterMessage(
+  config: IRequiredConfig,
   mixed: RedisClient,
   message: Message,
   keyQueueProcessing: string,
@@ -47,6 +49,7 @@ export function deadLetterMessage(
   cb: ICallback<void>,
 ): void;
 export function deadLetterMessage(
+  config: IRequiredConfig,
   mixed: RedisClient | TRedisClientMulti,
   message: Message,
   keyQueueProcessing: string,
@@ -58,8 +61,7 @@ export function deadLetterMessage(
     if (!cb) throw new errors.PanicError(`Expected a callback function`);
     const queue = message.getRequiredQueue();
     const { keyQueueDL } = redisKeys.getQueueKeys(queue);
-    const { store, expire, queueSize } =
-      getConfiguration().messages.store.deadLettered;
+    const { store, expire, queueSize } = config.messages.store.deadLettered;
     if (store) {
       if (expire || queueSize) {
         mixed.lpoprpushextra(
@@ -82,6 +84,6 @@ export function deadLetterMessage(
       mixed.rpop(keyQueueProcessing, (err) => cb(err));
     }
   } else {
-    deadLetterMessageTransaction(mixed, message, keyQueueProcessing);
+    deadLetterMessageTransaction(config, mixed, message, keyQueueProcessing);
   }
 }
