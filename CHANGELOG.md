@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 7.0.0-rc.3 (2022-05-26)
+
+* Update migration/configuration/message/message-manager references (6d53877)
+* Update docs (df2eddb)
+* Bump up redis-smq-common to v1.0.0-rc.3, refactor (0508c75)
+* Bump up redis-smq-common to v1.0.0-rc.2 (f38d757)
+* Remove singletons, use instance based configuration (65f28ec)
+* Fix 'fsevents not accessible from jest-haste-map' error (1cbc786)
+* Use shared components from redis-smq-common (2abfb98)
+* Reorganize codebase folders (cdf25fa)
+* Clean up redis-keys.ts (c6b8af8)
+* Add PluginRegistrationNotAllowedError error, clean up (aa003a1)
+* Update tests (0950706)
+* Implement a plugging system for using the web-ui as an extension (e2b0cca)
+* Fix tests (ca01d66)
+* Reorganize codebase files (2cef191)
+* Remove the web ui from codebase, clean up (ffe03c9)
+* Update http-api.md (4023dc5)
+
 ## 7.0.0-rc.2 (2022-05-18)
 
 * Fix typo (8002616)
