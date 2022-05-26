@@ -6,9 +6,10 @@ const { Message } = require('redis-smq');
 
 ## Table of Content
 
-1. [Configuration](#configuration)
-2. [Public Static Properties](#public-static-properties)
-3. Public Methods
+1. [Public Static Properties](#public-static-properties)
+2. [Public Static Methods](#public-static-methods)
+   1. [Message.setDefaultConsumeOptions()](#messagesetdefaultconsumeoptions)
+3. [Public Methods](#public-methods)
    1. General methods
       1. [Message.prototype.getId()](#messageprototypegetid)
       2. [Message.prototype.getCreatedAt()](#messageprototypegetcreatedat)
@@ -46,18 +47,6 @@ const { Message } = require('redis-smq');
       4. [Message.prototype.disablePriority()](#messageprototypedisablepriority)
    7. [Other Methods](#other-methods)
 
-
-## Configuration
-
-For each new Message instance, the default values for the following properties are:
-
-- `Message TTL` - 0 (has no effect)
-- `Message retry threshold` - 3
-- `Message retry delay` - 60000
-- `Message consume timeout` - 0 (has no effect)
-
-You can overwrite these default values using the [configuration object](/docs/configuration.md).
-
 ## Public Static Properties
 
 ### Message.MessagePriority
@@ -75,6 +64,34 @@ Message priority values that you can apply to a given message. Valid message pri
 
 Message priority can be set using [setPriority()](#messageprototypesetpriority). Do not forget to 
 configure your producers and consumers to use [Priority queues](/docs/priority-queues.md).
+
+## Public Static Methods
+
+### Message.setDefaultConsumeOptions()
+
+```javascript
+setDefaultConsumeOptions(consumeOptions);
+```
+
+**Parameters**
+
+- `consumeOptions` *(object): Optional.* Default message parameters.
+   - `consumeOptions.consumeTimeout` *(Integer): Optional.* In milliseconds. Message consumption timeout. See .
+   - `consumeOptions.ttl` *(Integer): Optional.* In milliseconds. Message TTL. See .
+   - `consumeOptions.retryThreshold` *(Integer): Optional.* Message retry threshold. See .
+   - `consumeOptions.retryDelay` *(Integer): Optional.* In milliseconds. Message retry delay. See.
+   
+For each new Message instance, the default values for `Message TTL`, `Message retry threshold`, `Message retry delay`,
+and `Message consume timeout` are:
+
+- `Message TTL` - 0 (has no effect)
+- `Message retry threshold` - 3
+- `Message retry delay` - 60000
+- `Message consume timeout` - 0 (has no effect)
+
+These values can be set using `Message.setDefaultConsumeOptions()` and can be overwritten for a given message instance 
+using [setConsumeTimeout()](/docs/api/message.md#messageprototypesetconsumetimeout), [setTTL()](/docs/api/message.md#messageprototypesetttl), 
+[setRetryThreshold()](/docs/api/message.md#messageprototypesetretrythreshold), and [setRetryDelay()](/docs/api/message.md#messageprototypesetretrydelay).
 
 ## Public Methods
 

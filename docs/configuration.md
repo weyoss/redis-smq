@@ -1,21 +1,6 @@
 # Configuration
 
-```javascript
-'use strict';
-const config = require('./config');
-const { Consumer, setConfiguration } = require('redis-smq');
-
-// Applying system-wide configuration
-// This setup should be done during your application bootstrap
-// Throws an error if the configuration has been already set up
-setConfiguration(config);
-
-// ...
-```
-
-You can configure many of RedisSMQ features using a configuration object that you can pass to `setConfiguration()` method from the main package, before starting and using any component.
-
-RedisSMQ accepts a one-time configuration setup which can take place, usually, during your application bootstrap. 
+You can configure many of RedisSMQ features using a config object that you can pass in to a configurable component (for example a Consumer constructor).
 
 ## Configuration parameters
 
@@ -60,18 +45,11 @@ module.exports = {
 - `namespace` *(string): Optional.* The namespace for message queues. It can be composed only of letters (a-z),
   numbers (0-9) and (-_) characters. Namespace can be for example configured per project.
 
-- `redis` *(object): Optional.* Redis client parameters. If not provided the `redis` client would be used by default.
+- `redis` *(object): Optional.* See [Redis Configuration](https://github.com/weyoss/redis-smq-common/blob/master/docs/redis.md) for more details.
 
-- `redis.client` *(string): Optional.* Redis client name. Can be either `redis` or `ioredis`.
-
-- `redis.options` *(object): Optional.* Redis client options.
-   - See https://github.com/NodeRedis/node_redis#options-object-properties for all valid parameters for `redis` client.
-   - See https://github.com/luin/ioredis/blob/master/API.md#new_Redis for all valid `ioredis` parameters.
-
-- `logger` *(object): Optional.* See [Logs Configuration](logs.md#configuration) for more details.
+- `logger` *(object): Optional.* See [Logs Configuration](https://github.com/weyoss/redis-smq-common/blob/master/docs/logs.md) for more details.
 
 - `messages` *(object): Optional.* Message options
-
   - `messages.store` *(boolean | object): Optional.* Whether to store acknowledged and/or dead-lettered messages. By default, acknowledged and dead-lettered messages are not stored. Keep in mind that storing messages affects performance.
     - `messages.store` *(boolean)*
       - `messages.store = false` - Do not store acknowledged and dead-lettered messages. 
