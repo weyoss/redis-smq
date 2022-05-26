@@ -105,15 +105,6 @@ export type TQueueSettings = {
   rateLimit?: TQueueRateLimit | null;
 };
 
-export type TWorkerParameters = {
-  timeout?: number;
-};
-
-export interface IConsumerWorkerParameters extends TWorkerParameters {
-  config: IRequiredConfig;
-  consumerId: string;
-}
-
 export type TConsumerInfo = {
   ipAddress: string[];
   hostname: string;
@@ -121,12 +112,12 @@ export type TConsumerInfo = {
   createdAt: number;
 };
 
-export type THeartbeatPayload = {
+export type TConsumerHeartbeat = {
   timestamp: number;
-  data: THeartbeatPayloadData;
+  data: TConsumerHeartbeatPayload;
 };
 
-export type THeartbeatPayloadData = {
+export type TConsumerHeartbeatPayload = {
   ram: { usage: NodeJS.MemoryUsage; free: number; total: number };
   cpu: { user: number; system: number; percentage: string };
 };

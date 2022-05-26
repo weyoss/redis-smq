@@ -119,11 +119,6 @@ export abstract class List extends AbstractMessageStorage<
   ): void {
     this.validatePaginationParams(skip, take);
     const { keyMessages } = key;
-    const getTotalItems = (cb: ICallback<number>) =>
-      this.redisClient.llen(keyMessages, (err, reply) => {
-        if (err) cb(err);
-        else cb(null, reply ?? 0);
-      });
     const getItems = (
       total: number,
       cb: ICallback<TPaginatedResponse<TFetchMessagesReply>>,
@@ -153,7 +148,10 @@ export abstract class List extends AbstractMessageStorage<
           },
         );
     };
-    async.waterfall([getTotalItems, getItems], cb);
+    async.waterfall(
+      [(cb: ICallback<number>) => this.countMessages(key, cb), getItems],
+      cb,
+    );
   }
 
   protected override purgeMessages(
@@ -162,5 +160,16 @@ export abstract class List extends AbstractMessageStorage<
   ): void {
     const { keyMessages } = key;
     this.redisClient.del(keyMessages, (err) => cb(err));
+  }
+
+  protected countMessages(
+    key: TListKeyMessagesParams,
+    cb: ICallback<number>,
+  ): void {
+    const { keyMessages } = key;
+    this.redisClient.llen(keyMessages, (err, reply) => {
+      if (err) cb(err);
+      else cb(null, reply ?? 0);
+    });
   }
 }

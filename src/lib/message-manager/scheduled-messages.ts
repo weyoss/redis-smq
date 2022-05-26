@@ -1,6 +1,5 @@
 import { TGetMessagesReply } from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { RedisClient } from 'redis-smq-common';
 import { SortedSet } from './message-storage/sorted-set';
 import { ICallback } from 'redis-smq-common/dist/types';
 
@@ -58,11 +57,15 @@ export class ScheduledMessages extends SortedSet {
     );
   }
 
-  static count(redisClient: RedisClient, cb: ICallback<number>): void {
-    const { keyScheduledMessageWeight } = redisKeys.getMainKeys();
-    redisClient.zcard(keyScheduledMessageWeight, (err, reply) => {
-      if (err) cb(err);
-      else cb(null, reply ?? 0);
-    });
+  count(cb: ICallback<number>): void {
+    const { keyScheduledMessageWeight, keyScheduledMessages } =
+      redisKeys.getMainKeys();
+    this.countMessages(
+      {
+        keyMessages: keyScheduledMessages,
+        keyMessagesWeight: keyScheduledMessageWeight,
+      },
+      cb,
+    );
   }
 }

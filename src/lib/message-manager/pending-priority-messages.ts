@@ -93,4 +93,19 @@ export class PendingPriorityMessages extends SortedSet {
       else cb(null, reply ?? 0);
     });
   }
+
+  count(queue: string | TQueueParams, cb: ICallback<number>): void {
+    const queueParams = Queue.getParams(this.config, queue);
+    const {
+      keyQueuePendingPriorityMessageWeight,
+      keyQueuePendingPriorityMessages,
+    } = redisKeys.getQueueKeys(queueParams);
+    this.countMessages(
+      {
+        keyMessages: keyQueuePendingPriorityMessages,
+        keyMessagesWeight: keyQueuePendingPriorityMessageWeight,
+      },
+      cb,
+    );
+  }
 }

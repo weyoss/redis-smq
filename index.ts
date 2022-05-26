@@ -1,6 +1,3 @@
-import { logger } from 'redis-smq-common';
-
-export const setLogger = logger.setLogger;
 export { events } from './src/common/events/events';
 export { Consumer } from './src/lib/consumer/consumer';
 export { Producer } from './src/lib/producer/producer';

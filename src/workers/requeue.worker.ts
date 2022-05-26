@@ -1,18 +1,15 @@
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { Message } from '../lib/message/message';
-import { IConsumerWorkerParameters } from '../../types';
 import { async, errors, RedisClient, Worker } from 'redis-smq-common';
 import { ICallback } from 'redis-smq-common/dist/types';
 
-export class RequeueWorker extends Worker<IConsumerWorkerParameters> {
+export class RequeueWorker extends Worker {
   protected redisKeys: ReturnType<typeof redisKeys['getMainKeys']>;
+  protected redisClient: RedisClient;
 
-  constructor(
-    redisClient: RedisClient,
-    params: IConsumerWorkerParameters,
-    managed: boolean,
-  ) {
-    super(redisClient, params, managed);
+  constructor(redisClient: RedisClient, managed: boolean) {
+    super(managed);
+    this.redisClient = redisClient;
     this.redisKeys = redisKeys.getMainKeys();
   }
 

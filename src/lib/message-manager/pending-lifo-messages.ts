@@ -3,7 +3,6 @@ import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { MessageNotFoundError } from './errors/message-not-found.error';
 import { List } from './message-storage/list';
 import { Queue } from '../queue-manager/queue';
-import { RedisClient } from 'redis-smq-common';
 import { ICallback } from 'redis-smq-common/dist/types';
 
 export class PendingLifoMessages extends List {
@@ -61,15 +60,9 @@ export class PendingLifoMessages extends List {
     this.fetchMessages({ keyMessages: keyQueuePending }, skip, take, cb);
   }
 
-  static count(
-    redisClient: RedisClient,
-    queue: TQueueParams,
-    cb: ICallback<number>,
-  ): void {
-    const { keyQueuePending } = redisKeys.getQueueKeys(queue);
-    redisClient.llen(keyQueuePending, (err, reply) => {
-      if (err) cb(err);
-      else cb(null, reply ?? 0);
-    });
+  count(queue: string | TQueueParams, cb: ICallback<number>): void {
+    const queueParams = Queue.getParams(this.config, queue);
+    const { keyQueuePending } = redisKeys.getQueueKeys(queueParams);
+    this.countMessages({ keyMessages: keyQueuePending }, cb);
   }
 }

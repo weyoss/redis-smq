@@ -1,11 +1,10 @@
 import { promisifyAll } from 'bluebird';
 import { events } from '../src/common/events/events';
-import { Producer, Message, Consumer, setLogger } from '../index';
+import { Producer, Message, Consumer } from '../index';
 import { config as testConfig } from './config';
 import { IConfig, TConsumerMessageHandler, TQueueParams } from '../types';
 import { QueueManager } from '../src/lib/queue-manager/queue-manager';
 import { MessageManager } from '../src/lib/message-manager/message-manager';
-import * as supertest from 'supertest';
 import * as configuration from '../src/config/configuration';
 import ScheduleWorker from '../src/workers/schedule.worker';
 import { RedisClient, logger } from 'redis-smq-common';
@@ -19,17 +18,6 @@ type TGetConsumerArgs = {
   messageHandler?: TConsumerMessageHandler;
   cfg?: IConfig;
 };
-
-export interface ISuperTestResponse<TData> extends supertest.Response {
-  body: {
-    data?: TData;
-    error?: {
-      code: string;
-      message: string;
-      details: Record<string, any>;
-    };
-  };
-}
 
 const QueueManagerAsync = promisifyAll(QueueManager);
 const MessageManagerAsync = promisifyAll(MessageManager);
@@ -49,7 +37,7 @@ export async function startUp(): Promise<void> {
   const redisClient = await getRedisInstance();
   await redisClient.flushallAsync();
   logger.reset();
-  setLogger(console);
+  logger.setLogger(console);
 }
 
 export async function shutdown(): Promise<void> {
@@ -144,15 +132,7 @@ export async function getQueueManager(cfg: IConfig = config) {
 export async function startScheduleWorker(): Promise<void> {
   if (!scheduleWorker) {
     const redisClient = await getRedisInstance();
-    scheduleWorker = new ScheduleWorker(
-      redisClient,
-      {
-        timeout: 1000,
-        config,
-        consumerId: 'abc',
-      },
-      false,
-    );
+    scheduleWorker = new ScheduleWorker(redisClient, false);
     scheduleWorker.run();
   }
 }

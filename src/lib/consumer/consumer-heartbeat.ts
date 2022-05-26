@@ -1,9 +1,5 @@
 import * as os from 'os';
-import {
-  IRequiredConfig,
-  THeartbeatPayload,
-  THeartbeatPayloadData,
-} from '../../../types';
+import { IRequiredConfig, TConsumerHeartbeat } from '../../../types';
 import { RedisClient, Ticker } from 'redis-smq-common';
 import { events } from '../../common/events/events';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
@@ -11,6 +7,7 @@ import { EventEmitter } from 'events';
 import { errors, async } from 'redis-smq-common';
 import { Consumer } from './consumer';
 import { ICallback } from 'redis-smq-common/dist/types';
+import { handleOfflineConsumer } from './offline-consumers';
 
 const cpuUsageStatsRef = {
   cpuUsage: process.cpuUsage(),
@@ -65,7 +62,7 @@ export class ConsumerHeartbeat extends EventEmitter {
     this.ticker.nextTick();
   }
 
-  protected getPayload(): THeartbeatPayload {
+  protected getPayload(): TConsumerHeartbeat {
     const timestamp = Date.now();
     return {
       timestamp,
@@ -139,7 +136,7 @@ export class ConsumerHeartbeat extends EventEmitter {
             const idx = Number(index);
             const payload = reply[idx];
             if (payload) {
-              const { timestamp: heartbeatTimestamp }: THeartbeatPayload =
+              const { timestamp: heartbeatTimestamp }: TConsumerHeartbeat =
                 JSON.parse(payload);
               const timestamp = Date.now() - ConsumerHeartbeat.heartbeatTTL;
               r[consumerIds[idx]] = heartbeatTimestamp > timestamp;
@@ -154,61 +151,50 @@ export class ConsumerHeartbeat extends EventEmitter {
 
   static getValidHeartbeats(
     redisClient: RedisClient,
-    transform: boolean,
     cb: ICallback<
       {
         consumerId: string;
-        payload: THeartbeatPayloadData | string;
+        payload: string;
       }[]
     >,
   ): void {
-    const { keyHeartbeatConsumerWeight, keyHeartbeats } =
-      redisKeys.getMainKeys();
-    const timestamp = Date.now() - ConsumerHeartbeat.heartbeatTTL;
-    redisClient.zrangebyscore(
-      keyHeartbeatConsumerWeight,
-      timestamp,
-      '+inf',
-      (err, consumerIds) => {
-        if (err) cb(err);
-        else if (consumerIds && consumerIds.length) {
-          redisClient.hmget(keyHeartbeats, consumerIds, (err, res) => {
-            if (err) cb(err);
-            else if (!res || res.length !== consumerIds.length)
-              cb(new errors.EmptyCallbackReplyError());
-            else {
-              const heartbeats: {
-                consumerId: string;
-                payload: THeartbeatPayloadData | string;
-              }[] = [];
-              async.each(
-                res,
-                (payloadStr, index, done) => {
-                  // A consumer/producer could go offline at the time while we are processing heartbeats
-                  // If a heartbeat is not found, do not return an error. Just skip it.
-                  if (payloadStr) {
-                    const idx = Number(index);
-                    const consumerId = consumerIds[idx];
-                    const payload: THeartbeatPayloadData | string = transform
-                      ? JSON.parse(payloadStr)
-                      : payloadStr;
-                    heartbeats.push({
-                      consumerId,
-                      payload,
-                    });
-                    done();
-                  } else done();
-                },
-                (err) => {
-                  if (err) cb(err);
-                  else cb(null, heartbeats);
-                },
-              );
-            }
-          });
-        } else cb(null, []);
-      },
-    );
+    ConsumerHeartbeat.getValidHeartbeatIds(redisClient, (err, consumerIds) => {
+      if (err) cb(err);
+      else if (consumerIds && consumerIds.length) {
+        const { keyHeartbeats } = redisKeys.getMainKeys();
+        redisClient.hmget(keyHeartbeats, consumerIds, (err, res) => {
+          if (err) cb(err);
+          else if (!res || res.length !== consumerIds.length)
+            cb(new errors.EmptyCallbackReplyError());
+          else {
+            const heartbeats: {
+              consumerId: string;
+              payload: string;
+            }[] = [];
+            async.each(
+              res,
+              (payload, index, done) => {
+                // A consumer/producer could go offline at the time while we are processing heartbeats
+                // If a heartbeat is not found, do not return an error. Just skip it.
+                if (payload) {
+                  const idx = Number(index);
+                  const consumerId = consumerIds[idx];
+                  heartbeats.push({
+                    consumerId,
+                    payload,
+                  });
+                  done();
+                } else done();
+              },
+              (err) => {
+                if (err) cb(err);
+                else cb(null, heartbeats);
+              },
+            );
+          }
+        });
+      } else cb(null, []);
+    });
   }
 
   static getValidHeartbeatIds(
@@ -260,13 +246,7 @@ export class ConsumerHeartbeat extends EventEmitter {
         (consumerId, _, done) => {
           multi.hdel(keyHeartbeats, consumerId);
           multi.zrem(keyHeartbeatConsumerWeight, consumerId);
-          Consumer.handleOfflineConsumer(
-            config,
-            multi,
-            redisClient,
-            consumerId,
-            done,
-          );
+          handleOfflineConsumer(config, multi, redisClient, consumerId, done);
         },
         () => redisClient.execMulti(multi, (err) => cb(err)),
       );

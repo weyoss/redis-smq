@@ -1,7 +1,8 @@
-import { Consumer, Producer, setLogger, QueueManager, Message } from '../..';
+import { Consumer, Producer, QueueManager, Message } from '../..';
 import { IConfig } from '../../types';
+import { logger } from 'redis-smq-common';
 
-setLogger(console);
+logger.setLogger(console);
 
 const config: IConfig = {
   logger: {
