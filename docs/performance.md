@@ -1,6 +1,6 @@
 # Performance
 
-> ☝ ️Out-of-box RedisSMQ is optimized for performance. But if you are using a custom configuration, you should consider disabling the following features, in your production environment: logging, monitor server, storing acknowledged & dead-lettered messages.
+> Out-of-box RedisSMQ is optimized for performance. But if you are using a custom configuration, you should consider disabling the following features, in your production environment: logging, monitor server, storing acknowledged & dead-lettered messages.
 
 
 ## Scenarios
