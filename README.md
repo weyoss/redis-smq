@@ -1,16 +1,21 @@
 <div align="center" style="text-align: center">
   <p><a href="https://github.com/weyoss/redis-smq"><img alt="RedisSMQ" src="./logo.png" /></a></p>
   <p>A simple high-performance Redis message queue for Node.js.</p>
-  <p>
-    <a href="https://github.com/weyoss/redis-smq/actions/workflows/tests.yml"><img src="https://github.com/weyoss/redis-smq/actions/workflows/tests.yml/badge.svg" alt="Tests" style="max-width:100%;" /></a>
-    <a href="https://coveralls.io/r/weyoss/redis-smq?branch=master" rel="nofollow"><img src="https://img.shields.io/coveralls/github/weyoss/redis-smq.svg" alt="Coverage Status" /></a>
-    <a href="https://npmjs.org/package/redis-smq" rel="nofollow"><img src="https://img.shields.io/npm/v/redis-smq.svg" alt="NPM version" /></a>
-    <a href="https://npmjs.org/package/redis-smq" rel="nofollow"><img src="https://img.shields.io/npm/dm/redis-smq.svg" alt="NPM downloads" /></a>
-    <a href="https://lgtm.com/projects/g/weyoss/redis-smq/context:javascript" rel="nofollow"><img src="https://img.shields.io/lgtm/grade/javascript/github/weyoss/redis-smq.svg?logo=lgtm&logoWidth=18" alt="Code quality" /></a>
-  </p>
 </div>
 
+# RedisSMQ
+
+<p>
+   <a href="https://github.com/weyoss/redis-smq/actions/workflows/tests.yml"><img src="https://github.com/weyoss/redis-smq/actions/workflows/tests.yml/badge.svg" alt="Tests" style="max-width:100%;" /></a>
+   <a href="https://coveralls.io/r/weyoss/redis-smq?branch=master" rel="nofollow"><img src="https://img.shields.io/coveralls/github/weyoss/redis-smq.svg" alt="Coverage Status" /></a>
+   <a href="https://npmjs.org/package/redis-smq" rel="nofollow"><img src="https://img.shields.io/npm/v/redis-smq.svg" alt="NPM version" /></a>
+   <a href="https://npmjs.org/package/redis-smq" rel="nofollow"><img src="https://img.shields.io/npm/dm/redis-smq.svg" alt="NPM downloads" /></a>
+   <a href="https://lgtm.com/projects/g/weyoss/redis-smq/context:javascript" rel="nofollow"><img src="https://img.shields.io/lgtm/grade/javascript/github/weyoss/redis-smq.svg?logo=lgtm&logoWidth=18" alt="Code quality" /></a>
+</p>
+
 RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing them asynchronously with consumers. Backed by Redis, it allows scaling up your application with ease of use.
+
+> ☝ The master branch reflects the latest changes and updates. It is currently going under heavy development. To view the documentation of the latest stable release see [v6.4.2 docs](https://github.com/weyoss/redis-smq/tree/v6.4.2).
 
 ## Features
 
@@ -23,8 +28,8 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 * **[Scheduling Messages](docs/scheduling-messages.md)**: Messages can be configured to be delayed, delivered for N times with an optional period between deliveries, and to be scheduled using CRON expressions.
 * **[Reliable Priority Queues](docs/priority-queues.md)**: Supports priority messaging.
 * **[Multiplexing](docs/multiplexing.md)**: A feature which allows message handlers to use a single redis connection to dequeue and consume messages.  
-* **[HTTP API](docs/http-api.md)**: an HTTP interface is provided to interact with the MQ.
-* **[Web UI](docs/web-ui.md)**: RedisSMQ can be managed also from your web browser.
+* **[HTTP API](https://github.com/weyoss/redis-smq-monitor)**: an HTTP interface is provided to interact with the MQ.
+* **[Web UI](https://github.com/weyoss/redis-smq-monitor-client)**: RedisSMQ can be managed also from your web browser.
 * **[Logging](docs/logs.md)**: Comes with a built-in JSON logger. But you can also use your own logger instance.
 * **[Configurable](docs/configuration.md)**: Many options and features can be configured.
 * **Both redis & ioredis clients are supported**: RedisSMQ can be configured to use either `redis` or `ioredis` to connect to Redis server.
@@ -55,8 +60,8 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
       4. [Multiplexing](docs/multiplexing.md)
       5. [Message Manager](docs/api/message-manager.md)
       6. [Queue Manager](docs/api/queue-manager.md)
-      7. [HTTP API](docs/http-api.md)
-      8. [Web UI](docs/web-ui.md)
+      7. [HTTP API](https://github.com/weyoss/redis-smq-monitor)
+      8. [Web UI](https://github.com/weyoss/redis-smq-monitor-client)
       9. [Logs](docs/logs.md)
 5. [RedisSMQ Architecture](docs/redis-smq-architecture.md)
 6. [Performance](#performance)
@@ -67,9 +72,8 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 
 **2022.05.13**
 
-:rocket: Release 7.0.0-rc.0 is ready! The RedisSMQ v7 is a refinement release with many improvements toward making 
-things more simple to use and removing any confusions that can occur while working with the message queue. If you are 
-upgrading your installation, take a look at the [migration guide](docs/migrating-from-v6-to-v7.md).
+:rocket: Release v7 is coming out! The RedisSMQ v7 is a refinement release with many improvements toward making 
+things more simple to use and removing any confusions that can occur while working with the message queue.
 
 ## Installation
 
@@ -225,9 +229,9 @@ See [Consumer Reference](docs/api/consumer.md) for more details.
 
 * [Queue Manager](docs/api/queue-manager.md)
 
-* [HTTP API](docs/http-api.md)
+* [HTTP API](https://github.com/weyoss/redis-smq-monitor)
 
-* [Web UI](docs/web-ui.md)
+* [Web UI](https://github.com/weyoss/redis-smq-monitor-client)
 
 * [Logs](docs/logs.md)
 

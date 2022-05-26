@@ -48,18 +48,7 @@ module.exports = {
             */
         },
     },
-    monitor: {
-        enabled: true,
-        host: '127.0.0.1',
-        port: 3000,
-    },
     messages: {
-      consumeOptions: {
-        consumeTimeout: 60000,
-        retryThreshold: 5,
-        retryDelay: 60000,
-        ttl: 120000,
-      },
       store: false,
     },
     
@@ -81,15 +70,7 @@ module.exports = {
 
 - `logger` *(object): Optional.* See [Logs Configuration](logs.md#configuration) for more details.
 
-- `monitor` *(object): Optional.* See [Web UI Configuration](web-ui.md#configuration) for more details.
-
 - `messages` *(object): Optional.* Message options
-
-  - `messages.consumeOptions` *(object): Optional.* Default message parameters. These parameters can be overwritten for a given message instance using the [Message API](api/message.md). 
-    - `messages.consumeOptions.consumeTimeout` *(Integer): Optional.* In milliseconds. Message consumption timeout. See [setConsumeTimeout()](/docs/api/message.md#messageprototypesetconsumetimeout).
-    - `messages.consumeOptions.ttl` *(Integer): Optional.* In milliseconds. Message TTL. See [setTTL()](/docs/api/message.md#messageprototypesetttl).
-    - `messages.consumeOptions.retryThreshold` *(Integer): Optional.* Message retry threshold. See [setRetryThreshold()](/docs/api/message.md#messageprototypesetretrythreshold).
-    - `messages.consumeOptions.retryDelay` *(Integer): Optional.* In milliseconds. Message retry delay. See [setRetryDelay()](/docs/api/message.md#messageprototypesetretrydelay).
 
   - `messages.store` *(boolean | object): Optional.* Whether to store acknowledged and/or dead-lettered messages. By default, acknowledged and dead-lettered messages are not stored. Keep in mind that storing messages affects performance.
     - `messages.store` *(boolean)*
