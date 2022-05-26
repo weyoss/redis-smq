@@ -42,29 +42,13 @@ test('HeartbeatMonitorWorker -> RequeueWorker', async () => {
 
   // should move message from processing queue to delay queue
   const heartbeatMonitor = promisifyAll(
-    new HeartbeatMonitorWorker(
-      redisClient,
-      {
-        config,
-        consumerId: 'abc',
-      },
-      false,
-    ),
+    new HeartbeatMonitorWorker(redisClient, config, false),
   );
   heartbeatMonitor.run();
   await delay(5000);
 
   // should move from delay queue to scheduled queue
-  const requeueWorker = promisifyAll(
-    new RequeueWorker(
-      redisClient,
-      {
-        config,
-        consumerId: 'abc',
-      },
-      false,
-    ),
-  );
+  const requeueWorker = promisifyAll(new RequeueWorker(redisClient, false));
   requeueWorker.run();
   await delay(5000);
 

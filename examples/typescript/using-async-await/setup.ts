@@ -1,10 +1,11 @@
 import { config } from './config';
-import { setLogger, QueueManager } from '../../..'; // from 'redis-smq'
+import { QueueManager } from '../../..'; // from 'redis-smq'
 import { promisifyAll } from 'bluebird';
+import { logger } from 'redis-smq-common';
 
 // Setting up a custom logger
 // This step should be also done from your application bootstrap
-setLogger(console);
+logger.setLogger(console);
 
 const QueueManagerAsync = promisifyAll(QueueManager);
 

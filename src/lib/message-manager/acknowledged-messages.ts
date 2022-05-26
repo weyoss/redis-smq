@@ -1,12 +1,7 @@
-import {
-  IRequiredConfig,
-  TGetMessagesReply,
-  TQueueParams,
-} from '../../../types';
+import { TGetMessagesReply, TQueueParams } from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { List } from './message-storage/list';
 import { Queue } from '../queue-manager/queue';
-import { RedisClient } from 'redis-smq-common';
 import { ICallback } from 'redis-smq-common/dist/types';
 
 export class AcknowledgedMessages extends List {
@@ -83,17 +78,9 @@ export class AcknowledgedMessages extends List {
     );
   }
 
-  static count(
-    config: IRequiredConfig,
-    redisClient: RedisClient,
-    queue: TQueueParams,
-    cb: ICallback<number>,
-  ): void {
-    const queueParams = Queue.getParams(config, queue);
+  count(queue: string | TQueueParams, cb: ICallback<number>): void {
+    const queueParams = Queue.getParams(this.config, queue);
     const { keyQueueAcknowledged } = redisKeys.getQueueKeys(queueParams);
-    redisClient.llen(keyQueueAcknowledged, (err, reply) => {
-      if (err) cb(err);
-      else cb(null, reply ?? 0);
-    });
+    this.countMessages({ keyMessages: keyQueueAcknowledged }, cb);
   }
 }

@@ -49,4 +49,6 @@ export abstract class AbstractMessageStorage<
   ): void;
 
   protected abstract purgeMessages(key: KeyParams, cb: ICallback<void>): void;
+
+  protected abstract countMessages(key: KeyParams, cb: ICallback<number>): void;
 }

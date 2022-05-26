@@ -1,10 +1,11 @@
 import { config } from './config';
-import { setLogger, QueueManager } from '../../..'; // from 'redis-smq'
+import { QueueManager } from '../../..'; // from 'redis-smq'
 import { ICallback } from 'redis-smq-common/dist/types';
+import { logger } from 'redis-smq-common';
 
 // Setting up a custom logger
 // This step should be also done from your application bootstrap
-setLogger(console);
+logger.setLogger(console);
 
 export function init(cb: ICallback<void>): void {
   // Before producing and consuming messages to/from a given queue, we need to make sure that such queue exists

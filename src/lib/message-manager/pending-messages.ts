@@ -82,4 +82,13 @@ export class PendingMessages {
       }
     });
   }
+
+  count(queue: string | TQueueParams, cb: ICallback<number>): void {
+    Queue.getSettings(this.config, this.redisClient, queue, (err, settings) => {
+      if (err) cb(err);
+      else if (settings?.priorityQueuing)
+        this.pendingPriorityMessages.count(queue, cb);
+      else this.pendingLifoMessages.count(queue, cb);
+    });
+  }
 }

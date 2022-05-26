@@ -1,11 +1,17 @@
-import { IConsumerWorkerParameters } from '../../types';
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { Message } from '../lib/message/message';
-import { async, errors, Worker } from 'redis-smq-common';
+import { async, errors, RedisClient, Worker } from 'redis-smq-common';
 import { ELuaScriptName } from '../common/redis-client/redis-client';
 import { ICallback } from 'redis-smq-common/dist/types';
 
-export class ScheduleWorker extends Worker<IConsumerWorkerParameters> {
+export class ScheduleWorker extends Worker {
+  protected redisClient: RedisClient;
+
+  constructor(redisClient: RedisClient, managed: boolean) {
+    super(managed);
+    this.redisClient = redisClient;
+  }
+
   protected fetchMessageIds = (cb: ICallback<string[]>): void => {
     const { keyScheduledMessageWeight } = redisKeys.getMainKeys();
     this.redisClient.zrangebyscore(

@@ -42,11 +42,6 @@ export abstract class SortedSet extends AbstractMessageStorage<
   ): void {
     this.validatePaginationParams(skip, take);
     const { keyMessages, keyMessagesWeight } = key;
-    const getTotalItems = (cb: ICallback<number>) =>
-      this.redisClient.zcard(keyMessagesWeight, (err, reply) => {
-        if (err) cb(err);
-        else cb(null, reply ?? 0);
-      });
     const getMessages = (
       reply: { total: number; items: string[] },
       cb: ICallback<TGetMessagesReply>,
@@ -101,7 +96,14 @@ export abstract class SortedSet extends AbstractMessageStorage<
         );
       }
     };
-    async.waterfall([getTotalItems, getMessageIds, getMessages], cb);
+    async.waterfall(
+      [
+        (cb: ICallback<number>) => this.countMessages(key, cb),
+        getMessageIds,
+        getMessages,
+      ],
+      cb,
+    );
   }
 
   protected override purgeMessages(
@@ -126,6 +128,17 @@ export abstract class SortedSet extends AbstractMessageStorage<
       if (err) cb(err);
       else if (!reply) cb(new MessageNotFoundError());
       else cb(null, Message.createFromMessage(reply));
+    });
+  }
+
+  protected override countMessages(
+    key: TSortedSetKeyMessagesParams,
+    cb: ICallback<number>,
+  ): void {
+    const { keyMessagesWeight } = key;
+    this.redisClient.zcard(keyMessagesWeight, (err, reply) => {
+      if (err) cb(err);
+      else cb(null, reply ?? 0);
     });
   }
 }
