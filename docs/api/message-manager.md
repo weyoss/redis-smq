@@ -9,7 +9,7 @@ const { MessageManager } = require('redis-smq');
 ## Table of Content
 
 1. [Public Static Methods](#public-static-methods) 
-   1. [MessageManager.getSingletonInstance()](#messagemanagergetsingletoninstance)
+   1. [MessageManager.createInstance()](#messagemanagercreateinstance)
 2. [Public Properties](#public-properties)
    1. [Properties](#properties)
       1. [MessageManager.prototype.scheduledMessages](#messagemanagerprototypescheduledmessages)
@@ -27,24 +27,25 @@ const { MessageManager } = require('redis-smq');
    
 ## Public Static Methods
 
-### MessageManager.getSingletonInstance()
-
-Obtain a MessageManager instance.
+### MessageManager.createInstance()
 
 ```javascript
-getSingletonInstance(cb)
+createInstance(config, cb)
 ```
 
 **Parameters**
-- `cb(err, messageManager)` *(Function): Required.* Callback function.
-  - `err` *(Error | null | undefined).* Error object.
-  - `messageManager` *(MessageManager).* MessageManager instance.
+
+- `config` *(object): Optional.*  See [Configuration](docs/configuration.md) for more details.
+- `cb(err, queueManager)` *(Function): Required.* Callback function.
+    - `err` *(Error | null | undefined).* Error object.
+    - `messageManager` *(MessageManager).* MessageManager instance.
 
 **Example**
+
 ```javascript
 const { MessageManager } = require('redis-smq');
 
-MessageManager.getSingletonInstance((err, messageManager) => {
+MessageManager.createInstance({}, (err, messageManager) => {
   if (err) console.log(err);
   else {
     // ...

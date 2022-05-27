@@ -7,7 +7,7 @@ const { QueueManager } = require('redis-smq');
 ## Table of Content
 
 1. [Public Static Methods](#public-static-methods)
-   1. [QueueManager.getSingletonInstance()](#queuemanagergetsingletoninstance)
+   1. [QueueManager.createInstance()](#queuemanagercreateinstance)
 2. [Public Properties](#public-properties)
    1. [QueueManager.prototype.namespace](#queuemanagerprototypenamespace)
       1. [QueueManager.prototype.namespace.list()](#queuemanagerprototypenamespacelist)
@@ -30,13 +30,14 @@ const { QueueManager } = require('redis-smq');
 
 ## Public Static Methods
 
-### QueueManager.getSingletonInstance()
+### QueueManager.createInstance()
 
 ```javascript
-getSingletonInstance(cb)
+createInstance(config, cb)
 ```
 
 **Parameters**
+- `config` *(object): Optional.*  See [Configuration](docs/configuration.md) for more details.
 - `cb(err, queueManager)` *(Function): Required.* Callback function.
     - `err` *(Error | null | undefined).* Error object.
     - `queueManager` *(QueueManager).* QueueManager instance.
@@ -45,8 +46,9 @@ getSingletonInstance(cb)
 
 ```javascript
 const { QueueManager } = require('redis-smq');
+const config = require('./config');
 
-QueueManager.getSingletonInstance((err, queueManager) => {
+QueueManager.createInstance(config, (err, queueManager) => {
   if (err) console.log(err);
   else {
     // ...
