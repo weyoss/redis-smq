@@ -15,7 +15,7 @@
 
 RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing them asynchronously with consumers. Backed by Redis, it allows scaling up your application with ease of use.
 
-> ☝ The master branch reflects the latest changes and updates. It is currently going under heavy development. To view the documentation of the latest stable release see [v6.4.2 docs](https://github.com/weyoss/redis-smq/tree/v6.4.2).
+> ☝ The master branch reflects the latest changes and updates. It is currently going under heavy development. To view the release documentation see [v6.4.2 docs](https://github.com/weyoss/redis-smq/tree/v6.4.2).
 
 ## Features
 
@@ -30,7 +30,7 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 * **[Multiplexing](docs/multiplexing.md)**: A feature which allows message handlers to use a single redis connection to dequeue and consume messages.  
 * **[HTTP API](https://github.com/weyoss/redis-smq-monitor)**: an HTTP interface is provided to interact with the MQ.
 * **[Web UI](https://github.com/weyoss/redis-smq-monitor-client)**: RedisSMQ can be managed also from your web browser.
-* **[Logging](docs/logs.md)**: Comes with a built-in JSON logger. But you can also use your own logger instance.
+* **[Logging](https://github.com/weyoss/redis-smq-common/blob/master/docs/logs.md)**: Comes with a built-in JSON logger. But you can also use your own logger instance.
 * **[Configurable](docs/configuration.md)**: Many options and features can be configured.
 * **Both redis & ioredis clients are supported**: RedisSMQ can be configured to use either `redis` or `ioredis` to connect to Redis server.
 * **Rigorously tested**: With 100+ tests and code coverage no less than 80%.
@@ -62,7 +62,7 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
       6. [Queue Manager](docs/api/queue-manager.md)
       7. [HTTP API](https://github.com/weyoss/redis-smq-monitor)
       8. [Web UI](https://github.com/weyoss/redis-smq-monitor-client)
-      9. [Logs](docs/logs.md)
+      9. [Logs](https://github.com/weyoss/redis-smq-common/blob/master/docs/logs.md)
 5. [RedisSMQ Architecture](docs/redis-smq-architecture.md)
 6. [Performance](#performance)
 7. [Contributing](#contributing)
@@ -233,7 +233,7 @@ See [Consumer Reference](docs/api/consumer.md) for more details.
 
 * [Web UI](https://github.com/weyoss/redis-smq-monitor-client)
 
-* [Logs](docs/logs.md)
+* [Logs](https://github.com/weyoss/redis-smq-common/blob/master/docs/logs.md)
 
 ## RedisSMQ Architecture
 
