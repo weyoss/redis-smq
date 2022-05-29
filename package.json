@@ -91,6 +91,6 @@
   },
   "engineStrict": true,
   "engines": {
-    "node": "12 || ^14 || ^16"
+    "node": ">=14"
   }
 }
