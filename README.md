@@ -83,7 +83,7 @@ npm install redis-smq --save
 
 Considerations:
 
-- RedisSMQ is targeted to be used in production environments. Therefore, only active LTS and maintenance LTS Node.js releases (v12, v14, and v16) are supported. The latest stable Node.js version is recommended.
+- RedisSMQ is tested under active LTS and maintenance LTS Node.js releases (v14 and v16) are supported. Minimal Node.js version is >= 14.
 - Minimal Redis server version is 2.6.12. The latest stable Redis version is recommended.
 
 ## Configuration
