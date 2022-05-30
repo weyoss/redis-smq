@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 7.0.0-rc.4 (2022-05-30)
+
+* Update README.md (fef27c1)
+* Support node-redis v4 (c7a91b1)
+* Drop support for node.js v12 (0b5a4e9)
+* Fix outdated documentation (d3bf31b)
+* Fix broken link (fd48c86)
+
 ## 7.0.0-rc.3 (2022-05-26)
 
 * Update migration/configuration/message/message-manager references (6d53877)
