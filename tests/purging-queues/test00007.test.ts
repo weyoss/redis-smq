@@ -47,7 +47,7 @@ test('Concurrently deleting a message queue and starting a consumer', async () =
       queueManager.queue.deleteAsync(queue),
       consumer.runAsync(),
     ]);
-  }).rejects.toThrow('Redis transaction has been abandoned. Try again.');
+  }).rejects.toThrow('One (or more) of the watched keys has been changed');
 
   const m2 = await queueManager.queueMetrics.getMetricsAsync(queue);
   expect(m2).toEqual({

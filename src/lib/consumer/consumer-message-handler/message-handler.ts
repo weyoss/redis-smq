@@ -20,7 +20,7 @@ import { async, PowerManager, RedisClient } from 'redis-smq-common';
 import {
   ICallback,
   ICompatibleLogger,
-  TRedisClientMulti,
+  IRedisClientMulti,
 } from 'redis-smq-common/dist/types';
 
 export class MessageHandler extends EventEmitter {
@@ -214,7 +214,7 @@ export class MessageHandler extends EventEmitter {
     redisClient: RedisClient,
     consumerId: string,
     queue: TQueueParams,
-    pendingMulti: TRedisClientMulti | undefined,
+    pendingMulti: IRedisClientMulti | undefined,
     cb: ICallback<void>,
   ): void {
     const multi = pendingMulti ?? redisClient.multi();
@@ -238,7 +238,7 @@ export class MessageHandler extends EventEmitter {
       (err) => {
         if (err) cb(err);
         else if (pendingMulti) cb();
-        else redisClient.execMulti(multi, (err) => cb(err));
+        else multi.exec((err) => cb(err));
       },
     );
   }

@@ -1,6 +1,12 @@
 import { MessageHandler } from '../message-handler';
 import { MessageHandlerRunner } from '../message-handler-runner';
-import { async, errors, RedisClient, Ticker } from 'redis-smq-common';
+import {
+  async,
+  createClientInstance,
+  errors,
+  RedisClient,
+  Ticker,
+} from 'redis-smq-common';
 import { TConsumerMessageHandlerParams } from '../../../../../types';
 import { Consumer } from '../../consumer';
 import { events } from '../../../../common/events/events';
@@ -118,7 +124,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
       [
         (cb: ICallback<void>) => {
           const { redis } = this.config;
-          RedisClient.getNewInstance(redis, (err, client) => {
+          createClientInstance(redis, (err, client) => {
             if (err) cb(err);
             else if (!client) cb(new errors.EmptyCallbackReplyError());
             else {

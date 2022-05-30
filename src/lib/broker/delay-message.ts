@@ -1,11 +1,11 @@
 import { EMessageUnacknowledgedCause } from '../../../types';
 import { Message } from '../message/message';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { ICallback, TRedisClientMulti } from 'redis-smq-common/dist/types';
+import { ICallback, IRedisClientMulti } from 'redis-smq-common/dist/types';
 import { errors, RedisClient } from 'redis-smq-common';
 
 export function delayMessageTransaction(
-  mixed: TRedisClientMulti,
+  mixed: IRedisClientMulti,
   message: Message,
   keyQueueProcessing: string,
 ): void {
@@ -15,7 +15,7 @@ export function delayMessageTransaction(
 }
 
 export function delayMessage(
-  mixed: TRedisClientMulti,
+  mixed: IRedisClientMulti,
   message: Message,
   keyQueueProcessing: string,
   unacknowledgedCause: EMessageUnacknowledgedCause,
@@ -28,7 +28,7 @@ export function delayMessage(
   cb: ICallback<void>,
 ): void;
 export function delayMessage(
-  mixed: RedisClient | TRedisClientMulti,
+  mixed: RedisClient | IRedisClientMulti,
   message: Message,
   keyQueueProcessing: string,
   unacknowledgedCause: EMessageUnacknowledgedCause,

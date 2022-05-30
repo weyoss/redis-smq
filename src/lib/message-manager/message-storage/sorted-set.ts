@@ -31,7 +31,7 @@ export abstract class SortedSet extends AbstractMessageStorage<
     const multi = this.redisClient.multi();
     multi.hdel(keyMessages, messageId);
     multi.zrem(keyMessagesWeight, messageId);
-    this.redisClient.execMulti(multi, (err) => cb(err));
+    multi.exec((err) => cb(err));
   }
 
   protected override fetchMessages(
@@ -114,7 +114,7 @@ export abstract class SortedSet extends AbstractMessageStorage<
     const multi = this.redisClient.multi();
     multi.del(keyMessages);
     multi.del(keyMessagesWeight);
-    this.redisClient.execMulti(multi, (err) => cb(err));
+    multi.exec((err) => cb(err));
   }
 
   protected override getMessageById(

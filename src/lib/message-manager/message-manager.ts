@@ -1,4 +1,9 @@
-import { errors, logger, RedisClient } from 'redis-smq-common';
+import {
+  createClientInstance,
+  errors,
+  logger,
+  RedisClient,
+} from 'redis-smq-common';
 import { ScheduledMessages } from './scheduled-messages';
 import { AcknowledgedMessages } from './acknowledged-messages';
 import { DeadLetteredMessages } from './dead-lettered-messages';
@@ -34,7 +39,7 @@ export class MessageManager {
 
   static createInstance(config: IConfig, cb: ICallback<MessageManager>): void {
     const cfg = getConfiguration(config);
-    RedisClient.getNewInstance(cfg.redis, (err, client) => {
+    createClientInstance(cfg.redis, (err, client) => {
       if (err) cb(err);
       else if (!client) cb(new errors.EmptyCallbackReplyError());
       else {

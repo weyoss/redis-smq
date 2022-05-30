@@ -84,7 +84,7 @@ export class ConsumerHeartbeat extends EventEmitter {
     const multi = this.redisClient.multi();
     multi.hset(this.keyHeartbeats, this.consumer.getId(), heartbeatPayloadStr);
     multi.zadd(this.keyHeartbeatTimestamps, timestamp, this.consumer.getId());
-    this.redisClient.execMulti(multi, (err) => {
+    multi.exec((err) => {
       if (err) this.emit(events.ERROR, err);
       else {
         this.emit(
@@ -248,7 +248,7 @@ export class ConsumerHeartbeat extends EventEmitter {
           multi.zrem(keyHeartbeatConsumerWeight, consumerId);
           handleOfflineConsumer(config, multi, redisClient, consumerId, done);
         },
-        () => redisClient.execMulti(multi, (err) => cb(err)),
+        () => multi.exec((err) => cb(err)),
       );
     } else cb();
   }

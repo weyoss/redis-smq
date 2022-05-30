@@ -2,7 +2,12 @@ import { QueueRateLimit } from './queue-rate-limit';
 import { Namespace } from './namespace';
 import { QueueMetrics } from './queue-metrics';
 import { Queue } from './queue';
-import { errors, logger, RedisClient } from 'redis-smq-common';
+import {
+  createClientInstance,
+  errors,
+  logger,
+  RedisClient,
+} from 'redis-smq-common';
 import { ICallback } from 'redis-smq-common/dist/types';
 import { getConfiguration } from '../../config/configuration';
 import { IConfig } from '../../../types';
@@ -35,7 +40,7 @@ export class QueueManager {
   static createInstance(config: IConfig, cb: ICallback<QueueManager>): void {
     const cfg = getConfiguration(config);
     const redis = cfg.redis;
-    RedisClient.getNewInstance(redis, (err, client) => {
+    createClientInstance(redis, (err, client) => {
       if (err) cb(err);
       else if (!client) cb(new errors.EmptyCallbackReplyError());
       else {

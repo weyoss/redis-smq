@@ -7,7 +7,12 @@ import { QueueManager } from '../src/lib/queue-manager/queue-manager';
 import { MessageManager } from '../src/lib/message-manager/message-manager';
 import * as configuration from '../src/config/configuration';
 import ScheduleWorker from '../src/workers/schedule.worker';
-import { RedisClient, logger } from 'redis-smq-common';
+import {
+  createClientInstance,
+  errors,
+  logger,
+  RedisClient,
+} from 'redis-smq-common';
 
 export const config = configuration.getConfiguration(testConfig);
 
@@ -160,9 +165,14 @@ export function validateTime(
 }
 
 export async function getRedisInstance() {
-  const RedisClientAsync = promisifyAll(RedisClient);
   const c = promisifyAll(
-    await RedisClientAsync.getNewInstanceAsync(config.redis),
+    await new Promise<RedisClient>((resolve, reject) => {
+      createClientInstance(config.redis, (err, client) => {
+        if (err) reject(err);
+        else if (!client) reject(new errors.EmptyCallbackReplyError());
+        else resolve(client);
+      });
+    }),
   );
   redisClients.push(c);
   return c;

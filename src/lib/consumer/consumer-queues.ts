@@ -1,11 +1,11 @@
 import { TConsumerInfo, TQueueParams } from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { async, RedisClient } from 'redis-smq-common';
-import { ICallback, TRedisClientMulti } from 'redis-smq-common/dist/types';
+import { ICallback, IRedisClientMulti } from 'redis-smq-common/dist/types';
 
 export const consumerQueues = {
   removeConsumer(
-    multi: TRedisClientMulti,
+    multi: IRedisClientMulti,
     queue: TQueueParams,
     consumerId: string,
   ): void {

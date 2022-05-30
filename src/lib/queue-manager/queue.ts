@@ -79,7 +79,7 @@ export class Queue {
       (err, multi) => {
         if (err) cb(err);
         else if (!multi) cb(new errors.EmptyCallbackReplyError());
-        else this.redisClient.execMulti(multi, (err) => cb(err));
+        else multi.exec((err) => cb(err));
       },
     );
   }

@@ -5,6 +5,7 @@ import { events } from '../common/events/events';
 import { getConfiguration } from '../config/configuration';
 import {
   async,
+  createClientInstance,
   errors,
   logger,
   PowerManager,
@@ -39,7 +40,7 @@ export abstract class Base extends EventEmitter {
   }
 
   protected setUpSharedRedisClient = (cb: ICallback<void>): void => {
-    RedisClient.getNewInstance(this.config.redis, (err, client) => {
+    createClientInstance(this.config.redis, (err, client) => {
       if (err) cb(err);
       else if (!client) cb(new errors.EmptyCallbackReplyError());
       else {

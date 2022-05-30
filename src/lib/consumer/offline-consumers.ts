@@ -1,12 +1,12 @@
 import { IRequiredConfig, TQueueParams } from '../../../types';
-import { ICallback, TRedisClientMulti } from 'redis-smq-common/dist/types';
+import { ICallback, IRedisClientMulti } from 'redis-smq-common/dist/types';
 import { async, RedisClient } from 'redis-smq-common';
 import { consumerQueues } from './consumer-queues';
 import { MessageHandler } from './consumer-message-handler/message-handler';
 
 export function handleOfflineConsumer(
   config: IRequiredConfig,
-  multi: TRedisClientMulti, // pending transaction
+  multi: IRedisClientMulti, // pending transaction
   redisClient: RedisClient, // for readonly operations
   consumerId: string,
   cb: ICallback<void>,

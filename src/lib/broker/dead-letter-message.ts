@@ -5,12 +5,12 @@ import {
 } from '../../../types';
 import { Message } from '../message/message';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { ICallback, TRedisClientMulti } from 'redis-smq-common/dist/types';
+import { ICallback, IRedisClientMulti } from 'redis-smq-common/dist/types';
 import { errors, RedisClient } from 'redis-smq-common';
 
 function deadLetterMessageTransaction(
   config: IRequiredConfig,
-  mixed: TRedisClientMulti,
+  mixed: IRedisClientMulti,
   message: Message,
   keyQueueProcessing: string,
 ): void {
@@ -33,7 +33,7 @@ function deadLetterMessageTransaction(
 
 export function deadLetterMessage(
   config: IRequiredConfig,
-  mixed: TRedisClientMulti,
+  mixed: IRedisClientMulti,
   message: Message,
   keyQueueProcessing: string,
   unacknowledgedCause: EMessageUnacknowledgedCause,
@@ -50,7 +50,7 @@ export function deadLetterMessage(
 ): void;
 export function deadLetterMessage(
   config: IRequiredConfig,
-  mixed: RedisClient | TRedisClientMulti,
+  mixed: RedisClient | IRedisClientMulti,
   message: Message,
   keyQueueProcessing: string,
   unacknowledgedCause: EMessageUnacknowledgedCause,

@@ -19,6 +19,7 @@ import {
   WorkerRunner,
   WorkerPool,
   logger,
+  createClientInstance,
 } from 'redis-smq-common';
 import { ICallback, TUnaryFunction } from 'redis-smq-common/dist/types';
 import DelayWorker from '../../workers/delay.worker';
@@ -45,7 +46,7 @@ export class Consumer extends Base {
   }
 
   private setUpHeartbeat = (cb: ICallback<void>): void => {
-    RedisClient.getNewInstance(this.config.redis, (err, redisClient) => {
+    createClientInstance(this.config.redis, (err, redisClient) => {
       if (err) cb(err);
       else if (!redisClient) cb(new errors.EmptyCallbackReplyError());
       else {
