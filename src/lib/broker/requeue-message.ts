@@ -1,11 +1,11 @@
 import { EMessageUnacknowledgedCause } from '../../../types';
 import { Message } from '../message/message';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { ICallback, TRedisClientMulti } from 'redis-smq-common/dist/types';
+import { ICallback, IRedisClientMulti } from 'redis-smq-common/dist/types';
 import { errors, RedisClient } from 'redis-smq-common';
 
 export function requeueMessage(
-  mixed: TRedisClientMulti,
+  mixed: IRedisClientMulti,
   message: Message,
   keyQueueProcessing: string,
   unacknowledgedCause: EMessageUnacknowledgedCause,
@@ -18,7 +18,7 @@ export function requeueMessage(
   cb: ICallback<void>,
 ): void;
 export function requeueMessage(
-  mixed: RedisClient | TRedisClientMulti,
+  mixed: RedisClient | IRedisClientMulti,
   message: Message,
   keyQueueProcessing: string,
   unacknowledgedCause: EMessageUnacknowledgedCause,

@@ -7,7 +7,12 @@ import {
   TConsumerMessageHandlerParams,
   TQueueParams,
 } from '../../../../types';
-import { async, errors, RedisClient } from 'redis-smq-common';
+import {
+  async,
+  createClientInstance,
+  errors,
+  RedisClient,
+} from 'redis-smq-common';
 import { MessageHandlerAlreadyExistsError } from '../errors/message-handler-already-exists.error';
 import { ICallback, ICompatibleLogger } from 'redis-smq-common/dist/types';
 
@@ -89,7 +94,7 @@ export class MessageHandlerRunner {
     cb: ICallback<void>,
   ): void {
     const { redis } = this.config;
-    RedisClient.getNewInstance(redis, (err, client) => {
+    createClientInstance(redis, (err, client) => {
       if (err) cb(err);
       else if (!client) cb(new errors.EmptyCallbackReplyError());
       else {

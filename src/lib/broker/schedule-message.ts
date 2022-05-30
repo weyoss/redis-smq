@@ -1,12 +1,12 @@
 import { Message } from '../message/message';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { MessageNotScheduledError } from '../producer/errors/message-not-scheduled.error';
-import { ICallback, TRedisClientMulti } from 'redis-smq-common/dist/types';
+import { ICallback, IRedisClientMulti } from 'redis-smq-common/dist/types';
 import { errors, RedisClient } from 'redis-smq-common';
 import { ELuaScriptName } from '../../common/redis-client/redis-client';
 
 function scheduleMessageTransaction(
-  multi: TRedisClientMulti,
+  multi: IRedisClientMulti,
   message: Message,
 ): boolean {
   const timestamp = message.getNextScheduledTimestamp();
@@ -23,7 +23,7 @@ function scheduleMessageTransaction(
 }
 
 export function scheduleMessage(
-  mixed: TRedisClientMulti,
+  mixed: IRedisClientMulti,
   message: Message,
 ): boolean;
 export function scheduleMessage(
@@ -32,7 +32,7 @@ export function scheduleMessage(
   cb: ICallback<void>,
 ): void;
 export function scheduleMessage(
-  mixed: RedisClient | TRedisClientMulti,
+  mixed: RedisClient | IRedisClientMulti,
   message: Message,
   cb?: ICallback<void>,
 ): void | boolean {

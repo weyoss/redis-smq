@@ -35,7 +35,7 @@ export class DelayWorker extends Worker {
             },
             (err) => {
               if (err) cb(err);
-              else this.redisClient.execMulti(multi, (err) => cb(err));
+              else multi.exec((err) => cb(err));
             },
           );
         } else cb();

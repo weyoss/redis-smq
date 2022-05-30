@@ -7,7 +7,7 @@ import { deadLetterMessage } from './dead-letter-message';
 import { requeueMessage } from './requeue-message';
 import { Message } from '../message/message';
 import { delayMessage } from './delay-message';
-import { ICallback, TRedisClientMulti } from 'redis-smq-common/dist/types';
+import { ICallback, IRedisClientMulti } from 'redis-smq-common/dist/types';
 import { errors, RedisClient } from 'redis-smq-common';
 
 enum EValidateAction {
@@ -69,7 +69,7 @@ function getRetryAction(
 
 function retryTransaction(
   config: IRequiredConfig,
-  mixed: TRedisClientMulti,
+  mixed: IRedisClientMulti,
   processingQueue: string,
   message: Message,
   unacknowledgedCause: EMessageUnacknowledgedCause,
@@ -94,7 +94,7 @@ function retryTransaction(
 
 export function retryMessage(
   config: IRequiredConfig,
-  mixed: TRedisClientMulti,
+  mixed: IRedisClientMulti,
   processingQueue: string,
   message: Message,
   unacknowledgedCause: EMessageUnacknowledgedCause,
@@ -109,7 +109,7 @@ export function retryMessage(
 ): void;
 export function retryMessage(
   config: IRequiredConfig,
-  mixed: RedisClient | TRedisClientMulti,
+  mixed: RedisClient | IRedisClientMulti,
   processingQueue: string,
   message: Message,
   unacknowledgedCause: EMessageUnacknowledgedCause,

@@ -6,7 +6,7 @@ import {
 import { Message } from '../../message/message';
 import { async, RedisClient } from 'redis-smq-common';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
-import { ICallback, TRedisClientMulti } from 'redis-smq-common/dist/types';
+import { ICallback, IRedisClientMulti } from 'redis-smq-common/dist/types';
 import { retryMessage } from '../../broker/retry-message';
 
 function fetchProcessingQueueMessage(
@@ -30,7 +30,7 @@ function fetchProcessingQueueMessage(
 }
 
 function deleteProcessingQueue(
-  multi: TRedisClientMulti,
+  multi: IRedisClientMulti,
   queue: TQueueParams,
   processingQueue: string,
 ): void {
@@ -47,7 +47,7 @@ export const processingQueue = {
     redisClient: RedisClient,
     consumerId: string,
     queue: TQueueParams,
-    multi: TRedisClientMulti,
+    multi: IRedisClientMulti,
     cb: ICallback<void>,
   ): void {
     const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
@@ -88,7 +88,7 @@ export const processingQueue = {
   },
 
   setUpProcessingQueue(
-    multi: TRedisClientMulti,
+    multi: IRedisClientMulti,
     queue: TQueueParams,
     consumerId: string,
   ): void {

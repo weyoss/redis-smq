@@ -31,7 +31,7 @@ export class QueueRateLimit {
     const multi = this.redisClient.multi();
     multi.hdel(keyQueueSettings, keyQueueSettingsRateLimit);
     multi.del(keyQueueRateLimitCounter);
-    this.redisClient.execMulti(multi, (err) => cb(err));
+    multi.exec((err) => cb(err));
   }
 
   set(

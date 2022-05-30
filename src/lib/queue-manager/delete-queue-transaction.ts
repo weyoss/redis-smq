@@ -5,7 +5,7 @@ import { ConsumerHeartbeat } from '../consumer/consumer-heartbeat';
 import { Consumer } from '../consumer/consumer';
 import { Queue } from './queue';
 import { QueueNotFoundError } from './errors/queue-not-found.error';
-import { ICallback, TRedisClientMulti } from 'redis-smq-common/dist/types';
+import { ICallback, IRedisClientMulti } from 'redis-smq-common/dist/types';
 import { IRequiredConfig, TQueueParams } from '../../../types';
 
 function validateMessageQueueDeletion(
@@ -45,8 +45,8 @@ export function initDeleteQueueTransaction(
   config: IRequiredConfig,
   redisClient: RedisClient,
   queueParams: TQueueParams,
-  multi: TRedisClientMulti | undefined,
-  cb: ICallback<TRedisClientMulti>,
+  multi: IRedisClientMulti | undefined,
+  cb: ICallback<IRedisClientMulti>,
 ): void {
   const {
     keyQueuePending,
@@ -112,9 +112,9 @@ export function initDeleteQueueTransaction(
               const pQueues = processingQueues ?? [];
               if (pQueues.length) {
                 keys.push(...pQueues);
-                tx.srem(keyProcessingQueues, ...pQueues);
+                tx.srem(keyProcessingQueues, pQueues);
               }
-              tx.del(...keys);
+              tx.del(keys);
               cb(null, tx);
             }
           },
