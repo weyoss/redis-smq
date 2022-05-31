@@ -61,7 +61,7 @@ export class DequeueMessage {
     );
   }
 
-  protected waitForMessage(cb: ICallback<string>): void {
+  protected waitForMessage(cb: ICallback<string | null>): void {
     this.redisClient.brpoplpush(
       this.redisKeys.keyQueuePending,
       this.redisKeys.keyQueueProcessing,
@@ -70,7 +70,7 @@ export class DequeueMessage {
     );
   }
 
-  protected dequeueMessage(cb: ICallback<string>): void {
+  protected dequeueMessage(cb: ICallback<string | null>): void {
     this.redisClient.rpoplpush(
       this.redisKeys.keyQueuePending,
       this.redisKeys.keyQueueProcessing,
@@ -79,7 +79,7 @@ export class DequeueMessage {
   }
 
   dequeue(): void {
-    const cb: ICallback<string> = (err, reply) => {
+    const cb: ICallback<string | null> = (err, reply) => {
       if (err) {
         this.ticker.abort();
         this.messageHandler.handleError(err);

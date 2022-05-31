@@ -1,4 +1,4 @@
-import { promisifyAll } from 'bluebird';
+import { promisify, promisifyAll } from 'bluebird';
 import { events } from '../src/common/events/events';
 import { Producer, Message, Consumer } from '../index';
 import { config as testConfig } from './config';
@@ -7,12 +7,7 @@ import { QueueManager } from '../src/lib/queue-manager/queue-manager';
 import { MessageManager } from '../src/lib/message-manager/message-manager';
 import * as configuration from '../src/config/configuration';
 import ScheduleWorker from '../src/workers/schedule.worker';
-import {
-  createClientInstance,
-  errors,
-  logger,
-  RedisClient,
-} from 'redis-smq-common';
+import { createClientInstance, logger, RedisClient } from 'redis-smq-common';
 
 export const config = configuration.getConfiguration(testConfig);
 
@@ -26,6 +21,7 @@ type TGetConsumerArgs = {
 
 const QueueManagerAsync = promisifyAll(QueueManager);
 const MessageManagerAsync = promisifyAll(MessageManager);
+const createClientInstanceAsync = promisify(createClientInstance);
 
 export const defaultQueue: TQueueParams = {
   name: 'test_queue',
@@ -165,15 +161,7 @@ export function validateTime(
 }
 
 export async function getRedisInstance() {
-  const c = promisifyAll(
-    await new Promise<RedisClient>((resolve, reject) => {
-      createClientInstance(config.redis, (err, client) => {
-        if (err) reject(err);
-        else if (!client) reject(new errors.EmptyCallbackReplyError());
-        else resolve(client);
-      });
-    }),
-  );
+  const c = promisifyAll(await createClientInstanceAsync(config.redis));
   redisClients.push(c);
   return c;
 }
