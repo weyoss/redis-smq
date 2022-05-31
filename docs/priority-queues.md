@@ -31,10 +31,10 @@ QueueManager.getSingletonInstance((err, queueManager) => {
 
 To set up a message priority, the [Message API](/docs/api/message.md) provides the following methods:
 
-* [Message.prototype.setPriority()](api/message.md#messageprototypesetpriority)
-* [Message.prototype.getPriority()](api/message.md#messageprototypegetpriority)
+* [Message.prototype.setPriority()](/docs/api/message.md#messageprototypesetpriority)
+* [Message.prototype.getPriority()](/docs/api/message.md#messageprototypegetpriority)
 
-See [Message Priority](api/message.md#messagemessagepriority) for more details.
+See [Message Priority](/docs/api/message.md#messagemessagepriority) for more details.
 
 ### Producing Messages
 

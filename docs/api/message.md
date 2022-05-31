@@ -76,10 +76,10 @@ setDefaultConsumeOptions(consumeOptions);
 **Parameters**
 
 - `consumeOptions` *(object): Optional.* Default message parameters.
-   - `consumeOptions.consumeTimeout` *(Integer): Optional.* In milliseconds. Message consumption timeout. See .
-   - `consumeOptions.ttl` *(Integer): Optional.* In milliseconds. Message TTL. See .
-   - `consumeOptions.retryThreshold` *(Integer): Optional.* Message retry threshold. See .
-   - `consumeOptions.retryDelay` *(Integer): Optional.* In milliseconds. Message retry delay. See.
+   - `consumeOptions.consumeTimeout` *(Integer): Optional.* In milliseconds. Message consumption timeout.
+   - `consumeOptions.ttl` *(Integer): Optional.* In milliseconds. Message TTL.
+   - `consumeOptions.retryThreshold` *(Integer): Optional.* Message retry threshold.
+   - `consumeOptions.retryDelay` *(Integer): Optional.* In milliseconds. Message retry delay.
    
 For each new Message instance, the default values for `Message TTL`, `Message retry threshold`, `Message retry delay`,
 and `Message consume timeout` are:
@@ -89,7 +89,7 @@ and `Message consume timeout` are:
 - `Message retry delay` - 60000
 - `Message consume timeout` - 0 (has no effect)
 
-These values can be set using `Message.setDefaultConsumeOptions()` and can be overwritten for a given message instance 
+These values can be adjusted using `Message.setDefaultConsumeOptions()` and may be overwritten for a given message instance 
 using [setConsumeTimeout()](/docs/api/message.md#messageprototypesetconsumetimeout), [setTTL()](/docs/api/message.md#messageprototypesetttl), 
 [setRetryThreshold()](/docs/api/message.md#messageprototypesetretrythreshold), and [setRetryDelay()](/docs/api/message.md#messageprototypesetretrydelay).
 

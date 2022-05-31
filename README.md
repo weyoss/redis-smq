@@ -19,19 +19,19 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 
 ## Features
 
-* **[High-performance message processing](docs/performance.md)**
+* **[High-performance message processing](/docs/performance.md)**
 * **[Multi-Queue Producers](#producer-class) & [Multi-Queue Consumers](#consumer-class)**: Offering very flexible models which make RedisSMQ an ideal message broker for your microservices. 
 * **[Supporting both at-least-once/at-most-once delivery](/docs/api/message.md#messageprototypesetretrythreshold)**: In case of failures, while delivering or processing a message, RedisSMQ can guaranty that the message will be not lost and redelivered again. When configured to do so, RedisSMQ can also ensure that the message is delivered at-most-once.
-* **[Message Expiration](docs/api/message.md#messageprototypesetttl)**: A message will not be delivered if it has been in a queue for longer than a given amount of time, called TTL (time-to-live).
-* **[Message Consumption Timeout](docs/api/message.md#messageprototypesetconsumetimeout)**: Timeout for consuming messages.
-* **[Queue Rate Limiting](docs/queue-rate-limiting.md)**: Allowing you to control the rate at which the messages are consumed from a given queue.
-* **[Scheduling Messages](docs/scheduling-messages.md)**: Messages can be configured to be delayed, delivered for N times with an optional period between deliveries, and to be scheduled using CRON expressions.
-* **[Reliable Priority Queues](docs/priority-queues.md)**: Supports priority messaging.
-* **[Multiplexing](docs/multiplexing.md)**: A feature which allows message handlers to use a single redis connection to dequeue and consume messages.  
+* **[Message Expiration](/docs/api/message.md#messageprototypesetttl)**: A message will not be delivered if it has been in a queue for longer than a given amount of time, called TTL (time-to-live).
+* **[Message Consumption Timeout](/docs/api/message.md#messageprototypesetconsumetimeout)**: Timeout for consuming messages.
+* **[Queue Rate Limiting](/docs/queue-rate-limiting.md)**: Allowing you to control the rate at which the messages are consumed from a given queue.
+* **[Scheduling Messages](/docs/scheduling-messages.md)**: Messages can be configured to be delayed, delivered for N times with an optional period between deliveries, and to be scheduled using CRON expressions.
+* **[Reliable Priority Queues](/docs/priority-queues.md)**: Supports priority messaging.
+* **[Multiplexing](/docs/multiplexing.md)**: A feature which allows message handlers to use a single redis connection to dequeue and consume messages.  
 * **[HTTP API](https://github.com/weyoss/redis-smq-monitor)**: an HTTP interface is provided to interact with the MQ.
 * **[Web UI](https://github.com/weyoss/redis-smq-monitor-client)**: RedisSMQ can be managed also from your web browser.
 * **[Logging](https://github.com/weyoss/redis-smq-common/blob/master/docs/logs.md)**: Comes with a built-in JSON logger. But you can also use your own logger instance.
-* **[Configurable](docs/configuration.md)**: Many options and features can be configured.
+* **[Configurable](/docs/configuration.md)**: Many options and features can be configured.
 * **Both redis & ioredis clients are supported**: RedisSMQ can be configured to use either `redis` or `ioredis` to connect to Redis server.
 * **Rigorously tested**: With 100+ tests and code coverage no less than 80%.
 * **Highly optimized**: Strongly-typed and implemented using pure callbacks, with small memory footprint and no memory leaks. See [callbacks vs promises vs async/await benchmarks](http://bluebirdjs.com/docs/benchmarks.html).
@@ -41,7 +41,7 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 
 &nbsp;
 
-![RedisSMQ Overview](docs/redis-smq-overview.png)
+![RedisSMQ Overview](/docs/redis-smq-overview.png)
 
 ## Table of Content
 
@@ -54,16 +54,16 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
        2. [Producer Class](#producer-class)
        3. [Consumer Class](#consumer-class)
    2. Advanced Topics
-      1. [Scheduling Messages](docs/scheduling-messages.md)
-      2. [Priority Queues](docs/priority-queues.md)
-      3. [Queue Rate Limiting](docs/queue-rate-limiting.md)
-      4. [Multiplexing](docs/multiplexing.md)
-      5. [Message Manager](docs/api/message-manager.md)
-      6. [Queue Manager](docs/api/queue-manager.md)
+      1. [Scheduling Messages](/docs/scheduling-messages.md)
+      2. [Priority Queues](/docs/priority-queues.md)
+      3. [Queue Rate Limiting](/docs/queue-rate-limiting.md)
+      4. [Multiplexing](/docs/multiplexing.md)
+      5. [Message Manager](/docs/api/message-manager.md)
+      6. [Queue Manager](/docs/api/queue-manager.md)
       7. [HTTP API](https://github.com/weyoss/redis-smq-monitor)
       8. [Web UI](https://github.com/weyoss/redis-smq-monitor-client)
       9. [Logs](https://github.com/weyoss/redis-smq-common/blob/master/docs/logs.md)
-5. [RedisSMQ Architecture](docs/redis-smq-architecture.md)
+5. [RedisSMQ Architecture](/docs/redis-smq-architecture.md)
 6. [Performance](#performance)
 7. [Contributing](#contributing)
 8. [License](#license)
@@ -88,7 +88,7 @@ Considerations:
 
 ## Configuration
 
-See [Configuration](docs/configuration.md) for more details.
+See [Configuration](/docs/configuration.md) for more details.
 
 ## Usage
 
@@ -129,7 +129,7 @@ message
 
 The `Message` class provides many methods for setting up different message parameters such as message body, message priority, message TTL, etc. 
 
-See [Message Reference](docs/api/message.md) for more details.
+See [Message Reference](/docs/api/message.md) for more details.
 
 #### Producer Class
 
@@ -162,7 +162,7 @@ producer.produce(message, (err) => {
 });
 ```
 
-See [Producer Reference](docs/api/producer.md) for more details.
+See [Producer Reference](/docs/api/producer.md) for more details.
 
 #### Consumer Class
 
@@ -214,21 +214,21 @@ A `dead-letter queue` is a system generated queue that holds all messages that c
 
 By default, RedisSMQ does not store acknowledged and dead-lettered messages for saving disk and memory space, and also to increase message processing performance. If you need such feature, you can enable it from your [configuration](/docs/configuration.md) object.
 
-See [Consumer Reference](docs/api/consumer.md) for more details.
+See [Consumer Reference](/docs/api/consumer.md) for more details.
 
 ### Advanced Topics
 
-* [Scheduling Messages](docs/scheduling-messages.md)
+* [Scheduling Messages](/docs/scheduling-messages.md)
 
-* [Priority Queues](docs/priority-queues.md)
+* [Priority Queues](/docs/priority-queues.md)
 
-* [Queue Rate Limiting](docs/queue-rate-limiting.md)
+* [Queue Rate Limiting](/docs/queue-rate-limiting.md)
 
-* [Multiplexing](docs/multiplexing.md)
+* [Multiplexing](/docs/multiplexing.md)
   
-* [Message Manager](docs/api/message-manager.md)
+* [Message Manager](/docs/api/message-manager.md)
 
-* [Queue Manager](docs/api/queue-manager.md)
+* [Queue Manager](/docs/api/queue-manager.md)
 
 * [HTTP API](https://github.com/weyoss/redis-smq-monitor)
 
@@ -238,11 +238,11 @@ See [Consumer Reference](docs/api/consumer.md) for more details.
 
 ## RedisSMQ Architecture
 
-* See [Architecture Overview](docs/redis-smq-architecture.md).
+* See [Architecture Overview](/docs/redis-smq-architecture.md).
 
 ## Performance
 
-See [Performance](docs/performance.md) for more details.
+See [Performance](/docs/performance.md) for more details.
 
 ## Contributing
 

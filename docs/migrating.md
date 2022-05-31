@@ -1,4 +1,4 @@
-# Migrating from RedisSMQ v6.x.x to v7.x.x
+# Migrating from RedisSMQ v6 to v7
 
 > Before upgrading, you should make a backup or finish processing your messages in case you have if you any important data.
 
