@@ -26,8 +26,8 @@ constructor(config, useMultiplexing)
 
 **Parameters**
 
-- `config` *(object): Optional.*  See [Configuration](docs/configuration.md) for more details.
-- `useMultiplexing` *(boolean): Optional.*  See [Multiplexing](docs/multiplexing.md) for more details. By default, multiplexing is not enabled.
+- `config` *(object): Optional.*  See [Configuration](/docs/configuration.md) for more details.
+- `useMultiplexing` *(boolean): Optional.*  See [Multiplexing](/docs/multiplexing.md) for more details. By default, multiplexing is not enabled.
 
 ### Consumer.prototype.consume()
 

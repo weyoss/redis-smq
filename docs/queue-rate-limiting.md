@@ -31,4 +31,4 @@ QueueManager.getSingletonInstance((err, queueManager) => {
 });
 ```
 
-Queue rate limiting parameters can be also configured using the [HTTP API Interface](/docs/http-api.md) or from your browser with the help of the [Web UI](/docs/web-ui.md).
+Queue rate limiting parameters can be also configured using the [HTTP API Interface](https://github.com/weyoss/redis-smq-monitor) or from your browser with the help of the [Web UI](https://github.com/weyoss/redis-smq-monitor-client).

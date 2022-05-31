@@ -37,7 +37,7 @@ createInstance(config, cb)
 ```
 
 **Parameters**
-- `config` *(object): Optional.*  See [Configuration](docs/configuration.md) for more details.
+- `config` *(object): Optional.*  See [Configuration](/docs/configuration.md) for more details.
 - `cb(err, queueManager)` *(Function): Required.* Callback function.
     - `err` *(Error | null | undefined).* Error object.
     - `queueManager` *(QueueManager).* QueueManager instance.

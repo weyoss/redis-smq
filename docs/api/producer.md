@@ -16,7 +16,7 @@ const producer = new Producer(config);
 
 **Parameters**
 
-- `config` *(object): Optional.*  See [Configuration](docs/configuration.md) for more details.
+- `config` *(object): Optional.*  See [Configuration](/docs/configuration.md) for more details.
 
 
 ### Producer.prototype.produce()
