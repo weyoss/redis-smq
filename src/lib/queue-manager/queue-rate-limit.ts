@@ -69,7 +69,10 @@ export class QueueRateLimit {
     );
   }
 
-  get(queue: string | TQueueParams, cb: ICallback<TQueueRateLimit>): void {
+  get(
+    queue: string | TQueueParams,
+    cb: ICallback<TQueueRateLimit | null>,
+  ): void {
     QueueRateLimit.get(this.config, this.redisClient, queue, cb);
   }
 
@@ -99,7 +102,7 @@ export class QueueRateLimit {
     config: IRequiredConfig,
     redisClient: RedisClient,
     queue: string | TQueueParams,
-    cb: ICallback<TQueueRateLimit>,
+    cb: ICallback<TQueueRateLimit | null>,
   ): void {
     const queueParams = Queue.getParams(config, queue);
     const { keyQueueSettings, keyQueueSettingsRateLimit } =

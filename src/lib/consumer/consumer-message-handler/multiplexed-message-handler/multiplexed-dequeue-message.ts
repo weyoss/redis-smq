@@ -6,7 +6,7 @@ import { ICallback } from 'redis-smq-common/dist/types';
 
 export class MultiplexedDequeueMessage extends DequeueMessage {
   override dequeue(): void {
-    const cb: ICallback<string> = (err, reply) => {
+    const cb: ICallback<string | null> = (err, reply) => {
       if (err) {
         this.ticker.abort();
         this.messageHandler.handleError(err);
