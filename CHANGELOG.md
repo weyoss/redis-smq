@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 7.0.0-rc.5 (2022-05-31)
+
+* Bump up redis-smq-common to v1.0.0-rc.10 (e025525)
+* Update docs (738d9d0)
+
 ## 7.0.0-rc.4 (2022-05-30)
 
 * Update README.md (fef27c1)
