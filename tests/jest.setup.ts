@@ -1,10 +1,10 @@
-import { shutdown, startUp } from './common';
+import { startUp } from './common/start-up';
+import { shutdown } from './common/shut-down';
+import { init } from './common/init';
 
-const noop = () => void 0;
+beforeAll(init);
 
-beforeAll(noop);
-
-afterAll(noop);
+afterAll(() => void 0);
 
 beforeEach(async () => {
   await startUp();
