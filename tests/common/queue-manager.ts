@@ -1,0 +1,32 @@
+import { IConfig } from '../../types';
+import { promisifyAll } from 'bluebird';
+import { QueueManager } from '../../src/lib/queue-manager/queue-manager';
+import { requiredConfig } from './config';
+
+const QueueManagerAsync = promisifyAll(QueueManager);
+
+let queueManager: QueueManager | null = null;
+
+export async function getQueueManager(cfg: IConfig = requiredConfig) {
+  if (!queueManager) {
+    queueManager = await QueueManagerAsync.createInstanceAsync(cfg);
+  }
+  const queue = promisifyAll(queueManager.queue);
+  const namespace = promisifyAll(queueManager.namespace);
+  const queueRateLimit = promisifyAll(queueManager.queueRateLimit);
+  const queueMetrics = promisifyAll(queueManager.queueMetrics);
+  return {
+    queue,
+    namespace,
+    queueRateLimit,
+    queueMetrics,
+  };
+}
+
+export async function shutDownQueueManager() {
+  if (queueManager) {
+    const q = promisifyAll(queueManager);
+    await q.quitAsync();
+    queueManager = null;
+  }
+}

@@ -1,0 +1,51 @@
+import { merge } from 'lodash';
+import { config } from '../../common/config';
+import { getMessageManager } from '../../common/message-manager';
+import {
+  createQueue,
+  defaultQueue,
+  produceAndAcknowledgeMessage,
+  produceAndDeadLetterMessage,
+} from '../../common/message-producing-consuming';
+
+test('Message storage: acknowledged = true, deadLettered = false', async () => {
+  const cfg = merge(config, {
+    messages: {
+      store: {
+        acknowledged: true,
+        deadLettered: false,
+      },
+    },
+  });
+  await createQueue(defaultQueue, false);
+  const { producer, consumer } = await produceAndDeadLetterMessage(
+    defaultQueue,
+    cfg,
+  );
+  await producer.shutdownAsync();
+  await consumer.shutdownAsync();
+  const messageManager = await getMessageManager();
+  const res1 = await messageManager.deadLetteredMessages.listAsync(
+    defaultQueue,
+    0,
+    100,
+  );
+  expect(res1.total).toBe(0);
+  expect(res1.items.length).toBe(0);
+
+  const { producer: p, consumer: c } = await produceAndAcknowledgeMessage(
+    defaultQueue,
+    cfg,
+  );
+
+  await p.shutdownAsync();
+  await c.shutdownAsync();
+
+  const res2 = await messageManager.acknowledgedMessages.listAsync(
+    defaultQueue,
+    0,
+    100,
+  );
+  expect(res2.total).toBe(1);
+  expect(res2.items.length).toBe(1);
+});
