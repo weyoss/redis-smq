@@ -10,7 +10,7 @@ import { MessageQueueRequiredError } from './errors/message-queue-required.error
 import { MessageAlreadyPublishedError } from './errors/message-already-published.error';
 import { ELuaScriptName } from '../../common/redis-client/redis-client';
 import { ICallback, TUnaryFunction } from 'redis-smq-common/dist/types';
-import { scheduleMessage } from '../broker/schedule-message';
+import { scheduleMessage } from './schedule-message';
 import { Queue } from '../queue-manager/queue';
 
 export class Producer extends Base {

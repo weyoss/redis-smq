@@ -2,7 +2,7 @@ import { redisKeys } from '../common/redis-keys/redis-keys';
 import { Message } from '../lib/message/message';
 import { async, RedisClient, Worker } from 'redis-smq-common';
 import { ICallback } from 'redis-smq-common/dist/types';
-import { scheduleMessage } from '../lib/broker/schedule-message';
+import { scheduleMessage } from '../lib/producer/schedule-message';
 
 export class DelayWorker extends Worker {
   protected redisKeys: ReturnType<typeof redisKeys['getMainKeys']>;

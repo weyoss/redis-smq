@@ -7,7 +7,7 @@ import { Message } from '../../message/message';
 import { async, RedisClient } from 'redis-smq-common';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { ICallback, IRedisClientMulti } from 'redis-smq-common/dist/types';
-import { retryMessage } from '../../broker/retry-message';
+import { retryMessage } from './retry-message';
 
 function fetchProcessingQueueMessage(
   redisClient: RedisClient,

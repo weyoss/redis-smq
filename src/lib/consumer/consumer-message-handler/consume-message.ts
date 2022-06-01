@@ -5,8 +5,8 @@ import { ConsumerError } from '../errors/consumer.error';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { MessageHandler } from './message-handler';
 import { RedisClient } from 'redis-smq-common';
-import { retryMessage } from '../../broker/retry-message';
-import { acknowledgeMessage } from '../../broker/acknowledge-message';
+import { retryMessage } from './retry-message';
+import { acknowledgeMessage } from './acknowledge-message';
 
 export class ConsumeMessage {
   protected keyQueueProcessing: string;
