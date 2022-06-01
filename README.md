@@ -53,6 +53,7 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
        1. [Message Class](#message-class)
        2. [Producer Class](#producer-class)
        3. [Consumer Class](#consumer-class)
+          1. [Message Acknowledgement](#message-acknowledgement)
    2. Advanced Topics
       1. [Scheduling Messages](/docs/scheduling-messages.md)
       2. [Priority Queues](/docs/priority-queues.md)
@@ -133,7 +134,7 @@ See [Message Reference](/docs/api/message.md) for more details.
 
 #### Producer Class
 
-`Producer` class allows you to publish a message to a queue. 
+A `Producer` instance allows you to publish a message to a queue. 
 
 You can use a single `Producer` instance to produce messages, including messages with priority, to multiple queues.
 
@@ -166,19 +167,17 @@ See [Producer Reference](/docs/api/producer.md) for more details.
 
 #### Consumer Class
 
-`Consumer` class can be used to receive and consume messages from a queue.
+A `Consumer` instance can be used to receive and consume messages from one or multiple queues.
 
-Similarly to a `Producer` instance, a `Consumer` instance can consume messages from multiple queues.
+To consume messages from a queue, the `Consumer` class provides the [consume()](/docs/api/consumer.md#consumerprototypeconsume) method which allows you to register a `message handler`. 
 
-For consuming messages from a queue, the `Consumer` class provides the [consume()](/docs/api/consumer.md#consumerprototypeconsume) method which allows you to register a `message handler`. 
+A `message handler` is a function that receives a delivered message from a given queue. 
 
-A `message handler` is a function which get called once a message is received. 
+Message handlers can be registered at any time, before or after a consumer has been started. 
 
-Message handlers can be registered at any time, before or after you have started your consumer. 
+In contrast to producers, consumers are not automatically started upon creation. To start a consumer use the [run()](/docs/api/consumer.md#consumerprototyperun) method.
 
-A consumer can be started using the [run()](/docs/api/consumer.md#consumerprototyperun) method.
-
-To shut down and remove a given `message handler` from your consumer, use the [cancel()](/docs/api/consumer.md#consumerprototypecancel) method. 
+To stop consuming messages from a queue and to remove the associated `message handler` from your consumer, use the [cancel()](/docs/api/consumer.md#consumerprototypecancel) method. 
 
 To shut down completely your consumer and tear down all message handlers, use the [shutdown()](/docs/api/consumer.md#consumerprototypeshutdown) method.
 
@@ -202,17 +201,21 @@ consumer.consume('test_queue', messageHandler, (err) => {
 consumer.run();
 ```
 
+##### Message Acknowledgement
+
 Once a message is received, to acknowledge it, you invoke the callback function without arguments, as shown in the example above. 
 
-Message acknowledgment informs the MQ that a message has been successfully consumed.
+Message acknowledgment informs the MQ that the delivered message has been successfully consumed.
 
-If an error occurred while processing a message, you can unacknowledge the message by passing the error to the callback function.
+If an error occurred while processing a message, you can unacknowledge it by passing in the error to the callback function.
 
-By default, unacknowledged messages are re-queued and delivered again unless **message retry threshold** is exceeded. Then the messages are moved to a **dead-letter queue (DLQ)**. 
+By default, unacknowledged messages are re-queued and delivered again unless **message retry threshold** is exceeded. 
 
-A `dead-letter queue` is a system generated queue that holds all messages that couldn't be processed or can not be delivered to consumers.
+Delivered messages that couldn't be processed or can not be delivered to consumers are moved to a system generated queue called **dead-letter queue (DLQ)**.
 
-By default, RedisSMQ does not store acknowledged and dead-lettered messages for saving disk and memory space, and also to increase message processing performance. If you need such feature, you can enable it from your [configuration](/docs/configuration.md) object.
+By default, RedisSMQ does not store acknowledged and dead-lettered messages for saving disk and memory spaces, and also to increase message processing performance. 
+
+If you need such feature, you can enable it from your [configuration](/docs/configuration.md) object.
 
 See [Consumer Reference](/docs/api/consumer.md) for more details.
 
