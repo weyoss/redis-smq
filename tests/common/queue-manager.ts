@@ -25,8 +25,7 @@ export async function getQueueManager(cfg: IConfig = requiredConfig) {
 
 export async function shutDownQueueManager() {
   if (queueManager) {
-    const q = promisifyAll(queueManager);
-    await q.quitAsync();
+    await promisifyAll(queueManager).quitAsync();
     queueManager = null;
   }
 }

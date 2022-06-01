@@ -1,8 +1,8 @@
 import { RedisClient } from 'redis-smq-common';
-import { Message } from '../message/message';
+import { Message } from '../../message/message';
 import { ICallback } from 'redis-smq-common/dist/types';
-import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { IRequiredConfig } from '../../../types';
+import { redisKeys } from '../../../common/redis-keys/redis-keys';
+import { IRequiredConfig } from '../../../../types';
 
 export function acknowledgeMessage(
   config: IRequiredConfig,

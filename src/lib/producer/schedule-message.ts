@@ -1,6 +1,6 @@
 import { Message } from '../message/message';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { MessageNotScheduledError } from '../producer/errors/message-not-scheduled.error';
+import { MessageNotScheduledError } from './errors/message-not-scheduled.error';
 import { ICallback, IRedisClientMulti } from 'redis-smq-common/dist/types';
 import { errors, RedisClient } from 'redis-smq-common';
 import { ELuaScriptName } from '../../common/redis-client/redis-client';

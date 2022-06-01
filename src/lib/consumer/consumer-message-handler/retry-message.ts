@@ -2,10 +2,10 @@ import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgedCause,
   IRequiredConfig,
-} from '../../../types';
+} from '../../../../types';
 import { deadLetterMessage } from './dead-letter-message';
 import { requeueMessage } from './requeue-message';
-import { Message } from '../message/message';
+import { Message } from '../../message/message';
 import { delayMessage } from './delay-message';
 import { ICallback, IRedisClientMulti } from 'redis-smq-common/dist/types';
 import { errors, RedisClient } from 'redis-smq-common';

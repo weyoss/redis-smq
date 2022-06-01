@@ -1,5 +1,6 @@
 import ScheduleWorker from '../../src/workers/schedule.worker';
 import { getRedisInstance } from './redis';
+import { promisifyAll } from 'bluebird';
 
 let scheduleWorker: ScheduleWorker | null = null;
 
@@ -12,12 +13,8 @@ export async function startScheduleWorker(): Promise<void> {
 }
 
 export async function stopScheduleWorker(): Promise<void> {
-  return new Promise<void>((resolve) => {
-    if (scheduleWorker) {
-      scheduleWorker.quit(() => {
-        scheduleWorker = null;
-        resolve();
-      });
-    } else resolve();
-  });
+  if (scheduleWorker) {
+    await promisifyAll(scheduleWorker).quitAsync();
+    scheduleWorker = null;
+  }
 }

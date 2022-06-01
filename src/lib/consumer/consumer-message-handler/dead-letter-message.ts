@@ -2,9 +2,9 @@ import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgedCause,
   IRequiredConfig,
-} from '../../../types';
-import { Message } from '../message/message';
-import { redisKeys } from '../../common/redis-keys/redis-keys';
+} from '../../../../types';
+import { Message } from '../../message/message';
+import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { ICallback, IRedisClientMulti } from 'redis-smq-common/dist/types';
 import { errors, RedisClient } from 'redis-smq-common';
 
