@@ -1,9 +1,10 @@
 const config = require('./config');
-const { setLogger, QueueManager } = require('../../..'); // require('redis-smq')
+const { QueueManager } = require('../../..'); // require('redis-smq')
+const { logger } = require('redis-smq-common');
 
 // Setting up a custom logger
 // This step should be also done from your application bootstrap
-setLogger(console);
+logger.setLogger(console);
 
 exports.init = function init(cb) {
   // Before producing and consuming messages to/from a given queue, we need to make sure that such queue exists

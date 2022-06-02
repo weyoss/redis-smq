@@ -1,5 +1,5 @@
 const { Consumer } = require('../../..'); // require('redis-smq')
-const config = require('config');
+const config = require('./config');
 
 const consumer = new Consumer(config);
 
