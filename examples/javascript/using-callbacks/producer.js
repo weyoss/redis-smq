@@ -1,5 +1,5 @@
 const { Producer, Message } = require('../../..'); // require('redis-smq')
-const config = require('config');
+const config = require('./config');
 
 const producer = new Producer(config);
 

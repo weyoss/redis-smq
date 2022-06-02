@@ -1,10 +1,11 @@
 const config = require('./config');
-const { setLogger, QueueManager } = require('../../..'); // require('redis-smq')
+const { QueueManager } = require('../../..'); // require('redis-smq')
 const { promisifyAll } = require('bluebird');
+const { logger } = require('redis-smq-common');
 
 // Setting up a custom logger
 // This step should be also done from your application bootstrap
-setLogger(console);
+logger.setLogger(console);
 
 const QueueManagerAsync = promisifyAll(QueueManager);
 
