@@ -3,7 +3,7 @@ import { Message } from '../../../src/lib/message/message';
 import { events } from '../../../src/common/events/events';
 import { DelayWorker } from '../../../src/workers/delay.worker';
 import { ScheduleWorker } from '../../../src/workers/schedule.worker';
-import { HeartbeatMonitorWorker } from '../../../src/workers/heartbeat-monitor.worker';
+import { ConsumersMonitorWorker } from '../../../src/workers/consumers-monitor.worker';
 import { getMessageManager } from '../../common/message-manager';
 import { untilConsumerEvent } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
@@ -14,6 +14,7 @@ import {
   defaultQueue,
 } from '../../common/message-producing-consuming';
 import { requiredConfig } from '../../common/config';
+import { logger } from '../../common/logger';
 
 test('HeartbeatMonitorWorker -> DelayWorker -> ScheduleWorker', async () => {
   await createQueue(defaultQueue, false);
@@ -43,7 +44,7 @@ test('HeartbeatMonitorWorker -> DelayWorker -> ScheduleWorker', async () => {
 
   // should move message from processing queue to delay queue
   const heartbeatMonitor = promisifyAll(
-    new HeartbeatMonitorWorker(redisClient, requiredConfig, false),
+    new ConsumersMonitorWorker(redisClient, requiredConfig, false, logger),
   );
   heartbeatMonitor.run();
   await delay(5000);

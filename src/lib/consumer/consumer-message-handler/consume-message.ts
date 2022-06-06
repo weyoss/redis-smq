@@ -1,19 +1,24 @@
 import { Message } from '../../message/message';
 import { EMessageUnacknowledgedCause } from '../../../../types';
 import { events } from '../../../common/events/events';
-import { ConsumerError } from '../errors/consumer.error';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { MessageHandler } from './message-handler';
-import { RedisClient } from 'redis-smq-common';
-import { retryMessage } from './retry-message';
+import { errors, RedisClient } from 'redis-smq-common';
+import { ERetryStatus, retryMessage } from './retry-message';
 import { acknowledgeMessage } from './acknowledge-message';
+import { ICallback, ICompatibleLogger } from 'redis-smq-common/dist/types';
 
 export class ConsumeMessage {
   protected keyQueueProcessing: string;
   protected messageHandler: MessageHandler;
   protected redisClient: RedisClient;
+  protected logger: ICompatibleLogger;
 
-  constructor(messageHandler: MessageHandler, redisClient: RedisClient) {
+  constructor(
+    messageHandler: MessageHandler,
+    redisClient: RedisClient,
+    logger: ICompatibleLogger,
+  ) {
     this.redisClient = redisClient;
     this.messageHandler = messageHandler;
     const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
@@ -21,32 +26,31 @@ export class ConsumeMessage {
       messageHandler.getConsumerId(),
     );
     this.keyQueueProcessing = keyQueueProcessing;
+    this.logger = logger;
   }
 
   protected unacknowledgeMessage(
     msg: Message,
     cause: EMessageUnacknowledgedCause,
-    err?: Error,
   ): void {
-    if (err) {
-      // log error
-    }
     retryMessage(
       this.messageHandler.getConfig(),
       this.redisClient,
       this.keyQueueProcessing,
       msg,
       cause,
-      (err, deadLetterCause) => {
+      (err, retryStatus) => {
         if (err) this.messageHandler.handleError(err);
+        else if (!retryStatus)
+          this.messageHandler.handleError(new errors.EmptyCallbackReplyError());
         else {
-          this.messageHandler.emit(events.MESSAGE_UNACKNOWLEDGED, msg, cause);
-          if (deadLetterCause !== undefined) {
-            this.messageHandler.emit(
-              events.MESSAGE_DEAD_LETTERED,
-              msg,
-              deadLetterCause,
-            );
+          this.messageHandler.emit(
+            events.MESSAGE_UNACKNOWLEDGED,
+            msg,
+            EMessageUnacknowledgedCause.CONSUME_ERROR,
+          );
+          if (retryStatus.status === ERetryStatus.MESSAGE_DEAD_LETTERED) {
+            this.messageHandler.emit(events.MESSAGE_DEAD_LETTERED, msg);
           }
         }
       },
@@ -65,16 +69,16 @@ export class ConsumeMessage {
           this.unacknowledgeMessage(msg, EMessageUnacknowledgedCause.TIMEOUT);
         }, consumeTimeout);
       }
-      const onConsumed = (err?: Error | null) => {
+      const onConsumed: ICallback<void> = (err) => {
         if (this.messageHandler.isRunning() && !isTimeout) {
           if (timer) clearTimeout(timer);
-          if (err)
+          if (err) {
+            this.logger.error(err);
             this.unacknowledgeMessage(
               msg,
               EMessageUnacknowledgedCause.UNACKNOWLEDGED,
-              err,
             );
-          else {
+          } else {
             acknowledgeMessage(
               this.messageHandler.getConfig(),
               this.redisClient,
@@ -96,17 +100,8 @@ export class ConsumeMessage {
         onConsumed,
       );
     } catch (error: unknown) {
-      const err =
-        error instanceof Error
-          ? error
-          : new ConsumerError(
-              `An error occurred while processing message ID (${msg.getRequiredId()})`,
-            );
-      this.unacknowledgeMessage(
-        msg,
-        EMessageUnacknowledgedCause.CAUGHT_ERROR,
-        err,
-      );
+      this.logger.error(error);
+      this.unacknowledgeMessage(msg, EMessageUnacknowledgedCause.CONSUME_ERROR);
     }
   }
 

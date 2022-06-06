@@ -84,9 +84,9 @@ export enum EMessageDeadLetterCause {
 
 export enum EMessageUnacknowledgedCause {
   TIMEOUT = 'timeout',
-  CAUGHT_ERROR = 'caught_error',
+  CONSUME_ERROR = 'consumer_error',
   UNACKNOWLEDGED = 'unacknowledged',
-  RECOVERY = 'recovery',
+  OFFLINE_CONSUMER = 'offline_consumer',
   TTL_EXPIRED = 'ttl_expired',
 }
 

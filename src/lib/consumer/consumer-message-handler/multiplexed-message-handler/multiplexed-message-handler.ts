@@ -43,32 +43,9 @@ export class MultiplexedMessageHandler extends MessageHandler {
       this.powerManager.goingDown();
       async.waterfall(
         [
-          (cb: ICallback<void>) => {
-            this.dequeueMessage.quit(cb);
-          },
-          (cb: ICallback<void>) => {
-            async.each(
-              this.plugins,
-              (plugin, index, done) => plugin.quit(done),
-              (err) => {
-                if (err) cb(err);
-                else {
-                  this.plugins = [];
-                  cb();
-                }
-              },
-            );
-          },
-          (cb: ICallback<void>) => {
-            MessageHandler.cleanUp(
-              this.getConfig(),
-              this.sharedRedisClient,
-              this.consumerId,
-              this.queue,
-              undefined,
-              cb,
-            );
-          },
+          (cb: ICallback<void>) => this.dequeueMessage.quit(cb),
+          (cb: ICallback<void>) => this.tearDownPlugins(cb),
+          (cb: ICallback<void>) => this.cleanUp(cb),
         ],
         (err) => {
           if (err) cb(err);

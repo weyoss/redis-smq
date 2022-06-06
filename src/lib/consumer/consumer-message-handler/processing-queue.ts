@@ -7,11 +7,12 @@ import { Message } from '../../message/message';
 import { async, RedisClient } from 'redis-smq-common';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { ICallback, IRedisClientMulti } from 'redis-smq-common/dist/types';
-import { retryMessage } from './retry-message';
+import { retryMessage, TRetryStatus } from './retry-message';
+
+export type TCleanUpStatus = TRetryStatus | false;
 
 function fetchProcessingQueueMessage(
   redisClient: RedisClient,
-  consumerId: string,
   keyQueueProcessing: string,
   cb: ICallback<Message>,
 ): void {
@@ -48,31 +49,29 @@ export const processingQueue = {
     consumerId: string,
     queue: TQueueParams,
     multi: IRedisClientMulti,
-    cb: ICallback<void>,
+    cb: ICallback<TCleanUpStatus>,
   ): void {
     const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
       queue,
       consumerId,
     );
+    let status: TCleanUpStatus = false;
     async.waterfall(
       [
         (cb: ICallback<void>) => {
           fetchProcessingQueueMessage(
             redisClient,
-            consumerId,
             keyQueueProcessing,
             (err, msg) => {
               if (err) cb(err);
               else if (msg) {
-                const deadLettered = retryMessage(
+                status = retryMessage(
                   config,
                   multi,
                   keyQueueProcessing,
                   msg,
-                  EMessageUnacknowledgedCause.RECOVERY,
+                  EMessageUnacknowledgedCause.OFFLINE_CONSUMER,
                 );
-                // todo
-                // do something with deadLettered
                 cb();
               } else cb();
             },
@@ -83,7 +82,10 @@ export const processingQueue = {
           cb();
         },
       ],
-      cb,
+      (err) => {
+        if (err) cb(err);
+        else cb(null, status);
+      },
     );
   },
 
