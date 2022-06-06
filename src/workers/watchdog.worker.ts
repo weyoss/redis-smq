@@ -7,7 +7,7 @@ import { consumerQueues } from '../lib/consumer/consumer-queues';
 import { MessageHandler } from '../lib/consumer/consumer-message-handler/message-handler';
 import { ERetryStatus } from '../lib/consumer/consumer-message-handler/retry-message';
 
-export class ConsumersMonitorWorker extends Worker {
+export class WatchdogWorker extends Worker {
   protected redisClient: RedisClient;
   protected config: IRequiredConfig;
   protected logger: ICompatibleLogger;
@@ -97,4 +97,4 @@ export class ConsumersMonitorWorker extends Worker {
   };
 }
 
-export default ConsumersMonitorWorker;
+export default WatchdogWorker;

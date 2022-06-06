@@ -3,7 +3,7 @@ import { Message } from '../../../src/lib/message/message';
 import { events } from '../../../src/common/events/events';
 import { DelayWorker } from '../../../src/workers/delay.worker';
 import { ScheduleWorker } from '../../../src/workers/schedule.worker';
-import { ConsumersMonitorWorker } from '../../../src/workers/consumers-monitor.worker';
+import { WatchdogWorker } from '../../../src/workers/watchdog.worker';
 import { getMessageManager } from '../../common/message-manager';
 import { untilConsumerEvent } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
@@ -43,10 +43,10 @@ test('HeartbeatMonitorWorker -> DelayWorker -> ScheduleWorker', async () => {
   const redisClient = await getRedisInstance();
 
   // should move message from processing queue to delay queue
-  const heartbeatMonitor = promisifyAll(
-    new ConsumersMonitorWorker(redisClient, requiredConfig, false, logger),
+  const watchdogWorker = promisifyAll(
+    new WatchdogWorker(redisClient, requiredConfig, false, logger),
   );
-  heartbeatMonitor.run();
+  watchdogWorker.run();
   await delay(5000);
 
   // should move from delay queue to scheduled queue
@@ -74,6 +74,6 @@ test('HeartbeatMonitorWorker -> DelayWorker -> ScheduleWorker', async () => {
   expect(res3.total).toBe(1);
 
   await delayHandler.quitAsync();
-  await heartbeatMonitor.quitAsync();
+  await watchdogWorker.quitAsync();
   await scheduleWorker.quitAsync();
 });

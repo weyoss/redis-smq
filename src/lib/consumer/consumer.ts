@@ -23,7 +23,7 @@ import {
 } from 'redis-smq-common';
 import { ICallback, TUnaryFunction } from 'redis-smq-common/dist/types';
 import DelayWorker from '../../workers/delay.worker';
-import ConsumersMonitorWorker from '../../workers/consumers-monitor.worker';
+import WatchdogWorker from '../../workers/watchdog.worker';
 import RequeueWorker from '../../workers/requeue.worker';
 import ScheduleWorker from '../../workers/schedule.worker';
 
@@ -87,7 +87,7 @@ export class Consumer extends Base {
     this.workerRunner.once(events.UP, cb);
     this.workerRunner.addWorker(new DelayWorker(redisClient, true));
     this.workerRunner.addWorker(
-      new ConsumersMonitorWorker(redisClient, this.config, true, this.logger),
+      new WatchdogWorker(redisClient, this.config, true, this.logger),
     );
     this.workerRunner.addWorker(new RequeueWorker(redisClient, true));
     this.workerRunner.addWorker(new ScheduleWorker(redisClient, true));
