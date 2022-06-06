@@ -25,6 +25,17 @@ type TGetRetryActionReply =
       deadLetterCause: EMessageDeadLetterCause;
     };
 
+export enum ERetryStatus {
+  MESSAGE_DELAYED,
+  MESSAGE_REQUEUED,
+  MESSAGE_DEAD_LETTERED,
+}
+
+export type TRetryStatus = {
+  status: ERetryStatus;
+  message: Message;
+};
+
 function getRetryAction(
   message: Message,
   unacknowledgedCause: EMessageUnacknowledgedCause,
@@ -73,7 +84,7 @@ function retryTransaction(
   processingQueue: string,
   message: Message,
   unacknowledgedCause: EMessageUnacknowledgedCause,
-): EMessageDeadLetterCause | void {
+): TRetryStatus {
   const r = getRetryAction(message, unacknowledgedCause);
   if (r.action === EValidateAction.DEAD_LETTER) {
     deadLetterMessage(
@@ -84,12 +95,14 @@ function retryTransaction(
       unacknowledgedCause,
       r.deadLetterCause,
     );
-    return r.deadLetterCause;
+    return { message, status: ERetryStatus.MESSAGE_DEAD_LETTERED };
   }
   if (r.action === EValidateAction.REQUEUE) {
-    return requeueMessage(mixed, message, processingQueue, unacknowledgedCause);
+    requeueMessage(mixed, message, processingQueue, unacknowledgedCause);
+    return { message, status: ERetryStatus.MESSAGE_REQUEUED };
   }
-  return delayMessage(mixed, message, processingQueue, unacknowledgedCause);
+  delayMessage(mixed, message, processingQueue, unacknowledgedCause);
+  return { message, status: ERetryStatus.MESSAGE_DELAYED };
 }
 
 export function retryMessage(
@@ -98,14 +111,14 @@ export function retryMessage(
   processingQueue: string,
   message: Message,
   unacknowledgedCause: EMessageUnacknowledgedCause,
-): EMessageDeadLetterCause | void;
+): TRetryStatus;
 export function retryMessage(
   config: IRequiredConfig,
   mixed: RedisClient,
   processingQueue: string,
   message: Message,
   unacknowledgedCause: EMessageUnacknowledgedCause,
-  cb: ICallback<EMessageDeadLetterCause | void>,
+  cb: ICallback<TRetryStatus>,
 ): void;
 export function retryMessage(
   config: IRequiredConfig,
@@ -113,8 +126,8 @@ export function retryMessage(
   processingQueue: string,
   message: Message,
   unacknowledgedCause: EMessageUnacknowledgedCause,
-  cb?: ICallback<EMessageDeadLetterCause | void>,
-): void | EMessageDeadLetterCause {
+  cb?: ICallback<TRetryStatus>,
+): TRetryStatus | void {
   if (mixed instanceof RedisClient) {
     if (!cb) throw new errors.PanicError(`Expected a callback function`);
     const r = getRetryAction(message, unacknowledgedCause);
@@ -128,7 +141,8 @@ export function retryMessage(
         r.deadLetterCause,
         (err) => {
           if (err) cb(err);
-          else cb(null, r.deadLetterCause);
+          else
+            cb(null, { message, status: ERetryStatus.MESSAGE_DEAD_LETTERED });
         },
       );
     }
@@ -138,7 +152,10 @@ export function retryMessage(
         message,
         processingQueue,
         unacknowledgedCause,
-        cb,
+        (err) => {
+          if (err) cb(err);
+          else cb(null, { message, status: ERetryStatus.MESSAGE_DELAYED });
+        },
       );
     }
     return requeueMessage(
@@ -146,7 +163,10 @@ export function retryMessage(
       message,
       processingQueue,
       unacknowledgedCause,
-      cb,
+      (err) => {
+        if (err) cb(err);
+        else cb(null, { message, status: ERetryStatus.MESSAGE_REQUEUED });
+      },
     );
   } else {
     return retryTransaction(

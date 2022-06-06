@@ -1,13 +1,12 @@
 import * as os from 'os';
-import { IRequiredConfig, TConsumerHeartbeat } from '../../../types';
+import { TConsumerHeartbeat } from '../../../types';
 import { RedisClient, Ticker } from 'redis-smq-common';
 import { events } from '../../common/events/events';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { EventEmitter } from 'events';
 import { errors, async } from 'redis-smq-common';
 import { Consumer } from './consumer';
-import { ICallback } from 'redis-smq-common/dist/types';
-import { handleOfflineConsumer } from './offline-consumers';
+import { ICallback, IRedisClientMulti } from 'redis-smq-common/dist/types';
 
 const cpuUsageStatsRef = {
   cpuUsage: process.cpuUsage(),
@@ -105,13 +104,14 @@ export class ConsumerHeartbeat extends EventEmitter {
           this.ticker.once(events.DOWN, cb);
           this.ticker.quit();
         },
-        (cb: ICallback<void>) =>
-          ConsumerHeartbeat.handleExpiredHeartbeatIds(
-            this.consumer.getConfig(),
-            this.redisClient,
-            [this.consumer.getId()],
-            (err) => cb(err),
-          ),
+        (cb: ICallback<void>) => {
+          const multi = this.redisClient.multi();
+          ConsumerHeartbeat.handleExpiredHeartbeatId(
+            this.consumer.getId(),
+            multi,
+          );
+          multi.exec((err) => cb(err));
+        },
         (cb: ICallback<void>) => this.redisClient.halt(cb),
       ],
       cb,
@@ -231,25 +231,16 @@ export class ConsumerHeartbeat extends EventEmitter {
     );
   }
 
-  static handleExpiredHeartbeatIds(
-    config: IRequiredConfig,
-    redisClient: RedisClient,
-    consumerIds: string[],
-    cb: ICallback<void>,
+  static handleExpiredHeartbeatId(
+    consumerId: string | string[],
+    multi: IRedisClientMulti,
   ): void {
-    if (consumerIds.length) {
-      const { keyHeartbeats, keyHeartbeatConsumerWeight } =
-        redisKeys.getMainKeys();
-      const multi = redisClient.multi();
-      async.each(
-        consumerIds,
-        (consumerId, _, done) => {
-          multi.hdel(keyHeartbeats, consumerId);
-          multi.zrem(keyHeartbeatConsumerWeight, consumerId);
-          handleOfflineConsumer(config, multi, redisClient, consumerId, done);
-        },
-        () => multi.exec((err) => cb(err)),
-      );
-    } else cb();
+    const { keyHeartbeats, keyHeartbeatConsumerWeight } =
+      redisKeys.getMainKeys();
+    const ids = typeof consumerId === 'string' ? [consumerId] : consumerId;
+    ids.forEach((consumerId) => {
+      multi.hdel(keyHeartbeats, consumerId);
+      multi.zrem(keyHeartbeatConsumerWeight, consumerId);
+    });
   }
 }

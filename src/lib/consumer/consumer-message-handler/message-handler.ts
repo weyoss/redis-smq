@@ -11,7 +11,7 @@ import { Message } from '../../message/message';
 import { events } from '../../../common/events/events';
 import { EventEmitter } from 'events';
 import { consumerQueues } from '../consumer-queues';
-import { processingQueue } from './processing-queue';
+import { processingQueue, TCleanUpStatus } from './processing-queue';
 import { DequeueMessage } from './dequeue-message';
 import { ConsumeMessage } from './consume-message';
 import { getConsumerPlugins } from '../../../plugins/plugins';
@@ -22,6 +22,7 @@ import {
   ICompatibleLogger,
   IRedisClientMulti,
 } from 'redis-smq-common/dist/types';
+import { ERetryStatus } from './retry-message';
 
 export class MessageHandler extends EventEmitter {
   protected id: string;
@@ -56,7 +57,7 @@ export class MessageHandler extends EventEmitter {
     this.powerManager = new PowerManager();
     this.logger = logger;
     this.dequeueMessage = new DequeueMessage(this, dequeueRedisClient);
-    this.consumeMessage = new ConsumeMessage(this, dequeueRedisClient);
+    this.consumeMessage = new ConsumeMessage(this, dequeueRedisClient, logger);
     this.registerEventsHandlers();
     this.initPlugins();
   }
@@ -114,6 +115,43 @@ export class MessageHandler extends EventEmitter {
     });
   }
 
+  protected cleanUp(cb: ICallback<void>): void {
+    MessageHandler.cleanUp(
+      this.getConfig(),
+      this.sharedRedisClient,
+      this.consumerId,
+      this.queue,
+      undefined,
+      (err, reply) => {
+        if (err) cb(err);
+        else if (reply) {
+          this.logger.debug(
+            `Message ID ${reply.message.getId()} has been ${
+              reply.status === ERetryStatus.MESSAGE_DEAD_LETTERED
+                ? 'dead-lettered'
+                : 'unacknowledged'
+            }.`,
+          );
+          cb();
+        } else cb();
+      },
+    );
+  }
+
+  protected tearDownPlugins(cb: ICallback<void>): void {
+    async.each(
+      this.plugins,
+      (plugin, index, done) => plugin.quit(done),
+      (err) => {
+        if (err) cb(err);
+        else {
+          this.plugins = [];
+          cb();
+        }
+      },
+    );
+  }
+
   handleError(err: Error): void {
     if (this.powerManager.isRunning() || this.powerManager.isGoingUp()) {
       this.emit(events.ERROR, err);
@@ -141,35 +179,10 @@ export class MessageHandler extends EventEmitter {
       this.powerManager.goingDown();
       async.waterfall(
         [
-          (cb: ICallback<void>) => {
-            this.dequeueMessage.quit(cb);
-          },
-          (cb: ICallback<void>) => {
-            async.each(
-              this.plugins,
-              (plugin, index, done) => plugin.quit(done),
-              (err) => {
-                if (err) cb(err);
-                else {
-                  this.plugins = [];
-                  cb();
-                }
-              },
-            );
-          },
-          (cb: ICallback<void>) => {
-            MessageHandler.cleanUp(
-              this.getConfig(),
-              this.sharedRedisClient,
-              this.consumerId,
-              this.queue,
-              undefined,
-              cb,
-            );
-          },
-          (cb: ICallback<void>) => {
-            this.dequeueRedisClient.halt(cb);
-          },
+          (cb: ICallback<void>) => this.dequeueMessage.quit(cb),
+          (cb: ICallback<void>) => this.tearDownPlugins(cb),
+          (cb: ICallback<void>) => this.cleanUp(cb),
+          (cb: ICallback<void>) => this.dequeueRedisClient.halt(cb),
         ],
         (err) => {
           if (err) cb(err);
@@ -215,9 +228,10 @@ export class MessageHandler extends EventEmitter {
     consumerId: string,
     queue: TQueueParams,
     pendingMulti: IRedisClientMulti | undefined,
-    cb: ICallback<void>,
+    cb: ICallback<TCleanUpStatus>,
   ): void {
     const multi = pendingMulti ?? redisClient.multi();
+    let status: TCleanUpStatus = false;
     async.waterfall(
       [
         (cb: ICallback<void>) => {
@@ -227,7 +241,13 @@ export class MessageHandler extends EventEmitter {
             consumerId,
             queue,
             multi,
-            cb,
+            (err, reply) => {
+              if (err) cb(err);
+              else {
+                status = reply ?? false;
+                cb();
+              }
+            },
           );
         },
         (cb: ICallback<void>) => {
@@ -237,8 +257,12 @@ export class MessageHandler extends EventEmitter {
       ],
       (err) => {
         if (err) cb(err);
-        else if (pendingMulti) cb();
-        else multi.exec((err) => cb(err));
+        else if (pendingMulti) cb(null, status);
+        else
+          multi.exec((err) => {
+            if (err) cb(err);
+            else cb(null, status);
+          });
       },
     );
   }
