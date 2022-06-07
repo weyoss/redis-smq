@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## 7.0.0-rc.7 (2022-06-07)
+
+* Update redis keys prefix (a6ca852)
+* Use codecov instead of coveralls (d8b5f83)
+* Improve consuming-messages/test00013 (5cd823c)
+* Improve consuming-messages/test00010 (a9a4f47)
+* Test WatchdogWorker (73fbe9a)
+* Clean up (aa9a51a)
+* Improve unacknowleged messages handling, refactor (005c6a0)
+* Fix outdated javascript examples (e31f89c)
+* Keep a clean directory structure (642739f)
+* Update README.md (5c011e3)
+* Clean up tests (10ebb77)
+
 ## 7.0.0-rc.6 (2022-05-31)
 
 * Bump up redis-smq-common to v1.0.0-rc.11 (43717f0)
