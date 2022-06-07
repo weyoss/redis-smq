@@ -28,10 +28,10 @@ import RequeueWorker from '../../workers/requeue.worker';
 import ScheduleWorker from '../../workers/schedule.worker';
 
 export class Consumer extends Base {
-  private readonly redisKeys: TConsumerRedisKeys;
-  private readonly messageHandlerRunner: MessageHandlerRunner;
-  private heartbeat: ConsumerHeartbeat | null = null;
-  private workerRunner: WorkerRunner | null = null;
+  protected readonly redisKeys: TConsumerRedisKeys;
+  protected readonly messageHandlerRunner: MessageHandlerRunner;
+  protected heartbeat: ConsumerHeartbeat | null = null;
+  protected workerRunner: WorkerRunner | null = null;
 
   constructor(config: IConfig = {}, useMultiplexing = false) {
     super(config);
@@ -45,7 +45,7 @@ export class Consumer extends Base {
     this.redisKeys = redisKeys.getConsumerKeys(this.getId());
   }
 
-  private setUpHeartbeat = (cb: ICallback<void>): void => {
+  protected setUpHeartbeat = (cb: ICallback<void>): void => {
     createClientInstance(this.config.redis, (err, redisClient) => {
       if (err) cb(err);
       else if (!redisClient) cb(new errors.EmptyCallbackReplyError());
@@ -59,7 +59,7 @@ export class Consumer extends Base {
     });
   };
 
-  private tearDownHeartbeat = (cb: ICallback<void>): void => {
+  protected tearDownHeartbeat = (cb: ICallback<void>): void => {
     if (this.heartbeat) {
       this.heartbeat.quit(() => {
         this.heartbeat = null;
@@ -68,7 +68,7 @@ export class Consumer extends Base {
     } else cb();
   };
 
-  private setUpConsumerWorkers = (cb: ICallback<void>): void => {
+  protected setUpConsumerWorkers = (cb: ICallback<void>): void => {
     const redisClient = this.getSharedRedisClient();
     const { keyLockConsumerWorkersRunner } = this.getRedisKeys();
     const nsLogger = logger.getNamespacedLogger(
@@ -94,7 +94,7 @@ export class Consumer extends Base {
     this.workerRunner.run();
   };
 
-  private tearDownConsumerWorkers = (cb: ICallback<void>): void => {
+  protected tearDownConsumerWorkers = (cb: ICallback<void>): void => {
     if (this.workerRunner) {
       this.workerRunner.quit(() => {
         this.workerRunner = null;
@@ -103,12 +103,12 @@ export class Consumer extends Base {
     } else cb();
   };
 
-  private runMessageHandlers = (cb: ICallback<void>): void => {
+  protected runMessageHandlers = (cb: ICallback<void>): void => {
     const redisClient = this.getSharedRedisClient();
     this.messageHandlerRunner.run(redisClient, cb);
   };
 
-  private shutdownMessageHandlers = (cb: ICallback<void>): void => {
+  protected shutdownMessageHandlers = (cb: ICallback<void>): void => {
     if (this.messageHandlerRunner) {
       this.messageHandlerRunner.shutdown(cb);
     } else cb();

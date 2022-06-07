@@ -7,6 +7,8 @@ import { getConsumer } from './consumer';
 import { getProducer } from './producer';
 import { getQueueManager } from './queue-manager';
 import { requiredConfig } from './config';
+import { fork } from 'child_process';
+import * as path from 'path';
 
 export const defaultQueue: TQueueParams = {
   name: 'test_queue',
@@ -96,4 +98,12 @@ export async function createQueue(
 ) {
   const qm = await getQueueManager();
   await qm.queue.createAsync(queue, priorityQueuing);
+}
+
+export async function crashAConsumerConsumingAMessage() {
+  await new Promise((resolve) => {
+    const thread = fork(path.join(__dirname, 'consumer-thread.js'));
+    thread.on('error', () => void 0);
+    thread.on('exit', resolve);
+  });
 }
