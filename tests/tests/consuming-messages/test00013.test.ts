@@ -4,7 +4,11 @@ import { events } from '../../../src/common/events/events';
 import { ICallback } from 'redis-smq-common/dist/types';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
-import { createQueue } from '../../common/message-producing-consuming';
+import {
+  crashAConsumerConsumingAMessage,
+  createQueue,
+  defaultQueue,
+} from '../../common/message-producing-consuming';
 
 type TQueueMetrics = {
   receivedMessages: Message[];
@@ -12,88 +16,57 @@ type TQueueMetrics = {
 };
 
 test('Given many queues, a message is recovered from a consumer crash and re-queued to its origin queue', async () => {
-  await createQueue('queue_a', false);
+  await createQueue(defaultQueue, false);
   await createQueue('queue_b', false);
 
-  const queueAMetrics: TQueueMetrics = {
+  const defaultQueueMetrics: TQueueMetrics = {
     receivedMessages: [],
     acks: 0,
   };
-  const queueAConsumer1 = getConsumer({
-    queue: 'queue_a',
-    messageHandler: (msg: Message) => {
-      // do not acknowledge/unacknowledge the message
-      queueAMetrics.receivedMessages.push(msg);
-      queueAConsumer1.shutdown();
-    },
-  });
-  queueAConsumer1.run();
-
-  queueAConsumer1.on(events.DOWN, () => {
-    // once stopped, start another consumer
-    queueAConsumer2.run();
-  });
-
-  const queueAConsumer2 = getConsumer({
-    queue: 'queue_a',
-    messageHandler: (msg: Message, cb: ICallback<void>) => {
-      queueAMetrics.receivedMessages.push(msg);
-      cb();
-    },
-  });
-  queueAConsumer2.on(events.MESSAGE_ACKNOWLEDGED, () => {
-    queueAMetrics.acks += 1;
-  });
-
   const queueBMetrics: TQueueMetrics = {
     receivedMessages: [],
     acks: 0,
   };
-  const queueBConsumer1 = getConsumer({
+
+  const queueAConsumer = getConsumer({
+    queue: defaultQueue,
+    messageHandler: (msg: Message, cb: ICallback<void>) => {
+      defaultQueueMetrics.receivedMessages.push(msg);
+      cb();
+    },
+  });
+  queueAConsumer.on(events.MESSAGE_ACKNOWLEDGED, () => {
+    defaultQueueMetrics.acks += 1;
+  });
+  await queueAConsumer.runAsync();
+
+  const queueBConsumer = getConsumer({
     queue: 'queue_b',
     messageHandler: (msg: Message, cb: ICallback<void>) => {
       queueBMetrics.receivedMessages.push(msg);
       cb();
     },
   });
-  queueBConsumer1.on(events.MESSAGE_ACKNOWLEDGED, () => {
+  queueBConsumer.on(events.MESSAGE_ACKNOWLEDGED, () => {
     queueBMetrics.acks += 1;
   });
-  queueBConsumer1.run();
+  await queueBConsumer.runAsync();
 
   const producer = getProducer();
 
-  /**
-   * Produce a message to QUEUE A
-   */
-  const msg = new Message();
-  msg.setBody({ hello: 'world' }).setQueue('queue_a');
-  await producer.produceAsync(msg);
-
-  /**
-   * Produce a message to QUEUE B
-   */
+  // Produce a message to QUEUE B
   const anotherMsg = new Message();
   anotherMsg.setBody({ id: 'b' }).setQueue('queue_b');
   await producer.produceAsync(anotherMsg);
 
-  /**
-   * Wait 20s
-   */
-  await delay(20000);
+  // using defaultQueue
+  await crashAConsumerConsumingAMessage();
+  await delay(10000);
 
-  /**
-   * Check
-   */
-  expect(queueAMetrics.acks).toBe(1);
+  expect(defaultQueueMetrics.acks).toBe(1);
+  expect(defaultQueueMetrics.receivedMessages.length).toBe(1);
+
   expect(queueBMetrics.acks).toBe(1);
-  expect(queueAMetrics.receivedMessages.length).toBe(2);
-  expect(queueAMetrics.receivedMessages[0].getRequiredId()).toBe(
-    msg.getRequiredId(),
-  );
-  expect(queueAMetrics.receivedMessages[1].getRequiredId()).toBe(
-    msg.getRequiredId(),
-  );
   expect(queueBMetrics.receivedMessages.length).toBe(1);
   expect(queueBMetrics.receivedMessages[0].getRequiredId()).toBe(
     anotherMsg.getRequiredId(),
