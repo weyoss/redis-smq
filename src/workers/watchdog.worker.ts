@@ -53,7 +53,7 @@ export class WatchdogWorker extends Worker {
                           queue,
                           multi,
                           (err, reply) => {
-                            if (err) cb(err);
+                            if (err) done(err);
                             else {
                               statuses.push(reply ?? false);
                               done();
@@ -61,7 +61,7 @@ export class WatchdogWorker extends Worker {
                           },
                         );
                       },
-                      cb,
+                      callback,
                     );
                   }
                 },

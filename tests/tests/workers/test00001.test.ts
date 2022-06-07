@@ -16,7 +16,7 @@ import {
 import { requiredConfig } from '../../common/config';
 import { logger } from '../../common/logger';
 
-test('HeartbeatMonitorWorker -> DelayWorker -> ScheduleWorker', async () => {
+test('WatchdogWorker -> DelayWorker -> ScheduleWorker', async () => {
   await createQueue(defaultQueue, false);
 
   let message: Message | null = null;
