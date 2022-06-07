@@ -1,30 +1,14 @@
-import { events } from '../../../src/common/events/events';
 import {
+  crashAConsumerConsumingAMessage,
   createQueue,
   defaultQueue,
-  produceMessage,
 } from '../../common/message-producing-consuming';
 import { untilMessageAcknowledged } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 
 test('A message is not lost in case of a consumer crash', async () => {
   await createQueue(defaultQueue, false);
-
-  await produceMessage();
-
-  /**
-   * Consumer1 tries to consume a message but "crushes" (stops)
-   */
-  const consumer1 = getConsumer({
-    messageHandler: jest.fn(() => {
-      // do not acknowledge/unacknowledge the message
-      consumer1.shutdown();
-    }),
-  });
-  consumer1.on(events.DOWN, () => {
-    // once stopped, start consumer2
-    consumer2.run();
-  });
+  await crashAConsumerConsumingAMessage();
 
   /**
    * Consumer2 re-queues failed message and consume it!
@@ -34,7 +18,6 @@ test('A message is not lost in case of a consumer crash', async () => {
       cb();
     }),
   });
-
-  consumer1.run();
+  consumer2.run();
   await untilMessageAcknowledged(consumer2);
 });
