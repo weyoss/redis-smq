@@ -44,7 +44,7 @@ export class MultiplexedMessageHandler extends MessageHandler {
       async.waterfall(
         [
           (cb: ICallback<void>) => this.dequeueMessage.quit(cb),
-          (cb: ICallback<void>) => this.tearDownPlugins(cb),
+          (cb: ICallback<void>) => this.tearDownEventListeners(cb),
           (cb: ICallback<void>) => this.cleanUp(cb),
         ],
         (err) => {

@@ -11,7 +11,6 @@ import {
   PowerManager,
   RedisClient,
 } from 'redis-smq-common';
-import { disablePluginRegistration } from '../plugins/plugins';
 import {
   ICallback,
   ICompatibleLogger,
@@ -36,7 +35,6 @@ export abstract class Base extends EventEmitter {
       `${this.constructor.name.toLowerCase()}:${this.id}`,
     );
     this.registerEventsHandlers();
-    disablePluginRegistration();
   }
 
   protected setUpSharedRedisClient = (cb: ICallback<void>): void => {

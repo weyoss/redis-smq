@@ -1,7 +1,7 @@
 import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgedCause,
-  IPlugin,
+  IEventListener,
   IRequiredConfig,
   TConsumerMessageHandler,
   TQueueParams,
@@ -14,7 +14,6 @@ import { consumerQueues } from '../consumer-queues';
 import { processingQueue, TCleanUpStatus } from './processing-queue';
 import { DequeueMessage } from './dequeue-message';
 import { ConsumeMessage } from './consume-message';
-import { getConsumerPlugins } from '../../../plugins/plugins';
 import { Consumer } from '../consumer';
 import { async, PowerManager, RedisClient } from 'redis-smq-common';
 import {
@@ -23,6 +22,7 @@ import {
   IRedisClientMulti,
 } from 'redis-smq-common/dist/types';
 import { ERetryStatus } from './retry-message';
+import { EventProvider } from '../../../common/event-listeners/event-provider';
 
 export class MessageHandler extends EventEmitter {
   protected id: string;
@@ -36,7 +36,7 @@ export class MessageHandler extends EventEmitter {
   protected dequeueMessage: DequeueMessage;
   protected consumeMessage: ConsumeMessage;
   protected handler: TConsumerMessageHandler;
-  protected plugins: IPlugin[] = [];
+  protected eventListeners: IEventListener[] = [];
 
   constructor(
     consumer: Consumer,
@@ -59,7 +59,7 @@ export class MessageHandler extends EventEmitter {
     this.dequeueMessage = new DequeueMessage(this, dequeueRedisClient);
     this.consumeMessage = new ConsumeMessage(this, dequeueRedisClient, logger);
     this.registerEventsHandlers();
-    this.initPlugins();
+    this.initEventListeners();
   }
 
   protected registerEventsHandlers(): void {
@@ -104,14 +104,15 @@ export class MessageHandler extends EventEmitter {
     this.on(events.DOWN, () => this.logger.info('Down.'));
   }
 
-  protected initPlugins(): void {
-    getConsumerPlugins().forEach((ctor) => {
+  protected initEventListeners(): void {
+    this.getConfig().eventListeners.consumerEventListeners.forEach((ctor) => {
       const plugin = new ctor(
         this.sharedRedisClient,
+        this.consumerId,
         this.queue,
-        this.consumer,
+        new EventProvider(this),
       );
-      this.plugins.push(plugin);
+      this.eventListeners.push(plugin);
     });
   }
 
@@ -138,14 +139,14 @@ export class MessageHandler extends EventEmitter {
     );
   }
 
-  protected tearDownPlugins(cb: ICallback<void>): void {
+  protected tearDownEventListeners(cb: ICallback<void>): void {
     async.each(
-      this.plugins,
-      (plugin, index, done) => plugin.quit(done),
+      this.eventListeners,
+      (listener, index, done) => listener.quit(done),
       (err) => {
         if (err) cb(err);
         else {
-          this.plugins = [];
+          this.eventListeners = [];
           cb();
         }
       },
@@ -180,7 +181,7 @@ export class MessageHandler extends EventEmitter {
       async.waterfall(
         [
           (cb: ICallback<void>) => this.dequeueMessage.quit(cb),
-          (cb: ICallback<void>) => this.tearDownPlugins(cb),
+          (cb: ICallback<void>) => this.tearDownEventListeners(cb),
           (cb: ICallback<void>) => this.cleanUp(cb),
           (cb: ICallback<void>) => this.dequeueRedisClient.halt(cb),
         ],
