@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 7.0.0-rc.8 (2022-06-09)
+
+* Update docs (96a45e7)
+* Test consumers/producers event listeners (856e12d)
+* Implement consumers/producers event listeners (6f5d603)
+
 ## 7.0.0-rc.7 (2022-06-07)
 
 * Update redis keys prefix (a6ca852)
