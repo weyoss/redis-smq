@@ -70,6 +70,10 @@ module.exports = {
           - `messages.store.deadLettered.queueSize` *(number): Optional.* Store a maximum of N dead-lettered messages. Older messages get deleted when the maximum size is reached.
           - `messages.store.deadLettered.expire` *(number): Optional.* Store dead-lettered messages for N milliseconds. Each time a new message is saved the expiration is updated.
 
+- `eventListeners` *(object): Optional.* See [Event Listeners](/docs/event-listeners.md) for more details.
+  - `eventListeners.consumerEventListeners` *(array): Optional.* An array of consumer event listeners. See [Event Listeners](/docs/event-listeners.md) for more details.
+  - `eventListeners.producerEventListeners` *(array): Optional.* An array of producer event listeners.  See [Event Listeners](/docs/event-listeners.md) for more details.
+
   
 **messages.store Usage Examples**
 
