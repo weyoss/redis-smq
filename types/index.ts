@@ -10,6 +10,7 @@ import { RedisClient } from 'redis-smq-common';
 ///
 
 export interface IEventProvider {
+  // type-coverage:ignore-next-line
   on(event: string, listener: (...args: any[]) => void): void;
 }
 
