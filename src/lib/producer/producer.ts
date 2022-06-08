@@ -1,48 +1,50 @@
-import { IConfig, IPlugin } from '../../../types';
+import { IConfig, IEventListener } from '../../../types';
 import { Message } from '../message/message';
 import { events } from '../../common/events/events';
 import { Base } from '../base';
 import { RedisClient, errors, async } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { MessageNotPublishedError } from './errors/message-not-published.error';
-import { getProducerPlugins } from '../../plugins/plugins';
 import { MessageQueueRequiredError } from './errors/message-queue-required.error';
 import { MessageAlreadyPublishedError } from './errors/message-already-published.error';
 import { ELuaScriptName } from '../../common/redis-client/redis-client';
 import { ICallback, TUnaryFunction } from 'redis-smq-common/dist/types';
 import { scheduleMessage } from './schedule-message';
 import { Queue } from '../queue-manager/queue';
+import { EventProvider } from '../../common/event-listeners/event-provider';
 
 export class Producer extends Base {
-  protected plugins: IPlugin[] = [];
+  protected eventListeners: IEventListener[] = [];
 
   constructor(config: IConfig = {}) {
     super(config);
     this.run();
   }
 
-  protected initPlugins = (cb: ICallback<void>): void => {
+  protected initEventListeners = (cb: ICallback<void>): void => {
     const sharedRedisClient = this.getSharedRedisClient();
-    getProducerPlugins().forEach((ctor) =>
-      this.plugins.push(new ctor(sharedRedisClient, this)),
+    this.config.eventListeners.producerEventListeners.forEach((ctor) =>
+      this.eventListeners.push(
+        new ctor(sharedRedisClient, this.id, new EventProvider(this)),
+      ),
     );
     cb();
   };
 
   protected override goingUp(): TUnaryFunction<ICallback<void>>[] {
-    return super.goingUp().concat([this.initPlugins]);
+    return super.goingUp().concat([this.initEventListeners]);
   }
 
   protected override goingDown(): TUnaryFunction<ICallback<void>>[] {
     return [
       (cb: ICallback<void>): void =>
         async.each(
-          this.plugins,
-          (plugin, idx, done) => plugin.quit(done),
+          this.eventListeners,
+          (listener, idx, done) => listener.quit(done),
           (err) => {
             if (err) cb(err);
             else {
-              this.plugins = [];
+              this.eventListeners = [];
               cb();
             }
           },

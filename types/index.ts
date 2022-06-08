@@ -1,13 +1,34 @@
 import { Message } from '../src/lib/message/message';
 import { redisKeys } from '../src/common/redis-keys/redis-keys';
-import { Consumer } from '../src/lib/consumer/consumer';
-import { Producer } from '../src/lib/producer/producer';
 import {
   ICallback,
   TLoggerConfig,
   TRedisConfig,
 } from 'redis-smq-common/dist/types';
 import { RedisClient } from 'redis-smq-common';
+
+///
+
+export interface IEventProvider {
+  on(event: string, listener: (...args: any[]) => void): void;
+}
+
+export interface IEventListener {
+  quit(cb: ICallback<void>): void;
+}
+
+export type TConsumerEventListenerConstructor = new (
+  redisClient: RedisClient,
+  consumerId: string,
+  queue: TQueueParams,
+  eventProvider: IEventProvider,
+) => IEventListener;
+
+export type TProducerEventListenerConstructor = new (
+  redisClient: RedisClient,
+  producerId: string,
+  eventProvider: IEventProvider,
+) => IEventListener;
 
 ///////////
 
@@ -25,11 +46,17 @@ export interface IMessagesConfigStore {
   deadLettered?: boolean | IMessagesConfigStoreOptions;
 }
 
+export interface IEventListenersConfig {
+  consumerEventListeners?: TConsumerEventListenerConstructor[];
+  producerEventListeners?: TProducerEventListenerConstructor[];
+}
+
 export interface IConfig {
   redis?: TRedisConfig;
   namespace?: string;
   logger?: TLoggerConfig;
   messages?: IMessagesConfig;
+  eventListeners?: IEventListenersConfig;
 }
 
 ///////////
@@ -44,10 +71,13 @@ export interface IRequiredMessagesConfigStore {
   deadLettered: IRequiredStoreMessagesParams;
 }
 
+export type TRequiredEventListenersConfig = Required<IEventListenersConfig>;
+
 export interface IRequiredConfig extends Required<IConfig> {
   messages: {
     store: IRequiredMessagesConfigStore;
   };
+  eventListeners: TRequiredEventListenersConfig;
 }
 
 ///////////
@@ -159,23 +189,6 @@ export type TMessageMetadataJSON = {
   nextScheduledDelay: number;
   nextRetryDelay: number;
 };
-
-///
-
-export interface IPlugin {
-  quit(cb: ICallback<void>): void;
-}
-
-export type TConsumerPluginConstructor = new (
-  redisClient: RedisClient,
-  queue: TQueueParams,
-  consumer: Consumer,
-) => IPlugin;
-
-export type TProducerPluginConstructor = new (
-  redisClient: RedisClient,
-  producer: Producer,
-) => IPlugin;
 
 ///
 
