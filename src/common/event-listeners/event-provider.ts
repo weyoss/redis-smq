@@ -8,6 +8,7 @@ export class EventProvider implements IEventProvider {
     this.eventEmitter = eventEmitter;
   }
 
+  // type-coverage:ignore-next-line
   on(event: string, listener: (...args: any[]) => void): void {
     this.eventEmitter.on(event, listener);
   }
