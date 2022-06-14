@@ -19,9 +19,9 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 
 ## Features
 
-* **[High-performance message processing](/docs/performance.md)**
-* **[Multi-Queue Producers](#producer-class) & [Multi-Queue Consumers](#consumer-class)**: Offering very flexible models which make RedisSMQ an ideal message broker for your microservices. 
-* **[Supporting both at-least-once/at-most-once delivery](/docs/api/message.md#messageprototypesetretrythreshold)**: In case of failures, while delivering or processing a message, RedisSMQ can guaranty that the message will be not lost and redelivered again. When configured to do so, RedisSMQ can also ensure that the message is delivered at-most-once.
+* **[High-performance message processing](/docs/performance.md)**.
+* **[Multi-Queue Producers](#producer-class) & [Multi-Queue Consumers](#consumer-class)**: Offering flexible Producer/Consumer models, with focus on simplicity and without tons of features. This can make RedisSMQ an ideal message broker for your microservices. 
+* **[Supports both at-least-once/at-most-once delivery](/docs/api/message.md#messageprototypesetretrythreshold)**: In case of failures, while delivering or processing a message, RedisSMQ can guaranty that the message will be not lost and redelivered again. When configured to do so, RedisSMQ can also ensure that the message is delivered at-most-once.
 * **[Message Expiration](/docs/api/message.md#messageprototypesetttl)**: A message will not be delivered if it has been in a queue for longer than a given amount of time, called TTL (time-to-live).
 * **[Message Consumption Timeout](/docs/api/message.md#messageprototypesetconsumetimeout)**: Timeout for consuming messages.
 * **[Queue Rate Limiting](/docs/queue-rate-limiting.md)**: Allowing you to control the rate at which the messages are consumed from a given queue.
@@ -30,11 +30,10 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 * **[Multiplexing](/docs/multiplexing.md)**: A feature which allows message handlers to use a single redis connection to dequeue and consume messages.  
 * **[HTTP API](https://github.com/weyoss/redis-smq-monitor)**: an HTTP interface is provided to interact with the MQ.
 * **[Web UI](https://github.com/weyoss/redis-smq-monitor-client)**: RedisSMQ can be managed also from your web browser.
-* **[Logging](https://github.com/weyoss/redis-smq-common/blob/master/docs/logs.md)**: Comes with a built-in JSON logger. But you can also use your own logger instance.
+* **[Logging](https://github.com/weyoss/redis-smq-common/blob/master/docs/logs.md)**: RedisSMQ comes with a built-in JSON logger, but can also use your application logger.
 * **[Configurable](/docs/configuration.md)**: Many options and features can be configured.
-* **Both redis & ioredis clients are supported**: RedisSMQ can be configured to use either `redis` or `ioredis` to connect to Redis server.
-* **Rigorously tested**: With 100+ tests and code coverage no less than 80%.
-* **Highly optimized**: Strongly-typed and implemented using pure callbacks, with small memory footprint and no memory leaks. See [callbacks vs promises vs async/await benchmarks](http://bluebirdjs.com/docs/benchmarks.html).
+* **[Supports Multiple Redis clients](/docs/configuration.md)**: Depending on your preferences, RedisSMQ can use either [node-redis v3](https://github.com/redis/node-redis/tree/v3.1.2), [node-redis v4](https://github.com/redis/node-redis), or [ioredis](https://github.com/luin/ioredis).
+* **[Highly optimized](https://lgtm.com/projects/g/weyoss/redis-smq/context:javascript)**: Strongly-typed and implemented using pure callbacks, with small memory footprint and no memory leaks. See [callbacks vs promises vs async/await benchmarks](http://bluebirdjs.com/docs/benchmarks.html).
 
 
 ### RedisSMQ Use Case: Multi-Queue Producers & Multi-Queue Consumers
