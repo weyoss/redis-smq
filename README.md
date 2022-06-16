@@ -33,7 +33,7 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 * **[Logging](https://github.com/weyoss/redis-smq-common/blob/master/docs/logs.md)**: RedisSMQ comes with a built-in JSON logger, but can also use your application logger.
 * **[Configurable](/docs/configuration.md)**: Many options and features can be configured.
 * **[Supports Multiple Redis clients](/docs/configuration.md)**: Depending on your preferences, RedisSMQ can use either [node-redis v3](https://github.com/redis/node-redis/tree/v3.1.2), [node-redis v4](https://github.com/redis/node-redis), or [ioredis](https://github.com/luin/ioredis).
-* **[Highly optimized](https://lgtm.com/projects/g/weyoss/redis-smq/context:javascript)**: Strongly-typed and implemented using pure callbacks, with small memory footprint and no memory leaks. See [callbacks vs promises vs async/await benchmarks](http://bluebirdjs.com/docs/benchmarks.html).
+* **[Highly optimized](https://lgtm.com/projects/g/weyoss/redis-smq/context:javascript)**: Strongly-typed and implemented using pure callbacks, with small memory footprint and no memory leaks. See [Callback vs Promise vs Async/Await benchmarks](https://gist.github.com/weyoss/24f9ecbda175d943a48cb7ec38bde821).
 
 
 ### RedisSMQ Use Case: Multi-Queue Producers & Multi-Queue Consumers
