@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 7.0.0 (2022-06-18)
+
+* Fix typing issue (cd8bf6a)
+* Bump up redis-smq-common to v1.0.0 (02c353d)
+* Update callback vs promise vs async/await benchmarks (6fca49c)
+* Update README.md (7fbdcbf)
+
 ## 7.0.0-rc.8 (2022-06-09)
 
 * Update docs (96a45e7)
