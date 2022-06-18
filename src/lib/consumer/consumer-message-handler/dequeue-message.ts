@@ -52,7 +52,7 @@ export class DequeueMessage {
     this.ticker = new Ticker(() => this.dequeue());
   }
 
-  protected dequeueMessageWithPriority(cb: ICallback<string>): void {
+  protected dequeueMessageWithPriority(cb: ICallback<string | null>): void {
     this.redisClient.zpophgetrpush(
       this.redisKeys.keyQueuePendingPriorityMessageWeight,
       this.redisKeys.keyQueuePendingPriorityMessages,
