@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 7.0.1 (2022-06-18)
+
+* Update migrating.md (9065d5f)
+* Update README.md (4cfb653)
+
 ## 7.0.0 (2022-06-18)
 
 * Fix typing issue (cd8bf6a)
