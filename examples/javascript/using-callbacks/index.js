@@ -2,5 +2,13 @@ const { init } = require('./setup');
 const { produce } = require('./producer');
 const { consume } = require('./consumer');
 
-// To simplify the example, we are ignoring errors from callbacks
-init(() => produce(() => consume(() => void 0)));
+// For simplicity, we are using nested callbacks
+init((err) => {
+  if (err) throw err;
+  produce((err) => {
+    if (err) throw err;
+    consume((err) => {
+      if (err) throw err;
+    });
+  });
+});

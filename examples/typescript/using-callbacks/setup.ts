@@ -10,9 +10,9 @@ logger.setLogger(console);
 export function init(cb: ICallback<void>): void {
   // Before producing and consuming messages to/from a given queue, we need to make sure that such queue exists
   QueueManager.createInstance(config, (err, queueManager) => {
-    if (err) throw err;
+    if (err) cb(err);
     else if (!queueManager)
-      throw new Error('Expected an instance of QueueManager');
+      cb(new Error('Expected an instance of QueueManager'));
     else
       queueManager.queue.create('test_queue', false, (err) => {
         if (err) cb(err);
