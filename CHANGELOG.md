@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 7.0.3 (2022-07-13)
+
+* Fix consuming-messages/test00012 (4c9dfb8)
+
 ## 7.0.2 (2022-07-13)
 
 * Bump up redis-smq-common to v1.0.1 (e3fbb10)
