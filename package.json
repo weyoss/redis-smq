@@ -36,7 +36,7 @@
     "bluebird": "3.7.2",
     "cron-parser": "3.5.0",
     "lodash": "4.17.21",
-    "redis-smq-common": "1.0.0",
+    "redis-smq-common": "1.0.1",
     "uuid": "8.3.2"
   },
   "devDependencies": {
