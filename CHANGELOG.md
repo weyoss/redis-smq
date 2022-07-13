@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 7.0.2 (2022-07-13)
+
+* Bump up redis-smq-common to v1.0.1 (e3fbb10)
+* Bump up typescript to v4.7.4 (0f69254)
+* Fix npm vulnerability warnings (9925be0)
+* Clean up examples (72ea0fb)
+
 ## 7.0.1 (2022-06-18)
 
 * Update migrating.md (9065d5f)
