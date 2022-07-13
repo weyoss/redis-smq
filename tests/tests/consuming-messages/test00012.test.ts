@@ -59,13 +59,13 @@ test('An unacknowledged message is delayed given messageRetryDelay > 0 and messa
     }
     const diff = timestamps[i] - timestamps[i - 1];
     if (i === 1) {
-      expect(validateTime(diff, 15000)).toBe(true);
+      expect(validateTime(diff, 11000)).toBe(true);
     } else if (i === 2) {
-      expect(validateTime(diff, 15000)).toBe(true);
+      expect(validateTime(diff, 11000)).toBe(true);
     } else if (i === 3) {
-      expect(validateTime(diff, 15000)).toBe(true);
+      expect(validateTime(diff, 11000)).toBe(true);
     } else {
-      expect(validateTime(diff, 15000)).toBe(true);
+      expect(validateTime(diff, 11000)).toBe(true);
     }
   }
 });
