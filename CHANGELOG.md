@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 7.0.4 (2022-07-14)
+
+* Fix dev dependencies (e42d072)
+* Update installation info (12c6170)
+* Make redis-smq-common as a peer dependency (ade08af)
+
 ## 7.0.3 (2022-07-13)
 
 * Fix consuming-messages/test00012 (4c9dfb8)
