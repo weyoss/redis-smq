@@ -76,7 +76,7 @@ things more simple to use and removing any confusions that can occur while worki
 ## Installation
 
 ```text
-npm install redis-smq --save
+npm install redis-smq-common redis-smq --save
 ```
 
 Considerations:
