@@ -1,7 +1,6 @@
 import {
   EMessageDeadLetterCause,
   EMessageUnacknowledgedCause,
-  IEventListener,
   IRequiredConfig,
   TConsumerMessageHandler,
   TQueueParams,
@@ -22,7 +21,6 @@ import {
   IRedisClientMulti,
 } from 'redis-smq-common/dist/types';
 import { ERetryStatus } from './retry-message';
-import { EventProvider } from '../../../common/event-listeners/event-provider';
 
 export class MessageHandler extends EventEmitter {
   protected id: string;
@@ -36,7 +34,6 @@ export class MessageHandler extends EventEmitter {
   protected dequeueMessage: DequeueMessage;
   protected consumeMessage: ConsumeMessage;
   protected handler: TConsumerMessageHandler;
-  protected eventListeners: IEventListener[] = [];
 
   constructor(
     consumer: Consumer,
@@ -59,7 +56,6 @@ export class MessageHandler extends EventEmitter {
     this.dequeueMessage = new DequeueMessage(this, dequeueRedisClient);
     this.consumeMessage = new ConsumeMessage(this, dequeueRedisClient, logger);
     this.registerEventsHandlers();
-    this.initEventListeners();
   }
 
   protected registerEventsHandlers(): void {
@@ -104,18 +100,6 @@ export class MessageHandler extends EventEmitter {
     this.on(events.DOWN, () => this.logger.info('Down.'));
   }
 
-  protected initEventListeners(): void {
-    this.getConfig().eventListeners.consumerEventListeners.forEach((ctor) => {
-      const plugin = new ctor(
-        this.sharedRedisClient,
-        this.consumerId,
-        this.queue,
-        new EventProvider(this),
-      );
-      this.eventListeners.push(plugin);
-    });
-  }
-
   protected cleanUp(cb: ICallback<void>): void {
     MessageHandler.cleanUp(
       this.getConfig(),
@@ -135,20 +119,6 @@ export class MessageHandler extends EventEmitter {
           );
           cb();
         } else cb();
-      },
-    );
-  }
-
-  protected tearDownEventListeners(cb: ICallback<void>): void {
-    async.each(
-      this.eventListeners,
-      (listener, index, done) => listener.quit(done),
-      (err) => {
-        if (err) cb(err);
-        else {
-          this.eventListeners = [];
-          cb();
-        }
       },
     );
   }
@@ -181,7 +151,6 @@ export class MessageHandler extends EventEmitter {
       async.waterfall(
         [
           (cb: ICallback<void>) => this.dequeueMessage.quit(cb),
-          (cb: ICallback<void>) => this.tearDownEventListeners(cb),
           (cb: ICallback<void>) => this.cleanUp(cb),
           (cb: ICallback<void>) => this.dequeueRedisClient.halt(cb),
         ],

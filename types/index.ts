@@ -5,31 +5,20 @@ import {
   TLoggerConfig,
   TRedisConfig,
 } from 'redis-smq-common/dist/types';
-import { RedisClient } from 'redis-smq-common';
+import { EventEmitter } from 'events';
 
 ///
 
-export interface IEventProvider {
-  // type-coverage:ignore-next-line
-  on(event: string, listener: (...args: any[]) => void): void;
-}
+export type TEventListenerInitArgs = {
+  eventProvider: EventEmitter;
+  config: IRequiredConfig;
+  instanceId: string;
+};
 
 export interface IEventListener {
+  init(args: TEventListenerInitArgs, cb: ICallback<void>): void;
   quit(cb: ICallback<void>): void;
 }
-
-export type TConsumerEventListenerConstructor = new (
-  redisClient: RedisClient,
-  consumerId: string,
-  queue: TQueueParams,
-  eventProvider: IEventProvider,
-) => IEventListener;
-
-export type TProducerEventListenerConstructor = new (
-  redisClient: RedisClient,
-  producerId: string,
-  eventProvider: IEventProvider,
-) => IEventListener;
 
 ///////////
 
@@ -48,8 +37,8 @@ export interface IMessagesConfigStore {
 }
 
 export interface IEventListenersConfig {
-  consumerEventListeners?: TConsumerEventListenerConstructor[];
-  producerEventListeners?: TProducerEventListenerConstructor[];
+  consumerEventListeners?: (new () => IEventListener)[];
+  producerEventListeners?: (new () => IEventListener)[];
 }
 
 export interface IConfig {
