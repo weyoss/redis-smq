@@ -1,11 +1,10 @@
 import {
   IConfig,
   IEventListener,
-  IEventProvider,
+  TEventListenerInitArgs,
   TQueueParams,
 } from '../../../types';
 import { ICallback } from 'redis-smq-common/dist/types';
-import { RedisClient } from 'redis-smq-common';
 import { config } from '../../common/config';
 import { Message } from '../../../src/lib/message/message';
 import { events } from '../../../src/common/events/events';
@@ -24,27 +23,26 @@ const consumerStats: Record<
 > = {};
 
 class TestConsumerEventListener implements IEventListener {
-  constructor(
-    redisClient: RedisClient,
-    consumerId: string,
-    queue: TQueueParams,
-    eventProvider: IEventProvider,
+  init(
+    { instanceId, eventProvider }: TEventListenerInitArgs,
+    cb: ICallback<void>,
   ) {
-    consumerStats[consumerId] = [];
+    consumerStats[instanceId] = [];
     eventProvider.on(events.MESSAGE_ACKNOWLEDGED, (msg: Message) => {
-      consumerStats[consumerId].push({
-        queue,
+      consumerStats[instanceId].push({
+        queue: msg.getRequiredQueue(),
         event: events.MESSAGE_ACKNOWLEDGED,
         message: msg,
       });
     });
     eventProvider.on(events.MESSAGE_DEAD_LETTERED, (msg: Message) => {
-      consumerStats[consumerId].push({
-        queue,
+      consumerStats[instanceId].push({
+        queue: msg.getRequiredQueue(),
         event: events.MESSAGE_DEAD_LETTERED,
         message: msg,
       });
     });
+    cb();
   }
 
   quit(cb: ICallback<void>) {

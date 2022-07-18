@@ -1,6 +1,9 @@
-import { IConfig, IEventListener, IEventProvider } from '../../../types';
+import {
+  IConfig,
+  IEventListener,
+  TEventListenerInitArgs,
+} from '../../../types';
 import { ICallback } from 'redis-smq-common/dist/types';
-import { RedisClient } from 'redis-smq-common';
 import { config } from '../../common/config';
 import { Message } from '../../../src/lib/message/message';
 import { events } from '../../../src/common/events/events';
@@ -13,18 +16,16 @@ import {
 const producerStats: Record<string, { event: string; message: Message }[]> = {};
 
 class TestProducerEventListener implements IEventListener {
-  constructor(
-    redisClient: RedisClient,
-    producerId: string,
-    eventProvider: IEventProvider,
-  ) {
-    producerStats[producerId] = [];
+  init(args: TEventListenerInitArgs, cb: ICallback<void>) {
+    const { instanceId, eventProvider } = args;
+    producerStats[instanceId] = [];
     eventProvider.on(events.MESSAGE_PUBLISHED, (msg: Message) => {
-      producerStats[producerId].push({
+      producerStats[instanceId].push({
         event: events.MESSAGE_PUBLISHED,
         message: msg,
       });
     });
+    cb();
   }
 
   quit(cb: ICallback<void>) {

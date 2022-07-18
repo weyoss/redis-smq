@@ -11,7 +11,6 @@ import { ELuaScriptName } from '../../common/redis-client/redis-client';
 import { ICallback, TUnaryFunction } from 'redis-smq-common/dist/types';
 import { scheduleMessage } from './schedule-message';
 import { Queue } from '../queue-manager/queue';
-import { EventProvider } from '../../common/event-listeners/event-provider';
 
 export class Producer extends Base {
   protected eventListeners: IEventListener[] = [];
@@ -22,13 +21,27 @@ export class Producer extends Base {
   }
 
   protected initEventListeners = (cb: ICallback<void>): void => {
-    const sharedRedisClient = this.getSharedRedisClient();
-    this.config.eventListeners.producerEventListeners.forEach((ctor) =>
-      this.eventListeners.push(
-        new ctor(sharedRedisClient, this.id, new EventProvider(this)),
-      ),
+    async.eachOf(
+      this.config.eventListeners.producerEventListeners,
+      (ctor, key, callback) => {
+        const instance = new ctor();
+        instance.init(
+          {
+            instanceId: this.id,
+            eventProvider: this,
+            config: this.getConfig(),
+          },
+          (err) => {
+            if (err) callback(err);
+            else {
+              this.eventListeners.push(instance);
+              callback();
+            }
+          },
+        );
+      },
+      cb,
     );
-    cb();
   };
 
   protected override goingUp(): TUnaryFunction<ICallback<void>>[] {
