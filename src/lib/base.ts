@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import { EventEmitter } from 'events';
-import { IConfig, IRequiredConfig } from '../../types';
+import { IConfig, IEventListener, IRequiredConfig } from '../../types';
 import { events } from '../common/events/events';
 import { getConfiguration } from '../config/configuration';
 import {
@@ -24,6 +24,7 @@ export abstract class Base extends EventEmitter {
   protected sharedRedisClient: RedisClient | null = null;
   protected logger: ICompatibleLogger;
   protected config: IRequiredConfig;
+  protected eventListeners: IEventListener[] = [];
 
   constructor(config: IConfig) {
     super();
@@ -34,7 +35,7 @@ export abstract class Base extends EventEmitter {
       this.config.logger,
       `${this.constructor.name.toLowerCase()}:${this.id}`,
     );
-    this.registerEventsHandlers();
+    this.registerSystemEventListeners();
   }
 
   protected setUpSharedRedisClient = (cb: ICallback<void>): void => {
@@ -57,7 +58,7 @@ export abstract class Base extends EventEmitter {
     } else cb();
   };
 
-  protected registerEventsHandlers(): void {
+  protected registerSystemEventListeners(): void {
     this.on(events.GOING_UP, () => this.logger.info(`Going up...`));
     this.on(events.UP, () => this.logger.info(`Up and running...`));
     this.on(events.GOING_DOWN, () => this.logger.info(`Going down...`));
@@ -76,7 +77,7 @@ export abstract class Base extends EventEmitter {
   }
 
   protected goingDown(): TUnaryFunction<ICallback<void>>[] {
-    return [this.tearDownSharedRedisClient];
+    return [this.tearDownEventListeners, this.tearDownSharedRedisClient];
   }
 
   protected down(cb?: ICallback<boolean>): void {
@@ -90,6 +91,47 @@ export abstract class Base extends EventEmitter {
       throw new errors.PanicError('Expected an instance of RedisClient');
     return this.sharedRedisClient;
   }
+
+  protected registerEventListeners(
+    Ctors: (new () => IEventListener)[],
+    cb: ICallback<void>,
+  ): void {
+    async.eachOf(
+      Ctors,
+      (ctor, key, done) => {
+        const instance = new ctor();
+        instance.init(
+          {
+            instanceId: this.id,
+            eventProvider: this,
+            config: this.getConfig(),
+          },
+          (err) => {
+            if (err) done(err);
+            else {
+              this.eventListeners.push(instance);
+              done();
+            }
+          },
+        );
+      },
+      cb,
+    );
+  }
+
+  protected tearDownEventListeners = (cb: ICallback<void>): void => {
+    async.each(
+      this.eventListeners,
+      (listener, index, done) => listener.quit(done),
+      (err) => {
+        if (err) cb(err);
+        else {
+          this.eventListeners = [];
+          cb();
+        }
+      },
+    );
+  };
 
   handleError(err: Error): void {
     if (this.powerManager.isGoingUp() || this.powerManager.isRunning()) {
