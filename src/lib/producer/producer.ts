@@ -1,8 +1,8 @@
-import { IConfig, IEventListener } from '../../../types';
+import { IConfig } from '../../../types';
 import { Message } from '../message/message';
 import { events } from '../../common/events/events';
 import { Base } from '../base';
-import { RedisClient, errors, async } from 'redis-smq-common';
+import { RedisClient, errors } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { MessageNotPublishedError } from './errors/message-not-published.error';
 import { MessageQueueRequiredError } from './errors/message-queue-required.error';
@@ -13,56 +13,20 @@ import { scheduleMessage } from './schedule-message';
 import { Queue } from '../queue-manager/queue';
 
 export class Producer extends Base {
-  protected eventListeners: IEventListener[] = [];
-
   constructor(config: IConfig = {}) {
     super(config);
     this.run();
   }
 
-  protected initEventListeners = (cb: ICallback<void>): void => {
-    async.eachOf(
+  protected initProducerEventListeners = (cb: ICallback<void>): void => {
+    this.registerEventListeners(
       this.config.eventListeners.producerEventListeners,
-      (ctor, key, callback) => {
-        const instance = new ctor();
-        instance.init(
-          {
-            instanceId: this.id,
-            eventProvider: this,
-            config: this.getConfig(),
-          },
-          (err) => {
-            if (err) callback(err);
-            else {
-              this.eventListeners.push(instance);
-              callback();
-            }
-          },
-        );
-      },
       cb,
     );
   };
 
   protected override goingUp(): TUnaryFunction<ICallback<void>>[] {
-    return super.goingUp().concat([this.initEventListeners]);
-  }
-
-  protected override goingDown(): TUnaryFunction<ICallback<void>>[] {
-    return [
-      (cb: ICallback<void>): void =>
-        async.each(
-          this.eventListeners,
-          (listener, idx, done) => listener.quit(done),
-          (err) => {
-            if (err) cb(err);
-            else {
-              this.eventListeners = [];
-              cb();
-            }
-          },
-        ),
-    ].concat(super.goingDown());
+    return super.goingUp().concat([this.initProducerEventListeners]);
   }
 
   protected enqueue(

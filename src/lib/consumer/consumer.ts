@@ -4,7 +4,6 @@ import {
   TConsumerInfo,
   TQueueParams,
   IConfig,
-  IEventListener,
 } from '../../../types';
 import { events } from '../../common/events/events';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
@@ -21,7 +20,6 @@ import {
   WorkerPool,
   logger,
   createClientInstance,
-  async,
 } from 'redis-smq-common';
 import { ICallback, TUnaryFunction } from 'redis-smq-common/dist/types';
 import DelayWorker from '../../workers/delay.worker';
@@ -34,7 +32,6 @@ export class Consumer extends Base {
   protected readonly messageHandlerRunner: MessageHandlerRunner;
   protected heartbeat: ConsumerHeartbeat | null = null;
   protected workerRunner: WorkerRunner | null = null;
-  protected eventListeners: IEventListener[] = [];
 
   constructor(config: IConfig = {}, useMultiplexing = false) {
     super(config);
@@ -97,41 +94,10 @@ export class Consumer extends Base {
     this.workerRunner.run();
   };
 
-  protected initEventListeners = (cb: ICallback<void>): void => {
-    async.eachOf(
-      this.getConfig().eventListeners.consumerEventListeners,
-      (ctor, key, callback) => {
-        const instance = new ctor();
-        instance.init(
-          {
-            instanceId: this.id,
-            eventProvider: this,
-            config: this.getConfig(),
-          },
-          (err) => {
-            if (err) callback(err);
-            else {
-              this.eventListeners.push(instance);
-              callback();
-            }
-          },
-        );
-      },
+  protected initConsumerEventListeners = (cb: ICallback<void>): void => {
+    this.registerEventListeners(
+      this.config.eventListeners.consumerEventListeners,
       cb,
-    );
-  };
-
-  protected tearDownEventListeners = (cb: ICallback<void>): void => {
-    async.each(
-      this.eventListeners,
-      (listener, index, done) => listener.quit(done),
-      (err) => {
-        if (err) cb(err);
-        else {
-          this.eventListeners = [];
-          cb();
-        }
-      },
     );
   };
 
@@ -160,7 +126,7 @@ export class Consumer extends Base {
       .goingUp()
       .concat([
         this.setUpHeartbeat,
-        this.initEventListeners,
+        this.initConsumerEventListeners,
         this.runMessageHandlers,
         this.setUpConsumerWorkers,
       ]);
@@ -170,7 +136,6 @@ export class Consumer extends Base {
     return [
       this.tearDownConsumerWorkers,
       this.shutdownMessageHandlers,
-      this.tearDownEventListeners,
       this.tearDownHeartbeat,
     ].concat(super.goingDown());
   }
