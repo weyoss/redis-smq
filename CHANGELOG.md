@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 7.0.5 (2022-07-20)
+
+* Remove code redundancies (55eec79)
+* Update event listeners docs (e308848)
+* Refactor IEventListener interface, clean up (14dbf30)
+
 ## 7.0.4 (2022-07-14)
 
 * Fix dev dependencies (e42d072)
