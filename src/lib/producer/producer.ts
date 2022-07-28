@@ -1,4 +1,3 @@
-import { IConfig } from '../../../types';
 import { Message } from '../message/message';
 import { events } from '../../common/events/events';
 import { Base } from '../base';
@@ -13,11 +12,6 @@ import { scheduleMessage } from './schedule-message';
 import { Queue } from '../queue-manager/queue';
 
 export class Producer extends Base {
-  constructor(config: IConfig = {}) {
-    super(config);
-    this.run();
-  }
-
   protected initProducerEventListeners = (cb: ICallback<void>): void => {
     this.registerEventListeners(
       this.config.eventListeners.producerEventListeners,
@@ -73,17 +67,23 @@ export class Producer extends Base {
     } else if (message.getMetadata()) {
       cb(new MessageAlreadyPublishedError());
     } else {
-      const queueParams = Queue.getParams(this.config, queue);
-      message.setQueue(queueParams);
-      const messageId = message.getSetMetadata().getId();
-      const callback: ICallback<void> = (err) => {
-        if (err) cb(err);
-        else {
-          this.emit(events.MESSAGE_PUBLISHED, message);
-          cb();
-        }
-      };
-      const proceed = () => {
+      if (!this.powerManager.isUp())
+        cb(
+          new errors.PanicError(
+            `Producer ID ${this.getId()} is not running. Before producing messages you need to run your producer instance.`,
+          ),
+        );
+      else {
+        const queueParams = Queue.getParams(this.config, queue);
+        message.setQueue(queueParams);
+        const messageId = message.getSetMetadata().getId();
+        const callback: ICallback<void> = (err) => {
+          if (err) cb(err);
+          else {
+            this.emit(events.MESSAGE_PUBLISHED, message);
+            cb();
+          }
+        };
         const redisClient = this.getSharedRedisClient();
         if (message.isSchedulable()) {
           scheduleMessage(redisClient, message, (err) => {
@@ -102,16 +102,7 @@ export class Producer extends Base {
             }
           });
         }
-      };
-      if (!this.powerManager.isUp()) {
-        if (this.powerManager.isGoingUp()) {
-          this.once(events.UP, proceed);
-        } else {
-          cb(
-            new errors.PanicError(`Producer ID ${this.getId()} is not running`),
-          );
-        }
-      } else proceed();
+      }
     }
   }
 }
