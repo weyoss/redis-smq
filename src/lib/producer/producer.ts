@@ -1,7 +1,7 @@
 import { Message } from '../message/message';
 import { events } from '../../common/events/events';
 import { Base } from '../base';
-import { RedisClient, errors } from 'redis-smq-common';
+import { RedisClient } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { MessageNotPublishedError } from './errors/message-not-published.error';
 import { MessageQueueRequiredError } from './errors/message-queue-required.error';
@@ -10,6 +10,7 @@ import { ELuaScriptName } from '../../common/redis-client/redis-client';
 import { ICallback, TUnaryFunction } from 'redis-smq-common/dist/types';
 import { scheduleMessage } from './schedule-message';
 import { Queue } from '../queue-manager/queue';
+import { ProducerNotRunningError } from './errors/producer-not-running.error';
 
 export class Producer extends Base {
   protected initProducerEventListeners = (cb: ICallback<void>): void => {
@@ -67,12 +68,7 @@ export class Producer extends Base {
     } else if (message.getMetadata()) {
       cb(new MessageAlreadyPublishedError());
     } else {
-      if (!this.powerManager.isUp())
-        cb(
-          new errors.PanicError(
-            `Producer ID ${this.getId()} is not running. Before producing messages you need to run your producer instance.`,
-          ),
-        );
+      if (!this.powerManager.isUp()) cb(new ProducerNotRunningError());
       else {
         const queueParams = Queue.getParams(this.config, queue);
         message.setQueue(queueParams);

@@ -26,7 +26,7 @@ export abstract class Base extends EventEmitter {
   protected config: IRequiredConfig;
   protected eventListeners: IEventListener[] = [];
 
-  constructor(config: IConfig) {
+  constructor(config: IConfig = {}) {
     super();
     this.id = uuid();
     this.powerManager = new PowerManager(false);
