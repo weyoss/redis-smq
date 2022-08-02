@@ -12,6 +12,8 @@ import {
 test('A message is dead-lettered when messageRetryThreshold is exceeded', async () => {
   await createQueue(defaultQueue, false);
   const producer = getProducer();
+  await producer.runAsync();
+
   const consumer = getConsumer({
     messageHandler: jest.fn(() => {
       throw new Error('Explicit error');

@@ -21,7 +21,8 @@ test('Priority queuing: case 2', async () => {
     }),
   );
 
-  const producer = promisifyAll(getProducer());
+  const producer = getProducer();
+  await producer.runAsync();
 
   // message 1
   const msg1 = new Message();

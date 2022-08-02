@@ -16,6 +16,8 @@ test("Make sure scheduled messages aren't published if destination queue is dele
     .setQueue('some_queue');
 
   const producer = getProducer();
+  await producer.runAsync();
+
   await producer.produceAsync(msg);
 
   const messageManager = await getMessageManager();

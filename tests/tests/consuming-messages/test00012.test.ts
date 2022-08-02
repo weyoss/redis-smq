@@ -44,6 +44,8 @@ test('An unacknowledged message is delayed given messageRetryDelay > 0 and messa
     .setRetryThreshold(5);
 
   const producer = getProducer();
+  await producer.runAsync();
+
   await producer.produceAsync(msg);
   consumer.run();
 

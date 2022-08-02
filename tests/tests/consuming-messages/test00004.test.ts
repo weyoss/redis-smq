@@ -14,6 +14,8 @@ test('A message is dead-lettered and not delivered when messageTTL is exceeded',
   await createQueue(defaultQueue, false);
 
   const producer = getProducer();
+  await producer.runAsync();
+
   const consumer = getConsumer();
   const consume = jest.spyOn(consumer, 'consume');
 

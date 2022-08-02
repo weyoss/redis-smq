@@ -28,7 +28,9 @@ test('Set a rate limit for a queue and consume messages using many consumers', a
     await consumer.runAsync();
   }
 
-  const producer = await getProducer();
+  const producer = getProducer();
+  await producer.runAsync();
+
   for (let i = 0; i < 100; i += 1) {
     await producer.produceAsync(
       new Message().setBody(`msg ${i}`).setQueue(defaultQueue),

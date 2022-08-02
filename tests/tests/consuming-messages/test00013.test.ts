@@ -53,6 +53,7 @@ test('Given many queues, a message is recovered from a consumer crash and re-que
   await queueBConsumer.runAsync();
 
   const producer = getProducer();
+  await producer.runAsync();
 
   // Produce a message to QUEUE B
   const anotherMsg = new Message();

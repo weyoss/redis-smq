@@ -11,6 +11,8 @@ import {
 
 test('Unacknowledged messages are re-queued when messageRetryThreshold is not exceeded', async () => {
   const producer = getProducer();
+  await producer.runAsync();
+
   await createQueue(defaultQueue, false);
 
   let callCount = 0;

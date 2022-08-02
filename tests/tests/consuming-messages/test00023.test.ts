@@ -25,6 +25,8 @@ test('Periodic scheduled messages upon consume failures are dead-lettered withou
     .setRetryThreshold(5)
     .setQueue(defaultQueue);
   const producer = getProducer();
+  await producer.runAsync();
+
   await producer.produceAsync(msg);
 
   consumer.run();

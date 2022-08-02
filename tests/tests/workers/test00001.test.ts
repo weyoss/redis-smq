@@ -23,11 +23,12 @@ test('WatchdogWorker -> DelayWorker -> ScheduleWorker', async () => {
   const consumer = getConsumer({
     messageHandler: jest.fn((msg) => {
       message = msg;
-      consumer.shutdown();
+      setTimeout(() => consumer.shutdown(), 5000);
     }),
   });
 
   const producer = getProducer();
+  await producer.runAsync();
   await producer.produceAsync(
     new Message()
       .setRetryDelay(10000)

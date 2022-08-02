@@ -20,6 +20,8 @@ test('Schedule a message: combine CRON, REPEAT, REPEAT PERIOD, DELAY', async () 
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
 
   const producer = getProducer();
+  await producer.runAsync();
+
   await producer.produceAsync(msg);
   const producedAt = Date.now();
 

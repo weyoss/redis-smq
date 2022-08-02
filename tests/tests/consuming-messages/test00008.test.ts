@@ -10,6 +10,8 @@ import {
 
 test('Async exceptions are caught when consuming a message', async () => {
   const producer = getProducer();
+  await producer.runAsync();
+
   await createQueue(defaultQueue, false);
 
   let callCount = 0;

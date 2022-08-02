@@ -11,6 +11,7 @@ test('Produce and consume 100 messages', async () => {
   await createQueue(defaultQueue, false);
 
   const producer = getProducer();
+  await producer.runAsync();
 
   const total = 100;
   const publishedMsg: Message[] = [];

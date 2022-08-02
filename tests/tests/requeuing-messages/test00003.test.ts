@@ -24,6 +24,8 @@ test('Combined test. Requeue a priority message from acknowledged queue. Check q
     .setPriority(Message.MessagePriority.ABOVE_NORMAL);
 
   const producer = getProducer();
+  await producer.runAsync();
+
   await producer.produceAsync(message);
 
   consumer.run();

@@ -7,6 +7,7 @@ import { createQueue } from '../../common/message-producing-consuming';
 
 test('Consume messages from different queues and published by a single producer instance', async () => {
   const producer = getProducer();
+  await producer.runAsync();
   for (let i = 0; i < 5; i += 1) {
     const queue = `QuEue_${i}`;
     await createQueue(queue, false);

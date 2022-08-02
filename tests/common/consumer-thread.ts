@@ -5,12 +5,15 @@ import { Producer } from '../../src/lib/producer/producer';
 import { Message } from '../../src/lib/message/message';
 
 const producer = new Producer(config);
-producer.produce(
-  new Message().setQueue(defaultQueue).setBody(123).setRetryDelay(0),
-  (err) => {
-    if (err) throw err;
-  },
-);
+producer.run((err) => {
+  if (err) throw err;
+  producer.produce(
+    new Message().setQueue(defaultQueue).setBody(123).setRetryDelay(0),
+    (err) => {
+      if (err) throw err;
+    },
+  );
+});
 
 const consumer = new Consumer(config);
 consumer.consume(

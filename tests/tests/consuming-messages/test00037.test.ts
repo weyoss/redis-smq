@@ -9,6 +9,7 @@ test('Scheduling a message and expecting different kind of failures', async () =
   await qm.queue.createAsync('test1', true);
 
   const producer = getProducer();
+  await producer.runAsync();
 
   try {
     const msg = new Message()

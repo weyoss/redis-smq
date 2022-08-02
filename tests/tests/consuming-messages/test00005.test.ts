@@ -14,6 +14,8 @@ test('Setting default message TTL from configuration', async () => {
   await createQueue(defaultQueue, false);
 
   const producer = getProducer();
+  await producer.runAsync();
+
   const consumer = getConsumer();
   const consume = jest.spyOn(consumer, 'consume');
 

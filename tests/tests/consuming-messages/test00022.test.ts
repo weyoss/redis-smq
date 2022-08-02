@@ -14,7 +14,7 @@ test('Shutdown a consumer when consuming a message with retryThreshold = 0: expe
 
   const consumer = getConsumer({
     messageHandler: jest.fn(() => {
-      consumer.shutdown();
+      setTimeout(() => consumer.shutdown(), 5000);
     }),
   });
 
@@ -23,6 +23,7 @@ test('Shutdown a consumer when consuming a message with retryThreshold = 0: expe
     .setBody('message body')
     .setQueue(defaultQueue);
   const producer = getProducer();
+  await producer.runAsync();
   await producer.produceAsync(msg);
 
   consumer.run();

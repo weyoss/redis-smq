@@ -19,6 +19,8 @@ test('Schedule a message: CRON', async () => {
     .setQueue(defaultQueue);
 
   const producer = getProducer();
+  await producer.runAsync();
+
   await producer.produceAsync(msg);
 
   await startScheduleWorker();

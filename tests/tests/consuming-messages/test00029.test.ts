@@ -19,7 +19,9 @@ test('Rate limit a queue without priority and check message rate', async () => {
     interval: 10000,
   });
 
-  const producer = await getProducer();
+  const producer = getProducer();
+  await producer.runAsync();
+
   await producer.produceAsync(
     new Message().setBody('msg 1').setQueue(defaultQueue),
   );
