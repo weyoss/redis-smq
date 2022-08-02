@@ -54,6 +54,8 @@ test('Given many consumers, a message is delivered only to one consumer', async 
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
 
   const producer = getProducer();
+  await producer.runAsync();
+
   await producer.produceAsync(msg);
 
   /**

@@ -13,6 +13,8 @@ test('A message is unacknowledged when messageConsumeTimeout is exceeded', async
   await createQueue(defaultQueue, false);
 
   const producer = getProducer();
+  await producer.runAsync();
+
   let consumeCount = 0;
   const consumer = getConsumer({
     messageHandler: jest.fn((msg: unknown, cb: ICallback<void>) => {

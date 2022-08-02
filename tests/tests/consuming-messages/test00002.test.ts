@@ -11,6 +11,8 @@ import {
 test('Produce and consume 1 message', async () => {
   await createQueue(defaultQueue, false);
   const producer = getProducer();
+  await producer.runAsync();
+
   const consumer = getConsumer({
     messageHandler: (msg1, cb) => cb(),
   });

@@ -19,6 +19,8 @@ test('Schedule a message: DELAY', async () => {
     .setQueue(defaultQueue); // seconds
 
   const producer = getProducer();
+  await producer.runAsync();
+
   await producer.produceAsync(msg);
   const producedAt = Date.now();
 

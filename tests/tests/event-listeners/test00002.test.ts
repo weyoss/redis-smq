@@ -42,12 +42,14 @@ const cfg: IConfig = {
 
 test('Producer event listeners', async () => {
   await createQueue(defaultQueue, false);
-  const p0 = await getProducer(cfg);
+  const p0 = getProducer(cfg);
+  await p0.runAsync();
   const m0 = new Message().setQueue(defaultQueue).setBody(123);
   await p0.produceAsync(m0);
   const m1 = new Message().setQueue(defaultQueue).setBody(123);
   await p0.produceAsync(m1);
-  const p1 = await getProducer(cfg);
+  const p1 = getProducer(cfg);
+  await p1.runAsync();
   const m2 = new Message().setQueue(defaultQueue).setBody(123);
   await p1.produceAsync(m2);
   const m3 = new Message().setQueue(defaultQueue).setBody(123);

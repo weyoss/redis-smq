@@ -21,6 +21,8 @@ test('Schedule a message: combine REPEAT, REPEAT PERIOD, DELAY. Case 1', async (
     .setQueue(defaultQueue);
 
   const producer = getProducer();
+  await producer.runAsync();
+
   await producer.produceAsync(msg);
   const producedAt = Date.now();
 

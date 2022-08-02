@@ -13,6 +13,8 @@ test('An unacknowledged message is dead-lettered and not delivered again, given 
   await createQueue(defaultQueue, false);
 
   const producer = getProducer();
+  await producer.runAsync();
+
   const consumer = getConsumer({
     messageHandler: () => {
       throw new Error();

@@ -1,7 +1,6 @@
 import { IConfig, TQueueParams } from '../../types';
 import { Message } from '../../src/lib/message/message';
 import { events } from '../../src/common/events/events';
-import { promisifyAll } from 'bluebird';
 import { untilConsumerEvent, untilMessageAcknowledged } from './events';
 import { getConsumer } from './consumer';
 import { getProducer } from './producer';
@@ -20,6 +19,8 @@ export async function produceAndAcknowledgeMessage(
   cfg: IConfig = requiredConfig,
 ) {
   const producer = getProducer(cfg);
+  await producer.runAsync();
+
   const consumer = getConsumer({
     cfg,
     queue,
@@ -42,6 +43,8 @@ export async function produceAndDeadLetterMessage(
   cfg: IConfig = requiredConfig,
 ) {
   const producer = getProducer(cfg);
+  await producer.runAsync();
+
   const consumer = getConsumer({
     cfg,
     queue,
@@ -64,6 +67,8 @@ export async function produceMessage(
   cfg: IConfig = requiredConfig,
 ) {
   const producer = getProducer(cfg);
+  await producer.runAsync();
+
   const message = new Message();
   message.setBody({ hello: 'world' }).setQueue(queue);
   await producer.produceAsync(message);
@@ -74,7 +79,9 @@ export async function produceMessageWithPriority(
   queue: TQueueParams = defaultQueue,
   cfg: IConfig = requiredConfig,
 ) {
-  const producer = promisifyAll(getProducer(cfg));
+  const producer = getProducer(cfg);
+  await producer.runAsync();
+
   const message = new Message();
   message.setPriority(Message.MessagePriority.LOW).setQueue(queue);
   await producer.produceAsync(message);
@@ -85,7 +92,9 @@ export async function scheduleMessage(
   queue: TQueueParams = defaultQueue,
   cfg: IConfig = requiredConfig,
 ) {
-  const producer = promisifyAll(getProducer(cfg));
+  const producer = getProducer(cfg);
+  await producer.runAsync();
+
   const message = new Message();
   message.setScheduledDelay(10000).setQueue(queue);
   await producer.produceAsync(message);

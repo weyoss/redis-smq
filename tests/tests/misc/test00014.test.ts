@@ -3,6 +3,8 @@ import { getProducer } from '../../common/producer';
 
 test('Producer: isRunning, isGoingUp, isGoingDown, isUp, isDown', async () => {
   const mProducer = getProducer();
+  await mProducer.runAsync();
+
   expect(typeof mProducer.getId()).toBe('string');
   if (mProducer.isGoingUp()) {
     await new Promise((resolve) => {

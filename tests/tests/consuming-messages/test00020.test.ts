@@ -3,6 +3,7 @@ import { getProducer } from '../../common/producer';
 
 test('Producing a message without a message queue', async () => {
   const producer = getProducer();
+  await producer.runAsync();
 
   const msg = new Message();
   msg.setBody({ hello: 'world' });

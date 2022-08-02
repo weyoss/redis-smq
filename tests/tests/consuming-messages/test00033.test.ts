@@ -50,6 +50,8 @@ test('Consume messages from different queues using a single consumer instance: c
   ]);
 
   const producer = getProducer();
+  await producer.runAsync();
+
   for (let i = 0; i < 5; i += 1) {
     await producer.produceAsync(
       new Message().setQueue(`test${i + 1}`).setBody(`body ${i + 1}`),

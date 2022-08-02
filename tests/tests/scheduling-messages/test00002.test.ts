@@ -10,6 +10,8 @@ test('Schedule a message: messageManager.getScheduledMessages()', async () => {
   await createQueue(defaultQueue, false);
 
   const producer = getProducer();
+  await producer.runAsync();
+
   const msg1 = new Message();
   msg1.setScheduledDelay(30000);
   msg1
