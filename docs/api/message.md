@@ -287,21 +287,19 @@ message.getBody(); // 123
 ### Message.prototype.getId()
 
 ```javascript
-const { Message, Producer } = require('redis-smq');
+const { Message } = require('redis-smq');
 
 const message = new Message();
 message.setQueue('test_queue').setBody('some data');
 message.getId(); // null
 
-
-new Producer().produce(message, (err) => {
+producer.produce(message, (err) => {
   if (err) console.log(err);
   else {
     const messageId = message.getId(); // c53d1766-0e56-4362-8aab-ef70c4eb03ad
     console.log('Message ID is ', messageId);
   }
 })
-
 ````
 
 ### Message.prototype.getTTL()
@@ -364,13 +362,12 @@ message.getCreatedAt(); // 1530613595087, in millis
 ### Message.prototype.getPublishedAt()
 
 ```javascript
-const {Message, Producer} = require('redis-smq');
+const { Message } = require('redis-smq');
 
 const message = new Message();
 message.setQueue('test_queue').setBody('Test message');
 message.getPublishedAt(); // null
 
-const producer = new Producer();
 producer.produce(message, (err) => {
     if (err) console.log(err);
     else {
@@ -382,7 +379,7 @@ producer.produce(message, (err) => {
 ### Message.prototype.getScheduledAt()
 
 ```javascript
-const {Message, Producer} = require('redis-smq');
+const { Message } = require('redis-smq');
 
 const message = new Message();
 message.setScheduledRepeat(6);
@@ -390,7 +387,6 @@ message.getScheduledAt(); // null
 message.setQueue('test_queue');
 message.setBody('Test message');
 
-const producer = new Producer();
 producer.produce(message, (err) => {
     if (err) console.log(err);
     else {

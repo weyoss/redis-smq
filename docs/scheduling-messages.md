@@ -14,9 +14,7 @@ using the `produce()` method.
 
 ```javascript
 'use strict';
-const { Message, Producer } = require('redis-smq');
-
-const producer = new Producer();
+const { Message } = require('redis-smq');
 
 const message = new Message();
 message

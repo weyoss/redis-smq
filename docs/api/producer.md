@@ -19,6 +19,25 @@ const producer = new Producer(config);
 - `config` *(object): Optional.*  See [Configuration](/docs/configuration.md) for more details.
 
 
+### Producer.prototype.run()
+
+Start your producer instance. No connection to Redis server is opened until this method is called.
+
+Starting with v7.0.6 producer instances are no longer automatically started upon creation.
+
+You have to run a producer before producing messages.
+
+**Syntax**
+
+```javascript
+run(cb);
+```
+
+**Parameters**
+- `cb(err, status)` *(function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* Error object.
+  - `status` *(boolean).* Indicate whether the operation completed successfully.
+
 ### Producer.prototype.produce()
 
 **Syntax**
@@ -33,17 +52,14 @@ producer.produce(message, cb);
 - `cb(err)` *(function): Required.* Callback function.
 
 ```javascript
-const { Message, Producer } = require('redis-smq');
+const { Message } = require('redis-smq');
 
 const message = new Message();
-
 message
         .setBody({ hello: 'world' })
         .setTTL(3600000)
         .setScheduledDelay(10000) // in millis
         .setQueue('test_queue');
-
-const producer = new Producer();
 producer.produce(message, (err) => {
   if (err) console.log(err);
   else console.log('Successfully produced')
@@ -57,23 +73,6 @@ Before publishing a message, make sure that:
 - Messages without priority are published to a LIFO queue.
 
 Otherwise, an error will be returned.
-
-### Producer.prototype.run()
-
-Start your producer instance. No connection to Redis server is opened until this method is called.
-
-Contrary to consumer instances, producer instances are automatically started upon creation.
-
-**Syntax**
-
-```javascript
-run(cb);
-```
-
-**Parameters**
-- `cb(err, status)` *(function): Required.* Callback function.
-  - `err` *(Error | null | undefined).* Error object.
-  - `status` *(boolean).* Indicate whether the operation completed successfully.
 
 ### Producer.prototype.shutdown()
 
