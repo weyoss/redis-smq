@@ -41,15 +41,13 @@ See [Message Priority](/docs/api/message.md#messagemessagepriority) for more det
 Before producing a message with a priority, make sure that queue of the message is a priority queue. Otherwise, an error will be returned.
 
 ```javascript
-const {Message, Producer} = require('redis-smq');
+const { Message } = require('redis-smq');
 
 const msg1 = new Message();
 msg1.setPriority(Message.MessagePriority.HIGH).setQueue('test_queue');
-
-const producer = new Producer();
 producer.produce(msg1, (err) => {
-    if (err) console.log(err);
-    else console.log('Successfully produced')
+  if (err) console.log(err);
+  else console.log('Successfully produced')
 });
 ```
 

@@ -141,24 +141,26 @@ Before publishing a message do not forget to set the destination queue of the me
 'use strict';
 const {Message, Producer} = require('redis-smq');
 
-const message = new Message();
-
-message
-    .setBody({hello: 'world'})
-    .setTTL(3600000) // in millis
-    .setQueue('test_queue');
-
-message.getId() // null
-
 const producer = new Producer();
-producer.produce(message, (err) => {
-    if (err) console.log(err);
-    else {
-      const msgId = message.getId(); // string
-      console.log('Successfully produced. Message ID is ', msgId);
-    }
-});
+producer.run((err) => {
+   if (err) throw err;
+   const message = new Message();
+   message
+           .setBody({hello: 'world'})
+           .setTTL(3600000) // in millis
+           .setQueue('test_queue');
+   message.getId() // null
+   producer.produce(message, (err) => {
+      if (err) console.log(err);
+      else {
+         const msgId = message.getId(); // string
+         console.log('Successfully produced. Message ID is ', msgId);
+      }
+   });
+})
 ```
+
+Starting with v7.0.6, before producing messages you need first to run your producer instance.
 
 See [Producer Reference](/docs/api/producer.md) for more details.
 
