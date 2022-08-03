@@ -1,40 +1,77 @@
-import { Consumer, Producer, QueueManager, Message } from '../..';
-import { IConfig } from '../../types';
-import { logger } from 'redis-smq-common';
-
-logger.setLogger(console);
-
-const config: IConfig = {
-  logger: {
-    enabled: false,
-  },
-  messages: {
-    store: true,
-  },
-};
-
-const producer = new Producer(config);
-
-const consumer = new Consumer(config);
-consumer.run();
-
-const produce = (err?: Error | null) => {
-  if (err) console.log(err);
-  else {
-    setTimeout(() => {
-      const m = new Message().setBody(Date.now()).setQueue(queue);
-      producer.produce(m, produce);
-    }, 1000);
-  }
-};
+import { async } from 'redis-smq-common';
+import { ICallback } from 'redis-smq-common/dist/types';
+import { Producer, Consumer, QueueManager, Message } from '../..';
+import { events } from '../../src/common/events/events';
 
 const queue = `queue_${Date.now()}`;
-QueueManager.createInstance(config, (err, queueManager) => {
+const producer = new Producer();
+
+const produceForever = (err?: Error | null) => {
   if (err) console.log(err);
   else {
-    queueManager?.queue.create(queue, false, (err) => {
-      if (err) console.log(err);
-      else consumer.consume(queue, (msg, cb) => cb(), produce);
-    });
+    if (producer.isGoingUp() || producer.isRunning()) {
+      const message = new Message().setBody('some data').setQueue(queue); // using the default namespace
+      producer.produce(message, produceForever);
+    }
   }
+};
+
+const consumer = new Consumer();
+
+consumer.consume(
+  queue, // using the default namespace
+  (message, cb) => cb(),
+  (err) => err && console.log(err),
+);
+
+consumer.on(events.UP, () => {
+  console.log('UP');
 });
+
+consumer.on(events.DOWN, () => {
+  console.log('DOWN');
+});
+
+const serialOnOff = (cb: ICallback<void>) =>
+  async.waterfall(
+    [
+      (cb: ICallback<void>) => consumer.run((err) => cb(err)),
+      (cb: ICallback<void>) => consumer.shutdown((err) => cb(err)),
+      (cb: ICallback<void>) => consumer.run((err) => cb(err)),
+      (cb: ICallback<void>) => consumer.shutdown((err) => cb(err)),
+      (cb: ICallback<void>) => consumer.run((err) => cb(err)),
+      (cb: ICallback<void>) => consumer.shutdown((err) => cb(err)),
+      (cb: ICallback<void>) => consumer.run((err) => cb(err)),
+      (cb: ICallback<void>) => consumer.shutdown((err) => cb(err)),
+      (cb: ICallback<void>) => consumer.run((err) => cb(err)),
+      (cb: ICallback<void>) => consumer.shutdown((err) => cb(err)),
+    ],
+    cb,
+  );
+
+let queueManager: QueueManager | null | undefined = null;
+async.waterfall(
+  [
+    (cb: ICallback<void>) =>
+      QueueManager.createInstance({}, (err, instance) => {
+        if (err) cb(err);
+        else {
+          queueManager = instance;
+          queueManager?.queue.create(queue, false, cb);
+        }
+      }),
+    (cb: ICallback<void>) => producer.run((err) => cb(err)),
+    (cb: ICallback<void>) => {
+      produceForever();
+      serialOnOff(cb);
+    },
+  ],
+  (err) => {
+    if (err) console.log(err);
+    else {
+      producer.shutdown();
+      consumer.shutdown();
+      queueManager?.quit(() => void 0);
+    }
+  },
+);
