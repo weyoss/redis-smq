@@ -1,5 +1,6 @@
 import { events } from '../../../src/common/events/events';
 import { getProducer } from '../../common/producer';
+import { shutDownBaseInstance } from '../../common/base-instance';
 
 test('Producer: isRunning, isGoingUp, isGoingDown, isUp, isDown', async () => {
   const mProducer = getProducer();
@@ -11,7 +12,7 @@ test('Producer: isRunning, isGoingUp, isGoingDown, isUp, isDown', async () => {
       mProducer.once(events.UP, resolve);
     });
   }
-  await mProducer.shutdownAsync();
+  await shutDownBaseInstance(mProducer);
   expect(mProducer.isRunning()).toBe(false);
   expect(mProducer.isGoingUp()).toBe(false);
   expect(mProducer.isGoingDown()).toBe(false);
@@ -23,5 +24,5 @@ test('Producer: isRunning, isGoingUp, isGoingDown, isUp, isDown', async () => {
   expect(mProducer.isGoingDown()).toBe(false);
   expect(mProducer.isUp()).toBe(true);
   expect(mProducer.isDown()).toBe(false);
-  await mProducer.shutdownAsync();
+  await shutDownBaseInstance(mProducer);
 });

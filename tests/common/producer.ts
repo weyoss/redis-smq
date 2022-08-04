@@ -1,8 +1,8 @@
 import { IConfig } from '../../types';
 import { Producer } from '../../src/lib/producer/producer';
 import { promisifyAll } from 'bluebird';
-import { events } from '../../src/common/events/events';
 import { requiredConfig } from './config';
+import { shutDownBaseInstance } from './base-instance';
 
 const producersList: Producer[] = [];
 
@@ -14,17 +14,5 @@ export function getProducer(cfg: IConfig = requiredConfig) {
 }
 
 export async function shutDownProducers() {
-  for (const i of producersList) {
-    if (i.isGoingUp()) {
-      await new Promise((resolve) => {
-        i.once(events.UP, resolve);
-      });
-    }
-    if (i.isRunning()) {
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise((resolve) => {
-        i.shutdown(resolve);
-      });
-    }
-  }
+  for (const i of producersList) await shutDownBaseInstance(i);
 }

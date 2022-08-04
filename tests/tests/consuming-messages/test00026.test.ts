@@ -7,6 +7,7 @@ import {
   defaultQueue,
   produceAndAcknowledgeMessage,
 } from '../../common/message-producing-consuming';
+import { shutDownBaseInstance } from '../../common/base-instance';
 
 test('Message storage: acknowledged.expire = 10000', async () => {
   const cfg = merge(config, {
@@ -26,8 +27,8 @@ test('Message storage: acknowledged.expire = 10000', async () => {
     cfg,
   );
 
-  await p.shutdownAsync();
-  await c.shutdownAsync();
+  await shutDownBaseInstance(p);
+  await shutDownBaseInstance(c);
 
   const res1 = await messageManager.acknowledgedMessages.listAsync(
     defaultQueue,

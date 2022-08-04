@@ -7,6 +7,7 @@ import {
   produceAndAcknowledgeMessage,
   produceAndDeadLetterMessage,
 } from '../../common/message-producing-consuming';
+import { shutDownBaseInstance } from '../../common/base-instance';
 
 test('Message storage: storeMessages = false', async () => {
   const cfg = merge(config, {
@@ -20,8 +21,8 @@ test('Message storage: storeMessages = false', async () => {
     defaultQueue,
     cfg,
   );
-  await producer.shutdownAsync();
-  await consumer.shutdownAsync();
+  await shutDownBaseInstance(producer);
+  await shutDownBaseInstance(consumer);
   const messageManager = await getMessageManager();
   const res1 = await messageManager.deadLetteredMessages.listAsync(
     defaultQueue,
@@ -36,8 +37,8 @@ test('Message storage: storeMessages = false', async () => {
     cfg,
   );
 
-  await p.shutdownAsync();
-  await c.shutdownAsync();
+  await shutDownBaseInstance(p);
+  await shutDownBaseInstance(c);
 
   const res2 = await messageManager.acknowledgedMessages.listAsync(
     defaultQueue,

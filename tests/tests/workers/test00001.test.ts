@@ -15,6 +15,7 @@ import {
 } from '../../common/message-producing-consuming';
 import { requiredConfig } from '../../common/config';
 import { logger } from '../../common/logger';
+import { shutDownBaseInstance } from '../../common/base-instance';
 
 test('WatchdogWorker -> DelayWorker -> ScheduleWorker', async () => {
   await createQueue(defaultQueue, false);
@@ -38,7 +39,7 @@ test('WatchdogWorker -> DelayWorker -> ScheduleWorker', async () => {
 
   consumer.run();
   await untilConsumerEvent(consumer, events.DOWN);
-  await consumer.shutdownAsync();
+  await shutDownBaseInstance(consumer);
   expect(message !== null).toBe(true);
 
   const redisClient = await getRedisInstance();

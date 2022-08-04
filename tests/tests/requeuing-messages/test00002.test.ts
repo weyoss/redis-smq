@@ -5,11 +5,12 @@ import {
   defaultQueue,
   produceAndAcknowledgeMessage,
 } from '../../common/message-producing-consuming';
+import { shutDownBaseInstance } from '../../common/base-instance';
 
 test('Combined test. Requeue a message from acknowledged queue. Check queue metrics.', async () => {
   await createQueue(defaultQueue, false);
   const { consumer, queue, message } = await produceAndAcknowledgeMessage();
-  await consumer.shutdownAsync();
+  await shutDownBaseInstance(consumer);
   const messageManager = await getMessageManager();
   const res1 = await messageManager.pendingMessages.listAsync(queue, 0, 100);
   expect(res1.total).toBe(0);

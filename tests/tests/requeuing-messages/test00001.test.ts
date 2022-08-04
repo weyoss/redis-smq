@@ -5,11 +5,12 @@ import {
   defaultQueue,
   produceAndDeadLetterMessage,
 } from '../../common/message-producing-consuming';
+import { shutDownBaseInstance } from '../../common/base-instance';
 
 test('Combined test: Requeue a message from dead-letter queue. Check queue metrics.', async () => {
   await createQueue(defaultQueue, false);
   const { message, queue, consumer } = await produceAndDeadLetterMessage();
-  await consumer.shutdownAsync();
+  await shutDownBaseInstance(consumer);
 
   const messageManager = await getMessageManager();
   await messageManager.deadLetteredMessages.requeueAsync(

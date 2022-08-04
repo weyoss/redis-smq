@@ -16,6 +16,7 @@ import {
 } from '../../common/message-producing-consuming';
 import { delay } from 'bluebird';
 import { getConsumer } from '../../common/consumer';
+import { shutDownBaseInstance } from '../../common/base-instance';
 
 const consumerStats: Record<
   string,
@@ -63,12 +64,12 @@ test('Consumer event listeners', async () => {
     defaultQueue,
     cfg,
   );
-  await c0.shutdownAsync();
+  await shutDownBaseInstance(c0);
   const { message: m1, consumer: c1 } = await produceAndAcknowledgeMessage(
     defaultQueue,
     cfg,
   );
-  await c1.shutdownAsync();
+  await shutDownBaseInstance(c1);
   const anotherQueue = { name: 'another_queue', ns: 'testing' };
   await createQueue(anotherQueue, false);
   const {
@@ -76,7 +77,7 @@ test('Consumer event listeners', async () => {
     consumer: c2,
     producer: p2,
   } = await produceAndDeadLetterMessage(anotherQueue, cfg);
-  await c2.shutdownAsync();
+  await shutDownBaseInstance(c2);
 
   const c3 = getConsumer({ queue: anotherQueue, cfg });
   await c3.runAsync();

@@ -6,6 +6,7 @@ import {
   createQueue,
   defaultQueue,
 } from '../../common/message-producing-consuming';
+import { shutDownBaseInstance } from '../../common/base-instance';
 
 describe('Consumer heartbeat: check online/offline consumers', () => {
   test('Case 1', async () => {
@@ -36,7 +37,7 @@ describe('Consumer heartbeat: check online/offline consumers', () => {
       await HeartbeatAsync.getExpiredHeartbeatIdsAsync(redisClient);
     expect(expiredHeartbeatKeys.length).toBe(0);
 
-    await consumer.shutdownAsync();
+    await shutDownBaseInstance(consumer);
 
     //
     const validHeartbeatKeys2 = await HeartbeatAsync.getValidHeartbeatIdsAsync(

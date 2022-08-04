@@ -2,6 +2,7 @@ import { promisifyAll } from 'bluebird';
 import { Consumer } from '../../../src/lib/consumer/consumer';
 import { config } from '../../common/config';
 import { getQueueManager } from '../../common/queue-manager';
+import { shutDownBaseInstance } from '../../common/base-instance';
 
 test('Consume messages from different queues using a single consumer instance: case 1', async () => {
   const queueManager = await getQueueManager();
@@ -73,5 +74,5 @@ test('Consume messages from different queues using a single consumer instance: c
     { name: 'queue_a', ns: 'testing' },
   ]);
 
-  await consumer.shutdownAsync();
+  await shutDownBaseInstance(consumer);
 });

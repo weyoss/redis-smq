@@ -5,6 +5,7 @@ import { events } from '../../../src/common/events/events';
 import { config } from '../../common/config';
 import { getQueueManager } from '../../common/queue-manager';
 import { getProducer } from '../../common/producer';
+import { shutDownBaseInstance } from '../../common/base-instance';
 
 test('Consume messages from different queues using a single consumer instance: case 6', async () => {
   const qm = await getQueueManager();
@@ -85,5 +86,5 @@ test('Consume messages from different queues using a single consumer instance: c
     'body 5',
   ]);
 
-  await consumer.shutdownAsync();
+  await shutDownBaseInstance(consumer);
 });
