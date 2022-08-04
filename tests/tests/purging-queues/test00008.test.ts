@@ -4,6 +4,7 @@ import {
   createQueue,
   produceAndAcknowledgeMessage,
 } from '../../common/message-producing-consuming';
+import { shutDownBaseInstance } from '../../common/base-instance';
 
 test('Combined: Fetching namespaces, deleting a namespace with its message queues', async () => {
   const queueA: TQueueParams = {
@@ -41,14 +42,14 @@ test('Combined: Fetching namespaces, deleting a namespace with its message queue
     'Before deleting a queue/namespace, make sure it is not used by a message handler',
   );
 
-  await c1.shutdownAsync();
+  await shutDownBaseInstance(c1);
   await expect(async () => {
     await queueManager.namespace.deleteAsync('ns1');
   }).rejects.toThrow(
     'Before deleting a queue/namespace, make sure it is not used by a message handler',
   );
 
-  await c2.shutdownAsync();
+  await shutDownBaseInstance(c2);
   await queueManager.namespace.deleteAsync('ns1');
 
   await expect(queueManager.queueMetrics.getMetricsAsync(q1)).rejects.toThrow(

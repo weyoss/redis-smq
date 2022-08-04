@@ -4,6 +4,7 @@ import {
   defaultQueue,
   produceAndAcknowledgeMessage,
 } from '../../common/message-producing-consuming';
+import { shutDownBaseInstance } from '../../common/base-instance';
 
 test('Deleting a message queue with all of its data', async () => {
   await createQueue(defaultQueue, false);
@@ -18,7 +19,7 @@ test('Deleting a message queue with all of its data', async () => {
     'Before deleting a queue/namespace, make sure it is not used by a message handler',
   );
 
-  await consumer.shutdownAsync();
+  await shutDownBaseInstance(consumer);
   await queueManager.queue.deleteAsync(queue);
 
   await expect(

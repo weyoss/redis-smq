@@ -5,6 +5,7 @@ import { config } from '../../common/config';
 import { untilMessageAcknowledged } from '../../common/events';
 import { getProducer } from '../../common/producer';
 import { createQueue } from '../../common/message-producing-consuming';
+import { shutDownBaseInstance } from '../../common/base-instance';
 
 test('Consume messages from different queues using a single consumer instance: case 2', async () => {
   await createQueue('test_queue', false);
@@ -34,5 +35,5 @@ test('Consume messages from different queues using a single consumer instance: c
   }, 1000);
   await untilMessageAcknowledged(consumer, msg2);
 
-  await consumer.shutdownAsync();
+  await shutDownBaseInstance(consumer);
 });

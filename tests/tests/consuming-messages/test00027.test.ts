@@ -6,6 +6,7 @@ import {
   defaultQueue,
   produceAndAcknowledgeMessage,
 } from '../../common/message-producing-consuming';
+import { shutDownBaseInstance } from '../../common/base-instance';
 
 test('Message storage: acknowledged.queueSize = 3', async () => {
   const cfg = merge(config, {
@@ -24,8 +25,8 @@ test('Message storage: acknowledged.queueSize = 3', async () => {
     defaultQueue,
     cfg,
   );
-  await c1.shutdownAsync();
-  await p1.shutdownAsync();
+  await shutDownBaseInstance(c1);
+  await shutDownBaseInstance(p1);
 
   const res1 = await messageManager.acknowledgedMessages.listAsync(
     defaultQueue,
@@ -39,8 +40,8 @@ test('Message storage: acknowledged.queueSize = 3', async () => {
     defaultQueue,
     cfg,
   );
-  await c2.shutdownAsync();
-  await p2.shutdownAsync();
+  await shutDownBaseInstance(c2);
+  await shutDownBaseInstance(p2);
 
   const res2 = await messageManager.acknowledgedMessages.listAsync(
     defaultQueue,
@@ -54,8 +55,8 @@ test('Message storage: acknowledged.queueSize = 3', async () => {
     defaultQueue,
     cfg,
   );
-  await c3.shutdownAsync();
-  await p3.shutdownAsync();
+  await shutDownBaseInstance(c3);
+  await shutDownBaseInstance(p3);
 
   const res3 = await messageManager.acknowledgedMessages.listAsync(
     defaultQueue,
@@ -69,8 +70,8 @@ test('Message storage: acknowledged.queueSize = 3', async () => {
     defaultQueue,
     cfg,
   );
-  await c4.shutdownAsync();
-  await p4.shutdownAsync();
+  await shutDownBaseInstance(c4);
+  await shutDownBaseInstance(p4);
 
   const res4 = await messageManager.acknowledgedMessages.listAsync(
     defaultQueue,

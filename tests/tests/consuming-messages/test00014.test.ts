@@ -4,6 +4,7 @@ import { untilMessageAcknowledged } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
 import { createQueue } from '../../common/message-producing-consuming';
+import { shutDownBaseInstance } from '../../common/base-instance';
 
 test('Consume messages from different queues and published by a single producer instance', async () => {
   const producer = getProducer();
@@ -39,7 +40,7 @@ test('Consume messages from different queues and published by a single producer 
     });
     await consumer.runAsync();
     await untilMessageAcknowledged(consumer);
-    await consumer.shutdownAsync();
+    await shutDownBaseInstance(consumer);
 
     //
     const m2 = await metrics.queueMetrics.getMetricsAsync(`queue_${i}`);

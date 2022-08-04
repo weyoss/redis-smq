@@ -8,6 +8,7 @@ import {
   createQueue,
   defaultQueue,
 } from '../../common/message-producing-consuming';
+import { shutDownBaseInstance } from '../../common/base-instance';
 
 test('Consume messages from different queues using a single consumer instance: case 5', async () => {
   await createQueue(defaultQueue, false);
@@ -47,5 +48,5 @@ test('Consume messages from different queues using a single consumer instance: c
     'body 5',
   ]);
 
-  await consumer.shutdownAsync();
+  await shutDownBaseInstance(consumer);
 });

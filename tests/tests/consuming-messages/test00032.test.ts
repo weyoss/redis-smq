@@ -5,6 +5,7 @@ import { config } from '../../common/config';
 import { getQueueManager } from '../../common/queue-manager';
 import { getRedisInstance } from '../../common/redis';
 import { defaultQueue } from '../../common/message-producing-consuming';
+import { shutDownBaseInstance } from '../../common/base-instance';
 
 test('Consume messages from different queues using a single consumer instance: case 3', async () => {
   const qm = await getQueueManager();
@@ -73,5 +74,5 @@ test('Consume messages from different queues using a single consumer instance: c
   );
   expect(Object.keys(c1)).toEqual([]);
 
-  await consumer.shutdownAsync();
+  await shutDownBaseInstance(consumer);
 });
