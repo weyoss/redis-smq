@@ -21,7 +21,7 @@ To create a priority queue use the [QueueManager.prototype.queue.create()](/docs
 ```javascript
 const { QueueManager } = require('redis-smq');
 
-QueueManager.getSingletonInstance((err, queueManager) => {
+QueueManager.createInstance(config, (err, queueManager) => {
   if (err) console.log(err);
   else queueManager.queue.create('test_queue', true, (err) => console.log(err));
 })

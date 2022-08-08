@@ -45,7 +45,7 @@ createInstance(config, cb)
 ```javascript
 const { MessageManager } = require('redis-smq');
 
-MessageManager.createInstance({}, (err, messageManager) => {
+MessageManager.createInstance(config, (err, messageManager) => {
   if (err) console.log(err);
   else {
     // ...

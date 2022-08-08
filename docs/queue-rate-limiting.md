@@ -20,7 +20,7 @@ To configure and view rate limiting parameters for a queue, the [QueueManager](/
 ```javascript
 const { QueueManager } = require('redis-smq');
 
-QueueManager.getSingletonInstance((err, queueManager) => {
+QueueManager.createInstance(config, (err, queueManager) => {
   if (err) console.log(err);
   else {
     // Setting a rate limit of 200 msg/min for the 'notofications' queue
