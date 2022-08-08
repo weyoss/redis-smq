@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 7.0.6 (2022-08-08)
+
+* Improve consumer/producer shutdown handling (36278ce)
+* Update docs (51dfd16)
+* Update examples (208934b)
+* Fix tests (573e340)
+* Add and use ProducerNotRunningError error class (e89facd)
+* Fix a potential MaxListenersExceededWarning exception throwing (011a21b)
+* Make producers to be run manually before producing messages (c989449)
+
 ## 7.0.5 (2022-07-20)
 
 * Remove code redundancies (55eec79)
