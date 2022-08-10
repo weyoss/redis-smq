@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 7.0.7 (2022-08-10)
+
+* Bump up redis-smq-common to v1.0.2 (ff385ad)
+* Update docs (3871e8f)
+
 ## 7.0.6 (2022-08-08)
 
 * Improve consumer/producer shutdown handling (36278ce)
