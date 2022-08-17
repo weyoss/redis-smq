@@ -5,8 +5,8 @@ import {
   TQueueParams,
 } from '../../../types';
 import { MessageMetadata } from './message-metadata';
-import { errors } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
+import { MessageError } from './errors/message.error';
 
 export class Message {
   // Do not forget about javascript users. Using an object map instead of enum
@@ -70,7 +70,7 @@ export class Message {
 
   getRequiredMetadata(): MessageMetadata {
     if (!this.metadata) {
-      throw new errors.PanicError(
+      throw new MessageError(
         `Expected an instance of MessageMetadata. Probably the message has not yet been published`,
       );
     }
@@ -112,7 +112,7 @@ export class Message {
 
   getRequiredId(): string {
     if (!this.metadata) {
-      throw new errors.PanicError(`Message has not yet been published`);
+      throw new MessageError(`Message has not yet been published`);
     }
     return this.metadata.getId();
   }
@@ -134,7 +134,7 @@ export class Message {
     // So just make sure that we have an integer value
     const value = Number(period);
     if (isNaN(value) || value < 0) {
-      throw new errors.ArgumentError(
+      throw new MessageError(
         'Expected a positive integer value in milliseconds',
       );
     }
@@ -150,7 +150,7 @@ export class Message {
     // So just make sure that we have an integer value
     const value = Number(delay);
     if (isNaN(value) || value < 0) {
-      throw new errors.ArgumentError(
+      throw new MessageError(
         'Expected a positive integer value in milliseconds',
       );
     }
@@ -170,7 +170,7 @@ export class Message {
     // So just make sure that we have an integer value
     const value = Number(repeat);
     if (isNaN(value) || value < 0) {
-      throw new errors.ArgumentError('Expected a positive integer value >= 0');
+      throw new MessageError('Expected a positive integer value >= 0');
     }
     this.scheduledRepeat = value;
     return this;
@@ -212,7 +212,7 @@ export class Message {
 
   setPriority(priority: number): Message {
     if (!Object.values(Message.MessagePriority).includes(priority)) {
-      throw new errors.ArgumentError('Invalid message priority.');
+      throw new MessageError('Invalid message priority.');
     }
     this.priority = priority;
     return this;
@@ -244,12 +244,10 @@ export class Message {
 
   getRequiredQueue(): TQueueParams {
     if (!this.queue) {
-      throw new errors.PanicError(`Expected queue parameters to be not empty`);
+      throw new MessageError(`Expected queue parameters to be not empty`);
     }
     if (typeof this.queue === 'string') {
-      throw new errors.PanicError(
-        `Expected queue parameters to be not a string`,
-      );
+      throw new MessageError(`Expected queue parameters to be not a string`);
     }
     return this.queue;
   }
@@ -410,7 +408,7 @@ export class Message {
     // So just make sure that we have an integer value
     const value = Number(delay);
     if (isNaN(value) || value < 0) {
-      throw new errors.ArgumentError(
+      throw new MessageError(
         'Expected a positive integer in milliseconds >= 0',
       );
     }
@@ -421,7 +419,7 @@ export class Message {
     // So just make sure that we have an integer value
     const value = Number(ttl);
     if (isNaN(value) || value < 0) {
-      throw new errors.ArgumentError(
+      throw new MessageError(
         'Expected a positive integer value in milliseconds >= 0',
       );
     }
@@ -433,7 +431,7 @@ export class Message {
     // So just make sure that we have an integer value
     const value = Number(timeout);
     if (isNaN(value) || value < 0) {
-      throw new errors.ArgumentError(
+      throw new MessageError(
         'Expected a positive integer value in milliseconds >= 0',
       );
     }
@@ -445,7 +443,7 @@ export class Message {
     // So just make sure that we have an integer value
     const value = Number(threshold);
     if (isNaN(value) || value < 0) {
-      throw new errors.ArgumentError(
+      throw new MessageError(
         'Retry threshold should be a positive integer >= 0',
       );
     }
