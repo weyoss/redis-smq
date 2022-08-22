@@ -14,7 +14,7 @@ function deadLetterMessageTransaction(
   message: Message,
   keyQueueProcessing: string,
 ): void {
-  const queue = message.getRequiredQueue();
+  const queue = message.getDestinationQueue();
   const { keyQueueDL } = redisKeys.getQueueKeys(queue);
   const { store, expire, queueSize } = config.messages.store.deadLettered;
   if (store) {
@@ -59,7 +59,7 @@ export function deadLetterMessage(
 ): void {
   if (mixed instanceof RedisClient) {
     if (!cb) throw new errors.PanicError(`Expected a callback function`);
-    const queue = message.getRequiredQueue();
+    const queue = message.getDestinationQueue();
     const { keyQueueDL } = redisKeys.getQueueKeys(queue);
     const { store, expire, queueSize } = config.messages.store.deadLettered;
     if (store) {

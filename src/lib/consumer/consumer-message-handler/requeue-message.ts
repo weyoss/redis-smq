@@ -24,7 +24,7 @@ export function requeueMessage(
   unacknowledgedCause: EMessageUnacknowledgedCause,
   cb?: ICallback<void>,
 ): void {
-  const queue = message.getRequiredQueue();
+  const queue = message.getDestinationQueue();
   const { keyRequeueMessages } = redisKeys.getQueueKeys(queue);
   if (mixed instanceof RedisClient) {
     if (!cb) throw new errors.PanicError(`Expected a callback function`);

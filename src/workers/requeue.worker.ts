@@ -25,7 +25,7 @@ export class RequeueWorker extends Worker {
             messages,
             (messageStr, _, done) => {
               const message = Message.createFromMessage(messageStr);
-              const queue = message.getRequiredQueue();
+              const queue = message.getDestinationQueue();
               const { keyQueuePending, keyQueuePendingPriorityMessageWeight } =
                 redisKeys.getQueueKeys(queue);
               multi.lrem(keyRequeueMessages, 1, messageStr);

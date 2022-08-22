@@ -57,7 +57,7 @@ export class ScheduleWorker extends Worker {
         messages,
         (msg, _, done) => {
           const message = Message.createFromMessage(msg);
-          const queue = message.getRequiredQueue();
+          const queue = message.getDestinationQueue();
           const {
             keyQueueSettings,
             keyQueueSettingsPriorityQueuing,

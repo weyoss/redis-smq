@@ -1,12 +1,19 @@
 import { parseExpression } from 'cron-parser';
 import {
+  EMessageExchange,
+  TFanOutParams,
   TMessageConsumeOptions,
   TMessageJSON,
   TQueueParams,
+  TTopicParams,
 } from '../../../types';
 import { MessageMetadata } from './message-metadata';
-import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { MessageError } from './errors/message.error';
+import { Exchange } from '../exchange/exchange';
+import { DirectExchange } from '../exchange/direct.exchange';
+import { TopicExchange } from '../exchange/topic.exchange';
+import { FanOutExchange } from '../exchange/fan-out.exchange';
+import { MessageExchangeRequiredError } from './errors/message-exchange-required.error';
 
 export class Message {
   // Do not forget about javascript users. Using an object map instead of enum
@@ -30,8 +37,6 @@ export class Message {
 
   protected readonly createdAt: number;
 
-  protected queue: string | TQueueParams | null = null;
-
   protected ttl = 0;
 
   protected retryThreshold = 3;
@@ -53,6 +58,8 @@ export class Message {
   protected scheduledRepeat = 0;
 
   protected metadata: MessageMetadata | null = null;
+
+  protected exchange: Exchange | null = null;
 
   constructor() {
     this.createdAt = Date.now();
@@ -77,12 +84,17 @@ export class Message {
     return this.metadata;
   }
 
+  setMetadata(m: MessageMetadata): Message {
+    this.metadata = m;
+    return this;
+  }
+
   getSetMetadata(): MessageMetadata {
     if (!this.metadata) {
-      this.metadata = new MessageMetadata();
-      if (this.scheduledDelay) {
-        this.metadata.setNextScheduledDelay(this.scheduledDelay);
-      }
+      const m = new MessageMetadata();
+      if (this.scheduledDelay) m.setNextScheduledDelay(this.scheduledDelay);
+      this.setMetadata(m);
+      return m;
     }
     return this.metadata;
   }
@@ -125,6 +137,11 @@ export class Message {
   }
 
   ///
+
+  setExchange(exchange: Exchange): Message {
+    this.exchange = exchange;
+    return this;
+  }
 
   /**
    * @param period In millis
@@ -218,14 +235,24 @@ export class Message {
     return this;
   }
 
-  setQueue(queue: string | TQueueParams): Message {
-    this.queue =
-      typeof queue === 'string'
-        ? redisKeys.validateRedisKey(queue)
-        : {
-            name: redisKeys.validateRedisKey(queue.name),
-            ns: redisKeys.validateNamespace(queue.ns),
-          };
+  setFanOut(fanOutParams: string | TFanOutParams): Message {
+    this.exchange = new FanOutExchange(fanOutParams);
+    return this;
+  }
+
+  setTopic(topicParams: string | TTopicParams): Message {
+    this.exchange = new TopicExchange(topicParams);
+    return this;
+  }
+
+  setQueue(queueParams: string | TQueueParams): Message {
+    this.exchange = new DirectExchange(queueParams);
+    return this;
+  }
+
+  setDestinationQueue(queue: TQueueParams): Message {
+    const exchange = this.getRequiredExchange();
+    exchange.setDestinationQueue(queue);
     return this;
   }
 
@@ -239,17 +266,29 @@ export class Message {
   }
 
   getQueue(): TQueueParams | string | null {
-    return this.queue;
+    if (this.exchange instanceof DirectExchange) {
+      return this.exchange.getQueue();
+    }
+    return null;
   }
 
-  getRequiredQueue(): TQueueParams {
-    if (!this.queue) {
-      throw new MessageError(`Expected queue parameters to be not empty`);
+  getTopic(): TTopicParams | string | null {
+    if (this.exchange instanceof TopicExchange) {
+      return this.exchange.getTopic();
     }
-    if (typeof this.queue === 'string') {
-      throw new MessageError(`Expected queue parameters to be not a string`);
+    return null;
+  }
+
+  getFanOutParams(): TFanOutParams | string | null {
+    if (this.exchange instanceof FanOutExchange) {
+      return this.exchange.getBindingParams();
     }
-    return this.queue;
+    return null;
+  }
+
+  getDestinationQueue(): TQueueParams {
+    const exchange = this.getRequiredExchange();
+    return exchange.getRequiredDestinationQueue();
   }
 
   getPriority(): number | null {
@@ -364,6 +403,17 @@ export class Message {
     return 0;
   }
 
+  getExchange(): Exchange | null {
+    return this.exchange;
+  }
+
+  getRequiredExchange(): Exchange {
+    if (!this.exchange) {
+      throw new MessageExchangeRequiredError();
+    }
+    return this.exchange;
+  }
+
   toString(): string {
     return JSON.stringify(this);
   }
@@ -371,7 +421,6 @@ export class Message {
   toJSON(): TMessageJSON {
     return {
       createdAt: this.createdAt,
-      queue: typeof this.queue === 'string' ? null : this.queue,
       ttl: this.ttl,
       retryThreshold: this.retryThreshold,
       retryDelay: this.retryDelay,
@@ -383,6 +432,8 @@ export class Message {
       scheduledRepeatPeriod: this.scheduledRepeatPeriod,
       scheduledRepeat: this.scheduledRepeat,
       metadata: this.metadata ? this.metadata.toJSON() : null,
+      queue: this.exchange ? this.exchange.getDestinationQueue() : null,
+      exchange: this.exchange ? this.exchange.toJSON() : null,
     };
   }
 
@@ -450,19 +501,26 @@ export class Message {
     return value;
   }
 
-  static createFromMessage(message: string | Message, reset = false): Message {
-    const messageJSON: Message =
-      typeof message === 'string' ? JSON.parse(message) : message;
+  static createFromMessage(
+    message: string | Message,
+    hardReset = false,
+  ): Message {
+    const { exchange, metadata, queue, ...params }: TMessageJSON =
+      typeof message === 'string' ? JSON.parse(message) : message.toJSON();
     const m = new Message();
-    Object.assign(m, messageJSON, {
-      metadata: messageJSON.metadata
-        ? Object.assign(new MessageMetadata(), messageJSON.metadata)
-        : null,
-    });
-    if (reset) {
-      const metadata = m.getMetadata();
-      if (metadata) {
-        metadata.reset();
+    Object.assign(m, params);
+    if (metadata) {
+      const meta = new MessageMetadata();
+      if (!hardReset) Object.assign(meta, metadata);
+      m.setMetadata(meta);
+    }
+    if (exchange) {
+      if (exchange['type'] === EMessageExchange.DIRECT) {
+        m.setExchange(DirectExchange.createInstanceFrom(exchange));
+      } else if (exchange['type'] === EMessageExchange.FANOUT) {
+        m.setExchange(FanOutExchange.createInstanceFrom(exchange));
+      } else {
+        m.setExchange(TopicExchange.createInstanceFrom(exchange));
       }
     }
     return m;
