@@ -58,8 +58,8 @@ export abstract class List extends AbstractMessageStorage<
       else if (!msg) cb(new errors.EmptyCallbackReplyError());
       else {
         const { keyMessages } = key;
-        const message = Message.createFromMessage(msg, false);
-        const queue = message.getRequiredQueue();
+        const message = Message.createFromMessage(msg);
+        const queue = message.getDestinationQueue();
         message.getRequiredMetadata().reset(); // resetting all system parameters
         const {
           keyQueueSettings,

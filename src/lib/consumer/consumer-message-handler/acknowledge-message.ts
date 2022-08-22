@@ -11,7 +11,7 @@ export function acknowledgeMessage(
   keyQueueProcessing: string,
   cb: ICallback<void>,
 ): void {
-  const queue = message.getRequiredQueue();
+  const queue = message.getDestinationQueue();
   const { store, queueSize, expire } = config.messages.store.acknowledged;
   if (store) {
     const { keyQueueAcknowledged } = redisKeys.getQueueKeys(queue);

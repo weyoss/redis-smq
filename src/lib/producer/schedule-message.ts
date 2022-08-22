@@ -40,7 +40,7 @@ export function scheduleMessage(
     if (!cb) throw new errors.PanicError(`Expected a callback function`);
     const timestamp = message.getNextScheduledTimestamp();
     if (timestamp > 0) {
-      const queue = message.getRequiredQueue();
+      const queue = message.getDestinationQueue();
       const {
         keyQueueSettings,
         keyQueueSettingsPriorityQueuing,

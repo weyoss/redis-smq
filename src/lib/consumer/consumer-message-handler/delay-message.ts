@@ -9,7 +9,7 @@ export function delayMessageTransaction(
   message: Message,
   keyQueueProcessing: string,
 ): void {
-  const queue = message.getRequiredQueue();
+  const queue = message.getDestinationQueue();
   const { keyDelayedMessages } = redisKeys.getQueueKeys(queue);
   mixed.rpoplpush(keyQueueProcessing, keyDelayedMessages);
 }
@@ -36,7 +36,7 @@ export function delayMessage(
 ): void {
   if (mixed instanceof RedisClient) {
     if (!cb) throw new errors.PanicError(`Expected a callback function`);
-    const queue = message.getRequiredQueue();
+    const queue = message.getDestinationQueue();
     const { keyDelayedMessages } = redisKeys.getQueueKeys(queue);
     mixed.rpoplpush(keyQueueProcessing, keyDelayedMessages, (err) => cb(err));
   } else {

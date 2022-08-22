@@ -110,6 +110,16 @@ export enum EMessageUnacknowledgedCause {
   TTL_EXPIRED = 'ttl_expired',
 }
 
+export type TFanOutParams = {
+  bindingKey: string;
+  ns: string;
+};
+
+export type TTopicParams = {
+  topic: string;
+  ns: string;
+};
+
 export type TQueueParams = {
   name: string;
   ns: string;
@@ -154,7 +164,8 @@ export type TConsumerMessageHandlerParams = {
 
 export type TMessageJSON = {
   createdAt: number;
-  queue: TQueueParams | null;
+  queue: TQueueParams | string | null;
+  exchange: Record<string, any> | null;
   ttl: number;
   retryThreshold: number;
   retryDelay: number;
@@ -167,6 +178,33 @@ export type TMessageJSON = {
   scheduledRepeat: number;
   metadata: TMessageMetadataJSON | null;
 };
+
+export enum EMessageExchange {
+  DIRECT,
+  FANOUT,
+  TOPIC,
+}
+
+export interface IMessageExchange {
+  exchangeTag: string | null;
+  destinationQueue: TQueueParams | null;
+  type: number;
+}
+
+export interface IMessageExchangeDirect extends IMessageExchange {
+  type: EMessageExchange.DIRECT;
+  queue: TQueueParams | string;
+}
+
+export interface IMessageExchangeFanOut extends IMessageExchange {
+  type: EMessageExchange.FANOUT;
+  bindingParams: string | TFanOutParams;
+}
+
+export interface IMessageExchangeTopic extends IMessageExchange {
+  type: EMessageExchange.TOPIC;
+  topic: TTopicParams | string;
+}
 
 export type TMessageMetadataJSON = {
   uuid: string;
@@ -187,4 +225,11 @@ export type TMessageConsumeOptions = {
   retryThreshold: number;
   retryDelay: number;
   consumeTimeout: number;
+};
+
+///
+
+export type TProduceMessageReply = {
+  messages: Message[];
+  scheduled: boolean;
 };
