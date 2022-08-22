@@ -134,7 +134,7 @@ export class Queue {
 
   static list(redisClient: RedisClient, cb: ICallback<TQueueParams[]>): void {
     const { keyQueues } = redisKeys.getMainKeys();
-    redisClient.smembers(keyQueues, (err, reply) => {
+    redisClient.sscanFallback(keyQueues, (err, reply) => {
       if (err) cb(err);
       else if (!reply) cb(new errors.EmptyCallbackReplyError());
       else {
