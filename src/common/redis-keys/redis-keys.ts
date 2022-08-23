@@ -150,12 +150,12 @@ export const redisKeys = {
         'Invalid Redis key. Expected be a non empty string.',
       );
     }
-    const filtered = key.toLowerCase().replace(/[^a-z0-9_-]/g, '');
-    if (filtered.length !== key.length) {
+    const lowerCase = key.toLowerCase();
+    if (!/^[a-z0-9]+([-_.]?[a-z0-9]+)*$/.test(lowerCase)) {
       throw new RedisKeysError(
-        'Invalid Redis key. Only letters (a-z), numbers (0-9) and (-_) are allowed.',
+        'Invalid Redis key. Valid characters are letters (a-z) and numbers (0-9). (-_) are allowed between alphanumerics. Use a dot (.) to denote hierarchies.',
       );
     }
-    return filtered;
+    return lowerCase;
   },
 };
