@@ -1,48 +1,37 @@
 import { Exchange } from './exchange';
 import {
-  EMessageExchange,
+  EExchangeType,
+  IFanOutExchangeParams,
   IRequiredConfig,
-  IMessageExchangeFanOut,
   TQueueParams,
-  TFanOutParams,
 } from '../../../types';
 import { RedisClient } from 'redis-smq-common';
 import { ICallback } from 'redis-smq-common/dist/types';
+import { QueueExchange } from '../queue-manager/queue-exchange';
+import { ExchangeError } from './errors/exchange.error';
 
-export class FanOutExchange extends Exchange {
-  protected type = EMessageExchange.FANOUT;
-  protected bindingParams: string | TFanOutParams;
-
-  constructor(bindingParams: string | TFanOutParams) {
-    super();
-    this.bindingParams = bindingParams;
+export class FanOutExchange extends Exchange<string, EExchangeType.FANOUT> {
+  constructor(fanOutName: string) {
+    super(fanOutName, EExchangeType.FANOUT);
   }
 
-  getBindingParams(): string | TFanOutParams {
-    return this.bindingParams;
+  protected override validateBindingParams(bindingParams: string): string {
+    return bindingParams;
   }
 
-  //@todo
   getQueues(
     redisClient: RedisClient,
     config: IRequiredConfig,
     cb: ICallback<TQueueParams[]>,
   ): void {
-    //
+    QueueExchange.getExchangeBindings(redisClient, this, cb);
   }
 
-  override toJSON(): IMessageExchangeFanOut {
-    return {
-      ...super.toJSON(),
-      type: EMessageExchange.FANOUT,
-      bindingParams: this.bindingParams,
-    };
-  }
-
-  static createInstanceFrom(json: Record<string, any>): FanOutExchange {
-    const name = String(json['name']);
-    const e = new FanOutExchange(name);
-    e.populate(json);
+  static fromJSON(json: Partial<IFanOutExchangeParams>): FanOutExchange {
+    if (!json.bindingParams)
+      throw new ExchangeError('Binding params are required.');
+    const e = new FanOutExchange(json.bindingParams);
+    e.fromJSON(json);
     return e;
   }
 }

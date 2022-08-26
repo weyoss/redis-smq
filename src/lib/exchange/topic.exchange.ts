@@ -1,8 +1,8 @@
 import { Exchange } from './exchange';
 import {
-  EMessageExchange,
+  EExchangeType,
+  ITopicExchangeParams,
   IRequiredConfig,
-  IMessageExchangeTopic,
   TQueueParams,
   TTopicParams,
 } from '../../../types';
@@ -10,22 +10,35 @@ import { async, RedisClient } from 'redis-smq-common';
 import { ICallback } from 'redis-smq-common/dist/types';
 import { Queue } from '../queue-manager/queue';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { InvalidTopicError } from './errors/invalid-topic.error';
+import { ExchangeError } from './errors/exchange.error';
 
-export class TopicExchange extends Exchange {
-  protected type = EMessageExchange.TOPIC;
-  protected topic: TTopicParams | string;
-
-  constructor(topic: string | TTopicParams) {
-    super();
-    this.topic = topic;
+export class TopicExchange extends Exchange<
+  TTopicParams | string,
+  EExchangeType.TOPIC
+> {
+  constructor(topic: TTopicParams | string) {
+    super(topic, EExchangeType.TOPIC);
   }
 
-  protected validateTopicName(topic: string): string {
-    const lowerCase = topic.toLowerCase();
-    if (!/^[a-z0-9]+([-_.]?[a-z0-9]+)*$/.test(lowerCase))
-      throw new InvalidTopicError();
-    return lowerCase;
+  protected override validateBindingParams(
+    topicParams: TTopicParams | string,
+  ): TTopicParams | string {
+    return typeof topicParams === 'string'
+      ? redisKeys.validateRedisKey(topicParams)
+      : {
+          topic: redisKeys.validateRedisKey(topicParams.topic),
+          ns: redisKeys.validateNamespace(topicParams.ns),
+        };
+  }
+
+  protected getTopicParams(config: IRequiredConfig): TTopicParams {
+    if (typeof this.bindingParams === 'string') {
+      return {
+        topic: this.bindingParams,
+        ns: config.namespace,
+      };
+    }
+    return this.bindingParams;
   }
 
   matchQueues(
@@ -33,7 +46,7 @@ export class TopicExchange extends Exchange {
     queues: TQueueParams[],
     cb: ICallback<TQueueParams[]>,
   ): void {
-    const topicParams = this.getNamespacedTopic(config);
+    const topicParams = this.getTopicParams(config);
     const matched: TQueueParams[] = [];
     const regExp = new RegExp(topicParams.topic);
     async.eachOf(
@@ -50,23 +63,6 @@ export class TopicExchange extends Exchange {
     );
   }
 
-  getTopic(): TTopicParams | string {
-    return this.topic;
-  }
-
-  getNamespacedTopic(config: IRequiredConfig): TTopicParams {
-    const topicParams: { topic: string; ns?: string } =
-      typeof this.topic === 'string' ? { topic: this.topic } : this.topic;
-    const topic = this.validateTopicName(topicParams.topic);
-    const ns = topicParams.ns
-      ? redisKeys.validateNamespace(topicParams.ns)
-      : config.namespace;
-    return {
-      topic,
-      ns,
-    };
-  }
-
   getQueues(
     redisClient: RedisClient,
     config: IRequiredConfig,
@@ -78,18 +74,11 @@ export class TopicExchange extends Exchange {
     });
   }
 
-  override toJSON(): IMessageExchangeTopic {
-    return {
-      ...super.toJSON(),
-      type: EMessageExchange.TOPIC,
-      topic: this.topic,
-    };
-  }
-
-  static createInstanceFrom(json: Record<string, any>): TopicExchange {
-    const topic = String(json['topic']);
-    const e = new TopicExchange(topic);
-    e.populate(json);
+  static fromJSON(json: Partial<ITopicExchangeParams>): TopicExchange {
+    if (!json.bindingParams)
+      throw new ExchangeError('Binding params are required.');
+    const e = new TopicExchange(json.bindingParams);
+    e.fromJSON(json);
     return e;
   }
 }

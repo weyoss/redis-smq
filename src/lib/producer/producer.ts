@@ -103,7 +103,10 @@ export class Producer extends Base {
         const redisClient = this.getSharedRedisClient();
         const exchange = message.getRequiredExchange();
         if (exchange instanceof DirectExchange) {
-          const queue = Queue.getParams(this.config, exchange.getQueue());
+          const queue = Queue.getParams(
+            this.config,
+            exchange.getBindingParams(),
+          );
           this.produceMessage(redisClient, message, queue, (err) =>
             callback(err, [message]),
           );
