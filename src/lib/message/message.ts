@@ -1,15 +1,14 @@
 import { parseExpression } from 'cron-parser';
 import {
-  EMessageExchange,
-  TFanOutParams,
+  EExchangeType,
   TMessageConsumeOptions,
+  TExchange,
   TMessageJSON,
   TQueueParams,
   TTopicParams,
 } from '../../../types';
 import { MessageMetadata } from './message-metadata';
 import { MessageError } from './errors/message.error';
-import { Exchange } from '../exchange/exchange';
 import { DirectExchange } from '../exchange/direct.exchange';
 import { TopicExchange } from '../exchange/topic.exchange';
 import { FanOutExchange } from '../exchange/fan-out.exchange';
@@ -59,7 +58,7 @@ export class Message {
 
   protected metadata: MessageMetadata | null = null;
 
-  protected exchange: Exchange | null = null;
+  protected exchange: TExchange | null = null;
 
   constructor() {
     this.createdAt = Date.now();
@@ -138,7 +137,7 @@ export class Message {
 
   ///
 
-  setExchange(exchange: Exchange): Message {
+  setExchange(exchange: TExchange): Message {
     this.exchange = exchange;
     return this;
   }
@@ -235,8 +234,8 @@ export class Message {
     return this;
   }
 
-  setFanOut(fanOutParams: string | TFanOutParams): Message {
-    this.exchange = new FanOutExchange(fanOutParams);
+  setFanOut(bindingKey: string): Message {
+    this.exchange = new FanOutExchange(bindingKey);
     return this;
   }
 
@@ -267,19 +266,19 @@ export class Message {
 
   getQueue(): TQueueParams | string | null {
     if (this.exchange instanceof DirectExchange) {
-      return this.exchange.getQueue();
+      return this.exchange.getBindingParams();
     }
     return null;
   }
 
   getTopic(): TTopicParams | string | null {
     if (this.exchange instanceof TopicExchange) {
-      return this.exchange.getTopic();
+      return this.exchange.getBindingParams();
     }
     return null;
   }
 
-  getFanOutParams(): TFanOutParams | string | null {
+  getFanOutParams(): string | null {
     if (this.exchange instanceof FanOutExchange) {
       return this.exchange.getBindingParams();
     }
@@ -403,11 +402,11 @@ export class Message {
     return 0;
   }
 
-  getExchange(): Exchange | null {
+  getExchange(): TExchange | null {
     return this.exchange;
   }
 
-  getRequiredExchange(): Exchange {
+  getRequiredExchange(): TExchange {
     if (!this.exchange) {
       throw new MessageExchangeRequiredError();
     }
@@ -515,12 +514,12 @@ export class Message {
       m.setMetadata(meta);
     }
     if (exchange) {
-      if (exchange['type'] === EMessageExchange.DIRECT) {
-        m.setExchange(DirectExchange.createInstanceFrom(exchange));
-      } else if (exchange['type'] === EMessageExchange.FANOUT) {
-        m.setExchange(FanOutExchange.createInstanceFrom(exchange));
+      if (exchange['type'] === EExchangeType.DIRECT) {
+        m.setExchange(DirectExchange.fromJSON(exchange));
+      } else if (exchange['type'] === EExchangeType.FANOUT) {
+        m.setExchange(FanOutExchange.fromJSON(exchange));
       } else {
-        m.setExchange(TopicExchange.createInstanceFrom(exchange));
+        m.setExchange(TopicExchange.fromJSON(exchange));
       }
     }
     return m;
