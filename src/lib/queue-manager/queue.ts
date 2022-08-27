@@ -111,6 +111,7 @@ export class Queue {
       keyQueueSettings,
       keyQueueSettingsPriorityQueuing,
       keyQueueSettingsRateLimit,
+      keyQueueSettingsExchangeBinding,
     } = redisKeys.getQueueKeys(queueParams);
     redisClient.hgetall(keyQueueSettings, (err, reply) => {
       if (err) cb(err);
@@ -125,6 +126,9 @@ export class Queue {
           }
           if (key === keyQueueSettingsRateLimit) {
             queueSettings.rateLimit = JSON.parse(reply[key]);
+          }
+          if (key === keyQueueSettingsExchangeBinding) {
+            queueSettings.exchangeBinding = reply[key];
           }
         }
         cb(null, queueSettings);

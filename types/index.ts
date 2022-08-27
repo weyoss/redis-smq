@@ -6,6 +6,14 @@ import {
   TRedisConfig,
 } from 'redis-smq-common/dist/types';
 import { EventEmitter } from 'events';
+import { Namespace } from '../src/lib/queue-manager/namespace';
+import { Queue } from '../src/lib/queue-manager/queue';
+import { QueueRateLimit } from '../src/lib/queue-manager/queue-rate-limit';
+import { QueueMetrics } from '../src/lib/queue-manager/queue-metrics';
+import { QueueExchange } from '../src/lib/queue-manager/queue-exchange';
+import { DirectExchange } from '../src/lib/exchange/direct.exchange';
+import { TopicExchange } from '../src/lib/exchange/topic.exchange';
+import { FanOutExchange } from '../src/lib/exchange/fan-out.exchange';
 
 ///
 
@@ -110,11 +118,6 @@ export enum EMessageUnacknowledgedCause {
   TTL_EXPIRED = 'ttl_expired',
 }
 
-export type TFanOutParams = {
-  bindingKey: string;
-  ns: string;
-};
-
 export type TTopicParams = {
   topic: string;
   ns: string;
@@ -133,6 +136,7 @@ export type TQueueRateLimit = {
 export type TQueueSettings = {
   priorityQueuing: boolean;
   rateLimit?: TQueueRateLimit | null;
+  exchangeBinding?: string;
 };
 
 export type TConsumerInfo = {
@@ -179,32 +183,38 @@ export type TMessageJSON = {
   metadata: TMessageMetadataJSON | null;
 };
 
-export enum EMessageExchange {
+export enum EExchangeType {
   DIRECT,
   FANOUT,
   TOPIC,
 }
 
-export interface IMessageExchange {
+export type TExchange = DirectExchange | TopicExchange | FanOutExchange;
+
+export interface IExchangeParams<
+  TBindingParams,
+  TBindingType extends EExchangeType,
+> {
   exchangeTag: string | null;
   destinationQueue: TQueueParams | null;
-  type: number;
+  bindingParams: TBindingParams;
+  type: TBindingType;
 }
 
-export interface IMessageExchangeDirect extends IMessageExchange {
-  type: EMessageExchange.DIRECT;
-  queue: TQueueParams | string;
-}
+export type IDirectExchangeParams = IExchangeParams<
+  TQueueParams | string,
+  EExchangeType.DIRECT
+>;
 
-export interface IMessageExchangeFanOut extends IMessageExchange {
-  type: EMessageExchange.FANOUT;
-  bindingParams: string | TFanOutParams;
-}
+export type IFanOutExchangeParams = IExchangeParams<
+  string,
+  EExchangeType.FANOUT
+>;
 
-export interface IMessageExchangeTopic extends IMessageExchange {
-  type: EMessageExchange.TOPIC;
-  topic: TTopicParams | string;
-}
+export type ITopicExchangeParams = IExchangeParams<
+  TTopicParams | string,
+  EExchangeType.TOPIC
+>;
 
 export type TMessageMetadataJSON = {
   uuid: string;
@@ -232,4 +242,15 @@ export type TMessageConsumeOptions = {
 export type TProduceMessageReply = {
   messages: Message[];
   scheduled: boolean;
+};
+
+///
+
+export type TQueueManager = {
+  namespace: Namespace;
+  queue: Queue;
+  queueRateLimit: QueueRateLimit;
+  queueMetrics: QueueMetrics;
+  queueExchange: QueueExchange;
+  quit: (cb: ICallback<void>) => void;
 };
