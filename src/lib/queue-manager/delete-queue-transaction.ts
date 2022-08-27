@@ -73,6 +73,7 @@ export function initDeleteQueueTransaction(
     keyQueueRateLimitCounter,
     keyQueueSettings,
   ];
+  let exchangeBinding: string | null = null;
   redisClient.watch(
     [keyQueueConsumers, keyQueueProcessingQueues, keyQueueSettings],
     (err) => {
@@ -81,13 +82,23 @@ export function initDeleteQueueTransaction(
         async.waterfall(
           [
             (cb: ICallback<void>): void =>
-              Queue.exists(config, redisClient, queueParams, (err, reply) => {
-                if (err) cb(err);
-                else if (!reply) cb(new QueueNotFoundError());
-                else cb();
-              }),
-            (cb: ICallback<void>): void =>
-              validateMessageQueueDeletion(redisClient, queueParams, cb),
+              Queue.getSettings(
+                config,
+                redisClient,
+                queueParams,
+                (err, reply) => {
+                  if (err) cb(err);
+                  else if (!reply) cb(new QueueNotFoundError());
+                  else {
+                    if (reply.exchangeBinding)
+                      exchangeBinding = reply.exchangeBinding;
+                    cb();
+                  }
+                },
+              ),
+            (cb: ICallback<void>): void => {
+              validateMessageQueueDeletion(redisClient, queueParams, cb);
+            },
             (cb: ICallback<string[]>) => {
               processingQueue.getQueueProcessingQueues(
                 redisClient,
@@ -115,6 +126,7 @@ export function initDeleteQueueTransaction(
                 tx.srem(keyProcessingQueues, pQueues);
               }
               tx.del(keys);
+              if (exchangeBinding) tx.srem(exchangeBinding, str);
               cb(null, tx);
             }
           },

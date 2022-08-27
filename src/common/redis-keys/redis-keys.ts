@@ -37,6 +37,8 @@ enum ERedisKey {
   KEY_QUEUE_SETTINGS,
   KEY_QUEUE_SETTINGS_RATE_LIMIT,
   KEY_QUEUE_SETTINGS_PRIORITY_QUEUING,
+  KEY_QUEUE_SETTINGS_EXCHANGE_BINDING,
+  KEY_EXCHANGE_BINDINGS,
 }
 
 function makeNamespacedKeys<T extends Record<string, ERedisKey>>(
@@ -86,6 +88,17 @@ export const redisKeys = {
     };
   },
 
+  getFanOutExchangeKeys(bindingKey: string) {
+    const mainKeys = this.getMainKeys();
+    const exchangeKeys = {
+      keyExchangeBindings: ERedisKey.KEY_EXCHANGE_BINDINGS,
+    };
+    return {
+      ...mainKeys,
+      ...makeNamespacedKeys(exchangeKeys, globalNamespace, bindingKey),
+    };
+  },
+
   getConsumerKeys(instanceId: string) {
     const mainKeys = this.getMainKeys();
     const consumerKeys = {
@@ -130,6 +143,8 @@ export const redisKeys = {
       keyQueueSettingsRateLimit: ERedisKey.KEY_QUEUE_SETTINGS_RATE_LIMIT,
       keyQueueSettingsPriorityQueuing:
         ERedisKey.KEY_QUEUE_SETTINGS_PRIORITY_QUEUING,
+      keyQueueSettingsExchangeBinding:
+        ERedisKey.KEY_QUEUE_SETTINGS_EXCHANGE_BINDING,
     };
     return makeNamespacedKeys(mainKeys, globalNamespace);
   },
