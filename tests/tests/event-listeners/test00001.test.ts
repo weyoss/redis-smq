@@ -31,14 +31,14 @@ class TestConsumerEventListener implements IEventListener {
     consumerStats[instanceId] = [];
     eventProvider.on(events.MESSAGE_ACKNOWLEDGED, (msg: Message) => {
       consumerStats[instanceId].push({
-        queue: msg.getRequiredQueue(),
+        queue: msg.getDestinationQueue(),
         event: events.MESSAGE_ACKNOWLEDGED,
         message: msg,
       });
     });
     eventProvider.on(events.MESSAGE_DEAD_LETTERED, (msg: Message) => {
       consumerStats[instanceId].push({
-        queue: msg.getRequiredQueue(),
+        queue: msg.getDestinationQueue(),
         event: events.MESSAGE_DEAD_LETTERED,
         message: msg,
       });

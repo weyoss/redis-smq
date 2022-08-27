@@ -1,4 +1,6 @@
 import { Message } from '../../../src/lib/message/message';
+import { DestinationQueueRequiredError } from '../../../src/lib/exchange/errors/destination-queue-required.error';
+import { MessageExchangeRequiredError } from '../../../src/lib/message/errors/message-exchange-required.error';
 
 test('Message: validations', async () => {
   const msg = new Message();
@@ -30,8 +32,12 @@ test('Message: validations', async () => {
     msg.setPriority(-100);
   }).toThrow('Invalid message priority.');
   expect(() => {
-    msg.getRequiredQueue();
-  }).toThrow(`Expected queue parameters to be not empty`);
+    msg.getDestinationQueue();
+  }).toThrow(MessageExchangeRequiredError);
+  msg.setQueue('test1');
+  expect(() => {
+    msg.getDestinationQueue();
+  }).toThrow(DestinationQueueRequiredError);
   expect(msg.hasNextDelay()).toBe(false);
   expect(msg.hasRetryThresholdExceeded()).toBe(false);
 });

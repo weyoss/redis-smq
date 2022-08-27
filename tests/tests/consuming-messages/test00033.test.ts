@@ -61,7 +61,7 @@ test('Consume messages from different queues using a single consumer instance: c
 
   await delay(10000);
   expect(messages.length).toBe(5);
-  expect(messages.map((i) => i.getRequiredQueue().name).sort()).toEqual([
+  expect(messages.map((i) => i.getDestinationQueue().name).sort()).toEqual([
     'test1',
     'test2',
     'test3',
@@ -92,7 +92,7 @@ test('Consume messages from different queues using a single consumer instance: c
     new Message().setQueue(`test6`).setBody(`body 6`),
   );
   await delay(10000);
-  expect(messages.map((i) => i.getRequiredQueue().name).sort()).toEqual([
+  expect(messages.map((i) => i.getDestinationQueue().name).sort()).toEqual([
     'test1',
     'test2',
     'test3',

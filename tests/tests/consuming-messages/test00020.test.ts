@@ -1,5 +1,6 @@
 import { Message } from '../../../index';
 import { getProducer } from '../../common/producer';
+import { MessageExchangeRequiredError } from '../../../src/lib/message/errors/message-exchange-required.error';
 
 test('Producing a message without a message queue', async () => {
   const producer = getProducer();
@@ -10,5 +11,5 @@ test('Producing a message without a message queue', async () => {
 
   await expect(async () => {
     await producer.produceAsync(msg);
-  }).rejects.toThrow('Can not publish a message without a message queue');
+  }).rejects.toThrow(MessageExchangeRequiredError);
 });
