@@ -1,11 +1,11 @@
-import { IConfig } from '../../types';
+import { IConfig, TQueueManager } from '../../types';
 import { promisifyAll } from 'bluebird';
 import { QueueManager } from '../../src/lib/queue-manager/queue-manager';
 import { requiredConfig } from './config';
 
 const QueueManagerAsync = promisifyAll(QueueManager);
 
-let queueManager: QueueManager | null = null;
+let queueManager: TQueueManager | null = null;
 
 export async function getQueueManager(cfg: IConfig = requiredConfig) {
   if (!queueManager) {
@@ -15,11 +15,13 @@ export async function getQueueManager(cfg: IConfig = requiredConfig) {
   const namespace = promisifyAll(queueManager.namespace);
   const queueRateLimit = promisifyAll(queueManager.queueRateLimit);
   const queueMetrics = promisifyAll(queueManager.queueMetrics);
+  const queueExchange = promisifyAll(queueManager.queueExchange);
   return {
     queue,
     namespace,
     queueRateLimit,
     queueMetrics,
+    queueExchange,
   };
 }
 
