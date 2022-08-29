@@ -1,5 +1,5 @@
 import { ICallback, RedisClientName } from 'redis-smq-common/dist/types';
-import { Consumer, Producer, Message, QueueManager } from '../..'; // from 'redis-smq'
+import { Consumer, Producer, Message, QueueManager } from '../../index'; // from 'redis-smq'
 import { IConfig, TProduceMessageReply } from '../../types'; // from 'redis-smq/dist/types'
 import { logger } from 'redis-smq-common';
 
