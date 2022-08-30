@@ -49,7 +49,11 @@ producer.produce(message, cb);
 **Parameters**
 
 - `message` *(Message): Required.* Message instance.
-- `cb(err)` *(function): Required.* Callback function.
+- `cb(err, reply)` *(function): Required.* Callback function.
+  - `err` *(Error | null | undefined).* An error object will be returned in case of failures.
+  - `reply` *(object | null).* Indicate whether the operation completed successfully.
+    - `reply.scheduled` *(boolean).* Indicate whether the message has been scheduled.
+    - `reply.queues` *(array).* A list of queues to which the message has been published.
 
 ```javascript
 const { Message } = require('redis-smq');
