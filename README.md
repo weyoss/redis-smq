@@ -15,6 +15,8 @@
 
 RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing them asynchronously with consumers. Backed by Redis, it allows scaling up your application with ease of use.
 
+> ☝ The master branch reflects the latest changes and updates that may not yet be released. To view the current release documentation see [v7.0.7 docs](https://github.com/weyoss/redis-smq/tree/v7.0.7).
+
 ## Features
 
 * **[High-performance message processing](/docs/performance.md)**.
