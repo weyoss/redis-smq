@@ -1,8 +1,8 @@
 import { Exchange } from './exchange';
 import {
   EExchangeType,
-  ITopicExchangeParams,
   IRequiredConfig,
+  ITopicExchangeParams,
   TQueueParams,
   TTopicParams,
 } from '../../../types';
@@ -10,7 +10,7 @@ import { async, RedisClient } from 'redis-smq-common';
 import { ICallback } from 'redis-smq-common/dist/types';
 import { Queue } from '../queue-manager/queue';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { ExchangeError } from './errors/exchange.error';
+import { InvalidExchangeDataError } from './errors/invalid-exchange-data.error';
 
 export class TopicExchange extends Exchange<
   TTopicParams | string,
@@ -75,8 +75,8 @@ export class TopicExchange extends Exchange<
   }
 
   static fromJSON(json: Partial<ITopicExchangeParams>): TopicExchange {
-    if (!json.bindingParams)
-      throw new ExchangeError('Binding params are required.');
+    if (!json.bindingParams || json.type !== EExchangeType.TOPIC)
+      throw new InvalidExchangeDataError();
     const e = new TopicExchange(json.bindingParams);
     e.fromJSON(json);
     return e;
