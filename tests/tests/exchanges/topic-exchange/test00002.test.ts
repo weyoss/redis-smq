@@ -19,4 +19,20 @@ test('TopicExchange: matching queues', async () => {
       { ns: 'testing', name: 'w123.2.4' },
     ]),
   ).toBe(true);
+  const e2 = promisifyAll(
+    new TopicExchange({ ns: 'my_app', topic: 'w123.2.4' }),
+  );
+  const queues2 = await e2.matchQueuesAsync(requiredConfig, [
+    { ns: 'my_app', name: 'w123.2.4.5' },
+    { ns: 'testing', name: 'w123.2.4.5.6' },
+    { ns: 'beta', name: 'w123.2' },
+    { ns: 'my_app', name: 'w123.2' },
+    { ns: 'my_app', name: 'w123.2.4' },
+  ]);
+  expect(
+    isEqual(queues2, [
+      { ns: 'my_app', name: 'w123.2.4.5' },
+      { ns: 'my_app', name: 'w123.2.4' },
+    ]),
+  ).toBe(true);
 });
