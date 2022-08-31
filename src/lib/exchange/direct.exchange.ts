@@ -9,7 +9,7 @@ import { RedisClient } from 'redis-smq-common';
 import { ICallback } from 'redis-smq-common/dist/types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { Queue } from '../queue-manager/queue';
-import { ExchangeError } from './errors/exchange.error';
+import { InvalidExchangeDataError } from './errors/invalid-exchange-data.error';
 
 export class DirectExchange extends Exchange<
   TQueueParams | string,
@@ -40,8 +40,8 @@ export class DirectExchange extends Exchange<
   }
 
   static fromJSON(json: Partial<IDirectExchangeParams>): DirectExchange {
-    if (!json.bindingParams)
-      throw new ExchangeError('Binding params are required.');
+    if (!json.bindingParams || json.type !== EExchangeType.DIRECT)
+      throw new InvalidExchangeDataError();
     const e = new DirectExchange(json.bindingParams);
     e.fromJSON(json);
     return e;

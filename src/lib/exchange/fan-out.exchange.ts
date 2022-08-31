@@ -8,7 +8,7 @@ import {
 import { RedisClient } from 'redis-smq-common';
 import { ICallback } from 'redis-smq-common/dist/types';
 import { QueueExchange } from '../queue-manager/queue-exchange';
-import { ExchangeError } from './errors/exchange.error';
+import { InvalidExchangeDataError } from './errors/invalid-exchange-data.error';
 
 export class FanOutExchange extends Exchange<string, EExchangeType.FANOUT> {
   constructor(fanOutName: string) {
@@ -28,8 +28,8 @@ export class FanOutExchange extends Exchange<string, EExchangeType.FANOUT> {
   }
 
   static fromJSON(json: Partial<IFanOutExchangeParams>): FanOutExchange {
-    if (!json.bindingParams)
-      throw new ExchangeError('Binding params are required.');
+    if (!json.bindingParams || json.type !== EExchangeType.FANOUT)
+      throw new InvalidExchangeDataError();
     const e = new FanOutExchange(json.bindingParams);
     e.fromJSON(json);
     return e;
