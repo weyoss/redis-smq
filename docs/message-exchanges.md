@@ -1,6 +1,6 @@
 ## Message Exchanges
 
-Starting with v7.1.0, message exchanges offers different ways to route a message to a queue.
+Starting with v7.1.0, message exchanges offer different ways to route a message to a queue.
 
 A message exchange is like an address or a routing algorithm which decides to which queues the message should go.
 
@@ -77,11 +77,11 @@ The second argument of the [producer.produce()](/docs/api/producer.md#producerpr
 
 ### Fanout Exchange
 
-The fanout exchange allow you to publish a message to one or multiple queues which are bound to a binding key.
+The fanout exchange allows producers to publish a message to one or multiple queues which are bound to a binding key.
 
 #### Usage
 
-In order to use a fanout exchange, you need first to create a binding key and bind the selected queues to the exchange.
+In order to use a fanout exchange you need first to create a binding key and bind the selected queues to the exchange.
 
 The [queueManager.queueExchange](/docs/api/queue-manager.md#queuemanagerprototypequeueexchange) provides:
 
@@ -98,8 +98,10 @@ The [Message API](/docs/api/message.md) provides:
 ```typescript
 import { Message, FanOutExchange } from "redis-smq";
 
+// Assuming that my-fanout-exchange already exists
+
 const msg = new Message();
-msg.FanOutExchange('my-fanout-exchange').setBody('123456789');
+msg.setFanOut('my-fanout-exchange').setBody('123456789');
 
 // the same as
 const exchange = new FanOutExchange('my-fanout-exchange');
