@@ -14,9 +14,15 @@ const { Message } = require('redis-smq');
       1. [Message.prototype.getId()](#messageprototypegetid)
       2. [Message.prototype.getCreatedAt()](#messageprototypegetcreatedat)
       3. [Message.prototype.getPublishedAt()](#messageprototypegetpublishedat)
-   2. Message queue
+   2. Message exchange
       1. [Message.prototype.setQueue()](#messageprototypesetqueue)
       2. [Message.prototype.getQueue()](#messageprototypegetqueue)
+      3. [Message.prototype.setTopic()](#messageprototypesettopic)
+      4. [Message.prototype.getTopic()](#messageprototypegettopic)
+      5. [Message.prototype.setFanout()](#messageprototypesetfanout)
+      6. [Message.prototype.getFanout()](#messageprototypegetfanout)
+      7. [Message.prototype.setExchange()](#messageprototypegetexchange)
+      8. [Message.prototype.getExchange()](#messageprototypegetexchange)
    3. Message payload
       1. [Message.prototype.setBody()](#messageprototypesetbody)
       2. [Message.prototype.getBody()](#messageprototypegetbody)
@@ -122,6 +128,30 @@ message.getQueue() // null;
 message.setQueue('test_queue');
 message.getQueue(); // { name: 'test_queue', ns: 'default' }
 ```
+
+### Message.prototype.setTopic()
+
+TODO
+
+### Message.prototype.getTopic()
+
+TODO
+
+### Message.prototype.setFanout()
+
+TODO
+
+### Message.prototype.getFanout()
+
+TODO
+
+### Message.prototype.setExchange()
+
+TODO
+
+### Message.prototype.getExchange()
+
+TODO
 
 ### Message.prototype.setBody()
 

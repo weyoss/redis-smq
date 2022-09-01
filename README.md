@@ -22,6 +22,7 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 * **[High-performance message processing](/docs/performance.md)**.
 * **[Multi-Queue Producers](#producer-class) & [Multi-Queue Consumers](#consumer-class)**: Offering flexible Producer/Consumer models, with focus on simplicity and without tons of features. This can make RedisSMQ an ideal message broker for your microservices. 
 * **[Supports both at-least-once/at-most-once delivery](/docs/api/message.md#messageprototypesetretrythreshold)**: In case of failures, while delivering or processing a message, RedisSMQ can guaranty that the message will be not lost and redelivered again. When configured to do so, RedisSMQ can also ensure that the message is delivered at-most-once.
+* **[Supports Different Exchange Types](/docs/message-exchanges.md)**: RedisSMQ offers 3 types of exchanges: [Direct Exchange](/docs/message-exchanges.md#direct-exchange), [Topic Exchange](/docs/message-exchanges.md#topic-exchange), and [Fanout Exchange](/docs/message-exchanges.md#fanout-exchange) for publishing a message to one or multiple queues. 
 * **[Message Expiration](/docs/api/message.md#messageprototypesetttl)**: A message will not be delivered if it has been in a queue for longer than a given amount of time, called TTL (time-to-live).
 * **[Message Consumption Timeout](/docs/api/message.md#messageprototypesetconsumetimeout)**: Timeout for consuming messages.
 * **[Queue Rate Limiting](/docs/queue-rate-limiting.md)**: Allowing you to control the rate at which the messages are consumed from a given queue.
@@ -56,13 +57,14 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
    2. Advanced Topics
       1. [Scheduling Messages](/docs/scheduling-messages.md)
       2. [Priority Queues](/docs/priority-queues.md)
-      3. [Queue Rate Limiting](/docs/queue-rate-limiting.md)
-      4. [Multiplexing](/docs/multiplexing.md)
-      5. [Message Manager](/docs/api/message-manager.md)
-      6. [Queue Manager](/docs/api/queue-manager.md)
-      7. [HTTP API](https://github.com/weyoss/redis-smq-monitor)
-      8. [Web UI](https://github.com/weyoss/redis-smq-monitor-client)
-      9. [Logs](https://github.com/weyoss/redis-smq-common/blob/master/docs/logs.md)
+      3. [Message Exchanges](/docs/message-exchanges.md)
+      4. [Queue Rate Limiting](/docs/queue-rate-limiting.md)
+      5. [Multiplexing](/docs/multiplexing.md)
+      6. [Message Manager](/docs/api/message-manager.md)
+      7. [Queue Manager](/docs/api/queue-manager.md)
+      8. [HTTP API](https://github.com/weyoss/redis-smq-monitor)
+      9. [Web UI](https://github.com/weyoss/redis-smq-monitor-client)
+      10. [Logs](https://github.com/weyoss/redis-smq-common/blob/master/docs/logs.md)
 5. [RedisSMQ Architecture](/docs/redis-smq-architecture.md)
 6. [Performance](#performance)
 7. [Contributing](#contributing)
@@ -225,6 +227,8 @@ See [Consumer Reference](/docs/api/consumer.md) for more details.
 * [Scheduling Messages](/docs/scheduling-messages.md)
 
 * [Priority Queues](/docs/priority-queues.md)
+
+* [Message Exchanges](/docs/message-exchanges.md)
 
 * [Queue Rate Limiting](/docs/queue-rate-limiting.md)
 
