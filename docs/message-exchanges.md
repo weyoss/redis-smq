@@ -15,7 +15,7 @@ The direct exchange allows producers to publish a message to a single queue whic
 
 The queue name of the direct exchange may be a string, like `a.b.c.d`, which is composed of alphanumeric characters, including `-` and `_` characters, that may be separated by a `.`. 
 
-It can be also an object describing the namespace of the queue like `{ ns: 'my-app', name: 'a.b.c.d'}`. If a string is used for the direct exchange queue then the default namespace will be used.
+Direct exchange queue name may be also an object describing the namespace of the queue like `{ ns: 'my-app', name: 'a.b.c.d'}`. If a string is used for the direct exchange queue then the default namespace will be used.
 
 A direct exchange with the queue `a.b.c.d` matches exactly the queue with the name `a.b.c.d`.
 
