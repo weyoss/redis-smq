@@ -15,13 +15,11 @@ export async function getQueueManager(cfg: IConfig = requiredConfig) {
   const namespace = promisifyAll(queueManager.namespace);
   const queueRateLimit = promisifyAll(queueManager.queueRateLimit);
   const queueMetrics = promisifyAll(queueManager.queueMetrics);
-  const queueExchange = promisifyAll(queueManager.queueExchange);
   return {
     queue,
     namespace,
     queueRateLimit,
     queueMetrics,
-    queueExchange,
   };
 }
 
