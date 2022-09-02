@@ -1,4 +1,4 @@
-import { TopicExchange } from '../../../../src/lib/exchange/topic.exchange';
+import { TopicExchange } from '../../../../src/lib/exchange/topic-exchange';
 import { EExchangeType, ITopicExchangeParams } from '../../../../types';
 import { InvalidExchangeDataError } from '../../../../src/lib/exchange/errors/invalid-exchange-data.error';
 

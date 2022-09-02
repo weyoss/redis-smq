@@ -1,4 +1,4 @@
-import { TopicExchange } from '../../../../src/lib/exchange/topic.exchange';
+import { TopicExchange } from '../../../../src/lib/exchange/topic-exchange';
 import { createQueue } from '../../../common/message-producing-consuming';
 import { Message } from '../../../../src/lib/message/message';
 import { getProducer } from '../../../common/producer';

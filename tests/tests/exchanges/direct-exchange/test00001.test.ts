@@ -1,5 +1,5 @@
 import { RedisKeysError } from '../../../../src/common/redis-keys/redis-keys.error';
-import { DirectExchange } from '../../../../src/lib/exchange/direct.exchange';
+import { DirectExchange } from '../../../../src/lib/exchange/direct-exchange';
 import { promisifyAll } from 'bluebird';
 import { getRedisInstance } from '../../../common/redis';
 import { requiredConfig } from '../../../common/config';

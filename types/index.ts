@@ -11,9 +11,9 @@ import { Queue } from '../src/lib/queue-manager/queue';
 import { QueueRateLimit } from '../src/lib/queue-manager/queue-rate-limit';
 import { QueueMetrics } from '../src/lib/queue-manager/queue-metrics';
 import { QueueExchange } from '../src/lib/queue-manager/queue-exchange';
-import { DirectExchange } from '../src/lib/exchange/direct.exchange';
-import { TopicExchange } from '../src/lib/exchange/topic.exchange';
-import { FanOutExchange } from '../src/lib/exchange/fan-out.exchange';
+import { DirectExchange } from '../src/lib/exchange/direct-exchange';
+import { TopicExchange } from '../src/lib/exchange/topic-exchange';
+import { FanOutExchange } from '../src/lib/exchange/fan-out-exchange';
 
 ///
 

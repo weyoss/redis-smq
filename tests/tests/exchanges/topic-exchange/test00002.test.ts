@@ -1,4 +1,4 @@
-import { TopicExchange } from '../../../../src/lib/exchange/topic.exchange';
+import { TopicExchange } from '../../../../src/lib/exchange/topic-exchange';
 import { requiredConfig } from '../../../common/config';
 import { promisifyAll } from 'bluebird';
 import { isEqual } from '../../../common/util';

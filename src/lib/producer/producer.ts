@@ -10,7 +10,7 @@ import { ICallback, TUnaryFunction } from 'redis-smq-common/dist/types';
 import { scheduleMessage } from './schedule-message';
 import { ProducerNotRunningError } from './errors/producer-not-running.error';
 import { TProduceMessageReply, TQueueParams } from '../../../types';
-import { DirectExchange } from '../exchange/direct.exchange';
+import { DirectExchange } from '../exchange/direct-exchange';
 import { Queue } from '../queue-manager/queue';
 
 export class Producer extends Base {

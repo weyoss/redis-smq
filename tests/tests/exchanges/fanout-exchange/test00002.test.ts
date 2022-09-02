@@ -1,5 +1,5 @@
 import { getQueueManager } from '../../../common/queue-manager';
-import { FanOutExchange } from '../../../../src/lib/exchange/fan-out.exchange';
+import { FanOutExchange } from '../../../../src/lib/exchange/fan-out-exchange';
 import { getRedisInstance } from '../../../common/redis';
 import { requiredConfig } from '../../../common/config';
 import { promisifyAll } from 'bluebird';

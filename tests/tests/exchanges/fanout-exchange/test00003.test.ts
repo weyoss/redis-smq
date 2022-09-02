@@ -1,7 +1,7 @@
 import { Message } from '../../../../src/lib/message/message';
 import { getProducer } from '../../../common/producer';
 import { getQueueManager } from '../../../common/queue-manager';
-import { FanOutExchange } from '../../../../src/lib/exchange/fan-out.exchange';
+import { FanOutExchange } from '../../../../src/lib/exchange/fan-out-exchange';
 import { isEqual } from '../../../common/util';
 
 test('FanOutExchange: producing messages using setTopic()', async () => {
