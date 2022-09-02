@@ -83,12 +83,12 @@ The fanout exchange allows producers to publish a message to one or multiple que
 
 In order to use a fanout exchange you need first to create a binding key and bind the selected queues to the exchange.
 
-The [queueManager.queueExchange](/docs/api/queue-manager.md#queuemanagerprototypequeueexchange) provides:
+The [FanOutExchangeManager](/docs/api/fanout-exchange-manager.md) provides:
 
-- [bindQueueToExchange()](/docs/api/queue-manager.md#queuemanagerprototypebindqueuetoexchange): To bind an existing queue to a fanout binding key.
-- [unbindQueueFromExchange()](/docs/api/queue-manager.md#queuemanagerprototypeunbindqueuefromexchange): To unbind a queue from a fanout binding key.
-- [getQueueExchangeBinding()](/docs/api/queue-manager.md#queuemanagerprototypegetqueueexchangebinding): To retrieve the fanout exchange binding key to which a queue is bound.
-- [getExchangeBindings()](/docs/api/queue-manager.md#queuemanagerprototypegetexchangebindings): To get the list of queues that are bound to a given fanout exchange binding key. 
+- [bindQueueToExchange()](/docs/api/fanout-exchange-manager.md#fanoutexchangemanagerprototypebindqueuetoexchange): To bind an existing queue to a fanout binding key.
+- [unbindQueueFromExchange()](/docs/api/fanout-exchange-manager.md#fanoutexchangemanagerprototypeunbindqueuefromexchange): To unbind a queue from a fanout binding key.
+- [getQueueExchangeBinding()](/docs/api/fanout-exchange-manager.md#fanoutexchangemanagerprototypegetqueueexchangebinding): To retrieve the fanout exchange binding key to which a queue is bound.
+- [getExchangeBindings()](/docs/api/fanout-exchange-manager.md#fanoutexchangemanagerprototypegetexchangebindings): To get the list of queues that are bound to a given fanout exchange binding key. 
 
 The [Message API](/docs/api/message.md) provides:
 
