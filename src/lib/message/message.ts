@@ -9,9 +9,9 @@ import {
 } from '../../../types';
 import { MessageMetadata } from './message-metadata';
 import { MessageError } from './errors/message.error';
-import { DirectExchange } from '../exchange/direct.exchange';
-import { TopicExchange } from '../exchange/topic.exchange';
-import { FanOutExchange } from '../exchange/fan-out.exchange';
+import { DirectExchange } from '../exchange/direct-exchange';
+import { TopicExchange } from '../exchange/topic-exchange';
+import { FanOutExchange } from '../exchange/fan-out-exchange';
 import { MessageExchangeRequiredError } from './errors/message-exchange-required.error';
 
 export class Message {

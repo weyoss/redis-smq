@@ -1,4 +1,4 @@
-import { TopicExchange } from '../../../../src/lib/exchange/topic.exchange';
+import { TopicExchange } from '../../../../src/lib/exchange/topic-exchange';
 import { RedisKeysError } from '../../../../src/common/redis-keys/redis-keys.error';
 
 test('TopicExchange: topic validation', async () => {

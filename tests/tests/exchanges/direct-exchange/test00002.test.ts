@@ -1,6 +1,6 @@
 import { EExchangeType, IDirectExchangeParams } from '../../../../types';
 import { InvalidExchangeDataError } from '../../../../src/lib/exchange/errors/invalid-exchange-data.error';
-import { DirectExchange } from '../../../../src/lib/exchange/direct.exchange';
+import { DirectExchange } from '../../../../src/lib/exchange/direct-exchange';
 
 test('DirectExchange: fromJSON()', async () => {
   const json: IDirectExchangeParams = {

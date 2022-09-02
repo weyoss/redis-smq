@@ -1,4 +1,4 @@
-import { FanOutExchange } from '../exchange/fan-out.exchange';
+import { FanOutExchange } from '../exchange/fan-out-exchange';
 import { IRequiredConfig, TQueueParams, TQueueSettings } from '../../../types';
 import { ICallback, ICompatibleLogger } from 'redis-smq-common/dist/types';
 import { async, RedisClient } from 'redis-smq-common';

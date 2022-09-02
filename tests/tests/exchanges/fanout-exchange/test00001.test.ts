@@ -1,5 +1,5 @@
 import { getQueueManager } from '../../../common/queue-manager';
-import { FanOutExchange } from '../../../../src/lib/exchange/fan-out.exchange';
+import { FanOutExchange } from '../../../../src/lib/exchange/fan-out-exchange';
 import { isEqual } from '../../../common/util';
 
 test('QueueExchange: bindQueueToExchange(), getExchangeBindings(), unbindQueueFromExchange()', async () => {
