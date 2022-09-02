@@ -19,16 +19,11 @@ const { QueueManager } = require('redis-smq');
       3. [QueueManager.prototype.queue.delete()](#queuemanagerprototypequeuedelete)
       4. [QueueManager.prototype.queue.exists()](#queuemanagerprototypequeueexists)
       5. [QueueManager.prototype.queue.getSettings()](#queuemanagerprototypequeuegetsettings)
-   3. [QueueManager.prototype.queueExchange]()
-      1. [QueueManager.prototype.bindQueueToExchange()](#queuemanagerprototypebindqueuetoexchange)
-      2. [QueueManager.prototype.unbindQueueFromExchange()](#queuemanagerprototypeunbindqueuefromexchange) 
-      3. [QueueManager.prototype.getQueueExchangeBinding()](#queuemanagerprototypegetqueueexchangebinding) 
-      4. [QueueManager.prototype.getExchangeBindings()](#queuemanagerprototypegetexchangebindings) 
-   4. [QueueManager.prototype.queueRateLimit](#queuemanagerprototypequeueratelimit)
+   3. [QueueManager.prototype.queueRateLimit](#queuemanagerprototypequeueratelimit)
       1. [QueueManager.prototype.queueRateLimit.set()](#queuemanagerprototypequeueratelimitset)
       2. [QueueManager.prototype.queueRateLimit.clear()](#queuemanagerprototypequeueratelimitclear)
       3. [QueueManager.prototype.queueRateLimit.get()](#queuemanagerprototypequeueratelimitget)
-   5. [QueueManager.prototype.queueMetrics](#queuemanagerprototypequeuemetrics)
+   4. [QueueManager.prototype.queueMetrics](#queuemanagerprototypequeuemetrics)
       1. [QueueManager.prototype.queueMetrics.getMetrics()](#queuemanagerprototypequeuemetricsgetmetrics)
 3. [Public Methods](#public-methods)
    1. [QueueManager.prototype.quit()](#queuemanagerprototypequit)
@@ -192,24 +187,6 @@ getSettings(queue, cb);
       - `settings.rateLimit` *(object)* Existing rate limit.
         - `settings.rateLimit.limit` *(number): Required.* The maximum number of messages within an `interval`.
         - `settings.rateLimit.interval` *(number): Required.* The timespan for `limit` in milliseconds.
-
-### QueueManager.prototype.queueExchange
-
-#### QueueManager.prototype.bindQueueToExchange()
-
-TODO
-
-#### QueueManager.prototype.unbindQueueFromExchange()
-
-TODO
-
-#### QueueManager.prototype.getQueueExchangeBinding()
-
-TODO
-
-#### QueueManager.prototype.getExchangeBindings()
-
-TODO
 
 ### QueueManager.prototype.queueRateLimit
 
