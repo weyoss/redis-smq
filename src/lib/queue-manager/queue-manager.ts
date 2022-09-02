@@ -6,7 +6,6 @@ import { createClientInstance, errors, logger } from 'redis-smq-common';
 import { ICallback } from 'redis-smq-common/dist/types';
 import { getConfiguration } from '../../config/configuration';
 import { IConfig, TQueueManager } from '../../../types';
-import { QueueExchange } from './queue-exchange';
 
 export class QueueManager {
   static createInstance(config: IConfig, cb: ICallback<TQueueManager>): void {
@@ -22,13 +21,11 @@ export class QueueManager {
         const queue = new Queue(cfg, client, nsLogger);
         const queueRateLimit = new QueueRateLimit(cfg, client, nsLogger);
         const queueMetrics = new QueueMetrics(cfg, client, nsLogger);
-        const queueExchange = new QueueExchange(cfg, client, nsLogger);
         cb(null, {
           namespace,
           queue,
           queueRateLimit,
           queueMetrics,
-          queueExchange,
           quit(cb: ICallback<void>): void {
             client.halt(cb);
           },

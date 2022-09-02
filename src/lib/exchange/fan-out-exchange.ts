@@ -7,8 +7,8 @@ import {
 } from '../../../types';
 import { RedisClient } from 'redis-smq-common';
 import { ICallback } from 'redis-smq-common/dist/types';
-import { QueueExchange } from '../queue-manager/queue-exchange';
 import { InvalidExchangeDataError } from './errors/invalid-exchange-data.error';
+import { FanOutExchangeManager } from './fan-out-exchange-manager';
 
 export class FanOutExchange extends Exchange<string, EExchangeType.FANOUT> {
   constructor(fanOutName: string) {
@@ -24,7 +24,7 @@ export class FanOutExchange extends Exchange<string, EExchangeType.FANOUT> {
     config: IRequiredConfig,
     cb: ICallback<TQueueParams[]>,
   ): void {
-    QueueExchange.getExchangeBindings(redisClient, this, cb);
+    FanOutExchangeManager.getExchangeBindings(redisClient, this, cb);
   }
 
   static fromJSON(json: Partial<IFanOutExchangeParams>): FanOutExchange {
