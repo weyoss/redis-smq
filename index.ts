@@ -7,3 +7,4 @@ export { QueueManager } from './src/lib/queue-manager/queue-manager';
 export { DirectExchange } from './src/lib/exchange/direct-exchange';
 export { TopicExchange } from './src/lib/exchange/topic-exchange';
 export { FanOutExchange } from './src/lib/exchange/fan-out-exchange';
+export { FanOutExchangeManager } from './src/lib/exchange/fan-out-exchange-manager';

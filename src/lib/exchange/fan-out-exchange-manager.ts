@@ -1,16 +1,28 @@
-import { FanOutExchange } from '../exchange/fan-out-exchange';
-import { IRequiredConfig, TQueueParams, TQueueSettings } from '../../../types';
+import {
+  IConfig,
+  IRequiredConfig,
+  TQueueParams,
+  TQueueSettings,
+} from '../../../types';
+import {
+  async,
+  createClientInstance,
+  errors,
+  logger,
+  RedisClient,
+} from 'redis-smq-common';
 import { ICallback, ICompatibleLogger } from 'redis-smq-common/dist/types';
-import { async, RedisClient } from 'redis-smq-common';
+import { FanOutExchange } from './fan-out-exchange';
+import { Queue } from '../queue-manager/queue';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { Queue } from './queue';
+import { getConfiguration } from '../../config/configuration';
 
-export class QueueExchange {
+export class FanOutExchangeManager {
   protected config: IRequiredConfig;
   protected redisClient: RedisClient;
   protected logger: ICompatibleLogger;
 
-  constructor(
+  protected constructor(
     config: IRequiredConfig,
     redisClient: RedisClient,
     logger: ICompatibleLogger,
@@ -110,19 +122,23 @@ export class QueueExchange {
     exchange: FanOutExchange,
     cb: ICallback<TQueueParams[]>,
   ): void {
-    QueueExchange.getExchangeBindings(this.redisClient, exchange, cb);
+    FanOutExchangeManager.getExchangeBindings(this.redisClient, exchange, cb);
   }
 
   getQueueExchangeBinding(
     queue: TQueueParams | string,
     cb: ICallback<string>,
   ): void {
-    QueueExchange.getQueueExchangeBinding(
+    FanOutExchangeManager.getQueueExchangeBinding(
       this.config,
       this.redisClient,
       queue,
       cb,
     );
+  }
+
+  quit(cb: ICallback<void>): void {
+    this.redisClient.halt(cb);
   }
 
   static getExchangeBindings(
@@ -151,6 +167,28 @@ export class QueueExchange {
     Queue.getSettings(config, redisClient, queue, (err, reply) => {
       if (err) cb(err);
       else cb(null, reply?.exchangeBinding);
+    });
+  }
+
+  static createInstance(
+    config: IConfig = {},
+    cb: ICallback<FanOutExchangeManager>,
+  ): void {
+    const cfg = getConfiguration(config);
+    const redis = cfg.redis;
+    createClientInstance(redis, (err, client) => {
+      if (err) cb(err);
+      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else {
+        const loggerCfg = cfg.logger;
+        const nsLogger = logger.getNamespacedLogger(loggerCfg, 'queue-manager');
+        const fanOutExchangeManager = new FanOutExchangeManager(
+          cfg,
+          client,
+          nsLogger,
+        );
+        cb(null, fanOutExchangeManager);
+      }
     });
   }
 }
