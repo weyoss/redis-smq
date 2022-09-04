@@ -113,10 +113,16 @@ export class Producer extends Base {
         } else {
           exchange.getQueues(redisClient, this.config, (err, queues) => {
             if (err) cb(err);
+            else if (!queues?.length)
+              cb(
+                new MessageNotPublishedError(
+                  `The exchange (${exchange.constructor.name}) does not match any queue.`,
+                ),
+              );
             else {
               const messages: Message[] = [];
               async.eachOf(
-                queues ?? [],
+                queues,
                 (queue, index, done) => {
                   const msg = Message.createFromMessage(message, true);
                   this.produceMessage(redisClient, msg, queue, (err) => {

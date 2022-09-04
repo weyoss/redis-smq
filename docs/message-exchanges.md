@@ -37,7 +37,7 @@ const exchange = new DirectExchange('a.b.c.d');
 msg.setExchange(exchange).setBody('123456789');
 ```
 
-When publishing the message, if the queue does not exist, the message will be discarded and an error will be returned.
+When publishing a message with a direct exchange, if the exchange queue does not exist the message will be discarded and an error will be returned.
 
 ### Topic Exchange
 
@@ -71,9 +71,7 @@ const exchange = new TopicExchange('a.b.c.d');
 msg.setExchange(exchange).setBody('123456789');
 ```
 
-When publishing a message, if the topic pattern did not match any queue, the message will be discarded and no error will be returned.
-
-The second argument of the [producer.produce()](/docs/api/producer.md#producerprototypeproduce) callback provides the list of published messages. 
+When publishing a message with a topic exchange, if the topic pattern does not match any queue the message will be discarded and an error will be returned.
 
 ### Fanout Exchange
 
@@ -81,13 +79,13 @@ The fanout exchange allows producers to publish a message to one or multiple que
 
 #### Usage
 
-In order to use a fanout exchange you need first to create a binding key and bind the selected queues to the exchange.
+In order to use a fanout exchange you need first to create it and bind the selected queues to the exchange.
 
 The [FanOutExchangeManager](/docs/api/fanout-exchange-manager.md) provides:
 
-- [bindQueue()](/docs/api/fanout-exchange-manager.md#fanoutexchangemanagerprototypebindqueue): To bind an existing queue to a fanout binding key.
-- [unbindQueue()](/docs/api/fanout-exchange-manager.md#fanoutexchangemanagerprototypeunbindqueue): To unbind a queue from a fanout binding key.
-- [getQueueExchange()](/docs/api/fanout-exchange-manager.md#fanoutexchangemanagerprototypegetqueueexchange): To retrieve the fanout exchange binding key to which a queue is bound.
+- [bindQueue()](/docs/api/fanout-exchange-manager.md#fanoutexchangemanagerprototypebindqueue): To bind an existing queue to a fanout exchange.
+- [unbindQueue()](/docs/api/fanout-exchange-manager.md#fanoutexchangemanagerprototypeunbindqueue): To unbind a queue from a fanout exchange.
+- [getQueueExchange()](/docs/api/fanout-exchange-manager.md#fanoutexchangemanagerprototypegetqueueexchange): To retrieve the fanout exchange to which a queue is bound.
 - [getExchangeQueues()](/docs/api/fanout-exchange-manager.md#fanoutexchangemanagerprototypegetexchangequeues): To get the list of queues that are bound to a given fanout exchange. 
 
 The [Message API](/docs/api/message.md) provides:
@@ -108,6 +106,5 @@ const exchange = new FanOutExchange('my-fanout-exchange');
 msg.setExchange(exchange).setBody('123456789');
 ```
 
-The same as for the [Topic Exchange](#topic-exchange), when publishing a message, if the topic pattern did not match any queue, the message will be discarded and no error will be returned.
+When publishing a message with a fanout exchange, if the exchange does not exist or no queue is bound to such an exchange the message will be discarded and error will be returned.
 
-The second argument of the [producer.produce()](/docs/api/producer.md#producerprototypeproduce) callback provides the list of published messages. 
