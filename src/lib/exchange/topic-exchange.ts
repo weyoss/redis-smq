@@ -56,10 +56,7 @@ export class TopicExchange extends Exchange<
           matched.push(queue);
         done();
       },
-      (err) => {
-        if (err) cb(err);
-        else cb(null, matched);
-      },
+      (err) => cb(err, matched),
     );
   }
 
