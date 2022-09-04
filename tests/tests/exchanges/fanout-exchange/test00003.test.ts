@@ -16,8 +16,8 @@ test('FanOutExchange: producing messages using setTopic()', async () => {
   await queue.createAsync(q2, false);
 
   const exchange = new FanOutExchange('fanout_a');
-  await fanOutExchangeManager.bindQueueToExchangeAsync(exchange, q1);
-  await fanOutExchangeManager.bindQueueToExchangeAsync(exchange, q2);
+  await fanOutExchangeManager.bindQueueAsync(q1, exchange);
+  await fanOutExchangeManager.bindQueueAsync(q2, exchange);
 
   const producer = getProducer();
   await producer.runAsync();

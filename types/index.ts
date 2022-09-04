@@ -135,7 +135,7 @@ export type TQueueRateLimit = {
 export type TQueueSettings = {
   priorityQueuing: boolean;
   rateLimit?: TQueueRateLimit | null;
-  exchangeBinding?: string;
+  exchange?: FanOutExchange;
 };
 
 export type TConsumerInfo = {
