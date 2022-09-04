@@ -6,6 +6,7 @@ import { initDeleteQueueTransaction } from './delete-queue-transaction';
 import { errors, RedisClient } from 'redis-smq-common';
 import { ELuaScriptName } from '../../common/redis-client/redis-client';
 import { ICallback, ICompatibleLogger } from 'redis-smq-common/dist/types';
+import { FanOutExchange } from '../exchange/fan-out-exchange';
 
 export class Queue {
   protected config: IRequiredConfig;
@@ -128,7 +129,7 @@ export class Queue {
             queueSettings.rateLimit = JSON.parse(reply[key]);
           }
           if (key === keyQueueSettingsExchangeBinding) {
-            queueSettings.exchangeBinding = reply[key];
+            queueSettings.exchange = new FanOutExchange(reply[key]);
           }
         }
         cb(null, queueSettings);

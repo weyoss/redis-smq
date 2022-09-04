@@ -24,7 +24,7 @@ export class FanOutExchange extends Exchange<string, EExchangeType.FANOUT> {
     config: IRequiredConfig,
     cb: ICallback<TQueueParams[]>,
   ): void {
-    FanOutExchangeManager.getExchangeBindings(redisClient, this, cb);
+    FanOutExchangeManager.getExchangeQueues(redisClient, this, cb);
   }
 
   static fromJSON(json: Partial<IFanOutExchangeParams>): FanOutExchange {

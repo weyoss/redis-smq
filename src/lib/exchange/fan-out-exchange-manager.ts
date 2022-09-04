@@ -32,9 +32,9 @@ export class FanOutExchangeManager {
     this.config = config;
   }
 
-  bindQueueToExchange(
-    exchange: FanOutExchange,
+  bindQueue(
     queue: TQueueParams | string,
+    exchange: FanOutExchange,
     cb: ICallback<void>,
   ): void {
     async.waterfall(
@@ -77,7 +77,7 @@ export class FanOutExchangeManager {
     );
   }
 
-  unbindQueueFromExchange(
+  unbindQueue(
     queue: TQueueParams | string,
     exchange: FanOutExchange,
     cb: ICallback<void>,
@@ -118,18 +118,18 @@ export class FanOutExchangeManager {
     );
   }
 
-  getExchangeBindings(
+  getExchangeQueues(
     exchange: FanOutExchange,
     cb: ICallback<TQueueParams[]>,
   ): void {
-    FanOutExchangeManager.getExchangeBindings(this.redisClient, exchange, cb);
+    FanOutExchangeManager.getExchangeQueues(this.redisClient, exchange, cb);
   }
 
-  getQueueExchangeBinding(
+  getQueueExchange(
     queue: TQueueParams | string,
-    cb: ICallback<string>,
+    cb: ICallback<FanOutExchange>,
   ): void {
-    FanOutExchangeManager.getQueueExchangeBinding(
+    FanOutExchangeManager.getQueueExchange(
       this.config,
       this.redisClient,
       queue,
@@ -141,7 +141,7 @@ export class FanOutExchangeManager {
     this.redisClient.halt(cb);
   }
 
-  static getExchangeBindings(
+  static getExchangeQueues(
     redisClient: RedisClient,
     exchange: FanOutExchange,
     cb: ICallback<TQueueParams[]>,
@@ -158,15 +158,15 @@ export class FanOutExchangeManager {
     });
   }
 
-  static getQueueExchangeBinding(
+  static getQueueExchange(
     config: IRequiredConfig,
     redisClient: RedisClient,
     queue: TQueueParams | string,
-    cb: ICallback<string>,
+    cb: ICallback<FanOutExchange>,
   ): void {
     Queue.getSettings(config, redisClient, queue, (err, reply) => {
       if (err) cb(err);
-      else cb(null, reply?.exchangeBinding);
+      else cb(null, reply?.exchange);
     });
   }
 
