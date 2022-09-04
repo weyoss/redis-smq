@@ -19,8 +19,8 @@ const { Message } = require('redis-smq');
       2. [Message.prototype.getQueue()](#messageprototypegetqueue)
       3. [Message.prototype.setTopic()](#messageprototypesettopic)
       4. [Message.prototype.getTopic()](#messageprototypegettopic)
-      5. [Message.prototype.setFanout()](#messageprototypesetfanout)
-      6. [Message.prototype.getFanout()](#messageprototypegetfanout)
+      5. [Message.prototype.setFanOut()](#messageprototypesetfanout)
+      6. [Message.prototype.getFanOut()](#messageprototypegetfanout)
       7. [Message.prototype.setExchange()](#messageprototypegetexchange)
       8. [Message.prototype.getExchange()](#messageprototypegetexchange)
    3. Message payload
@@ -131,27 +131,61 @@ message.getQueue(); // { name: 'test_queue', ns: 'default' }
 
 ### Message.prototype.setTopic()
 
-TODO
+```javascript
+const { Message } = require('redis-smq');
+
+const message = new Message();
+message.setTopic(`a.b.c.d`);
+message.setTopic({ ns: 'my-app', topic: 'a.b.c.d' });
+```
 
 ### Message.prototype.getTopic()
 
-TODO
+```javascript
+const { Message, TopicExchange } = require('redis-smq');
 
-### Message.prototype.setFanout()
+const message = new Message();
+message.setTopic(`a.b.c.d`);
+message.getTopic(); // `a.b.c.d
+```
 
-TODO
+### Message.prototype.setFanOut()
 
-### Message.prototype.getFanout()
+```javascript
+const { Message } = require('redis-smq');
 
-TODO
+const message = new Message();
+message.setFanOut(`a123`);
+```
 
+Before setting up a `fanout` for a message, make sure to create it first using the [FanOutExchangeManager](/docs/api/fanout-exchange-manager.md). 
+
+### Message.prototype.getFanOut()
+
+```javascript
+const { Message } = require('redis-smq');
+
+const message = new Message();
+message.getFanOut(); // a123
+```
 ### Message.prototype.setExchange()
 
-TODO
+```javascript
+const { Message, TopicExchange } = require('redis-smq');
+
+const message = new Message();
+const e = new TopicExchange('a.b');
+message.setExchange(e); 
+```
 
 ### Message.prototype.getExchange()
 
-TODO
+```javascript
+const { Message } = require('redis-smq');
+
+const message = new Message();
+message.getExchange(); 
+```
 
 ### Message.prototype.setBody()
 
