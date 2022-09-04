@@ -7,15 +7,15 @@ A message exchange is like an address or a routing algorithm which decides to wh
 Unlike other message queues, where messages are published first to an exchange, message exchanges in RedisSMQ does 
 allow producers to directly publish messages to queues. 
 
-Before publishing a message, an exchange for the message should be set. Out-of-box RedisSMQ offers 3 exchange types.
+Before publishing a message, an exchange for the message must be set. Out-of-box RedisSMQ offers 3 exchange types.
 
 ### Direct Exchange
 
 The direct exchange allows producers to publish a message to a single queue which is matched exactly by the specified queue of the exchange.
 
-The queue name of the direct exchange may be a string, like `a.b.c.d`, which is composed of alphanumeric characters, including `-` and `_` characters, that may be separated by a `.`. 
+The queue of the direct exchange may be a string, like `a.b.c.d`, which is composed of alphanumeric characters, including `-` and `_` characters, that may be separated by a `.`. 
 
-Direct exchange queue name may be also an object describing the namespace of the queue like `{ ns: 'my-app', name: 'a.b.c.d'}`. If a string is used for the direct exchange queue then the default namespace will be used.
+Direct exchange queue may be also an object describing the namespace of the queue like `{ ns: 'my-app', name: 'a.b.c.d'}`. If a string is used for the direct exchange queue then the default namespace will be used.
 
 A direct exchange with the queue `a.b.c.d` matches exactly the queue with the name `a.b.c.d`.
 
@@ -71,7 +71,7 @@ const exchange = new TopicExchange('a.b.c.d');
 msg.setExchange(exchange).setBody('123456789');
 ```
 
-When publishing a message with a topic exchange, if the topic pattern does not match any queue the message will be discarded and an error will be returned.
+When publishing a message with a topic exchange, if the topic pattern does not match any queues the message will be discarded and an error will be returned.
 
 ### Fanout Exchange
 
@@ -106,5 +106,5 @@ const exchange = new FanOutExchange('my-fanout-exchange');
 msg.setExchange(exchange).setBody('123456789');
 ```
 
-When publishing a message with a fanout exchange, if the exchange does not exist or no queue is bound to such an exchange the message will be discarded and error will be returned.
+When publishing a message with a fanout exchange, if the exchange does not exist or no queues are bound to such an exchange the message will be discarded and error will be returned.
 
