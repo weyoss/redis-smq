@@ -5,7 +5,7 @@ import { FanOutExchange } from '../../../../src/lib/exchange/fan-out-exchange';
 import { isEqual } from '../../../common/util';
 import { getFanOutExchangeManager } from '../../../common/fanout-exchange-manager';
 
-test('FanOutExchange: producing messages using setTopic()', async () => {
+test('FanOutExchange: producing messages using setExchange()', async () => {
   const { queue } = await getQueueManager();
   const fanOutExchangeManager = await getFanOutExchangeManager();
 
