@@ -52,8 +52,8 @@ producer.produce(message, cb);
 - `cb(err, reply)` *(function): Required.* Callback function.
   - `err` *(Error | null | undefined).* An error object will be returned in case of failures.
   - `reply` *(object | null).* Indicate whether the operation completed successfully.
-    - `reply.scheduled` *(boolean).* Indicate whether the message has been scheduled.
-    - `reply.messages` *(array).* A list of published messages.
+    - `reply.scheduled` *(boolean).* Indicate whether the message(s) has been scheduled.
+    - `reply.messages` *(array).* A list of messages that has been scheduled or published.
 
 ```javascript
 const { Message } = require('redis-smq');
@@ -72,9 +72,10 @@ producer.produce(message, (err) => {
 
 Before publishing a message, make sure that:
 
-- The queue of the message does exist.
-- Messages with a priority are published to a priority queue.
-- Messages without priority are published to a LIFO queue.
+- The message does have an exchange. See [Message Exchanges](/docs/message-exchanges.md) for more details.
+- The message is published to the right queue:
+  - Messages with a priority should be published to a queue with priority queuing enabled.
+  - Messages without a priority should be published to a LIFO queue.
 
 Otherwise, an error will be returned.
 
