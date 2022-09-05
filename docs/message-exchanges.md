@@ -1,13 +1,22 @@
 ## Message Exchanges
 
-Starting with v7.1.0, message exchanges offer different ways to route a message to a queue.
+Starting with v7.1.0, message exchanges offer different ways to route a message to one or multiple queues.
 
 A message exchange is like an address or a routing algorithm which decides to which queues the message should go.
 
-Unlike other message queues, where messages are published first to an exchange, message exchanges in RedisSMQ does 
-allow producers to directly publish messages to queues. 
+Unlike other message queues, where messages are published first to an exchange, message exchanges in RedisSMQ do not store messages.
 
-Before publishing a message, an exchange for the message must be set. Out-of-box RedisSMQ offers 3 exchange types.
+Each message is required to have a `message exchange` which is used by the producer to retrieve the list of queues that matches the exchange parameters.
+
+From then, the producer **directly** publishes the message to the matched queues.
+
+When a message is published to multiple queues, for each queue a new message is created with the same properties as the base message but with a new ID. 
+
+For a given message exchange, all messages that were created and published to multiple queues have the same `exchange tag`.
+
+An `exchange tag` is a unique string property that identifies an exchange instance and, it is used to keep track of published messages originating from the same exchange instance.
+
+Out-of-box RedisSMQ offers 3 exchange types.
 
 ### Direct Exchange
 
