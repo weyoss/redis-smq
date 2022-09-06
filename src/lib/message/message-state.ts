@@ -1,7 +1,7 @@
 import { v4 as uuid } from 'uuid';
-import { TMessageMetadataJSON } from '../../../types';
+import { TMessageState } from '../../../types';
 
-export class MessageMetadata {
+export class MessageState {
   protected readonly uuid: string;
 
   protected publishedAt: number | null = null;
@@ -24,17 +24,17 @@ export class MessageMetadata {
     this.uuid = uuid();
   }
 
-  setPublishedAt(timestamp: number): MessageMetadata {
+  setPublishedAt(timestamp: number): MessageState {
     this.publishedAt = timestamp;
     return this;
   }
 
-  setScheduledAt(timestamp: number): MessageMetadata {
+  setScheduledAt(timestamp: number): MessageState {
     this.scheduledAt = timestamp;
     return this;
   }
 
-  setNextScheduledDelay(delay: number): MessageMetadata {
+  setNextScheduledDelay(delay: number): MessageState {
     this.nextScheduledDelay = delay;
     return this;
   }
@@ -48,7 +48,7 @@ export class MessageMetadata {
     return 0;
   }
 
-  setNextRetryDelay(delay: number): MessageMetadata {
+  setNextRetryDelay(delay: number): MessageState {
     this.nextRetryDelay = delay;
     return this;
   }
@@ -66,7 +66,7 @@ export class MessageMetadata {
     return this.nextScheduledDelay > 0 || this.nextRetryDelay > 0;
   }
 
-  resetMessageScheduledRepeatCount(): MessageMetadata {
+  resetMessageScheduledRepeatCount(): MessageState {
     this.scheduledRepeatCount = 0;
     return this;
   }
@@ -76,12 +76,12 @@ export class MessageMetadata {
     return this.attempts;
   }
 
-  setAttempts(attempts: number): MessageMetadata {
+  setAttempts(attempts: number): MessageState {
     this.attempts = attempts;
     return this;
   }
 
-  setMessageScheduledCronFired(fired: boolean): MessageMetadata {
+  setMessageScheduledCronFired(fired: boolean): MessageState {
     this.scheduledCronFired = fired;
     return this;
   }
@@ -91,12 +91,12 @@ export class MessageMetadata {
     return this.scheduledRepeatCount;
   }
 
-  setExpired(expired: boolean): MessageMetadata {
+  setExpired(expired: boolean): MessageState {
     this.expired = expired;
     return this;
   }
 
-  reset(): MessageMetadata {
+  reset(): MessageState {
     this.publishedAt = null;
     this.scheduledAt = null;
     this.attempts = 0;
@@ -161,7 +161,7 @@ export class MessageMetadata {
     return 0;
   }
 
-  toJSON(): TMessageMetadataJSON {
+  toJSON(): TMessageState {
     return {
       uuid: this.uuid,
       publishedAt: this.publishedAt,

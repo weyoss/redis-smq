@@ -27,9 +27,9 @@ export class DelayWorker extends Worker {
             (i, _, done) => {
               multi.lrem(keyDelayedMessages, 1, i);
               const message = Message.createFromMessage(i);
-              message.getRequiredMetadata().incrAttempts();
+              message.getRequiredMessageState().incrAttempts();
               const delay = message.getRetryDelay();
-              message.getRequiredMetadata().setNextRetryDelay(delay);
+              message.getRequiredMessageState().setNextRetryDelay(delay);
               scheduleMessage(multi, message);
               done();
             },

@@ -7,7 +7,7 @@ import {
   TQueueParams,
   TTopicParams,
 } from '../../../types';
-import { MessageMetadata } from './message-metadata';
+import { MessageState } from './message-state';
 import { MessageError } from './errors/message.error';
 import { DirectExchange } from '../exchange/direct-exchange';
 import { TopicExchange } from '../exchange/topic-exchange';
@@ -56,7 +56,7 @@ export class Message {
 
   protected scheduledRepeat = 0;
 
-  protected metadata: MessageMetadata | null = null;
+  protected messageState: MessageState | null = null;
 
   protected exchange: TExchange | null = null;
 
@@ -70,66 +70,66 @@ export class Message {
     this.setRetryThreshold(retryThreshold);
   }
 
-  getMetadata(): MessageMetadata | null {
-    return this.metadata;
+  getMessageState(): MessageState | null {
+    return this.messageState;
   }
 
-  getRequiredMetadata(): MessageMetadata {
-    if (!this.metadata) {
+  getRequiredMessageState(): MessageState {
+    if (!this.messageState) {
       throw new MessageError(
-        `Expected an instance of MessageMetadata. Probably the message has not yet been published`,
+        `Expected an instance of MessageState. Probably the message has not yet been published`,
       );
     }
-    return this.metadata;
+    return this.messageState;
   }
 
-  setMetadata(m: MessageMetadata): Message {
-    this.metadata = m;
+  setMessageState(m: MessageState): Message {
+    this.messageState = m;
     return this;
   }
 
-  getSetMetadata(): MessageMetadata {
-    if (!this.metadata) {
-      const m = new MessageMetadata();
+  getSetMessageState(): MessageState {
+    if (!this.messageState) {
+      const m = new MessageState();
       if (this.scheduledDelay) m.setNextScheduledDelay(this.scheduledDelay);
-      this.setMetadata(m);
+      this.setMessageState(m);
       return m;
     }
-    return this.metadata;
+    return this.messageState;
   }
 
   ///
 
   getPublishedAt(): number | null {
-    if (this.metadata) {
-      return this.metadata.getPublishedAt();
+    if (this.messageState) {
+      return this.messageState.getPublishedAt();
     }
     return null;
   }
 
   getScheduledAt(): number | null {
-    if (this.metadata) {
-      return this.metadata.getScheduledAt();
+    if (this.messageState) {
+      return this.messageState.getScheduledAt();
     }
     return null;
   }
 
   getId(): string | null {
-    if (this.metadata) {
-      return this.metadata.getId();
+    if (this.messageState) {
+      return this.messageState.getId();
     }
     return null;
   }
 
   getRequiredId(): string {
-    if (!this.metadata) {
+    if (!this.messageState) {
       throw new MessageError(`Message has not yet been published`);
     }
-    return this.metadata.getId();
+    return this.messageState.getId();
   }
 
   getSetExpired(): boolean {
-    return this.getRequiredMetadata().getSetExpired(
+    return this.getRequiredMessageState().getSetExpired(
       this.getTTL(),
       this.getCreatedAt(),
     );
@@ -335,18 +335,18 @@ export class Message {
   }
 
   hasNextDelay(): boolean {
-    if (this.metadata) {
-      return this.metadata.hasDelay();
+    if (this.messageState) {
+      return this.messageState.hasDelay();
     }
     return !!this.getMessageScheduledDelay();
   }
 
   getNextScheduledTimestamp(): number {
     if (this.isSchedulable()) {
-      const metadata = this.getRequiredMetadata();
+      const messageState = this.getRequiredMessageState();
 
       // Delay
-      const delay = metadata.getSetNextDelay();
+      const delay = messageState.getSetNextDelay();
       if (delay) {
         return Date.now() + delay;
       }
@@ -361,7 +361,7 @@ export class Message {
       const msgScheduledRepeat = this.getScheduledRepeat();
       let repeatTimestamp = 0;
       if (msgScheduledRepeat) {
-        const newCount = metadata.getMessageScheduledRepeatCount() + 1;
+        const newCount = messageState.getMessageScheduledRepeatCount() + 1;
         if (newCount <= msgScheduledRepeat) {
           const scheduledRepeatPeriod = this.getScheduledRepeatPeriod();
           const now = Date.now();
@@ -376,26 +376,26 @@ export class Message {
       if (repeatTimestamp && cronTimestamp) {
         if (
           repeatTimestamp < cronTimestamp &&
-          metadata.hasScheduledCronFired()
+          messageState.hasScheduledCronFired()
         ) {
-          metadata.incrMessageScheduledRepeatCount();
+          messageState.incrMessageScheduledRepeatCount();
           return repeatTimestamp;
         }
       }
 
       if (cronTimestamp) {
         // reset repeat count on each cron tick
-        metadata.resetMessageScheduledRepeatCount();
+        messageState.resetMessageScheduledRepeatCount();
 
         // if the message has also a repeat scheduling then the first time it will fires only
         // after CRON scheduling has been fired
-        metadata.setMessageScheduledCronFired(true);
+        messageState.setMessageScheduledCronFired(true);
 
         return cronTimestamp;
       }
 
       if (repeatTimestamp) {
-        metadata.incrMessageScheduledRepeatCount();
+        messageState.incrMessageScheduledRepeatCount();
         return repeatTimestamp;
       }
     }
@@ -430,19 +430,19 @@ export class Message {
       scheduledDelay: this.scheduledDelay,
       scheduledRepeatPeriod: this.scheduledRepeatPeriod,
       scheduledRepeat: this.scheduledRepeat,
-      metadata: this.metadata ? this.metadata.toJSON() : null,
+      messageState: this.messageState ? this.messageState.toJSON() : null,
       queue: this.exchange ? this.exchange.getDestinationQueue() : null,
       exchange: this.exchange ? this.exchange.toJSON() : null,
     };
   }
 
   hasRetryThresholdExceeded(): boolean {
-    const metadata = this.getMetadata();
-    if (!metadata) {
+    const messageState = this.getMessageState();
+    if (!messageState) {
       return false;
     }
     const threshold = this.getRetryThreshold();
-    return metadata.getAttempts() + 1 >= threshold;
+    return messageState.getAttempts() + 1 >= threshold;
   }
 
   isSchedulable(): boolean {
@@ -504,14 +504,14 @@ export class Message {
     message: string | Message,
     hardReset = false,
   ): Message {
-    const { exchange, metadata, queue, ...params }: TMessageJSON =
+    const { exchange, messageState, queue, ...params }: TMessageJSON =
       typeof message === 'string' ? JSON.parse(message) : message.toJSON();
     const m = new Message();
     Object.assign(m, params);
-    if (metadata) {
-      const meta = new MessageMetadata();
-      if (!hardReset) Object.assign(meta, metadata);
-      m.setMetadata(meta);
+    if (messageState) {
+      const meta = new MessageState();
+      if (!hardReset) Object.assign(meta, messageState);
+      m.setMessageState(meta);
     }
     if (exchange) {
       if (exchange['type'] === EExchangeType.DIRECT) {

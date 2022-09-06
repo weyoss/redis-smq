@@ -13,7 +13,7 @@ function scheduleMessageTransaction(
   if (timestamp > 0) {
     const { keyScheduledMessageWeight, keyScheduledMessages } =
       redisKeys.getMainKeys();
-    message.getRequiredMetadata().setScheduledAt(Date.now());
+    message.getRequiredMessageState().setScheduledAt(Date.now());
     const messageId = message.getRequiredId();
     multi.zadd(keyScheduledMessageWeight, timestamp, messageId);
     multi.hset(keyScheduledMessages, messageId, JSON.stringify(message));
@@ -47,7 +47,7 @@ export function scheduleMessage(
         keyScheduledMessageWeight,
         keyScheduledMessages,
       } = redisKeys.getQueueKeys(queue);
-      message.getRequiredMetadata().setScheduledAt(Date.now());
+      message.getRequiredMessageState().setScheduledAt(Date.now());
       const messageId = message.getRequiredId();
       mixed.runScript(
         ELuaScriptName.SCHEDULE_MESSAGE,

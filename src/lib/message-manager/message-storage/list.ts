@@ -60,7 +60,7 @@ export abstract class List extends AbstractMessageStorage<
         const { keyMessages } = key;
         const message = Message.createFromMessage(msg);
         const queue = message.getDestinationQueue();
-        message.getRequiredMetadata().reset(); // resetting all system parameters
+        message.getRequiredMessageState().reset(); // resetting all system parameters
         const {
           keyQueueSettings,
           keyQueueSettingsPriorityQueuing,

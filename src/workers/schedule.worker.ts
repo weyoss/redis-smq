@@ -68,7 +68,7 @@ export class ScheduleWorker extends Worker {
             keyScheduledMessages,
           } = redisKeys.getQueueKeys(queue);
           const nextScheduleTimestamp = message.getNextScheduledTimestamp();
-          message.getRequiredMetadata().setPublishedAt(Date.now());
+          message.getRequiredMessageState().setPublishedAt(Date.now());
           this.redisClient.runScript(
             ELuaScriptName.ENQUEUE_SCHEDULED_MESSAGE,
             [
