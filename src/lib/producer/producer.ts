@@ -31,7 +31,7 @@ export class Producer extends Base {
     message: Message,
     cb: ICallback<void>,
   ): void {
-    message.getRequiredMetadata().setPublishedAt(Date.now());
+    message.getRequiredMessageState().setPublishedAt(Date.now());
     const {
       keyQueueSettings,
       keyQueueSettingsPriorityQueuing,
@@ -70,7 +70,7 @@ export class Producer extends Base {
   ): void {
     const messageId = message
       .setDestinationQueue(queue)
-      .getSetMetadata()
+      .getSetMessageState()
       .getId();
     if (message.isSchedulable())
       scheduleMessage(redisClient, message, (err) => {
@@ -94,7 +94,7 @@ export class Producer extends Base {
   produce(message: Message, cb: ICallback<TProduceMessageReply>): void {
     if (!this.powerManager.isUp()) cb(new ProducerNotRunningError());
     else {
-      if (message.getMetadata()) cb(new MessageAlreadyPublishedError());
+      if (message.getMessageState()) cb(new MessageAlreadyPublishedError());
       else {
         const callback: ICallback<Message[]> = (err, messages = []) => {
           if (err) cb(err);

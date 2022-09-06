@@ -179,7 +179,7 @@ export type TMessageJSON = {
   scheduledDelay: number | null;
   scheduledRepeatPeriod: number | null;
   scheduledRepeat: number;
-  metadata: TMessageMetadataJSON | null;
+  messageState: TMessageState | null;
 };
 
 export enum EExchangeType {
@@ -215,7 +215,7 @@ export type ITopicExchangeParams = IExchangeParams<
   EExchangeType.TOPIC
 >;
 
-export type TMessageMetadataJSON = {
+export type TMessageState = {
   uuid: string;
   publishedAt: number | null;
   scheduledAt: number | null;
