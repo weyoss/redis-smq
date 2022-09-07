@@ -40,5 +40,5 @@ test('Periodic scheduled messages upon consume failures are dead-lettered withou
   expect(res.total).toBe(1);
   expect(typeof res.items[0].message.getId()).toBe('string');
   expect(res.items[0].message.getId()).toBe(msg.getId());
-  expect(res.items[0].message.getMetadata()?.getAttempts()).toBe(0);
+  expect(res.items[0].message.getMessageState()?.getAttempts()).toBe(0);
 });

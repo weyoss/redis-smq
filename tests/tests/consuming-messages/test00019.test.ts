@@ -24,7 +24,7 @@ test('An unacknowledged message is dead-lettered and not delivered again, given 
   const msg = new Message();
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue).setRetryThreshold(0);
 
-  expect(msg.getMetadata()).toBe(null);
+  expect(msg.getMessageState()).toBe(null);
   expect(msg.getId()).toBe(null);
   await producer.produceAsync(msg);
 
@@ -37,5 +37,5 @@ test('An unacknowledged message is dead-lettered and not delivered again, given 
     100,
   );
   expect(r.items.length).toBe(1);
-  expect(r.items[0].message.getMetadata()?.getAttempts()).toBe(0);
+  expect(r.items[0].message.getMessageState()?.getAttempts()).toBe(0);
 });
