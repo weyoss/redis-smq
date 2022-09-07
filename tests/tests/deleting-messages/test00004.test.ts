@@ -32,7 +32,7 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(res3.total).toBe(1);
   expect(res3.items.length).toBe(1);
   const msg1 = Message.createFromMessage(message);
-  msg1.getRequiredMetadata().setAttempts(2);
+  msg1.getRequiredMessageState().setAttempts(2);
   expect(res3.items[0].message).toEqual(msg1);
 
   const queueManager = await getQueueManager();
