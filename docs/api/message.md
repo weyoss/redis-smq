@@ -551,10 +551,10 @@ msg.hasPriority(); // false
 These methods are used internally and should not be used in your application:
 
 - Message.prototype.getRequiredQueue()
-- Message.prototype.getRequiredMetadata()
-- Message.prototype.getMetadata()
+- Message.prototype.getRequiredMessageState()
+- Message.prototype.getMessageState()
 - Message.prototype.hasRetryThresholdExceeded()
-- Message.prototype.getSetMetadata()
+- Message.prototype.getSetMessageState()
 - Message.prototype.getSetExpired()
 - Message.prototype.getNextScheduledTimestamp()
 - Message.prototype.hasNextDelay()
