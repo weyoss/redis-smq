@@ -1,11 +1,11 @@
-import { IConfig, TQueueManager } from '../../types';
+import { IConfig } from '../../types';
 import { promisifyAll } from 'bluebird';
 import { QueueManager } from '../../src/lib/queue-manager/queue-manager';
 import { requiredConfig } from './config';
 
 const QueueManagerAsync = promisifyAll(QueueManager);
 
-let queueManager: TQueueManager | null = null;
+let queueManager: QueueManager | null = null;
 
 export async function getQueueManager(cfg: IConfig = requiredConfig) {
   if (!queueManager) {
