@@ -13,7 +13,7 @@ export abstract class Exchange<
   TBindingParams,
   TBindingType extends EExchangeType,
 > {
-  protected exchangeTag: string | null = null;
+  protected exchangeTag: string;
   protected destinationQueue: TQueueParams | null = null;
   protected bindingParams: TBindingParams;
   protected type: TBindingType;
@@ -21,17 +21,11 @@ export abstract class Exchange<
   protected constructor(bindingParams: TBindingParams, type: TBindingType) {
     this.bindingParams = this.validateBindingParams(bindingParams);
     this.type = type;
-    this.generateExchangeTag();
-  }
-
-  protected setExchangeTag(tag: string): void {
-    this.exchangeTag = tag;
+    this.exchangeTag = this.generateExchangeTag();
   }
 
   protected generateExchangeTag(): string {
-    const tag = `${this.constructor.name}-${uuid()}`;
-    this.setExchangeTag(tag);
-    return tag;
+    return `${this.constructor.name}-${uuid()}`;
   }
 
   setDestinationQueue(queue: TQueueParams | null): void {
@@ -63,8 +57,8 @@ export abstract class Exchange<
   }
 
   fromJSON(JSON: Partial<IExchangeParams<TBindingParams, TBindingType>>): void {
-    if (JSON.exchangeTag) this.setExchangeTag(JSON.exchangeTag);
     if (JSON.destinationQueue) this.setDestinationQueue(JSON.destinationQueue);
+    if (JSON.exchangeTag) this.exchangeTag = JSON.exchangeTag;
     if (JSON.type) this.type = JSON.type;
   }
 
