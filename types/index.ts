@@ -164,7 +164,11 @@ export type TConsumerMessageHandlerParams = {
 export type TMessageJSON = {
   createdAt: number;
   queue: TQueueParams | string | null;
-  exchange: Record<string, any> | null;
+  exchange:
+    | IDirectExchangeParams
+    | ITopicExchangeParams
+    | IFanOutExchangeParams
+    | null;
   ttl: number;
   retryThreshold: number;
   retryDelay: number;
