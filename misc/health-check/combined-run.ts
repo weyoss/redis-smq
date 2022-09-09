@@ -2,7 +2,6 @@ import { async } from 'redis-smq-common';
 import { ICallback } from 'redis-smq-common/dist/types';
 import { Producer, Consumer, QueueManager, Message } from '../../index';
 import { events } from '../../src/common/events/events';
-import { TQueueManager } from '../../types';
 
 const queue = `queue_${Date.now()}`;
 const producer = new Producer();
@@ -50,7 +49,7 @@ const serialOnOff = (cb: ICallback<void>) =>
     cb,
   );
 
-let queueManager: TQueueManager | null | undefined = null;
+let queueManager: QueueManager | null | undefined = null;
 async.waterfall(
   [
     (cb: ICallback<void>) =>

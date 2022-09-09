@@ -6,10 +6,6 @@ import {
   TRedisConfig,
 } from 'redis-smq-common/dist/types';
 import { EventEmitter } from 'events';
-import { Namespace } from '../src/lib/queue-manager/namespace';
-import { Queue } from '../src/lib/queue-manager/queue';
-import { QueueRateLimit } from '../src/lib/queue-manager/queue-rate-limit';
-import { QueueMetrics } from '../src/lib/queue-manager/queue-metrics';
 import { DirectExchange } from '../src/lib/exchange/direct-exchange';
 import { TopicExchange } from '../src/lib/exchange/topic-exchange';
 import { FanOutExchange } from '../src/lib/exchange/fan-out-exchange';
@@ -194,7 +190,7 @@ export interface IExchangeParams<
   TBindingParams,
   TBindingType extends EExchangeType,
 > {
-  exchangeTag: string | null;
+  exchangeTag: string;
   destinationQueue: TQueueParams | null;
   bindingParams: TBindingParams;
   type: TBindingType;
@@ -241,14 +237,4 @@ export type TMessageConsumeOptions = {
 export type TProduceMessageReply = {
   messages: Message[];
   scheduled: boolean;
-};
-
-///
-
-export type TQueueManager = {
-  namespace: Namespace;
-  queue: Queue;
-  queueRateLimit: QueueRateLimit;
-  queueMetrics: QueueMetrics;
-  quit: (cb: ICallback<void>) => void;
 };
