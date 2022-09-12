@@ -25,7 +25,9 @@ export abstract class Exchange<
   }
 
   protected generateExchangeTag(): string {
-    return `${this.constructor.name}-${uuid()}`;
+    return `${this.constructor.name
+      .replace(/([a-z])([A-Z])/, '$1-$2')
+      .toLowerCase()}-${uuid()}`;
   }
 
   setDestinationQueue(queue: TQueueParams | null): void {
