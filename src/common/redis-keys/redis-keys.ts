@@ -39,6 +39,7 @@ enum ERedisKey {
   KEY_QUEUE_SETTINGS_PRIORITY_QUEUING,
   KEY_QUEUE_SETTINGS_EXCHANGE_BINDING,
   KEY_EXCHANGE_BINDINGS,
+  KEY_EXCHANGES,
 }
 
 function makeNamespacedKeys<T extends Record<string, ERedisKey>>(
@@ -145,6 +146,7 @@ export const redisKeys = {
         ERedisKey.KEY_QUEUE_SETTINGS_PRIORITY_QUEUING,
       keyQueueSettingsExchangeBinding:
         ERedisKey.KEY_QUEUE_SETTINGS_EXCHANGE_BINDING,
+      keyExchanges: ERedisKey.KEY_EXCHANGES,
     };
     return makeNamespacedKeys(mainKeys, globalNamespace);
   },
