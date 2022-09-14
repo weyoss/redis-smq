@@ -9,6 +9,7 @@ import { RedisClient } from 'redis-smq-common';
 import { ICallback } from 'redis-smq-common/dist/types';
 import { InvalidExchangeDataError } from './errors/invalid-exchange-data.error';
 import { FanOutExchangeManager } from './fan-out-exchange-manager';
+import { redisKeys } from '../../common/redis-keys/redis-keys';
 
 export class FanOutExchange extends Exchange<string, EExchangeType.FANOUT> {
   constructor(fanOutName: string) {
@@ -16,7 +17,7 @@ export class FanOutExchange extends Exchange<string, EExchangeType.FANOUT> {
   }
 
   protected override validateBindingParams(bindingParams: string): string {
-    return bindingParams;
+    return redisKeys.validateRedisKey(bindingParams);
   }
 
   getQueues(
