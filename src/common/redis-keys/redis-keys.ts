@@ -168,10 +168,10 @@ export const redisKeys = {
       );
     }
     const lowerCase = key.toLowerCase();
-
-    const filtered = key
-      .toLowerCase()
-      .replace(/(?:[a-z][a-z0-9]?)+(?:[-_.]?[a-z0-9])*/, '');
+    const filtered = lowerCase.replace(
+      /(?:[a-z][a-z0-9]?)+(?:[-_.]?[a-z0-9])*/,
+      '',
+    );
     if (filtered.length) {
       throw new RedisKeysError(
         'Invalid Redis key. Valid characters are letters (a-z) and numbers (0-9). (-_) are allowed between alphanumerics. Use a dot (.) to denote hierarchies.',
