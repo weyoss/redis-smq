@@ -7,6 +7,7 @@ import { errors, RedisClient } from 'redis-smq-common';
 import { ELuaScriptName } from '../../common/redis-client/redis-client';
 import { ICallback, ICompatibleLogger } from 'redis-smq-common/dist/types';
 import { FanOutExchange } from '../exchange/fan-out-exchange';
+import { EmptyCallbackReplyError } from 'redis-smq-common/dist/src/errors/empty-callback-reply.error';
 
 export class Queue {
   protected config: IRequiredConfig;
@@ -26,7 +27,7 @@ export class Queue {
   create(
     queue: string | TQueueParams,
     priorityQueuing: boolean,
-    cb: ICallback<void>,
+    cb: ICallback<{ queue: TQueueParams; settings: TQueueSettings }>,
   ): void {
     const queueParams = Queue.getParams(this.config, queue);
     const {
@@ -50,7 +51,12 @@ export class Queue {
       (err, reply) => {
         if (err) cb(err);
         else if (!reply) cb(new QueueExistsError());
-        else cb();
+        else
+          this.getSettings(queueParams, (err, settings) => {
+            if (err) cb(err);
+            else if (!settings) cb(new EmptyCallbackReplyError());
+            else cb(null, { queue: queueParams, settings });
+          });
       },
     );
   }
@@ -120,7 +126,11 @@ export class Queue {
         cb(new QueueNotFoundError());
       else {
         // default settings
-        const queueSettings: TQueueSettings = { priorityQueuing: false };
+        const queueSettings: TQueueSettings = {
+          priorityQueuing: false,
+          exchange: null,
+          rateLimit: null,
+        };
         for (const key in reply) {
           if (key === keyQueueSettingsPriorityQueuing) {
             queueSettings.priorityQueuing = JSON.parse(reply[key]);
