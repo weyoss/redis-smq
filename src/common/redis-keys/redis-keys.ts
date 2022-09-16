@@ -5,7 +5,7 @@ import { TQueueParams } from '../../../types';
 const keySegmentSeparator = ':';
 
 // Key prefix
-const nsPrefix = 'redis-smq-v7';
+const nsPrefix = 'redis-smq-v7.1';
 
 // Namespaces
 const globalNamespace = 'global';
