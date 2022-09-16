@@ -130,8 +130,8 @@ export type TQueueRateLimit = {
 
 export type TQueueSettings = {
   priorityQueuing: boolean;
-  rateLimit?: TQueueRateLimit | null;
-  exchange?: string | null;
+  rateLimit: TQueueRateLimit | null;
+  exchange: string | null;
 };
 
 export enum EQueueSettingType {
