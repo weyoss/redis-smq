@@ -35,9 +35,6 @@ enum ERedisKey {
   KEY_NAMESPACES,
   KEY_QUEUE_RATE_LIMIT_COUNTER,
   KEY_QUEUE_SETTINGS,
-  KEY_QUEUE_SETTINGS_RATE_LIMIT,
-  KEY_QUEUE_SETTINGS_PRIORITY_QUEUING,
-  KEY_QUEUE_SETTINGS_EXCHANGE_BINDING,
   KEY_EXCHANGE_BINDINGS,
   KEY_EXCHANGES,
 }
@@ -141,11 +138,6 @@ export const redisKeys = {
       keyDelayedMessages: ERedisKey.KEY_DELAYED_MESSAGES,
       keyRequeueMessages: ERedisKey.KEY_REQUEUE_MESSAGES,
       keyNamespaces: ERedisKey.KEY_NAMESPACES,
-      keyQueueSettingsRateLimit: ERedisKey.KEY_QUEUE_SETTINGS_RATE_LIMIT,
-      keyQueueSettingsPriorityQueuing:
-        ERedisKey.KEY_QUEUE_SETTINGS_PRIORITY_QUEUING,
-      keyQueueSettingsExchangeBinding:
-        ERedisKey.KEY_QUEUE_SETTINGS_EXCHANGE_BINDING,
       keyExchanges: ERedisKey.KEY_EXCHANGES,
     };
     return makeNamespacedKeys(mainKeys, globalNamespace);

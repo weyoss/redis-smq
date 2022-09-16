@@ -7,7 +7,6 @@ import { Queue } from './queue';
 import { QueueNotFoundError } from './errors/queue-not-found.error';
 import { ICallback, IRedisClientMulti } from 'redis-smq-common/dist/types';
 import { IRequiredConfig, TQueueParams } from '../../../types';
-import { FanOutExchange } from '../exchange/fan-out-exchange';
 
 function validateMessageQueueDeletion(
   redisClient: RedisClient,
@@ -74,7 +73,7 @@ export function initDeleteQueueTransaction(
     keyQueueRateLimitCounter,
     keyQueueSettings,
   ];
-  let exchange: FanOutExchange | null = null;
+  let exchange: string | null = null;
   redisClient.watch(
     [keyQueueConsumers, keyQueueProcessingQueues, keyQueueSettings],
     (err) => {
@@ -126,7 +125,7 @@ export function initDeleteQueueTransaction(
                 tx.srem(keyProcessingQueues, pQueues);
               }
               tx.del(keys);
-              if (exchange) tx.srem(exchange.getBindingParams(), str);
+              if (exchange) tx.srem(exchange, str);
               cb(null, tx);
             }
           },

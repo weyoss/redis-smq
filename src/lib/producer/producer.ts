@@ -9,7 +9,11 @@ import { ELuaScriptName } from '../../common/redis-client/redis-client';
 import { ICallback, TUnaryFunction } from 'redis-smq-common/dist/types';
 import { scheduleMessage } from './schedule-message';
 import { ProducerNotRunningError } from './errors/producer-not-running.error';
-import { TProduceMessageReply, TQueueParams } from '../../../types';
+import {
+  EQueueSettingType,
+  TProduceMessageReply,
+  TQueueParams,
+} from '../../../types';
 import { DirectExchange } from '../exchange/direct-exchange';
 import { Queue } from '../queue-manager/queue';
 
@@ -34,7 +38,6 @@ export class Producer extends Base {
     message.getRequiredMessageState().setPublishedAt(Date.now());
     const {
       keyQueueSettings,
-      keyQueueSettingsPriorityQueuing,
       keyQueuePendingPriorityMessages,
       keyQueuePendingPriorityMessageWeight,
       keyQueuePending,
@@ -43,7 +46,7 @@ export class Producer extends Base {
       ELuaScriptName.PUBLISH_MESSAGE,
       [
         keyQueueSettings,
-        keyQueueSettingsPriorityQueuing,
+        EQueueSettingType.PRIORITY_QUEUING,
         keyQueuePendingPriorityMessages,
         keyQueuePendingPriorityMessageWeight,
         keyQueuePending,

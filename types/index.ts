@@ -131,8 +131,14 @@ export type TQueueRateLimit = {
 export type TQueueSettings = {
   priorityQueuing: boolean;
   rateLimit?: TQueueRateLimit | null;
-  exchange?: FanOutExchange | null;
+  exchange?: string | null;
 };
+
+export enum EQueueSettingType {
+  PRIORITY_QUEUING = 'PRIORITY_QUEUING',
+  RATE_LIMIT = 'RATE_LIMIT',
+  EXCHANGE = 'EXCHANGE',
+}
 
 export type TConsumerInfo = {
   ipAddress: string[];

@@ -1,4 +1,5 @@
 import {
+  EQueueSettingType,
   IConfig,
   IRequiredConfig,
   TQueueParams,
@@ -76,18 +77,14 @@ export class FanOutExchangeManager {
           Queue.getSettings(this.config, this.redisClient, queue, cb),
         (queueSettings: TQueueSettings, cb: ICallback<void>) => {
           const exchangeParams = exchange.getBindingParams();
-          const currentExchangeParams =
-            queueSettings.exchange?.getBindingParams();
+          const currentExchangeParams = queueSettings.exchange;
           if (currentExchangeParams === exchangeParams) cb();
           else {
             const { keyExchanges, keyExchangeBindings } =
               redisKeys.getFanOutExchangeKeys(exchangeParams);
             const queueParams = Queue.getParams(this.config, queue);
-            const {
-              keyQueues,
-              keyQueueSettings,
-              keyQueueSettingsExchangeBinding,
-            } = redisKeys.getQueueKeys(queueParams);
+            const { keyQueues, keyQueueSettings } =
+              redisKeys.getQueueKeys(queueParams);
             this.redisClient.watch(
               [keyQueues, keyQueueSettings, keyExchangeBindings],
               (err) => {
@@ -99,7 +96,7 @@ export class FanOutExchangeManager {
                   multi.sadd(keyExchangeBindings, queueParamsStr);
                   multi.hset(
                     keyQueueSettings,
-                    keyQueueSettingsExchangeBinding,
+                    EQueueSettingType.EXCHANGE,
                     exchangeParams,
                   );
                   if (currentExchangeParams) {
@@ -135,11 +132,8 @@ export class FanOutExchangeManager {
             exchange.getBindingParams(),
           );
           const queueParams = Queue.getParams(this.config, queue);
-          const {
-            keyQueues,
-            keyQueueSettings,
-            keyQueueSettingsExchangeBinding,
-          } = redisKeys.getQueueKeys(queueParams);
+          const { keyQueues, keyQueueSettings } =
+            redisKeys.getQueueKeys(queueParams);
           this.redisClient.watch(
             [keyQueues, keyQueueSettings, keyExchangeBindings],
             (err) => {
@@ -148,7 +142,7 @@ export class FanOutExchangeManager {
                 const multi = this.redisClient.multi();
                 const queueParamsStr = JSON.stringify(queueParams);
                 multi.srem(keyExchangeBindings, queueParamsStr);
-                multi.hdel(keyQueueSettings, keyQueueSettingsExchangeBinding);
+                multi.hdel(keyQueueSettings, EQueueSettingType.EXCHANGE);
                 multi.exec((err) => cb(err));
               }
             },
@@ -176,7 +170,7 @@ export class FanOutExchangeManager {
 
   getQueueExchange(
     queue: TQueueParams | string,
-    cb: ICallback<FanOutExchange | null>,
+    cb: ICallback<string | null>,
   ): void {
     FanOutExchangeManager.getQueueExchange(
       this.config,
@@ -211,7 +205,7 @@ export class FanOutExchangeManager {
     config: IRequiredConfig,
     redisClient: RedisClient,
     queue: TQueueParams | string,
-    cb: ICallback<FanOutExchange | null>,
+    cb: ICallback<string | null>,
   ): void {
     Queue.getSettings(config, redisClient, queue, (err, reply) => {
       if (err) cb(err);

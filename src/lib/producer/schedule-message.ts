@@ -4,6 +4,7 @@ import { MessageNotScheduledError } from './errors/message-not-scheduled.error';
 import { ICallback, IRedisClientMulti } from 'redis-smq-common/dist/types';
 import { errors, RedisClient } from 'redis-smq-common';
 import { ELuaScriptName } from '../../common/redis-client/redis-client';
+import { EQueueSettingType } from '../../../types';
 
 function scheduleMessageTransaction(
   multi: IRedisClientMulti,
@@ -43,7 +44,6 @@ export function scheduleMessage(
       const queue = message.getDestinationQueue();
       const {
         keyQueueSettings,
-        keyQueueSettingsPriorityQueuing,
         keyScheduledMessageWeight,
         keyScheduledMessages,
       } = redisKeys.getQueueKeys(queue);
@@ -53,7 +53,7 @@ export function scheduleMessage(
         ELuaScriptName.SCHEDULE_MESSAGE,
         [
           keyQueueSettings,
-          keyQueueSettingsPriorityQueuing,
+          EQueueSettingType.PRIORITY_QUEUING,
           keyScheduledMessageWeight,
           keyScheduledMessages,
         ],
