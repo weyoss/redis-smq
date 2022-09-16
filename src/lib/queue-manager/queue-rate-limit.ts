@@ -1,4 +1,9 @@
-import { IRequiredConfig, TQueueParams, TQueueRateLimit } from '../../../types';
+import {
+  EQueueSettingType,
+  IRequiredConfig,
+  TQueueParams,
+  TQueueRateLimit,
+} from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { QueueRateLimitError } from './errors/queue-rate-limit.error';
 import { Queue } from './queue';
@@ -23,13 +28,10 @@ export class QueueRateLimit {
 
   clear(queue: string | TQueueParams, cb: ICallback<void>): void {
     const queueParams = Queue.getParams(this.config, queue);
-    const {
-      keyQueueSettings,
-      keyQueueSettingsRateLimit,
-      keyQueueRateLimitCounter,
-    } = redisKeys.getQueueKeys(queueParams);
+    const { keyQueueSettings, keyQueueRateLimitCounter } =
+      redisKeys.getQueueKeys(queueParams);
     const multi = this.redisClient.multi();
-    multi.hdel(keyQueueSettings, keyQueueSettingsRateLimit);
+    multi.hdel(keyQueueSettings, EQueueSettingType.RATE_LIMIT);
     multi.del(keyQueueRateLimitCounter);
     multi.exec((err) => cb(err));
   }
@@ -59,11 +61,10 @@ export class QueueRateLimit {
       );
     }
     const validatedRateLimit: TQueueRateLimit = { interval, limit };
-    const { keyQueueSettings, keyQueueSettingsRateLimit } =
-      redisKeys.getQueueKeys(queueParams);
+    const { keyQueueSettings } = redisKeys.getQueueKeys(queueParams);
     this.redisClient.hset(
       keyQueueSettings,
-      keyQueueSettingsRateLimit,
+      EQueueSettingType.RATE_LIMIT,
       JSON.stringify(validatedRateLimit),
       (err) => cb(err),
     );
@@ -105,11 +106,10 @@ export class QueueRateLimit {
     cb: ICallback<TQueueRateLimit | null>,
   ): void {
     const queueParams = Queue.getParams(config, queue);
-    const { keyQueueSettings, keyQueueSettingsRateLimit } =
-      redisKeys.getQueueKeys(queueParams);
+    const { keyQueueSettings } = redisKeys.getQueueKeys(queueParams);
     redisClient.hget(
       keyQueueSettings,
-      keyQueueSettingsRateLimit,
+      EQueueSettingType.RATE_LIMIT,
       (err, reply) => {
         if (err) cb(err);
         else if (!reply) cb(null, null);

@@ -3,6 +3,7 @@ import { Message } from '../lib/message/message';
 import { async, errors, RedisClient, Worker } from 'redis-smq-common';
 import { ELuaScriptName } from '../common/redis-client/redis-client';
 import { ICallback } from 'redis-smq-common/dist/types';
+import { EQueueSettingType } from '../../types';
 
 export class ScheduleWorker extends Worker {
   protected redisClient: RedisClient;
@@ -60,7 +61,6 @@ export class ScheduleWorker extends Worker {
           const queue = message.getDestinationQueue();
           const {
             keyQueueSettings,
-            keyQueueSettingsPriorityQueuing,
             keyQueuePending,
             keyQueuePendingPriorityMessages,
             keyQueuePendingPriorityMessageWeight,
@@ -73,7 +73,7 @@ export class ScheduleWorker extends Worker {
             ELuaScriptName.ENQUEUE_SCHEDULED_MESSAGE,
             [
               keyQueueSettings,
-              keyQueueSettingsPriorityQueuing,
+              EQueueSettingType.PRIORITY_QUEUING,
               keyQueuePendingPriorityMessages,
               keyQueuePendingPriorityMessageWeight,
               keyQueuePending,

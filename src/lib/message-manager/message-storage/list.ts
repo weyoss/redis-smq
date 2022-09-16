@@ -1,5 +1,5 @@
 import { AbstractMessageStorage } from './abstract-message-storage';
-import { TPaginatedResponse } from '../../../../types';
+import { EQueueSettingType, TPaginatedResponse } from '../../../../types';
 import { Message } from '../../message/message';
 import { async, errors } from 'redis-smq-common';
 import { MessageNotFoundError } from '../errors/message-not-found.error';
@@ -63,7 +63,6 @@ export abstract class List extends AbstractMessageStorage<
         message.getRequiredMessageState().reset(); // resetting all system parameters
         const {
           keyQueueSettings,
-          keyQueueSettingsPriorityQueuing,
           keyQueuePending,
           keyQueuePendingPriorityMessageWeight,
           keyQueuePendingPriorityMessages,
@@ -72,7 +71,7 @@ export abstract class List extends AbstractMessageStorage<
           ELuaScriptName.REQUEUE_MESSAGE,
           [
             keyQueueSettings,
-            keyQueueSettingsPriorityQueuing,
+            EQueueSettingType.PRIORITY_QUEUING,
             keyQueuePendingPriorityMessages,
             keyQueuePendingPriorityMessageWeight,
             keyQueuePending,

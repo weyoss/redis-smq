@@ -1,4 +1,9 @@
-import { IRequiredConfig, TQueueParams, TQueueSettings } from '../../../types';
+import {
+  EQueueSettingType,
+  IRequiredConfig,
+  TQueueParams,
+  TQueueSettings,
+} from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { QueueExistsError } from './errors/queue-exists.error';
 import { QueueNotFoundError } from './errors/queue-not-found.error';
@@ -6,7 +11,6 @@ import { initDeleteQueueTransaction } from './delete-queue-transaction';
 import { errors, RedisClient } from 'redis-smq-common';
 import { ELuaScriptName } from '../../common/redis-client/redis-client';
 import { ICallback, ICompatibleLogger } from 'redis-smq-common/dist/types';
-import { FanOutExchange } from '../exchange/fan-out-exchange';
 import { EmptyCallbackReplyError } from 'redis-smq-common/dist/src/errors/empty-callback-reply.error';
 
 export class Queue {
@@ -30,13 +34,8 @@ export class Queue {
     cb: ICallback<{ queue: TQueueParams; settings: TQueueSettings }>,
   ): void {
     const queueParams = Queue.getParams(this.config, queue);
-    const {
-      keyQueues,
-      keyNsQueues,
-      keyNamespaces,
-      keyQueueSettings,
-      keyQueueSettingsPriorityQueuing,
-    } = redisKeys.getQueueKeys(queueParams);
+    const { keyQueues, keyNsQueues, keyNamespaces, keyQueueSettings } =
+      redisKeys.getQueueKeys(queueParams);
     const queueIndex = JSON.stringify(queueParams);
     this.redisClient.runScript(
       ELuaScriptName.CREATE_QUEUE,
@@ -45,7 +44,7 @@ export class Queue {
         keyNsQueues,
         keyQueues,
         keyQueueSettings,
-        keyQueueSettingsPriorityQueuing,
+        EQueueSettingType.PRIORITY_QUEUING,
       ],
       [queueParams.ns, queueIndex, JSON.stringify(priorityQueuing)],
       (err, reply) => {
@@ -114,12 +113,7 @@ export class Queue {
     cb: ICallback<TQueueSettings>,
   ): void {
     const queueParams = Queue.getParams(config, queue);
-    const {
-      keyQueueSettings,
-      keyQueueSettingsPriorityQueuing,
-      keyQueueSettingsRateLimit,
-      keyQueueSettingsExchangeBinding,
-    } = redisKeys.getQueueKeys(queueParams);
+    const { keyQueueSettings } = redisKeys.getQueueKeys(queueParams);
     redisClient.hgetall(keyQueueSettings, (err, reply) => {
       if (err) cb(err);
       else if (!reply || !Object.keys(reply).length)
@@ -132,14 +126,14 @@ export class Queue {
           rateLimit: null,
         };
         for (const key in reply) {
-          if (key === keyQueueSettingsPriorityQueuing) {
+          if (key === EQueueSettingType.PRIORITY_QUEUING) {
             queueSettings.priorityQueuing = JSON.parse(reply[key]);
           }
-          if (key === keyQueueSettingsRateLimit) {
+          if (key === EQueueSettingType.RATE_LIMIT) {
             queueSettings.rateLimit = JSON.parse(reply[key]);
           }
-          if (key === keyQueueSettingsExchangeBinding) {
-            queueSettings.exchange = new FanOutExchange(reply[key]);
+          if (key === EQueueSettingType.EXCHANGE) {
+            queueSettings.exchange = reply[key];
           }
         }
         cb(null, queueSettings);
