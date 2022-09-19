@@ -34,7 +34,7 @@ export class FanOutExchangeManager {
     this.config = config;
   }
 
-  saveExchange(exchange: FanOutExchange, cb: ICallback<void>): void {
+  createExchange(exchange: FanOutExchange, cb: ICallback<void>): void {
     const { keyExchanges } = redisKeys.getMainKeys();
     this.redisClient.sadd(keyExchanges, exchange.getBindingParams(), (err) =>
       cb(err),
@@ -170,7 +170,7 @@ export class FanOutExchangeManager {
 
   getQueueExchange(
     queue: TQueueParams | string,
-    cb: ICallback<string | null>,
+    cb: ICallback<FanOutExchange | null>,
   ): void {
     FanOutExchangeManager.getQueueExchange(
       this.config,
@@ -205,11 +205,12 @@ export class FanOutExchangeManager {
     config: IRequiredConfig,
     redisClient: RedisClient,
     queue: TQueueParams | string,
-    cb: ICallback<string | null>,
+    cb: ICallback<FanOutExchange | null>,
   ): void {
     Queue.getSettings(config, redisClient, queue, (err, reply) => {
       if (err) cb(err);
-      else cb(null, reply?.exchange);
+      else
+        cb(null, reply?.exchange ? new FanOutExchange(reply.exchange) : null);
     });
   }
 
