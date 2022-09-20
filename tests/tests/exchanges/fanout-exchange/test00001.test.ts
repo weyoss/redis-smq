@@ -28,10 +28,10 @@ test('QueueExchange: bindQueue(), getExchangeQueues(), unbindQueue()', async () 
   expect(isEqual(r1, [q3])).toBe(true);
 
   const r2 = await fanOutExchangeManager.getQueueExchangeAsync(q1);
-  expect(r2.getBindingParams()).toEqual(exchangeA.getBindingParams());
+  expect(r2?.getBindingParams()).toEqual(exchangeA.getBindingParams());
 
   const r3 = await fanOutExchangeManager.getQueueExchangeAsync(q2);
-  expect(r3.getBindingParams()).toEqual(exchangeA.getBindingParams());
+  expect(r3?.getBindingParams()).toEqual(exchangeA.getBindingParams());
 
   await fanOutExchangeManager.unbindQueueAsync(q1, exchangeA);
 
@@ -39,10 +39,10 @@ test('QueueExchange: bindQueue(), getExchangeQueues(), unbindQueue()', async () 
   expect(isEqual(r4, [q2])).toBe(true);
 
   const r5 = await fanOutExchangeManager.getQueueExchangeAsync(q1);
-  expect(r5).toEqual(undefined);
+  expect(r5).toEqual(null);
 
   const r6 = await fanOutExchangeManager.getQueueExchangeAsync(q2);
-  expect(r6.getBindingParams()).toEqual(exchangeA.getBindingParams());
+  expect(r6?.getBindingParams()).toEqual(exchangeA.getBindingParams());
 
   const r7 = await fanOutExchangeManager.getExchangesAsync();
   expect(r7.sort()).toEqual(
