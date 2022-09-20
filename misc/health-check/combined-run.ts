@@ -57,7 +57,7 @@ async.waterfall(
         if (err) cb(err);
         else {
           queueManager = instance;
-          queueManager?.queue.create(queue, false, cb);
+          queueManager?.queue.create(queue, false, (err) => cb(err));
         }
       }),
     (cb: ICallback<void>) => producer.run((err) => cb(err)),
