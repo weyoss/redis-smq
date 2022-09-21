@@ -5,11 +5,13 @@
 1. [Public Static Methods](#public-static-methods)
     1. [FanOutExchangeManager.createInstance()](#fanoutexchangemanagercreateinstance)
 2. [Public Methods](#public-methods)
-   1. [FanOutExchangeManager.prototype.bindQueue()](#fanoutexchangemanagerprototypebindqueue)
-   2. [FanOutExchangeManager.prototype.unbindQueue()](#fanoutexchangemanagerprototypeunbindqueue) 
-   3. [FanOutExchangeManager.prototype.getQueueExchange()](#fanoutexchangemanagerprototypegetqueueexchange) 
-   4. [FanOutExchangeManager.prototype.getExchangeQueues()](#fanoutexchangemanagerprototypegetexchangequeues) 
-   5. [FanOutExchangeManager.prototype.quit()](#fanoutexchangemanagerprototypequit)
+   1. [FanOutExchangeManager.prototype.createExchange()](#fanoutexchangemanagerprototypecreateexchange)
+   2. [FanOutExchangeManager.prototype.deleteExchange()](#fanoutexchangemanagerprototypedeleteexchange)
+   3. [FanOutExchangeManager.prototype.bindQueue()](#fanoutexchangemanagerprototypebindqueue)
+   4. [FanOutExchangeManager.prototype.unbindQueue()](#fanoutexchangemanagerprototypeunbindqueue) 
+   5. [FanOutExchangeManager.prototype.getQueueExchange()](#fanoutexchangemanagerprototypegetqueueexchange) 
+   6. [FanOutExchangeManager.prototype.getExchangeQueues()](#fanoutexchangemanagerprototypegetexchangequeues) 
+   7. [FanOutExchangeManager.prototype.quit()](#fanoutexchangemanagerprototypequit)
 
 ## Public Static Methods
 
@@ -40,6 +42,30 @@ FanOutExchangeManager.createInstance(config, (err, fanOutExchangeManager) => {
 ```
 
 ## Public Methods
+
+### FanOutExchangeManager.prototype.createExchange()
+
+```typescript
+createExchange(exchange, cb);
+```
+
+**Parameters**
+
+- `exchange` *(object): required*. FanOutExchange instance.
+- `cb(err)` *(function): Required.*
+    - `err` *(Error | null | undefined)*.
+
+### FanOutExchangeManager.prototype.deleteExchange()
+
+```typescript
+deleteExchange(exchange, cb);
+```
+
+**Parameters**
+
+- `exchange` *(object): required*. FanOutExchange instance.
+- `cb(err)` *(function): Required.*
+    - `err` *(Error | null | undefined)*.
 
 ### FanOutExchangeManager.prototype.bindQueue()
 
