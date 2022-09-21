@@ -128,25 +128,34 @@ export class FanOutExchangeManager {
         (cb: ICallback<TQueueSettings>) =>
           Queue.getSettings(this.config, this.redisClient, queue, cb),
         (queueSettings: TQueueSettings, cb: ICallback<void>) => {
-          const { keyExchangeBindings } = redisKeys.getFanOutExchangeKeys(
-            exchange.getBindingParams(),
-          );
           const queueParams = Queue.getParams(this.config, queue);
-          const { keyQueues, keyQueueSettings } =
-            redisKeys.getQueueKeys(queueParams);
-          this.redisClient.watch(
-            [keyQueues, keyQueueSettings, keyExchangeBindings],
-            (err) => {
-              if (err) cb(err);
-              else {
-                const multi = this.redisClient.multi();
-                const queueParamsStr = JSON.stringify(queueParams);
-                multi.srem(keyExchangeBindings, queueParamsStr);
-                multi.hdel(keyQueueSettings, EQueueSettingType.EXCHANGE);
-                multi.exec((err) => cb(err));
-              }
-            },
-          );
+          const exchangeName = exchange.getBindingParams();
+          if (queueSettings.exchange !== exchangeName)
+            cb(
+              new ExchangeError(
+                `Queue ${queueParams.name}@${queueParams.ns} is not bound to [${exchangeName}] exchange.`,
+              ),
+            );
+          else {
+            const { keyExchangeBindings } = redisKeys.getFanOutExchangeKeys(
+              queueSettings.exchange,
+            );
+            const { keyQueues, keyQueueSettings } =
+              redisKeys.getQueueKeys(queueParams);
+            this.redisClient.watch(
+              [keyQueues, keyQueueSettings, keyExchangeBindings],
+              (err) => {
+                if (err) cb(err);
+                else {
+                  const multi = this.redisClient.multi();
+                  const queueParamsStr = JSON.stringify(queueParams);
+                  multi.srem(keyExchangeBindings, queueParamsStr);
+                  multi.hdel(keyQueueSettings, EQueueSettingType.EXCHANGE);
+                  multi.exec((err) => cb(err));
+                }
+              },
+            );
+          }
         },
       ],
       (err) => {
