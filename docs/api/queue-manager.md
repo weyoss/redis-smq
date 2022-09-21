@@ -115,8 +115,18 @@ create(queue, priorityQueuing, cb);
     - `queue.name` *(string): Required.* Queue name.
     - `queue.ns` *(string): Required.* Queue namespace.
 - `priorityQueuing` *(boolean): Required.* Enable/disable priority queuing.
-- `cb(err)` *(Function): Required.* Callback function.
+- `cb(err, reply)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
+  - `reply` *(object | null | undefined)*
+    - `reply.queue` *(object)*
+      - `queue.name` *(string): Required.* Queue name.
+      - `queue.ns` *(string): Required.* Queue namespace.
+    - `reply.settings` *(object)*. Queue settings
+      - `reply.settings.priorityQueuing` *(boolean)*. Whether priority queuing is enabled.
+      - `reply.settings.rateLimit` *(object|null)*. Queue rate limit.
+          - `reply.settings.rateLimit.limit` *(number): Required.* The maximum number of messages within an `interval`.
+          - `reply.settings.rateLimit.interval` *(number): Required.* The timespan for `limit` in milliseconds.
+      - `reply.settings.exchange` *(string|null)*. The fanout exchange to which the queue is bound.
 
 The queue name can be composed only of letters (a-z), numbers (0-9) and (-_) characters.
 
@@ -182,11 +192,10 @@ getSettings(queue, cb);
   - `err` *(Error | null | undefined).* Error object.
   - `settings` *(object)*
     - `settings.priorityQueuing` *(boolean)*. Whether priority queuing is enabled.
-    - `settings.rateLimit` *(object|null|undefined)*. Queue rate limit.
-      - `settings.rateLimit` *(null|undefined)* Rate limit is not set.
-      - `settings.rateLimit` *(object)* Existing rate limit.
-        - `settings.rateLimit.limit` *(number): Required.* The maximum number of messages within an `interval`.
-        - `settings.rateLimit.interval` *(number): Required.* The timespan for `limit` in milliseconds.
+    - `settings.rateLimit` *(object|null)*. Queue rate limit.
+      - `settings.rateLimit.limit` *(number): Required.* The maximum number of messages within an `interval`.
+      - `settings.rateLimit.interval` *(number): Required.* The timespan for `limit` in milliseconds.
+    - `settings.exchange` *(string|null)*. The fanout exchange to which the queue is bound.
 
 ### QueueManager.prototype.queueRateLimit
 
