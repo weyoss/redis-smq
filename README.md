@@ -72,9 +72,9 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 
 **2022.10.06**
 
-:rocket: Release v7.1 is out! The RedisSMQ v7.1 extends the message queue features by introducing **[Message Exchanges](/docs/message-exchanges.md)**. 
-Also, the [Web UI](https://github.com/weyoss/redis-smq-monitor-client) has been reworked for better user experience and to support the new features. 
-So feel to play with the new release, if you encounter any issue, or you have a question do not hesitate to open an issue.
+:rocket: RedisSMQ v7.1 is out! This new release extends the message queue features by introducing [Message Exchanges](/docs/message-exchanges.md). 
+Also, the [Web UI](https://github.com/weyoss/redis-smq-monitor-client) has been reworked for better user experience and 
+to fully support message exchanges and other various routine operations. 
 
 ## Installation
 
