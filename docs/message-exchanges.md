@@ -20,7 +20,7 @@ Out-of-box RedisSMQ offers 3 exchange types.
 
 ### Direct Exchange
 
-The direct exchange allows producers to publish a message to a single queue which is matched exactly by the specified queue of the exchange.
+A direct exchange allows producers to publish a message to a single queue which is matched exactly by the specified queue of the exchange.
 
 The queue of the direct exchange may be a string, like `a.b.c.d`, which is composed of alphanumeric characters, including `-` and `_` characters, that may be separated by a `.`. 
 
@@ -50,13 +50,13 @@ When publishing a message with a direct exchange, if the exchange queue does not
 
 ### Topic Exchange
 
-When the topic exchange is used for a message, it allows to publish the message to one or multiple queues which are matched by the topic pattern of the exchange.
+When a topic exchange is used for a message, it allows to publish the message to one or multiple queues which are matched by the topic pattern of the exchange.
 
 The pattern of a topic exchange is a string which is composed of alphanumeric characters, including `-` and `_` characters, that are separated by a `.`.
 
 The `a.b.c.d` topic pattern matches the following queues `a.b.c.d`, `a.b.c.d.e`, and `a.b.c.d.e.f`, but it does not match the `a.b`, `a.b.c`, or `a.b.c.z` queues.
 
-Topic pattern may be also an object describing the namespace of the topic. 
+A topic pattern may be also an object describing the namespace of the topic. 
 
 For example the topic `{ ns: 'my-app', topic: 'a.b.c.d'}` will match all queues which satisfy the pattern `a.b.c.d` from the namespace `my-app`.
 
@@ -84,7 +84,7 @@ When publishing a message with a topic exchange, if the topic pattern does not m
 
 ### Fanout Exchange
 
-The fanout exchange allows producers to publish a message to one or multiple queues which are bound to a binding key.
+A fanout exchange allows producers to publish a message to one or multiple queues which are bound to this exchange by a binding key.
 
 #### Usage
 
@@ -117,3 +117,4 @@ msg.setExchange(exchange).setBody('123456789');
 
 When publishing a message with a fanout exchange, if the exchange does not exist or no queues are bound to such an exchange the message will be discarded and error will be returned.
 
+Additionally, Fanout exchanges can be also managed using the [HTTP API Interface](https://github.com/weyoss/redis-smq-monitor) or from your browser with the help of the [Web UI](https://github.com/weyoss/redis-smq-monitor-client).
