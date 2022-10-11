@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 7.1.1 (2022-10-11)
+
+* docs(message-exchanges): update docs (19d7dd3)
+* docs: update README (63b2fe6)
+
 ## 7.1.0 (2022-10-06)
 
 * docs: update README.md (8734e49)
