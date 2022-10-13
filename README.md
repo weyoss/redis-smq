@@ -18,7 +18,7 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 ## Features
 
 * **[High-performance message processing](/docs/performance.md)**.
-* **[Multi-Queue Producers](#producer-class) & [Multi-Queue Consumers](#consumer-class)**: Offering flexible Producer/Consumer models, with focus on simplicity and without tons of features. This can make RedisSMQ an ideal message broker for your microservices. 
+* **[Multi-Queue Producers](#producer) & [Multi-Queue Consumers](#consumer)**: Offering flexible Producer/Consumer models, with focus on simplicity and without tons of features. This can make RedisSMQ an ideal message broker for your microservices. 
 * **[Supports both at-least-once/at-most-once delivery](/docs/api/message.md#messageprototypesetretrythreshold)**: In case of failures, while delivering or processing a message, RedisSMQ can guaranty that the message will be not lost and redelivered again. When configured to do so, RedisSMQ can also ensure that the message is delivered at-most-once.
 * **[Supports Different Exchange Types](/docs/message-exchanges.md)**: RedisSMQ offers 3 types of exchanges: [Direct Exchange](/docs/message-exchanges.md#direct-exchange), [Topic Exchange](/docs/message-exchanges.md#topic-exchange), and [Fanout Exchange](/docs/message-exchanges.md#fanout-exchange) for publishing a message to one or multiple queues. 
 * **[Message Expiration](/docs/api/message.md#messageprototypesetttl)**: A message will not be delivered if it has been in a queue for longer than a given amount of time, called TTL (time-to-live).
@@ -47,12 +47,12 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 2. [Installation](#installation)
 3. [Configuration](#configuration)
 4. [Usage](#usage)
-   1. Basics
-       1. [Message Class](#message-class)
-       2. [Producer Class](#producer-class)
-       3. [Consumer Class](#consumer-class)
+   1. [Basics](#basics)
+       1. [Message](#message)
+       2. [Producer](#producer)
+       3. [Consumer](#consumer)
           1. [Message Acknowledgement](#message-acknowledgement)
-   2. Advanced Topics
+   2. [Advanced Topics](#advanced-topics)
       1. [Scheduling Messages](/docs/scheduling-messages.md)
       2. [Priority Queues](/docs/priority-queues.md)
       3. [Message Exchanges](/docs/message-exchanges.md)
@@ -93,9 +93,15 @@ See [Configuration](/docs/configuration.md) for more details.
 
 ## Usage
 
-Before producing/consuming a message to/from a queue, make sure that such queue exists. 
+### Basics
 
-You can create a queue, view existing queues, or delete a queue using the [QueueManager](/docs/api/queue-manager.md).
+RedisSMQ provides 3 classes in order to work with the message queue: `Message`, `Producer`, and `Consumer`.
+
+Producers and consumers exchange data using one or multiple queues that may be created using the [QueueManager](/docs/api/queue-manager.md).
+
+A queue is responsible for holding messages which are produced by producers and are delivered to consumers.
+
+RedisSMQ supports 2 types of queues: LIFO Queues and Priority Queues. See [Priority Queues](/docs/priority-queues.md) for more details.
 
 ```javascript
 const { QueueManager } = require('redis-smq');
@@ -107,11 +113,7 @@ QueueManager.createInstance(config, (err, queueManager) => {
 })
 ```
 
-### Basics
-
-RedisSMQ provides 3 classes in order to work with the message queue: `Message`, `Producer`, and `Consumer`.
-
-#### Message Class
+#### Message
 
 `Message` class is responsible for creating messages that may be published. 
 
@@ -124,21 +126,21 @@ const { Message } = require('redis-smq');
 const message = new Message();
 message
     .setBody({hello: 'world'})
-    .setTTL(3600000) // in millis
-    .setQueue('test_queue');
+    .setTTL(3600000)
+    .setRetryThreshold(5);
 ```
 
 The `Message` class provides many methods for setting up different message parameters such as message body, message priority, message TTL, etc. 
 
 See [Message Reference](/docs/api/message.md) for more details.
 
-#### Producer Class
+#### Producer
 
-A `Producer` instance allows you to publish a message to a queue. 
+A `Producer` instance allows to publish a message to a queue. 
 
-You can use a single `Producer` instance to produce messages, including messages with priority, to multiple queues.
+You can use a single `Producer` instance to produce messages, including messages with priority, to one or multiple queues.
 
-Before publishing a message do not forget to set the destination queue of the message using the [setQueue()](/docs/api/message.md#messageprototypesetqueue) method, otherwise an error will be returned.
+Before publishing a message do not forget to set an exchange for the message using [setQueue()](/docs/api/message.md#messageprototypesetqueue), [setTopic()](/docs/api/message.md#messageprototypesettopic), or [setFanOut()](/docs/api/message.md#messageprototypesetfanout). Otherwise, an error will be returned. See [Message Exchanges](/docs/message-exchanges.md) for more details.
 
 ```javascript
 'use strict';
@@ -150,8 +152,8 @@ producer.run((err) => {
    const message = new Message();
    message
            .setBody({hello: 'world'})
-           .setTTL(3600000) // in millis
-           .setQueue('test_queue');
+           .setTTL(3600000) // message expiration (in millis)
+           .setQueue('test_queue'); // setting up a direct exchange 
    message.getId() // null
    producer.produce(message, (err) => {
       if (err) console.log(err);
@@ -167,11 +169,11 @@ Starting with v7.0.6, before producing messages you need first to run your produ
 
 See [Producer Reference](/docs/api/producer.md) for more details.
 
-#### Consumer Class
+#### Consumer
 
 A `Consumer` instance can be used to receive and consume messages from one or multiple queues.
 
-To consume messages from a queue, the `Consumer` class provides the [consume()](/docs/api/consumer.md#consumerprototypeconsume) method which allows you to register a `message handler`. 
+To consume messages from a queue, the `Consumer` class provides the [consume()](/docs/api/consumer.md#consumerprototypeconsume) method which allows to register a `message handler`. 
 
 A `message handler` is a function that receives a delivered message from a given queue. 
 
