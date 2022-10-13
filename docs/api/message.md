@@ -115,7 +115,7 @@ setQueue(queue);
       - `queue.name` *(string): Required.* Queue name.
       - `queue.ns` *(string): Required.* Queue namespace.
 
-The queue name can be composed only of letters (a-z), numbers (0-9) and (-_) characters.
+See [Direct Exchange](/docs/message-exchanges.md#direct-exchange) for more details.
 
 ### Message.prototype.getQueue()
 
@@ -139,6 +139,8 @@ message.setTopic(`a.b.c.d`);
 message.setTopic({ ns: 'my-app', topic: 'a.b.c.d' });
 ```
 
+See [Topic Exchange](/docs/message-exchanges.md#topic-exchange) for more details.
+
 ### Message.prototype.getTopic()
 
 ```javascript
@@ -160,6 +162,8 @@ message.setFanOut(`a123`);
 
 Before setting up a `fanout` for a message, make sure to create it first using the [FanOutExchangeManager](/docs/api/fanout-exchange-manager.md). 
 
+See [Fanout Exchange](/docs/message-exchanges.md#fanout-exchange) for more details.
+
 ### Message.prototype.getFanOut()
 
 ```javascript
@@ -177,6 +181,8 @@ const message = new Message();
 const e = new TopicExchange('a.b');
 message.setExchange(e); 
 ```
+
+See [Message Exchanges](/docs/message-exchanges.md) for more details.
 
 ### Message.prototype.getExchange()
 
