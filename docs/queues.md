@@ -26,7 +26,7 @@ A queue name is required to fulfill the following requirements:
 - To be composed of alphanumeric characters `[a-z0-9]` for example `queue$` is an invalid queue name;
 - May include `-` and `_` characters for example `my-queue` or `my_queue` are valid queue names;
 - To start with an alpha character `[a-z]` and ends with an alphanumeric character `[a-z0-9]` for example `3queue` or `my_queue_` are invalid queue names;
-- Is allowed to include a dots (`.`) for denoting queue hierarchy for example `sports.football`. See [Topic Exchange](/docs/message-exchanges.md#topic-exchange);
+- Is allowed to include dots (`.`) for denoting queues hierarchy for example `sports.football`. See [Topic Exchange](/docs/message-exchanges.md#topic-exchange);
 
 ## Managing Queues and Namespaces
 
