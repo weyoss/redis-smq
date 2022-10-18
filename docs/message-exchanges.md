@@ -22,9 +22,9 @@ Out-of-box RedisSMQ offers 3 exchange types.
 
 A direct exchange allows producers to publish a message to a single queue which is matched exactly by the specified queue of the exchange.
 
-The queue of the direct exchange may be a string, like `a.b.c.d`, which is composed of alphanumeric characters, including `-` and `_` characters, that may be separated by a `.`. 
+The queue of the direct exchange may be a string, like `a.b.c.d` or an object describing the namespace of the queue like `{ ns: 'my-app', name: 'a.b.c.d'}`. 
 
-Direct exchange queue may be also an object describing the namespace of the queue like `{ ns: 'my-app', name: 'a.b.c.d'}`. If a string is used for the direct exchange queue then the default namespace will be used.
+If a string is used for the direct exchange queue then the **default** namespace will be used.
 
 A direct exchange with the queue `a.b.c.d` matches exactly the queue with the name `a.b.c.d`.
 

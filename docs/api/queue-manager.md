@@ -128,7 +128,7 @@ create(queue, priorityQueuing, cb);
           - `reply.settings.rateLimit.interval` *(number): Required.* The timespan for `limit` in milliseconds.
       - `reply.settings.exchange` *(string|null)*. The fanout exchange to which the queue is bound.
 
-The queue name can be composed only of letters (a-z), numbers (0-9) and (-_) characters.
+See [Queue Naming Requirements](/docs/queues.md#queue-naming-requirements).
 
 #### QueueManager.prototype.queue.list()
 

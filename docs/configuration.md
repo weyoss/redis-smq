@@ -42,8 +42,7 @@ module.exports = {
 
 **Parameters**
 
-- `namespace` *(string): Optional.* The namespace for message queues. It can be composed only of letters (a-z),
-  numbers (0-9) and (-_) characters. Namespace can be for example configured per project.
+- `namespace` *(string): Optional.* See [Queue Namespace](/docs/queues.md#queue-namespace) for more details.
 
 - `redis` *(object): Optional.* See [Redis Configuration](https://github.com/weyoss/redis-smq-common/blob/master/docs/redis.md) for more details.
 
