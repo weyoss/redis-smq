@@ -91,7 +91,6 @@ unbindQueue(queue, exchange, cb);
 
 **Parameters**
 
-
 - `queue` *(string|object): Required.*
   - `queue` *(string)*. Queue name. Default namespace will be used.
   - `queue` *(object)*. You can also provide a queue name and a namespace.
@@ -100,8 +99,8 @@ unbindQueue(queue, exchange, cb);
 - `exchange` *(object): required*. FanOutExchange instance.
 - `cb(err)` *(function): Required.*
     - `err` *(Error | null | undefined)*.
-### FanOutExchangeManager.prototype.getQueueExchange()
 
+### FanOutExchangeManager.prototype.getQueueExchange()
 
 ```typescript
 getQueueExchange(queue, cb);

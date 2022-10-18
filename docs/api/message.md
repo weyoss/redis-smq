@@ -69,7 +69,7 @@ Message priority values that you can apply to a given message. Valid message pri
 - `Message.MessagePriority.HIGHEST`
 
 Message priority can be set using [setPriority()](#messageprototypesetpriority). Do not forget to 
-configure your producers and consumers to use [Priority queues](/docs/priority-queues.md).
+configure your producers and consumers to use [Priority queues](/docs/queues.md).
 
 ## Public Static Methods
 
@@ -219,7 +219,7 @@ msg.setPriority(Message.MessagePriority.ABOVE_NORMAL);
 
 See:
 - [Message Priority](#messagemessagepriority) for valid message priorities.
-- [Priority queues](/docs/priority-queues.md) for more details about priority messaging.
+- [Priority queues](/docs/queues.md) for more details about priority messaging.
 
 ### Message.prototype.setTTL()
 
