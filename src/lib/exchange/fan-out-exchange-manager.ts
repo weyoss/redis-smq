@@ -71,43 +71,40 @@ export class FanOutExchangeManager {
     exchange: FanOutExchange,
     cb: ICallback<void>,
   ): void {
+    const exchangeParams = exchange.getBindingParams();
+    const queueParams = Queue.getParams(this.config, queue);
+    const { keyQueues, keyQueueSettings } = redisKeys.getQueueKeys(queueParams);
+    const { keyExchanges, keyExchangeBindings } =
+      redisKeys.getFanOutExchangeKeys(exchangeParams);
     async.waterfall(
       [
+        (cb: ICallback<void>) =>
+          this.redisClient.watch(
+            [keyQueues, keyQueueSettings, keyExchangeBindings],
+            (err) => cb(err),
+          ),
         (cb: ICallback<TQueueSettings>) =>
           Queue.getSettings(this.config, this.redisClient, queue, cb),
         (queueSettings: TQueueSettings, cb: ICallback<void>) => {
-          const exchangeParams = exchange.getBindingParams();
           const currentExchangeParams = queueSettings.exchange;
           if (currentExchangeParams === exchangeParams) cb();
           else {
-            const { keyExchanges, keyExchangeBindings } =
-              redisKeys.getFanOutExchangeKeys(exchangeParams);
-            const queueParams = Queue.getParams(this.config, queue);
-            const { keyQueues, keyQueueSettings } =
-              redisKeys.getQueueKeys(queueParams);
-            this.redisClient.watch(
-              [keyQueues, keyQueueSettings, keyExchangeBindings],
-              (err) => {
-                if (err) cb(err);
-                else {
-                  const multi = this.redisClient.multi();
-                  const queueParamsStr = JSON.stringify(queueParams);
-                  multi.sadd(keyExchanges, exchangeParams);
-                  multi.sadd(keyExchangeBindings, queueParamsStr);
-                  multi.hset(
-                    keyQueueSettings,
-                    EQueueSettingType.EXCHANGE,
-                    exchangeParams,
-                  );
-                  if (currentExchangeParams) {
-                    const { keyExchangeBindings } =
-                      redisKeys.getFanOutExchangeKeys(currentExchangeParams);
-                    multi.srem(keyExchangeBindings, queueParamsStr);
-                  }
-                  multi.exec((err) => cb(err));
-                }
-              },
+            const multi = this.redisClient.multi();
+            const queueParamsStr = JSON.stringify(queueParams);
+            multi.sadd(keyExchanges, exchangeParams);
+            multi.sadd(keyExchangeBindings, queueParamsStr);
+            multi.hset(
+              keyQueueSettings,
+              EQueueSettingType.EXCHANGE,
+              exchangeParams,
             );
+            if (currentExchangeParams) {
+              const { keyExchangeBindings } = redisKeys.getFanOutExchangeKeys(
+                currentExchangeParams,
+              );
+              multi.srem(keyExchangeBindings, queueParamsStr);
+            }
+            multi.exec((err) => cb(err));
           }
         },
       ],
