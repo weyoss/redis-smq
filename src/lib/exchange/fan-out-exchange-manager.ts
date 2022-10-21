@@ -120,39 +120,40 @@ export class FanOutExchangeManager {
     exchange: FanOutExchange,
     cb: ICallback<void>,
   ): void {
+    const exchangeName = exchange.getBindingParams();
+    const queueParams = Queue.getParams(this.config, queue);
+    const { keyQueues, keyQueueSettings } = redisKeys.getQueueKeys(queueParams);
+    const { keyExchangeBindings } =
+      redisKeys.getFanOutExchangeKeys(exchangeName);
     async.waterfall(
       [
+        (cb: ICallback<void>) =>
+          this.redisClient.watch(
+            [keyQueues, keyQueueSettings, keyExchangeBindings],
+            (err) => cb(err),
+          ),
         (cb: ICallback<TQueueSettings>) =>
-          Queue.getSettings(this.config, this.redisClient, queue, cb),
-        (queueSettings: TQueueSettings, cb: ICallback<void>) => {
-          const queueParams = Queue.getParams(this.config, queue);
-          const exchangeName = exchange.getBindingParams();
-          if (queueSettings.exchange !== exchangeName)
-            cb(
-              new ExchangeError(
-                `Queue ${queueParams.name}@${queueParams.ns} is not bound to [${exchangeName}] exchange.`,
-              ),
-            );
-          else {
-            const { keyExchangeBindings } = redisKeys.getFanOutExchangeKeys(
-              queueSettings.exchange,
-            );
-            const { keyQueues, keyQueueSettings } =
-              redisKeys.getQueueKeys(queueParams);
-            this.redisClient.watch(
-              [keyQueues, keyQueueSettings, keyExchangeBindings],
-              (err) => {
-                if (err) cb(err);
-                else {
-                  const multi = this.redisClient.multi();
-                  const queueParamsStr = JSON.stringify(queueParams);
-                  multi.srem(keyExchangeBindings, queueParamsStr);
-                  multi.hdel(keyQueueSettings, EQueueSettingType.EXCHANGE);
-                  multi.exec((err) => cb(err));
-                }
-              },
-            );
-          }
+          Queue.getSettings(
+            this.config,
+            this.redisClient,
+            queue,
+            (err, settings) => {
+              if (err) cb(err);
+              else if (settings?.exchange !== exchangeName)
+                cb(
+                  new ExchangeError(
+                    `Queue ${queueParams.name}@${queueParams.ns} is not bound to [${exchangeName}] exchange.`,
+                  ),
+                );
+              else cb();
+            },
+          ),
+        (cb: ICallback<void>) => {
+          const multi = this.redisClient.multi();
+          const queueParamsStr = JSON.stringify(queueParams);
+          multi.srem(keyExchangeBindings, queueParamsStr);
+          multi.hdel(keyQueueSettings, EQueueSettingType.EXCHANGE);
+          multi.exec((err) => cb(err));
         },
       ],
       (err) => {
