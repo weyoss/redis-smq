@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 7.1.2 (2022-10-22)
+
+* fix(FanOutExchangeManager): fix unbindQueue() transaction handling (dec63de)
+* fix(FanOutExchangeManager): fix bindQueue() transaction handling (afbdde6)
+* docs(queues): fix typos (08f29c0)
+* docs(queues): add queues.md reference, clean up (3219eb8)
+* docs: improve documentation, add missing links (c740e11)
+
 ## 7.1.1 (2022-10-11)
 
 * docs(message-exchanges): update docs (19d7dd3)
