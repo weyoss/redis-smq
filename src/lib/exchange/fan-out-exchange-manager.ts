@@ -18,6 +18,7 @@ import { Queue } from '../queue-manager/queue';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { getConfiguration } from '../../config/configuration';
 import { ExchangeError } from './errors/exchange.error';
+import { FanOutExchangeQueueError } from './errors/fan-out-exchange-queue.error';
 
 export class FanOutExchangeManager {
   protected config: IRequiredConfig;
@@ -85,6 +86,29 @@ export class FanOutExchangeManager {
           ),
         (cb: ICallback<TQueueSettings>) =>
           Queue.getSettings(this.config, this.redisClient, queue, cb),
+        (queueSettings: TQueueSettings, cb: ICallback<TQueueSettings>) =>
+          this.getExchangeQueues(exchange, (err, queues) => {
+            if (err) cb(err);
+            else {
+              const eQueue = queues?.pop();
+              if (eQueue)
+                Queue.getSettings(
+                  this.config,
+                  this.redisClient,
+                  eQueue,
+                  (err, exchangeQueueSetting) => {
+                    if (err) cb(err);
+                    else if (
+                      exchangeQueueSetting?.priorityQueuing !==
+                      queueSettings.priorityQueuing
+                    )
+                      cb(new FanOutExchangeQueueError());
+                    else cb(null, queueSettings);
+                  },
+                );
+              else cb(null, queueSettings);
+            }
+          }),
         (queueSettings: TQueueSettings, cb: ICallback<void>) => {
           const currentExchangeParams = queueSettings.exchange;
           if (currentExchangeParams === exchangeParams) cb();
