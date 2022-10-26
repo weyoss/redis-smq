@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 7.1.3 (2022-10-26)
+
+* test(FanOutExchangeManager): test binding queues of different types (d2e287c)
+* fix(FanOutExchangeManager): forbid binding queues of different types (0df6bdc)
+
 ## 7.1.2 (2022-10-22)
 
 * fix(FanOutExchangeManager): fix unbindQueue() transaction handling (dec63de)
