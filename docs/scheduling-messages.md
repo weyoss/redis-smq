@@ -30,8 +30,9 @@ producer.produce(message, (err) => {
 
 For managing scheduled messages, the [Message Manager](/docs/api/message-manager.md) provides:
 
-* [MessageManager.prototype.scheduledMessages.list()](/docs/api/message-manager.md#list)
-* [MessageManager.prototype.scheduledMessages.delete()](/docs/api/message-manager.md#delete)
-* [MessageManager.prototype.scheduledMessages.purge()](/docs/api/message-manager.md#purge)
+* [MessageManager.prototype.scheduledMessages.list()](/docs/api/message-manager.md#messagemanagerprototypescheduledmessageslist)
+* [MessageManager.prototype.scheduledMessages.delete()](/docs/api/message-manager.md#messagemanagerprototypescheduledmessagesdelete)
+* [MessageManager.prototype.scheduledMessages.purge()](/docs/api/message-manager.md#messagemanagerprototypescheduledmessagespurge)
+* [MessageManager.prototype.scheduledMessages.count()](/docs/api/message-manager.md#messagemanagerprototypescheduledmessagescount)
 
 Scheduled messages can be also managed using the [HTTP API Interface](https://github.com/weyoss/redis-smq-monitor) or from your browser with the help of the [Web UI](https://github.com/weyoss/redis-smq-monitor-client).

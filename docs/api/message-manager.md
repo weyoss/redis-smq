@@ -16,7 +16,7 @@ const { MessageManager } = require('redis-smq');
       2. [MessageManager.prototype.pendingMessages](#messagemanagerprototypependingmessages)
       3. [MessageManager.prototype.acknowledgedMessages](#messagemanagerprototypeacknowledgedmessages)
       4. [MessageManager.prototype.deadLetteredMessages](#messagemanagerprototypedeadletteredmessages) 
-   2. [Methods Description](#methods-description) 
+   2. [Common Methods Description](#common-methods-description) 
       1. [list()](#list)
       2. [delete()](#delete)
       3. [purge()](#purge)
@@ -59,9 +59,41 @@ MessageManager.createInstance(config, (err, messageManager) => {
 
 #### MessageManager.prototype.scheduledMessages
 
-* [MessageManager.prototype.scheduledMessages.list()](#list)
-* [MessageManager.prototype.scheduledMessages.delete()](#delete)
-* [MessageManager.prototype.scheduledMessages.purge()](#purge)
+##### MessageManager.prototype.scheduledMessages.list()
+
+```javascript
+list(skip, take, cb);
+```
+
+**Parameters**
+- `skip` *(number): Required.* Offset from where messages should be taken. Starts from 0.
+- `take` *(number): Required.* Max number of messages that should be taken. Starts from 1.
+- `cb(err, result)` *(Function): Required.* Callback function.
+    - `err` *(Error | null | undefined).*
+    - `result.total` *(number).* Total messages that has been scheduled so far.
+    - `result.items` *(Array).* An array of scheduled messages.
+        - `result.items[*].sequenceId` *(number).* Message sequence ID.
+        - `result.items[*].message` *(Message).* The stored message at the sequence ID.
+
+##### MessageManager.prototype.scheduledMessages.purge()
+
+```javascript
+purge(cb);
+```
+
+**Parameters**
+- `cb(err)` *(Function): Required.* Callback function.
+    - `err` *(Error | null | undefined).* Error object.
+##### MessageManager.prototype.scheduledMessages.delete()
+
+```javascript
+delete(messageId, cb);
+```
+
+**Parameters**
+- `messageId` *(string): Required.* Message ID.
+- `cb(err)` *(Function): Required.* Callback function.
+    - `err` *(Error | null | undefined).* Error object.
 
 ##### MessageManager.prototype.scheduledMessages.count()
 
@@ -97,7 +129,7 @@ count(cb);
 * [MessageManager.prototype.deadLetteredMessages.requeue()](#requeue)
 * [MessageManager.prototype.deadLetteredMessages.count()](#count)
 
-### Methods Description
+### Common Methods Description
 
 #### list()
 
