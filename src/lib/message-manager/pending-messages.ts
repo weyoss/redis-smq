@@ -1,5 +1,6 @@
 import { RedisClient } from 'redis-smq-common';
 import {
+  EQueueType,
   IRequiredConfig,
   TGetMessagesReply,
   TQueueParams,
@@ -42,7 +43,7 @@ export class PendingMessages {
       queueParams,
       (err, settings) => {
         if (err) cb(err);
-        else if (settings?.priorityQueuing) {
+        else if (settings?.type === EQueueType.PRIORITY_QUEUE) {
           this.pendingPriorityMessages.purge(queueParams, cb);
         } else {
           this.pendingLifoMessages.purge(queueParams, cb);
@@ -59,7 +60,7 @@ export class PendingMessages {
   ): void {
     Queue.getSettings(this.config, this.redisClient, queue, (err, settings) => {
       if (err) cb(err);
-      else if (settings?.priorityQueuing) {
+      else if (settings?.type === EQueueType.PRIORITY_QUEUE) {
         this.pendingPriorityMessages.list(queue, skip, take, cb);
       } else {
         this.pendingLifoMessages.list(queue, skip, take, cb);
@@ -75,7 +76,7 @@ export class PendingMessages {
   ): void {
     Queue.getSettings(this.config, this.redisClient, queue, (err, settings) => {
       if (err) cb(err);
-      else if (settings?.priorityQueuing) {
+      else if (settings?.type === EQueueType.PRIORITY_QUEUE) {
         this.pendingPriorityMessages.delete(queue, messageId, cb);
       } else {
         this.pendingLifoMessages.delete(queue, messageId, sequenceId, cb);
@@ -86,7 +87,7 @@ export class PendingMessages {
   count(queue: string | TQueueParams, cb: ICallback<number>): void {
     Queue.getSettings(this.config, this.redisClient, queue, (err, settings) => {
       if (err) cb(err);
-      else if (settings?.priorityQueuing)
+      else if (settings?.type === EQueueType.PRIORITY_QUEUE)
         this.pendingPriorityMessages.count(queue, cb);
       else this.pendingLifoMessages.count(queue, cb);
     });

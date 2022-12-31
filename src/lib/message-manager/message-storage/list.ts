@@ -71,7 +71,7 @@ export abstract class List extends AbstractMessageStorage<
           ELuaScriptName.REQUEUE_MESSAGE,
           [
             keyQueueSettings,
-            EQueueSettingType.PRIORITY_QUEUING,
+            EQueueSettingType.QUEUE_TYPE,
             keyQueuePendingPriorityMessages,
             keyQueuePendingPriorityMessageWeight,
             keyQueuePending,

@@ -53,7 +53,7 @@ export function scheduleMessage(
         ELuaScriptName.SCHEDULE_MESSAGE,
         [
           keyQueueSettings,
-          EQueueSettingType.PRIORITY_QUEUING,
+          EQueueSettingType.QUEUE_TYPE,
           keyScheduledMessageWeight,
           keyScheduledMessages,
         ],

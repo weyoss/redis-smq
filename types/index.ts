@@ -129,15 +129,21 @@ export type TQueueRateLimit = {
 };
 
 export type TQueueSettings = {
-  priorityQueuing: boolean;
+  type: EQueueType;
   rateLimit: TQueueRateLimit | null;
   exchange: string | null;
 };
 
 export enum EQueueSettingType {
-  PRIORITY_QUEUING = 'PRIORITY_QUEUING',
+  QUEUE_TYPE = 'QUEUE_TYPE',
   RATE_LIMIT = 'RATE_LIMIT',
   EXCHANGE = 'EXCHANGE',
+}
+
+export enum EQueueType {
+  LIFO_QUEUE,
+  FIFO_QUEUE,
+  PRIORITY_QUEUE,
 }
 
 export type TConsumerInfo = {
