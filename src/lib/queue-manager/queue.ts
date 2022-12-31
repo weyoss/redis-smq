@@ -1,5 +1,6 @@
 import {
   EQueueSettingType,
+  EQueueType,
   IRequiredConfig,
   TQueueParams,
   TQueueSettings,
@@ -28,9 +29,25 @@ export class Queue {
     this.logger = logger;
   }
 
+  /**
+   * When priorityQueuing = false the default queue type is EQueueType.LIFO_QUEUE
+   *
+   * @deprecated Use createQueue() instead.
+   */
   create(
     queue: string | TQueueParams,
     priorityQueuing: boolean,
+    cb: ICallback<{ queue: TQueueParams; settings: TQueueSettings }>,
+  ): void {
+    const queueType = priorityQueuing
+      ? EQueueType.PRIORITY_QUEUE
+      : EQueueType.LIFO_QUEUE;
+    this.createQueue(queue, queueType, cb);
+  }
+
+  createQueue(
+    queue: string | TQueueParams,
+    queueType: EQueueType,
     cb: ICallback<{ queue: TQueueParams; settings: TQueueSettings }>,
   ): void {
     const queueParams = Queue.getParams(this.config, queue);
@@ -44,9 +61,9 @@ export class Queue {
         keyNsQueues,
         keyQueues,
         keyQueueSettings,
-        EQueueSettingType.PRIORITY_QUEUING,
+        EQueueSettingType.QUEUE_TYPE,
       ],
-      [queueParams.ns, queueIndex, JSON.stringify(priorityQueuing)],
+      [queueParams.ns, queueIndex, queueType],
       (err, reply) => {
         if (err) cb(err);
         else if (!reply) cb(new QueueExistsError());
@@ -121,13 +138,13 @@ export class Queue {
       else {
         // default settings
         const queueSettings: TQueueSettings = {
-          priorityQueuing: false,
+          type: EQueueType.LIFO_QUEUE,
           exchange: null,
           rateLimit: null,
         };
         for (const key in reply) {
-          if (key === EQueueSettingType.PRIORITY_QUEUING) {
-            queueSettings.priorityQueuing = JSON.parse(reply[key]);
+          if (key === EQueueSettingType.QUEUE_TYPE) {
+            queueSettings.type = Number(reply[key]);
           }
           if (key === EQueueSettingType.RATE_LIMIT) {
             queueSettings.rateLimit = JSON.parse(reply[key]);

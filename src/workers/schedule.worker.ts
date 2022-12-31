@@ -73,7 +73,7 @@ export class ScheduleWorker extends Worker {
             ELuaScriptName.ENQUEUE_SCHEDULED_MESSAGE,
             [
               keyQueueSettings,
-              EQueueSettingType.PRIORITY_QUEUING,
+              EQueueSettingType.QUEUE_TYPE,
               keyQueuePendingPriorityMessages,
               keyQueuePendingPriorityMessageWeight,
               keyQueuePending,
@@ -86,6 +86,7 @@ export class ScheduleWorker extends Worker {
               message.getPriority() ?? '',
               `${nextScheduleTimestamp}`,
             ],
+            // todo log script return value for debugging
             (err) => done(err),
           );
         },

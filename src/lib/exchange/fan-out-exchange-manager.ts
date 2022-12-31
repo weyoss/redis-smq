@@ -98,10 +98,7 @@ export class FanOutExchangeManager {
                   eQueue,
                   (err, exchangeQueueSetting) => {
                     if (err) cb(err);
-                    else if (
-                      exchangeQueueSetting?.priorityQueuing !==
-                      queueSettings.priorityQueuing
-                    )
+                    else if (exchangeQueueSetting?.type !== queueSettings.type)
                       cb(new FanOutExchangeQueueError());
                     else cb(null, queueSettings);
                   },

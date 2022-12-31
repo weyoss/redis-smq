@@ -46,7 +46,7 @@ export class Producer extends Base {
       ELuaScriptName.PUBLISH_MESSAGE,
       [
         keyQueueSettings,
-        EQueueSettingType.PRIORITY_QUEUING,
+        EQueueSettingType.QUEUE_TYPE,
         keyQueuePendingPriorityMessages,
         keyQueuePendingPriorityMessageWeight,
         keyQueuePending,

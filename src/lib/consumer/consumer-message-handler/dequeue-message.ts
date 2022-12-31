@@ -1,16 +1,16 @@
 import * as os from 'os';
 import {
+  EQueueType,
   TConsumerInfo,
   TQueueParams,
   TQueueRateLimit,
 } from '../../../../types';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
-import { RedisClient, Ticker } from 'redis-smq-common';
+import { async, errors, RedisClient, Ticker } from 'redis-smq-common';
 import { events } from '../../../common/events/events';
 import { Message } from '../../message/message';
 import { MessageHandler } from './message-handler';
 import { QueueRateLimit } from '../../queue-manager/queue-rate-limit';
-import { async, errors } from 'redis-smq-common';
 import { Queue } from '../../queue-manager/queue';
 import { ELuaScriptName } from '../../../common/redis-client/redis-client';
 import { QueueNotFoundError } from '../../queue-manager/errors/queue-not-found.error';
@@ -38,7 +38,7 @@ export class DequeueMessage {
   protected queueRateLimit: TQueueRateLimit | null = null;
   protected ticker: Ticker;
   protected messageHandler: MessageHandler;
-  protected priorityQueuing = false;
+  protected queueType: EQueueType | null = null;
 
   constructor(messageHandler: MessageHandler, redisClient: RedisClient) {
     this.messageHandler = messageHandler;
@@ -91,10 +91,10 @@ export class DequeueMessage {
       }
     };
     const deq = () => {
-      if (this.priorityQueuing) this.dequeueMessageWithPriority(cb);
+      if (this.isPriorityQueuingEnabled()) this.dequeueMessageWithPriority(cb);
       else this.dequeueMessage(cb);
     };
-    if (this.priorityQueuing || this.queueRateLimit) {
+    if (this.isPriorityQueuingEnabled() || this.queueRateLimit) {
       if (this.queueRateLimit) {
         QueueRateLimit.hasExceeded(
           this.redisClient,
@@ -110,6 +110,10 @@ export class DequeueMessage {
     } else {
       this.waitForMessage(cb);
     }
+  }
+
+  protected isPriorityQueuingEnabled(): boolean {
+    return this.queueType === EQueueType.PRIORITY_QUEUE;
   }
 
   run(cb: ICallback<void>): void {
@@ -161,7 +165,7 @@ export class DequeueMessage {
               if (err) cb(err);
               else if (!reply) cb(new errors.EmptyCallbackReplyError());
               else {
-                this.priorityQueuing = reply.priorityQueuing;
+                this.queueType = reply.type;
                 this.queueRateLimit = reply.rateLimit ?? null;
                 cb();
               }

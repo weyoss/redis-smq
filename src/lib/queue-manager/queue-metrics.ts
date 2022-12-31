@@ -1,4 +1,9 @@
-import { IQueueMetrics, IRequiredConfig, TQueueParams } from '../../../types';
+import {
+  EQueueType,
+  IQueueMetrics,
+  IRequiredConfig,
+  TQueueParams,
+} from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { async, errors, RedisClient } from 'redis-smq-common';
 import { Queue } from './queue';
@@ -34,7 +39,7 @@ export class QueueMetrics {
     } = redisKeys.getQueueKeys(queueParams);
     async.waterfall(
       [
-        (cb: ICallback<boolean>) =>
+        (cb: ICallback<EQueueType>) =>
           Queue.getSettings(
             this.config,
             this.redisClient,
@@ -42,11 +47,11 @@ export class QueueMetrics {
             (err, settings) => {
               if (err) cb(err);
               if (!settings) cb(new errors.EmptyCallbackReplyError());
-              else cb(null, settings.priorityQueuing);
+              else cb(null, settings.type);
             },
           ),
-        (priorityQueuing: boolean, cb: ICallback<void>) => {
-          if (priorityQueuing) {
+        (queueType: EQueueType, cb: ICallback<void>) => {
+          if (queueType === EQueueType.PRIORITY_QUEUE) {
             this.redisClient.zcard(
               keyQueuePendingPriorityMessageWeight,
               (err, reply) => {

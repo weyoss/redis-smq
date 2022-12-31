@@ -1,16 +1,16 @@
 --- KEYS[1] keyQueueSettings
---- KEYS[2] keyQueueSettingsPriorityQueuing
+--- KEYS[2] keyQueueSettingsQueueType
 --- KEYS[3] keyScheduledMessages (sorted set)
 --- KEYS[4] keyScheduledMessagesIndex (hash)
 --- ARGV[1] message id
 --- ARGV[2] message
 --- ARGV[3] scheduleTimestamp
 --- ARGV[4] message priority
-local priorityQueuing = redis.call("HGET", KEYS[1], KEYS[2])
-if (priorityQueuing == false) then
+local queueType = redis.call("HGET", KEYS[1], KEYS[2])
+if (queueType == false) then
     return 'QUEUE_NOT_FOUND'
 end
-if priorityQueuing == 'true' then
+if queueType == '2' then
     if ARGV[4] == nil or ARGV[4] == '' then
         return 'MESSAGE_PRIORITY_REQUIRED'
     end
