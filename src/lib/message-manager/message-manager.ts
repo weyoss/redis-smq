@@ -4,10 +4,10 @@ import {
   logger,
   RedisClient,
 } from 'redis-smq-common';
-import { ScheduledMessages } from './scheduled-messages';
-import { AcknowledgedMessages } from './acknowledged-messages';
-import { DeadLetteredMessages } from './dead-lettered-messages';
-import { PendingMessages } from './pending-messages';
+import { ScheduledMessages } from './messages/scheduled-messages';
+import { AcknowledgedMessages } from './messages/acknowledged-messages';
+import { DeadLetteredMessages } from './messages/dead-lettered-messages';
+import { PendingMessages } from './messages/pending-messages';
 import { getConfiguration } from '../../config/configuration';
 import { ICallback } from 'redis-smq-common/dist/types';
 import { IConfig } from '../../../types';

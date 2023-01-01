@@ -1,10 +1,10 @@
-import { TGetMessagesReply, TQueueParams } from '../../../types';
-import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { List } from './message-storage/list';
-import { Queue } from '../queue-manager/queue';
+import { TGetMessagesReply, TQueueParams } from '../../../../types';
+import { redisKeys } from '../../../common/redis-keys/redis-keys';
+import { ListMessageStorage } from '../message-storage/list-message-storage';
+import { Queue } from '../../queue-manager/queue';
 import { ICallback } from 'redis-smq-common/dist/types';
 
-export class AcknowledgedMessages extends List {
+export class AcknowledgedMessages extends ListMessageStorage {
   list(
     queue: string | TQueueParams,
     skip: number,

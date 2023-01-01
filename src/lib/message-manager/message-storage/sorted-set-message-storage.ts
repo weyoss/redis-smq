@@ -14,7 +14,7 @@ type TSortedSetMessageIdParams = {
   messageId: string;
 };
 
-export abstract class SortedSet extends AbstractMessageStorage<
+export abstract class SortedSetMessageStorage extends AbstractMessageStorage<
   TSortedSetKeyMessagesParams,
   TSortedSetMessageIdParams
 > {

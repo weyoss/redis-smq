@@ -4,16 +4,16 @@ import {
   IRequiredConfig,
   TGetMessagesReply,
   TQueueParams,
-} from '../../../types';
-import { Queue } from '../queue-manager/queue';
+} from '../../../../types';
+import { Queue } from '../../queue-manager/queue';
 import { PendingPriorityMessages } from './pending-priority-messages';
-import { PendingLifoMessages } from './pending-lifo-messages';
+import { PendingNonPriorityMessages } from './pending-non-priority-messages';
 import { ICallback, ICompatibleLogger } from 'redis-smq-common/dist/types';
 
 export class PendingMessages {
   protected redisClient: RedisClient;
   protected pendingPriorityMessages: PendingPriorityMessages;
-  protected pendingLifoMessages: PendingLifoMessages;
+  protected pendingNonPriorityMessages: PendingNonPriorityMessages;
   protected config: IRequiredConfig;
 
   constructor(
@@ -23,7 +23,7 @@ export class PendingMessages {
   ) {
     this.redisClient = redisClient;
     this.config = config;
-    this.pendingLifoMessages = new PendingLifoMessages(
+    this.pendingNonPriorityMessages = new PendingNonPriorityMessages(
       config,
       redisClient,
       logger,
@@ -46,7 +46,7 @@ export class PendingMessages {
         else if (settings?.type === EQueueType.PRIORITY_QUEUE) {
           this.pendingPriorityMessages.purge(queueParams, cb);
         } else {
-          this.pendingLifoMessages.purge(queueParams, cb);
+          this.pendingNonPriorityMessages.purge(queueParams, cb);
         }
       },
     );
@@ -63,7 +63,7 @@ export class PendingMessages {
       else if (settings?.type === EQueueType.PRIORITY_QUEUE) {
         this.pendingPriorityMessages.list(queue, skip, take, cb);
       } else {
-        this.pendingLifoMessages.list(queue, skip, take, cb);
+        this.pendingNonPriorityMessages.list(queue, skip, take, cb);
       }
     });
   }
@@ -79,7 +79,12 @@ export class PendingMessages {
       else if (settings?.type === EQueueType.PRIORITY_QUEUE) {
         this.pendingPriorityMessages.delete(queue, messageId, cb);
       } else {
-        this.pendingLifoMessages.delete(queue, messageId, sequenceId, cb);
+        this.pendingNonPriorityMessages.delete(
+          queue,
+          messageId,
+          sequenceId,
+          cb,
+        );
       }
     });
   }
@@ -89,7 +94,7 @@ export class PendingMessages {
       if (err) cb(err);
       else if (settings?.type === EQueueType.PRIORITY_QUEUE)
         this.pendingPriorityMessages.count(queue, cb);
-      else this.pendingLifoMessages.count(queue, cb);
+      else this.pendingNonPriorityMessages.count(queue, cb);
     });
   }
 }
