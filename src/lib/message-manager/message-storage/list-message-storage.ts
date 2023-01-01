@@ -19,7 +19,7 @@ type TListMessageIdParams = {
   sequenceId: number;
 };
 
-export abstract class List extends AbstractMessageStorage<
+export abstract class ListMessageStorage extends AbstractMessageStorage<
   TListKeyMessagesParams,
   TListMessageIdParams
 > {

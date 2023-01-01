@@ -1,10 +1,10 @@
-import { TGetMessagesReply, TQueueParams } from '../../../types';
-import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { List } from './message-storage/list';
-import { Queue } from '../queue-manager/queue';
+import { TGetMessagesReply, TQueueParams } from '../../../../types';
+import { redisKeys } from '../../../common/redis-keys/redis-keys';
+import { ListMessageStorage } from '../message-storage/list-message-storage';
+import { Queue } from '../../queue-manager/queue';
 import { ICallback } from 'redis-smq-common/dist/types';
 
-export class DeadLetteredMessages extends List {
+export class DeadLetteredMessages extends ListMessageStorage {
   purge(queue: string | TQueueParams, cb: ICallback<void>): void {
     const queueParams = Queue.getParams(this.config, queue);
     const { keyQueueDL } = redisKeys.getQueueKeys(queueParams);

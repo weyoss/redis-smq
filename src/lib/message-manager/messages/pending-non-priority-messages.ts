@@ -1,11 +1,11 @@
-import { TGetMessagesReply, TQueueParams } from '../../../types';
-import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { MessageNotFoundError } from './errors/message-not-found.error';
-import { List } from './message-storage/list';
-import { Queue } from '../queue-manager/queue';
+import { TGetMessagesReply, TQueueParams } from '../../../../types';
+import { redisKeys } from '../../../common/redis-keys/redis-keys';
+import { MessageNotFoundError } from '../errors/message-not-found.error';
+import { ListMessageStorage } from '../message-storage/list-message-storage';
+import { Queue } from '../../queue-manager/queue';
 import { ICallback } from 'redis-smq-common/dist/types';
 
-export class PendingLifoMessages extends List {
+export class PendingNonPriorityMessages extends ListMessageStorage {
   purge(queue: string | TQueueParams, cb: ICallback<void>): void {
     const queueParams = Queue.getParams(this.config, queue);
     const { keyQueuePending } = redisKeys.getQueueKeys(queueParams);

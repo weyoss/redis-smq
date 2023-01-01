@@ -1,9 +1,9 @@
-import { TGetMessagesReply } from '../../../types';
-import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { SortedSet } from './message-storage/sorted-set';
+import { TGetMessagesReply } from '../../../../types';
+import { redisKeys } from '../../../common/redis-keys/redis-keys';
+import { SortedSetMessageStorage } from '../message-storage/sorted-set-message-storage';
 import { ICallback } from 'redis-smq-common/dist/types';
 
-export class ScheduledMessages extends SortedSet {
+export class ScheduledMessages extends SortedSetMessageStorage {
   delete(messageId: string, cb: ICallback<void>): void {
     const { keyScheduledMessages, keyScheduledMessageWeight } =
       redisKeys.getMainKeys();
