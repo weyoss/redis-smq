@@ -32,7 +32,7 @@ export class Queue {
   /**
    * When priorityQueuing = false the default queue type is EQueueType.LIFO_QUEUE
    *
-   * @deprecated Use createQueue() instead.
+   * @deprecated Use save() method instead.
    */
   create(
     queue: string | TQueueParams,
@@ -42,10 +42,10 @@ export class Queue {
     const queueType = priorityQueuing
       ? EQueueType.PRIORITY_QUEUE
       : EQueueType.LIFO_QUEUE;
-    this.createQueue(queue, queueType, cb);
+    this.save(queue, queueType, cb);
   }
 
-  createQueue(
+  save(
     queue: string | TQueueParams,
     queueType: EQueueType,
     cb: ICallback<{ queue: TQueueParams; settings: TQueueSettings }>,
