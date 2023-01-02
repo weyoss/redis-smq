@@ -1,4 +1,4 @@
-import { IConfig, TQueueParams } from '../../types';
+import { EQueueType, IConfig, TQueueParams } from '../../types';
 import { Message } from '../../src/lib/message/message';
 import { events } from '../../src/common/events/events';
 import { untilConsumerEvent, untilMessageAcknowledged } from './events';
@@ -103,10 +103,16 @@ export async function scheduleMessage(
 
 export async function createQueue(
   queue: string | TQueueParams,
-  priorityQueuing: boolean,
-) {
+  mixed: boolean | EQueueType,
+): Promise<void> {
   const qm = await getQueueManager();
-  await qm.queue.createAsync(queue, priorityQueuing);
+  const type =
+    typeof mixed === 'boolean'
+      ? mixed
+        ? EQueueType.PRIORITY_QUEUE
+        : EQueueType.LIFO_QUEUE
+      : mixed;
+  await qm.queue.saveAsync(queue, type);
 }
 
 export async function crashAConsumerConsumingAMessage() {

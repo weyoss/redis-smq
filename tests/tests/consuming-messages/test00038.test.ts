@@ -1,3 +1,12 @@
+/*
+ * Copyright (c)
+ * Weyoss <weyoss@protonmail.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
+ */
+
 import { Message } from '../../../index';
 import { delay } from 'bluebird';
 import { getConsumer } from '../../common/consumer';
@@ -8,8 +17,8 @@ import {
 } from '../../common/message-producing-consuming';
 import { EQueueType } from '../../../types';
 
-test('Produce and consume 100 messages: LIFO Queues', async () => {
-  await createQueue(defaultQueue, EQueueType.LIFO_QUEUE);
+test('Produce and consume 100 messages: FIFO Queues', async () => {
+  await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
 
   const producer = getProducer();
   await producer.runAsync();
@@ -36,7 +45,7 @@ test('Produce and consume 100 messages: LIFO Queues', async () => {
   expect(deliveredMessages.length).toEqual(publishedMsg.length);
   for (let i = 0; i < total; i += 1) {
     expect(publishedMsg[i].getRequiredId()).toStrictEqual(
-      deliveredMessages[total - i - 1].getRequiredId(),
+      deliveredMessages[i].getRequiredId(),
     );
   }
 });
