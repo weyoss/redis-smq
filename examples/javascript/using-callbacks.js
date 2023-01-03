@@ -1,6 +1,7 @@
 const { logger } = require('redis-smq-common');
 const { RedisClientName } = require('redis-smq-common/dist/types');
-const { Consumer, Producer, Message, QueueManager } = require('../..'); // from 'redis-smq'
+const { Consumer, Producer, Message, QueueManager } = require('../..');
+const { EQueueType } = require('../../dist/types'); // from 'redis-smq/dist/types'
 
 const config = {
   namespace: 'ns1',
@@ -39,10 +40,14 @@ const createQueue = (cb) => {
         if (err) cb(err);
         else if (!reply) {
           // Creating a queue (a LIFO queue)
-          queueManager.queue.create('test_queue', false, (err) => {
-            if (err) cb(err);
-            else queueManager.quit(cb);
-          });
+          queueManager.queue.save(
+            'test_queue',
+            EQueueType.LIFO_QUEUE,
+            (err) => {
+              if (err) cb(err);
+              else queueManager.quit(cb);
+            },
+          );
         } else cb();
       });
     }

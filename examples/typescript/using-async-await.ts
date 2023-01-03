@@ -2,7 +2,7 @@ import { promisifyAll } from 'bluebird';
 import { logger } from 'redis-smq-common';
 import { RedisClientName } from 'redis-smq-common/dist/types';
 import { Consumer, Producer, Message, QueueManager } from '../..'; // from 'redis-smq'
-import { IConfig } from '../../types'; // from 'redis-smq/dist/types'
+import { EQueueType, IConfig } from '../../types'; // from 'redis-smq/dist/types'
 
 export const config: IConfig = {
   namespace: 'ns1',
@@ -43,7 +43,7 @@ const createQueue = async () => {
   const exists = await queueAsync.existsAsync('test_queue');
   if (!exists) {
     // Creating a queue (a LIFO queue)
-    await queueAsync.createAsync('test_queue', false);
+    await queueAsync.saveAsync('test_queue', EQueueType.LIFO_QUEUE);
   }
 };
 

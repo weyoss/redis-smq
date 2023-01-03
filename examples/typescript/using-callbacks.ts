@@ -1,6 +1,6 @@
 import { ICallback, RedisClientName } from 'redis-smq-common/dist/types';
 import { Consumer, Producer, Message, QueueManager } from '../../index'; // from 'redis-smq'
-import { IConfig, TProduceMessageReply } from '../../types'; // from 'redis-smq/dist/types'
+import { EQueueType, IConfig, TProduceMessageReply } from '../../types'; // from 'redis-smq/dist/types'
 import { logger } from 'redis-smq-common';
 
 export const config: IConfig = {
@@ -40,10 +40,14 @@ const createQueue = (cb: ICallback<void>): void => {
         if (err) cb(err);
         else if (!reply) {
           // Creating a queue (a LIFO queue)
-          queueManager.queue.create('test_queue', false, (err) => {
-            if (err) cb(err);
-            else queueManager.quit(cb);
-          });
+          queueManager.queue.save(
+            'test_queue',
+            EQueueType.LIFO_QUEUE,
+            (err) => {
+              if (err) cb(err);
+              else queueManager.quit(cb);
+            },
+          );
         } else cb();
       });
     }
