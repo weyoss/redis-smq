@@ -21,11 +21,11 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 * **[Multi-Queue Producers](#producer) & [Multi-Queue Consumers](#consumer)**: Offering flexible Producer/Consumer models, with focus on simplicity and without tons of features. This can make RedisSMQ an ideal message broker for your microservices. 
 * **[at-least-once/at-most-once Delivery](/docs/api/message.md#messageprototypesetretrythreshold)**: In case of failures, while delivering or processing a message, RedisSMQ can guaranty that the message will be not lost and redelivered again. When configured to do so, RedisSMQ can also ensure that the message is delivered at-most-once.
 * **[Different Exchange Types](/docs/message-exchanges.md)**: RedisSMQ offers 3 types of exchanges: [Direct Exchange](/docs/message-exchanges.md#direct-exchange), [Topic Exchange](/docs/message-exchanges.md#topic-exchange), and [Fanout Exchange](/docs/message-exchanges.md#fanout-exchange) for publishing a message to one or multiple queues. 
+* **[FIFO queues, LIFO queues, and Reliable Priority Queues](/docs/queues.md)**: Provides different queuing strategies that you may use depending on your needs and requirements.
 * **[Message Expiration](/docs/api/message.md#messageprototypesetttl)**: A message will not be delivered if it has been in a queue for longer than a given amount of time, called TTL (time-to-live).
 * **[Message Consumption Timeout](/docs/api/message.md#messageprototypesetconsumetimeout)**: Timeout for consuming messages.
 * **[Queue Rate Limiting](/docs/queue-rate-limiting.md)**: Allowing you to control the rate at which the messages are consumed from a given queue.
 * **[Scheduling Messages](/docs/scheduling-messages.md)**: Messages can be configured to be delayed, delivered for N times with an optional period between deliveries, and to be scheduled using CRON expressions.
-* **[Reliable Priority Queues](/docs/queues.md)**: Supports priority messaging.
 * **[Multiplexing](/docs/multiplexing.md)**: A feature which allows message handlers to use a single redis connection to dequeue and consume messages.  
 * **[HTTP API](https://github.com/weyoss/redis-smq-monitor)**: an HTTP interface is provided to interact with the MQ.
 * **[Web UI](https://github.com/weyoss/redis-smq-monitor-client)**: RedisSMQ can be managed also from your web browser.
@@ -100,16 +100,15 @@ Producers and consumers exchange data using one or multiple queues that may be c
 
 A queue is responsible for holding messages which are produced by producers and are delivered to consumers.
 
-RedisSMQ supports 2 types of queues: [LIFO Queues and Priority Queues](/docs/queues.md).
-
 ```javascript
 const { QueueManager } = require('redis-smq');
+const { EQueueType } = require('redis-smq/dist/types');
 const config = require('./config')
 
 QueueManager.createInstance(config, (err, queueManager) => {
   if (err) console.log(err);
   // Creating a LIFO queue
-  else queueManager.queue.create('test_queue', false, (err) => console.log(err));
+  else queueManager.queue.save('test_queue', EQueueType.LIFO_QUEUE, (err) => console.log(err));
 })
 ```
 

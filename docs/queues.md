@@ -2,11 +2,14 @@
 
 A queue is responsible for holding messages which are produced by producers and are delivered to consumers.
 
-RedisSMQ supports 2 types of queues:
+RedisSMQ supports **3 types** of queues:
 
- - **LIFO queue**: In a LIFO queue newer queue messages are always delivered first, before earlier messages. LIFO queues use [brpoplpush](https://redis.io/commands/brpoplpush) which blocks the connection to the Redis server until a message is received. LIFO queues can be used in most use cases where delivery priority of the messages is not critical to the operation of your application. 
- - **Priority queues**: When enabled, messages with higher priority are always delivered first before messages with lower priority. Priority queues use pooling and lua scripting which introduce a little of overhead on the MQ and therefore priority queues are less performant than LIFO queues. 
- 
+ - **LIFO (Last In, First Out) queue**: In a LIFO queue the last published messages are always delivered first and the first published messages are delivered last. 
+ - **FIFO (First In, First Out) queue**: In a FIFO queue the first published messages are delivered first and the last published messages are delivered last.
+ - **Priority queues**: When enabled, messages with higher priority are always delivered first before messages with lower priority. 
+
+Both LIFO and FIFO queues use [brpoplpush](https://redis.io/commands/brpoplpush), which blocks the connection to the Redis server until a message is received. However, priority queues use pooling and lua scripting which introduce a little of overhead on the MQ and therefore priority queues are less performant than other queue types.
+
 ## Queue Namespace
 
 Queues in RedisSMQ are namespaced. 
@@ -35,30 +38,54 @@ Queues and Namespaces can be managed using the [QueueManager](/docs/api/queue-ma
 1. [QueueManager.prototype.namespace.list()](/docs/api/queue-manager.md#queuemanagerprototypenamespacelist): To retrieve the list of namespaces.
 2. [QueueManager.prototype.namespace.getQueues()](/docs/api/queue-manager.md#queuemanagerprototypenamespacegetqueues): To retrieve the list of queues of a given namespace.
 3. [QueueManager.prototype.namespace.delete()](/docs/api/queue-manager.md#queuemanagerprototypenamespacedelete): To delete a namespace alongside with its queues.
-4. [QueueManager.prototype.queue.create()](/docs/api/queue-manager.md#queuemanagerprototypequeuecreate): To create a queue.
+4. [QueueManager.prototype.queue.save()](/docs/api/queue-manager.md#queuemanagerprototypequeuesave): To create a queue.
 5. [QueueManager.prototype.queue.list()](/docs/api/queue-manager.md#queuemanagerprototypequeuelist): To retrieve the list of queues from all namespaces.
 6. [QueueManager.prototype.queue.delete()](/docs/api/queue-manager.md#queuemanagerprototypequeuedelete): To delete a queue.
 7. [QueueManager.prototype.queue.exists()](/docs/api/queue-manager.md#queuemanagerprototypequeueexists): To check of a queue exists.
 8. [QueueManager.prototype.queue.getSettings()](/docs/api/queue-manager.md#queuemanagerprototypequeuegetsettings): To retrieve settings of a given queue. 
 
-## Creating a Queue
+## LIFO Queues
 
-Creating a LIFO queue named 'test_queue' in the 'default' namespace.
+Creating a LIFO queue named 'lifo_queue' in the 'default' namespace.
 
 ```javascript
 const { QueueManager } = require('redis-smq');
 
 QueueManager.createInstance(config, (err, queueManager) => {
   if (err) console.log(err);
-  // A LIFO queue is going to be created when the value of the second parameter equals false.
-  // A PRIORITY queue is going to be created when the value of the second parameter equals true.  
-  else queueManager.queue.create('test_queue', false, (err) => console.log(err));
+  else queueManager.queue.save('lifo_queue', EQueueType.LIFO_QUEUE, (err) => console.log(err));
 })
 ```
 
-See [QueueManager.prototype.queue.create()](/docs/api/queue-manager.md#queuemanagerprototypequeuecreate) for more details.
+See [QueueManager.prototype.queue.save()](/docs/api/queue-manager.md#queuemanagerprototypequeuesave) for more details.
+
+## FIFO Queues
+
+Creating a FIFO queue named 'fifo_queue' in the 'default' namespace.
+
+```javascript
+const { QueueManager } = require('redis-smq');
+
+QueueManager.createInstance(config, (err, queueManager) => {
+  if (err) console.log(err);
+  else queueManager.queue.save('fifo_queue', EQueueType.FIFO_QUEUE, (err) => console.log(err));
+})
+```
+
+See [QueueManager.prototype.queue.save()](/docs/api/queue-manager.md#queuemanagerprototypequeuesave) for more details.
 
 ## Priority Queues
+
+Creating a FIFO queue named 'priority_queue' in the 'default' namespace.
+
+```javascript
+const { QueueManager } = require('redis-smq');
+
+QueueManager.createInstance(config, (err, queueManager) => {
+  if (err) console.log(err);
+  else queueManager.queue.save('priority_queue', EQueueType.PRIORITY_QUEUE, (err) => console.log(err));
+})
+```
 
 ### Setting Up a Message Priority
 
