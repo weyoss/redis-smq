@@ -123,6 +123,41 @@ export class Queue {
     };
   }
 
+  static parseSettings(raw: Record<string, string>): TQueueSettings {
+    // default settings
+    const queueSettings: TQueueSettings = {
+      // Keeping compatibility with v7.1 queue settings schema
+      // which does not use TQueueSettings.type
+      // todo: remove TQueueSettings.priorityQueuing key within next major release
+      priorityQueuing: false,
+      type: EQueueType.LIFO_QUEUE,
+      exchange: null,
+      rateLimit: null,
+    };
+    for (const key in raw) {
+      // Keeping compatibility with v7.1 queue settings schema
+      // which does not use EQueueSettingType.QUEUE_TYPE
+      // todo: remove EQueueSettingType.PRIORITY_QUEUING checking within next major release
+      if (key === EQueueSettingType.PRIORITY_QUEUING && JSON.parse(raw[key])) {
+        queueSettings.type = EQueueType.PRIORITY_QUEUE;
+        queueSettings.priorityQueuing = true;
+      }
+      if (key === EQueueSettingType.QUEUE_TYPE) {
+        queueSettings.type = Number(raw[key]);
+        if (queueSettings.type === EQueueType.PRIORITY_QUEUE) {
+          queueSettings.priorityQueuing = true;
+        }
+      }
+      if (key === EQueueSettingType.RATE_LIMIT) {
+        queueSettings.rateLimit = JSON.parse(raw[key]);
+      }
+      if (key === EQueueSettingType.EXCHANGE) {
+        queueSettings.exchange = raw[key];
+      }
+    }
+    return queueSettings;
+  }
+
   static getSettings(
     config: IRequiredConfig,
     redisClient: RedisClient,
@@ -136,40 +171,7 @@ export class Queue {
       else if (!reply || !Object.keys(reply).length)
         cb(new QueueNotFoundError());
       else {
-        // default settings
-        const queueSettings: TQueueSettings = {
-          // Keeping compatibility with existing/old queue settings schema
-          // which does not use TQueueSettings.type
-          // todo: remove TQueueSettings.priorityQueuing key within next major release
-          priorityQueuing: false,
-          type: EQueueType.LIFO_QUEUE,
-          exchange: null,
-          rateLimit: null,
-        };
-        for (const key in reply) {
-          // Keeping compatibility with existing/old queue settings schema
-          // which does not use EQueueSettingType.QUEUE_TYPE
-          // todo: remove EQueueSettingType.PRIORITY_QUEUING checking within next major release
-          if (
-            key === EQueueSettingType.PRIORITY_QUEUING &&
-            JSON.parse(reply[key])
-          ) {
-            queueSettings.type = EQueueType.PRIORITY_QUEUE;
-            queueSettings.priorityQueuing = true;
-          }
-          if (key === EQueueSettingType.QUEUE_TYPE) {
-            queueSettings.type = Number(reply[key]);
-            if (queueSettings.type === EQueueType.PRIORITY_QUEUE) {
-              queueSettings.priorityQueuing = true;
-            }
-          }
-          if (key === EQueueSettingType.RATE_LIMIT) {
-            queueSettings.rateLimit = JSON.parse(reply[key]);
-          }
-          if (key === EQueueSettingType.EXCHANGE) {
-            queueSettings.exchange = reply[key];
-          }
-        }
+        const queueSettings = Queue.parseSettings(reply);
         cb(null, queueSettings);
       }
     });
