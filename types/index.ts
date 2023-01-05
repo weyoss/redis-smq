@@ -129,12 +129,16 @@ export type TQueueRateLimit = {
 };
 
 export type TQueueSettings = {
+  // todo: remove TQueueSettings.priorityQueuing within next major release
+  priorityQueuing: boolean;
   type: EQueueType;
   rateLimit: TQueueRateLimit | null;
   exchange: string | null;
 };
 
 export enum EQueueSettingType {
+  // todo: remove EQueueSettingType.PRIORITY_QUEUING within next major release
+  PRIORITY_QUEUING = 'PRIORITY_QUEUING',
   QUEUE_TYPE = 'QUEUE_TYPE',
   RATE_LIMIT = 'RATE_LIMIT',
   EXCHANGE = 'EXCHANGE',
