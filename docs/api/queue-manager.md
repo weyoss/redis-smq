@@ -235,7 +235,7 @@ getSettings(queue, cb);
 - `cb(err, settings)` *(Function): Required.* Callback function.
   - `err` *(Error | null | undefined).* Error object.
   - `settings` *(object)*
-    - `settings.priorityQueuing` *(boolean)*. Whether priority queuing is enabled.
+    - `settings.type` *(number)*. Queue type.
     - `settings.rateLimit` *(object|null)*. Queue rate limit.
       - `settings.rateLimit.limit` *(number): Required.* The maximum number of messages within an `interval`.
       - `settings.rateLimit.interval` *(number): Required.* The timespan for `limit` in milliseconds.
