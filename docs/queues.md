@@ -2,15 +2,68 @@
 
 A queue is responsible for holding messages which are produced by producers and are delivered to consumers.
 
-RedisSMQ supports **3 types** of queues:
+RedisSMQ supports 3 types of queues: **LIFO queues**, **FIFO queues**, and **Priority queues**.
 
- - **LIFO (Last In, First Out) queue**: In a LIFO queue the last published messages are always delivered first and the first published messages are delivered last. 
- - **FIFO (First In, First Out) queue**: In a FIFO queue the first published messages are delivered first and the last published messages are delivered last.
- - **Priority queues**: When enabled, messages with higher priority are always delivered first before messages with lower priority. 
+All RedisSMQ queue types are **reliable**. A queue is said to be reliable, when during a failure scenario, let it be for example a consumer crash, it can recover from such failure and the message being processed is not lost. 
 
-Both LIFO and FIFO queues use [brpoplpush](https://redis.io/commands/brpoplpush), which blocks the connection to the Redis server until a message is received. However, priority queues use pooling and lua scripting which introduce a little of overhead on the MQ and therefore priority queues are less performant than other queue types.
+In a typical use case, both LIFO and FIFO queues use [brpoplpush](https://redis.io/commands/brpoplpush), which blocks the connection to the Redis server until a message is received. However, priority queues use pooling and lua scripting which introduce a little of overhead on the MQ and therefore priority queues are less performant than other queue types.
 
-## Queue Namespace
+## LIFO (Last In, First Out) queues
+
+In a LIFO queue the last published messages are always delivered first and the first published messages are delivered last.
+
+```javascript
+const { QueueManager } = require('redis-smq');
+
+QueueManager.createInstance(config, (err, queueManager) => {
+  if (err) console.log(err);
+  // Creating a LIFO queue named 'lifo_queue' in the 'default' namespace.
+  else queueManager.queue.save('lifo_queue', EQueueType.LIFO_QUEUE, (err) => console.log(err));
+})
+```
+
+See [QueueManager.prototype.queue.save()](/docs/api/queue-manager.md#queuemanagerprototypequeuesave) for more details.
+
+## FIFO (First In, First Out) Queues
+
+In a FIFO queue the first published messages are delivered first and the last published messages are delivered last.
+
+```javascript
+const { QueueManager } = require('redis-smq');
+
+QueueManager.createInstance(config, (err, queueManager) => {
+  if (err) console.log(err);
+  // Creating a FIFO queue named 'fifo_queue' in the 'default' namespace.
+  else queueManager.queue.save('fifo_queue', EQueueType.FIFO_QUEUE, (err) => console.log(err));
+})
+```
+
+See [QueueManager.prototype.queue.save()](/docs/api/queue-manager.md#queuemanagerprototypequeuesave) for more details.
+
+## Priority Queues
+
+In a priority queue, messages with higher priority are always delivered first before messages with lower priority.
+
+```javascript
+const { QueueManager } = require('redis-smq');
+
+QueueManager.createInstance(config, (err, queueManager) => {
+  if (err) console.log(err);
+  // Creating a priority queue named 'priority_queue' in the 'default' namespace.
+  else queueManager.queue.save('priority_queue', EQueueType.PRIORITY_QUEUE, (err) => console.log(err));
+})
+```
+
+### Setting Up a Message Priority
+
+To set up a message priority, the [Message API](/docs/api/message.md) provides the following methods:
+
+* [Message.prototype.setPriority()](/docs/api/message.md#messageprototypesetpriority)
+* [Message.prototype.getPriority()](/docs/api/message.md#messageprototypegetpriority)
+
+See [Message Priority](/docs/api/message.md#messagemessagepriority) for more details.
+
+## Queue Namespaces
 
 Queues in RedisSMQ are namespaced. 
 
@@ -42,86 +95,4 @@ Queues and Namespaces can be managed using the [QueueManager](/docs/api/queue-ma
 5. [QueueManager.prototype.queue.list()](/docs/api/queue-manager.md#queuemanagerprototypequeuelist): To retrieve the list of queues from all namespaces.
 6. [QueueManager.prototype.queue.delete()](/docs/api/queue-manager.md#queuemanagerprototypequeuedelete): To delete a queue.
 7. [QueueManager.prototype.queue.exists()](/docs/api/queue-manager.md#queuemanagerprototypequeueexists): To check of a queue exists.
-8. [QueueManager.prototype.queue.getSettings()](/docs/api/queue-manager.md#queuemanagerprototypequeuegetsettings): To retrieve settings of a given queue. 
-
-## LIFO Queues
-
-Creating a LIFO queue named 'lifo_queue' in the 'default' namespace.
-
-```javascript
-const { QueueManager } = require('redis-smq');
-
-QueueManager.createInstance(config, (err, queueManager) => {
-  if (err) console.log(err);
-  else queueManager.queue.save('lifo_queue', EQueueType.LIFO_QUEUE, (err) => console.log(err));
-})
-```
-
-See [QueueManager.prototype.queue.save()](/docs/api/queue-manager.md#queuemanagerprototypequeuesave) for more details.
-
-## FIFO Queues
-
-Creating a FIFO queue named 'fifo_queue' in the 'default' namespace.
-
-```javascript
-const { QueueManager } = require('redis-smq');
-
-QueueManager.createInstance(config, (err, queueManager) => {
-  if (err) console.log(err);
-  else queueManager.queue.save('fifo_queue', EQueueType.FIFO_QUEUE, (err) => console.log(err));
-})
-```
-
-See [QueueManager.prototype.queue.save()](/docs/api/queue-manager.md#queuemanagerprototypequeuesave) for more details.
-
-## Priority Queues
-
-Creating a FIFO queue named 'priority_queue' in the 'default' namespace.
-
-```javascript
-const { QueueManager } = require('redis-smq');
-
-QueueManager.createInstance(config, (err, queueManager) => {
-  if (err) console.log(err);
-  else queueManager.queue.save('priority_queue', EQueueType.PRIORITY_QUEUE, (err) => console.log(err));
-})
-```
-
-### Setting Up a Message Priority
-
-To set up a message priority, the [Message API](/docs/api/message.md) provides the following methods:
-
-* [Message.prototype.setPriority()](/docs/api/message.md#messageprototypesetpriority)
-* [Message.prototype.getPriority()](/docs/api/message.md#messageprototypegetpriority)
-
-See [Message Priority](/docs/api/message.md#messagemessagepriority) for more details.
-
-### Producing Messages
-
-Before producing a message with a priority, make sure that the destination queues of the message has priority queuing enabled. Otherwise, an error will be returned.
-
-```javascript
-const { Message } = require('redis-smq');
-
-const msg1 = new Message();
-msg1.setPriority(Message.MessagePriority.HIGH).setQueue('test_queue');
-producer.produce(msg1, (err) => {
-  if (err) console.log(err);
-  else console.log('Successfully produced')
-});
-```
-
-To learn more about the destination queues of a message see [Message Exchanges](/docs/message-exchanges.md).
-
-### Consuming Messages
-
-Consuming messages from a priority queue works as usually without any extra settings.
-
-```javascript
-'use strict';
-const { Consumer } = require('redis-smq');
-
-const consumer = new Consumer();
-consumer.consume('test_queue', (msg, cb) => cb(), (err) => console.log(error));
-consumer.run();
-```
+8. [QueueManager.prototype.queue.getSettings()](/docs/api/queue-manager.md#queuemanagerprototypequeuegetsettings): To retrieve settings of a given queue.
