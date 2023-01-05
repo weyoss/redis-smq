@@ -138,13 +138,30 @@ export class Queue {
       else {
         // default settings
         const queueSettings: TQueueSettings = {
+          // Keeping compatibility with existing/old queue settings schema
+          // which does not use TQueueSettings.type
+          // todo: remove TQueueSettings.priorityQueuing key within next major release
+          priorityQueuing: false,
           type: EQueueType.LIFO_QUEUE,
           exchange: null,
           rateLimit: null,
         };
         for (const key in reply) {
+          // Keeping compatibility with existing/old queue settings schema
+          // which does not use EQueueSettingType.QUEUE_TYPE
+          // todo: remove EQueueSettingType.PRIORITY_QUEUING checking within next major release
+          if (
+            key === EQueueSettingType.PRIORITY_QUEUING &&
+            JSON.parse(reply[key])
+          ) {
+            queueSettings.type = EQueueType.PRIORITY_QUEUE;
+            queueSettings.priorityQueuing = true;
+          }
           if (key === EQueueSettingType.QUEUE_TYPE) {
             queueSettings.type = Number(reply[key]);
+            if (queueSettings.type === EQueueType.PRIORITY_QUEUE) {
+              queueSettings.priorityQueuing = true;
+            }
           }
           if (key === EQueueSettingType.RATE_LIMIT) {
             queueSettings.rateLimit = JSON.parse(reply[key]);
