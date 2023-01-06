@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## 7.2.0 (2023-01-06)
+
+* build: fix NPM vulnerability warnings (e2ca247)
+* build: bump up redis-smq-common to v1.0.5 (cc08fe7)
+* docs(readme): update documentation (3713643)
+* refactor(message-state): improve getSetExpired() logic (bb6f262)
+* test(queue): test settings parsing compatibility with v7.1 (0656217)
+* refactor(queue): move out settings parsing logic from getSettings() (cf4ba86)
+* fix(queue): Keep compatibility with v7.1 queue settings schema (d49735e)
+* docs(queue-manager): update queue.getSettings() reference (09214a4)
+* chore: update license (6016483)
+* docs(queues): improve documentation (494a0ce)
+* docs(queue-manager): update docs (77d2e64)
+* fix(examples): use save() method to create queues (9026923)
+* test(queue-manager): test FIFO queues (b97dc4d)
+* refactor(queue-manager): clean up (7f2d693)
+* refactor(message-manager): refactor and clean up (4f55431)
+* feat(queue-manager): allow to create and use FIFO queues (853a29b)
+* docs(message-manager): update scheduled messages API reference (7fa3d23)
+
 ## 7.1.3 (2022-10-26)
 
 * test(FanOutExchangeManager): test binding queues of different types (d2e287c)
