@@ -136,17 +136,12 @@ export class MessageState {
   }
 
   getSetExpired(ttl: number, createdAt: number): boolean {
-    if (!this.hasExpired()) {
-      const messageTTL = ttl;
-      if (messageTTL) {
-        const curTime = new Date().getTime();
-        const expired = createdAt + messageTTL - curTime <= 0;
-        this.setExpired(expired);
-        return expired;
-      }
-      return false;
+    if (ttl) {
+      const curTime = new Date().getTime();
+      const expired = createdAt + ttl - curTime <= 0;
+      this.setExpired(expired);
     }
-    return true;
+    return this.hasExpired();
   }
 
   getSetNextDelay(): number {
