@@ -22,9 +22,9 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 * **[at-least-once/at-most-once Delivery](/docs/api/message.md#messageprototypesetretrythreshold)**: In case of failures, while delivering or processing a message, RedisSMQ can guaranty that the message will be not lost and redelivered again. When configured to do so, RedisSMQ can also ensure that the message is delivered at-most-once.
 * **[Different Exchange Types](/docs/message-exchanges.md)**: RedisSMQ offers 3 types of exchanges: [Direct Exchange](/docs/message-exchanges.md#direct-exchange), [Topic Exchange](/docs/message-exchanges.md#topic-exchange), and [Fanout Exchange](/docs/message-exchanges.md#fanout-exchange) for publishing a message to one or multiple queues. 
 * **[FIFO queues, LIFO queues, and Reliable Priority Queues](/docs/queues.md)**: Provides different queuing strategies that you may use depending on your needs and requirements.
-* **[Message Expiration](/docs/api/message.md#messageprototypesetttl)**: A message will not be delivered if it has been in a queue for longer than a given amount of time, called TTL (time-to-live).
-* **[Message Consumption Timeout](/docs/api/message.md#messageprototypesetconsumetimeout)**: Timeout for consuming messages.
-* **[Queue Rate Limiting](/docs/queue-rate-limiting.md)**: Allowing you to control the rate at which the messages are consumed from a given queue.
+* **[Message Expiration](/docs/api/message.md#messageprototypesetttl)**: Allowing a message to expire if it has not been delivered within a given amount of time.
+* **[Message Consumption Timeout](/docs/api/message.md#messageprototypesetconsumetimeout)**: Allowing to set up a timeout for consuming messages.
+* **[Queue Rate Limiting](/docs/queue-rate-limiting.md)**: Allowing to control the rate at which the messages are consumed from a given queue.
 * **[Scheduling Messages](/docs/scheduling-messages.md)**: Messages can be configured to be delayed, delivered for N times with an optional period between deliveries, and to be scheduled using CRON expressions.
 * **[Multiplexing](/docs/multiplexing.md)**: A feature which allows message handlers to use a single redis connection to dequeue and consume messages.  
 * **[HTTP API](https://github.com/weyoss/redis-smq-monitor)**: an HTTP interface is provided to interact with the MQ.
