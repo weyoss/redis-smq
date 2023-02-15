@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 7.2.1 (2023-02-15)
+
+* build: update deps (e362d7c)
+* fix: use path.resolve() to fix 'no such file or directory' error (b713fbe)
+* build: bump up redis-smq-common to v1.0.6 (fc25b15)
+
 ## 7.2.0 (2023-01-06)
 
 * build: fix NPM vulnerability warnings (e2ca247)
