@@ -39,7 +39,7 @@
     "uuid": "8.3.2"
   },
   "peerDependencies": {
-    "redis-smq-common": "^1.0.5"
+    "redis-smq-common": "^1.0.6"
   },
   "devDependencies": {
     "@types/bluebird": "3.5.36",
