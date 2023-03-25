@@ -193,6 +193,9 @@ export class Consumer extends Base {
 
   static getConsumerHeartbeats(
     redisClient: RedisClient,
+    timestamp: number,
+    offset: number,
+    count: number,
     cb: ICallback<
       {
         consumerId: string;
@@ -200,6 +203,12 @@ export class Consumer extends Base {
       }[]
     >,
   ): void {
-    ConsumerHeartbeat.getValidHeartbeats(redisClient, cb);
+    ConsumerHeartbeat.getValidHeartbeats(
+      redisClient,
+      timestamp,
+      offset,
+      count,
+      cb,
+    );
   }
 }

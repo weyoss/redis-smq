@@ -25,75 +25,81 @@ export class WatchdogWorker extends Worker {
   }
 
   work = (cb: ICallback<void>): void => {
-    ConsumerHeartbeat.getExpiredHeartbeatIds(this.redisClient, (err, reply) => {
-      if (err) cb(err);
-      else {
-        const ids = reply ?? [];
-        if (ids.length) {
-          const statuses: TCleanUpStatus[] = [];
-          const multi = this.redisClient.multi();
-          async.each(
-            ids,
-            (consumerId, key, callback) => {
-              ConsumerHeartbeat.handleExpiredHeartbeatId(consumerId, multi);
-              consumerQueues.getConsumerQueues(
-                this.redisClient,
-                consumerId,
-                (err, reply) => {
-                  if (err) callback(err);
-                  else {
-                    const queues = reply ?? [];
-                    async.each(
-                      queues,
-                      (queue, _, done) => {
-                        MessageHandler.cleanUp(
-                          this.config,
-                          this.redisClient,
-                          consumerId,
-                          queue,
-                          multi,
-                          (err, reply) => {
-                            if (err) done(err);
-                            else {
-                              statuses.push(reply ?? false);
-                              done();
-                            }
-                          },
-                        );
-                      },
-                      callback,
-                    );
-                  }
-                },
-              );
-            },
-            (err) => {
-              if (err) cb(err);
-              else {
-                multi.exec((err) => {
-                  if (err) cb(err);
-                  else {
-                    statuses.forEach((cleanUpStatus) => {
-                      if (cleanUpStatus) {
-                        this.logger.debug(
-                          `Message ID ${cleanUpStatus.message.getId()} has been ${
-                            cleanUpStatus.status ===
-                            ERetryStatus.MESSAGE_DEAD_LETTERED
-                              ? 'dead-lettered'
-                              : 'unacknowledged'
-                          }.`,
-                        );
-                      }
-                    });
-                    cb();
-                  }
-                });
-              }
-            },
-          );
-        } else cb();
-      }
-    });
+    ConsumerHeartbeat.getExpiredHeartbeatIds(
+      this.redisClient,
+      Date.now(),
+      0,
+      100,
+      (err, reply) => {
+        if (err) cb(err);
+        else {
+          const ids = reply ?? [];
+          if (ids.length) {
+            const statuses: TCleanUpStatus[] = [];
+            const multi = this.redisClient.multi();
+            async.each(
+              ids,
+              (consumerId, key, callback) => {
+                ConsumerHeartbeat.handleExpiredHeartbeatId(consumerId, multi);
+                consumerQueues.getConsumerQueues(
+                  this.redisClient,
+                  consumerId,
+                  (err, reply) => {
+                    if (err) callback(err);
+                    else {
+                      const queues = reply ?? [];
+                      async.each(
+                        queues,
+                        (queue, _, done) => {
+                          MessageHandler.cleanUp(
+                            this.config,
+                            this.redisClient,
+                            consumerId,
+                            queue,
+                            multi,
+                            (err, reply) => {
+                              if (err) done(err);
+                              else {
+                                statuses.push(reply ?? false);
+                                done();
+                              }
+                            },
+                          );
+                        },
+                        callback,
+                      );
+                    }
+                  },
+                );
+              },
+              (err) => {
+                if (err) cb(err);
+                else {
+                  multi.exec((err) => {
+                    if (err) cb(err);
+                    else {
+                      statuses.forEach((cleanUpStatus) => {
+                        if (cleanUpStatus) {
+                          this.logger.debug(
+                            `Message ID ${cleanUpStatus.message.getId()} has been ${
+                              cleanUpStatus.status ===
+                              ERetryStatus.MESSAGE_DEAD_LETTERED
+                                ? 'dead-lettered'
+                                : 'unacknowledged'
+                            }.`,
+                          );
+                        }
+                      });
+                      cb();
+                    }
+                  });
+                }
+              },
+            );
+          } else cb();
+        }
+      },
+    );
   };
 }
 
