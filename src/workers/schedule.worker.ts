@@ -19,6 +19,8 @@ export class ScheduleWorker extends Worker {
       keyScheduledMessageWeight,
       0,
       Date.now(),
+      0,
+      100,
       cb,
     );
   };
