@@ -19,6 +19,9 @@ describe('Consumer heartbeat: check online/offline consumers', () => {
     //
     const validHeartbeatIds = await HeartbeatAsync.getValidHeartbeatIdsAsync(
       redisClient,
+      Date.now(),
+      0,
+      100,
     );
 
     expect(validHeartbeatIds.length).toBe(1);
@@ -27,6 +30,9 @@ describe('Consumer heartbeat: check online/offline consumers', () => {
     //
     const validHeartbeats = await HeartbeatAsync.getValidHeartbeatsAsync(
       redisClient,
+      Date.now(),
+      0,
+      100,
     );
     expect(validHeartbeats.length).toBe(1);
     const { consumerId: id2 } = validHeartbeats[0] ?? {};
@@ -34,7 +40,12 @@ describe('Consumer heartbeat: check online/offline consumers', () => {
 
     //
     const expiredHeartbeatKeys =
-      await HeartbeatAsync.getExpiredHeartbeatIdsAsync(redisClient);
+      await HeartbeatAsync.getExpiredHeartbeatIdsAsync(
+        redisClient,
+        Date.now(),
+        0,
+        100,
+      );
     expect(expiredHeartbeatKeys.length).toBe(0);
 
     await shutDownBaseInstance(consumer);
@@ -42,18 +53,29 @@ describe('Consumer heartbeat: check online/offline consumers', () => {
     //
     const validHeartbeatKeys2 = await HeartbeatAsync.getValidHeartbeatIdsAsync(
       redisClient,
+      Date.now(),
+      0,
+      100,
     );
     expect(validHeartbeatKeys2.length).toBe(0);
 
     //
     const validHeartbeats2 = await HeartbeatAsync.getValidHeartbeatsAsync(
       redisClient,
+      Date.now(),
+      0,
+      100,
     );
     expect(validHeartbeats2.length).toBe(0);
 
     //
     const expiredHeartbeatKeys2 =
-      await HeartbeatAsync.getExpiredHeartbeatIdsAsync(redisClient);
+      await HeartbeatAsync.getExpiredHeartbeatIdsAsync(
+        redisClient,
+        Date.now(),
+        0,
+        100,
+      );
     expect(expiredHeartbeatKeys2.length).toBe(0);
   });
 });
