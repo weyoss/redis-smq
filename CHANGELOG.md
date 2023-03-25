@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 7.2.2 (2023-03-25)
+
+* test(workers): update tests (c22f1bb)
+* perf(workers): use offset/count for schedule and watchdog workers (e78ecdb)
+* build: bump up redis-smq-common to v2.0.0 (c90050d)
+* build: clean up (61851a9)
+
 ## 7.2.1 (2023-02-15)
 
 * build: update deps (e362d7c)
