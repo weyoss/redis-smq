@@ -4,6 +4,7 @@ import {
   TConsumerInfo,
   TQueueParams,
   IConfig,
+  TConsumerHeartbeat,
 } from '../../../types';
 import { events } from '../../common/events/events';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
@@ -166,7 +167,30 @@ export class Consumer extends Base {
     return this.redisKeys;
   }
 
-  static getOnlineConsumers(
+  static getConsumersHeartbeats(
+    redisClient: RedisClient,
+    consumersIds: string[],
+    cb: ICallback<Record<string, TConsumerHeartbeat | false>>,
+  ): void {
+    ConsumerHeartbeat.getConsumersHeartbeats(redisClient, consumersIds, cb);
+  }
+
+  static getConsumerHeartbeat(
+    redisClient: RedisClient,
+    consumerId: string,
+    cb: ICallback<TConsumerHeartbeat | false>,
+  ): void {
+    ConsumerHeartbeat.getConsumersHeartbeats(
+      redisClient,
+      [consumerId],
+      (err, consumersHeartbeats = {}) => {
+        if (err) cb(err);
+        else cb(null, consumersHeartbeats[consumerId]);
+      },
+    );
+  }
+
+  static getQueueConsumers(
     redisClient: RedisClient,
     queue: TQueueParams,
     transform = false,
@@ -175,7 +199,7 @@ export class Consumer extends Base {
     consumerQueues.getQueueConsumers(redisClient, queue, transform, cb);
   }
 
-  static getOnlineConsumerIds(
+  static getQueueConsumerIds(
     redisClient: RedisClient,
     queue: TQueueParams,
     cb: ICallback<string[]>,
@@ -183,32 +207,11 @@ export class Consumer extends Base {
     consumerQueues.getQueueConsumerIds(redisClient, queue, cb);
   }
 
-  static countOnlineConsumers(
+  static countQueueConsumers(
     redisClient: RedisClient,
     queue: TQueueParams,
     cb: ICallback<number>,
   ): void {
     consumerQueues.countQueueConsumers(redisClient, queue, cb);
-  }
-
-  static getConsumerHeartbeats(
-    redisClient: RedisClient,
-    timestamp: number,
-    offset: number,
-    count: number,
-    cb: ICallback<
-      {
-        consumerId: string;
-        payload: string;
-      }[]
-    >,
-  ): void {
-    ConsumerHeartbeat.getValidHeartbeats(
-      redisClient,
-      timestamp,
-      offset,
-      count,
-      cb,
-    );
   }
 }

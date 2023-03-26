@@ -27,7 +27,6 @@ export class WatchdogWorker extends Worker {
   work = (cb: ICallback<void>): void => {
     ConsumerHeartbeat.getExpiredHeartbeatIds(
       this.redisClient,
-      Date.now(),
       0,
       100,
       (err, reply) => {

@@ -25,17 +25,18 @@ export const consumerQueues = {
     client.hgetall(keyQueueConsumers, (err, reply) => {
       if (err) cb(err);
       else {
+        const consumers = reply ?? {};
         if (transform) {
           const data: Record<string | number, TConsumerInfo> = {};
-          async.each(
-            reply ?? {},
+          async.eachIn(
+            consumers,
             (item, key, done) => {
               data[key] = JSON.parse(item);
               done();
             },
             () => cb(null, data),
           );
-        } else cb(null, reply ?? {});
+        } else cb(null, consumers);
       }
     });
   },
