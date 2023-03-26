@@ -7,75 +7,56 @@ import {
   defaultQueue,
 } from '../../common/message-producing-consuming';
 import { shutDownBaseInstance } from '../../common/base-instance';
+import { Consumer } from '../../../src/lib/consumer/consumer';
 
-describe('Consumer heartbeat: check online/offline consumers', () => {
-  test('Case 1', async () => {
-    const redisClient = await getRedisInstance();
-    const HeartbeatAsync = promisifyAll(ConsumerHeartbeat);
-    await createQueue(defaultQueue, false);
-    const consumer = getConsumer();
-    await consumer.runAsync();
+test('Consumer heartbeat: check online/offline consumers', async () => {
+  const redisClient = await getRedisInstance();
+  const HeartbeatAsync = promisifyAll(ConsumerHeartbeat);
+  const ConsumerAsync = promisifyAll(Consumer);
+  await createQueue(defaultQueue, false);
+  const consumer = getConsumer();
+  await consumer.runAsync();
 
-    //
-    const validHeartbeatIds = await HeartbeatAsync.getValidHeartbeatIdsAsync(
-      redisClient,
-      Date.now(),
-      0,
-      100,
-    );
+  //
+  const consumerHeartbeat = await ConsumerAsync.getConsumerHeartbeatAsync(
+    redisClient,
+    consumer.getId(),
+  );
+  expect(consumerHeartbeat).not.toBe(false);
+  expect(Object.keys(consumerHeartbeat)).toEqual(
+    expect.arrayContaining(['timestamp', 'data']),
+  );
 
-    expect(validHeartbeatIds.length).toBe(1);
-    expect(validHeartbeatIds[0]).toBe(consumer.getId());
+  const consumersHeartbeats = await HeartbeatAsync.getConsumersHeartbeatsAsync(
+    redisClient,
+    [consumer.getId()],
+  );
+  expect(Object.keys(consumersHeartbeats).length).toBe(1);
+  expect(consumersHeartbeats[consumer.getId()]).not.toBe(false);
+  expect(Object.keys(consumersHeartbeats[consumer.getId()])).toEqual(
+    expect.arrayContaining(['timestamp', 'data']),
+  );
 
-    //
-    const validHeartbeats = await HeartbeatAsync.getValidHeartbeatsAsync(
-      redisClient,
-      Date.now(),
-      0,
-      100,
-    );
-    expect(validHeartbeats.length).toBe(1);
-    const { consumerId: id2 } = validHeartbeats[0] ?? {};
-    expect(id2).toBe(consumer.getId());
+  //
+  const expiredHeartbeatKeys = await HeartbeatAsync.getExpiredHeartbeatIdsAsync(
+    redisClient,
+    0,
+    100,
+  );
+  expect(expiredHeartbeatKeys.length).toBe(0);
 
-    //
-    const expiredHeartbeatKeys =
-      await HeartbeatAsync.getExpiredHeartbeatIdsAsync(
-        redisClient,
-        Date.now(),
-        0,
-        100,
-      );
-    expect(expiredHeartbeatKeys.length).toBe(0);
+  await shutDownBaseInstance(consumer);
 
-    await shutDownBaseInstance(consumer);
+  //
+  const validHeartbeatKeys2 = await HeartbeatAsync.getConsumersHeartbeatsAsync(
+    redisClient,
+    [consumer.getId()],
+  );
+  expect(Object.keys(validHeartbeatKeys2).length).toBe(1);
+  expect(validHeartbeatKeys2[consumer.getId()]).toBe(false);
 
-    //
-    const validHeartbeatKeys2 = await HeartbeatAsync.getValidHeartbeatIdsAsync(
-      redisClient,
-      Date.now(),
-      0,
-      100,
-    );
-    expect(validHeartbeatKeys2.length).toBe(0);
-
-    //
-    const validHeartbeats2 = await HeartbeatAsync.getValidHeartbeatsAsync(
-      redisClient,
-      Date.now(),
-      0,
-      100,
-    );
-    expect(validHeartbeats2.length).toBe(0);
-
-    //
-    const expiredHeartbeatKeys2 =
-      await HeartbeatAsync.getExpiredHeartbeatIdsAsync(
-        redisClient,
-        Date.now(),
-        0,
-        100,
-      );
-    expect(expiredHeartbeatKeys2.length).toBe(0);
-  });
+  //
+  const expiredHeartbeatKeys2 =
+    await HeartbeatAsync.getExpiredHeartbeatIdsAsync(redisClient, 0, 100);
+  expect(expiredHeartbeatKeys2.length).toBe(0);
 });
