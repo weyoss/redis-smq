@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 7.2.3 (2023-03-26)
+
+* test(consumer-heartbeat): update tests (4332153)
+* refactor(consumer-heartbeat): clean up and improve API (20fc1b1)
+
 ## 7.2.2 (2023-03-25)
 
 * test(workers): update tests (c22f1bb)
