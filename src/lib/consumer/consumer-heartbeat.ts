@@ -118,10 +118,16 @@ export class ConsumerHeartbeat extends EventEmitter {
     );
   }
 
-  static validateHeartbeatsOf(
+  protected static isExpiredHeartbeat(heartbeat: TConsumerHeartbeat): boolean {
+    const { timestamp: heartbeatTimestamp } = heartbeat;
+    const timestamp = Date.now() - ConsumerHeartbeat.heartbeatTTL;
+    return heartbeatTimestamp > timestamp;
+  }
+
+  static getConsumersHeartbeats(
     redisClient: RedisClient,
     consumerIds: string[],
-    cb: ICallback<Record<string, boolean>>,
+    cb: ICallback<Record<string, TConsumerHeartbeat | false>>,
   ): void {
     const keyHeartbeats = redisKeys.getMainKeys().keyHeartbeats;
     redisClient.hmget(keyHeartbeats, consumerIds, (err, reply) => {
@@ -129,18 +135,17 @@ export class ConsumerHeartbeat extends EventEmitter {
       else if (!reply || reply.length !== consumerIds.length)
         cb(new errors.InvalidCallbackReplyError());
       else {
-        const r: Record<string, boolean> = {};
-        async.each(
+        const r: Record<string, TConsumerHeartbeat | false> = {};
+        async.eachOf(
           consumerIds,
           (item, index, done) => {
-            const idx = Number(index);
-            const payload = reply[idx];
+            const payload = reply[index];
             if (payload) {
-              const { timestamp: heartbeatTimestamp }: TConsumerHeartbeat =
-                JSON.parse(payload);
-              const timestamp = Date.now() - ConsumerHeartbeat.heartbeatTTL;
-              r[consumerIds[idx]] = heartbeatTimestamp > timestamp;
-            } else r[consumerIds[idx]] = false;
+              const consumerHeartbeat: TConsumerHeartbeat = JSON.parse(payload);
+              r[consumerIds[index]] = this.isExpiredHeartbeat(consumerHeartbeat)
+                ? consumerHeartbeat
+                : false;
+            } else r[consumerIds[index]] = false;
             done();
           },
           () => cb(null, r),
@@ -149,94 +154,14 @@ export class ConsumerHeartbeat extends EventEmitter {
     });
   }
 
-  static getValidHeartbeats(
-    redisClient: RedisClient,
-    timestamp: number,
-    offset: number,
-    count: number,
-    cb: ICallback<
-      {
-        consumerId: string;
-        payload: string;
-      }[]
-    >,
-  ): void {
-    ConsumerHeartbeat.getValidHeartbeatIds(
-      redisClient,
-      timestamp,
-      offset,
-      count,
-      (err, consumerIds) => {
-        if (err) cb(err);
-        else if (consumerIds && consumerIds.length) {
-          const { keyHeartbeats } = redisKeys.getMainKeys();
-          redisClient.hmget(keyHeartbeats, consumerIds, (err, res) => {
-            if (err) cb(err);
-            else if (!res || res.length !== consumerIds.length)
-              cb(new errors.EmptyCallbackReplyError());
-            else {
-              const heartbeats: {
-                consumerId: string;
-                payload: string;
-              }[] = [];
-              async.each(
-                res,
-                (payload, index, done) => {
-                  // A consumer/producer could go offline at the time while we are processing heartbeats
-                  // If a heartbeat is not found, do not return an error. Just skip it.
-                  if (payload) {
-                    const idx = Number(index);
-                    const consumerId = consumerIds[idx];
-                    heartbeats.push({
-                      consumerId,
-                      payload,
-                    });
-                    done();
-                  } else done();
-                },
-                (err) => {
-                  if (err) cb(err);
-                  else cb(null, heartbeats);
-                },
-              );
-            }
-          });
-        } else cb(null, []);
-      },
-    );
-  }
-
-  static getValidHeartbeatIds(
-    redisClient: RedisClient,
-    timestamp: number,
-    offset: number,
-    count: number,
-    cb: ICallback<string[]>,
-  ): void {
-    const { keyHeartbeatConsumerWeight } = redisKeys.getMainKeys();
-    const ts = timestamp - ConsumerHeartbeat.heartbeatTTL;
-    redisClient.zrangebyscore(
-      keyHeartbeatConsumerWeight,
-      ts,
-      '+inf',
-      offset,
-      count,
-      (err, consumerIds) => {
-        if (err) cb(err);
-        else cb(null, consumerIds ?? []);
-      },
-    );
-  }
-
   static getExpiredHeartbeatIds(
     redisClient: RedisClient,
-    timestamp: number,
     offset: number,
     count: number,
     cb: ICallback<string[]>,
   ): void {
     const { keyHeartbeatConsumerWeight } = redisKeys.getMainKeys();
-    const ts = timestamp - ConsumerHeartbeat.heartbeatTTL;
+    const ts = Date.now() - ConsumerHeartbeat.heartbeatTTL;
     redisClient.zrangebyscore(
       keyHeartbeatConsumerWeight,
       '-inf',

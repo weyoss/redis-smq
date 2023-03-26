@@ -15,7 +15,7 @@ function validateMessageQueueDeletion(
 ): void {
   const verifyHeartbeats = (consumerIds: string[], cb: ICallback<void>) => {
     if (consumerIds.length) {
-      ConsumerHeartbeat.validateHeartbeatsOf(
+      ConsumerHeartbeat.getConsumersHeartbeats(
         redisClient,
         consumerIds,
         (err, reply) => {
@@ -36,7 +36,7 @@ function validateMessageQueueDeletion(
     } else cb();
   };
   const getOnlineConsumers = (cb: ICallback<string[]>): void => {
-    Consumer.getOnlineConsumerIds(redisClient, queue, cb);
+    Consumer.getQueueConsumerIds(redisClient, queue, cb);
   };
   async.waterfall([getOnlineConsumers, verifyHeartbeats], (err) => cb(err));
 }
