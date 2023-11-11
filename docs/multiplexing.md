@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Docs](README.md) / Multiplexing
+
 # Multiplexing
 
 In normal operation mode, each message handler creates and uses its own redis connection for consuming messages. This gives your application many advantages, some of them are:
@@ -18,10 +20,10 @@ So, before deciding whether to use multiplexing, it is important to know what yo
 
 ## Enabling multiplexing
 
-Use the [Consumer class constructor](/docs/api/consumer.md#consumerprototypeconstructor) second argument to enable multiplexing:
+Use the [Consumer class constructor](api/classes/Consumer.md#constructors) first argument to enable multiplexing:
 
 ```javascript
-const consumer = new Consumer({}, true);
+const consumer = new Consumer(true);
 ```
 
 Once created, you can your consumer instance can be used as usually:

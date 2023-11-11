@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Docs](README.md) / Queue Rate limiting
+
 # Queue Rate limiting
 
 In some cases consuming messages with a high message rate may be not desirable. For example:
@@ -9,26 +11,22 @@ In some cases consuming messages with a high message rate may be not desirable. 
 
 RedisSMQ allows you, in such cases, to control the rate at which the messages are consumed by setting a rate limit for a given queue.
 
-To configure and view rate limiting parameters for a queue, the [QueueManager](/docs/api/queue-manager.md) provides the following methods:
+To configure and view rate limiting parameters for a queue, the [QueueRateLimit](api/classes/QueueRateLimit.md) provides the following methods:
 
-- [QueueManager.prototype.queueRateLimit.set()](/docs/api/queue-manager.md#queuemanagerprototypequeueratelimitset)
-- [QueueManager.prototype.queueRateLimit.clear()](/docs/api/queue-manager.md#queuemanagerprototypequeueratelimitclear)
-- [QueueManager.prototype.queueRateLimit.get()](/docs/api/queue-manager.md#queuemanagerprototypequeueratelimitget)
+- [QueueRateLimit.prototype.set()](api/classes/QueueRateLimit.md#set)
+- [QueueRateLimit.prototype.clear()](api/classes/QueueRateLimit.md#clear)
+- [QueueRateLimit.prototype.get()](api/classes/QueueRateLimit.md#get)
 
 **Example**
 
 ```javascript
-const { QueueManager } = require('redis-smq');
+const { QueueRateLimit } = require('redis-smq');
 
-QueueManager.createInstance(config, (err, queueManager) => {
-  if (err) console.log(err);
-  else {
-    // Setting a rate limit of 200 msg/min for the 'notofications' queue
-    queueManager.queueRateLimit.set('notifications', { limit: 200, interval: 60000 }, (err) => {
-      // ...
-    })
-  }
-});
+const queueRateLimit = new QueueRateLimit(config);
+// Setting a rate limit of 200 msg/min for the 'notofications' queue
+queueRateLimit.set('notifications', { limit: 200, interval: 60000 }, (err) => {
+  // ...
+})
 ```
 
 Queue rate limiting parameters can be also configured using the [HTTP API Interface](https://github.com/weyoss/redis-smq-monitor) or from your browser with the help of the [Web UI](https://github.com/weyoss/redis-smq-monitor-client).

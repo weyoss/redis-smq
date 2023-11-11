@@ -1,4 +1,6 @@
-## Message Exchanges
+[RedisSMQ](../README.md) / [Docs](README.md) / Message Exchanges
+
+# Message Exchanges
 
 Starting with v7.1.0, message exchanges offer different ways to route a message to one or multiple queues.
 
@@ -18,7 +20,7 @@ An `exchange tag` is a unique string property that identifies an exchange instan
 
 Out-of-box RedisSMQ offers 3 exchange types.
 
-### Direct Exchange
+## Direct Exchange
 
 A direct exchange allows producers to publish a message to a single queue which is matched exactly by the specified queue of the exchange.
 
@@ -28,27 +30,27 @@ If a string is used for the direct exchange queue then the **default** namespace
 
 A direct exchange with the queue `a.b.c.d` matches exactly the queue with the name `a.b.c.d`.
 
-#### Usage
+### Usage
 
-The [Message API](/docs/api/message.md) provides:
+The [Message Class](api/classes/Message.md) provides:
 
-- [setQueue()](/docs/api/message.md#messageprototypesetqueue): to set up a queue for the message. Under the hood, a new `DirectExchange` instance will be created and used for the message exchange.
-- [setExchange()](/docs/api/message.md#messageprototypesetexchange): to set a `DirectExchange` instance which you have manually created.
+- [setQueue()](api/classes/Message.md#setqueue): to set up a queue for the message. Under the hood, a new `ExchangeDirect` instance will be created and used for the message exchange.
+- [setExchange()](api/classes/Message.md#setexchange): to set a `ExchangeDirect` instance which you have manually created.
 
 ```typescript
-import { Message, DirectExchange } from "redis-smq";
+import { Message, ExchangeDirect } from "redis-smq";
 
 const msg = new Message();
 msg.setQueue('a.b.c.d').setBody('123456789');
 
 // the same as
-const exchange = new DirectExchange('a.b.c.d');
+const exchange = new ExchangeDirect('a.b.c.d');
 msg.setExchange(exchange).setBody('123456789');
 ```
 
 When publishing a message with a direct exchange, if the exchange queue does not exist the message will be discarded and an error will be returned.
 
-### Topic Exchange
+## Topic Exchange
 
 When a topic exchange is used for a message, it allows to publish the message to one or multiple queues which are matched by the topic pattern of the exchange.
 
@@ -62,59 +64,59 @@ For example the topic `{ ns: 'my-app', topic: 'a.b.c.d'}` will match all queues 
 
 When a namespace is not provided the default namespace will be used.
 
-#### Usage
+### Usage
 
-The [Message API](/docs/api/message.md) provides:
+The [Message Class](api/classes/Message.md) provides:
 
-- [setTopic()](/docs/api/message.md#messageprototypesettopic): to set up a topic for the message. Under the hood, a new `TopicExchange` instance will be created and used for the message exchange.
-- [setExchange()](/docs/api/message.md#messageprototypesetexchange): to set a `TopicExchange` instance which you have manually created.
+- [setTopic()](api/classes/Message.md#settopic): to set up a topic for the message. Under the hood, a new `ExchangeTopic` instance will be created and used for the message exchange.
+- [setExchange()](api/classes/Message.md#setexchange): to set a `ExchangeTopic` instance which you have manually created.
 
 ```typescript
-import { Message, TopicExchange } from "redis-smq";
+import { Message, ExchangeTopic } from "redis-smq";
 
 const msg = new Message();
 msg.setTopic('a.b.c.d').setBody('123456789');
 
 // the same as
-const exchange = new TopicExchange('a.b.c.d');
+const exchange = new ExchangeTopic('a.b.c.d');
 msg.setExchange(exchange).setBody('123456789');
 ```
 
 When publishing a message with a topic exchange, if the topic pattern does not match any queues the message will be discarded and an error will be returned.
 
-### Fanout Exchange
+## FanOut Exchange
 
-A fanout exchange allows producers to publish a message to one or multiple queues which are bound to this exchange by a binding key.
+A FanOut exchange allows producers to publish a message to one or multiple queues which are bound to this exchange by a binding key.
 
-#### Usage
+### Usage
 
-In order to use a fanout exchange you need first to create it and bind the selected queues to the exchange.
+In order to use a FanOut exchange you need first to create it and bind the selected queues to the exchange.
 
-The [FanOutExchangeManager](/docs/api/fanout-exchange-manager.md) provides:
+The [FanOutExchange](api/classes/ExchangeFanOut.md) provides:
 
-- [bindQueue()](/docs/api/fanout-exchange-manager.md#fanoutexchangemanagerprototypebindqueue): To bind an existing queue to a fanout exchange.
-- [unbindQueue()](/docs/api/fanout-exchange-manager.md#fanoutexchangemanagerprototypeunbindqueue): To unbind a queue from a fanout exchange.
-- [getQueueExchange()](/docs/api/fanout-exchange-manager.md#fanoutexchangemanagerprototypegetqueueexchange): To retrieve the fanout exchange to which a queue is bound.
-- [getExchangeQueues()](/docs/api/fanout-exchange-manager.md#fanoutexchangemanagerprototypegetexchangequeues): To get the list of queues that are bound to a given fanout exchange. 
+- [bindQueue()](api/classes/ExchangeFanOut.md#bindqueue): To bind an existing queue to a FanOut exchange.
+- [unbindQueue()](api/classes/ExchangeFanOut.md#unbindqueue): To unbind a queue from a FanOut exchange.
+- [getQueueExchange()](api/classes/ExchangeFanOut.md#getqueueexchange): To retrieve the FanOut exchange to which a queue is bound.
+- [getQueues()](api/classes/ExchangeFanOut.md#getqueues): To get the list of queues that are bound to a given FanOut exchange. 
 
-The [Message API](/docs/api/message.md) provides:
+The [Message API](api/classes/Message.md) provides:
 
-- [setFanout()](/docs/api/message.md#messageprototypesetfanout): to set up a fanout exchange for the message. Under the hood, a new `FanOutExchange` instance will be created and used for the message exchange.
-- [setExchange()](/docs/api/message.md#messageprototypesetexchange): to set a `FanOutExchange` instance which you have manually created.
+- [setFanOut()](api/classes/Message.md#setfanout): to set up a FanOut exchange for the message. Under the hood, a new `ExchangeFanOut` instance will be created and used for the message exchange.
+- [setExchange()](api/classes/Message.md#setexchange): to set a `ExchangeFanOut` instance which you have manually created.
 
 ```typescript
-import { Message, FanOutExchange } from "redis-smq";
+import { Message, ExchangeFanOut } from "redis-smq";
 
-// Assuming that my-fanout-exchange already exists
+// Assuming that my-FanOut-exchange already exists
 
 const msg = new Message();
-msg.setFanOut('my-fanout-exchange').setBody('123456789');
+msg.setFanOut('my-FanOut-exchange').setBody('123456789');
 
 // the same as
-const exchange = new FanOutExchange('my-fanout-exchange');
+const exchange = new ExchangeFanOut('my-FanOut-exchange');
 msg.setExchange(exchange).setBody('123456789');
 ```
 
-When publishing a message with a fanout exchange, if the exchange does not exist or no queues are bound to such an exchange the message will be discarded and error will be returned.
+When publishing a message with a FanOut exchange, if the exchange does not exist or no queues are bound to such an exchange the message will be discarded and error will be returned.
 
-Additionally, Fanout exchanges can be also managed using the [HTTP API Interface](https://github.com/weyoss/redis-smq-monitor) or from your browser with the help of the [Web UI](https://github.com/weyoss/redis-smq-monitor-client).
+Additionally, FanOut exchanges can be also managed using the [HTTP API Interface](https://github.com/weyoss/redis-smq-monitor) or from your browser with the help of the [Web UI](https://github.com/weyoss/redis-smq-monitor-client).
