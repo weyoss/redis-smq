@@ -5,36 +5,31 @@
 ## Contents
 
 - [Properties](IQueueProperties.md#properties)
-  - [0](IQueueProperties.md#0-equeuepropertyqueue_type)
-  - [1](IQueueProperties.md#1-equeuepropertyrate_limit)
-  - [2](IQueueProperties.md#2-equeuepropertyexchange)
-  - [3](IQueueProperties.md#3-equeuepropertymessages_count)
-- [Additional Info](#additional-info)
+  - [exchange](#exchange)
+  - [messagesCount](#messagescount)
+  - [queueType](#queuetype)
+  - [rateLimit](#ratelimit)
 
 ## Properties
 
-### 0 (EQueueProperty.QUEUE_TYPE)
+### exchange
 
-> **0**: [`EQueueType`](../enumerations/EQueueType.md)
-
-***
-
-### 1 (EQueueProperty.RATE_LIMIT)
-
-> **1**: `null` | [`IQueueRateLimit`](IQueueRateLimit.md)
+> **exchange**: `null` | `string`
 
 ***
 
-### 2 (EQueueProperty.EXCHANGE)
+### messagesCount
 
-> **2**: `null` | `string`
+> **messagesCount**: `number`
 
 ***
 
-### 3 (EQueueProperty.MESSAGES_COUNT)
+### queueType
 
-> **3**: `number`
+> **queueType**: [`EQueueType`](../enumerations/EQueueType.md)
 
-## Additional Info
+***
 
-See [EQueueProperty](../enumerations/EQueueProperty.md) for more details about queue properties.
+### rateLimit
+
+> **rateLimit**: `null` | [`IQueueRateLimit`](IQueueRateLimit.md)
