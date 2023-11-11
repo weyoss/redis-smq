@@ -35,7 +35,7 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 * **[Highly optimized](https://lgtm.com/projects/g/weyoss/redis-smq/context:javascript)**: Strongly-typed and implemented using pure callbacks, with small memory footprint and no memory leaks. See [Callback vs Promise vs Async/Await benchmarks](https://gist.github.com/weyoss/24f9ecbda175d943a48cb7ec38bde821).
 
 
-### RedisSMQ Use Case: Multi-Queue Producers & Multi-Queue Consumers
+## RedisSMQ Use Case: Multi-Queue Producers & Multi-Queue Consumers
 
 &nbsp;
 
@@ -53,7 +53,7 @@ Producers and consumers exchange data using one or multiple queues that may be c
 
 A queue is responsible for holding messages which are produced by producers and are delivered to consumers.
 
-## Creating a queue
+### Creating a queue
 
 ```javascript
 const { Queue, EQueueType } = require('redis-smq');
@@ -64,7 +64,7 @@ const queue = new Queue();
 queue.save('my_queue', EQueueType.LIFO_QUEUE, (err) => console.log(err));
 ```
 
-## Producing a message
+### Producing a message
 
 ```javascript
 const { Producer, Message } = require('redis-smq');
@@ -77,7 +77,7 @@ message.setQueue('my_queue').setBody('Hello Word!')
 producer.produce(message, (err) => console.log(err));
 ```
 
-## Consuming a message
+### Consuming a message
 
 ```javascript
 const { Consumer } = require('redis-smq');
