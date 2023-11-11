@@ -1,10 +1,6 @@
 import { async, errors, ICallback } from 'redis-smq-common';
 import { QueueMessagesPaginatorAbstract } from './queue-messages-paginator-abstract';
-import {
-  EQueueProperty,
-  IQueueMessagesPage,
-  IQueueParams,
-} from '../../../../types';
+import { IQueueMessagesPage, IQueueParams } from '../../../../types';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { _getCommonRedisClient } from '../../../common/_get-common-redis-client';
 import { _getQueueParams } from '../queue/_get-queue-params';
@@ -23,7 +19,7 @@ export abstract class QueueMessagesPaginatorSet extends QueueMessagesPaginatorAb
         _getQueueProperties(client, queueParams, (err, properties) => {
           if (err) cb(err);
           else if (!properties) cb(new errors.EmptyCallbackReplyError());
-          else cb(null, properties[EQueueProperty.MESSAGES_COUNT]);
+          else cb(null, properties.messagesCount);
         });
       }
     });

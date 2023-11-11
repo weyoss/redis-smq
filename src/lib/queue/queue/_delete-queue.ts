@@ -8,7 +8,7 @@ import {
 import { processingQueue } from '../../consumer/message-handler/processing-queue';
 import { ConsumerHeartbeat } from '../../consumer/consumer-heartbeat';
 import { QueueNotFoundError } from '../errors/queue-not-found.error';
-import { EQueueProperty, IQueueParams } from '../../../../types';
+import { IQueueParams } from '../../../../types';
 import { _getQueueProperties } from './_get-queue-properties';
 import { QueueNotEmptyError } from '../errors/queue-not-empty.error';
 import { QueueHasRunningConsumersError } from '../errors/queue-has-running-consumers.error';
@@ -91,10 +91,10 @@ export function _deleteQueue(
                 if (err) cb(err);
                 else if (!reply) cb(new QueueNotFoundError());
                 else {
-                  const messagesCount = reply[EQueueProperty.MESSAGES_COUNT];
+                  const messagesCount = reply.messagesCount;
                   if (messagesCount) cb(new QueueNotEmptyError());
                   else {
-                    exchange = reply[EQueueProperty.EXCHANGE] ?? null;
+                    exchange = reply.exchange ?? null;
                     cb();
                   }
                 }

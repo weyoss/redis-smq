@@ -1,5 +1,4 @@
 import {
-  EQueueProperty,
   EQueueType,
   IQueueMessagesCount,
   IQueueParams,
@@ -60,10 +59,10 @@ export class QueueMessages extends QueueMessagesPaginatorSet {
         async.waterfall(
           [
             (cb: ICallback<EQueueType>) =>
-              _getQueueProperties(client, queueParams, (err, settings) => {
+              _getQueueProperties(client, queueParams, (err, properties) => {
                 if (err) cb(err);
-                else if (!settings) cb(new errors.EmptyCallbackReplyError());
-                else cb(null, settings[EQueueProperty.QUEUE_TYPE]);
+                else if (!properties) cb(new errors.EmptyCallbackReplyError());
+                else cb(null, properties.queueType);
               }),
             (queueType: EQueueType, cb: ICallback<number>) => {
               if (queueType === EQueueType.PRIORITY_QUEUE) {

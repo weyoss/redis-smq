@@ -9,27 +9,27 @@ import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { QueueNotFoundError } from '../errors/queue-not-found.error';
 
 function parseProperties(raw: Record<string, string>): IQueueProperties {
-  const queueSettings: IQueueProperties = {
-    [EQueueProperty.QUEUE_TYPE]: EQueueType.LIFO_QUEUE,
-    [EQueueProperty.EXCHANGE]: null,
-    [EQueueProperty.RATE_LIMIT]: null,
-    [EQueueProperty.MESSAGES_COUNT]: 0,
+  const properties: IQueueProperties = {
+    queueType: EQueueType.LIFO_QUEUE,
+    exchange: null,
+    rateLimit: null,
+    messagesCount: 0,
   };
   for (const key in raw) {
     const keyNum = Number(key);
     if (keyNum === EQueueProperty.QUEUE_TYPE) {
-      queueSettings[keyNum] = Number(raw[key]);
+      properties.queueType = Number(raw[key]);
     } else if (keyNum === EQueueProperty.RATE_LIMIT) {
-      queueSettings[keyNum] = JSON.parse(raw[key]);
+      properties.rateLimit = JSON.parse(raw[key]);
     } else if (keyNum === EQueueProperty.EXCHANGE) {
-      queueSettings[keyNum] = raw[key];
+      properties.exchange = raw[key];
     } else if (keyNum === EQueueProperty.MESSAGES_COUNT) {
-      queueSettings[keyNum] = Number(raw[key]);
+      properties.messagesCount = Number(raw[key]);
     } else {
       throw new errors.PanicError(`Unsupported queue settings type [${key}]`);
     }
   }
-  return queueSettings;
+  return properties;
 }
 
 export function _getQueueProperties(
