@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Docs](README.md) / Event listeners
+
 # Event listeners
 
 Event listeners can be a way to automate processing every event from each consumer or producer instance.
@@ -23,9 +25,9 @@ manage event listeners for you.
 Let's create a consumer event listener class which we will use to demonstrate how to work with consumer event listeners.
 
 ```typescript
-import { IEventListener, IEventProvider, TEventListenerInitArgs } from 'redis-smq/dist/types';
+import { IEventListener, IEventProvider, TEventListenerInitArgs } from 'redis-smq';
 import { events } from 'redis-smq';
-import { ICallback } from "redis-smq-common/dist/types";
+import { ICallback } from "redis-smq-common";
 
 export class ConsumerEventListener implements IEventListener {
   init(
@@ -66,8 +68,7 @@ The `quit()` method is required to gracefully shut down your event listener inst
 Using a configuration object, RedisSMQ allows you to register one or many event listener classes as shown in the example bellow:
 
 ```typescript
-import { IConfig } from 'redis-smq/dist/types';
-import { Consumer } from 'redis-smq';
+import { IConfig, Configuration } from 'redis-smq';
 
 const config: IConfig = {
   eventListener: {
@@ -75,7 +76,7 @@ const config: IConfig = {
   }
 }
 
-const consumer = new Consumer(config);
+Configuration.getSetConfig(config);
 ```
 
 ### Consumer Message Events:
@@ -92,8 +93,7 @@ The producer event listener class also implements the `IEventListener` interface
 Example:
 
 ```typescript
-import { IEventListener, IEventProvider } from 'redis-smq/dist/types';
-import { events } from 'redis-smq';
+import { IEventListener, IEventProvider, events } from 'redis-smq';
 
 export class ProducerEventListener implements IEventListener {
   init(args: TEventListenerInitArgs, cb: ICallback<void>) {
@@ -109,8 +109,7 @@ export class ProducerEventListener implements IEventListener {
 Similarly to a consumer event listener, you can tell RedisSMQ to use a producer event listener by including it in the `eventListener.producerEventListeners` array from the configuration object as shown bellow:
 
 ```typescript
-import { IConfig } from 'redis-smq/dist/types';
-import { Producer } from 'redis-smq';
+import { IConfig, Configuration } from 'redis-smq';
 
 const config: IConfig = {
   eventListener: {
@@ -118,7 +117,7 @@ const config: IConfig = {
   }
 }
 
-const producer = new Producer(config);
+Configuration.getSetConfig(config);
 ```
 
 ### Producer Message Events:

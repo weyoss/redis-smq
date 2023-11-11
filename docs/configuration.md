@@ -1,3 +1,6 @@
+[RedisSMQ](../README.md) / [Docs](README.md) / Configuration
+
+
 # Configuration
 
 You can configure many of RedisSMQ features using a config object that you can pass in to a configurable component (for example a Consumer constructor).
@@ -42,37 +45,7 @@ module.exports = {
 
 **Parameters**
 
-- `namespace` *(string): Optional.* See [Queue Namespace](/docs/queues.md#queue-namespace) for more details.
-
-- `redis` *(object): Optional.* See [Redis Configuration](https://github.com/weyoss/redis-smq-common/blob/master/docs/redis.md) for more details.
-
-- `logger` *(object): Optional.* See [Logs Configuration](https://github.com/weyoss/redis-smq-common/blob/master/docs/logs.md) for more details.
-
-- `messages` *(object): Optional.* Message options
-  - `messages.store` *(boolean | object): Optional.* Whether to store acknowledged and/or dead-lettered messages. By default, acknowledged and dead-lettered messages are not stored. Keep in mind that storing messages affects performance.
-    - `messages.store` *(boolean)*
-      - `messages.store = false` - Do not store acknowledged and dead-lettered messages. 
-      - `messages.store = true` - Store acknowledged and dead-lettered messages.
-    - `messages.store` *(object)*
-      - `messages.store.acknowledged` *(boolean | object): Optional.*
-        - `messages.store.acknowledged` *(boolean)*
-          - `messages.store.acknowledged = true`: Store acknowledged messages.
-          - `messages.store.acknowledged = false`: Do not store acknowledged messages.
-        - `messages.store.acknowledged` *(object)*
-          - `messages.store.acknowledged.queueSize` *(number): Optional.* Store a maximum of N acknowledged messages. Older messages get deleted when the maximum size is reached.
-          - `messages.store.acknowledged.expire` *(number): Optional.* Store acknowledged messages for N milliseconds. Each time a new message is saved the expiration is updated.
-      - `messages.store.deadLettered` *(boolean | object): Optional.*
-        - `messages.store.deadLettered` *(boolean)*
-          - `messages.store.deadLettered = true`: Store dead-lettered messages.
-          - `messages.store.deadLettered = false`: Do not store dead-lettered messages.
-        - `messages.store.deadLettered` *(object)*
-          - `messages.store.deadLettered.queueSize` *(number): Optional.* Store a maximum of N dead-lettered messages. Older messages get deleted when the maximum size is reached.
-          - `messages.store.deadLettered.expire` *(number): Optional.* Store dead-lettered messages for N milliseconds. Each time a new message is saved the expiration is updated.
-
-- `eventListeners` *(object): Optional.* See [Event Listeners](/docs/event-listeners.md) for more details.
-  - `eventListeners.consumerEventListeners` *(array): Optional.* An array of consumer event listeners. See [Event Listeners](/docs/event-listeners.md) for more details.
-  - `eventListeners.producerEventListeners` *(array): Optional.* An array of producer event listeners.  See [Event Listeners](/docs/event-listeners.md) for more details.
-
+See [IRedisSMQConfig Interface](api/interfaces/IRedisSMQConfig.md) for more details.
   
 **messages.store Usage Examples**
 

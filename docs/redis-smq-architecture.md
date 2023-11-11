@@ -1,3 +1,5 @@
+[RedisSMQ](../README.md) / [Docs](README.md) / RedisSMQ Architecture Overview
+
 # RedisSMQ Architecture Overview
 
 High-level overview of how RedisSMQ works:
