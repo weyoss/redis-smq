@@ -1,12 +1,16 @@
-import { TConsumerInfo, TQueueParams } from '../../../types';
+import { TQueueConsumer, IQueueParams } from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { async, RedisClient } from 'redis-smq-common';
-import { ICallback, IRedisClientMulti } from 'redis-smq-common/dist/types';
+import {
+  async,
+  RedisClient,
+  ICallback,
+  IRedisTransaction,
+} from 'redis-smq-common';
 
 export const consumerQueues = {
   removeConsumer(
-    multi: IRedisClientMulti,
-    queue: TQueueParams,
+    multi: IRedisTransaction,
+    queue: IQueueParams,
     consumerId: string,
   ): void {
     const { keyQueueConsumers, keyConsumerQueues } =
@@ -17,9 +21,9 @@ export const consumerQueues = {
 
   getQueueConsumers(
     client: RedisClient,
-    queue: TQueueParams,
+    queue: IQueueParams,
     transform: boolean,
-    cb: ICallback<Record<string, TConsumerInfo | string>>,
+    cb: ICallback<Record<string, TQueueConsumer | string>>,
   ): void {
     const { keyQueueConsumers } = redisKeys.getQueueKeys(queue);
     client.hgetall(keyQueueConsumers, (err, reply) => {
@@ -27,7 +31,7 @@ export const consumerQueues = {
       else {
         const consumers = reply ?? {};
         if (transform) {
-          const data: Record<string | number, TConsumerInfo> = {};
+          const data: Record<string | number, TQueueConsumer> = {};
           async.eachIn(
             consumers,
             (item, key, done) => {
@@ -43,7 +47,7 @@ export const consumerQueues = {
 
   getQueueConsumerIds(
     client: RedisClient,
-    queue: TQueueParams,
+    queue: IQueueParams,
     cb: ICallback<string[]>,
   ): void {
     const { keyQueueConsumers } = redisKeys.getQueueKeys(queue);
@@ -52,7 +56,7 @@ export const consumerQueues = {
 
   countQueueConsumers(
     client: RedisClient,
-    queue: TQueueParams,
+    queue: IQueueParams,
     cb: ICallback<number>,
   ): void {
     const { keyQueueConsumers } = redisKeys.getQueueKeys(queue);
@@ -62,13 +66,13 @@ export const consumerQueues = {
   getConsumerQueues(
     client: RedisClient,
     consumerId: string,
-    cb: ICallback<TQueueParams[]>,
+    cb: ICallback<IQueueParams[]>,
   ): void {
     const { keyConsumerQueues } = redisKeys.getConsumerKeys(consumerId);
     client.smembers(keyConsumerQueues, (err, reply) => {
       if (err) cb(err);
       else {
-        const queues: TQueueParams[] = (reply ?? []).map((i) => JSON.parse(i));
+        const queues: IQueueParams[] = (reply ?? []).map((i) => JSON.parse(i));
         cb(null, queues);
       }
     });

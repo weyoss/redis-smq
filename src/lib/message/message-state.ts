@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid';
-import { TMessageState } from '../../../types';
+import { IMessageStateSerialized } from '../../../types';
 
 export class MessageState {
   protected readonly uuid: string;
@@ -7,6 +7,8 @@ export class MessageState {
   protected publishedAt: number | null = null;
 
   protected scheduledAt: number | null = null;
+
+  protected lastScheduledAt: number | null = null;
 
   protected scheduledCronFired = false;
 
@@ -20,6 +22,10 @@ export class MessageState {
 
   protected nextRetryDelay = 0;
 
+  protected scheduledTimes = 0;
+
+  protected scheduledMessageId: string | null = null;
+
   constructor() {
     this.uuid = uuid();
   }
@@ -31,6 +37,17 @@ export class MessageState {
 
   setScheduledAt(timestamp: number): MessageState {
     this.scheduledAt = timestamp;
+    return this;
+  }
+
+  setLastScheduledAt(timestamp: number): MessageState {
+    this.lastScheduledAt = timestamp;
+    this.scheduledTimes += 1;
+    return this;
+  }
+
+  setScheduledMessageId(messageId: string): MessageState {
+    this.scheduledMessageId = messageId;
     return this;
   }
 
@@ -99,11 +116,13 @@ export class MessageState {
   reset(): MessageState {
     this.publishedAt = null;
     this.scheduledAt = null;
+    this.lastScheduledAt = null;
     this.attempts = 0;
     this.expired = false;
     this.nextScheduledDelay = 0;
     this.scheduledCronFired = false;
     this.scheduledRepeatCount = 0;
+    this.scheduledTimes = 0;
     return this;
   }
 
@@ -156,17 +175,24 @@ export class MessageState {
     return 0;
   }
 
-  toJSON(): TMessageState {
+  getScheduledMessageId(): string | null {
+    return this.scheduledMessageId;
+  }
+
+  toJSON(): IMessageStateSerialized {
     return {
       uuid: this.uuid,
       publishedAt: this.publishedAt,
       scheduledAt: this.scheduledAt,
+      lastScheduledAt: this.lastScheduledAt,
       scheduledCronFired: this.scheduledCronFired,
+      scheduledTimes: this.scheduledTimes,
       attempts: this.attempts,
       scheduledRepeatCount: this.scheduledRepeatCount,
       expired: this.expired,
       nextScheduledDelay: this.nextScheduledDelay,
       nextRetryDelay: this.nextRetryDelay,
+      scheduledMessageId: this.scheduledMessageId,
     };
   }
 }

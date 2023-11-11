@@ -1,16 +1,20 @@
---- KEYS[1] keyNamespaces (set)
---- KEYS[2] keyNsQueues (set)
---- KEYS[3] keyQueues (set)
---- KEYS[4] keyQueueSettings (hash)
---- KEYS[5] keyQueueSettingsQueueType
---- ARGV[1] namespace
---- ARGV[2] queue
---- ARGV[3] queueType
-if redis.call("SISMEMBER", KEYS[3], ARGV[2]) == 0 then
-    redis.call("SADD", KEYS[3], ARGV[2])
-    redis.call("SADD", KEYS[2], ARGV[2])
-    redis.call("SADD", KEYS[1], ARGV[1])
-    redis.call("HSET", KEYS[4], KEYS[5], ARGV[3])
+local keyNamespaces = KEYS[1]
+local keyNsQueues = KEYS[2]
+local keyQueues = KEYS[3]
+local keyQueueProperties = KEYS[4]
+local keyQueuePropertiesQueueType = KEYS[5]
+
+---
+
+local namespace = ARGV[1]
+local queue = ARGV[2]
+local queueType = ARGV[3]
+
+if redis.call("SISMEMBER", keyQueues, queue) == 0 then
+    redis.call("SADD", keyQueues, queue)
+    redis.call("SADD", keyNsQueues, queue)
+    redis.call("SADD", keyNamespaces, namespace)
+    redis.call("HSET", keyQueueProperties, keyQueuePropertiesQueueType, queueType)
     return 1
 end
 return 0

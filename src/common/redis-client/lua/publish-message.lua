@@ -1,32 +1,61 @@
---- KEYS[1] keyQueueSettings
---- KEYS[2] keyQueueSettingsQueueType
---- KEYS[3] keyQueuePendingPriorityMessages (hash)
---- KEYS[4] keyQueuePendingPriorityMessageIds (sorted set)
---- KEYS[5] keyQueuePending (list)
---- ARGV[1] message id
---- ARGV[2] message
---- ARGV[3] messagePriority
-local queueType = redis.call("HGET", KEYS[1], KEYS[2])
+local keyQueueProperties = KEYS[1]
+local keyPriorityQueue = KEYS[2]
+local keyQueuePending = KEYS[3]
+local keyMessage = KEYS[4]
+
+---
+
+local EQueuePropertyQueueType = ARGV[1]
+local EQueuePropertyMessagesCount = ARGV[2]
+local EQueuePropertyQueueTypePriorityQueue = ARGV[3]
+local EQueuePropertyQueueTypeLIFOQueue = ARGV[4]
+local EQueuePropertyQueueTypeFIFOQueue = ARGV[5]
+local messagePriority = ARGV[6]
+local keyQueueMessages = ARGV[7]
+local messageId = ARGV[8]
+local EMessagePropertyStatus = ARGV[9]
+local messageStatus = ARGV[10]
+local EMessagePropertyState = ARGV[11]
+local messageState = ARGV[12]
+local EMessagePropertyMessage = ARGV[13]
+local message = ARGV[14]
+
+local queueProperties = redis.call("HMGET", keyQueueProperties, EQueuePropertyQueueType)
+
+local function saveMessage()
+    redis.call("SADD", keyQueueMessages, messageId)
+    redis.call(
+            "HMSET", keyMessage,
+            EMessagePropertyStatus, messageStatus,
+            EMessagePropertyState, messageState,
+            EMessagePropertyMessage, message
+    )
+    redis.call("HINCRBY", keyQueueProperties, EQueuePropertyMessagesCount, 1)
+end
+
+local queueType = queueProperties[1]
 if queueType == false then
     return 'QUEUE_NOT_FOUND'
 end
-if queueType == '2' then
-    if ARGV[3] == nil or ARGV[3] == '' then
+
+if queueType == EQueuePropertyQueueTypePriorityQueue then
+    if messagePriority == nil or messagePriority == '' then
         return 'MESSAGE_PRIORITY_REQUIRED'
     end
-    redis.call("HSET", KEYS[3], ARGV[1], ARGV[2])
-    redis.call("ZADD", KEYS[4], ARGV[3], ARGV[1])
-    return 'OK'
-end
-if not(ARGV[3] == nil or ARGV[3] == '') then
-   return 'PRIORITY_QUEUING_NOT_ENABLED'
-end
-if queueType == '0' then
-    redis.call("RPUSH", KEYS[5], ARGV[2])
-elseif queueType == '1' then
-    redis.call("LPUSH", KEYS[5], ARGV[2])
+    redis.call("ZADD", keyPriorityQueue, messagePriority, messageId)
 else
-    return 'UNKNOWN_QUEUE_TYPE'
+    if not(messagePriority == nil or messagePriority == '') then
+       return 'PRIORITY_QUEUING_NOT_ENABLED'
+    end
+    if queueType == EQueuePropertyQueueTypeLIFOQueue then
+       redis.call("RPUSH", keyQueuePending, messageId)
+    elseif queueType == EQueuePropertyQueueTypeFIFOQueue then
+       redis.call("LPUSH", keyQueuePending, messageId)
+    else
+       return 'UNKNOWN_QUEUE_TYPE'
+    end
 end
+
+saveMessage()
 return 'OK'
 

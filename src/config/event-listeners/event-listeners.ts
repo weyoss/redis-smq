@@ -1,14 +1,14 @@
-import { IConfig, TRequiredEventListenersConfig } from '../../../types';
+import { IRedisSMQConfig, IEventListenersConfigRequired } from '../../../types';
 import { merge } from 'lodash';
 
-const defaultConfig: TRequiredEventListenersConfig = {
+const defaultConfig: IEventListenersConfigRequired = {
   consumerEventListeners: [],
   producerEventListeners: [],
 };
 
 export function EventListeners(
-  userConfig: IConfig,
-): TRequiredEventListenersConfig {
+  userConfig: IRedisSMQConfig,
+): IEventListenersConfigRequired {
   const { eventListeners = {} } = userConfig;
   return merge({}, defaultConfig, eventListeners);
 }

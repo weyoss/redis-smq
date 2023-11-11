@@ -1,24 +1,22 @@
 import {
   EExchangeType,
-  IExchangeParams,
-  IRequiredConfig,
-  TQueueParams,
+  IExchange,
+  IExchangeSerialized,
+  IQueueParams,
 } from '../../../types';
-import { RedisClient } from 'redis-smq-common';
-import { ICallback } from 'redis-smq-common/dist/types';
+import { ICallback } from 'redis-smq-common';
 import { v4 as uuid } from 'uuid';
-import { DestinationQueueRequiredError } from './errors/destination-queue-required.error';
 
 export abstract class Exchange<
   TBindingParams,
-  TBindingType extends EExchangeType,
-> {
-  protected exchangeTag: string;
-  protected destinationQueue: TQueueParams | null = null;
-  protected bindingParams: TBindingParams;
-  protected type: TBindingType;
+  ExchangeType extends EExchangeType,
+> implements IExchange<TBindingParams, ExchangeType>
+{
+  readonly type: ExchangeType;
+  readonly bindingParams: TBindingParams;
+  exchangeTag: string;
 
-  protected constructor(bindingParams: TBindingParams, type: TBindingType) {
+  protected constructor(bindingParams: TBindingParams, type: ExchangeType) {
     this.bindingParams = this.validateBindingParams(bindingParams);
     this.type = type;
     this.exchangeTag = this.generateExchangeTag();
@@ -30,47 +28,27 @@ export abstract class Exchange<
       .toLowerCase()}-${uuid()}`;
   }
 
-  setDestinationQueue(queue: TQueueParams | null): void {
-    this.destinationQueue = queue;
-  }
-
   getBindingParams(): TBindingParams {
     return this.bindingParams;
   }
 
-  getDestinationQueue(): TQueueParams | null {
-    return this.destinationQueue;
-  }
-
-  getRequiredDestinationQueue(): TQueueParams {
-    if (!this.destinationQueue) {
-      throw new DestinationQueueRequiredError();
-    }
-    return this.destinationQueue;
-  }
-
-  toJSON(): IExchangeParams<TBindingParams, TBindingType> {
+  toJSON(): IExchangeSerialized<TBindingParams, ExchangeType> {
     return {
       exchangeTag: this.exchangeTag,
-      destinationQueue: this.destinationQueue,
       bindingParams: this.bindingParams,
       type: this.type,
     };
   }
 
-  fromJSON(JSON: Partial<IExchangeParams<TBindingParams, TBindingType>>): void {
-    if (JSON.destinationQueue) this.setDestinationQueue(JSON.destinationQueue);
+  fromJSON(
+    JSON: Partial<IExchangeSerialized<TBindingParams, ExchangeType>>,
+  ): void {
     if (JSON.exchangeTag) this.exchangeTag = JSON.exchangeTag;
-    if (JSON.type) this.type = JSON.type;
   }
 
   protected abstract validateBindingParams(
     bindingParams: TBindingParams,
   ): TBindingParams;
 
-  abstract getQueues(
-    redisClient: RedisClient,
-    config: IRequiredConfig,
-    cb: ICallback<TQueueParams[]>,
-  ): void;
+  abstract getQueues(cb: ICallback<IQueueParams[]>): void;
 }

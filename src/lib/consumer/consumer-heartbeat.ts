@@ -1,12 +1,17 @@
 import * as os from 'os';
-import { TConsumerHeartbeat } from '../../../types';
-import { RedisClient, Ticker } from 'redis-smq-common';
+import { IConsumerHeartbeat } from '../../../types';
+import {
+  RedisClient,
+  Ticker,
+  errors,
+  async,
+  ICallback,
+  IRedisTransaction,
+} from 'redis-smq-common';
 import { events } from '../../common/events/events';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { EventEmitter } from 'events';
-import { errors, async } from 'redis-smq-common';
 import { Consumer } from './consumer';
-import { ICallback, IRedisClientMulti } from 'redis-smq-common/dist/types';
 
 const cpuUsageStatsRef = {
   cpuUsage: process.cpuUsage(),
@@ -49,19 +54,24 @@ export class ConsumerHeartbeat extends EventEmitter {
   protected keyHeartbeatTimestamps: string;
   protected consumer: Consumer;
 
-  constructor(consumer: Consumer, redisClient: RedisClient) {
+  constructor(
+    redisClient: RedisClient,
+    consumer: Consumer,
+    redisKeys: {
+      keyHeartbeats: string;
+      keyHeartbeatConsumerWeight: string;
+    },
+  ) {
     super();
     this.redisClient = redisClient;
     this.consumer = consumer;
-    const { keyHeartbeats } = consumer.getRedisKeys();
-    this.keyHeartbeats = keyHeartbeats;
-    this.keyHeartbeatTimestamps =
-      redisKeys.getMainKeys().keyHeartbeatConsumerWeight;
+    this.keyHeartbeats = redisKeys.keyHeartbeats;
+    this.keyHeartbeatTimestamps = redisKeys.keyHeartbeatConsumerWeight;
     this.ticker = new Ticker(() => this.onTick());
     this.ticker.nextTick();
   }
 
-  protected getPayload(): TConsumerHeartbeat {
+  protected getPayload(): IConsumerHeartbeat {
     const timestamp = Date.now();
     return {
       timestamp,
@@ -118,7 +128,7 @@ export class ConsumerHeartbeat extends EventEmitter {
     );
   }
 
-  protected static isExpiredHeartbeat(heartbeat: TConsumerHeartbeat): boolean {
+  protected static isExpiredHeartbeat(heartbeat: IConsumerHeartbeat): boolean {
     const { timestamp: heartbeatTimestamp } = heartbeat;
     const timestamp = Date.now() - ConsumerHeartbeat.heartbeatTTL;
     return heartbeatTimestamp > timestamp;
@@ -127,7 +137,7 @@ export class ConsumerHeartbeat extends EventEmitter {
   static getConsumersHeartbeats(
     redisClient: RedisClient,
     consumerIds: string[],
-    cb: ICallback<Record<string, TConsumerHeartbeat | false>>,
+    cb: ICallback<Record<string, IConsumerHeartbeat | false>>,
   ): void {
     const keyHeartbeats = redisKeys.getMainKeys().keyHeartbeats;
     redisClient.hmget(keyHeartbeats, consumerIds, (err, reply) => {
@@ -135,13 +145,13 @@ export class ConsumerHeartbeat extends EventEmitter {
       else if (!reply || reply.length !== consumerIds.length)
         cb(new errors.InvalidCallbackReplyError());
       else {
-        const r: Record<string, TConsumerHeartbeat | false> = {};
+        const r: Record<string, IConsumerHeartbeat | false> = {};
         async.eachOf(
           consumerIds,
           (item, index, done) => {
             const payload = reply[index];
             if (payload) {
-              const consumerHeartbeat: TConsumerHeartbeat = JSON.parse(payload);
+              const consumerHeartbeat: IConsumerHeartbeat = JSON.parse(payload);
               r[consumerIds[index]] = this.isExpiredHeartbeat(consumerHeartbeat)
                 ? consumerHeartbeat
                 : false;
@@ -177,7 +187,7 @@ export class ConsumerHeartbeat extends EventEmitter {
 
   static handleExpiredHeartbeatId(
     consumerId: string | string[],
-    multi: IRedisClientMulti,
+    multi: IRedisTransaction,
   ): void {
     const { keyHeartbeats, keyHeartbeatConsumerWeight } =
       redisKeys.getMainKeys();

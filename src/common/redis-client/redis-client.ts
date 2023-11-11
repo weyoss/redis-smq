@@ -3,19 +3,23 @@ import * as fs from 'fs';
 import { resolve } from 'path';
 
 export enum ELuaScriptName {
-  ENQUEUE_SCHEDULED_MESSAGE = 'ENQUEUE_SCHEDULED_MESSAGE',
+  PUBLISH_SCHEDULED_MESSAGE = 'PUBLISH_SCHEDULED_MESSAGE',
   PUBLISH_MESSAGE = 'PUBLISH_MESSAGE',
   REQUEUE_MESSAGE = 'REQUEUE_MESSAGE',
   SCHEDULE_MESSAGE = 'SCHEDULE_MESSAGE',
   HAS_QUEUE_RATE_EXCEEDED = 'HAS_QUEUE_RATE_EXCEEDED',
   CREATE_QUEUE = 'CREATE_QUEUE',
   INIT_CONSUMER_QUEUE = 'INIT_CONSUMER_QUEUE',
+  HANDLE_PROCESSING_QUEUE = 'HANDLE_PROCESSING_QUEUE',
+  ACKNOWLEDGE_MESSAGE = 'ACKNOWLEDGE_MESSAGE',
+  DELETE_MESSAGE = 'DELETE_MESSAGE',
+  FETCH_MESSAGE_FOR_PROCESSING = 'FETCH_MESSAGE_FOR_PROCESSING',
 }
 
 RedisClient.addScript(
-  ELuaScriptName.ENQUEUE_SCHEDULED_MESSAGE,
+  ELuaScriptName.PUBLISH_SCHEDULED_MESSAGE,
   fs
-    .readFileSync(resolve(__dirname, './lua/enqueue-scheduled-message.lua'))
+    .readFileSync(resolve(__dirname, './lua/publish-scheduled-message.lua'))
     .toString(),
 );
 RedisClient.addScript(
@@ -44,5 +48,27 @@ RedisClient.addScript(
   ELuaScriptName.INIT_CONSUMER_QUEUE,
   fs
     .readFileSync(resolve(__dirname, './lua/init-consumer-queue.lua'))
+    .toString(),
+);
+RedisClient.addScript(
+  ELuaScriptName.HANDLE_PROCESSING_QUEUE,
+  fs
+    .readFileSync(resolve(__dirname, './lua/handle-processing-queue.lua'))
+    .toString(),
+);
+RedisClient.addScript(
+  ELuaScriptName.ACKNOWLEDGE_MESSAGE,
+  fs
+    .readFileSync(resolve(__dirname, './lua/acknowledge-message.lua'))
+    .toString(),
+);
+RedisClient.addScript(
+  ELuaScriptName.DELETE_MESSAGE,
+  fs.readFileSync(resolve(__dirname, './lua/delete-message.lua')).toString(),
+);
+RedisClient.addScript(
+  ELuaScriptName.FETCH_MESSAGE_FOR_PROCESSING,
+  fs
+    .readFileSync(resolve(__dirname, './lua/fetch-message-for-processing.lua'))
     .toString(),
 );

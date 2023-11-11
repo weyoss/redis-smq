@@ -1,11 +1,13 @@
-import { IConfig, IRequiredConfig } from '../../types';
+import { IRedisSMQConfig, IRedisSMQConfigRequired } from '../../types';
 import { merge } from 'lodash';
-import { RedisClientName } from 'redis-smq-common/dist/types';
+import { ERedisConfigClient } from 'redis-smq-common';
 
-const defaultConfig: IRequiredConfig['redis'] = {
-  client: RedisClientName.IOREDIS,
+const defaultConfig: IRedisSMQConfigRequired['redis'] = {
+  client: ERedisConfigClient.IOREDIS,
 };
 
-export default function Redis(userConfig: IConfig): IRequiredConfig['redis'] {
+export default function Redis(
+  userConfig: IRedisSMQConfig,
+): IRedisSMQConfigRequired['redis'] {
   return merge({}, defaultConfig, userConfig.redis ?? {});
 }
