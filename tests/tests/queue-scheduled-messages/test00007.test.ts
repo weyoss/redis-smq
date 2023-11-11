@@ -1,6 +1,5 @@
 import { Message } from '../../../src/lib/message/message';
 import { delay } from 'bluebird';
-import { getMessageManager } from '../../common/message-manager';
 import { startScheduleWorker } from '../../common/schedule-worker';
 import { getProducer } from '../../common/producer';
 import {
@@ -8,6 +7,7 @@ import {
   defaultQueue,
 } from '../../common/message-producing-consuming';
 import { validateTime } from '../../common/validate-time';
+import { getQueuePendingMessages } from '../../common/queue-pending-messages';
 
 test('Schedule a message: combine REPEAT, REPEAT PERIOD, DELAY. Case 1', async () => {
   await createQueue(defaultQueue, false);
@@ -29,19 +29,19 @@ test('Schedule a message: combine REPEAT, REPEAT PERIOD, DELAY. Case 1', async (
   await startScheduleWorker();
   await delay(30000);
 
-  const messageManager = await getMessageManager();
-  const r = await messageManager.pendingMessages.listAsync(defaultQueue, 0, 99);
+  const pendingMessages = await getQueuePendingMessages();
+  const r = await pendingMessages.getMessagesAsync(defaultQueue, 0, 100);
   expect(r.items.length).toBe(4);
 
-  const diff1 = (r.items[0].message.getPublishedAt() ?? 0) - producedAt;
+  const diff1 = (r.items[0].getPublishedAt() ?? 0) - producedAt;
   expect(validateTime(diff1, 10000)).toBe(true);
 
-  const diff2 = (r.items[1].message.getPublishedAt() ?? 0) - producedAt;
+  const diff2 = (r.items[1].getPublishedAt() ?? 0) - producedAt;
   expect(validateTime(diff2, 13000)).toBe(true);
 
-  const diff3 = (r.items[2].message.getPublishedAt() ?? 0) - producedAt;
+  const diff3 = (r.items[2].getPublishedAt() ?? 0) - producedAt;
   expect(validateTime(diff3, 16000)).toBe(true);
 
-  const diff4 = (r.items[3].message.getPublishedAt() ?? 0) - producedAt;
+  const diff4 = (r.items[3].getPublishedAt() ?? 0) - producedAt;
   expect(validateTime(diff4, 19000)).toBe(true);
 });

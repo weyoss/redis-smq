@@ -1,32 +1,40 @@
-import { getQueueManager } from '../../common/queue-manager';
 import {
   createQueue,
   defaultQueue,
   produceAndAcknowledgeMessage,
 } from '../../common/message-producing-consuming';
 import { shutDownBaseInstance } from '../../common/base-instance';
+import { getQueueMessages } from '../../common/queue-messages';
+import { getQueue } from '../../common/queue';
+import { QueueNotEmptyError } from '../../../src/lib/queue/errors/queue-not-empty.error';
+import { QueueHasRunningConsumersError } from '../../../src/lib/queue/errors/queue-has-running-consumers.error';
+import { QueueNotFoundError } from '../../../src/lib/queue/errors/queue-not-found.error';
 
 test('Deleting a message queue with all of its data', async () => {
   await createQueue(defaultQueue, false);
   const { consumer, queue } = await produceAndAcknowledgeMessage();
 
-  const queueManager = await getQueueManager();
+  const queueMessages = await getQueueMessages();
 
-  const m1 = await queueManager.queueMetrics.getMetricsAsync(queue);
-  expect(m1.acknowledged).toBe(1);
+  const m = await queueMessages.countMessagesByStatusAsync(defaultQueue);
+  expect(m.acknowledged).toBe(1);
 
-  await expect(queueManager.queue.deleteAsync(queue)).rejects.toThrow(
-    'Before deleting a queue/namespace, make sure it is not used by a message handler',
+  const q = await getQueue();
+
+  await expect(q.deleteAsync(queue)).rejects.toThrow(QueueNotEmptyError);
+
+  await queueMessages.purgeAsync(defaultQueue);
+
+  await expect(q.deleteAsync(queue)).rejects.toThrow(
+    QueueHasRunningConsumersError,
   );
 
   await shutDownBaseInstance(consumer);
-  await queueManager.queue.deleteAsync(queue);
+  await q.deleteAsync(queue);
 
-  await expect(
-    queueManager.queueMetrics.getMetricsAsync(queue),
-  ).rejects.toThrow('Queue does not exist');
-
-  await expect(queueManager.queue.deleteAsync(queue)).rejects.toThrow(
-    'Queue does not exist',
+  await expect(queueMessages.countMessagesByStatusAsync(queue)).rejects.toThrow(
+    QueueNotFoundError,
   );
+
+  await expect(q.deleteAsync(queue)).rejects.toThrow(QueueNotFoundError);
 });

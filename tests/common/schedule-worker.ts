@@ -1,13 +1,13 @@
-import ScheduleWorker from '../../src/workers/schedule.worker';
+import PublishScheduledWorker from '../../src/workers/publish-scheduled.worker';
 import { getRedisInstance } from './redis';
 import { promisifyAll } from 'bluebird';
 
-let scheduleWorker: ScheduleWorker | null = null;
+let scheduleWorker: PublishScheduledWorker | null = null;
 
 export async function startScheduleWorker(): Promise<void> {
   if (!scheduleWorker) {
     const redisClient = await getRedisInstance();
-    scheduleWorker = new ScheduleWorker(redisClient, false);
+    scheduleWorker = new PublishScheduledWorker(redisClient, false);
     scheduleWorker.run();
   }
 }

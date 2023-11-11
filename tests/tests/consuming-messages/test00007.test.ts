@@ -1,6 +1,6 @@
 import { Message } from '../../../src/lib/message/message';
 import { events } from '../../../src/common/events/events';
-import { ICallback } from 'redis-smq-common/dist/types';
+import { ICallback } from 'redis-smq-common';
 import { untilMessageAcknowledged } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -9,7 +9,7 @@ import {
   defaultQueue,
 } from '../../common/message-producing-consuming';
 
-test('Unacknowledged messages are re-queued when messageRetryThreshold is not exceeded', async () => {
+test('Unacknowledged message are re-queued when messageRetryThreshold is not exceeded', async () => {
   const producer = getProducer();
   await producer.runAsync();
 

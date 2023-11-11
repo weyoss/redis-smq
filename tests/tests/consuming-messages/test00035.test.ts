@@ -2,22 +2,21 @@ import { delay, promisifyAll } from 'bluebird';
 import { Consumer } from '../../../src/lib/consumer/consumer';
 import { Message } from '../../../src/lib/message/message';
 import { events } from '../../../src/common/events/events';
-import { config } from '../../common/config';
-import { getQueueManager } from '../../common/queue-manager';
 import { getProducer } from '../../common/producer';
 import { shutDownBaseInstance } from '../../common/base-instance';
+import { EQueueType } from '../../../types';
+import { getQueue } from '../../common/queue';
 
-test('Consume messages from different queues using a single consumer instance: case 6', async () => {
-  const qm = await getQueueManager();
-
+test('Consume message from different queues using a single consumer instance: case 6', async () => {
   const messages: Message[] = [];
-  const consumer = promisifyAll(new Consumer(config, true));
+  const consumer = promisifyAll(new Consumer(true));
   await consumer.runAsync();
 
   // running without message handlers
   await delay(5000);
 
-  await qm.queue.createAsync('test0', false);
+  const queue = await getQueue();
+  await queue.saveAsync('test0', EQueueType.LIFO_QUEUE);
   await consumer.consumeAsync('test0', () => void 0);
 
   consumer.once(events.MESSAGE_RECEIVED, () => {
@@ -37,31 +36,31 @@ test('Consume messages from different queues using a single consumer instance: c
   await delay(10000);
   expect(consumer.getQueues()).toEqual([]);
 
-  await qm.queue.createAsync('test1', true);
+  await queue.saveAsync('test1', EQueueType.PRIORITY_QUEUE);
   await consumer.consumeAsync('test1', (msg, cb) => {
     messages.push(msg);
     cb();
   });
 
-  await qm.queue.createAsync('test2', true);
+  await queue.saveAsync('test2', EQueueType.PRIORITY_QUEUE);
   await consumer.consumeAsync('test2', (msg, cb) => {
     messages.push(msg);
     cb();
   });
 
-  await qm.queue.createAsync('test3', true);
+  await queue.saveAsync('test3', EQueueType.PRIORITY_QUEUE);
   await consumer.consumeAsync('test3', (msg, cb) => {
     messages.push(msg);
     cb();
   });
 
-  await qm.queue.createAsync('test4', true);
+  await queue.saveAsync('test4', EQueueType.PRIORITY_QUEUE);
   await consumer.consumeAsync('test4', (msg, cb) => {
     messages.push(msg);
     cb();
   });
 
-  await qm.queue.createAsync('test5', true);
+  await queue.saveAsync('test5', EQueueType.PRIORITY_QUEUE);
   await consumer.consumeAsync('test5', (msg, cb) => {
     messages.push(msg);
     cb();

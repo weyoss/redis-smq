@@ -1,19 +1,19 @@
 import { promisifyAll } from 'bluebird';
 import { Consumer } from '../../../src/lib/consumer/consumer';
-import { config } from '../../common/config';
-import { getQueueManager } from '../../common/queue-manager';
 import { shutDownBaseInstance } from '../../common/base-instance';
+import { EQueueType } from '../../../types';
+import { getQueue } from '../../common/queue';
 
-test('Consume messages from different queues using a single consumer instance: case 1', async () => {
-  const queueManager = await getQueueManager();
-  const consumer = promisifyAll(new Consumer(config));
+test('Consume message from different queues using a single consumer instance: case 1', async () => {
+  const queueInstance = await getQueue();
+  const consumer = promisifyAll(new Consumer());
 
   expect(consumer.getQueues()).toEqual([]);
 
-  await queueManager.queue.createAsync('test_queue', false);
+  await queueInstance.saveAsync('test_queue', EQueueType.LIFO_QUEUE);
   await consumer.consumeAsync('test_queue', (msg, cb) => cb());
 
-  await queueManager.queue.createAsync('another_queue', false);
+  await queueInstance.saveAsync('another_queue', EQueueType.LIFO_QUEUE);
   await consumer.consumeAsync('another_queue', (msg, cb) => cb());
 
   expect(
@@ -61,7 +61,7 @@ test('Consume messages from different queues using a single consumer instance: c
     { name: 'another_queue', ns: 'testing' },
   ]);
 
-  await queueManager.queue.createAsync('queue_a', true);
+  await queueInstance.saveAsync('queue_a', EQueueType.PRIORITY_QUEUE);
   await consumer.consumeAsync('queue_a', (msg, cb) => cb());
 
   expect(consumer.consumeAsync('queue_a', (msg, cb) => cb())).rejects.toThrow(

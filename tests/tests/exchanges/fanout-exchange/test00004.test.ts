@@ -1,28 +1,27 @@
 import { Message } from '../../../../src/lib/message/message';
 import { getProducer } from '../../../common/producer';
-import { getQueueManager } from '../../../common/queue-manager';
-import { FanOutExchange } from '../../../../src/lib/exchange/fan-out-exchange';
+import { ExchangeFanOut } from '../../../../src/lib/exchange/exchange-fan-out';
 import { isEqual } from '../../../common/util';
-import { getFanOutExchangeManager } from '../../../common/fanout-exchange-manager';
+import { EQueueType } from '../../../../types';
+import { getQueue } from '../../../common/queue';
+import { getFanOutExchange } from '../../../common/exchange';
 
-test('FanOutExchange: producing messages using setExchange()', async () => {
-  const { queue } = await getQueueManager();
-  const fanOutExchangeManager = await getFanOutExchangeManager();
-
+test('ExchangeFanOut: producing message using setExchange()', async () => {
   const q1 = { ns: 'testing', name: 'w123' };
   const q2 = { ns: 'testing', name: 'w456' };
 
-  await queue.createAsync(q1, false);
-  await queue.createAsync(q2, false);
+  const queue = await getQueue();
+  await queue.saveAsync(q1, EQueueType.LIFO_QUEUE);
+  await queue.saveAsync(q2, EQueueType.LIFO_QUEUE);
 
-  const exchange = new FanOutExchange('fanout_a');
-  await fanOutExchangeManager.bindQueueAsync(q1, exchange);
-  await fanOutExchangeManager.bindQueueAsync(q2, exchange);
+  const exchange = getFanOutExchange('fanout_a');
+  await exchange.bindQueueAsync(q1);
+  await exchange.bindQueueAsync(q2);
 
   const producer = getProducer();
   await producer.runAsync();
 
-  const e = new FanOutExchange('fanout_a');
+  const e = new ExchangeFanOut('fanout_a');
   const msg = new Message().setExchange(e).setBody('hello');
 
   const r = await producer.produceAsync(msg);

@@ -1,28 +1,26 @@
-import { EQueueType, IConfig, TQueueParams } from '../../types';
+import { EQueueType, IQueueParams } from '../../types';
 import { Message } from '../../src/lib/message/message';
 import { events } from '../../src/common/events/events';
 import { untilConsumerEvent, untilMessageAcknowledged } from './events';
 import { getConsumer } from './consumer';
 import { getProducer } from './producer';
-import { getQueueManager } from './queue-manager';
-import { requiredConfig } from './config';
 import { fork } from 'child_process';
 import * as path from 'path';
+import { getQueue } from './queue';
+import { Configuration } from '../../src/config/configuration';
 
-export const defaultQueue: TQueueParams = {
+export const defaultQueue: IQueueParams = {
   name: 'test_queue',
-  ns: requiredConfig.namespace,
+  ns: Configuration.getSetConfig().namespace,
 };
 
 export async function produceAndAcknowledgeMessage(
-  queue: TQueueParams = defaultQueue,
-  cfg: IConfig = requiredConfig,
+  queue: IQueueParams = defaultQueue,
 ) {
-  const producer = getProducer(cfg);
+  const producer = getProducer();
   await producer.runAsync();
 
   const consumer = getConsumer({
-    cfg,
     queue,
     messageHandler: jest.fn((msg, cb) => {
       cb();
@@ -39,14 +37,12 @@ export async function produceAndAcknowledgeMessage(
 }
 
 export async function produceAndDeadLetterMessage(
-  queue: TQueueParams = defaultQueue,
-  cfg: IConfig = requiredConfig,
+  queue: IQueueParams = defaultQueue,
 ) {
-  const producer = getProducer(cfg);
+  const producer = getProducer();
   await producer.runAsync();
 
   const consumer = getConsumer({
-    cfg,
     queue,
     messageHandler: jest.fn(() => {
       throw new Error('Explicit error');
@@ -62,11 +58,8 @@ export async function produceAndDeadLetterMessage(
   return { producer, consumer, message, queue };
 }
 
-export async function produceMessage(
-  queue: TQueueParams = defaultQueue,
-  cfg: IConfig = requiredConfig,
-) {
-  const producer = getProducer(cfg);
+export async function produceMessage(queue: IQueueParams = defaultQueue) {
+  const producer = getProducer();
   await producer.runAsync();
 
   const message = new Message();
@@ -76,10 +69,9 @@ export async function produceMessage(
 }
 
 export async function produceMessageWithPriority(
-  queue: TQueueParams = defaultQueue,
-  cfg: IConfig = requiredConfig,
+  queue: IQueueParams = defaultQueue,
 ) {
-  const producer = getProducer(cfg);
+  const producer = getProducer();
   await producer.runAsync();
 
   const message = new Message();
@@ -88,11 +80,8 @@ export async function produceMessageWithPriority(
   return { message, producer, queue };
 }
 
-export async function scheduleMessage(
-  queue: TQueueParams = defaultQueue,
-  cfg: IConfig = requiredConfig,
-) {
-  const producer = getProducer(cfg);
+export async function scheduleMessage(queue: IQueueParams = defaultQueue) {
+  const producer = getProducer();
   await producer.runAsync();
 
   const message = new Message();
@@ -102,17 +91,17 @@ export async function scheduleMessage(
 }
 
 export async function createQueue(
-  queue: string | TQueueParams,
+  queue: string | IQueueParams,
   mixed: boolean | EQueueType,
 ): Promise<void> {
-  const qm = await getQueueManager();
+  const queueInstance = await getQueue();
   const type =
     typeof mixed === 'boolean'
       ? mixed
         ? EQueueType.PRIORITY_QUEUE
         : EQueueType.LIFO_QUEUE
       : mixed;
-  await qm.queue.saveAsync(queue, type);
+  await queueInstance.saveAsync(queue, type);
 }
 
 export async function crashAConsumerConsumingAMessage() {

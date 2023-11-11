@@ -1,22 +1,20 @@
-import { getMessageManager } from '../../common/message-manager';
 import {
   createQueue,
   defaultQueue,
   scheduleMessage,
 } from '../../common/message-producing-consuming';
+import { getQueueMessages } from '../../common/queue-messages';
 
-test('Purging scheduled messages queue', async () => {
+test('Purging scheduled message queue', async () => {
   await createQueue(defaultQueue, false);
-  const { message } = await scheduleMessage();
+  await scheduleMessage();
 
-  const messageManager = await getMessageManager();
-  const m = await messageManager.scheduledMessages.listAsync(0, 99);
+  const queueMessages = await getQueueMessages();
+  const m = await queueMessages.countMessagesByStatusAsync(defaultQueue);
+  expect(m.scheduled).toBe(1);
 
-  expect(m.total).toBe(1);
-  expect(m.items[0].message.getId()).toBe(message.getRequiredId());
+  await queueMessages.purgeAsync(defaultQueue);
 
-  await messageManager.scheduledMessages.purgeAsync();
-  const m2 = await messageManager.scheduledMessages.listAsync(0, 99);
-  expect(m2.total).toBe(0);
-  expect(m2.items.length).toBe(0);
+  const m1 = await queueMessages.countMessagesByStatusAsync(defaultQueue);
+  expect(m1.scheduled).toBe(0);
 });

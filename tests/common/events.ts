@@ -28,6 +28,19 @@ export async function untilMessageAcknowledged(
   }
 }
 
+export async function untilMessageDeadLettered(
+  consumer: Consumer,
+  msg?: Message,
+): Promise<void> {
+  const [message] = await consumerOnEvent<[Message]>(
+    consumer,
+    events.MESSAGE_DEAD_LETTERED,
+  );
+  if (msg && msg.getRequiredId() !== message.getRequiredId()) {
+    await untilMessageDeadLettered(consumer, msg);
+  }
+}
+
 export async function untilConsumerEvent(
   consumer: Consumer,
   event: string,

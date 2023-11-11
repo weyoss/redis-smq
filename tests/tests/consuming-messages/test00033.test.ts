@@ -1,12 +1,11 @@
 import { delay, promisifyAll } from 'bluebird';
 import { Consumer } from '../../../src/lib/consumer/consumer';
 import { Message } from '../../../src/lib/message/message';
-import { config } from '../../common/config';
 import { getProducer } from '../../common/producer';
 import { createQueue } from '../../common/message-producing-consuming';
 import { shutDownBaseInstance } from '../../common/base-instance';
 
-test('Consume messages from different queues using a single consumer instance: case 4', async () => {
+test('Consume message from different queues using a single consumer instance: case 4', async () => {
   await createQueue('test1', false);
   await createQueue('test2', false);
   await createQueue('test3', false);
@@ -15,7 +14,7 @@ test('Consume messages from different queues using a single consumer instance: c
   await createQueue('test6', false);
 
   const messages: Message[] = [];
-  const consumer = promisifyAll(new Consumer(config, true));
+  const consumer = promisifyAll(new Consumer(true));
 
   await consumer.consumeAsync('test1', (msg, cb) => {
     messages.push(msg);

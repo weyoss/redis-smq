@@ -7,26 +7,15 @@ import {
   defaultQueue,
 } from '../../common/message-producing-consuming';
 import { shutDownBaseInstance } from '../../common/base-instance';
-import { Consumer } from '../../../src/lib/consumer/consumer';
 
 test('Consumer heartbeat: check online/offline consumers', async () => {
   const redisClient = await getRedisInstance();
   const HeartbeatAsync = promisifyAll(ConsumerHeartbeat);
-  const ConsumerAsync = promisifyAll(Consumer);
   await createQueue(defaultQueue, false);
   const consumer = getConsumer();
   await consumer.runAsync();
 
   //
-  const consumerHeartbeat = await ConsumerAsync.getConsumerHeartbeatAsync(
-    redisClient,
-    consumer.getId(),
-  );
-  expect(consumerHeartbeat).not.toBe(false);
-  expect(Object.keys(consumerHeartbeat)).toEqual(
-    expect.arrayContaining(['timestamp', 'data']),
-  );
-
   const consumersHeartbeats = await HeartbeatAsync.getConsumersHeartbeatsAsync(
     redisClient,
     [consumer.getId()],

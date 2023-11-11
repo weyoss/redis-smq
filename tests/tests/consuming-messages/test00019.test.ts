@@ -1,6 +1,5 @@
 import { Message } from '../../../index';
 import { events } from '../../../src/common/events/events';
-import { getMessageManager } from '../../common/message-manager';
 import { untilConsumerEvent } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -8,6 +7,7 @@ import {
   createQueue,
   defaultQueue,
 } from '../../common/message-producing-consuming';
+import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages';
 
 test('An unacknowledged message is dead-lettered and not delivered again, given retryThreshold is 0', async () => {
   await createQueue(defaultQueue, false);
@@ -30,12 +30,8 @@ test('An unacknowledged message is dead-lettered and not delivered again, given 
 
   consumer.run();
   await untilConsumerEvent(consumer, events.MESSAGE_DEAD_LETTERED);
-  const messageManager = await getMessageManager();
-  const r = await messageManager.deadLetteredMessages.listAsync(
-    defaultQueue,
-    0,
-    100,
-  );
+  const deadLetteredMessages = await getQueueDeadLetteredMessages();
+  const r = await deadLetteredMessages.getMessagesAsync(defaultQueue, 0, 100);
   expect(r.items.length).toBe(1);
-  expect(r.items[0].message.getMessageState()?.getAttempts()).toBe(0);
+  expect(r.items[0].getMessageState()?.getAttempts()).toBe(0);
 });

@@ -1,26 +1,25 @@
 import { delay, promisifyAll } from 'bluebird';
 import { Consumer } from '../../../src/lib/consumer/consumer';
 import { Message } from '../../../src/lib/message/message';
-import { config } from '../../common/config';
-import { getQueueManager } from '../../common/queue-manager';
 import { getProducer } from '../../common/producer';
 import {
   createQueue,
   defaultQueue,
 } from '../../common/message-producing-consuming';
 import { shutDownBaseInstance } from '../../common/base-instance';
+import { getQueueRateLimit } from '../../common/queue-rate-limit';
 
-test('Consume messages from different queues using a single consumer instance: case 5', async () => {
+test('Consume message from different queues using a single consumer instance: case 5', async () => {
   await createQueue(defaultQueue, false);
 
-  const qm = await getQueueManager();
-  await qm.queueRateLimit.setAsync(defaultQueue, {
+  const queueRateLimit = await getQueueRateLimit();
+  await queueRateLimit.setAsync(defaultQueue, {
     limit: 3,
     interval: 5000,
   });
 
   const messages: Message[] = [];
-  const consumer = promisifyAll(new Consumer(config, true));
+  const consumer = promisifyAll(new Consumer(true));
 
   await consumer.consumeAsync(defaultQueue, (msg, cb) => {
     messages.push(msg);

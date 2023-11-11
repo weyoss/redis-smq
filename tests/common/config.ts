@@ -1,14 +1,13 @@
-import { IConfig } from '../../types';
-import { RedisClientName } from 'redis-smq-common/dist/types';
-import * as configuration from '../../src/config/configuration';
+import { IRedisSMQConfig } from '../../types';
+import { ERedisConfigClient } from 'redis-smq-common';
 
 const redisHost = process.env.REDIS_HOST || '127.0.0.1';
 const redisPort = Number(process.env.REDIS_PORT) || 6379;
 
-export const config: IConfig = {
+export const config: IRedisSMQConfig = {
   namespace: 'testing',
   redis: {
-    client: RedisClientName.IOREDIS,
+    client: ERedisConfigClient.IOREDIS,
     options: {
       host: redisHost,
       port: redisPort,
@@ -22,4 +21,3 @@ export const config: IConfig = {
     store: true,
   },
 };
-export const requiredConfig = configuration.getConfiguration(config);

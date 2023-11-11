@@ -1,15 +1,15 @@
 import { Message } from '../../../src/lib/message/message';
-import { events } from '../../../src/common/events/events';
-import { getMessageManager } from '../../common/message-manager';
-import { untilConsumerEvent } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
 import {
   createQueue,
   defaultQueue,
 } from '../../common/message-producing-consuming';
+import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages';
+import { untilConsumerEvent } from '../../common/events';
+import { events } from '../../../src/common/events/events';
 
-test('Periodic scheduled messages upon consume failures are dead-lettered without being re-queued', async () => {
+test('Messages produced from scheduled message are processed like normal message upon consume failures (retry, delay, requeue, etc)', async () => {
   await createQueue(defaultQueue, false);
 
   const consumer = getConsumer({
@@ -31,14 +31,10 @@ test('Periodic scheduled messages upon consume failures are dead-lettered withou
 
   consumer.run();
   await untilConsumerEvent(consumer, events.MESSAGE_DEAD_LETTERED);
-  const messageManager = await getMessageManager();
-  const res = await messageManager.deadLetteredMessages.listAsync(
-    defaultQueue,
-    0,
-    99,
-  );
-  expect(res.total).toBe(1);
-  expect(typeof res.items[0].message.getId()).toBe('string');
-  expect(res.items[0].message.getId()).toBe(msg.getId());
-  expect(res.items[0].message.getMessageState()?.getAttempts()).toBe(0);
+  const deadLetteredMessages = await getQueueDeadLetteredMessages();
+  const res = await deadLetteredMessages.getMessagesAsync(defaultQueue, 0, 100);
+  expect(res.totalItems).toBe(1);
+  expect(typeof res.items[0].getId()).toBe('string');
+  expect(res.items[0].getScheduledMessageId()).toBe(msg.getId());
+  expect(res.items[0].getMessageState()?.getAttempts()).toBe(4);
 });

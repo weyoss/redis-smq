@@ -1,7 +1,6 @@
 import { delay } from 'bluebird';
 import { Message } from '../../../src/lib/message/message';
 import { events } from '../../../src/common/events/events';
-import { getQueueManager } from '../../common/queue-manager';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
 import {
@@ -9,12 +8,13 @@ import {
   defaultQueue,
 } from '../../common/message-producing-consuming';
 import { validateTime } from '../../common/validate-time';
+import { getQueueRateLimit } from '../../common/queue-rate-limit';
 
-test('Set a rate limit for a queue and consume messages using many consumers', async () => {
+test('Set a rate limit for a queue and consume message using many consumers', async () => {
   await createQueue(defaultQueue, false);
 
-  const qm = await getQueueManager();
-  await qm.queueRateLimit.setAsync(defaultQueue, {
+  const queueRateLimit = await getQueueRateLimit();
+  await queueRateLimit.setAsync(defaultQueue, {
     limit: 3,
     interval: 10000,
   });

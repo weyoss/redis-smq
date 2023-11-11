@@ -1,9 +1,8 @@
 import { delay, promisifyAll } from 'bluebird';
 import { Message } from '../../../src/lib/message/message';
 import { events } from '../../../src/common/events/events';
-import { RequeueWorker } from '../../../src/workers/requeue.worker';
-import { WatchdogWorker } from '../../../src/workers/watchdog.worker';
-import { getMessageManager } from '../../common/message-manager';
+import { RequeueUnacknowledgedWorker } from '../../../src/workers/requeue-unacknowledged.worker';
+import { WatchConsumersWorker } from '../../../src/workers/watch-consumers.worker';
 import { untilConsumerEvent } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getRedisInstance } from '../../common/redis';
@@ -12,11 +11,11 @@ import {
   createQueue,
   defaultQueue,
 } from '../../common/message-producing-consuming';
-import { requiredConfig } from '../../common/config';
 import { logger } from '../../common/logger';
 import { shutDownBaseInstance } from '../../common/base-instance';
+import { getQueuePendingMessages } from '../../common/queue-pending-messages';
 
-test('WatchdogWorker -> RequeueWorker', async () => {
+test('WatchdogWorker -> RequeueUnacknowledgedWorker', async () => {
   await createQueue(defaultQueue, false);
 
   let message: Message | null = null;
@@ -46,23 +45,21 @@ test('WatchdogWorker -> RequeueWorker', async () => {
 
   // should move message from processing queue to delay queue
   const watchdogWorker = promisifyAll(
-    new WatchdogWorker(redisClient, requiredConfig, false, logger),
+    new WatchConsumersWorker(redisClient, false, logger),
   );
   watchdogWorker.run();
   await delay(5000);
 
   // should move from delay queue to scheduled queue
-  const requeueWorker = promisifyAll(new RequeueWorker(redisClient, false));
+  const requeueWorker = promisifyAll(
+    new RequeueUnacknowledgedWorker(redisClient, false),
+  );
   requeueWorker.run();
   await delay(5000);
 
-  const messageManager = await getMessageManager();
-  const res3 = await messageManager.pendingMessages.listAsync(
-    defaultQueue,
-    0,
-    99,
-  );
-  expect(res3.total).toBe(1);
+  const pendingMessages = await getQueuePendingMessages();
+  const res3 = await pendingMessages.getMessagesAsync(defaultQueue, 0, 100);
+  expect(res3.totalItems).toBe(1);
 
   await requeueWorker.quitAsync();
   await watchdogWorker.quitAsync();

@@ -1,10 +1,10 @@
 import { Message } from '../../../src/lib/message/message';
-import { getMessageManager } from '../../common/message-manager';
 import { getProducer } from '../../common/producer';
 import {
   createQueue,
   defaultQueue,
 } from '../../common/message-producing-consuming';
+import { getQueueScheduledMessages } from '../../common/queue-scheduled-messages';
 
 test('Schedule a message: messageManager.getScheduledMessages()', async () => {
   await createQueue(defaultQueue, false);
@@ -34,24 +34,13 @@ test('Schedule a message: messageManager.getScheduledMessages()', async () => {
     .setQueue(defaultQueue);
   await producer.produceAsync(msg3);
 
-  const messageManager = await getMessageManager();
+  const queueScheduled = await getQueueScheduledMessages();
 
   // Page 1
-  const pageOne = await messageManager.scheduledMessages.listAsync(0, 2);
-  expect(pageOne.total).toEqual(3);
-  expect(pageOne.items.length).toEqual(2);
-  expect(pageOne.items[0].message.getId()).toEqual(
-    msg1.getMessageState()?.getId(),
-  );
-  expect(pageOne.items[1].message.getId()).toEqual(
-    msg2.getMessageState()?.getId(),
-  );
-
-  // Page 2
-  const pageTwo = await messageManager.scheduledMessages.listAsync(2, 2);
-  expect(pageTwo.total).toEqual(3);
-  expect(pageTwo.items.length).toEqual(1);
-  expect(pageTwo.items[0].message.getId()).toEqual(
-    msg3.getMessageState()?.getId(),
-  );
+  const pageOne = await queueScheduled.getMessagesAsync(defaultQueue, 0, 100);
+  expect(pageOne.totalItems).toEqual(3);
+  expect(pageOne.items.length).toEqual(3);
+  expect(pageOne.items[0].getId()).toEqual(msg1.getMessageState()?.getId());
+  expect(pageOne.items[1].getId()).toEqual(msg2.getMessageState()?.getId());
+  expect(pageOne.items[2].getId()).toEqual(msg3.getMessageState()?.getId());
 });

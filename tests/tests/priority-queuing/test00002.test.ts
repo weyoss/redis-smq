@@ -1,15 +1,16 @@
 import { delay, promisifyAll } from 'bluebird';
 import { Message } from '../../../src/lib/message/message';
-import { getQueueManager } from '../../common/queue-manager';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
 import { defaultQueue } from '../../common/message-producing-consuming';
+import { EQueueType } from '../../../types';
+import { getQueue } from '../../common/queue';
 
 test('Priority queuing: case 2', async () => {
   const consumedMessages: Message[] = [];
 
-  const qm = await getQueueManager();
-  await qm.queue.createAsync(defaultQueue, true);
+  const queue = await getQueue();
+  await queue.saveAsync(defaultQueue, EQueueType.PRIORITY_QUEUE);
 
   const consumer = promisifyAll(
     getConsumer({

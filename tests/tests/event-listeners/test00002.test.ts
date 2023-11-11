@@ -1,9 +1,9 @@
 import {
-  IConfig,
+  IRedisSMQConfig,
   IEventListener,
   TEventListenerInitArgs,
 } from '../../../types';
-import { ICallback } from 'redis-smq-common/dist/types';
+import { ICallback } from 'redis-smq-common';
 import { config } from '../../common/config';
 import { Message } from '../../../src/lib/message/message';
 import { events } from '../../../src/common/events/events';
@@ -12,6 +12,7 @@ import {
   createQueue,
   defaultQueue,
 } from '../../common/message-producing-consuming';
+import { Configuration } from '../../../src/config/configuration';
 
 const producerStats: Record<string, { event: string; message: Message }[]> = {};
 
@@ -33,22 +34,25 @@ class TestProducerEventListener implements IEventListener {
   }
 }
 
-const cfg: IConfig = {
-  ...config,
-  eventListeners: {
-    producerEventListeners: [TestProducerEventListener],
-  },
-};
-
 test('Producer event listeners', async () => {
+  const cfg: IRedisSMQConfig = {
+    ...config,
+    eventListeners: {
+      producerEventListeners: [TestProducerEventListener],
+    },
+  };
+
+  Configuration.reset();
+  Configuration.getSetConfig(cfg);
+
   await createQueue(defaultQueue, false);
-  const p0 = getProducer(cfg);
+  const p0 = getProducer();
   await p0.runAsync();
   const m0 = new Message().setQueue(defaultQueue).setBody(123);
   await p0.produceAsync(m0);
   const m1 = new Message().setQueue(defaultQueue).setBody(123);
   await p0.produceAsync(m1);
-  const p1 = getProducer(cfg);
+  const p1 = getProducer();
   await p1.runAsync();
   const m2 = new Message().setQueue(defaultQueue).setBody(123);
   await p1.produceAsync(m2);

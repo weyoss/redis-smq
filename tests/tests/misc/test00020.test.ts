@@ -1,6 +1,5 @@
 import { Message } from '../../../src/lib/message/message';
-import { DestinationQueueRequiredError } from '../../../src/lib/exchange/errors/destination-queue-required.error';
-import { MessageExchangeRequiredError } from '../../../src/lib/message/errors/message-exchange-required.error';
+import { DestinationQueueRequiredError } from '../../../src/lib/message/errors/destination-queue-required.error';
 
 test('Message: validations', async () => {
   const msg = new Message();
@@ -33,7 +32,7 @@ test('Message: validations', async () => {
   }).toThrow('Invalid message priority.');
   expect(() => {
     msg.getDestinationQueue();
-  }).toThrow(MessageExchangeRequiredError);
+  }).toThrow(DestinationQueueRequiredError);
   msg.setQueue('test1');
   expect(() => {
     msg.getDestinationQueue();

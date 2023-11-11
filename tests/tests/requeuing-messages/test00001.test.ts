@@ -1,39 +1,43 @@
-import { getQueueManager } from '../../common/queue-manager';
-import { getMessageManager } from '../../common/message-manager';
 import {
   createQueue,
   defaultQueue,
   produceAndDeadLetterMessage,
 } from '../../common/message-producing-consuming';
 import { shutDownBaseInstance } from '../../common/base-instance';
+import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages';
+import { getQueuePendingMessages } from '../../common/queue-pending-messages';
+import { getQueueMessages } from '../../common/queue-messages';
 
 test('Combined test: Requeue a message from dead-letter queue. Check queue metrics.', async () => {
   await createQueue(defaultQueue, false);
   const { message, queue, consumer } = await produceAndDeadLetterMessage();
   await shutDownBaseInstance(consumer);
 
-  const messageManager = await getMessageManager();
-  await messageManager.deadLetteredMessages.requeueAsync(
+  const deadLetteredMessages = await getQueueDeadLetteredMessages();
+  await deadLetteredMessages.requeueMessageAsync(
     queue,
     message.getRequiredId(),
-    0,
   );
 
-  const res2 = await messageManager.pendingMessages.listAsync(queue, 0, 100);
-  expect(res2.total).toBe(1);
+  const pendingMessages = await getQueuePendingMessages();
+  const res2 = await pendingMessages.getMessagesAsync(queue, 0, 100);
+  expect(res2.totalItems).toBe(1);
   expect(res2.items.length).toBe(1);
-  expect(res2.items[0].message.getId()).toEqual(message.getRequiredId());
+  expect(res2.items[0].getId()).toEqual(message.getRequiredId());
 
-  const res3 = await messageManager.deadLetteredMessages.listAsync(
-    queue,
-    0,
-    100,
-  );
-  expect(res3.total).toBe(0);
+  const res3 = await deadLetteredMessages.getMessagesAsync(queue, 0, 100);
+  expect(res3.totalItems).toBe(0);
   expect(res3.items.length).toBe(0);
 
-  const queueManager = await getQueueManager();
-  const queueMetrics = await queueManager.queueMetrics.getMetricsAsync(queue);
-  expect(queueMetrics.deadLettered).toBe(0);
-  expect(queueMetrics.pending).toBe(1);
+  const queueMessages = await getQueueMessages();
+  const count = await queueMessages.countMessagesByStatusAsync(queue);
+  expect(count.deadLettered).toBe(0);
+  expect(count.pending).toBe(1);
+
+  await expect(async () => {
+    await deadLetteredMessages.requeueMessageAsync(
+      queue,
+      message.getRequiredId(),
+    );
+  }).not.toThrow();
 });

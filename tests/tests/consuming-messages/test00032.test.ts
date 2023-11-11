@@ -1,17 +1,17 @@
 import { promisifyAll } from 'bluebird';
 import { Consumer } from '../../../src/lib/consumer/consumer';
 import { consumerQueues } from '../../../src/lib/consumer/consumer-queues';
-import { config } from '../../common/config';
-import { getQueueManager } from '../../common/queue-manager';
 import { getRedisInstance } from '../../common/redis';
 import { defaultQueue } from '../../common/message-producing-consuming';
 import { shutDownBaseInstance } from '../../common/base-instance';
+import { EQueueType } from '../../../types';
+import { getQueue } from '../../common/queue';
 
-test('Consume messages from different queues using a single consumer instance: case 3', async () => {
-  const qm = await getQueueManager();
-  await qm.queue.createAsync(defaultQueue, false);
+test('Consume message from different queues using a single consumer instance: case 3', async () => {
+  const queue = await getQueue();
+  await queue.saveAsync(defaultQueue, EQueueType.LIFO_QUEUE);
 
-  const consumer = promisifyAll(new Consumer(config));
+  const consumer = promisifyAll(new Consumer());
   await consumer.runAsync();
 
   const redisClient = await getRedisInstance();

@@ -1,10 +1,9 @@
 import { Consumer } from '../../src/lib/consumer/consumer';
-import { config } from './config';
 import { defaultQueue } from './message-producing-consuming';
 import { Producer } from '../../src/lib/producer/producer';
 import { Message } from '../../src/lib/message/message';
 
-const producer = new Producer(config);
+const producer = new Producer();
 producer.run((err) => {
   if (err) throw err;
   producer.produce(
@@ -15,7 +14,7 @@ producer.run((err) => {
   );
 });
 
-const consumer = new Consumer(config);
+const consumer = new Consumer();
 consumer.consume(
   defaultQueue,
   () => void 0, // not acknowledging

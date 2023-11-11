@@ -1,13 +1,15 @@
 import { createClientInstance, RedisClient } from 'redis-smq-common';
 import { promisify, promisifyAll } from 'bluebird';
-import { requiredConfig } from './config';
+import { Configuration } from '../../src/config/configuration';
 
 const RedisClientAsync = promisifyAll(RedisClient.prototype);
 const createClientInstanceAsync = promisify(createClientInstance);
 const redisClients: typeof RedisClientAsync[] = [];
 
 export async function getRedisInstance() {
-  const c = promisifyAll(await createClientInstanceAsync(requiredConfig.redis));
+  const c = promisifyAll(
+    await createClientInstanceAsync(Configuration.getSetConfig().redis),
+  );
   redisClients.push(c);
   return c;
 }
