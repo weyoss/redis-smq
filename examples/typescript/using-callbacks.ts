@@ -1,12 +1,20 @@
-import { ICallback, RedisClientName } from 'redis-smq-common/dist/types';
-import { Consumer, Producer, Message, QueueManager } from '../../index'; // from 'redis-smq'
-import { EQueueType, IConfig, TProduceMessageReply } from '../../types'; // from 'redis-smq/dist/types'
-import { logger } from 'redis-smq-common';
+import { ERedisConfigClient, ICallback, logger } from 'redis-smq-common';
+import {
+  Consumer,
+  Producer,
+  Message,
+  Queue,
+  EQueueType,
+  IRedisSMQConfig,
+  ExchangeDirect,
+  disconnect,
+} from '../../index'; // from 'redis-smq'
+import { Configuration } from '../../src/config/configuration';
 
-export const config: IConfig = {
+export const config: IRedisSMQConfig = {
   namespace: 'ns1',
   redis: {
-    client: RedisClientName.IOREDIS,
+    client: ERedisConfigClient.IOREDIS,
     options: {
       host: '127.0.0.1',
       port: 6379,
@@ -25,51 +33,43 @@ export const config: IConfig = {
   },
 };
 
+Configuration.getSetConfig(config);
+
 // Setting up a custom logger
 // This step should be also done from your application bootstrap
 logger.setLogger(console);
 
+const queue = new Queue();
+
 const createQueue = (cb: ICallback<void>): void => {
-  // Before producing and consuming messages to/from a given queue, we need to make sure that such queue exists
-  QueueManager.createInstance(config, (err, queueManager) => {
+  // Before producing and consuming message to/from a given queue, we need to make sure that such queue exists
+  queue.exists('test_queue', (err, reply) => {
     if (err) cb(err);
-    else if (!queueManager)
-      cb(new Error('Expected an instance of QueueManager'));
-    else {
-      queueManager.queue.exists('test_queue', (err, reply) => {
+    else if (!reply) {
+      // Creating a queue (a LIFO queue)
+      queue.save('test_queue', EQueueType.LIFO_QUEUE, (err) => {
         if (err) cb(err);
-        else if (!reply) {
-          // Creating a queue (a LIFO queue)
-          queueManager.queue.save(
-            'test_queue',
-            EQueueType.LIFO_QUEUE,
-            (err) => {
-              if (err) cb(err);
-              else queueManager.quit(cb);
-            },
-          );
-        } else cb();
+        else disconnect(cb);
       });
-    }
+    } else cb();
   });
 };
 
-const produce = (cb: ICallback<TProduceMessageReply>): void => {
-  const producer = new Producer(config);
+const produce = (cb: ICallback<void>): void => {
+  const producer = new Producer();
   producer.run((err) => {
     if (err) cb(err);
     else {
+      const e = new ExchangeDirect('test_queue');
       const msg = new Message();
-      msg
-        .setBody({ ts: `Current time is ${Date.now()}` })
-        .setQueue('test_queue');
-      producer.produce(msg, cb);
+      msg.setBody({ ts: `Current time is ${Date.now()}` }).setExchange(e);
+      producer.produce(msg, (err) => cb(err));
     }
   });
 };
 
 const consume = (cb: ICallback<void>): void => {
-  const consumer = new Consumer(config);
+  const consumer = new Consumer();
   // starting the consumer and then registering a message handler
   consumer.run((err) => {
     if (err) cb(err);

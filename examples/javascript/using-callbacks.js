@@ -1,7 +1,14 @@
 const { logger } = require('redis-smq-common');
 const { RedisClientName } = require('redis-smq-common/dist/types');
-const { Consumer, Producer, Message, QueueManager } = require('../..');
-const { EQueueType } = require('../../dist/types'); // from 'redis-smq/dist/types'
+const {
+  Consumer,
+  Producer,
+  Message,
+  Queue,
+  Configuration,
+  disconnect,
+  EQueuePropertyQueueType,
+} = require('../../index');
 
 const config = {
   namespace: 'ns1',
@@ -25,32 +32,25 @@ const config = {
   },
 };
 
+Configuration.getSetConfig(config);
+
 // Setting up a custom logger
 // This step should be also done from your application bootstrap
 logger.setLogger(console);
 
+const queue = new Queue(config);
+
 const createQueue = (cb) => {
-  // Before producing and consuming messages to/from a given queue, we need to make sure that such queue exists
-  QueueManager.createInstance(config, (err, queueManager) => {
+  // Before producing and consuming message to/from a given queue, we need to make sure that such queue exists
+  queue.exists('test_queue', (err, reply) => {
     if (err) cb(err);
-    else if (!queueManager)
-      cb(new Error('Expected an instance of QueueManager'));
-    else {
-      queueManager.queue.exists('test_queue', (err, reply) => {
+    else if (!reply) {
+      // Creating a queue (a LIFO queue)
+      queue.save('test_queue', EQueuePropertyQueueType.LIFO_QUEUE, (err) => {
         if (err) cb(err);
-        else if (!reply) {
-          // Creating a queue (a LIFO queue)
-          queueManager.queue.save(
-            'test_queue',
-            EQueueType.LIFO_QUEUE,
-            (err) => {
-              if (err) cb(err);
-              else queueManager.quit(cb);
-            },
-          );
-        } else cb();
+        else disconnect(cb);
       });
-    }
+    } else cb();
   });
 };
 

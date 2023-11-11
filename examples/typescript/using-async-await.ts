@@ -1,13 +1,21 @@
-import { promisifyAll } from 'bluebird';
-import { logger } from 'redis-smq-common';
-import { RedisClientName } from 'redis-smq-common/dist/types';
-import { Consumer, Producer, Message, QueueManager } from '../..'; // from 'redis-smq'
-import { EQueueType, IConfig } from '../../types'; // from 'redis-smq/dist/types'
+import { promisify, promisifyAll } from 'bluebird';
+import { ERedisConfigClient, logger } from 'redis-smq-common';
+import {
+  Consumer,
+  Producer,
+  Message,
+  Queue,
+  IRedisSMQConfig,
+  EQueueType,
+  ExchangeDirect,
+  disconnect,
+} from '../../index';
+import { Configuration } from '../../src/config/configuration';
 
-export const config: IConfig = {
+export const config: IRedisSMQConfig = {
   namespace: 'ns1',
   redis: {
-    client: RedisClientName.IOREDIS,
+    client: ERedisConfigClient.IOREDIS,
     options: {
       host: '127.0.0.1',
       port: 6379,
@@ -26,31 +34,31 @@ export const config: IConfig = {
   },
 };
 
+Configuration.getSetConfig(config);
+
 // Setting up a custom logger
 // This step should be also done from your application bootstrap
 logger.setLogger(console);
 
-const QueueManagerAsync = promisifyAll(QueueManager);
-const producer = promisifyAll(new Producer(config));
-const consumer = promisifyAll(new Consumer(config));
+const queue = promisifyAll(new Queue());
+const producer = promisifyAll(new Producer());
+const consumer = promisifyAll(new Consumer());
 
 const createQueue = async () => {
-  const queueManagerAsync = promisifyAll(
-    await QueueManagerAsync.createInstanceAsync(config),
-  );
-  const queueAsync = promisifyAll(queueManagerAsync.queue);
-  // Before producing and consuming messages to/from a given queue, we need to make sure that such queue exists
-  const exists = await queueAsync.existsAsync('test_queue');
+  // Before producing and consuming message to/from a given queue, we need to make sure that such queue exists
+  const exists = await queue.existsAsync('test_queue');
   if (!exists) {
     // Creating a queue (a LIFO queue)
-    await queueAsync.saveAsync('test_queue', EQueueType.LIFO_QUEUE);
+    await queue.saveAsync('test_queue', EQueueType.LIFO_QUEUE);
+    await promisify(disconnect)();
   }
 };
 
 const produce = async () => {
   await producer.runAsync();
   const msg = new Message();
-  msg.setBody({ ts: `Current time is ${Date.now()}` }).setQueue('test_queue');
+  const e = new ExchangeDirect('test_queue');
+  msg.setBody({ ts: `Current time is ${Date.now()}` }).setExchange(e);
   await producer.produceAsync(msg);
 };
 
