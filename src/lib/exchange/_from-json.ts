@@ -5,7 +5,7 @@ import { ExchangeTopic } from './exchange-topic';
 import { ExchangeDirect } from './exchange-direct';
 
 export function _fromJSON(
-  json: TExchangeSerialized,
+  json: Partial<TExchangeSerialized>,
 ): ExchangeFanOut | ExchangeTopic | ExchangeDirect {
   if (!json.bindingParams || json.type === undefined)
     throw new InvalidExchangeDataError();
