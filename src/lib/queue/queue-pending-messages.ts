@@ -1,5 +1,4 @@
 import {
-  EQueueProperty,
   EQueueType,
   IQueueMessages,
   IQueueMessagesPage,
@@ -34,9 +33,7 @@ export class QueuePendingMessages implements IQueueMessages {
         _getQueueProperties(client, queueParams, (err, properties) => {
           if (err) cb(err);
           else if (!properties) cb(new errors.EmptyCallbackReplyError());
-          else if (
-            properties[EQueueProperty.QUEUE_TYPE] === EQueueType.PRIORITY_QUEUE
-          ) {
+          else if (properties.queueType === EQueueType.PRIORITY_QUEUE) {
             cb(null, this.priorityQueueMessages);
           } else {
             cb(null, this.linearQueueMessages);

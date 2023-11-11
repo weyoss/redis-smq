@@ -99,7 +99,7 @@ export class ExchangeFanOut extends Exchange<
             (cb: ICallback<IQueueProperties>) =>
               _getQueueProperties(client, queueParams, cb),
             (
-              queueSettings: IQueueProperties,
+              queueProperties: IQueueProperties,
               cb: ICallback<IQueueProperties>,
             ) =>
               this.getQueues((err, queues) => {
@@ -110,24 +110,23 @@ export class ExchangeFanOut extends Exchange<
                     _getQueueProperties(
                       client,
                       eQueue,
-                      (err, exchangeQueueSetting) => {
+                      (err, exchangeQueueProperties) => {
                         if (err) cb(err);
-                        else if (!exchangeQueueSetting)
+                        else if (!exchangeQueueProperties)
                           cb(new errors.EmptyCallbackReplyError());
                         else if (
-                          exchangeQueueSetting[EQueueProperty.QUEUE_TYPE] !==
-                          queueSettings[EQueueProperty.QUEUE_TYPE]
+                          exchangeQueueProperties.queueType !==
+                          queueProperties.queueType
                         )
                           cb(new FanOutExchangeQueueError());
-                        else cb(null, queueSettings);
+                        else cb(null, queueProperties);
                       },
                     );
-                  else cb(null, queueSettings);
+                  else cb(null, queueProperties);
                 }
               }),
-            (queueSettings: IQueueProperties, cb: ICallback<void>) => {
-              const currentExchangeParams =
-                queueSettings[EQueueProperty.EXCHANGE];
+            (queueProperties: IQueueProperties, cb: ICallback<void>) => {
+              const currentExchangeParams = queueProperties.exchange;
               if (currentExchangeParams === exchangeParams) cb();
               else {
                 const multi = client.multi();
@@ -176,10 +175,10 @@ export class ExchangeFanOut extends Exchange<
                 (err) => cb(err),
               ),
             (cb: ICallback<IQueueProperties>) =>
-              _getQueueProperties(client, queueParams, (err, settings) => {
+              _getQueueProperties(client, queueParams, (err, properties) => {
                 if (err) cb(err);
-                else if (!settings) cb(new errors.EmptyCallbackReplyError());
-                else if (settings[EQueueProperty.EXCHANGE] !== exchangeName)
+                else if (!properties) cb(new errors.EmptyCallbackReplyError());
+                else if (properties.exchange !== exchangeName)
                   cb(
                     new ExchangeError(
                       `Queue ${queueParams.name}@${queueParams.ns} is not bound to [${exchangeName}] exchange.`,

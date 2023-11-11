@@ -18,7 +18,7 @@ export class Queue {
   save(
     queue: string | IQueueParams,
     queueType: EQueueType,
-    cb: ICallback<{ queue: IQueueParams; settings: IQueueProperties }>,
+    cb: ICallback<{ queue: IQueueParams; properties: IQueueProperties }>,
   ): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
@@ -42,10 +42,10 @@ export class Queue {
             if (err) cb(err);
             else if (!reply) cb(new QueueExistsError());
             else
-              this.getProperties(queueParams, (err, settings) => {
+              this.getProperties(queueParams, (err, properties) => {
                 if (err) cb(err);
-                else if (!settings) cb(new errors.EmptyCallbackReplyError());
-                else cb(null, { queue: queueParams, settings });
+                else if (!properties) cb(new errors.EmptyCallbackReplyError());
+                else cb(null, { queue: queueParams, properties });
               });
           },
         );

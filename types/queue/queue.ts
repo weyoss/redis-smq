@@ -15,10 +15,10 @@ export interface IQueueRateLimit {
 }
 
 export interface IQueueProperties {
-  [EQueueProperty.QUEUE_TYPE]: EQueueType;
-  [EQueueProperty.RATE_LIMIT]: IQueueRateLimit | null;
-  [EQueueProperty.EXCHANGE]: string | null;
-  [EQueueProperty.MESSAGES_COUNT]: number;
+  queueType: EQueueType;
+  rateLimit: IQueueRateLimit | null;
+  exchange: string | null;
+  messagesCount: number;
 }
 
 export enum EQueueProperty {

@@ -2,7 +2,6 @@ import * as os from 'os';
 import {
   EMessageProperty,
   EMessagePropertyStatus,
-  EQueueProperty,
   EQueueType,
   TQueueConsumer,
   IQueueParams,
@@ -197,8 +196,8 @@ export class DequeueMessage {
             if (err) cb(err);
             else if (!reply) cb(new errors.EmptyCallbackReplyError());
             else {
-              this.queueType = reply[EQueueProperty.QUEUE_TYPE];
-              this.queueRateLimit = reply[EQueueProperty.RATE_LIMIT] ?? null;
+              this.queueType = reply.queueType;
+              this.queueRateLimit = reply.rateLimit ?? null;
               cb();
             }
           });
