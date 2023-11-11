@@ -1,32 +1,29 @@
 import {
   TConsumerMessageHandler,
   TConsumerRedisKeys,
-  TConsumerInfo,
-  TQueueParams,
-  IConfig,
-  TConsumerHeartbeat,
+  IQueueParams,
 } from '../../../types';
 import { events } from '../../common/events/events';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { ConsumerHeartbeat } from './consumer-heartbeat';
 import { Base } from '../base';
-import { consumerQueues } from './consumer-queues';
-import { MessageHandlerRunner } from './consumer-message-handler/message-handler-runner';
-import { MultiplexedMessageHandlerRunner } from './consumer-message-handler/multiplexed-message-handler/multiplexed-message-handler-runner';
-import { Queue } from '../queue-manager/queue';
+import { MessageHandlerRunner } from './message-handler/message-handler-runner';
+import { MultiplexedMessageHandlerRunner } from './multiplexed-message-handler/multiplexed-message-handler-runner';
 import {
   errors,
-  RedisClient,
   WorkerRunner,
   WorkerPool,
   logger,
   createClientInstance,
+  ICallback,
+  TUnaryFunction,
 } from 'redis-smq-common';
-import { ICallback, TUnaryFunction } from 'redis-smq-common/dist/types';
-import DelayWorker from '../../workers/delay.worker';
-import WatchdogWorker from '../../workers/watchdog.worker';
-import RequeueWorker from '../../workers/requeue.worker';
-import ScheduleWorker from '../../workers/schedule.worker';
+import DelayUnacknowledgedWorker from '../../workers/delay-unacknowledged.worker';
+import WatchConsumersWorker from '../../workers/watch-consumers.worker';
+import RequeueUnacknowledgedWorker from '../../workers/requeue-unacknowledged.worker';
+import PublishScheduledWorker from '../../workers/publish-scheduled.worker';
+import { _getQueueParams } from '../queue/queue/_get-queue-params';
+import { Configuration } from '../../config/configuration';
 
 export class Consumer extends Base {
   protected readonly redisKeys: TConsumerRedisKeys;
@@ -34,10 +31,10 @@ export class Consumer extends Base {
   protected heartbeat: ConsumerHeartbeat | null = null;
   protected workerRunner: WorkerRunner | null = null;
 
-  constructor(config: IConfig = {}, useMultiplexing = false) {
-    super(config);
+  constructor(useMultiplexing = false) {
+    super();
     const nsLogger = logger.getNamespacedLogger(
-      this.config.logger,
+      Configuration.getSetConfig().logger,
       `consumer:${this.id}:message-handler`,
     );
     this.messageHandlerRunner = useMultiplexing
@@ -47,17 +44,24 @@ export class Consumer extends Base {
   }
 
   protected setUpHeartbeat = (cb: ICallback<void>): void => {
-    createClientInstance(this.config.redis, (err, redisClient) => {
-      if (err) cb(err);
-      else if (!redisClient) cb(new errors.EmptyCallbackReplyError());
-      else {
-        this.heartbeat = new ConsumerHeartbeat(this, redisClient);
-        this.heartbeat.on(events.ERROR, (err: Error) =>
-          this.emit(events.ERROR, err),
-        );
-        this.heartbeat.once(events.TICK, () => cb());
-      }
-    });
+    createClientInstance(
+      Configuration.getSetConfig().redis,
+      (err, redisClient) => {
+        if (err) cb(err);
+        else if (!redisClient) cb(new errors.EmptyCallbackReplyError());
+        else {
+          this.heartbeat = new ConsumerHeartbeat(
+            redisClient,
+            this,
+            this.redisKeys,
+          );
+          this.heartbeat.on(events.ERROR, (err: Error) =>
+            this.emit(events.ERROR, err),
+          );
+          this.heartbeat.once(events.TICK, () => cb());
+        }
+      },
+    );
   };
 
   protected tearDownHeartbeat = (cb: ICallback<void>): void => {
@@ -71,9 +75,9 @@ export class Consumer extends Base {
 
   protected setUpConsumerWorkers = (cb: ICallback<void>): void => {
     const redisClient = this.getSharedRedisClient();
-    const { keyLockConsumerWorkersRunner } = this.getRedisKeys();
+    const { keyLockConsumerWorkersRunner } = this.redisKeys;
     const nsLogger = logger.getNamespacedLogger(
-      this.config.logger,
+      Configuration.getSetConfig().logger,
       `consumer:${this.id}:worker-runner`,
     );
     this.workerRunner = new WorkerRunner(
@@ -86,18 +90,22 @@ export class Consumer extends Base {
       this.emit(events.ERROR, err),
     );
     this.workerRunner.once(events.UP, cb);
-    this.workerRunner.addWorker(new DelayWorker(redisClient, true));
     this.workerRunner.addWorker(
-      new WatchdogWorker(redisClient, this.config, true, this.logger),
+      new DelayUnacknowledgedWorker(redisClient, true),
     );
-    this.workerRunner.addWorker(new RequeueWorker(redisClient, true));
-    this.workerRunner.addWorker(new ScheduleWorker(redisClient, true));
+    this.workerRunner.addWorker(
+      new WatchConsumersWorker(redisClient, true, this.logger),
+    );
+    this.workerRunner.addWorker(
+      new RequeueUnacknowledgedWorker(redisClient, true),
+    );
+    this.workerRunner.addWorker(new PublishScheduledWorker(redisClient, true));
     this.workerRunner.run();
   };
 
   protected initConsumerEventListeners = (cb: ICallback<void>): void => {
     this.registerEventListeners(
-      this.config.eventListeners.consumerEventListeners,
+      Configuration.getSetConfig().eventListeners.consumerEventListeners,
       cb,
     );
   };
@@ -142,11 +150,11 @@ export class Consumer extends Base {
   }
 
   consume(
-    queue: string | TQueueParams,
+    queue: string | IQueueParams,
     messageHandler: TConsumerMessageHandler,
     cb: ICallback<void>,
   ): void {
-    const queueParams = Queue.getParams(this.config, queue);
+    const queueParams = _getQueueParams(queue);
     this.messageHandlerRunner.addMessageHandler(
       queueParams,
       messageHandler,
@@ -154,64 +162,12 @@ export class Consumer extends Base {
     );
   }
 
-  cancel(queue: string | TQueueParams, cb: ICallback<void>): void {
-    const queueParams = Queue.getParams(this.config, queue);
+  cancel(queue: string | IQueueParams, cb: ICallback<void>): void {
+    const queueParams = _getQueueParams(queue);
     this.messageHandlerRunner.removeMessageHandler(queueParams, cb);
   }
 
-  getQueues(): TQueueParams[] {
+  getQueues(): IQueueParams[] {
     return this.messageHandlerRunner.getQueues();
-  }
-
-  getRedisKeys(): TConsumerRedisKeys {
-    return this.redisKeys;
-  }
-
-  static getConsumersHeartbeats(
-    redisClient: RedisClient,
-    consumersIds: string[],
-    cb: ICallback<Record<string, TConsumerHeartbeat | false>>,
-  ): void {
-    ConsumerHeartbeat.getConsumersHeartbeats(redisClient, consumersIds, cb);
-  }
-
-  static getConsumerHeartbeat(
-    redisClient: RedisClient,
-    consumerId: string,
-    cb: ICallback<TConsumerHeartbeat | false>,
-  ): void {
-    ConsumerHeartbeat.getConsumersHeartbeats(
-      redisClient,
-      [consumerId],
-      (err, consumersHeartbeats = {}) => {
-        if (err) cb(err);
-        else cb(null, consumersHeartbeats[consumerId]);
-      },
-    );
-  }
-
-  static getQueueConsumers(
-    redisClient: RedisClient,
-    queue: TQueueParams,
-    transform = false,
-    cb: ICallback<Record<string, TConsumerInfo | string>>,
-  ): void {
-    consumerQueues.getQueueConsumers(redisClient, queue, transform, cb);
-  }
-
-  static getQueueConsumerIds(
-    redisClient: RedisClient,
-    queue: TQueueParams,
-    cb: ICallback<string[]>,
-  ): void {
-    consumerQueues.getQueueConsumerIds(redisClient, queue, cb);
-  }
-
-  static countQueueConsumers(
-    redisClient: RedisClient,
-    queue: TQueueParams,
-    cb: ICallback<number>,
-  ): void {
-    consumerQueues.countQueueConsumers(redisClient, queue, cb);
   }
 }

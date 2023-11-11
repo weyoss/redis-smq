@@ -1,8 +1,7 @@
 import { v4 as uuid } from 'uuid';
 import { EventEmitter } from 'events';
-import { IConfig, IEventListener, IRequiredConfig } from '../../types';
+import { IEventListener } from '../../types';
 import { events } from '../common/events/events';
-import { getConfiguration } from '../config/configuration';
 import {
   async,
   createClientInstance,
@@ -10,36 +9,33 @@ import {
   logger,
   PowerManager,
   RedisClient,
-} from 'redis-smq-common';
-import {
   ICallback,
-  ICompatibleLogger,
   TFunction,
   TUnaryFunction,
-} from 'redis-smq-common/dist/types';
+  ILogger,
+} from 'redis-smq-common';
+import { Configuration } from '../config/configuration';
 
 export abstract class Base extends EventEmitter {
   protected readonly id: string;
   protected readonly powerManager: PowerManager;
   protected sharedRedisClient: RedisClient | null = null;
-  protected logger: ICompatibleLogger;
-  protected config: IRequiredConfig;
+  protected logger: ILogger;
   protected eventListeners: IEventListener[] = [];
 
-  constructor(config: IConfig = {}) {
+  constructor() {
     super();
     this.id = uuid();
     this.powerManager = new PowerManager(false);
-    this.config = getConfiguration(config);
     this.logger = logger.getNamespacedLogger(
-      this.config.logger,
+      Configuration.getSetConfig().logger,
       `${this.constructor.name.toLowerCase()}:${this.id}`,
     );
     this.registerSystemEventListeners();
   }
 
   protected setUpSharedRedisClient = (cb: ICallback<void>): void => {
-    createClientInstance(this.config.redis, (err, client) => {
+    createClientInstance(Configuration.getSetConfig().redis, (err, client) => {
       if (err) cb(err);
       else if (!client) cb(new errors.EmptyCallbackReplyError());
       else {
@@ -104,7 +100,6 @@ export abstract class Base extends EventEmitter {
           {
             instanceId: this.id,
             eventProvider: this,
-            config: this.getConfig(),
           },
           (err) => {
             if (err) done(err);
@@ -189,9 +184,5 @@ export abstract class Base extends EventEmitter {
 
   getId(): string {
     return this.id;
-  }
-
-  getConfig(): IRequiredConfig {
-    return this.config;
   }
 }

@@ -1,26 +1,34 @@
 import { Message } from '../message/message';
 import { events } from '../../common/events/events';
 import { Base } from '../base';
-import { async, RedisClient } from 'redis-smq-common';
+import {
+  async,
+  RedisClient,
+  ICallback,
+  TUnaryFunction,
+} from 'redis-smq-common';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { MessageNotPublishedError } from './errors/message-not-published.error';
 import { MessageAlreadyPublishedError } from './errors/message-already-published.error';
 import { ELuaScriptName } from '../../common/redis-client/redis-client';
-import { ICallback, TUnaryFunction } from 'redis-smq-common/dist/types';
-import { scheduleMessage } from './schedule-message';
+import { _scheduleMessage } from './_schedule-message';
 import { ProducerNotRunningError } from './errors/producer-not-running.error';
 import {
-  EQueueSettingType,
-  TProduceMessageReply,
-  TQueueParams,
+  EMessageProperty,
+  EMessagePropertyStatus,
+  EQueueProperty,
+  EQueueType,
+  IQueueParams,
 } from '../../../types';
-import { DirectExchange } from '../exchange/direct-exchange';
-import { Queue } from '../queue-manager/queue';
+import { ExchangeDirect } from '../exchange/exchange-direct';
+import { _getQueueParams } from '../queue/queue/_get-queue-params';
+import { _fromMessage } from '../message/_from-message';
+import { Configuration } from '../../config/configuration';
 
 export class Producer extends Base {
   protected initProducerEventListeners = (cb: ICallback<void>): void => {
     this.registerEventListeners(
-      this.config.eventListeners.producerEventListeners,
+      Configuration.getSetConfig().eventListeners.producerEventListeners,
       cb,
     );
   };
@@ -31,30 +39,43 @@ export class Producer extends Base {
 
   protected enqueue(
     redisClient: RedisClient,
-    queue: TQueueParams,
+    queue: IQueueParams,
     message: Message,
     cb: ICallback<void>,
   ): void {
-    message.getRequiredMessageState().setPublishedAt(Date.now());
+    const messageState = message.getRequiredMessageState();
+    messageState.setPublishedAt(Date.now());
+    const messageId = message.getRequiredId();
     const {
-      keyQueueSettings,
-      keyQueuePendingPriorityMessages,
-      keyQueuePendingPriorityMessageWeight,
+      keyQueueProperties,
+      keyPriorityQueuePending,
       keyQueuePending,
+      keyQueueMessages,
     } = redisKeys.getQueueKeys(queue);
+    const { keyMessage } = redisKeys.getMessageKeys(messageId);
     redisClient.runScript(
       ELuaScriptName.PUBLISH_MESSAGE,
       [
-        keyQueueSettings,
-        EQueueSettingType.QUEUE_TYPE,
-        keyQueuePendingPriorityMessages,
-        keyQueuePendingPriorityMessageWeight,
+        keyQueueProperties,
+        keyPriorityQueuePending,
         keyQueuePending,
+        keyMessage,
       ],
       [
-        message.getRequiredId(),
-        JSON.stringify(message),
+        EQueueProperty.QUEUE_TYPE,
+        EQueueProperty.MESSAGES_COUNT,
+        EQueueType.PRIORITY_QUEUE,
+        EQueueType.LIFO_QUEUE,
+        EQueueType.FIFO_QUEUE,
         message.getPriority() ?? '',
+        keyQueueMessages, // Passing as argument. Final key will be computed dynamically
+        messageId,
+        EMessageProperty.STATUS,
+        EMessagePropertyStatus.PENDING,
+        EMessageProperty.STATE,
+        JSON.stringify(messageState),
+        EMessageProperty.MESSAGE,
+        JSON.stringify(message.toJSON()),
       ],
       (err, reply) => {
         if (err) cb(err);
@@ -68,7 +89,7 @@ export class Producer extends Base {
   protected produceMessage(
     redisClient: RedisClient,
     message: Message,
-    queue: TQueueParams,
+    queue: IQueueParams,
     cb: ICallback<void>,
   ): void {
     const messageId = message
@@ -76,7 +97,7 @@ export class Producer extends Base {
       .getSetMessageState()
       .getId();
     if (message.isSchedulable())
-      scheduleMessage(redisClient, message, (err) => {
+      _scheduleMessage(redisClient, message, (err) => {
         if (err) cb(err);
         else {
           this.logger.info(`Message (ID ${messageId}) has been scheduled.`);
@@ -94,7 +115,13 @@ export class Producer extends Base {
       });
   }
 
-  produce(message: Message, cb: ICallback<TProduceMessageReply>): void {
+  produce(
+    message: Message,
+    cb: ICallback<{
+      messages: Message[];
+      scheduled: boolean;
+    }>,
+  ): void {
     if (!this.powerManager.isUp()) cb(new ProducerNotRunningError());
     else {
       if (message.getMessageState()) cb(new MessageAlreadyPublishedError());
@@ -105,16 +132,13 @@ export class Producer extends Base {
         };
         const redisClient = this.getSharedRedisClient();
         const exchange = message.getRequiredExchange();
-        if (exchange instanceof DirectExchange) {
-          const queue = Queue.getParams(
-            this.config,
-            exchange.getBindingParams(),
-          );
+        if (exchange instanceof ExchangeDirect) {
+          const queue = _getQueueParams(exchange.getBindingParams());
           this.produceMessage(redisClient, message, queue, (err) =>
             callback(err, [message]),
           );
         } else {
-          exchange.getQueues(redisClient, this.config, (err, queues) => {
+          exchange.getQueues((err, queues) => {
             if (err) cb(err);
             else if (!queues?.length)
               cb(
@@ -127,7 +151,7 @@ export class Producer extends Base {
               async.eachOf(
                 queues,
                 (queue, index, done) => {
-                  const msg = Message.createFromMessage(message, true);
+                  const msg = _fromMessage(message, null, true);
                   this.produceMessage(redisClient, msg, queue, (err) => {
                     if (err) done(err);
                     else {

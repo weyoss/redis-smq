@@ -1,0 +1,14 @@
+export enum EConsumeMessageDeadLetterCause {
+  TTL_EXPIRED,
+  RETRY_THRESHOLD_EXCEEDED,
+  PERIODIC_MESSAGE,
+}
+
+export enum EConsumeMessageUnacknowledgedCause {
+  TIMEOUT,
+  CONSUME_ERROR,
+  UNACKNOWLEDGED,
+  OFFLINE_CONSUMER,
+  OFFLINE_MESSAGE_HANDLER,
+  TTL_EXPIRED,
+}

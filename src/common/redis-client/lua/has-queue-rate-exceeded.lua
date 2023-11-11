@@ -1,15 +1,19 @@
---- KEYS[1] key_counter
---- ARGV[1] rate_limit
---- ARGV[2] expire 
-local result = redis.call("GET", KEYS[1])
+local keyQueueRateLimitCounter = KEYS[1]
+
+---
+
+local rateLimitLimit = ARGV[1]
+local rateLimitExpire = ARGV[2]
+
+local result = redis.call("GET", keyQueueRateLimitCounter)
 if result == false then
-    redis.call("SET", KEYS[1], ARGV[1])
-    redis.call("PEXPIRE", KEYS[1], ARGV[2]);
+    redis.call("SET", keyQueueRateLimitCounter, rateLimitLimit)
+    redis.call("PEXPIRE", keyQueueRateLimitCounter, rateLimitExpire);
     return 0
 end
 local count = tonumber(result)
 if count <= 1 then
     return 1
 end
-redis.call("DECR", KEYS[1])
+redis.call("DECR", keyQueueRateLimitCounter)
 return 0

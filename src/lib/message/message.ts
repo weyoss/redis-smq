@@ -1,21 +1,21 @@
 import { parseExpression } from 'cron-parser';
 import {
-  EExchangeType,
   TMessageConsumeOptions,
   TExchange,
-  TMessageJSON,
-  TQueueParams,
+  IMessageSerialized,
+  IQueueParams,
   TTopicParams,
 } from '../../../types';
 import { MessageState } from './message-state';
 import { MessageError } from './errors/message.error';
-import { DirectExchange } from '../exchange/direct-exchange';
-import { TopicExchange } from '../exchange/topic-exchange';
-import { FanOutExchange } from '../exchange/fan-out-exchange';
+import { ExchangeDirect } from '../exchange/exchange-direct';
 import { MessageExchangeRequiredError } from './errors/message-exchange-required.error';
+import { DestinationQueueRequiredError } from './errors/destination-queue-required.error';
+import { DestinationQueueAlreadySetError } from './errors/destination-queue-already-set.error';
+import { ExchangeFanOut } from '../exchange/exchange-fan-out';
+import { ExchangeTopic } from '../exchange/exchange-topic';
 
 export class Message {
-  // Do not forget about javascript users. Using an object map instead of enum
   static readonly MessagePriority = {
     LOWEST: 7,
     VERY_LOW: 6,
@@ -59,6 +59,8 @@ export class Message {
   protected messageState: MessageState | null = null;
 
   protected exchange: TExchange | null = null;
+
+  protected destinationQueue: IQueueParams | null = null;
 
   constructor() {
     this.createdAt = Date.now();
@@ -110,6 +112,13 @@ export class Message {
   getScheduledAt(): number | null {
     if (this.messageState) {
       return this.messageState.getScheduledAt();
+    }
+    return null;
+  }
+
+  getScheduledMessageId(): string | null {
+    if (this.messageState) {
+      return this.messageState.getScheduledMessageId();
     }
     return null;
   }
@@ -192,6 +201,14 @@ export class Message {
     return this;
   }
 
+  resetScheduledParams(): Message {
+    this.scheduledCron = null;
+    this.scheduledDelay = null;
+    this.scheduledRepeatPeriod = null;
+    this.scheduledRepeat = 0;
+    return this;
+  }
+
   /**
    * @param ttl In milliseconds
    */
@@ -235,23 +252,25 @@ export class Message {
   }
 
   setFanOut(bindingKey: string): Message {
-    this.exchange = new FanOutExchange(bindingKey);
+    this.exchange = new ExchangeFanOut(bindingKey);
     return this;
   }
 
   setTopic(topicParams: string | TTopicParams): Message {
-    this.exchange = new TopicExchange(topicParams);
+    this.exchange = new ExchangeTopic(topicParams);
     return this;
   }
 
-  setQueue(queueParams: string | TQueueParams): Message {
-    this.exchange = new DirectExchange(queueParams);
+  setQueue(queueParams: string | IQueueParams): Message {
+    this.exchange = new ExchangeDirect(queueParams);
     return this;
   }
 
-  setDestinationQueue(queue: TQueueParams): Message {
-    const exchange = this.getRequiredExchange();
-    exchange.setDestinationQueue(queue);
+  setDestinationQueue(queue: IQueueParams): Message {
+    if (this.destinationQueue !== null) {
+      throw new DestinationQueueAlreadySetError();
+    }
+    this.destinationQueue = queue;
     return this;
   }
 
@@ -264,30 +283,18 @@ export class Message {
     return this.priority !== null;
   }
 
-  getQueue(): TQueueParams | string | null {
-    if (this.exchange instanceof DirectExchange) {
+  getQueue(): IQueueParams | string | null {
+    if (this.exchange instanceof ExchangeDirect) {
       return this.exchange.getBindingParams();
     }
     return null;
   }
 
-  getTopic(): TTopicParams | string | null {
-    if (this.exchange instanceof TopicExchange) {
-      return this.exchange.getBindingParams();
+  getDestinationQueue(): IQueueParams {
+    if (!this.destinationQueue) {
+      throw new DestinationQueueRequiredError();
     }
-    return null;
-  }
-
-  getFanOutParams(): string | null {
-    if (this.exchange instanceof FanOutExchange) {
-      return this.exchange.getBindingParams();
-    }
-    return null;
-  }
-
-  getDestinationQueue(): TQueueParams {
-    const exchange = this.getRequiredExchange();
-    return exchange.getRequiredDestinationQueue();
+    return this.destinationQueue;
   }
 
   getPriority(): number | null {
@@ -417,7 +424,7 @@ export class Message {
     return JSON.stringify(this);
   }
 
-  toJSON(): TMessageJSON {
+  toJSON(): IMessageSerialized {
     return {
       createdAt: this.createdAt,
       ttl: this.ttl,
@@ -430,9 +437,8 @@ export class Message {
       scheduledDelay: this.scheduledDelay,
       scheduledRepeatPeriod: this.scheduledRepeatPeriod,
       scheduledRepeat: this.scheduledRepeat,
-      messageState: this.messageState ? this.messageState.toJSON() : null,
-      queue: this.exchange ? this.exchange.getDestinationQueue() : null,
       exchange: this.exchange ? this.exchange.toJSON() : null,
+      destinationQueue: this.destinationQueue,
     };
   }
 
@@ -454,8 +460,6 @@ export class Message {
   }
 
   protected static validateRetryDelay(delay: number): number {
-    // JavaScript users do not have type checking
-    // So just make sure that we have an integer value
     const value = Number(delay);
     if (isNaN(value) || value < 0) {
       throw new MessageError(
@@ -465,8 +469,6 @@ export class Message {
     return value;
   }
   protected static validateTTL(ttl: unknown): number {
-    // JavaScript users do not have type checking
-    // So just make sure that we have an integer value
     const value = Number(ttl);
     if (isNaN(value) || value < 0) {
       throw new MessageError(
@@ -477,8 +479,6 @@ export class Message {
   }
 
   protected static validateConsumeTimeout(timeout: unknown): number {
-    // JavaScript users do not have type checking
-    // So just make sure that we have an integer value
     const value = Number(timeout);
     if (isNaN(value) || value < 0) {
       throw new MessageError(
@@ -489,8 +489,6 @@ export class Message {
   }
 
   protected static validateRetryThreshold(threshold: unknown): number {
-    // JavaScript users do not have type checking
-    // So just make sure that we have an integer value
     const value = Number(threshold);
     if (isNaN(value) || value < 0) {
       throw new MessageError(
@@ -498,31 +496,6 @@ export class Message {
       );
     }
     return value;
-  }
-
-  static createFromMessage(
-    message: string | Message,
-    hardReset = false,
-  ): Message {
-    const { exchange, messageState, queue, ...params }: TMessageJSON =
-      typeof message === 'string' ? JSON.parse(message) : message.toJSON();
-    const m = new Message();
-    Object.assign(m, params);
-    if (messageState) {
-      const meta = new MessageState();
-      if (!hardReset) Object.assign(meta, messageState);
-      m.setMessageState(meta);
-    }
-    if (exchange) {
-      if (exchange['type'] === EExchangeType.DIRECT) {
-        m.setExchange(DirectExchange.fromJSON(exchange));
-      } else if (exchange['type'] === EExchangeType.FANOUT) {
-        m.setExchange(FanOutExchange.fromJSON(exchange));
-      } else {
-        m.setExchange(TopicExchange.fromJSON(exchange));
-      }
-    }
-    return m;
   }
 
   static setDefaultConsumeOptions(

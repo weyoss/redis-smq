@@ -1,8 +1,8 @@
-import { IConfig, IRequiredConfig } from '../../../types';
+import { IRedisSMQConfig, IRedisSMQConfigRequired } from '../../../types';
 import { merge } from 'lodash';
 import Store from './store';
 
-const defaultConfig: IRequiredConfig['messages'] = {
+const defaultConfig: IRedisSMQConfigRequired['messages'] = {
   store: {
     acknowledged: {
       store: false,
@@ -18,8 +18,8 @@ const defaultConfig: IRequiredConfig['messages'] = {
 };
 
 export default function Messages(
-  userConfig: IConfig,
-): IRequiredConfig['messages'] {
+  userConfig: IRedisSMQConfig,
+): IRedisSMQConfigRequired['messages'] {
   const store = Store(userConfig);
   return merge({}, defaultConfig, { store });
 }

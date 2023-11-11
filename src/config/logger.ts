@@ -1,10 +1,12 @@
-import { IConfig, IRequiredConfig } from '../../types';
+import { IRedisSMQConfig, IRedisSMQConfigRequired } from '../../types';
 import { merge } from 'lodash';
 
-const defaultConfig: IRequiredConfig['logger'] = {
+const defaultConfig: IRedisSMQConfigRequired['logger'] = {
   enabled: false,
 };
 
-export default function Logger(userConfig: IConfig): IRequiredConfig['logger'] {
+export default function Logger(
+  userConfig: IRedisSMQConfig,
+): IRedisSMQConfigRequired['logger'] {
   return merge({}, defaultConfig, userConfig.logger ?? {});
 }
