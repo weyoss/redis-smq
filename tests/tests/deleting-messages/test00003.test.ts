@@ -1,81 +1,62 @@
-import { getQueueManager } from '../../common/queue-manager';
-import { getMessageManager } from '../../common/message-manager';
 import {
   createQueue,
   defaultQueue,
   produceAndAcknowledgeMessage,
 } from '../../common/message-producing-consuming';
+import { getQueueMessages } from '../../common/queue-messages';
+import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages';
+import { getQueuePendingMessages } from '../../common/queue-pending-messages';
+import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages';
 
-test('Combined test: Delete an acknowledged message. Check pending, acknowledged, and dead-letter messages. Check queue metrics.', async () => {
+test('Combined test: Delete an acknowledged message. Check pending, acknowledged, and dead-letter message. Check queue metrics.', async () => {
   await createQueue(defaultQueue, false);
   const { queue, message } = await produceAndAcknowledgeMessage();
-  const messageManager = await getMessageManager();
-  const res0 = await messageManager.deadLetteredMessages.listAsync(
-    queue,
-    0,
-    100,
-  );
-  expect(res0.total).toBe(0);
-  expect(res0.items.length).toBe(0);
+  const deadLetteredMessages = await getQueueDeadLetteredMessages();
+  const res0 = await deadLetteredMessages.countMessagesAsync(queue);
+  expect(res0).toBe(0);
 
-  const res1 = await messageManager.pendingMessages.listAsync(queue, 0, 100);
-  expect(res1.total).toBe(0);
-  expect(res1.items.length).toBe(0);
+  const pendingMessages = await getQueuePendingMessages();
+  const res1 = await pendingMessages.countMessagesAsync(queue);
+  expect(res1).toBe(0);
 
-  const res2 = await messageManager.acknowledgedMessages.listAsync(
-    queue,
-    0,
-    100,
-  );
-  expect(res2.total).toBe(1);
-  expect(res2.items.length).toBe(1);
-  expect(res2.items[0].message).toEqual(message);
+  const acknowledgedMessages = await getQueueAcknowledgedMessages();
 
-  const queueManager = await getQueueManager();
-  const queueMetrics = await queueManager.queueMetrics.getMetricsAsync(queue);
-  expect(queueMetrics.pending).toBe(0);
-  expect(queueMetrics.acknowledged).toBe(1);
+  const res2 = await acknowledgedMessages.countMessagesAsync(queue);
+  expect(res2).toBe(1);
 
-  await messageManager.acknowledgedMessages.deleteAsync(
-    queue,
-    message.getRequiredId(),
-    0,
-  );
+  const res3 = await acknowledgedMessages.getMessagesAsync(queue, 0, 100);
+  expect(res3.totalItems).toBe(1);
+  expect(res3.items.length).toBe(1);
+  expect(res3.items[0]).toEqual(message);
 
-  const res3 = await messageManager.acknowledgedMessages.listAsync(
-    queue,
-    0,
-    100,
-  );
-  expect(res3.total).toBe(0);
-  expect(res3.items.length).toBe(0);
+  const queueMessages = await getQueueMessages();
+  const count = await queueMessages.countMessagesByStatusAsync(queue);
+  expect(count.pending).toBe(0);
+  expect(count.acknowledged).toBe(1);
 
-  const res4 = await messageManager.pendingMessages.listAsync(queue, 0, 100);
-  expect(res4.total).toBe(0);
+  await acknowledgedMessages.deleteMessageAsync(queue, message.getRequiredId());
+
+  const res4 = await acknowledgedMessages.getMessagesAsync(queue, 0, 100);
+  expect(res4.totalItems).toBe(0);
   expect(res4.items.length).toBe(0);
 
-  const res5 = await messageManager.pendingMessages.listAsync(queue, 0, 100);
-  expect(res5.total).toBe(0);
+  const res5 = await pendingMessages.getMessagesAsync(queue, 0, 100);
+  expect(res5.totalItems).toBe(0);
   expect(res5.items.length).toBe(0);
 
-  const res6 = await messageManager.deadLetteredMessages.listAsync(
-    queue,
-    0,
-    100,
-  );
-  expect(res6.total).toBe(0);
+  const res6 = await deadLetteredMessages.getMessagesAsync(queue, 0, 100);
+  expect(res6.totalItems).toBe(0);
   expect(res6.items.length).toBe(0);
 
-  const queueMetrics1 = await queueManager.queueMetrics.getMetricsAsync(queue);
-  expect(queueMetrics1.acknowledged).toBe(0);
+  const count1 = await queueMessages.countMessagesByStatusAsync(queue);
+  expect(count1.acknowledged).toBe(0);
+  expect(count1.pending).toBe(0);
+  expect(count1.deadLettered).toBe(0);
 
   await expect(async () => {
-    await messageManager.acknowledgedMessages.deleteAsync(
+    await acknowledgedMessages.deleteMessageAsync(
       queue,
       message.getRequiredId(),
-      0,
     );
-  }).rejects.toThrow(
-    'Either message parameters are invalid or the message has been already deleted',
-  );
+  }).rejects.toThrow('Message not found');
 });

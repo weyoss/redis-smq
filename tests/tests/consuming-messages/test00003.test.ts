@@ -8,10 +8,10 @@ import {
 } from '../../common/message-producing-consuming';
 import { EQueueType } from '../../../types';
 
-test('Produce and consume 100 messages: LIFO Queues', async () => {
+test('Produce and consume 100 message: LIFO Queues', async () => {
   await createQueue(defaultQueue, EQueueType.LIFO_QUEUE);
 
-  const producer = getProducer();
+  const producer = await getProducer();
   await producer.runAsync();
 
   const total = 100;

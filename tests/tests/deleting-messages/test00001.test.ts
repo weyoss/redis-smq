@@ -1,43 +1,30 @@
-import { getQueueManager } from '../../common/queue-manager';
-import { getMessageManager } from '../../common/message-manager';
 import {
   createQueue,
   defaultQueue,
   produceMessage,
 } from '../../common/message-producing-consuming';
+import { getQueuePendingMessages } from '../../common/queue-pending-messages';
 
-test('Combined test: Delete a pending message. Check pending messages. Check queue metrics.', async () => {
+test('Combined test: Delete a pending message. Check pending message. Check queue metrics.', async () => {
   await createQueue(defaultQueue, false);
 
   const { queue, message } = await produceMessage();
-  const messageManager = await getMessageManager();
-  const res1 = await messageManager.pendingMessages.listAsync(queue, 0, 100);
 
-  expect(res1.total).toBe(1);
-  expect(res1.items[0].message.getId()).toBe(message.getRequiredId());
+  const pendingMessages = await getQueuePendingMessages();
+  const res1 = await pendingMessages.getMessagesAsync(queue, 0, 100);
 
-  const queueManager = await getQueueManager();
-  const queueMetrics = await queueManager.queueMetrics.getMetricsAsync(queue);
-  expect(queueMetrics.pending).toBe(1);
+  expect(res1.totalItems).toBe(1);
+  expect(res1.items[0].getId()).toBe(message.getRequiredId());
 
-  await messageManager.pendingMessages.deleteAsync(
-    queue,
-    message.getRequiredId(),
-    0,
-  );
+  const count = await pendingMessages.countMessagesAsync(queue);
+  expect(count).toBe(1);
 
-  const res2 = await messageManager.pendingMessages.listAsync(queue, 0, 100);
+  await pendingMessages.deleteMessageAsync(queue, message.getRequiredId());
 
-  expect(res2.total).toBe(0);
+  const res2 = await pendingMessages.getMessagesAsync(queue, 0, 100);
+  expect(res2.totalItems).toBe(0);
   expect(res2.items.length).toBe(0);
 
-  const queueMetrics1 = await queueManager.queueMetrics.getMetricsAsync(queue);
-  expect(queueMetrics1.pending).toBe(0);
-
-  // Deleting a message that was already deleted should not throw an error
-  await messageManager.pendingMessages.deleteAsync(
-    queue,
-    message.getRequiredId(),
-    0,
-  );
+  const count2 = await pendingMessages.countMessagesAsync(queue);
+  expect(count2).toBe(0);
 });

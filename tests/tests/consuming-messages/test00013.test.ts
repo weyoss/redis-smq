@@ -1,7 +1,7 @@
 import { Message } from '../../../src/lib/message/message';
 import { delay } from 'bluebird';
 import { events } from '../../../src/common/events/events';
-import { ICallback } from 'redis-smq-common/dist/types';
+import { ICallback } from 'redis-smq-common';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
 import {

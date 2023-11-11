@@ -5,7 +5,7 @@ import {
 } from '../../common/message-producing-consuming';
 import { MessageAlreadyPublishedError } from '../../../src/lib/producer/errors/message-already-published.error';
 
-test('Producing duplicate messages', async () => {
+test('Producing duplicate message', async () => {
   await createQueue(defaultQueue, false);
   const { producer, message } = await produceMessage();
   await expect(async () => {

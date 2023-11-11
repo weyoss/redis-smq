@@ -1,13 +1,14 @@
 import { delay } from 'bluebird';
 import { merge } from 'lodash';
 import { config } from '../../common/config';
-import { getMessageManager } from '../../common/message-manager';
 import {
   createQueue,
   defaultQueue,
   produceAndAcknowledgeMessage,
 } from '../../common/message-producing-consuming';
 import { shutDownBaseInstance } from '../../common/base-instance';
+import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages';
+import { Configuration } from '../../../src/config/configuration';
 
 test('Message storage: acknowledged.expire = 10000', async () => {
   const cfg = merge(config, {
@@ -19,32 +20,33 @@ test('Message storage: acknowledged.expire = 10000', async () => {
       },
     },
   });
+  Configuration.reset();
+  Configuration.getSetConfig(cfg);
 
-  const messageManager = await getMessageManager();
   await createQueue(defaultQueue, false);
   const { producer: p, consumer: c } = await produceAndAcknowledgeMessage(
     defaultQueue,
-    cfg,
   );
 
   await shutDownBaseInstance(p);
   await shutDownBaseInstance(c);
 
-  const res1 = await messageManager.acknowledgedMessages.listAsync(
+  const acknowledgedMessages = await getQueueAcknowledgedMessages();
+  const res1 = await acknowledgedMessages.getMessagesAsync(
     defaultQueue,
     0,
     100,
   );
-  expect(res1.total).toBe(1);
+  expect(res1.totalItems).toBe(1);
   expect(res1.items.length).toBe(1);
 
   await delay(20000);
 
-  const res2 = await messageManager.acknowledgedMessages.listAsync(
+  const res2 = await acknowledgedMessages.getMessagesAsync(
     defaultQueue,
     0,
     100,
   );
-  expect(res2.total).toBe(0);
+  expect(res2.totalItems).toBe(0);
   expect(res2.items.length).toBe(0);
 });

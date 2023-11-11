@@ -1,10 +1,10 @@
-import { TopicExchange } from '../../../../src/lib/exchange/topic-exchange';
+import { ExchangeTopic } from '../../../../src/lib/exchange/exchange-topic';
 import { createQueue } from '../../../common/message-producing-consuming';
 import { Message } from '../../../../src/lib/message/message';
 import { getProducer } from '../../../common/producer';
 import { isEqual } from '../../../common/util';
 
-test('TopicExchange: producing messages using setExchange()', async () => {
+test('ExchangeTopic: producing message using setExchange()', async () => {
   await createQueue({ ns: 'testing', name: 'w123.2.4.5' }, false);
   await createQueue({ ns: 'testing', name: 'w123.2.4.5.6' }, false);
   await createQueue({ ns: 'beta', name: 'w123.2' }, false);
@@ -14,7 +14,7 @@ test('TopicExchange: producing messages using setExchange()', async () => {
   const producer = getProducer();
   await producer.runAsync();
 
-  const e1 = new TopicExchange('w123.2.4');
+  const e1 = new ExchangeTopic('w123.2.4');
   const msg = new Message().setExchange(e1).setBody('hello');
   const r = await producer.produceAsync(msg);
   expect(r.scheduled).toEqual(false);

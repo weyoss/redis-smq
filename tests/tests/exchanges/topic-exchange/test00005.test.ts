@@ -3,7 +3,7 @@ import { Message } from '../../../../src/lib/message/message';
 import { getProducer } from '../../../common/producer';
 import { isEqual } from '../../../common/util';
 
-test('TopicExchange: producing messages using setTopic()', async () => {
+test('ExchangeTopic: producing message using setTopic()', async () => {
   await createQueue({ ns: 'testing', name: 'w123.2.4.5' }, false);
   await createQueue({ ns: 'testing', name: 'w123.2.4.5.6' }, false);
   await createQueue({ ns: 'beta', name: 'w123.2' }, false);

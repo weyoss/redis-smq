@@ -1,13 +1,18 @@
-import { TQueueParams } from '../../../types';
-import { getQueueManager } from '../../common/queue-manager';
+import { IQueueParams } from '../../../types';
 import {
   createQueue,
   produceAndAcknowledgeMessage,
 } from '../../common/message-producing-consuming';
 import { shutDownBaseInstance } from '../../common/base-instance';
+import { getNamespace } from '../../common/namespace';
+import { getQueueMessages } from '../../common/queue-messages';
+import { QueueNotEmptyError } from '../../../src/lib/queue/errors/queue-not-empty.error';
+import { QueueHasRunningConsumersError } from '../../../src/lib/queue/errors/queue-has-running-consumers.error';
+import { QueueNotFoundError } from '../../../src/lib/queue/errors/queue-not-found.error';
+import { NamespaceNotFoundError } from '../../../src/lib/queue/errors/namespace-not-found.error';
 
 test('Combined: Fetching namespaces, deleting a namespace with its message queues', async () => {
-  const queueA: TQueueParams = {
+  const queueA: IQueueParams = {
     name: 'queue_a',
     ns: 'ns1',
   };
@@ -16,7 +21,7 @@ test('Combined: Fetching namespaces, deleting a namespace with its message queue
     queueA,
   );
 
-  const queueB: TQueueParams = {
+  const queueB: IQueueParams = {
     name: 'queue_b',
     ns: 'ns1',
   };
@@ -25,45 +30,55 @@ test('Combined: Fetching namespaces, deleting a namespace with its message queue
     queueB,
   );
 
-  const queueManager = await getQueueManager();
+  const ns = await getNamespace();
 
-  const m0 = await queueManager.namespace.listAsync();
+  const m0 = await ns.getNamespacesAsync();
   expect(m0).toEqual(['ns1']);
 
-  const m1 = await queueManager.queueMetrics.getMetricsAsync(q1);
+  const qm = await getQueueMessages();
+  const m1 = await qm.countMessagesByStatusAsync(q1);
   expect(m1.acknowledged).toBe(1);
 
-  const m2 = await queueManager.queueMetrics.getMetricsAsync(q2);
+  const m2 = await qm.countMessagesByStatusAsync(q2);
   expect(m2.acknowledged).toBe(1);
 
   await expect(async () => {
-    await queueManager.namespace.deleteAsync('ns1');
-  }).rejects.toThrow(
-    'Before deleting a queue/namespace, make sure it is not used by a message handler',
-  );
+    await ns.deleteAsync('ns1');
+  }).rejects.toThrow(QueueNotEmptyError);
+
+  await qm.purgeAsync(q1);
+
+  await expect(async () => {
+    await ns.deleteAsync('ns1');
+  }).rejects.toThrow(QueueHasRunningConsumersError);
 
   await shutDownBaseInstance(c1);
+
   await expect(async () => {
-    await queueManager.namespace.deleteAsync('ns1');
-  }).rejects.toThrow(
-    'Before deleting a queue/namespace, make sure it is not used by a message handler',
-  );
+    await ns.deleteAsync('ns1');
+  }).rejects.toThrow(QueueNotEmptyError);
+
+  await qm.purgeAsync(q2);
+
+  await expect(async () => {
+    await ns.deleteAsync('ns1');
+  }).rejects.toThrow(QueueHasRunningConsumersError);
 
   await shutDownBaseInstance(c2);
-  await queueManager.namespace.deleteAsync('ns1');
+  await ns.deleteAsync('ns1');
 
-  await expect(queueManager.queueMetrics.getMetricsAsync(q1)).rejects.toThrow(
-    'Queue does not exist',
+  await expect(qm.countMessagesByStatusAsync(q1)).rejects.toThrow(
+    QueueNotFoundError,
   );
 
-  await expect(queueManager.queueMetrics.getMetricsAsync(q2)).rejects.toThrow(
-    'Queue does not exist',
+  await expect(qm.countMessagesByStatusAsync(q2)).rejects.toThrow(
+    QueueNotFoundError,
   );
 
-  const m5 = await queueManager.namespace.listAsync();
+  const m5 = await ns.getNamespacesAsync();
   expect(m5).toEqual([]);
 
   await expect(async () => {
-    await queueManager.namespace.deleteAsync('ns1');
-  }).rejects.toThrow(`Namespace (ns1) does not exist`);
+    await ns.deleteAsync('ns1');
+  }).rejects.toThrow(NamespaceNotFoundError);
 });

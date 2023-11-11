@@ -1,12 +1,13 @@
 import { Message } from '../../../src/lib/message/message';
 import { MessageNotScheduledError } from '../../../src/lib/producer/errors/message-not-scheduled.error';
-import { getQueueManager } from '../../common/queue-manager';
 import { getProducer } from '../../common/producer';
+import { EQueueType } from '../../../types';
+import { getQueue } from '../../common/queue';
 
 test('Scheduling a message and expecting different kind of failures', async () => {
-  const qm = await getQueueManager();
-  await qm.queue.createAsync('test0', false);
-  await qm.queue.createAsync('test1', true);
+  const queue = await getQueue();
+  await queue.saveAsync('test0', EQueueType.LIFO_QUEUE);
+  await queue.saveAsync('test1', EQueueType.PRIORITY_QUEUE);
 
   const producer = getProducer();
   await producer.runAsync();

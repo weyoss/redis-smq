@@ -1,10 +1,10 @@
 import {
-  IConfig,
+  IRedisSMQConfig,
   IEventListener,
   TEventListenerInitArgs,
-  TQueueParams,
+  IQueueParams,
 } from '../../../types';
-import { ICallback } from 'redis-smq-common/dist/types';
+import { ICallback } from 'redis-smq-common';
 import { config } from '../../common/config';
 import { Message } from '../../../src/lib/message/message';
 import { events } from '../../../src/common/events/events';
@@ -17,10 +17,11 @@ import {
 import { delay } from 'bluebird';
 import { getConsumer } from '../../common/consumer';
 import { shutDownBaseInstance } from '../../common/base-instance';
+import { Configuration } from '../../../src/config/configuration';
 
 const consumerStats: Record<
   string,
-  { queue: TQueueParams; event: string; message: Message }[]
+  { queue: IQueueParams; event: string; message: Message }[]
 > = {};
 
 class TestConsumerEventListener implements IEventListener {
@@ -51,23 +52,25 @@ class TestConsumerEventListener implements IEventListener {
   }
 }
 
-const cfg: IConfig = {
-  ...config,
-  eventListeners: {
-    consumerEventListeners: [TestConsumerEventListener],
-  },
-};
-
 test('Consumer event listeners', async () => {
+  const cfg: IRedisSMQConfig = {
+    ...config,
+    eventListeners: {
+      consumerEventListeners: [TestConsumerEventListener],
+    },
+  };
+
+  Configuration.reset();
+  Configuration.getSetConfig(cfg);
+  Message.setDefaultConsumeOptions({ retryDelay: 0 });
+
   await createQueue(defaultQueue, false);
   const { message: m0, consumer: c0 } = await produceAndAcknowledgeMessage(
     defaultQueue,
-    cfg,
   );
   await shutDownBaseInstance(c0);
   const { message: m1, consumer: c1 } = await produceAndAcknowledgeMessage(
     defaultQueue,
-    cfg,
   );
   await shutDownBaseInstance(c1);
   const anotherQueue = { name: 'another_queue', ns: 'testing' };
@@ -76,10 +79,10 @@ test('Consumer event listeners', async () => {
     message: m2,
     consumer: c2,
     producer: p2,
-  } = await produceAndDeadLetterMessage(anotherQueue, cfg);
+  } = await produceAndDeadLetterMessage(anotherQueue);
   await shutDownBaseInstance(c2);
 
-  const c3 = getConsumer({ queue: anotherQueue, cfg });
+  const c3 = getConsumer({ queue: anotherQueue });
   await c3.runAsync();
 
   const m3 = new Message().setQueue(anotherQueue).setBody('MMM');

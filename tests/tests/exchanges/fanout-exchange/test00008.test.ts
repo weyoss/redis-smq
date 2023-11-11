@@ -1,23 +1,19 @@
-import { FanOutExchange } from '../../../../src/lib/exchange/fan-out-exchange';
-import { getFanOutExchangeManager } from '../../../common/fanout-exchange-manager';
-import { getQueueManager } from '../../../common/queue-manager';
 import { FanOutExchangeQueueError } from '../../../../src/lib/exchange/errors/fan-out-exchange-queue.error';
+import { EQueueType } from '../../../../types';
+import { getQueue } from '../../../common/queue';
+import { getFanOutExchange } from '../../../common/exchange';
 
-test('FanOutExchange: binding different types of queues', async () => {
-  const fanOutExchangeManager = await getFanOutExchangeManager();
-
-  const e1 = new FanOutExchange('e1');
-  await fanOutExchangeManager.createExchangeAsync(e1);
+test('ExchangeFanOut: binding different types of queues', async () => {
+  const e1 = getFanOutExchange('e1');
+  await e1.saveExchangeAsync();
 
   const q1 = { ns: 'testing', name: 'w123' };
-  const { queue } = await getQueueManager();
-  await queue.createAsync(q1, false);
-  await fanOutExchangeManager.bindQueueAsync(q1, e1);
+  const queueInstance = await getQueue();
+  await queueInstance.saveAsync(q1, EQueueType.LIFO_QUEUE);
+  await e1.bindQueueAsync(q1);
 
   const q2 = { ns: 'testing', name: 'w456' };
-  await queue.createAsync(q2, true);
+  await queueInstance.saveAsync(q2, EQueueType.PRIORITY_QUEUE);
 
-  await expect(fanOutExchangeManager.bindQueueAsync(q2, e1)).rejects.toThrow(
-    FanOutExchangeQueueError,
-  );
+  await expect(e1.bindQueueAsync(q2)).rejects.toThrow(FanOutExchangeQueueError);
 });

@@ -1,23 +1,23 @@
-import { getQueueManager } from '../../common/queue-manager';
 import { defaultQueue } from '../../common/message-producing-consuming';
+import { getQueueRateLimit } from '../../common/queue-rate-limit';
 
 test('SetQueueRateLimit()/GetQueueRateLimit()/ClearQueueRateLimit()', async () => {
-  const qm = await getQueueManager();
-  await qm.queueRateLimit.setAsync(defaultQueue, {
+  const queueRateLimit = await getQueueRateLimit();
+  await queueRateLimit.setAsync(defaultQueue, {
     limit: 5,
     interval: 1000,
   });
 
-  const rateLimit = await qm.queueRateLimit.getAsync(defaultQueue);
+  const rateLimit = await queueRateLimit.getAsync(defaultQueue);
   expect(rateLimit).toEqual({ limit: 5, interval: 1000 });
 
-  qm.queueRateLimit.clearAsync(defaultQueue);
+  await queueRateLimit.clearAsync(defaultQueue);
 
-  const rateLimit2 = await qm.queueRateLimit.getAsync(defaultQueue);
+  const rateLimit2 = await queueRateLimit.getAsync(defaultQueue);
   expect(rateLimit2).toEqual(null);
 
   await expect(async () => {
-    await qm.queueRateLimit.setAsync(defaultQueue, {
+    await queueRateLimit.setAsync(defaultQueue, {
       limit: 0,
       interval: 1000,
     });
@@ -26,7 +26,7 @@ test('SetQueueRateLimit()/GetQueueRateLimit()/ClearQueueRateLimit()', async () =
   );
 
   await expect(async () => {
-    await qm.queueRateLimit.setAsync(defaultQueue, {
+    await queueRateLimit.setAsync(defaultQueue, {
       limit: 4,
       interval: 0,
     });

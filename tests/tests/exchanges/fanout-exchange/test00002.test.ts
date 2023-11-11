@@ -1,26 +1,20 @@
-import { getQueueManager } from '../../../common/queue-manager';
-import { FanOutExchange } from '../../../../src/lib/exchange/fan-out-exchange';
-import { getRedisInstance } from '../../../common/redis';
-import { requiredConfig } from '../../../common/config';
-import { promisifyAll } from 'bluebird';
 import { isEqual } from '../../../common/util';
-import { getFanOutExchangeManager } from '../../../common/fanout-exchange-manager';
+import { EQueueType } from '../../../../types';
+import { getQueue } from '../../../common/queue';
+import { getFanOutExchange } from '../../../common/exchange';
 
-test('FanOutExchange: getQueues() ', async () => {
-  const { queue } = await getQueueManager();
-  const fanOutExchangeManager = await getFanOutExchangeManager();
-
+test('ExchangeFanOut: getQueues() ', async () => {
   const q1 = { ns: 'testing', name: 'w123' };
   const q2 = { ns: 'testing', name: 'w456' };
 
-  await queue.createAsync(q1, false);
-  await queue.createAsync(q2, false);
+  const queue = await getQueue();
+  await queue.saveAsync(q1, EQueueType.LIFO_QUEUE);
+  await queue.saveAsync(q2, EQueueType.LIFO_QUEUE);
 
-  const exchange = promisifyAll(new FanOutExchange('fanout_a'));
-  await fanOutExchangeManager.bindQueueAsync(q1, exchange);
-  await fanOutExchangeManager.bindQueueAsync(q2, exchange);
+  const exchange = getFanOutExchange('fanout_a');
+  await exchange.bindQueueAsync(q1);
+  await exchange.bindQueueAsync(q2);
 
-  const redisClient = await getRedisInstance();
-  const r = await exchange.getQueuesAsync(redisClient, requiredConfig);
+  const r = await exchange.getQueuesAsync();
   expect(isEqual(r, [q1, q2])).toBe(true);
 });

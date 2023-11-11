@@ -1,6 +1,5 @@
 import { merge } from 'lodash';
 import { config } from '../../common/config';
-import { getMessageManager } from '../../common/message-manager';
 import {
   createQueue,
   defaultQueue,
@@ -8,6 +7,9 @@ import {
   produceAndDeadLetterMessage,
 } from '../../common/message-producing-consuming';
 import { shutDownBaseInstance } from '../../common/base-instance';
+import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages';
+import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages';
+import { Configuration } from '../../../src/config/configuration';
 
 test('Message storage: acknowledged = true, deadLettered = false', async () => {
   const cfg = merge(config, {
@@ -18,35 +20,37 @@ test('Message storage: acknowledged = true, deadLettered = false', async () => {
       },
     },
   });
+  Configuration.reset();
+  Configuration.getSetConfig(cfg);
+
   await createQueue(defaultQueue, false);
   const { producer, consumer } = await produceAndDeadLetterMessage(
     defaultQueue,
-    cfg,
   );
   await shutDownBaseInstance(producer);
   await shutDownBaseInstance(consumer);
-  const messageManager = await getMessageManager();
-  const res1 = await messageManager.deadLetteredMessages.listAsync(
+  const deadLetteredMessages = await getQueueDeadLetteredMessages();
+  const res1 = await deadLetteredMessages.getMessagesAsync(
     defaultQueue,
     0,
     100,
   );
-  expect(res1.total).toBe(0);
+  expect(res1.totalItems).toBe(0);
   expect(res1.items.length).toBe(0);
 
   const { producer: p, consumer: c } = await produceAndAcknowledgeMessage(
     defaultQueue,
-    cfg,
   );
 
   await shutDownBaseInstance(p);
   await shutDownBaseInstance(c);
 
-  const res2 = await messageManager.acknowledgedMessages.listAsync(
+  const acknowledgedMessages = await getQueueAcknowledgedMessages();
+  const res2 = await acknowledgedMessages.getMessagesAsync(
     defaultQueue,
     0,
     100,
   );
-  expect(res2.total).toBe(1);
+  expect(res2.totalItems).toBe(1);
   expect(res2.items.length).toBe(1);
 });

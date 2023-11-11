@@ -1,20 +1,20 @@
 import { delay } from 'bluebird';
 import { Message } from '../../../src/lib/message/message';
 import { events } from '../../../src/common/events/events';
-import { getQueueManager } from '../../common/queue-manager';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
-import {
-  createQueue,
-  defaultQueue,
-} from '../../common/message-producing-consuming';
 import { validateTime } from '../../common/validate-time';
+import { defaultQueue } from '../../common/message-producing-consuming';
+import { EQueueType } from '../../../types';
+import { getQueue } from '../../common/queue';
+import { getQueueRateLimit } from '../../common/queue-rate-limit';
 
-test('Rate limit a queue without priority and check message rate', async () => {
-  await createQueue(defaultQueue, false);
+test('Rate limit a priority queue and check message rate', async () => {
+  const queue = await getQueue();
+  await queue.saveAsync(defaultQueue, EQueueType.PRIORITY_QUEUE);
 
-  const qm = await getQueueManager();
-  await qm.queueRateLimit.setAsync(defaultQueue, {
+  const queueRateLimit = await getQueueRateLimit();
+  await queueRateLimit.setAsync(defaultQueue, {
     limit: 3,
     interval: 10000,
   });
@@ -23,26 +23,46 @@ test('Rate limit a queue without priority and check message rate', async () => {
   await producer.runAsync();
 
   await producer.produceAsync(
-    new Message().setBody('msg 1').setQueue(defaultQueue),
+    new Message()
+      .setBody('msg 1')
+      .setQueue(defaultQueue)
+      .setPriority(Message.MessagePriority.HIGH),
   );
   await producer.produceAsync(
-    new Message().setBody('msg 2').setQueue(defaultQueue),
+    new Message()
+      .setBody('msg 2')
+      .setQueue(defaultQueue)
+      .setPriority(Message.MessagePriority.HIGH),
   );
   await producer.produceAsync(
-    new Message().setBody('msg 3').setQueue(defaultQueue),
+    new Message()
+      .setBody('msg 3')
+      .setQueue(defaultQueue)
+      .setPriority(Message.MessagePriority.HIGH),
   );
   await producer.produceAsync(
-    new Message().setBody('msg 4').setQueue(defaultQueue),
+    new Message()
+      .setBody('msg 4')
+      .setQueue(defaultQueue)
+      .setPriority(Message.MessagePriority.HIGH),
   );
   await producer.produceAsync(
-    new Message().setBody('msg 5').setQueue(defaultQueue),
+    new Message()
+      .setBody('msg 5')
+      .setQueue(defaultQueue)
+      .setPriority(Message.MessagePriority.HIGH),
   );
   await producer.produceAsync(
-    new Message().setBody('msg 6').setQueue(defaultQueue),
+    new Message()
+      .setBody('msg 6')
+      .setQueue(defaultQueue)
+      .setPriority(Message.MessagePriority.HIGH),
   );
 
   const messages: { ts: number; msg: Message }[] = [];
   const consumer = await getConsumer();
+  await consumer.cancelAsync(defaultQueue);
+  await consumer.consumeAsync(defaultQueue, (msg, cb) => cb());
 
   consumer.on(events.MESSAGE_ACKNOWLEDGED, (msg: Message) => {
     messages.push({ ts: Date.now(), msg });

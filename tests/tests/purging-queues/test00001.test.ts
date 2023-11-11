@@ -1,21 +1,19 @@
-import { getQueueManager } from '../../common/queue-manager';
-import { getMessageManager } from '../../common/message-manager';
 import {
   createQueue,
   defaultQueue,
   produceMessage,
 } from '../../common/message-producing-consuming';
+import { getQueueMessages } from '../../common/queue-messages';
 
 test('Purging pending queue', async () => {
   await createQueue(defaultQueue, false);
   const { queue } = await produceMessage();
-  const queueManager = await getQueueManager();
+  const queueMessages = await getQueueMessages();
 
-  const m2 = await queueManager.queueMetrics.getMetricsAsync(queue);
+  const m2 = await queueMessages.countMessagesByStatusAsync(queue);
   expect(m2.pending).toBe(1);
-  const messageManager = await getMessageManager();
-  await messageManager.pendingMessages.purgeAsync(queue);
+  await queueMessages.purgeAsync(queue);
 
-  const m3 = await queueManager.queueMetrics.getMetricsAsync(queue);
+  const m3 = await queueMessages.countMessagesByStatusAsync(queue);
   expect(m3.pending).toBe(0);
 });

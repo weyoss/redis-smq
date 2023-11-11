@@ -1,23 +1,22 @@
-import { getQueueManager } from '../../common/queue-manager';
-import { getMessageManager } from '../../common/message-manager';
 import {
   createQueue,
   defaultQueue,
   produceAndDeadLetterMessage,
 } from '../../common/message-producing-consuming';
 import { shutDownBaseInstance } from '../../common/base-instance';
+import { getQueueMessages } from '../../common/queue-messages';
 
 test('Purging dead letter queue', async () => {
   await createQueue(defaultQueue, false);
   const { queue, consumer } = await produceAndDeadLetterMessage();
   await shutDownBaseInstance(consumer);
 
-  const queueManager = await getQueueManager();
-  const m = await queueManager.queueMetrics.getMetricsAsync(queue);
+  const queueMessages = await getQueueMessages();
+  const m = await queueMessages.countMessagesByStatusAsync(queue);
   expect(m.deadLettered).toBe(1);
-  const messageManager = await getMessageManager();
-  await messageManager.deadLetteredMessages.purgeAsync(queue);
 
-  const m2 = await queueManager.queueMetrics.getMetricsAsync(queue);
-  expect(m2.deadLettered).toBe(0);
+  await queueMessages.purgeAsync(queue);
+
+  const m1 = await queueMessages.countMessagesByStatusAsync(queue);
+  expect(m1.deadLettered).toBe(0);
 });

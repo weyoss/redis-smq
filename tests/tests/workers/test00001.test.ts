@@ -1,10 +1,9 @@
 import { delay, promisifyAll } from 'bluebird';
 import { Message } from '../../../src/lib/message/message';
 import { events } from '../../../src/common/events/events';
-import { DelayWorker } from '../../../src/workers/delay.worker';
-import { ScheduleWorker } from '../../../src/workers/schedule.worker';
-import { WatchdogWorker } from '../../../src/workers/watchdog.worker';
-import { getMessageManager } from '../../common/message-manager';
+import { DelayUnacknowledgedWorker } from '../../../src/workers/delay-unacknowledged.worker';
+import { PublishScheduledWorker } from '../../../src/workers/publish-scheduled.worker';
+import { WatchConsumersWorker } from '../../../src/workers/watch-consumers.worker';
 import { untilConsumerEvent } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getRedisInstance } from '../../common/redis';
@@ -13,11 +12,12 @@ import {
   createQueue,
   defaultQueue,
 } from '../../common/message-producing-consuming';
-import { requiredConfig } from '../../common/config';
 import { logger } from '../../common/logger';
 import { shutDownBaseInstance } from '../../common/base-instance';
+import { getQueueScheduledMessages } from '../../common/queue-scheduled-messages';
+import { getQueuePendingMessages } from '../../common/queue-pending-messages';
 
-test('WatchdogWorker -> DelayWorker -> ScheduleWorker', async () => {
+test('WatchdogWorker -> DelayUnacknowledgedWorker -> PublishScheduledWorker', async () => {
   await createQueue(defaultQueue, false);
 
   let message: Message | null = null;
@@ -46,34 +46,35 @@ test('WatchdogWorker -> DelayWorker -> ScheduleWorker', async () => {
 
   // should move message from processing queue to delay queue
   const watchdogWorker = promisifyAll(
-    new WatchdogWorker(redisClient, requiredConfig, false, logger),
+    new WatchConsumersWorker(redisClient, false, logger),
   );
   watchdogWorker.run();
   await delay(5000);
 
   // should move from delay queue to scheduled queue
-  const delayHandler = promisifyAll(new DelayWorker(redisClient, false));
+  const delayHandler = promisifyAll(
+    new DelayUnacknowledgedWorker(redisClient, false),
+  );
   delayHandler.run();
   await delay(5000);
 
-  const messageManager = await getMessageManager();
-  const res = await messageManager.scheduledMessages.listAsync(0, 99);
-  expect(res.total).toBe(1);
+  const scheduledMessages = await getQueueScheduledMessages();
+  const res = await scheduledMessages.getMessagesAsync(defaultQueue, 0, 100);
+  expect(res.totalItems).toBe(1);
 
   // should move from delay queue to scheduled queue
-  const scheduleWorker = promisifyAll(new ScheduleWorker(redisClient, false));
+  const scheduleWorker = promisifyAll(
+    new PublishScheduledWorker(redisClient, false),
+  );
   scheduleWorker.run();
   await delay(15000);
 
-  const res2 = await messageManager.scheduledMessages.listAsync(0, 99);
-  expect(res2.total).toBe(0);
+  const res2 = await scheduledMessages.getMessagesAsync(defaultQueue, 0, 100);
+  expect(res2.totalItems).toBe(0);
 
-  const res3 = await messageManager.pendingMessages.listAsync(
-    defaultQueue,
-    0,
-    99,
-  );
-  expect(res3.total).toBe(1);
+  const pendingMessages = await getQueuePendingMessages();
+  const res3 = await pendingMessages.getMessagesAsync(defaultQueue, 0, 100);
+  expect(res3.totalItems).toBe(1);
 
   await delayHandler.quitAsync();
   await watchdogWorker.quitAsync();

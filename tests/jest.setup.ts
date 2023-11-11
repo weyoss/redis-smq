@@ -1,8 +1,7 @@
 import { startUp } from './common/start-up';
 import { shutdown } from './common/shut-down';
-import { init } from './common/init';
 
-beforeAll(init);
+beforeAll(() => void 0);
 
 afterAll(() => void 0);
 
