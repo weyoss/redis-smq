@@ -1,16 +1,22 @@
-import { async } from 'redis-smq-common';
-import { ICallback } from 'redis-smq-common/dist/types';
-import { Producer, Consumer, QueueManager, Message } from '../../index';
-import { events } from '../../src/common/events/events';
+import { async, ICallback } from 'redis-smq-common';
+import {
+  Producer,
+  Consumer,
+  Message,
+  Queue,
+  disconnect,
+  EQueueType,
+  events,
+} from '../../index';
 
-const queue = `queue_${Date.now()}`;
+const queueName = `queue_${Date.now()}`;
 const producer = new Producer();
 
 const produceForever = (err?: Error | null) => {
   if (err) console.log(err);
   else {
     if (producer.isGoingUp() || producer.isRunning()) {
-      const message = new Message().setBody('some data').setQueue(queue); // using the default namespace
+      const message = new Message().setBody('some data').setQueue(queueName);
       producer.produce(message, produceForever);
     }
   }
@@ -19,7 +25,7 @@ const produceForever = (err?: Error | null) => {
 const consumer = new Consumer();
 
 consumer.consume(
-  queue, // using the default namespace
+  queueName, // using the default namespace
   (message, cb) => cb(),
   (err) => err && console.log(err),
 );
@@ -49,17 +55,11 @@ const serialOnOff = (cb: ICallback<void>) =>
     cb,
   );
 
-let queueManager: QueueManager | null | undefined = null;
+const queue = new Queue();
 async.waterfall(
   [
     (cb: ICallback<void>) =>
-      QueueManager.createInstance({}, (err, instance) => {
-        if (err) cb(err);
-        else {
-          queueManager = instance;
-          queueManager?.queue.create(queue, false, (err) => cb(err));
-        }
-      }),
+      queue.save(queueName, EQueueType.LIFO_QUEUE, (err) => cb(err)),
     (cb: ICallback<void>) => producer.run((err) => cb(err)),
     (cb: ICallback<void>) => {
       produceForever();
@@ -71,7 +71,7 @@ async.waterfall(
     else {
       producer.shutdown();
       consumer.shutdown();
-      queueManager?.quit(() => void 0);
+      disconnect(() => void 0);
     }
   },
 );

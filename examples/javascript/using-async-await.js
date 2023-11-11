@@ -1,8 +1,14 @@
-const { promisifyAll } = require('bluebird');
-const { logger } = require('redis-smq-common');
-const { RedisClientName } = require('redis-smq-common/dist/types');
-const { Consumer, Producer, Message, QueueManager } = require('../..');
-const { EQueueType } = require('../../dist/types'); // from 'redis-smq/dist/types'
+const { promisifyAll, promisify } = require('bluebird');
+const { logger, RedisClientName } = require('redis-smq-common');
+const {
+  Consumer,
+  Producer,
+  Message,
+  Queue,
+  EQueueType,
+  Configuration,
+  disconnect,
+} = require('../../index');
 
 const config = {
   namespace: 'ns1',
@@ -26,24 +32,23 @@ const config = {
   },
 };
 
+Configuration.getSetConfig(config);
+
 // Setting up a custom logger
 // This step should be also done from your application bootstrap
 logger.setLogger(console);
 
-const QueueManagerAsync = promisifyAll(QueueManager);
+const queue = promisifyAll(new Queue(config));
 const producer = promisifyAll(new Producer(config));
 const consumer = promisifyAll(new Consumer(config));
 
 const createQueue = async () => {
-  const queueManagerAsync = promisifyAll(
-    await QueueManagerAsync.createInstanceAsync(config),
-  );
-  const queueAsync = promisifyAll(queueManagerAsync.queue);
-  // Before producing and consuming messages to/from a given queue, we need to make sure that such queue exists
-  const exists = await queueAsync.existsAsync('test_queue');
+  // Before producing and consuming message to/from a given queue, we need to make sure that such queue exists
+  const exists = await queue.existsAsync('test_queue');
   if (!exists) {
     // Creating a queue (a LIFO queue)
-    await queueAsync.saveAsync('test_queue', EQueueType.LIFO_QUEUE);
+    await queue.saveAsync('test_queue', EQueueType.LIFO_QUEUE);
+    await promisify(disconnect)();
   }
 };
 
