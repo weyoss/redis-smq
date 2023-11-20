@@ -1,3 +1,12 @@
+/*
+ * Copyright (c)
+ * Weyoss <weyoss@protonmail.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
+ */
+
 import { delay } from 'bluebird';
 import { Message } from '../../../src/lib/message/message';
 import { events } from '../../../src/common/events/events';
