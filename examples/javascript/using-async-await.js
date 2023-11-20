@@ -1,6 +1,6 @@
-const { promisifyAll, promisify } = require('bluebird');
-const { logger, RedisClientName } = require('redis-smq-common');
-const {
+import { logger, ERedisConfigClient } from 'redis-smq-common';
+import bluebird from 'bluebird';
+import {
   Consumer,
   Producer,
   Message,
@@ -8,12 +8,14 @@ const {
   EQueueType,
   Configuration,
   disconnect,
-} = require('../../index');
+} from '../..'; // redis-smq
+
+const { promisify, promisifyAll } = bluebird;
 
 const config = {
   namespace: 'ns1',
   redis: {
-    client: RedisClientName.IOREDIS,
+    client: ERedisConfigClient.IOREDIS,
     options: {
       host: '127.0.0.1',
       port: 6379,
@@ -38,9 +40,9 @@ Configuration.getSetConfig(config);
 // This step should be also done from your application bootstrap
 logger.setLogger(console);
 
-const queue = promisifyAll(new Queue(config));
-const producer = promisifyAll(new Producer(config));
-const consumer = promisifyAll(new Consumer(config));
+const queue = promisifyAll(new Queue());
+const producer = promisifyAll(new Producer());
+const consumer = promisifyAll(new Consumer());
 
 const createQueue = async () => {
   // Before producing and consuming message to/from a given queue, we need to make sure that such queue exists

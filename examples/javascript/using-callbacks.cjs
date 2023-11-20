@@ -1,17 +1,15 @@
-import { ERedisConfigClient, ICallback, logger } from 'redis-smq-common';
-import {
+const { logger, ERedisConfigClient } = require('redis-smq-common');
+const {
   Consumer,
   Producer,
   Message,
   Queue,
-  EQueueType,
-  IRedisSMQConfig,
-  ExchangeDirect,
+  Configuration,
   disconnect,
-} from '../..'; // redis-smq
-import { Configuration } from '../../src/config/configuration';
+  EQueueType,
+} = require('../..'); // redis-smq
 
-export const config: IRedisSMQConfig = {
+const config = {
   namespace: 'ns1',
   redis: {
     client: ERedisConfigClient.IOREDIS,
@@ -41,7 +39,7 @@ logger.setLogger(console);
 
 const queue = new Queue();
 
-const createQueue = (cb: ICallback<void>): void => {
+const createQueue = (cb) => {
   // Before producing and consuming message to/from a given queue, we need to make sure that such queue exists
   queue.exists('test_queue', (err, reply) => {
     if (err) cb(err);
@@ -55,20 +53,21 @@ const createQueue = (cb: ICallback<void>): void => {
   });
 };
 
-const produce = (cb: ICallback<void>): void => {
+const produce = (cb) => {
   const producer = new Producer();
   producer.run((err) => {
     if (err) cb(err);
     else {
-      const e = new ExchangeDirect('test_queue');
       const msg = new Message();
-      msg.setBody({ ts: `Current time is ${Date.now()}` }).setExchange(e);
-      producer.produce(msg, (err) => cb(err));
+      msg
+        .setBody({ ts: `Current time is ${Date.now()}` })
+        .setQueue('test_queue');
+      producer.produce(msg, cb);
     }
   });
 };
 
-const consume = (cb: ICallback<void>): void => {
+const consume = (cb) => {
   const consumer = new Consumer();
   // starting the consumer and then registering a message handler
   consumer.run((err) => {
