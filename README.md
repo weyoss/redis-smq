@@ -55,7 +55,7 @@ npm i redis-smq@rc
 Considerations:
 
 - Minimal Node.js version is >= 18 (RedisSMQ is tested under current active LTS and maintenance LTS Node.js releases).
-- Minimal Redis server version is 2.8.0.
+- Minimal Redis server version is 4.0.0.
 
 ## Usage
 
