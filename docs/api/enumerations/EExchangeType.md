@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / EExchangeType
+>[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / EExchangeType
 
 # Enumeration: EExchangeType
 

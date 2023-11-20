@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / TExchangeTopicExchange
+>[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / TExchangeTopicExchange
 
 # Type alias: TExchangeTopicExchange
 

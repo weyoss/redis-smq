@@ -1,4 +1,4 @@
-[RedisSMQ](../README.md) / Docs
+>[RedisSMQ](../README.md) / Docs
 
 # RedisSMQ Docs
 
@@ -15,7 +15,7 @@
 - [Scheduling Messages](scheduling-messages.md)
 - [Performance](performance.md)
 - [RedisSMQ Architecture](redis-smq-architecture.md)
-- [Logs](https://github.com/weyoss/redis-smq-common/blob/master/docs/logs.md)
+- [Logs](https://github.com/weyoss/redis-smq-common/blob/master/docs/README.md#logs)
 - Extra
   - [HTTP API](https://github.com/weyoss/redis-smq-monitor)
   - [Web UI](https://github.com/weyoss/redis-smq-monitor-client)

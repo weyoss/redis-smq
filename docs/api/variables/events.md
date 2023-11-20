@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / events
+>[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / events
 
 # Variable: events
 

@@ -1,4 +1,4 @@
-[RedisSMQ](../README.md) / [Docs](README.md) / Configuration
+>[RedisSMQ](../README.md) / [Docs](README.md) / Configuration
 
 
 # Configuration

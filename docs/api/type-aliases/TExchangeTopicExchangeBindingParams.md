@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / TExchangeTopicExchangeBindingParams
+>[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / TExchangeTopicExchangeBindingParams
 
 # Type alias: TExchangeTopicExchangeBindingParams
 
