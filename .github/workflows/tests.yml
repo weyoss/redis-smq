@@ -20,11 +20,11 @@ jobs:
           - ubuntu-latest
 
         node:
-          - 14
-          - 16
+          - 18
+          - 20
 
         redis:
-          - 2.6.17
+          - 2.8
           - 3
           - 4
           - 5
