@@ -7,11 +7,11 @@ import {
   TTopicParams,
 } from '../../../types';
 import { MessageState } from './message-state';
-import { MessageError } from './errors/message.error';
+import { MessageError } from './errors';
 import { ExchangeDirect } from '../exchange/exchange-direct';
-import { MessageExchangeRequiredError } from './errors/message-exchange-required.error';
-import { DestinationQueueRequiredError } from './errors/destination-queue-required.error';
-import { DestinationQueueAlreadySetError } from './errors/destination-queue-already-set.error';
+import { MessageExchangeRequiredError } from './errors';
+import { MessageDestinationQueueRequiredError } from './errors';
+import { MessageDestinationQueueAlreadySetError } from './errors';
 import { ExchangeFanOut } from '../exchange/exchange-fan-out';
 import { ExchangeTopic } from '../exchange/exchange-topic';
 
@@ -268,7 +268,7 @@ export class Message {
 
   setDestinationQueue(queue: IQueueParams): Message {
     if (this.destinationQueue !== null) {
-      throw new DestinationQueueAlreadySetError();
+      throw new MessageDestinationQueueAlreadySetError();
     }
     this.destinationQueue = queue;
     return this;
@@ -292,7 +292,7 @@ export class Message {
 
   getDestinationQueue(): IQueueParams {
     if (!this.destinationQueue) {
-      throw new DestinationQueueRequiredError();
+      throw new MessageDestinationQueueRequiredError();
     }
     return this.destinationQueue;
   }

@@ -10,13 +10,13 @@ import { Base } from '../base';
 import { MessageHandlerRunner } from './message-handler/message-handler-runner';
 import { MultiplexedMessageHandlerRunner } from './multiplexed-message-handler/multiplexed-message-handler-runner';
 import {
-  errors,
   WorkerRunner,
   WorkerPool,
   logger,
-  createClientInstance,
+  redis,
   ICallback,
   TUnaryFunction,
+  CallbackEmptyReplyError,
 } from 'redis-smq-common';
 import DelayUnacknowledgedWorker from '../../workers/delay-unacknowledged.worker';
 import WatchConsumersWorker from '../../workers/watch-consumers.worker';
@@ -33,7 +33,7 @@ export class Consumer extends Base {
 
   constructor(useMultiplexing = false) {
     super();
-    const nsLogger = logger.getNamespacedLogger(
+    const nsLogger = logger.getLogger(
       Configuration.getSetConfig().logger,
       `consumer:${this.id}:message-handler`,
     );
@@ -44,11 +44,11 @@ export class Consumer extends Base {
   }
 
   protected setUpHeartbeat = (cb: ICallback<void>): void => {
-    createClientInstance(
+    redis.createInstance(
       Configuration.getSetConfig().redis,
       (err, redisClient) => {
         if (err) cb(err);
-        else if (!redisClient) cb(new errors.EmptyCallbackReplyError());
+        else if (!redisClient) cb(new CallbackEmptyReplyError());
         else {
           this.heartbeat = new ConsumerHeartbeat(
             redisClient,
@@ -76,7 +76,7 @@ export class Consumer extends Base {
   protected setUpConsumerWorkers = (cb: ICallback<void>): void => {
     const redisClient = this.getSharedRedisClient();
     const { keyLockConsumerWorkersRunner } = this.redisKeys;
-    const nsLogger = logger.getNamespacedLogger(
+    const nsLogger = logger.getLogger(
       Configuration.getSetConfig().logger,
       `consumer:${this.id}:worker-runner`,
     );

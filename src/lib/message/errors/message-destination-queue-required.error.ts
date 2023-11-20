@@ -1,6 +1,6 @@
 import { MessageError } from './message.error';
 
-export class DestinationQueueRequiredError extends MessageError {
+export class MessageDestinationQueueRequiredError extends MessageError {
   constructor() {
     super(`Destination queue is required`);
   }

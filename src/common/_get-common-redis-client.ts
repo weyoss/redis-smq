@@ -1,8 +1,8 @@
 import {
-  createClientInstance,
-  errors,
+  redis,
   RedisClient,
   ICallback,
+  CallbackEmptyReplyError,
 } from 'redis-smq-common';
 import { Configuration } from '../config/configuration';
 
@@ -10,10 +10,10 @@ let redisClient: RedisClient | null = null;
 
 export function _getCommonRedisClient(cb: ICallback<RedisClient>): void {
   if (!redisClient) {
-    const redis = Configuration.getSetConfig().redis;
-    createClientInstance(redis, (err, client) => {
+    const cfg = Configuration.getSetConfig().redis;
+    redis.createInstance(cfg, (err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else {
         redisClient = client;
         cb(null, client);

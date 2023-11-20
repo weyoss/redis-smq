@@ -1,4 +1,9 @@
-import { async, errors, RedisClient, ICallback } from 'redis-smq-common';
+import {
+  async,
+  RedisClient,
+  ICallback,
+  CallbackEmptyReplyError,
+} from 'redis-smq-common';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import {
   EMessageProperty,
@@ -8,6 +13,7 @@ import {
 } from '../../../../types';
 import { ELuaScriptName } from '../../../common/redis-client/redis-client';
 import { _getMessage } from './_get-message';
+import { QueueDeleteOperationError } from '../errors';
 
 export function _deleteMessage(
   redisClient: RedisClient,
@@ -22,7 +28,7 @@ export function _deleteMessage(
     (id, _, done) => {
       _getMessage(redisClient, id, (err, message) => {
         if (err) done(err);
-        else if (!message) done(new errors.EmptyCallbackReplyError());
+        else if (!message) done(new CallbackEmptyReplyError());
         else {
           const queueParams = message.getDestinationQueue();
           const {
@@ -78,7 +84,12 @@ export function _deleteMessage(
           argv,
           (err, reply) => {
             if (err) cb(err);
-            else if (reply !== 'OK') cb(new errors.ArgumentError());
+            else if (reply !== 'OK')
+              cb(
+                new QueueDeleteOperationError(
+                  reply ? String(reply) : undefined,
+                ),
+              );
             else cb();
           },
         );

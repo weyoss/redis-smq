@@ -1,7 +1,3 @@
-import { errors } from 'redis-smq-common';
+import { QueueError } from './queue.error';
 
-export class QueueNotEmptyError extends errors.RedisSMQError {
-  constructor() {
-    super(`Queue not empty.`);
-  }
-}
+export class QueueNotEmptyError extends QueueError {}

@@ -2,12 +2,13 @@ import { MessageHandler } from '../message-handler/message-handler';
 import { MessageHandlerRunner } from '../message-handler/message-handler-runner';
 import {
   async,
-  createClientInstance,
-  errors,
+  redis,
   RedisClient,
   Ticker,
   ICallback,
   ILogger,
+  PanicError,
+  CallbackEmptyReplyError,
 } from 'redis-smq-common';
 import {
   EConsumeMessageUnacknowledgedCause,
@@ -107,7 +108,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
 
   protected getMuxRedisClient(): RedisClient {
     if (!this.muxRedisClient) {
-      throw new errors.PanicError('Expected a non-empty value');
+      throw new PanicError('Expected a non-empty value');
     }
     return this.muxRedisClient;
   }
@@ -133,10 +134,10 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
     async.waterfall(
       [
         (cb: ICallback<void>) => {
-          const { redis } = Configuration.getSetConfig();
-          createClientInstance(redis, (err, client) => {
+          const { redis: cfg } = Configuration.getSetConfig();
+          redis.createInstance(cfg, (err, client) => {
             if (err) cb(err);
-            else if (!client) cb(new errors.EmptyCallbackReplyError());
+            else if (!client) cb(new CallbackEmptyReplyError());
             else {
               this.muxRedisClient = client;
               cb();

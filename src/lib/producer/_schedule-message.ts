@@ -1,6 +1,6 @@
 import { Message } from '../message/message';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { MessageNotScheduledError } from './errors/message-not-scheduled.error';
+import { ProducerMessageNotScheduledError } from './errors';
 import { RedisClient, ICallback } from 'redis-smq-common';
 import { ELuaScriptName } from '../../common/redis-client/redis-client';
 import {
@@ -55,9 +55,10 @@ export function _scheduleMessage(
       (err, reply) => {
         if (err) cb(err);
         else if (reply !== 'OK')
-          cb(new MessageNotScheduledError(String(reply)));
+          cb(new ProducerMessageNotScheduledError(String(reply)));
         else cb();
       },
     );
-  } else cb(new MessageNotScheduledError('INVALID_SCHEDULING_PARAMETERS'));
+  } else
+    cb(new ProducerMessageNotScheduledError('INVALID_SCHEDULING_PARAMETERS'));
 }

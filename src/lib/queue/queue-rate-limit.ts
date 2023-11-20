@@ -1,8 +1,12 @@
 import { EQueueProperty, IQueueParams, IQueueRateLimit } from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { QueueRateLimitError } from './errors/queue-rate-limit.error';
+import { QueueRateLimitError } from './errors';
 import { Queue } from './queue/queue';
-import { errors, RedisClient, ICallback } from 'redis-smq-common';
+import {
+  RedisClient,
+  ICallback,
+  CallbackEmptyReplyError,
+} from 'redis-smq-common';
 import { ELuaScriptName } from '../../common/redis-client/redis-client';
 import { _getQueueParams } from './queue/_get-queue-params';
 import { _getCommonRedisClient } from '../../common/_get-common-redis-client';
@@ -17,7 +21,7 @@ export class QueueRateLimit {
   clear(queue: string | IQueueParams, cb: ICallback<void>): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else {
         const queueParams = _getQueueParams(queue);
         const { keyQueueProperties, keyQueueRateLimitCounter } =
@@ -37,7 +41,7 @@ export class QueueRateLimit {
   ): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else {
         const queueParams = _getQueueParams(queue);
         // validating rateLimit params from a javascript client
@@ -76,7 +80,7 @@ export class QueueRateLimit {
   ): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else QueueRateLimit.hasExceeded(client, queue, rateLimit, cb);
     });
   }
@@ -87,7 +91,7 @@ export class QueueRateLimit {
   ): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else {
         const queueParams = _getQueueParams(queue);
         const { keyQueueProperties } = redisKeys.getQueueKeys(queueParams);

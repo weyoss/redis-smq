@@ -46,8 +46,10 @@ local function updateMessageStatus()
 end
 
 local function removeQueueConsumer()
-    redis.call("HDEL", keyQueueConsumers, consumerId)
-    redis.call("SREM", keyConsumerQueues, queue)
+    if queue ~= '' then
+        redis.call("HDEL", keyQueueConsumers, consumerId)
+        redis.call("SREM", keyConsumerQueues, queue)
+    end
 end
 
 local function deleteConsumer()
@@ -81,9 +83,11 @@ local function retryMessage()
 end
 
 local function deleteProcessingQueue()
-    redis.call("SREM", keyProcessingQueues, keyQueueProcessing)
-    redis.call("HDEL", keyQueueProcessingQueues, keyQueueProcessing)
-    redis.call("DEL", keyQueueProcessing)
+    if keyQueueProcessing ~= '' then
+        redis.call("SREM", keyProcessingQueues, keyQueueProcessing)
+        redis.call("HDEL", keyQueueProcessingQueues, keyQueueProcessing)
+        redis.call("DEL", keyQueueProcessing)
+    end
 end
 
 ---

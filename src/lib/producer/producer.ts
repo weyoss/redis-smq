@@ -8,11 +8,11 @@ import {
   TUnaryFunction,
 } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { MessageNotPublishedError } from './errors/message-not-published.error';
-import { MessageAlreadyPublishedError } from './errors/message-already-published.error';
+import { ProducerMessageNotPublishedError } from './errors';
+import { ProducerMessageAlreadyPublishedError } from './errors';
 import { ELuaScriptName } from '../../common/redis-client/redis-client';
 import { _scheduleMessage } from './_schedule-message';
-import { ProducerNotRunningError } from './errors/producer-not-running.error';
+import { ProducerInstanceNotRunningError } from './errors';
 import {
   EMessageProperty,
   EMessagePropertyStatus,
@@ -80,7 +80,11 @@ export class Producer extends Base {
       (err, reply) => {
         if (err) cb(err);
         else if (reply !== 'OK')
-          cb(new MessageNotPublishedError(String(reply)));
+          cb(
+            new ProducerMessageNotPublishedError(
+              reply ? String(reply) : undefined,
+            ),
+          );
         else cb();
       },
     );
@@ -122,9 +126,10 @@ export class Producer extends Base {
       scheduled: boolean;
     }>,
   ): void {
-    if (!this.powerManager.isUp()) cb(new ProducerNotRunningError());
+    if (!this.powerSwitch.isUp()) cb(new ProducerInstanceNotRunningError());
     else {
-      if (message.getMessageState()) cb(new MessageAlreadyPublishedError());
+      if (message.getMessageState())
+        cb(new ProducerMessageAlreadyPublishedError());
       else {
         const callback: ICallback<Message[]> = (err, messages = []) => {
           if (err) cb(err);
@@ -142,7 +147,7 @@ export class Producer extends Base {
             if (err) cb(err);
             else if (!queues?.length)
               cb(
-                new MessageNotPublishedError(
+                new ProducerMessageNotPublishedError(
                   `The exchange (${exchange.constructor.name}) does not match any queue.`,
                 ),
               );

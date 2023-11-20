@@ -1,6 +1,6 @@
 import { MessageError } from './message.error';
 
-export class DestinationQueueAlreadySetError extends MessageError {
+export class MessageDestinationQueueAlreadySetError extends MessageError {
   constructor() {
     super(`Destination queue is already set`);
   }

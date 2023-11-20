@@ -30,7 +30,9 @@
   "bugs": {
     "url": "https://github.com/weyoss/redis-smq/issues"
   },
-  "main": "dist/index.js",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
     "bluebird": "3.7.2",
@@ -46,36 +48,29 @@
     "@types/node": "16.10.2",
     "@types/supertest": "2.0.11",
     "@types/uuid": "9.0.0",
-    "@typescript-eslint/eslint-plugin": "4.32.0",
-    "@typescript-eslint/parser": "4.32.0",
-    "eslint": "7.32.0",
-    "eslint-config-prettier": "8.3.0",
-    "eslint-plugin-prettier": "4.0.0",
+    "@typescript-eslint/eslint-plugin": "6.10.0",
+    "@typescript-eslint/parser": "6.10.0",
+    "eslint": "8.53.0",
+    "eslint-config-prettier": "9.0.0",
+    "eslint-plugin-prettier": "5.0.1",
     "husky": "7.0.4",
     "jest": "27.2.4",
     "lint-staged": "11.1.2",
-    "prettier": "2.4.1",
-    "redis-smq-common": "file:../redis-smq-common",
+    "prettier": "3.0.3",
+    "redis-smq-common": "3.0.0-rc.5",
     "supertest": "6.1.6",
-    "ts-jest": "27.0.5",
-    "ts-node": "^10.9.1",
     "type-coverage": "2.19.0",
-    "typescript": "4.7.4"
+    "typescript": "4.9.4"
   },
   "scripts": {
-    "build:clean": "rimraf dist",
-    "prebuild": "npm run build:clean",
-    "build": "tsc",
-    "postbuild": "cp -r src/common/redis-client/lua dist/src/common/redis-client/",
+    "build": "scripts/build.sh",
+    "test": "scripts/test.sh",
+    "release": "scripts/release.sh",
+    "benchmark": "scripts/benchmark.sh",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
     "lint": "eslint \"{src,tests,types}/**/*.ts\" --fix",
-    "pretest": "npm run build",
-    "test": "NODE_ENV=test jest --runInBand --verbose --collectCoverage",
-    "precoverage": "npm run build",
     "type-coverage": "type-coverage --strict --at-least 100  --ignore-files \"dist/**/*\"",
-    "prepublishOnly": "npm run build",
-    "prepare": "husky install",
-    "benchmark": "[ ! -d \"misc/benchmarks\" ] && exit 0 || cd misc/benchmarks && sudo docker-compose down --remove-orphans && sudo docker-compose run -e TM=5000 benchmark-runner"
+    "prepare": "husky install"
   },
   "lint-staged": {
     "*.(ts)": [
@@ -90,6 +85,6 @@
   },
   "engineStrict": true,
   "engines": {
-    "node": ">=14"
+    "node": ">=18"
   }
 }

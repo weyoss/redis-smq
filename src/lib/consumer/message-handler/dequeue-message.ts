@@ -10,16 +10,17 @@ import {
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import {
   async,
-  errors,
   RedisClient,
   Ticker,
   ICallback,
+  CallbackEmptyReplyError,
+  CallbackInvalidReplyError,
 } from 'redis-smq-common';
 import { events } from '../../../common/events/events';
 import { MessageHandler } from './message-handler';
 import { QueueRateLimit } from '../../queue/queue-rate-limit';
 import { ELuaScriptName } from '../../../common/redis-client/redis-client';
-import { QueueNotFoundError } from '../../queue/errors/queue-not-found.error';
+import { QueueNotFoundError } from '../../queue/errors';
 import { _getQueueProperties } from '../../queue/queue/_get-queue-properties';
 import { _fromMessage } from '../../message/_from-message';
 
@@ -41,7 +42,7 @@ export class DequeueMessage {
   protected redisClient: RedisClient;
   protected queue: IQueueParams;
   protected consumerId: string;
-  protected redisKeys: ReturnType<typeof redisKeys['getQueueConsumerKeys']>;
+  protected redisKeys: ReturnType<(typeof redisKeys)['getQueueConsumerKeys']>;
   protected queueRateLimit: IQueueRateLimit | null = null;
   protected ticker: Ticker;
   protected messageHandler: MessageHandler;
@@ -75,11 +76,9 @@ export class DequeueMessage {
       (err, reply: unknown) => {
         if (err) this.messageHandler.handleError(err);
         else if (!reply)
-          this.messageHandler.handleError(new errors.EmptyCallbackReplyError());
+          this.messageHandler.handleError(new CallbackEmptyReplyError());
         else if (!Array.isArray(reply))
-          this.messageHandler.handleError(
-            new errors.InvalidCallbackReplyError(),
-          );
+          this.messageHandler.handleError(new CallbackInvalidReplyError());
         else {
           const [state, msg]: string[] = reply;
           const message = _fromMessage(msg, state);
@@ -194,7 +193,7 @@ export class DequeueMessage {
         (cb: ICallback<void>) => {
           _getQueueProperties(this.redisClient, this.queue, (err, reply) => {
             if (err) cb(err);
-            else if (!reply) cb(new errors.EmptyCallbackReplyError());
+            else if (!reply) cb(new CallbackEmptyReplyError());
             else {
               this.queueType = reply.queueType;
               this.queueRateLimit = reply.rateLimit ?? null;

@@ -1,4 +1,8 @@
-import { errors, RedisClient, ICallback } from 'redis-smq-common';
+import {
+  RedisClient,
+  ICallback,
+  CallbackEmptyReplyError,
+} from 'redis-smq-common';
 import { IQueueParams } from '../../../../types';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 
@@ -9,7 +13,7 @@ export function _getQueues(
   const { keyQueues } = redisKeys.getMainKeys();
   client.sscanAll(keyQueues, {}, (err, reply) => {
     if (err) cb(err);
-    else if (!reply) cb(new errors.EmptyCallbackReplyError());
+    else if (!reply) cb(new CallbackEmptyReplyError());
     else {
       const queues: IQueueParams[] = reply.map((i) => JSON.parse(i));
       cb(null, queues);

@@ -1,5 +1,10 @@
 import { IQueueParams, TTopicParams } from '../../../types';
-import { async, errors, ICallback, RedisClient } from 'redis-smq-common';
+import {
+  async,
+  CallbackEmptyReplyError,
+  ICallback,
+  RedisClient,
+} from 'redis-smq-common';
 import { _getQueues } from '../queue/queue/_get-queues';
 import { _getTopicExchangeParams } from './_get-topic-exchange-params';
 
@@ -10,7 +15,7 @@ export function _getTopicExchangeQueues(
 ): void {
   _getQueues(redisClient, (err, queues) => {
     if (err) cb(err);
-    else if (!queues) cb(new errors.EmptyCallbackReplyError());
+    else if (!queues) cb(new CallbackEmptyReplyError());
     else {
       const topicParams = _getTopicExchangeParams(topic);
       const matched: IQueueParams[] = [];

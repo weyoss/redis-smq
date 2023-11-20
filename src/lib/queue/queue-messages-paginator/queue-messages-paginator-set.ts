@@ -1,4 +1,4 @@
-import { async, errors, ICallback } from 'redis-smq-common';
+import { async, CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
 import { QueueMessagesPaginatorAbstract } from './queue-messages-paginator-abstract';
 import { IQueueMessagesPage, IQueueParams } from '../../../../types';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
@@ -13,12 +13,12 @@ export abstract class QueueMessagesPaginatorSet extends QueueMessagesPaginatorAb
   ): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else {
         const queueParams = _getQueueParams(queue);
         _getQueueProperties(client, queueParams, (err, properties) => {
           if (err) cb(err);
-          else if (!properties) cb(new errors.EmptyCallbackReplyError());
+          else if (!properties) cb(new CallbackEmptyReplyError());
           else cb(null, properties.messagesCount);
         });
       }
@@ -37,7 +37,7 @@ export abstract class QueueMessagesPaginatorSet extends QueueMessagesPaginatorAb
         (totalItems: number, cb: ICallback<IQueueMessagesPage<string>>) => {
           _getCommonRedisClient((err, client) => {
             if (err) cb(err);
-            else if (!client) cb(new errors.EmptyCallbackReplyError());
+            else if (!client) cb(new CallbackEmptyReplyError());
             else {
               if (!totalItems) {
                 cb(null, {
@@ -55,7 +55,7 @@ export abstract class QueueMessagesPaginatorSet extends QueueMessagesPaginatorAb
                   { COUNT: pageSize },
                   (err, reply) => {
                     if (err) cb(err);
-                    else if (!reply) cb(new errors.EmptyCallbackReplyError());
+                    else if (!reply) cb(new CallbackEmptyReplyError());
                     else
                       cb(null, {
                         cursor: Number(reply.cursor),

@@ -4,9 +4,9 @@ import {
   IQueueParams,
   IQueueProperties,
 } from '../../../../types';
-import { errors, RedisClient, ICallback } from 'redis-smq-common';
+import { RedisClient, ICallback, PanicError } from 'redis-smq-common';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
-import { QueueNotFoundError } from '../errors/queue-not-found.error';
+import { QueueNotFoundError } from '../errors';
 
 function parseProperties(raw: Record<string, string>): IQueueProperties {
   const properties: IQueueProperties = {
@@ -26,7 +26,7 @@ function parseProperties(raw: Record<string, string>): IQueueProperties {
     } else if (keyNum === EQueueProperty.MESSAGES_COUNT) {
       properties.messagesCount = Number(raw[key]);
     } else {
-      throw new errors.PanicError(`Unsupported queue settings type [${key}]`);
+      throw new PanicError(`Unsupported queue settings type [${key}]`);
     }
   }
   return properties;

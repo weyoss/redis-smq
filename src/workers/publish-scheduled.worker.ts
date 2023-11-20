@@ -1,6 +1,6 @@
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { Message } from '../lib/message/message';
-import { async, RedisClient, Worker } from 'redis-smq-common';
+import { async, RedisClient, Worker, WorkerError } from 'redis-smq-common';
 import { ELuaScriptName } from '../common/redis-client/redis-client';
 import {
   EMessageProperty,
@@ -8,7 +8,7 @@ import {
   EQueueProperty,
   EQueueType,
 } from '../../types';
-import { errors, ICallback } from 'redis-smq-common';
+import { ICallback } from 'redis-smq-common';
 import { _getMessages } from '../lib/queue/queue-messages/_get-message';
 import { _fromMessage } from '../lib/message/_from-message';
 
@@ -112,8 +112,7 @@ export class PublishScheduledWorker extends Worker {
               argv,
               (err, reply) => {
                 if (err) cb(err);
-                else if (reply !== 'OK')
-                  cb(new errors.GenericError(String(reply)));
+                else if (reply !== 'OK') cb(new WorkerError(String(reply)));
                 else cb();
               },
             );

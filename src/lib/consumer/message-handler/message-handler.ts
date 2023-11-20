@@ -14,7 +14,7 @@ import { ConsumeMessage } from './consume-message';
 import { Consumer } from '../consumer';
 import {
   async,
-  PowerManager,
+  PowerSwitch,
   RedisClient,
   ICallback,
   ILogger,
@@ -27,7 +27,7 @@ export class MessageHandler extends EventEmitter {
   protected queue: IQueueParams;
   protected dequeueRedisClient: RedisClient;
   protected sharedRedisClient: RedisClient;
-  protected powerManager: PowerManager;
+  protected powerSwitch: PowerSwitch;
   protected logger: ILogger;
   protected dequeueMessage: DequeueMessage;
   protected consumeMessage: ConsumeMessage;
@@ -49,7 +49,7 @@ export class MessageHandler extends EventEmitter {
     this.dequeueRedisClient = dequeueRedisClient;
     this.sharedRedisClient = sharedRedisClient;
     this.handler = handler;
-    this.powerManager = new PowerManager();
+    this.powerSwitch = new PowerSwitch();
     this.logger = logger;
     this.dequeueMessage = new DequeueMessage(this, dequeueRedisClient);
     this.consumeMessage = new ConsumeMessage(this, dequeueRedisClient, logger);
@@ -62,7 +62,7 @@ export class MessageHandler extends EventEmitter {
       this.dequeueMessage.dequeue();
     });
     this.on(events.MESSAGE_NEXT, () => {
-      if (this.powerManager.isRunning()) {
+      if (this.powerSwitch.isRunning()) {
         this.dequeueMessage.dequeue();
       }
     });
@@ -88,7 +88,7 @@ export class MessageHandler extends EventEmitter {
       },
     );
     this.on(events.MESSAGE_RECEIVED, (msg: Message) => {
-      if (this.powerManager.isRunning()) {
+      if (this.powerSwitch.isRunning()) {
         this.logger.info(
           `Consuming message (ID ${msg.getRequiredId()}) with properties (${msg.toString()})`,
         );
@@ -113,7 +113,7 @@ export class MessageHandler extends EventEmitter {
   }
 
   handleError(err: Error): void {
-    if (this.powerManager.isRunning() || this.powerManager.isGoingUp()) {
+    if (this.powerSwitch.isRunning() || this.powerSwitch.isGoingUp()) {
       this.emit(events.ERROR, err);
     }
   }
@@ -123,11 +123,11 @@ export class MessageHandler extends EventEmitter {
   }
 
   run(cb: ICallback<void>): void {
-    this.powerManager.goingUp();
+    this.powerSwitch.goingUp();
     this.dequeueMessage.run((err) => {
       if (err) cb(err);
       else {
-        this.powerManager.commit();
+        this.powerSwitch.commit();
         this.emit(events.UP);
         cb();
       }
@@ -139,7 +139,7 @@ export class MessageHandler extends EventEmitter {
     cb: ICallback<void>,
   ): void {
     const goDown = () => {
-      this.powerManager.goingDown();
+      this.powerSwitch.goingDown();
       async.waterfall(
         [
           (cb: ICallback<void>) => this.dequeueMessage.quit(cb),
@@ -149,14 +149,14 @@ export class MessageHandler extends EventEmitter {
         (err) => {
           if (err) cb(err);
           else {
-            this.powerManager.commit();
+            this.powerSwitch.commit();
             this.emit(events.DOWN);
             cb();
           }
         },
       );
     };
-    if (this.powerManager.isGoingUp()) this.once(events.UP, goDown);
+    if (this.powerSwitch.isGoingUp()) this.once(events.UP, goDown);
     else goDown();
   }
 
@@ -173,7 +173,7 @@ export class MessageHandler extends EventEmitter {
   }
 
   isRunning(): boolean {
-    return this.powerManager.isRunning();
+    return this.powerSwitch.isRunning();
   }
 
   getHandler(): TConsumerMessageHandler {

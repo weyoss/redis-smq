@@ -7,7 +7,6 @@ import {
 import { Message } from '../../message/message';
 import {
   async,
-  errors,
   RedisClient,
   ICallback,
   ILogger,
@@ -23,6 +22,7 @@ import { consumerQueues } from '../consumer-queues';
 import { ELuaScriptName } from '../../../common/redis-client/redis-client';
 import { _getMessage } from '../../queue/queue-messages/_get-message';
 import { Configuration } from '../../../config/configuration';
+import { ConsumerError } from '../errors';
 
 export type THandleProcessingQueueReply = TGetRetryActionReply | false;
 
@@ -77,73 +77,92 @@ export const processingQueue = {
                 }
               },
               (queues: IQueueParams[], cb: ICallback<void>) => {
-                async.each(
-                  queues,
-                  (queue, _, done) => {
-                    args.push(JSON.stringify(queue));
-                    args.push(consumerId);
-                    const {
-                      keyQueueProcessing,
-                      keyQueueDL,
-                      keyQueueProcessingQueues,
-                      keyQueueConsumers,
-                      keyConsumerQueues,
-                      keyQueueProperties,
-                    } = redisKeys.getQueueConsumerKeys(queue, consumerId);
-                    keys.push(
-                      keyQueueProcessing,
-                      keyQueueDL,
-                      keyQueueProcessingQueues,
-                      keyQueueConsumers,
-                      keyConsumerQueues,
-                      keyQueueProperties,
-                    );
-                    this.fetchProcessingQueueMessage(
-                      redisClient,
-                      keyQueueProcessing,
-                      (err, message) => {
-                        if (err) done(err);
-                        else {
-                          if (message) {
-                            const messageId = message.getRequiredId();
-                            args.push(messageId);
-                            const { keyMessage } =
-                              redisKeys.getMessageKeys(messageId);
-                            keys.push(keyMessage);
-                            retryActionReply = getRetryAction(
-                              message,
-                              unacknowledgedCause,
-                            );
-                            const { action } = retryActionReply;
-                            const messageStatus =
-                              action === ERetryAction.DEAD_LETTER
-                                ? EMessagePropertyStatus.DEAD_LETTERED
-                                : action === ERetryAction.REQUEUE
-                                ? EMessagePropertyStatus.UNACK_REQUEUING
-                                : EMessagePropertyStatus.UNACK_DELAYING;
-                            args.push(
-                              action,
-                              action === ERetryAction.DEAD_LETTER
-                                ? retryActionReply.deadLetterCause
-                                : '',
-                              unacknowledgedCause,
-                              messageStatus,
-                            );
-                            debugInfo.push(
-                              `Message ID ${messageId} has been ${
+                if (queues.length) {
+                  async.each(
+                    queues,
+                    (queue, _, done) => {
+                      args.push(JSON.stringify(queue));
+                      args.push(consumerId);
+                      const {
+                        keyQueueProcessing,
+                        keyQueueDL,
+                        keyQueueProcessingQueues,
+                        keyQueueConsumers,
+                        keyConsumerQueues,
+                        keyQueueProperties,
+                      } = redisKeys.getQueueConsumerKeys(queue, consumerId);
+                      keys.push(
+                        keyQueueProcessing,
+                        keyQueueDL,
+                        keyQueueProcessingQueues,
+                        keyQueueConsumers,
+                        keyConsumerQueues,
+                        keyQueueProperties,
+                      );
+                      this.fetchProcessingQueueMessage(
+                        redisClient,
+                        keyQueueProcessing,
+                        (err, message) => {
+                          if (err) done(err);
+                          else {
+                            if (message) {
+                              const messageId = message.getRequiredId();
+                              args.push(messageId);
+                              const { keyMessage } =
+                                redisKeys.getMessageKeys(messageId);
+                              keys.push(keyMessage);
+                              retryActionReply = getRetryAction(
+                                message,
+                                unacknowledgedCause,
+                              );
+                              const { action } = retryActionReply;
+                              const messageStatus =
                                 action === ERetryAction.DEAD_LETTER
-                                  ? 'dead-lettered'
-                                  : 'unacknowledged'
-                              }.`,
-                            );
-                          } else args.push('', '', '', unacknowledgedCause, '');
-                          done();
-                        }
-                      },
-                    );
-                  },
-                  cb,
-                );
+                                  ? EMessagePropertyStatus.DEAD_LETTERED
+                                  : action === ERetryAction.REQUEUE
+                                  ? EMessagePropertyStatus.UNACK_REQUEUING
+                                  : EMessagePropertyStatus.UNACK_DELAYING;
+                              args.push(
+                                action,
+                                action === ERetryAction.DEAD_LETTER
+                                  ? retryActionReply.deadLetterCause
+                                  : '',
+                                unacknowledgedCause,
+                                messageStatus,
+                              );
+                              debugInfo.push(
+                                `Message ID ${messageId} has been ${
+                                  action === ERetryAction.DEAD_LETTER
+                                    ? 'dead-lettered'
+                                    : 'unacknowledged'
+                                }.`,
+                              );
+                            } else {
+                              keys.push('');
+                              args.push('', '', '', unacknowledgedCause, '');
+                            }
+                            done();
+                          }
+                        },
+                      );
+                    },
+                    cb,
+                  );
+                } else {
+                  const { keyConsumerQueues } =
+                    redisKeys.getConsumerKeys(consumerId);
+                  keys.push('', '', '', '', keyConsumerQueues, '', '');
+                  args.push(
+                    '',
+                    consumerId,
+                    '',
+                    '',
+                    '',
+                    unacknowledgedCause,
+                    '',
+                  );
+                  cb();
+                }
               },
             ],
             done,
@@ -159,7 +178,7 @@ export const processingQueue = {
               (err, reply) => {
                 if (err) cb(err);
                 else if (reply !== 'OK')
-                  cb(new errors.GenericError(String(reply)));
+                  cb(new ConsumerError(reply ? String(reply) : undefined));
                 else {
                   debugInfo.forEach((i) => logger.debug(i));
                   cb(null, retryActionReply);

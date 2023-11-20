@@ -7,11 +7,11 @@ import {
 } from 'redis-smq-common';
 import { processingQueue } from '../../consumer/message-handler/processing-queue';
 import { ConsumerHeartbeat } from '../../consumer/consumer-heartbeat';
-import { QueueNotFoundError } from '../errors/queue-not-found.error';
+import { QueueNotFoundError } from '../errors';
 import { IQueueParams } from '../../../../types';
 import { _getQueueProperties } from './_get-queue-properties';
-import { QueueNotEmptyError } from '../errors/queue-not-empty.error';
-import { QueueHasRunningConsumersError } from '../errors/queue-has-running-consumers.error';
+import { QueueNotEmptyError } from '../errors';
+import { QueueHasRunningConsumersError } from '../errors';
 import { consumerQueues } from '../../consumer/consumer-queues';
 
 function checkOnlineConsumers(

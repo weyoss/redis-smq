@@ -1,5 +1,5 @@
 import { _getCommonRedisClient } from '../../../common/_get-common-redis-client';
-import { async, errors, ICallback } from 'redis-smq-common';
+import { async, CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
 import { QueueMessagesPaginatorAbstract } from './queue-messages-paginator-abstract';
 import { IQueueMessagesPage, IQueueParams } from '../../../../types';
 
@@ -7,7 +7,7 @@ export abstract class QueueMessagesPaginatorSortedSet extends QueueMessagesPagin
   countMessages(queue: string | IQueueParams, cb: ICallback<number>): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else {
         const key = this.getRedisKey(queue);
         client.zcard(key, cb);
@@ -27,7 +27,7 @@ export abstract class QueueMessagesPaginatorSortedSet extends QueueMessagesPagin
         (totalItems: number, cb: ICallback<IQueueMessagesPage<string>>) => {
           _getCommonRedisClient((err, client) => {
             if (err) cb(err);
-            else if (!client) cb(new errors.EmptyCallbackReplyError());
+            else if (!client) cb(new CallbackEmptyReplyError());
             else {
               if (!totalItems) {
                 cb(null, {
@@ -43,7 +43,7 @@ export abstract class QueueMessagesPaginatorSortedSet extends QueueMessagesPagin
                   { COUNT: pageSize },
                   (err, reply) => {
                     if (err) cb(err);
-                    else if (!reply) cb(new errors.EmptyCallbackReplyError());
+                    else if (!reply) cb(new CallbackEmptyReplyError());
                     else
                       cb(null, {
                         cursor: Number(reply.cursor),

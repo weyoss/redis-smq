@@ -4,7 +4,7 @@ import {
   IQueueMessagesPage,
   IQueueParams,
 } from '../../../../types';
-import { async, errors, ICallback } from 'redis-smq-common';
+import { async, CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
 import { Message } from '../../message/message';
 import { _getCommonRedisClient } from '../../../common/_get-common-redis-client';
 import { _deleteMessage } from '../queue-messages/_delete-message';
@@ -52,7 +52,7 @@ export abstract class QueueMessagesPaginatorAbstract implements IQueueMessages {
   purge(queue: string | IQueueParams, cb: ICallback<void>): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else {
         const deleteMessages = (cursor = '0') => {
           async.waterfall<string>(
@@ -88,12 +88,12 @@ export abstract class QueueMessagesPaginatorAbstract implements IQueueMessages {
   ): void {
     this.getMessagesIds(queue, cursor, pageSize, (err, reply) => {
       if (err) cb(err);
-      else if (!reply) cb(new errors.EmptyCallbackReplyError());
+      else if (!reply) cb(new CallbackEmptyReplyError());
       else {
         if (reply.items.length) {
           _getCommonRedisClient((err, client) => {
             if (err) cb(err);
-            else if (!client) cb(new errors.EmptyCallbackReplyError());
+            else if (!client) cb(new CallbackEmptyReplyError());
             else {
               _getMessages(client, reply.items, (err, messages) => {
                 if (err) cb(err);
@@ -113,7 +113,7 @@ export abstract class QueueMessagesPaginatorAbstract implements IQueueMessages {
   ): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else _deleteMessage(client, messageId, cb);
     });
   }

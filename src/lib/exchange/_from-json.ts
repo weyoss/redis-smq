@@ -1,5 +1,5 @@
 import { EExchangeType, TExchangeSerialized } from '../../../types';
-import { InvalidExchangeDataError } from './errors/invalid-exchange-data.error';
+import { ExchangeInvalidDataError } from './errors';
 import { ExchangeFanOut } from './exchange-fan-out';
 import { ExchangeTopic } from './exchange-topic';
 import { ExchangeDirect } from './exchange-direct';
@@ -8,7 +8,7 @@ export function _fromJSON(
   json: Partial<TExchangeSerialized>,
 ): ExchangeFanOut | ExchangeTopic | ExchangeDirect {
   if (!json.bindingParams || json.type === undefined)
-    throw new InvalidExchangeDataError();
+    throw new ExchangeInvalidDataError();
   if (json.type === EExchangeType.FANOUT) {
     const e = new ExchangeFanOut(json.bindingParams);
     e.fromJSON(json);
@@ -24,5 +24,5 @@ export function _fromJSON(
     e.fromJSON(json);
     return e;
   }
-  throw new InvalidExchangeDataError();
+  throw new ExchangeInvalidDataError();
 }

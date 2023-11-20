@@ -15,6 +15,6 @@ if redis.call("SISMEMBER", keyQueues, queue) == 0 then
     redis.call("SADD", keyNsQueues, queue)
     redis.call("SADD", keyNamespaces, namespace)
     redis.call("HSET", keyQueueProperties, keyQueuePropertiesQueueType, queueType)
-    return 1
+    return 'OK'
 end
-return 0
+return 'QUEUE_EXISTS'
