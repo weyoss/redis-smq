@@ -8,7 +8,7 @@
  */
 
 import { Message } from '../../src/lib/message/message';
-import { ICallback } from '../../../redis-smq-common';
+import { ICallback } from 'redis-smq-common';
 import { IQueueParams } from '../queue';
 import { redisKeys } from '../../src/common/redis-keys/redis-keys';
 
