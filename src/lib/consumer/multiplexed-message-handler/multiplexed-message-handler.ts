@@ -46,7 +46,7 @@ export class MultiplexedMessageHandler extends MessageHandler {
     cb: ICallback<void>,
   ): void {
     const goDown = () => {
-      this.powerManager.goingDown();
+      this.powerSwitch.goingDown();
       async.waterfall(
         [
           (cb: ICallback<void>) => this.dequeueMessage.quit(cb),
@@ -55,14 +55,14 @@ export class MultiplexedMessageHandler extends MessageHandler {
         (err) => {
           if (err) cb(err);
           else {
-            this.powerManager.commit();
+            this.powerSwitch.commit();
             this.emit(events.DOWN);
             cb();
           }
         },
       );
     };
-    if (this.powerManager.isGoingUp()) this.once(events.UP, goDown);
+    if (this.powerSwitch.isGoingUp()) this.once(events.UP, goDown);
     else goDown();
   }
 }

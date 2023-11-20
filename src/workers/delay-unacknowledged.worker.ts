@@ -1,10 +1,11 @@
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import {
   async,
-  errors,
   RedisClient,
   Worker,
   ICallback,
+  CallbackEmptyReplyError,
+  WorkerError,
 } from 'redis-smq-common';
 import {
   EMessageProperty,
@@ -15,7 +16,7 @@ import { ELuaScriptName } from '../common/redis-client/redis-client';
 import { _getMessage } from '../lib/queue/queue-messages/_get-message';
 
 export class DelayUnacknowledgedWorker extends Worker {
-  protected redisKeys: ReturnType<typeof redisKeys['getMainKeys']>;
+  protected redisKeys: ReturnType<(typeof redisKeys)['getMainKeys']>;
   protected redisClient: RedisClient;
 
   constructor(redisClient: RedisClient, managed: boolean) {
@@ -47,7 +48,7 @@ export class DelayUnacknowledgedWorker extends Worker {
             (messageId, _, done) => {
               _getMessage(this.redisClient, messageId, (err, message) => {
                 if (err) done(err);
-                else if (!message) cb(new errors.EmptyCallbackReplyError());
+                else if (!message) cb(new CallbackEmptyReplyError());
                 else {
                   const messageId = message.getRequiredId();
                   const queue = message.getDestinationQueue();
@@ -82,9 +83,8 @@ export class DelayUnacknowledgedWorker extends Worker {
                   args,
                   (err, reply) => {
                     if (err) cb(err);
-                    else if (!reply) cb(new errors.EmptyCallbackReplyError());
-                    else if (reply !== 'OK')
-                      cb(new errors.GenericError(String(reply)));
+                    else if (!reply) cb(new CallbackEmptyReplyError());
+                    else if (reply !== 'OK') cb(new WorkerError(String(reply)));
                     else cb();
                   },
                 );

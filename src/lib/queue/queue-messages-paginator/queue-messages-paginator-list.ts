@@ -1,5 +1,5 @@
 import { _getCommonRedisClient } from '../../../common/_get-common-redis-client';
-import { async, errors, ICallback } from 'redis-smq-common';
+import { async, CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
 import { QueueMessagesPaginatorAbstract } from './queue-messages-paginator-abstract';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { ELuaScriptName } from '../../../common/redis-client/redis-client';
@@ -11,14 +11,14 @@ import {
   IQueueMessagesPage,
   IQueueParams,
 } from '../../../../types';
-import { MessageRequeueError } from '../errors/message-requeue.error';
+import { QueueMessageRequeueError } from '../errors';
 import { _getMessage } from '../queue-messages/_get-message';
 
 export abstract class QueueMessagesPaginatorList extends QueueMessagesPaginatorAbstract {
   countMessages(queue: string | IQueueParams, cb: ICallback<number>): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else {
         const key = this.getRedisKey(queue);
         client.llen(key, cb);
@@ -38,7 +38,7 @@ export abstract class QueueMessagesPaginatorList extends QueueMessagesPaginatorA
         (totalItems: number, cb: ICallback<IQueueMessagesPage<string>>) => {
           _getCommonRedisClient((err, client) => {
             if (err) cb(err);
-            else if (!client) cb(new errors.EmptyCallbackReplyError());
+            else if (!client) cb(new CallbackEmptyReplyError());
             else {
               const { currentPage, offsetStart, offsetEnd, totalPages } =
                 this.getPaginationParams(cursor, totalItems, pageSize);
@@ -77,11 +77,11 @@ export abstract class QueueMessagesPaginatorList extends QueueMessagesPaginatorA
   ): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else {
         _getMessage(client, id, (err, message) => {
           if (err) cb(err);
-          else if (!message) cb(new errors.EmptyCallbackReplyError());
+          else if (!message) cb(new CallbackEmptyReplyError());
           else {
             const queue = message.getDestinationQueue();
             message.getRequiredMessageState().reset(); // resetting all system parameters
@@ -116,7 +116,7 @@ export abstract class QueueMessagesPaginatorList extends QueueMessagesPaginatorA
               ],
               (err, reply) => {
                 if (err) cb(err);
-                else if (!reply) cb(new MessageRequeueError());
+                else if (!reply) cb(new QueueMessageRequeueError());
                 else cb();
               },
             );

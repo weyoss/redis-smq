@@ -6,7 +6,7 @@ import {
 } from '../../../types';
 import { PriorityQueueMessages } from './priority-queue-messages';
 import { LinearQueueMessages } from './linear-queue-messages';
-import { errors, ICallback } from 'redis-smq-common';
+import { CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
 import { Message } from '../message/message';
 import { _getQueueProperties } from './queue/_get-queue-properties';
 import { _getQueueParams } from './queue/_get-queue-params';
@@ -28,11 +28,11 @@ export class QueuePendingMessages implements IQueueMessages {
     const queueParams = _getQueueParams(queue);
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else {
         _getQueueProperties(client, queueParams, (err, properties) => {
           if (err) cb(err);
-          else if (!properties) cb(new errors.EmptyCallbackReplyError());
+          else if (!properties) cb(new CallbackEmptyReplyError());
           else if (properties.queueType === EQueueType.PRIORITY_QUEUE) {
             cb(null, this.priorityQueueMessages);
           } else {

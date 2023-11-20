@@ -1,3 +1,3 @@
-import { errors } from 'redis-smq-common';
+import { QueueError } from './queue.error';
 
-export class QueueExistsError extends errors.RedisSMQError {}
+export class QueueExistsError extends QueueError {}

@@ -3,7 +3,7 @@ import {
   IQueueMessagesCount,
   IQueueParams,
 } from '../../../../types';
-import { async, errors, ICallback } from 'redis-smq-common';
+import { async, CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { _getCommonRedisClient } from '../../../common/_get-common-redis-client';
 import { Message } from '../../message/message';
@@ -28,7 +28,7 @@ export class QueueMessages extends QueueMessagesPaginatorSet {
   getMessagesByIds(messageIds: string[], cb: ICallback<Message[]>): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else _getMessages(client, messageIds, cb);
     });
   }
@@ -36,7 +36,7 @@ export class QueueMessages extends QueueMessagesPaginatorSet {
   getMessageById(messageId: string, cb: ICallback<Message>): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else _getMessage(client, messageId, cb);
     });
   }
@@ -47,7 +47,7 @@ export class QueueMessages extends QueueMessagesPaginatorSet {
   ): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else {
         const queueParams = _getQueueParams(queue);
         const count: IQueueMessagesCount = {
@@ -61,7 +61,7 @@ export class QueueMessages extends QueueMessagesPaginatorSet {
             (cb: ICallback<EQueueType>) =>
               _getQueueProperties(client, queueParams, (err, properties) => {
                 if (err) cb(err);
-                else if (!properties) cb(new errors.EmptyCallbackReplyError());
+                else if (!properties) cb(new CallbackEmptyReplyError());
                 else cb(null, properties.queueType);
               }),
             (queueType: EQueueType, cb: ICallback<number>) => {
@@ -104,7 +104,7 @@ export class QueueMessages extends QueueMessagesPaginatorSet {
   deleteMessagesByIds(ids: string[], cb: ICallback<void>): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else _deleteMessage(client, ids, cb);
     });
   }

@@ -6,13 +6,13 @@ import {
   IQueueParams,
   IQueueProperties,
 } from '../../../types';
-import { async, errors, ICallback } from 'redis-smq-common';
+import { async, CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { _getFanOutExchangeQueues } from './_get-fan-out-exchange-queues';
-import { ExchangeError } from './errors/exchange.error';
+import { ExchangeError } from './errors';
 import { _getQueueParams } from '../queue/queue/_get-queue-params';
 import { _getQueueProperties } from '../queue/queue/_get-queue-properties';
-import { FanOutExchangeQueueError } from './errors/fan-out-exchange-queue.error';
+import { ExchangeFanOutError } from './errors';
 import { _getQueueFanOutExchange } from './_get-queue-fan-out-exchange';
 import { _getCommonRedisClient } from '../../common/_get-common-redis-client';
 
@@ -33,7 +33,7 @@ export class ExchangeFanOut extends Exchange<
   getQueues(cb: ICallback<IQueueParams[]>): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else _getFanOutExchangeQueues(client, this, cb);
     });
   }
@@ -87,7 +87,7 @@ export class ExchangeFanOut extends Exchange<
       redisKeys.getFanOutExchangeKeys(exchangeParams);
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else {
         async.waterfall(
           [
@@ -113,12 +113,16 @@ export class ExchangeFanOut extends Exchange<
                       (err, exchangeQueueProperties) => {
                         if (err) cb(err);
                         else if (!exchangeQueueProperties)
-                          cb(new errors.EmptyCallbackReplyError());
+                          cb(new CallbackEmptyReplyError());
                         else if (
                           exchangeQueueProperties.queueType !==
                           queueProperties.queueType
                         )
-                          cb(new FanOutExchangeQueueError());
+                          cb(
+                            new ExchangeFanOutError(
+                              'Binding different types of queues to the same exchange is not allowed.',
+                            ),
+                          );
                         else cb(null, queueProperties);
                       },
                     );
@@ -165,7 +169,7 @@ export class ExchangeFanOut extends Exchange<
       redisKeys.getFanOutExchangeKeys(exchangeName);
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else {
         async.waterfall(
           [
@@ -177,10 +181,10 @@ export class ExchangeFanOut extends Exchange<
             (cb: ICallback<IQueueProperties>) =>
               _getQueueProperties(client, queueParams, (err, properties) => {
                 if (err) cb(err);
-                else if (!properties) cb(new errors.EmptyCallbackReplyError());
+                else if (!properties) cb(new CallbackEmptyReplyError());
                 else if (properties.exchange !== exchangeName)
                   cb(
-                    new ExchangeError(
+                    new ExchangeFanOutError(
                       `Queue ${queueParams.name}@${queueParams.ns} is not bound to [${exchangeName}] exchange.`,
                     ),
                   );
@@ -207,7 +211,7 @@ export class ExchangeFanOut extends Exchange<
     const { keyExchanges } = redisKeys.getMainKeys();
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else client.sscanAll(keyExchanges, {}, cb);
     });
   }
@@ -218,7 +222,7 @@ export class ExchangeFanOut extends Exchange<
   ): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else {
         const queueParams = _getQueueParams(queue);
         _getQueueFanOutExchange(client, queueParams, cb);

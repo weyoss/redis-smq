@@ -5,9 +5,9 @@ import {
   IQueueProperties,
 } from '../../../../types';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
-import { QueueExistsError } from '../errors/queue-exists.error';
+import { QueueExistsError } from '../errors';
 import { _deleteQueue } from './_delete-queue';
-import { errors, ICallback } from 'redis-smq-common';
+import { CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
 import { ELuaScriptName } from '../../../common/redis-client/redis-client';
 import { _getCommonRedisClient } from '../../../common/_get-common-redis-client';
 import { _getQueueProperties } from './_get-queue-properties';
@@ -22,7 +22,7 @@ export class Queue {
   ): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else {
         const queueParams = _getQueueParams(queue);
         const { keyQueues, keyNsQueues, keyNamespaces, keyQueueProperties } =
@@ -40,11 +40,12 @@ export class Queue {
           [queueParams.ns, queueIndex, queueType],
           (err, reply) => {
             if (err) cb(err);
-            else if (!reply) cb(new QueueExistsError());
+            else if (!reply) cb(new CallbackEmptyReplyError());
+            else if (reply !== 'OK') cb(new QueueExistsError());
             else
               this.getProperties(queueParams, (err, properties) => {
                 if (err) cb(err);
-                else if (!properties) cb(new errors.EmptyCallbackReplyError());
+                else if (!properties) cb(new CallbackEmptyReplyError());
                 else cb(null, { queue: queueParams, properties });
               });
           },
@@ -56,7 +57,7 @@ export class Queue {
   exists(queue: string | IQueueParams, cb: ICallback<boolean>): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else {
         const queueParams = _getQueueParams(queue);
         const { keyQueues } = redisKeys.getMainKeys();
@@ -75,12 +76,12 @@ export class Queue {
   delete(queue: string | IQueueParams, cb: ICallback<void>): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else {
         const queueParams = _getQueueParams(queue);
         _deleteQueue(client, queueParams, undefined, (err, multi) => {
           if (err) cb(err);
-          else if (!multi) cb(new errors.EmptyCallbackReplyError());
+          else if (!multi) cb(new CallbackEmptyReplyError());
           else multi.exec((err) => cb(err));
         });
       }
@@ -94,7 +95,7 @@ export class Queue {
     const queueParams = _getQueueParams(queue);
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else _getQueueProperties(client, queueParams, cb);
     });
   }
@@ -102,7 +103,7 @@ export class Queue {
   getQueues(cb: ICallback<IQueueParams[]>): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else _getQueues(client, cb);
     });
   }

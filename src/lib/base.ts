@@ -4,21 +4,22 @@ import { IEventListener } from '../../types';
 import { events } from '../common/events/events';
 import {
   async,
-  createClientInstance,
-  errors,
+  redis,
   logger,
-  PowerManager,
+  PowerSwitch,
   RedisClient,
   ICallback,
   TFunction,
   TUnaryFunction,
   ILogger,
+  CallbackEmptyReplyError,
+  PanicError,
 } from 'redis-smq-common';
 import { Configuration } from '../config/configuration';
 
 export abstract class Base extends EventEmitter {
   protected readonly id: string;
-  protected readonly powerManager: PowerManager;
+  protected readonly powerSwitch: PowerSwitch;
   protected sharedRedisClient: RedisClient | null = null;
   protected logger: ILogger;
   protected eventListeners: IEventListener[] = [];
@@ -26,8 +27,8 @@ export abstract class Base extends EventEmitter {
   constructor() {
     super();
     this.id = uuid();
-    this.powerManager = new PowerManager(false);
-    this.logger = logger.getNamespacedLogger(
+    this.powerSwitch = new PowerSwitch(false);
+    this.logger = logger.getLogger(
       Configuration.getSetConfig().logger,
       `${this.constructor.name.toLowerCase()}:${this.id}`,
     );
@@ -35,9 +36,9 @@ export abstract class Base extends EventEmitter {
   }
 
   protected setUpSharedRedisClient = (cb: ICallback<void>): void => {
-    createClientInstance(Configuration.getSetConfig().redis, (err, client) => {
+    redis.createInstance(Configuration.getSetConfig().redis, (err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else {
         this.sharedRedisClient = client;
         cb();
@@ -67,7 +68,7 @@ export abstract class Base extends EventEmitter {
   }
 
   protected up(cb?: ICallback<boolean>): void {
-    this.powerManager.commit();
+    this.powerSwitch.commit();
     this.emit(events.UP);
     cb && cb(null, true);
   }
@@ -77,14 +78,14 @@ export abstract class Base extends EventEmitter {
   }
 
   protected down(cb?: ICallback<boolean>): void {
-    this.powerManager.commit();
+    this.powerSwitch.commit();
     this.emit(events.DOWN);
     cb && cb(null, true);
   }
 
   protected getSharedRedisClient(): RedisClient {
     if (!this.sharedRedisClient)
-      throw new errors.PanicError('Expected an instance of RedisClient');
+      throw new PanicError('Expected an instance of RedisClient');
     return this.sharedRedisClient;
   }
 
@@ -129,13 +130,13 @@ export abstract class Base extends EventEmitter {
   };
 
   handleError(err: Error): void {
-    if (this.powerManager.isGoingUp() || this.powerManager.isRunning()) {
+    if (this.powerSwitch.isGoingUp() || this.powerSwitch.isRunning()) {
       throw err;
     }
   }
 
   run(cb?: ICallback<boolean>): void {
-    const r = this.powerManager.goingUp();
+    const r = this.powerSwitch.goingUp();
     if (r) {
       this.emit(events.GOING_UP);
       const tasks = this.goingUp();
@@ -151,7 +152,7 @@ export abstract class Base extends EventEmitter {
   }
 
   shutdown(cb?: ICallback<boolean>): void {
-    const r = this.powerManager.goingDown();
+    const r = this.powerSwitch.goingDown();
     if (r) {
       this.emit(events.GOING_DOWN);
       const tasks = this.goingDown();
@@ -163,23 +164,23 @@ export abstract class Base extends EventEmitter {
   }
 
   isRunning(): boolean {
-    return this.powerManager.isRunning();
+    return this.powerSwitch.isRunning();
   }
 
   isGoingUp(): boolean {
-    return this.powerManager.isGoingUp();
+    return this.powerSwitch.isGoingUp();
   }
 
   isGoingDown(): boolean {
-    return this.powerManager.isGoingDown();
+    return this.powerSwitch.isGoingDown();
   }
 
   isUp(): boolean {
-    return this.powerManager.isUp();
+    return this.powerSwitch.isUp();
   }
 
   isDown(): boolean {
-    return this.powerManager.isDown();
+    return this.powerSwitch.isDown();
   }
 
   getId(): string {

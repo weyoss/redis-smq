@@ -3,10 +3,10 @@ import { IConsumerHeartbeat } from '../../../types';
 import {
   RedisClient,
   Ticker,
-  errors,
   async,
   ICallback,
   IRedisTransaction,
+  CallbackInvalidReplyError,
 } from 'redis-smq-common';
 import { events } from '../../common/events/events';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
@@ -143,7 +143,7 @@ export class ConsumerHeartbeat extends EventEmitter {
     redisClient.hmget(keyHeartbeats, consumerIds, (err, reply) => {
       if (err) cb(err);
       else if (!reply || reply.length !== consumerIds.length)
-        cb(new errors.InvalidCallbackReplyError());
+        cb(new CallbackInvalidReplyError());
       else {
         const r: Record<string, IConsumerHeartbeat | false> = {};
         async.eachOf(

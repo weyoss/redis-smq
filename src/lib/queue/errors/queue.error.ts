@@ -1,3 +1,3 @@
 import { RedisSMQError } from 'redis-smq-common';
 
-export class MessageError extends RedisSMQError {}
+export class QueueError extends RedisSMQError {}

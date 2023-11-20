@@ -1,8 +1,8 @@
 import { IQueueParams } from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { _deleteQueue } from './queue/_delete-queue';
-import { async, errors, ICallback } from 'redis-smq-common';
-import { NamespaceNotFoundError } from './errors/namespace-not-found.error';
+import { async, CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
+import { QueueNamespaceNotFoundError } from './errors';
 import { _getQueues } from './queue/_get-queues';
 import { _getCommonRedisClient } from '../../common/_get-common-redis-client';
 
@@ -10,12 +10,12 @@ export class Namespace {
   getNamespaces(cb: ICallback<string[]>): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else {
         const { keyNamespaces } = redisKeys.getMainKeys();
         client.smembers(keyNamespaces, (err, reply) => {
           if (err) cb(err);
-          else if (!reply) cb(new errors.EmptyCallbackReplyError());
+          else if (!reply) cb(new CallbackEmptyReplyError());
           else cb(null, reply);
         });
       }
@@ -25,12 +25,12 @@ export class Namespace {
   getNamespaceQueues(namespace: string, cb: ICallback<IQueueParams[]>): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else {
         const { keyNsQueues } = redisKeys.getNamespaceKeys(namespace);
         client.smembers(keyNsQueues, (err, reply) => {
           if (err) cb(err);
-          else if (!reply) cb(new errors.EmptyCallbackReplyError());
+          else if (!reply) cb(new CallbackEmptyReplyError());
           else {
             const messageQueues: IQueueParams[] = reply.map((i) =>
               JSON.parse(i),
@@ -45,7 +45,7 @@ export class Namespace {
   delete(namespace: string, cb: ICallback<void>): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else {
         const { keyNamespaces } = redisKeys.getMainKeys();
         async.waterfall(
@@ -53,7 +53,8 @@ export class Namespace {
             (cb: ICallback<void>) => {
               client.sismember(keyNamespaces, namespace, (err, isMember) => {
                 if (err) cb(err);
-                else if (!isMember) cb(new NamespaceNotFoundError(namespace));
+                else if (!isMember)
+                  cb(new QueueNamespaceNotFoundError(namespace));
                 else cb();
               });
             },

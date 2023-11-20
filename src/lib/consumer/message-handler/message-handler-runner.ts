@@ -9,13 +9,14 @@ import {
 } from '../../../../types';
 import {
   async,
-  createClientInstance,
-  errors,
+  redis,
   RedisClient,
   ICallback,
   ILogger,
+  CallbackEmptyReplyError,
+  PanicError,
 } from 'redis-smq-common';
-import { MessageHandlerAlreadyExistsError } from '../errors/message-handler-already-exists.error';
+import { ConsumerMessageHandlerAlreadyExistsError } from '../errors';
 import { Configuration } from '../../../config/configuration';
 
 export class MessageHandlerRunner {
@@ -93,10 +94,10 @@ export class MessageHandlerRunner {
     handlerParams: IConsumerMessageHandlerArgs,
     cb: ICallback<void>,
   ): void {
-    const { redis } = Configuration.getSetConfig();
-    createClientInstance(redis, (err, client) => {
+    const { redis: cfg } = Configuration.getSetConfig();
+    redis.createInstance(cfg, (err, client) => {
       if (err) cb(err);
-      else if (!client) cb(new errors.EmptyCallbackReplyError());
+      else if (!client) cb(new CallbackEmptyReplyError());
       else {
         const handler = this.createMessageHandlerInstance(
           client,
@@ -127,7 +128,7 @@ export class MessageHandlerRunner {
 
   protected getSharedRedisClient(): RedisClient {
     if (!this.sharedRedisClient) {
-      throw new errors.PanicError('Expected a non-empty value');
+      throw new PanicError('Expected a non-empty value');
     }
     return this.sharedRedisClient;
   }
@@ -193,7 +194,7 @@ export class MessageHandlerRunner {
     cb: ICallback<void>,
   ): void {
     const handler = this.getMessageHandler(queue);
-    if (handler) cb(new MessageHandlerAlreadyExistsError(queue));
+    if (handler) cb(new ConsumerMessageHandlerAlreadyExistsError(queue));
     else {
       const handlerParams = {
         queue,

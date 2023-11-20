@@ -14,5 +14,5 @@ export interface IConsumerMessageHandlerArgs {
 }
 
 export type TConsumerRedisKeys = ReturnType<
-  typeof redisKeys['getConsumerKeys']
+  (typeof redisKeys)['getConsumerKeys']
 >;
