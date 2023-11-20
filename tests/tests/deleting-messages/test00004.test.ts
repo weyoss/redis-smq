@@ -16,6 +16,7 @@ import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-m
 import { getQueuePendingMessages } from '../../common/queue-pending-messages';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages';
 import { getQueueMessages } from '../../common/queue-messages';
+import { QueueMessageNotFoundError } from '../../../src/lib/queue/errors';
 
 test('Combined test: Delete a dead-letter message. Check pending, acknowledged, and dead-letter message. Check queue metrics.', async () => {
   await createQueue(defaultQueue, false);
@@ -69,5 +70,5 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
       queue,
       message.getRequiredId(),
     );
-  }).rejects.toThrow('Message not found');
+  }).rejects.toThrow(QueueMessageNotFoundError);
 });
