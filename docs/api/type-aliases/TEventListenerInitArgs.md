@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / TEventListenerInitArgs
+>[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / TEventListenerInitArgs
 
 # Type alias: TEventListenerInitArgs
 

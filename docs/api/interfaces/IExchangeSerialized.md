@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IExchangeSerialized
+>[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IExchangeSerialized
 
 # Interface: IExchangeSerialized`<BindingParams, ExchangeType>`
 

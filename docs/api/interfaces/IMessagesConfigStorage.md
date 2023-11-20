@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IMessagesConfigStorage
+>[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IMessagesConfigStorage
 
 # Interface: IMessagesConfigStorage
 

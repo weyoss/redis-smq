@@ -1,4 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / EQueueProperty
+>[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / EQueueProperty
 
 # Enumeration: EQueueProperty
 
