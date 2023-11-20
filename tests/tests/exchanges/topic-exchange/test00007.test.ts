@@ -1,6 +1,6 @@
 import { Message } from '../../../../src/lib/message/message';
 import { getProducer } from '../../../common/producer';
-import { MessageNotPublishedError } from '../../../../src/lib/producer/errors/message-not-published.error';
+import { ProducerMessageNotPublishedError } from '../../../../src/lib/producer/errors';
 import { ExchangeTopic } from '../../../../src/lib/exchange/exchange-topic';
 
 test('ExchangeTopic: producing message having an exchange without matched queues ', async () => {
@@ -11,6 +11,6 @@ test('ExchangeTopic: producing message having an exchange without matched queues
   const msg = new Message().setExchange(e).setBody('hello');
 
   await expect(async () => await producer.produceAsync(msg)).rejects.toThrow(
-    MessageNotPublishedError,
+    ProducerMessageNotPublishedError,
   );
 });

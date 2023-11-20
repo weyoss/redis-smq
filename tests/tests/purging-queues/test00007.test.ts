@@ -1,13 +1,16 @@
 import { IQueueParams } from '../../../types';
 import { processingQueue } from '../../../src/lib/consumer/message-handler/processing-queue';
-import { RedisClient, ICallback } from 'redis-smq-common';
+import {
+  RedisClient,
+  ICallback,
+  WatchedKeysChangedError,
+} from 'redis-smq-common';
 import {
   createQueue,
   defaultQueue,
 } from '../../common/message-producing-consuming';
 import { getConsumer } from '../../common/consumer';
 import { getQueue } from '../../common/queue';
-import { WatchedKeysChangedError } from 'redis-smq-common/dist/src/redis-client/errors/watched-keys-changed.error';
 
 test('Concurrently deleting a message queue and starting a consumer', async () => {
   await createQueue(defaultQueue, false);

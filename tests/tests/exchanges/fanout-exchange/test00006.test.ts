@@ -1,7 +1,7 @@
 import { Message } from '../../../../src/lib/message/message';
 import { getProducer } from '../../../common/producer';
 import { ExchangeFanOut } from '../../../../src/lib/exchange/exchange-fan-out';
-import { MessageNotPublishedError } from '../../../../src/lib/producer/errors/message-not-published.error';
+import { ProducerMessageNotPublishedError } from '../../../../src/lib/producer/errors';
 
 test('ExchangeFanOut: producing message having an exchange without matched queues ', async () => {
   const producer = getProducer();
@@ -11,6 +11,6 @@ test('ExchangeFanOut: producing message having an exchange without matched queue
   const msg = new Message().setExchange(e).setBody('hello');
 
   await expect(async () => await producer.produceAsync(msg)).rejects.toThrow(
-    MessageNotPublishedError,
+    ProducerMessageNotPublishedError,
   );
 });

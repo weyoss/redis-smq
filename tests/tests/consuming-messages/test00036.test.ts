@@ -1,5 +1,5 @@
 import { Message } from '../../../src/lib/message/message';
-import { MessageNotPublishedError } from '../../../src/lib/producer/errors/message-not-published.error';
+import { ProducerMessageNotPublishedError } from '../../../src/lib/producer/errors';
 import { getProducer } from '../../common/producer';
 import { EQueueType } from '../../../types';
 import { getQueue } from '../../common/queue';
@@ -19,7 +19,7 @@ test('Producing a message and expecting different kind of failures', async () =>
       .setPriority(Message.MessagePriority.LOW);
     await producer.produceAsync(msg);
   } catch (e: unknown) {
-    const m = e instanceof MessageNotPublishedError ? e.message : '';
+    const m = e instanceof ProducerMessageNotPublishedError ? e.message : '';
     expect(m).toBe('PRIORITY_QUEUING_NOT_ENABLED');
   }
 
@@ -27,7 +27,7 @@ test('Producing a message and expecting different kind of failures', async () =>
     const msg1 = new Message().setQueue('test1').setBody('body');
     await producer.produceAsync(msg1);
   } catch (e: unknown) {
-    const m = e instanceof MessageNotPublishedError ? e.message : '';
+    const m = e instanceof ProducerMessageNotPublishedError ? e.message : '';
     expect(m).toBe('MESSAGE_PRIORITY_REQUIRED');
   }
 
@@ -35,7 +35,7 @@ test('Producing a message and expecting different kind of failures', async () =>
     const msg2 = new Message().setQueue('test2').setBody('body');
     await producer.produceAsync(msg2);
   } catch (e: unknown) {
-    const m = e instanceof MessageNotPublishedError ? e.message : '';
+    const m = e instanceof ProducerMessageNotPublishedError ? e.message : '';
     expect(m).toBe('QUEUE_NOT_FOUND');
   }
 });

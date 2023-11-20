@@ -4,7 +4,7 @@ import {
   createQueue,
   defaultQueue,
 } from '../../common/message-producing-consuming';
-import { ProducerNotRunningError } from '../../../src/lib/producer/errors/producer-not-running.error';
+import { ProducerInstanceNotRunningError } from '../../../src/lib/producer/errors';
 
 test('Shutdown a producer and try to produce a message', async () => {
   const producer = getProducer();
@@ -14,5 +14,5 @@ test('Shutdown a producer and try to produce a message', async () => {
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
   await expect(async () => {
     await producer.produceAsync(msg);
-  }).rejects.toThrowError(ProducerNotRunningError);
+  }).rejects.toThrowError(ProducerInstanceNotRunningError);
 });

@@ -1,4 +1,4 @@
-import { FanOutExchangeQueueError } from '../../../../src/lib/exchange/errors/fan-out-exchange-queue.error';
+import { ExchangeFanOutError } from '../../../../src/lib/exchange/errors';
 import { EQueueType } from '../../../../types';
 import { getQueue } from '../../../common/queue';
 import { getFanOutExchange } from '../../../common/exchange';
@@ -15,5 +15,5 @@ test('ExchangeFanOut: binding different types of queues', async () => {
   const q2 = { ns: 'testing', name: 'w456' };
   await queueInstance.saveAsync(q2, EQueueType.PRIORITY_QUEUE);
 
-  await expect(e1.bindQueueAsync(q2)).rejects.toThrow(FanOutExchangeQueueError);
+  await expect(e1.bindQueueAsync(q2)).rejects.toThrow(ExchangeFanOutError);
 });

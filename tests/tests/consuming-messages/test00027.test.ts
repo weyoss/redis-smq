@@ -23,9 +23,8 @@ test('Message storage: acknowledged.queueSize = 3', async () => {
   Configuration.getSetConfig(cfg);
 
   await createQueue(defaultQueue, false);
-  const { consumer: c1, producer: p1 } = await produceAndAcknowledgeMessage(
-    defaultQueue,
-  );
+  const { consumer: c1, producer: p1 } =
+    await produceAndAcknowledgeMessage(defaultQueue);
   await shutDownBaseInstance(c1);
   await shutDownBaseInstance(p1);
 
@@ -38,9 +37,8 @@ test('Message storage: acknowledged.queueSize = 3', async () => {
   expect(res1.totalItems).toBe(1);
   expect(res1.items.length).toBe(1);
 
-  const { consumer: c2, producer: p2 } = await produceAndAcknowledgeMessage(
-    defaultQueue,
-  );
+  const { consumer: c2, producer: p2 } =
+    await produceAndAcknowledgeMessage(defaultQueue);
   await shutDownBaseInstance(c2);
   await shutDownBaseInstance(p2);
 
@@ -52,9 +50,8 @@ test('Message storage: acknowledged.queueSize = 3', async () => {
   expect(res2.totalItems).toBe(2);
   expect(res2.items.length).toBe(2);
 
-  const { consumer: c3, producer: p3 } = await produceAndAcknowledgeMessage(
-    defaultQueue,
-  );
+  const { consumer: c3, producer: p3 } =
+    await produceAndAcknowledgeMessage(defaultQueue);
   await shutDownBaseInstance(c3);
   await shutDownBaseInstance(p3);
 
@@ -66,9 +63,8 @@ test('Message storage: acknowledged.queueSize = 3', async () => {
   expect(res3.totalItems).toBe(3);
   expect(res3.items.length).toBe(3);
 
-  const { consumer: c4, producer: p4 } = await produceAndAcknowledgeMessage(
-    defaultQueue,
-  );
+  const { consumer: c4, producer: p4 } =
+    await produceAndAcknowledgeMessage(defaultQueue);
   await shutDownBaseInstance(c4);
   await shutDownBaseInstance(p4);
 

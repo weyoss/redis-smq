@@ -6,9 +6,9 @@ import {
 import { shutDownBaseInstance } from '../../common/base-instance';
 import { getQueueMessages } from '../../common/queue-messages';
 import { getQueue } from '../../common/queue';
-import { QueueNotEmptyError } from '../../../src/lib/queue/errors/queue-not-empty.error';
-import { QueueHasRunningConsumersError } from '../../../src/lib/queue/errors/queue-has-running-consumers.error';
-import { QueueNotFoundError } from '../../../src/lib/queue/errors/queue-not-found.error';
+import { QueueNotEmptyError } from '../../../src/lib/queue/errors';
+import { QueueHasRunningConsumersError } from '../../../src/lib/queue/errors';
+import { QueueNotFoundError } from '../../../src/lib/queue/errors';
 
 test('Deleting a message queue with all of its data', async () => {
   await createQueue(defaultQueue, false);
