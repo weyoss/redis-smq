@@ -1,3 +1,66 @@
+
+
+## [8.0.0-rc.0](https://github.com/weyoss/redis-smq/compare/v7.2.3...v8.0.0-rc.0) (2023-11-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* use latest redis-smq-common release, fix broken changes
+
+### Features
+
+* allow to track a published message by its ID ([5f702d2](https://github.com/weyoss/redis-smq/commit/5f702d251a5b1f43c0364d6ce96a667d4f79d700))
+
+
+### Bug Fixes
+
+* **exchange:** fix json argument typings for _fromJSON() ([55bf8cc](https://github.com/weyoss/redis-smq/commit/55bf8cca65fce23774a68e6aaac1b590bbc07ff4))
+
+
+### Documentation
+
+* add missing error classes reference, clean up ([106b6d0](https://github.com/weyoss/redis-smq/commit/106b6d0627b747e49d5d09499dda21912803298a))
+* **api:** improve IQueueProperties description ([4ffeee3](https://github.com/weyoss/redis-smq/commit/4ffeee30e4a119a4bf378a4e753b19ad60f62070))
+* fix empty links ([dfc4ae9](https://github.com/weyoss/redis-smq/commit/dfc4ae992be9b4145e100d8f063947c316b04f37))
+* fix javascript/typescript examples ([4cb2eb1](https://github.com/weyoss/redis-smq/commit/4cb2eb13055609ea05ed98b34a143feedb63ebc0))
+* **queue:** update IQueueProperties interface reference ([631f239](https://github.com/weyoss/redis-smq/commit/631f2393fedb7f33a20611e1a006b19c64a9fa93))
+* **README.md:** add pre-release notice ([458fc57](https://github.com/weyoss/redis-smq/commit/458fc57e8089b8aa2835783a8bfe642364989ff6))
+* **README.md:** fix typo ([3abf1e2](https://github.com/weyoss/redis-smq/commit/3abf1e2665c4ae5d3eb91b8166abc630cd9f039a))
+* **README.md:** update minimal supported Redis version ([2c3ea00](https://github.com/weyoss/redis-smq/commit/2c3ea00dd93266b59ee649ffc8ff9351708f925b))
+* **README:** fix heading hierarchy ([6dc0bd5](https://github.com/weyoss/redis-smq/commit/6dc0bd5ea10b42cc5a4ab1012c480f206e576edb))
+* update docs ([188679e](https://github.com/weyoss/redis-smq/commit/188679e9476c9c0ba979be500168567775e085f3))
+* update examples ([ac4b0b5](https://github.com/weyoss/redis-smq/commit/ac4b0b5d7d1d50ad10e9f5bcd825b28a51c37c40))
+
+
+### Codebase Refactoring
+
+* **queue:** use friendly keys for queue properties object ([9e88f54](https://github.com/weyoss/redis-smq/commit/9e88f54052a9b0bc89144e8d067f1818f0d32a13))
+* use latest redis-smq-common release, fix broken changes ([e347d4d](https://github.com/weyoss/redis-smq/commit/e347d4d148c3b104e7d73c9ef8d5bf796657c1d6))
+
+
+### Tests
+
+* fix broken changes from latest redis-smq-common ([30a6099](https://github.com/weyoss/redis-smq/commit/30a609981786cabd4d08e9277be5b0bab8ad86fb))
+* fix QueueMessageNotFoundError checking ([6053cee](https://github.com/weyoss/redis-smq/commit/6053ceef7b7922bbb58eaf91d4d3a15baea34bb4))
+* fix tests ([561f0d0](https://github.com/weyoss/redis-smq/commit/561f0d06f0c4f28e6338def878210f2704b718b0))
+
+
+### Misc
+
+* add npm scripts ([34b4883](https://github.com/weyoss/redis-smq/commit/34b4883fa65a3c0b75d019cd1aedda3d42ccfc63))
+* bump up redis-smq-common to v3.0.0-rc.6 ([f177b95](https://github.com/weyoss/redis-smq/commit/f177b95a84b1ab41304a8ceb568922e359c626b2))
+* bump up type-coverage to v2.27.0 ([5140727](https://github.com/weyoss/redis-smq/commit/5140727f59ebf820702b2822149d85a266ca4b5e))
+* fix incorrect imports ([ba82774](https://github.com/weyoss/redis-smq/commit/ba827746f1824191bd677919f3165e405ff8bcfc))
+* update both .gitignore and .npmignore files ([3e84387](https://github.com/weyoss/redis-smq/commit/3e8438758d65fec2afa4f8de11f25239f581c368))
+* update package-lock.json ([77c761a](https://github.com/weyoss/redis-smq/commit/77c761aec04e103bc6a60b01ae0393a9e9bf7e43))
+* update project copyright annotation ([4080ac0](https://github.com/weyoss/redis-smq/commit/4080ac0b76f418193391e20f5e8c294cac7671e9))
+
+
+### Continuous Integration
+
+* drop support for redis server 2.8 and 3 ([9ef8ade](https://github.com/weyoss/redis-smq/commit/9ef8adec08bf90d1cc27b9bbabe591bca25a7d8e))
+* update minimal supported versions for nodejs and redis ([13b3197](https://github.com/weyoss/redis-smq/commit/13b31977937c65aa989de8d715022d1afb5f0839))
+
 # CHANGELOG
 
 ## 7.2.3 (2023-03-26)
@@ -776,4 +839,3 @@ the configuration namespace is not set, the default namespace is used.
 * Rewritten RedisSMQ Monitor based on React and D3
 * RedisSMQ Monitor has split up from main repository and now maintained separately. 
 * Introduced changelog
-
