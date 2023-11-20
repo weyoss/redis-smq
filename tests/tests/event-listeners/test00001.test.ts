@@ -65,13 +65,11 @@ test('Consumer event listeners', async () => {
   Message.setDefaultConsumeOptions({ retryDelay: 0 });
 
   await createQueue(defaultQueue, false);
-  const { message: m0, consumer: c0 } = await produceAndAcknowledgeMessage(
-    defaultQueue,
-  );
+  const { message: m0, consumer: c0 } =
+    await produceAndAcknowledgeMessage(defaultQueue);
   await shutDownBaseInstance(c0);
-  const { message: m1, consumer: c1 } = await produceAndAcknowledgeMessage(
-    defaultQueue,
-  );
+  const { message: m1, consumer: c1 } =
+    await produceAndAcknowledgeMessage(defaultQueue);
   await shutDownBaseInstance(c1);
   const anotherQueue = { name: 'another_queue', ns: 'testing' };
   await createQueue(anotherQueue, false);

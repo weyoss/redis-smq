@@ -24,9 +24,8 @@ test('Message storage: acknowledged = true, deadLettered = false', async () => {
   Configuration.getSetConfig(cfg);
 
   await createQueue(defaultQueue, false);
-  const { producer, consumer } = await produceAndDeadLetterMessage(
-    defaultQueue,
-  );
+  const { producer, consumer } =
+    await produceAndDeadLetterMessage(defaultQueue);
   await shutDownBaseInstance(producer);
   await shutDownBaseInstance(consumer);
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
@@ -38,9 +37,8 @@ test('Message storage: acknowledged = true, deadLettered = false', async () => {
   expect(res1.totalItems).toBe(0);
   expect(res1.items.length).toBe(0);
 
-  const { producer: p, consumer: c } = await produceAndAcknowledgeMessage(
-    defaultQueue,
-  );
+  const { producer: p, consumer: c } =
+    await produceAndAcknowledgeMessage(defaultQueue);
 
   await shutDownBaseInstance(p);
   await shutDownBaseInstance(c);

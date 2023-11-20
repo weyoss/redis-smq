@@ -1,5 +1,5 @@
 import { Message } from '../../../src/lib/message/message';
-import { MessageNotScheduledError } from '../../../src/lib/producer/errors/message-not-scheduled.error';
+import { ProducerMessageNotScheduledError } from '../../../src/lib/producer/errors';
 import { getProducer } from '../../common/producer';
 import { EQueueType } from '../../../types';
 import { getQueue } from '../../common/queue';
@@ -20,7 +20,7 @@ test('Scheduling a message and expecting different kind of failures', async () =
       .setScheduledCRON('* * * * * *');
     await producer.produceAsync(msg);
   } catch (e: unknown) {
-    const m = e instanceof MessageNotScheduledError ? e.message : '';
+    const m = e instanceof ProducerMessageNotScheduledError ? e.message : '';
     expect(m).toBe('PRIORITY_QUEUING_NOT_ENABLED');
   }
 
@@ -31,7 +31,7 @@ test('Scheduling a message and expecting different kind of failures', async () =
       .setScheduledCRON('* * * * * *');
     await producer.produceAsync(msg1);
   } catch (e: unknown) {
-    const m = e instanceof MessageNotScheduledError ? e.message : '';
+    const m = e instanceof ProducerMessageNotScheduledError ? e.message : '';
     expect(m).toBe('MESSAGE_PRIORITY_REQUIRED');
   }
 
@@ -42,7 +42,7 @@ test('Scheduling a message and expecting different kind of failures', async () =
       .setScheduledCRON('* * * * * *');
     await producer.produceAsync(msg2);
   } catch (e: unknown) {
-    const m = e instanceof MessageNotScheduledError ? e.message : '';
+    const m = e instanceof ProducerMessageNotScheduledError ? e.message : '';
     expect(m).toBe('QUEUE_NOT_FOUND');
   }
 });

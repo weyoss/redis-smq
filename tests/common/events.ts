@@ -2,6 +2,7 @@ import { Consumer } from '../../src/lib/consumer/consumer';
 import { Message } from '../../src/lib/message/message';
 import { events } from '../../src/common/events/events';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function consumerOnEvent<T extends Array<any>>(
   consumer: Consumer,
   event: string,

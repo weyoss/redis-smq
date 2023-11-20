@@ -6,10 +6,10 @@ import {
 import { shutDownBaseInstance } from '../../common/base-instance';
 import { getNamespace } from '../../common/namespace';
 import { getQueueMessages } from '../../common/queue-messages';
-import { QueueNotEmptyError } from '../../../src/lib/queue/errors/queue-not-empty.error';
-import { QueueHasRunningConsumersError } from '../../../src/lib/queue/errors/queue-has-running-consumers.error';
-import { QueueNotFoundError } from '../../../src/lib/queue/errors/queue-not-found.error';
-import { NamespaceNotFoundError } from '../../../src/lib/queue/errors/namespace-not-found.error';
+import { QueueNotEmptyError } from '../../../src/lib/queue/errors';
+import { QueueHasRunningConsumersError } from '../../../src/lib/queue/errors';
+import { QueueNotFoundError } from '../../../src/lib/queue/errors';
+import { QueueNamespaceNotFoundError } from '../../../src/lib/queue/errors';
 
 test('Combined: Fetching namespaces, deleting a namespace with its message queues', async () => {
   const queueA: IQueueParams = {
@@ -17,18 +17,16 @@ test('Combined: Fetching namespaces, deleting a namespace with its message queue
     ns: 'ns1',
   };
   await createQueue(queueA, false);
-  const { consumer: c1, queue: q1 } = await produceAndAcknowledgeMessage(
-    queueA,
-  );
+  const { consumer: c1, queue: q1 } =
+    await produceAndAcknowledgeMessage(queueA);
 
   const queueB: IQueueParams = {
     name: 'queue_b',
     ns: 'ns1',
   };
   await createQueue(queueB, false);
-  const { consumer: c2, queue: q2 } = await produceAndAcknowledgeMessage(
-    queueB,
-  );
+  const { consumer: c2, queue: q2 } =
+    await produceAndAcknowledgeMessage(queueB);
 
   const ns = await getNamespace();
 
@@ -80,5 +78,5 @@ test('Combined: Fetching namespaces, deleting a namespace with its message queue
 
   await expect(async () => {
     await ns.deleteAsync('ns1');
-  }).rejects.toThrow(NamespaceNotFoundError);
+  }).rejects.toThrow(QueueNamespaceNotFoundError);
 });

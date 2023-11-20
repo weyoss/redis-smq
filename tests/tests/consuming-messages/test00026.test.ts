@@ -24,9 +24,8 @@ test('Message storage: acknowledged.expire = 10000', async () => {
   Configuration.getSetConfig(cfg);
 
   await createQueue(defaultQueue, false);
-  const { producer: p, consumer: c } = await produceAndAcknowledgeMessage(
-    defaultQueue,
-  );
+  const { producer: p, consumer: c } =
+    await produceAndAcknowledgeMessage(defaultQueue);
 
   await shutDownBaseInstance(p);
   await shutDownBaseInstance(c);

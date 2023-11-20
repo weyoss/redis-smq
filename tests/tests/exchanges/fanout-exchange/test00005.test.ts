@@ -1,5 +1,5 @@
 import { EExchangeType, TExchangeSerialized } from '../../../../types';
-import { InvalidExchangeDataError } from '../../../../src/lib/exchange/errors/invalid-exchange-data.error';
+import { ExchangeInvalidDataError } from '../../../../src/lib/exchange/errors';
 import { _fromJSON } from '../../../../src/lib/exchange/_from-json';
 
 test('ExchangeFanOut: fromJSON()', async () => {
@@ -8,7 +8,7 @@ test('ExchangeFanOut: fromJSON()', async () => {
     type: EExchangeType.FANOUT,
     exchangeTag: '123',
   };
-  expect(() => _fromJSON({})).toThrow(InvalidExchangeDataError);
+  expect(() => _fromJSON({})).toThrow(ExchangeInvalidDataError);
   const e = _fromJSON(json);
   expect(e.toJSON()).toEqual(json);
 });

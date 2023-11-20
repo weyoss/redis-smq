@@ -1,6 +1,6 @@
 import { Message } from '../../../index';
 import { getProducer } from '../../common/producer';
-import { MessageExchangeRequiredError } from '../../../src/lib/message/errors/message-exchange-required.error';
+import { MessageExchangeRequiredError } from '../../../src/lib/message/errors';
 
 test('Producing a message without a message queue', async () => {
   const producer = getProducer();
