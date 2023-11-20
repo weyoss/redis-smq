@@ -8,7 +8,7 @@
  */
 
 import { IQueueParams } from '../queue';
-import { ICallback } from '../../../redis-smq-common';
+import { ICallback } from 'redis-smq-common';
 
 export type TTopicParams = {
   topic: string;
