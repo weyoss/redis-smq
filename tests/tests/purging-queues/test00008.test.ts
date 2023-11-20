@@ -12,7 +12,6 @@ import {
   createQueue,
   produceAndAcknowledgeMessage,
 } from '../../common/message-producing-consuming';
-import { shutDownBaseInstance } from '../../common/base-instance';
 import { getNamespace } from '../../common/namespace';
 import { getQueueMessages } from '../../common/queue-messages';
 import { QueueNotEmptyError } from '../../../src/lib/queue/errors';
@@ -26,16 +25,14 @@ test('Combined: Fetching namespaces, deleting a namespace with its message queue
     ns: 'ns1',
   };
   await createQueue(queueA, false);
-  const { consumer: c1, queue: q1 } =
-    await produceAndAcknowledgeMessage(queueA);
+  const { consumer: c1 } = await produceAndAcknowledgeMessage(queueA);
 
   const queueB: IQueueParams = {
     name: 'queue_b',
     ns: 'ns1',
   };
   await createQueue(queueB, false);
-  const { consumer: c2, queue: q2 } =
-    await produceAndAcknowledgeMessage(queueB);
+  const { consumer: c2 } = await produceAndAcknowledgeMessage(queueB);
 
   const ns = await getNamespace();
 
@@ -43,42 +40,47 @@ test('Combined: Fetching namespaces, deleting a namespace with its message queue
   expect(m0).toEqual(['ns1']);
 
   const qm = await getQueueMessages();
-  const m1 = await qm.countMessagesByStatusAsync(q1);
+  const m1 = await qm.countMessagesByStatusAsync(queueA);
   expect(m1.acknowledged).toBe(1);
 
-  const m2 = await qm.countMessagesByStatusAsync(q2);
+  const m2 = await qm.countMessagesByStatusAsync(queueB);
   expect(m2.acknowledged).toBe(1);
 
-  await expect(async () => {
-    await ns.deleteAsync('ns1');
-  }).rejects.toThrow(QueueNotEmptyError);
-
-  await qm.purgeAsync(q1);
-
-  await expect(async () => {
-    await ns.deleteAsync('ns1');
-  }).rejects.toThrow(QueueHasRunningConsumersError);
-
-  await shutDownBaseInstance(c1);
+  await c1.shutdownAsync();
+  await c2.shutdownAsync();
 
   await expect(async () => {
     await ns.deleteAsync('ns1');
   }).rejects.toThrow(QueueNotEmptyError);
 
-  await qm.purgeAsync(q2);
+  await qm.purgeAsync(queueA);
+
+  await expect(async () => {
+    await ns.deleteAsync('ns1');
+  }).rejects.toThrow(QueueNotEmptyError);
+
+  await qm.purgeAsync(queueB);
+  await c1.runAsync();
+  await c2.runAsync();
 
   await expect(async () => {
     await ns.deleteAsync('ns1');
   }).rejects.toThrow(QueueHasRunningConsumersError);
 
-  await shutDownBaseInstance(c2);
+  await c1.shutdownAsync();
+
+  await expect(async () => {
+    await ns.deleteAsync('ns1');
+  }).rejects.toThrow(QueueHasRunningConsumersError);
+
+  await c2.shutdownAsync();
   await ns.deleteAsync('ns1');
 
-  await expect(qm.countMessagesByStatusAsync(q1)).rejects.toThrow(
+  await expect(qm.countMessagesByStatusAsync(queueA)).rejects.toThrow(
     QueueNotFoundError,
   );
 
-  await expect(qm.countMessagesByStatusAsync(q2)).rejects.toThrow(
+  await expect(qm.countMessagesByStatusAsync(queueB)).rejects.toThrow(
     QueueNotFoundError,
   );
 
