@@ -1,19 +1,18 @@
-const { logger } = require('redis-smq-common');
-const { RedisClientName } = require('redis-smq-common/dist/types');
-const {
+import { logger, ERedisConfigClient } from 'redis-smq-common';
+import {
   Consumer,
   Producer,
   Message,
   Queue,
   Configuration,
   disconnect,
-  EQueuePropertyQueueType,
-} = require('../../index');
+  EQueueType,
+} from '../..'; // redis-smq
 
 const config = {
   namespace: 'ns1',
   redis: {
-    client: RedisClientName.IOREDIS,
+    client: ERedisConfigClient.IOREDIS,
     options: {
       host: '127.0.0.1',
       port: 6379,
@@ -38,7 +37,7 @@ Configuration.getSetConfig(config);
 // This step should be also done from your application bootstrap
 logger.setLogger(console);
 
-const queue = new Queue(config);
+const queue = new Queue();
 
 const createQueue = (cb) => {
   // Before producing and consuming message to/from a given queue, we need to make sure that such queue exists
@@ -46,7 +45,7 @@ const createQueue = (cb) => {
     if (err) cb(err);
     else if (!reply) {
       // Creating a queue (a LIFO queue)
-      queue.save('test_queue', EQueuePropertyQueueType.LIFO_QUEUE, (err) => {
+      queue.save('test_queue', EQueueType.LIFO_QUEUE, (err) => {
         if (err) cb(err);
         else disconnect(cb);
       });
@@ -55,7 +54,7 @@ const createQueue = (cb) => {
 };
 
 const produce = (cb) => {
-  const producer = new Producer(config);
+  const producer = new Producer();
   producer.run((err) => {
     if (err) cb(err);
     else {
@@ -69,7 +68,7 @@ const produce = (cb) => {
 };
 
 const consume = (cb) => {
-  const consumer = new Consumer(config);
+  const consumer = new Consumer();
   // starting the consumer and then registering a message handler
   consumer.run((err) => {
     if (err) cb(err);

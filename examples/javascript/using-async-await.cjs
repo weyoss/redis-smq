@@ -1,18 +1,16 @@
-import { promisify, promisifyAll } from 'bluebird';
-import { ERedisConfigClient, logger } from 'redis-smq-common';
-import {
+const { promisifyAll, promisify } = require('bluebird');
+const { logger, ERedisConfigClient } = require('redis-smq-common');
+const {
   Consumer,
   Producer,
   Message,
   Queue,
-  IRedisSMQConfig,
   EQueueType,
-  ExchangeDirect,
+  Configuration,
   disconnect,
-} from '../..'; // redis-smq
-import { Configuration } from '../../src/config/configuration';
+} = require('../..'); // redis-smq
 
-export const config: IRedisSMQConfig = {
+const config = {
   namespace: 'ns1',
   redis: {
     client: ERedisConfigClient.IOREDIS,
@@ -57,8 +55,7 @@ const createQueue = async () => {
 const produce = async () => {
   await producer.runAsync();
   const msg = new Message();
-  const e = new ExchangeDirect('test_queue');
-  msg.setBody({ ts: `Current time is ${Date.now()}` }).setExchange(e);
+  msg.setBody({ ts: `Current time is ${Date.now()}` }).setQueue('test_queue');
   await producer.produceAsync(msg);
 };
 
@@ -92,4 +89,4 @@ async function main() {
   await consume();
 }
 
-main().catch((err: Error) => console.log(err));
+main().catch((err) => console.log(err));
