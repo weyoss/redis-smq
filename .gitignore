@@ -35,3 +35,4 @@ lerna-debug.log*
 
 misc/benchmarks
 docker-compose.yml
+scripts/release*
