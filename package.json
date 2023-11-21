@@ -79,8 +79,7 @@
       "git add"
     ],
     "*.(json|js)": [
-      "prettier --write",
-      "git add"
+      "prettier --write"
     ]
   },
   "engineStrict": true,
