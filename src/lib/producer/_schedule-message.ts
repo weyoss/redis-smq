@@ -42,6 +42,7 @@ export function _scheduleMessage(
       [
         keyScheduledMessages,
         keyDelayedMessages,
+        keyQueueMessages,
         keyQueueProperties,
         keyMessage,
         keyQueueScheduled,
@@ -58,7 +59,6 @@ export function _scheduleMessage(
         messageId,
         JSON.stringify(message),
         `${timestamp}`,
-        keyQueueMessages, // Not a final key. Passing it as an argument
         JSON.stringify(message.getMessageState()),
       ],
       (err, reply) => {

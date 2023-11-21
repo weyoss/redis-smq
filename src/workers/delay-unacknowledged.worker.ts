@@ -67,18 +67,19 @@ export class DelayUnacknowledgedWorker extends Worker {
                     keyQueueScheduled,
                   } = redisKeys.getQueueKeys(queue);
                   const { keyMessage } = redisKeys.getMessageKeys(messageId);
-                  keys.push(keyQueueProperties, keyMessage, keyQueueScheduled);
+                  keys.push(
+                    keyQueueMessages,
+                    keyQueueProperties,
+                    keyMessage,
+                    keyQueueScheduled,
+                  );
                   args.push(messageId, '');
                   const delay = message.getRetryDelay();
                   const messageState = message.getRequiredMessageState();
                   messageState.incrAttempts();
                   messageState.setNextRetryDelay(delay);
                   const timestamp = message.getNextScheduledTimestamp();
-                  args.push(
-                    timestamp,
-                    keyQueueMessages,
-                    JSON.stringify(messageState),
-                  );
+                  args.push(timestamp, JSON.stringify(messageState));
                   done();
                 }
               });

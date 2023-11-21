@@ -12,6 +12,7 @@ local scheduleFromDelayed = ARGV[7]
 
 ---
 
+local keyQueueMessages = ''
 local keyQueueProperties = ''
 local keyMessage = ''
 local keyQueueScheduled = ''
@@ -21,7 +22,6 @@ local keyQueueScheduled = ''
 local messageId = ''
 local message = ''
 local scheduleTimestamp = ''
-local keyQueueMessages = ''
 local messageState = ''
 
 ---
@@ -64,20 +64,19 @@ end
 if #ARGV > argvIndexOffset then
     for index in pairs(ARGV) do
         if (index > argvIndexOffset) then
-            local idx = index % 5
-            if idx == 3 then
+            local idx = index % 4
+            if idx == 0 then
                 messageId = ARGV[index]
-                keyQueueProperties = KEYS[keyIndexOffset + 1]
-                keyMessage = KEYS[keyIndexOffset + 2]
-                keyQueueScheduled = KEYS[keyIndexOffset + 3]
-                keyIndexOffset = keyIndexOffset + 3
-            elseif idx == 4 then
-                message = ARGV[index]
-            elseif idx == 0 then
-                scheduleTimestamp = ARGV[index]
+                keyQueueMessages = KEYS[keyIndexOffset + 1]
+                keyQueueProperties = KEYS[keyIndexOffset + 2]
+                keyMessage = KEYS[keyIndexOffset + 3]
+                keyQueueScheduled = KEYS[keyIndexOffset + 4]
+                keyIndexOffset = keyIndexOffset + 4
             elseif idx == 1 then
-                keyQueueMessages = ARGV[index]
+                message = ARGV[index]
             elseif idx == 2 then
+                scheduleTimestamp = ARGV[index]
+            elseif idx == 3 then
                 messageState = ARGV[index]
                 local found = checkQueue()
                 if found == 'OK' then
