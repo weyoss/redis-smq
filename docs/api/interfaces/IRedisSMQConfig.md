@@ -21,7 +21,7 @@
 
 ### logger
 
-> **logger**?: `ILoggerConfig`
+> **logger**?: [`ILoggerConfig`](https://github.com/weyoss/redis-smq-common/blob/master/docs/api/interfaces/ILoggerConfig.md)
 
 ***
 
@@ -39,5 +39,5 @@
 
 ### redis
 
-> **redis**?: `IRedisConfig`
+> **redis**?: [`IRedisConfig`](https://github.com/weyoss/redis-smq-common/blob/master/docs/api/README.md#iredisconfig)
 
