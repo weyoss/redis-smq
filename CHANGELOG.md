@@ -1,11 +1,28 @@
 
 
+## [8.0.0-rc.1](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.0...v8.0.0-rc.1) (2023-11-21)
+
+
+### Codebase Refactoring
+
+* pass keyQueueMessages as a key for SCHEDULE_MESSAGE script ([f9f69b3](https://github.com/weyoss/redis-smq/commit/f9f69b3359c63702974946d9ae486b1a59a38485))
+
+
+### Tests
+
+* fix unpredictable error throwing when deleting a namespace ([4126670](https://github.com/weyoss/redis-smq/commit/4126670ca283073c42e69e80e5fc95f1eaf95a92))
+
+
+### Misc
+
+* update lint-staged configuration ([9543401](https://github.com/weyoss/redis-smq/commit/9543401acae6abed6eaa53aa9149e0306b2cad64))
+
 ## [8.0.0-rc.0](https://github.com/weyoss/redis-smq/compare/v7.2.3...v8.0.0-rc.0) (2023-11-20)
 
 
 ### ⚠ BREAKING CHANGES
 
-* use latest redis-smq-common release, fix broken changes
+* use latest redis-smq-common release, fix breaking changes
 
 ### Features
 
@@ -35,12 +52,12 @@
 ### Codebase Refactoring
 
 * **queue:** use friendly keys for queue properties object ([9e88f54](https://github.com/weyoss/redis-smq/commit/9e88f54052a9b0bc89144e8d067f1818f0d32a13))
-* use latest redis-smq-common release, fix broken changes ([e347d4d](https://github.com/weyoss/redis-smq/commit/e347d4d148c3b104e7d73c9ef8d5bf796657c1d6))
+* use latest redis-smq-common release, fix breaking changes ([e347d4d](https://github.com/weyoss/redis-smq/commit/e347d4d148c3b104e7d73c9ef8d5bf796657c1d6))
 
 
 ### Tests
 
-* fix broken changes from latest redis-smq-common ([30a6099](https://github.com/weyoss/redis-smq/commit/30a609981786cabd4d08e9277be5b0bab8ad86fb))
+* fix breaking changes from latest redis-smq-common ([30a6099](https://github.com/weyoss/redis-smq/commit/30a609981786cabd4d08e9277be5b0bab8ad86fb))
 * fix QueueMessageNotFoundError checking ([6053cee](https://github.com/weyoss/redis-smq/commit/6053ceef7b7922bbb58eaf91d4d3a15baea34bb4))
 * fix tests ([561f0d0](https://github.com/weyoss/redis-smq/commit/561f0d06f0c4f28e6338def878210f2704b718b0))
 
