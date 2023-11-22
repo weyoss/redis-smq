@@ -67,11 +67,11 @@ module.exports = {
 
 #### Message Storage
 
-Published messages, to a queue, are permanently stored unless deleted explicitly. 
+Published messages, to a queue, are permanently stored unless deleted explicitly.
 
 The `message.store` option allows, additionally, to configure acknowledged/dead-lettered messages storage for all message queues.
 
-In other words, when `message.store` is enabled, a queue, in addition to all published messages, may hold a list of all 
+In other words, when `message.store` is enabled, a queue, in addition to all published messages, may hold a list of all
 dead-lettered messages for example.
 
 By default acknowledged and dead-lettered messages are not stored.
