@@ -9,14 +9,19 @@
 
 import { Message } from '../../message/message';
 import {
+  EConsumeMessageUnacknowledgedCause,
   EMessageProperty,
   EMessagePropertyStatus,
-  EConsumeMessageUnacknowledgedCause,
 } from '../../../../types';
 import { events } from '../../../common/events/events';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { MessageHandler } from './message-handler';
-import { RedisClient, ICallback, ILogger } from 'redis-smq-common';
+import {
+  CallbackEmptyReplyError,
+  ICallback,
+  ILogger,
+  RedisClient,
+} from 'redis-smq-common';
 import { processingQueue } from './processing-queue';
 import { ERetryAction } from './retry-message';
 import { ELuaScriptName } from '../../../common/redis-client/redis-client';
@@ -77,13 +82,45 @@ export class ConsumeMessage {
       cause,
       (err, reply) => {
         if (err) this.messageHandler.handleError(err);
+        else if (!reply)
+          this.messageHandler.handleError(new CallbackEmptyReplyError());
         else {
-          this.messageHandler.emit(events.MESSAGE_UNACKNOWLEDGED, msg, cause);
-          if (reply && reply.action === ERetryAction.DEAD_LETTER) {
+          const messageId = msg.getRequiredId();
+          const queue = msg.getDestinationQueue();
+          const messageHandlerId = this.messageHandler.getId();
+          const consumerId = this.messageHandler.getConsumerId();
+          this.messageHandler.emit(
+            events.MESSAGE_UNACKNOWLEDGED,
+            cause,
+            messageId,
+            queue,
+            messageHandlerId,
+            consumerId,
+          );
+          if (reply.action === ERetryAction.DEAD_LETTER) {
             this.messageHandler.emit(
               events.MESSAGE_DEAD_LETTERED,
-              msg,
               reply.deadLetterCause,
+              messageId,
+              queue,
+              messageHandlerId,
+              consumerId,
+            );
+          } else if (reply.action === ERetryAction.DELAY) {
+            this.messageHandler.emit(
+              events.MESSAGE_DELAYED,
+              messageId,
+              queue,
+              messageHandlerId,
+              consumerId,
+            );
+          } else {
+            this.messageHandler.emit(
+              events.MESSAGE_REQUEUED,
+              messageId,
+              queue,
+              messageHandlerId,
+              consumerId,
             );
           }
         }
@@ -118,7 +155,14 @@ export class ConsumeMessage {
           } else {
             this.acknowledgeMessage(msg, (err) => {
               if (err) this.messageHandler.handleError(err);
-              else this.messageHandler.emit(events.MESSAGE_ACKNOWLEDGED, msg);
+              else
+                this.messageHandler.emit(
+                  events.MESSAGE_ACKNOWLEDGED,
+                  msg.getRequiredId(),
+                  msg.getDestinationQueue(),
+                  this.messageHandler.getId(),
+                  this.messageHandler.getConsumerId(),
+                );
             });
           }
         }
@@ -126,7 +170,10 @@ export class ConsumeMessage {
 
       // As a safety measure, in case if we mess with message system
       // properties, only a clone of the message is actually given
-      this.messageHandler.getHandler()(_fromMessage(msg), onConsumed);
+      this.messageHandler.getHandler()(
+        _fromMessage(msg, msg.getStatus(), msg.getMessageState()),
+        onConsumed,
+      );
     } catch (error: unknown) {
       this.logger.error(error);
       this.unacknowledgeMessage(

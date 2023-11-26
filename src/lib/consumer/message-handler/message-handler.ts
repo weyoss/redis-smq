@@ -12,9 +12,10 @@ import {
   EConsumeMessageUnacknowledgedCause,
   TConsumerMessageHandler,
   IQueueParams,
+  EMessageProperty,
+  EMessagePropertyStatus,
 } from '../../../../types';
 import { v4 as uuid } from 'uuid';
-import { Message } from '../../message/message';
 import { events } from '../../../common/events/events';
 import { EventEmitter } from 'events';
 import { processingQueue } from './processing-queue';
@@ -27,7 +28,12 @@ import {
   RedisClient,
   ICallback,
   ILogger,
+  CallbackEmptyReplyError,
+  CallbackInvalidReplyError,
 } from 'redis-smq-common';
+import { ELuaScriptName } from '../../../common/redis-client/redis-client';
+import { _fromMessage } from '../../message/_from-message';
+import { redisKeys } from '../../../common/redis-keys/redis-keys';
 
 export class MessageHandler extends EventEmitter {
   protected id: string;
@@ -60,7 +66,7 @@ export class MessageHandler extends EventEmitter {
     this.handler = handler;
     this.powerSwitch = new PowerSwitch();
     this.logger = logger;
-    this.dequeueMessage = new DequeueMessage(this, dequeueRedisClient);
+    this.dequeueMessage = new DequeueMessage(this, dequeueRedisClient, true);
     this.consumeMessage = new ConsumeMessage(this, dequeueRedisClient, logger);
     this.registerEventsHandlers();
   }
@@ -75,36 +81,65 @@ export class MessageHandler extends EventEmitter {
         this.dequeueMessage.dequeue();
       }
     });
-    this.on(events.MESSAGE_ACKNOWLEDGED, (msg: Message) => {
-      this.logger.info(`Message (ID ${msg.getRequiredId()}) acknowledged`);
+    this.on(events.MESSAGE_ACKNOWLEDGED, (messageId: string) => {
+      this.logger.info(`Message (ID ${messageId}) acknowledged`);
       this.emit(events.MESSAGE_NEXT);
     });
     this.on(
       events.MESSAGE_DEAD_LETTERED,
-      (msg: Message, cause: EConsumeMessageDeadLetterCause) => {
+      (cause: EConsumeMessageDeadLetterCause, messageId: string) => {
         this.logger.info(
-          `Message (ID ${msg.getRequiredId()}) dead-lettered (cause ${cause})`,
+          `Message (ID ${messageId}) dead-lettered (cause ${cause})`,
         );
       },
     );
     this.on(
       events.MESSAGE_UNACKNOWLEDGED,
-      (msg: Message, cause: EConsumeMessageUnacknowledgedCause) => {
-        this.emit(events.MESSAGE_NEXT);
+      (cause: EConsumeMessageUnacknowledgedCause, messageId: string) => {
         this.logger.info(
-          `Message (ID ${msg.getRequiredId()}) unacknowledged (cause ${cause})`,
+          `Message (ID ${messageId}) unacknowledged (cause ${cause})`,
         );
+        this.emit(events.MESSAGE_NEXT);
       },
     );
-    this.on(events.MESSAGE_RECEIVED, (msg: Message) => {
+    this.on(events.MESSAGE_RECEIVED, (messageId: string) => {
+      this.logger.info(`Got message (ID ${messageId})...`);
       if (this.powerSwitch.isRunning()) {
-        this.logger.info(
-          `Consuming message (ID ${msg.getRequiredId()}) with properties (${msg.toString()})`,
-        );
-        this.consumeMessage.handleReceivedMessage(msg);
+        this.processMessage(messageId);
       }
     });
     this.on(events.DOWN, () => this.logger.info('Down.'));
+  }
+
+  protected processMessage(messageId: string): void {
+    const { keyMessage } = redisKeys.getMessageKeys(messageId);
+    const keys: string[] = [keyMessage];
+    const argv: (string | number)[] = [
+      EMessageProperty.STATUS,
+      EMessageProperty.STATE,
+      EMessageProperty.MESSAGE,
+      EMessagePropertyStatus.PROCESSING,
+    ];
+    this.dequeueRedisClient.runScript(
+      ELuaScriptName.FETCH_MESSAGE_FOR_PROCESSING,
+      keys,
+      argv,
+      (err, reply: unknown) => {
+        if (err) this.handleError(err);
+        else if (!reply) this.handleError(new CallbackEmptyReplyError());
+        else if (!Array.isArray(reply))
+          this.handleError(new CallbackInvalidReplyError());
+        else {
+          const [state, msg]: string[] = reply;
+          const message = _fromMessage(
+            msg,
+            EMessagePropertyStatus.PROCESSING,
+            state,
+          );
+          this.consumeMessage.handleReceivedMessage(message);
+        }
+      },
+    );
   }
 
   protected cleanUp(
@@ -119,6 +154,10 @@ export class MessageHandler extends EventEmitter {
       messageUnacknowledgedCause,
       (err) => cb(err),
     );
+  }
+
+  protected shutdownDequeueClient(cb: ICallback<void>): void {
+    this.dequeueRedisClient.halt(cb);
   }
 
   handleError(err: Error): void {
@@ -153,7 +192,7 @@ export class MessageHandler extends EventEmitter {
         [
           (cb: ICallback<void>) => this.dequeueMessage.quit(cb),
           (cb: ICallback<void>) => this.cleanUp(messageUnacknowledgedCause, cb),
-          (cb: ICallback<void>) => this.dequeueRedisClient.halt(cb),
+          (cb: ICallback<void>) => this.shutdownDequeueClient(cb),
         ],
         (err) => {
           if (err) cb(err);

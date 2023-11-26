@@ -29,6 +29,7 @@ export function _getMessage(
         null,
         _fromMessage(
           reply[EMessageProperty.MESSAGE],
+          Number(reply[EMessageProperty.STATUS]),
           reply[EMessageProperty.STATE],
         ),
       );
@@ -52,6 +53,7 @@ export function _getMessages(
         } else {
           const msg = _fromMessage(
             reply[EMessageProperty.MESSAGE],
+            Number(reply[EMessageProperty.STATUS]),
             reply[EMessageProperty.STATE],
           );
           messages.push(msg);

@@ -9,14 +9,10 @@
 
 import { MessageHandler } from '../message-handler/message-handler';
 import { events } from '../../../common/events/events';
-import {
-  EConsumeMessageUnacknowledgedCause,
-  TConsumerMessageHandler,
-  IQueueParams,
-} from '../../../../types';
-import { MultiplexedDequeueMessage } from './multiplexed-dequeue-message';
+import { ICallback, ILogger, RedisClient } from 'redis-smq-common';
+import { DequeueMessage } from '../message-handler/dequeue-message';
 import { Consumer } from '../consumer';
-import { async, RedisClient, ICallback, ILogger } from 'redis-smq-common';
+import { IQueueParams, TConsumerMessageHandler } from '../../../../types';
 
 export class MultiplexedMessageHandler extends MessageHandler {
   constructor(
@@ -35,10 +31,7 @@ export class MultiplexedMessageHandler extends MessageHandler {
       sharedRedisClient,
       logger,
     );
-    this.dequeueMessage = new MultiplexedDequeueMessage(
-      this,
-      dequeueRedisClient,
-    );
+    this.dequeueMessage = new DequeueMessage(this, dequeueRedisClient, false);
   }
 
   protected override registerEventsHandlers(): void {
@@ -49,29 +42,7 @@ export class MultiplexedMessageHandler extends MessageHandler {
       this.logger.info('Up and running...');
     });
   }
-
-  override shutdown(
-    messageUnacknowledgedCause: EConsumeMessageUnacknowledgedCause,
-    cb: ICallback<void>,
-  ): void {
-    const goDown = () => {
-      this.powerSwitch.goingDown();
-      async.waterfall(
-        [
-          (cb: ICallback<void>) => this.dequeueMessage.quit(cb),
-          (cb: ICallback<void>) => this.cleanUp(messageUnacknowledgedCause, cb),
-        ],
-        (err) => {
-          if (err) cb(err);
-          else {
-            this.powerSwitch.commit();
-            this.emit(events.DOWN);
-            cb();
-          }
-        },
-      );
-    };
-    if (this.powerSwitch.isGoingUp()) this.once(events.UP, goDown);
-    else goDown();
+  protected override shutdownDequeueClient(cb: ICallback<void>) {
+    cb();
   }
 }

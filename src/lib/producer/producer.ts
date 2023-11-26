@@ -15,6 +15,7 @@ import {
   RedisClient,
   ICallback,
   TUnaryFunction,
+  CallbackEmptyReplyError,
 } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { ProducerMessageNotPublishedError } from './errors';
@@ -103,7 +104,7 @@ export class Producer extends Base {
     redisClient: RedisClient,
     message: Message,
     queue: IQueueParams,
-    cb: ICallback<void>,
+    cb: ICallback<string>,
   ): void {
     const messageId = message
       .setDestinationQueue(queue)
@@ -114,7 +115,7 @@ export class Producer extends Base {
         if (err) cb(err);
         else {
           this.logger.info(`Message (ID ${messageId}) has been scheduled.`);
-          cb();
+          cb(null, messageId);
         }
       });
     else
@@ -122,8 +123,8 @@ export class Producer extends Base {
         if (err) cb(err);
         else {
           this.logger.info(`Message (ID ${messageId}) has been published.`);
-          this.emit(events.MESSAGE_PUBLISHED, message);
-          cb();
+          this.emit(events.MESSAGE_PUBLISHED, messageId, queue);
+          cb(null, messageId);
         }
       });
   }
@@ -131,7 +132,7 @@ export class Producer extends Base {
   produce(
     message: Message,
     cb: ICallback<{
-      messages: Message[];
+      messages: string[];
       scheduled: boolean;
     }>,
   ): void {
@@ -140,17 +141,21 @@ export class Producer extends Base {
       if (message.getMessageState())
         cb(new ProducerMessageAlreadyPublishedError());
       else {
-        const callback: ICallback<Message[]> = (err, messages = []) => {
+        const callback: ICallback<string[] | string> = (err, messages) => {
           if (err) cb(err);
-          else cb(null, { scheduled: false, messages });
+          else if (!messages) cb(new CallbackEmptyReplyError());
+          else {
+            cb(null, {
+              scheduled: false,
+              messages: typeof messages === 'string' ? [messages] : messages,
+            });
+          }
         };
         const redisClient = this.getSharedRedisClient();
         const exchange = message.getRequiredExchange();
         if (exchange instanceof ExchangeDirect) {
           const queue = _getQueueParams(exchange.getBindingParams());
-          this.produceMessage(redisClient, message, queue, (err) =>
-            callback(err, [message]),
-          );
+          this.produceMessage(redisClient, message, queue, callback);
         } else {
           exchange.getQueues((err, queues) => {
             if (err) cb(err);
@@ -161,20 +166,28 @@ export class Producer extends Base {
                 ),
               );
             else {
-              const messages: Message[] = [];
+              const messages: string[] = [];
               async.eachOf(
                 queues,
                 (queue, index, done) => {
-                  const msg = _fromMessage(message, null, true);
-                  this.produceMessage(redisClient, msg, queue, (err) => {
-                    if (err) done(err);
-                    else {
-                      messages.push(msg);
-                      done();
-                    }
-                  });
+                  const msg = _fromMessage(message, null, null);
+                  this.produceMessage(
+                    redisClient,
+                    msg,
+                    queue,
+                    (err, messageId) => {
+                      if (err) done(err);
+                      else {
+                        messageId && messages.push(messageId);
+                        done();
+                      }
+                    },
+                  );
                 },
-                (err) => callback(err, messages),
+                (err) => {
+                  if (err) callback(err);
+                  else callback(null, messages);
+                },
               );
             }
           });

@@ -68,7 +68,7 @@ export class PublishScheduledWorker extends Worker {
         messages,
         (msg, _, done) => {
           const ts = Date.now();
-          const message = _fromMessage(msg, null, true);
+          const message = _fromMessage(msg, null, null);
           const messageState = message
             .resetScheduledParams()
             .getSetMessageState()
