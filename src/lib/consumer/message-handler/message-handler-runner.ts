@@ -215,8 +215,9 @@ export class MessageHandlerRunner {
           handlerParams,
         )}) has been registered.`,
       );
-      if (this.consumer.isRunning()) this.runMessageHandler(handlerParams, cb);
-      else cb();
+      if (this.consumer.isRunning()) {
+        this.runMessageHandler(handlerParams, cb);
+      } else cb();
     }
   }
 

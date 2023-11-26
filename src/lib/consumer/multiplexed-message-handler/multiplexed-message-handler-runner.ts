@@ -52,8 +52,10 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   ): void {
     super.registerMessageHandlerEvents(messageHandler);
     messageHandler.on(events.MESSAGE_NEXT, () => {
-      if (this.multiplexingDelay) this.nextTick();
-      else this.dequeue();
+      if (messageHandler.isRunning()) {
+        if (this.multiplexingDelay) this.nextTick();
+        else this.dequeue();
+      }
     });
     messageHandler.on(
       events.MESSAGE_RECEIVED,
@@ -171,16 +173,20 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
     async.waterfall(
       [
         (cb: ICallback<void>) => {
+          super.shutdown(cb);
+        },
+        (cb: ICallback<void>) => {
           this.ticker.once(events.DOWN, cb);
           this.ticker.quit();
         },
-        (cb: ICallback<void>) => super.shutdown(cb),
         (cb: ICallback<void>) => {
           if (this.muxRedisClient) this.muxRedisClient.halt(cb);
           else cb();
         },
       ],
-      cb,
+      (err) => {
+        cb(err);
+      },
     );
   }
 }

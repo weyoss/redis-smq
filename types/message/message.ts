@@ -18,6 +18,7 @@ export enum EMessageProperty {
 }
 
 export enum EMessagePropertyStatus {
+  UNPUBLISHED = -1,
   SCHEDULED,
   PENDING,
   PROCESSING,

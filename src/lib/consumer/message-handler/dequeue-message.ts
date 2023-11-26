@@ -9,21 +9,18 @@
 
 import * as os from 'os';
 import {
-  EMessageProperty,
-  EMessagePropertyStatus,
   EQueueType,
-  TQueueConsumer,
   IQueueParams,
   IQueueRateLimit,
+  TQueueConsumer,
 } from '../../../../types';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import {
   async,
+  CallbackEmptyReplyError,
+  ICallback,
   RedisClient,
   Ticker,
-  ICallback,
-  CallbackEmptyReplyError,
-  CallbackInvalidReplyError,
 } from 'redis-smq-common';
 import { events } from '../../../common/events/events';
 import { MessageHandler } from './message-handler';
@@ -31,7 +28,6 @@ import { QueueRateLimit } from '../../queue/queue-rate-limit';
 import { ELuaScriptName } from '../../../common/redis-client/redis-client';
 import { QueueNotFoundError } from '../../queue/errors';
 import { _getQueueProperties } from '../../queue/queue/_get-queue-properties';
-import { _fromMessage } from '../../message/_from-message';
 
 const IPAddresses = (() => {
   const nets = os.networkInterfaces();
@@ -55,104 +51,104 @@ export class DequeueMessage {
   protected queueRateLimit: IQueueRateLimit | null = null;
   protected ticker: Ticker;
   protected messageHandler: MessageHandler;
+  protected blockUntilMessageReceived: boolean;
   protected queueType: EQueueType | null = null;
 
-  constructor(messageHandler: MessageHandler, redisClient: RedisClient) {
+  constructor(
+    messageHandler: MessageHandler,
+    redisClient: RedisClient,
+    blockUntilMessageReceived = true,
+  ) {
     this.messageHandler = messageHandler;
     this.redisClient = redisClient;
+    this.blockUntilMessageReceived = blockUntilMessageReceived;
     this.queue = messageHandler.getQueue();
     this.consumerId = messageHandler.getConsumerId();
     this.redisKeys = redisKeys.getQueueConsumerKeys(
       this.queue,
       this.consumerId,
     );
-    this.ticker = new Ticker(() => this.dequeue());
+    this.ticker = new Ticker(() => {
+      this.messageHandler.emit(events.MESSAGE_NEXT);
+    });
   }
 
-  protected emitReceivedMessage(messageId: string): void {
-    const { keyMessage } = redisKeys.getMessageKeys(messageId);
-    const keys: string[] = [keyMessage];
-    const argv: (string | number)[] = [
-      EMessageProperty.STATUS,
-      EMessageProperty.STATE,
-      EMessageProperty.MESSAGE,
-      EMessagePropertyStatus.PROCESSING,
-    ];
-    this.redisClient.runScript(
-      ELuaScriptName.FETCH_MESSAGE_FOR_PROCESSING,
-      keys,
-      argv,
-      (err, reply: unknown) => {
-        if (err) this.messageHandler.handleError(err);
-        else if (!reply)
-          this.messageHandler.handleError(new CallbackEmptyReplyError());
-        else if (!Array.isArray(reply))
-          this.messageHandler.handleError(new CallbackInvalidReplyError());
-        else {
-          const [state, msg]: string[] = reply;
-          const message = _fromMessage(msg, state);
-          this.messageHandler.emit(events.MESSAGE_RECEIVED, message);
-        }
-      },
-    );
-  }
+  protected handleMessage: ICallback<string | null> = (err, messageId) => {
+    if (err) {
+      this.ticker.abort();
+      this.messageHandler.handleError(err);
+    } else if (typeof messageId === 'string') {
+      this.messageHandler.emit(
+        events.MESSAGE_RECEIVED,
+        messageId,
+        this.queue,
+        this.consumerId,
+      );
+    } else {
+      this.ticker.nextTick();
+    }
+  };
 
-  protected dequeueMessageWithPriority(cb: ICallback<string | null>): void {
-    this.redisClient.zpoprpush(
-      this.redisKeys.keyPriorityQueuePending,
-      this.redisKeys.keyQueueProcessing,
-      cb,
-    );
-  }
+  protected dequeueWithRateLimit = (): boolean => {
+    if (this.queueRateLimit) {
+      QueueRateLimit.hasExceeded(
+        this.redisClient,
+        this.queue,
+        this.queueRateLimit,
+        (err, isExceeded) => {
+          if (err) this.messageHandler.handleError(err);
+          else if (isExceeded) this.ticker.nextTick();
+          else this.dequeueWithRateLimitExec();
+        },
+      );
+      return true;
+    }
+    return false;
+  };
 
-  protected waitForMessage(cb: ICallback<string | null>): void {
-    this.redisClient.brpoplpush(
-      this.redisKeys.keyQueuePending,
-      this.redisKeys.keyQueueProcessing,
-      0,
-      cb,
-    );
-  }
+  protected dequeueWithRateLimitExec = () => {
+    if (this.isPriorityQueuingEnabled()) this.dequeueWithPriority();
+    else this.dequeueAndReturn();
+  };
 
-  protected dequeueMessage(cb: ICallback<string | null>): void {
+  protected dequeueWithPriority = (): boolean => {
+    if (this.isPriorityQueuingEnabled()) {
+      this.redisClient.zpoprpush(
+        this.redisKeys.keyPriorityQueuePending,
+        this.redisKeys.keyQueueProcessing,
+        this.handleMessage,
+      );
+      return true;
+    }
+    return false;
+  };
+
+  protected dequeueAndBlock = (): boolean => {
+    if (this.blockUntilMessageReceived) {
+      this.redisClient.brpoplpush(
+        this.redisKeys.keyQueuePending,
+        this.redisKeys.keyQueueProcessing,
+        0,
+        this.handleMessage,
+      );
+      return true;
+    }
+    return false;
+  };
+
+  protected dequeueAndReturn = (): void => {
     this.redisClient.rpoplpush(
       this.redisKeys.keyQueuePending,
       this.redisKeys.keyQueueProcessing,
-      cb,
+      this.handleMessage,
     );
-  }
+  };
 
   dequeue(): void {
-    const cb: ICallback<string | null> = (err, reply) => {
-      if (err) {
-        this.ticker.abort();
-        this.messageHandler.handleError(err);
-      } else if (typeof reply === 'string') {
-        this.emitReceivedMessage(reply);
-      } else {
-        this.ticker.nextTick();
-      }
-    };
-    const deq = () => {
-      if (this.isPriorityQueuingEnabled()) this.dequeueMessageWithPriority(cb);
-      else this.dequeueMessage(cb);
-    };
-    if (this.isPriorityQueuingEnabled() || this.queueRateLimit) {
-      if (this.queueRateLimit) {
-        QueueRateLimit.hasExceeded(
-          this.redisClient,
-          this.queue,
-          this.queueRateLimit,
-          (err, isExceeded) => {
-            if (err) this.messageHandler.handleError(err);
-            else if (isExceeded) this.ticker.nextTick();
-            else deq();
-          },
-        );
-      } else deq();
-    } else {
-      this.waitForMessage(cb);
-    }
+    this.dequeueWithRateLimit() ||
+      this.dequeueWithPriority() ||
+      this.dequeueAndBlock() ||
+      this.dequeueAndReturn();
   }
 
   protected isPriorityQueuingEnabled(): boolean {

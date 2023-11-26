@@ -9,18 +9,21 @@
 
 import { parseExpression } from 'cron-parser';
 import {
-  TMessageConsumeOptions,
-  TExchange,
+  EMessagePropertyStatus,
   IMessageSerialized,
   IQueueParams,
+  TExchange,
+  TMessageConsumeOptions,
   TTopicParams,
 } from '../../../types';
 import { MessageState } from './message-state';
-import { MessageError } from './errors';
+import {
+  MessageDestinationQueueAlreadySetError,
+  MessageDestinationQueueRequiredError,
+  MessageError,
+  MessageExchangeRequiredError,
+} from './errors';
 import { ExchangeDirect } from '../exchange/exchange-direct';
-import { MessageExchangeRequiredError } from './errors';
-import { MessageDestinationQueueRequiredError } from './errors';
-import { MessageDestinationQueueAlreadySetError } from './errors';
 import { ExchangeFanOut } from '../exchange/exchange-fan-out';
 import { ExchangeTopic } from '../exchange/exchange-topic';
 
@@ -70,6 +73,8 @@ export class Message {
   protected exchange: TExchange | null = null;
 
   protected destinationQueue: IQueueParams | null = null;
+
+  protected status: EMessagePropertyStatus = EMessagePropertyStatus.UNPUBLISHED;
 
   constructor() {
     this.createdAt = Date.now();
@@ -151,6 +156,10 @@ export class Message {
       this.getTTL(),
       this.getCreatedAt(),
     );
+  }
+
+  getStatus(): EMessagePropertyStatus {
+    return this.status;
   }
 
   ///
@@ -290,6 +299,11 @@ export class Message {
 
   hasPriority(): boolean {
     return this.priority !== null;
+  }
+
+  setStatus(s: EMessagePropertyStatus): Message {
+    this.status = s;
+    return this;
   }
 
   getQueue(): IQueueParams | string | null {
