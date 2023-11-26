@@ -15,7 +15,6 @@ import {
 import { ICallback } from 'redis-smq-common';
 import { config } from '../../common/config';
 import { Message } from '../../../src/lib/message/message';
-import { events } from '../../../src/common/events/events';
 import { getProducer } from '../../common/producer';
 import {
   createQueue,
@@ -23,18 +22,14 @@ import {
 } from '../../common/message-producing-consuming';
 import { Configuration } from '../../../src/config/configuration';
 
-const producerStats: Record<string, { event: string; messageId: string }[]> =
-  {};
+const producerStats: Record<string, string[]> = {};
 
 class TestProducerEventListener implements IEventListener {
   init(args: TEventListenerInitArgs, cb: ICallback<void>) {
     const { instanceId, eventProvider } = args;
     producerStats[instanceId] = [];
-    eventProvider.on(events.MESSAGE_PUBLISHED, (messageId: string) => {
-      producerStats[instanceId].push({
-        event: events.MESSAGE_PUBLISHED,
-        messageId,
-      });
+    eventProvider.on('messagePublished', (messageId: string) => {
+      producerStats[instanceId].push(messageId);
     });
     cb();
   }
@@ -70,21 +65,9 @@ test('Producer event listeners', async () => {
   await p1.produceAsync(m3);
   expect(Object.keys(producerStats)).toEqual([p0.getId(), p1.getId()]);
   expect(producerStats[p0.getId()].length).toEqual(2);
-  expect(producerStats[p0.getId()][0]).toEqual({
-    event: events.MESSAGE_PUBLISHED,
-    messageId: m0.getRequiredId(),
-  });
-  expect(producerStats[p0.getId()][1]).toEqual({
-    event: events.MESSAGE_PUBLISHED,
-    messageId: m1.getRequiredId(),
-  });
+  expect(producerStats[p0.getId()][0]).toEqual(m0.getRequiredId());
+  expect(producerStats[p0.getId()][1]).toEqual(m1.getRequiredId());
   expect(producerStats[p1.getId()].length).toEqual(2);
-  expect(producerStats[p1.getId()][0]).toEqual({
-    event: events.MESSAGE_PUBLISHED,
-    messageId: m2.getRequiredId(),
-  });
-  expect(producerStats[p1.getId()][1]).toEqual({
-    event: events.MESSAGE_PUBLISHED,
-    messageId: m3.getRequiredId(),
-  });
+  expect(producerStats[p1.getId()][0]).toEqual(m2.getRequiredId());
+  expect(producerStats[p1.getId()][1]).toEqual(m3.getRequiredId());
 });

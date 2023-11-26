@@ -8,7 +8,6 @@
  */
 
 import { Message } from '../../../src/lib/message/message';
-import { events } from '../../../src/common/events/events';
 import { ICallback } from 'redis-smq-common';
 import { untilConsumerEvent } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
@@ -43,6 +42,6 @@ test('A message is unacknowledged when messageConsumeTimeout is exceeded', async
 
   await producer.produceAsync(msg);
   consumer.run();
-  await untilConsumerEvent(consumer, events.MESSAGE_UNACKNOWLEDGED);
-  await untilConsumerEvent(consumer, events.MESSAGE_ACKNOWLEDGED);
+  await untilConsumerEvent(consumer, 'messageUnacknowledged');
+  await untilConsumerEvent(consumer, 'messageAcknowledged');
 });

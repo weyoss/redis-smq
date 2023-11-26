@@ -8,7 +8,6 @@
  */
 
 import { Message } from '../../../src/lib/message/message';
-import { events } from '../../../src/common/events/events';
 import { untilMessageAcknowledged } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -36,12 +35,12 @@ test('An unacknowledged message is delayed given messageRetryDelay > 0 and messa
   });
 
   let unacks = 0;
-  consumer.on(events.MESSAGE_UNACKNOWLEDGED, () => {
+  consumer.on('messageUnacknowledged', () => {
     unacks += 1;
   });
 
   let acks = 0;
-  consumer.on(events.MESSAGE_ACKNOWLEDGED, () => {
+  consumer.on('messageAcknowledged', () => {
     acks += 1;
   });
 

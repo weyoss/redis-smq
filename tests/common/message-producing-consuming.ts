@@ -9,7 +9,6 @@
 
 import { EQueueType, IQueueParams } from '../../types';
 import { Message } from '../../src/lib/message/message';
-import { events } from '../../src/common/events/events';
 import { untilConsumerEvent, untilMessageAcknowledged } from './events';
 import { getConsumer } from './consumer';
 import { getProducer } from './producer';
@@ -63,7 +62,7 @@ export async function produceAndDeadLetterMessage(
   const { messages } = await producer.produceAsync(message);
 
   consumer.run();
-  await untilConsumerEvent(consumer, events.MESSAGE_DEAD_LETTERED);
+  await untilConsumerEvent(consumer, 'messageDeadLettered');
   return { producer, consumer, messageId: messages[0], queue };
 }
 

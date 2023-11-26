@@ -9,7 +9,6 @@
 
 import { delay, promisifyAll } from 'bluebird';
 import { Message } from '../../../src/lib/message/message';
-import { events } from '../../../src/common/events/events';
 import { DelayUnacknowledgedWorker } from '../../../src/workers/delay-unacknowledged.worker';
 import { PublishScheduledWorker } from '../../../src/workers/publish-scheduled.worker';
 import { WatchConsumersWorker } from '../../../src/workers/watch-consumers.worker';
@@ -47,7 +46,7 @@ test('WatchdogWorker -> DelayUnacknowledgedWorker -> PublishScheduledWorker', as
   );
 
   consumer.run();
-  await untilConsumerEvent(consumer, events.DOWN);
+  await untilConsumerEvent(consumer, 'down');
   await shutDownBaseInstance(consumer);
   expect(message !== null).toBe(true);
 

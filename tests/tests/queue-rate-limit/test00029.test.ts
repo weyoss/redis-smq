@@ -9,7 +9,6 @@
 
 import { delay } from 'bluebird';
 import { Message } from '../../../src/lib/message/message';
-import { events } from '../../../src/common/events/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
 import {
@@ -53,7 +52,7 @@ test('Rate limit a queue without priority and check message rate', async () => {
   const messages: { ts: number; messageId: string }[] = [];
   const consumer = await getConsumer();
 
-  consumer.on(events.MESSAGE_ACKNOWLEDGED, (messageId: string) => {
+  consumer.on('messageAcknowledged', (messageId: string) => {
     messages.push({ ts: Date.now(), messageId });
   });
 

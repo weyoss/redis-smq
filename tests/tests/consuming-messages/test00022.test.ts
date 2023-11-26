@@ -8,7 +8,6 @@
  */
 
 import { Message } from '../../../src/lib/message/message';
-import { events } from '../../../src/common/events/events';
 import { untilConsumerEvent } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -36,7 +35,7 @@ test('Shutdown a consumer when consuming a message with retryThreshold = 0: expe
   await producer.produceAsync(msg);
 
   consumer.run();
-  await untilConsumerEvent(consumer, events.DOWN);
+  await untilConsumerEvent(consumer, 'down');
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
   const res = await deadLetteredMessages.getMessagesAsync(defaultQueue, 0, 100);
   expect(res.totalItems).toBe(1);

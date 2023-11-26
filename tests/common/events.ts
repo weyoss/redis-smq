@@ -8,12 +8,12 @@
  */
 
 import { Consumer } from '../../src/lib/consumer/consumer';
-import { events } from '../../src/common/events/events';
+import { TRedisSMQEvent } from '../../types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function consumerOnEvent<T extends Array<any>>(
   consumer: Consumer,
-  event: string,
+  event: keyof TRedisSMQEvent,
 ) {
   return new Promise<T>((resolve) => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -28,10 +28,7 @@ export async function untilMessageAcknowledged(
   consumer: Consumer,
   messageId?: string,
 ): Promise<void> {
-  const [id] = await consumerOnEvent<[string]>(
-    consumer,
-    events.MESSAGE_ACKNOWLEDGED,
-  );
+  const [id] = await consumerOnEvent<[string]>(consumer, 'messageAcknowledged');
   if (messageId && messageId !== id) {
     await untilMessageAcknowledged(consumer, messageId);
   }
@@ -43,7 +40,7 @@ export async function untilMessageDeadLettered(
 ): Promise<void> {
   const [, id] = await consumerOnEvent<[string, string]>(
     consumer,
-    events.MESSAGE_DEAD_LETTERED,
+    'messageDeadLettered',
   );
   if (messageId && messageId !== id) {
     await untilMessageDeadLettered(consumer, messageId);
@@ -52,7 +49,7 @@ export async function untilMessageDeadLettered(
 
 export async function untilConsumerEvent(
   consumer: Consumer,
-  event: string,
+  event: keyof TRedisSMQEvent,
 ): Promise<unknown[]> {
   return consumerOnEvent(consumer, event);
 }

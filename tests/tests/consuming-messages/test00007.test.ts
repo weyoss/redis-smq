@@ -8,7 +8,6 @@
  */
 
 import { Message } from '../../../src/lib/message/message';
-import { events } from '../../../src/common/events/events';
 import { ICallback } from 'redis-smq-common';
 import { untilMessageAcknowledged } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
@@ -35,12 +34,12 @@ test('Unacknowledged message are re-queued when messageRetryThreshold is not exc
   });
 
   let unacknowledged = 0;
-  consumer.on(events.MESSAGE_UNACKNOWLEDGED, () => {
+  consumer.on('messageUnacknowledged', () => {
     unacknowledged += 1;
   });
 
   let acknowledged = 0;
-  consumer.on(events.MESSAGE_ACKNOWLEDGED, () => {
+  consumer.on('messageAcknowledged', () => {
     acknowledged += 1;
   });
 

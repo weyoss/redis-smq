@@ -8,7 +8,6 @@
  */
 
 import { Message } from '../../../index';
-import { events } from '../../../src/common/events/events';
 import { untilConsumerEvent } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -38,7 +37,7 @@ test('An unacknowledged message is dead-lettered and not delivered again, given 
   await producer.produceAsync(msg);
 
   consumer.run();
-  await untilConsumerEvent(consumer, events.MESSAGE_DEAD_LETTERED);
+  await untilConsumerEvent(consumer, 'messageDeadLettered');
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
   const r = await deadLetteredMessages.getMessagesAsync(defaultQueue, 0, 100);
   expect(r.items.length).toBe(1);
