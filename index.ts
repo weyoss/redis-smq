@@ -16,7 +16,6 @@ export * from './src/lib/queue/errors';
 export * from './src/lib/exchange/errors';
 export * from './src/lib/producer/errors';
 export * from './src/lib/message/errors';
-export { events } from './src/common/events/events';
 export { Consumer } from './src/lib/consumer/consumer';
 export { Producer } from './src/lib/producer/producer';
 export { Message } from './src/lib/message/message';

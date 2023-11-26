@@ -12,7 +12,6 @@ import {
   TConsumerRedisKeys,
   IQueueParams,
 } from '../../../types';
-import { events } from '../../common/events/events';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { ConsumerHeartbeat } from './consumer-heartbeat';
 import { Base } from '../base';
@@ -64,10 +63,8 @@ export class Consumer extends Base {
             this,
             this.redisKeys,
           );
-          this.heartbeat.on(events.ERROR, (err: Error) =>
-            this.emit(events.ERROR, err),
-          );
-          this.heartbeat.once(events.TICK, () => cb());
+          this.heartbeat.on('error', (err) => this.emit('error', err));
+          this.heartbeat.once('heartbeatTick', () => cb());
         }
       },
     );
@@ -95,10 +92,8 @@ export class Consumer extends Base {
       new WorkerPool(),
       nsLogger,
     );
-    this.workerRunner.on(events.ERROR, (err: Error) =>
-      this.emit(events.ERROR, err),
-    );
-    this.workerRunner.once(events.UP, cb);
+    this.workerRunner.on('error', (...args) => this.emit('error', ...args));
+    this.workerRunner.once('up', cb);
     this.workerRunner.addWorker(
       new DelayUnacknowledgedWorker(redisClient, true),
     );

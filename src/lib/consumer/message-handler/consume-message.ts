@@ -13,7 +13,6 @@ import {
   EMessageProperty,
   EMessagePropertyStatus,
 } from '../../../../types';
-import { events } from '../../../common/events/events';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { MessageHandler } from './message-handler';
 import {
@@ -90,7 +89,7 @@ export class ConsumeMessage {
           const messageHandlerId = this.messageHandler.getId();
           const consumerId = this.messageHandler.getConsumerId();
           this.messageHandler.emit(
-            events.MESSAGE_UNACKNOWLEDGED,
+            'messageUnacknowledged',
             cause,
             messageId,
             queue,
@@ -99,7 +98,7 @@ export class ConsumeMessage {
           );
           if (reply.action === ERetryAction.DEAD_LETTER) {
             this.messageHandler.emit(
-              events.MESSAGE_DEAD_LETTERED,
+              'messageDeadLettered',
               reply.deadLetterCause,
               messageId,
               queue,
@@ -108,7 +107,7 @@ export class ConsumeMessage {
             );
           } else if (reply.action === ERetryAction.DELAY) {
             this.messageHandler.emit(
-              events.MESSAGE_DELAYED,
+              'messageDelayed',
               messageId,
               queue,
               messageHandlerId,
@@ -116,7 +115,7 @@ export class ConsumeMessage {
             );
           } else {
             this.messageHandler.emit(
-              events.MESSAGE_REQUEUED,
+              'messageRequeued',
               messageId,
               queue,
               messageHandlerId,
@@ -157,7 +156,7 @@ export class ConsumeMessage {
               if (err) this.messageHandler.handleError(err);
               else
                 this.messageHandler.emit(
-                  events.MESSAGE_ACKNOWLEDGED,
+                  'messageAcknowledged',
                   msg.getRequiredId(),
                   msg.getDestinationQueue(),
                   this.messageHandler.getId(),

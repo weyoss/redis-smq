@@ -22,7 +22,6 @@ import {
   RedisClient,
   Ticker,
 } from 'redis-smq-common';
-import { events } from '../../../common/events/events';
 import { MessageHandler } from './message-handler';
 import { QueueRateLimit } from '../../queue/queue-rate-limit';
 import { ELuaScriptName } from '../../../common/redis-client/redis-client';
@@ -69,7 +68,7 @@ export class DequeueMessage {
       this.consumerId,
     );
     this.ticker = new Ticker(() => {
-      this.messageHandler.emit(events.MESSAGE_NEXT);
+      this.messageHandler.emit('next');
     });
   }
 
@@ -79,7 +78,7 @@ export class DequeueMessage {
       this.messageHandler.handleError(err);
     } else if (typeof messageId === 'string') {
       this.messageHandler.emit(
-        events.MESSAGE_RECEIVED,
+        'messageReceived',
         messageId,
         this.queue,
         this.consumerId,
@@ -212,7 +211,7 @@ export class DequeueMessage {
   }
 
   quit(cb: ICallback<void>): void {
-    this.ticker.once(events.DOWN, cb);
+    this.ticker.once('down', cb);
     this.ticker.quit();
   }
 }

@@ -8,9 +8,7 @@
  */
 
 import { v4 as uuid } from 'uuid';
-import { EventEmitter } from 'events';
 import { IEventListener } from '../../types';
-import { events } from '../common/events/events';
 import {
   async,
   redis,
@@ -23,10 +21,12 @@ import {
   ILogger,
   CallbackEmptyReplyError,
   PanicError,
+  EventEmitter,
 } from 'redis-smq-common';
 import { Configuration } from '../config/configuration';
+import { TRedisSMQEvent } from '../../types';
 
-export abstract class Base extends EventEmitter {
+export abstract class Base extends EventEmitter<TRedisSMQEvent> {
   protected readonly id: string;
   protected readonly powerSwitch: PowerSwitch;
   protected sharedRedisClient: RedisClient | null = null;
@@ -65,11 +65,11 @@ export abstract class Base extends EventEmitter {
   };
 
   protected registerSystemEventListeners(): void {
-    this.on(events.GOING_UP, () => this.logger.info(`Going up...`));
-    this.on(events.UP, () => this.logger.info(`Up and running...`));
-    this.on(events.GOING_DOWN, () => this.logger.info(`Going down...`));
-    this.on(events.DOWN, () => this.logger.info(`Down.`));
-    this.on(events.ERROR, (err: Error) => this.handleError(err));
+    this.on('goingUp', () => this.logger.info(`Going up...`));
+    this.on('up', () => this.logger.info(`Up and running...`));
+    this.on('goingDown', () => this.logger.info(`Going down...`));
+    this.on('down', () => this.logger.info(`Down.`));
+    this.on('error', (err: Error) => this.handleError(err));
   }
 
   protected goingUp(): TFunction[] {
@@ -78,7 +78,7 @@ export abstract class Base extends EventEmitter {
 
   protected up(cb?: ICallback<boolean>): void {
     this.powerSwitch.commit();
-    this.emit(events.UP);
+    this.emit('up');
     cb && cb(null, true);
   }
 
@@ -88,7 +88,7 @@ export abstract class Base extends EventEmitter {
 
   protected down(cb?: ICallback<boolean>): void {
     this.powerSwitch.commit();
-    this.emit(events.DOWN);
+    this.emit('down');
     cb && cb(null, true);
   }
 
@@ -147,12 +147,12 @@ export abstract class Base extends EventEmitter {
   run(cb?: ICallback<boolean>): void {
     const r = this.powerSwitch.goingUp();
     if (r) {
-      this.emit(events.GOING_UP);
+      this.emit('goingUp');
       const tasks = this.goingUp();
       async.waterfall(tasks, (err) => {
         if (err) {
           if (cb) cb(err);
-          else this.emit(events.ERROR, err);
+          else this.emit('error', err);
         } else this.up(cb);
       });
     } else {
@@ -163,7 +163,7 @@ export abstract class Base extends EventEmitter {
   shutdown(cb?: ICallback<boolean>): void {
     const r = this.powerSwitch.goingDown();
     if (r) {
-      this.emit(events.GOING_DOWN);
+      this.emit('goingDown');
       const tasks = this.goingDown();
       async.waterfall(tasks, () => {
         // ignoring shutdown errors

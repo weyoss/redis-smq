@@ -16,11 +16,11 @@ import {
   ICallback,
   IRedisTransaction,
   CallbackInvalidReplyError,
+  EventEmitter,
 } from 'redis-smq-common';
-import { events } from '../../common/events/events';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { EventEmitter } from 'events';
 import { Consumer } from './consumer';
+import { TRedisSMQEvent } from '../../../types';
 
 const cpuUsageStatsRef = {
   cpuUsage: process.cpuUsage(),
@@ -55,7 +55,7 @@ function cpuUsage() {
   };
 }
 
-export class ConsumerHeartbeat extends EventEmitter {
+export class ConsumerHeartbeat extends EventEmitter<TRedisSMQEvent> {
   protected static readonly heartbeatTTL = 10 * 1000; // 10 sec
   protected redisClient: RedisClient;
   protected ticker: Ticker;
@@ -103,10 +103,10 @@ export class ConsumerHeartbeat extends EventEmitter {
     multi.hset(this.keyHeartbeats, this.consumer.getId(), heartbeatPayloadStr);
     multi.zadd(this.keyHeartbeatTimestamps, timestamp, this.consumer.getId());
     multi.exec((err) => {
-      if (err) this.emit(events.ERROR, err);
+      if (err) this.emit('error', err);
       else {
         this.emit(
-          events.TICK,
+          'heartbeatTick',
           timestamp,
           this.consumer.getId(),
           heartbeatPayload,
@@ -120,7 +120,7 @@ export class ConsumerHeartbeat extends EventEmitter {
     async.waterfall(
       [
         (cb: ICallback<void>) => {
-          this.ticker.once(events.DOWN, cb);
+          this.ticker.once('down', cb);
           this.ticker.quit();
         },
         (cb: ICallback<void>) => {
