@@ -13,6 +13,7 @@ import { isEqual } from '../../../common/util';
 import { EQueueType } from '../../../../types';
 import { getQueue } from '../../../common/queue';
 import { getFanOutExchange } from '../../../common/exchange';
+import { getQueueMessages } from '../../../common/queue-messages';
 
 test('ExchangeFanOut: producing message using setFanOut()', async () => {
   const q1 = { ns: 'testing', name: 'w123' };
@@ -33,9 +34,11 @@ test('ExchangeFanOut: producing message using setFanOut()', async () => {
 
   const r = await producer.produceAsync(msg);
   expect(r.scheduled).toEqual(false);
+  const messages = await getQueueMessages();
+  const items = await messages.getMessagesByIdsAsync(r.messages);
   expect(
     isEqual(
-      r.messages.map((i) => i.getDestinationQueue()),
+      items.map((i) => i.getDestinationQueue()),
       [q1, q2],
     ),
   ).toBe(true);

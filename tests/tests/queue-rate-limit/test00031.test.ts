@@ -28,11 +28,11 @@ test('Set a rate limit for a queue and consume message using many consumers', as
     interval: 10000,
   });
 
-  const messages: { ts: number; msg: Message }[] = [];
+  const messages: { ts: number; messageId: string }[] = [];
   for (let i = 0; i < 6; i += 1) {
     const consumer = await getConsumer();
-    consumer.on(events.MESSAGE_ACKNOWLEDGED, (msg: Message) => {
-      messages.push({ ts: Date.now(), msg });
+    consumer.on(events.MESSAGE_ACKNOWLEDGED, (messageId: string) => {
+      messages.push({ ts: Date.now(), messageId });
     });
     await consumer.runAsync();
   }

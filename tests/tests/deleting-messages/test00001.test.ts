@@ -17,18 +17,18 @@ import { getQueuePendingMessages } from '../../common/queue-pending-messages';
 test('Combined test: Delete a pending message. Check pending message. Check queue metrics.', async () => {
   await createQueue(defaultQueue, false);
 
-  const { queue, message } = await produceMessage();
+  const { queue, messageId } = await produceMessage();
 
   const pendingMessages = await getQueuePendingMessages();
   const res1 = await pendingMessages.getMessagesAsync(queue, 0, 100);
 
   expect(res1.totalItems).toBe(1);
-  expect(res1.items[0].getId()).toBe(message.getRequiredId());
+  expect(res1.items[0].getId()).toBe(messageId);
 
   const count = await pendingMessages.countMessagesAsync(queue);
   expect(count).toBe(1);
 
-  await pendingMessages.deleteMessageAsync(queue, message.getRequiredId());
+  await pendingMessages.deleteMessageAsync(queue, messageId);
 
   const res2 = await pendingMessages.getMessagesAsync(queue, 0, 100);
   expect(res2.totalItems).toBe(0);

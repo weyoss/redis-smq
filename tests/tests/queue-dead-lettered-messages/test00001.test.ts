@@ -39,7 +39,7 @@ test('Queue dead-lettered message', async () => {
     messageHandler: (msg1, cb) => cb(new Error()),
   });
   consumer.run();
-  await untilMessageDeadLettered(consumer, msg);
+  await untilMessageDeadLettered(consumer, msg.getRequiredId());
 
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
   const count = await deadLetteredMessages.countMessagesAsync(defaultQueue);
