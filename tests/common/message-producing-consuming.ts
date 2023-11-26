@@ -38,11 +38,11 @@ export async function produceAndAcknowledgeMessage(
 
   const message = new Message();
   message.setBody({ hello: 'world' }).setQueue(queue);
-  await producer.produceAsync(message);
+  const { messages } = await producer.produceAsync(message);
 
   consumer.run();
   await untilMessageAcknowledged(consumer);
-  return { producer, consumer, queue, message };
+  return { producer, consumer, queue, messageId: messages[0] };
 }
 
 export async function produceAndDeadLetterMessage(
@@ -60,11 +60,11 @@ export async function produceAndDeadLetterMessage(
 
   const message = new Message();
   message.setBody({ hello: 'world' }).setQueue(queue);
-  await producer.produceAsync(message);
+  const { messages } = await producer.produceAsync(message);
 
   consumer.run();
   await untilConsumerEvent(consumer, events.MESSAGE_DEAD_LETTERED);
-  return { producer, consumer, message, queue };
+  return { producer, consumer, messageId: messages[0], queue };
 }
 
 export async function produceMessage(queue: IQueueParams = defaultQueue) {
@@ -73,8 +73,8 @@ export async function produceMessage(queue: IQueueParams = defaultQueue) {
 
   const message = new Message();
   message.setBody({ hello: 'world' }).setQueue(queue);
-  await producer.produceAsync(message);
-  return { producer, message, queue };
+  const { messages } = await producer.produceAsync(message);
+  return { producer, messageId: messages[0], queue };
 }
 
 export async function produceMessageWithPriority(
@@ -85,8 +85,8 @@ export async function produceMessageWithPriority(
 
   const message = new Message();
   message.setPriority(Message.MessagePriority.LOW).setQueue(queue);
-  await producer.produceAsync(message);
-  return { message, producer, queue };
+  const { messages } = await producer.produceAsync(message);
+  return { messageId: messages[0], producer, queue };
 }
 
 export async function scheduleMessage(queue: IQueueParams = defaultQueue) {
@@ -95,8 +95,8 @@ export async function scheduleMessage(queue: IQueueParams = defaultQueue) {
 
   const message = new Message();
   message.setScheduledDelay(10000).setQueue(queue);
-  await producer.produceAsync(message);
-  return { message, producer, queue };
+  const { messages } = await producer.produceAsync(message);
+  return { messageId: messages[0], producer, queue };
 }
 
 export async function createQueue(

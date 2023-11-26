@@ -19,20 +19,17 @@ import { getQueueMessages } from '../../common/queue-messages';
 
 test('Combined test: Requeue a message from dead-letter queue. Check queue metrics.', async () => {
   await createQueue(defaultQueue, false);
-  const { message, queue, consumer } = await produceAndDeadLetterMessage();
+  const { messageId, queue, consumer } = await produceAndDeadLetterMessage();
   await shutDownBaseInstance(consumer);
 
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
-  await deadLetteredMessages.requeueMessageAsync(
-    queue,
-    message.getRequiredId(),
-  );
+  await deadLetteredMessages.requeueMessageAsync(queue, messageId);
 
   const pendingMessages = await getQueuePendingMessages();
   const res2 = await pendingMessages.getMessagesAsync(queue, 0, 100);
   expect(res2.totalItems).toBe(1);
   expect(res2.items.length).toBe(1);
-  expect(res2.items[0].getId()).toEqual(message.getRequiredId());
+  expect(res2.items[0].getId()).toEqual(messageId);
 
   const res3 = await deadLetteredMessages.getMessagesAsync(queue, 0, 100);
   expect(res3.totalItems).toBe(0);
@@ -44,9 +41,6 @@ test('Combined test: Requeue a message from dead-letter queue. Check queue metri
   expect(count.pending).toBe(1);
 
   await expect(async () => {
-    await deadLetteredMessages.requeueMessageAsync(
-      queue,
-      message.getRequiredId(),
-    );
+    await deadLetteredMessages.requeueMessageAsync(queue, messageId);
   }).not.toThrow();
 });

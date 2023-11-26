@@ -21,7 +21,7 @@ test('Consume message from different queues using a single consumer instance: ca
 
   const consumer = promisifyAll(new Consumer());
   await consumer.consumeAsync('test_queue', (msg, cb) => {
-    cb();
+    setTimeout(cb, 1000);
   });
   await consumer.consumeAsync('another_queue', (msg, cb) => {
     cb();
@@ -32,16 +32,12 @@ test('Consume message from different queues using a single consumer instance: ca
   await producer.runAsync();
 
   const msg1 = new Message().setQueue('test_queue').setBody('some data');
-  setTimeout(() => {
-    producer.produceAsync(msg1);
-  }, 1000);
-  await untilMessageAcknowledged(consumer, msg1);
+  const { messages } = await producer.produceAsync(msg1);
+  await untilMessageAcknowledged(consumer, messages[0]);
 
   const msg2 = new Message().setQueue('another_queue').setBody('some data');
-  setTimeout(() => {
-    producer.produceAsync(msg2);
-  }, 1000);
-  await untilMessageAcknowledged(consumer, msg2);
+  const { messages: m } = await producer.produceAsync(msg2);
+  await untilMessageAcknowledged(consumer, m[0]);
 
   await shutDownBaseInstance(consumer);
 });

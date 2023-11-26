@@ -8,10 +8,11 @@
  */
 
 import {
-  IRedisSMQConfig,
+  EConsumeMessageDeadLetterCause,
   IEventListener,
-  TEventListenerInitArgs,
   IQueueParams,
+  IRedisSMQConfig,
+  TEventListenerInitArgs,
 } from '../../../types';
 import { ICallback } from 'redis-smq-common';
 import { config } from '../../common/config';
@@ -30,7 +31,7 @@ import { Configuration } from '../../../src/config/configuration';
 
 const consumerStats: Record<
   string,
-  { queue: IQueueParams; event: string; message: Message }[]
+  { queue: IQueueParams; event: string; messageId: string }[]
 > = {};
 
 class TestConsumerEventListener implements IEventListener {
@@ -39,20 +40,30 @@ class TestConsumerEventListener implements IEventListener {
     cb: ICallback<void>,
   ) {
     consumerStats[instanceId] = [];
-    eventProvider.on(events.MESSAGE_ACKNOWLEDGED, (msg: Message) => {
-      consumerStats[instanceId].push({
-        queue: msg.getDestinationQueue(),
-        event: events.MESSAGE_ACKNOWLEDGED,
-        message: msg,
-      });
-    });
-    eventProvider.on(events.MESSAGE_DEAD_LETTERED, (msg: Message) => {
-      consumerStats[instanceId].push({
-        queue: msg.getDestinationQueue(),
-        event: events.MESSAGE_DEAD_LETTERED,
-        message: msg,
-      });
-    });
+    eventProvider.on(
+      events.MESSAGE_ACKNOWLEDGED,
+      (messageId: string, queue: IQueueParams) => {
+        consumerStats[instanceId].push({
+          queue,
+          event: events.MESSAGE_ACKNOWLEDGED,
+          messageId,
+        });
+      },
+    );
+    eventProvider.on(
+      events.MESSAGE_DEAD_LETTERED,
+      (
+        _: EConsumeMessageDeadLetterCause,
+        messageId: string,
+        queue: IQueueParams,
+      ) => {
+        consumerStats[instanceId].push({
+          queue,
+          event: events.MESSAGE_DEAD_LETTERED,
+          messageId,
+        });
+      },
+    );
     cb();
   }
 
@@ -74,16 +85,16 @@ test('Consumer event listeners', async () => {
   Message.setDefaultConsumeOptions({ retryDelay: 0 });
 
   await createQueue(defaultQueue, false);
-  const { message: m0, consumer: c0 } =
+  const { messageId: m0, consumer: c0 } =
     await produceAndAcknowledgeMessage(defaultQueue);
   await shutDownBaseInstance(c0);
-  const { message: m1, consumer: c1 } =
+  const { messageId: m1, consumer: c1 } =
     await produceAndAcknowledgeMessage(defaultQueue);
   await shutDownBaseInstance(c1);
   const anotherQueue = { name: 'another_queue', ns: 'testing' };
   await createQueue(anotherQueue, false);
   const {
-    message: m2,
+    messageId: m2,
     consumer: c2,
     producer: p2,
   } = await produceAndDeadLetterMessage(anotherQueue);
@@ -109,29 +120,29 @@ test('Consumer event listeners', async () => {
   expect(consumerStats[c0.getId()][0]).toEqual({
     queue: defaultQueue,
     event: events.MESSAGE_ACKNOWLEDGED,
-    message: m0,
+    messageId: m0,
   });
   expect(consumerStats[c1.getId()][0]).toEqual({
     queue: defaultQueue,
     event: events.MESSAGE_ACKNOWLEDGED,
-    message: m1,
+    messageId: m1,
   });
   expect(consumerStats[c2.getId()].length).toEqual(1);
   expect(consumerStats[c2.getId()][0].queue).toEqual(anotherQueue);
   expect(consumerStats[c2.getId()][0].event).toEqual(
     events.MESSAGE_DEAD_LETTERED,
   );
-  expect(consumerStats[c2.getId()][0].message.getId()).toEqual(m2.getId());
+  expect(consumerStats[c2.getId()][0].messageId).toEqual(m2);
 
   expect(consumerStats[c3.getId()].length).toEqual(2);
   expect(consumerStats[c3.getId()][0]).toEqual({
     queue: anotherQueue,
     event: events.MESSAGE_ACKNOWLEDGED,
-    message: m3,
+    messageId: m3.getRequiredId(),
   });
   expect(consumerStats[c3.getId()][1]).toEqual({
     queue: anotherQueue,
     event: events.MESSAGE_ACKNOWLEDGED,
-    message: m4,
+    messageId: m4.getRequiredId(),
   });
 });

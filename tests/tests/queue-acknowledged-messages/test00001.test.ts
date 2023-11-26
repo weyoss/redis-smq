@@ -39,7 +39,7 @@ test('Acknowledged message', async () => {
     messageHandler: (msg1, cb) => cb(),
   });
   consumer.run();
-  await untilMessageAcknowledged(consumer, msg);
+  await untilMessageAcknowledged(consumer, msg.getRequiredId());
 
   const acknowledgedMessages = await getQueueAcknowledgedMessages();
   const count = await acknowledgedMessages.countMessagesAsync(defaultQueue);

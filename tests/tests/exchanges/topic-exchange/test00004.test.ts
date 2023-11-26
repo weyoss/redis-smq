@@ -12,6 +12,7 @@ import { createQueue } from '../../../common/message-producing-consuming';
 import { Message } from '../../../../src/lib/message/message';
 import { getProducer } from '../../../common/producer';
 import { isEqual } from '../../../common/util';
+import { getQueueMessages } from '../../../common/queue-messages';
 
 test('ExchangeTopic: producing message using setExchange()', async () => {
   await createQueue({ ns: 'testing', name: 'w123.2.4.5' }, false);
@@ -27,9 +28,11 @@ test('ExchangeTopic: producing message using setExchange()', async () => {
   const msg = new Message().setExchange(e1).setBody('hello');
   const r = await producer.produceAsync(msg);
   expect(r.scheduled).toEqual(false);
+  const messages = await getQueueMessages();
+  const items = await messages.getMessagesByIdsAsync(r.messages);
   expect(
     isEqual(
-      r.messages.map((i) => i.getDestinationQueue()),
+      items.map((i) => i.getDestinationQueue()),
       [
         { ns: 'testing', name: 'w123.2.4.5.6' },
         { ns: 'testing', name: 'w123.2.4.5' },

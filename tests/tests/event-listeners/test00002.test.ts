@@ -23,16 +23,17 @@ import {
 } from '../../common/message-producing-consuming';
 import { Configuration } from '../../../src/config/configuration';
 
-const producerStats: Record<string, { event: string; message: Message }[]> = {};
+const producerStats: Record<string, { event: string; messageId: string }[]> =
+  {};
 
 class TestProducerEventListener implements IEventListener {
   init(args: TEventListenerInitArgs, cb: ICallback<void>) {
     const { instanceId, eventProvider } = args;
     producerStats[instanceId] = [];
-    eventProvider.on(events.MESSAGE_PUBLISHED, (msg: Message) => {
+    eventProvider.on(events.MESSAGE_PUBLISHED, (messageId: string) => {
       producerStats[instanceId].push({
         event: events.MESSAGE_PUBLISHED,
-        message: msg,
+        messageId,
       });
     });
     cb();
@@ -71,19 +72,19 @@ test('Producer event listeners', async () => {
   expect(producerStats[p0.getId()].length).toEqual(2);
   expect(producerStats[p0.getId()][0]).toEqual({
     event: events.MESSAGE_PUBLISHED,
-    message: m0,
+    messageId: m0.getRequiredId(),
   });
   expect(producerStats[p0.getId()][1]).toEqual({
     event: events.MESSAGE_PUBLISHED,
-    message: m1,
+    messageId: m1.getRequiredId(),
   });
   expect(producerStats[p1.getId()].length).toEqual(2);
   expect(producerStats[p1.getId()][0]).toEqual({
     event: events.MESSAGE_PUBLISHED,
-    message: m2,
+    messageId: m2.getRequiredId(),
   });
   expect(producerStats[p1.getId()][1]).toEqual({
     event: events.MESSAGE_PUBLISHED,
-    message: m3,
+    messageId: m3.getRequiredId(),
   });
 });

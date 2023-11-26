@@ -50,11 +50,11 @@ test('Rate limit a queue without priority and check message rate', async () => {
     new Message().setBody('msg 6').setQueue(defaultQueue),
   );
 
-  const messages: { ts: number; msg: Message }[] = [];
+  const messages: { ts: number; messageId: string }[] = [];
   const consumer = await getConsumer();
 
-  consumer.on(events.MESSAGE_ACKNOWLEDGED, (msg: Message) => {
-    messages.push({ ts: Date.now(), msg });
+  consumer.on(events.MESSAGE_ACKNOWLEDGED, (messageId: string) => {
+    messages.push({ ts: Date.now(), messageId });
   });
 
   await consumer.runAsync();

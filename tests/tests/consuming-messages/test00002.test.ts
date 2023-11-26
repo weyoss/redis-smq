@@ -39,5 +39,5 @@ test('Produce and consume 1 message', async () => {
 
   consumer.run();
 
-  await untilMessageAcknowledged(consumer, msg);
+  await untilMessageAcknowledged(consumer, msg.getRequiredId());
 });

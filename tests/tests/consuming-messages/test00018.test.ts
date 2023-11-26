@@ -10,14 +10,18 @@
 import {
   createQueue,
   defaultQueue,
-  produceMessage,
 } from '../../common/message-producing-consuming';
 import { ProducerMessageAlreadyPublishedError } from '../../../src/lib/producer/errors';
+import { Message } from '../../../src/lib/message/message';
+import { getProducer } from '../../common/producer';
 
 test('Producing duplicate message', async () => {
   await createQueue(defaultQueue, false);
-  const { producer, message } = await produceMessage();
+  const m = new Message().setQueue(defaultQueue).setBody('123');
+  const p = await getProducer();
+  await p.runAsync();
+  await p.produceAsync(m);
   await expect(async () => {
-    await producer.produceAsync(message);
+    await p.produceAsync(m);
   }).rejects.toThrow(ProducerMessageAlreadyPublishedError);
 });

@@ -8,7 +8,6 @@
  */
 
 import { Consumer } from '../../src/lib/consumer/consumer';
-import { Message } from '../../src/lib/message/message';
 import { events } from '../../src/common/events/events';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -27,27 +26,27 @@ export async function consumerOnEvent<T extends Array<any>>(
 
 export async function untilMessageAcknowledged(
   consumer: Consumer,
-  msg?: Message,
+  messageId?: string,
 ): Promise<void> {
-  const [message] = await consumerOnEvent<[Message]>(
+  const [id] = await consumerOnEvent<[string]>(
     consumer,
     events.MESSAGE_ACKNOWLEDGED,
   );
-  if (msg && msg.getRequiredId() !== message.getRequiredId()) {
-    await untilMessageAcknowledged(consumer, msg);
+  if (messageId && messageId !== id) {
+    await untilMessageAcknowledged(consumer, messageId);
   }
 }
 
 export async function untilMessageDeadLettered(
   consumer: Consumer,
-  msg?: Message,
+  messageId?: string,
 ): Promise<void> {
-  const [message] = await consumerOnEvent<[Message]>(
+  const [, id] = await consumerOnEvent<[string, string]>(
     consumer,
     events.MESSAGE_DEAD_LETTERED,
   );
-  if (msg && msg.getRequiredId() !== message.getRequiredId()) {
-    await untilMessageDeadLettered(consumer, msg);
+  if (messageId && messageId !== id) {
+    await untilMessageDeadLettered(consumer, messageId);
   }
 }
 

@@ -20,7 +20,7 @@ import { QueueMessageNotFoundError } from '../../../src/lib/queue/errors';
 
 test('Combined test: Delete a dead-letter message. Check pending, acknowledged, and dead-letter message. Check queue metrics.', async () => {
   await createQueue(defaultQueue, false);
-  const { queue, message } = await produceAndDeadLetterMessage();
+  const { queue, messageId } = await produceAndDeadLetterMessage();
 
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
   const res0 = await deadLetteredMessages.countMessagesAsync(queue);
@@ -38,7 +38,7 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   const res3 = await deadLetteredMessages.getMessagesAsync(queue, 0, 100);
   expect(res3.totalItems).toBe(1);
   expect(res3.items.length).toBe(1);
-  expect(res3.items[0].getId()).toEqual(message.getRequiredId());
+  expect(res3.items[0].getId()).toEqual(messageId);
 
   const queueMessages = await getQueueMessages();
   const count = await queueMessages.countMessagesByStatusAsync(queue);
@@ -46,7 +46,7 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(count.acknowledged).toBe(0);
   expect(count.deadLettered).toBe(1);
 
-  await deadLetteredMessages.deleteMessageAsync(queue, message.getRequiredId());
+  await deadLetteredMessages.deleteMessageAsync(queue, messageId);
 
   const res4 = await acknowledgedMessages.getMessagesAsync(queue, 0, 100);
   expect(res4.totalItems).toBe(0);
@@ -66,9 +66,6 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(count1.deadLettered).toBe(0);
 
   await expect(async () => {
-    await deadLetteredMessages.deleteMessageAsync(
-      queue,
-      message.getRequiredId(),
-    );
+    await deadLetteredMessages.deleteMessageAsync(queue, messageId);
   }).rejects.toThrow(QueueMessageNotFoundError);
 });
