@@ -10,7 +10,6 @@
 import { delay, promisifyAll } from 'bluebird';
 import { Consumer } from '../../../src/lib/consumer/consumer';
 import { Message } from '../../../src/lib/message/message';
-import { events } from '../../../src/common/events/events';
 import { getProducer } from '../../common/producer';
 import { shutDownBaseInstance } from '../../common/base-instance';
 import { EQueueType } from '../../../types';
@@ -28,7 +27,7 @@ test('Consume message from different queues using a single consumer instance: ca
   await queue.saveAsync('test0', EQueueType.LIFO_QUEUE);
   await consumer.consumeAsync('test0', () => void 0);
 
-  consumer.once(events.MESSAGE_RECEIVED, () => {
+  consumer.once('messageReceived', () => {
     setTimeout(() => {
       // cancelling a queue when a message handler is active
       consumer.cancelAsync('test0').catch((e: unknown) => {

@@ -9,7 +9,6 @@
 
 import { delay } from 'bluebird';
 import { Message } from '../../../src/lib/message/message';
-import { events } from '../../../src/common/events/events';
 import { untilConsumerEvent } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -29,7 +28,7 @@ test('Setting default message TTL from configuration', async () => {
   const consume = jest.spyOn(consumer, 'consume');
 
   let unacks = 0;
-  consumer.on(events.MESSAGE_UNACKNOWLEDGED, () => {
+  consumer.on('messageUnacknowledged', () => {
     unacks += 1;
   });
   const msg = new Message();
@@ -39,7 +38,7 @@ test('Setting default message TTL from configuration', async () => {
   await delay(5000);
   consumer.run();
 
-  await untilConsumerEvent(consumer, events.MESSAGE_DEAD_LETTERED);
+  await untilConsumerEvent(consumer, 'messageDeadLettered');
 
   expect(consume).toHaveBeenCalledTimes(0);
   expect(unacks).toBe(1);

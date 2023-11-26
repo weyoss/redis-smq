@@ -9,7 +9,6 @@
 
 import { delay } from 'bluebird';
 import { Message } from '../../../src/lib/message/message';
-import { events } from '../../../src/common/events/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
 import { validateTime } from '../../common/validate-time';
@@ -73,7 +72,7 @@ test('Rate limit a priority queue and check message rate', async () => {
   await consumer.cancelAsync(defaultQueue);
   await consumer.consumeAsync(defaultQueue, (msg, cb) => cb());
 
-  consumer.on(events.MESSAGE_ACKNOWLEDGED, (messageId: string) => {
+  consumer.on('messageAcknowledged', (messageId: string) => {
     messages.push({ ts: Date.now(), messageId });
   });
 

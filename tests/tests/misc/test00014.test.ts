@@ -7,7 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import { events } from '../../../src/common/events/events';
 import { getProducer } from '../../common/producer';
 import { shutDownBaseInstance } from '../../common/base-instance';
 
@@ -17,8 +16,8 @@ test('Producer: isRunning, isGoingUp, isGoingDown, isUp, isDown', async () => {
 
   expect(typeof mProducer.getId()).toBe('string');
   if (mProducer.isGoingUp()) {
-    await new Promise((resolve) => {
-      mProducer.once(events.UP, resolve);
+    await new Promise<void>((resolve) => {
+      mProducer.once('up', resolve);
     });
   }
   await shutDownBaseInstance(mProducer);

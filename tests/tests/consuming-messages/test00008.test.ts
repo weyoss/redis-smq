@@ -8,7 +8,6 @@
  */
 
 import { Message } from '../../../src/lib/message/message';
-import { events } from '../../../src/common/events/events';
 import { delay } from 'bluebird';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -37,12 +36,12 @@ test('Async exceptions are caught when consuming a message', async () => {
   });
 
   let unacknowledged = 0;
-  consumer.on(events.MESSAGE_UNACKNOWLEDGED, () => {
+  consumer.on('messageUnacknowledged', () => {
     unacknowledged += 1;
   });
 
   let acknowledged = 0;
-  consumer.on(events.MESSAGE_ACKNOWLEDGED, () => {
+  consumer.on('messageAcknowledged', () => {
     acknowledged += 1;
   });
 

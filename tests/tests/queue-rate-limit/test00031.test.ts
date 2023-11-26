@@ -9,7 +9,6 @@
 
 import { delay } from 'bluebird';
 import { Message } from '../../../src/lib/message/message';
-import { events } from '../../../src/common/events/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
 import {
@@ -31,7 +30,7 @@ test('Set a rate limit for a queue and consume message using many consumers', as
   const messages: { ts: number; messageId: string }[] = [];
   for (let i = 0; i < 6; i += 1) {
     const consumer = await getConsumer();
-    consumer.on(events.MESSAGE_ACKNOWLEDGED, (messageId: string) => {
+    consumer.on('messageAcknowledged', (messageId: string) => {
       messages.push({ ts: Date.now(), messageId });
     });
     await consumer.runAsync();

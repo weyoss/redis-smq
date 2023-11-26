@@ -9,7 +9,6 @@
 
 import { delay } from 'bluebird';
 import { Message } from '../../../src/lib/message/message';
-import { events } from '../../../src/common/events/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
 import {
@@ -28,10 +27,10 @@ test('Given many consumers, a message is delivered only to one consumer', async 
   let unacks1 = 0;
   let acks1 = 0;
   consumer1
-    .on(events.MESSAGE_UNACKNOWLEDGED, () => {
+    .on('messageUnacknowledged', () => {
       unacks1 += 1;
     })
-    .on(events.MESSAGE_ACKNOWLEDGED, () => {
+    .on('messageAcknowledged', () => {
       acks1 += 1;
     });
 
@@ -46,10 +45,10 @@ test('Given many consumers, a message is delivered only to one consumer', async 
   let unacks2 = 0;
   let acks2 = 0;
   consumer2
-    .on(events.MESSAGE_UNACKNOWLEDGED, () => {
+    .on('messageUnacknowledged', () => {
       unacks2 += 1;
     })
-    .on(events.MESSAGE_ACKNOWLEDGED, () => {
+    .on('messageAcknowledged', () => {
       acks2 += 1;
     });
 

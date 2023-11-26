@@ -17,7 +17,6 @@ import {
 import { ICallback } from 'redis-smq-common';
 import { config } from '../../common/config';
 import { Message } from '../../../src/lib/message/message';
-import { events } from '../../../src/common/events/events';
 import {
   createQueue,
   defaultQueue,
@@ -28,10 +27,11 @@ import { delay } from 'bluebird';
 import { getConsumer } from '../../common/consumer';
 import { shutDownBaseInstance } from '../../common/base-instance';
 import { Configuration } from '../../../src/config/configuration';
+import { TRedisSMQEvent } from '../../../types';
 
 const consumerStats: Record<
   string,
-  { queue: IQueueParams; event: string; messageId: string }[]
+  { queue: IQueueParams; event: keyof TRedisSMQEvent; messageId: string }[]
 > = {};
 
 class TestConsumerEventListener implements IEventListener {
@@ -41,17 +41,17 @@ class TestConsumerEventListener implements IEventListener {
   ) {
     consumerStats[instanceId] = [];
     eventProvider.on(
-      events.MESSAGE_ACKNOWLEDGED,
+      'messageAcknowledged',
       (messageId: string, queue: IQueueParams) => {
         consumerStats[instanceId].push({
           queue,
-          event: events.MESSAGE_ACKNOWLEDGED,
+          event: 'messageAcknowledged',
           messageId,
         });
       },
     );
     eventProvider.on(
-      events.MESSAGE_DEAD_LETTERED,
+      'messageDeadLettered',
       (
         _: EConsumeMessageDeadLetterCause,
         messageId: string,
@@ -59,7 +59,7 @@ class TestConsumerEventListener implements IEventListener {
       ) => {
         consumerStats[instanceId].push({
           queue,
-          event: events.MESSAGE_DEAD_LETTERED,
+          event: 'messageDeadLettered',
           messageId,
         });
       },
@@ -119,30 +119,28 @@ test('Consumer event listeners', async () => {
   ]);
   expect(consumerStats[c0.getId()][0]).toEqual({
     queue: defaultQueue,
-    event: events.MESSAGE_ACKNOWLEDGED,
+    event: 'messageAcknowledged',
     messageId: m0,
   });
   expect(consumerStats[c1.getId()][0]).toEqual({
     queue: defaultQueue,
-    event: events.MESSAGE_ACKNOWLEDGED,
+    event: 'messageAcknowledged',
     messageId: m1,
   });
   expect(consumerStats[c2.getId()].length).toEqual(1);
   expect(consumerStats[c2.getId()][0].queue).toEqual(anotherQueue);
-  expect(consumerStats[c2.getId()][0].event).toEqual(
-    events.MESSAGE_DEAD_LETTERED,
-  );
+  expect(consumerStats[c2.getId()][0].event).toEqual('messageDeadLettered');
   expect(consumerStats[c2.getId()][0].messageId).toEqual(m2);
 
   expect(consumerStats[c3.getId()].length).toEqual(2);
   expect(consumerStats[c3.getId()][0]).toEqual({
     queue: anotherQueue,
-    event: events.MESSAGE_ACKNOWLEDGED,
+    event: 'messageAcknowledged',
     messageId: m3.getRequiredId(),
   });
   expect(consumerStats[c3.getId()][1]).toEqual({
     queue: anotherQueue,
-    event: events.MESSAGE_ACKNOWLEDGED,
+    event: 'messageAcknowledged',
     messageId: m4.getRequiredId(),
   });
 });

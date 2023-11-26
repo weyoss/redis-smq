@@ -42,8 +42,8 @@ test('Consume message from different queues and published by a single producer i
     const consumer = getConsumer({
       queue: `queUE_${i}`,
       messageHandler: (msg, cb) => {
-        // message handlers start consuming message once started and before the consumer is fully started (when events.UP is emitted)
-        // untilMessageAcknowledged() may miss acknowledged events
+        // message handlers start consuming message once started and before the consumer is fully started (when event.UP is emitted)
+        // untilMessageAcknowledged() may miss acknowledged event
         // As a workaround, adding a delay before acknowledging a message
         setTimeout(cb, 10000);
       },

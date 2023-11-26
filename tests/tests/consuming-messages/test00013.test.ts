@@ -9,7 +9,6 @@
 
 import { Message } from '../../../src/lib/message/message';
 import { delay } from 'bluebird';
-import { events } from '../../../src/common/events/events';
 import { ICallback } from 'redis-smq-common';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -44,7 +43,7 @@ test('Given many queues, a message is recovered from a consumer crash and re-que
       cb();
     },
   });
-  queueAConsumer.on(events.MESSAGE_ACKNOWLEDGED, () => {
+  queueAConsumer.on('messageAcknowledged', () => {
     defaultQueueMetrics.acks += 1;
   });
   await queueAConsumer.runAsync();
@@ -56,7 +55,7 @@ test('Given many queues, a message is recovered from a consumer crash and re-que
       cb();
     },
   });
-  queueBConsumer.on(events.MESSAGE_ACKNOWLEDGED, () => {
+  queueBConsumer.on('messageAcknowledged', () => {
     queueBMetrics.acks += 1;
   });
   await queueBConsumer.runAsync();

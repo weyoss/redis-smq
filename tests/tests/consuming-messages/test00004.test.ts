@@ -9,7 +9,6 @@
 
 import { delay } from 'bluebird';
 import { Message } from '../../../src/lib/message/message';
-import { events } from '../../../src/common/events/events';
 import { untilConsumerEvent } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -29,7 +28,7 @@ test('A message is dead-lettered and not delivered when messageTTL is exceeded',
   const consume = jest.spyOn(consumer, 'consume');
 
   let unacknowledged = 0;
-  consumer.on(events.MESSAGE_UNACKNOWLEDGED, () => {
+  consumer.on('messageUnacknowledged', () => {
     unacknowledged += 1;
   });
 
@@ -40,7 +39,7 @@ test('A message is dead-lettered and not delivered when messageTTL is exceeded',
   await delay(5000);
   consumer.run();
 
-  await untilConsumerEvent(consumer, events.MESSAGE_DEAD_LETTERED);
+  await untilConsumerEvent(consumer, 'messageDeadLettered');
   expect(consume).toHaveBeenCalledTimes(0);
   expect(unacknowledged).toBe(1);
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
