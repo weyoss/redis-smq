@@ -1,32 +1,31 @@
->[RedisSMQ](../README.md) / [Docs](README.md) / Event listeners
+> [RedisSMQ](../README.md) / [Docs](README.md) / IEvent listeners
 
-# Event listeners
+# IEvent listeners
 
-Event listeners can be a way to automate processing every event from each consumer or producer instance.
+IEvent listeners can be a way to automate processing every event from each consumer or producer instance.
 
-Let's suppose that for some reason you want to catch all `events.MESSAGE_ACKNOWLEDGED` events from all created 
+Let's suppose that for some reason you want to catch all `events.MESSAGE_ACKNOWLEDGED` events from all created
 consumer instances in your application.
 
-There are many ways to take in order to achieve your goal. The most repetitive and error prone way is to manually 
+There are many ways to take in order to achieve your goal. The most repetitive and error prone way is to manually
 register an event listener after creating each consumer instance like this way:
 
 ```javascript
 const consumer = new Consumer();
-consumer.on(events.MESSAGE_ACKNOWLEDGED, (msg) => {
+consumer.on('messageAcknowledged', (msg) => {
   //...
 })
 ```
 
-A more convenient way to do the same thing but with less manual work, is to configure RedisSMQ to initialize and 
+A more convenient way to do the same thing but with less manual work, is to configure RedisSMQ to initialize and
 manage event listeners for you.
 
-## Consumer Event Listeners
+## Consumer IEvent Listeners
 
 Let's create a consumer event listener class which we will use to demonstrate how to work with consumer event listeners.
 
 ```typescript
 import { IEventListener, IEventProvider, TEventListenerInitArgs } from 'redis-smq';
-import { events } from 'redis-smq';
 import { ICallback } from "redis-smq-common";
 
 export class ConsumerEventListener implements IEventListener {
@@ -79,16 +78,9 @@ const config: IConfig = {
 Configuration.getSetConfig(config);
 ```
 
-### Consumer Message Events:
+## Producer IEvent Listeners
 
-* events.MESSAGE_RECEIVED
-* events.MESSAGE_ACKNOWLEDGED
-* events.MESSAGE_UNACKNOWLEDGED
-* events.MESSAGE_DEAD_LETTERED
-
-## Producer Event Listeners
-
-The producer event listener class also implements the `IEventListener` interface: 
+The producer event listener class also implements the `IEventListener` interface:
 
 Example:
 
@@ -120,6 +112,6 @@ const config: IConfig = {
 Configuration.getSetConfig(config);
 ```
 
-### Producer Message Events:
+## Message Events
 
-* events.MESSAGE_PUBLISHED
+See [TRedisSMQEvent](./api/type-aliases/TRedisSMQEvent.md).

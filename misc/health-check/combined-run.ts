@@ -15,7 +15,6 @@ import {
   Queue,
   disconnect,
   EQueueType,
-  events,
 } from '../../index';
 
 const queueName = `queue_${Date.now()}`;
@@ -39,11 +38,11 @@ consumer.consume(
   (err) => err && console.log(err),
 );
 
-consumer.on(events.UP, () => {
+consumer.on('up', () => {
   console.log('UP');
 });
 
-consumer.on(events.DOWN, () => {
+consumer.on('down', () => {
   console.log('DOWN');
 });
 
