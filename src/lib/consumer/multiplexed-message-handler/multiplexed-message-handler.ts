@@ -8,7 +8,6 @@
  */
 
 import { MessageHandler } from '../message-handler/message-handler';
-import { events } from '../../../common/events/events';
 import { ICallback, ILogger, RedisClient } from 'redis-smq-common';
 import { DequeueMessage } from '../message-handler/dequeue-message';
 import { Consumer } from '../consumer';
@@ -36,9 +35,9 @@ export class MultiplexedMessageHandler extends MessageHandler {
 
   protected override registerEventsHandlers(): void {
     super.registerEventsHandlers();
-    this.removeAllListeners(events.MESSAGE_NEXT);
-    this.removeAllListeners(events.UP);
-    this.on(events.UP, () => {
+    this.removeAllListeners('next');
+    this.removeAllListeners('up');
+    this.on('up', () => {
       this.logger.info('Up and running...');
     });
   }

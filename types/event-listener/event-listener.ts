@@ -7,11 +7,11 @@
  * in the root directory of this source tree.
  */
 
-import { ICallback } from 'redis-smq-common';
-import { EventEmitter } from 'events';
+import { ICallback, EventEmitter } from 'redis-smq-common';
+import { TRedisSMQEvent } from '../event';
 
 export type TEventListenerInitArgs = {
-  eventProvider: EventEmitter;
+  eventProvider: EventEmitter<TRedisSMQEvent>;
   instanceId: string;
 };
 

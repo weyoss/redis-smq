@@ -7,11 +7,4 @@
  * in the root directory of this source tree.
  */
 
-export * from './consumer';
-export * from './event-listener';
-export * from './exchange';
-export * from './message';
-export * from './queue';
-export * from './queue-messages';
-export * from './redis-smq';
 export * from './event';

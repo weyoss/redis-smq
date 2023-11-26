@@ -16,8 +16,6 @@ import {
   EMessagePropertyStatus,
 } from '../../../../types';
 import { v4 as uuid } from 'uuid';
-import { events } from '../../../common/events/events';
-import { EventEmitter } from 'events';
 import { processingQueue } from './processing-queue';
 import { DequeueMessage } from './dequeue-message';
 import { ConsumeMessage } from './consume-message';
@@ -30,12 +28,14 @@ import {
   ILogger,
   CallbackEmptyReplyError,
   CallbackInvalidReplyError,
+  EventEmitter,
 } from 'redis-smq-common';
 import { ELuaScriptName } from '../../../common/redis-client/redis-client';
 import { _fromMessage } from '../../message/_from-message';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
+import { TRedisSMQEvent } from '../../../../types';
 
-export class MessageHandler extends EventEmitter {
+export class MessageHandler extends EventEmitter<TRedisSMQEvent> {
   protected id: string;
   protected consumer: Consumer;
   protected consumerId: string;
@@ -72,21 +72,21 @@ export class MessageHandler extends EventEmitter {
   }
 
   protected registerEventsHandlers(): void {
-    this.on(events.UP, () => {
+    this.on('up', () => {
       this.logger.info('Up and running...');
       this.dequeueMessage.dequeue();
     });
-    this.on(events.MESSAGE_NEXT, () => {
+    this.on('next', () => {
       if (this.powerSwitch.isRunning()) {
         this.dequeueMessage.dequeue();
       }
     });
-    this.on(events.MESSAGE_ACKNOWLEDGED, (messageId: string) => {
+    this.on('messageAcknowledged', (messageId: string) => {
       this.logger.info(`Message (ID ${messageId}) acknowledged`);
-      this.emit(events.MESSAGE_NEXT);
+      this.emit('next');
     });
     this.on(
-      events.MESSAGE_DEAD_LETTERED,
+      'messageDeadLettered',
       (cause: EConsumeMessageDeadLetterCause, messageId: string) => {
         this.logger.info(
           `Message (ID ${messageId}) dead-lettered (cause ${cause})`,
@@ -94,21 +94,21 @@ export class MessageHandler extends EventEmitter {
       },
     );
     this.on(
-      events.MESSAGE_UNACKNOWLEDGED,
+      'messageUnacknowledged',
       (cause: EConsumeMessageUnacknowledgedCause, messageId: string) => {
         this.logger.info(
           `Message (ID ${messageId}) unacknowledged (cause ${cause})`,
         );
-        this.emit(events.MESSAGE_NEXT);
+        this.emit('next');
       },
     );
-    this.on(events.MESSAGE_RECEIVED, (messageId: string) => {
+    this.on('messageReceived', (messageId: string) => {
       this.logger.info(`Got message (ID ${messageId})...`);
       if (this.powerSwitch.isRunning()) {
         this.processMessage(messageId);
       }
     });
-    this.on(events.DOWN, () => this.logger.info('Down.'));
+    this.on('down', () => this.logger.info('Down.'));
   }
 
   protected processMessage(messageId: string): void {
@@ -162,7 +162,7 @@ export class MessageHandler extends EventEmitter {
 
   handleError(err: Error): void {
     if (this.powerSwitch.isRunning() || this.powerSwitch.isGoingUp()) {
-      this.emit(events.ERROR, err);
+      this.emit('error', err);
     }
   }
 
@@ -176,7 +176,7 @@ export class MessageHandler extends EventEmitter {
       if (err) cb(err);
       else {
         this.powerSwitch.commit();
-        this.emit(events.UP);
+        this.emit('up');
         cb();
       }
     });
@@ -198,13 +198,13 @@ export class MessageHandler extends EventEmitter {
           if (err) cb(err);
           else {
             this.powerSwitch.commit();
-            this.emit(events.DOWN);
+            this.emit('down');
             cb();
           }
         },
       );
     };
-    if (this.powerSwitch.isGoingUp()) this.once(events.UP, goDown);
+    if (this.powerSwitch.isGoingUp()) this.once('up', goDown);
     else goDown();
   }
 

@@ -24,7 +24,6 @@ import {
   IConsumerMessageHandlerArgs,
 } from '../../../../types';
 import { Consumer } from '../consumer';
-import { events } from '../../../common/events/events';
 import { MultiplexedMessageHandler } from './multiplexed-message-handler';
 import { Configuration } from '../../../config/configuration';
 
@@ -51,14 +50,14 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
     messageHandler: MessageHandler,
   ): void {
     super.registerMessageHandlerEvents(messageHandler);
-    messageHandler.on(events.MESSAGE_NEXT, () => {
+    messageHandler.on('next', () => {
       if (messageHandler.isRunning()) {
         if (this.multiplexingDelay) this.nextTick();
         else this.dequeue();
       }
     });
     messageHandler.on(
-      events.MESSAGE_RECEIVED,
+      'messageReceived',
       () => (this.multiplexingDelay = false),
     );
   }
@@ -176,7 +175,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
           super.shutdown(cb);
         },
         (cb: ICallback<void>) => {
-          this.ticker.once(events.DOWN, cb);
+          this.ticker.once('down', cb);
           this.ticker.quit();
         },
         (cb: ICallback<void>) => {

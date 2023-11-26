@@ -9,7 +9,6 @@
 
 import { Consumer } from '../consumer';
 import { MessageHandler } from './message-handler';
-import { events } from '../../../common/events/events';
 import {
   EConsumeMessageUnacknowledgedCause,
   TConsumerMessageHandler,
@@ -41,20 +40,20 @@ export class MessageHandlerRunner {
   }
 
   protected registerMessageHandlerEvents(messageHandler: MessageHandler): void {
-    messageHandler.on(events.ERROR, (...args: unknown[]) =>
-      this.consumer.emit(events.ERROR, ...args),
+    messageHandler.on('error', (...args) =>
+      this.consumer.emit('error', ...args),
     );
-    messageHandler.on(events.MESSAGE_UNACKNOWLEDGED, (...args: unknown[]) =>
-      this.consumer.emit(events.MESSAGE_UNACKNOWLEDGED, ...args),
+    messageHandler.on('messageUnacknowledged', (...args) =>
+      this.consumer.emit('messageUnacknowledged', ...args),
     );
-    messageHandler.on(events.MESSAGE_DEAD_LETTERED, (...args: unknown[]) =>
-      this.consumer.emit(events.MESSAGE_DEAD_LETTERED, ...args),
+    messageHandler.on('messageDeadLettered', (...args) =>
+      this.consumer.emit('messageDeadLettered', ...args),
     );
-    messageHandler.on(events.MESSAGE_ACKNOWLEDGED, (...args: unknown[]) =>
-      this.consumer.emit(events.MESSAGE_ACKNOWLEDGED, ...args),
+    messageHandler.on('messageAcknowledged', (...args) =>
+      this.consumer.emit('messageAcknowledged', ...args),
     );
-    messageHandler.on(events.MESSAGE_RECEIVED, (...args: unknown[]) =>
-      this.consumer.emit(events.MESSAGE_RECEIVED, ...args),
+    messageHandler.on('messageReceived', (...args) =>
+      this.consumer.emit('messageReceived', ...args),
     );
   }
 

@@ -8,7 +8,6 @@
  */
 
 import { Message } from '../message/message';
-import { events } from '../../common/events/events';
 import { Base } from '../base';
 import {
   async,
@@ -123,7 +122,7 @@ export class Producer extends Base {
         if (err) cb(err);
         else {
           this.logger.info(`Message (ID ${messageId}) has been published.`);
-          this.emit(events.MESSAGE_PUBLISHED, messageId, queue);
+          this.emit('messagePublished', messageId, queue);
           cb(null, messageId);
         }
       });
