@@ -1,5 +1,31 @@
 
 
+## [8.0.0-rc.2](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.1...v8.0.0-rc.2) (2023-11-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* **events:** use typed events, remove legacy events
+* add message status, return message IDs for produced messages
+
+### Features
+
+* add message status, return message IDs for produced messages ([56566bf](https://github.com/weyoss/redis-smq/commit/56566bf77d180a3b8a2baf0659f9bfc4861c71b3))
+* **events:** use typed events, remove legacy events ([5f5a34f](https://github.com/weyoss/redis-smq/commit/5f5a34f11b51949c761a83301a087a682a105a89))
+
+
+### Documentation
+
+* **README.md:** update features description ([4ac300e](https://github.com/weyoss/redis-smq/commit/4ac300e71ef758d30f24810205732fd8b1d61b55))
+* update configuration.md ([83ce680](https://github.com/weyoss/redis-smq/commit/83ce680d4ba06901d4b524c542036d8f661a8af4))
+* use typed events, remove legacy events ([7c899f8](https://github.com/weyoss/redis-smq/commit/7c899f81f3eb66084d1b94b818d549800d453334))
+
+
+### Tests
+
+* add message status, return message IDs for produced messages ([8e3c228](https://github.com/weyoss/redis-smq/commit/8e3c22854940e7de3ab911e99cba64793b6ef7a5))
+* use typed events, remove legacy events ([5d85cb0](https://github.com/weyoss/redis-smq/commit/5d85cb006b49cae97a214012e0f249399357c76a))
+
 ## [8.0.0-rc.1](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.0...v8.0.0-rc.1) (2023-11-21)
 
 

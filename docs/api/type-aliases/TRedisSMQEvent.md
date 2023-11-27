@@ -21,3 +21,9 @@
 > `messageUnacknowledged`: (`cause`: [`EConsumeMessageUnacknowledgedCause`](../enumerations/EConsumeMessageUnacknowledgedCause.md), `messageId`: `string`, `queue`: [`IQueueParams`](../interfaces/IQueueParams.md), `messageHandlerId`: `string`, `consumerId`: `string`) => `void`
 >
 > }
+
+
+| col1 | col2 | col3 |
+| ------ | ------ | ------ |
+|      |      |      |
+|      |      |      |
