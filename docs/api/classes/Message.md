@@ -2,70 +2,77 @@
 
 # Class: Message
 
-## Contents
+## Table of contents
 
-- [Constructors](Message.md#constructors)
-  - [new Message()](Message.md#new-message)
-- [Properties](Message.md#properties)
-  - [MessagePriority](Message.md#messagepriority)
-- [Methods](Message.md#methods)
-  - [disablePriority()](Message.md#disablepriority)
-  - [getBody()](Message.md#getbody)
-  - [getConsumeTimeout()](Message.md#getconsumetimeout)
-  - [getCreatedAt()](Message.md#getcreatedat)
-  - [getDestinationQueue()](Message.md#getdestinationqueue)
-  - [getExchange()](Message.md#getexchange)
-  - [getId()](Message.md#getid)
-  - [getMessageScheduledDelay()](Message.md#getmessagescheduleddelay)
-  - [getMessageState()](Message.md#getmessagestate)
-  - [getNextScheduledTimestamp()](Message.md#getnextscheduledtimestamp)
-  - [getPriority()](Message.md#getpriority)
-  - [getPublishedAt()](Message.md#getpublishedat)
-  - [getQueue()](Message.md#getqueue)
-  - [getRequiredExchange()](Message.md#getrequiredexchange)
-  - [getRequiredId()](Message.md#getrequiredid)
-  - [getRequiredMessageState()](Message.md#getrequiredmessagestate)
-  - [getRetryDelay()](Message.md#getretrydelay)
-  - [getRetryThreshold()](Message.md#getretrythreshold)
-  - [getScheduledAt()](Message.md#getscheduledat)
-  - [getScheduledCRON()](Message.md#getscheduledcron)
-  - [getScheduledMessageId()](Message.md#getscheduledmessageid)
-  - [getScheduledRepeat()](Message.md#getscheduledrepeat)
-  - [getScheduledRepeatPeriod()](Message.md#getscheduledrepeatperiod)
-  - [getSetExpired()](Message.md#getsetexpired)
-  - [getSetMessageState()](Message.md#getsetmessagestate)
-  - [getTTL()](Message.md#getttl)
-  - [hasNextDelay()](Message.md#hasnextdelay)
-  - [hasPriority()](Message.md#haspriority)
-  - [hasRetryThresholdExceeded()](Message.md#hasretrythresholdexceeded)
-  - [isPeriodic()](Message.md#isperiodic)
-  - [isSchedulable()](Message.md#isschedulable)
-  - [resetScheduledParams()](Message.md#resetscheduledparams)
-  - [setBody()](Message.md#setbody)
-  - [setConsumeTimeout()](Message.md#setconsumetimeout)
-  - [setDestinationQueue()](Message.md#setdestinationqueue)
-  - [setExchange()](Message.md#setexchange)
-  - [setFanOut()](Message.md#setfanout)
-  - [setMessageState()](Message.md#setmessagestate)
-  - [setPriority()](Message.md#setpriority)
-  - [setQueue()](Message.md#setqueue)
-  - [setRetryDelay()](Message.md#setretrydelay)
-  - [setRetryThreshold()](Message.md#setretrythreshold)
-  - [setScheduledCRON()](Message.md#setscheduledcron)
-  - [setScheduledDelay()](Message.md#setscheduleddelay)
-  - [setScheduledRepeat()](Message.md#setscheduledrepeat)
-  - [setScheduledRepeatPeriod()](Message.md#setscheduledrepeatperiod)
-  - [setTTL()](Message.md#setttl)
-  - [setTopic()](Message.md#settopic)
-  - [toJSON()](Message.md#tojson)
-  - [toString()](Message.md#tostring)
-  - [setDefaultConsumeOptions()](Message.md#setdefaultconsumeoptions)
+### Constructors
+
+- [constructor](Message.md#constructor)
+
+### Properties
+
+- [MessagePriority](Message.md#messagepriority)
+
+### Methods
+
+- [disablePriority](Message.md#disablepriority)
+- [getBody](Message.md#getbody)
+- [getConsumeTimeout](Message.md#getconsumetimeout)
+- [getCreatedAt](Message.md#getcreatedat)
+- [getDestinationQueue](Message.md#getdestinationqueue)
+- [getExchange](Message.md#getexchange)
+- [getId](Message.md#getid)
+- [getMessageScheduledDelay](Message.md#getmessagescheduleddelay)
+- [getMessageState](Message.md#getmessagestate)
+- [getNextScheduledTimestamp](Message.md#getnextscheduledtimestamp)
+- [getPriority](Message.md#getpriority)
+- [getPublishedAt](Message.md#getpublishedat)
+- [getQueue](Message.md#getqueue)
+- [getRequiredExchange](Message.md#getrequiredexchange)
+- [getRequiredId](Message.md#getrequiredid)
+- [getRequiredMessageState](Message.md#getrequiredmessagestate)
+- [getRetryDelay](Message.md#getretrydelay)
+- [getRetryThreshold](Message.md#getretrythreshold)
+- [getScheduledAt](Message.md#getscheduledat)
+- [getScheduledCRON](Message.md#getscheduledcron)
+- [getScheduledMessageId](Message.md#getscheduledmessageid)
+- [getScheduledRepeat](Message.md#getscheduledrepeat)
+- [getScheduledRepeatPeriod](Message.md#getscheduledrepeatperiod)
+- [getSetExpired](Message.md#getsetexpired)
+- [getSetMessageState](Message.md#getsetmessagestate)
+- [getStatus](Message.md#getstatus)
+- [getTTL](Message.md#getttl)
+- [hasNextDelay](Message.md#hasnextdelay)
+- [hasPriority](Message.md#haspriority)
+- [hasRetryThresholdExceeded](Message.md#hasretrythresholdexceeded)
+- [isPeriodic](Message.md#isperiodic)
+- [isSchedulable](Message.md#isschedulable)
+- [resetScheduledParams](Message.md#resetscheduledparams)
+- [setBody](Message.md#setbody)
+- [setConsumeTimeout](Message.md#setconsumetimeout)
+- [setDestinationQueue](Message.md#setdestinationqueue)
+- [setExchange](Message.md#setexchange)
+- [setFanOut](Message.md#setfanout)
+- [setMessageState](Message.md#setmessagestate)
+- [setPriority](Message.md#setpriority)
+- [setQueue](Message.md#setqueue)
+- [setRetryDelay](Message.md#setretrydelay)
+- [setRetryThreshold](Message.md#setretrythreshold)
+- [setScheduledCRON](Message.md#setscheduledcron)
+- [setScheduledDelay](Message.md#setscheduleddelay)
+- [setScheduledRepeat](Message.md#setscheduledrepeat)
+- [setScheduledRepeatPeriod](Message.md#setscheduledrepeatperiod)
+- [setStatus](Message.md#setstatus)
+- [setTTL](Message.md#setttl)
+- [setTopic](Message.md#settopic)
+- [toJSON](Message.md#tojson)
+- [toString](Message.md#tostring)
+- [setDefaultConsumeOptions](Message.md#setdefaultconsumeoptions)
 
 ## Constructors
 
-### new Message()
+### constructor
 
-> **new Message**(): [`Message`](Message.md)
+• **new Message**(): [`Message`](Message.md)
 
 #### Returns
 
@@ -75,627 +82,655 @@
 
 ### MessagePriority
 
-> **`static`** **`readonly`** **MessagePriority**: `object`
+▪ `Static` `Readonly` **MessagePriority**: `Object`
 
 #### Type declaration
 
-##### ABOVE_NORMAL
-
-> **ABOVE_NORMAL**: `number` = `3`
-
-##### HIGH
-
-> **HIGH**: `number` = `2`
-
-##### HIGHEST
-
-> **HIGHEST**: `number` = `0`
-
-##### LOW
-
-> **LOW**: `number` = `5`
-
-##### LOWEST
-
-> **LOWEST**: `number` = `7`
-
-##### NORMAL
-
-> **NORMAL**: `number` = `4`
-
-##### VERY_HIGH
-
-> **VERY_HIGH**: `number` = `1`
-
-##### VERY_LOW
-
-> **VERY_LOW**: `number` = `6`
+| Name | Type |
+| :------ | :------ |
+| `ABOVE_NORMAL` | `number` |
+| `HIGH` | `number` |
+| `HIGHEST` | `number` |
+| `LOW` | `number` |
+| `LOWEST` | `number` |
+| `NORMAL` | `number` |
+| `VERY_HIGH` | `number` |
+| `VERY_LOW` | `number` |
 
 ## Methods
 
-### disablePriority()
+### disablePriority
 
-> **disablePriority**(): [`Message`](Message.md)
+▸ **disablePriority**(): [`Message`](Message.md)
 
 #### Returns
 
 [`Message`](Message.md)
 
-***
+___
 
-### getBody()
+### getBody
 
-> **getBody**(): `unknown`
+▸ **getBody**(): `unknown`
 
 #### Returns
 
 `unknown`
 
-***
+___
 
-### getConsumeTimeout()
+### getConsumeTimeout
 
-> **getConsumeTimeout**(): `number`
-
-#### Returns
-
-`number`
-
-***
-
-### getCreatedAt()
-
-> **getCreatedAt**(): `number`
+▸ **getConsumeTimeout**(): `number`
 
 #### Returns
 
 `number`
 
-***
+___
 
-### getDestinationQueue()
+### getCreatedAt
 
-> **getDestinationQueue**(): [`IQueueParams`](../interfaces/IQueueParams.md)
+▸ **getCreatedAt**(): `number`
+
+#### Returns
+
+`number`
+
+___
+
+### getDestinationQueue
+
+▸ **getDestinationQueue**(): [`IQueueParams`](../interfaces/IQueueParams.md)
 
 #### Returns
 
 [`IQueueParams`](../interfaces/IQueueParams.md)
 
-***
+___
 
-### getExchange()
+### getExchange
 
-> **getExchange**(): `null` | [`TExchange`](../type-aliases/TExchange.md)
-
-#### Returns
-
-`null` | [`TExchange`](../type-aliases/TExchange.md)
-
-***
-
-### getId()
-
-> **getId**(): `null` | `string`
+▸ **getExchange**(): ``null`` \| [`TExchange`](../type-aliases/TExchange.md)
 
 #### Returns
 
-`null` | `string`
+``null`` \| [`TExchange`](../type-aliases/TExchange.md)
 
-***
+___
 
-### getMessageScheduledDelay()
+### getId
 
-> **getMessageScheduledDelay**(): `null` | `number`
-
-#### Returns
-
-`null` | `number`
-
-***
-
-### getMessageState()
-
-> **getMessageState**(): `null` | `MessageState`
+▸ **getId**(): ``null`` \| `string`
 
 #### Returns
 
-`null` | `MessageState`
+``null`` \| `string`
 
-***
+___
 
-### getNextScheduledTimestamp()
+### getMessageScheduledDelay
 
-> **getNextScheduledTimestamp**(): `number`
+▸ **getMessageScheduledDelay**(): ``null`` \| `number`
+
+#### Returns
+
+``null`` \| `number`
+
+___
+
+### getMessageState
+
+▸ **getMessageState**(): ``null`` \| `MessageState`
+
+#### Returns
+
+``null`` \| `MessageState`
+
+___
+
+### getNextScheduledTimestamp
+
+▸ **getNextScheduledTimestamp**(): `number`
 
 #### Returns
 
 `number`
 
-***
+___
 
-### getPriority()
+### getPriority
 
-> **getPriority**(): `null` | `number`
-
-#### Returns
-
-`null` | `number`
-
-***
-
-### getPublishedAt()
-
-> **getPublishedAt**(): `null` | `number`
+▸ **getPriority**(): ``null`` \| `number`
 
 #### Returns
 
-`null` | `number`
+``null`` \| `number`
 
-***
+___
 
-### getQueue()
+### getPublishedAt
 
-> **getQueue**(): `null` | `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
+▸ **getPublishedAt**(): ``null`` \| `number`
 
 #### Returns
 
-`null` | `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
+``null`` \| `number`
 
-***
+___
 
-### getRequiredExchange()
+### getQueue
 
-> **getRequiredExchange**(): [`TExchange`](../type-aliases/TExchange.md)
+▸ **getQueue**(): ``null`` \| `string` \| [`IQueueParams`](../interfaces/IQueueParams.md)
+
+#### Returns
+
+``null`` \| `string` \| [`IQueueParams`](../interfaces/IQueueParams.md)
+
+___
+
+### getRequiredExchange
+
+▸ **getRequiredExchange**(): [`TExchange`](../type-aliases/TExchange.md)
 
 #### Returns
 
 [`TExchange`](../type-aliases/TExchange.md)
 
-***
+___
 
-### getRequiredId()
+### getRequiredId
 
-> **getRequiredId**(): `string`
+▸ **getRequiredId**(): `string`
 
 #### Returns
 
 `string`
 
-***
+___
 
-### getRequiredMessageState()
+### getRequiredMessageState
 
-> **getRequiredMessageState**(): `MessageState`
-
-#### Returns
-
-`MessageState`
-
-***
-
-### getRetryDelay()
-
-> **getRetryDelay**(): `number`
-
-#### Returns
-
-`number`
-
-***
-
-### getRetryThreshold()
-
-> **getRetryThreshold**(): `number`
-
-#### Returns
-
-`number`
-
-***
-
-### getScheduledAt()
-
-> **getScheduledAt**(): `null` | `number`
-
-#### Returns
-
-`null` | `number`
-
-***
-
-### getScheduledCRON()
-
-> **getScheduledCRON**(): `null` | `string`
-
-#### Returns
-
-`null` | `string`
-
-***
-
-### getScheduledMessageId()
-
-> **getScheduledMessageId**(): `null` | `string`
-
-#### Returns
-
-`null` | `string`
-
-***
-
-### getScheduledRepeat()
-
-> **getScheduledRepeat**(): `number`
-
-#### Returns
-
-`number`
-
-***
-
-### getScheduledRepeatPeriod()
-
-> **getScheduledRepeatPeriod**(): `null` | `number`
-
-#### Returns
-
-`null` | `number`
-
-***
-
-### getSetExpired()
-
-> **getSetExpired**(): `boolean`
-
-#### Returns
-
-`boolean`
-
-***
-
-### getSetMessageState()
-
-> **getSetMessageState**(): `MessageState`
+▸ **getRequiredMessageState**(): `MessageState`
 
 #### Returns
 
 `MessageState`
 
-***
+___
 
-### getTTL()
+### getRetryDelay
 
-> **getTTL**(): `number`
+▸ **getRetryDelay**(): `number`
 
 #### Returns
 
 `number`
 
-***
+___
 
-### hasNextDelay()
+### getRetryThreshold
 
-> **hasNextDelay**(): `boolean`
+▸ **getRetryThreshold**(): `number`
+
+#### Returns
+
+`number`
+
+___
+
+### getScheduledAt
+
+▸ **getScheduledAt**(): ``null`` \| `number`
+
+#### Returns
+
+``null`` \| `number`
+
+___
+
+### getScheduledCRON
+
+▸ **getScheduledCRON**(): ``null`` \| `string`
+
+#### Returns
+
+``null`` \| `string`
+
+___
+
+### getScheduledMessageId
+
+▸ **getScheduledMessageId**(): ``null`` \| `string`
+
+#### Returns
+
+``null`` \| `string`
+
+___
+
+### getScheduledRepeat
+
+▸ **getScheduledRepeat**(): `number`
+
+#### Returns
+
+`number`
+
+___
+
+### getScheduledRepeatPeriod
+
+▸ **getScheduledRepeatPeriod**(): ``null`` \| `number`
+
+#### Returns
+
+``null`` \| `number`
+
+___
+
+### getSetExpired
+
+▸ **getSetExpired**(): `boolean`
 
 #### Returns
 
 `boolean`
 
-***
+___
 
-### hasPriority()
+### getSetMessageState
 
-> **hasPriority**(): `boolean`
+▸ **getSetMessageState**(): `MessageState`
+
+#### Returns
+
+`MessageState`
+
+___
+
+### getStatus
+
+▸ **getStatus**(): [`EMessagePropertyStatus`](../enumerations/EMessagePropertyStatus.md)
+
+#### Returns
+
+[`EMessagePropertyStatus`](../enumerations/EMessagePropertyStatus.md)
+
+___
+
+### getTTL
+
+▸ **getTTL**(): `number`
+
+#### Returns
+
+`number`
+
+___
+
+### hasNextDelay
+
+▸ **hasNextDelay**(): `boolean`
 
 #### Returns
 
 `boolean`
 
-***
+___
 
-### hasRetryThresholdExceeded()
+### hasPriority
 
-> **hasRetryThresholdExceeded**(): `boolean`
-
-#### Returns
-
-`boolean`
-
-***
-
-### isPeriodic()
-
-> **isPeriodic**(): `boolean`
+▸ **hasPriority**(): `boolean`
 
 #### Returns
 
 `boolean`
 
-***
+___
 
-### isSchedulable()
+### hasRetryThresholdExceeded
 
-> **isSchedulable**(): `boolean`
+▸ **hasRetryThresholdExceeded**(): `boolean`
 
 #### Returns
 
 `boolean`
 
-***
+___
 
-### resetScheduledParams()
+### isPeriodic
 
-> **resetScheduledParams**(): [`Message`](Message.md)
+▸ **isPeriodic**(): `boolean`
+
+#### Returns
+
+`boolean`
+
+___
+
+### isSchedulable
+
+▸ **isSchedulable**(): `boolean`
+
+#### Returns
+
+`boolean`
+
+___
+
+### resetScheduledParams
+
+▸ **resetScheduledParams**(): [`Message`](Message.md)
 
 #### Returns
 
 [`Message`](Message.md)
 
-***
+___
 
-### setBody()
+### setBody
 
-> **setBody**(`body`): [`Message`](Message.md)
+▸ **setBody**(`body`): [`Message`](Message.md)
 
 #### Parameters
 
-▪ **body**: `unknown`
+| Name | Type |
+| :------ | :------ |
+| `body` | `unknown` |
 
 #### Returns
 
 [`Message`](Message.md)
 
-***
+___
 
-### setConsumeTimeout()
+### setConsumeTimeout
 
-> **setConsumeTimeout**(`timeout`): [`Message`](Message.md)
+▸ **setConsumeTimeout**(`timeout`): [`Message`](Message.md)
 
 #### Parameters
 
-▪ **timeout**: `number`
-
-In milliseconds
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `timeout` | `number` | In milliseconds |
 
 #### Returns
 
 [`Message`](Message.md)
 
-***
+___
 
-### setDestinationQueue()
+### setDestinationQueue
 
-> **setDestinationQueue**(`queue`): [`Message`](Message.md)
+▸ **setDestinationQueue**(`queue`): [`Message`](Message.md)
 
 #### Parameters
 
-▪ **queue**: [`IQueueParams`](../interfaces/IQueueParams.md)
+| Name | Type |
+| :------ | :------ |
+| `queue` | [`IQueueParams`](../interfaces/IQueueParams.md) |
 
 #### Returns
 
 [`Message`](Message.md)
 
-***
+___
 
-### setExchange()
+### setExchange
 
-> **setExchange**(`exchange`): [`Message`](Message.md)
+▸ **setExchange**(`exchange`): [`Message`](Message.md)
 
 #### Parameters
 
-▪ **exchange**: [`TExchange`](../type-aliases/TExchange.md)
+| Name | Type |
+| :------ | :------ |
+| `exchange` | [`TExchange`](../type-aliases/TExchange.md) |
 
 #### Returns
 
 [`Message`](Message.md)
 
-***
+___
 
-### setFanOut()
+### setFanOut
 
-> **setFanOut**(`bindingKey`): [`Message`](Message.md)
+▸ **setFanOut**(`bindingKey`): [`Message`](Message.md)
 
 #### Parameters
 
-▪ **bindingKey**: `string`
+| Name | Type |
+| :------ | :------ |
+| `bindingKey` | `string` |
 
 #### Returns
 
 [`Message`](Message.md)
 
-***
+___
 
-### setMessageState()
+### setMessageState
 
-> **setMessageState**(`m`): [`Message`](Message.md)
+▸ **setMessageState**(`m`): [`Message`](Message.md)
 
 #### Parameters
 
-▪ **m**: `MessageState`
+| Name | Type |
+| :------ | :------ |
+| `m` | `MessageState` |
 
 #### Returns
 
 [`Message`](Message.md)
 
-***
+___
 
-### setPriority()
+### setPriority
 
-> **setPriority**(`priority`): [`Message`](Message.md)
+▸ **setPriority**(`priority`): [`Message`](Message.md)
 
 #### Parameters
 
-▪ **priority**: `number`
+| Name | Type |
+| :------ | :------ |
+| `priority` | `number` |
 
 #### Returns
 
 [`Message`](Message.md)
 
-***
+___
 
-### setQueue()
+### setQueue
 
-> **setQueue**(`queueParams`): [`Message`](Message.md)
+▸ **setQueue**(`queueParams`): [`Message`](Message.md)
 
 #### Parameters
 
-▪ **queueParams**: `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
+| Name | Type |
+| :------ | :------ |
+| `queueParams` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
 
 #### Returns
 
 [`Message`](Message.md)
 
-***
+___
 
-### setRetryDelay()
+### setRetryDelay
 
-> **setRetryDelay**(`delay`): [`Message`](Message.md)
+▸ **setRetryDelay**(`delay`): [`Message`](Message.md)
 
 #### Parameters
 
-▪ **delay**: `number`
-
-In millis
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `delay` | `number` | In millis |
 
 #### Returns
 
 [`Message`](Message.md)
 
-***
+___
 
-### setRetryThreshold()
+### setRetryThreshold
 
-> **setRetryThreshold**(`threshold`): [`Message`](Message.md)
+▸ **setRetryThreshold**(`threshold`): [`Message`](Message.md)
 
 #### Parameters
 
-▪ **threshold**: `number`
+| Name | Type |
+| :------ | :------ |
+| `threshold` | `number` |
 
 #### Returns
 
 [`Message`](Message.md)
 
-***
+___
 
-### setScheduledCRON()
+### setScheduledCRON
 
-> **setScheduledCRON**(`cron`): [`Message`](Message.md)
+▸ **setScheduledCRON**(`cron`): [`Message`](Message.md)
 
 #### Parameters
 
-▪ **cron**: `string`
+| Name | Type |
+| :------ | :------ |
+| `cron` | `string` |
 
 #### Returns
 
 [`Message`](Message.md)
 
-***
+___
 
-### setScheduledDelay()
+### setScheduledDelay
 
-> **setScheduledDelay**(`delay`): [`Message`](Message.md)
+▸ **setScheduledDelay**(`delay`): [`Message`](Message.md)
 
 #### Parameters
 
-▪ **delay**: `number`
-
-In millis
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `delay` | `number` | In millis |
 
 #### Returns
 
 [`Message`](Message.md)
 
-***
+___
 
-### setScheduledRepeat()
+### setScheduledRepeat
 
-> **setScheduledRepeat**(`repeat`): [`Message`](Message.md)
+▸ **setScheduledRepeat**(`repeat`): [`Message`](Message.md)
 
 #### Parameters
 
-▪ **repeat**: `number`
+| Name | Type |
+| :------ | :------ |
+| `repeat` | `number` |
 
 #### Returns
 
 [`Message`](Message.md)
 
-***
+___
 
-### setScheduledRepeatPeriod()
+### setScheduledRepeatPeriod
 
-> **setScheduledRepeatPeriod**(`period`): [`Message`](Message.md)
+▸ **setScheduledRepeatPeriod**(`period`): [`Message`](Message.md)
 
 #### Parameters
 
-▪ **period**: `number`
-
-In millis
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `period` | `number` | In millis |
 
 #### Returns
 
 [`Message`](Message.md)
 
-***
+___
 
-### setTTL()
+### setStatus
 
-> **setTTL**(`ttl`): [`Message`](Message.md)
+▸ **setStatus**(`s`): [`Message`](Message.md)
 
 #### Parameters
 
-▪ **ttl**: `number`
-
-In milliseconds
+| Name | Type |
+| :------ | :------ |
+| `s` | [`EMessagePropertyStatus`](../enumerations/EMessagePropertyStatus.md) |
 
 #### Returns
 
 [`Message`](Message.md)
 
-***
+___
 
-### setTopic()
+### setTTL
 
-> **setTopic**(`topicParams`): [`Message`](Message.md)
+▸ **setTTL**(`ttl`): [`Message`](Message.md)
 
 #### Parameters
 
-▪ **topicParams**: `string` | [`TTopicParams`](../type-aliases/TTopicParams.md)
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `ttl` | `number` | In milliseconds |
 
 #### Returns
 
 [`Message`](Message.md)
 
-***
+___
 
-### toJSON()
+### setTopic
 
-> **toJSON**(): [`IMessageSerialized`](../interfaces/IMessageSerialized.md)
+▸ **setTopic**(`topicParams`): [`Message`](Message.md)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `topicParams` | `string` \| [`TTopicParams`](../type-aliases/TTopicParams.md) |
+
+#### Returns
+
+[`Message`](Message.md)
+
+___
+
+### toJSON
+
+▸ **toJSON**(): [`IMessageSerialized`](../interfaces/IMessageSerialized.md)
 
 #### Returns
 
 [`IMessageSerialized`](../interfaces/IMessageSerialized.md)
 
-***
+___
 
-### toString()
+### toString
 
-> **toString**(): `string`
+▸ **toString**(): `string`
 
 #### Returns
 
 `string`
 
-***
+___
 
-### setDefaultConsumeOptions()
+### setDefaultConsumeOptions
 
-> **`static`** **setDefaultConsumeOptions**(`consumeOptions`): `void`
+▸ **setDefaultConsumeOptions**(`consumeOptions`): `void`
 
 #### Parameters
 
-▪ **consumeOptions**: `Partial`<[`TMessageConsumeOptions`](../type-aliases/TMessageConsumeOptions.md)>
+| Name | Type |
+| :------ | :------ |
+| `consumeOptions` | `Partial`\<[`TMessageConsumeOptions`](../type-aliases/TMessageConsumeOptions.md)\> |
 
 #### Returns
 
 `void`
-
