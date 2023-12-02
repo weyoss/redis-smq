@@ -16,14 +16,19 @@ import { shutDownBaseInstance } from './base-instance';
 type TGetConsumerArgs = {
   queue?: string | IQueueParams;
   messageHandler?: TConsumerMessageHandler;
+  consumeDefaultQueue?: boolean;
 };
 
 const consumersList: Consumer[] = [];
 
 export function getConsumer(args: TGetConsumerArgs = {}) {
-  const { queue = defaultQueue, messageHandler = (msg, cb) => cb() } = args;
+  const {
+    queue = defaultQueue,
+    messageHandler = (msg, cb) => cb(),
+    consumeDefaultQueue = true,
+  } = args;
   const consumer = promisifyAll(new Consumer());
-  consumer.consume(queue, messageHandler, () => void 0);
+  consumeDefaultQueue && consumer.consume(queue, messageHandler, () => void 0);
   consumersList.push(consumer);
   return consumer;
 }
