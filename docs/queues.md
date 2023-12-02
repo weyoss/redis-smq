@@ -17,7 +17,7 @@ In a LIFO queue the last published messages are always delivered first and the f
 ```javascript
 const { Queue } = require('redis-smq');
 
-const queue = new Queue(config);
+const queue = new Queue();
 
 // Creating a LIFO queue named 'my_lifo_queue' in the 'default' namespace.
 queue.save('my_lifo_queue', EQueueType.LIFO_QUEUE, (err) => console.log(err));
@@ -32,7 +32,7 @@ In a FIFO queue the first published messages are delivered first and the last pu
 ```javascript
 const { QueueManager } = require('redis-smq');
 
-const queue = new Queue(config);
+const queue = new Queue();
 
 // Creating a FIFO queue named 'my_fifo_queue' in the 'default' namespace.
 queue.save('my_fifo_queue', EQueueType.FIFO_QUEUE, (err) => console.log(err));
@@ -47,7 +47,7 @@ In a priority queue, messages with higher priority are always delivered first be
 ```javascript
 const { QueueManager } = require('redis-smq');
 
-const queue = new Queue(config);
+const queue = new Queue();
 
 // Creating a PRIORITY queue named 'my_priority_queue' in the 'default' namespace.
 queue.save('my_priority_queue', EQueueType.PRIORITY_QUEUE, (err) => console.log(err));
