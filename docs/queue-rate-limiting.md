@@ -22,7 +22,7 @@ To configure and view rate limiting parameters for a queue, the [QueueRateLimit]
 ```javascript
 const { QueueRateLimit } = require('redis-smq');
 
-const queueRateLimit = new QueueRateLimit(config);
+const queueRateLimit = new QueueRateLimit();
 // Setting a rate limit of 200 msg/min for the 'notofications' queue
 queueRateLimit.set('notifications', { limit: 200, interval: 60000 }, (err) => {
   // ...
