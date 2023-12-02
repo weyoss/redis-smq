@@ -1,5 +1,17 @@
 
 
+## [8.0.0-rc.4](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.3...v8.0.0-rc.4) (2023-12-02)
+
+
+### Documentation
+
+* clean up outdated examples ([dd1c68b](https://github.com/weyoss/redis-smq/commit/dd1c68bdd7cf7de2dfa309dbe7efff76fed5c983))
+
+
+### Misc
+
+* move redis-smq-common from dev-deps to deps ([675880d](https://github.com/weyoss/redis-smq/commit/675880d3803cca9c89aa860486bae43dbe7e2f70))
+
 ## [8.0.0-rc.3](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.2...v8.0.0-rc.3) (2023-12-02)
 
 
