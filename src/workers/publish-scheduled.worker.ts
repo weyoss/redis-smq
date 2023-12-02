@@ -20,6 +20,7 @@ import {
 import { ICallback } from 'redis-smq-common';
 import { _getMessages } from '../lib/queue/queue-messages/_get-message';
 import { _fromMessage } from '../lib/message/_from-message';
+import { MessageState } from '../lib/message/message-state';
 
 export class PublishScheduledWorker extends Worker {
   protected redisClient: RedisClient;
@@ -68,23 +69,8 @@ export class PublishScheduledWorker extends Worker {
         messages,
         (msg, _, done) => {
           const ts = Date.now();
-          const message = _fromMessage(msg, null, null);
-          const messageState = message
-            .resetScheduledParams()
-            .getSetMessageState()
-            .setPublishedAt(ts)
-            .setScheduledMessageId(msg.getRequiredId());
-          const messageId = messageState.getId();
-          const messagePriority = message.getPriority() ?? '';
-          const queue = message.getDestinationQueue();
-          const {
-            keyQueueProperties,
-            keyQueuePending,
-            keyPriorityQueuePending,
-            keyQueueScheduled,
-            keyQueueMessages,
-          } = redisKeys.getQueueKeys(queue);
-          const { keyMessage } = redisKeys.getMessageKeys(messageId);
+          const messagePriority = msg.getPriority() ?? '';
+          const queue = msg.getDestinationQueue();
           const { keyMessage: keyScheduledMessage } = redisKeys.getMessageKeys(
             msg.getRequiredId(),
           );
@@ -92,20 +78,48 @@ export class PublishScheduledWorker extends Worker {
           const scheduledMessageState = msg
             .getRequiredMessageState()
             .setLastScheduledAt(ts);
+          const {
+            keyQueueProperties,
+            keyQueuePending,
+            keyPriorityQueuePending,
+            keyQueueScheduled,
+            keyQueueMessages,
+          } = redisKeys.getQueueKeys(queue);
+
+          let newMessage: Message | null = null;
+          let newMessageState: MessageState | null = null;
+          let newMessageId: string = '';
+          let newKeyMessage: string = '';
+
+          const hasBeenUnacknowledged =
+            msg.getRetryDelay() > 0 &&
+            msg.getRequiredMessageState().getAttempts() > 0;
+
+          if (!hasBeenUnacknowledged) {
+            newMessage = _fromMessage(msg, null, null);
+            newMessageState = newMessage
+              .resetScheduledParams()
+              .getSetMessageState()
+              .setPublishedAt(ts)
+              .setScheduledMessageId(msg.getRequiredId());
+            newMessageId = newMessageState.getId();
+            newKeyMessage = redisKeys.getMessageKeys(newMessageId).keyMessage;
+          }
+
           keys.push(
-            keyMessage,
+            newKeyMessage,
             keyQueuePending,
             keyQueueProperties,
+            keyQueueMessages,
             keyPriorityQueuePending,
             keyQueueScheduled,
             keyScheduledMessage,
           );
           argv.push(
-            messageId,
+            newMessageId,
+            newMessage ? JSON.stringify(newMessage) : '',
+            newMessageState ? JSON.stringify(newMessageState) : '',
             messagePriority,
-            JSON.stringify(message),
-            JSON.stringify(messageState),
-            keyQueueMessages,
             msg.getRequiredId(),
             nextScheduleTimestamp,
             JSON.stringify(scheduledMessageState),
