@@ -35,9 +35,9 @@
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "bluebird": "3.7.2",
     "cron-parser": "4.7.1",
     "lodash": "4.17.21",
+    "redis-smq-common": "3.0.0-rc.7",
     "uuid": "9.0.0"
   },
   "devDependencies": {
@@ -45,11 +45,12 @@
     "@types/debug": "4.1.7",
     "@types/jest": "27.0.2",
     "@types/lodash": "4.14.191",
-    "@types/node": "16.10.2",
+    "@types/node": "18.19.1",
     "@types/supertest": "2.0.11",
     "@types/uuid": "9.0.0",
     "@typescript-eslint/eslint-plugin": "6.10.0",
     "@typescript-eslint/parser": "6.10.0",
+    "bluebird": "3.7.2",
     "eslint": "8.53.0",
     "eslint-config-prettier": "9.0.0",
     "eslint-plugin-prettier": "5.0.1",
@@ -57,7 +58,6 @@
     "jest": "27.2.4",
     "lint-staged": "11.1.2",
     "prettier": "3.0.3",
-    "redis-smq-common": "3.0.0-rc.7",
     "supertest": "6.1.6",
     "type-coverage": "2.27.0",
     "typescript": "4.9.4"
