@@ -1,5 +1,23 @@
 
 
+## [8.0.0-rc.3](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.2...v8.0.0-rc.3) (2023-12-02)
+
+
+### Bug Fixes
+
+* **scheduler:** handle unacked messages with retry delay correctly ([a97b145](https://github.com/weyoss/redis-smq/commit/a97b145f605d6b5c7d9f6f83c844c9d2447c5786))
+
+
+### Documentation
+
+* update Message reference ([1cff3e3](https://github.com/weyoss/redis-smq/commit/1cff3e3fe3634ffa2d502a4bbb589948ed8e56ea))
+* update TRedisSMQEvent reference ([5afa22e](https://github.com/weyoss/redis-smq/commit/5afa22ea1d2de00cb9c4708c55ec8fe1ef5a39b5))
+
+
+### Tests
+
+* **message:** add new test cases covering message status ([9eec7e9](https://github.com/weyoss/redis-smq/commit/9eec7e9e2a39244ab62b9f8db4d049d3363a534d))
+
 ## [8.0.0-rc.2](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.1...v8.0.0-rc.2) (2023-11-27)
 
 
