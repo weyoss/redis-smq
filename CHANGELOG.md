@@ -1,5 +1,17 @@
 
 
+## [8.0.0-rc.5](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.4...v8.0.0-rc.5) (2023-12-03)
+
+
+### Documentation
+
+* clean up ([2d7c004](https://github.com/weyoss/redis-smq/commit/2d7c004e690ca2f30a6de8d22feb5f4a3711eab9))
+
+
+### Codebase Refactoring
+
+* improve typings ([c86bb53](https://github.com/weyoss/redis-smq/commit/c86bb53969bbb919f115268cbf510c818af44066))
+
 ## [8.0.0-rc.4](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.3...v8.0.0-rc.4) (2023-12-02)
 
 
