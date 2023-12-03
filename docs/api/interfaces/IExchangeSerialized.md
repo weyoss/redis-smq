@@ -1,41 +1,42 @@
->[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IExchangeSerialized
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IExchangeSerialized
 
-# Interface: IExchangeSerialized`<BindingParams, ExchangeType>`
-
-## Contents
-
-- [Extended By](IExchangeSerialized.md#extended-by)
-- [Type parameters](IExchangeSerialized.md#type-parameters)
-- [Properties](IExchangeSerialized.md#properties)
-  - [bindingParams](IExchangeSerialized.md#bindingparams)
-  - [exchangeTag](IExchangeSerialized.md#exchangetag)
-  - [type](IExchangeSerialized.md#type)
-
-## Extended By
-
-- [`IExchange`](IExchange.md)
+# Interface: IExchangeSerialized\<BindingParams, ExchangeType\>
 
 ## Type parameters
 
-▪ **BindingParams**
+| Name | Type |
+| :------ | :------ |
+| `BindingParams` | `BindingParams` |
+| `ExchangeType` | extends [`EExchangeType`](../enums/EExchangeType.md) |
 
-▪ **ExchangeType** extends [`EExchangeType`](../enumerations/EExchangeType.md)
+## Hierarchy
+
+- **`IExchangeSerialized`**
+
+  ↳ [`IExchange`](IExchange.md)
+
+## Table of contents
+
+### Properties
+
+- [bindingParams](IExchangeSerialized.md#bindingparams)
+- [exchangeTag](IExchangeSerialized.md#exchangetag)
+- [type](IExchangeSerialized.md#type)
 
 ## Properties
 
 ### bindingParams
 
-> **`readonly`** **bindingParams**: `BindingParams`
+• `Readonly` **bindingParams**: `BindingParams`
 
-***
+___
 
 ### exchangeTag
 
-> **`readonly`** **exchangeTag**: `string`
+• `Readonly` **exchangeTag**: `string`
 
-***
+___
 
 ### type
 
-> **`readonly`** **type**: `ExchangeType`
-
+• `Readonly` **type**: `ExchangeType`

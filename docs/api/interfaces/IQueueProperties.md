@@ -1,35 +1,36 @@
->[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IQueueProperties
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IQueueProperties
 
 # Interface: IQueueProperties
 
-## Contents
+## Table of contents
 
-- [Properties](IQueueProperties.md#properties)
-  - [exchange](#exchange)
-  - [messagesCount](#messagescount)
-  - [queueType](#queuetype)
-  - [rateLimit](#ratelimit)
+### Properties
+
+- [exchange](IQueueProperties.md#exchange)
+- [messagesCount](IQueueProperties.md#messagescount)
+- [queueType](IQueueProperties.md#queuetype)
+- [rateLimit](IQueueProperties.md#ratelimit)
 
 ## Properties
 
 ### exchange
 
-> **exchange**: `null` | `string`
+• **exchange**: ``null`` \| `string`
 
-***
+___
 
 ### messagesCount
 
-> **messagesCount**: `number`
+• **messagesCount**: `number`
 
-***
+___
 
 ### queueType
 
-> **queueType**: [`EQueueType`](../enumerations/EQueueType.md)
+• **queueType**: [`EQueueType`](../enums/EQueueType.md)
 
-***
+___
 
 ### rateLimit
 
-> **rateLimit**: `null` | [`IQueueRateLimit`](IQueueRateLimit.md)
+• **rateLimit**: ``null`` \| [`IQueueRateLimit`](IQueueRateLimit.md)

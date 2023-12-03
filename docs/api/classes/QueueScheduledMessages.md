@@ -1,88 +1,123 @@
->[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / QueueScheduledMessages
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / QueueScheduledMessages
 
 # Class: QueueScheduledMessages
 
-## Contents
+## Hierarchy
 
-- [Constructors](QueueScheduledMessages.md#constructors)
-  - [new QueueScheduledMessages()](QueueScheduledMessages.md#new-queuescheduledmessages)
-- [Methods](QueueScheduledMessages.md#methods)
-  - [countMessages()](QueueScheduledMessages.md#countmessages)
-  - [deleteMessage()](QueueScheduledMessages.md#deletemessage)
-  - [getMessages()](QueueScheduledMessages.md#getmessages)
-  - [purge()](QueueScheduledMessages.md#purge)
+- `QueueMessagesPaginatorSortedSet`
+
+  ↳ **`QueueScheduledMessages`**
+
+## Table of contents
+
+### Constructors
+
+- [constructor](QueueScheduledMessages.md#constructor)
+
+### Methods
+
+- [countMessages](QueueScheduledMessages.md#countmessages)
+- [deleteMessage](QueueScheduledMessages.md#deletemessage)
+- [getMessages](QueueScheduledMessages.md#getmessages)
+- [purge](QueueScheduledMessages.md#purge)
 
 ## Constructors
 
-### new QueueScheduledMessages()
+### constructor
 
-> **new QueueScheduledMessages**(): [`QueueScheduledMessages`](QueueScheduledMessages.md)
+• **new QueueScheduledMessages**(): [`QueueScheduledMessages`](QueueScheduledMessages.md)
 
 #### Returns
 
 [`QueueScheduledMessages`](QueueScheduledMessages.md)
 
+#### Inherited from
+
+QueueMessagesPaginatorSortedSet.constructor
+
 ## Methods
 
-### countMessages()
+### countMessages
 
-> **countMessages**(`queue`, `cb`): `void`
+▸ **countMessages**(`queue`, `cb`): `void`
 
 #### Parameters
 
-▪ **queue**: `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
-
-▪ **cb**: `ICallback`<`number`>
+| Name | Type |
+| :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `cb` | `ICallback`\<`number`\> |
 
 #### Returns
 
 `void`
 
-### deleteMessage()
+#### Inherited from
 
-> **deleteMessage**(`queue`, `messageId`, `cb`): `void`
+QueueMessagesPaginatorSortedSet.countMessages
+
+___
+
+### deleteMessage
+
+▸ **deleteMessage**(`queue`, `messageId`, `cb`): `void`
 
 #### Parameters
 
-▪ **queue**: `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
-
-▪ **messageId**: `string` | `string`[]
-
-▪ **cb**: `ICallback`<`void`>
+| Name | Type |
+| :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `messageId` | `string` \| `string`[] |
+| `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 
 `void`
 
-### getMessages()
+#### Inherited from
 
-> **getMessages**(`queue`, `cursor`, `pageSize`, `cb`): `void`
+QueueMessagesPaginatorSortedSet.deleteMessage
+
+___
+
+### getMessages
+
+▸ **getMessages**(`queue`, `cursor`, `pageSize`, `cb`): `void`
 
 #### Parameters
 
-▪ **queue**: `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
-
-▪ **cursor**: `number`
-
-▪ **pageSize**: `number`
-
-▪ **cb**: `ICallback`<[`IQueueMessagesPage`](../interfaces/IQueueMessagesPage.md)<[`Message`](Message.md)>>
+| Name | Type |
+| :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `cursor` | `number` |
+| `pageSize` | `number` |
+| `cb` | `ICallback`\<[`IQueueMessagesPage`](../interfaces/IQueueMessagesPage.md)\<[`Message`](Message.md)\>\> |
 
 #### Returns
 
 `void`
 
-### purge()
+#### Inherited from
 
-> **purge**(`queue`, `cb`): `void`
+QueueMessagesPaginatorSortedSet.getMessages
+
+___
+
+### purge
+
+▸ **purge**(`queue`, `cb`): `void`
 
 #### Parameters
 
-▪ **queue**: `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
-
-▪ **cb**: `ICallback`<`void`>
+| Name | Type |
+| :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 
 `void`
 
+#### Inherited from
+
+QueueMessagesPaginatorSortedSet.purge

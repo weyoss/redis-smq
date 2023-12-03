@@ -1,99 +1,99 @@
->[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IMessageSerialized
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IMessageSerialized
 
 # Interface: IMessageSerialized
 
-## Contents
+## Table of contents
 
-- [Properties](IMessageSerialized.md#properties)
-  - [body](IMessageSerialized.md#body)
-  - [consumeTimeout](IMessageSerialized.md#consumetimeout)
-  - [createdAt](IMessageSerialized.md#createdat)
-  - [destinationQueue](IMessageSerialized.md#destinationqueue)
-  - [exchange](IMessageSerialized.md#exchange)
-  - [priority](IMessageSerialized.md#priority)
-  - [retryDelay](IMessageSerialized.md#retrydelay)
-  - [retryThreshold](IMessageSerialized.md#retrythreshold)
-  - [scheduledCron](IMessageSerialized.md#scheduledcron)
-  - [scheduledDelay](IMessageSerialized.md#scheduleddelay)
-  - [scheduledRepeat](IMessageSerialized.md#scheduledrepeat)
-  - [scheduledRepeatPeriod](IMessageSerialized.md#scheduledrepeatperiod)
-  - [ttl](IMessageSerialized.md#ttl)
+### Properties
+
+- [body](IMessageSerialized.md#body)
+- [consumeTimeout](IMessageSerialized.md#consumetimeout)
+- [createdAt](IMessageSerialized.md#createdat)
+- [destinationQueue](IMessageSerialized.md#destinationqueue)
+- [exchange](IMessageSerialized.md#exchange)
+- [priority](IMessageSerialized.md#priority)
+- [retryDelay](IMessageSerialized.md#retrydelay)
+- [retryThreshold](IMessageSerialized.md#retrythreshold)
+- [scheduledCron](IMessageSerialized.md#scheduledcron)
+- [scheduledDelay](IMessageSerialized.md#scheduleddelay)
+- [scheduledRepeat](IMessageSerialized.md#scheduledrepeat)
+- [scheduledRepeatPeriod](IMessageSerialized.md#scheduledrepeatperiod)
+- [ttl](IMessageSerialized.md#ttl)
 
 ## Properties
 
 ### body
 
-> **body**: `unknown`
+• **body**: `unknown`
 
-***
+___
 
 ### consumeTimeout
 
-> **consumeTimeout**: `number`
+• **consumeTimeout**: `number`
 
-***
+___
 
 ### createdAt
 
-> **createdAt**: `number`
+• **createdAt**: `number`
 
-***
+___
 
 ### destinationQueue
 
-> **destinationQueue**: `null` | [`IQueueParams`](IQueueParams.md)
+• **destinationQueue**: ``null`` \| [`IQueueParams`](IQueueParams.md)
 
-***
+___
 
 ### exchange
 
-> **exchange**: `null` | [`TExchangeSerialized`](../type-aliases/TExchangeSerialized.md)
+• **exchange**: ``null`` \| [`TExchangeSerialized`](../README.md#texchangeserialized)
 
-***
+___
 
 ### priority
 
-> **priority**: `null` | `number`
+• **priority**: ``null`` \| `number`
 
-***
+___
 
 ### retryDelay
 
-> **retryDelay**: `number`
+• **retryDelay**: `number`
 
-***
+___
 
 ### retryThreshold
 
-> **retryThreshold**: `number`
+• **retryThreshold**: `number`
 
-***
+___
 
 ### scheduledCron
 
-> **scheduledCron**: `null` | `string`
+• **scheduledCron**: ``null`` \| `string`
 
-***
+___
 
 ### scheduledDelay
 
-> **scheduledDelay**: `null` | `number`
+• **scheduledDelay**: ``null`` \| `number`
 
-***
+___
 
 ### scheduledRepeat
 
-> **scheduledRepeat**: `number`
+• **scheduledRepeat**: `number`
 
-***
+___
 
 ### scheduledRepeatPeriod
 
-> **scheduledRepeatPeriod**: `null` | `number`
+• **scheduledRepeatPeriod**: ``null`` \| `number`
 
-***
+___
 
 ### ttl
 
-> **ttl**: `number`
-
+• **ttl**: `number`

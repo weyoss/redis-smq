@@ -1,23 +1,26 @@
->[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / Queue
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / Queue
 
 # Class: Queue
 
-## Contents
+## Table of contents
 
-- [Constructors](Queue.md#constructors)
-  - [new Queue()](Queue.md#new-queue)
-- [Methods](Queue.md#methods)
-  - [delete()](Queue.md#delete)
-  - [exists()](Queue.md#exists)
-  - [getProperties()](Queue.md#getproperties)
-  - [getQueues()](Queue.md#getqueues)
-  - [save()](Queue.md#save)
+### Constructors
+
+- [constructor](Queue.md#constructor)
+
+### Methods
+
+- [delete](Queue.md#delete)
+- [exists](Queue.md#exists)
+- [getProperties](Queue.md#getproperties)
+- [getQueues](Queue.md#getqueues)
+- [save](Queue.md#save)
 
 ## Constructors
 
-### new Queue()
+### constructor
 
-> **new Queue**(): [`Queue`](Queue.md)
+• **new Queue**(): [`Queue`](Queue.md)
 
 #### Returns
 
@@ -25,81 +28,85 @@
 
 ## Methods
 
-### delete()
+### delete
 
-> **delete**(`queue`, `cb`): `void`
+▸ **delete**(`queue`, `cb`): `void`
 
 #### Parameters
 
-▪ **queue**: `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
-
-▪ **cb**: `ICallback`<`void`>
+| Name | Type |
+| :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 
 `void`
 
-***
+___
 
-### exists()
+### exists
 
-> **exists**(`queue`, `cb`): `void`
+▸ **exists**(`queue`, `cb`): `void`
 
 #### Parameters
 
-▪ **queue**: `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
-
-▪ **cb**: `ICallback`<`boolean`>
+| Name | Type |
+| :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `cb` | `ICallback`\<`boolean`\> |
 
 #### Returns
 
 `void`
 
-***
+___
 
-### getProperties()
+### getProperties
 
-> **getProperties**(`queue`, `cb`): `void`
+▸ **getProperties**(`queue`, `cb`): `void`
 
 #### Parameters
 
-▪ **queue**: `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
-
-▪ **cb**: `ICallback`<[`IQueueProperties`](../interfaces/IQueueProperties.md)>
+| Name | Type |
+| :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `cb` | `ICallback`\<[`IQueueProperties`](../interfaces/IQueueProperties.md)\> |
 
 #### Returns
 
 `void`
 
-***
+___
 
-### getQueues()
+### getQueues
 
-> **getQueues**(`cb`): `void`
+▸ **getQueues**(`cb`): `void`
 
 #### Parameters
 
-▪ **cb**: `ICallback`<[`IQueueParams`](../interfaces/IQueueParams.md)[]>
+| Name | Type |
+| :------ | :------ |
+| `cb` | `ICallback`\<[`IQueueParams`](../interfaces/IQueueParams.md)[]\> |
 
 #### Returns
 
 `void`
 
-***
+___
 
-### save()
+### save
 
-> **save**(`queue`, `queueType`, `cb`): `void`
+▸ **save**(`queue`, `queueType`, `cb`): `void`
 
 #### Parameters
 
-▪ **queue**: `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
-
-▪ **queueType**: [`EQueueType`](../enumerations/EQueueType.md)
-
-▪ **cb**: `ICallback`<`object`>
+| Name | Type |
+| :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `queueType` | [`EQueueType`](../enums/EQueueType.md) |
+| `cb` | `ICallback`\<\{ `properties`: [`IQueueProperties`](../interfaces/IQueueProperties.md) ; `queue`: [`IQueueParams`](../interfaces/IQueueParams.md)  }\> |
 
 #### Returns
 
 `void`
-

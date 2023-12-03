@@ -1,25 +1,43 @@
->[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IMessagesConfigStorageOptionsRequired
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IMessagesConfigStorageOptionsRequired
 
 # Interface: IMessagesConfigStorageOptionsRequired
 
-## Contents
+## Hierarchy
 
-- [Properties](IMessagesConfigStorageOptionsRequired.md#properties)
-  - [expire](IMessagesConfigStorageOptionsRequired.md#expire)
-  - [queueSize](IMessagesConfigStorageOptionsRequired.md#queuesize)
-  - [store](IMessagesConfigStorageOptionsRequired.md#store)
+- `Required`\<[`IMessagesConfigStorageOptions`](IMessagesConfigStorageOptions.md)\>
+
+  ↳ **`IMessagesConfigStorageOptionsRequired`**
+
+## Table of contents
+
+### Properties
+
+- [expire](IMessagesConfigStorageOptionsRequired.md#expire)
+- [queueSize](IMessagesConfigStorageOptionsRequired.md#queuesize)
+- [store](IMessagesConfigStorageOptionsRequired.md#store)
 
 ## Properties
 
 ### expire
 
-> **expire**: `number`
+• **expire**: `number`
+
+#### Inherited from
+
+Required.expire
+
+___
 
 ### queueSize
 
-> **queueSize**: `number`
+• **queueSize**: `number`
+
+#### Inherited from
+
+Required.queueSize
+
+___
 
 ### store
 
-> **store**: `boolean`
-
+• **store**: `boolean`

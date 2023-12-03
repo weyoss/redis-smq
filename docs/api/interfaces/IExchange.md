@@ -1,86 +1,96 @@
->[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IExchange
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IExchange
 
-# Interface: IExchange`<BindingParams, ExchangeType>`
-
-## Contents
-
-- [Type parameters](IExchange.md#type-parameters)
-- [Properties](IExchange.md#properties)
-  - [bindingParams](IExchange.md#bindingparams)
-  - [exchangeTag](IExchange.md#exchangetag)
-  - [type](IExchange.md#type)
-- [Methods](IExchange.md#methods)
-  - [getBindingParams()](IExchange.md#getbindingparams)
-  - [getQueues()](IExchange.md#getqueues)
-  - [toJSON()](IExchange.md#tojson)
+# Interface: IExchange\<BindingParams, ExchangeType\>
 
 ## Type parameters
 
-▪ **BindingParams**
+| Name | Type |
+| :------ | :------ |
+| `BindingParams` | `BindingParams` |
+| `ExchangeType` | extends [`EExchangeType`](../enums/EExchangeType.md) |
 
-▪ **ExchangeType** extends [`EExchangeType`](../enumerations/EExchangeType.md)
+## Hierarchy
+
+- [`IExchangeSerialized`](IExchangeSerialized.md)\<`BindingParams`, `ExchangeType`\>
+
+  ↳ **`IExchange`**
+
+## Table of contents
+
+### Properties
+
+- [bindingParams](IExchange.md#bindingparams)
+- [exchangeTag](IExchange.md#exchangetag)
+- [type](IExchange.md#type)
+
+### Methods
+
+- [getBindingParams](IExchange.md#getbindingparams)
+- [getQueues](IExchange.md#getqueues)
+- [toJSON](IExchange.md#tojson)
 
 ## Properties
 
 ### bindingParams
 
-> **`readonly`** **bindingParams**: `BindingParams`
+• `Readonly` **bindingParams**: `BindingParams`
 
 #### Inherited from
 
-[`IExchangeSerialized`](IExchangeSerialized.md).[`bindingParams`](IExchangeSerialized.md#bindingparams)
+[IExchangeSerialized](IExchangeSerialized.md).[bindingParams](IExchangeSerialized.md#bindingparams)
 
-***
+___
 
 ### exchangeTag
 
-> **`readonly`** **exchangeTag**: `string`
+• `Readonly` **exchangeTag**: `string`
 
 #### Inherited from
 
-[`IExchangeSerialized`](IExchangeSerialized.md).[`exchangeTag`](IExchangeSerialized.md#exchangetag)
+[IExchangeSerialized](IExchangeSerialized.md).[exchangeTag](IExchangeSerialized.md#exchangetag)
 
-***
+___
 
 ### type
 
-> **`readonly`** **type**: `ExchangeType`
+• `Readonly` **type**: `ExchangeType`
 
 #### Inherited from
 
-[`IExchangeSerialized`](IExchangeSerialized.md).[`type`](IExchangeSerialized.md#type)
+[IExchangeSerialized](IExchangeSerialized.md).[type](IExchangeSerialized.md#type)
 
 ## Methods
 
-### getBindingParams()
+### getBindingParams
 
-> **getBindingParams**(): `BindingParams`
+▸ **getBindingParams**(): `BindingParams`
 
 #### Returns
 
 `BindingParams`
 
-***
+___
 
-### getQueues()
+### getQueues
 
-> **getQueues**(`cb`): `void`
+▸ **getQueues**(`cb`): `void`
 
 #### Parameters
 
-▪ **cb**: `ICallback`<[`IQueueParams`](IQueueParams.md)[]>
+| Name | Type |
+| :------ | :------ |
+| `cb` | `ICallback`\<[`IQueueParams`](IQueueParams.md)[]\> |
 
 #### Returns
 
 `void`
 
-***
+___
 
-### toJSON()
+### toJSON
 
-> **toJSON**(): [`IExchangeSerialized`](IExchangeSerialized.md)<`BindingParams`, `ExchangeType`>
+▸ **toJSON**(): [`IExchangeSerialized`](IExchangeSerialized.md)\<`BindingParams`, `ExchangeType`\>
 
 #### Returns
 
-[`IExchangeSerialized`](IExchangeSerialized.md)<`BindingParams`, `ExchangeType`>
-
+[`IExchangeSerialized`](IExchangeSerialized.md)\<`BindingParams`, `ExchangeType`\>

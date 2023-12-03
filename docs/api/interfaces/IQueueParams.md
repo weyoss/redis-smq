@@ -1,22 +1,22 @@
->[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IQueueParams
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IQueueParams
 
 # Interface: IQueueParams
 
-## Contents
+## Table of contents
 
-- [Properties](IQueueParams.md#properties)
-  - [name](IQueueParams.md#name)
-  - [ns](IQueueParams.md#ns)
+### Properties
+
+- [name](IQueueParams.md#name)
+- [ns](IQueueParams.md#ns)
 
 ## Properties
 
 ### name
 
-> **name**: `string`
+• **name**: `string`
 
-***
+___
 
 ### ns
 
-> **ns**: `string`
-
+• **ns**: `string`

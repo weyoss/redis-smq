@@ -1,23 +1,26 @@
->[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / QueueRateLimit
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / QueueRateLimit
 
 # Class: QueueRateLimit
 
-## Contents
+## Table of contents
 
-- [Constructors](QueueRateLimit.md#constructors)
-  - [new QueueRateLimit()](QueueRateLimit.md#new-queueratelimit)
-- [Methods](QueueRateLimit.md#methods)
-  - [clear()](QueueRateLimit.md#clear)
-  - [get()](QueueRateLimit.md#get)
-  - [hasExceeded()](QueueRateLimit.md#hasexceeded)
-  - [set()](QueueRateLimit.md#set)
-  - [hasExceeded()](QueueRateLimit.md#hasexceeded-1)
+### Constructors
+
+- [constructor](QueueRateLimit.md#constructor)
+
+### Methods
+
+- [clear](QueueRateLimit.md#clear)
+- [get](QueueRateLimit.md#get)
+- [hasExceeded](QueueRateLimit.md#hasexceeded)
+- [set](QueueRateLimit.md#set)
+- [hasExceeded](QueueRateLimit.md#hasexceeded-1)
 
 ## Constructors
 
-### new QueueRateLimit()
+### constructor
 
-> **new QueueRateLimit**(): [`QueueRateLimit`](QueueRateLimit.md)
+• **new QueueRateLimit**(): [`QueueRateLimit`](QueueRateLimit.md)
 
 #### Returns
 
@@ -25,89 +28,89 @@
 
 ## Methods
 
-### clear()
+### clear
 
-> **clear**(`queue`, `cb`): `void`
+▸ **clear**(`queue`, `cb`): `void`
 
 #### Parameters
 
-▪ **queue**: `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
-
-▪ **cb**: `ICallback`<`void`>
+| Name | Type |
+| :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 
 `void`
 
-***
+___
 
-### get()
+### get
 
-> **get**(`queue`, `cb`): `void`
+▸ **get**(`queue`, `cb`): `void`
 
 #### Parameters
 
-▪ **queue**: `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
-
-▪ **cb**: `ICallback`<`null` | [`IQueueRateLimit`](../interfaces/IQueueRateLimit.md)>
+| Name | Type |
+| :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `cb` | `ICallback`\<``null`` \| [`IQueueRateLimit`](../interfaces/IQueueRateLimit.md)\> |
 
 #### Returns
 
 `void`
 
-***
+___
 
-### hasExceeded()
+### hasExceeded
 
-> **hasExceeded**(`queue`, `rateLimit`, `cb`): `void`
+▸ **hasExceeded**(`queue`, `rateLimit`, `cb`): `void`
 
 #### Parameters
 
-▪ **queue**: [`IQueueParams`](../interfaces/IQueueParams.md)
-
-▪ **rateLimit**: [`IQueueRateLimit`](../interfaces/IQueueRateLimit.md)
-
-▪ **cb**: `ICallback`<`boolean`>
+| Name | Type |
+| :------ | :------ |
+| `queue` | [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `rateLimit` | [`IQueueRateLimit`](../interfaces/IQueueRateLimit.md) |
+| `cb` | `ICallback`\<`boolean`\> |
 
 #### Returns
 
 `void`
 
-***
+___
 
-### set()
+### set
 
-> **set**(`queue`, `rateLimit`, `cb`): `void`
+▸ **set**(`queue`, `rateLimit`, `cb`): `void`
 
 #### Parameters
 
-▪ **queue**: `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
-
-▪ **rateLimit**: [`IQueueRateLimit`](../interfaces/IQueueRateLimit.md)
-
-▪ **cb**: `ICallback`<`void`>
+| Name | Type |
+| :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `rateLimit` | [`IQueueRateLimit`](../interfaces/IQueueRateLimit.md) |
+| `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 
 `void`
 
-***
+___
 
-### hasExceeded()
+### hasExceeded
 
-> **`static`** **hasExceeded**(`redisClient`, `queue`, `rateLimit`, `cb`): `void`
+▸ **hasExceeded**(`redisClient`, `queue`, `rateLimit`, `cb`): `void`
 
 #### Parameters
 
-▪ **redisClient**: `RedisClient`
-
-▪ **queue**: [`IQueueParams`](../interfaces/IQueueParams.md)
-
-▪ **rateLimit**: [`IQueueRateLimit`](../interfaces/IQueueRateLimit.md)
-
-▪ **cb**: `ICallback`<`boolean`>
+| Name | Type |
+| :------ | :------ |
+| `redisClient` | `RedisClient` |
+| `queue` | [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `rateLimit` | [`IQueueRateLimit`](../interfaces/IQueueRateLimit.md) |
+| `cb` | `ICallback`\<`boolean`\> |
 
 #### Returns
 
 `void`
-

@@ -1,50 +1,38 @@
->[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IConsumerHeartbeatPayload
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IConsumerHeartbeatPayload
 
 # Interface: IConsumerHeartbeatPayload
 
-## Contents
+## Table of contents
 
-- [Properties](IConsumerHeartbeatPayload.md#properties)
-  - [cpu](IConsumerHeartbeatPayload.md#cpu)
-  - [ram](IConsumerHeartbeatPayload.md#ram)
+### Properties
+
+- [cpu](IConsumerHeartbeatPayload.md#cpu)
+- [ram](IConsumerHeartbeatPayload.md#ram)
 
 ## Properties
 
 ### cpu
 
-> **cpu**: `object`
+• **cpu**: `Object`
 
 #### Type declaration
 
-##### percentage
+| Name | Type |
+| :------ | :------ |
+| `percentage` | `string` |
+| `system` | `number` |
+| `user` | `number` |
 
-> **percentage**: `string`
-
-##### system
-
-> **system**: `number`
-
-##### user
-
-> **user**: `number`
-
-***
+___
 
 ### ram
 
-> **ram**: `object`
+• **ram**: `Object`
 
 #### Type declaration
 
-##### free
-
-> **free**: `number`
-
-##### total
-
-> **total**: `number`
-
-##### usage
-
-> **usage**: `MemoryUsage`
-
+| Name | Type |
+| :------ | :------ |
+| `free` | `number` |
+| `total` | `number` |
+| `usage` | `MemoryUsage` |

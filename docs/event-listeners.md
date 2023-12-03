@@ -1,4 +1,4 @@
-> [RedisSMQ](../README.md) / [Docs](README.md) / IEvent listeners
+[RedisSMQ](../README.md) / [Docs](README.md) / IEvent listeners
 
 # IEvent listeners
 
@@ -114,4 +114,4 @@ Configuration.getSetConfig(config);
 
 ## Message Events
 
-See [TRedisSMQEvent](./api/type-aliases/TRedisSMQEvent.md).
+See [TRedisSMQEvent](api/README.md#tredissmqevent).

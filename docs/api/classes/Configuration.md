@@ -1,45 +1,47 @@
->[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / Configuration
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / Configuration
 
 # Class: Configuration
 
-## Contents
+## Table of contents
 
-- [Methods](Configuration.md#methods)
-  - [getConfig()](Configuration.md#getconfig)
-  - [getSetConfig()](Configuration.md#getsetconfig)
-  - [reset()](Configuration.md#reset)
+### Methods
+
+- [getConfig](Configuration.md#getconfig)
+- [getSetConfig](Configuration.md#getsetconfig)
+- [reset](Configuration.md#reset)
 
 ## Methods
 
-### getConfig()
+### getConfig
 
-> **getConfig**(): [`IRedisSMQConfigRequired`](../interfaces/IRedisSMQConfigRequired.md)
+▸ **getConfig**(): [`IRedisSMQConfigRequired`](../interfaces/IRedisSMQConfigRequired.md)
 
 #### Returns
 
 [`IRedisSMQConfigRequired`](../interfaces/IRedisSMQConfigRequired.md)
 
-***
+___
 
-### getSetConfig()
+### getSetConfig
 
-> **`static`** **getSetConfig**(`config`): [`IRedisSMQConfigRequired`](../interfaces/IRedisSMQConfigRequired.md)
+▸ **getSetConfig**(`config?`): [`IRedisSMQConfigRequired`](../interfaces/IRedisSMQConfigRequired.md)
 
 #### Parameters
 
-▪ **config**: [`IRedisSMQConfig`](../interfaces/IRedisSMQConfig.md)= `{}`
+| Name | Type |
+| :------ | :------ |
+| `config` | [`IRedisSMQConfig`](../interfaces/IRedisSMQConfig.md) |
 
 #### Returns
 
 [`IRedisSMQConfigRequired`](../interfaces/IRedisSMQConfigRequired.md)
 
-***
+___
 
-### reset()
+### reset
 
-> **`static`** **reset**(): `void`
+▸ **reset**(): `void`
 
 #### Returns
 
 `void`
-

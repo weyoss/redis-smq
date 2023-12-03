@@ -1,40 +1,43 @@
->[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IEventListener
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IEventListener
 
 # Interface: IEventListener
 
-## Contents
+## Table of contents
 
-- [Methods](IEventListener.md#methods)
-  - [init()](IEventListener.md#init)
-  - [quit()](IEventListener.md#quit)
+### Methods
+
+- [init](IEventListener.md#init)
+- [quit](IEventListener.md#quit)
 
 ## Methods
 
-### init()
+### init
 
-> **init**(`args`, `cb`): `void`
+▸ **init**(`args`, `cb`): `void`
 
 #### Parameters
 
-▪ **args**: [`TEventListenerInitArgs`](../type-aliases/TEventListenerInitArgs.md)
-
-▪ **cb**: `ICallback`<`void`>
+| Name | Type |
+| :------ | :------ |
+| `args` | [`TEventListenerInitArgs`](../README.md#teventlistenerinitargs) |
+| `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 
 `void`
 
-***
+___
 
-### quit()
+### quit
 
-> **quit**(`cb`): `void`
+▸ **quit**(`cb`): `void`
 
 #### Parameters
 
-▪ **cb**: `ICallback`<`void`>
+| Name | Type |
+| :------ | :------ |
+| `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 
 `void`
-

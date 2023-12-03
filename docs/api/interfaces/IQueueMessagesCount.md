@@ -1,36 +1,36 @@
->[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IQueueMessagesCount
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IQueueMessagesCount
 
 # Interface: IQueueMessagesCount
 
-## Contents
+## Table of contents
 
-- [Properties](IQueueMessagesCount.md#properties)
-  - [acknowledged](IQueueMessagesCount.md#acknowledged)
-  - [deadLettered](IQueueMessagesCount.md#deadlettered)
-  - [pending](IQueueMessagesCount.md#pending)
-  - [scheduled](IQueueMessagesCount.md#scheduled)
+### Properties
+
+- [acknowledged](IQueueMessagesCount.md#acknowledged)
+- [deadLettered](IQueueMessagesCount.md#deadlettered)
+- [pending](IQueueMessagesCount.md#pending)
+- [scheduled](IQueueMessagesCount.md#scheduled)
 
 ## Properties
 
 ### acknowledged
 
-> **acknowledged**: `number`
+• **acknowledged**: `number`
 
-***
+___
 
 ### deadLettered
 
-> **deadLettered**: `number`
+• **deadLettered**: `number`
 
-***
+___
 
 ### pending
 
-> **pending**: `number`
+• **pending**: `number`
 
-***
+___
 
 ### scheduled
 
-> **scheduled**: `number`
-
+• **scheduled**: `number`
