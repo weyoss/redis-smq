@@ -21,11 +21,11 @@ export enum EExchangeType {
   TOPIC,
 }
 
-export type TExchangeDirectExchangeBindingParams = IQueueParams | string;
+export type TExchangeDirectBindingParams = IQueueParams | string;
 
-export type TExchangeFanOutExchangeBindingParams = string;
+export type TExchangeFanOutBindingParams = string;
 
-export type TExchangeTopicExchangeBindingParams = TTopicParams | string;
+export type TExchangeTopicBindingParams = TTopicParams | string;
 
 export interface IExchange<BindingParams, ExchangeType extends EExchangeType>
   extends IExchangeSerialized<BindingParams, ExchangeType> {
@@ -43,24 +43,39 @@ export interface IExchangeSerialized<
   readonly exchangeTag: string;
 }
 
-export type TExchangeDirectExchange = IExchange<
-  TExchangeDirectExchangeBindingParams,
+export type TExchangeDirectSerialized = IExchangeSerialized<
+  TExchangeDirectBindingParams,
   EExchangeType.DIRECT
 >;
 
-export type TExchangeTopicExchange = IExchange<
-  TExchangeTopicExchangeBindingParams,
+export type TExchangeTopicSerialized = IExchangeSerialized<
+  TExchangeTopicBindingParams,
   EExchangeType.TOPIC
 >;
 
-export type TExchangeFanOutExchange = IExchange<
-  TExchangeFanOutExchangeBindingParams,
+export type TExchangeFanOutSerialized = IExchangeSerialized<
+  TExchangeFanOutBindingParams,
   EExchangeType.FANOUT
 >;
 
-export type TExchange =
-  | TExchangeDirectExchange
-  | TExchangeTopicExchange
-  | TExchangeFanOutExchange;
+export type TExchangeDirect = IExchange<
+  TExchangeDirectBindingParams,
+  EExchangeType.DIRECT
+>;
 
-export type TExchangeSerialized = ReturnType<TExchange['toJSON']>;
+export type TExchangeTopic = IExchange<
+  TExchangeTopicBindingParams,
+  EExchangeType.TOPIC
+>;
+
+export type TExchangeFanOut = IExchange<
+  TExchangeFanOutBindingParams,
+  EExchangeType.FANOUT
+>;
+
+export type TExchange = TExchangeDirect | TExchangeTopic | TExchangeFanOut;
+
+export type TExchangeSerialized =
+  | TExchangeDirectSerialized
+  | TExchangeTopicSerialized
+  | TExchangeFanOutSerialized;

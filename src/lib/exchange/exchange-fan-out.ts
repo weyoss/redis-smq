@@ -11,7 +11,7 @@ import { Exchange } from './exchange';
 import {
   EExchangeType,
   EQueueProperty,
-  TExchangeFanOutExchangeBindingParams,
+  TExchangeFanOutBindingParams,
   IQueueParams,
   IQueueProperties,
 } from '../../../types';
@@ -26,15 +26,15 @@ import { _getQueueFanOutExchange } from './_get-queue-fan-out-exchange';
 import { _getCommonRedisClient } from '../../common/_get-common-redis-client';
 
 export class ExchangeFanOut extends Exchange<
-  TExchangeFanOutExchangeBindingParams,
+  TExchangeFanOutBindingParams,
   EExchangeType.FANOUT
 > {
-  constructor(queue: TExchangeFanOutExchangeBindingParams) {
-    super(queue, EExchangeType.FANOUT);
+  constructor(fanOutName: TExchangeFanOutBindingParams) {
+    super(fanOutName, EExchangeType.FANOUT);
   }
 
   protected override validateBindingParams(
-    bindingParams: TExchangeFanOutExchangeBindingParams,
+    bindingParams: TExchangeFanOutBindingParams,
   ): string {
     return redisKeys.validateRedisKey(bindingParams);
   }

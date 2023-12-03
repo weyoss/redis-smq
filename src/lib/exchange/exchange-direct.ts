@@ -11,21 +11,21 @@ import { Exchange } from './exchange';
 import {
   EExchangeType,
   IQueueParams,
-  TExchangeDirectExchangeBindingParams,
+  TExchangeDirectBindingParams,
 } from '../../../types';
 import { ICallback } from 'redis-smq-common';
 import { _getQueueParams } from '../queue/queue/_get-queue-params';
 
 export class ExchangeDirect extends Exchange<
-  TExchangeDirectExchangeBindingParams,
+  TExchangeDirectBindingParams,
   EExchangeType.DIRECT
 > {
-  constructor(queue: TExchangeDirectExchangeBindingParams) {
+  constructor(queue: TExchangeDirectBindingParams) {
     super(queue, EExchangeType.DIRECT);
   }
 
   protected override validateBindingParams(
-    queue: TExchangeDirectExchangeBindingParams,
+    queue: TExchangeDirectBindingParams,
   ): IQueueParams {
     return _getQueueParams(queue);
   }

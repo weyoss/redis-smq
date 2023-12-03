@@ -40,7 +40,7 @@ export interface IQueueMessagesPage<T> {
   items: T[];
 }
 
-export type IQeueMessagesPageParams = {
+export type IQueueMessagesPageParams = {
   currentPage: number;
   offsetStart: number;
   offsetEnd: number;
