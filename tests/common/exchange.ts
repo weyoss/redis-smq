@@ -10,27 +10,21 @@
 import { promisifyAll } from 'bluebird';
 import { ExchangeFanOut } from '../../src/lib/exchange/exchange-fan-out';
 import {
-  TExchangeDirectExchangeBindingParams,
-  TExchangeFanOutExchangeBindingParams,
-  TExchangeTopicExchangeBindingParams,
+  TExchangeDirectBindingParams,
+  TExchangeFanOutBindingParams,
+  TExchangeTopicBindingParams,
 } from '../../types';
 import { ExchangeTopic } from '../../src/lib/exchange/exchange-topic';
 import { ExchangeDirect } from '../../src/lib/exchange/exchange-direct';
 
-export function getFanOutExchange(
-  bindingParams: TExchangeFanOutExchangeBindingParams,
-) {
+export function getFanOutExchange(bindingParams: TExchangeFanOutBindingParams) {
   return promisifyAll(new ExchangeFanOut(bindingParams));
 }
 
-export function getTopicExchange(
-  bindingParams: TExchangeTopicExchangeBindingParams,
-) {
+export function getTopicExchange(bindingParams: TExchangeTopicBindingParams) {
   return promisifyAll(new ExchangeTopic(bindingParams));
 }
 
-export function getDirectExchange(
-  bindingParams: TExchangeDirectExchangeBindingParams,
-) {
+export function getDirectExchange(bindingParams: TExchangeDirectBindingParams) {
   return promisifyAll(new ExchangeDirect(bindingParams));
 }

@@ -10,7 +10,7 @@
 import { Exchange } from './exchange';
 import {
   EExchangeType,
-  TExchangeTopicExchangeBindingParams,
+  TExchangeTopicBindingParams,
   IQueueParams,
   TTopicParams,
 } from '../../../types';
@@ -20,15 +20,15 @@ import { _getTopicExchangeParams } from './_get-topic-exchange-params';
 import { _getCommonRedisClient } from '../../common/_get-common-redis-client';
 
 export class ExchangeTopic extends Exchange<
-  TExchangeTopicExchangeBindingParams,
+  TExchangeTopicBindingParams,
   EExchangeType.TOPIC
 > {
-  constructor(queue: TExchangeTopicExchangeBindingParams) {
-    super(queue, EExchangeType.TOPIC);
+  constructor(topic: TExchangeTopicBindingParams) {
+    super(topic, EExchangeType.TOPIC);
   }
 
   protected override validateBindingParams(
-    topicParams: TExchangeTopicExchangeBindingParams,
+    topicParams: TExchangeTopicBindingParams,
   ): TTopicParams {
     return _getTopicExchangeParams(topicParams);
   }

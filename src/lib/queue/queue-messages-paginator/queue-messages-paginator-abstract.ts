@@ -9,7 +9,7 @@
 
 import {
   IQueueMessages,
-  IQeueMessagesPageParams,
+  IQueueMessagesPageParams,
   IQueueMessagesPage,
   IQueueParams,
 } from '../../../../types';
@@ -30,7 +30,7 @@ export abstract class QueueMessagesPaginatorAbstract implements IQueueMessages {
     cursor: number,
     totalItems: number,
     pageSize: number,
-  ): IQeueMessagesPageParams {
+  ): IQueueMessagesPageParams {
     const totalPages = this.getTotalPages(pageSize, totalItems);
     const currentPage = cursor < 1 || cursor > totalPages ? 1 : cursor;
     const offsetBase = currentPage - 1;
