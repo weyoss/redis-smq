@@ -1,22 +1,22 @@
->[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IQueueRateLimit
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IQueueRateLimit
 
 # Interface: IQueueRateLimit
 
-## Contents
+## Table of contents
 
-- [Properties](IQueueRateLimit.md#properties)
-  - [interval](IQueueRateLimit.md#interval)
-  - [limit](IQueueRateLimit.md#limit)
+### Properties
+
+- [interval](IQueueRateLimit.md#interval)
+- [limit](IQueueRateLimit.md#limit)
 
 ## Properties
 
 ### interval
 
-> **interval**: `number`
+• **interval**: `number`
 
-***
+___
 
 ### limit
 
-> **limit**: `number`
-
+• **limit**: `number`

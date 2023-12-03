@@ -1,22 +1,22 @@
->[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IMessagesConfigStorageOptions
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IMessagesConfigStorageOptions
 
 # Interface: IMessagesConfigStorageOptions
 
-## Contents
+## Table of contents
 
-- [Properties](IMessagesConfigStorageOptions.md#properties)
-  - [expire](IMessagesConfigStorageOptions.md#expire)
-  - [queueSize](IMessagesConfigStorageOptions.md#queuesize)
+### Properties
+
+- [expire](IMessagesConfigStorageOptions.md#expire)
+- [queueSize](IMessagesConfigStorageOptions.md#queuesize)
 
 ## Properties
 
 ### expire
 
-> **expire**?: `number`
+• `Optional` **expire**: `number`
 
-***
+___
 
 ### queueSize
 
-> **queueSize**?: `number`
-
+• `Optional` **queueSize**: `number`

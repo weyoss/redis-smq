@@ -1,82 +1,87 @@
->[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IQueueMessages
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IQueueMessages
 
 # Interface: IQueueMessages
 
-## Contents
+## Implemented by
 
-- [Methods](IQueueMessages.md#methods)
-  - [countMessages()](IQueueMessages.md#countmessages)
-  - [deleteMessage()](IQueueMessages.md#deletemessage)
-  - [getMessages()](IQueueMessages.md#getmessages)
-  - [purge()](IQueueMessages.md#purge)
+- [`QueuePendingMessages`](../classes/QueuePendingMessages.md)
+
+## Table of contents
+
+### Methods
+
+- [countMessages](IQueueMessages.md#countmessages)
+- [deleteMessage](IQueueMessages.md#deletemessage)
+- [getMessages](IQueueMessages.md#getmessages)
+- [purge](IQueueMessages.md#purge)
 
 ## Methods
 
-### countMessages()
+### countMessages
 
-> **countMessages**(`queue`, `cb`): `void`
+▸ **countMessages**(`queue`, `cb`): `void`
 
 #### Parameters
 
-▪ **queue**: `string` | [`IQueueParams`](IQueueParams.md)
-
-▪ **cb**: `ICallback`<`number`>
+| Name | Type |
+| :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](IQueueParams.md) |
+| `cb` | `ICallback`\<`number`\> |
 
 #### Returns
 
 `void`
 
-***
+___
 
-### deleteMessage()
+### deleteMessage
 
-> **deleteMessage**(`queue`, `messageId`, `cb`): `void`
+▸ **deleteMessage**(`queue`, `messageId`, `cb`): `void`
 
 #### Parameters
 
-▪ **queue**: `string` | [`IQueueParams`](IQueueParams.md)
-
-▪ **messageId**: `string`
-
-▪ **cb**: `ICallback`<`void`>
+| Name | Type |
+| :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](IQueueParams.md) |
+| `messageId` | `string` |
+| `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 
 `void`
 
-***
+___
 
-### getMessages()
+### getMessages
 
-> **getMessages**(`queue`, `page`, `pageSize`, `cb`): `void`
+▸ **getMessages**(`queue`, `page`, `pageSize`, `cb`): `void`
 
 #### Parameters
 
-▪ **queue**: `string` | [`IQueueParams`](IQueueParams.md)
-
-▪ **page**: `number`
-
-▪ **pageSize**: `number`
-
-▪ **cb**: `ICallback`<[`IQueueMessagesPage`](IQueueMessagesPage.md)<[`Message`](../classes/Message.md)>>
+| Name | Type |
+| :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](IQueueParams.md) |
+| `page` | `number` |
+| `pageSize` | `number` |
+| `cb` | `ICallback`\<[`IQueueMessagesPage`](IQueueMessagesPage.md)\<[`Message`](../classes/Message.md)\>\> |
 
 #### Returns
 
 `void`
 
-***
+___
 
-### purge()
+### purge
 
-> **purge**(`queue`, `cb`): `void`
+▸ **purge**(`queue`, `cb`): `void`
 
 #### Parameters
 
-▪ **queue**: `string` | [`IQueueParams`](IQueueParams.md)
-
-▪ **cb**: `ICallback`<`void`>
+| Name | Type |
+| :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](IQueueParams.md) |
+| `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 
 `void`
-

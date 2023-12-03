@@ -1,4 +1,4 @@
->[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / Message
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / Message
 
 # Class: Message
 
@@ -151,11 +151,11 @@ ___
 
 ### getExchange
 
-▸ **getExchange**(): ``null`` \| [`TExchange`](../type-aliases/TExchange.md)
+▸ **getExchange**(): ``null`` \| [`TExchange`](../README.md#texchange)
 
 #### Returns
 
-``null`` \| [`TExchange`](../type-aliases/TExchange.md)
+``null`` \| [`TExchange`](../README.md#texchange)
 
 ___
 
@@ -231,11 +231,11 @@ ___
 
 ### getRequiredExchange
 
-▸ **getRequiredExchange**(): [`TExchange`](../type-aliases/TExchange.md)
+▸ **getRequiredExchange**(): [`TExchange`](../README.md#texchange)
 
 #### Returns
 
-[`TExchange`](../type-aliases/TExchange.md)
+[`TExchange`](../README.md#texchange)
 
 ___
 
@@ -351,11 +351,11 @@ ___
 
 ### getStatus
 
-▸ **getStatus**(): [`EMessagePropertyStatus`](../enumerations/EMessagePropertyStatus.md)
+▸ **getStatus**(): [`EMessagePropertyStatus`](../enums/EMessagePropertyStatus.md)
 
 #### Returns
 
-[`EMessagePropertyStatus`](../enumerations/EMessagePropertyStatus.md)
+[`EMessagePropertyStatus`](../enums/EMessagePropertyStatus.md)
 
 ___
 
@@ -485,7 +485,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `exchange` | [`TExchange`](../type-aliases/TExchange.md) |
+| `exchange` | [`TExchange`](../README.md#texchange) |
 
 #### Returns
 
@@ -661,7 +661,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `s` | [`EMessagePropertyStatus`](../enumerations/EMessagePropertyStatus.md) |
+| `s` | [`EMessagePropertyStatus`](../enums/EMessagePropertyStatus.md) |
 
 #### Returns
 
@@ -693,7 +693,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `topicParams` | `string` \| [`TTopicParams`](../type-aliases/TTopicParams.md) |
+| `topicParams` | `string` \| [`TTopicParams`](../modules.md#ttopicparams) |
 
 #### Returns
 
@@ -729,7 +729,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `consumeOptions` | `Partial`\<[`TMessageConsumeOptions`](../type-aliases/TMessageConsumeOptions.md)\> |
+| `consumeOptions` | `Partial`\<[`TMessageConsumeOptions`](../README.md#tmessageconsumeoptions)\> |
 
 #### Returns
 

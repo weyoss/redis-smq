@@ -1,22 +1,22 @@
->[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IConsumerMessageHandlerArgs
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IConsumerMessageHandlerArgs
 
 # Interface: IConsumerMessageHandlerArgs
 
-## Contents
+## Table of contents
 
-- [Properties](IConsumerMessageHandlerArgs.md#properties)
-  - [messageHandler](IConsumerMessageHandlerArgs.md#messagehandler)
-  - [queue](IConsumerMessageHandlerArgs.md#queue)
+### Properties
+
+- [messageHandler](IConsumerMessageHandlerArgs.md#messagehandler)
+- [queue](IConsumerMessageHandlerArgs.md#queue)
 
 ## Properties
 
 ### messageHandler
 
-> **messageHandler**: [`TConsumerMessageHandler`](../type-aliases/TConsumerMessageHandler.md)
+• **messageHandler**: [`TConsumerMessageHandler`](../README.md#tconsumermessagehandler)
 
-***
+___
 
 ### queue
 
-> **queue**: [`IQueueParams`](IQueueParams.md)
-
+• **queue**: [`IQueueParams`](IQueueParams.md)

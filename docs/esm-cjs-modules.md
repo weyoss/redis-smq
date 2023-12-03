@@ -1,4 +1,4 @@
-> [RedisSMQ](../README.md) / [Docs](README.md) / ESM & CJS Modules
+[RedisSMQ](../README.md) / [Docs](README.md) / ESM & CJS Modules
 
 # ESM & CJS Modules
 

@@ -1,132 +1,203 @@
->[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / Producer
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / Producer
 
 # Class: Producer
 
-## Contents
+## Hierarchy
 
-- [Constructors](Producer.md#constructors)
-  - [new Producer()](Producer.md#new-producer)
-- [Methods](Producer.md#methods)
-  - [getId()](Producer.md#getid)
-  - [handleError()](Producer.md#handleerror)
-  - [isDown()](Producer.md#isdown)
-  - [isGoingDown()](Producer.md#isgoingdown)
-  - [isGoingUp()](Producer.md#isgoingup)
-  - [isRunning()](Producer.md#isrunning)
-  - [isUp()](Producer.md#isup)
-  - [produce()](Producer.md#produce)
-  - [run()](Producer.md#run)
-  - [shutdown()](Producer.md#shutdown)
+- `Base`
+
+  ↳ **`Producer`**
+
+## Table of contents
+
+### Constructors
+
+- [constructor](Producer.md#constructor)
+
+### Methods
+
+- [getId](Producer.md#getid)
+- [handleError](Producer.md#handleerror)
+- [isDown](Producer.md#isdown)
+- [isGoingDown](Producer.md#isgoingdown)
+- [isGoingUp](Producer.md#isgoingup)
+- [isRunning](Producer.md#isrunning)
+- [isUp](Producer.md#isup)
+- [produce](Producer.md#produce)
+- [run](Producer.md#run)
+- [shutdown](Producer.md#shutdown)
 
 ## Constructors
 
-### new Producer()
+### constructor
 
-> **new Producer**(): [`Producer`](Producer.md)
+• **new Producer**(): [`Producer`](Producer.md)
 
 #### Returns
 
 [`Producer`](Producer.md)
 
+#### Inherited from
+
+Base.constructor
+
 ## Methods
 
-### getId()
+### getId
 
-> **getId**(): `string`
+▸ **getId**(): `string`
 
 #### Returns
 
 `string`
 
-### handleError()
+#### Inherited from
 
-> **handleError**(`err`): `void`
+Base.getId
+
+___
+
+### handleError
+
+▸ **handleError**(`err`): `void`
 
 #### Parameters
 
-▪ **err**: `Error`
+| Name | Type |
+| :------ | :------ |
+| `err` | `Error` |
 
 #### Returns
 
 `void`
 
-### isDown()
+#### Inherited from
 
-> **isDown**(): `boolean`
+Base.handleError
 
-#### Returns
+___
 
-`boolean`
+### isDown
 
-### isGoingDown()
-
-> **isGoingDown**(): `boolean`
+▸ **isDown**(): `boolean`
 
 #### Returns
 
 `boolean`
 
-### isGoingUp()
+#### Inherited from
 
-> **isGoingUp**(): `boolean`
+Base.isDown
 
-#### Returns
+___
 
-`boolean`
+### isGoingDown
 
-### isRunning()
-
-> **isRunning**(): `boolean`
+▸ **isGoingDown**(): `boolean`
 
 #### Returns
 
 `boolean`
 
-### isUp()
+#### Inherited from
 
-> **isUp**(): `boolean`
+Base.isGoingDown
+
+___
+
+### isGoingUp
+
+▸ **isGoingUp**(): `boolean`
 
 #### Returns
 
 `boolean`
 
-### produce()
+#### Inherited from
 
-> **produce**(`message`, `cb`): `void`
+Base.isGoingUp
+
+___
+
+### isRunning
+
+▸ **isRunning**(): `boolean`
+
+#### Returns
+
+`boolean`
+
+#### Inherited from
+
+Base.isRunning
+
+___
+
+### isUp
+
+▸ **isUp**(): `boolean`
+
+#### Returns
+
+`boolean`
+
+#### Inherited from
+
+Base.isUp
+
+___
+
+### produce
+
+▸ **produce**(`message`, `cb`): `void`
 
 #### Parameters
 
-▪ **message**: [`Message`](Message.md)
-
-▪ **cb**: `ICallback`<`object`>
+| Name | Type |
+| :------ | :------ |
+| `message` | [`Message`](Message.md) |
+| `cb` | `ICallback`\<\{ `messages`: `string`[] ; `scheduled`: `boolean`  }\> |
 
 #### Returns
 
 `void`
 
-***
+___
 
-### run()
+### run
 
-> **run**(`cb`?): `void`
+▸ **run**(`cb?`): `void`
 
 #### Parameters
 
-▪ **cb?**: `ICallback`<`boolean`>
+| Name | Type |
+| :------ | :------ |
+| `cb?` | `ICallback`\<`boolean`\> |
 
 #### Returns
 
 `void`
 
-### shutdown()
+#### Inherited from
 
-> **shutdown**(`cb`?): `void`
+Base.run
+
+___
+
+### shutdown
+
+▸ **shutdown**(`cb?`): `void`
 
 #### Parameters
 
-▪ **cb?**: `ICallback`<`boolean`>
+| Name | Type |
+| :------ | :------ |
+| `cb?` | `ICallback`\<`boolean`\> |
 
 #### Returns
 
 `void`
 
+#### Inherited from
+
+Base.shutdown

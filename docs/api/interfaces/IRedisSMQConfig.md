@@ -1,43 +1,43 @@
->[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IRedisSMQConfig
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IRedisSMQConfig
 
 # Interface: IRedisSMQConfig
 
-## Contents
+## Table of contents
 
-- [Properties](IRedisSMQConfig.md#properties)
-  - [eventListeners](IRedisSMQConfig.md#eventlisteners)
-  - [logger](IRedisSMQConfig.md#logger)
-  - [messages](IRedisSMQConfig.md#messages)
-  - [namespace](IRedisSMQConfig.md#namespace)
-  - [redis](IRedisSMQConfig.md#redis)
+### Properties
+
+- [eventListeners](IRedisSMQConfig.md#eventlisteners)
+- [logger](IRedisSMQConfig.md#logger)
+- [messages](IRedisSMQConfig.md#messages)
+- [namespace](IRedisSMQConfig.md#namespace)
+- [redis](IRedisSMQConfig.md#redis)
 
 ## Properties
 
 ### eventListeners
 
-> **eventListeners**?: [`IEventListenersConfig`](IEventListenersConfig.md)
+• `Optional` **eventListeners**: [`IEventListenersConfig`](IEventListenersConfig.md)
 
-***
+___
 
 ### logger
 
-> **logger**?: [`ILoggerConfig`](https://github.com/weyoss/redis-smq-common/blob/master/docs/api/interfaces/ILoggerConfig.md)
+• `Optional` **logger**: [`ILoggerConfig`](https://github.com/weyoss/redis-smq-common/blob/master/docs/api/interfaces/ILoggerConfig.md)
 
-***
+___
 
 ### messages
 
-> **messages**?: [`IMessagesConfig`](IMessagesConfig.md)
+• `Optional` **messages**: [`IMessagesConfig`](IMessagesConfig.md)
 
-***
+___
 
 ### namespace
 
-> **namespace**?: `string`
+• `Optional` **namespace**: `string`
 
-***
+___
 
 ### redis
 
-> **redis**?: [`IRedisConfig`](https://github.com/weyoss/redis-smq-common/blob/master/docs/api/README.md#iredisconfig)
-
+• `Optional` **redis**: [`IRedisConfig`](https://github.com/weyoss/redis-smq-common/blob/master/docs/api/README.md#iredisconfig)

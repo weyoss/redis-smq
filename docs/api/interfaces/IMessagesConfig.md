@@ -1,15 +1,15 @@
->[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IMessagesConfig
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IMessagesConfig
 
 # Interface: IMessagesConfig
 
-## Contents
+## Table of contents
 
-- [Properties](IMessagesConfig.md#properties)
-  - [store](IMessagesConfig.md#store)
+### Properties
+
+- [store](IMessagesConfig.md#store)
 
 ## Properties
 
 ### store
 
-> **store**?: `boolean` | [`IMessagesConfigStorage`](IMessagesConfigStorage.md)
-
+• `Optional` **store**: `boolean` \| [`IMessagesConfigStorage`](IMessagesConfigStorage.md)

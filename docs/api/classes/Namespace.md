@@ -1,21 +1,24 @@
->[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / Namespace
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / Namespace
 
 # Class: Namespace
 
-## Contents
+## Table of contents
 
-- [Constructors](Namespace.md#constructors)
-  - [new Namespace()](Namespace.md#new-namespace)
-- [Methods](Namespace.md#methods)
-  - [delete()](Namespace.md#delete)
-  - [getNamespaceQueues()](Namespace.md#getnamespacequeues)
-  - [getNamespaces()](Namespace.md#getnamespaces)
+### Constructors
+
+- [constructor](Namespace.md#constructor)
+
+### Methods
+
+- [delete](Namespace.md#delete)
+- [getNamespaceQueues](Namespace.md#getnamespacequeues)
+- [getNamespaces](Namespace.md#getnamespaces)
 
 ## Constructors
 
-### new Namespace()
+### constructor
 
-> **new Namespace**(): [`Namespace`](Namespace.md)
+• **new Namespace**(): [`Namespace`](Namespace.md)
 
 #### Returns
 
@@ -23,47 +26,50 @@
 
 ## Methods
 
-### delete()
+### delete
 
-> **delete**(`namespace`, `cb`): `void`
+▸ **delete**(`namespace`, `cb`): `void`
 
 #### Parameters
 
-▪ **namespace**: `string`
-
-▪ **cb**: `ICallback`<`void`>
+| Name | Type |
+| :------ | :------ |
+| `namespace` | `string` |
+| `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 
 `void`
 
-***
+___
 
-### getNamespaceQueues()
+### getNamespaceQueues
 
-> **getNamespaceQueues**(`namespace`, `cb`): `void`
+▸ **getNamespaceQueues**(`namespace`, `cb`): `void`
 
 #### Parameters
 
-▪ **namespace**: `string`
-
-▪ **cb**: `ICallback`<[`IQueueParams`](../interfaces/IQueueParams.md)[]>
+| Name | Type |
+| :------ | :------ |
+| `namespace` | `string` |
+| `cb` | `ICallback`\<[`IQueueParams`](../interfaces/IQueueParams.md)[]\> |
 
 #### Returns
 
 `void`
 
-***
+___
 
-### getNamespaces()
+### getNamespaces
 
-> **getNamespaces**(`cb`): `void`
+▸ **getNamespaces**(`cb`): `void`
 
 #### Parameters
 
-▪ **cb**: `ICallback`<`string`[]>
+| Name | Type |
+| :------ | :------ |
+| `cb` | `ICallback`\<`string`[]\> |
 
 #### Returns
 
 `void`
-

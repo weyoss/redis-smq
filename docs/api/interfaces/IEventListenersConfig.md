@@ -1,22 +1,22 @@
->[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IEventListenersConfig
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IEventListenersConfig
 
 # Interface: IEventListenersConfig
 
-## Contents
+## Table of contents
 
-- [Properties](IEventListenersConfig.md#properties)
-  - [consumerEventListeners](IEventListenersConfig.md#consumereventlisteners)
-  - [producerEventListeners](IEventListenersConfig.md#producereventlisteners)
+### Properties
+
+- [consumerEventListeners](IEventListenersConfig.md#consumereventlisteners)
+- [producerEventListeners](IEventListenersConfig.md#producereventlisteners)
 
 ## Properties
 
 ### consumerEventListeners
 
-> **consumerEventListeners**?: () => [`IEventListener`](IEventListener.md)[]
+• `Optional` **consumerEventListeners**: () => [`IEventListener`](IEventListener.md)[]
 
-***
+___
 
 ### producerEventListeners
 
-> **producerEventListeners**?: () => [`IEventListener`](IEventListener.md)[]
-
+• `Optional` **producerEventListeners**: () => [`IEventListener`](IEventListener.md)[]
