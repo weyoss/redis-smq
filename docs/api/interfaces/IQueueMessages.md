@@ -11,7 +11,6 @@
 ### Methods
 
 - [countMessages](IQueueMessages.md#countmessages)
-- [deleteMessage](IQueueMessages.md#deletemessage)
 - [getMessages](IQueueMessages.md#getmessages)
 - [purge](IQueueMessages.md#purge)
 
@@ -27,24 +26,6 @@
 | :------ | :------ |
 | `queue` | `string` \| [`IQueueParams`](IQueueParams.md) |
 | `cb` | `ICallback`\<`number`\> |
-
-#### Returns
-
-`void`
-
-___
-
-### deleteMessage
-
-▸ **deleteMessage**(`queue`, `messageId`, `cb`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](IQueueParams.md) |
-| `messageId` | `string` |
-| `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 

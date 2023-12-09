@@ -15,7 +15,6 @@
 ### Methods
 
 - [countMessages](QueuePendingMessages.md#countmessages)
-- [deleteMessage](QueuePendingMessages.md#deletemessage)
 - [getMessages](QueuePendingMessages.md#getmessages)
 - [purge](QueuePendingMessages.md#purge)
 
@@ -49,28 +48,6 @@
 #### Implementation of
 
 [IQueueMessages](../interfaces/IQueueMessages.md).[countMessages](../interfaces/IQueueMessages.md#countmessages)
-
-___
-
-### deleteMessage
-
-▸ **deleteMessage**(`queue`, `messageId`, `cb`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
-| `messageId` | `string` |
-| `cb` | `ICallback`\<`void`\> |
-
-#### Returns
-
-`void`
-
-#### Implementation of
-
-[IQueueMessages](../interfaces/IQueueMessages.md).[deleteMessage](../interfaces/IQueueMessages.md#deletemessage)
 
 ___
 

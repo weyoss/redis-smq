@@ -17,7 +17,6 @@
 ### Methods
 
 - [countMessages](QueueScheduledMessages.md#countmessages)
-- [deleteMessage](QueueScheduledMessages.md#deletemessage)
 - [getMessages](QueueScheduledMessages.md#getmessages)
 - [purge](QueueScheduledMessages.md#purge)
 
@@ -55,28 +54,6 @@ QueueMessagesPaginatorSortedSet.constructor
 #### Inherited from
 
 QueueMessagesPaginatorSortedSet.countMessages
-
-___
-
-### deleteMessage
-
-▸ **deleteMessage**(`queue`, `messageId`, `cb`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
-| `messageId` | `string` \| `string`[] |
-| `cb` | `ICallback`\<`void`\> |
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-QueueMessagesPaginatorSortedSet.deleteMessage
 
 ___
 
