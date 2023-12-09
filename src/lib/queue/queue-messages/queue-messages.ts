@@ -118,7 +118,7 @@ export class QueueMessages extends QueueMessagesPaginatorSet {
     });
   }
 
-  deleteMessagesById(id: string, cb: ICallback<void>): void {
+  deleteMessageById(id: string, cb: ICallback<void>): void {
     this.deleteMessagesByIds([id], cb);
   }
 }
