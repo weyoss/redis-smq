@@ -18,7 +18,6 @@
 
 - [countMessages](QueueMessages.md#countmessages)
 - [countMessagesByStatus](QueueMessages.md#countmessagesbystatus)
-- [deleteMessage](QueueMessages.md#deletemessage)
 - [deleteMessageById](QueueMessages.md#deletemessagebyid)
 - [deleteMessagesByIds](QueueMessages.md#deletemessagesbyids)
 - [getMessageById](QueueMessages.md#getmessagebyid)
@@ -77,28 +76,6 @@ ___
 #### Returns
 
 `void`
-
-___
-
-### deleteMessage
-
-▸ **deleteMessage**(`queue`, `messageId`, `cb`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
-| `messageId` | `string` \| `string`[] |
-| `cb` | `ICallback`\<`void`\> |
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-QueueMessagesPaginatorSet.deleteMessage
 
 ___
 

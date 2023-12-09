@@ -30,11 +30,8 @@ producer.produce(message, (err) => {
 })
 ```
 
-For managing scheduled messages, the [QueueScheduledMessages Class](api/classes/QueueScheduledMessages.md) provides:
+For managing scheduled messages see [QueueScheduledMessages Class](api/classes/QueueScheduledMessages.md).
 
-* [QueueScheduledMessages.prototype.getMessages()](api/classes/QueueScheduledMessages.md#getmessages)
-* [QueueScheduledMessages.prototype.deleteMessage()](api/classes/QueueScheduledMessages.md#deletemessage)
-* [QueueScheduledMessages.prototype.purge()](api/classes/QueueScheduledMessages.md#purge)
-* [QueueScheduledMessages.prototype.countMessages()](api/classes/QueueScheduledMessages.md#countmessages)
+To delete a scheduled message see [QueueMessages.deleteMessageById()](api/classes/QueueMessages.md#deletemessagebyid).
 
 Scheduled messages can be also managed using the [HTTP API Interface](https://github.com/weyoss/redis-smq-monitor) or from your browser with the help of the [Web UI](https://github.com/weyoss/redis-smq-monitor-client).

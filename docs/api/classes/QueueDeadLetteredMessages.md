@@ -17,7 +17,6 @@
 ### Methods
 
 - [countMessages](QueueDeadLetteredMessages.md#countmessages)
-- [deleteMessage](QueueDeadLetteredMessages.md#deletemessage)
 - [getMessages](QueueDeadLetteredMessages.md#getmessages)
 - [purge](QueueDeadLetteredMessages.md#purge)
 - [requeueMessage](QueueDeadLetteredMessages.md#requeuemessage)
@@ -56,28 +55,6 @@ QueueMessagesPaginatorList.constructor
 #### Inherited from
 
 QueueMessagesPaginatorList.countMessages
-
-___
-
-### deleteMessage
-
-▸ **deleteMessage**(`queue`, `messageId`, `cb`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
-| `messageId` | `string` \| `string`[] |
-| `cb` | `ICallback`\<`void`\> |
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-QueueMessagesPaginatorList.deleteMessage
 
 ___
 
