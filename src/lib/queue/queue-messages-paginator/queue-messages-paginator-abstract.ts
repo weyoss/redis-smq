@@ -114,16 +114,4 @@ export abstract class QueueMessagesPaginatorAbstract implements IQueueMessages {
       }
     });
   }
-
-  deleteMessage(
-    queue: string | IQueueParams,
-    messageId: string | string[],
-    cb: ICallback<void>,
-  ): void {
-    _getCommonRedisClient((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else _deleteMessage(client, messageId, cb);
-    });
-  }
 }

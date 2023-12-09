@@ -71,17 +71,6 @@ export class QueuePendingMessages implements IQueueMessages {
     });
   }
 
-  deleteMessage(
-    queue: string | IQueueParams,
-    messageId: string,
-    cb: ICallback<void>,
-  ): void {
-    this.getQueueImplementation(queue, (err, pendingMessages) => {
-      if (err) cb(err);
-      else pendingMessages?.deleteMessage(queue, messageId, cb);
-    });
-  }
-
   purge(queue: string | IQueueParams, cb: ICallback<void>): void {
     this.getQueueImplementation(queue, (err, pendingMessages) => {
       if (err) cb(err);

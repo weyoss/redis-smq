@@ -20,11 +20,6 @@ export interface IQueueMessages {
     cb: ICallback<IQueueMessagesPage<Message>>,
   ): void;
   purge(queue: string | IQueueParams, cb: ICallback<void>): void;
-  deleteMessage(
-    queue: string | IQueueParams,
-    messageId: string,
-    cb: ICallback<void>,
-  ): void;
 }
 
 export interface IQueueMessagesCount {
