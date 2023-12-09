@@ -1,5 +1,26 @@
 
 
+## [8.0.0-rc.7](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.6...v8.0.0-rc.7) (2023-12-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* **QueueMessages:** remove redundant method deleteMessage()
+
+### Documentation
+
+* **QueueMessages:** remove redundant method deleteMessage() ([cdeb454](https://github.com/weyoss/redis-smq/commit/cdeb4543f859e108efdcaa61aeac15d3a325b0a5))
+
+
+### Codebase Refactoring
+
+* **QueueMessages:** remove redundant method deleteMessage() ([af21dff](https://github.com/weyoss/redis-smq/commit/af21dff9f6b959ed21aa4cbe812606c1efbf4046))
+
+
+### Tests
+
+* **QueueMessages:** remove redundant method deleteMessage() ([dfa3792](https://github.com/weyoss/redis-smq/commit/dfa37924a0a8e2fc726ce4a76baa535c79f0c917))
+
 ## [8.0.0-rc.6](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.5...v8.0.0-rc.6) (2023-12-09)
 
 
