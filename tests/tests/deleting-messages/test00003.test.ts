@@ -44,7 +44,7 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   expect(count.pending).toBe(0);
   expect(count.acknowledged).toBe(1);
 
-  await acknowledgedMessages.deleteMessageAsync(queue, messageId);
+  await queueMessages.deleteMessageByIdAsync(messageId);
 
   const res4 = await acknowledgedMessages.getMessagesAsync(queue, 0, 100);
   expect(res4.totalItems).toBe(0);
@@ -64,6 +64,6 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   expect(count1.deadLettered).toBe(0);
 
   await expect(async () => {
-    await acknowledgedMessages.deleteMessageAsync(queue, messageId);
+    await queueMessages.deleteMessageByIdAsync(messageId);
   }).rejects.toThrow(QueueMessageNotFoundError);
 });
