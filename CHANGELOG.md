@@ -1,5 +1,21 @@
 
 
+## [8.0.0-rc.6](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.5...v8.0.0-rc.6) (2023-12-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* **QueueMessages:** rename deleteMessagesById to deleteMessageById
+
+### Documentation
+
+* **QueueMessages:** rename deleteMessagesById to deleteMessageById ([81cfb72](https://github.com/weyoss/redis-smq/commit/81cfb72a012e99398435418f52c8a24018759234))
+
+
+### Codebase Refactoring
+
+* **QueueMessages:** rename deleteMessagesById to deleteMessageById ([b3baf71](https://github.com/weyoss/redis-smq/commit/b3baf711e6210034aac256362418dd8d87859557))
+
 ## [8.0.0-rc.5](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.4...v8.0.0-rc.5) (2023-12-03)
 
 
