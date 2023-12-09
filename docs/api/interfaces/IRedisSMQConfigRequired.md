@@ -28,7 +28,7 @@
 
 Required.eventListeners
 
-___
+---
 
 ### logger
 
@@ -38,7 +38,7 @@ ___
 
 Required.logger
 
-___
+---
 
 ### messages
 
@@ -46,15 +46,16 @@ ___
 
 #### Type declaration
 
-| Name | Type |
-| :------ | :------ |
+
+| Name    | Type                                                                  |
+| :-------- | :---------------------------------------------------------------------- |
 | `store` | [`IMessagesConfigStorageRequired`](IMessagesConfigStorageRequired.md) |
 
 #### Overrides
 
 Required.messages
 
-___
+---
 
 ### namespace
 
@@ -64,7 +65,7 @@ ___
 
 Required.namespace
 
-___
+---
 
 ### redis
 

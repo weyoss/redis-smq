@@ -19,7 +19,7 @@
 - [countMessages](QueueMessages.md#countmessages)
 - [countMessagesByStatus](QueueMessages.md#countmessagesbystatus)
 - [deleteMessage](QueueMessages.md#deletemessage)
-- [deleteMessagesById](QueueMessages.md#deletemessagesbyid)
+- [deleteMessageById](QueueMessages.md#deletemessagebyid)
 - [deleteMessagesByIds](QueueMessages.md#deletemessagesbyids)
 - [getMessageById](QueueMessages.md#getmessagebyid)
 - [getMessages](QueueMessages.md#getmessages)
@@ -102,9 +102,9 @@ QueueMessagesPaginatorSet.deleteMessage
 
 ___
 
-### deleteMessagesById
+### deleteMessageById
 
-▸ **deleteMessagesById**(`id`, `cb`): `void`
+▸ **deleteMessageById**(`id`, `cb`): `void`
 
 #### Parameters
 
