@@ -13,16 +13,16 @@ import {
   ICallback,
   CallbackEmptyReplyError,
 } from 'redis-smq-common';
-import { redisKeys } from '../../../common/redis-keys/redis-keys';
+import { redisKeys } from '../../common/redis-keys/redis-keys';
 import {
   EMessageProperty,
   EMessagePropertyStatus,
   EQueueProperty,
   EQueueType,
-} from '../../../../types';
-import { ELuaScriptName } from '../../../common/redis-client/redis-client';
+} from '../../../types';
+import { ELuaScriptName } from '../../common/redis-client/redis-client';
 import { _getMessage } from './_get-message';
-import { QueueDeleteOperationError } from '../errors';
+import { MessageDeleteError } from './errors/message-delete.error';
 
 export function _deleteMessage(
   redisClient: RedisClient,
@@ -94,11 +94,7 @@ export function _deleteMessage(
           (err, reply) => {
             if (err) cb(err);
             else if (reply !== 'OK')
-              cb(
-                new QueueDeleteOperationError(
-                  reply ? String(reply) : undefined,
-                ),
-              );
+              cb(new MessageDeleteError(reply ? String(reply) : undefined));
             else cb();
           },
         );

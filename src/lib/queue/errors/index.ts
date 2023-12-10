@@ -7,7 +7,6 @@
  * in the root directory of this source tree.
  */
 
-export { QueueMessageNotFoundError } from './queue-message-not-found.error';
 export { QueueMessageRequeueError } from './queue-message-requeue.error';
 export { QueueNamespaceNotFoundError } from './queue-namespace-not-found.error';
 export { QueueExistsError } from './queue-exists.error';

@@ -14,10 +14,10 @@ import {
   IQueueParams,
 } from '../../../../types';
 import { async, CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
-import { Message } from '../../message/message';
+import { MessageEnvelope } from '../../message/message-envelope';
 import { _getCommonRedisClient } from '../../../common/_get-common-redis-client';
-import { _deleteMessage } from '../queue-messages/_delete-message';
-import { _getMessages } from '../queue-messages/_get-message';
+import { _deleteMessage } from '../../message/_delete-message';
+import { _getMessages } from '../../message/_get-message';
 
 export abstract class QueueMessagesPaginatorAbstract implements IQueueMessages {
   protected getTotalPages(pageSize: number, totalItems: number): number {
@@ -93,7 +93,7 @@ export abstract class QueueMessagesPaginatorAbstract implements IQueueMessages {
     queue: string | IQueueParams,
     cursor: number,
     pageSize: number,
-    cb: ICallback<IQueueMessagesPage<Message>>,
+    cb: ICallback<IQueueMessagesPage<MessageEnvelope>>,
   ): void {
     this.getMessagesIds(queue, cursor, pageSize, (err, reply) => {
       if (err) cb(err);

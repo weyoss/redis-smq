@@ -13,19 +13,19 @@ import {
   IMessageSerialized,
   IMessageStateSerialized,
 } from '../../../types';
-import { Message } from './message';
+import { MessageEnvelope } from './message-envelope';
 import { _fromJSON } from '../exchange/_from-json';
 
 export function _fromMessage(
-  msg: string | Message,
+  msg: string | MessageEnvelope,
   status: EMessagePropertyStatus | null,
   msgState: string | MessageState | null,
-): Message {
+): MessageEnvelope {
   const { exchange, ...params }: IMessageSerialized =
     typeof msg === 'string' ? JSON.parse(msg) : msg.toJSON();
 
   // Properties
-  const m = new Message();
+  const m = new MessageEnvelope();
   Object.assign(m, params);
 
   // Status

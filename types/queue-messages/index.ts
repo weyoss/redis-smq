@@ -8,7 +8,7 @@
  */
 
 import { ICallback } from 'redis-smq-common';
-import { Message } from '../../src/lib/message/message';
+import { MessageEnvelope } from '../../src/lib/message/message-envelope';
 import { IQueueParams } from '../queue';
 
 export interface IQueueMessages {
@@ -17,7 +17,7 @@ export interface IQueueMessages {
     queue: string | IQueueParams,
     page: number,
     pageSize: number,
-    cb: ICallback<IQueueMessagesPage<Message>>,
+    cb: ICallback<IQueueMessagesPage<MessageEnvelope>>,
   ): void;
   purge(queue: string | IQueueParams, cb: ICallback<void>): void;
 }

@@ -8,7 +8,7 @@
  */
 
 import { redisKeys } from '../common/redis-keys/redis-keys';
-import { Message } from '../lib/message/message';
+import { MessageEnvelope } from '../lib/message/message-envelope';
 import { async, RedisClient, Worker, WorkerError } from 'redis-smq-common';
 import { ELuaScriptName } from '../common/redis-client/redis-client';
 import {
@@ -18,7 +18,7 @@ import {
   EQueueType,
 } from '../../types';
 import { ICallback } from 'redis-smq-common';
-import { _getMessages } from '../lib/queue/queue-messages/_get-message';
+import { _getMessages } from '../lib/message/_get-message';
 import { _fromMessage } from '../lib/message/_from-message';
 import { MessageState } from '../lib/message/message-state';
 
@@ -42,13 +42,16 @@ export class PublishScheduledWorker extends Worker {
     );
   };
 
-  protected fetchMessages = (ids: string[], cb: ICallback<Message[]>): void => {
+  protected fetchMessages = (
+    ids: string[],
+    cb: ICallback<MessageEnvelope[]>,
+  ): void => {
     if (ids.length) _getMessages(this.redisClient, ids, cb);
     else cb(null, []);
   };
 
   protected enqueueMessages = (
-    messages: Message[],
+    messages: MessageEnvelope[],
     cb: ICallback<void>,
   ): void => {
     if (messages.length) {
@@ -86,7 +89,7 @@ export class PublishScheduledWorker extends Worker {
             keyQueueMessages,
           } = redisKeys.getQueueKeys(queue);
 
-          let newMessage: Message | null = null;
+          let newMessage: MessageEnvelope | null = null;
           let newMessageState: MessageState | null = null;
           let newMessageId: string = '';
           let newKeyMessage: string = '';

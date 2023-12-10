@@ -21,7 +21,7 @@ import {
   IQueueParams,
 } from '../../../../types';
 import { QueueMessageRequeueError } from '../errors';
-import { _getMessage } from '../queue-messages/_get-message';
+import { _getMessage } from '../../message/_get-message';
 
 export abstract class QueueMessagesPaginatorList extends QueueMessagesPaginatorAbstract {
   countMessages(queue: string | IQueueParams, cb: ICallback<number>): void {

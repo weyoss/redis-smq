@@ -13,7 +13,7 @@ import {
   EConsumeMessageUnacknowledgedCause,
   IQueueParams,
 } from '../../../../types';
-import { Message } from '../../message/message';
+import { MessageEnvelope } from '../../message/message-envelope';
 import {
   async,
   RedisClient,
@@ -29,7 +29,7 @@ import {
 } from './retry-message';
 import { consumerQueues } from '../consumer-queues';
 import { ELuaScriptName } from '../../../common/redis-client/redis-client';
-import { _getMessage } from '../../queue/queue-messages/_get-message';
+import { _getMessage } from '../../message/_get-message';
 import { Configuration } from '../../../config/configuration';
 import { ConsumerError } from '../errors';
 
@@ -203,7 +203,7 @@ export const processingQueue = {
   fetchProcessingQueueMessage(
     redisClient: RedisClient,
     keyQueueProcessing: string,
-    cb: ICallback<Message>,
+    cb: ICallback<MessageEnvelope>,
   ): void {
     redisClient.lrange(
       keyQueueProcessing,

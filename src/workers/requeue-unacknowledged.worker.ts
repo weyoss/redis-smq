@@ -22,7 +22,7 @@ import {
   EQueueType,
 } from '../../types';
 import { ELuaScriptName } from '../common/redis-client/redis-client';
-import { _getMessage } from '../lib/queue/queue-messages/_get-message';
+import { _getMessage } from '../lib/message/_get-message';
 
 export class RequeueUnacknowledgedWorker extends Worker {
   protected redisKeys: ReturnType<(typeof redisKeys)['getMainKeys']>;

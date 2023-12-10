@@ -8,22 +8,22 @@
  */
 
 import { async, RedisClient, ICallback } from 'redis-smq-common';
-import { Message } from '../../message/message';
-import { redisKeys } from '../../../common/redis-keys/redis-keys';
-import { QueueMessageNotFoundError } from '../errors';
-import { EMessageProperty } from '../../../../types';
-import { _fromMessage } from '../../message/_from-message';
+import { MessageEnvelope } from './message-envelope';
+import { redisKeys } from '../../common/redis-keys/redis-keys';
+import { EMessageProperty } from '../../../types';
+import { _fromMessage } from './_from-message';
+import { MessageNotFoundError } from './errors/message-not-found.error';
 
 export function _getMessage(
   redisClient: RedisClient,
   messageId: string,
-  cb: ICallback<Message>,
+  cb: ICallback<MessageEnvelope>,
 ): void {
   const { keyMessage } = redisKeys.getMessageKeys(messageId);
   redisClient.hgetall(keyMessage, (err, reply) => {
     if (err) cb(err);
     else if (!reply || !Object.keys(reply).length)
-      cb(new QueueMessageNotFoundError());
+      cb(new MessageNotFoundError());
     else
       cb(
         null,
@@ -39,9 +39,9 @@ export function _getMessage(
 export function _getMessages(
   redisClient: RedisClient,
   messageIds: string[],
-  cb: ICallback<Message[]>,
+  cb: ICallback<MessageEnvelope[]>,
 ): void {
-  const messages: Message[] = [];
+  const messages: MessageEnvelope[] = [];
   async.each(
     messageIds,
     (id, index, done) => {
@@ -49,7 +49,7 @@ export function _getMessages(
       redisClient.hgetall(keyMessage, (err, reply) => {
         if (err) done(err);
         else if (!reply || !Object.keys(reply).length) {
-          done(new QueueMessageNotFoundError());
+          done(new MessageNotFoundError());
         } else {
           const msg = _fromMessage(
             reply[EMessageProperty.MESSAGE],

@@ -19,6 +19,7 @@ export * from './src/lib/message/errors';
 export { Consumer } from './src/lib/consumer/consumer';
 export { Producer } from './src/lib/producer/producer';
 export { Message } from './src/lib/message/message';
+export { MessageEnvelope } from './src/lib/message/message-envelope';
 export { ExchangeDirect } from './src/lib/exchange/exchange-direct';
 export { ExchangeTopic } from './src/lib/exchange/exchange-topic';
 export { ExchangeFanOut } from './src/lib/exchange/exchange-fan-out';

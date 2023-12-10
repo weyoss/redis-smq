@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Message } from '../message/message';
+import { MessageEnvelope } from '../message/message-envelope';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { ProducerMessageNotScheduledError } from './errors';
 import { RedisClient, ICallback } from 'redis-smq-common';
@@ -20,7 +20,7 @@ import {
 
 export function _scheduleMessage(
   mixed: RedisClient,
-  message: Message,
+  message: MessageEnvelope,
   cb: ICallback<void>,
 ): void {
   const timestamp = message.getNextScheduledTimestamp();
