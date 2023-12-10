@@ -11,3 +11,5 @@ export { MessageDestinationQueueAlreadySetError } from './message-destination-qu
 export { MessageDestinationQueueRequiredError } from './message-destination-queue-required.error';
 export { MessageError } from './message.error';
 export { MessageExchangeRequiredError } from './message-exchange-required.error';
+export { MessageNotFoundError } from './message-not-found.error';
+export { MessageDeleteError } from './message-delete.error';
