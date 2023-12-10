@@ -8,7 +8,7 @@
  */
 
 import { delay } from 'bluebird';
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
 import {
@@ -58,7 +58,7 @@ test('Given many consumers, a message is delivered only to one consumer', async 
   /**
    *
    */
-  const msg = new Message();
+  const msg = new MessageEnvelope();
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
 
   const producer = getProducer();

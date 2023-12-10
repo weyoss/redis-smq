@@ -8,7 +8,7 @@
  */
 
 import { promisifyAll } from 'bluebird';
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { Consumer } from '../../../src/lib/consumer/consumer';
 import { untilMessageAcknowledged } from '../../common/events';
 import { getProducer } from '../../common/producer';
@@ -31,11 +31,15 @@ test('Consume message from different queues using a single consumer instance: ca
   const producer = getProducer();
   await producer.runAsync();
 
-  const msg1 = new Message().setQueue('test_queue').setBody('some data');
+  const msg1 = new MessageEnvelope()
+    .setQueue('test_queue')
+    .setBody('some data');
   const { messages } = await producer.produceAsync(msg1);
   await untilMessageAcknowledged(consumer, messages[0]);
 
-  const msg2 = new Message().setQueue('another_queue').setBody('some data');
+  const msg2 = new MessageEnvelope()
+    .setQueue('another_queue')
+    .setBody('some data');
   const { messages: m } = await producer.produceAsync(msg2);
   await untilMessageAcknowledged(consumer, m[0]);
 

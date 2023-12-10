@@ -12,12 +12,12 @@ import {
   defaultQueue,
 } from '../../common/message-producing-consuming';
 import { ProducerMessageAlreadyPublishedError } from '../../../src/lib/producer/errors';
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { getProducer } from '../../common/producer';
 
 test('Producing duplicate message', async () => {
   await createQueue(defaultQueue, false);
-  const m = new Message().setQueue(defaultQueue).setBody('123');
+  const m = new MessageEnvelope().setQueue(defaultQueue).setBody('123');
   const p = await getProducer();
   await p.runAsync();
   await p.produceAsync(m);

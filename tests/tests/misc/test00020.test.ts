@@ -7,14 +7,14 @@
  * in the root directory of this source tree.
  */
 
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { MessageDestinationQueueRequiredError } from '../../../src/lib/message/errors';
 
-test('Message: validations', async () => {
-  const msg = new Message();
+test('MessageEnvelope: validations', async () => {
+  const msg = new MessageEnvelope();
   expect(() => {
     msg.getRequiredId();
-  }).toThrow('Message has not yet been published');
+  }).toThrow('MessageEnvelope has not yet been published');
   expect(() => {
     msg.setScheduledRepeatPeriod(-1);
   }).toThrow('Expected a positive integer value in milliseconds');

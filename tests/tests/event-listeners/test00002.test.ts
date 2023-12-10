@@ -14,7 +14,7 @@ import {
 } from '../../../types';
 import { ICallback } from 'redis-smq-common';
 import { config } from '../../common/config';
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { getProducer } from '../../common/producer';
 import {
   createQueue,
@@ -53,15 +53,15 @@ test('Producer event listeners', async () => {
   await createQueue(defaultQueue, false);
   const p0 = getProducer();
   await p0.runAsync();
-  const m0 = new Message().setQueue(defaultQueue).setBody(123);
+  const m0 = new MessageEnvelope().setQueue(defaultQueue).setBody(123);
   await p0.produceAsync(m0);
-  const m1 = new Message().setQueue(defaultQueue).setBody(123);
+  const m1 = new MessageEnvelope().setQueue(defaultQueue).setBody(123);
   await p0.produceAsync(m1);
   const p1 = getProducer();
   await p1.runAsync();
-  const m2 = new Message().setQueue(defaultQueue).setBody(123);
+  const m2 = new MessageEnvelope().setQueue(defaultQueue).setBody(123);
   await p1.produceAsync(m2);
-  const m3 = new Message().setQueue(defaultQueue).setBody(123);
+  const m3 = new MessageEnvelope().setQueue(defaultQueue).setBody(123);
   await p1.produceAsync(m3);
   expect(Object.keys(producerStats)).toEqual([p0.getId(), p1.getId()]);
   expect(producerStats[p0.getId()].length).toEqual(2);

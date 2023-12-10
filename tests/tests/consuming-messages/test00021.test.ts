@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Message } from '../../../index';
+import { MessageEnvelope } from '../../../index';
 import { getProducer } from '../../common/producer';
 import {
   createQueue,
@@ -19,7 +19,7 @@ test('Shutdown a producer and try to produce a message', async () => {
   const producer = getProducer();
   await createQueue(defaultQueue, false);
 
-  const msg = new Message();
+  const msg = new MessageEnvelope();
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
   await expect(async () => {
     await producer.produceAsync(msg);

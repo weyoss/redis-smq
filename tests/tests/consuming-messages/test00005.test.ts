@@ -8,7 +8,7 @@
  */
 
 import { delay } from 'bluebird';
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { untilConsumerEvent } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -31,7 +31,7 @@ test('Setting default message TTL from configuration', async () => {
   consumer.on('messageUnacknowledged', () => {
     unacks += 1;
   });
-  const msg = new Message();
+  const msg = new MessageEnvelope();
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue).setTTL(2000);
 
   await producer.produceAsync(msg);

@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { delay } from 'bluebird';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -45,7 +45,7 @@ test('Async exceptions are caught when consuming a message', async () => {
     acknowledged += 1;
   });
 
-  const msg = new Message();
+  const msg = new MessageEnvelope();
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
 
   await producer.produceAsync(msg);

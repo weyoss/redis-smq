@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Message } from '../../../index';
+import { MessageEnvelope } from '../../../index';
 import { untilConsumerEvent } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -29,7 +29,7 @@ test('An unacknowledged message is dead-lettered and not delivered again, given 
     },
   });
 
-  const msg = new Message();
+  const msg = new MessageEnvelope();
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue).setRetryThreshold(0);
 
   expect(msg.getMessageState()).toBe(null);

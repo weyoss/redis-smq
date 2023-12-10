@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Message } from '../../../index';
+import { MessageEnvelope } from '../../../index';
 import { delay } from 'bluebird';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -24,15 +24,15 @@ test('Produce and consume 100 message: LIFO Queues', async () => {
   await producer.runAsync();
 
   const total = 100;
-  const publishedMsg: Message[] = [];
+  const publishedMsg: MessageEnvelope[] = [];
   for (let i = 0; i < total; i += 1) {
-    const msg = new Message();
+    const msg = new MessageEnvelope();
     msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
     await producer.produceAsync(msg);
     publishedMsg.push(msg);
   }
 
-  const deliveredMessages: Message[] = [];
+  const deliveredMessages: MessageEnvelope[] = [];
   const consumer = getConsumer({
     messageHandler: (msg, cb) => {
       deliveredMessages.push(msg);

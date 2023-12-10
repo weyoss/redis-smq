@@ -19,7 +19,7 @@ import { shutDownBaseInstance } from '../../common/base-instance';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages';
 import { Configuration } from '../../../src/config/configuration';
 
-test('Message storage: acknowledged.expire = 10000', async () => {
+test('MessageEnvelope storage: acknowledged.expire = 10000', async () => {
   const cfg = merge(config, {
     messages: {
       store: {

@@ -9,10 +9,11 @@
 
 import { ExchangeTopic } from '../../../../src/lib/exchange/exchange-topic';
 import { createQueue } from '../../../common/message-producing-consuming';
-import { Message } from '../../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../../src/lib/message/message-envelope';
 import { getProducer } from '../../../common/producer';
 import { isEqual } from '../../../common/util';
-import { getQueueMessages } from '../../../common/queue-messages';
+import { promisifyAll } from 'bluebird';
+import { Message } from '../../../../src/lib/message/message';
 
 test('ExchangeTopic: producing message using setExchange()', async () => {
   await createQueue({ ns: 'testing', name: 'w123.2.4.5' }, false);
@@ -25,11 +26,11 @@ test('ExchangeTopic: producing message using setExchange()', async () => {
   await producer.runAsync();
 
   const e1 = new ExchangeTopic('w123.2.4');
-  const msg = new Message().setExchange(e1).setBody('hello');
+  const msg = new MessageEnvelope().setExchange(e1).setBody('hello');
   const r = await producer.produceAsync(msg);
   expect(r.scheduled).toEqual(false);
-  const messages = await getQueueMessages();
-  const items = await messages.getMessagesByIdsAsync(r.messages);
+  const message = promisifyAll(new Message());
+  const items = await message.getMessagesByIdsAsync(r.messages);
   expect(
     isEqual(
       items.map((i) => i.getDestinationQueue()),

@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Message } from '../../../index';
+import { MessageEnvelope } from '../../../index';
 import { MessageState } from '../../../src/lib/message/message-state';
 import { untilMessageAcknowledged } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
@@ -26,7 +26,7 @@ test('Produce and consume 1 message', async () => {
     messageHandler: (msg1, cb) => cb(),
   });
 
-  const msg = new Message();
+  const msg = new MessageEnvelope();
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
 
   expect(msg.getMessageState()).toBe(null);

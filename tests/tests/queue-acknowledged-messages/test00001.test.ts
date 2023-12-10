@@ -12,7 +12,7 @@ import {
   defaultQueue,
 } from '../../common/message-producing-consuming';
 import { getProducer } from '../../common/producer';
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { MessageState } from '../../../src/lib/message/message-state';
 import { getQueueMessages } from '../../common/queue-messages';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages';
@@ -24,7 +24,7 @@ test('Acknowledged message', async () => {
   const producer = getProducer();
   await producer.runAsync();
 
-  const msg = new Message();
+  const msg = new MessageEnvelope();
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
 
   expect(msg.getMessageState()).toBe(null);

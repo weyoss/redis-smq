@@ -8,7 +8,7 @@
  */
 
 import { delay } from 'bluebird';
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
 import {
@@ -41,7 +41,7 @@ test('Set a rate limit for a queue and consume message using many consumers', as
 
   for (let i = 0; i < 100; i += 1) {
     await producer.produceAsync(
-      new Message().setBody(`msg ${i}`).setQueue(defaultQueue),
+      new MessageEnvelope().setBody(`msg ${i}`).setQueue(defaultQueue),
     );
   }
 

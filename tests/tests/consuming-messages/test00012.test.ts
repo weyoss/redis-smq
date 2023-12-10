@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { untilMessageAcknowledged } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -44,7 +44,7 @@ test('An unacknowledged message is delayed given messageRetryDelay > 0 and messa
     acks += 1;
   });
 
-  const msg = new Message();
+  const msg = new MessageEnvelope();
   msg
     .setBody({ hello: 'world' })
     .setQueue(defaultQueue)

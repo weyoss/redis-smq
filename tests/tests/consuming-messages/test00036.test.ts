@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { ProducerMessageNotPublishedError } from '../../../src/lib/producer/errors';
 import { getProducer } from '../../common/producer';
 import { EQueueType } from '../../../types';
@@ -22,10 +22,10 @@ test('Producing a message and expecting different kind of failures', async () =>
   await producer.runAsync();
 
   try {
-    const msg = new Message()
+    const msg = new MessageEnvelope()
       .setQueue('test0')
       .setBody('body')
-      .setPriority(Message.MessagePriority.LOW);
+      .setPriority(MessageEnvelope.MessagePriority.LOW);
     await producer.produceAsync(msg);
   } catch (e: unknown) {
     const m = e instanceof ProducerMessageNotPublishedError ? e.message : '';
@@ -33,7 +33,7 @@ test('Producing a message and expecting different kind of failures', async () =>
   }
 
   try {
-    const msg1 = new Message().setQueue('test1').setBody('body');
+    const msg1 = new MessageEnvelope().setQueue('test1').setBody('body');
     await producer.produceAsync(msg1);
   } catch (e: unknown) {
     const m = e instanceof ProducerMessageNotPublishedError ? e.message : '';
@@ -41,7 +41,7 @@ test('Producing a message and expecting different kind of failures', async () =>
   }
 
   try {
-    const msg2 = new Message().setQueue('test2').setBody('body');
+    const msg2 = new MessageEnvelope().setQueue('test2').setBody('body');
     await producer.produceAsync(msg2);
   } catch (e: unknown) {
     const m = e instanceof ProducerMessageNotPublishedError ? e.message : '';

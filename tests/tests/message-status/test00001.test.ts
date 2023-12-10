@@ -7,34 +7,35 @@
  * in the root directory of this source tree.
  */
 
-import { EMessagePropertyStatus, Message } from '../../../index';
+import { EMessagePropertyStatus, MessageEnvelope } from '../../../index';
 import { getProducer } from '../../common/producer';
 import {
   createQueue,
   defaultQueue,
 } from '../../common/message-producing-consuming';
 import { EQueueType } from '../../../types';
-import { getQueueMessages } from '../../common/queue-messages';
 import { getConsumer } from '../../common/consumer';
 import { untilMessageAcknowledged } from '../../common/events';
+import { promisifyAll } from 'bluebird';
+import { Message } from '../../../src/lib/message/message';
 
-test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> ACKNOWLEDGED', async () => {
+test('MessageEnvelope status: UNPUBLISHED -> PENDING -> PROCESSING -> ACKNOWLEDGED', async () => {
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
 
   const producer = getProducer();
   await producer.runAsync();
-  const msg = new Message();
+  const msg = new MessageEnvelope();
   expect(msg.getStatus()).toBe(EMessagePropertyStatus.UNPUBLISHED);
 
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
   const { messages } = await producer.produceAsync(msg);
 
-  const queueMessages = await getQueueMessages();
-  const msg0 = await queueMessages.getMessageByIdAsync(messages[0]);
+  const message = promisifyAll(new Message());
+  const msg0 = await message.getMessageByIdAsync(messages[0]);
   expect(msg0.getStatus()).toBe(EMessagePropertyStatus.PENDING);
 
   const consumer = getConsumer({ consumeDefaultQueue: false });
-  const msg1: Message[] = [];
+  const msg1: MessageEnvelope[] = [];
   await consumer.consumeAsync(defaultQueue, (msg, cb) => {
     msg1.push(msg);
     cb();
@@ -44,6 +45,6 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> ACKNOWLEDGED', asy
   await untilMessageAcknowledged(consumer);
   expect(msg1[0].getStatus()).toBe(EMessagePropertyStatus.PROCESSING);
 
-  const msg2 = await queueMessages.getMessageByIdAsync(messages[0]);
+  const msg2 = await message.getMessageByIdAsync(messages[0]);
   expect(msg2.getStatus()).toBe(EMessagePropertyStatus.ACKNOWLEDGED);
 });

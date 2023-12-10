@@ -9,7 +9,7 @@
 
 import { delay, promisifyAll } from 'bluebird';
 import { Consumer } from '../../../src/lib/consumer/consumer';
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { getProducer } from '../../common/producer';
 import {
   createQueue,
@@ -27,7 +27,7 @@ test('Consume message from different queues using a single consumer instance: ca
     interval: 5000,
   });
 
-  const messages: Message[] = [];
+  const messages: MessageEnvelope[] = [];
   const consumer = promisifyAll(new Consumer(true));
 
   await consumer.consumeAsync(defaultQueue, (msg, cb) => {
@@ -42,7 +42,7 @@ test('Consume message from different queues using a single consumer instance: ca
 
   for (let i = 0; i < 5; i += 1) {
     await producer.produceAsync(
-      new Message().setQueue(defaultQueue).setBody(`body ${i + 1}`),
+      new MessageEnvelope().setQueue(defaultQueue).setBody(`body ${i + 1}`),
     );
   }
 

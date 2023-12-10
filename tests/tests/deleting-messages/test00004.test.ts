@@ -16,7 +16,9 @@ import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-m
 import { getQueuePendingMessages } from '../../common/queue-pending-messages';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages';
 import { getQueueMessages } from '../../common/queue-messages';
-import { QueueMessageNotFoundError } from '../../../src/lib/queue/errors';
+import { promisifyAll } from 'bluebird';
+import { MessageNotFoundError } from '../../../src/lib/message/errors/message-not-found.error';
+import { Message } from '../../../src/lib/message/message';
 
 test('Combined test: Delete a dead-letter message. Check pending, acknowledged, and dead-letter message. Check queue metrics.', async () => {
   await createQueue(defaultQueue, false);
@@ -46,7 +48,8 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(count.acknowledged).toBe(0);
   expect(count.deadLettered).toBe(1);
 
-  await queueMessages.deleteMessageByIdAsync(messageId);
+  const message = promisifyAll(new Message());
+  await message.deleteMessageByIdAsync(messageId);
 
   const res4 = await acknowledgedMessages.getMessagesAsync(queue, 0, 100);
   expect(res4.totalItems).toBe(0);
@@ -66,6 +69,6 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(count1.deadLettered).toBe(0);
 
   await expect(async () => {
-    await queueMessages.deleteMessageByIdAsync(messageId);
-  }).rejects.toThrow(QueueMessageNotFoundError);
+    await message.deleteMessageByIdAsync(messageId);
+  }).rejects.toThrow(MessageNotFoundError);
 });

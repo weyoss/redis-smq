@@ -8,7 +8,7 @@
  */
 
 import { delay } from 'bluebird';
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
 import { validateTime } from '../../common/validate-time';
@@ -31,40 +31,40 @@ test('Rate limit a priority queue and check message rate', async () => {
   await producer.runAsync();
 
   await producer.produceAsync(
-    new Message()
+    new MessageEnvelope()
       .setBody('msg 1')
       .setQueue(defaultQueue)
-      .setPriority(Message.MessagePriority.HIGH),
+      .setPriority(MessageEnvelope.MessagePriority.HIGH),
   );
   await producer.produceAsync(
-    new Message()
+    new MessageEnvelope()
       .setBody('msg 2')
       .setQueue(defaultQueue)
-      .setPriority(Message.MessagePriority.HIGH),
+      .setPriority(MessageEnvelope.MessagePriority.HIGH),
   );
   await producer.produceAsync(
-    new Message()
+    new MessageEnvelope()
       .setBody('msg 3')
       .setQueue(defaultQueue)
-      .setPriority(Message.MessagePriority.HIGH),
+      .setPriority(MessageEnvelope.MessagePriority.HIGH),
   );
   await producer.produceAsync(
-    new Message()
+    new MessageEnvelope()
       .setBody('msg 4')
       .setQueue(defaultQueue)
-      .setPriority(Message.MessagePriority.HIGH),
+      .setPriority(MessageEnvelope.MessagePriority.HIGH),
   );
   await producer.produceAsync(
-    new Message()
+    new MessageEnvelope()
       .setBody('msg 5')
       .setQueue(defaultQueue)
-      .setPriority(Message.MessagePriority.HIGH),
+      .setPriority(MessageEnvelope.MessagePriority.HIGH),
   );
   await producer.produceAsync(
-    new Message()
+    new MessageEnvelope()
       .setBody('msg 6')
       .setQueue(defaultQueue)
-      .setPriority(Message.MessagePriority.HIGH),
+      .setPriority(MessageEnvelope.MessagePriority.HIGH),
   );
 
   const messages: { ts: number; messageId: string }[] = [];

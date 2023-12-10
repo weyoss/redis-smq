@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { untilMessageAcknowledged } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -29,11 +29,11 @@ test('Combined test. Requeue a priority message from acknowledged queue. Check q
     }),
   });
 
-  const message = new Message();
+  const message = new MessageEnvelope();
   message
     .setBody({ hello: 'world' })
     .setQueue(defaultQueue)
-    .setPriority(Message.MessagePriority.ABOVE_NORMAL);
+    .setPriority(MessageEnvelope.MessagePriority.ABOVE_NORMAL);
 
   const producer = getProducer();
   await producer.runAsync();

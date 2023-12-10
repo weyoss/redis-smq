@@ -18,7 +18,7 @@ import { shutDownBaseInstance } from '../../common/base-instance';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages';
 import { Configuration } from '../../../src/config/configuration';
 
-test('Message storage: acknowledged.queueSize = 3', async () => {
+test('MessageEnvelope storage: acknowledged.queueSize = 3', async () => {
   const cfg = merge(config, {
     messages: {
       store: {

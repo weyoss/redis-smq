@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { ICallback } from 'redis-smq-common';
 import { untilConsumerEvent } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
@@ -33,7 +33,7 @@ test('A message is unacknowledged when messageConsumeTimeout is exceeded', async
     }),
   });
 
-  const msg = new Message();
+  const msg = new MessageEnvelope();
   msg
     .setBody({ hello: 'world' })
     .setQueue(defaultQueue)
