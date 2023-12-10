@@ -16,7 +16,7 @@ import {
 } from '../../../types';
 import { ICallback } from 'redis-smq-common';
 import { config } from '../../common/config';
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import {
   createQueue,
   defaultQueue,
@@ -82,7 +82,7 @@ test('Consumer event listeners', async () => {
 
   Configuration.reset();
   Configuration.getSetConfig(cfg);
-  Message.setDefaultConsumeOptions({ retryDelay: 0 });
+  MessageEnvelope.setDefaultConsumeOptions({ retryDelay: 0 });
 
   await createQueue(defaultQueue, false);
   const { messageId: m0, consumer: c0 } =
@@ -103,10 +103,10 @@ test('Consumer event listeners', async () => {
   const c3 = getConsumer({ queue: anotherQueue });
   await c3.runAsync();
 
-  const m3 = new Message().setQueue(anotherQueue).setBody('MMM');
+  const m3 = new MessageEnvelope().setQueue(anotherQueue).setBody('MMM');
   await p2.produceAsync(m3);
 
-  const m4 = new Message().setQueue(anotherQueue).setBody('MMM');
+  const m4 = new MessageEnvelope().setQueue(anotherQueue).setBody('MMM');
   await p2.produceAsync(m4);
 
   await delay(5000);

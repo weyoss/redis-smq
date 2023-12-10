@@ -11,12 +11,12 @@ import { getRedisInstance } from './redis';
 import { logger } from 'redis-smq-common';
 import { Configuration } from '../../src/config/configuration';
 import { config } from './config';
-import { Message } from '../../src/lib/message/message';
+import { MessageEnvelope } from '../../src/lib/message/message-envelope';
 
 export async function startUp(): Promise<void> {
   Configuration.reset();
   Configuration.getSetConfig(config);
-  Message.setDefaultConsumeOptions({
+  MessageEnvelope.setDefaultConsumeOptions({
     ttl: 0,
     retryThreshold: 3,
     retryDelay: 0,

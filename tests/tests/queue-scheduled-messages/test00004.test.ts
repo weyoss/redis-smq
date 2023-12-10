@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { delay } from 'bluebird';
 import {
   startScheduleWorker,
@@ -25,7 +25,7 @@ import { getQueueMessages } from '../../common/queue-messages';
 test('Schedule a message: CRON', async () => {
   await createQueue(defaultQueue, false);
 
-  const msg = new Message();
+  const msg = new MessageEnvelope();
   msg
     .setScheduledCRON('*/6 * * * * *')
     .setBody({ hello: 'world' })

@@ -8,7 +8,7 @@
  */
 
 import { delay } from 'bluebird';
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { untilConsumerEvent } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -32,7 +32,7 @@ test('A message is dead-lettered and not delivered when messageTTL is exceeded',
     unacknowledged += 1;
   });
 
-  const msg = new Message();
+  const msg = new MessageEnvelope();
   msg.setBody({ hello: 'world' }).setTTL(3000).setQueue(defaultQueue);
 
   await producer.produceAsync(msg);

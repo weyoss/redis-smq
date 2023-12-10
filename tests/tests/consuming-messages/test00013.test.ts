@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { delay } from 'bluebird';
 import { ICallback } from 'redis-smq-common';
 import { getConsumer } from '../../common/consumer';
@@ -19,7 +19,7 @@ import {
 } from '../../common/message-producing-consuming';
 
 type TQueueMetrics = {
-  receivedMessages: Message[];
+  receivedMessages: MessageEnvelope[];
   acks: number;
 };
 
@@ -38,7 +38,7 @@ test('Given many queues, a message is recovered from a consumer crash and re-que
 
   const queueAConsumer = getConsumer({
     queue: defaultQueue,
-    messageHandler: (msg: Message, cb: ICallback<void>) => {
+    messageHandler: (msg: MessageEnvelope, cb: ICallback<void>) => {
       defaultQueueMetrics.receivedMessages.push(msg);
       cb();
     },
@@ -50,7 +50,7 @@ test('Given many queues, a message is recovered from a consumer crash and re-que
 
   const queueBConsumer = getConsumer({
     queue: 'queue_b',
-    messageHandler: (msg: Message, cb: ICallback<void>) => {
+    messageHandler: (msg: MessageEnvelope, cb: ICallback<void>) => {
       queueBMetrics.receivedMessages.push(msg);
       cb();
     },
@@ -64,7 +64,7 @@ test('Given many queues, a message is recovered from a consumer crash and re-que
   await producer.runAsync();
 
   // Produce a message to QUEUE B
-  const anotherMsg = new Message();
+  const anotherMsg = new MessageEnvelope();
   anotherMsg.setBody({ id: 'b' }).setQueue('queue_b');
   await producer.produceAsync(anotherMsg);
 

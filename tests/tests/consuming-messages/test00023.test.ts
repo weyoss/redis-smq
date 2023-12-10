@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
 import {
@@ -26,7 +26,7 @@ test('Messages produced from scheduled message are processed like normal message
     }),
   });
 
-  const msg = new Message()
+  const msg = new MessageEnvelope()
     .setScheduledRepeat(10)
     .setScheduledRepeatPeriod(60000)
     .setBody('message body')

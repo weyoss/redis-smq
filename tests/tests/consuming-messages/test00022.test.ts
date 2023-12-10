@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { untilConsumerEvent } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -26,7 +26,7 @@ test('Shutdown a consumer when consuming a message with retryThreshold = 0: expe
     }),
   });
 
-  const msg = new Message()
+  const msg = new MessageEnvelope()
     .setRetryThreshold(0)
     .setBody('message body')
     .setQueue(defaultQueue);

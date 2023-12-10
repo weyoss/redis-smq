@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { getProducer } from '../../common/producer';
 import {
   createQueue,
@@ -21,7 +21,7 @@ test('Schedule a message: messageManager.getScheduledMessages()', async () => {
   const producer = getProducer();
   await producer.runAsync();
 
-  const msg1 = new Message();
+  const msg1 = new MessageEnvelope();
   msg1.setScheduledDelay(30000);
   msg1
     .setScheduledCRON('0 * * * * *')
@@ -29,14 +29,14 @@ test('Schedule a message: messageManager.getScheduledMessages()', async () => {
     .setQueue(defaultQueue);
   await producer.produceAsync(msg1);
 
-  const msg2 = new Message();
+  const msg2 = new MessageEnvelope();
   msg2
     .setScheduledDelay(60000)
     .setBody({ hello: 'world2' })
     .setQueue(defaultQueue);
   await producer.produceAsync(msg2);
 
-  const msg3 = new Message();
+  const msg3 = new MessageEnvelope();
   msg3
     .setScheduledDelay(90000)
     .setBody({ hello: 'world3' })

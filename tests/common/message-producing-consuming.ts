@@ -8,7 +8,7 @@
  */
 
 import { EQueueType, IQueueParams } from '../../types';
-import { Message } from '../../src/lib/message/message';
+import { MessageEnvelope } from '../../src/lib/message/message-envelope';
 import { untilConsumerEvent, untilMessageAcknowledged } from './events';
 import { getConsumer } from './consumer';
 import { getProducer } from './producer';
@@ -35,7 +35,7 @@ export async function produceAndAcknowledgeMessage(
     }),
   });
 
-  const message = new Message();
+  const message = new MessageEnvelope();
   message.setBody({ hello: 'world' }).setQueue(queue);
   const { messages } = await producer.produceAsync(message);
 
@@ -57,7 +57,7 @@ export async function produceAndDeadLetterMessage(
     }),
   });
 
-  const message = new Message();
+  const message = new MessageEnvelope();
   message.setBody({ hello: 'world' }).setQueue(queue);
   const { messages } = await producer.produceAsync(message);
 
@@ -70,7 +70,7 @@ export async function produceMessage(queue: IQueueParams = defaultQueue) {
   const producer = getProducer();
   await producer.runAsync();
 
-  const message = new Message();
+  const message = new MessageEnvelope();
   message.setBody({ hello: 'world' }).setQueue(queue);
   const { messages } = await producer.produceAsync(message);
   return { producer, messageId: messages[0], queue };
@@ -82,8 +82,8 @@ export async function produceMessageWithPriority(
   const producer = getProducer();
   await producer.runAsync();
 
-  const message = new Message();
-  message.setPriority(Message.MessagePriority.LOW).setQueue(queue);
+  const message = new MessageEnvelope();
+  message.setPriority(MessageEnvelope.MessagePriority.LOW).setQueue(queue);
   const { messages } = await producer.produceAsync(message);
   return { messageId: messages[0], producer, queue };
 }
@@ -92,7 +92,7 @@ export async function scheduleMessage(queue: IQueueParams = defaultQueue) {
   const producer = getProducer();
   await producer.runAsync();
 
-  const message = new Message();
+  const message = new MessageEnvelope();
   message.setScheduledDelay(10000).setQueue(queue);
   const { messages } = await producer.produceAsync(message);
   return { messageId: messages[0], producer, queue };

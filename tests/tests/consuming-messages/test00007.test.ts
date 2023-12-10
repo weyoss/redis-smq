@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { ICallback } from 'redis-smq-common';
 import { untilMessageAcknowledged } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
@@ -25,7 +25,7 @@ test('Unacknowledged message are re-queued when messageRetryThreshold is not exc
 
   let callCount = 0;
   const consumer = getConsumer({
-    messageHandler: jest.fn((msg: Message, cb: ICallback<void>) => {
+    messageHandler: jest.fn((msg: MessageEnvelope, cb: ICallback<void>) => {
       callCount += 1;
       if (callCount === 1) throw new Error('Explicit error');
       else if (callCount === 2) cb();
@@ -43,7 +43,7 @@ test('Unacknowledged message are re-queued when messageRetryThreshold is not exc
     acknowledged += 1;
   });
 
-  const msg = new Message();
+  const msg = new MessageEnvelope();
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
 
   await producer.produceAsync(msg);

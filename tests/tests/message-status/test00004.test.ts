@@ -7,23 +7,24 @@
  * in the root directory of this source tree.
  */
 
-import { EMessagePropertyStatus, Message } from '../../../index';
+import { EMessagePropertyStatus, MessageEnvelope } from '../../../index';
 import { getProducer } from '../../common/producer';
 import {
   createQueue,
   defaultQueue,
 } from '../../common/message-producing-consuming';
 import { EQueueType } from '../../../types';
-import { getQueueMessages } from '../../common/queue-messages';
 import { getConsumer } from '../../common/consumer';
 import { untilConsumerEvent } from '../../common/events';
+import { promisifyAll } from 'bluebird';
+import { Message } from '../../../src/lib/message/message';
 
-test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQUEUING -> ACKNOWLEDGED', async () => {
+test('MessageEnvelope status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQUEUING -> ACKNOWLEDGED', async () => {
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
 
   const producer = getProducer();
   await producer.runAsync();
-  const msg = new Message();
+  const msg = new MessageEnvelope();
   expect(msg.getStatus()).toBe(EMessagePropertyStatus.UNPUBLISHED);
 
   msg
@@ -33,12 +34,12 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQUEUING ->
     .setRetryDelay(0);
   const { messages } = await producer.produceAsync(msg);
 
-  const queueMessages = await getQueueMessages();
-  const msg0 = await queueMessages.getMessageByIdAsync(messages[0]);
+  const message = promisifyAll(new Message());
+  const msg0 = await message.getMessageByIdAsync(messages[0]);
   expect(msg0.getStatus()).toBe(EMessagePropertyStatus.PENDING);
 
   const consumer = getConsumer({ consumeDefaultQueue: false });
-  const msg1: Message[] = [];
+  const msg1: MessageEnvelope[] = [];
   await consumer.consumeAsync(defaultQueue, (msg, cb) => {
     if (!msg1.length) {
       msg1.push(msg);
@@ -51,12 +52,12 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQUEUING ->
   await consumer.shutdownAsync();
   expect(msg1[0].getStatus()).toBe(EMessagePropertyStatus.PROCESSING);
 
-  const msg2 = await queueMessages.getMessageByIdAsync(messages[0]);
+  const msg2 = await message.getMessageByIdAsync(messages[0]);
   expect(msg2.getStatus()).toBe(EMessagePropertyStatus.UNACK_REQUEUING);
 
   consumer.run();
   await untilConsumerEvent(consumer, 'messageAcknowledged');
 
-  const msg3 = await queueMessages.getMessageByIdAsync(messages[0]);
+  const msg3 = await message.getMessageByIdAsync(messages[0]);
   expect(msg3.getStatus()).toBe(EMessagePropertyStatus.ACKNOWLEDGED);
 });

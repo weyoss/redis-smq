@@ -13,7 +13,8 @@ import {
   produceMessage,
 } from '../../common/message-producing-consuming';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages';
-import { getQueueMessages } from '../../common/queue-messages';
+import { promisifyAll } from 'bluebird';
+import { Message } from '../../../src/lib/message/message';
 
 test('Combined test: Delete a pending message. Check pending message. Check queue metrics.', async () => {
   await createQueue(defaultQueue, false);
@@ -29,8 +30,8 @@ test('Combined test: Delete a pending message. Check pending message. Check queu
   const count = await pendingMessages.countMessagesAsync(queue);
   expect(count).toBe(1);
 
-  const queueMessages = await getQueueMessages();
-  await queueMessages.deleteMessageByIdAsync(messageId);
+  const message = promisifyAll(new Message());
+  await message.deleteMessageByIdAsync(messageId);
 
   const res2 = await pendingMessages.getMessagesAsync(queue, 0, 100);
   expect(res2.totalItems).toBe(0);

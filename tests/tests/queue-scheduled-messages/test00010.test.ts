@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { ProducerMessageNotScheduledError } from '../../../src/lib/producer/errors';
 import { getProducer } from '../../common/producer';
 import { EQueueType } from '../../../types';
@@ -22,10 +22,10 @@ test('Scheduling a message and expecting different kind of failures', async () =
   await producer.runAsync();
 
   try {
-    const msg = new Message()
+    const msg = new MessageEnvelope()
       .setQueue('test0')
       .setBody('body')
-      .setPriority(Message.MessagePriority.LOW)
+      .setPriority(MessageEnvelope.MessagePriority.LOW)
       .setScheduledCRON('* * * * * *');
     await producer.produceAsync(msg);
   } catch (e: unknown) {
@@ -34,7 +34,7 @@ test('Scheduling a message and expecting different kind of failures', async () =
   }
 
   try {
-    const msg1 = new Message()
+    const msg1 = new MessageEnvelope()
       .setQueue('test1')
       .setBody('body')
       .setScheduledCRON('* * * * * *');
@@ -45,7 +45,7 @@ test('Scheduling a message and expecting different kind of failures', async () =
   }
 
   try {
-    const msg2 = new Message()
+    const msg2 = new MessageEnvelope()
       .setQueue('test2')
       .setBody('body')
       .setScheduledCRON('* * * * * *');

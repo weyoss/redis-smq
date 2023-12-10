@@ -8,7 +8,7 @@
  */
 
 import { delay, promisifyAll } from 'bluebird';
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { RequeueUnacknowledgedWorker } from '../../../src/workers/requeue-unacknowledged.worker';
 import { WatchConsumersWorker } from '../../../src/workers/watch-consumers.worker';
 import { untilConsumerEvent } from '../../common/events';
@@ -26,7 +26,7 @@ import { getQueuePendingMessages } from '../../common/queue-pending-messages';
 test('WatchdogWorker -> RequeueUnacknowledgedWorker', async () => {
   await createQueue(defaultQueue, false);
 
-  let message: Message | null = null;
+  let message: MessageEnvelope | null = null;
   const consumer = getConsumer({
     messageHandler: jest.fn((msg) => {
       message = msg;
@@ -38,7 +38,7 @@ test('WatchdogWorker -> RequeueUnacknowledgedWorker', async () => {
   await producer.runAsync();
 
   await producer.produceAsync(
-    new Message()
+    new MessageEnvelope()
       .setRetryDelay(0)
       .setBody('message body')
       .setQueue(defaultQueue),

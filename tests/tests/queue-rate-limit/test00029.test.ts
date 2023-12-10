@@ -8,7 +8,7 @@
  */
 
 import { delay } from 'bluebird';
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
 import {
@@ -31,22 +31,22 @@ test('Rate limit a queue without priority and check message rate', async () => {
   await producer.runAsync();
 
   await producer.produceAsync(
-    new Message().setBody('msg 1').setQueue(defaultQueue),
+    new MessageEnvelope().setBody('msg 1').setQueue(defaultQueue),
   );
   await producer.produceAsync(
-    new Message().setBody('msg 2').setQueue(defaultQueue),
+    new MessageEnvelope().setBody('msg 2').setQueue(defaultQueue),
   );
   await producer.produceAsync(
-    new Message().setBody('msg 3').setQueue(defaultQueue),
+    new MessageEnvelope().setBody('msg 3').setQueue(defaultQueue),
   );
   await producer.produceAsync(
-    new Message().setBody('msg 4').setQueue(defaultQueue),
+    new MessageEnvelope().setBody('msg 4').setQueue(defaultQueue),
   );
   await producer.produceAsync(
-    new Message().setBody('msg 5').setQueue(defaultQueue),
+    new MessageEnvelope().setBody('msg 5').setQueue(defaultQueue),
   );
   await producer.produceAsync(
-    new Message().setBody('msg 6').setQueue(defaultQueue),
+    new MessageEnvelope().setBody('msg 6').setQueue(defaultQueue),
   );
 
   const messages: { ts: number; messageId: string }[] = [];

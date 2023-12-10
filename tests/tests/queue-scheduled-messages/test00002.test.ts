@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { delay } from 'bluebird';
 import { startScheduleWorker } from '../../common/schedule-worker';
 import { getProducer } from '../../common/producer';
@@ -22,7 +22,7 @@ import { getQueueMessages } from '../../common/queue-messages';
 test('Schedule a message: DELAY', async () => {
   await createQueue(defaultQueue, false);
 
-  const msg = new Message();
+  const msg = new MessageEnvelope();
   msg
     .setScheduledDelay(10000) // ms
     .setBody({ hello: 'world' })

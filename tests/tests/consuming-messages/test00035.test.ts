@@ -9,14 +9,14 @@
 
 import { delay, promisifyAll } from 'bluebird';
 import { Consumer } from '../../../src/lib/consumer/consumer';
-import { Message } from '../../../src/lib/message/message';
+import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { getProducer } from '../../common/producer';
 import { shutDownBaseInstance } from '../../common/base-instance';
 import { EQueueType } from '../../../types';
 import { getQueue } from '../../common/queue';
 
 test('Consume message from different queues using a single consumer instance: case 6', async () => {
-  const messages: Message[] = [];
+  const messages: MessageEnvelope[] = [];
   const consumer = promisifyAll(new Consumer(true));
   await consumer.runAsync();
 
@@ -39,7 +39,9 @@ test('Consume message from different queues using a single consumer instance: ca
   const producer = getProducer();
   await producer.runAsync();
 
-  await producer.produceAsync(new Message().setQueue('test0').setBody('body'));
+  await producer.produceAsync(
+    new MessageEnvelope().setQueue('test0').setBody('body'),
+  );
 
   await delay(10000);
   expect(consumer.getQueues()).toEqual([]);
@@ -76,7 +78,7 @@ test('Consume message from different queues using a single consumer instance: ca
 
   for (let i = 0; i < 5; i += 1) {
     await producer.produceAsync(
-      new Message()
+      new MessageEnvelope()
         .setQueue(`test${i + 1}`)
         .setBody(`body ${i + 1}`)
         .setPriority(i),
