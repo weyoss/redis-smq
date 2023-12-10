@@ -15,15 +15,12 @@ import {
 import { async, CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { _getCommonRedisClient } from '../../../common/_get-common-redis-client';
-import { Message } from '../../message/message';
 import { QueueMessagesPaginatorSet } from '../queue-messages-paginator/queue-messages-paginator-set';
 import { PriorityQueueMessages } from '../priority-queue-messages';
 import { LinearQueueMessages } from '../linear-queue-messages';
 import { QueueDeadLetteredMessages } from '../queue-dead-lettered-messages';
 import { QueueAcknowledgedMessages } from '../queue-acknowledged-messages';
 import { QueueScheduledMessages } from '../queue-scheduled-messages';
-import { _getMessage, _getMessages } from './_get-message';
-import { _deleteMessage } from './_delete-message';
 import { _getQueueParams } from '../queue/_get-queue-params';
 import { _getQueueProperties } from '../queue/_get-queue-properties';
 
@@ -32,22 +29,6 @@ export class QueueMessages extends QueueMessagesPaginatorSet {
     const queueParams = _getQueueParams(queue);
     const { keyPriorityQueuePending } = redisKeys.getQueueKeys(queueParams);
     return keyPriorityQueuePending;
-  }
-
-  getMessagesByIds(messageIds: string[], cb: ICallback<Message[]>): void {
-    _getCommonRedisClient((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else _getMessages(client, messageIds, cb);
-    });
-  }
-
-  getMessageById(messageId: string, cb: ICallback<Message>): void {
-    _getCommonRedisClient((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else _getMessage(client, messageId, cb);
-    });
   }
 
   countMessagesByStatus(
@@ -108,17 +89,5 @@ export class QueueMessages extends QueueMessagesPaginatorSet {
         );
       }
     });
-  }
-
-  deleteMessagesByIds(ids: string[], cb: ICallback<void>): void {
-    _getCommonRedisClient((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else _deleteMessage(client, ids, cb);
-    });
-  }
-
-  deleteMessageById(id: string, cb: ICallback<void>): void {
-    this.deleteMessagesByIds([id], cb);
   }
 }

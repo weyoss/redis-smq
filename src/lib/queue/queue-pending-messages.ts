@@ -16,7 +16,7 @@ import {
 import { PriorityQueueMessages } from './priority-queue-messages';
 import { LinearQueueMessages } from './linear-queue-messages';
 import { CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
-import { Message } from '../message/message';
+import { MessageEnvelope } from '../message/message-envelope';
 import { _getQueueProperties } from './queue/_get-queue-properties';
 import { _getQueueParams } from './queue/_get-queue-params';
 import { _getCommonRedisClient } from '../../common/_get-common-redis-client';
@@ -63,7 +63,7 @@ export class QueuePendingMessages implements IQueueMessages {
     queue: string | IQueueParams,
     cursor: number,
     pageSize: number,
-    cb: ICallback<IQueueMessagesPage<Message>>,
+    cb: ICallback<IQueueMessagesPage<MessageEnvelope>>,
   ): void {
     this.getQueueImplementation(queue, (err, pendingMessages) => {
       if (err) cb(err);

@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Message } from '../../message/message';
+import { MessageEnvelope } from '../../message/message-envelope';
 import {
   EConsumeMessageUnacknowledgedCause,
   EMessageProperty,
@@ -48,7 +48,10 @@ export class ConsumeMessage {
     this.logger = logger;
   }
 
-  protected acknowledgeMessage(message: Message, cb: ICallback<void>): void {
+  protected acknowledgeMessage(
+    message: MessageEnvelope,
+    cb: ICallback<void>,
+  ): void {
     const messageId = message.getRequiredId();
     const queue = message.getDestinationQueue();
     const { keyQueueAcknowledged } = redisKeys.getQueueKeys(queue);
@@ -70,7 +73,7 @@ export class ConsumeMessage {
   }
 
   protected unacknowledgeMessage(
-    msg: Message,
+    msg: MessageEnvelope,
     cause: EConsumeMessageUnacknowledgedCause,
   ): void {
     processingQueue.handleProcessingQueue(
@@ -127,7 +130,7 @@ export class ConsumeMessage {
     );
   }
 
-  protected consumeMessage(msg: Message): void {
+  protected consumeMessage(msg: MessageEnvelope): void {
     let isTimeout = false;
     let timer: NodeJS.Timeout | null = null;
     try {
@@ -182,7 +185,7 @@ export class ConsumeMessage {
     }
   }
 
-  handleReceivedMessage(message: Message): void {
+  handleReceivedMessage(message: MessageEnvelope): void {
     if (message.getSetExpired()) {
       this.unacknowledgeMessage(
         message,

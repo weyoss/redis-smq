@@ -56,7 +56,7 @@ Considerations:
 
 ## Usage
 
-RedisSMQ provides 3 classes in order to work with the message queue: `Message`, `Producer`, and `Consumer`.
+RedisSMQ provides 3 classes in order to work with the message queue: `MessageEnvelope`, `Producer`, and `Consumer`.
 
 Producers and consumers exchange data using one or multiple queues that may be created using the [Queue Class](docs/api/classes/Queue.md).
 
@@ -76,11 +76,11 @@ queue.save('my_queue', EQueueType.LIFO_QUEUE, (err) => console.log(err));
 ### Producing a message
 
 ```javascript
-const { Producer, Message } = require('redis-smq');
+const { Producer, MessageEnvelope } = require('redis-smq');
 
 const producer = new Producer();
 
-const message = new Message();
+const message = new MessageEnvelope();
 message.setQueue('my_queue').setBody('Hello Word!')
 
 producer.produce(message, (err) => console.log(err));

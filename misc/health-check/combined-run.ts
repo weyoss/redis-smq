@@ -11,7 +11,7 @@ import { async, ICallback } from 'redis-smq-common';
 import {
   Producer,
   Consumer,
-  Message,
+  MessageEnvelope,
   Queue,
   disconnect,
   EQueueType,
@@ -24,7 +24,9 @@ const produceForever = (err?: Error | null) => {
   if (err) console.log(err);
   else {
     if (producer.isGoingUp() || producer.isRunning()) {
-      const message = new Message().setBody('some data').setQueue(queueName);
+      const message = new MessageEnvelope()
+        .setBody('some data')
+        .setQueue(queueName);
       producer.produce(message, produceForever);
     }
   }

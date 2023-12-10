@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Message } from '../message/message';
+import { MessageEnvelope } from '../message/message-envelope';
 import { Base } from '../base';
 import {
   async,
@@ -49,7 +49,7 @@ export class Producer extends Base {
   protected enqueue(
     redisClient: RedisClient,
     queue: IQueueParams,
-    message: Message,
+    message: MessageEnvelope,
     cb: ICallback<void>,
   ): void {
     const messageState = message.getRequiredMessageState();
@@ -101,7 +101,7 @@ export class Producer extends Base {
 
   protected produceMessage(
     redisClient: RedisClient,
-    message: Message,
+    message: MessageEnvelope,
     queue: IQueueParams,
     cb: ICallback<string>,
   ): void {
@@ -129,7 +129,7 @@ export class Producer extends Base {
   }
 
   produce(
-    message: Message,
+    message: MessageEnvelope,
     cb: ICallback<{
       messages: string[];
       scheduled: boolean;

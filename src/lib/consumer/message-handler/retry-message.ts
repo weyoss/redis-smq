@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Message } from '../../message/message';
+import { MessageEnvelope } from '../../message/message-envelope';
 import {
   EConsumeMessageDeadLetterCause,
   EConsumeMessageUnacknowledgedCause,
@@ -29,7 +29,7 @@ export type TGetRetryActionReply =
     };
 
 export function getRetryAction(
-  message: Message,
+  message: MessageEnvelope,
   unacknowledgedCause: EConsumeMessageUnacknowledgedCause,
 ): TGetRetryActionReply {
   if (
