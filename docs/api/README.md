@@ -9,6 +9,7 @@
 - [EConsumeMessageDeadLetterCause](enums/EConsumeMessageDeadLetterCause.md)
 - [EConsumeMessageUnacknowledgedCause](enums/EConsumeMessageUnacknowledgedCause.md)
 - [EExchangeType](enums/EExchangeType.md)
+- [EMessagePriority](enums/EMessagePriority.md)
 - [EMessageProperty](enums/EMessageProperty.md)
 - [EMessagePropertyStatus](enums/EMessagePropertyStatus.md)
 - [EQueueProperty](enums/EQueueProperty.md)
@@ -22,6 +23,7 @@
 - [ExchangeFanOut](classes/ExchangeFanOut.md)
 - [ExchangeTopic](classes/ExchangeTopic.md)
 - [Message](classes/Message.md)
+- [MessageEnvelope](classes/MessageEnvelope.md)
 - [Namespace](classes/Namespace.md)
 - [Producer](classes/Producer.md)
 - [Queue](classes/Queue.md)
@@ -39,6 +41,8 @@
 - [ExchangeError](classes/ExchangeError.md)
 - [ExchangeFanOutError](classes/ExchangeFanOutError.md)
 - [ExchangeInvalidDataError](classes/ExchangeInvalidDataError.md)
+- [MessageDeleteError](classes/MessageDeleteError.md)
+- [MessageNotFoundError](classes/MessageNotFoundError.md)
 - [MessageDestinationQueueAlreadySetError](classes/MessageDestinationQueueAlreadySetError.md)
 - [MessageDestinationQueueRequiredError](classes/MessageDestinationQueueRequiredError.md)
 - [MessageError](classes/MessageError.md)
@@ -48,11 +52,9 @@
 - [ProducerMessageAlreadyPublishedError](classes/ProducerMessageAlreadyPublishedError.md)
 - [ProducerMessageNotPublishedError](classes/ProducerMessageNotPublishedError.md)
 - [ProducerMessageNotScheduledError](classes/ProducerMessageNotScheduledError.md)
-- [QueueDeleteOperationError](classes/QueueDeleteOperationError.md)
 - [QueueError](classes/QueueError.md)
 - [QueueExistsError](classes/QueueExistsError.md)
 - [QueueHasRunningConsumersError](classes/QueueHasRunningConsumersError.md)
-- [QueueMessageNotFoundError](classes/QueueMessageNotFoundError.md)
 - [QueueMessageRequeueError](classes/QueueMessageRequeueError.md)
 - [QueueNamespaceNotFoundError](classes/QueueNamespaceNotFoundError.md)
 - [QueueNotEmptyError](classes/QueueNotEmptyError.md)
@@ -137,7 +139,7 @@
 
 ### TConsumerMessageHandler
 
-Ƭ **TConsumerMessageHandler**: (`msg`: [`Message`](classes/Message.md), `cb`: `ICallback`\<`void`\>) => `void`
+Ƭ **TConsumerMessageHandler**: (`msg`: [`MessageEnvelope`](classes/Message.md), `cb`: `ICallback`\<`void`\>) => `void`
 
 #### Type declaration
 
@@ -148,7 +150,7 @@
 
 | Name  | Type                            |
 | :------ | :-------------------------------- |
-| `msg` | [`Message`](classes/Message.md) |
+| `msg` | [`MessageEnvelope`](classes/Message.md) |
 | `cb`  | `ICallback`\<`void`\>           |
 
 ##### Returns

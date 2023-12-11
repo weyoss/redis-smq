@@ -11,7 +11,7 @@ const { logger, ERedisConfigClient } = require('redis-smq-common');
 const {
   Consumer,
   Producer,
-  Message,
+  MessageEnvelope,
   Queue,
   Configuration,
   disconnect,
@@ -67,7 +67,7 @@ const produce = (cb) => {
   producer.run((err) => {
     if (err) cb(err);
     else {
-      const msg = new Message();
+      const msg = new MessageEnvelope();
       msg
         .setBody({ ts: `Current time is ${Date.now()}` })
         .setQueue('test_queue');

@@ -8,8 +8,6 @@
 
   ↳ **`QueueError`**
 
-  ↳↳ [`QueueMessageNotFoundError`](QueueMessageNotFoundError.md)
-
   ↳↳ [`QueueMessageRequeueError`](QueueMessageRequeueError.md)
 
   ↳↳ [`QueueNamespaceNotFoundError`](QueueNamespaceNotFoundError.md)
@@ -23,8 +21,6 @@
   ↳↳ [`QueueNotFoundError`](QueueNotFoundError.md)
 
   ↳↳ [`QueueRateLimitError`](QueueRateLimitError.md)
-
-  ↳↳ [`QueueDeleteOperationError`](QueueDeleteOperationError.md)
 
 ## Table of contents
 

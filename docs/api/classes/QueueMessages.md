@@ -122,7 +122,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `messageId` | `string` |
-| `cb` | `ICallback`\<[`Message`](Message.md)\> |
+| `cb` | `ICallback`\<[`MessageEnvelope`](Message.md)\> |
 
 #### Returns
 
@@ -141,7 +141,7 @@ ___
 | `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
 | `cursor` | `number` |
 | `pageSize` | `number` |
-| `cb` | `ICallback`\<[`IQueueMessagesPage`](../interfaces/IQueueMessagesPage.md)\<[`Message`](Message.md)\>\> |
+| `cb` | `ICallback`\<[`IQueueMessagesPage`](../interfaces/IQueueMessagesPage.md)\<[`MessageEnvelope`](Message.md)\>\> |
 
 #### Returns
 
@@ -162,7 +162,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `messageIds` | `string`[] |
-| `cb` | `ICallback`\<[`Message`](Message.md)[]\> |
+| `cb` | `ICallback`\<[`MessageEnvelope`](Message.md)[]\> |
 
 #### Returns
 
