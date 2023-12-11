@@ -1,4 +1,4 @@
->[RedisSMQ](../README.md) / [Docs](README.md) / Scheduling Messages
+[RedisSMQ](../README.md) / [Docs](README.md) / Scheduling Messages
 
 # Scheduling Messages
 

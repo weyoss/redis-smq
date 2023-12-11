@@ -1,4 +1,4 @@
->[RedisSMQ](../README.md) / [Docs](README.md) / Producing Messages
+[RedisSMQ](../README.md) / [Docs](README.md) / Producing Messages
 
 # Producing Messages
 

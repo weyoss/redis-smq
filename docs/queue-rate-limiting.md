@@ -1,4 +1,4 @@
->[RedisSMQ](../README.md) / [Docs](README.md) / Queue Rate limiting
+[RedisSMQ](../README.md) / [Docs](README.md) / Queue Rate limiting
 
 # Queue Rate limiting
 

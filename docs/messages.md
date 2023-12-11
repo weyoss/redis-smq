@@ -1,4 +1,4 @@
->[RedisSMQ](../README.md) / [Docs](README.md) / Messages
+[RedisSMQ](../README.md) / [Docs](README.md) / Messages
 
 # Messages
 
@@ -17,4 +17,4 @@ msg.setBody({hello: 'world'})
 
 The `MessageEnvelope` class provides many methods for setting up different delivery/consumption parameters such as message priority, message TTL, retry threshold, etc.
 
-See [MessageEnvelope Class](api/classes/MessageEnvelope.md) for more details.
+See [Message Class](api/classes/Message.md) and [MessageEnvelope Class](api/classes/MessageEnvelope.md) for more details.
