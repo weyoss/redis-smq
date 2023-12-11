@@ -12,8 +12,21 @@ import { _getCommonRedisClient } from '../../common/_get-common-redis-client';
 import { _getMessage, _getMessages } from './_get-message';
 import { _deleteMessage } from './_delete-message';
 import { MessageEnvelope } from './message-envelope';
+import { EMessagePropertyStatus } from '../../../types';
+import { _getMessageStatus } from './_get-message-status';
 
 export class Message {
+  getMessageStatus(
+    messageId: string,
+    cb: ICallback<EMessagePropertyStatus>,
+  ): void {
+    _getCommonRedisClient((err, client) => {
+      if (err) cb(err);
+      else if (!client) cb(new CallbackEmptyReplyError());
+      else _getMessageStatus(client, messageId, cb);
+    });
+  }
+
   getMessagesByIds(
     messageIds: string[],
     cb: ICallback<MessageEnvelope[]>,
