@@ -13,7 +13,7 @@ import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
 import { validateTime } from '../../common/validate-time';
 import { defaultQueue } from '../../common/message-producing-consuming';
-import { EQueueType } from '../../../types';
+import { EMessagePriority, EQueueType } from '../../../types';
 import { getQueue } from '../../common/queue';
 import { getQueueRateLimit } from '../../common/queue-rate-limit';
 
@@ -34,37 +34,37 @@ test('Rate limit a priority queue and check message rate', async () => {
     new MessageEnvelope()
       .setBody('msg 1')
       .setQueue(defaultQueue)
-      .setPriority(MessageEnvelope.MessagePriority.HIGH),
+      .setPriority(EMessagePriority.HIGH),
   );
   await producer.produceAsync(
     new MessageEnvelope()
       .setBody('msg 2')
       .setQueue(defaultQueue)
-      .setPriority(MessageEnvelope.MessagePriority.HIGH),
+      .setPriority(EMessagePriority.HIGH),
   );
   await producer.produceAsync(
     new MessageEnvelope()
       .setBody('msg 3')
       .setQueue(defaultQueue)
-      .setPriority(MessageEnvelope.MessagePriority.HIGH),
+      .setPriority(EMessagePriority.HIGH),
   );
   await producer.produceAsync(
     new MessageEnvelope()
       .setBody('msg 4')
       .setQueue(defaultQueue)
-      .setPriority(MessageEnvelope.MessagePriority.HIGH),
+      .setPriority(EMessagePriority.HIGH),
   );
   await producer.produceAsync(
     new MessageEnvelope()
       .setBody('msg 5')
       .setQueue(defaultQueue)
-      .setPriority(MessageEnvelope.MessagePriority.HIGH),
+      .setPriority(EMessagePriority.HIGH),
   );
   await producer.produceAsync(
     new MessageEnvelope()
       .setBody('msg 6')
       .setQueue(defaultQueue)
-      .setPriority(MessageEnvelope.MessagePriority.HIGH),
+      .setPriority(EMessagePriority.HIGH),
   );
 
   const messages: { ts: number; messageId: string }[] = [];

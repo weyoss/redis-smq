@@ -12,7 +12,7 @@ import { untilMessageAcknowledged } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
 import { defaultQueue } from '../../common/message-producing-consuming';
-import { EQueueType } from '../../../types';
+import { EMessagePriority, EQueueType } from '../../../types';
 import { getQueue } from '../../common/queue';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages';
 import { getQueueMessages } from '../../common/queue-messages';
@@ -33,7 +33,7 @@ test('Combined test. Requeue a priority message from acknowledged queue. Check q
   message
     .setBody({ hello: 'world' })
     .setQueue(defaultQueue)
-    .setPriority(MessageEnvelope.MessagePriority.ABOVE_NORMAL);
+    .setPriority(EMessagePriority.ABOVE_NORMAL);
 
   const producer = getProducer();
   await producer.runAsync();
