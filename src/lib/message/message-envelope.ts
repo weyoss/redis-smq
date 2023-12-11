@@ -9,6 +9,7 @@
 
 import { parseExpression } from 'cron-parser';
 import {
+  EMessagePriority,
   EMessagePropertyStatus,
   IMessageSerialized,
   IQueueParams,
@@ -28,17 +29,6 @@ import { ExchangeFanOut } from '../exchange/exchange-fan-out';
 import { ExchangeTopic } from '../exchange/exchange-topic';
 
 export class MessageEnvelope {
-  static readonly MessagePriority = {
-    LOWEST: 7,
-    VERY_LOW: 6,
-    LOW: 5,
-    NORMAL: 4,
-    ABOVE_NORMAL: 3,
-    HIGH: 2,
-    VERY_HIGH: 1,
-    HIGHEST: 0,
-  };
-
   protected static defaultConsumeOptions: TMessageConsumeOptions = {
     ttl: 0,
     retryThreshold: 3,
@@ -58,7 +48,7 @@ export class MessageEnvelope {
 
   protected body: unknown = null;
 
-  protected priority: number | null = null;
+  protected priority: EMessagePriority | null = null;
 
   protected scheduledCron: string | null = null;
 
@@ -262,7 +252,10 @@ export class MessageEnvelope {
   }
 
   setPriority(priority: number): MessageEnvelope {
-    if (!Object.values(MessageEnvelope.MessagePriority).includes(priority)) {
+    if (
+      priority < EMessagePriority.HIGHEST ||
+      priority > EMessagePriority.LOWEST
+    ) {
       throw new MessageError('Invalid message priority.');
     }
     this.priority = priority;
