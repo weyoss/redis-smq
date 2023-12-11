@@ -18,11 +18,7 @@
 
 - [countMessages](QueueMessages.md#countmessages)
 - [countMessagesByStatus](QueueMessages.md#countmessagesbystatus)
-- [deleteMessageById](QueueMessages.md#deletemessagebyid)
-- [deleteMessagesByIds](QueueMessages.md#deletemessagesbyids)
-- [getMessageById](QueueMessages.md#getmessagebyid)
 - [getMessages](QueueMessages.md#getmessages)
-- [getMessagesByIds](QueueMessages.md#getmessagesbyids)
 - [purge](QueueMessages.md#purge)
 
 ## Constructors
@@ -79,57 +75,6 @@ ___
 
 ___
 
-### deleteMessageById
-
-▸ **deleteMessageById**(`id`, `cb`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `id` | `string` |
-| `cb` | `ICallback`\<`void`\> |
-
-#### Returns
-
-`void`
-
-___
-
-### deleteMessagesByIds
-
-▸ **deleteMessagesByIds**(`ids`, `cb`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `ids` | `string`[] |
-| `cb` | `ICallback`\<`void`\> |
-
-#### Returns
-
-`void`
-
-___
-
-### getMessageById
-
-▸ **getMessageById**(`messageId`, `cb`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `messageId` | `string` |
-| `cb` | `ICallback`\<[`MessageEnvelope`](Message.md)\> |
-
-#### Returns
-
-`void`
-
-___
-
 ### getMessages
 
 ▸ **getMessages**(`queue`, `cursor`, `pageSize`, `cb`): `void`
@@ -141,7 +86,7 @@ ___
 | `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
 | `cursor` | `number` |
 | `pageSize` | `number` |
-| `cb` | `ICallback`\<[`IQueueMessagesPage`](../interfaces/IQueueMessagesPage.md)\<[`MessageEnvelope`](Message.md)\>\> |
+| `cb` | `ICallback`\<[`IQueueMessagesPage`](../interfaces/IQueueMessagesPage.md)\<[`MessageEnvelope`](MessageEnvelope.md)\>\> |
 
 #### Returns
 
@@ -150,23 +95,6 @@ ___
 #### Inherited from
 
 QueueMessagesPaginatorSet.getMessages
-
-___
-
-### getMessagesByIds
-
-▸ **getMessagesByIds**(`messageIds`, `cb`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `messageIds` | `string`[] |
-| `cb` | `ICallback`\<[`MessageEnvelope`](Message.md)[]\> |
-
-#### Returns
-
-`void`
 
 ___
 
