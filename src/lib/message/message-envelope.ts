@@ -251,13 +251,7 @@ export class MessageEnvelope {
     return this;
   }
 
-  setPriority(priority: number): MessageEnvelope {
-    if (
-      priority < EMessagePriority.HIGHEST ||
-      priority > EMessagePriority.LOWEST
-    ) {
-      throw new MessageError('Invalid message priority.');
-    }
+  setPriority(priority: EMessagePriority): MessageEnvelope {
     this.priority = priority;
     return this;
   }
@@ -313,7 +307,7 @@ export class MessageEnvelope {
     return this.destinationQueue;
   }
 
-  getPriority(): number | null {
+  getPriority(): EMessagePriority | null {
     return this.priority;
   }
 
