@@ -55,23 +55,25 @@ queue.save('my_priority_queue', EQueueType.PRIORITY_QUEUE, (err) => console.log(
 
 See [Queue.prototype.save()](api/classes/Queue.md#save) for more details.
 
-### Setting Up a Message Priority
+### Setting Up a MessageEnvelope Priority
 
-To set up a message priority, the [Message API](api/classes/Message.md) provides the following methods:
+To set up a message priority, the [MessageEnvelope API](api/classes/MessageEnvelope.md) provides the following methods:
 
-* [Message.prototype.setPriority()](api/classes/Message.md#setpriority)
-* [Message.prototype.getPriority()](api/classes/Message.md#getpriority)
+* [MessageEnvelope.prototype.setPriority()](api/classes/MessageEnvelope.md#setpriority)
+* [MessageEnvelope.prototype.getPriority()](api/classes/MessageEnvelope.md#getpriority)
 
 Valid message priority values that you can apply to a given message are:
 
-- `Message.MessagePriority.LOWEST`
-- `Message.MessagePriority.VERY_LOW`
-- `Message.MessagePriority.LOW`
-- `Message.MessagePriority.NORMAL`
-- `Message.MessagePriority.ABOVE_NORMAL`
-- `Message.MessagePriority.HIGH`
-- `Message.MessagePriority.VERY_HIGH`
-- `Message.MessagePriority.HIGHEST`
+- `EMessagePriority.LOWEST`
+- `EMessagePriority.VERY_LOW`
+- `EMessagePriority.LOW`
+- `EMessagePriority.NORMAL`
+- `EMessagePriority.ABOVE_NORMAL`
+- `EMessagePriority.HIGH`
+- `EMessagePriority.VERY_HIGH`
+- `EMessagePriority.HIGHEST`
+
+See [EMessagePriority](api/enums/EMessagePriority.md).
 
 ## Queue Namespaces
 

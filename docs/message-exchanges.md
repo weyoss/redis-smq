@@ -32,15 +32,15 @@ A direct exchange with the queue `a.b.c.d` matches exactly the queue with the na
 
 ### Usage
 
-The [Message Class](api/classes/Message.md) provides:
+The [MessageEnvelope Class](api/classes/MessageEnvelope.md) provides:
 
-- [setQueue()](api/classes/Message.md#setqueue): to set up a queue for the message. Under the hood, a new `ExchangeDirect` instance will be created and used for the message exchange.
-- [setExchange()](api/classes/Message.md#setexchange): to set a `ExchangeDirect` instance which you have manually created.
+- [setQueue()](api/classes/MessageEnvelope.md#setqueue): to set up a queue for the message. Under the hood, a new `ExchangeDirect` instance will be created and used for the message exchange.
+- [setExchange()](api/classes/MessageEnvelope.md#setexchange): to set a `ExchangeDirect` instance which you have manually created.
 
 ```typescript
-import { Message, ExchangeDirect } from "redis-smq";
+import { MessageEnvelope, ExchangeDirect } from "redis-smq";
 
-const msg = new Message();
+const msg = new MessageEnvelope();
 msg.setQueue('a.b.c.d').setBody('123456789');
 
 // the same as
@@ -66,15 +66,15 @@ When a namespace is not provided the default namespace will be used.
 
 ### Usage
 
-The [Message Class](api/classes/Message.md) provides:
+The [MessageEnvelope Class](api/classes/MessageEnvelope.md) provides:
 
-- [setTopic()](api/classes/Message.md#settopic): to set up a topic for the message. Under the hood, a new `ExchangeTopic` instance will be created and used for the message exchange.
-- [setExchange()](api/classes/Message.md#setexchange): to set a `ExchangeTopic` instance which you have manually created.
+- [setTopic()](api/classes/MessageEnvelope.md#settopic): to set up a topic for the message. Under the hood, a new `ExchangeTopic` instance will be created and used for the message exchange.
+- [setExchange()](api/classes/MessageEnvelope.md#setexchange): to set a `ExchangeTopic` instance which you have manually created.
 
 ```typescript
-import { Message, ExchangeTopic } from "redis-smq";
+import { MessageEnvelope, ExchangeTopic } from "redis-smq";
 
-const msg = new Message();
+const msg = new MessageEnvelope();
 msg.setTopic('a.b.c.d').setBody('123456789');
 
 // the same as
@@ -99,17 +99,17 @@ The [FanOutExchange](api/classes/ExchangeFanOut.md) provides:
 - [getQueueExchange()](api/classes/ExchangeFanOut.md#getqueueexchange): To retrieve the FanOut exchange to which a queue is bound.
 - [getQueues()](api/classes/ExchangeFanOut.md#getqueues): To get the list of queues that are bound to a given FanOut exchange. 
 
-The [Message API](api/classes/Message.md) provides:
+The [MessageEnvelope API](api/classes/MessageEnvelope.md) provides:
 
-- [setFanOut()](api/classes/Message.md#setfanout): to set up a FanOut exchange for the message. Under the hood, a new `ExchangeFanOut` instance will be created and used for the message exchange.
-- [setExchange()](api/classes/Message.md#setexchange): to set a `ExchangeFanOut` instance which you have manually created.
+- [setFanOut()](api/classes/MessageEnvelope.md#setfanout): to set up a FanOut exchange for the message. Under the hood, a new `ExchangeFanOut` instance will be created and used for the message exchange.
+- [setExchange()](api/classes/MessageEnvelope.md#setexchange): to set a `ExchangeFanOut` instance which you have manually created.
 
 ```typescript
-import { Message, ExchangeFanOut } from "redis-smq";
+import { MessageEnvelope, ExchangeFanOut } from "redis-smq";
 
 // Assuming that my-FanOut-exchange already exists
 
-const msg = new Message();
+const msg = new MessageEnvelope();
 msg.setFanOut('my-FanOut-exchange').setBody('123456789');
 
 // the same as

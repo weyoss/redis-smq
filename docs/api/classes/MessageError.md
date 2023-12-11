@@ -14,6 +14,10 @@
 
   ↳↳ [`MessageExchangeRequiredError`](MessageExchangeRequiredError.md)
 
+  ↳↳ [`MessageNotFoundError`](MessageNotFoundError.md)
+
+  ↳↳ [`MessageDeleteError`](MessageDeleteError.md)
+
 ## Table of contents
 
 ### Constructors

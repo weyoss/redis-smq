@@ -155,7 +155,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `message` | [`Message`](Message.md) |
+| `message` | [`MessageEnvelope`](Message.md) |
 | `cb` | `ICallback`\<\{ `messages`: `string`[] ; `scheduled`: `boolean`  }\> |
 
 #### Returns
