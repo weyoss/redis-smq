@@ -7,12 +7,12 @@
  * in the root directory of this source tree.
  */
 
-import { async, RedisClient, ICallback } from 'redis-smq-common';
+import { async, ICallback, RedisClient } from 'redis-smq-common';
 import { MessageEnvelope } from './message-envelope';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { EMessageProperty } from '../../../types';
 import { _fromMessage } from './_from-message';
-import { MessageNotFoundError } from './errors/message-not-found.error';
+import { MessageNotFoundError } from './errors';
 
 export function _getMessage(
   redisClient: RedisClient,
