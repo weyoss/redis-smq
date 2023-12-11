@@ -31,20 +31,28 @@ test('MessageEnvelope status: UNPUBLISHED -> PENDING -> PROCESSING -> ACKNOWLEDG
   const { messages } = await producer.produceAsync(msg);
 
   const message = promisifyAll(new Message());
-  const msg0 = await message.getMessageByIdAsync(messages[0]);
-  expect(msg0.getStatus()).toBe(EMessagePropertyStatus.PENDING);
+  const status0 = await message.getMessageStatusAsync(messages[0]);
+  expect(status0).toBe(EMessagePropertyStatus.PENDING);
 
   const consumer = getConsumer({ consumeDefaultQueue: false });
-  const msg1: MessageEnvelope[] = [];
+  const statuses: EMessagePropertyStatus[] = [];
   await consumer.consumeAsync(defaultQueue, (msg, cb) => {
-    msg1.push(msg);
-    cb();
+    statuses.push(msg.getStatus());
+    message.getMessageStatus(msg.getRequiredId(), (err, status) => {
+      if (err) cb(err);
+      else {
+        statuses.push(Number(status));
+        cb();
+      }
+    });
   });
 
   consumer.run();
   await untilMessageAcknowledged(consumer);
-  expect(msg1[0].getStatus()).toBe(EMessagePropertyStatus.PROCESSING);
 
-  const msg2 = await message.getMessageByIdAsync(messages[0]);
-  expect(msg2.getStatus()).toBe(EMessagePropertyStatus.ACKNOWLEDGED);
+  expect(statuses[0]).toBe(EMessagePropertyStatus.PROCESSING);
+  expect(statuses[1]).toBe(EMessagePropertyStatus.PROCESSING);
+
+  const status1 = await message.getMessageStatusAsync(messages[0]);
+  expect(status1).toBe(EMessagePropertyStatus.ACKNOWLEDGED);
 });
