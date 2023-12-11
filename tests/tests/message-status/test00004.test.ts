@@ -39,10 +39,10 @@ test('MessageEnvelope status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQU
   expect(msg0.getStatus()).toBe(EMessagePropertyStatus.PENDING);
 
   const consumer = getConsumer({ consumeDefaultQueue: false });
-  const msg1: MessageEnvelope[] = [];
+  const msg1: EMessagePropertyStatus[] = [];
   await consumer.consumeAsync(defaultQueue, (msg, cb) => {
     if (!msg1.length) {
-      msg1.push(msg);
+      msg1.push(msg.getStatus());
       cb(new Error());
     } else cb();
   });
@@ -50,14 +50,14 @@ test('MessageEnvelope status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQU
   consumer.run();
   await untilConsumerEvent(consumer, 'messageUnacknowledged');
   await consumer.shutdownAsync();
-  expect(msg1[0].getStatus()).toBe(EMessagePropertyStatus.PROCESSING);
+  expect(msg1[0]).toBe(EMessagePropertyStatus.PROCESSING);
 
-  const msg2 = await message.getMessageByIdAsync(messages[0]);
-  expect(msg2.getStatus()).toBe(EMessagePropertyStatus.UNACK_REQUEUING);
+  const msg2 = await message.getMessageStatusAsync(messages[0]);
+  expect(msg2).toBe(EMessagePropertyStatus.UNACK_REQUEUING);
 
   consumer.run();
   await untilConsumerEvent(consumer, 'messageAcknowledged');
 
-  const msg3 = await message.getMessageByIdAsync(messages[0]);
-  expect(msg3.getStatus()).toBe(EMessagePropertyStatus.ACKNOWLEDGED);
+  const msg3 = await message.getMessageStatusAsync(messages[0]);
+  expect(msg3).toBe(EMessagePropertyStatus.ACKNOWLEDGED);
 });

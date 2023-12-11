@@ -31,20 +31,20 @@ test('MessageEnvelope status: UNPUBLISHED -> PENDING -> PROCESSING -> DEAD_LETTE
   const { messages } = await producer.produceAsync(msg);
 
   const message = promisifyAll(new Message());
-  const msg0 = await message.getMessageByIdAsync(messages[0]);
-  expect(msg0.getStatus()).toBe(EMessagePropertyStatus.PENDING);
+  const msg0 = await message.getMessageStatusAsync(messages[0]);
+  expect(msg0).toBe(EMessagePropertyStatus.PENDING);
 
   const consumer = getConsumer({ consumeDefaultQueue: false });
-  const msg1: MessageEnvelope[] = [];
+  const msg1: EMessagePropertyStatus[] = [];
   await consumer.consumeAsync(defaultQueue, (msg, cb) => {
-    msg1.push(msg);
+    msg1.push(msg.getStatus());
     cb(new Error());
   });
 
   consumer.run();
   await untilMessageDeadLettered(consumer);
-  expect(msg1[0].getStatus()).toBe(EMessagePropertyStatus.PROCESSING);
+  expect(msg1[0]).toBe(EMessagePropertyStatus.PROCESSING);
 
-  const msg2 = await message.getMessageByIdAsync(messages[0]);
-  expect(msg2.getStatus()).toBe(EMessagePropertyStatus.DEAD_LETTERED);
+  const msg2 = await message.getMessageStatusAsync(messages[0]);
+  expect(msg2).toBe(EMessagePropertyStatus.DEAD_LETTERED);
 });
