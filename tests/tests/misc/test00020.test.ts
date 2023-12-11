@@ -14,7 +14,7 @@ test('MessageEnvelope: validations', async () => {
   const msg = new MessageEnvelope();
   expect(() => {
     msg.getRequiredId();
-  }).toThrow('MessageEnvelope has not yet been published');
+  }).toThrow('Message has not yet been published');
   expect(() => {
     msg.setScheduledRepeatPeriod(-1);
   }).toThrow('Expected a positive integer value in milliseconds');

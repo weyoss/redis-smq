@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { EQueueType, IQueueParams } from '../../types';
+import { EMessagePriority, EQueueType, IQueueParams } from '../../types';
 import { MessageEnvelope } from '../../src/lib/message/message-envelope';
 import { untilConsumerEvent, untilMessageAcknowledged } from './events';
 import { getConsumer } from './consumer';
@@ -83,7 +83,7 @@ export async function produceMessageWithPriority(
   await producer.runAsync();
 
   const message = new MessageEnvelope();
-  message.setPriority(MessageEnvelope.MessagePriority.LOW).setQueue(queue);
+  message.setPriority(EMessagePriority.LOW).setQueue(queue);
   const { messages } = await producer.produceAsync(message);
   return { messageId: messages[0], producer, queue };
 }

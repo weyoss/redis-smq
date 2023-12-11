@@ -10,7 +10,7 @@
 import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
 import { ProducerMessageNotPublishedError } from '../../../src/lib/producer/errors';
 import { getProducer } from '../../common/producer';
-import { EQueueType } from '../../../types';
+import { EMessagePriority, EQueueType } from '../../../types';
 import { getQueue } from '../../common/queue';
 
 test('Producing a message and expecting different kind of failures', async () => {
@@ -25,7 +25,7 @@ test('Producing a message and expecting different kind of failures', async () =>
     const msg = new MessageEnvelope()
       .setQueue('test0')
       .setBody('body')
-      .setPriority(MessageEnvelope.MessagePriority.LOW);
+      .setPriority(EMessagePriority.LOW);
     await producer.produceAsync(msg);
   } catch (e: unknown) {
     const m = e instanceof ProducerMessageNotPublishedError ? e.message : '';
