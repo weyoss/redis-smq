@@ -178,11 +178,11 @@ ___
 
 ### getPriority
 
-▸ **getPriority**(): ``null`` \| `number`
+▸ **getPriority**(): ``null`` \| [`EMessagePriority`](../enums/EMessagePriority.md)
 
 #### Returns
 
-``null`` \| `number`
+``null`` \| [`EMessagePriority`](../enums/EMessagePriority.md)
 
 ___
 
@@ -510,7 +510,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `priority` | `number` |
+| `priority` | [`EMessagePriority`](../enums/EMessagePriority.md) |
 
 #### Returns
 
