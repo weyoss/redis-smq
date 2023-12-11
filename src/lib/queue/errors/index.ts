@@ -15,4 +15,3 @@ export { QueueNotEmptyError } from './queue-not-empty.error';
 export { QueueNotFoundError } from './queue-not-found.error';
 export { QueueRateLimitError } from './queue-rate-limit.error';
 export { QueueError } from './queue.error';
-export { QueueDeleteOperationError } from './queue-delete-operation.error';

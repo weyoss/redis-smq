@@ -10,6 +10,17 @@
 import { TExchangeSerialized } from '../index';
 import { IQueueParams } from '../queue';
 
+export enum EMessagePriority {
+  HIGHEST,
+  VERY_HIGH,
+  HIGH,
+  ABOVE_NORMAL,
+  NORMAL,
+  LOW,
+  VERY_LOW,
+  LOWEST,
+}
+
 export enum EMessageProperty {
   ID,
   STATUS,
