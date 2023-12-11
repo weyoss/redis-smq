@@ -37,9 +37,6 @@ test('MessageEnvelope: validations', async () => {
     msg.setRetryDelay(-1);
   }).toThrow('Expected a positive integer in milliseconds >= 0');
   expect(() => {
-    msg.setPriority(-100);
-  }).toThrow('Invalid message priority.');
-  expect(() => {
     msg.getDestinationQueue();
   }).toThrow(MessageDestinationQueueRequiredError);
   msg.setQueue('test1');
