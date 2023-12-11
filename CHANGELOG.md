@@ -1,5 +1,40 @@
 
 
+## [8.0.0-rc.8](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.7...v8.0.0-rc.8) (2023-12-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* **Message:** remove Message.MessagePriority, add EMessagePriority
+* **QueueMessages:** move message methods to Message,add MessageEnvelope
+
+### Features
+
+* **Message:** add getMessageStatus() method ([fda81fa](https://github.com/weyoss/redis-smq/commit/fda81fa7a3c4428799dfabef8581f0f3b39949e8))
+
+
+### Bug Fixes
+
+* **Message:** export missing error classes ([29e8817](https://github.com/weyoss/redis-smq/commit/29e8817fa805faed42ebd9a3fea469004552eec1))
+
+
+### Documentation
+
+* update documentation and examples ([8efb082](https://github.com/weyoss/redis-smq/commit/8efb08200ac1f2751c7e10e3492445badb2e4039))
+
+
+### Codebase Refactoring
+
+* **Message:** remove Message.MessagePriority, add EMessagePriority ([702a01d](https://github.com/weyoss/redis-smq/commit/702a01da987479a4f3b2127b9da0851d74046c10))
+* **QueueMessages:** move message methods to Message,add MessageEnvelope ([f71f0d0](https://github.com/weyoss/redis-smq/commit/f71f0d06240e16b1519ae175793ae28470684d4f))
+
+
+### Tests
+
+* **Message:** add getMessageStatus() method ([76e97c4](https://github.com/weyoss/redis-smq/commit/76e97c48fdc86c2709db39b17a0ba55432157270))
+* **Message:** remove Message.MessagePriority, add EMessagePriority ([88a1368](https://github.com/weyoss/redis-smq/commit/88a1368ff8e000f3f26141ec29fddc7f96a7103e))
+* **QueueMessages:** move message methods to Message,add MessageEnvelope ([932a88e](https://github.com/weyoss/redis-smq/commit/932a88eee5bfd0dc020c8516f76e2d351d486fe3))
+
 ## [8.0.0-rc.7](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.6...v8.0.0-rc.7) (2023-12-09)
 
 
