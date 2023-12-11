@@ -1,5 +1,22 @@
 
 
+## [8.0.0-rc.9](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.8...v8.0.0-rc.9) (2023-12-11)
+
+
+### Documentation
+
+* update documentation ([85d6adb](https://github.com/weyoss/redis-smq/commit/85d6adb7e8db6cb4f427a34e8e510c11d2fc5bf0))
+
+
+### Codebase Refactoring
+
+* **MessageEnvelope:** improve setPriority/getPriority typings ([91c44f0](https://github.com/weyoss/redis-smq/commit/91c44f013d6ff757876a0e57dcec45869ab6a02a))
+
+
+### Tests
+
+* **MessageEnvelope:** improve setPriority/getPriority typings ([20fd6e5](https://github.com/weyoss/redis-smq/commit/20fd6e58e466ae425bba54d4d85adf4df888654b))
+
 ## [8.0.0-rc.8](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.7...v8.0.0-rc.8) (2023-12-11)
 
 
@@ -217,8 +234,6 @@
 
 * drop support for redis server 2.8 and 3 ([9ef8ade](https://github.com/weyoss/redis-smq/commit/9ef8adec08bf90d1cc27b9bbabe591bca25a7d8e))
 * update minimal supported versions for nodejs and redis ([13b3197](https://github.com/weyoss/redis-smq/commit/13b31977937c65aa989de8d715022d1afb5f0839))
-
-# CHANGELOG
 
 ## 7.2.3 (2023-03-26)
 
