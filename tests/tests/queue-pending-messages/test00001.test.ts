@@ -12,8 +12,7 @@ import {
   defaultQueue,
 } from '../../common/message-producing-consuming';
 import { getProducer } from '../../common/producer';
-import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
-import { MessageState } from '../../../src/lib/message/message-state';
+import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages';
 import { getQueueMessages } from '../../common/queue-messages';
 
@@ -22,16 +21,10 @@ test('Pending message', async () => {
   const producer = getProducer();
   await producer.runAsync();
 
-  const msg = new MessageEnvelope();
+  const msg = new ProducibleMessage();
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
 
-  expect(msg.getMessageState()).toBe(null);
-  expect(msg.getId()).toBe(null);
-
-  await producer.produceAsync(msg);
-
-  expect((msg.getMessageState() ?? {}) instanceof MessageState).toBe(true);
-  expect(typeof msg.getId() === 'string').toBe(true);
+  const [id] = await producer.produceAsync(msg);
 
   const queuePendingMessages = await getQueuePendingMessages();
   const count = await queuePendingMessages.countMessagesAsync(defaultQueue);
@@ -46,7 +39,7 @@ test('Pending message', async () => {
   expect(messages.cursor).toBe(0);
   expect(messages.totalItems).toBe(1);
   expect(messages.items.length).toBe(1);
-  expect(messages.items[0].getId()).toBe(msg.getRequiredId());
+  expect(messages.items[0].getId()).toBe(id);
 
   const queueMessages = await getQueueMessages();
   const count1 = await queueMessages.countMessagesAsync(defaultQueue);

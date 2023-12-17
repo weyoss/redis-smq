@@ -8,7 +8,7 @@
  */
 
 import { delay, promisifyAll } from 'bluebird';
-import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
+import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { DelayUnacknowledgedWorker } from '../../../src/workers/delay-unacknowledged.worker';
 import { PublishScheduledWorker } from '../../../src/workers/publish-scheduled.worker';
 import { WatchConsumersWorker } from '../../../src/workers/watch-consumers.worker';
@@ -24,11 +24,12 @@ import { logger } from '../../common/logger';
 import { shutDownBaseInstance } from '../../common/base-instance';
 import { getQueueScheduledMessages } from '../../common/queue-scheduled-messages';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages';
+import { IConsumableMessage } from '../../../types';
 
 test('WatchdogWorker -> DelayUnacknowledgedWorker -> PublishScheduledWorker', async () => {
   await createQueue(defaultQueue, false);
 
-  let message: MessageEnvelope | null = null;
+  let message: IConsumableMessage | null = null;
   const consumer = getConsumer({
     messageHandler: jest.fn((msg) => {
       message = msg;
@@ -39,7 +40,7 @@ test('WatchdogWorker -> DelayUnacknowledgedWorker -> PublishScheduledWorker', as
   const producer = getProducer();
   await producer.runAsync();
   await producer.produceAsync(
-    new MessageEnvelope()
+    new ProducibleMessage()
       .setRetryDelay(10000)
       .setBody('message body')
       .setQueue(defaultQueue),

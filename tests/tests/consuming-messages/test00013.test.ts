@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
+import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { delay } from 'bluebird';
 import { ICallback } from 'redis-smq-common';
 import { getConsumer } from '../../common/consumer';
@@ -17,9 +17,10 @@ import {
   createQueue,
   defaultQueue,
 } from '../../common/message-producing-consuming';
+import { IConsumableMessage } from '../../../types';
 
 type TQueueMetrics = {
-  receivedMessages: MessageEnvelope[];
+  receivedMessages: string[];
   acks: number;
 };
 
@@ -38,8 +39,8 @@ test('Given many queues, a message is recovered from a consumer crash and re-que
 
   const queueAConsumer = getConsumer({
     queue: defaultQueue,
-    messageHandler: (msg: MessageEnvelope, cb: ICallback<void>) => {
-      defaultQueueMetrics.receivedMessages.push(msg);
+    messageHandler: (msg: IConsumableMessage, cb: ICallback<void>) => {
+      defaultQueueMetrics.receivedMessages.push(msg.getId());
       cb();
     },
   });
@@ -50,8 +51,8 @@ test('Given many queues, a message is recovered from a consumer crash and re-que
 
   const queueBConsumer = getConsumer({
     queue: 'queue_b',
-    messageHandler: (msg: MessageEnvelope, cb: ICallback<void>) => {
-      queueBMetrics.receivedMessages.push(msg);
+    messageHandler: (msg: IConsumableMessage, cb: ICallback<void>) => {
+      queueBMetrics.receivedMessages.push(msg.getId());
       cb();
     },
   });
@@ -64,9 +65,9 @@ test('Given many queues, a message is recovered from a consumer crash and re-que
   await producer.runAsync();
 
   // Produce a message to QUEUE B
-  const anotherMsg = new MessageEnvelope();
+  const anotherMsg = new ProducibleMessage();
   anotherMsg.setBody({ id: 'b' }).setQueue('queue_b');
-  await producer.produceAsync(anotherMsg);
+  const [id] = await producer.produceAsync(anotherMsg);
 
   // using defaultQueue
   await crashAConsumerConsumingAMessage();
@@ -77,7 +78,5 @@ test('Given many queues, a message is recovered from a consumer crash and re-que
 
   expect(queueBMetrics.acks).toBe(1);
   expect(queueBMetrics.receivedMessages.length).toBe(1);
-  expect(queueBMetrics.receivedMessages[0].getRequiredId()).toBe(
-    anotherMsg.getRequiredId(),
-  );
+  expect(queueBMetrics.receivedMessages[0]).toBe(id);
 });

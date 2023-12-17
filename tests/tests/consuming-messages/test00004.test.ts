@@ -8,7 +8,7 @@
  */
 
 import { delay } from 'bluebird';
-import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
+import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { untilConsumerEvent } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -32,10 +32,10 @@ test('A message is dead-lettered and not delivered when messageTTL is exceeded',
     unacknowledged += 1;
   });
 
-  const msg = new MessageEnvelope();
+  const msg = new ProducibleMessage();
   msg.setBody({ hello: 'world' }).setTTL(3000).setQueue(defaultQueue);
 
-  await producer.produceAsync(msg);
+  const [id] = await producer.produceAsync(msg);
   await delay(5000);
   consumer.run();
 
@@ -49,5 +49,5 @@ test('A message is dead-lettered and not delivered when messageTTL is exceeded',
     100,
   );
   expect(list.totalItems).toBe(1);
-  expect(list.items[0].getId()).toBe(msg.getRequiredId());
+  expect(list.items[0].getId()).toBe(id);
 });

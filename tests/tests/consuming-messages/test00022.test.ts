@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
+import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { untilConsumerEvent } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -26,13 +26,13 @@ test('Shutdown a consumer when consuming a message with retryThreshold = 0: expe
     }),
   });
 
-  const msg = new MessageEnvelope()
+  const msg = new ProducibleMessage()
     .setRetryThreshold(0)
     .setBody('message body')
     .setQueue(defaultQueue);
   const producer = getProducer();
   await producer.runAsync();
-  await producer.produceAsync(msg);
+  const [id] = await producer.produceAsync(msg);
 
   consumer.run();
   await untilConsumerEvent(consumer, 'down');
@@ -40,5 +40,5 @@ test('Shutdown a consumer when consuming a message with retryThreshold = 0: expe
   const res = await deadLetteredMessages.getMessagesAsync(defaultQueue, 0, 100);
   expect(res.totalItems).toBe(1);
   expect(typeof res.items[0].getId()).toBe('string');
-  expect(res.items[0].getId()).toBe(msg.getId());
+  expect(res.items[0].getId()).toBe(id);
 });

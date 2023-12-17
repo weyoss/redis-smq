@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
+import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { getProducer } from '../../common/producer';
 import {
   createQueue,
@@ -21,27 +21,27 @@ test('Schedule a message: messageManager.getScheduledMessages()', async () => {
   const producer = getProducer();
   await producer.runAsync();
 
-  const msg1 = new MessageEnvelope();
+  const msg1 = new ProducibleMessage();
   msg1.setScheduledDelay(30000);
   msg1
     .setScheduledCRON('0 * * * * *')
     .setBody({ hello: 'world1' })
     .setQueue(defaultQueue);
-  await producer.produceAsync(msg1);
+  const [id1] = await producer.produceAsync(msg1);
 
-  const msg2 = new MessageEnvelope();
+  const msg2 = new ProducibleMessage();
   msg2
     .setScheduledDelay(60000)
     .setBody({ hello: 'world2' })
     .setQueue(defaultQueue);
-  await producer.produceAsync(msg2);
+  const [id2] = await producer.produceAsync(msg2);
 
-  const msg3 = new MessageEnvelope();
+  const msg3 = new ProducibleMessage();
   msg3
     .setScheduledDelay(90000)
     .setBody({ hello: 'world3' })
     .setQueue(defaultQueue);
-  await producer.produceAsync(msg3);
+  const [id3] = await producer.produceAsync(msg3);
 
   const queueScheduled = await getQueueScheduledMessages();
 
@@ -49,7 +49,7 @@ test('Schedule a message: messageManager.getScheduledMessages()', async () => {
   const pageOne = await queueScheduled.getMessagesAsync(defaultQueue, 0, 100);
   expect(pageOne.totalItems).toEqual(3);
   expect(pageOne.items.length).toEqual(3);
-  expect(pageOne.items[0].getId()).toEqual(msg1.getMessageState()?.getId());
-  expect(pageOne.items[1].getId()).toEqual(msg2.getMessageState()?.getId());
-  expect(pageOne.items[2].getId()).toEqual(msg3.getMessageState()?.getId());
+  expect(pageOne.items[0].getId()).toEqual(id1);
+  expect(pageOne.items[1].getId()).toEqual(id2);
+  expect(pageOne.items[2].getId()).toEqual(id3);
 });

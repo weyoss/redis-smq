@@ -12,8 +12,7 @@ import {
   defaultQueue,
 } from '../../common/message-producing-consuming';
 import { getProducer } from '../../common/producer';
-import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
-import { MessageState } from '../../../src/lib/message/message-state';
+import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { getQueueMessages } from '../../common/queue-messages';
 import { getConsumer } from '../../common/consumer';
 import { untilMessageDeadLettered } from '../../common/events';
@@ -24,22 +23,16 @@ test('Queue dead-lettered message', async () => {
   const producer = getProducer();
   await producer.runAsync();
 
-  const msg = new MessageEnvelope();
+  const msg = new ProducibleMessage();
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
 
-  expect(msg.getMessageState()).toBe(null);
-  expect(msg.getId()).toBe(null);
-
-  await producer.produceAsync(msg);
-
-  expect((msg.getMessageState() ?? {}) instanceof MessageState).toBe(true);
-  expect(typeof msg.getId() === 'string').toBe(true);
+  const [id] = await producer.produceAsync(msg);
 
   const consumer = getConsumer({
     messageHandler: (msg1, cb) => cb(new Error()),
   });
   consumer.run();
-  await untilMessageDeadLettered(consumer, msg.getRequiredId());
+  await untilMessageDeadLettered(consumer, id);
 
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
   const count = await deadLetteredMessages.countMessagesAsync(defaultQueue);
@@ -54,7 +47,7 @@ test('Queue dead-lettered message', async () => {
   expect(messages.cursor).toBe(0);
   expect(messages.totalItems).toBe(1);
   expect(messages.items.length).toBe(1);
-  expect(messages.items[0].getId()).toBe(msg.getRequiredId());
+  expect(messages.items[0].getId()).toBe(id);
 
   const queueMessages = await getQueueMessages();
   const count1 = await queueMessages.countMessagesAsync(defaultQueue);

@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
+import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { delay } from 'bluebird';
 import { startScheduleWorker } from '../../common/schedule-worker';
 import { getProducer } from '../../common/producer';
@@ -21,7 +21,7 @@ import { getQueuePendingMessages } from '../../common/queue-pending-messages';
 test('Schedule a message: combine CRON, REPEAT, REPEAT PERIOD, DELAY', async () => {
   await createQueue(defaultQueue, false);
 
-  const msg = new MessageEnvelope();
+  const msg = new ProducibleMessage();
   msg.setScheduledCRON('*/20 * * * * *'); // Schedule message for each 20 seconds
   msg.setScheduledRepeat(2); // repeat 2 times
   msg.setScheduledRepeatPeriod(5000); // 5 secs between each repeat

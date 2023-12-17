@@ -20,7 +20,7 @@ import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-m
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages';
 import { Configuration } from '../../../src/config/configuration';
 
-test('MessageEnvelope storage: acknowledged = true, deadLettered = false', async () => {
+test('Message storage: acknowledged = true, deadLettered = false', async () => {
   const cfg = merge(config, {
     messages: {
       store: {
