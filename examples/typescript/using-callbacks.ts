@@ -11,7 +11,7 @@ import { ERedisConfigClient, ICallback, logger } from 'redis-smq-common';
 import {
   Consumer,
   Producer,
-  MessageEnvelope,
+  ProducibleMessage,
   Queue,
   EQueueType,
   IRedisSMQConfig,
@@ -70,7 +70,7 @@ const produce = (cb: ICallback<void>): void => {
     if (err) cb(err);
     else {
       const e = new ExchangeDirect('test_queue');
-      const msg = new MessageEnvelope();
+      const msg = new ProducibleMessage();
       msg.setBody({ ts: `Current time is ${Date.now()}` }).setExchange(e);
       producer.produce(msg, (err) => cb(err));
     }

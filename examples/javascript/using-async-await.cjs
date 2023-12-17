@@ -12,7 +12,7 @@ const { logger, ERedisConfigClient } = require('redis-smq-common');
 const {
   Consumer,
   Producer,
-  MessageEnvelope,
+  ProducibleMessage,
   Queue,
   EQueueType,
   Configuration,
@@ -63,7 +63,7 @@ const createQueue = async () => {
 
 const produce = async () => {
   await producer.runAsync();
-  const msg = new MessageEnvelope();
+  const msg = new ProducibleMessage();
   msg.setBody({ ts: `Current time is ${Date.now()}` }).setQueue('test_queue');
   await producer.produceAsync(msg);
 };
