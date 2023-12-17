@@ -8,8 +8,8 @@
  */
 
 import { ICallback } from 'redis-smq-common';
-import { MessageEnvelope } from '../../src/lib/message/message-envelope';
 import { IQueueParams } from '../queue';
+import { IConsumableMessage } from '../message';
 
 export interface IQueueMessages {
   countMessages(queue: string | IQueueParams, cb: ICallback<number>): void;
@@ -17,7 +17,7 @@ export interface IQueueMessages {
     queue: string | IQueueParams,
     page: number,
     pageSize: number,
-    cb: ICallback<IQueueMessagesPage<MessageEnvelope>>,
+    cb: ICallback<IQueueMessagesPage<IConsumableMessage>>,
   ): void;
   purge(queue: string | IQueueParams, cb: ICallback<void>): void;
 }

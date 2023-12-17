@@ -11,9 +11,14 @@ import { CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
 import { _getCommonRedisClient } from '../../common/_get-common-redis-client';
 import { _getMessage, _getMessages } from './_get-message';
 import { _deleteMessage } from './_delete-message';
-import { MessageEnvelope } from './message-envelope';
-import { EMessagePropertyStatus } from '../../../types';
+import {
+  EMessagePropertyStatus,
+  IMessageStateSerialized,
+  IConsumableMessage,
+} from '../../../types';
 import { _getMessageStatus } from './_get-message-status';
+import { _createRMessage } from './_create-r-message';
+import { _getMessageState } from './_get-message-state';
 
 export class Message {
   getMessageStatus(
@@ -27,22 +32,48 @@ export class Message {
     });
   }
 
-  getMessagesByIds(
-    messageIds: string[],
-    cb: ICallback<MessageEnvelope[]>,
+  getMessageState(
+    messageId: string,
+    cb: ICallback<IMessageStateSerialized>,
   ): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
       else if (!client) cb(new CallbackEmptyReplyError());
-      else _getMessages(client, messageIds, cb);
+      else _getMessageState(client, messageId, cb);
     });
   }
 
-  getMessageById(messageId: string, cb: ICallback<MessageEnvelope>): void {
+  getMessagesByIds(
+    messageIds: string[],
+    cb: ICallback<IConsumableMessage[]>,
+  ): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
       else if (!client) cb(new CallbackEmptyReplyError());
-      else _getMessage(client, messageId, cb);
+      else
+        _getMessages(client, messageIds, (err, reply) => {
+          if (err) cb(err);
+          else if (!reply) cb(new CallbackEmptyReplyError());
+          else {
+            cb(
+              null,
+              reply.map((i) => _createRMessage(i)),
+            );
+          }
+        });
+    });
+  }
+
+  getMessageById(messageId: string, cb: ICallback<IConsumableMessage>): void {
+    _getCommonRedisClient((err, client) => {
+      if (err) cb(err);
+      else if (!client) cb(new CallbackEmptyReplyError());
+      else
+        _getMessage(client, messageId, (err, reply) => {
+          if (err) cb(err);
+          else if (!reply) cb(new CallbackEmptyReplyError());
+          else cb(null, _createRMessage(reply));
+        });
     });
   }
 

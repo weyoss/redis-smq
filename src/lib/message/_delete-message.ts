@@ -22,7 +22,7 @@ import {
 } from '../../../types';
 import { ELuaScriptName } from '../../common/redis-client/redis-client';
 import { _getMessage } from './_get-message';
-import { MessageDeleteError } from './errors/message-delete.error';
+import { MessageDeleteError } from './errors';
 
 export function _deleteMessage(
   redisClient: RedisClient,

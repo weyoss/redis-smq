@@ -24,8 +24,8 @@ import {
 import { processingQueue } from './processing-queue';
 import { ERetryAction } from './retry-message';
 import { ELuaScriptName } from '../../../common/redis-client/redis-client';
-import { _fromMessage } from '../../message/_from-message';
 import { Configuration } from '../../../config/configuration';
+import { _createRMessage } from '../../message/_create-r-message';
 
 export class ConsumeMessage {
   protected keyQueueProcessing: string;
@@ -52,7 +52,7 @@ export class ConsumeMessage {
     message: MessageEnvelope,
     cb: ICallback<void>,
   ): void {
-    const messageId = message.getRequiredId();
+    const messageId = message.getId();
     const queue = message.getDestinationQueue();
     const { keyQueueAcknowledged } = redisKeys.getQueueKeys(queue);
     const { store, queueSize, expire } =
@@ -87,7 +87,7 @@ export class ConsumeMessage {
         else if (!reply)
           this.messageHandler.handleError(new CallbackEmptyReplyError());
         else {
-          const messageId = msg.getRequiredId();
+          const messageId = msg.getId();
           const queue = msg.getDestinationQueue();
           const messageHandlerId = this.messageHandler.getId();
           const consumerId = this.messageHandler.getConsumerId();
@@ -134,7 +134,7 @@ export class ConsumeMessage {
     let isTimeout = false;
     let timer: NodeJS.Timeout | null = null;
     try {
-      const consumeTimeout = msg.getConsumeTimeout();
+      const consumeTimeout = msg.producibleMessage.getConsumeTimeout();
       if (consumeTimeout) {
         timer = setTimeout(() => {
           isTimeout = true;
@@ -160,7 +160,7 @@ export class ConsumeMessage {
               else
                 this.messageHandler.emit(
                   'messageAcknowledged',
-                  msg.getRequiredId(),
+                  msg.getId(),
                   msg.getDestinationQueue(),
                   this.messageHandler.getId(),
                   this.messageHandler.getConsumerId(),
@@ -169,13 +169,7 @@ export class ConsumeMessage {
           }
         }
       };
-
-      // As a safety measure, in case if we mess with message system
-      // properties, only a clone of the message is actually given
-      this.messageHandler.getHandler()(
-        _fromMessage(msg, msg.getStatus(), msg.getMessageState()),
-        onConsumed,
-      );
+      this.messageHandler.getHandler()(_createRMessage(msg), onConsumed);
     } catch (error: unknown) {
       this.logger.error(error);
       this.unacknowledgeMessage(

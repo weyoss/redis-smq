@@ -115,7 +115,7 @@ export const processingQueue = {
                           if (err) done(err);
                           else {
                             if (message) {
-                              const messageId = message.getRequiredId();
+                              const messageId = message.getId();
                               args.push(messageId);
                               const { keyMessage } =
                                 redisKeys.getMessageKeys(messageId);

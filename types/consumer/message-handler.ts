@@ -7,13 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { MessageEnvelope } from '../../src/lib/message/message-envelope';
 import { ICallback } from 'redis-smq-common';
 import { IQueueParams } from '../queue';
 import { redisKeys } from '../../src/common/redis-keys/redis-keys';
+import { IConsumableMessage } from '../message';
 
 export type TConsumerMessageHandler = (
-  msg: MessageEnvelope,
+  msg: IConsumableMessage,
   cb: ICallback<void>,
 ) => void;
 

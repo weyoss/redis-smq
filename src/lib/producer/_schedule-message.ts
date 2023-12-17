@@ -34,8 +34,8 @@ export function _scheduleMessage(
       keyQueueMessages,
     } = redisKeys.getQueueKeys(queue);
     const ts = Date.now();
-    message.getRequiredMessageState().setScheduledAt(ts).setLastScheduledAt(ts);
-    const messageId = message.getRequiredId();
+    message.getMessageState().setScheduledAt(ts).setLastScheduledAt(ts);
+    const messageId = message.getId();
     const { keyMessage } = redisKeys.getMessageKeys(messageId);
     mixed.runScript(
       ELuaScriptName.SCHEDULE_MESSAGE,

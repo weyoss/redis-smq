@@ -55,7 +55,7 @@ export function getRetryAction(
       deadLetterCause: EConsumeMessageDeadLetterCause.RETRY_THRESHOLD_EXCEEDED,
     };
   }
-  const delay = message.getRetryDelay();
+  const delay = message.producibleMessage.getRetryDelay();
   if (delay) {
     return {
       action: ERetryAction.DELAY,

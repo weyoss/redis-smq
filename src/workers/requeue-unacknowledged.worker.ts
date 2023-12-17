@@ -58,9 +58,9 @@ export class RequeueUnacknowledgedWorker extends Worker {
                 if (err) done(err);
                 else if (!message) cb(new CallbackEmptyReplyError());
                 else {
-                  const messageId = message.getRequiredId();
+                  const messageId = message.getId();
                   const queue = message.getDestinationQueue();
-                  const messageState = message.getRequiredMessageState();
+                  const messageState = message.getMessageState();
                   const {
                     keyQueuePending,
                     keyPriorityQueuePending,
@@ -74,7 +74,8 @@ export class RequeueUnacknowledgedWorker extends Worker {
                     keyMessage,
                   );
                   messageState.incrAttempts();
-                  const messagePriority = message.getPriority() ?? '';
+                  const messagePriority =
+                    message.producibleMessage.getPriority() ?? '';
                   argv.push(
                     messageId,
                     messagePriority,

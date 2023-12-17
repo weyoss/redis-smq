@@ -59,7 +59,7 @@ export class DelayUnacknowledgedWorker extends Worker {
                 if (err) done(err);
                 else if (!message) cb(new CallbackEmptyReplyError());
                 else {
-                  const messageId = message.getRequiredId();
+                  const messageId = message.getId();
                   const queue = message.getDestinationQueue();
                   const {
                     keyQueueProperties,
@@ -74,8 +74,8 @@ export class DelayUnacknowledgedWorker extends Worker {
                     keyQueueScheduled,
                   );
                   args.push(messageId, '');
-                  const delay = message.getRetryDelay();
-                  const messageState = message.getRequiredMessageState();
+                  const delay = message.producibleMessage.getRetryDelay();
+                  const messageState = message.getMessageState();
                   messageState.incrAttempts();
                   messageState.setNextRetryDelay(delay);
                   const timestamp = message.getNextScheduledTimestamp();
