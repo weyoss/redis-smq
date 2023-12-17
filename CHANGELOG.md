@@ -1,5 +1,33 @@
 
 
+## [8.0.0-rc.10](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.9...v8.0.0-rc.10) (2023-12-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* add ProducibleMessage/ConsumableMessage/MessageEnvelope
+
+### Features
+
+* add ProducibleMessage/ConsumableMessage/MessageEnvelope ([4a3eec7](https://github.com/weyoss/redis-smq/commit/4a3eec79575b2845d2c35ec478b89e4a5acb863d))
+
+
+### Documentation
+
+* add ProducibleMessage/ConsumableMessage/MessageEnvelope ([55aa68e](https://github.com/weyoss/redis-smq/commit/55aa68e17021afadad32ee2c1b9dfef6924449f5))
+* **QueueMessages:** fix outdated class reference ([e6ae499](https://github.com/weyoss/redis-smq/commit/e6ae4991d4389e1d1602bd780f4e0d95e02e5606))
+* update examples ([bbccf7c](https://github.com/weyoss/redis-smq/commit/bbccf7cb5a2a5dfe2eacaeabb097129cbdcf6720))
+
+
+### Tests
+
+* add ProducibleMessage/ConsumableMessage/MessageEnvelope ([2961a22](https://github.com/weyoss/redis-smq/commit/2961a221190307c4a4a8857fed9ec12622bdd10d))
+
+
+### Misc
+
+* update health-check ([81edb25](https://github.com/weyoss/redis-smq/commit/81edb255d081824143f147ed8d0faefe0948224f))
+
 ## [8.0.0-rc.9](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.8...v8.0.0-rc.9) (2023-12-11)
 
 
