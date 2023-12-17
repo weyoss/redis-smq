@@ -42,13 +42,13 @@ ___
 
 ### destinationQueue
 
-• **destinationQueue**: ``null`` \| [`IQueueParams`](IQueueParams.md)
+• **destinationQueue**: [`IQueueParams`](IQueueParams.md)
 
 ___
 
 ### exchange
 
-• **exchange**: ``null`` \| [`TExchangeSerialized`](../README.md#texchangeserialized)
+• **exchange**: [`TExchangeSerialized`](../README.md#texchangeserialized)
 
 ___
 

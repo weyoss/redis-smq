@@ -13,6 +13,7 @@
 - [deleteMessageById](Message.md#deletemessagebyid)
 - [deleteMessagesByIds](Message.md#deletemessagesbyids)
 - [getMessageById](Message.md#getmessagebyid)
+- [getMessageState](Message.md#getmessagestate)
 - [getMessageStatus](Message.md#getmessagestatus)
 - [getMessagesByIds](Message.md#getmessagesbyids)
 
@@ -71,7 +72,24 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `messageId` | `string` |
-| `cb` | `ICallback`\<[`MessageEnvelope`](MessageEnvelope.md)\> |
+| `cb` | `ICallback`\<[`IConsumableMessage`](../interfaces/IConsumableMessage.md)\> |
+
+#### Returns
+
+`void`
+
+___
+
+### getMessageState
+
+▸ **getMessageState**(`messageId`, `cb`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `messageId` | `string` |
+| `cb` | `ICallback`\<[`IMessageStateSerialized`](../interfaces/IMessageStateSerialized.md)\> |
 
 #### Returns
 
@@ -105,7 +123,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `messageIds` | `string`[] |
-| `cb` | `ICallback`\<[`MessageEnvelope`](MessageEnvelope.md)[]\> |
+| `cb` | `ICallback`\<[`IConsumableMessage`](../interfaces/IConsumableMessage.md)[]\> |
 
 #### Returns
 

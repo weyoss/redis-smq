@@ -19,10 +19,10 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 
 * [High-performance message processing](docs/performance.md).
 * Flexible Producer/Consumer model which offers [Multi-Queue Producers](docs/producing-messages.md) & [Multi-Queue Consumers](docs/consuming-messages.md), focuses on simplicity and without tons of features. This makes RedisSMQ an ideal message broker for microservices-based applications.
-* In case of failures, while delivering or processing a message, RedisSMQ can guaranty that the message is not lost and that it is redelivered [at-least-once](docs/api/classes/MessageEnvelope.md#setretrythreshold). When configured to do so, RedisSMQ can also ensure that the message is delivered [at-most-once](docs/api/classes/MessageEnvelope.md#setretrythreshold).
+* In case of failures, while delivering or processing a message, RedisSMQ can guaranty that the message is not lost and that it is redelivered [at-least-once](docs/api/classes/ProducibleMessage.md#setretrythreshold). When configured to do so, RedisSMQ can also ensure that the message is delivered [at-most-once](docs/api/classes/ProducibleMessage.md#setretrythreshold).
 * RedisSMQ offers different exchange types: [Direct Exchange](docs/message-exchanges.md#direct-exchange), [Topic Exchange](docs/message-exchanges.md#topic-exchange), and [FanOut Exchange](docs/message-exchanges.md#fanout-exchange) for publishing a message to one or multiple queues.
 * 3 queuing strategies that you may use depending on your needs and requirements: [FIFO queues, LIFO queues, and Reliable Priority Queues](docs/queues.md).
-* A message can be [set to expire](docs/api/classes/MessageEnvelope.md#setttl) if it has not been delivered within a given amount of time. [Consumption timeout](docs/api/classes/MessageEnvelope.md#setconsumetimeout) allows canceling a message consumption if a consumer did not acknowledge the message for a period of time.
+* A message can be [set to expire](docs/api/classes/ProducibleMessage.md#setttl) if it has not been delivered within a given amount of time. [Consumption timeout](docs/api/classes/ProducibleMessage.md#setconsumetimeout) allows canceling a message consumption if a consumer did not acknowledge the message for a period of time.
 * [Queue Rate Limiting](docs/queue-rate-limiting.md) which allows to control the rate at which the messages are consumed from a given queue.
 * Builtin [message scheduler](docs/scheduling-messages.md) allowing to delay a message, to deliver a message for N times with an optional period between deliveries, or simply to schedule message delivery using CRON expressions.
 * [Multiplexing](/docs/multiplexing.md): A feature which allows message handlers to use a single redis connection to dequeue and consume messages.
@@ -56,7 +56,7 @@ Considerations:
 
 ## Usage
 
-RedisSMQ provides 3 classes in order to work with the message queue: `MessageEnvelope`, `Producer`, and `Consumer`.
+RedisSMQ provides 3 classes in order to work with the message queue: `ProducibleMessage`, `Producer`, and `Consumer`.
 
 Producers and consumers exchange data using one or multiple queues that may be created using the [Queue Class](docs/api/classes/Queue.md).
 
@@ -76,11 +76,11 @@ queue.save('my_queue', EQueueType.LIFO_QUEUE, (err) => console.log(err));
 ### Producing a message
 
 ```javascript
-const { Producer, MessageEnvelope } = require('redis-smq');
+const { Producer, ProducibleMessage } = require('redis-smq');
 
 const producer = new Producer();
 
-const msg = new MessageEnvelope();
+const msg = new ProducibleMessage();
 msg.setQueue('my_queue').setBody('Hello Word!')
 
 producer.produce(msg, (err) => console.log(err));

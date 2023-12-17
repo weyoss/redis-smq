@@ -4,21 +4,21 @@
 
 Starting with version 1.0.19, RedisSMQ enables you to schedule a one-time or repeating messages in your MQ server.
 
-To set up scheduling parameters for a given message, the [MessageEnvelope Class](api/classes/MessageEnvelope.md) provides:
+To set up scheduling parameters for a given message, the [ProducibleMessage Class](api/classes/ProducibleMessage.md) provides:
 
-* [MessageEnvelope.prototype.setScheduledCRON()](api/classes/MessageEnvelope.md#setscheduledcron)
-* [MessageEnvelope.prototype.setScheduledDelay()](api/classes/MessageEnvelope.md#setscheduleddelay)
-* [MessageEnvelope.prototype.setScheduledRepeat()](api/classes/MessageEnvelope.md#setscheduledrepeat)
-* [MessageEnvelope.prototype.setScheduledRepeatPeriod()](api/classes/MessageEnvelope.md#setscheduledrepeatperiod)
+* [ProducibleMessage.prototype.setScheduledCRON()](api/classes/ProducibleMessage.md#setscheduledcron)
+* [ProducibleMessage.prototype.setScheduledDelay()](api/classes/ProducibleMessage.md#setscheduleddelay)
+* [ProducibleMessage.prototype.setScheduledRepeat()](api/classes/ProducibleMessage.md#setscheduledrepeat)
+* [ProducibleMessage.prototype.setScheduledRepeatPeriod()](api/classes/ProducibleMessage.md#setscheduledrepeatperiod)
 
 To schedule your message, you can publish it, as any other message, from your [Producer Class](api/classes/Producer.md) 
 using the [produce()](api/classes/Producer.md#produce) method.
 
 ```javascript
 'use strict';
-const { MessageEnvelope } = require('redis-smq');
+const { ProducibleMessage } = require('redis-smq');
 
-const msg = new MessageEnvelope();
+const msg = new ProducibleMessage();
 msg
   .setBody({ hello: 'world' })
   .setScheduledCRON(`0 0 * * * *`)
@@ -32,6 +32,6 @@ producer.produce(msg, (err) => {
 
 For managing scheduled messages see [QueueScheduledMessages Class](api/classes/QueueScheduledMessages.md).
 
-To delete a scheduled message see [QueueMessages.deleteMessageById()](api/classes/QueueMessages.md#deletemessagebyid).
+To delete a scheduled message see [Message.deleteMessageById()](api/classes/Message.md#deletemessagebyid).
 
 Scheduled messages can be also managed using the [HTTP API Interface](https://github.com/weyoss/redis-smq-monitor) or from your browser with the help of the [Web UI](https://github.com/weyoss/redis-smq-monitor-client).
