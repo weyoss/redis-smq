@@ -44,7 +44,7 @@ ___
 | `queue` | `string` \| [`IQueueParams`](IQueueParams.md) |
 | `page` | `number` |
 | `pageSize` | `number` |
-| `cb` | `ICallback`\<[`IQueueMessagesPage`](IQueueMessagesPage.md)\<[`MessageEnvelope`](../classes/Message.md)\>\> |
+| `cb` | `ICallback`\<[`IQueueMessagesPage`](IQueueMessagesPage.md)\<[`IConsumableMessage`](IConsumableMessage.md)\>\> |
 
 #### Returns
 

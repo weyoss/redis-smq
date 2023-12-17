@@ -37,10 +37,9 @@
 
 #### Parameters
 
-
-| Name              | Type      | Default value |
-| :------------------ | :---------- | :-------------- |
-| `useMultiplexing` | `boolean` | `false`       |
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `useMultiplexing` | `boolean` | `false` |
 
 #### Returns
 
@@ -58,17 +57,16 @@ Base.constructor
 
 #### Parameters
 
-
-| Name    | Type                                                        |
-| :-------- | :------------------------------------------------------------ |
+| Name | Type |
+| :------ | :------ |
 | `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
-| `cb`    | `ICallback`\<`void`\>                                       |
+| `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 
 `void`
 
----
+___
 
 ### consume
 
@@ -76,18 +74,17 @@ Base.constructor
 
 #### Parameters
 
-
-| Name             | Type                                                              |
-| :----------------- | :------------------------------------------------------------------ |
-| `queue`          | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md)       |
+| Name | Type |
+| :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
 | `messageHandler` | [`TConsumerMessageHandler`](../README.md#tconsumermessagehandler) |
-| `cb`             | `ICallback`\<`void`\>                                             |
+| `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 
 `void`
 
----
+___
 
 ### getId
 
@@ -101,7 +98,7 @@ Base.constructor
 
 Base.getId
 
----
+___
 
 ### getQueues
 
@@ -111,7 +108,7 @@ Base.getId
 
 [`IQueueParams`](../interfaces/IQueueParams.md)[]
 
----
+___
 
 ### handleError
 
@@ -119,9 +116,8 @@ Base.getId
 
 #### Parameters
 
-
-| Name  | Type    |
-| :------ | :-------- |
+| Name | Type |
+| :------ | :------ |
 | `err` | `Error` |
 
 #### Returns
@@ -132,7 +128,7 @@ Base.getId
 
 Base.handleError
 
----
+___
 
 ### isDown
 
@@ -146,7 +142,7 @@ Base.handleError
 
 Base.isDown
 
----
+___
 
 ### isGoingDown
 
@@ -160,7 +156,7 @@ Base.isDown
 
 Base.isGoingDown
 
----
+___
 
 ### isGoingUp
 
@@ -174,7 +170,7 @@ Base.isGoingDown
 
 Base.isGoingUp
 
----
+___
 
 ### isRunning
 
@@ -188,7 +184,7 @@ Base.isGoingUp
 
 Base.isRunning
 
----
+___
 
 ### isUp
 
@@ -202,7 +198,7 @@ Base.isRunning
 
 Base.isUp
 
----
+___
 
 ### run
 
@@ -210,9 +206,8 @@ Base.isUp
 
 #### Parameters
 
-
-| Name  | Type                     |
-| :------ | :------------------------- |
+| Name | Type |
+| :------ | :------ |
 | `cb?` | `ICallback`\<`boolean`\> |
 
 #### Returns
@@ -223,7 +218,7 @@ Base.isUp
 
 Base.run
 
----
+___
 
 ### shutdown
 
@@ -231,9 +226,8 @@ Base.run
 
 #### Parameters
 
-
-| Name  | Type                     |
-| :------ | :------------------------- |
+| Name | Type |
+| :------ | :------ |
 | `cb?` | `ICallback`\<`boolean`\> |
 
 #### Returns

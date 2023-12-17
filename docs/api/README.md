@@ -23,9 +23,9 @@
 - [ExchangeFanOut](classes/ExchangeFanOut.md)
 - [ExchangeTopic](classes/ExchangeTopic.md)
 - [Message](classes/Message.md)
-- [MessageEnvelope](classes/MessageEnvelope.md)
 - [Namespace](classes/Namespace.md)
 - [Producer](classes/Producer.md)
+- [ProducibleMessage](classes/ProducibleMessage.md)
 - [Queue](classes/Queue.md)
 - [QueueAcknowledgedMessages](classes/QueueAcknowledgedMessages.md)
 - [QueueDeadLetteredMessages](classes/QueueDeadLetteredMessages.md)
@@ -38,31 +38,31 @@
 
 - [ConsumerError](classes/ConsumerError.md)
 - [ConsumerMessageHandlerAlreadyExistsError](classes/ConsumerMessageHandlerAlreadyExistsError.md)
-- [ExchangeError](classes/ExchangeError.md)
 - [ExchangeFanOutError](classes/ExchangeFanOutError.md)
 - [ExchangeInvalidDataError](classes/ExchangeInvalidDataError.md)
+- [ExchangeError](classes/ExchangeError.md)
 - [MessageDeleteError](classes/MessageDeleteError.md)
-- [MessageNotFoundError](classes/MessageNotFoundError.md)
 - [MessageDestinationQueueAlreadySetError](classes/MessageDestinationQueueAlreadySetError.md)
 - [MessageDestinationQueueRequiredError](classes/MessageDestinationQueueRequiredError.md)
 - [MessageError](classes/MessageError.md)
 - [MessageExchangeRequiredError](classes/MessageExchangeRequiredError.md)
+- [MessageNotFoundError](classes/MessageNotFoundError.md)
 - [ProducerError](classes/ProducerError.md)
 - [ProducerInstanceNotRunningError](classes/ProducerInstanceNotRunningError.md)
-- [ProducerMessageAlreadyPublishedError](classes/ProducerMessageAlreadyPublishedError.md)
 - [ProducerMessageNotPublishedError](classes/ProducerMessageNotPublishedError.md)
 - [ProducerMessageNotScheduledError](classes/ProducerMessageNotScheduledError.md)
+- [QueueRateLimitError](classes/QueueRateLimitError.md)
+- [QueueNamespaceNotFoundError](classes/QueueNamespaceNotFoundError.md)
+- [QueueNotEmptyError](classes/QueueNotEmptyError.md)
+- [QueueNotFoundError](classes/QueueNotFoundError.md)
 - [QueueError](classes/QueueError.md)
 - [QueueExistsError](classes/QueueExistsError.md)
 - [QueueHasRunningConsumersError](classes/QueueHasRunningConsumersError.md)
 - [QueueMessageRequeueError](classes/QueueMessageRequeueError.md)
-- [QueueNamespaceNotFoundError](classes/QueueNamespaceNotFoundError.md)
-- [QueueNotEmptyError](classes/QueueNotEmptyError.md)
-- [QueueNotFoundError](classes/QueueNotFoundError.md)
-- [QueueRateLimitError](classes/QueueRateLimitError.md)
 
 ### Interfaces
 
+- [IConsumableMessage](interfaces/IConsumableMessage.md)
 - [IConsumerHeartbeat](interfaces/IConsumerHeartbeat.md)
 - [IConsumerHeartbeatPayload](interfaces/IConsumerHeartbeatPayload.md)
 - [IConsumerMessageHandlerArgs](interfaces/IConsumerMessageHandlerArgs.md)
@@ -119,7 +119,7 @@
 
 Ƭ **IEventListenersConfigRequired**: `Required`\<[`IEventListenersConfig`](interfaces/IEventListenersConfig.md)\>
 
----
+___
 
 ### IQueueMessagesPageParams
 
@@ -127,19 +127,18 @@
 
 #### Type declaration
 
-
-| Name          | Type     |
-| :-------------- | :--------- |
+| Name | Type |
+| :------ | :------ |
 | `currentPage` | `number` |
-| `offsetEnd`   | `number` |
+| `offsetEnd` | `number` |
 | `offsetStart` | `number` |
-| `totalPages`  | `number` |
+| `totalPages` | `number` |
 
----
+___
 
 ### TConsumerMessageHandler
 
-Ƭ **TConsumerMessageHandler**: (`msg`: [`MessageEnvelope`](classes/Message.md), `cb`: `ICallback`\<`void`\>) => `void`
+Ƭ **TConsumerMessageHandler**: (`msg`: [`IConsumableMessage`](interfaces/IConsumableMessage.md), `cb`: `ICallback`\<`void`\>) => `void`
 
 #### Type declaration
 
@@ -147,23 +146,22 @@
 
 ##### Parameters
 
-
-| Name  | Type                            |
-| :------ | :-------------------------------- |
-| `msg` | [`MessageEnvelope`](classes/Message.md) |
-| `cb`  | `ICallback`\<`void`\>           |
+| Name | Type |
+| :------ | :------ |
+| `msg` | [`IConsumableMessage`](interfaces/IConsumableMessage.md) |
+| `cb` | `ICallback`\<`void`\> |
 
 ##### Returns
 
 `void`
 
----
+___
 
 ### TConsumerRedisKeys
 
 Ƭ **TConsumerRedisKeys**: `ReturnType`\<typeof `redisKeys`[``"getConsumerKeys"``]\>
 
----
+___
 
 ### TEventListenerInitArgs
 
@@ -171,79 +169,78 @@
 
 #### Type declaration
 
-
-| Name            | Type                                                           |
-| :---------------- | :--------------------------------------------------------------- |
+| Name | Type |
+| :------ | :------ |
 | `eventProvider` | `EventEmitter`\<[`TRedisSMQEvent`](README.md#tredissmqevent)\> |
-| `instanceId`    | `string`                                                       |
+| `instanceId` | `string` |
 
----
+___
 
 ### TExchange
 
 Ƭ **TExchange**: [`TExchangeDirect`](README.md#texchangedirect) \| [`TExchangeTopic`](README.md#texchangetopic) \| [`TExchangeFanOut`](README.md#texchangefanout)
 
----
+___
 
 ### TExchangeDirect
 
 Ƭ **TExchangeDirect**: [`IExchange`](interfaces/IExchange.md)\<[`TExchangeDirectBindingParams`](README.md#texchangedirectbindingparams), [`DIRECT`](enums/EExchangeType.md#direct)\>
 
----
+___
 
 ### TExchangeDirectBindingParams
 
 Ƭ **TExchangeDirectBindingParams**: [`IQueueParams`](interfaces/IQueueParams.md) \| `string`
 
----
+___
 
 ### TExchangeDirectSerialized
 
 Ƭ **TExchangeDirectSerialized**: [`IExchangeSerialized`](interfaces/IExchangeSerialized.md)\<[`TExchangeDirectBindingParams`](README.md#texchangedirectbindingparams), [`DIRECT`](enums/EExchangeType.md#direct)\>
 
----
+___
 
 ### TExchangeFanOut
 
 Ƭ **TExchangeFanOut**: [`IExchange`](interfaces/IExchange.md)\<[`TExchangeFanOutBindingParams`](README.md#texchangefanoutbindingparams), [`FANOUT`](enums/EExchangeType.md#fanout)\>
 
----
+___
 
 ### TExchangeFanOutBindingParams
 
 Ƭ **TExchangeFanOutBindingParams**: `string`
 
----
+___
 
 ### TExchangeFanOutSerialized
 
 Ƭ **TExchangeFanOutSerialized**: [`IExchangeSerialized`](interfaces/IExchangeSerialized.md)\<[`TExchangeFanOutBindingParams`](README.md#texchangefanoutbindingparams), [`FANOUT`](enums/EExchangeType.md#fanout)\>
 
----
+___
 
 ### TExchangeSerialized
 
 Ƭ **TExchangeSerialized**: [`TExchangeDirectSerialized`](README.md#texchangedirectserialized) \| [`TExchangeTopicSerialized`](README.md#texchangetopicserialized) \| [`TExchangeFanOutSerialized`](README.md#texchangefanoutserialized)
 
----
+___
 
 ### TExchangeTopic
 
 Ƭ **TExchangeTopic**: [`IExchange`](interfaces/IExchange.md)\<[`TExchangeTopicBindingParams`](README.md#texchangetopicbindingparams), [`TOPIC`](enums/EExchangeType.md#topic)\>
 
----
+___
 
 ### TExchangeTopicBindingParams
 
 Ƭ **TExchangeTopicBindingParams**: [`TTopicParams`](README.md#ttopicparams) \| `string`
 
----
+___
 
 ### TExchangeTopicSerialized
 
 Ƭ **TExchangeTopicSerialized**: [`IExchangeSerialized`](interfaces/IExchangeSerialized.md)\<[`TExchangeTopicBindingParams`](README.md#texchangetopicbindingparams), [`TOPIC`](enums/EExchangeType.md#topic)\>
 
----
+___
 
 ### TMessageConsumeOptions
 
@@ -251,15 +248,14 @@
 
 #### Type declaration
 
-
-| Name             | Type     |
-| :----------------- | :--------- |
+| Name | Type |
+| :------ | :------ |
 | `consumeTimeout` | `number` |
-| `retryDelay`     | `number` |
+| `retryDelay` | `number` |
 | `retryThreshold` | `number` |
-| `ttl`            | `number` |
+| `ttl` | `number` |
 
----
+___
 
 ### TQueueConsumer
 
@@ -267,15 +263,14 @@
 
 #### Type declaration
 
-
-| Name        | Type       |
-| :------------ | :----------- |
-| `createdAt` | `number`   |
-| `hostname`  | `string`   |
+| Name | Type |
+| :------ | :------ |
+| `createdAt` | `number` |
+| `hostname` | `string` |
 | `ipAddress` | `string`[] |
-| `pid`       | `number`   |
+| `pid` | `number` |
 
----
+___
 
 ### TRedisSMQEvent
 
@@ -297,7 +292,7 @@
 | `messageRequeued`       | (`messageId`: `string`, `queue`: [`IQueueParams`](interfaces/IQueueParams.md), `messageHandlerId`: `string`, `consumerId`: `string`) => `void` ;                                                                                               |
 | `messageUnacknowledged` | (`cause`: [`EConsumeMessageUnacknowledgedCause`](enums/EConsumeMessageUnacknowledgedCause.md), `messageId`: `string`, `queue`: [`IQueueParams`](interfaces/IQueueParams.md), `messageHandlerId`: `string`, `consumerId`: `string`) => `void` ; |
 
----
+___
 
 ### TTopicParams
 
@@ -305,10 +300,9 @@
 
 #### Type declaration
 
-
-| Name    | Type     |
-| :-------- | :--------- |
-| `ns`    | `string` |
+| Name | Type |
+| :------ | :------ |
+| `ns` | `string` |
 | `topic` | `string` |
 
 ## Functions
@@ -319,9 +313,8 @@
 
 #### Parameters
 
-
-| Name | Type                  |
-| :----- | :---------------------- |
+| Name | Type |
+| :------ | :------ |
 | `cb` | `ICallback`\<`void`\> |
 
 #### Returns

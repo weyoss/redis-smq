@@ -55,12 +55,12 @@ queue.save('my_priority_queue', EQueueType.PRIORITY_QUEUE, (err) => console.log(
 
 See [Queue.prototype.save()](api/classes/Queue.md#save) for more details.
 
-### Setting Up a MessageEnvelope Priority
+### Setting Up a ProducibleMessage Priority
 
-To set up a message priority, the [MessageEnvelope API](api/classes/MessageEnvelope.md) provides the following methods:
+To set up a message priority, the [ProducibleMessage API](api/classes/ProducibleMessage.md) provides the following methods:
 
-* [MessageEnvelope.prototype.setPriority()](api/classes/MessageEnvelope.md#setpriority)
-* [MessageEnvelope.prototype.getPriority()](api/classes/MessageEnvelope.md#getpriority)
+* [ProducibleMessage.prototype.setPriority()](api/classes/ProducibleMessage.md#setpriority)
+* [ProducibleMessage.prototype.getPriority()](api/classes/ProducibleMessage.md#getpriority)
 
 Valid message priority values that you can apply to a given message are:
 

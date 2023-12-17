@@ -149,14 +149,14 @@ ___
 
 ### produce
 
-▸ **produce**(`message`, `cb`): `void`
+▸ **produce**(`msg`, `cb`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `message` | [`MessageEnvelope`](Message.md) |
-| `cb` | `ICallback`\<\{ `messages`: `string`[] ; `scheduled`: `boolean`  }\> |
+| `msg` | [`ProducibleMessage`](ProducibleMessage.md) |
+| `cb` | `ICallback`\<`string`[]\> |
 
 #### Returns
 

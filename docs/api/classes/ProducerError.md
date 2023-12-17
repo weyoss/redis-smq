@@ -8,8 +8,6 @@
 
   ↳ **`ProducerError`**
 
-  ↳↳ [`ProducerMessageAlreadyPublishedError`](ProducerMessageAlreadyPublishedError.md)
-
   ↳↳ [`ProducerMessageNotPublishedError`](ProducerMessageNotPublishedError.md)
 
   ↳↳ [`ProducerMessageNotScheduledError`](ProducerMessageNotScheduledError.md)

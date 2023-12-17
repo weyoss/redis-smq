@@ -86,7 +86,7 @@ ___
 | `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
 | `cursor` | `number` |
 | `pageSize` | `number` |
-| `cb` | `ICallback`\<[`IQueueMessagesPage`](../interfaces/IQueueMessagesPage.md)\<[`MessageEnvelope`](MessageEnvelope.md)\>\> |
+| `cb` | `ICallback`\<[`IQueueMessagesPage`](../interfaces/IQueueMessagesPage.md)\<[`IConsumableMessage`](../interfaces/IConsumableMessage.md)\>\> |
 
 #### Returns
 
