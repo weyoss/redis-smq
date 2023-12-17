@@ -2,14 +2,6 @@
 
 # Interface: IConsumableMessage
 
-## Hierarchy
-
-- `Omit`\<[`ProducibleMessage`](../classes/ProducibleMessage.md), ``"setBody"`` \| ``"setConsumeTimeout"`` \| ``"setPriority"`` \| ``"setTTL"`` \| ``"setFanOut"`` \| ``"setQueue"`` \| ``"setTopic"`` \| ``"setRetryDelay"`` \| ``"setRetryThreshold"`` \| ``"setScheduledRepeatPeriod"`` \| ``"setScheduledRepeat"`` \| ``"setScheduledCRON"`` \| ``"setScheduledDelay"`` \| ``"disablePriority"`` \| ``"resetScheduledParams"`` \| ``"setExchange"`` \| ``"getExchange"``\>
-
-- `Pick`\<`ProducibleMessage`, ``"getScheduledMessageId"`` \| ``"getDestinationQueue"`` \| ``"getStatus"`` \| ``"getPublishedAt"`` \| ``"getScheduledAt"`` \| ``"getId"`` \| ``"toJSON"`` \| ``"getExchange"``\>
-
-  ↳ **`IConsumableMessage`**
-
 ## Table of contents
 
 ### Methods
