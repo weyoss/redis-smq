@@ -15,18 +15,23 @@ import {
 } from '../../../types';
 import { MessageEnvelope } from './message-envelope';
 import { _fromJSON } from '../exchange/_from-json';
+import { ProducibleMessage } from './producible-message';
 
 export function _fromMessage(
   msg: string | MessageEnvelope,
   status: EMessagePropertyStatus | null,
   msgState: string | MessageState | null,
 ): MessageEnvelope {
-  const { exchange, ...params }: IMessageSerialized =
+  const { exchange, destinationQueue, ...params }: IMessageSerialized =
     typeof msg === 'string' ? JSON.parse(msg) : msg.toJSON();
 
-  // Properties
-  const m = new MessageEnvelope();
-  Object.assign(m, params);
+  const messagePub = new ProducibleMessage();
+  Object.assign(messagePub, params);
+  messagePub.setExchange(_fromJSON(exchange));
+
+  //
+  const m = new MessageEnvelope(messagePub);
+  m.setDestinationQueue(destinationQueue);
 
   // Status
   if (status !== null) {
@@ -41,9 +46,6 @@ export function _fromMessage(
     Object.assign(messageStateInstance, messageStateJSON);
     m.setMessageState(messageStateInstance);
   }
-
-  // Exchange
-  if (exchange) m.setExchange(_fromJSON(exchange));
 
   return m;
 }

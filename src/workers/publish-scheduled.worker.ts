@@ -72,14 +72,14 @@ export class PublishScheduledWorker extends Worker {
         messages,
         (msg, _, done) => {
           const ts = Date.now();
-          const messagePriority = msg.getPriority() ?? '';
+          const messagePriority = msg.producibleMessage.getPriority() ?? '';
           const queue = msg.getDestinationQueue();
           const { keyMessage: keyScheduledMessage } = redisKeys.getMessageKeys(
-            msg.getRequiredId(),
+            msg.getId(),
           );
           const nextScheduleTimestamp = msg.getNextScheduledTimestamp();
           const scheduledMessageState = msg
-            .getRequiredMessageState()
+            .getMessageState()
             .setLastScheduledAt(ts);
           const {
             keyQueueProperties,
@@ -95,16 +95,16 @@ export class PublishScheduledWorker extends Worker {
           let newKeyMessage: string = '';
 
           const hasBeenUnacknowledged =
-            msg.getRetryDelay() > 0 &&
-            msg.getRequiredMessageState().getAttempts() > 0;
+            msg.producibleMessage.getRetryDelay() > 0 &&
+            msg.getMessageState().getAttempts() > 0;
 
           if (!hasBeenUnacknowledged) {
             newMessage = _fromMessage(msg, null, null);
+            newMessage.producibleMessage.resetScheduledParams();
             newMessageState = newMessage
-              .resetScheduledParams()
-              .getSetMessageState()
+              .getMessageState()
               .setPublishedAt(ts)
-              .setScheduledMessageId(msg.getRequiredId());
+              .setScheduledMessageId(msg.getId());
             newMessageId = newMessageState.getId();
             newKeyMessage = redisKeys.getMessageKeys(newMessageId).keyMessage;
           }
@@ -123,7 +123,7 @@ export class PublishScheduledWorker extends Worker {
             newMessage ? JSON.stringify(newMessage) : '',
             newMessageState ? JSON.stringify(newMessageState) : '',
             messagePriority,
-            msg.getRequiredId(),
+            msg.getId(),
             nextScheduleTimestamp,
             JSON.stringify(scheduledMessageState),
           );

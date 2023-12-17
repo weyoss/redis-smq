@@ -12,12 +12,12 @@ import {
   IQueueMessagesPageParams,
   IQueueMessagesPage,
   IQueueParams,
+  IConsumableMessage,
 } from '../../../../types';
 import { async, CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
-import { MessageEnvelope } from '../../message/message-envelope';
 import { _getCommonRedisClient } from '../../../common/_get-common-redis-client';
 import { _deleteMessage } from '../../message/_delete-message';
-import { _getMessages } from '../../message/_get-message';
+import { Message } from '../../message/message';
 
 export abstract class QueueMessagesPaginatorAbstract implements IQueueMessages {
   protected getTotalPages(pageSize: number, totalItems: number): number {
@@ -93,7 +93,7 @@ export abstract class QueueMessagesPaginatorAbstract implements IQueueMessages {
     queue: string | IQueueParams,
     cursor: number,
     pageSize: number,
-    cb: ICallback<IQueueMessagesPage<MessageEnvelope>>,
+    cb: ICallback<IQueueMessagesPage<IConsumableMessage>>,
   ): void {
     this.getMessagesIds(queue, cursor, pageSize, (err, reply) => {
       if (err) cb(err);
@@ -104,9 +104,12 @@ export abstract class QueueMessagesPaginatorAbstract implements IQueueMessages {
             if (err) cb(err);
             else if (!client) cb(new CallbackEmptyReplyError());
             else {
-              _getMessages(client, reply.items, (err, messages) => {
+              const message = new Message();
+              message.getMessagesByIds(reply.items, (err, items) => {
                 if (err) cb(err);
-                else cb(null, { ...reply, items: messages ?? [] });
+                else {
+                  cb(null, { ...reply, items: items ?? [] });
+                }
               });
             }
           });

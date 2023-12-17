@@ -9,6 +9,8 @@
 
 import { TExchangeSerialized } from '../index';
 import { IQueueParams } from '../queue';
+import { MessageEnvelope } from '../../src/lib/message/message-envelope';
+import { ProducibleMessage } from '../../src/lib/message/producible-message';
 
 export enum EMessagePriority {
   HIGHEST,
@@ -41,7 +43,7 @@ export enum EMessagePropertyStatus {
 
 export interface IMessageSerialized {
   createdAt: number;
-  exchange: TExchangeSerialized | null;
+  exchange: TExchangeSerialized;
   ttl: number;
   retryThreshold: number;
   retryDelay: number;
@@ -52,7 +54,7 @@ export interface IMessageSerialized {
   scheduledDelay: number | null;
   scheduledRepeatPeriod: number | null;
   scheduledRepeat: number;
-  destinationQueue: IQueueParams | null;
+  destinationQueue: IQueueParams;
 }
 
 export type TMessageConsumeOptions = {
@@ -61,3 +63,36 @@ export type TMessageConsumeOptions = {
   retryDelay: number;
   consumeTimeout: number;
 };
+
+export interface IConsumableMessage
+  extends Omit<
+      ProducibleMessage,
+      | 'setBody'
+      | 'setConsumeTimeout'
+      | 'setPriority'
+      | 'setTTL'
+      | 'setFanOut'
+      | 'setQueue'
+      | 'setTopic'
+      | 'setRetryDelay'
+      | 'setRetryThreshold'
+      | 'setScheduledRepeatPeriod'
+      | 'setScheduledRepeat'
+      | 'setScheduledCRON'
+      | 'setScheduledDelay'
+      | 'disablePriority'
+      | 'resetScheduledParams'
+      | 'setExchange'
+      | 'getExchange'
+    >,
+    Pick<
+      MessageEnvelope,
+      | 'getScheduledMessageId'
+      | 'getDestinationQueue'
+      | 'getStatus'
+      | 'getPublishedAt'
+      | 'getScheduledAt'
+      | 'getId'
+      | 'toJSON'
+      | 'getExchange'
+    > {}

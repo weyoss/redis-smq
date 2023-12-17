@@ -93,13 +93,13 @@ export abstract class QueueMessagesPaginatorList extends QueueMessagesPaginatorA
           else if (!message) cb(new CallbackEmptyReplyError());
           else {
             const queue = message.getDestinationQueue();
-            message.getRequiredMessageState().reset(); // resetting all system parameters
+            message.getMessageState().reset(); // resetting all system parameters
             const {
               keyQueueProperties,
               keyQueuePending,
               keyPriorityQueuePending,
             } = redisKeys.getQueueKeys(queue);
-            const messageId = message.getRequiredId();
+            const messageId = message.getId();
             const { keyMessage } = redisKeys.getMessageKeys(messageId);
             const sourceKey = this.getRedisKey(source);
             client.runScript(
@@ -120,8 +120,8 @@ export abstract class QueueMessagesPaginatorList extends QueueMessagesPaginatorA
                 EMessagePropertyStatus.PENDING,
                 EMessageProperty.STATE,
                 messageId,
-                message.getPriority() ?? '',
-                JSON.stringify(message.getRequiredMessageState()),
+                message.producibleMessage.getPriority() ?? '',
+                JSON.stringify(message.getMessageState()),
               ],
               (err, reply) => {
                 if (err) cb(err);
