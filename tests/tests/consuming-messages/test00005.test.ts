@@ -8,7 +8,7 @@
  */
 
 import { delay } from 'bluebird';
-import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
+import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { untilConsumerEvent } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -31,10 +31,10 @@ test('Setting default message TTL from configuration', async () => {
   consumer.on('messageUnacknowledged', () => {
     unacks += 1;
   });
-  const msg = new MessageEnvelope();
+  const msg = new ProducibleMessage();
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue).setTTL(2000);
 
-  await producer.produceAsync(msg);
+  const [id] = await producer.produceAsync(msg);
   await delay(5000);
   consumer.run();
 
@@ -49,5 +49,5 @@ test('Setting default message TTL from configuration', async () => {
     100,
   );
   expect(list.totalItems).toBe(1);
-  expect(list.items[0].getId()).toBe(msg.getRequiredId());
+  expect(list.items[0].getId()).toBe(id);
 });

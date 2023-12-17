@@ -7,7 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import { MessageEnvelope } from '../../../index';
 import { untilConsumerEvent } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -16,6 +15,9 @@ import {
   defaultQueue,
 } from '../../common/message-producing-consuming';
 import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages';
+import { ProducibleMessage } from '../../../src/lib/message/producible-message';
+import { promisifyAll } from 'bluebird';
+import { Message } from '../../../src/lib/message/message';
 
 test('An unacknowledged message is dead-lettered and not delivered again, given retryThreshold is 0', async () => {
   await createQueue(defaultQueue, false);
@@ -29,11 +31,8 @@ test('An unacknowledged message is dead-lettered and not delivered again, given 
     },
   });
 
-  const msg = new MessageEnvelope();
+  const msg = new ProducibleMessage();
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue).setRetryThreshold(0);
-
-  expect(msg.getMessageState()).toBe(null);
-  expect(msg.getId()).toBe(null);
   await producer.produceAsync(msg);
 
   consumer.run();
@@ -41,5 +40,8 @@ test('An unacknowledged message is dead-lettered and not delivered again, given 
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
   const r = await deadLetteredMessages.getMessagesAsync(defaultQueue, 0, 100);
   expect(r.items.length).toBe(1);
-  expect(r.items[0].getMessageState()?.getAttempts()).toBe(0);
+
+  const m = promisifyAll(new Message());
+  const mState = await m.getMessageStateAsync(r.items[0].getId());
+  expect(mState.attempts).toBe(0);
 });

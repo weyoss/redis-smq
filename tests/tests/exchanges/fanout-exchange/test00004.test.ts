@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { MessageEnvelope } from '../../../../src/lib/message/message-envelope';
+import { ProducibleMessage } from '../../../../src/lib/message/producible-message';
 import { getProducer } from '../../../common/producer';
 import { ExchangeFanOut } from '../../../../src/lib/exchange/exchange-fan-out';
 import { isEqual } from '../../../common/util';
@@ -33,12 +33,11 @@ test('ExchangeFanOut: producing message using setExchange()', async () => {
   await producer.runAsync();
 
   const e = new ExchangeFanOut('fanout_a');
-  const msg = new MessageEnvelope().setExchange(e).setBody('hello');
+  const msg = new ProducibleMessage().setExchange(e).setBody('hello');
 
-  const r = await producer.produceAsync(msg);
-  expect(r.scheduled).toEqual(false);
+  const ids = await producer.produceAsync(msg);
   const message = promisifyAll(new Message());
-  const items = await message.getMessagesByIdsAsync(r.messages);
+  const items = await message.getMessagesByIdsAsync(ids);
   expect(
     isEqual(
       items.map((i) => i.getDestinationQueue()),

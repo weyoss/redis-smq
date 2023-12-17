@@ -8,7 +8,7 @@
  */
 
 import { delay } from 'bluebird';
-import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
+import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
 import { validateTime } from '../../common/validate-time';
@@ -31,37 +31,37 @@ test('Rate limit a priority queue and check message rate', async () => {
   await producer.runAsync();
 
   await producer.produceAsync(
-    new MessageEnvelope()
+    new ProducibleMessage()
       .setBody('msg 1')
       .setQueue(defaultQueue)
       .setPriority(EMessagePriority.HIGH),
   );
   await producer.produceAsync(
-    new MessageEnvelope()
+    new ProducibleMessage()
       .setBody('msg 2')
       .setQueue(defaultQueue)
       .setPriority(EMessagePriority.HIGH),
   );
   await producer.produceAsync(
-    new MessageEnvelope()
+    new ProducibleMessage()
       .setBody('msg 3')
       .setQueue(defaultQueue)
       .setPriority(EMessagePriority.HIGH),
   );
   await producer.produceAsync(
-    new MessageEnvelope()
+    new ProducibleMessage()
       .setBody('msg 4')
       .setQueue(defaultQueue)
       .setPriority(EMessagePriority.HIGH),
   );
   await producer.produceAsync(
-    new MessageEnvelope()
+    new ProducibleMessage()
       .setBody('msg 5')
       .setQueue(defaultQueue)
       .setPriority(EMessagePriority.HIGH),
   );
   await producer.produceAsync(
-    new MessageEnvelope()
+    new ProducibleMessage()
       .setBody('msg 6')
       .setQueue(defaultQueue)
       .setPriority(EMessagePriority.HIGH),

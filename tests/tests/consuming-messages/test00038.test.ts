@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { MessageEnvelope } from '../../../index';
+import { ProducibleMessage } from '../../../index';
 import { delay } from 'bluebird';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -24,18 +24,18 @@ test('Produce and consume 100 message: FIFO Queues', async () => {
   await producer.runAsync();
 
   const total = 100;
-  const publishedMsg: MessageEnvelope[] = [];
+  const publishedMsg: string[] = [];
   for (let i = 0; i < total; i += 1) {
-    const msg = new MessageEnvelope();
+    const msg = new ProducibleMessage();
     msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
-    await producer.produceAsync(msg);
-    publishedMsg.push(msg);
+    const [id] = await producer.produceAsync(msg);
+    publishedMsg.push(id);
   }
 
-  const deliveredMessages: MessageEnvelope[] = [];
+  const deliveredMessages: string[] = [];
   const consumer = getConsumer({
     messageHandler: (msg, cb) => {
-      deliveredMessages.push(msg);
+      deliveredMessages.push(msg.getId());
       cb();
     },
   });
@@ -44,8 +44,6 @@ test('Produce and consume 100 message: FIFO Queues', async () => {
 
   expect(deliveredMessages.length).toEqual(publishedMsg.length);
   for (let i = 0; i < total; i += 1) {
-    expect(publishedMsg[i].getRequiredId()).toStrictEqual(
-      deliveredMessages[i].getRequiredId(),
-    );
+    expect(publishedMsg[i]).toStrictEqual(deliveredMessages[i]);
   }
 });

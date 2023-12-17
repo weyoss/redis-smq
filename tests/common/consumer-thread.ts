@@ -10,13 +10,16 @@
 import { Consumer } from '../../src/lib/consumer/consumer';
 import { defaultQueue } from './message-producing-consuming';
 import { Producer } from '../../src/lib/producer/producer';
-import { MessageEnvelope } from '../../src/lib/message/message-envelope';
+import { ProducibleMessage } from '../../src/lib/message/producible-message';
 
 const producer = new Producer();
 producer.run((err) => {
   if (err) throw err;
   producer.produce(
-    new MessageEnvelope().setQueue(defaultQueue).setBody(123).setRetryDelay(0),
+    new ProducibleMessage()
+      .setQueue(defaultQueue)
+      .setBody(123)
+      .setRetryDelay(0),
     (err) => {
       if (err) throw err;
     },

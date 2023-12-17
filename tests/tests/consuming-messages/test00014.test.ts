@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
+import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { untilMessageAcknowledged } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -22,7 +22,7 @@ test('Consume message from different queues and published by a single producer i
     const queue = `QuEue_${i}`;
     await createQueue(queue, false);
 
-    const message = new MessageEnvelope();
+    const message = new ProducibleMessage();
     // queue name should be normalized to lowercase
     message.setBody(`Message ${i}`).setQueue(queue);
     await producer.produceAsync(message);

@@ -9,7 +9,7 @@
 
 import { ExchangeTopic } from '../../../../src/lib/exchange/exchange-topic';
 import { createQueue } from '../../../common/message-producing-consuming';
-import { MessageEnvelope } from '../../../../src/lib/message/message-envelope';
+import { ProducibleMessage } from '../../../../src/lib/message/producible-message';
 import { getProducer } from '../../../common/producer';
 import { isEqual } from '../../../common/util';
 import { promisifyAll } from 'bluebird';
@@ -26,11 +26,10 @@ test('ExchangeTopic: producing message using setExchange()', async () => {
   await producer.runAsync();
 
   const e1 = new ExchangeTopic('w123.2.4');
-  const msg = new MessageEnvelope().setExchange(e1).setBody('hello');
-  const r = await producer.produceAsync(msg);
-  expect(r.scheduled).toEqual(false);
+  const msg = new ProducibleMessage().setExchange(e1).setBody('hello');
+  const ids = await producer.produceAsync(msg);
   const message = promisifyAll(new Message());
-  const items = await message.getMessagesByIdsAsync(r.messages);
+  const items = await message.getMessagesByIdsAsync(ids);
   expect(
     isEqual(
       items.map((i) => i.getDestinationQueue()),

@@ -14,7 +14,7 @@ import {
 } from '../../../types';
 import { ICallback } from 'redis-smq-common';
 import { config } from '../../common/config';
-import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
+import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { getProducer } from '../../common/producer';
 import {
   createQueue,
@@ -53,21 +53,21 @@ test('Producer event listeners', async () => {
   await createQueue(defaultQueue, false);
   const p0 = getProducer();
   await p0.runAsync();
-  const m0 = new MessageEnvelope().setQueue(defaultQueue).setBody(123);
-  await p0.produceAsync(m0);
-  const m1 = new MessageEnvelope().setQueue(defaultQueue).setBody(123);
-  await p0.produceAsync(m1);
+  const m0 = new ProducibleMessage().setQueue(defaultQueue).setBody(123);
+  const [id0] = await p0.produceAsync(m0);
+  const m1 = new ProducibleMessage().setQueue(defaultQueue).setBody(123);
+  const [id1] = await p0.produceAsync(m1);
   const p1 = getProducer();
   await p1.runAsync();
-  const m2 = new MessageEnvelope().setQueue(defaultQueue).setBody(123);
-  await p1.produceAsync(m2);
-  const m3 = new MessageEnvelope().setQueue(defaultQueue).setBody(123);
-  await p1.produceAsync(m3);
+  const m2 = new ProducibleMessage().setQueue(defaultQueue).setBody(123);
+  const [id2] = await p1.produceAsync(m2);
+  const m3 = new ProducibleMessage().setQueue(defaultQueue).setBody(123);
+  const [id3] = await p1.produceAsync(m3);
   expect(Object.keys(producerStats)).toEqual([p0.getId(), p1.getId()]);
   expect(producerStats[p0.getId()].length).toEqual(2);
-  expect(producerStats[p0.getId()][0]).toEqual(m0.getRequiredId());
-  expect(producerStats[p0.getId()][1]).toEqual(m1.getRequiredId());
+  expect(producerStats[p0.getId()][0]).toEqual(id0);
+  expect(producerStats[p0.getId()][1]).toEqual(id1);
   expect(producerStats[p1.getId()].length).toEqual(2);
-  expect(producerStats[p1.getId()][0]).toEqual(m2.getRequiredId());
-  expect(producerStats[p1.getId()][1]).toEqual(m3.getRequiredId());
+  expect(producerStats[p1.getId()][0]).toEqual(id2);
+  expect(producerStats[p1.getId()][1]).toEqual(id3);
 });

@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
+import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { untilMessageAcknowledged } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -29,7 +29,7 @@ test('Combined test. Requeue a priority message from acknowledged queue. Check q
     }),
   });
 
-  const message = new MessageEnvelope();
+  const message = new ProducibleMessage();
   message
     .setBody({ hello: 'world' })
     .setQueue(defaultQueue)
@@ -38,7 +38,7 @@ test('Combined test. Requeue a priority message from acknowledged queue. Check q
   const producer = getProducer();
   await producer.runAsync();
 
-  await producer.produceAsync(message);
+  const [id] = await producer.produceAsync(message);
 
   consumer.run();
   await untilMessageAcknowledged(consumer);
@@ -57,10 +57,7 @@ test('Combined test. Requeue a priority message from acknowledged queue. Check q
   expect(count.pending).toBe(0);
   expect(count.acknowledged).toBe(1);
 
-  await acknowledgedMessages.requeueMessageAsync(
-    defaultQueue,
-    message.getRequiredId(),
-  );
+  await acknowledgedMessages.requeueMessageAsync(defaultQueue, id);
 
   const count2 = await queueMessages.countMessagesByStatusAsync(defaultQueue);
   expect(count2.pending).toBe(1);
@@ -78,13 +75,10 @@ test('Combined test. Requeue a priority message from acknowledged queue. Check q
   const res7 = await pendingMessages.getMessagesAsync(defaultQueue, 0, 100);
   expect(res7.totalItems).toBe(1);
   expect(res7.items.length).toBe(1);
-  expect(res7.items[0].getId()).toEqual(message.getRequiredId());
+  expect(res7.items[0].getId()).toEqual(id);
 
   await expect(
     async () =>
-      await acknowledgedMessages.requeueMessageAsync(
-        defaultQueue,
-        message.getRequiredId(),
-      ),
+      await acknowledgedMessages.requeueMessageAsync(defaultQueue, id),
   ).not.toThrow();
 });

@@ -17,7 +17,7 @@ import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-m
 import { getQueuePendingMessages } from '../../common/queue-pending-messages';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages';
 import { promisifyAll } from 'bluebird';
-import { MessageNotFoundError } from '../../../src/lib/message/errors/message-not-found.error';
+import { MessageNotFoundError } from '../../../src/lib/message/errors';
 import { Message } from '../../../src/lib/message/message';
 
 test('Combined test: Delete an acknowledged message. Check pending, acknowledged, and dead-letter message. Check queue metrics.', async () => {
@@ -39,7 +39,7 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   const res3 = await acknowledgedMessages.getMessagesAsync(queue, 0, 100);
   expect(res3.totalItems).toBe(1);
   expect(res3.items.length).toBe(1);
-  expect(res3.items[0].getRequiredId()).toEqual(messageId);
+  expect(res3.items[0].getId()).toEqual(messageId);
 
   const queueMessages = await getQueueMessages();
   const count = await queueMessages.countMessagesByStatusAsync(queue);

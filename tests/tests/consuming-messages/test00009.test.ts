@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
+import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { delay } from 'bluebird';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
@@ -33,10 +33,10 @@ test('A message is dead-lettered when messageRetryThreshold is exceeded', async 
     unacknowledged += 1;
   });
 
-  const msg = new MessageEnvelope();
+  const msg = new ProducibleMessage();
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
 
-  await producer.produceAsync(msg);
+  const [id] = await producer.produceAsync(msg);
   consumer.run();
 
   await delay(30000);
@@ -48,5 +48,5 @@ test('A message is dead-lettered when messageRetryThreshold is exceeded', async 
     100,
   );
   expect(list.totalItems).toBe(1);
-  expect(list.items[0].getId()).toBe(msg.getRequiredId());
+  expect(list.items[0].getId()).toBe(id);
 });

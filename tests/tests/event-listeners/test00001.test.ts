@@ -16,7 +16,7 @@ import {
 } from '../../../types';
 import { ICallback } from 'redis-smq-common';
 import { config } from '../../common/config';
-import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
+import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import {
   createQueue,
   defaultQueue,
@@ -82,7 +82,7 @@ test('Consumer event listeners', async () => {
 
   Configuration.reset();
   Configuration.getSetConfig(cfg);
-  MessageEnvelope.setDefaultConsumeOptions({ retryDelay: 0 });
+  ProducibleMessage.setDefaultConsumeOptions({ retryDelay: 0 });
 
   await createQueue(defaultQueue, false);
   const { messageId: m0, consumer: c0 } =
@@ -103,11 +103,11 @@ test('Consumer event listeners', async () => {
   const c3 = getConsumer({ queue: anotherQueue });
   await c3.runAsync();
 
-  const m3 = new MessageEnvelope().setQueue(anotherQueue).setBody('MMM');
-  await p2.produceAsync(m3);
+  const m3 = new ProducibleMessage().setQueue(anotherQueue).setBody('MMM');
+  const [id3] = await p2.produceAsync(m3);
 
-  const m4 = new MessageEnvelope().setQueue(anotherQueue).setBody('MMM');
-  await p2.produceAsync(m4);
+  const m4 = new ProducibleMessage().setQueue(anotherQueue).setBody('MMM');
+  const [id4] = await p2.produceAsync(m4);
 
   await delay(5000);
 
@@ -136,11 +136,11 @@ test('Consumer event listeners', async () => {
   expect(consumerStats[c3.getId()][0]).toEqual({
     queue: anotherQueue,
     event: 'messageAcknowledged',
-    messageId: m3.getRequiredId(),
+    messageId: id3,
   });
   expect(consumerStats[c3.getId()][1]).toEqual({
     queue: anotherQueue,
     event: 'messageAcknowledged',
-    messageId: m4.getRequiredId(),
+    messageId: id4,
   });
 });

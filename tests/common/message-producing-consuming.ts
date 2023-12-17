@@ -8,7 +8,7 @@
  */
 
 import { EMessagePriority, EQueueType, IQueueParams } from '../../types';
-import { MessageEnvelope } from '../../src/lib/message/message-envelope';
+import { ProducibleMessage } from '../../src/lib/message/producible-message';
 import { untilConsumerEvent, untilMessageAcknowledged } from './events';
 import { getConsumer } from './consumer';
 import { getProducer } from './producer';
@@ -35,13 +35,13 @@ export async function produceAndAcknowledgeMessage(
     }),
   });
 
-  const message = new MessageEnvelope();
+  const message = new ProducibleMessage();
   message.setBody({ hello: 'world' }).setQueue(queue);
-  const { messages } = await producer.produceAsync(message);
+  const [messageId] = await producer.produceAsync(message);
 
   consumer.run();
   await untilMessageAcknowledged(consumer);
-  return { producer, consumer, queue, messageId: messages[0] };
+  return { producer, consumer, queue, messageId };
 }
 
 export async function produceAndDeadLetterMessage(
@@ -57,23 +57,23 @@ export async function produceAndDeadLetterMessage(
     }),
   });
 
-  const message = new MessageEnvelope();
+  const message = new ProducibleMessage();
   message.setBody({ hello: 'world' }).setQueue(queue);
-  const { messages } = await producer.produceAsync(message);
+  const [messageId] = await producer.produceAsync(message);
 
   consumer.run();
   await untilConsumerEvent(consumer, 'messageDeadLettered');
-  return { producer, consumer, messageId: messages[0], queue };
+  return { producer, consumer, messageId, queue };
 }
 
 export async function produceMessage(queue: IQueueParams = defaultQueue) {
   const producer = getProducer();
   await producer.runAsync();
 
-  const message = new MessageEnvelope();
+  const message = new ProducibleMessage();
   message.setBody({ hello: 'world' }).setQueue(queue);
-  const { messages } = await producer.produceAsync(message);
-  return { producer, messageId: messages[0], queue };
+  const [messageId] = await producer.produceAsync(message);
+  return { producer, messageId, queue };
 }
 
 export async function produceMessageWithPriority(
@@ -82,20 +82,20 @@ export async function produceMessageWithPriority(
   const producer = getProducer();
   await producer.runAsync();
 
-  const message = new MessageEnvelope();
+  const message = new ProducibleMessage();
   message.setPriority(EMessagePriority.LOW).setQueue(queue);
-  const { messages } = await producer.produceAsync(message);
-  return { messageId: messages[0], producer, queue };
+  const [messageId] = await producer.produceAsync(message);
+  return { messageId, producer, queue };
 }
 
 export async function scheduleMessage(queue: IQueueParams = defaultQueue) {
   const producer = getProducer();
   await producer.runAsync();
 
-  const message = new MessageEnvelope();
+  const message = new ProducibleMessage();
   message.setScheduledDelay(10000).setQueue(queue);
-  const { messages } = await producer.produceAsync(message);
-  return { messageId: messages[0], producer, queue };
+  const [messageId] = await producer.produceAsync(message);
+  return { messageId, producer, queue };
 }
 
 export async function createQueue(

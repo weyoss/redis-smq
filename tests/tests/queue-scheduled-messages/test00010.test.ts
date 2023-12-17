@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
+import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { ProducerMessageNotScheduledError } from '../../../src/lib/producer/errors';
 import { getProducer } from '../../common/producer';
 import { EMessagePriority, EQueueType } from '../../../types';
@@ -22,7 +22,7 @@ test('Scheduling a message and expecting different kind of failures', async () =
   await producer.runAsync();
 
   try {
-    const msg = new MessageEnvelope()
+    const msg = new ProducibleMessage()
       .setQueue('test0')
       .setBody('body')
       .setPriority(EMessagePriority.LOW)
@@ -34,7 +34,7 @@ test('Scheduling a message and expecting different kind of failures', async () =
   }
 
   try {
-    const msg1 = new MessageEnvelope()
+    const msg1 = new ProducibleMessage()
       .setQueue('test1')
       .setBody('body')
       .setScheduledCRON('* * * * * *');
@@ -45,7 +45,7 @@ test('Scheduling a message and expecting different kind of failures', async () =
   }
 
   try {
-    const msg2 = new MessageEnvelope()
+    const msg2 = new ProducibleMessage()
       .setQueue('test2')
       .setBody('body')
       .setScheduledCRON('* * * * * *');

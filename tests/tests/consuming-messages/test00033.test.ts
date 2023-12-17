@@ -9,10 +9,11 @@
 
 import { delay, promisifyAll } from 'bluebird';
 import { Consumer } from '../../../src/lib/consumer/consumer';
-import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
+import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { getProducer } from '../../common/producer';
 import { createQueue } from '../../common/message-producing-consuming';
 import { shutDownBaseInstance } from '../../common/base-instance';
+import { IConsumableMessage } from '../../../types';
 
 test('Consume message from different queues using a single consumer instance: case 4', async () => {
   await createQueue('test1', false);
@@ -22,7 +23,7 @@ test('Consume message from different queues using a single consumer instance: ca
   await createQueue('test5', false);
   await createQueue('test6', false);
 
-  const messages: MessageEnvelope[] = [];
+  const messages: IConsumableMessage[] = [];
   const consumer = promisifyAll(new Consumer(true));
 
   await consumer.consumeAsync('test1', (msg, cb) => {
@@ -63,7 +64,7 @@ test('Consume message from different queues using a single consumer instance: ca
 
   for (let i = 0; i < 5; i += 1) {
     await producer.produceAsync(
-      new MessageEnvelope().setQueue(`test${i + 1}`).setBody(`body ${i + 1}`),
+      new ProducibleMessage().setQueue(`test${i + 1}`).setBody(`body ${i + 1}`),
     );
   }
 
@@ -97,7 +98,7 @@ test('Consume message from different queues using a single consumer instance: ca
     cb();
   });
   await producer.produceAsync(
-    new MessageEnvelope().setQueue(`test6`).setBody(`body 6`),
+    new ProducibleMessage().setQueue(`test6`).setBody(`body 6`),
   );
   await delay(10000);
   expect(messages.map((i) => i.getDestinationQueue().name).sort()).toEqual([

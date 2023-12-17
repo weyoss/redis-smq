@@ -9,7 +9,7 @@
 
 import { delay, promisifyAll } from 'bluebird';
 import { Consumer } from '../../../src/lib/consumer/consumer';
-import { MessageEnvelope } from '../../../src/lib/message/message-envelope';
+import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { getProducer } from '../../common/producer';
 import {
   createQueue,
@@ -17,6 +17,7 @@ import {
 } from '../../common/message-producing-consuming';
 import { shutDownBaseInstance } from '../../common/base-instance';
 import { getQueueRateLimit } from '../../common/queue-rate-limit';
+import { IConsumableMessage } from '../../../types';
 
 test('Consume message from different queues using a single consumer instance: case 5', async () => {
   await createQueue(defaultQueue, false);
@@ -27,7 +28,7 @@ test('Consume message from different queues using a single consumer instance: ca
     interval: 5000,
   });
 
-  const messages: MessageEnvelope[] = [];
+  const messages: IConsumableMessage[] = [];
   const consumer = promisifyAll(new Consumer(true));
 
   await consumer.consumeAsync(defaultQueue, (msg, cb) => {
@@ -42,7 +43,7 @@ test('Consume message from different queues using a single consumer instance: ca
 
   for (let i = 0; i < 5; i += 1) {
     await producer.produceAsync(
-      new MessageEnvelope().setQueue(defaultQueue).setBody(`body ${i + 1}`),
+      new ProducibleMessage().setQueue(defaultQueue).setBody(`body ${i + 1}`),
     );
   }
 
