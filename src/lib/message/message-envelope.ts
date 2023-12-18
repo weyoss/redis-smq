@@ -48,24 +48,15 @@ export class MessageEnvelope {
   }
 
   getPublishedAt(): number | null {
-    if (this.messageState) {
-      return this.messageState.getPublishedAt();
-    }
-    return null;
+    return this.messageState.getPublishedAt();
   }
 
   getScheduledAt(): number | null {
-    if (this.messageState) {
-      return this.messageState.getScheduledAt();
-    }
-    return null;
+    return this.messageState.getScheduledAt();
   }
 
   getScheduledMessageId(): string | null {
-    if (this.messageState) {
-      return this.messageState.getScheduledMessageId();
-    }
-    return null;
+    return this.messageState.getScheduledMessageId();
   }
 
   getId(): string {
@@ -104,10 +95,7 @@ export class MessageEnvelope {
   }
 
   hasNextDelay(): boolean {
-    if (this.messageState) {
-      return this.messageState.hasDelay();
-    }
-    return !!this.producibleMessage.getScheduledDelay();
+    return this.messageState.hasDelay();
   }
 
   getNextScheduledTimestamp(): number {
@@ -203,12 +191,8 @@ export class MessageEnvelope {
   }
 
   hasRetryThresholdExceeded(): boolean {
-    const messageState = this.getMessageState();
-    if (!messageState) {
-      return false;
-    }
     const threshold = this.producibleMessage.getRetryThreshold();
-    return messageState.getAttempts() + 1 >= threshold;
+    return this.messageState.getAttempts() + 1 >= threshold;
   }
 
   isSchedulable(): boolean {
