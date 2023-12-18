@@ -1,5 +1,12 @@
 
 
+## [8.0.0-rc.12](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.11...v8.0.0-rc.12) (2023-12-18)
+
+
+### Misc
+
+* update logo ([9bd373e](https://github.com/weyoss/redis-smq/commit/9bd373e693c57c8e18dddb5b0899c710e6de9492))
+
 ## [8.0.0-rc.11](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.10...v8.0.0-rc.11) (2023-12-18)
 
 
