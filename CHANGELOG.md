@@ -1,5 +1,23 @@
 
 
+## [8.0.0-rc.11](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.10...v8.0.0-rc.11) (2023-12-18)
+
+
+### Documentation
+
+* **IConsumableMessage:** clean up ([5b5ce3a](https://github.com/weyoss/redis-smq/commit/5b5ce3aedd3e378cc74a2715da2ae1e98f41124f))
+
+
+### Codebase Refactoring
+
+* **MessageEnvelope:** clean up ([72140f6](https://github.com/weyoss/redis-smq/commit/72140f61742dd4e3cbe36a6c421bf5f0b5a2f7ac))
+* rename _createRMessage to _createConsumableMessage ([7a138fd](https://github.com/weyoss/redis-smq/commit/7a138fdce633946d4f69a7c8aa4d78a019bc82df))
+
+
+### Tests
+
+* **ConsumableMessage:** increase code coverage ([3960c6e](https://github.com/weyoss/redis-smq/commit/3960c6ef72875fcdd0684eb1025afd0c0630c67c))
+
 ## [8.0.0-rc.10](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.9...v8.0.0-rc.10) (2023-12-17)
 
 
