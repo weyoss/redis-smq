@@ -1,5 +1,5 @@
 <div align="center" style="text-align: center">
-  <p><a href="https://github.com/weyoss/redis-smq"><img alt="RedisSMQ" src="./logo.png" /></a></p>
+  <p><a href="https://github.com/weyoss/redis-smq"><img alt="RedisSMQ" src="./logo.png?v=202312182134" /></a></p>
   <p>A simple high-performance Redis message queue for Node.js.</p>
 </div>
 
