@@ -18,7 +18,9 @@ import {
   TTopicParams,
 } from '../../../types';
 
-export function _createRMessage(msg: MessageEnvelope): IConsumableMessage {
+export function _createConsumableMessage(
+  msg: MessageEnvelope,
+): IConsumableMessage {
   return {
     getPublishedAt(): number | null {
       return msg.getPublishedAt();

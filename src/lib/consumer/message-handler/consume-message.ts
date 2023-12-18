@@ -25,7 +25,7 @@ import { processingQueue } from './processing-queue';
 import { ERetryAction } from './retry-message';
 import { ELuaScriptName } from '../../../common/redis-client/redis-client';
 import { Configuration } from '../../../config/configuration';
-import { _createRMessage } from '../../message/_create-r-message';
+import { _createConsumableMessage } from '../../message/_create-consumable-message';
 
 export class ConsumeMessage {
   protected keyQueueProcessing: string;
@@ -169,7 +169,10 @@ export class ConsumeMessage {
           }
         }
       };
-      this.messageHandler.getHandler()(_createRMessage(msg), onConsumed);
+      this.messageHandler.getHandler()(
+        _createConsumableMessage(msg),
+        onConsumed,
+      );
     } catch (error: unknown) {
       this.logger.error(error);
       this.unacknowledgeMessage(

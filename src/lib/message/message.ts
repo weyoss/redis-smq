@@ -17,7 +17,7 @@ import {
   IConsumableMessage,
 } from '../../../types';
 import { _getMessageStatus } from './_get-message-status';
-import { _createRMessage } from './_create-r-message';
+import { _createConsumableMessage } from './_create-consumable-message';
 import { _getMessageState } from './_get-message-state';
 
 export class Message {
@@ -57,7 +57,7 @@ export class Message {
           else {
             cb(
               null,
-              reply.map((i) => _createRMessage(i)),
+              reply.map((i) => _createConsumableMessage(i)),
             );
           }
         });
@@ -72,7 +72,7 @@ export class Message {
         _getMessage(client, messageId, (err, reply) => {
           if (err) cb(err);
           else if (!reply) cb(new CallbackEmptyReplyError());
-          else cb(null, _createRMessage(reply));
+          else cb(null, _createConsumableMessage(reply));
         });
     });
   }
