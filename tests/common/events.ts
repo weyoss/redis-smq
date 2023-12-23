@@ -38,7 +38,7 @@ export async function untilMessageDeadLettered(
   consumer: Consumer,
   messageId?: string,
 ): Promise<void> {
-  const [, id] = await consumerOnEvent<[string, string]>(
+  const [id] = await consumerOnEvent<[string, string]>(
     consumer,
     'messageDeadLettered',
   );

@@ -10,9 +10,9 @@
 import {
   IRedisSMQConfig,
   IEventListener,
-  TEventListenerInitArgs,
+  TRedisSMQEvent,
 } from '../../../types';
-import { ICallback } from 'redis-smq-common';
+import { EventEmitter, ICallback } from 'redis-smq-common';
 import { config } from '../../common/config';
 import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { getProducer } from '../../common/producer';
@@ -24,12 +24,14 @@ import { Configuration } from '../../../src/config/configuration';
 
 const producerStats: Record<string, string[]> = {};
 
-class TestProducerEventListener implements IEventListener {
-  init(args: TEventListenerInitArgs, cb: ICallback<void>) {
-    const { instanceId, eventProvider } = args;
-    producerStats[instanceId] = [];
-    eventProvider.on('messagePublished', (messageId: string) => {
-      producerStats[instanceId].push(messageId);
+class TestProducerEventListener
+  extends EventEmitter<TRedisSMQEvent>
+  implements IEventListener
+{
+  init(cb: ICallback<void>) {
+    this.on('messagePublished', (messageId: string, queue, producerId) => {
+      producerStats[producerId] = producerStats[producerId] ?? [];
+      producerStats[producerId].push(messageId);
     });
     cb();
   }
@@ -42,9 +44,7 @@ class TestProducerEventListener implements IEventListener {
 test('Producer event listeners', async () => {
   const cfg: IRedisSMQConfig = {
     ...config,
-    eventListeners: {
-      producerEventListeners: [TestProducerEventListener],
-    },
+    eventListeners: [TestProducerEventListener],
   };
 
   Configuration.reset();
