@@ -60,13 +60,15 @@ Using a configuration object, RedisSMQ allows you to register one or many event 
 import { IConfig, Configuration } from 'redis-smq';
 
 const config: IConfig = {
-  eventListener: [MyEventListener]
+  eventListeners: [MyEventListener]
 }
 
 Configuration.getSetConfig(config);
 ```
 
-### Emitted Events
+See [`IRedisSMQConfig`](api/interfaces/IRedisSMQConfig.md) for more details.
+
+### Events
 
 An event listener allows subscribing to the following events:
 
