@@ -1,5 +1,26 @@
 
 
+## [8.0.0-rc.13](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.12...v8.0.0-rc.13) (2023-12-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* **event-listeners:** unify consumer/producer event listeners
+
+### Documentation
+
+* **event-listeners:** update documentation ([71100d3](https://github.com/weyoss/redis-smq/commit/71100d3aa94a61fb8ece86e439f0b120b66a6cab))
+
+
+### Codebase Refactoring
+
+* **event-listeners:** unify consumer/producer event listeners ([9e1a181](https://github.com/weyoss/redis-smq/commit/9e1a1811dd841d4329f0ee14e979d2770a7a6358))
+
+
+### Tests
+
+* **event-listeners:** unify consumer/producer event listeners ([2d14a07](https://github.com/weyoss/redis-smq/commit/2d14a077feda98933fb6c038bea5a33ad8d5f610))
+
 ## [8.0.0-rc.12](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.11...v8.0.0-rc.12) (2023-12-18)
 
 
