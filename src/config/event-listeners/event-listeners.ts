@@ -7,17 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { IRedisSMQConfig, IEventListenersConfigRequired } from '../../../types';
-import { merge } from 'lodash';
+import { IRedisSMQConfig, TEventListenersConfig } from '../../../types';
 
-const defaultConfig: IEventListenersConfigRequired = {
-  consumerEventListeners: [],
-  producerEventListeners: [],
-};
+const defaultConfig: TEventListenersConfig = [];
 
 export function EventListeners(
   userConfig: IRedisSMQConfig,
-): IEventListenersConfigRequired {
-  const { eventListeners = {} } = userConfig;
-  return merge({}, defaultConfig, eventListeners);
+): TEventListenersConfig {
+  const { eventListeners = [] } = userConfig;
+  return [...defaultConfig, ...eventListeners];
 }

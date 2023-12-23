@@ -21,7 +21,11 @@ export type TRedisSMQEvent = TEvent & {
     consumerId: string,
     heartbeatPayload: IConsumerHeartbeat,
   ) => void;
-  messagePublished: (messageId: string, queue: IQueueParams) => void;
+  messagePublished: (
+    messageId: string,
+    queue: IQueueParams,
+    producerId: string,
+  ) => void;
   messageAcknowledged: (
     messageId: string,
     queue: IQueueParams,
@@ -29,18 +33,18 @@ export type TRedisSMQEvent = TEvent & {
     consumerId: string,
   ) => void;
   messageUnacknowledged: (
-    cause: EConsumeMessageUnacknowledgedCause,
     messageId: string,
     queue: IQueueParams,
     messageHandlerId: string,
     consumerId: string,
+    cause: EConsumeMessageUnacknowledgedCause,
   ) => void;
   messageDeadLettered: (
-    cause: EConsumeMessageDeadLetterCause,
     messageId: string,
     queue: IQueueParams,
     messageHandlerId: string,
     consumerId: string,
+    cause: EConsumeMessageDeadLetterCause,
   ) => void;
   messageReceived: (
     messageId: string,

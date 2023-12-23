@@ -10,12 +10,7 @@
 import { ICallback, EventEmitter } from 'redis-smq-common';
 import { TRedisSMQEvent } from '../event';
 
-export type TEventListenerInitArgs = {
-  eventProvider: EventEmitter<TRedisSMQEvent>;
-  instanceId: string;
-};
-
-export interface IEventListener {
-  init(args: TEventListenerInitArgs, cb: ICallback<void>): void;
+export interface IEventListener extends EventEmitter<TRedisSMQEvent> {
+  init(cb: ICallback<void>): void;
   quit(cb: ICallback<void>): void;
 }
