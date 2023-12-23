@@ -16,7 +16,7 @@
 
 ### eventListeners
 
-• `Optional` **eventListeners**: [`IEventListenersConfig`](IEventListenersConfig.md)
+• `Optional` **eventListeners**: [`TEventListenersConfig`](../README.md#teventlistenersconfig)
 
 ___
 

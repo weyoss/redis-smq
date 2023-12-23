@@ -67,7 +67,6 @@
 - [IConsumerHeartbeatPayload](interfaces/IConsumerHeartbeatPayload.md)
 - [IConsumerMessageHandlerArgs](interfaces/IConsumerMessageHandlerArgs.md)
 - [IEventListener](interfaces/IEventListener.md)
-- [IEventListenersConfig](interfaces/IEventListenersConfig.md)
 - [IExchange](interfaces/IExchange.md)
 - [IExchangeSerialized](interfaces/IExchangeSerialized.md)
 - [IMessageSerialized](interfaces/IMessageSerialized.md)
@@ -88,11 +87,10 @@
 
 ### Type Aliases
 
-- [IEventListenersConfigRequired](README.md#ieventlistenersconfigrequired)
 - [IQueueMessagesPageParams](README.md#iqueuemessagespageparams)
 - [TConsumerMessageHandler](README.md#tconsumermessagehandler)
 - [TConsumerRedisKeys](README.md#tconsumerrediskeys)
-- [TEventListenerInitArgs](README.md#teventlistenerinitargs)
+- [TEventListenersConfig](README.md#teventlistenersconfig)
 - [TExchange](README.md#texchange)
 - [TExchangeDirect](README.md#texchangedirect)
 - [TExchangeDirectBindingParams](README.md#texchangedirectbindingparams)
@@ -114,12 +112,6 @@
 - [disconnect](README.md#disconnect)
 
 ## Type Aliases
-
-### IEventListenersConfigRequired
-
-Ƭ **IEventListenersConfigRequired**: `Required`\<[`IEventListenersConfig`](interfaces/IEventListenersConfig.md)\>
-
-___
 
 ### IQueueMessagesPageParams
 
@@ -163,16 +155,9 @@ ___
 
 ___
 
-### TEventListenerInitArgs
+### TEventListenersConfig
 
-Ƭ **TEventListenerInitArgs**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `eventProvider` | `EventEmitter`\<[`TRedisSMQEvent`](README.md#tredissmqevent)\> |
-| `instanceId` | `string` |
+Ƭ **TEventListenersConfig**: () => [`IEventListener`](interfaces/IEventListener.md)[]
 
 ___
 
@@ -285,12 +270,12 @@ ___
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `heartbeatTick`         | (`timestamp`: `number`, `consumerId`: `string`, `heartbeatPayload`: [`IConsumerHeartbeat`](interfaces/IConsumerHeartbeat.md)) => `void` ;                                                                                                      |
 | `messageAcknowledged`   | (`messageId`: `string`, `queue`: [`IQueueParams`](interfaces/IQueueParams.md), `messageHandlerId`: `string`, `consumerId`: `string`) => `void` ;                                                                                               |
-| `messageDeadLettered`   | (`cause`: [`EConsumeMessageDeadLetterCause`](enums/EConsumeMessageDeadLetterCause.md), `messageId`: `string`, `queue`: [`IQueueParams`](interfaces/IQueueParams.md), `messageHandlerId`: `string`, `consumerId`: `string`) => `void` ;         |
+| `messageDeadLettered`   | (`messageId`: `string`, `queue`: [`IQueueParams`](interfaces/IQueueParams.md), `messageHandlerId`: `string`, `consumerId`: `string`, `cause`: [`EConsumeMessageDeadLetterCause`](enums/EConsumeMessageDeadLetterCause.md)) => `void` ;         |
 | `messageDelayed`        | (`messageId`: `string`, `queue`: [`IQueueParams`](interfaces/IQueueParams.md), `messageHandlerId`: `string`, `consumerId`: `string`) => `void` ;                                                                                               |
-| `messagePublished`      | (`messageId`: `string`, `queue`: [`IQueueParams`](interfaces/IQueueParams.md)) => `void` ;                                                                                                                                                     |
+| `messagePublished`      | (`messageId`: `string`, `queue`: [`IQueueParams`](interfaces/IQueueParams.md), `producerId`: `string`) => `void` ;                                                                                                                                                     |
 | `messageReceived`       | (`messageId`: `string`, `queue`: [`IQueueParams`](interfaces/IQueueParams.md), `consumerId`: `string`) => `void` ;                                                                                                                             |
 | `messageRequeued`       | (`messageId`: `string`, `queue`: [`IQueueParams`](interfaces/IQueueParams.md), `messageHandlerId`: `string`, `consumerId`: `string`) => `void` ;                                                                                               |
-| `messageUnacknowledged` | (`cause`: [`EConsumeMessageUnacknowledgedCause`](enums/EConsumeMessageUnacknowledgedCause.md), `messageId`: `string`, `queue`: [`IQueueParams`](interfaces/IQueueParams.md), `messageHandlerId`: `string`, `consumerId`: `string`) => `void` ; |
+| `messageUnacknowledged` | (`messageId`: `string`, `queue`: [`IQueueParams`](interfaces/IQueueParams.md), `messageHandlerId`: `string`, `consumerId`: `string`, `cause`: [`EConsumeMessageUnacknowledgedCause`](enums/EConsumeMessageUnacknowledgedCause.md)) => `void` ; |
 
 ___
 

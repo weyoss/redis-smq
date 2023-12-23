@@ -19,7 +19,7 @@ const queue = new Queue();
 queue.save('my_queue', EQueueType.LIFO_QUEUE, (err) => console.log(err));
 ```
 
-## Using RedisSMQ as an CJS Module
+## Using RedisSMQ as a CJS Module
 
 ```javascript
 const { Queue, EQueueType } = require('redis-smq');

@@ -2,6 +2,12 @@
 
 # Interface: IEventListener
 
+## Hierarchy
+
+- `EventEmitter`\<[`TRedisSMQEvent`](../README.md#tredissmqevent)\>
+
+  ↳ **`IEventListener`**
+
 ## Table of contents
 
 ### Methods
@@ -13,13 +19,12 @@
 
 ### init
 
-▸ **init**(`args`, `cb`): `void`
+▸ **init**(`cb`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `args` | [`TEventListenerInitArgs`](../README.md#teventlistenerinitargs) |
 | `cb` | `ICallback`\<`void`\> |
 
 #### Returns

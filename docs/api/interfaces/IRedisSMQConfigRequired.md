@@ -22,7 +22,7 @@
 
 ### eventListeners
 
-• **eventListeners**: `Required`\<[`IEventListenersConfig`](IEventListenersConfig.md)\>
+• **eventListeners**: [`TEventListenersConfig`](../README.md#teventlistenersconfig)
 
 #### Overrides
 
