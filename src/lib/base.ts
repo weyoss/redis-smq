@@ -64,6 +64,11 @@ export abstract class Base extends EventEmitter<TRedisSMQEvent> {
     } else cb();
   };
 
+  protected initEventListeners = (cb: ICallback<void>): void => {
+    const { eventListeners } = Configuration.getSetConfig();
+    this.registerEventListeners(eventListeners, cb);
+  };
+
   protected registerSystemEventListeners(): void {
     this.on('goingUp', () => this.logger.info(`Going up...`));
     this.on('up', () => this.logger.info(`Up and running...`));
@@ -73,7 +78,7 @@ export abstract class Base extends EventEmitter<TRedisSMQEvent> {
   }
 
   protected goingUp(): TFunction[] {
-    return [this.setUpSharedRedisClient];
+    return [this.setUpSharedRedisClient, this.initEventListeners];
   }
 
   protected up(cb?: ICallback<boolean>): void {
@@ -106,19 +111,13 @@ export abstract class Base extends EventEmitter<TRedisSMQEvent> {
       Ctors,
       (ctor, key, done) => {
         const instance = new ctor();
-        instance.init(
-          {
-            instanceId: this.id,
-            eventProvider: this,
-          },
-          (err) => {
-            if (err) done(err);
-            else {
-              this.eventListeners.push(instance);
-              done();
-            }
-          },
-        );
+        instance.init((err) => {
+          if (err) done(err);
+          else {
+            this.eventListeners.push(instance);
+            done();
+          }
+        });
       },
       cb,
     );

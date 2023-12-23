@@ -51,6 +51,28 @@ export class Consumer extends Base {
     this.redisKeys = redisKeys.getConsumerKeys(this.getId());
   }
 
+  protected override registerSystemEventListeners(): void {
+    super.registerSystemEventListeners();
+    this.on('messageAcknowledged', (...args) => {
+      if (this.eventListeners.length)
+        this.eventListeners.forEach((i) =>
+          i.emit('messageAcknowledged', ...args),
+        );
+    });
+    this.on('messageUnacknowledged', (...args) => {
+      if (this.eventListeners.length)
+        this.eventListeners.forEach((i) =>
+          i.emit('messageUnacknowledged', ...args),
+        );
+    });
+    this.on('messageDeadLettered', (...args) => {
+      if (this.eventListeners.length)
+        this.eventListeners.forEach((i) =>
+          i.emit('messageDeadLettered', ...args),
+        );
+    });
+  }
+
   protected setUpHeartbeat = (cb: ICallback<void>): void => {
     redis.createInstance(
       Configuration.getSetConfig().redis,
@@ -107,13 +129,6 @@ export class Consumer extends Base {
     this.workerRunner.run();
   };
 
-  protected initConsumerEventListeners = (cb: ICallback<void>): void => {
-    this.registerEventListeners(
-      Configuration.getSetConfig().eventListeners.consumerEventListeners,
-      cb,
-    );
-  };
-
   protected tearDownConsumerWorkers = (cb: ICallback<void>): void => {
     if (this.workerRunner) {
       this.workerRunner.quit(() => {
@@ -139,7 +154,6 @@ export class Consumer extends Base {
       .goingUp()
       .concat([
         this.setUpHeartbeat,
-        this.initConsumerEventListeners,
         this.runMessageHandlers,
         this.setUpConsumerWorkers,
       ]);

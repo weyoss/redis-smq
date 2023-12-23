@@ -93,20 +93,20 @@ export class ConsumeMessage {
           const consumerId = this.messageHandler.getConsumerId();
           this.messageHandler.emit(
             'messageUnacknowledged',
-            cause,
             messageId,
             queue,
             messageHandlerId,
             consumerId,
+            cause,
           );
           if (reply.action === ERetryAction.DEAD_LETTER) {
             this.messageHandler.emit(
               'messageDeadLettered',
-              reply.deadLetterCause,
               messageId,
               queue,
               messageHandlerId,
               consumerId,
+              reply.deadLetterCause,
             );
           } else if (reply.action === ERetryAction.DELAY) {
             this.messageHandler.emit(

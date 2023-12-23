@@ -13,7 +13,6 @@ import {
   async,
   RedisClient,
   ICallback,
-  TUnaryFunction,
   CallbackEmptyReplyError,
 } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
@@ -30,19 +29,15 @@ import {
 } from '../../../types';
 import { ExchangeDirect } from '../exchange/exchange-direct';
 import { _getQueueParams } from '../queue/queue/_get-queue-params';
-import { Configuration } from '../../config/configuration';
 import { ProducibleMessage } from '../message/producible-message';
 
 export class Producer extends Base {
-  protected initProducerEventListeners = (cb: ICallback<void>): void => {
-    this.registerEventListeners(
-      Configuration.getSetConfig().eventListeners.producerEventListeners,
-      cb,
-    );
-  };
-
-  protected override goingUp(): TUnaryFunction<ICallback<void>>[] {
-    return super.goingUp().concat([this.initProducerEventListeners]);
+  protected override registerSystemEventListeners(): void {
+    super.registerSystemEventListeners();
+    this.on('messagePublished', (...args) => {
+      if (this.eventListeners.length)
+        this.eventListeners.forEach((i) => i.emit('messagePublished', ...args));
+    });
   }
 
   protected enqueue(
@@ -121,7 +116,7 @@ export class Producer extends Base {
         if (err) cb(err);
         else {
           this.logger.info(`Message (ID ${messageId}) has been published.`);
-          this.emit('messagePublished', messageId, queue);
+          this.emit('messagePublished', messageId, queue, this.id);
           cb(null, messageId);
         }
       });

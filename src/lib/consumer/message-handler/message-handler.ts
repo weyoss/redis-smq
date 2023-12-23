@@ -8,7 +8,6 @@
  */
 
 import {
-  EConsumeMessageDeadLetterCause,
   EConsumeMessageUnacknowledgedCause,
   TConsumerMessageHandler,
   IQueueParams,
@@ -87,7 +86,7 @@ export class MessageHandler extends EventEmitter<TRedisSMQEvent> {
     });
     this.on(
       'messageDeadLettered',
-      (cause: EConsumeMessageDeadLetterCause, messageId: string) => {
+      (messageId, queue, messageHandlerId, consumerId, cause) => {
         this.logger.info(
           `Message (ID ${messageId}) dead-lettered (cause ${cause})`,
         );
@@ -95,7 +94,7 @@ export class MessageHandler extends EventEmitter<TRedisSMQEvent> {
     );
     this.on(
       'messageUnacknowledged',
-      (cause: EConsumeMessageUnacknowledgedCause, messageId: string) => {
+      (messageId, queue, messageHandlerId, consumerId, cause) => {
         this.logger.info(
           `Message (ID ${messageId}) unacknowledged (cause ${cause})`,
         );
