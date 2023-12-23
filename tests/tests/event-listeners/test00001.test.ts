@@ -7,14 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import {
-  EConsumeMessageDeadLetterCause,
-  IEventListener,
-  IQueueParams,
-  IRedisSMQConfig,
-  TEventListenerInitArgs,
-} from '../../../types';
-import { ICallback } from 'redis-smq-common';
+import { IEventListener, IQueueParams, IRedisSMQConfig } from '../../../types';
+import { EventEmitter, ICallback } from 'redis-smq-common';
 import { config } from '../../common/config';
 import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import {
@@ -34,30 +28,37 @@ const consumerStats: Record<
   { queue: IQueueParams; event: keyof TRedisSMQEvent; messageId: string }[]
 > = {};
 
-class TestConsumerEventListener implements IEventListener {
-  init(
-    { instanceId, eventProvider }: TEventListenerInitArgs,
-    cb: ICallback<void>,
-  ) {
-    consumerStats[instanceId] = [];
-    eventProvider.on(
+class TestConsumerEventListener
+  extends EventEmitter<TRedisSMQEvent>
+  implements IEventListener
+{
+  init(cb: ICallback<void>) {
+    this.on(
       'messageAcknowledged',
-      (messageId: string, queue: IQueueParams) => {
-        consumerStats[instanceId].push({
+      (
+        messageId: string,
+        queue: IQueueParams,
+        messageHandlerId,
+        consumerId,
+      ) => {
+        consumerStats[consumerId] = consumerStats[consumerId] ?? [];
+        consumerStats[consumerId].push({
           queue,
           event: 'messageAcknowledged',
           messageId,
         });
       },
     );
-    eventProvider.on(
+    this.on(
       'messageDeadLettered',
       (
-        _: EConsumeMessageDeadLetterCause,
         messageId: string,
         queue: IQueueParams,
+        messageHandlerId,
+        consumerId,
       ) => {
-        consumerStats[instanceId].push({
+        consumerStats[consumerId] = consumerStats[consumerId] ?? [];
+        consumerStats[consumerId].push({
           queue,
           event: 'messageDeadLettered',
           messageId,
@@ -75,9 +76,7 @@ class TestConsumerEventListener implements IEventListener {
 test('Consumer event listeners', async () => {
   const cfg: IRedisSMQConfig = {
     ...config,
-    eventListeners: {
-      consumerEventListeners: [TestConsumerEventListener],
-    },
+    eventListeners: [TestConsumerEventListener],
   };
 
   Configuration.reset();
