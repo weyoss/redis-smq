@@ -7,15 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { EExchangeType, TExchangeSerialized } from '../../../types';
+import { EExchangeType, TExchange, TExchangeSerialized } from '../../../types';
 import { ExchangeInvalidDataError } from './errors';
 import { ExchangeFanOut } from './exchange-fan-out';
 import { ExchangeTopic } from './exchange-topic';
 import { ExchangeDirect } from './exchange-direct';
 
-export function _fromJSON(
-  json: Partial<TExchangeSerialized>,
-): ExchangeFanOut | ExchangeTopic | ExchangeDirect {
+export function _fromJSON(json: Partial<TExchangeSerialized>): TExchange {
   if (!json.bindingParams || json.type === undefined)
     throw new ExchangeInvalidDataError();
   if (json.type === EExchangeType.FANOUT) {

@@ -8,3 +8,4 @@
  */
 
 export * from './exchange';
+export * from './common';
