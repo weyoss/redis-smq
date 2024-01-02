@@ -137,6 +137,10 @@ export abstract class Base extends EventEmitter<TRedisSMQEvent> {
     );
   };
 
+  protected hasEventListeners(): boolean {
+    return !!Configuration.getSetConfig().eventListeners.length;
+  }
+
   handleError(err: Error): void {
     if (this.powerSwitch.isGoingUp() || this.powerSwitch.isRunning()) {
       throw err;
