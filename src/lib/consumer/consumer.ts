@@ -53,24 +53,23 @@ export class Consumer extends Base {
 
   protected override registerSystemEventListeners(): void {
     super.registerSystemEventListeners();
-    this.on('messageAcknowledged', (...args) => {
-      if (this.eventListeners.length)
+    if (this.hasEventListeners()) {
+      this.on('messageAcknowledged', (...args) => {
         this.eventListeners.forEach((i) =>
           i.emit('messageAcknowledged', ...args),
         );
-    });
-    this.on('messageUnacknowledged', (...args) => {
-      if (this.eventListeners.length)
+      });
+      this.on('messageUnacknowledged', (...args) => {
         this.eventListeners.forEach((i) =>
           i.emit('messageUnacknowledged', ...args),
         );
-    });
-    this.on('messageDeadLettered', (...args) => {
-      if (this.eventListeners.length)
+      });
+      this.on('messageDeadLettered', (...args) => {
         this.eventListeners.forEach((i) =>
           i.emit('messageDeadLettered', ...args),
         );
-    });
+      });
+    }
   }
 
   protected setUpHeartbeat = (cb: ICallback<void>): void => {

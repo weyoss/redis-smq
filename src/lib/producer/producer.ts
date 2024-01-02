@@ -34,10 +34,11 @@ import { ProducibleMessage } from '../message/producible-message';
 export class Producer extends Base {
   protected override registerSystemEventListeners(): void {
     super.registerSystemEventListeners();
-    this.on('messagePublished', (...args) => {
-      if (this.eventListeners.length)
+    if (this.hasEventListeners()) {
+      this.on('messagePublished', (...args) => {
         this.eventListeners.forEach((i) => i.emit('messagePublished', ...args));
-    });
+      });
+    }
   }
 
   protected enqueue(
