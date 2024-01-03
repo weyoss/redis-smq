@@ -22,6 +22,10 @@ Out-of-box RedisSMQ offers 3 exchange types.
 
 ## Direct Exchange
 
+&nbsp;
+
+![RedisSMQ Direct Exchange](redis-smq-direct-exchange.png)
+
 A direct exchange allows producers to publish a message to a single queue which is matched exactly by the specified queue of the exchange.
 
 The queue of the direct exchange may be a string, like `a.b.c.d` or an object describing the namespace of the queue like `{ ns: 'my-app', name: 'a.b.c.d'}`. 
@@ -51,6 +55,10 @@ msg.setExchange(exchange).setBody('123456789');
 When publishing a message with a direct exchange, if the exchange queue does not exist the message will be discarded and an error will be returned.
 
 ## Topic Exchange
+
+&nbsp;
+
+![RedisSMQ Topic Exchange](redis-smq-topic-exchange.png)
 
 When a topic exchange is used for a message, it allows to publish the message to one or multiple queues which are matched by the topic pattern of the exchange.
 
@@ -85,6 +93,10 @@ msg.setExchange(exchange).setBody('123456789');
 When publishing a message with a topic exchange, if the topic pattern does not match any queues the message will be discarded and an error will be returned.
 
 ## FanOut Exchange
+
+&nbsp;
+
+![RedisSMQ FanOut Exchange](redis-smq-fanout-exchange.png)
 
 A FanOut exchange allows producers to publish a message to one or multiple queues which are bound to this exchange by a binding key.
 
