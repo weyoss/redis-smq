@@ -1,6 +1,6 @@
 <div align="center" style="text-align: center">
   <p><a href="https://github.com/weyoss/redis-smq"><img alt="RedisSMQ" src="./logo.png?v=202312182134" /></a></p>
-  <p>A simple high-performance Redis message queue for Node.js.</p>
+  <p style='color: #d82c20'>A simple high-performance Redis message queue for Node.js.</p>
 </div>
 
 # RedisSMQ
@@ -35,7 +35,7 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 
 &nbsp;
 
-![RedisSMQ Overview](docs/redis-smq-overview.png)
+![RedisSMQ Multi-Queue Producers & Multi-Queue Consumers](docs/redis-smq-multi-queue-consumers-producers.png)
 
 ## What's new?
 

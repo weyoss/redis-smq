@@ -6,11 +6,15 @@ A queue is responsible for holding messages which are produced by producers and 
 
 RedisSMQ supports 3 types of queues: **LIFO queues**, **FIFO queues**, and **Priority queues**.
 
-All RedisSMQ queue types are **reliable**. A queue is said to be reliable, when during a failure scenario, let it be for example a consumer crash, it can recover from such failure and the message being processed is not lost. 
+All RedisSMQ queue types are **reliable**. A queue is said to be reliable, when during a failure scenario, let it be for example a consumer crash, it can recover from such failure and the message being processed is not lost.
 
 In a typical use case, both LIFO and FIFO queues use [brpoplpush](https://redis.io/commands/brpoplpush), which blocks the connection to the Redis server until a message is received. However, priority queues use pooling and lua scripting which introduce a little of overhead on the MQ and therefore priority queues are less performant than other queue types.
 
 ## LIFO (Last In, First Out) queues
+
+&nbsp;
+
+![RedisSMQ LIFO Queuing](redis-smq-lifo.png)
 
 In a LIFO queue the last published messages are always delivered first and the first published messages are delivered last.
 
@@ -27,6 +31,10 @@ See [Queue.prototype.save()](api/classes/Queue.md#save) for more details.
 
 ## FIFO (First In, First Out) Queues
 
+&nbsp;
+
+![RedisSMQ FIFO Queuing](redis-smq-fifo.png)
+
 In a FIFO queue the first published messages are delivered first and the last published messages are delivered last.
 
 ```javascript
@@ -41,6 +49,10 @@ queue.save('my_fifo_queue', EQueueType.FIFO_QUEUE, (err) => console.log(err));
 See [Queue.prototype.save()](api/classes/Queue.md#save) for more details.
 
 ## Priority Queues
+
+&nbsp;
+
+![RedisSMQ Priority Queuing](redis-smq-priority-queuing.png)
 
 In a priority queue, messages with higher priority are always delivered first before messages with lower priority.
 
@@ -77,7 +89,7 @@ See [EMessagePriority](api/enums/EMessagePriority.md).
 
 ## Queue Namespaces
 
-Queues in RedisSMQ are namespaced. 
+Queues in RedisSMQ are namespaced.
 
 A queue namespace is used as a scope for a given set of queues to ensure unique queue names and to avoid **name collisions** when multiple queues share the same name.
 
