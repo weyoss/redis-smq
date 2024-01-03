@@ -14,7 +14,7 @@ In a typical use case, both LIFO and FIFO queues use [brpoplpush](https://redis.
 
 &nbsp;
 
-![RedisSMQ LIFO Queuing](redis-smq-lifo.png)
+![RedisSMQ LIFO Queuing](redis-smq-lifo-queuing.png)
 
 In a LIFO queue the last published messages are always delivered first and the first published messages are delivered last.
 
@@ -33,7 +33,7 @@ See [Queue.prototype.save()](api/classes/Queue.md#save) for more details.
 
 &nbsp;
 
-![RedisSMQ FIFO Queuing](redis-smq-fifo.png)
+![RedisSMQ FIFO Queuing](redis-smq-fifo-queuing.png)
 
 In a FIFO queue the first published messages are delivered first and the last published messages are delivered last.
 
