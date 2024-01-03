@@ -1,5 +1,27 @@
 
 
+## [8.0.0-rc.14](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.13...v8.0.0-rc.14) (2024-01-03)
+
+
+### Documentation
+
+* add new diagrams and update existing ones ([f5182b1](https://github.com/weyoss/redis-smq/commit/f5182b10b5179365edf68e7b6bf564ccc25281ab))
+* **event-listeners:** add a link to IRedisSMQConfig interface ([a7635c5](https://github.com/weyoss/redis-smq/commit/a7635c5d811ad775123547a5696c78b030981269))
+* scale down diagrams ([c3b37e4](https://github.com/weyoss/redis-smq/commit/c3b37e445a6d15fdcc8c7a73b713a1f7d5e7c94e))
+* update exchange diagrams ([9dc05d6](https://github.com/weyoss/redis-smq/commit/9dc05d6cd835d779b9d183e83f562c7991105c92))
+
+
+### Codebase Refactoring
+
+* **event-listeners:** clean up ([d9195e4](https://github.com/weyoss/redis-smq/commit/d9195e4e85e2e4519d238f5f3ecace37ae9bbb32))
+* **exchanges:** improve typings ([97665fe](https://github.com/weyoss/redis-smq/commit/97665fed4a579af444c46e01a6b05f9adb12e888))
+* **message:** handle various errors when deleting a message ([a4505ae](https://github.com/weyoss/redis-smq/commit/a4505ae7d95bda0185da28433c6737e395400e7b))
+
+
+### Tests
+
+* **message:** handle various errors when deleting a message ([ecf301b](https://github.com/weyoss/redis-smq/commit/ecf301b06aac1bf6d0fcb1ced962a32ac6a6ca68))
+
 ## [8.0.0-rc.13](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.12...v8.0.0-rc.13) (2023-12-23)
 
 
