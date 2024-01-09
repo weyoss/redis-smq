@@ -22,8 +22,6 @@ Out-of-box RedisSMQ offers 3 exchange types.
 
 ## Direct Exchange
 
-&nbsp;
-
 ![RedisSMQ Direct Exchange](redis-smq-direct-exchange.png)
 
 A direct exchange allows producers to publish a message to a single queue which is matched exactly by the specified queue of the exchange.
@@ -55,8 +53,6 @@ msg.setExchange(exchange).setBody('123456789');
 When publishing a message with a direct exchange, if the exchange queue does not exist the message will be discarded and an error will be returned.
 
 ## Topic Exchange
-
-&nbsp;
 
 ![RedisSMQ Topic Exchange](redis-smq-topic-exchange.png)
 
@@ -93,8 +89,6 @@ msg.setExchange(exchange).setBody('123456789');
 When publishing a message with a topic exchange, if the topic pattern does not match any queues the message will be discarded and an error will be returned.
 
 ## FanOut Exchange
-
-&nbsp;
 
 ![RedisSMQ FanOut Exchange](redis-smq-fanout-exchange.png)
 

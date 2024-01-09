@@ -12,8 +12,6 @@ In a typical use case, both LIFO and FIFO queues use [brpoplpush](https://redis.
 
 ## LIFO (Last In, First Out) queues
 
-&nbsp;
-
 ![RedisSMQ LIFO Queuing](redis-smq-lifo-queuing.png)
 
 In a LIFO queue the last published messages are always delivered first and the first published messages are delivered last.
@@ -31,8 +29,6 @@ See [Queue.prototype.save()](api/classes/Queue.md#save) for more details.
 
 ## FIFO (First In, First Out) Queues
 
-&nbsp;
-
 ![RedisSMQ FIFO Queuing](redis-smq-fifo-queuing.png)
 
 In a FIFO queue the first published messages are delivered first and the last published messages are delivered last.
@@ -49,8 +45,6 @@ queue.save('my_fifo_queue', EQueueType.FIFO_QUEUE, (err) => console.log(err));
 See [Queue.prototype.save()](api/classes/Queue.md#save) for more details.
 
 ## Priority Queues
-
-&nbsp;
 
 ![RedisSMQ Priority Queuing](redis-smq-priority-queuing.png)
 

@@ -1,6 +1,10 @@
+> [!IMPORTANT]
+> Currently, RedisSMQ is going under heavy development. Pre-releases at any time may introduce new commits with breaking changes. 
+> The master branch always reflects the most recent changes. To view the latest release reference see [RedisSMQ v7.2.3](https://github.com/weyoss/redis-smq/tree/v7.2.3)
+
 <div align="center" style="text-align: center">
   <p><a href="https://github.com/weyoss/redis-smq"><img alt="RedisSMQ" src="./logo.png?v=202312182134" /></a></p>
-  <p style='color: #d82c20'>A simple high-performance Redis message queue for Node.js.</p>
+  <p>A simple high-performance Redis message queue for Node.js.</p>
 </div>
 
 # RedisSMQ
@@ -33,8 +37,6 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 
 ## RedisSMQ Use Case: Multi-Queue Producers & Multi-Queue Consumers
 
-&nbsp;
-
 ![RedisSMQ Multi-Queue Producers & Multi-Queue Consumers](docs/redis-smq-multi-queue-consumers-producers.png)
 
 ## What's new?
@@ -42,8 +44,6 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 :rocket: RedisSMQ v8 is coming soon!
 
 ## Installation
-
-> Currently, RedisSMQ is going under heavy development. Pre-releases at any time may introduce new commits with breaking changes. To view the latest release reference see [RedisSMQ v7.2.3](https://github.com/weyoss/redis-smq/tree/v7.2.3)
 
 ```shell
 npm i redis-smq@rc
