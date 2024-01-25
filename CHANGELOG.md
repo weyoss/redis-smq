@@ -1,5 +1,25 @@
 
 
+## [8.0.0-rc.15](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.14...v8.0.0-rc.15) (2024-01-25)
+
+
+### Features
+
+* add Pub/Sub delivery model, refactor and clean up ([47affa1](https://github.com/weyoss/redis-smq/commit/47affa172eb2fc6943f660bea3feab3af1bc28ec))
+
+
+### Documentation
+
+* add a notification about the latest release, clean up ([904f196](https://github.com/weyoss/redis-smq/commit/904f196f1854059625b08af05fe5ceb1466d4a9f))
+* add Pub/Sub delivery model, refactor and clean up ([32db9dd](https://github.com/weyoss/redis-smq/commit/32db9dd2772bc16568e03e6e216a7d0fd0a599a7))
+* clean up ([c7d13a6](https://github.com/weyoss/redis-smq/commit/c7d13a639a1ed9f134ba3deb99d1e2a23223935a))
+
+
+### Misc
+
+* bump up redis-smq-common to v3.0.0-rc.8 ([d411849](https://github.com/weyoss/redis-smq/commit/d4118496263479036085ee09ceb5785ee497bb59))
+* bump up redis-smq-common to v3.0.0-rc9 ([d372e9d](https://github.com/weyoss/redis-smq/commit/d372e9d98593934e9e9fb63efcd56cbad99202af))
+
 ## [8.0.0-rc.14](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.13...v8.0.0-rc.14) (2024-01-03)
 
 
