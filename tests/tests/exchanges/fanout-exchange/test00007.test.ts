@@ -8,7 +8,7 @@
  */
 
 import { ExchangeFanOut } from '../../../../src/lib/exchange/exchange-fan-out';
-import { EQueueType } from '../../../../types';
+import { EQueueDeliveryModel, EQueueType } from '../../../../types';
 import { getQueue } from '../../../common/queue';
 import { getFanOutExchange } from '../../../common/exchange';
 import { promisifyAll } from 'bluebird';
@@ -29,7 +29,11 @@ test('ExchangeFanOut: creating and deleting an exchange', async () => {
   const q1 = { ns: 'testing', name: 'w123' };
 
   const queue = await getQueue();
-  await queue.saveAsync(q1, EQueueType.LIFO_QUEUE);
+  await queue.saveAsync(
+    q1,
+    EQueueType.LIFO_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
   await e1.bindQueueAsync(q1);
   await e1.bindQueueAsync(q1);
 

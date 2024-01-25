@@ -10,13 +10,25 @@
 import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { ProducerMessageNotScheduledError } from '../../../src/lib/producer/errors';
 import { getProducer } from '../../common/producer';
-import { EMessagePriority, EQueueType } from '../../../types';
+import {
+  EMessagePriority,
+  EQueueDeliveryModel,
+  EQueueType,
+} from '../../../types';
 import { getQueue } from '../../common/queue';
 
 test('Scheduling a message and expecting different kind of failures', async () => {
   const queue = await getQueue();
-  await queue.saveAsync('test0', EQueueType.LIFO_QUEUE);
-  await queue.saveAsync('test1', EQueueType.PRIORITY_QUEUE);
+  await queue.saveAsync(
+    'test0',
+    EQueueType.LIFO_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
+  await queue.saveAsync(
+    'test1',
+    EQueueType.PRIORITY_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
 
   const producer = getProducer();
   await producer.runAsync();

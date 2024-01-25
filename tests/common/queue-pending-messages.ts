@@ -8,7 +8,7 @@
  */
 
 import { promisifyAll } from 'bluebird';
-import { QueuePendingMessages } from '../../src/lib/queue/queue-pending-messages';
+import { QueuePendingMessages } from '../../src/lib/queue/queue-pending-messages/queue-pending-messages';
 
 export async function getQueuePendingMessages() {
   return promisifyAll(new QueuePendingMessages());

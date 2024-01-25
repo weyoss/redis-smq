@@ -51,7 +51,7 @@ test('Consume message from different queues using a single consumer instance: ca
   });
 
   const queues = consumer.getQueues();
-  expect(queues.map((i) => i.name)).toEqual([
+  expect(queues.map((i) => i.queueParams.name)).toEqual([
     'test1',
     'test2',
     'test3',
@@ -86,7 +86,7 @@ test('Consume message from different queues using a single consumer instance: ca
   ]);
 
   await consumer.cancelAsync('test4');
-  expect(consumer.getQueues().map((i) => i.name)).toEqual([
+  expect(consumer.getQueues().map((i) => i.queueParams.name)).toEqual([
     'test1',
     'test2',
     'test3',
@@ -109,7 +109,7 @@ test('Consume message from different queues using a single consumer instance: ca
     'test5',
     'test6',
   ]);
-  expect(consumer.getQueues().map((i) => i.name)).toEqual([
+  expect(consumer.getQueues().map((i) => i.queueParams.name)).toEqual([
     'test1',
     'test2',
     'test3',

@@ -10,7 +10,7 @@
 import { ProducibleMessage } from '../../../../src/lib/message/producible-message';
 import { getProducer } from '../../../common/producer';
 import { isEqual } from '../../../common/util';
-import { EQueueType } from '../../../../types';
+import { EQueueDeliveryModel, EQueueType } from '../../../../types';
 import { getQueue } from '../../../common/queue';
 import { getFanOutExchange } from '../../../common/exchange';
 import { promisifyAll } from 'bluebird';
@@ -21,8 +21,16 @@ test('ExchangeFanOut: producing message using setFanOut()', async () => {
   const q2 = { ns: 'testing', name: 'w456' };
 
   const queue = await getQueue();
-  await queue.saveAsync(q1, EQueueType.LIFO_QUEUE);
-  await queue.saveAsync(q2, EQueueType.LIFO_QUEUE);
+  await queue.saveAsync(
+    q1,
+    EQueueType.LIFO_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
+  await queue.saveAsync(
+    q2,
+    EQueueType.LIFO_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
 
   const exchange = getFanOutExchange('fanout_a');
   await exchange.bindQueueAsync(q1);

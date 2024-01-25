@@ -16,6 +16,7 @@ import { shutDownBaseInstance } from '../../common/base-instance';
 import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages';
 import { getQueueMessages } from '../../common/queue-messages';
+import { QueueMessageRequeueError } from '../../../src/lib/queue/errors';
 
 test('Combined test: Requeue a message from dead-letter queue. Check queue metrics.', async () => {
   await createQueue(defaultQueue, false);
@@ -40,7 +41,7 @@ test('Combined test: Requeue a message from dead-letter queue. Check queue metri
   expect(count.deadLettered).toBe(0);
   expect(count.pending).toBe(1);
 
-  await expect(async () => {
-    await deadLetteredMessages.requeueMessageAsync(queue, messageId);
-  }).not.toThrow();
+  await expect(
+    deadLetteredMessages.requeueMessageAsync(queue, messageId),
+  ).rejects.toThrow(QueueMessageRequeueError);
 });

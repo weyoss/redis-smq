@@ -10,7 +10,7 @@
 import { promisifyAll } from 'bluebird';
 import { Consumer } from '../../../src/lib/consumer/consumer';
 import { shutDownBaseInstance } from '../../common/base-instance';
-import { EQueueType } from '../../../types';
+import { EQueueDeliveryModel, EQueueType } from '../../../types';
 import { getQueue } from '../../common/queue';
 
 test('Consume message from different queues using a single consumer instance: case 1', async () => {
@@ -19,10 +19,18 @@ test('Consume message from different queues using a single consumer instance: ca
 
   expect(consumer.getQueues()).toEqual([]);
 
-  await queueInstance.saveAsync('test_queue', EQueueType.LIFO_QUEUE);
+  await queueInstance.saveAsync(
+    'test_queue',
+    EQueueType.LIFO_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
   await consumer.consumeAsync('test_queue', (msg, cb) => cb());
 
-  await queueInstance.saveAsync('another_queue', EQueueType.LIFO_QUEUE);
+  await queueInstance.saveAsync(
+    'another_queue',
+    EQueueType.LIFO_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
   await consumer.consumeAsync('another_queue', (msg, cb) => cb());
 
   expect(
@@ -32,19 +40,21 @@ test('Consume message from different queues using a single consumer instance: ca
   );
 
   expect(consumer.getQueues()).toEqual([
-    { name: 'test_queue', ns: 'testing' },
-    { name: 'another_queue', ns: 'testing' },
+    { queueParams: { name: 'test_queue', ns: 'testing' }, groupId: null },
+    { queueParams: { name: 'another_queue', ns: 'testing' }, groupId: null },
   ]);
 
   await consumer.cancelAsync('another_queue');
 
-  expect(consumer.getQueues()).toEqual([{ name: 'test_queue', ns: 'testing' }]);
+  expect(consumer.getQueues()).toEqual([
+    { queueParams: { name: 'test_queue', ns: 'testing' }, groupId: null },
+  ]);
 
   await consumer.consumeAsync('another_queue', (msg, cb) => cb());
 
   expect(consumer.getQueues()).toEqual([
-    { name: 'test_queue', ns: 'testing' },
-    { name: 'another_queue', ns: 'testing' },
+    { queueParams: { name: 'test_queue', ns: 'testing' }, groupId: null },
+    { queueParams: { name: 'another_queue', ns: 'testing' }, groupId: null },
   ]);
 
   const res = await consumer.runAsync();
@@ -61,16 +71,22 @@ test('Consume message from different queues using a single consumer instance: ca
   // does not throw an error
   await consumer.cancelAsync('another_queue');
 
-  expect(consumer.getQueues()).toEqual([{ name: 'test_queue', ns: 'testing' }]);
+  expect(consumer.getQueues()).toEqual([
+    { queueParams: { name: 'test_queue', ns: 'testing' }, groupId: null },
+  ]);
 
   await consumer.consumeAsync('another_queue', (msg, cb) => cb());
 
   expect(consumer.getQueues()).toEqual([
-    { name: 'test_queue', ns: 'testing' },
-    { name: 'another_queue', ns: 'testing' },
+    { queueParams: { name: 'test_queue', ns: 'testing' }, groupId: null },
+    { queueParams: { name: 'another_queue', ns: 'testing' }, groupId: null },
   ]);
 
-  await queueInstance.saveAsync('queue_a', EQueueType.PRIORITY_QUEUE);
+  await queueInstance.saveAsync(
+    'queue_a',
+    EQueueType.PRIORITY_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
   await consumer.consumeAsync('queue_a', (msg, cb) => cb());
 
   expect(consumer.consumeAsync('queue_a', (msg, cb) => cb())).rejects.toThrow(
@@ -78,9 +94,9 @@ test('Consume message from different queues using a single consumer instance: ca
   );
 
   expect(consumer.getQueues()).toEqual([
-    { name: 'test_queue', ns: 'testing' },
-    { name: 'another_queue', ns: 'testing' },
-    { name: 'queue_a', ns: 'testing' },
+    { queueParams: { name: 'test_queue', ns: 'testing' }, groupId: null },
+    { queueParams: { name: 'another_queue', ns: 'testing' }, groupId: null },
+    { queueParams: { name: 'queue_a', ns: 'testing' }, groupId: null },
   ]);
 
   await shutDownBaseInstance(consumer);

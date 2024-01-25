@@ -7,7 +7,12 @@
  * in the root directory of this source tree.
  */
 
-import { IEventListener, IQueueParams, IRedisSMQConfig } from '../../../types';
+import {
+  IEventListener,
+  IQueueParams,
+  IQueueParsedParams,
+  IRedisSMQConfig,
+} from '../../../types';
 import { EventEmitter, ICallback } from 'redis-smq-common';
 import { config } from '../../common/config';
 import { ProducibleMessage } from '../../../src/lib/message/producible-message';
@@ -25,7 +30,11 @@ import { TRedisSMQEvent } from '../../../types';
 
 const consumerStats: Record<
   string,
-  { queue: IQueueParams; event: keyof TRedisSMQEvent; messageId: string }[]
+  {
+    queue: IQueueParams;
+    event: keyof TRedisSMQEvent;
+    messageId: string;
+  }[]
 > = {};
 
 class TestConsumerEventListener
@@ -37,13 +46,13 @@ class TestConsumerEventListener
       'messageAcknowledged',
       (
         messageId: string,
-        queue: IQueueParams,
+        queue: IQueueParsedParams,
         messageHandlerId,
         consumerId,
       ) => {
         consumerStats[consumerId] = consumerStats[consumerId] ?? [];
         consumerStats[consumerId].push({
-          queue,
+          queue: queue.queueParams,
           event: 'messageAcknowledged',
           messageId,
         });
@@ -53,13 +62,13 @@ class TestConsumerEventListener
       'messageDeadLettered',
       (
         messageId: string,
-        queue: IQueueParams,
+        queue: IQueueParsedParams,
         messageHandlerId,
         consumerId,
       ) => {
         consumerStats[consumerId] = consumerStats[consumerId] ?? [];
         consumerStats[consumerId].push({
-          queue,
+          queue: queue.queueParams,
           event: 'messageDeadLettered',
           messageId,
         });

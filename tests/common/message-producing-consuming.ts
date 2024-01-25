@@ -7,7 +7,12 @@
  * in the root directory of this source tree.
  */
 
-import { EMessagePriority, EQueueType, IQueueParams } from '../../types';
+import {
+  EMessagePriority,
+  EQueueDeliveryModel,
+  EQueueType,
+  IQueueParams,
+} from '../../types';
 import { ProducibleMessage } from '../../src/lib/message/producible-message';
 import { untilConsumerEvent, untilMessageAcknowledged } from './events';
 import { getConsumer } from './consumer';
@@ -109,7 +114,11 @@ export async function createQueue(
         ? EQueueType.PRIORITY_QUEUE
         : EQueueType.LIFO_QUEUE
       : mixed;
-  await queueInstance.saveAsync(queue, type);
+  await queueInstance.saveAsync(
+    queue,
+    type,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
 }
 
 export async function crashAConsumerConsumingAMessage() {
