@@ -8,6 +8,7 @@
 
 - [body](IMessageSerialized.md#body)
 - [consumeTimeout](IMessageSerialized.md#consumetimeout)
+- [consumerGroupId](IMessageSerialized.md#consumergroupid)
 - [createdAt](IMessageSerialized.md#createdat)
 - [destinationQueue](IMessageSerialized.md#destinationqueue)
 - [exchange](IMessageSerialized.md#exchange)
@@ -31,6 +32,12 @@ ___
 ### consumeTimeout
 
 • **consumeTimeout**: `number`
+
+___
+
+### consumerGroupId
+
+• **consumerGroupId**: ``null`` \| `string`
 
 ___
 

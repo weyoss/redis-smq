@@ -18,7 +18,13 @@
 
 ### constructor
 
-• **new QueueMessageRequeueError**(): [`QueueMessageRequeueError`](QueueMessageRequeueError.md)
+• **new QueueMessageRequeueError**(`msg?`): [`QueueMessageRequeueError`](QueueMessageRequeueError.md)
+
+#### Parameters
+
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `msg` | `string` | `'MESSAGE_REQUEUE_ERROR'` |
 
 #### Returns
 

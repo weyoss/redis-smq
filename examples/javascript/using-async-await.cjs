@@ -15,9 +15,10 @@ const {
   ProducibleMessage,
   Queue,
   EQueueType,
+  EQueueDeliveryMode,
   Configuration,
   disconnect,
-} = require('../..'); // redis-smq
+} = require('../..');
 
 const config = {
   namespace: 'ns1',
@@ -56,7 +57,11 @@ const createQueue = async () => {
   const exists = await queue.existsAsync('test_queue');
   if (!exists) {
     // Creating a queue (a LIFO queue)
-    await queue.saveAsync('test_queue', EQueueType.LIFO_QUEUE);
+    await queue.saveAsync(
+      'test_queue',
+      EQueueType.LIFO_QUEUE,
+      EQueueDeliveryMode.POINT_TO_POINT,
+    );
     await promisify(disconnect)();
   }
 };

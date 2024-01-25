@@ -12,6 +12,7 @@
 - [EMessagePriority](enums/EMessagePriority.md)
 - [EMessageProperty](enums/EMessageProperty.md)
 - [EMessagePropertyStatus](enums/EMessagePropertyStatus.md)
+- [EQueueDeliveryModel](enums/EQueueDeliveryModel.md)
 - [EQueueProperty](enums/EQueueProperty.md)
 - [EQueueType](enums/EQueueType.md)
 
@@ -19,8 +20,7 @@
 
 - [Configuration](classes/Configuration.md)
 - [Consumer](classes/Consumer.md)
-- [ExchangeDirect](classes/ExchangeDirect.md)
-- [ExchangeFanOut](classes/ExchangeFanOut.md)
+- [ConsumerGroups](classes/ConsumerGroups.md)
 - [ExchangeTopic](classes/ExchangeTopic.md)
 - [Message](classes/Message.md)
 - [Namespace](classes/Namespace.md)
@@ -34,13 +34,20 @@
 - [QueueRateLimit](classes/QueueRateLimit.md)
 - [QueueScheduledMessages](classes/QueueScheduledMessages.md)
 
-### Errors
+## Errors
 
 - [ConsumerError](classes/ConsumerError.md)
+- [ConsumerGroupDeleteError](classes/ConsumerGroupDeleteError.md)
+- [ConsumerGroupIdNotFoundError](classes/ConsumerGroupIdNotFoundError.md)
+- [ConsumerGroupIdNotSupportedError](classes/ConsumerGroupIdNotSupportedError.md)
+- [ConsumerGroupIdRequiredError](classes/ConsumerGroupIdRequiredError.md)
+- [ConsumerInvalidGroupIdError](classes/ConsumerInvalidGroupIdError.md)
 - [ConsumerMessageHandlerAlreadyExistsError](classes/ConsumerMessageHandlerAlreadyExistsError.md)
+- [ExchangeDirect](classes/ExchangeDirect.md)
+- [ExchangeError](classes/ExchangeError.md)
+- [ExchangeFanOut](classes/ExchangeFanOut.md)
 - [ExchangeFanOutError](classes/ExchangeFanOutError.md)
 - [ExchangeInvalidDataError](classes/ExchangeInvalidDataError.md)
-- [ExchangeError](classes/ExchangeError.md)
 - [MessageDeleteError](classes/MessageDeleteError.md)
 - [MessageDestinationQueueAlreadySetError](classes/MessageDestinationQueueAlreadySetError.md)
 - [MessageDestinationQueueRequiredError](classes/MessageDestinationQueueRequiredError.md)
@@ -49,16 +56,18 @@
 - [MessageNotFoundError](classes/MessageNotFoundError.md)
 - [ProducerError](classes/ProducerError.md)
 - [ProducerInstanceNotRunningError](classes/ProducerInstanceNotRunningError.md)
+- [ProducerMessageExchangeRequiredError](classes/ProducerMessageExchangeRequiredError.md)
 - [ProducerMessageNotPublishedError](classes/ProducerMessageNotPublishedError.md)
 - [ProducerMessageNotScheduledError](classes/ProducerMessageNotScheduledError.md)
-- [QueueRateLimitError](classes/QueueRateLimitError.md)
-- [QueueNamespaceNotFoundError](classes/QueueNamespaceNotFoundError.md)
-- [QueueNotEmptyError](classes/QueueNotEmptyError.md)
-- [QueueNotFoundError](classes/QueueNotFoundError.md)
+- [ProducerQueueWithoutConsumerGroupsError](classes/ProducerQueueWithoutConsumerGroupsError.md)
 - [QueueError](classes/QueueError.md)
 - [QueueExistsError](classes/QueueExistsError.md)
 - [QueueHasRunningConsumersError](classes/QueueHasRunningConsumersError.md)
 - [QueueMessageRequeueError](classes/QueueMessageRequeueError.md)
+- [QueueNamespaceNotFoundError](classes/QueueNamespaceNotFoundError.md)
+- [QueueNotEmptyError](classes/QueueNotEmptyError.md)
+- [QueueNotFoundError](classes/QueueNotFoundError.md)
+- [QueueRateLimitError](classes/QueueRateLimitError.md)
 
 ### Interfaces
 
@@ -76,10 +85,14 @@
 - [IMessagesConfigStorageOptions](interfaces/IMessagesConfigStorageOptions.md)
 - [IMessagesConfigStorageOptionsRequired](interfaces/IMessagesConfigStorageOptionsRequired.md)
 - [IMessagesConfigStorageRequired](interfaces/IMessagesConfigStorageRequired.md)
+- [IQueueConsumerGroupParams](interfaces/IQueueConsumerGroupParams.md)
+- [IQueueGroupConsumersPendingCount](interfaces/IQueueGroupConsumersPendingCount.md)
 - [IQueueMessages](interfaces/IQueueMessages.md)
 - [IQueueMessagesCount](interfaces/IQueueMessagesCount.md)
 - [IQueueMessagesPage](interfaces/IQueueMessagesPage.md)
+- [IQueueMessagesRequeuable](interfaces/IQueueMessagesRequeuable.md)
 - [IQueueParams](interfaces/IQueueParams.md)
+- [IQueueParsedParams](interfaces/IQueueParsedParams.md)
 - [IQueueProperties](interfaces/IQueueProperties.md)
 - [IQueueRateLimit](interfaces/IQueueRateLimit.md)
 - [IRedisSMQConfig](interfaces/IRedisSMQConfig.md)
@@ -92,18 +105,15 @@
 - [TConsumerRedisKeys](README.md#tconsumerrediskeys)
 - [TEventListenersConfig](README.md#teventlistenersconfig)
 - [TExchange](README.md#texchange)
-- [TExchangeDirect](README.md#texchangedirect)
 - [TExchangeDirectBindingParams](README.md#texchangedirectbindingparams)
-- [TExchangeDirectSerialized](README.md#texchangedirectserialized)
-- [TExchangeFanOut](README.md#texchangefanout)
 - [TExchangeFanOutBindingParams](README.md#texchangefanoutbindingparams)
-- [TExchangeFanOutSerialized](README.md#texchangefanoutserialized)
 - [TExchangeSerialized](README.md#texchangeserialized)
-- [TExchangeTopic](README.md#texchangetopic)
 - [TExchangeTopicBindingParams](README.md#texchangetopicbindingparams)
-- [TExchangeTopicSerialized](README.md#texchangetopicserialized)
 - [TMessageConsumeOptions](README.md#tmessageconsumeoptions)
 - [TQueueConsumer](README.md#tqueueconsumer)
+- [TQueueExtendedParams](README.md#tqueueextendedparams)
+- [TQueueMessagesPaginationParams](README.md#tqueuemessagespaginationparams)
+- [TQueueMessagesParams](README.md#tqueuemessagesparams)
 - [TRedisSMQEvent](README.md#tredissmqevent)
 - [TTopicParams](README.md#ttopicparams)
 
@@ -163,13 +173,7 @@ ___
 
 ### TExchange
 
-Ƭ **TExchange**: [`TExchangeDirect`](README.md#texchangedirect) \| [`TExchangeTopic`](README.md#texchangetopic) \| [`TExchangeFanOut`](README.md#texchangefanout)
-
-___
-
-### TExchangeDirect
-
-Ƭ **TExchangeDirect**: [`IExchange`](interfaces/IExchange.md)\<[`TExchangeDirectBindingParams`](README.md#texchangedirectbindingparams), [`DIRECT`](enums/EExchangeType.md#direct)\>
+Ƭ **TExchange**: [`ExchangeDirect`](classes/ExchangeDirect.md) \| [`ExchangeTopic`](classes/ExchangeTopic.md) \| [`ExchangeFanOut`](classes/ExchangeFanOut.md)
 
 ___
 
@@ -179,51 +183,21 @@ ___
 
 ___
 
-### TExchangeDirectSerialized
-
-Ƭ **TExchangeDirectSerialized**: [`IExchangeSerialized`](interfaces/IExchangeSerialized.md)\<[`TExchangeDirectBindingParams`](README.md#texchangedirectbindingparams), [`DIRECT`](enums/EExchangeType.md#direct)\>
-
-___
-
-### TExchangeFanOut
-
-Ƭ **TExchangeFanOut**: [`IExchange`](interfaces/IExchange.md)\<[`TExchangeFanOutBindingParams`](README.md#texchangefanoutbindingparams), [`FANOUT`](enums/EExchangeType.md#fanout)\>
-
-___
-
 ### TExchangeFanOutBindingParams
 
 Ƭ **TExchangeFanOutBindingParams**: `string`
 
 ___
 
-### TExchangeFanOutSerialized
-
-Ƭ **TExchangeFanOutSerialized**: [`IExchangeSerialized`](interfaces/IExchangeSerialized.md)\<[`TExchangeFanOutBindingParams`](README.md#texchangefanoutbindingparams), [`FANOUT`](enums/EExchangeType.md#fanout)\>
-
-___
-
 ### TExchangeSerialized
 
-Ƭ **TExchangeSerialized**: [`TExchangeDirectSerialized`](README.md#texchangedirectserialized) \| [`TExchangeTopicSerialized`](README.md#texchangetopicserialized) \| [`TExchangeFanOutSerialized`](README.md#texchangefanoutserialized)
-
-___
-
-### TExchangeTopic
-
-Ƭ **TExchangeTopic**: [`IExchange`](interfaces/IExchange.md)\<[`TExchangeTopicBindingParams`](README.md#texchangetopicbindingparams), [`TOPIC`](enums/EExchangeType.md#topic)\>
+Ƭ **TExchangeSerialized**: `ReturnType`\<[`ExchangeDirect`](classes/ExchangeDirect.md)[``"toJSON"``]\> \| `ReturnType`\<[`ExchangeTopic`](classes/ExchangeTopic.md)[``"toJSON"``]\> \| `ReturnType`\<[`ExchangeFanOut`](classes/ExchangeFanOut.md)[``"toJSON"``]\>
 
 ___
 
 ### TExchangeTopicBindingParams
 
 Ƭ **TExchangeTopicBindingParams**: [`TTopicParams`](README.md#ttopicparams) \| `string`
-
-___
-
-### TExchangeTopicSerialized
-
-Ƭ **TExchangeTopicSerialized**: [`IExchangeSerialized`](interfaces/IExchangeSerialized.md)\<[`TExchangeTopicBindingParams`](README.md#texchangetopicbindingparams), [`TOPIC`](enums/EExchangeType.md#topic)\>
 
 ___
 
@@ -254,6 +228,40 @@ ___
 | `hostname` | `string` |
 | `ipAddress` | `string`[] |
 | `pid` | `number` |
+
+___
+
+### TQueueExtendedParams
+
+Ƭ **TQueueExtendedParams**: `string` \| [`IQueueParams`](interfaces/IQueueParams.md) \| [`IQueueConsumerGroupParams`](interfaces/IQueueConsumerGroupParams.md)
+
+___
+
+### TQueueMessagesPaginationParams
+
+Ƭ **TQueueMessagesPaginationParams**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `consumerGroupId?` | `string` \| ``null`` |
+| `page` | `number` |
+| `pageSize` | `number` |
+| `queue` | `string` \| [`IQueueParams`](interfaces/IQueueParams.md) |
+
+___
+
+### TQueueMessagesParams
+
+Ƭ **TQueueMessagesParams**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `consumerGroupId?` | `string` \| ``null`` |
+| `queue` | `string` \| [`IQueueParams`](interfaces/IQueueParams.md) |
 
 ___
 

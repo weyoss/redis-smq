@@ -20,6 +20,7 @@ import {
   disconnect,
 } from '../..'; // redis-smq
 import { Configuration } from '../../src/config/configuration';
+import { EQueueDeliveryModel } from '../../types';
 
 export const config: IRedisSMQConfig = {
   namespace: 'ns1',
@@ -58,7 +59,11 @@ const createQueue = async () => {
   const exists = await queue.existsAsync('test_queue');
   if (!exists) {
     // Creating a queue (a LIFO queue)
-    await queue.saveAsync('test_queue', EQueueType.LIFO_QUEUE);
+    await queue.saveAsync(
+      'test_queue',
+      EQueueType.LIFO_QUEUE,
+      EQueueDeliveryModel.POINT_TO_POINT,
+    );
     await promisify(disconnect)();
   }
 };

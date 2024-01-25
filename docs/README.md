@@ -10,11 +10,13 @@ See [API Reference](api/README.md) for more details.
 
 - [Configuration](configuration.md)
 - [Queues](queues.md)
+- [Queue Delivery Models](queue-delivery-models.md)
 - [Producing Messages](producing-messages.md)
 - [Consuming Messages](consuming-messages.md)
 - [Messages](messages.md)
 - [Message Exchanges](message-exchanges.md)
 - [Queue Rate Limiting](queue-rate-limiting.md)
+- [Exchanges and Delivery Models](exchanges-and-delivery-models.md)
 - [Multiplexing](multiplexing.md)
 - [Scheduling Messages](scheduling-messages.md)
 - [Performance](performance.md)

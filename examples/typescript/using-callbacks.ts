@@ -19,6 +19,7 @@ import {
   disconnect,
 } from '../..'; // redis-smq
 import { Configuration } from '../../src/config/configuration';
+import { EQueueDeliveryModel } from '../../types';
 
 export const config: IRedisSMQConfig = {
   namespace: 'ns1',
@@ -56,10 +57,15 @@ const createQueue = (cb: ICallback<void>): void => {
     if (err) cb(err);
     else if (!reply) {
       // Creating a queue (a LIFO queue)
-      queue.save('test_queue', EQueueType.LIFO_QUEUE, (err) => {
-        if (err) cb(err);
-        else disconnect(cb);
-      });
+      queue.save(
+        'test_queue',
+        EQueueType.LIFO_QUEUE,
+        EQueueDeliveryModel.POINT_TO_POINT,
+        (err) => {
+          if (err) cb(err);
+          else disconnect(cb);
+        },
+      );
     } else cb();
   });
 };

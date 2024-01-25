@@ -8,6 +8,10 @@
 
   ↳ **`QueueAcknowledgedMessages`**
 
+## Implements
+
+- [`IQueueMessagesRequeuable`](../interfaces/IQueueMessagesRequeuable.md)
+
 ## Table of contents
 
 ### Constructors
@@ -45,7 +49,7 @@ QueueMessagesPaginatorList.constructor
 
 | Name | Type |
 | :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
 | `cb` | `ICallback`\<`number`\> |
 
 #### Returns
@@ -60,14 +64,14 @@ ___
 
 ### getMessages
 
-▸ **getMessages**(`queue`, `cursor`, `pageSize`, `cb`): `void`
+▸ **getMessages**(`queue`, `page`, `pageSize`, `cb`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
-| `cursor` | `number` |
+| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
+| `page` | `number` |
 | `pageSize` | `number` |
 | `cb` | `ICallback`\<[`IQueueMessagesPage`](../interfaces/IQueueMessagesPage.md)\<[`IConsumableMessage`](../interfaces/IConsumableMessage.md)\>\> |
 
@@ -89,7 +93,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
 | `cb` | `ICallback`\<`void`\> |
 
 #### Returns
@@ -104,20 +108,20 @@ ___
 
 ### requeueMessage
 
-▸ **requeueMessage**(`source`, `id`, `cb`): `void`
+▸ **requeueMessage**(`queue`, `messageId`, `cb`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `source` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
-| `id` | `string` |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `messageId` | `string` |
 | `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 
 `void`
 
-#### Inherited from
+#### Implementation of
 
-QueueMessagesPaginatorList.requeueMessage
+[IQueueMessagesRequeuable](../interfaces/IQueueMessagesRequeuable.md).[requeueMessage](../interfaces/IQueueMessagesRequeuable.md#requeuemessage)

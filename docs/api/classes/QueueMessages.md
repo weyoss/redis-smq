@@ -45,7 +45,7 @@ QueueMessagesPaginatorSet.constructor
 
 | Name | Type |
 | :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
 | `cb` | `ICallback`\<`number`\> |
 
 #### Returns
@@ -77,14 +77,14 @@ ___
 
 ### getMessages
 
-▸ **getMessages**(`queue`, `cursor`, `pageSize`, `cb`): `void`
+▸ **getMessages**(`queue`, `page`, `pageSize`, `cb`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
-| `cursor` | `number` |
+| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
+| `page` | `number` |
 | `pageSize` | `number` |
 | `cb` | `ICallback`\<[`IQueueMessagesPage`](../interfaces/IQueueMessagesPage.md)\<[`IConsumableMessage`](../interfaces/IConsumableMessage.md)\>\> |
 
@@ -106,7 +106,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
 | `cb` | `ICallback`\<`void`\> |
 
 #### Returns

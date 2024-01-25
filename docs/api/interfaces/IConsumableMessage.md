@@ -2,12 +2,21 @@
 
 # Interface: IConsumableMessage
 
+## Hierarchy
+
+- `Omit`\<[`ProducibleMessage`](../classes/ProducibleMessage.md), ``"setBody"`` \| ``"setConsumeTimeout"`` \| ``"setPriority"`` \| ``"setTTL"`` \| ``"setFanOut"`` \| ``"setQueue"`` \| ``"setTopic"`` \| ``"setRetryDelay"`` \| ``"setRetryThreshold"`` \| ``"setScheduledRepeatPeriod"`` \| ``"setScheduledRepeat"`` \| ``"setScheduledCRON"`` \| ``"setScheduledDelay"`` \| ``"disablePriority"`` \| ``"resetScheduledParams"`` \| ``"setExchange"`` \| ``"getExchange"``\>
+
+- `Pick`\<`MessageEnvelope`, ``"getScheduledMessageId"`` \| ``"getDestinationQueue"`` \| ``"getStatus"`` \| ``"getPublishedAt"`` \| ``"getScheduledAt"`` \| ``"getId"`` \| ``"toJSON"`` \| ``"getExchange"`` \| ``"getConsumerGroupId"``\>
+
+  ↳ **`IConsumableMessage`**
+
 ## Table of contents
 
 ### Methods
 
 - [getBody](IConsumableMessage.md#getbody)
 - [getConsumeTimeout](IConsumableMessage.md#getconsumetimeout)
+- [getConsumerGroupId](IConsumableMessage.md#getconsumergroupid)
 - [getCreatedAt](IConsumableMessage.md#getcreatedat)
 - [getDestinationQueue](IConsumableMessage.md#getdestinationqueue)
 - [getExchange](IConsumableMessage.md#getexchange)
@@ -57,6 +66,20 @@ ___
 #### Inherited from
 
 Omit.getConsumeTimeout
+
+___
+
+### getConsumerGroupId
+
+▸ **getConsumerGroupId**(): ``null`` \| `string`
+
+#### Returns
+
+``null`` \| `string`
+
+#### Inherited from
+
+Pick.getConsumerGroupId
 
 ___
 

@@ -27,7 +27,7 @@ ___
 
 ### pending
 
-• **pending**: `number`
+• **pending**: `number` \| [`IQueueGroupConsumersPendingCount`](IQueueGroupConsumersPendingCount.md)
 
 ___
 

@@ -14,6 +14,10 @@
 
   ↳↳ [`ProducerInstanceNotRunningError`](ProducerInstanceNotRunningError.md)
 
+  ↳↳ [`ProducerQueueWithoutConsumerGroupsError`](ProducerQueueWithoutConsumerGroupsError.md)
+
+  ↳↳ [`ProducerMessageExchangeRequiredError`](ProducerMessageExchangeRequiredError.md)
+
 ## Table of contents
 
 ### Constructors
