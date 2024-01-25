@@ -8,24 +8,28 @@
  */
 
 import { ICallback } from 'redis-smq-common';
-import { IQueueParams } from '../queue';
+import { IQueueParams, TQueueExtendedParams } from '../queue';
 import { IConsumableMessage } from '../message';
 
 export interface IQueueMessages {
-  countMessages(queue: string | IQueueParams, cb: ICallback<number>): void;
+  countMessages(queue: TQueueExtendedParams, cb: ICallback<number>): void;
   getMessages(
-    queue: string | IQueueParams,
+    queue: TQueueExtendedParams,
     page: number,
     pageSize: number,
     cb: ICallback<IQueueMessagesPage<IConsumableMessage>>,
   ): void;
-  purge(queue: string | IQueueParams, cb: ICallback<void>): void;
+  purge(queue: TQueueExtendedParams, cb: ICallback<void>): void;
+}
+
+export interface IQueueGroupConsumersPendingCount {
+  [key: string]: number;
 }
 
 export interface IQueueMessagesCount {
   acknowledged: number;
   deadLettered: number;
-  pending: number;
+  pending: number | IQueueGroupConsumersPendingCount;
   scheduled: number;
 }
 
@@ -41,3 +45,23 @@ export type IQueueMessagesPageParams = {
   offsetEnd: number;
   totalPages: number;
 };
+
+export type TQueueMessagesParams = {
+  queue: string | IQueueParams;
+  consumerGroupId?: string | null;
+};
+
+export type TQueueMessagesPaginationParams = {
+  queue: string | IQueueParams;
+  page: number;
+  pageSize: number;
+  consumerGroupId?: string | null;
+};
+
+export interface IQueueMessagesRequeuable {
+  requeueMessage(
+    queue: string | IQueueParams,
+    messageId: string,
+    cb: ICallback<void>,
+  ): void;
+}

@@ -9,22 +9,18 @@
 
 import { async, CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
 import { QueueMessagesPaginatorAbstract } from './queue-messages-paginator-abstract';
-import { IQueueMessagesPage, IQueueParams } from '../../../../types';
+import { IQueueMessagesPage, IQueueParsedParams } from '../../../../types';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { _getCommonRedisClient } from '../../../common/_get-common-redis-client';
-import { _getQueueParams } from '../queue/_get-queue-params';
 import { _getQueueProperties } from '../queue/_get-queue-properties';
 
 export abstract class QueueMessagesPaginatorSet extends QueueMessagesPaginatorAbstract {
-  override countMessages(
-    queue: string | IQueueParams,
-    cb: ICallback<number>,
-  ): void {
+  protected count(queue: IQueueParsedParams, cb: ICallback<number>): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
       else if (!client) cb(new CallbackEmptyReplyError());
       else {
-        const queueParams = _getQueueParams(queue);
+        const { queueParams } = queue;
         _getQueueProperties(client, queueParams, (err, properties) => {
           if (err) cb(err);
           else if (!properties) cb(new CallbackEmptyReplyError());
@@ -35,14 +31,14 @@ export abstract class QueueMessagesPaginatorSet extends QueueMessagesPaginatorAb
   }
 
   protected getMessagesIds(
-    queue: string | IQueueParams,
-    cursor: number,
+    queue: IQueueParsedParams,
+    page: number,
     pageSize: number,
     cb: ICallback<IQueueMessagesPage<string>>,
   ): void {
     async.waterfall(
       [
-        (cb: ICallback<number>) => this.countMessages(queue, cb),
+        (cb: ICallback<number>) => this.count(queue, cb),
         (totalItems: number, cb: ICallback<IQueueMessagesPage<string>>) => {
           _getCommonRedisClient((err, client) => {
             if (err) cb(err);
@@ -55,12 +51,14 @@ export abstract class QueueMessagesPaginatorSet extends QueueMessagesPaginatorAb
                   items: [],
                 });
               } else {
-                const queueParams = _getQueueParams(queue);
-                const { keyQueueMessages } =
-                  redisKeys.getQueueKeys(queueParams);
+                const { queueParams, groupId } = queue;
+                const { keyQueueMessages } = redisKeys.getQueueKeys(
+                  queueParams,
+                  groupId,
+                );
                 client.sscan(
                   keyQueueMessages,
-                  String(cursor),
+                  String(page),
                   { COUNT: pageSize },
                   (err, reply) => {
                     if (err) cb(err);

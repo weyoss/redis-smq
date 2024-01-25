@@ -10,10 +10,10 @@
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import {
   async,
+  CallbackEmptyReplyError,
+  ICallback,
   RedisClient,
   Worker,
-  ICallback,
-  CallbackEmptyReplyError,
 } from 'redis-smq-common';
 import {
   EMessageProperty,
@@ -59,17 +59,19 @@ export class RequeueUnacknowledgedWorker extends Worker {
                 else if (!message) cb(new CallbackEmptyReplyError());
                 else {
                   const messageId = message.getId();
-                  const queue = message.getDestinationQueue();
                   const messageState = message.getMessageState();
                   const {
                     keyQueuePending,
-                    keyPriorityQueuePending,
+                    keyQueuePriorityPending,
                     keyQueueProperties,
-                  } = redisKeys.getQueueKeys(queue);
+                  } = redisKeys.getQueueKeys(
+                    message.getDestinationQueue(),
+                    message.getConsumerGroupId(),
+                  );
                   const { keyMessage } = redisKeys.getMessageKeys(messageId);
                   keys.push(
                     keyQueueProperties,
-                    keyPriorityQueuePending,
+                    keyQueuePriorityPending,
                     keyQueuePending,
                     keyMessage,
                   );

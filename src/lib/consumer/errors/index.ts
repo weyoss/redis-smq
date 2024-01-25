@@ -9,3 +9,8 @@
 
 export { ConsumerError } from './consumer.error';
 export { ConsumerMessageHandlerAlreadyExistsError } from './consumer-message-handler-already-exists.error';
+export { ConsumerGroupDeleteError } from './consumer-group-delete.error';
+export { ConsumerGroupIdNotFoundError } from './consumer-group-id-not-found.error';
+export { ConsumerGroupIdNotSupportedError } from './consumer-group-id-not-supported.error';
+export { ConsumerGroupIdRequiredError } from './consumer-group-id-required.error';
+export { ConsumerInvalidGroupIdError } from './consumer-invalid-group-id.error';

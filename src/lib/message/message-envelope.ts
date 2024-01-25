@@ -29,6 +29,8 @@ export class MessageEnvelope {
 
   protected destinationQueue: IQueueParams | null = null;
 
+  protected consumerGroupId: string | null = null;
+
   readonly producibleMessage;
 
   constructor(producibleMessage: ProducibleMessage) {
@@ -172,6 +174,15 @@ export class MessageEnvelope {
     return JSON.stringify(this);
   }
 
+  setConsumerGroupId(consumerGroupId: string): MessageEnvelope {
+    this.consumerGroupId = consumerGroupId;
+    return this;
+  }
+
+  getConsumerGroupId(): string | null {
+    return this.consumerGroupId;
+  }
+
   toJSON(): IMessageSerialized {
     return {
       createdAt: this.producibleMessage.getCreatedAt(),
@@ -187,6 +198,7 @@ export class MessageEnvelope {
       scheduledRepeat: this.producibleMessage.getScheduledRepeat(),
       exchange: this.getExchange().toJSON(),
       destinationQueue: this.getDestinationQueue(),
+      consumerGroupId: this.getConsumerGroupId(),
     };
   }
 

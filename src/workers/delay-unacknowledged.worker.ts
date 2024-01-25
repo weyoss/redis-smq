@@ -10,10 +10,10 @@
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import {
   async,
+  CallbackEmptyReplyError,
+  ICallback,
   RedisClient,
   Worker,
-  ICallback,
-  CallbackEmptyReplyError,
   WorkerError,
 } from 'redis-smq-common';
 import {
@@ -60,12 +60,14 @@ export class DelayUnacknowledgedWorker extends Worker {
                 else if (!message) cb(new CallbackEmptyReplyError());
                 else {
                   const messageId = message.getId();
-                  const queue = message.getDestinationQueue();
                   const {
                     keyQueueProperties,
                     keyQueueMessages,
                     keyQueueScheduled,
-                  } = redisKeys.getQueueKeys(queue);
+                  } = redisKeys.getQueueKeys(
+                    message.getDestinationQueue(),
+                    message.getConsumerGroupId(),
+                  );
                   const { keyMessage } = redisKeys.getMessageKeys(messageId);
                   keys.push(
                     keyQueueMessages,

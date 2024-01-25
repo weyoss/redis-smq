@@ -14,7 +14,7 @@ import {
   TExchangeDirectBindingParams,
 } from '../../../types';
 import { ICallback } from 'redis-smq-common';
-import { _getQueueParams } from '../queue/queue/_get-queue-params';
+import { _parseQueueParams } from '../queue/queue/_parse-queue-params';
 
 export class ExchangeDirect extends Exchange<
   TExchangeDirectBindingParams,
@@ -27,11 +27,11 @@ export class ExchangeDirect extends Exchange<
   protected override validateBindingParams(
     queue: TExchangeDirectBindingParams,
   ): IQueueParams {
-    return _getQueueParams(queue);
+    return _parseQueueParams(queue);
   }
 
   getQueues(cb: ICallback<IQueueParams[]>): void {
-    const queue = _getQueueParams(this.bindingParams);
+    const queue = _parseQueueParams(this.bindingParams);
     cb(null, [queue]);
   }
 }

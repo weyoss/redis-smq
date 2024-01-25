@@ -18,7 +18,7 @@ local keyMessage = ''
 local keyQueuePending = ''
 local keyQueueMessages = ''
 local keyQueueProperties = ''
-local keyPriorityQueuePending = ''
+local keyQueuePriorityPending = ''
 local keyQueueScheduled = ''
 local keyScheduledMessage = ''
 
@@ -54,7 +54,7 @@ local function publishMessage(queueType, msgId)
     elseif queueType == EQueuePropertyQueueTypeFIFOQueue then
         redis.call("LPUSH", keyQueuePending, msgId)
     else
-        redis.call("ZADD", keyPriorityQueuePending, messagePriority, msgId)
+        redis.call("ZADD", keyQueuePriorityPending, messagePriority, msgId)
     end
 end
 
@@ -123,7 +123,7 @@ if #ARGV > argvIndexOffset then
                 keyQueuePending = KEYS[keyIndexOffset + 2]
                 keyQueueProperties = KEYS[keyIndexOffset + 3]
                 keyQueueMessages = KEYS[keyIndexOffset + 4]
-                keyPriorityQueuePending = KEYS[keyIndexOffset + 5]
+                keyQueuePriorityPending = KEYS[keyIndexOffset + 5]
                 keyQueueScheduled = KEYS[keyIndexOffset + 6]
                 keyScheduledMessage = KEYS[keyIndexOffset + 7]
                 keyIndexOffset = keyIndexOffset + 7

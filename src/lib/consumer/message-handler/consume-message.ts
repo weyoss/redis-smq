@@ -12,6 +12,7 @@ import {
   EConsumeMessageUnacknowledgedCause,
   EMessageProperty,
   EMessagePropertyStatus,
+  IQueueParsedParams,
 } from '../../../../types';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { MessageHandler } from './message-handler';
@@ -28,10 +29,12 @@ import { Configuration } from '../../../config/configuration';
 import { _createConsumableMessage } from '../../message/_create-consumable-message';
 
 export class ConsumeMessage {
-  protected keyQueueProcessing: string;
   protected messageHandler: MessageHandler;
   protected redisClient: RedisClient;
   protected logger: ILogger;
+  protected keyQueueProcessing: string;
+  protected keyQueueAcknowledged: string;
+  protected queue: IQueueParsedParams;
 
   constructor(
     messageHandler: MessageHandler,
@@ -40,10 +43,14 @@ export class ConsumeMessage {
   ) {
     this.redisClient = redisClient;
     this.messageHandler = messageHandler;
-    const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
-      messageHandler.getQueue(),
-      messageHandler.getConsumerId(),
-    );
+    this.queue = messageHandler.getQueue();
+    const { keyQueueProcessing, keyQueueAcknowledged } =
+      redisKeys.getQueueConsumerKeys(
+        this.queue.queueParams,
+        messageHandler.getConsumerId(),
+        this.queue.groupId,
+      );
+    this.keyQueueAcknowledged = keyQueueAcknowledged;
     this.keyQueueProcessing = keyQueueProcessing;
     this.logger = logger;
   }
@@ -53,14 +60,12 @@ export class ConsumeMessage {
     cb: ICallback<void>,
   ): void {
     const messageId = message.getId();
-    const queue = message.getDestinationQueue();
-    const { keyQueueAcknowledged } = redisKeys.getQueueKeys(queue);
     const { store, queueSize, expire } =
       Configuration.getSetConfig().messages.store.acknowledged;
     const { keyMessage } = redisKeys.getMessageKeys(messageId);
     this.redisClient.runScript(
       ELuaScriptName.ACKNOWLEDGE_MESSAGE,
-      [this.keyQueueProcessing, keyQueueAcknowledged, keyMessage],
+      [this.keyQueueProcessing, this.keyQueueAcknowledged, keyMessage],
       [
         EMessageProperty.STATUS,
         EMessagePropertyStatus.ACKNOWLEDGED,
@@ -79,7 +84,7 @@ export class ConsumeMessage {
     processingQueue.handleProcessingQueue(
       this.redisClient,
       [this.messageHandler.getConsumerId()],
-      [this.messageHandler.getQueue()],
+      [this.queue.queueParams],
       this.logger,
       cause,
       (err, reply) => {
@@ -88,13 +93,12 @@ export class ConsumeMessage {
           this.messageHandler.handleError(new CallbackEmptyReplyError());
         else {
           const messageId = msg.getId();
-          const queue = msg.getDestinationQueue();
           const messageHandlerId = this.messageHandler.getId();
           const consumerId = this.messageHandler.getConsumerId();
           this.messageHandler.emit(
             'messageUnacknowledged',
             messageId,
-            queue,
+            this.queue,
             messageHandlerId,
             consumerId,
             cause,
@@ -103,7 +107,7 @@ export class ConsumeMessage {
             this.messageHandler.emit(
               'messageDeadLettered',
               messageId,
-              queue,
+              this.queue,
               messageHandlerId,
               consumerId,
               reply.deadLetterCause,
@@ -112,7 +116,7 @@ export class ConsumeMessage {
             this.messageHandler.emit(
               'messageDelayed',
               messageId,
-              queue,
+              this.queue,
               messageHandlerId,
               consumerId,
             );
@@ -120,7 +124,7 @@ export class ConsumeMessage {
             this.messageHandler.emit(
               'messageRequeued',
               messageId,
-              queue,
+              this.queue,
               messageHandlerId,
               consumerId,
             );
@@ -161,7 +165,7 @@ export class ConsumeMessage {
                 this.messageHandler.emit(
                   'messageAcknowledged',
                   msg.getId(),
-                  msg.getDestinationQueue(),
+                  this.queue,
                   this.messageHandler.getId(),
                   this.messageHandler.getConsumerId(),
                 );

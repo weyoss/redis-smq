@@ -22,7 +22,12 @@ export function _fromMessage(
   status: EMessagePropertyStatus | null,
   msgState: string | MessageState | null,
 ): MessageEnvelope {
-  const { exchange, destinationQueue, ...params }: IMessageSerialized =
+  const {
+    exchange,
+    destinationQueue,
+    consumerGroupId,
+    ...params
+  }: IMessageSerialized =
     typeof msg === 'string' ? JSON.parse(msg) : msg.toJSON();
 
   const messagePub = new ProducibleMessage();
@@ -32,6 +37,11 @@ export function _fromMessage(
   //
   const m = new MessageEnvelope(messagePub);
   m.setDestinationQueue(destinationQueue);
+
+  //
+  if (consumerGroupId) {
+    m.setConsumerGroupId(consumerGroupId);
+  }
 
   // Status
   if (status !== null) {

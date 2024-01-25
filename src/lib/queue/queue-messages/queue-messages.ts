@@ -8,28 +8,29 @@
  */
 
 import {
+  EQueueDeliveryModel,
   EQueueType,
+  IQueueGroupConsumersPendingCount,
   IQueueMessagesCount,
   IQueueParams,
+  IQueueProperties,
 } from '../../../../types';
 import { async, CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { _getCommonRedisClient } from '../../../common/_get-common-redis-client';
 import { QueueMessagesPaginatorSet } from '../queue-messages-paginator/queue-messages-paginator-set';
-import { PriorityQueueMessages } from '../priority-queue-messages';
-import { LinearQueueMessages } from '../linear-queue-messages';
+import { PriorityQueuePendingMessages } from '../queue-pending-messages/priority-queue-pending-messages';
+import { LinearQueuePendingMessages } from '../queue-pending-messages/linear-queue-pending-messages';
 import { QueueDeadLetteredMessages } from '../queue-dead-lettered-messages';
 import { QueueAcknowledgedMessages } from '../queue-acknowledged-messages';
 import { QueueScheduledMessages } from '../queue-scheduled-messages';
-import { _getQueueParams } from '../queue/_get-queue-params';
+import { _parseQueueParams } from '../queue/_parse-queue-params';
 import { _getQueueProperties } from '../queue/_get-queue-properties';
+import { _getConsumerGroups } from '../../consumer/consumer-groups/_get-consumer-groups';
 
 export class QueueMessages extends QueueMessagesPaginatorSet {
-  protected override getRedisKey(queue: string | IQueueParams): string {
-    const queueParams = _getQueueParams(queue);
-    const { keyPriorityQueuePending } = redisKeys.getQueueKeys(queueParams);
-    return keyPriorityQueuePending;
-  }
+  protected redisKey: keyof ReturnType<typeof redisKeys.getQueueKeys> =
+    'keyQueueMessages';
 
   countMessagesByStatus(
     queue: string | IQueueParams,
@@ -39,7 +40,7 @@ export class QueueMessages extends QueueMessagesPaginatorSet {
       if (err) cb(err);
       else if (!client) cb(new CallbackEmptyReplyError());
       else {
-        const queueParams = _getQueueParams(queue);
+        const queueParams = _parseQueueParams(queue);
         const count: IQueueMessagesCount = {
           acknowledged: 0,
           deadLettered: 0,
@@ -48,22 +49,56 @@ export class QueueMessages extends QueueMessagesPaginatorSet {
         };
         async.waterfall(
           [
-            (cb: ICallback<EQueueType>) =>
+            (cb: ICallback<IQueueProperties>) =>
               _getQueueProperties(client, queueParams, (err, properties) => {
                 if (err) cb(err);
                 else if (!properties) cb(new CallbackEmptyReplyError());
-                else cb(null, properties.queueType);
+                else cb(null, properties);
               }),
-            (queueType: EQueueType, cb: ICallback<number>) => {
-              if (queueType === EQueueType.PRIORITY_QUEUE) {
-                const priorityQueueMessages = new PriorityQueueMessages();
-                priorityQueueMessages.countMessages(queue, cb);
-              } else {
-                const queuePendingMessages = new LinearQueueMessages();
-                queuePendingMessages.countMessages(queue, cb);
-              }
+            (
+              properties: IQueueProperties,
+              cb: ICallback<number | IQueueGroupConsumersPendingCount>,
+            ) => {
+              const { queueType, deliveryModel } = properties;
+              const countPendingFn = (
+                groupId: string | null,
+                cb: ICallback<number>,
+              ) => {
+                if (queueType === EQueueType.PRIORITY_QUEUE) {
+                  const priorityQueueMessages =
+                    new PriorityQueuePendingMessages();
+                  priorityQueueMessages.countMessages({ queue, groupId }, cb);
+                } else {
+                  const queuePendingMessages = new LinearQueuePendingMessages();
+                  queuePendingMessages.countMessages({ queue, groupId }, cb);
+                }
+              };
+              if (deliveryModel === EQueueDeliveryModel.PUB_SUB) {
+                _getConsumerGroups(client, queueParams, (err, groups) => {
+                  if (err) cb(err);
+                  else {
+                    const pending: IQueueGroupConsumersPendingCount = {};
+                    async.each(
+                      groups ?? [],
+                      (groupId, _, cb) => {
+                        countPendingFn(groupId, (err, cnt) => {
+                          if (err) cb(err);
+                          else {
+                            pending[groupId] = Number(cnt);
+                            cb();
+                          }
+                        });
+                      },
+                      (err) => cb(err, pending),
+                    );
+                  }
+                });
+              } else countPendingFn(null, cb);
             },
-            (pending: number, cb: ICallback<number>) => {
+            (
+              pending: number | IQueueGroupConsumersPendingCount,
+              cb: ICallback<number>,
+            ) => {
               count.pending = pending;
               const queueDeadLetteredMessages = new QueueDeadLetteredMessages();
               queueDeadLetteredMessages.countMessages(queue, cb);

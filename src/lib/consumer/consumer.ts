@@ -8,9 +8,10 @@
  */
 
 import {
+  IQueueParsedParams,
   TConsumerMessageHandler,
   TConsumerRedisKeys,
-  IQueueParams,
+  TQueueExtendedParams,
 } from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { ConsumerHeartbeat } from './consumer-heartbeat';
@@ -18,20 +19,20 @@ import { Base } from '../base';
 import { MessageHandlerRunner } from './message-handler/message-handler-runner';
 import { MultiplexedMessageHandlerRunner } from './multiplexed-message-handler/multiplexed-message-handler-runner';
 import {
-  WorkerRunner,
-  WorkerPool,
+  CallbackEmptyReplyError,
+  ICallback,
   logger,
   redis,
-  ICallback,
   TUnaryFunction,
-  CallbackEmptyReplyError,
+  WorkerPool,
+  WorkerRunner,
 } from 'redis-smq-common';
 import DelayUnacknowledgedWorker from '../../workers/delay-unacknowledged.worker';
 import WatchConsumersWorker from '../../workers/watch-consumers.worker';
 import RequeueUnacknowledgedWorker from '../../workers/requeue-unacknowledged.worker';
 import PublishScheduledWorker from '../../workers/publish-scheduled.worker';
-import { _getQueueParams } from '../queue/queue/_get-queue-params';
 import { Configuration } from '../../config/configuration';
+import { _parseQueueExtendedParams } from '../queue/queue/_parse-queue-extended-params';
 
 export class Consumer extends Base {
   protected readonly redisKeys: TConsumerRedisKeys;
@@ -143,9 +144,7 @@ export class Consumer extends Base {
   };
 
   protected shutdownMessageHandlers = (cb: ICallback<void>): void => {
-    if (this.messageHandlerRunner) {
-      this.messageHandlerRunner.shutdown(cb);
-    } else cb();
+    this.messageHandlerRunner.shutdown(cb);
   };
 
   protected override goingUp(): TUnaryFunction<ICallback<void>>[] {
@@ -167,24 +166,24 @@ export class Consumer extends Base {
   }
 
   consume(
-    queue: string | IQueueParams,
+    queue: TQueueExtendedParams,
     messageHandler: TConsumerMessageHandler,
     cb: ICallback<void>,
   ): void {
-    const queueParams = _getQueueParams(queue);
+    const parsedQueueParams = _parseQueueExtendedParams(queue);
     this.messageHandlerRunner.addMessageHandler(
-      queueParams,
+      parsedQueueParams,
       messageHandler,
       cb,
     );
   }
 
-  cancel(queue: string | IQueueParams, cb: ICallback<void>): void {
-    const queueParams = _getQueueParams(queue);
-    this.messageHandlerRunner.removeMessageHandler(queueParams, cb);
+  cancel(queue: TQueueExtendedParams, cb: ICallback<void>): void {
+    const parsedQueueParams = _parseQueueExtendedParams(queue);
+    this.messageHandlerRunner.removeMessageHandler(parsedQueueParams, cb);
   }
 
-  getQueues(): IQueueParams[] {
+  getQueues(): IQueueParsedParams[] {
     return this.messageHandlerRunner.getQueues();
   }
 }

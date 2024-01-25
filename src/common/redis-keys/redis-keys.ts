@@ -14,15 +14,14 @@ import { IQueueParams } from '../../../types';
 const keySegmentSeparator = ':';
 
 // Key prefix
-const nsPrefix = 'redis-smq-v8.0';
+const nsPrefix = 'redis-smq-rc815';
 
 // Namespaces
 const globalNamespace = 'global';
 
 enum ERedisKey {
   KEY_QUEUE_PENDING = 1,
-  KEY_QUEUE_PENDING_PRIORITY_MESSAGES,
-  KEY_QUEUE_PENDING_PRIORITY_MESSAGE_WEIGHT,
+  KEY_QUEUE_PRIORITY_PENDING,
   KEY_QUEUE_DL,
   KEY_QUEUE_PROCESSING,
   KEY_QUEUE_ACKNOWLEDGED,
@@ -50,6 +49,7 @@ enum ERedisKey {
   KEY_QUEUE_MESSAGES,
   KEY_QUEUE_MESSAGE_IDS,
   KEY_DELETED_QUEUES,
+  KEY_QUEUE_CONSUMER_GROUPS,
 }
 
 function makeNamespacedKeys<T extends Record<string, ERedisKey>>(
@@ -78,27 +78,34 @@ export const redisKeys = {
     };
   },
 
-  getQueueKeys(queueParams: IQueueParams) {
+  getQueueKeys(queueParams: IQueueParams, consumerGroupId: string | null) {
     const nsKeys = this.getNamespaceKeys(queueParams.ns);
     const queueKeys = {
-      keyQueuePending: ERedisKey.KEY_QUEUE_PENDING,
       keyQueueDL: ERedisKey.KEY_QUEUE_DL,
       keyQueueProcessingQueues: ERedisKey.KEY_QUEUE_PROCESSING_QUEUES,
       keyQueueAcknowledged: ERedisKey.KEY_QUEUE_ACKNOWLEDGED,
       keyQueueScheduled: ERedisKey.KEY_QUEUE_SCHEDULED,
-      keyPriorityQueuePending:
-        ERedisKey.KEY_QUEUE_PENDING_PRIORITY_MESSAGE_WEIGHT,
-      keyQueuePendingPriorityMessages:
-        ERedisKey.KEY_QUEUE_PENDING_PRIORITY_MESSAGES,
       keyQueueConsumers: ERedisKey.KEY_QUEUE_CONSUMERS,
       keyQueueRateLimitCounter: ERedisKey.KEY_QUEUE_RATE_LIMIT_COUNTER,
       keyQueueProperties: ERedisKey.KEY_QUEUE_PROPERTIES,
       keyQueueMessages: ERedisKey.KEY_QUEUE_MESSAGES,
       keyQueueMessageIds: ERedisKey.KEY_QUEUE_MESSAGE_IDS,
+      keyQueueConsumerGroups: ERedisKey.KEY_QUEUE_CONSUMER_GROUPS,
     };
+    const pendingKeys = {
+      keyQueuePending: ERedisKey.KEY_QUEUE_PENDING,
+      keyQueuePriorityPending: ERedisKey.KEY_QUEUE_PRIORITY_PENDING,
+    };
+    const payload = [queueParams.name];
     return {
       ...nsKeys,
-      ...makeNamespacedKeys(queueKeys, queueParams.ns, queueParams.name),
+      ...makeNamespacedKeys(queueKeys, queueParams.ns, ...payload),
+      ...makeNamespacedKeys(
+        pendingKeys,
+        queueParams.ns,
+        ...payload,
+        ...(consumerGroupId ? [consumerGroupId] : []),
+      ),
     };
   },
 
@@ -133,8 +140,12 @@ export const redisKeys = {
     };
   },
 
-  getQueueConsumerKeys(queueParams: IQueueParams, instanceId: string) {
-    const queueKeys = this.getQueueKeys(queueParams);
+  getQueueConsumerKeys(
+    queueParams: IQueueParams,
+    instanceId: string,
+    consumerGroupId: string | null,
+  ) {
+    const queueKeys = this.getQueueKeys(queueParams, consumerGroupId);
     const consumerKeys = this.getConsumerKeys(instanceId);
     const consumerQueueKeys = {
       keyQueueProcessing: ERedisKey.KEY_QUEUE_PROCESSING,
@@ -178,7 +189,7 @@ export const redisKeys = {
     return ns;
   },
 
-  validateRedisKey(key?: string): string {
+  validateRedisKey(key?: string | null): string {
     if (!key || !key.length) {
       throw new RedisKeysError(
         'Invalid Redis key. Expected be a non empty string.',

@@ -10,7 +10,7 @@
 import { MessageEnvelope } from '../message/message-envelope';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { ProducerMessageNotScheduledError } from './errors';
-import { RedisClient, ICallback } from 'redis-smq-common';
+import { ICallback, RedisClient } from 'redis-smq-common';
 import { ELuaScriptName } from '../../common/redis-client/redis-client';
 import {
   EMessageProperty,
@@ -25,14 +25,16 @@ export function _scheduleMessage(
 ): void {
   const timestamp = message.getNextScheduledTimestamp();
   if (timestamp > 0) {
-    const queue = message.getDestinationQueue();
     const {
       keyQueueProperties,
       keyQueueScheduled,
       keyScheduledMessages,
       keyDelayedMessages,
       keyQueueMessages,
-    } = redisKeys.getQueueKeys(queue);
+    } = redisKeys.getQueueKeys(
+      message.getDestinationQueue(),
+      message.getConsumerGroupId(),
+    );
     const ts = Date.now();
     message.getMessageState().setScheduledAt(ts).setLastScheduledAt(ts);
     const messageId = message.getId();

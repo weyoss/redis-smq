@@ -42,19 +42,20 @@ local function requeue()
         local queueType = redis.call("HGET", keyQueueProperties, keyQueuePropertyQueueType)
         if queueType == typePriorityQueue and not(messagePriority == nil or messagePriority == '') then
             redis.call("ZADD", keyQueuePriority, messagePriority, messageId)
-            return 1
+            return 'OK'
         elseif (queueType == typeLIFOQueue or queueType == typeFIFOQueue) and (messagePriority == nil or messagePriority == '') then
             if queueType == typeLIFOQueue then
                 redis.call("RPUSH", keyQueuePending, messageId)
             else
                 redis.call("LPUSH", keyQueuePending, messageId)
             end
-            return 1
+            return 'OK'
         end
     end
-    return 0
+    return 'MESSAGE_NOT_FOUND'
 end
 
+local result = 'INVALID_PARAMETERS'
 if #ARGV > argvIndexOffset then
     for index in pairs(ARGV) do
         if (index > argvIndexOffset) then
@@ -70,14 +71,15 @@ if #ARGV > argvIndexOffset then
                 messagePriority = ARGV[index]
             elseif idx == 1 then
                 messageState = ARGV[index]
-                local result = requeue()
-                if result == 1 then
+                result = requeue()
+                if result == 'OK' then
                     updateMessage()
+                else
+                    break
                 end
             end
         end
     end
-    return 'OK'
 end
 
-return 'INVALID_PARAMETERS'
+return result

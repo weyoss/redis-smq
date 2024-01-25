@@ -28,9 +28,10 @@ export { Queue } from './src/lib/queue/queue/queue';
 export { QueueMessages } from './src/lib/queue/queue-messages/queue-messages';
 export { QueueAcknowledgedMessages } from './src/lib/queue/queue-acknowledged-messages';
 export { QueueDeadLetteredMessages } from './src/lib/queue/queue-dead-lettered-messages';
-export { QueuePendingMessages } from './src/lib/queue/queue-pending-messages';
+export { QueuePendingMessages } from './src/lib/queue/queue-pending-messages/queue-pending-messages';
 export { QueueScheduledMessages } from './src/lib/queue/queue-scheduled-messages';
-export { QueueRateLimit } from './src/lib/queue/queue-rate-limit';
+export { QueueRateLimit } from './src/lib/queue/queue-rate-limit/queue-rate-limit';
+export { ConsumerGroups } from './src/lib/consumer/consumer-groups/consumer-groups';
 export { Configuration } from './src/config/configuration';
 export function disconnect(cb: ICallback<void>): void {
   _destroyCommonRedisClient(cb);

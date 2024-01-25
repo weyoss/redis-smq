@@ -11,8 +11,8 @@ import { MessageEnvelope } from './message-envelope';
 import {
   EMessagePriority,
   EMessagePropertyStatus,
-  IMessageSerialized,
   IConsumableMessage,
+  IMessageSerialized,
   IQueueParams,
   TExchange,
   TTopicParams,
@@ -112,6 +112,10 @@ export function _createConsumableMessage(
 
     getExchange(): TExchange {
       return msg.getExchange();
+    },
+
+    getConsumerGroupId(): string | null {
+      return msg.getConsumerGroupId();
     },
   };
 }

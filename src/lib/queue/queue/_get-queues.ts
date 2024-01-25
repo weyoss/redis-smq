@@ -8,9 +8,9 @@
  */
 
 import {
-  RedisClient,
-  ICallback,
   CallbackEmptyReplyError,
+  ICallback,
+  RedisClient,
 } from 'redis-smq-common';
 import { IQueueParams } from '../../../../types';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';

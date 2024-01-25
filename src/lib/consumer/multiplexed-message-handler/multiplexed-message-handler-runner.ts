@@ -11,13 +11,13 @@ import { MessageHandler } from '../message-handler/message-handler';
 import { MessageHandlerRunner } from '../message-handler/message-handler-runner';
 import {
   async,
-  redis,
-  RedisClient,
-  Ticker,
+  CallbackEmptyReplyError,
   ICallback,
   ILogger,
   PanicError,
-  CallbackEmptyReplyError,
+  redis,
+  RedisClient,
+  Ticker,
 } from 'redis-smq-common';
 import {
   EConsumeMessageUnacknowledgedCause,
@@ -88,11 +88,9 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
     handlerParams: IConsumerMessageHandlerArgs,
   ): MessageHandler {
     const sharedRedisClient = this.getSharedRedisClient();
-    const { queue, messageHandler } = handlerParams;
     const instance = new MultiplexedMessageHandler(
       this.consumer,
-      queue,
-      messageHandler,
+      handlerParams,
       redisClient,
       sharedRedisClient,
       this.logger,

@@ -8,17 +8,19 @@
  */
 
 import {
+  EQueueDeliveryModel,
   EQueueProperty,
   EQueueType,
   IQueueParams,
   IQueueProperties,
 } from '../../../../types';
-import { RedisClient, ICallback, PanicError } from 'redis-smq-common';
+import { ICallback, PanicError, RedisClient } from 'redis-smq-common';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { QueueNotFoundError } from '../errors';
 
 function parseProperties(raw: Record<string, string>): IQueueProperties {
   const properties: IQueueProperties = {
+    deliveryModel: EQueueDeliveryModel.POINT_TO_POINT,
     queueType: EQueueType.LIFO_QUEUE,
     exchange: null,
     rateLimit: null,
@@ -34,6 +36,8 @@ function parseProperties(raw: Record<string, string>): IQueueProperties {
       properties.exchange = raw[key];
     } else if (keyNum === EQueueProperty.MESSAGES_COUNT) {
       properties.messagesCount = Number(raw[key]);
+    } else if (keyNum === EQueueProperty.DELIVERY_MODEL) {
+      properties.deliveryModel = Number(raw[key]);
     } else {
       throw new PanicError(`Unsupported queue settings type [${key}]`);
     }
@@ -46,7 +50,7 @@ export function _getQueueProperties(
   queueParams: IQueueParams,
   cb: ICallback<IQueueProperties>,
 ): void {
-  const { keyQueueProperties } = redisKeys.getQueueKeys(queueParams);
+  const { keyQueueProperties } = redisKeys.getQueueKeys(queueParams, null);
   redisClient.hgetall(keyQueueProperties, (err, reply) => {
     if (err) cb(err);
     else if (!reply || !Object.keys(reply).length) cb(new QueueNotFoundError());

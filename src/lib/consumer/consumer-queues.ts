@@ -7,13 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { TQueueConsumer, IQueueParams } from '../../../types';
+import { IQueueParams, TQueueConsumer } from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import {
   async,
-  RedisClient,
   ICallback,
   IRedisTransaction,
+  RedisClient,
 } from 'redis-smq-common';
 
 export const consumerQueues = {
@@ -23,7 +23,7 @@ export const consumerQueues = {
     consumerId: string,
   ): void {
     const { keyQueueConsumers, keyConsumerQueues } =
-      redisKeys.getQueueConsumerKeys(queue, consumerId);
+      redisKeys.getQueueConsumerKeys(queue, consumerId, null);
     multi.hdel(keyQueueConsumers, consumerId);
     multi.srem(keyConsumerQueues, JSON.stringify(queue));
   },
@@ -34,7 +34,7 @@ export const consumerQueues = {
     transform: boolean,
     cb: ICallback<Record<string, TQueueConsumer | string>>,
   ): void {
-    const { keyQueueConsumers } = redisKeys.getQueueKeys(queue);
+    const { keyQueueConsumers } = redisKeys.getQueueKeys(queue, null);
     client.hgetall(keyQueueConsumers, (err, reply) => {
       if (err) cb(err);
       else {
@@ -59,7 +59,7 @@ export const consumerQueues = {
     queue: IQueueParams,
     cb: ICallback<string[]>,
   ): void {
-    const { keyQueueConsumers } = redisKeys.getQueueKeys(queue);
+    const { keyQueueConsumers } = redisKeys.getQueueKeys(queue, null);
     client.hkeys(keyQueueConsumers, cb);
   },
 
@@ -68,7 +68,7 @@ export const consumerQueues = {
     queue: IQueueParams,
     cb: ICallback<number>,
   ): void {
-    const { keyQueueConsumers } = redisKeys.getQueueKeys(queue);
+    const { keyQueueConsumers } = redisKeys.getQueueKeys(queue, null);
     client.hlen(keyQueueConsumers, cb);
   },
 

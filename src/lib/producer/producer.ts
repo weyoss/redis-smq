@@ -11,15 +11,20 @@ import { MessageEnvelope } from '../message/message-envelope';
 import { Base } from '../base';
 import {
   async,
-  RedisClient,
   ICallback,
-  CallbackEmptyReplyError,
+  PanicError,
+  RedisClient,
+  TUnaryFunction,
 } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { ProducerMessageNotPublishedError } from './errors';
+import {
+  ProducerQueueWithoutConsumerGroupsError,
+  ProducerInstanceNotRunningError,
+  ProducerMessageExchangeRequiredError,
+  ProducerMessageNotPublishedError,
+} from './errors';
 import { ELuaScriptName } from '../../common/redis-client/redis-client';
 import { _scheduleMessage } from './_schedule-message';
-import { ProducerInstanceNotRunningError } from './errors';
 import {
   EMessageProperty,
   EMessagePropertyStatus,
@@ -28,10 +33,35 @@ import {
   IQueueParams,
 } from '../../../types';
 import { ExchangeDirect } from '../exchange/exchange-direct';
-import { _getQueueParams } from '../queue/queue/_get-queue-params';
+import { _parseQueueParams } from '../queue/queue/_parse-queue-params';
 import { ProducibleMessage } from '../message/producible-message';
+import { QueueConsumerGroupsDictionary } from './queue-consumer-groups-dictionary';
 
 export class Producer extends Base {
+  protected queueConsumerGroupsHandler: QueueConsumerGroupsDictionary | null =
+    null;
+
+  protected initQueueConsumerGroupsHandler = (cb: ICallback<void>): void => {
+    this.queueConsumerGroupsHandler = new QueueConsumerGroupsDictionary(
+      this.getSharedRedisClient(),
+    );
+    this.queueConsumerGroupsHandler.run(cb);
+  };
+
+  protected tearDownQueueConsumerGroupsHandler = (
+    cb: ICallback<void>,
+  ): void => {
+    this.queueConsumerGroupsHandler?.quit(cb);
+  };
+
+  protected override goingUp(): TUnaryFunction<ICallback<void>>[] {
+    return super.goingUp().concat([this.initQueueConsumerGroupsHandler]);
+  }
+
+  protected override goingDown(): TUnaryFunction<ICallback<void>>[] {
+    return [this.tearDownQueueConsumerGroupsHandler].concat(super.goingDown());
+  }
+
   protected override registerSystemEventListeners(): void {
     super.registerSystemEventListeners();
     if (this.hasEventListeners()) {
@@ -39,6 +69,14 @@ export class Producer extends Base {
         this.eventListeners.forEach((i) => i.emit('messagePublished', ...args));
       });
     }
+  }
+
+  protected getQueueConsumerGroupsHandler(): QueueConsumerGroupsDictionary {
+    if (!this.queueConsumerGroupsHandler)
+      throw new PanicError(
+        `Expected an instance of QueueConsumerGroupsHandler`,
+      );
+    return this.queueConsumerGroupsHandler;
   }
 
   protected enqueue(
@@ -50,19 +88,18 @@ export class Producer extends Base {
     const messageState = message.getMessageState();
     messageState.setPublishedAt(Date.now());
     const messageId = message.getId();
-    const {
-      keyQueueProperties,
-      keyPriorityQueuePending,
-      keyQueuePending,
-      keyQueueMessages,
-    } = redisKeys.getQueueKeys(queue);
+    const keys = redisKeys.getQueueKeys(
+      message.getDestinationQueue(),
+      message.getConsumerGroupId(),
+    );
     const { keyMessage } = redisKeys.getMessageKeys(messageId);
     redisClient.runScript(
       ELuaScriptName.PUBLISH_MESSAGE,
       [
-        keyQueueProperties,
-        keyPriorityQueuePending,
-        keyQueuePending,
+        keys.keyQueueProperties,
+        keys.keyQueuePriorityPending,
+        keys.keyQueuePending,
+        keys.keyQueueMessages,
         keyMessage,
       ],
       [
@@ -72,7 +109,6 @@ export class Producer extends Base {
         EQueueType.LIFO_QUEUE,
         EQueueType.FIFO_QUEUE,
         message.producibleMessage.getPriority() ?? '',
-        keyQueueMessages, // Passing as argument. Final key will be computed dynamically
         messageId,
         EMessageProperty.STATUS,
         EMessagePropertyStatus.PENDING,
@@ -94,7 +130,7 @@ export class Producer extends Base {
     );
   }
 
-  protected produceMessage(
+  protected produceMessageItem(
     redisClient: RedisClient,
     message: MessageEnvelope,
     queue: IQueueParams,
@@ -117,28 +153,65 @@ export class Producer extends Base {
         if (err) cb(err);
         else {
           this.logger.info(`Message (ID ${messageId}) has been published.`);
-          this.emit('messagePublished', messageId, queue, this.id);
+          this.emit(
+            'messagePublished',
+            messageId,
+            { queueParams: queue, groupId: message.getConsumerGroupId() },
+            this.id,
+          );
           cb(null, messageId);
         }
       });
   }
 
+  protected produceMessage(
+    redisClient: RedisClient,
+    message: ProducibleMessage,
+    queue: IQueueParams,
+    cb: ICallback<string[]>,
+  ): void {
+    const { exists, consumerGroups } =
+      this.getQueueConsumerGroupsHandler().getConsumerGroups(queue);
+    if (exists) {
+      if (!consumerGroups.length) {
+        cb(new ProducerQueueWithoutConsumerGroupsError());
+      }
+      const ids: string[] = [];
+      async.eachOf(
+        consumerGroups,
+        (group, _, done) => {
+          const msg = new MessageEnvelope(message).setConsumerGroupId(group);
+          this.produceMessageItem(redisClient, msg, queue, (err, reply) => {
+            if (err) done(err);
+            else {
+              ids.push(String(reply));
+              done();
+            }
+          });
+        },
+        (err) => {
+          if (err) cb(err);
+          else cb(null, ids);
+        },
+      );
+    } else {
+      const msg = new MessageEnvelope(message);
+      this.produceMessageItem(redisClient, msg, queue, (err, reply) => {
+        if (err) cb(err);
+        else cb(null, [String(reply)]);
+      });
+    }
+  }
+
   produce(msg: ProducibleMessage, cb: ICallback<string[]>): void {
     if (!this.powerSwitch.isUp()) cb(new ProducerInstanceNotRunningError());
     else {
-      const callback: ICallback<string[] | string> = (err, messages) => {
-        if (err) cb(err);
-        else if (!messages) cb(new CallbackEmptyReplyError());
-        else {
-          cb(null, typeof messages === 'string' ? [messages] : messages);
-        }
-      };
       const redisClient = this.getSharedRedisClient();
-      const envelope = new MessageEnvelope(msg);
-      const exchange = envelope.getExchange();
-      if (exchange instanceof ExchangeDirect) {
-        const queue = _getQueueParams(exchange.getBindingParams());
-        this.produceMessage(redisClient, envelope, queue, callback);
+      const exchange = msg.getExchange();
+      if (!exchange) cb(new ProducerMessageExchangeRequiredError());
+      else if (exchange instanceof ExchangeDirect) {
+        const queue = _parseQueueParams(exchange.getBindingParams());
+        this.produceMessage(redisClient, msg, queue, cb);
       } else {
         exchange.getQueues((err, queues) => {
           if (err) cb(err);
@@ -153,18 +226,17 @@ export class Producer extends Base {
             async.eachOf(
               queues,
               (queue, index, done) => {
-                const m = new MessageEnvelope(msg);
-                this.produceMessage(redisClient, m, queue, (err, messageId) => {
+                this.produceMessage(redisClient, msg, queue, (err, reply) => {
                   if (err) done(err);
                   else {
-                    messageId && messages.push(messageId);
+                    reply && messages.push(...reply);
                     done();
                   }
                 });
               },
               (err) => {
-                if (err) callback(err);
-                else callback(null, messages);
+                if (err) cb(err);
+                else cb(null, messages);
               },
             );
           }

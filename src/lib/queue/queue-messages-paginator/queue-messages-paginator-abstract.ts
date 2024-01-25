@@ -8,18 +8,25 @@
  */
 
 import {
-  IQueueMessages,
-  IQueueMessagesPageParams,
-  IQueueMessagesPage,
-  IQueueParams,
   IConsumableMessage,
+  IQueueMessages,
+  IQueueMessagesPage,
+  IQueueMessagesPageParams,
+  IQueueParsedParams,
+  TQueueExtendedParams,
 } from '../../../../types';
 import { async, CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
 import { _getCommonRedisClient } from '../../../common/_get-common-redis-client';
 import { _deleteMessage } from '../../message/_delete-message';
 import { Message } from '../../message/message';
+import { _validateQueueExtendedParams } from '../_validate-queue-extended-params';
+import { redisKeys } from '../../../common/redis-keys/redis-keys';
+import { _parseQueueExtendedParams } from '../queue/_parse-queue-extended-params';
 
 export abstract class QueueMessagesPaginatorAbstract implements IQueueMessages {
+  protected requireGroupId: boolean = false;
+  protected abstract redisKey: keyof ReturnType<typeof redisKeys.getQueueKeys>;
+
   protected getTotalPages(pageSize: number, totalItems: number): number {
     const totalPages = Math.ceil(totalItems / pageSize);
     if (totalPages === 0) return 1;
@@ -44,77 +51,96 @@ export abstract class QueueMessagesPaginatorAbstract implements IQueueMessages {
     };
   }
 
-  abstract countMessages(
-    queue: string | IQueueParams,
-    cb: ICallback<number>,
-  ): void;
-
   protected abstract getMessagesIds(
-    queue: string | IQueueParams,
-    cursor: number,
+    queue: IQueueParsedParams,
+    page: number,
     pageSize: number,
     cb: ICallback<IQueueMessagesPage<string>>,
   ): void;
 
-  protected abstract getRedisKey(queue: string | IQueueParams): string;
+  protected abstract count(
+    queue: IQueueParsedParams,
+    cb: ICallback<number>,
+  ): void;
 
-  purge(queue: string | IQueueParams, cb: ICallback<void>): void {
-    _getCommonRedisClient((err, client) => {
+  countMessages(queue: TQueueExtendedParams, cb: ICallback<number>): void {
+    const parsedParams = _parseQueueExtendedParams(queue);
+    _validateQueueExtendedParams(parsedParams, this.requireGroupId, (err) => {
       if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else {
-        const deleteMessages = (cursor = '0') => {
-          async.waterfall<string>(
-            [
-              (cb: ICallback<IQueueMessagesPage<string>>) => {
-                this.getMessagesIds(queue, Number(cursor), 1000, cb);
-              },
-              (reply: IQueueMessagesPage<string>, cb: ICallback<string>) => {
-                const { items, cursor } = reply;
-                _deleteMessage(client, items, (err) => {
+      else this.count(parsedParams, cb);
+    });
+  }
+
+  purge(queue: TQueueExtendedParams, cb: ICallback<void>): void {
+    const parsedParams = _parseQueueExtendedParams(queue);
+    _validateQueueExtendedParams(parsedParams, this.requireGroupId, (err) => {
+      if (err) cb(err);
+      else
+        _getCommonRedisClient((err, client) => {
+          if (err) cb(err);
+          else if (!client) cb(new CallbackEmptyReplyError());
+          else {
+            const deleteMessages = (cursor = '0') => {
+              async.waterfall<string>(
+                [
+                  (cb: ICallback<IQueueMessagesPage<string>>) => {
+                    this.getMessagesIds(parsedParams, Number(cursor), 1000, cb);
+                  },
+                  (
+                    reply: IQueueMessagesPage<string>,
+                    cb: ICallback<string>,
+                  ) => {
+                    const { items, cursor } = reply;
+                    _deleteMessage(client, items, (err) => {
+                      if (err) cb(err);
+                      else cb(null, String(cursor));
+                    });
+                  },
+                ],
+                (err, next) => {
                   if (err) cb(err);
-                  else cb(null, String(cursor));
-                });
-              },
-            ],
-            (err, next) => {
-              if (err) cb(err);
-              else if (next !== '0') deleteMessages(next);
-              else cb();
-            },
-          );
-        };
-        deleteMessages('0');
-      }
+                  else if (next !== '0') deleteMessages(next);
+                  else cb();
+                },
+              );
+            };
+            deleteMessages('0');
+          }
+        });
     });
   }
 
   getMessages(
-    queue: string | IQueueParams,
-    cursor: number,
+    queue: TQueueExtendedParams,
+    page: number,
     pageSize: number,
     cb: ICallback<IQueueMessagesPage<IConsumableMessage>>,
   ): void {
-    this.getMessagesIds(queue, cursor, pageSize, (err, reply) => {
+    const parsedParams = _parseQueueExtendedParams(queue);
+    _validateQueueExtendedParams(parsedParams, this.requireGroupId, (err) => {
       if (err) cb(err);
-      else if (!reply) cb(new CallbackEmptyReplyError());
-      else {
-        if (reply.items.length) {
-          _getCommonRedisClient((err, client) => {
-            if (err) cb(err);
-            else if (!client) cb(new CallbackEmptyReplyError());
-            else {
-              const message = new Message();
-              message.getMessagesByIds(reply.items, (err, items) => {
+      else
+        this.getMessagesIds(parsedParams, page, pageSize, (err, reply) => {
+          if (err) cb(err);
+          else if (!reply) cb(new CallbackEmptyReplyError());
+          else {
+            if (reply.items.length) {
+              _getCommonRedisClient((err, client) => {
                 if (err) cb(err);
+                else if (!client) cb(new CallbackEmptyReplyError());
                 else {
-                  cb(null, { ...reply, items: items ?? [] });
+                  const message = new Message();
+                  message.getMessagesByIds(reply.items, (err, items) => {
+                    if (err) cb(err);
+                    else {
+                      cb(null, { ...reply, items: items ?? [] });
+                    }
+                  });
                 }
               });
-            }
-          });
-        } else cb(null, { ...reply, items: [] });
-      }
+            } else cb(null, { ...reply, items: [] });
+          }
+        });
     });
   }
 }

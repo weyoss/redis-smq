@@ -9,9 +9,9 @@
 
 import {
   async,
-  RedisClient,
-  ICallback,
   CallbackEmptyReplyError,
+  ICallback,
+  RedisClient,
 } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import {
@@ -39,7 +39,6 @@ export function _deleteMessage(
         if (err) done(err);
         else if (!message) done(new CallbackEmptyReplyError());
         else {
-          const queueParams = message.getDestinationQueue();
           const {
             keyScheduledMessages,
             keyDelayedMessages,
@@ -48,9 +47,12 @@ export function _deleteMessage(
             keyQueueDL,
             keyQueueScheduled,
             keyQueueAcknowledged,
-            keyPriorityQueuePending,
+            keyQueuePriorityPending,
             keyQueuePending,
-          } = redisKeys.getQueueKeys(queueParams);
+          } = redisKeys.getQueueKeys(
+            message.getDestinationQueue(),
+            message.getConsumerGroupId(),
+          );
           const { keyMessage } = redisKeys.getMessageKeys(id);
           keys.push(
             keyScheduledMessages,
@@ -62,7 +64,7 @@ export function _deleteMessage(
             keyQueueDL,
             keyQueueAcknowledged,
             keyQueueScheduled,
-            keyPriorityQueuePending,
+            keyQueuePriorityPending,
           );
           argv.push(
             EQueueProperty.QUEUE_TYPE,

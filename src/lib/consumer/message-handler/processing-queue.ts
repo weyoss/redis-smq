@@ -8,18 +8,18 @@
  */
 
 import {
+  EConsumeMessageUnacknowledgedCause,
   EMessageProperty,
   EMessagePropertyStatus,
-  EConsumeMessageUnacknowledgedCause,
   IQueueParams,
 } from '../../../../types';
 import { MessageEnvelope } from '../../message/message-envelope';
 import {
   async,
-  RedisClient,
   ICallback,
   ILogger,
   IRedisTransaction,
+  RedisClient,
 } from 'redis-smq-common';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import {
@@ -99,7 +99,11 @@ export const processingQueue = {
                         keyQueueConsumers,
                         keyConsumerQueues,
                         keyQueueProperties,
-                      } = redisKeys.getQueueConsumerKeys(queue, consumerId);
+                      } = redisKeys.getQueueConsumerKeys(
+                        queue,
+                        consumerId,
+                        null,
+                      );
                       keys.push(
                         keyQueueProcessing,
                         keyQueueDL,
@@ -226,7 +230,7 @@ export const processingQueue = {
       keyQueueProcessing,
       keyProcessingQueues,
       keyQueueProcessingQueues,
-    } = redisKeys.getQueueConsumerKeys(queue, consumerId);
+    } = redisKeys.getQueueConsumerKeys(queue, consumerId, null);
     multi.hset(keyQueueProcessingQueues, keyQueueProcessing, consumerId);
     multi.sadd(keyProcessingQueues, keyQueueProcessing);
   },
@@ -236,7 +240,7 @@ export const processingQueue = {
     queue: IQueueParams,
     cb: ICallback<Record<string, string>>,
   ): void {
-    const { keyQueueProcessingQueues } = redisKeys.getQueueKeys(queue);
+    const { keyQueueProcessingQueues } = redisKeys.getQueueKeys(queue, null);
     redisClient.hgetall(keyQueueProcessingQueues, cb);
   },
 };

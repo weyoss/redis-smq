@@ -1,7 +1,8 @@
 local keyQueueProperties = KEYS[1]
 local keyPriorityQueue = KEYS[2]
 local keyQueuePending = KEYS[3]
-local keyMessage = KEYS[4]
+local keyQueueMessages = KEYS[4]
+local keyMessage = KEYS[5]
 
 ---
 
@@ -11,14 +12,13 @@ local EQueuePropertyQueueTypePriorityQueue = ARGV[3]
 local EQueuePropertyQueueTypeLIFOQueue = ARGV[4]
 local EQueuePropertyQueueTypeFIFOQueue = ARGV[5]
 local messagePriority = ARGV[6]
-local keyQueueMessages = ARGV[7]
-local messageId = ARGV[8]
-local EMessagePropertyStatus = ARGV[9]
-local messageStatus = ARGV[10]
-local EMessagePropertyState = ARGV[11]
-local messageState = ARGV[12]
-local EMessagePropertyMessage = ARGV[13]
-local message = ARGV[14]
+local messageId = ARGV[7]
+local EMessagePropertyStatus = ARGV[8]
+local messageStatus = ARGV[9]
+local EMessagePropertyState = ARGV[10]
+local messageState = ARGV[11]
+local EMessagePropertyMessage = ARGV[12]
+local message = ARGV[13]
 
 local queueProperties = redis.call("HMGET", keyQueueProperties, EQueuePropertyQueueType)
 

@@ -7,15 +7,28 @@
  * in the root directory of this source tree.
  */
 
-import { IQueueParams } from '../../../types';
+import {
+  EMessagePropertyStatus,
+  IQueueMessagesRequeuable,
+  IQueueParams,
+} from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { QueueMessagesPaginatorList } from './queue-messages-paginator/queue-messages-paginator-list';
-import { _getQueueParams } from './queue/_get-queue-params';
+import { ICallback } from 'redis-smq-common';
+import { _requeueMessage } from './_requeue-message';
 
-export class QueueAcknowledgedMessages extends QueueMessagesPaginatorList {
-  protected override getRedisKey(queue: string | IQueueParams): string {
-    const queueParams = _getQueueParams(queue);
-    const { keyQueueAcknowledged } = redisKeys.getQueueKeys(queueParams);
-    return keyQueueAcknowledged;
+export class QueueAcknowledgedMessages
+  extends QueueMessagesPaginatorList
+  implements IQueueMessagesRequeuable
+{
+  protected redisKey: keyof ReturnType<typeof redisKeys.getQueueKeys> =
+    'keyQueueAcknowledged';
+
+  requeueMessage(
+    queue: string | IQueueParams,
+    messageId: string,
+    cb: ICallback<void>,
+  ): void {
+    _requeueMessage(queue, messageId, EMessagePropertyStatus.ACKNOWLEDGED, cb);
   }
 }

@@ -26,7 +26,7 @@ local keyQueuePending = ''
 local keyQueueDL = ''
 local keyQueueAcknowledged = ''
 local keyQueueScheduled = ''
-local keyPriorityQueuePending = ''
+local keyQueuePriorityPending = ''
 
 ---
 
@@ -67,7 +67,7 @@ local function deleteMessage()
         local queueType = redis.call("HGET", keyQueueProperties, EQueuePropertyQueueType)
         if queueType ~= false then
             if queueType == EQueuePropertyQueueTypePriorityQueue then
-                deleted = redis.call("ZREM", keyPriorityQueuePending, messageId)
+                deleted = redis.call("ZREM", keyQueuePriorityPending, messageId)
             end
             if queueType == EQueuePropertyQueueTypeFIFOQueue or queueType == EQueuePropertyQueueTypeLIFOQueue then
                 deleted = redis.call("LREM", keyQueuePending, 1, messageId)
@@ -94,7 +94,7 @@ if #ARGV > argvIndexOffset then
             keyQueueDL = KEYS[keyIndexOffset + 4]
             keyQueueAcknowledged = KEYS[keyIndexOffset + 5]
             keyQueueScheduled = KEYS[keyIndexOffset + 6]
-            keyPriorityQueuePending = KEYS[keyIndexOffset + 7]
+            keyQueuePriorityPending = KEYS[keyIndexOffset + 7]
             keyIndexOffset = keyIndexOffset + 7
             deleteMessageStatus = deleteMessage()
             if deleteMessageStatus ~= 'OK' then

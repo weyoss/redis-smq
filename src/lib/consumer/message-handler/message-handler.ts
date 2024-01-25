@@ -9,10 +9,12 @@
 
 import {
   EConsumeMessageUnacknowledgedCause,
-  TConsumerMessageHandler,
-  IQueueParams,
   EMessageProperty,
   EMessagePropertyStatus,
+  IConsumerMessageHandlerArgs,
+  IQueueParsedParams,
+  TConsumerMessageHandler,
+  TRedisSMQEvent,
 } from '../../../../types';
 import { v4 as uuid } from 'uuid';
 import { processingQueue } from './processing-queue';
@@ -21,24 +23,23 @@ import { ConsumeMessage } from './consume-message';
 import { Consumer } from '../consumer';
 import {
   async,
-  PowerSwitch,
-  RedisClient,
-  ICallback,
-  ILogger,
   CallbackEmptyReplyError,
   CallbackInvalidReplyError,
   EventEmitter,
+  ICallback,
+  ILogger,
+  PowerSwitch,
+  RedisClient,
 } from 'redis-smq-common';
 import { ELuaScriptName } from '../../../common/redis-client/redis-client';
 import { _fromMessage } from '../../message/_from-message';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
-import { TRedisSMQEvent } from '../../../../types';
 
 export class MessageHandler extends EventEmitter<TRedisSMQEvent> {
   protected id: string;
   protected consumer: Consumer;
   protected consumerId: string;
-  protected queue: IQueueParams;
+  protected queue: IQueueParsedParams;
   protected dequeueRedisClient: RedisClient;
   protected sharedRedisClient: RedisClient;
   protected powerSwitch: PowerSwitch;
@@ -49,23 +50,23 @@ export class MessageHandler extends EventEmitter<TRedisSMQEvent> {
 
   constructor(
     consumer: Consumer,
-    queue: IQueueParams,
-    handler: TConsumerMessageHandler,
+    handlerParams: IConsumerMessageHandlerArgs,
     dequeueRedisClient: RedisClient,
     sharedRedisClient: RedisClient,
     logger: ILogger,
   ) {
     super();
+    const { queue, messageHandler } = handlerParams;
     this.id = uuid();
     this.consumer = consumer;
     this.consumerId = consumer.getId();
     this.queue = queue;
     this.dequeueRedisClient = dequeueRedisClient;
     this.sharedRedisClient = sharedRedisClient;
-    this.handler = handler;
+    this.handler = messageHandler;
     this.powerSwitch = new PowerSwitch();
     this.logger = logger;
-    this.dequeueMessage = new DequeueMessage(this, dequeueRedisClient, true);
+    this.dequeueMessage = new DequeueMessage(this, dequeueRedisClient);
     this.consumeMessage = new ConsumeMessage(this, dequeueRedisClient, logger);
     this.registerEventsHandlers();
   }
@@ -148,7 +149,7 @@ export class MessageHandler extends EventEmitter<TRedisSMQEvent> {
     processingQueue.handleProcessingQueue(
       this.sharedRedisClient,
       [this.consumerId],
-      [this.queue],
+      [this.queue.queueParams],
       this.logger,
       messageUnacknowledgedCause,
       (err) => cb(err),
@@ -207,7 +208,7 @@ export class MessageHandler extends EventEmitter<TRedisSMQEvent> {
     else goDown();
   }
 
-  getQueue(): IQueueParams {
+  getQueue(): IQueueParsedParams {
     return this.queue;
   }
 
