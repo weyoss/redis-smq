@@ -20,7 +20,7 @@ test('A message is not lost in case of a consumer crash', async () => {
   await crashAConsumerConsumingAMessage();
 
   /**
-   * Consumer2 re-queues failed message and consume it!
+   * Consumer2 re-queues failed message and consumes it!
    */
   const consumer2 = getConsumer({
     messageHandler: jest.fn((msg, cb) => {

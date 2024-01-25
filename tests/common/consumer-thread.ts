@@ -21,6 +21,7 @@ producer.run((err) => {
       .setBody(123)
       .setRetryDelay(0),
     (err) => {
+      console.log('GGGGGGG', err);
       if (err) throw err;
     },
   );

@@ -12,15 +12,24 @@ import { untilMessageAcknowledged } from '../../common/events';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
 import { defaultQueue } from '../../common/message-producing-consuming';
-import { EMessagePriority, EQueueType } from '../../../types';
+import {
+  EMessagePriority,
+  EQueueDeliveryModel,
+  EQueueType,
+} from '../../../types';
 import { getQueue } from '../../common/queue';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages';
 import { getQueueMessages } from '../../common/queue-messages';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages';
+import { QueueMessageRequeueError } from '../../../src/lib/queue/errors';
 
 test('Combined test. Requeue a priority message from acknowledged queue. Check queue metrics.', async () => {
   const queue = await getQueue();
-  await queue.saveAsync(defaultQueue, EQueueType.PRIORITY_QUEUE);
+  await queue.saveAsync(
+    defaultQueue,
+    EQueueType.PRIORITY_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
 
   const consumer = getConsumer({
     queue: defaultQueue,
@@ -78,7 +87,6 @@ test('Combined test. Requeue a priority message from acknowledged queue. Check q
   expect(res7.items[0].getId()).toEqual(id);
 
   await expect(
-    async () =>
-      await acknowledgedMessages.requeueMessageAsync(defaultQueue, id),
-  ).not.toThrow();
+    acknowledgedMessages.requeueMessageAsync(defaultQueue, id),
+  ).rejects.toThrow(QueueMessageRequeueError);
 });

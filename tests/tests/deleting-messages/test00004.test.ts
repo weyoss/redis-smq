@@ -17,7 +17,7 @@ import { getQueuePendingMessages } from '../../common/queue-pending-messages';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages';
 import { getQueueMessages } from '../../common/queue-messages';
 import { promisifyAll } from 'bluebird';
-import { MessageNotFoundError } from '../../../src/lib/message/errors/message-not-found.error';
+import { MessageNotFoundError } from '../../../src/lib/message/errors';
 import { Message } from '../../../src/lib/message/message';
 
 test('Combined test: Delete a dead-letter message. Check pending, acknowledged, and dead-letter message. Check queue metrics.', async () => {

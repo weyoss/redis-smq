@@ -13,13 +13,21 @@ import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
 import { validateTime } from '../../common/validate-time';
 import { defaultQueue } from '../../common/message-producing-consuming';
-import { EMessagePriority, EQueueType } from '../../../types';
+import {
+  EMessagePriority,
+  EQueueDeliveryModel,
+  EQueueType,
+} from '../../../types';
 import { getQueue } from '../../common/queue';
 import { getQueueRateLimit } from '../../common/queue-rate-limit';
 
 test('Rate limit a priority queue and check message rate', async () => {
   const queue = await getQueue();
-  await queue.saveAsync(defaultQueue, EQueueType.PRIORITY_QUEUE);
+  await queue.saveAsync(
+    defaultQueue,
+    EQueueType.PRIORITY_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
 
   const queueRateLimit = await getQueueRateLimit();
   await queueRateLimit.setAsync(defaultQueue, {

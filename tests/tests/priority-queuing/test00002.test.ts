@@ -12,14 +12,22 @@ import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
 import { defaultQueue } from '../../common/message-producing-consuming';
-import { EMessagePriority, EQueueType } from '../../../types';
+import {
+  EMessagePriority,
+  EQueueDeliveryModel,
+  EQueueType,
+} from '../../../types';
 import { getQueue } from '../../common/queue';
 
 test('Priority queuing: case 2', async () => {
   const consumedMessages: string[] = [];
 
   const queue = await getQueue();
-  await queue.saveAsync(defaultQueue, EQueueType.PRIORITY_QUEUE);
+  await queue.saveAsync(
+    defaultQueue,
+    EQueueType.PRIORITY_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
 
   const consumer = promisifyAll(
     getConsumer({

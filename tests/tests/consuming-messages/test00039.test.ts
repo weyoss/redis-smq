@@ -64,6 +64,8 @@ test('ConsumableMessage', async () => {
   expect(consumableMessage.getScheduledDelay()).toBe(null);
   expect(consumableMessage.getFanOut()).toBe(null);
   expect(consumableMessage.getTopic()).toBe(null);
+  expect(consumableMessage.getTopic()).toBe(null);
+  expect(consumableMessage.getConsumerGroupId()).toBe(null);
   expect(consumableMessage.toJSON()).toEqual({
     createdAt: consumableMessage.getCreatedAt(),
     exchange: consumableMessage.getExchange().toJSON(),
@@ -78,5 +80,6 @@ test('ConsumableMessage', async () => {
     scheduledRepeatPeriod: consumableMessage.getScheduledRepeatPeriod(),
     scheduledRepeat: consumableMessage.getScheduledRepeat(),
     destinationQueue: consumableMessage.getDestinationQueue(),
+    consumerGroupId: consumableMessage.getConsumerGroupId(),
   });
 });

@@ -13,12 +13,16 @@ import { consumerQueues } from '../../../src/lib/consumer/consumer-queues';
 import { getRedisInstance } from '../../common/redis';
 import { defaultQueue } from '../../common/message-producing-consuming';
 import { shutDownBaseInstance } from '../../common/base-instance';
-import { EQueueType } from '../../../types';
+import { EQueueDeliveryModel, EQueueType } from '../../../types';
 import { getQueue } from '../../common/queue';
 
 test('Consume message from different queues using a single consumer instance: case 3', async () => {
   const queue = await getQueue();
-  await queue.saveAsync(defaultQueue, EQueueType.LIFO_QUEUE);
+  await queue.saveAsync(
+    defaultQueue,
+    EQueueType.LIFO_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
 
   const consumer = promisifyAll(new Consumer());
   await consumer.runAsync();

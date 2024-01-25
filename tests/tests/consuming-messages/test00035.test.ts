@@ -12,7 +12,11 @@ import { Consumer } from '../../../src/lib/consumer/consumer';
 import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { getProducer } from '../../common/producer';
 import { shutDownBaseInstance } from '../../common/base-instance';
-import { EQueueType, IConsumableMessage } from '../../../types';
+import {
+  EQueueDeliveryModel,
+  EQueueType,
+  IConsumableMessage,
+} from '../../../types';
 import { getQueue } from '../../common/queue';
 
 test('Consume message from different queues using a single consumer instance: case 6', async () => {
@@ -24,7 +28,11 @@ test('Consume message from different queues using a single consumer instance: ca
   await delay(5000);
 
   const queue = await getQueue();
-  await queue.saveAsync('test0', EQueueType.LIFO_QUEUE);
+  await queue.saveAsync(
+    'test0',
+    EQueueType.LIFO_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
   await consumer.consumeAsync('test0', () => void 0);
 
   consumer.once('messageReceived', () => {
@@ -46,31 +54,51 @@ test('Consume message from different queues using a single consumer instance: ca
   await delay(10000);
   expect(consumer.getQueues()).toEqual([]);
 
-  await queue.saveAsync('test1', EQueueType.PRIORITY_QUEUE);
+  await queue.saveAsync(
+    'test1',
+    EQueueType.PRIORITY_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
   await consumer.consumeAsync('test1', (msg, cb) => {
     messages.push(msg);
     cb();
   });
 
-  await queue.saveAsync('test2', EQueueType.PRIORITY_QUEUE);
+  await queue.saveAsync(
+    'test2',
+    EQueueType.PRIORITY_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
   await consumer.consumeAsync('test2', (msg, cb) => {
     messages.push(msg);
     cb();
   });
 
-  await queue.saveAsync('test3', EQueueType.PRIORITY_QUEUE);
+  await queue.saveAsync(
+    'test3',
+    EQueueType.PRIORITY_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
   await consumer.consumeAsync('test3', (msg, cb) => {
     messages.push(msg);
     cb();
   });
 
-  await queue.saveAsync('test4', EQueueType.PRIORITY_QUEUE);
+  await queue.saveAsync(
+    'test4',
+    EQueueType.PRIORITY_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
   await consumer.consumeAsync('test4', (msg, cb) => {
     messages.push(msg);
     cb();
   });
 
-  await queue.saveAsync('test5', EQueueType.PRIORITY_QUEUE);
+  await queue.saveAsync(
+    'test5',
+    EQueueType.PRIORITY_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
   await consumer.consumeAsync('test5', (msg, cb) => {
     messages.push(msg);
     cb();

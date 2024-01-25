@@ -9,7 +9,7 @@
 
 import { ExchangeFanOut } from '../../../../src/lib/exchange/exchange-fan-out';
 import { isEqual } from '../../../common/util';
-import { EQueueType } from '../../../../types';
+import { EQueueDeliveryModel, EQueueType } from '../../../../types';
 import { getQueue } from '../../../common/queue';
 import { getFanOutExchange } from '../../../common/exchange';
 import { promisifyAll } from 'bluebird';
@@ -22,9 +22,21 @@ test('QueueExchange: bindQueue(), getExchangeQueues(), unbindQueue()', async () 
   const q3 = { ns: 'testing', name: 'w789' };
 
   const queue = await getQueue();
-  await queue.saveAsync(q1, EQueueType.LIFO_QUEUE);
-  await queue.saveAsync(q2, EQueueType.LIFO_QUEUE);
-  await queue.saveAsync(q3, EQueueType.LIFO_QUEUE);
+  await queue.saveAsync(
+    q1,
+    EQueueType.LIFO_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
+  await queue.saveAsync(
+    q2,
+    EQueueType.LIFO_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
+  await queue.saveAsync(
+    q3,
+    EQueueType.LIFO_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+  );
 
   const exchangeA = getFanOutExchange('fanout_a');
   const exchangeB = getFanOutExchange('fanout_b');
