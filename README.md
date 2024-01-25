@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> Currently, RedisSMQ is going under heavy development. Pre-releases at any time may introduce new commits with breaking changes. 
+> Currently, RedisSMQ is going under heavy development. Pre-releases at any time may introduce new commits with breaking changes.
 > The master branch always reflects the most recent changes. To view the latest release reference see [RedisSMQ v7.2.3](https://github.com/weyoss/redis-smq/tree/v7.2.3)
 
 <div align="center" style="text-align: center">
@@ -17,22 +17,23 @@
    <a href="https://npmjs.org/package/redis-smq" rel="nofollow"><img src="https://img.shields.io/npm/dm/redis-smq.svg" alt="NPM downloads" /></a>
 </p>
 
-RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing them asynchronously with consumers. Backed by Redis, it allows scaling up your application with ease of use.
+RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing them asynchronously with consumers. Backed by Redis, it allows scaling up your typical applications with ease of use.
 
 ## Features
 
 * [High-performance message processing](docs/performance.md).
-* Flexible Producer/Consumer model which offers [Multi-Queue Producers](docs/producing-messages.md) & [Multi-Queue Consumers](docs/consuming-messages.md), focuses on simplicity and without tons of features. This makes RedisSMQ an ideal message broker for microservices-based applications.
-* In case of failures, while delivering or processing a message, RedisSMQ can guaranty that the message is not lost and that it is redelivered [at-least-once](docs/api/classes/ProducibleMessage.md#setretrythreshold). When configured to do so, RedisSMQ can also ensure that the message is delivered [at-most-once](docs/api/classes/ProducibleMessage.md#setretrythreshold).
+* Flexible Producer/Consumer model which offers [Multi-Queue Producers](docs/producing-messages.md) & [Multi-Queue Consumers](docs/consuming-messages.md).
 * RedisSMQ offers different exchange types: [Direct Exchange](docs/message-exchanges.md#direct-exchange), [Topic Exchange](docs/message-exchanges.md#topic-exchange), and [FanOut Exchange](docs/message-exchanges.md#fanout-exchange) for publishing a message to one or multiple queues.
-* 3 queuing strategies that you may use depending on your needs and requirements: [FIFO queues, LIFO queues, and Reliable Priority Queues](docs/queues.md).
-* A message can be [set to expire](docs/api/classes/ProducibleMessage.md#setttl) if it has not been delivered within a given amount of time. [Consumption timeout](docs/api/classes/ProducibleMessage.md#setconsumetimeout) allows canceling a message consumption if a consumer did not acknowledge the message for a period of time.
-* [Queue Rate Limiting](docs/queue-rate-limiting.md) which allows to control the rate at which the messages are consumed from a given queue.
-* Builtin [message scheduler](docs/scheduling-messages.md) allowing to delay a message, to deliver a message for N times with an optional period between deliveries, or simply to schedule message delivery using CRON expressions.
-* [Multiplexing](/docs/multiplexing.md): A feature which allows message handlers to use a single redis connection to dequeue and consume messages.
-* An [HTTP interface](https://github.com/weyoss/redis-smq-monitor) is provided to interact with the MQ. RedisSMQ can be managed also from your [web browser](https://github.com/weyoss/redis-smq-monitor-client).
-* Depending on [your preferences](docs/configuration.md), RedisSMQ can use either [node-redis v3](https://github.com/redis/node-redis/tree/v3.1.2), [node-redis v4](https://github.com/redis/node-redis), or [ioredis](https://github.com/luin/ioredis).
-* RedisSMQ is [highly optimized](https://lgtm.com/projects/g/weyoss/redis-smq/context:javascript), implemented using pure callbacks, with small memory footprint and no memory leaks. See [Callback vs Promise vs Async/Await benchmarks](https://gist.github.com/weyoss/24f9ecbda175d943a48cb7ec38bde821).
+* Supports [Point-2-Point](docs/queue-delivery-models.md#point-2-point-delivery-model) and [Pub/Sub](docs/queue-delivery-models.md#pubsub-delivery-model) [delivery models](docs/queue-delivery-models.md).
+* Both [delivery models](docs/queue-delivery-models.md) are reliable. For cases of failure, while delivering/consuming messages, [at-least-once](docs/api/classes/ProducibleMessage.md#setretrythreshold) and [at-most-once](docs/api/classes/ProducibleMessage.md#setretrythreshold) modes may be configured.
+* [3 queuing strategies](docs/queues.md): [FIFO queues](docs/queues.md#fifo-first-in-first-out-queues), [LIFO queues](docs/queues.md#lifo-last-in-first-out-queues), and [Reliable Priority Queues](docs/queues.md#priority-queues).
+* Messages can be [set to expire](docs/api/classes/ProducibleMessage.md#setttl) when not delivered within a given amount of time or to have a [consumption timeout](docs/api/classes/ProducibleMessage.md#setconsumetimeout) while being in process.
+* Queues may be [rate Limited](docs/queue-rate-limiting.md) to control the rate at which the messages are consumed.
+* Has a builtin [scheduler](docs/scheduling-messages.md) allowing messages [to be delayed](docs/api/classes/ProducibleMessage.md#setscheduleddelay), [to be delivered for N times](docs/api/classes/ProducibleMessage.md#setscheduledrepeat) with an optional [period between deliveries](docs/api/classes/ProducibleMessage.md#setscheduledrepeatperiod), or simply [to be scheduled using CRON expressions](docs/api/classes/ProducibleMessage.md#setscheduledcron).
+* Provides [an HTTP API](https://github.com/weyoss/redis-smq-monitor) to interact with the message queue for external services.
+* RedisSMQ can be managed also from your [web browser](https://github.com/weyoss/redis-smq-monitor-client).
+* Either [node-redis](https://github.com/redis/node-redis) or [ioredis](https://github.com/luin/ioredis) can be used as a Redis client.
+* [Highly optimized](https://lgtm.com/projects/g/weyoss/redis-smq/context:javascript), implemented using pure callbacks, with small memory footprint and no memory leaks. See [Callback vs Promise vs Async/Await benchmarks](https://gist.github.com/weyoss/24f9ecbda175d943a48cb7ec38bde821).
 * [Both ESM & CJS modules are supported](docs/esm-cjs-modules.md).
 
 ## RedisSMQ Use Case: Multi-Queue Producers & Multi-Queue Consumers
@@ -65,13 +66,15 @@ A queue is responsible for holding messages which are produced by producers and 
 ### Creating a queue
 
 ```javascript
-const { Queue, EQueueType } = require('redis-smq');
+const { Queue, EQueueType, EQueueDeliveryModel } = require('redis-smq');
 
 const queue = new Queue();
 
 // Creating a LIFO queue
-queue.save('my_queue', EQueueType.LIFO_QUEUE, (err) => console.log(err));
+queue.save('my_queue', EQueueType.LIFO_QUEUE, EQueueDeliveryModel.POINT_TO_POINT, (err) => console.log(err));
 ```
+
+In the example above we are defining a [LIFO queue](docs/queues.md#lifo-last-in-first-out-queues) with a [POINT-2-POINT delivery model](docs/queue-delivery-models.md#point-2-point-delivery-model).
 
 ### Producing a message
 

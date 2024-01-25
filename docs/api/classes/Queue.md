@@ -97,7 +97,7 @@ ___
 
 ### save
 
-▸ **save**(`queue`, `queueType`, `cb`): `void`
+▸ **save**(`queue`, `queueType`, `deliveryModel`, `cb`): `void`
 
 #### Parameters
 
@@ -105,6 +105,7 @@ ___
 | :------ | :------ |
 | `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
 | `queueType` | [`EQueueType`](../enums/EQueueType.md) |
+| `deliveryModel` | [`EQueueDeliveryModel`](../enums/EQueueDeliveryModel.md) |
 | `cb` | `ICallback`\<\{ `properties`: [`IQueueProperties`](../interfaces/IQueueProperties.md) ; `queue`: [`IQueueParams`](../interfaces/IQueueParams.md)  }\> |
 
 #### Returns

@@ -15,6 +15,7 @@ import {
   ProducibleMessage,
   Queue,
   EQueueType,
+  EQueueDeliveryMode,
   Configuration,
   disconnect,
 } from '../..'; // redis-smq
@@ -58,7 +59,11 @@ const createQueue = async () => {
   const exists = await queue.existsAsync('test_queue');
   if (!exists) {
     // Creating a queue (a LIFO queue)
-    await queue.saveAsync('test_queue', EQueueType.LIFO_QUEUE);
+    await queue.saveAsync(
+      'test_queue',
+      EQueueType.LIFO_QUEUE,
+      EQueueDeliveryMode.POINT_TO_POINT,
+    );
     await promisify(disconnect)();
   }
 };

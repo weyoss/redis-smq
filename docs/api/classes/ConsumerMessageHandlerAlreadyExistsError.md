@@ -24,7 +24,7 @@
 
 | Name | Type |
 | :------ | :------ |
-| `queue` | [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `queue` | [`IQueueParsedParams`](../interfaces/IQueueParsedParams.md) |
 
 #### Returns
 

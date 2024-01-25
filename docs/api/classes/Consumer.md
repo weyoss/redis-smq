@@ -59,7 +59,7 @@ Base.constructor
 
 | Name | Type |
 | :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
 | `cb` | `ICallback`\<`void`\> |
 
 #### Returns
@@ -76,7 +76,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
 | `messageHandler` | [`TConsumerMessageHandler`](../README.md#tconsumermessagehandler) |
 | `cb` | `ICallback`\<`void`\> |
 
@@ -102,11 +102,11 @@ ___
 
 ### getQueues
 
-▸ **getQueues**(): [`IQueueParams`](../interfaces/IQueueParams.md)[]
+▸ **getQueues**(): [`IQueueParsedParams`](../interfaces/IQueueParsedParams.md)[]
 
 #### Returns
 
-[`IQueueParams`](../interfaces/IQueueParams.md)[]
+[`IQueueParsedParams`](../interfaces/IQueueParsedParams.md)[]
 
 ___
 

@@ -6,12 +6,19 @@
 
 ### Properties
 
+- [deliveryModel](IQueueProperties.md#deliverymodel)
 - [exchange](IQueueProperties.md#exchange)
 - [messagesCount](IQueueProperties.md#messagescount)
 - [queueType](IQueueProperties.md#queuetype)
 - [rateLimit](IQueueProperties.md#ratelimit)
 
 ## Properties
+
+### deliveryModel
+
+• **deliveryModel**: [`EQueueDeliveryModel`](../enums/EQueueDeliveryModel.md)
+
+___
 
 ### exchange
 

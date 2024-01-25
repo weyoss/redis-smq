@@ -14,7 +14,6 @@
 - [get](QueueRateLimit.md#get)
 - [hasExceeded](QueueRateLimit.md#hasexceeded)
 - [set](QueueRateLimit.md#set)
-- [hasExceeded](QueueRateLimit.md#hasexceeded-1)
 
 ## Constructors
 
@@ -91,25 +90,6 @@ ___
 | `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
 | `rateLimit` | [`IQueueRateLimit`](../interfaces/IQueueRateLimit.md) |
 | `cb` | `ICallback`\<`void`\> |
-
-#### Returns
-
-`void`
-
-___
-
-### hasExceeded
-
-▸ **hasExceeded**(`redisClient`, `queue`, `rateLimit`, `cb`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `redisClient` | `RedisClient` |
-| `queue` | [`IQueueParams`](../interfaces/IQueueParams.md) |
-| `rateLimit` | [`IQueueRateLimit`](../interfaces/IQueueRateLimit.md) |
-| `cb` | `ICallback`\<`boolean`\> |
 
 #### Returns
 

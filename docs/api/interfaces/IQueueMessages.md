@@ -24,7 +24,7 @@
 
 | Name | Type |
 | :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](IQueueParams.md) |
+| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
 | `cb` | `ICallback`\<`number`\> |
 
 #### Returns
@@ -41,7 +41,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](IQueueParams.md) |
+| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
 | `page` | `number` |
 | `pageSize` | `number` |
 | `cb` | `ICallback`\<[`IQueueMessagesPage`](IQueueMessagesPage.md)\<[`IConsumableMessage`](IConsumableMessage.md)\>\> |
@@ -60,7 +60,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](IQueueParams.md) |
+| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
 | `cb` | `ICallback`\<`void`\> |
 
 #### Returns

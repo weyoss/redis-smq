@@ -16,6 +16,7 @@ const {
   Configuration,
   disconnect,
   EQueueType,
+  EQueueDeliveryMode,
 } = require('../..'); // redis-smq
 
 const config = {
@@ -54,10 +55,15 @@ const createQueue = (cb) => {
     if (err) cb(err);
     else if (!reply) {
       // Creating a queue (a LIFO queue)
-      queue.save('test_queue', EQueueType.LIFO_QUEUE, (err) => {
-        if (err) cb(err);
-        else disconnect(cb);
-      });
+      queue.save(
+        'test_queue',
+        EQueueType.LIFO_QUEUE,
+        EQueueDeliveryMode.POINT_TO_POINT,
+        (err) => {
+          if (err) cb(err);
+          else disconnect(cb);
+        },
+      );
     } else cb();
   });
 };

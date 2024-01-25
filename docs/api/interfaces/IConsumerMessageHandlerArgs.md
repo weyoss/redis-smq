@@ -19,4 +19,4 @@ ___
 
 ### queue
 
-• **queue**: [`IQueueParams`](IQueueParams.md)
+• **queue**: [`IQueueParsedParams`](IQueueParsedParams.md)
