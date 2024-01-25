@@ -9,28 +9,25 @@
 
 import { MessageHandler } from '../message-handler/message-handler';
 import { ICallback, ILogger, RedisClient } from 'redis-smq-common';
-import { DequeueMessage } from '../message-handler/dequeue-message';
 import { Consumer } from '../consumer';
-import { IQueueParams, TConsumerMessageHandler } from '../../../../types';
+import { IConsumerMessageHandlerArgs } from '../../../../types';
 
 export class MultiplexedMessageHandler extends MessageHandler {
   constructor(
     consumer: Consumer,
-    queue: IQueueParams,
-    handler: TConsumerMessageHandler,
+    handlerParams: IConsumerMessageHandlerArgs,
     dequeueRedisClient: RedisClient,
     sharedRedisClient: RedisClient,
     logger: ILogger,
   ) {
     super(
       consumer,
-      queue,
-      handler,
+      handlerParams,
       dequeueRedisClient,
       sharedRedisClient,
       logger,
     );
-    this.dequeueMessage = new DequeueMessage(this, dequeueRedisClient, false);
+    this.dequeueMessage.disableConnectionBlocking();
   }
 
   protected override registerEventsHandlers(): void {

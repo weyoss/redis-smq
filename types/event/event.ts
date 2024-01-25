@@ -11,7 +11,7 @@ import {
   EConsumeMessageDeadLetterCause,
   EConsumeMessageUnacknowledgedCause,
   IConsumerHeartbeat,
-  IQueueParams,
+  IQueueParsedParams,
 } from '../index';
 import { TEvent } from 'redis-smq-common';
 
@@ -23,43 +23,43 @@ export type TRedisSMQEvent = TEvent & {
   ) => void;
   messagePublished: (
     messageId: string,
-    queue: IQueueParams,
+    queue: IQueueParsedParams,
     producerId: string,
   ) => void;
   messageAcknowledged: (
     messageId: string,
-    queue: IQueueParams,
+    queue: IQueueParsedParams,
     messageHandlerId: string,
     consumerId: string,
   ) => void;
   messageUnacknowledged: (
     messageId: string,
-    queue: IQueueParams,
+    queue: IQueueParsedParams,
     messageHandlerId: string,
     consumerId: string,
     cause: EConsumeMessageUnacknowledgedCause,
   ) => void;
   messageDeadLettered: (
     messageId: string,
-    queue: IQueueParams,
+    queue: IQueueParsedParams,
     messageHandlerId: string,
     consumerId: string,
     cause: EConsumeMessageDeadLetterCause,
   ) => void;
   messageReceived: (
     messageId: string,
-    queue: IQueueParams,
+    queue: IQueueParsedParams,
     consumerId: string,
   ) => void;
   messageRequeued: (
     messageId: string,
-    queue: IQueueParams,
+    queue: IQueueParsedParams,
     messageHandlerId: string,
     consumerId: string,
   ) => void;
   messageDelayed: (
     messageId: string,
-    queue: IQueueParams,
+    queue: IQueueParsedParams,
     messageHandlerId: string,
     consumerId: string,
   ) => void;

@@ -11,18 +11,18 @@ import { Consumer } from '../consumer';
 import { MessageHandler } from './message-handler';
 import {
   EConsumeMessageUnacknowledgedCause,
-  TConsumerMessageHandler,
   IConsumerMessageHandlerArgs,
-  IQueueParams,
+  IQueueParsedParams,
+  TConsumerMessageHandler,
 } from '../../../../types';
 import {
   async,
-  redis,
-  RedisClient,
+  CallbackEmptyReplyError,
   ICallback,
   ILogger,
-  CallbackEmptyReplyError,
   PanicError,
+  redis,
+  RedisClient,
 } from 'redis-smq-common';
 import { ConsumerMessageHandlerAlreadyExistsError } from '../errors';
 import { Configuration } from '../../../config/configuration';
@@ -58,19 +58,28 @@ export class MessageHandlerRunner {
   }
 
   protected getMessageHandlerInstance(
-    queue: IQueueParams,
+    queue: IQueueParsedParams,
   ): MessageHandler | undefined {
+    const { queueParams, groupId } = queue;
     return this.messageHandlerInstances.find((i) => {
-      const q = i.getQueue();
-      return q.name === queue.name && q.ns === queue.ns;
+      const handlerQueue = i.getQueue();
+      return (
+        handlerQueue.queueParams.name === queueParams.name &&
+        handlerQueue.queueParams.ns === queueParams.ns &&
+        handlerQueue.groupId === groupId
+      );
     });
   }
 
   protected getMessageHandler(
-    queue: IQueueParams,
+    queue: IQueueParsedParams,
   ): IConsumerMessageHandlerArgs | undefined {
+    const { queueParams, groupId } = queue;
     return this.messageHandlers.find(
-      (i) => i.queue.name === queue.name && i.queue.ns === queue.ns,
+      (i) =>
+        i.queue.queueParams.name === queueParams.name &&
+        i.queue.queueParams.ns === queueParams.ns &&
+        i.queue.groupId === groupId,
     );
   }
 
@@ -79,11 +88,9 @@ export class MessageHandlerRunner {
     handlerParams: IConsumerMessageHandlerArgs,
   ): MessageHandler {
     const sharedRedisClient = this.getSharedRedisClient();
-    const { queue, messageHandler } = handlerParams;
     const instance = new MessageHandler(
       this.consumer,
-      queue,
-      messageHandler,
+      handlerParams,
       dequeueRedisClient,
       sharedRedisClient,
       this.logger,
@@ -126,8 +133,12 @@ export class MessageHandlerRunner {
     messageHandler.shutdown(messageUnacknowledgedCause, () => {
       this.messageHandlerInstances = this.messageHandlerInstances.filter(
         (handler) => {
-          const q = handler.getQueue();
-          return !(q.name === queue.name && q.ns === queue.ns);
+          const iQueue = handler.getQueue();
+          return !(
+            iQueue.queueParams.name === queue.queueParams.name &&
+            iQueue.queueParams.ns === queue.queueParams.ns &&
+            iQueue.groupId === queue.groupId
+          );
         },
       );
       cb();
@@ -172,13 +183,18 @@ export class MessageHandlerRunner {
     );
   }
 
-  removeMessageHandler(queue: IQueueParams, cb: ICallback<void>): void {
+  removeMessageHandler(queue: IQueueParsedParams, cb: ICallback<void>): void {
+    const { queueParams, groupId } = queue;
     const handler = this.getMessageHandler(queue);
     if (!handler) cb();
     else {
       this.messageHandlers = this.messageHandlers.filter((handler) => {
-        const q = handler.queue;
-        return !(q.name === queue.name && q.ns === queue.ns);
+        const handerQueue = handler.queue;
+        return !(
+          queueParams.name === handerQueue.queueParams.name &&
+          queueParams.ns === handerQueue.queueParams.ns &&
+          groupId === handerQueue.groupId
+        );
       });
       this.logger.info(
         `Message handler with parameters (${JSON.stringify(
@@ -197,7 +213,7 @@ export class MessageHandlerRunner {
   }
 
   addMessageHandler(
-    queue: IQueueParams,
+    queue: IQueueParsedParams,
     messageHandler: TConsumerMessageHandler,
     cb: ICallback<void>,
   ): void {
@@ -220,7 +236,7 @@ export class MessageHandlerRunner {
     }
   }
 
-  getQueues(): IQueueParams[] {
+  getQueues(): IQueueParsedParams[] {
     return this.messageHandlers.map((i) => i.queue);
   }
 }

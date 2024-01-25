@@ -18,12 +18,33 @@ export interface IQueueParams {
   ns: string;
 }
 
+export interface IQueueConsumerGroupParams {
+  queue: string | IQueueParams;
+  groupId: string | null;
+}
+
+export type TQueueExtendedParams =
+  | string
+  | IQueueParams
+  | IQueueConsumerGroupParams;
+
+export interface IQueueParsedParams {
+  queueParams: IQueueParams;
+  groupId: string | null;
+}
+
 export interface IQueueRateLimit {
   limit: number;
   interval: number;
 }
 
+export enum EQueueDeliveryModel {
+  POINT_TO_POINT,
+  PUB_SUB,
+}
+
 export interface IQueueProperties {
+  deliveryModel: EQueueDeliveryModel;
   queueType: EQueueType;
   rateLimit: IQueueRateLimit | null;
   exchange: string | null;
@@ -35,4 +56,5 @@ export enum EQueueProperty {
   RATE_LIMIT,
   EXCHANGE,
   MESSAGES_COUNT,
+  DELIVERY_MODEL,
 }

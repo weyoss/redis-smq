@@ -8,23 +8,22 @@
  */
 
 import { v4 as uuid } from 'uuid';
-import { IEventListener } from '../../types';
+import { IEventListener, TRedisSMQEvent } from '../../types';
 import {
   async,
-  redis,
-  logger,
-  PowerSwitch,
-  RedisClient,
+  CallbackEmptyReplyError,
+  EventEmitter,
   ICallback,
+  ILogger,
+  logger,
+  PanicError,
+  PowerSwitch,
+  redis,
+  RedisClient,
   TFunction,
   TUnaryFunction,
-  ILogger,
-  CallbackEmptyReplyError,
-  PanicError,
-  EventEmitter,
 } from 'redis-smq-common';
 import { Configuration } from '../config/configuration';
-import { TRedisSMQEvent } from '../../types';
 
 export abstract class Base extends EventEmitter<TRedisSMQEvent> {
   protected readonly id: string;
@@ -91,10 +90,10 @@ export abstract class Base extends EventEmitter<TRedisSMQEvent> {
     return [this.tearDownEventListeners, this.tearDownSharedRedisClient];
   }
 
-  protected down(cb?: ICallback<boolean>): void {
+  protected down(cb: ICallback<boolean>): void {
     this.powerSwitch.commit();
     this.emit('down');
-    cb && cb(null, true);
+    cb(null, true);
   }
 
   protected getSharedRedisClient(): RedisClient {
@@ -164,15 +163,16 @@ export abstract class Base extends EventEmitter<TRedisSMQEvent> {
   }
 
   shutdown(cb?: ICallback<boolean>): void {
+    const callback = cb ?? (() => void 0);
     const r = this.powerSwitch.goingDown();
     if (r) {
       this.emit('goingDown');
       const tasks = this.goingDown();
       async.waterfall(tasks, () => {
         // ignoring shutdown errors
-        this.down(cb);
+        this.down(callback);
       });
-    } else cb && cb(null, r);
+    } else callback(null, r);
   }
 
   isRunning(): boolean {

@@ -9,8 +9,9 @@
 
 import * as os from 'os';
 import {
+  EQueueDeliveryModel,
   EQueueType,
-  IQueueParams,
+  IQueueParsedParams,
   IQueueRateLimit,
   TQueueConsumer,
 } from '../../../../types';
@@ -19,14 +20,20 @@ import {
   async,
   CallbackEmptyReplyError,
   ICallback,
+  PanicError,
   RedisClient,
   Ticker,
 } from 'redis-smq-common';
 import { MessageHandler } from './message-handler';
-import { QueueRateLimit } from '../../queue/queue-rate-limit';
 import { ELuaScriptName } from '../../../common/redis-client/redis-client';
 import { QueueNotFoundError } from '../../queue/errors';
 import { _getQueueProperties } from '../../queue/queue/_get-queue-properties';
+import { _hasRateLimitExceeded } from '../../queue/queue-rate-limit/_has-rate-limit-exceeded';
+import {
+  ConsumerGroupIdNotSupportedError,
+  ConsumerGroupIdRequiredError,
+} from '../errors';
+import { _saveConsumerGroup } from '../consumer-groups/_save-consumer-group';
 
 const IPAddresses = (() => {
   const nets = os.networkInterfaces();
@@ -44,29 +51,51 @@ const IPAddresses = (() => {
 
 export class DequeueMessage {
   protected redisClient: RedisClient;
-  protected queue: IQueueParams;
+  protected queue: IQueueParsedParams;
   protected consumerId: string;
-  protected redisKeys: ReturnType<(typeof redisKeys)['getQueueConsumerKeys']>;
   protected queueRateLimit: IQueueRateLimit | null = null;
   protected ticker: Ticker;
   protected messageHandler: MessageHandler;
-  protected blockUntilMessageReceived: boolean;
+  protected blockUntilMessageReceived: boolean = true;
   protected queueType: EQueueType | null = null;
 
-  constructor(
-    messageHandler: MessageHandler,
-    redisClient: RedisClient,
-    blockUntilMessageReceived = true,
-  ) {
+  protected keyQueues: string;
+  protected keyQueueConsumers: string;
+  protected keyConsumerQueues: string;
+  protected keyProcessingQueues: string;
+  protected keyQueueProcessingQueues: string;
+
+  protected keyQueueProcessing: string;
+  protected keyQueuePending: string;
+  protected keyQueuePriorityPending: string;
+
+  constructor(messageHandler: MessageHandler, redisClient: RedisClient) {
     this.messageHandler = messageHandler;
     this.redisClient = redisClient;
-    this.blockUntilMessageReceived = blockUntilMessageReceived;
     this.queue = messageHandler.getQueue();
     this.consumerId = messageHandler.getConsumerId();
-    this.redisKeys = redisKeys.getQueueConsumerKeys(
-      this.queue,
+    const {
+      keyQueues,
+      keyQueueConsumers,
+      keyConsumerQueues,
+      keyProcessingQueues,
+      keyQueueProcessingQueues,
+      keyQueuePending,
+      keyQueuePriorityPending,
+      keyQueueProcessing,
+    } = redisKeys.getQueueConsumerKeys(
+      this.queue.queueParams,
       this.consumerId,
+      this.queue.groupId,
     );
+    this.keyQueuePriorityPending = keyQueuePriorityPending;
+    this.keyQueuePending = keyQueuePending;
+    this.keyQueueProcessing = keyQueueProcessing;
+    this.keyQueues = keyQueues;
+    this.keyQueueConsumers = keyQueueConsumers;
+    this.keyConsumerQueues = keyConsumerQueues;
+    this.keyProcessingQueues = keyProcessingQueues;
+    this.keyQueueProcessingQueues = keyQueueProcessingQueues;
     this.ticker = new Ticker(() => {
       this.messageHandler.emit('next');
     });
@@ -90,9 +119,9 @@ export class DequeueMessage {
 
   protected dequeueWithRateLimit = (): boolean => {
     if (this.queueRateLimit) {
-      QueueRateLimit.hasExceeded(
+      _hasRateLimitExceeded(
         this.redisClient,
-        this.queue,
+        this.queue.queueParams,
         this.queueRateLimit,
         (err, isExceeded) => {
           if (err) this.messageHandler.handleError(err);
@@ -113,8 +142,8 @@ export class DequeueMessage {
   protected dequeueWithPriority = (): boolean => {
     if (this.isPriorityQueuingEnabled()) {
       this.redisClient.zpoprpush(
-        this.redisKeys.keyPriorityQueuePending,
-        this.redisKeys.keyQueueProcessing,
+        this.keyQueuePriorityPending,
+        this.keyQueueProcessing,
         this.handleMessage,
       );
       return true;
@@ -125,8 +154,8 @@ export class DequeueMessage {
   protected dequeueAndBlock = (): boolean => {
     if (this.blockUntilMessageReceived) {
       this.redisClient.brpoplpush(
-        this.redisKeys.keyQueuePending,
-        this.redisKeys.keyQueueProcessing,
+        this.keyQueuePending,
+        this.keyQueueProcessing,
         0,
         this.handleMessage,
       );
@@ -137,11 +166,16 @@ export class DequeueMessage {
 
   protected dequeueAndReturn = (): void => {
     this.redisClient.rpoplpush(
-      this.redisKeys.keyQueuePending,
-      this.redisKeys.keyQueueProcessing,
+      this.keyQueuePending,
+      this.keyQueueProcessing,
       this.handleMessage,
     );
   };
+
+  disableConnectionBlocking(): DequeueMessage {
+    this.blockUntilMessageReceived = false;
+    return this;
+  }
 
   dequeue(): void {
     this.dequeueWithRateLimit() ||
@@ -158,14 +192,6 @@ export class DequeueMessage {
     async.waterfall(
       [
         (cb: ICallback<void>) => {
-          const {
-            keyQueues,
-            keyQueueConsumers,
-            keyConsumerQueues,
-            keyQueueProcessing,
-            keyProcessingQueues,
-            keyQueueProcessingQueues,
-          } = this.redisKeys;
           const consumerInfo: TQueueConsumer = {
             ipAddress: IPAddresses,
             hostname: os.hostname(),
@@ -175,17 +201,17 @@ export class DequeueMessage {
           this.redisClient.runScript(
             ELuaScriptName.INIT_CONSUMER_QUEUE,
             [
-              keyQueues,
-              keyQueueConsumers,
-              keyConsumerQueues,
-              keyProcessingQueues,
-              keyQueueProcessingQueues,
+              this.keyQueues,
+              this.keyQueueConsumers,
+              this.keyConsumerQueues,
+              this.keyProcessingQueues,
+              this.keyQueueProcessingQueues,
             ],
             [
               this.consumerId,
               JSON.stringify(consumerInfo),
-              JSON.stringify(this.queue),
-              keyQueueProcessing,
+              JSON.stringify(this.queue.queueParams),
+              this.keyQueueProcessing,
             ],
             (err, reply) => {
               if (err) cb(err);
@@ -195,15 +221,42 @@ export class DequeueMessage {
           );
         },
         (cb: ICallback<void>) => {
-          _getQueueProperties(this.redisClient, this.queue, (err, reply) => {
-            if (err) cb(err);
-            else if (!reply) cb(new CallbackEmptyReplyError());
-            else {
-              this.queueType = reply.queueType;
-              this.queueRateLimit = reply.rateLimit ?? null;
-              cb();
-            }
-          });
+          _getQueueProperties(
+            this.redisClient,
+            this.queue.queueParams,
+            (err, queueProperties) => {
+              if (err) cb(err);
+              else if (!queueProperties) cb(new CallbackEmptyReplyError());
+              else {
+                this.queueType = queueProperties.queueType;
+                this.queueRateLimit = queueProperties.rateLimit ?? null;
+                const { queueParams, groupId } = this.queue;
+                // P2P delivery model
+                if (
+                  queueProperties.deliveryModel ===
+                  EQueueDeliveryModel.POINT_TO_POINT
+                ) {
+                  if (groupId) cb(new ConsumerGroupIdNotSupportedError());
+                  else cb();
+                }
+                // PubSub delivery model
+                else if (
+                  queueProperties.deliveryModel === EQueueDeliveryModel.PUB_SUB
+                ) {
+                  if (!groupId) cb(new ConsumerGroupIdRequiredError());
+                  else
+                    _saveConsumerGroup(
+                      this.redisClient,
+                      queueParams,
+                      groupId,
+                      (err) => cb(err),
+                    );
+                }
+                // Unknown delivery model
+                else cb(new PanicError('UNKNOWN_DELIVERY_MODEL'));
+              }
+            },
+          );
         },
       ],
       cb,

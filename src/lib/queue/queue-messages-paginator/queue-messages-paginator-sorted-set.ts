@@ -10,29 +10,30 @@
 import { _getCommonRedisClient } from '../../../common/_get-common-redis-client';
 import { async, CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
 import { QueueMessagesPaginatorAbstract } from './queue-messages-paginator-abstract';
-import { IQueueMessagesPage, IQueueParams } from '../../../../types';
+import { IQueueMessagesPage, IQueueParsedParams } from '../../../../types';
+import { redisKeys } from '../../../common/redis-keys/redis-keys';
 
 export abstract class QueueMessagesPaginatorSortedSet extends QueueMessagesPaginatorAbstract {
-  countMessages(queue: string | IQueueParams, cb: ICallback<number>): void {
+  protected count(queue: IQueueParsedParams, cb: ICallback<number>): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
       else if (!client) cb(new CallbackEmptyReplyError());
       else {
-        const key = this.getRedisKey(queue);
-        client.zcard(key, cb);
+        const keys = redisKeys.getQueueKeys(queue.queueParams, queue.groupId);
+        client.zcard(keys[this.redisKey], cb);
       }
     });
   }
 
   protected getMessagesIds(
-    queue: string | IQueueParams,
-    cursor: number,
+    queue: IQueueParsedParams,
+    page: number,
     pageSize: number,
     cb: ICallback<IQueueMessagesPage<string>>,
   ): void {
     async.waterfall(
       [
-        (cb: ICallback<number>) => this.countMessages(queue, cb),
+        (cb: ICallback<number>) => this.count(queue, cb),
         (totalItems: number, cb: ICallback<IQueueMessagesPage<string>>) => {
           _getCommonRedisClient((err, client) => {
             if (err) cb(err);
@@ -45,10 +46,11 @@ export abstract class QueueMessagesPaginatorSortedSet extends QueueMessagesPagin
                   items: [],
                 });
               } else {
-                const key = this.getRedisKey(queue);
+                const { queueParams, groupId } = queue;
+                const keys = redisKeys.getQueueKeys(queueParams, groupId);
                 client.zscan(
-                  key,
-                  String(cursor),
+                  keys[this.redisKey],
+                  String(page),
                   { COUNT: pageSize },
                   (err, reply) => {
                     if (err) cb(err);

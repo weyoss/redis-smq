@@ -8,7 +8,7 @@
  */
 
 import { ICallback } from 'redis-smq-common';
-import { IQueueParams } from '../queue';
+import { IQueueParsedParams } from '../queue';
 import { redisKeys } from '../../src/common/redis-keys/redis-keys';
 import { IConsumableMessage } from '../message';
 
@@ -18,7 +18,7 @@ export type TConsumerMessageHandler = (
 ) => void;
 
 export interface IConsumerMessageHandlerArgs {
-  queue: IQueueParams;
+  queue: IQueueParsedParams;
   messageHandler: TConsumerMessageHandler;
 }
 

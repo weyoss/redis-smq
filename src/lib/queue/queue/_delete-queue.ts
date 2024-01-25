@@ -10,18 +10,21 @@
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import {
   async,
-  RedisClient,
   ICallback,
   IRedisTransaction,
+  RedisClient,
 } from 'redis-smq-common';
 import { processingQueue } from '../../consumer/message-handler/processing-queue';
 import { ConsumerHeartbeat } from '../../consumer/consumer-heartbeat';
-import { QueueNotFoundError } from '../errors';
-import { IQueueParams } from '../../../../types';
+import {
+  QueueHasRunningConsumersError,
+  QueueNotEmptyError,
+  QueueNotFoundError,
+} from '../errors';
+import { EQueueDeliveryModel, IQueueParams } from '../../../../types';
 import { _getQueueProperties } from './_get-queue-properties';
-import { QueueNotEmptyError } from '../errors';
-import { QueueHasRunningConsumersError } from '../errors';
 import { consumerQueues } from '../../consumer/consumer-queues';
+import { _getConsumerGroups } from '../../consumer/consumer-groups/_get-consumer-groups';
 
 function checkOnlineConsumers(
   redisClient: RedisClient,
@@ -61,9 +64,8 @@ export function _deleteQueue(
     keyQueuePending,
     keyQueueDL,
     keyQueueProcessingQueues,
-    keyPriorityQueuePending,
+    keyQueuePriorityPending,
     keyQueueAcknowledged,
-    keyQueuePendingPriorityMessages,
     keyQueueConsumers,
     keyProcessingQueues,
     keyQueues,
@@ -72,23 +74,30 @@ export function _deleteQueue(
     keyQueueProperties,
     keyQueueScheduled,
     keyQueueMessages,
-  } = redisKeys.getQueueKeys(queueParams);
+    keyQueueConsumerGroups,
+  } = redisKeys.getQueueKeys(queueParams, null);
   const keys: string[] = [
     keyQueuePending,
     keyQueueDL,
     keyQueueProcessingQueues,
-    keyPriorityQueuePending,
+    keyQueuePriorityPending,
     keyQueueAcknowledged,
-    keyQueuePendingPriorityMessages,
     keyQueueConsumers,
     keyQueueRateLimitCounter,
     keyQueueProperties,
     keyQueueScheduled,
     keyQueueMessages,
+    keyQueueConsumerGroups,
   ];
   let exchange: string | null = null;
+  let pubSubDelivery = false;
   redisClient.watch(
-    [keyQueueConsumers, keyQueueProcessingQueues, keyQueueProperties],
+    [
+      keyQueueConsumers,
+      keyQueueProcessingQueues,
+      keyQueueProperties,
+      keyQueueConsumerGroups,
+    ],
     (err) => {
       if (err) cb(err);
       else {
@@ -104,10 +113,31 @@ export function _deleteQueue(
                   if (messagesCount) cb(new QueueNotEmptyError());
                   else {
                     exchange = reply.exchange ?? null;
+                    pubSubDelivery =
+                      reply.deliveryModel === EQueueDeliveryModel.PUB_SUB;
                     cb();
                   }
                 }
               }),
+            (cb: ICallback<void>) => {
+              if (pubSubDelivery) {
+                _getConsumerGroups(redisClient, queueParams, (err, groups) => {
+                  if (err) cb(err);
+                  else {
+                    async.eachOf(
+                      groups ?? [],
+                      (groupId, _, cb) => {
+                        const { keyQueuePriorityPending, keyQueuePending } =
+                          redisKeys.getQueueKeys(queueParams, groupId);
+                        keys.push(keyQueuePending, keyQueuePriorityPending);
+                        cb();
+                      },
+                      cb,
+                    );
+                  }
+                });
+              } else cb();
+            },
             (cb: ICallback<void>): void => {
               checkOnlineConsumers(redisClient, queueParams, cb);
             },

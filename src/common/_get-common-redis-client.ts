@@ -8,10 +8,10 @@
  */
 
 import {
+  CallbackEmptyReplyError,
+  ICallback,
   redis,
   RedisClient,
-  ICallback,
-  CallbackEmptyReplyError,
 } from 'redis-smq-common';
 import { Configuration } from '../config/configuration';
 

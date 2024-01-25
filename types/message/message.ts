@@ -55,6 +55,7 @@ export interface IMessageSerialized {
   scheduledRepeatPeriod: number | null;
   scheduledRepeat: number;
   destinationQueue: IQueueParams;
+  consumerGroupId: string | null;
 }
 
 export type TMessageConsumeOptions = {
@@ -95,4 +96,5 @@ export interface IConsumableMessage
       | 'getId'
       | 'toJSON'
       | 'getExchange'
+      | 'getConsumerGroupId'
     > {}

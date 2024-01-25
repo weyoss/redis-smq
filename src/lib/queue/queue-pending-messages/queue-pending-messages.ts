@@ -12,29 +12,29 @@ import {
   IConsumableMessage,
   IQueueMessages,
   IQueueMessagesPage,
-  IQueueParams,
-} from '../../../types';
-import { PriorityQueueMessages } from './priority-queue-messages';
-import { LinearQueueMessages } from './linear-queue-messages';
+  TQueueExtendedParams,
+} from '../../../../types';
+import { PriorityQueuePendingMessages } from './priority-queue-pending-messages';
+import { LinearQueuePendingMessages } from './linear-queue-pending-messages';
 import { CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
-import { _getQueueProperties } from './queue/_get-queue-properties';
-import { _getQueueParams } from './queue/_get-queue-params';
-import { _getCommonRedisClient } from '../../common/_get-common-redis-client';
+import { _getQueueProperties } from '../queue/_get-queue-properties';
+import { _getCommonRedisClient } from '../../../common/_get-common-redis-client';
+import { _parseQueueExtendedParams } from '../queue/_parse-queue-extended-params';
 
 export class QueuePendingMessages implements IQueueMessages {
-  protected priorityQueueMessages: PriorityQueueMessages;
-  protected linearQueueMessages: LinearQueueMessages;
+  protected priorityQueueMessages: PriorityQueuePendingMessages;
+  protected linearQueuePendingMessages: LinearQueuePendingMessages;
 
   constructor() {
-    this.priorityQueueMessages = new PriorityQueueMessages();
-    this.linearQueueMessages = new LinearQueueMessages();
+    this.priorityQueueMessages = new PriorityQueuePendingMessages();
+    this.linearQueuePendingMessages = new LinearQueuePendingMessages();
   }
 
   protected getQueueImplementation(
-    queue: string | IQueueParams,
+    queue: TQueueExtendedParams,
     cb: ICallback<IQueueMessages>,
   ): void {
-    const queueParams = _getQueueParams(queue);
+    const { queueParams } = _parseQueueExtendedParams(queue);
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
       else if (!client) cb(new CallbackEmptyReplyError());
@@ -45,14 +45,14 @@ export class QueuePendingMessages implements IQueueMessages {
           else if (properties.queueType === EQueueType.PRIORITY_QUEUE) {
             cb(null, this.priorityQueueMessages);
           } else {
-            cb(null, this.linearQueueMessages);
+            cb(null, this.linearQueuePendingMessages);
           }
         });
       }
     });
   }
 
-  countMessages(queue: string | IQueueParams, cb: ICallback<number>): void {
+  countMessages(queue: TQueueExtendedParams, cb: ICallback<number>): void {
     this.getQueueImplementation(queue, (err, pendingMessages) => {
       if (err) cb(err);
       else pendingMessages?.countMessages(queue, cb);
@@ -60,18 +60,18 @@ export class QueuePendingMessages implements IQueueMessages {
   }
 
   getMessages(
-    queue: string | IQueueParams,
-    cursor: number,
+    queue: TQueueExtendedParams,
+    page: number,
     pageSize: number,
     cb: ICallback<IQueueMessagesPage<IConsumableMessage>>,
   ): void {
     this.getQueueImplementation(queue, (err, pendingMessages) => {
       if (err) cb(err);
-      else pendingMessages?.getMessages(queue, cursor, pageSize, cb);
+      else pendingMessages?.getMessages(queue, page, pageSize, cb);
     });
   }
 
-  purge(queue: string | IQueueParams, cb: ICallback<void>): void {
+  purge(queue: TQueueExtendedParams, cb: ICallback<void>): void {
     this.getQueueImplementation(queue, (err, pendingMessages) => {
       if (err) cb(err);
       else pendingMessages?.purge(queue, cb);

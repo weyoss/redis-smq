@@ -13,8 +13,8 @@ import { _getMessage, _getMessages } from './_get-message';
 import { _deleteMessage } from './_delete-message';
 import {
   EMessagePropertyStatus,
-  IMessageStateSerialized,
   IConsumableMessage,
+  IMessageStateSerialized,
 } from '../../../types';
 import { _getMessageStatus } from './_get-message-status';
 import { _createConsumableMessage } from './_create-consumable-message';

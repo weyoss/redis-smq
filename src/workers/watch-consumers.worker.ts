@@ -8,7 +8,7 @@
  */
 
 import { ConsumerHeartbeat } from '../lib/consumer/consumer-heartbeat';
-import { RedisClient, Worker, ICallback, ILogger } from 'redis-smq-common';
+import { ICallback, ILogger, RedisClient, Worker } from 'redis-smq-common';
 import { EConsumeMessageUnacknowledgedCause } from '../../types';
 import { processingQueue } from '../lib/consumer/message-handler/processing-queue';
 
@@ -29,7 +29,7 @@ export class WatchConsumersWorker extends Worker {
       10,
       (err, reply) => {
         if (err) cb(err);
-        else
+        else {
           processingQueue.handleProcessingQueue(
             this.redisClient,
             reply ?? [],
@@ -38,6 +38,7 @@ export class WatchConsumersWorker extends Worker {
             EConsumeMessageUnacknowledgedCause.OFFLINE_CONSUMER,
             (err) => cb(err),
           );
+        }
       },
     );
   };

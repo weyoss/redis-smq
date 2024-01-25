@@ -8,11 +8,11 @@
  */
 
 import {
-  IRedisSMQConfig,
-  IMessagesConfigStorageOptions,
-  IMessagesConfigStorageRequired,
-  IMessagesConfigStorageOptionsRequired,
   IMessagesConfigStorage,
+  IMessagesConfigStorageOptions,
+  IMessagesConfigStorageOptionsRequired,
+  IMessagesConfigStorageRequired,
+  IRedisSMQConfig,
 } from '../../../types';
 import { ConfigurationError } from '../configuration.error';
 

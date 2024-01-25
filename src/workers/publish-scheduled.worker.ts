@@ -9,7 +9,13 @@
 
 import { redisKeys } from '../common/redis-keys/redis-keys';
 import { MessageEnvelope } from '../lib/message/message-envelope';
-import { async, RedisClient, Worker, WorkerError } from 'redis-smq-common';
+import {
+  async,
+  ICallback,
+  RedisClient,
+  Worker,
+  WorkerError,
+} from 'redis-smq-common';
 import { ELuaScriptName } from '../common/redis-client/redis-client';
 import {
   EMessageProperty,
@@ -17,7 +23,6 @@ import {
   EQueueProperty,
   EQueueType,
 } from '../../types';
-import { ICallback } from 'redis-smq-common';
 import { _getMessages } from '../lib/message/_get-message';
 import { _fromMessage } from '../lib/message/_from-message';
 import { MessageState } from '../lib/message/message-state';
@@ -73,7 +78,6 @@ export class PublishScheduledWorker extends Worker {
         (msg, _, done) => {
           const ts = Date.now();
           const messagePriority = msg.producibleMessage.getPriority() ?? '';
-          const queue = msg.getDestinationQueue();
           const { keyMessage: keyScheduledMessage } = redisKeys.getMessageKeys(
             msg.getId(),
           );
@@ -84,10 +88,13 @@ export class PublishScheduledWorker extends Worker {
           const {
             keyQueueProperties,
             keyQueuePending,
-            keyPriorityQueuePending,
+            keyQueuePriorityPending,
             keyQueueScheduled,
             keyQueueMessages,
-          } = redisKeys.getQueueKeys(queue);
+          } = redisKeys.getQueueKeys(
+            msg.getDestinationQueue(),
+            msg.getConsumerGroupId(),
+          );
 
           let newMessage: MessageEnvelope | null = null;
           let newMessageState: MessageState | null = null;
@@ -114,7 +121,7 @@ export class PublishScheduledWorker extends Worker {
             keyQueuePending,
             keyQueueProperties,
             keyQueueMessages,
-            keyPriorityQueuePending,
+            keyQueuePriorityPending,
             keyQueueScheduled,
             keyScheduledMessage,
           );

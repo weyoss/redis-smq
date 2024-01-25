@@ -11,17 +11,16 @@ import { Exchange } from './exchange';
 import {
   EExchangeType,
   EQueueProperty,
-  TExchangeFanOutBindingParams,
   IQueueParams,
   IQueueProperties,
+  TExchangeFanOutBindingParams,
 } from '../../../types';
 import { async, CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { _getFanOutExchangeQueues } from './_get-fan-out-exchange-queues';
-import { ExchangeError } from './errors';
-import { _getQueueParams } from '../queue/queue/_get-queue-params';
+import { ExchangeError, ExchangeFanOutError } from './errors';
+import { _parseQueueParams } from '../queue/queue/_parse-queue-params';
 import { _getQueueProperties } from '../queue/queue/_get-queue-properties';
-import { ExchangeFanOutError } from './errors';
 import { _getQueueFanOutExchange } from './_get-queue-fan-out-exchange';
 import { _getCommonRedisClient } from '../../common/_get-common-redis-client';
 
@@ -89,9 +88,11 @@ export class ExchangeFanOut extends Exchange<
 
   bindQueue(queue: IQueueParams | string, cb: ICallback<void>): void {
     const exchangeParams = this.getBindingParams();
-    const queueParams = _getQueueParams(queue);
-    const { keyQueues, keyQueueProperties } =
-      redisKeys.getQueueKeys(queueParams);
+    const queueParams = _parseQueueParams(queue);
+    const { keyQueues, keyQueueProperties } = redisKeys.getQueueKeys(
+      queueParams,
+      null,
+    );
     const { keyExchanges, keyExchangeBindings } =
       redisKeys.getFanOutExchangeKeys(exchangeParams);
     _getCommonRedisClient((err, client) => {
@@ -171,9 +172,11 @@ export class ExchangeFanOut extends Exchange<
 
   unbindQueue(queue: IQueueParams | string, cb: ICallback<void>): void {
     const exchangeName = this.getBindingParams();
-    const queueParams = _getQueueParams(queue);
-    const { keyQueues, keyQueueProperties } =
-      redisKeys.getQueueKeys(queueParams);
+    const queueParams = _parseQueueParams(queue);
+    const { keyQueues, keyQueueProperties } = redisKeys.getQueueKeys(
+      queueParams,
+      null,
+    );
     const { keyExchangeBindings } =
       redisKeys.getFanOutExchangeKeys(exchangeName);
     _getCommonRedisClient((err, client) => {
@@ -233,7 +236,7 @@ export class ExchangeFanOut extends Exchange<
       if (err) cb(err);
       else if (!client) cb(new CallbackEmptyReplyError());
       else {
-        const queueParams = _getQueueParams(queue);
+        const queueParams = _parseQueueParams(queue);
         _getQueueFanOutExchange(client, queueParams, cb);
       }
     });

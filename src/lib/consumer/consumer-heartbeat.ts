@@ -8,19 +8,18 @@
  */
 
 import * as os from 'os';
-import { IConsumerHeartbeat } from '../../../types';
+import { IConsumerHeartbeat, TRedisSMQEvent } from '../../../types';
 import {
-  RedisClient,
-  Ticker,
   async,
-  ICallback,
-  IRedisTransaction,
   CallbackInvalidReplyError,
   EventEmitter,
+  ICallback,
+  IRedisTransaction,
+  RedisClient,
+  Ticker,
 } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { Consumer } from './consumer';
-import { TRedisSMQEvent } from '../../../types';
 
 const cpuUsageStatsRef = {
   cpuUsage: process.cpuUsage(),

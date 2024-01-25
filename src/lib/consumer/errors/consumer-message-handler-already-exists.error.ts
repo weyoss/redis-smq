@@ -8,12 +8,14 @@
  */
 
 import { ConsumerError } from './consumer.error';
-import { IQueueParams } from '../../../../types';
+import { IQueueParsedParams } from '../../../../types';
 
 export class ConsumerMessageHandlerAlreadyExistsError extends ConsumerError {
-  constructor(queue: IQueueParams) {
+  constructor(queue: IQueueParsedParams) {
     super(
-      `A message handler for queue [${queue.name}@${queue.ns}] already exists`,
+      `A message handler for queue [${queue.queueParams.name}@${
+        queue.queueParams.ns
+      }${queue.groupId ? `/${queue.groupId}` : ''}] already exists`,
     );
   }
 }

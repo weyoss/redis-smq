@@ -10,8 +10,8 @@
 import { Exchange } from './exchange';
 import {
   EExchangeType,
-  TExchangeTopicBindingParams,
   IQueueParams,
+  TExchangeTopicBindingParams,
   TTopicParams,
 } from '../../../types';
 import { CallbackEmptyReplyError, ICallback } from 'redis-smq-common';

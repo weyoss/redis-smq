@@ -23,6 +23,7 @@ export enum ELuaScriptName {
   ACKNOWLEDGE_MESSAGE = 'ACKNOWLEDGE_MESSAGE',
   DELETE_MESSAGE = 'DELETE_MESSAGE',
   FETCH_MESSAGE_FOR_PROCESSING = 'FETCH_MESSAGE_FOR_PROCESSING',
+  DELETE_CONSUMER_GROUP = 'DELETE_CONSUMER_GROUP',
 }
 
 RedisClient.addScript(
@@ -79,5 +80,11 @@ RedisClient.addScript(
   ELuaScriptName.FETCH_MESSAGE_FOR_PROCESSING,
   fs
     .readFileSync(resolve(__dirname, './lua/fetch-message-for-processing.lua'))
+    .toString(),
+);
+RedisClient.addScript(
+  ELuaScriptName.DELETE_CONSUMER_GROUP,
+  fs
+    .readFileSync(resolve(__dirname, './lua/delete-consumer-group.lua'))
     .toString(),
 );
