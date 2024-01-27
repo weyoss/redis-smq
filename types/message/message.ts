@@ -7,10 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { TExchangeSerialized } from '../index';
+import { IMessageStateTransferable, TExchangeSerialized } from '../index';
 import { IQueueParams } from '../queue';
-import { MessageEnvelope } from '../../src/lib/message/message-envelope';
-import { ProducibleMessage } from '../../src/lib/message/producible-message';
 
 export enum EMessagePriority {
   HIGHEST,
@@ -41,7 +39,7 @@ export enum EMessagePropertyStatus {
   DEAD_LETTERED,
 }
 
-export interface IMessageSerialized {
+export interface IMessageParams {
   createdAt: number;
   exchange: TExchangeSerialized;
   ttl: number;
@@ -58,43 +56,15 @@ export interface IMessageSerialized {
   consumerGroupId: string | null;
 }
 
+export interface IMessageTransferable extends IMessageParams {
+  id: string;
+  messageState: IMessageStateTransferable;
+  status: EMessagePropertyStatus;
+}
+
 export type TMessageConsumeOptions = {
   ttl: number;
   retryThreshold: number;
   retryDelay: number;
   consumeTimeout: number;
 };
-
-export interface IConsumableMessage
-  extends Omit<
-      ProducibleMessage,
-      | 'setBody'
-      | 'setConsumeTimeout'
-      | 'setPriority'
-      | 'setTTL'
-      | 'setFanOut'
-      | 'setQueue'
-      | 'setTopic'
-      | 'setRetryDelay'
-      | 'setRetryThreshold'
-      | 'setScheduledRepeatPeriod'
-      | 'setScheduledRepeat'
-      | 'setScheduledCRON'
-      | 'setScheduledDelay'
-      | 'disablePriority'
-      | 'resetScheduledParams'
-      | 'setExchange'
-      | 'getExchange'
-    >,
-    Pick<
-      MessageEnvelope,
-      | 'getScheduledMessageId'
-      | 'getDestinationQueue'
-      | 'getStatus'
-      | 'getPublishedAt'
-      | 'getScheduledAt'
-      | 'getId'
-      | 'toJSON'
-      | 'getExchange'
-      | 'getConsumerGroupId'
-    > {}

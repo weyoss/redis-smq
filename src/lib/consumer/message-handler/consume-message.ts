@@ -12,7 +12,9 @@ import {
   EConsumeMessageUnacknowledgedCause,
   EMessageProperty,
   EMessagePropertyStatus,
+  IMessageTransferable,
   IQueueParsedParams,
+  TConsumerMessageHandler,
 } from '../../../../types';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { MessageHandler } from './message-handler';
@@ -26,7 +28,7 @@ import { processingQueue } from './processing-queue';
 import { ERetryAction } from './retry-message';
 import { ELuaScriptName } from '../../../common/redis-client/redis-client';
 import { Configuration } from '../../../config/configuration';
-import { _createConsumableMessage } from '../../message/_create-consumable-message';
+import { ConsumeMessageWorker } from './consume-message-worker';
 
 export class ConsumeMessage {
   protected messageHandler: MessageHandler;
@@ -35,6 +37,7 @@ export class ConsumeMessage {
   protected keyQueueProcessing: string;
   protected keyQueueAcknowledged: string;
   protected queue: IQueueParsedParams;
+  protected consumeMessageWorker: ConsumeMessageWorker | null = null;
 
   constructor(
     messageHandler: MessageHandler,
@@ -134,6 +137,25 @@ export class ConsumeMessage {
     );
   }
 
+  protected getConsumeMessageWorker(messageHandlerFilename: string) {
+    if (!this.consumeMessageWorker) {
+      this.consumeMessageWorker = new ConsumeMessageWorker(
+        messageHandlerFilename,
+      );
+    }
+    return this.consumeMessageWorker;
+  }
+
+  protected invokeMessageHandler(
+    messageHandler: TConsumerMessageHandler,
+    msg: IMessageTransferable,
+    cb: ICallback<void>,
+  ): void {
+    if (typeof messageHandler === 'string') {
+      this.getConsumeMessageWorker(messageHandler).consume(msg, cb);
+    } else messageHandler(msg, cb);
+  }
+
   protected consumeMessage(msg: MessageEnvelope): void {
     let isTimeout = false;
     let timer: NodeJS.Timeout | null = null;
@@ -173,8 +195,9 @@ export class ConsumeMessage {
           }
         }
       };
-      this.messageHandler.getHandler()(
-        _createConsumableMessage(msg),
+      this.invokeMessageHandler(
+        this.messageHandler.getHandler(),
+        msg.transfer(),
         onConsumed,
       );
     } catch (error: unknown) {
@@ -193,5 +216,11 @@ export class ConsumeMessage {
         EConsumeMessageUnacknowledgedCause.TTL_EXPIRED,
       );
     } else this.consumeMessage(message);
+  }
+
+  quit(cb: ICallback<void>) {
+    if (this.consumeMessageWorker) {
+      this.consumeMessageWorker.quit(cb);
+    } else cb();
   }
 }

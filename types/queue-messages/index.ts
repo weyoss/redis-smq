@@ -9,7 +9,7 @@
 
 import { ICallback } from 'redis-smq-common';
 import { IQueueParams, TQueueExtendedParams } from '../queue';
-import { IConsumableMessage } from '../message';
+import { IMessageTransferable } from '../message';
 
 export interface IQueueMessages {
   countMessages(queue: TQueueExtendedParams, cb: ICallback<number>): void;
@@ -17,7 +17,7 @@ export interface IQueueMessages {
     queue: TQueueExtendedParams,
     page: number,
     pageSize: number,
-    cb: ICallback<IQueueMessagesPage<IConsumableMessage>>,
+    cb: ICallback<IQueueMessagesPage<IMessageTransferable>>,
   ): void;
   purge(queue: TQueueExtendedParams, cb: ICallback<void>): void;
 }

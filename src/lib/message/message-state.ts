@@ -8,7 +8,7 @@
  */
 
 import { v4 as uuid } from 'uuid';
-import { IMessageStateSerialized } from '../../../types';
+import { IMessageStateTransferable } from '../../../types';
 
 export class MessageState {
   protected readonly uuid: string;
@@ -188,7 +188,7 @@ export class MessageState {
     return this.scheduledMessageId;
   }
 
-  toJSON(): IMessageStateSerialized {
+  toJSON(): IMessageStateTransferable {
     return {
       uuid: this.uuid,
       publishedAt: this.publishedAt,

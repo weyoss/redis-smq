@@ -118,7 +118,11 @@ export class MessageHandlerRunner {
           client,
           handlerParams,
         );
-        handler.run(cb);
+        handler.run((err) => {
+          if (err)
+            this.removeMessageHandler(handlerParams.queue, () => cb(err));
+          else cb();
+        });
       }
     });
   }

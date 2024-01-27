@@ -10,8 +10,8 @@
 import { MessageState } from './message-state';
 import {
   EMessagePropertyStatus,
-  IMessageSerialized,
-  IMessageStateSerialized,
+  IMessageParams,
+  IMessageStateTransferable,
 } from '../../../types';
 import { MessageEnvelope } from './message-envelope';
 import { _fromJSON } from '../exchange/_from-json';
@@ -27,8 +27,7 @@ export function _fromMessage(
     destinationQueue,
     consumerGroupId,
     ...params
-  }: IMessageSerialized =
-    typeof msg === 'string' ? JSON.parse(msg) : msg.toJSON();
+  }: IMessageParams = typeof msg === 'string' ? JSON.parse(msg) : msg.toJSON();
 
   const messagePub = new ProducibleMessage();
   Object.assign(messagePub, params);
@@ -51,7 +50,7 @@ export function _fromMessage(
   // MessageState
   if (msgState !== null) {
     const messageStateInstance = new MessageState();
-    const messageStateJSON: IMessageStateSerialized =
+    const messageStateJSON: IMessageStateTransferable =
       typeof msgState === 'string' ? JSON.parse(msgState) : msgState;
     Object.assign(messageStateInstance, messageStateJSON);
     m.setMessageState(messageStateInstance);
