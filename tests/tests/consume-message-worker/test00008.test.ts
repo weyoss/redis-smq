@@ -9,7 +9,7 @@
 
 import { EventEmitter } from 'events';
 import { delay } from 'bluebird';
-import { EWorkerThreadMessageCodeExit } from '../../../src/lib/consumer/message-handler/consume-message-worker-thread';
+import { EWorkerThreadMessageCodeExit } from '../../../types';
 
 it('ConsumeMessageWorker: case 8', async () => {
   const mockParentPort: EventEmitter & { postMessage?: () => void } =

@@ -14,37 +14,13 @@ import {
   MessagePort,
 } from 'worker_threads';
 import {
+  EWorkerThreadMessageCodeConsume,
+  EWorkerThreadMessageCodeExit,
   IMessageTransferable,
   TConsumerMessageHandlerFn,
+  TWorkerThreadMessage,
+  TWorkerThreadMessageCode,
 } from '../../../../types';
-
-export enum EWorkerThreadMessageCodeExit {
-  WORKER_DATA_REQUIRED = 100,
-  INVALID_HANDLER_TYPE,
-  HANDLER_IMPORT_ERROR,
-  UNCAUGHT_EXCEPTION,
-  TERMINATED,
-}
-
-export enum EWorkerThreadMessageCodeConsume {
-  OK = 200,
-  MESSAGE_PROCESSING_ERROR,
-  MESSAGE_PROCESSING_CAUGHT_ERROR,
-}
-
-export type TWorkerThreadMessageCode =
-  | EWorkerThreadMessageCodeExit
-  | EWorkerThreadMessageCodeConsume;
-
-export type TWorkerThreadError = {
-  name: string;
-  message: string;
-};
-
-export type TWorkerThreadMessage = {
-  code: TWorkerThreadMessageCode;
-  error: TWorkerThreadError | null;
-};
 
 function getHandlerFn(
   filename: string,
