@@ -54,7 +54,7 @@ test('Schedule a message: DELAY', async () => {
   const r = await pendingMessages.getMessagesAsync(defaultQueue, 0, 100);
   expect(r.items.length).toBe(1);
 
-  const diff = (r.items[0].getPublishedAt() ?? 0) - producedAt;
+  const diff = (r.items[0].messageState.publishedAt ?? 0) - producedAt;
   expect(validateTime(diff, 10000)).toBe(true);
 
   const count2 = await queueMessages.countMessagesByStatusAsync(defaultQueue);

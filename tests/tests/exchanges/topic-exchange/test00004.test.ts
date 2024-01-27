@@ -32,7 +32,7 @@ test('ExchangeTopic: producing message using setExchange()', async () => {
   const items = await message.getMessagesByIdsAsync(ids);
   expect(
     isEqual(
-      items.map((i) => i.getDestinationQueue()),
+      items.map((i) => i.destinationQueue),
       [
         { ns: 'testing', name: 'w123.2.4.5.6' },
         { ns: 'testing', name: 'w123.2.4.5' },

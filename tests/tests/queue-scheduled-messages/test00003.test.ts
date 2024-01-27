@@ -49,7 +49,7 @@ test('Schedule a message: messageManager.getScheduledMessages()', async () => {
   const pageOne = await queueScheduled.getMessagesAsync(defaultQueue, 0, 100);
   expect(pageOne.totalItems).toEqual(3);
   expect(pageOne.items.length).toEqual(3);
-  expect(pageOne.items[0].getId()).toEqual(id1);
-  expect(pageOne.items[1].getId()).toEqual(id2);
-  expect(pageOne.items[2].getId()).toEqual(id3);
+  expect(pageOne.items[0].id).toEqual(id1);
+  expect(pageOne.items[1].id).toEqual(id2);
+  expect(pageOne.items[2].id).toEqual(id3);
 });

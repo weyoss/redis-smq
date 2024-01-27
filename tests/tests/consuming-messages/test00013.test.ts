@@ -9,7 +9,6 @@
 
 import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { delay } from 'bluebird';
-import { ICallback } from 'redis-smq-common';
 import { getConsumer } from '../../common/consumer';
 import { getProducer } from '../../common/producer';
 import {
@@ -17,7 +16,6 @@ import {
   createQueue,
   defaultQueue,
 } from '../../common/message-producing-consuming';
-import { IConsumableMessage } from '../../../types';
 
 type TQueueMetrics = {
   receivedMessages: string[];
@@ -39,8 +37,8 @@ test('Given many queues, a message is recovered from a consumer crash and re-que
 
   const queueAConsumer = getConsumer({
     queue: defaultQueue,
-    messageHandler: (msg: IConsumableMessage, cb: ICallback<void>) => {
-      defaultQueueMetrics.receivedMessages.push(msg.getId());
+    messageHandler: (msg, cb) => {
+      defaultQueueMetrics.receivedMessages.push(msg.id);
       cb();
     },
   });
@@ -51,8 +49,8 @@ test('Given many queues, a message is recovered from a consumer crash and re-que
 
   const queueBConsumer = getConsumer({
     queue: 'queue_b',
-    messageHandler: (msg: IConsumableMessage, cb: ICallback<void>) => {
-      queueBMetrics.receivedMessages.push(msg.getId());
+    messageHandler: (msg, cb) => {
+      queueBMetrics.receivedMessages.push(msg.id);
       cb();
     },
   });

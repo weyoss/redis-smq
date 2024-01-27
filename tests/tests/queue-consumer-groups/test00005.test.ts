@@ -45,7 +45,7 @@ test('Publish and consume a message to/from queue with many consumer groups: una
   await consumer1.consumeAsync(
     { queue: queue1, groupId: 'my-group-1' },
     (msg, cb) => {
-      msg1.push(msg.getId());
+      msg1.push(msg.id);
       cb();
     },
   );
@@ -56,7 +56,7 @@ test('Publish and consume a message to/from queue with many consumer groups: una
   await consumer2.consumeAsync(
     { queue: queue1, groupId: 'my-group-2' },
     (msg, cb) => {
-      msg2.push(msg.getId());
+      msg2.push(msg.id);
       cb();
     },
   );
@@ -67,7 +67,7 @@ test('Publish and consume a message to/from queue with many consumer groups: una
   await consumer3.consumeAsync(
     { queue: queue1, groupId: 'my-group-3' },
     (msg, cb) => {
-      msg3.push(msg.getId());
+      msg3.push(msg.id);
       cb();
     },
   );
@@ -78,7 +78,7 @@ test('Publish and consume a message to/from queue with many consumer groups: una
   await consumer4.consumeAsync(
     { queue: queue1, groupId: 'my-group-4' },
     (msg, cb) => {
-      msg4.push(msg.getId());
+      msg4.push(msg.id);
       if (msg4.length < 3) cb(new Error('Explicit error')); // unacknowledging
       else cb();
     },
@@ -134,7 +134,7 @@ test('Publish and consume a message to/from queue with many consumer groups: una
   const res3 = await acknowledgedMessages.getMessagesAsync(queue1, 0, 100);
   expect(res3.totalItems).toBe(4);
   expect(res3.items.length).toBe(4);
-  expect(res3.items.map((i) => i.getConsumerGroupId()).sort()).toEqual([
+  expect(res3.items.map((i) => i.consumerGroupId).sort()).toEqual([
     'my-group-1',
     'my-group-2',
     'my-group-3',

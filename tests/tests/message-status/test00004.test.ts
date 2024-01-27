@@ -35,13 +35,13 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQUEUING ->
 
   const message = promisifyAll(new Message());
   const msg0 = await message.getMessageByIdAsync(id);
-  expect(msg0.getStatus()).toBe(EMessagePropertyStatus.PENDING);
+  expect(msg0.status).toBe(EMessagePropertyStatus.PENDING);
 
   const consumer = getConsumer({ consumeDefaultQueue: false });
   const msg1: EMessagePropertyStatus[] = [];
   await consumer.consumeAsync(defaultQueue, (msg, cb) => {
     if (!msg1.length) {
-      msg1.push(msg.getStatus());
+      msg1.push(msg.status);
       cb(new Error());
     } else cb();
   });

@@ -42,6 +42,6 @@ test('An unacknowledged message is dead-lettered and not delivered again, given 
   expect(r.items.length).toBe(1);
 
   const m = promisifyAll(new Message());
-  const mState = await m.getMessageStateAsync(r.items[0].getId());
+  const mState = await m.getMessageStateAsync(r.items[0].id);
   expect(mState.attempts).toBe(0);
 });

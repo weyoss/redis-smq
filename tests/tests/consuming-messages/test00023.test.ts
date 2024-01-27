@@ -44,10 +44,10 @@ test('Messages produced from scheduled message are processed like normal message
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
   const res = await deadLetteredMessages.getMessagesAsync(defaultQueue, 0, 100);
   expect(res.totalItems).toBe(1);
-  expect(typeof res.items[0].getId()).toBe('string');
+  expect(typeof res.items[0].id).toBe('string');
 
   const m = promisifyAll(new Message());
-  const mState = await m.getMessageStateAsync(res.items[0].getId());
+  const mState = await m.getMessageStateAsync(res.items[0].id);
   expect(mState.scheduledMessageId).toBe(id);
   expect(mState.attempts).toBe(4);
 });

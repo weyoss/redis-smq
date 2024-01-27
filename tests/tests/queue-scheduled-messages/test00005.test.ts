@@ -40,7 +40,8 @@ test('Schedule a message: combine CRON, REPEAT, REPEAT PERIOD', async () => {
 
   for (let i = 0; i < r.items.length; i += 1) {
     const diff =
-      (r.items[i].getPublishedAt() ?? 0) - (r.items[0].getPublishedAt() ?? 0);
+      (r.items[i].messageState.publishedAt ?? 0) -
+      (r.items[0].messageState.publishedAt ?? 0);
     if (i === 0) {
       expect(validateTime(diff, 0)).toBe(true);
     } else if (i === 1) {

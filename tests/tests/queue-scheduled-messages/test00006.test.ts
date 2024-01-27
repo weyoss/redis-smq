@@ -44,7 +44,7 @@ test('Schedule a message: combine CRON, REPEAT, REPEAT PERIOD, DELAY', async () 
   for (let i = 0; i < r.items.length; i += 1) {
     if (i === 0) {
       // verify that the message was first delayed
-      const diff = (r.items[i].getPublishedAt() ?? 0) - producedAt;
+      const diff = (r.items[i].messageState.publishedAt ?? 0) - producedAt;
       expect(validateTime(diff, 15000)).toBe(true);
       continue;
     }
@@ -56,7 +56,8 @@ test('Schedule a message: combine CRON, REPEAT, REPEAT PERIOD, DELAY', async () 
     }
 
     const diff =
-      (r.items[i].getPublishedAt() ?? 0) - (r.items[1].getPublishedAt() ?? 0);
+      (r.items[i].messageState.publishedAt ?? 0) -
+      (r.items[1].messageState.publishedAt ?? 0);
 
     if (i === 2) {
       expect(validateTime(diff, 5000)).toBe(true);

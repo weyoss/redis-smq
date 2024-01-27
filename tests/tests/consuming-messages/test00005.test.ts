@@ -49,5 +49,5 @@ test('Setting default message TTL from configuration', async () => {
     100,
   );
   expect(list.totalItems).toBe(1);
-  expect(list.items[0].getId()).toBe(id);
+  expect(list.items[0].id).toBe(id);
 });

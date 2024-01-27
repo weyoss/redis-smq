@@ -84,7 +84,7 @@ test('Combined test. Requeue a priority message from acknowledged queue. Check q
   const res7 = await pendingMessages.getMessagesAsync(defaultQueue, 0, 100);
   expect(res7.totalItems).toBe(1);
   expect(res7.items.length).toBe(1);
-  expect(res7.items[0].getId()).toEqual(id);
+  expect(res7.items[0].id).toEqual(id);
 
   await expect(
     acknowledgedMessages.requeueMessageAsync(defaultQueue, id),

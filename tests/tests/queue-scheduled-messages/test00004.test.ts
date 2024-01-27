@@ -46,7 +46,8 @@ test('Schedule a message: CRON', async () => {
   expect(r.totalItems).toBeGreaterThan(8);
   for (let i = 0; i < r.items.length; i += 1) {
     const diff =
-      (r.items[i].getPublishedAt() ?? 0) - (r.items[0].getPublishedAt() ?? 0);
+      (r.items[i].messageState.publishedAt ?? 0) -
+      (r.items[0].messageState.publishedAt ?? 0);
     expect(validateTime(diff, 6000 * i)).toBe(true);
   }
 

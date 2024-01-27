@@ -33,7 +33,7 @@ test('Priority queuing: case 2', async () => {
     getConsumer({
       queue: defaultQueue,
       messageHandler: jest.fn((msg, cb) => {
-        consumedMessages.push(msg.getId());
+        consumedMessages.push(msg.id);
         cb();
       }),
     }),

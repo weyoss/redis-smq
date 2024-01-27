@@ -16,7 +16,7 @@ import {
   createQueue,
   defaultQueue,
 } from '../../common/message-producing-consuming';
-import { IConsumableMessage } from '../../../types';
+import { IMessageParams } from '../../../types';
 
 test('Unacknowledged message are re-queued when messageRetryThreshold is not exceeded', async () => {
   const producer = getProducer();
@@ -26,7 +26,7 @@ test('Unacknowledged message are re-queued when messageRetryThreshold is not exc
 
   let callCount = 0;
   const consumer = getConsumer({
-    messageHandler: jest.fn((msg: IConsumableMessage, cb: ICallback<void>) => {
+    messageHandler: jest.fn((msg: IMessageParams, cb: ICallback<void>) => {
       callCount += 1;
       if (callCount === 1) throw new Error('Explicit error');
       else if (callCount === 2) cb();
