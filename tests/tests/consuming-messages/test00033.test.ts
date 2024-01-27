@@ -13,7 +13,7 @@ import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { getProducer } from '../../common/producer';
 import { createQueue } from '../../common/message-producing-consuming';
 import { shutDownBaseInstance } from '../../common/base-instance';
-import { IConsumableMessage } from '../../../types';
+import { IMessageParams } from '../../../types';
 
 test('Consume message from different queues using a single consumer instance: case 4', async () => {
   await createQueue('test1', false);
@@ -23,7 +23,7 @@ test('Consume message from different queues using a single consumer instance: ca
   await createQueue('test5', false);
   await createQueue('test6', false);
 
-  const messages: IConsumableMessage[] = [];
+  const messages: IMessageParams[] = [];
   const consumer = promisifyAll(new Consumer(true));
 
   await consumer.consumeAsync('test1', (msg, cb) => {
@@ -70,14 +70,14 @@ test('Consume message from different queues using a single consumer instance: ca
 
   await delay(10000);
   expect(messages.length).toBe(5);
-  expect(messages.map((i) => i.getDestinationQueue().name).sort()).toEqual([
+  expect(messages.map((i) => i.destinationQueue.name).sort()).toEqual([
     'test1',
     'test2',
     'test3',
     'test4',
     'test5',
   ]);
-  expect(messages.map((i) => i.getBody()).sort()).toEqual([
+  expect(messages.map((i) => i.body).sort()).toEqual([
     'body 1',
     'body 2',
     'body 3',
@@ -101,7 +101,7 @@ test('Consume message from different queues using a single consumer instance: ca
     new ProducibleMessage().setQueue(`test6`).setBody(`body 6`),
   );
   await delay(10000);
-  expect(messages.map((i) => i.getDestinationQueue().name).sort()).toEqual([
+  expect(messages.map((i) => i.destinationQueue.name).sort()).toEqual([
     'test1',
     'test2',
     'test3',

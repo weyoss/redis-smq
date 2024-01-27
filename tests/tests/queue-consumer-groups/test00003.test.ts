@@ -108,7 +108,7 @@ test('Publish and consume a message to/from queue with many consumer groups: usi
   const res3 = await acknowledgedMessages.getMessagesAsync(queue1, 0, 100);
   expect(res3.totalItems).toBe(4);
   expect(res3.items.length).toBe(4);
-  expect(res3.items.map((i) => i.getConsumerGroupId()).sort()).toEqual([
+  expect(res3.items.map((i) => i.consumerGroupId).sort()).toEqual([
     'my-group-1',
     'my-group-2',
     'my-group-3',

@@ -35,7 +35,7 @@ test('Produce and consume 100 message: FIFO Queues', async () => {
   const deliveredMessages: string[] = [];
   const consumer = getConsumer({
     messageHandler: (msg, cb) => {
-      deliveredMessages.push(msg.getId());
+      deliveredMessages.push(msg.id);
       cb();
     },
   });

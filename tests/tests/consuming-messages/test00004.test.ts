@@ -49,5 +49,5 @@ test('A message is dead-lettered and not delivered when messageTTL is exceeded',
     100,
   );
   expect(list.totalItems).toBe(1);
-  expect(list.items[0].getId()).toBe(id);
+  expect(list.items[0].id).toBe(id);
 });

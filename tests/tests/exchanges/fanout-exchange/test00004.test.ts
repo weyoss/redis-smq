@@ -48,7 +48,7 @@ test('ExchangeFanOut: producing message using setExchange()', async () => {
   const items = await message.getMessagesByIdsAsync(ids);
   expect(
     isEqual(
-      items.map((i) => i.getDestinationQueue()),
+      items.map((i) => i.destinationQueue),
       [q1, q2],
     ),
   ).toBe(true);

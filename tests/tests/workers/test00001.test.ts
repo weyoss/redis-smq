@@ -24,12 +24,12 @@ import { logger } from '../../common/logger';
 import { shutDownBaseInstance } from '../../common/base-instance';
 import { getQueueScheduledMessages } from '../../common/queue-scheduled-messages';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages';
-import { IConsumableMessage } from '../../../types';
+import { IMessageParams } from '../../../types';
 
 test('WatchdogWorker -> DelayUnacknowledgedWorker -> PublishScheduledWorker', async () => {
   await createQueue(defaultQueue, false);
 
-  let message: IConsumableMessage | null = null;
+  let message: IMessageParams | null = null;
   const consumer = getConsumer({
     messageHandler: jest.fn((msg) => {
       message = msg;

@@ -40,7 +40,7 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   const res3 = await deadLetteredMessages.getMessagesAsync(queue, 0, 100);
   expect(res3.totalItems).toBe(1);
   expect(res3.items.length).toBe(1);
-  expect(res3.items[0].getId()).toEqual(messageId);
+  expect(res3.items[0].id).toEqual(messageId);
 
   const queueMessages = await getQueueMessages();
   const count = await queueMessages.countMessagesByStatusAsync(queue);

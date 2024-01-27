@@ -41,7 +41,7 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_DELAYING -> 
   const msg1: EMessagePropertyStatus[] = [];
   await consumer.consumeAsync(defaultQueue, (msg, cb) => {
     if (!msg1.length) {
-      msg1.push(msg.getStatus());
+      msg1.push(msg.status);
       cb(new Error());
     } else cb();
   });

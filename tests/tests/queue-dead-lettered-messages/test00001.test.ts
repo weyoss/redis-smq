@@ -47,7 +47,7 @@ test('Queue dead-lettered message', async () => {
   expect(messages.cursor).toBe(0);
   expect(messages.totalItems).toBe(1);
   expect(messages.items.length).toBe(1);
-  expect(messages.items[0].getId()).toBe(id);
+  expect(messages.items[0].id).toBe(id);
 
   const queueMessages = await getQueueMessages();
   const count1 = await queueMessages.countMessagesAsync(defaultQueue);

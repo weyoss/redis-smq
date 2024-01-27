@@ -17,7 +17,7 @@ import {
 } from '../../common/message-producing-consuming';
 import { shutDownBaseInstance } from '../../common/base-instance';
 import { getQueueRateLimit } from '../../common/queue-rate-limit';
-import { IConsumableMessage } from '../../../types';
+import { IMessageParams } from '../../../types';
 
 test('Consume message from different queues using a single consumer instance: case 5', async () => {
   await createQueue(defaultQueue, false);
@@ -28,7 +28,7 @@ test('Consume message from different queues using a single consumer instance: ca
     interval: 5000,
   });
 
-  const messages: IConsumableMessage[] = [];
+  const messages: IMessageParams[] = [];
   const consumer = promisifyAll(new Consumer(true));
 
   await consumer.consumeAsync(defaultQueue, (msg, cb) => {
@@ -49,7 +49,7 @@ test('Consume message from different queues using a single consumer instance: ca
 
   await delay(10000);
   expect(messages.length).toBe(5);
-  expect(messages.map((i) => i.getBody()).sort()).toEqual([
+  expect(messages.map((i) => i.body).sort()).toEqual([
     'body 1',
     'body 2',
     'body 3',

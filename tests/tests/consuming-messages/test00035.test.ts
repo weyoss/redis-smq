@@ -15,12 +15,12 @@ import { shutDownBaseInstance } from '../../common/base-instance';
 import {
   EQueueDeliveryModel,
   EQueueType,
-  IConsumableMessage,
+  IMessageParams,
 } from '../../../types';
 import { getQueue } from '../../common/queue';
 
 test('Consume message from different queues using a single consumer instance: case 6', async () => {
-  const messages: IConsumableMessage[] = [];
+  const messages: IMessageParams[] = [];
   const consumer = promisifyAll(new Consumer(true));
   await consumer.runAsync();
 
@@ -115,7 +115,7 @@ test('Consume message from different queues using a single consumer instance: ca
 
   await delay(10000);
   expect(messages.length).toBe(5);
-  expect(messages.map((i) => i.getBody()).sort()).toEqual([
+  expect(messages.map((i) => i.body).sort()).toEqual([
     'body 1',
     'body 2',
     'body 3',

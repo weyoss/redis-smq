@@ -30,7 +30,7 @@ test('Combined test: Requeue a message from dead-letter queue. Check queue metri
   const res2 = await pendingMessages.getMessagesAsync(queue, 0, 100);
   expect(res2.totalItems).toBe(1);
   expect(res2.items.length).toBe(1);
-  expect(res2.items[0].getId()).toEqual(messageId);
+  expect(res2.items[0].id).toEqual(messageId);
 
   const res3 = await deadLetteredMessages.getMessagesAsync(queue, 0, 100);
   expect(res3.totalItems).toBe(0);

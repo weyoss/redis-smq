@@ -54,8 +54,8 @@ test('Publish and consume a message to/from a consumer group', async () => {
 
   const message = promisifyAll(new Message());
   const msg = await message.getMessageByIdAsync(messageId);
-  expect(msg.getId()).toEqual(messageId);
-  expect(msg.getConsumerGroupId()).toEqual('my-group');
+  expect(msg.id).toEqual(messageId);
+  expect(msg.consumerGroupId).toEqual('my-group');
 
   const queueMessages = promisifyAll(new QueueMessages());
   const count = await queueMessages.countMessagesByStatusAsync(queue1);
@@ -76,8 +76,8 @@ test('Publish and consume a message to/from a consumer group', async () => {
     1,
     10,
   );
-  expect(messages.items[0].getId()).toEqual(messageId);
-  expect(messages.items[0].getConsumerGroupId()).toEqual('my-group');
+  expect(messages.items[0].id).toEqual(messageId);
+  expect(messages.items[0].consumerGroupId).toEqual('my-group');
 
   const consumer = promisifyAll(new Consumer());
   await consumer.consumeAsync(

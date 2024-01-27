@@ -24,7 +24,7 @@ test('Combined test: Delete a pending message with priority. Check pending messa
   const res1 = await pendingMessages.getMessagesAsync(queue, 0, 100);
 
   expect(res1.totalItems).toBe(1);
-  expect(res1.items[0].getId()).toBe(messageId);
+  expect(res1.items[0].id).toBe(messageId);
 
   const queueMessages = await getQueueMessages();
   const count = await queueMessages.countMessagesByStatusAsync(queue);

@@ -36,7 +36,7 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> DEAD_LETTERED', as
   const consumer = getConsumer({ consumeDefaultQueue: false });
   const msg1: EMessagePropertyStatus[] = [];
   await consumer.consumeAsync(defaultQueue, (msg, cb) => {
-    msg1.push(msg.getStatus());
+    msg1.push(msg.status);
     cb(new Error());
   });
 

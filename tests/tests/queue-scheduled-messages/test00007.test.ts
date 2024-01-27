@@ -42,15 +42,15 @@ test('Schedule a message: combine REPEAT, REPEAT PERIOD, DELAY. Case 1', async (
   const r = await pendingMessages.getMessagesAsync(defaultQueue, 0, 100);
   expect(r.items.length).toBe(4);
 
-  const diff1 = (r.items[0].getPublishedAt() ?? 0) - producedAt;
+  const diff1 = (r.items[0].messageState.publishedAt ?? 0) - producedAt;
   expect(validateTime(diff1, 10000)).toBe(true);
 
-  const diff2 = (r.items[1].getPublishedAt() ?? 0) - producedAt;
+  const diff2 = (r.items[1].messageState.publishedAt ?? 0) - producedAt;
   expect(validateTime(diff2, 13000)).toBe(true);
 
-  const diff3 = (r.items[2].getPublishedAt() ?? 0) - producedAt;
+  const diff3 = (r.items[2].messageState.publishedAt ?? 0) - producedAt;
   expect(validateTime(diff3, 16000)).toBe(true);
 
-  const diff4 = (r.items[3].getPublishedAt() ?? 0) - producedAt;
+  const diff4 = (r.items[3].messageState.publishedAt ?? 0) - producedAt;
   expect(validateTime(diff4, 19000)).toBe(true);
 });
