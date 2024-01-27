@@ -10,12 +10,12 @@
 import path from 'path';
 import { Worker } from 'worker_threads';
 import { ICallback } from 'redis-smq-common';
-import { IMessageParams } from '../../../../types';
 import {
-  EWorkerThreadMessageCodeExit,
   EWorkerThreadMessageCodeConsume,
+  EWorkerThreadMessageCodeExit,
+  IMessageParams,
   TWorkerThreadMessage,
-} from './consume-message-worker-thread';
+} from '../../../../types';
 import { ConsumerMessageHandlerWorkerError } from './errors';
 
 export class ConsumeMessageWorker {

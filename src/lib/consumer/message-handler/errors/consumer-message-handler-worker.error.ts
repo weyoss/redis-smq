@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { TWorkerThreadMessage } from '../consume-message-worker-thread';
 import { ConsumerMessageHandlerError } from './consumer-message-handler.error';
+import { TWorkerThreadMessage } from '../../../../../types';
 
 export class ConsumerMessageHandlerWorkerError extends ConsumerMessageHandlerError {
   constructor(msg: TWorkerThreadMessage) {
