@@ -9,7 +9,7 @@
 
 import {
   EQueueType,
-  IConsumableMessage,
+  IMessageTransferable,
   IQueueMessages,
   IQueueMessagesPage,
   TQueueExtendedParams,
@@ -63,7 +63,7 @@ export class QueuePendingMessages implements IQueueMessages {
     queue: TQueueExtendedParams,
     page: number,
     pageSize: number,
-    cb: ICallback<IQueueMessagesPage<IConsumableMessage>>,
+    cb: ICallback<IQueueMessagesPage<IMessageTransferable>>,
   ): void {
     this.getQueueImplementation(queue, (err, pendingMessages) => {
       if (err) cb(err);

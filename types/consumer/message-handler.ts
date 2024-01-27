@@ -10,12 +10,14 @@
 import { ICallback } from 'redis-smq-common';
 import { IQueueParsedParams } from '../queue';
 import { redisKeys } from '../../src/common/redis-keys/redis-keys';
-import { IConsumableMessage } from '../message';
+import { IMessageTransferable } from '../message';
 
-export type TConsumerMessageHandler = (
-  msg: IConsumableMessage,
+export type TConsumerMessageHandlerFn = (
+  msg: IMessageTransferable,
   cb: ICallback<void>,
 ) => void;
+
+export type TConsumerMessageHandler = string | TConsumerMessageHandlerFn;
 
 export interface IConsumerMessageHandlerArgs {
   queue: IQueueParsedParams;

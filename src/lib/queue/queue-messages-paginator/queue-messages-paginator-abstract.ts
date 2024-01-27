@@ -8,7 +8,7 @@
  */
 
 import {
-  IConsumableMessage,
+  IMessageTransferable,
   IQueueMessages,
   IQueueMessagesPage,
   IQueueMessagesPageParams,
@@ -114,7 +114,7 @@ export abstract class QueueMessagesPaginatorAbstract implements IQueueMessages {
     queue: TQueueExtendedParams,
     page: number,
     pageSize: number,
-    cb: ICallback<IQueueMessagesPage<IConsumableMessage>>,
+    cb: ICallback<IQueueMessagesPage<IMessageTransferable>>,
   ): void {
     const parsedParams = _parseQueueExtendedParams(queue);
     _validateQueueExtendedParams(parsedParams, this.requireGroupId, (err) => {

@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-export interface IMessageStateSerialized {
+export interface IMessageStateTransferable {
   uuid: string;
   publishedAt: number | null;
   scheduledAt: number | null;

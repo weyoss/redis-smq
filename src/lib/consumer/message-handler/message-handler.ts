@@ -7,6 +7,8 @@
  * in the root directory of this source tree.
  */
 
+import { stat } from 'fs';
+import path from 'path';
 import {
   EConsumeMessageUnacknowledgedCause,
   EMessageProperty,
@@ -34,6 +36,7 @@ import {
 import { ELuaScriptName } from '../../../common/redis-client/redis-client';
 import { _fromMessage } from '../../message/_from-message';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
+import { ConsumerMessageHandlerError } from './errors';
 
 export class MessageHandler extends EventEmitter<TRedisSMQEvent> {
   protected id: string;
@@ -64,7 +67,7 @@ export class MessageHandler extends EventEmitter<TRedisSMQEvent> {
     this.dequeueRedisClient = dequeueRedisClient;
     this.sharedRedisClient = sharedRedisClient;
     this.handler = messageHandler;
-    this.powerSwitch = new PowerSwitch();
+    this.powerSwitch = new PowerSwitch(false);
     this.logger = logger;
     this.dequeueMessage = new DequeueMessage(this, dequeueRedisClient);
     this.consumeMessage = new ConsumeMessage(this, dequeueRedisClient, logger);
@@ -160,6 +163,18 @@ export class MessageHandler extends EventEmitter<TRedisSMQEvent> {
     this.dequeueRedisClient.halt(cb);
   }
 
+  protected forceShutDown(cb: ICallback<void>) {
+    this.powerSwitch.rollback();
+    async.waterfall(
+      [
+        (cb: ICallback<void>) => this.dequeueMessage.quit(cb),
+        (cb: ICallback<void>) => this.consumeMessage.quit(cb),
+        (cb: ICallback<void>) => this.shutdownDequeueClient(cb),
+      ],
+      cb,
+    );
+  }
+
   handleError(err: Error): void {
     if (this.powerSwitch.isRunning() || this.powerSwitch.isGoingUp()) {
       this.emit('error', err);
@@ -172,14 +187,34 @@ export class MessageHandler extends EventEmitter<TRedisSMQEvent> {
 
   run(cb: ICallback<void>): void {
     this.powerSwitch.goingUp();
-    this.dequeueMessage.run((err) => {
-      if (err) cb(err);
-      else {
-        this.powerSwitch.commit();
-        this.emit('up');
-        cb();
-      }
-    });
+    async.waterfall(
+      [
+        (cb: ICallback<void>) => {
+          if (typeof this.handler === 'string') {
+            if (!['.js', '.cjs'].includes(path.extname(this.handler))) {
+              cb(new ConsumerMessageHandlerError('Invalid file extension'));
+            } else
+              stat(this.handler, (err) => {
+                if (err) cb(new ConsumerMessageHandlerError(err.message));
+                else cb();
+              });
+          } else cb();
+        },
+        (cb: ICallback<void>) =>
+          this.dequeueMessage.run((err) => {
+            if (err) cb(err);
+            else {
+              this.powerSwitch.commit();
+              this.emit('up');
+              cb();
+            }
+          }),
+      ],
+      (err) => {
+        if (err) this.forceShutDown(() => cb(err));
+        else cb();
+      },
+    );
   }
 
   shutdown(
@@ -187,22 +222,26 @@ export class MessageHandler extends EventEmitter<TRedisSMQEvent> {
     cb: ICallback<void>,
   ): void {
     const goDown = () => {
-      this.powerSwitch.goingDown();
-      async.waterfall(
-        [
-          (cb: ICallback<void>) => this.dequeueMessage.quit(cb),
-          (cb: ICallback<void>) => this.cleanUp(messageUnacknowledgedCause, cb),
-          (cb: ICallback<void>) => this.shutdownDequeueClient(cb),
-        ],
-        (err) => {
-          if (err) cb(err);
-          else {
-            this.powerSwitch.commit();
-            this.emit('down');
-            cb();
-          }
-        },
-      );
+      const r = this.powerSwitch.goingDown();
+      if (r) {
+        async.waterfall(
+          [
+            (cb: ICallback<void>) => this.dequeueMessage.quit(cb),
+            (cb: ICallback<void>) => this.consumeMessage.quit(cb),
+            (cb: ICallback<void>) =>
+              this.cleanUp(messageUnacknowledgedCause, cb),
+            (cb: ICallback<void>) => this.shutdownDequeueClient(cb),
+          ],
+          (err) => {
+            if (err) cb(err);
+            else {
+              this.powerSwitch.commit();
+              this.emit('down');
+              cb();
+            }
+          },
+        );
+      } else cb();
     };
     if (this.powerSwitch.isGoingUp()) this.once('up', goDown);
     else goDown();

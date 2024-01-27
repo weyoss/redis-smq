@@ -9,13 +9,13 @@
 
 import { ICallback, RedisClient } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
-import { EMessageProperty, IMessageStateSerialized } from '../../../types';
+import { EMessageProperty, IMessageStateTransferable } from '../../../types';
 import { MessageNotFoundError } from './errors';
 
 export function _getMessageState(
   redisClient: RedisClient,
   messageId: string,
-  cb: ICallback<IMessageStateSerialized>,
+  cb: ICallback<IMessageStateTransferable>,
 ): void {
   const { keyMessage } = redisKeys.getMessageKeys(messageId);
   redisClient.hget(keyMessage, String(EMessageProperty.STATE), (err, reply) => {

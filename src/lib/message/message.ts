@@ -13,11 +13,10 @@ import { _getMessage, _getMessages } from './_get-message';
 import { _deleteMessage } from './_delete-message';
 import {
   EMessagePropertyStatus,
-  IConsumableMessage,
-  IMessageStateSerialized,
+  IMessageStateTransferable,
+  IMessageTransferable,
 } from '../../../types';
 import { _getMessageStatus } from './_get-message-status';
-import { _createConsumableMessage } from './_create-consumable-message';
 import { _getMessageState } from './_get-message-state';
 
 export class Message {
@@ -34,7 +33,7 @@ export class Message {
 
   getMessageState(
     messageId: string,
-    cb: ICallback<IMessageStateSerialized>,
+    cb: ICallback<IMessageStateTransferable>,
   ): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
@@ -45,7 +44,7 @@ export class Message {
 
   getMessagesByIds(
     messageIds: string[],
-    cb: ICallback<IConsumableMessage[]>,
+    cb: ICallback<IMessageTransferable[]>,
   ): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
@@ -57,14 +56,14 @@ export class Message {
           else {
             cb(
               null,
-              reply.map((i) => _createConsumableMessage(i)),
+              reply.map((i) => i.transfer()),
             );
           }
         });
     });
   }
 
-  getMessageById(messageId: string, cb: ICallback<IConsumableMessage>): void {
+  getMessageById(messageId: string, cb: ICallback<IMessageTransferable>): void {
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
       else if (!client) cb(new CallbackEmptyReplyError());
@@ -72,7 +71,7 @@ export class Message {
         _getMessage(client, messageId, (err, reply) => {
           if (err) cb(err);
           else if (!reply) cb(new CallbackEmptyReplyError());
-          else cb(null, _createConsumableMessage(reply));
+          else cb(null, reply.transfer());
         });
     });
   }

@@ -10,7 +10,8 @@
 import { parseExpression } from 'cron-parser';
 import {
   EMessagePropertyStatus,
-  IMessageSerialized,
+  IMessageTransferable,
+  IMessageParams,
   IQueueParams,
   TExchange,
 } from '../../../types';
@@ -183,7 +184,7 @@ export class MessageEnvelope {
     return this.consumerGroupId;
   }
 
-  toJSON(): IMessageSerialized {
+  toJSON(): IMessageParams {
     return {
       createdAt: this.producibleMessage.getCreatedAt(),
       ttl: this.producibleMessage.getTTL(),
@@ -199,6 +200,15 @@ export class MessageEnvelope {
       exchange: this.getExchange().toJSON(),
       destinationQueue: this.getDestinationQueue(),
       consumerGroupId: this.getConsumerGroupId(),
+    };
+  }
+
+  transfer(): IMessageTransferable {
+    return {
+      ...this.toJSON(),
+      id: this.getId(),
+      messageState: this.getMessageState().toJSON(),
+      status: this.getStatus(),
     };
   }
 
