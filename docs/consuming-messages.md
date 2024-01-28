@@ -4,7 +4,7 @@
 
 A `Consumer` instance can be used to receive and consume messages from one or multiple queues.
 
-To consume messages from a queue, the [Consumer Class](api/classes/Consumer.md) class provides the 
+To consume messages from a queue, the [Consumer Class](api/classes/Consumer.md) class provides the
 [consume()](api/classes/Consumer.md#consume) method which allows to register a `message handler`.
 
 A `message handler` is a function that receives a delivered message from a given queue.
@@ -15,8 +15,7 @@ In contrast to producers, consumers are not automatically started upon creation.
 
 To stop consuming messages from a queue and to remove the associated `message handler` from your consumer, use the [cancel()](api/classes/Consumer.md#cancel) method.
 
-To shut down completely your consumer and tear down all message handlers, use the 
-[shutdown()](api/classes/Consumer.md#shutdown) method.
+To shut down completely your consumer and tear down all message handlers, use the [shutdown()](api/classes/Consumer.md#shutdown) method.
 
 ```javascript
 'use strict';
@@ -26,8 +25,7 @@ const { Consumer } = require('redis-smq');
 const consumer = new Consumer();
 
 const messageHandler = (msg, cb) => {
-   const payload = msg.getBody();
-   console.log('Message payload', payload);
+   console.log('Message payload', msg.body);
    cb(); // acknowledging the message
 };
 
@@ -35,7 +33,32 @@ consumer.consume('test_queue', messageHandler, (err) => {
    if (err) console.error(err);
 });
 
-consumer.run();
+consumer.run((err) => {
+  if (err) console.error(err);
+});
+```
+
+Alternatively we can also register a message handler strictly after that a consumer has been started.
+
+```javascript
+'use strict';
+
+const { Consumer } = require('redis-smq');
+
+const consumer = new Consumer();
+
+consumer.run((err) => {
+  if (err) console.error(err);
+  else {
+    const messageHandler = (msg, cb) => {
+      console.log('Message payload', msg.body);
+      cb(); // acknowledging the message
+    };
+    consumer.consume('test_queue', messageHandler, (err) => {
+      if (err) console.error(err);
+    });
+  }
+});
 ```
 
 ## Message Acknowledgement

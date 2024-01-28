@@ -17,7 +17,7 @@ const { Queue, EQueueDeliveryModel, EQueueType } = require('redis-smq');
 
 const queue = new Queue();
 queue.save('my-queue', EQueueType.LIFO_QUEUE, EQueueDeliveryModel.POINT_TO_POINT, (err, reply) => {
-  if (err) console.log(err);
+  if (err) console.error(err);
   else console.log('Successfully created', reply)
 })
 ```
@@ -34,9 +34,9 @@ message.setBody('hello world').setQueue('my-queue');
 
 const producer = new Producer();
 producer.run((err) => {
-  if (err) console.log(err);
+  if (err) console.error(err);
   else producer.produce(message, (err, reply) => {
-    if (err) console.log(err);
+    if (err) console.error(err);
     else console.log('Successfully produced', reply);
   })
 })
@@ -53,11 +53,11 @@ const consumer = new Consumer();
 
 const messageHandler = (msg, cb) => cb(); // acknowledging
 consumer.consume('my-queue', messageHandler, (err) => {
-  if (err) console.log(err);
+  if (err) console.error(err);
   else console.log('MessageHandler added');
 });
 consumer.run((err) => {
-  if (err) console.log(err);
+  if (err) console.error(err);
 })
 ```
 
@@ -94,7 +94,7 @@ const { Queue, EQueueDeliveryModel, EQueueType } = require('redis-smq');
 
 const queue = new Queue();
 queue.save('my-pubsub-queue', EQueueType.LIFO_QUEUE, EQueueDeliveryModel.PUB_SUB, (err, reply) => {
-  if (err) console.log(err);
+  if (err) console.error(err);
   else console.log('Successfully created', reply)
 })
 ```
@@ -119,9 +119,9 @@ message.setBody('hello world').setQueue('my-pubsub-queue');
 
 const producer = new Producer();
 producer.run((err) => {
-  if (err) console.log(err);
+  if (err) console.error(err);
   else producer.produce(message, (err, reply) => {
-    if (err) console.log(err);
+    if (err) console.error(err);
     else console.log('Successfully produced', reply);
   })
 })
@@ -142,11 +142,11 @@ const consumer = new Consumer();
 
 const messageHandler = (msg, cb) => cb(); // acknowledging
 consumer.consume({ queue: 'my-pubsub-queue', groupId: 'my-app-group-1' }, messageHandler, (err) => {
-  if (err) console.log(err);
+  if (err) console.error(err);
   else console.log('MessageHandler added');
 });
 consumer.run((err) => {
-  if (err) console.log(err);
+  if (err) console.error(err);
 })
 ```
 

@@ -44,7 +44,7 @@ ___
 | `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
 | `page` | `number` |
 | `pageSize` | `number` |
-| `cb` | `ICallback`\<[`IQueueMessagesPage`](IQueueMessagesPage.md)\<[`IConsumableMessage`](IConsumableMessage.md)\>\> |
+| `cb` | `ICallback`\<[`IQueueMessagesPage`](IQueueMessagesPage.md)\<[`IMessageTransferable`](IMessageTransferable.md)\>\> |
 
 #### Returns
 

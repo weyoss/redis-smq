@@ -22,7 +22,7 @@ const { Queue } = require('redis-smq');
 const queue = new Queue();
 
 // Creating a LIFO queue named 'my_lifo_queue' in the 'default' namespace.
-queue.save('my_lifo_queue', EQueueType.LIFO_QUEUE, (err) => console.log(err));
+queue.save('my_lifo_queue', EQueueType.LIFO_QUEUE, (err) => console.error(err));
 ```
 
 See [Queue.prototype.save()](api/classes/Queue.md#save) for more details.
@@ -39,7 +39,7 @@ const { QueueManager } = require('redis-smq');
 const queue = new Queue();
 
 // Creating a FIFO queue named 'my_fifo_queue' in the 'default' namespace.
-queue.save('my_fifo_queue', EQueueType.FIFO_QUEUE, (err) => console.log(err));
+queue.save('my_fifo_queue', EQueueType.FIFO_QUEUE, (err) => console.error(err));
 ```
 
 See [Queue.prototype.save()](api/classes/Queue.md#save) for more details.
@@ -56,7 +56,7 @@ const { QueueManager } = require('redis-smq');
 const queue = new Queue();
 
 // Creating a PRIORITY queue named 'my_priority_queue' in the 'default' namespace.
-queue.save('my_priority_queue', EQueueType.PRIORITY_QUEUE, (err) => console.log(err));
+queue.save('my_priority_queue', EQueueType.PRIORITY_QUEUE, (err) => console.error(err));
 ```
 
 See [Queue.prototype.save()](api/classes/Queue.md#save) for more details.
