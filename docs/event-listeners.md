@@ -4,11 +4,9 @@
 
 Event listeners is a way to automate processing every event from each consumer or producer instance.
 
-Let's suppose that for some reason you want to catch all `messageAcknowledged` events from all created
-consumer instances in your application.
+Let's suppose that for some reason you want to catch all `messageAcknowledged` events from all created consumer instances in your application.
 
-There are many ways to take in order to achieve this goal. The most repetitive and error prone way is to manually
-register an event listener after creating each consumer instance like this way:
+There are many ways to take in order to achieve this goal. The most repetitive and error prone way is to manually register an event listener after creating each consumer instance like this way:
 
 ```javascript
 const consumer = new Consumer();
@@ -17,8 +15,7 @@ consumer.on('messageAcknowledged', (messageId, queue, messageHandlerId, consumer
 })
 ```
 
-A more convenient way to do the same thing but with less manual work is to configure RedisSMQ to initialize and
-manage event listeners for you.
+A more convenient way to do the same thing but with less manual work is to configure RedisSMQ to initialize and manage event listeners for you.
 
 ## Usage
 

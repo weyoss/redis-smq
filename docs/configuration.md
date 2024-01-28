@@ -2,8 +2,7 @@
 
 # Configuration
 
-RedisSMQ configuration is a one-time setup that takes place, usually, during your application initialization and before
-using any exported class or function from the library.
+RedisSMQ configuration is a one-time setup that takes place, usually, during your application initialization and before using any exported class or function from the library.
 
 To register a configuration object RedisSMQ provides a singleton class that may be used as shown bellow:
 
@@ -71,8 +70,7 @@ Published messages, to a queue, are permanently stored unless deleted explicitly
 
 The `message.store` option allows, additionally, to configure acknowledged/dead-lettered messages storage for all message queues.
 
-In other words, when `message.store` is enabled, a queue, in addition to all published messages, may hold a list of all
-dead-lettered messages for example.
+In other words, when `message.store` is enabled, a queue, in addition to all published messages, may hold a list of all dead-lettered messages for example.
 
 By default acknowledged and dead-lettered messages are not stored.
 

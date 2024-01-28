@@ -15,12 +15,16 @@
 - [EQueueDeliveryModel](enums/EQueueDeliveryModel.md)
 - [EQueueProperty](enums/EQueueProperty.md)
 - [EQueueType](enums/EQueueType.md)
+- [EWorkerThreadMessageCodeConsume](enums/EWorkerThreadMessageCodeConsume.md)
+- [EWorkerThreadMessageCodeExit](enums/EWorkerThreadMessageCodeExit.md)
 
 ### Classes
 
 - [Configuration](classes/Configuration.md)
 - [Consumer](classes/Consumer.md)
 - [ConsumerGroups](classes/ConsumerGroups.md)
+- [ExchangeDirect](classes/ExchangeDirect.md)
+- [ExchangeFanOut](classes/ExchangeFanOut.md)
 - [ExchangeTopic](classes/ExchangeTopic.md)
 - [Message](classes/Message.md)
 - [Namespace](classes/Namespace.md)
@@ -34,7 +38,7 @@
 - [QueueRateLimit](classes/QueueRateLimit.md)
 - [QueueScheduledMessages](classes/QueueScheduledMessages.md)
 
-## Errors
+### Errors
 
 - [ConsumerError](classes/ConsumerError.md)
 - [ConsumerGroupDeleteError](classes/ConsumerGroupDeleteError.md)
@@ -43,9 +47,9 @@
 - [ConsumerGroupIdRequiredError](classes/ConsumerGroupIdRequiredError.md)
 - [ConsumerInvalidGroupIdError](classes/ConsumerInvalidGroupIdError.md)
 - [ConsumerMessageHandlerAlreadyExistsError](classes/ConsumerMessageHandlerAlreadyExistsError.md)
-- [ExchangeDirect](classes/ExchangeDirect.md)
+- [ConsumerMessageHandlerError](classes/ConsumerMessageHandlerError.md)
+- [ConsumerMessageHandlerWorkerError](classes/ConsumerMessageHandlerWorkerError.md)
 - [ExchangeError](classes/ExchangeError.md)
-- [ExchangeFanOut](classes/ExchangeFanOut.md)
 - [ExchangeFanOutError](classes/ExchangeFanOutError.md)
 - [ExchangeInvalidDataError](classes/ExchangeInvalidDataError.md)
 - [MessageDeleteError](classes/MessageDeleteError.md)
@@ -71,15 +75,15 @@
 
 ### Interfaces
 
-- [IConsumableMessage](interfaces/IConsumableMessage.md)
 - [IConsumerHeartbeat](interfaces/IConsumerHeartbeat.md)
 - [IConsumerHeartbeatPayload](interfaces/IConsumerHeartbeatPayload.md)
 - [IConsumerMessageHandlerArgs](interfaces/IConsumerMessageHandlerArgs.md)
 - [IEventListener](interfaces/IEventListener.md)
 - [IExchange](interfaces/IExchange.md)
 - [IExchangeSerialized](interfaces/IExchangeSerialized.md)
-- [IMessageSerialized](interfaces/IMessageSerialized.md)
-- [IMessageStateSerialized](interfaces/IMessageStateSerialized.md)
+- [IMessageParams](interfaces/IMessageParams.md)
+- [IMessageStateTransferable](interfaces/IMessageStateTransferable.md)
+- [IMessageTransferable](interfaces/IMessageTransferable.md)
 - [IMessagesConfig](interfaces/IMessagesConfig.md)
 - [IMessagesConfigStorage](interfaces/IMessagesConfigStorage.md)
 - [IMessagesConfigStorageOptions](interfaces/IMessagesConfigStorageOptions.md)
@@ -102,6 +106,7 @@
 
 - [IQueueMessagesPageParams](README.md#iqueuemessagespageparams)
 - [TConsumerMessageHandler](README.md#tconsumermessagehandler)
+- [TConsumerMessageHandlerFn](README.md#tconsumermessagehandlerfn)
 - [TConsumerRedisKeys](README.md#tconsumerrediskeys)
 - [TEventListenersConfig](README.md#teventlistenersconfig)
 - [TExchange](README.md#texchange)
@@ -116,6 +121,9 @@
 - [TQueueMessagesParams](README.md#tqueuemessagesparams)
 - [TRedisSMQEvent](README.md#tredissmqevent)
 - [TTopicParams](README.md#ttopicparams)
+- [TWorkerThreadError](README.md#tworkerthreaderror)
+- [TWorkerThreadMessage](README.md#tworkerthreadmessage)
+- [TWorkerThreadMessageCode](README.md#tworkerthreadmessagecode)
 
 ### Functions
 
@@ -140,7 +148,13 @@ ___
 
 ### TConsumerMessageHandler
 
-Ƭ **TConsumerMessageHandler**: (`msg`: [`IConsumableMessage`](interfaces/IConsumableMessage.md), `cb`: `ICallback`\<`void`\>) => `void`
+Ƭ **TConsumerMessageHandler**: `string` \| [`TConsumerMessageHandlerFn`](README.md#tconsumermessagehandlerfn)
+
+___
+
+### TConsumerMessageHandlerFn
+
+Ƭ **TConsumerMessageHandlerFn**: (`msg`: [`IMessageTransferable`](interfaces/IMessageTransferable.md), `cb`: `ICallback`\<`void`\>) => `void`
 
 #### Type declaration
 
@@ -150,7 +164,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `msg` | [`IConsumableMessage`](interfaces/IConsumableMessage.md) |
+| `msg` | [`IMessageTransferable`](interfaces/IMessageTransferable.md) |
 | `cb` | `ICallback`\<`void`\> |
 
 ##### Returns
@@ -297,6 +311,38 @@ ___
 | :------ | :------ |
 | `ns` | `string` |
 | `topic` | `string` |
+
+___
+
+### TWorkerThreadError
+
+Ƭ **TWorkerThreadError**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `message` | `string` |
+| `name` | `string` |
+
+___
+
+### TWorkerThreadMessage
+
+Ƭ **TWorkerThreadMessage**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `code` | [`TWorkerThreadMessageCode`](README.md#tworkerthreadmessagecode) |
+| `error` | [`TWorkerThreadError`](README.md#tworkerthreaderror) \| ``null`` |
+
+___
+
+### TWorkerThreadMessageCode
+
+Ƭ **TWorkerThreadMessageCode**: [`EWorkerThreadMessageCodeExit`](enums/EWorkerThreadMessageCodeExit.md) \| [`EWorkerThreadMessageCodeConsume`](enums/EWorkerThreadMessageCodeConsume.md)
 
 ## Functions
 

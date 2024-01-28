@@ -72,7 +72,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `messageId` | `string` |
-| `cb` | `ICallback`\<[`IConsumableMessage`](../interfaces/IConsumableMessage.md)\> |
+| `cb` | `ICallback`\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\> |
 
 #### Returns
 
@@ -89,7 +89,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `messageId` | `string` |
-| `cb` | `ICallback`\<[`IMessageStateSerialized`](../interfaces/IMessageStateSerialized.md)\> |
+| `cb` | `ICallback`\<[`IMessageStateTransferable`](../interfaces/IMessageStateTransferable.md)\> |
 
 #### Returns
 
@@ -123,7 +123,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `messageIds` | `string`[] |
-| `cb` | `ICallback`\<[`IConsumableMessage`](../interfaces/IConsumableMessage.md)[]\> |
+| `cb` | `ICallback`\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)[]\> |
 
 #### Returns
 

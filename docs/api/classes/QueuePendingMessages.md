@@ -62,7 +62,7 @@ ___
 | `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
 | `page` | `number` |
 | `pageSize` | `number` |
-| `cb` | `ICallback`\<[`IQueueMessagesPage`](../interfaces/IQueueMessagesPage.md)\<[`IConsumableMessage`](../interfaces/IConsumableMessage.md)\>\> |
+| `cb` | `ICallback`\<[`IQueueMessagesPage`](../interfaces/IQueueMessagesPage.md)\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\>\> |
 
 #### Returns
 

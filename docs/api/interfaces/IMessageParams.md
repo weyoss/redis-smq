@@ -1,25 +1,31 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IMessageSerialized
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IMessageParams
 
-# Interface: IMessageSerialized
+# Interface: IMessageParams
+
+## Hierarchy
+
+- **`IMessageParams`**
+
+  ↳ [`IMessageTransferable`](IMessageTransferable.md)
 
 ## Table of contents
 
 ### Properties
 
-- [body](IMessageSerialized.md#body)
-- [consumeTimeout](IMessageSerialized.md#consumetimeout)
-- [consumerGroupId](IMessageSerialized.md#consumergroupid)
-- [createdAt](IMessageSerialized.md#createdat)
-- [destinationQueue](IMessageSerialized.md#destinationqueue)
-- [exchange](IMessageSerialized.md#exchange)
-- [priority](IMessageSerialized.md#priority)
-- [retryDelay](IMessageSerialized.md#retrydelay)
-- [retryThreshold](IMessageSerialized.md#retrythreshold)
-- [scheduledCron](IMessageSerialized.md#scheduledcron)
-- [scheduledDelay](IMessageSerialized.md#scheduleddelay)
-- [scheduledRepeat](IMessageSerialized.md#scheduledrepeat)
-- [scheduledRepeatPeriod](IMessageSerialized.md#scheduledrepeatperiod)
-- [ttl](IMessageSerialized.md#ttl)
+- [body](IMessageParams.md#body)
+- [consumeTimeout](IMessageParams.md#consumetimeout)
+- [consumerGroupId](IMessageParams.md#consumergroupid)
+- [createdAt](IMessageParams.md#createdat)
+- [destinationQueue](IMessageParams.md#destinationqueue)
+- [exchange](IMessageParams.md#exchange)
+- [priority](IMessageParams.md#priority)
+- [retryDelay](IMessageParams.md#retrydelay)
+- [retryThreshold](IMessageParams.md#retrythreshold)
+- [scheduledCron](IMessageParams.md#scheduledcron)
+- [scheduledDelay](IMessageParams.md#scheduleddelay)
+- [scheduledRepeat](IMessageParams.md#scheduledrepeat)
+- [scheduledRepeatPeriod](IMessageParams.md#scheduledrepeatperiod)
+- [ttl](IMessageParams.md#ttl)
 
 ## Properties
 

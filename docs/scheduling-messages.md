@@ -25,7 +25,7 @@ msg
   .setQueue('test_queue');
 
 producer.produce(msg, (err) => {
-  if (err) console.log(err);
+  if (err) console.error(err);
   else console.log('Message has been successfully scheduled');
 })
 ```

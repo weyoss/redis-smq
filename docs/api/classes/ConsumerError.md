@@ -20,6 +20,8 @@
 
   ↳↳ [`ConsumerInvalidGroupIdError`](ConsumerInvalidGroupIdError.md)
 
+  ↳↳ [`ConsumerMessageHandlerError`](ConsumerMessageHandlerError.md)
+
 ## Table of contents
 
 ### Constructors

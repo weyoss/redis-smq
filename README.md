@@ -27,6 +27,7 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 * Supports [Point-2-Point](docs/queue-delivery-models.md#point-2-point-delivery-model) and [Pub/Sub](docs/queue-delivery-models.md#pubsub-delivery-model) [delivery models](docs/queue-delivery-models.md).
 * Both [delivery models](docs/queue-delivery-models.md) are reliable. For cases of failure, while delivering/consuming messages, [at-least-once](docs/api/classes/ProducibleMessage.md#setretrythreshold) and [at-most-once](docs/api/classes/ProducibleMessage.md#setretrythreshold) modes may be configured.
 * [3 queuing strategies](docs/queues.md): [FIFO queues](docs/queues.md#fifo-first-in-first-out-queues), [LIFO queues](docs/queues.md#lifo-last-in-first-out-queues), and [Priority Queues](docs/queues.md#priority-queues).
+* [Message Handler Worker Threads](docs/message-handler-worker-threads.md) which allow sandboxing and running your message handler from a separate isolated thread and without affecting the performance of other message handlers from the same consumer.
 * Messages can be [set to expire](docs/api/classes/ProducibleMessage.md#setttl) when not delivered within a given amount of time or to have a [consumption timeout](docs/api/classes/ProducibleMessage.md#setconsumetimeout) while being in process.
 * Queues may be [rate Limited](docs/queue-rate-limiting.md) to control the rate at which the messages are consumed.
 * Has a builtin [scheduler](docs/scheduling-messages.md) allowing messages [to be delayed](docs/api/classes/ProducibleMessage.md#setscheduleddelay), [to be delivered for N times](docs/api/classes/ProducibleMessage.md#setscheduledrepeat) with an optional [period between deliveries](docs/api/classes/ProducibleMessage.md#setscheduledrepeatperiod), or simply [to be scheduled using CRON expressions](docs/api/classes/ProducibleMessage.md#setscheduledcron).
@@ -66,41 +67,36 @@ A queue is responsible for holding messages which are produced by producers and 
 ### Creating a queue
 
 ```javascript
-const { Queue, EQueueType, EQueueDeliveryModel } = require('redis-smq');
-
 const queue = new Queue();
-
-// Creating a LIFO queue
-queue.save('my_queue', EQueueType.LIFO_QUEUE, EQueueDeliveryModel.POINT_TO_POINT, (err) => console.log(err));
+queue.save('my_queue', EQueueType.LIFO_QUEUE, EQueueDeliveryModel.POINT_TO_POINT, (err) => console.error(err));
 ```
 
 In the example above we are defining a [LIFO queue](docs/queues.md#lifo-last-in-first-out-queues) with a [POINT-2-POINT delivery model](docs/queue-delivery-models.md#point-2-point-delivery-model).
 
+See [Queues](docs/queues.md) for more details.
+
 ### Producing a message
 
 ```javascript
-const { Producer, ProducibleMessage } = require('redis-smq');
-
-const producer = new Producer();
-
 const msg = new ProducibleMessage();
 msg.setQueue('my_queue').setBody('Hello Word!')
-
-producer.produce(msg, (err) => console.log(err));
+producer.produce(msg, (err) => console.error(err));
 ```
+
+See [Producing Messages](docs/producing-messages.md) for more details.
 
 ### Consuming a message
 
 ```javascript
-const { Consumer } = require('redis-smq');
-
 const consumer = new Consumer();
 const messageHandler = (msg, cb) => {
-  console.log(msg.getBody());
+  console.log(msg.body);
   cb();
 }
-consumer.consume('my_queue', messageHandler, (err) => console.log(err));
+consumer.consume('my_queue', messageHandler, (err) => console.error(err));
 ```
+
+See [Consuming Messages](docs/consuming-messages.md) for more details.
 
 ## Documentation
 
