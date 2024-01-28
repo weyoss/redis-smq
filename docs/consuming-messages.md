@@ -5,17 +5,17 @@
 A `Consumer` instance can be used to receive and consume messages from one or multiple queues.
 
 To consume messages from a queue, the [Consumer Class](api/classes/Consumer.md) class provides the
-[consume()](api/classes/Consumer.md#consume) method which allows to register a `message handler`.
+[Consumer.consume()](api/classes/Consumer.md#consume) method which allows to register a `message handler`.
 
 A `message handler` is a function that receives a delivered message from a given queue.
 
 Message handlers can be registered at any time, before or after a consumer has been started.
 
-In contrast to producers, consumers are not automatically started upon creation. To start a consumer use the [run()](api/classes/Consumer.md#run) method.
+In contrast to producers, consumers are not automatically started upon creation. To start a consumer use the [Consumer.run()](api/classes/Consumer.md#run) method.
 
-To stop consuming messages from a queue and to remove the associated `message handler` from your consumer, use the [cancel()](api/classes/Consumer.md#cancel) method.
+To stop consuming messages from a queue and to remove the associated `message handler` from your consumer, use the [Consumer.cancel()](api/classes/Consumer.md#cancel) method.
 
-To shut down completely your consumer and tear down all message handlers, use the [shutdown()](api/classes/Consumer.md#shutdown) method.
+To shut down completely your consumer and tear down all message handlers, use the [Consumer.shutdown()](api/classes/Consumer.md#shutdown) method.
 
 ```javascript
 'use strict';

@@ -6,7 +6,7 @@ A `Producer` instance allows to publish a message to a queue.
 
 You can use a single `Producer` instance to produce messages, including messages with priority, to one or multiple queues.
 
-Before publishing a message do not forget to set an exchange for the message using [setQueue()](api/classes/ProducibleMessage.md#setqueue), [setTopic()](api/classes/ProducibleMessage.md#settopic), or [setFanOut()](api/classes/ProducibleMessage.md#setfanout). Otherwise, an error will be returned.
+Before publishing a message do not forget to set an exchange for the message using [ProducibleMessage.setQueue()](api/classes/ProducibleMessage.md#setqueue), [setTopic()](api/classes/ProducibleMessage.md#settopic), or [setFanOut()](api/classes/ProducibleMessage.md#setfanout). Otherwise, an error will be returned.
 
 See [Message Exchanges](message-exchanges.md) for more details.
 

@@ -20,7 +20,7 @@ So, before deciding whether to use multiplexing, it is important to know what yo
 
 ## Enabling multiplexing
 
-Use the [Consumer class constructor](api/classes/Consumer.md#constructor) first argument to enable multiplexing:
+Use the [Consumer Class Constructor](api/classes/Consumer.md#constructor) first argument to enable multiplexing:
 
 ```javascript
 const consumer = new Consumer(true);

@@ -53,4 +53,4 @@ Please note that message handler filename should be always an absolute path.
 
 If you are using TypeScript as your primary language you should create and save as usually your message handler file with a `.ts` extension. But when registering your message handler the `.ts` extension, in the message handler filename, should be replaced with a `.js` or `.cjs` extension depending on your TypeScript project settings.
 
-See [Consumer.prototype.consume](docs/api/classes/Consumer.md#consume) for more details.
+See [Consumer.consume()](api/classes/Consumer.md#consume) for more details.
