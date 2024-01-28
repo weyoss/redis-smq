@@ -6,13 +6,13 @@ Starting with version 1.0.19, RedisSMQ enables you to schedule a one-time or rep
 
 To set up scheduling parameters for a given message, the [ProducibleMessage Class](api/classes/ProducibleMessage.md) provides:
 
-* [ProducibleMessage.prototype.setScheduledCRON()](api/classes/ProducibleMessage.md#setscheduledcron)
-* [ProducibleMessage.prototype.setScheduledDelay()](api/classes/ProducibleMessage.md#setscheduleddelay)
-* [ProducibleMessage.prototype.setScheduledRepeat()](api/classes/ProducibleMessage.md#setscheduledrepeat)
-* [ProducibleMessage.prototype.setScheduledRepeatPeriod()](api/classes/ProducibleMessage.md#setscheduledrepeatperiod)
+* [ProducibleMessage.setScheduledCRON()](api/classes/ProducibleMessage.md#setscheduledcron)
+* [ProducibleMessage.setScheduledDelay()](api/classes/ProducibleMessage.md#setscheduleddelay)
+* [ProducibleMessage.setScheduledRepeat()](api/classes/ProducibleMessage.md#setscheduledrepeat)
+* [ProducibleMessage.setScheduledRepeatPeriod()](api/classes/ProducibleMessage.md#setscheduledrepeatperiod)
 
 To schedule your message, you can publish it, as any other message, from your [Producer Class](api/classes/Producer.md) 
-using the [produce()](api/classes/Producer.md#produce) method.
+using the [Producer.produce()](api/classes/Producer.md#produce) method.
 
 ```javascript
 'use strict';

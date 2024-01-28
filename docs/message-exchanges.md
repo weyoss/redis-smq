@@ -36,11 +36,11 @@ A direct exchange with the queue `a.b.c.d` matches exactly the queue with the na
 
 The [ProducibleMessage Class](api/classes/ProducibleMessage.md) provides:
 
-- [setQueue()](api/classes/ProducibleMessage.md#setqueue): to set up a queue for the message. Under the hood, a new `ExchangeDirect` instance will be created and used for the message exchange.
-- [setExchange()](api/classes/ProducibleMessage.md#setexchange): to set a `ExchangeDirect` instance which you have manually created.
+- [ProducibleMessage.setQueue()](api/classes/ProducibleMessage.md#setqueue): to set up a queue for the message. Under the hood, a new `ExchangeDirect` instance will be created and used for the message exchange.
+- [ProducibleMessage.setExchange()](api/classes/ProducibleMessage.md#setexchange): to set a `ExchangeDirect` instance which you have manually created.
 
 ```typescript
-import { ProducibleMessage, ExchangeDirect } from "redis-smq";
+const { ProducibleMessage, ExchangeDirect } = require("redis-smq");
 
 const msg = new ProducibleMessage();
 msg.setQueue('a.b.c.d').setBody('123456789');
@@ -72,11 +72,11 @@ When a namespace is not provided the default namespace will be used.
 
 The [ProducibleMessage Class](api/classes/ProducibleMessage.md) provides:
 
-- [setTopic()](api/classes/ProducibleMessage.md#settopic): to set up a topic for the message. Under the hood, a new `ExchangeTopic` instance will be created and used for the message exchange.
-- [setExchange()](api/classes/ProducibleMessage.md#setexchange): to set a `ExchangeTopic` instance which you have manually created.
+- [ProducibleMessage.setTopic()](api/classes/ProducibleMessage.md#settopic): to set up a topic for the message. Under the hood, a new `ExchangeTopic` instance will be created and used for the message exchange.
+- [ProducibleMessage.setExchange()](api/classes/ProducibleMessage.md#setexchange): to set a `ExchangeTopic` instance which you have manually created.
 
 ```typescript
-import { ProducibleMessage, ExchangeTopic } from "redis-smq";
+const { ProducibleMessage, ExchangeTopic } = require("redis-smq");
 
 const msg = new ProducibleMessage();
 msg.setTopic('a.b.c.d').setBody('123456789');
@@ -98,20 +98,20 @@ A FanOut exchange allows producers to publish a message to one or multiple queue
 
 In order to use a FanOut exchange you need first to create it and bind the selected queues to the exchange.
 
-The [FanOutExchange](api/classes/ExchangeFanOut.md) provides:
+The [ExchangeFanOut Class](api/classes/ExchangeFanOut.md) provides:
 
-- [bindQueue()](api/classes/ExchangeFanOut.md#bindqueue): To bind an existing queue to a FanOut exchange.
-- [unbindQueue()](api/classes/ExchangeFanOut.md#unbindqueue): To unbind a queue from a FanOut exchange.
-- [getQueueExchange()](api/classes/ExchangeFanOut.md#getqueueexchange): To retrieve the FanOut exchange to which a queue is bound.
-- [getQueues()](api/classes/ExchangeFanOut.md#getqueues): To get the list of queues that are bound to a given FanOut exchange. 
+- [ExchangeFanOut.bindQueue()](api/classes/ExchangeFanOut.md#bindqueue): To bind an existing queue to a FanOut exchange.
+- [ExchangeFanOut.unbindQueue()](api/classes/ExchangeFanOut.md#unbindqueue): To unbind a queue from a FanOut exchange.
+- [ExchangeFanOut.getQueueExchange()](api/classes/ExchangeFanOut.md#getqueueexchange): To retrieve the FanOut exchange to which a queue is bound.
+- [ExchangeFanOut.getQueues()](api/classes/ExchangeFanOut.md#getqueues): To get the list of queues that are bound to a given FanOut exchange. 
 
 The [ProducibleMessage API](api/classes/ProducibleMessage.md) provides:
 
-- [setFanOut()](api/classes/ProducibleMessage.md#setfanout): to set up a FanOut exchange for the message. Under the hood, a new `ExchangeFanOut` instance will be created and used for the message exchange.
-- [setExchange()](api/classes/ProducibleMessage.md#setexchange): to set a `ExchangeFanOut` instance which you have manually created.
+- [ProducibleMessage.setFanOut()](api/classes/ProducibleMessage.md#setfanout): to set up a FanOut exchange for the message. Under the hood, a new `ExchangeFanOut` instance will be created and used for the message exchange.
+- [ProducibleMessage.setExchange()](api/classes/ProducibleMessage.md#setexchange): to set a `ExchangeFanOut` instance which you have manually created.
 
 ```typescript
-import { ProducibleMessage, ExchangeFanOut } from "redis-smq";
+const { ProducibleMessage, ExchangeFanOut } = require("redis-smq");
 
 // Assuming that my-FanOut-exchange already exists
 

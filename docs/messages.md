@@ -21,8 +21,8 @@ See:
 
 - [ProducibleMessage Class](api/classes/ProducibleMessage.md) - To set up various message parameters
 - [Message Class](api/classes/Message.md) - To fetch/delete a message or a list of messages
-- [QueueMessages](docs/api/classes/QueueMessages.md) - To browse all queue messages
-- [QueuePendingMessages](docs/api/classes/QueuePendingMessages.md) - To browse queue pending messages
-- [QueueAcknowledgedMessages](docs/api/classes/QueueAcknowledgedMessages.md) - To browse/requeue/delete queue acknowledged messages
-- [QueueDeadLetteredMessages](docs/api/classes/QueueDeadLetteredMessages.md) - To browse/requeue/delete queue dead-lettered messages
-- [QueueScheduledMessages](docs/api/classes/QueueScheduledMessages.md) - To browse/delete queue scheduled messages
+- [QueueMessages Class](api/classes/QueueMessages.md) - To browse all queue messages
+- [QueuePendingMessages Class](api/classes/QueuePendingMessages.md) - To browse queue pending messages
+- [QueueAcknowledgedMessages Class](api/classes/QueueAcknowledgedMessages.md) - To browse/requeue/delete queue acknowledged messages
+- [QueueDeadLetteredMessages Class](api/classes/QueueDeadLetteredMessages.md) - To browse/requeue/delete queue dead-lettered messages
+- [QueueScheduledMessages Class](api/classes/QueueScheduledMessages.md) - To browse/delete queue scheduled messages

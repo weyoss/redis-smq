@@ -25,7 +25,7 @@ const queue = new Queue();
 queue.save('my_lifo_queue', EQueueType.LIFO_QUEUE, (err) => console.error(err));
 ```
 
-See [Queue.prototype.save()](api/classes/Queue.md#save) for more details.
+See [Queue.save()](api/classes/Queue.md#save) for more details.
 
 ## FIFO (First In, First Out) Queues
 
@@ -42,7 +42,7 @@ const queue = new Queue();
 queue.save('my_fifo_queue', EQueueType.FIFO_QUEUE, (err) => console.error(err));
 ```
 
-See [Queue.prototype.save()](api/classes/Queue.md#save) for more details.
+See [Queue.save()](api/classes/Queue.md#save) for more details.
 
 ## Priority Queues
 
@@ -59,14 +59,14 @@ const queue = new Queue();
 queue.save('my_priority_queue', EQueueType.PRIORITY_QUEUE, (err) => console.error(err));
 ```
 
-See [Queue.prototype.save()](api/classes/Queue.md#save) for more details.
+See [Queue.save()](api/classes/Queue.md#save) for more details.
 
 ### Setting Up a ProducibleMessage Priority
 
-To set up a message priority, the [ProducibleMessage API](api/classes/ProducibleMessage.md) provides the following methods:
+To set up a message priority, the [ProducibleMessage Class](api/classes/ProducibleMessage.md) provides the following methods:
 
-* [ProducibleMessage.prototype.setPriority()](api/classes/ProducibleMessage.md#setpriority)
-* [ProducibleMessage.prototype.getPriority()](api/classes/ProducibleMessage.md#getpriority)
+* [ProducibleMessage.setPriority()](api/classes/ProducibleMessage.md#setpriority)
+* [ProducibleMessage.getPriority()](api/classes/ProducibleMessage.md#getpriority)
 
 Valid message priority values that you can apply to a given message are:
 
@@ -104,21 +104,23 @@ A queue name is required to fulfill the following requirements:
 
 ## Managing Queues and Namespaces
 
-Queues and Namespaces can be managed using the [Queue](api/classes/Queue.md) and [Namespace](api/classes/Namespace.md) classes which provide the following methods:
+Queues and Namespaces can be managed using the [Queue Class](api/classes/Queue.md) and [Namespace Class](api/classes/Namespace.md) which provide the following methods:
 
-1. [Namespace.prototype.getNamespaces()](api/classes/Namespace.md#getnamespaces): To retrieve the list of namespaces.
-2. [Namespace.prototype.getNamespaceQueues()](api/classes/Namespace.md#getnamespacequeues): To retrieve the list of queues of a given namespace.
-3. [Namespace.prototype.delete()](api/classes/Namespace.md#delete): To delete a namespace alongside with its queues.
-4. [Queue.prototype.save()](api/classes/Queue.md#save): To create a queue.
-5. [Queue.prototype.list()](api/classes/Queue.md#getqueues): To retrieve the list of queues from all namespaces.
-6. [Queue.prototype.delete()](api/classes/Queue.md#delete): To delete a queue.
-7. [Queue.prototype.exists()](api/classes/Queue.md#exists): To check of a queue exists.
-8. [Queue.prototype.getProperties()](api/classes/Queue.md#getproperties): To retrieve properties of a given queue.
+1. [Namespace.getNamespaces()](api/classes/Namespace.md#getnamespaces): To retrieve the list of namespaces.
+2. [Namespace.getNamespaceQueues()](api/classes/Namespace.md#getnamespacequeues): To retrieve the list of queues of a given namespace.
+3. [Namespace.delete()](api/classes/Namespace.md#delete): To delete a namespace alongside with its queues.
+4. [Queue.save()](api/classes/Queue.md#save): To create a queue.
+5. [Queue.list()](api/classes/Queue.md#getqueues): To retrieve the list of queues from all namespaces.
+6. [Queue.delete()](api/classes/Queue.md#delete): To delete a queue.
+7. [Queue.exists()](api/classes/Queue.md#exists): To check of a queue exists.
+8. [Queue.getProperties()](api/classes/Queue.md#getproperties): To retrieve properties of a given queue.
 
 ## Queue Messages
 
-- [QueueMessages](docs/api/classes/QueueMessages.md) - To browse all queue messages
-- [QueuePendingMessages](docs/api/classes/QueuePendingMessages.md) - To browse queue pending messages
-- [QueueAcknowledgedMessages](docs/api/classes/QueueAcknowledgedMessages.md) - To browse/requeue/delete queue acknowledged messages
-- [QueueDeadLetteredMessages](docs/api/classes/QueueDeadLetteredMessages.md) - To browse/requeue/delete queue dead-lettered messages
-- [QueueScheduledMessages](docs/api/classes/QueueScheduledMessages.md) - To browse/delete queue scheduled messages
+RedisSMQ provides:
+
+- [QueueMessages Class](api/classes/QueueMessages.md) - To browse all queue messages
+- [QueuePendingMessages Class](api/classes/QueuePendingMessages.md) - To browse queue pending messages
+- [QueueAcknowledgedMessages Class](api/classes/QueueAcknowledgedMessages.md) - To browse/requeue/delete queue acknowledged messages
+- [QueueDeadLetteredMessages Class](api/classes/QueueDeadLetteredMessages.md) - To browse/requeue/delete queue dead-lettered messages
+- [QueueScheduledMessages Class](api/classes/QueueScheduledMessages.md) - To browse/delete queue scheduled messages

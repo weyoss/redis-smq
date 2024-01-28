@@ -22,7 +22,7 @@ queue.save('my-queue', EQueueType.LIFO_QUEUE, EQueueDeliveryModel.POINT_TO_POINT
 })
 ```
 
-See [Queue.prototype.save()](api/classes/Queue.md#save) for more details.
+See [Queue.save()](api/classes/Queue.md#save) for more details.
 
 ### Publishing a Message to a Point-2-Point Queue
 
@@ -42,7 +42,7 @@ producer.run((err) => {
 })
 ```
 
-See [Producer.prototype.produce()](api/classes/Producer.md#produce) for more details.
+See [Producer.produce()](api/classes/Producer.md#produce) for more details.
 
 ### Consuming a message from a Point-2-Point Queue
 
@@ -99,7 +99,7 @@ queue.save('my-pubsub-queue', EQueueType.LIFO_QUEUE, EQueueDeliveryModel.PUB_SUB
 })
 ```
 
-See [Queue.prototype.save()](api/classes/Queue.md#save) for more details.
+See [Queue.save()](api/classes/Queue.md#save) for more details.
 
 ### Creating Consumer Groups
 
@@ -107,7 +107,7 @@ If it does not exist a consumer group of a given queue is created automatically 
 
 Consumer groups may be also created manually using the [ConsumerGroups.saveConsumerGroup()](api/classes/ConsumerGroups.md) method.
 
-See [ConsumerGroups](api/classes/ConsumerGroups.md) for managing consumer groups.
+See [ConsumerGroups Class](api/classes/ConsumerGroups.md) for managing consumer groups.
 
 ### Publishing a Message to a Pub/Sub Queue
 
@@ -131,7 +131,7 @@ When producing a message to a Pub/Sub queue, if the queue has no consumer groups
 
 So make sure the queue has at least one consumer group before publishing messages.
 
-See [Producer.prototype.produce()](api/classes/Producer.md#produce) for more details.
+See [Producer.produce()](api/classes/Producer.md#produce) for more details.
 
 ### Consuming a message from a Pub/Sub Queue
 

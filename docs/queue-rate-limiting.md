@@ -11,11 +11,11 @@ In some cases consuming messages with a high message rate may be not desirable. 
 
 RedisSMQ allows you, in such cases, to control the rate at which the messages are consumed by setting a rate limit for a given queue.
 
-To configure and view rate limiting parameters for a queue, the [QueueRateLimit](api/classes/QueueRateLimit.md) provides the following methods:
+To configure and view rate limiting parameters for a queue, the [QueueRateLimit Class](api/classes/QueueRateLimit.md) provides the following methods:
 
-- [QueueRateLimit.prototype.set()](api/classes/QueueRateLimit.md#set)
-- [QueueRateLimit.prototype.clear()](api/classes/QueueRateLimit.md#clear)
-- [QueueRateLimit.prototype.get()](api/classes/QueueRateLimit.md#get)
+- [QueueRateLimit.set()](api/classes/QueueRateLimit.md#set)
+- [QueueRateLimit.clear()](api/classes/QueueRateLimit.md#clear)
+- [QueueRateLimit.get()](api/classes/QueueRateLimit.md#get)
 
 **Example**
 
