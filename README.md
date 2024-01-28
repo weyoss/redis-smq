@@ -68,7 +68,9 @@ A queue is responsible for holding messages which are produced by producers and 
 
 ```javascript
 const queue = new Queue();
-queue.save('my_queue', EQueueType.LIFO_QUEUE, EQueueDeliveryModel.POINT_TO_POINT, (err) => console.error(err));
+queue.save('my_queue', EQueueType.LIFO_QUEUE, EQueueDeliveryModel.POINT_TO_POINT, (err) => {
+  if (err) console.error(err)
+});
 ```
 
 In the example above we are defining a [LIFO queue](docs/queues.md#lifo-last-in-first-out-queues) with a [POINT-2-POINT delivery model](docs/queue-delivery-models.md#point-2-point-delivery-model).
@@ -80,7 +82,10 @@ See [Queues](docs/queues.md) for more details.
 ```javascript
 const msg = new ProducibleMessage();
 msg.setQueue('my_queue').setBody('Hello Word!')
-producer.produce(msg, (err) => console.error(err));
+producer.produce(msg, (err, ids) => {
+  if (err) console.error(err);
+  else console.log(`Produced message IDs are: ${ids.join(', ')}`)
+});
 ```
 
 See [Producing Messages](docs/producing-messages.md) for more details.
@@ -93,7 +98,9 @@ const messageHandler = (msg, cb) => {
   console.log(msg.body);
   cb();
 }
-consumer.consume('my_queue', messageHandler, (err) => console.error(err));
+consumer.consume('my_queue', messageHandler, (err) => {
+  if (err) console.error(err);
+});
 ```
 
 See [Consuming Messages](docs/consuming-messages.md) for more details.
