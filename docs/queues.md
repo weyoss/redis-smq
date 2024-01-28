@@ -114,3 +114,11 @@ Queues and Namespaces can be managed using the [Queue](api/classes/Queue.md) and
 6. [Queue.prototype.delete()](api/classes/Queue.md#delete): To delete a queue.
 7. [Queue.prototype.exists()](api/classes/Queue.md#exists): To check of a queue exists.
 8. [Queue.prototype.getProperties()](api/classes/Queue.md#getproperties): To retrieve properties of a given queue.
+
+## Queue Messages
+
+- [QueueMessages](docs/api/classes/QueueMessages.md) - To browse all queue messages
+- [QueuePendingMessages](docs/api/classes/QueuePendingMessages.md) - To browse queue pending messages
+- [QueueAcknowledgedMessages](docs/api/classes/QueueAcknowledgedMessages.md) - To browse/requeue/delete queue acknowledged messages
+- [QueueDeadLetteredMessages](docs/api/classes/QueueDeadLetteredMessages.md) - To browse/requeue/delete queue dead-lettered messages
+- [QueueScheduledMessages](docs/api/classes/QueueScheduledMessages.md) - To browse/delete queue scheduled messages
