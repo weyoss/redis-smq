@@ -1,5 +1,34 @@
 
 
+## [8.0.0-rc.16](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.15...v8.0.0-rc.16) (2024-01-28)
+
+
+### Features
+
+* allow running/sandboxing message handlers using worker threads ([53095bd](https://github.com/weyoss/redis-smq/commit/53095bd2689ccb2f701365bafb4ef8e550da82b3))
+
+
+### Bug Fixes
+
+* export message handler errors ([26d2689](https://github.com/weyoss/redis-smq/commit/26d26890da139d88c46ce220e3dda3d9c8e03aee))
+
+
+### Documentation
+
+* **ConsumeMessageWorker:** update docs and clean up ([140322e](https://github.com/weyoss/redis-smq/commit/140322e3520ee3db905ea977a159064f339aa7d2))
+* fix broken links ([aad9010](https://github.com/weyoss/redis-smq/commit/aad9010e70ed332b154f4fbdcb8ac657a14fe6b9))
+* update messages and queues documentation ([7c3d06e](https://github.com/weyoss/redis-smq/commit/7c3d06ed3765ffc14dfece4f725241aa4535e1e7))
+
+
+### Codebase Refactoring
+
+* **ConsumeMessageWorker:** improve typings ([66c6ca9](https://github.com/weyoss/redis-smq/commit/66c6ca948677f76d496fe0b988bd195e1a7108a2))
+
+
+### Tests
+
+* allow running/sandboxing message handlers using worker threads ([79e6886](https://github.com/weyoss/redis-smq/commit/79e688674ed11ec34ce2f74d5f15c8eefa129767))
+
 ## [8.0.0-rc.15](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.14...v8.0.0-rc.15) (2024-01-25)
 
 
