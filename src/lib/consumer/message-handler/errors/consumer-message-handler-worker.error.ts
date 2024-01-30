@@ -8,15 +8,19 @@
  */
 
 import { ConsumerMessageHandlerError } from './consumer-message-handler.error';
-import { TWorkerThreadMessage } from '../../../../../types';
+import {
+  EWorkerThreadMessageCodeConsume,
+  EWorkerThreadMessageCodeExit,
+  TWorkerThreadMessage,
+} from '../../../../../types';
 
 export class ConsumerMessageHandlerWorkerError extends ConsumerMessageHandlerError {
   constructor(msg: TWorkerThreadMessage) {
     const { code, error } = msg;
-    super(
-      `Error code: ${code}.${
-        error ? `Message: ${error.name}: ${error.message}` : ''
-      }`,
-    );
+    const messageStr = `Error code: ${
+      EWorkerThreadMessageCodeExit[code] ??
+      EWorkerThreadMessageCodeConsume[code]
+    }.${error ? ` Cause: ${error.name}(${error.message})` : ''}`;
+    super(messageStr);
   }
 }

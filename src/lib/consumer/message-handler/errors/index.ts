@@ -9,3 +9,5 @@
 
 export { ConsumerMessageHandlerError } from './consumer-message-handler.error';
 export { ConsumerMessageHandlerWorkerError } from './consumer-message-handler-worker.error';
+export { ConsumerMessageHandlerFilenameExtensionError } from './consumer-message-handler-filename-extension.error';
+export { ConsumerMessageHandlerFileError } from './consumer-message-handler-file.error';
