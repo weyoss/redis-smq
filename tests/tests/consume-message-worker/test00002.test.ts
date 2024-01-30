@@ -15,6 +15,10 @@ import path from 'path';
 import { Producer } from '../../../src/lib/producer/producer';
 import { ProducibleMessage } from '../../../src/lib/message/producible-message';
 import { QueueMessages } from '../../../src/lib/queue/queue-messages/queue-messages';
+import {
+  ConsumerMessageHandlerFilenameExtensionError,
+  ConsumerMessageHandlerFileError,
+} from '../../../src/lib/consumer/message-handler/errors';
 
 it('ConsumeMessageWorker: case 2', async () => {
   const consumer = promisifyAll(new Consumer());
@@ -34,7 +38,7 @@ it('ConsumeMessageWorker: case 2', async () => {
   );
 
   await expect(consumer.consumeAsync(queue1, handlerFilename)).rejects.toThrow(
-    'ENOENT: no such file or directory, stat ',
+    ConsumerMessageHandlerFileError,
   );
 
   const handlerFilename2 = path.resolve(
@@ -43,7 +47,7 @@ it('ConsumeMessageWorker: case 2', async () => {
   );
 
   await expect(consumer.consumeAsync(queue1, handlerFilename2)).rejects.toThrow(
-    'Invalid file extension',
+    ConsumerMessageHandlerFilenameExtensionError,
   );
 
   const handlerFilename3 = path.resolve(

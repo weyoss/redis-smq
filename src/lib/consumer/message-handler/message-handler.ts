@@ -36,7 +36,10 @@ import {
 import { ELuaScriptName } from '../../../common/redis-client/redis-client';
 import { _fromMessage } from '../../message/_from-message';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
-import { ConsumerMessageHandlerError } from './errors';
+import {
+  ConsumerMessageHandlerFilenameExtensionError,
+  ConsumerMessageHandlerFileError,
+} from './errors';
 
 export class MessageHandler extends EventEmitter<TRedisSMQEvent> {
   protected id: string;
@@ -192,10 +195,10 @@ export class MessageHandler extends EventEmitter<TRedisSMQEvent> {
         (cb: ICallback<void>) => {
           if (typeof this.handler === 'string') {
             if (!['.js', '.cjs'].includes(path.extname(this.handler))) {
-              cb(new ConsumerMessageHandlerError('Invalid file extension'));
+              cb(new ConsumerMessageHandlerFilenameExtensionError());
             } else
               stat(this.handler, (err) => {
-                if (err) cb(new ConsumerMessageHandlerError(err.message));
+                if (err) cb(new ConsumerMessageHandlerFileError());
                 else cb();
               });
           } else cb();
