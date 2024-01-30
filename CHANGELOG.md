@@ -1,5 +1,18 @@
 
 
+## [8.0.0-rc.17](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.16...v8.0.0-rc.17) (2024-01-30)
+
+
+### Documentation
+
+* add missing error classes ([753331e](https://github.com/weyoss/redis-smq/commit/753331e5ce4fb239cb29b3ae4c3246ba185b4d94))
+* simplify and unify class/method naming and referencing ([0299b31](https://github.com/weyoss/redis-smq/commit/0299b314e843c28d52e2f767ace150e39652287c))
+
+
+### Codebase Refactoring
+
+* improve MessageHandler error handling ([957d257](https://github.com/weyoss/redis-smq/commit/957d257e66cce6faaf9dad5bf949cdd1198cfae8))
+
 ## [8.0.0-rc.16](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.15...v8.0.0-rc.16) (2024-01-28)
 
 
