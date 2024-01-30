@@ -48,6 +48,8 @@
 - [ConsumerInvalidGroupIdError](classes/ConsumerInvalidGroupIdError.md)
 - [ConsumerMessageHandlerAlreadyExistsError](classes/ConsumerMessageHandlerAlreadyExistsError.md)
 - [ConsumerMessageHandlerError](classes/ConsumerMessageHandlerError.md)
+- [ConsumerMessageHandlerFileError](classes/ConsumerMessageHandlerFileError.md)
+- [ConsumerMessageHandlerFilenameExtensionError](classes/ConsumerMessageHandlerFilenameExtensionError.md)
 - [ConsumerMessageHandlerWorkerError](classes/ConsumerMessageHandlerWorkerError.md)
 - [ExchangeError](classes/ExchangeError.md)
 - [ExchangeFanOutError](classes/ExchangeFanOutError.md)
