@@ -211,7 +211,8 @@ export class Producer extends Base {
       if (!exchange) cb(new ProducerMessageExchangeRequiredError());
       else if (exchange instanceof ExchangeDirect) {
         const queue = _parseQueueParams(exchange.getBindingParams());
-        this.produceMessage(redisClient, msg, queue, cb);
+        if (queue instanceof Error) cb(queue);
+        else this.produceMessage(redisClient, msg, queue, cb);
       } else {
         exchange.getQueues((err, queues) => {
           if (err) cb(err);

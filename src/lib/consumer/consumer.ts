@@ -171,16 +171,22 @@ export class Consumer extends Base {
     cb: ICallback<void>,
   ): void {
     const parsedQueueParams = _parseQueueExtendedParams(queue);
-    this.messageHandlerRunner.addMessageHandler(
-      parsedQueueParams,
-      messageHandler,
-      cb,
-    );
+    if (parsedQueueParams instanceof Error) cb(parsedQueueParams);
+    else {
+      this.messageHandlerRunner.addMessageHandler(
+        parsedQueueParams,
+        messageHandler,
+        cb,
+      );
+    }
   }
 
   cancel(queue: TQueueExtendedParams, cb: ICallback<void>): void {
     const parsedQueueParams = _parseQueueExtendedParams(queue);
-    this.messageHandlerRunner.removeMessageHandler(parsedQueueParams, cb);
+    if (parsedQueueParams instanceof Error) cb(parsedQueueParams);
+    else {
+      this.messageHandlerRunner.removeMessageHandler(parsedQueueParams, cb);
+    }
   }
 
   getQueues(): IQueueParsedParams[] {

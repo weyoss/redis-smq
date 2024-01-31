@@ -179,19 +179,19 @@ export const redisKeys = {
     return makeNamespacedKeys(mainKeys, globalNamespace);
   },
 
-  validateNamespace(ns: string): string {
-    ns = this.validateRedisKey(ns);
-    if (ns === globalNamespace) {
-      throw new RedisKeysError(
-        `Namespace [${ns}] is reserved. Use another one.`,
+  validateNamespace(ns: string): string | RedisKeysError {
+    const validated = this.validateRedisKey(ns);
+    if (validated === globalNamespace) {
+      return new RedisKeysError(
+        `Namespace [${validated}] is reserved. Use another one.`,
       );
     }
-    return ns;
+    return validated;
   },
 
-  validateRedisKey(key?: string | null): string {
+  validateRedisKey(key: string | null | undefined): string | RedisKeysError {
     if (!key || !key.length) {
-      throw new RedisKeysError(
+      return new RedisKeysError(
         'Invalid Redis key. Expected be a non empty string.',
       );
     }
@@ -201,7 +201,7 @@ export const redisKeys = {
       '',
     );
     if (filtered.length) {
-      throw new RedisKeysError(
+      return new RedisKeysError(
         'Invalid Redis key. Valid characters are letters (a-z) and numbers (0-9). (-_) are allowed between alphanumerics. Use a dot (.) to denote hierarchies.',
       );
     }

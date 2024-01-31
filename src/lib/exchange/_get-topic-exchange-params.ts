@@ -10,10 +10,11 @@
 import { TTopicParams } from '../../../types';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { Configuration } from '../../config/configuration';
+import { RedisKeysError } from '../../common/redis-keys/redis-keys.error';
 
 export function _getTopicExchangeParams(
   topic: TTopicParams | string,
-): TTopicParams {
+): TTopicParams | RedisKeysError {
   const config = Configuration.getSetConfig();
   const topicParams =
     typeof topic === 'string'
@@ -22,8 +23,12 @@ export function _getTopicExchangeParams(
           ns: config.namespace,
         }
       : topic;
+  const vTopic = redisKeys.validateRedisKey(topicParams.topic);
+  if (vTopic instanceof Error) return vTopic;
+  const vNamespace = redisKeys.validateNamespace(topicParams.ns);
+  if (vNamespace instanceof Error) return vNamespace;
   return {
-    topic: redisKeys.validateRedisKey(topicParams.topic),
-    ns: redisKeys.validateNamespace(topicParams.ns),
+    topic: vTopic,
+    ns: vNamespace,
   };
 }

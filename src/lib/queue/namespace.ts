@@ -32,69 +32,76 @@ export class Namespace {
   }
 
   getNamespaceQueues(namespace: string, cb: ICallback<IQueueParams[]>): void {
-    _getCommonRedisClient((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else {
-        const { keyNsQueues } = redisKeys.getNamespaceKeys(namespace);
-        client.smembers(keyNsQueues, (err, reply) => {
-          if (err) cb(err);
-          else if (!reply) cb(new CallbackEmptyReplyError());
-          else {
-            const messageQueues: IQueueParams[] = reply.map((i) =>
-              JSON.parse(i),
-            );
-            cb(null, messageQueues);
-          }
-        });
-      }
-    });
+    const ns = redisKeys.validateRedisKey(namespace);
+    if (ns instanceof Error) cb(ns);
+    else {
+      _getCommonRedisClient((err, client) => {
+        if (err) cb(err);
+        else if (!client) cb(new CallbackEmptyReplyError());
+        else {
+          const { keyNsQueues } = redisKeys.getNamespaceKeys(ns);
+          client.smembers(keyNsQueues, (err, reply) => {
+            if (err) cb(err);
+            else if (!reply) cb(new CallbackEmptyReplyError());
+            else {
+              const messageQueues: IQueueParams[] = reply.map((i) =>
+                JSON.parse(i),
+              );
+              cb(null, messageQueues);
+            }
+          });
+        }
+      });
+    }
   }
 
   delete(namespace: string, cb: ICallback<void>): void {
-    _getCommonRedisClient((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else {
-        const { keyNamespaces } = redisKeys.getMainKeys();
-        async.waterfall(
-          [
-            (cb: ICallback<void>) => {
-              client.sismember(keyNamespaces, namespace, (err, isMember) => {
-                if (err) cb(err);
-                else if (!isMember)
-                  cb(new QueueNamespaceNotFoundError(namespace));
-                else cb();
-              });
+    const ns = redisKeys.validateRedisKey(namespace);
+    if (ns instanceof Error) cb(ns);
+    else {
+      _getCommonRedisClient((err, client) => {
+        if (err) cb(err);
+        else if (!client) cb(new CallbackEmptyReplyError());
+        else {
+          const { keyNamespaces } = redisKeys.getMainKeys();
+          async.waterfall(
+            [
+              (cb: ICallback<void>) => {
+                client.sismember(keyNamespaces, ns, (err, isMember) => {
+                  if (err) cb(err);
+                  else if (!isMember) cb(new QueueNamespaceNotFoundError(ns));
+                  else cb();
+                });
+              },
+            ],
+            (err) => {
+              if (err) cb(err);
+              else {
+                _getQueues(client, (err, reply) => {
+                  if (err) cb(err);
+                  else {
+                    const queues = reply ?? [];
+                    const multi = client.multi();
+                    multi.srem(keyNamespaces, ns);
+                    async.eachOf(
+                      queues,
+                      (queueParams, _, done) => {
+                        _deleteQueue(client, queueParams, multi, (err) =>
+                          done(err),
+                        );
+                      },
+                      (err) => {
+                        if (err) cb(err);
+                        else multi.exec((err) => cb(err));
+                      },
+                    );
+                  }
+                });
+              }
             },
-          ],
-          (err) => {
-            if (err) cb(err);
-            else {
-              _getQueues(client, (err, reply) => {
-                if (err) cb(err);
-                else {
-                  const queues = reply ?? [];
-                  const multi = client.multi();
-                  multi.srem(keyNamespaces, namespace);
-                  async.eachOf(
-                    queues,
-                    (queueParams, _, done) => {
-                      _deleteQueue(client, queueParams, multi, (err) =>
-                        done(err),
-                      );
-                    },
-                    (err) => {
-                      if (err) cb(err);
-                      else multi.exec((err) => cb(err));
-                    },
-                  );
-                }
-              });
-            }
-          },
-        );
-      }
-    });
+          );
+        }
+      });
+    }
   }
 }
