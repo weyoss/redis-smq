@@ -27,11 +27,14 @@ export class ExchangeDirect extends Exchange<
   protected override validateBindingParams(
     queue: TExchangeDirectBindingParams,
   ): IQueueParams {
-    return _parseQueueParams(queue);
+    const queueParams = _parseQueueParams(queue);
+    if (queueParams instanceof Error) throw queueParams;
+    return queueParams;
   }
 
   getQueues(cb: ICallback<IQueueParams[]>): void {
-    const queue = _parseQueueParams(this.bindingParams);
-    cb(null, [queue]);
+    const queueParams = _parseQueueParams(this.bindingParams);
+    if (queueParams instanceof Error) cb(queueParams);
+    else cb(null, [queueParams]);
   }
 }

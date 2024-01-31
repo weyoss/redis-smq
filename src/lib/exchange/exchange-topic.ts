@@ -30,7 +30,9 @@ export class ExchangeTopic extends Exchange<
   protected override validateBindingParams(
     topicParams: TExchangeTopicBindingParams,
   ): TTopicParams {
-    return _getTopicExchangeParams(topicParams);
+    const params = _getTopicExchangeParams(topicParams);
+    if (params instanceof Error) throw params;
+    return params;
   }
 
   getQueues(cb: ICallback<IQueueParams[]>): void {

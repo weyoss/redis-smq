@@ -28,19 +28,22 @@ export class QueueRateLimit {
   }
 
   clear(queue: string | IQueueParams, cb: ICallback<void>): void {
-    _getCommonRedisClient((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else {
-        const queueParams = _parseQueueParams(queue);
-        const { keyQueueProperties, keyQueueRateLimitCounter } =
-          redisKeys.getQueueKeys(queueParams, null);
-        const multi = client.multi();
-        multi.hdel(keyQueueProperties, String(EQueueProperty.RATE_LIMIT));
-        multi.del(keyQueueRateLimitCounter);
-        multi.exec((err) => cb(err));
-      }
-    });
+    const queueParams = _parseQueueParams(queue);
+    if (queueParams instanceof Error) cb(queueParams);
+    else {
+      _getCommonRedisClient((err, client) => {
+        if (err) cb(err);
+        else if (!client) cb(new CallbackEmptyReplyError());
+        else {
+          const { keyQueueProperties, keyQueueRateLimitCounter } =
+            redisKeys.getQueueKeys(queueParams, null);
+          const multi = client.multi();
+          multi.hdel(keyQueueProperties, String(EQueueProperty.RATE_LIMIT));
+          multi.del(keyQueueRateLimitCounter);
+          multi.exec((err) => cb(err));
+        }
+      });
+    }
   }
 
   set(
@@ -48,81 +51,91 @@ export class QueueRateLimit {
     rateLimit: IQueueRateLimit,
     cb: ICallback<void>,
   ): void {
-    _getCommonRedisClient((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else {
-        const queueParams = _parseQueueParams(queue);
-        // validating rateLimit params from a javascript client
-        const limit = Number(rateLimit.limit);
-        if (isNaN(limit) || limit <= 0) {
-          cb(
-            new QueueRateLimitError(
-              `Invalid rateLimit.limit. Expected a positive integer > 0`,
-            ),
+    const queueParams = _parseQueueParams(queue);
+    if (queueParams instanceof Error) cb(queueParams);
+    else {
+      _getCommonRedisClient((err, client) => {
+        if (err) cb(err);
+        else if (!client) cb(new CallbackEmptyReplyError());
+        else {
+          // validating rateLimit params from a javascript client
+          const limit = Number(rateLimit.limit);
+          if (isNaN(limit) || limit <= 0) {
+            cb(
+              new QueueRateLimitError(
+                `Invalid rateLimit.limit. Expected a positive integer > 0`,
+              ),
+            );
+          }
+          const interval = Number(rateLimit.interval);
+          if (isNaN(interval) || interval < 1000) {
+            cb(
+              new QueueRateLimitError(
+                `Invalid rateLimit.interval. Expected a positive integer >= 1000`,
+              ),
+            );
+          }
+          const validatedRateLimit: IQueueRateLimit = { interval, limit };
+          const { keyQueueProperties } = redisKeys.getQueueKeys(
+            queueParams,
+            null,
+          );
+          client.hset(
+            keyQueueProperties,
+            String(EQueueProperty.RATE_LIMIT),
+            JSON.stringify(validatedRateLimit),
+            (err) => cb(err),
           );
         }
-        const interval = Number(rateLimit.interval);
-        if (isNaN(interval) || interval < 1000) {
-          cb(
-            new QueueRateLimitError(
-              `Invalid rateLimit.interval. Expected a positive integer >= 1000`,
-            ),
-          );
-        }
-        const validatedRateLimit: IQueueRateLimit = { interval, limit };
-        const { keyQueueProperties } = redisKeys.getQueueKeys(
-          queueParams,
-          null,
-        );
-        client.hset(
-          keyQueueProperties,
-          String(EQueueProperty.RATE_LIMIT),
-          JSON.stringify(validatedRateLimit),
-          (err) => cb(err),
-        );
-      }
-    });
+      });
+    }
   }
 
   hasExceeded(
-    queue: IQueueParams,
+    queue: string | IQueueParams,
     rateLimit: IQueueRateLimit,
     cb: ICallback<boolean>,
   ): void {
-    _getCommonRedisClient((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else _hasRateLimitExceeded(client, queue, rateLimit, cb);
-    });
+    const queueParams = _parseQueueParams(queue);
+    if (queueParams instanceof Error) cb(queueParams);
+    else {
+      _getCommonRedisClient((err, client) => {
+        if (err) cb(err);
+        else if (!client) cb(new CallbackEmptyReplyError());
+        else _hasRateLimitExceeded(client, queueParams, rateLimit, cb);
+      });
+    }
   }
 
   get(
     queue: string | IQueueParams,
     cb: ICallback<IQueueRateLimit | null>,
   ): void {
-    _getCommonRedisClient((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else {
-        const queueParams = _parseQueueParams(queue);
-        const { keyQueueProperties } = redisKeys.getQueueKeys(
-          queueParams,
-          null,
-        );
-        client.hget(
-          keyQueueProperties,
-          String(EQueueProperty.RATE_LIMIT),
-          (err, reply) => {
-            if (err) cb(err);
-            else if (!reply) cb(null, null);
-            else {
-              const rateLimit: IQueueRateLimit = JSON.parse(reply);
-              cb(null, rateLimit);
-            }
-          },
-        );
-      }
-    });
+    const queueParams = _parseQueueParams(queue);
+    if (queueParams instanceof Error) cb(queueParams);
+    else {
+      _getCommonRedisClient((err, client) => {
+        if (err) cb(err);
+        else if (!client) cb(new CallbackEmptyReplyError());
+        else {
+          const { keyQueueProperties } = redisKeys.getQueueKeys(
+            queueParams,
+            null,
+          );
+          client.hget(
+            keyQueueProperties,
+            String(EQueueProperty.RATE_LIMIT),
+            (err, reply) => {
+              if (err) cb(err);
+              else if (!reply) cb(null, null);
+              else {
+                const rateLimit: IQueueRateLimit = JSON.parse(reply);
+                cb(null, rateLimit);
+              }
+            },
+          );
+        }
+      });
+    }
   }
 }

@@ -22,11 +22,14 @@ export class ConsumerGroups {
     cb: ICallback<number>,
   ): void {
     const queueParams = _parseQueueParams(queue);
-    _getCommonRedisClient((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else _saveConsumerGroup(client, queueParams, groupId, cb);
-    });
+    if (queueParams instanceof Error) cb(queueParams);
+    else {
+      _getCommonRedisClient((err, client) => {
+        if (err) cb(err);
+        else if (!client) cb(new CallbackEmptyReplyError());
+        else _saveConsumerGroup(client, queueParams, groupId, cb);
+      });
+    }
   }
 
   deleteConsumerGroup(
@@ -35,11 +38,14 @@ export class ConsumerGroups {
     cb: ICallback<void>,
   ): void {
     const queueParams = _parseQueueParams(queue);
-    _getCommonRedisClient((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else _deleteConsumerGroup(client, queueParams, groupId, cb);
-    });
+    if (queueParams instanceof Error) cb(queueParams);
+    else {
+      _getCommonRedisClient((err, client) => {
+        if (err) cb(err);
+        else if (!client) cb(new CallbackEmptyReplyError());
+        else _deleteConsumerGroup(client, queueParams, groupId, cb);
+      });
+    }
   }
 
   getConsumerGroups(
@@ -47,10 +53,13 @@ export class ConsumerGroups {
     cb: ICallback<string[]>,
   ): void {
     const queueParams = _parseQueueParams(queue);
-    _getCommonRedisClient((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else _getConsumerGroups(client, queueParams, cb);
-    });
+    if (queueParams instanceof Error) cb(queueParams);
+    else {
+      _getCommonRedisClient((err, client) => {
+        if (err) cb(err);
+        else if (!client) cb(new CallbackEmptyReplyError());
+        else _getConsumerGroups(client, queueParams, cb);
+      });
+    }
   }
 }

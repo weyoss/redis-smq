@@ -18,7 +18,9 @@ import { ICallback, PanicError, RedisClient } from 'redis-smq-common';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
 import { QueueNotFoundError } from '../errors';
 
-function parseProperties(raw: Record<string, string>): IQueueProperties {
+function parseProperties(
+  raw: Record<string, string>,
+): IQueueProperties | PanicError {
   const properties: IQueueProperties = {
     deliveryModel: EQueueDeliveryModel.POINT_TO_POINT,
     queueType: EQueueType.LIFO_QUEUE,
@@ -39,7 +41,7 @@ function parseProperties(raw: Record<string, string>): IQueueProperties {
     } else if (keyNum === EQueueProperty.DELIVERY_MODEL) {
       properties.deliveryModel = Number(raw[key]);
     } else {
-      throw new PanicError(`Unsupported queue settings type [${key}]`);
+      return new PanicError(`Unsupported queue settings type [${key}]`);
     }
   }
   return properties;
@@ -56,7 +58,8 @@ export function _getQueueProperties(
     else if (!reply || !Object.keys(reply).length) cb(new QueueNotFoundError());
     else {
       const queueProperties = parseProperties(reply);
-      cb(null, queueProperties);
+      if (queueProperties instanceof Error) cb(queueProperties);
+      else cb(null, queueProperties);
     }
   });
 }

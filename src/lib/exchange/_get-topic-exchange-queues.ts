@@ -22,22 +22,25 @@ export function _getTopicExchangeQueues(
   topic: TTopicParams | string,
   cb: ICallback<IQueueParams[]>,
 ): void {
-  _getQueues(redisClient, (err, queues) => {
-    if (err) cb(err);
-    else if (!queues) cb(new CallbackEmptyReplyError());
-    else {
-      const topicParams = _getTopicExchangeParams(topic);
-      const matched: IQueueParams[] = [];
-      const regExp = new RegExp(topicParams.topic);
-      async.eachOf(
-        queues,
-        (queue, index, done) => {
-          if (queue.ns === topicParams.ns && regExp.test(queue.name))
-            matched.push(queue);
-          done();
-        },
-        (err) => cb(err, matched),
-      );
-    }
-  });
+  const topicParams = _getTopicExchangeParams(topic);
+  if (topicParams instanceof Error) cb(topicParams);
+  else {
+    _getQueues(redisClient, (err, queues) => {
+      if (err) cb(err);
+      else if (!queues) cb(new CallbackEmptyReplyError());
+      else {
+        const matched: IQueueParams[] = [];
+        const regExp = new RegExp(topicParams.topic);
+        async.eachOf(
+          queues,
+          (queue, index, done) => {
+            if (queue.ns === topicParams.ns && regExp.test(queue.name))
+              matched.push(queue);
+            done();
+          },
+          (err) => cb(err, matched),
+        );
+      }
+    });
+  }
 }

@@ -20,6 +20,7 @@ import { _getMessage } from '../message/_get-message';
 import { redisKeys } from '../../common/redis-keys/redis-keys';
 import { ELuaScriptName } from '../../common/redis-client/redis-client';
 import { QueueMessageRequeueError } from './errors';
+import { _parseQueueParams } from './queue/_parse-queue-params';
 
 export function _requeueMessage(
   queue: string | IQueueParams,
@@ -29,64 +30,76 @@ export function _requeueMessage(
     | EMessagePropertyStatus.DEAD_LETTERED,
   cb: ICallback<void>,
 ): void {
-  _getCommonRedisClient((err, client) => {
-    if (err) cb(err);
-    else if (!client) cb(new CallbackEmptyReplyError());
-    else {
-      _getMessage(client, messageId, (err, message) => {
-        if (err) cb(err);
-        else if (!message) cb(new CallbackEmptyReplyError());
-        else if (messageStatus !== message.getStatus())
-          cb(new QueueMessageRequeueError('INVALID_OPERATION'));
-        else {
-          message.getMessageState().reset(); // resetting all system parameters
-          const {
-            keyQueueProperties,
-            keyQueuePending,
-            keyQueuePriorityPending,
-            keyQueueAcknowledged,
-            keyQueueDL,
-          } = redisKeys.getQueueKeys(
-            message.getDestinationQueue(),
-            message.getConsumerGroupId(),
-          );
-          const messageId = message.getId();
-          const { keyMessage } = redisKeys.getMessageKeys(messageId);
-          const status = message.getStatus();
-          const sourceKey =
-            status === EMessagePropertyStatus.DEAD_LETTERED
-              ? keyQueueDL
-              : keyQueueAcknowledged;
-          client.runScript(
-            ELuaScriptName.REQUEUE_MESSAGE,
-            [
-              sourceKey,
-              keyQueueProperties,
-              keyQueuePriorityPending,
-              keyQueuePending,
-              keyMessage,
-            ],
-            [
-              EQueueProperty.QUEUE_TYPE,
-              EQueueType.PRIORITY_QUEUE,
-              EQueueType.LIFO_QUEUE,
-              EQueueType.FIFO_QUEUE,
-              EMessageProperty.STATUS,
-              EMessagePropertyStatus.PENDING,
-              EMessageProperty.STATE,
-              messageId,
-              message.producibleMessage.getPriority() ?? '',
-              JSON.stringify(message.getMessageState()),
-            ],
-            (err, reply) => {
-              if (err) cb(err);
-              else if (reply !== 'OK')
-                cb(new QueueMessageRequeueError(String(reply)));
-              else cb();
-            },
-          );
-        }
-      });
-    }
-  });
+  const queueParams = _parseQueueParams(queue);
+  if (queueParams instanceof Error) cb(queueParams);
+  else {
+    _getCommonRedisClient((err, client) => {
+      if (err) cb(err);
+      else if (!client) cb(new CallbackEmptyReplyError());
+      else {
+        _getMessage(client, messageId, (err, message) => {
+          if (err) cb(err);
+          else if (!message) cb(new CallbackEmptyReplyError());
+          else if (messageStatus !== message.getStatus())
+            cb(new QueueMessageRequeueError('INVALID_OPERATION'));
+          else {
+            const destinationQueue = message.getDestinationQueue();
+            if (
+              queueParams.name !== destinationQueue.name ||
+              queueParams.ns !== destinationQueue.ns
+            ) {
+              cb(new QueueMessageRequeueError('INVALID_OPERATION'));
+            } else {
+              message.getMessageState().reset(); // resetting all system parameters
+              const {
+                keyQueueProperties,
+                keyQueuePending,
+                keyQueuePriorityPending,
+                keyQueueAcknowledged,
+                keyQueueDL,
+              } = redisKeys.getQueueKeys(
+                message.getDestinationQueue(),
+                message.getConsumerGroupId(),
+              );
+              const messageId = message.getId();
+              const { keyMessage } = redisKeys.getMessageKeys(messageId);
+              const status = message.getStatus();
+              const sourceKey =
+                status === EMessagePropertyStatus.DEAD_LETTERED
+                  ? keyQueueDL
+                  : keyQueueAcknowledged;
+              client.runScript(
+                ELuaScriptName.REQUEUE_MESSAGE,
+                [
+                  sourceKey,
+                  keyQueueProperties,
+                  keyQueuePriorityPending,
+                  keyQueuePending,
+                  keyMessage,
+                ],
+                [
+                  EQueueProperty.QUEUE_TYPE,
+                  EQueueType.PRIORITY_QUEUE,
+                  EQueueType.LIFO_QUEUE,
+                  EQueueType.FIFO_QUEUE,
+                  EMessageProperty.STATUS,
+                  EMessagePropertyStatus.PENDING,
+                  EMessageProperty.STATE,
+                  messageId,
+                  message.producibleMessage.getPriority() ?? '',
+                  JSON.stringify(message.getMessageState()),
+                ],
+                (err, reply) => {
+                  if (err) cb(err);
+                  else if (reply !== 'OK')
+                    cb(new QueueMessageRequeueError(String(reply)));
+                  else cb();
+                },
+              );
+            }
+          }
+        });
+      }
+    });
+  }
 }

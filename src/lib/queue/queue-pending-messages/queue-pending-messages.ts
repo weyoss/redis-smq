@@ -12,6 +12,7 @@ import {
   IMessageTransferable,
   IQueueMessages,
   IQueueMessagesPage,
+  IQueueParsedParams,
   TQueueExtendedParams,
 } from '../../../../types';
 import { PriorityQueuePendingMessages } from './priority-queue-pending-messages';
@@ -31,15 +32,14 @@ export class QueuePendingMessages implements IQueueMessages {
   }
 
   protected getQueueImplementation(
-    queue: TQueueExtendedParams,
+    queue: IQueueParsedParams,
     cb: ICallback<IQueueMessages>,
   ): void {
-    const { queueParams } = _parseQueueExtendedParams(queue);
     _getCommonRedisClient((err, client) => {
       if (err) cb(err);
       else if (!client) cb(new CallbackEmptyReplyError());
       else {
-        _getQueueProperties(client, queueParams, (err, properties) => {
+        _getQueueProperties(client, queue.queueParams, (err, properties) => {
           if (err) cb(err);
           else if (!properties) cb(new CallbackEmptyReplyError());
           else if (properties.queueType === EQueueType.PRIORITY_QUEUE) {
@@ -53,10 +53,14 @@ export class QueuePendingMessages implements IQueueMessages {
   }
 
   countMessages(queue: TQueueExtendedParams, cb: ICallback<number>): void {
-    this.getQueueImplementation(queue, (err, pendingMessages) => {
-      if (err) cb(err);
-      else pendingMessages?.countMessages(queue, cb);
-    });
+    const parsedParams = _parseQueueExtendedParams(queue);
+    if (parsedParams instanceof Error) cb(parsedParams);
+    else {
+      this.getQueueImplementation(parsedParams, (err, pendingMessages) => {
+        if (err) cb(err);
+        else pendingMessages?.countMessages(queue, cb);
+      });
+    }
   }
 
   getMessages(
@@ -65,16 +69,24 @@ export class QueuePendingMessages implements IQueueMessages {
     pageSize: number,
     cb: ICallback<IQueueMessagesPage<IMessageTransferable>>,
   ): void {
-    this.getQueueImplementation(queue, (err, pendingMessages) => {
-      if (err) cb(err);
-      else pendingMessages?.getMessages(queue, page, pageSize, cb);
-    });
+    const parsedParams = _parseQueueExtendedParams(queue);
+    if (parsedParams instanceof Error) cb(parsedParams);
+    else {
+      this.getQueueImplementation(parsedParams, (err, pendingMessages) => {
+        if (err) cb(err);
+        else pendingMessages?.getMessages(queue, page, pageSize, cb);
+      });
+    }
   }
 
   purge(queue: TQueueExtendedParams, cb: ICallback<void>): void {
-    this.getQueueImplementation(queue, (err, pendingMessages) => {
-      if (err) cb(err);
-      else pendingMessages?.purge(queue, cb);
-    });
+    const parsedParams = _parseQueueExtendedParams(queue);
+    if (parsedParams instanceof Error) cb(parsedParams);
+    else {
+      this.getQueueImplementation(parsedParams, (err, pendingMessages) => {
+        if (err) cb(err);
+        else pendingMessages?.purge(queue, cb);
+      });
+    }
   }
 }

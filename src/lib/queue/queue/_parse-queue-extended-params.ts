@@ -14,6 +14,7 @@ import {
 } from '../../../../types';
 import { _parseQueueParams } from './_parse-queue-params';
 import { redisKeys } from '../../../common/redis-keys/redis-keys';
+import { RedisKeysError } from '../../../common/redis-keys/redis-keys.error';
 
 function isQueueParams(args: unknown): args is IQueueParams {
   return (
@@ -26,21 +27,32 @@ function isQueueParams(args: unknown): args is IQueueParams {
 
 export function _parseQueueExtendedParams(
   args: TQueueExtendedParams,
-): IQueueParsedParams {
+): IQueueParsedParams | RedisKeysError {
   if (typeof args === 'string') {
+    const queueParams = _parseQueueParams(args);
+    if (queueParams instanceof Error) return queueParams;
     return {
-      queueParams: _parseQueueParams(args),
+      queueParams,
       groupId: null,
     };
   }
   if (isQueueParams(args)) {
+    const queueParams = _parseQueueParams(args);
+    if (queueParams instanceof Error) return queueParams;
     return {
-      queueParams: _parseQueueParams(args),
+      queueParams,
       groupId: null,
     };
   }
+  const queueParams = _parseQueueParams(args.queue);
+  if (queueParams instanceof Error) return queueParams;
+  let groupId: string | RedisKeysError | null = null;
+  if (args.groupId) {
+    groupId = redisKeys.validateRedisKey(args.groupId);
+    if (groupId instanceof Error) return groupId;
+  }
   return {
-    queueParams: _parseQueueParams(args.queue),
-    groupId: args.groupId ? redisKeys.validateRedisKey(args.groupId) : null,
+    queueParams,
+    groupId,
   };
 }
