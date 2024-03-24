@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { IRedisSMQConfig, IRedisSMQConfigRequired } from '../../types';
-import { merge } from 'lodash';
+import _ from 'lodash';
+import { IRedisSMQConfig, IRedisSMQConfigRequired } from './types/index.js';
 
 const defaultConfig: IRedisSMQConfigRequired['logger'] = {
   enabled: false,
@@ -17,5 +17,5 @@ const defaultConfig: IRedisSMQConfigRequired['logger'] = {
 export default function Logger(
   userConfig: IRedisSMQConfig,
 ): IRedisSMQConfigRequired['logger'] {
-  return merge({}, defaultConfig, userConfig.logger ?? {});
+  return _.merge({}, defaultConfig, userConfig.logger ?? {});
 }

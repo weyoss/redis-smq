@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { ConsumerError } from '../../errors';
+import { ConsumerError } from '../../errors/index.js';
 
 export class ConsumerMessageHandlerError extends ConsumerError {
   constructor(msg?: string) {

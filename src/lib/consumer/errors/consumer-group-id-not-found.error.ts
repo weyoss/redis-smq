@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { ConsumerError } from './consumer.error';
+import { ConsumerError } from './consumer.error.js';
 
 export class ConsumerGroupIdNotFoundError extends ConsumerError {
   constructor() {

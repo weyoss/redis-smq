@@ -7,8 +7,9 @@
  * in the root directory of this source tree.
  */
 
-import { defaultQueue } from '../../common/message-producing-consuming';
-import { getQueueRateLimit } from '../../common/queue-rate-limit';
+import { test, expect } from '@jest/globals';
+import { defaultQueue } from '../../common/message-producing-consuming.js';
+import { getQueueRateLimit } from '../../common/queue-rate-limit.js';
 
 test('SetQueueRateLimit()/GetQueueRateLimit()/ClearQueueRateLimit()', async () => {
   const queueRateLimit = await getQueueRateLimit();
@@ -25,21 +26,19 @@ test('SetQueueRateLimit()/GetQueueRateLimit()/ClearQueueRateLimit()', async () =
   const rateLimit2 = await queueRateLimit.getAsync(defaultQueue);
   expect(rateLimit2).toEqual(null);
 
-  await expect(async () => {
-    await queueRateLimit.setAsync(defaultQueue, {
+  await expect(
+    queueRateLimit.setAsync(defaultQueue, {
       limit: 0,
       interval: 1000,
-    });
-  }).rejects.toThrow(
-    `Invalid rateLimit.limit. Expected a positive integer > 0`,
-  );
+    }),
+  ).rejects.toThrow(`Invalid rateLimit.limit. Expected a positive integer > 0`);
 
-  await expect(async () => {
-    await queueRateLimit.setAsync(defaultQueue, {
+  await expect(
+    queueRateLimit.setAsync(defaultQueue, {
       limit: 4,
       interval: 0,
-    });
-  }).rejects.toThrow(
+    }),
+  ).rejects.toThrow(
     `Invalid rateLimit.interval. Expected a positive integer >= 1000`,
   );
 });

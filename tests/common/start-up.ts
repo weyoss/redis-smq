@@ -7,11 +7,11 @@
  * in the root directory of this source tree.
  */
 
-import { getRedisInstance } from './redis';
 import { logger } from 'redis-smq-common';
-import { Configuration } from '../../src/config/configuration';
-import { config } from './config';
-import { ProducibleMessage } from '../../src/lib/message/producible-message';
+import { Configuration } from '../../src/config/index.js';
+import { ProducibleMessage } from '../../src/lib/index.js';
+import { config } from './config.js';
+import { getRedisInstance } from './redis.js';
 
 export async function startUp(): Promise<void> {
   Configuration.reset();

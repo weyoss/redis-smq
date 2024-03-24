@@ -7,17 +7,20 @@
  * in the root directory of this source tree.
  */
 
-import { EMessagePropertyStatus, ProducibleMessage } from '../../../index';
-import { getProducer } from '../../common/producer';
+import { test, expect } from '@jest/globals';
+import { EMessagePropertyStatus, ProducibleMessage } from '../../../index.js';
+import { EQueueType } from '../../../src/lib/index.js';
+import { getConsumer } from '../../common/consumer.js';
+import {
+  untilMessageAcknowledged,
+  untilMessageUnacknowledged,
+} from '../../common/events.js';
+import { getMessage } from '../../common/message.js';
 import {
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
-import { EQueueType } from '../../../types';
-import { getConsumer } from '../../common/consumer';
-import { untilConsumerEvent } from '../../common/events';
-import { promisifyAll } from 'bluebird';
-import { Message } from '../../../src/lib/message/message';
+} from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
 
 test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQUEUING -> ACKNOWLEDGED', async () => {
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
@@ -33,7 +36,7 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQUEUING ->
     .setRetryDelay(0);
   const [id] = await producer.produceAsync(msg);
 
-  const message = promisifyAll(new Message());
+  const message = await getMessage();
   const msg0 = await message.getMessageByIdAsync(id);
   expect(msg0.status).toBe(EMessagePropertyStatus.PENDING);
 
@@ -46,16 +49,16 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQUEUING ->
     } else cb();
   });
 
-  consumer.run();
-  await untilConsumerEvent(consumer, 'messageUnacknowledged');
+  consumer.run(() => void 0);
+  await untilMessageUnacknowledged(consumer);
   await consumer.shutdownAsync();
   expect(msg1[0]).toBe(EMessagePropertyStatus.PROCESSING);
 
   const msg2 = await message.getMessageStatusAsync(id);
   expect(msg2).toBe(EMessagePropertyStatus.UNACK_REQUEUING);
 
-  consumer.run();
-  await untilConsumerEvent(consumer, 'messageAcknowledged');
+  consumer.run(() => void 0);
+  await untilMessageAcknowledged(consumer);
 
   const msg3 = await message.getMessageStatusAsync(id);
   expect(msg3).toBe(EMessagePropertyStatus.ACKNOWLEDGED);

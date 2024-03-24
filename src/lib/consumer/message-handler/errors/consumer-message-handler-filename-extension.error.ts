@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { ConsumerMessageHandlerError } from './consumer-message-handler.error';
+import { ConsumerMessageHandlerError } from './consumer-message-handler.error.js';
 
 export class ConsumerMessageHandlerFilenameExtensionError extends ConsumerMessageHandlerError {
   constructor() {

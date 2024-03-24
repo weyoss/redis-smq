@@ -7,23 +7,23 @@
  * in the root directory of this source tree.
  */
 
-import PublishScheduledWorker from '../../src/workers/publish-scheduled.worker';
-import { getRedisInstance } from './redis';
-import { promisifyAll } from 'bluebird';
+import bluebird from 'bluebird';
+import { Runnable } from 'redis-smq-common';
+import { Configuration } from '../../src/config/configuration.js';
+import PublishScheduledWorker from '../../src/lib/consumer/workers/publish-scheduled.worker.js';
 
-let scheduleWorker: PublishScheduledWorker | null = null;
+let scheduleWorker: Runnable<Record<string, never>> | null = null;
 
 export async function startScheduleWorker(): Promise<void> {
   if (!scheduleWorker) {
-    const redisClient = await getRedisInstance();
-    scheduleWorker = new PublishScheduledWorker(redisClient, false);
-    scheduleWorker.run();
+    scheduleWorker = PublishScheduledWorker(Configuration.getSetConfig());
+    await bluebird.promisifyAll(scheduleWorker).runAsync();
   }
 }
 
 export async function stopScheduleWorker(): Promise<void> {
   if (scheduleWorker) {
-    await promisifyAll(scheduleWorker).quitAsync();
+    await bluebird.promisifyAll(scheduleWorker).shutdownAsync();
     scheduleWorker = null;
   }
 }

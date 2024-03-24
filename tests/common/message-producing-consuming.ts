@@ -7,20 +7,25 @@
  * in the root directory of this source tree.
  */
 
+import { fork } from 'child_process';
+import path from 'path';
+import { getDirname, ICallback } from 'redis-smq-common';
+import { Configuration } from '../../src/config/index.js';
 import {
   EMessagePriority,
   EQueueDeliveryModel,
   EQueueType,
+  IMessageTransferable,
   IQueueParams,
-} from '../../types';
-import { ProducibleMessage } from '../../src/lib/message/producible-message';
-import { untilConsumerEvent, untilMessageAcknowledged } from './events';
-import { getConsumer } from './consumer';
-import { getProducer } from './producer';
-import { fork } from 'child_process';
-import * as path from 'path';
-import { getQueue } from './queue';
-import { Configuration } from '../../src/config/configuration';
+  ProducibleMessage,
+} from '../../src/lib/index.js';
+import { getConsumer } from './consumer.js';
+import {
+  untilMessageAcknowledged,
+  untilMessageDeadLettered,
+} from './events.js';
+import { getProducer } from './producer.js';
+import { getQueue } from './queue.js';
 
 export const defaultQueue: IQueueParams = {
   name: 'test_queue',
@@ -35,16 +40,14 @@ export async function produceAndAcknowledgeMessage(
 
   const consumer = getConsumer({
     queue,
-    messageHandler: jest.fn((msg, cb) => {
-      cb();
-    }),
+    messageHandler: (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
   });
 
   const message = new ProducibleMessage();
   message.setBody({ hello: 'world' }).setQueue(queue);
   const [messageId] = await producer.produceAsync(message);
 
-  consumer.run();
+  consumer.run(() => void 0);
   await untilMessageAcknowledged(consumer);
   return { producer, consumer, queue, messageId };
 }
@@ -57,17 +60,17 @@ export async function produceAndDeadLetterMessage(
 
   const consumer = getConsumer({
     queue,
-    messageHandler: jest.fn(() => {
+    messageHandler: () => {
       throw new Error('Explicit error');
-    }),
+    },
   });
 
   const message = new ProducibleMessage();
   message.setBody({ hello: 'world' }).setQueue(queue);
   const [messageId] = await producer.produceAsync(message);
 
-  consumer.run();
-  await untilConsumerEvent(consumer, 'messageDeadLettered');
+  consumer.run(() => void 0);
+  await untilMessageDeadLettered(consumer);
   return { producer, consumer, messageId, queue };
 }
 
@@ -123,7 +126,7 @@ export async function createQueue(
 
 export async function crashAConsumerConsumingAMessage() {
   await new Promise((resolve) => {
-    const thread = fork(path.join(__dirname, 'consumer-thread.js'));
+    const thread = fork(path.join(getDirname(), 'consumer-thread.js'));
     thread.on('error', () => void 0);
     thread.on('exit', resolve);
   });

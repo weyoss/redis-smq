@@ -12,21 +12,22 @@ module.exports = {
   env: {
     node: true,
     jest: true,
-    es6: true
+    es6: true,
   },
   parserOptions: {
     ecmaVersion: 'latest',
     sourceType: 'module',
   },
   ignorePatterns: ['.eslintrc.cjs', 'node_modules/**', 'dist/**'],
-  extends: [
-    'eslint:recommended',
-    'plugin:prettier/recommended',
-  ],
+  extends: ['eslint:recommended', 'plugin:prettier/recommended'],
   overrides: [
     {
       files: ['**/*.ts', '**/*.tsx'],
-      env: { 'browser': true, 'es6': true, 'node': true },
+      env: {
+        browser: true,
+        es6: true,
+        node: true,
+      },
       extends: [
         'eslint:recommended',
         'plugin:@typescript-eslint/eslint-recommended',
@@ -42,4 +43,3 @@ module.exports = {
     },
   ],
 };
-

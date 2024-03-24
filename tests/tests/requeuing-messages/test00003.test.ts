@@ -7,21 +7,24 @@
  * in the root directory of this source tree.
  */
 
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
-import { untilMessageAcknowledged } from '../../common/events';
-import { getConsumer } from '../../common/consumer';
-import { getProducer } from '../../common/producer';
-import { defaultQueue } from '../../common/message-producing-consuming';
+import { test, expect, jest } from '@jest/globals';
+import { ICallback } from 'redis-smq-common';
 import {
   EMessagePriority,
   EQueueDeliveryModel,
   EQueueType,
-} from '../../../types';
-import { getQueue } from '../../common/queue';
-import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages';
-import { getQueueMessages } from '../../common/queue-messages';
-import { getQueuePendingMessages } from '../../common/queue-pending-messages';
-import { QueueMessageRequeueError } from '../../../src/lib/queue/errors';
+  IMessageTransferable,
+  MessageRequeueError,
+  ProducibleMessage,
+} from '../../../src/lib/index.js';
+import { getConsumer } from '../../common/consumer.js';
+import { untilMessageAcknowledged } from '../../common/events.js';
+import { defaultQueue } from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
+import { getQueue } from '../../common/queue.js';
+import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
+import { getQueueMessages } from '../../common/queue-messages.js';
+import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 
 test('Combined test. Requeue a priority message from acknowledged queue. Check queue metrics.', async () => {
   const queue = await getQueue();
@@ -33,9 +36,11 @@ test('Combined test. Requeue a priority message from acknowledged queue. Check q
 
   const consumer = getConsumer({
     queue: defaultQueue,
-    messageHandler: jest.fn((msg, cb) => {
-      setTimeout(cb, 5000);
-    }),
+    messageHandler: jest.fn(
+      (msg: IMessageTransferable, cb: ICallback<void>) => {
+        setTimeout(() => cb(), 5000);
+      },
+    ),
   });
 
   const message = new ProducibleMessage();
@@ -49,7 +54,7 @@ test('Combined test. Requeue a priority message from acknowledged queue. Check q
 
   const [id] = await producer.produceAsync(message);
 
-  consumer.run();
+  consumer.run(() => void 0);
   await untilMessageAcknowledged(consumer);
 
   const acknowledgedMessages = await getQueueAcknowledgedMessages();
@@ -88,5 +93,5 @@ test('Combined test. Requeue a priority message from acknowledged queue. Check q
 
   await expect(
     acknowledgedMessages.requeueMessageAsync(defaultQueue, id),
-  ).rejects.toThrow(QueueMessageRequeueError);
+  ).rejects.toThrow(MessageRequeueError);
 });

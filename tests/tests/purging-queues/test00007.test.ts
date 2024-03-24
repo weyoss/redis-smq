@@ -7,19 +7,20 @@
  * in the root directory of this source tree.
  */
 
-import { IQueueParams } from '../../../types';
-import { processingQueue } from '../../../src/lib/consumer/message-handler/processing-queue';
+import { test, expect } from '@jest/globals';
 import {
-  RedisClient,
   ICallback,
+  IRedisClient,
   WatchedKeysChangedError,
 } from 'redis-smq-common';
+import { IQueueParams } from '../../../src/lib/index.js';
+import { processingQueue } from '../../../src/lib/consumer/message-handler/processing-queue.js';
+import { getConsumer } from '../../common/consumer.js';
 import {
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
-import { getConsumer } from '../../common/consumer';
-import { getQueue } from '../../common/queue';
+} from '../../common/message-producing-consuming.js';
+import { getQueue } from '../../common/queue.js';
 
 test('Concurrently deleting a message queue and starting a consumer', async () => {
   await createQueue(defaultQueue, false);
@@ -32,7 +33,7 @@ test('Concurrently deleting a message queue and starting a consumer', async () =
   const originalMethod = processingQueue.getQueueProcessingQueues;
   processingQueue.getQueueProcessingQueues = (
     ...args: [
-      redisClient: RedisClient,
+      redisClient: IRedisClient,
       queue: IQueueParams,
       cb: ICallback<Record<string, string>>,
     ]
@@ -44,9 +45,9 @@ test('Concurrently deleting a message queue and starting a consumer', async () =
 
   const q = await getQueue();
 
-  await expect(async () => {
-    await Promise.all([q.deleteAsync(defaultQueue), consumer.runAsync()]);
-  }).rejects.toThrow(WatchedKeysChangedError);
+  await expect(
+    Promise.all([q.deleteAsync(defaultQueue), consumer.runAsync()]),
+  ).rejects.toThrow(WatchedKeysChangedError);
 
   // restore
   processingQueue.getQueueProcessingQueues = originalMethod;

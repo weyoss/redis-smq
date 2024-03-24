@@ -7,27 +7,24 @@
  * in the root directory of this source tree.
  */
 
-import { redis, RedisClient } from 'redis-smq-common';
-import { promisify, promisifyAll } from 'bluebird';
-import { Configuration } from '../../src/config/configuration';
+import bluebird from 'bluebird';
+import { createRedisClient, IRedisClient } from 'redis-smq-common';
+import { Configuration } from '../../src/config/index.js';
 
-const RedisClientAsync = promisifyAll(RedisClient.prototype);
-const createInstanceAsync = promisify(redis.createInstance);
-const redisClients: (typeof RedisClientAsync)[] = [];
+const redisClients: IRedisClient[] = [];
+const createInstanceAsync = bluebird.promisify(createRedisClient);
 
 export async function getRedisInstance() {
-  const c = promisifyAll(
-    await createInstanceAsync(Configuration.getSetConfig().redis),
-  );
+  const c = await createInstanceAsync(Configuration.getSetConfig().redis);
   redisClients.push(c);
-  return c;
+  return bluebird.promisifyAll(c);
 }
 
 export async function shutDownRedisClients() {
   while (redisClients.length) {
     const redisClient = redisClients.pop();
     if (redisClient) {
-      await redisClient.haltAsync();
+      await bluebird.promisifyAll(redisClient).haltAsync();
     }
   }
 }

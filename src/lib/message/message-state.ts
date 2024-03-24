@@ -8,7 +8,7 @@
  */
 
 import { v4 as uuid } from 'uuid';
-import { IMessageStateTransferable } from '../../../types';
+import { IMessageStateTransferable } from './types/index.js';
 
 export class MessageState {
   protected readonly uuid: string;

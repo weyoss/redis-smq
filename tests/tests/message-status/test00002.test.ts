@@ -7,17 +7,17 @@
  * in the root directory of this source tree.
  */
 
-import { EMessagePropertyStatus, ProducibleMessage } from '../../../index';
-import { getProducer } from '../../common/producer';
+import { test, expect } from '@jest/globals';
+import { EMessagePropertyStatus, ProducibleMessage } from '../../../index.js';
+import { EQueueType } from '../../../src/lib/index.js';
+import { getConsumer } from '../../common/consumer.js';
+import { untilMessageDeadLettered } from '../../common/events.js';
+import { getMessage } from '../../common/message.js';
 import {
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
-import { EQueueType } from '../../../types';
-import { getConsumer } from '../../common/consumer';
-import { untilMessageDeadLettered } from '../../common/events';
-import { promisifyAll } from 'bluebird';
-import { Message } from '../../../src/lib/message/message';
+} from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
 
 test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> DEAD_LETTERED', async () => {
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
@@ -29,7 +29,7 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> DEAD_LETTERED', as
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue).setRetryThreshold(0);
   const [id] = await producer.produceAsync(msg);
 
-  const message = promisifyAll(new Message());
+  const message = await getMessage();
   const msg0 = await message.getMessageStatusAsync(id);
   expect(msg0).toBe(EMessagePropertyStatus.PENDING);
 
@@ -40,7 +40,7 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> DEAD_LETTERED', as
     cb(new Error());
   });
 
-  consumer.run();
+  consumer.run(() => void 0);
   await untilMessageDeadLettered(consumer);
   expect(msg1[0]).toBe(EMessagePropertyStatus.PROCESSING);
 

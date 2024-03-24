@@ -7,24 +7,31 @@
  * in the root directory of this source tree.
  */
 
-import { EExchangeType, TExchangeSerialized } from '../../../../types';
-import { ExchangeInvalidDataError } from '../../../../src/lib/exchange/errors';
-import { _fromJSON } from '../../../../src/lib/exchange/_from-json';
+import { test, expect } from '@jest/globals';
+import { IQueueParams, ProducibleMessage } from '../../../../src/lib/index.js';
+import { createQueue } from '../../../common/message-producing-consuming.js';
+import { getMessage } from '../../../common/message.js';
+import { getProducer } from '../../../common/producer.js';
+import { isEqual } from '../../../common/utils.js';
 
-test('ExchangeDirect: fromJSON()', async () => {
-  const json: TExchangeSerialized = {
-    bindingParams: 'w123.1',
-    type: EExchangeType.DIRECT,
-    exchangeTag: '123',
-  };
-  expect(() => _fromJSON({})).toThrow(ExchangeInvalidDataError);
-  const e = _fromJSON(json);
-  expect(e.toJSON()).toEqual({
-    bindingParams: {
-      ns: 'testing',
-      name: 'w123.1',
-    },
-    type: EExchangeType.DIRECT,
-    exchangeTag: '123',
-  });
+test('DirectExchange: producing message with a Direct exchange', async () => {
+  const myQueue: IQueueParams = { ns: 'testing', name: 'w123.2.4.5' };
+  await createQueue(myQueue, false);
+
+  const producer = getProducer();
+  await producer.runAsync();
+
+  const msg = new ProducibleMessage().setQueue(myQueue).setBody('hello');
+  const ids = await producer.produceAsync(msg);
+  expect(ids.length).toBe(1);
+
+  const message = await getMessage();
+  const items = await message.getMessagesByIdsAsync(ids);
+  expect(
+    isEqual(
+      items.map((i) => i.destinationQueue),
+      [myQueue],
+    ),
+  ).toBe(true);
+  expect(items[0].exchange.exchangeTag).toEqual(msg.getExchange()?.exchangeTag);
 });

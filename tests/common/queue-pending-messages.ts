@@ -7,9 +7,19 @@
  * in the root directory of this source tree.
  */
 
-import { promisifyAll } from 'bluebird';
-import { QueuePendingMessages } from '../../src/lib/queue/queue-pending-messages/queue-pending-messages';
+import bluebird from 'bluebird';
+import { QueuePendingMessages } from '../../src/lib/index.js';
+
+const instances: QueuePendingMessages[] = [];
 
 export async function getQueuePendingMessages() {
-  return promisifyAll(new QueuePendingMessages());
+  const instance = new QueuePendingMessages();
+  instances.push(instance);
+  return bluebird.promisifyAll(instance);
+}
+
+export async function shutDownQueuePendingMessages() {
+  for (const i of instances) {
+    await bluebird.promisifyAll(i).shutdownAsync();
+  }
 }

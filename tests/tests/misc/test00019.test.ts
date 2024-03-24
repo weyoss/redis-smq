@@ -7,7 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import Store from '../../../src/config/messages/store';
+import { test, expect } from '@jest/globals';
+import Store from '../../../src/config/messages/store.js';
 
 test('Configuration: storeMessages', async () => {
   expect(() => {

@@ -7,18 +7,20 @@
  * in the root directory of this source tree.
  */
 
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
+import { test, expect, jest } from '@jest/globals';
 import { ICallback } from 'redis-smq-common';
-import { untilMessageAcknowledged } from '../../common/events';
-import { getConsumer } from '../../common/consumer';
-import { getProducer } from '../../common/producer';
+import { IMessageParams, ProducibleMessage } from '../../../src/lib/index.js';
+import { getConsumer } from '../../common/consumer.js';
+import { getEventBus } from '../../common/event-bus-redis.js';
+import { untilMessageAcknowledged } from '../../common/events.js';
 import {
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
-import { IMessageParams } from '../../../types';
+} from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
 
 test('Unacknowledged message are re-queued when messageRetryThreshold is not exceeded', async () => {
+  const eventBus = await getEventBus();
   const producer = getProducer();
   await producer.runAsync();
 
@@ -35,12 +37,12 @@ test('Unacknowledged message are re-queued when messageRetryThreshold is not exc
   });
 
   let unacknowledged = 0;
-  consumer.on('messageUnacknowledged', () => {
+  eventBus.on('consumer.consumeMessage.messageUnacknowledged', () => {
     unacknowledged += 1;
   });
 
   let acknowledged = 0;
-  consumer.on('messageAcknowledged', () => {
+  eventBus.on('consumer.consumeMessage.messageAcknowledged', () => {
     acknowledged += 1;
   });
 
@@ -48,7 +50,7 @@ test('Unacknowledged message are re-queued when messageRetryThreshold is not exc
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
 
   await producer.produceAsync(msg);
-  consumer.run();
+  consumer.run(() => void 0);
 
   await untilMessageAcknowledged(consumer);
 

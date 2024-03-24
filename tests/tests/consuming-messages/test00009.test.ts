@@ -7,17 +7,20 @@
  * in the root directory of this source tree.
  */
 
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
-import { delay } from 'bluebird';
-import { getConsumer } from '../../common/consumer';
-import { getProducer } from '../../common/producer';
+import { test, expect, jest } from '@jest/globals';
+import bluebird from 'bluebird';
+import { ProducibleMessage } from '../../../src/lib/index.js';
+import { getConsumer } from '../../common/consumer.js';
+import { getEventBus } from '../../common/event-bus-redis.js';
 import {
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
-import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages';
+} from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
+import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
 
 test('A message is dead-lettered when messageRetryThreshold is exceeded', async () => {
+  const eventBus = await getEventBus();
   await createQueue(defaultQueue, false);
   const producer = getProducer();
   await producer.runAsync();
@@ -29,7 +32,7 @@ test('A message is dead-lettered when messageRetryThreshold is exceeded', async 
   });
 
   let unacknowledged = 0;
-  consumer.on('messageUnacknowledged', () => {
+  eventBus.on('consumer.consumeMessage.messageUnacknowledged', () => {
     unacknowledged += 1;
   });
 
@@ -37,9 +40,9 @@ test('A message is dead-lettered when messageRetryThreshold is exceeded', async 
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
 
   const [id] = await producer.produceAsync(msg);
-  consumer.run();
+  consumer.run(() => void 0);
 
-  await delay(30000);
+  await bluebird.delay(30000);
   expect(unacknowledged).toBe(3);
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
   const list = await deadLetteredMessages.getMessagesAsync(

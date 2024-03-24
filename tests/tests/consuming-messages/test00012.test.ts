@@ -7,40 +7,49 @@
  * in the root directory of this source tree.
  */
 
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
-import { untilMessageAcknowledged } from '../../common/events';
-import { getConsumer } from '../../common/consumer';
-import { getProducer } from '../../common/producer';
+import { test, expect, jest } from '@jest/globals';
+import { ICallback } from 'redis-smq-common';
+import {
+  IMessageTransferable,
+  ProducibleMessage,
+} from '../../../src/lib/index.js';
+import { getConsumer } from '../../common/consumer.js';
+import { getEventBus } from '../../common/event-bus-redis.js';
+import { untilMessageAcknowledged } from '../../common/events.js';
 import {
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
-import { validateTime } from '../../common/validate-time';
+} from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
+import { validateTime } from '../../common/validate-time.js';
 
 test('An unacknowledged message is delayed given messageRetryDelay > 0 and messageRetryThreshold > 0 and is not exceeded', async () => {
+  const eventBus = await getEventBus();
   await createQueue(defaultQueue, false);
 
   const timestamps: number[] = [];
   let callCount = 0;
   const consumer = getConsumer({
-    messageHandler: jest.fn((msg, cb) => {
-      timestamps.push(Date.now());
-      callCount += 1;
-      if (callCount < 5) {
-        throw new Error('Explicit error');
-      } else if (callCount === 5) {
-        cb();
-      } else throw new Error('Unexpected call');
-    }),
+    messageHandler: jest.fn(
+      (msg: IMessageTransferable, cb: ICallback<void>) => {
+        timestamps.push(Date.now());
+        callCount += 1;
+        if (callCount < 5) {
+          throw new Error('Explicit error');
+        } else if (callCount === 5) {
+          cb();
+        } else throw new Error('Unexpected call');
+      },
+    ),
   });
 
   let unacks = 0;
-  consumer.on('messageUnacknowledged', () => {
+  eventBus.on('consumer.consumeMessage.messageUnacknowledged', () => {
     unacks += 1;
   });
 
   let acks = 0;
-  consumer.on('messageAcknowledged', () => {
+  eventBus.on('consumer.consumeMessage.messageAcknowledged', () => {
     acks += 1;
   });
 
@@ -55,7 +64,7 @@ test('An unacknowledged message is delayed given messageRetryDelay > 0 and messa
   await producer.runAsync();
 
   await producer.produceAsync(msg);
-  consumer.run();
+  consumer.run(() => void 0);
 
   await untilMessageAcknowledged(consumer);
 

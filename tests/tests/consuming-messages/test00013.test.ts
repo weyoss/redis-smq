@@ -7,15 +7,21 @@
  * in the root directory of this source tree.
  */
 
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
-import { delay } from 'bluebird';
-import { getConsumer } from '../../common/consumer';
-import { getProducer } from '../../common/producer';
+import { test, expect } from '@jest/globals';
+import bluebird from 'bluebird';
+import { ICallback } from 'redis-smq-common';
+import {
+  IMessageTransferable,
+  ProducibleMessage,
+} from '../../../src/lib/index.js';
+import { getConsumer } from '../../common/consumer.js';
+import { getEventBus } from '../../common/event-bus-redis.js';
 import {
   crashAConsumerConsumingAMessage,
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
+} from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
 
 type TQueueMetrics = {
   receivedMessages: string[];
@@ -23,6 +29,7 @@ type TQueueMetrics = {
 };
 
 test('Given many queues, a message is recovered from a consumer crash and re-queued to its origin queue', async () => {
+  const eventBus = await getEventBus();
   await createQueue(defaultQueue, false);
   await createQueue('queue_b', false);
 
@@ -37,25 +44,25 @@ test('Given many queues, a message is recovered from a consumer crash and re-que
 
   const queueAConsumer = getConsumer({
     queue: defaultQueue,
-    messageHandler: (msg, cb) => {
+    messageHandler: (msg: IMessageTransferable, cb: ICallback<void>) => {
       defaultQueueMetrics.receivedMessages.push(msg.id);
       cb();
     },
   });
-  queueAConsumer.on('messageAcknowledged', () => {
-    defaultQueueMetrics.acks += 1;
+  eventBus.on('consumer.consumeMessage.messageAcknowledged', (...args) => {
+    if (args[3] === queueAConsumer.getId()) defaultQueueMetrics.acks += 1;
   });
   await queueAConsumer.runAsync();
 
   const queueBConsumer = getConsumer({
     queue: 'queue_b',
-    messageHandler: (msg, cb) => {
+    messageHandler: (msg: IMessageTransferable, cb: ICallback<void>) => {
       queueBMetrics.receivedMessages.push(msg.id);
       cb();
     },
   });
-  queueBConsumer.on('messageAcknowledged', () => {
-    queueBMetrics.acks += 1;
+  eventBus.on('consumer.consumeMessage.messageAcknowledged', (...args) => {
+    if (args[3] === queueBConsumer.getId()) queueBMetrics.acks += 1;
   });
   await queueBConsumer.runAsync();
 
@@ -69,7 +76,7 @@ test('Given many queues, a message is recovered from a consumer crash and re-que
 
   // using defaultQueue
   await crashAConsumerConsumingAMessage();
-  await delay(10000);
+  await bluebird.delay(10000);
 
   expect(defaultQueueMetrics.acks).toBe(1);
   expect(defaultQueueMetrics.receivedMessages.length).toBe(1);

@@ -7,17 +7,20 @@
  * in the root directory of this source tree.
  */
 
-import { IQueueParams } from '../../../types';
+import { test, expect } from '@jest/globals';
+import {
+  IQueueParams,
+  NamespaceNotFoundError,
+  QueueHasRunningConsumersError,
+  QueueNotEmptyError,
+  QueueNotFoundError,
+} from '../../../src/lib/index.js';
 import {
   createQueue,
   produceAndAcknowledgeMessage,
-} from '../../common/message-producing-consuming';
-import { getNamespace } from '../../common/namespace';
-import { getQueueMessages } from '../../common/queue-messages';
-import { QueueNotEmptyError } from '../../../src/lib/queue/errors';
-import { QueueHasRunningConsumersError } from '../../../src/lib/queue/errors';
-import { QueueNotFoundError } from '../../../src/lib/queue/errors';
-import { QueueNamespaceNotFoundError } from '../../../src/lib/queue/errors';
+} from '../../common/message-producing-consuming.js';
+import { getNamespace } from '../../common/namespace.js';
+import { getQueueMessages } from '../../common/queue-messages.js';
 
 test('Combined: Fetching namespaces, deleting a namespace with its message queues', async () => {
   const queueA: IQueueParams = {
@@ -49,29 +52,25 @@ test('Combined: Fetching namespaces, deleting a namespace with its message queue
   await c1.shutdownAsync();
   await c2.shutdownAsync();
 
-  await expect(async () => {
-    await ns.deleteAsync('ns1');
-  }).rejects.toThrow(QueueNotEmptyError);
+  await expect(ns.deleteAsync('ns1')).rejects.toThrow(QueueNotEmptyError);
 
   await qm.purgeAsync(queueA);
 
-  await expect(async () => {
-    await ns.deleteAsync('ns1');
-  }).rejects.toThrow(QueueNotEmptyError);
+  await expect(ns.deleteAsync('ns1')).rejects.toThrow(QueueNotEmptyError);
 
   await qm.purgeAsync(queueB);
   await c1.runAsync();
   await c2.runAsync();
 
-  await expect(async () => {
-    await ns.deleteAsync('ns1');
-  }).rejects.toThrow(QueueHasRunningConsumersError);
+  await expect(ns.deleteAsync('ns1')).rejects.toThrow(
+    QueueHasRunningConsumersError,
+  );
 
   await c1.shutdownAsync();
 
-  await expect(async () => {
-    await ns.deleteAsync('ns1');
-  }).rejects.toThrow(QueueHasRunningConsumersError);
+  await expect(ns.deleteAsync('ns1')).rejects.toThrow(
+    QueueHasRunningConsumersError,
+  );
 
   await c2.shutdownAsync();
   await ns.deleteAsync('ns1');
@@ -87,7 +86,5 @@ test('Combined: Fetching namespaces, deleting a namespace with its message queue
   const m5 = await ns.getNamespacesAsync();
   expect(m5).toEqual([]);
 
-  await expect(async () => {
-    await ns.deleteAsync('ns1');
-  }).rejects.toThrow(QueueNamespaceNotFoundError);
+  await expect(ns.deleteAsync('ns1')).rejects.toThrow(NamespaceNotFoundError);
 });

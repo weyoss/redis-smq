@@ -7,14 +7,15 @@
  * in the root directory of this source tree.
  */
 
-import { ProducibleMessage } from '../../../index';
-import { untilMessageAcknowledged } from '../../common/events';
-import { getConsumer } from '../../common/consumer';
-import { getProducer } from '../../common/producer';
+import { test } from '@jest/globals';
+import { ProducibleMessage } from '../../../index.js';
+import { getConsumer } from '../../common/consumer.js';
+import { untilMessageAcknowledged } from '../../common/events.js';
 import {
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
+} from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
 
 test('Produce and consume 1 message', async () => {
   await createQueue(defaultQueue, false);
@@ -29,7 +30,7 @@ test('Produce and consume 1 message', async () => {
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
 
   const [messageId] = await producer.produceAsync(msg);
-  consumer.run();
+  consumer.run(() => void 0);
 
   await untilMessageAcknowledged(consumer, messageId);
 });

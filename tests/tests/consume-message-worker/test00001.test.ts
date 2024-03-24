@@ -7,21 +7,26 @@
  * in the root directory of this source tree.
  */
 
-import { delay, promisifyAll } from 'bluebird';
-import { Consumer } from '../../../src/lib/consumer/consumer';
-import { Queue } from '../../../src/lib/queue/queue/queue';
-import { EQueueDeliveryModel, EQueueType } from '../../../types';
+import bluebird from 'bluebird';
 import path from 'path';
-import { Producer } from '../../../src/lib/producer/producer';
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
-import { QueueMessages } from '../../../src/lib/queue/queue-messages/queue-messages';
+import { it, expect } from '@jest/globals';
+import { getDirname } from 'redis-smq-common';
+import {
+  Consumer,
+  EQueueDeliveryModel,
+  EQueueType,
+  Producer,
+  ProducibleMessage,
+} from '../../../src/lib/index.js';
+import { getQueue } from '../../common/queue.js';
+import { getQueueMessages } from '../../common/queue-messages.js';
 
 it('ConsumeMessageWorker: case 1', async () => {
-  const consumer = promisifyAll(new Consumer());
+  const consumer = bluebird.promisifyAll(new Consumer());
   await consumer.runAsync();
 
   const queue1 = 'test';
-  const queue = promisifyAll(new Queue());
+  const queue = await getQueue();
   await queue.saveAsync(
     queue1,
     EQueueType.FIFO_QUEUE,
@@ -29,21 +34,21 @@ it('ConsumeMessageWorker: case 1', async () => {
   );
 
   const handlerFilename = path.resolve(
-    __dirname,
+    getDirname(),
     '../../common/message-handler-worker-acks.js',
   );
   await consumer.consumeAsync(queue1, handlerFilename);
 
-  const producer = promisifyAll(new Producer());
+  const producer = bluebird.promisifyAll(new Producer());
   await producer.runAsync();
 
   await producer.produceAsync(
     new ProducibleMessage().setQueue(queue1).setBody('123'),
   );
 
-  await delay(5000);
+  await bluebird.delay(5000);
 
-  const queueMessages = promisifyAll(new QueueMessages());
+  const queueMessages = await getQueueMessages();
   const count = await queueMessages.countMessagesByStatusAsync(queue1);
   expect(count).toEqual({
     acknowledged: 1,

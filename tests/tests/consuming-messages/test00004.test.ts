@@ -7,18 +7,21 @@
  * in the root directory of this source tree.
  */
 
-import { delay } from 'bluebird';
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
-import { untilConsumerEvent } from '../../common/events';
-import { getConsumer } from '../../common/consumer';
-import { getProducer } from '../../common/producer';
+import bluebird from 'bluebird';
+import { test, expect, jest } from '@jest/globals';
+import { ProducibleMessage } from '../../../src/lib/index.js';
+import { getConsumer } from '../../common/consumer.js';
+import { getEventBus } from '../../common/event-bus-redis.js';
+import { untilMessageDeadLettered } from '../../common/events.js';
 import {
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
-import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages';
+} from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
+import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
 
 test('A message is dead-lettered and not delivered when messageTTL is exceeded', async () => {
+  const eventBus = await getEventBus();
   await createQueue(defaultQueue, false);
 
   const producer = getProducer();
@@ -28,7 +31,7 @@ test('A message is dead-lettered and not delivered when messageTTL is exceeded',
   const consume = jest.spyOn(consumer, 'consume');
 
   let unacknowledged = 0;
-  consumer.on('messageUnacknowledged', () => {
+  eventBus.on('consumer.consumeMessage.messageUnacknowledged', () => {
     unacknowledged += 1;
   });
 
@@ -36,10 +39,10 @@ test('A message is dead-lettered and not delivered when messageTTL is exceeded',
   msg.setBody({ hello: 'world' }).setTTL(3000).setQueue(defaultQueue);
 
   const [id] = await producer.produceAsync(msg);
-  await delay(5000);
-  consumer.run();
+  await bluebird.delay(5000);
+  consumer.run(() => void 0);
 
-  await untilConsumerEvent(consumer, 'messageDeadLettered');
+  await untilMessageDeadLettered(consumer);
   expect(consume).toHaveBeenCalledTimes(0);
   expect(unacknowledged).toBe(1);
   const deadLetteredMessages = await getQueueDeadLetteredMessages();

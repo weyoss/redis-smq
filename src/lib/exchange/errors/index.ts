@@ -7,6 +7,6 @@
  * in the root directory of this source tree.
  */
 
-export { ExchangeError } from './exchange.error';
-export { ExchangeFanOutError } from './exchange-fan-out.error';
-export { ExchangeInvalidDataError } from './exchange-invalid-data.error';
+export { ExchangeError } from './exchange.error.js';
+export { ExchangeFanOutError } from './exchange-fan-out.error.js';
+export { ExchangeInvalidDataError } from './exchange-invalid-data.error.js';

@@ -7,13 +7,18 @@
  * in the root directory of this source tree.
  */
 
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
-import { untilMessageAcknowledged } from '../../common/events';
-import { getConsumer } from '../../common/consumer';
-import { getProducer } from '../../common/producer';
-import { createQueue } from '../../common/message-producing-consuming';
-import { shutDownBaseInstance } from '../../common/base-instance';
-import { getQueueMessages } from '../../common/queue-messages';
+import { test, expect } from '@jest/globals';
+import { ICallback } from 'redis-smq-common';
+import {
+  IMessageTransferable,
+  ProducibleMessage,
+} from '../../../src/lib/index.js';
+import { shutDownBaseInstance } from '../../common/base-instance.js';
+import { getConsumer } from '../../common/consumer.js';
+import { untilMessageAcknowledged } from '../../common/events.js';
+import { createQueue } from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
+import { getQueueMessages } from '../../common/queue-messages.js';
 
 test('Consume message from different queues and published by a single producer instance', async () => {
   const producer = getProducer();
@@ -41,11 +46,11 @@ test('Consume message from different queues and published by a single producer i
     // queue name should be normalized to lowercase
     const consumer = getConsumer({
       queue: `queUE_${i}`,
-      messageHandler: (msg, cb) => {
+      messageHandler: (msg: IMessageTransferable, cb: ICallback<void>) => {
         // message handlers start consuming message once started and before the consumer is fully started (when event.UP is emitted)
         // untilMessageAcknowledged() may miss acknowledged event
         // As a workaround, adding a delay before acknowledging a message
-        setTimeout(cb, 10000);
+        setTimeout(() => cb(), 10000);
       },
     });
     await consumer.runAsync();

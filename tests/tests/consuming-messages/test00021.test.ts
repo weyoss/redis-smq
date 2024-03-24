@@ -7,13 +7,14 @@
  * in the root directory of this source tree.
  */
 
-import { ProducibleMessage } from '../../../index';
-import { getProducer } from '../../common/producer';
+import { test, expect } from '@jest/globals';
+import { ProducibleMessage } from '../../../index.js';
+import { ProducerInstanceNotRunningError } from '../../../src/lib/index.js';
 import {
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
-import { ProducerInstanceNotRunningError } from '../../../src/lib/producer/errors';
+} from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
 
 test('Shutdown a producer and try to produce a message', async () => {
   const producer = getProducer();
@@ -21,7 +22,7 @@ test('Shutdown a producer and try to produce a message', async () => {
 
   const msg = new ProducibleMessage();
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
-  await expect(async () => {
-    await producer.produceAsync(msg);
-  }).rejects.toThrowError(ProducerInstanceNotRunningError);
+  await expect(producer.produceAsync(msg)).rejects.toThrowError(
+    ProducerInstanceNotRunningError,
+  );
 });

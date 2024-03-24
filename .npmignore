@@ -3,7 +3,7 @@ dist/examples
 examples
 src/**
 tests/**
-.eslintrc.cjs
+.eslintrc*
 .gitignore
 .npmignore
 .prettierrc

@@ -7,9 +7,9 @@
  * in the root directory of this source tree.
  */
 
-import { IRedisSMQConfig, IRedisSMQConfigRequired } from '../../types';
-import { merge } from 'lodash';
+import _ from 'lodash';
 import { ERedisConfigClient } from 'redis-smq-common';
+import { IRedisSMQConfig, IRedisSMQConfigRequired } from './types/index.js';
 
 const defaultConfig: IRedisSMQConfigRequired['redis'] = {
   client: ERedisConfigClient.IOREDIS,
@@ -18,5 +18,5 @@ const defaultConfig: IRedisSMQConfigRequired['redis'] = {
 export default function Redis(
   userConfig: IRedisSMQConfig,
 ): IRedisSMQConfigRequired['redis'] {
-  return merge({}, defaultConfig, userConfig.redis ?? {});
+  return _.merge({}, defaultConfig, userConfig.redis ?? {});
 }

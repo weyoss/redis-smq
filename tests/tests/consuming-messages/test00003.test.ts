@@ -7,15 +7,16 @@
  * in the root directory of this source tree.
  */
 
-import { ProducibleMessage } from '../../../index';
-import { delay } from 'bluebird';
-import { getConsumer } from '../../common/consumer';
-import { getProducer } from '../../common/producer';
+import bluebird from 'bluebird';
+import { test, expect } from '@jest/globals';
+import { ProducibleMessage } from '../../../index.js';
+import { EQueueType } from '../../../src/lib/index.js';
+import { getConsumer } from '../../common/consumer.js';
 import {
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
-import { EQueueType } from '../../../types';
+} from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
 
 test('Produce and consume 100 message: LIFO Queues', async () => {
   await createQueue(defaultQueue, EQueueType.LIFO_QUEUE);
@@ -40,7 +41,7 @@ test('Produce and consume 100 message: LIFO Queues', async () => {
     },
   });
   await consumer.runAsync();
-  await delay(20000);
+  await bluebird.delay(20000);
 
   expect(deliveredMessages.length).toEqual(publishedMsg.length);
   for (let i = 0; i < total; i += 1) {

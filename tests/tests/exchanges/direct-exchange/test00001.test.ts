@@ -7,18 +7,18 @@
  * in the root directory of this source tree.
  */
 
-import { RedisKeysError } from '../../../../src/common/redis-keys/redis-keys.error';
-import { ExchangeDirect } from '../../../../src/lib/exchange/exchange-direct';
-import { promisifyAll } from 'bluebird';
+import { test, expect } from '@jest/globals';
+import { RedisKeysError } from '../../../../src/common/redis-keys/redis-keys.error.js';
+import { getDirectExchange } from '../../../common/exchange.js';
 
 test('DirectExchange', async () => {
-  expect(() => new ExchangeDirect('!@223333')).toThrow(RedisKeysError);
-  expect(() => new ExchangeDirect('223333.')).toThrow(RedisKeysError);
-  expect(() => new ExchangeDirect('223333.w')).toThrow(RedisKeysError);
-  expect(() => new ExchangeDirect('a223333.w')).not.toThrow(RedisKeysError);
-  expect(() => new ExchangeDirect('a223333.w_e')).not.toThrow();
-  expect(() => new ExchangeDirect('a223333.w-e')).not.toThrow();
-  const e = promisifyAll(new ExchangeDirect('queue_a'));
-  const r = await e.getQueuesAsync();
+  const e = getDirectExchange();
+  await expect(e.getQueuesAsync('!@223333')).rejects.toThrow(RedisKeysError);
+  await expect(e.getQueuesAsync('223333.')).rejects.toThrow(RedisKeysError);
+  await expect(e.getQueuesAsync('223333.w')).rejects.toThrow(RedisKeysError);
+  await expect(e.getQueuesAsync('a223333.w')).resolves.not.toThrow();
+  await expect(e.getQueuesAsync('a223333.w_e')).resolves.not.toThrow();
+  await expect(e.getQueuesAsync('a223333.w-e')).resolves.not.toThrow();
+  const r = await e.getQueuesAsync('queue_a');
   expect(r).toEqual([{ name: 'queue_a', ns: 'testing' }]);
 });

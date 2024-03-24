@@ -7,11 +7,11 @@
  * in the root directory of this source tree.
  */
 
-import { MessageEnvelope } from '../../message/message-envelope';
+import { MessageEnvelope } from '../../message/message-envelope.js';
 import {
   EConsumeMessageDeadLetterCause,
   EConsumeMessageUnacknowledgedCause,
-} from '../../../../types';
+} from '../types/index.js';
 
 export enum ERetryAction {
   DEAD_LETTER,

@@ -7,14 +7,14 @@
  * in the root directory of this source tree.
  */
 
-import { IQueueParams, TQueueConsumer } from '../../../types';
-import { redisKeys } from '../../common/redis-keys/redis-keys';
 import {
   async,
   ICallback,
+  IRedisClient,
   IRedisTransaction,
-  RedisClient,
 } from 'redis-smq-common';
+import { redisKeys } from '../../common/redis-keys/redis-keys.js';
+import { IQueueParams, TQueueConsumer } from '../queue/index.js';
 
 export const consumerQueues = {
   removeConsumer(
@@ -22,14 +22,14 @@ export const consumerQueues = {
     queue: IQueueParams,
     consumerId: string,
   ): void {
-    const { keyQueueConsumers, keyConsumerQueues } =
-      redisKeys.getQueueConsumerKeys(queue, consumerId, null);
+    const { keyQueueConsumers } = redisKeys.getQueueKeys(queue, null);
+    const { keyConsumerQueues } = redisKeys.getConsumerKeys(consumerId);
     multi.hdel(keyQueueConsumers, consumerId);
     multi.srem(keyConsumerQueues, JSON.stringify(queue));
   },
 
   getQueueConsumers(
-    client: RedisClient,
+    client: IRedisClient,
     queue: IQueueParams,
     transform: boolean,
     cb: ICallback<Record<string, TQueueConsumer | string>>,
@@ -55,7 +55,7 @@ export const consumerQueues = {
   },
 
   getQueueConsumerIds(
-    client: RedisClient,
+    client: IRedisClient,
     queue: IQueueParams,
     cb: ICallback<string[]>,
   ): void {
@@ -64,7 +64,7 @@ export const consumerQueues = {
   },
 
   countQueueConsumers(
-    client: RedisClient,
+    client: IRedisClient,
     queue: IQueueParams,
     cb: ICallback<number>,
   ): void {
@@ -73,7 +73,7 @@ export const consumerQueues = {
   },
 
   getConsumerQueues(
-    client: RedisClient,
+    client: IRedisClient,
     consumerId: string,
     cb: ICallback<IQueueParams[]>,
   ): void {

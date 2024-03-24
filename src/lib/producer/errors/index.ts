@@ -7,9 +7,9 @@
  * in the root directory of this source tree.
  */
 
-export { ProducerError } from './producer.error';
-export { ProducerMessageNotPublishedError } from './producer-message-not-published.error';
-export { ProducerMessageNotScheduledError } from './producer-message-not-scheduled.error';
-export { ProducerInstanceNotRunningError } from './producer-instance-not-running.error';
-export { ProducerQueueWithoutConsumerGroupsError } from './producer-queue-without-consumer-groups.error';
-export { ProducerMessageExchangeRequiredError } from './producer-message-exchange-required.error';
+export { ProducerError } from './producer.error.js';
+export { ProducerMessageNotPublishedError } from './producer-message-not-published.error.js';
+export { ProducerMessageNotScheduledError } from './producer-message-not-scheduled.error.js';
+export { ProducerInstanceNotRunningError } from './producer-instance-not-running.error.js';
+export { ProducerQueueWithoutConsumerGroupsError } from './producer-queue-without-consumer-groups.error.js';
+export { ProducerMessageExchangeRequiredError } from './producer-message-exchange-required.error.js';

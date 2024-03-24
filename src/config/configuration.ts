@@ -7,12 +7,12 @@
  * in the root directory of this source tree.
  */
 
-import { IRedisSMQConfig, IRedisSMQConfigRequired } from '../../types';
-import Namespace from './namespace';
-import Redis from './redis';
-import Logger from './logger';
-import Messages from './messages/messages';
-import { EventListeners } from './event-listeners/event-listeners';
+import EventBus from './event-bus.js';
+import Logger from './logger.js';
+import Messages from './messages/messages.js';
+import Namespace from './namespace.js';
+import Redis from './redis.js';
+import { IRedisSMQConfig, IRedisSMQConfigRequired } from './types/index.js';
 
 export class Configuration {
   protected static instance: Configuration | null = null;
@@ -20,22 +20,6 @@ export class Configuration {
 
   protected constructor(config: IRedisSMQConfig) {
     this.config = this.parseConfiguration(config);
-  }
-
-  protected parseConfiguration(
-    config: IRedisSMQConfig,
-  ): IRedisSMQConfigRequired {
-    return {
-      namespace: Namespace(config),
-      redis: Redis(config),
-      logger: Logger(config),
-      messages: Messages(config),
-      eventListeners: EventListeners(config),
-    };
-  }
-
-  getConfig(): IRedisSMQConfigRequired {
-    return this.config;
   }
 
   static getSetConfig(config: IRedisSMQConfig = {}): IRedisSMQConfigRequired {
@@ -47,5 +31,21 @@ export class Configuration {
 
   static reset(): void {
     Configuration.instance = null;
+  }
+
+  getConfig(): IRedisSMQConfigRequired {
+    return this.config;
+  }
+
+  protected parseConfiguration(
+    config: IRedisSMQConfig,
+  ): IRedisSMQConfigRequired {
+    return {
+      namespace: Namespace(config),
+      redis: Redis(config),
+      logger: Logger(config),
+      messages: Messages(config),
+      eventBus: EventBus(config),
+    };
   }
 }

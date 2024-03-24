@@ -7,49 +7,59 @@
  * in the root directory of this source tree.
  */
 
-import { Consumer } from '../../src/lib/consumer/consumer';
-import { TRedisSMQEvent } from '../../types';
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function consumerOnEvent<T extends Array<any>>(
-  consumer: Consumer,
-  event: keyof TRedisSMQEvent,
-) {
-  return new Promise<T>((resolve) => {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    consumer.once(event, (...args: T) => {
-      resolve(args);
-    });
-  });
-}
+import { Consumer } from '../../src/lib/index.js';
+import { getEventBus } from './event-bus-redis.js';
 
 export async function untilMessageAcknowledged(
   consumer: Consumer,
   messageId?: string,
 ): Promise<void> {
-  const [id] = await consumerOnEvent<[string]>(consumer, 'messageAcknowledged');
-  if (messageId && messageId !== id) {
-    await untilMessageAcknowledged(consumer, messageId);
-  }
+  const eventBus = await getEventBus();
+  await new Promise<void>((resolve) => {
+    eventBus.on('consumer.consumeMessage.messageAcknowledged', (...args) => {
+      if (args[3] === consumer.getId()) {
+        if (messageId) {
+          if (messageId === args[0]) resolve();
+        } else resolve();
+      }
+    });
+  });
+}
+
+export async function untilMessageUnacknowledged(
+  consumer: Consumer,
+  messageId?: string,
+): Promise<void> {
+  const eventBus = await getEventBus();
+  await new Promise<void>((resolve) => {
+    eventBus.on('consumer.consumeMessage.messageUnacknowledged', (...args) => {
+      if (args[3] === consumer.getId()) {
+        if (messageId) {
+          if (messageId === args[0]) resolve();
+        } else resolve();
+      }
+    });
+  });
 }
 
 export async function untilMessageDeadLettered(
   consumer: Consumer,
   messageId?: string,
 ): Promise<void> {
-  const [id] = await consumerOnEvent<[string, string]>(
-    consumer,
-    'messageDeadLettered',
-  );
-  if (messageId && messageId !== id) {
-    await untilMessageDeadLettered(consumer, messageId);
-  }
+  const eventBus = await getEventBus();
+  await new Promise<void>((resolve) => {
+    eventBus.on('consumer.consumeMessage.messageDeadLettered', (...args) => {
+      if (args[3] === consumer.getId()) {
+        if (messageId) {
+          if (messageId === args[0]) resolve();
+        } else resolve();
+      }
+    });
+  });
 }
 
-export async function untilConsumerEvent(
-  consumer: Consumer,
-  event: keyof TRedisSMQEvent,
-): Promise<unknown[]> {
-  return consumerOnEvent(consumer, event);
+export async function untilConsumerDown(consumer: Consumer): Promise<void> {
+  await new Promise<void>((resolve) => {
+    consumer.on('consumer.down', () => resolve());
+  });
 }

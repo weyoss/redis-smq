@@ -7,9 +7,19 @@
  * in the root directory of this source tree.
  */
 
-import { promisifyAll } from 'bluebird';
-import { QueueRateLimit } from '../../src/lib/queue/queue-rate-limit/queue-rate-limit';
+import bluebird from 'bluebird';
+import { QueueRateLimit } from '../../src/lib/index.js';
+
+const instances: QueueRateLimit[] = [];
 
 export async function getQueueRateLimit() {
-  return promisifyAll(new QueueRateLimit());
+  const instance = new QueueRateLimit();
+  instances.push(instance);
+  return bluebird.promisifyAll(instance);
+}
+
+export async function shutDownQueueRateLimit() {
+  for (const i of instances) {
+    await bluebird.promisifyAll(i).shutdownAsync();
+  }
 }

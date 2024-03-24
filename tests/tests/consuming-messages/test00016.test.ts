@@ -7,25 +7,36 @@
  * in the root directory of this source tree.
  */
 
-import { promisifyAll } from 'bluebird';
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
-import { Consumer } from '../../../src/lib/consumer/consumer';
-import { untilMessageAcknowledged } from '../../common/events';
-import { getProducer } from '../../common/producer';
-import { createQueue } from '../../common/message-producing-consuming';
-import { shutDownBaseInstance } from '../../common/base-instance';
+import { test } from '@jest/globals';
+import bluebird from 'bluebird';
+import { ICallback } from 'redis-smq-common';
+import {
+  Consumer,
+  IMessageTransferable,
+  ProducibleMessage,
+} from '../../../src/lib/index.js';
+import { shutDownBaseInstance } from '../../common/base-instance.js';
+import { untilMessageAcknowledged } from '../../common/events.js';
+import { createQueue } from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
 
 test('Consume message from different queues using a single consumer instance: case 2', async () => {
   await createQueue('test_queue', false);
   await createQueue('another_queue', false);
 
-  const consumer = promisifyAll(new Consumer());
-  await consumer.consumeAsync('test_queue', (msg, cb) => {
-    setTimeout(cb, 1000);
-  });
-  await consumer.consumeAsync('another_queue', (msg, cb) => {
-    cb();
-  });
+  const consumer = bluebird.promisifyAll(new Consumer());
+  await consumer.consumeAsync(
+    'test_queue',
+    (msg: IMessageTransferable, cb: ICallback<void>) => {
+      setTimeout(() => cb(), 1000);
+    },
+  );
+  await consumer.consumeAsync(
+    'another_queue',
+    (msg: IMessageTransferable, cb: ICallback<void>) => {
+      cb();
+    },
+  );
   await consumer.runAsync();
 
   const producer = getProducer();

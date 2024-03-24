@@ -7,10 +7,10 @@
  * in the root directory of this source tree.
  */
 
-import { ExchangeTopic } from '../../../../src/lib/exchange/exchange-topic';
-import { promisifyAll } from 'bluebird';
-import { createQueue } from '../../../common/message-producing-consuming';
-import { isEqual } from '../../../common/util';
+import { test, expect } from '@jest/globals';
+import { getTopicExchange } from '../../../common/exchange.js';
+import { createQueue } from '../../../common/message-producing-consuming.js';
+import { isEqual } from '../../../common/utils.js';
 
 test('ExchangeTopic: fetching and matching queues', async () => {
   await createQueue({ ns: 'testing', name: 'w123.2.4.5' }, false);
@@ -19,8 +19,8 @@ test('ExchangeTopic: fetching and matching queues', async () => {
   await createQueue({ ns: 'testing', name: 'w123.2' }, false);
   await createQueue({ ns: 'testing', name: 'w123.2.4' }, false);
 
-  const e1 = promisifyAll(new ExchangeTopic('w123.2.4'));
-  const queues = await e1.getQueuesAsync();
+  const e1 = getTopicExchange();
+  const queues = await e1.getQueuesAsync('w123.2.4');
   expect(
     isEqual(queues, [
       { ns: 'testing', name: 'w123.2.4.5.6' },

@@ -7,13 +7,18 @@
  * in the root directory of this source tree.
  */
 
-import { delay, promisifyAll } from 'bluebird';
-import { Consumer } from '../../../src/lib/consumer/consumer';
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
-import { getProducer } from '../../common/producer';
-import { createQueue } from '../../common/message-producing-consuming';
-import { shutDownBaseInstance } from '../../common/base-instance';
-import { IMessageParams } from '../../../types';
+import { test, expect } from '@jest/globals';
+import bluebird from 'bluebird';
+import { ICallback } from 'redis-smq-common';
+import {
+  Consumer,
+  IMessageParams,
+  IMessageTransferable,
+  ProducibleMessage,
+} from '../../../src/lib/index.js';
+import { shutDownBaseInstance } from '../../common/base-instance.js';
+import { createQueue } from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
 
 test('Consume message from different queues using a single consumer instance: case 4', async () => {
   await createQueue('test1', false);
@@ -24,31 +29,46 @@ test('Consume message from different queues using a single consumer instance: ca
   await createQueue('test6', false);
 
   const messages: IMessageParams[] = [];
-  const consumer = promisifyAll(new Consumer(true));
+  const consumer = bluebird.promisifyAll(new Consumer(true));
 
-  await consumer.consumeAsync('test1', (msg, cb) => {
-    messages.push(msg);
-    cb();
-  });
-  await consumer.consumeAsync('test2', (msg, cb) => {
-    messages.push(msg);
-    cb();
-  });
-  await consumer.consumeAsync('test3', (msg, cb) => {
-    messages.push(msg);
-    cb();
-  });
+  await consumer.consumeAsync(
+    'test1',
+    (msg: IMessageTransferable, cb: ICallback<void>) => {
+      messages.push(msg);
+      cb();
+    },
+  );
+  await consumer.consumeAsync(
+    'test2',
+    (msg: IMessageTransferable, cb: ICallback<void>) => {
+      messages.push(msg);
+      cb();
+    },
+  );
+  await consumer.consumeAsync(
+    'test3',
+    (msg: IMessageTransferable, cb: ICallback<void>) => {
+      messages.push(msg);
+      cb();
+    },
+  );
 
   await consumer.runAsync();
 
-  await consumer.consumeAsync('test4', (msg, cb) => {
-    messages.push(msg);
-    cb();
-  });
-  await consumer.consumeAsync('test5', (msg, cb) => {
-    messages.push(msg);
-    cb();
-  });
+  await consumer.consumeAsync(
+    'test4',
+    (msg: IMessageTransferable, cb: ICallback<void>) => {
+      messages.push(msg);
+      cb();
+    },
+  );
+  await consumer.consumeAsync(
+    'test5',
+    (msg: IMessageTransferable, cb: ICallback<void>) => {
+      messages.push(msg);
+      cb();
+    },
+  );
 
   const queues = consumer.getQueues();
   expect(queues.map((i) => i.queueParams.name)).toEqual([
@@ -68,7 +88,7 @@ test('Consume message from different queues using a single consumer instance: ca
     );
   }
 
-  await delay(10000);
+  await bluebird.delay(10000);
   expect(messages.length).toBe(5);
   expect(messages.map((i) => i.destinationQueue.name).sort()).toEqual([
     'test1',
@@ -93,14 +113,17 @@ test('Consume message from different queues using a single consumer instance: ca
     'test5',
   ]);
 
-  await consumer.consumeAsync('test6', (msg, cb) => {
-    messages.push(msg);
-    cb();
-  });
+  await consumer.consumeAsync(
+    'test6',
+    (msg: IMessageTransferable, cb: ICallback<void>) => {
+      messages.push(msg);
+      cb();
+    },
+  );
   await producer.produceAsync(
     new ProducibleMessage().setQueue(`test6`).setBody(`body 6`),
   );
-  await delay(10000);
+  await bluebird.delay(10000);
   expect(messages.map((i) => i.destinationQueue.name).sort()).toEqual([
     'test1',
     'test2',

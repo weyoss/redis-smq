@@ -7,22 +7,23 @@
  * in the root directory of this source tree.
  */
 
-import { delay, promisifyAll } from 'bluebird';
-import { Queue } from '../../../src/lib/queue/queue/queue';
+import { test, expect } from '@jest/globals';
+import bluebird from 'bluebird';
 import {
+  Consumer,
+  ConsumerGroupIdRequiredError,
+  ConsumerGroups,
   EMessagePriority,
   EQueueDeliveryModel,
   EQueueType,
   IQueueParams,
-} from '../../../types';
-import { Consumer } from '../../../src/lib/consumer/consumer';
-import { Producer } from '../../../src/lib/producer/producer';
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
-import { Message } from '../../../src/lib/message/message';
-import { QueueMessages } from '../../../src/lib/queue/queue-messages/queue-messages';
-import { ConsumerGroups } from '../../../src/lib/consumer/consumer-groups/consumer-groups';
-import { QueuePendingMessages } from '../../../src/lib/queue/queue-pending-messages/queue-pending-messages';
-import { ConsumerGroupIdRequiredError } from '../../../src/lib/consumer/errors';
+  Producer,
+  ProducibleMessage,
+} from '../../../src/lib/index.js';
+import { getMessage } from '../../common/message.js';
+import { getQueue } from '../../common/queue.js';
+import { getQueueMessages } from '../../common/queue-messages.js';
+import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 
 test('Publish and consume a message to/from a consumer group', async () => {
   const queue1: IQueueParams = {
@@ -30,17 +31,17 @@ test('Publish and consume a message to/from a consumer group', async () => {
     ns: 'ns1',
   };
 
-  const queue = promisifyAll(new Queue());
+  const queue = await getQueue();
   await queue.saveAsync(
     queue1,
     EQueueType.PRIORITY_QUEUE,
     EQueueDeliveryModel.PUB_SUB,
   );
 
-  const consumerGroups = promisifyAll(new ConsumerGroups());
+  const consumerGroups = bluebird.promisifyAll(new ConsumerGroups());
   await consumerGroups.saveConsumerGroupAsync(queue1, 'my-group');
 
-  const producer = promisifyAll(new Producer());
+  const producer = bluebird.promisifyAll(new Producer());
   await producer.runAsync();
 
   const [messageId] = await producer.produceAsync(
@@ -50,14 +51,14 @@ test('Publish and consume a message to/from a consumer group', async () => {
       .setPriority(EMessagePriority.HIGHEST),
   );
 
-  await delay(5000);
+  await bluebird.delay(5000);
 
-  const message = promisifyAll(new Message());
+  const message = await getMessage();
   const msg = await message.getMessageByIdAsync(messageId);
   expect(msg.id).toEqual(messageId);
   expect(msg.consumerGroupId).toEqual('my-group');
 
-  const queueMessages = promisifyAll(new QueueMessages());
+  const queueMessages = await getQueueMessages();
   const count = await queueMessages.countMessagesByStatusAsync(queue1);
   expect(count).toEqual({
     acknowledged: 0,
@@ -66,7 +67,7 @@ test('Publish and consume a message to/from a consumer group', async () => {
     scheduled: 0,
   });
 
-  const pendingMessages = promisifyAll(new QueuePendingMessages());
+  const pendingMessages = await getQueuePendingMessages();
   await expect(pendingMessages.getMessagesAsync(queue1, 1, 10)).rejects.toThrow(
     ConsumerGroupIdRequiredError,
   );
@@ -79,13 +80,13 @@ test('Publish and consume a message to/from a consumer group', async () => {
   expect(messages.items[0].id).toEqual(messageId);
   expect(messages.items[0].consumerGroupId).toEqual('my-group');
 
-  const consumer = promisifyAll(new Consumer());
+  const consumer = bluebird.promisifyAll(new Consumer());
   await consumer.consumeAsync(
     { queue: queue1, groupId: 'my-group' },
     (msg, cb) => cb(),
   );
   await consumer.runAsync();
-  await delay(5000);
+  await bluebird.delay(5000);
 
   const count2 = await queueMessages.countMessagesByStatusAsync(queue1);
   expect(count2).toEqual({
@@ -97,4 +98,5 @@ test('Publish and consume a message to/from a consumer group', async () => {
 
   await consumer.shutdownAsync();
   await producer.shutdownAsync();
+  await consumerGroups.shutdownAsync();
 });

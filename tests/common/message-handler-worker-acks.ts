@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { IMessageParams } from '../../types';
 import { ICallback } from 'redis-smq-common';
+import { IMessageParams } from '../../src/lib/index.js';
 
 export default function myHandler(msg: IMessageParams, cb: ICallback<void>) {
   cb();

@@ -7,18 +7,18 @@
  * in the root directory of this source tree.
  */
 
+import cronParser from 'cron-parser';
+import { _getExchangeDirectTransferable } from '../exchange/exchange-direct/_/_get-exchange-direct-transferable.js';
+import { _getExchangeFanOutTransferable } from '../exchange/exchange-fan-out/_/_get-exchange-fanout-transferable.js';
+import { _getExchangeTopicTransferable } from '../exchange/exchange-topic/_/_get-exchange-topic-transferable.js';
 import {
-  EMessagePriority,
-  IQueueParams,
-  TExchange,
-  TMessageConsumeOptions,
-  TTopicParams,
-} from '../../../types';
-import { MessageError } from './errors';
-import { parseExpression } from 'cron-parser';
-import { ExchangeFanOut } from '../exchange/exchange-fan-out';
-import { ExchangeTopic } from '../exchange/exchange-topic';
-import { ExchangeDirect } from '../exchange/exchange-direct';
+  EExchangeType,
+  ITopicParams,
+  TExchangeTransferable,
+} from '../exchange/index.js';
+import { IQueueParams } from '../queue/index.js';
+import { MessageError } from './errors/index.js';
+import { EMessagePriority, TMessageConsumeOptions } from './types/index.js';
 
 export class ProducibleMessage {
   protected static defaultConsumeOptions: TMessageConsumeOptions = {
@@ -50,7 +50,7 @@ export class ProducibleMessage {
 
   protected scheduledRepeat = 0;
 
-  protected exchange: TExchange | null = null;
+  protected exchange: TExchangeTransferable | null = null;
 
   constructor() {
     this.createdAt = Date.now();
@@ -60,6 +60,73 @@ export class ProducibleMessage {
     this.setRetryDelay(retryDelay);
     this.setTTL(ttl);
     this.setRetryThreshold(retryThreshold);
+  }
+
+  static setDefaultConsumeOptions(
+    consumeOptions: Partial<TMessageConsumeOptions>,
+  ): void {
+    const {
+      ttl = null,
+      retryThreshold = null,
+      retryDelay = null,
+      consumeTimeout = null,
+    } = consumeOptions;
+
+    if (ttl !== null)
+      ProducibleMessage.defaultConsumeOptions.ttl =
+        ProducibleMessage.validateTTL(ttl);
+
+    if (retryDelay !== null)
+      ProducibleMessage.defaultConsumeOptions.retryDelay =
+        ProducibleMessage.validateRetryDelay(retryDelay);
+
+    if (retryThreshold !== null)
+      ProducibleMessage.defaultConsumeOptions.retryThreshold =
+        ProducibleMessage.validateRetryThreshold(retryThreshold);
+
+    if (consumeTimeout !== null)
+      ProducibleMessage.defaultConsumeOptions.consumeTimeout =
+        ProducibleMessage.validateConsumeTimeout(consumeTimeout);
+  }
+
+  protected static validateRetryDelay(delay: number): number {
+    const value = Number(delay);
+    if (isNaN(value) || value < 0) {
+      throw new MessageError(
+        'Expected a positive integer in milliseconds >= 0',
+      );
+    }
+    return value;
+  }
+
+  protected static validateTTL(ttl: unknown): number {
+    const value = Number(ttl);
+    if (isNaN(value) || value < 0) {
+      throw new MessageError(
+        'Expected a positive integer value in milliseconds >= 0',
+      );
+    }
+    return value;
+  }
+
+  protected static validateConsumeTimeout(timeout: unknown): number {
+    const value = Number(timeout);
+    if (isNaN(value) || value < 0) {
+      throw new MessageError(
+        'Expected a positive integer value in milliseconds >= 0',
+      );
+    }
+    return value;
+  }
+
+  protected static validateRetryThreshold(threshold: unknown): number {
+    const value = Number(threshold);
+    if (isNaN(value) || value < 0) {
+      throw new MessageError(
+        'Retry threshold should be a positive integer >= 0',
+      );
+    }
+    return value;
   }
 
   getCreatedAt(): number {
@@ -104,7 +171,7 @@ export class ProducibleMessage {
 
   setScheduledCRON(cron: string): ProducibleMessage {
     // it throws an exception for an invalid value
-    parseExpression(cron);
+    cronParser.parseExpression(cron);
     this.scheduledCron = cron;
     return this;
   }
@@ -177,48 +244,46 @@ export class ProducibleMessage {
   }
 
   setFanOut(fanOutName: string): ProducibleMessage {
-    this.exchange = new ExchangeFanOut(fanOutName);
+    this.exchange = _getExchangeFanOutTransferable(fanOutName);
     return this;
   }
 
-  setTopic(topicParams: string | TTopicParams): ProducibleMessage {
-    this.exchange = new ExchangeTopic(topicParams);
+  setTopic(topicParams: string | ITopicParams): ProducibleMessage {
+    this.exchange = _getExchangeTopicTransferable(topicParams);
     return this;
   }
 
   setQueue(queueParams: string | IQueueParams): ProducibleMessage {
-    this.exchange = new ExchangeDirect(queueParams);
+    this.exchange = _getExchangeDirectTransferable(queueParams);
     return this;
   }
 
-  getQueue(): IQueueParams | string | null {
-    if (this.exchange && this.exchange instanceof ExchangeDirect) {
-      return this.exchange.getBindingParams();
+  getQueue(): IQueueParams | null {
+    if (this.exchange && this.exchange.type === EExchangeType.DIRECT) {
+      return this.exchange.params;
     }
     return null;
   }
 
-  getTopic(): TTopicParams | string | null {
-    if (this.exchange && this.exchange instanceof ExchangeTopic) {
-      return this.exchange.getBindingParams();
+  getTopic(): ITopicParams | null {
+    if (this.exchange && this.exchange.type === EExchangeType.TOPIC) {
+      return this.exchange.params;
     }
     return null;
   }
 
   getFanOut(): string | null {
-    if (this.exchange && this.exchange instanceof ExchangeFanOut) {
-      return this.exchange.getBindingParams();
+    if (this.exchange && this.exchange.type === EExchangeType.FANOUT) {
+      return this.exchange.params;
     }
     return null;
   }
 
-  setExchange(exchange: TExchange): ProducibleMessage {
-    this.exchange = exchange;
-    return this;
-  }
-
-  getExchange(): TExchange | null {
-    return this.exchange;
+  getExchange(): TExchangeTransferable | null {
+    if (this.exchange) {
+      return this.exchange;
+    }
+    return null;
   }
 
   getScheduledRepeatPeriod(): number | null {
@@ -255,71 +320,5 @@ export class ProducibleMessage {
 
   getBody(): unknown {
     return this.body;
-  }
-
-  protected static validateRetryDelay(delay: number): number {
-    const value = Number(delay);
-    if (isNaN(value) || value < 0) {
-      throw new MessageError(
-        'Expected a positive integer in milliseconds >= 0',
-      );
-    }
-    return value;
-  }
-  protected static validateTTL(ttl: unknown): number {
-    const value = Number(ttl);
-    if (isNaN(value) || value < 0) {
-      throw new MessageError(
-        'Expected a positive integer value in milliseconds >= 0',
-      );
-    }
-    return value;
-  }
-
-  protected static validateConsumeTimeout(timeout: unknown): number {
-    const value = Number(timeout);
-    if (isNaN(value) || value < 0) {
-      throw new MessageError(
-        'Expected a positive integer value in milliseconds >= 0',
-      );
-    }
-    return value;
-  }
-
-  protected static validateRetryThreshold(threshold: unknown): number {
-    const value = Number(threshold);
-    if (isNaN(value) || value < 0) {
-      throw new MessageError(
-        'Retry threshold should be a positive integer >= 0',
-      );
-    }
-    return value;
-  }
-
-  static setDefaultConsumeOptions(
-    consumeOptions: Partial<TMessageConsumeOptions>,
-  ): void {
-    const {
-      ttl = null,
-      retryThreshold = null,
-      retryDelay = null,
-      consumeTimeout = null,
-    } = consumeOptions;
-
-    if (ttl !== null)
-      ProducibleMessage.defaultConsumeOptions.ttl =
-        ProducibleMessage.validateTTL(ttl);
-
-    if (retryDelay !== null)
-      ProducibleMessage.defaultConsumeOptions.retryDelay =
-        ProducibleMessage.validateRetryDelay(retryDelay);
-
-    if (retryThreshold !== null)
-      ProducibleMessage.defaultConsumeOptions.retryThreshold =
-        ProducibleMessage.validateRetryThreshold(retryThreshold);
-
-    if (consumeTimeout !== null)
-      ProducibleMessage.defaultConsumeOptions.consumeTimeout =
-        ProducibleMessage.validateConsumeTimeout(consumeTimeout);
   }
 }

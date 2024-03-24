@@ -12,9 +12,9 @@ import {
   IMessagesConfigStorageOptions,
   IMessagesConfigStorageOptionsRequired,
   IMessagesConfigStorageRequired,
-  IRedisSMQConfig,
-} from '../../../types';
-import { ConfigurationError } from '../configuration.error';
+} from '../../lib/index.js';
+import { ConfigurationError } from '../configuration.error.js';
+import { IRedisSMQConfig } from '../types/index.js';
 
 function getMessageStorageConfig(
   config: IRedisSMQConfig,

@@ -7,49 +7,60 @@
  * in the root directory of this source tree.
  */
 
-import { delay } from 'bluebird';
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
-import { getConsumer } from '../../common/consumer';
-import { getProducer } from '../../common/producer';
+import { test, expect, jest } from '@jest/globals';
+import bluebird from 'bluebird';
+import { ICallback } from 'redis-smq-common';
+import {
+  IMessageTransferable,
+  ProducibleMessage,
+} from '../../../src/lib/index.js';
+import { getConsumer } from '../../common/consumer.js';
+import { getEventBus } from '../../common/event-bus-redis.js';
 import {
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
+} from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
 
 test('Given many consumers, a message is delivered only to one consumer', async () => {
+  const eventBus = await getEventBus();
   await createQueue(defaultQueue, false);
 
   const consumer1 = getConsumer({
-    messageHandler: jest.fn((msg, cb) => {
-      cb();
-    }),
+    messageHandler: jest.fn(
+      (msg: IMessageTransferable, cb: ICallback<void>) => {
+        cb();
+      },
+    ),
   });
   let unacks1 = 0;
   let acks1 = 0;
-  consumer1
-    .on('messageUnacknowledged', () => {
-      unacks1 += 1;
+  eventBus
+    .on('consumer.consumeMessage.messageUnacknowledged', (...args) => {
+      if (args[3] === consumer1.getId()) unacks1 += 1;
     })
-    .on('messageAcknowledged', () => {
-      acks1 += 1;
+    .on('consumer.consumeMessage.messageAcknowledged', (...args) => {
+      if (args[3] === consumer1.getId()) acks1 += 1;
     });
 
   /**
    *
    */
   const consumer2 = getConsumer({
-    messageHandler: jest.fn((msg, cb) => {
-      cb();
-    }),
+    messageHandler: jest.fn(
+      (msg: IMessageTransferable, cb: ICallback<void>) => {
+        cb();
+      },
+    ),
   });
   let unacks2 = 0;
   let acks2 = 0;
-  consumer2
-    .on('messageUnacknowledged', () => {
-      unacks2 += 1;
+  eventBus
+    .on('consumer.consumeMessage.messageUnacknowledged', (...args) => {
+      if (args[3] === consumer2.getId()) unacks2 += 1;
     })
-    .on('messageAcknowledged', () => {
-      acks2 += 1;
+    .on('consumer.consumeMessage.messageAcknowledged', (...args) => {
+      if (args[3] === consumer2.getId()) acks2 += 1;
     });
 
   await consumer1.runAsync();
@@ -69,7 +80,7 @@ test('Given many consumers, a message is delivered only to one consumer', async 
   /**
    *
    */
-  await delay(20000);
+  await bluebird.delay(20000);
 
   /**
    *

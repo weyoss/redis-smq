@@ -7,10 +7,11 @@
  * in the root directory of this source tree.
  */
 
-import { isEqual } from '../../../common/util';
-import { EQueueDeliveryModel, EQueueType } from '../../../../types';
-import { getQueue } from '../../../common/queue';
-import { getFanOutExchange } from '../../../common/exchange';
+import { test, expect } from '@jest/globals';
+import { EQueueDeliveryModel, EQueueType } from '../../../../src/lib/index.js';
+import { getFanOutExchange } from '../../../common/exchange.js';
+import { getQueue } from '../../../common/queue.js';
+import { isEqual } from '../../../common/utils.js';
 
 test('ExchangeFanOut: getQueues() ', async () => {
   const q1 = { ns: 'testing', name: 'w123' };
@@ -28,10 +29,10 @@ test('ExchangeFanOut: getQueues() ', async () => {
     EQueueDeliveryModel.POINT_TO_POINT,
   );
 
-  const exchange = getFanOutExchange('fanout_a');
-  await exchange.bindQueueAsync(q1);
-  await exchange.bindQueueAsync(q2);
+  const fanOutExchange = getFanOutExchange();
+  await fanOutExchange.bindQueueAsync(q1, 'fanout_a');
+  await fanOutExchange.bindQueueAsync(q2, 'fanout_a');
 
-  const r = await exchange.getQueuesAsync();
+  const r = await fanOutExchange.getQueuesAsync('fanout_a');
   expect(isEqual(r, [q1, q2])).toBe(true);
 });

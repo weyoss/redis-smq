@@ -7,6 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import { ExchangeError } from './exchange.error';
+import { ExchangeError } from './exchange.error.js';
 
 export class ExchangeFanOutError extends ExchangeError {}

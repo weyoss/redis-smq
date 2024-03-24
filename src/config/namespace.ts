@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { IRedisSMQConfig } from '../../types';
-import { redisKeys } from '../common/redis-keys/redis-keys';
+import { redisKeys } from '../common/redis-keys/redis-keys.js';
+import { IRedisSMQConfig } from './types/index.js';
 
 const defaultNamespace = 'default';
 

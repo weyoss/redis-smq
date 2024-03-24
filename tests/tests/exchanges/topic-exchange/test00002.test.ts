@@ -7,9 +7,10 @@
  * in the root directory of this source tree.
  */
 
-import { isEqual } from '../../../common/util';
-import { getTopicExchange } from '../../../common/exchange';
-import { createQueue } from '../../../common/message-producing-consuming';
+import { test, expect } from '@jest/globals';
+import { getTopicExchange } from '../../../common/exchange.js';
+import { createQueue } from '../../../common/message-producing-consuming.js';
+import { isEqual } from '../../../common/utils.js';
 
 test('ExchangeTopic: matching queues', async () => {
   await createQueue({ ns: 'testing', name: 'w123.2.4.5' }, false);
@@ -20,8 +21,8 @@ test('ExchangeTopic: matching queues', async () => {
   await createQueue({ ns: 'my_app', name: 'w123.2.4.5' }, false);
   await createQueue({ ns: 'my_app', name: 'w123.2.4' }, false);
 
-  const e1 = getTopicExchange('w123.2.4');
-  const queues = await e1.getQueuesAsync();
+  const e = getTopicExchange();
+  const queues = await e.getQueuesAsync('w123.2.4');
   expect(
     isEqual(queues, [
       { ns: 'testing', name: 'w123.2.4.5' },
@@ -29,8 +30,7 @@ test('ExchangeTopic: matching queues', async () => {
       { ns: 'testing', name: 'w123.2.4' },
     ]),
   ).toBe(true);
-  const e2 = getTopicExchange({ ns: 'my_app', topic: 'w123.2.4' });
-  const queues2 = await e2.getQueuesAsync();
+  const queues2 = await e.getQueuesAsync({ ns: 'my_app', topic: 'w123.2.4' });
   expect(
     isEqual(queues2, [
       { ns: 'my_app', name: 'w123.2.4.5' },

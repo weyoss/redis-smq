@@ -7,18 +7,18 @@
  * in the root directory of this source tree.
  */
 
+import { test, expect } from '@jest/globals';
+import { MessageNotFoundError } from '../../../src/lib/index.js';
+import { getMessage } from '../../common/message.js';
 import {
   createQueue,
   defaultQueue,
   produceAndDeadLetterMessage,
-} from '../../common/message-producing-consuming';
-import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages';
-import { getQueuePendingMessages } from '../../common/queue-pending-messages';
-import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages';
-import { getQueueMessages } from '../../common/queue-messages';
-import { promisifyAll } from 'bluebird';
-import { MessageNotFoundError } from '../../../src/lib/message/errors';
-import { Message } from '../../../src/lib/message/message';
+} from '../../common/message-producing-consuming.js';
+import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
+import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
+import { getQueueMessages } from '../../common/queue-messages.js';
+import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 
 test('Combined test: Delete a dead-letter message. Check pending, acknowledged, and dead-letter message. Check queue metrics.', async () => {
   await createQueue(defaultQueue, false);
@@ -48,7 +48,7 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(count.acknowledged).toBe(0);
   expect(count.deadLettered).toBe(1);
 
-  const message = promisifyAll(new Message());
+  const message = await getMessage();
   await message.deleteMessageByIdAsync(messageId);
 
   const res4 = await acknowledgedMessages.getMessagesAsync(queue, 0, 100);
@@ -68,7 +68,7 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(count1.pending).toBe(0);
   expect(count1.deadLettered).toBe(0);
 
-  await expect(async () => {
-    await message.deleteMessageByIdAsync(messageId);
-  }).rejects.toThrow(MessageNotFoundError);
+  await expect(message.deleteMessageByIdAsync(messageId)).rejects.toThrow(
+    MessageNotFoundError,
+  );
 });

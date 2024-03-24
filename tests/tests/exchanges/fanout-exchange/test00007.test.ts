@@ -7,23 +7,17 @@
  * in the root directory of this source tree.
  */
 
-import { ExchangeFanOut } from '../../../../src/lib/exchange/exchange-fan-out';
-import { EQueueDeliveryModel, EQueueType } from '../../../../types';
-import { getQueue } from '../../../common/queue';
-import { getFanOutExchange } from '../../../common/exchange';
-import { promisifyAll } from 'bluebird';
-
-const FanOutExchangeAsync = promisifyAll(ExchangeFanOut);
+import { test, expect } from '@jest/globals';
+import { EQueueDeliveryModel, EQueueType } from '../../../../src/lib/index.js';
+import { getFanOutExchange } from '../../../common/exchange.js';
+import { getQueue } from '../../../common/queue.js';
 
 test('ExchangeFanOut: creating and deleting an exchange', async () => {
-  const e1 = getFanOutExchange('e1');
-  await e1.saveExchangeAsync();
-  await e1.saveExchangeAsync();
-
-  const e2 = getFanOutExchange('e2');
-  await e2.saveExchangeAsync();
-
-  const r1 = await FanOutExchangeAsync.getAllExchangesAsync();
+  const fanOutExchange = getFanOutExchange();
+  await fanOutExchange.saveExchangeAsync('e1');
+  await fanOutExchange.saveExchangeAsync('e1');
+  await fanOutExchange.saveExchangeAsync('e2');
+  const r1 = await fanOutExchange.getAllExchangesAsync();
   expect(r1.sort()).toEqual(['e1', 'e2']);
 
   const q1 = { ns: 'testing', name: 'w123' };
@@ -34,30 +28,30 @@ test('ExchangeFanOut: creating and deleting an exchange', async () => {
     EQueueType.LIFO_QUEUE,
     EQueueDeliveryModel.POINT_TO_POINT,
   );
-  await e1.bindQueueAsync(q1);
-  await e1.bindQueueAsync(q1);
+  await fanOutExchange.bindQueueAsync(q1, 'e1');
+  await fanOutExchange.bindQueueAsync(q1, 'e1');
 
-  const r4 = await e1.getQueuesAsync();
+  const r4 = await fanOutExchange.getQueuesAsync('e1');
   expect(r4).toEqual([q1]);
 
-  await e2.bindQueueAsync(q1);
+  await fanOutExchange.bindQueueAsync(q1, 'e2');
 
-  const r5 = await e1.getQueuesAsync();
+  const r5 = await fanOutExchange.getQueuesAsync('e1');
   expect(r5).toEqual([]);
 
-  const r6 = await e2.getQueuesAsync();
+  const r6 = await fanOutExchange.getQueuesAsync('e2');
   expect(r6).toEqual([q1]);
 
-  await expect(e2.deleteExchangeAsync()).rejects.toThrow(
+  await expect(fanOutExchange.deleteExchangeAsync('e2')).rejects.toThrow(
     `Exchange has 1 bound queue(s). Unbind all queues before deleting the exchange.`,
   );
 
-  await e2.unbindQueueAsync(q1);
-  await expect(e2.unbindQueueAsync(q1)).rejects.toThrow(
+  await fanOutExchange.unbindQueueAsync(q1, 'e2');
+  await expect(fanOutExchange.unbindQueueAsync(q1, 'e2')).rejects.toThrow(
     `Queue ${q1.name}@${q1.ns} is not bound to [e2] exchange.`,
   );
 
-  await e2.deleteExchangeAsync();
-  const r7 = await FanOutExchangeAsync.getAllExchangesAsync();
+  await fanOutExchange.deleteExchangeAsync('e2');
+  const r7 = await fanOutExchange.getAllExchangesAsync();
   expect(r7).toEqual(['e1']);
 });

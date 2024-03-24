@@ -7,24 +7,51 @@
  * in the root directory of this source tree.
  */
 
-import { promisifyAll } from 'bluebird';
-import { ExchangeFanOut } from '../../src/lib/exchange/exchange-fan-out';
+import bluebird from 'bluebird';
 import {
-  TExchangeDirectBindingParams,
-  TExchangeFanOutBindingParams,
-  TExchangeTopicBindingParams,
-} from '../../types';
-import { ExchangeTopic } from '../../src/lib/exchange/exchange-topic';
-import { ExchangeDirect } from '../../src/lib/exchange/exchange-direct';
+  ExchangeDirect,
+  ExchangeFanOut,
+  ExchangeTopic,
+} from '../../src/lib/index.js';
 
-export function getFanOutExchange(bindingParams: TExchangeFanOutBindingParams) {
-  return promisifyAll(new ExchangeFanOut(bindingParams));
+const fanOutExchanges: ExchangeFanOut[] = [];
+
+export function getFanOutExchange() {
+  const instance = new ExchangeFanOut();
+  fanOutExchanges.push(instance);
+  return bluebird.promisifyAll(instance);
 }
 
-export function getTopicExchange(bindingParams: TExchangeTopicBindingParams) {
-  return promisifyAll(new ExchangeTopic(bindingParams));
+export async function shutDownFanOutExchange() {
+  for (const i of fanOutExchanges) {
+    await bluebird.promisifyAll(i).shutdownAsync();
+  }
 }
 
-export function getDirectExchange(bindingParams: TExchangeDirectBindingParams) {
-  return promisifyAll(new ExchangeDirect(bindingParams));
+const topicExchanges: ExchangeTopic[] = [];
+
+export function getTopicExchange() {
+  const instance = new ExchangeTopic();
+  topicExchanges.push(instance);
+  return bluebird.promisifyAll(instance);
+}
+
+export async function shutDownTopicExchange() {
+  for (const i of topicExchanges) {
+    await bluebird.promisifyAll(i).shutdownAsync();
+  }
+}
+
+const directExchanges: ExchangeDirect[] = [];
+
+export function getDirectExchange() {
+  const instance = new ExchangeDirect();
+  directExchanges.push(instance);
+  return bluebird.promisifyAll(instance);
+}
+
+export async function shutDownDirectExchange() {
+  for (const i of directExchanges) {
+    await bluebird.promisifyAll(i).shutdownAsync();
+  }
 }

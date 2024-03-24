@@ -7,18 +7,25 @@
  * in the root directory of this source tree.
  */
 
-import { delay } from 'bluebird';
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
-import { getConsumer } from '../../common/consumer';
-import { getProducer } from '../../common/producer';
+import { test, expect } from '@jest/globals';
+import bluebird from 'bluebird';
+import { ProducibleMessage } from '../../../src/lib/index.js';
+import { getConsumer } from '../../common/consumer.js';
+import { getEventBus } from '../../common/event-bus-redis.js';
 import {
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
-import { validateTime } from '../../common/validate-time';
-import { getQueueRateLimit } from '../../common/queue-rate-limit';
+} from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
+import { getQueueRateLimit } from '../../common/queue-rate-limit.js';
+import { validateTime } from '../../common/validate-time.js';
+
+process.on('warning', (warning) => {
+  console.log('TRACING', warning);
+});
 
 test('Set a rate limit for a queue and consume message using many consumers', async () => {
+  const eventBus = await getEventBus();
   await createQueue(defaultQueue, false);
 
   const queueRateLimit = await getQueueRateLimit();
@@ -28,11 +35,15 @@ test('Set a rate limit for a queue and consume message using many consumers', as
   });
 
   const messages: { ts: number; messageId: string }[] = [];
+  eventBus.on(
+    'consumer.consumeMessage.messageAcknowledged',
+    (messageId: string) => {
+      messages.push({ ts: Date.now(), messageId });
+    },
+  );
+
   for (let i = 0; i < 6; i += 1) {
     const consumer = await getConsumer();
-    consumer.on('messageAcknowledged', (messageId: string) => {
-      messages.push({ ts: Date.now(), messageId });
-    });
     await consumer.runAsync();
   }
 
@@ -45,7 +56,7 @@ test('Set a rate limit for a queue and consume message using many consumers', as
     );
   }
 
-  await delay(30000);
+  await bluebird.delay(30000);
   expect(messages.length > 6).toBe(true);
 
   for (let i = 0; i < messages.length; i += 1) {

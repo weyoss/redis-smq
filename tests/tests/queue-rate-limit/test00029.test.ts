@@ -7,18 +7,21 @@
  * in the root directory of this source tree.
  */
 
-import { delay } from 'bluebird';
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
-import { getConsumer } from '../../common/consumer';
-import { getProducer } from '../../common/producer';
+import { test, expect } from '@jest/globals';
+import bluebird from 'bluebird';
+import { ProducibleMessage } from '../../../src/lib/index.js';
+import { getConsumer } from '../../common/consumer.js';
+import { getEventBus } from '../../common/event-bus-redis.js';
 import {
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
-import { validateTime } from '../../common/validate-time';
-import { getQueueRateLimit } from '../../common/queue-rate-limit';
+} from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
+import { getQueueRateLimit } from '../../common/queue-rate-limit.js';
+import { validateTime } from '../../common/validate-time.js';
 
 test('Rate limit a queue without priority and check message rate', async () => {
+  const eventBus = await getEventBus();
   await createQueue(defaultQueue, false);
 
   const queueRateLimit = await getQueueRateLimit();
@@ -52,12 +55,15 @@ test('Rate limit a queue without priority and check message rate', async () => {
   const messages: { ts: number; messageId: string }[] = [];
   const consumer = await getConsumer();
 
-  consumer.on('messageAcknowledged', (messageId: string) => {
-    messages.push({ ts: Date.now(), messageId });
-  });
+  eventBus.on(
+    'consumer.consumeMessage.messageAcknowledged',
+    (messageId: string) => {
+      messages.push({ ts: Date.now(), messageId });
+    },
+  );
 
   await consumer.runAsync();
-  await delay(25000);
+  await bluebird.delay(25000);
 
   expect(messages.length).toBe(6);
 

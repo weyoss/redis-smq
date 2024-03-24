@@ -7,16 +7,23 @@
  * in the root directory of this source tree.
  */
 
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
-import { delay } from 'bluebird';
-import { getConsumer } from '../../common/consumer';
-import { getProducer } from '../../common/producer';
+import { test, expect, jest } from '@jest/globals';
+import bluebird from 'bluebird';
+import { ICallback } from 'redis-smq-common';
+import {
+  IMessageTransferable,
+  ProducibleMessage,
+} from '../../../src/lib/index.js';
+import { getConsumer } from '../../common/consumer.js';
+import { getEventBus } from '../../common/event-bus-redis.js';
 import {
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
+} from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
 
 test('Async exceptions are caught when consuming a message', async () => {
+  const eventBus = await getEventBus();
   const producer = getProducer();
   await producer.runAsync();
 
@@ -24,24 +31,26 @@ test('Async exceptions are caught when consuming a message', async () => {
 
   let callCount = 0;
   const consumer = getConsumer({
-    messageHandler: jest.fn((msg, cb) => {
-      callCount += 1;
-      if (callCount === 1) {
-        setTimeout(() => {
-          cb(new Error('Async error'));
-        }, 2000);
-      } else if (callCount === 2) cb();
-      else throw new Error('Unexpected call');
-    }),
+    messageHandler: jest.fn(
+      (msg: IMessageTransferable, cb: ICallback<void>) => {
+        callCount += 1;
+        if (callCount === 1) {
+          setTimeout(() => {
+            cb(new Error('Async error'));
+          }, 2000);
+        } else if (callCount === 2) cb();
+        else throw new Error('Unexpected call');
+      },
+    ),
   });
 
   let unacknowledged = 0;
-  consumer.on('messageUnacknowledged', () => {
+  eventBus.on('consumer.consumeMessage.messageUnacknowledged', () => {
     unacknowledged += 1;
   });
 
   let acknowledged = 0;
-  consumer.on('messageAcknowledged', () => {
+  eventBus.on('consumer.consumeMessage.messageAcknowledged', () => {
     acknowledged += 1;
   });
 
@@ -49,9 +58,9 @@ test('Async exceptions are caught when consuming a message', async () => {
   msg.setBody({ hello: 'world' }).setQueue(defaultQueue);
 
   await producer.produceAsync(msg);
-  consumer.run();
+  consumer.run(() => void 0);
 
-  await delay(15000);
+  await bluebird.delay(15000);
   expect(unacknowledged).toBe(1);
   expect(acknowledged).toBe(1);
 });
