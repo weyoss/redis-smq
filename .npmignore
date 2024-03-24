@@ -1,5 +1,6 @@
 dist/tests
 dist/examples
+dist/**/tests
 examples
 src/**
 tests/**
@@ -25,3 +26,5 @@ docker-compose.yml
 scripts/**
 docs/**
 .codecov.yml
+tsconfig*
+jest*

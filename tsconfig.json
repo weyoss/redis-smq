@@ -14,6 +14,8 @@
     "allowSyntheticDefaultImports": true,
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
 
     // esm settings
     "outDir": "dist/esm",
