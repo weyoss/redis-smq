@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { promisifyAll } from 'bluebird';
+import bluebird from 'bluebird';
 import { ERedisConfigClient, logger } from 'redis-smq-common';
 import {
   Configuration,
@@ -19,6 +19,8 @@ import {
   ProducibleMessage,
   Queue,
 } from '../../index.js'; // redis-smq
+
+const { promisifyAll } = bluebird;
 
 export const config: IRedisSMQConfig = {
   namespace: 'ns1',

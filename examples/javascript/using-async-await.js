@@ -12,12 +12,12 @@ import bluebird from 'bluebird';
 import {
   Configuration,
   Consumer,
-  EQueueDeliveryMode,
+  EQueueDeliveryModel,
   EQueueType,
   Producer,
   ProducibleMessage,
   Queue,
-} from '../..'; // redis-smq
+} from 'redis-smq';
 
 const { promisifyAll } = bluebird;
 
@@ -61,7 +61,7 @@ const createQueue = async () => {
     await queue.saveAsync(
       'test_queue',
       EQueueType.LIFO_QUEUE,
-      EQueueDeliveryMode.POINT_TO_POINT,
+      EQueueDeliveryModel.POINT_TO_POINT,
     );
     await queue.shutdownAsync();
   }
