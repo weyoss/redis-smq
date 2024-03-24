@@ -1,5 +1,22 @@
 
 
+## [8.0.0-rc.18](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.17...v8.0.0-rc.18) (2024-03-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* rebase on redis-smq-common@3.0.0-rc.14
+
+### Documentation
+
+* update documentation and API reference ([3baaee6](https://github.com/weyoss/redis-smq/commit/3baaee6649c7bde47ce4c22c12ca4dc367ab301d))
+
+
+### Codebase Refactoring
+
+* do not throw errors for async functions ([582f355](https://github.com/weyoss/redis-smq/commit/582f35539c01e9b98a05fbd65b2247cba623524c))
+* rebase on redis-smq-common@3.0.0-rc.14 ([2c5edbd](https://github.com/weyoss/redis-smq/commit/2c5edbd8debdf4599ddbb7ad42a37bc94fea14d1))
+
 ## [8.0.0-rc.17](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.16...v8.0.0-rc.17) (2024-01-30)
 
 
