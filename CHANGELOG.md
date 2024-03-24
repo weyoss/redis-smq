@@ -1,5 +1,12 @@
 
 
+## [8.0.0-rc.19](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.18...v8.0.0-rc.19) (2024-03-24)
+
+
+### Documentation
+
+* fix incorrect generated anchor texts ([c4f523f](https://github.com/weyoss/redis-smq/commit/c4f523f9a17dbbb8510b35032cfecfc69905dd04))
+
 ## [8.0.0-rc.18](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.17...v8.0.0-rc.18) (2024-03-24)
 
 
