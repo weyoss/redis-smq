@@ -27,6 +27,3 @@ cat >dist/cjs/package.json <<!EOF
 }
 !EOF
 cp -r src/common/redis-client/scripts/lua dist/cjs/src/common/redis-client/scripts/
-
-# types
-tsc -p ./tsconfig.types.json

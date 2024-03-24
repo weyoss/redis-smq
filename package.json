@@ -33,12 +33,17 @@
   "type": "module",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
-  "types": "./dist/types/index.d.ts",
+  "types": "./dist/esm/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js",
-      "types": "./dist/types/index.d.ts"
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
     },
     "./package.json": "./package.json"
   },
@@ -52,7 +57,7 @@
   "dependencies": {
     "cron-parser": "4.7.1",
     "lodash": "4.17.21",
-    "redis-smq-common": "3.0.0-rc.14",
+    "redis-smq-common": "3.0.0-rc.15",
     "uuid": "9.0.0"
   },
   "devDependencies": {
