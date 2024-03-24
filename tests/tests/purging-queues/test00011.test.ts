@@ -7,14 +7,15 @@
  * in the root directory of this source tree.
  */
 
+import { test, expect } from '@jest/globals';
+import { shutDownBaseInstance } from '../../common/base-instance.js';
 import {
   createQueue,
   defaultQueue,
   produceAndAcknowledgeMessage,
-} from '../../common/message-producing-consuming';
-import { shutDownBaseInstance } from '../../common/base-instance';
-import { getQueueMessages } from '../../common/queue-messages';
-import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages';
+} from '../../common/message-producing-consuming.js';
+import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
+import { getQueueMessages } from '../../common/queue-messages.js';
 
 test('Purging acknowledged queue', async () => {
   await createQueue(defaultQueue, false);

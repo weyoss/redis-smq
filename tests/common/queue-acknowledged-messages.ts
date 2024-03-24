@@ -7,9 +7,19 @@
  * in the root directory of this source tree.
  */
 
-import { promisifyAll } from 'bluebird';
-import { QueueAcknowledgedMessages } from '../../src/lib/queue/queue-acknowledged-messages';
+import bluebird from 'bluebird';
+import { QueueAcknowledgedMessages } from '../../src/lib/index.js';
+
+const instances: QueueAcknowledgedMessages[] = [];
 
 export async function getQueueAcknowledgedMessages() {
-  return promisifyAll(new QueueAcknowledgedMessages());
+  const instance = new QueueAcknowledgedMessages();
+  instances.push(instance);
+  return bluebird.promisifyAll(instance);
+}
+
+export async function shutDownQueueAcknowledgedMessages() {
+  for (const i of instances) {
+    await bluebird.promisifyAll(i).shutdownAsync();
+  }
 }

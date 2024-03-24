@@ -7,14 +7,14 @@
  * in the root directory of this source tree.
  */
 
-import { createQueue } from '../../../common/message-producing-consuming';
-import { ProducibleMessage } from '../../../../src/lib/message/producible-message';
-import { getProducer } from '../../../common/producer';
-import { isEqual } from '../../../common/util';
-import { promisifyAll } from 'bluebird';
-import { Message } from '../../../../src/lib/message/message';
+import { test, expect } from '@jest/globals';
+import { ProducibleMessage } from '../../../../src/lib/index.js';
+import { getMessage } from '../../../common/message.js';
+import { createQueue } from '../../../common/message-producing-consuming.js';
+import { getProducer } from '../../../common/producer.js';
+import { isEqual } from '../../../common/utils.js';
 
-test('ExchangeTopic: producing message using setTopic()', async () => {
+test('ExchangeTopic: producing message with a Topic Exchange', async () => {
   await createQueue({ ns: 'testing', name: 'w123.2.4.5' }, false);
   await createQueue({ ns: 'testing', name: 'w123.2.4.5.6' }, false);
   await createQueue({ ns: 'beta', name: 'w123.2' }, false);
@@ -26,7 +26,7 @@ test('ExchangeTopic: producing message using setTopic()', async () => {
 
   const msg = new ProducibleMessage().setTopic('w123.2.4').setBody('hello');
   const ids = await producer.produceAsync(msg);
-  const message = promisifyAll(new Message());
+  const message = await getMessage();
   const items = await message.getMessagesByIdsAsync(ids);
   expect(
     isEqual(

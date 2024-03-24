@@ -31,16 +31,32 @@
     "url": "https://github.com/weyoss/redis-smq/issues"
   },
   "type": "module",
-  "main": "dist/index.cjs",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "types": "./dist/types/index.d.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      ".": [
+        "./dist/types/index.d.ts"
+      ]
+    }
+  },
   "dependencies": {
     "cron-parser": "4.7.1",
     "lodash": "4.17.21",
-    "redis-smq-common": "3.0.0-rc.9",
+    "redis-smq-common": "3.0.0-rc.14",
     "uuid": "9.0.0"
   },
   "devDependencies": {
+    "@jest/globals": "29.7.0",
     "@types/bluebird": "3.5.38",
     "@types/debug": "4.1.7",
     "@types/jest": "27.0.2",
@@ -55,7 +71,7 @@
     "eslint-config-prettier": "9.0.0",
     "eslint-plugin-prettier": "5.0.1",
     "husky": "7.0.4",
-    "jest": "27.2.4",
+    "jest": "29.7.0",
     "lint-staged": "11.1.2",
     "prettier": "3.0.3",
     "supertest": "6.1.6",
@@ -64,8 +80,9 @@
   },
   "scripts": {
     "build": "scripts/build.sh",
-    "test": "scripts/test.sh",
-    "release": "scripts/release.sh",
+    "test": "NODE_OPTIONS=--experimental-vm-modules scripts/test.sh --config jest.config.js",
+    "test:cjs": "scripts/test.sh --config jest.config.cjs",
+    "release": "scripts/release/release.sh",
     "benchmark": "scripts/benchmark.sh",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
     "lint": "eslint \"{src,tests,types}/**/*.ts\" --fix",

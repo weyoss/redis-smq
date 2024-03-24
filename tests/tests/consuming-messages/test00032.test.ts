@@ -7,14 +7,20 @@
  * in the root directory of this source tree.
  */
 
-import { promisifyAll } from 'bluebird';
-import { Consumer } from '../../../src/lib/consumer/consumer';
-import { consumerQueues } from '../../../src/lib/consumer/consumer-queues';
-import { getRedisInstance } from '../../common/redis';
-import { defaultQueue } from '../../common/message-producing-consuming';
-import { shutDownBaseInstance } from '../../common/base-instance';
-import { EQueueDeliveryModel, EQueueType } from '../../../types';
-import { getQueue } from '../../common/queue';
+import { test, expect } from '@jest/globals';
+import bluebird from 'bluebird';
+import { ICallback } from 'redis-smq-common';
+import {
+  Consumer,
+  EQueueDeliveryModel,
+  EQueueType,
+  IMessageTransferable,
+} from '../../../src/lib/index.js';
+import { consumerQueues } from '../../../src/lib/consumer/consumer-queues.js';
+import { shutDownBaseInstance } from '../../common/base-instance.js';
+import { defaultQueue } from '../../common/message-producing-consuming.js';
+import { getQueue } from '../../common/queue.js';
+import { getRedisInstance } from '../../common/redis.js';
 
 test('Consume message from different queues using a single consumer instance: case 3', async () => {
   const queue = await getQueue();
@@ -24,11 +30,11 @@ test('Consume message from different queues using a single consumer instance: ca
     EQueueDeliveryModel.POINT_TO_POINT,
   );
 
-  const consumer = promisifyAll(new Consumer());
+  const consumer = bluebird.promisifyAll(new Consumer());
   await consumer.runAsync();
 
   const redisClient = await getRedisInstance();
-  const consumerQueuesAsync = promisifyAll(consumerQueues);
+  const consumerQueuesAsync = bluebird.promisifyAll(consumerQueues);
 
   const a = await consumerQueuesAsync.getConsumerQueuesAsync(
     redisClient,
@@ -50,7 +56,10 @@ test('Consume message from different queues using a single consumer instance: ca
   );
   expect(Object.keys(a2)).toEqual([]);
 
-  await consumer.consumeAsync(defaultQueue, (msg, cb) => cb());
+  await consumer.consumeAsync(
+    defaultQueue,
+    (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
+  );
 
   const b = await consumerQueuesAsync.getConsumerQueuesAsync(
     redisClient,

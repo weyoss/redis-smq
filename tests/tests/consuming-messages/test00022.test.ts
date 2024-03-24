@@ -7,22 +7,23 @@
  * in the root directory of this source tree.
  */
 
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
-import { untilConsumerEvent } from '../../common/events';
-import { getConsumer } from '../../common/consumer';
-import { getProducer } from '../../common/producer';
+import { test, expect, jest } from '@jest/globals';
+import { ProducibleMessage } from '../../../src/lib/index.js';
+import { getConsumer } from '../../common/consumer.js';
+import { untilConsumerDown } from '../../common/events.js';
 import {
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
-import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages';
+} from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
+import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
 
 test('Shutdown a consumer when consuming a message with retryThreshold = 0: expect the message to be dead-lettered', async () => {
   await createQueue(defaultQueue, false);
 
   const consumer = getConsumer({
     messageHandler: jest.fn(() => {
-      setTimeout(() => consumer.shutdown(), 5000);
+      setTimeout(() => consumer.shutdown(() => void 0), 5000);
     }),
   });
 
@@ -34,8 +35,8 @@ test('Shutdown a consumer when consuming a message with retryThreshold = 0: expe
   await producer.runAsync();
   const [id] = await producer.produceAsync(msg);
 
-  consumer.run();
-  await untilConsumerEvent(consumer, 'down');
+  consumer.run(() => void 0);
+  await untilConsumerDown(consumer);
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
   const res = await deadLetteredMessages.getMessagesAsync(defaultQueue, 0, 100);
   expect(res.totalItems).toBe(1);

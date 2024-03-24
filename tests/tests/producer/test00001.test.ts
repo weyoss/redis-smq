@@ -7,12 +7,13 @@
  * in the root directory of this source tree.
  */
 
+import { test, expect } from '@jest/globals';
+import { ProducibleMessage } from '../../../src/lib/index.js';
 import {
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
-import { getProducer } from '../../common/producer';
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
+} from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
 
 test('Producing a message', async () => {
   await createQueue(defaultQueue, false);

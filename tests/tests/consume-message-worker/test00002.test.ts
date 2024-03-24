@@ -7,25 +7,30 @@
  * in the root directory of this source tree.
  */
 
-import { delay, promisifyAll } from 'bluebird';
-import { Consumer } from '../../../src/lib/consumer/consumer';
-import { Queue } from '../../../src/lib/queue/queue/queue';
-import { EQueueDeliveryModel, EQueueType } from '../../../types';
+import bluebird from 'bluebird';
 import path from 'path';
-import { Producer } from '../../../src/lib/producer/producer';
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
-import { QueueMessages } from '../../../src/lib/queue/queue-messages/queue-messages';
+import { it, expect } from '@jest/globals';
+import { getDirname } from 'redis-smq-common';
 import {
-  ConsumerMessageHandlerFilenameExtensionError,
+  Consumer,
+  EQueueDeliveryModel,
+  EQueueType,
+  Producer,
+  ProducibleMessage,
+} from '../../../src/lib/index.js';
+import {
   ConsumerMessageHandlerFileError,
-} from '../../../src/lib/consumer/message-handler/errors';
+  ConsumerMessageHandlerFilenameExtensionError,
+} from '../../../src/lib/consumer/message-handler/errors/index.js';
+import { getQueue } from '../../common/queue.js';
+import { getQueueMessages } from '../../common/queue-messages.js';
 
 it('ConsumeMessageWorker: case 2', async () => {
-  const consumer = promisifyAll(new Consumer());
+  const consumer = bluebird.promisifyAll(new Consumer());
   await consumer.runAsync();
 
   const queue1 = 'test';
-  const queue = promisifyAll(new Queue());
+  const queue = await getQueue();
   await queue.saveAsync(
     queue1,
     EQueueType.FIFO_QUEUE,
@@ -33,7 +38,7 @@ it('ConsumeMessageWorker: case 2', async () => {
   );
 
   const handlerFilename = path.resolve(
-    __dirname,
+    getDirname(),
     '../../common/non-existent-handler.js',
   );
 
@@ -42,7 +47,7 @@ it('ConsumeMessageWorker: case 2', async () => {
   );
 
   const handlerFilename2 = path.resolve(
-    __dirname,
+    getDirname(),
     '../../common/non-existent-handler.jsf',
   );
 
@@ -51,12 +56,12 @@ it('ConsumeMessageWorker: case 2', async () => {
   );
 
   const handlerFilename3 = path.resolve(
-    __dirname,
+    getDirname(),
     '../../common/message-handler-worker-unacks.js',
   );
   await consumer.consumeAsync(queue1, handlerFilename3);
 
-  const producer = promisifyAll(new Producer());
+  const producer = bluebird.promisifyAll(new Producer());
   await producer.runAsync();
 
   await producer.produceAsync(
@@ -66,9 +71,9 @@ it('ConsumeMessageWorker: case 2', async () => {
       .setRetryThreshold(0),
   );
 
-  await delay(5000);
+  await bluebird.delay(5000);
 
-  const queueMessages = promisifyAll(new QueueMessages());
+  const queueMessages = await getQueueMessages();
   const count = await queueMessages.countMessagesByStatusAsync(queue1);
   expect(count).toEqual({
     acknowledged: 0,
@@ -80,7 +85,7 @@ it('ConsumeMessageWorker: case 2', async () => {
   await consumer.cancelAsync(queue1);
 
   const handlerFilename4 = path.resolve(
-    __dirname,
+    getDirname(),
     '../../common/message-handler-worker-unacks-exception.js',
   );
   await consumer.consumeAsync(queue1, handlerFilename4);
@@ -92,7 +97,7 @@ it('ConsumeMessageWorker: case 2', async () => {
       .setRetryThreshold(0),
   );
 
-  await delay(5000);
+  await bluebird.delay(5000);
 
   const count2 = await queueMessages.countMessagesByStatusAsync(queue1);
   expect(count2).toEqual({
@@ -105,7 +110,7 @@ it('ConsumeMessageWorker: case 2', async () => {
   await consumer.cancelAsync(queue1);
 
   const handlerFilename5 = path.resolve(
-    __dirname,
+    getDirname(),
     '../../common/message-handler-worker-faulty.js',
   );
   await consumer.consumeAsync(queue1, handlerFilename5);
@@ -117,12 +122,12 @@ it('ConsumeMessageWorker: case 2', async () => {
       .setRetryThreshold(0),
   );
 
-  await delay(5000);
+  await bluebird.delay(5000);
 
   await consumer.cancelAsync(queue1);
 
   const handlerFilename6 = path.resolve(
-    __dirname,
+    getDirname(),
     '../../common/message-handler-worker-faulty-exit.js',
   );
   await consumer.consumeAsync(queue1, handlerFilename6);
@@ -134,7 +139,7 @@ it('ConsumeMessageWorker: case 2', async () => {
       .setRetryThreshold(0),
   );
 
-  await delay(5000);
+  await bluebird.delay(5000);
 
   await consumer.shutdownAsync();
   await producer.shutdownAsync();

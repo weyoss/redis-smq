@@ -7,24 +7,37 @@
  * in the root directory of this source tree.
  */
 
-import { CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
-import { _getCommonRedisClient } from '../../common/_get-common-redis-client';
-import { _getMessage, _getMessages } from './_get-message';
-import { _deleteMessage } from './_delete-message';
+import { CallbackEmptyReplyError, ICallback, logger } from 'redis-smq-common';
+import { RedisClientInstance } from '../../common/redis-client/redis-client-instance.js';
+import { Configuration } from '../../config/index.js';
+import { _deleteMessage } from './_/_delete-message.js';
+import { _getMessage, _getMessages } from './_/_get-message.js';
+import { _getMessageState } from './_/_get-message-state.js';
+import { _getMessageStatus } from './_/_get-message-status.js';
 import {
   EMessagePropertyStatus,
   IMessageStateTransferable,
   IMessageTransferable,
-} from '../../../types';
-import { _getMessageStatus } from './_get-message-status';
-import { _getMessageState } from './_get-message-state';
+} from './types/index.js';
 
 export class Message {
+  protected logger;
+  protected redisClient;
+
+  constructor() {
+    this.logger = logger.getLogger(
+      Configuration.getSetConfig().logger,
+      `exchange-fan-out-manager`,
+    );
+    this.redisClient = new RedisClientInstance();
+    this.redisClient.on('error', (err) => this.logger.error(err));
+  }
+
   getMessageStatus(
     messageId: string,
     cb: ICallback<EMessagePropertyStatus>,
   ): void {
-    _getCommonRedisClient((err, client) => {
+    this.redisClient.getSetInstance((err, client) => {
       if (err) cb(err);
       else if (!client) cb(new CallbackEmptyReplyError());
       else _getMessageStatus(client, messageId, cb);
@@ -35,7 +48,7 @@ export class Message {
     messageId: string,
     cb: ICallback<IMessageStateTransferable>,
   ): void {
-    _getCommonRedisClient((err, client) => {
+    this.redisClient.getSetInstance((err, client) => {
       if (err) cb(err);
       else if (!client) cb(new CallbackEmptyReplyError());
       else _getMessageState(client, messageId, cb);
@@ -46,7 +59,7 @@ export class Message {
     messageIds: string[],
     cb: ICallback<IMessageTransferable[]>,
   ): void {
-    _getCommonRedisClient((err, client) => {
+    this.redisClient.getSetInstance((err, client) => {
       if (err) cb(err);
       else if (!client) cb(new CallbackEmptyReplyError());
       else
@@ -64,7 +77,7 @@ export class Message {
   }
 
   getMessageById(messageId: string, cb: ICallback<IMessageTransferable>): void {
-    _getCommonRedisClient((err, client) => {
+    this.redisClient.getSetInstance((err, client) => {
       if (err) cb(err);
       else if (!client) cb(new CallbackEmptyReplyError());
       else
@@ -77,7 +90,7 @@ export class Message {
   }
 
   deleteMessagesByIds(ids: string[], cb: ICallback<void>): void {
-    _getCommonRedisClient((err, client) => {
+    this.redisClient.getSetInstance((err, client) => {
       if (err) cb(err);
       else if (!client) cb(new CallbackEmptyReplyError());
       else _deleteMessage(client, ids, cb);
@@ -87,4 +100,8 @@ export class Message {
   deleteMessageById(id: string, cb: ICallback<void>): void {
     this.deleteMessagesByIds([id], cb);
   }
+
+  shutdown = (cb: ICallback<void>): void => {
+    this.redisClient.shutdown(cb);
+  };
 }

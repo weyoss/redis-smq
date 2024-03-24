@@ -7,17 +7,18 @@
  * in the root directory of this source tree.
  */
 
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
-import { delay } from 'bluebird';
-import { startScheduleWorker } from '../../common/schedule-worker';
-import { getProducer } from '../../common/producer';
+import { test, expect } from '@jest/globals';
+import bluebird from 'bluebird';
+import { ProducibleMessage } from '../../../src/lib/index.js';
 import {
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
-import { validateTime } from '../../common/validate-time';
-import { getQueuePendingMessages } from '../../common/queue-pending-messages';
-import { getQueueMessages } from '../../common/queue-messages';
+} from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
+import { getQueueMessages } from '../../common/queue-messages.js';
+import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
+import { startScheduleWorker } from '../../common/schedule-worker.js';
+import { validateTime } from '../../common/validate-time.js';
 
 test('Schedule a message: DELAY', async () => {
   await createQueue(defaultQueue, false);
@@ -48,7 +49,7 @@ test('Schedule a message: DELAY', async () => {
   });
 
   await startScheduleWorker();
-  await delay(30000);
+  await bluebird.delay(30000);
 
   const pendingMessages = await getQueuePendingMessages();
   const r = await pendingMessages.getMessagesAsync(defaultQueue, 0, 100);

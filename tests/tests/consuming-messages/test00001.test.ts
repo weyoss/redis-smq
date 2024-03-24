@@ -7,6 +7,7 @@
  * in the root directory of this source tree.
  */
 
+import { describe, test, expect } from '@jest/globals';
 import {
   createQueue,
   defaultQueue,
@@ -15,8 +16,8 @@ import {
   produceMessage,
   produceMessageWithPriority,
   scheduleMessage,
-} from '../../common/message-producing-consuming';
-import { getQueueMessages } from '../../common/queue-messages';
+} from '../../common/message-producing-consuming.js';
+import { getQueueMessages } from '../../common/queue-messages.js';
 
 describe('QueueMessages: countMessagesByStatus()', () => {
   test('Case 1', async () => {

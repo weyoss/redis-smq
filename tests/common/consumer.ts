@@ -7,11 +7,14 @@
  * in the root directory of this source tree.
  */
 
-import { TConsumerMessageHandler, IQueueParams } from '../../types';
-import { promisifyAll } from 'bluebird';
-import { Consumer } from '../../src/lib/consumer/consumer';
-import { defaultQueue } from './message-producing-consuming';
-import { shutDownBaseInstance } from './base-instance';
+import bluebird from 'bluebird';
+import {
+  Consumer,
+  IQueueParams,
+  TConsumerMessageHandler,
+} from '../../src/lib/index.js';
+import { shutDownBaseInstance } from './base-instance.js';
+import { defaultQueue } from './message-producing-consuming.js';
 
 type TGetConsumerArgs = {
   queue?: string | IQueueParams;
@@ -27,7 +30,7 @@ export function getConsumer(args: TGetConsumerArgs = {}) {
     messageHandler = (msg, cb) => cb(),
     consumeDefaultQueue = true,
   } = args;
-  const consumer = promisifyAll(new Consumer());
+  const consumer = bluebird.promisifyAll(new Consumer());
   consumeDefaultQueue && consumer.consume(queue, messageHandler, () => void 0);
   consumersList.push(consumer);
   return consumer;

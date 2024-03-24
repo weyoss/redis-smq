@@ -14,5 +14,19 @@ npm run type-coverage
 npm run lint
 npm run format
 rm -rf dist
-tsc
-cp -r src/common/redis-client/lua dist/src/common/redis-client/
+
+# esm
+tsc -p ./tsconfig.json
+cp -r src/common/redis-client/scripts/lua dist/esm/src/common/redis-client/scripts/
+
+# cjs
+tsc -p ./tsconfig.cjs.json
+cat >dist/cjs/package.json <<!EOF
+{
+    "type": "commonjs"
+}
+!EOF
+cp -r src/common/redis-client/scripts/lua dist/cjs/src/common/redis-client/scripts/
+
+# types
+tsc -p ./tsconfig.types.json

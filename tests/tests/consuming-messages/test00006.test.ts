@@ -7,15 +7,19 @@
  * in the root directory of this source tree.
  */
 
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
+import { test, jest } from '@jest/globals';
 import { ICallback } from 'redis-smq-common';
-import { untilConsumerEvent } from '../../common/events';
-import { getConsumer } from '../../common/consumer';
-import { getProducer } from '../../common/producer';
+import { ProducibleMessage } from '../../../src/lib/index.js';
+import { getConsumer } from '../../common/consumer.js';
+import {
+  untilMessageAcknowledged,
+  untilMessageUnacknowledged,
+} from '../../common/events.js';
 import {
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
+} from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
 
 test('A message is unacknowledged when messageConsumeTimeout is exceeded', async () => {
   await createQueue(defaultQueue, false);
@@ -26,7 +30,7 @@ test('A message is unacknowledged when messageConsumeTimeout is exceeded', async
   let consumeCount = 0;
   const consumer = getConsumer({
     messageHandler: jest.fn((msg: unknown, cb: ICallback<void>) => {
-      if (consumeCount === 0) setTimeout(cb, 5000);
+      if (consumeCount === 0) setTimeout(() => cb(), 5000);
       else if (consumeCount === 1) cb();
       else throw new Error('Unexpected call');
       consumeCount += 1;
@@ -41,7 +45,7 @@ test('A message is unacknowledged when messageConsumeTimeout is exceeded', async
     .setRetryDelay(6000);
 
   await producer.produceAsync(msg);
-  consumer.run();
-  await untilConsumerEvent(consumer, 'messageUnacknowledged');
-  await untilConsumerEvent(consumer, 'messageAcknowledged');
+  consumer.run(() => void 0);
+  await untilMessageUnacknowledged(consumer);
+  await untilMessageAcknowledged(consumer);
 });

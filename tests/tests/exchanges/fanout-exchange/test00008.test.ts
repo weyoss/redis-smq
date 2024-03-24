@@ -7,14 +7,18 @@
  * in the root directory of this source tree.
  */
 
-import { ExchangeFanOutError } from '../../../../src/lib/exchange/errors';
-import { EQueueDeliveryModel, EQueueType } from '../../../../types';
-import { getQueue } from '../../../common/queue';
-import { getFanOutExchange } from '../../../common/exchange';
+import { test, expect } from '@jest/globals';
+import {
+  EQueueDeliveryModel,
+  EQueueType,
+  ExchangeFanOutError,
+} from '../../../../src/lib/index.js';
+import { getFanOutExchange } from '../../../common/exchange.js';
+import { getQueue } from '../../../common/queue.js';
 
 test('ExchangeFanOut: binding different types of queues', async () => {
-  const e1 = getFanOutExchange('e1');
-  await e1.saveExchangeAsync();
+  const fanOutExchangeManager = getFanOutExchange();
+  await fanOutExchangeManager.saveExchangeAsync('e1');
 
   const q1 = { ns: 'testing', name: 'w123' };
   const queueInstance = await getQueue();
@@ -23,7 +27,7 @@ test('ExchangeFanOut: binding different types of queues', async () => {
     EQueueType.LIFO_QUEUE,
     EQueueDeliveryModel.POINT_TO_POINT,
   );
-  await e1.bindQueueAsync(q1);
+  await fanOutExchangeManager.bindQueueAsync(q1, 'e1');
 
   const q2 = { ns: 'testing', name: 'w456' };
   await queueInstance.saveAsync(
@@ -32,5 +36,7 @@ test('ExchangeFanOut: binding different types of queues', async () => {
     EQueueDeliveryModel.POINT_TO_POINT,
   );
 
-  await expect(e1.bindQueueAsync(q2)).rejects.toThrow(ExchangeFanOutError);
+  await expect(fanOutExchangeManager.bindQueueAsync(q2, 'e1')).rejects.toThrow(
+    ExchangeFanOutError,
+  );
 });

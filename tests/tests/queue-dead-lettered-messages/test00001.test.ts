@@ -7,16 +7,17 @@
  * in the root directory of this source tree.
  */
 
+import { test, expect } from '@jest/globals';
+import { ProducibleMessage } from '../../../src/lib/index.js';
+import { getConsumer } from '../../common/consumer.js';
+import { untilMessageDeadLettered } from '../../common/events.js';
 import {
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
-import { getProducer } from '../../common/producer';
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
-import { getQueueMessages } from '../../common/queue-messages';
-import { getConsumer } from '../../common/consumer';
-import { untilMessageDeadLettered } from '../../common/events';
-import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages';
+} from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
+import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
+import { getQueueMessages } from '../../common/queue-messages.js';
 
 test('Queue dead-lettered message', async () => {
   await createQueue(defaultQueue, false);
@@ -31,7 +32,7 @@ test('Queue dead-lettered message', async () => {
   const consumer = getConsumer({
     messageHandler: (msg1, cb) => cb(new Error()),
   });
-  consumer.run();
+  consumer.run(() => void 0);
   await untilMessageDeadLettered(consumer, id);
 
   const deadLetteredMessages = await getQueueDeadLetteredMessages();

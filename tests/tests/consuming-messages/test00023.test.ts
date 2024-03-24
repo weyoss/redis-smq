@@ -7,17 +7,17 @@
  * in the root directory of this source tree.
  */
 
-import { getConsumer } from '../../common/consumer';
-import { getProducer } from '../../common/producer';
+import { test, expect, jest } from '@jest/globals';
+import { ProducibleMessage } from '../../../src/lib/index.js';
+import { getConsumer } from '../../common/consumer.js';
+import { untilMessageDeadLettered } from '../../common/events.js';
+import { getMessage } from '../../common/message.js';
 import {
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
-import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages';
-import { untilConsumerEvent } from '../../common/events';
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
-import { promisifyAll } from 'bluebird';
-import { Message } from '../../../src/lib/message/message';
+} from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
+import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
 
 test('Messages produced from scheduled message are processed like normal message upon consume failures (retry, delay, requeue, etc)', async () => {
   await createQueue(defaultQueue, false);
@@ -39,14 +39,14 @@ test('Messages produced from scheduled message are processed like normal message
 
   const [id] = await producer.produceAsync(msg);
 
-  consumer.run();
-  await untilConsumerEvent(consumer, 'messageDeadLettered');
+  consumer.run(() => void 0);
+  await untilMessageDeadLettered(consumer);
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
   const res = await deadLetteredMessages.getMessagesAsync(defaultQueue, 0, 100);
   expect(res.totalItems).toBe(1);
   expect(typeof res.items[0].id).toBe('string');
 
-  const m = promisifyAll(new Message());
+  const m = await getMessage();
   const mState = await m.getMessageStateAsync(res.items[0].id);
   expect(mState.scheduledMessageId).toBe(id);
   expect(mState.attempts).toBe(4);

@@ -7,10 +7,10 @@
  * in the root directory of this source tree.
  */
 
-export { ConsumerError } from './consumer.error';
-export { ConsumerMessageHandlerAlreadyExistsError } from './consumer-message-handler-already-exists.error';
-export { ConsumerGroupDeleteError } from './consumer-group-delete.error';
-export { ConsumerGroupIdNotFoundError } from './consumer-group-id-not-found.error';
-export { ConsumerGroupIdNotSupportedError } from './consumer-group-id-not-supported.error';
-export { ConsumerGroupIdRequiredError } from './consumer-group-id-required.error';
-export { ConsumerInvalidGroupIdError } from './consumer-invalid-group-id.error';
+export { ConsumerError } from './consumer.error.js';
+export { ConsumerMessageHandlerAlreadyExistsError } from './consumer-message-handler-already-exists.error.js';
+export { ConsumerGroupDeleteError } from './consumer-group-delete.error.js';
+export { ConsumerGroupIdNotFoundError } from './consumer-group-id-not-found.error.js';
+export { ConsumerGroupIdNotSupportedError } from './consumer-group-id-not-supported.error.js';
+export { ConsumerGroupIdRequiredError } from './consumer-group-id-required.error.js';
+export { ConsumerInvalidGroupIdError } from './consumer-invalid-group-id.error.js';

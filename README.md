@@ -23,7 +23,7 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 
 * [High-performance message processing](docs/performance.md).
 * Flexible Producer/Consumer model which offers [Multi-Queue Producers](docs/producing-messages.md) & [Multi-Queue Consumers](docs/consuming-messages.md).
-* RedisSMQ offers different exchange types: [Direct Exchange](docs/message-exchanges.md#direct-exchange), [Topic Exchange](docs/message-exchanges.md#topic-exchange), and [FanOut Exchange](docs/message-exchanges.md#fanout-exchange) for publishing a message to one or multiple queues.
+* RedisSMQ offers different exchange types: [Direct ExchangeAbstract](docs/message-exchanges.md#direct-exchange), [Topic ExchangeAbstract](docs/message-exchanges.md#topic-exchange), and [FanOut ExchangeAbstract](docs/message-exchanges.md#fanout-exchange) for publishing a message to one or multiple queues.
 * Supports [Point-2-Point](docs/queue-delivery-models.md#point-2-point-delivery-model) and [Pub/Sub](docs/queue-delivery-models.md#pubsub-delivery-model) [delivery models](docs/queue-delivery-models.md).
 * Both [delivery models](docs/queue-delivery-models.md) are reliable. For cases of failure, while delivering/consuming messages, [at-least-once](docs/api/classes/ProducibleMessage.md#setretrythreshold) and [at-most-once](docs/api/classes/ProducibleMessage.md#setretrythreshold) modes may be configured.
 * [3 queuing strategies](docs/queues.md): [FIFO queues](docs/queues.md#fifo-first-in-first-out-queues), [LIFO queues](docs/queues.md#lifo-last-in-first-out-queues), and [Priority Queues](docs/queues.md#priority-queues).
@@ -68,9 +68,14 @@ A queue is responsible for holding messages which are produced by producers and 
 
 ```javascript
 const queue = new Queue();
-queue.save('my_queue', EQueueType.LIFO_QUEUE, EQueueDeliveryModel.POINT_TO_POINT, (err) => {
-  if (err) console.error(err)
-});
+queue.save(
+  'my_queue',
+  EQueueType.LIFO_QUEUE,
+  EQueueDeliveryModel.POINT_TO_POINT,
+  (err) => {
+    if (err) console.error(err);
+  },
+);
 ```
 
 In the example above we are defining a [LIFO queue](docs/queues.md#lifo-last-in-first-out-queues) with a [POINT-2-POINT delivery model](docs/queue-delivery-models.md#point-2-point-delivery-model).
@@ -81,10 +86,10 @@ See [Queues](docs/queues.md) for more details.
 
 ```javascript
 const msg = new ProducibleMessage();
-msg.setQueue('my_queue').setBody('Hello Word!')
+msg.setQueue('my_queue').setBody('Hello Word!');
 producer.produce(msg, (err, ids) => {
   if (err) console.error(err);
-  else console.log(`Produced message IDs are: ${ids.join(', ')}`)
+  else console.log(`Produced message IDs are: ${ids.join(', ')}`);
 });
 ```
 
@@ -97,7 +102,7 @@ const consumer = new Consumer();
 const messageHandler = (msg, cb) => {
   console.log(msg.body);
   cb();
-}
+};
 consumer.consume('my_queue', messageHandler, (err) => {
   if (err) console.error(err);
 });

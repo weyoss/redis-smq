@@ -11,10 +11,6 @@ set -x
 set -e
 
 export NODE_ENV=test
+export NODE_OPTIONS="$NODE_OPTIONS --trace-warnings"
 npm run build
-cat >dist/package.json <<!EOF
-{
-    "type": "commonjs"
-}
-!EOF
 jest --runInBand --verbose --collectCoverage "$@"

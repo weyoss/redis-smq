@@ -7,9 +7,9 @@
  * in the root directory of this source tree.
  */
 
-import { IRedisSMQConfig, IRedisSMQConfigRequired } from '../../../types';
-import { merge } from 'lodash';
-import Store from './store';
+import _ from 'lodash';
+import { IRedisSMQConfig, IRedisSMQConfigRequired } from '../types/index.js';
+import Store from './store.js';
 
 const defaultConfig: IRedisSMQConfigRequired['messages'] = {
   store: {
@@ -30,5 +30,5 @@ export default function Messages(
   userConfig: IRedisSMQConfig,
 ): IRedisSMQConfigRequired['messages'] {
   const store = Store(userConfig);
-  return merge({}, defaultConfig, { store });
+  return _.merge({}, defaultConfig, { store });
 }

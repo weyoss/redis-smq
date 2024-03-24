@@ -1,20 +1,26 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "allowSyntheticDefaultImports": true,
-    "target": "es6",
     "sourceMap": true,
-    "outDir": "./dist",
     "incremental": false,
     "strict": true,
     "skipLibCheck": true,
     "strictPropertyInitialization": true,
     "noImplicitOverride": true,
-    "esModuleInterop": true
+    "types": ["node"],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
+
+    // esm settings
+    "outDir": "dist/esm",
+    "lib": ["esnext"],
+    "target": "esnext",
+    "module": "nodenext",
+    "moduleResolution": "nodenext"
   },
   "exclude": ["node_modules", "dist", "**/*.js", "**/*.cjs"]
 }

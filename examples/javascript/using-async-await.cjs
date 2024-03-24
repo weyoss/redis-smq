@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-const { promisifyAll, promisify } = require('bluebird');
+const { promisifyAll } = require('bluebird');
 const { logger, ERedisConfigClient } = require('redis-smq-common');
 const {
   Consumer,
@@ -17,7 +17,6 @@ const {
   EQueueType,
   EQueueDeliveryMode,
   Configuration,
-  disconnect,
 } = require('../..');
 
 const config = {
@@ -62,7 +61,7 @@ const createQueue = async () => {
       EQueueType.LIFO_QUEUE,
       EQueueDeliveryMode.POINT_TO_POINT,
     );
-    await promisify(disconnect)();
+    await queue.shutdownAsync();
   }
 };
 

@@ -7,20 +7,19 @@
  * in the root directory of this source tree.
  */
 
-import { logger, ERedisConfigClient } from 'redis-smq-common';
+import { ERedisConfigClient, logger } from 'redis-smq-common';
 import bluebird from 'bluebird';
 import {
+  Configuration,
   Consumer,
+  EQueueDeliveryMode,
+  EQueueType,
   Producer,
   ProducibleMessage,
   Queue,
-  EQueueType,
-  EQueueDeliveryMode,
-  Configuration,
-  disconnect,
 } from '../..'; // redis-smq
 
-const { promisify, promisifyAll } = bluebird;
+const { promisifyAll } = bluebird;
 
 const config = {
   namespace: 'ns1',
@@ -64,7 +63,7 @@ const createQueue = async () => {
       EQueueType.LIFO_QUEUE,
       EQueueDeliveryMode.POINT_TO_POINT,
     );
-    await promisify(disconnect)();
+    await queue.shutdownAsync();
   }
 };
 

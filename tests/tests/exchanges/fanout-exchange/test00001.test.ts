@@ -7,16 +7,15 @@
  * in the root directory of this source tree.
  */
 
-import { ExchangeFanOut } from '../../../../src/lib/exchange/exchange-fan-out';
-import { isEqual } from '../../../common/util';
-import { EQueueDeliveryModel, EQueueType } from '../../../../types';
-import { getQueue } from '../../../common/queue';
-import { getFanOutExchange } from '../../../common/exchange';
-import { promisifyAll } from 'bluebird';
+import { test, expect } from '@jest/globals';
+import { EQueueDeliveryModel, EQueueType } from '../../../../src/lib/index.js';
+import { getFanOutExchange } from '../../../common/exchange.js';
+import { getQueue } from '../../../common/queue.js';
+import { isEqual } from '../../../common/utils.js';
 
-const FanOutExchangeAsync = promisifyAll(ExchangeFanOut);
+test('ExchangeFanOut: bindQueue(), getExchangeQueues(), unbindQueue()', async () => {
+  const fanOutExchange = getFanOutExchange();
 
-test('QueueExchange: bindQueue(), getExchangeQueues(), unbindQueue()', async () => {
   const q1 = { ns: 'testing', name: 'w123' };
   const q2 = { ns: 'testing', name: 'w456' };
   const q3 = { ns: 'testing', name: 'w789' };
@@ -38,37 +37,33 @@ test('QueueExchange: bindQueue(), getExchangeQueues(), unbindQueue()', async () 
     EQueueDeliveryModel.POINT_TO_POINT,
   );
 
-  const exchangeA = getFanOutExchange('fanout_a');
-  const exchangeB = getFanOutExchange('fanout_b');
-  await exchangeA.bindQueueAsync(q1);
-  await exchangeA.bindQueueAsync(q2);
-  await exchangeB.bindQueueAsync(q3);
+  await fanOutExchange.bindQueueAsync(q1, 'fanout_a');
+  await fanOutExchange.bindQueueAsync(q2, 'fanout_a');
+  await fanOutExchange.bindQueueAsync(q3, 'fanout_b');
 
-  const r0 = await exchangeA.getQueuesAsync();
+  const r0 = await fanOutExchange.getQueuesAsync('fanout_a');
   expect(isEqual(r0, [q1, q2])).toBe(true);
 
-  const r1 = await exchangeB.getQueuesAsync();
+  const r1 = await fanOutExchange.getQueuesAsync('fanout_b');
   expect(isEqual(r1, [q3])).toBe(true);
 
-  const r2 = await FanOutExchangeAsync.getQueueExchangeAsync(q1);
-  expect(r2?.getBindingParams()).toEqual(exchangeA.getBindingParams());
+  const r2 = await fanOutExchange.getQueueExchangeAsync(q1);
+  expect(r2).toEqual('fanout_a');
 
-  const r3 = await FanOutExchangeAsync.getQueueExchangeAsync(q2);
-  expect(r3?.getBindingParams()).toEqual(exchangeA.getBindingParams());
+  const r3 = await fanOutExchange.getQueueExchangeAsync(q2);
+  expect(r3).toEqual('fanout_a');
 
-  await exchangeA.unbindQueueAsync(q1);
+  await fanOutExchange.unbindQueueAsync(q1, 'fanout_a');
 
-  const r4 = await exchangeA.getQueuesAsync();
+  const r4 = await fanOutExchange.getQueuesAsync('fanout_a');
   expect(isEqual(r4, [q2])).toBe(true);
 
-  const r5 = await FanOutExchangeAsync.getQueueExchangeAsync(q1);
+  const r5 = await fanOutExchange.getQueueExchangeAsync(q1);
   expect(r5).toEqual(null);
 
-  const r6 = await FanOutExchangeAsync.getQueueExchangeAsync(q2);
-  expect(r6?.getBindingParams()).toEqual(exchangeA.getBindingParams());
+  const r6 = await fanOutExchange.getQueueExchangeAsync(q2);
+  expect(r6).toEqual('fanout_a');
 
-  const r7 = await FanOutExchangeAsync.getAllExchangesAsync();
-  expect(r7.sort()).toEqual(
-    [exchangeA.getBindingParams(), exchangeB.getBindingParams()].sort(),
-  );
+  const r7 = await fanOutExchange.getAllExchangesAsync();
+  expect(r7.sort()).toEqual(['fanout_a', 'fanout_b'].sort());
 });

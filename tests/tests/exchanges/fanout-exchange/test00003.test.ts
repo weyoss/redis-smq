@@ -7,16 +7,19 @@
  * in the root directory of this source tree.
  */
 
-import { ProducibleMessage } from '../../../../src/lib/message/producible-message';
-import { getProducer } from '../../../common/producer';
-import { isEqual } from '../../../common/util';
-import { EQueueDeliveryModel, EQueueType } from '../../../../types';
-import { getQueue } from '../../../common/queue';
-import { getFanOutExchange } from '../../../common/exchange';
-import { promisifyAll } from 'bluebird';
-import { Message } from '../../../../src/lib/message/message';
+import { test, expect } from '@jest/globals';
+import {
+  EQueueDeliveryModel,
+  EQueueType,
+  ProducibleMessage,
+} from '../../../../src/lib/index.js';
+import { getFanOutExchange } from '../../../common/exchange.js';
+import { getMessage } from '../../../common/message.js';
+import { getProducer } from '../../../common/producer.js';
+import { getQueue } from '../../../common/queue.js';
+import { isEqual } from '../../../common/utils.js';
 
-test('ExchangeFanOut: producing message using setFanOut()', async () => {
+test('ExchangeFanOut: producing message with a FanOut exchange', async () => {
   const q1 = { ns: 'testing', name: 'w123' };
   const q2 = { ns: 'testing', name: 'w456' };
 
@@ -32,9 +35,9 @@ test('ExchangeFanOut: producing message using setFanOut()', async () => {
     EQueueDeliveryModel.POINT_TO_POINT,
   );
 
-  const exchange = getFanOutExchange('fanout_a');
-  await exchange.bindQueueAsync(q1);
-  await exchange.bindQueueAsync(q2);
+  const fanOutExchange = getFanOutExchange();
+  await fanOutExchange.bindQueueAsync(q1, 'fanout_a');
+  await fanOutExchange.bindQueueAsync(q2, 'fanout_a');
 
   const producer = getProducer();
   await producer.runAsync();
@@ -42,7 +45,7 @@ test('ExchangeFanOut: producing message using setFanOut()', async () => {
   const msg = new ProducibleMessage().setFanOut('fanout_a').setBody('hello');
 
   const ids = await producer.produceAsync(msg);
-  const message = promisifyAll(new Message());
+  const message = await getMessage();
   const items = await message.getMessagesByIdsAsync(ids);
   expect(
     isEqual(
@@ -50,4 +53,6 @@ test('ExchangeFanOut: producing message using setFanOut()', async () => {
       [q1, q2],
     ),
   ).toBe(true);
+
+  await fanOutExchange.shutdownAsync();
 });

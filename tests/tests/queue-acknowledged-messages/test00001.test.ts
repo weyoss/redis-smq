@@ -7,16 +7,17 @@
  * in the root directory of this source tree.
  */
 
+import { test, expect } from '@jest/globals';
+import { ProducibleMessage } from '../../../src/lib/index.js';
+import { getConsumer } from '../../common/consumer.js';
+import { untilMessageAcknowledged } from '../../common/events.js';
 import {
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
-import { getProducer } from '../../common/producer';
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
-import { getQueueMessages } from '../../common/queue-messages';
-import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages';
-import { getConsumer } from '../../common/consumer';
-import { untilMessageAcknowledged } from '../../common/events';
+} from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
+import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
+import { getQueueMessages } from '../../common/queue-messages.js';
 
 test('Acknowledged message', async () => {
   await createQueue(defaultQueue, false);
@@ -31,7 +32,7 @@ test('Acknowledged message', async () => {
   const consumer = getConsumer({
     messageHandler: (msg1, cb) => cb(),
   });
-  consumer.run();
+  consumer.run(() => void 0);
   await untilMessageAcknowledged(consumer, id);
 
   const acknowledgedMessages = await getQueueAcknowledgedMessages();

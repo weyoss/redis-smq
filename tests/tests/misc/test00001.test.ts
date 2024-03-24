@@ -7,19 +7,20 @@
  * in the root directory of this source tree.
  */
 
-import { ConsumerHeartbeat } from '../../../src/lib/consumer/consumer-heartbeat';
-import { promisifyAll } from 'bluebird';
-import { getConsumer } from '../../common/consumer';
-import { getRedisInstance } from '../../common/redis';
+import { test, expect } from '@jest/globals';
+import bluebird from 'bluebird';
+import { ConsumerHeartbeat } from '../../../src/lib/consumer/consumer-heartbeat/consumer-heartbeat.js';
+import { shutDownBaseInstance } from '../../common/base-instance.js';
+import { getConsumer } from '../../common/consumer.js';
 import {
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
-import { shutDownBaseInstance } from '../../common/base-instance';
+} from '../../common/message-producing-consuming.js';
+import { getRedisInstance } from '../../common/redis.js';
 
 test('Consumer heartbeat: check online/offline consumers', async () => {
   const redisClient = await getRedisInstance();
-  const HeartbeatAsync = promisifyAll(ConsumerHeartbeat);
+  const HeartbeatAsync = bluebird.promisifyAll(ConsumerHeartbeat);
   await createQueue(defaultQueue, false);
   const consumer = getConsumer();
   await consumer.runAsync();

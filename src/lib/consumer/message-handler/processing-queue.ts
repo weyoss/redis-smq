@@ -7,37 +7,31 @@
  * in the root directory of this source tree.
  */
 
+import { async, ICallback, ILogger, IRedisClient } from 'redis-smq-common';
+import { ELuaScriptName } from '../../../common/redis-client/scripts/scripts.js';
+import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
+import { Configuration } from '../../../config/index.js';
 import {
-  EConsumeMessageUnacknowledgedCause,
   EMessageProperty,
   EMessagePropertyStatus,
-  IQueueParams,
-} from '../../../../types';
-import { MessageEnvelope } from '../../message/message-envelope';
-import {
-  async,
-  ICallback,
-  ILogger,
-  IRedisTransaction,
-  RedisClient,
-} from 'redis-smq-common';
-import { redisKeys } from '../../../common/redis-keys/redis-keys';
+} from '../../message/index.js';
+import { _getMessage } from '../../message/_/_get-message.js';
+import { MessageEnvelope } from '../../message/message-envelope.js';
+import { IQueueParams } from '../../queue/index.js';
+import { consumerQueues } from '../consumer-queues.js';
+import { ConsumerError } from '../errors/index.js';
+import { EConsumeMessageUnacknowledgedCause } from '../types/index.js';
 import {
   ERetryAction,
   getRetryAction,
   TGetRetryActionReply,
-} from './retry-message';
-import { consumerQueues } from '../consumer-queues';
-import { ELuaScriptName } from '../../../common/redis-client/redis-client';
-import { _getMessage } from '../../message/_get-message';
-import { Configuration } from '../../../config/configuration';
-import { ConsumerError } from '../errors';
+} from './retry-message.js';
 
 export type THandleProcessingQueueReply = TGetRetryActionReply | false;
 
 export const processingQueue = {
   handleProcessingQueue(
-    redisClient: RedisClient,
+    redisClient: IRedisClient,
     consumerIds: string[],
     queues: IQueueParams[],
     logger: ILogger,
@@ -48,17 +42,10 @@ export const processingQueue = {
     if (consumerIds.length) {
       const { store, expire, queueSize } =
         Configuration.getSetConfig().messages.store.deadLettered;
-      const {
-        keyProcessingQueues,
-        keyHeartbeats,
-        keyHeartbeatConsumerWeight,
-        keyDelayedMessages,
-        keyRequeueMessages,
-      } = redisKeys.getMainKeys();
+      const { keyProcessingQueues, keyDelayedMessages, keyRequeueMessages } =
+        redisKeys.getMainKeys();
       const keys: string[] = [
         keyProcessingQueues,
-        keyHeartbeats,
-        keyHeartbeatConsumerWeight,
         keyDelayedMessages,
         keyRequeueMessages,
       ];
@@ -92,18 +79,16 @@ export const processingQueue = {
                     (queue, _, done) => {
                       args.push(JSON.stringify(queue));
                       args.push(consumerId);
+                      const { keyConsumerQueues } =
+                        redisKeys.getConsumerKeys(consumerId);
+                      const { keyQueueProcessing } =
+                        redisKeys.getQueueConsumerKeys(queue, consumerId);
                       const {
-                        keyQueueProcessing,
                         keyQueueDL,
                         keyQueueProcessingQueues,
                         keyQueueConsumers,
-                        keyConsumerQueues,
                         keyQueueProperties,
-                      } = redisKeys.getQueueConsumerKeys(
-                        queue,
-                        consumerId,
-                        null,
-                      );
+                      } = redisKeys.getQueueKeys(queue, null);
                       keys.push(
                         keyQueueProcessing,
                         keyQueueDL,
@@ -205,7 +190,7 @@ export const processingQueue = {
   },
 
   fetchProcessingQueueMessage(
-    redisClient: RedisClient,
+    redisClient: IRedisClient,
     keyQueueProcessing: string,
     cb: ICallback<MessageEnvelope>,
   ): void {
@@ -221,22 +206,8 @@ export const processingQueue = {
     );
   },
 
-  setUpProcessingQueue(
-    multi: IRedisTransaction,
-    queue: IQueueParams,
-    consumerId: string,
-  ): void {
-    const {
-      keyQueueProcessing,
-      keyProcessingQueues,
-      keyQueueProcessingQueues,
-    } = redisKeys.getQueueConsumerKeys(queue, consumerId, null);
-    multi.hset(keyQueueProcessingQueues, keyQueueProcessing, consumerId);
-    multi.sadd(keyProcessingQueues, keyQueueProcessing);
-  },
-
   getQueueProcessingQueues(
-    redisClient: RedisClient,
+    redisClient: IRedisClient,
     queue: IQueueParams,
     cb: ICallback<Record<string, string>>,
   ): void {

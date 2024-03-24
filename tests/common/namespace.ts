@@ -7,9 +7,19 @@
  * in the root directory of this source tree.
  */
 
-import { promisifyAll } from 'bluebird';
-import { Namespace } from '../../src/lib/queue/namespace';
+import bluebird from 'bluebird';
+import { Namespace } from '../../src/lib/index.js';
+
+const instances: Namespace[] = [];
 
 export async function getNamespace() {
-  return promisifyAll(new Namespace());
+  const instance = new Namespace();
+  instances.push(instance);
+  return bluebird.promisifyAll(instance);
+}
+
+export async function shutDownNamespace() {
+  for (const i of instances) {
+    await bluebird.promisifyAll(i).shutdownAsync();
+  }
 }

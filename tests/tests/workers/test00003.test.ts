@@ -7,40 +7,37 @@
  * in the root directory of this source tree.
  */
 
-import { delay, promisifyAll } from 'bluebird';
-import { WatchConsumersWorker } from '../../../src/workers/watch-consumers.worker';
-import { getRedisInstance } from '../../common/redis';
+import { test, expect } from '@jest/globals';
+import bluebird from 'bluebird';
+import { Configuration } from '../../../src/config/configuration.js';
+import RequeueUnacknowledgedWorker from '../../../src/lib/consumer/workers/requeue-unacknowledged.worker.js';
+import WatchConsumersWorker from '../../../src/lib/consumer/workers/watch-consumers.worker.js';
 import {
+  crashAConsumerConsumingAMessage,
   createQueue,
   defaultQueue,
-  crashAConsumerConsumingAMessage,
-} from '../../common/message-producing-consuming';
-import { logger } from '../../common/logger';
-import RequeueUnacknowledgedWorker from '../../../src/workers/requeue-unacknowledged.worker';
-import { getQueuePendingMessages } from '../../common/queue-pending-messages';
+} from '../../common/message-producing-consuming.js';
+import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 
 test('WatchdogWorker', async () => {
   await createQueue(defaultQueue, false);
   await crashAConsumerConsumingAMessage();
 
-  const redisClient = await getRedisInstance();
-  const watchdogWorker = promisifyAll(
-    new WatchConsumersWorker(redisClient, false, logger),
+  const watchdogWorker = await bluebird.promisifyAll(
+    WatchConsumersWorker(Configuration.getSetConfig()),
   );
-  watchdogWorker.run();
+  await watchdogWorker.runAsync();
 
-  const redisClient2 = await getRedisInstance();
-  const requeueWorker = promisifyAll(
-    new RequeueUnacknowledgedWorker(redisClient2, false),
+  const requeueWorker = await bluebird.promisifyAll(
+    RequeueUnacknowledgedWorker(Configuration.getSetConfig()),
   );
-  requeueWorker.run();
-
-  await delay(20000);
+  await requeueWorker.runAsync();
+  await bluebird.delay(20000);
 
   const pendingMessages = await getQueuePendingMessages();
   const res3 = await pendingMessages.getMessagesAsync(defaultQueue, 0, 100);
   expect(res3.totalItems).toBe(1);
 
-  await watchdogWorker.quitAsync();
-  await requeueWorker.quitAsync();
+  await requeueWorker.shutdownAsync();
+  await watchdogWorker.shutdownAsync();
 });

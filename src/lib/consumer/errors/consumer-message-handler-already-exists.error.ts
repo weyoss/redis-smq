@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { ConsumerError } from './consumer.error';
-import { IQueueParsedParams } from '../../../../types';
+import { IQueueParsedParams } from '../../queue/index.js';
+import { ConsumerError } from './consumer.error.js';
 
 export class ConsumerMessageHandlerAlreadyExistsError extends ConsumerError {
   constructor(queue: IQueueParsedParams) {

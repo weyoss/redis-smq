@@ -7,14 +7,16 @@
  * in the root directory of this source tree.
  */
 
-import { ExchangeTopic } from '../../../../src/lib/exchange/exchange-topic';
-import { RedisKeysError } from '../../../../src/common/redis-keys/redis-keys.error';
+import { test, expect } from '@jest/globals';
+import { RedisKeysError } from '../../../../src/common/redis-keys/redis-keys.error.js';
+import { getTopicExchange } from '../../../common/exchange.js';
 
 test('ExchangeTopic: topic validation', async () => {
-  expect(() => new ExchangeTopic('!@223333')).toThrow(RedisKeysError);
-  expect(() => new ExchangeTopic('223333.')).toThrow(RedisKeysError);
-  expect(() => new ExchangeTopic('223333.w')).toThrow(RedisKeysError);
-  expect(() => new ExchangeTopic('a223333.w')).not.toThrow();
-  expect(() => new ExchangeTopic('a223333.w_e')).not.toThrow();
-  expect(() => new ExchangeTopic('a223333.w-e')).not.toThrow();
+  const e = getTopicExchange();
+  await expect(e.getQueuesAsync('!@223333')).rejects.toThrow(RedisKeysError);
+  await expect(e.getQueuesAsync('223333.')).rejects.toThrow(RedisKeysError);
+  await expect(e.getQueuesAsync('223333.w')).rejects.toThrow(RedisKeysError);
+  await expect(e.getQueuesAsync('a223333.w')).resolves.not.toThrow();
+  await expect(e.getQueuesAsync('a223333.w_e')).resolves.not.toThrow();
+  await expect(e.getQueuesAsync('a223333.w-e')).resolves.not.toThrow();
 });

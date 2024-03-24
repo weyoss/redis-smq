@@ -7,17 +7,22 @@
  * in the root directory of this source tree.
  */
 
-import { delay, promisifyAll } from 'bluebird';
-import { Consumer } from '../../../src/lib/consumer/consumer';
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
-import { getProducer } from '../../common/producer';
+import { test, expect } from '@jest/globals';
+import bluebird from 'bluebird';
+import { ICallback } from 'redis-smq-common';
+import {
+  Consumer,
+  IMessageParams,
+  IMessageTransferable,
+  ProducibleMessage,
+} from '../../../src/lib/index.js';
+import { shutDownBaseInstance } from '../../common/base-instance.js';
 import {
   createQueue,
   defaultQueue,
-} from '../../common/message-producing-consuming';
-import { shutDownBaseInstance } from '../../common/base-instance';
-import { getQueueRateLimit } from '../../common/queue-rate-limit';
-import { IMessageParams } from '../../../types';
+} from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
+import { getQueueRateLimit } from '../../common/queue-rate-limit.js';
 
 test('Consume message from different queues using a single consumer instance: case 5', async () => {
   await createQueue(defaultQueue, false);
@@ -29,12 +34,15 @@ test('Consume message from different queues using a single consumer instance: ca
   });
 
   const messages: IMessageParams[] = [];
-  const consumer = promisifyAll(new Consumer(true));
+  const consumer = bluebird.promisifyAll(new Consumer(true));
 
-  await consumer.consumeAsync(defaultQueue, (msg, cb) => {
-    messages.push(msg);
-    cb();
-  });
+  await consumer.consumeAsync(
+    defaultQueue,
+    (msg: IMessageTransferable, cb: ICallback<void>) => {
+      messages.push(msg);
+      cb();
+    },
+  );
 
   await consumer.runAsync();
 
@@ -47,7 +55,7 @@ test('Consume message from different queues using a single consumer instance: ca
     );
   }
 
-  await delay(10000);
+  await bluebird.delay(15000);
   expect(messages.length).toBe(5);
   expect(messages.map((i) => i.body).sort()).toEqual([
     'body 1',

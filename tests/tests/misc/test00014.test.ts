@@ -7,17 +7,18 @@
  * in the root directory of this source tree.
  */
 
-import { getProducer } from '../../common/producer';
-import { shutDownBaseInstance } from '../../common/base-instance';
+import { test, expect } from '@jest/globals';
+import { shutDownBaseInstance } from '../../common/base-instance.js';
+import { getProducer } from '../../common/producer.js';
 
 test('Producer: isRunning, isGoingUp, isGoingDown, isUp, isDown', async () => {
   const mProducer = getProducer();
-  await mProducer.runAsync();
+  mProducer.run(() => void 0);
 
   expect(typeof mProducer.getId()).toBe('string');
   if (mProducer.isGoingUp()) {
     await new Promise<void>((resolve) => {
-      mProducer.once('up', resolve);
+      mProducer.once('producer.up', () => resolve());
     });
   }
   await shutDownBaseInstance(mProducer);

@@ -7,11 +7,12 @@
  * in the root directory of this source tree.
  */
 
+import { test, expect } from '@jest/globals';
 import {
   ProducerMessageExchangeRequiredError,
   ProducibleMessage,
-} from '../../../index';
-import { getProducer } from '../../common/producer';
+} from '../../../index.js';
+import { getProducer } from '../../common/producer.js';
 
 test('Producing a message without a message queue', async () => {
   const producer = getProducer();
@@ -20,7 +21,7 @@ test('Producing a message without a message queue', async () => {
   const msg = new ProducibleMessage();
   msg.setBody({ hello: 'world' });
 
-  await expect(async () => {
-    await producer.produceAsync(msg);
-  }).rejects.toThrow(ProducerMessageExchangeRequiredError);
+  await expect(producer.produceAsync(msg)).rejects.toThrow(
+    ProducerMessageExchangeRequiredError,
+  );
 });

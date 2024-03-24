@@ -7,15 +7,21 @@
  * in the root directory of this source tree.
  */
 
-import { promisifyAll } from 'bluebird';
-import { Consumer } from '../../../src/lib/consumer/consumer';
-import { shutDownBaseInstance } from '../../common/base-instance';
-import { EQueueDeliveryModel, EQueueType } from '../../../types';
-import { getQueue } from '../../common/queue';
+import { test, expect } from '@jest/globals';
+import bluebird from 'bluebird';
+import { ICallback } from 'redis-smq-common';
+import {
+  Consumer,
+  EQueueDeliveryModel,
+  EQueueType,
+  IMessageTransferable,
+} from '../../../src/lib/index.js';
+import { shutDownBaseInstance } from '../../common/base-instance.js';
+import { getQueue } from '../../common/queue.js';
 
 test('Consume message from different queues using a single consumer instance: case 1', async () => {
   const queueInstance = await getQueue();
-  const consumer = promisifyAll(new Consumer());
+  const consumer = bluebird.promisifyAll(new Consumer());
 
   expect(consumer.getQueues()).toEqual([]);
 
@@ -24,17 +30,26 @@ test('Consume message from different queues using a single consumer instance: ca
     EQueueType.LIFO_QUEUE,
     EQueueDeliveryModel.POINT_TO_POINT,
   );
-  await consumer.consumeAsync('test_queue', (msg, cb) => cb());
+  await consumer.consumeAsync(
+    'test_queue',
+    (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
+  );
 
   await queueInstance.saveAsync(
     'another_queue',
     EQueueType.LIFO_QUEUE,
     EQueueDeliveryModel.POINT_TO_POINT,
   );
-  await consumer.consumeAsync('another_queue', (msg, cb) => cb());
+  await consumer.consumeAsync(
+    'another_queue',
+    (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
+  );
 
   expect(
-    consumer.consumeAsync('another_queue', (msg, cb) => cb()),
+    consumer.consumeAsync(
+      'another_queue',
+      (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
+    ),
   ).rejects.toThrow(
     `A message handler for queue [another_queue@testing] already exists`,
   );
@@ -50,7 +65,10 @@ test('Consume message from different queues using a single consumer instance: ca
     { queueParams: { name: 'test_queue', ns: 'testing' }, groupId: null },
   ]);
 
-  await consumer.consumeAsync('another_queue', (msg, cb) => cb());
+  await consumer.consumeAsync(
+    'another_queue',
+    (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
+  );
 
   expect(consumer.getQueues()).toEqual([
     { queueParams: { name: 'test_queue', ns: 'testing' }, groupId: null },
@@ -61,7 +79,10 @@ test('Consume message from different queues using a single consumer instance: ca
   expect(res).toBe(true);
 
   expect(
-    consumer.consumeAsync('another_queue', (msg, cb) => cb()),
+    consumer.consumeAsync(
+      'another_queue',
+      (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
+    ),
   ).rejects.toThrow(
     `A message handler for queue [another_queue@testing] already exists`,
   );
@@ -75,7 +96,10 @@ test('Consume message from different queues using a single consumer instance: ca
     { queueParams: { name: 'test_queue', ns: 'testing' }, groupId: null },
   ]);
 
-  await consumer.consumeAsync('another_queue', (msg, cb) => cb());
+  await consumer.consumeAsync(
+    'another_queue',
+    (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
+  );
 
   expect(consumer.getQueues()).toEqual([
     { queueParams: { name: 'test_queue', ns: 'testing' }, groupId: null },
@@ -87,9 +111,17 @@ test('Consume message from different queues using a single consumer instance: ca
     EQueueType.PRIORITY_QUEUE,
     EQueueDeliveryModel.POINT_TO_POINT,
   );
-  await consumer.consumeAsync('queue_a', (msg, cb) => cb());
+  await consumer.consumeAsync(
+    'queue_a',
+    (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
+  );
 
-  expect(consumer.consumeAsync('queue_a', (msg, cb) => cb())).rejects.toThrow(
+  expect(
+    consumer.consumeAsync(
+      'queue_a',
+      (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
+    ),
+  ).rejects.toThrow(
     `A message handler for queue [queue_a@testing] already exists`,
   );
 

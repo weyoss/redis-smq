@@ -7,12 +7,15 @@
  * in the root directory of this source tree.
  */
 
-import { Base } from '../../src/lib/base';
+import { Consumer, Producer } from '../../src/lib/index.js';
 
-export async function shutDownBaseInstance(i: Base): Promise<void> {
+export async function shutDownBaseInstance(
+  i: Consumer | Producer,
+): Promise<void> {
   if (i.isGoingUp()) {
     await new Promise<void>((resolve) => {
-      i.once('up', resolve);
+      if (i instanceof Producer) i.on('producer.up', () => resolve());
+      else i.on('consumer.up', () => resolve());
     });
   }
   if (i.isRunning()) {

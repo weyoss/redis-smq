@@ -7,17 +7,20 @@
  * in the root directory of this source tree.
  */
 
-import { delay, promisifyAll } from 'bluebird';
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
-import { getConsumer } from '../../common/consumer';
-import { getProducer } from '../../common/producer';
-import { defaultQueue } from '../../common/message-producing-consuming';
+import { test, expect, jest } from '@jest/globals';
+import bluebird from 'bluebird';
+import { ICallback } from 'redis-smq-common';
 import {
   EMessagePriority,
   EQueueDeliveryModel,
   EQueueType,
-} from '../../../types';
-import { getQueue } from '../../common/queue';
+  IMessageTransferable,
+  ProducibleMessage,
+} from '../../../src/lib/index.js';
+import { getConsumer } from '../../common/consumer.js';
+import { defaultQueue } from '../../common/message-producing-consuming.js';
+import { getProducer } from '../../common/producer.js';
+import { getQueue } from '../../common/queue.js';
 
 test('Priority queuing: case 2', async () => {
   const consumedMessages: string[] = [];
@@ -29,13 +32,15 @@ test('Priority queuing: case 2', async () => {
     EQueueDeliveryModel.POINT_TO_POINT,
   );
 
-  const consumer = promisifyAll(
+  const consumer = bluebird.promisifyAll(
     getConsumer({
       queue: defaultQueue,
-      messageHandler: jest.fn((msg, cb) => {
-        consumedMessages.push(msg.id);
-        cb();
-      }),
+      messageHandler: jest.fn(
+        (msg: IMessageTransferable, cb: ICallback<void>) => {
+          consumedMessages.push(msg.id);
+          cb();
+        },
+      ),
     }),
   );
 
@@ -78,7 +83,7 @@ test('Priority queuing: case 2', async () => {
   const [id5] = await producer.produceAsync(msg5);
 
   await consumer.runAsync();
-  await delay(10000);
+  await bluebird.delay(10000);
 
   expect(consumedMessages.length).toBe(5);
   expect(consumedMessages[0]).toBe(id5);

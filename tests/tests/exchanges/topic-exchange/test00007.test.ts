@@ -7,19 +7,20 @@
  * in the root directory of this source tree.
  */
 
-import { ProducibleMessage } from '../../../../src/lib/message/producible-message';
-import { getProducer } from '../../../common/producer';
-import { ProducerMessageNotPublishedError } from '../../../../src/lib/producer/errors';
-import { ExchangeTopic } from '../../../../src/lib/exchange/exchange-topic';
+import { test, expect } from '@jest/globals';
+import {
+  ProducerMessageNotPublishedError,
+  ProducibleMessage,
+} from '../../../../src/lib/index.js';
+import { getProducer } from '../../../common/producer.js';
 
 test('ExchangeTopic: producing message having an exchange without matched queues ', async () => {
   const producer = getProducer();
   await producer.runAsync();
 
-  const e = new ExchangeTopic('a.b.c.d');
-  const msg = new ProducibleMessage().setExchange(e).setBody('hello');
+  const msg = new ProducibleMessage().setTopic('a.b.c.d').setBody('hello');
 
-  await expect(async () => await producer.produceAsync(msg)).rejects.toThrow(
+  await expect(producer.produceAsync(msg)).rejects.toThrow(
     ProducerMessageNotPublishedError,
   );
 });

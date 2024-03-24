@@ -14,7 +14,6 @@ const {
   ProducibleMessage,
   Queue,
   Configuration,
-  disconnect,
   EQueueType,
   EQueueDeliveryMode,
 } = require('../..'); // redis-smq
@@ -61,7 +60,7 @@ const createQueue = (cb) => {
         EQueueDeliveryMode.POINT_TO_POINT,
         (err) => {
           if (err) cb(err);
-          else disconnect(cb);
+          else queue.shutdown(cb);
         },
       );
     } else cb();

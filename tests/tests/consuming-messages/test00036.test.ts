@@ -7,15 +7,16 @@
  * in the root directory of this source tree.
  */
 
-import { ProducibleMessage } from '../../../src/lib/message/producible-message';
-import { ProducerMessageNotPublishedError } from '../../../src/lib/producer/errors';
-import { getProducer } from '../../common/producer';
+import { test, expect } from '@jest/globals';
 import {
   EMessagePriority,
   EQueueDeliveryModel,
   EQueueType,
-} from '../../../types';
-import { getQueue } from '../../common/queue';
+  ProducerMessageNotPublishedError,
+  ProducibleMessage,
+} from '../../../src/lib/index.js';
+import { getProducer } from '../../common/producer.js';
+import { getQueue } from '../../common/queue.js';
 
 test('Producing a message and expecting different kind of failures', async () => {
   const queue = await getQueue();

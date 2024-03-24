@@ -7,71 +7,134 @@
  * in the root directory of this source tree.
  */
 
-import { MessageEnvelope } from '../message/message-envelope';
-import { Base } from '../base';
 import {
   async,
+  CallbackEmptyReplyError,
   ICallback,
+  ILogger,
+  IRedisClient,
+  logger,
   PanicError,
-  RedisClient,
+  Runnable,
   TUnaryFunction,
 } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis-keys/redis-keys';
-import {
-  ProducerQueueWithoutConsumerGroupsError,
-  ProducerInstanceNotRunningError,
-  ProducerMessageExchangeRequiredError,
-  ProducerMessageNotPublishedError,
-} from './errors';
-import { ELuaScriptName } from '../../common/redis-client/redis-client';
-import { _scheduleMessage } from './_schedule-message';
+import { TProducerEvent } from '../../common/index.js';
+import { RedisClientFactory } from '../../common/redis-client/redis-client-factory.js';
+import { ELuaScriptName } from '../../common/redis-client/scripts/scripts.js';
+import { redisKeys } from '../../common/redis-keys/redis-keys.js';
+import { Configuration } from '../../config/index.js';
+import { EventBusRedisFactory } from '../event-bus/event-bus-redis-factory.js';
+import { EExchangeType } from '../exchange/index.js';
+import { _getExchangeQueues } from '../exchange/_/_get-exchange-queues.js';
 import {
   EMessageProperty,
   EMessagePropertyStatus,
-  EQueueProperty,
-  EQueueType,
-  IQueueParams,
-} from '../../../types';
-import { ExchangeDirect } from '../exchange/exchange-direct';
-import { _parseQueueParams } from '../queue/queue/_parse-queue-params';
-import { ProducibleMessage } from '../message/producible-message';
-import { QueueConsumerGroupsDictionary } from './queue-consumer-groups-dictionary';
+  ProducibleMessage,
+} from '../message/index.js';
+import { MessageEnvelope } from '../message/message-envelope.js';
+import { EQueueProperty, EQueueType, IQueueParams } from '../queue/index.js';
+import { _scheduleMessage } from './_/_schedule-message.js';
+import {
+  ProducerInstanceNotRunningError,
+  ProducerMessageExchangeRequiredError,
+  ProducerMessageNotPublishedError,
+  ProducerQueueWithoutConsumerGroupsError,
+} from './errors/index.js';
+import { QueueConsumerGroupsCache } from './queue-consumer-groups-cache.js';
+import { eventBusPublisher } from './event-bus-publisher.js';
 
-export class Producer extends Base {
-  protected queueConsumerGroupsHandler: QueueConsumerGroupsDictionary | null =
-    null;
+export class Producer extends Runnable<TProducerEvent> {
+  protected logger;
+  protected redisClient;
+  protected eventBus;
+  protected queueConsumerGroupsHandler: QueueConsumerGroupsCache | null = null;
 
-  protected initQueueConsumerGroupsHandler = (cb: ICallback<void>): void => {
-    this.queueConsumerGroupsHandler = new QueueConsumerGroupsDictionary(
-      this.getSharedRedisClient(),
+  constructor() {
+    super();
+    this.redisClient = RedisClientFactory(this.id, (err) =>
+      this.handleError(err),
     );
-    this.queueConsumerGroupsHandler.run(cb);
-  };
-
-  protected tearDownQueueConsumerGroupsHandler = (
-    cb: ICallback<void>,
-  ): void => {
-    this.queueConsumerGroupsHandler?.quit(cb);
-  };
-
-  protected override goingUp(): TUnaryFunction<ICallback<void>>[] {
-    return super.goingUp().concat([this.initQueueConsumerGroupsHandler]);
-  }
-
-  protected override goingDown(): TUnaryFunction<ICallback<void>>[] {
-    return [this.tearDownQueueConsumerGroupsHandler].concat(super.goingDown());
-  }
-
-  protected override registerSystemEventListeners(): void {
-    super.registerSystemEventListeners();
-    if (this.hasEventListeners()) {
-      this.on('messagePublished', (...args) => {
-        this.eventListeners.forEach((i) => i.emit('messagePublished', ...args));
-      });
+    this.eventBus = EventBusRedisFactory(this.id, (err) =>
+      this.handleError(err),
+    );
+    this.logger = logger.getLogger(
+      Configuration.getSetConfig().logger,
+      `producer:${this.id}`,
+    );
+    if (Configuration.getSetConfig().eventBus.enabled) {
+      eventBusPublisher(this, this.logger);
     }
   }
 
-  protected getQueueConsumerGroupsHandler(): QueueConsumerGroupsDictionary {
+  protected override getLogger(): ILogger {
+    return this.logger;
+  }
+
+  protected initQueueConsumerGroupsHandler = (cb: ICallback<void>): void => {
+    this.queueConsumerGroupsHandler = new QueueConsumerGroupsCache(
+      this.id,
+      this.logger,
+    );
+    this.queueConsumerGroupsHandler.run((err) => cb(err));
+  };
+
+  protected shutDownQueueConsumerGroupsHandler = (
+    cb: ICallback<void>,
+  ): void => {
+    if (this.queueConsumerGroupsHandler) {
+      this.queueConsumerGroupsHandler.shutdown(() => {
+        this.queueConsumerGroupsHandler = null;
+        cb();
+      });
+    } else cb();
+  };
+
+  protected initRedisClient = (cb: ICallback<void>): void =>
+    this.redisClient.getSetInstance((err, client) => {
+      if (err) cb(err);
+      else if (!client) cb(new CallbackEmptyReplyError());
+      else {
+        client.on('error', (err) => this.handleError(err));
+        cb();
+      }
+    });
+
+  protected override goingUp(): TUnaryFunction<ICallback<void>>[] {
+    return super.goingUp().concat([
+      this.redisClient.init,
+      this.eventBus.init,
+      (cb: ICallback<void>) => {
+        this.emit('producer.goingUp', this.id);
+        cb();
+      },
+      this.initRedisClient,
+      this.initQueueConsumerGroupsHandler,
+    ]);
+  }
+
+  protected override up(cb: ICallback<boolean>) {
+    super.up(() => {
+      this.emit('producer.up', this.id);
+      cb(null, true);
+    });
+  }
+
+  protected override goingDown(): TUnaryFunction<ICallback<void>>[] {
+    this.emit('producer.goingDown', this.id);
+    return [
+      this.shutDownQueueConsumerGroupsHandler,
+      this.redisClient.shutdown,
+    ].concat(super.goingDown());
+  }
+
+  protected override down(cb: ICallback<boolean>) {
+    super.down(() => {
+      this.emit('producer.down', this.id);
+      setTimeout(() => this.eventBus.shutdown(() => cb(null, true)), 1000);
+    });
+  }
+
+  protected getQueueConsumerGroupsHandler(): QueueConsumerGroupsCache {
     if (!this.queueConsumerGroupsHandler)
       throw new PanicError(
         `Expected an instance of QueueConsumerGroupsHandler`,
@@ -80,7 +143,7 @@ export class Producer extends Base {
   }
 
   protected enqueue(
-    redisClient: RedisClient,
+    redisClient: IRedisClient,
     queue: IQueueParams,
     message: MessageEnvelope,
     cb: ICallback<void>,
@@ -131,7 +194,7 @@ export class Producer extends Base {
   }
 
   protected produceMessageItem(
-    redisClient: RedisClient,
+    redisClient: IRedisClient,
     message: MessageEnvelope,
     queue: IQueueParams,
     cb: ICallback<string>,
@@ -154,7 +217,7 @@ export class Producer extends Base {
         else {
           this.logger.info(`Message (ID ${messageId}) has been published.`);
           this.emit(
-            'messagePublished',
+            'producer.messagePublished',
             messageId,
             { queueParams: queue, groupId: message.getConsumerGroupId() },
             this.id,
@@ -165,7 +228,7 @@ export class Producer extends Base {
   }
 
   protected produceMessage(
-    redisClient: RedisClient,
+    redisClient: IRedisClient,
     message: ProducibleMessage,
     queue: IQueueParams,
     cb: ICallback<string[]>,
@@ -204,22 +267,25 @@ export class Producer extends Base {
   }
 
   produce(msg: ProducibleMessage, cb: ICallback<string[]>): void {
-    if (!this.powerSwitch.isUp()) cb(new ProducerInstanceNotRunningError());
+    if (!this.isUp()) cb(new ProducerInstanceNotRunningError());
     else {
-      const redisClient = this.getSharedRedisClient();
-      const exchange = msg.getExchange();
-      if (!exchange) cb(new ProducerMessageExchangeRequiredError());
-      else if (exchange instanceof ExchangeDirect) {
-        const queue = _parseQueueParams(exchange.getBindingParams());
-        if (queue instanceof Error) cb(queue);
-        else this.produceMessage(redisClient, msg, queue, cb);
+      const redisClient = this.redisClient.getInstance();
+      if (redisClient instanceof Error) {
+        cb(redisClient);
+        return void 0;
+      }
+      const exchangeParams = msg.getExchange();
+      if (!exchangeParams) cb(new ProducerMessageExchangeRequiredError());
+      else if (exchangeParams.type === EExchangeType.DIRECT) {
+        const queue = exchangeParams.params;
+        this.produceMessage(redisClient, msg, queue, cb);
       } else {
-        exchange.getQueues((err, queues) => {
+        _getExchangeQueues(redisClient, exchangeParams, (err, queues) => {
           if (err) cb(err);
           else if (!queues?.length)
             cb(
               new ProducerMessageNotPublishedError(
-                `The exchange (${exchange.constructor.name}) does not match any queue.`,
+                `The exchange does not match any queue.`,
               ),
             );
           else {

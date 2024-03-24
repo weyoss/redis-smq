@@ -7,16 +7,15 @@
  * in the root directory of this source tree.
  */
 
-import { logger, ERedisConfigClient } from 'redis-smq-common';
+import { ERedisConfigClient, logger } from 'redis-smq-common';
 import {
-  Consumer,
-  Producer,
-  Message,
-  Queue,
   Configuration,
-  disconnect,
-  EQueueType,
+  Consumer,
   EQueueDeliveryMode,
+  EQueueType,
+  Message,
+  Producer,
+  Queue,
 } from '../..'; // redis-smq
 
 const config = {
@@ -61,7 +60,7 @@ const createQueue = (cb) => {
         EQueueDeliveryMode.POINT_TO_POINT,
         (err) => {
           if (err) cb(err);
-          else disconnect(cb);
+          else queue.shutdown(cb);
         },
       );
     } else cb();

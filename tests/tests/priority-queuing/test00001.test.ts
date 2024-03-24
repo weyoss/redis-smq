@@ -7,11 +7,12 @@
  * in the root directory of this source tree.
  */
 
-import { promisifyAll } from 'bluebird';
-import { getConsumer } from '../../common/consumer';
-import { defaultQueue } from '../../common/message-producing-consuming';
-import { EQueueDeliveryModel, EQueueType } from '../../../types';
-import { getQueue } from '../../common/queue';
+import { test } from '@jest/globals';
+import bluebird from 'bluebird';
+import { EQueueDeliveryModel, EQueueType } from '../../../src/lib/index.js';
+import { getConsumer } from '../../common/consumer.js';
+import { defaultQueue } from '../../common/message-producing-consuming.js';
+import { getQueue } from '../../common/queue.js';
 
 test('Priority queuing: case 1', async () => {
   const queue = await getQueue();
@@ -21,6 +22,6 @@ test('Priority queuing: case 1', async () => {
     EQueueDeliveryModel.POINT_TO_POINT,
   );
 
-  const consumer = promisifyAll(getConsumer({ queue: defaultQueue }));
+  const consumer = bluebird.promisifyAll(getConsumer({ queue: defaultQueue }));
   await consumer.runAsync();
 });

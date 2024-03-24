@@ -7,9 +7,19 @@
  * in the root directory of this source tree.
  */
 
-import { promisifyAll } from 'bluebird';
-import { QueueDeadLetteredMessages } from '../../src/lib/queue/queue-dead-lettered-messages';
+import bluebird from 'bluebird';
+import { QueueDeadLetteredMessages } from '../../src/lib/index.js';
+
+const instances: QueueDeadLetteredMessages[] = [];
 
 export async function getQueueDeadLetteredMessages() {
-  return promisifyAll(new QueueDeadLetteredMessages());
+  const instance = new QueueDeadLetteredMessages();
+  instances.push(instance);
+  return bluebird.promisifyAll(instance);
+}
+
+export async function shutDownQueueDeadLetteredMessages() {
+  for (const i of instances) {
+    await bluebird.promisifyAll(i).shutdownAsync();
+  }
 }

@@ -7,15 +7,15 @@
  * in the root directory of this source tree.
  */
 
+import { test, expect } from '@jest/globals';
+import { getMessage } from '../../common/message.js';
 import {
   createQueue,
   defaultQueue,
   produceMessageWithPriority,
-} from '../../common/message-producing-consuming';
-import { getQueuePendingMessages } from '../../common/queue-pending-messages';
-import { getQueueMessages } from '../../common/queue-messages';
-import { promisifyAll } from 'bluebird';
-import { Message } from '../../../src/lib/message/message';
+} from '../../common/message-producing-consuming.js';
+import { getQueueMessages } from '../../common/queue-messages.js';
+import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 
 test('Combined test: Delete a pending message with priority. Check pending message. Check queue metrics.', async () => {
   await createQueue(defaultQueue, true);
@@ -30,7 +30,7 @@ test('Combined test: Delete a pending message with priority. Check pending messa
   const count = await queueMessages.countMessagesByStatusAsync(queue);
   expect(count.pending).toBe(1);
 
-  const message = promisifyAll(new Message());
+  const message = await getMessage();
   await message.deleteMessageByIdAsync(messageId);
 
   const res2 = await pendingMessages.getMessagesAsync(queue, 0, 100);

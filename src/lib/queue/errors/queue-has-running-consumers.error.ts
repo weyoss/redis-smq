@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { QueueError } from './queue.error';
+import { QueueError } from './queue.error.js';
 
 export class QueueHasRunningConsumersError extends QueueError {
   constructor() {

@@ -7,12 +7,15 @@
  * in the root directory of this source tree.
  */
 
-/** @type {import('ts-jest/dist/types').InitialOptionsTsJest} */
 const { resolve } = require('path');
 
 module.exports = {
   rootDir: resolve('./'),
-  testMatch: ['**/dist/**/*.test.js'],
-  setupFilesAfterEnv: ['<rootDir>/dist/tests/jest.setup.js'],
+  testMatch: ['<rootDir>/dist/cjs/tests/**/*.test.js'],
+  setupFilesAfterEnv: ['<rootDir>/dist/cjs/tests/setup.js'],
   coverageDirectory: '<rootDir>/coverage',
+  verbose: true,
+  testTimeout: 160000,
+  resetMocks: true,
+  resetModules: true,
 };

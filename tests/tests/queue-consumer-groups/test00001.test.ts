@@ -7,48 +7,67 @@
  * in the root directory of this source tree.
  */
 
-import { QueueConsumerGroupsDictionary } from '../../../src/lib/producer/queue-consumer-groups-dictionary';
-import { getRedisInstance } from '../../common/redis';
-import { delay, promisifyAll } from 'bluebird';
-import { Queue } from '../../../src/lib/queue/queue/queue';
-import { EQueueDeliveryModel, EQueueType, IQueueParams } from '../../../types';
-import { Consumer } from '../../../src/lib/consumer/consumer';
-import { ConsumerGroups } from '../../../src/lib/consumer/consumer-groups/consumer-groups';
+import { test, expect } from '@jest/globals';
+import bluebird from 'bluebird';
+import { v4 } from 'uuid';
+import { RedisClientFactory } from '../../../src/common/redis-client/redis-client-factory.js';
+import { EventBusRedisFactory } from '../../../src/lib/event-bus/event-bus-redis-factory.js';
+import {
+  Consumer,
+  ConsumerGroups,
+  EQueueDeliveryModel,
+  EQueueType,
+  IQueueParams,
+} from '../../../src/lib/index.js';
+import { QueueConsumerGroupsCache } from '../../../src/lib/producer/queue-consumer-groups-cache.js';
+import { getQueue } from '../../common/queue.js';
 
-test('QueueConsumerGroupsDictionary: combined tests', async () => {
-  const redisClient = await getRedisInstance();
-  const dictionary = promisifyAll(
-    new QueueConsumerGroupsDictionary(redisClient),
+test('QueueConsumerGroupsCache: combined tests', async () => {
+  const producerId = v4();
+
+  const eventBus = bluebird.promisifyAll(
+    EventBusRedisFactory(producerId, (err) => console.log(err)),
   );
-  await dictionary.runAsync();
+  await eventBus.initAsync();
+
+  const redisClientInstance = bluebird.promisifyAll(
+    RedisClientFactory(producerId, (err) => console.log(err)),
+  );
+  await redisClientInstance.initAsync();
+
+  // initializing a standalone dictionary
+  const queueConsumerGroupsDictionary = bluebird.promisifyAll(
+    new QueueConsumerGroupsCache(producerId, console),
+  );
+  await queueConsumerGroupsDictionary.runAsync();
 
   const queue1: IQueueParams = {
     name: 'test-queue',
     ns: 'ns1',
   };
 
-  const gp1 = dictionary.getConsumerGroups(queue1);
+  const gp1 = queueConsumerGroupsDictionary.getConsumerGroups(queue1);
   expect(gp1).toEqual({
     exists: false,
     consumerGroups: [],
   });
 
-  const queue = promisifyAll(new Queue());
+  const queue = await getQueue();
   await queue.saveAsync(
     queue1,
     EQueueType.PRIORITY_QUEUE,
     EQueueDeliveryModel.PUB_SUB,
   );
 
-  await delay(5000);
+  await bluebird.delay(5000);
 
-  const gp2 = dictionary.getConsumerGroups(queue1);
+  const gp2 = queueConsumerGroupsDictionary.getConsumerGroups(queue1);
   expect(gp2).toEqual({
     exists: true,
     consumerGroups: [],
   });
 
-  const consumer = promisifyAll(new Consumer());
+  const consumer = bluebird.promisifyAll(new Consumer());
   await consumer.runAsync();
 
   await consumer.consumeAsync(
@@ -56,9 +75,9 @@ test('QueueConsumerGroupsDictionary: combined tests', async () => {
     (msg, cb) => cb(),
   );
 
-  await delay(5000);
+  await bluebird.delay(5000);
 
-  const gp3 = dictionary.getConsumerGroups(queue1);
+  const gp3 = queueConsumerGroupsDictionary.getConsumerGroups(queue1);
   expect(gp3).toEqual({
     exists: true,
     consumerGroups: ['my-group'],
@@ -84,20 +103,20 @@ test('QueueConsumerGroupsDictionary: combined tests', async () => {
     EQueueDeliveryModel.POINT_TO_POINT,
   );
 
-  await delay(5000);
+  await bluebird.delay(5000);
 
-  const gp4 = dictionary.getConsumerGroups(queue1);
+  const gp4 = queueConsumerGroupsDictionary.getConsumerGroups(queue1);
   expect(gp4).toEqual({
     exists: true,
     consumerGroups: ['my-group'],
   });
-  const gp5 = dictionary.getConsumerGroups(queue2);
+  const gp5 = queueConsumerGroupsDictionary.getConsumerGroups(queue2);
   expect(gp5).toEqual({
     exists: true,
     consumerGroups: [],
   });
 
-  const gp6 = dictionary.getConsumerGroups(queue3);
+  const gp6 = queueConsumerGroupsDictionary.getConsumerGroups(queue3);
   expect(gp6).toEqual({
     exists: false,
     consumerGroups: [],
@@ -105,17 +124,17 @@ test('QueueConsumerGroupsDictionary: combined tests', async () => {
 
   await consumer.shutdownAsync();
 
-  const consumerGroups = promisifyAll(new ConsumerGroups());
+  const consumerGroups = bluebird.promisifyAll(new ConsumerGroups());
   await consumerGroups.deleteConsumerGroupAsync(queue1, 'my-group');
 
-  await delay(5000);
+  await bluebird.delay(5000);
 
-  const gp7 = dictionary.getConsumerGroups(queue1);
+  const gp7 = queueConsumerGroupsDictionary.getConsumerGroups(queue1);
   expect(gp7).toEqual({
     exists: true,
     consumerGroups: [],
   });
-  const gp8 = dictionary.getConsumerGroups(queue2);
+  const gp8 = queueConsumerGroupsDictionary.getConsumerGroups(queue2);
   expect(gp8).toEqual({
     exists: true,
     consumerGroups: [],
@@ -123,30 +142,33 @@ test('QueueConsumerGroupsDictionary: combined tests', async () => {
 
   await queue.deleteAsync(queue1);
 
-  await delay(5000);
+  await bluebird.delay(5000);
 
-  const gp9 = dictionary.getConsumerGroups(queue1);
+  const gp9 = queueConsumerGroupsDictionary.getConsumerGroups(queue1);
   expect(gp9).toEqual({
     exists: false,
     consumerGroups: [],
   });
-  const gp10 = dictionary.getConsumerGroups(queue2);
+  const gp10 = queueConsumerGroupsDictionary.getConsumerGroups(queue2);
   expect(gp10).toEqual({
     exists: true,
     consumerGroups: [],
   });
 
-  await dictionary.quitAsync();
+  await queueConsumerGroupsDictionary.shutdownAsync();
 
-  const dictionary2 = promisifyAll(
-    new QueueConsumerGroupsDictionary(redisClient),
+  const queueConsumerGroupsDictionary2 = bluebird.promisifyAll(
+    new QueueConsumerGroupsCache(producerId, console),
   );
-  await dictionary2.runAsync();
-  const gp11 = dictionary2.getConsumerGroups(queue2);
+  await queueConsumerGroupsDictionary2.runAsync();
+  const gp11 = queueConsumerGroupsDictionary2.getConsumerGroups(queue2);
   expect(gp11).toEqual({
     exists: true,
     consumerGroups: [],
   });
 
-  await dictionary2.quitAsync();
+  await queueConsumerGroupsDictionary2.shutdownAsync();
+  await consumerGroups.shutdownAsync();
+  await eventBus.shutdownAsync();
+  await redisClientInstance.shutdownAsync();
 });

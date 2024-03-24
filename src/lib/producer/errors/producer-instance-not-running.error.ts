@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { ProducerError } from './producer.error';
+import { ProducerError } from './producer.error.js';
 
 export class ProducerInstanceNotRunningError extends ProducerError {
   constructor(

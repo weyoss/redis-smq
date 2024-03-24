@@ -7,10 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { Consumer } from '../../src/lib/consumer/consumer';
-import { defaultQueue } from './message-producing-consuming';
-import { Producer } from '../../src/lib/producer/producer';
-import { ProducibleMessage } from '../../src/lib/message/producible-message';
+import { Consumer, Producer, ProducibleMessage } from '../../src/lib/index.js';
+import { defaultQueue } from './message-producing-consuming.js';
 
 const producer = new Producer();
 producer.run((err) => {
@@ -21,7 +19,6 @@ producer.run((err) => {
       .setBody(123)
       .setRetryDelay(0),
     (err) => {
-      console.log('GGGGGGG', err);
       if (err) throw err;
     },
   );
@@ -35,7 +32,7 @@ consumer.consume(
     if (err) throw err;
   },
 );
-consumer.run();
+consumer.run(() => void 0);
 
 setTimeout(() => {
   process.exit(0);

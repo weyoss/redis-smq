@@ -9,17 +9,15 @@
 
 import { ERedisConfigClient, ICallback, logger } from 'redis-smq-common';
 import {
+  Configuration,
   Consumer,
+  EQueueDeliveryModel,
+  EQueueType,
+  IRedisSMQConfig,
   Producer,
   ProducibleMessage,
   Queue,
-  EQueueType,
-  IRedisSMQConfig,
-  ExchangeDirect,
-  disconnect,
-} from '../..'; // redis-smq
-import { Configuration } from '../../src/config/configuration';
-import { EQueueDeliveryModel } from '../../types';
+} from '../../index.js'; // redis-smq
 
 export const config: IRedisSMQConfig = {
   namespace: 'ns1',
@@ -63,7 +61,7 @@ const createQueue = (cb: ICallback<void>): void => {
         EQueueDeliveryModel.POINT_TO_POINT,
         (err) => {
           if (err) cb(err);
-          else disconnect(cb);
+          else queue.shutdown(cb);
         },
       );
     } else cb();
@@ -75,9 +73,10 @@ const produce = (cb: ICallback<void>): void => {
   producer.run((err) => {
     if (err) cb(err);
     else {
-      const e = new ExchangeDirect('test_queue');
       const msg = new ProducibleMessage();
-      msg.setBody({ ts: `Current time is ${Date.now()}` }).setExchange(e);
+      msg
+        .setBody({ ts: `Current time is ${Date.now()}` })
+        .setQueue('test_queue');
       producer.produce(msg, (err) => cb(err));
     }
   });

@@ -7,15 +7,15 @@
  * in the root directory of this source tree.
  */
 
-import { Producer } from '../../src/lib/producer/producer';
-import { promisifyAll } from 'bluebird';
-import { shutDownBaseInstance } from './base-instance';
+import bluebird from 'bluebird';
+import { Producer } from '../../src/lib/index.js';
+import { shutDownBaseInstance } from './base-instance.js';
 
 const producersList: Producer[] = [];
 
 export function getProducer() {
   const producer = new Producer();
-  const p = promisifyAll(producer);
+  const p = bluebird.promisifyAll(producer);
   producersList.push(p);
   return p;
 }

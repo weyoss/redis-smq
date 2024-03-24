@@ -7,16 +7,17 @@
  * in the root directory of this source tree.
  */
 
+import { test, expect } from '@jest/globals';
+import { MessageRequeueError } from '../../../src/lib/index.js';
+import { shutDownBaseInstance } from '../../common/base-instance.js';
 import {
   createQueue,
   defaultQueue,
   produceAndAcknowledgeMessage,
-} from '../../common/message-producing-consuming';
-import { shutDownBaseInstance } from '../../common/base-instance';
-import { getQueuePendingMessages } from '../../common/queue-pending-messages';
-import { getQueueMessages } from '../../common/queue-messages';
-import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages';
-import { QueueMessageRequeueError } from '../../../src/lib/queue/errors';
+} from '../../common/message-producing-consuming.js';
+import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
+import { getQueueMessages } from '../../common/queue-messages.js';
+import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 
 test('Combined test. Requeue a message from acknowledged queue. Check queue metrics.', async () => {
   await createQueue(defaultQueue, false);
@@ -43,5 +44,5 @@ test('Combined test. Requeue a message from acknowledged queue. Check queue metr
 
   await expect(
     acknowledgedMessages.requeueMessageAsync(queue, messageId),
-  ).rejects.toThrow(QueueMessageRequeueError);
+  ).rejects.toThrow(MessageRequeueError);
 });

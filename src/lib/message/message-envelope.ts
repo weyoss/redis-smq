@@ -7,32 +7,28 @@
  * in the root directory of this source tree.
  */
 
-import { parseExpression } from 'cron-parser';
-import {
-  EMessagePropertyStatus,
-  IMessageTransferable,
-  IMessageParams,
-  IQueueParams,
-  TExchange,
-} from '../../../types';
-import { MessageState } from './message-state';
+import cronParser from 'cron-parser';
+import { TExchangeTransferable } from '../exchange/index.js';
+import { IQueueParams } from '../queue/index.js';
 import {
   MessageDestinationQueueAlreadySetError,
   MessageDestinationQueueRequiredError,
   MessageExchangeRequiredError,
-} from './errors';
-import { ProducibleMessage } from './producible-message';
+} from './errors/index.js';
+import { MessageState } from './message-state.js';
+import { ProducibleMessage } from './producible-message.js';
+import {
+  EMessagePropertyStatus,
+  IMessageParams,
+  IMessageTransferable,
+} from './types/index.js';
 
 export class MessageEnvelope {
-  protected messageState: MessageState;
-
-  protected status: EMessagePropertyStatus = EMessagePropertyStatus.UNPUBLISHED;
-
-  protected destinationQueue: IQueueParams | null = null;
-
-  protected consumerGroupId: string | null = null;
-
   readonly producibleMessage;
+  protected messageState: MessageState;
+  protected status: EMessagePropertyStatus = EMessagePropertyStatus.UNPUBLISHED;
+  protected destinationQueue: IQueueParams | null = null;
+  protected consumerGroupId: string | null = null;
 
   constructor(producibleMessage: ProducibleMessage) {
     this.producibleMessage = producibleMessage;
@@ -48,18 +44,6 @@ export class MessageEnvelope {
   setMessageState(m: MessageState): MessageEnvelope {
     this.messageState = m;
     return this;
-  }
-
-  getPublishedAt(): number | null {
-    return this.messageState.getPublishedAt();
-  }
-
-  getScheduledAt(): number | null {
-    return this.messageState.getScheduledAt();
-  }
-
-  getScheduledMessageId(): string | null {
-    return this.messageState.getScheduledMessageId();
   }
 
   getId(): string {
@@ -114,7 +98,7 @@ export class MessageEnvelope {
       // CRON
       const msgScheduledCron = this.producibleMessage.getScheduledCRON();
       const cronTimestamp = msgScheduledCron
-        ? parseExpression(msgScheduledCron).next().getTime()
+        ? cronParser.parseExpression(msgScheduledCron).next().getTime()
         : 0;
 
       // Repeat
@@ -163,7 +147,7 @@ export class MessageEnvelope {
     return 0;
   }
 
-  getExchange(): TExchange {
+  getExchange(): TExchangeTransferable {
     const exchange = this.producibleMessage.getExchange();
     if (!exchange) {
       throw new MessageExchangeRequiredError();
@@ -197,7 +181,7 @@ export class MessageEnvelope {
       scheduledDelay: this.producibleMessage.getScheduledDelay(),
       scheduledRepeatPeriod: this.producibleMessage.getScheduledRepeatPeriod(),
       scheduledRepeat: this.producibleMessage.getScheduledRepeat(),
-      exchange: this.getExchange().toJSON(),
+      exchange: this.getExchange(),
       destinationQueue: this.getDestinationQueue(),
       consumerGroupId: this.getConsumerGroupId(),
     };

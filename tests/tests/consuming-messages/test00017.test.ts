@@ -7,21 +7,22 @@
  * in the root directory of this source tree.
  */
 
-import { merge } from 'lodash';
-import { config } from '../../common/config';
+import { test, expect } from '@jest/globals';
+import _ from 'lodash';
+import { Configuration } from '../../../src/config/index.js';
+import { shutDownBaseInstance } from '../../common/base-instance.js';
+import { config } from '../../common/config.js';
 import {
   createQueue,
   defaultQueue,
   produceAndAcknowledgeMessage,
   produceAndDeadLetterMessage,
-} from '../../common/message-producing-consuming';
-import { shutDownBaseInstance } from '../../common/base-instance';
-import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages';
-import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages';
-import { Configuration } from '../../../src/config/configuration';
+} from '../../common/message-producing-consuming.js';
+import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
+import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
 
 test('Message storage: storeMessages = false', async () => {
-  const cfg = merge(config, {
+  const cfg = _.merge(config, {
     messages: {
       store: false,
     },

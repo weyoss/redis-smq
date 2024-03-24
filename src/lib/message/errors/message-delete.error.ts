@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { MessageError } from './message.error';
+import { MessageError } from './message.error.js';
 
 export class MessageDeleteError extends MessageError {
   constructor(msg?: string) {
