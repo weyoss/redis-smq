@@ -7,16 +7,16 @@
  * in the root directory of this source tree.
  */
 
-const { logger, ERedisConfigClient } = require('redis-smq-common');
+const { ERedisConfigClient, logger } = require('redis-smq-common');
 const {
+  Configuration,
   Consumer,
   Producer,
-  ProducibleMessage,
   Queue,
-  Configuration,
   EQueueType,
-  EQueueDeliveryMode,
-} = require('../..'); // redis-smq
+  EQueueDeliveryModel,
+  ProducibleMessage,
+} = require('redis-smq');
 
 const config = {
   namespace: 'ns1',
@@ -57,7 +57,7 @@ const createQueue = (cb) => {
       queue.save(
         'test_queue',
         EQueueType.LIFO_QUEUE,
-        EQueueDeliveryMode.POINT_TO_POINT,
+        EQueueDeliveryModel.POINT_TO_POINT,
         (err) => {
           if (err) cb(err);
           else queue.shutdown(cb);

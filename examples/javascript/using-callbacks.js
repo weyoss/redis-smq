@@ -11,12 +11,12 @@ import { ERedisConfigClient, logger } from 'redis-smq-common';
 import {
   Configuration,
   Consumer,
-  EQueueDeliveryMode,
-  EQueueType,
-  Message,
   Producer,
   Queue,
-} from '../..'; // redis-smq
+  EQueueType,
+  EQueueDeliveryModel,
+  ProducibleMessage,
+} from 'redis-smq';
 
 const config = {
   namespace: 'ns1',
@@ -57,7 +57,7 @@ const createQueue = (cb) => {
       queue.save(
         'test_queue',
         EQueueType.LIFO_QUEUE,
-        EQueueDeliveryMode.POINT_TO_POINT,
+        EQueueDeliveryModel.POINT_TO_POINT,
         (err) => {
           if (err) cb(err);
           else queue.shutdown(cb);
@@ -72,7 +72,7 @@ const produce = (cb) => {
   producer.run((err) => {
     if (err) cb(err);
     else {
-      const msg = new Message();
+      const msg = new ProducibleMessage();
       msg
         .setBody({ ts: `Current time is ${Date.now()}` })
         .setQueue('test_queue');

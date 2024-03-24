@@ -15,9 +15,9 @@ const {
   ProducibleMessage,
   Queue,
   EQueueType,
-  EQueueDeliveryMode,
+  EQueueDeliveryModel,
   Configuration,
-} = require('../..');
+} = require('redis-smq');
 
 const config = {
   namespace: 'ns1',
@@ -59,7 +59,7 @@ const createQueue = async () => {
     await queue.saveAsync(
       'test_queue',
       EQueueType.LIFO_QUEUE,
-      EQueueDeliveryMode.POINT_TO_POINT,
+      EQueueDeliveryModel.POINT_TO_POINT,
     );
     await queue.shutdownAsync();
   }
