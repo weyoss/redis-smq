@@ -1,10 +1,8 @@
 [RedisSMQ](../README.md) / [Docs](README.md) / Performance
 
-
 # Performance
 
 > Out-of-box RedisSMQ is optimized for performance. But if you are using a custom configuration, you should consider disabling the following features, in your production environment: logging, monitor server, storing acknowledged & dead-lettered messages.
-
 
 ## Scenarios
 
@@ -31,7 +29,7 @@ All consumers/producers instances and Redis server are launched from the same ho
 ## Results
 
 | Scenario                                            | Producer rate (msg/sec) | Consumer rate (msg/sec) |
-|-----------------------------------------------------|-------------------------|-------------------------|
+| --------------------------------------------------- | ----------------------- | ----------------------- |
 | Run 1 producer instance                             | 23K+                    | 0                       |
 | Run 10 producer instances                           | 96K+                    | 0                       |
 | Run 1 consumer instance                             | 0                       | 13K+                    |

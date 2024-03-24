@@ -16,10 +16,15 @@ In the Point-2-Point model, a message is produced to a Point-2-Point queue and t
 const { Queue, EQueueDeliveryModel, EQueueType } = require('redis-smq');
 
 const queue = new Queue();
-queue.save('my-queue', EQueueType.LIFO_QUEUE, EQueueDeliveryModel.POINT_TO_POINT, (err, reply) => {
-  if (err) console.error(err);
-  else console.log('Successfully created', reply)
-})
+queue.save(
+  'my-queue',
+  EQueueType.LIFO_QUEUE,
+  EQueueDeliveryModel.POINT_TO_POINT,
+  (err, reply) => {
+    if (err) console.error(err);
+    else console.log('Successfully created', reply);
+  },
+);
 ```
 
 See [Queue.save()](api/classes/Queue.md#save) for more details.
@@ -35,11 +40,12 @@ message.setBody('hello world').setQueue('my-queue');
 const producer = new Producer();
 producer.run((err) => {
   if (err) console.error(err);
-  else producer.produce(message, (err, reply) => {
-    if (err) console.error(err);
-    else console.log('Successfully produced', reply);
-  })
-})
+  else
+    producer.produce(message, (err, reply) => {
+      if (err) console.error(err);
+      else console.log('Successfully produced', reply);
+    });
+});
 ```
 
 See [Producer.produce()](api/classes/Producer.md#produce) for more details.
@@ -58,7 +64,7 @@ consumer.consume('my-queue', messageHandler, (err) => {
 });
 consumer.run((err) => {
   if (err) console.error(err);
-})
+});
 ```
 
 ## Pub/Sub Delivery Model
@@ -93,10 +99,15 @@ When `retryTreshold` is exceeded failed messages from all consumer groups are st
 const { Queue, EQueueDeliveryModel, EQueueType } = require('redis-smq');
 
 const queue = new Queue();
-queue.save('my-pubsub-queue', EQueueType.LIFO_QUEUE, EQueueDeliveryModel.PUB_SUB, (err, reply) => {
-  if (err) console.error(err);
-  else console.log('Successfully created', reply)
-})
+queue.save(
+  'my-pubsub-queue',
+  EQueueType.LIFO_QUEUE,
+  EQueueDeliveryModel.PUB_SUB,
+  (err, reply) => {
+    if (err) console.error(err);
+    else console.log('Successfully created', reply);
+  },
+);
 ```
 
 See [Queue.save()](api/classes/Queue.md#save) for more details.
@@ -120,14 +131,15 @@ message.setBody('hello world').setQueue('my-pubsub-queue');
 const producer = new Producer();
 producer.run((err) => {
   if (err) console.error(err);
-  else producer.produce(message, (err, reply) => {
-    if (err) console.error(err);
-    else console.log('Successfully produced', reply);
-  })
-})
+  else
+    producer.produce(message, (err, reply) => {
+      if (err) console.error(err);
+      else console.log('Successfully produced', reply);
+    });
+});
 ```
 
-When producing a message to a Pub/Sub queue, if the queue has no consumer groups an error will be returned. 
+When producing a message to a Pub/Sub queue, if the queue has no consumer groups an error will be returned.
 
 So make sure the queue has at least one consumer group before publishing messages.
 
@@ -141,13 +153,17 @@ const { Consumer } = require('redis-smq');
 const consumer = new Consumer();
 
 const messageHandler = (msg, cb) => cb(); // acknowledging
-consumer.consume({ queue: 'my-pubsub-queue', groupId: 'my-app-group-1' }, messageHandler, (err) => {
-  if (err) console.error(err);
-  else console.log('MessageHandler added');
-});
+consumer.consume(
+  { queue: 'my-pubsub-queue', groupId: 'my-app-group-1' },
+  messageHandler,
+  (err) => {
+    if (err) console.error(err);
+    else console.log('MessageHandler added');
+  },
+);
 consumer.run((err) => {
   if (err) console.error(err);
-})
+});
 ```
 
 Please do not forget to provide the consumer group ID when consuming messages from a Pub/Sub queue.

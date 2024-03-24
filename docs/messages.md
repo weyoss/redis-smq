@@ -10,9 +10,7 @@ The message payload can be of any valid JSON data type. It may be a simple text 
 const { ProducibleMessage } = require('redis-smq');
 
 const msg = new ProducibleMessage();
-msg.setBody({hello: 'world'})
-   .setTTL(3600000)
-   .setRetryThreshold(5);
+msg.setBody({ hello: 'world' }).setTTL(3600000).setRetryThreshold(5);
 ```
 
 The `ProducibleMessage` class provides many methods for setting up different delivery/consumption parameters such as message priority, message TTL, retry threshold, etc.

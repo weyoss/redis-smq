@@ -12,7 +12,7 @@
 
 ### Properties
 
-- [eventListeners](IRedisSMQConfigRequired.md#eventlisteners)
+- [eventBus](IRedisSMQConfigRequired.md#eventbus)
 - [logger](IRedisSMQConfigRequired.md#logger)
 - [messages](IRedisSMQConfigRequired.md#messages)
 - [namespace](IRedisSMQConfigRequired.md#namespace)
@@ -20,15 +20,15 @@
 
 ## Properties
 
-### eventListeners
+### eventBus
 
-• **eventListeners**: [`TEventListenersConfig`](../README.md#teventlistenersconfig)
+• **eventBus**: `Required`\<[`IEventBusConfig`](IEventBusConfig.md)\>
 
 #### Overrides
 
-Required.eventListeners
+Required.eventBus
 
----
+___
 
 ### logger
 
@@ -38,7 +38,7 @@ Required.eventListeners
 
 Required.logger
 
----
+___
 
 ### messages
 
@@ -46,16 +46,15 @@ Required.logger
 
 #### Type declaration
 
-
-| Name    | Type                                                                  |
-| :-------- | :---------------------------------------------------------------------- |
+| Name | Type |
+| :------ | :------ |
 | `store` | [`IMessagesConfigStorageRequired`](IMessagesConfigStorageRequired.md) |
 
 #### Overrides
 
 Required.messages
 
----
+___
 
 ### namespace
 
@@ -65,7 +64,7 @@ Required.messages
 
 Required.namespace
 
----
+___
 
 ### redis
 

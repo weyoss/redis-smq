@@ -13,6 +13,7 @@
 - [deleteConsumerGroup](ConsumerGroups.md#deleteconsumergroup)
 - [getConsumerGroups](ConsumerGroups.md#getconsumergroups)
 - [saveConsumerGroup](ConsumerGroups.md#saveconsumergroup)
+- [shutdown](ConsumerGroups.md#shutdown)
 
 ## Constructors
 
@@ -72,6 +73,22 @@ ___
 | `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
 | `groupId` | `string` |
 | `cb` | `ICallback`\<`number`\> |
+
+#### Returns
+
+`void`
+
+___
+
+### shutdown
+
+▸ **shutdown**(`cb`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 

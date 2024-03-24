@@ -30,7 +30,6 @@
 - [resetScheduledParams](ProducibleMessage.md#resetscheduledparams)
 - [setBody](ProducibleMessage.md#setbody)
 - [setConsumeTimeout](ProducibleMessage.md#setconsumetimeout)
-- [setExchange](ProducibleMessage.md#setexchange)
 - [setFanOut](ProducibleMessage.md#setfanout)
 - [setPriority](ProducibleMessage.md#setpriority)
 - [setQueue](ProducibleMessage.md#setqueue)
@@ -98,11 +97,11 @@ ___
 
 ### getExchange
 
-▸ **getExchange**(): ``null`` \| [`TExchange`](../README.md#texchange)
+▸ **getExchange**(): ``null`` \| [`TExchangeTransferable`](../README.md#texchangetransferable)
 
 #### Returns
 
-``null`` \| [`TExchange`](../README.md#texchange)
+``null`` \| [`TExchangeTransferable`](../README.md#texchangetransferable)
 
 ___
 
@@ -128,11 +127,11 @@ ___
 
 ### getQueue
 
-▸ **getQueue**(): ``null`` \| `string` \| [`IQueueParams`](../interfaces/IQueueParams.md)
+▸ **getQueue**(): ``null`` \| [`IQueueParams`](../interfaces/IQueueParams.md)
 
 #### Returns
 
-``null`` \| `string` \| [`IQueueParams`](../interfaces/IQueueParams.md)
+``null`` \| [`IQueueParams`](../interfaces/IQueueParams.md)
 
 ___
 
@@ -208,11 +207,11 @@ ___
 
 ### getTopic
 
-▸ **getTopic**(): ``null`` \| `string` \| [`TTopicParams`](../README.md#ttopicparams)
+▸ **getTopic**(): ``null`` \| [`ITopicParams`](../interfaces/ITopicParams.md)
 
 #### Returns
 
-``null`` \| `string` \| [`TTopicParams`](../README.md#ttopicparams)
+``null`` \| [`ITopicParams`](../interfaces/ITopicParams.md)
 
 ___
 
@@ -261,22 +260,6 @@ ___
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `timeout` | `number` | In milliseconds |
-
-#### Returns
-
-[`ProducibleMessage`](ProducibleMessage.md)
-
-___
-
-### setExchange
-
-▸ **setExchange**(`exchange`): [`ProducibleMessage`](ProducibleMessage.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `exchange` | [`TExchange`](../README.md#texchange) |
 
 #### Returns
 
@@ -452,7 +435,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `topicParams` | `string` \| [`TTopicParams`](../modules.md#ttopicparams) |
+| `topicParams` | `string` \| [`ITopicParams`](../interfaces/ITopicParams.md) |
 
 #### Returns
 

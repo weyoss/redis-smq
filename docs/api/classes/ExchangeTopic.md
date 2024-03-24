@@ -4,7 +4,7 @@
 
 ## Hierarchy
 
-- `Exchange`\<[`TExchangeTopicBindingParams`](../README.md#texchangetopicbindingparams), [`TOPIC`](../enums/EExchangeType.md#topic)\>
+- `ExchangeAbstract`\<`string` \| [`ITopicParams`](../interfaces/ITopicParams.md)\>
 
   ↳ **`ExchangeTopic`**
 
@@ -14,116 +14,36 @@
 
 - [constructor](ExchangeTopic.md#constructor)
 
-### Properties
-
-- [bindingParams](ExchangeTopic.md#bindingparams)
-- [exchangeTag](ExchangeTopic.md#exchangetag)
-- [type](ExchangeTopic.md#type)
-
 ### Methods
 
-- [fromJSON](ExchangeTopic.md#fromjson)
-- [getBindingParams](ExchangeTopic.md#getbindingparams)
 - [getQueues](ExchangeTopic.md#getqueues)
-- [toJSON](ExchangeTopic.md#tojson)
+- [shutdown](ExchangeTopic.md#shutdown)
 
 ## Constructors
 
 ### constructor
 
-• **new ExchangeTopic**(`topic`): [`ExchangeTopic`](ExchangeTopic.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `topic` | [`TExchangeTopicBindingParams`](../README.md#texchangetopicbindingparams) |
+• **new ExchangeTopic**(): [`ExchangeTopic`](ExchangeTopic.md)
 
 #### Returns
 
 [`ExchangeTopic`](ExchangeTopic.md)
 
-#### Overrides
-
-Exchange\&lt;
-  TExchangeTopicBindingParams,
-  EExchangeType.TOPIC
-\&gt;.constructor
-
-## Properties
-
-### bindingParams
-
-• `Readonly` **bindingParams**: [`TExchangeTopicBindingParams`](../README.md#texchangetopicbindingparams)
-
 #### Inherited from
 
-Exchange.bindingParams
-
-___
-
-### exchangeTag
-
-• **exchangeTag**: `string`
-
-#### Inherited from
-
-Exchange.exchangeTag
-
-___
-
-### type
-
-• `Readonly` **type**: [`TOPIC`](../enums/EExchangeType.md#topic)
-
-#### Inherited from
-
-Exchange.type
+ExchangeAbstract\<string \| ITopicParams\>.constructor
 
 ## Methods
 
-### fromJSON
-
-▸ **fromJSON**(`JSON`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `JSON` | `Partial`\<[`IExchangeSerialized`](../interfaces/IExchangeSerialized.md)\<[`TExchangeTopicBindingParams`](../README.md#texchangetopicbindingparams), [`TOPIC`](../enums/EExchangeType.md#topic)\>\> |
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-Exchange.fromJSON
-
-___
-
-### getBindingParams
-
-▸ **getBindingParams**(): [`TExchangeTopicBindingParams`](../README.md#texchangetopicbindingparams)
-
-#### Returns
-
-[`TExchangeTopicBindingParams`](../README.md#texchangetopicbindingparams)
-
-#### Inherited from
-
-Exchange.getBindingParams
-
-___
-
 ### getQueues
 
-▸ **getQueues**(`cb`): `void`
+▸ **getQueues**(`exchangeParams`, `cb`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
+| `exchangeParams` | `string` \| [`ITopicParams`](../interfaces/ITopicParams.md) |
 | `cb` | `ICallback`\<[`IQueueParams`](../interfaces/IQueueParams.md)[]\> |
 
 #### Returns
@@ -132,18 +52,24 @@ ___
 
 #### Overrides
 
-Exchange.getQueues
+ExchangeAbstract.getQueues
 
 ___
 
-### toJSON
+### shutdown
 
-▸ **toJSON**(): [`IExchangeSerialized`](../interfaces/IExchangeSerialized.md)\<[`TExchangeTopicBindingParams`](../README.md#texchangetopicbindingparams), [`TOPIC`](../enums/EExchangeType.md#topic)\>
+▸ **shutdown**(`cb`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 
-[`IExchangeSerialized`](../interfaces/IExchangeSerialized.md)\<[`TExchangeTopicBindingParams`](../README.md#texchangetopicbindingparams), [`TOPIC`](../enums/EExchangeType.md#topic)\>
+`void`
 
 #### Inherited from
 
-Exchange.toJSON
+ExchangeAbstract.shutdown

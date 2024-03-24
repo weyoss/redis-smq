@@ -15,6 +15,7 @@
 - [getProperties](Queue.md#getproperties)
 - [getQueues](Queue.md#getqueues)
 - [save](Queue.md#save)
+- [shutdown](Queue.md#shutdown)
 
 ## Constructors
 
@@ -107,6 +108,22 @@ ___
 | `queueType` | [`EQueueType`](../enums/EQueueType.md) |
 | `deliveryModel` | [`EQueueDeliveryModel`](../enums/EQueueDeliveryModel.md) |
 | `cb` | `ICallback`\<\{ `properties`: [`IQueueProperties`](../interfaces/IQueueProperties.md) ; `queue`: [`IQueueParams`](../interfaces/IQueueParams.md)  }\> |
+
+#### Returns
+
+`void`
+
+___
+
+### shutdown
+
+▸ **shutdown**(`cb`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 

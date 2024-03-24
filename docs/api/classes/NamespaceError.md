@@ -1,40 +1,42 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / QueueRateLimitError
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / NamespaceError
 
-# Class: QueueRateLimitError
+# Class: NamespaceError
 
 ## Hierarchy
 
 - `RedisSMQError`
 
-  ↳ **`QueueRateLimitError`**
+  ↳ **`NamespaceError`**
+
+  ↳↳ [`NamespaceNotFoundError`](NamespaceNotFoundError.md)
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](QueueRateLimitError.md#constructor)
+- [constructor](NamespaceError.md#constructor)
 
 ### Properties
 
-- [cause](QueueRateLimitError.md#cause)
-- [message](QueueRateLimitError.md#message)
-- [stack](QueueRateLimitError.md#stack)
-- [prepareStackTrace](QueueRateLimitError.md#preparestacktrace)
-- [stackTraceLimit](QueueRateLimitError.md#stacktracelimit)
+- [cause](NamespaceError.md#cause)
+- [message](NamespaceError.md#message)
+- [stack](NamespaceError.md#stack)
+- [prepareStackTrace](NamespaceError.md#preparestacktrace)
+- [stackTraceLimit](NamespaceError.md#stacktracelimit)
 
 ### Accessors
 
-- [name](QueueRateLimitError.md#name)
+- [name](NamespaceError.md#name)
 
 ### Methods
 
-- [captureStackTrace](QueueRateLimitError.md#capturestacktrace)
+- [captureStackTrace](NamespaceError.md#capturestacktrace)
 
 ## Constructors
 
 ### constructor
 
-• **new QueueRateLimitError**(`message?`): [`QueueRateLimitError`](QueueRateLimitError.md)
+• **new NamespaceError**(`message?`): [`NamespaceError`](NamespaceError.md)
 
 #### Parameters
 
@@ -44,7 +46,7 @@
 
 #### Returns
 
-[`QueueRateLimitError`](QueueRateLimitError.md)
+[`NamespaceError`](NamespaceError.md)
 
 #### Inherited from
 

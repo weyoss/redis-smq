@@ -19,6 +19,7 @@ See [API Reference](api/README.md) for more details.
 - [Exchanges and Delivery Models](exchanges-and-delivery-models.md)
 - [Scheduling Messages](scheduling-messages.md)
 - [Message Handler Worker Threads](message-handler-worker-threads.md)
+- [EventBus](event-bus.md)
 - [Multiplexing](multiplexing.md)
 - [Performance](performance.md)
 - [RedisSMQ Architecture](redis-smq-architecture.md)

@@ -14,6 +14,7 @@
 - [get](QueueRateLimit.md#get)
 - [hasExceeded](QueueRateLimit.md#hasexceeded)
 - [set](QueueRateLimit.md#set)
+- [shutdown](QueueRateLimit.md#shutdown)
 
 ## Constructors
 
@@ -69,7 +70,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `queue` | [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
 | `rateLimit` | [`IQueueRateLimit`](../interfaces/IQueueRateLimit.md) |
 | `cb` | `ICallback`\<`boolean`\> |
 
@@ -89,6 +90,22 @@ ___
 | :------ | :------ |
 | `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
 | `rateLimit` | [`IQueueRateLimit`](../interfaces/IQueueRateLimit.md) |
+| `cb` | `ICallback`\<`void`\> |
+
+#### Returns
+
+`void`
+
+___
+
+### shutdown
+
+▸ **shutdown**(`cb`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
 | `cb` | `ICallback`\<`void`\> |
 
 #### Returns

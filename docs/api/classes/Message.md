@@ -16,6 +16,7 @@
 - [getMessageState](Message.md#getmessagestate)
 - [getMessageStatus](Message.md#getmessagestatus)
 - [getMessagesByIds](Message.md#getmessagesbyids)
+- [shutdown](Message.md#shutdown)
 
 ## Constructors
 
@@ -124,6 +125,22 @@ ___
 | :------ | :------ |
 | `messageIds` | `string`[] |
 | `cb` | `ICallback`\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)[]\> |
+
+#### Returns
+
+`void`
+
+___
+
+### shutdown
+
+▸ **shutdown**(`cb`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 

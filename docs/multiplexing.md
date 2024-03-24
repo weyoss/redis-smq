@@ -9,7 +9,7 @@ In normal operation mode, each message handler creates and uses its own redis co
 
 On the other hand, multiplexing allows many message handlers to share a single Redis connection. While this may sound counterproductive, it gives your applications some obvious advantages.
 
-One of them is that consumers using multiplexing can handle a large number of message queues without creating a significant load on your system. The number of Redis connections does not grow linearly as the number of queues grows, and it is reduced to only one shared connection for all your message handlers. 
+One of them is that consumers using multiplexing can handle a large number of message queues without creating a significant load on your system. The number of Redis connections does not grow linearly as the number of queues grows, and it is reduced to only one shared connection for all your message handlers.
 
 Multiplexing does not come without a cost. Here are some of its disadvantages:
 
@@ -20,7 +20,7 @@ So, before deciding whether to use multiplexing, it is important to know what yo
 
 ## Enabling multiplexing
 
-Use the [Consumer Class Constructor](api/classes/Consumer.md#constructor) first argument to enable multiplexing:
+Use the [Consumer Class Constructor](api/classes/Consumer.md#constructor) first argument to enabled multiplexing:
 
 ```javascript
 const consumer = new Consumer(true);
@@ -29,23 +29,21 @@ const consumer = new Consumer(true);
 Once created, you can your consumer instance can be used as usually:
 
 ```javascript
-consumer.consume('queue1', messageHandler1, (e) => { 
-  //... 
+consumer.consume('queue1', messageHandler1, (e) => {
+  //...
 });
 
 consumer.consume('queue2', messageHandler2, (e) => {
-  //... 
+  //...
 });
 
 consumer.consume('queue3', messageHandler3, (e) => {
-  //... 
+  //...
 });
 
 consumer.consume('queue4', messageHandler4, (e) => {
-  //... 
+  //...
 });
 ```
 
-As noted above, you should use multiplexing only when you really have a large number of queues, and you want to optimize your system resources. Otherwise, you should not enable it.
-
-
+As noted above, you should use multiplexing only when you really have a large number of queues, and you want to optimize your system resources. Otherwise, you should not enabled it.

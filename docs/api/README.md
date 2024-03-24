@@ -15,14 +15,13 @@
 - [EQueueDeliveryModel](enums/EQueueDeliveryModel.md)
 - [EQueueProperty](enums/EQueueProperty.md)
 - [EQueueType](enums/EQueueType.md)
-- [EWorkerThreadMessageCodeConsume](enums/EWorkerThreadMessageCodeConsume.md)
-- [EWorkerThreadMessageCodeExit](enums/EWorkerThreadMessageCodeExit.md)
 
 ### Classes
 
 - [Configuration](classes/Configuration.md)
 - [Consumer](classes/Consumer.md)
 - [ConsumerGroups](classes/ConsumerGroups.md)
+- [EventBusRedisInstance](classes/EventBusRedisInstance.md)
 - [ExchangeDirect](classes/ExchangeDirect.md)
 - [ExchangeFanOut](classes/ExchangeFanOut.md)
 - [ExchangeTopic](classes/ExchangeTopic.md)
@@ -38,7 +37,7 @@
 - [QueueRateLimit](classes/QueueRateLimit.md)
 - [QueueScheduledMessages](classes/QueueScheduledMessages.md)
 
-### Errors
+#### Errors
 
 - [ConsumerError](classes/ConsumerError.md)
 - [ConsumerGroupDeleteError](classes/ConsumerGroupDeleteError.md)
@@ -47,10 +46,6 @@
 - [ConsumerGroupIdRequiredError](classes/ConsumerGroupIdRequiredError.md)
 - [ConsumerInvalidGroupIdError](classes/ConsumerInvalidGroupIdError.md)
 - [ConsumerMessageHandlerAlreadyExistsError](classes/ConsumerMessageHandlerAlreadyExistsError.md)
-- [ConsumerMessageHandlerError](classes/ConsumerMessageHandlerError.md)
-- [ConsumerMessageHandlerFileError](classes/ConsumerMessageHandlerFileError.md)
-- [ConsumerMessageHandlerFilenameExtensionError](classes/ConsumerMessageHandlerFilenameExtensionError.md)
-- [ConsumerMessageHandlerWorkerError](classes/ConsumerMessageHandlerWorkerError.md)
 - [ExchangeError](classes/ExchangeError.md)
 - [ExchangeFanOutError](classes/ExchangeFanOutError.md)
 - [ExchangeInvalidDataError](classes/ExchangeInvalidDataError.md)
@@ -60,6 +55,9 @@
 - [MessageError](classes/MessageError.md)
 - [MessageExchangeRequiredError](classes/MessageExchangeRequiredError.md)
 - [MessageNotFoundError](classes/MessageNotFoundError.md)
+- [MessageRequeueError](classes/MessageRequeueError.md)
+- [NamespaceError](classes/NamespaceError.md)
+- [NamespaceNotFoundError](classes/NamespaceNotFoundError.md)
 - [ProducerError](classes/ProducerError.md)
 - [ProducerInstanceNotRunningError](classes/ProducerInstanceNotRunningError.md)
 - [ProducerMessageExchangeRequiredError](classes/ProducerMessageExchangeRequiredError.md)
@@ -69,20 +67,19 @@
 - [QueueError](classes/QueueError.md)
 - [QueueExistsError](classes/QueueExistsError.md)
 - [QueueHasRunningConsumersError](classes/QueueHasRunningConsumersError.md)
-- [QueueMessageRequeueError](classes/QueueMessageRequeueError.md)
-- [QueueNamespaceNotFoundError](classes/QueueNamespaceNotFoundError.md)
+- [QueueMessageError](classes/QueueMessageError.md)
 - [QueueNotEmptyError](classes/QueueNotEmptyError.md)
 - [QueueNotFoundError](classes/QueueNotFoundError.md)
 - [QueueRateLimitError](classes/QueueRateLimitError.md)
 
 ### Interfaces
 
+- [IConsumerConfig](interfaces/IConsumerConfig.md)
 - [IConsumerHeartbeat](interfaces/IConsumerHeartbeat.md)
 - [IConsumerHeartbeatPayload](interfaces/IConsumerHeartbeatPayload.md)
 - [IConsumerMessageHandlerArgs](interfaces/IConsumerMessageHandlerArgs.md)
-- [IEventListener](interfaces/IEventListener.md)
+- [IEventBusConfig](interfaces/IEventBusConfig.md)
 - [IExchange](interfaces/IExchange.md)
-- [IExchangeSerialized](interfaces/IExchangeSerialized.md)
 - [IMessageParams](interfaces/IMessageParams.md)
 - [IMessageStateTransferable](interfaces/IMessageStateTransferable.md)
 - [IMessageTransferable](interfaces/IMessageTransferable.md)
@@ -103,33 +100,33 @@
 - [IQueueRateLimit](interfaces/IQueueRateLimit.md)
 - [IRedisSMQConfig](interfaces/IRedisSMQConfig.md)
 - [IRedisSMQConfigRequired](interfaces/IRedisSMQConfigRequired.md)
+- [ITopicParams](interfaces/ITopicParams.md)
 
 ### Type Aliases
 
 - [IQueueMessagesPageParams](README.md#iqueuemessagespageparams)
+- [TConsumerConsumeMessageEvent](README.md#tconsumerconsumemessageevent)
+- [TConsumerDequeueMessageEvent](README.md#tconsumerdequeuemessageevent)
+- [TConsumerEvent](README.md#tconsumerevent)
+- [TConsumerHeartbeatEvent](README.md#tconsumerheartbeatevent)
 - [TConsumerMessageHandler](README.md#tconsumermessagehandler)
+- [TConsumerMessageHandlerEvent](README.md#tconsumermessagehandlerevent)
 - [TConsumerMessageHandlerFn](README.md#tconsumermessagehandlerfn)
+- [TConsumerMessageHandlerRunnerEvent](README.md#tconsumermessagehandlerrunnerevent)
 - [TConsumerRedisKeys](README.md#tconsumerrediskeys)
-- [TEventListenersConfig](README.md#teventlistenersconfig)
-- [TExchange](README.md#texchange)
-- [TExchangeDirectBindingParams](README.md#texchangedirectbindingparams)
-- [TExchangeFanOutBindingParams](README.md#texchangefanoutbindingparams)
-- [TExchangeSerialized](README.md#texchangeserialized)
-- [TExchangeTopicBindingParams](README.md#texchangetopicbindingparams)
+- [TEventBusEvent](README.md#teventbusevent)
+- [TExchangeDirectTransferable](README.md#texchangedirecttransferable)
+- [TExchangeFanOutTransferable](README.md#texchangefanouttransferable)
+- [TExchangeTopicTransferable](README.md#texchangetopictransferable)
+- [TExchangeTransferable](README.md#texchangetransferable)
 - [TMessageConsumeOptions](README.md#tmessageconsumeoptions)
+- [TProducerEvent](README.md#tproducerevent)
 - [TQueueConsumer](README.md#tqueueconsumer)
+- [TQueueEvent](README.md#tqueueevent)
 - [TQueueExtendedParams](README.md#tqueueextendedparams)
 - [TQueueMessagesPaginationParams](README.md#tqueuemessagespaginationparams)
 - [TQueueMessagesParams](README.md#tqueuemessagesparams)
 - [TRedisSMQEvent](README.md#tredissmqevent)
-- [TTopicParams](README.md#ttopicparams)
-- [TWorkerThreadError](README.md#tworkerthreaderror)
-- [TWorkerThreadMessage](README.md#tworkerthreadmessage)
-- [TWorkerThreadMessageCode](README.md#tworkerthreadmessagecode)
-
-### Functions
-
-- [disconnect](README.md#disconnect)
 
 ## Type Aliases
 
@@ -148,9 +145,81 @@
 
 ___
 
+### TConsumerConsumeMessageEvent
+
+Ƭ **TConsumerConsumeMessageEvent**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `consumer.consumeMessage.error` | (`err`: `Error`, `consumerId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md)) => `void` |
+| `consumer.consumeMessage.messageAcknowledged` | (`messageId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md), `messageHandlerId`: `string`, `consumerId`: `string`) => `void` |
+| `consumer.consumeMessage.messageDeadLettered` | (`messageId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md), `messageHandlerId`: `string`, `consumerId`: `string`, `cause`: [`EConsumeMessageDeadLetterCause`](enums/EConsumeMessageDeadLetterCause.md)) => `void` |
+| `consumer.consumeMessage.messageDelayed` | (`messageId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md), `messageHandlerId`: `string`, `consumerId`: `string`) => `void` |
+| `consumer.consumeMessage.messageRequeued` | (`messageId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md), `messageHandlerId`: `string`, `consumerId`: `string`) => `void` |
+| `consumer.consumeMessage.messageUnacknowledged` | (`messageId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md), `messageHandlerId`: `string`, `consumerId`: `string`, `cause`: [`EConsumeMessageUnacknowledgedCause`](enums/EConsumeMessageUnacknowledgedCause.md)) => `void` |
+
+___
+
+### TConsumerDequeueMessageEvent
+
+Ƭ **TConsumerDequeueMessageEvent**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `consumer.dequeueMessage.error` | (`err`: `Error`, `consumerId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md)) => `void` |
+| `consumer.dequeueMessage.messageReceived` | (`messageId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md), `consumerId`: `string`) => `void` |
+| `consumer.dequeueMessage.nextMessage` | () => `void` |
+
+___
+
+### TConsumerEvent
+
+Ƭ **TConsumerEvent**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `consumer.down` | (`consumerId`: `string`) => `void` |
+| `consumer.error` | (`err`: `Error`, `consumerId`: `string`) => `void` |
+| `consumer.goingDown` | (`consumerId`: `string`) => `void` |
+| `consumer.goingUp` | (`consumerId`: `string`) => `void` |
+| `consumer.up` | (`consumerId`: `string`) => `void` |
+
+___
+
+### TConsumerHeartbeatEvent
+
+Ƭ **TConsumerHeartbeatEvent**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `consumerHeartbeat.error` | (`err`: `Error`) => `void` |
+| `consumerHeartbeat.heartbeat` | (`consumerId`: `string`, `timestamp`: `number`, `heartbeatPayload`: [`IConsumerHeartbeat`](interfaces/IConsumerHeartbeat.md)) => `void` |
+
+___
+
 ### TConsumerMessageHandler
 
 Ƭ **TConsumerMessageHandler**: `string` \| [`TConsumerMessageHandlerFn`](README.md#tconsumermessagehandlerfn)
+
+___
+
+### TConsumerMessageHandlerEvent
+
+Ƭ **TConsumerMessageHandlerEvent**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `consumer.messageHandler.error` | (`err`: `Error`, `consumerId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md)) => `void` |
 
 ___
 
@@ -175,45 +244,81 @@ ___
 
 ___
 
+### TConsumerMessageHandlerRunnerEvent
+
+Ƭ **TConsumerMessageHandlerRunnerEvent**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `consumer.messageHandlerRunner.error` | (`err`: `Error`, `consumerId`: `string`) => `void` |
+
+___
+
 ### TConsumerRedisKeys
 
 Ƭ **TConsumerRedisKeys**: `ReturnType`\<typeof `redisKeys`[``"getConsumerKeys"``]\>
 
 ___
 
-### TEventListenersConfig
+### TEventBusEvent
 
-Ƭ **TEventListenersConfig**: () => [`IEventListener`](interfaces/IEventListener.md)[]
+Ƭ **TEventBusEvent**: `Object`
 
-___
+#### Type declaration
 
-### TExchange
-
-Ƭ **TExchange**: [`ExchangeDirect`](classes/ExchangeDirect.md) \| [`ExchangeTopic`](classes/ExchangeTopic.md) \| [`ExchangeFanOut`](classes/ExchangeFanOut.md)
-
-___
-
-### TExchangeDirectBindingParams
-
-Ƭ **TExchangeDirectBindingParams**: [`IQueueParams`](interfaces/IQueueParams.md) \| `string`
+| Name | Type |
+| :------ | :------ |
+| `error` | (`err`: `Error`) => `void` |
 
 ___
 
-### TExchangeFanOutBindingParams
+### TExchangeDirectTransferable
 
-Ƭ **TExchangeFanOutBindingParams**: `string`
+Ƭ **TExchangeDirectTransferable**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `exchangeTag` | `string` |
+| `params` | [`IQueueParams`](interfaces/IQueueParams.md) |
+| `type` | [`DIRECT`](enums/EExchangeType.md#direct) |
 
 ___
 
-### TExchangeSerialized
+### TExchangeFanOutTransferable
 
-Ƭ **TExchangeSerialized**: `ReturnType`\<[`ExchangeDirect`](classes/ExchangeDirect.md)[``"toJSON"``]\> \| `ReturnType`\<[`ExchangeTopic`](classes/ExchangeTopic.md)[``"toJSON"``]\> \| `ReturnType`\<[`ExchangeFanOut`](classes/ExchangeFanOut.md)[``"toJSON"``]\>
+Ƭ **TExchangeFanOutTransferable**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `exchangeTag` | `string` |
+| `params` | `string` |
+| `type` | [`FANOUT`](enums/EExchangeType.md#fanout) |
 
 ___
 
-### TExchangeTopicBindingParams
+### TExchangeTopicTransferable
 
-Ƭ **TExchangeTopicBindingParams**: [`TTopicParams`](README.md#ttopicparams) \| `string`
+Ƭ **TExchangeTopicTransferable**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `exchangeTag` | `string` |
+| `params` | [`ITopicParams`](interfaces/ITopicParams.md) |
+| `type` | [`TOPIC`](enums/EExchangeType.md#topic) |
+
+___
+
+### TExchangeTransferable
+
+Ƭ **TExchangeTransferable**: [`TExchangeDirectTransferable`](README.md#texchangedirecttransferable) \| [`TExchangeTopicTransferable`](README.md#texchangetopictransferable) \| [`TExchangeFanOutTransferable`](README.md#texchangefanouttransferable)
 
 ___
 
@@ -232,6 +337,23 @@ ___
 
 ___
 
+### TProducerEvent
+
+Ƭ **TProducerEvent**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `producer.down` | (`producerId`: `string`) => `void` |
+| `producer.error` | (`err`: `Error`, `producerId`: `string`) => `void` |
+| `producer.goingDown` | (`producerId`: `string`) => `void` |
+| `producer.goingUp` | (`producerId`: `string`) => `void` |
+| `producer.messagePublished` | (`messageId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md), `producerId`: `string`) => `void` |
+| `producer.up` | (`producerId`: `string`) => `void` |
+
+___
+
 ### TQueueConsumer
 
 Ƭ **TQueueConsumer**: `Object`
@@ -244,6 +366,21 @@ ___
 | `hostname` | `string` |
 | `ipAddress` | `string`[] |
 | `pid` | `number` |
+
+___
+
+### TQueueEvent
+
+Ƭ **TQueueEvent**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `queue.consumerGroupCreated` | (`queue`: [`IQueueParams`](interfaces/IQueueParams.md), `groupId`: `string`) => `void` |
+| `queue.consumerGroupDeleted` | (`queue`: [`IQueueParams`](interfaces/IQueueParams.md), `groupId`: `string`) => `void` |
+| `queue.queueCreated` | (`queue`: [`IQueueParams`](interfaces/IQueueParams.md), `properties`: [`IQueueProperties`](interfaces/IQueueProperties.md)) => `void` |
+| `queue.queueDeleted` | (`queue`: [`IQueueParams`](interfaces/IQueueParams.md)) => `void` |
 
 ___
 
@@ -283,81 +420,4 @@ ___
 
 ### TRedisSMQEvent
 
-- [`TEvent`](https://github.com/weyoss/redis-smq-common/blob/master/docs/api/README.md#tevent)
-
-  ↳ `TRedisSMQEvent`.
-
-Ƭ **TRedisSMQEvent**
-
-
-| Event Name              | Arguments                                                                                                                                                                                                                                      |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `heartbeatTick`         | (`timestamp`: `number`, `consumerId`: `string`, `heartbeatPayload`: [`IConsumerHeartbeat`](interfaces/IConsumerHeartbeat.md)) => `void` ;                                                                                                      |
-| `messageAcknowledged`   | (`messageId`: `string`, `queue`: [`IQueueParams`](interfaces/IQueueParams.md), `messageHandlerId`: `string`, `consumerId`: `string`) => `void` ;                                                                                               |
-| `messageDeadLettered`   | (`messageId`: `string`, `queue`: [`IQueueParams`](interfaces/IQueueParams.md), `messageHandlerId`: `string`, `consumerId`: `string`, `cause`: [`EConsumeMessageDeadLetterCause`](enums/EConsumeMessageDeadLetterCause.md)) => `void` ;         |
-| `messageDelayed`        | (`messageId`: `string`, `queue`: [`IQueueParams`](interfaces/IQueueParams.md), `messageHandlerId`: `string`, `consumerId`: `string`) => `void` ;                                                                                               |
-| `messagePublished`      | (`messageId`: `string`, `queue`: [`IQueueParams`](interfaces/IQueueParams.md), `producerId`: `string`) => `void` ;                                                                                                                                                     |
-| `messageReceived`       | (`messageId`: `string`, `queue`: [`IQueueParams`](interfaces/IQueueParams.md), `consumerId`: `string`) => `void` ;                                                                                                                             |
-| `messageRequeued`       | (`messageId`: `string`, `queue`: [`IQueueParams`](interfaces/IQueueParams.md), `messageHandlerId`: `string`, `consumerId`: `string`) => `void` ;                                                                                               |
-| `messageUnacknowledged` | (`messageId`: `string`, `queue`: [`IQueueParams`](interfaces/IQueueParams.md), `messageHandlerId`: `string`, `consumerId`: `string`, `cause`: [`EConsumeMessageUnacknowledgedCause`](enums/EConsumeMessageUnacknowledgedCause.md)) => `void` ; |
-
-___
-
-### TTopicParams
-
-Ƭ **TTopicParams**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `ns` | `string` |
-| `topic` | `string` |
-
-___
-
-### TWorkerThreadError
-
-Ƭ **TWorkerThreadError**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `message` | `string` |
-| `name` | `string` |
-
-___
-
-### TWorkerThreadMessage
-
-Ƭ **TWorkerThreadMessage**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `code` | [`TWorkerThreadMessageCode`](README.md#tworkerthreadmessagecode) |
-| `error` | [`TWorkerThreadError`](README.md#tworkerthreaderror) \| ``null`` |
-
-___
-
-### TWorkerThreadMessageCode
-
-Ƭ **TWorkerThreadMessageCode**: [`EWorkerThreadMessageCodeExit`](enums/EWorkerThreadMessageCodeExit.md) \| [`EWorkerThreadMessageCodeConsume`](enums/EWorkerThreadMessageCodeConsume.md)
-
-## Functions
-
-### disconnect
-
-▸ **disconnect**(`cb`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `cb` | `ICallback`\<`void`\> |
-
-#### Returns
-
-`void`
+Ƭ **TRedisSMQEvent**: [`TEventBusEvent`](README.md#teventbusevent) & [`TConsumerEvent`](README.md#tconsumerevent) & [`TConsumerHeartbeatEvent`](README.md#tconsumerheartbeatevent) & [`TConsumerMessageHandlerRunnerEvent`](README.md#tconsumermessagehandlerrunnerevent) & [`TConsumerMessageHandlerEvent`](README.md#tconsumermessagehandlerevent) & [`TConsumerConsumeMessageEvent`](README.md#tconsumerconsumemessageevent) & [`TConsumerDequeueMessageEvent`](README.md#tconsumerdequeuemessageevent) & [`TProducerEvent`](README.md#tproducerevent) & [`TQueueEvent`](README.md#tqueueevent)

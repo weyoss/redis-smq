@@ -25,12 +25,12 @@ const { Consumer } = require('redis-smq');
 const consumer = new Consumer();
 
 const messageHandler = (msg, cb) => {
-   console.log('Message payload', msg.body);
-   cb(); // acknowledging the message
+  console.log('Message payload', msg.body);
+  cb(); // acknowledging the message
 };
 
 consumer.consume('test_queue', messageHandler, (err) => {
-   if (err) console.error(err);
+  if (err) console.error(err);
 });
 
 consumer.run((err) => {
@@ -75,6 +75,6 @@ Delivered messages that couldn't be processed or can not be delivered to consume
 
 By default, RedisSMQ does not store acknowledged and dead-lettered messages for saving disk and memory spaces, and also to increase message processing performance.
 
-If you need such feature, you can enable it from your [configuration](configuration.md) object.
+If you need such feature, you can enabled it from your [configuration](configuration.md) object.
 
 See [Consumer Class](api/classes/Consumer.md) for more details.
