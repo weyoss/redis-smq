@@ -1,5 +1,12 @@
 
 
+## [8.0.0-rc.20](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.19...v8.0.0-rc.20) (2024-03-24)
+
+
+### Bug Fixes
+
+* include missing enums when exporting esm/cjs modules ([2ee6802](https://github.com/weyoss/redis-smq/commit/2ee680205dbde78af46f4e4347cdf4fa80adfe3b))
+
 ## [8.0.0-rc.19](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.18...v8.0.0-rc.19) (2024-03-24)
 
 
