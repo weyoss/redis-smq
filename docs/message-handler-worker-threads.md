@@ -30,7 +30,7 @@ Running a message handler in a separate thread is really useful, as already ment
 module.exports = function myHandler(msg, cb) {
   console.log(msg.body);
   // Perform here any heavy operation
-}
+};
 ```
 
 #### Consuming Messages
@@ -41,8 +41,13 @@ const path = require('path');
 const { Consumer } = require('redis-smq');
 
 const consumer = new Consumer();
-const messageHandlerFilename = path.resolve(__dirname, './my/application/path/message-handlers/my-handler.js')
-consumer.consume('my_queue', messageHandlerFilename, (err) => console.error(err));
+const messageHandlerFilename = path.resolve(
+  __dirname,
+  './my/application/path/message-handlers/my-handler.js',
+);
+consumer.consume('my_queue', messageHandlerFilename, (err) =>
+  console.error(err),
+);
 
 consumer.run((err) => {
   if (err) console.error(err);

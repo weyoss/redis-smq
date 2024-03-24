@@ -11,12 +11,6 @@ In some cases consuming messages with a high message rate may be not desirable. 
 
 RedisSMQ allows you, in such cases, to control the rate at which the messages are consumed by setting a rate limit for a given queue.
 
-To configure and view rate limiting parameters for a queue, the [QueueRateLimit Class](api/classes/QueueRateLimit.md) provides the following methods:
-
-- [QueueRateLimit.set()](api/classes/QueueRateLimit.md#set)
-- [QueueRateLimit.clear()](api/classes/QueueRateLimit.md#clear)
-- [QueueRateLimit.get()](api/classes/QueueRateLimit.md#get)
-
 **Example**
 
 ```javascript
@@ -26,7 +20,9 @@ const queueRateLimit = new QueueRateLimit();
 // Setting a rate limit of 200 msg/min for the 'notofications' queue
 queueRateLimit.set('notifications', { limit: 200, interval: 60000 }, (err) => {
   // ...
-})
+});
 ```
+
+To configure and view rate limiting parameters for a queue, the [QueueRateLimit Class](api/classes/QueueRateLimit.md).
 
 Queue rate limiting parameters can be also configured using the [HTTP API Interface](https://github.com/weyoss/redis-smq-monitor) or from your browser with the help of the [Web UI](https://github.com/weyoss/redis-smq-monitor-client).

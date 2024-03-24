@@ -4,7 +4,7 @@
 
 ## Hierarchy
 
-- `Exchange`\<[`TExchangeFanOutBindingParams`](../README.md#texchangefanoutbindingparams), [`FANOUT`](../enums/EExchangeType.md#fanout)\>
+- `ExchangeAbstract`\<`string`\>
 
   ↳ **`ExchangeFanOut`**
 
@@ -14,89 +14,43 @@
 
 - [constructor](ExchangeFanOut.md#constructor)
 
-### Properties
-
-- [bindingParams](ExchangeFanOut.md#bindingparams)
-- [exchangeTag](ExchangeFanOut.md#exchangetag)
-- [type](ExchangeFanOut.md#type)
-
 ### Methods
 
 - [bindQueue](ExchangeFanOut.md#bindqueue)
 - [deleteExchange](ExchangeFanOut.md#deleteexchange)
-- [fromJSON](ExchangeFanOut.md#fromjson)
-- [getBindingParams](ExchangeFanOut.md#getbindingparams)
-- [getQueues](ExchangeFanOut.md#getqueues)
-- [saveExchange](ExchangeFanOut.md#saveexchange)
-- [toJSON](ExchangeFanOut.md#tojson)
-- [unbindQueue](ExchangeFanOut.md#unbindqueue)
 - [getAllExchanges](ExchangeFanOut.md#getallexchanges)
 - [getQueueExchange](ExchangeFanOut.md#getqueueexchange)
+- [getQueues](ExchangeFanOut.md#getqueues)
+- [saveExchange](ExchangeFanOut.md#saveexchange)
+- [shutdown](ExchangeFanOut.md#shutdown)
+- [unbindQueue](ExchangeFanOut.md#unbindqueue)
 
 ## Constructors
 
 ### constructor
 
-• **new ExchangeFanOut**(`fanOutName`): [`ExchangeFanOut`](ExchangeFanOut.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `fanOutName` | `string` |
+• **new ExchangeFanOut**(): [`ExchangeFanOut`](ExchangeFanOut.md)
 
 #### Returns
 
 [`ExchangeFanOut`](ExchangeFanOut.md)
 
-#### Overrides
-
-Exchange\&lt;
-  TExchangeFanOutBindingParams,
-  EExchangeType.FANOUT
-\&gt;.constructor
-
-## Properties
-
-### bindingParams
-
-• `Readonly` **bindingParams**: `string`
-
 #### Inherited from
 
-Exchange.bindingParams
-
-___
-
-### exchangeTag
-
-• **exchangeTag**: `string`
-
-#### Inherited from
-
-Exchange.exchangeTag
-
-___
-
-### type
-
-• `Readonly` **type**: [`FANOUT`](../enums/EExchangeType.md#fanout)
-
-#### Inherited from
-
-Exchange.type
+ExchangeAbstract\<string\>.constructor
 
 ## Methods
 
 ### bindQueue
 
-▸ **bindQueue**(`queue`, `cb`): `void`
+▸ **bindQueue**(`queue`, `exchangeParams`, `cb`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `exchangeParams` | `string` |
 | `cb` | `ICallback`\<`void`\> |
 
 #### Returns
@@ -107,113 +61,13 @@ ___
 
 ### deleteExchange
 
-▸ **deleteExchange**(`cb`): `void`
+▸ **deleteExchange**(`exchangeParams`, `cb`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `cb` | `ICallback`\<`void`\> |
-
-#### Returns
-
-`void`
-
-___
-
-### fromJSON
-
-▸ **fromJSON**(`JSON`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `JSON` | `Partial`\<[`IExchangeSerialized`](../interfaces/IExchangeSerialized.md)\<`string`, [`FANOUT`](../enums/EExchangeType.md#fanout)\>\> |
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-Exchange.fromJSON
-
-___
-
-### getBindingParams
-
-▸ **getBindingParams**(): `string`
-
-#### Returns
-
-`string`
-
-#### Inherited from
-
-Exchange.getBindingParams
-
-___
-
-### getQueues
-
-▸ **getQueues**(`cb`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `cb` | `ICallback`\<[`IQueueParams`](../interfaces/IQueueParams.md)[]\> |
-
-#### Returns
-
-`void`
-
-#### Overrides
-
-Exchange.getQueues
-
-___
-
-### saveExchange
-
-▸ **saveExchange**(`cb`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `cb` | `ICallback`\<`void`\> |
-
-#### Returns
-
-`void`
-
-___
-
-### toJSON
-
-▸ **toJSON**(): [`IExchangeSerialized`](../interfaces/IExchangeSerialized.md)\<`string`, [`FANOUT`](../enums/EExchangeType.md#fanout)\>
-
-#### Returns
-
-[`IExchangeSerialized`](../interfaces/IExchangeSerialized.md)\<`string`, [`FANOUT`](../enums/EExchangeType.md#fanout)\>
-
-#### Inherited from
-
-Exchange.toJSON
-
-___
-
-### unbindQueue
-
-▸ **unbindQueue**(`queue`, `cb`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `exchangeParams` | `string` |
 | `cb` | `ICallback`\<`void`\> |
 
 #### Returns
@@ -247,7 +101,83 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
-| `cb` | `ICallback`\<``null`` \| [`ExchangeFanOut`](ExchangeFanOut.md)\> |
+| `cb` | `ICallback`\<``null`` \| `string`\> |
+
+#### Returns
+
+`void`
+
+___
+
+### getQueues
+
+▸ **getQueues**(`exchangeParams`, `cb`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `exchangeParams` | `string` |
+| `cb` | `ICallback`\<[`IQueueParams`](../interfaces/IQueueParams.md)[]\> |
+
+#### Returns
+
+`void`
+
+#### Overrides
+
+ExchangeAbstract.getQueues
+
+___
+
+### saveExchange
+
+▸ **saveExchange**(`exchangeParams`, `cb`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `exchangeParams` | `string` |
+| `cb` | `ICallback`\<`void`\> |
+
+#### Returns
+
+`void`
+
+___
+
+### shutdown
+
+▸ **shutdown**(`cb`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `cb` | `ICallback`\<`void`\> |
+
+#### Returns
+
+`void`
+
+#### Inherited from
+
+ExchangeAbstract.shutdown
+
+___
+
+### unbindQueue
+
+▸ **unbindQueue**(`queue`, `exchangeParams`, `cb`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
+| `exchangeParams` | `string` |
+| `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 

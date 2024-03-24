@@ -4,7 +4,7 @@
 
 ## Hierarchy
 
-- `Exchange`\<[`TExchangeDirectBindingParams`](../README.md#texchangedirectbindingparams), [`DIRECT`](../enums/EExchangeType.md#direct)\>
+- `ExchangeAbstract`\<`string` \| [`IQueueParams`](../interfaces/IQueueParams.md)\>
 
   ↳ **`ExchangeDirect`**
 
@@ -14,116 +14,36 @@
 
 - [constructor](ExchangeDirect.md#constructor)
 
-### Properties
-
-- [bindingParams](ExchangeDirect.md#bindingparams)
-- [exchangeTag](ExchangeDirect.md#exchangetag)
-- [type](ExchangeDirect.md#type)
-
 ### Methods
 
-- [fromJSON](ExchangeDirect.md#fromjson)
-- [getBindingParams](ExchangeDirect.md#getbindingparams)
 - [getQueues](ExchangeDirect.md#getqueues)
-- [toJSON](ExchangeDirect.md#tojson)
+- [shutdown](ExchangeDirect.md#shutdown)
 
 ## Constructors
 
 ### constructor
 
-• **new ExchangeDirect**(`queue`): [`ExchangeDirect`](ExchangeDirect.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `queue` | [`TExchangeDirectBindingParams`](../README.md#texchangedirectbindingparams) |
+• **new ExchangeDirect**(): [`ExchangeDirect`](ExchangeDirect.md)
 
 #### Returns
 
 [`ExchangeDirect`](ExchangeDirect.md)
 
-#### Overrides
-
-Exchange\&lt;
-  TExchangeDirectBindingParams,
-  EExchangeType.DIRECT
-\&gt;.constructor
-
-## Properties
-
-### bindingParams
-
-• `Readonly` **bindingParams**: [`TExchangeDirectBindingParams`](../README.md#texchangedirectbindingparams)
-
 #### Inherited from
 
-Exchange.bindingParams
-
-___
-
-### exchangeTag
-
-• **exchangeTag**: `string`
-
-#### Inherited from
-
-Exchange.exchangeTag
-
-___
-
-### type
-
-• `Readonly` **type**: [`DIRECT`](../enums/EExchangeType.md#direct)
-
-#### Inherited from
-
-Exchange.type
+ExchangeAbstract\<string \| IQueueParams\>.constructor
 
 ## Methods
 
-### fromJSON
-
-▸ **fromJSON**(`JSON`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `JSON` | `Partial`\<[`IExchangeSerialized`](../interfaces/IExchangeSerialized.md)\<[`TExchangeDirectBindingParams`](../README.md#texchangedirectbindingparams), [`DIRECT`](../enums/EExchangeType.md#direct)\>\> |
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-Exchange.fromJSON
-
-___
-
-### getBindingParams
-
-▸ **getBindingParams**(): [`TExchangeDirectBindingParams`](../README.md#texchangedirectbindingparams)
-
-#### Returns
-
-[`TExchangeDirectBindingParams`](../README.md#texchangedirectbindingparams)
-
-#### Inherited from
-
-Exchange.getBindingParams
-
-___
-
 ### getQueues
 
-▸ **getQueues**(`cb`): `void`
+▸ **getQueues**(`exchangeParams`, `cb`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
+| `exchangeParams` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
 | `cb` | `ICallback`\<[`IQueueParams`](../interfaces/IQueueParams.md)[]\> |
 
 #### Returns
@@ -132,18 +52,24 @@ ___
 
 #### Overrides
 
-Exchange.getQueues
+ExchangeAbstract.getQueues
 
 ___
 
-### toJSON
+### shutdown
 
-▸ **toJSON**(): [`IExchangeSerialized`](../interfaces/IExchangeSerialized.md)\<[`TExchangeDirectBindingParams`](../README.md#texchangedirectbindingparams), [`DIRECT`](../enums/EExchangeType.md#direct)\>
+▸ **shutdown**(`cb`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 
-[`IExchangeSerialized`](../interfaces/IExchangeSerialized.md)\<[`TExchangeDirectBindingParams`](../README.md#texchangedirectbindingparams), [`DIRECT`](../enums/EExchangeType.md#direct)\>
+`void`
 
 #### Inherited from
 
-Exchange.toJSON
+ExchangeAbstract.shutdown

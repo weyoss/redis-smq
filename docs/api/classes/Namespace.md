@@ -13,6 +13,7 @@
 - [delete](Namespace.md#delete)
 - [getNamespaceQueues](Namespace.md#getnamespacequeues)
 - [getNamespaces](Namespace.md#getnamespaces)
+- [shutdown](Namespace.md#shutdown)
 
 ## Constructors
 
@@ -69,6 +70,22 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `cb` | `ICallback`\<`string`[]\> |
+
+#### Returns
+
+`void`
+
+___
+
+### shutdown
+
+▸ **shutdown**(`cb`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 

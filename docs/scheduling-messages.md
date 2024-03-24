@@ -6,12 +6,12 @@ Starting with version 1.0.19, RedisSMQ enables you to schedule a one-time or rep
 
 To set up scheduling parameters for a given message, the [ProducibleMessage Class](api/classes/ProducibleMessage.md) provides:
 
-* [ProducibleMessage.setScheduledCRON()](api/classes/ProducibleMessage.md#setscheduledcron)
-* [ProducibleMessage.setScheduledDelay()](api/classes/ProducibleMessage.md#setscheduleddelay)
-* [ProducibleMessage.setScheduledRepeat()](api/classes/ProducibleMessage.md#setscheduledrepeat)
-* [ProducibleMessage.setScheduledRepeatPeriod()](api/classes/ProducibleMessage.md#setscheduledrepeatperiod)
+- [ProducibleMessage.setScheduledCRON()](api/classes/ProducibleMessage.md#setscheduledcron)
+- [ProducibleMessage.setScheduledDelay()](api/classes/ProducibleMessage.md#setscheduleddelay)
+- [ProducibleMessage.setScheduledRepeat()](api/classes/ProducibleMessage.md#setscheduledrepeat)
+- [ProducibleMessage.setScheduledRepeatPeriod()](api/classes/ProducibleMessage.md#setscheduledrepeatperiod)
 
-To schedule your message, you can publish it, as any other message, from your [Producer Class](api/classes/Producer.md) 
+To schedule your message, you can publish it, as any other message, from your [Producer Class](api/classes/Producer.md)
 using the [Producer.produce()](api/classes/Producer.md#produce) method.
 
 ```javascript
@@ -27,7 +27,7 @@ msg
 producer.produce(msg, (err) => {
   if (err) console.error(err);
   else console.log('Message has been successfully scheduled');
-})
+});
 ```
 
 For managing scheduled messages see [QueueScheduledMessages Class](api/classes/QueueScheduledMessages.md).

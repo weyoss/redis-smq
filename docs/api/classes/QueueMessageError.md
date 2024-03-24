@@ -1,40 +1,42 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / QueueRateLimitError
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / QueueMessageError
 
-# Class: QueueRateLimitError
+# Class: QueueMessageError
 
 ## Hierarchy
 
 - `RedisSMQError`
 
-  ↳ **`QueueRateLimitError`**
+  ↳ **`QueueMessageError`**
+
+  ↳↳ [`MessageRequeueError`](MessageRequeueError.md)
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](QueueRateLimitError.md#constructor)
+- [constructor](QueueMessageError.md#constructor)
 
 ### Properties
 
-- [cause](QueueRateLimitError.md#cause)
-- [message](QueueRateLimitError.md#message)
-- [stack](QueueRateLimitError.md#stack)
-- [prepareStackTrace](QueueRateLimitError.md#preparestacktrace)
-- [stackTraceLimit](QueueRateLimitError.md#stacktracelimit)
+- [cause](QueueMessageError.md#cause)
+- [message](QueueMessageError.md#message)
+- [stack](QueueMessageError.md#stack)
+- [prepareStackTrace](QueueMessageError.md#preparestacktrace)
+- [stackTraceLimit](QueueMessageError.md#stacktracelimit)
 
 ### Accessors
 
-- [name](QueueRateLimitError.md#name)
+- [name](QueueMessageError.md#name)
 
 ### Methods
 
-- [captureStackTrace](QueueRateLimitError.md#capturestacktrace)
+- [captureStackTrace](QueueMessageError.md#capturestacktrace)
 
 ## Constructors
 
 ### constructor
 
-• **new QueueRateLimitError**(`message?`): [`QueueRateLimitError`](QueueRateLimitError.md)
+• **new QueueMessageError**(`message?`): [`QueueMessageError`](QueueMessageError.md)
 
 #### Parameters
 
@@ -44,7 +46,7 @@
 
 #### Returns
 
-[`QueueRateLimitError`](QueueRateLimitError.md)
+[`QueueMessageError`](QueueMessageError.md)
 
 #### Inherited from
 

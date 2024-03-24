@@ -6,7 +6,7 @@
 
 [Message Exchanges](message-exchanges.md) should not be confused with [Queue Delivery Models](queue-delivery-models.md).
 
-Message exchanges allow publishing a message to one or many queues based on the message exchange. 
+Message exchanges allow publishing a message to one or many queues based on the message exchange.
 
 On the other hand, delivery models allow delivering a message to one consumer or to all consumers of a given queue.
 

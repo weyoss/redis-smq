@@ -4,7 +4,7 @@
 
 ## Hierarchy
 
-- `Base`
+- `Runnable`\<[`TProducerEvent`](../README.md#tproducerevent)\>
 
   ↳ **`Producer`**
 
@@ -16,14 +16,18 @@
 
 ### Methods
 
+- [emit](Producer.md#emit)
 - [getId](Producer.md#getid)
-- [handleError](Producer.md#handleerror)
 - [isDown](Producer.md#isdown)
 - [isGoingDown](Producer.md#isgoingdown)
 - [isGoingUp](Producer.md#isgoingup)
 - [isRunning](Producer.md#isrunning)
 - [isUp](Producer.md#isup)
+- [on](Producer.md#on)
+- [once](Producer.md#once)
 - [produce](Producer.md#produce)
+- [removeAllListeners](Producer.md#removealllisteners)
+- [removeListener](Producer.md#removelistener)
 - [run](Producer.md#run)
 - [shutdown](Producer.md#shutdown)
 
@@ -37,11 +41,38 @@
 
 [`Producer`](Producer.md)
 
-#### Inherited from
+#### Overrides
 
-Base.constructor
+Runnable\&lt;TProducerEvent\&gt;.constructor
 
 ## Methods
+
+### emit
+
+▸ **emit**\<`E`\>(`event`, `...args`): `boolean`
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof [`TProducerEvent`](../README.md#tproducerevent) |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `...args` | `Parameters`\<[`TProducerEvent`](../README.md#tproducerevent)[`E`]\> |
+
+#### Returns
+
+`boolean`
+
+#### Inherited from
+
+Runnable.emit
+
+___
 
 ### getId
 
@@ -53,27 +84,7 @@ Base.constructor
 
 #### Inherited from
 
-Base.getId
-
-___
-
-### handleError
-
-▸ **handleError**(`err`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-Base.handleError
+Runnable.getId
 
 ___
 
@@ -87,7 +98,7 @@ ___
 
 #### Inherited from
 
-Base.isDown
+Runnable.isDown
 
 ___
 
@@ -101,7 +112,7 @@ ___
 
 #### Inherited from
 
-Base.isGoingDown
+Runnable.isGoingDown
 
 ___
 
@@ -115,7 +126,7 @@ ___
 
 #### Inherited from
 
-Base.isGoingUp
+Runnable.isGoingUp
 
 ___
 
@@ -129,7 +140,7 @@ ___
 
 #### Inherited from
 
-Base.isRunning
+Runnable.isRunning
 
 ___
 
@@ -143,7 +154,61 @@ ___
 
 #### Inherited from
 
-Base.isUp
+Runnable.isUp
+
+___
+
+### on
+
+▸ **on**\<`E`\>(`event`, `listener`): [`Producer`](Producer.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof [`TProducerEvent`](../README.md#tproducerevent) |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `listener` | [`TProducerEvent`](../README.md#tproducerevent)[`E`] |
+
+#### Returns
+
+[`Producer`](Producer.md)
+
+#### Inherited from
+
+Runnable.on
+
+___
+
+### once
+
+▸ **once**\<`E`\>(`event`, `listener`): [`Producer`](Producer.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof [`TProducerEvent`](../README.md#tproducerevent) |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `listener` | [`TProducerEvent`](../README.md#tproducerevent)[`E`] |
+
+#### Returns
+
+[`Producer`](Producer.md)
+
+#### Inherited from
+
+Runnable.once
 
 ___
 
@@ -164,15 +229,68 @@ ___
 
 ___
 
-### run
+### removeAllListeners
 
-▸ **run**(`cb?`): `void`
+▸ **removeAllListeners**\<`E`\>(`event?`): [`Producer`](Producer.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof [`TProducerEvent`](../README.md#tproducerevent) |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `cb?` | `ICallback`\<`boolean`\> |
+| `event?` | `Extract`\<`E`, `string`\> |
+
+#### Returns
+
+[`Producer`](Producer.md)
+
+#### Inherited from
+
+Runnable.removeAllListeners
+
+___
+
+### removeListener
+
+▸ **removeListener**\<`E`\>(`event`, `listener`): [`Producer`](Producer.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof [`TProducerEvent`](../README.md#tproducerevent) |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `listener` | [`TProducerEvent`](../README.md#tproducerevent)[`E`] |
+
+#### Returns
+
+[`Producer`](Producer.md)
+
+#### Inherited from
+
+Runnable.removeListener
+
+___
+
+### run
+
+▸ **run**(`cb`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `cb` | `ICallback`\<`boolean`\> |
 
 #### Returns
 
@@ -180,19 +298,19 @@ ___
 
 #### Inherited from
 
-Base.run
+Runnable.run
 
 ___
 
 ### shutdown
 
-▸ **shutdown**(`cb?`): `void`
+▸ **shutdown**(`cb`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `cb?` | `ICallback`\<`boolean`\> |
+| `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 
@@ -200,4 +318,4 @@ ___
 
 #### Inherited from
 
-Base.shutdown
+Runnable.shutdown

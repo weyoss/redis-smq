@@ -20,6 +20,7 @@
 - [countMessagesByStatus](QueueMessages.md#countmessagesbystatus)
 - [getMessages](QueueMessages.md#getmessages)
 - [purge](QueueMessages.md#purge)
+- [shutdown](QueueMessages.md#shutdown)
 
 ## Constructors
 
@@ -31,7 +32,7 @@
 
 [`QueueMessages`](QueueMessages.md)
 
-#### Inherited from
+#### Overrides
 
 QueueMessagesPaginatorSet.constructor
 
@@ -116,3 +117,23 @@ ___
 #### Inherited from
 
 QueueMessagesPaginatorSet.purge
+
+___
+
+### shutdown
+
+▸ **shutdown**(`cb`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `cb` | `ICallback`\<`void`\> |
+
+#### Returns
+
+`void`
+
+#### Overrides
+
+QueueMessagesPaginatorSet.shutdown

@@ -1,54 +1,54 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / MessageNotFoundError
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / NamespaceNotFoundError
 
-# Class: MessageNotFoundError
+# Class: NamespaceNotFoundError
 
 ## Hierarchy
 
-- [`MessageError`](MessageError.md)
+- [`NamespaceError`](NamespaceError.md)
 
-  ↳ **`MessageNotFoundError`**
+  ↳ **`NamespaceNotFoundError`**
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](MessageNotFoundError.md#constructor)
+- [constructor](NamespaceNotFoundError.md#constructor)
 
 ### Properties
 
-- [cause](MessageNotFoundError.md#cause)
-- [message](MessageNotFoundError.md#message)
-- [stack](MessageNotFoundError.md#stack)
-- [prepareStackTrace](MessageNotFoundError.md#preparestacktrace)
-- [stackTraceLimit](MessageNotFoundError.md#stacktracelimit)
+- [cause](NamespaceNotFoundError.md#cause)
+- [message](NamespaceNotFoundError.md#message)
+- [stack](NamespaceNotFoundError.md#stack)
+- [prepareStackTrace](NamespaceNotFoundError.md#preparestacktrace)
+- [stackTraceLimit](NamespaceNotFoundError.md#stacktracelimit)
 
 ### Accessors
 
-- [name](MessageNotFoundError.md#name)
+- [name](NamespaceNotFoundError.md#name)
 
 ### Methods
 
-- [captureStackTrace](MessageNotFoundError.md#capturestacktrace)
+- [captureStackTrace](NamespaceNotFoundError.md#capturestacktrace)
 
 ## Constructors
 
 ### constructor
 
-• **new MessageNotFoundError**(`msg?`): [`MessageNotFoundError`](MessageNotFoundError.md)
+• **new NamespaceNotFoundError**(`namespace`): [`NamespaceNotFoundError`](NamespaceNotFoundError.md)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `msg?` | `string` |
+| `namespace` | `string` |
 
 #### Returns
 
-[`MessageNotFoundError`](MessageNotFoundError.md)
+[`NamespaceNotFoundError`](NamespaceNotFoundError.md)
 
 #### Overrides
 
-[MessageError](MessageError.md).[constructor](MessageError.md#constructor)
+[NamespaceError](NamespaceError.md).[constructor](NamespaceError.md#constructor)
 
 ## Properties
 
@@ -58,7 +58,7 @@
 
 #### Inherited from
 
-[MessageError](MessageError.md).[cause](MessageError.md#cause)
+[NamespaceError](NamespaceError.md).[cause](NamespaceError.md#cause)
 
 ___
 
@@ -68,7 +68,7 @@ ___
 
 #### Inherited from
 
-[MessageError](MessageError.md).[message](MessageError.md#message)
+[NamespaceError](NamespaceError.md).[message](NamespaceError.md#message)
 
 ___
 
@@ -78,7 +78,7 @@ ___
 
 #### Inherited from
 
-[MessageError](MessageError.md).[stack](MessageError.md#stack)
+[NamespaceError](NamespaceError.md).[stack](NamespaceError.md#stack)
 
 ___
 
@@ -109,7 +109,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[MessageError](MessageError.md).[prepareStackTrace](MessageError.md#preparestacktrace)
+[NamespaceError](NamespaceError.md).[prepareStackTrace](NamespaceError.md#preparestacktrace)
 
 ___
 
@@ -119,7 +119,7 @@ ___
 
 #### Inherited from
 
-[MessageError](MessageError.md).[stackTraceLimit](MessageError.md#stacktracelimit)
+[NamespaceError](NamespaceError.md).[stackTraceLimit](NamespaceError.md#stacktracelimit)
 
 ## Accessors
 
@@ -133,7 +133,7 @@ ___
 
 #### Inherited from
 
-MessageError.name
+NamespaceError.name
 
 ## Methods
 
@@ -156,4 +156,4 @@ Create .stack property on a target object
 
 #### Inherited from
 
-[MessageError](MessageError.md).[captureStackTrace](MessageError.md#capturestacktrace)
+[NamespaceError](NamespaceError.md).[captureStackTrace](NamespaceError.md#capturestacktrace)

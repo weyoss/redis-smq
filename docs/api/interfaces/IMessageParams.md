@@ -61,7 +61,7 @@ ___
 
 ### exchange
 
-• **exchange**: [`TExchangeSerialized`](../README.md#texchangeserialized)
+• **exchange**: [`TExchangeTransferable`](../README.md#texchangetransferable)
 
 ___
 

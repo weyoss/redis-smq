@@ -4,7 +4,7 @@
 
 ## Hierarchy
 
-- `Base`
+- `Runnable`\<[`TConsumerEvent`](../README.md#tconsumerevent)\>
 
   ↳ **`Consumer`**
 
@@ -18,14 +18,18 @@
 
 - [cancel](Consumer.md#cancel)
 - [consume](Consumer.md#consume)
+- [emit](Consumer.md#emit)
 - [getId](Consumer.md#getid)
 - [getQueues](Consumer.md#getqueues)
-- [handleError](Consumer.md#handleerror)
 - [isDown](Consumer.md#isdown)
 - [isGoingDown](Consumer.md#isgoingdown)
 - [isGoingUp](Consumer.md#isgoingup)
 - [isRunning](Consumer.md#isrunning)
 - [isUp](Consumer.md#isup)
+- [on](Consumer.md#on)
+- [once](Consumer.md#once)
+- [removeAllListeners](Consumer.md#removealllisteners)
+- [removeListener](Consumer.md#removelistener)
 - [run](Consumer.md#run)
 - [shutdown](Consumer.md#shutdown)
 
@@ -33,13 +37,13 @@
 
 ### constructor
 
-• **new Consumer**(`useMultiplexing?`): [`Consumer`](Consumer.md)
+• **new Consumer**(`enableMultiplexing?`): [`Consumer`](Consumer.md)
 
 #### Parameters
 
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `useMultiplexing` | `boolean` | `false` |
+| Name | Type |
+| :------ | :------ |
+| `enableMultiplexing?` | `boolean` |
 
 #### Returns
 
@@ -47,7 +51,7 @@
 
 #### Overrides
 
-Base.constructor
+Runnable\&lt;TConsumerEvent\&gt;.constructor
 
 ## Methods
 
@@ -86,6 +90,33 @@ ___
 
 ___
 
+### emit
+
+▸ **emit**\<`E`\>(`event`, `...args`): `boolean`
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof [`TConsumerEvent`](../README.md#tconsumerevent) |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `...args` | `Parameters`\<[`TConsumerEvent`](../README.md#tconsumerevent)[`E`]\> |
+
+#### Returns
+
+`boolean`
+
+#### Inherited from
+
+Runnable.emit
+
+___
+
 ### getId
 
 ▸ **getId**(): `string`
@@ -96,7 +127,7 @@ ___
 
 #### Inherited from
 
-Base.getId
+Runnable.getId
 
 ___
 
@@ -110,26 +141,6 @@ ___
 
 ___
 
-### handleError
-
-▸ **handleError**(`err`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-Base.handleError
-
-___
-
 ### isDown
 
 ▸ **isDown**(): `boolean`
@@ -140,7 +151,7 @@ ___
 
 #### Inherited from
 
-Base.isDown
+Runnable.isDown
 
 ___
 
@@ -154,7 +165,7 @@ ___
 
 #### Inherited from
 
-Base.isGoingDown
+Runnable.isGoingDown
 
 ___
 
@@ -168,7 +179,7 @@ ___
 
 #### Inherited from
 
-Base.isGoingUp
+Runnable.isGoingUp
 
 ___
 
@@ -182,7 +193,7 @@ ___
 
 #### Inherited from
 
-Base.isRunning
+Runnable.isRunning
 
 ___
 
@@ -196,19 +207,126 @@ ___
 
 #### Inherited from
 
-Base.isUp
+Runnable.isUp
+
+___
+
+### on
+
+▸ **on**\<`E`\>(`event`, `listener`): [`Consumer`](Consumer.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof [`TConsumerEvent`](../README.md#tconsumerevent) |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `listener` | [`TConsumerEvent`](../README.md#tconsumerevent)[`E`] |
+
+#### Returns
+
+[`Consumer`](Consumer.md)
+
+#### Inherited from
+
+Runnable.on
+
+___
+
+### once
+
+▸ **once**\<`E`\>(`event`, `listener`): [`Consumer`](Consumer.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof [`TConsumerEvent`](../README.md#tconsumerevent) |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `listener` | [`TConsumerEvent`](../README.md#tconsumerevent)[`E`] |
+
+#### Returns
+
+[`Consumer`](Consumer.md)
+
+#### Inherited from
+
+Runnable.once
+
+___
+
+### removeAllListeners
+
+▸ **removeAllListeners**\<`E`\>(`event?`): [`Consumer`](Consumer.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof [`TConsumerEvent`](../README.md#tconsumerevent) |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event?` | `Extract`\<`E`, `string`\> |
+
+#### Returns
+
+[`Consumer`](Consumer.md)
+
+#### Inherited from
+
+Runnable.removeAllListeners
+
+___
+
+### removeListener
+
+▸ **removeListener**\<`E`\>(`event`, `listener`): [`Consumer`](Consumer.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof [`TConsumerEvent`](../README.md#tconsumerevent) |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `listener` | [`TConsumerEvent`](../README.md#tconsumerevent)[`E`] |
+
+#### Returns
+
+[`Consumer`](Consumer.md)
+
+#### Inherited from
+
+Runnable.removeListener
 
 ___
 
 ### run
 
-▸ **run**(`cb?`): `void`
+▸ **run**(`cb`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `cb?` | `ICallback`\<`boolean`\> |
+| `cb` | `ICallback`\<`boolean`\> |
 
 #### Returns
 
@@ -216,19 +334,19 @@ ___
 
 #### Inherited from
 
-Base.run
+Runnable.run
 
 ___
 
 ### shutdown
 
-▸ **shutdown**(`cb?`): `void`
+▸ **shutdown**(`cb`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `cb?` | `ICallback`\<`boolean`\> |
+| `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 
@@ -236,4 +354,4 @@ ___
 
 #### Inherited from
 
-Base.shutdown
+Runnable.shutdown

@@ -6,7 +6,7 @@
 
 ### Properties
 
-- [eventListeners](IRedisSMQConfig.md#eventlisteners)
+- [eventBus](IRedisSMQConfig.md#eventbus)
 - [logger](IRedisSMQConfig.md#logger)
 - [messages](IRedisSMQConfig.md#messages)
 - [namespace](IRedisSMQConfig.md#namespace)
@@ -14,9 +14,9 @@
 
 ## Properties
 
-### eventListeners
+### eventBus
 
-• `Optional` **eventListeners**: [`TEventListenersConfig`](../README.md#teventlistenersconfig)
+• `Optional` **eventBus**: [`IEventBusConfig`](IEventBusConfig.md)
 
 ___
 

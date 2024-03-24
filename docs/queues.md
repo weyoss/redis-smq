@@ -17,12 +17,17 @@ In a typical use case, both LIFO and FIFO queues use [brpoplpush](https://redis.
 In a LIFO queue the last published messages are always delivered first and the first published messages are delivered last.
 
 ```javascript
-const { Queue } = require('redis-smq');
+const { Queue, EQueueType, EQueueDeliveryModel } = require('redis-smq');
 
 const queue = new Queue();
-
-// Creating a LIFO queue named 'my_lifo_queue' in the 'default' namespace.
-queue.save('my_lifo_queue', EQueueType.LIFO_QUEUE, (err) => console.error(err));
+queue.save(
+  'my_queue',
+  EQueueType.LIFO_QUEUE,
+  EQueueDeliveryModel.POINT_TO_POINT,
+  (err) => {
+    if (err) console.error(err);
+  },
+);
 ```
 
 See [Queue.save()](api/classes/Queue.md#save) for more details.
@@ -34,12 +39,17 @@ See [Queue.save()](api/classes/Queue.md#save) for more details.
 In a FIFO queue the first published messages are delivered first and the last published messages are delivered last.
 
 ```javascript
-const { QueueManager } = require('redis-smq');
+const { Queue, EQueueType, EQueueDeliveryModel } = require('redis-smq');
 
 const queue = new Queue();
-
-// Creating a FIFO queue named 'my_fifo_queue' in the 'default' namespace.
-queue.save('my_fifo_queue', EQueueType.FIFO_QUEUE, (err) => console.error(err));
+queue.save(
+  'my_queue',
+  EQueueType.FIFO_QUEUE,
+  EQueueDeliveryModel.POINT_TO_POINT,
+  (err) => {
+    if (err) console.error(err);
+  },
+);
 ```
 
 See [Queue.save()](api/classes/Queue.md#save) for more details.
@@ -51,12 +61,17 @@ See [Queue.save()](api/classes/Queue.md#save) for more details.
 In a priority queue, messages with higher priority are always delivered first before messages with lower priority.
 
 ```javascript
-const { QueueManager } = require('redis-smq');
+const { Queue, EQueueType, EQueueDeliveryModel } = require('redis-smq');
 
 const queue = new Queue();
-
-// Creating a PRIORITY queue named 'my_priority_queue' in the 'default' namespace.
-queue.save('my_priority_queue', EQueueType.PRIORITY_QUEUE, (err) => console.error(err));
+queue.save(
+  'my_queue',
+  EQueueType.PRIORITY_QUEUE,
+  EQueueDeliveryModel.POINT_TO_POINT,
+  (err) => {
+    if (err) console.error(err);
+  },
+);
 ```
 
 See [Queue.save()](api/classes/Queue.md#save) for more details.
@@ -65,8 +80,8 @@ See [Queue.save()](api/classes/Queue.md#save) for more details.
 
 To set up a message priority, the [ProducibleMessage Class](api/classes/ProducibleMessage.md) provides the following methods:
 
-* [ProducibleMessage.setPriority()](api/classes/ProducibleMessage.md#setpriority)
-* [ProducibleMessage.getPriority()](api/classes/ProducibleMessage.md#getpriority)
+- [ProducibleMessage.setPriority()](api/classes/ProducibleMessage.md#setpriority)
+- [ProducibleMessage.getPriority()](api/classes/ProducibleMessage.md#getpriority)
 
 Valid message priority values that you can apply to a given message are:
 

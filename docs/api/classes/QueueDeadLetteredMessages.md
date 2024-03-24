@@ -24,6 +24,7 @@
 - [getMessages](QueueDeadLetteredMessages.md#getmessages)
 - [purge](QueueDeadLetteredMessages.md#purge)
 - [requeueMessage](QueueDeadLetteredMessages.md#requeuemessage)
+- [shutdown](QueueDeadLetteredMessages.md#shutdown)
 
 ## Constructors
 
@@ -125,3 +126,23 @@ ___
 #### Implementation of
 
 [IQueueMessagesRequeuable](../interfaces/IQueueMessagesRequeuable.md).[requeueMessage](../interfaces/IQueueMessagesRequeuable.md#requeuemessage)
+
+___
+
+### shutdown
+
+▸ **shutdown**(`cb`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `cb` | `ICallback`\<`void`\> |
+
+#### Returns
+
+`void`
+
+#### Inherited from
+
+QueueMessagesPaginatorList.shutdown

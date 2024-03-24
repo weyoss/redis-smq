@@ -17,6 +17,7 @@
 - [countMessages](QueuePendingMessages.md#countmessages)
 - [getMessages](QueuePendingMessages.md#getmessages)
 - [purge](QueuePendingMessages.md#purge)
+- [shutdown](QueuePendingMessages.md#shutdown)
 
 ## Constructors
 
@@ -92,3 +93,19 @@ ___
 #### Implementation of
 
 [IQueueMessages](../interfaces/IQueueMessages.md).[purge](../interfaces/IQueueMessages.md#purge)
+
+___
+
+### shutdown
+
+▸ **shutdown**(`cb`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `cb` | `ICallback`\<`void`\> |
+
+#### Returns
+
+`void`
