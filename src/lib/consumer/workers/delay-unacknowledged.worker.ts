@@ -16,11 +16,11 @@ import {
 import { ELuaScriptName } from '../../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { IRedisSMQConfigRequired } from '../../../config/index.js';
+import { _getMessage } from '../../message/_/_get-message.js';
 import {
   EMessageProperty,
   EMessagePropertyStatus,
 } from '../../message/index.js';
-import { _getMessage } from '../../message/_/_get-message.js';
 import { EQueueProperty } from '../../queue/index.js';
 import { Worker } from './worker.js';
 

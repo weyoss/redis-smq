@@ -16,9 +16,9 @@ import {
 import { RedisClientInstance } from '../../common/redis-client/redis-client-instance.js';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../config/index.js';
-import { IQueueParams } from '../queue/index.js';
 import { _deleteQueue } from '../queue/_/_delete-queue.js';
 import { _getQueues } from '../queue/_/_get-queues.js';
+import { IQueueParams } from '../queue/index.js';
 import { NamespaceNotFoundError } from './errors/index.js';
 
 export class Namespace {

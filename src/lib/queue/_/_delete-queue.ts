@@ -18,13 +18,13 @@ import { _getConsumerGroups } from '../../consumer-groups/_/_get-consumer-groups
 import { ConsumerHeartbeat } from '../../consumer/consumer-heartbeat/consumer-heartbeat.js';
 import { consumerQueues } from '../../consumer/consumer-queues.js';
 import { processingQueue } from '../../consumer/message-handler/processing-queue.js';
-import { _getQueueProperties } from './_get-queue-properties.js';
 import {
   QueueHasRunningConsumersError,
   QueueNotEmptyError,
   QueueNotFoundError,
 } from '../errors/index.js';
 import { EQueueDeliveryModel, IQueueParams } from '../types/index.js';
+import { _getQueueProperties } from './_get-queue-properties.js';
 
 function checkOnlineConsumers(
   redisClient: IRedisClient,

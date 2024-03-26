@@ -11,11 +11,11 @@ import { async, ICallback, ILogger, IRedisClient } from 'redis-smq-common';
 import { ELuaScriptName } from '../../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../../config/index.js';
+import { _getMessage } from '../../message/_/_get-message.js';
 import {
   EMessageProperty,
   EMessagePropertyStatus,
 } from '../../message/index.js';
-import { _getMessage } from '../../message/_/_get-message.js';
 import { MessageEnvelope } from '../../message/message-envelope.js';
 import { IQueueParams } from '../../queue/index.js';
 import { consumerQueues } from '../consumer-queues.js';

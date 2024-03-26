@@ -24,8 +24,8 @@ import { ELuaScriptName } from '../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../config/index.js';
 import { EventBusRedisFactory } from '../event-bus/event-bus-redis-factory.js';
-import { EExchangeType } from '../exchange/index.js';
 import { _getExchangeQueues } from '../exchange/_/_get-exchange-queues.js';
+import { EExchangeType } from '../exchange/index.js';
 import {
   EMessageProperty,
   EMessagePropertyStatus,
@@ -40,8 +40,8 @@ import {
   ProducerMessageNotPublishedError,
   ProducerQueueWithoutConsumerGroupsError,
 } from './errors/index.js';
-import { QueueConsumerGroupsCache } from './queue-consumer-groups-cache.js';
 import { eventBusPublisher } from './event-bus-publisher.js';
+import { QueueConsumerGroupsCache } from './queue-consumer-groups-cache.js';
 
 export class Producer extends Runnable<TProducerEvent> {
   protected logger;
