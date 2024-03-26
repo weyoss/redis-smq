@@ -10,6 +10,8 @@ All RedisSMQ queue types are **reliable**. A queue is said to be reliable, when 
 
 In a typical use case, both LIFO and FIFO queues use [brpoplpush](https://redis.io/commands/brpoplpush), which blocks the connection to the Redis server until a message is received. However, priority queues use pooling and lua scripting which introduce a little of overhead on the MQ and therefore priority queues are less performant than other queue types.
 
+In the next examples for simplicity we are going to use a `EQueueDeliveryModel.POINT_TO_POINT` [delivery model](queue-delivery-models.md) for all the queues. But you may choose any combination of `EQueueType` and `EQueueDeliveryModel` that fits your application.
+
 ## LIFO (Last In, First Out) queues
 
 ![RedisSMQ LIFO Queuing](redis-smq-lifo-queuing.png)
@@ -119,23 +121,21 @@ A queue name is required to fulfill the following requirements:
 
 ## Managing Queues and Namespaces
 
-Queues and Namespaces can be managed using the [Queue Class](api/classes/Queue.md) and [Namespace Class](api/classes/Namespace.md) which provide the following methods:
+To manage queues and namespaces RedisSMQ provides:
 
-1. [Namespace.getNamespaces()](api/classes/Namespace.md#getnamespaces): To retrieve the list of namespaces.
-2. [Namespace.getNamespaceQueues()](api/classes/Namespace.md#getnamespacequeues): To retrieve the list of queues of a given namespace.
-3. [Namespace.delete()](api/classes/Namespace.md#delete): To delete a namespace alongside with its queues.
-4. [Queue.save()](api/classes/Queue.md#save): To create a queue.
-5. [Queue.list()](api/classes/Queue.md#getqueues): To retrieve the list of queues from all namespaces.
-6. [Queue.delete()](api/classes/Queue.md#delete): To delete a queue.
-7. [Queue.exists()](api/classes/Queue.md#exists): To check of a queue exists.
-8. [Queue.getProperties()](api/classes/Queue.md#getproperties): To retrieve properties of a given queue.
+- [Namespace Class](api/classes/Namespace.md)
+- [Queue Class](api/classes/Queue.md)
 
 ## Queue Messages
 
-RedisSMQ provides:
+To manage queue messages use:
 
-- [QueueMessages Class](api/classes/QueueMessages.md) - To browse all queue messages
-- [QueuePendingMessages Class](api/classes/QueuePendingMessages.md) - To browse queue pending messages
-- [QueueAcknowledgedMessages Class](api/classes/QueueAcknowledgedMessages.md) - To browse/requeue/delete queue acknowledged messages
-- [QueueDeadLetteredMessages Class](api/classes/QueueDeadLetteredMessages.md) - To browse/requeue/delete queue dead-lettered messages
-- [QueueScheduledMessages Class](api/classes/QueueScheduledMessages.md) - To browse/delete queue scheduled messages
+- [QueueMessages Class](api/classes/QueueMessages.md)
+- [QueuePendingMessages Class](api/classes/QueuePendingMessages.md)
+- [QueueAcknowledgedMessages Class](api/classes/QueueAcknowledgedMessages.md)
+- [QueueDeadLetteredMessages Class](api/classes/QueueDeadLetteredMessages.md)
+- [QueueScheduledMessages Class](api/classes/QueueScheduledMessages.md)
+
+Please note that queue acknowledged messages and dead-lettered messages are not saved by default. 
+
+To manage acknowledged and dead-lettered messages you need to enable acknowledged/dead-lettered messages storage from your [RedisSMQ Configuration](configuration.md).

@@ -11,8 +11,7 @@ To set up scheduling parameters for a given message, the [ProducibleMessage Clas
 - [ProducibleMessage.setScheduledRepeat()](api/classes/ProducibleMessage.md#setscheduledrepeat)
 - [ProducibleMessage.setScheduledRepeatPeriod()](api/classes/ProducibleMessage.md#setscheduledrepeatperiod)
 
-To schedule your message, you can publish it, as any other message, from your [Producer Class](api/classes/Producer.md)
-using the [Producer.produce()](api/classes/Producer.md#produce) method.
+You can publish scheduled messages, as any other message, using the [Producer.produce()](api/classes/Producer.md#produce) method.
 
 ```javascript
 'use strict';
@@ -24,14 +23,15 @@ msg
   .setScheduledCRON(`0 0 * * * *`)
   .setQueue('test_queue');
 
-producer.produce(msg, (err) => {
+producer.produce(msg, (err, messageIds) => {
   if (err) console.error(err);
-  else console.log('Message has been successfully scheduled');
+  else console.log('Message has been successfully scheduled. Message IDs are: ', messageIds.join(','));
 });
 ```
 
-For managing scheduled messages see [QueueScheduledMessages Class](api/classes/QueueScheduledMessages.md).
+For managing scheduled messages see:
 
-To delete a scheduled message see [Message.deleteMessageById()](api/classes/Message.md#deletemessagebyid).
+- [QueueScheduledMessages Class](api/classes/QueueScheduledMessages.md)
+- [Message Class](api/classes/Message.md)
 
-Scheduled messages can be also managed using the [HTTP API Interface](https://github.com/weyoss/redis-smq-monitor) or from your browser with the help of the [Web UI](https://github.com/weyoss/redis-smq-monitor-client).
+Scheduled messages may be also managed using the [HTTP API Interface](https://github.com/weyoss/redis-smq-monitor) or from your browser with the help of the [Web UI](https://github.com/weyoss/redis-smq-monitor-client).

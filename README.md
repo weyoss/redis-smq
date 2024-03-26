@@ -3,19 +3,18 @@
 > The master branch always reflects the most recent changes. To view the latest release reference see [RedisSMQ v7.2.3](https://github.com/weyoss/redis-smq/tree/v7.2.3)
 
 <div align="center" style="text-align: center">
-  <p><a href="https://github.com/weyoss/redis-smq"><img alt="RedisSMQ" src="./logo.png?v=202312182134" /></a></p>
-  <p>A simple high-performance Redis message queue for Node.js.</p>
+    <p><a href="https://github.com/weyoss/redis-smq"><img alt="RedisSMQ" src="./logo.png?v=202312182134" /></a></p>
+    <p>A simple high-performance Redis message queue for Node.js.</p>
+    <p>
+       <a href="https://github.com/weyoss/redis-smq/actions/workflows/tests.yml"><img src="https://github.com/weyoss/redis-smq/actions/workflows/tests.yml/badge.svg" alt="Tests" style="max-width:100%;" /></a>
+       <a href="https://github.com/weyoss/redis-smq/actions/workflows/codeql.yml" rel="nofollow"><img src="https://github.com/weyoss/redis-smq/actions/workflows/codeql.yml/badge.svg" alt="Code quality" /></a>
+       <a href="https://codecov.io/github/weyoss/redis-smq?branch=master" rel="nofollow"><img src="https://img.shields.io/codecov/c/github/weyoss/redis-smq" alt="Coverage Status" /></a>
+       <a href="https://npmjs.org/package/redis-smq" rel="nofollow"><img src="https://img.shields.io/npm/v/redis-smq.svg" alt="NPM version" /></a>
+       <a href="https://npmjs.org/package/redis-smq" rel="nofollow"><img src="https://img.shields.io/npm/dm/redis-smq.svg" alt="NPM downloads" /></a>
+    </p>
 </div>
 
 # RedisSMQ
-
-<p>
-   <a href="https://github.com/weyoss/redis-smq/actions/workflows/tests.yml"><img src="https://github.com/weyoss/redis-smq/actions/workflows/tests.yml/badge.svg" alt="Tests" style="max-width:100%;" /></a>
-   <a href="https://github.com/weyoss/redis-smq/actions/workflows/codeql.yml" rel="nofollow"><img src="https://github.com/weyoss/redis-smq/actions/workflows/codeql.yml/badge.svg" alt="Code quality" /></a>
-   <a href="https://codecov.io/github/weyoss/redis-smq?branch=master" rel="nofollow"><img src="https://img.shields.io/codecov/c/github/weyoss/redis-smq" alt="Coverage Status" /></a>
-   <a href="https://npmjs.org/package/redis-smq" rel="nofollow"><img src="https://img.shields.io/npm/v/redis-smq.svg" alt="NPM version" /></a>
-   <a href="https://npmjs.org/package/redis-smq" rel="nofollow"><img src="https://img.shields.io/npm/dm/redis-smq.svg" alt="NPM downloads" /></a>
-</p>
 
 RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing them asynchronously with consumers. Backed by Redis, it allows scaling up your typical applications with ease of use.
 
@@ -43,7 +42,27 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 
 ## What's new?
 
-:rocket: RedisSMQ v8 is coming soon!
+:rocket: RC's are now available for RedisSMQ v8! The v8 release will bring major improvements and new features. Some of them are:
+
+- [x] Message queue codebase refactoring and optimizations.
+- [x] Message storage and handling improvements.
+- [x] Message status which allows to retrieve, at any time, the status of a message by its ID.
+- [x] [Pub/Sub Delivery Model and Consumer Groups](docs/queue-delivery-models.md#pubsub-delivery-model).
+- [x] Message handlers sandboxing and message processing performance improvement with [Message Handler Worker Threads](docs/message-handler-worker-threads.md).
+- [x] Cross-system event propagation based on [EventBus](docs/event-bus.md).
+- [x] Better error handling aiming at reporting fatal errors to the application whenever it is possible and without crashing the main process.
+- [x] [ESM Modules Support](docs/esm-cjs-modules.md).
+
+Current RedisSMQ v8 RC status:
+
+- [x] RedisSMQ Common Library
+- [x] RedisSMQ
+- [ ] HTTP API (WIP)
+- [ ] Web UI (WIP)
+
+If you wish to get the latest updates early feel free to try RedisSMQ v8 RC. Do not hesitate to report any bug or issue if encountered. 
+
+Otherwise, stay with [RedisSMQ v7](https://github.com/weyoss/redis-smq/tree/v7.2.3) if you are looking for a fully working release with an HTTP API and a Web UI.
 
 ## Installation
 
