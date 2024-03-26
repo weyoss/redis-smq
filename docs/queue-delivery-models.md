@@ -2,13 +2,13 @@
 
 # Queue Delivery Models
 
-When it comes to message delivery RedisSMQ provides 2 reliable models: Point-2-Point and Pub/Sub.
+When it comes to message delivery RedisSMQ provides 2 reliable models: `Point-2-Point` and `Pub/Sub`.
 
 ## Point-2-Point Delivery Model
 
 ![RedisSMQ Point-2-Point Delivery Model](redis-smq-point-2-point-delivery-model.png)
 
-In the Point-2-Point model, a message is produced to a Point-2-Point queue and then delivered to and consumed by at a time only one consumer.
+In the `Point-2-Point` model, a message is produced to a `Point-2-Point` queue and then delivered to and consumed by at a time only one consumer.
 
 ### Creating a Point-2-Point Queue
 
@@ -73,9 +73,9 @@ consumer.run((err) => {
 
 ![RedisSMQ Pub/Sub Delivery Model High-level View](redis-smq-pubsub-delivery-model-highlevel-view.png)
 
-In the Pub/Sub model, on the other hand, a message is delivered to and consumed by all consumers of a Pub/Sub queue.
+In the `Pub/Sub` model, on the other hand, a message is delivered to and consumed by all consumers of a `Pub/Sub` queue.
 
-From a high-level view the Pub/Sub model maybe illustrated as shown in the diagram above.
+From a high-level view the `Pub/Sub` model maybe illustrated as shown in the diagram above.
 
 Each consumer receives and processes a copy of the produced message.
 
@@ -83,15 +83,15 @@ Each consumer receives and processes a copy of the produced message.
 
 ![RedisSMQ Pub/Sub Delivery Model](redis-smq-pubsub-delivery-model.png)
 
-To consume messages from a Pub/Sub queue, a consumer group is required.
+To consume messages from a `Pub/Sub` queue, a consumer group is required.
 
-In fact, when publishing a message to a pub/sub queue, the message is published to all consumer groups of the given queue.
+In fact, when publishing a message to a `Pub/Sub` queue, the message is published to all consumer groups of the given queue.
 
 Within a consumer group, only one consumer receives the message.
 
-For a consumer group, unacknowledged messages are retried in the same manner as for a Point-2-Point queue.
+For a consumer group, unacknowledged messages are retried in the same manner as for a `Point-2-Point` queue.
 
-When `retryTreshold` is exceeded failed messages from all consumer groups are stored, if configured to do so, in the dead-letter-queue of the given Pub/Sub queue.
+When `retryTreshold` is exceeded failed messages from all consumer groups are stored, if configured to do so, in the dead-letter-queue of the given `Pub/Sub` queue.
 
 ### Creating a Pub/Sub Queue
 
@@ -139,7 +139,7 @@ producer.run((err) => {
 });
 ```
 
-When producing a message to a Pub/Sub queue, if the queue has no consumer groups an error will be returned.
+When producing a message to a `Pub/Sub` queue, if the queue has no consumer groups an error will be returned.
 
 So make sure the queue has at least one consumer group before publishing messages.
 
@@ -166,4 +166,4 @@ consumer.run((err) => {
 });
 ```
 
-Please do not forget to provide the consumer group ID when consuming messages from a Pub/Sub queue.
+Please do not forget to provide the consumer group ID when consuming messages from a `Pub/Sub` queue.
