@@ -12,8 +12,8 @@ import {
   ConsumerGroupIdNotSupportedError,
   ConsumerGroupIdRequiredError,
 } from '../../consumer/index.js';
-import { EQueueDeliveryModel, IQueueParsedParams } from '../../queue/index.js';
 import { _getQueueProperties } from '../../queue/_/_get-queue-properties.js';
+import { EQueueDeliveryModel, IQueueParsedParams } from '../../queue/index.js';
 
 export function _validateQueueExtendedParams(
   redisClient: IRedisClient,

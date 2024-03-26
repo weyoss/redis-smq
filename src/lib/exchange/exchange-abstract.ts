@@ -34,7 +34,6 @@ export abstract class ExchangeAbstract<ExchangeParams>
   ): void;
 
   shutdown = (cb: ICallback<void>): void => {
-    console.log('SSSSSSSSSSSSSSSSSSSSSSSSS');
     this.redisClient.shutdown(cb);
   };
 }

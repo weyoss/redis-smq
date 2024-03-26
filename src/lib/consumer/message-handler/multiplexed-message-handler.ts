@@ -9,9 +9,9 @@
 
 import { ILogger } from 'redis-smq-common';
 import { Consumer } from '../consumer/consumer.js';
+import { IConsumerMessageHandlerArgs } from '../types/index.js';
 import { DequeueMessage } from './dequeue-message/dequeue-message.js';
 import { MessageHandler } from './message-handler/message-handler.js';
-import { IConsumerMessageHandlerArgs } from '../types/index.js';
 
 export class MultiplexedMessageHandler extends MessageHandler {
   protected dequeueNextFn;

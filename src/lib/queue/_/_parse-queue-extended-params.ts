@@ -7,14 +7,14 @@
  * in the root directory of this source tree.
  */
 
-import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { RedisKeysError } from '../../../common/redis-keys/redis-keys.error.js';
-import { _parseQueueParams } from './_parse-queue-params.js';
+import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import {
   IQueueParams,
   IQueueParsedParams,
   TQueueExtendedParams,
 } from '../types/index.js';
+import { _parseQueueParams } from './_parse-queue-params.js';
 
 function isQueueParams(args: unknown): args is IQueueParams {
   return (

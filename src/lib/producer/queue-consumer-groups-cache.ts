@@ -17,13 +17,13 @@ import {
 import { RedisClientFactory } from '../../common/redis-client/redis-client-factory.js';
 import { _getConsumerGroups } from '../consumer-groups/_/_get-consumer-groups.js';
 import { EventBusRedisFactory } from '../event-bus/event-bus-redis-factory.js';
+import { _getQueueProperties } from '../queue/_/_get-queue-properties.js';
+import { _getQueues } from '../queue/_/_get-queues.js';
 import {
   EQueueDeliveryModel,
   IQueueParams,
   IQueueProperties,
 } from '../queue/index.js';
-import { _getQueueProperties } from '../queue/_/_get-queue-properties.js';
-import { _getQueues } from '../queue/_/_get-queues.js';
 
 export class QueueConsumerGroupsCache extends Runnable<
   Pick<TRedisClientEvent, 'error'>

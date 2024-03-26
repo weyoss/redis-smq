@@ -13,11 +13,11 @@ import { Configuration } from '../../../config/configuration.js';
 import { IQueueParsedParams } from '../../queue/index.js';
 import { Consumer } from '../consumer/consumer.js';
 import { ConsumerMessageHandlerAlreadyExistsError } from '../errors/index.js';
+import { MessageHandler } from '../message-handler/message-handler/message-handler.js';
 import {
   IConsumerMessageHandlerArgs,
   TConsumerMessageHandler,
 } from '../types/index.js';
-import { MessageHandler } from '../message-handler/message-handler/message-handler.js';
 import { eventBusPublisher } from './event-bus-publisher.js';
 
 export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunnerEvent> {

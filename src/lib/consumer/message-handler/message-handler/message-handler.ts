@@ -23,11 +23,11 @@ import { RedisClientInstance } from '../../../../common/redis-client/redis-clien
 import { ELuaScriptName } from '../../../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../../../config/index.js';
+import { _fromMessage } from '../../../message/_/_from-message.js';
 import {
   EMessageProperty,
   EMessagePropertyStatus,
 } from '../../../message/index.js';
-import { _fromMessage } from '../../../message/_/_from-message.js';
 import { IQueueParsedParams } from '../../../queue/index.js';
 import { Consumer } from '../../consumer/consumer.js';
 import {

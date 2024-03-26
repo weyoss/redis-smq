@@ -9,10 +9,10 @@
 
 import { async, ICallback, IRedisClient } from 'redis-smq-common';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
-import { _fromMessage } from './_from-message.js';
 import { MessageNotFoundError } from '../errors/index.js';
 import { MessageEnvelope } from '../message-envelope.js';
 import { EMessageProperty } from '../types/index.js';
+import { _fromMessage } from './_from-message.js';
 
 export function _getMessage(
   redisClient: IRedisClient,

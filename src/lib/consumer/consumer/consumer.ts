@@ -24,14 +24,14 @@ import { RedisClientFactory } from '../../../common/redis-client/redis-client-fa
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../../config/index.js';
 import { EventBusRedisFactory } from '../../event-bus/event-bus-redis-factory.js';
-import { IQueueParsedParams, TQueueExtendedParams } from '../../queue/index.js';
 import { _parseQueueExtendedParams } from '../../queue/_/_parse-queue-extended-params.js';
+import { IQueueParsedParams, TQueueExtendedParams } from '../../queue/index.js';
 import { _cleanupOfflineConsumer } from '../consumer-heartbeat/_/_cleanup-offline-consumer.js';
-import { eventBusPublisher } from './event-bus-publisher.js';
 import { ConsumerHeartbeat } from '../consumer-heartbeat/consumer-heartbeat.js';
 import { MessageHandlerRunner } from '../message-handler-runner/message-handler-runner.js';
 import { MultiplexedMessageHandlerRunner } from '../message-handler-runner/multiplexed-message-handler-runner.js';
 import { TConsumerMessageHandler } from '../types/index.js';
+import { eventBusPublisher } from './event-bus-publisher.js';
 
 export class Consumer extends Runnable<TConsumerEvent> {
   protected messageHandlerRunner;

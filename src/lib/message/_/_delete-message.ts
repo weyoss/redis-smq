@@ -16,9 +16,9 @@ import {
 import { ELuaScriptName } from '../../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { EQueueProperty, EQueueType } from '../../queue/index.js';
-import { _getMessage } from './_get-message.js';
 import { MessageDeleteError } from '../errors/index.js';
 import { EMessageProperty, EMessagePropertyStatus } from '../types/index.js';
+import { _getMessage } from './_get-message.js';
 
 export function _deleteMessage(
   redisClient: IRedisClient,

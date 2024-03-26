@@ -11,9 +11,9 @@ import { CallbackEmptyReplyError, ICallback, logger } from 'redis-smq-common';
 import { RedisClientInstance } from '../../common/redis-client/redis-client-instance.js';
 import { Configuration } from '../../config/index.js';
 import { _deleteMessage } from './_/_delete-message.js';
-import { _getMessage, _getMessages } from './_/_get-message.js';
 import { _getMessageState } from './_/_get-message-state.js';
 import { _getMessageStatus } from './_/_get-message-status.js';
+import { _getMessage, _getMessages } from './_/_get-message.js';
 import {
   EMessagePropertyStatus,
   IMessageStateTransferable,

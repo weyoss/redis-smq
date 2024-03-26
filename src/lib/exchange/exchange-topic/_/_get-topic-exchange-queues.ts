@@ -13,8 +13,8 @@ import {
   ICallback,
   IRedisClient,
 } from 'redis-smq-common';
-import { IQueueParams } from '../../../queue/index.js';
 import { _getQueues } from '../../../queue/_/_get-queues.js';
+import { IQueueParams } from '../../../queue/index.js';
 import { ITopicParams } from '../../types/index.js';
 import { _getTopicExchangeParams } from './_get-topic-exchange-params.js';
 

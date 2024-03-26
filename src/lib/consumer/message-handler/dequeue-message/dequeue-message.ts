@@ -25,6 +25,8 @@ import { redisKeys } from '../../../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../../../config/configuration.js';
 import { _saveConsumerGroup } from '../../../consumer-groups/_/_save-consumer-group.js';
 import { EventBusRedisFactory } from '../../../event-bus/event-bus-redis-factory.js';
+import { _hasRateLimitExceeded } from '../../../queue-rate-limit/_/_has-rate-limit-exceeded.js';
+import { _getQueueProperties } from '../../../queue/_/_get-queue-properties.js';
 import {
   EQueueDeliveryModel,
   EQueueType,
@@ -33,8 +35,6 @@ import {
   QueueNotFoundError,
   TQueueConsumer,
 } from '../../../queue/index.js';
-import { _hasRateLimitExceeded } from '../../../queue-rate-limit/_/_has-rate-limit-exceeded.js';
-import { _getQueueProperties } from '../../../queue/_/_get-queue-properties.js';
 import {
   ConsumerGroupIdNotSupportedError,
   ConsumerGroupIdRequiredError,

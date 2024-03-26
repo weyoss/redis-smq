@@ -10,9 +10,9 @@
 import { ICallback, ILogger, Timer } from 'redis-smq-common';
 import { Consumer } from '../consumer/consumer.js';
 import { MessageHandler } from '../message-handler/message-handler/message-handler.js';
-import { MessageHandlerRunner } from './message-handler-runner.js';
-import { IConsumerMessageHandlerArgs } from '../types/index.js';
 import { MultiplexedMessageHandler } from '../message-handler/multiplexed-message-handler.js';
+import { IConsumerMessageHandlerArgs } from '../types/index.js';
+import { MessageHandlerRunner } from './message-handler-runner.js';
 
 export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   protected timer;
