@@ -8,7 +8,7 @@
  */
 
 import { ILogger } from 'redis-smq-common';
-import { TProducerEvent } from '../../common/types/event.js';
+import { TProducerEvent } from '../../common/index.js';
 import { EventBusRedisFactory } from '../event-bus/event-bus-redis-factory.js';
 import { Producer } from './producer.js';
 

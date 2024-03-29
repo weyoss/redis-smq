@@ -10,4 +10,3 @@
 export * from './message-handler.js';
 export * from './consumer-heartbeat.js';
 export * from './consume-message.js';
-export * from './config.js';

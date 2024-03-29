@@ -8,7 +8,7 @@
  */
 
 import { ILogger } from 'redis-smq-common';
-import { TConsumerHeartbeatEvent } from '../../../common/types/event.js';
+import { TConsumerHeartbeatEvent } from '../../../common/index.js';
 import { EventBusRedisFactory } from '../../event-bus/event-bus-redis-factory.js';
 import { ConsumerHeartbeat } from './consumer-heartbeat.js';
 

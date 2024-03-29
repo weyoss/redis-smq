@@ -22,7 +22,7 @@ import { TConsumerDequeueMessageEvent } from '../../../../common/index.js';
 import { RedisClientInstance } from '../../../../common/redis-client/redis-client-instance.js';
 import { ELuaScriptName } from '../../../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../../common/redis-keys/redis-keys.js';
-import { Configuration } from '../../../../config/configuration.js';
+import { Configuration } from '../../../../config/index.js';
 import { _saveConsumerGroup } from '../../../consumer-groups/_/_save-consumer-group.js';
 import { EventBusRedisFactory } from '../../../event-bus/event-bus-redis-factory.js';
 import { _hasRateLimitExceeded } from '../../../queue-rate-limit/_/_has-rate-limit-exceeded.js';

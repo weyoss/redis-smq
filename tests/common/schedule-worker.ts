@@ -9,7 +9,7 @@
 
 import bluebird from 'bluebird';
 import { Runnable } from 'redis-smq-common';
-import { Configuration } from '../../src/config/configuration.js';
+import { Configuration } from '../../src/config/index.js';
 import PublishScheduledWorker from '../../src/lib/consumer/workers/publish-scheduled.worker.js';
 
 let scheduleWorker: Runnable<Record<string, never>> | null = null;

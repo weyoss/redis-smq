@@ -8,7 +8,7 @@
  */
 
 import { v4 } from 'uuid';
-import { IQueueParams } from '../../../queue/types/queue.js';
+import { IQueueParams } from '../../../queue/index.js';
 import {
   EExchangeType,
   TExchangeDirectTransferable,

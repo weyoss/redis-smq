@@ -9,7 +9,7 @@
 
 import { test, jest } from '@jest/globals';
 import { ICallback } from 'redis-smq-common';
-import { IMessageTransferable } from '../../../src/lib/message/types/message.js';
+import { IMessageTransferable } from '../../../src/lib/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import { untilMessageAcknowledged } from '../../common/events.js';
 import {

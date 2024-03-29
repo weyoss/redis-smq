@@ -16,8 +16,8 @@ import {
   IQueueParams,
   IQueueProperties,
 } from '../../queue/index.js';
-import { ExchangeFanOutError } from '../errors/exchange-fan-out.error.js';
-import { ExchangeError } from '../errors/exchange.error.js';
+import { ExchangeFanOutError } from '../errors/index.js';
+import { ExchangeError } from '../errors/index.js';
 import { ExchangeAbstract } from '../exchange-abstract.js';
 import { _getFanOutExchangeQueues } from './_/_get-fan-out-exchange-queues.js';
 import { _getQueueFanOutExchange } from './_/_get-queue-fan-out-exchange.js';
