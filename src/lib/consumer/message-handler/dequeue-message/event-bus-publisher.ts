@@ -8,7 +8,7 @@
  */
 
 import { ILogger } from 'redis-smq-common';
-import { TConsumerDequeueMessageEvent } from '../../../../common/types/event.js';
+import { TConsumerDequeueMessageEvent } from '../../../../common/index.js';
 import { EventBusRedisFactory } from '../../../event-bus/event-bus-redis-factory.js';
 import { DequeueMessage } from './dequeue-message.js';
 

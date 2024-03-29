@@ -8,7 +8,7 @@
  */
 
 import { CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
-import { IQueueParams } from '../../queue/types/queue.js';
+import { IQueueParams } from '../../queue/index.js';
 import { ExchangeAbstract } from '../exchange-abstract.js';
 import { ITopicParams } from '../types/exchange.js';
 import { _getTopicExchangeParams } from './_/_get-topic-exchange-params.js';

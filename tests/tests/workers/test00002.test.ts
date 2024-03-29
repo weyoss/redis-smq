@@ -9,7 +9,7 @@
 
 import { test, expect, jest } from '@jest/globals';
 import bluebird from 'bluebird';
-import { Configuration } from '../../../src/config/configuration.js';
+import { Configuration } from '../../../src/config/index.js';
 import {
   IMessageParams,
   IMessageTransferable,

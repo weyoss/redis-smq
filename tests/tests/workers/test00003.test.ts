@@ -9,7 +9,7 @@
 
 import { test, expect } from '@jest/globals';
 import bluebird from 'bluebird';
-import { Configuration } from '../../../src/config/configuration.js';
+import { Configuration } from '../../../src/config/index.js';
 import RequeueUnacknowledgedWorker from '../../../src/lib/consumer/workers/requeue-unacknowledged.worker.js';
 import WatchConsumersWorker from '../../../src/lib/consumer/workers/watch-consumers.worker.js';
 import {

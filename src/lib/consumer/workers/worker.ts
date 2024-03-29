@@ -9,7 +9,7 @@
 
 import { ICallback, ILogger, logger, Runnable, Timer } from 'redis-smq-common';
 import { RedisClientInstance } from '../../../common/redis-client/redis-client-instance.js';
-import { IRedisSMQConfigRequired } from '../../../config/types/config.js';
+import { IRedisSMQConfigRequired } from '../../../config/index.js';
 
 export abstract class Worker extends Runnable<Record<string, never>> {
   protected redisClient;

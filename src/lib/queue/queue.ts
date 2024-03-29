@@ -17,7 +17,7 @@ import { RedisClientInstance } from '../../common/redis-client/redis-client-inst
 import { ELuaScriptName } from '../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../config/index.js';
-import { EventBusRedisInstance } from '../event-bus/event-bus-redis-instance.js';
+import { EventBusRedisInstance } from '../event-bus/index.js';
 import { _deleteQueue } from './_/_delete-queue.js';
 import { _getQueueProperties } from './_/_get-queue-properties.js';
 import { _getQueues } from './_/_get-queues.js';

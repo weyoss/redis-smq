@@ -8,7 +8,7 @@
  */
 
 import bluebird from 'bluebird';
-import { EventBusRedisInstance } from '../../src/lib/event-bus/event-bus-redis-instance.js';
+import { EventBusRedisInstance } from '../../src/lib/index.js';
 
 const eventBus = bluebird.promisifyAll(new EventBusRedisInstance());
 

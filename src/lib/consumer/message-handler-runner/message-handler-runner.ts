@@ -9,7 +9,7 @@
 
 import { async, ICallback, ILogger, Runnable } from 'redis-smq-common';
 import { TConsumerMessageHandlerRunnerEvent } from '../../../common/index.js';
-import { Configuration } from '../../../config/configuration.js';
+import { Configuration } from '../../../config/index.js';
 import { IQueueParsedParams } from '../../queue/index.js';
 import { Consumer } from '../consumer/consumer.js';
 import { ConsumerMessageHandlerAlreadyExistsError } from '../errors/index.js';
