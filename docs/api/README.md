@@ -41,10 +41,8 @@
 
 - [ConsumerError](classes/ConsumerError.md)
 - [ConsumerGroupDeleteError](classes/ConsumerGroupDeleteError.md)
-- [ConsumerGroupIdNotFoundError](classes/ConsumerGroupIdNotFoundError.md)
 - [ConsumerGroupIdNotSupportedError](classes/ConsumerGroupIdNotSupportedError.md)
 - [ConsumerGroupIdRequiredError](classes/ConsumerGroupIdRequiredError.md)
-- [ConsumerInvalidGroupIdError](classes/ConsumerInvalidGroupIdError.md)
 - [ConsumerMessageHandlerAlreadyExistsError](classes/ConsumerMessageHandlerAlreadyExistsError.md)
 - [ExchangeError](classes/ExchangeError.md)
 - [ExchangeFanOutError](classes/ExchangeFanOutError.md)
