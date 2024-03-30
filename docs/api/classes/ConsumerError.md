@@ -12,13 +12,9 @@
 
   ↳↳ [`ConsumerGroupDeleteError`](ConsumerGroupDeleteError.md)
 
-  ↳↳ [`ConsumerGroupIdNotFoundError`](ConsumerGroupIdNotFoundError.md)
-
   ↳↳ [`ConsumerGroupIdNotSupportedError`](ConsumerGroupIdNotSupportedError.md)
 
   ↳↳ [`ConsumerGroupIdRequiredError`](ConsumerGroupIdRequiredError.md)
-
-  ↳↳ [`ConsumerInvalidGroupIdError`](ConsumerInvalidGroupIdError.md)
 
 ## Table of contents
 

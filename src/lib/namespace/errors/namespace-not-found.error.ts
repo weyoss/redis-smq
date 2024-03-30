@@ -9,8 +9,4 @@
 
 import { NamespaceError } from './namespace.error.js';
 
-export class NamespaceNotFoundError extends NamespaceError {
-  constructor(namespace: string) {
-    super(`Namespace (${namespace}) does not exist`);
-  }
-}
+export class NamespaceNotFoundError extends NamespaceError {}

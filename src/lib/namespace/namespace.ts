@@ -57,17 +57,32 @@ export class Namespace {
         if (err) cb(err);
         else if (!client) cb(new CallbackEmptyReplyError());
         else {
+          const { keyNamespaces } = redisKeys.getMainKeys();
           const { keyNamespaceQueues } = redisKeys.getNamespaceKeys(ns);
-          client.smembers(keyNamespaceQueues, (err, reply) => {
-            if (err) cb(err);
-            else if (!reply) cb(new CallbackEmptyReplyError());
-            else {
-              const messageQueues: IQueueParams[] = reply.map((i) =>
-                JSON.parse(i),
-              );
-              cb(null, messageQueues);
-            }
-          });
+          async.waterfall(
+            [
+              (cb: ICallback<void>) => {
+                client.sismember(keyNamespaces, ns, (err, reply) => {
+                  if (err) cb(err);
+                  else if (!reply) cb(new NamespaceNotFoundError());
+                  else cb();
+                });
+              },
+              (cb: ICallback<IQueueParams[]>) => {
+                client.smembers(keyNamespaceQueues, (err, reply) => {
+                  if (err) cb(err);
+                  else if (!reply) cb(new CallbackEmptyReplyError());
+                  else {
+                    const messageQueues: IQueueParams[] = reply.map((i) =>
+                      JSON.parse(i),
+                    );
+                    cb(null, messageQueues);
+                  }
+                });
+              },
+            ],
+            cb,
+          );
         }
       });
     }
