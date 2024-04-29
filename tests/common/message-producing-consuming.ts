@@ -34,6 +34,7 @@ export const defaultQueue: IQueueParams = {
 
 export async function produceAndAcknowledgeMessage(
   queue: IQueueParams = defaultQueue,
+  autoShutdown = false,
 ) {
   const producer = getProducer();
   await producer.runAsync();
@@ -49,11 +50,18 @@ export async function produceAndAcknowledgeMessage(
 
   consumer.run(() => void 0);
   await untilMessageAcknowledged(consumer);
+
+  if (autoShutdown) {
+    await producer.shutdownAsync();
+    await consumer.shutdownAsync();
+  }
+
   return { producer, consumer, queue, messageId };
 }
 
 export async function produceAndDeadLetterMessage(
   queue: IQueueParams = defaultQueue,
+  autoShutdown = false,
 ) {
   const producer = getProducer();
   await producer.runAsync();
@@ -71,6 +79,12 @@ export async function produceAndDeadLetterMessage(
 
   consumer.run(() => void 0);
   await untilMessageDeadLettered(consumer);
+
+  if (autoShutdown) {
+    await producer.shutdownAsync();
+    await consumer.shutdownAsync();
+  }
+
   return { producer, consumer, messageId, queue };
 }
 
