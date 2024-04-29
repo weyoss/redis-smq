@@ -28,6 +28,24 @@ export function _deleteMessage(
   const keys: string[] = [];
   const argv: (string | number)[] = [];
   const ids = typeof messageId === 'string' ? [messageId] : messageId;
+  const { keyScheduledMessages, keyDelayedMessages, keyRequeueMessages } =
+    redisKeys.getMainKeys();
+  keys.push(keyScheduledMessages, keyDelayedMessages, keyRequeueMessages);
+  argv.push(
+    EQueueProperty.QUEUE_TYPE,
+    EQueueProperty.MESSAGES_COUNT,
+    EQueueType.PRIORITY_QUEUE,
+    EQueueType.LIFO_QUEUE,
+    EQueueType.FIFO_QUEUE,
+    EMessageProperty.STATUS,
+    EMessagePropertyStatus.PROCESSING,
+    EMessagePropertyStatus.ACKNOWLEDGED,
+    EMessagePropertyStatus.PENDING,
+    EMessagePropertyStatus.SCHEDULED,
+    EMessagePropertyStatus.DEAD_LETTERED,
+    EMessagePropertyStatus.UNACK_DELAYING,
+    EMessagePropertyStatus.UNACK_REQUEUING,
+  );
   async.each(
     ids,
     (id, _, done) => {
@@ -46,16 +64,8 @@ export function _deleteMessage(
             message.getDestinationQueue(),
             message.getConsumerGroupId(),
           );
-          const {
-            keyScheduledMessages,
-            keyDelayedMessages,
-            keyRequeueMessages,
-          } = redisKeys.getMainKeys();
           const { keyMessage } = redisKeys.getMessageKeys(id);
           keys.push(
-            keyScheduledMessages,
-            keyDelayedMessages,
-            keyRequeueMessages,
             keyMessage,
             keyQueueProperties,
             keyQueuePending,
@@ -64,22 +74,7 @@ export function _deleteMessage(
             keyQueueScheduled,
             keyQueuePriorityPending,
           );
-          argv.push(
-            EQueueProperty.QUEUE_TYPE,
-            EQueueProperty.MESSAGES_COUNT,
-            EQueueType.PRIORITY_QUEUE,
-            EQueueType.LIFO_QUEUE,
-            EQueueType.FIFO_QUEUE,
-            EMessageProperty.STATUS,
-            EMessagePropertyStatus.PROCESSING,
-            EMessagePropertyStatus.ACKNOWLEDGED,
-            EMessagePropertyStatus.PENDING,
-            EMessagePropertyStatus.SCHEDULED,
-            EMessagePropertyStatus.DEAD_LETTERED,
-            EMessagePropertyStatus.UNACK_DELAYING,
-            EMessagePropertyStatus.UNACK_REQUEUING,
-            id,
-          );
+          argv.push(id);
           done();
         }
       });
