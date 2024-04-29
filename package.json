@@ -47,13 +47,6 @@
     },
     "./package.json": "./package.json"
   },
-  "typesVersions": {
-    "*": {
-      ".": [
-        "./dist/types/index.d.ts"
-      ]
-    }
-  },
   "dependencies": {
     "cron-parser": "4.7.1",
     "lodash": "4.17.21",
