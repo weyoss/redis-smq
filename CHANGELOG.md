@@ -1,5 +1,36 @@
 
 
+## [8.0.0-rc.21](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.20...v8.0.0-rc.21) (2024-04-29)
+
+
+### Bug Fixes
+
+* **message:** correct logic for deleting multiple messages by IDs ([fdb39d6](https://github.com/weyoss/redis-smq/commit/fdb39d66f3cea59decf8ad29b5efdf827780ba73))
+
+
+### Documentation
+
+* improve RC release status description, clean up ([98910dc](https://github.com/weyoss/redis-smq/commit/98910dcef215494ccee4de01879d0e2f8037213d))
+* update examples ([d80beb2](https://github.com/weyoss/redis-smq/commit/d80beb2af2472ac596a88531786a0ba2681e09dd))
+
+
+### Codebase Refactoring
+
+* optimize imports ([29a0efb](https://github.com/weyoss/redis-smq/commit/29a0efb9e46ce23a6fb14c44222cf987a05ee22a))
+* remove unused error classes and clean up ([15bd959](https://github.com/weyoss/redis-smq/commit/15bd9591d58b5717ee5a8e8191df7388e65a768b))
+* shorten imports ([3bfb8f1](https://github.com/weyoss/redis-smq/commit/3bfb8f1e39011e2f48039b2c534f0fe936b67759))
+
+
+### Tests
+
+* increase code coverage ([e9d84e8](https://github.com/weyoss/redis-smq/commit/e9d84e8b4a9a239246473ca770ce035ce8e66831))
+
+
+### Misc
+
+* clean up package.json ([ff9ff3d](https://github.com/weyoss/redis-smq/commit/ff9ff3d06f61c20f70bd55c34a545278713847d5))
+* update LICENSE ([cb18d44](https://github.com/weyoss/redis-smq/commit/cb18d4449f851df803a0e2cd84410257cbfcfdfd))
+
 ## [8.0.0-rc.20](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.19...v8.0.0-rc.20) (2024-03-24)
 
 
