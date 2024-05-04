@@ -16,6 +16,7 @@
 - [getMessageState](Message.md#getmessagestate)
 - [getMessageStatus](Message.md#getmessagestatus)
 - [getMessagesByIds](Message.md#getmessagesbyids)
+- [requeueMessageById](Message.md#requeuemessagebyid)
 - [shutdown](Message.md#shutdown)
 
 ## Constructors
@@ -125,6 +126,23 @@ ___
 | :------ | :------ |
 | `messageIds` | `string`[] |
 | `cb` | `ICallback`\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)[]\> |
+
+#### Returns
+
+`void`
+
+___
+
+### requeueMessageById
+
+▸ **requeueMessageById**(`messageId`, `cb`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `messageId` | `string` |
+| `cb` | `ICallback`\<`void`\> |
 
 #### Returns
 

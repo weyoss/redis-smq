@@ -8,10 +8,6 @@
 
   ↳ **`QueueAcknowledgedMessages`**
 
-## Implements
-
-- [`IQueueMessagesRequeuable`](../interfaces/IQueueMessagesRequeuable.md)
-
 ## Table of contents
 
 ### Constructors
@@ -23,7 +19,6 @@
 - [countMessages](QueueAcknowledgedMessages.md#countmessages)
 - [getMessages](QueueAcknowledgedMessages.md#getmessages)
 - [purge](QueueAcknowledgedMessages.md#purge)
-- [requeueMessage](QueueAcknowledgedMessages.md#requeuemessage)
 - [shutdown](QueueAcknowledgedMessages.md#shutdown)
 
 ## Constructors
@@ -104,28 +99,6 @@ ___
 #### Inherited from
 
 QueueMessagesPaginatorList.purge
-
-___
-
-### requeueMessage
-
-▸ **requeueMessage**(`queue`, `messageId`, `cb`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
-| `messageId` | `string` |
-| `cb` | `ICallback`\<`void`\> |
-
-#### Returns
-
-`void`
-
-#### Implementation of
-
-[IQueueMessagesRequeuable](../interfaces/IQueueMessagesRequeuable.md).[requeueMessage](../interfaces/IQueueMessagesRequeuable.md#requeuemessage)
 
 ___
 
