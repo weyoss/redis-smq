@@ -8,10 +8,6 @@
 
   ↳ **`QueueDeadLetteredMessages`**
 
-## Implements
-
-- [`IQueueMessagesRequeuable`](../interfaces/IQueueMessagesRequeuable.md)
-
 ## Table of contents
 
 ### Constructors
@@ -23,7 +19,6 @@
 - [countMessages](QueueDeadLetteredMessages.md#countmessages)
 - [getMessages](QueueDeadLetteredMessages.md#getmessages)
 - [purge](QueueDeadLetteredMessages.md#purge)
-- [requeueMessage](QueueDeadLetteredMessages.md#requeuemessage)
 - [shutdown](QueueDeadLetteredMessages.md#shutdown)
 
 ## Constructors
@@ -104,28 +99,6 @@ ___
 #### Inherited from
 
 QueueMessagesPaginatorList.purge
-
-___
-
-### requeueMessage
-
-▸ **requeueMessage**(`queue`, `messageId`, `cb`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
-| `messageId` | `string` |
-| `cb` | `ICallback`\<`void`\> |
-
-#### Returns
-
-`void`
-
-#### Implementation of
-
-[IQueueMessagesRequeuable](../interfaces/IQueueMessagesRequeuable.md).[requeueMessage](../interfaces/IQueueMessagesRequeuable.md#requeuemessage)
 
 ___
 
