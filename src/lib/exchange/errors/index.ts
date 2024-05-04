@@ -9,4 +9,8 @@
 
 export { ExchangeError } from './exchange.error.js';
 export { ExchangeFanOutError } from './exchange-fan-out.error.js';
-export { ExchangeInvalidDataError } from './exchange-invalid-data.error.js';
+export { ExchangeInvalidTopicParamsError } from './exchange-invalid-topic-params.error.js';
+export { ExchangeInvalidFanOutParamsError } from './exchange-invalid-fan-out-params.error.js';
+export { ExchangeInvalidQueueParamsError } from './exchange-invalid-queue-params.error.js';
+export { ExchangeFanOutExchangeHasBoundQueuesError } from './exchange-fan-out-exchange-has-bound-queues.error.js';
+export { ExchangeQueueIsNotBoundToExchangeError } from './exchange-queue-is-not-bound-to-exchange.error.js';

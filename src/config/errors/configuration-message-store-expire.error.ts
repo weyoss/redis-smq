@@ -7,6 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import { RedisSMQError } from 'redis-smq-common';
+import { ConfigurationError } from './configuration.error.js';
 
-export class QueueMessageError extends RedisSMQError {}
+export class ConfigurationMessageStoreExpireError extends ConfigurationError {}

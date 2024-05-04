@@ -8,6 +8,7 @@
  */
 
 import { v4 } from 'uuid';
+import { ExchangeInvalidFanOutParamsError } from '../../errors/exchange-invalid-fan-out-params.error.js';
 import {
   EExchangeType,
   TExchangeFanOutTransferable,
@@ -16,9 +17,11 @@ import { _validateExchangeFanOutParams } from './_validate-exchange-fan-out-para
 
 export function _getExchangeFanOutTransferable(
   fanOutName: string,
-): TExchangeFanOutTransferable {
+): TExchangeFanOutTransferable | ExchangeInvalidFanOutParamsError {
+  const params = _validateExchangeFanOutParams(fanOutName);
+  if (params instanceof Error) return params;
   return {
-    params: _validateExchangeFanOutParams(fanOutName),
+    params,
     type: EExchangeType.FANOUT,
     exchangeTag: v4(),
   };

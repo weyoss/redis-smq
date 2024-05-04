@@ -12,6 +12,7 @@ import bluebird from 'bluebird';
 import { ICallback } from 'redis-smq-common';
 import {
   Consumer,
+  ConsumerConsumeMessageHandlerAlreadyExistsError,
   EQueueDeliveryModel,
   EQueueType,
   IMessageTransferable,
@@ -50,9 +51,7 @@ test('Consume message from different queues using a single consumer instance: ca
       'another_queue',
       (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
     ),
-  ).rejects.toThrow(
-    `A message handler for queue [another_queue@testing] already exists`,
-  );
+  ).rejects.toThrow(ConsumerConsumeMessageHandlerAlreadyExistsError);
 
   expect(consumer.getQueues()).toEqual([
     { queueParams: { name: 'test_queue', ns: 'testing' }, groupId: null },
@@ -83,9 +82,7 @@ test('Consume message from different queues using a single consumer instance: ca
       'another_queue',
       (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
     ),
-  ).rejects.toThrow(
-    `A message handler for queue [another_queue@testing] already exists`,
-  );
+  ).rejects.toThrow(ConsumerConsumeMessageHandlerAlreadyExistsError);
 
   await consumer.cancelAsync('another_queue');
 
@@ -121,9 +118,7 @@ test('Consume message from different queues using a single consumer instance: ca
       'queue_a',
       (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
     ),
-  ).rejects.toThrow(
-    `A message handler for queue [queue_a@testing] already exists`,
-  );
+  ).rejects.toThrow(ConsumerConsumeMessageHandlerAlreadyExistsError);
 
   expect(consumer.getQueues()).toEqual([
     { queueParams: { name: 'test_queue', ns: 'testing' }, groupId: null },

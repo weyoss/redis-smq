@@ -7,6 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import { QueueError } from './queue.error.js';
+import { ProducerError } from './producer.error.js';
 
-export class QueueNotFoundError extends QueueError {}
+export class ProducerPriorityQueuingNotEnabledError extends ProducerError {}

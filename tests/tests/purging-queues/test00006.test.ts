@@ -9,9 +9,9 @@
 
 import { test, expect } from '@jest/globals';
 import {
-  QueueHasRunningConsumersError,
-  QueueNotEmptyError,
-  QueueNotFoundError,
+  QueueQueueHasRunningConsumersError,
+  QueueQueueNotEmptyError,
+  QueueQueueNotFoundError,
 } from '../../../src/lib/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import {
@@ -33,20 +33,20 @@ test('Deleting a message queue with all of its data', async () => {
 
   const q = await getQueue();
 
-  await expect(q.deleteAsync(queue)).rejects.toThrow(QueueNotEmptyError);
+  await expect(q.deleteAsync(queue)).rejects.toThrow(QueueQueueNotEmptyError);
 
   await queueMessages.purgeAsync(defaultQueue);
 
   await expect(q.deleteAsync(queue)).rejects.toThrow(
-    QueueHasRunningConsumersError,
+    QueueQueueHasRunningConsumersError,
   );
 
   await shutDownBaseInstance(consumer);
   await q.deleteAsync(queue);
 
   await expect(queueMessages.countMessagesByStatusAsync(queue)).rejects.toThrow(
-    QueueNotFoundError,
+    QueueQueueNotFoundError,
   );
 
-  await expect(q.deleteAsync(queue)).rejects.toThrow(QueueNotFoundError);
+  await expect(q.deleteAsync(queue)).rejects.toThrow(QueueQueueNotFoundError);
 });

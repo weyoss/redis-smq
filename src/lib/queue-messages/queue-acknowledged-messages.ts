@@ -7,37 +7,10 @@
  * in the root directory of this source tree.
  */
 
-import { CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
-import { EMessagePropertyStatus } from '../message/index.js';
-import { IQueueParams } from '../queue/index.js';
-import { _requeueMessage } from './_/_requeue-message.js';
 import { QueueMessagesPaginatorList } from './queue-messages-paginator/queue-messages-paginator-list.js';
-import { IQueueMessagesRequeuable } from './types/index.js';
 
-export class QueueAcknowledgedMessages
-  extends QueueMessagesPaginatorList
-  implements IQueueMessagesRequeuable
-{
+export class QueueAcknowledgedMessages extends QueueMessagesPaginatorList {
   protected redisKey: keyof ReturnType<typeof redisKeys.getQueueKeys> =
     'keyQueueAcknowledged';
-
-  requeueMessage(
-    queue: string | IQueueParams,
-    messageId: string,
-    cb: ICallback<void>,
-  ): void {
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else
-        _requeueMessage(
-          client,
-          queue,
-          messageId,
-          EMessagePropertyStatus.ACKNOWLEDGED,
-          cb,
-        );
-    });
-  }
 }

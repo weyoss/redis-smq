@@ -9,8 +9,4 @@
 
 import { ConsumerError } from '../../errors/index.js';
 
-export class ConsumerMessageHandlerError extends ConsumerError {
-  constructor(msg?: string) {
-    super(msg);
-  }
-}
+export class ConsumerMessageHandlerError extends ConsumerError {}

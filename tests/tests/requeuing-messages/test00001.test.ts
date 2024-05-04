@@ -8,13 +8,14 @@
  */
 
 import { test, expect } from '@jest/globals';
-import { MessageRequeueError } from '../../../src/lib/index.js';
+import { MessageMessageNotRequeuableError } from '../../../src/lib/message/errors/message-message-not-requeuable.error.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import {
   createQueue,
   defaultQueue,
   produceAndDeadLetterMessage,
 } from '../../common/message-producing-consuming.js';
+import { getMessage } from '../../common/message.js';
 import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
@@ -24,8 +25,8 @@ test('Combined test: Requeue a message from dead-letter queue. Check queue metri
   const { messageId, queue, consumer } = await produceAndDeadLetterMessage();
   await shutDownBaseInstance(consumer);
 
-  const deadLetteredMessages = await getQueueDeadLetteredMessages();
-  await deadLetteredMessages.requeueMessageAsync(queue, messageId);
+  const message = await getMessage();
+  await message.requeueMessageByIdAsync(messageId);
 
   const pendingMessages = await getQueuePendingMessages();
   const res2 = await pendingMessages.getMessagesAsync(queue, 0, 100);
@@ -33,6 +34,7 @@ test('Combined test: Requeue a message from dead-letter queue. Check queue metri
   expect(res2.items.length).toBe(1);
   expect(res2.items[0].id).toEqual(messageId);
 
+  const deadLetteredMessages = await getQueueDeadLetteredMessages();
   const res3 = await deadLetteredMessages.getMessagesAsync(queue, 0, 100);
   expect(res3.totalItems).toBe(0);
   expect(res3.items.length).toBe(0);
@@ -42,7 +44,7 @@ test('Combined test: Requeue a message from dead-letter queue. Check queue metri
   expect(count.deadLettered).toBe(0);
   expect(count.pending).toBe(1);
 
-  await expect(
-    deadLetteredMessages.requeueMessageAsync(queue, messageId),
-  ).rejects.toThrow(MessageRequeueError);
+  await expect(message.requeueMessageByIdAsync(messageId)).rejects.toThrow(
+    MessageMessageNotRequeuableError,
+  );
 });

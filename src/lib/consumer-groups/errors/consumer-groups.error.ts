@@ -7,10 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import { MessageError } from './message.error.js';
+import { RedisSMQError } from 'redis-smq-common';
 
-export class MessageDeleteError extends MessageError {
-  constructor(msg?: string) {
-    super(msg ?? `MESSAGE_DELETE_ERROR`);
-  }
-}
+export class ConsumerGroupsError extends RedisSMQError {}

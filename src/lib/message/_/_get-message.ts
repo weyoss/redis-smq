@@ -9,7 +9,7 @@
 
 import { async, ICallback, IRedisClient } from 'redis-smq-common';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
-import { MessageNotFoundError } from '../errors/index.js';
+import { MessageMessageNotFoundError } from '../errors/index.js';
 import { MessageEnvelope } from '../message-envelope.js';
 import { EMessageProperty } from '../types/index.js';
 import { _fromMessage } from './_from-message.js';
@@ -23,7 +23,7 @@ export function _getMessage(
   redisClient.hgetall(keyMessage, (err, reply) => {
     if (err) cb(err);
     else if (!reply || !Object.keys(reply).length)
-      cb(new MessageNotFoundError());
+      cb(new MessageMessageNotFoundError());
     else
       cb(
         null,
@@ -49,7 +49,7 @@ export function _getMessages(
       redisClient.hgetall(keyMessage, (err, reply) => {
         if (err) done(err);
         else if (!reply || !Object.keys(reply).length) {
-          done(new MessageNotFoundError());
+          done(new MessageMessageNotFoundError());
         } else {
           const msg = _fromMessage(
             reply[EMessageProperty.MESSAGE],

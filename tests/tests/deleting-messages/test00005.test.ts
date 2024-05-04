@@ -9,7 +9,10 @@
 
 import { test, expect } from '@jest/globals';
 import bluebird from 'bluebird';
-import { MessageNotFoundError } from '../../../src/lib/index.js';
+import {
+  MessageMessageInProcessError,
+  MessageMessageNotFoundError,
+} from '../../../src/lib/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import { getMessage } from '../../common/message.js';
 import {
@@ -40,7 +43,7 @@ test('Combined test: Delete a message being in process. Check pending, acknowled
 
   const message = await getMessage();
   await expect(message.deleteMessageByIdAsync(messageId)).rejects.toThrow(
-    'MESSAGE_IN_PROCESS',
+    MessageMessageInProcessError,
   );
 
   await bluebird.delay(20000);
@@ -56,7 +59,7 @@ test('Combined test: Delete a message being in process. Check pending, acknowled
   expect(count3.acknowledged).toBe(0);
 
   await expect(message.deleteMessageByIdAsync(messageId)).rejects.toThrow(
-    MessageNotFoundError,
+    MessageMessageNotFoundError,
   );
 
   await message.shutdownAsync();

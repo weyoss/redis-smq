@@ -11,7 +11,7 @@ import { expect, test } from '@jest/globals';
 import bluebird from 'bluebird';
 import {
   Consumer,
-  ConsumerGroupIdNotSupportedError,
+  ConsumerConsumerGroupIdNotSupportedError,
   EQueueDeliveryModel,
   EQueueType,
   IQueueParams,
@@ -38,7 +38,7 @@ test('ConsumerGroupIdNotSupportedError', async () => {
   );
 
   await expect(consumer1.runAsync()).rejects.toThrow(
-    ConsumerGroupIdNotSupportedError,
+    ConsumerConsumerGroupIdNotSupportedError,
   );
   await consumer1.shutdownAsync();
 });

@@ -7,5 +7,4 @@
  * in the root directory of this source tree.
  */
 
-export { MessageRequeueError } from './message-requeue.error.js';
-export { QueueMessageError } from './queue-message.error.js';
+export { QueueMessagesError } from './queue-messages.error.js';

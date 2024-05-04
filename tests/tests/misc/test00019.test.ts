@@ -8,6 +8,8 @@
  */
 
 import { test, expect } from '@jest/globals';
+import { ConfigurationMessageQueueSizeError } from '../../../src/config/errors/configuration-message-queue-size.error.js';
+import { ConfigurationMessageStoreExpireError } from '../../../src/config/errors/configuration-message-store-expire.error.js';
 import Store from '../../../src/config/messages/store.js';
 
 test('Configuration: storeMessages', async () => {
@@ -21,7 +23,7 @@ test('Configuration: storeMessages', async () => {
         },
       },
     });
-  }).toThrow(`Parameter [queueSize] should be >= 0`);
+  }).toThrow(ConfigurationMessageQueueSizeError);
 
   expect(() => {
     Store({
@@ -33,7 +35,7 @@ test('Configuration: storeMessages', async () => {
         },
       },
     });
-  }).toThrow(`Parameter [expire] should be >= 0`);
+  }).toThrow(ConfigurationMessageStoreExpireError);
 
   const config = Store({});
   expect(config.deadLettered.store).toEqual(false);

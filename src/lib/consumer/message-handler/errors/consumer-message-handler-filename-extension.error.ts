@@ -9,10 +9,4 @@
 
 import { ConsumerMessageHandlerError } from './consumer-message-handler.error.js';
 
-export class ConsumerMessageHandlerFilenameExtensionError extends ConsumerMessageHandlerError {
-  constructor() {
-    super(
-      `Message handler filename must ends with a '.js' or '.cjs' extension depending on your project settings.`,
-    );
-  }
-}
+export class ConsumerMessageHandlerFilenameExtensionError extends ConsumerMessageHandlerError {}

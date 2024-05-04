@@ -8,3 +8,4 @@
  */
 
 export * from './consumer-groups.js';
+export * from './errors/index.js';

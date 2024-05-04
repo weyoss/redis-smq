@@ -7,5 +7,6 @@
  * in the root directory of this source tree.
  */
 
+export * from './errors/index.js';
 export * from './event-bus-redis-instance.js';
 export * from './types/index.js';

@@ -8,14 +8,20 @@
  */
 
 import { test, expect } from '@jest/globals';
-import { RedisKeysError } from '../../../../src/common/redis-keys/redis-keys.error.js';
+import { ExchangeInvalidTopicParamsError } from '../../../../src/lib/exchange/errors/exchange-invalid-topic-params.error.js';
 import { getTopicExchange } from '../../../common/exchange.js';
 
 test('ExchangeTopic: topic validation', async () => {
   const e = getTopicExchange();
-  await expect(e.getQueuesAsync('!@223333')).rejects.toThrow(RedisKeysError);
-  await expect(e.getQueuesAsync('223333.')).rejects.toThrow(RedisKeysError);
-  await expect(e.getQueuesAsync('223333.w')).rejects.toThrow(RedisKeysError);
+  await expect(e.getQueuesAsync('!@223333')).rejects.toThrow(
+    ExchangeInvalidTopicParamsError,
+  );
+  await expect(e.getQueuesAsync('223333.')).rejects.toThrow(
+    ExchangeInvalidTopicParamsError,
+  );
+  await expect(e.getQueuesAsync('223333.w')).rejects.toThrow(
+    ExchangeInvalidTopicParamsError,
+  );
   await expect(e.getQueuesAsync('a223333.w')).resolves.not.toThrow();
   await expect(e.getQueuesAsync('a223333.w_e')).resolves.not.toThrow();
   await expect(e.getQueuesAsync('a223333.w-e')).resolves.not.toThrow();

@@ -11,6 +11,7 @@ import { ICallback, IEventBus, IRedisClient } from 'redis-smq-common';
 import { TRedisSMQEvent } from '../../../common/index.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { IQueueParams } from '../../queue/index.js';
+import { ConsumerGroupsInvalidGroupIdError } from '../errors/consumer-groups-invalid-group-id.error.js';
 
 export function _saveConsumerGroup(
   redisClient: IRedisClient,
@@ -20,7 +21,7 @@ export function _saveConsumerGroup(
   cb: ICallback<number>,
 ): void {
   const gid = redisKeys.validateRedisKey(groupId);
-  if (gid instanceof Error) cb(gid);
+  if (gid instanceof Error) cb(new ConsumerGroupsInvalidGroupIdError());
   else {
     const { keyQueueConsumerGroups } = redisKeys.getQueueKeys(queue, gid);
     redisClient.sadd(keyQueueConsumerGroups, gid, (err, reply) => {

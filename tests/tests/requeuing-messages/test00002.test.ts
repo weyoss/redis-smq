@@ -8,13 +8,14 @@
  */
 
 import { test, expect } from '@jest/globals';
-import { MessageRequeueError } from '../../../src/lib/index.js';
+import { MessageMessageNotRequeuableError } from '../../../src/lib/message/errors/message-message-not-requeuable.error.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import {
   createQueue,
   defaultQueue,
   produceAndAcknowledgeMessage,
 } from '../../common/message-producing-consuming.js';
+import { getMessage } from '../../common/message.js';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
@@ -24,9 +25,10 @@ test('Combined test. Requeue a message from acknowledged queue. Check queue metr
   const { messageId, queue, consumer } = await produceAndAcknowledgeMessage();
   await shutDownBaseInstance(consumer);
 
-  const acknowledgedMessages = await getQueueAcknowledgedMessages();
-  await acknowledgedMessages.requeueMessageAsync(queue, messageId);
+  const message = await getMessage();
+  await message.requeueMessageByIdAsync(messageId);
 
+  const acknowledgedMessages = await getQueueAcknowledgedMessages();
   const pendingMessages = await getQueuePendingMessages();
   const res2 = await pendingMessages.getMessagesAsync(queue, 0, 100);
   expect(res2.totalItems).toBe(1);
@@ -42,7 +44,7 @@ test('Combined test. Requeue a message from acknowledged queue. Check queue metr
   expect(count.acknowledged).toBe(0);
   expect(count.pending).toBe(1);
 
-  await expect(
-    acknowledgedMessages.requeueMessageAsync(queue, messageId),
-  ).rejects.toThrow(MessageRequeueError);
+  await expect(message.requeueMessageByIdAsync(messageId)).rejects.toThrow(
+    MessageMessageNotRequeuableError,
+  );
 });

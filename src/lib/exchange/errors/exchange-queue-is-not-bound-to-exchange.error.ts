@@ -7,10 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import { QueueMessageError } from './queue-message.error.js';
+import { ExchangeError } from './exchange.error.js';
 
-export class MessageRequeueError extends QueueMessageError {
-  constructor(msg = 'MESSAGE_REQUEUE_ERROR') {
-    super(msg);
-  }
-}
+export class ExchangeQueueIsNotBoundToExchangeError extends ExchangeError {}

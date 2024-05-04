@@ -16,7 +16,12 @@ import {
 import { ELuaScriptName } from '../../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { EQueueProperty, EQueueType } from '../../queue/index.js';
-import { MessageDeleteError } from '../errors/index.js';
+import {
+  MessageError,
+  MessageInvalidParametersError,
+  MessageMessageInProcessError,
+  MessageMessageNotFoundError,
+} from '../errors/index.js';
 import { EMessageProperty, EMessagePropertyStatus } from '../types/index.js';
 import { _getMessage } from './_get-message.js';
 
@@ -88,9 +93,19 @@ export function _deleteMessage(
           argv,
           (err, reply) => {
             if (err) cb(err);
-            else if (reply !== 'OK')
-              cb(new MessageDeleteError(reply ? String(reply) : undefined));
-            else cb();
+            else if (reply !== 'OK') {
+              if (reply === 'MESSAGE_NOT_FOUND') {
+                cb(new MessageMessageNotFoundError());
+              } else if (reply === 'MESSAGE_IN_PROCESS') {
+                cb(new MessageMessageInProcessError());
+              } else if (reply === 'MESSAGE_NOT_DELETED') {
+                cb(new MessageMessageNotFoundError());
+              } else if (reply === 'INVALID_PARAMETERS') {
+                cb(new MessageInvalidParametersError());
+              } else {
+                cb(new MessageError());
+              }
+            } else cb();
           },
         );
       } else cb();

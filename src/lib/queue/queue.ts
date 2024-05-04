@@ -22,7 +22,7 @@ import { _deleteQueue } from './_/_delete-queue.js';
 import { _getQueueProperties } from './_/_get-queue-properties.js';
 import { _getQueues } from './_/_get-queues.js';
 import { _parseQueueParams } from './_/_parse-queue-params.js';
-import { QueueExistsError } from './errors/index.js';
+import { QueueQueueExistsError } from './errors/index.js';
 import {
   EQueueDeliveryModel,
   EQueueProperty,
@@ -84,7 +84,7 @@ export class Queue {
             (err, reply) => {
               if (err) cb(err);
               else if (!reply) cb(new CallbackEmptyReplyError());
-              else if (reply !== 'OK') cb(new QueueExistsError());
+              else if (reply !== 'OK') cb(new QueueQueueExistsError());
               else
                 this.getProperties(queueParams, (err, properties) => {
                   if (err) cb(err);

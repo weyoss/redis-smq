@@ -16,7 +16,9 @@ import {
 } from '../../message/index.js';
 import { MessageEnvelope } from '../../message/message-envelope.js';
 import { EQueueProperty } from '../../queue/index.js';
-import { ProducerMessageNotScheduledError } from '../errors/index.js';
+import { ProducerQueueNotFoundError } from '../errors/producer-queue-not-found.error.js';
+import { ProducerScheduleInvalidParametersError } from '../errors/producer-schedule-invalid-parameters.error.js';
+import { ProducerError } from '../errors/producer.error.js';
 
 export function _scheduleMessage(
   mixed: IRedisClient,
@@ -62,11 +64,16 @@ export function _scheduleMessage(
       ],
       (err, reply) => {
         if (err) cb(err);
-        else if (reply !== 'OK')
-          cb(new ProducerMessageNotScheduledError(String(reply)));
-        else cb();
+        else if (reply !== 'OK') {
+          if (reply === 'QUEUE_NOT_FOUND') {
+            cb(new ProducerQueueNotFoundError());
+          } else if (reply !== 'INVALID_PARAMETERS') {
+            cb(new ProducerScheduleInvalidParametersError());
+          } else {
+            cb(new ProducerError());
+          }
+        } else cb();
       },
     );
-  } else
-    cb(new ProducerMessageNotScheduledError('INVALID_SCHEDULING_PARAMETERS'));
+  } else cb(new ProducerScheduleInvalidParametersError());
 }

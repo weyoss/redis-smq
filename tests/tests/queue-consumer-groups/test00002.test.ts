@@ -11,7 +11,7 @@ import { test, expect } from '@jest/globals';
 import bluebird from 'bluebird';
 import {
   Consumer,
-  ConsumerGroupIdRequiredError,
+  ConsumerConsumerGroupIdRequiredError,
   ConsumerGroups,
   EMessagePriority,
   EQueueDeliveryModel,
@@ -69,7 +69,7 @@ test('Publish and consume a message to/from a consumer group', async () => {
 
   const pendingMessages = await getQueuePendingMessages();
   await expect(pendingMessages.getMessagesAsync(queue1, 1, 10)).rejects.toThrow(
-    ConsumerGroupIdRequiredError,
+    ConsumerConsumerGroupIdRequiredError,
   );
 
   const messages = await pendingMessages.getMessagesAsync(

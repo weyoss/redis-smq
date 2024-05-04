@@ -17,7 +17,7 @@ import {
   TExchangeTransferable,
 } from '../exchange/index.js';
 import { IQueueParams } from '../queue/index.js';
-import { MessageError } from './errors/index.js';
+import { MessageMessagePropertyError } from './errors/message-message-property.error.js';
 import { EMessagePriority, TMessageConsumeOptions } from './types/index.js';
 
 export class ProducibleMessage {
@@ -92,9 +92,7 @@ export class ProducibleMessage {
   protected static validateRetryDelay(delay: number): number {
     const value = Number(delay);
     if (isNaN(value) || value < 0) {
-      throw new MessageError(
-        'Expected a positive integer in milliseconds >= 0',
-      );
+      throw new MessageMessagePropertyError();
     }
     return value;
   }
@@ -102,9 +100,7 @@ export class ProducibleMessage {
   protected static validateTTL(ttl: unknown): number {
     const value = Number(ttl);
     if (isNaN(value) || value < 0) {
-      throw new MessageError(
-        'Expected a positive integer value in milliseconds >= 0',
-      );
+      throw new MessageMessagePropertyError();
     }
     return value;
   }
@@ -112,9 +108,7 @@ export class ProducibleMessage {
   protected static validateConsumeTimeout(timeout: unknown): number {
     const value = Number(timeout);
     if (isNaN(value) || value < 0) {
-      throw new MessageError(
-        'Expected a positive integer value in milliseconds >= 0',
-      );
+      throw new MessageMessagePropertyError();
     }
     return value;
   }
@@ -122,9 +116,7 @@ export class ProducibleMessage {
   protected static validateRetryThreshold(threshold: unknown): number {
     const value = Number(threshold);
     if (isNaN(value) || value < 0) {
-      throw new MessageError(
-        'Retry threshold should be a positive integer >= 0',
-      );
+      throw new MessageMessagePropertyError();
     }
     return value;
   }
@@ -141,9 +133,7 @@ export class ProducibleMessage {
     // So just make sure that we have an integer value
     const value = Number(period);
     if (isNaN(value) || value < 0) {
-      throw new MessageError(
-        'Expected a positive integer value in milliseconds',
-      );
+      throw new MessageMessagePropertyError();
     }
     this.scheduledRepeatPeriod = value;
     return this;
@@ -157,9 +147,7 @@ export class ProducibleMessage {
     // So just make sure that we have an integer value
     const value = Number(delay);
     if (isNaN(value) || value < 0) {
-      throw new MessageError(
-        'Expected a positive integer value in milliseconds',
-      );
+      throw new MessageMessagePropertyError();
     }
     this.scheduledDelay = value;
     return this;
@@ -181,7 +169,7 @@ export class ProducibleMessage {
     // So just make sure that we have an integer value
     const value = Number(repeat);
     if (isNaN(value) || value < 0) {
-      throw new MessageError('Expected a positive integer value >= 0');
+      throw new MessageMessagePropertyError();
     }
     this.scheduledRepeat = value;
     return this;
@@ -244,17 +232,23 @@ export class ProducibleMessage {
   }
 
   setFanOut(fanOutName: string): ProducibleMessage {
-    this.exchange = _getExchangeFanOutTransferable(fanOutName);
+    const exchange = _getExchangeFanOutTransferable(fanOutName);
+    if (exchange instanceof Error) throw exchange;
+    this.exchange = exchange;
     return this;
   }
 
   setTopic(topicParams: string | ITopicParams): ProducibleMessage {
-    this.exchange = _getExchangeTopicTransferable(topicParams);
+    const exchange = _getExchangeTopicTransferable(topicParams);
+    if (exchange instanceof Error) throw exchange;
+    this.exchange = exchange;
     return this;
   }
 
   setQueue(queueParams: string | IQueueParams): ProducibleMessage {
-    this.exchange = _getExchangeDirectTransferable(queueParams);
+    const exchange = _getExchangeDirectTransferable(queueParams);
+    if (exchange instanceof Error) throw exchange;
+    this.exchange = exchange;
     return this;
   }
 

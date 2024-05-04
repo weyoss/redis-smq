@@ -9,7 +9,7 @@
 
 import { test, expect } from '@jest/globals';
 import { redisKeys } from '../../../src/common/redis-keys/redis-keys.js';
-import { RedisKeysError } from '../../../src/common/redis-keys/redis-keys.error.js';
+import { RedisKeysError } from '../../../src/common/redis-keys/errors/redis-keys.error.js';
 
 test('redisKeys', async () => {
   expect(redisKeys.validateNamespace('global')).toBeInstanceOf(RedisKeysError);

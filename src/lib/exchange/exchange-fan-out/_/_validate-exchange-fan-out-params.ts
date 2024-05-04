@@ -8,9 +8,12 @@
  */
 
 import { redisKeys } from '../../../../common/redis-keys/redis-keys.js';
+import { ExchangeInvalidFanOutParamsError } from '../../errors/index.js';
 
-export function _validateExchangeFanOutParams(fanOutName: string): string {
+export function _validateExchangeFanOutParams(
+  fanOutName: string,
+): string | ExchangeInvalidFanOutParamsError {
   const name = redisKeys.validateRedisKey(fanOutName);
-  if (name instanceof Error) throw name;
+  if (name instanceof Error) return new ExchangeInvalidFanOutParamsError();
   return name;
 }

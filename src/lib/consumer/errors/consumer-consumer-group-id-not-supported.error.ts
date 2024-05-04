@@ -9,10 +9,4 @@
 
 import { ConsumerError } from './consumer.error.js';
 
-export class ConsumerGroupIdNotSupportedError extends ConsumerError {
-  constructor() {
-    super(
-      `Consumer groups are only supported for queues of a PubSub delivery model.`,
-    );
-  }
-}
+export class ConsumerConsumerGroupIdNotSupportedError extends ConsumerError {}

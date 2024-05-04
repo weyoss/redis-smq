@@ -14,6 +14,7 @@ import { _deleteMessage } from './_/_delete-message.js';
 import { _getMessageState } from './_/_get-message-state.js';
 import { _getMessageStatus } from './_/_get-message-status.js';
 import { _getMessage, _getMessages } from './_/_get-message.js';
+import { _requeueMessage } from './_/_requeue-message.js';
 import {
   EMessagePropertyStatus,
   IMessageStateTransferable,
@@ -99,6 +100,14 @@ export class Message {
 
   deleteMessageById(id: string, cb: ICallback<void>): void {
     this.deleteMessagesByIds([id], cb);
+  }
+
+  requeueMessageById(messageId: string, cb: ICallback<void>): void {
+    this.redisClient.getSetInstance((err, client) => {
+      if (err) cb(err);
+      else if (!client) cb(new CallbackEmptyReplyError());
+      else _requeueMessage(client, messageId, cb);
+    });
   }
 
   shutdown = (cb: ICallback<void>): void => {

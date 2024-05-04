@@ -8,31 +8,35 @@
  */
 
 import { test, expect } from '@jest/globals';
-import { EMessagePriority, ProducibleMessage } from '../../../src/lib/index.js';
+import {
+  EMessagePriority,
+  MessageMessagePropertyError,
+  ProducibleMessage,
+} from '../../../src/lib/index.js';
 
 test('ProducibleMessage', async () => {
   const msg = new ProducibleMessage();
   expect(() => {
     msg.setScheduledRepeatPeriod(-1);
-  }).toThrow('Expected a positive integer value in milliseconds');
+  }).toThrow(MessageMessagePropertyError);
   expect(() => {
     msg.setScheduledDelay(-1);
-  }).toThrow('Expected a positive integer value in milliseconds');
+  }).toThrow(MessageMessagePropertyError);
   expect(() => {
     msg.setScheduledRepeat(-1);
-  }).toThrow('Expected a positive integer value >= 0');
+  }).toThrow(MessageMessagePropertyError);
   expect(() => {
     msg.setTTL(-1);
-  }).toThrow('Expected a positive integer value in milliseconds >= 0');
+  }).toThrow(MessageMessagePropertyError);
   expect(() => {
     msg.setConsumeTimeout(-1);
-  }).toThrow('Expected a positive integer value in milliseconds >= 0');
+  }).toThrow(MessageMessagePropertyError);
   expect(() => {
     msg.setRetryThreshold(-1);
-  }).toThrow('Retry threshold should be a positive integer >= 0');
+  }).toThrow(MessageMessagePropertyError);
   expect(() => {
     msg.setRetryDelay(-1);
-  }).toThrow('Expected a positive integer in milliseconds >= 0');
+  }).toThrow(MessageMessagePropertyError);
 
   msg.setPriority(EMessagePriority.HIGHEST);
   expect(msg.getPriority()).toBe(EMessagePriority.HIGHEST);

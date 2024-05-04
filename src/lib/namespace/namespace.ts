@@ -102,7 +102,7 @@ export class Namespace {
               (cb: ICallback<void>) => {
                 client.sismember(keyNamespaces, ns, (err, isMember) => {
                   if (err) cb(err);
-                  else if (!isMember) cb(new NamespaceNotFoundError(ns));
+                  else if (!isMember) cb(new NamespaceNotFoundError());
                   else cb();
                 });
               },

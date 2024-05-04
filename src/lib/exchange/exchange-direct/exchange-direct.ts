@@ -18,6 +18,7 @@ export class ExchangeDirect extends ExchangeAbstract<string | IQueueParams> {
     cb: ICallback<IQueueParams[]>,
   ): void {
     const queue = _validateExchangeDirectParams(exchangeParams);
-    cb(null, [queue]);
+    if (queue instanceof Error) cb(queue);
+    else cb(null, [queue]);
   }
 }

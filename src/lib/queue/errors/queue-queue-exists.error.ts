@@ -7,10 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import { MessageError } from './message.error.js';
+import { QueueError } from './queue.error.js';
 
-export class MessageNotFoundError extends MessageError {
-  constructor(msg?: string) {
-    super(msg ?? `MESSAGE_NOT_FOUND`);
-  }
-}
+export class QueueQueueExistsError extends QueueError {}
