@@ -11,7 +11,7 @@ import { test, expect } from '@jest/globals';
 import {
   EQueueDeliveryModel,
   EQueueType,
-  ExchangeFanOutError,
+  ExchangeFanOutQueueTypeError,
 } from '../../../../src/lib/index.js';
 import { getFanOutExchange } from '../../../common/exchange.js';
 import { getQueue } from '../../../common/queue.js';
@@ -37,6 +37,6 @@ test('ExchangeFanOut: binding different types of queues', async () => {
   );
 
   await expect(fanOutExchangeManager.bindQueueAsync(q2, 'e1')).rejects.toThrow(
-    ExchangeFanOutError,
+    ExchangeFanOutQueueTypeError,
   );
 });

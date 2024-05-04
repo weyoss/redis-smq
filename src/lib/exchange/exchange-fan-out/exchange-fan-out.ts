@@ -17,8 +17,8 @@ import {
   IQueueProperties,
 } from '../../queue/index.js';
 import {
-  ExchangeFanOutError,
   ExchangeFanOutExchangeHasBoundQueuesError,
+  ExchangeFanOutQueueTypeError,
   ExchangeQueueIsNotBoundToExchangeError,
 } from '../errors/index.js';
 import { ExchangeAbstract } from '../exchange-abstract.js';
@@ -135,11 +135,7 @@ export class ExchangeFanOut extends ExchangeAbstract<string> {
                             exchangeQueueProperties.queueType !==
                             queueProperties.queueType
                           )
-                            cb(
-                              new ExchangeFanOutError(
-                                'Binding different types of queues to the same exchange is not allowed.',
-                              ),
-                            );
+                            cb(new ExchangeFanOutQueueTypeError());
                           else cb(null, queueProperties);
                         },
                       );
