@@ -1,5 +1,22 @@
 
 
+## [8.0.0-rc.22](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.21...v8.0.0-rc.22) (2024-05-04)
+
+
+### Features
+
+* use more granular error classes for reporting errors ([2cc06c1](https://github.com/weyoss/redis-smq/commit/2cc06c1cfbf2fe19c5c0756638ff73806ce06529))
+
+
+### Bug Fixes
+
+* **exchange:** use more granular error classes for reporting errors ([3b3e640](https://github.com/weyoss/redis-smq/commit/3b3e6407cd6a2c1db8a3e68d58163447746cd5d0))
+
+
+### Documentation
+
+* add missing error classes ([e16ffea](https://github.com/weyoss/redis-smq/commit/e16ffead799a4a40020ba27b9daae306301efd1a))
+
 ## [8.0.0-rc.21](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.20...v8.0.0-rc.21) (2024-04-29)
 
 
