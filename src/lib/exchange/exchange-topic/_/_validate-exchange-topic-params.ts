@@ -7,13 +7,14 @@
  * in the root directory of this source tree.
  */
 
+import { ExchangeInvalidTopicParamsError } from '../../errors/exchange-invalid-topic-params.error.js';
 import { ITopicParams } from '../../types/index.js';
 import { _getTopicExchangeParams } from './_get-topic-exchange-params.js';
 
 export function _validateExchangeTopicParams(
   topicParams: string | ITopicParams,
-): ITopicParams {
+): ITopicParams | ExchangeInvalidTopicParamsError {
   const params = _getTopicExchangeParams(topicParams);
-  if (params instanceof Error) throw params;
+  if (params instanceof Error) return new ExchangeInvalidTopicParamsError();
   return params;
 }

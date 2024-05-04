@@ -12,7 +12,9 @@ import {
   EMessagePriority,
   EQueueDeliveryModel,
   EQueueType,
-  ProducerMessageNotPublishedError,
+  ProducerMessagePriorityRequiredError,
+  ProducerPriorityQueuingNotEnabledError,
+  ProducerQueueNotFoundError,
   ProducibleMessage,
 } from '../../../src/lib/index.js';
 import { getProducer } from '../../common/producer.js';
@@ -41,23 +43,20 @@ test('Producing a message and expecting different kind of failures', async () =>
       .setPriority(EMessagePriority.LOW);
     await producer.produceAsync(msg);
   } catch (e: unknown) {
-    const m = e instanceof ProducerMessageNotPublishedError ? e.message : '';
-    expect(m).toBe('PRIORITY_QUEUING_NOT_ENABLED');
+    expect(e instanceof ProducerPriorityQueuingNotEnabledError).toBe(true);
   }
 
   try {
     const msg1 = new ProducibleMessage().setQueue('test1').setBody('body');
     await producer.produceAsync(msg1);
   } catch (e: unknown) {
-    const m = e instanceof ProducerMessageNotPublishedError ? e.message : '';
-    expect(m).toBe('MESSAGE_PRIORITY_REQUIRED');
+    expect(e instanceof ProducerMessagePriorityRequiredError).toBe(true);
   }
 
   try {
     const msg2 = new ProducibleMessage().setQueue('test2').setBody('body');
     await producer.produceAsync(msg2);
   } catch (e: unknown) {
-    const m = e instanceof ProducerMessageNotPublishedError ? e.message : '';
-    expect(m).toBe('QUEUE_NOT_FOUND');
+    expect(e instanceof ProducerQueueNotFoundError).toBe(true);
   }
 });

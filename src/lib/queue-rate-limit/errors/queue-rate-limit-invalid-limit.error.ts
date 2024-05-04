@@ -7,6 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import { ExchangeError } from './exchange.error.js';
+import { QueueRateLimitError } from './queue-rate-limit.error.js';
 
-export class ExchangeInvalidDataError extends ExchangeError {}
+export class QueueRateLimitInvalidLimitError extends QueueRateLimitError {}

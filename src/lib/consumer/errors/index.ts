@@ -8,7 +8,6 @@
  */
 
 export { ConsumerError } from './consumer.error.js';
-export { ConsumerMessageHandlerAlreadyExistsError } from './consumer-message-handler-already-exists.error.js';
-export { ConsumerGroupDeleteError } from './consumer-group-delete.error.js';
-export { ConsumerGroupIdNotSupportedError } from './consumer-group-id-not-supported.error.js';
-export { ConsumerGroupIdRequiredError } from './consumer-group-id-required.error.js';
+export { ConsumerConsumeMessageHandlerAlreadyExistsError } from './consumer-consume-message-handler-already-exists.error.js';
+export { ConsumerConsumerGroupIdNotSupportedError } from './consumer-consumer-group-id-not-supported.error.js';
+export { ConsumerConsumerGroupIdRequiredError } from './consumer-consumer-group-id-required.error.js';

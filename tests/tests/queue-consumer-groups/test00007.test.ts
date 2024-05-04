@@ -9,13 +9,14 @@
 
 import { expect, test } from '@jest/globals';
 import bluebird from 'bluebird';
-import { RedisKeysError } from '../../../src/common/redis-keys/redis-keys.error.js';
 import {
   Consumer,
   ConsumerGroups,
+  ConsumerGroupsInvalidGroupIdError,
   EQueueDeliveryModel,
   EQueueType,
   IQueueParams,
+  QueueInvalidQueueParameterError,
 } from '../../../src/lib/index.js';
 import { getQueue } from '../../common/queue.js';
 
@@ -38,12 +39,12 @@ test('Consumer group ID validation', async () => {
       { queue: queue1, groupId: 'my-group-1!' },
       (msg, cb) => cb(),
     ),
-  ).rejects.toThrow(RedisKeysError);
+  ).rejects.toThrow(QueueInvalidQueueParameterError);
 
   const consumerGroups = bluebird.promisifyAll(new ConsumerGroups());
   await expect(
     consumerGroups.saveConsumerGroupAsync(queue1, 'my-group-1!'),
-  ).rejects.toThrow(RedisKeysError);
+  ).rejects.toThrow(ConsumerGroupsInvalidGroupIdError);
 
   await consumerGroups.shutdownAsync();
   await consumer1.shutdownAsync();

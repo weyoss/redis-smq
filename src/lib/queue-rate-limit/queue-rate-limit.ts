@@ -24,7 +24,10 @@ import {
 } from '../queue/index.js';
 import { _parseQueueParams } from '../queue/_/_parse-queue-params.js';
 import { _hasRateLimitExceeded } from './_/_has-rate-limit-exceeded.js';
-import { QueueRateLimitError } from './errors/index.js';
+import {
+  QueueRateLimitInvalidLimitError,
+  QueueRateLimitInvalidIntervalError,
+} from './errors/index.js';
 
 export class QueueRateLimit {
   protected redisClient;
@@ -75,19 +78,11 @@ export class QueueRateLimit {
           // validating rateLimit params from a javascript client
           const limit = Number(rateLimit.limit);
           if (isNaN(limit) || limit <= 0) {
-            cb(
-              new QueueRateLimitError(
-                `Invalid rateLimit.limit. Expected a positive integer > 0`,
-              ),
-            );
+            cb(new QueueRateLimitInvalidLimitError());
           }
           const interval = Number(rateLimit.interval);
           if (isNaN(interval) || interval < 1000) {
-            cb(
-              new QueueRateLimitError(
-                `Invalid rateLimit.interval. Expected a positive integer >= 1000`,
-              ),
-            );
+            cb(new QueueRateLimitInvalidIntervalError());
           }
           const validatedRateLimit: IQueueRateLimit = { interval, limit };
           const { keyQueueProperties } = redisKeys.getQueueKeys(

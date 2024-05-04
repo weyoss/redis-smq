@@ -12,7 +12,7 @@ import { TConsumerMessageHandlerRunnerEvent } from '../../../common/index.js';
 import { Configuration } from '../../../config/index.js';
 import { IQueueParsedParams } from '../../queue/index.js';
 import { Consumer } from '../consumer/consumer.js';
-import { ConsumerMessageHandlerAlreadyExistsError } from '../errors/index.js';
+import { ConsumerConsumeMessageHandlerAlreadyExistsError } from '../errors/index.js';
 import { MessageHandler } from '../message-handler/message-handler/message-handler.js';
 import {
   IConsumerMessageHandlerArgs,
@@ -198,7 +198,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
     cb: ICallback<void>,
   ): void {
     const handler = this.getMessageHandler(queue);
-    if (handler) cb(new ConsumerMessageHandlerAlreadyExistsError(queue));
+    if (handler) cb(new ConsumerConsumeMessageHandlerAlreadyExistsError());
     else {
       const handlerParams = {
         queue,

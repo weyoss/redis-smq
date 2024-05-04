@@ -9,7 +9,7 @@
 
 import { test, expect } from '@jest/globals';
 import {
-  ProducerMessageNotPublishedError,
+  ProducerExchangeNoMatchedQueueError,
   ProducibleMessage,
 } from '../../../../src/lib/index.js';
 import { getProducer } from '../../../common/producer.js';
@@ -21,6 +21,6 @@ test('ExchangeFanOut: producing message having an exchange without matched queue
   const msg = new ProducibleMessage().setFanOut('fanout_a').setBody('hello');
 
   await expect(producer.produceAsync(msg)).rejects.toThrow(
-    ProducerMessageNotPublishedError,
+    ProducerExchangeNoMatchedQueueError,
   );
 });

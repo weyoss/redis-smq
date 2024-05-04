@@ -13,7 +13,8 @@ import {
   IMessagesConfigStorageOptionsRequired,
   IMessagesConfigStorageRequired,
 } from '../../lib/index.js';
-import { ConfigurationError } from '../configuration.error.js';
+import { ConfigurationMessageQueueSizeError } from '../errors/configuration-message-queue-size.error.js';
+import { ConfigurationMessageStoreExpireError } from '../errors/configuration-message-store-expire.error.js';
 import { IRedisSMQConfig } from '../types/index.js';
 
 function getMessageStorageConfig(
@@ -43,11 +44,11 @@ function getMessageStorageParams(
   }
   const queueSize = Number(params.queueSize ?? 0);
   if (isNaN(queueSize) || queueSize < 0) {
-    throw new ConfigurationError(`Parameter [queueSize] should be >= 0`);
+    throw new ConfigurationMessageQueueSizeError();
   }
   const expire = Number(params.expire ?? 0);
   if (isNaN(expire) || expire < 0) {
-    throw new ConfigurationError(`Parameter [expire] should be >= 0`);
+    throw new ConfigurationMessageStoreExpireError();
   }
   return {
     store: true,

@@ -11,8 +11,10 @@ import { async, ICallback, IEventBus, IRedisClient } from 'redis-smq-common';
 import { TRedisSMQEvent } from '../../../common/index.js';
 import { ELuaScriptName } from '../../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
-import { ConsumerGroupDeleteError } from '../../consumer/index.js';
 import { EQueueProperty, EQueueType, IQueueParams } from '../../queue/index.js';
+import { ConsumerGroupsConsumerGroupNotEmptyError } from '../errors/consumer-groups-consumer-group-not-empty.error.js';
+import { ConsumerGroupsQueueNotFoundError } from '../errors/consumer-groups-queue-not-found.error.js';
+import { ConsumerGroupsError } from '../errors/consumer-groups.error.js';
 
 export function _deleteConsumerGroup(
   redisClient: IRedisClient,
@@ -47,9 +49,15 @@ export function _deleteConsumerGroup(
           ],
           (err, reply) => {
             if (err) cb(err);
-            else if (reply !== 'OK')
-              cb(new ConsumerGroupDeleteError(String(reply)));
-            else {
+            else if (reply !== 'OK') {
+              if (reply === 'QUEUE_NOT_FOUND') {
+                cb(new ConsumerGroupsQueueNotFoundError());
+              } else if (reply === 'CONSUMER_GROUP_NOT_EMPTY') {
+                cb(new ConsumerGroupsConsumerGroupNotEmptyError());
+              } else {
+                cb(new ConsumerGroupsError());
+              }
+            } else {
               eventBus.emit('queue.consumerGroupDeleted', queue, groupId);
               cb();
             }

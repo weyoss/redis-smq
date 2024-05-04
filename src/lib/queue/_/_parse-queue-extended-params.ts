@@ -7,8 +7,9 @@
  * in the root directory of this source tree.
  */
 
-import { RedisKeysError } from '../../../common/redis-keys/redis-keys.error.js';
+import { RedisKeysError } from '../../../common/redis-keys/errors/redis-keys.error.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
+import { QueueInvalidQueueParameterError } from '../errors/queue-invalid-queue-parameter.error.js';
 import {
   IQueueParams,
   IQueueParsedParams,
@@ -27,10 +28,11 @@ function isQueueParams(args: unknown): args is IQueueParams {
 
 export function _parseQueueExtendedParams(
   args: TQueueExtendedParams,
-): IQueueParsedParams | RedisKeysError {
+): IQueueParsedParams | QueueInvalidQueueParameterError {
   if (typeof args === 'string') {
     const queueParams = _parseQueueParams(args);
-    if (queueParams instanceof Error) return queueParams;
+    if (queueParams instanceof Error)
+      return new QueueInvalidQueueParameterError();
     return {
       queueParams,
       groupId: null,
@@ -38,7 +40,8 @@ export function _parseQueueExtendedParams(
   }
   if (isQueueParams(args)) {
     const queueParams = _parseQueueParams(args);
-    if (queueParams instanceof Error) return queueParams;
+    if (queueParams instanceof Error)
+      return new QueueInvalidQueueParameterError();
     return {
       queueParams,
       groupId: null,
@@ -49,7 +52,7 @@ export function _parseQueueExtendedParams(
   let groupId: string | RedisKeysError | null = null;
   if (args.groupId) {
     groupId = redisKeys.validateRedisKey(args.groupId);
-    if (groupId instanceof Error) return groupId;
+    if (groupId instanceof Error) return new QueueInvalidQueueParameterError();
   }
   return {
     queueParams,

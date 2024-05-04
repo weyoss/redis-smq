@@ -9,10 +9,4 @@
 
 import { ConsumerMessageHandlerError } from './consumer-message-handler.error.js';
 
-export class ConsumerMessageHandlerFileError extends ConsumerMessageHandlerError {
-  constructor() {
-    super(
-      `Make sure the message handler filename is an absolute file path pointing to an existing file in your project. `,
-    );
-  }
-}
+export class ConsumerMessageHandlerFileError extends ConsumerMessageHandlerError {}

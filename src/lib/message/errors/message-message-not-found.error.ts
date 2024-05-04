@@ -7,6 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import { QueueError } from './queue.error.js';
+import { MessageError } from './message.error.js';
 
-export class QueueNotEmptyError extends QueueError {}
+export class MessageMessageNotFoundError extends MessageError {}

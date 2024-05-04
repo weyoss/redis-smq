@@ -10,6 +10,9 @@
 export { MessageDestinationQueueAlreadySetError } from './message-destination-queue-already-set.error.js';
 export { MessageDestinationQueueRequiredError } from './message-destination-queue-required.error.js';
 export { MessageError } from './message.error.js';
-export { MessageExchangeRequiredError } from './message-exchange-required.error.js';
-export { MessageNotFoundError } from './message-not-found.error.js';
-export { MessageDeleteError } from './message-delete.error.js';
+export { MessageMessageExchangeRequiredError } from './message-message-exchange-required.error.js';
+export { MessageMessageNotFoundError } from './message-message-not-found.error.js';
+export { MessageMessagePropertyError } from './message-message-property.error.js';
+export { MessageMessageInProcessError } from './message-message-in-process.error.js';
+export { MessageInvalidParametersError } from './message-invalid-parameters.error.js';
+export { MessageMessageNotRequeuableError } from './message-message-not-requeuable.error.js';

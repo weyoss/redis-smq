@@ -9,8 +9,4 @@
 
 import { MessageError } from './message.error.js';
 
-export class MessageDestinationQueueRequiredError extends MessageError {
-  constructor() {
-    super(`Destination queue is required`);
-  }
-}
+export class MessageDestinationQueueRequiredError extends MessageError {}

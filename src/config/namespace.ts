@@ -8,6 +8,7 @@
  */
 
 import { redisKeys } from '../common/redis-keys/redis-keys.js';
+import { ConfigurationNamespaceError } from './errors/configuration-namespace.error.js';
 import { IRedisSMQConfig } from './types/index.js';
 
 const defaultNamespace = 'default';
@@ -15,6 +16,6 @@ const defaultNamespace = 'default';
 export default function Namespace(userConfig: IRedisSMQConfig): string {
   if (!userConfig.namespace) return defaultNamespace;
   const ns = redisKeys.validateNamespace(userConfig.namespace);
-  if (ns instanceof Error) throw ns;
+  if (ns instanceof Error) throw new ConfigurationNamespaceError();
   return ns;
 }

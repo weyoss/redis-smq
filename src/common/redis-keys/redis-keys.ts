@@ -8,7 +8,7 @@
  */
 
 import { IQueueParams } from '../../lib/index.js';
-import { RedisKeysError } from './redis-keys.error.js';
+import { RedisKeysInvalidKeyError } from './errors/index.js';
 
 // Key segments separator
 const keySegmentSeparator = ':';
@@ -156,21 +156,19 @@ export const redisKeys = {
     return makeNamespacedKeys(mainKeys, globalNamespace);
   },
 
-  validateNamespace(ns: string): string | RedisKeysError {
+  validateNamespace(ns: string): string | RedisKeysInvalidKeyError {
     const validated = this.validateRedisKey(ns);
     if (validated === globalNamespace) {
-      return new RedisKeysError(
-        `Namespace [${validated}] is reserved. Use another one.`,
-      );
+      return new RedisKeysInvalidKeyError();
     }
     return validated;
   },
 
-  validateRedisKey(key: string | null | undefined): string | RedisKeysError {
+  validateRedisKey(
+    key: string | null | undefined,
+  ): string | RedisKeysInvalidKeyError {
     if (!key || !key.length) {
-      return new RedisKeysError(
-        'Invalid Redis key. Expected be a non empty string.',
-      );
+      return new RedisKeysInvalidKeyError();
     }
     const lowerCase = key.toLowerCase();
     const filtered = lowerCase.replace(
@@ -178,9 +176,7 @@ export const redisKeys = {
       '',
     );
     if (filtered.length) {
-      return new RedisKeysError(
-        'Invalid Redis key. Valid characters are letters (a-z) and numbers (0-9). (-_) are allowed between alphanumerics. Use a dot (.) to denote hierarchies.',
-      );
+      return new RedisKeysInvalidKeyError();
     }
     return lowerCase;
   },

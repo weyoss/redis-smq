@@ -7,14 +7,14 @@
  * in the root directory of this source tree.
  */
 
-import { RedisKeysError } from '../../../../common/redis-keys/redis-keys.error.js';
 import { redisKeys } from '../../../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../../../config/index.js';
+import { ExchangeInvalidTopicParamsError } from '../../errors/exchange-invalid-topic-params.error.js';
 import { ITopicParams } from '../../types/index.js';
 
 export function _getTopicExchangeParams(
   topic: ITopicParams | string,
-): ITopicParams | RedisKeysError {
+): ITopicParams | ExchangeInvalidTopicParamsError {
   const config = Configuration.getSetConfig();
   const topicParams =
     typeof topic === 'string'
@@ -24,9 +24,9 @@ export function _getTopicExchangeParams(
         }
       : topic;
   const vTopic = redisKeys.validateRedisKey(topicParams.topic);
-  if (vTopic instanceof Error) return vTopic;
+  if (vTopic instanceof Error) return new ExchangeInvalidTopicParamsError();
   const vNamespace = redisKeys.validateNamespace(topicParams.ns);
-  if (vNamespace instanceof Error) return vNamespace;
+  if (vNamespace instanceof Error) return new ExchangeInvalidTopicParamsError();
   return {
     topic: vTopic,
     ns: vNamespace,

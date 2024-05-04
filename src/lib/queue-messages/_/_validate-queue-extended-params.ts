@@ -9,8 +9,8 @@
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
 import {
-  ConsumerGroupIdNotSupportedError,
-  ConsumerGroupIdRequiredError,
+  ConsumerConsumerGroupIdNotSupportedError,
+  ConsumerConsumerGroupIdRequiredError,
 } from '../../consumer/index.js';
 import { _getQueueProperties } from '../../queue/_/_get-queue-properties.js';
 import { EQueueDeliveryModel, IQueueParsedParams } from '../../queue/index.js';
@@ -30,12 +30,12 @@ export function _validateQueueExtendedParams(
         properties?.deliveryModel === EQueueDeliveryModel.PUB_SUB &&
         !groupId
       ) {
-        cb(new ConsumerGroupIdRequiredError());
+        cb(new ConsumerConsumerGroupIdRequiredError());
       } else if (
         properties?.deliveryModel === EQueueDeliveryModel.POINT_TO_POINT &&
         groupId
       ) {
-        cb(new ConsumerGroupIdNotSupportedError());
+        cb(new ConsumerConsumerGroupIdNotSupportedError());
       } else cb();
     }
   });

@@ -16,8 +16,11 @@ import {
   IQueueParams,
   IQueueProperties,
 } from '../../queue/index.js';
-import { ExchangeFanOutError } from '../errors/index.js';
-import { ExchangeError } from '../errors/index.js';
+import {
+  ExchangeFanOutError,
+  ExchangeFanOutExchangeHasBoundQueuesError,
+  ExchangeQueueIsNotBoundToExchangeError,
+} from '../errors/index.js';
 import { ExchangeAbstract } from '../exchange-abstract.js';
 import { _getFanOutExchangeQueues } from './_/_get-fan-out-exchange-queues.js';
 import { _getQueueFanOutExchange } from './_/_get-queue-fan-out-exchange.js';
@@ -26,15 +29,18 @@ import { _validateExchangeFanOutParams } from './_/_validate-exchange-fan-out-pa
 export class ExchangeFanOut extends ExchangeAbstract<string> {
   getQueues(exchangeParams: string, cb: ICallback<IQueueParams[]>): void {
     const fanOutName = _validateExchangeFanOutParams(exchangeParams);
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else _getFanOutExchangeQueues(client, fanOutName, cb);
-    });
+    if (fanOutName instanceof Error) cb(fanOutName);
+    else {
+      this.redisClient.getSetInstance((err, client) => {
+        if (err) cb(err);
+        else if (!client) cb(new CallbackEmptyReplyError());
+        else _getFanOutExchangeQueues(client, fanOutName, cb);
+      });
+    }
   }
 
   saveExchange(exchangeParams: string, cb: ICallback<void>): void {
-    const fanOutName = redisKeys.validateRedisKey(exchangeParams);
+    const fanOutName = _validateExchangeFanOutParams(exchangeParams);
     if (fanOutName instanceof Error) cb(fanOutName);
     else {
       const { keyFanOutExchanges } = redisKeys.getMainKeys();
@@ -48,7 +54,7 @@ export class ExchangeFanOut extends ExchangeAbstract<string> {
   }
 
   deleteExchange(exchangeParams: string, cb: ICallback<void>): void {
-    const fanOutName = redisKeys.validateRedisKey(exchangeParams);
+    const fanOutName = _validateExchangeFanOutParams(exchangeParams);
     if (fanOutName instanceof Error) cb(fanOutName);
     else {
       const { keyExchangeBindings } =
@@ -66,11 +72,7 @@ export class ExchangeFanOut extends ExchangeAbstract<string> {
                 (err, reply = []) => {
                   if (err) cb(err);
                   else if (reply.length)
-                    cb(
-                      new ExchangeError(
-                        `Exchange has ${reply.length} bound queue(s). Unbind all queues before deleting the exchange.`,
-                      ),
-                    );
+                    cb(new ExchangeFanOutExchangeHasBoundQueuesError());
                   else {
                     const multi = client.multi();
                     multi.srem(keyFanOutExchanges, fanOutName);
@@ -92,7 +94,7 @@ export class ExchangeFanOut extends ExchangeAbstract<string> {
     cb: ICallback<void>,
   ): void {
     const queueParams = _parseQueueParams(queue);
-    const fanOutName = redisKeys.validateRedisKey(exchangeParams);
+    const fanOutName = _validateExchangeFanOutParams(exchangeParams);
     if (queueParams instanceof Error) cb(queueParams);
     else if (fanOutName instanceof Error) cb(fanOutName);
     else {
@@ -182,7 +184,7 @@ export class ExchangeFanOut extends ExchangeAbstract<string> {
     cb: ICallback<void>,
   ): void {
     const queueParams = _parseQueueParams(queue);
-    const fanOutName = redisKeys.validateRedisKey(exchangeParams);
+    const fanOutName = _validateExchangeFanOutParams(exchangeParams);
     if (queueParams instanceof Error) cb(queueParams);
     else if (fanOutName instanceof Error) cb(fanOutName);
     else {
@@ -206,11 +208,7 @@ export class ExchangeFanOut extends ExchangeAbstract<string> {
                   if (err) cb(err);
                   else if (!properties) cb(new CallbackEmptyReplyError());
                   else if (properties.exchange !== fanOutName)
-                    cb(
-                      new ExchangeFanOutError(
-                        `Queue ${queueParams.name}@${queueParams.ns} is not bound to [${fanOutName}] exchange.`,
-                      ),
-                    );
+                    cb(new ExchangeQueueIsNotBoundToExchangeError());
                   else cb();
                 }),
               (cb: ICallback<void>) => {

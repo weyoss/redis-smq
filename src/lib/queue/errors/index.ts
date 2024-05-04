@@ -7,8 +7,9 @@
  * in the root directory of this source tree.
  */
 
-export { QueueExistsError } from './queue-exists.error.js';
-export { QueueHasRunningConsumersError } from './queue-has-running-consumers.error.js';
-export { QueueNotEmptyError } from './queue-not-empty.error.js';
-export { QueueNotFoundError } from './queue-not-found.error.js';
+export { QueueQueueExistsError } from './queue-queue-exists.error.js';
+export { QueueQueueHasRunningConsumersError } from './queue-queue-has-running-consumers.error.js';
+export { QueueQueueNotEmptyError } from './queue-queue-not-empty.error.js';
+export { QueueQueueNotFoundError } from './queue-queue-not-found.error.js';
 export { QueueError } from './queue.error.js';
+export { QueueInvalidQueueParameterError } from './queue-invalid-queue-parameter.error.js';

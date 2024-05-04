@@ -9,4 +9,4 @@
 
 import { QueueError } from './queue.error.js';
 
-export class QueueExistsError extends QueueError {}
+export class QueueQueueHasRunningConsumersError extends QueueError {}

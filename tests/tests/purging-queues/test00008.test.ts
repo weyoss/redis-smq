@@ -11,9 +11,9 @@ import { test, expect } from '@jest/globals';
 import {
   IQueueParams,
   NamespaceNotFoundError,
-  QueueHasRunningConsumersError,
-  QueueNotEmptyError,
-  QueueNotFoundError,
+  QueueQueueHasRunningConsumersError,
+  QueueQueueNotEmptyError,
+  QueueQueueNotFoundError,
 } from '../../../src/lib/index.js';
 import {
   createQueue,
@@ -52,35 +52,35 @@ test('Combined: Fetching namespaces, deleting a namespace with its message queue
   await c1.shutdownAsync();
   await c2.shutdownAsync();
 
-  await expect(ns.deleteAsync('ns1')).rejects.toThrow(QueueNotEmptyError);
+  await expect(ns.deleteAsync('ns1')).rejects.toThrow(QueueQueueNotEmptyError);
 
   await qm.purgeAsync(queueA);
 
-  await expect(ns.deleteAsync('ns1')).rejects.toThrow(QueueNotEmptyError);
+  await expect(ns.deleteAsync('ns1')).rejects.toThrow(QueueQueueNotEmptyError);
 
   await qm.purgeAsync(queueB);
   await c1.runAsync();
   await c2.runAsync();
 
   await expect(ns.deleteAsync('ns1')).rejects.toThrow(
-    QueueHasRunningConsumersError,
+    QueueQueueHasRunningConsumersError,
   );
 
   await c1.shutdownAsync();
 
   await expect(ns.deleteAsync('ns1')).rejects.toThrow(
-    QueueHasRunningConsumersError,
+    QueueQueueHasRunningConsumersError,
   );
 
   await c2.shutdownAsync();
   await ns.deleteAsync('ns1');
 
   await expect(qm.countMessagesByStatusAsync(queueA)).rejects.toThrow(
-    QueueNotFoundError,
+    QueueQueueNotFoundError,
   );
 
   await expect(qm.countMessagesByStatusAsync(queueB)).rejects.toThrow(
-    QueueNotFoundError,
+    QueueQueueNotFoundError,
   );
 
   const m5 = await ns.getNamespacesAsync();

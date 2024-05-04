@@ -7,6 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import { ProducerError } from './producer.error.js';
+import { RedisKeysError } from './redis-keys.error.js';
 
-export class ProducerMessageNotScheduledError extends ProducerError {}
+export class RedisKeysInvalidKeyError extends RedisKeysError {}

@@ -8,14 +8,20 @@
  */
 
 import { test, expect } from '@jest/globals';
-import { RedisKeysError } from '../../../../src/common/redis-keys/redis-keys.error.js';
+import { ExchangeInvalidQueueParamsError } from '../../../../src/lib/exchange/errors/exchange-invalid-queue-params.error.js';
 import { getDirectExchange } from '../../../common/exchange.js';
 
 test('DirectExchange', async () => {
   const e = getDirectExchange();
-  await expect(e.getQueuesAsync('!@223333')).rejects.toThrow(RedisKeysError);
-  await expect(e.getQueuesAsync('223333.')).rejects.toThrow(RedisKeysError);
-  await expect(e.getQueuesAsync('223333.w')).rejects.toThrow(RedisKeysError);
+  await expect(e.getQueuesAsync('!@223333')).rejects.toThrow(
+    ExchangeInvalidQueueParamsError,
+  );
+  await expect(e.getQueuesAsync('223333.')).rejects.toThrow(
+    ExchangeInvalidQueueParamsError,
+  );
+  await expect(e.getQueuesAsync('223333.w')).rejects.toThrow(
+    ExchangeInvalidQueueParamsError,
+  );
   await expect(e.getQueuesAsync('a223333.w')).resolves.not.toThrow();
   await expect(e.getQueuesAsync('a223333.w_e')).resolves.not.toThrow();
   await expect(e.getQueuesAsync('a223333.w-e')).resolves.not.toThrow();

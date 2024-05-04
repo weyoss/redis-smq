@@ -9,4 +9,4 @@
 
 import { ProducerError } from './producer.error.js';
 
-export class ProducerMessageNotPublishedError extends ProducerError {}
+export class ProducerScheduleInvalidParametersError extends ProducerError {}

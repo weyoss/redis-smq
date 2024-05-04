@@ -9,7 +9,7 @@
 
 import { ICallback, IRedisClient, PanicError } from 'redis-smq-common';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
-import { QueueNotFoundError } from '../errors/index.js';
+import { QueueQueueNotFoundError } from '../errors/index.js';
 import {
   EQueueDeliveryModel,
   EQueueProperty,
@@ -55,7 +55,8 @@ export function _getQueueProperties(
   const { keyQueueProperties } = redisKeys.getQueueKeys(queueParams, null);
   redisClient.hgetall(keyQueueProperties, (err, reply) => {
     if (err) cb(err);
-    else if (!reply || !Object.keys(reply).length) cb(new QueueNotFoundError());
+    else if (!reply || !Object.keys(reply).length)
+      cb(new QueueQueueNotFoundError());
     else {
       const queueProperties = parseProperties(reply);
       if (queueProperties instanceof Error) cb(queueProperties);

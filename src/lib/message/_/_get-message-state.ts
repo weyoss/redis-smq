@@ -9,7 +9,7 @@
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
-import { MessageNotFoundError } from '../errors/index.js';
+import { MessageMessageNotFoundError } from '../errors/index.js';
 import { EMessageProperty, IMessageStateTransferable } from '../types/index.js';
 
 export function _getMessageState(
@@ -20,7 +20,7 @@ export function _getMessageState(
   const { keyMessage } = redisKeys.getMessageKeys(messageId);
   redisClient.hget(keyMessage, String(EMessageProperty.STATE), (err, reply) => {
     if (err) cb(err);
-    else if (!reply) cb(new MessageNotFoundError());
+    else if (!reply) cb(new MessageMessageNotFoundError());
     else cb(null, JSON.parse(reply));
   });
 }

@@ -7,10 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import { MessageError } from './message.error.js';
+import { ExchangeError } from './exchange.error.js';
 
-export class MessageExchangeRequiredError extends MessageError {
-  constructor() {
-    super(`A message exchange is required`);
-  }
-}
+export class ExchangeInvalidFanOutParamsError extends ExchangeError {}

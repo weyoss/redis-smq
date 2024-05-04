@@ -13,7 +13,7 @@ import { IQueueParams } from '../queue/index.js';
 import {
   MessageDestinationQueueAlreadySetError,
   MessageDestinationQueueRequiredError,
-  MessageExchangeRequiredError,
+  MessageMessageExchangeRequiredError,
 } from './errors/index.js';
 import { MessageState } from './message-state.js';
 import { ProducibleMessage } from './producible-message.js';
@@ -150,7 +150,7 @@ export class MessageEnvelope {
   getExchange(): TExchangeTransferable {
     const exchange = this.producibleMessage.getExchange();
     if (!exchange) {
-      throw new MessageExchangeRequiredError();
+      throw new MessageMessageExchangeRequiredError();
     }
     return exchange;
   }

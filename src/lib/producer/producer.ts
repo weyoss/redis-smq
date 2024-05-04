@@ -35,10 +35,15 @@ import { MessageEnvelope } from '../message/message-envelope.js';
 import { EQueueProperty, EQueueType, IQueueParams } from '../queue/index.js';
 import { _scheduleMessage } from './_/_schedule-message.js';
 import {
+  ProducerError,
+  ProducerExchangeNoMatchedQueueError,
   ProducerInstanceNotRunningError,
   ProducerMessageExchangeRequiredError,
-  ProducerMessageNotPublishedError,
-  ProducerQueueWithoutConsumerGroupsError,
+  ProducerMessagePriorityRequiredError,
+  ProducerPriorityQueuingNotEnabledError,
+  ProducerQueueMissingConsumerGroupsError,
+  ProducerQueueNotFoundError,
+  ProducerUnknownQueueTypeError,
 } from './errors/index.js';
 import { eventBusPublisher } from './event-bus-publisher.js';
 import { QueueConsumerGroupsCache } from './queue-consumer-groups-cache.js';
@@ -182,13 +187,19 @@ export class Producer extends Runnable<TProducerEvent> {
       ],
       (err, reply) => {
         if (err) cb(err);
-        else if (reply !== 'OK')
-          cb(
-            new ProducerMessageNotPublishedError(
-              reply ? String(reply) : undefined,
-            ),
-          );
-        else cb();
+        else if (reply !== 'OK') {
+          if (reply === 'QUEUE_NOT_FOUND') {
+            cb(new ProducerQueueNotFoundError());
+          } else if (reply === 'MESSAGE_PRIORITY_REQUIRED') {
+            cb(new ProducerMessagePriorityRequiredError());
+          } else if (reply === 'PRIORITY_QUEUING_NOT_ENABLED') {
+            cb(new ProducerPriorityQueuingNotEnabledError());
+          } else if (reply === 'UNKNOWN_QUEUE_TYPE') {
+            cb(new ProducerUnknownQueueTypeError());
+          } else {
+            cb(new ProducerError());
+          }
+        } else cb();
       },
     );
   }
@@ -237,7 +248,7 @@ export class Producer extends Runnable<TProducerEvent> {
       this.getQueueConsumerGroupsHandler().getConsumerGroups(queue);
     if (exists) {
       if (!consumerGroups.length) {
-        cb(new ProducerQueueWithoutConsumerGroupsError());
+        cb(new ProducerQueueMissingConsumerGroupsError());
       }
       const ids: string[] = [];
       async.eachOf(
@@ -283,11 +294,7 @@ export class Producer extends Runnable<TProducerEvent> {
         _getExchangeQueues(redisClient, exchangeParams, (err, queues) => {
           if (err) cb(err);
           else if (!queues?.length)
-            cb(
-              new ProducerMessageNotPublishedError(
-                `The exchange does not match any queue.`,
-              ),
-            );
+            cb(new ProducerExchangeNoMatchedQueueError());
           else {
             const messages: string[] = [];
             async.eachOf(

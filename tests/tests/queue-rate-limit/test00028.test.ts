@@ -8,6 +8,8 @@
  */
 
 import { test, expect } from '@jest/globals';
+import { QueueRateLimitInvalidIntervalError } from '../../../src/lib/queue-rate-limit/errors/queue-rate-limit-invalid-interval.error.js';
+import { QueueRateLimitInvalidLimitError } from '../../../src/lib/queue-rate-limit/errors/queue-rate-limit-invalid-limit.error.js';
 import { defaultQueue } from '../../common/message-producing-consuming.js';
 import { getQueueRateLimit } from '../../common/queue-rate-limit.js';
 
@@ -31,14 +33,12 @@ test('SetQueueRateLimit()/GetQueueRateLimit()/ClearQueueRateLimit()', async () =
       limit: 0,
       interval: 1000,
     }),
-  ).rejects.toThrow(`Invalid rateLimit.limit. Expected a positive integer > 0`);
+  ).rejects.toThrow(QueueRateLimitInvalidLimitError);
 
   await expect(
     queueRateLimit.setAsync(defaultQueue, {
       limit: 4,
       interval: 0,
     }),
-  ).rejects.toThrow(
-    `Invalid rateLimit.interval. Expected a positive integer >= 1000`,
-  );
+  ).rejects.toThrow(QueueRateLimitInvalidIntervalError);
 });

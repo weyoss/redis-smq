@@ -9,10 +9,4 @@
 
 import { ConsumerError } from './consumer.error.js';
 
-export class ConsumerGroupIdRequiredError extends ConsumerError {
-  constructor() {
-    super(
-      `A Consumer group is required for queues of a PubSub delivery model.`,
-    );
-  }
-}
+export class ConsumerConsumerGroupIdRequiredError extends ConsumerError {}

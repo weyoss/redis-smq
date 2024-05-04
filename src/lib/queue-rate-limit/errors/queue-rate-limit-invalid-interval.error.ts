@@ -7,6 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import { ConsumerError } from './consumer.error.js';
+import { QueueRateLimitError } from './queue-rate-limit.error.js';
 
-export class ConsumerGroupDeleteError extends ConsumerError {}
+export class QueueRateLimitInvalidIntervalError extends QueueRateLimitError {}

@@ -8,7 +8,7 @@
  */
 
 import { test, expect } from '@jest/globals';
-import { MessageNotFoundError } from '../../../src/lib/index.js';
+import { MessageMessageNotFoundError } from '../../../src/lib/index.js';
 import { getMessage } from '../../common/message.js';
 import {
   createQueue,
@@ -67,6 +67,6 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   expect(count1.deadLettered).toBe(0);
 
   await expect(message.deleteMessageByIdAsync(messageId)).rejects.toThrow(
-    MessageNotFoundError,
+    MessageMessageNotFoundError,
   );
 });

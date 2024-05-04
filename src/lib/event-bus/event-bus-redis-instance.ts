@@ -18,7 +18,7 @@ import {
 } from 'redis-smq-common';
 import { TRedisSMQEvent } from '../../common/index.js';
 import { Configuration } from '../../config/index.js';
-import { EventBusLockError } from './errors/event-bus-lock.error.js';
+import { EventBusInstanceLockError } from './errors/event-bus-instance-lock.error.js';
 
 export class EventBusRedisInstance extends EventEmitter<
   Pick<TRedisClientEvent, 'error'>
@@ -59,7 +59,7 @@ export class EventBusRedisInstance extends EventEmitter<
           },
         );
       } else cb(null, this.instance);
-    } else cb(new EventBusLockError());
+    } else cb(new EventBusInstanceLockError());
   }
 
   shutdown = (cb: ICallback<void>): void => {

@@ -7,6 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import { ProducerError } from './producer.error.js';
+import { MessageError } from './message.error.js';
 
-export class ProducerQueueWithoutConsumerGroupsError extends ProducerError {}
+export class MessageMessageExchangeRequiredError extends MessageError {}

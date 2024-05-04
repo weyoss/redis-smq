@@ -11,7 +11,7 @@ import { test, expect } from '@jest/globals';
 import {
   MessageDestinationQueueAlreadySetError,
   MessageDestinationQueueRequiredError,
-  MessageExchangeRequiredError,
+  MessageMessageExchangeRequiredError,
   ProducibleMessage,
 } from '../../../src/lib/index.js';
 import { MessageEnvelope } from '../../../src/lib/message/message-envelope.js';
@@ -26,5 +26,5 @@ test('MessageEnvelope: additional checks', async () => {
   expect(() => env.setDestinationQueue({ ns: 'ns1', name: 'queue2' })).toThrow(
     MessageDestinationQueueAlreadySetError,
   );
-  expect(() => env.getExchange()).toThrow(MessageExchangeRequiredError);
+  expect(() => env.getExchange()).toThrow(MessageMessageExchangeRequiredError);
 });

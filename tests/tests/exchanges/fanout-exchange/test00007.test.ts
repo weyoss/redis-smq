@@ -8,7 +8,12 @@
  */
 
 import { test, expect } from '@jest/globals';
-import { EQueueDeliveryModel, EQueueType } from '../../../../src/lib/index.js';
+import {
+  EQueueDeliveryModel,
+  EQueueType,
+  ExchangeFanOutExchangeHasBoundQueuesError,
+  ExchangeQueueIsNotBoundToExchangeError,
+} from '../../../../src/lib/index.js';
 import { getFanOutExchange } from '../../../common/exchange.js';
 import { getQueue } from '../../../common/queue.js';
 
@@ -43,12 +48,12 @@ test('ExchangeFanOut: creating and deleting an exchange', async () => {
   expect(r6).toEqual([q1]);
 
   await expect(fanOutExchange.deleteExchangeAsync('e2')).rejects.toThrow(
-    `Exchange has 1 bound queue(s). Unbind all queues before deleting the exchange.`,
+    ExchangeFanOutExchangeHasBoundQueuesError,
   );
 
   await fanOutExchange.unbindQueueAsync(q1, 'e2');
   await expect(fanOutExchange.unbindQueueAsync(q1, 'e2')).rejects.toThrow(
-    `Queue ${q1.name}@${q1.ns} is not bound to [e2] exchange.`,
+    ExchangeQueueIsNotBoundToExchangeError,
   );
 
   await fanOutExchange.deleteExchangeAsync('e2');

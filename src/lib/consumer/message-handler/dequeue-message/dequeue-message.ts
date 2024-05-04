@@ -32,12 +32,12 @@ import {
   EQueueType,
   IQueueParsedParams,
   IQueueRateLimit,
-  QueueNotFoundError,
+  QueueQueueNotFoundError,
   TQueueConsumer,
 } from '../../../queue/index.js';
 import {
-  ConsumerGroupIdNotSupportedError,
-  ConsumerGroupIdRequiredError,
+  ConsumerConsumerGroupIdNotSupportedError,
+  ConsumerConsumerGroupIdRequiredError,
 } from '../../errors/index.js';
 import { eventBusPublisher } from './event-bus-publisher.js';
 
@@ -172,7 +172,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
           ],
           (err, reply) => {
             if (err) cb(err);
-            else if (!reply) cb(new QueueNotFoundError());
+            else if (!reply) cb(new QueueQueueNotFoundError());
             else cb();
           },
         );
@@ -198,14 +198,14 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
                 queueProperties.deliveryModel ===
                 EQueueDeliveryModel.POINT_TO_POINT
               ) {
-                if (groupId) cb(new ConsumerGroupIdNotSupportedError());
+                if (groupId) cb(new ConsumerConsumerGroupIdNotSupportedError());
                 else cb();
               }
               // PubSub delivery model
               else if (
                 queueProperties.deliveryModel === EQueueDeliveryModel.PUB_SUB
               ) {
-                if (!groupId) cb(new ConsumerGroupIdRequiredError());
+                if (!groupId) cb(new ConsumerConsumerGroupIdRequiredError());
                 else {
                   const eventBus = this.eventBus.getInstance();
                   if (eventBus instanceof Error) cb(eventBus);

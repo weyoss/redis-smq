@@ -19,9 +19,9 @@ import { ConsumerHeartbeat } from '../../consumer/consumer-heartbeat/consumer-he
 import { consumerQueues } from '../../consumer/consumer-queues.js';
 import { processingQueue } from '../../consumer/message-handler/processing-queue.js';
 import {
-  QueueHasRunningConsumersError,
-  QueueNotEmptyError,
-  QueueNotFoundError,
+  QueueQueueHasRunningConsumersError,
+  QueueQueueNotEmptyError,
+  QueueQueueNotFoundError,
 } from '../errors/index.js';
 import { EQueueDeliveryModel, IQueueParams } from '../types/index.js';
 import { _getQueueProperties } from './_get-queue-properties.js';
@@ -41,7 +41,7 @@ function checkOnlineConsumers(
           else {
             const r = reply ?? {};
             const onlineArr = Object.keys(r).filter((id) => r[id]);
-            if (onlineArr.length) cb(new QueueHasRunningConsumersError());
+            if (onlineArr.length) cb(new QueueQueueHasRunningConsumersError());
             else cb();
           }
         },
@@ -106,10 +106,10 @@ export function _deleteQueue(
             (cb: ICallback<void>): void =>
               _getQueueProperties(redisClient, queueParams, (err, reply) => {
                 if (err) cb(err);
-                else if (!reply) cb(new QueueNotFoundError());
+                else if (!reply) cb(new QueueQueueNotFoundError());
                 else {
                   const messagesCount = reply.messagesCount;
-                  if (messagesCount) cb(new QueueNotEmptyError());
+                  if (messagesCount) cb(new QueueQueueNotEmptyError());
                   else {
                     exchange = reply.exchange ?? null;
                     pubSubDelivery =

@@ -7,6 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import { RedisSMQError } from 'redis-smq-common';
+import { QueueError } from './queue.error.js';
 
-export class EventBusLockError extends RedisSMQError {}
+export class QueueQueueNotEmptyError extends QueueError {}

@@ -14,12 +14,13 @@ import {
   EQueueDeliveryModel,
   EQueueType,
   IMessageTransferable,
-  MessageRequeueError,
+  MessageMessageNotRequeuableError,
   ProducibleMessage,
 } from '../../../src/lib/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import { untilMessageAcknowledged } from '../../common/events.js';
 import { defaultQueue } from '../../common/message-producing-consuming.js';
+import { getMessage } from '../../common/message.js';
 import { getProducer } from '../../common/producer.js';
 import { getQueue } from '../../common/queue.js';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
@@ -43,8 +44,8 @@ test('Combined test. Requeue a priority message from acknowledged queue. Check q
     ),
   });
 
-  const message = new ProducibleMessage();
-  message
+  const msg = new ProducibleMessage();
+  msg
     .setBody({ hello: 'world' })
     .setQueue(defaultQueue)
     .setPriority(EMessagePriority.ABOVE_NORMAL);
@@ -52,7 +53,7 @@ test('Combined test. Requeue a priority message from acknowledged queue. Check q
   const producer = getProducer();
   await producer.runAsync();
 
-  const [id] = await producer.produceAsync(message);
+  const [id] = await producer.produceAsync(msg);
 
   consumer.run(() => void 0);
   await untilMessageAcknowledged(consumer);
@@ -71,7 +72,8 @@ test('Combined test. Requeue a priority message from acknowledged queue. Check q
   expect(count.pending).toBe(0);
   expect(count.acknowledged).toBe(1);
 
-  await acknowledgedMessages.requeueMessageAsync(defaultQueue, id);
+  const message = await getMessage();
+  await message.requeueMessageByIdAsync(id);
 
   const count2 = await queueMessages.countMessagesByStatusAsync(defaultQueue);
   expect(count2.pending).toBe(1);
@@ -91,7 +93,7 @@ test('Combined test. Requeue a priority message from acknowledged queue. Check q
   expect(res7.items.length).toBe(1);
   expect(res7.items[0].id).toEqual(id);
 
-  await expect(
-    acknowledgedMessages.requeueMessageAsync(defaultQueue, id),
-  ).rejects.toThrow(MessageRequeueError);
+  await expect(message.requeueMessageByIdAsync(id)).rejects.toThrow(
+    MessageMessageNotRequeuableError,
+  );
 });

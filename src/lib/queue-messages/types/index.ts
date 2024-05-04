@@ -57,11 +57,3 @@ export type TQueueMessagesPaginationParams = {
   pageSize: number;
   consumerGroupId?: string | null;
 };
-
-export interface IQueueMessagesRequeuable {
-  requeueMessage(
-    queue: string | IQueueParams,
-    messageId: string,
-    cb: ICallback<void>,
-  ): void;
-}
