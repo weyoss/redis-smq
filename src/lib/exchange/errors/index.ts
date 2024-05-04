@@ -14,3 +14,4 @@ export { ExchangeInvalidFanOutParamsError } from './exchange-invalid-fan-out-par
 export { ExchangeInvalidQueueParamsError } from './exchange-invalid-queue-params.error.js';
 export { ExchangeFanOutExchangeHasBoundQueuesError } from './exchange-fan-out-exchange-has-bound-queues.error.js';
 export { ExchangeQueueIsNotBoundToExchangeError } from './exchange-queue-is-not-bound-to-exchange.error.js';
+export { ExchangeFanOutQueueTypeError } from './exchange-fan-out-queue-type.error.js';
