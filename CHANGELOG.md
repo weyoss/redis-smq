@@ -1,5 +1,24 @@
 
 
+## [8.0.0-rc.23](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.22...v8.0.0-rc.23) (2024-05-10)
+
+
+### Bug Fixes
+
+* use namespaced errors ([637096b](https://github.com/weyoss/redis-smq/commit/637096baf1f1e201b3dc5cf381944dab608b296d))
+* validate queue delivery model before adding consumer groups ([eebcae7](https://github.com/weyoss/redis-smq/commit/eebcae7da0364ffd8cf731e451dbfce3ed32fd11))
+
+
+### Documentation
+
+* add new error classes reference ([5f7427d](https://github.com/weyoss/redis-smq/commit/5f7427d0ed100624f10e3b9cc1b615bf9ae51730))
+* update Message API reference ([9c1fa7a](https://github.com/weyoss/redis-smq/commit/9c1fa7a129dd159ad118276fd904232d71bde508))
+
+
+### Tests
+
+* use QueueMessagesConsumerGroupIdRequiredError class ([efb9821](https://github.com/weyoss/redis-smq/commit/efb98215b3bb93460ef07345fc447a286474b914))
+
 ## [8.0.0-rc.22](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.21...v8.0.0-rc.22) (2024-05-04)
 
 
