@@ -19,7 +19,10 @@ import { Configuration } from '../../config/index.js';
 import { _deleteQueue } from '../queue/_/_delete-queue.js';
 import { _getQueues } from '../queue/_/_get-queues.js';
 import { IQueueParams } from '../queue/index.js';
-import { NamespaceNotFoundError } from './errors/index.js';
+import {
+  NamespaceInvalidNamespaceError,
+  NamespaceNotFoundError,
+} from './errors/index.js';
 
 export class Namespace {
   protected logger;
@@ -51,7 +54,7 @@ export class Namespace {
 
   getNamespaceQueues(namespace: string, cb: ICallback<IQueueParams[]>): void {
     const ns = redisKeys.validateRedisKey(namespace);
-    if (ns instanceof Error) cb(ns);
+    if (ns instanceof Error) cb(new NamespaceInvalidNamespaceError());
     else {
       this.redisClient.getSetInstance((err, client) => {
         if (err) cb(err);
@@ -90,7 +93,7 @@ export class Namespace {
 
   delete(namespace: string, cb: ICallback<void>): void {
     const ns = redisKeys.validateRedisKey(namespace);
-    if (ns instanceof Error) cb(ns);
+    if (ns instanceof Error) cb(new NamespaceInvalidNamespaceError());
     else {
       this.redisClient.getSetInstance((err, client) => {
         if (err) cb(err);

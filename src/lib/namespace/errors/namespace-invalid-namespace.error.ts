@@ -7,6 +7,6 @@
  * in the root directory of this source tree.
  */
 
-export { NamespaceNotFoundError } from './namespace-not-found.error.js';
-export { NamespaceError } from './namespace.error.js';
-export { NamespaceInvalidNamespaceError } from './namespace-invalid-namespace.error.js';
+import { NamespaceError } from './namespace.error.js';
+
+export class NamespaceInvalidNamespaceError extends NamespaceError {}
