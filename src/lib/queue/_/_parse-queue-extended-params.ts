@@ -31,8 +31,7 @@ export function _parseQueueExtendedParams(
 ): IQueueParsedParams | QueueInvalidQueueParameterError {
   if (typeof args === 'string') {
     const queueParams = _parseQueueParams(args);
-    if (queueParams instanceof Error)
-      return new QueueInvalidQueueParameterError();
+    if (queueParams instanceof Error) return queueParams;
     return {
       queueParams,
       groupId: null,
@@ -40,8 +39,7 @@ export function _parseQueueExtendedParams(
   }
   if (isQueueParams(args)) {
     const queueParams = _parseQueueParams(args);
-    if (queueParams instanceof Error)
-      return new QueueInvalidQueueParameterError();
+    if (queueParams instanceof Error) return queueParams;
     return {
       queueParams,
       groupId: null,
