@@ -20,6 +20,7 @@ import {
   MessageError,
   MessageInvalidParametersError,
   MessageMessageInProcessError,
+  MessageMessageNotDeletedError,
   MessageMessageNotFoundError,
 } from '../errors/index.js';
 import { EMessageProperty, EMessagePropertyStatus } from '../types/index.js';
@@ -99,7 +100,7 @@ export function _deleteMessage(
               } else if (reply === 'MESSAGE_IN_PROCESS') {
                 cb(new MessageMessageInProcessError());
               } else if (reply === 'MESSAGE_NOT_DELETED') {
-                cb(new MessageMessageNotFoundError());
+                cb(new MessageMessageNotDeletedError());
               } else if (reply === 'INVALID_PARAMETERS') {
                 cb(new MessageInvalidParametersError());
               } else {
