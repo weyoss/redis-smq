@@ -11,3 +11,4 @@ export { ConsumerGroupsError } from './consumer-groups.error.js';
 export { ConsumerGroupsQueueNotFoundError } from './consumer-groups-queue-not-found.error.js';
 export { ConsumerGroupsConsumerGroupNotEmptyError } from './consumer-groups-consumer-group-not-empty.error.js';
 export { ConsumerGroupsInvalidGroupIdError } from './consumer-groups-invalid-group-id.error.js';
+export { ConsumerGroupsConsumerGroupsNotSupportedError } from './consumer-groups-consumer-groups-not-supported.error.js';
