@@ -11,7 +11,6 @@ import { test, expect } from '@jest/globals';
 import bluebird from 'bluebird';
 import {
   Consumer,
-  ConsumerConsumerGroupIdRequiredError,
   ConsumerGroups,
   EMessagePriority,
   EQueueDeliveryModel,
@@ -19,6 +18,7 @@ import {
   IQueueParams,
   Producer,
   ProducibleMessage,
+  QueueMessagesConsumerGroupIdRequiredError,
 } from '../../../src/lib/index.js';
 import { getMessage } from '../../common/message.js';
 import { getQueue } from '../../common/queue.js';
@@ -69,7 +69,7 @@ test('Publish and consume a message to/from a consumer group', async () => {
 
   const pendingMessages = await getQueuePendingMessages();
   await expect(pendingMessages.getMessagesAsync(queue1, 1, 10)).rejects.toThrow(
-    ConsumerConsumerGroupIdRequiredError,
+    QueueMessagesConsumerGroupIdRequiredError,
   );
 
   const messages = await pendingMessages.getMessagesAsync(
