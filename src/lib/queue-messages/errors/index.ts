@@ -8,3 +8,5 @@
  */
 
 export { QueueMessagesError } from './queue-messages.error.js';
+export { QueueMessagesConsumerGroupIdRequiredError } from './queue-messages-consumer-group-id-required.error.js';
+export { QueueMessagesConsumerGroupIdNotSupportedError } from './queue-messages-consumer-group-id-not-supported.error.js';

@@ -16,3 +16,4 @@ export { MessageMessagePropertyError } from './message-message-property.error.js
 export { MessageMessageInProcessError } from './message-message-in-process.error.js';
 export { MessageInvalidParametersError } from './message-invalid-parameters.error.js';
 export { MessageMessageNotRequeuableError } from './message-message-not-requeuable.error.js';
+export { MessageMessageNotDeletedError } from './message-message-not-deleted.error.js';

@@ -8,12 +8,10 @@
  */
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
-import {
-  ConsumerConsumerGroupIdNotSupportedError,
-  ConsumerConsumerGroupIdRequiredError,
-} from '../../consumer/index.js';
 import { _getQueueProperties } from '../../queue/_/_get-queue-properties.js';
 import { EQueueDeliveryModel, IQueueParsedParams } from '../../queue/index.js';
+import { QueueMessagesConsumerGroupIdNotSupportedError } from '../errors/queue-messages-consumer-group-id-not-supported.error.js';
+import { QueueMessagesConsumerGroupIdRequiredError } from '../errors/queue-messages-consumer-group-id-required.error.js';
 
 export function _validateQueueExtendedParams(
   redisClient: IRedisClient,
@@ -30,12 +28,12 @@ export function _validateQueueExtendedParams(
         properties?.deliveryModel === EQueueDeliveryModel.PUB_SUB &&
         !groupId
       ) {
-        cb(new ConsumerConsumerGroupIdRequiredError());
+        cb(new QueueMessagesConsumerGroupIdRequiredError());
       } else if (
         properties?.deliveryModel === EQueueDeliveryModel.POINT_TO_POINT &&
         groupId
       ) {
-        cb(new ConsumerConsumerGroupIdNotSupportedError());
+        cb(new QueueMessagesConsumerGroupIdNotSupportedError());
       } else cb();
     }
   });
