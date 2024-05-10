@@ -7,10 +7,18 @@
  * in the root directory of this source tree.
  */
 
-import { ICallback, IEventBus, IRedisClient } from 'redis-smq-common';
+import {
+  async,
+  CallbackEmptyReplyError,
+  ICallback,
+  IEventBus,
+  IRedisClient,
+} from 'redis-smq-common';
 import { TRedisSMQEvent } from '../../../common/index.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
-import { IQueueParams } from '../../queue/index.js';
+import { _getQueueProperties } from '../../queue/_/_get-queue-properties.js';
+import { EQueueDeliveryModel, IQueueParams } from '../../queue/index.js';
+import { ConsumerGroupsConsumerGroupsNotSupportedError } from '../errors/consumer-groups-consumer-groups-not-supported.error.js';
 import { ConsumerGroupsInvalidGroupIdError } from '../errors/consumer-groups-invalid-group-id.error.js';
 
 export function _saveConsumerGroup(
@@ -23,13 +31,29 @@ export function _saveConsumerGroup(
   const gid = redisKeys.validateRedisKey(groupId);
   if (gid instanceof Error) cb(new ConsumerGroupsInvalidGroupIdError());
   else {
-    const { keyQueueConsumerGroups } = redisKeys.getQueueKeys(queue, gid);
-    redisClient.sadd(keyQueueConsumerGroups, gid, (err, reply) => {
-      if (err) cb(err);
-      else {
-        if (reply) eventBus.emit('queue.consumerGroupCreated', queue, groupId);
-        cb(null, reply);
-      }
-    });
+    async.waterfall(
+      [
+        (cb: ICallback<void>) =>
+          _getQueueProperties(redisClient, queue, (err, properties) => {
+            if (err) cb(err);
+            else if (!properties) cb(new CallbackEmptyReplyError());
+            else if (properties.deliveryModel !== EQueueDeliveryModel.PUB_SUB)
+              cb(new ConsumerGroupsConsumerGroupsNotSupportedError());
+            else cb();
+          }),
+        (cb: ICallback<number>) => {
+          const { keyQueueConsumerGroups } = redisKeys.getQueueKeys(queue, gid);
+          redisClient.sadd(keyQueueConsumerGroups, gid, (err, reply) => {
+            if (err) cb(err);
+            else {
+              if (reply)
+                eventBus.emit('queue.consumerGroupCreated', queue, groupId);
+              cb(null, reply);
+            }
+          });
+        },
+      ],
+      cb,
+    );
   }
 }
