@@ -72,6 +72,7 @@
 - [MessageMessageNotRequeuableError](classes/MessageMessageNotRequeuableError.md)
 - [MessageMessagePropertyError](classes/MessageMessagePropertyError.md)
 - [NamespaceError](classes/NamespaceError.md)
+- [NamespaceInvalidNamespaceError](classes/NamespaceInvalidNamespaceError.md)
 - [NamespaceNotFoundError](classes/NamespaceNotFoundError.md)
 - [ProducerError](classes/ProducerError.md)
 - [ProducerExchangeNoMatchedQueueError](classes/ProducerExchangeNoMatchedQueueError.md)
@@ -95,6 +96,7 @@
 - [QueueRateLimitError](classes/QueueRateLimitError.md)
 - [QueueRateLimitInvalidIntervalError](classes/QueueRateLimitInvalidIntervalError.md)
 - [QueueRateLimitInvalidLimitError](classes/QueueRateLimitInvalidLimitError.md)
+- [QueueRateLimitQueueNotFoundError](classes/QueueRateLimitQueueNotFoundError.md)
 
 ### Interfaces
 
