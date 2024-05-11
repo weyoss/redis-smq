@@ -10,3 +10,4 @@
 export { QueueRateLimitError } from './queue-rate-limit.error.js';
 export { QueueRateLimitInvalidIntervalError } from './queue-rate-limit-invalid-interval.error.js';
 export { QueueRateLimitInvalidLimitError } from './queue-rate-limit-invalid-limit.error.js';
+export { QueueRateLimitQueueNotFoundError } from './queue-rate-limit-queue-not-found.error.js';

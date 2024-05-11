@@ -7,7 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { beforeAll, afterAll, beforeEach, afterEach } from '@jest/globals';
+import {
+  beforeAll,
+  afterAll,
+  beforeEach,
+  afterEach,
+  jest,
+} from '@jest/globals';
 import { shutdown } from './common/shut-down.js';
 import { startUp } from './common/start-up.js';
 
@@ -16,7 +22,10 @@ beforeAll(() => void 0);
 afterAll(() => void 0);
 
 beforeEach(async () => {
+  jest.resetAllMocks();
+  jest.resetModules();
   await startUp();
+  jest.resetModules();
 });
 
 afterEach(async () => {

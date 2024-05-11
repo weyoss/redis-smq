@@ -14,6 +14,7 @@ import {
   logger,
 } from 'redis-smq-common';
 import { RedisClientInstance } from '../../common/redis-client/redis-client-instance.js';
+import { ELuaScriptName } from '../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../config/index.js';
 import { _parseQueueParamsAndValidate } from '../queue/_/_parse-queue-params-and-validate.js';
@@ -27,6 +28,7 @@ import { _hasRateLimitExceeded } from './_/_has-rate-limit-exceeded.js';
 import {
   QueueRateLimitInvalidLimitError,
   QueueRateLimitInvalidIntervalError,
+  QueueRateLimitQueueNotFoundError,
 } from './errors/index.js';
 
 export class QueueRateLimit {
@@ -91,11 +93,16 @@ export class QueueRateLimit {
               queueParams,
               null,
             );
-            client.hset(
-              keyQueueProperties,
-              String(EQueueProperty.RATE_LIMIT),
-              JSON.stringify(validatedRateLimit),
-              (err) => cb(err),
+            client.runScript(
+              ELuaScriptName.SET_QUEUE_RATE_LIMIT,
+              [keyQueueProperties],
+              [EQueueProperty.RATE_LIMIT, JSON.stringify(validatedRateLimit)],
+              (err, reply) => {
+                if (err) cb(err);
+                else if (reply !== 'OK')
+                  cb(new QueueRateLimitQueueNotFoundError());
+                else cb();
+              },
             );
           }
         });

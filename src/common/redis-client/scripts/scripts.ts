@@ -25,6 +25,7 @@ export enum ELuaScriptName {
   FETCH_MESSAGE_FOR_PROCESSING = 'FETCH_MESSAGE_FOR_PROCESSING',
   DELETE_CONSUMER_GROUP = 'DELETE_CONSUMER_GROUP',
   CLEANUP_OFFLINE_CONSUMER = 'CLEANUP_OFFLINE_CONSUMER',
+  SET_QUEUE_RATE_LIMIT = 'SET_QUEUE_RATE_LIMIT',
 }
 
 RedisClientAbstract.addScript(
@@ -101,5 +102,11 @@ RedisClientAbstract.addScript(
   ELuaScriptName.CLEANUP_OFFLINE_CONSUMER,
   fs
     .readFileSync(resolve(getDirname(), './lua/cleanup-offline-consumer.lua'))
+    .toString(),
+);
+RedisClientAbstract.addScript(
+  ELuaScriptName.SET_QUEUE_RATE_LIMIT,
+  fs
+    .readFileSync(resolve(getDirname(), './lua/set-queue-rate-limit.lua'))
     .toString(),
 );
