@@ -10,11 +10,23 @@
 import { test, expect } from '@jest/globals';
 import { QueueRateLimitInvalidIntervalError } from '../../../src/lib/queue-rate-limit/errors/queue-rate-limit-invalid-interval.error.js';
 import { QueueRateLimitInvalidLimitError } from '../../../src/lib/queue-rate-limit/errors/queue-rate-limit-invalid-limit.error.js';
-import { defaultQueue } from '../../common/message-producing-consuming.js';
+import { QueueQueueNotFoundError } from '../../../src/lib/queue/errors/queue-queue-not-found.error.js';
+import {
+  createQueue,
+  defaultQueue,
+} from '../../common/message-producing-consuming.js';
 import { getQueueRateLimit } from '../../common/queue-rate-limit.js';
 
 test('SetQueueRateLimit()/GetQueueRateLimit()/ClearQueueRateLimit()', async () => {
   const queueRateLimit = await getQueueRateLimit();
+  await expect(
+    queueRateLimit.setAsync(defaultQueue, {
+      limit: 5,
+      interval: 1000,
+    }),
+  ).rejects.toThrow(QueueQueueNotFoundError);
+
+  await createQueue(defaultQueue, false);
   await queueRateLimit.setAsync(defaultQueue, {
     limit: 5,
     interval: 1000,
