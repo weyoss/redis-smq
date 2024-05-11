@@ -22,6 +22,7 @@ import { _deleteQueue } from './_/_delete-queue.js';
 import { _getQueueProperties } from './_/_get-queue-properties.js';
 import { _getQueues } from './_/_get-queues.js';
 import { _parseQueueParams } from './_/_parse-queue-params.js';
+import { _queueExists } from './_/_queue-exists.js';
 import { QueueQueueExistsError } from './errors/index.js';
 import {
   EQueueDeliveryModel,
@@ -117,17 +118,7 @@ export class Queue {
       this.redisClient.getSetInstance((err, client) => {
         if (err) cb(err);
         else if (!client) cb(new CallbackEmptyReplyError());
-        else {
-          const { keyQueues } = redisKeys.getMainKeys();
-          client.sismember(
-            keyQueues,
-            JSON.stringify(queueParams),
-            (err, reply) => {
-              if (err) cb(err);
-              else cb(null, !!reply);
-            },
-          );
-        }
+        else _queueExists(client, queueParams, cb);
       });
     }
   }
