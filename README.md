@@ -30,7 +30,7 @@ RedisSMQ is a Node.js library for queuing messages (aka jobs) and processing the
 * Messages can be [set to expire](docs/api/classes/ProducibleMessage.md#setttl) when not delivered within a given amount of time or to have a [consumption timeout](docs/api/classes/ProducibleMessage.md#setconsumetimeout) while being in process.
 * Queues may be [rate Limited](docs/queue-rate-limiting.md) to control the rate at which the messages are consumed.
 * Has a builtin [scheduler](docs/scheduling-messages.md) allowing messages [to be delayed](docs/api/classes/ProducibleMessage.md#setscheduleddelay), [to be delivered for N times](docs/api/classes/ProducibleMessage.md#setscheduledrepeat) with an optional [period between deliveries](docs/api/classes/ProducibleMessage.md#setscheduledrepeatperiod), or simply [to be scheduled using CRON expressions](docs/api/classes/ProducibleMessage.md#setscheduledcron).
-* Provides [an HTTP API](https://github.com/weyoss/redis-smq-monitor) to interact with the message queue for external services.
+* Provides [an HTTP interface](https://github.com/weyoss/redis-smq-rest-api) to interact with the message queue using a RESTful API.
 * RedisSMQ can be managed also from your [web browser](https://github.com/weyoss/redis-smq-monitor-client).
 * Either [node-redis](https://github.com/redis/node-redis) or [ioredis](https://github.com/luin/ioredis) can be used as a Redis client.
 * [Highly optimized](https://lgtm.com/projects/g/weyoss/redis-smq/context:javascript), implemented using pure callbacks, with small memory footprint and no memory leaks. See [Callback vs Promise vs Async/Await benchmarks](https://gist.github.com/weyoss/24f9ecbda175d943a48cb7ec38bde821).
@@ -57,7 +57,7 @@ Current RedisSMQ v8 RC status:
 
 - [x] RedisSMQ Common Library
 - [x] RedisSMQ
-- [ ] HTTP API (WIP)
+- [x] [RESTful API](https://github.com/weyoss/redis-smq-rest-api)
 - [ ] Web UI (WIP)
 
 If you wish to get the latest updates early feel free to try RedisSMQ v8 RC. Do not hesitate to report any bug or issue if encountered. 
