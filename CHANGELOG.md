@@ -1,5 +1,24 @@
 
 
+## [8.0.0-rc.24](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.23...v8.0.0-rc.24) (2024-05-15)
+
+
+### Bug Fixes
+
+* **namespace:** replace generic error in getNamespaceQueues() ([aa9c8e5](https://github.com/weyoss/redis-smq/commit/aa9c8e5a125bdf1fc8e200263618693671219882))
+* **queue-rate-limit:** always validate queue existence ([538cf78](https://github.com/weyoss/redis-smq/commit/538cf786b3b3131f137d1488d6d130323acb571d))
+
+
+### Documentation
+
+* add new error classes reference ([6c39625](https://github.com/weyoss/redis-smq/commit/6c3962589537a83fe345e349743a798e73e751a6))
+
+
+### Codebase Refactoring
+
+* **queue-rate-limit:** move QueueRateLimit.set() logic to LUA ([d104a9c](https://github.com/weyoss/redis-smq/commit/d104a9c038ea321e5e18049bffefc54850d4294f))
+* **queue:** return the original error instance ([14228ec](https://github.com/weyoss/redis-smq/commit/14228ec255776cabf2a9202078cd016f80b5f5da))
+
 ## [8.0.0-rc.23](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.22...v8.0.0-rc.23) (2024-05-10)
 
 
