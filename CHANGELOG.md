@@ -1,5 +1,17 @@
 
 
+## [8.0.0-rc.25](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.24...v8.0.0-rc.25) (2024-07-07)
+
+
+### Documentation
+
+* add a link to redis-smq-rest-api ([a1ab6fc](https://github.com/weyoss/redis-smq/commit/a1ab6fc594b4d32de5f4e4257fbf46c2447f0018))
+
+
+### Misc
+
+* make redis-smq-common a peer dependency ([3b7dbab](https://github.com/weyoss/redis-smq/commit/3b7dbab7a14fc3b11aa75badc36a396727fb4f3b))
+
 ## [8.0.0-rc.24](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.23...v8.0.0-rc.24) (2024-05-15)
 
 
