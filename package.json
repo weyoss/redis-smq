@@ -47,10 +47,12 @@
     },
     "./package.json": "./package.json"
   },
+  "peerDependencies": {
+    "redis-smq-common": "3.0.0-rc.15"
+  },
   "dependencies": {
     "cron-parser": "4.7.1",
     "lodash": "4.17.21",
-    "redis-smq-common": "3.0.0-rc.15",
     "uuid": "9.0.0"
   },
   "devDependencies": {
