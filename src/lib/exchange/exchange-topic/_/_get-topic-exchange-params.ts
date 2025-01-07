@@ -9,7 +9,7 @@
 
 import { redisKeys } from '../../../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../../../config/index.js';
-import { ExchangeInvalidTopicParamsError } from '../../errors/exchange-invalid-topic-params.error.js';
+import { ExchangeInvalidTopicParamsError } from '../../errors/index.js';
 import { ITopicParams } from '../../types/index.js';
 
 export function _getTopicExchangeParams(

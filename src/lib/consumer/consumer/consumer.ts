@@ -7,26 +7,21 @@
  * in the root directory of this source tree.
  */
 
-import path from 'path';
 import {
   CallbackEmptyReplyError,
-  getDirname,
   ICallback,
   ILogger,
   logger,
   Runnable,
   TRedisClientEvent,
   TUnaryFunction,
-  WorkerResourceGroup,
 } from 'redis-smq-common';
 import { TConsumerEvent } from '../../../common/index.js';
 import { RedisClientFactory } from '../../../common/redis-client/redis-client-factory.js';
-import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../../config/index.js';
 import { EventBusRedisFactory } from '../../event-bus/event-bus-redis-factory.js';
 import { _parseQueueExtendedParams } from '../../queue/_/_parse-queue-extended-params.js';
 import { IQueueParsedParams, TQueueExtendedParams } from '../../queue/index.js';
-import { _cleanupOfflineConsumer } from '../consumer-heartbeat/_/_cleanup-offline-consumer.js';
 import { ConsumerHeartbeat } from '../consumer-heartbeat/consumer-heartbeat.js';
 import { MessageHandlerRunner } from '../message-handler-runner/message-handler-runner.js';
 import { MultiplexedMessageHandlerRunner } from '../message-handler-runner/multiplexed-message-handler-runner.js';
@@ -38,9 +33,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
   protected logger;
   protected redisClient;
   protected eventBus;
-
   protected heartbeat: ConsumerHeartbeat | null = null;
-  protected workerResourceGroup: WorkerResourceGroup | null = null;
 
   constructor(enableMultiplexing?: boolean) {
     super();
@@ -87,49 +80,6 @@ export class Consumer extends Runnable<TConsumerEvent> {
     } else cb();
   };
 
-  protected setUpConsumerWorkers = (cb: ICallback<void>): void => {
-    const config = Configuration.getSetConfig();
-    const { keyLockConsumerWorkersRunner } = redisKeys.getMainKeys();
-    const nsLogger = logger.getLogger(
-      config.logger,
-      `consumer:${this.id}:worker-runner`,
-    );
-    const redisClient = this.redisClient.getInstance();
-    if (redisClient instanceof Error) {
-      cb(redisClient);
-      return void 0;
-    }
-    this.workerResourceGroup = new WorkerResourceGroup(
-      redisClient,
-      nsLogger,
-      keyLockConsumerWorkersRunner,
-    );
-    this.workerResourceGroup.on('workerResourceGroup.error', (err) =>
-      this.handleError(err),
-    );
-    const workersDir = path.resolve(getDirname(), '../workers');
-    this.workerResourceGroup.loadFromDir(workersDir, config, (err) => {
-      if (err) cb(err);
-      else {
-        this.workerResourceGroup?.run((err) => {
-          if (err) this.handleError(err);
-        });
-        cb();
-      }
-    });
-  };
-
-  protected shutDownConsumerWorkers = (cb: ICallback<void>): void => {
-    if (this.workerResourceGroup) {
-      this.workerResourceGroup.shutdown(() => {
-        this.workerResourceGroup = null;
-        cb();
-      });
-    } else {
-      cb();
-    }
-  };
-
   protected runMessageHandlers = (cb: ICallback<void>): void => {
     this.messageHandlerRunner.run((err) => cb(err));
   };
@@ -167,24 +117,14 @@ export class Consumer extends Runnable<TConsumerEvent> {
       this.initRedisClient,
       this.setUpHeartbeat,
       this.runMessageHandlers,
-      this.setUpConsumerWorkers,
     ]);
   }
 
   protected override goingDown(): TUnaryFunction<ICallback<void>>[] {
     this.emit('consumer.goingDown', this.id);
     return [
-      this.shutDownConsumerWorkers,
       this.shutdownMessageHandlers,
       this.shutDownHeartbeat,
-      (cb: ICallback<void>) => {
-        const redisClient = this.redisClient.getInstance();
-        if (redisClient instanceof Error) {
-          cb();
-          return void 0;
-        }
-        _cleanupOfflineConsumer(redisClient, [this.id], cb);
-      },
       this.shutDownRedisClient,
     ].concat(super.goingDown());
   }

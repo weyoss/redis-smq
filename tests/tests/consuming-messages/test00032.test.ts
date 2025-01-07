@@ -7,16 +7,16 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
+import { expect, test } from '@jest/globals';
 import bluebird from 'bluebird';
 import { ICallback } from 'redis-smq-common';
+import { consumerQueues } from '../../../src/lib/consumer/consumer-queues.js';
 import {
   Consumer,
   EQueueDeliveryModel,
   EQueueType,
   IMessageTransferable,
 } from '../../../src/lib/index.js';
-import { consumerQueues } from '../../../src/lib/consumer/consumer-queues.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import { defaultQueue } from '../../common/message-producing-consuming.js';
 import { getQueue } from '../../common/queue.js';

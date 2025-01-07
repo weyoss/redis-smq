@@ -17,7 +17,7 @@ import {
   TExchangeTransferable,
 } from '../exchange/index.js';
 import { IQueueParams } from '../queue/index.js';
-import { MessageMessagePropertyError } from './errors/message-message-property.error.js';
+import { MessageMessagePropertyError } from './errors/index.js';
 import { EMessagePriority, TMessageConsumeOptions } from './types/index.js';
 
 export class ProducibleMessage {

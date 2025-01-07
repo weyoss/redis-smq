@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
+import { expect, test } from '@jest/globals';
 import bluebird from 'bluebird';
 import { v4 } from 'uuid';
 import { RedisClientFactory } from '../../../src/common/redis-client/redis-client-factory.js';

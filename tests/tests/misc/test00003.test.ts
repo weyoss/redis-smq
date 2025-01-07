@@ -7,9 +7,9 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
+import { expect, test } from '@jest/globals';
+import { RedisKeysError } from '../../../src/common/redis-keys/errors/index.js';
 import { redisKeys } from '../../../src/common/redis-keys/redis-keys.js';
-import { RedisKeysError } from '../../../src/common/redis-keys/errors/redis-keys.error.js';
 
 test('redisKeys', async () => {
   expect(redisKeys.validateNamespace('global')).toBeInstanceOf(RedisKeysError);

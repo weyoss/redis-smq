@@ -8,10 +8,10 @@
  */
 
 import {
-  beforeAll,
   afterAll,
-  beforeEach,
   afterEach,
+  beforeAll,
+  beforeEach,
   jest,
 } from '@jest/globals';
 import { shutdown } from './common/shut-down.js';

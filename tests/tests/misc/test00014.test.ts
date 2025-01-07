@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
+import { expect, test } from '@jest/globals';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import { getProducer } from '../../common/producer.js';
 

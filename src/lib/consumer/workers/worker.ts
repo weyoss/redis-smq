@@ -9,17 +9,22 @@
 
 import { ICallback, ILogger, logger, Runnable, Timer } from 'redis-smq-common';
 import { RedisClientInstance } from '../../../common/redis-client/redis-client-instance.js';
-import { IRedisSMQConfigRequired } from '../../../config/index.js';
+import { IConsumerMessageHandlerWorkerPayload } from '../types/index.js';
 
 export abstract class Worker extends Runnable<Record<string, never>> {
   protected redisClient;
   protected logger;
   private timer;
   protected config;
+  protected queueParsedParams;
 
-  constructor(config: IRedisSMQConfigRequired) {
+  constructor({
+    config,
+    queueParsedParams,
+  }: IConsumerMessageHandlerWorkerPayload) {
     super();
     this.config = config;
+    this.queueParsedParams = queueParsedParams;
     this.logger = logger.getLogger(
       config.logger,
       `worker:${this.constructor.name.toLowerCase()}:${this.id}`,

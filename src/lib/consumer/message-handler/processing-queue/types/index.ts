@@ -7,6 +7,4 @@
  * in the root directory of this source tree.
  */
 
-export * from './message-handler.js';
-export * from './consumer-heartbeat.js';
-export * from '../message-handler/processing-queue/types/index.js';
+export * from './processing-queue.js';

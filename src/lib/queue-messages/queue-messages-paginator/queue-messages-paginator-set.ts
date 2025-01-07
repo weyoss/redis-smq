@@ -9,8 +9,8 @@
 
 import { async, CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
-import { IQueueParsedParams } from '../../queue/index.js';
 import { _getQueueProperties } from '../../queue/_/_get-queue-properties.js';
+import { IQueueParsedParams } from '../../queue/index.js';
 import { IQueueMessagesPage } from '../types/index.js';
 import { QueueMessagesPaginatorAbstract } from './queue-messages-paginator-abstract.js';
 

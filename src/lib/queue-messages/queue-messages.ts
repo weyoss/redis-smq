@@ -10,14 +10,14 @@
 import { async, CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
 import { _getConsumerGroups } from '../consumer-groups/_/_get-consumer-groups.js';
+import { _getQueueProperties } from '../queue/_/_get-queue-properties.js';
+import { _parseQueueParams } from '../queue/_/_parse-queue-params.js';
 import {
   EQueueDeliveryModel,
   EQueueType,
   IQueueParams,
   IQueueProperties,
 } from '../queue/index.js';
-import { _getQueueProperties } from '../queue/_/_get-queue-properties.js';
-import { _parseQueueParams } from '../queue/_/_parse-queue-params.js';
 import { QueueAcknowledgedMessages } from './queue-acknowledged-messages.js';
 import { QueueDeadLetteredMessages } from './queue-dead-lettered-messages.js';
 import { QueueMessagesPaginatorSet } from './queue-messages-paginator/queue-messages-paginator-set.js';

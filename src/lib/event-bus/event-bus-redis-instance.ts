@@ -18,7 +18,7 @@ import {
 } from 'redis-smq-common';
 import { TRedisSMQEvent } from '../../common/index.js';
 import { Configuration } from '../../config/index.js';
-import { EventBusInstanceLockError } from './errors/event-bus-instance-lock.error.js';
+import { EventBusInstanceLockError } from './errors/index.js';
 
 export class EventBusRedisInstance extends EventEmitter<
   Pick<TRedisClientEvent, 'error'>

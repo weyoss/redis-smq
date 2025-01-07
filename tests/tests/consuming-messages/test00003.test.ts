@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
+import { expect, test } from '@jest/globals';
 import bluebird from 'bluebird';
-import { test, expect } from '@jest/globals';
 import { ProducibleMessage } from '../../../index.js';
 import { EQueueType } from '../../../src/lib/index.js';
 import { getConsumer } from '../../common/consumer.js';

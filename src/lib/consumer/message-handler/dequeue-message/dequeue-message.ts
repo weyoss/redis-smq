@@ -63,7 +63,6 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
   protected keyQueues;
   protected keyQueueConsumers;
   protected keyConsumerQueues;
-  protected keyProcessingQueues;
   protected keyQueueProcessingQueues;
   protected keyQueueProcessing;
   protected keyQueuePending;
@@ -105,7 +104,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
       this.queue.queueParams,
       this.consumerId,
     );
-    const { keyQueues, keyProcessingQueues } = redisKeys.getMainKeys();
+    const { keyQueues } = redisKeys.getMainKeys();
     const {
       keyQueueProcessingQueues,
       keyQueuePending,
@@ -118,7 +117,6 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
     this.keyQueues = keyQueues;
     this.keyQueueConsumers = keyQueueConsumers;
     this.keyConsumerQueues = keyConsumerQueues;
-    this.keyProcessingQueues = keyProcessingQueues;
     this.keyQueueProcessingQueues = keyQueueProcessingQueues;
     this.timer = new Timer();
     this.timer.on('error', (err) => this.handleError(err));
@@ -161,7 +159,6 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
             this.keyQueues,
             this.keyQueueConsumers,
             this.keyConsumerQueues,
-            this.keyProcessingQueues,
             this.keyQueueProcessingQueues,
           ],
           [

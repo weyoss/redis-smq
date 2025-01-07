@@ -17,7 +17,7 @@ import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { _getConsumerGroups } from '../../consumer-groups/_/_get-consumer-groups.js';
 import { ConsumerHeartbeat } from '../../consumer/consumer-heartbeat/consumer-heartbeat.js';
 import { consumerQueues } from '../../consumer/consumer-queues.js';
-import { processingQueue } from '../../consumer/message-handler/processing-queue.js';
+import { processingQueue } from '../../consumer/message-handler/processing-queue/processing-queue.js';
 import {
   QueueQueueHasRunningConsumersError,
   QueueQueueNotEmptyError,
@@ -31,27 +31,29 @@ function checkOnlineConsumers(
   queue: IQueueParams,
   cb: ICallback<void>,
 ): void {
-  const verifyHeartbeats = (consumerIds: string[], cb: ICallback<void>) => {
-    if (consumerIds.length) {
-      ConsumerHeartbeat.getConsumersHeartbeats(
-        redisClient,
-        consumerIds,
-        (err, reply) => {
-          if (err) cb(err);
-          else {
-            const r = reply ?? {};
-            const onlineArr = Object.keys(r).filter((id) => r[id]);
-            if (onlineArr.length) cb(new QueueQueueHasRunningConsumersError());
-            else cb();
-          }
+  consumerQueues.getQueueConsumers(
+    redisClient,
+    queue,
+    false,
+    (err, consumers) => {
+      if (err) cb(err);
+      async.eachIn(
+        consumers ?? {},
+        (_, consumerId, done) => {
+          ConsumerHeartbeat.isConsumerAlive(
+            redisClient,
+            consumerId,
+            (err, alive) => {
+              if (err) done(err);
+              else if (alive) done(new QueueQueueHasRunningConsumersError());
+              else done();
+            },
+          );
         },
+        (err) => cb(err),
       );
-    } else cb();
-  };
-  const getOnlineConsumers = (cb: ICallback<string[]>): void => {
-    consumerQueues.getQueueConsumerIds(redisClient, queue, cb);
-  };
-  async.waterfall([getOnlineConsumers, verifyHeartbeats], (err) => cb(err));
+    },
+  );
 }
 
 export function _deleteQueue(
@@ -74,7 +76,7 @@ export function _deleteQueue(
     keyQueueConsumerGroups,
   } = redisKeys.getQueueKeys(queueParams, null);
   const { keyNamespaceQueues } = redisKeys.getNamespaceKeys(queueParams.ns);
-  const { keyProcessingQueues, keyQueues } = redisKeys.getMainKeys();
+  const { keyQueues } = redisKeys.getMainKeys();
   const keys: string[] = [
     keyQueuePending,
     keyQueueDL,
@@ -163,7 +165,6 @@ export function _deleteQueue(
               tx.srem(keyNamespaceQueues, str);
               if (processingQueues.length) {
                 keys.push(...processingQueues);
-                tx.srem(keyProcessingQueues, processingQueues);
               }
               tx.del(keys);
               if (exchange) tx.srem(exchange, str);

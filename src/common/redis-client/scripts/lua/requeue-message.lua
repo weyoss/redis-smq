@@ -1,4 +1,5 @@
 local keyFromQueue = KEYS[1]
+local keyQueueProperties = KEYS[2]
 
 ---
 
@@ -12,7 +13,6 @@ local EMessagePropertyState = ARGV[7]
 
 ---
 
-local keyQueueProperties = ''
 local keyQueuePriority = ''
 local keyQueuePending = ''
 local keyMessage = ''
@@ -23,7 +23,7 @@ local messageState = ''
 
 ---
 
-local keyIndexOffset = 1
+local keyIndexOffset = 2
 local argvIndexOffset = 7
 
 ---
@@ -62,11 +62,10 @@ if #ARGV > argvIndexOffset then
             local idx = index % 3
             if idx == 2 then
                 messageId = ARGV[index]
-                keyQueueProperties = KEYS[keyIndexOffset + 1]
-                keyQueuePriority = KEYS[keyIndexOffset + 2]
-                keyQueuePending = KEYS[keyIndexOffset + 3]
-                keyMessage = KEYS[keyIndexOffset + 4]
-                keyIndexOffset = keyIndexOffset + 4
+                keyQueuePriority = KEYS[keyIndexOffset + 1]
+                keyQueuePending = KEYS[keyIndexOffset + 2]
+                keyMessage = KEYS[keyIndexOffset + 3]
+                keyIndexOffset = keyIndexOffset + 3;
             elseif idx == 0 then
                 messagePriority = ARGV[index]
             elseif idx == 1 then

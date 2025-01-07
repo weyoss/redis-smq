@@ -26,8 +26,8 @@ import {
 } from '../queue/index.js';
 import { _hasRateLimitExceeded } from './_/_has-rate-limit-exceeded.js';
 import {
-  QueueRateLimitInvalidLimitError,
   QueueRateLimitInvalidIntervalError,
+  QueueRateLimitInvalidLimitError,
   QueueRateLimitQueueNotFoundError,
 } from './errors/index.js';
 

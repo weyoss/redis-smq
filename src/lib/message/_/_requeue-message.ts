@@ -14,16 +14,16 @@ import {
 } from 'redis-smq-common';
 import { ELuaScriptName } from '../../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
-import { _getMessage } from './_get-message.js';
+import { EQueueProperty, EQueueType } from '../../queue/index.js';
 import {
   EMessageProperty,
   EMessagePropertyStatus,
   MessageError,
-  MessageMessageNotRequeuableError,
   MessageInvalidParametersError,
   MessageMessageNotFoundError,
+  MessageMessageNotRequeuableError,
 } from '../index.js';
-import { EQueueProperty, EQueueType } from '../../queue/index.js';
+import { _getMessage } from './_get-message.js';
 
 export function _requeueMessage(
   redisClient: IRedisClient,

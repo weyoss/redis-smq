@@ -9,7 +9,7 @@
 
 import { _parseQueueParams } from '../../../queue/_/_parse-queue-params.js';
 import { IQueueParams } from '../../../queue/index.js';
-import { ExchangeInvalidQueueParamsError } from '../../errors/exchange-invalid-queue-params.error.js';
+import { ExchangeInvalidQueueParamsError } from '../../errors/index.js';
 
 export function _validateExchangeDirectParams(
   queue: string | IQueueParams,

@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
+import { expect, test } from '@jest/globals';
 import bluebird from 'bluebird';
 import { ICallback } from 'redis-smq-common';
 import { IMessageTransferable, ProducibleMessage } from '../../../index.js';

@@ -7,13 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
-import { getMessage } from '../../common/message.js';
+import { expect, test } from '@jest/globals';
 import {
   createQueue,
   defaultQueue,
   produceAndAcknowledgeMessage,
 } from '../../common/message-producing-consuming.js';
+import { getMessage } from '../../common/message.js';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 
 test('Combined test: Delete acknowledged messages by IDs. Check acknowledged messages. Check queue metrics.', async () => {

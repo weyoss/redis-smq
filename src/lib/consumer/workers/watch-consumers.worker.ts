@@ -8,11 +8,13 @@
  */
 
 import { async, ICallback } from 'redis-smq-common';
-import { IRedisSMQConfigRequired } from '../../../config/index.js';
-import { _cleanupOfflineConsumer } from '../consumer-heartbeat/_/_cleanup-offline-consumer.js';
 import { ConsumerHeartbeat } from '../consumer-heartbeat/consumer-heartbeat.js';
-import { processingQueue } from '../message-handler/processing-queue.js';
-import { EConsumeMessageUnacknowledgedCause } from '../types/index.js';
+import { consumerQueues } from '../consumer-queues.js';
+import { processingQueue } from '../message-handler/processing-queue/processing-queue.js';
+import {
+  EMessageUnknowledgmentReason,
+  IConsumerMessageHandlerWorkerPayload,
+} from '../types/index.js';
 import { Worker } from './worker.js';
 
 class WatchConsumersWorker extends Worker {
@@ -22,38 +24,40 @@ class WatchConsumersWorker extends Worker {
       cb(redisClient);
       return void 0;
     }
-    ConsumerHeartbeat.getExpiredHeartbeatIds(
+    consumerQueues.getQueueConsumerIds(
       redisClient,
-      0,
-      10,
-      (err, reply) => {
+      this.queueParsedParams.queueParams,
+      (err, consumerIds) => {
         if (err) cb(err);
         else {
-          if (reply?.length) {
-            async.waterfall(
-              [
-                (cb: ICallback<void>) => {
-                  processingQueue.handleProcessingQueue(
-                    redisClient,
-                    reply,
-                    [],
-                    this.logger,
-                    EConsumeMessageUnacknowledgedCause.OFFLINE_CONSUMER,
-                    (err) => cb(err),
-                  );
+          async.eachOf(
+            consumerIds ?? [],
+            (consumerId, _, done) => {
+              ConsumerHeartbeat.isConsumerAlive(
+                redisClient,
+                consumerId,
+                (err, alive) => {
+                  if (err) done(err);
+                  else if (!alive) {
+                    processingQueue.unknowledgeMessage(
+                      redisClient,
+                      consumerId,
+                      [this.queueParsedParams.queueParams],
+                      this.logger,
+                      EMessageUnknowledgmentReason.OFFLINE_CONSUMER,
+                      (err) => done(err),
+                    );
+                  } else done();
                 },
-                (cb: ICallback<void>) => {
-                  _cleanupOfflineConsumer(redisClient, reply, cb);
-                },
-              ],
-              cb,
-            );
-          } else cb();
+              );
+            },
+            (err) => cb(err),
+          );
         }
       },
     );
   };
 }
 
-export default (config: IRedisSMQConfigRequired) =>
-  new WatchConsumersWorker(config);
+export default (payload: IConsumerMessageHandlerWorkerPayload) =>
+  new WatchConsumersWorker(payload);

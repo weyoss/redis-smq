@@ -7,19 +7,19 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
+import { expect, test } from '@jest/globals';
 import bluebird from 'bluebird';
 import {
   MessageMessageInProcessError,
   MessageMessageNotFoundError,
 } from '../../../src/lib/index.js';
 import { getConsumer } from '../../common/consumer.js';
-import { getMessage } from '../../common/message.js';
 import {
   createQueue,
   defaultQueue,
   produceMessage,
 } from '../../common/message-producing-consuming.js';
+import { getMessage } from '../../common/message.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 
 test('Combined test: Delete a message being in process. Check pending, acknowledged, and dead-letter message. Check queue metrics.', async () => {

@@ -15,30 +15,37 @@ import {
 } from 'redis-smq-common';
 import { ELuaScriptName } from '../../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
-import { IRedisSMQConfigRequired } from '../../../config/index.js';
 import { _getMessage } from '../../message/_/_get-message.js';
 import {
   EMessageProperty,
   EMessagePropertyStatus,
 } from '../../message/index.js';
 import { EQueueProperty } from '../../queue/index.js';
+import { IConsumerMessageHandlerWorkerPayload } from '../types/index.js';
 import { Worker } from './worker.js';
 
 class DelayUnacknowledgedWorker extends Worker {
   work = (cb: ICallback<void>): void => {
-    const { keyDelayedMessages, keyScheduledMessages } =
-      redisKeys.getMainKeys();
+    const {
+      keyQueueDelayed,
+      keyQueueScheduled,
+      keyQueueProperties,
+      keyQueueMessages,
+    } = redisKeys.getQueueKeys(
+      this.queueParsedParams.queueParams,
+      this.queueParsedParams.groupId,
+    );
     const redisClient = this.redisClient.getInstance();
     if (redisClient instanceof Error) {
       cb(redisClient);
       return void 0;
     }
-    redisClient.lrange(keyDelayedMessages, 0, 9, (err, reply) => {
+    redisClient.lrange(keyQueueDelayed, 0, 9, (err, reply) => {
       if (err) cb(err);
       else {
         const messageIds = reply ?? [];
         if (messageIds.length) {
-          const keys: string[] = [keyScheduledMessages, keyDelayedMessages];
+          const keys: string[] = [];
           const args: (string | number)[] = [
             EQueueProperty.QUEUE_TYPE,
             EQueueProperty.MESSAGES_COUNT,
@@ -56,20 +63,13 @@ class DelayUnacknowledgedWorker extends Worker {
                 else if (!message) cb(new CallbackEmptyReplyError());
                 else {
                   const messageId = message.getId();
-                  const {
-                    keyQueueProperties,
-                    keyQueueMessages,
-                    keyQueueScheduled,
-                  } = redisKeys.getQueueKeys(
-                    message.getDestinationQueue(),
-                    message.getConsumerGroupId(),
-                  );
                   const { keyMessage } = redisKeys.getMessageKeys(messageId);
                   keys.push(
                     keyQueueMessages,
                     keyQueueProperties,
                     keyMessage,
                     keyQueueScheduled,
+                    keyQueueDelayed,
                   );
                   args.push(messageId, '');
                   const delay = message.producibleMessage.getRetryDelay();
@@ -105,5 +105,5 @@ class DelayUnacknowledgedWorker extends Worker {
   };
 }
 
-export default (config: IRedisSMQConfigRequired) =>
-  new DelayUnacknowledgedWorker(config);
+export default (payload: IConsumerMessageHandlerWorkerPayload) =>
+  new DelayUnacknowledgedWorker(payload);

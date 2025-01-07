@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
+import { expect, test } from '@jest/globals';
 import bluebird from 'bluebird';
 import {
   Consumer,
@@ -21,9 +21,9 @@ import {
   QueueMessagesConsumerGroupIdRequiredError,
 } from '../../../src/lib/index.js';
 import { getMessage } from '../../common/message.js';
-import { getQueue } from '../../common/queue.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
+import { getQueue } from '../../common/queue.js';
 
 test('Publish and consume a message to/from a consumer group', async () => {
   const queue1: IQueueParams = {

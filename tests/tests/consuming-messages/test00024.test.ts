@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
+import { expect, test } from '@jest/globals';
 import _ from 'lodash';
 import { Configuration } from '../../../src/config/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';

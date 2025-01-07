@@ -1,8 +1,7 @@
 local keyQueues = KEYS[1]
 local keyQueueConsumers = KEYS[2]
 local keyConsumerQueues = KEYS[3]
-local keyProcessingQueues = KEYS[4]
-local keyQueueProcessingQueues = KEYS[5]
+local keyQueueProcessingQueues = KEYS[4]
 
 ---
 
@@ -15,7 +14,6 @@ if redis.call("SISMEMBER", keyQueues, queue) == 1 then
     redis.call("SADD", keyConsumerQueues, queue)
     redis.call("HSET", keyQueueConsumers, consumerId, consumerInfo)
     redis.call("HSET", keyQueueProcessingQueues, consumerProcessingQueue, consumerId)
-    redis.call("SADD", keyProcessingQueues, consumerProcessingQueue)
     return 1
 end
 return 0

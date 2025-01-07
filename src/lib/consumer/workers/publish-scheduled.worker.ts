@@ -10,7 +10,6 @@
 import { async, ICallback, PanicError } from 'redis-smq-common';
 import { ELuaScriptName } from '../../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
-import { IRedisSMQConfigRequired } from '../../../config/index.js';
 import { _fromMessage } from '../../message/_/_from-message.js';
 import { _getMessages } from '../../message/_/_get-message.js';
 import {
@@ -20,6 +19,7 @@ import {
 import { MessageEnvelope } from '../../message/message-envelope.js';
 import { MessageState } from '../../message/message-state.js';
 import { EQueueProperty, EQueueType } from '../../queue/index.js';
+import { IConsumerMessageHandlerWorkerPayload } from '../types/index.js';
 import { Worker } from './worker.js';
 
 class PublishScheduledWorker extends Worker {
@@ -36,8 +36,11 @@ class PublishScheduledWorker extends Worker {
       cb(redisClient);
       return void 0;
     }
-    const { keyScheduledMessages } = redisKeys.getMainKeys();
-    redisClient.zrangebyscore(keyScheduledMessages, 0, Date.now(), 0, 9, cb);
+    const { keyQueueScheduled } = redisKeys.getQueueKeys(
+      this.queueParsedParams.queueParams,
+      this.queueParsedParams.groupId,
+    );
+    redisClient.zrangebyscore(keyQueueScheduled, 0, Date.now(), 0, 9, cb);
   };
 
   protected fetchMessages = (
@@ -58,8 +61,7 @@ class PublishScheduledWorker extends Worker {
     cb: ICallback<void>,
   ): void => {
     if (messages.length) {
-      const { keyScheduledMessages } = redisKeys.getMainKeys();
-      const keys: string[] = [keyScheduledMessages];
+      const keys: string[] = [];
       const argv: (string | number)[] = [
         EMessageProperty.STATUS,
         EMessagePropertyStatus.PENDING,
@@ -117,8 +119,8 @@ class PublishScheduledWorker extends Worker {
           keys.push(
             newKeyMessage,
             keyQueuePending,
-            keyQueueProperties,
             keyQueueMessages,
+            keyQueueProperties,
             keyQueuePriorityPending,
             keyQueueScheduled,
             keyScheduledMessage,
@@ -159,5 +161,5 @@ class PublishScheduledWorker extends Worker {
   };
 }
 
-export default (config: IRedisSMQConfigRequired) =>
-  new PublishScheduledWorker(config);
+export default (payload: IConsumerMessageHandlerWorkerPayload) =>
+  new PublishScheduledWorker(payload);

@@ -8,7 +8,7 @@
  */
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
-import { QueueQueueNotFoundError } from '../errors/queue-queue-not-found.error.js';
+import { QueueQueueNotFoundError } from '../errors/index.js';
 import { IQueueParams } from '../types/queue.js';
 import { _parseQueueParams } from './_parse-queue-params.js';
 import { _queueExists } from './_queue-exists.js';

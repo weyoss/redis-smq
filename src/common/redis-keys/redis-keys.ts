@@ -14,7 +14,7 @@ import { RedisKeysInvalidKeyError } from './errors/index.js';
 const keySegmentSeparator = ':';
 
 // Key prefix
-const nsPrefix = 'redis-smq-rc815';
+const nsPrefix = 'redis-smq-rc826';
 
 // Namespaces
 const globalNamespace = 'global';
@@ -26,28 +26,24 @@ enum ERedisKey {
   KEY_QUEUE_PROCESSING,
   KEY_QUEUE_ACKNOWLEDGED,
   KEY_QUEUE_SCHEDULED,
+  KEY_QUEUE_DELAYED,
+  KEY_QUEUE_REQUEUED,
   KEY_QUEUE_CONSUMERS,
   KEY_QUEUE_PROCESSING_QUEUES,
-  KEY_LOCK_CONSUMER_WORKERS_RUNNER,
-  KEY_DELAYED_MESSAGES,
-  KEY_REQUEUE_MESSAGES,
-  KEY_SCHEDULED_MESSAGES,
-  KEY_HEARTBEATS,
-  KEY_HEARTBEAT_CONSUMER_WEIGHT,
-  KEY_QUEUES,
-  KEY_PROCESSING_QUEUES,
-  KEY_CONSUMER_QUEUES,
-  KEY_NS_QUEUES,
-  KEY_NAMESPACES,
+  KEY_QUEUE_WORKERS_LOCK,
   KEY_QUEUE_RATE_LIMIT_COUNTER,
   KEY_QUEUE_PROPERTIES,
+  KEY_QUEUE_MESSAGES,
+  KEY_QUEUE_MESSAGE_IDS,
+  KEY_QUEUE_CONSUMER_GROUPS,
+  KEY_QUEUES,
+  KEY_CONSUMER_QUEUES,
+  KEY_CONSUMER_HEARTBEAT,
+  KEY_NS_QUEUES,
+  KEY_NAMESPACES,
   KEY_EXCHANGE_BINDINGS,
   KEY_FANOUT_EXCHANGES,
   KEY_MESSAGE,
-  KEY_QUEUE_MESSAGES,
-  KEY_QUEUE_MESSAGE_IDS,
-  KEY_DELETED_QUEUES,
-  KEY_QUEUE_CONSUMER_GROUPS,
 }
 
 function makeNamespacedKeys<T extends Record<string, ERedisKey>>(
@@ -80,12 +76,15 @@ export const redisKeys = {
       keyQueueProcessingQueues: ERedisKey.KEY_QUEUE_PROCESSING_QUEUES,
       keyQueueAcknowledged: ERedisKey.KEY_QUEUE_ACKNOWLEDGED,
       keyQueueScheduled: ERedisKey.KEY_QUEUE_SCHEDULED,
+      keyQueueRequeued: ERedisKey.KEY_QUEUE_REQUEUED,
+      keyQueueDelayed: ERedisKey.KEY_QUEUE_DELAYED,
       keyQueueConsumers: ERedisKey.KEY_QUEUE_CONSUMERS,
       keyQueueRateLimitCounter: ERedisKey.KEY_QUEUE_RATE_LIMIT_COUNTER,
       keyQueueProperties: ERedisKey.KEY_QUEUE_PROPERTIES,
       keyQueueMessages: ERedisKey.KEY_QUEUE_MESSAGES,
       keyQueueMessageIds: ERedisKey.KEY_QUEUE_MESSAGE_IDS,
       keyQueueConsumerGroups: ERedisKey.KEY_QUEUE_CONSUMER_GROUPS,
+      keyQueueWorkersLock: ERedisKey.KEY_QUEUE_WORKERS_LOCK,
     };
     const pendingKeys = {
       keyQueuePending: ERedisKey.KEY_QUEUE_PENDING,
@@ -124,6 +123,7 @@ export const redisKeys = {
   getConsumerKeys(instanceId: string) {
     const consumerKeys = {
       keyConsumerQueues: ERedisKey.KEY_CONSUMER_QUEUES,
+      keyConsumerHeartbeat: ERedisKey.KEY_CONSUMER_HEARTBEAT,
     };
     return {
       ...makeNamespacedKeys(consumerKeys, globalNamespace, instanceId),
@@ -142,16 +142,8 @@ export const redisKeys = {
   getMainKeys() {
     const mainKeys = {
       keyQueues: ERedisKey.KEY_QUEUES,
-      keyProcessingQueues: ERedisKey.KEY_PROCESSING_QUEUES,
-      keyHeartbeats: ERedisKey.KEY_HEARTBEATS,
-      keyHeartbeatTimestamps: ERedisKey.KEY_HEARTBEAT_CONSUMER_WEIGHT,
-      keyScheduledMessages: ERedisKey.KEY_SCHEDULED_MESSAGES,
-      keyLockConsumerWorkersRunner: ERedisKey.KEY_LOCK_CONSUMER_WORKERS_RUNNER,
-      keyDelayedMessages: ERedisKey.KEY_DELAYED_MESSAGES,
-      keyRequeueMessages: ERedisKey.KEY_REQUEUE_MESSAGES,
       keyNamespaces: ERedisKey.KEY_NAMESPACES,
       keyFanOutExchanges: ERedisKey.KEY_FANOUT_EXCHANGES,
-      keyDeletedQueues: ERedisKey.KEY_DELETED_QUEUES,
     };
     return makeNamespacedKeys(mainKeys, globalNamespace);
   },

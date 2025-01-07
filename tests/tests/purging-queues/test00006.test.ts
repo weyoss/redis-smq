@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
+import { expect, test } from '@jest/globals';
 import {
   QueueQueueHasRunningConsumersError,
   QueueQueueNotEmptyError,
@@ -19,8 +19,8 @@ import {
   defaultQueue,
   produceAndAcknowledgeMessage,
 } from '../../common/message-producing-consuming.js';
-import { getQueue } from '../../common/queue.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
+import { getQueue } from '../../common/queue.js';
 
 test('Deleting a message queue with all of its data', async () => {
   await createQueue(defaultQueue, false);

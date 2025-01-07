@@ -7,9 +7,9 @@
  * in the root directory of this source tree.
  */
 
+import { expect, test } from '@jest/globals';
 import bluebird from 'bluebird';
 import path from 'path';
-import { test, expect } from '@jest/globals';
 import { getDirname } from 'redis-smq-common';
 import { Consumer, ProducibleMessage } from '../../../src/lib/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';

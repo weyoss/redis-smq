@@ -8,7 +8,7 @@
  */
 
 import { redisKeys } from '../common/redis-keys/redis-keys.js';
-import { ConfigurationNamespaceError } from './errors/configuration-namespace.error.js';
+import { ConfigurationNamespaceError } from './errors/index.js';
 import { IRedisSMQConfig } from './types/index.js';
 
 const defaultNamespace = 'default';
