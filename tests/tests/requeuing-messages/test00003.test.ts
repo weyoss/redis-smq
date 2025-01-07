@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect, jest } from '@jest/globals';
+import { expect, jest, test } from '@jest/globals';
 import { ICallback } from 'redis-smq-common';
 import {
   EMessagePriority,
@@ -22,10 +22,10 @@ import { untilMessageAcknowledged } from '../../common/events.js';
 import { defaultQueue } from '../../common/message-producing-consuming.js';
 import { getMessage } from '../../common/message.js';
 import { getProducer } from '../../common/producer.js';
-import { getQueue } from '../../common/queue.js';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
+import { getQueue } from '../../common/queue.js';
 
 test('Combined test. Requeue a priority message from acknowledged queue. Check queue metrics.', async () => {
   const queue = await getQueue();

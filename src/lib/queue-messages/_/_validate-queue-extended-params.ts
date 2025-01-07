@@ -10,8 +10,10 @@
 import { ICallback, IRedisClient } from 'redis-smq-common';
 import { _getQueueProperties } from '../../queue/_/_get-queue-properties.js';
 import { EQueueDeliveryModel, IQueueParsedParams } from '../../queue/index.js';
-import { QueueMessagesConsumerGroupIdNotSupportedError } from '../errors/queue-messages-consumer-group-id-not-supported.error.js';
-import { QueueMessagesConsumerGroupIdRequiredError } from '../errors/queue-messages-consumer-group-id-required.error.js';
+import {
+  QueueMessagesConsumerGroupIdNotSupportedError,
+  QueueMessagesConsumerGroupIdRequiredError,
+} from '../errors/index.js';
 
 export function _validateQueueExtendedParams(
   redisClient: IRedisClient,

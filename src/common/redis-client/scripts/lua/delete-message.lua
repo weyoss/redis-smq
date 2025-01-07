@@ -1,9 +1,3 @@
-local keyScheduledMessages = KEYS[1]
-local keyDelayedMessages = KEYS[2]
-local keyRequeueMessages = KEYS[3]
-
----
-
 local EQueuePropertyQueueType = ARGV[1]
 local EQueuePropertyMessagesCount = ARGV[2]
 local EQueuePropertyQueueTypePriorityQueue = ARGV[3]
@@ -20,12 +14,14 @@ local EMessagePropertyStatusUnackRequeuing = ARGV[13]
 
 ---
 
+local keyQueueScheduled = ''
+local keyQueueDelayed = ''
+local keyQueueRequeued = ''
 local keyMessage = ''
 local keyQueueProperties = ''
 local keyQueuePending = ''
 local keyQueueDL = ''
 local keyQueueAcknowledged = ''
-local keyQueueScheduled = ''
 local keyQueuePriorityPending = ''
 
 ---
@@ -34,7 +30,7 @@ local messageId = ''
 
 ---
 
-local keyIndexOffset = 3
+local keyIndexOffset = 0
 local argvIndexOffset = 13
 
 ---
@@ -57,12 +53,11 @@ local function deleteMessage()
     elseif messageStatus == EMessagePropertyStatusDeadLettered then
         deleted = redis.call("LREM", keyQueueDL, 1, messageId)
     elseif messageStatus == EMessagePropertyStatusScheduled then
-        deleted = redis.call("ZREM", keyScheduledMessages, messageId)
-        redis.call("ZREM", keyQueueScheduled, messageId)
+        deleted = redis.call("ZREM", keyQueueScheduled, messageId)
     elseif messageStatus == EMessagePropertyStatusUnackDelaying then
-        deleted = redis.call("LREM", keyDelayedMessages, 1, messageId)
+        deleted = redis.call("LREM", keyQueueDelayed, 1, messageId)
     elseif messageStatus == EMessagePropertyStatusUnackRequeuing then
-        deleted = redis.call("LREM", keyRequeueMessages, 1, messageId)
+        deleted = redis.call("LREM", keyQueueRequeued, 1, messageId)
     elseif messageStatus == EMessagePropertyStatusPending then
         local queueType = redis.call("HGET", keyQueueProperties, EQueuePropertyQueueType)
         if queueType ~= false then
@@ -87,14 +82,16 @@ if #ARGV > argvIndexOffset then
     for index in pairs(ARGV) do
         if (index > argvIndexOffset) then
             messageId = ARGV[index]
-            keyMessage = KEYS[keyIndexOffset + 1]
-            keyQueueProperties = KEYS[keyIndexOffset + 2]
-            keyQueuePending = KEYS[keyIndexOffset + 3]
-            keyQueueDL = KEYS[keyIndexOffset + 4]
-            keyQueueAcknowledged = KEYS[keyIndexOffset + 5]
-            keyQueueScheduled = KEYS[keyIndexOffset + 6]
-            keyQueuePriorityPending = KEYS[keyIndexOffset + 7]
-            keyIndexOffset = keyIndexOffset + 7
+            keyQueueScheduled = KEYS[keyIndexOffset + 1]
+            keyQueueDelayed = KEYS[keyIndexOffset + 2]
+            keyQueueRequeued = KEYS[keyIndexOffset + 3]
+            keyMessage = KEYS[keyIndexOffset + 4]
+            keyQueueProperties = KEYS[keyIndexOffset + 5]
+            keyQueuePending = KEYS[keyIndexOffset + 6]
+            keyQueueDL = KEYS[keyIndexOffset + 7]
+            keyQueueAcknowledged = KEYS[keyIndexOffset + 8]
+            keyQueuePriorityPending = KEYS[keyIndexOffset + 9]
+            keyIndexOffset = keyIndexOffset + 9
             deleteMessageStatus = deleteMessage()
             if deleteMessageStatus ~= 'OK' then
                 break

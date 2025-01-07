@@ -9,7 +9,7 @@
 
 import { v4 } from 'uuid';
 import { IQueueParams } from '../../../queue/index.js';
-import { ExchangeInvalidQueueParamsError } from '../../errors/exchange-invalid-queue-params.error.js';
+import { ExchangeInvalidQueueParamsError } from '../../errors/index.js';
 import {
   EExchangeType,
   TExchangeDirectTransferable,

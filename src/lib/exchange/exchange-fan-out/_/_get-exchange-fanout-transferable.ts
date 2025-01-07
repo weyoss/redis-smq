@@ -8,7 +8,7 @@
  */
 
 import { v4 } from 'uuid';
-import { ExchangeInvalidFanOutParamsError } from '../../errors/exchange-invalid-fan-out-params.error.js';
+import { ExchangeInvalidFanOutParamsError } from '../../errors/index.js';
 import {
   EExchangeType,
   TExchangeFanOutTransferable,

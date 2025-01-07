@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect, jest } from '@jest/globals';
+import { expect, jest, test } from '@jest/globals';
 import { ProducibleMessage } from '../../../src/lib/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import { untilConsumerDown } from '../../common/events.js';

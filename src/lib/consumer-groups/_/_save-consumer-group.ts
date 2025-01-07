@@ -18,8 +18,10 @@ import { TRedisSMQEvent } from '../../../common/index.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { _getQueueProperties } from '../../queue/_/_get-queue-properties.js';
 import { EQueueDeliveryModel, IQueueParams } from '../../queue/index.js';
-import { ConsumerGroupsConsumerGroupsNotSupportedError } from '../errors/consumer-groups-consumer-groups-not-supported.error.js';
-import { ConsumerGroupsInvalidGroupIdError } from '../errors/consumer-groups-invalid-group-id.error.js';
+import {
+  ConsumerGroupsConsumerGroupsNotSupportedError,
+  ConsumerGroupsInvalidGroupIdError,
+} from '../errors/index.js';
 
 export function _saveConsumerGroup(
   redisClient: IRedisClient,

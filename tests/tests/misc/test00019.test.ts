@@ -7,9 +7,11 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
-import { ConfigurationMessageQueueSizeError } from '../../../src/config/errors/configuration-message-queue-size.error.js';
-import { ConfigurationMessageStoreExpireError } from '../../../src/config/errors/configuration-message-store-expire.error.js';
+import { expect, test } from '@jest/globals';
+import {
+  ConfigurationMessageQueueSizeError,
+  ConfigurationMessageStoreExpireError,
+} from '../../../src/config/index.js';
 import Store from '../../../src/config/messages/store.js';
 
 test('Configuration: storeMessages', async () => {

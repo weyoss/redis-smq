@@ -7,13 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
-import { getMessage } from '../../common/message.js';
+import { expect, test } from '@jest/globals';
 import {
   createQueue,
   defaultQueue,
   produceAndDeadLetterMessage,
 } from '../../common/message-producing-consuming.js';
+import { getMessage } from '../../common/message.js';
 import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
 
 test('Combined test: Delete dead-lettered messages by IDs. Check dead-lettered messages. Check queue metrics.', async () => {

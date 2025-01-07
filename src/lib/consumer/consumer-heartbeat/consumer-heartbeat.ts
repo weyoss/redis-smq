@@ -9,12 +9,9 @@
 
 import * as os from 'os';
 import {
-  async,
-  CallbackInvalidReplyError,
   ICallback,
   ILogger,
   IRedisClient,
-  IRedisTransaction,
   RedisClientAbstract,
   Runnable,
   Timer,
@@ -64,8 +61,7 @@ function cpuUsage() {
 export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
   protected static readonly heartbeatTTL = 10 * 1000; // 10 sec
   protected timer;
-  protected keyHeartbeats;
-  protected keyHeartbeatTimestamps;
+  protected keyConsumerHeartbeat;
   protected consumer;
   protected logger;
   protected redisClient;
@@ -84,19 +80,14 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
       );
       eventBusPublisher(this, this.consumer.getId(), this.logger);
     }
-    const { keyHeartbeats, keyHeartbeatTimestamps } = redisKeys.getMainKeys();
-    this.keyHeartbeats = keyHeartbeats;
-    this.keyHeartbeatTimestamps = keyHeartbeatTimestamps;
+    const { keyConsumerHeartbeat } = redisKeys.getConsumerKeys(
+      consumer.getId(),
+    );
+    this.keyConsumerHeartbeat = keyConsumerHeartbeat;
     this.timer = new Timer();
     this.timer.on('error', (err) => {
       this.emit('consumerHeartbeat.error', err);
     });
-  }
-
-  protected static isExpiredHeartbeat(heartbeat: IConsumerHeartbeat): boolean {
-    const { timestamp: heartbeatTimestamp } = heartbeat;
-    const timestamp = Date.now() - ConsumerHeartbeat.heartbeatTTL;
-    return heartbeatTimestamp > timestamp;
   }
 
   protected override getLogger(): ILogger {
@@ -127,26 +118,16 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
     const heartbeatPayload = this.getPayload();
     const consumerId = this.consumer.getId();
     const timestamp = Date.now();
-    async.waterfall(
-      [
-        (cb: ICallback<void>) => {
-          const heartbeatPayloadStr = JSON.stringify(heartbeatPayload);
-          redisClient.hset(
-            this.keyHeartbeats,
-            this.consumer.getId(),
-            heartbeatPayloadStr,
-            (err) => cb(err),
-          );
+    const heartbeatPayloadStr = JSON.stringify(heartbeatPayload);
+    redisClient.set(
+      this.keyConsumerHeartbeat,
+      heartbeatPayloadStr,
+      {
+        expire: {
+          mode: 'PX',
+          value: ConsumerHeartbeat.heartbeatTTL,
         },
-        (cb: ICallback<void>) => {
-          redisClient.zadd(
-            this.keyHeartbeatTimestamps,
-            timestamp,
-            consumerId,
-            (err) => cb(err),
-          );
-        },
-      ],
+      },
       (err) => {
         if (err) this.emit('consumerHeartbeat.error', err);
         else {
@@ -190,12 +171,7 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
         this.timer.reset();
         const redisClient = this.redisClient.getInstance();
         if (redisClient instanceof RedisClientAbstract) {
-          const multi = redisClient.multi();
-          ConsumerHeartbeat.handleExpiredHeartbeatId(
-            this.consumer.getId(),
-            multi,
-          );
-          multi.exec((err) => cb(err));
+          redisClient.del(this.keyConsumerHeartbeat, () => cb());
         }
         // ignoring errors
         else cb();
@@ -203,66 +179,15 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
     ].concat(super.goingDown());
   }
 
-  static getConsumersHeartbeats(
+  static isConsumerAlive(
     redisClient: IRedisClient,
-    consumerIds: string[],
-    cb: ICallback<Record<string, IConsumerHeartbeat | false>>,
+    consumerId: string,
+    cb: ICallback<boolean>,
   ): void {
-    const keyHeartbeats = redisKeys.getMainKeys().keyHeartbeats;
-    redisClient.hmget(keyHeartbeats, consumerIds, (err, reply) => {
+    const { keyConsumerHeartbeat } = redisKeys.getConsumerKeys(consumerId);
+    redisClient.get(keyConsumerHeartbeat, (err, heartbeat) => {
       if (err) cb(err);
-      else if (!reply || reply.length !== consumerIds.length)
-        cb(new CallbackInvalidReplyError());
-      else {
-        const r: Record<string, IConsumerHeartbeat | false> = {};
-        async.eachOf(
-          consumerIds,
-          (item, index, done) => {
-            const payload = reply[index];
-            if (payload) {
-              const consumerHeartbeat: IConsumerHeartbeat = JSON.parse(payload);
-              r[consumerIds[index]] = this.isExpiredHeartbeat(consumerHeartbeat)
-                ? consumerHeartbeat
-                : false;
-            } else r[consumerIds[index]] = false;
-            done();
-          },
-          () => cb(null, r),
-        );
-      }
-    });
-  }
-
-  static getExpiredHeartbeatIds(
-    redisClient: IRedisClient,
-    offset: number,
-    count: number,
-    cb: ICallback<string[]>,
-  ): void {
-    const { keyHeartbeatTimestamps } = redisKeys.getMainKeys();
-    const ts = Date.now() - ConsumerHeartbeat.heartbeatTTL;
-    redisClient.zrangebyscore(
-      keyHeartbeatTimestamps,
-      '-inf',
-      ts,
-      offset,
-      count,
-      (err, consumerIds) => {
-        if (err) cb(err);
-        else cb(null, consumerIds ?? []);
-      },
-    );
-  }
-
-  static handleExpiredHeartbeatId(
-    consumerId: string | string[],
-    multi: IRedisTransaction,
-  ): void {
-    const { keyHeartbeats, keyHeartbeatTimestamps } = redisKeys.getMainKeys();
-    const ids = typeof consumerId === 'string' ? [consumerId] : consumerId;
-    ids.forEach((consumerId) => {
-      multi.hdel(keyHeartbeats, consumerId);
-      multi.zrem(keyHeartbeatTimestamps, consumerId);
+      else cb(null, !!heartbeat);
     });
   }
 }

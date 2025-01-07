@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
-import { ExchangeInvalidTopicParamsError } from '../../../../src/lib/exchange/errors/exchange-invalid-topic-params.error.js';
+import { expect, test } from '@jest/globals';
+import { ExchangeInvalidTopicParamsError } from '../../../../src/lib/index.js';
 import { getTopicExchange } from '../../../common/exchange.js';
 
 test('ExchangeTopic: topic validation', async () => {

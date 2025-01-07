@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
+import { expect, test } from '@jest/globals';
 import bluebird from 'bluebird';
 import { ProducibleMessage } from '../../../src/lib/index.js';
 import {
@@ -36,7 +36,7 @@ test('Schedule a message: combine REPEAT, REPEAT PERIOD, DELAY. Case 2', async (
   await producer.produceAsync(msg);
   const producedAt = Date.now();
 
-  await startScheduleWorker();
+  await startScheduleWorker(defaultQueue);
   await bluebird.delay(30000);
 
   const pendingMessages = await getQueuePendingMessages();

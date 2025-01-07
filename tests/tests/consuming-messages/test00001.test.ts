@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { describe, test, expect } from '@jest/globals';
+import { describe, expect, test } from '@jest/globals';
 import {
   createQueue,
   defaultQueue,

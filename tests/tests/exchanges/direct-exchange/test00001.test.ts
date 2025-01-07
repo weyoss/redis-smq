@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
-import { ExchangeInvalidQueueParamsError } from '../../../../src/lib/exchange/errors/exchange-invalid-queue-params.error.js';
+import { expect, test } from '@jest/globals';
+import { ExchangeInvalidQueueParamsError } from '../../../../src/lib/index.js';
 import { getDirectExchange } from '../../../common/exchange.js';
 
 test('DirectExchange', async () => {

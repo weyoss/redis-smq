@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
+import { expect, test } from '@jest/globals';
 import { ProducibleMessage } from '../../../index.js';
 import { ProducerInstanceNotRunningError } from '../../../src/lib/index.js';
 import {

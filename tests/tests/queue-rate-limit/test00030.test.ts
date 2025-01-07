@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
+import { expect, test } from '@jest/globals';
 import bluebird from 'bluebird';
 import {
   EMessagePriority,
@@ -19,8 +19,8 @@ import { getConsumer } from '../../common/consumer.js';
 import { getEventBus } from '../../common/event-bus-redis.js';
 import { defaultQueue } from '../../common/message-producing-consuming.js';
 import { getProducer } from '../../common/producer.js';
-import { getQueue } from '../../common/queue.js';
 import { getQueueRateLimit } from '../../common/queue-rate-limit.js';
+import { getQueue } from '../../common/queue.js';
 import { validateTime } from '../../common/validate-time.js';
 
 test('Rate limit a priority queue and check message rate', async () => {

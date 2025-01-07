@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { ExchangeInvalidTopicParamsError } from '../../errors/exchange-invalid-topic-params.error.js';
+import { ExchangeInvalidTopicParamsError } from '../../errors/index.js';
 import { ITopicParams } from '../../types/index.js';
 import { _getTopicExchangeParams } from './_get-topic-exchange-params.js';
 

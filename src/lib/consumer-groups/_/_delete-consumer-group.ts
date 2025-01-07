@@ -12,9 +12,11 @@ import { TRedisSMQEvent } from '../../../common/index.js';
 import { ELuaScriptName } from '../../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { EQueueProperty, EQueueType, IQueueParams } from '../../queue/index.js';
-import { ConsumerGroupsConsumerGroupNotEmptyError } from '../errors/consumer-groups-consumer-group-not-empty.error.js';
-import { ConsumerGroupsQueueNotFoundError } from '../errors/consumer-groups-queue-not-found.error.js';
-import { ConsumerGroupsError } from '../errors/consumer-groups.error.js';
+import {
+  ConsumerGroupsConsumerGroupNotEmptyError,
+  ConsumerGroupsError,
+  ConsumerGroupsQueueNotFoundError,
+} from '../errors/index.js';
 
 export function _deleteConsumerGroup(
   redisClient: IRedisClient,

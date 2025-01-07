@@ -8,7 +8,7 @@
  */
 
 import { expect, test } from '@jest/globals';
-import { EQueueType } from '../../../src/lib/queue/types/queue.js';
+import { EQueueType } from '../../../src/lib/index.js';
 import {
   createQueue,
   defaultQueue,

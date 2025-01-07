@@ -7,15 +7,15 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
+import { expect, test } from '@jest/globals';
 import { ProducibleMessage } from '../../../src/lib/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import { untilMessageDeadLettered } from '../../common/events.js';
-import { getMessage } from '../../common/message.js';
 import {
   createQueue,
   defaultQueue,
 } from '../../common/message-producing-consuming.js';
+import { getMessage } from '../../common/message.js';
 import { getProducer } from '../../common/producer.js';
 import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
 

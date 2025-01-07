@@ -7,17 +7,17 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect, jest } from '@jest/globals';
+import { expect, jest, test } from '@jest/globals';
 import bluebird from 'bluebird';
 import { Configuration } from '../../../src/config/index.js';
+import DelayUnacknowledgedWorker from '../../../src/lib/consumer/workers/delay-unacknowledged.worker.js';
+import PublishScheduledWorker from '../../../src/lib/consumer/workers/publish-scheduled.worker.js';
+import WatchConsumersWorker from '../../../src/lib/consumer/workers/watch-consumers.worker.js';
 import {
   IMessageParams,
   IMessageTransferable,
   ProducibleMessage,
 } from '../../../src/lib/index.js';
-import DelayUnacknowledgedWorker from '../../../src/lib/consumer/workers/delay-unacknowledged.worker.js';
-import PublishScheduledWorker from '../../../src/lib/consumer/workers/publish-scheduled.worker.js';
-import WatchConsumersWorker from '../../../src/lib/consumer/workers/watch-consumers.worker.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import { getConsumer } from '../../common/consumer.js';
 import { untilConsumerDown } from '../../common/events.js';
@@ -54,16 +54,21 @@ test('WatchdogWorker -> DelayUnacknowledgedWorker -> PublishScheduledWorker', as
   await shutDownBaseInstance(consumer);
   expect(message !== null).toBe(true);
 
+  const workerArgs = {
+    queueParsedParams: { queueParams: defaultQueue, groupId: null },
+    config: Configuration.getSetConfig(),
+  };
+
   // should move message from processing queue to delay queue
-  const watchdogWorker = await bluebird.promisifyAll(
-    WatchConsumersWorker(Configuration.getSetConfig()),
+  const watchdogWorker = bluebird.promisifyAll(
+    WatchConsumersWorker(workerArgs),
   );
   await watchdogWorker.runAsync();
   await bluebird.delay(5000);
 
   // should move from delay queue to scheduled queue
-  const delayHandler = await bluebird.promisifyAll(
-    DelayUnacknowledgedWorker(Configuration.getSetConfig()),
+  const delayHandler = bluebird.promisifyAll(
+    DelayUnacknowledgedWorker(workerArgs),
   );
   await delayHandler.runAsync();
   await bluebird.delay(5000);
@@ -73,8 +78,8 @@ test('WatchdogWorker -> DelayUnacknowledgedWorker -> PublishScheduledWorker', as
   expect(res.totalItems).toBe(1);
 
   // should move from delay queue to scheduled queue
-  const scheduleWorker = await bluebird.promisifyAll(
-    PublishScheduledWorker(Configuration.getSetConfig()),
+  const scheduleWorker = bluebird.promisifyAll(
+    PublishScheduledWorker(workerArgs),
   );
   await scheduleWorker.runAsync();
   await bluebird.delay(15000);

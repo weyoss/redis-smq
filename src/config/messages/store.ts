@@ -13,8 +13,10 @@ import {
   IMessagesConfigStorageOptionsRequired,
   IMessagesConfigStorageRequired,
 } from '../../lib/index.js';
-import { ConfigurationMessageQueueSizeError } from '../errors/configuration-message-queue-size.error.js';
-import { ConfigurationMessageStoreExpireError } from '../errors/configuration-message-store-expire.error.js';
+import {
+  ConfigurationMessageQueueSizeError,
+  ConfigurationMessageStoreExpireError,
+} from '../errors/index.js';
 import { IRedisSMQConfig } from '../types/index.js';
 
 function getMessageStorageConfig(

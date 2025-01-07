@@ -34,9 +34,6 @@ export function _deleteMessage(
   const keys: string[] = [];
   const argv: (string | number)[] = [];
   const ids = typeof messageId === 'string' ? [messageId] : messageId;
-  const { keyScheduledMessages, keyDelayedMessages, keyRequeueMessages } =
-    redisKeys.getMainKeys();
-  keys.push(keyScheduledMessages, keyDelayedMessages, keyRequeueMessages);
   argv.push(
     EQueueProperty.QUEUE_TYPE,
     EQueueProperty.MESSAGES_COUNT,
@@ -60,9 +57,11 @@ export function _deleteMessage(
         else if (!message) done(new CallbackEmptyReplyError());
         else {
           const {
+            keyQueueScheduled,
+            keyQueueDelayed,
+            keyQueueRequeued,
             keyQueueProperties,
             keyQueueDL,
-            keyQueueScheduled,
             keyQueueAcknowledged,
             keyQueuePriorityPending,
             keyQueuePending,
@@ -72,12 +71,14 @@ export function _deleteMessage(
           );
           const { keyMessage } = redisKeys.getMessageKeys(id);
           keys.push(
+            keyQueueScheduled,
+            keyQueueDelayed,
+            keyQueueRequeued,
             keyMessage,
             keyQueueProperties,
             keyQueuePending,
             keyQueueDL,
             keyQueueAcknowledged,
-            keyQueueScheduled,
             keyQueuePriorityPending,
           );
           argv.push(id);

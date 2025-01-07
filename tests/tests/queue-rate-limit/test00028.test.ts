@@ -7,10 +7,12 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
-import { QueueRateLimitInvalidIntervalError } from '../../../src/lib/queue-rate-limit/errors/queue-rate-limit-invalid-interval.error.js';
-import { QueueRateLimitInvalidLimitError } from '../../../src/lib/queue-rate-limit/errors/queue-rate-limit-invalid-limit.error.js';
-import { QueueQueueNotFoundError } from '../../../src/lib/queue/errors/queue-queue-not-found.error.js';
+import { expect, test } from '@jest/globals';
+import {
+  QueueQueueNotFoundError,
+  QueueRateLimitInvalidIntervalError,
+  QueueRateLimitInvalidLimitError,
+} from '../../../src/lib/index.js';
 import {
   createQueue,
   defaultQueue,

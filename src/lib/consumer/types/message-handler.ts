@@ -8,7 +8,7 @@
  */
 
 import { ICallback } from 'redis-smq-common';
-import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
+import { IRedisSMQConfigRequired } from '../../../config/index.js';
 import { IMessageTransferable } from '../../message/index.js';
 import { IQueueParsedParams } from '../../queue/index.js';
 
@@ -24,6 +24,7 @@ export interface IConsumerMessageHandlerArgs {
   messageHandler: TConsumerMessageHandler;
 }
 
-export type TConsumerRedisKeys = ReturnType<
-  (typeof redisKeys)['getConsumerKeys']
->;
+export type IConsumerMessageHandlerWorkerPayload = {
+  config: IRedisSMQConfigRequired;
+  queueParsedParams: IQueueParsedParams;
+};

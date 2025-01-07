@@ -8,7 +8,7 @@
  */
 
 import { v4 } from 'uuid';
-import { ExchangeInvalidTopicParamsError } from '../../errors/exchange-invalid-topic-params.error.js';
+import { ExchangeInvalidTopicParamsError } from '../../errors/index.js';
 import {
   EExchangeType,
   ITopicParams,

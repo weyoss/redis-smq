@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
+import { expect, test } from '@jest/globals';
 import bluebird from 'bluebird';
 import { Configuration } from '../../../src/config/index.js';
 import RequeueUnacknowledgedWorker from '../../../src/lib/consumer/workers/requeue-unacknowledged.worker.js';
@@ -23,13 +23,18 @@ test('WatchdogWorker', async () => {
   await createQueue(defaultQueue, false);
   await crashAConsumerConsumingAMessage();
 
-  const watchdogWorker = await bluebird.promisifyAll(
-    WatchConsumersWorker(Configuration.getSetConfig()),
+  const workerArgs = {
+    queueParsedParams: { queueParams: defaultQueue, groupId: null },
+    config: Configuration.getSetConfig(),
+  };
+
+  const watchdogWorker = bluebird.promisifyAll(
+    WatchConsumersWorker(workerArgs),
   );
   await watchdogWorker.runAsync();
 
-  const requeueWorker = await bluebird.promisifyAll(
-    RequeueUnacknowledgedWorker(Configuration.getSetConfig()),
+  const requeueWorker = bluebird.promisifyAll(
+    RequeueUnacknowledgedWorker(workerArgs),
   );
   await requeueWorker.runAsync();
   await bluebird.delay(20000);

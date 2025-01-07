@@ -10,36 +10,32 @@
 import { async, CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
 import { ELuaScriptName } from '../../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
-import { IRedisSMQConfigRequired } from '../../../config/index.js';
 import { _getMessage } from '../../message/_/_get-message.js';
 import {
   EMessageProperty,
   EMessagePropertyStatus,
 } from '../../message/index.js';
 import { EQueueProperty, EQueueType } from '../../queue/index.js';
+import { IConsumerMessageHandlerWorkerPayload } from '../types/index.js';
 import { Worker } from './worker.js';
 
 class RequeueUnacknowledgedWorker extends Worker {
-  protected redisKeys;
-
-  constructor(config: IRedisSMQConfigRequired) {
-    super(config);
-    this.redisKeys = redisKeys.getMainKeys();
-  }
-
   work = (cb: ICallback<void>): void => {
-    const { keyRequeueMessages } = this.redisKeys;
+    const { keyQueueRequeued, keyQueueProperties } = redisKeys.getQueueKeys(
+      this.queueParsedParams.queueParams,
+      this.queueParsedParams.groupId,
+    );
     const redisClient = this.redisClient.getInstance();
     if (redisClient instanceof Error) {
       cb(redisClient);
       return void 0;
     }
-    redisClient.lrange(keyRequeueMessages, 0, 9, (err, reply) => {
+    redisClient.lrange(keyQueueRequeued, 0, 99, (err, reply) => {
       if (err) cb(err);
       else {
         const messageIds = reply ?? [];
         if (messageIds.length) {
-          const keys: string[] = [keyRequeueMessages];
+          const keys: string[] = [keyQueueRequeued, keyQueueProperties];
           const argv: (string | number)[] = [
             EQueueProperty.QUEUE_TYPE,
             EQueueType.PRIORITY_QUEUE,
@@ -58,21 +54,19 @@ class RequeueUnacknowledgedWorker extends Worker {
                 else {
                   const messageId = message.getId();
                   const messageState = message.getMessageState();
-                  const {
-                    keyQueuePending,
-                    keyQueuePriorityPending,
-                    keyQueueProperties,
-                  } = redisKeys.getQueueKeys(
-                    message.getDestinationQueue(),
-                    message.getConsumerGroupId(),
-                  );
+
+                  const { keyQueuePriorityPending, keyQueuePending } =
+                    redisKeys.getQueueKeys(
+                      message.getDestinationQueue(),
+                      message.getConsumerGroupId(),
+                    );
                   const { keyMessage } = redisKeys.getMessageKeys(messageId);
                   keys.push(
-                    keyQueueProperties,
                     keyQueuePriorityPending,
                     keyQueuePending,
                     keyMessage,
                   );
+
                   messageState.incrAttempts();
                   const messagePriority =
                     message.producibleMessage.getPriority() ?? '';
@@ -103,5 +97,5 @@ class RequeueUnacknowledgedWorker extends Worker {
   };
 }
 
-export default (config: IRedisSMQConfigRequired) =>
-  new RequeueUnacknowledgedWorker(config);
+export default (payload: IConsumerMessageHandlerWorkerPayload) =>
+  new RequeueUnacknowledgedWorker(payload);

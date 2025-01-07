@@ -1,7 +1,3 @@
-local keyScheduledMessages = KEYS[1]
-
----
-
 local EMessagePropertyStatus = ARGV[1]
 local EMessagePropertyStatusPending = ARGV[2]
 local EMessagePropertyState = ARGV[3]
@@ -32,7 +28,7 @@ local scheduledMessageState = ''
 
 ---
 
-local keyIndexOffset = 1
+local keyIndexOffset = 0
 local argvIndexOffset = 9
 
 ---
@@ -66,7 +62,6 @@ local function deletedScheduledMessage(updateMessageCount)
 end
 
 local function removeFromScheduled()
-    redis.call("ZREM", keyScheduledMessages, scheduledMessageId)
     redis.call("ZREM", keyQueueScheduled, scheduledMessageId)
 end
 
@@ -83,7 +78,6 @@ local function updateScheduledMessageProperties(status)
 end
 
 local function scheduleMessage()
-    redis.call("ZADD", keyScheduledMessages, scheduledMessageNextScheduleTimestamp, scheduledMessageId)
     redis.call("ZADD", keyQueueScheduled, scheduledMessageNextScheduleTimestamp, scheduledMessageId)
 end
 
@@ -121,8 +115,8 @@ if #ARGV > argvIndexOffset then
                 messageId = ARGV[index]
                 keyMessage = KEYS[keyIndexOffset + 1]
                 keyQueuePending = KEYS[keyIndexOffset + 2]
-                keyQueueProperties = KEYS[keyIndexOffset + 3]
-                keyQueueMessages = KEYS[keyIndexOffset + 4]
+                keyQueueMessages = KEYS[keyIndexOffset + 3]
+                keyQueueProperties = KEYS[keyIndexOffset + 4]
                 keyQueuePriorityPending = KEYS[keyIndexOffset + 5]
                 keyQueueScheduled = KEYS[keyIndexOffset + 6]
                 keyScheduledMessage = KEYS[keyIndexOffset + 7]

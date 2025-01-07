@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
+import { expect, test } from '@jest/globals';
 import { getTopicExchange } from '../../../common/exchange.js';
 import { createQueue } from '../../../common/message-producing-consuming.js';
 import { isEqual } from '../../../common/utils.js';

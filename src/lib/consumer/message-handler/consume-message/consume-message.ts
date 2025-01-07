@@ -29,15 +29,15 @@ import {
 import { MessageEnvelope } from '../../../message/message-envelope.js';
 import { IQueueParsedParams } from '../../../queue/index.js';
 import {
-  EConsumeMessageUnacknowledgedCause,
+  EMessageUnknowledgmentAction,
+  EMessageUnknowledgmentReason,
   TConsumerMessageHandler,
 } from '../../types/index.js';
 import {
   ConsumerMessageHandlerFileError,
   ConsumerMessageHandlerFilenameExtensionError,
 } from '../errors/index.js';
-import { processingQueue } from '../processing-queue.js';
-import { ERetryAction } from '../retry-message.js';
+import { processingQueue } from '../processing-queue/processing-queue.js';
 import { eventBusPublisher } from './event-bus-publisher.js';
 
 export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
@@ -125,19 +125,19 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
 
   protected unacknowledgeMessage(
     msg: MessageEnvelope,
-    cause: EConsumeMessageUnacknowledgedCause,
+    unknowledgmentReason: EMessageUnknowledgmentReason,
   ): void {
     const redisClient = this.redisClient.getInstance();
     if (redisClient instanceof Error) {
       this.handleError(redisClient);
       return void 0;
     }
-    processingQueue.handleProcessingQueue(
+    processingQueue.unknowledgeMessage(
       redisClient,
-      [this.consumerId],
+      this.consumerId,
       [this.queue.queueParams],
       this.logger,
-      cause,
+      unknowledgmentReason,
       (err, reply) => {
         if (err) this.handleError(err);
         else if (!reply) this.handleError(new CallbackEmptyReplyError());
@@ -149,18 +149,23 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
             this.queue,
             this.messageHandlerId,
             this.consumerId,
-            cause,
+            unknowledgmentReason,
           );
-          if (reply.action === ERetryAction.DEAD_LETTER) {
+          const unknowledgment = reply[messageId];
+          if (
+            unknowledgment.action === EMessageUnknowledgmentAction.DEAD_LETTER
+          ) {
             this.emit(
               'consumer.consumeMessage.messageDeadLettered',
               messageId,
               this.queue,
               this.messageHandlerId,
               this.consumerId,
-              reply.deadLetterCause,
+              unknowledgment.deadLetterReason,
             );
-          } else if (reply.action === ERetryAction.DELAY) {
+          } else if (
+            unknowledgment.action === EMessageUnknowledgmentAction.DELAY
+          ) {
             this.emit(
               'consumer.consumeMessage.messageDelayed',
               messageId,
@@ -211,10 +216,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
         timer = setTimeout(() => {
           isTimeout = true;
           timer = null;
-          this.unacknowledgeMessage(
-            msg,
-            EConsumeMessageUnacknowledgedCause.TIMEOUT,
-          );
+          this.unacknowledgeMessage(msg, EMessageUnknowledgmentReason.TIMEOUT);
         }, consumeTimeout);
       }
       const onConsumed: ICallback<void> = (err) => {
@@ -224,7 +226,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
             this.logger.error(err);
             this.unacknowledgeMessage(
               msg,
-              EConsumeMessageUnacknowledgedCause.UNACKNOWLEDGED,
+              EMessageUnknowledgmentReason.UNACKNOWLEDGED,
             );
           } else {
             this.acknowledgeMessage(msg);
@@ -240,7 +242,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
       this.logger.error(error);
       this.unacknowledgeMessage(
         msg,
-        EConsumeMessageUnacknowledgedCause.CONSUME_ERROR,
+        EMessageUnknowledgmentReason.CONSUME_ERROR,
       );
     }
   }
@@ -288,7 +290,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
       if (message.getSetExpired()) {
         this.unacknowledgeMessage(
           message,
-          EConsumeMessageUnacknowledgedCause.TTL_EXPIRED,
+          EMessageUnknowledgmentReason.TTL_EXPIRED,
         );
       } else this.consumeMessage(message);
     }

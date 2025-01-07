@@ -11,11 +11,11 @@ import { ERedisConfigClient, logger } from 'redis-smq-common';
 import {
   Configuration,
   Consumer,
-  Producer,
-  Queue,
-  EQueueType,
   EQueueDeliveryModel,
+  EQueueType,
+  Producer,
   ProducibleMessage,
+  Queue,
 } from 'redis-smq';
 
 const config = {

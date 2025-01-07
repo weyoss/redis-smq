@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
-import { MessageMessageNotRequeuableError } from '../../../src/lib/message/errors/message-message-not-requeuable.error.js';
+import { expect, test } from '@jest/globals';
+import { MessageMessageNotRequeuableError } from '../../../src/lib/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import {
   createQueue,

@@ -1,7 +1,3 @@
-local keyScheduledMessages = KEYS[1]
-local keyDelayedMessages = KEYS[2]
----
-
 local EQueuePropertyQueueType = ARGV[1]
 local EQueuePropertyMessagesCount = ARGV[2]
 local EMessagePropertyMessage = ARGV[3]
@@ -16,6 +12,7 @@ local keyQueueMessages = ''
 local keyQueueProperties = ''
 local keyMessage = ''
 local keyQueueScheduled = ''
+local keyQueueDelayed = ''
 
 ---
 
@@ -26,7 +23,7 @@ local messageState = ''
 
 ---
 
-local keyIndexOffset = 2
+local keyIndexOffset = 0
 local argvIndexOffset = 7
 
 ---
@@ -71,7 +68,8 @@ if #ARGV > argvIndexOffset then
                 keyQueueProperties = KEYS[keyIndexOffset + 2]
                 keyMessage = KEYS[keyIndexOffset + 3]
                 keyQueueScheduled = KEYS[keyIndexOffset + 4]
-                keyIndexOffset = keyIndexOffset + 4
+                keyQueueDelayed = KEYS[keyIndexOffset + 5]
+                keyIndexOffset = keyIndexOffset + 5
             elseif idx == 1 then
                 message = ARGV[index]
             elseif idx == 2 then
@@ -81,12 +79,11 @@ if #ARGV > argvIndexOffset then
                 local found = checkQueue()
                 if found == 'OK' then
                     if scheduleFromDelayed == '1' then
-                        redis.call("LREM", keyDelayedMessages, 1, messageId)
+                        redis.call("LREM", keyQueueDelayed, 1, messageId)
                         updateMessageState()
                     else
                         saveMessage()
                     end
-                    redis.call("ZADD", keyScheduledMessages, scheduleTimestamp, messageId)
                     redis.call("ZADD", keyQueueScheduled, scheduleTimestamp, messageId)
                 else
                     return found

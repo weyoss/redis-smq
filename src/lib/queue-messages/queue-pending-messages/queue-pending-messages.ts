@@ -16,13 +16,13 @@ import {
 import { RedisClientInstance } from '../../../common/redis-client/redis-client-instance.js';
 import { Configuration } from '../../../config/index.js';
 import { IMessageTransferable } from '../../message/index.js';
+import { _getQueueProperties } from '../../queue/_/_get-queue-properties.js';
+import { _parseQueueExtendedParams } from '../../queue/_/_parse-queue-extended-params.js';
 import {
   EQueueType,
   IQueueParsedParams,
   TQueueExtendedParams,
 } from '../../queue/index.js';
-import { _getQueueProperties } from '../../queue/_/_get-queue-properties.js';
-import { _parseQueueExtendedParams } from '../../queue/_/_parse-queue-extended-params.js';
 import { IQueueMessages, IQueueMessagesPage } from '../types/index.js';
 import { LinearQueuePendingMessages } from './linear-queue-pending-messages.js';
 import { PriorityQueuePendingMessages } from './priority-queue-pending-messages.js';

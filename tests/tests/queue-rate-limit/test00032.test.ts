@@ -11,7 +11,7 @@ import { expect, test } from '@jest/globals';
 import bluebird from 'bluebird';
 import { resolve } from 'path';
 import { getDirname, ICallback, IRedisClient } from 'redis-smq-common';
-import { IQueueParams } from '../../../src/lib/queue/types/queue.js';
+import { IQueueParams } from '../../../src/lib/index.js';
 import { defaultQueue } from '../../common/message-producing-consuming.js';
 import { mockModule } from '../../common/mock-module.js';
 

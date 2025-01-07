@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
+import { expect, test } from '@jest/globals';
 import bluebird from 'bluebird';
 import {
   Consumer,
@@ -20,9 +20,9 @@ import {
   Producer,
   ProducibleMessage,
 } from '../../../src/lib/index.js';
-import { getQueue } from '../../common/queue.js';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
+import { getQueue } from '../../common/queue.js';
 
 test('Publish and consume a message to/from queue with many consumer groups: using many consumers', async () => {
   const queue1: IQueueParams = {

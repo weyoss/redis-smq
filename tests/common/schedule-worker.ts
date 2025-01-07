@@ -9,21 +9,32 @@
 
 import bluebird from 'bluebird';
 import { Runnable } from 'redis-smq-common';
-import { Configuration } from '../../src/config/index.js';
+import {
+  Configuration,
+  IRedisSMQConfigRequired,
+} from '../../src/config/index.js';
 import PublishScheduledWorker from '../../src/lib/consumer/workers/publish-scheduled.worker.js';
+import { IQueueParams } from '../../src/lib/index.js';
 
-let scheduleWorker: Runnable<Record<string, never>> | null = null;
+const scheduleWorker: Record<string, Runnable<Record<string, never>>> = {};
 
-export async function startScheduleWorker(): Promise<void> {
-  if (!scheduleWorker) {
-    scheduleWorker = PublishScheduledWorker(Configuration.getSetConfig());
-    await bluebird.promisifyAll(scheduleWorker).runAsync();
+export async function startScheduleWorker(
+  queueParams: IQueueParams,
+  config?: IRedisSMQConfigRequired,
+): Promise<void> {
+  const key = `${queueParams.ns}${queueParams.name}`;
+  if (!scheduleWorker[key]) {
+    scheduleWorker[key] = PublishScheduledWorker({
+      queueParsedParams: { queueParams, groupId: null },
+      config: config ?? Configuration.getSetConfig(),
+    });
+    await bluebird.promisifyAll(scheduleWorker[key]).runAsync();
   }
 }
 
 export async function stopScheduleWorker(): Promise<void> {
-  if (scheduleWorker) {
-    await bluebird.promisifyAll(scheduleWorker).shutdownAsync();
-    scheduleWorker = null;
+  for (const key in scheduleWorker) {
+    await bluebird.promisifyAll(scheduleWorker[key]).shutdownAsync();
+    delete scheduleWorker[key];
   }
 }

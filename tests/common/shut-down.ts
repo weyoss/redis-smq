@@ -17,13 +17,13 @@ import {
 import { shutDownMessage } from './message.js';
 import { shutDownNamespace } from './namespace.js';
 import { shutDownProducers } from './producer.js';
-import { shutDownQueue } from './queue.js';
 import { shutDownQueueAcknowledgedMessages } from './queue-acknowledged-messages.js';
 import { shutDownQueueDeadLetteredMessages } from './queue-dead-lettered-messages.js';
 import { shutDownQueueMessages } from './queue-messages.js';
 import { shutDownQueuePendingMessages } from './queue-pending-messages.js';
 import { shutDownQueueRateLimit } from './queue-rate-limit.js';
 import { shutDownQueueScheduledMessages } from './queue-scheduled-messages.js';
+import { shutDownQueue } from './queue.js';
 import { shutDownRedisClients } from './redis.js';
 import { stopScheduleWorker } from './schedule-worker.js';
 

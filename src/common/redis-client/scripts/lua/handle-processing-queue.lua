@@ -1,9 +1,3 @@
-local keyProcessingQueues = KEYS[1]
-local keyDelayedMessages = KEYS[2]
-local keyRequeueMessages = KEYS[3]
-
----
-
 local ERetryActionDelay = ARGV[1]
 local ERetryActionRequeue = ARGV[2]
 local ERetryActionDeadLetter = ARGV[3]
@@ -16,12 +10,14 @@ local EMessageUnacknowledgedCauseOfflineHandler = ARGV[9]
 
 ---
 
-local keyIndexOffset = 3
+local keyIndexOffset = 0
 local argvIndexOffset = 9
 
 ---
 
 local keyQueueProcessing = ''
+local keyQueueDelayed = ''
+local keyQueueRequeued = ''
 local keyQueueDL = ''
 local keyQueueProcessingQueues = ''
 local keyQueueConsumers = ''
@@ -47,15 +43,19 @@ local function removeQueueConsumer()
     if queue ~= '' then
         redis.call("HDEL", keyQueueConsumers, consumerId)
         redis.call("SREM", keyConsumerQueues, queue)
+        local size = redis.call("SCARD", keyConsumerQueues)
+        if size == 0 then
+            redis.call("DEL", keyConsumerQueues)
+        end
     end
 end
 
 local function retryMessage()
     if messageId ~= '' then
         if retryAction == ERetryActionRequeue then
-            redis.call("RPOPLPUSH", keyQueueProcessing, keyRequeueMessages)
+            redis.call("RPOPLPUSH", keyQueueProcessing, keyQueueRequeued)
         elseif retryAction == ERetryActionDelay then
-            redis.call("RPOPLPUSH", keyQueueProcessing, keyDelayedMessages)
+            redis.call("RPOPLPUSH", keyQueueProcessing, keyQueueDelayed)
         else
             if storeMessages == '1' then
                 redis.call("LREM", keyQueueProcessing, 1, messageId)
@@ -76,7 +76,6 @@ end
 
 local function deleteProcessingQueue()
     if keyQueueProcessing ~= '' then
-        redis.call("SREM", keyProcessingQueues, keyQueueProcessing)
         redis.call("HDEL", keyQueueProcessingQueues, keyQueueProcessing)
         redis.call("DEL", keyQueueProcessing)
     end
@@ -91,13 +90,15 @@ if #ARGV > argvIndexOffset then
             if relativeIndex == 3 then
                 queue = ARGV[index]
                 keyQueueProcessing = KEYS[keyIndexOffset + 1]
-                keyQueueDL = KEYS[keyIndexOffset + 2]
-                keyQueueProcessingQueues = KEYS[keyIndexOffset + 3]
-                keyQueueConsumers = KEYS[keyIndexOffset + 4]
-                keyConsumerQueues = KEYS[keyIndexOffset + 5]
-                keyQueueProperties = KEYS[keyIndexOffset + 6]
-                keyMessage = KEYS[keyIndexOffset + 7]
-                keyIndexOffset = keyIndexOffset + 7
+                keyQueueDelayed = KEYS[keyIndexOffset + 2];
+                keyQueueRequeued = KEYS[keyIndexOffset + 3];
+                keyQueueDL = KEYS[keyIndexOffset + 4]
+                keyQueueProcessingQueues = KEYS[keyIndexOffset + 5]
+                keyQueueConsumers = KEYS[keyIndexOffset + 6]
+                keyConsumerQueues = KEYS[keyIndexOffset + 7]
+                keyQueueProperties = KEYS[keyIndexOffset + 8]
+                keyMessage = KEYS[keyIndexOffset + 9]
+                keyIndexOffset = keyIndexOffset + 9
             elseif relativeIndex == 4 then
                 consumerId = ARGV[index]
             elseif relativeIndex == 5 then

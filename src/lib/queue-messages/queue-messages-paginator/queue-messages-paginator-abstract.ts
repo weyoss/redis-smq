@@ -16,10 +16,10 @@ import {
 import { RedisClientInstance } from '../../../common/redis-client/redis-client-instance.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../../config/index.js';
-import { IMessageTransferable, Message } from '../../message/index.js';
 import { _deleteMessage } from '../../message/_/_delete-message.js';
-import { IQueueParsedParams, TQueueExtendedParams } from '../../queue/index.js';
+import { IMessageTransferable, Message } from '../../message/index.js';
 import { _parseQueueExtendedParams } from '../../queue/_/_parse-queue-extended-params.js';
+import { IQueueParsedParams, TQueueExtendedParams } from '../../queue/index.js';
 import { _validateQueueExtendedParams } from '../_/_validate-queue-extended-params.js';
 import {
   IQueueMessages,

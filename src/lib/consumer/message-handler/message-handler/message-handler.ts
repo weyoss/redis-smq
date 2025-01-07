@@ -7,12 +7,15 @@
  * in the root directory of this source tree.
  */
 
+import path from 'path';
 import {
   CallbackEmptyReplyError,
   CallbackInvalidReplyError,
+  getDirname,
   ICallback,
   ILogger,
   Runnable,
+  WorkerResourceGroup,
 } from 'redis-smq-common';
 import {
   TConsumerMessageHandlerEvent,
@@ -31,12 +34,12 @@ import {
 import { IQueueParsedParams } from '../../../queue/index.js';
 import { Consumer } from '../../consumer/consumer.js';
 import {
-  EConsumeMessageUnacknowledgedCause,
+  EMessageUnknowledgmentReason,
   IConsumerMessageHandlerArgs,
 } from '../../types/index.js';
 import { ConsumeMessage } from '../consume-message/consume-message.js';
 import { DequeueMessage } from '../dequeue-message/dequeue-message.js';
-import { processingQueue } from '../processing-queue.js';
+import { processingQueue } from '../processing-queue/processing-queue.js';
 import { evenBusPublisher } from './even-bus-publisher.js';
 
 export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
@@ -49,6 +52,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   protected messageHandler;
   protected autoDequeue;
   protected redisClient;
+  protected workerResourceGroup: WorkerResourceGroup | null = null;
 
   constructor(
     consumer: Consumer,
@@ -152,12 +156,12 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       cb();
       return void 0;
     }
-    processingQueue.handleProcessingQueue(
+    processingQueue.unknowledgeMessage(
       redisClient,
-      [this.consumerId],
+      this.consumerId,
       [this.queue.queueParams],
       this.logger,
-      EConsumeMessageUnacknowledgedCause.OFFLINE_MESSAGE_HANDLER,
+      EMessageUnknowledgmentReason.OFFLINE_MESSAGE_HANDLER,
       // ignoring errors
       () => cb(),
     );
@@ -179,6 +183,52 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     super.handleError(err);
   }
 
+  protected setUpConsumerWorkers = (cb: ICallback<void>): void => {
+    const config = Configuration.getSetConfig();
+    const { keyQueueWorkersLock } = redisKeys.getQueueKeys(
+      this.queue.queueParams,
+      this.queue.groupId,
+    );
+    const redisClient = this.redisClient.getInstance();
+    if (redisClient instanceof Error) {
+      cb(redisClient);
+      return void 0;
+    }
+    this.workerResourceGroup = new WorkerResourceGroup(
+      redisClient,
+      this.logger,
+      keyQueueWorkersLock,
+    );
+    this.workerResourceGroup.on('workerResourceGroup.error', (err) =>
+      this.handleError(err),
+    );
+    const workersDir = path.resolve(getDirname(), '../../workers');
+    this.workerResourceGroup.loadFromDir(
+      workersDir,
+      { config, queueParsedParams: this.queue },
+      (err) => {
+        if (err) cb(err);
+        else {
+          this.workerResourceGroup?.run((err) => {
+            if (err) this.handleError(err);
+          });
+          cb();
+        }
+      },
+    );
+  };
+
+  protected shutDownConsumerWorkers = (cb: ICallback<void>): void => {
+    if (this.workerResourceGroup) {
+      this.workerResourceGroup.shutdown(() => {
+        this.workerResourceGroup = null;
+        cb();
+      });
+    } else {
+      cb();
+    }
+  };
+
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
     return super.goingUp().concat([
       (cb: ICallback<void>) => this.dequeueMessage.run((err) => cb(err)),
@@ -187,11 +237,13 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
         if (this.autoDequeue) this.dequeue();
         cb();
       },
+      this.setUpConsumerWorkers,
     ]);
   }
 
   protected override goingDown(): ((cb: ICallback<void>) => void)[] {
     return [
+      this.shutDownConsumerWorkers,
       (cb: ICallback<void>) => this.dequeueMessage.shutdown(() => cb()),
       (cb: ICallback<void>) => this.consumeMessage.shutdown(() => cb()),
       (cb: ICallback<void>) => this.cleanUp(cb),

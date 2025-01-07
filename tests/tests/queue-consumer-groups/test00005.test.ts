@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { test, expect } from '@jest/globals';
+import { expect, test } from '@jest/globals';
 import bluebird from 'bluebird';
 import {
   Consumer,
@@ -20,9 +20,9 @@ import {
   Producer,
   ProducibleMessage,
 } from '../../../src/lib/index.js';
-import { getQueue } from '../../common/queue.js';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
+import { getQueue } from '../../common/queue.js';
 
 test('Publish and consume a message to/from queue with many consumer groups: unacknowledged messages', async () => {
   const queue1: IQueueParams = {
@@ -52,6 +52,7 @@ test('Publish and consume a message to/from queue with many consumer groups: una
     },
   );
   await consumer1.runAsync();
+
   const msg2: string[] = [];
   const consumer2 = bluebird.promisifyAll(new Consumer());
   await consumer2.consumeAsync(
@@ -62,6 +63,7 @@ test('Publish and consume a message to/from queue with many consumer groups: una
     },
   );
   await consumer2.runAsync();
+
   const msg3: string[] = [];
   const consumer3 = bluebird.promisifyAll(new Consumer());
   await consumer3.consumeAsync(
@@ -72,6 +74,7 @@ test('Publish and consume a message to/from queue with many consumer groups: una
     },
   );
   await consumer3.runAsync();
+
   const msg4: string[] = [];
   const consumer4 = bluebird.promisifyAll(new Consumer());
   await consumer4.consumeAsync(

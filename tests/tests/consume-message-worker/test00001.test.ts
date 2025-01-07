@@ -7,9 +7,9 @@
  * in the root directory of this source tree.
  */
 
+import { expect, it } from '@jest/globals';
 import bluebird from 'bluebird';
 import path from 'path';
-import { it, expect } from '@jest/globals';
 import { getDirname } from 'redis-smq-common';
 import {
   Consumer,
@@ -18,8 +18,8 @@ import {
   Producer,
   ProducibleMessage,
 } from '../../../src/lib/index.js';
-import { getQueue } from '../../common/queue.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
+import { getQueue } from '../../common/queue.js';
 
 it('ConsumeMessageWorker: case 1', async () => {
   const consumer = bluebird.promisifyAll(new Consumer());

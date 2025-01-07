@@ -16,9 +16,11 @@ import {
 } from '../../message/index.js';
 import { MessageEnvelope } from '../../message/message-envelope.js';
 import { EQueueProperty } from '../../queue/index.js';
-import { ProducerQueueNotFoundError } from '../errors/producer-queue-not-found.error.js';
-import { ProducerScheduleInvalidParametersError } from '../errors/producer-schedule-invalid-parameters.error.js';
-import { ProducerError } from '../errors/producer.error.js';
+import {
+  ProducerError,
+  ProducerQueueNotFoundError,
+  ProducerScheduleInvalidParametersError,
+} from '../errors/index.js';
 
 export function _scheduleMessage(
   mixed: IRedisClient,
@@ -27,13 +29,15 @@ export function _scheduleMessage(
 ): void {
   const timestamp = message.getNextScheduledTimestamp();
   if (timestamp > 0) {
-    const { keyQueueProperties, keyQueueScheduled, keyQueueMessages } =
-      redisKeys.getQueueKeys(
-        message.getDestinationQueue(),
-        message.getConsumerGroupId(),
-      );
-    const { keyScheduledMessages, keyDelayedMessages } =
-      redisKeys.getMainKeys();
+    const {
+      keyQueueProperties,
+      keyQueueScheduled,
+      keyQueueMessages,
+      keyQueueDelayed,
+    } = redisKeys.getQueueKeys(
+      message.getDestinationQueue(),
+      message.getConsumerGroupId(),
+    );
     const ts = Date.now();
     message.getMessageState().setScheduledAt(ts).setLastScheduledAt(ts);
     const messageId = message.getId();
@@ -41,12 +45,11 @@ export function _scheduleMessage(
     mixed.runScript(
       ELuaScriptName.SCHEDULE_MESSAGE,
       [
-        keyScheduledMessages,
-        keyDelayedMessages,
         keyQueueMessages,
         keyQueueProperties,
         keyMessage,
         keyQueueScheduled,
+        keyQueueDelayed,
       ],
       [
         EQueueProperty.QUEUE_TYPE,
@@ -56,7 +59,6 @@ export function _scheduleMessage(
         EMessagePropertyStatus.SCHEDULED,
         EMessageProperty.STATE,
         '0',
-
         messageId,
         JSON.stringify(message),
         `${timestamp}`,
