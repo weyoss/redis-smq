@@ -122,8 +122,8 @@ function unknowledgeProcessingQueueMessage(
             action === EMessageUnknowledgmentAction.DEAD_LETTER
               ? EMessagePropertyStatus.DEAD_LETTERED
               : action === EMessageUnknowledgmentAction.REQUEUE
-              ? EMessagePropertyStatus.UNACK_REQUEUING
-              : EMessagePropertyStatus.UNACK_DELAYING;
+                ? EMessagePropertyStatus.UNACK_REQUEUING
+                : EMessagePropertyStatus.UNACK_DELAYING;
           args.push(
             action,
             action === EMessageUnknowledgmentAction.DEAD_LETTER

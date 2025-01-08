@@ -31,7 +31,8 @@ export function getConsumer(args: TGetConsumerArgs = {}) {
     consumeDefaultQueue = true,
   } = args;
   const consumer = bluebird.promisifyAll(new Consumer());
-  consumeDefaultQueue && consumer.consume(queue, messageHandler, () => void 0);
+  if (consumeDefaultQueue)
+    consumer.consume(queue, messageHandler, () => void 0);
   consumersList.push(consumer);
   return consumer;
 }

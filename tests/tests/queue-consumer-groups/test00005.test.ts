@@ -81,7 +81,8 @@ test('Publish and consume a message to/from queue with many consumer groups: una
     { queue: queue1, groupId: 'my-group-4' },
     (msg, cb) => {
       msg4.push(msg.id);
-      if (msg4.length < 3) cb(new Error('Explicit error')); // unacknowledging
+      if (msg4.length < 3)
+        cb(new Error('Explicit error')); // unacknowledging
       else cb();
     },
   );
