@@ -332,23 +332,25 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
   };
 
   dequeue(): void {
-    if (this.isRunning()) {
-      if (this.isIdle()) {
-        this.resetIdle();
-        this.timer.setTimeout(() => {
-          this.dequeue();
-        }, 1000);
-      } else {
-        const redisClient = this.redisClient.getInstance();
-        if (redisClient instanceof Error) {
-          this.handleError(redisClient);
-          return void 0;
-        }
-        this.dequeueWithRateLimit(redisClient) ||
-          this.dequeueWithPriority(redisClient) ||
-          this.dequeueAndBlock(redisClient) ||
-          this.dequeueAndReturn(redisClient);
-      }
+    if (!this.isRunning()) return void 0;
+
+    if (this.isIdle()) {
+      this.resetIdle();
+      return void this.timer.setTimeout(() => {
+        this.dequeue();
+      }, 1000);
     }
+
+    const redisClient = this.redisClient.getInstance();
+    if (redisClient instanceof Error) {
+      return this.handleError(redisClient);
+    }
+
+    return void (
+      this.dequeueWithRateLimit(redisClient) ||
+      this.dequeueWithPriority(redisClient) ||
+      this.dequeueAndBlock(redisClient) ||
+      this.dequeueAndReturn(redisClient)
+    );
   }
 }

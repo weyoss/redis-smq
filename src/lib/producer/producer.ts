@@ -303,7 +303,7 @@ export class Producer extends Runnable<TProducerEvent> {
                 this.produceMessage(redisClient, msg, queue, (err, reply) => {
                   if (err) done(err);
                   else {
-                    reply && messages.push(...reply);
+                    if (reply) messages.push(...reply);
                     done();
                   }
                 });
