@@ -8,13 +8,11 @@
 
   ↳ **`ConsumerError`**
 
-  ↳↳ [`ConsumerMessageHandlerAlreadyExistsError`](ConsumerMessageHandlerAlreadyExistsError.md)
+  ↳↳ [`ConsumerConsumeMessageHandlerAlreadyExistsError`](ConsumerConsumeMessageHandlerAlreadyExistsError.md)
 
-  ↳↳ [`ConsumerGroupDeleteError`](ConsumerGroupDeleteError.md)
+  ↳↳ [`ConsumerConsumerGroupIdNotSupportedError`](ConsumerConsumerGroupIdNotSupportedError.md)
 
-  ↳↳ [`ConsumerGroupIdNotSupportedError`](ConsumerGroupIdNotSupportedError.md)
-
-  ↳↳ [`ConsumerGroupIdRequiredError`](ConsumerGroupIdRequiredError.md)
+  ↳↳ [`ConsumerConsumerGroupIdRequiredError`](ConsumerConsumerGroupIdRequiredError.md)
 
 ## Table of contents
 
@@ -42,17 +40,13 @@
 
 ### constructor
 
-• **new ConsumerError**(`message?`): [`ConsumerError`](ConsumerError.md)
+• **new ConsumerError**(`message?`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `message?` | `string` |
-
-#### Returns
-
-[`ConsumerError`](ConsumerError.md)
 
 #### Inherited from
 
@@ -147,7 +141,7 @@ RedisSMQError.name
 
 ### captureStackTrace
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 

@@ -12,11 +12,17 @@
 
   ↳↳ [`MessageDestinationQueueRequiredError`](MessageDestinationQueueRequiredError.md)
 
-  ↳↳ [`MessageExchangeRequiredError`](MessageExchangeRequiredError.md)
+  ↳↳ [`MessageMessageExchangeRequiredError`](MessageMessageExchangeRequiredError.md)
 
-  ↳↳ [`MessageNotFoundError`](MessageNotFoundError.md)
+  ↳↳ [`MessageMessageNotFoundError`](MessageMessageNotFoundError.md)
 
-  ↳↳ [`MessageDeleteError`](MessageDeleteError.md)
+  ↳↳ [`MessageMessagePropertyError`](MessageMessagePropertyError.md)
+
+  ↳↳ [`MessageInvalidParametersError`](MessageInvalidParametersError.md)
+
+  ↳↳ [`MessageMessageNotRequeuableError`](MessageMessageNotRequeuableError.md)
+
+  ↳↳ [`MessageMessageNotDeletedError`](MessageMessageNotDeletedError.md)
 
 ## Table of contents
 
@@ -44,17 +50,13 @@
 
 ### constructor
 
-• **new MessageError**(`message?`): [`MessageError`](MessageError.md)
+• **new MessageError**(`message?`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `message?` | `string` |
-
-#### Returns
-
-[`MessageError`](MessageError.md)
 
 #### Inherited from
 
@@ -149,7 +151,7 @@ RedisSMQError.name
 
 ### captureStackTrace
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 

@@ -8,13 +8,15 @@
 
   ↳ **`QueueError`**
 
-  ↳↳ [`QueueExistsError`](QueueExistsError.md)
+  ↳↳ [`QueueQueueExistsError`](QueueQueueExistsError.md)
 
-  ↳↳ [`QueueHasRunningConsumersError`](QueueHasRunningConsumersError.md)
+  ↳↳ [`QueueQueueHasRunningConsumersError`](QueueQueueHasRunningConsumersError.md)
 
-  ↳↳ [`QueueNotEmptyError`](QueueNotEmptyError.md)
+  ↳↳ [`QueueQueueNotEmptyError`](QueueQueueNotEmptyError.md)
 
-  ↳↳ [`QueueNotFoundError`](QueueNotFoundError.md)
+  ↳↳ [`QueueQueueNotFoundError`](QueueQueueNotFoundError.md)
+
+  ↳↳ [`QueueInvalidQueueParameterError`](QueueInvalidQueueParameterError.md)
 
 ## Table of contents
 
@@ -42,17 +44,13 @@
 
 ### constructor
 
-• **new QueueError**(`message?`): [`QueueError`](QueueError.md)
+• **new QueueError**(`message?`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `message?` | `string` |
-
-#### Returns
-
-[`QueueError`](QueueError.md)
 
 #### Inherited from
 
@@ -147,7 +145,7 @@ RedisSMQError.name
 
 ### captureStackTrace
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 

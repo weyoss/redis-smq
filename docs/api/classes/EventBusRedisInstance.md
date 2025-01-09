@@ -30,11 +30,7 @@
 
 ### constructor
 
-• **new EventBusRedisInstance**(): [`EventBusRedisInstance`](EventBusRedisInstance.md)
-
-#### Returns
-
-[`EventBusRedisInstance`](EventBusRedisInstance.md)
+• **new EventBusRedisInstance**()
 
 #### Inherited from
 

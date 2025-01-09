@@ -24,7 +24,7 @@ ___
 
 ### getSetConfig
 
-▸ **getSetConfig**(`config?`): [`IRedisSMQConfigRequired`](../interfaces/IRedisSMQConfigRequired.md)
+▸ `Static` **getSetConfig**(`config?`): [`IRedisSMQConfigRequired`](../interfaces/IRedisSMQConfigRequired.md)
 
 #### Parameters
 
@@ -40,7 +40,7 @@ ___
 
 ### reset
 
-▸ **reset**(): `void`
+▸ `Static` **reset**(): `void`
 
 #### Returns
 

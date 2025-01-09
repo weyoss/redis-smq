@@ -23,11 +23,7 @@
 
 ### constructor
 
-• **new Message**(): [`Message`](Message.md)
-
-#### Returns
-
-[`Message`](Message.md)
+• **new Message**()
 
 ## Methods
 

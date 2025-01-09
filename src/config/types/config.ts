@@ -15,8 +15,15 @@ import {
 } from '../../lib/index.js';
 
 export interface IRedisSMQConfig {
+  /**
+   * @see https://github.com/weyoss/redis-smq-common/blob/master/docs/api/README.md#iredisconfig
+   */
   redis?: IRedisConfig;
   namespace?: string;
+
+  /**
+   * @see https://github.com/weyoss/redis-smq-common/blob/master/docs/api/interfaces/ILoggerConfig.md
+   */
   logger?: ILoggerConfig;
   messages?: IMessagesConfig;
   eventBus?: IEventBusConfig;

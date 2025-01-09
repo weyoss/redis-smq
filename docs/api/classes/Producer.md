@@ -35,11 +35,7 @@
 
 ### constructor
 
-• **new Producer**(): [`Producer`](Producer.md)
-
-#### Returns
-
-[`Producer`](Producer.md)
+• **new Producer**()
 
 #### Overrides
 

@@ -34,17 +34,13 @@
 
 ### constructor
 
-• **new ProducerMessageExchangeRequiredError**(`message?`): [`ProducerMessageExchangeRequiredError`](ProducerMessageExchangeRequiredError.md)
+• **new ProducerMessageExchangeRequiredError**(`message?`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `message?` | `string` |
-
-#### Returns
-
-[`ProducerMessageExchangeRequiredError`](ProducerMessageExchangeRequiredError.md)
 
 #### Inherited from
 
@@ -139,7 +135,7 @@ ProducerError.name
 
 ### captureStackTrace
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 

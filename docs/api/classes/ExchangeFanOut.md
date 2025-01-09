@@ -29,11 +29,7 @@
 
 ### constructor
 
-• **new ExchangeFanOut**(): [`ExchangeFanOut`](ExchangeFanOut.md)
-
-#### Returns
-
-[`ExchangeFanOut`](ExchangeFanOut.md)
+• **new ExchangeFanOut**()
 
 #### Inherited from
 

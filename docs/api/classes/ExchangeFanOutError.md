@@ -8,6 +8,8 @@
 
   ↳ **`ExchangeFanOutError`**
 
+  ↳↳ [`ExchangeFanOutQueueTypeError`](ExchangeFanOutQueueTypeError.md)
+
 ## Table of contents
 
 ### Constructors
@@ -34,17 +36,13 @@
 
 ### constructor
 
-• **new ExchangeFanOutError**(`message?`): [`ExchangeFanOutError`](ExchangeFanOutError.md)
+• **new ExchangeFanOutError**(`message?`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `message?` | `string` |
-
-#### Returns
-
-[`ExchangeFanOutError`](ExchangeFanOutError.md)
 
 #### Inherited from
 
@@ -139,7 +137,7 @@ ExchangeError.name
 
 ### captureStackTrace
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 

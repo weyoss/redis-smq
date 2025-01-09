@@ -22,7 +22,11 @@ ___
 
 ### logger
 
-• `Optional` **logger**: [`ILoggerConfig`](https://github.com/weyoss/redis-smq-common/blob/master/docs/api/interfaces/ILoggerConfig.md)
+• `Optional` **logger**: `ILoggerConfig`
+
+**`See`**
+
+https://github.com/weyoss/redis-smq-common/blob/master/docs/api/interfaces/ILoggerConfig.md
 
 ___
 
@@ -40,4 +44,8 @@ ___
 
 ### redis
 
-• `Optional` **redis**: [`IRedisConfig`](https://github.com/weyoss/redis-smq-common/blob/master/docs/api/README.md#iredisconfig)
+• `Optional` **redis**: `IRedisConfig`
+
+**`See`**
+
+https://github.com/weyoss/redis-smq-common/blob/master/docs/api/README.md#iredisconfig

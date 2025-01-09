@@ -23,11 +23,7 @@
 
 ### constructor
 
-• **new QueuePendingMessages**(): [`QueuePendingMessages`](QueuePendingMessages.md)
-
-#### Returns
-
-[`QueuePendingMessages`](QueuePendingMessages.md)
+• **new QueuePendingMessages**()
 
 ## Methods
 

@@ -34,13 +34,15 @@
 
 ### constructor
 
-• **new MessageDestinationQueueAlreadySetError**(): [`MessageDestinationQueueAlreadySetError`](MessageDestinationQueueAlreadySetError.md)
+• **new MessageDestinationQueueAlreadySetError**(`message?`)
 
-#### Returns
+#### Parameters
 
-[`MessageDestinationQueueAlreadySetError`](MessageDestinationQueueAlreadySetError.md)
+| Name | Type |
+| :------ | :------ |
+| `message?` | `string` |
 
-#### Overrides
+#### Inherited from
 
 [MessageError](MessageError.md).[constructor](MessageError.md#constructor)
 
@@ -133,7 +135,7 @@ MessageError.name
 
 ### captureStackTrace
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 

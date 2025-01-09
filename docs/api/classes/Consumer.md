@@ -37,17 +37,13 @@
 
 ### constructor
 
-• **new Consumer**(`enableMultiplexing?`): [`Consumer`](Consumer.md)
+• **new Consumer**(`enableMultiplexing?`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `enableMultiplexing?` | `boolean` |
-
-#### Returns
-
-[`Consumer`](Consumer.md)
 
 #### Overrides
 

@@ -10,7 +10,15 @@
 
   ↳↳ [`ExchangeFanOutError`](ExchangeFanOutError.md)
 
-  ↳↳ [`ExchangeInvalidDataError`](ExchangeInvalidDataError.md)
+  ↳↳ [`ExchangeInvalidTopicParamsError`](ExchangeInvalidTopicParamsError.md)
+
+  ↳↳ [`ExchangeInvalidFanOutParamsError`](ExchangeInvalidFanOutParamsError.md)
+
+  ↳↳ [`ExchangeInvalidQueueParamsError`](ExchangeInvalidQueueParamsError.md)
+
+  ↳↳ [`ExchangeFanOutExchangeHasBoundQueuesError`](ExchangeFanOutExchangeHasBoundQueuesError.md)
+
+  ↳↳ [`ExchangeQueueIsNotBoundToExchangeError`](ExchangeQueueIsNotBoundToExchangeError.md)
 
 ## Table of contents
 
@@ -38,17 +46,13 @@
 
 ### constructor
 
-• **new ExchangeError**(`message?`): [`ExchangeError`](ExchangeError.md)
+• **new ExchangeError**(`message?`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `message?` | `string` |
-
-#### Returns
-
-[`ExchangeError`](ExchangeError.md)
 
 #### Inherited from
 
@@ -143,7 +147,7 @@ RedisSMQError.name
 
 ### captureStackTrace
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 

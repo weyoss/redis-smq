@@ -8,15 +8,23 @@
 
   ↳ **`ProducerError`**
 
-  ↳↳ [`ProducerMessageNotPublishedError`](ProducerMessageNotPublishedError.md)
-
-  ↳↳ [`ProducerMessageNotScheduledError`](ProducerMessageNotScheduledError.md)
-
   ↳↳ [`ProducerInstanceNotRunningError`](ProducerInstanceNotRunningError.md)
 
-  ↳↳ [`ProducerQueueWithoutConsumerGroupsError`](ProducerQueueWithoutConsumerGroupsError.md)
+  ↳↳ [`ProducerQueueMissingConsumerGroupsError`](ProducerQueueMissingConsumerGroupsError.md)
 
   ↳↳ [`ProducerMessageExchangeRequiredError`](ProducerMessageExchangeRequiredError.md)
+
+  ↳↳ [`ProducerQueueNotFoundError`](ProducerQueueNotFoundError.md)
+
+  ↳↳ [`ProducerMessagePriorityRequiredError`](ProducerMessagePriorityRequiredError.md)
+
+  ↳↳ [`ProducerPriorityQueuingNotEnabledError`](ProducerPriorityQueuingNotEnabledError.md)
+
+  ↳↳ [`ProducerUnknownQueueTypeError`](ProducerUnknownQueueTypeError.md)
+
+  ↳↳ [`ProducerExchangeNoMatchedQueueError`](ProducerExchangeNoMatchedQueueError.md)
+
+  ↳↳ [`ProducerScheduleInvalidParametersError`](ProducerScheduleInvalidParametersError.md)
 
 ## Table of contents
 
@@ -44,17 +52,13 @@
 
 ### constructor
 
-• **new ProducerError**(`message?`): [`ProducerError`](ProducerError.md)
+• **new ProducerError**(`message?`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `message?` | `string` |
-
-#### Returns
-
-[`ProducerError`](ProducerError.md)
 
 #### Inherited from
 
@@ -149,7 +153,7 @@ RedisSMQError.name
 
 ### captureStackTrace
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 

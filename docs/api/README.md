@@ -6,12 +6,13 @@
 
 ### Enumerations
 
-- [EConsumeMessageDeadLetterCause](enums/EConsumeMessageDeadLetterCause.md)
-- [EConsumeMessageUnacknowledgedCause](enums/EConsumeMessageUnacknowledgedCause.md)
 - [EExchangeType](enums/EExchangeType.md)
 - [EMessagePriority](enums/EMessagePriority.md)
 - [EMessageProperty](enums/EMessageProperty.md)
 - [EMessagePropertyStatus](enums/EMessagePropertyStatus.md)
+- [EMessageUnknowledgmentAction](enums/EMessageUnknowledgmentAction.md)
+- [EMessageUnknowledgmentDeadLetterReason](enums/EMessageUnknowledgmentDeadLetterReason.md)
+- [EMessageUnknowledgmentReason](enums/EMessageUnknowledgmentReason.md)
 - [EQueueDeliveryModel](enums/EQueueDeliveryModel.md)
 - [EQueueProperty](enums/EQueueProperty.md)
 - [EQueueType](enums/EQueueType.md)
@@ -19,41 +20,26 @@
 ### Classes
 
 - [Configuration](classes/Configuration.md)
-- [Consumer](classes/Consumer.md)
-- [ConsumerGroups](classes/ConsumerGroups.md)
-- [EventBusRedisInstance](classes/EventBusRedisInstance.md)
-- [ExchangeDirect](classes/ExchangeDirect.md)
-- [ExchangeFanOut](classes/ExchangeFanOut.md)
-- [ExchangeTopic](classes/ExchangeTopic.md)
-- [Message](classes/Message.md)
-- [Namespace](classes/Namespace.md)
-- [Producer](classes/Producer.md)
-- [ProducibleMessage](classes/ProducibleMessage.md)
-- [Queue](classes/Queue.md)
-- [QueueAcknowledgedMessages](classes/QueueAcknowledgedMessages.md)
-- [QueueDeadLetteredMessages](classes/QueueDeadLetteredMessages.md)
-- [QueueMessages](classes/QueueMessages.md)
-- [QueuePendingMessages](classes/QueuePendingMessages.md)
-- [QueueRateLimit](classes/QueueRateLimit.md)
-- [QueueScheduledMessages](classes/QueueScheduledMessages.md)
-
-#### Errors
-
 - [ConfigurationError](classes/ConfigurationError.md)
 - [ConfigurationMessageQueueSizeError](classes/ConfigurationMessageQueueSizeError.md)
 - [ConfigurationMessageStoreExpireError](classes/ConfigurationMessageStoreExpireError.md)
 - [ConfigurationNamespaceError](classes/ConfigurationNamespaceError.md)
+- [Consumer](classes/Consumer.md)
 - [ConsumerConsumeMessageHandlerAlreadyExistsError](classes/ConsumerConsumeMessageHandlerAlreadyExistsError.md)
 - [ConsumerConsumerGroupIdNotSupportedError](classes/ConsumerConsumerGroupIdNotSupportedError.md)
 - [ConsumerConsumerGroupIdRequiredError](classes/ConsumerConsumerGroupIdRequiredError.md)
 - [ConsumerError](classes/ConsumerError.md)
+- [ConsumerGroups](classes/ConsumerGroups.md)
 - [ConsumerGroupsConsumerGroupNotEmptyError](classes/ConsumerGroupsConsumerGroupNotEmptyError.md)
 - [ConsumerGroupsConsumerGroupsNotSupportedError](classes/ConsumerGroupsConsumerGroupsNotSupportedError.md)
 - [ConsumerGroupsError](classes/ConsumerGroupsError.md)
 - [ConsumerGroupsInvalidGroupIdError](classes/ConsumerGroupsInvalidGroupIdError.md)
 - [ConsumerGroupsQueueNotFoundError](classes/ConsumerGroupsQueueNotFoundError.md)
 - [EventBusInstanceLockError](classes/EventBusInstanceLockError.md)
+- [EventBusRedisInstance](classes/EventBusRedisInstance.md)
+- [ExchangeDirect](classes/ExchangeDirect.md)
 - [ExchangeError](classes/ExchangeError.md)
+- [ExchangeFanOut](classes/ExchangeFanOut.md)
 - [ExchangeFanOutError](classes/ExchangeFanOutError.md)
 - [ExchangeFanOutExchangeHasBoundQueuesError](classes/ExchangeFanOutExchangeHasBoundQueuesError.md)
 - [ExchangeFanOutQueueTypeError](classes/ExchangeFanOutQueueTypeError.md)
@@ -61,6 +47,8 @@
 - [ExchangeInvalidQueueParamsError](classes/ExchangeInvalidQueueParamsError.md)
 - [ExchangeInvalidTopicParamsError](classes/ExchangeInvalidTopicParamsError.md)
 - [ExchangeQueueIsNotBoundToExchangeError](classes/ExchangeQueueIsNotBoundToExchangeError.md)
+- [ExchangeTopic](classes/ExchangeTopic.md)
+- [Message](classes/Message.md)
 - [MessageDestinationQueueAlreadySetError](classes/MessageDestinationQueueAlreadySetError.md)
 - [MessageDestinationQueueRequiredError](classes/MessageDestinationQueueRequiredError.md)
 - [MessageError](classes/MessageError.md)
@@ -71,9 +59,11 @@
 - [MessageMessageNotFoundError](classes/MessageMessageNotFoundError.md)
 - [MessageMessageNotRequeuableError](classes/MessageMessageNotRequeuableError.md)
 - [MessageMessagePropertyError](classes/MessageMessagePropertyError.md)
+- [Namespace](classes/Namespace.md)
 - [NamespaceError](classes/NamespaceError.md)
 - [NamespaceInvalidNamespaceError](classes/NamespaceInvalidNamespaceError.md)
 - [NamespaceNotFoundError](classes/NamespaceNotFoundError.md)
+- [Producer](classes/Producer.md)
 - [ProducerError](classes/ProducerError.md)
 - [ProducerExchangeNoMatchedQueueError](classes/ProducerExchangeNoMatchedQueueError.md)
 - [ProducerInstanceNotRunningError](classes/ProducerInstanceNotRunningError.md)
@@ -84,23 +74,30 @@
 - [ProducerQueueNotFoundError](classes/ProducerQueueNotFoundError.md)
 - [ProducerScheduleInvalidParametersError](classes/ProducerScheduleInvalidParametersError.md)
 - [ProducerUnknownQueueTypeError](classes/ProducerUnknownQueueTypeError.md)
+- [ProducibleMessage](classes/ProducibleMessage.md)
+- [Queue](classes/Queue.md)
+- [QueueAcknowledgedMessages](classes/QueueAcknowledgedMessages.md)
+- [QueueDeadLetteredMessages](classes/QueueDeadLetteredMessages.md)
 - [QueueError](classes/QueueError.md)
 - [QueueInvalidQueueParameterError](classes/QueueInvalidQueueParameterError.md)
+- [QueueMessages](classes/QueueMessages.md)
 - [QueueMessagesConsumerGroupIdNotSupportedError](classes/QueueMessagesConsumerGroupIdNotSupportedError.md)
 - [QueueMessagesConsumerGroupIdRequiredError](classes/QueueMessagesConsumerGroupIdRequiredError.md)
 - [QueueMessagesError](classes/QueueMessagesError.md)
+- [QueuePendingMessages](classes/QueuePendingMessages.md)
 - [QueueQueueExistsError](classes/QueueQueueExistsError.md)
 - [QueueQueueHasRunningConsumersError](classes/QueueQueueHasRunningConsumersError.md)
 - [QueueQueueNotEmptyError](classes/QueueQueueNotEmptyError.md)
 - [QueueQueueNotFoundError](classes/QueueQueueNotFoundError.md)
+- [QueueRateLimit](classes/QueueRateLimit.md)
 - [QueueRateLimitError](classes/QueueRateLimitError.md)
 - [QueueRateLimitInvalidIntervalError](classes/QueueRateLimitInvalidIntervalError.md)
 - [QueueRateLimitInvalidLimitError](classes/QueueRateLimitInvalidLimitError.md)
 - [QueueRateLimitQueueNotFoundError](classes/QueueRateLimitQueueNotFoundError.md)
+- [QueueScheduledMessages](classes/QueueScheduledMessages.md)
 
 ### Interfaces
 
-- [IConsumerConfig](interfaces/IConsumerConfig.md)
 - [IConsumerHeartbeat](interfaces/IConsumerHeartbeat.md)
 - [IConsumerHeartbeatPayload](interfaces/IConsumerHeartbeatPayload.md)
 - [IConsumerMessageHandlerArgs](interfaces/IConsumerMessageHandlerArgs.md)
@@ -119,7 +116,6 @@
 - [IQueueMessages](interfaces/IQueueMessages.md)
 - [IQueueMessagesCount](interfaces/IQueueMessagesCount.md)
 - [IQueueMessagesPage](interfaces/IQueueMessagesPage.md)
-- [IQueueMessagesRequeuable](interfaces/IQueueMessagesRequeuable.md)
 - [IQueueParams](interfaces/IQueueParams.md)
 - [IQueueParsedParams](interfaces/IQueueParsedParams.md)
 - [IQueueProperties](interfaces/IQueueProperties.md)
@@ -130,6 +126,7 @@
 
 ### Type Aliases
 
+- [IConsumerMessageHandlerWorkerPayload](README.md#iconsumermessagehandlerworkerpayload)
 - [IQueueMessagesPageParams](README.md#iqueuemessagespageparams)
 - [TConsumerConsumeMessageEvent](README.md#tconsumerconsumemessageevent)
 - [TConsumerDequeueMessageEvent](README.md#tconsumerdequeuemessageevent)
@@ -139,13 +136,14 @@
 - [TConsumerMessageHandlerEvent](README.md#tconsumermessagehandlerevent)
 - [TConsumerMessageHandlerFn](README.md#tconsumermessagehandlerfn)
 - [TConsumerMessageHandlerRunnerEvent](README.md#tconsumermessagehandlerrunnerevent)
-- [TConsumerRedisKeys](README.md#tconsumerrediskeys)
 - [TEventBusEvent](README.md#teventbusevent)
 - [TExchangeDirectTransferable](README.md#texchangedirecttransferable)
 - [TExchangeFanOutTransferable](README.md#texchangefanouttransferable)
 - [TExchangeTopicTransferable](README.md#texchangetopictransferable)
 - [TExchangeTransferable](README.md#texchangetransferable)
 - [TMessageConsumeOptions](README.md#tmessageconsumeoptions)
+- [TMessageUnacknowledgmentStatus](README.md#tmessageunacknowledgmentstatus)
+- [TMessageUnknowledgmentAction](README.md#tmessageunknowledgmentaction)
 - [TProducerEvent](README.md#tproducerevent)
 - [TQueueConsumer](README.md#tqueueconsumer)
 - [TQueueEvent](README.md#tqueueevent)
@@ -155,6 +153,19 @@
 - [TRedisSMQEvent](README.md#tredissmqevent)
 
 ## Type Aliases
+
+### IConsumerMessageHandlerWorkerPayload
+
+Ƭ **IConsumerMessageHandlerWorkerPayload**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `config` | [`IRedisSMQConfigRequired`](interfaces/IRedisSMQConfigRequired.md) |
+| `queueParsedParams` | [`IQueueParsedParams`](interfaces/IQueueParsedParams.md) |
+
+___
 
 ### IQueueMessagesPageParams
 
@@ -181,10 +192,10 @@ ___
 | :------ | :------ |
 | `consumer.consumeMessage.error` | (`err`: `Error`, `consumerId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md)) => `void` |
 | `consumer.consumeMessage.messageAcknowledged` | (`messageId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md), `messageHandlerId`: `string`, `consumerId`: `string`) => `void` |
-| `consumer.consumeMessage.messageDeadLettered` | (`messageId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md), `messageHandlerId`: `string`, `consumerId`: `string`, `cause`: [`EConsumeMessageDeadLetterCause`](enums/EConsumeMessageDeadLetterCause.md)) => `void` |
+| `consumer.consumeMessage.messageDeadLettered` | (`messageId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md), `messageHandlerId`: `string`, `consumerId`: `string`, `deadLetterReason`: [`EMessageUnknowledgmentDeadLetterReason`](enums/EMessageUnknowledgmentDeadLetterReason.md)) => `void` |
 | `consumer.consumeMessage.messageDelayed` | (`messageId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md), `messageHandlerId`: `string`, `consumerId`: `string`) => `void` |
 | `consumer.consumeMessage.messageRequeued` | (`messageId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md), `messageHandlerId`: `string`, `consumerId`: `string`) => `void` |
-| `consumer.consumeMessage.messageUnacknowledged` | (`messageId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md), `messageHandlerId`: `string`, `consumerId`: `string`, `cause`: [`EConsumeMessageUnacknowledgedCause`](enums/EConsumeMessageUnacknowledgedCause.md)) => `void` |
+| `consumer.consumeMessage.messageUnacknowledged` | (`messageId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md), `messageHandlerId`: `string`, `consumerId`: `string`, `unknowledgmentReason`: [`EMessageUnknowledgmentReason`](enums/EMessageUnknowledgmentReason.md)) => `void` |
 
 ___
 
@@ -282,12 +293,6 @@ ___
 
 ___
 
-### TConsumerRedisKeys
-
-Ƭ **TConsumerRedisKeys**: `ReturnType`\<typeof `redisKeys`[``"getConsumerKeys"``]\>
-
-___
-
 ### TEventBusEvent
 
 Ƭ **TEventBusEvent**: `Object`
@@ -360,6 +365,18 @@ ___
 | `retryDelay` | `number` |
 | `retryThreshold` | `number` |
 | `ttl` | `number` |
+
+___
+
+### TMessageUnacknowledgmentStatus
+
+Ƭ **TMessageUnacknowledgmentStatus**: `Record`\<`string`, [`TMessageUnknowledgmentAction`](README.md#tmessageunknowledgmentaction)\>
+
+___
+
+### TMessageUnknowledgmentAction
+
+Ƭ **TMessageUnknowledgmentAction**: \{ `action`: [`REQUEUE`](enums/EMessageUnknowledgmentAction.md#requeue) \| [`DELAY`](enums/EMessageUnknowledgmentAction.md#delay)  } \| \{ `action`: [`DEAD_LETTER`](enums/EMessageUnknowledgmentAction.md#dead_letter) ; `deadLetterReason`: [`EMessageUnknowledgmentDeadLetterReason`](enums/EMessageUnknowledgmentDeadLetterReason.md)  }
 
 ___
 
