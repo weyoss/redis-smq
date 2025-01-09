@@ -1,4 +1,10 @@
+# Changelog
 
+## [8.0.0-rc.27](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.26...v8.0.0-rc.27) (2025-01-09)
+
+### Continuous Integration
+
+* fix broken CHANGELOG.md for v8.0.0-rc.26 ([a20b40e](https://github.com/weyoss/redis-smq/commit/a20b40ec343ab07a1a0ef80f4bf7625ed27ba9ec))
 
 ## [8.0.0-rc.26](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.25...v8.0.0-rc.26) (2025-01-09)
 
