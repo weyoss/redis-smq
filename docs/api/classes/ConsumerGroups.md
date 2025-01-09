@@ -19,11 +19,7 @@
 
 ### constructor
 
-• **new ConsumerGroups**(): [`ConsumerGroups`](ConsumerGroups.md)
-
-#### Returns
-
-[`ConsumerGroups`](ConsumerGroups.md)
+• **new ConsumerGroups**()
 
 ## Methods
 

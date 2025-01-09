@@ -32,7 +32,11 @@ ___
 
 ### logger
 
-• **logger**: [`ILoggerConfig`](https://github.com/weyoss/redis-smq-common/blob/master/docs/api/interfaces/ILoggerConfig.md)
+• **logger**: `ILoggerConfig`
+
+**`See`**
+
+https://github.com/weyoss/redis-smq-common/blob/master/docs/api/interfaces/ILoggerConfig.md
 
 #### Inherited from
 
@@ -68,7 +72,11 @@ ___
 
 ### redis
 
-• **redis**: [`IRedisConfig`](https://github.com/weyoss/redis-smq-common/blob/master/docs/api/README.md#iredisconfig)
+• **redis**: `IRedisConfig`
+
+**`See`**
+
+https://github.com/weyoss/redis-smq-common/blob/master/docs/api/README.md#iredisconfig
 
 #### Inherited from
 

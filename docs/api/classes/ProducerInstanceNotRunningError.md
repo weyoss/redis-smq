@@ -34,19 +34,15 @@
 
 ### constructor
 
-• **new ProducerInstanceNotRunningError**(`msg?`): [`ProducerInstanceNotRunningError`](ProducerInstanceNotRunningError.md)
+• **new ProducerInstanceNotRunningError**(`message?`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `msg` | `string` |
+| `message?` | `string` |
 
-#### Returns
-
-[`ProducerInstanceNotRunningError`](ProducerInstanceNotRunningError.md)
-
-#### Overrides
+#### Inherited from
 
 [ProducerError](ProducerError.md).[constructor](ProducerError.md#constructor)
 
@@ -139,7 +135,7 @@ ProducerError.name
 
 ### captureStackTrace
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 

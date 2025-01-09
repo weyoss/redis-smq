@@ -20,11 +20,7 @@
 
 ### constructor
 
-• **new QueueRateLimit**(): [`QueueRateLimit`](QueueRateLimit.md)
-
-#### Returns
-
-[`QueueRateLimit`](QueueRateLimit.md)
+• **new QueueRateLimit**()
 
 ## Methods
 

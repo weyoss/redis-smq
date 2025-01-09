@@ -8,6 +8,12 @@
 
   ↳ **`QueueRateLimitError`**
 
+  ↳↳ [`QueueRateLimitInvalidIntervalError`](QueueRateLimitInvalidIntervalError.md)
+
+  ↳↳ [`QueueRateLimitInvalidLimitError`](QueueRateLimitInvalidLimitError.md)
+
+  ↳↳ [`QueueRateLimitQueueNotFoundError`](QueueRateLimitQueueNotFoundError.md)
+
 ## Table of contents
 
 ### Constructors
@@ -34,17 +40,13 @@
 
 ### constructor
 
-• **new QueueRateLimitError**(`message?`): [`QueueRateLimitError`](QueueRateLimitError.md)
+• **new QueueRateLimitError**(`message?`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `message?` | `string` |
-
-#### Returns
-
-[`QueueRateLimitError`](QueueRateLimitError.md)
 
 #### Inherited from
 
@@ -139,7 +141,7 @@ RedisSMQError.name
 
 ### captureStackTrace
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 

@@ -34,19 +34,15 @@
 
 ### constructor
 
-• **new NamespaceNotFoundError**(`namespace`): [`NamespaceNotFoundError`](NamespaceNotFoundError.md)
+• **new NamespaceNotFoundError**(`message?`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `namespace` | `string` |
+| `message?` | `string` |
 
-#### Returns
-
-[`NamespaceNotFoundError`](NamespaceNotFoundError.md)
-
-#### Overrides
+#### Inherited from
 
 [NamespaceError](NamespaceError.md).[constructor](NamespaceError.md#constructor)
 
@@ -139,7 +135,7 @@ NamespaceError.name
 
 ### captureStackTrace
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 

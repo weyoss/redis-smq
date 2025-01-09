@@ -10,6 +10,8 @@
 
   ↳↳ [`NamespaceNotFoundError`](NamespaceNotFoundError.md)
 
+  ↳↳ [`NamespaceInvalidNamespaceError`](NamespaceInvalidNamespaceError.md)
+
 ## Table of contents
 
 ### Constructors
@@ -36,17 +38,13 @@
 
 ### constructor
 
-• **new NamespaceError**(`message?`): [`NamespaceError`](NamespaceError.md)
+• **new NamespaceError**(`message?`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `message?` | `string` |
-
-#### Returns
-
-[`NamespaceError`](NamespaceError.md)
 
 #### Inherited from
 
@@ -141,7 +139,7 @@ RedisSMQError.name
 
 ### captureStackTrace
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 

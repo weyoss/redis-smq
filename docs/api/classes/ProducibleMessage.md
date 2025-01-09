@@ -47,11 +47,7 @@
 
 ### constructor
 
-• **new ProducibleMessage**(): [`ProducibleMessage`](ProducibleMessage.md)
-
-#### Returns
-
-[`ProducibleMessage`](ProducibleMessage.md)
+• **new ProducibleMessage**()
 
 ## Methods
 
@@ -445,7 +441,7 @@ ___
 
 ### setDefaultConsumeOptions
 
-▸ **setDefaultConsumeOptions**(`consumeOptions`): `void`
+▸ `Static` **setDefaultConsumeOptions**(`consumeOptions`): `void`
 
 #### Parameters
 

@@ -21,11 +21,7 @@
 
 ### constructor
 
-• **new Queue**(): [`Queue`](Queue.md)
-
-#### Returns
-
-[`Queue`](Queue.md)
+• **new Queue**()
 
 ## Methods
 
