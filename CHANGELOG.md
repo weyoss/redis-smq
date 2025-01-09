@@ -1,5 +1,18 @@
 
 
+## [8.0.0-rc.26](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.25...v8.0.0-rc.26) (2025-01-09)
+
+
+### Documentation
+* update API reference ([b7d0f6f](https://github.com/weyoss/redis-smq/commit/b7d0f6f4e078557021854d33fd301980dab7782b))
+
+### Codebase Refactoring
+* use queue-scoped workers instead of global ones ([ada94e0](https://github.com/weyoss/redis-smq/commit/ada94e09d17f58488b1596c70b4f657110cc8b79))
+
+### Continuous Integration
+* add support for node.js v22 ([a15d62e](https://github.com/weyoss/redis-smq/commit/a15d62e49b609fb63b90082af53a0a23613677e8))
+* upgrade eslint and other deprecated dependencies ([c948298](https://github.com/weyoss/redis-smq/commit/c94829850c5cf04ca3240163669c242ba50ba9e2))
+
 ## [8.0.0-rc.25](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.24...v8.0.0-rc.25) (2024-07-07)
 
 
