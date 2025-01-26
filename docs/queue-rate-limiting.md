@@ -2,29 +2,37 @@
 
 # Queue Rate Limiting
 
-In some cases consuming messages with a high message rate may be not desirable. For example:
+In certain scenarios, consuming messages at a high rate can be disadvantageous. Some potential issues include:
 
-- A high rate of message consumption may create some problems for your application.
-- Your application is consuming messages with a high rate, however a high level of resources is being used which affects the overall performance of your system.
-- Your application is using an external API which is rate-limiting client requests and consuming messages with a high rate could make your service banned for a certain time or maybe permanently.
-- Etc.
+- **System Performance:** A high rate of message consumption may overwhelm your application, leading to performance degradation.
+- **Resource Utilization:** Rapid message consumption can result in excessive resource usage, negatively impacting the overall performance of your system.
+- **External API Restrictions:** If your application interacts with an external API that enforces rate limits on client requests, consuming messages too quickly could risk the suspension or permanent ban of your service.
+- **Additional Considerations:** Various other factors may necessitate managing message consumption rates.
 
-RedisSMQ allows you, in such cases, to control the rate at which the messages are consumed by setting a rate limit for a queue.
+To address these challenges, RedisSMQ allows you to set and control the rate at which messages are consumed by 
+implementing a rate limit for a queue.
 
-**Example**
+### Example
+
+Here's a simple example of how to set up a rate limit for your queue:
 
 ```javascript
 const { QueueRateLimit } = require('redis-smq');
 
 const queueRateLimit = new QueueRateLimit();
-// Setting a rate limit of 200 msg/min for the 'notofications' queue
+
+// Setting a rate limit of 200 messages per minute for the 'notifications' queue
 queueRateLimit.set('notifications', { limit: 200, interval: 60000 }, (err) => {
-  // ...
+  if (err) {
+    console.error('Error setting rate limit:', err);
+  } else {
+    console.log('Rate limit set successfully!');
+  }
 });
 ```
 
-To configure and manage rate limiting for a queue see:
+For comprehensive guidance on configuring and managing rate limiting for a queue, refer to the following resource:
 
--[QueueRateLimit Class](api/classes/QueueRateLimit.md).
+- [QueueRateLimit Class Documentation](api/classes/QueueRateLimit.md)
 
-Queue rate limiting parameters can be also configured using the [HTTP API Interface](https://github.com/weyoss/redis-smq-monitor) or from your browser with the help of the [Web UI](https://github.com/weyoss/redis-smq-monitor-client).
+Additionally, you can configure queue rate limiting parameters using the [HTTP API Interface](https://github.com/weyoss/redis-smq-monitor) or by accessing the [Web UI](https://github.com/weyoss/redis-smq-monitor-client) from your browser.

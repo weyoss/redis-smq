@@ -2,20 +2,30 @@
 
 # Consuming Messages
 
-A `Consumer` instance can be used to receive and consume messages from one or multiple queues.
+The [Consumer](api/classes/Consumer.md) instance enables you to receive and process messages from one or more queues in 
+the RedisSMQ.
 
-To consume messages from a queue, the [Consumer Class](api/classes/Consumer.md) class provides the
-[Consumer.consume()](api/classes/Consumer.md#consume) method which allows to register a `message handler`.
+## Setting Up a Consumer
 
-A `message handler` is a function that receives a delivered message from a given queue.
+To consume messages from a specific queue, use the [Consumer Class](api/classes/Consumer.md), which includes the [Consumer.consume()](api/classes/Consumer.md#consume) 
+method to register a message handler.
 
-Message handlers can be registered at any time, before or after a consumer has been started.
+### What is a Message Handler?
 
-In contrast to producers, consumers are not automatically started upon creation. To start a consumer use the [Consumer.run()](api/classes/Consumer.md#run) method.
+A message handler is a callback function you define that receives the delivered message from the specified queue. 
+You can register message handlers at any point — before or after the consumer has started.
 
-To stop consuming messages from a queue and to remove the associated `message handler` from your consumer, use the [Consumer.cancel()](api/classes/Consumer.md#cancel) method.
+**Important Note:** Unlike producers, consumers do not automatically start upon creation. You must explicitly start a 
+consumer using the [Consumer.run()](api/classes/Consumer.md#run) method.
 
-To shut down completely your consumer and tear down all message handlers, use the [Consumer.shutdown()](api/classes/Consumer.md#shutdown) method.
+## Consuming Messages
+
+To stop consuming messages from a queue and remove the related message handler, you can invoke the [Consumer.cancel()](api/classes/Consumer.md#cancel) 
+method. To fully shut down the consumer and dismantle all message handlers, use the [Consumer.shutdown()](api/classes/Consumer.md#shutdown) method.
+
+### Example: Registering a Message Handler
+
+Here's a basic example demonstrating how to set up a consumer and register a message handler:
 
 ```javascript
 'use strict';
@@ -25,20 +35,23 @@ const { Consumer } = require('redis-smq');
 const consumer = new Consumer();
 
 const messageHandler = (msg, cb) => {
-  console.log('Message payload', msg.body);
-  cb(); // acknowledging the message
+  console.log('Message payload:', msg.body);
+  cb(); // Acknowledge the message
 };
 
 consumer.consume('test_queue', messageHandler, (err) => {
   if (err) console.error(err);
 });
 
+// Start the consumer
 consumer.run((err) => {
   if (err) console.error(err);
 });
 ```
 
-Alternatively we can also register a message handler strictly after that a consumer has been started.
+### Alternative Approach: Registering After Starting
+
+You can also register a message handler after the consumer has been started:
 
 ```javascript
 'use strict';
@@ -51,8 +64,8 @@ consumer.run((err) => {
   if (err) console.error(err);
   else {
     const messageHandler = (msg, cb) => {
-      console.log('Message payload', msg.body);
-      cb(); // acknowledging the message
+      console.log('Message payload:', msg.body);
+      cb(); // Acknowledge the message
     };
     consumer.consume('test_queue', messageHandler, (err) => {
       if (err) console.error(err);
@@ -63,18 +76,20 @@ consumer.run((err) => {
 
 ## Message Acknowledgement
 
-Once a message is received, to acknowledge it, you invoke the callback function without arguments, as shown in the example above.
+Upon receiving a message, acknowledge it by invoking the callback without arguments, as shown in the examples above. 
+Acknowledgment signals to the message queue that the message has been successfully processed.
 
-Message acknowledgment informs the MQ that the delivered message has been successfully consumed.
+If an error occurs while processing a message, you can inform the message queue of the failure by passing the error to 
+the callback function. By default, unacknowledged messages are re-queued and delivered again unless they exceed the 
+defined message retry threshold.
 
-If an error occurred while processing a message, you can unacknowledge it by passing in the error to the callback function.
+Any messages that cannot be processed or delivered to consumers are moved to a system-generated queue known as the 
+dead-letter queue (DLQ).
 
-By default, unacknowledged messages are re-queued and delivered again unless **message retry threshold** is exceeded.
+### Note on Message Storage
 
-Delivered messages that couldn't be processed or can not be delivered to consumers are moved to a system generated queue called **dead-letter queue (DLQ)**.
+Redis-SMQ does not store acknowledged or dead-lettered messages by default. This design decision helps conserve disk 
+and memory space and improves message processing performance. If you require storage for acknowledged or dead-lettered 
+messages, you can enable this feature in your [configuration](configuration.md) object.
 
-By default, RedisSMQ does not store acknowledged and dead-lettered messages for saving disk and memory spaces, and also to increase message processing performance.
-
-If you need such feature, you can enabled it from your [configuration](configuration.md) object.
-
-See [Consumer Class](api/classes/Consumer.md) for more details.
+For more in-depth information, refer to the [Consumer Class](api/classes/Consumer.md) documentation.

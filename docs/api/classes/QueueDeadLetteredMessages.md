@@ -25,7 +25,11 @@
 
 ### constructor
 
-• **new QueueDeadLetteredMessages**()
+• **new QueueDeadLetteredMessages**(): [`QueueDeadLetteredMessages`](QueueDeadLetteredMessages.md)
+
+#### Returns
+
+[`QueueDeadLetteredMessages`](QueueDeadLetteredMessages.md)
 
 #### Inherited from
 

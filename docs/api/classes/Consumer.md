@@ -37,7 +37,7 @@
 
 ### constructor
 
-• **new Consumer**(`enableMultiplexing?`)
+• **new Consumer**(`enableMultiplexing?`): [`Consumer`](Consumer.md)
 
 #### Parameters
 
@@ -45,9 +45,13 @@
 | :------ | :------ |
 | `enableMultiplexing?` | `boolean` |
 
+#### Returns
+
+[`Consumer`](Consumer.md)
+
 #### Overrides
 
-Runnable\&lt;TConsumerEvent\&gt;.constructor
+Runnable\<TConsumerEvent\>.constructor
 
 ## Methods
 
@@ -55,12 +59,14 @@ Runnable\&lt;TConsumerEvent\&gt;.constructor
 
 ▸ **cancel**(`queue`, `cb`): `void`
 
+Cancel consuming messages from the provided queue.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
-| `cb` | `ICallback`\<`void`\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) | Queue parameters |
+| `cb` | `ICallback`\<`void`\> | A callback function |
 
 #### Returns
 
@@ -72,17 +78,23 @@ ___
 
 ▸ **consume**(`queue`, `messageHandler`, `cb`): `void`
 
+Start listening for messages on the specified queue.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
-| `messageHandler` | [`TConsumerMessageHandler`](../README.md#tconsumermessagehandler) |
-| `cb` | `ICallback`\<`void`\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) | A queue from which messages will be consumed. Before consuming messages from a queue make sure that the specified queue already exists in the system. |
+| `messageHandler` | [`TConsumerMessageHandler`](../README.md#tconsumermessagehandler) | A callback function that defines how to process each message consumed from the queue. The messageHandler will receive the message as an argument and should implement the logic for processing the message. This might include business logic, transformation, storage, etc. It's crucial that this function handles exceptions and errors properly to avoid issues with message acknowledgment. |
+| `cb` | `ICallback`\<`void`\> | The callback function will be executed after the consumption process is initiated. It typically signifies the end of the consumption setup and can be used to handle success or errors in starting the consumption process. |
 
 #### Returns
 
 `void`
+
+**`See`**
+
+https://github.com/weyoss/redis-smq/blob/master/docs/consuming-messages.md
 
 ___
 
@@ -131,9 +143,13 @@ ___
 
 ▸ **getQueues**(): [`IQueueParsedParams`](../interfaces/IQueueParsedParams.md)[]
 
+Retrieve the list of queues being consumed by a Consumer instance.
+
 #### Returns
 
 [`IQueueParsedParams`](../interfaces/IQueueParsedParams.md)[]
+
+- Queue list
 
 ___
 
@@ -209,7 +225,7 @@ ___
 
 ### on
 
-▸ **on**\<`E`\>(`event`, `listener`): [`Consumer`](Consumer.md)
+▸ **on**\<`E`\>(`event`, `listener`): `this`
 
 #### Type parameters
 
@@ -226,7 +242,7 @@ ___
 
 #### Returns
 
-[`Consumer`](Consumer.md)
+`this`
 
 #### Inherited from
 
@@ -236,7 +252,7 @@ ___
 
 ### once
 
-▸ **once**\<`E`\>(`event`, `listener`): [`Consumer`](Consumer.md)
+▸ **once**\<`E`\>(`event`, `listener`): `this`
 
 #### Type parameters
 
@@ -253,7 +269,7 @@ ___
 
 #### Returns
 
-[`Consumer`](Consumer.md)
+`this`
 
 #### Inherited from
 
@@ -263,7 +279,7 @@ ___
 
 ### removeAllListeners
 
-▸ **removeAllListeners**\<`E`\>(`event?`): [`Consumer`](Consumer.md)
+▸ **removeAllListeners**\<`E`\>(`event?`): `this`
 
 #### Type parameters
 
@@ -279,7 +295,7 @@ ___
 
 #### Returns
 
-[`Consumer`](Consumer.md)
+`this`
 
 #### Inherited from
 
@@ -289,7 +305,7 @@ ___
 
 ### removeListener
 
-▸ **removeListener**\<`E`\>(`event`, `listener`): [`Consumer`](Consumer.md)
+▸ **removeListener**\<`E`\>(`event`, `listener`): `this`
 
 #### Type parameters
 
@@ -306,7 +322,7 @@ ___
 
 #### Returns
 
-[`Consumer`](Consumer.md)
+`this`
 
 #### Inherited from
 

@@ -2,21 +2,32 @@
 
 # Queues
 
-A queue is responsible for holding messages which are produced by producers and are delivered to consumers.
+In RedisSMQ, a queue plays a crucial role in managing messages produced by producers and consumed by consumers. 
+The system supports three distinct types of queues: **LIFO (Last In, First Out)**, **FIFO (First In, First Out)**, and 
+**Priority queues**.
 
-RedisSMQ supports 3 types of queues: **LIFO queues**, **FIFO queues**, and **Priority queues**.
+## Reliability
 
-All RedisSMQ queue types are **reliable**. A queue is said to be reliable, when during a failure scenario, let it be for example a consumer crash, it can recover from such failure and the message being processed is not lost.
+All RedisSMQ queue types are designed to be **reliable**. Reliability ensures that messages are not lost, even in the 
+event of failures, such as a consumer crash. The system can recover from failure scenarios, maintaining message 
+integrity throughout the process.
 
-In a typical use case, both LIFO and FIFO queues use [brpoplpush](https://redis.io/commands/brpoplpush), which blocks the connection to the Redis server until a message is received. However, priority queues use pooling and lua scripting which introduce a little of overhead on the MQ and therefore priority queues are less performant than other queue types.
+## Queue Mechanics
 
-In the next examples for simplicity we are going to use a `EQueueDeliveryModel.POINT_TO_POINT` [delivery model](queue-delivery-models.md) for all the queues. But you may choose any combination of `EQueueType` and `EQueueDeliveryModel` that fits your application.
+In a typical LIFO or FIFO queue setup, RedisSMQ uses the [brpoplpush](https://redis.io/commands/brpoplpush) command to 
+block the connection to the Redis server until a message is available. Conversely, priority queues employ pooling and 
+Lua scripting, which may introduce additional overhead and result in slightly reduced performance compared to LIFO and 
+FIFO queues.
 
-## LIFO (Last In, First Out) queues
+For simplicity in the upcoming examples, we will utilize the `EQueueDeliveryModel.POINT_TO_POINT` delivery model across 
+all queue types. However, you can customize your application by choosing any combination of `EQueueType` and 
+`EQueueDeliveryModel` that suits your needs.
+
+## LIFO (Last In, First Out) Queues
 
 ![RedisSMQ LIFO Queuing](redis-smq-lifo-queuing.png)
 
-In a LIFO queue the last published messages are always delivered first and the first published messages are delivered last.
+In a LIFO queue, the most recently published messages are delivered first, while the oldest messages are delivered last.
 
 ```javascript
 const { Queue, EQueueType, EQueueDeliveryModel } = require('redis-smq');
@@ -32,13 +43,14 @@ queue.save(
 );
 ```
 
-See [Queue.save()](api/classes/Queue.md#save) for more details.
+For additional details, please refer to the [Queue.save()](api/classes/Queue.md#save) documentation.
 
 ## FIFO (First In, First Out) Queues
 
 ![RedisSMQ FIFO Queuing](redis-smq-fifo-queuing.png)
 
-In a FIFO queue the first published messages are delivered first and the last published messages are delivered last.
+In a FIFO queue, messages are processed in the order they are received: the first published messages are delivered 
+first, followed by later entries.
 
 ```javascript
 const { Queue, EQueueType, EQueueDeliveryModel } = require('redis-smq');
@@ -54,13 +66,14 @@ queue.save(
 );
 ```
 
-See [Queue.save()](api/classes/Queue.md#save) for more details.
+Refer to [Queue.save()](api/classes/Queue.md#save) for more information.
 
 ## Priority Queues
 
 ![RedisSMQ Priority Queuing](redis-smq-priority-queuing.png)
 
-In a priority queue, messages with higher priority are always delivered first before messages with lower priority.
+Priority queues deliver messages based on their assigned priority, ensuring that those with higher priority are 
+processed before lower-priority messages.
 
 ```javascript
 const { Queue, EQueueType, EQueueDeliveryModel } = require('redis-smq');
@@ -76,16 +89,17 @@ queue.save(
 );
 ```
 
-See [Queue.save()](api/classes/Queue.md#save) for more details.
+For further details, consult [Queue.save()](api/classes/Queue.md#save).
 
-### Setting Up a ProducibleMessage Priority
+### Setting Up Message Priorities
 
-To set up a message priority, the [ProducibleMessage Class](api/classes/ProducibleMessage.md) provides the following methods:
+To configure message priorities within your application, the [ProducibleMessage Class](api/classes/ProducibleMessage.md) 
+offers the following methods:
 
 - [ProducibleMessage.setPriority()](api/classes/ProducibleMessage.md#setpriority)
 - [ProducibleMessage.getPriority()](api/classes/ProducibleMessage.md#getpriority)
 
-Valid message priority values that you can apply to a given message are:
+Valid priority values include:
 
 - `EMessagePriority.LOWEST`
 - `EMessagePriority.VERY_LOW`
@@ -96,39 +110,36 @@ Valid message priority values that you can apply to a given message are:
 - `EMessagePriority.VERY_HIGH`
 - `EMessagePriority.HIGHEST`
 
-See [EMessagePriority](api/enums/EMessagePriority.md).
+Please refer to the [EMessagePriority](api/enums/EMessagePriority.md) documentation for more information.
 
-## Queue Namespaces
+## Queue Namespacing
 
-Queues in RedisSMQ are namespaced.
+RedisSMQ uses namespacing to manage queues effectively. Each namespace acts as a scope, ensuring unique queue names and 
+preventing **name collisions** across multiple queues that may share the same name.
 
-A queue namespace is used as a scope for a given set of queues to ensure unique queue names and to avoid **name collisions** when multiple queues share the same name.
-
-A given queue can be either identified by a queue name like `orders` or explicitly by its queue name and namespace for example `{ ns: 'my-app', name: 'orders' }`.
-
-By default, when a namespace for a queue is not specified, the queue is assigned to the **default** namespace.
-
-The default namespace can be configured from your configuration object. See [Configuration](configuration.md) for more details.
+A queue can be identified by its name (e.g., `orders`) or by its name and namespace 
+(e.g., `{ ns: 'my-app', name: 'orders' }`). If no namespace is specified, the queue defaults to the **default** 
+namespace. This default can be configured through your configuration object. For more details, see [Configuration](configuration.md).
 
 ## Queue Naming Requirements
 
-A queue name is required to fulfill the following requirements:
+Queue names must adhere to the following criteria:
 
-- To be composed of alphanumeric characters `[a-z0-9]` for example `queue$` is an invalid queue name;
-- May include `-` and `_` characters for example `my-queue` or `my_queue` are valid queue names;
-- To start with an alpha character `[a-z]` and ends with an alphanumeric character `[a-z0-9]` for example `3queue` or `my_queue_` are invalid queue names;
-- Is allowed to include dots (`.`) for denoting queues hierarchy for example `sports.football`. See [Topic Exchange](message-exchanges.md#topic-exchange);
+- Composed solely of alphanumeric characters `[a-z0-9]` (e.g., `queue$` is invalid).
+- May include `-` and `_` characters (e.g., `my-queue` and `my_queue` are valid).
+- Must start with an alphabetic character `[a-z]` and end with an alphanumeric character `[a-z0-9]` (e.g., `3queue` and `my_queue_` are invalid).
+- Can include dots (`.`) for hierarchical naming (e.g., `sports.football`). Refer to [Topic Exchange](message-exchanges.md#topic-exchange) for further details.
 
 ## Managing Queues and Namespaces
 
-To manage queues and namespaces RedisSMQ provides:
+RedisSMQ provides the following classes for effective queue and namespace management:
 
 - [Namespace Class](api/classes/Namespace.md)
 - [Queue Class](api/classes/Queue.md)
 
-## Queue Messages
+## Managing Queue Messages
 
-To manage queue messages use:
+For queue message management, utilize the following classes:
 
 - [QueueMessages Class](api/classes/QueueMessages.md)
 - [QueuePendingMessages Class](api/classes/QueuePendingMessages.md)
@@ -136,6 +147,5 @@ To manage queue messages use:
 - [QueueDeadLetteredMessages Class](api/classes/QueueDeadLetteredMessages.md)
 - [QueueScheduledMessages Class](api/classes/QueueScheduledMessages.md)
 
-Please note that queue acknowledged messages and dead-lettered messages are not saved by default. 
-
-To manage acknowledged and dead-lettered messages you need to enable acknowledged/dead-lettered messages storage from your [RedisSMQ Configuration](configuration.md).
+Please note that by default, acknowledged messages and dead-lettered messages are not saved. To enable storage for 
+acknowledged and dead-lettered messages, you must configure your [RedisSMQ Configuration](configuration.md) accordingly.

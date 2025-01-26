@@ -87,7 +87,8 @@
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
     "lint": "eslint \"{src,tests,types}/**/*.ts\" --fix",
     "type-coverage": "type-coverage --strict --at-least 100  --ignore-files \"dist/**/*\"",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "docs": "scripts/release/generate-docs.sh"
   },
   "lint-staged": {
     "*.(ts)": [

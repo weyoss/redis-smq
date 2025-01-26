@@ -277,6 +277,15 @@ export class Producer extends Runnable<TProducerEvent> {
     }
   }
 
+  /**
+   * Produce a message.
+   *
+   * Before publishing a message make sure to set an exchange for the message and to have at least one existing queue to be matched.
+   *
+   * @see https://github.com/weyoss/redis-smq/blob/master/docs/producing-messages.md
+   * @param {ProducibleMessage} msg - A message to produce.
+   * @param {ICallback<string[]>} cb - Callback function that accepts an array of message IDs that has been published.
+   */
   produce(msg: ProducibleMessage, cb: ICallback<string[]>): void {
     if (!this.isUp()) cb(new ProducerInstanceNotRunningError());
     else {

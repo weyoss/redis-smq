@@ -23,7 +23,11 @@
 
 ### constructor
 
-• **new ExchangeTopic**()
+• **new ExchangeTopic**(): [`ExchangeTopic`](ExchangeTopic.md)
+
+#### Returns
+
+[`ExchangeTopic`](ExchangeTopic.md)
 
 #### Inherited from
 

@@ -23,7 +23,11 @@
 
 ### constructor
 
-• **new ExchangeDirect**()
+• **new ExchangeDirect**(): [`ExchangeDirect`](ExchangeDirect.md)
+
+#### Returns
+
+[`ExchangeDirect`](ExchangeDirect.md)
 
 #### Inherited from
 

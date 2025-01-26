@@ -34,7 +34,14 @@ export interface IQueueParsedParams {
 }
 
 export interface IQueueRateLimit {
+  /**
+   * The maximum number of messages that can be processed per unit of time.
+   */
   limit: number;
+
+  /**
+   * The time window over which the rate limit is applied. In milliseconds.
+   */
   interval: number;
 }
 

@@ -2,15 +2,19 @@
 
 # Queue Delivery Models
 
-When it comes to message delivery RedisSMQ provides 2 reliable models: `Point-2-Point` and `Pub/Sub`.
+RedisSMQ offers two reliable message delivery models: **Point-to-Point** and **Pub/Sub**. Below, we delve into each 
+model, providing detailed explanations, sample code snippets, and best practices for implementation.
 
-## Point-2-Point Delivery Model
+## Point-to-Point Delivery Model
 
-![RedisSMQ Point-2-Point Delivery Model](redis-smq-point-2-point-delivery-model.png)
+![Point-to-Point Delivery Model](redis-smq-point-2-point-delivery-model.png)
 
-In the `Point-2-Point` model, a message is produced to a `Point-2-Point` queue and then delivered to and consumed by at a time only one consumer.
+In the **Point-to-Point** model, a message is produced to a queue and delivered to a single consumer at a time. This 
+model ensures that each message is processed only once by one consumer.
 
-### Creating a Point-2-Point Queue
+### Creating a Point-to-Point Queue
+
+To create a Point-to-Point queue, use the following code snippet:
 
 ```javascript
 const { Queue, EQueueDeliveryModel, EQueueType } = require('redis-smq');
@@ -21,15 +25,20 @@ queue.save(
   EQueueType.LIFO_QUEUE,
   EQueueDeliveryModel.POINT_TO_POINT,
   (err, reply) => {
-    if (err) console.error(err);
-    else console.log('Successfully created', reply);
-  },
+    if (err) {
+      console.error('Error creating queue:', err);
+    } else {
+      console.log('Successfully created queue:', reply);
+    }
+  }
 );
 ```
 
-See [Queue.save()](api/classes/Queue.md#save) for more details.
+*Refer to [Queue.save()](api/classes/Queue.md#save) for additional details.*
 
-### Publishing a Message to a Point-2-Point Queue
+### Publishing a Message to a Point-to-Point Queue
+
+To publish a message to a Point-to-Point queue, use the following:
 
 ```javascript
 const { Producer, ProducibleMessage } = require('redis-smq');
@@ -39,61 +48,76 @@ message.setBody('hello world').setQueue('my-queue');
 
 const producer = new Producer();
 producer.run((err) => {
-  if (err) console.error(err);
-  else
+  if (err) {
+    console.error('Error running producer:', err);
+  } else {
     producer.produce(message, (err, reply) => {
-      if (err) console.error(err);
-      else console.log('Successfully produced', reply);
+      if (err) {
+        console.error('Error producing message:', err);
+      } else {
+        console.log('Successfully produced message:', reply);
+      }
     });
+  }
 });
 ```
 
-See [Producer.produce()](api/classes/Producer.md#produce) for more details.
+*Refer to [Producer.produce()](api/classes/Producer.md#produce) for more details.*
 
-### Consuming a message from a Point-2-Point Queue
+### Consuming a Message from a Point-to-Point Queue
+
+To consume a message from a Point-to-Point queue, you can use the following snippet:
 
 ```javascript
 const { Consumer } = require('redis-smq');
 
 const consumer = new Consumer();
 
-const messageHandler = (msg, cb) => cb(); // acknowledging
+const messageHandler = (msg, cb) => {
+  // Acknowledge the message
+  cb();
+};
+
 consumer.consume('my-queue', messageHandler, (err) => {
-  if (err) console.error(err);
-  else console.log('MessageHandler added');
+  if (err) {
+    console.error('Error adding message handler:', err);
+  } else {
+    console.log('Message handler added successfully');
+  }
 });
+
 consumer.run((err) => {
-  if (err) console.error(err);
+  if (err) {
+    console.error('Error running consumer:', err);
+  }
 });
 ```
+
+---
 
 ## Pub/Sub Delivery Model
 
 ### Overview
 
-![RedisSMQ Pub/Sub Delivery Model High-level View](redis-smq-pubsub-delivery-model-highlevel-view.png)
+![Pub/Sub Delivery Model High-level View](redis-smq-pubsub-delivery-model-highlevel-view.png)
 
-In the `Pub/Sub` model, on the other hand, a message is delivered to and consumed by all consumers of a `Pub/Sub` queue.
-
-From a high-level view the `Pub/Sub` model maybe illustrated as shown in the diagram above.
-
-Each consumer receives and processes a copy of the produced message.
+In the **Pub/Sub** model, messages are delivered to all consumers of a queue. Every consumer receives and processes a 
+copy of the produced message.
 
 ### Consumer Groups
 
-![RedisSMQ Pub/Sub Delivery Model](redis-smq-pubsub-delivery-model.png)
+![Pub/Sub Delivery Model](redis-smq-pubsub-delivery-model.png)
 
-To consume messages from a `Pub/Sub` queue, a consumer group is required.
+To consume messages from a Pub/Sub queue, a consumer group is required.
 
-In fact, when publishing a message to a `Pub/Sub` queue, the message is published to all consumer groups of the given queue.
-
-Within a consumer group, only one consumer receives the message.
-
-For a consumer group, unacknowledged messages are retried in the same manner as for a `Point-2-Point` queue.
-
-When `retryTreshold` is exceeded failed messages from all consumer groups are stored, if configured to do so, in the dead-letter-queue of the given `Pub/Sub` queue.
+- When publishing a message to a Pub/Sub queue, it is sent to all consumer groups associated with that queue.
+- Within each consumer group, only one consumer will receive the message.
+- If a message remains unacknowledged for a given time, it will be retried in the same manner as within a Point-to-Point queue.
+- If the retry threshold is exceeded, failed messages can be stored, if configured, in the dead-letter queue for that Pub/Sub queue.
 
 ### Creating a Pub/Sub Queue
+
+To create a Pub/Sub queue, use the following:
 
 ```javascript
 const { Queue, EQueueDeliveryModel, EQueueType } = require('redis-smq');
@@ -104,23 +128,28 @@ queue.save(
   EQueueType.LIFO_QUEUE,
   EQueueDeliveryModel.PUB_SUB,
   (err, reply) => {
-    if (err) console.error(err);
-    else console.log('Successfully created', reply);
-  },
+    if (err) {
+      console.error('Error creating Pub/Sub queue:', err);
+    } else {
+      console.log('Successfully created Pub/Sub queue:', reply);
+    }
+  }
 );
 ```
 
-See [Queue.save()](api/classes/Queue.md#save) for more details.
+*Refer to [Queue.save()](api/classes/Queue.md#save) for additional details.*
 
 ### Creating Consumer Groups
 
-If it does not exist a consumer group of a given queue is created automatically when consuming messages from the queue.
+A consumer group is automatically created when consuming messages from the queue if it does not already exist.
 
-Consumer groups may be also created manually using the [ConsumerGroups.saveConsumerGroup()](api/classes/ConsumerGroups.md) method.
+You can also manually create consumer groups using the [ConsumerGroups.saveConsumerGroup()](api/classes/ConsumerGroups.md) method.
 
-See [ConsumerGroups Class](api/classes/ConsumerGroups.md) for managing consumer groups.
+*Refer to the [ConsumerGroups Class](api/classes/ConsumerGroups.md) for managing consumer groups.*
 
 ### Publishing a Message to a Pub/Sub Queue
+
+Use the following code to publish a message to a Pub/Sub queue:
 
 ```javascript
 const { ProducibleMessage, Producer } = require('redis-smq');
@@ -130,40 +159,56 @@ message.setBody('hello world').setQueue('my-pubsub-queue');
 
 const producer = new Producer();
 producer.run((err) => {
-  if (err) console.error(err);
-  else
+  if (err) {
+    console.error('Error running producer:', err);
+  } else {
     producer.produce(message, (err, reply) => {
-      if (err) console.error(err);
-      else console.log('Successfully produced', reply);
+      if (err) {
+        console.error('Error producing message:', err);
+      } else {
+        console.log('Successfully produced message:', reply);
+      }
     });
+  }
 });
 ```
 
-When producing a message to a `Pub/Sub` queue, if the queue has no consumer groups an error will be returned.
+*Note:* When producing a message to a Pub/Sub queue, if no consumer groups exist, an error will be returned. Ensure 
+that at least one consumer group is created prior to publishing messages.
 
-So make sure the queue has at least one consumer group before publishing messages.
+*Refer to [Producer.produce()](api/classes/Producer.md#produce) for more details.*
 
-See [Producer.produce()](api/classes/Producer.md#produce) for more details.
+### Consuming a Message from a Pub/Sub Queue
 
-### Consuming a message from a Pub/Sub Queue
+To consume a message from a Pub/Sub queue, ensure to specify the consumer group ID:
 
 ```javascript
 const { Consumer } = require('redis-smq');
 
 const consumer = new Consumer();
 
-const messageHandler = (msg, cb) => cb(); // acknowledging
+const messageHandler = (msg, cb) => {
+  // Acknowledge the message
+  cb();
+};
+
 consumer.consume(
   { queue: 'my-pubsub-queue', groupId: 'my-app-group-1' },
   messageHandler,
   (err) => {
-    if (err) console.error(err);
-    else console.log('MessageHandler added');
-  },
+    if (err) {
+      console.error('Error adding message handler:', err);
+    } else {
+      console.log('Message handler added successfully');
+    }
+  }
 );
+
 consumer.run((err) => {
-  if (err) console.error(err);
+  if (err) {
+    console.error('Error running consumer:', err);
+  }
 });
 ```
 
-Please do not forget to provide the consumer group ID when consuming messages from a `Pub/Sub` queue.
+*Remember to provide the consumer group ID when consuming messages from a Pub/Sub queue.*

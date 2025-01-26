@@ -26,7 +26,11 @@
 
 ### constructor
 
-• **new QueueMessages**()
+• **new QueueMessages**(): [`QueueMessages`](QueueMessages.md)
+
+#### Returns
+
+[`QueueMessages`](QueueMessages.md)
 
 #### Overrides
 

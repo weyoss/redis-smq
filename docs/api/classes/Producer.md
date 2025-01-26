@@ -35,11 +35,15 @@
 
 ### constructor
 
-• **new Producer**()
+• **new Producer**(): [`Producer`](Producer.md)
+
+#### Returns
+
+[`Producer`](Producer.md)
 
 #### Overrides
 
-Runnable\&lt;TProducerEvent\&gt;.constructor
+Runnable\<TProducerEvent\>.constructor
 
 ## Methods
 
@@ -156,7 +160,7 @@ ___
 
 ### on
 
-▸ **on**\<`E`\>(`event`, `listener`): [`Producer`](Producer.md)
+▸ **on**\<`E`\>(`event`, `listener`): `this`
 
 #### Type parameters
 
@@ -173,7 +177,7 @@ ___
 
 #### Returns
 
-[`Producer`](Producer.md)
+`this`
 
 #### Inherited from
 
@@ -183,7 +187,7 @@ ___
 
 ### once
 
-▸ **once**\<`E`\>(`event`, `listener`): [`Producer`](Producer.md)
+▸ **once**\<`E`\>(`event`, `listener`): `this`
 
 #### Type parameters
 
@@ -200,7 +204,7 @@ ___
 
 #### Returns
 
-[`Producer`](Producer.md)
+`this`
 
 #### Inherited from
 
@@ -212,22 +216,30 @@ ___
 
 ▸ **produce**(`msg`, `cb`): `void`
 
+Produce a message.
+
+Before publishing a message make sure to set an exchange for the message and to have at least one existing queue to be matched.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `msg` | [`ProducibleMessage`](ProducibleMessage.md) |
-| `cb` | `ICallback`\<`string`[]\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `msg` | [`ProducibleMessage`](ProducibleMessage.md) | A message to produce. |
+| `cb` | `ICallback`\<`string`[]\> | Callback function that accepts an array of message IDs that has been published. |
 
 #### Returns
 
 `void`
 
+**`See`**
+
+https://github.com/weyoss/redis-smq/blob/master/docs/producing-messages.md
+
 ___
 
 ### removeAllListeners
 
-▸ **removeAllListeners**\<`E`\>(`event?`): [`Producer`](Producer.md)
+▸ **removeAllListeners**\<`E`\>(`event?`): `this`
 
 #### Type parameters
 
@@ -243,7 +255,7 @@ ___
 
 #### Returns
 
-[`Producer`](Producer.md)
+`this`
 
 #### Inherited from
 
@@ -253,7 +265,7 @@ ___
 
 ### removeListener
 
-▸ **removeListener**\<`E`\>(`event`, `listener`): [`Producer`](Producer.md)
+▸ **removeListener**\<`E`\>(`event`, `listener`): `this`
 
 #### Type parameters
 
@@ -270,7 +282,7 @@ ___
 
 #### Returns
 
-[`Producer`](Producer.md)
+`this`
 
 #### Inherited from
 

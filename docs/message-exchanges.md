@@ -2,39 +2,40 @@
 
 # Message Exchanges
 
-Starting with v7.1.0, message exchanges offer different ways to route a message to one or multiple queues.
+Starting with version 7.1.0, RedisSMQ introduces message exchanges, which provide flexible routing methods for 
+directing messages to one or more queues.
 
-A message exchange is like an address or a routing algorithm which decides to which queues the message should go.
+A message exchange functions as an address or routing algorithm that determines the destinations for a message.
 
-Unlike other message queues, where messages are published first to an exchange, message exchanges in RedisSMQ do not store messages.
+Each message must be associated with a message exchange, which enables the producer to identify the list of queues that 
+correspond to the exchange parameters.
 
-Each message is required to have a `message exchange` which is used by the producer to retrieve the list of queues that matches the exchange parameters.
+Subsequently, the producer directly publishes the message to the matched queues.
 
-From then, the producer **directly** publishes the message to the matched queues.
+When a message is sent to multiple queues, a unique message is created for each queue with the same properties as the 
+original message, but each will have a different ID. All messages that are created and published to multiple queues 
+through a specific message exchange share a common Exchange Tag.
 
-When a message is published to multiple queues, for each queue a new message is created with the same properties as the base message but with a new ID.
+The Exchange Tag serves as a unique identifier to track all messages published to the identified queues at the moment 
+of publication.
 
-For a given message exchange, all messages that were created and published to multiple queues have the same `Exchange Tag`.
+RedisSMQ supports three exchange types out of the box:
 
-An `Exchange tag` is a unique string property that is used to keep track of all messages that was published to the list of matched queues at the time when published a message.
-
-Out-of-box RedisSMQ offers 3 exchange types.
-
-## Direct Exchange
+## 1. Direct Exchange
 
 ![RedisSMQ Direct Exchange](redis-smq-direct-exchange.png)
 
-A direct exchange allows producers to publish a message to a single queue which is matched exactly by the specified queue of the exchange.
+A direct exchange allows producers to send a message to a specific queue that exactly matches the designated exchange 
+queue.
 
-The queue of the direct exchange may be a string, like `a.b.c.d` or an object describing the namespace of the queue like `{ ns: 'my-app', name: 'a.b.c.d'}`.
+The queue can be specified as a string (e.g., `a.b.c.d`) or as an object that describes the queue's namespace 
+`{ ns: 'my-app', name: 'a.b.c.d'}`. If a string is provided, RedisSMQ will utilize the default namespace.
 
-If a string is used for the direct exchange queue then the **default** namespace will be used.
-
-A direct exchange with the queue `a.b.c.d` matches exactly the queue with the name `a.b.c.d`.
+For example, a direct exchange targeting the queue `a.b.c.d` will only match the queue named exactly as `a.b.c.d`.
 
 ### Usage
 
-To set up a Direct exchange (a queue) for a given message the  [ProducibleMessage Class](api/classes/ProducibleMessage.md) provides [ProducibleMessage.setQueue()](api/classes/ProducibleMessage.md#setqueue).
+To configure a direct exchange for a message, use the [ProducibleMessage Class](api/classes/ProducibleMessage.md) and the method [ProducibleMessage.setQueue()](api/classes/ProducibleMessage.md#setqueue):
 
 ```typescript
 const { ProducibleMessage } = require('redis-smq');
@@ -42,47 +43,49 @@ const { ProducibleMessage } = require('redis-smq');
 const msg = new ProducibleMessage();
 msg.setQueue('a.b.c.d').setBody('123456789');
 ```
+When publishing a message with a direct exchange, if the target queue does not exist, the message will not be sent, and an error will be returned.
 
-When publishing a message with a direct exchange, if the exchange queue does not exist the message will be discarded and an error will be returned.
+To retrieve the list of queues associated with a direct exchange, utilize [ExchangeDirect.getQueues()](api/classes/ExchangeDirect.md#getqueues).
 
-To get the list of matched queues for a given message with a direct exchange use [ExchangeDirect.getQueues()](api/classes/ExchangeDirect.md#getqueues).
-
-For more details see:
+For further details, visit:
 
 - [ExchangeDirect Class](api/classes/ExchangeDirect.md)
 
-## Topic Exchange
+## 2. Topic Exchange
 
 ![RedisSMQ Topic Exchange](redis-smq-topic-exchange.png)
 
-When a topic exchange is used for a message, it allows to publish the message to one or multiple queues which are matched by the topic pattern of the exchange.
+A topic exchange allows messages to be published to one or multiple queues that match a specified topic pattern.
 
-The pattern of a topic exchange is a string which is composed of alphanumeric characters, including `-` and `_` characters, that are separated by a `.`.
+The topic pattern is a string composed of alphanumeric characters, including - and _, separated by periods (.).
 
-The `a.b.c.d` topic pattern matches the following queues `a.b.c.d`, `a.b.c.d.e`, and `a.b.c.d.e.f`, but it does not match the `a.b`, `a.b.c`, or `a.b.c.z` queues.
+For instance, the topic pattern a.b.c.d will match the following queues: a.b.c.d, a.b.c.d.e, and a.b.c.d.e.f, but it 
+will not match a.b, a.b.c, or a.b.c.z.
 
-A topic pattern may be also an object describing the namespace of the topic.
+A topic pattern can also be represented as an object to denote the namespace:
 
-For example the topic `{ ns: 'my-app', topic: 'a.b.c.d'}` will match all queues which satisfy the pattern `a.b.c.d` from the namespace `my-app`.
+```javascript
+{ ns: 'my-app', topic: 'a.b.c.d' }
+```
 
-When a namespace is not provided the default namespace will be used.
+This will match all queues within the my-app namespace that satisfy the a.b.c.d pattern. If no namespace is specified, the default namespace will be applied.
 
 ### Usage
 
-To set up a Topic exchange (a topic) for a given message the [ProducibleMessage Class](api/classes/ProducibleMessage.md) provides [ProducibleMessage.setTopic()](api/classes/ProducibleMessage.md#settopic).
+To set up a topic exchange for a message, use the [ProducibleMessage Class](api/classes/ProducibleMessage.md) and the method [ProducibleMessage.setTopic()](api/classes/ProducibleMessage.md#settopic):
 
-```typescript
+```javascript
 const { ProducibleMessage } = require('redis-smq');
 
 const msg = new ProducibleMessage();
 msg.setTopic('a.b.c.d').setBody('123456789');
 ```
 
-When publishing a message with a topic exchange, if the topic pattern does not match any queues the message will be discarded and an error will be returned.
+If the topic pattern does not correspond to any queues, the message will be deleted and an error will be generated.
 
-To get the list of matched queues for a given message with a Topic exchange use [ExchangeTopic.getQueues()](api/classes/ExchangeTopic.md#getqueues).
+To fetch the list of queues associated with a topic exchange, employ [ExchangeTopic.getQueues()](api/classes/ExchangeTopic.md#getqueues).
 
-For more details see:
+For more information, refer to:
 
 - [ExchangeTopic Class](api/classes/ExchangeTopic.md)
 
@@ -90,15 +93,14 @@ For more details see:
 
 ![RedisSMQ FanOut Exchange](redis-smq-fanout-exchange.png)
 
-A FanOut exchange allows producers to publish a message to one or multiple queues which are bound to this exchange by a binding key.
+A FanOut exchange enables producers to publish a message to all queues that are bound to the exchange via a binding key.
+Usage
 
-### Usage
+To use a FanOut exchange, you must first create it via [ExchangeFanOut.saveExchange()](api/classes/ExchangeFanOut.md#saveexchange) and then bind one or more queues to the exchange through ExchangeFanOut.bindQueue().
 
-In order to use a FanOut exchange you need first to create it using [ExchangeFanOut.saveExchange()](api/classes/ExchangeFanOut.md#saveexchange) and bind one or many queues to the created exchange using [ExchangeFanOut.bindQueue()](api/classes/ExchangeFanOut.md#bindqueue).
+To set up a FanOut exchange for a message, the [ProducibleMessage API](api/classes/ProducibleMessage.md) utilizes [ProducibleMessage.setFanOut()](api/classes/ProducibleMessage.md#setfanout):
 
-To set up a FanOut exchange for a given message the [ProducibleMessage API](api/classes/ProducibleMessage.md) provides [ProducibleMessage.setFanOut()](api/classes/ProducibleMessage.md#setfanout).
-
-```typescript
+```javascript
 const { ProducibleMessage } = require('redis-smq');
 
 const msg = new ProducibleMessage();
@@ -107,12 +109,12 @@ const msg = new ProducibleMessage();
 msg.setFanOut('my-FanOut-exchange').setBody('123456789');
 ```
 
-When publishing a message with a FanOut exchange, if the exchange does not exist or no queues are bound to such an exchange the message will be discarded and error will be returned.
+When publishing with a FanOut exchange, if the exchange does not exist or no queues are associated, the message will be discarded and an error returned.
 
-To get the list of matched queues for a given message with a FanOut exchange use [ExchangeFanOut.getQueues()](api/classes/ExchangeFanOut.md#getqueues).
+To find out which queues are associated with a FanOut exchange, use [ExchangeFanOut.getQueues()](api/classes/ExchangeFanOut.md#getqueues).
 
-Additionally, FanOut exchanges can be also managed using the [HTTP API Interface](https://github.com/weyoss/redis-smq-monitor) or from your browser with the help of the [Web UI](https://github.com/weyoss/redis-smq-monitor-client).
+Additionally, FanOut exchanges can be managed through the [HTTP API Interface](https://github.com/weyoss/redis-smq-monitor) or via a browser using the [Web UI](https://github.com/weyoss/redis-smq-monitor-client).
 
-For more details see:
+For further details, consult:
 
 - [ExchangeFanOut Class](api/classes/ExchangeFanOut.md)

@@ -4,10 +4,26 @@
 
 ![RedisSMQ Exchanges and Delivery Models](redis-smq-exchanges-and-delivery-models.png)
 
-[Message Exchanges](message-exchanges.md) should not be confused with [Queue Delivery Models](queue-delivery-models.md).
+## Introduction
 
-Message exchanges allow publishing a message to one or many queues based on the message exchange.
+Message exchanges and queue delivery models are two distinct concepts that are often confused with one another. This 
+section aims to clarify the differences between them and explore how they can be combined to create complex publishing 
+and delivering models.
 
-On the other hand, delivery models allow delivering a message to one consumer or to all consumers of a given queue.
+## Message Exchanges
 
-Message exchanges and queue delivery models can be combined in order to create, as shown in the diagram above, complex publishing/delivering models based on various criteria that may be defined depending on your application needs.
+[Message Exchanges](message-exchanges.md) enable the publication of a message to one or multiple queues based on the exchange configuration. 
+This allows for flexible and dynamic routing of messages to various queues, catering to different application needs.
+
+## Queue Delivery Models
+
+In contrast, [Queue Delivery Models](queue-delivery-models.md) govern how messages are delivered to consumers of a given queue. They determine 
+whether a message is delivered to a single consumer or to all consumers of the queue, ensuring that messages are 
+processed efficiently and effectively.
+
+## Combining Exchanges and Delivery Models
+
+By combining message exchanges and queue delivery models, developers can create sophisticated publishing and delivering 
+models that cater to specific application requirements. This synergy enables the creation of complex workflows, where 
+messages are routed and delivered based on various criteria, such as message content, consumer availability, and queue 
+capacity.

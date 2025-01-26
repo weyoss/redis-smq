@@ -19,7 +19,11 @@
 
 ### constructor
 
-• **new ConsumerGroups**()
+• **new ConsumerGroups**(): [`ConsumerGroups`](ConsumerGroups.md)
+
+#### Returns
+
+[`ConsumerGroups`](ConsumerGroups.md)
 
 ## Methods
 
