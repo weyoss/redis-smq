@@ -15,8 +15,12 @@
 
 • **interval**: `number`
 
+The time window over which the rate limit is applied. In milliseconds.
+
 ___
 
 ### limit
 
 • **limit**: `number`
+
+The maximum number of messages that can be processed per unit of time.

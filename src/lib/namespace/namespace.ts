@@ -24,25 +24,41 @@ import {
   NamespaceNotFoundError,
 } from './errors/index.js';
 
+/**
+ * Namespace class for managing message queue namespaces in Redis.
+ * This class provides methods to get, create, and delete namespaces, as well as retrieve
+ * associated queues.
+ */
 export class Namespace {
   protected logger;
   protected redisClient;
 
   constructor() {
+    // Logger instance for logging messages and errors.
     this.logger = logger.getLogger(
       Configuration.getSetConfig().logger,
       `exchange-fan-out-manager`,
     );
+
+    // Redis client instance for interacting with Redis.
     this.redisClient = new RedisClientInstance();
+
+    // Error handling for Redis client.
     this.redisClient.on('error', (err) => this.logger.error(err));
   }
 
+  /**
+   * Retrieves all namespaces from Redis.
+   *
+   * @param {ICallback<string[]>} cb - Callback function to handle the result.
+   */
   getNamespaces(cb: ICallback<string[]>): void {
     this.redisClient.getSetInstance((err, client) => {
       if (err) cb(err);
       else if (!client) cb(new CallbackEmptyReplyError());
       else {
         const { keyNamespaces } = redisKeys.getMainKeys();
+        // Getting members of the namespaces set.
         client.smembers(keyNamespaces, (err, reply) => {
           if (err) cb(err);
           else if (!reply) cb(new CallbackEmptyReplyError());
@@ -52,6 +68,12 @@ export class Namespace {
     });
   }
 
+  /**
+   * Retrieves all queues associated with a given namespace.
+   *
+   * @param {string} namespace - The namespace to retrieve queues for.
+   * @param {ICallback<IQueueParams[]>} cb - Callback function to handle the result.
+   */
   getNamespaceQueues(namespace: string, cb: ICallback<IQueueParams[]>): void {
     const ns = redisKeys.validateRedisKey(namespace);
     if (ns instanceof Error) cb(new NamespaceInvalidNamespaceError());
@@ -72,6 +94,7 @@ export class Namespace {
                 });
               },
               (cb: ICallback<IQueueParams[]>) => {
+                // Retrieving queues associated with the namespace.
                 client.smembers(keyNamespaceQueues, (err, reply) => {
                   if (err) cb(err);
                   else if (!reply) cb(new CallbackEmptyReplyError());
@@ -91,6 +114,12 @@ export class Namespace {
     }
   }
 
+  /**
+   * Deletes a namespace and its associated queues from Redis.
+   *
+   * @param {string} namespace - The namespace to delete.
+   * @param {ICallback<void>} cb - Callback function to handle the result.
+   */
   delete(namespace: string, cb: ICallback<void>): void {
     const ns = redisKeys.validateRedisKey(namespace);
     if (ns instanceof Error) cb(new NamespaceInvalidNamespaceError());
@@ -103,6 +132,7 @@ export class Namespace {
           async.waterfall(
             [
               (cb: ICallback<void>) => {
+                // Check if the namespace exists.
                 client.sismember(keyNamespaces, ns, (err, isMember) => {
                   if (err) cb(err);
                   else if (!isMember) cb(new NamespaceNotFoundError());
@@ -118,6 +148,7 @@ export class Namespace {
                   else {
                     const queues = reply ?? [];
                     const multi = client.multi();
+                    // Remove the namespace and its queues.
                     multi.srem(keyNamespaces, ns);
                     async.eachOf(
                       queues,
@@ -141,6 +172,11 @@ export class Namespace {
     }
   }
 
+  /**
+   * Shuts down the Redis client.
+   *
+   * @param {ICallback<void>} cb - Callback function to handle the shutdown result.
+   */
   shutdown = (cb: ICallback<void>): void => {
     this.redisClient.shutdown(cb);
   };

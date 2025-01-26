@@ -25,7 +25,11 @@
 
 ### constructor
 
-• **new QueueAcknowledgedMessages**()
+• **new QueueAcknowledgedMessages**(): [`QueueAcknowledgedMessages`](QueueAcknowledgedMessages.md)
+
+#### Returns
+
+[`QueueAcknowledgedMessages`](QueueAcknowledgedMessages.md)
 
 #### Inherited from
 

@@ -157,6 +157,23 @@ export class Consumer extends Runnable<TConsumerEvent> {
     super.handleError(err);
   }
 
+  /**
+   * Start listening for messages on the specified queue.
+   *
+   * @see https://github.com/weyoss/redis-smq/blob/master/docs/consuming-messages.md
+   * @param {TQueueExtendedParams} queue - A queue from which messages will be consumed. Before consuming
+   * messages from a queue make sure that the specified queue already exists in
+   * the system.
+   * @param {TConsumerMessageHandler} messageHandler - A callback function that defines how to process each
+   * message consumed from the queue. The messageHandler will receive the
+   * message as an argument and should implement the logic for processing the
+   * message. This might include business logic, transformation, storage, etc.
+   * It's crucial that this function handles exceptions and errors properly to
+   * avoid issues with message acknowledgment.
+   * @param {ICallback<void>} cb - The callback function will be executed after the consumption process is initiated.
+   * It typically signifies the end of the consumption setup and can be used to
+   * handle success or errors in starting the consumption process.
+   */
   consume(
     queue: TQueueExtendedParams,
     messageHandler: TConsumerMessageHandler,
@@ -173,6 +190,12 @@ export class Consumer extends Runnable<TConsumerEvent> {
     }
   }
 
+  /**
+   * Cancel consuming messages from the provided queue.
+   *
+   * @param {TQueueExtendedParams} queue - Queue parameters
+   * @param {ICallback<void>} cb - A callback function
+   */
   cancel(queue: TQueueExtendedParams, cb: ICallback<void>): void {
     const parsedQueueParams = _parseQueueExtendedParams(queue);
     if (parsedQueueParams instanceof Error) cb(parsedQueueParams);
@@ -181,6 +204,11 @@ export class Consumer extends Runnable<TConsumerEvent> {
     }
   }
 
+  /**
+   * Retrieve the list of queues being consumed by a Consumer instance.
+   *
+   * @returns {IQueueParsedParams[]} - Queue list
+   */
   getQueues(): IQueueParsedParams[] {
     return this.messageHandlerRunner.getQueues();
   }

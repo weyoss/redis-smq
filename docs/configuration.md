@@ -2,9 +2,12 @@
 
 # Configuration
 
-RedisSMQ configuration is a one-time setup that takes place, usually, during your application initialization and before using any exported class or function from the library.
+Setting up RedisSMQ requires a one-time configuration, typically performed during the initialization of your application. 
+This setup must be completed before utilizing any exported classes or functions from the RedisSMQ library.
 
-To set up the message queue RedisSMQ provides a singleton class that may be used as shown bellow:
+## Singleton Configuration Class
+
+RedisSMQ provides a singleton class for configuration. Below is an example of how to set it up:
 
 ```javascript
 'use strict';
@@ -23,13 +26,15 @@ const config = {
 Configuration.getSetConfig(config);
 ```
 
-See [Configuration Reference](api/classes/Configuration.md) for more details.
+For more detailed information, please refer to the [Configuration Reference](api/classes/Configuration.md).
 
 ## Configuration parameters
 
-See [IRedisSMQConfig Interface](api/interfaces/IRedisSMQConfig.md) for more details.
+For an in-depth understanding of configuration options, see the [IRedisSMQConfig Interface](api/interfaces/IRedisSMQConfig.md).
 
-**Configuration Example**
+### Example Configuration
+
+Here’s an example of a complete RedisSMQ configuration:
 
 ```javascript
 'use strict';
@@ -42,44 +47,44 @@ module.exports = {
     options: {
       host: '127.0.0.1',
       port: 6379,
-      connect_timeout: 3600000,
+      connect_timeout: 3600000, // 1 hour
     },
   },
   logger: {
     enabled: true,
     options: {
       level: 'info',
+      // Uncomment and use the below configuration to enable file logging
       /*
-            streams: [
-                {
-                    path: path.normalize(`${__dirname}/../logs/redis-smq.log`)
-                },
-            ],
-            */
+      streams: [
+        {
+          path: path.normalize(`${__dirname}/../logs/redis-smq.log`)
+        },
+      ],
+      */
     },
   },
   messages: {
-    store: false,
+    store: false, // Set to true to enable message storage
   },
   eventBus: {
-    enabled: false,
+    enabled: false, // Set to true to enable the event bus
   }
 };
 ```
 
-#### Message Storage
+### Message Storage
 
-Published messages, to a queue, are permanently stored unless deleted explicitly.
+By default, published messages in a queue are stored until they are explicitly deleted. The `messages.store` option 
+allows you to manage how acknowledged and dead-lettered messages are stored across all message queues.
 
-The `message.store` option allows, additionally, to configure acknowledged/dead-lettered messages storage for all message queues.
+#### Default Behavior
 
-In other words, when `message.store` is enabled, a queue, in addition to all published messages, may hold a list of all dead-lettered messages for example.
+Acknowledged and dead-lettered messages are not stored by default.
 
-By default acknowledged and dead-lettered messages are not stored.
+#### Message Storage Configuration Examples
 
-**messages.store Usage Examples**
-
-- Only storing dead-lettered messages:
+##### 1. Only Storing Dead-Lettered Messages:
 
 ```javascript
 const config = {
@@ -91,7 +96,7 @@ const config = {
 };
 ```
 
-- Storing acknowledged messages without any limitation, and storing 100000 dead-lettered messages for a maximum retention time of 1 day:
+#### 2. Storing Acknowledged Messages Without Limitation, and 100,000 Dead-Lettered Messages with a Maximum Retention Time of 1 Day:
 
 ```javascript
 const config = {
@@ -100,14 +105,14 @@ const config = {
       acknowledged: true,
       deadLettered: {
         queueSize: 100000,
-        expire: 24 * 60 * 60 * 1000, // 1 day in millis
+        expire: 24 * 60 * 60 * 1000, // 1 day in milliseconds
       },
     },
   },
 };
 ```
 
-- Storing acknowledged messages up to 5000 messages, and storing a maximum of 5000 dead-lettered messages with a retention time of 1 day:
+#### 3. Storing Acknowledged Messages Up to 5,000, and Maximum 5,000 Dead-Lettered Messages with a Retention Time of 1 Day:
 
 ```javascript
 const config = {
@@ -118,7 +123,7 @@ const config = {
       },
       deadLettered: {
         queueSize: 5000,
-        expire: 24 * 60 * 60 * 1000,
+        expire: 24 * 60 * 60 * 1000, // 1 day in milliseconds
       },
     },
   },

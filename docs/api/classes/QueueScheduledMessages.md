@@ -25,7 +25,11 @@
 
 ### constructor
 
-• **new QueueScheduledMessages**()
+• **new QueueScheduledMessages**(): [`QueueScheduledMessages`](QueueScheduledMessages.md)
+
+#### Returns
+
+[`QueueScheduledMessages`](QueueScheduledMessages.md)
 
 #### Inherited from
 

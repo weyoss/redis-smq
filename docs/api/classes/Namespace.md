@@ -19,7 +19,11 @@
 
 ### constructor
 
-• **new Namespace**()
+• **new Namespace**(): [`Namespace`](Namespace.md)
+
+#### Returns
+
+[`Namespace`](Namespace.md)
 
 ## Methods
 

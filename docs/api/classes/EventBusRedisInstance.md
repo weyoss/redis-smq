@@ -30,7 +30,11 @@
 
 ### constructor
 
-• **new EventBusRedisInstance**()
+• **new EventBusRedisInstance**(): [`EventBusRedisInstance`](EventBusRedisInstance.md)
+
+#### Returns
+
+[`EventBusRedisInstance`](EventBusRedisInstance.md)
 
 #### Inherited from
 
@@ -111,7 +115,7 @@ ___
 
 ### on
 
-▸ **on**\<`E`\>(`event`, `listener`): [`EventBusRedisInstance`](EventBusRedisInstance.md)
+▸ **on**\<`E`\>(`event`, `listener`): `this`
 
 #### Type parameters
 
@@ -128,7 +132,7 @@ ___
 
 #### Returns
 
-[`EventBusRedisInstance`](EventBusRedisInstance.md)
+`this`
 
 #### Inherited from
 
@@ -138,7 +142,7 @@ ___
 
 ### once
 
-▸ **once**\<`E`\>(`event`, `listener`): [`EventBusRedisInstance`](EventBusRedisInstance.md)
+▸ **once**\<`E`\>(`event`, `listener`): `this`
 
 #### Type parameters
 
@@ -155,7 +159,7 @@ ___
 
 #### Returns
 
-[`EventBusRedisInstance`](EventBusRedisInstance.md)
+`this`
 
 #### Inherited from
 
@@ -165,7 +169,7 @@ ___
 
 ### removeAllListeners
 
-▸ **removeAllListeners**\<`E`\>(`event?`): [`EventBusRedisInstance`](EventBusRedisInstance.md)
+▸ **removeAllListeners**\<`E`\>(`event?`): `this`
 
 #### Type parameters
 
@@ -181,7 +185,7 @@ ___
 
 #### Returns
 
-[`EventBusRedisInstance`](EventBusRedisInstance.md)
+`this`
 
 #### Inherited from
 
@@ -191,7 +195,7 @@ ___
 
 ### removeListener
 
-▸ **removeListener**\<`E`\>(`event`, `listener`): [`EventBusRedisInstance`](EventBusRedisInstance.md)
+▸ **removeListener**\<`E`\>(`event`, `listener`): `this`
 
 #### Type parameters
 
@@ -208,7 +212,7 @@ ___
 
 #### Returns
 
-[`EventBusRedisInstance`](EventBusRedisInstance.md)
+`this`
 
 #### Inherited from
 

@@ -2,48 +2,59 @@
 
 # Multiplexing
 
-In normal operation mode, each message handler creates and uses its own redis connection for consuming messages. This gives your application many advantages, some of them are:
+In standard operation mode, each message handler establishes and utilizes its own Redis connection for consuming messages. This approach offers several significant advantages:
 
-- High message consumption rate
-- Message handlers run independently and do not block each other
+- **High Message Consumption Rate**: Independent connections can enhance the throughput of message handling. 
 
-On the other hand, multiplexing allows many message handlers to share a single Redis connection. While this may sound counterproductive, it gives your applications some obvious advantages.
+- **Isolation of Message Handlers**: Each handler operates independently, preventing any single handler from blocking 
+others and improving overall application responsiveness.
 
-One of them is that consumers using multiplexing can handle a large number of message queues without creating a significant load on your system. The number of Redis connections does not grow linearly as the number of queues grows, and it is reduced to only one shared connection for all your message handlers.
+However, multiplexing allows multiple message handlers to share a single Redis connection, which, while it may seem counterintuitive, presents some compelling benefits for your application.
 
-Multiplexing does not come without a cost. Here are some of its disadvantages:
+## Advantages of Multiplexing
 
-- Messages, from multiple queues, can not be dequeued and consumed in parallel. In fact, message handlers are run sequentially one after another, and sometimes a multiplexing delay is applied before dequeuing a message from the next queue.
-- A message handler may take a long time to consume a message and thus not giving back control to other message handlers for dequeuing messages. This may not be desirable if you are expecting messages to be consumed as soon as they are published.
+- **Resource Efficiency**: By sharing a single Redis connection, multiplexing enables consumers to manage a large 
+number of message queues without imposing a considerable load on your system. This approach curtails the number of 
+Redis connections, keeping it at just one for all message handlers regardless of the number of queues.
 
-So, before deciding whether to use multiplexing, it is important to know what you are dealing with, considering all the advantages and the disadvantages that it implies.
+## Disadvantages of Multiplexing
 
-## Enabling multiplexing
+However, multiplexing is not without its drawbacks:
 
-Use the [Consumer Class Constructor](api/classes/Consumer.md#constructor) first argument to enabled multiplexing:
+- **Sequential Processing**: Messages from different queues cannot be dequeued and processed in parallel. Handlers are executed one after the other, leading to potential delays if multiplexing latency is applied before accessing the next queue.
+
+- **Potential Delays in Message Processing**: If a message handler takes a considerable time to process a message, it can impede the timely dequeuing of messages for other handlers. This may not align with scenarios where prompt message consumption is critical.
+
+## Considerations Before Enabling Multiplexing
+
+Before opting for multiplexing, it’s crucial to weigh its advantages against the potential drawbacks. Assess your specific use case to determine if the resource optimization justifies the limitations on processing speed and message handling.
+How to Enable Multiplexing
+
+To enable multiplexing, you can utilize the first argument of the [Consumer Class Constructor](api/classes/Consumer.md#constructor):
 
 ```javascript
 const consumer = new Consumer(true);
 ```
 
-Once created, you can your consumer instance can be used as usually:
+Once your consumer instance is created, you can use it as follows:
 
 ```javascript
 consumer.consume('queue1', messageHandler1, (e) => {
-  //...
+//...
 });
 
 consumer.consume('queue2', messageHandler2, (e) => {
-  //...
+//...
 });
 
 consumer.consume('queue3', messageHandler3, (e) => {
-  //...
+//...
 });
 
 consumer.consume('queue4', messageHandler4, (e) => {
-  //...
+//...
 });
 ```
 
-As noted above, you should use multiplexing only when you really have a large number of queues, and you want to optimize your system resources. Otherwise, you should not enabled it.
+As highlighted, multiplexing should primarily be employed when managing a substantial number of queues and aiming to 
+optimize system resources. If this is not your situation, it may be advisable to refrain from enabling it.

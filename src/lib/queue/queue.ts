@@ -32,6 +32,12 @@ import {
   IQueueProperties,
 } from './types/index.js';
 
+/**
+ * The Queue class represents an interface that interacts with Redis for storing
+ * and managing queues.
+ * It provides functionality to create, check existence, delete, retrieve
+ * properties of queues, and manage shutdown operations.
+ */
 export class Queue {
   protected redisClient;
   protected eventBus;
@@ -49,6 +55,17 @@ export class Queue {
     this.redisClient.on('error', (err) => this.logger.error(err));
   }
 
+  /**
+   * Save a new queue with specified parameters.
+   * Upon success the callback function is invoked with the created queue details.
+   *
+   * @see https://github.com/weyoss/redis-smq/blob/master/docs/api/enums/EQueueType.md
+   * @see https://github.com/weyoss/redis-smq/blob/master/docs/api/enums/EQueueDeliveryModel.md
+   * @param queue - The name or parameters for the queue.
+   * @param queueType - The type of the queue, defined by EQueueType.
+   * @param deliveryModel - The model for message delivery, defined by EQueueDeliveryModel.
+   * @param cb - Callback function to handle success or error.
+   */
   save(
     queue: string | IQueueParams,
     queueType: EQueueType,
@@ -111,6 +128,12 @@ export class Queue {
     }
   }
 
+  /**
+   * Checks if a specified queue exists.
+   *
+   * @param queue - The name or parameters for the queue.
+   * @param cb - Callback function to return a boolean indicating the existence of the queue.
+   */
   exists(queue: string | IQueueParams, cb: ICallback<boolean>): void {
     const queueParams = _parseQueueParams(queue);
     if (queueParams instanceof Error) cb(queueParams);
@@ -123,6 +146,12 @@ export class Queue {
     }
   }
 
+  /**
+   * Delete a specific queue.
+   *
+   * @param queue - The name or parameters for the queue to be deleted.
+   * @param cb - Callback function to handle success or error.
+   */
   delete(queue: string | IQueueParams, cb: ICallback<void>): void {
     const queueParams = _parseQueueParams(queue);
     if (queueParams instanceof Error) cb(queueParams);
@@ -153,6 +182,12 @@ export class Queue {
     }
   }
 
+  /**
+   * Retrieves the properties of a specified queue.
+   *
+   * @param queue - The name or parameters for the queue.
+   * @param cb - Callback function to return the queue properties or an error.
+   */
   getProperties(
     queue: string | IQueueParams,
     cb: ICallback<IQueueProperties>,
@@ -168,6 +203,11 @@ export class Queue {
     }
   }
 
+  /**
+   * Fetches all existing queues.
+   *
+   * @param cb - Callback function to return with a list of queues or an error.
+   */
   getQueues(cb: ICallback<IQueueParams[]>): void {
     this.redisClient.getSetInstance((err, client) => {
       if (err) cb(err);
@@ -176,6 +216,11 @@ export class Queue {
     });
   }
 
+  /**
+   * Cleans up resources by shutting down the Redis client and event bus.
+   *
+   * @param {ICallback<void>} cb - Callback function to handle completion of the shutdown process.
+   */
   shutdown = (cb: ICallback<void>): void => {
     async.waterfall([this.redisClient.shutdown, this.eventBus.shutdown], cb);
   };
