@@ -31,10 +31,17 @@ import {
   QueueRateLimitQueueNotFoundError,
 } from './errors/index.js';
 
+/**
+ * The QueueRateLimit class provides functionality to manage rate limiting for
+ * message queues. It allows to set, get, check, and clear rate limits on
+ * specified queues. The rate limiting mechanism helps ensure fair usage of
+ * resources by controlling the number of messages processed within a defined
+ * timeframe.
+ */
 export class QueueRateLimit {
-  protected redisClient;
-  protected logger;
-  protected queue;
+  protected redisClient; // Redis client instance for interacting with Redis.
+  protected logger; // Logger instance for logging errors and information.
+  protected queue; // Queue instance for managing queue operations.
 
   constructor() {
     this.logger = logger.getLogger(
@@ -47,10 +54,10 @@ export class QueueRateLimit {
   }
 
   /**
-   * Reset or clear the rate limit settings for a specific queue.
+   * Resets or clears the rate limit settings for a specific queue.
    *
-   * @param queue
-   * @param cb
+   * @param queue - The name of the queue or an IQueueParams object representing the queue.
+   * @param cb - A callback function which receives an error or undefined when the operation is complete.
    */
   clear(queue: string | IQueueParams, cb: ICallback<void>): void {
     this.redisClient.getSetInstance((err, client) => {
@@ -73,15 +80,15 @@ export class QueueRateLimit {
   }
 
   /**
-   * Set a rate limit for a specific queue.
+   * Sets a rate limit for a specific queue.
    *
    * Rate limiting is a common practice to control how many messages can be
    * processed within a certain timeframe, preventing overload on consumers and
    * ensuring fair usage of resources.
    *
    * @param queue - The name of the queue or an IQueueParams object. This is the queue for which you want to set a rate limit.
-   * @param rateLimit - An IQueueRateLimit object that specifies the rate limit configuration.
-   * @param cb - A callback function that is called when the rate limit is set successfully. The callback function takes no arguments and returns no value.
+   * @param rateLimit - An IQueueRateLimit object specifying the rate limit configuration (limit and interval).
+   * @param cb - A callback function called when the rate limit is set successfully. No arguments are passed.
    */
   set(
     queue: string | IQueueParams,
@@ -127,11 +134,11 @@ export class QueueRateLimit {
   }
 
   /**
-   * Check if the rate limit for a specific queue has been exceeded.
+   * Checks if the rate limit for a specific queue has been exceeded.
    *
-   * @param queue - The name of the queue or an IQueueParams object that contains the queue configuration.
-   * @param rateLimit - An IQueueRateLimit object that defines the rate limit parameters.
-   * @param cb - A callback function that takes a boolean value as an argument, indicating whether the rate limit has been exceeded.
+   * @param queue - The name of the queue or an IQueueParams object containing the queue configuration.
+   * @param rateLimit - An IQueueRateLimit object defining the rate limit parameters.
+   * @param cb - A callback function which receives a boolean value indicating whether the rate limit has been exceeded.
    */
   hasExceeded(
     queue: string | IQueueParams,
@@ -151,10 +158,11 @@ export class QueueRateLimit {
   }
 
   /**
-   * Retrieve the current rate limit parameters for a specific message queue.
+   * Retrieves the current rate limit parameters for a specific message queue.
    *
-   * @param queue - The name of the queue or an IQueueParams object that contains the queue configuration.
-   * @param cb - A callback function that will be called once the rate limit has been fetched.
+   * @param queue - The name of the queue or an IQueueParams object containing the queue configuration.
+   * @param cb - A callback function that is called once the rate limit has been fetched.
+   * It receives either the current rate limit parameters or null if not set.
    */
   get(
     queue: string | IQueueParams,
@@ -190,9 +198,9 @@ export class QueueRateLimit {
   }
 
   /**
-   * Clean up resources by shutting down the Redis client.
+   * Cleans up resources by shutting down the Redis client and the queue.
    *
-   * @param {ICallback<void>} cb - A Callback function to handle completion of the shutdown process.
+   * @param {ICallback<void>} cb - A callback function to handle completion of the shutdown process.
    */
   shutdown = (cb: ICallback<void>): void => {
     async.waterfall([this.queue.shutdown, this.redisClient.shutdown], cb);

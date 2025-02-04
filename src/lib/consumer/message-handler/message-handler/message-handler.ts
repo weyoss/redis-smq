@@ -153,8 +153,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     const redisClient = this.redisClient.getInstance();
     if (redisClient instanceof Error) {
       // ignoring errors
-      cb();
-      return void 0;
+      return cb();
     }
     processingQueue.unknowledgeMessage(
       redisClient,
@@ -171,6 +170,15 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     return this.logger;
   }
 
+  /**
+   * Handles errors that occur during the operation of the MessageHandler.
+   *
+   * @param err - The error object that was encountered.
+   *
+   * @remarks
+   * This method checks if the MessageHandler instance is currently running. If it is, it emits a 'consumer.messageHandler.error' event with the error, consumer ID, and queue information.
+   * It then calls the parent class's `handleError` method to perform any additional error handling.
+   */
   protected override handleError(err: Error) {
     if (this.isRunning()) {
       this.emit(
@@ -183,6 +191,12 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     super.handleError(err);
   }
 
+  /**
+   * Sets up and initializes consumer workers.
+   *
+   * @param cb - A callback function that will be called once the setup is complete or if an error occurs.
+   *             The callback takes an error as its argument, which will be null if no error occurred.
+   */
   protected setUpConsumerWorkers = (cb: ICallback<void>): void => {
     const config = Configuration.getSetConfig();
     const { keyQueueWorkersLock } = redisKeys.getQueueKeys(
@@ -229,6 +243,15 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     }
   };
 
+  /**
+   * Prepares the MessageHandler instance for operation by setting up necessary components and processes.
+   *
+   * @returns An array of functions, each representing a setup operation to be executed in sequence.
+   *
+   * @remarks
+   * This method extends the `goingUp` process from the parent class by adding additional setup steps specific to the MessageHandler.
+   * It includes running the `dequeueMessage` and `consumeMessage` instances, optionally starting the dequeue process, and setting up consumer workers.
+   */
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
     return super.goingUp().concat([
       (cb: ICallback<void>) => this.dequeueMessage.run((err) => cb(err)),
@@ -241,6 +264,19 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     ]);
   }
 
+  /**
+   * Performs cleanup operations and shuts down the consumer workers before shutting down the MessageHandler instance.
+   *
+   * @remarks
+   * This method is called when the MessageHandler instance is being shut down. It ensures that all resources are properly cleaned up and that any running worker processes are terminated.
+   * The method executes the following steps:
+   * 1. Calls the `shutDownConsumerWorkers` method to terminate any running consumer worker processes.
+   * 2. Shuts down the `dequeueMessage` and `consumeMessage` instances by calling their respective `shutdown` methods.
+   * 3. Calls the `cleanUp` method to perform any necessary cleanup operations, such as acknowledging any unacknowledged messages.
+   * 4. Calls the `super.goingDown` method to perform any additional cleanup operations defined in the parent class.
+   *
+   * @returns An array of functions, each representing a cleanup operation to be executed in sequence.
+   */
   protected override goingDown(): ((cb: ICallback<void>) => void)[] {
     return [
       this.shutDownConsumerWorkers,
@@ -250,6 +286,18 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     ].concat(super.goingDown());
   }
 
+  /**
+   * Processes a message by fetching it from the queue and updating its status to 'processing'.
+   *
+   * @param messageId - The unique identifier of the message to be processed.
+   *
+   * @remarks
+   * This method checks if the MessageHandler instance is running. If it is, it retrieves the message from the queue using the provided `messageId`.
+   * It then updates the message's status to 'processing' and passes it to the `consumeMessage` instance for further handling.
+   * If the MessageHandler instance is not running, this method does nothing.
+   *
+   * @returns {void}
+   */
   processMessage(messageId: string): void {
     if (this.isRunning()) {
       const { keyMessage } = redisKeys.getMessageKeys(messageId);
@@ -270,34 +318,69 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
         keys,
         argv,
         (err, reply: unknown) => {
-          if (err) this.handleError(err);
-          else if (!reply) this.handleError(new CallbackEmptyReplyError());
-          else if (!Array.isArray(reply))
-            this.handleError(new CallbackInvalidReplyError());
-          else {
-            const [state, msg]: string[] = reply;
-            const message = _fromMessage(
-              msg,
-              EMessagePropertyStatus.PROCESSING,
-              state,
-            );
-            this.consumeMessage.handleReceivedMessage(message);
+          if (err) {
+            return this.handleError(err);
           }
+          if (!reply) {
+            return this.handleError(new CallbackEmptyReplyError());
+          }
+          if (!Array.isArray(reply)) {
+            return this.handleError(new CallbackInvalidReplyError());
+          }
+          const [state, msg]: string[] = reply;
+          const message = _fromMessage(
+            msg,
+            EMessagePropertyStatus.PROCESSING,
+            state,
+          );
+          this.consumeMessage.handleReceivedMessage(message);
         },
       );
     }
   }
 
+  /**
+   * Processes the next message in the queue by dequeuing it and making it available for consumption.
+   *
+   * This method calls the `dequeue` method of the `dequeueMessage` instance to retrieve a message from the queue.
+   * If the MessageHandler instance is not running, this method does nothing.
+   *
+   * @remarks
+   * The `dequeue` method ensures that only one consumer instance processes a message at a time, preventing message duplication.
+   *
+   * @returns {void}
+   */
   next(): void {
     this.dequeue();
   }
 
+  /**
+   * Dequeues a message from the associated queue.
+   *
+   * This method checks if the MessageHandler instance is running and then calls the `dequeue` method of the `dequeueMessage` instance.
+   * If the MessageHandler instance is not running, the method does nothing.
+   *
+   * @remarks
+   * The `dequeue` method is responsible for retrieving a message from the queue and making it available for processing.
+   * It ensures that only one consumer instance processes a message at a time, preventing message duplication.
+   *
+   * @returns {void}
+   */
   dequeue(): void {
     if (this.isRunning()) {
       this.dequeueMessage.dequeue();
     }
   }
 
+  /**
+   * Retrieves the queue parameters associated with the current MessageHandler instance.
+   *
+   * @returns The queue parameters, represented by the `IQueueParsedParams` interface.
+   *
+   * @remarks
+   * This method returns the queue parameters that were provided when creating the MessageHandler instance.
+   * The returned object contains information about the queue, such as the queue name, consumer group ID, and other relevant details.
+   */
   getQueue(): IQueueParsedParams {
     return this.queue;
   }

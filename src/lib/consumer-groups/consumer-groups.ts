@@ -25,10 +25,8 @@ import { _deleteConsumerGroup } from './_/_delete-consumer-group.js';
 import { _getConsumerGroups } from './_/_get-consumer-groups.js';
 import { _saveConsumerGroup } from './_/_save-consumer-group.js';
 
-/**
- * ConsumerGroups Class
- *
- * The `ConsumerGroups` class is responsible for managing consumer groups within the RedisSMQ MQ.
+/***
+ * The `ConsumerGroups` class is responsible for managing consumer groups within RedisSMQ.
  * It provides functionality to save, delete, and retrieve consumer groups associated with specific queues.
  * The class uses Redis as a backend and employs an event bus for managing events related to consumer groups.
  */

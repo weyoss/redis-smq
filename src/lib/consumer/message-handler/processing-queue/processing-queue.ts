@@ -57,14 +57,9 @@ function getMessageUnknowledgementAction(
     };
   }
   const delay = message.producibleMessage.getRetryDelay();
-  if (delay) {
-    return {
-      action: EMessageUnknowledgmentAction.DELAY,
-    };
-  }
-  return {
-    action: EMessageUnknowledgmentAction.REQUEUE,
-  };
+  return delay
+    ? { action: EMessageUnknowledgmentAction.DELAY }
+    : { action: EMessageUnknowledgmentAction.REQUEUE };
 }
 
 function unknowledgeProcessingQueueMessage(
@@ -77,8 +72,7 @@ function unknowledgeProcessingQueueMessage(
   unacknowledgementStatus: TMessageUnacknowledgmentStatus,
   done: ICallback<void>,
 ): void {
-  args.push(JSON.stringify(queue));
-  args.push(consumerId);
+  args.push(JSON.stringify(queue), consumerId);
   const { keyConsumerQueues } = redisKeys.getConsumerKeys(consumerId);
   const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
     queue,
@@ -92,6 +86,7 @@ function unknowledgeProcessingQueueMessage(
     keyQueueDelayed,
     keyQueueRequeued,
   } = redisKeys.getQueueKeys(queue, null);
+
   keys.push(
     keyQueueProcessing,
     keyQueueDelayed,
@@ -102,43 +97,48 @@ function unknowledgeProcessingQueueMessage(
     keyConsumerQueues,
     keyQueueProperties,
   );
+
   processingQueue.fetchProcessingQueueMessage(
     redisClient,
     keyQueueProcessing,
     (err, message) => {
-      if (err) done(err);
-      else {
-        if (message) {
-          const messageId = message.getId();
-          args.push(messageId);
-          const { keyMessage } = redisKeys.getMessageKeys(messageId);
-          keys.push(keyMessage);
-          const unknowledgementAction = getMessageUnknowledgementAction(
-            message,
-            unknowledgmentReason,
-          );
-          const { action } = unknowledgementAction;
-          const messageStatus =
-            action === EMessageUnknowledgmentAction.DEAD_LETTER
-              ? EMessagePropertyStatus.DEAD_LETTERED
-              : action === EMessageUnknowledgmentAction.REQUEUE
-                ? EMessagePropertyStatus.UNACK_REQUEUING
-                : EMessagePropertyStatus.UNACK_DELAYING;
-          args.push(
-            action,
-            action === EMessageUnknowledgmentAction.DEAD_LETTER
-              ? unknowledgementAction.deadLetterReason
-              : '',
-            unknowledgmentReason,
-            messageStatus,
-          );
-          unacknowledgementStatus[messageId] = unknowledgementAction;
-        } else {
-          keys.push('');
-          args.push('', '', '', unknowledgmentReason, '');
-        }
-        done();
+      if (err) return done(err);
+
+      if (!message) {
+        keys.push('');
+        args.push('', '', '', unknowledgmentReason, '');
+        return done();
       }
+
+      const messageId = message.getId();
+      const { keyMessage } = redisKeys.getMessageKeys(messageId);
+      keys.push(keyMessage);
+      args.push(messageId);
+
+      const unknowledgementAction = getMessageUnknowledgementAction(
+        message,
+        unknowledgmentReason,
+      );
+      const { action } = unknowledgementAction;
+
+      const messageStatus =
+        action === EMessageUnknowledgmentAction.DEAD_LETTER
+          ? EMessagePropertyStatus.DEAD_LETTERED
+          : action === EMessageUnknowledgmentAction.REQUEUE
+            ? EMessagePropertyStatus.UNACK_REQUEUING
+            : EMessagePropertyStatus.UNACK_DELAYING;
+
+      args.push(
+        action,
+        action === EMessageUnknowledgmentAction.DEAD_LETTER
+          ? unknowledgementAction.deadLetterReason
+          : '',
+        unknowledgmentReason,
+        messageStatus,
+      );
+
+      unacknowledgementStatus[messageId] = unknowledgementAction;
+      done();
     },
   );
 }
@@ -167,61 +167,67 @@ export const processingQueue = {
       EMessageUnknowledgmentReason.OFFLINE_MESSAGE_HANDLER,
     ];
     const messageHandlingStatus: TMessageUnacknowledgmentStatus = {};
-    async.waterfall(
+
+    async.waterfall<IQueueParams[]>(
       [
-        (cb: ICallback<IQueueParams[]>) => {
-          if (queues === null)
-            consumerQueues.getConsumerQueues(redisClient, consumerId, cb);
-          else cb(null, queues);
+        (next: ICallback<IQueueParams[]>) => {
+          if (queues === null) {
+            consumerQueues.getConsumerQueues(redisClient, consumerId, next);
+          } else {
+            next(null, queues);
+          }
         },
-        (queueParams: IQueueParams[], cb: ICallback<void>) => {
-          if (queueParams.length) {
-            async.eachOf(
-              queueParams,
-              (queue, _, done) => {
-                unknowledgeProcessingQueueMessage(
-                  redisClient,
-                  consumerId,
-                  queue,
-                  unknowledgmentReason,
-                  keys,
-                  args,
-                  messageHandlingStatus,
-                  done,
-                );
-              },
-              cb,
-            );
-          } else cb();
+        (queueParams: IQueueParams[], next: ICallback<void>) => {
+          if (!queueParams.length) {
+            return next();
+          }
+          async.eachOf(
+            queueParams,
+            (queue: IQueueParams, _: number, done: ICallback<void>) => {
+              unknowledgeProcessingQueueMessage(
+                redisClient,
+                consumerId,
+                queue,
+                unknowledgmentReason,
+                keys,
+                args,
+                messageHandlingStatus,
+                done,
+              );
+            },
+            next,
+          );
         },
       ],
       (err) => {
-        if (err) cb(err);
-        else if (keys.length) {
-          redisClient.runScript(
-            ELuaScriptName.HANDLE_PROCESSING_QUEUE,
-            keys,
-            args,
-            (err, reply) => {
-              if (err) cb(err);
-              else if (reply !== 'OK')
-                cb(new ConsumerError(reply ? String(reply) : undefined));
-              else {
-                for (const messageId in messageHandlingStatus) {
-                  logger.debug(
-                    `Message ID ${messageId} has been ${
-                      messageHandlingStatus[messageId].action ===
-                      EMessageUnknowledgmentAction.DEAD_LETTER
-                        ? 'dead-lettered'
-                        : 'unacknowledged'
-                    }.`,
-                  );
-                }
-                cb(null, messageHandlingStatus);
-              }
-            },
-          );
-        } else cb();
+        if (err) {
+          return cb(err);
+        }
+        if (!keys.length) {
+          return cb();
+        }
+        redisClient.runScript(
+          ELuaScriptName.HANDLE_PROCESSING_QUEUE,
+          keys,
+          args,
+          (err, reply) => {
+            if (err) {
+              return cb(err);
+            }
+            if (reply !== 'OK') {
+              return cb(new ConsumerError(reply ? String(reply) : undefined));
+            }
+            Object.keys(messageHandlingStatus).forEach((messageId) => {
+              const action =
+                messageHandlingStatus[messageId].action ===
+                EMessageUnknowledgmentAction.DEAD_LETTER
+                  ? 'dead-lettered'
+                  : 'unacknowledged';
+              logger.debug(`Message ID ${messageId} has been ${action}.`);
+            });
+            cb(null, messageHandlingStatus);
+          },
+        );
       },
     );
   },
@@ -231,16 +237,16 @@ export const processingQueue = {
     keyQueueProcessing: string,
     cb: ICallback<MessageEnvelope>,
   ): void {
-    redisClient.lrange(
-      keyQueueProcessing,
-      0,
-      0,
-      (err?: Error | null, range?: string[] | null) => {
-        if (err) cb(err);
-        else if (range && range.length) _getMessage(redisClient, range[0], cb);
-        else cb();
-      },
-    );
+    redisClient.lrange(keyQueueProcessing, 0, 0, (err, range) => {
+      if (err) {
+        return cb(err);
+      }
+      if (range && range.length) {
+        _getMessage(redisClient, range[0], cb);
+      } else {
+        cb();
+      }
+    });
   },
 
   getQueueProcessingQueues(

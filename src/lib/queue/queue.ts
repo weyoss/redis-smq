@@ -73,59 +73,46 @@ export class Queue {
     cb: ICallback<{ queue: IQueueParams; properties: IQueueProperties }>,
   ): void {
     const queueParams = _parseQueueParams(queue);
-    if (queueParams instanceof Error) cb(queueParams);
-    else {
-      this.redisClient.getSetInstance((err, client) => {
-        if (err) cb(err);
-        else if (!client) cb(new CallbackEmptyReplyError());
-        else {
-          const { keyQueueProperties } = redisKeys.getQueueKeys(
-            queueParams,
-            null,
-          );
-          const { keyNamespaces, keyQueues } = redisKeys.getMainKeys();
-          const { keyNamespaceQueues } = redisKeys.getNamespaceKeys(
-            queueParams.ns,
-          );
-          const queueParamsStr = JSON.stringify(queueParams);
-          client.runScript(
-            ELuaScriptName.CREATE_QUEUE,
-            [keyNamespaces, keyNamespaceQueues, keyQueues, keyQueueProperties],
-            [
-              queueParams.ns,
-              queueParamsStr,
-              EQueueProperty.QUEUE_TYPE,
-              queueType,
-              EQueueProperty.DELIVERY_MODEL,
-              deliveryModel,
-            ],
-            (err, reply) => {
-              if (err) cb(err);
-              else if (!reply) cb(new CallbackEmptyReplyError());
-              else if (reply !== 'OK') cb(new QueueQueueExistsError());
-              else
-                this.getProperties(queueParams, (err, properties) => {
-                  if (err) cb(err);
-                  else if (!properties) cb(new CallbackEmptyReplyError());
-                  else {
-                    this.eventBus.getSetInstance((err, instance) => {
-                      if (err) cb(err);
-                      else {
-                        instance?.emit(
-                          'queue.queueCreated',
-                          queueParams,
-                          properties,
-                        );
-                        cb(null, { queue: queueParams, properties });
-                      }
-                    });
-                  }
-                });
-            },
-          );
-        }
-      });
-    }
+    if (queueParams instanceof Error) return cb(queueParams);
+
+    this.redisClient.getSetInstance((err, client) => {
+      if (err) return cb(err);
+      if (!client) return cb(new CallbackEmptyReplyError());
+
+      const { keyQueueProperties } = redisKeys.getQueueKeys(queueParams, null);
+      const { keyNamespaces, keyQueues } = redisKeys.getMainKeys();
+      const { keyNamespaceQueues } = redisKeys.getNamespaceKeys(queueParams.ns);
+      const queueParamsStr = JSON.stringify(queueParams);
+
+      client.runScript(
+        ELuaScriptName.CREATE_QUEUE,
+        [keyNamespaces, keyNamespaceQueues, keyQueues, keyQueueProperties],
+        [
+          queueParams.ns,
+          queueParamsStr,
+          EQueueProperty.QUEUE_TYPE,
+          queueType,
+          EQueueProperty.DELIVERY_MODEL,
+          deliveryModel,
+        ],
+        (err, reply) => {
+          if (err) return cb(err);
+          if (!reply) return cb(new CallbackEmptyReplyError());
+          if (reply !== 'OK') return cb(new QueueQueueExistsError());
+
+          this.getProperties(queueParams, (err, properties) => {
+            if (err) return cb(err);
+            if (!properties) return cb(new CallbackEmptyReplyError());
+
+            this.eventBus.getSetInstance((err, instance) => {
+              if (err) return cb(err);
+              instance?.emit('queue.queueCreated', queueParams, properties);
+              cb(null, { queue: queueParams, properties });
+            });
+          });
+        },
+      );
+    });
   }
 
   /**
@@ -147,39 +134,30 @@ export class Queue {
   }
 
   /**
-   * Delete a specific queue.
+   * Deletes a specific queue.
    *
    * @param queue - The name or parameters for the queue to be deleted.
    * @param cb - Callback function to handle success or error.
    */
   delete(queue: string | IQueueParams, cb: ICallback<void>): void {
     const queueParams = _parseQueueParams(queue);
-    if (queueParams instanceof Error) cb(queueParams);
-    else {
-      this.redisClient.getSetInstance((err, client) => {
-        if (err) cb(err);
-        else if (!client) cb(new CallbackEmptyReplyError());
-        else {
-          _deleteQueue(client, queueParams, undefined, (err, multi) => {
-            if (err) cb(err);
-            else if (!multi) cb(new CallbackEmptyReplyError());
-            else
-              multi.exec((err) => {
-                if (err) cb(err);
-                else {
-                  this.eventBus.getSetInstance((err, instance) => {
-                    if (err) cb(err);
-                    else {
-                      instance?.emit('queue.queueDeleted', queueParams);
-                      cb();
-                    }
-                  });
-                }
-              });
+    if (queueParams instanceof Error) return cb(queueParams);
+    this.redisClient.getSetInstance((err, client) => {
+      if (err) return cb(err);
+      if (!client) return cb(new CallbackEmptyReplyError());
+      _deleteQueue(client, queueParams, undefined, (err, multi) => {
+        if (err) return cb(err);
+        if (!multi) return cb(new CallbackEmptyReplyError());
+        multi.exec((err) => {
+          if (err) return cb(err);
+          this.eventBus.getSetInstance((err, instance) => {
+            if (err) return cb(err);
+            instance?.emit('queue.queueDeleted', queueParams);
+            cb();
           });
-        }
+        });
       });
-    }
+    });
   }
 
   /**

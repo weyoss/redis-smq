@@ -7,27 +7,24 @@
  * in the root directory of this source tree.
  */
 
-import {
-  async,
-  ICallback,
-  IRedisClient,
-  IRedisTransaction,
-} from 'redis-smq-common';
+import { async, ICallback, IRedisClient } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
 import { IQueueParams, TQueueConsumer } from '../queue/index.js';
 
+/**
+ * A collection of functions for interacting with Redis queues and consumers.
+ */
 export const consumerQueues = {
-  removeConsumer(
-    multi: IRedisTransaction,
-    queue: IQueueParams,
-    consumerId: string,
-  ): void {
-    const { keyQueueConsumers } = redisKeys.getQueueKeys(queue, null);
-    const { keyConsumerQueues } = redisKeys.getConsumerKeys(consumerId);
-    multi.hdel(keyQueueConsumers, consumerId);
-    multi.srem(keyConsumerQueues, JSON.stringify(queue));
-  },
-
+  /**
+   * Retrieves all consumers associated with a specific queue.
+   *
+   * @param client - The Redis client instance.
+   * @param queue - The queue parameters.
+   * @param transform - A flag indicating whether to transform the consumer data.
+   * @param cb - The callback function to handle the result.
+   *
+   * @returns void
+   */
   getQueueConsumers(
     client: IRedisClient,
     queue: IQueueParams,
@@ -36,24 +33,32 @@ export const consumerQueues = {
   ): void {
     const { keyQueueConsumers } = redisKeys.getQueueKeys(queue, null);
     client.hgetall(keyQueueConsumers, (err, reply) => {
-      if (err) cb(err);
-      else {
-        const consumers = reply ?? {};
-        if (transform) {
-          const data: Record<string | number, TQueueConsumer> = {};
-          async.eachIn(
-            consumers,
-            (item, key, done) => {
-              data[key] = JSON.parse(item);
-              done();
-            },
-            () => cb(null, data),
-          );
-        } else cb(null, consumers);
-      }
+      if (err) return cb(err);
+
+      const consumers = reply ?? {};
+      if (!transform) return cb(null, consumers);
+
+      const data: Record<string | number, TQueueConsumer> = {};
+      async.eachIn(
+        consumers,
+        (item, key, done) => {
+          data[key] = JSON.parse(item);
+          done();
+        },
+        () => cb(null, data),
+      );
     });
   },
 
+  /**
+   * Retrieves all consumer IDs associated with a specific queue.
+   *
+   * @param client - The Redis client instance.
+   * @param queue - The queue parameters.
+   * @param cb - The callback function to handle the result.
+   *
+   * @returns void
+   */
   getQueueConsumerIds(
     client: IRedisClient,
     queue: IQueueParams,
@@ -63,15 +68,15 @@ export const consumerQueues = {
     client.hkeys(keyQueueConsumers, cb);
   },
 
-  countQueueConsumers(
-    client: IRedisClient,
-    queue: IQueueParams,
-    cb: ICallback<number>,
-  ): void {
-    const { keyQueueConsumers } = redisKeys.getQueueKeys(queue, null);
-    client.hlen(keyQueueConsumers, cb);
-  },
-
+  /**
+   * Retrieves all queues associated with a specific consumer.
+   *
+   * @param client - The Redis client instance.
+   * @param consumerId - The consumer ID.
+   * @param cb - The callback function to handle the result.
+   *
+   * @returns void
+   */
   getConsumerQueues(
     client: IRedisClient,
     consumerId: string,
@@ -79,11 +84,9 @@ export const consumerQueues = {
   ): void {
     const { keyConsumerQueues } = redisKeys.getConsumerKeys(consumerId);
     client.smembers(keyConsumerQueues, (err, reply) => {
-      if (err) cb(err);
-      else {
-        const queues: IQueueParams[] = (reply ?? []).map((i) => JSON.parse(i));
-        cb(null, queues);
-      }
+      if (err) return cb(err);
+      const queues: IQueueParams[] = (reply ?? []).map((i) => JSON.parse(i));
+      cb(null, queues);
     });
   },
 };

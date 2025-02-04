@@ -34,16 +34,12 @@ export class Namespace {
   protected redisClient;
 
   constructor() {
-    // Logger instance for logging messages and errors.
     this.logger = logger.getLogger(
       Configuration.getSetConfig().logger,
       `exchange-fan-out-manager`,
     );
 
-    // Redis client instance for interacting with Redis.
     this.redisClient = new RedisClientInstance();
-
-    // Error handling for Redis client.
     this.redisClient.on('error', (err) => this.logger.error(err));
   }
 
@@ -54,17 +50,15 @@ export class Namespace {
    */
   getNamespaces(cb: ICallback<string[]>): void {
     this.redisClient.getSetInstance((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else {
-        const { keyNamespaces } = redisKeys.getMainKeys();
-        // Getting members of the namespaces set.
-        client.smembers(keyNamespaces, (err, reply) => {
-          if (err) cb(err);
-          else if (!reply) cb(new CallbackEmptyReplyError());
-          else cb(null, reply);
-        });
-      }
+      if (err) return cb(err);
+      if (!client) return cb(new CallbackEmptyReplyError());
+
+      const { keyNamespaces } = redisKeys.getMainKeys();
+      client.smembers(keyNamespaces, (err, reply) => {
+        if (err) return cb(err);
+        if (!reply) return cb(new CallbackEmptyReplyError());
+        cb(null, reply);
+      });
     });
   }
 
@@ -76,42 +70,38 @@ export class Namespace {
    */
   getNamespaceQueues(namespace: string, cb: ICallback<IQueueParams[]>): void {
     const ns = redisKeys.validateRedisKey(namespace);
-    if (ns instanceof Error) cb(new NamespaceInvalidNamespaceError());
-    else {
-      this.redisClient.getSetInstance((err, client) => {
-        if (err) cb(err);
-        else if (!client) cb(new CallbackEmptyReplyError());
-        else {
-          const { keyNamespaces } = redisKeys.getMainKeys();
-          const { keyNamespaceQueues } = redisKeys.getNamespaceKeys(ns);
-          async.waterfall(
-            [
-              (cb: ICallback<void>) => {
-                client.sismember(keyNamespaces, ns, (err, reply) => {
-                  if (err) cb(err);
-                  else if (!reply) cb(new NamespaceNotFoundError());
-                  else cb();
-                });
-              },
-              (cb: ICallback<IQueueParams[]>) => {
-                // Retrieving queues associated with the namespace.
-                client.smembers(keyNamespaceQueues, (err, reply) => {
-                  if (err) cb(err);
-                  else if (!reply) cb(new CallbackEmptyReplyError());
-                  else {
-                    const messageQueues: IQueueParams[] = reply.map((i) =>
-                      JSON.parse(i),
-                    );
-                    cb(null, messageQueues);
-                  }
-                });
-              },
-            ],
-            cb,
-          );
-        }
-      });
-    }
+    if (ns instanceof Error) return cb(new NamespaceInvalidNamespaceError());
+
+    this.redisClient.getSetInstance((err, client) => {
+      if (err) return cb(err);
+      if (!client) return cb(new CallbackEmptyReplyError());
+
+      const { keyNamespaces } = redisKeys.getMainKeys();
+      const { keyNamespaceQueues } = redisKeys.getNamespaceKeys(ns);
+      async.waterfall(
+        [
+          (cb: ICallback<void>) => {
+            client.sismember(keyNamespaces, ns, (err, reply) => {
+              if (err) return cb(err);
+              if (!reply) return cb(new NamespaceNotFoundError());
+              cb();
+            });
+          },
+          (cb: ICallback<IQueueParams[]>) => {
+            client.smembers(keyNamespaceQueues, (err, reply) => {
+              if (err) return cb(err);
+              if (!reply) return cb(new CallbackEmptyReplyError());
+
+              const messageQueues: IQueueParams[] = reply.map((i) =>
+                JSON.parse(i),
+              );
+              cb(null, messageQueues);
+            });
+          },
+        ],
+        cb,
+      );
+    });
   }
 
   /**
@@ -122,54 +112,46 @@ export class Namespace {
    */
   delete(namespace: string, cb: ICallback<void>): void {
     const ns = redisKeys.validateRedisKey(namespace);
-    if (ns instanceof Error) cb(new NamespaceInvalidNamespaceError());
-    else {
-      this.redisClient.getSetInstance((err, client) => {
-        if (err) cb(err);
-        else if (!client) cb(new CallbackEmptyReplyError());
-        else {
-          const { keyNamespaces } = redisKeys.getMainKeys();
-          async.waterfall(
-            [
-              (cb: ICallback<void>) => {
-                // Check if the namespace exists.
-                client.sismember(keyNamespaces, ns, (err, isMember) => {
-                  if (err) cb(err);
-                  else if (!isMember) cb(new NamespaceNotFoundError());
-                  else cb();
-                });
+    if (ns instanceof Error) return cb(new NamespaceInvalidNamespaceError());
+
+    this.redisClient.getSetInstance((err, client) => {
+      if (err) return cb(err);
+      if (!client) return cb(new CallbackEmptyReplyError());
+
+      const { keyNamespaces } = redisKeys.getMainKeys();
+      async.waterfall(
+        [
+          (cb: ICallback<void>) => {
+            client.sismember(keyNamespaces, ns, (err, isMember) => {
+              if (err) return cb(err);
+              if (!isMember) return cb(new NamespaceNotFoundError());
+              cb();
+            });
+          },
+        ],
+        (err) => {
+          if (err) return cb(err);
+
+          _getQueues(client, (err, reply) => {
+            if (err) return cb(err);
+
+            const queues = reply ?? [];
+            const multi = client.multi();
+            multi.srem(keyNamespaces, ns);
+            async.eachOf(
+              queues,
+              (queueParams, _, done) => {
+                _deleteQueue(client, queueParams, multi, (err) => done(err));
               },
-            ],
-            (err) => {
-              if (err) cb(err);
-              else {
-                _getQueues(client, (err, reply) => {
-                  if (err) cb(err);
-                  else {
-                    const queues = reply ?? [];
-                    const multi = client.multi();
-                    // Remove the namespace and its queues.
-                    multi.srem(keyNamespaces, ns);
-                    async.eachOf(
-                      queues,
-                      (queueParams, _, done) => {
-                        _deleteQueue(client, queueParams, multi, (err) =>
-                          done(err),
-                        );
-                      },
-                      (err) => {
-                        if (err) cb(err);
-                        else multi.exec((err) => cb(err));
-                      },
-                    );
-                  }
-                });
-              }
-            },
-          );
-        }
-      });
-    }
+              (err) => {
+                if (err) return cb(err);
+                multi.exec((err) => cb(err));
+              },
+            );
+          });
+        },
+      );
+    });
   }
 
   /**

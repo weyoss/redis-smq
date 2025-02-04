@@ -21,6 +21,10 @@ import {
   IMessageTransferable,
 } from './types/index.js';
 
+/**
+ * The Message class provides methods for interacting with Redis-SMQ messages.
+ * It utilizes the RedisClientInstance to perform operations on Redis.
+ */
 export class Message {
   protected logger;
   protected redisClient;
@@ -34,6 +38,14 @@ export class Message {
     this.redisClient.on('error', (err) => this.logger.error(err));
   }
 
+  /**
+   * Retrieves the status of a message with the given ID.
+   *
+   * @param messageId - The ID of the message to retrieve the status for.
+   * @param cb - A callback function that will be called with the result.
+   *              If an error occurs, the first parameter will be an Error object.
+   *              Otherwise, the second parameter will be the status of the message.
+   */
   getMessageStatus(
     messageId: string,
     cb: ICallback<EMessagePropertyStatus>,
@@ -45,6 +57,14 @@ export class Message {
     });
   }
 
+  /**
+   * Retrieves the state of a message with the given ID.
+   *
+   * @param messageId - The ID of the message to retrieve the state for.
+   * @param cb - A callback function that will be called with the result.
+   *              If an error occurs, the first parameter will be an Error object.
+   *              Otherwise, the second parameter will be the state of the message.
+   */
   getMessageState(
     messageId: string,
     cb: ICallback<IMessageStateTransferable>,
@@ -56,6 +76,14 @@ export class Message {
     });
   }
 
+  /**
+   * Retrieves messages with the given IDs.
+   *
+   * @param messageIds - An array of IDs of the messages to retrieve.
+   * @param cb - A callback function that will be called with the result.
+   *              If an error occurs, the first parameter will be an Error object.
+   *              Otherwise, the second parameter will be an array of message objects.
+   */
   getMessagesByIds(
     messageIds: string[],
     cb: ICallback<IMessageTransferable[]>,
@@ -77,6 +105,14 @@ export class Message {
     });
   }
 
+  /**
+   * Retrieves a message with the given ID.
+   *
+   * @param messageId - The ID of the message to retrieve.
+   * @param cb - A callback function that will be called with the result.
+   *              If an error occurs, the first parameter will be an Error object.
+   *              Otherwise, the second parameter will be the message object.
+   */
   getMessageById(messageId: string, cb: ICallback<IMessageTransferable>): void {
     this.redisClient.getSetInstance((err, client) => {
       if (err) cb(err);
@@ -90,6 +126,14 @@ export class Message {
     });
   }
 
+  /**
+   * Deletes messages with the given IDs.
+   *
+   * @param ids - An array of IDs of the messages to delete.
+   * @param cb - A callback function that will be called with the result.
+   *              If an error occurs, the first parameter will be an Error object.
+   *              Otherwise, the second parameter will be undefined.
+   */
   deleteMessagesByIds(ids: string[], cb: ICallback<void>): void {
     this.redisClient.getSetInstance((err, client) => {
       if (err) cb(err);
@@ -98,10 +142,26 @@ export class Message {
     });
   }
 
+  /**
+   * Deletes a message with the given ID.
+   *
+   * @param id - The ID of the message to delete.
+   * @param cb - A callback function that will be called with the result.
+   *              If an error occurs, the first parameter will be an Error object.
+   *              Otherwise, the second parameter will be undefined.
+   */
   deleteMessageById(id: string, cb: ICallback<void>): void {
     this.deleteMessagesByIds([id], cb);
   }
 
+  /**
+   * Requeues a message with the given ID.
+   *
+   * @param messageId - The ID of the message to requeue.
+   * @param cb - A callback function that will be called with the result.
+   *              If an error occurs, the first parameter will be an Error object.
+   *              Otherwise, the second parameter will be undefined.
+   */
   requeueMessageById(messageId: string, cb: ICallback<void>): void {
     this.redisClient.getSetInstance((err, client) => {
       if (err) cb(err);
@@ -110,7 +170,14 @@ export class Message {
     });
   }
 
-  shutdown = (cb: ICallback<void>): void => {
+  /**
+   * Shuts down the Redis client and performs cleanup operations.
+   *
+   * @param cb - A callback function that will be called with the result.
+   *              If an error occurs, the first parameter will be an Error object.
+   *              Otherwise, the second parameter will be undefined.
+   */
+  shutdown(cb: ICallback<void>): void {
     this.redisClient.shutdown(cb);
-  };
+  }
 }
