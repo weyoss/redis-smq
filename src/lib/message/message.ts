@@ -177,7 +177,7 @@ export class Message {
    *              If an error occurs, the first parameter will be an Error object.
    *              Otherwise, the second parameter will be undefined.
    */
-  shutdown(cb: ICallback<void>): void {
+  shutdown = (cb: ICallback<void>): void => {
     this.redisClient.shutdown(cb);
-  }
+  };
 }
