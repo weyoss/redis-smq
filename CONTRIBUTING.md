@@ -1,6 +1,6 @@
 # Contributions
 
-If you want to make any project better, your contributions are very welcome!
+If you want to make RedisSMQ project better, your contributions are very welcome!
 
 ## Pull requests
 
@@ -12,7 +12,7 @@ coding style. You can check the status of your coding style by simply running `n
 Cover your code with new tests if needed. Only fully tested changes are accepted.
 
 Each time when you are ready to submit your changes don't forget to run `npm test` to check that your code is complying
-with eslint project rules and that all of the tests are successfully completed.
+with eslint project rules and that all the tests are successfully completed.
 
 ## Bugs
 
