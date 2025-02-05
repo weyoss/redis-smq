@@ -2,6 +2,10 @@
 
 # Class: ConsumerGroups
 
+The `ConsumerGroups` class is responsible for managing consumer groups within RedisSMQ.
+It provides functionality to save, delete, and retrieve consumer groups associated with specific queues.
+The class uses Redis as a backend and employs an event bus for managing events related to consumer groups.
+
 ## Table of contents
 
 ### Constructors
@@ -31,13 +35,17 @@
 
 ▸ **deleteConsumerGroup**(`queue`, `groupId`, `cb`): `void`
 
+Delete Consumer Group
+
+Deletes a consumer group from a specific queue.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
-| `groupId` | `string` |
-| `cb` | `ICallback`\<`void`\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) | The queue from which to delete the consumer group. |
+| `groupId` | `string` | The ID of the consumer group to delete. |
+| `cb` | `ICallback`\<`void`\> | Callback function to handle the result or error. |
 
 #### Returns
 
@@ -49,12 +57,16 @@ ___
 
 ▸ **getConsumerGroups**(`queue`, `cb`): `void`
 
+Get Consumer Groups
+
+Retrieves a list of consumer group IDs associated with a specific queue.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
-| `cb` | `ICallback`\<`string`[]\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) | The queue from which to retrieve consumer groups. |
+| `cb` | `ICallback`\<`string`[]\> | Callback function to handle the result or error. |
 
 #### Returns
 
@@ -66,13 +78,17 @@ ___
 
 ▸ **saveConsumerGroup**(`queue`, `groupId`, `cb`): `void`
 
+Save Consumer Group
+
+Saves a consumer group to a specific queue.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
-| `groupId` | `string` |
-| `cb` | `ICallback`\<`number`\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) | The queue to which the consumer group belongs. |
+| `groupId` | `string` | The ID of the consumer group to save. |
+| `cb` | `ICallback`\<`number`\> | Callback function to handle the result or error. |
 
 #### Returns
 
@@ -84,11 +100,15 @@ ___
 
 ▸ **shutdown**(`cb`): `void`
 
+Shutdown
+
+Shuts down the consumer groups manager and cleans up resources.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | `ICallback`\<`void`\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `cb` | `ICallback`\<`void`\> | Callback function to handle the result of the shutdown operation. |
 
 #### Returns
 

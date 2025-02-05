@@ -2,6 +2,10 @@
 
 # Class: Consumer
 
+Consumer class responsible for receiving and processing messages from a message queue.
+It implements the `Runnable` interface to handle lifecycle events like startup and shutdown.
+The Consumer can be configured for multiplexing, allowing it to handle multiple queues simultaneously with a single Redis connection.
+
 ## Hierarchy
 
 - `Runnable`\<[`TConsumerEvent`](../README.md#tconsumerevent)\>
@@ -39,11 +43,13 @@
 
 • **new Consumer**(`enableMultiplexing?`): [`Consumer`](Consumer.md)
 
+Creates a new Consumer instance.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `enableMultiplexing?` | `boolean` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `enableMultiplexing?` | `boolean` | (Optional) If set to true, the consumer uses a multiplexed message handler runner; otherwise, it uses a standard message handler runner. |
 
 #### Returns
 
@@ -59,18 +65,54 @@ Runnable\<TConsumerEvent\>.constructor
 
 ▸ **cancel**(`queue`, `cb`): `void`
 
-Cancel consuming messages from the provided queue.
+Cancels the consumption of messages from a specified queue.
+
+This function is responsible for stopping the consumption of messages from a specific queue.
+It removes the message handler associated with the given queue from the message handler runner.
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) | Queue parameters |
-| `cb` | `ICallback`\<`void`\> | A callback function |
+| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) | The queue parameters. This parameter represents the queue from which messages will be consumed. It can be a string representing the queue name or an object containing additional queue options. |
+| `cb` | `ICallback`\<`void`\> | Callback function to be called once cancellation is complete. This callback function will be invoked after the message handler associated with the given queue is removed. If an error occurs during the cancellation process, the error will be passed as the first argument to the callback function. Otherwise, the callback function will be invoked with no arguments. |
 
 #### Returns
 
 `void`
+
+**`Example`**
+
+```typescript
+const consumer = new Consumer();
+consumer.consume(
+  'my-queue',
+  (message, done) => {
+    // Handle the message
+    // ...
+    // Acknowledge the message
+    done();
+  },
+  (err) => {
+    if (err) {
+      console.error('Error consuming messages:', err);
+    } else {
+      console.log('Consumption set up successfully');
+    }
+  },
+);
+
+// Cancel consumption after some time
+setTimeout(() => {
+  consumer.cancel('my-queue', (err) => {
+    if (err) {
+      console.error('Error canceling consumption:', err);
+    } else {
+      console.log('Consumption cancelled successfully');
+    }
+  });
+}, 10000);
+```
 
 ___
 
@@ -78,7 +120,7 @@ ___
 
 ▸ **consume**(`queue`, `messageHandler`, `cb`): `void`
 
-Start listening for messages on the specified queue.
+Consumes messages from a specified queue using the provided message handler.
 
 #### Parameters
 
@@ -91,6 +133,28 @@ Start listening for messages on the specified queue.
 #### Returns
 
 `void`
+
+**`Example`**
+
+```typescript
+const consumer = new Consumer();
+consumer.consume(
+  'my-queue',
+  (message, done) => {
+    // Handle the message
+    // ...
+    // Acknowledge the message
+    done();
+  },
+  (err) => {
+    if (err) {
+      console.error('Error consuming messages:', err);
+    } else {
+      console.log('Consumption set up successfully');
+    }
+  },
+);
+```
 
 **`See`**
 
@@ -143,13 +207,44 @@ ___
 
 ▸ **getQueues**(): [`IQueueParsedParams`](../interfaces/IQueueParsedParams.md)[]
 
-Retrieve the list of queues being consumed by a Consumer instance.
+Retrieves a list of queues the consumer is currently configured to handle.
+
+This function returns an array of parsed queue parameters that the consumer is currently set up to handle.
+The parsed queue parameters include the queue name, options, and any additional parameters specified.
 
 #### Returns
 
 [`IQueueParsedParams`](../interfaces/IQueueParsedParams.md)[]
 
-- Queue list
+- An array of parsed queue parameters.
+Each element in the array represents a queue that the consumer is currently consuming messages from.
+
+**`Example`**
+
+```typescript
+const consumer = new Consumer();
+consumer.consume(
+  'my-queue',
+  (message, done) => {
+    // Handle the message
+    // ...
+    // Acknowledge the message
+    done();
+  },
+  (err) => {
+    if (err) {
+      console.error('Error consuming messages:', err);
+    } else {
+      console.log('Consumption set up successfully');
+    }
+  },
+);
+
+// Get the list of queues the consumer is handling
+const queues = consumer.getQueues();
+console.log('Queues:', queues);
+// Output: Queues: [{ queueParams: { name:'my-queue', ns: 'default' }, groupId: null }]
+```
 
 ___
 
