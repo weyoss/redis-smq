@@ -1,3 +1,25 @@
+
+
+## [8.0.0-rc.28](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.27...v8.0.0-rc.28) (2025-02-05)
+
+
+### Bug Fixes
+
+* **message:** revert back shutdown method to arrow function ([c4e5ceb](https://github.com/weyoss/redis-smq/commit/c4e5cebb4d9fbd91889618669765698cb80cd044))
+
+
+### Documentation
+
+* **api:** enhance class documentation with detailed descriptions and examples ([67f8a21](https://github.com/weyoss/redis-smq/commit/67f8a21c039e41301e8bfcf2c4ffc4319b02424d))
+* **api:** separate error classes from main classes ([4aa850e](https://github.com/weyoss/redis-smq/commit/4aa850ed5411906d4a38c32a673cf2021498c294))
+* **README:** update HTTP REST API reference link ([9e20a6c](https://github.com/weyoss/redis-smq/commit/9e20a6c08bf47b1a581129f922c9922c64cb7e3d))
+* update logo, improve content readability ([7c921d4](https://github.com/weyoss/redis-smq/commit/7c921d406e05961d92769f2a43c40f7fa955d5fa))
+
+
+### Codebase Refactoring
+
+* improve code structure and readability ([5b4a47c](https://github.com/weyoss/redis-smq/commit/5b4a47cdc1139507a724d1d48202f6d8c6074174))
+
 # Changelog
 
 ## [8.0.0-rc.27](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.26...v8.0.0-rc.27) (2025-01-09)
