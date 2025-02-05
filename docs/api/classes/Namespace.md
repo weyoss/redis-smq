@@ -2,6 +2,10 @@
 
 # Class: Namespace
 
+Namespace class for managing message queue namespaces in Redis.
+This class provides methods to get, create, and delete namespaces, as well as retrieve
+associated queues.
+
 ## Table of contents
 
 ### Constructors
@@ -31,12 +35,14 @@
 
 ▸ **delete**(`namespace`, `cb`): `void`
 
+Deletes a namespace and its associated queues from Redis.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `namespace` | `string` |
-| `cb` | `ICallback`\<`void`\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `namespace` | `string` | The namespace to delete. |
+| `cb` | `ICallback`\<`void`\> | Callback function to handle the result. |
 
 #### Returns
 
@@ -48,12 +54,14 @@ ___
 
 ▸ **getNamespaceQueues**(`namespace`, `cb`): `void`
 
+Retrieves all queues associated with a given namespace.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `namespace` | `string` |
-| `cb` | `ICallback`\<[`IQueueParams`](../interfaces/IQueueParams.md)[]\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `namespace` | `string` | The namespace to retrieve queues for. |
+| `cb` | `ICallback`\<[`IQueueParams`](../interfaces/IQueueParams.md)[]\> | Callback function to handle the result. |
 
 #### Returns
 
@@ -65,11 +73,13 @@ ___
 
 ▸ **getNamespaces**(`cb`): `void`
 
+Retrieves all namespaces from Redis.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | `ICallback`\<`string`[]\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `cb` | `ICallback`\<`string`[]\> | Callback function to handle the result. |
 
 #### Returns
 
@@ -81,11 +91,13 @@ ___
 
 ▸ **shutdown**(`cb`): `void`
 
+Shuts down the Redis client.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | `ICallback`\<`void`\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `cb` | `ICallback`\<`void`\> | Callback function to handle the shutdown result. |
 
 #### Returns
 

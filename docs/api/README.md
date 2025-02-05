@@ -38,7 +38,7 @@
 - [QueueRateLimit](classes/QueueRateLimit.md)
 - [QueueScheduledMessages](classes/QueueScheduledMessages.md)
 
-### Errors
+### Error Classes
 
 - [ConfigurationError](classes/ConfigurationError.md)
 - [ConfigurationMessageQueueSizeError](classes/ConfigurationMessageQueueSizeError.md)

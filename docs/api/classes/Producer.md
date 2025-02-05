@@ -2,6 +2,14 @@
 
 # Class: Producer
 
+The Producer class is responsible for producing messages, managing their
+delivery to various queues, and ensuring that all components are ready
+for operation.
+The class provides methods for enqueuing messages, handling consumer groups,
+and producing messages based on the message's exchange parameters.
+Error handling is included throughout the methods, returning appropriate
+error objects when necessary.
+
 ## Hierarchy
 
 - `Runnable`\<[`TProducerEvent`](../README.md#tproducerevent)\>
@@ -36,6 +44,9 @@
 ### constructor
 
 • **new Producer**(): [`Producer`](Producer.md)
+
+Constructor for the Producer class. Initializes the Redis client,
+event bus, and logger. Sets up the event bus publisher if enabled.
 
 #### Returns
 
@@ -216,24 +227,30 @@ ___
 
 ▸ **produce**(`msg`, `cb`): `void`
 
-Produce a message.
+Produces a message based on the provided parameters. Ensures that a valid
+exchange is set and that at least one matching queue exists before
+publishing the message.
 
-Before publishing a message make sure to set an exchange for the message and to have at least one existing queue to be matched.
+This method handles various errors, including:
+- ProducerInstanceNotRunningError: Thrown when the producer instance is not running.
+- ProducerMessageExchangeRequiredError: Thrown when no exchange is set for the message.
+- ProducerExchangeNoMatchedQueueError: Thrown when no matching queues are found for the exchange.
+- ProducerQueueNotFoundError: Thrown when a queue is not found.
+- ProducerMessagePriorityRequiredError: Thrown when a message priority is required.
+- ProducerPriorityQueuingNotEnabledError: Thrown when priority queuing is not enabled.
+- ProducerUnknownQueueTypeError: Thrown when an unknown queue type is encountered.
+- ProducerError: A generic error thrown when an unexpected error occurs.
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `msg` | [`ProducibleMessage`](ProducibleMessage.md) | A message to produce. |
-| `cb` | `ICallback`\<`string`[]\> | Callback function that accepts an array of message IDs that has been published. |
+| `msg` | [`ProducibleMessage`](ProducibleMessage.md) | The message to be produced and published. |
+| `cb` | `ICallback`\<`string`[]\> | A callback function to be executed upon completion. It receives an error as the first argument (if any) and an array of message IDs as the second argument. |
 
 #### Returns
 
 `void`
-
-**`See`**
-
-https://github.com/weyoss/redis-smq/blob/master/docs/producing-messages.md
 
 ___
 

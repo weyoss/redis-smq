@@ -25,11 +25,14 @@ To help you get up and running with RedisSMQ, we’ve organized essential resour
 - **[Message Handler Worker Threads](message-handler-worker-threads.md)**: Learn about worker threads and how they manage message processing.
 - **[EventBus](event-bus.md)**: Discover the EventBus feature for event-driven architecture.
 - **[Multiplexing](multiplexing.md)**: Understand how to use multiplexing for improved message handling.
+- **[Graceful Shutdown](graceful-shutdown.md)**: Learn best practices for safely shutting down your RedisSMQ class instances.
 - **[Performance](performance.md)**: Learn about the performance of RedisSMQ.
 - **[RedisSMQ Architecture](redis-smq-architecture.md)**: Gain insights into the architectural design of RedisSMQ.
 - **[Logs](https://github.com/weyoss/redis-smq-common/blob/master/docs/README.md#logs)**: Learn how to access and utilize logs for monitoring and debugging.
-- **[HTTP API](https://github.com/weyoss/redis-smq-monitor)**: Access the HTTP API for integrating RedisSMQ with other applications.
-- **[Web UI](https://github.com/weyoss/redis-smq-monitor-client)**: Explore the web interface for easy management of RedisSMQ.
+- **[HTTP REST API](redis-smq-rest-api)**: Access the HTTP API for integrating RedisSMQ with other applications.
+- **[Web UI](redis-smq-web-ui.md)**: Explore the web interface for easy management of RedisSMQ.
 - **[ESM & CJS Modules](esm-cjs-modules.md)**: Find out how to work with ECMAScript Modules and CommonJS modules.
 
 We hope this documentation serves as a valuable resource as you implement and use RedisSMQ in your projects!
+
+You can also check out the [FAQs](faqs/README.md) for common questions and issues.
