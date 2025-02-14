@@ -9,35 +9,31 @@
 
 import { expect, test } from '@jest/globals';
 import bluebird from 'bluebird';
-import { v4 } from 'uuid';
-import { RedisClientFactory } from '../../../src/common/redis-client/redis-client-factory.js';
-import { EventBusRedisFactory } from '../../../src/lib/event-bus/event-bus-redis-factory.js';
+import { RedisClient } from '../../../src/common/redis-client/redis-client.js';
 import {
   Consumer,
   ConsumerGroups,
   EQueueDeliveryModel,
   EQueueType,
+  EventBus,
   IQueueParams,
 } from '../../../src/lib/index.js';
 import { QueueConsumerGroupsCache } from '../../../src/lib/producer/queue-consumer-groups-cache.js';
+import { getProducer } from '../../common/producer.js';
 import { getQueue } from '../../common/queue.js';
 
 test('QueueConsumerGroupsCache: combined tests', async () => {
-  const producerId = v4();
+  const producer = getProducer();
 
-  const eventBus = bluebird.promisifyAll(
-    EventBusRedisFactory(producerId, (err) => console.log(err)),
-  );
+  const eventBus = bluebird.promisifyAll(new EventBus());
   await eventBus.initAsync();
 
-  const redisClientInstance = bluebird.promisifyAll(
-    RedisClientFactory(producerId, (err) => console.log(err)),
-  );
-  await redisClientInstance.initAsync();
+  const redisClient = bluebird.promisifyAll(new RedisClient());
+  await redisClient.initAsync();
 
   // initializing a standalone dictionary
   const queueConsumerGroupsDictionary = bluebird.promisifyAll(
-    new QueueConsumerGroupsCache(producerId, console),
+    new QueueConsumerGroupsCache(producer, redisClient, eventBus, console),
   );
   await queueConsumerGroupsDictionary.runAsync();
 
@@ -158,7 +154,7 @@ test('QueueConsumerGroupsCache: combined tests', async () => {
   await queueConsumerGroupsDictionary.shutdownAsync();
 
   const queueConsumerGroupsDictionary2 = bluebird.promisifyAll(
-    new QueueConsumerGroupsCache(producerId, console),
+    new QueueConsumerGroupsCache(producer, redisClient, eventBus, console),
   );
   await queueConsumerGroupsDictionary2.runAsync();
   const gp11 = queueConsumerGroupsDictionary2.getConsumerGroups(queue2);
@@ -170,5 +166,5 @@ test('QueueConsumerGroupsCache: combined tests', async () => {
   await queueConsumerGroupsDictionary2.shutdownAsync();
   await consumerGroups.shutdownAsync();
   await eventBus.shutdownAsync();
-  await redisClientInstance.shutdownAsync();
+  await redisClient.shutdownAsync();
 });

@@ -8,9 +8,9 @@
  */
 
 import bluebird from 'bluebird';
-import { EventBusRedisInstance } from '../../src/lib/index.js';
+import { EventBus } from '../../src/lib/index.js';
 
-const eventBus = bluebird.promisifyAll(new EventBusRedisInstance());
+const eventBus = bluebird.promisifyAll(new EventBus());
 
 export async function getEventBus() {
   return eventBus.getSetInstanceAsync();

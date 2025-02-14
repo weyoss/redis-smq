@@ -8,11 +8,7 @@
  */
 
 import { expect, test } from '@jest/globals';
-import {
-  ICallback,
-  IRedisClient,
-  WatchedKeysChangedError,
-} from 'redis-smq-common';
+import { ICallback, IRedisClient } from 'redis-smq-common';
 import { processingQueue } from '../../../src/lib/consumer/message-handler/processing-queue/processing-queue.js';
 import { IQueueParams } from '../../../src/lib/index.js';
 import { getConsumer } from '../../common/consumer.js';
@@ -45,6 +41,7 @@ test('Concurrently deleting a message queue and starting a consumer', async () =
 
   const q = await getQueue();
 
+  const { WatchedKeysChangedError } = await import('redis-smq-common');
   await expect(
     Promise.all([q.deleteAsync(defaultQueue), consumer.runAsync()]),
   ).rejects.toThrow(WatchedKeysChangedError);
