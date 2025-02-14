@@ -7,7 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import { ERedisConfigClient, logger } from 'redis-smq-common';
 import bluebird from 'bluebird';
 import {
   Configuration,
@@ -18,6 +17,7 @@ import {
   ProducibleMessage,
   Queue,
 } from 'redis-smq';
+import { ERedisConfigClient, logger } from 'redis-smq-common';
 
 const { promisifyAll } = bluebird;
 
@@ -32,14 +32,6 @@ const config = {
   },
   logger: {
     enabled: true,
-    options: {
-      level: 'info',
-      // streams: [
-      //   {
-      //     path: path.normalize(`${__dirname}/logs/redis-smq.log`),
-      //   },
-      // ],
-    },
   },
 };
 

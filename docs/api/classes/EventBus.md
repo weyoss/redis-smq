@@ -1,46 +1,44 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / EventBusRedisInstance
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / EventBus
 
-# Class: EventBusRedisInstance
+# Class: EventBus
 
 ## Hierarchy
 
 - `EventEmitter`\<`Pick`\<`TRedisClientEvent`, ``"error"``\>\>
 
-  ↳ **`EventBusRedisInstance`**
+  ↳ **`EventBus`**
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](EventBusRedisInstance.md#constructor)
+- [constructor](EventBus.md#constructor)
 
 ### Methods
 
-- [emit](EventBusRedisInstance.md#emit)
-- [getInstance](EventBusRedisInstance.md#getinstance)
-- [getSetInstance](EventBusRedisInstance.md#getsetinstance)
-- [init](EventBusRedisInstance.md#init)
-- [on](EventBusRedisInstance.md#on)
-- [once](EventBusRedisInstance.md#once)
-- [removeAllListeners](EventBusRedisInstance.md#removealllisteners)
-- [removeListener](EventBusRedisInstance.md#removelistener)
-- [shutdown](EventBusRedisInstance.md#shutdown)
+- [emit](EventBus.md#emit)
+- [getInstance](EventBus.md#getinstance)
+- [getSetInstance](EventBus.md#getsetinstance)
+- [init](EventBus.md#init)
+- [on](EventBus.md#on)
+- [once](EventBus.md#once)
+- [removeAllListeners](EventBus.md#removealllisteners)
+- [removeListener](EventBus.md#removelistener)
+- [shutdown](EventBus.md#shutdown)
 
 ## Constructors
 
 ### constructor
 
-• **new EventBusRedisInstance**(): [`EventBusRedisInstance`](EventBusRedisInstance.md)
+• **new EventBus**(): [`EventBus`](EventBus.md)
 
 #### Returns
 
-[`EventBusRedisInstance`](EventBusRedisInstance.md)
+[`EventBus`](EventBus.md)
 
 #### Inherited from
 
-EventEmitter\<
-  Pick\<TRedisClientEvent, 'error'\>
-\>.constructor
+EventEmitter\<Pick\<TRedisClientEvent, 'error'\>\>.constructor
 
 ## Methods
 

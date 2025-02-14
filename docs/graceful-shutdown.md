@@ -32,7 +32,7 @@ Before terminating your application, be sure to call `shutdown()` on the followi
 
 - [Consumer](api/classes/Consumer.md)
 - [ConsumerGroups](api/classes/ConsumerGroups.md)
-- [EventBusRedisInstance](api/classes/EventBusRedisInstance.md)
+- [EventBus](api/classes/EventBus.md)
 - [ExchangeDirect](api/classes/ExchangeDirect.md)
 - [ExchangeFanOut](api/classes/ExchangeFanOut.md)
 - [ExchangeTopic](api/classes/ExchangeTopic.md)

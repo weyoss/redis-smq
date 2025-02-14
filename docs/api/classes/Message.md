@@ -3,7 +3,7 @@
 # Class: Message
 
 The Message class provides methods for interacting with Redis-SMQ messages.
-It utilizes the RedisClientInstance to perform operations on Redis.
+It utilizes the RedisClient to perform operations on Redis.
 
 ## Table of contents
 

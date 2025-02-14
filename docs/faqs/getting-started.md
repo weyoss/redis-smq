@@ -7,18 +7,27 @@
    - **Node.js**: Make sure you have Node.js >= v18 installed on your system.
 
 2. Install RedisSMQ
-
+   
    First, install the package using npm:
 
    ```bash
    npm install redis-smq@rc
    ```
-   
-3. Create a configuration file:
-   
-   Create a new file, for example, `redis-smq-config.js`, and add the following basic configuration:
 
-   **File: /path/to/your/project/redis-smq-config.js**
+3. Install a Redis client:
+   
+   Choose either node-redis or ioredis. For this example, we'll use ioredis:
+   
+   ```shell
+   npm install ioredis
+   ```
+   
+
+4. Create a configuration file:
+ 
+   Create a new file, for example, `redis-smq-config.js`, and add the following basic configuration:
+   
+   File: /path/to/your/project/redis-smq-config.js
    ```javascript
    import { ERedisConfigClient } from 'redis-smq-common';
 
@@ -40,9 +49,9 @@
    };
    ```
 
-4. Create a queue
-
-   **File: /path/to/your/project/queue.js**
+5. Create a queue
+   
+   File: /path/to/your/project/queue.js
    ```javascript 
    import { Queue, Configuration } from 'redis-smq';
    import config from './path/to/your/project/redis-smq-config.js';
@@ -65,11 +74,11 @@
    });
    ```
 
-5. Create a producer
-
+6. Create a producer
+   
    Create a file for your producer, e.g., `producer.js`:
-
-   **File: /path/to/your/project/producer.js**
+   
+   File: /path/to/your/project/producer.js
    ```javascript
    import { Producer, ProducibleMessage, Configuration } from 'redis-smq';
    import config from './path/to/your/project/redis-smq-config.js';
@@ -101,11 +110,11 @@
    });
    ```
 
-6. Create a consumer
-
+7. Create a consumer
+   
    Create a file for your consumer, e.g., `consumer.js`:
-
-   **File: /path/to/your/project/consumer.js**
+   
+   File: /path/to/your/project/consumer.js
    ```javascript
    import { Consumer, Configuration } from 'redis-smq';
    import config from './path/to/your/project/redis-smq-config.js';
@@ -130,7 +139,7 @@
    });
    ```
 
-7. Run your application
+8. Run your application
 
    You can now run your producer and consumer in separate terminal windows:
 
