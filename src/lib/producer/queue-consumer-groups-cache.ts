@@ -14,9 +14,9 @@ import {
   Runnable,
   TRedisClientEvent,
 } from 'redis-smq-common';
-import { RedisClientFactory } from '../../common/redis-client/redis-client-factory.js';
+import { RedisClient } from '../../common/redis-client/redis-client.js';
 import { _getConsumerGroups } from '../consumer-groups/_/_get-consumer-groups.js';
-import { EventBusRedisFactory } from '../event-bus/event-bus-redis-factory.js';
+import { EventBus } from '../event-bus/index.js';
 import { _getQueueProperties } from '../queue/_/_get-queue-properties.js';
 import { _getQueues } from '../queue/_/_get-queues.js';
 import {
@@ -24,6 +24,7 @@ import {
   IQueueParams,
   IQueueProperties,
 } from '../queue/index.js';
+import { Producer } from './producer.js';
 
 export class QueueConsumerGroupsCache extends Runnable<
   Pick<TRedisClientEvent, 'error'>
@@ -34,15 +35,16 @@ export class QueueConsumerGroupsCache extends Runnable<
   protected logger;
   protected consumerGroupsByQueues: Record<string, string[]> = {};
 
-  constructor(producerId: string, logger: ILogger) {
+  constructor(
+    producer: Producer,
+    redisClient: RedisClient,
+    eventBus: EventBus,
+    logger: ILogger,
+  ) {
     super();
-    this.redisClient = RedisClientFactory(producerId, (err) =>
-      this.handleError(err),
-    );
-    this.eventBus = EventBusRedisFactory(producerId, (err) =>
-      this.handleError(err),
-    );
-    this.producerId = producerId;
+    this.redisClient = redisClient;
+    this.eventBus = eventBus;
+    this.producerId = producer.getId();
     this.logger = logger;
   }
 

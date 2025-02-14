@@ -17,10 +17,11 @@ import {
   WorkerCallable,
 } from 'redis-smq-common';
 import { TConsumerConsumeMessageEvent } from '../../../../common/index.js';
-import { RedisClientInstance } from '../../../../common/redis-client/redis-client-instance.js';
+import { RedisClient } from '../../../../common/redis-client/redis-client.js';
 import { ELuaScriptName } from '../../../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../../../config/index.js';
+import { EventBus } from '../../../event-bus/index.js';
 import {
   EMessageProperty,
   EMessagePropertyStatus,
@@ -28,6 +29,7 @@ import {
 } from '../../../message/index.js';
 import { MessageEnvelope } from '../../../message/message-envelope.js';
 import { IQueueParsedParams } from '../../../queue/index.js';
+import { Consumer } from '../../consumer/consumer.js';
 import {
   EMessageUnknowledgmentAction,
   EMessageUnknowledgmentReason,
@@ -55,22 +57,23 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
   > | null = null;
 
   constructor(
-    redisClient: RedisClientInstance,
-    consumerId: string,
+    redisClient: RedisClient,
+    consumer: Consumer,
     queue: IQueueParsedParams,
     messageHandlerId: string,
     messageHandler: TConsumerMessageHandler,
     logger: ILogger,
+    eventBus: EventBus | null,
   ) {
     super();
     this.queue = queue;
-    this.consumerId = consumerId;
+    this.consumerId = consumer.getId();
     this.messageHandler = messageHandler;
     this.messageHandlerId = messageHandlerId;
     this.redisClient = redisClient;
     const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
       this.queue.queueParams,
-      consumerId,
+      this.consumerId,
     );
     const { keyQueueAcknowledged } = redisKeys.getQueueKeys(
       this.queue.queueParams,
@@ -79,8 +82,8 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     this.keyQueueAcknowledged = keyQueueAcknowledged;
     this.keyQueueProcessing = keyQueueProcessing;
     this.logger = logger;
-    if (Configuration.getSetConfig().eventBus.enabled) {
-      eventBusPublisher(this, this.consumerId, logger);
+    if (eventBus) {
+      eventBusPublisher(this, eventBus, logger);
     }
   }
 

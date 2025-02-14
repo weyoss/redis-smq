@@ -7,9 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import * as fs from 'fs';
 import { resolve } from 'path';
-import { getDirname, RedisClientAbstract } from 'redis-smq-common';
+import { getDirname, ICallback, IRedisClient } from 'redis-smq-common';
 
 export enum ELuaScriptName {
   PUBLISH_SCHEDULED_MESSAGE = 'PUBLISH_SCHEDULED_MESSAGE',
@@ -28,85 +27,64 @@ export enum ELuaScriptName {
   SET_QUEUE_RATE_LIMIT = 'SET_QUEUE_RATE_LIMIT',
 }
 
-RedisClientAbstract.addScript(
-  ELuaScriptName.PUBLISH_SCHEDULED_MESSAGE,
-  fs
-    .readFileSync(resolve(getDirname(), './lua/publish-scheduled-message.lua'))
-    .toString(),
-);
-RedisClientAbstract.addScript(
-  ELuaScriptName.PUBLISH_MESSAGE,
-  fs
-    .readFileSync(resolve(getDirname(), './lua/publish-message.lua'))
-    .toString(),
-);
-RedisClientAbstract.addScript(
-  ELuaScriptName.REQUEUE_MESSAGE,
-  fs
-    .readFileSync(resolve(getDirname(), './lua/requeue-message.lua'))
-    .toString(),
-);
-RedisClientAbstract.addScript(
-  ELuaScriptName.SCHEDULE_MESSAGE,
-  fs
-    .readFileSync(resolve(getDirname(), './lua/schedule-message.lua'))
-    .toString(),
-);
-RedisClientAbstract.addScript(
-  ELuaScriptName.HAS_QUEUE_RATE_EXCEEDED,
-  fs
-    .readFileSync(resolve(getDirname(), './lua/has-queue-rate-exceeded.lua'))
-    .toString(),
-);
-RedisClientAbstract.addScript(
-  ELuaScriptName.CREATE_QUEUE,
-  fs.readFileSync(resolve(getDirname(), './lua/create-queue.lua')).toString(),
-);
-RedisClientAbstract.addScript(
-  ELuaScriptName.INIT_CONSUMER_QUEUE,
-  fs
-    .readFileSync(resolve(getDirname(), './lua/init-consumer-queue.lua'))
-    .toString(),
-);
-RedisClientAbstract.addScript(
-  ELuaScriptName.HANDLE_PROCESSING_QUEUE,
-  fs
-    .readFileSync(resolve(getDirname(), './lua/handle-processing-queue.lua'))
-    .toString(),
-);
-RedisClientAbstract.addScript(
-  ELuaScriptName.ACKNOWLEDGE_MESSAGE,
-  fs
-    .readFileSync(resolve(getDirname(), './lua/acknowledge-message.lua'))
-    .toString(),
-);
-RedisClientAbstract.addScript(
-  ELuaScriptName.DELETE_MESSAGE,
-  fs.readFileSync(resolve(getDirname(), './lua/delete-message.lua')).toString(),
-);
-RedisClientAbstract.addScript(
-  ELuaScriptName.FETCH_MESSAGE_FOR_PROCESSING,
-  fs
-    .readFileSync(
-      resolve(getDirname(), './lua/fetch-message-for-processing.lua'),
-    )
-    .toString(),
-);
-RedisClientAbstract.addScript(
-  ELuaScriptName.DELETE_CONSUMER_GROUP,
-  fs
-    .readFileSync(resolve(getDirname(), './lua/delete-consumer-group.lua'))
-    .toString(),
-);
-RedisClientAbstract.addScript(
-  ELuaScriptName.CLEANUP_OFFLINE_CONSUMER,
-  fs
-    .readFileSync(resolve(getDirname(), './lua/cleanup-offline-consumer.lua'))
-    .toString(),
-);
-RedisClientAbstract.addScript(
-  ELuaScriptName.SET_QUEUE_RATE_LIMIT,
-  fs
-    .readFileSync(resolve(getDirname(), './lua/set-queue-rate-limit.lua'))
-    .toString(),
-);
+const dirname = getDirname();
+
+const scriptFileMap = {
+  [ELuaScriptName.PUBLISH_SCHEDULED_MESSAGE]: resolve(
+    dirname,
+    './lua/publish-scheduled-message.lua',
+  ),
+  [ELuaScriptName.PUBLISH_MESSAGE]: resolve(
+    dirname,
+    './lua/publish-message.lua',
+  ),
+  [ELuaScriptName.REQUEUE_MESSAGE]: resolve(
+    dirname,
+    './lua/requeue-message.lua',
+  ),
+  [ELuaScriptName.SCHEDULE_MESSAGE]: resolve(
+    dirname,
+    './lua/schedule-message.lua',
+  ),
+  [ELuaScriptName.HAS_QUEUE_RATE_EXCEEDED]: resolve(
+    dirname,
+    './lua/has-queue-rate-exceeded.lua',
+  ),
+  [ELuaScriptName.CREATE_QUEUE]: resolve(dirname, './lua/create-queue.lua'),
+  [ELuaScriptName.INIT_CONSUMER_QUEUE]: resolve(
+    dirname,
+    './lua/init-consumer-queue.lua',
+  ),
+  [ELuaScriptName.HANDLE_PROCESSING_QUEUE]: resolve(
+    dirname,
+    './lua/handle-processing-queue.lua',
+  ),
+  [ELuaScriptName.ACKNOWLEDGE_MESSAGE]: resolve(
+    dirname,
+    './lua/acknowledge-message.lua',
+  ),
+  [ELuaScriptName.DELETE_MESSAGE]: resolve(dirname, './lua/delete-message.lua'),
+  [ELuaScriptName.FETCH_MESSAGE_FOR_PROCESSING]: resolve(
+    dirname,
+    './lua/fetch-message-for-processing.lua',
+  ),
+  [ELuaScriptName.DELETE_CONSUMER_GROUP]: resolve(
+    dirname,
+    './lua/delete-consumer-group.lua',
+  ),
+  [ELuaScriptName.CLEANUP_OFFLINE_CONSUMER]: resolve(
+    dirname,
+    './lua/cleanup-offline-consumer.lua',
+  ),
+  [ELuaScriptName.SET_QUEUE_RATE_LIMIT]: resolve(
+    dirname,
+    './lua/set-queue-rate-limit.lua',
+  ),
+};
+
+export function loadScriptFiles(
+  redisClient: IRedisClient,
+  cb: ICallback<void>,
+): void {
+  redisClient.loadScriptFiles(scriptFileMap, (err) => cb(err));
+}

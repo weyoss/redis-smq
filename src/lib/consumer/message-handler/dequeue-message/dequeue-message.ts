@@ -14,17 +14,16 @@ import {
   ILogger,
   IRedisClient,
   PanicError,
-  RedisClientAbstract,
   Runnable,
   Timer,
 } from 'redis-smq-common';
 import { TConsumerDequeueMessageEvent } from '../../../../common/index.js';
-import { RedisClientInstance } from '../../../../common/redis-client/redis-client-instance.js';
+import { RedisClient } from '../../../../common/redis-client/redis-client.js';
 import { ELuaScriptName } from '../../../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../../../config/index.js';
 import { _saveConsumerGroup } from '../../../consumer-groups/_/_save-consumer-group.js';
-import { EventBusRedisFactory } from '../../../event-bus/event-bus-redis-factory.js';
+import { EventBus } from '../../../event-bus/index.js';
 import { _hasRateLimitExceeded } from '../../../queue-rate-limit/_/_has-rate-limit-exceeded.js';
 import { _getQueueProperties } from '../../../queue/_/_get-queue-properties.js';
 import {
@@ -35,6 +34,7 @@ import {
   QueueQueueNotFoundError,
   TQueueConsumer,
 } from '../../../queue/index.js';
+import { Consumer } from '../../consumer/consumer.js';
 import {
   ConsumerConsumerGroupIdNotSupportedError,
   ConsumerConsumerGroupIdRequiredError,
@@ -78,26 +78,28 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
   protected idleTrigger = 0;
 
   constructor(
-    redisClient: RedisClientInstance,
+    redisClient: RedisClient,
     queue: IQueueParsedParams,
-    consumerId: string,
+    consumer: Consumer,
     logger: ILogger,
+    eventBus: EventBus | null,
     blockUntilMessageReceived: boolean = true,
     autoCloseRedisConnection = true,
   ) {
     super();
     this.queue = queue;
-    this.consumerId = consumerId;
+    this.consumerId = consumer.getId();
     this.logger = logger;
     this.blockUntilMessageReceived = blockUntilMessageReceived;
     this.autoCloseRedisConnection = autoCloseRedisConnection;
     this.redisClient = redisClient;
     this.redisClient.on('error', (err) => this.handleError(err));
-    this.eventBus = EventBusRedisFactory(this.consumerId, (err) =>
-      this.handleError(err),
-    );
+    if (!eventBus) {
+      this.eventBus = new EventBus();
+      this.eventBus.on('error', (err) => this.handleError(err));
+    } else this.eventBus = eventBus;
     if (Configuration.getSetConfig().eventBus.enabled) {
-      eventBusPublisher(this, consumerId, logger);
+      eventBusPublisher(this, this.eventBus, logger);
     }
     const { keyConsumerQueues } = redisKeys.getConsumerKeys(this.consumerId);
     const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
@@ -229,12 +231,11 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
     return [
       (cb: ICallback<void>): void => {
         this.timer.reset();
-        if (this.autoCloseRedisConnection) {
-          const redisClient = this.redisClient.getInstance();
-          if (redisClient instanceof RedisClientAbstract) redisClient.halt(cb);
-          // ignoring errors
-          else cb();
-        } else cb();
+        if (!this.autoCloseRedisConnection) return cb();
+        const redisClient = this.redisClient.getInstance();
+        // ignoring errors
+        if (redisClient instanceof Error) return cb();
+        redisClient.halt(cb);
       },
     ].concat(super.goingDown());
   }

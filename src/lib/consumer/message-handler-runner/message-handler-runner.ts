@@ -9,7 +9,8 @@
 
 import { async, ICallback, ILogger, Runnable } from 'redis-smq-common';
 import { TConsumerMessageHandlerRunnerEvent } from '../../../common/index.js';
-import { Configuration } from '../../../config/index.js';
+import { RedisClient } from '../../../common/redis-client/redis-client.js';
+import { EventBus } from '../../event-bus/index.js';
 import { IQueueParsedParams } from '../../queue/index.js';
 import { Consumer } from '../consumer/consumer.js';
 import { ConsumerConsumeMessageHandlerAlreadyExistsError } from '../errors/index.js';
@@ -22,16 +23,25 @@ import { eventBusPublisher } from './event-bus-publisher.js';
 
 export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunnerEvent> {
   protected consumer;
+  protected redisClient;
   protected logger;
   protected messageHandlerInstances: MessageHandler[] = [];
   protected messageHandlers: IConsumerMessageHandlerArgs[] = [];
+  protected eventBus;
 
-  constructor(consumer: Consumer, logger: ILogger) {
+  constructor(
+    consumer: Consumer,
+    redisClient: RedisClient,
+    logger: ILogger,
+    eventBus: EventBus | null,
+  ) {
     super();
     this.consumer = consumer;
+    this.redisClient = redisClient;
     this.logger = logger;
-    if (Configuration.getSetConfig().eventBus.enabled) {
-      eventBusPublisher(this, this.consumer.getId(), logger);
+    this.eventBus = eventBus;
+    if (this.eventBus) {
+      eventBusPublisher(this, this.eventBus, logger);
     }
   }
 
@@ -70,8 +80,11 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
   ): MessageHandler {
     const instance = new MessageHandler(
       this.consumer,
+      this.redisClient,
       this.logger,
       handlerParams,
+      true,
+      this.eventBus,
     );
     instance.on('consumer.messageHandler.error', (err, consumerId, queue) => {
       // this.handleError(err)

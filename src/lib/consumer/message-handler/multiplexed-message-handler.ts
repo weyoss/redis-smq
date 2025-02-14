@@ -8,6 +8,8 @@
  */
 
 import { ILogger } from 'redis-smq-common';
+import { RedisClient } from '../../../common/redis-client/redis-client.js';
+import { EventBus } from '../../event-bus/index.js';
 import { Consumer } from '../consumer/consumer.js';
 import { IConsumerMessageHandlerArgs } from '../types/index.js';
 import { DequeueMessage } from './dequeue-message/dequeue-message.js';
@@ -18,11 +20,13 @@ export class MultiplexedMessageHandler extends MessageHandler {
 
   constructor(
     consumer: Consumer,
-    handlerParams: IConsumerMessageHandlerArgs,
+    redisClient: RedisClient,
     logger: ILogger,
+    handlerParams: IConsumerMessageHandlerArgs,
+    eventBus: EventBus | null,
     dequeueNextFn: () => void,
   ) {
-    super(consumer, logger, handlerParams, false);
+    super(consumer, redisClient, logger, handlerParams, false, eventBus);
     this.dequeueNextFn = dequeueNextFn;
   }
 
@@ -30,8 +34,9 @@ export class MultiplexedMessageHandler extends MessageHandler {
     const instance = new DequeueMessage(
       this.redisClient,
       this.queue,
-      this.consumerId,
+      this.consumer,
       this.logger,
+      this.eventBus,
       false,
       false,
     );

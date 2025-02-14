@@ -21,11 +21,11 @@ import {
   TConsumerMessageHandlerEvent,
   TRedisSMQEvent,
 } from '../../../../common/index.js';
-import { RedisClientFactory } from '../../../../common/redis-client/redis-client-factory.js';
-import { RedisClientInstance } from '../../../../common/redis-client/redis-client-instance.js';
+import { RedisClient } from '../../../../common/redis-client/redis-client.js';
 import { ELuaScriptName } from '../../../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../../../config/index.js';
+import { EventBus } from '../../../event-bus/index.js';
 import { _fromMessage } from '../../../message/_/_from-message.js';
 import {
   EMessageProperty,
@@ -52,13 +52,16 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   protected messageHandler;
   protected autoDequeue;
   protected redisClient;
+  protected eventBus;
   protected workerResourceGroup: WorkerResourceGroup | null = null;
 
   constructor(
     consumer: Consumer,
+    redisClient: RedisClient,
     logger: ILogger,
     handlerParams: IConsumerMessageHandlerArgs,
     autoDequeue: boolean = true,
+    eventBus: EventBus | null,
   ) {
     super();
     const { queue, messageHandler } = handlerParams;
@@ -68,11 +71,10 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     this.messageHandler = messageHandler;
     this.logger = logger;
     this.autoDequeue = autoDequeue;
-    this.redisClient = RedisClientFactory(this.consumerId, (err) =>
-      this.handleError(err),
-    );
-    if (Configuration.getSetConfig().eventBus.enabled) {
-      evenBusPublisher(this, this.consumerId, this.logger);
+    this.redisClient = redisClient;
+    this.eventBus = eventBus;
+    if (this.eventBus) {
+      evenBusPublisher(this, this.eventBus, this.logger);
     }
     this.dequeueMessage = this.initDequeueMessageInstance();
     this.consumeMessage = this.initConsumeMessageInstance();
@@ -81,10 +83,11 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
 
   protected initDequeueMessageInstance(): DequeueMessage {
     const instance = new DequeueMessage(
-      new RedisClientInstance(),
+      new RedisClient(),
       this.queue,
-      this.consumerId,
+      this.consumer,
       this.logger,
+      this.eventBus,
     );
     instance.on('consumer.dequeueMessage.error', this.onError);
     return instance;
@@ -93,11 +96,12 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   protected initConsumeMessageInstance(): ConsumeMessage {
     const instance = new ConsumeMessage(
       this.redisClient,
-      this.consumerId,
+      this.consumer,
       this.queue,
       this.getId(),
       this.messageHandler,
       this.logger,
+      this.eventBus,
     );
     instance.on('consumer.consumeMessage.error', this.onError);
     return instance;

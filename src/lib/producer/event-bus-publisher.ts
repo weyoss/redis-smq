@@ -9,11 +9,14 @@
 
 import { ILogger } from 'redis-smq-common';
 import { TProducerEvent } from '../../common/index.js';
-import { EventBusRedisFactory } from '../event-bus/event-bus-redis-factory.js';
+import { EventBus } from '../event-bus/index.js';
 import { Producer } from './producer.js';
 
-export function eventBusPublisher(producer: Producer, logger: ILogger): void {
-  const eventBus = EventBusRedisFactory(producer.getId(), () => void 0);
+export function eventBusPublisher(
+  producer: Producer,
+  eventBus: EventBus,
+  logger: ILogger,
+): void {
   const up: TProducerEvent['producer.up'] = (...args) => {
     const instance = eventBus.getInstance();
     if (instance instanceof Error) logger.error(instance);

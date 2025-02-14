@@ -9,15 +9,14 @@
 
 import { ILogger } from 'redis-smq-common';
 import { TConsumerDequeueMessageEvent } from '../../../../common/index.js';
-import { EventBusRedisFactory } from '../../../event-bus/event-bus-redis-factory.js';
+import { EventBus } from '../../../event-bus/index.js';
 import { DequeueMessage } from './dequeue-message.js';
 
 export function eventBusPublisher(
   dequeueMessage: DequeueMessage,
-  consumerId: string,
+  eventBus: EventBus,
   logger: ILogger,
 ): void {
-  const eventBus = EventBusRedisFactory(consumerId, () => void 0);
   const messageReceived: TConsumerDequeueMessageEvent['consumer.dequeueMessage.messageReceived'] =
     (...args) => {
       const instance = eventBus.getInstance();

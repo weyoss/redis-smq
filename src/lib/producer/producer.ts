@@ -19,11 +19,11 @@ import {
   TUnaryFunction,
 } from 'redis-smq-common';
 import { TProducerEvent } from '../../common/index.js';
-import { RedisClientFactory } from '../../common/redis-client/redis-client-factory.js';
+import { RedisClient } from '../../common/redis-client/redis-client.js';
 import { ELuaScriptName } from '../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../config/index.js';
-import { EventBusRedisFactory } from '../event-bus/event-bus-redis-factory.js';
+import { EventBus } from '../event-bus/index.js';
 import { _getExchangeQueues } from '../exchange/_/_get-exchange-queues.js';
 import { EExchangeType } from '../exchange/index.js';
 import {
@@ -70,12 +70,10 @@ export class Producer extends Runnable<TProducerEvent> {
   constructor() {
     super();
     // Initializes the Redis client and event bus with error handling.
-    this.redisClient = RedisClientFactory(this.id, (err) =>
-      this.handleError(err),
-    );
-    this.eventBus = EventBusRedisFactory(this.id, (err) =>
-      this.handleError(err),
-    );
+    this.redisClient = new RedisClient();
+    this.redisClient.on('error', (err) => this.handleError(err));
+    this.eventBus = new EventBus();
+    this.eventBus.on('error', (err) => this.handleError(err));
     this.logger = logger.getLogger(
       Configuration.getSetConfig().logger,
       `producer:${this.id}`,
@@ -83,7 +81,7 @@ export class Producer extends Runnable<TProducerEvent> {
 
     // If the event bus is enabled in configuration, initializes the event bus publisher.
     if (Configuration.getSetConfig().eventBus.enabled) {
-      eventBusPublisher(this, this.logger);
+      eventBusPublisher(this, this.eventBus, this.logger);
     }
   }
 
@@ -101,7 +99,9 @@ export class Producer extends Runnable<TProducerEvent> {
    */
   protected initQueueConsumerGroupsHandler = (cb: ICallback<void>): void => {
     this.queueConsumerGroupsHandler = new QueueConsumerGroupsCache(
-      this.id,
+      this,
+      this.redisClient,
+      this.eventBus,
       this.logger,
     );
     this.queueConsumerGroupsHandler.run((err) => cb(err));

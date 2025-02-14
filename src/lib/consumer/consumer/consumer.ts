@@ -17,9 +17,9 @@ import {
   TUnaryFunction,
 } from 'redis-smq-common';
 import { TConsumerEvent } from '../../../common/index.js';
-import { RedisClientFactory } from '../../../common/redis-client/redis-client-factory.js';
+import { RedisClient } from '../../../common/redis-client/redis-client.js';
 import { Configuration } from '../../../config/index.js';
-import { EventBusRedisFactory } from '../../event-bus/event-bus-redis-factory.js';
+import { EventBus } from '../../event-bus/index.js';
 import { _parseQueueExtendedParams } from '../../queue/_/_parse-queue-extended-params.js';
 import { IQueueParsedParams, TQueueExtendedParams } from '../../queue/index.js';
 import { ConsumerHeartbeat } from '../consumer-heartbeat/consumer-heartbeat.js';
@@ -46,7 +46,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
   protected redisClient;
 
   // Event bus instance used for publishing/subscribing events, if enabled in the configuration.
-  protected eventBus;
+  protected eventBus: EventBus | null = null;
 
   // Heartbeat instance for ensuring the consumer remains alive and responsive.
   protected heartbeat: ConsumerHeartbeat | null = null;
@@ -64,19 +64,27 @@ export class Consumer extends Runnable<TConsumerEvent> {
       config.logger,
       `consumer:${this.id}:message-handler`,
     );
-    this.redisClient = RedisClientFactory(this.id, (err) =>
-      this.handleError(err),
-    );
+    this.redisClient = new RedisClient();
+    this.redisClient.on('error', this.onRedisError);
 
     if (Configuration.getSetConfig().eventBus.enabled) {
-      this.eventBus = EventBusRedisFactory(this.id, (err) =>
-        this.handleError(err),
-      );
-      eventBusPublisher(this, this.logger);
+      this.eventBus = new EventBus();
+      this.eventBus.on('error', this.onRedisError);
+      eventBusPublisher(this, this.eventBus, this.logger);
     }
     this.messageHandlerRunner = enableMultiplexing
-      ? new MultiplexedMessageHandlerRunner(this, this.logger)
-      : new MessageHandlerRunner(this, this.logger);
+      ? new MultiplexedMessageHandlerRunner(
+          this,
+          this.redisClient,
+          this.logger,
+          this.eventBus,
+        )
+      : new MessageHandlerRunner(
+          this,
+          this.redisClient,
+          this.logger,
+          this.eventBus,
+        );
 
     this.messageHandlerRunner.on('consumer.messageHandlerRunner.error', (err) =>
       this.handleError(err),
@@ -98,7 +106,12 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * @param {ICallback<void>} cb - Callback function to be called once setup is complete.
    */
   protected setUpHeartbeat = (cb: ICallback<void>): void => {
-    this.heartbeat = new ConsumerHeartbeat(this, this.logger);
+    this.heartbeat = new ConsumerHeartbeat(
+      this,
+      this.redisClient,
+      this.logger,
+      this.eventBus ?? null,
+    );
     this.heartbeat.on('consumerHeartbeat.error', (err) =>
       this.handleError(err),
     );

@@ -16,9 +16,9 @@ import {
   logger,
 } from 'redis-smq-common';
 import { TRedisSMQEvent } from '../../common/index.js';
-import { RedisClientInstance } from '../../common/redis-client/redis-client-instance.js';
+import { RedisClient } from '../../common/redis-client/redis-client.js';
 import { Configuration } from '../../config/index.js';
-import { EventBusRedisInstance } from '../event-bus/index.js';
+import { EventBus } from '../event-bus/index.js';
 import { _parseQueueParams } from '../queue/_/_parse-queue-params.js';
 import { IQueueParams } from '../queue/index.js';
 import { _deleteConsumerGroup } from './_/_delete-consumer-group.js';
@@ -42,11 +42,11 @@ export class ConsumerGroups {
     );
 
     // Set up the event bus and error handling
-    this.eventBus = new EventBusRedisInstance();
+    this.eventBus = new EventBus();
     this.eventBus.on('error', (err) => this.logger.error(err));
 
     // Initialize Redis client and error handling
-    this.redisClient = new RedisClientInstance();
+    this.redisClient = new RedisClient();
     this.redisClient.on('error', (err) => this.logger.error(err));
   }
 

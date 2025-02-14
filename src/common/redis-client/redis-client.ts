@@ -13,17 +13,33 @@ import {
   EventEmitter,
   ICallback,
   IRedisClient,
+  IRedisConfig,
   PanicError,
   TRedisClientEvent,
 } from 'redis-smq-common';
 import { Configuration } from '../../config/index.js';
 import { RedisClientInstanceLockError } from './errors/redis-client-instance-lock.error.js';
+import { loadScriptFiles } from './scripts/scripts.js';
 
-export class RedisClientInstance extends EventEmitter<
+export class RedisClient extends EventEmitter<
   Pick<TRedisClientEvent, 'error'>
 > {
   protected instance: IRedisClient | null = null;
   protected locked = false;
+
+  protected createClient(
+    config: IRedisConfig,
+    cb: ICallback<IRedisClient>,
+  ): void {
+    createRedisClient(config, (err, client) => {
+      if (err) return cb(err);
+      if (!client) return cb(new CallbackEmptyReplyError());
+      loadScriptFiles(client, (err) => {
+        if (err) return cb(err);
+        cb(null, client);
+      });
+    });
+  }
 
   init = (cb: ICallback<void>): void => {
     this.getSetInstance((err) => cb(err));
@@ -33,15 +49,13 @@ export class RedisClientInstance extends EventEmitter<
     if (!this.locked) {
       if (!this.instance) {
         this.locked = true;
-        createRedisClient(Configuration.getSetConfig().redis, (err, client) => {
+        this.createClient(Configuration.getSetConfig().redis, (err, client) => {
           this.locked = false;
-          if (err) cb(err);
-          else if (!client) cb(new CallbackEmptyReplyError());
-          else {
-            this.instance = client;
-            this.instance.on('error', (err) => this.emit('error', err));
-            cb(null, this.instance);
-          }
+          if (err) return cb(err);
+          if (!client) return cb(new CallbackEmptyReplyError());
+          this.instance = client;
+          this.instance.on('error', (err) => this.emit('error', err));
+          cb(null, this.instance);
         });
       } else cb(null, this.instance);
     } else cb(new RedisClientInstanceLockError());
