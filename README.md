@@ -29,20 +29,45 @@ A High-Performance Redis Simple Message Queue for Node.js
 - Communication between multiple services in microservices architectures.
 - Handling real-time events in gaming, IoT, or analytics systems.
 
-**Installation and Usage**
+**Installation**
 
 To get started with RedisSMQ, you can install the library using npm:
 ```bash
 npm i redis-smq@rc
 ```
 
-Don't forget to install a Redis client. Choose either node-redis or ioredis. 
+Don't forget to install a Redis client. Choose either node-redis or ioredis:
 
 ```shell
 npm install @redis/client
 # or
 npm install ioredis
 ```
+
+**Configuration**
+
+Set up the RedisSMQ configuration during your application bootstrap:
+
+```javascript
+'use strict';
+const { Configuration, ERedisConfigClient } = require('redis-smq');
+
+const config = {
+  redis: {
+    // Using ioredis as the Redis client
+    client: ERedisConfigClient.IOREDIS,
+    // Add any other ioredis options here
+    options: {
+      host: '127.0.0.1',
+      port: 6379,
+    },
+  },
+};
+
+Configuration.getSetConfig(config);
+```
+
+**Usage**
 
 Here's a basic example to create a queue, produce a message, and consume it:
 
