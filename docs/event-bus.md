@@ -8,7 +8,7 @@ The RedisSMQ EventBus enables your applications to subscribe to various system e
 By default, most events in RedisSMQ are not published to the EventBus. To utilize the EventBus, you must first enable 
 it in your [RedisSMQ Configuration](configuration.md).
 
-For detailed information, refer to the [EventBusRedisInstance API](api/classes/EventBusRedisInstance.md).
+For detailed information, refer to the [EventBus API](api/classes/EventBus.md).
 
 ## Supported EventBus Events
 
@@ -48,9 +48,9 @@ For more details on configuration, see [RedisSMQ Configuration](configuration.md
 To create an instance of the EventBus, use the following code:
 
 ```typescript
-import { EventBusRedisInstance } from 'redis-smq';
+import { EventBus } from 'redis-smq';
 
-EventBusRedisInstance.getSetInstance((err, eventBus) => {
+EventBus.getSetInstance((err, eventBus) => {
   if (err) {
     console.error('Failed to create EventBus instance:', err);
   } else {
@@ -75,14 +75,13 @@ eventBus.on('consumer.consumeMessage.messageAcknowledged', (messageId, queue, me
 
 To properly shut down the EventBus instance, call the shutDown method:
 
-
 ```javascript
-EventBusRedisInstance.shutDown((err) => {
-    if (err) {
-        console.error('Error shutting down EventBus:', err);
-    } else {
-        console.log('EventBus shut down successfully');
-    }
+EventBus.shutDown((err) => {
+  if (err) {
+    console.error('Error shutting down EventBus:', err);
+  } else {
+    console.log('EventBus shut down successfully');
+  }
 });
 ```
 

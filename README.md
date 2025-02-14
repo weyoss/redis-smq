@@ -10,17 +10,17 @@ A High-Performance Redis Simple Message Queue for Node.js
 
 **Key Features**
 
-*   [High-performance message processing](docs/performance.md)
-*   [Flexible producer/consumer model with multi-queue producers and consumers](docs/consuming-messages.md)
-*   [Different exchange types (Direct, Topic, FanOut) for publishing messages to one or multiple queues](docs/message-exchanges.md)
-*   [Two delivery models (Point-2-Point and Pub/Sub)](docs/queue-delivery-models.md) with reliable delivery and configurable retry modes
-*   [Three queuing strategies (FIFO, LIFO, Priority Queues)](docs/queues.md)
-*   [Message handler worker threads for sandboxing and performance improvement](docs/message-handler-worker-threads.md)
-*   [Message expiration and consumption timeout](docs/messages.md)
-*   [Queue rate limiting for controlling message consumption rates](docs/queue-rate-limiting.md)
-*   [Built-in scheduler for delayed message delivery and repeating messages](docs/scheduling-messages.md)
-*   [RESTful API](docs/redis-smq-rest-api.md) and [Web UI](docs/redis-smq-web-ui.md) for interacting with the message queue
-*   [Support for ESM and CJS modules](docs/esm-cjs-modules.md)
+- 🚀 [High-performance message processing](docs/performance.md)
+- 🔄 [Flexible producer/consumer model with multi-queue producers and consumers](docs/consuming-messages.md)
+- 🔀 [Different exchange types (Direct, Topic, FanOut) for publishing messages to one or multiple queues](docs/message-exchanges.md)
+- 📬 [Two delivery models (Point-2-Point and Pub/Sub)](docs/queue-delivery-models.md) with reliable delivery and configurable retry modes
+- 📊 [Three queuing strategies (FIFO, LIFO, Priority Queues)](docs/queues.md)
+- 🧵 [Message handler worker threads for sandboxing and performance improvement](docs/message-handler-worker-threads.md)
+- ⏱️ [Message expiration and consumption timeout](docs/messages.md)
+- 🚦 [Queue rate limiting for controlling message consumption rates](docs/queue-rate-limiting.md)
+- 🕰️ [Built-in scheduler for delayed message delivery and repeating messages](docs/scheduling-messages.md)
+- 🌐 [RESTful API](docs/redis-smq-rest-api.md) and [Web UI](docs/redis-smq-web-ui.md) for interacting with the message queue
+- 📦 [Support for ESM and CJS modules](docs/esm-cjs-modules.md)
 
 **Use Cases**
 
@@ -35,7 +35,17 @@ To get started with RedisSMQ, you can install the library using npm:
 ```bash
 npm i redis-smq@rc
 ```
-Create a queue, produce a message, and consume it using the provided classes and methods:
+
+Don't forget to install a Redis client. Choose either node-redis or ioredis. 
+
+```shell
+npm install @redis/client
+# or
+npm install ioredis
+```
+
+Here's a basic example to create a queue, produce a message, and consume it:
+
 ```javascript
 // Creating a queue
 const queue = new Queue();

@@ -33,14 +33,6 @@ export const config: IRedisSMQConfig = {
   },
   logger: {
     enabled: true,
-    options: {
-      level: 'info',
-      // streams: [
-      //   {
-      //     path: path.normalize(`${__dirname}/logs/redis-smq.log`),
-      //   },
-      // ],
-    },
   },
 };
 

@@ -22,7 +22,7 @@
 - [Configuration](classes/Configuration.md)
 - [Consumer](classes/Consumer.md)
 - [ConsumerGroups](classes/ConsumerGroups.md)
-- [EventBusRedisInstance](classes/EventBusRedisInstance.md)
+- [EventBus](classes/EventBus.md)
 - [ExchangeDirect](classes/ExchangeDirect.md)
 - [ExchangeFanOut](classes/ExchangeFanOut.md)
 - [ExchangeTopic](classes/ExchangeTopic.md)
