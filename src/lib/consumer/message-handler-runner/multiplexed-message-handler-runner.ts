@@ -8,6 +8,8 @@
  */
 
 import { ICallback, ILogger, Timer } from 'redis-smq-common';
+import { RedisClient } from '../../../common/redis-client/redis-client.js';
+import { EventBus } from '../../event-bus/index.js';
 import { Consumer } from '../consumer/consumer.js';
 import { MessageHandler } from '../message-handler/message-handler/message-handler.js';
 import { MultiplexedMessageHandler } from '../message-handler/multiplexed-message-handler.js';
@@ -19,8 +21,13 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   protected index = 0;
   protected activeMessageHandler: MessageHandler | null | undefined = null;
 
-  constructor(consumer: Consumer, logger: ILogger) {
-    super(consumer, logger);
+  constructor(
+    consumer: Consumer,
+    redisClient: RedisClient,
+    logger: ILogger,
+    eventBus: EventBus | null,
+  ) {
+    super(consumer, redisClient, logger, eventBus);
     this.timer = new Timer();
     this.timer.on('error', (err) => this.handleError(err));
   }
@@ -57,8 +64,10 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   ): MessageHandler {
     const instance = new MultiplexedMessageHandler(
       this.consumer,
-      handlerParams,
+      this.redisClient,
       this.logger,
+      handlerParams,
+      this.eventBus,
       this.execNextMessageHandler,
     );
     this.messageHandlerInstances.push(instance);

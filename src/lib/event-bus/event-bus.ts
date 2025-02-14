@@ -20,9 +20,7 @@ import { TRedisSMQEvent } from '../../common/index.js';
 import { Configuration } from '../../config/index.js';
 import { EventBusInstanceLockError } from './errors/index.js';
 
-export class EventBusRedisInstance extends EventEmitter<
-  Pick<TRedisClientEvent, 'error'>
-> {
+export class EventBus extends EventEmitter<Pick<TRedisClientEvent, 'error'>> {
   protected instance: IEventBus<TRedisSMQEvent> | null = null;
   protected locked = false;
 

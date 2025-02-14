@@ -9,15 +9,14 @@
 
 import { ILogger } from 'redis-smq-common';
 import { TConsumerHeartbeatEvent } from '../../../common/index.js';
-import { EventBusRedisFactory } from '../../event-bus/event-bus-redis-factory.js';
+import { EventBus } from '../../event-bus/index.js';
 import { ConsumerHeartbeat } from './consumer-heartbeat.js';
 
 export function eventBusPublisher(
   consumerHeartbeat: ConsumerHeartbeat,
-  consumerId: string,
+  eventBus: EventBus,
   logger: ILogger,
 ): void {
-  const eventBus = EventBusRedisFactory(consumerId, () => void 0);
   const onConsumerHeartbeat: TConsumerHeartbeatEvent['consumerHeartbeat.heartbeat'] =
     (...args) => {
       const instance = eventBus.getInstance();

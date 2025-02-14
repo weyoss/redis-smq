@@ -13,7 +13,7 @@ import {
   ICallback,
   logger,
 } from 'redis-smq-common';
-import { RedisClientInstance } from '../../common/redis-client/redis-client-instance.js';
+import { RedisClient } from '../../common/redis-client/redis-client.js';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../config/index.js';
 import { _deleteQueue } from '../queue/_/_delete-queue.js';
@@ -39,7 +39,7 @@ export class Namespace {
       `exchange-fan-out-manager`,
     );
 
-    this.redisClient = new RedisClientInstance();
+    this.redisClient = new RedisClient();
     this.redisClient.on('error', (err) => this.logger.error(err));
   }
 

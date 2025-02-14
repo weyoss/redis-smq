@@ -8,5 +8,5 @@
  */
 
 export * from './errors/index.js';
-export * from './event-bus-redis-instance.js';
+export * from './event-bus.js';
 export * from './types/index.js';

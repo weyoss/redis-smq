@@ -13,7 +13,7 @@ import {
   ICallback,
   logger,
 } from 'redis-smq-common';
-import { RedisClientInstance } from '../../../common/redis-client/redis-client-instance.js';
+import { RedisClient } from '../../../common/redis-client/redis-client.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../../config/index.js';
 import { _deleteMessage } from '../../message/_/_delete-message.js';
@@ -39,7 +39,7 @@ export abstract class QueueMessagesPaginatorAbstract implements IQueueMessages {
       Configuration.getSetConfig().logger,
       `queue-messages`,
     );
-    this.redisClient = new RedisClientInstance();
+    this.redisClient = new RedisClient();
     this.redisClient.on('error', (err) => this.logger.error(err));
     this.message = new Message();
   }

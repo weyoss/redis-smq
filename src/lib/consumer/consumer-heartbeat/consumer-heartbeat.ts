@@ -12,15 +12,13 @@ import {
   ICallback,
   ILogger,
   IRedisClient,
-  RedisClientAbstract,
   Runnable,
   Timer,
 } from 'redis-smq-common';
 import { TConsumerHeartbeatEvent } from '../../../common/index.js';
-import { RedisClientFactory } from '../../../common/redis-client/redis-client-factory.js';
+import { RedisClient } from '../../../common/redis-client/redis-client.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
-import { Configuration } from '../../../config/index.js';
-import { EventBusRedisFactory } from '../../event-bus/event-bus-redis-factory.js';
+import { EventBus } from '../../event-bus/index.js';
 import { Consumer } from '../consumer/consumer.js';
 import { IConsumerHeartbeat } from '../types/index.js';
 import { eventBusPublisher } from './event-bus-publisher.js';
@@ -65,20 +63,19 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
   protected consumer;
   protected logger;
   protected redisClient;
-  protected eventBus;
 
-  constructor(consumer: Consumer, logger: ILogger) {
+  constructor(
+    consumer: Consumer,
+    redisClient: RedisClient,
+    logger: ILogger,
+    eventBus: EventBus | null,
+  ) {
     super();
     this.consumer = consumer;
     this.logger = logger;
-    this.redisClient = RedisClientFactory(consumer.getId(), (err) =>
-      this.handleError(err),
-    );
-    if (Configuration.getSetConfig().eventBus.enabled) {
-      this.eventBus = EventBusRedisFactory(consumer.getId(), (err) =>
-        this.handleError(err),
-      );
-      eventBusPublisher(this, this.consumer.getId(), this.logger);
+    this.redisClient = redisClient;
+    if (eventBus) {
+      eventBusPublisher(this, eventBus, this.logger);
     }
     const { keyConsumerHeartbeat } = redisKeys.getConsumerKeys(
       consumer.getId(),
@@ -170,11 +167,9 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
       (cb: ICallback<void>) => {
         this.timer.reset();
         const redisClient = this.redisClient.getInstance();
-        if (redisClient instanceof RedisClientAbstract) {
-          redisClient.del(this.keyConsumerHeartbeat, () => cb());
-        }
         // ignoring errors
-        else cb();
+        if (redisClient instanceof Error) return cb();
+        redisClient.del(this.keyConsumerHeartbeat, () => cb());
       },
     ].concat(super.goingDown());
   }

@@ -13,11 +13,11 @@ import {
   ICallback,
   logger,
 } from 'redis-smq-common';
-import { RedisClientInstance } from '../../common/redis-client/redis-client-instance.js';
+import { RedisClient } from '../../common/redis-client/redis-client.js';
 import { ELuaScriptName } from '../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../config/index.js';
-import { EventBusRedisInstance } from '../event-bus/index.js';
+import { EventBus } from '../event-bus/index.js';
 import { _deleteQueue } from './_/_delete-queue.js';
 import { _getQueueProperties } from './_/_get-queue-properties.js';
 import { _getQueues } from './_/_get-queues.js';
@@ -48,10 +48,10 @@ export class Queue {
       Configuration.getSetConfig().logger,
       `queue`,
     );
-    this.eventBus = new EventBusRedisInstance();
+    this.eventBus = new EventBus();
     this.eventBus.on('error', (err) => this.logger.error(err));
 
-    this.redisClient = new RedisClientInstance();
+    this.redisClient = new RedisClient();
     this.redisClient.on('error', (err) => this.logger.error(err));
   }
 

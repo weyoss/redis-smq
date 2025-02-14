@@ -8,7 +8,7 @@
  */
 
 import { CallbackEmptyReplyError, ICallback, logger } from 'redis-smq-common';
-import { RedisClientInstance } from '../../common/redis-client/redis-client-instance.js';
+import { RedisClient } from '../../common/redis-client/redis-client.js';
 import { Configuration } from '../../config/index.js';
 import { _deleteMessage } from './_/_delete-message.js';
 import { _getMessageState } from './_/_get-message-state.js';
@@ -23,7 +23,7 @@ import {
 
 /**
  * The Message class provides methods for interacting with Redis-SMQ messages.
- * It utilizes the RedisClientInstance to perform operations on Redis.
+ * It utilizes the RedisClient to perform operations on Redis.
  */
 export class Message {
   protected logger;
@@ -34,7 +34,7 @@ export class Message {
       Configuration.getSetConfig().logger,
       `exchange-fan-out-manager`,
     );
-    this.redisClient = new RedisClientInstance();
+    this.redisClient = new RedisClient();
     this.redisClient.on('error', (err) => this.logger.error(err));
   }
 

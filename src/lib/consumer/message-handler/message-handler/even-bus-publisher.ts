@@ -9,15 +9,14 @@
 
 import { ILogger } from 'redis-smq-common';
 import { TConsumerMessageHandlerEvent } from '../../../../common/index.js';
-import { EventBusRedisFactory } from '../../../event-bus/event-bus-redis-factory.js';
+import { EventBus } from '../../../event-bus/index.js';
 import { MessageHandler } from './message-handler.js';
 
 export function evenBusPublisher(
   messageHandler: MessageHandler,
-  consumerId: string,
+  eventBus: EventBus,
   logger: ILogger,
 ): void {
-  const eventBus = EventBusRedisFactory(consumerId, () => void 0);
   const error: TConsumerMessageHandlerEvent['consumer.messageHandler.error'] = (
     ...args
   ) => {

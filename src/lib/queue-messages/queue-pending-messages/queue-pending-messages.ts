@@ -13,7 +13,7 @@ import {
   ICallback,
   logger,
 } from 'redis-smq-common';
-import { RedisClientInstance } from '../../../common/redis-client/redis-client-instance.js';
+import { RedisClient } from '../../../common/redis-client/redis-client.js';
 import { Configuration } from '../../../config/index.js';
 import { IMessageTransferable } from '../../message/index.js';
 import { _getQueueProperties } from '../../queue/_/_get-queue-properties.js';
@@ -38,7 +38,7 @@ export class QueuePendingMessages implements IQueueMessages {
       Configuration.getSetConfig().logger,
       `queue-pending-messages`,
     );
-    this.redisClient = new RedisClientInstance();
+    this.redisClient = new RedisClient();
     this.redisClient.on('error', (err) => this.logger.error(err));
 
     this.priorityQueueMessages = new PriorityQueuePendingMessages();

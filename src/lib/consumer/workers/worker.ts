@@ -8,7 +8,7 @@
  */
 
 import { ICallback, ILogger, logger, Runnable, Timer } from 'redis-smq-common';
-import { RedisClientInstance } from '../../../common/redis-client/redis-client-instance.js';
+import { RedisClient } from '../../../common/redis-client/redis-client.js';
 import { IConsumerMessageHandlerWorkerPayload } from '../types/index.js';
 
 export abstract class Worker extends Runnable<Record<string, never>> {
@@ -29,7 +29,7 @@ export abstract class Worker extends Runnable<Record<string, never>> {
       config.logger,
       `worker:${this.constructor.name.toLowerCase()}:${this.id}`,
     );
-    this.redisClient = new RedisClientInstance();
+    this.redisClient = new RedisClient();
     this.redisClient.on('error', (err) => this.handleError(err));
     this.timer = new Timer();
     this.timer.on('error', (err: Error) => this.handleError(err));

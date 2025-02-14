@@ -9,11 +9,14 @@
 
 import { ILogger } from 'redis-smq-common';
 import { TConsumerEvent } from '../../../common/index.js';
-import { EventBusRedisFactory } from '../../event-bus/event-bus-redis-factory.js';
+import { EventBus } from '../../event-bus/index.js';
 import { Consumer } from './consumer.js';
 
-export function eventBusPublisher(consumer: Consumer, logger: ILogger): void {
-  const eventBus = EventBusRedisFactory(consumer.getId(), () => void 0);
+export function eventBusPublisher(
+  consumer: Consumer,
+  eventBus: EventBus,
+  logger: ILogger,
+): void {
   const up: TConsumerEvent['consumer.up'] = (...args) => {
     const instance = eventBus.getInstance();
     if (instance instanceof Error) logger.error(instance);

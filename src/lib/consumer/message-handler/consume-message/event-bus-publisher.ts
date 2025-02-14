@@ -9,15 +9,14 @@
 
 import { ILogger } from 'redis-smq-common';
 import { TConsumerConsumeMessageEvent } from '../../../../common/index.js';
-import { EventBusRedisFactory } from '../../../event-bus/event-bus-redis-factory.js';
+import { EventBus } from '../../../event-bus/index.js';
 import { ConsumeMessage } from './consume-message.js';
 
 export function eventBusPublisher(
   consumeMessage: ConsumeMessage,
-  consumerId: string,
+  eventBus: EventBus,
   logger: ILogger,
 ): void {
-  const eventBus = EventBusRedisFactory(consumerId, () => void 0);
   const messageDeadLettered: TConsumerConsumeMessageEvent['consumer.consumeMessage.messageDeadLettered'] =
     (...args) => {
       const instance = eventBus.getInstance();

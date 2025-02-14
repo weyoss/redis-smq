@@ -13,7 +13,7 @@ import {
   ICallback,
   logger,
 } from 'redis-smq-common';
-import { RedisClientInstance } from '../../common/redis-client/redis-client-instance.js';
+import { RedisClient } from '../../common/redis-client/redis-client.js';
 import { ELuaScriptName } from '../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../config/index.js';
@@ -48,7 +48,7 @@ export class QueueRateLimit {
       Configuration.getSetConfig().logger,
       `queue-rate-limit`,
     );
-    this.redisClient = new RedisClientInstance();
+    this.redisClient = new RedisClient();
     this.redisClient.on('error', (err) => this.logger.error(err));
     this.queue = new Queue();
   }
