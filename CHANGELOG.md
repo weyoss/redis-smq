@@ -1,5 +1,30 @@
 
 
+## [8.0.0-rc.29](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.28...v8.0.0-rc.29) (2025-02-14)
+
+
+### Bug Fixes
+
+* **deps:** regenerate package-lock.json ([dc55c81](https://github.com/weyoss/redis-smq/commit/dc55c8101e9b57d2607ee47a78db7861d17623ab))
+
+
+### Documentation
+
+* **api:** update API documentation and references ([08f85ae](https://github.com/weyoss/redis-smq/commit/08f85ae0c963497d4200fcdfdeccc4aa83d3e60b))
+* **contributing:** update guidelines and improve language ([c2feb57](https://github.com/weyoss/redis-smq/commit/c2feb57429513abb4b8973fc0bb6000377712f2c))
+* **README:** update installation and usage instructions ([cfe19e4](https://github.com/weyoss/redis-smq/commit/cfe19e4f88cf5a5059ecb8567f1cbc16524008de))
+
+
+### Codebase Refactoring
+
+* remove unnecessary factory patterns ([3ed3a7d](https://github.com/weyoss/redis-smq/commit/3ed3a7d8056fae3c253f8af5b6b5f3f0d591945f))
+* **tests:** update imports and usage of EventBus and RedisClient ([f9dca11](https://github.com/weyoss/redis-smq/commit/f9dca11015e3d02fddccc8f442facb2bf008236a))
+
+
+### Misc
+
+* **deps:** update redis-smq-common to 3.0.0-rc.17 ([324d6f1](https://github.com/weyoss/redis-smq/commit/324d6f12fc82da8762f442c110a9351cce3c3505))
+
 ## [8.0.0-rc.28](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.27...v8.0.0-rc.28) (2025-02-05)
 
 
