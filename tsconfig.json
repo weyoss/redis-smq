@@ -16,9 +16,8 @@
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
     "declarationMap": true,
+    "alwaysStrict": true,
 
-    // esm settings
-    "outDir": "dist/esm",
     "lib": ["esnext"],
     "target": "esnext",
     "module": "nodenext",

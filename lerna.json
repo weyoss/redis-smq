@@ -1,0 +1,68 @@
+{
+  "$schema": "node_modules/lerna/schemas/lerna-schema.json",
+  "version": "8.0.0-rc.29",
+  "ignoreChanges": [],
+  "npmClient": "pnpm",
+  "command": {
+    "publish": {
+      "registry": "http://localhost:4873"
+    }
+  },
+  "changelogPreset": {
+    "name": "conventionalcommits",
+    "types": [
+      {
+        "type": "feat",
+        "section": "✨ Features"
+      },
+      {
+        "type": "fix",
+        "section": "🐛 Bug Fixes"
+      },
+      {
+        "type": "chore",
+        "section": "🚀 Chore",
+        "hidden": false
+      },
+      {
+        "type": "docs",
+        "section": "📝 Documentation"
+      },
+      {
+        "type": "style",
+        "section": "💄 Styles"
+      },
+      {
+        "type": "refactor",
+        "section": "♻️ Code Refactoring"
+      },
+      {
+        "type": "perf",
+        "section": "⚡ Performance Improvements"
+      },
+      {
+        "type": "test",
+        "section": "✅ Tests",
+        "hidden": false
+      },
+      {
+        "type": "revert",
+        "section": "⏪ Revert",
+        "hidden": false
+      },
+      {
+        "type": "build",
+        "section": "📦‍ Build System"
+      },
+      {
+        "type": "ci",
+        "section": "👷 Continuous Integration"
+      }
+    ],
+    "issuePrefixes": ["#"],
+    "issueUrlFormat": "{{host}}/{{owner}}/{{repository}}/issues/{{id}}",
+    "commitUrlFormat": "{{host}}/{{owner}}/{{repository}}/commit/{{hash}}",
+    "compareUrlFormat": "{{host}}/{{owner}}/{{repository}}/compare/{{previousTag}}...{{currentTag}}",
+    "userUrlFormat": "{{host}}/{{user}}"
+  }
+}

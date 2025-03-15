@@ -1,0 +1,73 @@
+{
+  "name": "redis-smq",
+  "version": "8.0.0-rc.29",
+  "description": "A simple high-performance Redis message queue for Node.js.",
+  "author": "Weyoss <weyoss@protonmail.com>",
+  "license": "MIT",
+  "keywords": [
+    "redis",
+    "message queue",
+    "message-queue",
+    "message",
+    "queue",
+    "job queue",
+    "job-queue",
+    "jobs",
+    "redis-smq",
+    "priority",
+    "priority queue",
+    "priority-queue",
+    "scheduler",
+    "broker",
+    "message broker",
+    "message-broker"
+  ],
+  "homepage": "https://github.com/weyoss/redis-smq",
+  "bugs": {
+    "url": "https://github.com/weyoss/redis-smq/issues"
+  },
+  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "peerDependencies": {
+    "redis-smq-common": "workspace:^"
+  },
+  "dependencies": {
+    "cron-parser": "4.9.0",
+    "lodash": "4.17.21",
+    "uuid": "11.1.0"
+  },
+  "devDependencies": {
+    "redis-smq-tools": "workspace:^"
+  },
+  "engineStrict": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/weyoss/redis-smq.git"
+  },
+  "scripts": {
+    "build": "scripts/build.sh",
+    "test": "../../scripts/test_workspace_esm.sh",
+    "document": "scripts/document.sh"
+  }
+}

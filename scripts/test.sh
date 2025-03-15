@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #
 # Copyright (c)
 # Weyoss <weyoss@protonmail.com>
@@ -7,10 +9,5 @@
 # in the root directory of this source tree.
 #
 
-set -x
-set -e
-
-export NODE_ENV=test
-export NODE_OPTIONS="$NODE_OPTIONS --trace-warnings"
-npm run build
-jest --runInBand --verbose --collectCoverage "$@"
+pnpm build:ca
+pnpm -r test
