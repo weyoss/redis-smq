@@ -4,10 +4,10 @@ name: ci
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [ master ]
+    branches: [master]
 
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -20,43 +20,58 @@ jobs:
           - ubuntu-latest
 
         node:
-          - 18
           - 20
-          - 22
 
-        redis:
-          - 4
-          - 5
-          - 6
-          - 7
+        # Dynamically generate the package list by scanning the packages directory
+        package: ${{ fromJSON(needs.list-packages.outputs.packages) }}
 
     runs-on: ${{ matrix.os }}
 
-    steps:
+    needs:
+      list-packages
 
+    steps:
       - name: Use Node.js ${{ matrix.node }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node }}
 
-      - name: Start Redis ${{ matrix.redis }}
-        uses: weyoss/redis-github-action@25915a901815971e3f91b3ae7010ab9fdca79392
-        with:
-          redis-version: ${{ matrix.redis }}
-
       - name: Check out repository code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Run type coverage
-        run: npm run type-coverage
+        run: pnpm build:ca
+        continue-on-error: false
 
       - name: Run tests and collect code coverage
-        run: npm test
+        run: pnpm -F ${{ matrix.package }} test
+        if: success()
+
+      - name: Navigate to package directory
+        run: cd packages/${{ matrix.package }}
         if: success()
 
       - name: Upload code coverage
         uses: codecov/codecov-action@v2
+        with:
+          name: codecov-${{ matrix.package }}
+          flags: ${{ matrix.package }}
+          directory: packages/${{ matrix.package }}/coverage
         if: success()
+
+  # Job to list all packages in the packages directory
+  list-packages:
+    runs-on: ubuntu-latest
+
+    outputs:
+      packages: ${{ steps.set-packages.outputs.packages }}
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: List packages
+        id: set-packages
+        run: |        
+          packages=$(ls -d packages/* | xargs -n 1 basename)
+          echo "::set-output name=packages::[$packages]"

@@ -18,16 +18,16 @@ module.exports = {
     ecmaVersion: 'latest',
     sourceType: 'module',
   },
-  ignorePatterns: ['.eslintrc.cjs', 'node_modules/**', 'dist/**'],
-  extends: ['eslint:recommended', 'plugin:prettier/recommended'],
+  ignorePatterns: ['**/.eslintrc.cjs', '**/dist', '**/node_modules', '**/data'],
+  extends: [
+    'eslint:recommended',
+    'plugin:json/recommended-legacy',
+    'plugin:prettier/recommended',
+  ],
   overrides: [
     {
       files: ['**/*.ts', '**/*.tsx'],
-      env: {
-        browser: true,
-        es6: true,
-        node: true,
-      },
+      env: { browser: true, es6: true, node: true },
       extends: [
         'eslint:recommended',
         'plugin:@typescript-eslint/eslint-recommended',

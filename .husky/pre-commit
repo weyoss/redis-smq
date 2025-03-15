@@ -1,16 +1,2 @@
-#!/bin/sh
-#
-# Copyright (c)
-# Weyoss <weyoss@protonmail.com>
-# https://github.com/weyoss
-#
-# This source code is licensed under the MIT license found in the LICENSE file
-# in the root directory of this source tree.
-#
-
-. "$(dirname "$0")/_/husky.sh"
-
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-
-npx lint-staged
+#!/usr/bin/env sh
+lint-staged
