@@ -13,15 +13,36 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Job to list all packages in the packages directory
+  list-packages:
+    runs-on: ubuntu-latest
+
+    outputs:
+      packages: ${{ steps.set-packages.outputs.packages }}
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: List packages
+        id: set-packages
+        run: |          
+          packages=($(ls -d packages/* | xargs -n 1 basename))
+          json="["
+          for package in "${packages[@]}"; do
+            json+="\"$package\","
+          done
+          json="${json%,}]"
+          echo "::set-output name=packages::$json"
+        shell: bash
+
   tests:
     strategy:
       matrix:
         os:
           - ubuntu-latest
-
         node:
           - 20
-
         # Dynamically generate the package list by scanning the packages directory
         package: ${{ fromJSON(needs.list-packages.outputs.packages) }}
 
@@ -38,6 +59,10 @@ jobs:
 
       - name: Check out repository code
         uses: actions/checkout@v3
+
+      - name: Install PNPM package manager
+        run: npm install pnpm@10 -g
+        continue-on-error: false
 
       - name: Install dependencies
         run: pnpm build:ca
@@ -58,20 +83,3 @@ jobs:
           flags: ${{ matrix.package }}
           directory: packages/${{ matrix.package }}/coverage
         if: success()
-
-  # Job to list all packages in the packages directory
-  list-packages:
-    runs-on: ubuntu-latest
-
-    outputs:
-      packages: ${{ steps.set-packages.outputs.packages }}
-
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@v3
-
-      - name: List packages
-        id: set-packages
-        run: |        
-          packages=$(ls -d packages/* | xargs -n 1 basename)
-          echo "::set-output name=packages::[$packages]"
