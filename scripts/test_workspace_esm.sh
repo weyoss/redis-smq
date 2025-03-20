@@ -24,6 +24,14 @@ test_project() {
     return 1
   fi
 
+  echo "Downloading and building Redis server..."
+  scriptsDir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+  if ! bash "$scriptsDir/download_redis_server.sh"; then
+    echo "Failed to download and build Redis server."
+    return 1
+  fi
+
+
   # Run tests with Jest
   echo "Running tests..."
   export NODE_OPTIONS="--experimental-vm-modules"
