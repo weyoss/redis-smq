@@ -19,7 +19,7 @@ async function isPortInUse(port: number): Promise<boolean> {
 
 export async function getRandomPort(): Promise<number> {
   let port = 0;
-  while (await isPortInUse(port)) {
+  while (!port || (await isPortInUse(port))) {
     port = Math.floor(Math.random() * 64000) + 1024;
   }
   return port;
