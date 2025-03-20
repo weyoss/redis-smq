@@ -9,7 +9,7 @@
     "@types/bluebird": "3.5.42",
     "@types/debug": "4.1.12",
     "@types/lodash": "4.17.14",
-    "@types/node": "18.19.1",
+    "@types/node": "20.17.24",
     "@types/supertest": "6.0.2",
     "@types/uuid": "10.0.0",
     "@typescript-eslint/eslint-plugin": "8.26.1",
