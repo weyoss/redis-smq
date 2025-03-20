@@ -8,6 +8,7 @@
  */
 
 import { spawn, ChildProcess } from 'child_process';
+import { access, constants } from 'node:fs/promises';
 import * as path from 'path';
 import { getRandomPort } from '../net/index.js';
 
@@ -25,6 +26,11 @@ export async function startRedisServer(
     'src',
     'redis-server',
   );
+  try {
+    await access(redisBin, constants.F_OK);
+  } catch {
+    throw new Error(`Redis binary not found at ${redisBin}`);
+  }
   const port = redisPort ?? (await getRandomPort());
   const process = spawn(redisBin, [
     '--appendonly',

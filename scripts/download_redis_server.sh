@@ -58,6 +58,9 @@ if [ ! -f "$REDIS_BIN" ]; then
   # Compile Redis
   echo "Compiling Redis..."
   make
+
+  # Make sure that the redis-server binary is executable
+  chmod +x "$REDIS_BIN"
 else
   echo "Redis binary found. Skipping build."
 fi
