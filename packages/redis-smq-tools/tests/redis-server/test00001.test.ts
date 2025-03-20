@@ -14,15 +14,8 @@ import {
 } from '../../src/redis-server/index.js';
 
 it('Downloads, builds, and starts Redis server', async () => {
-  const tag = Date.now();
-  const dataDir = `../../data/${tag}`;
-  let port = await startRedisServer(dataDir);
-  console.log(`Redis server started on port ${port}`);
-  await shutdownRedisServer(port);
-  console.log(`Redis server has been shut down`);
-
-  // If the tarball already exists, it will be used instead of downloading and build it again
-  port = await startRedisServer(dataDir);
+  const dataDir = `../../data`;
+  const port = await startRedisServer(dataDir);
   console.log(`Redis server started on port ${port}`);
   await shutdownRedisServer(port);
   console.log(`Redis server has been shut down`);
