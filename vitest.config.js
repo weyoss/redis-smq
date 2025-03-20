@@ -15,7 +15,7 @@ export default defineConfig({
       moduleDirectories: ['packages'],
     },
     setupFiles: './tests/setup.js',
-    testTimeout: 240000,
+    testTimeout: 120000,
     environment: 'node',
     watch: false,
     cache: false,
