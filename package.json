@@ -26,7 +26,6 @@
     "ioredis": "5.5.0",
     "lerna": "8.2.1",
     "lint-staged": "15.4.3",
-    "pnpm": "10.5.2",
     "prettier": "3.4.2",
     "supertest": "7.0.0",
     "type-coverage": "2.29.7",
