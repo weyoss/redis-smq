@@ -23,8 +23,12 @@ function isError(error: unknown): error is NodeJS.ErrnoException {
 }
 
 async function createDir(dir: string): Promise<void> {
-  await mkdir(dir, { recursive: true });
-  console.log(`Directory ${dir} created.`);
+  try {
+    await access(dir, constants.F_OK);
+  } catch {
+    await mkdir(dir, { recursive: true });
+    console.log(`Directory ${dir} created.`);
+  }
 }
 
 async function downloadRedis(workingDir: string): Promise<void> {
