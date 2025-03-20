@@ -10,14 +10,17 @@
 import { spawn, ChildProcess } from 'child_process';
 import axios from 'axios';
 import { createWriteStream } from 'node:fs';
-import { access, mkdir, constants } from 'node:fs/promises';
+import { access, mkdir, constants, open, unlink } from 'node:fs/promises';
 import * as tar from 'tar';
 import * as path from 'path';
 import { getRandomPort } from '../net/index.js';
 
 const REDIS_VERSION = 'stable';
 const PROCESS_LIST: Record<number, ChildProcess> = {};
-const SETUP_PROMISES: Map<string, Promise<void>> = new Map();
+
+function isError(error: unknown): error is NodeJS.ErrnoException {
+  return error instanceof Error;
+}
 
 async function createDir(dir: string): Promise<void> {
   await mkdir(dir, { recursive: true });
@@ -71,7 +74,32 @@ async function compileRedis(workingDir: string): Promise<void> {
   });
 }
 
+async function acquireLock(lockFile: string): Promise<void> {
+  try {
+    const fd = await open(lockFile, 'wx');
+    await fd.close();
+  } catch (err: unknown) {
+    if (isError(err) && err.code === 'EEXIST') {
+      await new Promise((resolve) => setTimeout(resolve, 100)); // Wait and retry
+      await acquireLock(lockFile);
+    } else {
+      throw err;
+    }
+  }
+}
+
+async function releaseLock(lockFile: string): Promise<void> {
+  try {
+    await unlink(lockFile);
+  } catch (err: unknown) {
+    if (isError(err) && err.code !== 'ENOENT') {
+      throw err;
+    }
+  }
+}
+
 async function setUpRedis(workingDir: string): Promise<void> {
+  const lockFile = path.join(workingDir, 'setup.lock');
   const redisBin = path.join(
     workingDir,
     `redis-${REDIS_VERSION}`,
@@ -79,12 +107,17 @@ async function setUpRedis(workingDir: string): Promise<void> {
     'redis-server',
   );
   try {
-    await access(redisBin, constants.F_OK);
-  } catch {
     await createDir(workingDir);
-    await downloadRedis(workingDir);
-    await extractRedis(workingDir);
-    await compileRedis(workingDir);
+    await acquireLock(lockFile);
+    try {
+      await access(redisBin, constants.F_OK);
+    } catch {
+      await downloadRedis(workingDir);
+      await extractRedis(workingDir);
+      await compileRedis(workingDir);
+    }
+  } finally {
+    await releaseLock(lockFile);
   }
 }
 
@@ -93,19 +126,7 @@ export async function startRedisServer(
   redisPort?: number,
 ): Promise<number> {
   const dir = path.resolve(workingDir);
-
-  // Check if there's already a setup promise for this directory
-  let setupPromise = SETUP_PROMISES.get(dir);
-  if (!setupPromise) {
-    setupPromise = setUpRedis(dir);
-    SETUP_PROMISES.set(dir, setupPromise);
-    setupPromise.finally(() => {
-      SETUP_PROMISES.delete(dir);
-    });
-  }
-
-  await setupPromise;
-
+  await setUpRedis(dir);
   const redisBin = path.join(
     dir,
     `redis-${REDIS_VERSION}`,
