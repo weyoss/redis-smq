@@ -41,8 +41,6 @@
     "prepare": "husky",
     "release": "scripts/release.sh",
     "document": "scripts/document.sh",
-    "redis:download": "scripts/download_redis_server.sh",
-    "redis:start": "scripts/start_redis_server.sh",
     "format:all": "eslint --fix . && prettier --write ."
   },
   "lint-staged": {
