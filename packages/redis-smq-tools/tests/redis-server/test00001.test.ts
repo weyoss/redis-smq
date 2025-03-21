@@ -14,8 +14,7 @@ import {
 } from '../../src/redis-server/index.js';
 
 it('Downloads, builds, and starts Redis server', async () => {
-  const dataDir = `../../data`;
-  const port = await startRedisServer(dataDir);
+  const port = await startRedisServer();
   console.log(`Redis server started on port ${port}`);
   await shutdownRedisServer(port);
   console.log(`Redis server has been shut down`);
