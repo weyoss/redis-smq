@@ -16,7 +16,7 @@ let redisPort: number | null = null;
 
 export async function initializeRedis() {
   if (!redisPort) {
-    redisPort = await startRedisServer('../../data');
+    redisPort = await startRedisServer();
     config.redis = config.redis ?? {
       client: ERedisConfigClient.IOREDIS,
     };
