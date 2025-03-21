@@ -72,10 +72,6 @@ jobs:
         run: pnpm -F ${{ matrix.package }} test
         if: success()
 
-      - name: Navigate to package directory
-        run: cd packages/${{ matrix.package }}
-        if: success()
-
       - name: Upload code coverage
         uses: codecov/codecov-action@v2
         with:
