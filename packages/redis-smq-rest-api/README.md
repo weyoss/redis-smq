@@ -1,8 +1,7 @@
 # RedisSMQ REST API
 
-[![Code Coverage](https://img.shields.io/codecov/c/github/weyoss/redis-smq-common?style=flat-square)](https://codecov.io/github/weyoss/redis-smq-common?flag=redis-smq-rest-api&style=flat-square)
-
----
+[![Latest Release](https://img.shields.io/github/v/release/weyoss/redis-smq?include_prereleases&label=release&color=green&style=flat-square)](https://github.com/weyoss/redis-smq/releases)
+[![Code Coverage](https://img.shields.io/codecov/c/github/weyoss/redis-smq?flag=redis-smq-rest-api&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/master/packages/redis-smq-rest-api)
 
 This package offers an HTTP interface which allows any web capable application to interact with the RedisSMQ
 message queue using a RESTful API.
