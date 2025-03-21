@@ -1,6 +1,6 @@
 {
   "name": "redis-smq-tools",
-  "version": "8.0.0-rc.29",
+  "version": "8.0.0-rc.30",
   "description": "Tools and helpers for developing and testing RedisSMQ",
   "author": "Weyoss <weyoss@protonmail.com>",
   "license": "MIT",
