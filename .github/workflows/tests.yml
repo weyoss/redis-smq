@@ -52,6 +52,10 @@ jobs:
       list-packages
 
     steps:
+      - name: Install Redis server
+        run: apt install redis-server
+        continue-on-error: false
+
       - name: Use Node.js ${{ matrix.node }}
         uses: actions/setup-node@v3
         with:
@@ -73,7 +77,7 @@ jobs:
         if: success()
 
       - name: Upload code coverage
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v4
         with:
           name: codecov-${{ matrix.package }}
           flags: ${{ matrix.package }}
