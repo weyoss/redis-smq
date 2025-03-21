@@ -7,32 +7,30 @@
  * in the root directory of this source tree.
  */
 
-import { spawn, ChildProcess } from 'child_process';
-import { access, constants } from 'node:fs/promises';
-import * as path from 'path';
+import { spawn, ChildProcess, exec } from 'child_process';
 import { getRandomPort } from '../net/index.js';
 
-const REDIS_VERSION = 'stable';
 const PROCESS_LIST: Record<number, ChildProcess> = {};
 
-export async function startRedisServer(
-  workingDir: string,
-  redisPort?: number,
-): Promise<number> {
-  const dir = path.resolve(workingDir);
-  const redisBin = path.join(
-    dir,
-    `redis-${REDIS_VERSION}`,
-    'src',
-    'redis-server',
-  );
-  try {
-    await access(redisBin, constants.F_OK);
-  } catch {
-    throw new Error(`Redis binary not found at ${redisBin}`);
+async function getRedisBinPath(): Promise<string | null> {
+  return new Promise((resolve) => {
+    exec('which redis-server || where redis-server', (error, stdout) => {
+      if (error) {
+        resolve(null);
+      } else {
+        resolve(stdout.trim());
+      }
+    });
+  });
+}
+
+export async function startRedisServer(redisPort?: number): Promise<number> {
+  const redisBinPath = await getRedisBinPath();
+  if (!redisBinPath) {
+    throw new Error(`Redis binary not found.`);
   }
   const port = redisPort ?? (await getRandomPort());
-  const process = spawn(redisBin, [
+  const process = spawn(redisBinPath, [
     '--appendonly',
     'no',
     '--save',
