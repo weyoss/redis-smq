@@ -8,14 +8,9 @@
  */
 
 import { it } from 'vitest';
-import {
-  shutdownRedisServer,
-  startRedisServer,
-} from '../../src/redis-server/index.js';
+import { redisServer } from '../../src/redis-server/index.js';
 
 it('Downloads, builds, and starts Redis server', async () => {
-  const port = await startRedisServer();
-  console.log(`Redis server started on port ${port}`);
-  await shutdownRedisServer(port);
-  console.log(`Redis server has been shut down`);
+  const port = await redisServer.startRedisServer();
+  await redisServer.shutdownRedisServer(port);
 });

@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { redisServer } from 'redis-smq-tools';
+import { redisServer } from '../src/redis-server/index.js';
 import { redisConfig } from './config.js';
 
 const { shutdownRedisServer, startRedisServer } = redisServer;
