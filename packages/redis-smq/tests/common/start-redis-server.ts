@@ -8,7 +8,7 @@
  */
 
 import { ERedisConfigClient } from 'redis-smq-common';
-import { redisServer } from 'redis-smq-tools';
+import { redisServer } from 'redis-smq-common';
 import { config } from './config.js';
 
 const { shutdownRedisServer, startRedisServer } = redisServer;

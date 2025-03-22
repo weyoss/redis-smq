@@ -8,15 +8,14 @@
  */
 
 import { ERedisConfigClient } from 'redis-smq-common';
-import { redisServer } from 'redis-smq-tools';
+import { redisServer } from 'redis-smq-common';
 import { config } from './config.js';
 
-const { shutdownRedisServer, startRedisServer } = redisServer;
 let redisPort: number | null = null;
 
 export async function initializeRedis() {
   if (!redisPort) {
-    redisPort = await startRedisServer();
+    redisPort = await redisServer.startRedisServer();
     config.redis = config.redis ?? {
       client: ERedisConfigClient.IOREDIS,
     };
@@ -28,5 +27,5 @@ export async function initializeRedis() {
 }
 
 export async function shutDownRedisServer() {
-  if (redisPort) await shutdownRedisServer(redisPort);
+  if (redisPort) await redisServer.shutdownRedisServer(redisPort);
 }

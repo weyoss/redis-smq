@@ -20,3 +20,5 @@ export * from './src/redis-client/index.js';
 export * from './src/runnable/index.js';
 export * from './src/timer/index.js';
 export * from './src/worker/index.js';
+export * from './src/net/index.js';
+export * from './src/redis-server/index.js';

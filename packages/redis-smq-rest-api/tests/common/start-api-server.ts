@@ -7,16 +7,15 @@
  * in the root directory of this source tree.
  */
 
-import { net } from 'redis-smq-tools';
+import { net } from 'redis-smq-common';
 import { RedisSmqRestApi } from '../../index.js';
 import { config } from './config.js';
 
-const { getRandomPort } = net;
 let server: RedisSmqRestApi | null = null;
 
 export async function startApiServer() {
   if (!server) {
-    const port = await getRandomPort();
+    const port = await net.getRandomPort();
     config.apiServer = config.apiServer || {};
     config.apiServer.port = port;
     server = new RedisSmqRestApi(config);

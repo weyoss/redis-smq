@@ -51,9 +51,6 @@
     "lodash": "4.17.21",
     "uuid": "11.1.0"
   },
-  "devDependencies": {
-    "redis-smq-tools": "workspace:^"
-  },
   "engineStrict": true,
   "engines": {
     "node": ">=20"

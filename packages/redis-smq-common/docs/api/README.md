@@ -88,6 +88,8 @@
 
 - [async](README.md#async)
 - [logger](README.md#logger)
+- [net](README.md#net)
+- [redisServer](README.md#redisserver)
 
 ### Functions
 
@@ -387,6 +389,33 @@ ___
 | `destroy` | () => `void` |
 | `getLogger` | (`cfg`: [`ILoggerConfig`](interfaces/ILoggerConfig.md), `ns?`: `string`) => [`ILogger`](interfaces/ILogger.md) |
 | `setLogger` | \<T\>(`logger`: `T`) => `void` |
+
+___
+
+### net
+
+• `Const` **net**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `getRandomPort` | () => `Promise`\<`number`\> |
+| `isPortInUse` | (`port`: `number`) => `Promise`\<`boolean`\> |
+
+___
+
+### redisServer
+
+• `Const` **redisServer**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `cleanUp` | () => `Promise`\<`void`\> |
+| `shutdownRedisServer` | (`port`: `number`) => `Promise`\<`void`\> |
+| `startRedisServer` | (`redisPort?`: `number`) => `Promise`\<`number`\> |
 
 ## Functions
 
