@@ -13,6 +13,7 @@
 !dist/esm/index.d.ts.map
 !dist/esm/index.js
 !dist/esm/index.js.map
+!dist/schema.json
 !LICENSE
 !CHANGELOG.md
 !package.json
