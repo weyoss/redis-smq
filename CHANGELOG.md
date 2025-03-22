@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [8.0.0-rc.31](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.30...v8.0.0-rc.31) (2025-03-22)
+
+### ⚠ BREAKING CHANGES
+
+- merge redis-server and net utils into redis-smq-common
+
+### ♻️ Code Refactoring
+
+- merge redis-server and net utils into redis-smq-common ([3591e20](https://github.com/weyoss/redis-smq/commit/3591e2060dec07ed05d13dba7b3a6154b5bc8057))
+
+### 📦‍ Build System
+
+- rename document script to document:all ([74fac60](https://github.com/weyoss/redis-smq/commit/74fac6016f175b108b7a3288a8c0bc28732d4c95))
+
 ## [8.0.0-rc.30](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.29...v8.0.0-rc.30) (2025-03-21)
 
 ### ✨ Features
