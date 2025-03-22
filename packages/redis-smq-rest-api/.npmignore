@@ -2,18 +2,17 @@
 *
 
 # Except the dist directory
-!dist/cjs/src
+!dist/cjs/src/**
 !dist/cjs/index.d.ts
 !dist/cjs/index.d.ts.map
 !dist/cjs/index.js
 !dist/cjs/index.js.map
 !dist/cjs/package.json
-!dist/esm/src
+!dist/esm/src/**
 !dist/esm/index.d.ts
 !dist/esm/index.d.ts.map
 !dist/esm/index.js
 !dist/esm/index.js.map
-!dist/schema.json
 !LICENSE
 !CHANGELOG.md
 !package.json
