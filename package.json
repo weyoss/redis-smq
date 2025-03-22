@@ -41,7 +41,7 @@
     "prepare": "husky",
     "release": "scripts/release.sh",
     "release:rc": "scripts/release.sh rc",
-    "document": "scripts/document.sh",
+    "document:all": "scripts/document.sh",
     "format:all": "eslint --fix . && prettier --write ."
   },
   "lint-staged": {
