@@ -22,9 +22,9 @@
     "message broker",
     "message-broker"
   ],
-  "homepage": "https://github.com/weyoss/redis-smq-common",
+  "homepage": "https://github.com/weyoss/redis-smq",
   "bugs": {
-    "url": "https://github.com/weyoss/redis-smq-common/issues"
+    "url": "https://github.com/weyoss/redis-smq/issues"
   },
   "type": "module",
   "main": "./dist/cjs/index.js",

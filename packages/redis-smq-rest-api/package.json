@@ -21,9 +21,9 @@
     "type": "git",
     "url": "https://github.com/weyoss/redis-smq.git"
   },
-  "homepage": "https://github.com/weyoss/redis-smq-rest-api",
+  "homepage": "https://github.com/weyoss/redis-smq",
   "bugs": {
-    "url": "https://github.com/weyoss/redis-smq-rest-api/issues"
+    "url": "https://github.com/weyoss/redis-smq/issues"
   },
   "type": "module",
   "main": "./dist/cjs/index.js",
