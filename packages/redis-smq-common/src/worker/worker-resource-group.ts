@@ -12,7 +12,7 @@ import path from 'path';
 import { async } from '../async/index.js';
 import { ICallback } from '../common/index.js';
 import { AbortError } from '../errors/index.js';
-import { RedisLock } from '../redis-lock/redis-lock.js';
+import { RedisLock } from '../redis-lock/index.js';
 import { ILogger } from '../logger/index.js';
 import { PowerSwitch } from '../power-switch/index.js';
 import { IRedisClient } from '../redis-client/index.js';
