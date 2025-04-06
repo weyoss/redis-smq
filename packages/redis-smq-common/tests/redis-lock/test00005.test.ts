@@ -10,13 +10,13 @@
 import { expect, it } from 'vitest';
 import bluebird from 'bluebird';
 import { AbortError } from '../../src/errors/index.js';
-import { Locker } from '../../src/locker/locker.js';
+import { RedisLock } from '../../src/redis-lock/redis-lock.js';
 import { getMockedRedisClient } from './common.js';
 
 it('Locker: acquireLock() -> LockAbortError', async () => {
   const redisClient = getMockedRedisClient();
   const lock = bluebird.promisifyAll(
-    new Locker(redisClient, console, 'key1', 10000, false),
+    new RedisLock(redisClient, console, 'key1', 10000, false),
   );
   await expect(
     Promise.all([

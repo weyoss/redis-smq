@@ -7,15 +7,15 @@
  * in the root directory of this source tree.
  */
 
-import { redisServer } from '../src/redis-server/index.js';
+import { RedisServer } from '../src/redis-server/index.js';
 import { redisConfig } from './config.js';
 
-const { shutdownRedisServer, startRedisServer } = redisServer;
-let redisPort: number | null = null;
+let redisServer: RedisServer | null = null;
 
 export async function initializeRedis() {
-  if (!redisPort) {
-    redisPort = await startRedisServer();
+  if (!redisServer) {
+    redisServer = new RedisServer();
+    const redisPort = await redisServer.start();
     redisConfig.options = {
       ...redisConfig,
       port: redisPort,
@@ -24,5 +24,5 @@ export async function initializeRedis() {
 }
 
 export async function shutDownRedisServer() {
-  if (redisPort) await shutdownRedisServer(redisPort);
+  if (redisServer) await redisServer.shutdown();
 }

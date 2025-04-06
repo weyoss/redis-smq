@@ -12,14 +12,14 @@ import bluebird from 'bluebird';
 import {
   LockExtendError,
   LockNotAcquiredError,
-} from '../../src/locker/index.js';
-import { Locker } from '../../src/locker/locker.js';
+} from '../../src/redis-lock/index.js';
+import { RedisLock } from '../../src/redis-lock/redis-lock.js';
 import { getRedisInstance } from '../common.js';
 
 it('Locker: locker(), extend(), releaseLock()', async () => {
   const redisClient = await getRedisInstance();
   const lock = bluebird.promisifyAll(
-    new Locker(redisClient, console, 'key1', 5000, false),
+    new RedisLock(redisClient, console, 'key1', 5000, false),
   );
   expect(lock.getId()).toBeDefined();
   await expect(lock.acquireLockAsync()).resolves.toBe(true);

@@ -4,7 +4,7 @@ import * as redisServerUtils from '../../src/redis-server/index.js';
 import { depPath, mockChildProcess, modPath } from './common.js';
 
 it('should reject with a timeout error when Redis server does not start within 10 seconds', async () => {
-  const { redisServer } = await esmock<typeof redisServerUtils>(
+  const { RedisServer } = await esmock<typeof redisServerUtils>(
     modPath,
     {},
     {
@@ -16,7 +16,8 @@ it('should reject with a timeout error when Redis server does not start within 1
       child_process: mockChildProcess({ startServerTimeout: 15000 }),
     },
   );
-  await expect(redisServer.startRedisServer()).rejects.toThrow(
+  const redisServer = new RedisServer();
+  await expect(redisServer.start()).rejects.toThrow(
     'Redis server start timeout',
   );
 });

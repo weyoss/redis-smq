@@ -10,7 +10,7 @@
 import { expect, it } from 'vitest';
 import bluebird from 'bluebird';
 import path from 'path';
-import { getDirname } from 'redis-smq-common';
+import { env } from 'redis-smq-common';
 import {
   Consumer,
   EQueueDeliveryModel,
@@ -34,7 +34,7 @@ it('ConsumeMessageWorker: case 1', async () => {
   );
 
   const handlerFilename = path.resolve(
-    getDirname(),
+    env.getCurrentDir(),
     '../../common/message-handler-worker-acks.js',
   );
   await consumer.consumeAsync(queue1, handlerFilename);

@@ -9,7 +9,7 @@
 
 import { resolve } from 'path';
 import { ICallback } from '../common/index.js';
-import { getDirname } from '../env/index.js';
+import { env } from '../env/index.js';
 import { AbortError } from '../errors/index.js';
 import { ILogger } from '../logger/index.js';
 import { IRedisClient } from '../redis-client/index.js';
@@ -22,7 +22,7 @@ import {
   LockNotAcquiredError,
 } from './errors/index.js';
 
-const dir = getDirname();
+const dir = env.getCurrentDir();
 
 export type TLockerEvent = {
   'locker.up': (id: string) => void;
@@ -46,7 +46,7 @@ const luaScriptMap = {
  * Represents a distributed locking mechanism using Redis.
  * Extends the Runnable class and implements locking, extending, and releasing operations.
  */
-export class Locker extends Runnable<TLockerEvent> {
+export class RedisLock extends Runnable<TLockerEvent> {
   protected readonly lockKey;
   protected readonly retryOnFail;
   protected readonly ttl;

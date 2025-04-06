@@ -10,7 +10,7 @@
 import { expect, it } from 'vitest';
 import bluebird from 'bluebird';
 import path from 'path';
-import { getDirname } from 'redis-smq-common';
+import { env } from 'redis-smq-common';
 import {
   ConsumerMessageHandlerFileError,
   ConsumerMessageHandlerFilenameExtensionError,
@@ -38,7 +38,7 @@ it('ConsumeMessageWorker: case 2', async () => {
   );
 
   const handlerFilename = path.resolve(
-    getDirname(),
+    env.getCurrentDir(),
     '../../common/non-existent-handler.js',
   );
 
@@ -47,7 +47,7 @@ it('ConsumeMessageWorker: case 2', async () => {
   );
 
   const handlerFilename2 = path.resolve(
-    getDirname(),
+    env.getCurrentDir(),
     '../../common/non-existent-handler.jsf',
   );
 
@@ -56,7 +56,7 @@ it('ConsumeMessageWorker: case 2', async () => {
   );
 
   const handlerFilename3 = path.resolve(
-    getDirname(),
+    env.getCurrentDir(),
     '../../common/message-handler-worker-unacks.js',
   );
   await consumer.consumeAsync(queue1, handlerFilename3);
@@ -85,7 +85,7 @@ it('ConsumeMessageWorker: case 2', async () => {
   await consumer.cancelAsync(queue1);
 
   const handlerFilename4 = path.resolve(
-    getDirname(),
+    env.getCurrentDir(),
     '../../common/message-handler-worker-unacks-exception.js',
   );
   await consumer.consumeAsync(queue1, handlerFilename4);
@@ -110,7 +110,7 @@ it('ConsumeMessageWorker: case 2', async () => {
   await consumer.cancelAsync(queue1);
 
   const handlerFilename5 = path.resolve(
-    getDirname(),
+    env.getCurrentDir(),
     '../../common/message-handler-worker-faulty.js',
   );
   await consumer.consumeAsync(queue1, handlerFilename5);
@@ -127,7 +127,7 @@ it('ConsumeMessageWorker: case 2', async () => {
   await consumer.cancelAsync(queue1);
 
   const handlerFilename6 = path.resolve(
-    getDirname(),
+    env.getCurrentDir(),
     '../../common/message-handler-worker-faulty-exit.js',
   );
   await consumer.consumeAsync(queue1, handlerFilename6);

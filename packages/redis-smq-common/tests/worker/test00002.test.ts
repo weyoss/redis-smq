@@ -10,10 +10,10 @@
 import { expect, it } from 'vitest';
 import bluebird from 'bluebird';
 import { resolve } from 'node:path';
-import { getDirname } from '../../src/env/index.js';
+import { env } from '../../src/env/index.js';
 import { WorkerCallable } from '../../src/worker/index.js';
 
-const dir = getDirname();
+const dir = env.getCurrentDir();
 
 it('WorkerCallable: case 2', async () => {
   const filename = resolve(dir, './workers/worker-non-existent.worker.js');

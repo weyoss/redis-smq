@@ -10,7 +10,7 @@
 import { resolve } from 'path';
 import { Worker as WorkerThread } from 'worker_threads';
 import { ICallback } from '../common/index.js';
-import { getDirname } from '../env/index.js';
+import { env } from '../env/index.js';
 import { EventEmitter } from '../event/index.js';
 import { WorkerThreadError } from './errors/index.js';
 import {
@@ -26,7 +26,7 @@ export type TWorkerEvent = {
   'worker.data': (payload: unknown) => void;
 };
 
-const dir = getDirname();
+const dir = env.getCurrentDir();
 
 /**
  * Abstract class representing a worker that executes in a separate thread.

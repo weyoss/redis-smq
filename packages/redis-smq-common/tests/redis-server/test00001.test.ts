@@ -7,10 +7,12 @@
  * in the root directory of this source tree.
  */
 
-import { it } from 'vitest';
-import { redisServer } from '../../src/redis-server/index.js';
+import { expect, it } from 'vitest';
+import { RedisServer } from '../../src/redis-server/index.js';
 
-it('Downloads, builds, and starts Redis server', async () => {
-  const port = await redisServer.startRedisServer();
-  await redisServer.shutdownRedisServer(port);
+it('should start and shut down Redis server', async () => {
+  const server = new RedisServer();
+  const port = await server.start();
+  expect(port).toBeGreaterThan(0);
+  await server.shutdown();
 });
