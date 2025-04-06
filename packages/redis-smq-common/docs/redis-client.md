@@ -10,7 +10,6 @@
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [Error Handling](#error-handling)
-- [Contributing](#contributing)
 
 ---
 
