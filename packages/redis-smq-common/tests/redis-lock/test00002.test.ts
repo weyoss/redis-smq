@@ -9,7 +9,7 @@
 
 import { expect, it } from 'vitest';
 import bluebird from 'bluebird';
-import { RedisLock } from '../../src/redis-lock/redis-lock.js';
+import { RedisLock } from '../../src/redis-lock/index.js';
 import { getRedisInstance } from '../common.js';
 
 it('Locker: retryOnFail', async () => {

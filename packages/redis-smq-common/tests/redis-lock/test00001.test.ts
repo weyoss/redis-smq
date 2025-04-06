@@ -13,7 +13,7 @@ import {
   LockExtendError,
   LockNotAcquiredError,
 } from '../../src/redis-lock/index.js';
-import { RedisLock } from '../../src/redis-lock/redis-lock.js';
+import { RedisLock } from '../../src/redis-lock/index.js';
 import { getRedisInstance } from '../common.js';
 
 it('Locker: locker(), extend(), releaseLock()', async () => {
