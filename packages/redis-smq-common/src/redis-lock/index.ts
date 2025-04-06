@@ -7,10 +7,5 @@
  * in the root directory of this source tree.
  */
 
-import { getCacheDir } from './cache-dir.js';
-import { getCurrentDir } from './current-dir.js';
-
-export const env = {
-  getCurrentDir,
-  getCacheDir,
-};
+export * from './errors/index.js';
+export * from './redis-lock.js';

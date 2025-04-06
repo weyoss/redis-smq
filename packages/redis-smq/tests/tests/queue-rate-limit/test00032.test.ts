@@ -11,7 +11,7 @@ import esmock from 'esmock';
 import { resolve } from 'path';
 import { expect, test, vitest } from 'vitest';
 import bluebird from 'bluebird';
-import { getDirname, ICallback, IRedisClient } from 'redis-smq-common';
+import { env, ICallback, IRedisClient } from 'redis-smq-common';
 import {
   IQueueParams,
   QueueRateLimit,
@@ -22,11 +22,11 @@ import { getDefaultQueue } from '../../common/message-producing-consuming.js';
 test('SetQueueRateLimit(): QueueRateLimitQueueNotFoundError', async () => {
   const defaultQueue = getDefaultQueue();
   const path1 = resolve(
-    getDirname(),
+    env.getCurrentDir(),
     '../../../src/lib/queue-rate-limit/queue-rate-limit.js',
   );
   const path2 = resolve(
-    getDirname(),
+    env.getCurrentDir(),
     '../../../src/lib/queue/_/_parse-queue-params-and-validate.js',
   );
   const { QueueRateLimit } = await esmock<{

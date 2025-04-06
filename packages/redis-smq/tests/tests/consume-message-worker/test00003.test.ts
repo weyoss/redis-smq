@@ -10,7 +10,7 @@
 import { expect, test } from 'vitest';
 import bluebird from 'bluebird';
 import path from 'path';
-import { getDirname } from 'redis-smq-common';
+import { env } from 'redis-smq-common';
 import { Consumer, ProducibleMessage } from '../../../src/lib/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import { getEventBus } from '../../common/event-bus-redis.js';
@@ -40,7 +40,7 @@ test('ConsumeMessageWorker: case 3', async () => {
     cb();
   });
   const handlerFilename1 = path.resolve(
-    getDirname(),
+    env.getCurrentDir(),
     '../../common/message-handler-worker-acks.js',
   );
   await consumer.consumeAsync('test3', handlerFilename1);
@@ -57,7 +57,7 @@ test('ConsumeMessageWorker: case 3', async () => {
   });
 
   const handlerFilename2 = path.resolve(
-    getDirname(),
+    env.getCurrentDir(),
     '../../common/message-handler-worker-acks.js',
   );
   await consumer.consumeAsync('test6', handlerFilename2);

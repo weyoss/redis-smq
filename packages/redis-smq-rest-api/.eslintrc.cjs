@@ -8,8 +8,8 @@
  */
 
 const { resolve } = require('path');
-const { getDirname } = require('redis-smq-common');
-const dir = getDirname();
+const { env } = require('redis-smq-common');
+const dir = env.getCurrentDir();
 module.exports = {
   extends: [resolve(dir, '../../.eslintrc.cjs')],
   rules: { '@typescript-eslint/no-empty-object-type': 'off' },

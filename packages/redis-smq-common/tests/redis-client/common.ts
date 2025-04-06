@@ -10,7 +10,7 @@
 import { expect } from 'vitest';
 import bluebird from 'bluebird';
 import { resolve } from 'node:path';
-import { getDirname } from '../../src/env/index.js';
+import { env } from '../../src/env/index.js';
 import { IRedisConfig } from '../../src/redis-client/index.js';
 import { getRedisInstance } from '../common.js';
 
@@ -188,7 +188,7 @@ export async function standardCommands(config: IRedisConfig) {
 }
 
 export async function scriptRunning(config: IRedisConfig) {
-  const dir = getDirname();
+  const dir = env.getCurrentDir();
   const client = await getRedisInstance(config);
   await client.loadScriptFilesAsync({
     test_script: resolve(dir, './lua-scripts/test_script.lua'),

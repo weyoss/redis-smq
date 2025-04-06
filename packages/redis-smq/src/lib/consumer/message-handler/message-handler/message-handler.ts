@@ -11,7 +11,7 @@ import path from 'path';
 import {
   CallbackEmptyReplyError,
   CallbackInvalidReplyError,
-  getDirname,
+  env,
   ICallback,
   ILogger,
   Runnable,
@@ -220,7 +220,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     this.workerResourceGroup.on('workerResourceGroup.error', (err) =>
       this.handleError(err),
     );
-    const workersDir = path.resolve(getDirname(), '../../workers');
+    const workersDir = path.resolve(env.getCurrentDir(), '../../workers');
     this.workerResourceGroup.loadFromDir(
       workersDir,
       { config, queueParsedParams: this.queue },

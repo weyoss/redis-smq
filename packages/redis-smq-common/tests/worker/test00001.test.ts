@@ -10,13 +10,13 @@
 import { expect, it } from 'vitest';
 import bluebird from 'bluebird';
 import { resolve } from 'node:path';
-import { getDirname } from '../../src/env/index.js';
+import { env } from '../../src/env/index.js';
 import {
   WorkerCallable,
   WorkerPayloadRequiredError,
 } from '../../src/worker/index.js';
 
-const dir = getDirname();
+const dir = env.getCurrentDir();
 
 it('WorkerCallable: case 1', async () => {
   const filename = resolve(dir, './workers/worker-ok.worker.js');

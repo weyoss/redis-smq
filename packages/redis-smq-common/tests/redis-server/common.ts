@@ -7,43 +7,17 @@
  * in the root directory of this source tree.
  */
 
-import path, { dirname } from 'node:path';
+import path from 'node:path';
 import { vi } from 'vitest';
+import { env } from '../../src/env/index.js';
 
-const currentDir = getDirname();
+const currentDir = env.getCurrentDir();
 
 export const modPath = path.resolve(
   currentDir,
   '../../src/redis-server/index.js',
 );
 export const depPath = path.resolve(currentDir, '../../src/net/index.js');
-
-function isStackTraces(stack: unknown): stack is NodeJS.CallSite[] {
-  return !!(stack && Array.isArray(stack));
-}
-
-function getDirname(): string {
-  const prepareStackTrace = Error.prepareStackTrace;
-  Error.prepareStackTrace = (
-    err: Error,
-    stackTraces: NodeJS.CallSite[],
-  ): NodeJS.CallSite[] => {
-    return stackTraces;
-  };
-  const err = new Error();
-  const stack: unknown = err.stack;
-  Error.prepareStackTrace = prepareStackTrace;
-  if (isStackTraces(stack)) {
-    const filename = stack[1].getFileName();
-    if (filename) {
-      const cleanFilename = filename.startsWith('file://')
-        ? filename.substring(7)
-        : filename;
-      return dirname(cleanFilename);
-    }
-  }
-  throw new Error(`Could not get current dir`);
-}
 
 export function mockChildProcess(
   args: { redisBinPath?: string; startServerTimeout?: number } = {},

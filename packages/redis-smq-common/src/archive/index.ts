@@ -7,5 +7,10 @@
  * in the root directory of this source tree.
  */
 
-export * from './errors/index.js';
-export * from './locker.js';
+import { extractTgz } from './extract-tgz.js';
+import { extractRpm } from './extract-rpm.js';
+
+export const archive = {
+  extractTgz,
+  extractRpm,
+};

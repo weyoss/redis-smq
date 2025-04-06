@@ -5,7 +5,7 @@ import { depPath, mockChildProcess, modPath } from './common.js';
 
 it('should throw an error when starting a Redis server on an already occupied port', async () => {
   const port = 6379;
-  const { redisServer } = await esmock<typeof redisServerUtils>(
+  const { RedisServer } = await esmock<typeof redisServerUtils>(
     modPath,
     {},
     {
@@ -17,9 +17,10 @@ it('should throw an error when starting a Redis server on an already occupied po
       child_process: mockChildProcess(),
     },
   );
-  await redisServer.startRedisServer(port);
-  await expect(redisServer.startRedisServer()).rejects.toThrow(
-    new Error(`Redis server is already running on port ${port}.`),
+  const redisServer = new RedisServer();
+  await redisServer.start(port);
+  await expect(redisServer.start()).rejects.toThrow(
+    new Error(`Cannot start Redis server while it is already running.`),
   );
-  await redisServer.shutdownRedisServer(port);
+  await redisServer.shutdown();
 });

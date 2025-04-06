@@ -11,7 +11,7 @@ import esmock from 'esmock';
 import { vitest } from 'vitest';
 import { EventEmitter } from 'events';
 import { resolve } from 'node:path';
-import { getDirname } from '../../src/env/index.js';
+import { env } from '../../src/env/index.js';
 import { EWorkerType } from '../../src/worker/index.js';
 
 export async function mockWorkerThread(
@@ -23,7 +23,7 @@ export async function mockWorkerThread(
     new EventEmitter();
   parentPort.postMessage = vitest.fn();
   const p = resolve(
-    getDirname(),
+    env.getCurrentDir(),
     '../../src/worker/worker-thread/worker-thread.js',
   );
   await esmock(

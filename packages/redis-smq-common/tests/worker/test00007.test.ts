@@ -10,7 +10,7 @@
 import { expect, it } from 'vitest';
 import bluebird from 'bluebird';
 import { resolve } from 'node:path';
-import { getDirname } from '../../src/env/index.js';
+import { env } from '../../src/env/index.js';
 import {
   EWorkerThreadChildExitCode,
   EWorkerThreadParentMessage,
@@ -19,7 +19,7 @@ import {
 import { mockWorkerThread } from './mock-worker-thread.js';
 
 it('WorkerCallable: case 7', async () => {
-  const dir = getDirname();
+  const dir = env.getCurrentDir();
   const { parentPort, mockExit } = await mockWorkerThread({
     filename: resolve(dir, './workers/worker-faulty-exit.worker.js'),
     type: EWorkerType.CALLABLE,

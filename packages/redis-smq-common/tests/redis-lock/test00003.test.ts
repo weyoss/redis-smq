@@ -9,24 +9,29 @@
 
 import { expect, it } from 'vitest';
 import bluebird from 'bluebird';
-import { Locker } from '../../src/locker/locker.js';
+import {
+  RedisLock,
+  LockMethodNotAllowedError,
+} from '../../src/redis-lock/index.js';
 import { getRedisInstance } from '../common.js';
 
-it('Locker: retryOnFail', async () => {
+it('Locker: autoExtend', async () => {
   const redisClient = await getRedisInstance();
   const lock = bluebird.promisifyAll(
-    new Locker(redisClient, console, 'key1', 20000, false),
+    new RedisLock(redisClient, console, 'key1', 10000, false, 3000),
   );
   await expect(lock.acquireLockAsync()).resolves.toBe(true);
+  await expect(lock.extendLockAsync()).rejects.toThrowError(
+    LockMethodNotAllowedError,
+  );
+
+  await bluebird.delay(20000);
 
   const lock2 = bluebird.promisifyAll(
-    new Locker(redisClient, console, 'key1', 10000, false),
+    new RedisLock(redisClient, console, 'key1', 10000, false),
   );
   await expect(lock2.acquireLockAsync()).resolves.toBe(false);
 
-  const lock3 = bluebird.promisifyAll(
-    new Locker(redisClient, console, 'key1', 10000, true),
-  );
-  await expect(lock3.acquireLockAsync()).resolves.toBe(true);
-  await expect(lock3.extendLockAsync()).resolves.toBeUndefined();
+  await lock.releaseLockAsync();
+  await lock2.releaseLockAsync();
 });

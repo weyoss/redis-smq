@@ -1,6 +1,6 @@
-[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / Locker
+[RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / RedisLock
 
-# Class: Locker
+# Class: RedisLock
 
 Represents a distributed locking mechanism using Redis.
 Extends the Runnable class and implements locking, extending, and releasing operations.
@@ -9,40 +9,40 @@ Extends the Runnable class and implements locking, extending, and releasing oper
 
 - [`Runnable`](Runnable.md)\<[`TLockerEvent`](../README.md#tlockerevent)\>
 
-  ↳ **`Locker`**
+  ↳ **`RedisLock`**
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](Locker.md#constructor)
+- [constructor](RedisLock.md#constructor)
 
 ### Methods
 
-- [acquireLock](Locker.md#acquirelock)
-- [emit](Locker.md#emit)
-- [extendLock](Locker.md#extendlock)
-- [getId](Locker.md#getid)
-- [isDown](Locker.md#isdown)
-- [isGoingDown](Locker.md#isgoingdown)
-- [isGoingUp](Locker.md#isgoingup)
-- [isLocked](Locker.md#islocked)
-- [isReleased](Locker.md#isreleased)
-- [isRunning](Locker.md#isrunning)
-- [isUp](Locker.md#isup)
-- [on](Locker.md#on)
-- [once](Locker.md#once)
-- [releaseLock](Locker.md#releaselock)
-- [removeAllListeners](Locker.md#removealllisteners)
-- [removeListener](Locker.md#removelistener)
-- [run](Locker.md#run)
-- [shutdown](Locker.md#shutdown)
+- [acquireLock](RedisLock.md#acquirelock)
+- [emit](RedisLock.md#emit)
+- [extendLock](RedisLock.md#extendlock)
+- [getId](RedisLock.md#getid)
+- [isDown](RedisLock.md#isdown)
+- [isGoingDown](RedisLock.md#isgoingdown)
+- [isGoingUp](RedisLock.md#isgoingup)
+- [isLocked](RedisLock.md#islocked)
+- [isReleased](RedisLock.md#isreleased)
+- [isRunning](RedisLock.md#isrunning)
+- [isUp](RedisLock.md#isup)
+- [on](RedisLock.md#on)
+- [once](RedisLock.md#once)
+- [releaseLock](RedisLock.md#releaselock)
+- [removeAllListeners](RedisLock.md#removealllisteners)
+- [removeListener](RedisLock.md#removelistener)
+- [run](RedisLock.md#run)
+- [shutdown](RedisLock.md#shutdown)
 
 ## Constructors
 
 ### constructor
 
-• **new Locker**(`redisClient`, `logger`, `lockKey`, `ttl`, `retryOnFail?`, `autoExtendInterval?`): [`Locker`](Locker.md)
+• **new RedisLock**(`redisClient`, `logger`, `lockKey`, `ttl`, `retryOnFail?`, `autoExtendInterval?`): [`RedisLock`](RedisLock.md)
 
 #### Parameters
 
@@ -57,7 +57,7 @@ Extends the Runnable class and implements locking, extending, and releasing oper
 
 #### Returns
 
-[`Locker`](Locker.md)
+[`RedisLock`](RedisLock.md)
 
 #### Overrides
 

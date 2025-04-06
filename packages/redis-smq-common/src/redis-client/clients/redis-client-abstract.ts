@@ -11,7 +11,7 @@ import fs from 'fs';
 import { resolve } from 'path';
 import { async } from '../../async/index.js';
 import { ICallback } from '../../common/index.js';
-import { getDirname } from '../../env/index.js';
+import { env } from '../../env/index.js';
 import { CallbackEmptyReplyError } from '../../errors/index.js';
 import { EventEmitter } from '../../event/index.js';
 import { RedisClientError } from '../errors/index.js';
@@ -21,7 +21,7 @@ import {
   TRedisClientEvent,
 } from '../types/index.js';
 
-const dir = getDirname();
+const dir = env.getCurrentDir();
 
 export enum ELuaScriptName {
   LPOPRPUSH = 'LPOPRPUSH',

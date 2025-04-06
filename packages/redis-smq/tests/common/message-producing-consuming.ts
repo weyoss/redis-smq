@@ -9,7 +9,7 @@
 
 import { fork } from 'child_process';
 import path from 'path';
-import { getDirname, ICallback } from 'redis-smq-common';
+import { env, ICallback } from 'redis-smq-common';
 import { Configuration } from '../../src/config/index.js';
 import {
   EMessagePriority,
@@ -143,7 +143,7 @@ export async function createQueue(
 
 export async function crashAConsumerConsumingAMessage() {
   await new Promise((resolve) => {
-    const thread = fork(path.join(getDirname(), 'consumer-thread.js'));
+    const thread = fork(path.join(env.getCurrentDir(), 'consumer-thread.js'));
     thread.send(JSON.stringify(config));
     thread.on('error', () => void 0);
     thread.on('exit', resolve);

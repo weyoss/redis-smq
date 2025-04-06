@@ -63,8 +63,10 @@
     }
   },
   "dependencies": {
+    "axios": "1.8.4",
     "bluebird": "3.7.2",
     "lodash": "4.17.21",
+    "tar": "7.4.3",
     "uuid": "11.1.0"
   },
   "scripts": {

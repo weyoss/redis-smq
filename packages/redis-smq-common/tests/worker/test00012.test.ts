@@ -10,11 +10,11 @@
 import { it } from 'vitest';
 import bluebird from 'bluebird';
 import { resolve } from 'node:path';
-import { getDirname } from '../../src/env/index.js';
+import { env } from '../../src/env/index.js';
 import { WorkerResourceGroup } from '../../src/worker/index.js';
 import { getRedisInstance } from '../common.js';
 
-const dir = getDirname();
+const dir = env.getCurrentDir();
 
 it('WorkerResourceGroup: addWorker()', async () => {
   const redisClient = await getRedisInstance();

@@ -17,7 +17,7 @@ It provides methods for starting, stopping, and handling errors during the execu
 
   ↳ **`Runnable`**
 
-  ↳↳ [`Locker`](Locker.md)
+  ↳↳ [`RedisLock`](RedisLock.md)
 
   ↳↳ [`WorkerResourceGroup`](WorkerResourceGroup.md)
 

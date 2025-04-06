@@ -12,7 +12,7 @@ import path from 'path';
 import { async } from '../async/index.js';
 import { ICallback } from '../common/index.js';
 import { AbortError } from '../errors/index.js';
-import { Locker } from '../locker/locker.js';
+import { RedisLock } from '../redis-lock/redis-lock.js';
 import { ILogger } from '../logger/index.js';
 import { PowerSwitch } from '../power-switch/index.js';
 import { IRedisClient } from '../redis-client/index.js';
@@ -45,7 +45,7 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
     this.redisClient.once('error', (err) => this.handleError(err));
 
     // Locker
-    this.locker = new Locker(
+    this.locker = new RedisLock(
       redisClient,
       logger,
       resourceGroupId,

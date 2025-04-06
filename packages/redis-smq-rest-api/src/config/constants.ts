@@ -8,9 +8,9 @@
  */
 
 import { resolve } from 'path';
-import { getDirname } from 'redis-smq-common';
+import { env } from 'redis-smq-common';
 
-const curDir = getDirname();
+const curDir = env.getCurrentDir();
 const srcDir = resolve(curDir, '../');
 const rootDir =
   resolve(srcDir, '../').split('/').pop() === 'redis-smq-rest-api'
