@@ -1,6 +1,6 @@
-[RedisSMQ Common Library](../README.md) / Redis Client Setup and Usage Guide
+[RedisSMQ Common Library](../README.md) / Redis Client
 
-# Redis Client Setup and Usage Guide
+# Redis Client
 
 ## Table of Contents
 
