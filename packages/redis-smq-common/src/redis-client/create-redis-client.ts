@@ -52,7 +52,10 @@ function createIORedisClient(
     );
 }
 
-function createClient(config: IRedisConfig, cb: ICallback<IRedisClient>): void {
+function initializeRedisClient(
+  config: IRedisConfig,
+  cb: ICallback<IRedisClient>,
+): void {
   if (config.client === ERedisConfigClient.REDIS) {
     return createNodeRedisClient(config, cb);
   }
@@ -70,7 +73,7 @@ export function createRedisClient(
   config: IRedisConfig,
   cb: ICallback<IRedisClient>,
 ): void {
-  createClient(config, (err, client) => {
+  initializeRedisClient(config, (err, client) => {
     if (err) return cb(err);
     if (!client) return cb(new CallbackEmptyReplyError());
     const onReady = () => {
