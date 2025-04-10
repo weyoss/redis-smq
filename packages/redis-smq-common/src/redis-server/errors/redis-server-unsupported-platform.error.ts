@@ -7,12 +7,10 @@
  * in the root directory of this source tree.
  */
 
-import * as cacheDir from './cache-dir.js';
-import * as currentDir from './current-dir.js';
-import * as filesystem from './filesystem.js';
+import { RedisServerError } from './redis-server.error.js';
 
-export const env = {
-  ...cacheDir,
-  ...currentDir,
-  ...filesystem,
-};
+export class RedisServerUnsupportedPlatformError extends RedisServerError {
+  constructor() {
+    super(`Unsupported platform/architecture`);
+  }
+}

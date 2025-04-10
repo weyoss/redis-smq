@@ -65,6 +65,7 @@
   "dependencies": {
     "axios": "1.8.4",
     "bluebird": "3.7.2",
+    "commander": "13.1.0",
     "lodash": "4.17.21",
     "tar": "7.4.3",
     "uuid": "11.1.0"
@@ -72,7 +73,12 @@
   "scripts": {
     "test": "../../scripts/test_workspace_esm.sh",
     "build": "scripts/build.sh",
-    "document": "scripts/document.sh"
+    "document": "scripts/document.sh",
+    "redis:download": "node ./dist/esm/bin/cli.js redis --download-binary",
+    "redis:build": "node ./dist/esm/bin/cli.js redis --build-from-source"
+  },
+  "bin": {
+    "redis-smq-common": "./dist/esm/bin/cli.js"
   },
   "engineStrict": true,
   "engines": {

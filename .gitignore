@@ -12,3 +12,4 @@ data
 **/scripts/benchmark.sh
 .husky/_
 lerna-debug.log
+*.sqlite

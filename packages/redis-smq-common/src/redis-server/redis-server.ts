@@ -1,7 +1,13 @@
 import { ChildProcess, spawn } from 'child_process';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
+import { env } from '../env/index.js';
 import { net } from '../net/index.js';
 import { PowerSwitch } from '../power-switch/index.js';
-import { initializeRedisServer } from './setup-redis.js';
+import { REDIS_BINARY_PATH } from './constants.js';
+import { RedisServerBinaryNotFoundError } from './errors/index.js';
+
+const execAsync = promisify(exec);
 
 export class RedisServer {
   private redisBinaryPath: string | null = null;
@@ -23,13 +29,6 @@ export class RedisServer {
   private handleProcessExit = async (): Promise<void> => {
     await this.shutdown();
   };
-
-  private async ensureRedisBinaryIsInstalled(): Promise<string> {
-    if (!this.redisBinaryPath) {
-      this.redisBinaryPath = await initializeRedisServer();
-    }
-    return this.redisBinaryPath;
-  }
 
   private async waitForRedisServerStartup(): Promise<number> {
     return new Promise((resolve, reject) => {
@@ -78,12 +77,42 @@ export class RedisServer {
     this.redisChildProcess?.on('exit', () => this.shutdown());
   }
 
+  /**
+   * Retrieves the system-wide Redis binary path.
+   *
+   * @returns {Promise<string | null>} - The path to the system-wide Redis binary, or null if not found.
+   */
+  private async fetchSystemWideRedisBinaryPath(): Promise<string | null> {
+    try {
+      const { stdout } = await execAsync(
+        'which redis-server || where redis-server',
+      );
+      return stdout.trim() || null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async getRedisServerBinaryPath(): Promise<string | null> {
+    const systemWideBinaryPath = await this.fetchSystemWideRedisBinaryPath();
+    if (systemWideBinaryPath) return systemWideBinaryPath;
+    if (await env.doesPathExist(REDIS_BINARY_PATH)) {
+      return REDIS_BINARY_PATH;
+    }
+    return null;
+  }
+
   async start(port?: number): Promise<number> {
     const goingUp = this.powerSwitch.goingUp();
     if (!goingUp) {
       throw new Error('Cannot start Redis server while it is already running.');
     }
-    this.redisBinaryPath = await this.ensureRedisBinaryIsInstalled();
+
+    this.redisBinaryPath = await this.getRedisServerBinaryPath();
+    if (!this.redisBinaryPath) {
+      throw new RedisServerBinaryNotFoundError();
+    }
+
     this.redisPort = port ?? (await net.getRandomPort());
 
     this.redisChildProcess = spawn(this.redisBinaryPath, [

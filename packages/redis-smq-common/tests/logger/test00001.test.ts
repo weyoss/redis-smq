@@ -17,7 +17,7 @@ it('Logger', async () => {
 
   expect(() => {
     logger.setLogger(console);
-  }).toThrow('Logger has been already initialized.');
+  }).toThrow('Logger has already been initialized.');
 
   logger.destroy();
   logger.setLogger(console);

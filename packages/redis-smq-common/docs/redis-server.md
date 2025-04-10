@@ -2,20 +2,71 @@
 
 # Redis Server
 
-The RedisServer class is a lightweight utility for managing the lifecycle of a Redis server process. It is designed for 
-applications that require an embedded Redis server, such as testing environments or local development setups. 
-This utility ensures a Redis server binary is available, either by using a system-wide installation or by downloading 
-and using a pre-compiled one.
+The `RedisServer` class is a lightweight utility for managing Redis server instances. It provides a simple way to start 
+and stop Redis server processes programmatically.
 
-## How It Works
+This utility is designed for:
+- Testing environments requiring isolated Redis instances
+- Local development setups
 
-The RedisServer class relies on the redis-server binary to launch the server.
-It first checks for a system-wide Redis installation. If none is found, it downloads and uses a pre-compiled binary.
-The server can be started on a specified port or on an automatically assigned free port.
+The `RedisServer` class requires a Redis server binary to function. It will look for Redis in the following order:
 
-## Supported platforms
+1. System-wide installation
+2. Local Redis binary
 
-The `RedisServer` utility supports the following platforms:
+If the RedisServer utility fails to locate a Redis binary, a `RedisServerBinaryNotFoundError` error is thrown.
+
+## Obtaining a Redis Binary
+
+### Option 1: Install Redis
+
+It is recommended to ensure that Redis is installed on your host system and accessible to the user account under which 
+your application is run.
+
+Use your package manager to install Redis. For example on Ubuntu/Debian systems:
+
+```shell
+sudo apt-get install redis-server
+```
+
+You can verify the installation by running: 
+
+```shell
+redis-server --version
+```
+
+This option is simple and reliable for most environments but requires administrative privileges.
+
+### Option 2: Build Redis from source
+
+In case you cannot rely on pre-installed binaries, you can build Redis from source by running:
+
+```shell
+pnpm -F redis-smq-common redis:build
+```
+
+**Requirements**
+
+Ensure your system has development tools installed. For example on Debian/Ubuntu systems run:
+
+```shell
+sudo agt-get install build-essential
+```
+
+### Option 3: Download a pre-built Redis binary
+
+Retrieve pre-built Redis binaries if building from source is not feasible.
+
+```shell
+pnpm -F redis-smq-common redis:download
+```
+
+Pre-built binaries are retrieved from GitHub (https://github.com/weyoss/valkey).
+
+This option is quick and easy to set up without requiring compilation but you but prebuilt binaries may not be compatible 
+with all systems due to environment differences (e.g., GLIBC version mismatches).
+
+## Supported Platforms
 
 - Linux x64
 - Linux arm64
@@ -23,36 +74,51 @@ The `RedisServer` utility supports the following platforms:
 - macOS x64
 - macOS arm64
 
-## Use Case
+## Usage Examples
 
-This utility is primarily designed as an embedded standalone server for testing and development purposes. 
-It allows the creation of multiple Redis server instances on the same machine, each running on a unique port. 
-This capability is particularly useful for parallel testing scenarios, where isolated Redis instances are required to 
-be created dynamically on the fly.
-
-## Usage
-
-```js
+```javascript
 import { RedisServer } from './redis-server';
 
 const redisServer = new RedisServer();
 
-// Starting the Redis server
-const port = await redisServer.start()
+// Start Redis on an automatically assigned free port
+const port = await redisServer.start();
 console.log(`Redis server started on port ${port}`);
 
-// Starting the Redis server on a specific port
-const port = 3333;
-await redisServer.start(port)
+// Start Redis on a specific port
+await redisServer.start(3333);
 
-// Shutting down the Redis server
-await redisServer.shutdown()
-
+// Shut down the Redis server
+await redisServer.shutdown();
 ```
 
-## Notes
+## Error Handling
 
-The RedisServer class is lightweight and designed for simplicity, making it ideal for testing and development scenarios.
-For production environments, consider using a dedicated Redis server instance.
+It's important to implement proper error handling when working with the Redis server:
+
+```javascript
+try {
+  const port = await redisServer.start();
+  console.log(`Redis server started on port ${port}`);
+} catch (error) {
+  console.error('Failed to start Redis server:', error.message);
+  // Handle the error appropriately
+}
+
+try {
+  await redisServer.shutdown();
+  console.log('Redis server shut down successfully');
+} catch (error) {
+  console.error('Failed to shut down Redis server:', error.message);
+  // Handle the error appropriately
+}
+```
+
+## Important Notes
+
+- All RedisSMQ package tests rely on `RedisServer` to launch local server instances. Ensure you have a working 
+RedisServer setup (option 1/option 2/option 3) before running tests.
+
+- This utility is designed for development and testing only. For production environments, use a dedicated Redis server instance.
 
 

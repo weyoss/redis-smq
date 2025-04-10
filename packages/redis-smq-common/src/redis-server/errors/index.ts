@@ -7,12 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import * as cacheDir from './cache-dir.js';
-import * as currentDir from './current-dir.js';
-import * as filesystem from './filesystem.js';
-
-export const env = {
-  ...cacheDir,
-  ...currentDir,
-  ...filesystem,
-};
+export * from './redis-server-binary-not-found.error.js';
+export * from './redis-server.error.js';
+export * from './redis-server-unsupported-platform.error.js';
