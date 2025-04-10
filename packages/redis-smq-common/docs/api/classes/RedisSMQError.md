@@ -24,6 +24,8 @@
 
   ↳↳ [`WorkerError`](WorkerError.md)
 
+  ↳↳ [`RedisServerError`](RedisServerError.md)
+
 ## Table of contents
 
 ### Constructors

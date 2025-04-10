@@ -42,6 +42,9 @@
 - [PanicError](classes/PanicError.md)
 - [RedisClientError](classes/RedisClientError.md)
 - [RedisSMQError](classes/RedisSMQError.md)
+- [RedisServerBinaryNotFoundError](classes/RedisServerBinaryNotFoundError.md)
+- [RedisServerError](classes/RedisServerError.md)
+- [RedisServerUnsupportedPlatformError](classes/RedisServerUnsupportedPlatformError.md)
 - [TimerError](classes/TimerError.md)
 - [WatchedKeysChangedError](classes/WatchedKeysChangedError.md)
 - [WorkerAlreadyDownError](classes/WorkerAlreadyDownError.md)
@@ -401,6 +404,9 @@ ___
 
 | Name | Type |
 | :------ | :------ |
+| `doesPathExist` | (`filePath`: `string`) => `Promise`\<`boolean`\> |
+| `downloadFile` | (`url`: `string`, `savePath`: `string`) => `Promise`\<`void`\> |
+| `ensureDirectoryExists` | (`dirPath`: `string`) => `Promise`\<`void`\> |
 | `getCacheDir` | () => `string` |
 | `getCurrentDir` | () => `string` |
 

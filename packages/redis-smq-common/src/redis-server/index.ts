@@ -8,3 +8,4 @@
  */
 
 export * from './redis-server.js';
+export * from './errors/index.js';
