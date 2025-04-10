@@ -63,7 +63,7 @@ pnpm -F redis-smq-common redis:download
 
 Pre-built binaries are retrieved from GitHub (https://github.com/weyoss/valkey).
 
-This option is quick and easy to set up without requiring compilation but you but prebuilt binaries may not be compatible 
+This option is quick and easy to set up without requiring compilation but prebuilt binaries may not be compatible 
 with all systems due to environment differences (e.g., GLIBC version mismatches).
 
 ## Supported Platforms
