@@ -13,7 +13,7 @@ import os from 'node:os';
 import * as path from 'path';
 import { archive } from '../archive/index.js';
 import { env } from '../env/index.js';
-import { fileLock } from '../file-lock/index.js';
+import { FileLock } from '../file-lock/index.js';
 import {
   REDIS_BINARY_PATH,
   REDIS_CACHE_DIRECTORY,
@@ -48,12 +48,10 @@ async function compileRedis(sourceDir: string): Promise<void> {
 }
 
 export async function buildRedisBinary(): Promise<string> {
+  const fileLock = new FileLock();
   try {
     await env.ensureDirectoryExists(REDIS_CACHE_DIRECTORY);
-    await fileLock.acquireLock(REDIS_SETUP_LOCK_FILE, {
-      retries: 60 * 10,
-      delay: 1000,
-    });
+    await fileLock.acquireLock(REDIS_SETUP_LOCK_FILE);
 
     const cacheExists = await env.doesPathExist(REDIS_BINARY_PATH);
     if (!cacheExists) {
