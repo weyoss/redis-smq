@@ -1,6 +1,6 @@
 {
   "name": "redis-smq-common",
-  "version": "8.0.0-rc.35",
+  "version": "8.0.0-rc.36",
   "description": "RedisSMQ Common Library provides many components that are mainly used by RedisSMQ and RedisSMQ Monitor.",
   "author": "Weyoss <weyoss@protonmail.com>",
   "license": "MIT",
