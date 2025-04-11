@@ -12,7 +12,7 @@ import os from 'node:os';
 import path from 'path';
 import { archive } from '../archive/index.js';
 import { env } from '../env/index.js';
-import { fileLock } from '../file-lock/index.js';
+import { FileLock } from '../file-lock/index.js';
 import {
   REDIS_BINARY_PATH,
   REDIS_CACHE_DIRECTORY,
@@ -55,12 +55,10 @@ async function downloadAndExtractRedis(downloadPath: string): Promise<string> {
 
 // Downloads and sets up the Redis binary
 export async function downloadPrebuiltBinary(): Promise<string> {
+  const fileLock = new FileLock();
   try {
     await env.ensureDirectoryExists(REDIS_CACHE_DIRECTORY);
-    await fileLock.acquireLock(REDIS_SETUP_LOCK_FILE, {
-      retries: 600,
-      delay: 1000,
-    });
+    await fileLock.acquireLock(REDIS_SETUP_LOCK_FILE);
 
     if (!(await env.doesPathExist(REDIS_BINARY_PATH))) {
       const tempDir = path.join(os.tmpdir(), `redis-${Date.now()}`);

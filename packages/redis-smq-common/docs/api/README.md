@@ -17,6 +17,7 @@
 - [EventBus](classes/EventBus.md)
 - [EventBusRedis](classes/EventBusRedis.md)
 - [EventEmitter](classes/EventEmitter.md)
+- [FileLock](classes/FileLock.md)
 - [PowerSwitch](classes/PowerSwitch.md)
 - [RedisLock](classes/RedisLock.md)
 - [RedisServer](classes/RedisServer.md)
@@ -93,7 +94,6 @@
 - [archive](README.md#archive)
 - [async](README.md#async)
 - [env](README.md#env)
-- [fileLock](README.md#filelock)
 - [logger](README.md#logger)
 - [net](README.md#net)
 
@@ -409,19 +409,6 @@ ___
 | `ensureDirectoryExists` | (`dirPath`: `string`) => `Promise`\<`void`\> |
 | `getCacheDir` | () => `string` |
 | `getCurrentDir` | () => `string` |
-
-___
-
-### fileLock
-
-• `Const` **fileLock**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `acquireLock` | (`lockFile`: `string`, `options`: \{ `delay`: `number` ; `retries`: `number`  }) => `Promise`\<`void`\> |
-| `releaseLock` | (`lockFile`: `string`) => `Promise`\<`void`\> |
 
 ___
 
