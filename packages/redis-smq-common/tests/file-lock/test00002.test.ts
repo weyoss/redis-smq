@@ -8,13 +8,15 @@
  */
 
 import { open, utimes } from 'node:fs/promises';
+import os from 'node:os';
 import { dirname } from 'node:path';
+import { resolve } from 'path';
 import { expect, it } from 'vitest';
 import { env } from '../../src/env/index.js';
 import { FileLock } from '../../src/file-lock/index.js';
 
 it('should remove stale lock files and acquire the lock', async () => {
-  const lockFile = '/tmp/test-stale-lock-' + Date.now();
+  const lockFile = resolve(os.tmpdir(), `${Date.now()}.lock`);
   const fileLock = new FileLock();
 
   // Create a stale lock file

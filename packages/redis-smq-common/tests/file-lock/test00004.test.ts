@@ -8,13 +8,14 @@
  */
 
 import esmock from 'esmock';
+import os from 'node:os';
 import { resolve } from 'path';
 import { expect, it, vi } from 'vitest';
 import { getCurrentDir } from '../../src/env/current-dir.js';
 import { FileLockAttemptsExhaustedError } from '../../src/file-lock/errors/index.js';
 
 it('should throw error when maximum retry attempts are exhausted', async () => {
-  const lockFile = '/tmp/test-lock-file';
+  const lockFile = resolve(os.tmpdir(), `${Date.now()}.lock`);
 
   // Mock setTimeout to execute immediately
   const mockSetTimeout = vi.fn().mockImplementation((cb: () => void) => {

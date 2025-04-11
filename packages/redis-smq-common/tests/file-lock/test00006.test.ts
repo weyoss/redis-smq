@@ -8,12 +8,13 @@
  */
 
 import esmock from 'esmock';
+import os from 'node:os';
 import { resolve } from 'path';
 import { expect, it, vi } from 'vitest';
 import { getCurrentDir } from '../../src/env/current-dir.js';
 
 it('should not retry if lock is already held by this process', async () => {
-  const lockFile = '/tmp/test-lock';
+  const lockFile = resolve(os.tmpdir(), `${Date.now()}.lock`);
   const mockFileHandle = { close: vi.fn() };
   const mockOpen = vi.fn().mockResolvedValueOnce(mockFileHandle);
   const mockEnsureDirectoryExists = vi.fn().mockResolvedValue(undefined);
