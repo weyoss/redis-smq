@@ -172,7 +172,7 @@ export class FileLock {
   }
 
   /**
-   * Acquires an exclusive lock on the specified resource
+   * Acquires a lock on the specified resource
    * @param lockFile Lock file
    * @param options Lock acquisition options
    * @returns Promise that resolves when the lock is acquired
@@ -204,7 +204,7 @@ export class FileLock {
 
     while (attempts < retries) {
       try {
-        // Try to create the lock file with exclusive access
+        // Try to create the lock file if not exists
         const fileHandle = await open(lockFile, 'wx');
 
         // Set up an interval to update the lock file's mtime
