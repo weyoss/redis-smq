@@ -9,13 +9,14 @@
 
 import bluebird from 'bluebird';
 import esmock from 'esmock';
+import os from 'node:os';
 import { resolve } from 'path';
 import { expect, it, vi } from 'vitest';
 import { getCurrentDir } from '../../src/env/current-dir.js';
 
 it('should attempt to clean up all locks on process exit', async () => {
-  const lockFile1 = '/tmp/test-lock-file-1';
-  const lockFile2 = '/tmp/test-lock-file-2';
+  const lockFile1 = resolve(os.tmpdir(), `${Date.now()}1.lock`);
+  const lockFile2 = resolve(os.tmpdir(), `${Date.now()}2.lock`);
   const mockFileHandle1 = { close: vi.fn() };
   const mockFileHandle2 = { close: vi.fn() };
   const unlinkMock = vi.fn().mockResolvedValue(undefined);

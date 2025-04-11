@@ -9,12 +9,13 @@
 
 import bluebird from 'bluebird';
 import esmock from 'esmock';
+import os from 'node:os';
 import { resolve } from 'path';
 import { expect, it, vi } from 'vitest';
 import { getCurrentDir } from '../../src/env/current-dir.js';
 
 it('should update lock file modification time at regular intervals', async () => {
-  const lockFile = '/tmp/test-lock-file';
+  const lockFile = resolve(os.tmpdir(), `${Date.now()}.lock`);
   const mockFileHandle = { close: vi.fn() };
   const utimesMock = vi.fn().mockResolvedValue(undefined);
 
