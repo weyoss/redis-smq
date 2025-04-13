@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [8.0.0](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.36...v8.0.0) (2025-04-13)
+
+### 🚀 Chore
+
+- expand release script options with semantic versioning commands ([0b3794a](https://github.com/weyoss/redis-smq/commit/0b3794a2fcc700892ff3f68cdb37e53f358fd90e))
+
+### 📝 Documentation
+
+- add release notes for RedisSMQ v8 ([81835e2](https://github.com/weyoss/redis-smq/commit/81835e22a3216a3c27199389681b610400128461))
+- update README with v8 release announcement ([99b977f](https://github.com/weyoss/redis-smq/commit/99b977f01bc327c5323196ddeafd620202b80f6a))
+
 ## [8.0.0-rc.36](https://github.com/weyoss/redis-smq/compare/v8.0.0-rc.35...v8.0.0-rc.36) (2025-04-11)
 
 ### ⚠ BREAKING CHANGES
