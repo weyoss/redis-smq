@@ -29,8 +29,8 @@ To help you get up and running with RedisSMQ, we’ve organized essential resour
 - **[Performance](performance.md)**: Learn about the performance of RedisSMQ.
 - **[RedisSMQ Architecture](redis-smq-architecture.md)**: Gain insights into the architectural design of RedisSMQ.
 - **[Logs](https://github.com/weyoss/redis-smq-common/blob/master/docs/README.md#logs)**: Learn how to access and utilize logs for monitoring and debugging.
-- **[HTTP REST API](redis-smq-rest-api.md)**: Access the HTTP API for integrating RedisSMQ with other applications.
-- **[Web UI](redis-smq-web-ui.md)**: Explore the web interface for easy management of RedisSMQ.
+- **[HTTP REST API](../../../packages/redis-smq-rest-api/README.md)**: Access the HTTP API for integrating RedisSMQ with other applications.
+- **[Web UI](../../../packages/redis-smq-web-ui/README.md)**: Explore the web interface for easy management of RedisSMQ.
 - **[ESM & CJS Modules](esm-cjs-modules.md)**: Find out how to work with ECMAScript Modules and CommonJS modules.
 
 We hope this documentation serves as a valuable resource as you implement and use RedisSMQ in your projects!

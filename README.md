@@ -22,7 +22,7 @@ A High-Performance Redis Simple Message Queue for Node.js
 - ⏱️ [Message expiration and consumption timeout](packages/redis-smq/docs/messages.md)
 - 🚦 [Queue rate limiting for controlling message consumption rates](packages/redis-smq/docs/queue-rate-limiting.md)
 - 🕰️ [Built-in scheduler for delayed message delivery and repeating messages](packages/redis-smq/docs/scheduling-messages.md)
-- 🌐 [RESTful API](packages/redis-smq/docs/redis-smq-rest-api.md) and [Web UI](packages/redis-smq/docs/redis-smq-web-ui.md) for interacting with the message queue
+- 🌐 [RESTful API](packages/redis-smq-rest-api/README.md) and [Web UI](packages/redis-smq-web-ui/README.md) for interacting with the message queue
 - 📦 [Support for ESM and CJS modules](packages/redis-smq/docs/esm-cjs-modules.md)
 
 **Use Cases**
