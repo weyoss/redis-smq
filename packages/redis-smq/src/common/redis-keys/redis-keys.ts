@@ -13,8 +13,11 @@ import { RedisKeysInvalidKeyError } from './errors/index.js';
 // Key segments separator
 const keySegmentSeparator = ':';
 
-// Key prefix
-const nsPrefix = 'redis-smq-rc826';
+// Keys version
+const keyVersion = `800.26`;
+
+// Keys prefix
+const keyPrefix = `redis-smq-${keyVersion}`;
 
 // Namespaces
 const globalNamespace = 'global';
@@ -53,7 +56,7 @@ function makeNamespacedKeys<T extends Record<string, ERedisKey>>(
 ): Record<Extract<keyof T, string>, string> {
   const result: Record<string, string> = {};
   for (const k in keys) {
-    result[k] = [nsPrefix, namespace, keys[k], ...rest].join(
+    result[k] = [keyPrefix, namespace, keys[k], ...rest].join(
       keySegmentSeparator,
     );
   }
