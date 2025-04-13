@@ -40,7 +40,12 @@
     "test:all": "scripts/test.sh",
     "prepare": "husky",
     "release": "scripts/release.sh",
-    "release:rc": "scripts/release.sh rc",
+    "release:patch": "scripts/release.sh patch",
+    "release:minor": "scripts/release.sh minor",
+    "release:major": "scripts/release.sh major",
+    "release:prepatch": "scripts/release.sh prepatch",
+    "release:preminor": "scripts/release.sh preminor",
+    "release:premajor": "scripts/release.sh premajor",
     "document:all": "scripts/document.sh",
     "format:all": "eslint --fix . && prettier --write ."
   },
