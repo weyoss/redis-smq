@@ -7,6 +7,10 @@ A High-Performance Redis Simple Message Queue for Node.js
 [![Latest Release](https://img.shields.io/github/v/release/weyoss/redis-smq?include_prereleases&label=release&color=green&style=flat-square)](https://github.com/weyoss/redis-smq/releases)
 ![Downloads](https://img.shields.io/npm/dm/redis-smq.svg?style=flat-square)
 
+**What's New**
+
+✨ V8 is here! Major architecture improvements, Pub/Sub delivery model, worker threads, enhanced TypeScript support, and more. [See release notes](release-notes/release-v8.md).
+
 **Key Features**
 
 - 🚀 [High-performance message processing](packages/redis-smq/docs/performance.md)
@@ -33,7 +37,7 @@ A High-Performance Redis Simple Message Queue for Node.js
 To get started with RedisSMQ, you can install the library using npm:
 
 ```bash
-npm i redis-smq@rc
+npm i redis-smq
 ```
 
 Don't forget to install a Redis client. Choose either node-redis or ioredis:
