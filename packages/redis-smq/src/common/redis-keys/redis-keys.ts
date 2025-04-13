@@ -10,173 +10,288 @@
 import { IQueueParams } from '../../lib/index.js';
 import { RedisKeysInvalidKeyError } from './errors/index.js';
 
-// Key segments separator
-const keySegmentSeparator = ':';
+/**
+ * Redis key configuration constants
+ */
+const REDIS_KEY_CONFIG = {
+  /** Key segments separator */
+  SEGMENT_SEPARATOR: ':',
 
-// Keys version
-const keyVersion = `800.26`;
+  /** Keys version */
+  VERSION: '800.26',
 
-// Keys prefix
-const keyPrefix = `redis-smq-${keyVersion}`;
+  /** Global namespace identifier */
+  GLOBAL_NAMESPACE: 'global',
+} as const;
 
-// Namespaces
-const globalNamespace = 'global';
+/**
+ * Redis key prefix with version
+ */
+const KEY_PREFIX = `redis-smq-${REDIS_KEY_CONFIG.VERSION}`;
 
+/**
+ * Enum for Redis key types
+ */
 enum ERedisKey {
-  KEY_QUEUE_PENDING = 1,
-  KEY_QUEUE_PRIORITY_PENDING,
-  KEY_QUEUE_DL,
-  KEY_QUEUE_PROCESSING,
-  KEY_QUEUE_ACKNOWLEDGED,
-  KEY_QUEUE_SCHEDULED,
-  KEY_QUEUE_DELAYED,
-  KEY_QUEUE_REQUEUED,
-  KEY_QUEUE_CONSUMERS,
-  KEY_QUEUE_PROCESSING_QUEUES,
-  KEY_QUEUE_WORKERS_LOCK,
-  KEY_QUEUE_RATE_LIMIT_COUNTER,
-  KEY_QUEUE_PROPERTIES,
-  KEY_QUEUE_MESSAGES,
-  KEY_QUEUE_MESSAGE_IDS,
-  KEY_QUEUE_CONSUMER_GROUPS,
-  KEY_QUEUES,
-  KEY_CONSUMER_QUEUES,
-  KEY_CONSUMER_HEARTBEAT,
-  KEY_NS_QUEUES,
-  KEY_NAMESPACES,
-  KEY_EXCHANGE_BINDINGS,
-  KEY_FANOUT_EXCHANGES,
-  KEY_MESSAGE,
+  // Queue related keys
+  QUEUE_PENDING = 1,
+  QUEUE_PRIORITY_PENDING,
+  QUEUE_DL,
+  QUEUE_PROCESSING,
+  QUEUE_ACKNOWLEDGED,
+  QUEUE_SCHEDULED,
+  QUEUE_DELAYED,
+  QUEUE_REQUEUED,
+  QUEUE_CONSUMERS,
+  QUEUE_PROCESSING_QUEUES,
+  QUEUE_WORKERS_LOCK,
+  QUEUE_RATE_LIMIT_COUNTER,
+  QUEUE_PROPERTIES,
+  QUEUE_MESSAGES,
+  QUEUE_MESSAGE_IDS,
+  QUEUE_CONSUMER_GROUPS,
+
+  // Global keys
+  QUEUES,
+  CONSUMER_QUEUES,
+  CONSUMER_HEARTBEAT,
+  NS_QUEUES,
+  NAMESPACES,
+  EXCHANGE_BINDINGS,
+  FANOUT_EXCHANGES,
+  MESSAGE,
 }
 
-function makeNamespacedKeys<T extends Record<string, ERedisKey>>(
+/**
+ * Type for key mapping objects
+ */
+type TRedisKeyMap = Record<string, ERedisKey>;
+
+/**
+ * Creates namespaced Redis keys from a key mapping
+ *
+ * @param keys - Object mapping key names to ERedisKey values
+ * @param namespace - Namespace for the keys
+ * @param rest - Additional key segments
+ * @returns Record with the same keys but values as formatted Redis key strings
+ */
+function makeNamespacedKeys<T extends TRedisKeyMap>(
   keys: T,
   namespace: string,
   ...rest: (string | number)[]
 ): Record<Extract<keyof T, string>, string> {
   const result: Record<string, string> = {};
-  for (const k in keys) {
-    result[k] = [keyPrefix, namespace, keys[k], ...rest].join(
-      keySegmentSeparator,
+
+  for (const keyName in keys) {
+    result[keyName] = [KEY_PREFIX, namespace, keys[keyName], ...rest].join(
+      REDIS_KEY_CONFIG.SEGMENT_SEPARATOR,
     );
   }
+
   return result;
 }
 
+/**
+ * Redis keys utility functions
+ */
 export const redisKeys = {
+  /**
+   * Get keys for a specific namespace
+   *
+   * @param ns - Namespace
+   * @returns Namespace-specific keys
+   */
   getNamespaceKeys(ns: string) {
     const keys = {
-      keyNamespaceQueues: ERedisKey.KEY_NS_QUEUES,
+      keyNamespaceQueues: ERedisKey.NS_QUEUES,
     };
     return {
       ...makeNamespacedKeys(keys, ns),
     };
   },
 
+  /**
+   * Get keys for a specific queue
+   *
+   * @param queueParams - Queue parameters
+   * @param consumerGroupId - Optional consumer group ID
+   * @returns Queue-specific keys
+   */
   getQueueKeys(queueParams: IQueueParams, consumerGroupId: string | null) {
     const queueKeys = {
-      keyQueueDL: ERedisKey.KEY_QUEUE_DL,
-      keyQueueProcessingQueues: ERedisKey.KEY_QUEUE_PROCESSING_QUEUES,
-      keyQueueAcknowledged: ERedisKey.KEY_QUEUE_ACKNOWLEDGED,
-      keyQueueScheduled: ERedisKey.KEY_QUEUE_SCHEDULED,
-      keyQueueRequeued: ERedisKey.KEY_QUEUE_REQUEUED,
-      keyQueueDelayed: ERedisKey.KEY_QUEUE_DELAYED,
-      keyQueueConsumers: ERedisKey.KEY_QUEUE_CONSUMERS,
-      keyQueueRateLimitCounter: ERedisKey.KEY_QUEUE_RATE_LIMIT_COUNTER,
-      keyQueueProperties: ERedisKey.KEY_QUEUE_PROPERTIES,
-      keyQueueMessages: ERedisKey.KEY_QUEUE_MESSAGES,
-      keyQueueMessageIds: ERedisKey.KEY_QUEUE_MESSAGE_IDS,
-      keyQueueConsumerGroups: ERedisKey.KEY_QUEUE_CONSUMER_GROUPS,
-      keyQueueWorkersLock: ERedisKey.KEY_QUEUE_WORKERS_LOCK,
+      keyQueueDL: ERedisKey.QUEUE_DL,
+      keyQueueProcessingQueues: ERedisKey.QUEUE_PROCESSING_QUEUES,
+      keyQueueAcknowledged: ERedisKey.QUEUE_ACKNOWLEDGED,
+      keyQueueScheduled: ERedisKey.QUEUE_SCHEDULED,
+      keyQueueRequeued: ERedisKey.QUEUE_REQUEUED,
+      keyQueueDelayed: ERedisKey.QUEUE_DELAYED,
+      keyQueueConsumers: ERedisKey.QUEUE_CONSUMERS,
+      keyQueueRateLimitCounter: ERedisKey.QUEUE_RATE_LIMIT_COUNTER,
+      keyQueueProperties: ERedisKey.QUEUE_PROPERTIES,
+      keyQueueMessages: ERedisKey.QUEUE_MESSAGES,
+      keyQueueMessageIds: ERedisKey.QUEUE_MESSAGE_IDS,
+      keyQueueConsumerGroups: ERedisKey.QUEUE_CONSUMER_GROUPS,
+      keyQueueWorkersLock: ERedisKey.QUEUE_WORKERS_LOCK,
     };
+
     const pendingKeys = {
-      keyQueuePending: ERedisKey.KEY_QUEUE_PENDING,
-      keyQueuePriorityPending: ERedisKey.KEY_QUEUE_PRIORITY_PENDING,
+      keyQueuePending: ERedisKey.QUEUE_PENDING,
+      keyQueuePriorityPending: ERedisKey.QUEUE_PRIORITY_PENDING,
     };
+
     const payload = [queueParams.name];
+    const pendingPayload = [
+      ...payload,
+      ...(consumerGroupId ? [consumerGroupId] : []),
+    ];
+
     return {
       ...makeNamespacedKeys(queueKeys, queueParams.ns, ...payload),
+      ...makeNamespacedKeys(pendingKeys, queueParams.ns, ...pendingPayload),
+    };
+  },
+
+  /**
+   * Get keys for a specific message
+   *
+   * @param messageId - Message ID
+   * @returns Message-specific keys
+   */
+  getMessageKeys(messageId: string) {
+    const messageKeys = {
+      keyMessage: ERedisKey.MESSAGE,
+    };
+    return {
       ...makeNamespacedKeys(
-        pendingKeys,
-        queueParams.ns,
-        ...payload,
-        ...(consumerGroupId ? [consumerGroupId] : []),
+        messageKeys,
+        REDIS_KEY_CONFIG.GLOBAL_NAMESPACE,
+        messageId,
       ),
     };
   },
 
-  getMessageKeys(messageId: string) {
-    const exchangeKeys = {
-      keyMessage: ERedisKey.KEY_MESSAGE,
-    };
-    return {
-      ...makeNamespacedKeys(exchangeKeys, globalNamespace, messageId),
-    };
-  },
-
+  /**
+   * Get keys for a fanout exchange
+   *
+   * @param bindingKey - Exchange binding key
+   * @returns Exchange-specific keys
+   */
   getFanOutExchangeKeys(bindingKey: string) {
     const exchangeKeys = {
-      keyExchangeBindings: ERedisKey.KEY_EXCHANGE_BINDINGS,
+      keyExchangeBindings: ERedisKey.EXCHANGE_BINDINGS,
     };
     return {
-      ...makeNamespacedKeys(exchangeKeys, globalNamespace, bindingKey),
+      ...makeNamespacedKeys(
+        exchangeKeys,
+        REDIS_KEY_CONFIG.GLOBAL_NAMESPACE,
+        bindingKey,
+      ),
     };
   },
 
+  /**
+   * Get keys for a consumer instance
+   *
+   * @param instanceId - Consumer instance ID
+   * @returns Consumer-specific keys
+   */
   getConsumerKeys(instanceId: string) {
     const consumerKeys = {
-      keyConsumerQueues: ERedisKey.KEY_CONSUMER_QUEUES,
-      keyConsumerHeartbeat: ERedisKey.KEY_CONSUMER_HEARTBEAT,
+      keyConsumerQueues: ERedisKey.CONSUMER_QUEUES,
+      keyConsumerHeartbeat: ERedisKey.CONSUMER_HEARTBEAT,
     };
     return {
-      ...makeNamespacedKeys(consumerKeys, globalNamespace, instanceId),
+      ...makeNamespacedKeys(
+        consumerKeys,
+        REDIS_KEY_CONFIG.GLOBAL_NAMESPACE,
+        instanceId,
+      ),
     };
   },
 
+  /**
+   * Get keys for a queue consumer
+   *
+   * @param queueParams - Queue parameters
+   * @param instanceId - Consumer instance ID
+   * @returns Queue consumer-specific keys
+   */
   getQueueConsumerKeys(queueParams: IQueueParams, instanceId: string) {
     const keys = {
-      keyQueueProcessing: ERedisKey.KEY_QUEUE_PROCESSING,
+      keyQueueProcessing: ERedisKey.QUEUE_PROCESSING,
     };
     return {
       ...makeNamespacedKeys(keys, queueParams.ns, queueParams.name, instanceId),
     };
   },
 
+  /**
+   * Get main global keys
+   *
+   * @returns Global keys
+   */
   getMainKeys() {
     const mainKeys = {
-      keyQueues: ERedisKey.KEY_QUEUES,
-      keyNamespaces: ERedisKey.KEY_NAMESPACES,
-      keyFanOutExchanges: ERedisKey.KEY_FANOUT_EXCHANGES,
+      keyQueues: ERedisKey.QUEUES,
+      keyNamespaces: ERedisKey.NAMESPACES,
+      keyFanOutExchanges: ERedisKey.FANOUT_EXCHANGES,
     };
-    return makeNamespacedKeys(mainKeys, globalNamespace);
+    return makeNamespacedKeys(mainKeys, REDIS_KEY_CONFIG.GLOBAL_NAMESPACE);
   },
 
+  /**
+   * Validate a namespace string
+   *
+   * @param ns - Namespace to validate
+   * @returns Validated namespace or error
+   */
   validateNamespace(ns: string): string | RedisKeysInvalidKeyError {
     const validated = this.validateRedisKey(ns);
-    if (validated === globalNamespace) {
+
+    if (validated instanceof RedisKeysInvalidKeyError) {
+      return validated;
+    }
+
+    if (validated === REDIS_KEY_CONFIG.GLOBAL_NAMESPACE) {
       return new RedisKeysInvalidKeyError();
     }
+
     return validated;
   },
 
+  /**
+   * Validate a Redis key string
+   *
+   * @param key - Key to validate
+   * @returns Validated key or error
+   */
   validateRedisKey(
     key: string | null | undefined,
   ): string | RedisKeysInvalidKeyError {
     if (!key || !key.length) {
       return new RedisKeysInvalidKeyError();
     }
+
     const lowerCase = key.toLowerCase();
+    // Regex matches valid key patterns, then we check if anything remains
     const filtered = lowerCase.replace(
-      /(?:[a-z][a-z0-9]?)+(?:[-_.]?[a-z0-9])*/,
+      /(?:[a-z][a-z0-9]?)+(?:[-_.]?[a-z0-9])*/g,
       '',
     );
+
     if (filtered.length) {
       return new RedisKeysInvalidKeyError();
     }
+
     return lowerCase;
   },
 
+  /**
+   * Get the key segment separator
+   *
+   * @returns Key segment separator
+   */
   getKeySegmentSeparator() {
-    return keySegmentSeparator;
+    return REDIS_KEY_CONFIG.SEGMENT_SEPARATOR;
   },
 };
