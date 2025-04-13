@@ -6,8 +6,6 @@
 This package offers an HTTP interface which allows any web capable application to interact with the RedisSMQ
 message queue using a RESTful API.
 
-Currently, RedisSMQ REST API is distributed as an RC release and is still in active development.
-
 ## Features
 
 - A clean and simple implementation as always :).
@@ -19,12 +17,12 @@ Currently, RedisSMQ REST API is distributed as an RC release and is still in act
 ## Installation
 
 ```shell
-npm i redis-smq-rest-api@rc --save
+npm i redis-smq-rest-api --save
 ```
 
 ### Prerequisites
 
-- [RedisSMQ V8](https://github.com/weyoss/redis-smq) latest RC release.
+- [RedisSMQ V8](https://github.com/weyoss/redis-smq) latest release.
 
 ## Configuration
 
