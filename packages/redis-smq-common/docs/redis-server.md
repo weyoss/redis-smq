@@ -2,6 +2,23 @@
 
 # Redis Server
 
+## Table of Contents
+- [Overview](#overview)
+- [Obtaining a Redis Binary](#obtaining-a-redis-binary)
+    - [Option 1: Install Redis](#option-1-install-redis)
+    - [Option 2: Build Redis from source](#option-2-build-redis-from-source)
+    - [Option 3: Download a pre-built Redis binary](#option-3-download-a-pre-built-redis-binary)
+- [Supported Platforms](#supported-platforms)
+- [Starting Redis server from CLI](#starting-redis-server-from-cli)
+- [Redis Server Commands Guide](#redis-server-commands-guide)
+    - [For redis-smq Developers](#for-redis-smq-developers)
+    - [For redis-smq-common Users](#for-redis-smq-common-users)
+- [Starting Redis Server Programmatically](#starting-redis-server-programmatically)
+    - [Error Handling](#error-handling)
+- [Important Notes](#important-notes)
+
+## Overview
+
 The `RedisServer` class is a lightweight utility for managing Redis server instances. It provides a simple way to start 
 and stop Redis server processes programmatically.
 
@@ -42,7 +59,7 @@ This option is simple and reliable for most environments but requires administra
 In case you cannot rely on pre-installed binaries, you can build Redis from source by running:
 
 ```shell
-pnpm -F redis-smq-common redis:build
+pnpm redis:build
 ```
 
 **Requirements**
@@ -58,7 +75,7 @@ sudo agt-get install build-essential
 Retrieve pre-built Redis binaries if building from source is not feasible.
 
 ```shell
-pnpm -F redis-smq-common redis:download
+pnpm redis:download
 ```
 
 Pre-built binaries are retrieved from GitHub (https://github.com/weyoss/valkey).
@@ -74,10 +91,54 @@ with all systems due to environment differences (e.g., GLIBC version mismatches)
 - macOS x64
 - macOS arm64
 
-## Usage Examples
+## Starting Redis server from CLI
+
+You can start the Redis server using the following command:
+
+```shell
+pnpm redis:start
+```
+
+## Redis Server Commands Guide
+
+### For redis-smq Developers
+
+When developing the redis-smq project itself, use these commands from the project root:
+
+```bash
+# Build Redis from source
+pnpm redis:build
+
+# Download pre-built Redis binary
+pnpm redis:download
+
+# Start Redis server
+pnpm redis:start
+```
+
+These commands are defined in the project's scripts and will properly handle the Redis server operations within the development environment.
+
+### For redis-smq-common Users
+
+If you've installed redis-smq-common as a dependency in your project, use these commands:
+
+```bash
+# Build Redis from source
+npx redis-smq-common redis --build-from-source
+
+# Download pre-built Redis binary
+npx redis-smq-common redis --download-binary
+
+# Start Redis server
+npx redis-smq-common redis --start-server
+```
+
+## Starting Redis Server Programmatically
+
+Use the `RedisServer` class to start and stop Redis instances in your application.
 
 ```javascript
-import { RedisServer } from './redis-server';
+import { RedisServer } from 'redis-smq-common';
 
 const redisServer = new RedisServer();
 
@@ -92,7 +153,7 @@ await redisServer.start(3333);
 await redisServer.shutdown();
 ```
 
-## Error Handling
+### Error Handling
 
 It's important to implement proper error handling when working with the Redis server:
 

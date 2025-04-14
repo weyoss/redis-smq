@@ -73,9 +73,7 @@
   "scripts": {
     "test": "../../scripts/test_workspace_esm.sh",
     "build": "scripts/build.sh",
-    "document": "scripts/document.sh",
-    "redis:download": "node ./dist/esm/bin/cli.js redis --download-binary",
-    "redis:build": "node ./dist/esm/bin/cli.js redis --build-from-source"
+    "document": "scripts/document.sh"
   },
   "bin": {
     "redis-smq-common": "./dist/esm/bin/cli.js"

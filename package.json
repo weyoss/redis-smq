@@ -47,7 +47,10 @@
     "release:preminor": "scripts/release.sh preminor",
     "release:premajor": "scripts/release.sh premajor",
     "document:all": "scripts/document.sh",
-    "format:all": "eslint --fix . && prettier --write ."
+    "format:all": "eslint --fix . && prettier --write .",
+    "redis:start": "scripts/redis.sh start",
+    "redis:download": "scripts/redis.sh download",
+    "redis:build": "scripts/redis.sh build"
   },
   "lint-staged": {
     "*.(js|ts|json)": [

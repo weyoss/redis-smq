@@ -49,6 +49,7 @@ Welcome to the RedisSMQ documentation! This comprehensive guide will help you im
 
 - **[HTTP REST API](../../../packages/redis-smq-rest-api/README.md)**: Access the HTTP API for integrating RedisSMQ with other applications
 - **[Web UI](../../../packages/redis-smq-web-ui/README.md)**: Explore the web interface for easy management of RedisSMQ
+- **[Redis Server](../../../packages/redis-smq-common/docs/redis-server.md)**: Learn how to start a Redis server instance for development and testing
 
 ## Reference
 
