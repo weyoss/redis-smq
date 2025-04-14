@@ -37,15 +37,15 @@ A High-Performance Redis Simple Message Queue for Node.js
 To get started with RedisSMQ, you can install the library using npm:
 
 ```bash
-npm i redis-smq
+npm i redis-smq@latest redis-smq-common@latest --save
 ```
 
 Don't forget to install a Redis client. Choose either node-redis or ioredis:
 
 ```shell
-npm install @redis/client
+npm install @redis/client --save
 # or
-npm install ioredis
+npm install ioredis --save
 ```
 
 **Configuration**
@@ -54,7 +54,8 @@ Set up the RedisSMQ configuration during your application bootstrap:
 
 ```javascript
 'use strict';
-const { Configuration, ERedisConfigClient } = require('redis-smq');
+const { Configuration } = require('redis-smq');
+const { ERedisConfigClient } = require('redis-smq-common');
 
 const config = {
   redis: {
