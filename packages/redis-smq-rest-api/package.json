@@ -1,6 +1,6 @@
 {
   "name": "redis-smq-rest-api",
-  "version": "8.0.2",
+  "version": "8.0.3",
   "description": "A RESTful API for RedisSMQ",
   "author": "Weyoss <weyoss@protonmail.com>",
   "license": "MIT",
