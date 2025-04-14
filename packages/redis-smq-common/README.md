@@ -6,3 +6,7 @@
 This package provides essential components that are used by RedisSMQ and other RedisSMQ-related packages.
 
 For more detailed information about the package's components and their usage, visit the [documentation page](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-common/docs).
+
+## License
+
+This project is licensed under is released under the [MIT License](https://github.com/weyoss/redis-smq/blob/master/LICENSE).

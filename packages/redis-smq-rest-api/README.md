@@ -3,31 +3,50 @@
 [![Latest Release](https://img.shields.io/github/v/release/weyoss/redis-smq?include_prereleases&label=release&color=green&style=flat-square)](https://github.com/weyoss/redis-smq/releases)
 [![Code Coverage](https://img.shields.io/codecov/c/github/weyoss/redis-smq?flag=redis-smq-rest-api&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/master/packages/redis-smq-rest-api)
 
-This package offers an HTTP interface which allows any web capable application to interact with the RedisSMQ
-message queue using a RESTful API.
+RedisSMQ REST API provides an HTTP interface enabling any web-capable application to interact with the RedisSMQ message 
+queue using a RESTful API.
 
 ## Features
 
-- A clean and simple implementation as always :).
-- Strict Request/Response validation based on [JSON Schema](https://json-schema.org/).
-- Native [OpenAPI v3](https://www.openapis.org/) support and [Swagger](https://swagger.io/) for developers.
-- Rigorously tested codebase with code coverage no less than 90%.
-- Both ESM & CJS modules are supported.
+- 🚀 Clean and efficient implementation
+- ✅ Strict request/response validation using [JSON Schema](https://json-schema.org/)
+- 📚 Native [OpenAPI v3](https://www.openapis.org/) support and [Swagger UI](https://swagger.io/)
+- 🧪 90%+ code coverage with extensive testing
+- 📦 Support for both ESM & CJS modules
 
-## Installation
 
-```shell
-npm i redis-smq-rest-api --save
-```
-
-### Prerequisites
+## Prerequisites
 
 - [RedisSMQ V8](https://github.com/weyoss/redis-smq) latest release.
 
+## Installation
+
+```bash
+# Using npm
+npm install redis-smq-rest-api --save
+
+# Using yarn
+yarn add redis-smq-rest-api
+
+# Using pnpm
+pnpm add redis-smq-rest-api
+```
+
+## Version Compatibility
+
+⚠️ Important: Always install matching versions of RedisSMQ packages to ensure compatibility.
+
+```bash
+npm install redis-smq@x.x.x redis-smq-rest-api@x.x.x @redis-smq/common@x.x.x
+```
+
+See [version compatibility](https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/version-compatibility.md) for details.
+
 ## Configuration
 
-The REST API configuration extends [RedisSMQ Configuration](https://github.com/weyoss/redis-smq/blob/master/docs/configuration.md)
-while adding the API server configuration.
+The REST API configuration extends the base [RedisSMQ configuration](https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/configuration.md) with additional API server settings.
+
+### Configuration Options
 
 ```typescript
 export type THttpApiConfig = {
@@ -39,6 +58,27 @@ export type THttpApiConfig = {
 export interface IRedisSMQHttpApiConfig extends IRedisSMQConfig {
   apiServer?: THttpApiConfig;
 }
+```
+
+### Configuration Examples
+
+```typescript
+import { RedisSmqRestApi } from 'redis-smq-rest-api';
+
+// Basic configuration
+const basicConfig: IRedisSMQHttpApiConfig = {
+  redis: {
+    client: 'ioredis',
+    options: {
+      host: '127.0.0.1',
+      port: 6379,
+    },
+  },
+  apiServer: {
+    host: '127.0.0.1',
+    port: 7210,
+  },
+};
 ```
 
 ## Usage
@@ -64,11 +104,28 @@ const apiServer = new RedisSmqRestApi(config);
 apiServer.run();
 ```
 
-## API Reference
+## API Documentation
 
-Once your RedisSMQ API server is up and running you may view the API Reference and try it directly from
-the Swagger UI which is accessible via `http://<HOSTAME:PORT>/docs`.
+### Swagger UI
 
-## OpenAPI Specification
+Access the interactive API documentation at:
 
-The OpenAPI specification is available at `http://<HOSTAME:PORT>/assets/openapi-specs.json`
+```text
+http://<HOSTNAME>:<PORT>/docs
+```
+
+### OpenAPI Specification
+
+Download the OpenAPI specification at:
+
+```text
+http://<HOSTNAME>:<PORT>/assets/openapi-specs.json
+```
+
+## Available Endpoints
+
+For detailed endpoint documentation, refer to the Swagger UI.
+
+## License
+
+This project is licensed under is released under the [MIT License](https://github.com/weyoss/redis-smq/blob/master/LICENSE).

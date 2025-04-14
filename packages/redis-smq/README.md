@@ -5,4 +5,9 @@
 
 A High-Performance Redis Simple Message Queue for Node.js.
 
-The source code and documentation for RedisSMQ are in the main [redis-smq](https://github.com/weyoss/redis-smq) repo.
+The source code and documentation for RedisSMQ are in the main [redis-smq](https://github.com/weyoss/redis-smq) repository.
+
+## License
+
+This project is licensed under is released under the [MIT License](https://github.com/weyoss/redis-smq/blob/master/LICENSE).
+
