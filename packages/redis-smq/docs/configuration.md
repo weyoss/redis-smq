@@ -11,7 +11,8 @@ RedisSMQ provides a singleton class for configuration. Below is an example of ho
 
 ```javascript
 'use strict';
-const { Configuration, ERedisConfigClient } = require('redis-smq');
+const { Configuration } = require('redis-smq');
+const { ERedisConfigClient } = require('redis-smq-common');
 
 const config = {
   redis: {
@@ -38,7 +39,7 @@ Here’s an example of a complete RedisSMQ configuration:
 
 ```javascript
 'use strict';
-const { ERedisConfigClient } = require('redis-smq');
+const { ERedisConfigClient } = require('redis-smq-common');
 
 module.exports = {
   namespace: 'my_project_name',
