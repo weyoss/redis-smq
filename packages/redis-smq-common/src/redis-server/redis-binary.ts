@@ -23,14 +23,14 @@ import { RedisServerUnsupportedPlatformError } from './errors/index.js';
 // Pre-built Redis binary URLs for supported platforms and architectures
 const tarballs: Record<string, Record<string, string>> = {
   linux: {
-    x64: 'https://github.com/weyoss/valkey/releases/download/v7.2.8-1/valkey-server-linux-x64-v7.2.8-1.tar.gz',
+    x64: 'https://github.com/weyoss/valkey/releases/download/v7.2.8-2/valkey-server-linux-x64-v7.2.8-2.tar.gz',
     arm64:
-      'https://github.com/weyoss/valkey/releases/download/v7.2.8-1/valkey-server-linux-arm64-v7.2.8-1.tar.gz',
+      'https://github.com/weyoss/valkey/releases/download/v7.2.8-2/valkey-server-linux-arm64-v7.2.8-2.tar.gz',
   },
   darwin: {
-    x64: 'https://github.com/weyoss/valkey/releases/download/v7.2.8-1/valkey-server-macos-x64-v7.2.8-1.tar.gz',
+    x64: 'https://github.com/weyoss/valkey/releases/download/v7.2.8-2/valkey-server-macos-x64-v7.2.8-2.tar.gz',
     arm64:
-      'https://github.com/weyoss/valkey/releases/download/v7.2.8-1/valkey-server-macos-arm64-v7.2.8-1.tar.gz',
+      'https://github.com/weyoss/valkey/releases/download/v7.2.8-2/valkey-server-macos-arm64-v7.2.8-2.tar.gz',
   },
 };
 
