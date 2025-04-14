@@ -2,7 +2,8 @@
 # RedisSMQ V8 Release Notes
 
 ## Overview
-RedisSMQ v8 represents a major evolution of our message queue system, with significant improvements to architecture, performance, and developer experience. This release focuses on reliability, scalability, and modern development practices.
+RedisSMQ v8 represents a major evolution of our message queue system, with significant improvements to architecture, 
+performance, and developer experience. This release focuses on reliability, scalability, and modern development practices.
 
 ## Table of Contents
 - [Overview](#overview)
@@ -15,14 +16,14 @@ RedisSMQ v8 represents a major evolution of our message queue system, with signi
 ## New Features
 
 ### Core Architecture
-- **Reworked System Design**: Refactored the message queue core codebase to support multiple message types and delivery models with focus on reliability and scalability
-- **Queue-Scoped Workers**: Replaced global workers with queue-scoped workers for better resource allocation and management
-- **Migration to Monorepo**: Restructured into a monorepo architecture for improved package organization, dependency management, and development workflow
+- **System Redesign**: Updated the core codebase to support multiple message types and delivery models for better reliability and scalability
+- **Queue-Scoped Workers**: Replaced global workers with workers specific to each queue for better resource management
+- **Monorepo Structure**: Moved to a monorepo setup for easier package organization, dependency management, and development workflow
 
 ### Messaging
-- **Pub/Sub Delivery Model**: Implemented a publish/subscribe pattern alongside existing queue models, enabling broadcast messaging to multiple consumers
-- **Message Tracking System**: Added comprehensive message lifecycle tracking with unique IDs from publication to consumption
-- **Message Envelope Architecture**: Redesigned with `ProducibleMessage`/`ConsumableMessage`/`MessageEnvelope` for clearer separation of concerns
+- **Pub/Sub Model**: Implemented a publish/subscribe pattern alongside existing queue models, enabling broadcast messaging to multiple consumers
+- **Message Tracking**: Added comprehensive message lifecycle tracking with unique IDs from publication to consumption
+- **Message Envelope**: Redesigned messages into  `ProducibleMessage`, `ConsumableMessage`, and `MessageEnvelope` for clearer separation of concerns
 
 ### API
 - **Enhanced Message Status API**: Introduced `getMessageStatus()` method and status tracking for improved visibility into message processing
@@ -34,30 +35,30 @@ RedisSMQ v8 represents a major evolution of our message queue system, with signi
 ## Improvements
 
 ### Performance & Reliability
-- **LUA-Based Operations**: Migrated Redis operations to LUA scripts for atomic execution, improved performance, and data consistency
-- **Worker Threads**: Added support for isolating message handlers in separate worker threads to prevent blocking the main event loop
-- **Async Error Handling**: Implemented robust error handling patterns for asynchronous operations
+- **LUA Scripts**: Moved Redis operations to LUA scripts for atomic execution, better performance, and data consistency
+- **Worker Threads**: Enabled running message handlers in separate threads for better isolation and performance
+- **Async Error Handling**: Improved error handling patterns for asynchronous operations
 
 ### Developer Experience
-- **Enhanced TypeScript Definitions**: Improved type definitions throughout the codebase for better IDE integration and compile-time checks
-- **Unified Event System**: Consolidated consumer/producer event listeners into a consistent, predictable API
+- **TypeScript Definitions:**: Improved type definitions throughout the codebase
+- **Unified Events**: Simplified event listeners into a consistent API
 - **Typed Events**: Implemented TypeScript event types for improved type safety and developer experience
-- **Granular Error Handling**: Developed specialized error classes for precise error reporting and handling
-- **PNPM Package Manager**: Replaced NPM with PNPM for faster, more efficient package management
+- **Error Classes**: Developed specialized error classes for precise error reporting
+- **PNPM**: Switched to PNPM for faster and more efficient package management
 
 ### Code Quality
-- **Code Structure Optimization**: Refactored for improved readability, maintainability, and adherence to best practices
-- **Standardized Patterns**: Implemented consistent design patterns throughout the codebase
-- **Enhanced Testing Framework**: Migrated to vitest framework for more effective testing
+- **Code Refactoring**: Improved readability, maintainability, and adherence to best practices
+- **Standard Patterns**: Applied consistent design patterns throughout the codebase
+- **Testing Framework**: Migrated to vitest for more effective testing
 
 ## Breaking Changes
 - **API Changes**: Several API changes require updates to existing code
-- **Data Structure Compatibility**: Redis data structures are NOT compatible with v7.x
+- **Data Structure**: Redis data structures are NOT compatible with v7.x
 
 ## Compatibility
-- **Node.js Compatibility**: Supports Node.js v20 and above, with full testing on v20 and v22
-- **Redis Compatibility**: Supports Redis v4 and above, with full testing on v7.2.8
+- **Node.js**: Supports Node.js v20 and above, with full testing on v20
+- **Redis**: Supports Redis v4 and above, with full testing on v7.2.8
 
 ## Documentation
-- **Interactive API Documentation**: Completely revamped API documentation with interactive examples and detailed explanations
-- **Architectural Diagrams**: Added new system architecture, message flow, and component interaction diagrams
+- **API Documentation and Guides**: Completely revamped API documentation with interactive examples and detailed explanations
+- **Diagrams**: Added new diagrams illustrating queuing models and queue delivery models
