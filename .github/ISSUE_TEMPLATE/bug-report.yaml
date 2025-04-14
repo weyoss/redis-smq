@@ -1,0 +1,88 @@
+name: Bug Report 🐛
+description: Create a bug report for RedisSMQ
+labels: ['type: bug']
+body:
+  - type: checkboxes
+    attributes:
+      label: Verify latest release
+      description: 'Please try the latest version of RedisSMQ and check if the issue still exists before creating a new one.'
+      options:
+        - label: I verified that the issue exists in the latest RedisSMQ release
+
+  - type: dropdown
+    attributes:
+      label: Which package(s) of RedisSMQ are affected? (leave empty if unsure)
+      multiple: true
+      options:
+        - 'RedisSMQ (redis-smq)'
+        - 'RedisSMQ Common Library (redis-smq-common)'
+        - 'RedisSMQ REST API (redis-smq-rest-api)'
+        - 'RedisSMQ Web UI (redis-smq-web-ui)'
+
+  - type: input
+    attributes:
+      label: Link to the code that reproduces this issue or a replay of the bug
+      description: |
+        A link to a GitHub repository minimal reproduction. If a minimal reproduction can't be created please share a replay of the bug which doesn't require sharing a private repo.
+
+  - type: textarea
+    id: reproduction_steps
+    attributes:
+      label: Reproduction steps
+      description: "How do you trigger this bug? Please walk us through it step by step."
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: ----------------------------
+
+  - type: textarea
+    attributes:
+      label: Describe the Bug
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: ----------------------------
+
+  - type: textarea
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: ----------------------------
+
+  - type: input
+    attributes:
+      label: Which Node.js version are you using?
+      description: 'Please specify the exact version. For example: 20.19.0'
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: ----------------------------
+
+  - type: input
+    attributes:
+      label: Which Redis version are you using?
+      description: 'Please specify the exact version. For example: 7.2.8'
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: operating-systems
+    attributes:
+      label: Which operating systems have you used?
+      description: You may select more than one.
+      options:
+        - label: macOS
+        - label: Windows
+        - label: Linux
