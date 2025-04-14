@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [8.0.2](https://github.com/weyoss/redis-smq/compare/v8.0.1...v8.0.2) (2025-04-14)
+
+### 🚀 Chore
+
+- **redis-smq-common:** update Valkey server binary URLs to v7.2.8-2 ([e6b9b8d](https://github.com/weyoss/redis-smq/commit/e6b9b8d31af9d321b3ad208bebabd09171932822))
+
+### 📝 Documentation
+
+- **redis-smq-common:** update package description and documentation link ([3a5d91c](https://github.com/weyoss/redis-smq/commit/3a5d91c05faed92c395eaa541c346d8ecb5273b7))
+- reorganize and enhance documentation across packages ([212fe75](https://github.com/weyoss/redis-smq/commit/212fe75143f1c446045c346e460065215e98f1d7))
+- simplify and streamline v8 release notes ([60ab227](https://github.com/weyoss/redis-smq/commit/60ab22750d213236a9bb157ab3a4ef7e60dacdd4))
+
 ## [8.0.1](https://github.com/weyoss/redis-smq/compare/v8.0.0...v8.0.1) (2025-04-13)
 
 ### 📝 Documentation
