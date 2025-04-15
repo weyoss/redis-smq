@@ -1,17 +1,32 @@
-name: Bug Report 🐛
-description: Create a bug report for RedisSMQ
+name: 🐛 Bug Report
+description: Create a detailed bug report to help us improve RedisSMQ
 labels: ['type: bug']
 body:
-  - type: checkboxes
+  - type: markdown
     attributes:
-      label: Verify latest release
-      description: 'Please try the latest version of RedisSMQ and check if the issue still exists before creating a new one.'
+      value: |
+        ## Thanks for taking the time to report this issue!
+        
+        The more information you provide, the faster we can identify and fix the problem.
+        Please fill out the sections below to help us reproduce and resolve the issue.
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: 🔍 Prerequisites
+      description: 'Please verify you have completed these steps before submitting your bug report.'
       options:
+        - label: I have searched existing issues to avoid creating duplicates
+          required: true
         - label: I verified that the issue exists in the latest RedisSMQ release
+          required: true
+        - label: I have included steps to reproduce the issue
+          required: true
 
   - type: dropdown
     attributes:
-      label: Which package(s) of RedisSMQ are affected? (leave empty if unsure)
+      label: 📦 Affected Package(s)
+      description: 'Which RedisSMQ package(s) are experiencing the issue? Select all that apply.'
       multiple: true
       options:
         - 'RedisSMQ (redis-smq)'
@@ -19,70 +34,90 @@ body:
         - 'RedisSMQ REST API (redis-smq-rest-api)'
         - 'RedisSMQ Web UI (redis-smq-web-ui)'
 
-  - type: input
+  - type: textarea
+    id: bug_description
     attributes:
-      label: Link to the code that reproduces this issue or a replay of the bug
-      description: |
-        A link to a GitHub repository minimal reproduction. If a minimal reproduction can't be created please share a replay of the bug which doesn't require sharing a private repo.
+      label: 🔴 Bug Description
+      description: "Provide a clear and concise description of what the bug is. What exactly is happening?"
+      placeholder: "When I attempt to process messages with high concurrency, the queue stops processing after approximately 1000 messages..."
+    validations:
+      required: true
 
   - type: textarea
     id: reproduction_steps
     attributes:
-      label: Reproduction steps
-      description: "How do you trigger this bug? Please walk us through it step by step."
+      label: 🔄 Steps to Reproduce
+      description: "How can we reproduce this issue? Please provide detailed steps, code snippets, or configuration details."
+      placeholder: |
+        1. Set up RedisSMQ with the following configuration...
+        2. Create a queue with these parameters...
+        3. Send X number of messages to the queue...
+        4. Observe that...
     validations:
       required: true
-
-  - type: markdown
-    attributes:
-      value: ----------------------------
-
-  - type: textarea
-    attributes:
-      label: Describe the Bug
-      description: A clear and concise description of what the bug is.
-    validations:
-      required: true
-
-  - type: markdown
-    attributes:
-      value: ----------------------------
-
-  - type: textarea
-    attributes:
-      label: Expected Behavior
-      description: A clear and concise description of what you expected to happen.
-    validations:
-      required: true
-
-  - type: markdown
-    attributes:
-      value: ----------------------------
 
   - type: input
     attributes:
-      label: Which Node.js version are you using?
-      description: 'Please specify the exact version. For example: 20.19.0'
+      label: 🔗 Reproduction Repository
+      description: |
+        If possible, provide a link to a minimal GitHub repository that reproduces the issue.
+        This dramatically speeds up our ability to diagnose and fix the problem.
+      placeholder: "https://github.com/username/redis-smq-bug-demo"
+
+  - type: textarea
+    attributes:
+      label: ✅ Expected Behavior
+      description: "What did you expect to happen instead of the current behavior?"
+      placeholder: "The queue should continue processing all messages without interruption..."
     validations:
       required: true
 
   - type: markdown
     attributes:
-      value: ----------------------------
+      value: |
+        ## Environment Information
+        Please provide details about your environment to help us understand the context of the issue.
 
   - type: input
     attributes:
-      label: Which Redis version are you using?
-      description: 'Please specify the exact version. For example: 7.2.8'
+      label: 📊 RedisSMQ Version
+      description: 'Which version of RedisSMQ are you using?'
+      placeholder: '7.1.0'
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: 🟢 Node.js Version
+      description: 'Please specify the exact Node.js version you are using.'
+      placeholder: '20.19.0'
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: 🔴 Redis Version
+      description: 'Please specify the exact Redis version you are using.'
+      placeholder: '7.2.8'
     validations:
       required: true
 
   - type: checkboxes
     id: operating-systems
     attributes:
-      label: Which operating systems have you used?
-      description: You may select more than one.
+      label: 💻 Operating System
+      description: Which operating system(s) are you experiencing the issue on?
       options:
         - label: macOS
         - label: Windows
         - label: Linux
+        - label: Docker/Container
+
+  - type: textarea
+    id: additional_information
+    attributes:
+      label: 📝 Additional Information
+      description: |
+        Include any logs, error messages, or additional context that might help us understand the issue.
+        If applicable, describe any workarounds you've tried.
+      placeholder: "Error logs, Redis configuration details, or other relevant information..."

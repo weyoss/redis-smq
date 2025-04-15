@@ -1,41 +1,67 @@
-name: Feature Request 💡
-description: Suggest a new feature for RedisSMQ
+
+name: 💡 Feature Request
+description: Suggest a new feature or enhancement for RedisSMQ
 labels: ['type: feature']
 body:
   - type: markdown
     attributes:
       value: |
-        These issues are for **concrete and actionable proposals**.
+        Thanks for taking the time to suggest an improvement to RedisSMQ! 
+        
+        These issues are for **concrete and actionable proposals** that can enhance the functionality of RedisSMQ.
+        Please provide as much detail as possible to help us understand your request.
 
   - type: textarea
     id: user-story
     attributes:
-      label: Describe the user story
-      description:  |
-        A clear and concise description of what workflow is meant to be improved. Example: "As a developer, I often want to do <something>, but I often face <problem>".
+      label: 👤 User Story
+      description: |
+        A clear and concise description of what workflow is meant to be improved. 
+        Example: "As a message queue developer, I often need to do <something> with RedisSMQ, but I face <problem>".
+      placeholder: "As a user, I want to..."
     validations:
       required: true
 
   - type: textarea
     id: solution
     attributes:
-      label: Describe the solution you'd like
-      description: A clear and concise description of what you want to happen. Consider that pnpm is used by many people, and your particular use case might not make sense to implement in the core.
+      label: 🚀 Proposed Solution
+      description: |
+        A clear and concise description of what you want to happen. 
+        Consider how your solution would fit into RedisSMQ's architecture and benefit the broader user community.
+      placeholder: "I suggest implementing..."
     validations:
       required: true
 
   - type: textarea
     id: drawbacks
     attributes:
-      label: Describe the drawbacks of your solution
-      description: This section is important not only to identify future issues, but also for us to see whether you thought through your request. Ask yourself, what are the problems we could have maintaining what you propose? How often will it break?
+      label: ⚠️ Potential Drawbacks
+      description: |
+        Help us understand the trade-offs of your proposal. What are the potential challenges or downsides?
+        This shows you've thought through your request thoroughly and helps us evaluate feasibility.
+      placeholder: "Some challenges might include..."
     validations:
       required: false
 
   - type: textarea
     id: alternatives
     attributes:
-      label: Describe alternatives you've considered
-      description: A clear and concise description of any alternative solutions or features you've considered, and why you think they wouldn't be good enough.
+      label: 🔄 Alternatives Considered
+      description: |
+        Have you explored other ways to solve this problem? Why do you believe your proposed solution is better?
+        This helps us understand your thought process and might reveal options we haven't considered.
+      placeholder: "I also considered..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: 📝 Additional Context
+      description: |
+        Add any other context, examples, or screenshots about the feature request here.
+        The more information you provide, the better we can understand your needs.
+      placeholder: "Other relevant details..."
     validations:
       required: false
