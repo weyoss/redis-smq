@@ -1,9 +1,13 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Question 🤷🏻‍♂️
+  - name: "❓ Question"
     url: https://github.com/weyoss/redis-smq/discussions/new?category=q-a
-    about: Ask questions and discuss with other community members
+    about: "Ask questions about usage, configuration, or best practices and get help from the community"
 
-  - name: Documentation
+  - name: "🆘 Support Request"
+    url: https://github.com/weyoss/redis-smq/discussions/new?category=q-a
+    about: "Need help with implementation or troubleshooting? Post your support requests here"
+
+  - name: "📚 Documentation"
     url: https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq/docs/README.md
-    about: Check the documentation before reporting issues
+    about: "Consult our comprehensive documentation for guides, API references, and examples before reporting issues"
