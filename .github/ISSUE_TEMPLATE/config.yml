@@ -1,5 +1,9 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Question 🤷🏻‍♂️
+    url: https://github.com/weyoss/redis-smq/discussions/new?category=q-a
+    about: Ask questions and discuss with other community members
+
   - name: Documentation
     url: https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq/docs/README.md
     about: Check the documentation before reporting issues
