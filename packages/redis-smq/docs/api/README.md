@@ -116,7 +116,7 @@
 - [IMessagesConfigStorageRequired](interfaces/IMessagesConfigStorageRequired.md)
 - [IQueueConsumerGroupParams](interfaces/IQueueConsumerGroupParams.md)
 - [IQueueGroupConsumersPendingCount](interfaces/IQueueGroupConsumersPendingCount.md)
-- [IQueueMessages](interfaces/IQueueMessages.md)
+- [IQueueMessageManager](interfaces/IQueueMessageManager.md)
 - [IQueueMessagesCount](interfaces/IQueueMessagesCount.md)
 - [IQueueMessagesPage](interfaces/IQueueMessagesPage.md)
 - [IQueueParams](interfaces/IQueueParams.md)

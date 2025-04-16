@@ -2,9 +2,13 @@
 
 # Class: QueueMessages
 
+QueueMessages class manages message counting and state reporting across queue types.
+It orchestrates various message handlers (pending, acknowledged, scheduled, dead-lettered)
+and leverages a waterfall pattern for processing.
+
 ## Hierarchy
 
-- `QueueMessagesPaginatorSet`
+- `QueueMessagesManagerAbstract`
 
   ↳ **`QueueMessages`**
 
@@ -34,7 +38,7 @@
 
 #### Overrides
 
-QueueMessagesPaginatorSet.constructor
+QueueMessagesManagerAbstract.constructor
 
 ## Methods
 
@@ -42,12 +46,14 @@ QueueMessagesPaginatorSet.constructor
 
 ▸ **countMessages**(`queue`, `cb`): `void`
 
+Counts the total number of messages in the queue.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
-| `cb` | `ICallback`\<`number`\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) | Extended queue parameters |
+| `cb` | `ICallback`\<`number`\> | Callback returning the count |
 
 #### Returns
 
@@ -55,7 +61,7 @@ QueueMessagesPaginatorSet.constructor
 
 #### Inherited from
 
-QueueMessagesPaginatorSet.countMessages
+QueueMessagesManagerAbstract.countMessages
 
 ___
 
@@ -63,12 +69,14 @@ ___
 
 ▸ **countMessagesByStatus**(`queue`, `cb`): `void`
 
+Count messages broken down by status: pending, acknowledged, scheduled, and dead-lettered.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
-| `cb` | `ICallback`\<[`IQueueMessagesCount`](../interfaces/IQueueMessagesCount.md)\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) | Queue string name or parameters. |
+| `cb` | `ICallback`\<[`IQueueMessagesCount`](../interfaces/IQueueMessagesCount.md)\> | Callback function returning the IQueueMessagesCount. |
 
 #### Returns
 
@@ -80,14 +88,16 @@ ___
 
 ▸ **getMessages**(`queue`, `page`, `pageSize`, `cb`): `void`
 
+Retrieves detailed messages for a specific page.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
-| `page` | `number` |
-| `pageSize` | `number` |
-| `cb` | `ICallback`\<[`IQueueMessagesPage`](../interfaces/IQueueMessagesPage.md)\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\>\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) | Extended queue parameters |
+| `page` | `number` | Page number |
+| `pageSize` | `number` | Number of items per page |
+| `cb` | `ICallback`\<[`IQueueMessagesPage`](../interfaces/IQueueMessagesPage.md)\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\>\> | Callback returning an IQueueMessagesPage of IMessageTransferable |
 
 #### Returns
 
@@ -95,7 +105,7 @@ ___
 
 #### Inherited from
 
-QueueMessagesPaginatorSet.getMessages
+QueueMessagesManagerAbstract.getMessages
 
 ___
 
@@ -103,12 +113,14 @@ ___
 
 ▸ **purge**(`queue`, `cb`): `void`
 
+Purges all messages from the queue.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
-| `cb` | `ICallback`\<`void`\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) | Extended queue parameters |
+| `cb` | `ICallback`\<`void`\> | Callback function |
 
 #### Returns
 
@@ -116,7 +128,7 @@ ___
 
 #### Inherited from
 
-QueueMessagesPaginatorSet.purge
+QueueMessagesManagerAbstract.purge
 
 ___
 
@@ -124,11 +136,13 @@ ___
 
 ▸ **shutdown**(`cb`): `void`
 
+Gracefully shut down all message handlers and parent resources.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | `ICallback`\<`void`\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `cb` | `ICallback`\<`void`\> | Callback invoked on shutdown completion. |
 
 #### Returns
 
@@ -136,4 +150,4 @@ ___
 
 #### Overrides
 
-QueueMessagesPaginatorSet.shutdown
+QueueMessagesManagerAbstract.shutdown

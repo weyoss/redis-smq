@@ -1,6 +1,6 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IQueueMessages
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IQueueMessageManager
 
-# Interface: IQueueMessages
+# Interface: IQueueMessageManager
 
 ## Implemented by
 
@@ -10,9 +10,9 @@
 
 ### Methods
 
-- [countMessages](IQueueMessages.md#countmessages)
-- [getMessages](IQueueMessages.md#getmessages)
-- [purge](IQueueMessages.md#purge)
+- [countMessages](IQueueMessageManager.md#countmessages)
+- [getMessages](IQueueMessageManager.md#getmessages)
+- [purge](IQueueMessageManager.md#purge)
 
 ## Methods
 
