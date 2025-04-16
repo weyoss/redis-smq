@@ -73,6 +73,9 @@ export async function standardCommands(config: IRedisConfig) {
   r = await client.smembersAsync('key5');
   expect(r).toEqual(['value']);
 
+  r = await client.scardAsync('key5');
+  expect(r).toEqual(1);
+
   for (let i = 0; i < 1100; i += 1) {
     r = await client.hsetAsync('key6', `k${i}`, `v${i}`);
     expect(r).toBe(1);
