@@ -36,7 +36,7 @@ ___
 
 **`See`**
 
-https://github.com/weyoss/redis-smq-common/blob/master/docs/api/interfaces/ILoggerConfig.md
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq-common/docs/api/interfaces/ILoggerConfig.md
 
 #### Inherited from
 
