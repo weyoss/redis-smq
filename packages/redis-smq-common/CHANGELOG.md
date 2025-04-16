@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [8.1.0](https://github.com/weyoss/redis-smq/compare/v8.0.3...v8.1.0) (2025-04-16)
+
+### ✨ Features
+
+- **redis-smq-common:** add scard method to Redis client ([fc0243c](https://github.com/weyoss/redis-smq/commit/fc0243ca8fda486685589f0efd97d43c932e6750))
+
+### 📝 Documentation
+
+- **redis-smq:** update documentation and interfaces ([f917cd9](https://github.com/weyoss/redis-smq/commit/f917cd92b1edfb33190f25feec5577538a64517a))
+
 ## [8.0.3](https://github.com/weyoss/redis-smq/compare/v8.0.2...v8.0.3) (2025-04-14)
 
 ### 🚀 Chore

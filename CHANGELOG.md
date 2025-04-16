@@ -3,6 +3,32 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [8.1.0](https://github.com/weyoss/redis-smq/compare/v8.0.3...v8.1.0) (2025-04-16)
+
+### ✨ Features
+
+- **redis-smq-common:** add scard method to Redis client ([fc0243c](https://github.com/weyoss/redis-smq/commit/fc0243ca8fda486685589f0efd97d43c932e6750))
+
+### 🐛 Bug Fixes
+
+- **redis-smq:** prevent duplicate message publishing for scheduled tasks ([18b1bd9](https://github.com/weyoss/redis-smq/commit/18b1bd9a6c88f714972c35cc0445c67ad8aa64e3))
+
+### 🚀 Chore
+
+- add GitHub issue templates for bug reports and feature requests ([696fe34](https://github.com/weyoss/redis-smq/commit/696fe347e166c501c3a3a35980a7ab9e52a06bde))
+- add Q&A discussion link ([d84a369](https://github.com/weyoss/redis-smq/commit/d84a3698f9bc17c3793c092b5ced800a9202a910))
+- improve issue templates with clearer labels and descriptions ([60771ce](https://github.com/weyoss/redis-smq/commit/60771ce94b44fc1f44f8dd522bd70bee473d3388))
+- update GitHub Actions dependencies to latest versions ([bf6eaff](https://github.com/weyoss/redis-smq/commit/bf6eaff951afd30b139972ecc071c1dc7aa3be3b))
+
+### 📝 Documentation
+
+- **redis-smq:** update documentation and interfaces ([f917cd9](https://github.com/weyoss/redis-smq/commit/f917cd92b1edfb33190f25feec5577538a64517a))
+
+### ♻️ Code Refactoring
+
+- **redis-smq:** improve queue message management system with storage abstractions ([20d9985](https://github.com/weyoss/redis-smq/commit/20d998592ad255731b6bca71ea5ef116c42c7bf1))
+- **redis-smq:** rename IQueueMessages interface to IQueueMessageManager ([505b555](https://github.com/weyoss/redis-smq/commit/505b5551c52acfe955b09a569f2d43e3c5cb045c))
+
 ## [8.0.3](https://github.com/weyoss/redis-smq/compare/v8.0.2...v8.0.3) (2025-04-14)
 
 ### 🚀 Chore
