@@ -16,7 +16,7 @@ import {
 
 export interface IRedisSMQConfig {
   /**
-   * @see https://github.com/weyoss/redis-smq-common/blob/master/docs/api/README.md#iredisconfig
+   * @see https://github.com/weyoss/redis-smq-common/blob/master/packages/redis-smq/docs/api/README.md#iredisconfig
    */
   redis?: IRedisConfig;
   namespace?: string;
