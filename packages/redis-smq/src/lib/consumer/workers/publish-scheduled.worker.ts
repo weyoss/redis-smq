@@ -82,9 +82,7 @@ class PublishScheduledWorker extends Worker {
             msg.getId(),
           );
           const nextScheduleTimestamp = msg.getNextScheduledTimestamp();
-          const scheduledMessageState = msg
-            .getMessageState()
-            .setLastScheduledAt(ts);
+          const scheduledMessageState = msg.getMessageState();
           const {
             keyQueueProperties,
             keyQueuePending,
@@ -101,11 +99,7 @@ class PublishScheduledWorker extends Worker {
           let newMessageId: string = '';
           let newKeyMessage: string = '';
 
-          const hasBeenUnacknowledged =
-            msg.producibleMessage.getRetryDelay() > 0 &&
-            msg.getMessageState().getAttempts() > 0;
-
-          if (!hasBeenUnacknowledged) {
+          if (nextScheduleTimestamp) {
             newMessage = _fromMessage(msg, null, null);
             newMessage.producibleMessage.resetScheduledParams();
             newMessageState = newMessage
@@ -114,6 +108,9 @@ class PublishScheduledWorker extends Worker {
               .setScheduledMessageId(msg.getId());
             newMessageId = newMessageState.getId();
             newKeyMessage = redisKeys.getMessageKeys(newMessageId).keyMessage;
+            scheduledMessageState.setLastScheduledAt(ts);
+          } else {
+            scheduledMessageState.setPublishedAt(ts);
           }
 
           keys.push(
