@@ -43,7 +43,7 @@ Welcome to the RedisSMQ documentation! This comprehensive guide will help you im
 ### Operations
 
 - **[Graceful Shutdown](graceful-shutdown.md)**: Safely manage system shutdown
-- **[Logs](https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq-common/docs/README.md#logs)**: Learn how to access and utilize logs for monitoring and debugging
+- **[Logs](https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq-common/docs/logger.md)**: Learn how to access and utilize logs for monitoring and debugging
 
 ## Tools & Interfaces
 
