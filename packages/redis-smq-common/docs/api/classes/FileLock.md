@@ -36,7 +36,7 @@ stale by other processes.
 
 ▸ **acquireLock**(`lockFile`, `options?`): `Promise`\<`void`\>
 
-Acquires an exclusive lock on the specified resource
+Acquires a lock on the specified resource
 
 #### Parameters
 

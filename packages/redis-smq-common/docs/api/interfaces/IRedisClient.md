@@ -51,6 +51,7 @@
 - [rpoplpush](IRedisClient.md#rpoplpush)
 - [runScript](IRedisClient.md#runscript)
 - [sadd](IRedisClient.md#sadd)
+- [scard](IRedisClient.md#scard)
 - [set](IRedisClient.md#set)
 - [shutdown](IRedisClient.md#shutdown)
 - [sismember](IRedisClient.md#sismember)
@@ -795,6 +796,23 @@ ___
 | :------ | :------ |
 | `key` | `string` |
 | `member` | `string` |
+| `cb` | [`ICallback`](ICallback.md)\<`number`\> |
+
+#### Returns
+
+`void`
+
+___
+
+### scard
+
+▸ **scard**(`key`, `cb`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `key` | `string` |
 | `cb` | [`ICallback`](ICallback.md)\<`number`\> |
 
 #### Returns

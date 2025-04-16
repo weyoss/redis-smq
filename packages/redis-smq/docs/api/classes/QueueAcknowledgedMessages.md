@@ -4,7 +4,7 @@
 
 ## Hierarchy
 
-- `QueueMessagesPaginatorList`
+- `QueueMessagesManagerAbstract`
 
   ↳ **`QueueAcknowledgedMessages`**
 
@@ -31,9 +31,9 @@
 
 [`QueueAcknowledgedMessages`](QueueAcknowledgedMessages.md)
 
-#### Inherited from
+#### Overrides
 
-QueueMessagesPaginatorList.constructor
+QueueMessagesManagerAbstract.constructor
 
 ## Methods
 
@@ -41,12 +41,14 @@ QueueMessagesPaginatorList.constructor
 
 ▸ **countMessages**(`queue`, `cb`): `void`
 
+Counts the total number of messages in the queue.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
-| `cb` | `ICallback`\<`number`\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) | Extended queue parameters |
+| `cb` | `ICallback`\<`number`\> | Callback returning the count |
 
 #### Returns
 
@@ -54,7 +56,7 @@ QueueMessagesPaginatorList.constructor
 
 #### Inherited from
 
-QueueMessagesPaginatorList.countMessages
+QueueMessagesManagerAbstract.countMessages
 
 ___
 
@@ -62,14 +64,16 @@ ___
 
 ▸ **getMessages**(`queue`, `page`, `pageSize`, `cb`): `void`
 
+Retrieves detailed messages for a specific page.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
-| `page` | `number` |
-| `pageSize` | `number` |
-| `cb` | `ICallback`\<[`IQueueMessagesPage`](../interfaces/IQueueMessagesPage.md)\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\>\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) | Extended queue parameters |
+| `page` | `number` | Page number |
+| `pageSize` | `number` | Number of items per page |
+| `cb` | `ICallback`\<[`IQueueMessagesPage`](../interfaces/IQueueMessagesPage.md)\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\>\> | Callback returning an IQueueMessagesPage of IMessageTransferable |
 
 #### Returns
 
@@ -77,7 +81,7 @@ ___
 
 #### Inherited from
 
-QueueMessagesPaginatorList.getMessages
+QueueMessagesManagerAbstract.getMessages
 
 ___
 
@@ -85,12 +89,14 @@ ___
 
 ▸ **purge**(`queue`, `cb`): `void`
 
+Purges all messages from the queue.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
-| `cb` | `ICallback`\<`void`\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) | Extended queue parameters |
+| `cb` | `ICallback`\<`void`\> | Callback function |
 
 #### Returns
 
@@ -98,7 +104,7 @@ ___
 
 #### Inherited from
 
-QueueMessagesPaginatorList.purge
+QueueMessagesManagerAbstract.purge
 
 ___
 
@@ -106,11 +112,13 @@ ___
 
 ▸ **shutdown**(`cb`): `void`
 
+Shuts down the manager and its dependencies gracefully.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | `ICallback`\<`void`\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `cb` | `ICallback`\<`void`\> | Callback function |
 
 #### Returns
 
@@ -118,4 +126,4 @@ ___
 
 #### Inherited from
 
-QueueMessagesPaginatorList.shutdown
+QueueMessagesManagerAbstract.shutdown

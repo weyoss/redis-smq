@@ -4,7 +4,7 @@
 
 ## Implements
 
-- [`IQueueMessages`](../interfaces/IQueueMessages.md)
+- [`IQueueMessageManager`](../interfaces/IQueueMessageManager.md)
 
 ## Table of contents
 
@@ -48,7 +48,7 @@
 
 #### Implementation of
 
-[IQueueMessages](../interfaces/IQueueMessages.md).[countMessages](../interfaces/IQueueMessages.md#countmessages)
+[IQueueMessageManager](../interfaces/IQueueMessageManager.md).[countMessages](../interfaces/IQueueMessageManager.md#countmessages)
 
 ___
 
@@ -71,7 +71,7 @@ ___
 
 #### Implementation of
 
-[IQueueMessages](../interfaces/IQueueMessages.md).[getMessages](../interfaces/IQueueMessages.md#getmessages)
+[IQueueMessageManager](../interfaces/IQueueMessageManager.md).[getMessages](../interfaces/IQueueMessageManager.md#getmessages)
 
 ___
 
@@ -92,7 +92,7 @@ ___
 
 #### Implementation of
 
-[IQueueMessages](../interfaces/IQueueMessages.md).[purge](../interfaces/IQueueMessages.md#purge)
+[IQueueMessageManager](../interfaces/IQueueMessageManager.md).[purge](../interfaces/IQueueMessageManager.md#purge)
 
 ___
 
