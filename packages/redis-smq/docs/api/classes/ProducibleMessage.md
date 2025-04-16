@@ -84,7 +84,7 @@ will be processed based on its default settings, without considering its priorit
 
 **`See`**
 
-https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setpriority
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setpriority
 
 ___
 
@@ -94,7 +94,7 @@ ___
 
 Retrieves the payload of a message.
 
-See https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setbody
+See https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setbody
 
 #### Returns
 
@@ -120,7 +120,7 @@ The consumption timeout value in milliseconds.
 
 **`See`**
 
-https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setconsumetimeout
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setconsumetimeout
 
 ___
 
@@ -162,9 +162,9 @@ The exchange associated with the message.
 
 **`See`**
 
- - https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setqueue
- - https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#settopic
- - https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setfanout
+ - https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setqueue
+ - https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#settopic
+ - https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setfanout
 
 ___
 
@@ -188,7 +188,7 @@ The fan-out pattern name as a string if one has been set,
 **`See`**
 
 For more information on setting the fan-out pattern:
-     https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setfanout
+     https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setfanout
 
 ___
 
@@ -212,7 +212,7 @@ The priority level of the message as defined
 **`See`**
 
 For more information on setting the priority:
-     https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setpriority
+     https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setpriority
 
 ___
 
@@ -236,7 +236,7 @@ The queue parameters associated with the message.
 **`See`**
 
 For more information on setting the queue parameters:
-     https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setqueue
+     https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setqueue
 
 ___
 
@@ -259,7 +259,7 @@ The retry delay value in milliseconds. A value of 0 indicates no delay
 
 **`See`**
 
-https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setretrydelay
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setretrydelay
 
 ___
 
@@ -283,7 +283,7 @@ The retry threshold value. A positive integer representing the
 **`See`**
 
 For more information on setting the retry threshold:
-     https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setretrythreshold
+     https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setretrythreshold
 
 ___
 
@@ -307,7 +307,7 @@ The CRON expression as a string if one has been set,
 **`See`**
 
 For more information on setting the CRON schedule:
-     https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setscheduledcron
+     https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledcron
 
 ___
 
@@ -324,7 +324,7 @@ the message should be delayed before it is delivered to a queue.
 
 **`See`**
 
-https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setscheduleddelay
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduleddelay
 
 ___
 
@@ -347,7 +347,7 @@ The number of times the message is scheduled to repeat.
 **`See`**
 
 For more information on setting the scheduled repeat:
-     https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setscheduledrepeat
+     https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledrepeat
 
 ___
 
@@ -370,7 +370,7 @@ The scheduled repeat period in milliseconds if set,
 **`See`**
 
 For more information on setting the scheduled repeat period:
-     https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setscheduledrepeatperiod
+     https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledrepeatperiod
 
 ___
 
@@ -394,7 +394,7 @@ The TTL value in milliseconds. A value of 0 indicates that the
 **`See`**
 
 For more information on setting the TTL:
-     https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setttl
+     https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setttl
 
 ___
 
@@ -418,7 +418,7 @@ The topic parameters associated with the message.
 **`See`**
 
 For more information on setting the topic parameters:
-     https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#settopic
+     https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#settopic
 
 ___
 
@@ -441,7 +441,7 @@ level has been set, and the method returns true. Otherwise, it returns false.
 
 **`See`**
 
-https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setpriority
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setpriority
 
 ___
 
@@ -463,10 +463,10 @@ The updated `ProducibleMessage` instance with the reset scheduled parameters.
 
 **`See`**
 
- - https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setscheduledcron
- - https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setscheduleddelay
- - https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setscheduledrepeatperiod
- - https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setscheduledrepeat
+ - https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledcron
+ - https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduleddelay
+ - https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledrepeatperiod
+ - https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledrepeat
 
 ___
 
@@ -522,7 +522,7 @@ The default consumption timeout is 0, which means there is no timeout set.
 
 **`See`**
 
-https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setconsumetimeout
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setconsumetimeout
 
 ___
 
@@ -555,7 +555,7 @@ needing to duplicate the message for each queue.
 
 **`See`**
 
-https://github.com/weyoss/redis-smq/blob/master/docs/exchanges-and-delivery-models.md
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/exchanges-and-delivery-models.md
 
 ___
 
@@ -585,7 +585,7 @@ Otherwise, message priority does not take effect.
 
 **`See`**
 
-https://github.com/weyoss/redis-smq/blob/master/docs/queues.md
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/queues.md
 
 ___
 
@@ -611,7 +611,7 @@ by consumers interested in those messages.
 
 **`See`**
 
-https://github.com/weyoss/redis-smq/blob/master/docs/exchanges-and-delivery-models.md
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/exchanges-and-delivery-models.md
 
 ___
 
@@ -650,7 +650,7 @@ The default retry delay is 60000 milliseconds (1 minute).
 
 **`See`**
 
-https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setretrydelay
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setretrydelay
 
 ___
 
@@ -680,7 +680,7 @@ The default retry threshold is 3.
 
 **`See`**
 
-https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setretrythreshold
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setretrythreshold
 
 ___
 
@@ -720,7 +720,7 @@ producibleMessage.setScheduledCRON('0 0 10 * * *').setScheduledRepeat(3).setSche
 
 **`See`**
 
-https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setscheduledcron
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledcron
 
 ___
 
@@ -753,7 +753,7 @@ immediately, allowing for the system to perform any necessary operations or chec
 
 **`See`**
 
-https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setscheduledelay
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledelay
 
 ___
 
@@ -839,7 +839,7 @@ the processing of outdated messages.
 
 **`See`**
 
-https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setttl
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setttl
 
 ___
 
@@ -869,7 +869,7 @@ their content or purpose.
 
 **`See`**
 
-https://github.com/weyoss/redis-smq/blob/master/docs/exchanges-and-delivery-models.md
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/exchanges-and-delivery-models.md
 
 ___
 

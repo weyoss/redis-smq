@@ -59,8 +59,8 @@ export class Queue {
    * Save a new queue with specified parameters.
    * Upon success the callback function is invoked with the created queue details.
    *
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/api/enums/EQueueType.md
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/api/enums/EQueueDeliveryModel.md
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/enums/EQueueType.md
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/enums/EQueueDeliveryModel.md
    * @param queue - The name or parameters for the queue.
    * @param queueType - The type of the queue, defined by EQueueType.
    * @param deliveryModel - The model for message delivery, defined by EQueueDeliveryModel.

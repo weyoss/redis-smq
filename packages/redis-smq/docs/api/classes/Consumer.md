@@ -158,7 +158,7 @@ consumer.consume(
 
 **`See`**
 
-https://github.com/weyoss/redis-smq/blob/master/docs/consuming-messages.md
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/consuming-messages.md
 
 ___
 

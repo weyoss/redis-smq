@@ -131,8 +131,8 @@ Upon success the callback function is invoked with the created queue details.
 
 **`See`**
 
- - https://github.com/weyoss/redis-smq/blob/master/docs/api/enums/EQueueType.md
- - https://github.com/weyoss/redis-smq/blob/master/docs/api/enums/EQueueDeliveryModel.md
+ - https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/enums/EQueueType.md
+ - https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/enums/EQueueDeliveryModel.md
 
 ___
 
