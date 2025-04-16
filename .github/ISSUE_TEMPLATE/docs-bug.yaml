@@ -1,22 +1,22 @@
-name: 'Documentation Bug Report'
+name: '📝🐛 Documentation Bug Report'
 description: Report an issue or inaccuracy in the RedisSMQ documentation
 
 body:
   - type: markdown
     attributes:
       value: |
-        # Documentation Bug Report
+        # 📝🐛 Documentation Bug Report
         Thank you for taking the time to report a documentation issue. This helps us improve the RedisSMQ documentation for everyone.
         
-        ## Guidelines
-        - Be specific about what's incorrect or missing
-        - Include examples of what you expected to find
-        - Suggest improvements if possible
+        ## 📋 Guidelines
+        - 🔍 Be specific about what's incorrect or missing
+        - 💡 Include examples of what you expected to find
+        - ✏️ Suggest improvements if possible
 
   - type: textarea
     id: description
     attributes:
-      label: Problem Description
+      label: 🐛 Problem Description
       description: Clearly describe the issue you found in the documentation.
       placeholder: The documentation is missing information about X, contains incorrect information about Y, or is unclear about Z.
     validations:
@@ -25,7 +25,7 @@ body:
   - type: input
     id: affected-url
     attributes:
-      label: Affected Documentation URL
+      label: 🔗 Affected Documentation URL
       description: Link to the specific page or section containing the issue.
       placeholder: https://github.com/weyoss/redis-smq/wiki/...
     validations:
@@ -34,31 +34,31 @@ body:
   - type: dropdown
     id: issue-type
     attributes:
-      label: Type of Documentation Issue
+      label: 📊 Type of Documentation Issue
       description: Select the category that best describes the issue.
       options:
-        - Missing information
-        - Incorrect information
-        - Unclear explanation
-        - Outdated content
-        - Code example doesn't work
-        - Broken link
-        - Formatting/display issue
-        - Other (please specify in description)
+        - 📝 Missing information
+        - ❌ Incorrect information
+        - 🤔 Unclear explanation
+        - 🕰️ Outdated content
+        - 💻 Code example doesn't work
+        - 🔗 Broken link
+        - 🎨 Formatting/display issue
+        - 🔄 Other (please specify in description)
     validations:
       required: true
 
   - type: textarea
     id: documentation-goal
     attributes:
-      label: What Were You Looking For?
+      label: 🔍 What Were You Looking For?
       description: Describe what information you were trying to find when you encountered this issue.
       placeholder: I was trying to understand how to configure X or implement Y feature...
 
   - type: textarea
     id: reproduction-steps
     attributes:
-      label: Steps to Reproduce
+      label: 🔄 Steps to Reproduce
       description: If applicable, list the steps that led you to encounter this issue.
       placeholder: |
         1. Went to page X
@@ -69,7 +69,7 @@ body:
   - type: textarea
     id: expected-vs-actual-behavior
     attributes:
-      label: Expected vs. Actual Documentation
+      label: ⚖️ Expected vs. Actual Documentation
       description: Describe what you expected to find and what you actually found.
       placeholder: |
         Expected: Clear instructions on how to configure X with examples.
@@ -78,26 +78,26 @@ body:
   - type: textarea
     id: suggested-fix
     attributes:
-      label: Suggested Improvement
+      label: 💡 Suggested Improvement
       description: If possible, suggest how the documentation could be improved.
       placeholder: Adding a code example showing how to configure X would make this clearer.
 
   - type: textarea
     id: screenshot
     attributes:
-      label: Screenshots
+      label: 📸 Screenshots
       description: If applicable, add screenshots to help explain the problem.
       placeholder: Drag and drop images here to upload them.
 
   - type: textarea
     id: additional-info
     attributes:
-      label: Additional Information
+      label: ℹ️ Additional Information
       description: Any other context that might help us understand and address the issue.
       placeholder: Version of RedisSMQ you're using, related issues, etc.
 
   - type: markdown
     attributes:
       value: |
-        ## Thank You!
+        ## 🙏 Thank You!
         Your contribution helps make RedisSMQ documentation better for everyone.
