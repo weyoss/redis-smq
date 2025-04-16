@@ -26,6 +26,6 @@ queuing and processing.
 
 &nbsp;
 
-![RedisSMQ Architecture Overview](/docs/redis-smq-architecture-overview.png)
+![RedisSMQ Architecture Overview](/packages/redis-smq/docs/redis-smq-architecture-overview.png)
 
 This structured workflow ensures efficient message handling, error management, and allows for seamless interactions between producers and consumers.

@@ -294,7 +294,7 @@ export class ProducibleMessage {
    *
    * @returns {ProducibleMessage} - The updated `ProducibleMessage` instance, allowing method chaining.
    *
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setscheduledelay
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledelay
    */
   setScheduledDelay(delay: number): ProducibleMessage {
     // JavaScript users do not have type checking
@@ -311,7 +311,7 @@ export class ProducibleMessage {
    * Retrieve the scheduled delay time for a message, which indicates how long
    * the message should be delayed before it is delivered to a queue.
    *
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setscheduleddelay
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduleddelay
    */
   getScheduledDelay(): number | null {
     return this.scheduledDelay;
@@ -339,7 +339,7 @@ export class ProducibleMessage {
    *
    * @returns {ProducibleMessage} - Returns the instance of the ProducibleMessage class, allowing method chaining.
    *
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setscheduledcron
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledcron
    */
   setScheduledCRON(cron: string): ProducibleMessage {
     // it throws an exception for an invalid value
@@ -383,10 +383,10 @@ export class ProducibleMessage {
    *
    * @returns {ProducibleMessage} The updated `ProducibleMessage` instance with the reset scheduled parameters.
    *
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setscheduledcron
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setscheduleddelay
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setscheduledrepeatperiod
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setscheduledrepeat
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledcron
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduleddelay
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledrepeatperiod
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledrepeat
    */
   resetScheduledParams(): ProducibleMessage {
     this.scheduledCron = null;
@@ -408,7 +408,7 @@ export class ProducibleMessage {
    *
    * @returns {ProducibleMessage} - The updated `ProducibleMessage` instance, allowing method chaining.
    *
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setttl
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setttl
    */
   setTTL(ttl: number): ProducibleMessage {
     this.ttl = ProducibleMessage.validateTTL(ttl);
@@ -429,7 +429,7 @@ export class ProducibleMessage {
    *
    * @returns {ProducibleMessage} - The updated `ProducibleMessage` instance, allowing method chaining.
    *
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setconsumetimeout
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setconsumetimeout
    */
   setConsumeTimeout(timeout: number): ProducibleMessage {
     this.consumeTimeout = ProducibleMessage.validateConsumeTimeout(timeout);
@@ -450,7 +450,7 @@ export class ProducibleMessage {
    *
    * @returns {ProducibleMessage} - The updated `ProducibleMessage` instance, allowing method chaining.
    *
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setretrythreshold
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setretrythreshold
    */
   setRetryThreshold(threshold: number): ProducibleMessage {
     this.retryThreshold = ProducibleMessage.validateRetryThreshold(threshold);
@@ -480,7 +480,7 @@ export class ProducibleMessage {
    *
    * @returns {ProducibleMessage} - The updated `ProducibleMessage` instance, allowing method chaining.
    *
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setretrydelay
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setretrydelay
    */
   setRetryDelay(delay: number): ProducibleMessage {
     this.retryDelay = ProducibleMessage.validateRetryDelay(delay);
@@ -518,7 +518,7 @@ export class ProducibleMessage {
    *
    * @returns {ProducibleMessage} - The updated `ProducibleMessage` instance, allowing method chaining.
    *
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/queues.md
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/queues.md
    */
   setPriority(priority: EMessagePriority): ProducibleMessage {
     this.priority = priority;
@@ -535,7 +535,7 @@ export class ProducibleMessage {
    * @returns {boolean} - Returns true if a priority level has been set for the message,
    *                      false otherwise.
    *
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setpriority
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setpriority
    */
   hasPriority(): boolean {
     return this.priority !== null;
@@ -550,7 +550,7 @@ export class ProducibleMessage {
    *
    * @returns {ProducibleMessage} - The updated `ProducibleMessage` instance, allowing method chaining.
    *
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setpriority
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setpriority
    */
   disablePriority(): ProducibleMessage {
     this.priority = null;
@@ -572,7 +572,7 @@ export class ProducibleMessage {
    * @param {string} fanOutName - The name of the fan-out pattern.
    * @returns {ProducibleMessage} - The updated `ProducibleMessage` instance, allowing method chaining.
    *
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/exchanges-and-delivery-models.md
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/exchanges-and-delivery-models.md
 
    */
   setFanOut(fanOutName: string): ProducibleMessage {
@@ -593,7 +593,7 @@ export class ProducibleMessage {
    * This feature is useful for organizing and filtering messages based on
    * their content or purpose.
    *
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/exchanges-and-delivery-models.md
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/exchanges-and-delivery-models.md
    * @param {string | ITopicParams} topicParams
    */
   setTopic(topicParams: string | ITopicParams): ProducibleMessage {
@@ -613,7 +613,7 @@ export class ProducibleMessage {
    *                                                  If an object is provided, it should contain the queue parameters as defined in the RedisSMQ documentation.
    * @returns {ProducibleMessage} - The updated `ProducibleMessage` instance, allowing method chaining.
    *
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/exchanges-and-delivery-models.md
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/exchanges-and-delivery-models.md
    */
   setQueue(queueParams: string | IQueueParams): ProducibleMessage {
     const exchange = _getExchangeDirectTransferable(queueParams);
@@ -633,7 +633,7 @@ export class ProducibleMessage {
    *          Returns null if no queue parameters have been set.
    *
    * @see For more information on setting the queue parameters:
-   *      https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setqueue
+   *      https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setqueue
    */
   getQueue(): IQueueParams | null {
     if (this.exchange && this.exchange.type === EExchangeType.DIRECT) {
@@ -653,7 +653,7 @@ export class ProducibleMessage {
    *          Returns null if no topic parameters have been set.
    *
    * @see For more information on setting the topic parameters:
-   *      https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#settopic
+   *      https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#settopic
    */
   getTopic(): ITopicParams | null {
     if (this.exchange && this.exchange.type === EExchangeType.TOPIC) {
@@ -673,7 +673,7 @@ export class ProducibleMessage {
    *                          or null if no fan-out pattern has been defined for this message.
    *
    * @see For more information on setting the fan-out pattern:
-   *      https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setfanout
+   *      https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setfanout
    */
   getFanOut(): string | null {
     if (this.exchange && this.exchange.type === EExchangeType.FANOUT) {
@@ -693,9 +693,9 @@ export class ProducibleMessage {
    *          Returns null if no exchange has been set.
    *          The returned object contains information about the exchange type and its parameters.
    *
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setqueue
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#settopic
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setfanout
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setqueue
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#settopic
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setfanout
    */
   getExchange(): TExchangeTransferable | null {
     if (this.exchange) {
@@ -714,7 +714,7 @@ export class ProducibleMessage {
    *                          or null if no repeat period has been defined for this message.
    *
    * @see For more information on setting the scheduled repeat period:
-   *      https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setscheduledrepeatperiod
+   *      https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledrepeatperiod
    */
   getScheduledRepeatPeriod(): number | null {
     return this.scheduledRepeatPeriod;
@@ -731,7 +731,7 @@ export class ProducibleMessage {
    *                          or null if no CRON schedule has been defined for this message.
    *
    * @see For more information on setting the CRON schedule:
-   *      https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setscheduledcron
+   *      https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledcron
    */
   getScheduledCRON(): string | null {
     return this.scheduledCron;
@@ -747,7 +747,7 @@ export class ProducibleMessage {
    *                   A value of 0 indicates the message is not scheduled for repetition.
    *
    * @see For more information on setting the scheduled repeat:
-   *      https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setscheduledrepeat
+   *      https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledrepeat
    */
   getScheduledRepeat(): number {
     return this.scheduledRepeat;
@@ -764,7 +764,7 @@ export class ProducibleMessage {
    *          message does not expire.
    *
    * @see For more information on setting the TTL:
-   *      https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setttl
+   *      https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setttl
    */
   getTTL(): number {
     return this.ttl;
@@ -781,7 +781,7 @@ export class ProducibleMessage {
    *          maximum number of retry attempts for the message.
    *
    * @see For more information on setting the retry threshold:
-   *      https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setretrythreshold
+   *      https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setretrythreshold
    */
   getRetryThreshold(): number {
     return this.retryThreshold;
@@ -797,7 +797,7 @@ export class ProducibleMessage {
    * @returns The retry delay value in milliseconds. A value of 0 indicates no delay
    *          between retry attempts.
    *
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setretrydelay
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setretrydelay
    */
   getRetryDelay(): number {
     return this.retryDelay;
@@ -812,7 +812,7 @@ export class ProducibleMessage {
    * @returns {number} The consumption timeout value in milliseconds.
    *                   A value of 0 indicates no timeout is set.
    *
-   * @see https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setconsumetimeout
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setconsumetimeout
    */
   getConsumeTimeout(): number {
     return this.consumeTimeout;
@@ -829,7 +829,7 @@ export class ProducibleMessage {
    *          in the EMessagePriority enum, or null if no priority has been set.
    *
    * @see For more information on setting the priority:
-   *      https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setpriority
+   *      https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setpriority
    */
   getPriority(): EMessagePriority | null {
     return this.priority;
@@ -838,7 +838,7 @@ export class ProducibleMessage {
   /**
    * Retrieves the payload of a message.
    *
-   * See https://github.com/weyoss/redis-smq/blob/master/docs/api/classes/ProducibleMessage.md#setbody
+   * See https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setbody
    */
   getBody(): unknown {
     return this.body;
