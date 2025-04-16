@@ -9,8 +9,8 @@
 
 export * from './errors/index.js';
 export * from './types/index.js';
-export * from './queue-messages.js';
-export * from './queue-acknowledged-messages.js';
-export * from './queue-dead-lettered-messages.js';
-export * from './queue-scheduled-messages.js';
-export * from './queue-pending-messages/index.js';
+export * from './queue-messages/queue-messages.js';
+export * from './queue-messages/queue-acknowledged-messages.js';
+export * from './queue-messages/queue-dead-lettered-messages.js';
+export * from './queue-messages/queue-scheduled-messages.js';
+export * from './queue-messages/queue-pending-messages/index.js';

@@ -7,47 +7,35 @@
  * in the root directory of this source tree.
  */
 
-import {
-  async,
-  CallbackEmptyReplyError,
-  ICallback,
-  logger,
-} from 'redis-smq-common';
-import { RedisClient } from '../../../common/redis-client/redis-client.js';
-import { Configuration } from '../../../config/index.js';
-import { IMessageTransferable } from '../../message/index.js';
-import { _getQueueProperties } from '../../queue/_/_get-queue-properties.js';
-import { _parseQueueExtendedParams } from '../../queue/_/_parse-queue-extended-params.js';
+import { async, CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
+import { RedisClient } from '../../../../common/redis-client/redis-client.js';
+import { IMessageTransferable } from '../../../message/index.js';
+import { _getQueueProperties } from '../../../queue/_/_get-queue-properties.js';
+import { _parseQueueExtendedParams } from '../../../queue/_/_parse-queue-extended-params.js';
 import {
   EQueueType,
   IQueueParsedParams,
   TQueueExtendedParams,
-} from '../../queue/index.js';
-import { IQueueMessages, IQueueMessagesPage } from '../types/index.js';
-import { LinearQueuePendingMessages } from './linear-queue-pending-messages.js';
+} from '../../../queue/index.js';
+import { QueueMessagesManagerAbstract } from '../../queue-messages-manager/queue-messages-manager-abstract.js';
+import { IQueueMessages, IQueueMessagesPage } from '../../types/index.js';
+import { SequentialQueuePendingMessages } from './sequential-queue-pending-messages.js';
 import { PriorityQueuePendingMessages } from './priority-queue-pending-messages.js';
 
 export class QueuePendingMessages implements IQueueMessages {
   protected redisClient;
-  protected logger;
   protected priorityQueueMessages;
-  protected linearQueuePendingMessages;
+  protected sequentialQueuePendingMessages;
 
   constructor() {
-    this.logger = logger.getLogger(
-      Configuration.getSetConfig().logger,
-      `queue-pending-messages`,
-    );
     this.redisClient = new RedisClient();
-    this.redisClient.on('error', (err) => this.logger.error(err));
-
     this.priorityQueueMessages = new PriorityQueuePendingMessages();
-    this.linearQueuePendingMessages = new LinearQueuePendingMessages();
+    this.sequentialQueuePendingMessages = new SequentialQueuePendingMessages();
   }
 
   protected getQueueImplementation(
     queue: IQueueParsedParams,
-    cb: ICallback<IQueueMessages>,
+    cb: ICallback<QueueMessagesManagerAbstract>,
   ): void {
     this.redisClient.getSetInstance((err, client) => {
       if (err) cb(err);
@@ -59,7 +47,7 @@ export class QueuePendingMessages implements IQueueMessages {
           else if (properties.queueType === EQueueType.PRIORITY_QUEUE) {
             cb(null, this.priorityQueueMessages);
           } else {
-            cb(null, this.linearQueuePendingMessages);
+            cb(null, this.sequentialQueuePendingMessages);
           }
         });
       }
@@ -108,7 +96,8 @@ export class QueuePendingMessages implements IQueueMessages {
     async.waterfall(
       [
         (cb: ICallback<void>) => this.priorityQueueMessages.shutdown(cb),
-        (cb: ICallback<void>) => this.linearQueuePendingMessages.shutdown(cb),
+        (cb: ICallback<void>) =>
+          this.sequentialQueuePendingMessages.shutdown(cb),
         this.redisClient.shutdown,
       ],
       cb,
