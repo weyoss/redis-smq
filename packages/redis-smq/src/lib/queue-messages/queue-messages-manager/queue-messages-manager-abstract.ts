@@ -22,7 +22,7 @@ import { IQueueParsedParams, TQueueExtendedParams } from '../../queue/index.js';
 import { _validateQueueExtendedParams } from '../_/_validate-queue-extended-params.js';
 import { QueueMessagesStorage } from '../queue-messages-storage/queue-messages-storage.js';
 import {
-  IQueueMessages,
+  IQueueMessageManager,
   IQueueMessagesPage,
   IQueueMessagesPageParams,
 } from '../types/index.js';
@@ -31,7 +31,9 @@ import {
  * Abstract base class for queue message management operations.
  * Provides common functionality for different types of queue message managers.
  */
-export abstract class QueueMessagesManagerAbstract implements IQueueMessages {
+export abstract class QueueMessagesManagerAbstract
+  implements IQueueMessageManager
+{
   /**
    * Redis client instance for database operations.
    */

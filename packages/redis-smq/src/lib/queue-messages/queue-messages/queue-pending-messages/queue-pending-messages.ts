@@ -17,12 +17,11 @@ import {
   IQueueParsedParams,
   TQueueExtendedParams,
 } from '../../../queue/index.js';
-import { QueueMessagesManagerAbstract } from '../../queue-messages-manager/queue-messages-manager-abstract.js';
-import { IQueueMessages, IQueueMessagesPage } from '../../types/index.js';
+import { IQueueMessageManager, IQueueMessagesPage } from '../../types/index.js';
 import { SequentialQueuePendingMessages } from './sequential-queue-pending-messages.js';
 import { PriorityQueuePendingMessages } from './priority-queue-pending-messages.js';
 
-export class QueuePendingMessages implements IQueueMessages {
+export class QueuePendingMessages implements IQueueMessageManager {
   protected redisClient;
   protected priorityQueueMessages;
   protected sequentialQueuePendingMessages;
@@ -35,7 +34,7 @@ export class QueuePendingMessages implements IQueueMessages {
 
   protected getQueueImplementation(
     queue: IQueueParsedParams,
-    cb: ICallback<QueueMessagesManagerAbstract>,
+    cb: ICallback<IQueueMessageManager>,
   ): void {
     this.redisClient.getSetInstance((err, client) => {
       if (err) cb(err);

@@ -11,7 +11,7 @@ import { ICallback } from 'redis-smq-common';
 import { IMessageTransferable } from '../../message/index.js';
 import { IQueueParams, TQueueExtendedParams } from '../../queue/index.js';
 
-export interface IQueueMessages {
+export interface IQueueMessageManager {
   countMessages(queue: TQueueExtendedParams, cb: ICallback<number>): void;
   getMessages(
     queue: TQueueExtendedParams,
