@@ -22,7 +22,7 @@ export interface IRedisSMQConfig {
   namespace?: string;
 
   /**
-   * @see https://github.com/weyoss/redis-smq-common/blob/master/docs/api/interfaces/ILoggerConfig.md
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq-common/docs/api/interfaces/ILoggerConfig.md
    */
   logger?: ILoggerConfig;
   messages?: IMessagesConfig;
