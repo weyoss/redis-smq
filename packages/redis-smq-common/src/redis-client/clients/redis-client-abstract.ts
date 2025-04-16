@@ -175,6 +175,8 @@ export abstract class RedisClientAbstract
 
   abstract srem(key: string, member: string, cb: ICallback<number>): void;
 
+  abstract scard(key: string, cb: ICallback<number>): void;
+
   abstract hgetall(key: string, cb: ICallback<Record<string, string>>): void;
 
   abstract hscan(

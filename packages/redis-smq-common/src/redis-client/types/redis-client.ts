@@ -102,6 +102,8 @@ export interface IRedisClient extends EventEmitter<TRedisClientEvent> {
 
   srem(key: string, member: string, cb: ICallback<number>): void;
 
+  scard(key: string, cb: ICallback<number>): void;
+
   hgetall(key: string, cb: ICallback<Record<string, string>>): void;
 
   hscan(

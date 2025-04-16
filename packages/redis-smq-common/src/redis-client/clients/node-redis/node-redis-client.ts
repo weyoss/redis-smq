@@ -255,6 +255,13 @@ export class NodeRedisClient extends RedisClientAbstract {
       .catch(cb);
   }
 
+  scard(key: string, cb: ICallback<number>): void {
+    this.client
+      .sCard(key)
+      .then((reply) => cb(null, reply))
+      .catch(cb);
+  }
+
   override hscan(
     key: string,
     cursor: string,
