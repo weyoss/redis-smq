@@ -7,4 +7,4 @@
  * in the root directory of this source tree.
  */
 
-export * from './logger.js';
+export * from './console-logger.js';

@@ -8,6 +8,7 @@
  */
 
 import { ICallback } from '../common/index.js';
+import { ILogger } from '../logger/index.js';
 import { PowerSwitch } from '../power-switch/index.js';
 import {
   WorkerAlreadyDownError,
@@ -27,28 +28,73 @@ export class WorkerRunnable<InitialPayload>
   protected readonly type: EWorkerType = EWorkerType.RUNNABLE;
   protected readonly powerSwitch;
 
-  constructor(workerFilename: string, initialPayload?: InitialPayload) {
+  constructor(
+    workerFilename: string,
+    initialPayload?: InitialPayload,
+    logger?: ILogger,
+  ) {
     super(workerFilename, initialPayload);
+    this.logger = logger ?? this.logger;
     this.powerSwitch = new PowerSwitch();
+    this.logger.info(`WorkerRunnable instance created for ${workerFilename}`);
+    this.logger.debug('WorkerRunnable initialization details', {
+      id: this.id,
+      type: EWorkerType[this.type],
+      hasCustomLogger: !!logger,
+      initialPayload: this.initialPayload ? 'provided' : 'none',
+    });
   }
 
   run(cb: ICallback<void>) {
+    this.logger.info(`Attempting to run worker ${this.id}`);
+
     const r = this.powerSwitch.goingUp();
     if (r) {
+      this.logger.debug('Power switch state changed to going up');
+
+      this.logger.debug('Registering worker thread event handlers');
       this.registerEvents(this);
+
+      this.logger.debug(`Posting RUN message to worker thread`);
       this.postMessage({ type: EWorkerThreadParentMessage.RUN });
+
+      this.logger.debug('Committing power switch state change');
       this.powerSwitch.commit();
+
+      this.logger.info(`Worker ${this.id} started successfully`);
       cb();
-    } else cb(new WorkerAlreadyRunningError());
+    } else {
+      this.logger.warn(`Cannot start worker ${this.id}: already running`);
+      cb(new WorkerAlreadyRunningError());
+    }
   }
 
   override shutdown(cb: ICallback<void>) {
+    this.logger.info(`Attempting to shut down worker ${this.id}`);
+
     const r = this.powerSwitch.goingDown();
     if (r) {
-      super.shutdown(() => {
+      this.logger.debug('Power switch state changed to going down');
+
+      this.logger.debug('Calling parent shutdown method');
+      super.shutdown((err) => {
+        if (err) {
+          this.logger.warn(
+            `Error during worker ${this.id} shutdown: ${err.message}`,
+            {
+              error: err.message,
+              stack: err.stack,
+            },
+          );
+        }
+        this.logger.debug('Committing power switch state change');
         this.powerSwitch.commit();
+        this.logger.info(`Worker ${this.id} shut down successfully`);
         cb();
       });
-    } else cb(new WorkerAlreadyDownError());
+    } else {
+      this.logger.warn(`Cannot shut down worker ${this.id}: already down`);
+      cb(new WorkerAlreadyDownError());
+    }
   }
 }
