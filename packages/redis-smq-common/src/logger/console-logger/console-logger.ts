@@ -32,7 +32,7 @@ export class ConsoleLogger implements ILogger {
     const {
       includeTimestamp = true,
       colorize = true,
-      logLevel = EConsoleLoggerLevel.DEBUG,
+      logLevel = EConsoleLoggerLevel.INFO,
       dateFormat,
     } = options;
 
