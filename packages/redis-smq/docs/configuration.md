@@ -9,12 +9,11 @@ This setup must be completed before utilizing any exported classes or functions 
 
 RedisSMQ provides a singleton class for configuration. Below is an example of how to set it up:
 
-```javascript
-'use strict';
-const { Configuration } = require('redis-smq');
-const { ERedisConfigClient } = require('redis-smq-common');
+```typescript
+import { Configuration, IRedisSMQConfig } from 'redis-smq';
+import { ERedisConfigClient } from 'redis-smq-common';
 
-const config = {
+const config: IRedisSMQConfig = {
   redis: {
     client: ERedisConfigClient.IOREDIS,
     options: {
@@ -37,11 +36,11 @@ For an in-depth understanding of configuration options, see the [IRedisSMQConfig
 
 Here’s an example of a complete RedisSMQ configuration:
 
-```javascript
-'use strict';
-const { ERedisConfigClient } = require('redis-smq-common');
+```typescript
+import { IRedisSMQConfig } from 'redis-smq';
+import { ERedisConfigClient, EConsoleLoggerLevel } from 'redis-smq-common'
 
-module.exports = {
+const config: IRedisSMQConfig = {
   namespace: 'my_project_name',
   redis: {
     client: ERedisConfigClient.IOREDIS,
@@ -54,15 +53,8 @@ module.exports = {
   logger: {
     enabled: true,
     options: {
-      level: 'info',
-      // Uncomment and use the below configuration to enable file logging
-      /*
-      streams: [
-        {
-          path: path.normalize(`${__dirname}/../logs/redis-smq.log`)
-        },
-      ],
-      */
+      logLevel: EConsoleLoggerLevel.INFO,
+      //...
     },
   },
   messages: {
@@ -87,8 +79,8 @@ Acknowledged and dead-lettered messages are not stored by default.
 
 ##### 1. Only Storing Dead-Lettered Messages:
 
-```javascript
-const config = {
+```typescript
+const config: IRedisSMQConfig = {
   messages: {
     store: {
       deadLettered: true,
@@ -99,8 +91,8 @@ const config = {
 
 #### 2. Storing Acknowledged Messages Without Limitation, and 100,000 Dead-Lettered Messages with a Maximum Retention Time of 1 Day:
 
-```javascript
-const config = {
+```typescript
+const config: IRedisSMQConfig = {
   messages: {
     store: {
       acknowledged: true,
@@ -115,8 +107,8 @@ const config = {
 
 #### 3. Storing Acknowledged Messages Up to 5,000, and Maximum 5,000 Dead-Lettered Messages with a Retention Time of 1 Day:
 
-```javascript
-const config = {
+```typescript
+const config: IRedisSMQConfig = {
   messages: {
     store: {
       acknowledged: {
