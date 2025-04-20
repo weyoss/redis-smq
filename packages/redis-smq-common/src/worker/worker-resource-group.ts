@@ -40,11 +40,21 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
     this.powerManager = new PowerSwitch();
     this.logger = logger;
 
+    this.logger.info(
+      `Initializing WorkerResourceGroup with ID: ${resourceGroupId}`,
+    );
+
     //
     this.redisClient = redisClient;
-    this.redisClient.once('error', (err) => this.handleError(err));
+    this.redisClient.once('error', (err) => {
+      this.logger.error(`Redis client error: ${err.message}`, err);
+      this.handleError(err);
+    });
 
     // Locker
+    this.logger.debug(
+      `Creating RedisLock for resource group: ${resourceGroupId}`,
+    );
     this.locker = new RedisLock(
       redisClient,
       logger,
@@ -54,17 +64,28 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
       15000,
     );
     this.locker.on('locker.error', (err) => {
+      this.logger.error(`Locker error: ${err.message}`, err);
       this.handleError(err);
     });
+
+    this.logger.info(
+      `WorkerResourceGroup initialized with ID: ${resourceGroupId}`,
+    );
   }
 
   protected lock = (cb: ICallback<void>) => {
-    this.locker.acquireLock((err) => {
-      if (err) cb(err);
-      else {
+    this.logger.debug('Attempting to acquire lock...');
+    this.locker.acquireLock((err, acquired) => {
+      if (err) {
+        this.logger.error(`Failed to acquire lock: ${err.message}`, err);
+        cb(err);
+      } else if (acquired) {
         this.logger.info(
           `Workers are exclusively running from this instance (Lock ID ${this.locker.getId()}).`,
         );
+        cb();
+      } else {
+        this.logger.warn('Lock was not acquired, but no error was returned');
         cb();
       }
     });
@@ -72,39 +93,94 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
 
   protected runWorkers = (cb: ICallback<void>) => {
     if (!this.runWorkersLocked) {
+      this.logger.info(`Starting ${this.workers.length} workers...`);
       this.runWorkersLocked = true;
-      async.each(
+      async.eachOf(
         this.workers,
-        (worker, _, done) => {
-          worker.run(done);
+        (worker, index, done) => {
+          this.logger.debug(
+            `Starting worker ${index + 1}/${this.workers.length} (ID: ${worker.getId()})`,
+          );
+          worker.run((err) => {
+            if (err) {
+              this.logger.error(
+                `Failed to start worker ${index + 1}/${this.workers.length} (ID: ${worker.getId()}): ${err.message}`,
+                err,
+              );
+            } else {
+              this.logger.debug(
+                `Worker ${index + 1}/${this.workers.length} (ID: ${worker.getId()}) started successfully`,
+              );
+            }
+            done(err);
+          });
         },
         (err) => {
           this.runWorkersLocked = false;
+          if (err) {
+            this.logger.error(`Error starting workers: ${err.message}`, err);
+          } else {
+            this.logger.info(
+              `All ${this.workers.length} workers started successfully`,
+            );
+          }
           cb(err);
         },
       );
-    } else cb(new AbortError());
+    } else {
+      this.logger.warn('Attempted to run workers while already locked');
+      cb(new AbortError());
+    }
   };
 
   protected shutDownWorkers = (cb: ICallback<void>): void => {
     if (!this.runWorkersLocked) {
+      this.logger.info(`Shutting down ${this.workers.length} workers...`);
       this.runWorkersLocked = true;
-      async.each(
+      async.eachOf(
         this.workers,
-        (worker, _, done) => {
-          worker.shutdown(() => done());
+        (worker, index, done) => {
+          this.logger.debug(
+            `Shutting down worker ${index + 1}/${this.workers.length} (ID: ${worker.getId()})`,
+          );
+          worker.shutdown((err) => {
+            if (err) {
+              this.logger.warn(
+                `Error shutting down worker ${index + 1}/${this.workers.length} (ID: ${worker.getId()}): ${err.message}`,
+              );
+            } else {
+              this.logger.debug(
+                `Worker ${index + 1}/${this.workers.length} (ID: ${worker.getId()}) shut down successfully`,
+              );
+            }
+            done(); // Always continue shutdown process regardless of errors
+          });
         },
         () => {
           this.workers = [];
           this.runWorkersLocked = false;
+          this.logger.info('All workers have been shut down');
           cb();
         },
       );
-    } else setTimeout(() => this.shutDownWorkers(cb), 1000);
+    } else {
+      this.logger.debug(
+        'Workers shutdown requested but workers are locked, retrying in 1 second...',
+      );
+      setTimeout(() => this.shutDownWorkers(cb), 1000);
+    }
   };
 
   protected releaseLock = (cb: ICallback<void>) => {
-    this.locker.releaseLock(cb);
+    this.logger.debug('Releasing lock...');
+    this.locker.releaseLock((err) => {
+      if (err) {
+        this.logger.error(`Failed to release lock: ${err.message}`, err);
+      } else {
+        this.logger.info('Lock released successfully');
+      }
+      cb(err);
+    });
   };
 
   protected override getLogger(): ILogger {
@@ -112,24 +188,34 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
   }
 
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
+    this.logger.debug('WorkerResourceGroup going up...');
     return super.goingUp().concat([this.lock, this.runWorkers]);
   }
 
   protected override goingDown(): ((cb: ICallback<void>) => void)[] {
+    this.logger.debug('WorkerResourceGroup going down...');
     return [this.shutDownWorkers, this.releaseLock].concat(super.goingDown());
   }
 
   protected override handleError(err: Error) {
     if (this.isRunning()) {
+      this.logger.error(`WorkerResourceGroup error: ${err.message}`, err);
       this.emit('workerResourceGroup.error', err);
       super.handleError(err);
     }
   }
 
   addWorker = (filename: string, payload: unknown): void => {
-    const worker = new WorkerRunnable(filename, payload);
-    worker.on('worker.error', (err) => this.handleError(err));
+    this.logger.debug(`Adding worker from file: ${filename}`);
+    const worker = new WorkerRunnable(filename, payload, this.logger);
+    worker.on('worker.error', (err) => {
+      this.logger.error(`Worker error from ${filename}: ${err.message}`, err);
+      this.handleError(err);
+    });
     this.workers.push(worker);
+    this.logger.info(
+      `Worker added from file: ${filename}, total workers: ${this.workers.length}`,
+    );
   };
 
   loadFromDir = (
@@ -138,22 +224,56 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
     cb: ICallback<void>,
   ): void => {
     if (this.isDown() && !this.isGoingUp()) {
+      this.logger.info(`Loading workers from directory: ${workersDir}`);
       readdir(workersDir, (err, files) => {
-        if (err) cb(err);
-        else {
-          async.each(
+        if (err) {
+          this.logger.error(
+            `Failed to read workers directory ${workersDir}: ${err.message}`,
+            err,
+          );
+          cb(err);
+        } else {
+          this.logger.debug(`Found ${files.length} files in workers directory`);
+          let workerCount = 0;
+
+          async.eachOf(
             files ?? [],
-            (file, _, done) => {
+            (file, index, done) => {
               if (file.endsWith('.worker.js')) {
                 const filepath = path.resolve(workersDir, file);
+                this.logger.debug(
+                  `Loading worker file ${index + 1}/${files.length}: ${file}`,
+                );
                 this.addWorker(filepath, payload);
+                workerCount++;
                 done();
-              } else done();
+              } else {
+                this.logger.debug(`Skipping non-worker file: ${file}`);
+                done();
+              }
             },
-            (err) => cb(err),
+            (err) => {
+              if (err) {
+                this.logger.error(`Error loading workers: ${err.message}`, err);
+              } else {
+                this.logger.info(
+                  `Successfully loaded ${workerCount} workers from ${files.length} files`,
+                );
+              }
+              cb(err);
+            },
           );
         }
       });
+    } else {
+      this.logger.warn(
+        'Cannot load workers: WorkerResourceGroup is not in DOWN state',
+      );
+      cb(
+        new Error(
+          'Cannot load workers: WorkerResourceGroup is not in DOWN state',
+        ),
+      );
     }
   };
 }

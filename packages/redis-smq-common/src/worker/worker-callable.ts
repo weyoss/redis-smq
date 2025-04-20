@@ -8,6 +8,7 @@
  */
 
 import { ICallback } from '../common/index.js';
+import { ILogger } from '../logger/index.js';
 import { WorkerPayloadRequiredError } from './errors/index.js';
 import {
   EWorkerThreadParentMessage,
@@ -22,16 +23,47 @@ export class WorkerCallable<Payload, Reply>
 {
   protected readonly type: EWorkerType = EWorkerType.CALLABLE;
 
-  constructor(workerFilename: string) {
+  constructor(workerFilename: string, logger?: ILogger) {
     super(workerFilename);
+    this.logger = logger ?? this.logger;
+    this.logger.info(`WorkerCallable instance created for ${workerFilename}`);
+    this.logger.debug('WorkerCallable initialization details', {
+      id: this.id,
+      type: EWorkerType[this.type],
+      hasCustomLogger: !!logger,
+    });
   }
 
   call(payload: Payload, cb: ICallback<Reply>) {
+    this.logger.info(`Calling worker ${this.id}`);
+    this.logger.debug('Call details', {
+      hasPayload: payload !== null && payload !== undefined,
+      payloadType:
+        payload !== null && payload !== undefined
+          ? typeof payload
+          : 'null/undefined',
+    });
+
     if (payload === null || payload === undefined) {
+      this.logger.error('Worker call failed: payload is required');
       cb(new WorkerPayloadRequiredError());
     } else {
-      this.registerEvents(cb);
-      this.postMessage({ type: EWorkerThreadParentMessage.CALL, payload });
+      try {
+        this.logger.debug('Registering worker thread event handlers');
+        this.registerEvents(cb);
+
+        this.logger.debug('Posting CALL message to worker thread');
+        this.postMessage({ type: EWorkerThreadParentMessage.CALL, payload });
+
+        this.logger.debug('Worker call initiated successfully');
+      } catch (err: unknown) {
+        const error = err instanceof Error ? err : new Error('Unknown error');
+        this.logger.error(`Worker call failed: ${error.message}`, {
+          error: error.message,
+          stack: error.stack,
+        });
+        cb(error);
+      }
     }
   }
 }

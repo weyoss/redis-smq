@@ -7,10 +7,5 @@
  * in the root directory of this source tree.
  */
 
-export interface ILoggerConfig {
-  /**
-   * This property determines whether the logger is enabled or not.
-   * If set to false, logging operations will be disabled.
-   */
-  enabled: boolean;
-}
+export * from './console-logger.js';
+export * from './types/index.js';
