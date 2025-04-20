@@ -17,6 +17,8 @@ properties of queues, and manage shutdown operations.
 
 - [delete](Queue.md#delete)
 - [exists](Queue.md#exists)
+- [getConsumerIds](Queue.md#getconsumerids)
+- [getConsumers](Queue.md#getconsumers)
 - [getProperties](Queue.md#getproperties)
 - [getQueues](Queue.md#getqueues)
 - [save](Queue.md#save)
@@ -65,6 +67,54 @@ Checks if a specified queue exists.
 | :------ | :------ | :------ |
 | `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) | The name or parameters for the queue. |
 | `cb` | `ICallback`\<`boolean`\> | Callback function to return a boolean indicating the existence of the queue. |
+
+#### Returns
+
+`void`
+
+___
+
+### getConsumerIds
+
+▸ **getConsumerIds**(`queue`, `cb`): `void`
+
+Retrieves the consumer IDs for a specified queue.
+
+This function accepts either a queue name (string) or queue parameters (IQueueParams)
+and retrieves the associated consumer IDs using the Redis client. The results are passed
+to the provided callback function. If any errors occur during parameter parsing or
+Redis client operations, they are logged and passed to the callback.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) | A string representing the queue name or an IQueueParams object with queue details. |
+| `cb` | `ICallback`\<`string`[]\> | A callback function that receives either an error or an array of consumer IDs. |
+
+#### Returns
+
+`void`
+
+___
+
+### getConsumers
+
+▸ **getConsumers**(`queue`, `cb`): `void`
+
+Retrieves the consumers for a specified queue.
+
+This function accepts either a queue name (string) or queue parameters (IQueueParams)
+and retrieves the associated consumers using the Redis client. The results are passed
+to the provided callback function. If any errors occur during parameter parsing or
+Redis client operations, they are logged and passed to the callback.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) | A string representing the queue name or an IQueueParams object with queue details. |
+| `cb` | `ICallback`\<`Record`\<`string`, [`TQueueConsumer`](../README.md#tqueueconsumer)\>\> | A callback function that receives either an error or a record of consumers. |
 
 #### Returns
 

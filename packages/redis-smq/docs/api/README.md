@@ -10,9 +10,9 @@
 - [EMessagePriority](enums/EMessagePriority.md)
 - [EMessageProperty](enums/EMessageProperty.md)
 - [EMessagePropertyStatus](enums/EMessagePropertyStatus.md)
-- [EMessageUnknowledgmentAction](enums/EMessageUnknowledgmentAction.md)
-- [EMessageUnknowledgmentDeadLetterReason](enums/EMessageUnknowledgmentDeadLetterReason.md)
-- [EMessageUnknowledgmentReason](enums/EMessageUnknowledgmentReason.md)
+- [EMessageUnacknowledgementAction](enums/EMessageUnacknowledgementAction.md)
+- [EMessageUnacknowledgementDeadLetterReason](enums/EMessageUnacknowledgementDeadLetterReason.md)
+- [EMessageUnacknowledgementReason](enums/EMessageUnacknowledgementReason.md)
 - [EQueueDeliveryModel](enums/EQueueDeliveryModel.md)
 - [EQueueProperty](enums/EQueueProperty.md)
 - [EQueueType](enums/EQueueType.md)
@@ -145,8 +145,8 @@
 - [TExchangeTopicTransferable](README.md#texchangetopictransferable)
 - [TExchangeTransferable](README.md#texchangetransferable)
 - [TMessageConsumeOptions](README.md#tmessageconsumeoptions)
-- [TMessageUnacknowledgmentStatus](README.md#tmessageunacknowledgmentstatus)
-- [TMessageUnknowledgmentAction](README.md#tmessageunknowledgmentaction)
+- [TMessageUnacknowledgementAction](README.md#tmessageunacknowledgementaction)
+- [TMessageUnacknowledgementStatus](README.md#tmessageunacknowledgementstatus)
 - [TProducerEvent](README.md#tproducerevent)
 - [TQueueConsumer](README.md#tqueueconsumer)
 - [TQueueEvent](README.md#tqueueevent)
@@ -195,10 +195,10 @@ ___
 | :------ | :------ |
 | `consumer.consumeMessage.error` | (`err`: `Error`, `consumerId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md)) => `void` |
 | `consumer.consumeMessage.messageAcknowledged` | (`messageId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md), `messageHandlerId`: `string`, `consumerId`: `string`) => `void` |
-| `consumer.consumeMessage.messageDeadLettered` | (`messageId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md), `messageHandlerId`: `string`, `consumerId`: `string`, `deadLetterReason`: [`EMessageUnknowledgmentDeadLetterReason`](enums/EMessageUnknowledgmentDeadLetterReason.md)) => `void` |
+| `consumer.consumeMessage.messageDeadLettered` | (`messageId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md), `messageHandlerId`: `string`, `consumerId`: `string`, `deadLetterReason`: [`EMessageUnacknowledgementDeadLetterReason`](enums/EMessageUnacknowledgementDeadLetterReason.md)) => `void` |
 | `consumer.consumeMessage.messageDelayed` | (`messageId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md), `messageHandlerId`: `string`, `consumerId`: `string`) => `void` |
 | `consumer.consumeMessage.messageRequeued` | (`messageId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md), `messageHandlerId`: `string`, `consumerId`: `string`) => `void` |
-| `consumer.consumeMessage.messageUnacknowledged` | (`messageId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md), `messageHandlerId`: `string`, `consumerId`: `string`, `unknowledgmentReason`: [`EMessageUnknowledgmentReason`](enums/EMessageUnknowledgmentReason.md)) => `void` |
+| `consumer.consumeMessage.messageUnacknowledged` | (`messageId`: `string`, `queue`: [`IQueueParsedParams`](interfaces/IQueueParsedParams.md), `messageHandlerId`: `string`, `consumerId`: `string`, `unknowledgmentReason`: [`EMessageUnacknowledgementReason`](enums/EMessageUnacknowledgementReason.md)) => `void` |
 
 ___
 
@@ -371,15 +371,15 @@ ___
 
 ___
 
-### TMessageUnacknowledgmentStatus
+### TMessageUnacknowledgementAction
 
-Ƭ **TMessageUnacknowledgmentStatus**: `Record`\<`string`, [`TMessageUnknowledgmentAction`](README.md#tmessageunknowledgmentaction)\>
+Ƭ **TMessageUnacknowledgementAction**: \{ `action`: [`REQUEUE`](enums/EMessageUnacknowledgementAction.md#requeue) \| [`DELAY`](enums/EMessageUnacknowledgementAction.md#delay)  } \| \{ `action`: [`DEAD_LETTER`](enums/EMessageUnacknowledgementAction.md#dead_letter) ; `deadLetterReason`: [`EMessageUnacknowledgementDeadLetterReason`](enums/EMessageUnacknowledgementDeadLetterReason.md)  }
 
 ___
 
-### TMessageUnknowledgmentAction
+### TMessageUnacknowledgementStatus
 
-Ƭ **TMessageUnknowledgmentAction**: \{ `action`: [`REQUEUE`](enums/EMessageUnknowledgmentAction.md#requeue) \| [`DELAY`](enums/EMessageUnknowledgmentAction.md#delay)  } \| \{ `action`: [`DEAD_LETTER`](enums/EMessageUnknowledgmentAction.md#dead_letter) ; `deadLetterReason`: [`EMessageUnknowledgmentDeadLetterReason`](enums/EMessageUnknowledgmentDeadLetterReason.md)  }
+Ƭ **TMessageUnacknowledgementStatus**: `Record`\<`string`, [`TMessageUnacknowledgementAction`](README.md#tmessageunacknowledgementaction)\>
 
 ___
 

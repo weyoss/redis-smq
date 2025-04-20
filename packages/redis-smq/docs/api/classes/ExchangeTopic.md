@@ -29,7 +29,7 @@
 
 [`ExchangeTopic`](ExchangeTopic.md)
 
-#### Inherited from
+#### Overrides
 
 ExchangeAbstract\<string \| ITopicParams\>.constructor
 

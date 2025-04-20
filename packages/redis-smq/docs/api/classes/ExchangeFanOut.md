@@ -2,6 +2,9 @@
 
 # Class: ExchangeFanOut
 
+ExchangeFanOut implements the fan-out exchange pattern where messages
+published to the exchange are routed to all queues bound to it.
+
 ## Hierarchy
 
 - `ExchangeAbstract`\<`string`\>
@@ -35,7 +38,7 @@
 
 [`ExchangeFanOut`](ExchangeFanOut.md)
 
-#### Inherited from
+#### Overrides
 
 ExchangeAbstract\<string\>.constructor
 
@@ -45,13 +48,15 @@ ExchangeAbstract\<string\>.constructor
 
 ▸ **bindQueue**(`queue`, `exchangeParams`, `cb`): `void`
 
+Binds a queue to a fan-out exchange.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
-| `exchangeParams` | `string` |
-| `cb` | `ICallback`\<`void`\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) | The queue to bind |
+| `exchangeParams` | `string` | The name of the fan-out exchange |
+| `cb` | `ICallback`\<`void`\> | Callback function called when the operation completes |
 
 #### Returns
 
@@ -63,12 +68,14 @@ ___
 
 ▸ **deleteExchange**(`exchangeParams`, `cb`): `void`
 
+Deletes a fan-out exchange from Redis.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `exchangeParams` | `string` |
-| `cb` | `ICallback`\<`void`\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `exchangeParams` | `string` | The name of the fan-out exchange |
+| `cb` | `ICallback`\<`void`\> | Callback function called when the operation completes |
 
 #### Returns
 
@@ -80,11 +87,13 @@ ___
 
 ▸ **getAllExchanges**(`cb`): `void`
 
+Retrieves all fan-out exchanges.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | `ICallback`\<`string`[]\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `cb` | `ICallback`\<`string`[]\> | Callback function that receives the list of exchanges |
 
 #### Returns
 
@@ -96,12 +105,14 @@ ___
 
 ▸ **getQueueExchange**(`queue`, `cb`): `void`
 
+Retrieves the fan-out exchange a queue is bound to.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
-| `cb` | `ICallback`\<``null`` \| `string`\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) | The queue to check |
+| `cb` | `ICallback`\<``null`` \| `string`\> | Callback function that receives the exchange name or null |
 
 #### Returns
 
@@ -113,12 +124,14 @@ ___
 
 ▸ **getQueues**(`exchangeParams`, `cb`): `void`
 
+Retrieves all queues bound to a fan-out exchange.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `exchangeParams` | `string` |
-| `cb` | `ICallback`\<[`IQueueParams`](../interfaces/IQueueParams.md)[]\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `exchangeParams` | `string` | The name of the fan-out exchange |
+| `cb` | `ICallback`\<[`IQueueParams`](../interfaces/IQueueParams.md)[]\> | Callback function that receives the list of bound queues |
 
 #### Returns
 
@@ -134,12 +147,14 @@ ___
 
 ▸ **saveExchange**(`exchangeParams`, `cb`): `void`
 
+Saves a fan-out exchange to Redis.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `exchangeParams` | `string` |
-| `cb` | `ICallback`\<`void`\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `exchangeParams` | `string` | The name of the fan-out exchange |
+| `cb` | `ICallback`\<`void`\> | Callback function called when the operation completes |
 
 #### Returns
 
@@ -171,13 +186,15 @@ ___
 
 ▸ **unbindQueue**(`queue`, `exchangeParams`, `cb`): `void`
 
+Unbinds a queue from a fan-out exchange.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
-| `exchangeParams` | `string` |
-| `cb` | `ICallback`\<`void`\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `queue` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) | The queue to unbind |
+| `exchangeParams` | `string` | The name of the fan-out exchange |
+| `cb` | `ICallback`\<`void`\> | Callback function called when the operation completes |
 
 #### Returns
 
