@@ -3,6 +3,36 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [8.2.0](https://github.com/weyoss/redis-smq/compare/v8.1.0...v8.2.0) (2025-04-20)
+
+### ✨ Features
+
+- **redis-smq-common:** implement ConsoleLogger and improve logging ([37122c2](https://github.com/weyoss/redis-smq/commit/37122c240d2fce3aebd74c8b82166503c2bf4eaf))
+- **redis-smq:** enhance logging with detailed debug information ([3935682](https://github.com/weyoss/redis-smq/commit/39356824d769f68165c82fcfd4fcb020aabe5822))
+
+### 🐛 Bug Fixes
+
+- **redis-smq:** await async queue consumers retrieval in test ([0b1f727](https://github.com/weyoss/redis-smq/commit/0b1f727b716c785da271a0410a8c9fd8082e0079))
+
+### 🚀 Chore
+
+- add documentation bug report issue template ([502b942](https://github.com/weyoss/redis-smq/commit/502b942508db3fb4beb490d0e133945ba6752ec1))
+- use more descriptive labels for docs bug report ([4848495](https://github.com/weyoss/redis-smq/commit/4848495a5b4b0a13efbdfc3d86d949c15853cef4))
+
+### 📝 Documentation
+
+- **redis-smq-common:** enhance logger documentation and add ConsoleLogger API reference ([e6299d7](https://github.com/weyoss/redis-smq/commit/e6299d7d0c72eebd4273307b855e6538d3fac280))
+- **redis-smq-rest-api:** update package name reference in README ([cf8415d](https://github.com/weyoss/redis-smq/commit/cf8415d6b1171c375fa6941430b34acc7b323acd))
+- **redis-smq:** fix typos and enhance API documentation ([aabf2fa](https://github.com/weyoss/redis-smq/commit/aabf2faf385fd0f8766f24a868c6dc75a55deaf1))
+- **redis-smq:** update configuration examples ([906193e](https://github.com/weyoss/redis-smq/commit/906193ea57158e20a7ae7446aa562e38d820f89d))
+- update logs documentation link ([9561f31](https://github.com/weyoss/redis-smq/commit/9561f31282440624dcef02edb694dc311590d921))
+- update redis-smq references ([79bdc4c](https://github.com/weyoss/redis-smq/commit/79bdc4c934b61bd07486738fdfa67a289f6f8127))
+- update redis-smq-common references ([d8d9fc3](https://github.com/weyoss/redis-smq/commit/d8d9fc380591f9d83e3885513e74d1dc82749e0c))
+
+### ✅ Tests
+
+- **redis-smq-common:** enhance logger tests ([98a275b](https://github.com/weyoss/redis-smq/commit/98a275b8528ae9ebd64e4a139867a4d8c0724d0f))
+
 ## [8.1.0](https://github.com/weyoss/redis-smq/compare/v8.0.3...v8.1.0) (2025-04-16)
 
 ### ✨ Features

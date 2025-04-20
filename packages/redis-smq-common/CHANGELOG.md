@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [8.2.0](https://github.com/weyoss/redis-smq/compare/v8.1.0...v8.2.0) (2025-04-20)
+
+### ✨ Features
+
+- **redis-smq-common:** implement ConsoleLogger and improve logging ([37122c2](https://github.com/weyoss/redis-smq/commit/37122c240d2fce3aebd74c8b82166503c2bf4eaf))
+
+### 📝 Documentation
+
+- **redis-smq-common:** enhance logger documentation and add ConsoleLogger API reference ([e6299d7](https://github.com/weyoss/redis-smq/commit/e6299d7d0c72eebd4273307b855e6538d3fac280))
+
+### ✅ Tests
+
+- **redis-smq-common:** enhance logger tests ([98a275b](https://github.com/weyoss/redis-smq/commit/98a275b8528ae9ebd64e4a139867a4d8c0724d0f))
+
 ## [8.1.0](https://github.com/weyoss/redis-smq/compare/v8.0.3...v8.1.0) (2025-04-16)
 
 ### ✨ Features
