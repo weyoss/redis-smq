@@ -6,6 +6,7 @@
 
 ### Enumerations
 
+- [EConsoleLoggerLevel](enums/EConsoleLoggerLevel.md)
 - [ERedisConfigClient](enums/ERedisConfigClient.md)
 - [EWorkerThreadChildExecutionCode](enums/EWorkerThreadChildExecutionCode.md)
 - [EWorkerThreadChildExitCode](enums/EWorkerThreadChildExitCode.md)
@@ -14,6 +15,7 @@
 
 ### Classes
 
+- [ConsoleLogger](classes/ConsoleLogger.md)
 - [EventBus](classes/EventBus.md)
 - [EventBusRedis](classes/EventBusRedis.md)
 - [EventEmitter](classes/EventEmitter.md)
@@ -57,6 +59,7 @@
 ### Interfaces
 
 - [ICallback](interfaces/ICallback.md)
+- [IConsoleLoggerOptions](interfaces/IConsoleLoggerOptions.md)
 - [IEventBus](interfaces/IEventBus.md)
 - [IEventEmitter](interfaces/IEventEmitter.md)
 - [ILogger](interfaces/ILogger.md)
@@ -70,6 +73,8 @@
 
 ### Type Aliases
 
+- [TConsoleLoggerLevelName](README.md#tconsoleloggerlevelname)
+- [TConsoleLoggerOptionsDateFormatter](README.md#tconsoleloggeroptionsdateformatter)
 - [TEventBusEvent](README.md#teventbusevent)
 - [TEventEmitterEvent](README.md#teventemitterevent)
 - [TFunction](README.md#tfunction)
@@ -102,6 +107,36 @@
 - [createRedisClient](README.md#createredisclient)
 
 ## Type Aliases
+
+### TConsoleLoggerLevelName
+
+Ƭ **TConsoleLoggerLevelName**: keyof typeof [`EConsoleLoggerLevel`](enums/EConsoleLoggerLevel.md)
+
+Type for log level names
+
+___
+
+### TConsoleLoggerOptionsDateFormatter
+
+Ƭ **TConsoleLoggerOptionsDateFormatter**: (`date`: `Date`) => `string`
+
+Type for date format function
+
+#### Type declaration
+
+▸ (`date`): `string`
+
+##### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `date` | `Date` |
+
+##### Returns
+
+`string`
+
+___
 
 ### TEventBusEvent
 

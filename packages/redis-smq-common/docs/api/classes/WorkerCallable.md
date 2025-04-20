@@ -29,6 +29,7 @@
 
 - [call](WorkerCallable.md#call)
 - [emit](WorkerCallable.md#emit)
+- [getId](WorkerCallable.md#getid)
 - [on](WorkerCallable.md#on)
 - [once](WorkerCallable.md#once)
 - [postMessage](WorkerCallable.md#postmessage)
@@ -40,7 +41,7 @@
 
 ### constructor
 
-• **new WorkerCallable**\<`Payload`, `Reply`\>(`workerFilename`): [`WorkerCallable`](WorkerCallable.md)\<`Payload`, `Reply`\>
+• **new WorkerCallable**\<`Payload`, `Reply`\>(`workerFilename`, `logger?`): [`WorkerCallable`](WorkerCallable.md)\<`Payload`, `Reply`\>
 
 #### Type parameters
 
@@ -54,6 +55,7 @@
 | Name | Type |
 | :------ | :------ |
 | `workerFilename` | `string` |
+| `logger?` | [`ILogger`](../interfaces/ILogger.md) |
 
 #### Returns
 
@@ -110,6 +112,24 @@ ___
 #### Inherited from
 
 Worker.emit
+
+___
+
+### getId
+
+▸ **getId**(): `string`
+
+Gets the worker ID.
+
+#### Returns
+
+`string`
+
+The worker ID.
+
+#### Inherited from
+
+Worker.getId
 
 ___
 
@@ -171,11 +191,13 @@ ___
 
 ▸ **postMessage**(`message`): `void`
 
+Posts a message to the worker thread.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `message` | [`TWorkerThreadParentMessage`](../README.md#tworkerthreadparentmessage) |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `message` | [`TWorkerThreadParentMessage`](../README.md#tworkerthreadparentmessage) | The message to post to the worker thread. |
 
 #### Returns
 
@@ -244,11 +266,13 @@ ___
 
 ▸ **shutdown**(`cb`): `void`
 
+Shuts down the worker thread.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | [`ICallback`](../interfaces/ICallback.md)\<`void`\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `cb` | [`ICallback`](../interfaces/ICallback.md)\<`void`\> | The callback function to call after shutdown. |
 
 #### Returns
 
