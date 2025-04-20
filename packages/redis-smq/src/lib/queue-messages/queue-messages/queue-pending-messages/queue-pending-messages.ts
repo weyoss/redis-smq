@@ -7,8 +7,14 @@
  * in the root directory of this source tree.
  */
 
-import { async, CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
+import {
+  async,
+  CallbackEmptyReplyError,
+  ICallback,
+  logger,
+} from 'redis-smq-common';
 import { RedisClient } from '../../../../common/redis-client/redis-client.js';
+import { Configuration } from '../../../../config/index.js';
 import { IMessageTransferable } from '../../../message/index.js';
 import { _getQueueProperties } from '../../../queue/_/_get-queue-properties.js';
 import { _parseQueueExtendedParams } from '../../../queue/_/_parse-queue-extended-params.js';
@@ -25,11 +31,17 @@ export class QueuePendingMessages implements IQueueMessageManager {
   protected redisClient;
   protected priorityQueueMessages;
   protected sequentialQueuePendingMessages;
+  protected logger;
 
   constructor() {
-    this.redisClient = new RedisClient();
+    this.logger = logger.getLogger(
+      Configuration.getSetConfig().logger,
+      this.constructor.name.toLowerCase(),
+    );
     this.priorityQueueMessages = new PriorityQueuePendingMessages();
     this.sequentialQueuePendingMessages = new SequentialQueuePendingMessages();
+    this.redisClient = new RedisClient();
+    this.redisClient.on('error', (err) => this.logger.error(err));
   }
 
   protected getQueueImplementation(

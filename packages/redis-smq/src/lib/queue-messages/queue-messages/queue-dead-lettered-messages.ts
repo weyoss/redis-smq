@@ -21,5 +21,6 @@ export class QueueDeadLetteredMessages extends QueueMessagesManagerAbstract {
       new Message(),
       'keyQueueDL',
     );
+    this.logger.debug('QueueDeadLetteredMessages initialized');
   }
 }

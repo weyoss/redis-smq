@@ -15,11 +15,13 @@ import { QueueMessagesStorageSortedSet } from '../queue-messages-storage/queue-m
 export class QueueScheduledMessages extends QueueMessagesManagerAbstract {
   constructor() {
     const redisClient = new RedisClient();
+    redisClient.on('error', (err) => this.logger.error(err));
     super(
       redisClient,
       new QueueMessagesStorageSortedSet(redisClient),
       new Message(),
       'keyQueueScheduled',
     );
+    this.logger.debug('QueueScheduledMessages initialized');
   }
 }

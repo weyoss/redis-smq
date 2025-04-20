@@ -11,11 +11,20 @@ import { CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { IQueueParsedParams } from '../../queue/index.js';
 import { QueueMessagesStorage } from './queue-messages-storage.js';
+import { RedisClient } from '../../../common/redis-client/redis-client.js';
 
 /**
  * Implementation of QueueMessagesStorage for Redis lists
  */
 export class QueueMessagesStorageList extends QueueMessagesStorage {
+  /**
+   * @param redisClient Redis client instance
+   */
+  constructor(redisClient: RedisClient) {
+    super(redisClient);
+    this.logger.debug('QueueMessagesStorageList initialized');
+  }
+
   /**
    * Count items in a Redis list
    * @param queue Queue parameters
@@ -28,11 +37,26 @@ export class QueueMessagesStorageList extends QueueMessagesStorage {
     cb: ICallback<number>,
   ): void {
     const keys = redisKeys.getQueueKeys(queue.queueParams, queue.groupId);
+    this.logger.debug(`Counting items in list ${keys[redisKey]}`);
+
     this.redisClient.getSetInstance((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else {
-        client.llen(keys[redisKey], cb);
+      if (err) {
+        this.logger.error(`Failed to get Redis client: ${err.message}`);
+        cb(err);
+      } else if (!client) {
+        this.logger.error('Redis client is empty');
+        cb(new CallbackEmptyReplyError());
+      } else {
+        this.logger.debug(`Executing LLEN on ${keys[redisKey]}`);
+        client.llen(keys[redisKey], (err, count) => {
+          if (err) {
+            this.logger.error(`LLEN operation failed: ${err.message}`);
+            cb(err);
+          } else {
+            this.logger.debug(`Count for ${keys[redisKey]}: ${count}`);
+            cb(null, count);
+          }
+        });
       }
     });
   }
@@ -53,17 +77,36 @@ export class QueueMessagesStorageList extends QueueMessagesStorage {
     cb: ICallback<string[]>,
   ): void {
     const keys = redisKeys.getQueueKeys(queue.queueParams, queue.groupId);
+    this.logger.debug(
+      `Fetching items from ${keys[redisKey]} with offset=${offset}, limit=${limit}`,
+    );
+
     this.redisClient.getSetInstance((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else {
+      if (err) {
+        this.logger.error(`Failed to get Redis client: ${err.message}`);
+        cb(err);
+      } else if (!client) {
+        this.logger.error('Redis client is empty');
+        cb(new CallbackEmptyReplyError());
+      } else {
+        this.logger.debug(
+          `Executing LRANGE on ${keys[redisKey]} from ${offset} to ${offset + limit - 1}`,
+        );
         client.lrange(
           keys[redisKey],
           offset,
           offset + limit - 1,
           (err, items) => {
-            if (err) cb(err);
-            else cb(null, items || []);
+            if (err) {
+              this.logger.error(`LRANGE operation failed: ${err.message}`);
+              cb(err);
+            } else {
+              const itemCount = items ? items.length : 0;
+              this.logger.debug(
+                `Retrieved ${itemCount} items from ${keys[redisKey]}`,
+              );
+              cb(null, items || []);
+            }
           },
         );
       }
@@ -83,43 +126,88 @@ export class QueueMessagesStorageList extends QueueMessagesStorage {
     cb: ICallback<string[]>,
   ): void {
     const chunkSize = 100;
+    this.logger.debug(`Fetching all items with chunk size ${chunkSize}`);
+
     this.redisClient.getSetInstance((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else {
+      if (err) {
+        this.logger.error(`Failed to get Redis client: ${err.message}`);
+        cb(err);
+      } else if (!client) {
+        this.logger.error('Redis client is empty');
+        cb(new CallbackEmptyReplyError());
+      } else {
         const keys = redisKeys.getQueueKeys(queue.queueParams, queue.groupId);
         const key = keys[redisKey];
+        this.logger.debug(`Fetching all items from ${key}`);
 
         // First get the list length to determine how many chunks we need
+        this.logger.debug(`Executing LLEN on ${key} to determine total length`);
         client.llen(key, (err, reply) => {
-          if (err) return cb(err);
+          if (err) {
+            this.logger.error(`LLEN operation failed: ${err.message}`);
+            return cb(err);
+          }
 
           const totalLength = Number(reply);
-          if (totalLength === 0) return cb(null, []);
+          this.logger.debug(`Total length of ${key}: ${totalLength}`);
+
+          if (totalLength === 0) {
+            this.logger.debug(`List ${key} is empty, returning empty array`);
+            return cb(null, []);
+          }
 
           const allItems: string[] = [];
+          const totalChunks = Math.ceil(totalLength / chunkSize);
+          this.logger.debug(
+            `Will process ${totalChunks} chunks for list ${key}`,
+          );
 
           // Process chunks recursively with non-blocking approach
-          const processChunk = (offset: number): void => {
+          const processChunk = (
+            offset: number,
+            chunkIndex: number = 1,
+          ): void => {
             // If we've processed all items, we're done
             if (offset >= totalLength) {
+              this.logger.debug(
+                `Completed fetching all ${allItems.length} items from ${key}`,
+              );
               return cb(null, allItems);
             }
 
             // Calculate end index for this chunk
             const end = Math.min(offset + chunkSize - 1, totalLength - 1);
+            this.logger.debug(
+              `Processing chunk ${chunkIndex}/${totalChunks} (offset: ${offset}, end: ${end})`,
+            );
 
             // Fetch the current chunk
             client.lrange(key, offset, end, (err, items) => {
-              if (err) return cb(err);
+              if (err) {
+                this.logger.error(
+                  `LRANGE operation failed for chunk ${chunkIndex}: ${err.message}`,
+                );
+                return cb(err);
+              }
 
-              if (!items || items.length === 0) return cb(null, allItems);
+              if (!items || items.length === 0) {
+                this.logger.debug(
+                  `No items in chunk ${chunkIndex}, returning ${allItems.length} items collected so far`,
+                );
+                return cb(null, allItems);
+              }
 
               // Add items to our result array
+              const chunkItemCount = items.length;
               allItems.push(...items);
+              this.logger.debug(
+                `Added ${chunkItemCount} items from chunk ${chunkIndex}, total items so far: ${allItems.length}`,
+              );
 
               // Process next chunk with setImmediate to avoid blocking
-              setImmediate(() => processChunk(offset + chunkSize));
+              setImmediate(() =>
+                processChunk(offset + chunkSize, chunkIndex + 1),
+              );
             });
           };
 

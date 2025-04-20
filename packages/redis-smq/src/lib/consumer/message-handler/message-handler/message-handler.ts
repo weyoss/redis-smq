@@ -14,6 +14,7 @@ import {
   env,
   ICallback,
   ILogger,
+  logger,
   Runnable,
   WorkerResourceGroup,
 } from 'redis-smq-common';
@@ -33,13 +34,9 @@ import {
 } from '../../../message/index.js';
 import { IQueueParsedParams } from '../../../queue/index.js';
 import { Consumer } from '../../consumer/consumer.js';
-import {
-  EMessageUnknowledgmentReason,
-  IConsumerMessageHandlerArgs,
-} from '../../types/index.js';
-import { ConsumeMessage } from '../consume-message/consume-message.js';
-import { DequeueMessage } from '../dequeue-message/dequeue-message.js';
-import { processingQueue } from '../processing-queue/processing-queue.js';
+import { IConsumerMessageHandlerArgs } from '../../types/index.js';
+import { ConsumeMessage } from './consume-message/consume-message.js';
+import { DequeueMessage } from './dequeue-message/dequeue-message.js';
 import { evenBusPublisher } from './even-bus-publisher.js';
 
 export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
@@ -58,7 +55,6 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   constructor(
     consumer: Consumer,
     redisClient: RedisClient,
-    logger: ILogger,
     handlerParams: IConsumerMessageHandlerArgs,
     autoDequeue: boolean = true,
     eventBus: EventBus | null,
@@ -69,72 +65,119 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     this.consumerId = consumer.getId();
     this.queue = queue;
     this.messageHandler = messageHandler;
-    this.logger = logger;
+    this.logger = logger.getLogger(
+      Configuration.getSetConfig().logger,
+      this.constructor.name.toLowerCase(),
+    );
+
+    this.logger.info(
+      `Initializing MessageHandler for consumer ${this.consumerId}, queue ${JSON.stringify(this.queue)}`,
+    );
+    this.logger.debug(
+      `autoDequeue: ${autoDequeue}, messageHandler type: ${typeof messageHandler}`,
+    );
+
     this.autoDequeue = autoDequeue;
     this.redisClient = redisClient;
     this.eventBus = eventBus;
+
     if (this.eventBus) {
+      this.logger.debug('Event bus provided, setting up event bus publisher');
       evenBusPublisher(this, this.eventBus, this.logger);
+    } else {
+      this.logger.debug(
+        'No event bus provided, skipping event bus publisher setup',
+      );
     }
+
+    this.logger.debug('Initializing DequeueMessage instance');
     this.dequeueMessage = this.initDequeueMessageInstance();
+
+    this.logger.debug('Initializing ConsumeMessage instance');
     this.consumeMessage = this.initConsumeMessageInstance();
+
+    this.logger.debug('Registering system events');
     this.registerSystemEvents();
+
+    this.logger.info(
+      `MessageHandler initialized for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
+    );
   }
 
   protected initDequeueMessageInstance(): DequeueMessage {
+    this.logger.debug('Creating new DequeueMessage instance');
     const instance = new DequeueMessage(
       new RedisClient(),
       this.queue,
       this.consumer,
-      this.logger,
       this.eventBus,
     );
+    this.logger.debug('Setting up error handler for DequeueMessage instance');
     instance.on('consumer.dequeueMessage.error', this.onError);
+    this.logger.debug('DequeueMessage instance created successfully');
     return instance;
   }
 
   protected initConsumeMessageInstance(): ConsumeMessage {
+    this.logger.debug('Creating new ConsumeMessage instance');
     const instance = new ConsumeMessage(
       this.redisClient,
       this.consumer,
       this.queue,
       this.getId(),
       this.messageHandler,
-      this.logger,
       this.eventBus,
     );
+    this.logger.debug('Setting up error handler for ConsumeMessage instance');
     instance.on('consumer.consumeMessage.error', this.onError);
+    this.logger.debug('ConsumeMessage instance created successfully');
     return instance;
   }
 
   protected onMessageReceived: TRedisSMQEvent['consumer.dequeueMessage.messageReceived'] =
     (messageId) => {
+      this.logger.debug(
+        `Message received event for message ${messageId}, processing`,
+      );
       this.processMessage(messageId);
     };
 
   protected onMessageUnacknowledged: TRedisSMQEvent['consumer.consumeMessage.messageUnacknowledged'] =
-    () => {
+    (messageId) => {
+      this.logger.debug(
+        `Message unacknowledged event for message ${messageId}, requesting next message`,
+      );
       this.next();
     };
 
   protected onMessageAcknowledged: TRedisSMQEvent['consumer.consumeMessage.messageAcknowledged'] =
-    () => {
+    (messageId) => {
+      this.logger.debug(
+        `Message acknowledged event for message ${messageId}, requesting next message`,
+      );
       this.next();
     };
 
   protected onMessageNext: TRedisSMQEvent['consumer.dequeueMessage.nextMessage'] =
     () => {
+      this.logger.debug('Next message event received, requesting next message');
       this.next();
     };
 
   protected onError = (err: Error) => {
     // ignore errors that may occur during shutdown
     if (this.isRunning()) {
+      this.logger.error(`Error event received while running: ${err.message}`);
       this.handleError(err);
+    } else {
+      this.logger.debug(
+        `Ignoring error event received during shutdown: ${err.message}`,
+      );
     }
   };
 
   protected registerSystemEvents = (): void => {
+    this.logger.debug('Registering system event handlers');
     this.dequeueMessage.on(
       'consumer.dequeueMessage.messageReceived',
       this.onMessageReceived,
@@ -151,24 +194,8 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       'consumer.consumeMessage.messageAcknowledged',
       this.onMessageAcknowledged,
     );
+    this.logger.debug('All system event handlers registered successfully');
   };
-
-  protected cleanUp(cb: ICallback<void>): void {
-    const redisClient = this.redisClient.getInstance();
-    if (redisClient instanceof Error) {
-      // ignoring errors
-      return cb();
-    }
-    processingQueue.unknowledgeMessage(
-      redisClient,
-      this.consumerId,
-      [this.queue.queueParams],
-      this.logger,
-      EMessageUnknowledgmentReason.OFFLINE_MESSAGE_HANDLER,
-      // ignoring errors
-      () => cb(),
-    );
-  }
 
   protected override getLogger(): ILogger {
     return this.logger;
@@ -185,11 +212,19 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
    */
   protected override handleError(err: Error) {
     if (this.isRunning()) {
+      this.logger.error(`MessageHandler error: ${err.message}`, err);
+      this.logger.debug(
+        `Emitting consumer.messageHandler.error event for consumer ${this.consumerId}`,
+      );
       this.emit(
         'consumer.messageHandler.error',
         err,
         this.consumerId,
         this.queue,
+      );
+    } else {
+      this.logger.debug(
+        `Error occurred while not running: ${err.message} (ignoring)`,
       );
     }
     super.handleError(err);
@@ -202,34 +237,63 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
    *             The callback takes an error as its argument, which will be null if no error occurred.
    */
   protected setUpConsumerWorkers = (cb: ICallback<void>): void => {
+    this.logger.debug('Setting up consumer workers');
+
     const config = Configuration.getSetConfig();
     const { keyQueueWorkersLock } = redisKeys.getQueueKeys(
       this.queue.queueParams,
       this.queue.groupId,
     );
+
+    this.logger.debug(`Queue workers lock key: ${keyQueueWorkersLock}`);
+
     const redisClient = this.redisClient.getInstance();
     if (redisClient instanceof Error) {
+      this.logger.error(`Failed to get Redis client: ${redisClient.message}`);
       cb(redisClient);
       return void 0;
     }
+
+    this.logger.debug('Creating WorkerResourceGroup');
     this.workerResourceGroup = new WorkerResourceGroup(
       redisClient,
       this.logger,
       keyQueueWorkersLock,
     );
-    this.workerResourceGroup.on('workerResourceGroup.error', (err) =>
-      this.handleError(err),
-    );
+
+    this.logger.debug('Setting up error handler for WorkerResourceGroup');
+    this.workerResourceGroup.on('workerResourceGroup.error', (err) => {
+      this.logger.error(`WorkerResourceGroup error: ${err.message}`);
+      this.handleError(err);
+    });
+
     const workersDir = path.resolve(env.getCurrentDir(), '../../workers');
+    this.logger.debug(`Loading workers from directory: ${workersDir}`);
+
     this.workerResourceGroup.loadFromDir(
       workersDir,
       { config, queueParsedParams: this.queue },
       (err) => {
-        if (err) cb(err);
-        else {
+        if (err) {
+          this.logger.error(
+            `Failed to load workers from directory: ${err.message}`,
+          );
+          cb(err);
+        } else {
+          this.logger.debug(
+            'Workers loaded successfully, starting WorkerResourceGroup',
+          );
           this.workerResourceGroup?.run((err) => {
-            if (err) this.handleError(err);
+            if (err) {
+              this.logger.error(
+                `Failed to start WorkerResourceGroup: ${err.message}`,
+              );
+              this.handleError(err);
+            } else {
+              this.logger.debug('WorkerResourceGroup started successfully');
+            }
           });
+          this.logger.debug('Consumer workers setup completed');
           cb();
         }
       },
@@ -238,11 +302,19 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
 
   protected shutDownConsumerWorkers = (cb: ICallback<void>): void => {
     if (this.workerResourceGroup) {
-      this.workerResourceGroup.shutdown(() => {
+      this.logger.debug('Shutting down consumer workers');
+      this.workerResourceGroup.shutdown((err) => {
+        if (err) {
+          this.logger.warn(
+            `Error during WorkerResourceGroup shutdown: ${err.message} (ignoring)`,
+          );
+        }
+        this.logger.debug('Consumer workers shut down successfully');
         this.workerResourceGroup = null;
         cb();
       });
     } else {
+      this.logger.debug('No consumer workers to shut down');
       cb();
     }
   };
@@ -257,11 +329,39 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
    * It includes running the `dequeueMessage` and `consumeMessage` instances, optionally starting the dequeue process, and setting up consumer workers.
    */
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
+    this.logger.info(
+      `MessageHandler going up for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
+    );
     return super.goingUp().concat([
-      (cb: ICallback<void>) => this.dequeueMessage.run((err) => cb(err)),
-      (cb: ICallback<void>) => this.consumeMessage.run((err) => cb(err)),
       (cb: ICallback<void>) => {
-        if (this.autoDequeue) this.dequeue();
+        this.logger.debug('Starting DequeueMessage instance');
+        this.dequeueMessage.run((err) => {
+          if (err) {
+            this.logger.error(`Failed to start DequeueMessage: ${err.message}`);
+          } else {
+            this.logger.debug('DequeueMessage started successfully');
+          }
+          cb(err);
+        });
+      },
+      (cb: ICallback<void>) => {
+        this.logger.debug('Starting ConsumeMessage instance');
+        this.consumeMessage.run((err) => {
+          if (err) {
+            this.logger.error(`Failed to start ConsumeMessage: ${err.message}`);
+          } else {
+            this.logger.debug('ConsumeMessage started successfully');
+          }
+          cb(err);
+        });
+      },
+      (cb: ICallback<void>) => {
+        if (this.autoDequeue) {
+          this.logger.debug('Auto-dequeue enabled, initiating first dequeue');
+          this.dequeue();
+        } else {
+          this.logger.debug('Auto-dequeue disabled, skipping initial dequeue');
+        }
         cb();
       },
       this.setUpConsumerWorkers,
@@ -276,17 +376,42 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
    * The method executes the following steps:
    * 1. Calls the `shutDownConsumerWorkers` method to terminate any running consumer worker processes.
    * 2. Shuts down the `dequeueMessage` and `consumeMessage` instances by calling their respective `shutdown` methods.
-   * 3. Calls the `cleanUp` method to perform any necessary cleanup operations, such as acknowledging any unacknowledged messages.
-   * 4. Calls the `super.goingDown` method to perform any additional cleanup operations defined in the parent class.
+   * 3. Calls the `super.goingDown` method to perform any additional cleanup operations defined in the parent class.
    *
    * @returns An array of functions, each representing a cleanup operation to be executed in sequence.
    */
   protected override goingDown(): ((cb: ICallback<void>) => void)[] {
+    this.logger.info(
+      `MessageHandler going down for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
+    );
     return [
       this.shutDownConsumerWorkers,
-      (cb: ICallback<void>) => this.dequeueMessage.shutdown(() => cb()),
-      (cb: ICallback<void>) => this.consumeMessage.shutdown(() => cb()),
-      (cb: ICallback<void>) => this.cleanUp(cb),
+      (cb: ICallback<void>) => {
+        this.logger.debug('Shutting down DequeueMessage instance');
+        this.dequeueMessage.shutdown((err) => {
+          if (err) {
+            this.logger.warn(
+              `Error during DequeueMessage shutdown: ${err.message} (ignoring)`,
+            );
+          } else {
+            this.logger.debug('DequeueMessage shut down successfully');
+          }
+          cb();
+        });
+      },
+      (cb: ICallback<void>) => {
+        this.logger.debug('Shutting down ConsumeMessage instance');
+        this.consumeMessage.shutdown((err) => {
+          if (err) {
+            this.logger.warn(
+              `Error during ConsumeMessage shutdown: ${err.message} (ignoring)`,
+            );
+          } else {
+            this.logger.debug('ConsumeMessage shut down successfully');
+          }
+          cb();
+        });
+      },
     ].concat(super.goingDown());
   }
 
@@ -303,44 +428,75 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
    * @returns {void}
    */
   processMessage(messageId: string): void {
-    if (this.isRunning()) {
-      const { keyMessage } = redisKeys.getMessageKeys(messageId);
-      const keys: string[] = [keyMessage];
-      const argv: (string | number)[] = [
-        EMessageProperty.STATUS,
-        EMessageProperty.STATE,
-        EMessageProperty.MESSAGE,
-        EMessagePropertyStatus.PROCESSING,
-      ];
-      const redisClient = this.redisClient.getInstance();
-      if (redisClient instanceof Error) {
-        this.handleError(redisClient);
-        return void 0;
-      }
-      redisClient.runScript(
-        ELuaScriptName.FETCH_MESSAGE_FOR_PROCESSING,
-        keys,
-        argv,
-        (err, reply: unknown) => {
-          if (err) {
-            return this.handleError(err);
-          }
-          if (!reply) {
-            return this.handleError(new CallbackEmptyReplyError());
-          }
-          if (!Array.isArray(reply)) {
-            return this.handleError(new CallbackInvalidReplyError());
-          }
-          const [state, msg]: string[] = reply;
-          const message = _fromMessage(
-            msg,
-            EMessagePropertyStatus.PROCESSING,
-            state,
-          );
-          this.consumeMessage.handleReceivedMessage(message);
-        },
+    if (!this.isRunning()) {
+      this.logger.debug(
+        `Ignoring processMessage call for message ${messageId} as handler is not running`,
       );
+      return void 0;
     }
+
+    this.logger.debug(`Processing message ${messageId}`);
+
+    const { keyMessage } = redisKeys.getMessageKeys(messageId);
+    this.logger.debug(`Message key: ${keyMessage}`);
+
+    const keys: string[] = [keyMessage];
+    const argv: (string | number)[] = [
+      EMessageProperty.STATUS,
+      EMessageProperty.STATE,
+      EMessageProperty.MESSAGE,
+      EMessagePropertyStatus.PROCESSING,
+    ];
+
+    const redisClient = this.redisClient.getInstance();
+    if (redisClient instanceof Error) {
+      this.logger.error(`Failed to get Redis client: ${redisClient.message}`);
+      this.handleError(redisClient);
+      return void 0;
+    }
+
+    this.logger.debug(
+      `Running FETCH_MESSAGE_FOR_PROCESSING script for message ${messageId}`,
+    );
+    redisClient.runScript(
+      ELuaScriptName.FETCH_MESSAGE_FOR_PROCESSING,
+      keys,
+      argv,
+      (err, reply: unknown) => {
+        if (err) {
+          this.logger.error(
+            `Failed to fetch message ${messageId} for processing: ${err.message}`,
+          );
+          return this.handleError(err);
+        }
+        if (!reply) {
+          this.logger.error(`Empty reply when fetching message ${messageId}`);
+          return this.handleError(new CallbackEmptyReplyError());
+        }
+        if (!Array.isArray(reply)) {
+          this.logger.error(
+            `Invalid reply type when fetching message ${messageId}`,
+          );
+          return this.handleError(new CallbackInvalidReplyError());
+        }
+
+        const [state, msg]: string[] = reply;
+        this.logger.debug(
+          `Message ${messageId} fetched successfully, state: ${state}`,
+        );
+
+        const message = _fromMessage(
+          msg,
+          EMessagePropertyStatus.PROCESSING,
+          state,
+        );
+
+        this.logger.debug(
+          `Passing message ${messageId} to ConsumeMessage for handling`,
+        );
+        this.consumeMessage.handleReceivedMessage(message);
+      },
+    );
   }
 
   /**
@@ -355,6 +511,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
    * @returns {void}
    */
   next(): void {
+    this.logger.debug('Requesting next message');
     this.dequeue();
   }
 
@@ -372,7 +529,10 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
    */
   dequeue(): void {
     if (this.isRunning()) {
+      this.logger.debug('Dequeuing message from queue');
       this.dequeueMessage.dequeue();
+    } else {
+      this.logger.debug('Ignoring dequeue call as handler is not running');
     }
   }
 
@@ -386,6 +546,9 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
    * The returned object contains information about the queue, such as the queue name, consumer group ID, and other relevant details.
    */
   getQueue(): IQueueParsedParams {
+    this.logger.debug(
+      `Getting queue parameters: ${JSON.stringify(this.queue)}`,
+    );
     return this.queue;
   }
 }

@@ -62,33 +62,46 @@ export class Consumer extends Runnable<TConsumerEvent> {
     const config = Configuration.getSetConfig();
     this.logger = logger.getLogger(
       config.logger,
-      `consumer:${this.id}:message-handler`,
+      this.constructor.name.toLowerCase(),
     );
+    this.logger.info(
+      `Initializing consumer${enableMultiplexing ? ' with multiplexing enabled' : ''}`,
+    );
+
     this.redisClient = new RedisClient();
     this.redisClient.on('error', this.onRedisError);
+    this.logger.debug('Redis client initialized');
 
     if (Configuration.getSetConfig().eventBus.enabled) {
+      this.logger.debug('Event bus is enabled, initializing');
       this.eventBus = new EventBus();
       this.eventBus.on('error', this.onRedisError);
       eventBusPublisher(this, this.eventBus, this.logger);
+      this.logger.debug('Event bus publisher configured');
+    } else {
+      this.logger.debug('Event bus is disabled');
     }
+
+    this.logger.debug(
+      `Creating ${enableMultiplexing ? 'multiplexed' : 'standard'} message handler runner`,
+    );
     this.messageHandlerRunner = enableMultiplexing
       ? new MultiplexedMessageHandlerRunner(
           this,
           this.redisClient,
-          this.logger,
           this.eventBus,
         )
-      : new MessageHandlerRunner(
-          this,
-          this.redisClient,
-          this.logger,
-          this.eventBus,
-        );
+      : new MessageHandlerRunner(this, this.redisClient, this.eventBus);
 
-    this.messageHandlerRunner.on('consumer.messageHandlerRunner.error', (err) =>
-      this.handleError(err),
+    this.messageHandlerRunner.on(
+      'consumer.messageHandlerRunner.error',
+      (err) => {
+        this.logger.error(`Message handler runner error: ${err.message}`);
+        this.handleError(err);
+      },
     );
+
+    this.logger.info(`Consumer initialized with ID: ${this.id}`);
   }
 
   /**
@@ -97,6 +110,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * @param {Error} error - The error encountered.
    */
   protected onRedisError: TRedisClientEvent['error'] = (error) => {
+    this.logger.error(`Redis client error: ${error.message}`);
     this.handleError(error);
   };
 
@@ -106,16 +120,26 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * @param {ICallback<void>} cb - Callback function to be called once setup is complete.
    */
   protected setUpHeartbeat = (cb: ICallback<void>): void => {
+    this.logger.debug('Setting up consumer heartbeat');
     this.heartbeat = new ConsumerHeartbeat(
       this,
       this.redisClient,
-      this.logger,
       this.eventBus ?? null,
     );
-    this.heartbeat.on('consumerHeartbeat.error', (err) =>
-      this.handleError(err),
-    );
-    this.heartbeat.run((err) => cb(err));
+    this.heartbeat.on('consumerHeartbeat.error', (err) => {
+      this.logger.error(`Heartbeat error: ${err.message}`);
+      this.handleError(err);
+    });
+    this.logger.debug('Starting heartbeat');
+    this.heartbeat.run((err) => {
+      if (err) {
+        this.logger.error(`Failed to start heartbeat: ${err.message}`);
+        cb(err);
+      } else {
+        this.logger.debug('Heartbeat started successfully');
+        cb();
+      }
+    });
   };
 
   /**
@@ -125,11 +149,19 @@ export class Consumer extends Runnable<TConsumerEvent> {
    */
   protected shutDownHeartbeat = (cb: ICallback<void>): void => {
     if (this.heartbeat) {
-      this.heartbeat.shutdown(() => {
+      this.logger.debug('Shutting down heartbeat');
+      this.heartbeat.shutdown((err) => {
+        if (err) {
+          this.logger.warn(`Error during heartbeat shutdown: ${err.message}`);
+        }
+        this.logger.debug('Heartbeat shut down');
         this.heartbeat = null;
         cb();
       });
-    } else cb();
+    } else {
+      this.logger.debug('No heartbeat to shut down');
+      cb();
+    }
   };
 
   /**
@@ -138,7 +170,16 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * @param {ICallback<void>} cb - Callback function to be called once processing is complete.
    */
   protected runMessageHandlers = (cb: ICallback<void>): void => {
-    this.messageHandlerRunner.run((err) => cb(err));
+    this.logger.debug('Starting message handlers');
+    this.messageHandlerRunner.run((err) => {
+      if (err) {
+        this.logger.error(`Failed to start message handlers: ${err.message}`);
+        cb(err);
+      } else {
+        this.logger.debug('Message handlers started successfully');
+        cb();
+      }
+    });
   };
 
   /**
@@ -147,7 +188,16 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * @param {ICallback<void>} cb - Callback function to be called once shutdown is complete.
    */
   protected shutdownMessageHandlers = (cb: ICallback<void>): void => {
-    this.messageHandlerRunner.shutdown(() => cb());
+    this.logger.debug('Shutting down message handlers');
+    this.messageHandlerRunner.shutdown((err) => {
+      if (err) {
+        this.logger.warn(
+          `Error during message handlers shutdown: ${err.message}`,
+        );
+      }
+      this.logger.debug('Message handlers shut down');
+      cb();
+    });
   };
 
   /**
@@ -156,10 +206,16 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * @param {ICallback<void>} cb - Callback function to be called once initialization is complete.
    */
   protected initRedisClient = (cb: ICallback<void>): void => {
+    this.logger.debug('Initializing Redis client connection');
     this.redisClient.getSetInstance((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else {
+      if (err) {
+        this.logger.error(`Failed to initialize Redis client: ${err.message}`);
+        cb(err);
+      } else if (!client) {
+        this.logger.error('Redis client returned empty instance');
+        cb(new CallbackEmptyReplyError());
+      } else {
+        this.logger.debug('Redis client connection established');
         client.on('error', this.onRedisError);
         cb();
       }
@@ -172,7 +228,14 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * @param {ICallback<void>} cb - Callback function to be called once shutdown is complete.
    */
   protected shutDownRedisClient = (cb: ICallback<void>): void => {
-    this.redisClient.shutdown(() => cb());
+    this.logger.debug('Shutting down Redis client');
+    this.redisClient.shutdown((err) => {
+      if (err) {
+        this.logger.warn(`Error during Redis client shutdown: ${err.message}`);
+      }
+      this.logger.debug('Redis client shut down');
+      cb();
+    });
   };
 
   /**
@@ -181,12 +244,30 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * @returns {TUnaryFunction<ICallback<void>>[]} - Array of functions to be executed in sequence during startup.
    */
   protected override goingUp(): TUnaryFunction<ICallback<void>>[] {
+    this.logger.info('Consumer going up');
     return super.goingUp().concat([
       (cb) => {
-        if (this.eventBus) this.eventBus.init(cb);
-        else cb();
+        if (this.eventBus) {
+          this.logger.debug('Initializing event bus');
+          this.eventBus.init((err) => {
+            if (err) {
+              this.logger.error(
+                `Failed to initialize event bus: ${err.message}`,
+              );
+            } else {
+              this.logger.debug('Event bus initialized');
+            }
+            cb(err);
+          });
+        } else {
+          this.logger.debug('Skipping event bus initialization (disabled)');
+          cb();
+        }
       },
       (cb) => {
+        this.logger.debug(
+          `Emitting consumer.goingUp event for consumer ${this.id}`,
+        );
         this.emit('consumer.goingUp', this.id);
         cb();
       },
@@ -202,6 +283,10 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * @returns {TUnaryFunction<ICallback<void>>[]} - Array of functions to be executed in sequence during shutdown.
    */
   protected override goingDown(): TUnaryFunction<ICallback<void>>[] {
+    this.logger.info('Consumer going down');
+    this.logger.debug(
+      `Emitting consumer.goingDown event for consumer ${this.id}`,
+    );
     this.emit('consumer.goingDown', this.id);
     return [
       this.shutdownMessageHandlers,
@@ -216,7 +301,9 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * @param {ICallback<boolean>} cb - Callback function to indicate success.
    */
   protected override up(cb: ICallback<boolean>) {
+    this.logger.info('Consumer is up');
     super.up(() => {
+      this.logger.debug(`Emitting consumer.up event for consumer ${this.id}`);
       this.emit('consumer.up', this.id);
       cb(null, true);
     });
@@ -228,14 +315,29 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * @param {ICallback<boolean>} cb - Callback function to indicate success.
    */
   protected override down(cb: ICallback<boolean>) {
+    this.logger.info('Consumer is down');
     super.down(() => {
+      this.logger.debug(`Emitting consumer.down event for consumer ${this.id}`);
       this.emit('consumer.down', this.id);
       // Delay the shutdown of the event bus
-      setTimeout(() => {
-        if (this.eventBus) {
-          this.eventBus.shutdown(() => cb(null, true));
-        } else cb(null, true);
-      }, 1000);
+      if (this.eventBus) {
+        this.logger.debug('Delaying event bus shutdown by 1000ms');
+        setTimeout(() => {
+          this.logger.debug('Shutting down event bus');
+          this.eventBus?.shutdown((err) => {
+            if (err) {
+              this.logger.warn(
+                `Error during event bus shutdown: ${err.message}`,
+              );
+            }
+            this.logger.debug('Event bus shut down');
+            cb(null, true);
+          });
+        }, 1000);
+      } else {
+        this.logger.debug('No event bus to shut down');
+        cb(null, true);
+      }
     });
   }
 
@@ -252,6 +354,8 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * @param {Error} err - The error to handle.
    */
   protected override handleError(err: Error) {
+    this.logger.error(`Consumer error: ${err.message}`, err);
+    this.logger.debug(`Emitting consumer.error event for consumer ${this.id}`);
     this.emit('consumer.error', err, this.id);
     super.handleError(err);
   }
@@ -300,13 +404,33 @@ export class Consumer extends Runnable<TConsumerEvent> {
     messageHandler: TConsumerMessageHandler,
     cb: ICallback<void>,
   ): void {
+    this.logger.info(
+      `Setting up consumption for queue: ${typeof queue === 'string' ? queue : JSON.stringify(queue)}`,
+    );
     const parsedQueueParams = _parseQueueExtendedParams(queue);
-    if (parsedQueueParams instanceof Error) cb(parsedQueueParams);
-    else {
+    if (parsedQueueParams instanceof Error) {
+      this.logger.error(
+        `Failed to parse queue parameters: ${parsedQueueParams.message}`,
+      );
+      cb(parsedQueueParams);
+    } else {
+      this.logger.debug(
+        `Adding message handler for queue: ${JSON.stringify(parsedQueueParams)}`,
+      );
       this.messageHandlerRunner.addMessageHandler(
         parsedQueueParams,
         messageHandler,
-        cb,
+        (err) => {
+          if (err) {
+            this.logger.error(`Failed to add message handler: ${err.message}`);
+            cb(err);
+          } else {
+            this.logger.info(
+              `Successfully set up consumption for queue: ${parsedQueueParams.queueParams.name} (namespace: ${parsedQueueParams.queueParams.ns}${parsedQueueParams.groupId ? `, group: ${parsedQueueParams.groupId}` : ''})`,
+            );
+            cb();
+          }
+        },
       );
     }
   }
@@ -359,10 +483,35 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * ```
    */
   cancel(queue: TQueueExtendedParams, cb: ICallback<void>): void {
+    this.logger.info(
+      `Canceling consumption for queue: ${typeof queue === 'string' ? queue : JSON.stringify(queue)}`,
+    );
     const parsedQueueParams = _parseQueueExtendedParams(queue);
-    if (parsedQueueParams instanceof Error) cb(parsedQueueParams);
-    else {
-      this.messageHandlerRunner.removeMessageHandler(parsedQueueParams, cb);
+    if (parsedQueueParams instanceof Error) {
+      this.logger.error(
+        `Failed to parse queue parameters: ${parsedQueueParams.message}`,
+      );
+      cb(parsedQueueParams);
+    } else {
+      this.logger.debug(
+        `Removing message handler for queue: ${JSON.stringify(parsedQueueParams)}`,
+      );
+      this.messageHandlerRunner.removeMessageHandler(
+        parsedQueueParams,
+        (err) => {
+          if (err) {
+            this.logger.error(
+              `Failed to remove message handler: ${err.message}`,
+            );
+            cb(err);
+          } else {
+            this.logger.info(
+              `Successfully canceled consumption for queue: ${parsedQueueParams.queueParams.name} (namespace: ${parsedQueueParams.queueParams.ns}${parsedQueueParams.groupId ? `, group: ${parsedQueueParams.groupId}` : ''})`,
+            );
+            cb();
+          }
+        },
+      );
     }
   }
 
@@ -402,6 +551,11 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * ```
    */
   getQueues(): IQueueParsedParams[] {
-    return this.messageHandlerRunner.getQueues();
+    this.logger.debug('Getting list of queues being consumed');
+    const queues = this.messageHandlerRunner.getQueues();
+    this.logger.debug(
+      `Consumer is handling ${queues.length} queues: ${JSON.stringify(queues)}`,
+    );
+    return queues;
   }
 }

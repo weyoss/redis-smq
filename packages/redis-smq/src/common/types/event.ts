@@ -8,8 +8,8 @@
  */
 
 import {
-  EMessageUnknowledgmentDeadLetterReason,
-  EMessageUnknowledgmentReason,
+  EMessageUnacknowledgementDeadLetterReason,
+  EMessageUnacknowledgementReason,
   IConsumerHeartbeat,
   IQueueParams,
   IQueueParsedParams,
@@ -37,14 +37,14 @@ export type TConsumerConsumeMessageEvent = {
     queue: IQueueParsedParams,
     messageHandlerId: string,
     consumerId: string,
-    unknowledgmentReason: EMessageUnknowledgmentReason,
+    unknowledgmentReason: EMessageUnacknowledgementReason,
   ) => void;
   'consumer.consumeMessage.messageDeadLettered': (
     messageId: string,
     queue: IQueueParsedParams,
     messageHandlerId: string,
     consumerId: string,
-    deadLetterReason: EMessageUnknowledgmentDeadLetterReason,
+    deadLetterReason: EMessageUnacknowledgementDeadLetterReason,
   ) => void;
   'consumer.consumeMessage.messageRequeued': (
     messageId: string,

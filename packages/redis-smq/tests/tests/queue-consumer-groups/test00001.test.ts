@@ -33,7 +33,7 @@ test('QueueConsumerGroupsCache: combined tests', async () => {
 
   // initializing a standalone dictionary
   const queueConsumerGroupsDictionary = bluebird.promisifyAll(
-    new QueueConsumerGroupsCache(producer, redisClient, eventBus, console),
+    new QueueConsumerGroupsCache(producer, redisClient, eventBus),
   );
   await queueConsumerGroupsDictionary.runAsync();
 
@@ -154,7 +154,7 @@ test('QueueConsumerGroupsCache: combined tests', async () => {
   await queueConsumerGroupsDictionary.shutdownAsync();
 
   const queueConsumerGroupsDictionary2 = bluebird.promisifyAll(
-    new QueueConsumerGroupsCache(producer, redisClient, eventBus, console),
+    new QueueConsumerGroupsCache(producer, redisClient, eventBus),
   );
   await queueConsumerGroupsDictionary2.runAsync();
   const gp11 = queueConsumerGroupsDictionary2.getConsumerGroups(queue2);

@@ -22,5 +22,6 @@ export class PriorityQueuePendingMessages extends QueueMessagesManagerAbstract {
       new Message(),
       'keyQueuePriorityPending',
     );
+    this.logger.debug('PriorityQueuePendingMessages initialized');
   }
 }

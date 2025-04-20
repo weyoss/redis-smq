@@ -61,6 +61,7 @@ export class QueueMessages extends QueueMessagesManagerAbstract {
     this.queueDeadLetteredMessages = new QueueDeadLetteredMessages();
     this.queueScheduledMessages = new QueueScheduledMessages();
     this.queueAcknowledgedMessages = new QueueAcknowledgedMessages();
+    this.logger.debug('QueueMessages initialized');
   }
 
   /**

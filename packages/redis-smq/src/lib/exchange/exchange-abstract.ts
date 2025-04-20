@@ -22,7 +22,7 @@ export abstract class ExchangeAbstract<ExchangeParams>
   constructor() {
     this.logger = logger.getLogger(
       Configuration.getSetConfig().logger,
-      `exchange`,
+      this.constructor.name.toLowerCase(),
     );
     this.redisClient = new RedisClient();
     this.redisClient.on('error', (err) => this.logger.error(err));
