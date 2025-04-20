@@ -27,6 +27,7 @@
 ### Methods
 
 - [emit](WorkerRunnable.md#emit)
+- [getId](WorkerRunnable.md#getid)
 - [on](WorkerRunnable.md#on)
 - [once](WorkerRunnable.md#once)
 - [postMessage](WorkerRunnable.md#postmessage)
@@ -39,7 +40,7 @@
 
 ### constructor
 
-• **new WorkerRunnable**\<`InitialPayload`\>(`workerFilename`, `initialPayload?`): [`WorkerRunnable`](WorkerRunnable.md)\<`InitialPayload`\>
+• **new WorkerRunnable**\<`InitialPayload`\>(`workerFilename`, `initialPayload?`, `logger?`): [`WorkerRunnable`](WorkerRunnable.md)\<`InitialPayload`\>
 
 #### Type parameters
 
@@ -53,6 +54,7 @@
 | :------ | :------ |
 | `workerFilename` | `string` |
 | `initialPayload?` | `InitialPayload` |
+| `logger?` | [`ILogger`](../interfaces/ILogger.md) |
 
 #### Returns
 
@@ -88,6 +90,24 @@ Worker\<void, void\>.constructor
 #### Inherited from
 
 Worker.emit
+
+___
+
+### getId
+
+▸ **getId**(): `string`
+
+Gets the worker ID.
+
+#### Returns
+
+`string`
+
+The worker ID.
+
+#### Inherited from
+
+Worker.getId
 
 ___
 
@@ -149,11 +169,13 @@ ___
 
 ▸ **postMessage**(`message`): `void`
 
+Posts a message to the worker thread.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `message` | [`TWorkerThreadParentMessage`](../README.md#tworkerthreadparentmessage) |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `message` | [`TWorkerThreadParentMessage`](../README.md#tworkerthreadparentmessage) | The message to post to the worker thread. |
 
 #### Returns
 

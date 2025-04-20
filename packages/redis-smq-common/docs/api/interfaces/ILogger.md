@@ -2,6 +2,10 @@
 
 # Interface: ILogger
 
+## Implemented by
+
+- [`ConsoleLogger`](../classes/ConsoleLogger.md)
+
 ## Table of contents
 
 ### Methods

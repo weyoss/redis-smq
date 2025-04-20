@@ -1,50 +1,45 @@
+
 [RedisSMQ Common Library](../README.md) / Logger
 
 # Logger
+
+## Overview
 
 Logging is an essential part of any application for debugging, monitoring, and auditing purposes.
 The redis-smq-common logging system provides a simple yet powerful interface to log messages with different severity
 levels (debug, info, warn, error) and supports namespaces for better organization.
 
-## Configuration
+## Table of Contents
 
-### Configuration Parameters
+- [Basic Usage](#basic-usage)
+    - [Enabling Logging](#enabling-logging)
+    - [Logging Messages](#logging-messages)
+    - [Cleaning Up](#cleaning-up)
+- [Configuration](#configuration)
+    - [Configuration Parameters](#configuration-parameters)
+    - [Configuration Example](#configuration-example)
+- [Built-in Console Logger](#built-in-console-logger)
+    - [Log Levels](#log-levels)
+    - [Advanced Configuration](#advanced-configuration)
+- [Custom Loggers](#custom-loggers)
+    - [Creating a Custom Logger](#creating-a-custom-logger)
+    - [Setting a Custom Logger](#setting-a-custom-logger)
+- [Integration with Third-Party Loggers](#integration-with-third-party-loggers)
+    - [Winston Integration](#winston-integration)
+    - [Pino Integration](#pino-integration)
+- [Performance Considerations](#performance-considerations)
 
-The logger can be configured using an [ILoggerConfig](api/interfaces/ILoggerConfig.md) object. The most important
-configuration option is enabled, which determines whether logging is active or not.
-
-### Configuration Example
-
-```javascript
-'use strict';
-
-const path = require('path');
-
-module.exports = {
-  logger: {
-    enabled: false,
-  },
-};
-```
-
-- `logger` _(object): Optional._ Configuration object for logging parameters.
-- `logger.enabled` _(boolean): Optional._ Enable or disable logging. By default, logging is disabled.
-
-## Usage
+## Basic Usage
 
 ### Enabling Logging
 
-By default, logging is disabled. Logging can affect message processing performance due to I/O operations.
+By default, logging is disabled to optimize performance. Logging can affect message processing performance due to I/O operations.
 
-To enable logging, set `cfg.enabled` to `true` in the configuration. This will initialize the Node.js console logger as
+To enable logging, set `cfg.enabled` to `true` in the configuration. This will initialize the builtin `ConsoleLogger` as
 the default logger.
 
-### Example
-
-Here's a basic example of how to configure and use the logger:
-
 ```typescript
-import { logger } from './logger';
+import { logger } from 'redis-smq-common';
 
 // Configuration for enabling the logger
 const config = {
@@ -53,67 +48,25 @@ const config = {
 
 // Get a logger instance with a namespace
 const log = logger.getLogger(config, 'MyNamespace');
+```
 
-// Log messages
+### Logging Messages
+
+Once you have a logger instance, you can log messages at different severity levels:
+
+```typescript
+// Log messages at different levels
 log.info('This is an info message');
 log.warn('This is a warning message');
 log.error('This is an error message');
 log.debug('This is a debug message');
+
+// Log with additional parameters
+log.info('User logged in', { userId: 123, timestamp: new Date() });
+log.error('Operation failed', new Error('Database connection error'));
 ```
 
-### Setting up a custom logger
-
-To set up and use a custom logger:
-
-#### 1. Create your custom logger:
-
-First, create a custom logger that implements the `ILogger` interface. This interface is defined in the project as:
-
-```typescript
-export interface ILogger {
-  info(message: unknown, ...params: unknown[]): void;
-  warn(message: unknown, ...params: unknown[]): void;
-  error(message: unknown, ...params: unknown[]): void;
-  debug(message: unknown, ...params: unknown[]): void;
-}
-```
-
-Your custom logger should implement these methods.
-
-#### 2. Set the custom logger:
-
-Use the `setLogger` function from the `logger` object to set your custom logger. This should be done before any other
-parts of the application try to use the logger.
-
-```typescript
-import { logger } from 'path-to-logger-file';
-
-// Assuming you have created a custom logger called MyCustomLogger
-const myCustomLogger = new MyCustomLogger();
-
-// Set the custom logger
-logger.setLogger(myCustomLogger);
-```
-
-#### 3. Use the logger:
-
-After setting the custom logger, you can use it throughout your application by calling `getLogger`:
-
-```typescript
-const myLogger = logger.getLogger({ enabled: true }, 'MyNamespace');
-
-myLogger.info('This is an info message');
-myLogger.warn('This is a warning');
-myLogger.error('This is an error');
-myLogger.debug('This is a debug message');
-```
-
-Note that the `getLogger` function takes two parameters:
-
-- An `ILoggerConfig` object, which includes an `enabled` flag and optional `options`.
-- An optional namespace string, which will be prepended to log messages.
-
-#### 4. Clean up:
+### Cleaning Up
 
 If needed, you can destroy the logger instance using:
 
@@ -121,25 +74,136 @@ If needed, you can destroy the logger instance using:
 logger.destroy();
 ```
 
-### Using a third party logging library
+This is particularly useful in testing environments or when you need to reset the logger configuration.
 
-Any other library that fulfills the ILogger interface may be used the same way as using a custom logger.
+## Configuration
 
-Here's a step-by-step guide on how to do this, using Winston as an example:
+### Configuration Parameters
 
-#### 1. Install the new logging package:
+The logger can be configured using an [ILoggerConfig](api/interfaces/ILoggerConfig.md) object with the following properties:
 
-```bash
-npm install winston
+| Property  | Type    | Required | Default | Description                                   |
+|-----------|---------|----------|---------|-----------------------------------------------|
+| `enabled` | boolean | No       | `false` | Determines whether logging is active          |
+| `options` | object  | No       | `{}`    | Configuration options for the built-in logger |
+
+### Configuration Example
+
+```typescript
+import { ILoggerConfig } from 'redis-smq-common';
+
+const loggerConfig: ILoggerConfig = {
+  enabled: true,
+  options: {
+    // Built-in logger options (see next section)
+  }
+};
 ```
 
-#### 2. Set the winston logger as the default logger:
+## Built-in Console Logger
+
+The redis-smq-common package comes with a built-in `ConsoleLogger` that provides basic logging functionality.
+
+### Log Levels
+
+The built-in logger supports the following log levels (in order of increasing severity):
+
+| Level | Description | Method |
+|-------|-------------|--------|
+| `DEBUG` | Detailed information for debugging purposes | `log.debug()` |
+| `INFO` | General information about application progress | `log.info()` |
+| `WARN` | Warning messages that don't prevent the application from working | `log.warn()` |
+| `ERROR` | Error messages that might require attention | `log.error()` |
+
+Only messages at or above the configured log level will be displayed.
+
+### Advanced Configuration
+
+The built-in `ConsoleLogger` can be configured with several options. 
+
+#### Example 
+
+```typescript
+import { ILoggerConfig } from 'redis-smq-common';
+
+const loggerConfig: ILoggerConfig = {
+  enabled: true,
+  options: {
+    includeTimestamp: true,                 // Include timestamps in log messages
+    colorize: true,                         // Use colors for different log levels
+    logLevel: EConsoleLoggerLevel.INFO,     // Only show INFO level and above
+    dateFormat: (date: Date) => date.toISOString()  // Custom date format function
+  }
+};
+```
+
+See [ILoggerConfig](api/interfaces/ILoggerConfig.md) for more details.
+
+## Custom Loggers
+
+### Creating a Custom Logger
+
+You can create a custom logger by implementing the `ILogger` interface:
+
+```typescript
+import { ILogger } from 'redis-smq-common';
+
+class MyCustomLogger implements ILogger {
+  info(message: unknown, ...params: unknown[]): void {
+    // Custom implementation for info level
+    console.log(`[INFO] ${message}`, ...params);
+  }
+
+  warn(message: unknown, ...params: unknown[]): void {
+    // Custom implementation for warn level
+    console.log(`[WARN] ${message}`, ...params);
+  }
+
+  error(message: unknown, ...params: unknown[]): void {
+    // Custom implementation for error level
+    console.error(`[ERROR] ${message}`, ...params);
+  }
+
+  debug(message: unknown, ...params: unknown[]): void {
+    // Custom implementation for debug level
+    console.log(`[DEBUG] ${message}`, ...params);
+  }
+}
+```
+
+### Setting a Custom Logger
+
+Use the `setLogger` function to set your custom logger:
+
+```typescript
+import { logger } from 'redis-smq-common';
+import { MyCustomLogger } from './my-custom-logger';
+
+// Create an instance of your custom logger
+const myCustomLogger = new MyCustomLogger();
+
+// Set it as the default logger
+logger.setLogger(myCustomLogger);
+
+// Now you can use it throughout your application
+const log = logger.getLogger({ enabled: true }, 'MyNamespace');
+log.info('Using my custom logger');
+```
+
+**Important**: You can only set the logger once. If you try to set it again, it will throw a `LoggerError` with the
+message "Logger has been already initialized."
+
+## Integration with Third-Party Loggers
+
+### Winston Integration
+
+[Winston](https://github.com/winstonjs/winston) is a popular logging library for Node.js. Here's how to integrate it:
 
 ```typescript
 import winston from 'winston';
-import { logger } from 'redis-smq-common';
+import { logger, ILogger } from 'redis-smq-common';
 
-// Create an instance of the Winston logger wrapper
+// Create a Winston logger
 const winstonLogger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
@@ -153,22 +217,36 @@ const winstonLogger = winston.createLogger({
   ],
 });
 
-// Set it as the default logger
+// Set the Winston adapter as the logger
 logger.setLogger(winstonLogger);
+
+// Use it throughout your application
+const log = logger.getLogger({ enabled: true }, 'MyService');
+log.info('Application started');
 ```
 
-#### 3. Use the logger throughout your application:
+### Pino Integration
+
+[Pino](https://github.com/pinojs/pino) is a very fast Node.js logger. Here's how to integrate it:
 
 ```typescript
-import { logger } from 'redis-smq-common';
+import pino from 'pino';
+import { logger, ILogger } from 'redis-smq-common';
 
-const myLogger = logger.getLogger({ enabled: true }, 'MyNamespace');
+// Create a Pino logger
+const pinoLogger = pino({
+  level: 'info',
+  timestamp: pino.stdTimeFunctions.isoTime,
+});
 
-myLogger.info('This is an info message');
-myLogger.warn('This is a warning');
-myLogger.error('This is an error');
-myLogger.debug('This is a debug message');
+// Set the Pino adapter as the logger
+logger.setLogger(pinoLogger);
+
+// Use it throughout your application
+const log = logger.getLogger({ enabled: true }, 'API');
+log.info('Server listening on port 3000');
 ```
 
-Remember that you can only set the logger once. If you try to set it again, it will throw a `LoggerError` with the
-message "Logger has been already initialized."
+## Performance Considerations
+
+For high-throughput applications, consider disabling logging in production or implementing log batching for third-party integrations.
