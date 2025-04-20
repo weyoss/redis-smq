@@ -22,5 +22,6 @@ export class SequentialQueuePendingMessages extends QueueMessagesManagerAbstract
       new Message(),
       'keyQueuePending',
     );
+    this.logger.debug('SequentialQueuePendingMessages initialized');
   }
 }

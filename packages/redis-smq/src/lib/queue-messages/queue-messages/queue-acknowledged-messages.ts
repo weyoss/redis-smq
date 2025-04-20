@@ -21,5 +21,6 @@ export class QueueAcknowledgedMessages extends QueueMessagesManagerAbstract {
       new Message(),
       'keyQueueAcknowledged',
     );
+    this.logger.debug('QueueAcknowledgedMessages initialized');
   }
 }

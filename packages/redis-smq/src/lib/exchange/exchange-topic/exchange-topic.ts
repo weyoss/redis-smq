@@ -15,17 +15,53 @@ import { _getTopicExchangeParams } from './_/_get-topic-exchange-params.js';
 import { _getTopicExchangeQueues } from './_/_get-topic-exchange-queues.js';
 
 export class ExchangeTopic extends ExchangeAbstract<string | ITopicParams> {
+  constructor() {
+    super();
+    this.logger.info('ExchangeTopic initialized');
+  }
+
   getQueues(
     exchangeParams: string | ITopicParams,
     cb: ICallback<IQueueParams[]>,
   ): void {
+    this.logger.debug(`Getting queues for topic exchange`, { exchangeParams });
+
     const topic = _getTopicExchangeParams(exchangeParams);
-    if (topic instanceof Error) cb(topic);
-    else {
+    if (topic instanceof Error) {
+      this.logger.error(`Invalid topic exchange parameters`, {
+        error: topic.message,
+      });
+      cb(topic);
+    } else {
       this.redisClient.getSetInstance((err, client) => {
-        if (err) cb(err);
-        else if (!client) cb(new CallbackEmptyReplyError());
-        else _getTopicExchangeQueues(client, topic, cb);
+        if (err) {
+          this.logger.error(`Failed to get Redis client instance`, {
+            error: err.message,
+          });
+          cb(err);
+        } else if (!client) {
+          this.logger.error(`Empty Redis client reply`);
+          cb(new CallbackEmptyReplyError());
+        } else {
+          this.logger.debug(`Getting topic exchange queues`, { topic });
+          _getTopicExchangeQueues(client, topic, (err, queues) => {
+            if (err) {
+              this.logger.error(`Failed to get topic exchange queues`, {
+                error: err.message,
+              });
+              cb(err);
+            } else {
+              this.logger.debug(
+                `Successfully retrieved topic exchange queues`,
+                {
+                  topic,
+                  queueCount: queues?.length || 0,
+                },
+              );
+              cb(null, queues);
+            }
+          });
+        }
       });
     }
   }

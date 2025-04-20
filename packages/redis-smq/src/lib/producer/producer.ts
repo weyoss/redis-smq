@@ -76,12 +76,20 @@ export class Producer extends Runnable<TProducerEvent> {
     this.eventBus.on('error', (err) => this.handleError(err));
     this.logger = logger.getLogger(
       Configuration.getSetConfig().logger,
-      `producer:${this.id}`,
+      this.constructor.name.toLowerCase(),
     );
+    this.logger.info(`Producer instance created with ID: ${this.getId()}`);
 
     // If the event bus is enabled in configuration, initializes the event bus publisher.
     if (Configuration.getSetConfig().eventBus.enabled) {
+      this.logger.debug(
+        'Event bus is enabled, initializing event bus publisher',
+      );
       eventBusPublisher(this, this.eventBus, this.logger);
+    } else {
+      this.logger.debug(
+        'Event bus is disabled, skipping event bus publisher initialization',
+      );
     }
   }
 
@@ -98,13 +106,25 @@ export class Producer extends Runnable<TProducerEvent> {
    * @param {ICallback<void>} cb - Callback to execute upon completion.
    */
   protected initQueueConsumerGroupsHandler = (cb: ICallback<void>): void => {
+    this.logger.debug('Initializing queue consumer groups handler');
     this.queueConsumerGroupsHandler = new QueueConsumerGroupsCache(
       this,
       this.redisClient,
       this.eventBus,
-      this.logger,
     );
-    this.queueConsumerGroupsHandler.run((err) => cb(err));
+    this.queueConsumerGroupsHandler.run((err) => {
+      if (err) {
+        this.logger.error(
+          'Failed to initialize queue consumer groups handler',
+          err,
+        );
+      } else {
+        this.logger.debug(
+          'Queue consumer groups handler initialized successfully',
+        );
+      }
+      cb(err);
+    });
   };
 
   /**
@@ -115,36 +135,57 @@ export class Producer extends Runnable<TProducerEvent> {
     cb: ICallback<void>,
   ): void => {
     if (this.queueConsumerGroupsHandler) {
+      this.logger.debug('Shutting down queue consumer groups handler');
       this.queueConsumerGroupsHandler.shutdown(() => {
+        this.logger.debug(
+          'Queue consumer groups handler shut down successfully',
+        );
         this.queueConsumerGroupsHandler = null;
         cb();
       });
-    } else cb();
+    } else {
+      this.logger.debug('No queue consumer groups handler to shut down');
+      cb();
+    }
   };
 
   /**
    * Initializes the Redis client.
    * @param {ICallback<void>} cb - Callback to execute upon completion.
    */
-  protected initRedisClient = (cb: ICallback<void>): void =>
+  protected initRedisClient = (cb: ICallback<void>): void => {
+    this.logger.debug('Initializing Redis client');
     this.redisClient.getSetInstance((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else {
-        client.on('error', (err) => this.handleError(err));
+      if (err) {
+        this.logger.error('Failed to initialize Redis client', err);
+        cb(err);
+      } else if (!client) {
+        this.logger.error('Redis client initialization returned empty reply');
+        cb(new CallbackEmptyReplyError());
+      } else {
+        this.logger.debug('Redis client initialized successfully');
+        client.on('error', (err) => {
+          this.logger.error('Redis client error', err);
+          this.handleError(err);
+        });
         cb();
       }
     });
+  };
 
   /**
    * Defines the sequence of actions to take when the Producer is going up.
    * @returns {TUnaryFunction<ICallback<void>>[]} An array of functions to execute.
    */
   protected override goingUp(): TUnaryFunction<ICallback<void>>[] {
+    this.logger.info(`Producer ${this.getId()} is starting up`);
     return super.goingUp().concat([
       this.redisClient.init,
       this.eventBus.init,
       (cb: ICallback<void>) => {
+        this.logger.debug(
+          `Emitting producer.goingUp event for producer ${this.id}`,
+        );
         this.emit('producer.goingUp', this.id);
         cb();
       },
@@ -159,6 +200,7 @@ export class Producer extends Runnable<TProducerEvent> {
    */
   protected override up(cb: ICallback<boolean>) {
     super.up(() => {
+      this.logger.info(`Producer ${this.getId()} is now up and running`);
       this.emit('producer.up', this.id);
       cb(null, true);
     });
@@ -172,6 +214,7 @@ export class Producer extends Runnable<TProducerEvent> {
    * @returns {TUnaryFunction<ICallback<void>>[]} An array of functions to execute.
    */
   protected override goingDown(): TUnaryFunction<ICallback<void>>[] {
+    this.logger.info(`Producer ${this.getId()} is shutting down`);
     this.emit('producer.goingDown', this.id);
     return [
       this.shutDownQueueConsumerGroupsHandler,
@@ -189,8 +232,15 @@ export class Producer extends Runnable<TProducerEvent> {
    */
   protected override down(cb: ICallback<boolean>): void {
     super.down(() => {
+      this.logger.info(`Producer ${this.getId()} is now down`);
       this.emit('producer.down', this.id);
-      setTimeout(() => this.eventBus.shutdown(() => cb(null, true)), 1000);
+      this.logger.debug('Shutting down event bus with 1 second delay');
+      setTimeout(() => {
+        this.eventBus.shutdown(() => {
+          this.logger.debug('Event bus shut down successfully');
+          cb(null, true);
+        });
+      }, 1000);
     });
   }
 
@@ -207,10 +257,13 @@ export class Producer extends Runnable<TProducerEvent> {
    * that the handler is expected but not available.
    */
   protected getQueueConsumerGroupsHandler(): QueueConsumerGroupsCache {
-    if (!this.queueConsumerGroupsHandler)
-      throw new PanicError(
+    if (!this.queueConsumerGroupsHandler) {
+      const error = new PanicError(
         `Expected an instance of QueueConsumerGroupsHandler`,
       );
+      this.logger.error('Queue consumer groups handler not initialized', error);
+      throw error;
+    }
     return this.queueConsumerGroupsHandler;
   }
 
@@ -234,18 +287,29 @@ export class Producer extends Runnable<TProducerEvent> {
     const messageState = message.getMessageState();
     messageState.setPublishedAt(Date.now());
     const messageId = message.getId();
-    const keys = redisKeys.getQueueKeys(
-      message.getDestinationQueue(),
-      message.getConsumerGroupId(),
+    const destinationQueue = message.getDestinationQueue();
+    const queueName = `${destinationQueue.name}@${destinationQueue.ns}`;
+    const consumerGroupId = message.getConsumerGroupId();
+
+    this.logger.debug(
+      `Enqueuing message ${messageId} to queue ${queueName}${consumerGroupId ? ` for consumer group ${consumerGroupId}` : ''}`,
     );
+
+    const keys = redisKeys.getQueueKeys(destinationQueue, consumerGroupId);
     const { keyMessage } = redisKeys.getMessageKeys(messageId);
+    const priority = message.producibleMessage.getPriority();
+
+    this.logger.debug(
+      `Message ${messageId} details: priority=${priority ?? 'none'}, queue=${queueName}`,
+    );
+
     const scriptArgs = [
       EQueueProperty.QUEUE_TYPE,
       EQueueProperty.MESSAGES_COUNT,
       EQueueType.PRIORITY_QUEUE,
       EQueueType.LIFO_QUEUE,
       EQueueType.FIFO_QUEUE,
-      message.producibleMessage.getPriority() ?? '',
+      priority ?? '',
       messageId,
       EMessageProperty.STATUS,
       EMessagePropertyStatus.PENDING,
@@ -266,20 +330,39 @@ export class Producer extends Runnable<TProducerEvent> {
       ],
       scriptArgs,
       (err, reply) => {
-        if (err) return cb(err);
+        if (err) {
+          this.logger.error(`Failed to enqueue message ${messageId}`, err);
+          return cb(err);
+        }
 
         switch (reply) {
           case 'OK':
+            this.logger.debug(
+              `Successfully enqueued message ${messageId} to queue ${queueName}`,
+            );
             return cb();
           case 'QUEUE_NOT_FOUND':
+            this.logger.error(
+              `Queue ${queueName} not found for message ${messageId}`,
+            );
             return cb(new ProducerQueueNotFoundError());
           case 'MESSAGE_PRIORITY_REQUIRED':
+            this.logger.error(
+              `Priority required for message ${messageId} but not provided`,
+            );
             return cb(new ProducerMessagePriorityRequiredError());
           case 'PRIORITY_QUEUING_NOT_ENABLED':
+            this.logger.error(
+              `Priority queuing not enabled for queue ${queueName}`,
+            );
             return cb(new ProducerPriorityQueuingNotEnabledError());
           case 'UNKNOWN_QUEUE_TYPE':
+            this.logger.error(`Unknown queue type for queue ${queueName}`);
             return cb(new ProducerUnknownQueueTypeError());
           default:
+            this.logger.error(
+              `Unknown error while enqueuing message ${messageId}: ${reply}`,
+            );
             return cb(new ProducerError());
         }
       },
@@ -297,13 +380,29 @@ export class Producer extends Runnable<TProducerEvent> {
       .getMessageState()
       .getId();
 
+    const queueName = `${queue.name}@${queue.ns}`;
+    this.logger.debug(
+      `Producing message item ${messageId} for queue ${queueName}${
+        message.isSchedulable() ? ' (scheduled)' : ''
+      }`,
+    );
+
     const handleResult: ICallback<void> = (err) => {
       if (err) {
+        this.logger.error(
+          `Failed to produce message ${messageId} for queue ${queueName}`,
+          err,
+        );
         cb(err);
       } else {
         const action = message.isSchedulable() ? 'scheduled' : 'published';
-        this.logger.info(`Message (ID ${messageId}) has been ${action}.`);
+        this.logger.info(
+          `Message (ID ${messageId}) has been ${action} to queue ${queueName}`,
+        );
         if (!message.isSchedulable()) {
+          this.logger.debug(
+            `Emitting messagePublished event for message ${messageId}`,
+          );
           this.emit(
             'producer.messagePublished',
             messageId,
@@ -316,8 +415,12 @@ export class Producer extends Runnable<TProducerEvent> {
     };
 
     if (message.isSchedulable()) {
+      this.logger.debug(`Scheduling message ${messageId} for future delivery`);
       _scheduleMessage(redisClient, message, handleResult);
     } else {
+      this.logger.debug(
+        `Enqueueing message ${messageId} for immediate delivery`,
+      );
       this.enqueue(redisClient, message, handleResult);
     }
   }
@@ -340,35 +443,84 @@ export class Producer extends Runnable<TProducerEvent> {
     queue: IQueueParams,
     cb: ICallback<string[]>,
   ): void {
+    const queueName = `${queue.name}@${queue.ns}`;
+    this.logger.debug(`Producing message for queue ${queueName}`);
+
     const { exists, consumerGroups } =
       this.getQueueConsumerGroupsHandler().getConsumerGroups(queue);
+
     if (exists) {
+      this.logger.debug(
+        `Queue ${queueName} exists with ${consumerGroups.length} consumer groups`,
+      );
+
       if (!consumerGroups.length) {
+        this.logger.error(`Queue ${queueName} has no consumer groups`);
         cb(new ProducerQueueMissingConsumerGroupsError());
+        return;
       }
+
       const ids: string[] = [];
+      this.logger.debug(
+        `Producing message for ${consumerGroups.length} consumer groups in queue ${queueName}`,
+      );
+
       async.eachOf(
         consumerGroups,
         (group, _, done) => {
+          this.logger.debug(
+            `Producing message for consumer group ${group} in queue ${queueName}`,
+          );
           const msg = new MessageEnvelope(message).setConsumerGroupId(group);
           this.produceMessageItem(redisClient, msg, queue, (err, reply) => {
-            if (err) done(err);
-            else {
+            if (err) {
+              this.logger.error(
+                `Failed to produce message for consumer group ${group}`,
+                err,
+              );
+              done(err);
+            } else {
+              this.logger.debug(
+                `Successfully produced message ${reply} for consumer group ${group}`,
+              );
               ids.push(String(reply));
               done();
             }
           });
         },
         (err) => {
-          if (err) cb(err);
-          else cb(null, ids);
+          if (err) {
+            this.logger.error(
+              `Failed to produce messages for some consumer groups in queue ${queueName}`,
+              err,
+            );
+            cb(err);
+          } else {
+            this.logger.info(
+              `Successfully produced ${ids.length} messages for queue ${queueName}`,
+            );
+            cb(null, ids);
+          }
         },
       );
     } else {
+      this.logger.debug(
+        `Queue ${queueName} has no consumer groups, producing message directly`,
+      );
       const msg = new MessageEnvelope(message);
       this.produceMessageItem(redisClient, msg, queue, (err, reply) => {
-        if (err) cb(err);
-        else cb(null, [String(reply)]);
+        if (err) {
+          this.logger.error(
+            `Failed to produce message for queue ${queueName}`,
+            err,
+          );
+          cb(err);
+        } else {
+          this.logger.info(
+            `Successfully produced message ${reply} for queue ${queueName}`,
+          );
+          cb(null, [String(reply)]);
+        }
       });
     }
   }
@@ -396,41 +548,76 @@ export class Producer extends Runnable<TProducerEvent> {
    */
   produce(msg: ProducibleMessage, cb: ICallback<string[]>): void {
     if (!this.isUp()) {
+      this.logger.error(
+        'Cannot produce message: Producer instance is not running',
+      );
       return cb(new ProducerInstanceNotRunningError());
-    }
-
-    const redisClient = this.redisClient.getInstance();
-    if (redisClient instanceof Error) {
-      return cb(redisClient);
     }
 
     const exchangeParams = msg.getExchange();
     if (!exchangeParams) {
+      this.logger.error(
+        'Cannot produce message: No exchange parameters provided',
+      );
       return cb(new ProducerMessageExchangeRequiredError());
+    }
+
+    this.logger.debug(
+      `Producing message with exchange type ${EExchangeType[exchangeParams.type]}`,
+    );
+
+    const redisClient = this.redisClient.getInstance();
+    if (redisClient instanceof Error) {
+      this.logger.error(
+        'Cannot produce message: Redis client error',
+        redisClient,
+      );
+      return cb(redisClient);
     }
 
     if (exchangeParams.type === EExchangeType.DIRECT) {
       const queue = exchangeParams.params;
+      this.logger.debug(
+        `Direct exchange: producing message for queue ${queue.name}@${queue.ns}`,
+      );
       return this.produceMessage(redisClient, msg, queue, cb);
     }
 
+    this.logger.debug(
+      `Fanout exchange: getting queues for exchange ${exchangeParams.type}`,
+    );
     _getExchangeQueues(redisClient, exchangeParams, (err, queues) => {
       if (err) {
+        this.logger.error('Failed to get exchange queues', err);
         return cb(err);
       }
+
       if (!queues?.length) {
+        this.logger.error('No matching queues found for exchange');
         return cb(new ProducerExchangeNoMatchedQueueError());
       }
 
+      this.logger.info(`Found ${queues.length} matching queues for exchange`);
       const messages: string[] = [];
+
       async.eachOf(
         queues,
         (queue, index, done) => {
+          this.logger.debug(
+            `Producing message for queue ${queue.name}@${queue.ns} (${index + 1}/${queues.length})`,
+          );
           this.produceMessage(redisClient, msg, queue, (err, reply) => {
             if (err) {
+              this.logger.error(
+                `Failed to produce message for queue ${queue.name}@${queue.ns}`,
+                err,
+              );
               return done(err);
             }
             if (reply) {
+              this.logger.debug(
+                `Successfully produced ${reply.length} messages for queue ${queue.name}@${queue.ns}`,
+              );
               messages.push(...reply);
             }
             done();
@@ -438,8 +625,15 @@ export class Producer extends Runnable<TProducerEvent> {
         },
         (err) => {
           if (err) {
+            this.logger.error(
+              'Failed to produce messages for some queues',
+              err,
+            );
             return cb(err);
           }
+          this.logger.info(
+            `Successfully produced ${messages.length} messages across ${queues.length} queues`,
+          );
           cb(null, messages);
         },
       );

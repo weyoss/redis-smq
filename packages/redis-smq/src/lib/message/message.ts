@@ -32,10 +32,11 @@ export class Message {
   constructor() {
     this.logger = logger.getLogger(
       Configuration.getSetConfig().logger,
-      `exchange-fan-out-manager`,
+      this.constructor.name.toLowerCase(),
     );
     this.redisClient = new RedisClient();
     this.redisClient.on('error', (err) => this.logger.error(err));
+    this.logger.debug('Message instance created');
   }
 
   /**
@@ -50,10 +51,33 @@ export class Message {
     messageId: string,
     cb: ICallback<EMessagePropertyStatus>,
   ): void {
+    this.logger.debug('Getting message status', { messageId });
     this.redisClient.getSetInstance((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else _getMessageStatus(client, messageId, cb);
+      if (err) {
+        this.logger.error('Failed to get Redis client instance', {
+          error: err.message,
+        });
+        cb(err);
+      } else if (!client) {
+        this.logger.error('Empty Redis client reply');
+        cb(new CallbackEmptyReplyError());
+      } else {
+        _getMessageStatus(client, messageId, (err, status) => {
+          if (err) {
+            this.logger.error('Failed to get message status', {
+              messageId,
+              error: err.message,
+            });
+            cb(err);
+          } else {
+            this.logger.debug('Successfully retrieved message status', {
+              messageId,
+              status,
+            });
+            cb(null, status);
+          }
+        });
+      }
     });
   }
 
@@ -69,10 +93,32 @@ export class Message {
     messageId: string,
     cb: ICallback<IMessageStateTransferable>,
   ): void {
+    this.logger.debug('Getting message state', { messageId });
     this.redisClient.getSetInstance((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else _getMessageState(client, messageId, cb);
+      if (err) {
+        this.logger.error('Failed to get Redis client instance', {
+          error: err.message,
+        });
+        cb(err);
+      } else if (!client) {
+        this.logger.error('Empty Redis client reply');
+        cb(new CallbackEmptyReplyError());
+      } else {
+        _getMessageState(client, messageId, (err, state) => {
+          if (err) {
+            this.logger.error('Failed to get message state', {
+              messageId,
+              error: err.message,
+            });
+            cb(err);
+          } else {
+            this.logger.debug('Successfully retrieved message state', {
+              messageId,
+            });
+            cb(null, state);
+          }
+        });
+      }
     });
   }
 
@@ -88,20 +134,37 @@ export class Message {
     messageIds: string[],
     cb: ICallback<IMessageTransferable[]>,
   ): void {
+    this.logger.debug('Getting messages by IDs', {
+      messageCount: messageIds.length,
+    });
     this.redisClient.getSetInstance((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else
+      if (err) {
+        this.logger.error('Failed to get Redis client instance', {
+          error: err.message,
+        });
+        cb(err);
+      } else if (!client) {
+        this.logger.error('Empty Redis client reply');
+        cb(new CallbackEmptyReplyError());
+      } else {
         _getMessages(client, messageIds, (err, reply) => {
-          if (err) cb(err);
-          else if (!reply) cb(new CallbackEmptyReplyError());
-          else {
+          if (err) {
+            this.logger.error('Failed to get messages', { error: err.message });
+            cb(err);
+          } else if (!reply) {
+            this.logger.error('Empty messages reply');
+            cb(new CallbackEmptyReplyError());
+          } else {
+            this.logger.debug('Successfully retrieved messages', {
+              messageCount: reply.length,
+            });
             cb(
               null,
               reply.map((i) => i.transfer()),
             );
           }
         });
+      }
     });
   }
 
@@ -114,15 +177,33 @@ export class Message {
    *              Otherwise, the second parameter will be the message object.
    */
   getMessageById(messageId: string, cb: ICallback<IMessageTransferable>): void {
+    this.logger.debug('Getting message by ID', { messageId });
     this.redisClient.getSetInstance((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else
-        _getMessage(client, messageId, (err, reply) => {
-          if (err) cb(err);
-          else if (!reply) cb(new CallbackEmptyReplyError());
-          else cb(null, reply.transfer());
+      if (err) {
+        this.logger.error('Failed to get Redis client instance', {
+          error: err.message,
         });
+        cb(err);
+      } else if (!client) {
+        this.logger.error('Empty Redis client reply');
+        cb(new CallbackEmptyReplyError());
+      } else {
+        _getMessage(client, messageId, (err, reply) => {
+          if (err) {
+            this.logger.error('Failed to get message', {
+              messageId,
+              error: err.message,
+            });
+            cb(err);
+          } else if (!reply) {
+            this.logger.error('Empty message reply', { messageId });
+            cb(new CallbackEmptyReplyError());
+          } else {
+            this.logger.debug('Successfully retrieved message', { messageId });
+            cb(null, reply.transfer());
+          }
+        });
+      }
     });
   }
 
@@ -135,10 +216,31 @@ export class Message {
    *              Otherwise, the second parameter will be undefined.
    */
   deleteMessagesByIds(ids: string[], cb: ICallback<void>): void {
+    this.logger.debug('Deleting messages by IDs', { messageCount: ids.length });
     this.redisClient.getSetInstance((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else _deleteMessage(client, ids, cb);
+      if (err) {
+        this.logger.error('Failed to get Redis client instance', {
+          error: err.message,
+        });
+        cb(err);
+      } else if (!client) {
+        this.logger.error('Empty Redis client reply');
+        cb(new CallbackEmptyReplyError());
+      } else {
+        _deleteMessage(client, ids, (err) => {
+          if (err) {
+            this.logger.error('Failed to delete messages', {
+              error: err.message,
+            });
+            cb(err);
+          } else {
+            this.logger.debug('Successfully deleted messages', {
+              messageCount: ids.length,
+            });
+            cb();
+          }
+        });
+      }
     });
   }
 
@@ -151,7 +253,19 @@ export class Message {
    *              Otherwise, the second parameter will be undefined.
    */
   deleteMessageById(id: string, cb: ICallback<void>): void {
-    this.deleteMessagesByIds([id], cb);
+    this.logger.debug('Deleting message by ID', { messageId: id });
+    this.deleteMessagesByIds([id], (err) => {
+      if (err) {
+        this.logger.error('Failed to delete message', {
+          messageId: id,
+          error: err.message,
+        });
+        cb(err);
+      } else {
+        this.logger.debug('Successfully deleted message', { messageId: id });
+        cb();
+      }
+    });
   }
 
   /**
@@ -163,10 +277,30 @@ export class Message {
    *              Otherwise, the second parameter will be undefined.
    */
   requeueMessageById(messageId: string, cb: ICallback<void>): void {
+    this.logger.debug('Requeuing message by ID', { messageId });
     this.redisClient.getSetInstance((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else _requeueMessage(client, messageId, cb);
+      if (err) {
+        this.logger.error('Failed to get Redis client instance', {
+          error: err.message,
+        });
+        cb(err);
+      } else if (!client) {
+        this.logger.error('Empty Redis client reply');
+        cb(new CallbackEmptyReplyError());
+      } else {
+        _requeueMessage(client, messageId, (err) => {
+          if (err) {
+            this.logger.error('Failed to requeue message', {
+              messageId,
+              error: err.message,
+            });
+            cb(err);
+          } else {
+            this.logger.debug('Successfully requeued message', { messageId });
+            cb();
+          }
+        });
+      }
     });
   }
 
@@ -178,6 +312,15 @@ export class Message {
    *              Otherwise, the second parameter will be undefined.
    */
   shutdown = (cb: ICallback<void>): void => {
-    this.redisClient.shutdown(cb);
+    this.logger.debug('Shutting down Message instance');
+    this.redisClient.shutdown((err) => {
+      if (err) {
+        this.logger.error('Error during shutdown', { error: err.message });
+        cb(err);
+      } else {
+        this.logger.debug('Successfully shut down Message instance');
+        cb();
+      }
+    });
   };
 }

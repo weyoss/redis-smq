@@ -12,12 +12,14 @@ import {
   ICallback,
   ILogger,
   IRedisClient,
+  logger,
   Runnable,
   Timer,
 } from 'redis-smq-common';
 import { TConsumerHeartbeatEvent } from '../../../common/index.js';
 import { RedisClient } from '../../../common/redis-client/redis-client.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
+import { Configuration } from '../../../config/index.js';
 import { EventBus } from '../../event-bus/index.js';
 import { Consumer } from '../consumer/consumer.js';
 import { IConsumerHeartbeat } from '../types/index.js';
@@ -67,24 +69,44 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
   constructor(
     consumer: Consumer,
     redisClient: RedisClient,
-    logger: ILogger,
     eventBus: EventBus | null,
   ) {
     super();
     this.consumer = consumer;
-    this.logger = logger;
+    this.logger = logger.getLogger(
+      Configuration.getSetConfig().logger,
+      this.constructor.name.toLowerCase(),
+    );
     this.redisClient = redisClient;
+
+    this.logger.debug(
+      `Initializing ConsumerHeartbeat for consumer ${consumer.getId()}`,
+    );
+
     if (eventBus) {
+      this.logger.debug('Event bus provided, setting up event bus publisher');
       eventBusPublisher(this, eventBus, this.logger);
+    } else {
+      this.logger.debug(
+        'No event bus provided, skipping event bus publisher setup',
+      );
     }
+
     const { keyConsumerHeartbeat } = redisKeys.getConsumerKeys(
       consumer.getId(),
     );
     this.keyConsumerHeartbeat = keyConsumerHeartbeat;
+    this.logger.debug(`Consumer heartbeat key: ${this.keyConsumerHeartbeat}`);
+
     this.timer = new Timer();
     this.timer.on('error', (err) => {
+      this.logger.error(`Timer error: ${err.message}`);
       this.emit('consumerHeartbeat.error', err);
     });
+
+    this.logger.info(
+      `ConsumerHeartbeat initialized for consumer ${consumer.getId()}`,
+    );
   }
 
   protected override getLogger(): ILogger {
@@ -92,8 +114,9 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
   }
 
   protected getPayload(): IConsumerHeartbeat {
+    this.logger.debug('Generating heartbeat payload');
     const timestamp = Date.now();
-    return {
+    const payload = {
       timestamp,
       data: {
         ram: {
@@ -104,18 +127,31 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
         cpu: cpuUsage(),
       },
     };
+    this.logger.debug(
+      `Heartbeat payload generated with timestamp ${timestamp}`,
+    );
+    return payload;
   }
 
   protected beat(): void {
+    this.logger.debug('Starting heartbeat cycle');
     const redisClient = this.redisClient.getInstance();
     if (redisClient instanceof Error) {
+      this.logger.error(
+        `Failed to get Redis client instance: ${redisClient.message}`,
+      );
       this.emit('consumerHeartbeat.error', redisClient);
       return void 0;
     }
+
     const heartbeatPayload = this.getPayload();
     const consumerId = this.consumer.getId();
     const timestamp = Date.now();
     const heartbeatPayloadStr = JSON.stringify(heartbeatPayload);
+
+    this.logger.debug(
+      `Setting heartbeat in Redis with TTL ${ConsumerHeartbeat.heartbeatTTL}ms`,
+    );
     redisClient.set(
       this.keyConsumerHeartbeat,
       heartbeatPayloadStr,
@@ -126,14 +162,21 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
         },
       },
       (err) => {
-        if (err) this.emit('consumerHeartbeat.error', err);
-        else {
+        if (err) {
+          this.logger.error(`Failed to set heartbeat in Redis: ${err.message}`);
+          this.emit('consumerHeartbeat.error', err);
+        } else {
+          this.logger.debug(
+            `Heartbeat successfully set in Redis for consumer ${consumerId}`,
+          );
           this.emit(
             'consumerHeartbeat.heartbeat',
             consumerId,
             timestamp,
             heartbeatPayload,
           );
+
+          this.logger.debug('Scheduling next heartbeat in 1000ms');
           this.timer.setTimeout(() => this.beat(), 1000);
         }
       },
@@ -141,35 +184,67 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
   }
 
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
+    this.logger.info('ConsumerHeartbeat going up');
     return super.goingUp().concat([
       (cb: ICallback<void>) => {
+        this.logger.debug('Setting up initial heartbeat');
+
         const cleanUp = () => {
+          this.logger.debug('Cleaning up heartbeat listeners');
           this.removeListener('consumerHeartbeat.heartbeat', onHeartbeat);
           this.removeListener('consumerHeartbeat.error', onError);
         };
+
         const onError = (err?: Error) => {
+          this.logger.error(`Error during initial heartbeat: ${err?.message}`);
           cleanUp();
           cb(err);
         };
+
         const onHeartbeat = () => {
+          this.logger.debug('Initial heartbeat successful');
           cleanUp();
           cb();
         };
+
         this.once('consumerHeartbeat.heartbeat', onHeartbeat);
         this.once('consumerHeartbeat.error', onError);
+
+        this.logger.debug('Initiating first heartbeat');
         this.beat();
       },
     ]);
   }
 
   protected override goingDown(): ((cb: ICallback<void>) => void)[] {
+    this.logger.info('ConsumerHeartbeat going down');
     return [
       (cb: ICallback<void>) => {
+        this.logger.debug('Resetting timer');
         this.timer.reset();
+
         const redisClient = this.redisClient.getInstance();
         // ignoring errors
-        if (redisClient instanceof Error) return cb();
-        redisClient.del(this.keyConsumerHeartbeat, () => cb());
+        if (redisClient instanceof Error) {
+          this.logger.warn(
+            `Could not get Redis client during shutdown: ${redisClient.message}`,
+          );
+          return cb();
+        }
+
+        this.logger.debug(
+          `Deleting heartbeat key ${this.keyConsumerHeartbeat} from Redis`,
+        );
+        redisClient.del(this.keyConsumerHeartbeat, (err) => {
+          if (err) {
+            this.logger.warn(
+              `Error deleting heartbeat key: ${err.message} (ignoring)`,
+            );
+          } else {
+            this.logger.debug('Heartbeat key successfully deleted from Redis');
+          }
+          cb();
+        });
       },
     ].concat(super.goingDown());
   }
@@ -181,8 +256,9 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
   ): void {
     const { keyConsumerHeartbeat } = redisKeys.getConsumerKeys(consumerId);
     redisClient.get(keyConsumerHeartbeat, (err, heartbeat) => {
-      if (err) cb(err);
-      else cb(null, !!heartbeat);
+      if (err) return cb(err);
+      const isAlive = !!heartbeat;
+      cb(null, isAlive);
     });
   }
 }

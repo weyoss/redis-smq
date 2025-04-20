@@ -16,44 +16,39 @@ import {
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { _getConsumerGroups } from '../../consumer-groups/_/_get-consumer-groups.js';
 import { ConsumerHeartbeat } from '../../consumer/consumer-heartbeat/consumer-heartbeat.js';
-import { consumerQueues } from '../../consumer/consumer-queues.js';
-import { processingQueue } from '../../consumer/message-handler/processing-queue/processing-queue.js';
 import {
   QueueQueueHasRunningConsumersError,
   QueueQueueNotEmptyError,
   QueueQueueNotFoundError,
 } from '../errors/index.js';
 import { EQueueDeliveryModel, IQueueParams } from '../types/index.js';
+import { _getQueueConsumerIds } from './_get-queue-consumer-ids.js';
 import { _getQueueProperties } from './_get-queue-properties.js';
+import { processingQueue } from '../../consumer/message-handler/message-handler/consume-message/processing-queue.js';
 
 function checkOnlineConsumers(
   redisClient: IRedisClient,
   queue: IQueueParams,
   cb: ICallback<void>,
 ): void {
-  consumerQueues.getQueueConsumers(
-    redisClient,
-    queue,
-    false,
-    (err, consumers) => {
-      if (err) cb(err);
-      async.eachIn(
-        consumers ?? {},
-        (_, consumerId, done) => {
-          ConsumerHeartbeat.isConsumerAlive(
-            redisClient,
-            consumerId,
-            (err, alive) => {
-              if (err) done(err);
-              else if (alive) done(new QueueQueueHasRunningConsumersError());
-              else done();
-            },
-          );
-        },
-        (err) => cb(err),
-      );
-    },
-  );
+  _getQueueConsumerIds(redisClient, queue, (err, consumers) => {
+    if (err) cb(err);
+    async.eachOf(
+      consumers ?? [],
+      (consumerId, _, done) => {
+        ConsumerHeartbeat.isConsumerAlive(
+          redisClient,
+          consumerId,
+          (err, alive) => {
+            if (err) done(err);
+            else if (alive) done(new QueueQueueHasRunningConsumersError());
+            else done();
+          },
+        );
+      },
+      (err) => cb(err),
+    );
+  });
 }
 
 export function _deleteQueue(

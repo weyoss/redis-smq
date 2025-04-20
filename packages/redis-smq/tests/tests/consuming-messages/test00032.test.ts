@@ -10,17 +10,21 @@
 import { expect, test } from 'vitest';
 import bluebird from 'bluebird';
 import { ICallback } from 'redis-smq-common';
-import { consumerQueues } from '../../../src/lib/consumer/consumer-queues.js';
+import { _getConsumerQueues } from '../../../src/lib/consumer/consumer/_/_get-consumer-queues.js';
 import {
   Consumer,
   EQueueDeliveryModel,
   EQueueType,
   IMessageTransferable,
 } from '../../../src/lib/index.js';
+import { _getQueueConsumers } from '../../../src/lib/queue/_/_get-queue-consumers.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import { getDefaultQueue } from '../../common/message-producing-consuming.js';
 import { getQueue } from '../../common/queue.js';
 import { getRedisInstance } from '../../common/redis.js';
+
+const _getConsumerQueuesAsync = bluebird.promisify(_getConsumerQueues);
+const _getQueueConsumersAsync = bluebird.promisify(_getQueueConsumers);
 
 test('Consume message from different queues using a single consumer instance: case 3', async () => {
   const defaultQueue = getDefaultQueue();
@@ -35,66 +39,30 @@ test('Consume message from different queues using a single consumer instance: ca
   await consumer.runAsync();
 
   const redisClient = await getRedisInstance();
-  const consumerQueuesAsync = bluebird.promisifyAll(consumerQueues);
 
-  const a = await consumerQueuesAsync.getConsumerQueuesAsync(
-    redisClient,
-    consumer.getId(),
-  );
+  const a = await _getConsumerQueuesAsync(redisClient, consumer.getId());
   expect(a).toEqual([]);
 
-  const a1 = await consumerQueuesAsync.getQueueConsumersAsync(
-    redisClient,
-    defaultQueue,
-    true,
-  );
+  const a1 = _getQueueConsumersAsync(redisClient, defaultQueue);
   expect(Object.keys(a1)).toEqual([]);
-
-  const a2 = await consumerQueuesAsync.getQueueConsumersAsync(
-    redisClient,
-    defaultQueue,
-    false,
-  );
-  expect(Object.keys(a2)).toEqual([]);
 
   await consumer.consumeAsync(
     defaultQueue,
     (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
   );
 
-  const b = await consumerQueuesAsync.getConsumerQueuesAsync(
-    redisClient,
-    consumer.getId(),
-  );
+  const b = await _getConsumerQueuesAsync(redisClient, consumer.getId());
   expect(b).toEqual([defaultQueue]);
 
-  const b1 = await consumerQueuesAsync.getQueueConsumersAsync(
-    redisClient,
-    defaultQueue,
-    true,
-  );
+  const b1 = await _getQueueConsumersAsync(redisClient, defaultQueue);
   expect(Object.keys(b1)).toEqual([consumer.getId()]);
-
-  const b2 = await consumerQueuesAsync.getQueueConsumersAsync(
-    redisClient,
-    defaultQueue,
-    false,
-  );
-  expect(Object.keys(b2)).toEqual([consumer.getId()]);
 
   await consumer.cancelAsync(defaultQueue);
 
-  const c = await consumerQueuesAsync.getConsumerQueuesAsync(
-    redisClient,
-    consumer.getId(),
-  );
+  const c = await _getConsumerQueuesAsync(redisClient, consumer.getId());
   expect(c).toEqual([]);
 
-  const c1 = await consumerQueuesAsync.getQueueConsumersAsync(
-    redisClient,
-    defaultQueue,
-    true,
-  );
+  const c1 = await _getQueueConsumersAsync(redisClient, defaultQueue);
   expect(Object.keys(c1)).toEqual([]);
 
   await shutDownBaseInstance(consumer);
