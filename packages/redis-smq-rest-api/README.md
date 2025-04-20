@@ -37,7 +37,7 @@ pnpm add redis-smq-rest-api
 ⚠️ Important: Always install matching versions of RedisSMQ packages to ensure compatibility.
 
 ```bash
-npm install redis-smq@x.x.x redis-smq-rest-api@x.x.x @redis-smq/common@x.x.x
+npm install redis-smq@x.x.x redis-smq-rest-api@x.x.x redis-smq-common@x.x.x
 ```
 
 See [version compatibility](https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/version-compatibility.md) for details.
