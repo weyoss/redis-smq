@@ -43,7 +43,7 @@ test('Consume message from different queues using a single consumer instance: ca
   const a = await _getConsumerQueuesAsync(redisClient, consumer.getId());
   expect(a).toEqual([]);
 
-  const a1 = _getQueueConsumersAsync(redisClient, defaultQueue);
+  const a1 = await _getQueueConsumersAsync(redisClient, defaultQueue);
   expect(Object.keys(a1)).toEqual([]);
 
   await consumer.consumeAsync(
