@@ -42,7 +42,7 @@ export abstract class QueueMessagesStorage {
    * Fetch items from the storage with pagination
    *
    * @param redisKey Redis key for the specific queue type
-   * @param pageParams
+   * @param pageParams Pagination parameters
    * @param cb Callback function
    */
   abstract fetchItems(
