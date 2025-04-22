@@ -52,7 +52,7 @@ export class QueueRateLimit {
     this.redisClient = new RedisClient();
     this.redisClient.on('error', (err) => this.logger.error(err));
     this.queue = new Queue();
-    this.logger.debug('QueueRateLimit initialized successfully');
+    this.logger.debug('QueueRateLimit initialized');
   }
 
   /**
