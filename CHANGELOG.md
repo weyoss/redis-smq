@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [8.2.1](https://github.com/weyoss/redis-smq/compare/v8.2.0...v8.2.1) (2025-04-22)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-common:** set default log level to INFO ([bbd6952](https://github.com/weyoss/redis-smq/commit/bbd6952938ce8f2633a54bc3384e97dee873a820))
+- **redis-smq:** use correct cursor for SSCAN operation, clean up ([33828ed](https://github.com/weyoss/redis-smq/commit/33828ed9621d5b126677e11ec1d42ac420dd380c))
+
+### 📝 Documentation
+
+- **redis-smq:** add pageSize to IQueueMessagesPageParams typing ([32bf04f](https://github.com/weyoss/redis-smq/commit/32bf04f522df2b68f26eb8a4cf1d911e83829a06))
+- **redis-smq:** improve logging and documentation ([ed477db](https://github.com/weyoss/redis-smq/commit/ed477dbde9f73f27051d8e857b2b5121aef8f626))
+
+### ✅ Tests
+
+- **redis-smq:** add new tests for queue message storage implementations ([5697e58](https://github.com/weyoss/redis-smq/commit/5697e587abe2e99e4d3a35c194d9034561b1c4d8))
+
 ## [8.2.0](https://github.com/weyoss/redis-smq/compare/v8.1.0...v8.2.0) (2025-04-20)
 
 ### ✨ Features
