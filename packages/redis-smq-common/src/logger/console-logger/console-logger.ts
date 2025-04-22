@@ -25,7 +25,7 @@ export class ConsoleLogger implements ILogger {
    * @param options - Configuration options for the logger
    * @param options.includeTimestamp - Whether to include timestamps in log messages (default: true)
    * @param options.colorize - Whether to colorize log messages (default: true)
-   * @param options.logLevel - Minimum log level to display (default: 'DEBUG')
+   * @param options.logLevel - Minimum log level to display (default: 'INFO')
    * @param options.dateFormat - Custom date formatter function (default: ISO string)
    */
   constructor(options: IConsoleLoggerOptions = {}) {
