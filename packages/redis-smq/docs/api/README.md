@@ -181,6 +181,7 @@ ___
 | `currentPage` | `number` |
 | `offsetEnd` | `number` |
 | `offsetStart` | `number` |
+| `pageSize` | `number` |
 | `totalPages` | `number` |
 
 ___
