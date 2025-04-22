@@ -118,7 +118,7 @@ export abstract class QueueMessagesManagerAbstract
     const currentPage = cursor < 1 || cursor > totalPages ? 1 : cursor;
     const offsetStart = (currentPage - 1) * pageSize;
     const offsetEnd = offsetStart + pageSize - 1;
-    return { offsetStart, offsetEnd, currentPage, totalPages };
+    return { offsetStart, offsetEnd, currentPage, totalPages, pageSize };
   }
 
   /**
@@ -139,6 +139,9 @@ export abstract class QueueMessagesManagerAbstract
       `Getting message IDs for queue ${queue.queueParams.name}, page ${page}, size ${pageSize}`,
     );
 
+    const keys = redisKeys.getQueueKeys(queue.queueParams, queue.groupId);
+    const keyVal = keys[this.redisKey];
+
     async.waterfall<IQueueMessagesPage<string>>(
       [
         // Step 1: Count total messages
@@ -146,7 +149,7 @@ export abstract class QueueMessagesManagerAbstract
           this.logger.debug(
             `Counting messages for queue ${queue.queueParams.name}`,
           );
-          this.messageStorage.count(queue, this.redisKey, next);
+          this.messageStorage.count(keyVal, next);
         },
 
         // Step 2: Fetch messages for the requested page
@@ -179,10 +182,8 @@ export abstract class QueueMessagesManagerAbstract
           );
 
           this.messageStorage.fetchItems(
-            queue,
-            this.redisKey,
-            offsetStart,
-            offsetEnd,
+            keyVal,
+            { page: currentPage, pageSize, offsetStart, offsetEnd },
             (err, items) => {
               if (err) {
                 this.logger.error(`Error fetching messages: ${err.message}`);
@@ -481,21 +482,23 @@ export abstract class QueueMessagesManagerAbstract
             return cb(err);
           }
 
-          this.messageStorage.count(
-            parsedParams,
-            this.redisKey,
-            (err, count) => {
-              if (err) {
-                this.logger.error(`Error counting messages: ${err.message}`);
-                return cb(err);
-              }
-
-              this.logger.debug(
-                `Queue ${parsedParams.queueParams.name} has ${count} messages`,
-              );
-              cb(null, count);
-            },
+          const keys = redisKeys.getQueueKeys(
+            parsedParams.queueParams,
+            parsedParams.groupId,
           );
+          const keyVal = keys[this.redisKey];
+
+          this.messageStorage.count(keyVal, (err, count) => {
+            if (err) {
+              this.logger.error(`Error counting messages: ${err.message}`);
+              return cb(err);
+            }
+
+            this.logger.debug(
+              `Queue ${parsedParams.queueParams.name} has ${count} messages`,
+            );
+            cb(null, count);
+          });
         },
       );
     });

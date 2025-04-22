@@ -9,9 +9,7 @@
 
 import { ICallback, ILogger, logger } from 'redis-smq-common';
 import { RedisClient } from '../../../common/redis-client/redis-client.js';
-import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../../config/index.js';
-import { IQueueParsedParams } from '../../queue/index.js';
 
 /**
  * Abstract class for queue message storage operations
@@ -24,7 +22,7 @@ export abstract class QueueMessagesStorage {
   /**
    * @param redisClient Redis client instance
    */
-  constructor(redisClient: RedisClient) {
+  protected constructor(redisClient: RedisClient) {
     this.redisClient = redisClient;
     this.logger = logger.getLogger(
       Configuration.getSetConfig().logger,
@@ -35,43 +33,34 @@ export abstract class QueueMessagesStorage {
   /**
    * Count items in the storage
    *
-   * @param queue Queue parameters
    * @param redisKey Redis key for the specific queue type
    * @param cb Callback function
    */
-  abstract count(
-    queue: IQueueParsedParams,
-    redisKey: keyof ReturnType<typeof redisKeys.getQueueKeys>,
-    cb: ICallback<number>,
-  ): void;
+  abstract count(redisKey: string, cb: ICallback<number>): void;
 
   /**
    * Fetch items from the storage with pagination
    *
-   * @param queue Queue parameters
    * @param redisKey Redis key for the specific queue type
-   * @param offset Start index
-   * @param limit Number of items to fetch
+   * @param pageParams
    * @param cb Callback function
    */
   abstract fetchItems(
-    queue: IQueueParsedParams,
-    redisKey: keyof ReturnType<typeof redisKeys.getQueueKeys>,
-    offset: number,
-    limit: number,
+    redisKey: string,
+    pageParams: {
+      page: number;
+      pageSize: number;
+      offsetStart: number;
+      offsetEnd: number;
+    },
     cb: ICallback<string[]>,
   ): void;
 
   /**
    * Fetch all items from the storage
    *
-   * @param queue Queue parameters
    * @param redisKey Redis key for the specific queue type
    * @param cb Callback function
    */
-  abstract fetchAllItems(
-    queue: IQueueParsedParams,
-    redisKey: keyof ReturnType<typeof redisKeys.getQueueKeys>,
-    cb: ICallback<string[]>,
-  ): void;
+  abstract fetchAllItems(redisKey: string, cb: ICallback<string[]>): void;
 }

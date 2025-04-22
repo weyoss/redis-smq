@@ -8,8 +8,6 @@
  */
 
 import { CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
-import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
-import { IQueueParsedParams } from '../../queue/index.js';
 import { QueueMessagesStorage } from './queue-messages-storage.js';
 import { RedisClient } from '../../../common/redis-client/redis-client.js';
 
@@ -29,22 +27,11 @@ export class QueueMessagesStorageSet extends QueueMessagesStorage {
 
   /**
    * Count items in a Redis set
-   * @param queue Queue parameters
    * @param redisKey Redis key for the specific queue type
    * @param cb Callback function
    */
-  count(
-    queue: IQueueParsedParams,
-    redisKey: keyof ReturnType<typeof redisKeys.getQueueKeys>,
-    cb: ICallback<number>,
-  ): void {
-    const queueName = `${queue.queueParams.name}@${queue.queueParams.ns}`;
-    this.logger.debug(
-      `Starting count operation for queue=${queueName}, key=${redisKey}`,
-    );
-
-    const keys = redisKeys.getQueueKeys(queue.queueParams, queue.groupId);
-    const key = keys[redisKey];
+  count(redisKey: string, cb: ICallback<number>): void {
+    this.logger.debug(`Starting count operation for key=${redisKey}`);
 
     this.redisClient.getSetInstance((err, client) => {
       if (err) {
@@ -62,12 +49,12 @@ export class QueueMessagesStorageSet extends QueueMessagesStorage {
         return cb(error);
       }
 
-      this.logger.debug(`Executing SCARD on ${key}`);
+      this.logger.debug(`Executing SCARD on ${redisKey}`);
 
-      client.scard(key, (err, reply) => {
+      client.scard(redisKey, (err, reply) => {
         if (err) {
           this.logger.error(
-            `Error in count operation for queue=${queueName}, key=${redisKey}: ${err.message}`,
+            `Error in count operation for key=${redisKey}: ${err.message}`,
             err,
           );
           return cb(err);
@@ -75,7 +62,7 @@ export class QueueMessagesStorageSet extends QueueMessagesStorage {
 
         this.logger.debug(`SCARD operation completed, count=${reply}`);
         this.logger.debug(
-          `Completed count operation for queue=${queueName}, key=${redisKey}, count=${reply}`,
+          `Completed count operation for key=${redisKey}, count=${reply}`,
         );
         cb(null, reply);
       });
@@ -84,26 +71,24 @@ export class QueueMessagesStorageSet extends QueueMessagesStorage {
 
   /**
    * Fetch items from a Redis set with pagination
-   * @param queue Queue parameters
    * @param redisKey Redis key for the specific queue type
-   * @param offset Start index
-   * @param limit Number of items to fetch
+   * @param pageParams
    * @param cb Callback function
    */
   fetchItems(
-    queue: IQueueParsedParams,
-    redisKey: keyof ReturnType<typeof redisKeys.getQueueKeys>,
-    offset: number,
-    limit: number,
+    redisKey: string,
+    pageParams: {
+      page: number;
+      pageSize: number;
+      offsetStart?: number;
+      offsetEnd?: number;
+    },
     cb: ICallback<string[]>,
   ): void {
-    const queueName = `${queue.queueParams.name}@${queue.queueParams.ns}`;
+    const { page, pageSize } = pageParams;
     this.logger.debug(
-      `Starting fetchItems operation for queue=${queueName}, key=${redisKey}, offset=${offset}, limit=${limit}`,
+      `Starting fetchItems operation for key=${redisKey}, page=${page}, pageSize=${pageSize}`,
     );
-
-    const keys = redisKeys.getQueueKeys(queue.queueParams, queue.groupId);
-    const key = keys[redisKey];
 
     this.redisClient.getSetInstance((err, client) => {
       if (err) {
@@ -112,7 +97,8 @@ export class QueueMessagesStorageSet extends QueueMessagesStorage {
           err,
         );
         return cb(err);
-      } else if (!client) {
+      }
+      if (!client) {
         const error = new CallbackEmptyReplyError();
         this.logger.error(
           `Redis client error during fetchItems operation: ${error.message}`,
@@ -121,45 +107,52 @@ export class QueueMessagesStorageSet extends QueueMessagesStorage {
         return cb(error);
       }
 
-      this.logger.debug(
-        `Executing SSCAN on ${key} with cursor=${offset.toString()}, count=${limit}`,
-      );
+      const scanToPage = (
+        cursor: string,
+        currentPage: number,
+        cb: ICallback<{ cursor: string; items: string[] }>,
+      ) => {
+        client.sscan(redisKey, cursor, { COUNT: pageSize }, (err, reply) => {
+          if (err) return cb(err);
+          if (!reply) return cb(new CallbackEmptyReplyError());
+          if (currentPage == page) {
+            return cb(null, reply);
+          }
 
-      client.sscan(key, offset.toString(), { COUNT: limit }, (err, reply) => {
+          // If we've reached the end of the set but haven't reached the requested page
+          if (reply.cursor === '0') {
+            return cb(null, { cursor, items: [] });
+          }
+          currentPage = currentPage + 1;
+          scanToPage(reply.cursor, currentPage, cb);
+        });
+      };
+
+      scanToPage('0', 1, (err, reply) => {
         if (err) {
           this.logger.error(
-            `Error in fetchItems operation for queue=${queueName}, key=${redisKey}: ${err.message}`,
+            `Error in fetchItems operation for key=${redisKey}: ${err.message}`,
             err,
           );
           return cb(err);
         }
-
-        const items = reply?.items || [];
-        const totalFound = items.length;
-
+        const { items = [] } = reply ?? {};
+        const itemCount = items.length;
         this.logger.debug(
-          `SSCAN operation completed, found ${totalFound} items`,
+          `SSCAN operation completed, retrieved ${itemCount} items`,
         );
 
-        // Apply pagination manually
-        let result: string[];
-        if (offset >= totalFound) {
+        if (itemCount === 0) {
           this.logger.debug(
-            `Offset ${offset} exceeds total items ${totalFound}, returning empty array`,
+            `No items found for key=${redisKey}, page=${page}, pageSize=${pageSize}`,
           );
-          result = [];
-        } else {
-          const paginatedItems = items.slice(0, limit);
-          this.logger.debug(
-            `Applied pagination: returning ${paginatedItems.length} items`,
-          );
-          result = paginatedItems;
         }
 
         this.logger.debug(
-          `Completed fetchItems operation for queue=${queueName}, key=${redisKey}, items=${result.length}`,
+          `Completed fetchItems operation for key=${redisKey}, items=${itemCount}`,
         );
-        cb(null, result);
+
+        cb(null, items);
       });
     });
   }
@@ -167,22 +160,11 @@ export class QueueMessagesStorageSet extends QueueMessagesStorage {
   /**
    * Fetch all items from a Redis set
    *
-   * @param queue Queue parameters
    * @param redisKey Redis key for the specific queue type
    * @param cb Callback function
    */
-  fetchAllItems(
-    queue: IQueueParsedParams,
-    redisKey: keyof ReturnType<typeof redisKeys.getQueueKeys>,
-    cb: ICallback<string[]>,
-  ): void {
-    const queueName = `${queue.queueParams.name}@${queue.queueParams.ns}`;
-    this.logger.debug(
-      `Starting fetchAllItems operation for queue=${queueName}, key=${redisKey}`,
-    );
-
-    const keys = redisKeys.getQueueKeys(queue.queueParams, queue.groupId);
-    const key = keys[redisKey];
+  fetchAllItems(redisKey: string, cb: ICallback<string[]>): void {
+    this.logger.debug(`Starting fetchAllItems operation for key=${redisKey}`);
 
     this.redisClient.getSetInstance((err, client) => {
       if (err) {
@@ -200,35 +182,40 @@ export class QueueMessagesStorageSet extends QueueMessagesStorage {
         return cb(error);
       }
 
-      this.logger.debug(`Executing SMEMBERS on ${key}`);
+      this.logger.debug(`Executing SMEMBERS on ${redisKey}`);
 
-      client.smembers(key, (err, items) => {
+      const items = new Set<string>();
+      const fullScan = (cursor: string, cb: ICallback<void>) => {
+        client.sscan(redisKey, cursor, {}, (err, reply) => {
+          if (err) return cb(err);
+          if (!reply) return cb(new CallbackEmptyReplyError());
+          reply.items.map((i) => items.add(i));
+          if (reply.cursor === '0') {
+            return cb();
+          }
+          fullScan(reply.cursor, cb);
+        });
+      };
+
+      fullScan('0', (err) => {
         if (err) {
           this.logger.error(
-            `Error in fetchAllItems operation for queue=${queueName}, key=${redisKey}: ${err.message}`,
+            `Error in fetchItems operation for key=${redisKey}: ${err.message}`,
             err,
           );
           return cb(err);
         }
-
-        const itemCount = items ? items.length : 0;
-
+        const itemCount = items.size;
         this.logger.debug(
-          `SMEMBERS operation completed, retrieved ${itemCount} items`,
+          `SSCAN operation completed, retrieved ${itemCount} items`,
         );
-
         if (itemCount === 0) {
-          this.logger.debug(`Set ${key} is empty`);
-        } else {
-          this.logger.debug(
-            `Successfully retrieved all ${itemCount} items from set ${key}`,
-          );
+          this.logger.debug(`No items found for key=${redisKey} (fullscan)`);
         }
-
         this.logger.debug(
-          `Completed fetchAllItems operation for queue=${queueName}, key=${redisKey}, items=${itemCount}`,
+          `Completed fetchAllItems operation for key=${redisKey}, items=${itemCount}`,
         );
-        cb(null, items || []);
+        cb(null, [...items.values()]);
       });
     });
   }

@@ -8,8 +8,6 @@
  */
 
 import { CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
-import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
-import { IQueueParsedParams } from '../../queue/index.js';
 import { QueueMessagesStorage } from './queue-messages-storage.js';
 import { RedisClient } from '../../../common/redis-client/redis-client.js';
 
@@ -32,19 +30,11 @@ export class QueueMessagesStorageSortedSet extends QueueMessagesStorage {
   /**
    * Count items in a Redis sorted set
    *
-   * @param queue - Queue parameters
    * @param redisKey - Redis key for the specific queue type
    * @param cb - Callback function
    */
-  count(
-    queue: IQueueParsedParams,
-    redisKey: keyof ReturnType<typeof redisKeys.getQueueKeys>,
-    cb: ICallback<number>,
-  ): void {
-    const queueName = `${queue.queueParams.name}@${queue.queueParams.ns}`;
-    this.logger.debug(
-      `Starting count operation for queue=${queueName}, key=${redisKey}`,
-    );
+  count(redisKey: string, cb: ICallback<number>): void {
+    this.logger.debug(`Starting count operation for key=${redisKey}`);
 
     this.redisClient.getSetInstance((err, client) => {
       if (err) {
@@ -61,22 +51,19 @@ export class QueueMessagesStorageSortedSet extends QueueMessagesStorage {
         );
         cb(error);
       } else {
-        const keys = redisKeys.getQueueKeys(queue.queueParams, queue.groupId);
-        const key = keys[redisKey];
+        this.logger.debug(`Executing ZCARD on ${redisKey}`);
 
-        this.logger.debug(`Executing ZCARD on ${key}`);
-
-        client.zcard(key, (err, count) => {
+        client.zcard(redisKey, (err, count) => {
           if (err) {
             this.logger.error(
-              `Error in count operation for queue=${queueName}, key=${redisKey}: ${err.message}`,
+              `Error in count operation for key=${redisKey}: ${err.message}`,
               err,
             );
             cb(err);
           } else {
             this.logger.debug(`ZCARD operation completed, count=${count}`);
             this.logger.debug(
-              `Completed count operation for queue=${queueName}, key=${redisKey}, count=${count}`,
+              `Completed count operation for key=${redisKey}, count=${count}`,
             );
             cb(null, count);
           }
@@ -88,22 +75,23 @@ export class QueueMessagesStorageSortedSet extends QueueMessagesStorage {
   /**
    * Fetch items from a Redis sorted set with pagination
    *
-   * @param queue - Queue parameters
    * @param redisKey - Redis key for the specific queue type
-   * @param offset - Start index (zero-based)
-   * @param limit - Number of items to fetch
+   * @param pageParams
    * @param cb - Callback function
    */
   fetchItems(
-    queue: IQueueParsedParams,
-    redisKey: keyof ReturnType<typeof redisKeys.getQueueKeys>,
-    offset: number,
-    limit: number,
+    redisKey: string,
+    pageParams: {
+      page?: number;
+      pageSize?: number;
+      offsetStart: number;
+      offsetEnd: number;
+    },
     cb: ICallback<string[]>,
   ): void {
-    const queueName = `${queue.queueParams.name}@${queue.queueParams.ns}`;
+    const { offsetStart, offsetEnd } = pageParams;
     this.logger.debug(
-      `Starting fetchItems operation for queue=${queueName}, key=${redisKey}, offset=${offset}, limit=${limit}`,
+      `Starting fetchItems operation for key=${redisKey}, start=${offsetStart}, stop=${offsetEnd}`,
     );
 
     this.redisClient.getSetInstance((err, client) => {
@@ -121,18 +109,14 @@ export class QueueMessagesStorageSortedSet extends QueueMessagesStorage {
         );
         cb(error);
       } else {
-        const keys = redisKeys.getQueueKeys(queue.queueParams, queue.groupId);
-        const key = keys[redisKey];
-        const endIndex = offset + limit - 1;
-
         this.logger.debug(
-          `Executing ZRANGE on ${key} from ${offset} to ${endIndex}`,
+          `Executing ZRANGE on ${redisKey} from ${offsetStart} to ${offsetEnd}`,
         );
 
-        client.zrange(key, offset, endIndex, (err, items) => {
+        client.zrange(redisKey, offsetStart, offsetEnd, (err, items) => {
           if (err) {
             this.logger.error(
-              `Error in fetchItems operation for queue=${queueName}, key=${redisKey}: ${err.message}`,
+              `Error in fetchItems operation for key=${redisKey}: ${err.message}`,
               err,
             );
             cb(err);
@@ -144,16 +128,12 @@ export class QueueMessagesStorageSortedSet extends QueueMessagesStorage {
 
             if (itemCount === 0) {
               this.logger.debug(
-                `No items found in range [${offset}, ${endIndex}] for ${key}`,
-              );
-            } else if (itemCount < limit) {
-              this.logger.debug(
-                `Partial result: requested ${limit} items but found only ${itemCount} items`,
+                `No items found in range [${offsetStart}, ${offsetEnd}] for ${redisKey}`,
               );
             }
 
             this.logger.debug(
-              `Completed fetchItems operation for queue=${queueName}, key=${redisKey}, items=${itemCount}`,
+              `Completed fetchItems operation for key=${redisKey}, items=${itemCount}`,
             );
             cb(null, items || []);
           }
@@ -165,19 +145,11 @@ export class QueueMessagesStorageSortedSet extends QueueMessagesStorage {
   /**
    * Fetch all items from a Redis sorted set using ZSCAN for memory efficiency
    *
-   * @param queue - Queue parameters
    * @param redisKey - Redis key for the specific queue type
    * @param cb - Callback function
    */
-  fetchAllItems(
-    queue: IQueueParsedParams,
-    redisKey: keyof ReturnType<typeof redisKeys.getQueueKeys>,
-    cb: ICallback<string[]>,
-  ): void {
-    const queueName = `${queue.queueParams.name}@${queue.queueParams.ns}`;
-    this.logger.debug(
-      `Starting fetchAllItems operation for queue=${queueName}, key=${redisKey}`,
-    );
+  fetchAllItems(redisKey: string, cb: ICallback<string[]>): void {
+    this.logger.debug(`Starting fetchAllItems operation for key=${redisKey}`);
 
     this.redisClient.getSetInstance((err, client) => {
       if (err) {
@@ -194,10 +166,7 @@ export class QueueMessagesStorageSortedSet extends QueueMessagesStorage {
         );
         cb(error);
       } else {
-        const keys = redisKeys.getQueueKeys(queue.queueParams, queue.groupId);
-        const key = keys[redisKey];
-
-        this.logger.debug(`Using ZSCAN to retrieve all items from ${key}`);
+        this.logger.debug(`Using ZSCAN to retrieve all items from ${redisKey}`);
 
         // Use recursive ZSCAN to get all items
         const allItems: string[] = [];
@@ -206,13 +175,13 @@ export class QueueMessagesStorageSortedSet extends QueueMessagesStorage {
         const scanRecursive = (cursor: string) => {
           scanCount++;
           this.logger.debug(
-            `ZSCAN iteration #${scanCount} with cursor=${cursor} for ${key}`,
+            `ZSCAN iteration #${scanCount} with cursor=${cursor} for ${redisKey}`,
           );
 
-          client.zscan(key, cursor, { COUNT: 100 }, (err, result) => {
+          client.zscan(redisKey, cursor, { COUNT: 100 }, (err, result) => {
             if (err) {
               this.logger.error(
-                `Error in ZSCAN operation for queue=${queueName}, key=${redisKey}: ${err.message}`,
+                `Error in ZSCAN operation for key=${redisKey}: ${err.message}`,
                 err,
               );
               cb(err);
@@ -240,7 +209,7 @@ export class QueueMessagesStorageSortedSet extends QueueMessagesStorage {
                 `ZSCAN completed after ${scanCount} iterations, total items: ${allItems.length}`,
               );
               this.logger.debug(
-                `Completed fetchAllItems operation for queue=${queueName}, key=${redisKey}, items=${allItems.length}`,
+                `Completed fetchAllItems operation for key=${redisKey}, items=${allItems.length}`,
               );
               cb(null, allItems);
             } else {
