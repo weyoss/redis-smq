@@ -40,6 +40,7 @@ export interface IQueueMessagesPage<T> {
 }
 
 export type IQueueMessagesPageParams = {
+  pageSize: number;
   currentPage: number;
   offsetStart: number;
   offsetEnd: number;

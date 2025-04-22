@@ -8,8 +8,6 @@
  */
 
 import { CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
-import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
-import { IQueueParsedParams } from '../../queue/index.js';
 import { QueueMessagesStorage } from './queue-messages-storage.js';
 import { RedisClient } from '../../../common/redis-client/redis-client.js';
 
@@ -27,17 +25,11 @@ export class QueueMessagesStorageList extends QueueMessagesStorage {
 
   /**
    * Count items in a Redis list
-   * @param queue Queue parameters
    * @param redisKey Redis key for the specific queue type
    * @param cb Callback function
    */
-  count(
-    queue: IQueueParsedParams,
-    redisKey: keyof ReturnType<typeof redisKeys.getQueueKeys>,
-    cb: ICallback<number>,
-  ): void {
-    const keys = redisKeys.getQueueKeys(queue.queueParams, queue.groupId);
-    this.logger.debug(`Counting items in list ${keys[redisKey]}`);
+  count(redisKey: string, cb: ICallback<number>): void {
+    this.logger.debug(`Counting items in list ${redisKey}`);
 
     this.redisClient.getSetInstance((err, client) => {
       if (err) {
@@ -47,13 +39,13 @@ export class QueueMessagesStorageList extends QueueMessagesStorage {
         this.logger.error('Redis client is empty');
         cb(new CallbackEmptyReplyError());
       } else {
-        this.logger.debug(`Executing LLEN on ${keys[redisKey]}`);
-        client.llen(keys[redisKey], (err, count) => {
+        this.logger.debug(`Executing LLEN on ${redisKey}`);
+        client.llen(redisKey, (err, count) => {
           if (err) {
             this.logger.error(`LLEN operation failed: ${err.message}`);
             cb(err);
           } else {
-            this.logger.debug(`Count for ${keys[redisKey]}: ${count}`);
+            this.logger.debug(`Count for ${redisKey}: ${count}`);
             cb(null, count);
           }
         });
@@ -63,22 +55,24 @@ export class QueueMessagesStorageList extends QueueMessagesStorage {
 
   /**
    * Fetch items from a Redis list with pagination
-   * @param queue Queue parameters
+   *
    * @param redisKey Redis key for the specific queue type
-   * @param offset Start index
-   * @param limit Number of items to fetch
-   * @param cb Callback function
+   * @param pageParams
+   * @param cb
    */
   fetchItems(
-    queue: IQueueParsedParams,
-    redisKey: keyof ReturnType<typeof redisKeys.getQueueKeys>,
-    offset: number,
-    limit: number,
+    redisKey: string,
+    pageParams: {
+      page?: number;
+      pageSize?: number;
+      offsetStart: number;
+      offsetEnd: number;
+    },
     cb: ICallback<string[]>,
   ): void {
-    const keys = redisKeys.getQueueKeys(queue.queueParams, queue.groupId);
+    const { offsetStart, offsetEnd } = pageParams;
     this.logger.debug(
-      `Fetching items from ${keys[redisKey]} with offset=${offset}, limit=${limit}`,
+      `Fetching items from ${redisKey} with start=${offsetStart}, stop=${offsetEnd}`,
     );
 
     this.redisClient.getSetInstance((err, client) => {
@@ -90,25 +84,18 @@ export class QueueMessagesStorageList extends QueueMessagesStorage {
         cb(new CallbackEmptyReplyError());
       } else {
         this.logger.debug(
-          `Executing LRANGE on ${keys[redisKey]} from ${offset} to ${offset + limit - 1}`,
+          `Executing LRANGE on ${redisKey} from ${offsetStart} to ${offsetEnd}`,
         );
-        client.lrange(
-          keys[redisKey],
-          offset,
-          offset + limit - 1,
-          (err, items) => {
-            if (err) {
-              this.logger.error(`LRANGE operation failed: ${err.message}`);
-              cb(err);
-            } else {
-              const itemCount = items ? items.length : 0;
-              this.logger.debug(
-                `Retrieved ${itemCount} items from ${keys[redisKey]}`,
-              );
-              cb(null, items || []);
-            }
-          },
-        );
+        client.lrange(redisKey, offsetStart, offsetEnd, (err, items) => {
+          if (err) {
+            this.logger.error(`LRANGE operation failed: ${err.message}`);
+            cb(err);
+          } else {
+            const itemCount = items ? items.length : 0;
+            this.logger.debug(`Retrieved ${itemCount} items from ${redisKey}`);
+            cb(null, items || []);
+          }
+        });
       }
     });
   }
@@ -116,15 +103,10 @@ export class QueueMessagesStorageList extends QueueMessagesStorage {
   /**
    * Fetch all items from a Redis list
    *
-   * @param queue Queue parameters
    * @param redisKey Redis key for the specific queue type
    * @param cb Callback function
    */
-  fetchAllItems(
-    queue: IQueueParsedParams,
-    redisKey: keyof ReturnType<typeof redisKeys.getQueueKeys>,
-    cb: ICallback<string[]>,
-  ): void {
+  fetchAllItems(redisKey: string, cb: ICallback<string[]>): void {
     const chunkSize = 100;
     this.logger.debug(`Fetching all items with chunk size ${chunkSize}`);
 
@@ -136,30 +118,32 @@ export class QueueMessagesStorageList extends QueueMessagesStorage {
         this.logger.error('Redis client is empty');
         cb(new CallbackEmptyReplyError());
       } else {
-        const keys = redisKeys.getQueueKeys(queue.queueParams, queue.groupId);
-        const key = keys[redisKey];
-        this.logger.debug(`Fetching all items from ${key}`);
+        this.logger.debug(`Fetching all items from ${redisKey}`);
 
         // First get the list length to determine how many chunks we need
-        this.logger.debug(`Executing LLEN on ${key} to determine total length`);
-        client.llen(key, (err, reply) => {
+        this.logger.debug(
+          `Executing LLEN on ${redisKey} to determine total length`,
+        );
+        client.llen(redisKey, (err, reply) => {
           if (err) {
             this.logger.error(`LLEN operation failed: ${err.message}`);
             return cb(err);
           }
 
           const totalLength = Number(reply);
-          this.logger.debug(`Total length of ${key}: ${totalLength}`);
+          this.logger.debug(`Total length of ${redisKey}: ${totalLength}`);
 
           if (totalLength === 0) {
-            this.logger.debug(`List ${key} is empty, returning empty array`);
+            this.logger.debug(
+              `List ${redisKey} is empty, returning empty array`,
+            );
             return cb(null, []);
           }
 
           const allItems: string[] = [];
           const totalChunks = Math.ceil(totalLength / chunkSize);
           this.logger.debug(
-            `Will process ${totalChunks} chunks for list ${key}`,
+            `Will process ${totalChunks} chunks for list ${redisKey}`,
           );
 
           // Process chunks recursively with non-blocking approach
@@ -170,7 +154,7 @@ export class QueueMessagesStorageList extends QueueMessagesStorage {
             // If we've processed all items, we're done
             if (offset >= totalLength) {
               this.logger.debug(
-                `Completed fetching all ${allItems.length} items from ${key}`,
+                `Completed fetching all ${allItems.length} items from ${redisKey}`,
               );
               return cb(null, allItems);
             }
@@ -182,7 +166,7 @@ export class QueueMessagesStorageList extends QueueMessagesStorage {
             );
 
             // Fetch the current chunk
-            client.lrange(key, offset, end, (err, items) => {
+            client.lrange(redisKey, offset, end, (err, items) => {
               if (err) {
                 this.logger.error(
                   `LRANGE operation failed for chunk ${chunkIndex}: ${err.message}`,

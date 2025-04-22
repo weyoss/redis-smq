@@ -10,7 +10,7 @@
 import { RedisClient } from '../../../common/redis-client/redis-client.js';
 import { Message } from '../../message/index.js';
 import { QueueMessagesManagerAbstract } from '../queue-messages-manager/queue-messages-manager-abstract.js';
-import { QueueMessagesStorageList } from '../queue-messages-storage/queue-message-storage-list.js';
+import { QueueMessagesStorageList } from '../queue-messages-storage/queue-messages-storage-list.js';
 
 export class QueueDeadLetteredMessages extends QueueMessagesManagerAbstract {
   constructor() {
