@@ -4,9 +4,10 @@ import { promisify } from 'node:util';
 import { env } from '../env/index.js';
 import { net } from '../net/index.js';
 import { PowerSwitch } from '../power-switch/index.js';
-import { REDIS_BINARY_PATH } from './constants.js';
+import { constants } from './constants.js';
 import { RedisServerBinaryNotFoundError } from './errors/index.js';
 
+const { REDIS_BINARY_PATH } = constants;
 const execAsync = promisify(exec);
 
 export class RedisServer {

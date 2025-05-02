@@ -14,12 +14,15 @@ import * as path from 'path';
 import { archive } from '../archive/index.js';
 import { env } from '../env/index.js';
 import { FileLock } from '../file-lock/index.js';
-import {
+import { getSupportedPlatform } from './get-supported-platform.js';
+import { constants } from './constants.js';
+
+const {
   REDIS_BINARY_PATH,
-  REDIS_CACHE_DIRECTORY,
-  REDIS_SERVER_VERSION,
   REDIS_SETUP_LOCK_FILE,
-} from './constants.js';
+  REDIS_SERVER_VERSION,
+  REDIS_CACHE_DIRECTORY,
+} = constants;
 
 async function compileRedis(sourceDir: string): Promise<void> {
   console.log(`Compiling Redis (${sourceDir})...`);
@@ -48,6 +51,10 @@ async function compileRedis(sourceDir: string): Promise<void> {
 }
 
 export async function buildRedisBinary(): Promise<string> {
+  // Validate system platform before continuing.
+  // An error is thrown if the platform is not supported.
+  getSupportedPlatform();
+
   const fileLock = new FileLock();
   try {
     await env.ensureDirectoryExists(REDIS_CACHE_DIRECTORY);
