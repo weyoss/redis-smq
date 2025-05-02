@@ -14,14 +14,16 @@ import { archive } from '../archive/index.js';
 import { env } from '../env/index.js';
 import { FileLock } from '../file-lock/index.js';
 import {
-  REDIS_BINARY_PATH,
-  REDIS_CACHE_DIRECTORY,
-  REDIS_SETUP_LOCK_FILE,
-} from './constants.js';
-import { RedisServerUnsupportedPlatformError } from './errors/index.js';
+  getSupportedPlatform,
+  TRedisServerPlatform,
+} from './get-supported-platform.js';
+import { constants } from './constants.js';
+
+const { REDIS_BINARY_PATH, REDIS_CACHE_DIRECTORY, REDIS_SETUP_LOCK_FILE } =
+  constants;
 
 // Pre-built Redis binary URLs for supported platforms and architectures
-const tarballs: Record<string, Record<string, string>> = {
+const tarballs: Record<TRedisServerPlatform, Record<string, string>> = {
   linux: {
     x64: 'https://github.com/weyoss/valkey/releases/download/v7.2.8-2/valkey-server-linux-x64-v7.2.8-2.tar.gz',
     arm64:
@@ -35,14 +37,10 @@ const tarballs: Record<string, Record<string, string>> = {
 };
 
 // Downloads and extracts the Redis binary
-async function downloadAndExtractRedis(downloadPath: string): Promise<string> {
-  const platform = os.platform();
-  const arch = os.arch();
-  const url = tarballs[platform][arch];
-  if (!url) {
-    throw new RedisServerUnsupportedPlatformError();
-  }
-
+async function downloadAndExtractRedis(
+  url: string,
+  downloadPath: string,
+): Promise<string> {
   const tarballPath = path.join(downloadPath, 'redis-server.tar.gz');
   await env.downloadFile(url, tarballPath);
 
@@ -55,6 +53,10 @@ async function downloadAndExtractRedis(downloadPath: string): Promise<string> {
 
 // Downloads and sets up the Redis binary
 export async function downloadPrebuiltBinary(): Promise<string> {
+  // Validate system platform before continuing.
+  // An error is thrown if the platform is not supported.
+  const platform = getSupportedPlatform();
+
   const fileLock = new FileLock();
   try {
     await env.ensureDirectoryExists(REDIS_CACHE_DIRECTORY);
@@ -64,7 +66,9 @@ export async function downloadPrebuiltBinary(): Promise<string> {
       const tempDir = path.join(os.tmpdir(), `redis-${Date.now()}`);
       await env.ensureDirectoryExists(tempDir);
 
-      const redisBinary = await downloadAndExtractRedis(tempDir);
+      const arch = os.arch();
+      const tarball = tarballs[platform][arch];
+      const redisBinary = await downloadAndExtractRedis(tarball, tempDir);
       await copyFile(redisBinary, REDIS_BINARY_PATH);
       await chmod(REDIS_BINARY_PATH, 0o755); // Make the binary executable
     }

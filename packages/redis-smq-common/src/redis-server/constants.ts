@@ -10,16 +10,17 @@
 import path from 'path';
 import { env } from '../env/index.js';
 
-export const REDIS_SERVER_VERSION = '7.2.8';
-export const REDIS_CACHE_DIRECTORY = path.join(
-  env.getCacheDir(),
-  'redis-smq-common',
-);
-export const REDIS_SETUP_LOCK_FILE = path.join(
+const REDIS_SERVER_VERSION = '7.2.8';
+const REDIS_CACHE_DIRECTORY = path.join(env.getCacheDir(), 'redis-smq-common');
+const REDIS_SETUP_LOCK_FILE = path.join(
   REDIS_CACHE_DIRECTORY,
   'redis-server-setup.lock',
 );
-export const REDIS_BINARY_PATH = path.join(
+const REDIS_BINARY_PATH = path.join(REDIS_CACHE_DIRECTORY, 'redis-server');
+
+export const constants = {
+  REDIS_SERVER_VERSION,
   REDIS_CACHE_DIRECTORY,
-  'redis-server',
-);
+  REDIS_SETUP_LOCK_FILE,
+  REDIS_BINARY_PATH,
+};
