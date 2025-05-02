@@ -16,11 +16,11 @@ import {
   Runnable,
   Timer,
 } from 'redis-smq-common';
+import { EventBus } from '../../../common/event-bus/event-bus.js';
 import { TConsumerHeartbeatEvent } from '../../../common/index.js';
 import { RedisClient } from '../../../common/redis-client/redis-client.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../../config/index.js';
-import { EventBus } from '../../event-bus/index.js';
 import { Consumer } from '../consumer/consumer.js';
 import { IConsumerHeartbeat } from '../types/index.js';
 import { eventBusPublisher } from './event-bus-publisher.js';

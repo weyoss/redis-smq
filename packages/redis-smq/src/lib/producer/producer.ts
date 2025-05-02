@@ -9,21 +9,19 @@
 
 import {
   async,
-  CallbackEmptyReplyError,
   ICallback,
   ILogger,
   IRedisClient,
   logger,
   PanicError,
   Runnable,
-  TUnaryFunction,
 } from 'redis-smq-common';
 import { TProducerEvent } from '../../common/index.js';
 import { RedisClient } from '../../common/redis-client/redis-client.js';
 import { ELuaScriptName } from '../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../config/index.js';
-import { EventBus } from '../event-bus/index.js';
+import { EventBus } from '../../common/index.js';
 import { _getExchangeQueues } from '../exchange/_/_get-exchange-queues.js';
 import { EExchangeType } from '../exchange/index.js';
 import {
@@ -150,34 +148,10 @@ export class Producer extends Runnable<TProducerEvent> {
   };
 
   /**
-   * Initializes the Redis client.
-   * @param {ICallback<void>} cb - Callback to execute upon completion.
-   */
-  protected initRedisClient = (cb: ICallback<void>): void => {
-    this.logger.debug('Initializing Redis client');
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error('Failed to initialize Redis client', err);
-        cb(err);
-      } else if (!client) {
-        this.logger.error('Redis client initialization returned empty reply');
-        cb(new CallbackEmptyReplyError());
-      } else {
-        this.logger.debug('Redis client initialized successfully');
-        client.on('error', (err) => {
-          this.logger.error('Redis client error', err);
-          this.handleError(err);
-        });
-        cb();
-      }
-    });
-  };
-
-  /**
    * Defines the sequence of actions to take when the Producer is going up.
-   * @returns {TUnaryFunction<ICallback<void>>[]} An array of functions to execute.
+   * @returns {((cb: ICallback<void>) => void)[]} An array of functions to execute.
    */
-  protected override goingUp(): TUnaryFunction<ICallback<void>>[] {
+  protected override goingUp(): ((cb: ICallback<void>) => void)[] {
     this.logger.info(`Producer ${this.getId()} is starting up`);
     return super.goingUp().concat([
       this.redisClient.init,
@@ -189,7 +163,6 @@ export class Producer extends Runnable<TProducerEvent> {
         this.emit('producer.goingUp', this.id);
         cb();
       },
-      this.initRedisClient,
       this.initQueueConsumerGroupsHandler,
     ]);
   }
@@ -211,9 +184,9 @@ export class Producer extends Runnable<TProducerEvent> {
    * This method is responsible for shutting down the producer instance and its associated components.
    * It ensures that the producer instance is properly closed and that any event bus instances are also shut down.
    *
-   * @returns {TUnaryFunction<ICallback<void>>[]} An array of functions to execute.
+   * @returns {((cb: ICallback<void>) => void)[]} An array of functions to execute.
    */
-  protected override goingDown(): TUnaryFunction<ICallback<void>>[] {
+  protected override goingDown(): ((cb: ICallback<void>) => void)[] {
     this.logger.info(`Producer ${this.getId()} is shutting down`);
     this.emit('producer.goingDown', this.id);
     return [

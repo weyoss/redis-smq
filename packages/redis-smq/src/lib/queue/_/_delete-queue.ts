@@ -98,7 +98,7 @@ export function _deleteQueue(
       if (err) cb(err);
       else {
         const processingQueues: string[] = [];
-        async.waterfall(
+        async.series(
           [
             (cb: ICallback<void>): void =>
               _getQueueProperties(redisClient, queueParams, (err, reply) => {

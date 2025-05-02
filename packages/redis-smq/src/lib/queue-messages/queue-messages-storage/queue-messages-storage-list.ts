@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
+import { ICallback, withRedisClient } from 'redis-smq-common';
 import { QueueMessagesStorage } from './queue-messages-storage.js';
 import { RedisClient } from '../../../common/redis-client/redis-client.js';
 
@@ -32,28 +32,22 @@ export class QueueMessagesStorageList extends QueueMessagesStorage {
   count(redisKey: string, cb: ICallback<number>): void {
     this.logger.debug(`Counting items in list ${redisKey}`);
 
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error(`Redis client error: ${err.message}`);
-        return cb(err);
-      }
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
+        this.logger.debug(`Executing LLEN on ${redisKey}`);
+        client.llen(redisKey, (err, count) => {
+          if (err) {
+            this.logger.error(`LLEN failed for ${redisKey}: ${err.message}`);
+            return cb(err);
+          }
 
-      if (!client) {
-        this.logger.error('Redis client is empty');
-        return cb(new CallbackEmptyReplyError());
-      }
-
-      this.logger.debug(`Executing LLEN on ${redisKey}`);
-      client.llen(redisKey, (err, count) => {
-        if (err) {
-          this.logger.error(`LLEN failed for ${redisKey}: ${err.message}`);
-          return cb(err);
-        }
-
-        this.logger.debug(`${redisKey} contains ${count} items`);
-        return cb(null, count);
-      });
-    });
+          this.logger.debug(`${redisKey} contains ${count} items`);
+          return cb(null, count);
+        });
+      },
+      cb,
+    );
   }
 
   /**
@@ -86,28 +80,22 @@ export class QueueMessagesStorageList extends QueueMessagesStorage {
       `Fetching items from ${redisKey} range [${offsetStart}:${offsetEnd}]`,
     );
 
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error(`Redis client error: ${err.message}`);
-        return cb(err);
-      }
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
+        client.lrange(redisKey, offsetStart, offsetEnd, (err, items) => {
+          if (err) {
+            this.logger.error(`LRANGE operation failed: ${err.message}`);
+            return cb(err);
+          }
 
-      if (!client) {
-        this.logger.error('Redis client is empty');
-        return cb(new CallbackEmptyReplyError());
-      }
-
-      client.lrange(redisKey, offsetStart, offsetEnd, (err, items) => {
-        if (err) {
-          this.logger.error(`LRANGE operation failed: ${err.message}`);
-          return cb(err);
-        }
-
-        const itemCount = items ? items.length : 0;
-        this.logger.debug(`Got ${itemCount} items from ${redisKey}`);
-        return cb(null, items || []);
-      });
-    });
+          const itemCount = items ? items.length : 0;
+          this.logger.debug(`Got ${itemCount} items from ${redisKey}`);
+          return cb(null, items || []);
+        });
+      },
+      cb,
+    );
   }
 
   /**
@@ -126,95 +114,94 @@ export class QueueMessagesStorageList extends QueueMessagesStorage {
     const chunkSize = 100; // Number of items to fetch in each chunk
     this.logger.debug(`Fetching all items with chunk size ${chunkSize}`);
 
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error(`Redis client error: ${err.message}`);
-        return cb(err);
-      }
-
-      if (!client) {
-        this.logger.error('Redis client is empty');
-        return cb(new CallbackEmptyReplyError());
-      }
-
-      // First get the list length to determine how many chunks we need
-      this.logger.debug(
-        `Executing LLEN on ${redisKey} to determine total length`,
-      );
-      client.llen(redisKey, (err, reply) => {
-        if (err) {
-          this.logger.error(`LLEN operation failed: ${err.message}`);
-          return cb(err);
-        }
-
-        const totalLength = Number(reply);
-        this.logger.debug(`${redisKey} total length: ${totalLength}`);
-
-        if (totalLength === 0) {
-          this.logger.debug(`List ${redisKey} is empty, returning empty array`);
-          return cb(null, []);
-        }
-
-        const allItems: string[] = [];
-        const totalChunks = Math.ceil(totalLength / chunkSize);
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
+        // First get the list length to determine how many chunks we need
         this.logger.debug(
-          `Processing ${totalChunks} chunks for list ${redisKey}`,
+          `Executing LLEN on ${redisKey} to determine total length`,
         );
-
-        /**
-         * Processes chunks of the Redis list recursively in a non-blocking way
-         *
-         * @param offset - Current position in the list
-         * @param chunkIndex - Current chunk number (for logging)
-         */
-        const processChunk = (offset: number, chunkIndex: number = 1): void => {
-          // If we've processed all items, we're done
-          if (offset >= totalLength) {
-            this.logger.debug(
-              `Completed all chunks, returning ${allItems.length} items`,
-            );
-            return cb(null, allItems);
+        client.llen(redisKey, (err, reply) => {
+          if (err) {
+            this.logger.error(`LLEN operation failed: ${err.message}`);
+            return cb(err);
           }
 
-          // Calculate end index for this chunk
-          const end = Math.min(offset + chunkSize - 1, totalLength - 1);
+          const totalLength = Number(reply);
+          this.logger.debug(`${redisKey} total length: ${totalLength}`);
+
+          if (totalLength === 0) {
+            this.logger.debug(
+              `List ${redisKey} is empty, returning empty array`,
+            );
+            return cb(null, []);
+          }
+
+          const allItems: string[] = [];
+          const totalChunks = Math.ceil(totalLength / chunkSize);
           this.logger.debug(
-            `Chunk ${chunkIndex}/${totalChunks}: range [${offset}:${end}]`,
+            `Processing ${totalChunks} chunks for list ${redisKey}`,
           );
 
-          // Fetch the current chunk
-          client.lrange(redisKey, offset, end, (err, items) => {
-            if (err) {
-              this.logger.error(
-                `LRANGE operation failed for chunk ${chunkIndex}: ${err.message}`,
-              );
-              return cb(err);
-            }
-
-            if (!items || items.length === 0) {
+          /**
+           * Processes chunks of the Redis list recursively in a non-blocking way
+           *
+           * @param offset - Current position in the list
+           * @param chunkIndex - Current chunk number (for logging)
+           */
+          const processChunk = (
+            offset: number,
+            chunkIndex: number = 1,
+          ): void => {
+            // If we've processed all items, we're done
+            if (offset >= totalLength) {
               this.logger.debug(
-                `Chunk ${chunkIndex} is empty, returning ${allItems.length} items`,
+                `Completed all chunks, returning ${allItems.length} items`,
               );
               return cb(null, allItems);
             }
 
-            // Add items to our result array
-            const chunkItemCount = items.length;
-            allItems.push(...items);
+            // Calculate end index for this chunk
+            const end = Math.min(offset + chunkSize - 1, totalLength - 1);
             this.logger.debug(
-              `Added ${chunkItemCount} items from chunk ${chunkIndex}, total items so far: ${allItems.length}`,
+              `Chunk ${chunkIndex}/${totalChunks}: range [${offset}:${end}]`,
             );
 
-            // Process next chunk with setImmediate to avoid blocking
-            setImmediate(() =>
-              processChunk(offset + chunkSize, chunkIndex + 1),
-            );
-          });
-        };
+            // Fetch the current chunk
+            client.lrange(redisKey, offset, end, (err, items) => {
+              if (err) {
+                this.logger.error(
+                  `LRANGE operation failed for chunk ${chunkIndex}: ${err.message}`,
+                );
+                return cb(err);
+              }
 
-        // Start processing from the beginning of the list
-        processChunk(0);
-      });
-    });
+              if (!items || items.length === 0) {
+                this.logger.debug(
+                  `Chunk ${chunkIndex} is empty, returning ${allItems.length} items`,
+                );
+                return cb(null, allItems);
+              }
+
+              // Add items to our result array
+              const chunkItemCount = items.length;
+              allItems.push(...items);
+              this.logger.debug(
+                `Added ${chunkItemCount} items from chunk ${chunkIndex}, total items so far: ${allItems.length}`,
+              );
+
+              // Process next chunk with setImmediate to avoid blocking
+              setImmediate(() =>
+                processChunk(offset + chunkSize, chunkIndex + 1),
+              );
+            });
+          };
+
+          // Start processing from the beginning of the list
+          processChunk(0);
+        });
+      },
+      cb,
+    );
   }
 }

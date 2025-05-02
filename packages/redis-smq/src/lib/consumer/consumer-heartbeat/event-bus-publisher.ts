@@ -9,8 +9,8 @@
 
 import { ILogger } from 'redis-smq-common';
 import { TConsumerHeartbeatEvent } from '../../../common/index.js';
-import { EventBus } from '../../event-bus/index.js';
 import { ConsumerHeartbeat } from './consumer-heartbeat.js';
+import { EventBus } from '../../../common/event-bus/event-bus.js';
 
 export function eventBusPublisher(
   consumerHeartbeat: ConsumerHeartbeat,

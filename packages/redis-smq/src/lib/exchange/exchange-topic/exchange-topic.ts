@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
+import { ICallback, withRedisClient } from 'redis-smq-common';
 import { IQueueParams } from '../../queue/index.js';
 import { ExchangeAbstract } from '../exchange-abstract.js';
 import { ITopicParams } from '../types/exchange.js';
@@ -31,38 +31,28 @@ export class ExchangeTopic extends ExchangeAbstract<string | ITopicParams> {
       this.logger.error(`Invalid topic exchange parameters`, {
         error: topic.message,
       });
-      cb(topic);
-    } else {
-      this.redisClient.getSetInstance((err, client) => {
-        if (err) {
-          this.logger.error(`Failed to get Redis client instance`, {
-            error: err.message,
-          });
-          cb(err);
-        } else if (!client) {
-          this.logger.error(`Empty Redis client reply`);
-          cb(new CallbackEmptyReplyError());
-        } else {
-          this.logger.debug(`Getting topic exchange queues`, { topic });
-          _getTopicExchangeQueues(client, topic, (err, queues) => {
-            if (err) {
-              this.logger.error(`Failed to get topic exchange queues`, {
-                error: err.message,
-              });
-              cb(err);
-            } else {
-              this.logger.debug(
-                `Successfully retrieved topic exchange queues`,
-                {
-                  topic,
-                  queueCount: queues?.length || 0,
-                },
-              );
-              cb(null, queues);
-            }
-          });
-        }
-      });
+      return cb(topic);
     }
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
+        this.logger.debug(`Getting topic exchange queues`, { topic });
+        _getTopicExchangeQueues(client, topic, (err, queues) => {
+          if (err) {
+            this.logger.error(`Failed to get topic exchange queues`, {
+              error: err.message,
+            });
+            cb(err);
+          } else {
+            this.logger.debug(`Successfully retrieved topic exchange queues`, {
+              topic,
+              queueCount: queues?.length || 0,
+            });
+            cb(null, queues);
+          }
+        });
+      },
+      cb,
+    );
   }
 }

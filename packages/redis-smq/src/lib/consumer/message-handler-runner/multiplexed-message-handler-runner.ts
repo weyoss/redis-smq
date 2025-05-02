@@ -9,7 +9,7 @@
 
 import { ICallback, Timer } from 'redis-smq-common';
 import { RedisClient } from '../../../common/redis-client/redis-client.js';
-import { EventBus } from '../../event-bus/index.js';
+import { EventBus } from '../../../common/event-bus/event-bus.js';
 import { Consumer } from '../consumer/consumer.js';
 import { MessageHandler } from '../message-handler/message-handler/message-handler.js';
 import { MultiplexedMessageHandler } from '../message-handler/message-handler/multiplexed-message-handler.js';

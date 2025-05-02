@@ -4,7 +4,7 @@
 
 ## Hierarchy
 
-- `EventEmitter`\<`Pick`\<`TRedisClientEvent`, ``"error"``\>\>
+- `EventBusRedisFactory`\<[`TRedisSMQEvent`](../README.md#tredissmqevent)\>
 
   ↳ **`EventBus`**
 
@@ -14,17 +14,20 @@
 
 - [constructor](EventBus.md#constructor)
 
+### Properties
+
+- [init](EventBus.md#init)
+- [shutdown](EventBus.md#shutdown)
+
 ### Methods
 
 - [emit](EventBus.md#emit)
 - [getInstance](EventBus.md#getinstance)
 - [getSetInstance](EventBus.md#getsetinstance)
-- [init](EventBus.md#init)
 - [on](EventBus.md#on)
 - [once](EventBus.md#once)
 - [removeAllListeners](EventBus.md#removealllisteners)
 - [removeListener](EventBus.md#removelistener)
-- [shutdown](EventBus.md#shutdown)
 
 ## Constructors
 
@@ -36,9 +39,57 @@
 
 [`EventBus`](EventBus.md)
 
+#### Overrides
+
+EventBusRedisFactory\<TRedisSMQEvent\>.constructor
+
+## Properties
+
+### init
+
+• **init**: (`cb`: `ICallback`\<`void`\>) => `void`
+
+#### Type declaration
+
+▸ (`cb`): `void`
+
+##### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `cb` | `ICallback`\<`void`\> |
+
+##### Returns
+
+`void`
+
 #### Inherited from
 
-EventEmitter\<Pick\<TRedisClientEvent, 'error'\>\>.constructor
+EventBusRedisFactory.init
+
+___
+
+### shutdown
+
+• **shutdown**: (`cb`: `ICallback`\<`void`\>) => `void`
+
+#### Type declaration
+
+▸ (`cb`): `void`
+
+##### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `cb` | `ICallback`\<`void`\> |
+
+##### Returns
+
+`void`
+
+#### Inherited from
+
+EventBusRedisFactory.shutdown
 
 ## Methods
 
@@ -65,7 +116,7 @@ EventEmitter\<Pick\<TRedisClientEvent, 'error'\>\>.constructor
 
 #### Inherited from
 
-EventEmitter.emit
+EventBusRedisFactory.emit
 
 ___
 
@@ -76,6 +127,10 @@ ___
 #### Returns
 
 `Error` \| `IEventBus`\<[`TRedisSMQEvent`](../README.md#tredissmqevent)\>
+
+#### Inherited from
+
+EventBusRedisFactory.getInstance
 
 ___
 
@@ -93,21 +148,9 @@ ___
 
 `void`
 
-___
+#### Inherited from
 
-### init
-
-▸ **init**(`cb`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `cb` | `ICallback`\<`void`\> |
-
-#### Returns
-
-`void`
+EventBusRedisFactory.getSetInstance
 
 ___
 
@@ -134,7 +177,7 @@ ___
 
 #### Inherited from
 
-EventEmitter.on
+EventBusRedisFactory.on
 
 ___
 
@@ -161,7 +204,7 @@ ___
 
 #### Inherited from
 
-EventEmitter.once
+EventBusRedisFactory.once
 
 ___
 
@@ -187,7 +230,7 @@ ___
 
 #### Inherited from
 
-EventEmitter.removeAllListeners
+EventBusRedisFactory.removeAllListeners
 
 ___
 
@@ -214,20 +257,4 @@ ___
 
 #### Inherited from
 
-EventEmitter.removeListener
-
-___
-
-### shutdown
-
-▸ **shutdown**(`cb`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `cb` | `ICallback`\<`void`\> |
-
-#### Returns
-
-`void`
+EventBusRedisFactory.removeListener

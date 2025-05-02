@@ -9,7 +9,7 @@
 
 import { ILogger } from 'redis-smq-common';
 import { TConsumerMessageHandlerRunnerEvent } from '../../../common/index.js';
-import { EventBus } from '../../event-bus/index.js';
+import { EventBus } from '../../../common/event-bus/event-bus.js';
 import { MessageHandlerRunner } from './message-handler-runner.js';
 
 export function eventBusPublisher(

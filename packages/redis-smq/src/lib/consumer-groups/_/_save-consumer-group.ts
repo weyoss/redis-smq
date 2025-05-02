@@ -43,7 +43,7 @@ export function _saveConsumerGroup(
               cb(new ConsumerGroupsConsumerGroupsNotSupportedError());
             else cb();
           }),
-        (cb: ICallback<number>) => {
+        (_, cb: ICallback<number>) => {
           const { keyQueueConsumerGroups } = redisKeys.getQueueKeys(queue, gid);
           redisClient.sadd(keyQueueConsumerGroups, gid, (err, reply) => {
             if (err) cb(err);

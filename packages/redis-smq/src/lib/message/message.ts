@@ -7,7 +7,12 @@
  * in the root directory of this source tree.
  */
 
-import { CallbackEmptyReplyError, ICallback, logger } from 'redis-smq-common';
+import {
+  CallbackEmptyReplyError,
+  ICallback,
+  logger,
+  withRedisClient,
+} from 'redis-smq-common';
 import { RedisClient } from '../../common/redis-client/redis-client.js';
 import { Configuration } from '../../config/index.js';
 import { _deleteMessage } from './_/_delete-message.js';
@@ -30,8 +35,9 @@ export class Message {
   protected redisClient;
 
   constructor() {
+    const config = Configuration.getSetConfig();
     this.logger = logger.getLogger(
-      Configuration.getSetConfig().logger,
+      config.logger,
       this.constructor.name.toLowerCase(),
     );
     this.redisClient = new RedisClient();
@@ -52,16 +58,9 @@ export class Message {
     cb: ICallback<EMessagePropertyStatus>,
   ): void {
     this.logger.debug('Getting message status', { messageId });
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error('Failed to get Redis client instance', {
-          error: err.message,
-        });
-        cb(err);
-      } else if (!client) {
-        this.logger.error('Empty Redis client reply');
-        cb(new CallbackEmptyReplyError());
-      } else {
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
         _getMessageStatus(client, messageId, (err, status) => {
           if (err) {
             this.logger.error('Failed to get message status', {
@@ -77,8 +76,9 @@ export class Message {
             cb(null, status);
           }
         });
-      }
-    });
+      },
+      cb,
+    );
   }
 
   /**
@@ -94,16 +94,9 @@ export class Message {
     cb: ICallback<IMessageStateTransferable>,
   ): void {
     this.logger.debug('Getting message state', { messageId });
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error('Failed to get Redis client instance', {
-          error: err.message,
-        });
-        cb(err);
-      } else if (!client) {
-        this.logger.error('Empty Redis client reply');
-        cb(new CallbackEmptyReplyError());
-      } else {
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
         _getMessageState(client, messageId, (err, state) => {
           if (err) {
             this.logger.error('Failed to get message state', {
@@ -118,8 +111,9 @@ export class Message {
             cb(null, state);
           }
         });
-      }
-    });
+      },
+      cb,
+    );
   }
 
   /**
@@ -137,16 +131,9 @@ export class Message {
     this.logger.debug('Getting messages by IDs', {
       messageCount: messageIds.length,
     });
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error('Failed to get Redis client instance', {
-          error: err.message,
-        });
-        cb(err);
-      } else if (!client) {
-        this.logger.error('Empty Redis client reply');
-        cb(new CallbackEmptyReplyError());
-      } else {
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
         _getMessages(client, messageIds, (err, reply) => {
           if (err) {
             this.logger.error('Failed to get messages', { error: err.message });
@@ -164,8 +151,9 @@ export class Message {
             );
           }
         });
-      }
-    });
+      },
+      cb,
+    );
   }
 
   /**
@@ -178,16 +166,9 @@ export class Message {
    */
   getMessageById(messageId: string, cb: ICallback<IMessageTransferable>): void {
     this.logger.debug('Getting message by ID', { messageId });
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error('Failed to get Redis client instance', {
-          error: err.message,
-        });
-        cb(err);
-      } else if (!client) {
-        this.logger.error('Empty Redis client reply');
-        cb(new CallbackEmptyReplyError());
-      } else {
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
         _getMessage(client, messageId, (err, reply) => {
           if (err) {
             this.logger.error('Failed to get message', {
@@ -203,8 +184,9 @@ export class Message {
             cb(null, reply.transfer());
           }
         });
-      }
-    });
+      },
+      cb,
+    );
   }
 
   /**
@@ -217,16 +199,9 @@ export class Message {
    */
   deleteMessagesByIds(ids: string[], cb: ICallback<void>): void {
     this.logger.debug('Deleting messages by IDs', { messageCount: ids.length });
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error('Failed to get Redis client instance', {
-          error: err.message,
-        });
-        cb(err);
-      } else if (!client) {
-        this.logger.error('Empty Redis client reply');
-        cb(new CallbackEmptyReplyError());
-      } else {
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
         _deleteMessage(client, ids, (err) => {
           if (err) {
             this.logger.error('Failed to delete messages', {
@@ -240,8 +215,9 @@ export class Message {
             cb();
           }
         });
-      }
-    });
+      },
+      cb,
+    );
   }
 
   /**
@@ -278,16 +254,9 @@ export class Message {
    */
   requeueMessageById(messageId: string, cb: ICallback<void>): void {
     this.logger.debug('Requeuing message by ID', { messageId });
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error('Failed to get Redis client instance', {
-          error: err.message,
-        });
-        cb(err);
-      } else if (!client) {
-        this.logger.error('Empty Redis client reply');
-        cb(new CallbackEmptyReplyError());
-      } else {
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
         _requeueMessage(client, messageId, (err) => {
           if (err) {
             this.logger.error('Failed to requeue message', {
@@ -300,8 +269,9 @@ export class Message {
             cb();
           }
         });
-      }
-    });
+      },
+      cb,
+    );
   }
 
   /**

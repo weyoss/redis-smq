@@ -9,17 +9,18 @@
 
 import {
   async,
-  CallbackEmptyReplyError,
   ICallback,
   IEventBus,
   ILogger,
   IRedisClient,
   logger,
+  withEventBus,
+  withRedisClient,
 } from 'redis-smq-common';
+import { EventBus } from '../../common/index.js';
 import { TRedisSMQEvent } from '../../common/index.js';
 import { RedisClient } from '../../common/redis-client/redis-client.js';
 import { Configuration } from '../../config/index.js';
-import { EventBus } from '../event-bus/index.js';
 import { _parseQueueParams } from '../queue/_/_parse-queue-params.js';
 import { IQueueParams } from '../queue/index.js';
 import { _deleteConsumerGroup } from './_/_delete-consumer-group.js';
@@ -88,55 +89,38 @@ export class ConsumerGroups {
       `Parsed queue parameters: ${JSON.stringify(queueParams)}`,
     );
 
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error(
-          `Failed to get Redis client instance: ${err.message}`,
-        );
-        return cb(err);
-      }
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
+        withEventBus(
+          this.eventBus,
+          (eventBus, cb) => {
+            this.logger.debug('EventBus instance obtained successfully');
+            _saveConsumerGroup(
+              client,
+              eventBus,
+              queueParams,
+              groupId,
+              (err, result) => {
+                if (err) {
+                  this.logger.error(
+                    `Failed to save consumer group '${groupId}': ${err.message}`,
+                  );
+                  return cb(err);
+                }
 
-      if (!client) {
-        this.logger.error('Redis client returned empty instance');
-        return cb(new CallbackEmptyReplyError());
-      }
-
-      this.logger.debug('Redis client instance obtained successfully');
-
-      this.eventBus.getSetInstance((err, eventBus) => {
-        if (err) {
-          this.logger.error(`Failed to get EventBus instance: ${err.message}`);
-          return cb(err);
-        }
-
-        if (!eventBus) {
-          this.logger.error('EventBus returned empty instance');
-          return cb(new CallbackEmptyReplyError());
-        }
-
-        this.logger.debug('EventBus instance obtained successfully');
-
-        _saveConsumerGroup(
-          client,
-          eventBus,
-          queueParams,
-          groupId,
-          (err, result) => {
-            if (err) {
-              this.logger.error(
-                `Failed to save consumer group '${groupId}': ${err.message}`,
-              );
-              return cb(err);
-            }
-
-            this.logger.info(
-              `Consumer group '${groupId}' ${result === 1 ? 'created' : 'already exists'} for queue: ${queueParams.name}`,
+                this.logger.info(
+                  `Consumer group '${groupId}' ${result === 1 ? 'created' : 'already exists'} for queue: ${queueParams.name}`,
+                );
+                cb(null, result);
+              },
             );
-            cb(null, result);
           },
+          cb,
         );
-      });
-    });
+      },
+      cb,
+    );
   }
 
   /**
@@ -169,87 +153,35 @@ export class ConsumerGroups {
       `Parsed queue parameters: ${JSON.stringify(queueParams)}`,
     );
 
-    async.waterfall(
+    async.withCallbackList(
       [
-        (cb: ICallback<IRedisClient>) => {
-          this.logger.debug('Getting Redis client instance');
-          this.redisClient.getSetInstance((err, client) => {
-            if (err) {
-              this.logger.error(
-                `Failed to get Redis client instance: ${err.message}`,
-              );
-              return cb(err);
-            }
-            if (!client) {
-              this.logger.error('Redis client returned empty instance');
-              return cb(new CallbackEmptyReplyError());
-            }
-            this.logger.debug('Redis client instance obtained successfully');
-            cb(null, client);
-          });
-        },
-        (
-          redisClient: IRedisClient,
-          cb: ICallback<{
-            redisClient: IRedisClient;
-            eventBus: IEventBus<TRedisSMQEvent>;
-          }>,
-        ) => {
-          this.logger.debug('Getting EventBus instance');
-          this.eventBus.getSetInstance((err, eventBus) => {
-            if (err) {
-              this.logger.error(
-                `Failed to get EventBus instance: ${err.message}`,
-              );
-              return cb(err);
-            }
-            if (!eventBus) {
-              this.logger.error('EventBus returned empty instance');
-              return cb(new CallbackEmptyReplyError());
-            }
-            this.logger.debug('EventBus instance obtained successfully');
-            cb(null, { redisClient, eventBus });
-          });
-        },
-        (
-          args: {
-            redisClient: IRedisClient;
-            eventBus: IEventBus<TRedisSMQEvent>;
-          },
-          cb: ICallback<void>,
-        ) => {
-          this.logger.debug(
-            `Executing delete operation for consumer group '${groupId}'`,
-          );
-          _deleteConsumerGroup(
-            args.redisClient,
-            args.eventBus,
-            queueParams,
-            groupId,
-            (err) => {
-              if (err) {
-                this.logger.error(
-                  `Failed to delete consumer group '${groupId}': ${err.message}`,
-                );
-                return cb(err);
-              }
-              this.logger.info(
-                `Consumer group '${groupId}' successfully deleted from queue: ${queueParams.name}`,
-              );
-              cb();
-            },
-          );
-        },
+        (cb: ICallback<IRedisClient>) =>
+          withRedisClient(
+            this.redisClient,
+            (client, cb) => cb(null, client),
+            cb,
+          ),
+        (cb: ICallback<IEventBus<TRedisSMQEvent>>) =>
+          withEventBus(this.eventBus, (eventBus, cb) => cb(null, eventBus), cb),
       ],
-      (err) => {
-        if (err) {
-          this.logger.error(
-            `Error in deleteConsumerGroup workflow: ${err.message}`,
+      ([client, eventBus], cb) => {
+        this.logger.debug(
+          `Executing delete operation for consumer group '${groupId}'`,
+        );
+        _deleteConsumerGroup(client, eventBus, queueParams, groupId, (err) => {
+          if (err) {
+            this.logger.error(
+              `Failed to delete consumer group '${groupId}': ${err.message}`,
+            );
+            return cb(err);
+          }
+          this.logger.info(
+            `Consumer group '${groupId}' successfully deleted from queue: ${queueParams.name}`,
           );
-          return cb(err);
-        }
-        cb();
+          cb();
+        });
       },
+      cb,
     );
   }
 
@@ -281,37 +213,27 @@ export class ConsumerGroups {
       `Parsed queue parameters: ${JSON.stringify(queueParams)}`,
     );
 
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error(
-          `Failed to get Redis client instance: ${err.message}`,
-        );
-        return cb(err);
-      }
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
+        _getConsumerGroups(client, queueParams, (err, groups) => {
+          if (err) {
+            this.logger.error(`Failed to get consumer groups: ${err.message}`);
+            return cb(err);
+          }
 
-      if (!client) {
-        this.logger.error('Redis client returned empty instance');
-        return cb(new CallbackEmptyReplyError());
-      }
+          this.logger.info(
+            `Retrieved ${Number(groups?.length)} consumer groups for queue: ${queueParams.name}`,
+          );
+          if (groups && groups.length > 0) {
+            this.logger.debug(`Consumer groups: ${JSON.stringify(groups)}`);
+          }
 
-      this.logger.debug('Redis client instance obtained successfully');
-
-      _getConsumerGroups(client, queueParams, (err, groups) => {
-        if (err) {
-          this.logger.error(`Failed to get consumer groups: ${err.message}`);
-          return cb(err);
-        }
-
-        this.logger.info(
-          `Retrieved ${Number(groups?.length)} consumer groups for queue: ${queueParams.name}`,
-        );
-        if (groups && groups.length > 0) {
-          this.logger.debug(`Consumer groups: ${JSON.stringify(groups)}`);
-        }
-
-        cb(null, groups);
-      });
-    });
+          cb(null, groups);
+        });
+      },
+      cb,
+    );
   }
 
   /**
@@ -324,7 +246,7 @@ export class ConsumerGroups {
   shutdown = (cb: ICallback<void>): void => {
     this.logger.info('Shutting down ConsumerGroups manager');
 
-    async.waterfall(
+    async.series(
       [
         (next: ICallback<void>) => {
           this.logger.debug('Shutting down RedisClient');

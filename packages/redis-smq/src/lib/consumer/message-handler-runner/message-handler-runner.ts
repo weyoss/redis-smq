@@ -11,7 +11,7 @@ import { async, ICallback, ILogger, logger, Runnable } from 'redis-smq-common';
 import { TConsumerMessageHandlerRunnerEvent } from '../../../common/index.js';
 import { RedisClient } from '../../../common/redis-client/redis-client.js';
 import { Configuration } from '../../../config/index.js';
-import { EventBus } from '../../event-bus/index.js';
+import { EventBus } from '../../../common/event-bus/event-bus.js';
 import { IQueueParsedParams } from '../../queue/index.js';
 import { Consumer } from '../consumer/consumer.js';
 import { ConsumerConsumeMessageHandlerAlreadyExistsError } from '../errors/index.js';
