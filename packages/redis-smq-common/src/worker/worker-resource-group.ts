@@ -10,7 +10,7 @@
 import { readdir } from 'fs';
 import path from 'path';
 import { async } from '../async/index.js';
-import { ICallback } from '../common/index.js';
+import { ICallback } from '../async/index.js';
 import { AbortError } from '../errors/index.js';
 import { RedisLock } from '../redis-lock/index.js';
 import { ILogger } from '../logger/index.js';

@@ -10,3 +10,5 @@
 export * from './types/index.js';
 export * from './errors/index.js';
 export * from './create-redis-client.js';
+export * from './with-redis-client.js';
+export * from './redis-client-factory.js';

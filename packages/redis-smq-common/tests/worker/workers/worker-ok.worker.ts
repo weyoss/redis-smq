@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { ICallback } from '../../../src/common/index.js';
+import { ICallback } from '../../../src/async/index.js';
 
 export default function myWorkerCallable(args: string, cb: ICallback<string>) {
   setTimeout(() => cb(null, args), 5000);

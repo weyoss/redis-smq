@@ -15,7 +15,7 @@ import {
   WatchError,
 } from '@redis/client';
 import { RedisClientMultiCommandType } from '@redis/client/dist/lib/client/multi-command.js';
-import { ICallback } from '../../../common/index.js';
+import { ICallback } from '../../../async/index.js';
 import { WatchedKeysChangedError } from '../../errors/index.js';
 import { IRedisTransaction } from '../../types/index.js';
 

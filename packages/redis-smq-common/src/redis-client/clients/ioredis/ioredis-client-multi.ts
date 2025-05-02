@@ -8,7 +8,7 @@
  */
 
 import { Redis } from 'ioredis';
-import { ICallback } from '../../../common/index.js';
+import { ICallback } from '../../../async/index.js';
 import {
   RedisClientError,
   WatchedKeysChangedError,

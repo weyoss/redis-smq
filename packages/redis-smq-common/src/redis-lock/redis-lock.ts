@@ -8,7 +8,7 @@
  */
 
 import { resolve } from 'path';
-import { ICallback } from '../common/index.js';
+import { ICallback } from '../async/index.js';
 import { env } from '../env/index.js';
 import { AbortError } from '../errors/index.js';
 import { ILogger } from '../logger/index.js';

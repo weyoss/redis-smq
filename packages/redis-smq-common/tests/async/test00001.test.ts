@@ -9,12 +9,12 @@
 
 import { expect, it } from 'vitest';
 import { async } from '../../src/async/async.js';
-import { ICallback } from '../../src/common/index.js';
+import { ICallback } from '../../src/async/index.js';
 
-it('async.waterfall: case 1', async () => {
+it('async.series: case 1', async () => {
   let count = 0;
   await new Promise<void>((resolve, reject) => {
-    async.waterfall(
+    async.series(
       [
         (cb: ICallback<void>) => {
           expect(count).toBe(0);

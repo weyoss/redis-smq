@@ -193,7 +193,7 @@ ___
 
 | Name | Type | Default value |
 | :------ | :------ | :------ |
-| `fn` | [`TFunction`](../README.md#tfunction)\<`void`, `any`\> | `undefined` |
+| `fn` | [`TFunction`](../README.md#tfunction) | `undefined` |
 | `interval` | `number` | `1000` |
 
 #### Returns
@@ -210,7 +210,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `fn` | [`TFunction`](../README.md#tfunction)\<`void`, `any`\> |
+| `fn` | [`TFunction`](../README.md#tfunction) |
 | `timeout` | `number` |
 
 #### Returns

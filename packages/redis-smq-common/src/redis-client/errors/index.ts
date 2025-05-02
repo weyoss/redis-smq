@@ -9,3 +9,4 @@
 
 export { RedisClientError } from './redis-client.error.js';
 export { WatchedKeysChangedError } from './watched-keys-changed.error.js';
+export { InstanceLockError } from './instance-lock.error.js';

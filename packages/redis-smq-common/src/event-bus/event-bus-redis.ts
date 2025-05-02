@@ -8,7 +8,7 @@
  */
 
 import { async } from '../async/index.js';
-import { ICallback } from '../common/index.js';
+import { ICallback } from '../async/index.js';
 import { EventEmitter, IEventBus, TEventBusEvent } from '../event/index.js';
 import {
   createRedisClient,
@@ -121,7 +121,7 @@ export class EventBusRedis<Events extends TEventBusEvent>
 
   shutdown(cb: ICallback<void>) {
     if (this.connected) {
-      async.waterfall(
+      async.series(
         [
           (cb: ICallback<void>) => this.subClient.halt(() => cb()),
           (cb: ICallback<void>) => this.pubClient.halt(() => cb()),
@@ -140,7 +140,7 @@ export class EventBusRedis<Events extends TEventBusEvent>
   ): void {
     let pubClient: IRedisClient | null | undefined = null;
     let subClient: IRedisClient | null | undefined = null;
-    async.waterfall(
+    async.series(
       [
         (cb: ICallback<void>) =>
           createRedisClient(config, (err, client) => {

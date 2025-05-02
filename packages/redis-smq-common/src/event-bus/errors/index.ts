@@ -7,5 +7,6 @@
  * in the root directory of this source tree.
  */
 
-export { EventBusError } from './event-bus.error.js';
-export { EventBusNotConnectedError } from './event-bus-not-connected.error.js';
+export * from './event-bus.error.js';
+export * from './event-bus-not-connected.error.js';
+export * from './event-bus-instance-lock.error.js';

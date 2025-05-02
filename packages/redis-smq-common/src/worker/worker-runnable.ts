@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { ICallback } from '../common/index.js';
+import { ICallback } from '../async/index.js';
 import { ILogger } from '../logger/index.js';
 import { PowerSwitch } from '../power-switch/index.js';
 import {

@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { ICallback } from '../../../../src/common/index.js';
+import { ICallback } from '../../../../src/async/index.js';
 import { IWorkerRunnable } from '../../../../src/worker/index.js';
 
 export default function myWorkerRunnable(): IWorkerRunnable {

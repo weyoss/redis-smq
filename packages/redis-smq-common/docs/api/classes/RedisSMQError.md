@@ -8,6 +8,8 @@
 
   ↳ **`RedisSMQError`**
 
+  ↳↳ [`AsyncCallbackTimeoutError`](AsyncCallbackTimeoutError.md)
+
   ↳↳ [`PanicError`](PanicError.md)
 
   ↳↳ [`AbortError`](AbortError.md)
@@ -19,6 +21,8 @@
   ↳↳ [`LoggerError`](LoggerError.md)
 
   ↳↳ [`RedisClientError`](RedisClientError.md)
+
+  ↳↳ [`InstanceLockError`](InstanceLockError.md)
 
   ↳↳ [`TimerError`](TimerError.md)
 
