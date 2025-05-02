@@ -9,10 +9,10 @@
 
 import {
   async,
-  CallbackEmptyReplyError,
   ICallback,
   IRedisClient,
   logger,
+  withRedisClient,
 } from 'redis-smq-common';
 import { RedisClient } from '../../../common/redis-client/redis-client.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
@@ -142,7 +142,7 @@ export abstract class QueueMessagesManagerAbstract
     const keys = redisKeys.getQueueKeys(queue.queueParams, queue.groupId);
     const keyVal = keys[this.redisKey];
 
-    async.waterfall<IQueueMessagesPage<string>>(
+    async.waterfall(
       [
         // Step 1: Count total messages
         (next: ICallback<number>) => {
@@ -231,31 +231,26 @@ export abstract class QueueMessagesManagerAbstract
       `Purging messages from queue ${parsedParams.queueParams.name}`,
     );
 
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error(`Error getting Redis client: ${err.message}`);
-        return cb(err);
-      }
-      if (!client) {
-        this.logger.error('Redis client is empty');
-        return cb(new CallbackEmptyReplyError());
-      }
-
-      _validateQueueExtendedParams(
-        client,
-        parsedParams,
-        this.requireGroupId,
-        (err) => {
-          if (err) {
-            this.logger.error(
-              `Error validating queue parameters: ${err.message}`,
-            );
-            return cb(err);
-          }
-          this._purgeMessages(client, parsedParams, cb);
-        },
-      );
-    });
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
+        _validateQueueExtendedParams(
+          client,
+          parsedParams,
+          this.requireGroupId,
+          (err) => {
+            if (err) {
+              this.logger.error(
+                `Error validating queue parameters: ${err.message}`,
+              );
+              return cb(err);
+            }
+            this._purgeMessages(client, parsedParams, cb);
+          },
+        );
+      },
+      cb,
+    );
   }
 
   /**
@@ -369,76 +364,62 @@ export abstract class QueueMessagesManagerAbstract
       `Getting messages for queue ${parsedParams.queueParams.name}, page ${page}, size ${pageSize}`,
     );
 
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error(`Error getting Redis client: ${err.message}`);
-        return cb(err);
-      }
-      if (!client) {
-        this.logger.error('Redis client is empty');
-        return cb(new CallbackEmptyReplyError());
-      }
-
-      _validateQueueExtendedParams(
-        client,
-        parsedParams,
-        this.requireGroupId,
-        (err) => {
-          if (err) {
-            this.logger.error(
-              `Error validating queue parameters: ${err.message}`,
-            );
-            return cb(err);
-          }
-
-          // Get message IDs for the requested page
-          this.getMessagesIds(
-            parsedParams,
-            page,
-            pageSize,
-            (err, pageResult) => {
-              if (err) {
-                this.logger.error(`Error getting message IDs: ${err.message}`);
-                return cb(err);
-              }
-              if (!pageResult) {
-                this.logger.error('Page result is empty');
-                return cb(new CallbackEmptyReplyError());
-              }
-
-              // If no messages on this page, return empty result
-              if (pageResult.items.length === 0) {
-                this.logger.debug(
-                  `No messages found for queue ${parsedParams.queueParams.name} on page ${page}`,
-                );
-                return cb(null, { ...pageResult, items: [] });
-              }
-
-              this.logger.debug(
-                `Retrieving ${pageResult.items.length} message details for queue ${parsedParams.queueParams.name}`,
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
+        _validateQueueExtendedParams(
+          client,
+          parsedParams,
+          this.requireGroupId,
+          (err) => {
+            if (err) {
+              this.logger.error(
+                `Error validating queue parameters: ${err.message}`,
               );
+              return cb(err);
+            }
 
-              // Get detailed message objects for the IDs
-              this.message.getMessagesByIds(
-                pageResult.items,
-                (err, messages) => {
-                  if (err) {
-                    this.logger.error(
-                      `Error getting message details: ${err.message}`,
-                    );
-                    return cb(err);
-                  }
+            async.withCallback(
+              // Get message IDs for the requested page
+              (cb: ICallback<IQueueMessagesPage<string>>) =>
+                this.getMessagesIds(parsedParams, page, pageSize, cb),
+              (pageResult, cb) => {
+                // If no messages on this page, return empty result
+                if (pageResult.items.length === 0) {
                   this.logger.debug(
-                    `Successfully retrieved ${messages?.length || 0} message details for queue ${parsedParams.queueParams.name}`,
+                    `No messages found for queue ${parsedParams.queueParams.name} on page ${page}`,
                   );
-                  cb(null, { ...pageResult, items: messages ?? [] });
-                },
-              );
-            },
-          );
-        },
-      );
-    });
+                  return cb(null, { ...pageResult, items: [] });
+                }
+
+                this.logger.debug(
+                  `Retrieving ${pageResult.items.length} message details for queue ${parsedParams.queueParams.name}`,
+                );
+
+                // Get detailed message objects for the IDs
+                this.message.getMessagesByIds(
+                  pageResult.items,
+                  (err, messages) => {
+                    if (err) {
+                      this.logger.error(
+                        `Error getting message details: ${err.message}`,
+                      );
+                      return cb(err);
+                    }
+                    this.logger.debug(
+                      `Successfully retrieved ${messages?.length || 0} message details for queue ${parsedParams.queueParams.name}`,
+                    );
+                    cb(null, { ...pageResult, items: messages ?? [] });
+                  },
+                );
+              },
+              cb,
+            );
+          },
+        );
+      },
+      cb,
+    );
   }
 
   /**
@@ -460,48 +441,43 @@ export abstract class QueueMessagesManagerAbstract
       `Counting messages for queue ${parsedParams.queueParams.name}`,
     );
 
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error(`Error getting Redis client: ${err.message}`);
-        return cb(err);
-      }
-      if (!client) {
-        this.logger.error('Redis client is empty');
-        return cb(new CallbackEmptyReplyError());
-      }
-
-      _validateQueueExtendedParams(
-        client,
-        parsedParams,
-        this.requireGroupId,
-        (err) => {
-          if (err) {
-            this.logger.error(
-              `Error validating queue parameters: ${err.message}`,
-            );
-            return cb(err);
-          }
-
-          const keys = redisKeys.getQueueKeys(
-            parsedParams.queueParams,
-            parsedParams.groupId,
-          );
-          const keyVal = keys[this.redisKey];
-
-          this.messageStorage.count(keyVal, (err, count) => {
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
+        _validateQueueExtendedParams(
+          client,
+          parsedParams,
+          this.requireGroupId,
+          (err) => {
             if (err) {
-              this.logger.error(`Error counting messages: ${err.message}`);
+              this.logger.error(
+                `Error validating queue parameters: ${err.message}`,
+              );
               return cb(err);
             }
 
-            this.logger.debug(
-              `Queue ${parsedParams.queueParams.name} has ${count} messages`,
+            const keys = redisKeys.getQueueKeys(
+              parsedParams.queueParams,
+              parsedParams.groupId,
             );
-            cb(null, count);
-          });
-        },
-      );
-    });
+            const keyVal = keys[this.redisKey];
+
+            this.messageStorage.count(keyVal, (err, count) => {
+              if (err) {
+                this.logger.error(`Error counting messages: ${err.message}`);
+                return cb(err);
+              }
+
+              this.logger.debug(
+                `Queue ${parsedParams.queueParams.name} has ${count} messages`,
+              );
+              cb(null, count);
+            });
+          },
+        );
+      },
+      cb,
+    );
   }
 
   /**
@@ -512,7 +488,7 @@ export abstract class QueueMessagesManagerAbstract
   shutdown(cb: ICallback<void>): void {
     this.logger.info('Shutting down queue messages manager');
 
-    async.waterfall(
+    async.series(
       [
         // Step 1: Shutdown message handler
         (next: ICallback<void>) => {

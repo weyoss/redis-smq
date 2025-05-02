@@ -9,7 +9,6 @@
 
 export * from './consumer/index.js';
 export * from './consumer-groups/index.js';
-export * from './event-bus/index.js';
 export * from './exchange/index.js';
 export * from './message/index.js';
 export * from './namespace/index.js';

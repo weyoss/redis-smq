@@ -12,6 +12,7 @@ import {
   CallbackEmptyReplyError,
   ICallback,
   logger,
+  withRedisClient,
 } from 'redis-smq-common';
 import { RedisClient } from '../../../../common/redis-client/redis-client.js';
 import { Configuration } from '../../../../config/index.js';
@@ -48,10 +49,9 @@ export class QueuePendingMessages implements IQueueMessageManager {
     queue: IQueueParsedParams,
     cb: ICallback<IQueueMessageManager>,
   ): void {
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) cb(err);
-      else if (!client) cb(new CallbackEmptyReplyError());
-      else {
+    withRedisClient(
+      this.redisClient,
+      (client, cb) =>
         _getQueueProperties(client, queue.queueParams, (err, properties) => {
           if (err) cb(err);
           else if (!properties) cb(new CallbackEmptyReplyError());
@@ -60,9 +60,9 @@ export class QueuePendingMessages implements IQueueMessageManager {
           } else {
             cb(null, this.sequentialQueuePendingMessages);
           }
-        });
-      }
-    });
+        }),
+      cb,
+    );
   }
 
   countMessages(queue: TQueueExtendedParams, cb: ICallback<number>): void {
@@ -104,14 +104,14 @@ export class QueuePendingMessages implements IQueueMessageManager {
   }
 
   shutdown = (cb: ICallback<void>): void => {
-    async.waterfall(
+    async.series(
       [
         (cb: ICallback<void>) => this.priorityQueueMessages.shutdown(cb),
         (cb: ICallback<void>) =>
           this.sequentialQueuePendingMessages.shutdown(cb),
         this.redisClient.shutdown,
       ],
-      cb,
+      (err) => cb(err),
     );
   };
 }

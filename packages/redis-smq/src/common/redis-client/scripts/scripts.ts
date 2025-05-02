@@ -8,7 +8,7 @@
  */
 
 import { resolve } from 'path';
-import { env, ICallback, IRedisClient } from 'redis-smq-common';
+import { env } from 'redis-smq-common';
 
 export enum ELuaScriptName {
   PUBLISH_SCHEDULED_MESSAGE = 'PUBLISH_SCHEDULED_MESSAGE',
@@ -29,7 +29,7 @@ export enum ELuaScriptName {
 
 const dirname = env.getCurrentDir();
 
-const scriptFileMap = {
+export const scriptFileMap = {
   [ELuaScriptName.PUBLISH_SCHEDULED_MESSAGE]: resolve(
     dirname,
     './lua/publish-scheduled-message.lua',
@@ -81,10 +81,3 @@ const scriptFileMap = {
     './lua/set-queue-rate-limit.lua',
   ),
 };
-
-export function loadScriptFiles(
-  redisClient: IRedisClient,
-  cb: ICallback<void>,
-): void {
-  redisClient.loadScriptFiles(scriptFileMap, (err) => cb(err));
-}

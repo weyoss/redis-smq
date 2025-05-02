@@ -12,6 +12,7 @@ import {
   CallbackEmptyReplyError,
   ICallback,
   logger,
+  withRedisClient,
 } from 'redis-smq-common';
 import { RedisClient } from '../../common/redis-client/redis-client.js';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
@@ -51,37 +52,32 @@ export class Namespace {
    */
   getNamespaces(cb: ICallback<string[]>): void {
     this.logger.debug('Getting all namespaces');
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error('Failed to get Redis client instance', {
-          error: err.message,
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
+        const { keyNamespaces } = redisKeys.getMainKeys();
+        this.logger.debug('Fetching namespaces from Redis', {
+          key: keyNamespaces,
         });
-        return cb(err);
-      }
-      if (!client) {
-        this.logger.error('Empty Redis client reply');
-        return cb(new CallbackEmptyReplyError());
-      }
-
-      const { keyNamespaces } = redisKeys.getMainKeys();
-      this.logger.debug('Fetching namespaces from Redis', {
-        key: keyNamespaces,
-      });
-      client.smembers(keyNamespaces, (err, reply) => {
-        if (err) {
-          this.logger.error('Failed to get namespaces', { error: err.message });
-          return cb(err);
-        }
-        if (!reply) {
-          this.logger.error('Empty namespaces reply');
-          return cb(new CallbackEmptyReplyError());
-        }
-        this.logger.debug('Successfully retrieved namespaces', {
-          count: reply.length,
+        client.smembers(keyNamespaces, (err, reply) => {
+          if (err) {
+            this.logger.error('Failed to get namespaces', {
+              error: err.message,
+            });
+            return cb(err);
+          }
+          if (!reply) {
+            this.logger.error('Empty namespaces reply');
+            return cb(new CallbackEmptyReplyError());
+          }
+          this.logger.debug('Successfully retrieved namespaces', {
+            count: reply.length,
+          });
+          cb(null, reply);
         });
-        cb(null, reply);
-      });
-    });
+      },
+      cb,
+    );
   }
 
   /**
@@ -97,77 +93,69 @@ export class Namespace {
       this.logger.error('Invalid namespace', { namespace });
       return cb(new NamespaceInvalidNamespaceError());
     }
-
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error('Failed to get Redis client instance', {
-          error: err.message,
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
+        const { keyNamespaces } = redisKeys.getMainKeys();
+        const { keyNamespaceQueues } = redisKeys.getNamespaceKeys(ns);
+        this.logger.debug('Checking if namespace exists', {
+          namespace: ns,
+          key: keyNamespaces,
         });
-        return cb(err);
-      }
-      if (!client) {
-        this.logger.error('Empty Redis client reply');
-        return cb(new CallbackEmptyReplyError());
-      }
 
-      const { keyNamespaces } = redisKeys.getMainKeys();
-      const { keyNamespaceQueues } = redisKeys.getNamespaceKeys(ns);
-      this.logger.debug('Checking if namespace exists', {
-        namespace: ns,
-        key: keyNamespaces,
-      });
-
-      async.waterfall(
-        [
-          (cb: ICallback<void>) => {
-            client.sismember(keyNamespaces, ns, (err, reply) => {
-              if (err) {
-                this.logger.error('Failed to check namespace existence', {
-                  namespace: ns,
-                  error: err.message,
-                });
-                return cb(err);
-              }
-              if (!reply) {
-                this.logger.error('Namespace not found', { namespace: ns });
-                return cb(new NamespaceNotFoundError());
-              }
-              this.logger.debug('Namespace exists', { namespace: ns });
-              cb();
-            });
-          },
-          (cb: ICallback<IQueueParams[]>) => {
-            this.logger.debug('Fetching queues for namespace', {
-              namespace: ns,
-              key: keyNamespaceQueues,
-            });
-            client.smembers(keyNamespaceQueues, (err, reply) => {
-              if (err) {
-                this.logger.error('Failed to get namespace queues', {
-                  namespace: ns,
-                  error: err.message,
-                });
-                return cb(err);
-              }
-              if (!reply) {
-                this.logger.error('Empty queues reply', { namespace: ns });
-                return cb(new CallbackEmptyReplyError());
-              }
-
-              const messageQueues: IQueueParams[] = reply.map((i) =>
-                JSON.parse(i),
-              );
-              this.logger.debug('Successfully retrieved namespace queues', {
-                namespace: ns,
-                queueCount: messageQueues.length,
+        async.waterfall(
+          [
+            (cb: ICallback<void>) => {
+              client.sismember(keyNamespaces, ns, (err, reply) => {
+                if (err) {
+                  this.logger.error('Failed to check namespace existence', {
+                    namespace: ns,
+                    error: err.message,
+                  });
+                  return cb(err);
+                }
+                if (!reply) {
+                  this.logger.error('Namespace not found', { namespace: ns });
+                  return cb(new NamespaceNotFoundError());
+                }
+                this.logger.debug('Namespace exists', { namespace: ns });
+                cb();
               });
-              cb(null, messageQueues);
-            });
-          },
-        ],
-        cb,
-      );
-    });
+            },
+            (_, cb: ICallback<IQueueParams[]>) => {
+              this.logger.debug('Fetching queues for namespace', {
+                namespace: ns,
+                key: keyNamespaceQueues,
+              });
+              client.smembers(keyNamespaceQueues, (err, reply) => {
+                if (err) {
+                  this.logger.error('Failed to get namespace queues', {
+                    namespace: ns,
+                    error: err.message,
+                  });
+                  return cb(err);
+                }
+                if (!reply) {
+                  this.logger.error('Empty queues reply', { namespace: ns });
+                  return cb(new CallbackEmptyReplyError());
+                }
+
+                const messageQueues: IQueueParams[] = reply.map((i) =>
+                  JSON.parse(i),
+                );
+                this.logger.debug('Successfully retrieved namespace queues', {
+                  namespace: ns,
+                  queueCount: messageQueues.length,
+                });
+                cb(null, messageQueues);
+              });
+            },
+          ],
+          cb,
+        );
+      },
+      cb,
+    );
   }
 
   /**
@@ -184,124 +172,123 @@ export class Namespace {
       return cb(new NamespaceInvalidNamespaceError());
     }
 
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error('Failed to get Redis client instance', {
-          error: err.message,
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
+        const { keyNamespaces } = redisKeys.getMainKeys();
+        this.logger.debug('Checking if namespace exists before deletion', {
+          namespace: ns,
+          key: keyNamespaces,
         });
-        return cb(err);
-      }
-      if (!client) {
-        this.logger.error('Empty Redis client reply');
-        return cb(new CallbackEmptyReplyError());
-      }
 
-      const { keyNamespaces } = redisKeys.getMainKeys();
-      this.logger.debug('Checking if namespace exists before deletion', {
-        namespace: ns,
-        key: keyNamespaces,
-      });
-
-      async.waterfall(
-        [
-          (cb: ICallback<void>) => {
-            client.sismember(keyNamespaces, ns, (err, isMember) => {
-              if (err) {
-                this.logger.error('Failed to check namespace existence', {
-                  namespace: ns,
-                  error: err.message,
-                });
-                return cb(err);
-              }
-              if (!isMember) {
-                this.logger.error('Namespace not found for deletion', {
-                  namespace: ns,
-                });
-                return cb(new NamespaceNotFoundError());
-              }
-              this.logger.debug('Namespace exists, proceeding with deletion', {
-                namespace: ns,
-              });
-              cb();
-            });
-          },
-        ],
-        (err) => {
-          if (err) return cb(err);
-
-          this.logger.debug('Getting all queues for deletion', {
-            namespace: ns,
-          });
-          _getQueues(client, (err, reply) => {
-            if (err) {
-              this.logger.error('Failed to get queues for deletion', {
-                namespace: ns,
-                error: err.message,
-              });
-              return cb(err);
-            }
-
-            const queues = reply ?? [];
-            this.logger.debug('Preparing to delete namespace and queues', {
-              namespace: ns,
-              queueCount: queues.length,
-            });
-
-            const multi = client.multi();
-            multi.srem(keyNamespaces, ns);
-
-            async.eachOf(
-              queues,
-              (queueParams, _, done) => {
-                this.logger.debug('Deleting queue', {
-                  namespace: ns,
-                  queue: queueParams.name,
-                });
-                _deleteQueue(client, queueParams, multi, (err) => {
-                  if (err) {
-                    this.logger.error('Failed to delete queue', {
-                      namespace: ns,
-                      queue: queueParams.name,
-                      error: err.message,
-                    });
-                  }
-                  done(err);
-                });
-              },
-              (err) => {
+        async.waterfall(
+          [
+            (cb: ICallback<void>) => {
+              client.sismember(keyNamespaces, ns, (err, isMember) => {
                 if (err) {
-                  this.logger.error('Failed during queue deletion', {
+                  this.logger.error('Failed to check namespace existence', {
                     namespace: ns,
                     error: err.message,
                   });
                   return cb(err);
                 }
-
-                this.logger.debug('Executing namespace deletion transaction', {
-                  namespace: ns,
-                });
-                multi.exec((err) => {
-                  if (err) {
-                    this.logger.error(
-                      'Failed to execute namespace deletion transaction',
-                      {
-                        namespace: ns,
-                        error: err.message,
-                      },
-                    );
-                    return cb(err);
-                  }
-                  this.logger.debug('Successfully deleted namespace', {
+                if (!isMember) {
+                  this.logger.error('Namespace not found for deletion', {
                     namespace: ns,
                   });
-                  cb();
+                  return cb(new NamespaceNotFoundError());
+                }
+                this.logger.debug(
+                  'Namespace exists, proceeding with deletion',
+                  {
+                    namespace: ns,
+                  },
+                );
+                cb();
+              });
+            },
+          ],
+          (err) => {
+            if (err) return cb(err);
+
+            this.logger.debug('Getting all queues for deletion', {
+              namespace: ns,
+            });
+            _getQueues(client, (err, reply) => {
+              if (err) {
+                this.logger.error('Failed to get queues for deletion', {
+                  namespace: ns,
+                  error: err.message,
                 });
-              },
-            );
-          });
-        },
-      );
-    });
+                return cb(err);
+              }
+
+              const queues = reply ?? [];
+              this.logger.debug('Preparing to delete namespace and queues', {
+                namespace: ns,
+                queueCount: queues.length,
+              });
+
+              const multi = client.multi();
+              multi.srem(keyNamespaces, ns);
+
+              async.eachOf(
+                queues,
+                (queueParams, _, done) => {
+                  this.logger.debug('Deleting queue', {
+                    namespace: ns,
+                    queue: queueParams.name,
+                  });
+                  _deleteQueue(client, queueParams, multi, (err) => {
+                    if (err) {
+                      this.logger.error('Failed to delete queue', {
+                        namespace: ns,
+                        queue: queueParams.name,
+                        error: err.message,
+                      });
+                    }
+                    done(err);
+                  });
+                },
+                (err) => {
+                  if (err) {
+                    this.logger.error('Failed during queue deletion', {
+                      namespace: ns,
+                      error: err.message,
+                    });
+                    return cb(err);
+                  }
+
+                  this.logger.debug(
+                    'Executing namespace deletion transaction',
+                    {
+                      namespace: ns,
+                    },
+                  );
+                  multi.exec((err) => {
+                    if (err) {
+                      this.logger.error(
+                        'Failed to execute namespace deletion transaction',
+                        {
+                          namespace: ns,
+                          error: err.message,
+                        },
+                      );
+                      return cb(err);
+                    }
+                    this.logger.debug('Successfully deleted namespace', {
+                      namespace: ns,
+                    });
+                    cb();
+                  });
+                },
+              );
+            });
+          },
+        );
+      },
+      cb,
+    );
   }
 
   /**

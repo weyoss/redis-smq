@@ -9,7 +9,7 @@
 
 import { ILogger } from 'redis-smq-common';
 import { TConsumerDequeueMessageEvent } from '../../../../../common/index.js';
-import { EventBus } from '../../../../event-bus/index.js';
+import { EventBus } from '../../../../../common/event-bus/event-bus.js';
 import { DequeueMessage } from './dequeue-message.js';
 
 export function eventBusPublisher(

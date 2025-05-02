@@ -12,12 +12,14 @@ import {
   CallbackEmptyReplyError,
   ICallback,
   logger,
+  withEventBus,
+  withRedisClient,
 } from 'redis-smq-common';
+import { EventBus } from '../../common/index.js';
 import { RedisClient } from '../../common/redis-client/redis-client.js';
 import { ELuaScriptName } from '../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../config/index.js';
-import { EventBus } from '../event-bus/index.js';
 import { _deleteQueue } from './_/_delete-queue.js';
 import { _getQueueConsumerIds } from './_/_get-queue-consumer-ids.js';
 import { _getQueueConsumers } from './_/_get-queue-consumers.js';
@@ -103,115 +105,85 @@ export class Queue {
     const queueName = `${queueParams.name}@${queueParams.ns}`;
     this.logger.debug(`Parsed queue parameters: ${queueName}`);
 
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error(
-          `Error getting Redis client for saving queue ${queueName}: ${err.message}`,
-          err,
-        );
-        return cb(err);
-      }
-      if (!client) {
-        const error = new CallbackEmptyReplyError();
-        this.logger.error(
-          `Redis client is empty for saving queue ${queueName}`,
-          error,
-        );
-        return cb(error);
-      }
-
-      const { keyQueueProperties } = redisKeys.getQueueKeys(queueParams, null);
-      const { keyNamespaces, keyQueues } = redisKeys.getMainKeys();
-      const { keyNamespaceQueues } = redisKeys.getNamespaceKeys(queueParams.ns);
-      const queueParamsStr = JSON.stringify(queueParams);
-
-      this.logger.debug(
-        `Executing CREATE_QUEUE script for ${queueName} with keys: [${keyNamespaces}, ${keyNamespaceQueues}, ${keyQueues}, ${keyQueueProperties}]`,
-      );
-
-      client.runScript(
-        ELuaScriptName.CREATE_QUEUE,
-        [keyNamespaces, keyNamespaceQueues, keyQueues, keyQueueProperties],
-        [
-          queueParams.ns,
-          queueParamsStr,
-          EQueueProperty.QUEUE_TYPE,
-          queueType,
-          EQueueProperty.DELIVERY_MODEL,
-          deliveryModel,
-        ],
-        (err, reply) => {
-          if (err) {
-            this.logger.error(
-              `Error executing CREATE_QUEUE script for ${queueName}: ${err.message}`,
-              err,
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
+        async.withCallback(
+          (cb) => {
+            const { keyQueueProperties } = redisKeys.getQueueKeys(
+              queueParams,
+              null,
             );
-            return cb(err);
-          }
-          if (!reply) {
-            const error = new CallbackEmptyReplyError();
-            this.logger.error(
-              `Empty reply from CREATE_QUEUE script for ${queueName}`,
-              error,
+            const { keyNamespaces, keyQueues } = redisKeys.getMainKeys();
+            const { keyNamespaceQueues } = redisKeys.getNamespaceKeys(
+              queueParams.ns,
             );
-            return cb(error);
-          }
-          if (reply !== 'OK') {
-            const error = new QueueQueueExistsError();
-            this.logger.error(`Queue ${queueName} already exists`, error);
-            return cb(error);
-          }
-
-          this.logger.debug(
-            `Queue ${queueName} created successfully, retrieving properties`,
-          );
-
-          this.getProperties(queueParams, (err, properties) => {
-            if (err) {
-              this.logger.error(
-                `Error getting properties for newly created queue ${queueName}: ${err.message}`,
-                err,
-              );
-              return cb(err);
-            }
-            if (!properties) {
-              const error = new CallbackEmptyReplyError();
-              this.logger.error(
-                `Empty properties for newly created queue ${queueName}`,
-                error,
-              );
+            const queueParamsStr = JSON.stringify(queueParams);
+            this.logger.debug(
+              `Executing CREATE_QUEUE script for ${queueName} with keys: [${keyNamespaces}, ${keyNamespaceQueues}, ${keyQueues}, ${keyQueueProperties}]`,
+            );
+            client.runScript(
+              ELuaScriptName.CREATE_QUEUE,
+              [
+                keyNamespaces,
+                keyNamespaceQueues,
+                keyQueues,
+                keyQueueProperties,
+              ],
+              [
+                queueParams.ns,
+                queueParamsStr,
+                EQueueProperty.QUEUE_TYPE,
+                queueType,
+                EQueueProperty.DELIVERY_MODEL,
+                deliveryModel,
+              ],
+              cb,
+            );
+          },
+          (reply, cb) => {
+            if (reply !== 'OK') {
+              const error = new QueueQueueExistsError();
+              this.logger.error(`Queue ${queueName} already exists`, error);
               return cb(error);
             }
-
             this.logger.debug(
-              `Retrieved properties for queue ${queueName}, emitting queue.queueCreated event`,
+              `Queue ${queueName} created successfully, retrieving properties`,
             );
-
-            this.eventBus.getSetInstance((err, instance) => {
-              if (err) {
-                this.logger.error(
-                  `Error getting EventBus instance for queue ${queueName}: ${err.message}`,
-                  err,
-                );
-                return cb(err);
-              }
-
-              if (instance) {
+            async.withCallback(
+              (cb: ICallback<IQueueProperties>) =>
+                this.getProperties(queueParams, cb),
+              (properties, cb) => {
                 this.logger.debug(
-                  `Emitting queue.queueCreated event for ${queueName}`,
+                  `Retrieved properties for queue ${queueName}, emitting queue.queueCreated event`,
                 );
-                instance.emit('queue.queueCreated', queueParams, properties);
-              }
-
-              this.logger.info(
-                `Queue ${queueName} successfully created with type=${EQueueType[queueType]}, deliveryModel=${EQueueDeliveryModel[deliveryModel]}`,
-              );
-              cb(null, { queue: queueParams, properties });
-            });
-          });
-        },
-      );
-    });
+                withEventBus(
+                  this.eventBus,
+                  (eventBus, cb) => {
+                    this.logger.debug(
+                      `Emitting queue.queueCreated event for ${queueName}`,
+                    );
+                    eventBus.emit(
+                      'queue.queueCreated',
+                      queueParams,
+                      properties,
+                    );
+                    this.logger.info(
+                      `Queue ${queueName} successfully created with type=${EQueueType[queueType]}, deliveryModel=${EQueueDeliveryModel[deliveryModel]}`,
+                    );
+                    cb(null, { queue: queueParams, properties });
+                  },
+                  cb,
+                );
+              },
+              cb,
+            );
+          },
+          cb,
+        );
+      },
+      cb,
+    );
   }
 
   /**
@@ -235,22 +207,9 @@ export class Queue {
     } else {
       const queueName = `${queueParams.name}@${queueParams.ns}`;
       this.logger.debug(`Parsed queue parameters: ${queueName}`);
-
-      this.redisClient.getSetInstance((err, client) => {
-        if (err) {
-          this.logger.error(
-            `Error getting Redis client for checking queue ${queueName}: ${err.message}`,
-            err,
-          );
-          cb(err);
-        } else if (!client) {
-          const error = new CallbackEmptyReplyError();
-          this.logger.error(
-            `Redis client is empty for checking queue ${queueName}`,
-            error,
-          );
-          cb(error);
-        } else {
+      withRedisClient(
+        this.redisClient,
+        (client, cb) => {
           this.logger.debug(`Checking if queue ${queueName} exists in Redis`);
           _queueExists(client, queueParams, (err, exists) => {
             if (err) {
@@ -264,8 +223,9 @@ export class Queue {
               cb(null, exists);
             }
           });
-        }
-      });
+        },
+        cb,
+      );
     }
   }
 
@@ -292,78 +252,58 @@ export class Queue {
     const queueName = `${queueParams.name}@${queueParams.ns}`;
     this.logger.debug(`Parsed queue parameters: ${queueName}`);
 
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error(
-          `Error getting Redis client for deleting queue ${queueName}: ${err.message}`,
-          err,
-        );
-        return cb(err);
-      }
-      if (!client) {
-        const error = new CallbackEmptyReplyError();
-        this.logger.error(
-          `Redis client is empty for deleting queue ${queueName}`,
-          error,
-        );
-        return cb(error);
-      }
-
-      this.logger.debug(`Executing delete queue operation for ${queueName}`);
-      _deleteQueue(client, queueParams, undefined, (err, multi) => {
-        if (err) {
-          this.logger.error(
-            `Error preparing delete operation for queue ${queueName}: ${err.message}`,
-            err,
-          );
-          return cb(err);
-        }
-        if (!multi) {
-          const error = new CallbackEmptyReplyError();
-          this.logger.error(
-            `Multi command is empty for deleting queue ${queueName}`,
-            error,
-          );
-          return cb(error);
-        }
-
-        this.logger.debug(
-          `Executing multi command to delete queue ${queueName}`,
-        );
-        multi.exec((err) => {
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
+        this.logger.debug(`Executing delete queue operation for ${queueName}`);
+        _deleteQueue(client, queueParams, undefined, (err, multi) => {
           if (err) {
             this.logger.error(
-              `Error executing multi command for deleting queue ${queueName}: ${err.message}`,
+              `Error preparing delete operation for queue ${queueName}: ${err.message}`,
               err,
             );
             return cb(err);
           }
+          if (!multi) {
+            const error = new CallbackEmptyReplyError();
+            this.logger.error(
+              `Multi command is empty for deleting queue ${queueName}`,
+              error,
+            );
+            return cb(error);
+          }
 
           this.logger.debug(
-            `Queue ${queueName} deleted from Redis, emitting queue.queueDeleted event`,
+            `Executing multi command to delete queue ${queueName}`,
           );
-          this.eventBus.getSetInstance((err, instance) => {
+          multi.exec((err) => {
             if (err) {
               this.logger.error(
-                `Error getting EventBus instance for queue ${queueName}: ${err.message}`,
+                `Error executing multi command for deleting queue ${queueName}: ${err.message}`,
                 err,
               );
               return cb(err);
             }
-
-            if (instance) {
-              this.logger.debug(
-                `Emitting queue.queueDeleted event for ${queueName}`,
-              );
-              instance.emit('queue.queueDeleted', queueParams);
-            }
-
-            this.logger.info(`Queue ${queueName} successfully deleted`);
-            cb();
+            this.logger.debug(
+              `Queue ${queueName} deleted from Redis, emitting queue.queueDeleted event`,
+            );
+            withEventBus(
+              this.eventBus,
+              (eventBus, cb) => {
+                this.logger.debug(
+                  `Emitting queue.queueDeleted event for ${queueName}`,
+                );
+                eventBus.emit('queue.queueDeleted', queueParams);
+                this.logger.info(`Queue ${queueName} successfully deleted`);
+                cb();
+              },
+              cb,
+            );
           });
         });
-      });
-    });
+      },
+      cb,
+    );
   }
 
   /**
@@ -391,21 +331,9 @@ export class Queue {
       const queueName = `${queueParams.name}@${queueParams.ns}`;
       this.logger.debug(`Parsed queue parameters: ${queueName}`);
 
-      this.redisClient.getSetInstance((err, client) => {
-        if (err) {
-          this.logger.error(
-            `Error getting Redis client for queue properties ${queueName}: ${err.message}`,
-            err,
-          );
-          cb(err);
-        } else if (!client) {
-          const error = new CallbackEmptyReplyError();
-          this.logger.error(
-            `Redis client is empty for queue properties ${queueName}`,
-            error,
-          );
-          cb(error);
-        } else {
+      withRedisClient(
+        this.redisClient,
+        (client, cb) => {
           this.logger.debug(`Retrieving properties for queue ${queueName}`);
           _getQueueProperties(client, queueParams, (err, properties) => {
             if (err) {
@@ -425,8 +353,9 @@ export class Queue {
               cb(null, properties);
             }
           });
-        }
-      });
+        },
+        cb,
+      );
     }
   }
 
@@ -437,19 +366,9 @@ export class Queue {
    */
   getQueues(cb: ICallback<IQueueParams[]>): void {
     this.logger.debug('Getting all queues');
-
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error(
-          `Error getting Redis client for fetching queues: ${err.message}`,
-          err,
-        );
-        cb(err);
-      } else if (!client) {
-        const error = new CallbackEmptyReplyError();
-        this.logger.error('Redis client is empty for fetching queues', error);
-        cb(error);
-      } else {
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
         this.logger.debug('Retrieving all queues from Redis');
         _getQueues(client, (err, queues) => {
           if (err) {
@@ -461,8 +380,9 @@ export class Queue {
             cb(null, queues);
           }
         });
-      }
-    });
+      },
+      cb,
+    );
   }
 
   /**
@@ -490,30 +410,17 @@ export class Queue {
         `Error parsing queue parameters for ${queueDesc}: ${queueParams.message}`,
         queueParams,
       );
-      cb(queueParams);
-    } else {
-      const queueName = `${queueParams.name}@${queueParams.ns}`;
-      this.logger.debug(`Parsed queue parameters: ${queueName}`);
-
-      this.redisClient.getSetInstance((err, client) => {
-        if (err) {
-          this.logger.error(
-            `Error getting Redis client for queue properties ${queueName}: ${err.message}`,
-            err,
-          );
-          cb(err);
-        } else if (!client) {
-          const error = new CallbackEmptyReplyError();
-          this.logger.error(
-            `Redis client is empty for queue properties ${queueName}`,
-            error,
-          );
-          cb(error);
-        } else {
-          _getQueueConsumers(client, queueParams, cb);
-        }
-      });
+      return cb(queueParams);
     }
+
+    const queueName = `${queueParams.name}@${queueParams.ns}`;
+    this.logger.debug(`Parsed queue parameters: ${queueName}`);
+
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => _getQueueConsumers(client, queueParams, cb),
+      cb,
+    );
   }
 
   /**
@@ -538,30 +445,17 @@ export class Queue {
         `Error parsing queue parameters for ${queueDesc}: ${queueParams.message}`,
         queueParams,
       );
-      cb(queueParams);
-    } else {
-      const queueName = `${queueParams.name}@${queueParams.ns}`;
-      this.logger.debug(`Parsed queue parameters: ${queueName}`);
-
-      this.redisClient.getSetInstance((err, client) => {
-        if (err) {
-          this.logger.error(
-            `Error getting Redis client for queue properties ${queueName}: ${err.message}`,
-            err,
-          );
-          cb(err);
-        } else if (!client) {
-          const error = new CallbackEmptyReplyError();
-          this.logger.error(
-            `Redis client is empty for queue properties ${queueName}`,
-            error,
-          );
-          cb(error);
-        } else {
-          _getQueueConsumerIds(client, queueParams, cb);
-        }
-      });
+      return cb(queueParams);
     }
+
+    const queueName = `${queueParams.name}@${queueParams.ns}`;
+    this.logger.debug(`Parsed queue parameters: ${queueName}`);
+
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => _getQueueConsumerIds(client, queueParams, cb),
+      cb,
+    );
   }
 
   /**
@@ -572,7 +466,7 @@ export class Queue {
   shutdown = (cb: ICallback<void>): void => {
     this.logger.info('Shutting down Queue instance');
 
-    async.waterfall(
+    async.series(
       [
         (next: ICallback<void>) => {
           this.logger.debug('Shutting down Redis client');

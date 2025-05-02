@@ -12,6 +12,7 @@ import {
   CallbackEmptyReplyError,
   ICallback,
   logger,
+  withRedisClient,
 } from 'redis-smq-common';
 import { RedisClient } from '../../../../../common/redis-client/redis-client.js';
 import { ELuaScriptName } from '../../../../../common/redis-client/scripts/scripts.js';
@@ -229,57 +230,58 @@ export class MessageUnacknowledgement {
     messageHandlingStatus: TMessageUnacknowledgementStatus,
     cb: ICallback<TMessageUnacknowledgementStatus>,
   ): void {
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) return cb(err);
-      if (!client) return cb(new CallbackEmptyReplyError());
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
+        // Get configuration for dead-lettered messages
+        const { store, expire, queueSize } =
+          Configuration.getSetConfig().messages.store.deadLettered;
 
-      // Get configuration for dead-lettered messages
-      const { store, expire, queueSize } =
-        Configuration.getSetConfig().messages.store.deadLettered;
+        // Prepare arguments for the Lua script
+        const execKeys: string[] = [...keys];
+        const execArgs: (string | number)[] = [
+          EMessageUnacknowledgementAction.DELAY,
+          EMessageUnacknowledgementAction.REQUEUE,
+          EMessageUnacknowledgementAction.DEAD_LETTER,
+          Number(store),
+          expire,
+          queueSize * -1,
+          EMessageProperty.STATUS,
+          EMessageUnacknowledgementReason.OFFLINE_CONSUMER,
+          EMessageUnacknowledgementReason.OFFLINE_MESSAGE_HANDLER,
+          ...argv,
+        ];
 
-      // Prepare arguments for the Lua script
-      const execKeys: string[] = [...keys];
-      const execArgs: (string | number)[] = [
-        EMessageUnacknowledgementAction.DELAY,
-        EMessageUnacknowledgementAction.REQUEUE,
-        EMessageUnacknowledgementAction.DEAD_LETTER,
-        Number(store),
-        expire,
-        queueSize * -1,
-        EMessageProperty.STATUS,
-        EMessageUnacknowledgementReason.OFFLINE_CONSUMER,
-        EMessageUnacknowledgementReason.OFFLINE_MESSAGE_HANDLER,
-        ...argv,
-      ];
+        // Execute the Lua script
+        client.runScript(
+          ELuaScriptName.HANDLE_PROCESSING_QUEUE,
+          execKeys,
+          execArgs,
+          (err, reply) => {
+            if (err) {
+              return cb(err);
+            }
 
-      // Execute the Lua script
-      client.runScript(
-        ELuaScriptName.HANDLE_PROCESSING_QUEUE,
-        execKeys,
-        execArgs,
-        (err, reply) => {
-          if (err) {
-            return cb(err);
-          }
+            if (reply !== 'OK') {
+              return cb(new ConsumerError(reply ? String(reply) : undefined));
+            }
 
-          if (reply !== 'OK') {
-            return cb(new ConsumerError(reply ? String(reply) : undefined));
-          }
+            // Log the status of each message
+            Object.keys(messageHandlingStatus).forEach((messageId) => {
+              const action =
+                messageHandlingStatus[messageId].action ===
+                EMessageUnacknowledgementAction.DEAD_LETTER
+                  ? 'dead-lettered'
+                  : 'unacknowledged';
+              this.logger.debug(`Message ID ${messageId} has been ${action}.`);
+            });
 
-          // Log the status of each message
-          Object.keys(messageHandlingStatus).forEach((messageId) => {
-            const action =
-              messageHandlingStatus[messageId].action ===
-              EMessageUnacknowledgementAction.DEAD_LETTER
-                ? 'dead-lettered'
-                : 'unacknowledged';
-            this.logger.debug(`Message ID ${messageId} has been ${action}.`);
-          });
-
-          cb(null, messageHandlingStatus);
-        },
-      );
-    });
+            cb(null, messageHandlingStatus);
+          },
+        );
+      },
+      cb,
+    );
   }
 
   /**
@@ -333,90 +335,93 @@ export class MessageUnacknowledgement {
     const args: (string | number)[] = [];
     const messageHandlingStatus: TMessageUnacknowledgementStatus = {};
 
-    async.waterfall<IQueueParams[]>(
-      [
-        // Step 1: Get the list of queues for this consumer
-        (next: ICallback<IQueueParams[]>) => {
-          if (queues === null) {
-            this.redisClient.getSetInstance((err, client) => {
-              if (err) return next(err);
-              if (!client) return next(new CallbackEmptyReplyError());
-              _getConsumerQueues(client, consumerId, next);
-            });
-          } else {
-            next(null, queues);
-          }
-        },
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
+        async.waterfall(
+          [
+            // Step 1: Get the list of queues for this consumer
+            (next: ICallback<IQueueParams[]>) => {
+              if (queues === null) _getConsumerQueues(client, consumerId, next);
+              else next(null, queues);
+            },
 
-        // Step 2: Process each queue
-        (queueParams: IQueueParams[], next: ICallback<void>) => {
-          if (!queueParams.length) {
-            return next();
-          }
+            // Step 2: Process each queue
+            (queueParams: IQueueParams[], next: ICallback<void>) => {
+              if (!queueParams.length) {
+                return next();
+              }
 
-          async.eachOf(
-            queueParams,
-            (queue: IQueueParams, _: number, done: ICallback<void>) => {
-              const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
-                queue,
-                consumerId,
-              );
-
-              // Fetch messages from the processing queue
-              processingQueue.fetchMessageFromProcessingQueue(
-                this.redisClient,
-                keyQueueProcessing,
-                (err, message) => {
-                  if (err) return done(err);
-
-                  // Get parameters for unacknowledgement
-                  this.getMessageUnacknowledgementParameters(
+              async.eachOf(
+                queueParams,
+                (queue: IQueueParams, _: number, done: ICallback<void>) => {
+                  const { keyQueueProcessing } = redisKeys.getQueueConsumerKeys(
+                    queue,
                     consumerId,
-                    message ?? queue,
-                    unacknowledgementReason,
-                    (err, reply) => {
-                      if (err) {
-                        return done(err);
-                      }
-                      if (!reply) {
-                        return done(new CallbackEmptyReplyError());
-                      }
+                  );
 
-                      // Collect keys, args, and status information
-                      keys.push(...reply.keys);
-                      args.push(...reply.args);
-                      Object.assign(
-                        messageHandlingStatus,
-                        reply.unacknowledgementStatus,
+                  // Fetch messages from the processing queue
+                  processingQueue.fetchMessageFromProcessingQueue(
+                    this.redisClient,
+                    keyQueueProcessing,
+                    (err, message) => {
+                      if (err) return done(err);
+
+                      // Get parameters for unacknowledgement
+                      async.withCallback(
+                        (
+                          cb: ICallback<{
+                            keys: string[];
+                            args: (string | number)[];
+                            unacknowledgementStatus: TMessageUnacknowledgementStatus;
+                          }>,
+                        ) =>
+                          this.getMessageUnacknowledgementParameters(
+                            consumerId,
+                            message ?? queue,
+                            unacknowledgementReason,
+                            cb,
+                          ),
+                        (reply, cb) => {
+                          // Collect keys, args, and status information
+                          keys.push(...reply.keys);
+                          args.push(...reply.args);
+                          Object.assign(
+                            messageHandlingStatus,
+                            reply.unacknowledgementStatus,
+                          );
+                          cb();
+                        },
+                        done,
                       );
-                      done();
                     },
                   );
                 },
+                next,
               );
             },
-            next,
-          );
-        },
-      ],
-      (err) => {
-        if (err) {
-          return cb(err);
-        }
+          ],
+          (err) => {
+            if (err) {
+              return cb(err);
+            }
 
-        // If no keys were collected, there's nothing to do
-        if (!keys.length) {
-          return cb(null, {});
-        }
+            // If no keys were collected, there's nothing to do
+            if (!keys.length) {
+              return cb(null, {});
+            }
 
-        // Execute the unacknowledgement operation
-        this.executeMessageUnacknowledgement(
-          keys,
-          args,
-          messageHandlingStatus,
-          cb,
+            // Execute the unacknowledgement operation
+            this.executeMessageUnacknowledgement(
+              keys,
+              args,
+              messageHandlingStatus,
+              cb,
+            );
+          },
         );
       },
+      cb,
     );
   }
 }

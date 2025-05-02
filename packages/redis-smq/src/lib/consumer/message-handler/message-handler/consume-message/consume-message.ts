@@ -10,6 +10,8 @@
 import { stat } from 'fs';
 import path from 'path';
 import {
+  async,
+  AsyncCallbackTimeoutError,
   CallbackEmptyReplyError,
   ICallback,
   ILogger,
@@ -17,12 +19,12 @@ import {
   Runnable,
   WorkerCallable,
 } from 'redis-smq-common';
+import { EventBus } from '../../../../../common/index.js';
 import { TConsumerConsumeMessageEvent } from '../../../../../common/index.js';
 import { RedisClient } from '../../../../../common/redis-client/redis-client.js';
 import { ELuaScriptName } from '../../../../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../../../../config/index.js';
-import { EventBus } from '../../../../event-bus/index.js';
 import {
   EMessageProperty,
   EMessagePropertyStatus,
@@ -329,61 +331,52 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     const messageId = msg.getId();
     this.logger.debug(`Consuming message ${messageId}`);
 
-    let isTimeout = false;
-    let timer: NodeJS.Timeout | null = null;
-
+    let isCallbackHandled = false;
     try {
+      let onConsumed: ICallback<void> = (err) => {
+        if (isCallbackHandled) {
+          this.logger.debug(
+            `Ignoring onConsumed callback for message ${messageId} as already handled`,
+          );
+          return;
+        }
+        isCallbackHandled = true;
+        if (this.isRunning()) {
+          if (err) {
+            this.logger.error(
+              `Error consuming message ${messageId}: ${err.message}`,
+            );
+            const unacknowledgementReason =
+              err instanceof AsyncCallbackTimeoutError
+                ? EMessageUnacknowledgementReason.TIMEOUT
+                : EMessageUnacknowledgementReason.UNACKNOWLEDGED;
+            if (
+              unacknowledgementReason ===
+              EMessageUnacknowledgementReason.TIMEOUT
+            ) {
+              this.logger.warn(
+                `Consume timeout (${consumeTimeout}ms) reached for message ${messageId}`,
+              );
+            }
+            return this.unacknowledgeMessage(msg, unacknowledgementReason);
+          }
+          this.logger.debug(
+            `Message ${messageId} consumed successfully, acknowledging`,
+          );
+          return this.acknowledgeMessage(msg);
+        }
+        this.logger.debug(
+          `Ignoring onConsumed callback for message ${messageId} as consumer is not running`,
+        );
+      };
+
       const consumeTimeout = msg.producibleMessage.getConsumeTimeout();
       if (consumeTimeout) {
         this.logger.debug(
           `Setting consume timeout of ${consumeTimeout}ms for message ${messageId}`,
         );
-        timer = setTimeout(() => {
-          isTimeout = true;
-          timer = null;
-          this.logger.warn(
-            `Consume timeout (${consumeTimeout}ms) reached for message ${messageId}`,
-          );
-          this.unacknowledgeMessage(
-            msg,
-            EMessageUnacknowledgementReason.TIMEOUT,
-          );
-        }, consumeTimeout);
+        onConsumed = async.withTimeout(onConsumed, consumeTimeout);
       }
-
-      const onConsumed: ICallback<void> = (err) => {
-        if (this.isRunning() && !isTimeout) {
-          if (timer) {
-            this.logger.debug(
-              `Clearing consume timeout for message ${messageId}`,
-            );
-            clearTimeout(timer);
-          }
-
-          if (err) {
-            this.logger.error(
-              `Error consuming message ${messageId}: ${err.message}`,
-            );
-            this.unacknowledgeMessage(
-              msg,
-              EMessageUnacknowledgementReason.UNACKNOWLEDGED,
-            );
-          } else {
-            this.logger.debug(
-              `Message ${messageId} consumed successfully, acknowledging`,
-            );
-            this.acknowledgeMessage(msg);
-          }
-        } else if (isTimeout) {
-          this.logger.debug(
-            `Ignoring onConsumed callback for timed out message ${messageId}`,
-          );
-        } else {
-          this.logger.debug(
-            `Ignoring onConsumed callback for message ${messageId} as consumer is not running`,
-          );
-        }
-      };
 
       this.logger.debug(
         `Transferring message ${messageId} for handler invocation`,
@@ -397,12 +390,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
       this.logger.error(
         `Exception during message consumption for message ${messageId}: ${error}`,
       );
-      if (timer) {
-        this.logger.debug(
-          `Clearing consume timeout for message ${messageId} due to exception`,
-        );
-        clearTimeout(timer);
-      }
+      isCallbackHandled = true;
       this.unacknowledgeMessage(
         msg,
         EMessageUnacknowledgementReason.CONSUME_ERROR,

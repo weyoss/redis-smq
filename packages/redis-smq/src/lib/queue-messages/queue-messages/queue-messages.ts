@@ -12,6 +12,7 @@ import {
   CallbackEmptyReplyError,
   ICallback,
   IRedisClient,
+  withRedisClient,
 } from 'redis-smq-common';
 import { RedisClient } from '../../../common/redis-client/redis-client.js';
 import { _getConsumerGroups } from '../../consumer-groups/_/_get-consumer-groups.js';
@@ -77,16 +78,12 @@ export class QueueMessages extends QueueMessagesManagerAbstract {
     if (queueParams instanceof Error) {
       return cb(queueParams);
     }
-
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        return cb(err);
-      }
-      if (!client) {
-        return cb(new CallbackEmptyReplyError());
-      }
-      this.executeCountingPipeline(client, queueParams, queue, cb);
-    });
+    withRedisClient(
+      this.redisClient,
+      (client, cb) =>
+        this.executeCountingPipeline(client, queueParams, queue, cb),
+      cb,
+    );
   }
 
   /**
@@ -263,7 +260,7 @@ export class QueueMessages extends QueueMessagesManagerAbstract {
    * @param cb - Callback invoked on shutdown completion.
    */
   override shutdown(cb: ICallback<void>): void {
-    async.waterfall(
+    async.series(
       [
         (next: ICallback<void>) => this.queuePendingMessages.shutdown(next),
         (next: ICallback<void>) => this.priorityQueueMessages.shutdown(next),
@@ -274,7 +271,7 @@ export class QueueMessages extends QueueMessagesManagerAbstract {
           this.queueDeadLetteredMessages.shutdown(next),
         (next: ICallback<void>) => super.shutdown(next),
       ],
-      cb,
+      (err) => cb(err),
     );
   }
 }

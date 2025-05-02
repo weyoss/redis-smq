@@ -8,7 +8,7 @@
  */
 
 import { RedisClient } from '../../../../common/redis-client/redis-client.js';
-import { EventBus } from '../../../event-bus/index.js';
+import { EventBus } from '../../../../common/event-bus/event-bus.js';
 import { Consumer } from '../../consumer/consumer.js';
 import { IConsumerMessageHandlerArgs } from '../../types/index.js';
 import { DequeueMessage } from './dequeue-message/dequeue-message.js';

@@ -8,18 +8,16 @@
  */
 
 import {
-  CallbackEmptyReplyError,
   ICallback,
   ILogger,
   logger,
   Runnable,
   TRedisClientEvent,
-  TUnaryFunction,
 } from 'redis-smq-common';
+import { EventBus } from '../../../common/index.js';
 import { TConsumerEvent } from '../../../common/index.js';
 import { RedisClient } from '../../../common/redis-client/redis-client.js';
 import { Configuration } from '../../../config/index.js';
-import { EventBus } from '../../event-bus/index.js';
 import { _parseQueueExtendedParams } from '../../queue/_/_parse-queue-extended-params.js';
 import { IQueueParsedParams, TQueueExtendedParams } from '../../queue/index.js';
 import { ConsumerHeartbeat } from '../consumer-heartbeat/consumer-heartbeat.js';
@@ -201,28 +199,6 @@ export class Consumer extends Runnable<TConsumerEvent> {
   };
 
   /**
-   * Initializes the Redis client instance.
-   *
-   * @param {ICallback<void>} cb - Callback function to be called once initialization is complete.
-   */
-  protected initRedisClient = (cb: ICallback<void>): void => {
-    this.logger.debug('Initializing Redis client connection');
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error(`Failed to initialize Redis client: ${err.message}`);
-        cb(err);
-      } else if (!client) {
-        this.logger.error('Redis client returned empty instance');
-        cb(new CallbackEmptyReplyError());
-      } else {
-        this.logger.debug('Redis client connection established');
-        client.on('error', this.onRedisError);
-        cb();
-      }
-    });
-  };
-
-  /**
    * Shuts down the Redis client instance.
    *
    * @param {ICallback<void>} cb - Callback function to be called once shutdown is complete.
@@ -241,9 +217,9 @@ export class Consumer extends Runnable<TConsumerEvent> {
   /**
    * Defines the startup sequence for the consumer.
    *
-   * @returns {TUnaryFunction<ICallback<void>>[]} - Array of functions to be executed in sequence during startup.
+   * @returns {((cb: ICallback<void>) => void)[]} - Array of functions to be executed in sequence during startup.
    */
-  protected override goingUp(): TUnaryFunction<ICallback<void>>[] {
+  protected override goingUp(): ((cb: ICallback<void>) => void)[] {
     this.logger.info('Consumer going up');
     return super.goingUp().concat([
       (cb) => {
@@ -271,7 +247,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
         this.emit('consumer.goingUp', this.id);
         cb();
       },
-      this.initRedisClient,
+      this.redisClient.init,
       this.setUpHeartbeat,
       this.runMessageHandlers,
     ]);
@@ -280,9 +256,9 @@ export class Consumer extends Runnable<TConsumerEvent> {
   /**
    * Defines the shutdown sequence for the consumer.
    *
-   * @returns {TUnaryFunction<ICallback<void>>[]} - Array of functions to be executed in sequence during shutdown.
+   * @returns {((cb: ICallback<void>) => void)[]} - Array of functions to be executed in sequence during shutdown.
    */
-  protected override goingDown(): TUnaryFunction<ICallback<void>>[] {
+  protected override goingDown(): ((cb: ICallback<void>) => void)[] {
     this.logger.info('Consumer going down');
     this.logger.debug(
       `Emitting consumer.goingDown event for consumer ${this.id}`,

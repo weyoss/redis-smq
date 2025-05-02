@@ -8,8 +8,8 @@
  */
 
 import { ILogger } from 'redis-smq-common';
+import { EventBus } from '../../../../../common/event-bus/event-bus.js';
 import { TConsumerConsumeMessageEvent } from '../../../../../common/index.js';
-import { EventBus } from '../../../../event-bus/index.js';
 import { ConsumeMessage } from './consume-message.js';
 
 export function eventBusPublisher(

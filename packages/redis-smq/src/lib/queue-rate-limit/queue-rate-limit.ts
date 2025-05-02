@@ -12,6 +12,7 @@ import {
   CallbackEmptyReplyError,
   ICallback,
   logger,
+  withRedisClient,
 } from 'redis-smq-common';
 import { RedisClient } from '../../common/redis-client/redis-client.js';
 import { ELuaScriptName } from '../../common/redis-client/scripts/scripts.js';
@@ -66,55 +67,40 @@ export class QueueRateLimit {
       typeof queue === 'string' ? queue : `${queue.name}@${queue.ns}`;
     this.logger.debug(`Clearing rate limit for queue: ${queueName}`);
 
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error(
-          `Failed to get Redis client instance: ${err.message}`,
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
+        this.logger.debug(`Validating queue parameters for: ${queueName}`);
+        async.withCallback(
+          (cb: ICallback<IQueueParams>) =>
+            _parseQueueParamsAndValidate(client, queue, cb),
+          (queueParams, cb) => {
+            const { keyQueueProperties, keyQueueRateLimitCounter } =
+              redisKeys.getQueueKeys(queueParams, null);
+            this.logger.debug(
+              `Clearing rate limit for queue ${queueParams.name}@${queueParams.ns} using keys: ${keyQueueProperties}, ${keyQueueRateLimitCounter}`,
+            );
+
+            const multi = client.multi();
+            multi.hdel(keyQueueProperties, String(EQueueProperty.RATE_LIMIT));
+            multi.del(keyQueueRateLimitCounter);
+
+            multi.exec((err) => {
+              if (err) {
+                this.logger.error(`Failed to clear rate limit: ${err.message}`);
+                return cb(err);
+              }
+              this.logger.info(
+                `Successfully cleared rate limit for queue: ${queueParams.name}@${queueParams.ns}`,
+              );
+              cb();
+            });
+          },
+          cb,
         );
-        return cb(err);
-      }
-      if (!client) {
-        this.logger.error('Redis client instance is empty');
-        return cb(new CallbackEmptyReplyError());
-      }
-
-      this.logger.debug(`Validating queue parameters for: ${queueName}`);
-      _parseQueueParamsAndValidate(client, queue, (err, queueParams) => {
-        if (err) {
-          this.logger.error(
-            `Failed to validate queue parameters: ${err.message}`,
-          );
-          return cb(err);
-        }
-        if (!queueParams) {
-          this.logger.error(
-            'Queue parameters validation returned empty result',
-          );
-          return cb(new CallbackEmptyReplyError());
-        }
-
-        const { keyQueueProperties, keyQueueRateLimitCounter } =
-          redisKeys.getQueueKeys(queueParams, null);
-        this.logger.debug(
-          `Clearing rate limit for queue ${queueParams.name}@${queueParams.ns} using keys: ${keyQueueProperties}, ${keyQueueRateLimitCounter}`,
-        );
-
-        const multi = client.multi();
-        multi.hdel(keyQueueProperties, String(EQueueProperty.RATE_LIMIT));
-        multi.del(keyQueueRateLimitCounter);
-
-        multi.exec((err) => {
-          if (err) {
-            this.logger.error(`Failed to clear rate limit: ${err.message}`);
-            return cb(err);
-          }
-          this.logger.info(
-            `Successfully cleared rate limit for queue: ${queueParams.name}@${queueParams.ns}`,
-          );
-          cb();
-        });
-      });
-    });
+      },
+      cb,
+    );
   }
 
   /**
@@ -139,85 +125,78 @@ export class QueueRateLimit {
       `Setting rate limit for queue: ${queueName}, limit: ${rateLimit.limit}, interval: ${rateLimit.interval}ms`,
     );
 
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error(
-          `Failed to get Redis client instance: ${err.message}`,
-        );
-        return cb(err);
-      }
-      if (!client) {
-        this.logger.error('Redis client instance is empty');
-        return cb(new CallbackEmptyReplyError());
-      }
-
-      this.logger.debug(`Validating queue parameters for: ${queueName}`);
-      _parseQueueParamsAndValidate(client, queue, (err, queueParams) => {
-        if (err) {
-          this.logger.error(
-            `Failed to validate queue parameters: ${err.message}`,
-          );
-          return cb(err);
-        }
-        if (!queueParams) {
-          this.logger.error(
-            'Queue parameters validation returned empty result',
-          );
-          return cb(new CallbackEmptyReplyError());
-        }
-
-        // validating rateLimit params from a javascript client
-        const limit = Number(rateLimit.limit);
-        if (isNaN(limit) || limit <= 0) {
-          this.logger.error(`Invalid rate limit value: ${rateLimit.limit}`);
-          return cb(new QueueRateLimitInvalidLimitError());
-        }
-
-        const interval = Number(rateLimit.interval);
-        if (isNaN(interval) || interval < 1000) {
-          this.logger.error(
-            `Invalid rate limit interval: ${rateLimit.interval}`,
-          );
-          return cb(new QueueRateLimitInvalidIntervalError());
-        }
-
-        const validatedRateLimit: IQueueRateLimit = { interval, limit };
-        this.logger.debug(
-          `Validated rate limit: ${limit} messages per ${interval}ms for queue: ${queueParams.name}@${queueParams.ns}`,
-        );
-
-        const { keyQueueProperties } = redisKeys.getQueueKeys(
-          queueParams,
-          null,
-        );
-        this.logger.debug(
-          `Setting rate limit using key: ${keyQueueProperties}`,
-        );
-
-        client.runScript(
-          ELuaScriptName.SET_QUEUE_RATE_LIMIT,
-          [keyQueueProperties],
-          [EQueueProperty.RATE_LIMIT, JSON.stringify(validatedRateLimit)],
-          (err, reply) => {
-            if (err) {
-              this.logger.error(`Failed to set rate limit: ${err.message}`);
-              return cb(err);
-            }
-            if (reply !== 'OK') {
-              this.logger.error(
-                `Queue not found when setting rate limit: ${queueParams.name}@${queueParams.ns}`,
-              );
-              return cb(new QueueRateLimitQueueNotFoundError());
-            }
-
-            this.logger.info(
-              `Successfully set rate limit for queue: ${queueParams.name}@${queueParams.ns}, limit: ${limit}, interval: ${interval}ms`,
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
+        this.logger.debug(`Validating queue parameters for: ${queueName}`);
+        _parseQueueParamsAndValidate(client, queue, (err, queueParams) => {
+          if (err) {
+            this.logger.error(
+              `Failed to validate queue parameters: ${err.message}`,
             );
-            cb();
-          },
-        );
-      });
-    });
+            return cb(err);
+          }
+          if (!queueParams) {
+            this.logger.error(
+              'Queue parameters validation returned empty result',
+            );
+            return cb(new CallbackEmptyReplyError());
+          }
+
+          // validating rateLimit params from a javascript client
+          const limit = Number(rateLimit.limit);
+          if (isNaN(limit) || limit <= 0) {
+            this.logger.error(`Invalid rate limit value: ${rateLimit.limit}`);
+            return cb(new QueueRateLimitInvalidLimitError());
+          }
+
+          const interval = Number(rateLimit.interval);
+          if (isNaN(interval) || interval < 1000) {
+            this.logger.error(
+              `Invalid rate limit interval: ${rateLimit.interval}`,
+            );
+            return cb(new QueueRateLimitInvalidIntervalError());
+          }
+
+          const validatedRateLimit: IQueueRateLimit = { interval, limit };
+          this.logger.debug(
+            `Validated rate limit: ${limit} messages per ${interval}ms for queue: ${queueParams.name}@${queueParams.ns}`,
+          );
+
+          const { keyQueueProperties } = redisKeys.getQueueKeys(
+            queueParams,
+            null,
+          );
+          this.logger.debug(
+            `Setting rate limit using key: ${keyQueueProperties}`,
+          );
+
+          client.runScript(
+            ELuaScriptName.SET_QUEUE_RATE_LIMIT,
+            [keyQueueProperties],
+            [EQueueProperty.RATE_LIMIT, JSON.stringify(validatedRateLimit)],
+            (err, reply) => {
+              if (err) {
+                this.logger.error(`Failed to set rate limit: ${err.message}`);
+                return cb(err);
+              }
+              if (reply !== 'OK') {
+                this.logger.error(
+                  `Queue not found when setting rate limit: ${queueParams.name}@${queueParams.ns}`,
+                );
+                return cb(new QueueRateLimitQueueNotFoundError());
+              }
+
+              this.logger.info(
+                `Successfully set rate limit for queue: ${queueParams.name}@${queueParams.ns}, limit: ${limit}, interval: ${interval}ms`,
+              );
+              cb();
+            },
+          );
+        });
+      },
+      cb,
+    );
   }
 
   /**
@@ -238,54 +217,47 @@ export class QueueRateLimit {
       `Checking if rate limit exceeded for queue: ${queueName}, limit: ${rateLimit.limit}, interval: ${rateLimit.interval}ms`,
     );
 
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error(
-          `Failed to get Redis client instance: ${err.message}`,
-        );
-        return cb(err);
-      }
-      if (!client) {
-        this.logger.error('Redis client instance is empty');
-        return cb(new CallbackEmptyReplyError());
-      }
-
-      this.logger.debug(`Validating queue parameters for: ${queueName}`);
-      _parseQueueParamsAndValidate(client, queue, (err, queueParams) => {
-        if (err) {
-          this.logger.error(
-            `Failed to validate queue parameters: ${err.message}`,
-          );
-          return cb(err);
-        }
-        if (!queueParams) {
-          this.logger.error(
-            'Queue parameters validation returned empty result',
-          );
-          return cb(new CallbackEmptyReplyError());
-        }
-
-        this.logger.debug(
-          `Checking rate limit for queue: ${queueParams.name}@${queueParams.ns}`,
-        );
-        _hasRateLimitExceeded(
-          client,
-          queueParams,
-          rateLimit,
-          (err, hasExceeded) => {
-            if (err) {
-              this.logger.error(`Failed to check rate limit: ${err.message}`);
-              return cb(err);
-            }
-
-            this.logger.debug(
-              `Rate limit check result for queue ${queueParams.name}@${queueParams.ns}: ${hasExceeded ? 'exceeded' : 'not exceeded'}`,
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
+        this.logger.debug(`Validating queue parameters for: ${queueName}`);
+        _parseQueueParamsAndValidate(client, queue, (err, queueParams) => {
+          if (err) {
+            this.logger.error(
+              `Failed to validate queue parameters: ${err.message}`,
             );
-            cb(null, hasExceeded);
-          },
-        );
-      });
-    });
+            return cb(err);
+          }
+          if (!queueParams) {
+            this.logger.error(
+              'Queue parameters validation returned empty result',
+            );
+            return cb(new CallbackEmptyReplyError());
+          }
+
+          this.logger.debug(
+            `Checking rate limit for queue: ${queueParams.name}@${queueParams.ns}`,
+          );
+          _hasRateLimitExceeded(
+            client,
+            queueParams,
+            rateLimit,
+            (err, hasExceeded) => {
+              if (err) {
+                this.logger.error(`Failed to check rate limit: ${err.message}`);
+                return cb(err);
+              }
+
+              this.logger.debug(
+                `Rate limit check result for queue ${queueParams.name}@${queueParams.ns}: ${hasExceeded ? 'exceeded' : 'not exceeded'}`,
+              );
+              cb(null, hasExceeded);
+            },
+          );
+        });
+      },
+      cb,
+    );
   }
 
   /**
@@ -302,78 +274,51 @@ export class QueueRateLimit {
     const queueName =
       typeof queue === 'string' ? queue : `${queue.name}@${queue.ns}`;
     this.logger.debug(`Getting rate limit for queue: ${queueName}`);
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
+        this.logger.debug(`Validating queue parameters for: ${queueName}`);
+        async.withCallback(
+          (cb: ICallback<IQueueParams>) =>
+            _parseQueueParamsAndValidate(client, queue, cb),
+          (queueParams, cb) => {
+            const { keyQueueProperties } = redisKeys.getQueueKeys(
+              queueParams,
+              null,
+            );
+            this.logger.debug(
+              `Getting rate limit using key: ${keyQueueProperties}`,
+            );
 
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error(
-          `Failed to get Redis client instance: ${err.message}`,
-        );
-        return cb(err);
-      }
-      if (!client) {
-        this.logger.error('Redis client instance is empty');
-        return cb(new CallbackEmptyReplyError());
-      }
+            client.hget(
+              keyQueueProperties,
+              String(EQueueProperty.RATE_LIMIT),
+              (err, reply) => {
+                if (err) {
+                  this.logger.error(`Failed to get rate limit: ${err.message}`);
+                  return cb(err);
+                }
 
-      this.logger.debug(`Validating queue parameters for: ${queueName}`);
-      _parseQueueParamsAndValidate(client, queue, (err, queueParams) => {
-        if (err) {
-          this.logger.error(
-            `Failed to validate queue parameters: ${err.message}`,
-          );
-          return cb(err);
-        }
-        if (!queueParams) {
-          this.logger.error(
-            'Queue parameters validation returned empty result',
-          );
-          return cb(new CallbackEmptyReplyError());
-        }
+                if (!reply) {
+                  this.logger.debug(
+                    `No rate limit found for queue: ${queueParams.name}@${queueParams.ns}`,
+                  );
+                  return cb(null, null);
+                }
 
-        const { keyQueueProperties } = redisKeys.getQueueKeys(
-          queueParams,
-          null,
-        );
-        this.logger.debug(
-          `Getting rate limit using key: ${keyQueueProperties}`,
-        );
-
-        client.hget(
-          keyQueueProperties,
-          String(EQueueProperty.RATE_LIMIT),
-          (err, reply) => {
-            if (err) {
-              this.logger.error(`Failed to get rate limit: ${err.message}`);
-              return cb(err);
-            }
-
-            if (!reply) {
-              this.logger.debug(
-                `No rate limit found for queue: ${queueParams.name}@${queueParams.ns}`,
-              );
-              return cb(null, null);
-            }
-
-            try {
-              const rateLimit: IQueueRateLimit = JSON.parse(reply);
-              this.logger.debug(
-                `Retrieved rate limit for queue ${queueParams.name}@${queueParams.ns}: limit: ${rateLimit.limit}, interval: ${rateLimit.interval}ms`,
-              );
-              cb(null, rateLimit);
-            } catch (error) {
-              this.logger.error(
-                `Failed to parse rate limit JSON: ${error instanceof Error ? error.message : String(error)}`,
-              );
-              cb(
-                error instanceof Error
-                  ? error
-                  : new Error(`Failed to parse rate limit JSON: ${error}`),
-              );
-            }
+                const rateLimit: IQueueRateLimit = JSON.parse(reply);
+                this.logger.debug(
+                  `Retrieved rate limit for queue ${queueParams.name}@${queueParams.ns}: limit: ${rateLimit.limit}, interval: ${rateLimit.interval}ms`,
+                );
+                cb(null, rateLimit);
+              },
+            );
           },
+          cb,
         );
-      });
-    });
+      },
+      cb,
+    );
   }
 
   /**
@@ -383,7 +328,7 @@ export class QueueRateLimit {
    */
   shutdown = (cb: ICallback<void>): void => {
     this.logger.debug('Shutting down QueueRateLimit');
-    async.waterfall([this.queue.shutdown, this.redisClient.shutdown], (err) => {
+    async.series([this.queue.shutdown, this.redisClient.shutdown], (err) => {
       if (err) {
         this.logger.error(`Error during shutdown: ${err.message}`);
         return cb(err);

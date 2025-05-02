@@ -24,7 +24,7 @@ import { ELuaScriptName } from '../../../../../common/redis-client/scripts/scrip
 import { redisKeys } from '../../../../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../../../../config/index.js';
 import { _saveConsumerGroup } from '../../../../consumer-groups/_/_save-consumer-group.js';
-import { EventBus } from '../../../../event-bus/index.js';
+import { EventBus } from '../../../../../common/event-bus/event-bus.js';
 import { _hasRateLimitExceeded } from '../../../../queue-rate-limit/_/_has-rate-limit-exceeded.js';
 import { _getQueueProperties } from '../../../../queue/_/_get-queue-properties.js';
 import {

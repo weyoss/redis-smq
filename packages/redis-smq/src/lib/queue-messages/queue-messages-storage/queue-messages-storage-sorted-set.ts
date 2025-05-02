@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
+import { ICallback, async, withRedisClient } from 'redis-smq-common';
 import { QueueMessagesStorage } from './queue-messages-storage.js';
 import { RedisClient } from '../../../common/redis-client/redis-client.js';
 
@@ -33,27 +33,22 @@ export class QueueMessagesStorageSortedSet extends QueueMessagesStorage {
    */
   count(redisKey: string, cb: ICallback<number>): void {
     this.logger.debug(`Counting items in ${redisKey}`);
-
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error(`Redis client error: ${err.message}`);
-        return cb(err);
-      }
-      if (!client) {
-        this.logger.error('Redis client is null');
-        return cb(new CallbackEmptyReplyError());
-      }
-      this.logger.debug(`Executing ZCARD on ${redisKey}`);
-      client.zcard(redisKey, (err, count) => {
-        if (err) {
-          this.logger.error(`ZCARD failed for ${redisKey}: ${err.message}`);
-          cb(err);
-        } else {
-          this.logger.debug(`${redisKey} contains ${count} items`);
-          cb(null, count);
-        }
-      });
-    });
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
+        this.logger.debug(`Executing ZCARD on ${redisKey}`);
+        client.zcard(redisKey, (err, count) => {
+          if (err) {
+            this.logger.error(`ZCARD failed for ${redisKey}: ${err.message}`);
+            cb(err);
+          } else {
+            this.logger.debug(`${redisKey} contains ${count} items`);
+            cb(null, count);
+          }
+        });
+      },
+      cb,
+    );
   }
 
   /**
@@ -87,38 +82,35 @@ export class QueueMessagesStorageSortedSet extends QueueMessagesStorage {
     this.logger.debug(
       `Fetching items from ${redisKey} range [${offsetStart}:${offsetEnd}]`,
     );
-
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error(`Redis client error: ${err.message}`);
-        return cb(err);
-      }
-      if (!client) {
-        this.logger.error('Redis client is null');
-        return cb(new CallbackEmptyReplyError());
-      }
-      this.logger.debug(
-        `Executing ZRANGE on ${redisKey} from ${offsetStart} to ${offsetEnd}`,
-      );
-      client.zrange(redisKey, offsetStart, offsetEnd, (err, items) => {
-        if (err) {
-          this.logger.error(`ZRANGE failed for ${redisKey}: ${err.message}`);
-          cb(err);
-        } else {
-          const itemCount = items ? items.length : 0;
-
-          if (itemCount === 0) {
-            this.logger.debug(
-              `No items found in ${redisKey} range [${offsetStart}:${offsetEnd}]`,
-            );
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
+        this.logger.debug(
+          `Executing ZRANGE on ${redisKey} from ${offsetStart} to ${offsetEnd}`,
+        );
+        client.zrange(redisKey, offsetStart, offsetEnd, (err, items) => {
+          if (err) {
+            this.logger.error(`ZRANGE failed for ${redisKey}: ${err.message}`);
+            cb(err);
           } else {
-            this.logger.debug(`Retrieved ${itemCount} items from ${redisKey}`);
-          }
+            const itemCount = items ? items.length : 0;
 
-          cb(null, items || []);
-        }
-      });
-    });
+            if (itemCount === 0) {
+              this.logger.debug(
+                `No items found in ${redisKey} range [${offsetStart}:${offsetEnd}]`,
+              );
+            } else {
+              this.logger.debug(
+                `Retrieved ${itemCount} items from ${redisKey}`,
+              );
+            }
+
+            cb(null, items || []);
+          }
+        });
+      },
+      cb,
+    );
   }
 
   /**
@@ -139,74 +131,64 @@ export class QueueMessagesStorageSortedSet extends QueueMessagesStorage {
   fetchAllItems(redisKey: string, cb: ICallback<string[]>): void {
     this.logger.debug(`Fetching all items from ${redisKey} using ZSCAN`);
 
-    this.redisClient.getSetInstance((err, client) => {
-      if (err) {
-        this.logger.error(`Redis client error: ${err.message}`);
-        return cb(err);
-      }
+    withRedisClient(
+      this.redisClient,
+      (client, cb) => {
+        // Using recursive ZSCAN to get all items
+        const allItems: string[] = [];
+        let scanCount = 0;
 
-      if (!client) {
-        this.logger.error('Redis client is null');
-        return cb(new CallbackEmptyReplyError());
-      }
-
-      // Using recursive ZSCAN to get all items
-      const allItems: string[] = [];
-      let scanCount = 0;
-
-      /**
-       * Recursively scans through the entire sorted set
-       *
-       * This function implements an incremental scanning approach using Redis ZSCAN.
-       * It collects items batch by batch using a cursor-based iteration, which is
-       * memory-efficient and non-blocking for the Redis server.
-       *
-       * @param cursor - Redis cursor for ZSCAN (start with "0" for first call)
-       * @returns void
-       */
-      const scanRecursive = (cursor: string): void => {
-        scanCount++;
-        this.logger.debug(
-          `ZSCAN iteration ${scanCount} on ${redisKey}, cursor: ${cursor}`,
-        );
-
-        client.zscan(redisKey, cursor, { COUNT: 100 }, (err, result) => {
-          if (err) {
-            this.logger.error(`ZSCAN failed: ${err.message}`);
-            return cb(err);
-          }
-
-          if (!result) {
-            this.logger.error('ZSCAN returned empty result object');
-            return cb(new CallbackEmptyReplyError());
-          }
-
-          const batchSize = result.items.length;
-          allItems.push(...result.items);
-
+        /**
+         * Recursively scans through the entire sorted set
+         *
+         * This function implements an incremental scanning approach using Redis ZSCAN.
+         * It collects items batch by batch using a cursor-based iteration, which is
+         * memory-efficient and non-blocking for the Redis server.
+         *
+         * @param cursor - Redis cursor for ZSCAN (start with "0" for first call)
+         * @returns void
+         */
+        const scanRecursive = (cursor: string): void => {
+          scanCount++;
           this.logger.debug(
-            `ZSCAN batch #${scanCount} retrieved ${batchSize} items, total collected: ${allItems.length}`,
+            `ZSCAN iteration ${scanCount} on ${redisKey}, cursor: ${cursor}`,
           );
+          async.withCallback(
+            (cb: ICallback<{ cursor: string; items: string[] }>) =>
+              client.zscan(redisKey, cursor, { COUNT: 100 }, cb),
+            (result, cb) => {
+              const batchSize = result.items.length;
+              allItems.push(...result.items);
 
-          // If cursor is '0', we've completed the scan
-          if (result.cursor === '0') {
-            this.logger.debug(
-              `ZSCAN complete, collected ${allItems.length} items in ${scanCount} iterations`,
-            );
-            return cb(null, allItems);
-          }
+              this.logger.debug(
+                `ZSCAN batch #${scanCount} retrieved ${batchSize} items, total collected: ${allItems.length}`,
+              );
 
-          // Continue scanning with the new cursor
-          // Using setImmediate to avoid blocking the event loop and prevent stack overflow
-          // for large datasets that might require many recursive calls
-          this.logger.debug(`ZSCAN continuing with cursor=${result.cursor}`);
-          setImmediate(() => scanRecursive(result.cursor));
-        });
-      };
+              // If cursor is '0', we've completed the scan
+              if (result.cursor === '0') {
+                this.logger.debug(
+                  `ZSCAN complete, collected ${allItems.length} items in ${scanCount} iterations`,
+                );
+                return cb(null, allItems);
+              }
 
-      // Start scanning from cursor 0
-      this.logger.debug(`Starting ZSCAN with initial cursor=0`);
-      scanRecursive('0');
-    });
+              // Continue scanning with the new cursor
+              // Using setImmediate to avoid blocking the event loop and prevent stack overflow
+              // for large datasets that might require many recursive calls
+              this.logger.debug(
+                `ZSCAN continuing with cursor=${result.cursor}`,
+              );
+              setImmediate(() => scanRecursive(result.cursor));
+            },
+            cb,
+          );
+        };
+
+        // Start scanning from cursor 0
+        this.logger.debug(`Starting ZSCAN with initial cursor=0`);
+        scanRecursive('0');
+      },
+      cb,
+    );
   }
 }

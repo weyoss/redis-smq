@@ -53,7 +53,6 @@
 - [ConsumerGroupsError](classes/ConsumerGroupsError.md)
 - [ConsumerGroupsInvalidGroupIdError](classes/ConsumerGroupsInvalidGroupIdError.md)
 - [ConsumerGroupsQueueNotFoundError](classes/ConsumerGroupsQueueNotFoundError.md)
-- [EventBusInstanceLockError](classes/EventBusInstanceLockError.md)
 - [ExchangeError](classes/ExchangeError.md)
 - [ExchangeFanOutError](classes/ExchangeFanOutError.md)
 - [ExchangeFanOutExchangeHasBoundQueuesError](classes/ExchangeFanOutExchangeHasBoundQueuesError.md)

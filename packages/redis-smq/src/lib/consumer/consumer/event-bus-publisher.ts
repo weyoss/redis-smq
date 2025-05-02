@@ -9,8 +9,8 @@
 
 import { ILogger } from 'redis-smq-common';
 import { TConsumerEvent } from '../../../common/index.js';
-import { EventBus } from '../../event-bus/index.js';
 import { Consumer } from './consumer.js';
+import { EventBus } from '../../../common/index.js';
 
 export function eventBusPublisher(
   consumer: Consumer,

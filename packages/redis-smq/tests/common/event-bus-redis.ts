@@ -8,14 +8,17 @@
  */
 
 import bluebird from 'bluebird';
-import { EventBus } from '../../src/lib/index.js';
+import { EventBus } from '../../src/common/index.js';
 
-const eventBus = bluebird.promisifyAll(new EventBus());
+let eventBus: ReturnType<typeof bluebird.promisifyAll<EventBus>> | null = null;
 
 export async function getEventBus() {
+  if (!eventBus) {
+    eventBus = bluebird.promisifyAll(new EventBus());
+  }
   return eventBus.getSetInstanceAsync();
 }
 
 export async function shutDownEventBus() {
-  return eventBus.shutdownAsync();
+  if (eventBus) await eventBus.shutdownAsync();
 }

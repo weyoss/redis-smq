@@ -18,7 +18,7 @@ import {
 import { RedisClient } from '../../common/redis-client/redis-client.js';
 import { Configuration } from '../../config/index.js';
 import { _getConsumerGroups } from '../consumer-groups/_/_get-consumer-groups.js';
-import { EventBus } from '../event-bus/index.js';
+import { EventBus } from '../../common/event-bus/event-bus.js';
 import { _getQueueProperties } from '../queue/_/_get-queue-properties.js';
 import { _getQueues } from '../queue/_/_get-queues.js';
 import {

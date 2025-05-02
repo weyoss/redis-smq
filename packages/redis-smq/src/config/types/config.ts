@@ -9,10 +9,13 @@
 
 import { ILoggerConfig, IRedisConfig } from 'redis-smq-common';
 import {
-  IEventBusConfig,
   IMessagesConfig,
   IMessagesConfigStorageRequired,
 } from '../../lib/index.js';
+
+export interface IEventBusConfig {
+  enabled?: boolean;
+}
 
 export interface IRedisSMQConfig {
   /**
