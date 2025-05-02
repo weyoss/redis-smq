@@ -10,6 +10,8 @@
 
   ↳↳ [`EventBusNotConnectedError`](EventBusNotConnectedError.md)
 
+  ↳↳ [`EventBusInstanceLockError`](EventBusInstanceLockError.md)
+
 ## Table of contents
 
 ### Constructors

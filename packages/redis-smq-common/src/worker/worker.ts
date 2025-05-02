@@ -10,7 +10,7 @@
 import { randomUUID } from 'node:crypto';
 import { resolve } from 'path';
 import { Worker as WorkerThread } from 'worker_threads';
-import { ICallback } from '../common/index.js';
+import { ICallback } from '../async/index.js';
 import { env } from '../env/index.js';
 import { EventEmitter } from '../event/index.js';
 import { logger } from '../logger/index.js';

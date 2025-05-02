@@ -8,7 +8,7 @@
  */
 
 import { Redis, RedisOptions } from 'ioredis';
-import { ICallback } from '../../../common/index.js';
+import { ICallback } from '../../../async/index.js';
 import { CallbackEmptyReplyError } from '../../../errors/index.js';
 import { RedisClientError } from '../../errors/index.js';
 import { RedisClientAbstract } from '../redis-client-abstract.js';

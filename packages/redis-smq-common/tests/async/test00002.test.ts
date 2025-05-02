@@ -9,7 +9,7 @@
 
 import { expect, it } from 'vitest';
 import { async } from '../../src/async/async.js';
-import { ICallback } from '../../src/common/index.js';
+import { ICallback } from '../../src/async/index.js';
 
 it('async.waterfall: case 2', async () => {
   let count = 0;

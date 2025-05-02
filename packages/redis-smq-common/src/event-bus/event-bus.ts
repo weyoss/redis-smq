@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { ICallback } from '../common/index.js';
+import { ICallback } from '../async/index.js';
 import { EventEmitter } from '../event/index.js';
 import { EventBusNotConnectedError } from './errors/index.js';
 import { IEventBus, TEventBusEvent } from './types/index.js';

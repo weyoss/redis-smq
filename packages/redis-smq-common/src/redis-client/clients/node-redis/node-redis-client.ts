@@ -8,7 +8,7 @@
  */
 
 import { createClient, RedisClientOptions } from '@redis/client';
-import { ICallback } from '../../../common/index.js';
+import { ICallback } from '../../../async/index.js';
 import { RedisClientError } from '../../errors/index.js';
 import { RedisClientAbstract } from '../redis-client-abstract.js';
 import { NodeRedisClientMulti } from './node-redis-client-multi.js';

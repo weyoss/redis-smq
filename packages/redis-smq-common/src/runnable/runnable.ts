@@ -9,7 +9,7 @@
 
 import { v4 as uuid } from 'uuid';
 import { async } from '../async/index.js';
-import { ICallback } from '../common/index.js';
+import { ICallback } from '../async/index.js';
 import { AbortError } from '../errors/index.js';
 import { EventEmitter, TEventEmitterEvent } from '../event/index.js';
 import { ILogger } from '../logger/index.js';
@@ -181,7 +181,7 @@ export abstract class Runnable<
           task(cb);
         } else cb(new AbortError());
       });
-      async.waterfall(tasks, (err) => {
+      async.series(tasks, (err) => {
         if (this.isRunning()) {
           if (err) {
             if (this.forceShutdownOnError) this.shutdown(() => cb(err));
@@ -217,7 +217,7 @@ export abstract class Runnable<
       if (this.isUp()) this.powerSwitch.goingDown();
       const tasks = this.goingDown();
       this.cleanUpBeforeShutdown = false;
-      async.waterfall(tasks, () => {
+      async.series(tasks, () => {
         if (this.cleanUpBeforeShutdown) this.shutdown(cb);
         else this.down(() => cb());
       });

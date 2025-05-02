@@ -9,7 +9,7 @@
 
 import { EventEmitter } from 'events';
 import { vitest } from 'vitest';
-import { ICallback, TFunction } from '../../src/common/index.js';
+import { ICallback, TFunction } from '../../src/async/index.js';
 import { IRedisClient } from '../../src/redis-client/index.js';
 
 export function getMockedRedisClient() {

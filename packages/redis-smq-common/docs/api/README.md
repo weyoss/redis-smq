@@ -18,9 +18,11 @@
 - [ConsoleLogger](classes/ConsoleLogger.md)
 - [EventBus](classes/EventBus.md)
 - [EventBusRedis](classes/EventBusRedis.md)
+- [EventBusRedisFactory](classes/EventBusRedisFactory.md)
 - [EventEmitter](classes/EventEmitter.md)
 - [FileLock](classes/FileLock.md)
 - [PowerSwitch](classes/PowerSwitch.md)
+- [RedisClientFactory](classes/RedisClientFactory.md)
 - [RedisLock](classes/RedisLock.md)
 - [RedisServer](classes/RedisServer.md)
 - [Runnable](classes/Runnable.md)
@@ -32,10 +34,13 @@
 ### Error Classes
 
 - [AbortError](classes/AbortError.md)
+- [AsyncCallbackTimeoutError](classes/AsyncCallbackTimeoutError.md)
 - [CallbackEmptyReplyError](classes/CallbackEmptyReplyError.md)
 - [CallbackInvalidReplyError](classes/CallbackInvalidReplyError.md)
 - [EventBusError](classes/EventBusError.md)
+- [EventBusInstanceLockError](classes/EventBusInstanceLockError.md)
 - [EventBusNotConnectedError](classes/EventBusNotConnectedError.md)
+- [InstanceLockError](classes/InstanceLockError.md)
 - [LockAcquireError](classes/LockAcquireError.md)
 - [LockError](classes/LockError.md)
 - [LockExtendError](classes/LockExtendError.md)
@@ -73,6 +78,11 @@
 
 ### Type Aliases
 
+- [ExtractAsyncOperationReturnType](README.md#extractasyncoperationreturntype)
+- [MapAsyncOperationReturnTypeToResult](README.md#mapasyncoperationreturntypetoresult)
+- [TAsyncFunction](README.md#tasyncfunction)
+- [TAsyncOperation](README.md#tasyncoperation)
+- [TAsyncOperationList](README.md#tasyncoperationlist)
 - [TConsoleLoggerLevelName](README.md#tconsoleloggerlevelname)
 - [TConsoleLoggerOptionsDateFormatter](README.md#tconsoleloggeroptionsdateformatter)
 - [TEventBusEvent](README.md#teventbusevent)
@@ -82,7 +92,6 @@
 - [TRedisClientEvent](README.md#tredisclientevent)
 - [TTimer](README.md#ttimer)
 - [TTimerEvent](README.md#ttimerevent)
-- [TUnaryFunction](README.md#tunaryfunction)
 - [TWorkerCallableFunction](README.md#tworkercallablefunction)
 - [TWorkerFunction](README.md#tworkerfunction)
 - [TWorkerResourceGroupEvent](README.md#tworkerresourcegroupevent)
@@ -105,8 +114,90 @@
 ### Functions
 
 - [createRedisClient](README.md#createredisclient)
+- [withEventBus](README.md#witheventbus)
+- [withRedisClient](README.md#withredisclient)
 
 ## Type Aliases
+
+### ExtractAsyncOperationReturnType
+
+Ƭ **ExtractAsyncOperationReturnType**\<`T`\>: `T` extends [`TAsyncOperation`](README.md#tasyncoperation)\<infer R\> ? `R` : `never`
+
+Helper type to extract the result type from a callback-based async operation
+
+#### Type parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `T` | extends [`TAsyncOperation`](README.md#tasyncoperation)\<`unknown`\> | The async operation type |
+
+___
+
+### MapAsyncOperationReturnTypeToResult
+
+Ƭ **MapAsyncOperationReturnTypeToResult**\<`AsyncOperationList`\>: \{ [K in keyof AsyncOperationList]: ExtractAsyncOperationReturnType\<AsyncOperationList[K]\> }
+
+Maps an array of operation types to an array of their result types
+
+#### Type parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `AsyncOperationList` | extends [`TAsyncOperationList`](README.md#tasyncoperationlist) | Array of async operations |
+
+___
+
+### TAsyncFunction
+
+Ƭ **TAsyncFunction**\<`TArgs`, `TResult`\>: [args: TArgs, callback: ICallback\<TResult\>]
+
+Represents a tuple where the last element is a callback function
+
+#### Type parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `TArgs` | extends `any`[] = [] | The types of the arguments in the tuple (excluding the callback) |
+| `TResult` | `any` | The type of result passed to the callback |
+
+___
+
+### TAsyncOperation
+
+Ƭ **TAsyncOperation**\<`TResult`\>: (`cb`: [`ICallback`](interfaces/ICallback.md)\<`TResult`\>) => `void`
+
+Represents an asynchronous operation that accepts a callback
+
+#### Type parameters
+
+| Name | Description |
+| :------ | :------ |
+| `TResult` | The type of result the operation produces |
+
+#### Type declaration
+
+▸ (`cb`): `void`
+
+##### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `cb` | [`ICallback`](interfaces/ICallback.md)\<`TResult`\> |
+
+##### Returns
+
+`void`
+
+___
+
+### TAsyncOperationList
+
+Ƭ **TAsyncOperationList**: [`TAsyncOperation`](README.md#tasyncoperation)\<`unknown`\>[]
+
+An array of asynchronous operations that can be executed sequentially or in parallel
+Each operation in the array can produce a different result type
+
+___
 
 ### TConsoleLoggerLevelName
 
@@ -152,14 +243,16 @@ ___
 
 ### TFunction
 
-Ƭ **TFunction**\<`TReturn`, `TArgs`\>: (...`args`: `TArgs`[]) => `TReturn`
+Ƭ **TFunction**\<`TArgs`, `TReturn`\>: (...`args`: `TArgs`) => `TReturn`
+
+A generic function type that can accept any number of arguments and return any type
 
 #### Type parameters
 
-| Name | Type |
-| :------ | :------ |
-| `TReturn` | `void` |
-| `TArgs` | `any` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `TArgs` | extends `any`[] = `any`[] | The types of the arguments |
+| `TReturn` | `any` | The return type of the function |
 
 #### Type declaration
 
@@ -169,7 +262,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `...args` | `TArgs`[] |
+| `...args` | `TArgs` |
 
 ##### Returns
 
@@ -232,33 +325,6 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `error` | (`err`: `Error`) => `void` |
-
-___
-
-### TUnaryFunction
-
-Ƭ **TUnaryFunction**\<`T`, `E`\>: (`reply`: `T`) => `E`
-
-#### Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `T` | `T` |
-| `E` | `void` |
-
-#### Type declaration
-
-▸ (`reply`): `E`
-
-##### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `reply` | `T` |
-
-##### Returns
-
-`E`
 
 ___
 
@@ -420,6 +486,11 @@ ___
 
 • `Const` **async**: `Object`
 
+A utility providing generic callback handling functions
+
+This helper centralizes common callback patterns and error handling
+to ensure consistent behavior across the application.
+
 #### Type declaration
 
 | Name | Type |
@@ -427,7 +498,15 @@ ___
 | `each` | \<T\>(`collection`: `Record`\<`string`, `T`\> \| `T`[], `iteratee`: (`item`: `T`, `key`: `string` \| `number`, `callback`: [`ICallback`](interfaces/ICallback.md)\<`void`\>) => `void`, `callback`: [`ICallback`](interfaces/ICallback.md)\<`void`\>) => `void` |
 | `eachIn` | \<T\>(`collection`: `Record`\<`string`, `T`\>, `iteratee`: (`item`: `T`, `key`: `string`, `callback`: [`ICallback`](interfaces/ICallback.md)\<`void`\>) => `void`, `callback`: [`ICallback`](interfaces/ICallback.md)\<`void`\>) => `void` |
 | `eachOf` | \<T\>(`collection`: `T`[], `iteratee`: (`item`: `T`, `key`: `number`, `callback`: [`ICallback`](interfaces/ICallback.md)\<`void`\>) => `void`, `callback`: [`ICallback`](interfaces/ICallback.md)\<`void`\>) => `void` |
-| `waterfall` | \<T\>(`tasks`: [`TFunction`](README.md#tfunction)\<`void`, `any`\>[], `callback`: [`ICallback`](interfaces/ICallback.md)\<`T`\>) => `void` |
+| `exec` | \<T\>(`operation`: (`cb`: [`ICallback`](interfaces/ICallback.md)\<`T`\>) => `void`, `callback`: [`ICallback`](interfaces/ICallback.md)\<`T`\>) => `void` |
+| `map` | \<T, R\>(`items`: `T`[], `operation`: (`item`: `T`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R`\>) => `void`, `chunkSize`: `number`, `callback`: [`ICallback`](interfaces/ICallback.md)\<`R`[]\>) => `void` |
+| `parallel` | \<AsyncOperationList\>(`operations`: [...AsyncOperationList[]], `callback`: [`ICallback`](interfaces/ICallback.md)\<[`MapAsyncOperationReturnTypeToResult`](README.md#mapasyncoperationreturntypetoresult)\<`AsyncOperationList`\>\>) => `void` |
+| `series` | \<AsyncOperationList\>(`operations`: [...AsyncOperationList[]], `callback`: [`ICallback`](interfaces/ICallback.md)\<[`MapAsyncOperationReturnTypeToResult`](README.md#mapasyncoperationreturntypetoresult)\<`AsyncOperationList`\>\>) => `void` |
+| `waterfall` | (`tasks`: [], `callback`: [`ICallback`](interfaces/ICallback.md)\<`void`\>) => `void`\<R1\>(`tasks`: [(`cb`: [`ICallback`](interfaces/ICallback.md)\<`R1`\>) => `void`], `callback`: [`ICallback`](interfaces/ICallback.md)\<`R1`\>) => `void`\<R1, R2\>(`tasks`: [(`cb`: [`ICallback`](interfaces/ICallback.md)\<`R1`\>) => `void`, (`arg`: `R1`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R2`\>) => `void`], `callback`: [`ICallback`](interfaces/ICallback.md)\<`R2`\>) => `void`\<R1, R2, R3\>(`tasks`: [(`cb`: [`ICallback`](interfaces/ICallback.md)\<`R1`\>) => `void`, (`arg`: `R1`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R2`\>) => `void`, (`arg`: `R2`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R3`\>) => `void`], `callback`: [`ICallback`](interfaces/ICallback.md)\<`R3`\>) => `void`\<R1, R2, R3, R4\>(`tasks`: [(`cb`: [`ICallback`](interfaces/ICallback.md)\<`R1`\>) => `void`, (`arg`: `R1`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R2`\>) => `void`, (`arg`: `R2`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R3`\>) => `void`, (`arg`: `R3`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R4`\>) => `void`], `callback`: [`ICallback`](interfaces/ICallback.md)\<`R4`\>) => `void`\<R1, R2, R3, R4, R5\>(`tasks`: [(`cb`: [`ICallback`](interfaces/ICallback.md)\<`R1`\>) => `void`, (`arg`: `R1`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R2`\>) => `void`, (`arg`: `R2`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R3`\>) => `void`, (`arg`: `R3`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R4`\>) => `void`, (`arg`: `R4`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R5`\>) => `void`], `callback`: [`ICallback`](interfaces/ICallback.md)\<`R5`\>) => `void`\<R1, R2, R3, R4, R5, R6\>(`tasks`: [(`cb`: [`ICallback`](interfaces/ICallback.md)\<`R1`\>) => `void`, (`arg`: `R1`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R2`\>) => `void`, (`arg`: `R2`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R3`\>) => `void`, (`arg`: `R3`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R4`\>) => `void`, (`arg`: `R4`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R5`\>) => `void`, (`arg`: `R5`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R6`\>) => `void`], `callback`: [`ICallback`](interfaces/ICallback.md)\<`R6`\>) => `void`\<R1, R2, R3, R4, R5, R6, R7\>(`tasks`: [(`cb`: [`ICallback`](interfaces/ICallback.md)\<`R1`\>) => `void`, (`arg`: `R1`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R2`\>) => `void`, (`arg`: `R2`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R3`\>) => `void`, (`arg`: `R3`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R4`\>) => `void`, (`arg`: `R4`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R5`\>) => `void`, (`arg`: `R5`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R6`\>) => `void`, (`arg`: `R6`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R7`\>) => `void`], `callback`: [`ICallback`](interfaces/ICallback.md)\<`R7`\>) => `void`\<R1, R2, R3, R4, R5, R6, R7, R8\>(`tasks`: [(`cb`: [`ICallback`](interfaces/ICallback.md)\<`R1`\>) => `void`, (`arg`: `R1`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R2`\>) => `void`, (`arg`: `R2`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R3`\>) => `void`, (`arg`: `R3`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R4`\>) => `void`, (`arg`: `R4`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R5`\>) => `void`, (`arg`: `R5`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R6`\>) => `void`, (`arg`: `R6`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R7`\>) => `void`, (`arg`: `R7`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R8`\>) => `void`], `callback`: [`ICallback`](interfaces/ICallback.md)\<`R8`\>) => `void`\<R1, R2, R3, R4, R5, R6, R7, R8, R9\>(`tasks`: [(`cb`: [`ICallback`](interfaces/ICallback.md)\<`R1`\>) => `void`, (`arg`: `R1`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R2`\>) => `void`, (`arg`: `R2`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R3`\>) => `void`, (`arg`: `R3`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R4`\>) => `void`, (`arg`: `R4`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R5`\>) => `void`, (`arg`: `R5`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R6`\>) => `void`], `callback`: [`ICallback`](interfaces/ICallback.md)\<`R9`\>) => `void`\<R1, R2, R3, R4, R5, R6, R7, R8, R9, R10\>(`tasks`: [(`cb`: [`ICallback`](interfaces/ICallback.md)\<`R1`\>) => `void`, (`arg`: `R1`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R2`\>) => `void`, (`arg`: `R2`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R3`\>) => `void`, (`arg`: `R3`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R4`\>) => `void`, (`arg`: `R4`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R5`\>) => `void`, (`arg`: `R5`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`R6`\>) => `void`], `callback`: [`ICallback`](interfaces/ICallback.md)\<`R10`\>) => `void` |
+| `withCallback` | \<S, T\>(`setup`: (`cb`: [`ICallback`](interfaces/ICallback.md)\<`S`\>) => `void`, `operation`: (`resource`: `S`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`T`\>) => `void`, `callback`: [`ICallback`](interfaces/ICallback.md)\<`T`\>) => `void` |
+| `withCallbackList` | \<S, T\>(`setups`: \{ [K in string \| number \| symbol]: Function }, `operation`: (`resources`: `S`, `cb`: [`ICallback`](interfaces/ICallback.md)\<`T`\>) => `void`, `callback`: [`ICallback`](interfaces/ICallback.md)\<`T`\>) => `void` |
+| `withRetry` | \<T\>(`operation`: (`cb`: [`ICallback`](interfaces/ICallback.md)\<`T`\>) => `void`, `options`: \{ `maxAttempts?`: `number` ; `retryDelay?`: `number` ; `shouldRetry?`: (`err`: `Error`) => `boolean`  }, `callback`: [`ICallback`](interfaces/ICallback.md)\<`T`\>) => `void` |
+| `withTimeout` | \<T\>(`callback`: [`ICallback`](interfaces/ICallback.md)\<`T`\>, `timeoutMs`: `number`) => [`ICallback`](interfaces/ICallback.md)\<`T`\> |
 
 ___
 
@@ -488,3 +567,79 @@ ___
 #### Returns
 
 `void`
+
+___
+
+### withEventBus
+
+▸ **withEventBus**\<`S`, `T`\>(`eventBusRedisFactory`, `operation`, `callback`): `void`
+
+A helper function for executing operations with an event bus instance
+
+This function provides a standardized way to:
+1. Get or create an event bus instance
+2. Execute an operation with the event bus
+3. Handle the callback with the result
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `S` | extends [`TEventBusEvent`](README.md#teventbusevent) |
+| `T` | `T` |
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `eventBusRedisFactory` | [`EventBusRedisFactory`](classes/EventBusRedisFactory.md)\<`S`\> | The factory that provides the event bus instance |
+| `operation` | (`eventBus`: [`IEventBus`](interfaces/IEventBus.md)\<`S`\>, `cb`: [`ICallback`](interfaces/ICallback.md)\<`T`\>) => `void` | The operation to execute with the event bus |
+| `callback` | [`ICallback`](interfaces/ICallback.md)\<`T`\> | The callback to invoke with the final result |
+
+#### Returns
+
+`void`
+
+**`Typeparam`**
+
+S - The type of events supported by the event bus
+
+**`Typeparam`**
+
+T - The type of data returned by the operation
+
+___
+
+### withRedisClient
+
+▸ **withRedisClient**\<`T`\>(`redisClient`, `operation`, `callback`): `void`
+
+Executes a Redis operation with standardized error handling
+
+This helper method centralizes the common pattern of:
+1. Getting a Redis client instance
+2. Checking for client errors
+3. Checking for empty client replies
+4. Executing the Redis operation with proper error handling
+
+#### Type parameters
+
+| Name |
+| :------ |
+| `T` |
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `redisClient` | [`RedisClientFactory`](classes/RedisClientFactory.md) | Redis client to use for the operation |
+| `operation` | (`client`: [`IRedisClient`](interfaces/IRedisClient.md), `cb`: [`ICallback`](interfaces/ICallback.md)\<`T`\>) => `void` | Function that performs the actual Redis operation |
+| `callback` | [`ICallback`](interfaces/ICallback.md)\<`T`\> | The original callback to invoke with results |
+
+#### Returns
+
+`void`
+
+**`Typeparam`**
+
+T - The type of data returned by the operation

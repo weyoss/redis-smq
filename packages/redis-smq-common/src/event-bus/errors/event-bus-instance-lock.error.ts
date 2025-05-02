@@ -7,4 +7,6 @@
  * in the root directory of this source tree.
  */
 
-export * from './types/index.js';
+import { EventBusError } from './event-bus.error.js';
+
+export class EventBusInstanceLockError extends EventBusError {}

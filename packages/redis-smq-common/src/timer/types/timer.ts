@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { TFunction } from '../../common/index.js';
+import { TFunction } from '../../async/index.js';
 
 export type TTimerEvent = {
   error: (err: Error) => void;

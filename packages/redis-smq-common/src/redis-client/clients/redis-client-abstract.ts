@@ -10,7 +10,7 @@
 import fs from 'fs';
 import { resolve } from 'path';
 import { async } from '../../async/index.js';
-import { ICallback } from '../../common/index.js';
+import { ICallback } from '../../async/index.js';
 import { env } from '../../env/index.js';
 import { CallbackEmptyReplyError } from '../../errors/index.js';
 import { EventEmitter } from '../../event/index.js';
@@ -44,7 +44,7 @@ export abstract class RedisClientAbstract
   protected connectionClosed = true;
 
   protected init(): void {
-    async.waterfall(
+    async.series(
       [
         (cb: ICallback<void>) => this.validateRedisServerSupport(cb),
         (cb: ICallback<void>) => this.loadBuiltInScriptFiles(cb),
@@ -402,7 +402,7 @@ export abstract class RedisClientAbstract
       }
     }
     if (!tasks.length) return cb(null, loadedScripts);
-    async.waterfall(tasks, (err) => {
+    async.series(tasks, (err) => {
       if (err) return cb(err);
       cb(null, loadedScripts);
     });
