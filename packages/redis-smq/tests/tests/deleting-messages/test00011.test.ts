@@ -16,7 +16,7 @@ import {
 import { getMessage } from '../../common/message.js';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 
-test('Combined test: Delete acknowledged messages by IDs. Check acknowledged messages. Check queue metrics.', async () => {
+test('Combined test: Delete acknowledged messages by IDs which include a non-existent message ID', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   const { messageId: msg1 } = await produceAndAcknowledgeMessage(
@@ -44,22 +44,26 @@ test('Combined test: Delete acknowledged messages by IDs. Check acknowledged mes
   expect(count).toBe(2);
 
   const message = await getMessage();
-  const reply = await message.deleteMessagesByIdsAsync([msg1, msg2]);
+  const reply = await message.deleteMessagesByIdsAsync([msg1]);
   expect(reply.status).toBe('OK');
   expect(reply.stats).toEqual({
-    processed: 2,
-    success: 2,
+    processed: 1,
+    success: 1,
     notFound: 0,
     inProcess: 0,
   });
 
-  const res2 = await acknowledgedMessages.getMessagesAsync(
-    defaultQueue,
-    0,
-    100,
-  );
-  expect(res2.totalItems).toBe(0);
-  expect(res2.items.length).toBe(0);
+  const count1 = await acknowledgedMessages.countMessagesAsync(defaultQueue);
+  expect(count1).toBe(1);
+
+  const reply2 = await message.deleteMessagesByIdsAsync([msg1, msg2]);
+  expect(reply2.status).toBe('PARTIAL_SUCCESS');
+  expect(reply2.stats).toEqual({
+    processed: 2,
+    success: 1,
+    notFound: 1,
+    inProcess: 0,
+  });
 
   const count2 = await acknowledgedMessages.countMessagesAsync(defaultQueue);
   expect(count2).toBe(0);

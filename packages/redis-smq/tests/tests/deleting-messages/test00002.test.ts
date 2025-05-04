@@ -32,7 +32,14 @@ test('Combined test: Delete a pending message with priority. Check pending messa
   expect(count.pending).toBe(1);
 
   const message = await getMessage();
-  await message.deleteMessageByIdAsync(messageId);
+  const reply = await message.deleteMessageByIdAsync(messageId);
+  expect(reply.status).toBe('OK');
+  expect(reply.stats).toEqual({
+    processed: 1,
+    success: 1,
+    notFound: 0,
+    inProcess: 0,
+  });
 
   const res2 = await pendingMessages.getMessagesAsync(queue, 0, 100);
   expect(res2.totalItems).toBe(0);

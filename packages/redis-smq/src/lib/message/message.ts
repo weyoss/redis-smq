@@ -8,6 +8,7 @@
  */
 
 import {
+  async,
   CallbackEmptyReplyError,
   ICallback,
   logger,
@@ -22,6 +23,7 @@ import { _getMessage, _getMessages } from './_/_get-message.js';
 import { _requeueMessage } from './_/_requeue-message.js';
 import {
   EMessagePropertyStatus,
+  IMessageDeleteResponse,
   IMessageStateTransferable,
   IMessageTransferable,
 } from './types/index.js';
@@ -190,33 +192,42 @@ export class Message {
   }
 
   /**
-   * Deletes messages with the given IDs.
+   * Deletes multiple messages by their IDs
    *
-   * @param ids - An array of IDs of the messages to delete.
-   * @param cb - A callback function that will be called with the result.
-   *              If an error occurs, the first parameter will be an Error object.
-   *              Otherwise, the second parameter will be undefined.
+   * @param ids - Array of message IDs to delete
+   * @param cb - Callback function that will be called with the deletion result
+   *             If an error occurs, the first parameter will be an Error object
+   *             Otherwise, the second parameter will contain the deletion response
    */
-  deleteMessagesByIds(ids: string[], cb: ICallback<void>): void {
-    this.logger.debug('Deleting messages by IDs', { messageCount: ids.length });
-    withRedisClient(
+  deleteMessagesByIds(
+    ids: string[],
+    cb: ICallback<IMessageDeleteResponse>,
+  ): void {
+    this.logger.debug(`Deleting ${ids.length} messages by IDs`, {
+      messageIds: ids,
+    });
+    withRedisClient<IMessageDeleteResponse>(
       this.redisClient,
       (client, cb) => {
-        _deleteMessage(client, ids, (err) => {
-          if (err) {
-            this.logger.error('Failed to delete messages', {
-              error: err.message,
-            });
-            cb(err);
-          } else {
-            this.logger.debug('Successfully deleted messages', {
-              messageCount: ids.length,
-            });
-            cb();
-          }
-        });
+        async.withCallback(
+          (cb: ICallback<IMessageDeleteResponse>) =>
+            _deleteMessage(client, ids, cb),
+          (reply, cb) => {
+            this.logger.debug('Messages deletion completed', reply);
+            cb(null, reply);
+          },
+          cb,
+        );
       },
-      cb,
+      (err, result) => {
+        if (err) {
+          this.logger.error('Failed to delete messages by IDs', {
+            error: err.message,
+            messageIds: ids,
+          });
+        }
+        cb(err, result);
+      },
     );
   }
 
@@ -225,12 +236,12 @@ export class Message {
    *
    * @param id - The ID of the message to delete.
    * @param cb - A callback function that will be called with the result.
-   *              If an error occurs, the first parameter will be an Error object.
-   *              Otherwise, the second parameter will be undefined.
+   *             If an error occurs, the first parameter will be an Error object.
+   *             Otherwise, the second parameter will contain the deletion response.
    */
-  deleteMessageById(id: string, cb: ICallback<void>): void {
+  deleteMessageById(id: string, cb: ICallback<IMessageDeleteResponse>): void {
     this.logger.debug('Deleting message by ID', { messageId: id });
-    this.deleteMessagesByIds([id], (err) => {
+    this.deleteMessagesByIds([id], (err, reply) => {
       if (err) {
         this.logger.error('Failed to delete message', {
           messageId: id,
@@ -239,7 +250,7 @@ export class Message {
         cb(err);
       } else {
         this.logger.debug('Successfully deleted message', { messageId: id });
-        cb();
+        cb(null, reply);
       }
     });
   }

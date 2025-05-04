@@ -10,3 +10,4 @@
 export * from './config.js';
 export * from './message-state.js';
 export * from './message.js';
+export * from './delete-message.js';

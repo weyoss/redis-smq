@@ -16,7 +16,7 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 
-test('Purging acknowledged queue', async () => {
+test('Purging acknowledged queue using QueueMessages', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   const { queue, consumer } = await produceAndAcknowledgeMessage();
