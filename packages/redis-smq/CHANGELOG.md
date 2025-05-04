@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [8.3.0](https://github.com/weyoss/redis-smq/compare/v8.2.1...v8.3.0) (2025-05-04)
+
+### 🐛 Bug Fixes
+
+- **redis-smq:** make message deletion more resilient to race conditions and inconsistent states ([3c07bae](https://github.com/weyoss/redis-smq/commit/3c07baee7df4e350d54d4c354d1f2604f8b773ae))
+
+### 📝 Documentation
+
+- **redis-smq:** update class references ([d30542e](https://github.com/weyoss/redis-smq/commit/d30542e89faa2f511ff4fa0f2640446b0c591d89))
+
+### ♻️ Code Refactoring
+
+- **redis-smq:** improve callback patterns and use new async utils ([8cff0d2](https://github.com/weyoss/redis-smq/commit/8cff0d2968561899c30156554aa89420c0fa8479))
+
 ## [8.2.1](https://github.com/weyoss/redis-smq/compare/v8.2.0...v8.2.1) (2025-04-22)
 
 ### 🐛 Bug Fixes

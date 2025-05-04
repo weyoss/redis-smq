@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [8.3.0](https://github.com/weyoss/redis-smq/compare/v8.2.1...v8.3.0) (2025-05-04)
+
+### ✨ Features
+
+- **redis-smq-common:** implement additional async utilities and factories ([030d2ec](https://github.com/weyoss/redis-smq/commit/030d2ec849315bb381593fb9781839937761b66e))
+
+### 🐛 Bug Fixes
+
+- **redis-smq:** make message deletion more resilient to race conditions and inconsistent states ([3c07bae](https://github.com/weyoss/redis-smq/commit/3c07baee7df4e350d54d4c354d1f2604f8b773ae))
+
+### 📝 Documentation
+
+- **redis-smq-common:** update ConsoleLogger constructor description ([f777ec6](https://github.com/weyoss/redis-smq/commit/f777ec63e2a963e32f1663c4571a878fa636f114))
+- **redis-smq:** update class references ([d30542e](https://github.com/weyoss/redis-smq/commit/d30542e89faa2f511ff4fa0f2640446b0c591d89))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-common:** improve Redis server platform support and constants organization ([d542a0a](https://github.com/weyoss/redis-smq/commit/d542a0ac7ae0c0a7ada81b60f5da347b44129792))
+- **redis-smq:** improve callback patterns and use new async utils ([8cff0d2](https://github.com/weyoss/redis-smq/commit/8cff0d2968561899c30156554aa89420c0fa8479))
+
 ## [8.2.1](https://github.com/weyoss/redis-smq/compare/v8.2.0...v8.2.1) (2025-04-22)
 
 ### 🐛 Bug Fixes
