@@ -105,6 +105,7 @@
 - [IConsumerMessageHandlerArgs](interfaces/IConsumerMessageHandlerArgs.md)
 - [IEventBusConfig](interfaces/IEventBusConfig.md)
 - [IExchange](interfaces/IExchange.md)
+- [IMessageDeleteResponse](interfaces/IMessageDeleteResponse.md)
 - [IMessageParams](interfaces/IMessageParams.md)
 - [IMessageStateTransferable](interfaces/IMessageStateTransferable.md)
 - [IMessageTransferable](interfaces/IMessageTransferable.md)
@@ -144,6 +145,8 @@
 - [TExchangeTopicTransferable](README.md#texchangetopictransferable)
 - [TExchangeTransferable](README.md#texchangetransferable)
 - [TMessageConsumeOptions](README.md#tmessageconsumeoptions)
+- [TMessageDeleteRawResponse](README.md#tmessagedeleterawresponse)
+- [TMessageDeleteStatus](README.md#tmessagedeletestatus)
 - [TMessageUnacknowledgementAction](README.md#tmessageunacknowledgementaction)
 - [TMessageUnacknowledgementStatus](README.md#tmessageunacknowledgementstatus)
 - [TProducerEvent](README.md#tproducerevent)
@@ -368,6 +371,18 @@ ___
 | `retryDelay` | `number` |
 | `retryThreshold` | `number` |
 | `ttl` | `number` |
+
+___
+
+### TMessageDeleteRawResponse
+
+Ƭ **TMessageDeleteRawResponse**: [`TMessageDeleteStatus`](README.md#tmessagedeletestatus) \| [`number`, `number`, `number`, `number`]
+
+___
+
+### TMessageDeleteStatus
+
+Ƭ **TMessageDeleteStatus**: ``"OK"`` \| ``"PARTIAL_SUCCESS"`` \| ``"MESSAGE_NOT_FOUND"`` \| ``"MESSAGE_IN_PROCESS"`` \| ``"MESSAGE_NOT_DELETED"`` \| ``"INVALID_PARAMETERS"``
 
 ___
 
