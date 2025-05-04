@@ -45,7 +45,7 @@ Deletes a message with the given ID.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `id` | `string` | The ID of the message to delete. |
-| `cb` | `ICallback`\<`void`\> | A callback function that will be called with the result. If an error occurs, the first parameter will be an Error object. Otherwise, the second parameter will be undefined. |
+| `cb` | `ICallback`\<[`IMessageDeleteResponse`](../interfaces/IMessageDeleteResponse.md)\> | A callback function that will be called with the result. If an error occurs, the first parameter will be an Error object. Otherwise, the second parameter will contain the deletion response. |
 
 #### Returns
 
@@ -57,14 +57,14 @@ ___
 
 ▸ **deleteMessagesByIds**(`ids`, `cb`): `void`
 
-Deletes messages with the given IDs.
+Deletes multiple messages by their IDs
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `ids` | `string`[] | An array of IDs of the messages to delete. |
-| `cb` | `ICallback`\<`void`\> | A callback function that will be called with the result. If an error occurs, the first parameter will be an Error object. Otherwise, the second parameter will be undefined. |
+| `ids` | `string`[] | Array of message IDs to delete |
+| `cb` | `ICallback`\<[`IMessageDeleteResponse`](../interfaces/IMessageDeleteResponse.md)\> | Callback function that will be called with the deletion result If an error occurs, the first parameter will be an Error object Otherwise, the second parameter will contain the deletion response |
 
 #### Returns
 
