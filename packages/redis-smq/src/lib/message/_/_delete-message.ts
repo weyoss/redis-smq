@@ -10,6 +10,7 @@
 import {
   async,
   CallbackEmptyReplyError,
+  CallbackInvalidReplyError,
   ICallback,
   IRedisClient,
 } from 'redis-smq-common';
@@ -17,19 +18,30 @@ import { ELuaScriptName } from '../../../common/redis-client/scripts/scripts.js'
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { EQueueProperty, EQueueType } from '../../queue/index.js';
 import {
-  MessageError,
   MessageInvalidParametersError,
-  MessageMessageInProcessError,
-  MessageMessageNotDeletedError,
   MessageMessageNotFoundError,
 } from '../errors/index.js';
-import { EMessageProperty, EMessagePropertyStatus } from '../types/index.js';
+import {
+  TMessageDeleteRawResponse,
+  IMessageDeleteResponse,
+  EMessageProperty,
+  EMessagePropertyStatus,
+} from '../types/index.js';
 import { _getMessage } from './_get-message.js';
+
+function isDeleteMessageResponse(
+  reply: unknown,
+): reply is TMessageDeleteRawResponse {
+  return (
+    // type-coverage:ignore-next-line
+    typeof reply === 'string' || (Array.isArray(reply) && reply.length === 4)
+  );
+}
 
 export function _deleteMessage(
   redisClient: IRedisClient,
   messageId: string | string[],
-  cb: ICallback<void>,
+  cb: ICallback<IMessageDeleteResponse>,
 ): void {
   const keys: string[] = [];
   const argv: (string | number)[] = [];
@@ -49,12 +61,37 @@ export function _deleteMessage(
     EMessagePropertyStatus.UNACK_DELAYING,
     EMessagePropertyStatus.UNACK_REQUEUING,
   );
+
+  const deleteResponse: IMessageDeleteResponse = {
+    status: 'MESSAGE_NOT_DELETED',
+    stats: {
+      processed: 0,
+      success: 0,
+      notFound: 0,
+      inProcess: 0,
+    },
+  };
+
+  const stats = deleteResponse.stats;
+
+  // Skip message retrieval for empty array
+  if (ids.length === 0) {
+    return cb(null, deleteResponse);
+  }
+
   async.each(
     ids,
     (id, _, done) => {
       _getMessage(redisClient, id, (err, message) => {
-        if (err) done(err);
-        else if (!message) done(new CallbackEmptyReplyError());
+        if (err) {
+          // If message not found, we'll assume it's already deleted
+          if (err instanceof MessageMessageNotFoundError) {
+            stats.notFound += 1;
+            stats.processed += 1;
+            return done();
+          }
+          return done(err);
+        } else if (!message) done(new CallbackEmptyReplyError());
         else {
           const {
             keyQueueScheduled,
@@ -65,6 +102,7 @@ export function _deleteMessage(
             keyQueueAcknowledged,
             keyQueuePriorityPending,
             keyQueuePending,
+            keyQueueMessages,
           } = redisKeys.getQueueKeys(
             message.getDestinationQueue(),
             message.getConsumerGroupId(),
@@ -80,6 +118,7 @@ export function _deleteMessage(
             keyQueueDL,
             keyQueueAcknowledged,
             keyQueuePriorityPending,
+            keyQueueMessages,
           );
           argv.push(id);
           done();
@@ -87,30 +126,39 @@ export function _deleteMessage(
       });
     },
     (err) => {
-      if (err) cb(err);
-      else if (keys.length && argv.length) {
-        redisClient.runScript(
+      if (err) return cb(err);
+
+      if (keys.length && argv.length) {
+        return redisClient.runScript(
           ELuaScriptName.DELETE_MESSAGE,
           keys,
           argv,
-          (err, reply) => {
-            if (err) cb(err);
-            else if (reply !== 'OK') {
-              if (reply === 'MESSAGE_NOT_FOUND') {
-                cb(new MessageMessageNotFoundError());
-              } else if (reply === 'MESSAGE_IN_PROCESS') {
-                cb(new MessageMessageInProcessError());
-              } else if (reply === 'MESSAGE_NOT_DELETED') {
-                cb(new MessageMessageNotDeletedError());
-              } else if (reply === 'INVALID_PARAMETERS') {
-                cb(new MessageInvalidParametersError());
-              } else {
-                cb(new MessageError());
-              }
-            } else cb();
+          (err, reply: unknown) => {
+            if (err) return cb(err);
+            if (!isDeleteMessageResponse(reply))
+              return cb(new CallbackInvalidReplyError());
+            if (typeof reply === 'string') {
+              if (reply === 'INVALID_PARAMETERS')
+                return cb(new MessageInvalidParametersError());
+              return cb(new CallbackInvalidReplyError());
+            }
+            const [processed, success, notFound, inProcess] = reply;
+            stats.processed += processed;
+            stats.success += success;
+            stats.notFound += notFound;
+            stats.inProcess += inProcess;
+
+            deleteResponse.status =
+              (stats.processed === stats.success && 'OK') ||
+              (stats.success && 'PARTIAL_SUCCESS') ||
+              'MESSAGE_NOT_DELETED';
+
+            cb(null, deleteResponse);
           },
         );
-      } else cb();
+      }
+
+      return cb(null, deleteResponse);
     },
   );
 }

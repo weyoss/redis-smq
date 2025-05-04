@@ -9,10 +9,6 @@
 
 import { expect, test } from 'vitest';
 import bluebird from 'bluebird';
-import {
-  MessageMessageInProcessError,
-  MessageMessageNotFoundError,
-} from '../../../src/lib/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import {
   createQueue,
@@ -43,9 +39,14 @@ test('Combined test: Delete a message being in process. Check pending, acknowled
   await bluebird.delay(5000);
 
   const message = await getMessage();
-  await expect(message.deleteMessageByIdAsync(messageId)).rejects.toThrow(
-    MessageMessageInProcessError,
-  );
+  const reply = await message.deleteMessageByIdAsync(messageId);
+  expect(reply.status).toBe('MESSAGE_NOT_DELETED');
+  expect(reply.stats).toEqual({
+    processed: 1,
+    success: 0,
+    notFound: 0,
+    inProcess: 1,
+  });
 
   await bluebird.delay(20000);
 
@@ -53,15 +54,27 @@ test('Combined test: Delete a message being in process. Check pending, acknowled
   expect(count2.pending).toBe(0);
   expect(count2.acknowledged).toBe(1);
 
-  await message.deleteMessageByIdAsync(messageId);
+  const reply1 = await message.deleteMessageByIdAsync(messageId);
+  expect(reply1.status).toBe('OK');
+  expect(reply1.stats).toEqual({
+    processed: 1,
+    success: 1,
+    notFound: 0,
+    inProcess: 0,
+  });
 
   const count3 = await queueMessages.countMessagesByStatusAsync(queue);
   expect(count3.pending).toBe(0);
   expect(count3.acknowledged).toBe(0);
 
-  await expect(message.deleteMessageByIdAsync(messageId)).rejects.toThrow(
-    MessageMessageNotFoundError,
-  );
+  const reply2 = await message.deleteMessageByIdAsync(messageId);
+  expect(reply2.status).toBe('MESSAGE_NOT_DELETED');
+  expect(reply2.stats).toEqual({
+    processed: 1,
+    success: 0,
+    notFound: 1,
+    inProcess: 0,
+  });
 
   await message.shutdownAsync();
 });

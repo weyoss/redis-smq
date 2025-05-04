@@ -8,7 +8,6 @@
  */
 
 import { expect, test } from 'vitest';
-import { MessageMessageNotFoundError } from '../../../src/lib/index.js';
 import {
   createQueue,
   getDefaultQueue,
@@ -48,7 +47,14 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   expect(count.acknowledged).toBe(1);
 
   const message = await getMessage();
-  await message.deleteMessageByIdAsync(messageId);
+  const reply = await message.deleteMessageByIdAsync(messageId);
+  expect(reply.status).toBe('OK');
+  expect(reply.stats).toEqual({
+    processed: 1,
+    success: 1,
+    notFound: 0,
+    inProcess: 0,
+  });
 
   const res4 = await acknowledgedMessages.getMessagesAsync(queue, 0, 100);
   expect(res4.totalItems).toBe(0);
@@ -67,7 +73,12 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   expect(count1.pending).toBe(0);
   expect(count1.deadLettered).toBe(0);
 
-  await expect(message.deleteMessageByIdAsync(messageId)).rejects.toThrow(
-    MessageMessageNotFoundError,
-  );
+  const reply2 = await message.deleteMessageByIdAsync(messageId);
+  expect(reply2.status).toBe('MESSAGE_NOT_DELETED');
+  expect(reply2.stats).toEqual({
+    processed: 1,
+    success: 0,
+    notFound: 1,
+    inProcess: 0,
+  });
 });

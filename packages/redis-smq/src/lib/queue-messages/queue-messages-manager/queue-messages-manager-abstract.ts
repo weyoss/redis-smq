@@ -213,10 +213,20 @@ export abstract class QueueMessagesManagerAbstract
   }
 
   /**
-   * Purges all messages from the queue.
+   * Purges all messages from the specified queue.
    *
-   * @param queue - Extended queue parameters
-   * @param cb - Callback function
+   * Different message types can be purged using specific classes:
+   * - {@link QueueMessages} - Delete all queue messages
+   * - {@link QueueAcknowledgedMessages} - Delete acknowledged messages (if configured to be stored)
+   * - {@link QueueDeadLetteredMessages} - Delete dead-lettered messages (if configured to be stored)
+   * - {@link QueueScheduledMessages} - Delete scheduled messages
+   * - {@link QueuePendingMessages} - Delete pending messages
+   *
+   * @param queue - The queue to purge. Can be a string, queue parameters object,
+   *                or queue consumer group parameters.
+   * @param cb - Callback function that will be invoked when the operation completes.
+   *             If an error occurs, the first parameter will contain the Error object.
+   *             Otherwise, the first parameter will be null/undefined.
    */
   purge(queue: TQueueExtendedParams, cb: ICallback<void>): void {
     const parsedParams = _parseQueueExtendedParams(queue);
@@ -299,14 +309,12 @@ export abstract class QueueMessagesManagerAbstract
             );
 
             // Delete the batch of messages
-            _deleteMessage(client, items, (err) => {
+            _deleteMessage(client, items, (err, reply) => {
               if (err) {
                 this.logger.error(`Error deleting messages: ${err.message}`);
                 return next(err);
               }
-              this.logger.debug(
-                `Successfully deleted ${items.length} messages from queue ${parsedParams.queueParams.name}`,
-              );
+              this.logger.debug('Messages deletion completed', reply);
               next(null, String(nextCursor));
             });
           },
