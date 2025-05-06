@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [8.3.1](https://github.com/weyoss/redis-smq/compare/v8.3.0...v8.3.1) (2025-05-06)
+
+### ⚡ Performance Improvements
+
+- **redis-smq:** optimize and clean up LUA scripts for better Redis performance ([1f8b128](https://github.com/weyoss/redis-smq/commit/1f8b128716e2686bd7d145efaef9b0c9a28daa65))
+
 ## [8.3.0](https://github.com/weyoss/redis-smq/compare/v8.2.1...v8.3.0) (2025-05-04)
 
 ### 🐛 Bug Fixes
