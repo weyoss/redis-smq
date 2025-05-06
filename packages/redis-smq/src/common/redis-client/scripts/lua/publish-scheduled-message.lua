@@ -8,136 +8,106 @@ local EQueuePropertyQueueTypeFIFOQueue = ARGV[7]
 local EQueuePropertyMessagesCount = ARGV[8]
 local EMessagePropertyMessage = ARGV[9]
 
----
+--
+local INITIAL_KEY_OFFSET = 0
+local INITIAL_ARGV_OFFSET = 9
+local PARAMS_PER_MESSAGE = 7
+local KEYS_PER_MESSAGE = 7
 
-local keyMessage = ''
-local keyQueuePending = ''
-local keyQueueMessages = ''
-local keyQueueProperties = ''
-local keyQueuePriorityPending = ''
-local keyQueueScheduled = ''
-local keyScheduledMessage = ''
-
-local messageId = ''
-local message = ''
-local messageState = ''
-local messagePriority = ''
-local scheduledMessageId = ''
-local scheduledMessageNextScheduleTimestamp = ''
-local scheduledMessageState = ''
-
----
-
-local keyIndexOffset = 0
-local argvIndexOffset = 9
-
----
-
-local function addToQueueMessages()
-    redis.call("SADD", keyQueueMessages, messageId)
-    redis.call(
-            "HMSET", keyMessage,
-            EMessagePropertyStatus, EMessagePropertyStatusPending,
-            EMessagePropertyState, messageState,
-            EMessagePropertyMessage, message
-    )
-    redis.call("HINCRBY", keyQueueProperties, EQueuePropertyMessagesCount, 1)
+-- Validate parameters
+if #ARGV <= INITIAL_ARGV_OFFSET then
+    return 'INVALID_PARAMETERS'
 end
 
-local function publishMessage(queueType, msgId)
-    if queueType == EQueuePropertyQueueTypeLIFOQueue then
-        redis.call("RPUSH", keyQueuePending, msgId)
-    elseif queueType == EQueuePropertyQueueTypeFIFOQueue then
-        redis.call("LPUSH", keyQueuePending, msgId)
-    else
-        redis.call("ZADD", keyQueuePriorityPending, messagePriority, msgId)
-    end
-end
+--
+local keyIndex = INITIAL_KEY_OFFSET + 1
 
-local function deletedScheduledMessage(updateMessageCount)
-    redis.call("DEL", keyScheduledMessage)
-    if updateMessageCount == true then
-        redis.call("HINCRBY", keyQueueProperties, EQueuePropertyMessagesCount, -1)
-    end
-end
+for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
+    -- Extract message parameters
+    local messageId = ARGV[argvIndex]
+    local message = ARGV[argvIndex + 1]
+    local messageState = ARGV[argvIndex + 2]
+    local messagePriority = ARGV[argvIndex + 3]
+    local scheduledMessageId = ARGV[argvIndex + 4]
+    local scheduledMessageNextScheduleTimestamp = ARGV[argvIndex + 5]
+    local scheduledMessageState = ARGV[argvIndex + 6]
 
-local function removeFromScheduled()
-    redis.call("ZREM", keyQueueScheduled, scheduledMessageId)
-end
+    -- Extract keys for current message
+    local keyMessage = KEYS[keyIndex]
+    local keyQueuePending = KEYS[keyIndex + 1]
+    local keyQueueMessages = KEYS[keyIndex + 2]
+    local keyQueueProperties = KEYS[keyIndex + 3]
+    local keyQueuePriorityPending = KEYS[keyIndex + 4]
+    local keyQueueScheduled = KEYS[keyIndex + 5]
+    local keyScheduledMessage = KEYS[keyIndex + 6]
 
-local function updateScheduledMessageProperties(status)
-    if status == '' then
-        redis.call("HSET", keyScheduledMessage, EMessagePropertyState, scheduledMessageState)
-    else
-        redis.call(
-                "HMSET", keyScheduledMessage,
-                EMessagePropertyState, scheduledMessageState,
-                EMessagePropertyStatus, status
-        )
-    end
-end
+    -- Update keyIndex for next iteration
+    keyIndex = keyIndex + KEYS_PER_MESSAGE
 
-local function scheduleMessage()
-    redis.call("ZADD", keyQueueScheduled, scheduledMessageNextScheduleTimestamp, scheduledMessageId)
-end
+    -- Get queue type
+    local queueType = redis.call("HGET", keyQueueProperties, EQueuePropertyQueueType)
 
-local function handleMessage()
-    local properties = redis.call("HMGET", keyQueueProperties, EQueuePropertyQueueType)
-    local queueType = properties[1]
-    if (queueType == false) then
-        removeFromScheduled()
-        deletedScheduledMessage(false)
-    elseif (queueType ~= EQueuePropertyQueueTypeLIFOQueue and queueType ~= EQueuePropertyQueueTypeFIFOQueue and queueType ~= EQueuePropertyQueueTypePriorityQueue) then
-        removeFromScheduled()
-        deletedScheduledMessage(true)
-    elseif messageId == '' then
-        publishMessage(queueType, scheduledMessageId)
-        removeFromScheduled()
-        updateScheduledMessageProperties(EMessagePropertyStatusPending)
-    else
-        publishMessage(queueType, messageId)
-        addToQueueMessages();
-        if scheduledMessageNextScheduleTimestamp == "0" then
-            removeFromScheduled()
-            deletedScheduledMessage(true)
-        else
-            scheduleMessage()
-            updateScheduledMessageProperties('')
+    -- Skip processing if queue type is missing, assuming queue has been deleted
+    if queueType ~= false then
+        -- Check if queue type is valid
+        if queueType ~= EQueuePropertyQueueTypeLIFOQueue and
+           queueType ~= EQueuePropertyQueueTypeFIFOQueue and
+           queueType ~= EQueuePropertyQueueTypePriorityQueue then
+            return 'ERROR_INVALID_QUEUE_TYPE'
         end
-    end
-end
 
-if #ARGV > argvIndexOffset then
-    for index in pairs(ARGV) do
-        if (index > argvIndexOffset) then
-            local idx = index % 7
-            if idx == 3 then
-                messageId = ARGV[index]
-                keyMessage = KEYS[keyIndexOffset + 1]
-                keyQueuePending = KEYS[keyIndexOffset + 2]
-                keyQueueMessages = KEYS[keyIndexOffset + 3]
-                keyQueueProperties = KEYS[keyIndexOffset + 4]
-                keyQueuePriorityPending = KEYS[keyIndexOffset + 5]
-                keyQueueScheduled = KEYS[keyIndexOffset + 6]
-                keyScheduledMessage = KEYS[keyIndexOffset + 7]
-                keyIndexOffset = keyIndexOffset + 7
-            elseif idx == 4 then
-                message = ARGV[index]
-            elseif idx == 5 then
-                messageState = ARGV[index]
-            elseif idx == 6 then
-                messagePriority = ARGV[index]
-            elseif idx == 0 then
-                scheduledMessageId = ARGV[index]
-            elseif idx == 1 then
-                scheduledMessageNextScheduleTimestamp = ARGV[index]
-            elseif idx == 2 then
-                scheduledMessageState = ARGV[index]
-                handleMessage()
+        -- Case 1: No message ID provided, use scheduled message directly
+        if messageId == '' then
+            -- Publish the scheduled message
+            if queueType == EQueuePropertyQueueTypeFIFOQueue then
+                redis.call("LPUSH", keyQueuePending, scheduledMessageId)
+            elseif queueType == EQueuePropertyQueueTypeLIFOQueue then
+                redis.call("RPUSH", keyQueuePending, scheduledMessageId)
+            else -- Priority queue
+                redis.call("ZADD", keyQueuePriorityPending, messagePriority, scheduledMessageId)
             end
+
+            -- Remove from scheduled
+            redis.call("ZREM", keyQueueScheduled, scheduledMessageId)
+
+            -- Update scheduled message properties
+            redis.call(
+                "HSET", keyScheduledMessage,
+                EMessagePropertyState, scheduledMessageState,
+                EMessagePropertyStatus, EMessagePropertyStatusPending
+            )
+
+        else
+            -- Case 2: Message ID provided, publish new message and reschedule the message
+            -- Check if we have the next schedule timestamp
+            if scheduledMessageNextScheduleTimestamp == "0" then
+                return 'ERROR_NEXT_SCHEDULE_TIMESTAMP_REQUIRED'
+            end
+
+            -- Publish the message
+            if queueType == EQueuePropertyQueueTypeFIFOQueue then
+                redis.call("LPUSH", keyQueuePending, messageId)
+            elseif queueType == EQueuePropertyQueueTypeLIFOQueue then
+                redis.call("RPUSH", keyQueuePending, messageId)
+            else -- Priority queue
+                redis.call("ZADD", keyQueuePriorityPending, messagePriority, messageId)
+            end
+
+            -- Add to queue messages
+            redis.call("SADD", keyQueueMessages, messageId)
+            redis.call(
+                "HSET", keyMessage,
+                EMessagePropertyStatus, EMessagePropertyStatusPending,
+                EMessagePropertyState, messageState,
+                EMessagePropertyMessage, message
+            )
+            redis.call("HINCRBY", keyQueueProperties, EQueuePropertyMessagesCount, 1)
+
+            -- Reschedule message
+            redis.call("ZADD", keyQueueScheduled, scheduledMessageNextScheduleTimestamp, scheduledMessageId)
+            redis.call("HSET", keyScheduledMessage, EMessagePropertyState, scheduledMessageState)
         end
     end
-    return 'OK'
 end
 
-return 'INVALID_PARAMETERS'
+return 'OK'

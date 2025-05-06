@@ -9,26 +9,37 @@ local typeLIFOQueue = ARGV[3]
 local typeFIFOQueue = ARGV[4]
 local groupId = ARGV[5]
 
+-- Get queue type once and validate it exists
 local queueType = redis.call("HGET", keyQueueProperties, queuePropertiesQueueType)
 if queueType == false then
     return 'QUEUE_NOT_FOUND'
 end
 
-local count = 0;
+-- Determine which key to check based on queue type (only once)
+local pendingKey
 if queueType == typePriorityQueue then
-    count = redis.call("ZCARD", keyQueuePendingPriority)
-elseif queueType == typeLIFOQueue or queueType == typeFIFOQueue then
-    count = redis.call("LLEN", keyQueuePending)
+    pendingKey = keyQueuePendingPriority
+else
+    pendingKey = keyQueuePending
 end
+
+-- Check if the queue is empty using the appropriate command
+local count = 0
+if queueType == typePriorityQueue then
+    count = redis.call("ZCARD", pendingKey)
+else
+    count = redis.call("LLEN", pendingKey)
+end
+
+-- Return early if the queue is not empty
 if count > 0 then
     return 'CONSUMER_GROUP_NOT_EMPTY'
 end
 
+-- Remove the consumer group
 redis.call("SREM", keyQueueConsumerGroups, groupId)
-if queueType == typePriorityQueue then
-    redis.call("DEL", keyQueuePendingPriority)
-elseif queueType == typeLIFOQueue or queueType == typeFIFOQueue then
-    redis.call("DEL", keyQueuePending)
-end
+
+-- Delete the pending queue
+redis.call("DEL", pendingKey)
 
 return 'OK'
