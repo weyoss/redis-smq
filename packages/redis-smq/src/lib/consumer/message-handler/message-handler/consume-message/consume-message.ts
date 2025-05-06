@@ -148,7 +148,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
         EMessagePropertyStatus.ACKNOWLEDGED,
         Number(store),
         expire,
-        queueSize * -1,
+        queueSize * -1, // should be negative for proper trimming (to keep newest messages)
       ],
       (err) => {
         if (err) {

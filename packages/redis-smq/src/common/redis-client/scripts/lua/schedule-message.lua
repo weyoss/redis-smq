@@ -6,92 +6,63 @@ local EMessagePropertyStatusScheduled = ARGV[5]
 local EMessagePropertyState = ARGV[6]
 local scheduleFromDelayed = ARGV[7]
 
----
+-- Constants for parameter counts
+local INITIAL_KEY_OFFSET = 0
+local INITIAL_ARGV_OFFSET = 7
+local PARAMS_PER_MESSAGE = 4
+local KEYS_PER_MESSAGE = 5
 
-local keyQueueMessages = ''
-local keyQueueProperties = ''
-local keyMessage = ''
-local keyQueueScheduled = ''
-local keyQueueDelayed = ''
+--
+if (#ARGV <= INITIAL_ARGV_OFFSET) then
+    return 'INVALID_PARAMETERS'
+end
 
----
+--
+local keyIndex = INITIAL_KEY_OFFSET + 1
 
-local messageId = ''
-local message = ''
-local scheduleTimestamp = ''
-local messageState = ''
+-- Process messages in batches
+for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
+    -- Extract message parameters
+    local messageId = ARGV[argvIndex]
+    local message = ARGV[argvIndex + 1]
+    local scheduleTimestamp = ARGV[argvIndex + 2]
+    local messageState = ARGV[argvIndex + 3]
 
----
+    -- Set keys for this message
+    local keyQueueMessages = KEYS[keyIndex]
+    local keyQueueProperties = KEYS[keyIndex + 1]
+    local keyMessage = KEYS[keyIndex + 2]
+    local keyQueueScheduled = KEYS[keyIndex + 3]
+    local keyQueueDelayed = KEYS[keyIndex + 4]
 
-local keyIndexOffset = 0
-local argvIndexOffset = 7
+    -- Update keyIndex for next iteration
+    keyIndex = keyIndex + KEYS_PER_MESSAGE
 
----
-
-local queueProperties = { nil, nil }
-
-local function checkQueue()
-    queueProperties = redis.call("HMGET", keyQueueProperties, EQueuePropertyQueueType, EQueuePropertyMessagesCount)
-    local queueType = queueProperties[1]
+    -- Check if queue exists
+    local queueType = redis.call("HGET", keyQueueProperties, EQueuePropertyQueueType)
     if queueType == false then
         return 'QUEUE_NOT_FOUND'
     end
-    return 'OK'
-end
 
-local function updateMessageState()
-    redis.call(
-            "HSET", keyMessage,
-            EMessagePropertyStatus, EMessagePropertyStatusScheduled,
-            EMessagePropertyState, messageState
-    )
-end
-
-local function saveMessage()
-    redis.call("SADD", keyQueueMessages, messageId)
-    redis.call(
-            "HSET", keyMessage,
-            EMessagePropertyMessage, message,
-            EMessagePropertyStatus, EMessagePropertyStatusScheduled,
-            EMessagePropertyState, messageState
-    )
-    redis.call("HINCRBY", keyQueueProperties, EQueuePropertyMessagesCount, 1)
-end
-
-if #ARGV > argvIndexOffset then
-    for index in pairs(ARGV) do
-        if (index > argvIndexOffset) then
-            local idx = index % 4
-            if idx == 0 then
-                messageId = ARGV[index]
-                keyQueueMessages = KEYS[keyIndexOffset + 1]
-                keyQueueProperties = KEYS[keyIndexOffset + 2]
-                keyMessage = KEYS[keyIndexOffset + 3]
-                keyQueueScheduled = KEYS[keyIndexOffset + 4]
-                keyQueueDelayed = KEYS[keyIndexOffset + 5]
-                keyIndexOffset = keyIndexOffset + 5
-            elseif idx == 1 then
-                message = ARGV[index]
-            elseif idx == 2 then
-                scheduleTimestamp = ARGV[index]
-            elseif idx == 3 then
-                messageState = ARGV[index]
-                local found = checkQueue()
-                if found == 'OK' then
-                    if scheduleFromDelayed == '1' then
-                        redis.call("LREM", keyQueueDelayed, 1, messageId)
-                        updateMessageState()
-                    else
-                        saveMessage()
-                    end
-                    redis.call("ZADD", keyQueueScheduled, scheduleTimestamp, messageId)
-                else
-                    return found
-                end
-            end
-        end
+    -- Process the message based on its source
+    if scheduleFromDelayed == '1' then
+        -- Update existing message from delayed queue
+        redis.call("LREM", keyQueueDelayed, 1, messageId)
+        redis.call("HSET", keyMessage,
+                  EMessagePropertyStatus, EMessagePropertyStatusScheduled,
+                  EMessagePropertyState, messageState)
+    else
+        -- Save new message
+        redis.call("SADD", keyQueueMessages, messageId)
+        redis.call("HSET", keyMessage,
+                  EMessagePropertyMessage, message,
+                  EMessagePropertyStatus, EMessagePropertyStatusScheduled,
+                  EMessagePropertyState, messageState)
+        redis.call("HINCRBY", keyQueueProperties, EQueuePropertyMessagesCount, 1)
     end
-    return 'OK'
+
+    -- Add to scheduled queue
+    redis.call("ZADD", keyQueueScheduled, scheduleTimestamp, messageId)
 end
 
-return 'INVALID_PARAMETERS'
+return 'OK'

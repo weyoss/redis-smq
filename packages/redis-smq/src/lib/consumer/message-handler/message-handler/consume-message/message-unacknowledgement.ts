@@ -245,7 +245,7 @@ export class MessageUnacknowledgement {
           EMessageUnacknowledgementAction.DEAD_LETTER,
           Number(store),
           expire,
-          queueSize * -1,
+          queueSize * -1, // should be negative for proper trimming (to keep newest messages)
           EMessageProperty.STATUS,
           EMessageUnacknowledgementReason.OFFLINE_CONSUMER,
           EMessageUnacknowledgementReason.OFFLINE_MESSAGE_HANDLER,

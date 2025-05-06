@@ -4,8 +4,6 @@ local keyQueuePending = KEYS[3]
 local keyQueueMessages = KEYS[4]
 local keyMessage = KEYS[5]
 
----
-
 local EQueuePropertyQueueType = ARGV[1]
 local EQueuePropertyMessagesCount = ARGV[2]
 local EQueuePropertyQueueTypePriorityQueue = ARGV[3]
@@ -20,33 +18,28 @@ local messageState = ARGV[11]
 local EMessagePropertyMessage = ARGV[12]
 local message = ARGV[13]
 
-local queueProperties = redis.call("HMGET", keyQueueProperties, EQueuePropertyQueueType)
+-- Get queue type with a single field fetch
+local queueType = redis.call("HGET", keyQueueProperties, EQueuePropertyQueueType)
 
-local function saveMessage()
-    redis.call("SADD", keyQueueMessages, messageId)
-    redis.call(
-            "HMSET", keyMessage,
-            EMessagePropertyStatus, messageStatus,
-            EMessagePropertyState, messageState,
-            EMessagePropertyMessage, message
-    )
-    redis.call("HINCRBY", keyQueueProperties, EQueuePropertyMessagesCount, 1)
-end
-
-local queueType = queueProperties[1]
+-- Early return if queue doesn't exist
 if queueType == false then
     return 'QUEUE_NOT_FOUND'
 end
 
+-- Handle different queue types
 if queueType == EQueuePropertyQueueTypePriorityQueue then
+    -- Check if priority is provided for priority queue
     if messagePriority == nil or messagePriority == '' then
         return 'MESSAGE_PRIORITY_REQUIRED'
     end
     redis.call("ZADD", keyPriorityQueue, messagePriority, messageId)
 else
+    -- Check if priority is incorrectly provided for non-priority queue
     if not (messagePriority == nil or messagePriority == '') then
         return 'PRIORITY_QUEUING_NOT_ENABLED'
     end
+
+    -- Handle LIFO and FIFO queues
     if queueType == EQueuePropertyQueueTypeLIFOQueue then
         redis.call("RPUSH", keyQueuePending, messageId)
     elseif queueType == EQueuePropertyQueueTypeFIFOQueue then
@@ -56,6 +49,14 @@ else
     end
 end
 
-saveMessage()
-return 'OK'
+-- Add message to queue and set its properties
+redis.call("SADD", keyQueueMessages, messageId)
+redis.call(
+    "HSET", keyMessage,
+    EMessagePropertyStatus, messageStatus,
+    EMessagePropertyState, messageState,
+    EMessagePropertyMessage, message
+)
+redis.call("HINCRBY", keyQueueProperties, EQueuePropertyMessagesCount, 1)
 
+return 'OK'

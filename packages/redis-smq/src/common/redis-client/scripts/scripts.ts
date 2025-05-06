@@ -23,7 +23,6 @@ export enum ELuaScriptName {
   DELETE_MESSAGE = 'DELETE_MESSAGE',
   FETCH_MESSAGE_FOR_PROCESSING = 'FETCH_MESSAGE_FOR_PROCESSING',
   DELETE_CONSUMER_GROUP = 'DELETE_CONSUMER_GROUP',
-  CLEANUP_OFFLINE_CONSUMER = 'CLEANUP_OFFLINE_CONSUMER',
   SET_QUEUE_RATE_LIMIT = 'SET_QUEUE_RATE_LIMIT',
 }
 
@@ -71,10 +70,6 @@ export const scriptFileMap = {
   [ELuaScriptName.DELETE_CONSUMER_GROUP]: resolve(
     dirname,
     './lua/delete-consumer-group.lua',
-  ),
-  [ELuaScriptName.CLEANUP_OFFLINE_CONSUMER]: resolve(
-    dirname,
-    './lua/cleanup-offline-consumer.lua',
   ),
   [ELuaScriptName.SET_QUEUE_RATE_LIMIT]: resolve(
     dirname,

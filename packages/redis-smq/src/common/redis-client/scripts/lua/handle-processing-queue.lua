@@ -8,49 +8,46 @@ local EMessagePropertyStatus = ARGV[7]
 local EMessageUnacknowledgedCauseOfflineConsumer = ARGV[8]
 local EMessageUnacknowledgedCauseOfflineHandler = ARGV[9]
 
----
+--
+local INITIAL_KEY_OFFSET = 0
+local INITIAL_ARGV_OFFSET = 9
+local PARAMS_PER_MESSAGE = 7
+local KEYS_PER_MESSAGE = 9
 
-local keyIndexOffset = 0
-local argvIndexOffset = 9
-
----
-
-local keyQueueProcessing = ''
-local keyQueueDelayed = ''
-local keyQueueRequeued = ''
-local keyQueueDL = ''
-local keyQueueProcessingQueues = ''
-local keyQueueConsumers = ''
-local keyConsumerQueues = ''
-local keyQueueProperties = ''
-local keyMessage = ''
-
-local queue = ''
-local consumerId = ''
-local messageId = ''
-local retryAction = ''
-local messageDeadLetteredCause = ''
-local messageUnacknowledgedCause = ''
-local messageStatus = ''
-
----
-
-local function updateMessageStatus()
-    redis.call("HMSET", keyMessage, EMessagePropertyStatus, messageStatus)
+--
+if (#ARGV <= INITIAL_ARGV_OFFSET) then
+    return 'INVALID_PARAMETERS'
 end
 
-local function removeQueueConsumer()
-    if queue ~= '' then
-        redis.call("HDEL", keyQueueConsumers, consumerId)
-        redis.call("SREM", keyConsumerQueues, queue)
-        local size = redis.call("SCARD", keyConsumerQueues)
-        if size == 0 then
-            redis.call("DEL", keyConsumerQueues)
-        end
-    end
-end
+--
+local keyIndex = INITIAL_KEY_OFFSET + 1
 
-local function retryMessage()
+--
+for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
+    -- Read all values for this group directly
+    local queue = ARGV[argvIndex]
+    local consumerId = ARGV[argvIndex + 1]
+    local messageId = ARGV[argvIndex + 2]
+    local retryAction = ARGV[argvIndex + 3]
+    local messageDeadLetteredCause = ARGV[argvIndex + 4]
+    local messageUnacknowledgedCause = ARGV[argvIndex + 5]
+    local messageStatus = ARGV[argvIndex + 6]
+
+    -- Get keys for this group directly
+    local keyQueueProcessing = KEYS[keyIndex]
+    local keyQueueDelayed = KEYS[keyIndex + 1]
+    local keyQueueRequeued = KEYS[keyIndex + 2]
+    local keyQueueDL = KEYS[keyIndex + 3]
+    local keyQueueProcessingQueues = KEYS[keyIndex + 4]
+    local keyQueueConsumers = KEYS[keyIndex + 5]
+    local keyConsumerQueues = KEYS[keyIndex + 6]
+    local keyQueueProperties = KEYS[keyIndex + 7]
+    local keyMessage = KEYS[keyIndex + 8]
+
+    -- Update keyIndex for next iteration
+    keyIndex = keyIndex + KEYS_PER_MESSAGE
+
+    -- Process message
     if messageId ~= '' then
         if retryAction == ERetryActionRequeue then
             redis.call("RPOPLPUSH", keyQueueProcessing, keyQueueRequeued)
@@ -64,63 +61,37 @@ local function retryMessage()
                     redis.call("PEXPIRE", keyQueueDL, expireStoredMessages)
                 end
                 if storedMessagesSize ~= '0' then
+                    -- storedMessagesSize should be negative for proper trimming (to keep newest messages)
                     redis.call("LTRIM", keyQueueDL, storedMessagesSize, -1)
                 end
             else
                 redis.call("RPOP", keyQueueProcessing)
             end
         end
-        updateMessageStatus();
+
+        -- Update message status
+        redis.call("HSET", keyMessage, EMessagePropertyStatus, messageStatus)
     end
-end
 
-local function deleteProcessingQueue()
-    if keyQueueProcessing ~= '' then
-        redis.call("HDEL", keyQueueProcessingQueues, keyQueueProcessing)
-        redis.call("DEL", keyQueueProcessing)
-    end
-end
+    -- Handle offline consumer/handler
+    if messageUnacknowledgedCause == EMessageUnacknowledgedCauseOfflineConsumer or
+       messageUnacknowledgedCause == EMessageUnacknowledgedCauseOfflineHandler then
+        -- Delete processing queue
+        if keyQueueProcessing ~= '' then
+            redis.call("HDEL", keyQueueProcessingQueues, keyQueueProcessing)
+            redis.call("DEL", keyQueueProcessing)
+        end
 
----
-
-if #ARGV > argvIndexOffset then
-    for index in pairs(ARGV) do
-        if (index > argvIndexOffset) then
-            local relativeIndex = index % 7
-            if relativeIndex == 3 then
-                queue = ARGV[index]
-                keyQueueProcessing = KEYS[keyIndexOffset + 1]
-                keyQueueDelayed = KEYS[keyIndexOffset + 2];
-                keyQueueRequeued = KEYS[keyIndexOffset + 3];
-                keyQueueDL = KEYS[keyIndexOffset + 4]
-                keyQueueProcessingQueues = KEYS[keyIndexOffset + 5]
-                keyQueueConsumers = KEYS[keyIndexOffset + 6]
-                keyConsumerQueues = KEYS[keyIndexOffset + 7]
-                keyQueueProperties = KEYS[keyIndexOffset + 8]
-                keyMessage = KEYS[keyIndexOffset + 9]
-                keyIndexOffset = keyIndexOffset + 9
-            elseif relativeIndex == 4 then
-                consumerId = ARGV[index]
-            elseif relativeIndex == 5 then
-                messageId = ARGV[index]
-            elseif relativeIndex == 6 then
-                retryAction = ARGV[index]
-            elseif relativeIndex == 0 then
-                messageDeadLetteredCause = ARGV[index]
-            elseif relativeIndex == 1 then
-                messageUnacknowledgedCause = ARGV[index]
-            elseif relativeIndex == 2 then
-                messageStatus = ARGV[index]
-                retryMessage()
-                if messageUnacknowledgedCause == EMessageUnacknowledgedCauseOfflineConsumer or messageUnacknowledgedCause == EMessageUnacknowledgedCauseOfflineHandler then
-                    deleteProcessingQueue()
-                    removeQueueConsumer()
-                end
+        -- Remove queue consumer
+        if queue ~= '' then
+            redis.call("HDEL", keyQueueConsumers, consumerId)
+            redis.call("SREM", keyConsumerQueues, queue)
+            local size = redis.call("SCARD", keyConsumerQueues)
+            if size == 0 then
+                redis.call("DEL", keyConsumerQueues)
             end
         end
     end
-    return 'OK'
 end
 
-return 'INVALID_PARAMETERS'
-
+return 'OK'
