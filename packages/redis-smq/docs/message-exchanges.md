@@ -114,8 +114,6 @@ When publishing with a FanOut exchange, if the exchange does not exist or no que
 
 To find out which queues are associated with a FanOut exchange, use [ExchangeFanOut.getQueues()](api/classes/ExchangeFanOut.md#getqueues).
 
-Additionally, FanOut exchanges can be managed through the [HTTP API Interface](https://github.com/weyoss/redis-smq-monitor) or via a browser using the [Web UI](https://github.com/weyoss/redis-smq-monitor-client).
-
 For further details, consult:
 
 - [ExchangeFanOut Class](api/classes/ExchangeFanOut.md)

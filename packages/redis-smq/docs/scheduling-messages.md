@@ -48,8 +48,3 @@ For effective management of scheduled messages, refer to the following classes:
 - **[QueueScheduledMessages Class](api/classes/QueueScheduledMessages.md)**: Provides methods for handling scheduled messages in the queue.
 - **[Message Class](api/classes/Message.md)**: Offers additional functionalities for manipulating individual messages.
 
-## Additional Management Options
-
-Scheduled messages can also be managed through the [HTTP API Interface](https://github.com/weyoss/redis-smq-monitor) or
-via a user-friendly [Web UI](https://github.com/weyoss/redis-smq-monitor-client) in your browser, allowing for easy
-oversight and control of your scheduled tasks.

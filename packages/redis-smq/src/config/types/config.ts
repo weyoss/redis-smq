@@ -19,7 +19,7 @@ export interface IEventBusConfig {
 
 export interface IRedisSMQConfig {
   /**
-   * @see https://github.com/weyoss/redis-smq-common/blob/master/packages/redis-smq/docs/api/README.md#iredisconfig
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq-common/docs/api/interfaces/IRedisConfig.md
    */
   redis?: IRedisConfig;
   namespace?: string;

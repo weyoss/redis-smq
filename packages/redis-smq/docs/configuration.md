@@ -68,57 +68,81 @@ const config: IRedisSMQConfig = {
 
 ### Message Storage
 
-By default, published messages in a queue are stored until they are explicitly deleted. The `messages.store` option
-allows you to manage how acknowledged and dead-lettered messages are stored across all message queues.
-
 #### Default Behavior
 
-Acknowledged and dead-lettered messages are not stored by default.
+- **All published messages** are stored in their respective queues until explicitly deleted.
+- **Acknowledged** and **dead-lettered** messages are **not** stored in dedicated lists by default; they remain accessible only as part of the main queue until removed.
 
-#### Message Storage Configuration Examples
+#### Browsing and Managing Messages
 
-##### 1. Only Storing Dead-Lettered Messages:
+RedisSMQ provides several classes for browsing and managing messages by type:
+
+| Class                                                                 | Purpose                                   | Requires Additional Storage? |
+|-----------------------------------------------------------------------|-------------------------------------------|------------------------------|
+| [QueueMessages](api/classes/QueueMessages.md)                         | Browse/manage all messages (any status)   | No                           |
+| [QueueScheduledMessages](api/classes/QueueScheduledMessages.md)       | Browse/manage only scheduled messages     | No                           |
+| [QueueAcknowledgedMessages](api/classes/QueueAcknowledgedMessages.md) | Browse/manage only acknowledged messages  | Yes                          |
+| [QueueDeadLetteredMessages](api/classes/QueueDeadLetteredMessages.md) | Browse/manage only dead-lettered messages | Yes                          |
+
+> **Note:** To use `QueueAcknowledgedMessages` or `QueueDeadLetteredMessages`, you must enable additional storage for these message types in your configuration.
+
+#### Enabling Storage for Acknowledged and Dead-Lettered Messages
+
+The `messages.store` option allows you to configure dedicated storage for acknowledged and/or dead-lettered messages, making them accessible via their specialized classes.
+
+Even without additional storage, acknowledged/dead-lettered messages can be retrieved:
+- By ID using [`Message.getMessageById()`](api/classes/Message.md#getmessagebyid)
+- By browsing all messages with [`QueueMessages.getMessages()`](api/classes/QueueMessages.md#getmessages)
+
+To specifically retrieve and manage all acknowledged/dead-lettered messages for a queue (e.g., for monitoring or analytics), enable dedicated storage and use the [`QueueAcknowledgedMessages`](api/classes/QueueAcknowledgedMessages.md)/[`QueueDeadLetteredMessages`](api/classes/QueueDeadLetteredMessages.md) classes.
+
+**Example 1: Enable Dead-Lettered Message Storage**
 
 ```typescript
 const config: IRedisSMQConfig = {
   messages: {
     store: {
-      deadLettered: true,
+      deadLettered: true, // Store all dead-lettered messages indefinitely
     },
   },
 };
 ```
 
-#### 2. Storing Acknowledged Messages Without Limitation, and 100,000 Dead-Lettered Messages with a Maximum Retention Time of 1 Day:
+**Example 2: Store All Acknowledged Messages, and Limit Dead-Lettered Messages to 100,000 with 1-Day Retention**
 
 ```typescript
 const config: IRedisSMQConfig = {
   messages: {
     store: {
-      acknowledged: true,
+      acknowledged: true, // Store all acknowledged messages indefinitely
       deadLettered: {
-        queueSize: 100000,
-        expire: 24 * 60 * 60 * 1000, // 1 day in milliseconds
+        queueSize: 100000, // Store up to 100,000 dead-lettered messages per queue
+        expire: 24 * 60 * 60 * 1000, // Retain for 1 day (in milliseconds)
       },
     },
   },
 };
 ```
 
-#### 3. Storing Acknowledged Messages Up to 5,000, and Maximum 5,000 Dead-Lettered Messages with a Retention Time of 1 Day:
+**Example 3: Limit Both Acknowledged and Dead-Lettered Messages to 5,000 with 1-Day Retention**
 
 ```typescript
 const config: IRedisSMQConfig = {
   messages: {
     store: {
       acknowledged: {
-        queueSize: 5000,
+        queueSize: 5000, // Store up to 5,000 acknowledged messages per queue
       },
       deadLettered: {
-        queueSize: 5000,
-        expire: 24 * 60 * 60 * 1000, // 1 day in milliseconds
+        queueSize: 5000, // Store up to 5,000 dead-lettered messages per queue
+        expire: 24 * 60 * 60 * 1000, // Retain for 1 day (in milliseconds)
       },
     },
   },
 };
 ```
+
+#### Summary
+- By default, only the main queue is persisted.
+- To enable managing of acknowledged or dead-lettered messages via their dedicated classes, configure `messages.store` accordingly.
+- Use the configuration examples above to tailor message retention to your application's needs.

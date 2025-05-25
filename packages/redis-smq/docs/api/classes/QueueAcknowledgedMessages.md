@@ -2,6 +2,16 @@
 
 # Class: QueueAcknowledgedMessages
 
+Manages acknowledged messages in a queue.
+
+Acknowledged messages are those that have been successfully processed by consumers
+and can be safely removed from the active queue. This class allows for tracking
+and management of these messages when the system is configured to store them.
+
+**`See`**
+
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/configuration.md#message-storage
+
 ## Hierarchy
 
 - `QueueMessagesManagerAbstract`

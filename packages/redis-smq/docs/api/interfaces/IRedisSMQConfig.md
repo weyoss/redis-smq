@@ -48,4 +48,4 @@ ___
 
 **`See`**
 
-https://github.com/weyoss/redis-smq-common/blob/master/packages/redis-smq/docs/api/README.md#iredisconfig
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq-common/docs/api/interfaces/IRedisConfig.md
