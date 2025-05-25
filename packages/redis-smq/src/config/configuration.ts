@@ -16,8 +16,6 @@ import { IRedisSMQConfig, IRedisSMQConfigRequired } from './types/index.js';
 
 /**
  * Configuration class for managing and setting up the RedisSMQ message queue.
- * This class is responsible for creating and managing instances of other configuration classes,
- * such as Namespace, Redis, Logger, Messages, and EventBus.
  */
 export class Configuration {
   protected static instance: Configuration | null = null;
@@ -44,7 +42,7 @@ export class Configuration {
    * };
    *
    * const myConfig = Configuration.getSetConfig(config);
-   * console.log(myConfig); // Output: { namespace: 'myNamespace', redis: { host: 'localhost', port: 6379 }, ... }
+   * console.log(myConfig);
    * ```
    */
   protected constructor(config: IRedisSMQConfig) {
@@ -72,7 +70,7 @@ export class Configuration {
    * };
    *
    * const myConfig = Configuration.getSetConfig(config);
-   * console.log(myConfig); // Output: { namespace: 'myNamespace', redis: { host: 'localhost', port: 6379 }, ... }
+   * console.log(myConfig);
    * ```
    */
   static getSetConfig(config: IRedisSMQConfig = {}): IRedisSMQConfigRequired {
@@ -117,21 +115,13 @@ export class Configuration {
   /**
    * Retrieves the current configuration settings for the RedisSMQ library.
    *
-   * @returns An object containing the required configuration properties:
-   * - `namespace`: An instance of the Namespace class, representing the namespace for Redis keys.
-   * - `redis`: An instance of the Redis class, managing the Redis connection.
-   * - `logger`: An instance of the Logger class, responsible for logging messages.
-   * - `messages`: An instance of the Messages class, managing message templates.
-   * - `eventBus`: An instance of the EventBus class, handling event subscriptions and notifications.
+   * @returns An object containing the required configuration properties including
+   * `namespace`, `redis`, `logger`, `messages`, and `eventBus`.
    *
    * @example
    * ```typescript
    * const myConfig = Configuration.getSetConfig();
-   * console.log(myConfig.namespace); // Output: Namespace instance
-   * console.log(myConfig.redis); // Output: Redis instance
-   * console.log(myConfig.logger); // Output: Logger instance
-   * console.log(myConfig.messages); // Output: Messages instance
-   * console.log(myConfig.eventBus); // Output: EventBus instance
+   * console.log(myConfig);
    * ```
    */
   getConfig(): IRedisSMQConfigRequired {

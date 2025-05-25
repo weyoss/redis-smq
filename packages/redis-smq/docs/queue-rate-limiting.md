@@ -33,6 +33,4 @@ queueRateLimit.set('notifications', { limit: 200, interval: 60000 }, (err) => {
 
 For comprehensive guidance on configuring and managing rate limiting for a queue, refer to the following resource:
 
-- [QueueRateLimit Class Documentation](api/classes/QueueRateLimit.md)
-
-Additionally, you can configure queue rate limiting parameters using the [HTTP API Interface](https://github.com/weyoss/redis-smq-monitor) or by accessing the [Web UI](https://github.com/weyoss/redis-smq-monitor-client) from your browser.
+- [QueueRateLimit Class](api/classes/QueueRateLimit.md)
