@@ -81,6 +81,7 @@ RedisSMQ provides several classes for browsing and managing messages by type:
 |-----------------------------------------------------------------------|-------------------------------------------|------------------------------|
 | [QueueMessages](api/classes/QueueMessages.md)                         | Browse/manage all messages (any status)   | No                           |
 | [QueueScheduledMessages](api/classes/QueueScheduledMessages.md)       | Browse/manage only scheduled messages     | No                           |
+| [QueuePendingMessages](api/classes/QueuePendingMessages.md)           | Browse/manage only pending messages       | No                           |
 | [QueueAcknowledgedMessages](api/classes/QueueAcknowledgedMessages.md) | Browse/manage only acknowledged messages  | Yes                          |
 | [QueueDeadLetteredMessages](api/classes/QueueDeadLetteredMessages.md) | Browse/manage only dead-lettered messages | Yes                          |
 
