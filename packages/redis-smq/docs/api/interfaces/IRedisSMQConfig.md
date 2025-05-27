@@ -18,6 +18,10 @@
 
 • `Optional` **eventBus**: [`IEventBusConfig`](IEventBusConfig.md)
 
+**`See`**
+
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/event-bus.md
+
 ___
 
 ### logger
@@ -33,6 +37,10 @@ ___
 ### messages
 
 • `Optional` **messages**: [`IMessagesConfig`](IMessagesConfig.md)
+
+**`See`**
+
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/message-storage.md
 
 ___
 
