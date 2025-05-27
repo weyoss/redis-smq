@@ -21,6 +21,7 @@ Welcome to the RedisSMQ documentation! This comprehensive guide will help you im
 ### Message Handling
 
 - **[Messages](messages.md)**: Get a comprehensive overview of message handling within RedisSMQ
+- **[Message Storage](message-storage.md)**: Understand how messages are stored, retained, and managed in Redis
 - **[Producing Messages](producing-messages.md)**: Discover how to produce and send messages to your queues
 - **[Consuming Messages](consuming-messages.md)**: Get insights into how to consume and process messages from your queues
 - **[Scheduling Messages](scheduling-messages.md)**: Find out how to schedule messages for future delivery
