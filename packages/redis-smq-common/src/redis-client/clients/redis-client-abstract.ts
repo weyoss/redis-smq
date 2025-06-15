@@ -46,8 +46,8 @@ export abstract class RedisClientAbstract
   protected init(): void {
     async.series(
       [
-        (cb: ICallback<void>) => this.validateRedisServerSupport(cb),
-        (cb: ICallback<void>) => this.loadBuiltInScriptFiles(cb),
+        (cb: ICallback) => this.validateRedisServerSupport(cb),
+        (cb: ICallback) => this.loadBuiltInScriptFiles(cb),
       ],
       (err) => {
         if (err) this.emit('error', err);
@@ -69,8 +69,8 @@ export abstract class RedisClientAbstract
     );
   }
 
-  validateRedisServerSupport(cb: ICallback<void>): void {
-    const validate = (cb: ICallback<void>) => {
+  validateRedisServerSupport(cb: ICallback): void {
+    const validate = (cb: ICallback) => {
       const [major, feature, minor] = minimalSupportedVersion;
       if (!this.validateRedisVersion(major, feature, minor))
         cb(new RedisClientError('UNSUPPORTED_REDIS_SERVER_VERSION'));
@@ -349,15 +349,15 @@ export abstract class RedisClientAbstract
     cb: ICallback<(string | null)[]>,
   ): void;
 
-  abstract halt(cb: ICallback<void>): void;
+  abstract halt(cb: ICallback): void;
 
   abstract end(flush: boolean): void;
 
-  abstract shutdown(cb: ICallback<void>): void;
+  abstract shutdown(cb: ICallback): void;
 
   abstract getInfo(cb: ICallback<string>): void;
 
-  updateServerVersion(cb: ICallback<void>): void {
+  updateServerVersion(cb: ICallback): void {
     if (!RedisClientAbstract.redisServerVersion) {
       this.getInfo((err, res) => {
         if (err) cb(err);
@@ -374,38 +374,67 @@ export abstract class RedisClientAbstract
     } else cb();
   }
 
-  loadBuiltInScriptFiles(cb: ICallback<void>): void {
+  loadBuiltInScriptFiles(cb: ICallback): void {
     this.loadScriptFiles(luaScriptMap, (err) => cb(err));
   }
 
   loadScriptFiles(
-    scriptMap: Record<string, string>,
+    scriptMap: Record<string, string | string[]>,
     cb: ICallback<Record<string, string>>,
   ): void {
-    const tasks: ((cb: ICallback<void>) => void)[] = [];
+    const scriptsToLoad: Record<string, string | string[]> = {};
     const loadedScripts: Record<string, string> = {};
 
+    // Step 1: Segregate already loaded scripts from those that need loading.
     for (const name in scriptMap) {
-      if (!RedisClientAbstract.scripts[name]) {
-        tasks.push((cb: ICallback<void>) => {
-          fs.readFile(scriptMap[name], 'utf8', (err, content) => {
-            if (err) return cb(err);
-            this.loadScript(content, (err, sha) => {
-              if (err) return cb(err);
-              if (!sha) return cb(new CallbackEmptyReplyError());
-              loadedScripts[name] = sha;
-              RedisClientAbstract.scripts[name] = sha;
-              cb();
-            });
-          });
-        });
+      const sha = RedisClientAbstract.scripts[name];
+      if (sha) {
+        loadedScripts[name] = sha;
+      } else {
+        scriptsToLoad[name] = scriptMap[name];
       }
     }
-    if (!tasks.length) return cb(null, loadedScripts);
-    async.series(tasks, (err) => {
-      if (err) return cb(err);
-      cb(null, loadedScripts);
-    });
+
+    // If all scripts are already cached, return immediately.
+    if (Object.keys(scriptsToLoad).length === 0) {
+      return cb(null, loadedScripts);
+    }
+
+    // Step 2: Load the remaining scripts in parallel.
+    async.eachIn(
+      scriptsToLoad,
+      (scripts, name, taskCallback) => {
+        const scriptsArr = Array.isArray(scripts) ? scripts : [scripts];
+
+        // Step 2a: Read and combine all file parts for a single script.
+        async.map<string, string>(
+          scriptsArr,
+          (file, mapCallback) => fs.readFile(file, 'utf8', mapCallback),
+          10,
+          (err, contents) => {
+            if (err) return taskCallback(err);
+            if (!contents) return cb(new CallbackEmptyReplyError());
+            const scriptContent = contents.join('\n');
+
+            // Step 2b: Load the combined script content into Redis.
+            this.loadScript(scriptContent, (err, sha) => {
+              if (err) return taskCallback(err);
+              if (!sha) return taskCallback(new CallbackEmptyReplyError());
+
+              // Step 2c: Cache the loaded script SHA.
+              loadedScripts[name] = sha;
+              RedisClientAbstract.scripts[name] = sha;
+              taskCallback();
+            });
+          },
+        );
+      },
+      (err) => {
+        // Step 3: Final callback after all scripts are loaded (or an error occurred).
+        if (err) return cb(err);
+        cb(null, loadedScripts);
+      },
+    );
   }
 
   getScriptId(name: string): string | RedisClientError {
