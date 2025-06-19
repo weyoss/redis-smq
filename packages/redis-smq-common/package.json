@@ -1,28 +1,31 @@
 {
   "name": "redis-smq-common",
   "version": "8.3.1",
-  "description": "RedisSMQ Common Library provides many components that are mainly used by RedisSMQ and RedisSMQ Monitor.",
+  "description": "Provides essential components and utilities shared across RedisSMQ packages.",
   "author": "Weyoss <weyoss@protonmail.com>",
   "license": "MIT",
   "keywords": [
     "redis",
-    "message queue",
-    "message-queue",
-    "message",
-    "queue",
-    "job queue",
-    "job-queue",
-    "jobs",
     "redis-smq",
-    "priority",
-    "priority queue",
+    "smq",
+    "message-queue",
+    "message-broker",
+    "job-queue",
     "priority-queue",
     "scheduler",
     "broker",
-    "message broker",
-    "message-broker"
+    "fifo",
+    "lifo",
+    "jobs"
   ],
   "homepage": "https://github.com/weyoss/redis-smq",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/weyoss/redis-smq.git"
+  },
   "bugs": {
     "url": "https://github.com/weyoss/redis-smq/issues"
   },
@@ -81,12 +84,5 @@
   "engineStrict": true,
   "engines": {
     "node": ">=20"
-  },
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/weyoss/redis-smq.git"
   }
 }
