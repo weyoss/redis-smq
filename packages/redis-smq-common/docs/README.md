@@ -8,7 +8,7 @@ The RedisSMQ Common Library consists of the following key components:
 2. **RedisLock**: Provides distributed locking mechanisms using Redis as a centralized lock manager.
 3. **RedisServer**: An embedded standalone server for testing and development purposes.
 4. **RedisClient**: A wrapper for Redis operations, supporting both node-redis and ioredis clients, providing a unified interface for Redis commands, transactions, and pub/sub operations.
-5. **FileLock**: A file-based locking mechanism to ensure exclusive access to a resource in a multi-process environment.
+5. **FileLock**: A file-based locking mechanism to ensure exclusive access to a resource in a multiprocess environment.
 6. **archive**: A utility for handling archive extraction, supporting both .tgz and .rpm formats.
 7. **env**: A utility for accessing environment-related paths, such as the current working directory and cache directory.
 8. **net**: Utility functions for network-related tasks, specifically for checking port availability and finding random available ports.
@@ -22,9 +22,7 @@ The RedisSMQ Common Library consists of the following key components:
 16. **Worker**: Implements a worker pattern for processing tasks, allowing the creation of specialized workers for different types of jobs.
 17. **Timer**: A wrapper around setTimout() and setInterval().
 
-## API Reference
-
-See [API reference](api/README.md) for more details.
+See [API reference](./api/README.md) for more details.
 
 ## Guides
 
@@ -33,3 +31,4 @@ To get started with the RedisSMQ Common Library, refer to the following guides:
 - [Logger](./logger.md)
 - [Redis Client](./redis-client)
 - [Redis Server](./redis-server.md)
+
