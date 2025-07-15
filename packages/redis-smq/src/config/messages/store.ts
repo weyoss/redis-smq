@@ -12,7 +12,7 @@ import {
   IMessagesConfigStorageOptions,
   IMessagesConfigStorageOptionsRequired,
   IMessagesConfigStorageRequired,
-} from '../../lib/index.js';
+} from '../../index.js';
 import {
   ConfigurationMessageQueueSizeError,
   ConfigurationMessageStoreExpireError,

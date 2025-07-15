@@ -16,18 +16,18 @@ import {
   IQueueParams,
   QueueRateLimit,
   QueueRateLimitQueueNotFoundError,
-} from '../../../src/lib/index.js';
+} from '../../../src/index.js';
 import { getDefaultQueue } from '../../common/message-producing-consuming.js';
 
 test('SetQueueRateLimit(): QueueRateLimitQueueNotFoundError', async () => {
   const defaultQueue = getDefaultQueue();
   const path1 = resolve(
     env.getCurrentDir(),
-    '../../../src/lib/queue-rate-limit/queue-rate-limit.js',
+    '../../../src/queue-rate-limit/queue-rate-limit.js',
   );
   const path2 = resolve(
     env.getCurrentDir(),
-    '../../../src/lib/queue/_/_parse-queue-params-and-validate.js',
+    '../../../src/queue/_/_parse-queue-params-and-validate.js',
   );
   const { QueueRateLimit } = await esmock<{
     QueueRateLimit: new () => QueueRateLimit;

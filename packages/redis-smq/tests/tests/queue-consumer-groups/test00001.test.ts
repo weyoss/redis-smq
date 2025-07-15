@@ -17,7 +17,7 @@ import {
   EQueueType,
   IQueueParams,
 } from '../../../index.js';
-import { QueueConsumerGroupsCache } from '../../../src/lib/producer/queue-consumer-groups-cache.js';
+import { QueueConsumerGroupsCache } from '../../../src/producer/queue-consumer-groups-cache.js';
 import { getProducer } from '../../common/producer.js';
 import { getQueue } from '../../common/queue.js';
 import { EventBus } from '../../../index.js';

@@ -11,7 +11,7 @@ import { expect, test } from 'vitest';
 import bluebird from 'bluebird';
 import { ICallback } from 'redis-smq-common';
 import { IMessageTransferable, ProducibleMessage } from '../../../index.js';
-import { EQueueType } from '../../../src/lib/index.js';
+import { EQueueType } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import {
   createQueue,

@@ -8,7 +8,7 @@
  */
 
 import bluebird from 'bluebird';
-import { Message } from '../../src/lib/index.js';
+import { Message } from '../../src/index.js';
 
 const instances: Message[] = [];
 

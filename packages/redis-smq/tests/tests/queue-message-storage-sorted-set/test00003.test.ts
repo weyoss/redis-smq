@@ -15,8 +15,8 @@ import {
   EMessagePriority,
   EQueueType,
   ProducibleMessage,
-} from '../../../src/lib/index.js';
-import { QueueMessagesStorageSortedSet } from '../../../src/lib/queue-messages/queue-messages-storage/queue-messages-storage-sorted-set.js';
+} from '../../../src/index.js';
+import { QueueStorageSortedSet } from '../../../src/common/queue-explorer/queue-storage/queue-storage-sorted-set.js';
 
 import {
   createQueue,
@@ -26,12 +26,12 @@ import { getProducer } from '../../common/producer.js';
 
 const { promisifyAll } = bluebird;
 
-it('QueueMessagesStorageSortedSet: should fetch all items for a large list (chunking test)', async () => {
+it('QueueStorageSortedSet: should fetch all items for a large list (chunking test)', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.PRIORITY_QUEUE);
   const redisClient = promisifyAll(new RedisClient());
   const queueMessagesStorageSortedSet = promisifyAll(
-    new QueueMessagesStorageSortedSet(redisClient),
+    new QueueStorageSortedSet(redisClient),
   );
 
   const ids: string[] = [];

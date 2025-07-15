@@ -9,7 +9,7 @@
 
 import { test } from 'vitest';
 import bluebird from 'bluebird';
-import { EQueueDeliveryModel, EQueueType } from '../../../src/lib/index.js';
+import { EQueueDeliveryModel, EQueueType } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import { getDefaultQueue } from '../../common/message-producing-consuming.js';
 import { getQueue } from '../../common/queue.js';

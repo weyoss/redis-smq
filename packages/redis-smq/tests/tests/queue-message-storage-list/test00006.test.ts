@@ -11,8 +11,8 @@ import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
 import { RedisClient } from '../../../src/common/redis-client/redis-client.js';
 import { redisKeys } from '../../../src/common/redis-keys/redis-keys.js';
-import { EQueueType, ProducibleMessage } from '../../../src/lib/index.js';
-import { QueueMessagesStorageList } from '../../../src/lib/queue-messages/queue-messages-storage/queue-messages-storage-list.js';
+import { EQueueType, ProducibleMessage } from '../../../src/index.js';
+import { QueueStorageList } from '../../../src/common/queue-explorer/queue-storage/queue-storage-list.js';
 import {
   createQueue,
   getDefaultQueue,
@@ -21,12 +21,12 @@ import { getProducer } from '../../common/producer.js';
 
 const { promisifyAll } = bluebird;
 
-it('QueueMessagesStorageList: should fetch all items for a small list', async () => {
+it('QueueStorageList: should fetch all items for a small list', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
   const redisClient = promisifyAll(new RedisClient());
   const queueMessagesStorageList = promisifyAll(
-    new QueueMessagesStorageList(redisClient),
+    new QueueStorageList(redisClient),
   );
 
   const ids: string[] = [];

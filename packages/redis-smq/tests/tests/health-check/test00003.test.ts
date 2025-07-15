@@ -15,7 +15,7 @@ import {
   EQueueType,
   Producer,
   ProducibleMessage,
-} from '../../../src/lib/index.js';
+} from '../../../src/index.js';
 import { getQueue } from '../../common/queue.js';
 
 test('Health check: case 3', async () => {

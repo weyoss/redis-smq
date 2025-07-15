@@ -11,8 +11,8 @@ import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
 import { RedisClient } from '../../../src/common/redis-client/redis-client.js';
 import { redisKeys } from '../../../src/common/redis-keys/redis-keys.js';
-import { EQueueType } from '../../../src/lib/index.js';
-import { QueueMessagesStorageSortedSet } from '../../../src/lib/queue-messages/queue-messages-storage/queue-messages-storage-sorted-set.js';
+import { EQueueType } from '../../../src/index.js';
+import { QueueStorageSortedSet } from '../../../src/common/queue-explorer/queue-storage/queue-storage-sorted-set.js';
 
 import {
   createQueue,
@@ -22,12 +22,12 @@ import {
 
 const { promisifyAll } = bluebird;
 
-it('QueueMessagesStorageSortedSet: should return 0 for an empty list', async () => {
+it('QueueStorageSortedSet: should return 0 for an empty list', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.PRIORITY_QUEUE);
   const redisClient = promisifyAll(new RedisClient());
   const queueMessagesStorageSortedSet = promisifyAll(
-    new QueueMessagesStorageSortedSet(redisClient),
+    new QueueStorageSortedSet(redisClient),
   );
 
   const { keyQueuePriorityPending } = redisKeys.getQueueKeys(
@@ -46,7 +46,7 @@ it('should return the correct count after adding items', async () => {
   await createQueue(defaultQueue, EQueueType.PRIORITY_QUEUE);
   const redisClient = promisifyAll(new RedisClient());
   const queueMessagesStorageSortedSet = promisifyAll(
-    new QueueMessagesStorageSortedSet(redisClient),
+    new QueueStorageSortedSet(redisClient),
   );
   await produceMessageWithPriority(defaultQueue);
   const { keyQueuePriorityPending } = redisKeys.getQueueKeys(

@@ -9,7 +9,7 @@
 
 import { expect, vitest, test } from 'vitest';
 import bluebird from 'bluebird';
-import { ProducibleMessage } from '../../../src/lib/index.js';
+import { ProducibleMessage } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import { getEventBus } from '../../common/event-bus-redis.js';
 import { untilMessageDeadLettered } from '../../common/events.js';

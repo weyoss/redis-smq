@@ -9,10 +9,7 @@
 
 import { expect, vitest, test } from 'vitest';
 import { ICallback } from 'redis-smq-common';
-import {
-  IMessageTransferable,
-  ProducibleMessage,
-} from '../../../src/lib/index.js';
+import { IMessageTransferable, ProducibleMessage } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import { getEventBus } from '../../common/event-bus-redis.js';
 import { untilMessageAcknowledged } from '../../common/events.js';
@@ -24,6 +21,7 @@ import { getProducer } from '../../common/producer.js';
 import { validateTime } from '../../common/validate-time.js';
 
 test('An unacknowledged message is delayed given messageRetryDelay > 0 and messageRetryThreshold > 0 and is not exceeded', async () => {
+  const retryThreshold = 5;
   const eventBus = await getEventBus();
 
   const defaultQueue = getDefaultQueue();
@@ -36,9 +34,9 @@ test('An unacknowledged message is delayed given messageRetryDelay > 0 and messa
       (msg: IMessageTransferable, cb: ICallback<void>) => {
         timestamps.push(Date.now());
         callCount += 1;
-        if (callCount < 5) {
+        if (callCount < retryThreshold) {
           throw new Error('Explicit error');
-        } else if (callCount === 5) {
+        } else if (callCount === retryThreshold) {
           cb();
         } else throw new Error('Unexpected call');
       },
@@ -60,7 +58,7 @@ test('An unacknowledged message is delayed given messageRetryDelay > 0 and messa
     .setBody({ hello: 'world' })
     .setQueue(getDefaultQueue())
     .setRetryDelay(10000)
-    .setRetryThreshold(5);
+    .setRetryThreshold(retryThreshold);
 
   const producer = getProducer();
   await producer.runAsync();
@@ -70,7 +68,7 @@ test('An unacknowledged message is delayed given messageRetryDelay > 0 and messa
 
   await untilMessageAcknowledged(consumer);
 
-  expect(unacks).toBe(4);
+  expect(unacks).toBe(retryThreshold - 1);
   expect(acks).toBe(1);
 
   // consumer workers are run each ~ 5 sec
@@ -79,14 +77,6 @@ test('An unacknowledged message is delayed given messageRetryDelay > 0 and messa
       continue;
     }
     const diff = timestamps[i] - timestamps[i - 1];
-    if (i === 1) {
-      expect(validateTime(diff, 11000)).toBe(true);
-    } else if (i === 2) {
-      expect(validateTime(diff, 11000)).toBe(true);
-    } else if (i === 3) {
-      expect(validateTime(diff, 11000)).toBe(true);
-    } else {
-      expect(validateTime(diff, 11000)).toBe(true);
-    }
+    expect(validateTime(diff, 11000, 5000)).toBe(true);
   }
 });

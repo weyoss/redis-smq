@@ -8,8 +8,8 @@
  */
 
 import { logger } from 'redis-smq-common';
-import { Configuration } from '../../src/config/index.js';
-import { ProducibleMessage } from '../../src/lib/index.js';
+import { Configuration } from '../../src/index.js';
+import { ProducibleMessage } from '../../src/index.js';
 import { config } from './config.js';
 import { getRedisInstance } from './redis.js';
 

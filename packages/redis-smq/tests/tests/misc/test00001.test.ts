@@ -9,7 +9,7 @@
 
 import { expect, test } from 'vitest';
 import bluebird from 'bluebird';
-import { ConsumerHeartbeat } from '../../../src/lib/consumer/consumer-heartbeat/consumer-heartbeat.js';
+import { ConsumerHeartbeat } from '../../../src/consumer/consumer-heartbeat/consumer-heartbeat.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import { getConsumer } from '../../common/consumer.js';
 import {

@@ -13,8 +13,8 @@ import {
   MessageDestinationQueueRequiredError,
   MessageMessageExchangeRequiredError,
   ProducibleMessage,
-} from '../../../src/lib/index.js';
-import { MessageEnvelope } from '../../../src/lib/message/message-envelope.js';
+} from '../../../src/index.js';
+import { MessageEnvelope } from '../../../src/message/message-envelope.js';
 
 test('MessageEnvelope: additional checks', async () => {
   const msg = new ProducibleMessage();

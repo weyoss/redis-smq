@@ -12,7 +12,7 @@ import {
   Consumer,
   IQueueParams,
   TConsumerMessageHandler,
-} from '../../src/lib/index.js';
+} from '../../src/index.js';
 import { shutDownBaseInstance } from './base-instance.js';
 import { getDefaultQueue } from './message-producing-consuming.js';
 

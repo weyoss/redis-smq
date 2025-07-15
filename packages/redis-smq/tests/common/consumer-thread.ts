@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { Configuration, IRedisSMQConfig } from '../../src/config/index.js';
-import { Consumer, Producer, ProducibleMessage } from '../../src/lib/index.js';
+import { Configuration, IRedisSMQConfig } from '../../src/index.js';
+import { Consumer, Producer, ProducibleMessage } from '../../src/index.js';
 import { getDefaultQueue } from './message-producing-consuming.js';
 
 process.on('message', function (payload: unknown) {

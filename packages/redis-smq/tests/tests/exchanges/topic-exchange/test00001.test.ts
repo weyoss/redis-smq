@@ -8,7 +8,7 @@
  */
 
 import { expect, test } from 'vitest';
-import { ExchangeInvalidTopicParamsError } from '../../../../src/lib/index.js';
+import { ExchangeInvalidTopicParamsError } from '../../../../src/index.js';
 import { getTopicExchange } from '../../../common/exchange.js';
 
 test('ExchangeTopic: topic validation', async () => {

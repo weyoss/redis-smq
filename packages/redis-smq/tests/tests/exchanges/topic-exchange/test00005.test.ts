@@ -8,7 +8,7 @@
  */
 
 import { expect, test } from 'vitest';
-import { ProducibleMessage } from '../../../../src/lib/index.js';
+import { ProducibleMessage } from '../../../../src/index.js';
 import { createQueue } from '../../../common/message-producing-consuming.js';
 import { getMessage } from '../../../common/message.js';
 import { getProducer } from '../../../common/producer.js';

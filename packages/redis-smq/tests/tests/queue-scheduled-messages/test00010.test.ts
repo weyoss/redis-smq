@@ -16,7 +16,7 @@ import {
   ProducerPriorityQueuingNotEnabledError,
   ProducerQueueNotFoundError,
   ProducibleMessage,
-} from '../../../src/lib/index.js';
+} from '../../../src/index.js';
 import { getProducer } from '../../common/producer.js';
 import { getQueue } from '../../common/queue.js';
 

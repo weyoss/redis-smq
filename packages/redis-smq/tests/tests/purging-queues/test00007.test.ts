@@ -9,8 +9,8 @@
 
 import { expect, test } from 'vitest';
 import { ICallback, IRedisClient } from 'redis-smq-common';
-import { processingQueue } from '../../../src/lib/consumer/message-handler/message-handler/consume-message/processing-queue.js';
-import { IQueueParams } from '../../../src/lib/index.js';
+import { processingQueue } from '../../../src/consumer/message-handler/consume-message/processing-queue.js';
+import { IQueueParams } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import {
   createQueue,

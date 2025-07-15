@@ -8,7 +8,7 @@
  */
 
 import { expect, vitest, test } from 'vitest';
-import { ProducibleMessage } from '../../../src/lib/index.js';
+import { ProducibleMessage } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import { untilConsumerDown } from '../../common/events.js';
 import {

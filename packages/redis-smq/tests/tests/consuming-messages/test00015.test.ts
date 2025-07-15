@@ -16,7 +16,7 @@ import {
   EQueueDeliveryModel,
   EQueueType,
   IMessageTransferable,
-} from '../../../src/lib/index.js';
+} from '../../../src/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import { getQueue } from '../../common/queue.js';
 

@@ -8,7 +8,7 @@
  */
 
 import bluebird from 'bluebird';
-import { Queue } from '../../src/lib/index.js';
+import { Queue } from '../../src/index.js';
 
 const instances: Queue[] = [];
 

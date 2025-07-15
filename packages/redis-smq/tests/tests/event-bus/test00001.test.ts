@@ -9,12 +9,12 @@
 
 import { expect, test } from 'vitest';
 import bluebird from 'bluebird';
-import { TRedisSMQEvent } from '../../../src/common/index.js';
+import { TRedisSMQEvent } from '../../../src/index.js';
 import {
   IQueueParams,
   IQueueParsedParams,
   ProducibleMessage,
-} from '../../../src/lib/index.js';
+} from '../../../src/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import { getConsumer } from '../../common/consumer.js';
 import { getEventBus } from '../../common/event-bus-redis.js';

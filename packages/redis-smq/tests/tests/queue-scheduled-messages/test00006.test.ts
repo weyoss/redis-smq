@@ -9,7 +9,7 @@
 
 import { expect, test } from 'vitest';
 import bluebird from 'bluebird';
-import { ProducibleMessage } from '../../../src/lib/index.js';
+import { ProducibleMessage } from '../../../src/index.js';
 import {
   createQueue,
   getDefaultQueue,

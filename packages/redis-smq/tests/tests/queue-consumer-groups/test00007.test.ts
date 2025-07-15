@@ -17,7 +17,7 @@ import {
   EQueueType,
   IQueueParams,
   QueueInvalidQueueParameterError,
-} from '../../../src/lib/index.js';
+} from '../../../src/index.js';
 import { getQueue } from '../../common/queue.js';
 
 test('Consumer group ID validation', async () => {

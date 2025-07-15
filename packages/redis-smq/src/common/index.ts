@@ -8,4 +8,5 @@
  */
 
 export * from './types/index.js';
-export * from './event-bus/event-bus.js';
+export * from './queue-explorer/errors/index.js';
+export * from './queue-explorer/types/index.js';

@@ -9,7 +9,7 @@
 
 import { vitest, test } from 'vitest';
 import { ICallback } from 'redis-smq-common';
-import { IMessageTransferable } from '../../../src/lib/index.js';
+import { IMessageTransferable } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import { untilMessageAcknowledged } from '../../common/events.js';
 import {

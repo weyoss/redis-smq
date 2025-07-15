@@ -15,7 +15,7 @@ import {
   Namespace,
   NamespaceNotFoundError,
   Queue,
-} from '../../../src/lib/index.js';
+} from '../../../src/index.js';
 
 test('Namespace', async () => {
   const queue = bluebird.promisifyAll(new Queue());
