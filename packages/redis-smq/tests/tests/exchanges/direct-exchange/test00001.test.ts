@@ -8,7 +8,7 @@
  */
 
 import { expect, test } from 'vitest';
-import { ExchangeInvalidQueueParamsError } from '../../../../src/lib/index.js';
+import { ExchangeInvalidQueueParamsError } from '../../../../src/index.js';
 import { getDirectExchange } from '../../../common/exchange.js';
 
 test('DirectExchange', async () => {

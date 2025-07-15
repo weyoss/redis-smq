@@ -12,7 +12,7 @@ import {
   EQueueDeliveryModel,
   EQueueType,
   ExchangeFanOutQueueTypeError,
-} from '../../../../src/lib/index.js';
+} from '../../../../src/index.js';
 import { getFanOutExchange } from '../../../common/exchange.js';
 import { getQueue } from '../../../common/queue.js';
 

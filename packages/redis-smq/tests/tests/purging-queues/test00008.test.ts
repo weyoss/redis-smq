@@ -14,7 +14,7 @@ import {
   QueueQueueHasRunningConsumersError,
   QueueQueueNotEmptyError,
   QueueQueueNotFoundError,
-} from '../../../src/lib/index.js';
+} from '../../../src/index.js';
 import {
   createQueue,
   produceAndAcknowledgeMessage,

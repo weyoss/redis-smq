@@ -9,10 +9,7 @@
 
 import { expect, test } from 'vitest';
 import { ICallback } from 'redis-smq-common';
-import {
-  IMessageTransferable,
-  ProducibleMessage,
-} from '../../../src/lib/index.js';
+import { IMessageTransferable, ProducibleMessage } from '../../../src/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import { getConsumer } from '../../common/consumer.js';
 import { untilMessageAcknowledged } from '../../common/events.js';

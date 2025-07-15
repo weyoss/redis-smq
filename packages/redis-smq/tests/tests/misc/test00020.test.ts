@@ -12,7 +12,7 @@ import {
   EMessagePriority,
   MessageMessagePropertyError,
   ProducibleMessage,
-} from '../../../src/lib/index.js';
+} from '../../../src/index.js';
 
 test('ProducibleMessage', async () => {
   const msg = new ProducibleMessage();

@@ -8,7 +8,7 @@
  */
 
 import { expect, test } from 'vitest';
-import { EQueueType } from '../../../src/lib/index.js';
+import { EQueueType } from '../../../src/index.js';
 import {
   createQueue,
   getDefaultQueue,

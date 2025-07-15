@@ -12,7 +12,7 @@ import {
   QueueQueueNotFoundError,
   QueueRateLimitInvalidIntervalError,
   QueueRateLimitInvalidLimitError,
-} from '../../../src/lib/index.js';
+} from '../../../src/index.js';
 import {
   createQueue,
   getDefaultQueue,

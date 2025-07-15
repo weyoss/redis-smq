@@ -8,7 +8,7 @@
  */
 
 import bluebird from 'bluebird';
-import { QueueRateLimit } from '../../src/lib/index.js';
+import { QueueRateLimit } from '../../src/index.js';
 
 const instances: QueueRateLimit[] = [];
 

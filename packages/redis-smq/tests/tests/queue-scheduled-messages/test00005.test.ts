@@ -9,7 +9,7 @@
 
 import { expect, test } from 'vitest';
 import bluebird from 'bluebird';
-import { ProducibleMessage } from '../../../src/lib/index.js';
+import { ProducibleMessage } from '../../../src/index.js';
 import {
   createQueue,
   getDefaultQueue,
@@ -24,7 +24,7 @@ test('Schedule a message: combine CRON, REPEAT, REPEAT PERIOD', async () => {
   await createQueue(defaultQueue, false);
 
   const msg = new ProducibleMessage();
-  msg.setScheduledCRON('*/20 * * * * *'); // Schedule message for each 30 seconds
+  msg.setScheduledCRON('*/20 * * * * *'); // Schedule message for each 20 seconds
   msg.setScheduledRepeat(2); // repeat 2 times
   msg.setScheduledRepeatPeriod(5000); // 5 secs between each repeat
   msg.setQueue(getDefaultQueue());

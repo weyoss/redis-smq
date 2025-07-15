@@ -8,7 +8,7 @@
  */
 
 import bluebird from 'bluebird';
-import { EventBus } from '../../src/common/index.js';
+import { EventBus } from '../../src/index.js';
 
 let eventBus: ReturnType<typeof bluebird.promisifyAll<EventBus>> | null = null;
 

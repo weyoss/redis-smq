@@ -9,7 +9,7 @@
 
 import { expect, test } from 'vitest';
 import { EMessagePropertyStatus, ProducibleMessage } from '../../../index.js';
-import { EQueueType } from '../../../src/lib/index.js';
+import { EQueueType } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import {
   untilMessageAcknowledged,
@@ -22,7 +22,7 @@ import {
 import { getMessage } from '../../common/message.js';
 import { getProducer } from '../../common/producer.js';
 
-test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_DELAYING -> ACKNOWLEDGED', async () => {
+test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQUEUING -> UNACK_DELAYING -> ACKNOWLEDGED', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
 
@@ -34,7 +34,7 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_DELAYING -> 
     .setBody({ hello: 'world' })
     .setQueue(getDefaultQueue())
     .setRetryThreshold(2)
-    .setRetryDelay(5000);
+    .setRetryDelay(10000);
   const [id] = await producer.produceAsync(msg);
 
   const message = await getMessage();
@@ -54,8 +54,13 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_DELAYING -> 
 
   await untilMessageUnacknowledged(consumer);
   expect(msg1[0]).toBe(EMessagePropertyStatus.PROCESSING);
-  const msg2 = await message.getMessageStatusAsync(id);
-  expect(msg2).toBe(EMessagePropertyStatus.UNACK_DELAYING);
+  const status = await message.getMessageStatusAsync(id);
+  expect(status).toBe(EMessagePropertyStatus.UNACK_REQUEUING);
+
+  await new Promise((resolve) => setTimeout(resolve, 3000));
+
+  const status1 = await message.getMessageStatusAsync(id);
+  expect(status1).toBe(EMessagePropertyStatus.UNACK_DELAYING);
 
   await untilMessageAcknowledged(consumer);
   const msg3 = await message.getMessageStatusAsync(id);

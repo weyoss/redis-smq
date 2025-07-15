@@ -17,7 +17,7 @@ import {
   IMessageParams,
   IMessageTransferable,
   ProducibleMessage,
-} from '../../../src/lib/index.js';
+} from '../../../src/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import { getEventBus } from '../../common/event-bus-redis.js';
 import { getProducer } from '../../common/producer.js';

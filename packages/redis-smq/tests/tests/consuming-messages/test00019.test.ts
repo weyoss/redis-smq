@@ -8,7 +8,7 @@
  */
 
 import { expect, test } from 'vitest';
-import { ProducibleMessage } from '../../../src/lib/index.js';
+import { ProducibleMessage } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import { untilMessageDeadLettered } from '../../common/events.js';
 import {
@@ -47,5 +47,5 @@ test('An unacknowledged message is dead-lettered and not delivered again, given 
 
   const m = await getMessage();
   const mState = await m.getMessageStateAsync(r.items[0].id);
-  expect(mState.attempts).toBe(0);
+  expect(mState.attempts).toBe(1);
 });

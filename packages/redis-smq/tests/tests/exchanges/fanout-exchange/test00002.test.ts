@@ -8,7 +8,7 @@
  */
 
 import { expect, test } from 'vitest';
-import { EQueueDeliveryModel, EQueueType } from '../../../../src/lib/index.js';
+import { EQueueDeliveryModel, EQueueType } from '../../../../src/index.js';
 import { getFanOutExchange } from '../../../common/exchange.js';
 import { getQueue } from '../../../common/queue.js';
 import { isEqual } from '../../../common/utils.js';

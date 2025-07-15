@@ -11,7 +11,7 @@ import { expect, test } from 'vitest';
 import {
   ProducerExchangeNoMatchedQueueError,
   ProducibleMessage,
-} from '../../../../src/lib/index.js';
+} from '../../../../src/index.js';
 import { getProducer } from '../../../common/producer.js';
 
 test('ExchangeFanOut: producing message having an exchange without matched queues ', async () => {

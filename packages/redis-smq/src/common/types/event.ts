@@ -14,7 +14,7 @@ import {
   IQueueParams,
   IQueueParsedParams,
   IQueueProperties,
-} from '../../lib/index.js';
+} from '../../index.js';
 
 export type TConsumerHeartbeatEvent = {
   'consumerHeartbeat.heartbeat': (

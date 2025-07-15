@@ -8,7 +8,7 @@
  */
 
 import { ICallback } from 'redis-smq-common';
-import { IMessageParams } from '../../src/lib/index.js';
+import { IMessageParams } from '../../src/index.js';
 
 export default function myHandler(msg: IMessageParams, cb: ICallback<void>) {
   cb(new Error('MY_ERROR'));

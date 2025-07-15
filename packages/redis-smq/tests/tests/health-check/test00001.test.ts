@@ -9,7 +9,7 @@
 
 import { expect, vitest, test } from 'vitest';
 import bluebird from 'bluebird';
-import { Producer } from '../../../src/lib/index.js';
+import { Producer } from '../../../src/index.js';
 
 test('Health check: case 1', async () => {
   const producerUpMock = vitest.fn();

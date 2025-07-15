@@ -10,14 +10,14 @@
 import { expect, test } from 'vitest';
 import bluebird from 'bluebird';
 import { ICallback } from 'redis-smq-common';
-import { _getConsumerQueues } from '../../../src/lib/consumer/consumer/_/_get-consumer-queues.js';
+import { _getConsumerQueues } from '../../../src/consumer/_/_get-consumer-queues.js';
 import {
   Consumer,
   EQueueDeliveryModel,
   EQueueType,
   IMessageTransferable,
-} from '../../../src/lib/index.js';
-import { _getQueueConsumers } from '../../../src/lib/queue/_/_get-queue-consumers.js';
+} from '../../../src/index.js';
+import { _getQueueConsumers } from '../../../src/queue/_/_get-queue-consumers.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import { getDefaultQueue } from '../../common/message-producing-consuming.js';
 import { getQueue } from '../../common/queue.js';

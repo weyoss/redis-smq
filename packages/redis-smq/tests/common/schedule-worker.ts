@@ -9,12 +9,9 @@
 
 import bluebird from 'bluebird';
 import { Runnable } from 'redis-smq-common';
-import {
-  Configuration,
-  IRedisSMQConfigRequired,
-} from '../../src/config/index.js';
-import PublishScheduledWorker from '../../src/lib/consumer/workers/publish-scheduled.worker.js';
-import { IQueueParams } from '../../src/lib/index.js';
+import { Configuration, IRedisSMQConfigRequired } from '../../src/index.js';
+import PublishScheduledWorker from '../../src/consumer/workers/publish-scheduled.worker.js';
+import { IQueueParams } from '../../src/index.js';
 
 const scheduleWorker: Record<string, Runnable<Record<string, never>>> = {};
 

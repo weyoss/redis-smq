@@ -8,7 +8,7 @@
  */
 
 import bluebird from 'bluebird';
-import { QueueScheduledMessages } from '../../src/lib/index.js';
+import { QueueScheduledMessages } from '../../src/index.js';
 
 const instances: QueueScheduledMessages[] = [];
 

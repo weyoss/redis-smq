@@ -8,7 +8,7 @@
  */
 
 import bluebird from 'bluebird';
-import { Namespace } from '../../src/lib/index.js';
+import { Namespace } from '../../src/index.js';
 
 const instances: Namespace[] = [];
 

@@ -9,7 +9,7 @@
 
 import { expect, test } from 'vitest';
 import { ProducibleMessage } from '../../../index.js';
-import { ProducerInstanceNotRunningError } from '../../../src/lib/index.js';
+import { ProducerInstanceNotRunningError } from '../../../src/index.js';
 import {
   createQueue,
   getDefaultQueue,

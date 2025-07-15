@@ -14,9 +14,8 @@ import {
   EQueueDeliveryModel,
   EQueueType,
   IMessageTransferable,
-  MessageMessageNotRequeuableError,
   ProducibleMessage,
-} from '../../../src/lib/index.js';
+} from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import { untilMessageAcknowledged } from '../../common/events.js';
 import { getDefaultQueue } from '../../common/message-producing-consuming.js';
@@ -74,27 +73,23 @@ test('Combined test. Requeue a priority message from acknowledged queue. Check q
   expect(count.acknowledged).toBe(1);
 
   const message = await getMessage();
-  await message.requeueMessageByIdAsync(id);
+  const newMessageId = await message.requeueMessageByIdAsync(id);
 
   const count2 = await queueMessages.countMessagesByStatusAsync(defaultQueue);
   expect(count2.pending).toBe(1);
-  expect(count2.acknowledged).toBe(0);
+  expect(count2.acknowledged).toBe(1);
 
   const res6 = await acknowledgedMessages.getMessagesAsync(
     defaultQueue,
     0,
     100,
   );
-  expect(res6.totalItems).toBe(0);
-  expect(res6.items.length).toBe(0);
+  expect(res6.totalItems).toBe(1);
+  expect(res6.items.length).toBe(1);
 
   const pendingMessages = await getQueuePendingMessages();
   const res7 = await pendingMessages.getMessagesAsync(defaultQueue, 0, 100);
   expect(res7.totalItems).toBe(1);
   expect(res7.items.length).toBe(1);
-  expect(res7.items[0].id).toEqual(id);
-
-  await expect(message.requeueMessageByIdAsync(id)).rejects.toThrow(
-    MessageMessageNotRequeuableError,
-  );
+  expect(res7.items[0].id).toEqual(newMessageId);
 });

@@ -11,7 +11,7 @@ import { expect, test } from 'vitest';
 import bluebird from 'bluebird';
 import path from 'path';
 import { env } from 'redis-smq-common';
-import { Consumer, ProducibleMessage } from '../../../src/lib/index.js';
+import { Consumer, ProducibleMessage } from '../../../src/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import { getEventBus } from '../../common/event-bus-redis.js';
 import { createQueue } from '../../common/message-producing-consuming.js';

@@ -8,7 +8,7 @@
  */
 
 import bluebird from 'bluebird';
-import { QueueAcknowledgedMessages } from '../../src/lib/index.js';
+import { QueueAcknowledgedMessages } from '../../src/index.js';
 
 const instances: QueueAcknowledgedMessages[] = [];
 

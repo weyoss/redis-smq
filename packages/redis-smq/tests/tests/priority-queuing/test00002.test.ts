@@ -16,7 +16,7 @@ import {
   EQueueType,
   IMessageTransferable,
   ProducibleMessage,
-} from '../../../src/lib/index.js';
+} from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import { getDefaultQueue } from '../../common/message-producing-consuming.js';
 import { getProducer } from '../../common/producer.js';

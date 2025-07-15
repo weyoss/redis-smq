@@ -12,7 +12,7 @@ import {
   ExchangeDirect,
   ExchangeFanOut,
   ExchangeTopic,
-} from '../../src/lib/index.js';
+} from '../../src/index.js';
 
 const fanOutExchanges: ExchangeFanOut[] = [];
 

@@ -7,6 +7,4 @@
  * in the root directory of this source tree.
  */
 
-export * from './src/common/index.js';
-export * from './src/config/index.js';
-export * from './src/lib/index.js';
+export * from './src/index.js';

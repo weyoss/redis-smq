@@ -12,7 +12,7 @@ import {
   EQueueDeliveryModel,
   EQueueType,
   ProducibleMessage,
-} from '../../../../src/lib/index.js';
+} from '../../../../src/index.js';
 import { getFanOutExchange } from '../../../common/exchange.js';
 import { getMessage } from '../../../common/message.js';
 import { getProducer } from '../../../common/producer.js';

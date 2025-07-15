@@ -10,7 +10,7 @@
 import { fork } from 'child_process';
 import path from 'path';
 import { env, ICallback } from 'redis-smq-common';
-import { Configuration } from '../../src/config/index.js';
+import { Configuration } from '../../src/index.js';
 import {
   EMessagePriority,
   EQueueDeliveryModel,
@@ -18,7 +18,7 @@ import {
   IMessageTransferable,
   IQueueParams,
   ProducibleMessage,
-} from '../../src/lib/index.js';
+} from '../../src/index.js';
 import { config } from './config.js';
 import { getConsumer } from './consumer.js';
 import {

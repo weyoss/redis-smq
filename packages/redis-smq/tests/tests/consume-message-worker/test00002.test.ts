@@ -14,14 +14,14 @@ import { env } from 'redis-smq-common';
 import {
   ConsumerMessageHandlerFileError,
   ConsumerMessageHandlerFilenameExtensionError,
-} from '../../../src/lib/consumer/message-handler/errors/index.js';
+} from '../../../src/consumer/message-handler/errors/index.js';
 import {
   Consumer,
   EQueueDeliveryModel,
   EQueueType,
   Producer,
   ProducibleMessage,
-} from '../../../src/lib/index.js';
+} from '../../../src/index.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueue } from '../../common/queue.js';
 

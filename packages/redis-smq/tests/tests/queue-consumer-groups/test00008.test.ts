@@ -15,7 +15,7 @@ import {
   EQueueDeliveryModel,
   EQueueType,
   IQueueParams,
-} from '../../../src/lib/index.js';
+} from '../../../src/index.js';
 import { getQueue } from '../../common/queue.js';
 
 test('Consumer groups/Queue delivery model validation', async () => {

@@ -7,17 +7,15 @@
  * in the root directory of this source tree.
  */
 
-import { expect, vitest, test } from 'vitest';
+import { expect, test, vitest } from 'vitest';
 import bluebird from 'bluebird';
-import { Configuration } from '../../../src/config/index.js';
-import DelayUnacknowledgedWorker from '../../../src/lib/consumer/workers/delay-unacknowledged.worker.js';
-import PublishScheduledWorker from '../../../src/lib/consumer/workers/publish-scheduled.worker.js';
-import WatchConsumersWorker from '../../../src/lib/consumer/workers/watch-consumers.worker.js';
 import {
-  IMessageParams,
-  IMessageTransferable,
+  Configuration,
+  EMessagePropertyStatus,
+  Message,
   ProducibleMessage,
-} from '../../../src/lib/index.js';
+} from '../../../src/index.js';
+import RequeueDelayedWorker from '../../../src/consumer/workers/requeue-delayed.worker.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import { getConsumer } from '../../common/consumer.js';
 import { untilConsumerDown } from '../../common/events.js';
@@ -27,23 +25,21 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getProducer } from '../../common/producer.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
-import { getQueueScheduledMessages } from '../../common/queue-scheduled-messages.js';
+import RequeueImmediateWorker from '../../../src/consumer/workers/requeue-immediate.worker.js';
 
-test('WatchdogWorker -> DelayUnacknowledgedWorker -> PublishScheduledWorker', async () => {
+test('An unacked message with retryDelay should be moved to queueRequeued. RequeueImmediateWorker should move the message from queueRequeued to queueDelayed. RequeueDelayedWorker should move the message from queueDelayed to queuePending.', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
 
-  let message: IMessageParams | null = null;
   const consumer = getConsumer({
-    messageHandler: vitest.fn((msg: IMessageTransferable) => {
-      message = msg;
+    messageHandler: vitest.fn(() => {
       setTimeout(() => consumer.shutdown(() => void 0), 5000);
     }),
   });
 
   const producer = getProducer();
   await producer.runAsync();
-  await producer.produceAsync(
+  const [messageId] = await producer.produceAsync(
     new ProducibleMessage()
       .setRetryDelay(10000)
       .setBody('message body')
@@ -53,46 +49,41 @@ test('WatchdogWorker -> DelayUnacknowledgedWorker -> PublishScheduledWorker', as
   consumer.run(() => void 0);
   await untilConsumerDown(consumer);
   await shutDownBaseInstance(consumer);
-  expect(message !== null).toBe(true);
+
+  const message = bluebird.promisifyAll(new Message());
+  const msg = await message.getMessageByIdAsync(messageId);
+
+  expect(msg.status === EMessagePropertyStatus.UNACK_REQUEUING).toBe(true);
 
   const workerArgs = {
     queueParsedParams: { queueParams: defaultQueue, groupId: null },
     config: Configuration.getSetConfig(),
   };
 
-  // should move message from processing queue to delay queue
-  const watchdogWorker = bluebird.promisifyAll(
-    WatchConsumersWorker(workerArgs),
+  // should move from requeue queue to delay queue
+  const requeueImmediateWorker = bluebird.promisifyAll(
+    RequeueImmediateWorker(workerArgs),
   );
-  await watchdogWorker.runAsync();
+  await requeueImmediateWorker.runAsync();
   await bluebird.delay(5000);
 
-  // should move from delay queue to scheduled queue
-  const delayHandler = bluebird.promisifyAll(
-    DelayUnacknowledgedWorker(workerArgs),
+  const msg2 = await message.getMessageByIdAsync(messageId);
+  expect(msg2.status === EMessagePropertyStatus.UNACK_DELAYING).toBe(true);
+
+  // should move from requeue queue to delay queue
+  const requeueDelayedWorker = bluebird.promisifyAll(
+    RequeueDelayedWorker(workerArgs),
   );
-  await delayHandler.runAsync();
-  await bluebird.delay(5000);
+  await requeueDelayedWorker.runAsync();
+  await bluebird.delay(10000);
 
-  const scheduledMessages = await getQueueScheduledMessages();
-  const res = await scheduledMessages.getMessagesAsync(defaultQueue, 0, 100);
-  expect(res.totalItems).toBe(1);
-
-  // should move from delay queue to scheduled queue
-  const scheduleWorker = bluebird.promisifyAll(
-    PublishScheduledWorker(workerArgs),
-  );
-  await scheduleWorker.runAsync();
-  await bluebird.delay(15000);
-
-  const res2 = await scheduledMessages.getMessagesAsync(defaultQueue, 0, 100);
-  expect(res2.totalItems).toBe(0);
+  const msg3 = await message.getMessageByIdAsync(messageId);
+  expect(msg3.status === EMessagePropertyStatus.PENDING).toBe(true);
 
   const pendingMessages = await getQueuePendingMessages();
-  const res3 = await pendingMessages.getMessagesAsync(defaultQueue, 0, 100);
-  expect(res3.totalItems).toBe(1);
+  const res = await pendingMessages.getMessagesAsync(defaultQueue, 0, 100);
+  expect(res.totalItems).toBe(1);
 
-  await delayHandler.shutdownAsync();
-  await watchdogWorker.shutdownAsync();
-  await scheduleWorker.shutdownAsync();
+  await requeueDelayedWorker.shutdownAsync();
+  await requeueImmediateWorker.shutdownAsync();
 });

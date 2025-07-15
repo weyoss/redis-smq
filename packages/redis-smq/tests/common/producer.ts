@@ -8,7 +8,7 @@
  */
 
 import bluebird from 'bluebird';
-import { Producer } from '../../src/lib/index.js';
+import { Producer } from '../../src/index.js';
 import { shutDownBaseInstance } from './base-instance.js';
 
 const producersList: Producer[] = [];

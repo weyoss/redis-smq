@@ -19,7 +19,7 @@ import {
   IQueueParams,
   Producer,
   ProducibleMessage,
-} from '../../../src/lib/index.js';
+} from '../../../src/index.js';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueue } from '../../common/queue.js';

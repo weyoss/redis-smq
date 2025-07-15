@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { IQueueParams } from '../../lib/index.js';
+import { IQueueParams } from '../../index.js';
 import { RedisKeysInvalidKeyError } from './errors/index.js';
 
 /**
@@ -51,15 +51,23 @@ enum ERedisKey {
   QUEUE_MESSAGE_IDS,
   QUEUE_CONSUMER_GROUPS,
 
-  // Global keys
-  QUEUES,
+  // Message keys
+  MESSAGE,
+
+  // Consumer keys
   CONSUMER_QUEUES,
   CONSUMER_HEARTBEAT,
+
+  // Namespace keys
   NS_QUEUES,
+
+  // Exchange keys
+  FANOUT_EXCHANGE_BINDINGS,
+
+  // Global keys
+  QUEUES,
   NAMESPACES,
-  EXCHANGE_BINDINGS,
   FANOUT_EXCHANGES,
-  MESSAGE,
 }
 
 /**
@@ -178,7 +186,7 @@ export const redisKeys = {
    */
   getFanOutExchangeKeys(bindingKey: string) {
     const exchangeKeys = {
-      keyExchangeBindings: ERedisKey.EXCHANGE_BINDINGS,
+      keyFanoutExchangeBindings: ERedisKey.FANOUT_EXCHANGE_BINDINGS,
     };
     return {
       ...makeNamespacedKeys(
