@@ -7,16 +7,40 @@
  * in the root directory of this source tree.
  */
 
-import { URL } from 'url';
-import { constants } from './constants.js';
 import { ConfigInvalidApiServerParamsError } from './errors/ConfigInvalidApiServerParamsError.js';
 import {
-  IRedisSMQHttpApiConfig,
-  IRedisSMQHttpApiParsedConfig,
-  THttpApiConfig,
+  IRedisSMQRestApiConfig,
+  IRedisSMQRestApiParsedConfig,
 } from './types/index.js';
+import {
+  EConsoleLoggerLevel,
+  ERedisConfigClient,
+  ILoggerConfig,
+  IRedisConfig,
+} from 'redis-smq-common';
 
-function normalizePath(path: string) {
+export const defaultConfig = {
+  logger: {
+    enabled: true,
+    options: {
+      logLevel: EConsoleLoggerLevel.DEBUG,
+    },
+  },
+  redis: {
+    client: ERedisConfigClient.IOREDIS,
+    options: {
+      host: '127.0.0.1',
+      port: 6379,
+      db: 1,
+    },
+  },
+  apiServer: {
+    port: 8081,
+    basePath: '/',
+  },
+};
+
+function normalizePath(path: string): string {
   const s = path
     .split('/')
     .map((i) => i.trim())
@@ -25,40 +49,49 @@ function normalizePath(path: string) {
   return `/${s}`;
 }
 
-function validateURL(
-  apiServer: THttpApiConfig,
-): [string, number, string] | Error {
-  const {
-    hostname = constants.apiServerHostname,
-    port = constants.apiServerPort,
-    basePath = constants.apiServerBasePath,
-  } = apiServer;
-  const address = `http://${hostname}:${port}${normalizePath(basePath)}`;
-  try {
-    const url = new URL(address);
-    if (!['http'].map((x) => `${x.toLowerCase()}:`).includes(url.protocol)) {
-      return new ConfigInvalidApiServerParamsError();
-    }
-    if (hostname !== url.hostname || port !== Number(url.port)) {
-      return new ConfigInvalidApiServerParamsError();
-    }
-    return [url.hostname, Number(url.port), url.pathname];
-  } catch {
-    return new ConfigInvalidApiServerParamsError();
-  }
-}
-
 export function parseConfig(
-  config: IRedisSMQHttpApiConfig = {},
-): IRedisSMQHttpApiParsedConfig {
-  const { apiServer = {}, ...rest } = config;
-  const reply = validateURL(apiServer);
-  if (reply instanceof Error) throw reply;
-  const [hostname, port, basePath] = reply;
+  config: IRedisSMQRestApiConfig = {},
+): IRedisSMQRestApiParsedConfig {
+  const { apiServer = {}, redis, logger, ...rest } = config;
+  const port = apiServer.port ?? defaultConfig.apiServer.port;
+  const basePath = normalizePath(
+    apiServer.basePath ?? defaultConfig.apiServer.basePath,
+  );
+
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new ConfigInvalidApiServerParamsError(
+      `Expected a valid port number (1-65535).`,
+    );
+  }
+
+  // Redis client config
+  const redisCfg: IRedisConfig = {
+    ...redis,
+    client: redis?.client ?? defaultConfig.redis.client,
+    options: {
+      ...(redis?.options ?? {}),
+      port: redis?.options?.port ?? defaultConfig.redis.options.port,
+      host: redis?.options?.host ?? defaultConfig.redis.options.host,
+      db: redis?.options?.db ?? defaultConfig.redis.options.db,
+    },
+  };
+
+  // Logger config
+  const loggerCfg: ILoggerConfig = {
+    ...(logger ?? {}),
+    enabled: logger?.enabled,
+    options: {
+      ...(logger?.options ?? {}),
+      logLevel:
+        logger?.options?.logLevel ?? defaultConfig.logger.options.logLevel,
+    },
+  };
+
   return {
     ...rest,
+    redis: redisCfg,
+    logger: loggerCfg,
     apiServer: {
-      hostname,
       port,
       basePath,
     },
