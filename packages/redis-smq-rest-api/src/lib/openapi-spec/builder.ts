@@ -9,14 +9,31 @@
 
 import { writeFile } from 'fs/promises';
 import { JSONSchema4, JSONSchema7 } from 'json-schema';
+import { readFile } from 'node:fs/promises';
 import { OpenAPIV3 } from 'openapi-types';
-import { resolve } from 'path';
+import { join, resolve } from 'path';
+import { env } from 'redis-smq-common';
 import { constants } from '../../config/constants.js';
 import { EControllerRequestPayload } from '../controller/types/index.js';
 import { TRouterResourceMap } from '../router/types/index.js';
 import { SchemaGenerator } from '../validator/schema-generator.js';
 import { getOpenApiRoutes } from './adaptor.js';
 import { IOpenApiRouteParams } from './types/index.js';
+
+/**
+ * Gets the package version from package.json
+ * @returns The version string from package.json
+ */
+async function getPackageVersion(): Promise<string> {
+  // Navigate to the package.json file
+  const currentDir = env.getCurrentDir();
+  const packagePath = join(currentDir, '../../../../../package.json');
+
+  // Read and parse the package.json file
+  const fileContent = await readFile(packagePath, 'utf-8');
+  const packageJson: { version: string } = JSON.parse(fileContent);
+  return packageJson.version;
+}
 
 // Using dynamic import instead of 'import ... from ...' to fix CJS module error:
 // TypeError: json_schema_to_openapi_schema_1.default.default is not a function
@@ -106,11 +123,12 @@ async function buildOpenApiDocument(
   routes: IOpenApiRouteParams[],
   basePath: string = '/',
 ) {
+  const restAPIVersion = await getPackageVersion();
   const spec: OpenAPIV3.Document = {
     openapi: '3.0.0',
     info: {
       title: 'RedisSMQ HTTP API specification',
-      version: '8.0.0',
+      version: restAPIVersion,
     },
     components: { schemas: {} },
     servers: [

@@ -9,8 +9,8 @@
 
 import KoaRouter from '@koa/router';
 import { RedisSMQError } from 'redis-smq-common';
-import { Container } from '../../app/container/Container.js';
-import { getErrorResponseParams } from '../../app/errors/getErrorResponseParams.js';
+import { Container } from '../../container/Container.js';
+import { getErrorResponseParams } from '../../errors/getErrorResponseParams.js';
 import {
   IApplicationMiddlewareContext,
   IApplicationMiddlewareState,
@@ -26,84 +26,154 @@ import { ValidateResponseMiddleware } from './middlewares/ValidateResponseMiddle
 import { parseRoutingMap } from './parser.js';
 import { TRouter, TRouterResourceMap } from './types/index.js';
 
-type TSchema = ReturnType<typeof SchemaGenerator>;
+type TSchemaGenerator = ReturnType<typeof SchemaGenerator>;
 
-async function registerRoute(
-  appRouter: TRouter,
-  controller: TControllerRequestHandlerGeneric,
+// Cache for schema validators to avoid redundant compilation
+const validatorCacheByController = new Map<
+  string,
+  {
+    requestValidators: ReturnType<TSchemaGenerator['getRequestValidators']>;
+    responseValidators: ReturnType<TSchemaGenerator['getResponseValidators']>;
+  }
+>();
+
+/**
+ * Gets or creates validators for a controller
+ *
+ * @param schemaGenerator - Schema generator instance
+ * @param controllerName - Name of the controller
+ * @param payloadSources - Payload sources for validation
+ * @returns Object containing request and response validators
+ */
+function getOrCreateValidatorsForController(
+  schemaGenerator: TSchemaGenerator,
   controllerName: string,
-  method: EControllerRequestMethod,
-  payload: EControllerRequestPayload[],
-  routePath: string,
-  schema: TSchema,
+  payloadSources: EControllerRequestPayload[],
 ) {
-  // Request validation
-  const requestSchema = schema.getRequestSchemas(controllerName, payload);
-  const requestValidatorMap = schema.getRequestValidators(requestSchema);
+  const cacheKey = `${controllerName}:${payloadSources.join(',')}`;
+  let cachedValidators = validatorCacheByController.get(cacheKey);
 
-  // Response validation
-  const responseSchema = schema.getResponseSchemas(controllerName);
-  const responseValidatorMap = schema.getResponseValidators(responseSchema);
+  if (!cachedValidators) {
+    // Request validation
+    const requestSchemas = schemaGenerator.getRequestSchemas(
+      controllerName,
+      payloadSources,
+    );
+    const requestValidators =
+      schemaGenerator.getRequestValidators(requestSchemas);
 
-  // Add koa route
-  appRouter[method](
+    // Response validation
+    const responseSchemas = schemaGenerator.getResponseSchemas(controllerName);
+    const responseValidators =
+      schemaGenerator.getResponseValidators(responseSchemas);
+
+    cachedValidators = {
+      requestValidators,
+      responseValidators,
+    };
+    validatorCacheByController.set(cacheKey, cachedValidators);
+  }
+
+  return cachedValidators;
+}
+
+/**
+ * Registers a route with validation middleware
+ */
+async function registerRouteWithValidation(
+  router: TRouter,
+  controllerHandler: TControllerRequestHandlerGeneric,
+  controllerName: string,
+  httpMethod: EControllerRequestMethod,
+  payloadSources: EControllerRequestPayload[],
+  routePath: string,
+  schemaGenerator: TSchemaGenerator,
+) {
+  const { requestValidators, responseValidators } =
+    getOrCreateValidatorsForController(
+      schemaGenerator,
+      controllerName,
+      payloadSources,
+    );
+
+  // Add koa route with optimized middleware chain
+  router[httpMethod](
     routePath,
-    ValidateRequestMiddleware(requestValidatorMap),
+    ValidateRequestMiddleware(requestValidators),
     async (ctx, next) => {
       try {
-        const [status, payload] = await controller(ctx, next);
-        const data = payload ?? null;
-        ctx.status = status;
-        ctx.body = data === null && status === 204 ? null : { data };
+        const [statusCode, responseData] = await controllerHandler(ctx, next);
+        const responseBody = responseData ?? null;
+        ctx.status = statusCode;
+        ctx.body =
+          responseBody === null && statusCode === 204
+            ? null
+            : { data: responseBody };
         ctx.state.responseSchemaKey = 'OK';
-      } catch (e: unknown) {
-        if (e instanceof RedisSMQError) {
-          const reply = getErrorResponseParams(e);
-          const [code, message] = reply;
-          ctx.state.responseSchemaKey = message;
-          ctx.status = code;
+      } catch (error: unknown) {
+        if (error instanceof RedisSMQError) {
+          const [errorCode, errorMessage] = getErrorResponseParams(error);
+          ctx.state.responseSchemaKey = errorMessage;
+          ctx.status = errorCode;
           ctx.body = {
             error: {
-              code: code,
-              message: message,
+              code: errorCode,
+              message: errorMessage,
               details: {},
             },
           };
-        } else throw e;
+        } else throw error;
       }
       return next();
     },
-    ValidateResponseMiddleware(responseValidatorMap),
+    ValidateResponseMiddleware(responseValidators),
   );
 }
 
-export async function registerResources(routingMap: TRouterResourceMap) {
+/**
+ * Registers all resources from the routing map
+ *
+ * @param routingMap - The routing resource map
+ * @returns Configured Koa router
+ */
+export async function registerResources(
+  routingMap: TRouterResourceMap,
+): Promise<TRouter> {
   const { apiServer } = Container.getInstance().resolve('config');
   const { basePath } = apiServer;
-  const appRouter = new KoaRouter<
+
+  // Create router with optional prefix
+  const apiRouter = new KoaRouter<
     IApplicationMiddlewareState,
     IApplicationMiddlewareContext
-  >({ prefix: basePath.length > 1 ? basePath : undefined });
-  const schema = SchemaGenerator();
+  >({
+    prefix: basePath && basePath.length > 1 ? basePath : undefined,
+  });
+
+  // Create schema generator once
+  const schemaGenerator = SchemaGenerator();
+
+  // Parse routing map and register each route
   await parseRoutingMap(
     routingMap,
     async (
-      controller: TControllerRequestHandlerGeneric,
+      controllerHandler: TControllerRequestHandlerGeneric,
       controllerName: string,
-      method: EControllerRequestMethod,
-      payload: EControllerRequestPayload[],
-      path: string,
+      httpMethod: EControllerRequestMethod,
+      payloadSources: EControllerRequestPayload[],
+      routePath: string,
     ) => {
-      await registerRoute(
-        appRouter,
-        controller,
+      await registerRouteWithValidation(
+        apiRouter,
+        controllerHandler,
         controllerName,
-        method,
-        payload,
-        path,
-        schema,
+        httpMethod,
+        payloadSources,
+        routePath,
+        schemaGenerator,
       );
     },
   );
-  return appRouter;
+
+  return apiRouter;
 }
