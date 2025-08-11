@@ -1,0 +1,60 @@
+{
+  "name": "redis-smq-web-server",
+  "version": "8.3.1",
+  "description": "Web server for RedisSMQ Web UI: serves the SPA and hosts or proxies the RedisSMQ REST API.",
+  "author": "Weyoss <weyoss@protonmail.com>",
+  "license": "MIT",
+  "keywords": [
+    "redis",
+    "redis-smq",
+    "message-queue",
+    "web-server",
+    "rest-api",
+    "proxy",
+    "http",
+    "express",
+    "spa",
+    "dashboard",
+    "monitoring"
+  ],
+  "homepage": "https://github.com/weyoss/redis-smq",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/weyoss/redis-smq.git"
+  },
+  "bugs": {
+    "url": "https://github.com/weyoss/redis-smq/issues"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "scripts/build.sh",
+    "dev": "tsc -w & node --watch dist/index.js",
+    "test": "vitest run"
+  },
+  "bin": {
+    "redis-smq-web-server": "./dist/esm/bin/cli.js"
+  },
+  "dependencies": {
+    "commander": "13.1.0",
+    "express": "4.21.2",
+    "ioredis": "5.5.0",
+    "http-proxy-middleware": "3.0.5"
+  },
+  "devDependencies": {
+    "@types/express": "4.17.23"
+  },
+  "peerDependencies": {
+    "redis-smq-web-ui": "workspace:^",
+    "redis-smq-rest-api": "workspace:^",
+    "redis-smq-common": "workspace:^"
+  },
+  "engineStrict": true,
+  "engines": {
+    "node": ">=20"
+  }
+}
