@@ -13,3 +13,10 @@ data
 .husky/_
 lerna-debug.log
 *.sqlite
+**/*.tsbuildinfo
+**/test-results/
+**/playwright-report/
+packages/redis-smq-web-ui/run/
+packages/redis-smq-web-ui/src/api/generated/
+packages/redis-smq-web-ui/src/api/model/
+**/.env
