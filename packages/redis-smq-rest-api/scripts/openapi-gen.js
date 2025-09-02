@@ -16,7 +16,7 @@ import {
   generateOpenApiDocument,
   saveOpenApiDocument,
 } from '../dist/esm/src/lib/openapi-spec/builder.js';
-import { routing } from '../dist/esm/src/app/router/routing.js';
+import { routing } from '../dist/esm/src/router/routing.js';
 
 // Configure the command-line interface
 const program = new Command();
