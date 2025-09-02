@@ -12,8 +12,8 @@ import { useInfiniteQuery, useQueryClient } from '@tanstack/vue-query';
 import {
   useDeleteApiV1MessagesId,
   usePostApiV1MessagesIdRequeue,
-} from '@/api/generated/message-list/message-list';
-import type { IQueueParams, IMessageTransferable } from '@/types/index.js';
+} from '@/api/generated/message-list/message-list.ts';
+import type { IQueueParams, IMessageTransferable } from '@/types/index.ts';
 import { getErrorMessage } from '@/lib/error.ts';
 
 /**

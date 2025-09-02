@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import type { IQueueParams } from '@/types/queues.js';
+import type { IQueueParams } from '@/types/queues.ts';
 
 export enum EExchangeType {
   DIRECT,

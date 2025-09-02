@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { useDeleteApiV1NamespacesNsQueuesName } from '@/api/generated/queue/queue.js';
+import { useDeleteApiV1NamespacesNsQueuesName } from '@/api/generated/queue/queue.ts';
 import { computed } from 'vue';
 
 /**

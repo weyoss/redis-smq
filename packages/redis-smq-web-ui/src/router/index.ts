@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { routes } from '@/router/routes.js';
-import { usePageContentStore } from '@/stores/pageContent.js';
+import { routes } from '@/router/routes.ts';
+import { usePageContentStore } from '@/stores/pageContent.ts';
 import NotFoundViewView from '@/views/NotFoundView.vue';
 import { createRouter, createWebHistory } from 'vue-router';
 

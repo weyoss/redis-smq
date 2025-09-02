@@ -8,7 +8,7 @@
  */
 
 // Get the API URL from the window.configs object or use a default
-import { getConfig } from '@/config/index.js';
+import { getConfig } from '@/config/index.ts';
 
 const apiUrl = getConfig('API_URL').replace(/\/+$/, '');
 

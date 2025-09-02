@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { usePostApiV1Queues } from '@/api/generated/queues/queues.js';
+import { usePostApiV1Queues } from '@/api/generated/queues/queues.ts';
 import { computed } from 'vue';
 
 /**

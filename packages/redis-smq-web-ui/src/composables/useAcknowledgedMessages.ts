@@ -8,12 +8,12 @@
  */
 
 import { type Ref } from 'vue';
-import { getApiV1NamespacesNsQueuesNameAcknowledgedMessages } from '@/api/generated/acknowledged-messages/acknowledged-messages';
+import { getApiV1NamespacesNsQueuesNameAcknowledgedMessages } from '@/api/generated/acknowledged-messages/acknowledged-messages.ts';
 import {
   useMessages,
   type MessagesQueryConfig,
 } from '@/composables/useMessages';
-import type { IQueueParams } from '@/types/index.js';
+import type { IQueueParams } from '@/types/index.ts';
 
 /**
  * Composable for acknowledged messages with delete capability but no requeue

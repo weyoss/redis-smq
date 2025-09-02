@@ -7,6 +7,6 @@
  * in the root directory of this source tree.
  */
 
-export * from '@/types/messages.js';
-export * from '@/types/queues.js';
-export * from '@/types/exchanges.js';
+export * from '@/types/messages.ts';
+export * from '@/types/queues.ts';
+export * from '@/types/exchanges.ts';

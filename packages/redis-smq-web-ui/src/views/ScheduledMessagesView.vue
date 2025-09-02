@@ -12,10 +12,10 @@ import { computed, watch, watchEffect } from 'vue';
 import { useRoute } from 'vue-router';
 import PageContent from '@/components/PageContent.vue';
 import MessageList from '@/components/MessageList.vue';
-import { usePageContentStore } from '@/stores/pageContent.js';
+import { usePageContentStore } from '@/stores/pageContent.ts';
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
 import { useSelectedQueuePropertiesStore } from '@/stores/selectedQueueProperties.ts';
-import type { IQueueParams } from '@/types/index.js';
+import type { IQueueParams } from '@/types/index.ts';
 import { useScheduledMessages } from '@/composables/useScheduledMessages.ts';
 
 const route = useRoute();

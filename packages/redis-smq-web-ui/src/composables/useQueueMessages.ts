@@ -8,12 +8,12 @@
  */
 
 import { type Ref } from 'vue';
-import { getApiV1NamespacesNsQueuesNameMessages } from '@/api/generated/queue-messages/queue-messages';
+import { getApiV1NamespacesNsQueuesNameMessages } from '@/api/generated/queue-messages/queue-messages.ts';
 import {
   useMessages,
   type MessagesQueryConfig,
 } from '@/composables/useMessages';
-import type { IQueueParams } from '@/types/index.js';
+import type { IQueueParams } from '@/types/index.ts';
 
 /**
  * Composable for all queue messages with full delete and requeue capabilities

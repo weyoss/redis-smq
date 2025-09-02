@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import BreadcrumbsBar from '@/components/BreadcrumbsPanel.vue';
-import { main } from '@/router/main.js';
+import { main } from '@/router/main.ts';
 import { computed, onMounted, ref } from 'vue';
 import { type RouteRecordNameGeneric, useRouter } from 'vue-router';
 import packageJson from '../package.json';

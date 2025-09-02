@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { EQueueDeliveryModel, EQueueType } from '@/types/index.js';
+import { EQueueDeliveryModel, EQueueType } from '@/types/index.ts';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import { z } from 'zod';

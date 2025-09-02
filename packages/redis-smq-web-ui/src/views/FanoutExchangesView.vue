@@ -12,7 +12,7 @@ import { computed, onMounted, ref, watchEffect } from 'vue';
 import { useFanoutExchanges } from '@/composables/useFanoutExchanges.ts';
 import { usePageContentStore, type PageAction } from '@/stores/pageContent';
 import { getErrorMessage } from '@/lib/error.ts';
-import type { IQueueParams } from '@/types/index.js';
+import type { IQueueParams } from '@/types/index.ts';
 
 import PageContent from '@/components/PageContent.vue';
 import CreateFanoutExchangeModal from '@/components/modals/CreateFanoutExchangeModal.vue';

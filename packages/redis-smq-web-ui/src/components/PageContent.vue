@@ -8,7 +8,7 @@
   -->
 
 <script setup lang="ts">
-import { usePageContentStore, type PageAction } from '@/stores/pageContent.js';
+import { usePageContentStore, type PageAction } from '@/stores/pageContent.ts';
 import { computed } from 'vue';
 
 interface Props {
