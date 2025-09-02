@@ -8,7 +8,7 @@
   -->
 
 <script setup lang="ts">
-import { routes } from '@/router/routes.js';
+import { routes } from '@/router/routes.ts';
 import { computed } from 'vue';
 import { useRoute, useRouter, type RouteRecordRaw } from 'vue-router';
 

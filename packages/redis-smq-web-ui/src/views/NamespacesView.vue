@@ -8,7 +8,7 @@
   -->
 
 <script setup lang="ts">
-import type { IQueueParams } from '@/types/index.js';
+import type { IQueueParams } from '@/types/index.ts';
 import { computed, onMounted, ref, watchEffect } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNamespaces } from '@/composables/useNamespaces.ts';

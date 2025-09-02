@@ -8,12 +8,12 @@
  */
 
 import { type Ref } from 'vue';
-import { getApiV1NamespacesNsQueuesNameScheduledMessages } from '@/api/generated/scheduled-messages/scheduled-messages';
+import { getApiV1NamespacesNsQueuesNameScheduledMessages } from '@/api/generated/scheduled-messages/scheduled-messages.ts';
 import {
   useMessages,
   type MessagesQueryConfig,
 } from '@/composables/useMessages';
-import type { IQueueParams } from '@/types/index.js';
+import type { IQueueParams } from '@/types/index.ts';
 
 /**
  * Composable for scheduled messages with delete capability but no requeue

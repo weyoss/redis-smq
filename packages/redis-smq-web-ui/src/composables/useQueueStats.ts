@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { useGetApiV1NamespacesNsQueuesNameTotalMessagesStats } from '@/api/generated/total-messages/total-messages.js';
+import { useGetApiV1NamespacesNsQueuesNameTotalMessagesStats } from '@/api/generated/total-messages/total-messages.ts';
 import { computed, type ComputedRef } from 'vue';
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
 

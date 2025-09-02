@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { getConfig } from '@/config/index.js';
+import { getConfig } from '@/config/index.ts';
 import axios, {
   type AxiosRequestConfig,
   type AxiosResponse,

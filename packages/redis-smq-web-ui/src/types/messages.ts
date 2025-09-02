@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import type { GetApiV1NamespacesNsQueuesNameMessages200DataItemsItem } from '@/api/model';
+import type { GetApiV1NamespacesNsQueuesNameMessages200DataItemsItem } from '@/api/model/index.ts';
 
 export enum EMessagePriority {
   HIGHEST,

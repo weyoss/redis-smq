@@ -9,11 +9,11 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { formatDate } from '@/lib/format.js';
+import { formatDate } from '@/lib/format.ts';
 import {
   EMessagePropertyStatus,
   type IMessageTransferable,
-} from '@/types/index.js';
+} from '@/types/index.ts';
 import ViewMessageModal from '@/components/modals/ViewMessageModal.vue';
 import type { getErrorMessage } from '@/lib/error.ts';
 

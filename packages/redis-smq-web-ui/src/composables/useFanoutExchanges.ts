@@ -22,7 +22,7 @@ import {
 import type {
   PostApiV1ExchangesFanOutBody,
   PutApiV1ExchangesFanOutFanOutNameQueuesBody,
-} from '@/api/model';
+} from '@/api/model/index.ts';
 import type { IQueueParams } from '@/types';
 
 /**

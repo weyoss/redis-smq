@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { main } from '@/router/main.js';
-import { pages } from '@/router/pages.js';
+import { main } from '@/router/main.ts';
+import { pages } from '@/router/pages.ts';
 import type { RouteRecordRaw } from 'vue-router';
 
 export const routes: readonly RouteRecordRaw[] = [...main, ...pages];

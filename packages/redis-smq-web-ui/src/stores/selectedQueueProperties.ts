@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { useGetApiV1NamespacesNsQueuesName } from '@/api/generated/queue/queue.js';
-import { EQueueDeliveryModel } from '@/types/index.js';
+import { useGetApiV1NamespacesNsQueuesName } from '@/api/generated/queue/queue.ts';
+import { EQueueDeliveryModel } from '@/types/index.ts';
 import { defineStore } from 'pinia';
 import { computed } from 'vue';
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';

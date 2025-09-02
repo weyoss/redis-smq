@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import type { IRedisSMQWebUIConfig } from '@/config/types/index.js';
+import type { IRedisSMQWebUIConfig } from '@/config/types/index.ts';
 
 // Create a global declaration to extend the Window interface
 declare global {

@@ -8,12 +8,12 @@
  */
 
 import { type Ref } from 'vue';
-import { getApiV1NamespacesNsQueuesNameDeadLetteredMessages } from '@/api/generated/dead-lettered-messages/dead-lettered-messages';
+import { getApiV1NamespacesNsQueuesNameDeadLetteredMessages } from '@/api/generated/dead-lettered-messages/dead-lettered-messages.ts';
 import {
   useMessages,
   type MessagesQueryConfig,
 } from '@/composables/useMessages';
-import type { IQueueParams } from '@/types/index.js';
+import type { IQueueParams } from '@/types/index.ts';
 
 /**
  * Composable for dead lettered messages with both delete and requeue capabilities

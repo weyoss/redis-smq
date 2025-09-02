@@ -8,11 +8,11 @@
   -->
 
 <script setup lang="ts">
-import type { PostApiV1QueuesBody } from '@/api/model/index.js';
+import type { PostApiV1QueuesBody } from '@/api/model/index.ts';
 import { computed, onMounted, ref, watch, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useNamespaces } from '@/composables/useNamespaces.ts';
-import { EQueueDeliveryModel, EQueueType } from '@/types/index.js';
+import { EQueueDeliveryModel, EQueueType } from '@/types/index.ts';
 import { getErrorMessage } from '@/lib/error.ts';
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
 import { useCreateQueue } from '@/composables/useCreateQueue.ts';

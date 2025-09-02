@@ -12,7 +12,7 @@ import {
   useGetApiV1NamespacesNsQueuesNameRateLimit,
   usePutApiV1NamespacesNsQueuesNameRateLimit,
 } from '@/api/generated/rate-limiting/rate-limiting.ts';
-import type { PutApiV1NamespacesNsQueuesNameRateLimitBody } from '@/api/model';
+import type { PutApiV1NamespacesNsQueuesNameRateLimitBody } from '@/api/model/index.ts';
 import { computed } from 'vue';
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
 

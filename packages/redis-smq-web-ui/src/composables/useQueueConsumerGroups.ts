@@ -12,7 +12,7 @@ import {
   usePostApiV1NamespacesNsQueuesNameConsumerGroups,
   useDeleteApiV1NamespacesNsQueuesNameConsumerGroupsConsumerGroupId,
 } from '@/api/generated/consumer-groups/consumer-groups.ts';
-import type { PostApiV1NamespacesNsQueuesNameConsumerGroupsBody } from '@/api/model';
+import type { PostApiV1NamespacesNsQueuesNameConsumerGroupsBody } from '@/api/model/index.ts';
 import { useSelectedQueuePropertiesStore } from '@/stores/selectedQueueProperties.ts';
 import { computed } from 'vue';
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';

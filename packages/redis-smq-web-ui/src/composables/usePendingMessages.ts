@@ -8,13 +8,13 @@
  */
 
 import { computed, type Ref } from 'vue';
-import { getApiV1NamespacesNsQueuesNamePendingMessages } from '@/api/generated/pending-messages/pending-messages';
+import { getApiV1NamespacesNsQueuesNamePendingMessages } from '@/api/generated/pending-messages/pending-messages.ts';
 import {
   useMessages,
   type MessagesQueryConfig,
 } from '@/composables/useMessages';
-import type { IQueueParams } from '@/types/index.js';
-import type { GetApiV1NamespacesNsQueuesNamePendingMessagesParams } from '@/api/model/getApiV1NamespacesNsQueuesNamePendingMessagesParams.js';
+import type { IQueueParams } from '@/types/index.ts';
+import type { GetApiV1NamespacesNsQueuesNamePendingMessagesParams } from '@/api/model/getApiV1NamespacesNsQueuesNamePendingMessagesParams.ts';
 
 /**
  * Composable for pending messages with both delete and requeue capabilities

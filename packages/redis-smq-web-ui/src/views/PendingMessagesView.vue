@@ -12,10 +12,10 @@ import ConsumerGroupSelector from '@/components/ConsumerGroupSelector.vue';
 import MessageList from '@/components/MessageList.vue';
 import PageContent from '@/components/PageContent.vue';
 import { usePendingMessages } from '@/composables/usePendingMessages.ts';
-import { usePageContentStore } from '@/stores/pageContent.js';
+import { usePageContentStore } from '@/stores/pageContent.ts';
 import { useSelectedQueuePropertiesStore } from '@/stores/selectedQueueProperties.ts';
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
-import type { IQueueParams } from '@/types/index.js';
+import type { IQueueParams } from '@/types/index.ts';
 import { computed, watch, watchEffect } from 'vue';
 import { useRoute } from 'vue-router';
 

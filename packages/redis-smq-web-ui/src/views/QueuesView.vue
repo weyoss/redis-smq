@@ -14,7 +14,7 @@ import { usePageContentStore, type PageAction } from '@/stores/pageContent';
 import { useSelectedQueueStore } from '@/stores/selectedQueue';
 import { useEscapeKey } from '@/composables/useEscapeKey';
 import type { QueueFormValues } from '@/composables/useQueueForm';
-import type { PostApiV1QueuesBody } from '@/api/model/index.js';
+import type { PostApiV1QueuesBody } from '@/api/model/index.ts';
 
 import PageContent from '@/components/PageContent.vue';
 import QueueListItem from '@/components/QueueListItem.vue';
