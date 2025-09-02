@@ -15,6 +15,8 @@ set -e
 # clean up
 rm -rf dist
 
+pnpm generate-openapi-client
+
 # vue app
 vue-tsc --build
 vite build .
