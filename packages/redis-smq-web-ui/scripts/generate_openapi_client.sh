@@ -12,6 +12,10 @@
 set -x
 set -e
 
+echo "Cleaning up old files ..."
+rm -rf src/api/generated
+rm -rf src/api/model
+
 echo "Generating API client ..."
 orval
 echo "API client generated successfully in src/api/generated"
