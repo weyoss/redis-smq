@@ -2,14 +2,8 @@
 
 # Interface: IEventBusConfig
 
-## Table of contents
-
-### Properties
-
-- [enabled](IEventBusConfig.md#enabled)
-
 ## Properties
 
-### enabled
+### enabled?
 
-• `Optional` **enabled**: `boolean`
+> `optional` **enabled**: `boolean`

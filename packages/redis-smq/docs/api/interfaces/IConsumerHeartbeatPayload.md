@@ -2,37 +2,38 @@
 
 # Interface: IConsumerHeartbeatPayload
 
-## Table of contents
-
-### Properties
-
-- [cpu](IConsumerHeartbeatPayload.md#cpu)
-- [ram](IConsumerHeartbeatPayload.md#ram)
-
 ## Properties
 
 ### cpu
 
-• **cpu**: `Object`
+> **cpu**: `object`
 
-#### Type declaration
+#### percentage
 
-| Name | Type |
-| :------ | :------ |
-| `percentage` | `string` |
-| `system` | `number` |
-| `user` | `number` |
+> **percentage**: `string`
 
-___
+#### system
+
+> **system**: `number`
+
+#### user
+
+> **user**: `number`
+
+***
 
 ### ram
 
-• **ram**: `Object`
+> **ram**: `object`
 
-#### Type declaration
+#### free
 
-| Name | Type |
-| :------ | :------ |
-| `free` | `number` |
-| `total` | `number` |
-| `usage` | `MemoryUsage` |
+> **free**: `number`
+
+#### total
+
+> **total**: `number`
+
+#### usage
+
+> **usage**: `MemoryUsage`

@@ -2,91 +2,128 @@
 
 # Interface: IMessageStateTransferable
 
-## Table of contents
-
-### Properties
-
-- [attempts](IMessageStateTransferable.md#attempts)
-- [expired](IMessageStateTransferable.md#expired)
-- [lastScheduledAt](IMessageStateTransferable.md#lastscheduledat)
-- [nextRetryDelay](IMessageStateTransferable.md#nextretrydelay)
-- [nextScheduledDelay](IMessageStateTransferable.md#nextscheduleddelay)
-- [publishedAt](IMessageStateTransferable.md#publishedat)
-- [scheduledAt](IMessageStateTransferable.md#scheduledat)
-- [scheduledCronFired](IMessageStateTransferable.md#scheduledcronfired)
-- [scheduledMessageId](IMessageStateTransferable.md#scheduledmessageid)
-- [scheduledRepeatCount](IMessageStateTransferable.md#scheduledrepeatcount)
-- [scheduledTimes](IMessageStateTransferable.md#scheduledtimes)
-- [uuid](IMessageStateTransferable.md#uuid)
-
 ## Properties
+
+### acknowledgedAt
+
+> **acknowledgedAt**: `null` \| `number`
+
+***
 
 ### attempts
 
-• **attempts**: `number`
+> **attempts**: `number`
 
-___
+***
+
+### deadLetteredAt
+
+> **deadLetteredAt**: `null` \| `number`
+
+***
+
+### effectiveScheduledDelay
+
+> **effectiveScheduledDelay**: `number`
+
+***
 
 ### expired
 
-• **expired**: `boolean`
+> **expired**: `boolean`
 
-___
+***
+
+### lastRequeuedAt
+
+> **lastRequeuedAt**: `null` \| `number`
+
+***
+
+### lastRetriedAttemptAt
+
+> **lastRetriedAttemptAt**: `null` \| `number`
+
+***
 
 ### lastScheduledAt
 
-• **lastScheduledAt**: ``null`` \| `number`
+> **lastScheduledAt**: `null` \| `number`
 
-___
+***
 
-### nextRetryDelay
+### lastUnacknowledgedAt
 
-• **nextRetryDelay**: `number`
+> **lastUnacknowledgedAt**: `null` \| `number`
 
-___
+***
 
-### nextScheduledDelay
+### processingStartedAt
 
-• **nextScheduledDelay**: `number`
+> **processingStartedAt**: `null` \| `number`
 
-___
+***
 
 ### publishedAt
 
-• **publishedAt**: ``null`` \| `number`
+> **publishedAt**: `null` \| `number`
 
-___
+***
+
+### requeueCount
+
+> **requeueCount**: `number`
+
+***
+
+### requeuedAt
+
+> **requeuedAt**: `null` \| `number`
+
+***
+
+### requeuedMessageParentId
+
+> **requeuedMessageParentId**: `null` \| `string`
+
+***
 
 ### scheduledAt
 
-• **scheduledAt**: ``null`` \| `number`
+> **scheduledAt**: `null` \| `number`
 
-___
+***
 
 ### scheduledCronFired
 
-• **scheduledCronFired**: `boolean`
+> **scheduledCronFired**: `boolean`
 
-___
+***
 
-### scheduledMessageId
+### scheduledMessageParentId
 
-• **scheduledMessageId**: ``null`` \| `string`
+> **scheduledMessageParentId**: `null` \| `string`
 
-___
+***
 
 ### scheduledRepeatCount
 
-• **scheduledRepeatCount**: `number`
+> **scheduledRepeatCount**: `number`
 
-___
+***
 
 ### scheduledTimes
 
-• **scheduledTimes**: `number`
+> **scheduledTimes**: `number`
 
-___
+***
+
+### unacknowledgedAt
+
+> **unacknowledgedAt**: `null` \| `number`
+
+***
 
 ### uuid
 
-• **uuid**: `string`
+> **uuid**: `string`

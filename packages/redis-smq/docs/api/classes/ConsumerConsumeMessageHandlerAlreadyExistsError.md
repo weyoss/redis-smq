@@ -2,153 +2,133 @@
 
 # Class: ConsumerConsumeMessageHandlerAlreadyExistsError
 
-## Hierarchy
+## Extends
 
 - [`ConsumerError`](ConsumerError.md)
 
-  ↳ **`ConsumerConsumeMessageHandlerAlreadyExistsError`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](ConsumerConsumeMessageHandlerAlreadyExistsError.md#constructor)
-
-### Properties
-
-- [cause](ConsumerConsumeMessageHandlerAlreadyExistsError.md#cause)
-- [message](ConsumerConsumeMessageHandlerAlreadyExistsError.md#message)
-- [stack](ConsumerConsumeMessageHandlerAlreadyExistsError.md#stack)
-- [prepareStackTrace](ConsumerConsumeMessageHandlerAlreadyExistsError.md#preparestacktrace)
-- [stackTraceLimit](ConsumerConsumeMessageHandlerAlreadyExistsError.md#stacktracelimit)
-
-### Accessors
-
-- [name](ConsumerConsumeMessageHandlerAlreadyExistsError.md#name)
-
-### Methods
-
-- [captureStackTrace](ConsumerConsumeMessageHandlerAlreadyExistsError.md#capturestacktrace)
-
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new ConsumerConsumeMessageHandlerAlreadyExistsError**(`message?`): [`ConsumerConsumeMessageHandlerAlreadyExistsError`](ConsumerConsumeMessageHandlerAlreadyExistsError.md)
+> **new ConsumerConsumeMessageHandlerAlreadyExistsError**(`message?`): `ConsumerConsumeMessageHandlerAlreadyExistsError`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `message?` | `string` |
+##### message?
+
+`string`
 
 #### Returns
 
-[`ConsumerConsumeMessageHandlerAlreadyExistsError`](ConsumerConsumeMessageHandlerAlreadyExistsError.md)
+`ConsumerConsumeMessageHandlerAlreadyExistsError`
 
 #### Inherited from
 
-[ConsumerError](ConsumerError.md).[constructor](ConsumerError.md#constructor)
+[`ConsumerError`](ConsumerError.md).[`constructor`](ConsumerError.md#constructor)
 
 ## Properties
 
-### cause
+### cause?
 
-• `Optional` **cause**: `unknown`
+> `optional` **cause**: `unknown`
 
 #### Inherited from
 
-[ConsumerError](ConsumerError.md).[cause](ConsumerError.md#cause)
+[`ConsumerError`](ConsumerError.md).[`cause`](ConsumerError.md#cause)
 
-___
+***
 
 ### message
 
-• **message**: `string`
+> **message**: `string`
 
 #### Inherited from
 
-[ConsumerError](ConsumerError.md).[message](ConsumerError.md#message)
+[`ConsumerError`](ConsumerError.md).[`message`](ConsumerError.md#message)
 
-___
+***
 
-### stack
+### stack?
 
-• `Optional` **stack**: `string`
+> `optional` **stack**: `string`
 
 #### Inherited from
 
-[ConsumerError](ConsumerError.md).[stack](ConsumerError.md#stack)
+[`ConsumerError`](ConsumerError.md).[`stack`](ConsumerError.md#stack)
 
-___
+***
 
-### prepareStackTrace
+### prepareStackTrace()?
 
-▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
+> `static` `optional` **prepareStackTrace**: (`err`, `stackTraces`) => `any`
 
 Optional override for formatting stack traces
 
-**`See`**
+#### Parameters
 
-https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+##### err
 
-#### Type declaration
+`Error`
 
-▸ (`err`, `stackTraces`): `any`
+##### stackTraces
 
-##### Parameters
+`CallSite`[]
 
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-| `stackTraces` | `CallSite`[] |
-
-##### Returns
+#### Returns
 
 `any`
 
+#### See
+
+https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+
 #### Inherited from
 
-[ConsumerError](ConsumerError.md).[prepareStackTrace](ConsumerError.md#preparestacktrace)
+[`ConsumerError`](ConsumerError.md).[`prepareStackTrace`](ConsumerError.md#preparestacktrace)
 
-___
+***
 
 ### stackTraceLimit
 
-▪ `Static` **stackTraceLimit**: `number`
+> `static` **stackTraceLimit**: `number`
 
 #### Inherited from
 
-[ConsumerError](ConsumerError.md).[stackTraceLimit](ConsumerError.md#stacktracelimit)
+[`ConsumerError`](ConsumerError.md).[`stackTraceLimit`](ConsumerError.md#stacktracelimit)
 
 ## Accessors
 
 ### name
 
-• `get` **name**(): `string`
+#### Get Signature
 
-#### Returns
+> **get** **name**(): `string`
+
+##### Returns
 
 `string`
 
 #### Inherited from
 
-ConsumerError.name
+[`ConsumerError`](ConsumerError.md).[`name`](ConsumerError.md#name)
 
 ## Methods
 
-### captureStackTrace
+### captureStackTrace()
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+> `static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `targetObject` | `object` |
-| `constructorOpt?` | `Function` |
+##### targetObject
+
+`object`
+
+##### constructorOpt?
+
+`Function`
 
 #### Returns
 
@@ -156,4 +136,4 @@ Create .stack property on a target object
 
 #### Inherited from
 
-[ConsumerError](ConsumerError.md).[captureStackTrace](ConsumerError.md#capturestacktrace)
+[`ConsumerError`](ConsumerError.md).[`captureStackTrace`](ConsumerError.md#capturestacktrace)

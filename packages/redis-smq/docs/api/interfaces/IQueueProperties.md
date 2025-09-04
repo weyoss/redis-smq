@@ -2,42 +2,74 @@
 
 # Interface: IQueueProperties
 
-## Table of contents
-
-### Properties
-
-- [deliveryModel](IQueueProperties.md#deliverymodel)
-- [exchange](IQueueProperties.md#exchange)
-- [messagesCount](IQueueProperties.md#messagescount)
-- [queueType](IQueueProperties.md#queuetype)
-- [rateLimit](IQueueProperties.md#ratelimit)
-
 ## Properties
+
+### acknowledgedMessagesCount
+
+> **acknowledgedMessagesCount**: `number`
+
+***
+
+### deadLetteredMessagesCount
+
+> **deadLetteredMessagesCount**: `number`
+
+***
+
+### delayedMessagesCount
+
+> **delayedMessagesCount**: `number`
+
+***
 
 ### deliveryModel
 
-• **deliveryModel**: [`EQueueDeliveryModel`](../enums/EQueueDeliveryModel.md)
+> **deliveryModel**: [`EQueueDeliveryModel`](../enumerations/EQueueDeliveryModel.md)
 
-___
+***
 
-### exchange
+### fanoutExchange
 
-• **exchange**: ``null`` \| `string`
+> **fanoutExchange**: `null` \| `string`
 
-___
+***
 
 ### messagesCount
 
-• **messagesCount**: `number`
+> **messagesCount**: `number`
 
-___
+***
+
+### pendingMessagesCount
+
+> **pendingMessagesCount**: `number`
+
+***
+
+### processingMessagesCount
+
+> **processingMessagesCount**: `number`
+
+***
 
 ### queueType
 
-• **queueType**: [`EQueueType`](../enums/EQueueType.md)
+> **queueType**: [`EQueueType`](../enumerations/EQueueType.md)
 
-___
+***
 
 ### rateLimit
 
-• **rateLimit**: ``null`` \| [`IQueueRateLimit`](IQueueRateLimit.md)
+> **rateLimit**: `null` \| [`IQueueRateLimit`](IQueueRateLimit.md)
+
+***
+
+### requeuedMessagesCount
+
+> **requeuedMessagesCount**: `number`
+
+***
+
+### scheduledMessagesCount
+
+> **scheduledMessagesCount**: `number`

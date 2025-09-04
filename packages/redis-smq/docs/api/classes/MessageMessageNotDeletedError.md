@@ -2,153 +2,133 @@
 
 # Class: MessageMessageNotDeletedError
 
-## Hierarchy
+## Extends
 
 - [`MessageError`](MessageError.md)
 
-  ↳ **`MessageMessageNotDeletedError`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](MessageMessageNotDeletedError.md#constructor)
-
-### Properties
-
-- [cause](MessageMessageNotDeletedError.md#cause)
-- [message](MessageMessageNotDeletedError.md#message)
-- [stack](MessageMessageNotDeletedError.md#stack)
-- [prepareStackTrace](MessageMessageNotDeletedError.md#preparestacktrace)
-- [stackTraceLimit](MessageMessageNotDeletedError.md#stacktracelimit)
-
-### Accessors
-
-- [name](MessageMessageNotDeletedError.md#name)
-
-### Methods
-
-- [captureStackTrace](MessageMessageNotDeletedError.md#capturestacktrace)
-
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new MessageMessageNotDeletedError**(`message?`): [`MessageMessageNotDeletedError`](MessageMessageNotDeletedError.md)
+> **new MessageMessageNotDeletedError**(`message?`): `MessageMessageNotDeletedError`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `message?` | `string` |
+##### message?
+
+`string`
 
 #### Returns
 
-[`MessageMessageNotDeletedError`](MessageMessageNotDeletedError.md)
+`MessageMessageNotDeletedError`
 
 #### Inherited from
 
-[MessageError](MessageError.md).[constructor](MessageError.md#constructor)
+[`MessageError`](MessageError.md).[`constructor`](MessageError.md#constructor)
 
 ## Properties
 
-### cause
+### cause?
 
-• `Optional` **cause**: `unknown`
+> `optional` **cause**: `unknown`
 
 #### Inherited from
 
-[MessageError](MessageError.md).[cause](MessageError.md#cause)
+[`MessageError`](MessageError.md).[`cause`](MessageError.md#cause)
 
-___
+***
 
 ### message
 
-• **message**: `string`
+> **message**: `string`
 
 #### Inherited from
 
-[MessageError](MessageError.md).[message](MessageError.md#message)
+[`MessageError`](MessageError.md).[`message`](MessageError.md#message)
 
-___
+***
 
-### stack
+### stack?
 
-• `Optional` **stack**: `string`
+> `optional` **stack**: `string`
 
 #### Inherited from
 
-[MessageError](MessageError.md).[stack](MessageError.md#stack)
+[`MessageError`](MessageError.md).[`stack`](MessageError.md#stack)
 
-___
+***
 
-### prepareStackTrace
+### prepareStackTrace()?
 
-▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
+> `static` `optional` **prepareStackTrace**: (`err`, `stackTraces`) => `any`
 
 Optional override for formatting stack traces
 
-**`See`**
+#### Parameters
 
-https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+##### err
 
-#### Type declaration
+`Error`
 
-▸ (`err`, `stackTraces`): `any`
+##### stackTraces
 
-##### Parameters
+`CallSite`[]
 
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-| `stackTraces` | `CallSite`[] |
-
-##### Returns
+#### Returns
 
 `any`
 
+#### See
+
+https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+
 #### Inherited from
 
-[MessageError](MessageError.md).[prepareStackTrace](MessageError.md#preparestacktrace)
+[`MessageError`](MessageError.md).[`prepareStackTrace`](MessageError.md#preparestacktrace)
 
-___
+***
 
 ### stackTraceLimit
 
-▪ `Static` **stackTraceLimit**: `number`
+> `static` **stackTraceLimit**: `number`
 
 #### Inherited from
 
-[MessageError](MessageError.md).[stackTraceLimit](MessageError.md#stacktracelimit)
+[`MessageError`](MessageError.md).[`stackTraceLimit`](MessageError.md#stacktracelimit)
 
 ## Accessors
 
 ### name
 
-• `get` **name**(): `string`
+#### Get Signature
 
-#### Returns
+> **get** **name**(): `string`
+
+##### Returns
 
 `string`
 
 #### Inherited from
 
-MessageError.name
+[`MessageError`](MessageError.md).[`name`](MessageError.md#name)
 
 ## Methods
 
-### captureStackTrace
+### captureStackTrace()
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+> `static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `targetObject` | `object` |
-| `constructorOpt?` | `Function` |
+##### targetObject
+
+`object`
+
+##### constructorOpt?
+
+`Function`
 
 #### Returns
 
@@ -156,4 +136,4 @@ Create .stack property on a target object
 
 #### Inherited from
 
-[MessageError](MessageError.md).[captureStackTrace](MessageError.md#capturestacktrace)
+[`MessageError`](MessageError.md).[`captureStackTrace`](MessageError.md#capturestacktrace)

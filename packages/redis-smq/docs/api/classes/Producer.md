@@ -10,70 +10,48 @@ and producing messages based on the message's exchange parameters.
 Error handling is included throughout the methods, returning appropriate
 error objects when necessary.
 
-## Hierarchy
+## Extends
 
-- `Runnable`\<[`TProducerEvent`](../README.md#tproducerevent)\>
-
-  ↳ **`Producer`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](Producer.md#constructor)
-
-### Methods
-
-- [emit](Producer.md#emit)
-- [getId](Producer.md#getid)
-- [isDown](Producer.md#isdown)
-- [isGoingDown](Producer.md#isgoingdown)
-- [isGoingUp](Producer.md#isgoingup)
-- [isRunning](Producer.md#isrunning)
-- [isUp](Producer.md#isup)
-- [on](Producer.md#on)
-- [once](Producer.md#once)
-- [produce](Producer.md#produce)
-- [removeAllListeners](Producer.md#removealllisteners)
-- [removeListener](Producer.md#removelistener)
-- [run](Producer.md#run)
-- [shutdown](Producer.md#shutdown)
+- `Runnable`\<[`TProducerEvent`](../type-aliases/TProducerEvent.md)\>
 
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new Producer**(): [`Producer`](Producer.md)
+> **new Producer**(): `Producer`
 
 Constructor for the Producer class. Initializes the Redis client,
 event bus, and logger. Sets up the event bus publisher if enabled.
 
 #### Returns
 
-[`Producer`](Producer.md)
+`Producer`
 
 #### Overrides
 
-Runnable\<TProducerEvent\>.constructor
+`Runnable<TProducerEvent>.constructor`
 
 ## Methods
 
-### emit
+### emit()
 
-▸ **emit**\<`E`\>(`event`, `...args`): `boolean`
+> **emit**\<`E`\>(`event`, ...`args`): `boolean`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TProducerEvent`](../README.md#tproducerevent) |
+##### E
+
+`E` *extends* keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `...args` | `Parameters`\<[`TProducerEvent`](../README.md#tproducerevent)[`E`]\> |
+##### event
+
+`E`
+
+##### args
+
+...`Parameters`\<[`TProducerEvent`](../type-aliases/TProducerEvent.md)\[`E`\]\>
 
 #### Returns
 
@@ -81,13 +59,13 @@ Runnable\<TProducerEvent\>.constructor
 
 #### Inherited from
 
-Runnable.emit
+`Runnable.emit`
 
-___
+***
 
-### getId
+### getId()
 
-▸ **getId**(): `string`
+> **getId**(): `string`
 
 #### Returns
 
@@ -95,27 +73,13 @@ ___
 
 #### Inherited from
 
-Runnable.getId
+`Runnable.getId`
 
-___
+***
 
-### isDown
+### isDown()
 
-▸ **isDown**(): `boolean`
-
-#### Returns
-
-`boolean`
-
-#### Inherited from
-
-Runnable.isDown
-
-___
-
-### isGoingDown
-
-▸ **isGoingDown**(): `boolean`
+> **isDown**(): `boolean`
 
 #### Returns
 
@@ -123,27 +87,13 @@ ___
 
 #### Inherited from
 
-Runnable.isGoingDown
+`Runnable.isDown`
 
-___
+***
 
-### isGoingUp
+### isGoingDown()
 
-▸ **isGoingUp**(): `boolean`
-
-#### Returns
-
-`boolean`
-
-#### Inherited from
-
-Runnable.isGoingUp
-
-___
-
-### isRunning
-
-▸ **isRunning**(): `boolean`
+> **isGoingDown**(): `boolean`
 
 #### Returns
 
@@ -151,13 +101,13 @@ ___
 
 #### Inherited from
 
-Runnable.isRunning
+`Runnable.isGoingDown`
 
-___
+***
 
-### isUp
+### isGoingUp()
 
-▸ **isUp**(): `boolean`
+> **isGoingUp**(): `boolean`
 
 #### Returns
 
@@ -165,26 +115,57 @@ ___
 
 #### Inherited from
 
-Runnable.isUp
+`Runnable.isGoingUp`
 
-___
+***
 
-### on
+### isRunning()
 
-▸ **on**\<`E`\>(`event`, `listener`): `this`
+> **isRunning**(): `boolean`
 
-#### Type parameters
+#### Returns
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TProducerEvent`](../README.md#tproducerevent) |
+`boolean`
+
+#### Inherited from
+
+`Runnable.isRunning`
+
+***
+
+### isUp()
+
+> **isUp**(): `boolean`
+
+#### Returns
+
+`boolean`
+
+#### Inherited from
+
+`Runnable.isUp`
+
+***
+
+### on()
+
+> **on**\<`E`\>(`event`, `listener`): `this`
+
+#### Type Parameters
+
+##### E
+
+`E` *extends* keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | [`TProducerEvent`](../README.md#tproducerevent)[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+[`TProducerEvent`](../type-aliases/TProducerEvent.md)\[`E`\]
 
 #### Returns
 
@@ -192,26 +173,29 @@ ___
 
 #### Inherited from
 
-Runnable.on
+`Runnable.on`
 
-___
+***
 
-### once
+### once()
 
-▸ **once**\<`E`\>(`event`, `listener`): `this`
+> **once**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TProducerEvent`](../README.md#tproducerevent) |
+##### E
+
+`E` *extends* keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | [`TProducerEvent`](../README.md#tproducerevent)[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+[`TProducerEvent`](../type-aliases/TProducerEvent.md)\[`E`\]
 
 #### Returns
 
@@ -219,13 +203,13 @@ ___
 
 #### Inherited from
 
-Runnable.once
+`Runnable.once`
 
-___
+***
 
-### produce
+### produce()
 
-▸ **produce**(`msg`, `cb`): `void`
+> **produce**(`msg`, `cb`): `void`
 
 Produces a message based on the provided parameters. Ensures that a valid
 exchange is set and that at least one matching queue exists before
@@ -243,32 +227,41 @@ This method handles various errors, including:
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `msg` | [`ProducibleMessage`](ProducibleMessage.md) | The message to be produced and published. |
-| `cb` | `ICallback`\<`string`[]\> | A callback function to be executed upon completion. It receives an error as the first argument (if any) and an array of message IDs as the second argument. |
+##### msg
+
+[`ProducibleMessage`](ProducibleMessage.md)
+
+The message to be produced and published.
+
+##### cb
+
+`ICallback`\<`string`[]\>
+
+A callback function to be executed upon completion.
+                                  It receives an error as the first argument (if any)
+                                  and an array of message IDs as the second argument.
 
 #### Returns
 
 `void`
 
-___
+***
 
-### removeAllListeners
+### removeAllListeners()
 
-▸ **removeAllListeners**\<`E`\>(`event?`): `this`
+> **removeAllListeners**\<`E`\>(`event?`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TProducerEvent`](../README.md#tproducerevent) |
+##### E
+
+`E` *extends* keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event?` | `Extract`\<`E`, `string`\> |
+##### event?
+
+`Extract`\<`E`, `string`\>
 
 #### Returns
 
@@ -276,26 +269,29 @@ ___
 
 #### Inherited from
 
-Runnable.removeAllListeners
+`Runnable.removeAllListeners`
 
-___
+***
 
-### removeListener
+### removeListener()
 
-▸ **removeListener**\<`E`\>(`event`, `listener`): `this`
+> **removeListener**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TProducerEvent`](../README.md#tproducerevent) |
+##### E
+
+`E` *extends* keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | [`TProducerEvent`](../README.md#tproducerevent)[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+[`TProducerEvent`](../type-aliases/TProducerEvent.md)\[`E`\]
 
 #### Returns
 
@@ -303,19 +299,19 @@ ___
 
 #### Inherited from
 
-Runnable.removeListener
+`Runnable.removeListener`
 
-___
+***
 
-### run
+### run()
 
-▸ **run**(`cb`): `void`
+> **run**(`cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | `ICallback`\<`boolean`\> |
+##### cb
+
+`ICallback`\<`boolean`\>
 
 #### Returns
 
@@ -323,19 +319,19 @@ ___
 
 #### Inherited from
 
-Runnable.run
+`Runnable.run`
 
-___
+***
 
-### shutdown
+### shutdown()
 
-▸ **shutdown**(`cb`): `void`
+> **shutdown**(`cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | `ICallback`\<`void`\> |
+##### cb
+
+`ICallback`\<`void`\>
 
 #### Returns
 
@@ -343,4 +339,4 @@ ___
 
 #### Inherited from
 
-Runnable.shutdown
+`Runnable.shutdown`

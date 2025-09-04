@@ -2,113 +2,85 @@
 
 # Class: EventBus
 
-## Hierarchy
+## Extends
 
-- `EventBusRedisFactory`\<[`TRedisSMQEvent`](../README.md#tredissmqevent)\>
-
-  ↳ **`EventBus`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](EventBus.md#constructor)
-
-### Properties
-
-- [init](EventBus.md#init)
-- [shutdown](EventBus.md#shutdown)
-
-### Methods
-
-- [emit](EventBus.md#emit)
-- [getInstance](EventBus.md#getinstance)
-- [getSetInstance](EventBus.md#getsetinstance)
-- [on](EventBus.md#on)
-- [once](EventBus.md#once)
-- [removeAllListeners](EventBus.md#removealllisteners)
-- [removeListener](EventBus.md#removelistener)
+- `EventBusRedisFactory`\<[`TRedisSMQEvent`](../type-aliases/TRedisSMQEvent.md)\>
 
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new EventBus**(): [`EventBus`](EventBus.md)
+> **new EventBus**(): `EventBus`
 
 #### Returns
 
-[`EventBus`](EventBus.md)
+`EventBus`
 
 #### Overrides
 
-EventBusRedisFactory\<TRedisSMQEvent\>.constructor
+`EventBusRedisFactory<TRedisSMQEvent>.constructor`
 
 ## Properties
 
-### init
+### init()
 
-• **init**: (`cb`: `ICallback`\<`void`\>) => `void`
-
-#### Type declaration
-
-▸ (`cb`): `void`
-
-##### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `cb` | `ICallback`\<`void`\> |
-
-##### Returns
-
-`void`
-
-#### Inherited from
-
-EventBusRedisFactory.init
-
-___
-
-### shutdown
-
-• **shutdown**: (`cb`: `ICallback`\<`void`\>) => `void`
-
-#### Type declaration
-
-▸ (`cb`): `void`
-
-##### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `cb` | `ICallback`\<`void`\> |
-
-##### Returns
-
-`void`
-
-#### Inherited from
-
-EventBusRedisFactory.shutdown
-
-## Methods
-
-### emit
-
-▸ **emit**\<`E`\>(`event`, `...args`): `boolean`
-
-#### Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `E` | extends ``"error"`` |
+> **init**: (`cb`) => `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `...args` | `Parameters`\<`Pick`\<`TRedisClientEvent`, ``"error"``\>[`E`]\> |
+##### cb
+
+`ICallback`\<`void`\>
+
+#### Returns
+
+`void`
+
+#### Inherited from
+
+`EventBusRedisFactory.init`
+
+***
+
+### shutdown()
+
+> **shutdown**: (`cb`) => `void`
+
+#### Parameters
+
+##### cb
+
+`ICallback`\<`void`\>
+
+#### Returns
+
+`void`
+
+#### Inherited from
+
+`EventBusRedisFactory.shutdown`
+
+## Methods
+
+### emit()
+
+> **emit**\<`E`\>(`event`, ...`args`): `boolean`
+
+#### Type Parameters
+
+##### E
+
+`E` *extends* `"error"`
+
+#### Parameters
+
+##### event
+
+`E`
+
+##### args
+
+...`Parameters`\<`Pick`\<`TRedisClientEvent`, `"error"`\>\[`E`\]\>
 
 #### Returns
 
@@ -116,33 +88,33 @@ EventBusRedisFactory.shutdown
 
 #### Inherited from
 
-EventBusRedisFactory.emit
+`EventBusRedisFactory.emit`
 
-___
+***
 
-### getInstance
+### getInstance()
 
-▸ **getInstance**(): `Error` \| `IEventBus`\<[`TRedisSMQEvent`](../README.md#tredissmqevent)\>
+> **getInstance**(): `Error` \| `IEventBus`\<[`TRedisSMQEvent`](../type-aliases/TRedisSMQEvent.md)\>
 
 #### Returns
 
-`Error` \| `IEventBus`\<[`TRedisSMQEvent`](../README.md#tredissmqevent)\>
+`Error` \| `IEventBus`\<[`TRedisSMQEvent`](../type-aliases/TRedisSMQEvent.md)\>
 
 #### Inherited from
 
-EventBusRedisFactory.getInstance
+`EventBusRedisFactory.getInstance`
 
-___
+***
 
-### getSetInstance
+### getSetInstance()
 
-▸ **getSetInstance**(`cb`): `void`
+> **getSetInstance**(`cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | `ICallback`\<`IEventBus`\<[`TRedisSMQEvent`](../README.md#tredissmqevent)\>\> |
+##### cb
+
+`ICallback`\<`IEventBus`\<[`TRedisSMQEvent`](../type-aliases/TRedisSMQEvent.md)\>\>
 
 #### Returns
 
@@ -150,26 +122,29 @@ ___
 
 #### Inherited from
 
-EventBusRedisFactory.getSetInstance
+`EventBusRedisFactory.getSetInstance`
 
-___
+***
 
-### on
+### on()
 
-▸ **on**\<`E`\>(`event`, `listener`): `this`
+> **on**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends ``"error"`` |
+##### E
+
+`E` *extends* `"error"`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `Pick`\<`TRedisClientEvent`, ``"error"``\>[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+`Pick`\<`TRedisClientEvent`, `"error"`\>\[`E`\]
 
 #### Returns
 
@@ -177,26 +152,29 @@ ___
 
 #### Inherited from
 
-EventBusRedisFactory.on
+`EventBusRedisFactory.on`
 
-___
+***
 
-### once
+### once()
 
-▸ **once**\<`E`\>(`event`, `listener`): `this`
+> **once**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends ``"error"`` |
+##### E
+
+`E` *extends* `"error"`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `Pick`\<`TRedisClientEvent`, ``"error"``\>[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+`Pick`\<`TRedisClientEvent`, `"error"`\>\[`E`\]
 
 #### Returns
 
@@ -204,25 +182,25 @@ ___
 
 #### Inherited from
 
-EventBusRedisFactory.once
+`EventBusRedisFactory.once`
 
-___
+***
 
-### removeAllListeners
+### removeAllListeners()
 
-▸ **removeAllListeners**\<`E`\>(`event?`): `this`
+> **removeAllListeners**\<`E`\>(`event?`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends ``"error"`` |
+##### E
+
+`E` *extends* `"error"`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event?` | `Extract`\<`E`, `string`\> |
+##### event?
+
+`Extract`\<`E`, `string`\>
 
 #### Returns
 
@@ -230,26 +208,29 @@ ___
 
 #### Inherited from
 
-EventBusRedisFactory.removeAllListeners
+`EventBusRedisFactory.removeAllListeners`
 
-___
+***
 
-### removeListener
+### removeListener()
 
-▸ **removeListener**\<`E`\>(`event`, `listener`): `this`
+> **removeListener**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends ``"error"`` |
+##### E
+
+`E` *extends* `"error"`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `Pick`\<`TRedisClientEvent`, ``"error"``\>[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+`Pick`\<`TRedisClientEvent`, `"error"`\>\[`E`\]
 
 #### Returns
 
@@ -257,4 +238,4 @@ ___
 
 #### Inherited from
 
-EventBusRedisFactory.removeListener
+`EventBusRedisFactory.removeListener`

@@ -2,21 +2,14 @@
 
 # Interface: ITopicParams
 
-## Table of contents
-
-### Properties
-
-- [ns](ITopicParams.md#ns)
-- [topic](ITopicParams.md#topic)
-
 ## Properties
 
 ### ns
 
-• **ns**: `string`
+> **ns**: `string`
 
-___
+***
 
 ### topic
 
-• **topic**: `string`
+> **topic**: `string`

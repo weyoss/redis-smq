@@ -2,21 +2,14 @@
 
 # Interface: IMessagesConfigStorageRequired
 
-## Table of contents
-
-### Properties
-
-- [acknowledged](IMessagesConfigStorageRequired.md#acknowledged)
-- [deadLettered](IMessagesConfigStorageRequired.md#deadlettered)
-
 ## Properties
 
 ### acknowledged
 
-• **acknowledged**: [`IMessagesConfigStorageOptionsRequired`](IMessagesConfigStorageOptionsRequired.md)
+> **acknowledged**: [`IMessagesConfigStorageOptionsRequired`](IMessagesConfigStorageOptionsRequired.md)
 
-___
+***
 
 ### deadLettered
 
-• **deadLettered**: [`IMessagesConfigStorageOptionsRequired`](IMessagesConfigStorageOptionsRequired.md)
+> **deadLettered**: [`IMessagesConfigStorageOptionsRequired`](IMessagesConfigStorageOptionsRequired.md)

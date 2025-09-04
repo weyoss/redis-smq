@@ -2,153 +2,133 @@
 
 # Class: ExchangeFanOutQueueTypeError
 
-## Hierarchy
+## Extends
 
 - [`ExchangeFanOutError`](ExchangeFanOutError.md)
 
-  ↳ **`ExchangeFanOutQueueTypeError`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](ExchangeFanOutQueueTypeError.md#constructor)
-
-### Properties
-
-- [cause](ExchangeFanOutQueueTypeError.md#cause)
-- [message](ExchangeFanOutQueueTypeError.md#message)
-- [stack](ExchangeFanOutQueueTypeError.md#stack)
-- [prepareStackTrace](ExchangeFanOutQueueTypeError.md#preparestacktrace)
-- [stackTraceLimit](ExchangeFanOutQueueTypeError.md#stacktracelimit)
-
-### Accessors
-
-- [name](ExchangeFanOutQueueTypeError.md#name)
-
-### Methods
-
-- [captureStackTrace](ExchangeFanOutQueueTypeError.md#capturestacktrace)
-
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new ExchangeFanOutQueueTypeError**(`message?`): [`ExchangeFanOutQueueTypeError`](ExchangeFanOutQueueTypeError.md)
+> **new ExchangeFanOutQueueTypeError**(`message?`): `ExchangeFanOutQueueTypeError`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `message?` | `string` |
+##### message?
+
+`string`
 
 #### Returns
 
-[`ExchangeFanOutQueueTypeError`](ExchangeFanOutQueueTypeError.md)
+`ExchangeFanOutQueueTypeError`
 
 #### Inherited from
 
-[ExchangeFanOutError](ExchangeFanOutError.md).[constructor](ExchangeFanOutError.md#constructor)
+[`ExchangeFanOutError`](ExchangeFanOutError.md).[`constructor`](ExchangeFanOutError.md#constructor)
 
 ## Properties
 
-### cause
+### cause?
 
-• `Optional` **cause**: `unknown`
+> `optional` **cause**: `unknown`
 
 #### Inherited from
 
-[ExchangeFanOutError](ExchangeFanOutError.md).[cause](ExchangeFanOutError.md#cause)
+[`ExchangeFanOutError`](ExchangeFanOutError.md).[`cause`](ExchangeFanOutError.md#cause)
 
-___
+***
 
 ### message
 
-• **message**: `string`
+> **message**: `string`
 
 #### Inherited from
 
-[ExchangeFanOutError](ExchangeFanOutError.md).[message](ExchangeFanOutError.md#message)
+[`ExchangeFanOutError`](ExchangeFanOutError.md).[`message`](ExchangeFanOutError.md#message)
 
-___
+***
 
-### stack
+### stack?
 
-• `Optional` **stack**: `string`
+> `optional` **stack**: `string`
 
 #### Inherited from
 
-[ExchangeFanOutError](ExchangeFanOutError.md).[stack](ExchangeFanOutError.md#stack)
+[`ExchangeFanOutError`](ExchangeFanOutError.md).[`stack`](ExchangeFanOutError.md#stack)
 
-___
+***
 
-### prepareStackTrace
+### prepareStackTrace()?
 
-▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
+> `static` `optional` **prepareStackTrace**: (`err`, `stackTraces`) => `any`
 
 Optional override for formatting stack traces
 
-**`See`**
+#### Parameters
 
-https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+##### err
 
-#### Type declaration
+`Error`
 
-▸ (`err`, `stackTraces`): `any`
+##### stackTraces
 
-##### Parameters
+`CallSite`[]
 
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-| `stackTraces` | `CallSite`[] |
-
-##### Returns
+#### Returns
 
 `any`
 
+#### See
+
+https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+
 #### Inherited from
 
-[ExchangeFanOutError](ExchangeFanOutError.md).[prepareStackTrace](ExchangeFanOutError.md#preparestacktrace)
+[`ExchangeFanOutError`](ExchangeFanOutError.md).[`prepareStackTrace`](ExchangeFanOutError.md#preparestacktrace)
 
-___
+***
 
 ### stackTraceLimit
 
-▪ `Static` **stackTraceLimit**: `number`
+> `static` **stackTraceLimit**: `number`
 
 #### Inherited from
 
-[ExchangeFanOutError](ExchangeFanOutError.md).[stackTraceLimit](ExchangeFanOutError.md#stacktracelimit)
+[`ExchangeFanOutError`](ExchangeFanOutError.md).[`stackTraceLimit`](ExchangeFanOutError.md#stacktracelimit)
 
 ## Accessors
 
 ### name
 
-• `get` **name**(): `string`
+#### Get Signature
 
-#### Returns
+> **get** **name**(): `string`
+
+##### Returns
 
 `string`
 
 #### Inherited from
 
-ExchangeFanOutError.name
+[`ExchangeFanOutError`](ExchangeFanOutError.md).[`name`](ExchangeFanOutError.md#name)
 
 ## Methods
 
-### captureStackTrace
+### captureStackTrace()
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+> `static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `targetObject` | `object` |
-| `constructorOpt?` | `Function` |
+##### targetObject
+
+`object`
+
+##### constructorOpt?
+
+`Function`
 
 #### Returns
 
@@ -156,4 +136,4 @@ Create .stack property on a target object
 
 #### Inherited from
 
-[ExchangeFanOutError](ExchangeFanOutError.md).[captureStackTrace](ExchangeFanOutError.md#capturestacktrace)
+[`ExchangeFanOutError`](ExchangeFanOutError.md).[`captureStackTrace`](ExchangeFanOutError.md#capturestacktrace)

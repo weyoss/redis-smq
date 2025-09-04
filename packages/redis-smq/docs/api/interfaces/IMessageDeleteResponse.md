@@ -2,30 +2,30 @@
 
 # Interface: IMessageDeleteResponse
 
-## Table of contents
-
-### Properties
-
-- [stats](IMessageDeleteResponse.md#stats)
-- [status](IMessageDeleteResponse.md#status)
-
 ## Properties
 
 ### stats
 
-• **stats**: `Object`
+> **stats**: `object`
 
-#### Type declaration
+#### inProcess
 
-| Name | Type |
-| :------ | :------ |
-| `inProcess` | `number` |
-| `notFound` | `number` |
-| `processed` | `number` |
-| `success` | `number` |
+> **inProcess**: `number`
 
-___
+#### notFound
+
+> **notFound**: `number`
+
+#### processed
+
+> **processed**: `number`
+
+#### success
+
+> **success**: `number`
+
+***
 
 ### status
 
-• **status**: [`TMessageDeleteStatus`](../README.md#tmessagedeletestatus)
+> **status**: [`TMessageDeleteStatus`](../type-aliases/TMessageDeleteStatus.md)

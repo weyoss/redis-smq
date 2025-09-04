@@ -2,171 +2,146 @@
 
 # Class: ProducerError
 
-## Hierarchy
+## Extends
 
 - `RedisSMQError`
 
-  ↳ **`ProducerError`**
+## Extended by
 
-  ↳↳ [`ProducerInstanceNotRunningError`](ProducerInstanceNotRunningError.md)
-
-  ↳↳ [`ProducerQueueMissingConsumerGroupsError`](ProducerQueueMissingConsumerGroupsError.md)
-
-  ↳↳ [`ProducerMessageExchangeRequiredError`](ProducerMessageExchangeRequiredError.md)
-
-  ↳↳ [`ProducerQueueNotFoundError`](ProducerQueueNotFoundError.md)
-
-  ↳↳ [`ProducerMessagePriorityRequiredError`](ProducerMessagePriorityRequiredError.md)
-
-  ↳↳ [`ProducerPriorityQueuingNotEnabledError`](ProducerPriorityQueuingNotEnabledError.md)
-
-  ↳↳ [`ProducerUnknownQueueTypeError`](ProducerUnknownQueueTypeError.md)
-
-  ↳↳ [`ProducerExchangeNoMatchedQueueError`](ProducerExchangeNoMatchedQueueError.md)
-
-  ↳↳ [`ProducerScheduleInvalidParametersError`](ProducerScheduleInvalidParametersError.md)
-
-## Table of contents
-
-### Constructors
-
-- [constructor](ProducerError.md#constructor)
-
-### Properties
-
-- [cause](ProducerError.md#cause)
-- [message](ProducerError.md#message)
-- [stack](ProducerError.md#stack)
-- [prepareStackTrace](ProducerError.md#preparestacktrace)
-- [stackTraceLimit](ProducerError.md#stacktracelimit)
-
-### Accessors
-
-- [name](ProducerError.md#name)
-
-### Methods
-
-- [captureStackTrace](ProducerError.md#capturestacktrace)
+- [`ProducerInstanceNotRunningError`](ProducerInstanceNotRunningError.md)
+- [`ProducerQueueMissingConsumerGroupsError`](ProducerQueueMissingConsumerGroupsError.md)
+- [`ProducerMessageExchangeRequiredError`](ProducerMessageExchangeRequiredError.md)
+- [`ProducerQueueNotFoundError`](ProducerQueueNotFoundError.md)
+- [`ProducerMessagePriorityRequiredError`](ProducerMessagePriorityRequiredError.md)
+- [`ProducerPriorityQueuingNotEnabledError`](ProducerPriorityQueuingNotEnabledError.md)
+- [`ProducerUnknownQueueTypeError`](ProducerUnknownQueueTypeError.md)
+- [`ProducerExchangeNoMatchedQueueError`](ProducerExchangeNoMatchedQueueError.md)
+- [`ProducerScheduleInvalidParametersError`](ProducerScheduleInvalidParametersError.md)
+- [`ProducerMessageAlreadyExistsError`](ProducerMessageAlreadyExistsError.md)
 
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new ProducerError**(`message?`): [`ProducerError`](ProducerError.md)
+> **new ProducerError**(`message?`): `ProducerError`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `message?` | `string` |
+##### message?
+
+`string`
 
 #### Returns
 
-[`ProducerError`](ProducerError.md)
+`ProducerError`
 
 #### Inherited from
 
-RedisSMQError.constructor
+`RedisSMQError.constructor`
 
 ## Properties
 
-### cause
+### cause?
 
-• `Optional` **cause**: `unknown`
+> `optional` **cause**: `unknown`
 
 #### Inherited from
 
-RedisSMQError.cause
+`RedisSMQError.cause`
 
-___
+***
 
 ### message
 
-• **message**: `string`
+> **message**: `string`
 
 #### Inherited from
 
-RedisSMQError.message
+`RedisSMQError.message`
 
-___
+***
 
-### stack
+### stack?
 
-• `Optional` **stack**: `string`
+> `optional` **stack**: `string`
 
 #### Inherited from
 
-RedisSMQError.stack
+`RedisSMQError.stack`
 
-___
+***
 
-### prepareStackTrace
+### prepareStackTrace()?
 
-▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
+> `static` `optional` **prepareStackTrace**: (`err`, `stackTraces`) => `any`
 
 Optional override for formatting stack traces
 
-**`See`**
+#### Parameters
 
-https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+##### err
 
-#### Type declaration
+`Error`
 
-▸ (`err`, `stackTraces`): `any`
+##### stackTraces
 
-##### Parameters
+`CallSite`[]
 
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-| `stackTraces` | `CallSite`[] |
-
-##### Returns
+#### Returns
 
 `any`
 
+#### See
+
+https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+
 #### Inherited from
 
-RedisSMQError.prepareStackTrace
+`RedisSMQError.prepareStackTrace`
 
-___
+***
 
 ### stackTraceLimit
 
-▪ `Static` **stackTraceLimit**: `number`
+> `static` **stackTraceLimit**: `number`
 
 #### Inherited from
 
-RedisSMQError.stackTraceLimit
+`RedisSMQError.stackTraceLimit`
 
 ## Accessors
 
 ### name
 
-• `get` **name**(): `string`
+#### Get Signature
 
-#### Returns
+> **get** **name**(): `string`
+
+##### Returns
 
 `string`
 
 #### Inherited from
 
-RedisSMQError.name
+`RedisSMQError.name`
 
 ## Methods
 
-### captureStackTrace
+### captureStackTrace()
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+> `static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `targetObject` | `object` |
-| `constructorOpt?` | `Function` |
+##### targetObject
+
+`object`
+
+##### constructorOpt?
+
+`Function`
 
 #### Returns
 
@@ -174,4 +149,4 @@ Create .stack property on a target object
 
 #### Inherited from
 
-RedisSMQError.captureStackTrace
+`RedisSMQError.captureStackTrace`

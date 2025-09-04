@@ -2,21 +2,14 @@
 
 # Interface: IQueueParsedParams
 
-## Table of contents
-
-### Properties
-
-- [groupId](IQueueParsedParams.md#groupid)
-- [queueParams](IQueueParsedParams.md#queueparams)
-
 ## Properties
 
 ### groupId
 
-• **groupId**: ``null`` \| `string`
+> **groupId**: `null` \| `string`
 
-___
+***
 
 ### queueParams
 
-• **queueParams**: [`IQueueParams`](IQueueParams.md)
+> **queueParams**: [`IQueueParams`](IQueueParams.md)

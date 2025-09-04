@@ -2,153 +2,133 @@
 
 # Class: ConfigurationNamespaceError
 
-## Hierarchy
+## Extends
 
 - [`ConfigurationError`](ConfigurationError.md)
 
-  ↳ **`ConfigurationNamespaceError`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](ConfigurationNamespaceError.md#constructor)
-
-### Properties
-
-- [cause](ConfigurationNamespaceError.md#cause)
-- [message](ConfigurationNamespaceError.md#message)
-- [stack](ConfigurationNamespaceError.md#stack)
-- [prepareStackTrace](ConfigurationNamespaceError.md#preparestacktrace)
-- [stackTraceLimit](ConfigurationNamespaceError.md#stacktracelimit)
-
-### Accessors
-
-- [name](ConfigurationNamespaceError.md#name)
-
-### Methods
-
-- [captureStackTrace](ConfigurationNamespaceError.md#capturestacktrace)
-
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new ConfigurationNamespaceError**(`message?`): [`ConfigurationNamespaceError`](ConfigurationNamespaceError.md)
+> **new ConfigurationNamespaceError**(`message?`): `ConfigurationNamespaceError`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `message?` | `string` |
+##### message?
+
+`string`
 
 #### Returns
 
-[`ConfigurationNamespaceError`](ConfigurationNamespaceError.md)
+`ConfigurationNamespaceError`
 
 #### Inherited from
 
-[ConfigurationError](ConfigurationError.md).[constructor](ConfigurationError.md#constructor)
+[`ConfigurationError`](ConfigurationError.md).[`constructor`](ConfigurationError.md#constructor)
 
 ## Properties
 
-### cause
+### cause?
 
-• `Optional` **cause**: `unknown`
+> `optional` **cause**: `unknown`
 
 #### Inherited from
 
-[ConfigurationError](ConfigurationError.md).[cause](ConfigurationError.md#cause)
+[`ConfigurationError`](ConfigurationError.md).[`cause`](ConfigurationError.md#cause)
 
-___
+***
 
 ### message
 
-• **message**: `string`
+> **message**: `string`
 
 #### Inherited from
 
-[ConfigurationError](ConfigurationError.md).[message](ConfigurationError.md#message)
+[`ConfigurationError`](ConfigurationError.md).[`message`](ConfigurationError.md#message)
 
-___
+***
 
-### stack
+### stack?
 
-• `Optional` **stack**: `string`
+> `optional` **stack**: `string`
 
 #### Inherited from
 
-[ConfigurationError](ConfigurationError.md).[stack](ConfigurationError.md#stack)
+[`ConfigurationError`](ConfigurationError.md).[`stack`](ConfigurationError.md#stack)
 
-___
+***
 
-### prepareStackTrace
+### prepareStackTrace()?
 
-▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
+> `static` `optional` **prepareStackTrace**: (`err`, `stackTraces`) => `any`
 
 Optional override for formatting stack traces
 
-**`See`**
+#### Parameters
 
-https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+##### err
 
-#### Type declaration
+`Error`
 
-▸ (`err`, `stackTraces`): `any`
+##### stackTraces
 
-##### Parameters
+`CallSite`[]
 
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-| `stackTraces` | `CallSite`[] |
-
-##### Returns
+#### Returns
 
 `any`
 
+#### See
+
+https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+
 #### Inherited from
 
-[ConfigurationError](ConfigurationError.md).[prepareStackTrace](ConfigurationError.md#preparestacktrace)
+[`ConfigurationError`](ConfigurationError.md).[`prepareStackTrace`](ConfigurationError.md#preparestacktrace)
 
-___
+***
 
 ### stackTraceLimit
 
-▪ `Static` **stackTraceLimit**: `number`
+> `static` **stackTraceLimit**: `number`
 
 #### Inherited from
 
-[ConfigurationError](ConfigurationError.md).[stackTraceLimit](ConfigurationError.md#stacktracelimit)
+[`ConfigurationError`](ConfigurationError.md).[`stackTraceLimit`](ConfigurationError.md#stacktracelimit)
 
 ## Accessors
 
 ### name
 
-• `get` **name**(): `string`
+#### Get Signature
 
-#### Returns
+> **get** **name**(): `string`
+
+##### Returns
 
 `string`
 
 #### Inherited from
 
-ConfigurationError.name
+[`ConfigurationError`](ConfigurationError.md).[`name`](ConfigurationError.md#name)
 
 ## Methods
 
-### captureStackTrace
+### captureStackTrace()
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+> `static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `targetObject` | `object` |
-| `constructorOpt?` | `Function` |
+##### targetObject
+
+`object`
+
+##### constructorOpt?
+
+`Function`
 
 #### Returns
 
@@ -156,4 +136,4 @@ Create .stack property on a target object
 
 #### Inherited from
 
-[ConfigurationError](ConfigurationError.md).[captureStackTrace](ConfigurationError.md#capturestacktrace)
+[`ConfigurationError`](ConfigurationError.md).[`captureStackTrace`](ConfigurationError.md#capturestacktrace)

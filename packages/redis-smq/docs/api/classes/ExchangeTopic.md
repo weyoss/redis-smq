@@ -2,32 +2,19 @@
 
 # Class: ExchangeTopic
 
-## Hierarchy
+## Extends
 
 - `ExchangeAbstract`\<`string` \| [`ITopicParams`](../interfaces/ITopicParams.md)\>
 
-  ↳ **`ExchangeTopic`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](ExchangeTopic.md#constructor)
-
-### Methods
-
-- [getQueues](ExchangeTopic.md#getqueues)
-- [shutdown](ExchangeTopic.md#shutdown)
-
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new ExchangeTopic**(): [`ExchangeTopic`](ExchangeTopic.md)
+> **new ExchangeTopic**(): `ExchangeTopic`
 
 #### Returns
 
-[`ExchangeTopic`](ExchangeTopic.md)
+`ExchangeTopic`
 
 #### Overrides
 
@@ -35,16 +22,19 @@ ExchangeAbstract\<string \| ITopicParams\>.constructor
 
 ## Methods
 
-### getQueues
+### getQueues()
 
-▸ **getQueues**(`exchangeParams`, `cb`): `void`
+> **getQueues**(`exchangeParams`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `exchangeParams` | `string` \| [`ITopicParams`](../interfaces/ITopicParams.md) |
-| `cb` | `ICallback`\<[`IQueueParams`](../interfaces/IQueueParams.md)[]\> |
+##### exchangeParams
+
+`string` | [`ITopicParams`](../interfaces/ITopicParams.md)
+
+##### cb
+
+`ICallback`\<[`IQueueParams`](../interfaces/IQueueParams.md)[]\>
 
 #### Returns
 
@@ -52,19 +42,19 @@ ExchangeAbstract\<string \| ITopicParams\>.constructor
 
 #### Overrides
 
-ExchangeAbstract.getQueues
+`ExchangeAbstract.getQueues`
 
-___
+***
 
-### shutdown
+### shutdown()
 
-▸ **shutdown**(`cb`): `void`
+> **shutdown**(`cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | `ICallback`\<`void`\> |
+##### cb
+
+`ICallback`\<`void`\>
 
 #### Returns
 
@@ -72,4 +62,4 @@ ___
 
 #### Inherited from
 
-ExchangeAbstract.shutdown
+`ExchangeAbstract.shutdown`

@@ -10,6 +10,7 @@ It is crucial to maintain version alignment between all RedisSMQ packages to ens
 - `redis-smq-common`
 - `redis-smq-rest-api`
 - `redis-smq-web-ui`
+- `redis-smq-web-server`
 
 ## Installation Example
 

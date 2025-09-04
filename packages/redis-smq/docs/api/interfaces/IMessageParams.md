@@ -1,112 +1,97 @@
 [RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IMessageParams
 
-# Interface: IMessageParams
+# Interface: IMessageParams\<TBody\>
 
-## Hierarchy
+## Extended by
 
-- **`IMessageParams`**
+- [`IMessageTransferable`](IMessageTransferable.md)
 
-  ↳ [`IMessageTransferable`](IMessageTransferable.md)
+## Type Parameters
 
-## Table of contents
+### TBody
 
-### Properties
-
-- [body](IMessageParams.md#body)
-- [consumeTimeout](IMessageParams.md#consumetimeout)
-- [consumerGroupId](IMessageParams.md#consumergroupid)
-- [createdAt](IMessageParams.md#createdat)
-- [destinationQueue](IMessageParams.md#destinationqueue)
-- [exchange](IMessageParams.md#exchange)
-- [priority](IMessageParams.md#priority)
-- [retryDelay](IMessageParams.md#retrydelay)
-- [retryThreshold](IMessageParams.md#retrythreshold)
-- [scheduledCron](IMessageParams.md#scheduledcron)
-- [scheduledDelay](IMessageParams.md#scheduleddelay)
-- [scheduledRepeat](IMessageParams.md#scheduledrepeat)
-- [scheduledRepeatPeriod](IMessageParams.md#scheduledrepeatperiod)
-- [ttl](IMessageParams.md#ttl)
+`TBody` = `unknown`
 
 ## Properties
 
 ### body
 
-• **body**: `unknown`
+> **body**: `TBody`
 
-___
-
-### consumeTimeout
-
-• **consumeTimeout**: `number`
-
-___
+***
 
 ### consumerGroupId
 
-• **consumerGroupId**: ``null`` \| `string`
+> **consumerGroupId**: `null` \| `string`
 
-___
+***
+
+### consumeTimeout
+
+> **consumeTimeout**: `number`
+
+***
 
 ### createdAt
 
-• **createdAt**: `number`
+> **createdAt**: `number`
 
-___
+***
 
 ### destinationQueue
 
-• **destinationQueue**: [`IQueueParams`](IQueueParams.md)
+> **destinationQueue**: [`IQueueParams`](IQueueParams.md)
 
-___
+***
 
 ### exchange
 
-• **exchange**: [`TExchangeTransferable`](../README.md#texchangetransferable)
+> **exchange**: [`TExchangeTransferable`](../type-aliases/TExchangeTransferable.md)
 
-___
+***
 
 ### priority
 
-• **priority**: ``null`` \| `number`
+> **priority**: `null` \| `number`
 
-___
+***
 
 ### retryDelay
 
-• **retryDelay**: `number`
+> **retryDelay**: `number`
 
-___
+***
 
 ### retryThreshold
 
-• **retryThreshold**: `number`
+> **retryThreshold**: `number`
 
-___
+***
 
 ### scheduledCron
 
-• **scheduledCron**: ``null`` \| `string`
+> **scheduledCron**: `null` \| `string`
 
-___
+***
 
 ### scheduledDelay
 
-• **scheduledDelay**: ``null`` \| `number`
+> **scheduledDelay**: `null` \| `number`
 
-___
+***
 
 ### scheduledRepeat
 
-• **scheduledRepeat**: `number`
+> **scheduledRepeat**: `number`
 
-___
+***
 
 ### scheduledRepeatPeriod
 
-• **scheduledRepeatPeriod**: ``null`` \| `number`
+> **scheduledRepeatPeriod**: `null` \| `number`
 
-___
+***
 
 ### ttl
 
-• **ttl**: `number`
+> **ttl**: `number`

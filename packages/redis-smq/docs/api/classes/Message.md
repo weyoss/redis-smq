@@ -5,179 +5,231 @@
 The Message class provides methods for interacting with Redis-SMQ messages.
 It utilizes the RedisClient to perform operations on Redis.
 
-## Table of contents
-
-### Constructors
-
-- [constructor](Message.md#constructor)
-
-### Methods
-
-- [deleteMessageById](Message.md#deletemessagebyid)
-- [deleteMessagesByIds](Message.md#deletemessagesbyids)
-- [getMessageById](Message.md#getmessagebyid)
-- [getMessageState](Message.md#getmessagestate)
-- [getMessageStatus](Message.md#getmessagestatus)
-- [getMessagesByIds](Message.md#getmessagesbyids)
-- [requeueMessageById](Message.md#requeuemessagebyid)
-- [shutdown](Message.md#shutdown)
-
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new Message**(): [`Message`](Message.md)
+> **new Message**(): `Message`
 
 #### Returns
 
-[`Message`](Message.md)
+`Message`
 
 ## Methods
 
-### deleteMessageById
+### deleteMessageById()
 
-▸ **deleteMessageById**(`id`, `cb`): `void`
+> **deleteMessageById**(`id`, `cb`): `void`
 
 Deletes a message with the given ID.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `id` | `string` | The ID of the message to delete. |
-| `cb` | `ICallback`\<[`IMessageDeleteResponse`](../interfaces/IMessageDeleteResponse.md)\> | A callback function that will be called with the result. If an error occurs, the first parameter will be an Error object. Otherwise, the second parameter will contain the deletion response. |
+##### id
+
+`string`
+
+The ID of the message to delete.
+
+##### cb
+
+`ICallback`\<[`IMessageDeleteResponse`](../interfaces/IMessageDeleteResponse.md)\>
+
+A callback function that will be called with the result.
+            If an error occurs, the first parameter will be an Error object.
+            Otherwise, the second parameter will contain the deletion response.
 
 #### Returns
 
 `void`
 
-___
+***
 
-### deleteMessagesByIds
+### deleteMessagesByIds()
 
-▸ **deleteMessagesByIds**(`ids`, `cb`): `void`
+> **deleteMessagesByIds**(`ids`, `cb`): `void`
 
 Deletes multiple messages by their IDs
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `ids` | `string`[] | Array of message IDs to delete |
-| `cb` | `ICallback`\<[`IMessageDeleteResponse`](../interfaces/IMessageDeleteResponse.md)\> | Callback function that will be called with the deletion result If an error occurs, the first parameter will be an Error object Otherwise, the second parameter will contain the deletion response |
+##### ids
+
+`string`[]
+
+Array of message IDs to delete
+
+##### cb
+
+`ICallback`\<[`IMessageDeleteResponse`](../interfaces/IMessageDeleteResponse.md)\>
+
+Callback function that will be called with the deletion result
+            If an error occurs, the first parameter will be an Error object
+            Otherwise, the second parameter will contain the deletion response
 
 #### Returns
 
 `void`
 
-___
+***
 
-### getMessageById
+### getMessageById()
 
-▸ **getMessageById**(`messageId`, `cb`): `void`
+> **getMessageById**(`messageId`, `cb`): `void`
 
 Retrieves a message with the given ID.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `messageId` | `string` | The ID of the message to retrieve. |
-| `cb` | `ICallback`\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\> | A callback function that will be called with the result. If an error occurs, the first parameter will be an Error object. Otherwise, the second parameter will be the message object. |
+##### messageId
+
+`string`
+
+The ID of the message to retrieve.
+
+##### cb
+
+`ICallback`\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\<`unknown`\>\>
+
+A callback function that will be called with the result.
+             If an error occurs, the first parameter will be an Error object.
+             Otherwise, the second parameter will be the message object.
 
 #### Returns
 
 `void`
 
-___
+***
 
-### getMessageState
+### getMessagesByIds()
 
-▸ **getMessageState**(`messageId`, `cb`): `void`
-
-Retrieves the state of a message with the given ID.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `messageId` | `string` | The ID of the message to retrieve the state for. |
-| `cb` | `ICallback`\<[`IMessageStateTransferable`](../interfaces/IMessageStateTransferable.md)\> | A callback function that will be called with the result. If an error occurs, the first parameter will be an Error object. Otherwise, the second parameter will be the state of the message. |
-
-#### Returns
-
-`void`
-
-___
-
-### getMessageStatus
-
-▸ **getMessageStatus**(`messageId`, `cb`): `void`
-
-Retrieves the status of a message with the given ID.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `messageId` | `string` | The ID of the message to retrieve the status for. |
-| `cb` | `ICallback`\<[`EMessagePropertyStatus`](../enums/EMessagePropertyStatus.md)\> | A callback function that will be called with the result. If an error occurs, the first parameter will be an Error object. Otherwise, the second parameter will be the status of the message. |
-
-#### Returns
-
-`void`
-
-___
-
-### getMessagesByIds
-
-▸ **getMessagesByIds**(`messageIds`, `cb`): `void`
+> **getMessagesByIds**(`messageIds`, `cb`): `void`
 
 Retrieves messages with the given IDs.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `messageIds` | `string`[] | An array of IDs of the messages to retrieve. |
-| `cb` | `ICallback`\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)[]\> | A callback function that will be called with the result. If an error occurs, the first parameter will be an Error object. Otherwise, the second parameter will be an array of message objects. |
+##### messageIds
+
+`string`[]
+
+An array of IDs of the messages to retrieve.
+
+##### cb
+
+`ICallback`\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\<`unknown`\>[]\>
+
+A callback function that will be called with the result.
+             If an error occurs, the first parameter will be an Error object.
+             Otherwise, the second parameter will be an array of message objects.
 
 #### Returns
 
 `void`
 
-___
+***
 
-### requeueMessageById
+### getMessageState()
 
-▸ **requeueMessageById**(`messageId`, `cb`): `void`
+> **getMessageState**(`messageId`, `cb`): `void`
 
-Requeues a message with the given ID.
+Retrieves the state of a message with the given ID.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `messageId` | `string` | The ID of the message to requeue. |
-| `cb` | `ICallback`\<`void`\> | A callback function that will be called with the result. If an error occurs, the first parameter will be an Error object. Otherwise, the second parameter will be undefined. |
+##### messageId
+
+`string`
+
+The ID of the message to retrieve the state for.
+
+##### cb
+
+`ICallback`\<[`IMessageStateTransferable`](../interfaces/IMessageStateTransferable.md)\>
+
+A callback function that will be called with the result.
+             If an error occurs, the first parameter will be an Error object.
+             Otherwise, the second parameter will be the state of the message.
 
 #### Returns
 
 `void`
 
-___
+***
 
-### shutdown
+### getMessageStatus()
 
-▸ **shutdown**(`cb`): `void`
+> **getMessageStatus**(`messageId`, `cb`): `void`
+
+Retrieves the status of a message with the given ID.
+
+#### Parameters
+
+##### messageId
+
+`string`
+
+The ID of the message to retrieve the status for.
+
+##### cb
+
+`ICallback`\<[`EMessagePropertyStatus`](../enumerations/EMessagePropertyStatus.md)\>
+
+A callback function that will be called with the result.
+             If an error occurs, the first parameter will be an Error object.
+             Otherwise, the second parameter will be the status of the message.
+
+#### Returns
+
+`void`
+
+***
+
+### requeueMessageById()
+
+> **requeueMessageById**(`messageId`, `cb`): `void`
+
+Requeues a message with the given ID.
+A requeued message is created as a new message. The old message is not deleted
+but its state is updated to reflect that it has been requeued.
+
+#### Parameters
+
+##### messageId
+
+`string`
+
+The ID of the message to requeue.
+
+##### cb
+
+`ICallback`\<`string`\>
+
+A callback function that will be called with the result.
+             If an error occurs, the first parameter will be an Error object.
+             On success, the second parameter will be the ID of the new message.
+
+#### Returns
+
+`void`
+
+***
+
+### shutdown()
+
+> **shutdown**(`cb`): `void`
 
 Shuts down the Redis client and performs cleanup operations.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `cb` | `ICallback`\<`void`\> | A callback function that will be called with the result. If an error occurs, the first parameter will be an Error object. Otherwise, the second parameter will be undefined. |
+##### cb
+
+`ICallback`\<`void`\>
+
+A callback function that will be called with the result.
+             If an error occurs, the first parameter will be an Error object.
+             Otherwise, the second parameter will be undefined.
 
 #### Returns
 

@@ -2,42 +2,32 @@
 
 # Interface: IMessagesConfigStorageOptionsRequired
 
-## Hierarchy
+## Extends
 
 - `Required`\<[`IMessagesConfigStorageOptions`](IMessagesConfigStorageOptions.md)\>
-
-  ↳ **`IMessagesConfigStorageOptionsRequired`**
-
-## Table of contents
-
-### Properties
-
-- [expire](IMessagesConfigStorageOptionsRequired.md#expire)
-- [queueSize](IMessagesConfigStorageOptionsRequired.md#queuesize)
-- [store](IMessagesConfigStorageOptionsRequired.md#store)
 
 ## Properties
 
 ### expire
 
-• **expire**: `number`
+> **expire**: `number`
 
 #### Inherited from
 
-Required.expire
+[`IMessagesConfigStorageOptions`](IMessagesConfigStorageOptions.md).[`expire`](IMessagesConfigStorageOptions.md#expire)
 
-___
+***
 
 ### queueSize
 
-• **queueSize**: `number`
+> **queueSize**: `number`
 
 #### Inherited from
 
-Required.queueSize
+[`IMessagesConfigStorageOptions`](IMessagesConfigStorageOptions.md).[`queueSize`](IMessagesConfigStorageOptions.md#queuesize)
 
-___
+***
 
 ### store
 
-• **store**: `boolean`
+> **store**: `boolean`

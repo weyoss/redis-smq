@@ -2,153 +2,133 @@
 
 # Class: NamespaceInvalidNamespaceError
 
-## Hierarchy
+## Extends
 
 - [`NamespaceError`](NamespaceError.md)
 
-  ↳ **`NamespaceInvalidNamespaceError`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](NamespaceInvalidNamespaceError.md#constructor)
-
-### Properties
-
-- [cause](NamespaceInvalidNamespaceError.md#cause)
-- [message](NamespaceInvalidNamespaceError.md#message)
-- [stack](NamespaceInvalidNamespaceError.md#stack)
-- [prepareStackTrace](NamespaceInvalidNamespaceError.md#preparestacktrace)
-- [stackTraceLimit](NamespaceInvalidNamespaceError.md#stacktracelimit)
-
-### Accessors
-
-- [name](NamespaceInvalidNamespaceError.md#name)
-
-### Methods
-
-- [captureStackTrace](NamespaceInvalidNamespaceError.md#capturestacktrace)
-
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new NamespaceInvalidNamespaceError**(`message?`): [`NamespaceInvalidNamespaceError`](NamespaceInvalidNamespaceError.md)
+> **new NamespaceInvalidNamespaceError**(`message?`): `NamespaceInvalidNamespaceError`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `message?` | `string` |
+##### message?
+
+`string`
 
 #### Returns
 
-[`NamespaceInvalidNamespaceError`](NamespaceInvalidNamespaceError.md)
+`NamespaceInvalidNamespaceError`
 
 #### Inherited from
 
-[NamespaceError](NamespaceError.md).[constructor](NamespaceError.md#constructor)
+[`NamespaceError`](NamespaceError.md).[`constructor`](NamespaceError.md#constructor)
 
 ## Properties
 
-### cause
+### cause?
 
-• `Optional` **cause**: `unknown`
+> `optional` **cause**: `unknown`
 
 #### Inherited from
 
-[NamespaceError](NamespaceError.md).[cause](NamespaceError.md#cause)
+[`NamespaceError`](NamespaceError.md).[`cause`](NamespaceError.md#cause)
 
-___
+***
 
 ### message
 
-• **message**: `string`
+> **message**: `string`
 
 #### Inherited from
 
-[NamespaceError](NamespaceError.md).[message](NamespaceError.md#message)
+[`NamespaceError`](NamespaceError.md).[`message`](NamespaceError.md#message)
 
-___
+***
 
-### stack
+### stack?
 
-• `Optional` **stack**: `string`
+> `optional` **stack**: `string`
 
 #### Inherited from
 
-[NamespaceError](NamespaceError.md).[stack](NamespaceError.md#stack)
+[`NamespaceError`](NamespaceError.md).[`stack`](NamespaceError.md#stack)
 
-___
+***
 
-### prepareStackTrace
+### prepareStackTrace()?
 
-▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
+> `static` `optional` **prepareStackTrace**: (`err`, `stackTraces`) => `any`
 
 Optional override for formatting stack traces
 
-**`See`**
+#### Parameters
 
-https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+##### err
 
-#### Type declaration
+`Error`
 
-▸ (`err`, `stackTraces`): `any`
+##### stackTraces
 
-##### Parameters
+`CallSite`[]
 
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-| `stackTraces` | `CallSite`[] |
-
-##### Returns
+#### Returns
 
 `any`
 
+#### See
+
+https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+
 #### Inherited from
 
-[NamespaceError](NamespaceError.md).[prepareStackTrace](NamespaceError.md#preparestacktrace)
+[`NamespaceError`](NamespaceError.md).[`prepareStackTrace`](NamespaceError.md#preparestacktrace)
 
-___
+***
 
 ### stackTraceLimit
 
-▪ `Static` **stackTraceLimit**: `number`
+> `static` **stackTraceLimit**: `number`
 
 #### Inherited from
 
-[NamespaceError](NamespaceError.md).[stackTraceLimit](NamespaceError.md#stacktracelimit)
+[`NamespaceError`](NamespaceError.md).[`stackTraceLimit`](NamespaceError.md#stacktracelimit)
 
 ## Accessors
 
 ### name
 
-• `get` **name**(): `string`
+#### Get Signature
 
-#### Returns
+> **get** **name**(): `string`
+
+##### Returns
 
 `string`
 
 #### Inherited from
 
-NamespaceError.name
+[`NamespaceError`](NamespaceError.md).[`name`](NamespaceError.md#name)
 
 ## Methods
 
-### captureStackTrace
+### captureStackTrace()
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+> `static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `targetObject` | `object` |
-| `constructorOpt?` | `Function` |
+##### targetObject
+
+`object`
+
+##### constructorOpt?
+
+`Function`
 
 #### Returns
 
@@ -156,4 +136,4 @@ Create .stack property on a target object
 
 #### Inherited from
 
-[NamespaceError](NamespaceError.md).[captureStackTrace](NamespaceError.md#capturestacktrace)
+[`NamespaceError`](NamespaceError.md).[`captureStackTrace`](NamespaceError.md#capturestacktrace)

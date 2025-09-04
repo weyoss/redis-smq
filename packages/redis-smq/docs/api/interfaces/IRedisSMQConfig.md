@@ -2,58 +2,48 @@
 
 # Interface: IRedisSMQConfig
 
-## Table of contents
-
-### Properties
-
-- [eventBus](IRedisSMQConfig.md#eventbus)
-- [logger](IRedisSMQConfig.md#logger)
-- [messages](IRedisSMQConfig.md#messages)
-- [namespace](IRedisSMQConfig.md#namespace)
-- [redis](IRedisSMQConfig.md#redis)
-
 ## Properties
 
-### eventBus
+### eventBus?
 
-• `Optional` **eventBus**: [`IEventBusConfig`](IEventBusConfig.md)
+> `optional` **eventBus**: [`IEventBusConfig`](IEventBusConfig.md)
 
-**`See`**
+#### See
 
 https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/event-bus.md
 
-___
+***
 
-### logger
+### logger?
 
-• `Optional` **logger**: `ILoggerConfig`
+> `optional` **logger**: `ILoggerConfig`
 
-**`See`**
+#### See
 
 https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq-common/docs/api/interfaces/ILoggerConfig.md
 
-___
+***
 
-### messages
+### messages?
 
-• `Optional` **messages**: [`IMessagesConfig`](IMessagesConfig.md)
+> `optional` **messages**: [`IMessagesConfig`](IMessagesConfig.md)
 
-**`See`**
+#### See
 
 https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/message-storage.md
 
-___
+***
 
-### namespace
+### namespace?
 
-• `Optional` **namespace**: `string`
+> `optional` **namespace**: `string`
 
-___
+***
 
-### redis
+### redis?
 
-• `Optional` **redis**: `IRedisConfig`
+> `optional` **redis**: `IRedisConfig`
 
-**`See`**
+#### See
 
 https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq-common/docs/api/interfaces/IRedisConfig.md
