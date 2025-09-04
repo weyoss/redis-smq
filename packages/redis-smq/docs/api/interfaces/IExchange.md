@@ -2,30 +2,27 @@
 
 # Interface: IExchange\<ExchangeParams\>
 
-## Type parameters
+## Type Parameters
 
-| Name |
-| :------ |
-| `ExchangeParams` |
+### ExchangeParams
 
-## Table of contents
-
-### Methods
-
-- [getQueues](IExchange.md#getqueues)
+`ExchangeParams`
 
 ## Methods
 
-### getQueues
+### getQueues()
 
-▸ **getQueues**(`exchangeParams`, `cb`): `void`
+> **getQueues**(`exchangeParams`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `exchangeParams` | `ExchangeParams` |
-| `cb` | `ICallback`\<[`IQueueParams`](IQueueParams.md)[]\> |
+##### exchangeParams
+
+`ExchangeParams`
+
+##### cb
+
+`ICallback`\<[`IQueueParams`](IQueueParams.md)[]\>
 
 #### Returns
 

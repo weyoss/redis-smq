@@ -2,21 +2,14 @@
 
 # Interface: IMessagesConfigStorage
 
-## Table of contents
-
-### Properties
-
-- [acknowledged](IMessagesConfigStorage.md#acknowledged)
-- [deadLettered](IMessagesConfigStorage.md#deadlettered)
-
 ## Properties
 
-### acknowledged
+### acknowledged?
 
-• `Optional` **acknowledged**: `boolean` \| [`IMessagesConfigStorageOptions`](IMessagesConfigStorageOptions.md)
+> `optional` **acknowledged**: `boolean` \| [`IMessagesConfigStorageOptions`](IMessagesConfigStorageOptions.md)
 
-___
+***
 
-### deadLettered
+### deadLettered?
 
-• `Optional` **deadLettered**: `boolean` \| [`IMessagesConfigStorageOptions`](IMessagesConfigStorageOptions.md)
+> `optional` **deadLettered**: `boolean` \| [`IMessagesConfigStorageOptions`](IMessagesConfigStorageOptions.md)

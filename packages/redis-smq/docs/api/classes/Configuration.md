@@ -4,19 +4,11 @@
 
 Configuration class for managing and setting up the RedisSMQ message queue.
 
-## Table of contents
-
-### Methods
-
-- [getConfig](Configuration.md#getconfig)
-- [getSetConfig](Configuration.md#getsetconfig)
-- [reset](Configuration.md#reset)
-
 ## Methods
 
-### getConfig
+### getConfig()
 
-▸ **getConfig**(): [`IRedisSMQConfigRequired`](../interfaces/IRedisSMQConfigRequired.md)
+> **getConfig**(): [`IRedisSMQConfigRequired`](../interfaces/IRedisSMQConfigRequired.md)
 
 Retrieves the current configuration settings for the RedisSMQ library.
 
@@ -27,27 +19,30 @@ Retrieves the current configuration settings for the RedisSMQ library.
 An object containing the required configuration properties including
 `namespace`, `redis`, `logger`, `messages`, and `eventBus`.
 
-**`Example`**
+#### Example
 
 ```typescript
 const myConfig = Configuration.getSetConfig();
 console.log(myConfig);
 ```
 
-___
+***
 
-### getSetConfig
+### getSetConfig()
 
-▸ **getSetConfig**(`config?`): [`IRedisSMQConfigRequired`](../interfaces/IRedisSMQConfigRequired.md)
+> `static` **getSetConfig**(`config`): [`IRedisSMQConfigRequired`](../interfaces/IRedisSMQConfigRequired.md)
 
 A static method that returns the singleton instance of the Configuration class.
 If an instance does not exist, it creates a new one using the provided configuration.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `config` | [`IRedisSMQConfig`](../interfaces/IRedisSMQConfig.md) | An optional configuration object for the RedisSMQ. If not provided, an empty object is used. |
+##### config
+
+[`IRedisSMQConfig`](../interfaces/IRedisSMQConfig.md) = `{}`
+
+An optional configuration object for the RedisSMQ.
+If not provided, an empty object is used.
 
 #### Returns
 
@@ -56,7 +51,7 @@ If an instance does not exist, it creates a new one using the provided configura
 The singleton instance of the Configuration class,
 containing the required configuration properties.
 
-**`Example`**
+#### Example
 
 ```typescript
 const config = {
@@ -71,11 +66,11 @@ const myConfig = Configuration.getSetConfig(config);
 console.log(myConfig);
 ```
 
-___
+***
 
-### reset
+### reset()
 
-▸ **reset**(): `void`
+> `static` **reset**(): `void`
 
 Resets the singleton instance of the Configuration class.
 This method is used to clear the current configuration and allow for a new instance to be created.
@@ -84,12 +79,12 @@ This method is used to clear the current configuration and allow for a new insta
 
 `void`
 
-**`Remarks`**
+#### Remarks
 
 This method is useful when testing or when changing the configuration settings dynamically.
 After calling this method, the next time `getSetConfig` is called, a new instance of the Configuration class will be created.
 
-**`Example`**
+#### Example
 
 ```typescript
 // Create a configuration instance

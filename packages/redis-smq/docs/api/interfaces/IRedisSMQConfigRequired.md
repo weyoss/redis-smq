@@ -2,82 +2,76 @@
 
 # Interface: IRedisSMQConfigRequired
 
-## Hierarchy
+## Extends
 
 - `Required`\<[`IRedisSMQConfig`](IRedisSMQConfig.md)\>
-
-  ↳ **`IRedisSMQConfigRequired`**
-
-## Table of contents
-
-### Properties
-
-- [eventBus](IRedisSMQConfigRequired.md#eventbus)
-- [logger](IRedisSMQConfigRequired.md#logger)
-- [messages](IRedisSMQConfigRequired.md#messages)
-- [namespace](IRedisSMQConfigRequired.md#namespace)
-- [redis](IRedisSMQConfigRequired.md#redis)
 
 ## Properties
 
 ### eventBus
 
-• **eventBus**: `Required`\<[`IEventBusConfig`](IEventBusConfig.md)\>
+> **eventBus**: `Required`\<[`IEventBusConfig`](IEventBusConfig.md)\>
+
+#### See
+
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/event-bus.md
 
 #### Overrides
 
-Required.eventBus
+[`IRedisSMQConfig`](IRedisSMQConfig.md).[`eventBus`](IRedisSMQConfig.md#eventbus)
 
-___
+***
 
 ### logger
 
-• **logger**: `ILoggerConfig`
+> **logger**: `ILoggerConfig`
 
-**`See`**
+#### See
 
 https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq-common/docs/api/interfaces/ILoggerConfig.md
 
 #### Inherited from
 
-Required.logger
+[`IRedisSMQConfig`](IRedisSMQConfig.md).[`logger`](IRedisSMQConfig.md#logger)
 
-___
+***
 
 ### messages
 
-• **messages**: `Object`
+> **messages**: `object`
 
-#### Type declaration
+#### store
 
-| Name | Type |
-| :------ | :------ |
-| `store` | [`IMessagesConfigStorageRequired`](IMessagesConfigStorageRequired.md) |
+> **store**: [`IMessagesConfigStorageRequired`](IMessagesConfigStorageRequired.md)
+
+#### See
+
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/message-storage.md
 
 #### Overrides
 
-Required.messages
+[`IRedisSMQConfig`](IRedisSMQConfig.md).[`messages`](IRedisSMQConfig.md#messages)
 
-___
+***
 
 ### namespace
 
-• **namespace**: `string`
+> **namespace**: `string`
 
 #### Inherited from
 
-Required.namespace
+[`IRedisSMQConfig`](IRedisSMQConfig.md).[`namespace`](IRedisSMQConfig.md#namespace)
 
-___
+***
 
 ### redis
 
-• **redis**: `IRedisConfig`
+> **redis**: `IRedisConfig`
 
-**`See`**
+#### See
 
 https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq-common/docs/api/interfaces/IRedisConfig.md
 
 #### Inherited from
 
-Required.redis
+[`IRedisSMQConfig`](IRedisSMQConfig.md).[`redis`](IRedisSMQConfig.md#redis)

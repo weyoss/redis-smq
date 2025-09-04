@@ -2,169 +2,145 @@
 
 # Class: MessageError
 
-## Hierarchy
+## Extends
 
 - `RedisSMQError`
 
-  ↳ **`MessageError`**
+## Extended by
 
-  ↳↳ [`MessageDestinationQueueAlreadySetError`](MessageDestinationQueueAlreadySetError.md)
-
-  ↳↳ [`MessageDestinationQueueRequiredError`](MessageDestinationQueueRequiredError.md)
-
-  ↳↳ [`MessageMessageExchangeRequiredError`](MessageMessageExchangeRequiredError.md)
-
-  ↳↳ [`MessageMessageNotFoundError`](MessageMessageNotFoundError.md)
-
-  ↳↳ [`MessageMessagePropertyError`](MessageMessagePropertyError.md)
-
-  ↳↳ [`MessageInvalidParametersError`](MessageInvalidParametersError.md)
-
-  ↳↳ [`MessageMessageNotRequeuableError`](MessageMessageNotRequeuableError.md)
-
-  ↳↳ [`MessageMessageNotDeletedError`](MessageMessageNotDeletedError.md)
-
-## Table of contents
-
-### Constructors
-
-- [constructor](MessageError.md#constructor)
-
-### Properties
-
-- [cause](MessageError.md#cause)
-- [message](MessageError.md#message)
-- [stack](MessageError.md#stack)
-- [prepareStackTrace](MessageError.md#preparestacktrace)
-- [stackTraceLimit](MessageError.md#stacktracelimit)
-
-### Accessors
-
-- [name](MessageError.md#name)
-
-### Methods
-
-- [captureStackTrace](MessageError.md#capturestacktrace)
+- [`MessageDestinationQueueAlreadySetError`](MessageDestinationQueueAlreadySetError.md)
+- [`MessageDestinationQueueRequiredError`](MessageDestinationQueueRequiredError.md)
+- [`MessageMessageExchangeRequiredError`](MessageMessageExchangeRequiredError.md)
+- [`MessageMessageNotFoundError`](MessageMessageNotFoundError.md)
+- [`MessageMessagePropertyError`](MessageMessagePropertyError.md)
+- [`MessageInvalidParametersError`](MessageInvalidParametersError.md)
+- [`MessageMessageNotRequeuableError`](MessageMessageNotRequeuableError.md)
+- [`MessageMessageNotDeletedError`](MessageMessageNotDeletedError.md)
+- [`MessageMessageAlreadyRequeuedError`](MessageMessageAlreadyRequeuedError.md)
 
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new MessageError**(`message?`): [`MessageError`](MessageError.md)
+> **new MessageError**(`message?`): `MessageError`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `message?` | `string` |
+##### message?
+
+`string`
 
 #### Returns
 
-[`MessageError`](MessageError.md)
+`MessageError`
 
 #### Inherited from
 
-RedisSMQError.constructor
+`RedisSMQError.constructor`
 
 ## Properties
 
-### cause
+### cause?
 
-• `Optional` **cause**: `unknown`
+> `optional` **cause**: `unknown`
 
 #### Inherited from
 
-RedisSMQError.cause
+`RedisSMQError.cause`
 
-___
+***
 
 ### message
 
-• **message**: `string`
+> **message**: `string`
 
 #### Inherited from
 
-RedisSMQError.message
+`RedisSMQError.message`
 
-___
+***
 
-### stack
+### stack?
 
-• `Optional` **stack**: `string`
+> `optional` **stack**: `string`
 
 #### Inherited from
 
-RedisSMQError.stack
+`RedisSMQError.stack`
 
-___
+***
 
-### prepareStackTrace
+### prepareStackTrace()?
 
-▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
+> `static` `optional` **prepareStackTrace**: (`err`, `stackTraces`) => `any`
 
 Optional override for formatting stack traces
 
-**`See`**
+#### Parameters
 
-https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+##### err
 
-#### Type declaration
+`Error`
 
-▸ (`err`, `stackTraces`): `any`
+##### stackTraces
 
-##### Parameters
+`CallSite`[]
 
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-| `stackTraces` | `CallSite`[] |
-
-##### Returns
+#### Returns
 
 `any`
 
+#### See
+
+https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+
 #### Inherited from
 
-RedisSMQError.prepareStackTrace
+`RedisSMQError.prepareStackTrace`
 
-___
+***
 
 ### stackTraceLimit
 
-▪ `Static` **stackTraceLimit**: `number`
+> `static` **stackTraceLimit**: `number`
 
 #### Inherited from
 
-RedisSMQError.stackTraceLimit
+`RedisSMQError.stackTraceLimit`
 
 ## Accessors
 
 ### name
 
-• `get` **name**(): `string`
+#### Get Signature
 
-#### Returns
+> **get** **name**(): `string`
+
+##### Returns
 
 `string`
 
 #### Inherited from
 
-RedisSMQError.name
+`RedisSMQError.name`
 
 ## Methods
 
-### captureStackTrace
+### captureStackTrace()
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+> `static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `targetObject` | `object` |
-| `constructorOpt?` | `Function` |
+##### targetObject
+
+`object`
+
+##### constructorOpt?
+
+`Function`
 
 #### Returns
 
@@ -172,4 +148,4 @@ Create .stack property on a target object
 
 #### Inherited from
 
-RedisSMQError.captureStackTrace
+`RedisSMQError.captureStackTrace`

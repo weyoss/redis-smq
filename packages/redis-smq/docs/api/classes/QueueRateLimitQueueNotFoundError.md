@@ -2,153 +2,133 @@
 
 # Class: QueueRateLimitQueueNotFoundError
 
-## Hierarchy
+## Extends
 
 - [`QueueRateLimitError`](QueueRateLimitError.md)
 
-  ↳ **`QueueRateLimitQueueNotFoundError`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](QueueRateLimitQueueNotFoundError.md#constructor)
-
-### Properties
-
-- [cause](QueueRateLimitQueueNotFoundError.md#cause)
-- [message](QueueRateLimitQueueNotFoundError.md#message)
-- [stack](QueueRateLimitQueueNotFoundError.md#stack)
-- [prepareStackTrace](QueueRateLimitQueueNotFoundError.md#preparestacktrace)
-- [stackTraceLimit](QueueRateLimitQueueNotFoundError.md#stacktracelimit)
-
-### Accessors
-
-- [name](QueueRateLimitQueueNotFoundError.md#name)
-
-### Methods
-
-- [captureStackTrace](QueueRateLimitQueueNotFoundError.md#capturestacktrace)
-
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new QueueRateLimitQueueNotFoundError**(`message?`): [`QueueRateLimitQueueNotFoundError`](QueueRateLimitQueueNotFoundError.md)
+> **new QueueRateLimitQueueNotFoundError**(`message?`): `QueueRateLimitQueueNotFoundError`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `message?` | `string` |
+##### message?
+
+`string`
 
 #### Returns
 
-[`QueueRateLimitQueueNotFoundError`](QueueRateLimitQueueNotFoundError.md)
+`QueueRateLimitQueueNotFoundError`
 
 #### Inherited from
 
-[QueueRateLimitError](QueueRateLimitError.md).[constructor](QueueRateLimitError.md#constructor)
+[`QueueRateLimitError`](QueueRateLimitError.md).[`constructor`](QueueRateLimitError.md#constructor)
 
 ## Properties
 
-### cause
+### cause?
 
-• `Optional` **cause**: `unknown`
+> `optional` **cause**: `unknown`
 
 #### Inherited from
 
-[QueueRateLimitError](QueueRateLimitError.md).[cause](QueueRateLimitError.md#cause)
+[`QueueRateLimitError`](QueueRateLimitError.md).[`cause`](QueueRateLimitError.md#cause)
 
-___
+***
 
 ### message
 
-• **message**: `string`
+> **message**: `string`
 
 #### Inherited from
 
-[QueueRateLimitError](QueueRateLimitError.md).[message](QueueRateLimitError.md#message)
+[`QueueRateLimitError`](QueueRateLimitError.md).[`message`](QueueRateLimitError.md#message)
 
-___
+***
 
-### stack
+### stack?
 
-• `Optional` **stack**: `string`
+> `optional` **stack**: `string`
 
 #### Inherited from
 
-[QueueRateLimitError](QueueRateLimitError.md).[stack](QueueRateLimitError.md#stack)
+[`QueueRateLimitError`](QueueRateLimitError.md).[`stack`](QueueRateLimitError.md#stack)
 
-___
+***
 
-### prepareStackTrace
+### prepareStackTrace()?
 
-▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
+> `static` `optional` **prepareStackTrace**: (`err`, `stackTraces`) => `any`
 
 Optional override for formatting stack traces
 
-**`See`**
+#### Parameters
 
-https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+##### err
 
-#### Type declaration
+`Error`
 
-▸ (`err`, `stackTraces`): `any`
+##### stackTraces
 
-##### Parameters
+`CallSite`[]
 
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-| `stackTraces` | `CallSite`[] |
-
-##### Returns
+#### Returns
 
 `any`
 
+#### See
+
+https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+
 #### Inherited from
 
-[QueueRateLimitError](QueueRateLimitError.md).[prepareStackTrace](QueueRateLimitError.md#preparestacktrace)
+[`QueueRateLimitError`](QueueRateLimitError.md).[`prepareStackTrace`](QueueRateLimitError.md#preparestacktrace)
 
-___
+***
 
 ### stackTraceLimit
 
-▪ `Static` **stackTraceLimit**: `number`
+> `static` **stackTraceLimit**: `number`
 
 #### Inherited from
 
-[QueueRateLimitError](QueueRateLimitError.md).[stackTraceLimit](QueueRateLimitError.md#stacktracelimit)
+[`QueueRateLimitError`](QueueRateLimitError.md).[`stackTraceLimit`](QueueRateLimitError.md#stacktracelimit)
 
 ## Accessors
 
 ### name
 
-• `get` **name**(): `string`
+#### Get Signature
 
-#### Returns
+> **get** **name**(): `string`
+
+##### Returns
 
 `string`
 
 #### Inherited from
 
-QueueRateLimitError.name
+[`QueueRateLimitError`](QueueRateLimitError.md).[`name`](QueueRateLimitError.md#name)
 
 ## Methods
 
-### captureStackTrace
+### captureStackTrace()
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+> `static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `targetObject` | `object` |
-| `constructorOpt?` | `Function` |
+##### targetObject
+
+`object`
+
+##### constructorOpt?
+
+`Function`
 
 #### Returns
 
@@ -156,4 +136,4 @@ Create .stack property on a target object
 
 #### Inherited from
 
-[QueueRateLimitError](QueueRateLimitError.md).[captureStackTrace](QueueRateLimitError.md#capturestacktrace)
+[`QueueRateLimitError`](QueueRateLimitError.md).[`captureStackTrace`](QueueRateLimitError.md#capturestacktrace)

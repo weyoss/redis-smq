@@ -2,153 +2,133 @@
 
 # Class: ExchangeInvalidTopicParamsError
 
-## Hierarchy
+## Extends
 
 - [`ExchangeError`](ExchangeError.md)
 
-  ↳ **`ExchangeInvalidTopicParamsError`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](ExchangeInvalidTopicParamsError.md#constructor)
-
-### Properties
-
-- [cause](ExchangeInvalidTopicParamsError.md#cause)
-- [message](ExchangeInvalidTopicParamsError.md#message)
-- [stack](ExchangeInvalidTopicParamsError.md#stack)
-- [prepareStackTrace](ExchangeInvalidTopicParamsError.md#preparestacktrace)
-- [stackTraceLimit](ExchangeInvalidTopicParamsError.md#stacktracelimit)
-
-### Accessors
-
-- [name](ExchangeInvalidTopicParamsError.md#name)
-
-### Methods
-
-- [captureStackTrace](ExchangeInvalidTopicParamsError.md#capturestacktrace)
-
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new ExchangeInvalidTopicParamsError**(`message?`): [`ExchangeInvalidTopicParamsError`](ExchangeInvalidTopicParamsError.md)
+> **new ExchangeInvalidTopicParamsError**(`message?`): `ExchangeInvalidTopicParamsError`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `message?` | `string` |
+##### message?
+
+`string`
 
 #### Returns
 
-[`ExchangeInvalidTopicParamsError`](ExchangeInvalidTopicParamsError.md)
+`ExchangeInvalidTopicParamsError`
 
 #### Inherited from
 
-[ExchangeError](ExchangeError.md).[constructor](ExchangeError.md#constructor)
+[`ExchangeError`](ExchangeError.md).[`constructor`](ExchangeError.md#constructor)
 
 ## Properties
 
-### cause
+### cause?
 
-• `Optional` **cause**: `unknown`
+> `optional` **cause**: `unknown`
 
 #### Inherited from
 
-[ExchangeError](ExchangeError.md).[cause](ExchangeError.md#cause)
+[`ExchangeError`](ExchangeError.md).[`cause`](ExchangeError.md#cause)
 
-___
+***
 
 ### message
 
-• **message**: `string`
+> **message**: `string`
 
 #### Inherited from
 
-[ExchangeError](ExchangeError.md).[message](ExchangeError.md#message)
+[`ExchangeError`](ExchangeError.md).[`message`](ExchangeError.md#message)
 
-___
+***
 
-### stack
+### stack?
 
-• `Optional` **stack**: `string`
+> `optional` **stack**: `string`
 
 #### Inherited from
 
-[ExchangeError](ExchangeError.md).[stack](ExchangeError.md#stack)
+[`ExchangeError`](ExchangeError.md).[`stack`](ExchangeError.md#stack)
 
-___
+***
 
-### prepareStackTrace
+### prepareStackTrace()?
 
-▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
+> `static` `optional` **prepareStackTrace**: (`err`, `stackTraces`) => `any`
 
 Optional override for formatting stack traces
 
-**`See`**
+#### Parameters
 
-https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+##### err
 
-#### Type declaration
+`Error`
 
-▸ (`err`, `stackTraces`): `any`
+##### stackTraces
 
-##### Parameters
+`CallSite`[]
 
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-| `stackTraces` | `CallSite`[] |
-
-##### Returns
+#### Returns
 
 `any`
 
+#### See
+
+https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+
 #### Inherited from
 
-[ExchangeError](ExchangeError.md).[prepareStackTrace](ExchangeError.md#preparestacktrace)
+[`ExchangeError`](ExchangeError.md).[`prepareStackTrace`](ExchangeError.md#preparestacktrace)
 
-___
+***
 
 ### stackTraceLimit
 
-▪ `Static` **stackTraceLimit**: `number`
+> `static` **stackTraceLimit**: `number`
 
 #### Inherited from
 
-[ExchangeError](ExchangeError.md).[stackTraceLimit](ExchangeError.md#stacktracelimit)
+[`ExchangeError`](ExchangeError.md).[`stackTraceLimit`](ExchangeError.md#stacktracelimit)
 
 ## Accessors
 
 ### name
 
-• `get` **name**(): `string`
+#### Get Signature
 
-#### Returns
+> **get** **name**(): `string`
+
+##### Returns
 
 `string`
 
 #### Inherited from
 
-ExchangeError.name
+[`ExchangeError`](ExchangeError.md).[`name`](ExchangeError.md#name)
 
 ## Methods
 
-### captureStackTrace
+### captureStackTrace()
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+> `static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `targetObject` | `object` |
-| `constructorOpt?` | `Function` |
+##### targetObject
+
+`object`
+
+##### constructorOpt?
+
+`Function`
 
 #### Returns
 
@@ -156,4 +136,4 @@ Create .stack property on a target object
 
 #### Inherited from
 
-[ExchangeError](ExchangeError.md).[captureStackTrace](ExchangeError.md#capturestacktrace)
+[`ExchangeError`](ExchangeError.md).[`captureStackTrace`](ExchangeError.md#capturestacktrace)

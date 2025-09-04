@@ -2,32 +2,19 @@
 
 # Class: ExchangeDirect
 
-## Hierarchy
+## Extends
 
 - `ExchangeAbstract`\<`string` \| [`IQueueParams`](../interfaces/IQueueParams.md)\>
 
-  ↳ **`ExchangeDirect`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](ExchangeDirect.md#constructor)
-
-### Methods
-
-- [getQueues](ExchangeDirect.md#getqueues)
-- [shutdown](ExchangeDirect.md#shutdown)
-
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new ExchangeDirect**(): [`ExchangeDirect`](ExchangeDirect.md)
+> **new ExchangeDirect**(): `ExchangeDirect`
 
 #### Returns
 
-[`ExchangeDirect`](ExchangeDirect.md)
+`ExchangeDirect`
 
 #### Inherited from
 
@@ -35,16 +22,19 @@ ExchangeAbstract\<string \| IQueueParams\>.constructor
 
 ## Methods
 
-### getQueues
+### getQueues()
 
-▸ **getQueues**(`exchangeParams`, `cb`): `void`
+> **getQueues**(`exchangeParams`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `exchangeParams` | `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) |
-| `cb` | `ICallback`\<[`IQueueParams`](../interfaces/IQueueParams.md)[]\> |
+##### exchangeParams
+
+`string` | [`IQueueParams`](../interfaces/IQueueParams.md)
+
+##### cb
+
+`ICallback`\<[`IQueueParams`](../interfaces/IQueueParams.md)[]\>
 
 #### Returns
 
@@ -52,19 +42,19 @@ ExchangeAbstract\<string \| IQueueParams\>.constructor
 
 #### Overrides
 
-ExchangeAbstract.getQueues
+`ExchangeAbstract.getQueues`
 
-___
+***
 
-### shutdown
+### shutdown()
 
-▸ **shutdown**(`cb`): `void`
+> **shutdown**(`cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | `ICallback`\<`void`\> |
+##### cb
+
+`ICallback`\<`void`\>
 
 #### Returns
 
@@ -72,4 +62,4 @@ ___
 
 #### Inherited from
 
-ExchangeAbstract.shutdown
+`ExchangeAbstract.shutdown`

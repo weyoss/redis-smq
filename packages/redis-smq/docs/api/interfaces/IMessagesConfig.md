@@ -2,14 +2,8 @@
 
 # Interface: IMessagesConfig
 
-## Table of contents
-
-### Properties
-
-- [store](IMessagesConfig.md#store)
-
 ## Properties
 
-### store
+### store?
 
-• `Optional` **store**: `boolean` \| [`IMessagesConfigStorage`](IMessagesConfigStorage.md)
+> `optional` **store**: `boolean` \| [`IMessagesConfigStorage`](IMessagesConfigStorage.md)

@@ -2,21 +2,14 @@
 
 # Interface: IConsumerMessageHandlerArgs
 
-## Table of contents
-
-### Properties
-
-- [messageHandler](IConsumerMessageHandlerArgs.md#messagehandler)
-- [queue](IConsumerMessageHandlerArgs.md#queue)
-
 ## Properties
 
 ### messageHandler
 
-• **messageHandler**: [`TConsumerMessageHandler`](../README.md#tconsumermessagehandler)
+> **messageHandler**: [`TConsumerMessageHandler`](../type-aliases/TConsumerMessageHandler.md)
 
-___
+***
 
 ### queue
 
-• **queue**: [`IQueueParsedParams`](IQueueParsedParams.md)
+> **queue**: [`IQueueParsedParams`](IQueueParsedParams.md)

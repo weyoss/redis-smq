@@ -1,0 +1,75 @@
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / EQueueProperty
+
+# Enumeration: EQueueProperty
+
+## Enumeration Members
+
+### ACKNOWLEDGED\_MESSAGES\_COUNT
+
+> **ACKNOWLEDGED\_MESSAGES\_COUNT**: `8`
+
+***
+
+### DEAD\_LETTERED\_MESSAGES\_COUNT
+
+> **DEAD\_LETTERED\_MESSAGES\_COUNT**: `9`
+
+***
+
+### DELAYED\_MESSAGES\_COUNT
+
+> **DELAYED\_MESSAGES\_COUNT**: `10`
+
+***
+
+### DELIVERY\_MODEL
+
+> **DELIVERY\_MODEL**: `4`
+
+***
+
+### FANOUT\_EXCHANGE
+
+> **FANOUT\_EXCHANGE**: `2`
+
+***
+
+### MESSAGES\_COUNT
+
+> **MESSAGES\_COUNT**: `3`
+
+***
+
+### PENDING\_MESSAGES\_COUNT
+
+> **PENDING\_MESSAGES\_COUNT**: `6`
+
+***
+
+### PROCESSING\_MESSAGES\_COUNT
+
+> **PROCESSING\_MESSAGES\_COUNT**: `7`
+
+***
+
+### QUEUE\_TYPE
+
+> **QUEUE\_TYPE**: `0`
+
+***
+
+### RATE\_LIMIT
+
+> **RATE\_LIMIT**: `1`
+
+***
+
+### REQUEUED\_MESSAGES\_COUNT
+
+> **REQUEUED\_MESSAGES\_COUNT**: `11`
+
+***
+
+### SCHEDULED\_MESSAGES\_COUNT
+
+> **SCHEDULED\_MESSAGES\_COUNT**: `5`

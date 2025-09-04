@@ -2,21 +2,14 @@
 
 # Interface: IMessagesConfigStorageOptions
 
-## Table of contents
-
-### Properties
-
-- [expire](IMessagesConfigStorageOptions.md#expire)
-- [queueSize](IMessagesConfigStorageOptions.md#queuesize)
-
 ## Properties
 
-### expire
+### expire?
 
-• `Optional` **expire**: `number`
+> `optional` **expire**: `number`
 
-___
+***
 
-### queueSize
+### queueSize?
 
-• `Optional` **queueSize**: `number`
+> `optional` **queueSize**: `number`

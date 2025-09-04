@@ -2,153 +2,133 @@
 
 # Class: ConsumerGroupsConsumerGroupsNotSupportedError
 
-## Hierarchy
+## Extends
 
 - [`ConsumerGroupsError`](ConsumerGroupsError.md)
 
-  ↳ **`ConsumerGroupsConsumerGroupsNotSupportedError`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](ConsumerGroupsConsumerGroupsNotSupportedError.md#constructor)
-
-### Properties
-
-- [cause](ConsumerGroupsConsumerGroupsNotSupportedError.md#cause)
-- [message](ConsumerGroupsConsumerGroupsNotSupportedError.md#message)
-- [stack](ConsumerGroupsConsumerGroupsNotSupportedError.md#stack)
-- [prepareStackTrace](ConsumerGroupsConsumerGroupsNotSupportedError.md#preparestacktrace)
-- [stackTraceLimit](ConsumerGroupsConsumerGroupsNotSupportedError.md#stacktracelimit)
-
-### Accessors
-
-- [name](ConsumerGroupsConsumerGroupsNotSupportedError.md#name)
-
-### Methods
-
-- [captureStackTrace](ConsumerGroupsConsumerGroupsNotSupportedError.md#capturestacktrace)
-
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new ConsumerGroupsConsumerGroupsNotSupportedError**(`message?`): [`ConsumerGroupsConsumerGroupsNotSupportedError`](ConsumerGroupsConsumerGroupsNotSupportedError.md)
+> **new ConsumerGroupsConsumerGroupsNotSupportedError**(`message?`): `ConsumerGroupsConsumerGroupsNotSupportedError`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `message?` | `string` |
+##### message?
+
+`string`
 
 #### Returns
 
-[`ConsumerGroupsConsumerGroupsNotSupportedError`](ConsumerGroupsConsumerGroupsNotSupportedError.md)
+`ConsumerGroupsConsumerGroupsNotSupportedError`
 
 #### Inherited from
 
-[ConsumerGroupsError](ConsumerGroupsError.md).[constructor](ConsumerGroupsError.md#constructor)
+[`ConsumerGroupsError`](ConsumerGroupsError.md).[`constructor`](ConsumerGroupsError.md#constructor)
 
 ## Properties
 
-### cause
+### cause?
 
-• `Optional` **cause**: `unknown`
+> `optional` **cause**: `unknown`
 
 #### Inherited from
 
-[ConsumerGroupsError](ConsumerGroupsError.md).[cause](ConsumerGroupsError.md#cause)
+[`ConsumerGroupsError`](ConsumerGroupsError.md).[`cause`](ConsumerGroupsError.md#cause)
 
-___
+***
 
 ### message
 
-• **message**: `string`
+> **message**: `string`
 
 #### Inherited from
 
-[ConsumerGroupsError](ConsumerGroupsError.md).[message](ConsumerGroupsError.md#message)
+[`ConsumerGroupsError`](ConsumerGroupsError.md).[`message`](ConsumerGroupsError.md#message)
 
-___
+***
 
-### stack
+### stack?
 
-• `Optional` **stack**: `string`
+> `optional` **stack**: `string`
 
 #### Inherited from
 
-[ConsumerGroupsError](ConsumerGroupsError.md).[stack](ConsumerGroupsError.md#stack)
+[`ConsumerGroupsError`](ConsumerGroupsError.md).[`stack`](ConsumerGroupsError.md#stack)
 
-___
+***
 
-### prepareStackTrace
+### prepareStackTrace()?
 
-▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
+> `static` `optional` **prepareStackTrace**: (`err`, `stackTraces`) => `any`
 
 Optional override for formatting stack traces
 
-**`See`**
+#### Parameters
 
-https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+##### err
 
-#### Type declaration
+`Error`
 
-▸ (`err`, `stackTraces`): `any`
+##### stackTraces
 
-##### Parameters
+`CallSite`[]
 
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-| `stackTraces` | `CallSite`[] |
-
-##### Returns
+#### Returns
 
 `any`
 
+#### See
+
+https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+
 #### Inherited from
 
-[ConsumerGroupsError](ConsumerGroupsError.md).[prepareStackTrace](ConsumerGroupsError.md#preparestacktrace)
+[`ConsumerGroupsError`](ConsumerGroupsError.md).[`prepareStackTrace`](ConsumerGroupsError.md#preparestacktrace)
 
-___
+***
 
 ### stackTraceLimit
 
-▪ `Static` **stackTraceLimit**: `number`
+> `static` **stackTraceLimit**: `number`
 
 #### Inherited from
 
-[ConsumerGroupsError](ConsumerGroupsError.md).[stackTraceLimit](ConsumerGroupsError.md#stacktracelimit)
+[`ConsumerGroupsError`](ConsumerGroupsError.md).[`stackTraceLimit`](ConsumerGroupsError.md#stacktracelimit)
 
 ## Accessors
 
 ### name
 
-• `get` **name**(): `string`
+#### Get Signature
 
-#### Returns
+> **get** **name**(): `string`
+
+##### Returns
 
 `string`
 
 #### Inherited from
 
-ConsumerGroupsError.name
+[`ConsumerGroupsError`](ConsumerGroupsError.md).[`name`](ConsumerGroupsError.md#name)
 
 ## Methods
 
-### captureStackTrace
+### captureStackTrace()
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+> `static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `targetObject` | `object` |
-| `constructorOpt?` | `Function` |
+##### targetObject
+
+`object`
+
+##### constructorOpt?
+
+`Function`
 
 #### Returns
 
@@ -156,4 +136,4 @@ Create .stack property on a target object
 
 #### Inherited from
 
-[ConsumerGroupsError](ConsumerGroupsError.md).[captureStackTrace](ConsumerGroupsError.md#capturestacktrace)
+[`ConsumerGroupsError`](ConsumerGroupsError.md).[`captureStackTrace`](ConsumerGroupsError.md#capturestacktrace)

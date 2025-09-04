@@ -2,153 +2,133 @@
 
 # Class: QueueQueueExistsError
 
-## Hierarchy
+## Extends
 
 - [`QueueError`](QueueError.md)
 
-  ↳ **`QueueQueueExistsError`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](QueueQueueExistsError.md#constructor)
-
-### Properties
-
-- [cause](QueueQueueExistsError.md#cause)
-- [message](QueueQueueExistsError.md#message)
-- [stack](QueueQueueExistsError.md#stack)
-- [prepareStackTrace](QueueQueueExistsError.md#preparestacktrace)
-- [stackTraceLimit](QueueQueueExistsError.md#stacktracelimit)
-
-### Accessors
-
-- [name](QueueQueueExistsError.md#name)
-
-### Methods
-
-- [captureStackTrace](QueueQueueExistsError.md#capturestacktrace)
-
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new QueueQueueExistsError**(`message?`): [`QueueQueueExistsError`](QueueQueueExistsError.md)
+> **new QueueQueueExistsError**(`message?`): `QueueQueueExistsError`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `message?` | `string` |
+##### message?
+
+`string`
 
 #### Returns
 
-[`QueueQueueExistsError`](QueueQueueExistsError.md)
+`QueueQueueExistsError`
 
 #### Inherited from
 
-[QueueError](QueueError.md).[constructor](QueueError.md#constructor)
+[`QueueError`](QueueError.md).[`constructor`](QueueError.md#constructor)
 
 ## Properties
 
-### cause
+### cause?
 
-• `Optional` **cause**: `unknown`
+> `optional` **cause**: `unknown`
 
 #### Inherited from
 
-[QueueError](QueueError.md).[cause](QueueError.md#cause)
+[`QueueError`](QueueError.md).[`cause`](QueueError.md#cause)
 
-___
+***
 
 ### message
 
-• **message**: `string`
+> **message**: `string`
 
 #### Inherited from
 
-[QueueError](QueueError.md).[message](QueueError.md#message)
+[`QueueError`](QueueError.md).[`message`](QueueError.md#message)
 
-___
+***
 
-### stack
+### stack?
 
-• `Optional` **stack**: `string`
+> `optional` **stack**: `string`
 
 #### Inherited from
 
-[QueueError](QueueError.md).[stack](QueueError.md#stack)
+[`QueueError`](QueueError.md).[`stack`](QueueError.md#stack)
 
-___
+***
 
-### prepareStackTrace
+### prepareStackTrace()?
 
-▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
+> `static` `optional` **prepareStackTrace**: (`err`, `stackTraces`) => `any`
 
 Optional override for formatting stack traces
 
-**`See`**
+#### Parameters
 
-https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+##### err
 
-#### Type declaration
+`Error`
 
-▸ (`err`, `stackTraces`): `any`
+##### stackTraces
 
-##### Parameters
+`CallSite`[]
 
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-| `stackTraces` | `CallSite`[] |
-
-##### Returns
+#### Returns
 
 `any`
 
+#### See
+
+https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+
 #### Inherited from
 
-[QueueError](QueueError.md).[prepareStackTrace](QueueError.md#preparestacktrace)
+[`QueueError`](QueueError.md).[`prepareStackTrace`](QueueError.md#preparestacktrace)
 
-___
+***
 
 ### stackTraceLimit
 
-▪ `Static` **stackTraceLimit**: `number`
+> `static` **stackTraceLimit**: `number`
 
 #### Inherited from
 
-[QueueError](QueueError.md).[stackTraceLimit](QueueError.md#stacktracelimit)
+[`QueueError`](QueueError.md).[`stackTraceLimit`](QueueError.md#stacktracelimit)
 
 ## Accessors
 
 ### name
 
-• `get` **name**(): `string`
+#### Get Signature
 
-#### Returns
+> **get** **name**(): `string`
+
+##### Returns
 
 `string`
 
 #### Inherited from
 
-QueueError.name
+[`QueueError`](QueueError.md).[`name`](QueueError.md#name)
 
 ## Methods
 
-### captureStackTrace
+### captureStackTrace()
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+> `static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `targetObject` | `object` |
-| `constructorOpt?` | `Function` |
+##### targetObject
+
+`object`
+
+##### constructorOpt?
+
+`Function`
 
 #### Returns
 
@@ -156,4 +136,4 @@ Create .stack property on a target object
 
 #### Inherited from
 
-[QueueError](QueueError.md).[captureStackTrace](QueueError.md#capturestacktrace)
+[`QueueError`](QueueError.md).[`captureStackTrace`](QueueError.md#capturestacktrace)
