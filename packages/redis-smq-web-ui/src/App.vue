@@ -34,11 +34,12 @@ const initializeApp = async () => {
     isLoading.value = true;
     appError.value = null;
 
-    // Simulate app initialization (replace with actual initialization logic)
-    await new Promise((resolve) => setTimeout(resolve, 4000));
-
     // Add any app initialization logic here
     // e.g., check authentication, load user preferences, etc.
+    // At this time no initialization is required
+
+    // Simulate app initialization
+    await new Promise((resolve) => setTimeout(resolve, 1500));
   } catch (error) {
     console.error('App initialization failed:', error);
     appError.value = 'Failed to initialize application';
