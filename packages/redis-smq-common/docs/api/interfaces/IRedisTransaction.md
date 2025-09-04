@@ -2,331 +2,365 @@
 
 # Interface: IRedisTransaction
 
-## Table of contents
-
-### Methods
-
-- [del](IRedisTransaction.md#del)
-- [exec](IRedisTransaction.md#exec)
-- [expire](IRedisTransaction.md#expire)
-- [hdel](IRedisTransaction.md#hdel)
-- [hincrby](IRedisTransaction.md#hincrby)
-- [hset](IRedisTransaction.md#hset)
-- [lpop](IRedisTransaction.md#lpop)
-- [lpush](IRedisTransaction.md#lpush)
-- [lrem](IRedisTransaction.md#lrem)
-- [ltrim](IRedisTransaction.md#ltrim)
-- [pexpire](IRedisTransaction.md#pexpire)
-- [rpop](IRedisTransaction.md#rpop)
-- [rpoplpush](IRedisTransaction.md#rpoplpush)
-- [rpush](IRedisTransaction.md#rpush)
-- [sadd](IRedisTransaction.md#sadd)
-- [srem](IRedisTransaction.md#srem)
-- [zadd](IRedisTransaction.md#zadd)
-- [zrem](IRedisTransaction.md#zrem)
-
 ## Methods
 
-### del
+### del()
 
-▸ **del**(`key`): `this`
+> **del**(`key`): `this`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` \| `string`[] |
+##### key
+
+`string` | `string`[]
 
 #### Returns
 
 `this`
 
-___
+***
 
-### exec
+### exec()
 
-▸ **exec**(`cb`): `void`
+> **exec**(`cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | [`ICallback`](ICallback.md)\<`unknown`[]\> |
+##### cb
+
+[`ICallback`](ICallback.md)\<`unknown`[]\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### expire
+### expire()
 
-▸ **expire**(`key`, `secs`): `this`
+> **expire**(`key`, `secs`): `this`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `secs` | `number` |
+##### key
+
+`string`
+
+##### secs
+
+`number`
 
 #### Returns
 
 `this`
 
-___
+***
 
-### hdel
+### hdel()
 
-▸ **hdel**(`key`, `field`): `this`
+> **hdel**(`key`, `field`): `this`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `field` | `string` \| `string`[] |
+##### key
+
+`string`
+
+##### field
+
+`string` | `string`[]
 
 #### Returns
 
 `this`
 
-___
+***
 
-### hincrby
+### hincrby()
 
-▸ **hincrby**(`key`, `field`, `by`): `this`
+> **hincrby**(`key`, `field`, `by`): `this`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `field` | `string` |
-| `by` | `number` |
+##### key
+
+`string`
+
+##### field
+
+`string`
+
+##### by
+
+`number`
 
 #### Returns
 
 `this`
 
-___
+***
 
-### hset
+### hset()
 
-▸ **hset**(`key`, `field`, `value`): `this`
+> **hset**(`key`, `field`, `value`): `this`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `field` | `string` |
-| `value` | `string` \| `number` |
+##### key
+
+`string`
+
+##### field
+
+`string`
+
+##### value
+
+`string` | `number`
 
 #### Returns
 
 `this`
 
-___
+***
 
-### lpop
+### lpop()
 
-▸ **lpop**(`key`): `this`
+> **lpop**(`key`): `this`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
+##### key
+
+`string`
 
 #### Returns
 
 `this`
 
-___
+***
 
-### lpush
+### lpush()
 
-▸ **lpush**(`key`, `element`): `this`
+> **lpush**(`key`, `element`): `this`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `element` | `string` |
+##### key
+
+`string`
+
+##### element
+
+`string`
 
 #### Returns
 
 `this`
 
-___
+***
 
-### lrem
+### lrem()
 
-▸ **lrem**(`key`, `count`, `element`): `this`
+> **lrem**(`key`, `count`, `element`): `this`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `count` | `number` |
-| `element` | `string` |
+##### key
+
+`string`
+
+##### count
+
+`number`
+
+##### element
+
+`string`
 
 #### Returns
 
 `this`
 
-___
+***
 
-### ltrim
+### ltrim()
 
-▸ **ltrim**(`key`, `start`, `stop`): `this`
+> **ltrim**(`key`, `start`, `stop`): `this`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `start` | `number` |
-| `stop` | `number` |
+##### key
+
+`string`
+
+##### start
+
+`number`
+
+##### stop
+
+`number`
 
 #### Returns
 
 `this`
 
-___
+***
 
-### pexpire
+### pexpire()
 
-▸ **pexpire**(`key`, `millis`): `this`
+> **pexpire**(`key`, `millis`): `this`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `millis` | `number` |
+##### key
+
+`string`
+
+##### millis
+
+`number`
 
 #### Returns
 
 `this`
 
-___
+***
 
-### rpop
+### rpop()
 
-▸ **rpop**(`key`): `this`
+> **rpop**(`key`): `this`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
+##### key
+
+`string`
 
 #### Returns
 
 `this`
 
-___
+***
 
-### rpoplpush
+### rpoplpush()
 
-▸ **rpoplpush**(`source`, `destination`): `this`
+> **rpoplpush**(`source`, `destination`): `this`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `source` | `string` |
-| `destination` | `string` |
+##### source
+
+`string`
+
+##### destination
+
+`string`
 
 #### Returns
 
 `this`
 
-___
+***
 
-### rpush
+### rpush()
 
-▸ **rpush**(`key`, `element`): `this`
+> **rpush**(`key`, `element`): `this`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `element` | `string` |
+##### key
+
+`string`
+
+##### element
+
+`string`
 
 #### Returns
 
 `this`
 
-___
+***
 
-### sadd
+### sadd()
 
-▸ **sadd**(`key`, `element`): `this`
+> **sadd**(`key`, `element`): `this`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `element` | `string` |
+##### key
+
+`string`
+
+##### element
+
+`string`
 
 #### Returns
 
 `this`
 
-___
+***
 
-### srem
+### srem()
 
-▸ **srem**(`key`, `element`): `this`
+> **srem**(`key`, `element`): `this`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `element` | `string` \| `string`[] |
+##### key
+
+`string`
+
+##### element
+
+`string` | `string`[]
 
 #### Returns
 
 `this`
 
-___
+***
 
-### zadd
+### zadd()
 
-▸ **zadd**(`key`, `score`, `element`): `this`
+> **zadd**(`key`, `score`, `element`): `this`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `score` | `number` |
-| `element` | `string` |
+##### key
+
+`string`
+
+##### score
+
+`number`
+
+##### element
+
+`string`
 
 #### Returns
 
 `this`
 
-___
+***
 
-### zrem
+### zrem()
 
-▸ **zrem**(`key`, `element`): `this`
+> **zrem**(`key`, `element`): `this`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `element` | `string` \| `string`[] |
+##### key
+
+`string`
+
+##### element
+
+`string` | `string`[]
 
 #### Returns
 

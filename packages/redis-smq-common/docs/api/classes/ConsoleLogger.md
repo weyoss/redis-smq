@@ -9,52 +9,47 @@ formatted logging with timestamps to the console.
 
 - [`ILogger`](../interfaces/ILogger.md)
 
-## Table of contents
-
-### Constructors
-
-- [constructor](ConsoleLogger.md#constructor)
-
-### Methods
-
-- [debug](ConsoleLogger.md#debug)
-- [error](ConsoleLogger.md#error)
-- [info](ConsoleLogger.md#info)
-- [isFormatted](ConsoleLogger.md#isformatted)
-- [warn](ConsoleLogger.md#warn)
-
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new ConsoleLogger**(`options?`): [`ConsoleLogger`](ConsoleLogger.md)
+> **new ConsoleLogger**(`options`): `ConsoleLogger`
 
 Creates a new ConsoleLogger instance.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `options` | [`IConsoleLoggerOptions`](../interfaces/IConsoleLoggerOptions.md) | Configuration options for the logger |
+##### options
+
+[`IConsoleLoggerOptions`](../interfaces/IConsoleLoggerOptions.md) = `{}`
+
+Configuration options for the logger
 
 #### Returns
 
-[`ConsoleLogger`](ConsoleLogger.md)
+`ConsoleLogger`
 
 ## Methods
 
-### debug
+### debug()
 
-▸ **debug**(`message`, `...params`): `void`
+> **debug**(`message`, ...`params`): `void`
 
 Logs a debug message to the console.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `message` | `unknown` | The message to log |
-| `...params` | `unknown`[] | Additional parameters to log |
+##### message
+
+`unknown`
+
+The message to log
+
+##### params
+
+...`unknown`[]
+
+Additional parameters to log
 
 #### Returns
 
@@ -62,22 +57,29 @@ Logs a debug message to the console.
 
 #### Implementation of
 
-[ILogger](../interfaces/ILogger.md).[debug](../interfaces/ILogger.md#debug)
+[`ILogger`](../interfaces/ILogger.md).[`debug`](../interfaces/ILogger.md#debug)
 
-___
+***
 
-### error
+### error()
 
-▸ **error**(`message`, `...params`): `void`
+> **error**(`message`, ...`params`): `void`
 
 Logs an error message to the console.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `message` | `unknown` | The message to log |
-| `...params` | `unknown`[] | Additional parameters to log |
+##### message
+
+`unknown`
+
+The message to log
+
+##### params
+
+...`unknown`[]
+
+Additional parameters to log
 
 #### Returns
 
@@ -85,22 +87,29 @@ Logs an error message to the console.
 
 #### Implementation of
 
-[ILogger](../interfaces/ILogger.md).[error](../interfaces/ILogger.md#error)
+[`ILogger`](../interfaces/ILogger.md).[`error`](../interfaces/ILogger.md#error)
 
-___
+***
 
-### info
+### info()
 
-▸ **info**(`message`, `...params`): `void`
+> **info**(`message`, ...`params`): `void`
 
 Logs an info message to the console.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `message` | `unknown` | The message to log |
-| `...params` | `unknown`[] | Additional parameters to log |
+##### message
+
+`unknown`
+
+The message to log
+
+##### params
+
+...`unknown`[]
+
+Additional parameters to log
 
 #### Returns
 
@@ -108,22 +117,24 @@ Logs an info message to the console.
 
 #### Implementation of
 
-[ILogger](../interfaces/ILogger.md).[info](../interfaces/ILogger.md#info)
+[`ILogger`](../interfaces/ILogger.md).[`info`](../interfaces/ILogger.md#info)
 
-___
+***
 
-### isFormatted
+### isFormatted()
 
-▸ **isFormatted**(`message`): `boolean`
+> **isFormatted**(`message`): `boolean`
 
 Checks if a message already contains a timestamp and log level.
 Takes into account possible ANSI color codes in the message.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `message` | `unknown` | The message to check |
+##### message
+
+`unknown`
+
+The message to check
 
 #### Returns
 
@@ -131,20 +142,27 @@ Takes into account possible ANSI color codes in the message.
 
 Whether the message already contains a timestamp and log level
 
-___
+***
 
-### warn
+### warn()
 
-▸ **warn**(`message`, `...params`): `void`
+> **warn**(`message`, ...`params`): `void`
 
 Logs a warning message to the console.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `message` | `unknown` | The message to log |
-| `...params` | `unknown`[] | Additional parameters to log |
+##### message
+
+`unknown`
+
+The message to log
+
+##### params
+
+...`unknown`[]
+
+Additional parameters to log
 
 #### Returns
 
@@ -152,4 +170,4 @@ Logs a warning message to the console.
 
 #### Implementation of
 
-[ILogger](../interfaces/ILogger.md).[warn](../interfaces/ILogger.md#warn)
+[`ILogger`](../interfaces/ILogger.md).[`warn`](../interfaces/ILogger.md#warn)

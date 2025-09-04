@@ -2,52 +2,37 @@
 
 # Interface: IEventBus\<Events\>
 
-## Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `Events` | extends [`TEventBusEvent`](../README.md#teventbusevent) |
-
-## Hierarchy
+## Extends
 
 - [`IEventEmitter`](IEventEmitter.md)\<`Events`\>
 
-  ↳ **`IEventBus`**
+## Type Parameters
 
-## Implemented by
+### Events
 
-- [`EventBus`](../classes/EventBus.md)
-- [`EventBusRedis`](../classes/EventBusRedis.md)
-
-## Table of contents
-
-### Methods
-
-- [emit](IEventBus.md#emit)
-- [on](IEventBus.md#on)
-- [once](IEventBus.md#once)
-- [removeAllListeners](IEventBus.md#removealllisteners)
-- [removeListener](IEventBus.md#removelistener)
-- [shutdown](IEventBus.md#shutdown)
+`Events` *extends* [`TEventBusEvent`](../type-aliases/TEventBusEvent.md)
 
 ## Methods
 
-### emit
+### emit()
 
-▸ **emit**\<`E`\>(`event`, `...args`): `boolean`
+> **emit**\<`E`\>(`event`, ...`args`): `boolean`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `...args` | `Parameters`\<`Events`[`E`]\> |
+##### event
+
+`E`
+
+##### args
+
+...`Parameters`\<`Events`\[`E`\]\>
 
 #### Returns
 
@@ -55,26 +40,29 @@
 
 #### Inherited from
 
-[IEventEmitter](IEventEmitter.md).[emit](IEventEmitter.md#emit)
+[`IEventEmitter`](IEventEmitter.md).[`emit`](IEventEmitter.md#emit)
 
-___
+***
 
-### on
+### on()
 
-▸ **on**\<`E`\>(`event`, `listener`): `this`
+> **on**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `Events`[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+`Events`\[`E`\]
 
 #### Returns
 
@@ -82,26 +70,29 @@ ___
 
 #### Inherited from
 
-[IEventEmitter](IEventEmitter.md).[on](IEventEmitter.md#on)
+[`IEventEmitter`](IEventEmitter.md).[`on`](IEventEmitter.md#on)
 
-___
+***
 
-### once
+### once()
 
-▸ **once**\<`E`\>(`event`, `listener`): `this`
+> **once**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `Events`[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+`Events`\[`E`\]
 
 #### Returns
 
@@ -109,25 +100,25 @@ ___
 
 #### Inherited from
 
-[IEventEmitter](IEventEmitter.md).[once](IEventEmitter.md#once)
+[`IEventEmitter`](IEventEmitter.md).[`once`](IEventEmitter.md#once)
 
-___
+***
 
-### removeAllListeners
+### removeAllListeners()
 
-▸ **removeAllListeners**\<`E`\>(`event?`): `this`
+> **removeAllListeners**\<`E`\>(`event?`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event?` | `E` |
+##### event?
+
+`E`
 
 #### Returns
 
@@ -135,26 +126,29 @@ ___
 
 #### Inherited from
 
-[IEventEmitter](IEventEmitter.md).[removeAllListeners](IEventEmitter.md#removealllisteners)
+[`IEventEmitter`](IEventEmitter.md).[`removeAllListeners`](IEventEmitter.md#removealllisteners)
 
-___
+***
 
-### removeListener
+### removeListener()
 
-▸ **removeListener**\<`E`\>(`event`, `listener`): `this`
+> **removeListener**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `Events`[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+`Events`\[`E`\]
 
 #### Returns
 
@@ -162,19 +156,19 @@ ___
 
 #### Inherited from
 
-[IEventEmitter](IEventEmitter.md).[removeListener](IEventEmitter.md#removelistener)
+[`IEventEmitter`](IEventEmitter.md).[`removeListener`](IEventEmitter.md#removelistener)
 
-___
+***
 
-### shutdown
+### shutdown()
 
-▸ **shutdown**(`cb`): `void`
+> **shutdown**(`cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | [`ICallback`](ICallback.md)\<`void`\> |
+##### cb
+
+[`ICallback`](ICallback.md)\<`void`\>
 
 #### Returns
 

@@ -2,21 +2,14 @@
 
 # Enumeration: EWorkerType
 
-## Table of contents
-
-### Enumeration Members
-
-- [CALLABLE](EWorkerType.md#callable)
-- [RUNNABLE](EWorkerType.md#runnable)
-
 ## Enumeration Members
 
 ### CALLABLE
 
-• **CALLABLE** = ``0``
+> **CALLABLE**: `0`
 
-___
+***
 
 ### RUNNABLE
 
-• **RUNNABLE** = ``1``
+> **RUNNABLE**: `1`

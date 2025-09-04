@@ -2,153 +2,133 @@
 
 # Class: EventBusInstanceLockError
 
-## Hierarchy
+## Extends
 
 - [`EventBusError`](EventBusError.md)
 
-  ↳ **`EventBusInstanceLockError`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](EventBusInstanceLockError.md#constructor)
-
-### Properties
-
-- [cause](EventBusInstanceLockError.md#cause)
-- [message](EventBusInstanceLockError.md#message)
-- [stack](EventBusInstanceLockError.md#stack)
-- [prepareStackTrace](EventBusInstanceLockError.md#preparestacktrace)
-- [stackTraceLimit](EventBusInstanceLockError.md#stacktracelimit)
-
-### Accessors
-
-- [name](EventBusInstanceLockError.md#name)
-
-### Methods
-
-- [captureStackTrace](EventBusInstanceLockError.md#capturestacktrace)
-
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new EventBusInstanceLockError**(`message?`): [`EventBusInstanceLockError`](EventBusInstanceLockError.md)
+> **new EventBusInstanceLockError**(`message?`): `EventBusInstanceLockError`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `message?` | `string` |
+##### message?
+
+`string`
 
 #### Returns
 
-[`EventBusInstanceLockError`](EventBusInstanceLockError.md)
+`EventBusInstanceLockError`
 
 #### Inherited from
 
-[EventBusError](EventBusError.md).[constructor](EventBusError.md#constructor)
+[`EventBusError`](EventBusError.md).[`constructor`](EventBusError.md#constructor)
 
 ## Properties
 
-### cause
+### cause?
 
-• `Optional` **cause**: `unknown`
+> `optional` **cause**: `unknown`
 
 #### Inherited from
 
-[EventBusError](EventBusError.md).[cause](EventBusError.md#cause)
+[`EventBusError`](EventBusError.md).[`cause`](EventBusError.md#cause)
 
-___
+***
 
 ### message
 
-• **message**: `string`
+> **message**: `string`
 
 #### Inherited from
 
-[EventBusError](EventBusError.md).[message](EventBusError.md#message)
+[`EventBusError`](EventBusError.md).[`message`](EventBusError.md#message)
 
-___
+***
 
-### stack
+### stack?
 
-• `Optional` **stack**: `string`
+> `optional` **stack**: `string`
 
 #### Inherited from
 
-[EventBusError](EventBusError.md).[stack](EventBusError.md#stack)
+[`EventBusError`](EventBusError.md).[`stack`](EventBusError.md#stack)
 
-___
+***
 
-### prepareStackTrace
+### prepareStackTrace()?
 
-▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
+> `static` `optional` **prepareStackTrace**: (`err`, `stackTraces`) => `any`
 
 Optional override for formatting stack traces
 
-**`See`**
+#### Parameters
 
-https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+##### err
 
-#### Type declaration
+`Error`
 
-▸ (`err`, `stackTraces`): `any`
+##### stackTraces
 
-##### Parameters
+`CallSite`[]
 
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-| `stackTraces` | `CallSite`[] |
-
-##### Returns
+#### Returns
 
 `any`
 
+#### See
+
+https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+
 #### Inherited from
 
-[EventBusError](EventBusError.md).[prepareStackTrace](EventBusError.md#preparestacktrace)
+[`EventBusError`](EventBusError.md).[`prepareStackTrace`](EventBusError.md#preparestacktrace)
 
-___
+***
 
 ### stackTraceLimit
 
-▪ `Static` **stackTraceLimit**: `number`
+> `static` **stackTraceLimit**: `number`
 
 #### Inherited from
 
-[EventBusError](EventBusError.md).[stackTraceLimit](EventBusError.md#stacktracelimit)
+[`EventBusError`](EventBusError.md).[`stackTraceLimit`](EventBusError.md#stacktracelimit)
 
 ## Accessors
 
 ### name
 
-• `get` **name**(): `string`
+#### Get Signature
 
-#### Returns
+> **get** **name**(): `string`
+
+##### Returns
 
 `string`
 
 #### Inherited from
 
-EventBusError.name
+[`EventBusError`](EventBusError.md).[`name`](EventBusError.md#name)
 
 ## Methods
 
-### captureStackTrace
+### captureStackTrace()
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+> `static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `targetObject` | `object` |
-| `constructorOpt?` | `Function` |
+##### targetObject
+
+`object`
+
+##### constructorOpt?
+
+`Function`
 
 #### Returns
 
@@ -156,4 +136,4 @@ Create .stack property on a target object
 
 #### Inherited from
 
-[EventBusError](EventBusError.md).[captureStackTrace](EventBusError.md#capturestacktrace)
+[`EventBusError`](EventBusError.md).[`captureStackTrace`](EventBusError.md#capturestacktrace)

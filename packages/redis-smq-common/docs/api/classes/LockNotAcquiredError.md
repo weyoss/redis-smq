@@ -2,153 +2,133 @@
 
 # Class: LockNotAcquiredError
 
-## Hierarchy
+## Extends
 
 - [`LockError`](LockError.md)
 
-  ↳ **`LockNotAcquiredError`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](LockNotAcquiredError.md#constructor)
-
-### Properties
-
-- [cause](LockNotAcquiredError.md#cause)
-- [message](LockNotAcquiredError.md#message)
-- [stack](LockNotAcquiredError.md#stack)
-- [prepareStackTrace](LockNotAcquiredError.md#preparestacktrace)
-- [stackTraceLimit](LockNotAcquiredError.md#stacktracelimit)
-
-### Accessors
-
-- [name](LockNotAcquiredError.md#name)
-
-### Methods
-
-- [captureStackTrace](LockNotAcquiredError.md#capturestacktrace)
-
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new LockNotAcquiredError**(`message?`): [`LockNotAcquiredError`](LockNotAcquiredError.md)
+> **new LockNotAcquiredError**(`message`): `LockNotAcquiredError`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `message` | `string` |
+##### message
+
+`string` = `...`
 
 #### Returns
 
-[`LockNotAcquiredError`](LockNotAcquiredError.md)
+`LockNotAcquiredError`
 
 #### Overrides
 
-[LockError](LockError.md).[constructor](LockError.md#constructor)
+[`LockError`](LockError.md).[`constructor`](LockError.md#constructor)
 
 ## Properties
 
-### cause
+### cause?
 
-• `Optional` **cause**: `unknown`
+> `optional` **cause**: `unknown`
 
 #### Inherited from
 
-[LockError](LockError.md).[cause](LockError.md#cause)
+[`LockError`](LockError.md).[`cause`](LockError.md#cause)
 
-___
+***
 
 ### message
 
-• **message**: `string`
+> **message**: `string`
 
 #### Inherited from
 
-[LockError](LockError.md).[message](LockError.md#message)
+[`LockError`](LockError.md).[`message`](LockError.md#message)
 
-___
+***
 
-### stack
+### stack?
 
-• `Optional` **stack**: `string`
+> `optional` **stack**: `string`
 
 #### Inherited from
 
-[LockError](LockError.md).[stack](LockError.md#stack)
+[`LockError`](LockError.md).[`stack`](LockError.md#stack)
 
-___
+***
 
-### prepareStackTrace
+### prepareStackTrace()?
 
-▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
+> `static` `optional` **prepareStackTrace**: (`err`, `stackTraces`) => `any`
 
 Optional override for formatting stack traces
 
-**`See`**
+#### Parameters
 
-https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+##### err
 
-#### Type declaration
+`Error`
 
-▸ (`err`, `stackTraces`): `any`
+##### stackTraces
 
-##### Parameters
+`CallSite`[]
 
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-| `stackTraces` | `CallSite`[] |
-
-##### Returns
+#### Returns
 
 `any`
 
+#### See
+
+https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+
 #### Inherited from
 
-[LockError](LockError.md).[prepareStackTrace](LockError.md#preparestacktrace)
+[`LockError`](LockError.md).[`prepareStackTrace`](LockError.md#preparestacktrace)
 
-___
+***
 
 ### stackTraceLimit
 
-▪ `Static` **stackTraceLimit**: `number`
+> `static` **stackTraceLimit**: `number`
 
 #### Inherited from
 
-[LockError](LockError.md).[stackTraceLimit](LockError.md#stacktracelimit)
+[`LockError`](LockError.md).[`stackTraceLimit`](LockError.md#stacktracelimit)
 
 ## Accessors
 
 ### name
 
-• `get` **name**(): `string`
+#### Get Signature
 
-#### Returns
+> **get** **name**(): `string`
+
+##### Returns
 
 `string`
 
 #### Inherited from
 
-LockError.name
+[`LockError`](LockError.md).[`name`](LockError.md#name)
 
 ## Methods
 
-### captureStackTrace
+### captureStackTrace()
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+> `static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `targetObject` | `object` |
-| `constructorOpt?` | `Function` |
+##### targetObject
+
+`object`
+
+##### constructorOpt?
+
+`Function`
 
 #### Returns
 
@@ -156,4 +136,4 @@ Create .stack property on a target object
 
 #### Inherited from
 
-[LockError](LockError.md).[captureStackTrace](LockError.md#capturestacktrace)
+[`LockError`](LockError.md).[`captureStackTrace`](LockError.md#capturestacktrace)

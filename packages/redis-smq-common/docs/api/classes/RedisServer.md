@@ -2,48 +2,37 @@
 
 # Class: RedisServer
 
-## Table of contents
-
-### Constructors
-
-- [constructor](RedisServer.md#constructor)
-
-### Methods
-
-- [shutdown](RedisServer.md#shutdown)
-- [start](RedisServer.md#start)
-
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new RedisServer**(): [`RedisServer`](RedisServer.md)
+> **new RedisServer**(): `RedisServer`
 
 #### Returns
 
-[`RedisServer`](RedisServer.md)
+`RedisServer`
 
 ## Methods
 
-### shutdown
+### shutdown()
 
-▸ **shutdown**(): `Promise`\<`void`\>
+> **shutdown**(): `Promise`\<`void`\>
 
 #### Returns
 
 `Promise`\<`void`\>
 
-___
+***
 
-### start
+### start()
 
-▸ **start**(`port?`): `Promise`\<`number`\>
+> **start**(`port?`): `Promise`\<`number`\>
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `port?` | `number` |
+##### port?
+
+`number`
 
 #### Returns
 
