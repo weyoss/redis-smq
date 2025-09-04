@@ -2,119 +2,101 @@
 
 # Class: PowerSwitch
 
-## Table of contents
-
-### Constructors
-
-- [constructor](PowerSwitch.md#constructor)
-
-### Methods
-
-- [commit](PowerSwitch.md#commit)
-- [goingDown](PowerSwitch.md#goingdown)
-- [goingUp](PowerSwitch.md#goingup)
-- [isDown](PowerSwitch.md#isdown)
-- [isGoingDown](PowerSwitch.md#isgoingdown)
-- [isGoingUp](PowerSwitch.md#isgoingup)
-- [isRunning](PowerSwitch.md#isrunning)
-- [isUp](PowerSwitch.md#isup)
-- [rollback](PowerSwitch.md#rollback)
-
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new PowerSwitch**(): [`PowerSwitch`](PowerSwitch.md)
+> **new PowerSwitch**(): `PowerSwitch`
 
 #### Returns
 
-[`PowerSwitch`](PowerSwitch.md)
+`PowerSwitch`
 
 ## Methods
 
-### commit
+### commit()
 
-▸ **commit**(): `boolean`
-
-#### Returns
-
-`boolean`
-
-___
-
-### goingDown
-
-▸ **goingDown**(): `boolean`
+> **commit**(): `boolean`
 
 #### Returns
 
 `boolean`
 
-___
+***
 
-### goingUp
+### goingDown()
 
-▸ **goingUp**(): `boolean`
-
-#### Returns
-
-`boolean`
-
-___
-
-### isDown
-
-▸ **isDown**(): `boolean`
+> **goingDown**(): `boolean`
 
 #### Returns
 
 `boolean`
 
-___
+***
 
-### isGoingDown
+### goingUp()
 
-▸ **isGoingDown**(): `boolean`
-
-#### Returns
-
-`boolean`
-
-___
-
-### isGoingUp
-
-▸ **isGoingUp**(): `boolean`
+> **goingUp**(): `boolean`
 
 #### Returns
 
 `boolean`
 
-___
+***
 
-### isRunning
+### isDown()
 
-▸ **isRunning**(): `boolean`
-
-#### Returns
-
-`boolean`
-
-___
-
-### isUp
-
-▸ **isUp**(): `boolean`
+> **isDown**(): `boolean`
 
 #### Returns
 
 `boolean`
 
-___
+***
 
-### rollback
+### isGoingDown()
 
-▸ **rollback**(): `boolean`
+> **isGoingDown**(): `boolean`
+
+#### Returns
+
+`boolean`
+
+***
+
+### isGoingUp()
+
+> **isGoingUp**(): `boolean`
+
+#### Returns
+
+`boolean`
+
+***
+
+### isRunning()
+
+> **isRunning**(): `boolean`
+
+#### Returns
+
+`boolean`
+
+***
+
+### isUp()
+
+> **isUp**(): `boolean`
+
+#### Returns
+
+`boolean`
+
+***
+
+### rollback()
+
+> **rollback**(): `boolean`
 
 #### Returns
 

@@ -2,135 +2,79 @@
 
 # Interface: IRedisClient
 
-## Hierarchy
+## Extends
 
-- [`EventEmitter`](../classes/EventEmitter.md)\<[`TRedisClientEvent`](../README.md#tredisclientevent)\>
-
-  ↳ **`IRedisClient`**
-
-## Table of contents
-
-### Methods
-
-- [brpoplpush](IRedisClient.md#brpoplpush)
-- [del](IRedisClient.md#del)
-- [emit](IRedisClient.md#emit)
-- [end](IRedisClient.md#end)
-- [evalsha](IRedisClient.md#evalsha)
-- [flushall](IRedisClient.md#flushall)
-- [get](IRedisClient.md#get)
-- [getInfo](IRedisClient.md#getinfo)
-- [getScriptId](IRedisClient.md#getscriptid)
-- [halt](IRedisClient.md#halt)
-- [hdel](IRedisClient.md#hdel)
-- [hget](IRedisClient.md#hget)
-- [hgetall](IRedisClient.md#hgetall)
-- [hkeys](IRedisClient.md#hkeys)
-- [hlen](IRedisClient.md#hlen)
-- [hmget](IRedisClient.md#hmget)
-- [hscan](IRedisClient.md#hscan)
-- [hscanAll](IRedisClient.md#hscanall)
-- [hset](IRedisClient.md#hset)
-- [llen](IRedisClient.md#llen)
-- [lmove](IRedisClient.md#lmove)
-- [loadBuiltInScriptFiles](IRedisClient.md#loadbuiltinscriptfiles)
-- [loadScript](IRedisClient.md#loadscript)
-- [loadScriptFiles](IRedisClient.md#loadscriptfiles)
-- [lpoprpush](IRedisClient.md#lpoprpush)
-- [lrange](IRedisClient.md#lrange)
-- [lrem](IRedisClient.md#lrem)
-- [multi](IRedisClient.md#multi)
-- [on](IRedisClient.md#on)
-- [once](IRedisClient.md#once)
-- [psubscribe](IRedisClient.md#psubscribe)
-- [publish](IRedisClient.md#publish)
-- [punsubscribe](IRedisClient.md#punsubscribe)
-- [removeAllListeners](IRedisClient.md#removealllisteners)
-- [removeListener](IRedisClient.md#removelistener)
-- [rpop](IRedisClient.md#rpop)
-- [rpoplpush](IRedisClient.md#rpoplpush)
-- [runScript](IRedisClient.md#runscript)
-- [sadd](IRedisClient.md#sadd)
-- [scard](IRedisClient.md#scard)
-- [set](IRedisClient.md#set)
-- [shutdown](IRedisClient.md#shutdown)
-- [sismember](IRedisClient.md#sismember)
-- [smembers](IRedisClient.md#smembers)
-- [srem](IRedisClient.md#srem)
-- [sscan](IRedisClient.md#sscan)
-- [sscanAll](IRedisClient.md#sscanall)
-- [subscribe](IRedisClient.md#subscribe)
-- [unsubscribe](IRedisClient.md#unsubscribe)
-- [unwatch](IRedisClient.md#unwatch)
-- [updateServerVersion](IRedisClient.md#updateserverversion)
-- [validateRedisServerSupport](IRedisClient.md#validateredisserversupport)
-- [validateRedisVersion](IRedisClient.md#validateredisversion)
-- [watch](IRedisClient.md#watch)
-- [zadd](IRedisClient.md#zadd)
-- [zcard](IRedisClient.md#zcard)
-- [zpoprpush](IRedisClient.md#zpoprpush)
-- [zrange](IRedisClient.md#zrange)
-- [zrangebyscore](IRedisClient.md#zrangebyscore)
-- [zrangebyscorewithscores](IRedisClient.md#zrangebyscorewithscores)
-- [zrem](IRedisClient.md#zrem)
-- [zremrangebyscore](IRedisClient.md#zremrangebyscore)
-- [zrevrange](IRedisClient.md#zrevrange)
-- [zscan](IRedisClient.md#zscan)
+- [`EventEmitter`](../classes/EventEmitter.md)\<[`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)\>
 
 ## Methods
 
-### brpoplpush
+### brpoplpush()
 
-▸ **brpoplpush**(`source`, `destination`, `timeout`, `cb`): `void`
+> **brpoplpush**(`source`, `destination`, `timeout`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `source` | `string` |
-| `destination` | `string` |
-| `timeout` | `number` |
-| `cb` | [`ICallback`](ICallback.md)\<``null`` \| `string`\> |
+##### source
+
+`string`
+
+##### destination
+
+`string`
+
+##### timeout
+
+`number`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`null` \| `string`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### del
+### del()
 
-▸ **del**(`key`, `cb`): `void`
+> **del**(`key`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` \| `string`[] |
-| `cb` | [`ICallback`](ICallback.md)\<`number`\> |
+##### key
+
+`string` | `string`[]
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### emit
+### emit()
 
-▸ **emit**\<`E`\>(`event`, `...args`): `boolean`
+> **emit**\<`E`\>(`event`, ...`args`): `boolean`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TRedisClientEvent`](../README.md#tredisclientevent) |
+##### E
+
+`E` *extends* keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `...args` | `Parameters`\<[`TRedisClientEvent`](../README.md#tredisclientevent)[`E`]\> |
+##### event
+
+`E`
+
+##### args
+
+...`Parameters`\<[`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)\[`E`\]\>
 
 #### Returns
 
@@ -138,459 +82,575 @@ ___
 
 #### Inherited from
 
-[EventEmitter](../classes/EventEmitter.md).[emit](../classes/EventEmitter.md#emit)
+[`EventEmitter`](../classes/EventEmitter.md).[`emit`](../classes/EventEmitter.md#emit)
 
-___
+***
 
-### end
+### end()
 
-▸ **end**(`flush`): `void`
+> **end**(`flush`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `flush` | `boolean` |
+##### flush
+
+`boolean`
 
 #### Returns
 
 `void`
 
-___
+***
 
-### evalsha
+### evalsha()
 
-▸ **evalsha**(`hash`, `args`, `cb`): `void`
+> **evalsha**(`hash`, `args`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `hash` | `string` |
-| `args` | `string` \| `number` \| (`string` \| `number`)[] |
-| `cb` | (`err?`: ``null`` \| `Error`, `res?`: `unknown`) => `void` |
+##### hash
+
+`string`
+
+##### args
+
+`string` | `number` | (`string` \| `number`)[]
+
+##### cb
+
+(`err?`, `res?`) => `void`
 
 #### Returns
 
 `void`
 
-___
+***
 
-### flushall
+### flushall()
 
-▸ **flushall**(`cb`): `void`
+> **flushall**(`cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | [`ICallback`](ICallback.md)\<`string`\> |
+##### cb
+
+[`ICallback`](ICallback.md)\<`string`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### get
+### get()
 
-▸ **get**(`key`, `cb`): `void`
+> **get**(`key`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<``null`` \| `string`\> |
+##### key
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`null` \| `string`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### getInfo
+### getInfo()
 
-▸ **getInfo**(`cb`): `void`
+> **getInfo**(`cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | [`ICallback`](ICallback.md)\<`string`\> |
+##### cb
+
+[`ICallback`](ICallback.md)\<`string`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### getScriptId
+### getScriptId()
 
-▸ **getScriptId**(`name`): `string` \| [`RedisClientError`](../classes/RedisClientError.md)
+> **getScriptId**(`name`): `string` \| [`RedisClientError`](../classes/RedisClientError.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `name` | `string` |
+##### name
+
+`string`
 
 #### Returns
 
 `string` \| [`RedisClientError`](../classes/RedisClientError.md)
 
-___
+***
 
-### halt
+### halt()
 
-▸ **halt**(`cb`): `void`
+> **halt**(`cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | [`ICallback`](ICallback.md)\<`void`\> |
+##### cb
+
+[`ICallback`](ICallback.md)\<`void`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### hdel
+### hdel()
 
-▸ **hdel**(`key`, `fields`, `cb`): `void`
+> **hdel**(`key`, `fields`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `fields` | `string` \| `string`[] |
-| `cb` | [`ICallback`](ICallback.md)\<`number`\> |
+##### key
+
+`string`
+
+##### fields
+
+`string` | `string`[]
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### hget
+### hget()
 
-▸ **hget**(`key`, `field`, `cb`): `void`
+> **hget**(`key`, `field`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `field` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<``null`` \| `string`\> |
+##### key
+
+`string`
+
+##### field
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`null` \| `string`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### hgetall
+### hgetall()
 
-▸ **hgetall**(`key`, `cb`): `void`
+> **hgetall**(`key`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<`Record`\<`string`, `string`\>\> |
+##### key
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`Record`\<`string`, `string`\>\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### hkeys
+### hkeys()
 
-▸ **hkeys**(`key`, `cb`): `void`
+> **hkeys**(`key`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<`string`[]\> |
+##### key
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`string`[]\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### hlen
+### hlen()
 
-▸ **hlen**(`key`, `cb`): `void`
+> **hlen**(`key`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<`number`\> |
+##### key
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### hmget
+### hmget()
 
-▸ **hmget**(`source`, `keys`, `cb`): `void`
+> **hmget**(`source`, `keys`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `source` | `string` |
-| `keys` | `string`[] |
-| `cb` | [`ICallback`](ICallback.md)\<(``null`` \| `string`)[]\> |
+##### source
+
+`string`
+
+##### keys
+
+`string`[]
+
+##### cb
+
+[`ICallback`](ICallback.md)\<(`null` \| `string`)[]\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### hscan
+### hscan()
 
-▸ **hscan**(`key`, `cursor`, `options`, `cb`): `void`
+> **hscan**(`key`, `cursor`, `options`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `cursor` | `string` |
-| `options` | `Object` |
-| `options.COUNT?` | `number` |
-| `options.MATCH?` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<\{ `cursor`: `string` ; `result`: `Record`\<`string`, `string`\>  }\> |
+##### key
+
+`string`
+
+##### cursor
+
+`string`
+
+##### options
+
+###### COUNT?
+
+`number`
+
+###### MATCH?
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<\{ `cursor`: `string`; `result`: `Record`\<`string`, `string`\>; \}\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### hscanAll
+### hscanAll()
 
-▸ **hscanAll**(`key`, `options`, `cb`): `void`
+> **hscanAll**(`key`, `options`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `options` | `Object` |
-| `options.COUNT?` | `number` |
-| `options.MATCH?` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<`Record`\<`string`, `string`\>\> |
+##### key
+
+`string`
+
+##### options
+
+###### COUNT?
+
+`number`
+
+###### MATCH?
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`Record`\<`string`, `string`\>\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### hset
+### hset()
 
-▸ **hset**(`key`, `field`, `value`, `cb`): `void`
+> **hset**(`key`, `field`, `value`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `field` | `string` |
-| `value` | `string` \| `number` |
-| `cb` | [`ICallback`](ICallback.md)\<`number`\> |
+##### key
+
+`string`
+
+##### field
+
+`string`
+
+##### value
+
+`string` | `number`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### llen
+### llen()
 
-▸ **llen**(`key`, `cb`): `void`
+> **llen**(`key`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<`number`\> |
+##### key
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### lmove
+### lmove()
 
-▸ **lmove**(`source`, `destination`, `from`, `to`, `cb`): `void`
+> **lmove**(`source`, `destination`, `from`, `to`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `source` | `string` |
-| `destination` | `string` |
-| `from` | ``"LEFT"`` \| ``"RIGHT"`` |
-| `to` | ``"LEFT"`` \| ``"RIGHT"`` |
-| `cb` | [`ICallback`](ICallback.md)\<``null`` \| `string`\> |
+##### source
+
+`string`
+
+##### destination
+
+`string`
+
+##### from
+
+`"LEFT"` | `"RIGHT"`
+
+##### to
+
+`"LEFT"` | `"RIGHT"`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`null` \| `string`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### loadBuiltInScriptFiles
+### loadBuiltInScriptFiles()
 
-▸ **loadBuiltInScriptFiles**(`cb`): `void`
+> **loadBuiltInScriptFiles**(`cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | [`ICallback`](ICallback.md)\<`void`\> |
+##### cb
+
+[`ICallback`](ICallback.md)\<`void`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### loadScript
+### loadScript()
 
-▸ **loadScript**(`script`, `cb`): `void`
+> **loadScript**(`script`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `script` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<`string`\> |
+##### script
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`string`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### loadScriptFiles
+### loadScriptFiles()
 
-▸ **loadScriptFiles**(`scriptMap`, `cb`): `void`
+> **loadScriptFiles**(`scriptMap`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `scriptMap` | `Record`\<`string`, `string`\> |
-| `cb` | [`ICallback`](ICallback.md)\<`Record`\<`string`, `string`\>\> |
+##### scriptMap
+
+`Record`\<`string`, `string` \| `string`[]\>
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`Record`\<`string`, `string`\>\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### lpoprpush
+### lpoprpush()
 
-▸ **lpoprpush**(`source`, `destination`, `cb`): `void`
+> **lpoprpush**(`source`, `destination`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `source` | `string` |
-| `destination` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<``null`` \| `string`\> |
+##### source
+
+`string`
+
+##### destination
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`null` \| `string`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### lrange
+### lrange()
 
-▸ **lrange**(`key`, `start`, `stop`, `cb`): `void`
+> **lrange**(`key`, `start`, `stop`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `start` | `number` |
-| `stop` | `number` |
-| `cb` | [`ICallback`](ICallback.md)\<`string`[]\> |
+##### key
+
+`string`
+
+##### start
+
+`number`
+
+##### stop
+
+`number`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`string`[]\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### lrem
+### lrem()
 
-▸ **lrem**(`key`, `count`, `element`, `cb`): `void`
+> **lrem**(`key`, `count`, `element`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `count` | `number` |
-| `element` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<`number`\> |
+##### key
+
+`string`
+
+##### count
+
+`number`
+
+##### element
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### multi
+### multi()
 
-▸ **multi**(): [`IRedisTransaction`](IRedisTransaction.md)
+> **multi**(): [`IRedisTransaction`](IRedisTransaction.md)
 
 #### Returns
 
 [`IRedisTransaction`](IRedisTransaction.md)
 
-___
+***
 
-### on
+### on()
 
-▸ **on**\<`E`\>(`event`, `listener`): `this`
+> **on**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TRedisClientEvent`](../README.md#tredisclientevent) |
+##### E
+
+`E` *extends* keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | [`TRedisClientEvent`](../README.md#tredisclientevent)[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+[`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)\[`E`\]
 
 #### Returns
 
@@ -598,26 +658,29 @@ ___
 
 #### Inherited from
 
-[EventEmitter](../classes/EventEmitter.md).[on](../classes/EventEmitter.md#on)
+[`EventEmitter`](../classes/EventEmitter.md).[`on`](../classes/EventEmitter.md#on)
 
-___
+***
 
-### once
+### once()
 
-▸ **once**\<`E`\>(`event`, `listener`): `this`
+> **once**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TRedisClientEvent`](../README.md#tredisclientevent) |
+##### E
+
+`E` *extends* keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | [`TRedisClientEvent`](../README.md#tredisclientevent)[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+[`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)\[`E`\]
 
 #### Returns
 
@@ -625,75 +688,81 @@ ___
 
 #### Inherited from
 
-[EventEmitter](../classes/EventEmitter.md).[once](../classes/EventEmitter.md#once)
+[`EventEmitter`](../classes/EventEmitter.md).[`once`](../classes/EventEmitter.md#once)
 
-___
+***
 
-### psubscribe
+### psubscribe()
 
-▸ **psubscribe**(`pattern`): `void`
+> **psubscribe**(`pattern`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `pattern` | `string` |
+##### pattern
+
+`string`
 
 #### Returns
 
 `void`
 
-___
+***
 
-### publish
+### publish()
 
-▸ **publish**(`channel`, `message`, `cb`): `void`
+> **publish**(`channel`, `message`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `channel` | `string` |
-| `message` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<`number`\> |
+##### channel
+
+`string`
+
+##### message
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### punsubscribe
+### punsubscribe()
 
-▸ **punsubscribe**(`channel?`): `void`
+> **punsubscribe**(`channel?`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `channel?` | `string` |
+##### channel?
+
+`string`
 
 #### Returns
 
 `void`
 
-___
+***
 
-### removeAllListeners
+### removeAllListeners()
 
-▸ **removeAllListeners**\<`E`\>(`event?`): `this`
+> **removeAllListeners**\<`E`\>(`event?`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TRedisClientEvent`](../README.md#tredisclientevent) |
+##### E
+
+`E` *extends* keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event?` | `Extract`\<`E`, `string`\> |
+##### event?
+
+`Extract`\<`E`, `string`\>
 
 #### Returns
 
@@ -701,26 +770,29 @@ ___
 
 #### Inherited from
 
-[EventEmitter](../classes/EventEmitter.md).[removeAllListeners](../classes/EventEmitter.md#removealllisteners)
+[`EventEmitter`](../classes/EventEmitter.md).[`removeAllListeners`](../classes/EventEmitter.md#removealllisteners)
 
-___
+***
 
-### removeListener
+### removeListener()
 
-▸ **removeListener**\<`E`\>(`event`, `listener`): `this`
+> **removeListener**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TRedisClientEvent`](../README.md#tredisclientevent) |
+##### E
+
+`E` *extends* keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | [`TRedisClientEvent`](../README.md#tredisclientevent)[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+[`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)\[`E`\]
 
 #### Returns
 
@@ -728,530 +800,711 @@ ___
 
 #### Inherited from
 
-[EventEmitter](../classes/EventEmitter.md).[removeListener](../classes/EventEmitter.md#removelistener)
+[`EventEmitter`](../classes/EventEmitter.md).[`removeListener`](../classes/EventEmitter.md#removelistener)
 
-___
+***
 
-### rpop
+### rpop()
 
-▸ **rpop**(`key`, `cb`): `void`
+> **rpop**(`key`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<``null`` \| `string`\> |
+##### key
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`null` \| `string`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### rpoplpush
+### rpoplpush()
 
-▸ **rpoplpush**(`source`, `destination`, `cb`): `void`
+> **rpoplpush**(`source`, `destination`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `source` | `string` |
-| `destination` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<``null`` \| `string`\> |
+##### source
+
+`string`
+
+##### destination
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`null` \| `string`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### runScript
+### runScript()
 
-▸ **runScript**(`scriptName`, `keys`, `args`, `cb`): `void`
+> **runScript**(`scriptName`, `keys`, `args`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `scriptName` | `string` |
-| `keys` | (`string` \| `number`)[] |
-| `args` | (`string` \| `number`)[] |
-| `cb` | [`ICallback`](ICallback.md)\<`unknown`\> |
+##### scriptName
+
+`string`
+
+##### keys
+
+(`string` \| `number`)[]
+
+##### args
+
+(`string` \| `number`)[]
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`unknown`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### sadd
+### sadd()
 
-▸ **sadd**(`key`, `member`, `cb`): `void`
+> **sadd**(`key`, `member`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `member` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<`number`\> |
+##### key
+
+`string`
+
+##### member
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### scard
+### scard()
 
-▸ **scard**(`key`, `cb`): `void`
+> **scard**(`key`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<`number`\> |
+##### key
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### set
+### set()
 
-▸ **set**(`key`, `value`, `options`, `cb`): `void`
+> **set**(`key`, `value`, `options`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `value` | `string` |
-| `options` | `Object` |
-| `options.exists?` | ``"NX"`` \| ``"XX"`` |
-| `options.expire?` | `Object` |
-| `options.expire.mode` | ``"EX"`` \| ``"PX"`` |
-| `options.expire.value` | `number` |
-| `cb` | [`ICallback`](ICallback.md)\<``null`` \| `string`\> |
+##### key
+
+`string`
+
+##### value
+
+`string`
+
+##### options
+
+###### exists?
+
+`"NX"` \| `"XX"`
+
+###### expire?
+
+\{ `mode`: `"EX"` \| `"PX"`; `value`: `number`; \}
+
+###### expire.mode
+
+`"EX"` \| `"PX"`
+
+###### expire.value
+
+`number`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`null` \| `string`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### shutdown
+### shutdown()
 
-▸ **shutdown**(`cb`): `void`
+> **shutdown**(`cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | [`ICallback`](ICallback.md)\<`void`\> |
+##### cb
+
+[`ICallback`](ICallback.md)\<`void`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### sismember
+### sismember()
 
-▸ **sismember**(`key`, `member`, `cb`): `void`
+> **sismember**(`key`, `member`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `member` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<`number`\> |
+##### key
+
+`string`
+
+##### member
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### smembers
+### smembers()
 
-▸ **smembers**(`key`, `cb`): `void`
+> **smembers**(`key`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<`string`[]\> |
+##### key
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`string`[]\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### srem
+### srem()
 
-▸ **srem**(`key`, `member`, `cb`): `void`
+> **srem**(`key`, `member`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `member` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<`number`\> |
+##### key
+
+`string`
+
+##### member
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### sscan
+### sscan()
 
-▸ **sscan**(`key`, `cursor`, `options`, `cb`): `void`
+> **sscan**(`key`, `cursor`, `options`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `cursor` | `string` |
-| `options` | `Object` |
-| `options.COUNT?` | `number` |
-| `options.MATCH?` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<\{ `cursor`: `string` ; `items`: `string`[]  }\> |
+##### key
+
+`string`
+
+##### cursor
+
+`string`
+
+##### options
+
+###### COUNT?
+
+`number`
+
+###### MATCH?
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<\{ `cursor`: `string`; `items`: `string`[]; \}\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### sscanAll
+### sscanAll()
 
-▸ **sscanAll**(`key`, `options`, `cb`): `void`
+> **sscanAll**(`key`, `options`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `options` | `Object` |
-| `options.COUNT?` | `number` |
-| `options.MATCH?` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<`string`[]\> |
+##### key
+
+`string`
+
+##### options
+
+###### COUNT?
+
+`number`
+
+###### MATCH?
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`string`[]\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### subscribe
+### subscribe()
 
-▸ **subscribe**(`channel`): `void`
+> **subscribe**(`channel`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `channel` | `string` |
+##### channel
+
+`string`
 
 #### Returns
 
 `void`
 
-___
+***
 
-### unsubscribe
+### unsubscribe()
 
-▸ **unsubscribe**(`channel?`): `void`
+> **unsubscribe**(`channel?`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `channel?` | `string` |
+##### channel?
+
+`string`
 
 #### Returns
 
 `void`
 
-___
+***
 
-### unwatch
+### unwatch()
 
-▸ **unwatch**(`cb`): `void`
+> **unwatch**(`cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | [`ICallback`](ICallback.md)\<`string`\> |
+##### cb
+
+[`ICallback`](ICallback.md)\<`string`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### updateServerVersion
+### updateServerVersion()
 
-▸ **updateServerVersion**(`cb`): `void`
+> **updateServerVersion**(`cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | [`ICallback`](ICallback.md)\<`void`\> |
+##### cb
+
+[`ICallback`](ICallback.md)\<`void`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### validateRedisServerSupport
+### validateRedisServerSupport()
 
-▸ **validateRedisServerSupport**(`cb`): `void`
+> **validateRedisServerSupport**(`cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | [`ICallback`](ICallback.md)\<`void`\> |
+##### cb
+
+[`ICallback`](ICallback.md)\<`void`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### validateRedisVersion
+### validateRedisVersion()
 
-▸ **validateRedisVersion**(`major`, `feature?`, `minor?`): `boolean`
+> **validateRedisVersion**(`major`, `feature?`, `minor?`): `boolean`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `major` | `number` |
-| `feature?` | `number` |
-| `minor?` | `number` |
+##### major
+
+`number`
+
+##### feature?
+
+`number`
+
+##### minor?
+
+`number`
 
 #### Returns
 
 `boolean`
 
-___
+***
 
-### watch
+### watch()
 
-▸ **watch**(`args`, `cb`): `void`
+> **watch**(`args`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `args` | `string`[] |
-| `cb` | [`ICallback`](ICallback.md)\<`string`\> |
+##### args
+
+`string`[]
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`string`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### zadd
+### zadd()
 
-▸ **zadd**(`key`, `score`, `member`, `cb`): `void`
+> **zadd**(`key`, `score`, `member`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `score` | `number` |
-| `member` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<`string` \| `number`\> |
+##### key
+
+`string`
+
+##### score
+
+`number`
+
+##### member
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`string` \| `number`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### zcard
+### zcard()
 
-▸ **zcard**(`key`, `cb`): `void`
+> **zcard**(`key`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<`number`\> |
+##### key
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### zpoprpush
+### zpoprpush()
 
-▸ **zpoprpush**(`source`, `destination`, `cb`): `void`
+> **zpoprpush**(`source`, `destination`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `source` | `string` |
-| `destination` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<``null`` \| `string`\> |
+##### source
+
+`string`
+
+##### destination
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`null` \| `string`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### zrange
+### zrange()
 
-▸ **zrange**(`key`, `min`, `max`, `cb`): `void`
+> **zrange**(`key`, `min`, `max`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `min` | `number` |
-| `max` | `number` |
-| `cb` | [`ICallback`](ICallback.md)\<`string`[]\> |
+##### key
+
+`string`
+
+##### min
+
+`number`
+
+##### max
+
+`number`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`string`[]\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### zrangebyscore
+### zrangebyscore()
 
-▸ **zrangebyscore**(`key`, `min`, `max`, `offset`, `count`, `cb`): `void`
+> **zrangebyscore**(`key`, `min`, `max`, `offset`, `count`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `min` | `string` \| `number` |
-| `max` | `string` \| `number` |
-| `offset` | `number` |
-| `count` | `number` |
-| `cb` | [`ICallback`](ICallback.md)\<`string`[]\> |
+##### key
+
+`string`
+
+##### min
+
+`string` | `number`
+
+##### max
+
+`string` | `number`
+
+##### offset
+
+`number`
+
+##### count
+
+`number`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`string`[]\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### zrangebyscorewithscores
+### zrangebyscorewithscores()
 
-▸ **zrangebyscorewithscores**(`source`, `min`, `max`, `cb`): `void`
+> **zrangebyscorewithscores**(`source`, `min`, `max`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `source` | `string` |
-| `min` | `number` |
-| `max` | `number` |
-| `cb` | [`ICallback`](ICallback.md)\<`Record`\<`string`, `string`\>\> |
+##### source
+
+`string`
+
+##### min
+
+`number`
+
+##### max
+
+`number`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`Record`\<`string`, `string`\>\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### zrem
+### zrem()
 
-▸ **zrem**(`source`, `id`, `cb`): `void`
+> **zrem**(`source`, `id`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `source` | `string` |
-| `id` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<`number`\> |
+##### source
+
+`string`
+
+##### id
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### zremrangebyscore
+### zremrangebyscore()
 
-▸ **zremrangebyscore**(`source`, `min`, `max`, `cb`): `void`
+> **zremrangebyscore**(`source`, `min`, `max`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `source` | `string` |
-| `min` | `string` \| `number` |
-| `max` | `string` \| `number` |
-| `cb` | [`ICallback`](ICallback.md)\<`number`\> |
+##### source
+
+`string`
+
+##### min
+
+`string` | `number`
+
+##### max
+
+`string` | `number`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### zrevrange
+### zrevrange()
 
-▸ **zrevrange**(`key`, `min`, `max`, `cb`): `void`
+> **zrevrange**(`key`, `min`, `max`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `min` | `number` |
-| `max` | `number` |
-| `cb` | [`ICallback`](ICallback.md)\<`string`[]\> |
+##### key
+
+`string`
+
+##### min
+
+`number`
+
+##### max
+
+`number`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`string`[]\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### zscan
+### zscan()
 
-▸ **zscan**(`key`, `cursor`, `options`, `cb`): `void`
+> **zscan**(`key`, `cursor`, `options`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `key` | `string` |
-| `cursor` | `string` |
-| `options` | `Object` |
-| `options.COUNT?` | `number` |
-| `options.MATCH?` | `string` |
-| `cb` | [`ICallback`](ICallback.md)\<\{ `cursor`: `string` ; `items`: `string`[]  }\> |
+##### key
+
+`string`
+
+##### cursor
+
+`string`
+
+##### options
+
+###### COUNT?
+
+`number`
+
+###### MATCH?
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<\{ `cursor`: `string`; `items`: `string`[]; \}\>
 
 #### Returns
 

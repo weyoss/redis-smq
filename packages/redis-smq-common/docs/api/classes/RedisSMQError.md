@@ -1,176 +1,148 @@
 [RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / RedisSMQError
 
-# Class: RedisSMQError
+# Abstract Class: RedisSMQError
 
-## Hierarchy
+## Extends
 
 - `Error`
 
-  ↳ **`RedisSMQError`**
+## Extended by
 
-  ↳↳ [`AsyncCallbackTimeoutError`](AsyncCallbackTimeoutError.md)
-
-  ↳↳ [`PanicError`](PanicError.md)
-
-  ↳↳ [`AbortError`](AbortError.md)
-
-  ↳↳ [`EventBusError`](EventBusError.md)
-
-  ↳↳ [`LockError`](LockError.md)
-
-  ↳↳ [`LoggerError`](LoggerError.md)
-
-  ↳↳ [`RedisClientError`](RedisClientError.md)
-
-  ↳↳ [`InstanceLockError`](InstanceLockError.md)
-
-  ↳↳ [`TimerError`](TimerError.md)
-
-  ↳↳ [`WorkerError`](WorkerError.md)
-
-  ↳↳ [`RedisServerError`](RedisServerError.md)
-
-## Table of contents
-
-### Constructors
-
-- [constructor](RedisSMQError.md#constructor)
-
-### Properties
-
-- [cause](RedisSMQError.md#cause)
-- [message](RedisSMQError.md#message)
-- [stack](RedisSMQError.md#stack)
-- [prepareStackTrace](RedisSMQError.md#preparestacktrace)
-- [stackTraceLimit](RedisSMQError.md#stacktracelimit)
-
-### Accessors
-
-- [name](RedisSMQError.md#name)
-
-### Methods
-
-- [captureStackTrace](RedisSMQError.md#capturestacktrace)
+- [`AsyncCallbackTimeoutError`](AsyncCallbackTimeoutError.md)
+- [`EventBusError`](EventBusError.md)
+- [`RedisServerError`](RedisServerError.md)
+- [`PanicError`](PanicError.md)
+- [`AbortError`](AbortError.md)
+- [`LockError`](LockError.md)
+- [`LoggerError`](LoggerError.md)
+- [`RedisClientError`](RedisClientError.md)
+- [`InstanceLockError`](InstanceLockError.md)
+- [`TimerError`](TimerError.md)
+- [`WorkerError`](WorkerError.md)
 
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new RedisSMQError**(`message?`): [`RedisSMQError`](RedisSMQError.md)
+> **new RedisSMQError**(`message?`): `RedisSMQError`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `message?` | `string` |
+##### message?
+
+`string`
 
 #### Returns
 
-[`RedisSMQError`](RedisSMQError.md)
+`RedisSMQError`
 
 #### Overrides
 
-Error.constructor
+`Error.constructor`
 
 ## Properties
 
-### cause
+### cause?
 
-• `Optional` **cause**: `unknown`
+> `optional` **cause**: `unknown`
 
 #### Inherited from
 
-Error.cause
+`Error.cause`
 
-___
+***
 
 ### message
 
-• **message**: `string`
+> **message**: `string`
 
 #### Inherited from
 
-Error.message
+`Error.message`
 
-___
+***
 
-### stack
+### stack?
 
-• `Optional` **stack**: `string`
+> `optional` **stack**: `string`
 
 #### Inherited from
 
-Error.stack
+`Error.stack`
 
-___
+***
 
-### prepareStackTrace
+### prepareStackTrace()?
 
-▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
+> `static` `optional` **prepareStackTrace**: (`err`, `stackTraces`) => `any`
 
 Optional override for formatting stack traces
 
-**`See`**
+#### Parameters
 
-https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+##### err
 
-#### Type declaration
+`Error`
 
-▸ (`err`, `stackTraces`): `any`
+##### stackTraces
 
-##### Parameters
+`CallSite`[]
 
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-| `stackTraces` | `CallSite`[] |
-
-##### Returns
+#### Returns
 
 `any`
 
+#### See
+
+https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+
 #### Inherited from
 
-Error.prepareStackTrace
+`Error.prepareStackTrace`
 
-___
+***
 
 ### stackTraceLimit
 
-▪ `Static` **stackTraceLimit**: `number`
+> `static` **stackTraceLimit**: `number`
 
 #### Inherited from
 
-Error.stackTraceLimit
+`Error.stackTraceLimit`
 
 ## Accessors
 
 ### name
 
-• `get` **name**(): `string`
+#### Get Signature
 
-#### Returns
+> **get** **name**(): `string`
+
+##### Returns
 
 `string`
 
 #### Overrides
 
-Error.name
+`Error.name`
 
 ## Methods
 
-### captureStackTrace
+### captureStackTrace()
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+> `static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `targetObject` | `object` |
-| `constructorOpt?` | `Function` |
+##### targetObject
+
+`object`
+
+##### constructorOpt?
+
+`Function`
 
 #### Returns
 
@@ -178,4 +150,4 @@ Create .stack property on a target object
 
 #### Inherited from
 
-Error.captureStackTrace
+`Error.captureStackTrace`

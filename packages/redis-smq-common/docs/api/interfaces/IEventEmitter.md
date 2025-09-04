@@ -2,141 +2,137 @@
 
 # Interface: IEventEmitter\<Events\>
 
-## Type parameters
+## Extended by
 
-| Name | Type |
-| :------ | :------ |
-| `Events` | extends [`TEventEmitterEvent`](../README.md#teventemitterevent) |
+- [`IEventBus`](IEventBus.md)
 
-## Hierarchy
+## Type Parameters
 
-- **`IEventEmitter`**
+### Events
 
-  ↳ [`IEventBus`](IEventBus.md)
-
-## Implemented by
-
-- [`EventEmitter`](../classes/EventEmitter.md)
-
-## Table of contents
-
-### Methods
-
-- [emit](IEventEmitter.md#emit)
-- [on](IEventEmitter.md#on)
-- [once](IEventEmitter.md#once)
-- [removeAllListeners](IEventEmitter.md#removealllisteners)
-- [removeListener](IEventEmitter.md#removelistener)
+`Events` *extends* [`TEventEmitterEvent`](../type-aliases/TEventEmitterEvent.md)
 
 ## Methods
 
-### emit
+### emit()
 
-▸ **emit**\<`E`\>(`event`, `...args`): `boolean`
+> **emit**\<`E`\>(`event`, ...`args`): `boolean`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `...args` | `Parameters`\<`Events`[`E`]\> |
+##### event
+
+`E`
+
+##### args
+
+...`Parameters`\<`Events`\[`E`\]\>
 
 #### Returns
 
 `boolean`
 
-___
+***
 
-### on
+### on()
 
-▸ **on**\<`E`\>(`event`, `listener`): `this`
+> **on**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `Events`[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+`Events`\[`E`\]
 
 #### Returns
 
 `this`
 
-___
+***
 
-### once
+### once()
 
-▸ **once**\<`E`\>(`event`, `listener`): `this`
+> **once**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `Events`[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+`Events`\[`E`\]
 
 #### Returns
 
 `this`
 
-___
+***
 
-### removeAllListeners
+### removeAllListeners()
 
-▸ **removeAllListeners**\<`E`\>(`event?`): `this`
+> **removeAllListeners**\<`E`\>(`event?`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event?` | `E` |
+##### event?
+
+`E`
 
 #### Returns
 
 `this`
 
-___
+***
 
-### removeListener
+### removeListener()
 
-▸ **removeListener**\<`E`\>(`event`, `listener`): `this`
+> **removeListener**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `Events`[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+`Events`\[`E`\]
 
 #### Returns
 

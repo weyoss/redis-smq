@@ -2,52 +2,41 @@
 
 # Class: EventBus\<Events\>
 
-## Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `Events` | extends [`TEventBusEvent`](../README.md#teventbusevent) |
-
-## Hierarchy
+## Extends
 
 - [`EventEmitter`](EventEmitter.md)\<`Events`\>
 
-  ↳ **`EventBus`**
+## Type Parameters
+
+### Events
+
+`Events` *extends* [`TEventBusEvent`](../type-aliases/TEventBusEvent.md)
 
 ## Implements
 
 - [`IEventBus`](../interfaces/IEventBus.md)\<`Events`\>
 
-## Table of contents
-
-### Methods
-
-- [emit](EventBus.md#emit)
-- [on](EventBus.md#on)
-- [once](EventBus.md#once)
-- [removeAllListeners](EventBus.md#removealllisteners)
-- [removeListener](EventBus.md#removelistener)
-- [shutdown](EventBus.md#shutdown)
-- [createInstance](EventBus.md#createinstance)
-
 ## Methods
 
-### emit
+### emit()
 
-▸ **emit**\<`E`\>(`event`, `...args`): `boolean`
+> **emit**\<`E`\>(`event`, ...`args`): `boolean`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `...args` | `Parameters`\<`Events`[`E`]\> |
+##### event
+
+`E`
+
+##### args
+
+...`Parameters`\<`Events`\[`E`\]\>
 
 #### Returns
 
@@ -55,30 +44,33 @@
 
 #### Implementation of
 
-[IEventBus](../interfaces/IEventBus.md).[emit](../interfaces/IEventBus.md#emit)
+[`IEventBus`](../interfaces/IEventBus.md).[`emit`](../interfaces/IEventBus.md#emit)
 
 #### Overrides
 
-[EventEmitter](EventEmitter.md).[emit](EventEmitter.md#emit)
+[`EventEmitter`](EventEmitter.md).[`emit`](EventEmitter.md#emit)
 
-___
+***
 
-### on
+### on()
 
-▸ **on**\<`E`\>(`event`, `listener`): `this`
+> **on**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `Events`[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+`Events`\[`E`\]
 
 #### Returns
 
@@ -86,30 +78,33 @@ ___
 
 #### Implementation of
 
-[IEventBus](../interfaces/IEventBus.md).[on](../interfaces/IEventBus.md#on)
+[`IEventBus`](../interfaces/IEventBus.md).[`on`](../interfaces/IEventBus.md#on)
 
 #### Overrides
 
-[EventEmitter](EventEmitter.md).[on](EventEmitter.md#on)
+[`EventEmitter`](EventEmitter.md).[`on`](EventEmitter.md#on)
 
-___
+***
 
-### once
+### once()
 
-▸ **once**\<`E`\>(`event`, `listener`): `this`
+> **once**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `Events`[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+`Events`\[`E`\]
 
 #### Returns
 
@@ -117,29 +112,29 @@ ___
 
 #### Implementation of
 
-[IEventBus](../interfaces/IEventBus.md).[once](../interfaces/IEventBus.md#once)
+[`IEventBus`](../interfaces/IEventBus.md).[`once`](../interfaces/IEventBus.md#once)
 
 #### Overrides
 
-[EventEmitter](EventEmitter.md).[once](EventEmitter.md#once)
+[`EventEmitter`](EventEmitter.md).[`once`](EventEmitter.md#once)
 
-___
+***
 
-### removeAllListeners
+### removeAllListeners()
 
-▸ **removeAllListeners**\<`E`\>(`event?`): `this`
+> **removeAllListeners**\<`E`\>(`event?`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event?` | `Extract`\<`E`, `string`\> |
+##### event?
+
+`Extract`\<`E`, `string`\>
 
 #### Returns
 
@@ -147,30 +142,33 @@ ___
 
 #### Implementation of
 
-[IEventBus](../interfaces/IEventBus.md).[removeAllListeners](../interfaces/IEventBus.md#removealllisteners)
+[`IEventBus`](../interfaces/IEventBus.md).[`removeAllListeners`](../interfaces/IEventBus.md#removealllisteners)
 
 #### Overrides
 
-[EventEmitter](EventEmitter.md).[removeAllListeners](EventEmitter.md#removealllisteners)
+[`EventEmitter`](EventEmitter.md).[`removeAllListeners`](EventEmitter.md#removealllisteners)
 
-___
+***
 
-### removeListener
+### removeListener()
 
-▸ **removeListener**\<`E`\>(`event`, `listener`): `this`
+> **removeListener**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `Events`[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+`Events`\[`E`\]
 
 #### Returns
 
@@ -178,23 +176,23 @@ ___
 
 #### Implementation of
 
-[IEventBus](../interfaces/IEventBus.md).[removeListener](../interfaces/IEventBus.md#removelistener)
+[`IEventBus`](../interfaces/IEventBus.md).[`removeListener`](../interfaces/IEventBus.md#removelistener)
 
 #### Overrides
 
-[EventEmitter](EventEmitter.md).[removeListener](EventEmitter.md#removelistener)
+[`EventEmitter`](EventEmitter.md).[`removeListener`](EventEmitter.md#removelistener)
 
-___
+***
 
-### shutdown
+### shutdown()
 
-▸ **shutdown**(`cb`): `void`
+> **shutdown**(`cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | [`ICallback`](../interfaces/ICallback.md)\<`void`\> |
+##### cb
+
+[`ICallback`](../interfaces/ICallback.md)\<`void`\>
 
 #### Returns
 
@@ -202,25 +200,25 @@ ___
 
 #### Implementation of
 
-[IEventBus](../interfaces/IEventBus.md).[shutdown](../interfaces/IEventBus.md#shutdown)
+[`IEventBus`](../interfaces/IEventBus.md).[`shutdown`](../interfaces/IEventBus.md#shutdown)
 
-___
+***
 
-### createInstance
+### createInstance()
 
-▸ **createInstance**\<`T`\>(`cb`): `void`
+> `static` **createInstance**\<`T`\>(`cb`): `void`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `T` | extends [`TEventBusEvent`](../README.md#teventbusevent) |
+##### T
+
+`T` *extends* [`TEventBusEvent`](../type-aliases/TEventBusEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | [`ICallback`](../interfaces/ICallback.md)\<[`IEventBus`](../interfaces/IEventBus.md)\<`T`\>\> |
+##### cb
+
+[`ICallback`](../interfaces/ICallback.md)\<[`IEventBus`](../interfaces/IEventBus.md)\<`T`\>\>
 
 #### Returns
 

@@ -2,147 +2,127 @@
 
 # Class: RedisServerBinaryNotFoundError
 
-## Hierarchy
+## Extends
 
 - [`RedisServerError`](RedisServerError.md)
 
-  ↳ **`RedisServerBinaryNotFoundError`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](RedisServerBinaryNotFoundError.md#constructor)
-
-### Properties
-
-- [cause](RedisServerBinaryNotFoundError.md#cause)
-- [message](RedisServerBinaryNotFoundError.md#message)
-- [stack](RedisServerBinaryNotFoundError.md#stack)
-- [prepareStackTrace](RedisServerBinaryNotFoundError.md#preparestacktrace)
-- [stackTraceLimit](RedisServerBinaryNotFoundError.md#stacktracelimit)
-
-### Accessors
-
-- [name](RedisServerBinaryNotFoundError.md#name)
-
-### Methods
-
-- [captureStackTrace](RedisServerBinaryNotFoundError.md#capturestacktrace)
-
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new RedisServerBinaryNotFoundError**(): [`RedisServerBinaryNotFoundError`](RedisServerBinaryNotFoundError.md)
+> **new RedisServerBinaryNotFoundError**(): `RedisServerBinaryNotFoundError`
 
 #### Returns
 
-[`RedisServerBinaryNotFoundError`](RedisServerBinaryNotFoundError.md)
+`RedisServerBinaryNotFoundError`
 
 #### Overrides
 
-[RedisServerError](RedisServerError.md).[constructor](RedisServerError.md#constructor)
+[`RedisServerError`](RedisServerError.md).[`constructor`](RedisServerError.md#constructor)
 
 ## Properties
 
-### cause
+### cause?
 
-• `Optional` **cause**: `unknown`
+> `optional` **cause**: `unknown`
 
 #### Inherited from
 
-[RedisServerError](RedisServerError.md).[cause](RedisServerError.md#cause)
+[`RedisServerError`](RedisServerError.md).[`cause`](RedisServerError.md#cause)
 
-___
+***
 
 ### message
 
-• **message**: `string`
+> **message**: `string`
 
 #### Inherited from
 
-[RedisServerError](RedisServerError.md).[message](RedisServerError.md#message)
+[`RedisServerError`](RedisServerError.md).[`message`](RedisServerError.md#message)
 
-___
+***
 
-### stack
+### stack?
 
-• `Optional` **stack**: `string`
+> `optional` **stack**: `string`
 
 #### Inherited from
 
-[RedisServerError](RedisServerError.md).[stack](RedisServerError.md#stack)
+[`RedisServerError`](RedisServerError.md).[`stack`](RedisServerError.md#stack)
 
-___
+***
 
-### prepareStackTrace
+### prepareStackTrace()?
 
-▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
+> `static` `optional` **prepareStackTrace**: (`err`, `stackTraces`) => `any`
 
 Optional override for formatting stack traces
 
-**`See`**
+#### Parameters
 
-https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+##### err
 
-#### Type declaration
+`Error`
 
-▸ (`err`, `stackTraces`): `any`
+##### stackTraces
 
-##### Parameters
+`CallSite`[]
 
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-| `stackTraces` | `CallSite`[] |
-
-##### Returns
+#### Returns
 
 `any`
 
+#### See
+
+https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+
 #### Inherited from
 
-[RedisServerError](RedisServerError.md).[prepareStackTrace](RedisServerError.md#preparestacktrace)
+[`RedisServerError`](RedisServerError.md).[`prepareStackTrace`](RedisServerError.md#preparestacktrace)
 
-___
+***
 
 ### stackTraceLimit
 
-▪ `Static` **stackTraceLimit**: `number`
+> `static` **stackTraceLimit**: `number`
 
 #### Inherited from
 
-[RedisServerError](RedisServerError.md).[stackTraceLimit](RedisServerError.md#stacktracelimit)
+[`RedisServerError`](RedisServerError.md).[`stackTraceLimit`](RedisServerError.md#stacktracelimit)
 
 ## Accessors
 
 ### name
 
-• `get` **name**(): `string`
+#### Get Signature
 
-#### Returns
+> **get** **name**(): `string`
+
+##### Returns
 
 `string`
 
 #### Inherited from
 
-RedisServerError.name
+[`RedisServerError`](RedisServerError.md).[`name`](RedisServerError.md#name)
 
 ## Methods
 
-### captureStackTrace
+### captureStackTrace()
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+> `static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `targetObject` | `object` |
-| `constructorOpt?` | `Function` |
+##### targetObject
+
+`object`
+
+##### constructorOpt?
+
+`Function`
 
 #### Returns
 
@@ -150,4 +130,4 @@ Create .stack property on a target object
 
 #### Inherited from
 
-[RedisServerError](RedisServerError.md).[captureStackTrace](RedisServerError.md#capturestacktrace)
+[`RedisServerError`](RedisServerError.md).[`captureStackTrace`](RedisServerError.md#capturestacktrace)

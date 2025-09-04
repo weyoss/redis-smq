@@ -2,147 +2,127 @@
 
 # Class: WorkerAlreadyRunningError
 
-## Hierarchy
+## Extends
 
 - [`WorkerError`](WorkerError.md)
 
-  ↳ **`WorkerAlreadyRunningError`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](WorkerAlreadyRunningError.md#constructor)
-
-### Properties
-
-- [cause](WorkerAlreadyRunningError.md#cause)
-- [message](WorkerAlreadyRunningError.md#message)
-- [stack](WorkerAlreadyRunningError.md#stack)
-- [prepareStackTrace](WorkerAlreadyRunningError.md#preparestacktrace)
-- [stackTraceLimit](WorkerAlreadyRunningError.md#stacktracelimit)
-
-### Accessors
-
-- [name](WorkerAlreadyRunningError.md#name)
-
-### Methods
-
-- [captureStackTrace](WorkerAlreadyRunningError.md#capturestacktrace)
-
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new WorkerAlreadyRunningError**(): [`WorkerAlreadyRunningError`](WorkerAlreadyRunningError.md)
+> **new WorkerAlreadyRunningError**(): `WorkerAlreadyRunningError`
 
 #### Returns
 
-[`WorkerAlreadyRunningError`](WorkerAlreadyRunningError.md)
+`WorkerAlreadyRunningError`
 
 #### Overrides
 
-[WorkerError](WorkerError.md).[constructor](WorkerError.md#constructor)
+[`WorkerError`](WorkerError.md).[`constructor`](WorkerError.md#constructor)
 
 ## Properties
 
-### cause
+### cause?
 
-• `Optional` **cause**: `unknown`
+> `optional` **cause**: `unknown`
 
 #### Inherited from
 
-[WorkerError](WorkerError.md).[cause](WorkerError.md#cause)
+[`WorkerError`](WorkerError.md).[`cause`](WorkerError.md#cause)
 
-___
+***
 
 ### message
 
-• **message**: `string`
+> **message**: `string`
 
 #### Inherited from
 
-[WorkerError](WorkerError.md).[message](WorkerError.md#message)
+[`WorkerError`](WorkerError.md).[`message`](WorkerError.md#message)
 
-___
+***
 
-### stack
+### stack?
 
-• `Optional` **stack**: `string`
+> `optional` **stack**: `string`
 
 #### Inherited from
 
-[WorkerError](WorkerError.md).[stack](WorkerError.md#stack)
+[`WorkerError`](WorkerError.md).[`stack`](WorkerError.md#stack)
 
-___
+***
 
-### prepareStackTrace
+### prepareStackTrace()?
 
-▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
+> `static` `optional` **prepareStackTrace**: (`err`, `stackTraces`) => `any`
 
 Optional override for formatting stack traces
 
-**`See`**
+#### Parameters
 
-https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+##### err
 
-#### Type declaration
+`Error`
 
-▸ (`err`, `stackTraces`): `any`
+##### stackTraces
 
-##### Parameters
+`CallSite`[]
 
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-| `stackTraces` | `CallSite`[] |
-
-##### Returns
+#### Returns
 
 `any`
 
+#### See
+
+https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+
 #### Inherited from
 
-[WorkerError](WorkerError.md).[prepareStackTrace](WorkerError.md#preparestacktrace)
+[`WorkerError`](WorkerError.md).[`prepareStackTrace`](WorkerError.md#preparestacktrace)
 
-___
+***
 
 ### stackTraceLimit
 
-▪ `Static` **stackTraceLimit**: `number`
+> `static` **stackTraceLimit**: `number`
 
 #### Inherited from
 
-[WorkerError](WorkerError.md).[stackTraceLimit](WorkerError.md#stacktracelimit)
+[`WorkerError`](WorkerError.md).[`stackTraceLimit`](WorkerError.md#stacktracelimit)
 
 ## Accessors
 
 ### name
 
-• `get` **name**(): `string`
+#### Get Signature
 
-#### Returns
+> **get** **name**(): `string`
+
+##### Returns
 
 `string`
 
 #### Inherited from
 
-WorkerError.name
+[`WorkerError`](WorkerError.md).[`name`](WorkerError.md#name)
 
 ## Methods
 
-### captureStackTrace
+### captureStackTrace()
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+> `static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `targetObject` | `object` |
-| `constructorOpt?` | `Function` |
+##### targetObject
+
+`object`
+
+##### constructorOpt?
+
+`Function`
 
 #### Returns
 
@@ -150,4 +130,4 @@ Create .stack property on a target object
 
 #### Inherited from
 
-[WorkerError](WorkerError.md).[captureStackTrace](WorkerError.md#capturestacktrace)
+[`WorkerError`](WorkerError.md).[`captureStackTrace`](WorkerError.md#capturestacktrace)

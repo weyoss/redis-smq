@@ -2,39 +2,30 @@
 
 # Interface: IConsoleLoggerOptions
 
-## Table of contents
-
-### Properties
-
-- [colorize](IConsoleLoggerOptions.md#colorize)
-- [dateFormat](IConsoleLoggerOptions.md#dateformat)
-- [includeTimestamp](IConsoleLoggerOptions.md#includetimestamp)
-- [logLevel](IConsoleLoggerOptions.md#loglevel)
-
 ## Properties
 
-### colorize
+### colorize?
 
-• `Optional` **colorize**: `boolean`
+> `optional` **colorize**: `boolean`
 
 Whether to colorize log messages with ANSI color codes
 
-**`Default`**
+#### Default
 
 ```ts
 true
 ```
 
-___
+***
 
-### dateFormat
+### dateFormat?
 
-• `Optional` **dateFormat**: [`TConsoleLoggerOptionsDateFormatter`](../README.md#tconsoleloggeroptionsdateformatter)
+> `optional` **dateFormat**: [`TConsoleLoggerOptionsDateFormatter`](../type-aliases/TConsoleLoggerOptionsDateFormatter.md)
 
 Custom date formatter function to format timestamps
 If not provided, ISO string format will be used
 
-**`Example`**
+#### Example
 
 ```ts
 // Format as local time
@@ -46,32 +37,32 @@ dateFormat: (date) => {
 }
 ```
 
-___
+***
 
-### includeTimestamp
+### includeTimestamp?
 
-• `Optional` **includeTimestamp**: `boolean`
+> `optional` **includeTimestamp**: `boolean`
 
 Whether to include timestamps in log messages
 
-**`Default`**
+#### Default
 
 ```ts
 true
 ```
 
-___
+***
 
-### logLevel
+### logLevel?
 
-• `Optional` **logLevel**: ``"INFO"`` \| ``"DEBUG"`` \| [`EConsoleLoggerLevel`](../enums/EConsoleLoggerLevel.md) \| ``"WARN"`` \| ``"ERROR"``
+> `optional` **logLevel**: `"INFO"` \| `"DEBUG"` \| [`EConsoleLoggerLevel`](../enumerations/EConsoleLoggerLevel.md) \| `"WARN"` \| `"ERROR"`
 
 Minimum log level to display
 Can be specified as a string ('DEBUG', 'INFO', 'WARN', 'ERROR') or
 using the numeric enum values from EConsoleLoggerLevel
 Messages with a level lower than this will be suppressed
 
-**`Default`**
+#### Default
 
 ```ts
 EConsoleLoggerLevel.DEBUG (0)

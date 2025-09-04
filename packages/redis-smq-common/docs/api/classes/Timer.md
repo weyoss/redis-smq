@@ -2,61 +2,45 @@
 
 # Class: Timer
 
-## Hierarchy
+## Extends
 
-- [`EventEmitter`](EventEmitter.md)\<[`TTimerEvent`](../README.md#ttimerevent)\>
-
-  ↳ **`Timer`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](Timer.md#constructor)
-
-### Methods
-
-- [emit](Timer.md#emit)
-- [on](Timer.md#on)
-- [once](Timer.md#once)
-- [removeAllListeners](Timer.md#removealllisteners)
-- [removeListener](Timer.md#removelistener)
-- [reset](Timer.md#reset)
-- [setInterval](Timer.md#setinterval)
-- [setTimeout](Timer.md#settimeout)
+- [`EventEmitter`](EventEmitter.md)\<[`TTimerEvent`](../type-aliases/TTimerEvent.md)\>
 
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new Timer**(): [`Timer`](Timer.md)
+> **new Timer**(): `Timer`
 
 #### Returns
 
-[`Timer`](Timer.md)
+`Timer`
 
 #### Inherited from
 
-[EventEmitter](EventEmitter.md).[constructor](EventEmitter.md#constructor)
+[`EventEmitter`](EventEmitter.md).[`constructor`](EventEmitter.md#constructor)
 
 ## Methods
 
-### emit
+### emit()
 
-▸ **emit**\<`E`\>(`event`, `...args`): `boolean`
+> **emit**\<`E`\>(`event`, ...`args`): `boolean`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends ``"error"`` |
+##### E
+
+`E` *extends* `"error"`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `...args` | `Parameters`\<[`TTimerEvent`](../README.md#ttimerevent)[`E`]\> |
+##### event
+
+`E`
+
+##### args
+
+...`Parameters`\<[`TTimerEvent`](../type-aliases/TTimerEvent.md)\[`E`\]\>
 
 #### Returns
 
@@ -64,26 +48,29 @@
 
 #### Inherited from
 
-[EventEmitter](EventEmitter.md).[emit](EventEmitter.md#emit)
+[`EventEmitter`](EventEmitter.md).[`emit`](EventEmitter.md#emit)
 
-___
+***
 
-### on
+### on()
 
-▸ **on**\<`E`\>(`event`, `listener`): `this`
+> **on**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends ``"error"`` |
+##### E
+
+`E` *extends* `"error"`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | [`TTimerEvent`](../README.md#ttimerevent)[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+[`TTimerEvent`](../type-aliases/TTimerEvent.md)\[`E`\]
 
 #### Returns
 
@@ -91,26 +78,29 @@ ___
 
 #### Inherited from
 
-[EventEmitter](EventEmitter.md).[on](EventEmitter.md#on)
+[`EventEmitter`](EventEmitter.md).[`on`](EventEmitter.md#on)
 
-___
+***
 
-### once
+### once()
 
-▸ **once**\<`E`\>(`event`, `listener`): `this`
+> **once**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends ``"error"`` |
+##### E
+
+`E` *extends* `"error"`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | [`TTimerEvent`](../README.md#ttimerevent)[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+[`TTimerEvent`](../type-aliases/TTimerEvent.md)\[`E`\]
 
 #### Returns
 
@@ -118,25 +108,25 @@ ___
 
 #### Inherited from
 
-[EventEmitter](EventEmitter.md).[once](EventEmitter.md#once)
+[`EventEmitter`](EventEmitter.md).[`once`](EventEmitter.md#once)
 
-___
+***
 
-### removeAllListeners
+### removeAllListeners()
 
-▸ **removeAllListeners**\<`E`\>(`event?`): `this`
+> **removeAllListeners**\<`E`\>(`event?`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends ``"error"`` |
+##### E
+
+`E` *extends* `"error"`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event?` | `Extract`\<`E`, `string`\> |
+##### event?
+
+`Extract`\<`E`, `string`\>
 
 #### Returns
 
@@ -144,26 +134,29 @@ ___
 
 #### Inherited from
 
-[EventEmitter](EventEmitter.md).[removeAllListeners](EventEmitter.md#removealllisteners)
+[`EventEmitter`](EventEmitter.md).[`removeAllListeners`](EventEmitter.md#removealllisteners)
 
-___
+***
 
-### removeListener
+### removeListener()
 
-▸ **removeListener**\<`E`\>(`event`, `listener`): `this`
+> **removeListener**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends ``"error"`` |
+##### E
+
+`E` *extends* `"error"`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | [`TTimerEvent`](../README.md#ttimerevent)[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+[`TTimerEvent`](../type-aliases/TTimerEvent.md)\[`E`\]
 
 #### Returns
 
@@ -171,47 +164,53 @@ ___
 
 #### Inherited from
 
-[EventEmitter](EventEmitter.md).[removeListener](EventEmitter.md#removelistener)
+[`EventEmitter`](EventEmitter.md).[`removeListener`](EventEmitter.md#removelistener)
 
-___
+***
 
-### reset
+### reset()
 
-▸ **reset**(): `void`
+> **reset**(): `void`
 
 #### Returns
 
 `void`
 
-___
+***
 
-### setInterval
+### setInterval()
 
-▸ **setInterval**(`fn`, `interval?`): `boolean`
+> **setInterval**(`fn`, `interval`): `boolean`
 
 #### Parameters
 
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `fn` | [`TFunction`](../README.md#tfunction) | `undefined` |
-| `interval` | `number` | `1000` |
+##### fn
+
+[`TFunction`](../type-aliases/TFunction.md)
+
+##### interval
+
+`number` = `1000`
 
 #### Returns
 
 `boolean`
 
-___
+***
 
-### setTimeout
+### setTimeout()
 
-▸ **setTimeout**(`fn`, `timeout`): `boolean`
+> **setTimeout**(`fn`, `timeout`): `boolean`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `fn` | [`TFunction`](../README.md#tfunction) |
-| `timeout` | `number` |
+##### fn
+
+[`TFunction`](../type-aliases/TFunction.md)
+
+##### timeout
+
+`number`
 
 #### Returns
 

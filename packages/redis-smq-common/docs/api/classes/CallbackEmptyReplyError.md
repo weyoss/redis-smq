@@ -2,147 +2,127 @@
 
 # Class: CallbackEmptyReplyError
 
-## Hierarchy
+## Extends
 
 - [`PanicError`](PanicError.md)
 
-  ↳ **`CallbackEmptyReplyError`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](CallbackEmptyReplyError.md#constructor)
-
-### Properties
-
-- [cause](CallbackEmptyReplyError.md#cause)
-- [message](CallbackEmptyReplyError.md#message)
-- [stack](CallbackEmptyReplyError.md#stack)
-- [prepareStackTrace](CallbackEmptyReplyError.md#preparestacktrace)
-- [stackTraceLimit](CallbackEmptyReplyError.md#stacktracelimit)
-
-### Accessors
-
-- [name](CallbackEmptyReplyError.md#name)
-
-### Methods
-
-- [captureStackTrace](CallbackEmptyReplyError.md#capturestacktrace)
-
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new CallbackEmptyReplyError**(): [`CallbackEmptyReplyError`](CallbackEmptyReplyError.md)
+> **new CallbackEmptyReplyError**(): `CallbackEmptyReplyError`
 
 #### Returns
 
-[`CallbackEmptyReplyError`](CallbackEmptyReplyError.md)
+`CallbackEmptyReplyError`
 
 #### Overrides
 
-[PanicError](PanicError.md).[constructor](PanicError.md#constructor)
+[`PanicError`](PanicError.md).[`constructor`](PanicError.md#constructor)
 
 ## Properties
 
-### cause
+### cause?
 
-• `Optional` **cause**: `unknown`
+> `optional` **cause**: `unknown`
 
 #### Inherited from
 
-[PanicError](PanicError.md).[cause](PanicError.md#cause)
+[`PanicError`](PanicError.md).[`cause`](PanicError.md#cause)
 
-___
+***
 
 ### message
 
-• **message**: `string`
+> **message**: `string`
 
 #### Inherited from
 
-[PanicError](PanicError.md).[message](PanicError.md#message)
+[`PanicError`](PanicError.md).[`message`](PanicError.md#message)
 
-___
+***
 
-### stack
+### stack?
 
-• `Optional` **stack**: `string`
+> `optional` **stack**: `string`
 
 #### Inherited from
 
-[PanicError](PanicError.md).[stack](PanicError.md#stack)
+[`PanicError`](PanicError.md).[`stack`](PanicError.md#stack)
 
-___
+***
 
-### prepareStackTrace
+### prepareStackTrace()?
 
-▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
+> `static` `optional` **prepareStackTrace**: (`err`, `stackTraces`) => `any`
 
 Optional override for formatting stack traces
 
-**`See`**
+#### Parameters
 
-https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+##### err
 
-#### Type declaration
+`Error`
 
-▸ (`err`, `stackTraces`): `any`
+##### stackTraces
 
-##### Parameters
+`CallSite`[]
 
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-| `stackTraces` | `CallSite`[] |
-
-##### Returns
+#### Returns
 
 `any`
 
+#### See
+
+https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+
 #### Inherited from
 
-[PanicError](PanicError.md).[prepareStackTrace](PanicError.md#preparestacktrace)
+[`PanicError`](PanicError.md).[`prepareStackTrace`](PanicError.md#preparestacktrace)
 
-___
+***
 
 ### stackTraceLimit
 
-▪ `Static` **stackTraceLimit**: `number`
+> `static` **stackTraceLimit**: `number`
 
 #### Inherited from
 
-[PanicError](PanicError.md).[stackTraceLimit](PanicError.md#stacktracelimit)
+[`PanicError`](PanicError.md).[`stackTraceLimit`](PanicError.md#stacktracelimit)
 
 ## Accessors
 
 ### name
 
-• `get` **name**(): `string`
+#### Get Signature
 
-#### Returns
+> **get** **name**(): `string`
+
+##### Returns
 
 `string`
 
 #### Inherited from
 
-PanicError.name
+[`PanicError`](PanicError.md).[`name`](PanicError.md#name)
 
 ## Methods
 
-### captureStackTrace
+### captureStackTrace()
 
-▸ **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+> `static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
 Create .stack property on a target object
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `targetObject` | `object` |
-| `constructorOpt?` | `Function` |
+##### targetObject
+
+`object`
+
+##### constructorOpt?
+
+`Function`
 
 #### Returns
 
@@ -150,4 +130,4 @@ Create .stack property on a target object
 
 #### Inherited from
 
-[PanicError](PanicError.md).[captureStackTrace](PanicError.md#capturestacktrace)
+[`PanicError`](PanicError.md).[`captureStackTrace`](PanicError.md#capturestacktrace)
