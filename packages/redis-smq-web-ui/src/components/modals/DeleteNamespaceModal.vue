@@ -90,7 +90,7 @@ const emit = defineEmits<{
                     </li>
                     <li>All messages in these queues will be lost</li>
                     <li>
-                      Any consumers connected to these queues will be
+                      Make sure that all consumers connected to these queues are
                       disconnected
                     </li>
                     <li>This action cannot be reversed</li>
@@ -159,7 +159,7 @@ const emit = defineEmits<{
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 1050;
   backdrop-filter: blur(4px);
 }
 
