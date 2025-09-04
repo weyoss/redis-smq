@@ -90,7 +90,8 @@ function handleOverlayClick() {
                 <ul class="warning-list">
                   <li>All messages in this queue will be permanently lost</li>
                   <li>
-                    Any consumers connected to this queue will be disconnected
+                    Make sure that all consumers connected to this queue are
+                    disconnected
                   </li>
                   <li>This action cannot be reversed</li>
                 </ul>
