@@ -1,0 +1,8 @@
+# Ignore everything
+*
+
+# Except the dist directory
+!dist/**
+!LICENSE
+!CHANGELOG.md
+!package.json
