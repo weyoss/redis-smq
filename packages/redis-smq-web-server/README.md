@@ -188,5 +188,5 @@ interface IRedisSMQWebServerConfig {
 
 ## License
 
-RedisSMQ Web UI is licensed under is released under the [MIT License](https://github.com/weyoss/redis-smq/blob/master/LICENSE).
+RedisSMQ Web Server is licensed under is released under the [MIT License](https://github.com/weyoss/redis-smq/blob/master/LICENSE).
 
