@@ -112,4 +112,4 @@ Contributions are welcome. Please see the repository’s CONTRIBUTING.md in the 
 
 ## License
 
-This project is licensed under is released under the [MIT License](https://github.com/weyoss/redis-smq/blob/master/LICENSE).
+RedisSMQ Web UI is licensed under is released under the [MIT License](https://github.com/weyoss/redis-smq/blob/master/LICENSE).
