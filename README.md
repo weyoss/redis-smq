@@ -9,7 +9,11 @@ A High-Performance Redis Simple Message Queue for Node.js
 
 **What's New**
 
-✨ V8 is here! Major architecture improvements, Pub/Sub delivery model, worker threads, enhanced TypeScript support, and more. [See release notes](release-notes/release-v8.md).
+- 05.09.2025: V9 is coming soon — a focused refinement of V8. It brings end-to-end message observability, a more robust and
+  efficient message storage layer, and a new Web UI for managing queues.
+
+- 13.04.2025: V8 is here! Major architecture improvements, Pub/Sub delivery model, worker threads, enhanced TypeScript support, and more. [See release notes](release-notes/release-v8.md).
+
 
 **Key Features**
 
@@ -34,7 +38,7 @@ A High-Performance Redis Simple Message Queue for Node.js
 
 **Installation**
 
-To get started with RedisSMQ, you can install the library using npm:
+To get started with RedisSMQ, you can install core packages using npm:
 
 ```bash
 npm i redis-smq@latest redis-smq-common@latest --save
@@ -47,6 +51,20 @@ npm install @redis/client --save
 # or
 npm install ioredis --save
 ```
+
+**Ecosystem**
+
+| Package                                                         | Description                                                                          |
+|-----------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| [redis-smq](packages/redis-smq/README.md)                       | A high-performance, reliable, and scalable message queue for Node.js.                |
+| [redis-smq-common](packages/redis-smq-common/README.md)         | Provides essential components and utilities shared across RedisSMQ packages.         |
+| [redis-smq-rest-api](packages/redis-smq-rest-api/README.md)     | A RESTful API for interacting with RedisSMQ, with OpenAPI v3 and Swagger UI.         |
+| [redis-smq-web-server](packages/redis-smq-web-server/README.md) | A web server for the RedisSMQ Web UI, handling static assets, routing, and proxying. |
+| [redis-smq-web-ui](packages/redis-smq-web-ui/README.md)         | A Single Page Application (SPA) for monitoring and managing RedisSMQ.                |
+
+**Version compatibility**
+
+Always install matching versions of RedisSMQ packages. See [Version Compatibility](packages/redis-smq/docs/version-compatibility.md).
 
 **Configuration**
 
