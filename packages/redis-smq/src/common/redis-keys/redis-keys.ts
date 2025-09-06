@@ -17,8 +17,15 @@ const REDIS_KEY_CONFIG = {
   /** Key segments separator */
   SEGMENT_SEPARATOR: ':',
 
-  /** Keys version */
-  VERSION: '800.26',
+  /**
+   * Major version of the Redis data structure.
+   *
+   * This value MUST be updated upon introducing breaking changes to the Redis data structure.
+   *
+   * The versioning scheme is based on the major version of the application. For instance,
+   * for an application version like v9.x.x, this value should be 9.
+   */
+  VERSION: 9,
 
   /** Global namespace identifier */
   GLOBAL_NAMESPACE: 'global',
