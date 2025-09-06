@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.1](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.0...v9.0.0-next.1) (2025-09-06)
+
+### 📝 Documentation
+
+- **redis-smq-rest-api:** add CLI usage documentation and examples ([c51cf48](https://github.com/weyoss/redis-smq/commit/c51cf4860ba556ce72b42472289f1bc8b69a3647))
+
 ## [9.0.0-next.0](https://github.com/weyoss/redis-smq/compare/v8.3.1...v9.0.0-next.0) (2025-09-06)
 
 ### ⚠ BREAKING CHANGES
