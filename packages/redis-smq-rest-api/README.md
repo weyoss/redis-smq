@@ -18,13 +18,7 @@ queue using a RESTful API.
 
 ```bash
 # Using npm
-npm install redis-smq-rest-api --save
-
-# Using yarn
-yarn add redis-smq-rest-api
-
-# Using pnpm
-pnpm add redis-smq-rest-api
+npm install redis-smq redis-smq-common redis-smq-rest-api --save
 ```
 
 ## Version Compatibility

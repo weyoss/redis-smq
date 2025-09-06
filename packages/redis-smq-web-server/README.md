@@ -28,7 +28,8 @@ npm install redis-smq-web-server
 Start the server with defaults:
 
 ```shell
-npx redis-smq-web-server
+# Using npm
+npx redis-smq redis-smq-common redis-smq-rest-api redis-smq-web-server --save
 ```
 
 Customize host/port, UI base path, and Redis connection:
