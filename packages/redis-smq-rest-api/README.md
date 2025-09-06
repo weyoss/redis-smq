@@ -14,11 +14,6 @@ queue using a RESTful API.
 - 🧪 90%+ code coverage with extensive testing
 - 📦 Support for both ESM & CJS modules
 
-
-## Prerequisites
-
-- [RedisSMQ V8](https://github.com/weyoss/redis-smq) latest release.
-
 ## Installation
 
 ```bash
