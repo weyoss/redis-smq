@@ -19,7 +19,7 @@ A lightweight, configurable HTTP server that hosts the RedisSMQ Web UI and expos
 
 ```bash
 # Using npm
-npm redis-smq redis-smq-common redis-smq-rest-api redis-smq-web-server --save
+npm install redis-smq redis-smq-common redis-smq-rest-api redis-smq-web-ui redis-smq-web-server --save
 ```
 
 ## Quick Start
