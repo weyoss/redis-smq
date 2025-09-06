@@ -18,7 +18,8 @@ A lightweight, configurable HTTP server that hosts the RedisSMQ Web UI and expos
 ## Installation
 
 ```bash
-npm install redis-smq-web-server
+# Using npm
+npm redis-smq redis-smq-common redis-smq-rest-api redis-smq-web-server --save
 ```
 
 ## Quick Start
@@ -28,8 +29,7 @@ npm install redis-smq-web-server
 Start the server with defaults:
 
 ```shell
-# Using npm
-npx redis-smq redis-smq-common redis-smq-rest-api redis-smq-web-server --save
+npx redis-smq-web-server
 ```
 
 Customize host/port, UI base path, and Redis connection:
