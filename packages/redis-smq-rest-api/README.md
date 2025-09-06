@@ -81,7 +81,7 @@ const basicConfig: IRedisSMQHttpApiConfig = {
 };
 ```
 
-## Usage
+## Programmatic Usage
 
 ```typescript
 import { RedisSmqRestApi } from 'redis-smq-rest-api';
@@ -102,6 +102,35 @@ const config: IRedisSMQHttpApiConfig = {
 
 const apiServer = new RedisSmqRestApi(config);
 apiServer.run();
+```
+
+## Usage from CLI
+
+The REST API server can be started directly from your terminal after installation.
+
+```shell
+npx redis-smq-rest-api
+```
+
+### CLI Options
+
+You can override the default configuration using the following command-line arguments:
+
+```shell
+-p, --port <port>             Port to run the API server on (default: "7210")
+-B, --base-path <basePath>    Base public path for the Swagger UI (default: "/")
+-H, --redis-host <redisHost>  Redis server host (default: "127.0.0.1")
+-P, --redis-port <redisPort>  Redis server port (default: "6379")
+-D, --redis-db <redisDB>      Redis database number (default: "0")
+-h, --help                    display help for command
+```
+
+### CLI Examples
+
+Starting the server on a specific port and connecting to a different Redis instance:
+
+```shell
+npx redis-smq-rest-api --port 8000 --redis-host 10.0.0.5 --redis-port 6380
 ```
 
 ## API Documentation
