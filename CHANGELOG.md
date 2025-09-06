@@ -3,6 +3,54 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.0](https://github.com/weyoss/redis-smq/compare/v8.3.1...v9.0.0-next.0) (2025-09-06)
+
+### ⚠ BREAKING CHANGES
+
+- **redis-smq-rest-api:** implement missing API endpoints
+- **redis-smq:** improve message lifecycle observability
+
+### ✨ Features
+
+- **redis-smq-rest-api:** implement missing API endpoints ([fdb6388](https://github.com/weyoss/redis-smq/commit/fdb63882876e8d39c3a41a1e620f575af752f06b))
+- **redis-smq-web-server:** implement web server package for hosting RedisSMQ Web UI ([f85e66f](https://github.com/weyoss/redis-smq/commit/f85e66f9aed869d0f19dab8b0b589632efb63273))
+- **redis-smq-web-ui:** implement comprehensive Vue.js web interface for RedisSMQ management ([cee3212](https://github.com/weyoss/redis-smq/commit/cee3212119c10c3fb08109d27f1ad89e7e033110))
+- **redis-smq:** improve message lifecycle observability ([159e6f1](https://github.com/weyoss/redis-smq/commit/159e6f1a9b408a9194bf725f062852ac4d650ec9))
+
+### 🐛 Bug Fixes
+
+- **redis-smq-rest-api:** correct import path for routing module ([133938e](https://github.com/weyoss/redis-smq/commit/133938e226833daa00e7daf5569869786ae5ba76))
+- **redis-smq-web-server:** correct package name in README ([9ad1ca1](https://github.com/weyoss/redis-smq/commit/9ad1ca104b33e2762a06ce149bfc361aa6131bad))
+- **redis-smq-web-server:** make test script pass without tests ([63ec530](https://github.com/weyoss/redis-smq/commit/63ec530194e995f064ddb06c45774b3a4b0e88bc))
+- **redis-smq-web-ui:** add OpenAPI client generation to build process ([c726ea6](https://github.com/weyoss/redis-smq/commit/c726ea64895cd51d1e899b0dcf8b9d3c280b9608))
+- **redis-smq-web-ui:** clean up old files before OpenAPI client generation ([65372c7](https://github.com/weyoss/redis-smq/commit/65372c725eab412d645dfb6c0589f0519773d70b))
+- **redis-smq-web-ui:** correct import path for messages API module ([dc913f6](https://github.com/weyoss/redis-smq/commit/dc913f689618358e45058891273670eba9d4cc61))
+- **redis-smq-web-ui:** correct license statement in README ([7dfed65](https://github.com/weyoss/redis-smq/commit/7dfed65b2249a6cebfdb949858297622abdbe294))
+- **redis-smq-web-ui:** improve modal warning text and fix z-index ([7dcefe1](https://github.com/weyoss/redis-smq/commit/7dcefe18fecbcb386c0be688b9f2d791faabf0eb))
+- **redis-smq-web-ui:** reduce app initialization delay and improve comments ([d250209](https://github.com/weyoss/redis-smq/commit/d25020943ce08d015be0e24d135fe77f9772c32f))
+- **redis-smq-web-ui:** standardize import file extensions to .ts ([65974b9](https://github.com/weyoss/redis-smq/commit/65974b9eb7031bba8e83ead4107a1f8b450cafa5))
+
+### 🚀 Chore
+
+- add .npmignore files to web packages for proper publishing ([2179c30](https://github.com/weyoss/redis-smq/commit/2179c30785e4c0f7ab7d1b102a91a966b70ccf24))
+- update dependencies to latest versions ([3460e8c](https://github.com/weyoss/redis-smq/commit/3460e8cddc1fd6738fd1ae10beaac53e1256cb8b))
+
+### 📝 Documentation
+
+- **redis-smq-common:** add missing copyright headers ([c44887a](https://github.com/weyoss/redis-smq/commit/c44887a437e131334bb096547d2eb8df7e8f50fd))
+- **redis-smq-common:** improve documentation ([6d7a5a9](https://github.com/weyoss/redis-smq/commit/6d7a5a96f6e268e96d2b47b2b6f564f760ed31af))
+- **redis-smq-common:** update API documentation format and structure ([46a8c66](https://github.com/weyoss/redis-smq/commit/46a8c6674b69e1933b0797ca6005153099d82b8b))
+- **redis-smq:** add message storage documentation ([2f37b0f](https://github.com/weyoss/redis-smq/commit/2f37b0f236ed61024802f3476800b7989d6bf8fc))
+- **redis-smq:** add QueuePendingMessages class to configuration docs ([6edb61e](https://github.com/weyoss/redis-smq/commit/6edb61e8d85ac6b8c49061398ed090f605909b95))
+- **redis-smq:** improve message storage documentation and class references ([7b14780](https://github.com/weyoss/redis-smq/commit/7b1478081fc05d3d3c81cbb2e4d5e0ccecf6b9fc))
+- **redis-smq:** update API documentation format and structure ([a7eab77](https://github.com/weyoss/redis-smq/commit/a7eab7779f2eb7fca5b9379dadbb5c36dbf7a756))
+- update README with V9 announcement and ecosystem overview ([9828f9b](https://github.com/weyoss/redis-smq/commit/9828f9b35deec9e899399a043864a22aaa384d1e))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-common:** improve package.json metadata ([7ba7535](https://github.com/weyoss/redis-smq/commit/7ba753578636f3002f8ccaa115fe7ad3f4e91550))
+- **redis-smq-common:** improve script loading to support multi-file scripts ([581855a](https://github.com/weyoss/redis-smq/commit/581855a281795368e93dbc36c9dba90b3681dc34))
+
 ## [8.3.1](https://github.com/weyoss/redis-smq/compare/v8.3.0...v8.3.1) (2025-05-06)
 
 ### ⚡ Performance Improvements
