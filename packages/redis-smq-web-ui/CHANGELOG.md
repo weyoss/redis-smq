@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.2](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.1...v9.0.0-next.2) (2025-09-07)
+
+### 📝 Documentation
+
+- **redis-smq-web-ui:** add screenshot to README ([c6fb731](https://github.com/weyoss/redis-smq/commit/c6fb731f1bf29021793cb7ee12e69b2a8332a707))
+
 ## [9.0.0-next.1](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.0...v9.0.0-next.1) (2025-09-06)
 
 **Note:** Version bump only for package redis-smq-web-ui
