@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.2](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.1...v9.0.0-next.2) (2025-09-07)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-rest-api:** add shebang to CLI script for proper execution ([1ed36cc](https://github.com/weyoss/redis-smq/commit/1ed36cc76c0c8dce97a6f99c0b082bec34d3853d))
+- **redis-smq-rest-api:** set default Redis database to 0 ([7e12b43](https://github.com/weyoss/redis-smq/commit/7e12b433c7d4f88bc3a443505818da6a479202a3))
+- **redis-smq-web-server:** add shebang to CLI script for proper execution ([0c213c5](https://github.com/weyoss/redis-smq/commit/0c213c5a39a86c1d752cfbf6e5e9595b678e7208))
+
+### 📝 Documentation
+
+- **redis-smq-rest-api:** remove outdated prerequisites section ([f14aaaf](https://github.com/weyoss/redis-smq/commit/f14aaaf0da96e43468ead3e845ebd2be7e61ae59))
+- **redis-smq-web-server:** fix installation/quick start commands ([9832d33](https://github.com/weyoss/redis-smq/commit/9832d33d8beafc31f989e6477a2d83be86392966))
+- **redis-smq-web-server:** fix npm install command ([db7f4e3](https://github.com/weyoss/redis-smq/commit/db7f4e3bd4f0778c2dad2eb9d779afd9515628ea))
+- **redis-smq-web-ui:** add screenshot to README ([c6fb731](https://github.com/weyoss/redis-smq/commit/c6fb731f1bf29021793cb7ee12e69b2a8332a707))
+- update installation instructions to include required deps ([107c2a5](https://github.com/weyoss/redis-smq/commit/107c2a5b2eda5b540f5f033808be94923e8688fa))
+
 ## [9.0.0-next.1](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.0...v9.0.0-next.1) (2025-09-06)
 
 ### 🐛 Bug Fixes
