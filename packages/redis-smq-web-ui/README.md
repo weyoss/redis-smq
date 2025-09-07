@@ -12,7 +12,7 @@ A Single Page Application for monitoring and managing RedisSMQ: inspect queues, 
 
 - Dashboard to overview queues, consumers, and message stats
 - Queue/message browsers with filters and actions (ack, retry, delete, etc.)
-- Support for FIFO/LIFO and multiple delivery models
+- Support for FIFO/LIFO/Priority Queues and multiple delivery models
 - Integrated documentation via Swagger UI (when served with the REST API)
 - Type-safe OpenAPI client (generated)
 
