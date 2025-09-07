@@ -1,5 +1,7 @@
 # RedisSMQ Web UI
 
+![RedisSMQ Web UI - Pending Messages](docs/screenshots/img01.png)
+
 A Single Page Application for monitoring and managing RedisSMQ: inspect queues, messages, consumers, and more — with an integrated OpenAPI client.
 
 - Works seamlessly with the RedisSMQ REST API
