@@ -8,7 +8,7 @@
  */
 
 import { ERedisConfigClient } from 'redis-smq-common';
-import { IRedisSMQConfig } from '../../src/config/index.js';
+import { IRedisSMQConfig } from '../../src/index.js';
 
 const redisHost = process.env.REDIS_HOST || '127.0.0.1';
 const redisPort = Number(process.env.REDIS_PORT) || 6379;

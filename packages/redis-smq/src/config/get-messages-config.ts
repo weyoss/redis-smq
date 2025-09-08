@@ -7,22 +7,24 @@
  * in the root directory of this source tree.
  */
 
+import _ from 'lodash';
+import { IRedisSMQConfig, IRedisSMQParsedConfig } from './types/index.js';
+import { defaultConfig } from './default-config.js';
 import {
-  IMessagesConfigStorage,
-  IMessagesConfigStorageOptions,
-  IMessagesConfigStorageOptionsRequired,
-  IMessagesConfigStorageRequired,
-} from '../../index.js';
+  IMessagesStorageConfig,
+  IMessagesStorageConfigOptions,
+  IMessagesStorageParsedConfigOptions,
+  IMessagesStorageParsedConfig,
+} from '../message/index.js';
 import {
   ConfigurationMessageQueueSizeError,
   ConfigurationMessageStoreExpireError,
-} from '../errors/index.js';
-import { IRedisSMQConfig } from '../types/index.js';
+} from './errors/index.js';
 
 function getMessageStorageConfig(
   config: IRedisSMQConfig,
-  key: keyof IMessagesConfigStorage,
-): boolean | IMessagesConfigStorageOptions {
+  key: keyof IMessagesStorageConfig,
+): boolean | IMessagesStorageConfigOptions {
   const { store } = config.messages ?? {};
   if (typeof store === 'undefined' || typeof store === 'boolean') {
     return Boolean(store);
@@ -34,8 +36,8 @@ function getMessageStorageConfig(
 
 function getMessageStorageParams(
   config: IRedisSMQConfig,
-  key: keyof IMessagesConfigStorage,
-): IMessagesConfigStorageOptionsRequired {
+  key: keyof IMessagesStorageConfig,
+): IMessagesStorageParsedConfigOptions {
   const params = getMessageStorageConfig(config, key);
   if (typeof params === 'boolean') {
     return {
@@ -59,11 +61,18 @@ function getMessageStorageParams(
   };
 }
 
-export default function Store(
+export function parseMessageStorageConfig(
   config: IRedisSMQConfig,
-): IMessagesConfigStorageRequired {
+): IMessagesStorageParsedConfig {
   return {
     acknowledged: getMessageStorageParams(config, 'acknowledged'),
     deadLettered: getMessageStorageParams(config, 'deadLettered'),
   };
+}
+
+export default function getMessagesConfig(
+  userConfig: IRedisSMQConfig,
+): IRedisSMQParsedConfig['messages'] {
+  const store = parseMessageStorageConfig(userConfig);
+  return _.merge({}, defaultConfig.messages, { store });
 }

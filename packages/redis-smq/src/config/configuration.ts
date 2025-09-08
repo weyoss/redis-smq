@@ -7,19 +7,15 @@
  * in the root directory of this source tree.
  */
 
-import EventBus from './event-bus.js';
-import Logger from './logger.js';
-import Messages from './messages/messages.js';
-import Namespace from './namespace.js';
-import Redis from './redis.js';
-import { IRedisSMQConfig, IRedisSMQConfigRequired } from './types/index.js';
+import { IRedisSMQConfig, IRedisSMQParsedConfig } from './types/index.js';
+import { parseConfig } from './parse-config.js';
 
 /**
  * Configuration class for managing and setting up the RedisSMQ message queue.
  */
 export class Configuration {
   protected static instance: Configuration | null = null;
-  protected config: IRedisSMQConfigRequired;
+  protected config: IRedisSMQParsedConfig;
 
   /**
    * Initializes the configuration properties using the provided `config` object.
@@ -46,7 +42,7 @@ export class Configuration {
    * ```
    */
   protected constructor(config: IRedisSMQConfig) {
-    this.config = this.parseConfiguration(config);
+    this.config = parseConfig(config);
   }
 
   /**
@@ -73,7 +69,7 @@ export class Configuration {
    * console.log(myConfig);
    * ```
    */
-  static getSetConfig(config: IRedisSMQConfig = {}): IRedisSMQConfigRequired {
+  static getSetConfig(config: IRedisSMQConfig = {}): IRedisSMQParsedConfig {
     if (!Configuration.instance) {
       Configuration.instance = new Configuration(config);
     }
@@ -124,19 +120,7 @@ export class Configuration {
    * console.log(myConfig);
    * ```
    */
-  getConfig(): IRedisSMQConfigRequired {
+  getConfig(): IRedisSMQParsedConfig {
     return this.config;
-  }
-
-  protected parseConfiguration(
-    config: IRedisSMQConfig,
-  ): IRedisSMQConfigRequired {
-    return {
-      namespace: Namespace(config),
-      redis: Redis(config),
-      logger: Logger(config),
-      messages: Messages(config),
-      eventBus: EventBus(config),
-    };
   }
 }

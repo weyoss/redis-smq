@@ -9,7 +9,7 @@
 
 import bluebird from 'bluebird';
 import { Runnable } from 'redis-smq-common';
-import { Configuration, IRedisSMQConfigRequired } from '../../src/index.js';
+import { Configuration, IRedisSMQParsedConfig } from '../../src/index.js';
 import PublishScheduledWorker from '../../src/consumer/workers/publish-scheduled.worker.js';
 import { IQueueParams } from '../../src/index.js';
 
@@ -17,7 +17,7 @@ const scheduleWorker: Record<string, Runnable<Record<string, never>>> = {};
 
 export async function startScheduleWorker(
   queueParams: IQueueParams,
-  config?: IRedisSMQConfigRequired,
+  config?: IRedisSMQParsedConfig,
 ): Promise<void> {
   const key = `${queueParams.ns}${queueParams.name}`;
   if (!scheduleWorker[key]) {
