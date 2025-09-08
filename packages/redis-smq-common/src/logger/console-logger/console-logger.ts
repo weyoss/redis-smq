@@ -33,7 +33,6 @@ export class ConsoleLogger implements ILogger {
       includeTimestamp = true,
       colorize = true,
       logLevel = EConsoleLoggerLevel.INFO,
-      dateFormat,
     } = options;
 
     this.logLevel =
@@ -42,7 +41,6 @@ export class ConsoleLogger implements ILogger {
     this.formatter = new ConsoleMessageFormatter({
       includeTimestamp,
       colorize,
-      dateFormat,
     });
   }
 

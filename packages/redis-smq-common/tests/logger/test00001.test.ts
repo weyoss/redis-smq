@@ -119,26 +119,6 @@ describe('Logger', () => {
       expect(infoSpy).not.toHaveBeenCalled();
       expect(warnSpy).toHaveBeenCalled();
     });
-
-    it('should support custom date format', () => {
-      const customDateFormat = () => 'CUSTOM_DATE';
-      const log = logger.getLogger({
-        enabled: true,
-        options: {
-          dateFormat: customDateFormat,
-        },
-      });
-
-      const infoSpy: MockInstance<(...args: unknown[]) => void> = vi.spyOn(
-        console,
-        'info',
-      );
-      log.info('test message');
-
-      const callArg: unknown = infoSpy.mock.calls[0][0];
-      expect(typeof callArg).toBe('string');
-      expect(callArg).toContain('CUSTOM_DATE');
-    });
   });
 
   describe('setLogger', () => {
