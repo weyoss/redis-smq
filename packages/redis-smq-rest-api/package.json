@@ -67,7 +67,17 @@
   },
   "peerDependencies": {
     "redis-smq": "workspace:^",
-    "redis-smq-common": "workspace:^"
+    "redis-smq-common": "workspace:^",
+    "@redis/client": "^1.6.0",
+    "ioredis": "^5.4.0"
+  },
+  "peerDependenciesMeta": {
+    "@redis/client": {
+      "optional": true
+    },
+    "ioredis": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/json-schema": "7.0.15",
