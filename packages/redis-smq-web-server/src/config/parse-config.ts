@@ -18,7 +18,7 @@ export const defaultConfig: IRedisSMQWebServerConfig = {
   basePath: '/',
   redisPort: 6379,
   redisHost: '127.0.0.1',
-  redisDB: 1,
+  redisDB: 0,
   apiProxyTarget: undefined,
 };
 
