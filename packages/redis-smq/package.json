@@ -50,7 +50,17 @@
     "./package.json": "./package.json"
   },
   "peerDependencies": {
-    "redis-smq-common": "workspace:^"
+    "redis-smq-common": "workspace:^",
+    "@redis/client": "^1.6.0",
+    "ioredis": "^5.4.0"
+  },
+  "peerDependenciesMeta": {
+    "@redis/client": {
+      "optional": true
+    },
+    "ioredis": {
+      "optional": true
+    }
   },
   "dependencies": {
     "cron-parser": "4.9.0",
