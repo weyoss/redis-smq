@@ -8,7 +8,7 @@
  */
 
 import { ICallback } from 'redis-smq-common';
-import { IRedisSMQConfigRequired } from '../../config/index.js';
+import { IRedisSMQParsedConfig } from '../../config/index.js';
 import { IMessageTransferable } from '../../message/index.js';
 import { IQueueParsedParams } from '../../queue/index.js';
 
@@ -25,6 +25,6 @@ export interface IConsumerMessageHandlerArgs {
 }
 
 export type IConsumerMessageHandlerWorkerPayload = {
-  config: IRedisSMQConfigRequired;
+  config: IRedisSMQParsedConfig;
   queueParsedParams: IQueueParsedParams;
 };

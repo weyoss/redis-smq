@@ -11,12 +11,12 @@ import { expect, test } from 'vitest';
 import {
   ConfigurationMessageQueueSizeError,
   ConfigurationMessageStoreExpireError,
-} from '../../../src/config/index.js';
-import Store from '../../../src/config/messages/store.js';
+} from '../../../src/index.js';
+import { parseMessageStorageConfig } from '../../../src/config/get-messages-config.js';
 
 test('Configuration: storeMessages', async () => {
   expect(() => {
-    Store({
+    parseMessageStorageConfig({
       messages: {
         store: {
           acknowledged: {
@@ -28,7 +28,7 @@ test('Configuration: storeMessages', async () => {
   }).toThrow(ConfigurationMessageQueueSizeError);
 
   expect(() => {
-    Store({
+    parseMessageStorageConfig({
       messages: {
         store: {
           acknowledged: {
@@ -39,7 +39,7 @@ test('Configuration: storeMessages', async () => {
     });
   }).toThrow(ConfigurationMessageStoreExpireError);
 
-  const config = Store({});
+  const config = parseMessageStorageConfig({});
   expect(config.deadLettered.store).toEqual(false);
   expect(config.deadLettered.expire).toEqual(0);
   expect(config.deadLettered.queueSize).toEqual(0);
@@ -47,7 +47,7 @@ test('Configuration: storeMessages', async () => {
   expect(config.acknowledged.expire).toEqual(0);
   expect(config.acknowledged.queueSize).toEqual(0);
 
-  const config2 = Store({ messages: { store: false } });
+  const config2 = parseMessageStorageConfig({ messages: { store: false } });
   expect(config2.deadLettered.store).toEqual(false);
   expect(config2.deadLettered.expire).toEqual(0);
   expect(config2.deadLettered.queueSize).toEqual(0);
@@ -55,7 +55,7 @@ test('Configuration: storeMessages', async () => {
   expect(config2.acknowledged.expire).toEqual(0);
   expect(config2.acknowledged.queueSize).toEqual(0);
 
-  const config3 = Store({ messages: { store: true } });
+  const config3 = parseMessageStorageConfig({ messages: { store: true } });
   expect(config3.deadLettered.store).toEqual(true);
   expect(config3.deadLettered.expire).toEqual(0);
   expect(config3.deadLettered.queueSize).toEqual(0);
@@ -63,7 +63,7 @@ test('Configuration: storeMessages', async () => {
   expect(config3.acknowledged.expire).toEqual(0);
   expect(config3.acknowledged.queueSize).toEqual(0);
 
-  const config4 = Store({ messages: { store: {} } });
+  const config4 = parseMessageStorageConfig({ messages: { store: {} } });
   expect(config4.deadLettered.store).toEqual(false);
   expect(config4.deadLettered.expire).toEqual(0);
   expect(config4.deadLettered.queueSize).toEqual(0);
@@ -71,7 +71,7 @@ test('Configuration: storeMessages', async () => {
   expect(config4.acknowledged.expire).toEqual(0);
   expect(config4.acknowledged.queueSize).toEqual(0);
 
-  const config5 = Store({
+  const config5 = parseMessageStorageConfig({
     messages: {
       store: { acknowledged: false },
     },
@@ -83,7 +83,7 @@ test('Configuration: storeMessages', async () => {
   expect(config5.acknowledged.expire).toEqual(0);
   expect(config5.acknowledged.queueSize).toEqual(0);
 
-  const config6 = Store({
+  const config6 = parseMessageStorageConfig({
     messages: { store: { acknowledged: true } },
   });
   expect(config6.deadLettered.store).toEqual(false);
@@ -93,7 +93,7 @@ test('Configuration: storeMessages', async () => {
   expect(config6.acknowledged.expire).toEqual(0);
   expect(config6.acknowledged.queueSize).toEqual(0);
 
-  const config7 = Store({
+  const config7 = parseMessageStorageConfig({
     messages: { store: { acknowledged: true, deadLettered: false } },
   });
   expect(config7.deadLettered.store).toEqual(false);
@@ -103,7 +103,7 @@ test('Configuration: storeMessages', async () => {
   expect(config7.acknowledged.expire).toEqual(0);
   expect(config7.acknowledged.queueSize).toEqual(0);
 
-  const config8 = Store({
+  const config8 = parseMessageStorageConfig({
     messages: { store: { acknowledged: true, deadLettered: true } },
   });
   expect(config8.deadLettered.store).toEqual(true);
@@ -113,7 +113,7 @@ test('Configuration: storeMessages', async () => {
   expect(config8.acknowledged.expire).toEqual(0);
   expect(config8.acknowledged.queueSize).toEqual(0);
 
-  const config9 = Store({
+  const config9 = parseMessageStorageConfig({
     messages: { store: { acknowledged: {}, deadLettered: true } },
   });
   expect(config9.deadLettered.store).toEqual(true);
@@ -123,7 +123,7 @@ test('Configuration: storeMessages', async () => {
   expect(config9.acknowledged.expire).toEqual(0);
   expect(config9.acknowledged.queueSize).toEqual(0);
 
-  const config10 = Store({
+  const config10 = parseMessageStorageConfig({
     messages: {
       store: {
         acknowledged: {
@@ -140,7 +140,7 @@ test('Configuration: storeMessages', async () => {
   expect(config10.acknowledged.expire).toEqual(90000);
   expect(config10.acknowledged.queueSize).toEqual(0);
 
-  const config11 = Store({
+  const config11 = parseMessageStorageConfig({
     messages: {
       store: {
         acknowledged: {

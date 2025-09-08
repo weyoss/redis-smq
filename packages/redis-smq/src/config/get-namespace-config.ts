@@ -10,11 +10,10 @@
 import { redisKeys } from '../common/redis-keys/redis-keys.js';
 import { ConfigurationNamespaceError } from './errors/index.js';
 import { IRedisSMQConfig } from './types/index.js';
+import { defaultConfig } from './default-config.js';
 
-const defaultNamespace = 'default';
-
-export default function Namespace(userConfig: IRedisSMQConfig): string {
-  if (!userConfig.namespace) return defaultNamespace;
+export function getNamespaceConfig(userConfig: IRedisSMQConfig): string {
+  if (!userConfig.namespace) return defaultConfig.namespace;
   const ns = redisKeys.validateNamespace(userConfig.namespace);
   if (ns instanceof Error) throw new ConfigurationNamespaceError();
   return ns;

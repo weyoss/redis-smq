@@ -8,25 +8,25 @@
  */
 
 export interface IMessagesConfig {
-  store?: boolean | IMessagesConfigStorage;
+  store?: boolean | IMessagesStorageConfig;
 }
 
-export interface IMessagesConfigStorageOptions {
+export interface IMessagesStorageConfigOptions {
   queueSize?: number;
   expire?: number;
 }
 
-export interface IMessagesConfigStorage {
-  acknowledged?: boolean | IMessagesConfigStorageOptions;
-  deadLettered?: boolean | IMessagesConfigStorageOptions;
+export interface IMessagesStorageConfig {
+  acknowledged?: boolean | IMessagesStorageConfigOptions;
+  deadLettered?: boolean | IMessagesStorageConfigOptions;
 }
 
-export interface IMessagesConfigStorageOptionsRequired
-  extends Required<IMessagesConfigStorageOptions> {
+export interface IMessagesStorageParsedConfigOptions
+  extends Required<IMessagesStorageConfigOptions> {
   store: boolean;
 }
 
-export interface IMessagesConfigStorageRequired {
-  acknowledged: IMessagesConfigStorageOptionsRequired;
-  deadLettered: IMessagesConfigStorageOptionsRequired;
+export interface IMessagesStorageParsedConfig {
+  acknowledged: IMessagesStorageParsedConfigOptions;
+  deadLettered: IMessagesStorageParsedConfigOptions;
 }

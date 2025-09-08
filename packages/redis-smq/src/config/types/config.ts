@@ -7,11 +7,13 @@
  * in the root directory of this source tree.
  */
 
-import { ILoggerConfig, IRedisConfig } from 'redis-smq-common';
 import {
-  IMessagesConfig,
-  IMessagesConfigStorageRequired,
-} from '../../index.js';
+  ERedisConfigClient,
+  IConsoleLoggerOptions,
+  ILoggerConfig,
+  IRedisConfig,
+} from 'redis-smq-common';
+import { IMessagesConfig, IMessagesStorageParsedConfig } from '../../index.js';
 
 export interface IEventBusConfig {
   enabled?: boolean;
@@ -41,9 +43,24 @@ export interface IRedisSMQConfig {
   eventBus?: IEventBusConfig;
 }
 
-export interface IRedisSMQConfigRequired extends Required<IRedisSMQConfig> {
+export interface IRedisSMQParsedConfig extends Required<IRedisSMQConfig> {
   messages: {
-    store: IMessagesConfigStorageRequired;
+    store: IMessagesStorageParsedConfig;
   };
   eventBus: Required<IEventBusConfig>;
+}
+
+export interface IRedisSMQDefaultConfig extends IRedisSMQParsedConfig {
+  redis: {
+    client: ERedisConfigClient.IOREDIS;
+    options: {
+      host: string;
+      port: number;
+      db: number;
+    };
+  };
+  logger: {
+    enabled: boolean;
+    options: Required<IConsoleLoggerOptions>;
+  };
 }
