@@ -57,8 +57,7 @@
     "produce-message": "./scripts/produce-message.js"
   },
   "peerDependencies": {
-    "redis-smq-common": "workspace:^",
-    "redis-smq-rest-api": "workspace:^"
+    "redis-smq-common": "workspace:^"
   },
   "dependencies": {
     "@vee-validate/zod": "4.15.0",
@@ -87,6 +86,7 @@
     "orval": "7.9.0",
     "redis-smq": "workspace:^",
     "redis-smq-common": "workspace:^",
+    "redis-smq-rest-api": "workspace:^",
     "vite": "6.2.4",
     "vite-plugin-dts": "4.5.4",
     "vite-plugin-node-polyfills": "0.23.0",
