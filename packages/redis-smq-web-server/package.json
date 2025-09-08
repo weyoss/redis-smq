@@ -42,16 +42,26 @@
   "dependencies": {
     "commander": "13.1.0",
     "express": "4.21.2",
-    "http-proxy-middleware": "3.0.5",
-    "ioredis": "5.5.0"
+    "http-proxy-middleware": "3.0.5"
   },
   "devDependencies": {
     "@types/express": "4.17.23"
   },
   "peerDependencies": {
+    "redis-smq": "workspace:^",
     "redis-smq-common": "workspace:^",
     "redis-smq-rest-api": "workspace:^",
-    "redis-smq-web-ui": "workspace:^"
+    "redis-smq-web-ui": "workspace:^",
+    "@redis/client": "^1.6.0",
+    "ioredis": "^5.4.0"
+  },
+  "peerDependenciesMeta": {
+    "@redis/client": {
+      "optional": true
+    },
+    "ioredis": {
+      "optional": true
+    }
   },
   "engineStrict": true,
   "engines": {
