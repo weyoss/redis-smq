@@ -11,44 +11,36 @@ import {
   IRedisSMQWebServerConfig,
   IRedisSMQWebServerParsedConfig,
 } from './types/index.js';
-import { ERedisConfigClient } from 'redis-smq-common';
+import { parseConfig as parseRestApiConfig } from 'redis-smq-rest-api';
 
 export const defaultConfig: IRedisSMQWebServerConfig = {
-  port: 8080,
-  basePath: '/',
-  redisPort: 6379,
-  redisHost: '127.0.0.1',
-  redisDB: 0,
-  apiProxyTarget: undefined,
+  webServer: {
+    port: 8080,
+    basePath: '/',
+    apiProxyTarget: undefined,
+  },
 };
 
+/**
+ * @param config
+ * @returns The parsed configuration, with default values applied.
+ */
 export function parseConfig(
   config: Partial<IRedisSMQWebServerConfig> = {},
 ): IRedisSMQWebServerParsedConfig {
-  const cfg: IRedisSMQWebServerConfig = {
-    ...defaultConfig,
-    ...config,
-  };
-  const webServerCfg = {
-    port: cfg.port,
-    basePath: cfg.basePath,
-    apiProxyTarget: cfg.apiProxyTarget,
+  const restApiParsedConfig = parseRestApiConfig(config);
+  const webServer = {
+    ...defaultConfig.webServer,
+    ...config.webServer,
   };
   return {
-    redis: {
-      client: ERedisConfigClient.IOREDIS,
-      options: {
-        port: cfg.redisPort,
-        host: cfg.redisHost,
-        db: cfg.redisDB,
-        showFriendlyErrorStack: true,
-      },
-    },
-    webServer: webServerCfg,
-    // Note: apiServer is used by the embedded REST API; when proxying, this is ignored by the web server.
-    apiServer: {
-      port: cfg.port,
-      basePath: cfg.basePath,
+    ...restApiParsedConfig,
+    webServer: {
+      port: Number(webServer.port),
+      basePath: String(webServer.basePath),
+      apiProxyTarget: webServer.apiProxyTarget
+        ? String(webServer.apiProxyTarget)
+        : undefined,
     },
   };
 }

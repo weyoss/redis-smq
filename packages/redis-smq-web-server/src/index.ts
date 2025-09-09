@@ -31,7 +31,7 @@ export class RedisSMQWebServer {
   private bootstrapped = false;
   private httpServer: http.Server | null = null;
 
-  constructor(config: Partial<IRedisSMQWebServerConfig> = {}) {
+  constructor(config: IRedisSMQWebServerConfig = {}) {
     // Default configuration
     this.config = parseConfig(config);
     this.webUIConfig = {
