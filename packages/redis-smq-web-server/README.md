@@ -68,51 +68,48 @@ to the upstream. In this mode, Redis connection options on the web server are no
 
 If you prefer embedding the server in your app, you can pass the same configuration programmatically.
 
-#### ESM / TypeScript
-
 ```typescript
 import { RedisSMQWebServer } from 'redis-smq-web-server';
+import { EConsoleLoggerLevel, ERedisConfigClient } from 'redis-smq-common';
 
-const redisSMQWebServer = new RedisSMQWebServer();
-
-await redisSMQWebServer.run({
-  port: 8080,
-  basePath: '/',
-  redisHost: '127.0.0.1',
-  redisPort: 6379,
-  redisDB: '1',
+// Run with the embedded REST API (in-process)
+const server = new RedisSMQWebServer({
+  webServer: {
+    port: 8080,
+    basePath: '/', // UI at '/', API at '/api', docs at '/docs'
+  },
+  // The following options are used only when apiProxyTarget is NOT set
+  redis: {
+    client: ERedisConfigClient.IOREDIS,
+    options: {
+      host: '127.0.0.1',
+      port: 6379,
+      db: 1,
+      showFriendlyErrorStack: true,
+    },
+  },
+  logger: {
+    enabled: true,
+    options: {
+      level: EConsoleLoggerLevel.INFO,
+    },
+  },
 });
+
+await server.run();
+// await server.shutdown();
 
 // Or proxy API/docs/assets to an external service
-await redisSMQWebServer.run({
-  port: 8080,
-  apiProxyTarget: 'http://127.0.0.1:7210',
+const srv = new RedisSMQWebServer({
+  webServer: {
+    port: 8080,
+    basePath: '/', // or '/redis-smq'
+    apiProxyTarget: 'http://127.0.0.1:7210',
+  },
+  // No redis/logger config required in proxy mode
 });
 
-// Optional: stop later
-// await redisSMQWebServer.shutdown();
-```
-
-#### CommonJS
-
-```javascript
-const { startWebServer } = require('redis-smq-web-server');
-
-const redisSMQWebServer = new RedisSMQWebServer();
-
-redisSMQWebServer.run({
-  port: 8080,
-  basePath: '/',
-  redisHost: '127.0.0.1',
-  redisPort: 6379,
-  redisDB: '1',
-});
-
-// Or proxy to external API
-redisSMQWebServer.run({
-  port: 8080,
-  apiProxyTarget: 'http://127.0.0.1:7210',
-});
+await srv.run();
 ```
 
 ## Routes
@@ -142,39 +139,54 @@ Proxying behavior:
 Configuration can be provided programmatically or via CLI arguments. The core interface is:
 
 ```typescript
-interface IRedisSMQWebServerConfig {
-  port: number;
-  basePath: string;
-  redisPort: number;
-  redisHost: string;
-  redisDB: string;
-  /**
-   * Optional: forward <basePath>/api, <basePath>/docs and <basePath>/assets
-   * to an external redis-smq-rest-api service. Example: "http://127.0.0.1:7210"
-   */
-  apiProxyTarget?: string;
+import type { IRedisSMQRestApiConfig } from 'redis-smq-rest-api';
+
+interface IRedisSMQWebServerConfig extends IRedisSMQRestApiConfig {
+  webServer?: {
+    /**
+     * HTTP port to run the web server on.
+     * Default: 8080
+     */
+    port?: number;
+
+    /**
+     * Base public path for the RedisSMQ Web UI and the local API/docs when embedded.
+     * Default: '/'
+     */
+    basePath?: string;
+
+    /**
+     * Optional target for proxying (/api, /docs, /assets).
+     * If provided, the embedded REST API is not mounted and requests are forwarded to the target.
+     * Example: 'http://127.0.0.1:7210'
+     */
+    apiProxyTarget?: string;
+  };
 }
 ```
 
-### Options
-- port: HTTP port the web server listens on.
-- basePath: Public base path where the UI and API are mounted (e.g., / or /redis-smq).
-- redisPort: Redis server port (default 6379).
-- redisHost: Redis server host (default 127.0.0.1).
-- redisDB: Redis database index used by RedisSMQ (e.g., "1").
-- apiProxyTarget: If provided, the web server proxies API/docs/assets to this upstream instead of hosting the API in-process.
+Notes:
+
+- When `webServer.apiProxyTarget` is set, the server proxies `<basePath>/api`, `<basePath>/docs`, and 
+`<basePath>/assets` to the target. In this mode, redis and logger options are not used by the web server (they are 
+handled by the upstream API service).
+
+- When `webServer.apiProxyTarget` is not set, the web server mounts the embedded `redis-smq-rest-api` using the provided 
+`IRedisSMQRestApiConfig` (redis, logger, etc.).
 
 ### ClI flags
 
 ```shell
-  -p, --port <port>             Port to run the server on (default: "8080")
-  -B, --base-path <basePath>    base public path for the RedisSMQ Web UI SPA (default: "/")
-  -H, --redis-host <redisHost>  Redis server host (default: "127.0.0.1")
-  -P, --redis-port <redisPort>  Redis server port (default: "6379")
-  -D, --redis-db <redisDB>      Redis database number (default: "1")
-  -x, --api-proxy-target <url>  Proxy target for API (/api, /docs, /assets). Example: http://127.0.0.1:7210
-  -h, --help                    display help for command
-
+-p, --port <number>                 Port to run the server on (default: "8080")
+-b, --base-path <string>            Base public path for the RedisSMQ Web UI SPA (default: "/")
+-t, --api-proxy-target <string>     Proxy target for API (/api, /docs, /assets). Example: http://127.0.0.1:6000
+-c, --redis-client <ioredis|redis>  Redis client. Valid options are: ioredis, redis. (default: "ioredis")
+-r, --redis-host <string>           Redis server host (default: "127.0.0.1")
+-o, --redis-port <number>           Redis server port (default: "6379")
+-d, --redis-db <number>             Redis database number (default: "0")
+-e, --enable-log <0|1>              Enable console logging. Valid options are: 0, 1 (default: "0")
+-v, --log-level <0|1|2|3>           Log level. Numbers: 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR (default: "1")
+-h, --help                          display help for command
 ```
 
 ## Deploying behind a reverse proxy
