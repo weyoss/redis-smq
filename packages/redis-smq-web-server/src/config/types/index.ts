@@ -7,19 +7,34 @@
  * in the root directory of this source tree.
  */
 
-import { IRedisSMQRestApiParsedConfig } from 'redis-smq-rest-api';
+import {
+  IRedisSMQRestApiConfig,
+  IRedisSMQRestApiParsedConfig,
+} from 'redis-smq-rest-api';
+import { EConsoleLoggerLevel, ERedisConfigClient } from 'redis-smq-common';
 
-export interface IRedisSMQWebServerConfig {
-  port: number;
+export interface IRedisSMQWebServerCliOptions {
+  port: string;
   basePath: string;
-  redisPort: number;
+  redisClient: ERedisConfigClient;
+  redisPort: string;
   redisHost: string;
-  redisDB: number;
-  /**
-   * If provided, the web server will proxy API requests to this target instead of embedding the REST API.
-   * Example: http://127.0.0.1:7210
-   */
+  redisDb: string;
+  enableLog: string;
+  logLevel: EConsoleLoggerLevel;
   apiProxyTarget?: string;
+}
+
+export interface IRedisSMQWebServerConfig extends IRedisSMQRestApiConfig {
+  webServer?: {
+    port?: number;
+    basePath?: string;
+    /**
+     * Optional target for proxying API calls (/api, /docs, /assets).
+     * If undefined, the embedded REST API will be mounted.
+     */
+    apiProxyTarget?: string;
+  };
 }
 
 export interface IRedisSMQWebServerParsedConfig
