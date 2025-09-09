@@ -35,8 +35,8 @@ jobs:
           npm install pnpm@10 -g
 
       - name: Install dependencies and build packages
-        run: |
-          pnpm install
+        run: pnpm build:ca
+        continue-on-error: false
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
