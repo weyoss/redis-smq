@@ -22,6 +22,14 @@ A lightweight, configurable HTTP server that hosts the RedisSMQ Web UI and expos
 npm install redis-smq redis-smq-common redis-smq-rest-api redis-smq-web-ui redis-smq-web-server --save
 ```
 
+Don't forget to install a Redis client. Choose either node-redis or ioredis:
+
+```shell
+npm install @redis/client --save
+# or
+npm install ioredis --save
+```
+
 ## Quick Start
 
 ### From the Command Line
