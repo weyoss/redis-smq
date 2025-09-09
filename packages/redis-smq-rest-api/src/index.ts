@@ -13,11 +13,11 @@ import { getAbsoluteFSPath as swaggerUiDistPath } from 'swagger-ui-dist';
 import { Container } from './container/Container.js';
 import { routing } from './router/routing.js';
 import { constants } from './config/constants.js';
-import { parseConfig } from './config/parseConfig.js';
+import { parseConfig } from './config/index.js';
 import {
   IRedisSMQRestApiConfig,
   IRedisSMQRestApiParsedConfig,
-} from './config/types/index.js';
+} from './config/index.js';
 import {
   IApplicationMiddlewareContext,
   IApplicationMiddlewareState,
