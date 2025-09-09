@@ -46,59 +46,91 @@ The REST API configuration extends the base [RedisSMQ configuration](https://git
 ### Configuration Options
 
 ```typescript
-export type THttpApiConfig = {
-  port?: number;
-  host?: string;
-  basePath?: string;
-};
-
 export interface IRedisSMQHttpApiConfig extends IRedisSMQConfig {
-  apiServer?: THttpApiConfig;
+  apiServer?: {
+    // Port to run the REST API on. Default: 7210
+    port?: number;
+
+    // Base path to mount the REST API and docs under. Default: '/'
+    basePath?: string;
+  };
 }
 ```
 
 ### Configuration Examples
 
 ```typescript
-import { RedisSmqRestApi } from 'redis-smq-rest-api';
+import { ERedisConfigClient, EConsoleLoggerLevel } from 'redis-smq-common';
 
-// Basic configuration
-const basicConfig: IRedisSMQHttpApiConfig = {
+const config = {
+  apiServer: {
+    port: 7210,
+    basePath: '/', // API at '/', Swagger at '/docs'
+  },
   redis: {
-    client: 'ioredis',
+    client: ERedisConfigClient.IOREDIS,
     options: {
       host: '127.0.0.1',
       port: 6379,
+      db: 0,
     },
   },
-  apiServer: {
-    host: '127.0.0.1',
-    port: 7210,
+  logger: {
+    enabled: true,
+    options: {
+      logLevel: EConsoleLoggerLevel.INFO, // or 'INFO'
+    },
   },
 };
 ```
 
 ## Programmatic Usage
 
-```typescript
-import { RedisSmqRestApi } from 'redis-smq-rest-api';
+The RedisSMQRestApi class can be used as a standalone server or embedded as middleware in an existing Express application.
 
-const config: IRedisSMQHttpApiConfig = {
+### Standalone Server
+
+This mode starts an HTTP server that listens on the configured port.
+
+
+```typescript
+import { RedisSMQRestApi } from 'redis-smq-rest-api';
+import { ERedisConfigClient } from 'redis-smq-common';
+
+const api = new RedisSMQRestApi({
+  apiServer: { port: 7210 },
   redis: {
     client: ERedisConfigClient.IOREDIS,
-    options: {
-      host: '127.0.0.1',
-      port: 6379,
-    },
+    options: { host: '127.0.0.1', port: 6379, db: 0 },
   },
-  apiServer: {
-    host: '127.0.0.1',
-    port: 7210,
-  },
-};
+});
 
-const apiServer = new RedisSmqRestApi(config);
-apiServer.run();
+await api.run();
+```
+
+### Embedded Middleware
+
+To integrate into an existing Express app, instantiate RedisSMQRestApi with false as the second argument to prevent it 
+from starting its own listener. Then, use getApplication() to get the middleware.
+
+```javascript
+import express from 'express';
+import { RedisSMQRestApi } from 'redis-smq-rest-api';
+import { ERedisConfigClient } from 'redis-smq-common';
+
+const app = express();
+const api = new RedisSMQRestApi(
+  {
+    apiServer: { basePath: '/api' }, // port is ignored
+    redis: { client: ERedisConfigClient.IOREDIS },
+  },
+  false, // <-- disable listener
+);
+
+const restApiMiddleware = await api.getApplication();
+app.use(restApiMiddleware);
+
+app.listen(3000, () => console.log('Host app listening on http://localhost:3000'));
 ```
 
 ## Usage from CLI
