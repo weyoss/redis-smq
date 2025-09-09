@@ -1,7 +1,3 @@
-[**redis-smq-common**](../README.md)
-
-***
-
 [RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / withRedisClient
 
 # Function: withRedisClient()
