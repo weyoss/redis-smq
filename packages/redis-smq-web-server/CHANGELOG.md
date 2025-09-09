@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.3](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.2...v9.0.0-next.3) (2025-09-09)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-web-server:** set default Redis database to 0 ([3b4e200](https://github.com/weyoss/redis-smq/commit/3b4e200681a5e1eec2446fa6ffa27878cb790b29))
+- **redis-smq-web-server:** update peer dependencies ([2be664e](https://github.com/weyoss/redis-smq/commit/2be664ea4bacffd5b0a780e05355e356028b6321))
+
+### 📝 Documentation
+
+- **redis-smq-rest-api:** add Redis client installation instructions ([40d9d54](https://github.com/weyoss/redis-smq/commit/40d9d541274701b6b701505e70d9f5ee8add0912))
+- **redis-smq-web-server:** update configuration API and CLI options ([873bedf](https://github.com/weyoss/redis-smq/commit/873bedf848bf7098010cf67b3a886e50864021c4))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-web-server:** improve CLI configuration and config parsing ([8ec1d84](https://github.com/weyoss/redis-smq/commit/8ec1d840678eb360a7854453cd6e20976d872c5c))
+
 ## [9.0.0-next.2](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.1...v9.0.0-next.2) (2025-09-07)
 
 ### 🐛 Bug Fixes
