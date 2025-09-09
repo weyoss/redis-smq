@@ -106,12 +106,15 @@ npx redis-smq-rest-api
 You can override the default configuration using the following command-line arguments:
 
 ```shell
--p, --port <port>             Port to run the API server on (default: "7210")
--B, --base-path <basePath>    Base public path for the Swagger UI (default: "/")
--H, --redis-host <redisHost>  Redis server host (default: "127.0.0.1")
--P, --redis-port <redisPort>  Redis server port (default: "6379")
--D, --redis-db <redisDB>      Redis database number (default: "0")
--h, --help                    display help for command
+-p, --port <number>                 Port to run the REST API on (default: "7210")
+-b, --base-path <string>            Base path to mount the REST API under (default: "/")
+-c, --redis-client <ioredis|redis>  Redis client. Valid options are: ioredis, redis. (default: "ioredis")
+-r, --redis-host <string>           Redis server host (default: "127.0.0.1")
+-o, --redis-port <number>           Redis server port (default: "6379")
+-d, --redis-db <number>             Redis database number (default: "0")
+-e, --enable-log <0|1>              Enable console logging: 0 (disabled), 1 (enabled) (default: "0")
+-v, --log-level <0|1|2|3>           Log level. Numbers: 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR (default: "1")
+-h, --help                          Display help for command
 ```
 
 ### CLI Examples
