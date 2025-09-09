@@ -21,6 +21,14 @@ queue using a RESTful API.
 npm install redis-smq redis-smq-common redis-smq-rest-api --save
 ```
 
+Don't forget to install a Redis client. Choose either node-redis or ioredis:
+
+```shell
+npm install @redis/client --save
+# or
+npm install ioredis --save
+```
+
 ## Version Compatibility
 
 ⚠️ Important: Always install matching versions of RedisSMQ packages to ensure compatibility.
