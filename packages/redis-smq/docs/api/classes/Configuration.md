@@ -8,13 +8,13 @@ Configuration class for managing and setting up the RedisSMQ message queue.
 
 ### getConfig()
 
-> **getConfig**(): [`IRedisSMQConfigRequired`](../interfaces/IRedisSMQConfigRequired.md)
+> **getConfig**(): [`IRedisSMQParsedConfig`](../interfaces/IRedisSMQParsedConfig.md)
 
 Retrieves the current configuration settings for the RedisSMQ library.
 
 #### Returns
 
-[`IRedisSMQConfigRequired`](../interfaces/IRedisSMQConfigRequired.md)
+[`IRedisSMQParsedConfig`](../interfaces/IRedisSMQParsedConfig.md)
 
 An object containing the required configuration properties including
 `namespace`, `redis`, `logger`, `messages`, and `eventBus`.
@@ -30,7 +30,7 @@ console.log(myConfig);
 
 ### getSetConfig()
 
-> `static` **getSetConfig**(`config`): [`IRedisSMQConfigRequired`](../interfaces/IRedisSMQConfigRequired.md)
+> `static` **getSetConfig**(`config`): [`IRedisSMQParsedConfig`](../interfaces/IRedisSMQParsedConfig.md)
 
 A static method that returns the singleton instance of the Configuration class.
 If an instance does not exist, it creates a new one using the provided configuration.
@@ -46,7 +46,7 @@ If not provided, an empty object is used.
 
 #### Returns
 
-[`IRedisSMQConfigRequired`](../interfaces/IRedisSMQConfigRequired.md)
+[`IRedisSMQParsedConfig`](../interfaces/IRedisSMQParsedConfig.md)
 
 The singleton instance of the Configuration class,
 containing the required configuration properties.

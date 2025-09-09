@@ -108,10 +108,10 @@
 - [IMessageDeleteResponse](interfaces/IMessageDeleteResponse.md)
 - [IMessageParams](interfaces/IMessageParams.md)
 - [IMessagesConfig](interfaces/IMessagesConfig.md)
-- [IMessagesConfigStorage](interfaces/IMessagesConfigStorage.md)
-- [IMessagesConfigStorageOptions](interfaces/IMessagesConfigStorageOptions.md)
-- [IMessagesConfigStorageOptionsRequired](interfaces/IMessagesConfigStorageOptionsRequired.md)
-- [IMessagesConfigStorageRequired](interfaces/IMessagesConfigStorageRequired.md)
+- [IMessagesStorageConfig](interfaces/IMessagesStorageConfig.md)
+- [IMessagesStorageConfigOptions](interfaces/IMessagesStorageConfigOptions.md)
+- [IMessagesStorageParsedConfig](interfaces/IMessagesStorageParsedConfig.md)
+- [IMessagesStorageParsedConfigOptions](interfaces/IMessagesStorageParsedConfigOptions.md)
 - [IMessageStateTransferable](interfaces/IMessageStateTransferable.md)
 - [IMessageTransferable](interfaces/IMessageTransferable.md)
 - [IPaginationPage](interfaces/IPaginationPage.md)
@@ -124,7 +124,8 @@
 - [IQueueProperties](interfaces/IQueueProperties.md)
 - [IQueueRateLimit](interfaces/IQueueRateLimit.md)
 - [IRedisSMQConfig](interfaces/IRedisSMQConfig.md)
-- [IRedisSMQConfigRequired](interfaces/IRedisSMQConfigRequired.md)
+- [IRedisSMQDefaultConfig](interfaces/IRedisSMQDefaultConfig.md)
+- [IRedisSMQParsedConfig](interfaces/IRedisSMQParsedConfig.md)
 - [ITopicParams](interfaces/ITopicParams.md)
 
 ## Type Aliases
@@ -160,4 +161,9 @@
 
 ## Variables
 
+- [defaultConfig](variables/defaultConfig.md)
 - [MessageStatePropertyMap](variables/MessageStatePropertyMap.md)
+
+## Functions
+
+- [parseConfig](functions/parseConfig.md)
