@@ -11,98 +11,104 @@
 
 import { Command } from 'commander';
 import { RedisSMQRestApi } from '../src/index.js';
-import { defaultConfig } from '../src/config/parseConfig.js';
-import { EConsoleLoggerLevel, ERedisConfigClient } from 'redis-smq-common';
-import { IRedisSMQRestApiConfig } from '../src/config/types/index.js';
+import { EConsoleLoggerLevel } from 'redis-smq-common';
+import {
+  DEFAULT_BASE_PATH,
+  DEFAULT_PORT,
+  IRedisSMQRestApiCliOptions,
+  IRedisSMQRestApiConfig,
+} from '../src/config/index.js';
+import { defaultConfig as defaultRedisSMQConfig } from 'redis-smq';
+
+// Keep existing behavior for deriving a numeric default log level
+const defaultLogLevel =
+  typeof defaultRedisSMQConfig.logger.options.logLevel === 'number'
+    ? defaultRedisSMQConfig.logger.options.logLevel
+    : EConsoleLoggerLevel[defaultRedisSMQConfig.logger.options.logLevel];
 
 const program = new Command();
 
-program
-  .name('redis-smq-rest-api')
-  .description(
-    'REST API for RedisSMQ: OpenAPI 3 schema and Swagger UI for managing queues, messages, and consumers.',
-  );
+program.name('redis-smq-rest-api').description('RedisSMQ REST API server');
 
 program
+  // Server options
   .option(
-    '-p, --port <port>',
-    'Port to run the server on',
-    String(defaultConfig.apiServer.port),
+    '-p, --port <number>',
+    'Port to run the REST API on',
+    String(DEFAULT_PORT),
   )
   .option(
-    '-B, --base-path <basePath>',
-    'Base public path for Swagger UI',
-    String(defaultConfig.apiServer.basePath),
+    '-b, --base-path <string>',
+    'Base path to mount the REST API under',
+    DEFAULT_BASE_PATH,
   )
+
+  // Redis options (short flags improved)
   .option(
-    '-c, --redis-client <redisClient>',
+    '-c, --redis-client <ioredis|redis>',
     'Redis client. Valid options are: ioredis, redis.',
-    defaultConfig.redis.client,
+    defaultRedisSMQConfig.redis.client,
   )
   .option(
-    '-H, --redis-host <redisHost>',
+    '-r, --redis-host <string>',
     'Redis server host',
-    defaultConfig.redis.options.host,
+    defaultRedisSMQConfig.redis.options.host,
   )
   .option(
-    '-P, --redis-port <redisPort>',
+    // Use -o to avoid colliding with -p (API port)
+    '-o, --redis-port <number>',
     'Redis server port',
-    String(defaultConfig.redis.options.port),
+    String(defaultRedisSMQConfig.redis.options.port),
   )
   .option(
-    '-d, --redis-db <redisDb>',
+    '-d, --redis-db <number>',
     'Redis database number',
-    String(defaultConfig.redis.options.db),
+    String(defaultRedisSMQConfig.redis.options.db),
   )
-  .option(
-    '-l, --enable-log <logEnabled>',
-    'Enable console logging',
-    String(defaultConfig.logger.enabled),
-  )
-  .option(
-    '-v, --log-level <logLevel>',
-    'Log level',
-    EConsoleLoggerLevel[defaultConfig.logger.options.logLevel],
-  );
 
-//
+  // Logging options
+  .option(
+    '-e, --enable-log <0|1>',
+    'Enable console logging: 0 (disabled), 1 (enabled)',
+    String(Number(defaultRedisSMQConfig.logger.enabled)),
+  )
+  .option(
+    '-v, --log-level <0|1|2|3>',
+    `Log level. Numbers: ${EConsoleLoggerLevel.DEBUG}=DEBUG, ${EConsoleLoggerLevel.INFO}=INFO, ${EConsoleLoggerLevel.WARN}=WARN, ${EConsoleLoggerLevel.ERROR}=ERROR`,
+    String(defaultLogLevel),
+  )
+
+  // Note: -h is reserved by Commander for help
+  .helpOption('-h, --help', 'Display help for command');
+
 program.parse();
 
-interface IRedisSMQRestApiOptions {
-  port: string;
-  redisClient: ERedisConfigClient;
-  basePath: string;
-  redisPort: string;
-  redisHost: string;
-  redisDb: string;
-  enableLog: string;
-  logLevel: EConsoleLoggerLevel;
-}
+const options: IRedisSMQRestApiCliOptions = program.opts();
 
-//
-const options: IRedisSMQRestApiOptions = program.opts();
-
-//
+// Build config from parsed CLI options
 const config: IRedisSMQRestApiConfig = {
   apiServer: {
     port: Number(options.port),
-    basePath: String(options.basePath),
+    basePath: options.basePath,
   },
   redis: {
     client: options.redisClient,
     options: {
-      port: Number(options.redisPort),
       host: options.redisHost,
+      port: Number(options.redisPort),
       db: Number(options.redisDb),
     },
   },
   logger: {
-    enabled: Boolean(options.enableLog),
+    enabled: Boolean(Number(options.enableLog)),
     options: {
-      logLevel: options.logLevel,
+      logLevel: Number(options.logLevel),
     },
   },
 };
 
-const server = new RedisSMQRestApi(config);
-server.run();
+const api = new RedisSMQRestApi(config);
+api.run().catch((err: unknown) => {
+  console.error(err);
+  process.exit(1);
+});

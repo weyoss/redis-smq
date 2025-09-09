@@ -7,38 +7,14 @@
  * in the root directory of this source tree.
  */
 
-import { ConfigInvalidApiServerParamsError } from './errors/ConfigInvalidApiServerParamsError.js';
 import {
   IRedisSMQRestApiConfig,
   IRedisSMQRestApiParsedConfig,
 } from './types/index.js';
-import {
-  EConsoleLoggerLevel,
-  ERedisConfigClient,
-  ILoggerConfig,
-  IRedisConfig,
-} from 'redis-smq-common';
+import { parseConfig as parseRedisSMQConfig } from 'redis-smq';
 
-export const defaultConfig = {
-  logger: {
-    enabled: true,
-    options: {
-      logLevel: EConsoleLoggerLevel.DEBUG,
-    },
-  },
-  redis: {
-    client: ERedisConfigClient.IOREDIS,
-    options: {
-      host: '127.0.0.1',
-      port: 6379,
-      db: 0,
-    },
-  },
-  apiServer: {
-    port: 8081,
-    basePath: '/',
-  },
-};
+export const DEFAULT_PORT = 7210;
+export const DEFAULT_BASE_PATH = '/';
 
 function normalizePath(path: string): string {
   const s = path
@@ -52,48 +28,14 @@ function normalizePath(path: string): string {
 export function parseConfig(
   config: IRedisSMQRestApiConfig = {},
 ): IRedisSMQRestApiParsedConfig {
-  const { apiServer = {}, redis, logger, ...rest } = config;
-  const port = apiServer.port ?? defaultConfig.apiServer.port;
-  const basePath = normalizePath(
-    apiServer.basePath ?? defaultConfig.apiServer.basePath,
-  );
-
-  if (!Number.isInteger(port) || port < 1 || port > 65535) {
-    throw new ConfigInvalidApiServerParamsError(
-      `Expected a valid port number (1-65535).`,
-    );
-  }
-
-  // Redis client config
-  const redisCfg: IRedisConfig = {
-    ...redis,
-    client: redis?.client ?? defaultConfig.redis.client,
-    options: {
-      ...(redis?.options ?? {}),
-      port: redis?.options?.port ?? defaultConfig.redis.options.port,
-      host: redis?.options?.host ?? defaultConfig.redis.options.host,
-      db: redis?.options?.db ?? defaultConfig.redis.options.db,
-    },
-  };
-
-  // Logger config
-  const loggerCfg: ILoggerConfig = {
-    ...(logger ?? {}),
-    enabled: logger?.enabled,
-    options: {
-      ...(logger?.options ?? {}),
-      logLevel:
-        logger?.options?.logLevel ?? defaultConfig.logger.options.logLevel,
-    },
-  };
+  const { apiServer = {}, ...rest } = config;
+  const redisSMQConfigParsed = parseRedisSMQConfig(rest);
 
   return {
-    ...rest,
-    redis: redisCfg,
-    logger: loggerCfg,
+    ...redisSMQConfigParsed,
     apiServer: {
-      port,
-      basePath,
+      port: apiServer.port ?? DEFAULT_PORT,
+      basePath: normalizePath(apiServer.basePath ?? DEFAULT_BASE_PATH),
     },
   };
 }

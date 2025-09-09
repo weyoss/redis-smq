@@ -7,5 +7,6 @@
  * in the root directory of this source tree.
  */
 
-export * from './src/index.js';
-export * from './src/config/index.js';
+export * from './errors/index.js';
+export * from './types/index.js';
+export * from './parseConfig.js';

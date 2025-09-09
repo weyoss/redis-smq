@@ -7,5 +7,5 @@
  * in the root directory of this source tree.
  */
 
-export * from './src/index.js';
-export * from './src/config/index.js';
+export * from './ConfigError.js';
+export * from './ConfigInvalidApiServerParamsError.js';

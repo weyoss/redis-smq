@@ -7,7 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { IRedisSMQConfig } from 'redis-smq';
+import { IRedisSMQConfig, IRedisSMQParsedConfig } from 'redis-smq';
+import { EConsoleLoggerLevel, ERedisConfigClient } from 'redis-smq-common';
 
 export type TRestApiConfig = {
   port?: number;
@@ -18,6 +19,17 @@ export interface IRedisSMQRestApiConfig extends IRedisSMQConfig {
   apiServer?: TRestApiConfig;
 }
 
-export interface IRedisSMQRestApiParsedConfig extends IRedisSMQConfig {
+export interface IRedisSMQRestApiParsedConfig extends IRedisSMQParsedConfig {
   apiServer: Required<TRestApiConfig>;
+}
+
+export interface IRedisSMQRestApiCliOptions {
+  port: string;
+  redisClient: ERedisConfigClient;
+  basePath: string;
+  redisPort: string;
+  redisHost: string;
+  redisDb: string;
+  enableLog: string;
+  logLevel: EConsoleLoggerLevel;
 }
