@@ -1,6 +1,6 @@
 {
   "name": "redis-smq-rest-api",
-  "version": "9.0.0-next.2",
+  "version": "9.0.0-next.3",
   "description": "REST API for RedisSMQ: OpenAPI 3 schema and Swagger UI for managing queues, messages, and consumers.",
   "author": "Weyoss <weyoss@protonmail.com>",
   "license": "MIT",
@@ -66,10 +66,10 @@
     "uuid": "11.1.0"
   },
   "peerDependencies": {
-    "redis-smq": "workspace:^",
-    "redis-smq-common": "workspace:^",
     "@redis/client": "^1.6.0",
-    "ioredis": "^5.4.0"
+    "ioredis": "^5.4.0",
+    "redis-smq": "workspace:^",
+    "redis-smq-common": "workspace:^"
   },
   "peerDependenciesMeta": {
     "@redis/client": {

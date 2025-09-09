@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.3](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.2...v9.0.0-next.3) (2025-09-09)
+
+### 📝 Documentation
+
+- **redis-smq-common:** update console logger documentation ([be75a62](https://github.com/weyoss/redis-smq/commit/be75a622faeb36cb198e4de84cba076d4cc157f1))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-common:** remove custom date format support from console logger ([92f8dd9](https://github.com/weyoss/redis-smq/commit/92f8dd9eec5baf162fce3974c0d69c41595b5164))
+
 ## [9.0.0-next.2](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.1...v9.0.0-next.2) (2025-09-07)
 
 **Note:** Version bump only for package redis-smq-common

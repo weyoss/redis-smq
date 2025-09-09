@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.3](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.2...v9.0.0-next.3) (2025-09-09)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-web-ui:** move redis-smq-rest-api from peer to dev deps ([573829e](https://github.com/weyoss/redis-smq/commit/573829e862355c33deb4b830a6c89c708d387c6f))
+
+### 📝 Documentation
+
+- **redis-smq-web-ui:** include Priority Queues support ([ce6d143](https://github.com/weyoss/redis-smq/commit/ce6d1436ea0015e66d736e7a01f1e2982254a0c2))
+
 ## [9.0.0-next.2](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.1...v9.0.0-next.2) (2025-09-07)
 
 ### 📝 Documentation
