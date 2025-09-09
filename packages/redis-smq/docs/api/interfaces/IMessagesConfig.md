@@ -6,4 +6,4 @@
 
 ### store?
 
-> `optional` **store**: `boolean` \| [`IMessagesConfigStorage`](IMessagesConfigStorage.md)
+> `optional` **store**: `boolean` \| [`IMessagesStorageConfig`](IMessagesStorageConfig.md)

@@ -1,10 +1,14 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IRedisSMQConfigRequired
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IRedisSMQParsedConfig
 
-# Interface: IRedisSMQConfigRequired
+# Interface: IRedisSMQParsedConfig
 
 ## Extends
 
 - `Required`\<[`IRedisSMQConfig`](IRedisSMQConfig.md)\>
+
+## Extended by
+
+- [`IRedisSMQDefaultConfig`](IRedisSMQDefaultConfig.md)
 
 ## Properties
 
@@ -42,7 +46,7 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq-common/docs/a
 
 #### store
 
-> **store**: [`IMessagesConfigStorageRequired`](IMessagesConfigStorageRequired.md)
+> **store**: [`IMessagesStorageParsedConfig`](IMessagesStorageParsedConfig.md)
 
 #### See
 

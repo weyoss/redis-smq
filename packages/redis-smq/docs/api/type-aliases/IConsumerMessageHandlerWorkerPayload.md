@@ -8,7 +8,7 @@
 
 ### config
 
-> **config**: [`IRedisSMQConfigRequired`](../interfaces/IRedisSMQConfigRequired.md)
+> **config**: [`IRedisSMQParsedConfig`](../interfaces/IRedisSMQParsedConfig.md)
 
 ***
 

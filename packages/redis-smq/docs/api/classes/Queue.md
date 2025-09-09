@@ -218,8 +218,8 @@ Callback function to handle success or error.
 
 #### See
 
- - https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/enums/EQueueType.md
- - https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/enums/EQueueDeliveryModel.md
+ - https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/enumerations/EQueueType.md
+ - https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/enumerations/EQueueDeliveryModel.md
 
 ***
 
