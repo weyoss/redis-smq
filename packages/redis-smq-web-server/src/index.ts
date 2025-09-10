@@ -20,6 +20,7 @@ import { RedisSMQRestApi } from 'redis-smq-rest-api';
 import { parseConfig } from './config/parse-config.js';
 import type { IRedisSMQWebUIConfig } from 'redis-smq-web-ui';
 import { createProxyMiddleware } from 'http-proxy-middleware';
+import { ILogger, logger } from 'redis-smq-common';
 
 export class RedisSMQWebServer {
   private readonly app = express();
@@ -30,6 +31,7 @@ export class RedisSMQWebServer {
   private restApi: RedisSMQRestApi | null = null;
   private bootstrapped = false;
   private httpServer: http.Server | null = null;
+  protected logger: ILogger;
 
   constructor(config: IRedisSMQWebServerConfig = {}) {
     // Default configuration
@@ -40,6 +42,7 @@ export class RedisSMQWebServer {
     };
     this.apiProxyTarget = this.config.webServer.apiProxyTarget ?? null;
     this.webUIPath = getDistPath();
+    this.logger = logger.getLogger(this.config.logger);
   }
 
   private async setupMiddleware(): Promise<void> {
@@ -101,7 +104,7 @@ export class RedisSMQWebServer {
         const indexPath = path.join(this.webUIPath, 'index.html');
         fs.readFile(indexPath, 'utf8', (err, data) => {
           if (err) {
-            console.error('Error reading index.html:', err);
+            this.logger.error('Error reading index.html:', err);
             return res.status(500).send('Error loading application');
           }
 
@@ -135,13 +138,13 @@ export class RedisSMQWebServer {
     await this.bootstrap();
     const port = this.config.webServer.port;
     this.httpServer = this.app.listen(port, () => {
-      console.log(`Redis SMQ Web Server running on port ${port}`);
+      this.logger.info(`Redis SMQ Web Server running on port ${port}`);
       if (this.apiProxyTarget) {
-        console.log(`Proxying API requests to ${this.apiProxyTarget}`);
+        this.logger.info(`Proxying API requests to ${this.apiProxyTarget}`);
       } else {
-        console.log(`Embedded Redis SMQ REST API is mounted`);
+        this.logger.info(`Embedded Redis SMQ REST API is mounted`);
       }
-      console.log(`Serving static assets from: ${this.webUIPath}`);
+      this.logger.info(`Serving static assets from: ${this.webUIPath}`);
     });
   }
 
@@ -155,7 +158,7 @@ export class RedisSMQWebServer {
         });
       });
       this.httpServer = null;
-      console.log('Redis SMQ Web Server has been shutdown.');
+      this.logger.info('Redis SMQ Web Server has been shutdown.');
     }
 
     // Shutdown embedded REST API (ensures resources are disposed)
