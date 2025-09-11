@@ -70,7 +70,7 @@ export function parseMessageStorageConfig(
   };
 }
 
-export default function getMessagesConfig(
+export default function parseMessagesConfig(
   userConfig: IRedisSMQConfig,
 ): IRedisSMQParsedConfig['messages'] {
   const store = parseMessageStorageConfig(userConfig);

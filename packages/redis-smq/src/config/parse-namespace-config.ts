@@ -12,7 +12,7 @@ import { ConfigurationNamespaceError } from './errors/index.js';
 import { IRedisSMQConfig } from './types/index.js';
 import { defaultConfig } from './default-config.js';
 
-export function getNamespaceConfig(userConfig: IRedisSMQConfig): string {
+export function parseNamespaceConfig(userConfig: IRedisSMQConfig): string {
   if (!userConfig.namespace) return defaultConfig.namespace;
   const ns = redisKeys.validateNamespace(userConfig.namespace);
   if (ns instanceof Error) throw new ConfigurationNamespaceError();

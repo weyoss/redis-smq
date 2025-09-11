@@ -11,7 +11,7 @@ import _ from 'lodash';
 import { IRedisSMQConfig, IRedisSMQParsedConfig } from './types/index.js';
 import { defaultConfig } from './default-config.js';
 
-export function getEventBusConfig(
+export function parseEventBusConfig(
   userConfig: IRedisSMQConfig,
 ): IRedisSMQParsedConfig['eventBus'] {
   return _.merge({}, defaultConfig.eventBus, userConfig.eventBus ?? {});

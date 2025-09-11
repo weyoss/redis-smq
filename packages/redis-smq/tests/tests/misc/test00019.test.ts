@@ -12,7 +12,7 @@ import {
   ConfigurationMessageQueueSizeError,
   ConfigurationMessageStoreExpireError,
 } from '../../../src/index.js';
-import { parseMessageStorageConfig } from '../../../src/config/get-messages-config.js';
+import { parseMessageStorageConfig } from '../../../src/config/parse-messages-config.js';
 
 test('Configuration: storeMessages', async () => {
   expect(() => {
