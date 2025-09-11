@@ -8,18 +8,18 @@
  */
 
 import { IRedisSMQConfig, IRedisSMQParsedConfig } from './types/index.js';
-import { getNamespaceConfig } from './get-namespace-config.js';
-import { getRedisConfig } from './get-redis-config.js';
-import { getLoggerConfig } from './get-logger-config.js';
-import getMessagesConfig from './get-messages-config.js';
-import { getEventBusConfig } from './get-event-bus-config.js';
+import { parseNamespaceConfig } from './parse-namespace-config.js';
+import { parseRedisConfig } from './parse-redis-config.js';
+import { parseLoggerConfig } from './parse-logger-config.js';
+import parseMessagesConfig from './parse-messages-config.js';
+import { parseEventBusConfig } from './parse-event-bus-config.js';
 
 export function parseConfig(config: IRedisSMQConfig): IRedisSMQParsedConfig {
   return {
-    namespace: getNamespaceConfig(config),
-    redis: getRedisConfig(config),
-    logger: getLoggerConfig(config),
-    messages: getMessagesConfig(config),
-    eventBus: getEventBusConfig(config),
+    namespace: parseNamespaceConfig(config),
+    redis: parseRedisConfig(config),
+    logger: parseLoggerConfig(config),
+    messages: parseMessagesConfig(config),
+    eventBus: parseEventBusConfig(config),
   };
 }

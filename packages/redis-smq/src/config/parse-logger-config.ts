@@ -11,7 +11,7 @@ import _ from 'lodash';
 import { IRedisSMQConfig, IRedisSMQParsedConfig } from './types/index.js';
 import { defaultConfig } from './default-config.js';
 
-export function getLoggerConfig(
+export function parseLoggerConfig(
   userConfig: IRedisSMQConfig,
 ): IRedisSMQParsedConfig['logger'] {
   return _.merge({}, defaultConfig.logger, userConfig.logger ?? {});

@@ -2,7 +2,7 @@ import _ from 'lodash';
 import { IRedisSMQConfig, IRedisSMQParsedConfig } from './types/index.js';
 import { defaultConfig } from './default-config.js';
 
-export function getRedisConfig(
+export function parseRedisConfig(
   userConfig: IRedisSMQConfig,
 ): IRedisSMQParsedConfig['redis'] {
   const userRedis = userConfig.redis;
