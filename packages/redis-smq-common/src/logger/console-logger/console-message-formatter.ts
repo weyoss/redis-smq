@@ -14,7 +14,7 @@ import {
 
 /**
  * ConsoleMessageFormatter handles the formatting of log messages with timestamps,
- * log levels, and ANSI color codes.
+ * log levels, namespaces, and ANSI color codes.
  */
 export class ConsoleMessageFormatter {
   private readonly includeTimestamp: boolean;
@@ -31,10 +31,13 @@ export class ConsoleMessageFormatter {
 
   private resetColor = '\u001b[0m';
 
+  private namespaces: string[] = [];
+
   /**
    * Creates a new MessageFormatter instance.
    *
    * @param options - Configuration options for the formatter
+   * @param namespace - Namespaces
    * @param options.includeTimestamp - Whether to include timestamps in log messages (default: true)
    * @param options.colorize - Whether to colorize log messages (default: true)
    * @param options.dateFormat - Custom date formatter function (default: ISO string)
@@ -45,11 +48,13 @@ export class ConsoleMessageFormatter {
       colorize?: boolean;
       dateFormat?: TConsoleLoggerOptionsDateFormatter;
     } = {},
+    namespace: string[] = [],
   ) {
     const { includeTimestamp, colorize, dateFormat } = options;
     this.includeTimestamp = includeTimestamp !== false;
     this.colorize = colorize !== false;
     this.dateFormatter = dateFormat || ((date: Date) => date.toISOString());
+    this.namespaces = namespace;
   }
 
   /**
@@ -114,7 +119,7 @@ export class ConsoleMessageFormatter {
       typeof message === 'string' ? message : JSON.stringify(message);
 
     // Base formatted message without color
-    const baseMessage = `${timestamp}[${level}] ${this.stripColorCodes(formattedMessage)}`;
+    const baseMessage = `${timestamp}${level}${this.formatNamespaces(this.namespaces)}: ${this.stripColorCodes(formattedMessage)}`;
 
     // Add color if enabled
     if (this.colorize && this.levelColors[level]) {
@@ -122,5 +127,15 @@ export class ConsoleMessageFormatter {
     }
 
     return baseMessage;
+  }
+
+  /**
+   * Formats multiple namespaces into a string representation.
+   * @param namespaces - Array of namespace strings.
+   * @returns Formatted namespace string like [ns1 / ns2 / ns3].
+   */
+  protected formatNamespaces(namespaces: string[]): string {
+    if (!namespaces.length) return '';
+    return ` (${namespaces.join(' / ')})`;
   }
 }

@@ -10,6 +10,7 @@
 import { ILogger } from '../types/index.js';
 import { ConsoleMessageFormatter } from './console-message-formatter.js';
 import { EConsoleLoggerLevel, IConsoleLoggerOptions } from './types/index.js';
+import { LoggerError } from '../errors/index.js';
 
 /**
  * ConsoleLogger implements the ILogger interface and provides
@@ -23,12 +24,16 @@ export class ConsoleLogger implements ILogger {
    * Creates a new ConsoleLogger instance.
    *
    * @param options - Configuration options for the logger
+   * @param namespaces - Namespaces
    * @param options.includeTimestamp - Whether to include timestamps in log messages (default: true)
    * @param options.colorize - Whether to colorize log messages (default: true)
    * @param options.logLevel - Minimum log level to display (default: 'INFO')
    * @param options.dateFormat - Custom date formatter function (default: ISO string)
    */
-  constructor(options: IConsoleLoggerOptions = {}) {
+  constructor(
+    options: IConsoleLoggerOptions = {},
+    namespaces: string | string[] = [],
+  ) {
     const {
       includeTimestamp = true,
       colorize = true,
@@ -38,9 +43,38 @@ export class ConsoleLogger implements ILogger {
     this.logLevel =
       typeof logLevel === 'number' ? logLevel : EConsoleLoggerLevel[logLevel];
 
-    this.formatter = new ConsoleMessageFormatter({
-      includeTimestamp,
-      colorize,
+    const namespaceArr =
+      typeof namespaces === 'string' ? [namespaces] : namespaces;
+    const validatedNamespaces = this.validateNamespaces(namespaceArr);
+    this.formatter = new ConsoleMessageFormatter(
+      {
+        includeTimestamp,
+        colorize,
+      },
+      validatedNamespaces,
+    );
+  }
+
+  /**
+   * Validates a namespace string to ensure it meets the required format.
+   * @param namespaces - The namespace string to validate.
+   * @throws LoggerError if the namespace is invalid.
+   */
+  private validateNamespaces(namespaces: string[]): string[] {
+    return namespaces.map((ns) => {
+      if (!ns || ns.trim() === '') {
+        throw new LoggerError('Namespace cannot be empty');
+      }
+
+      // Only allow alphanumeric characters, underscores, and hyphens
+      const validNamespacePattern = /^[a-zA-Z0-9_-]+$/;
+      if (!validNamespacePattern.test(ns)) {
+        throw new LoggerError(
+          'Namespace must contain only alphanumeric characters, underscores, and hyphens',
+        );
+      }
+
+      return ns.toLowerCase();
     });
   }
 
@@ -55,17 +89,6 @@ export class ConsoleLogger implements ILogger {
   }
 
   /**
-   * Checks if a message already contains a timestamp and log level.
-   * Takes into account possible ANSI color codes in the message.
-   *
-   * @param message - The message to check
-   * @returns Whether the message already contains a timestamp and log level
-   */
-  public isFormatted(message: unknown): boolean {
-    return this.formatter.isFormatted(message);
-  }
-
-  /**
    * Logs a debug message to the console.
    *
    * @param message - The message to log
@@ -74,9 +97,6 @@ export class ConsoleLogger implements ILogger {
   public debug(message: unknown, ...params: unknown[]): void {
     if (!this.shouldLog(EConsoleLoggerLevel.DEBUG)) return;
 
-    if (this.isFormatted(message)) {
-      return console.debug(message, ...params);
-    }
     const formattedMessage = this.formatter.format('DEBUG', message);
     console.debug(formattedMessage, ...params);
   }
@@ -90,9 +110,6 @@ export class ConsoleLogger implements ILogger {
   public error(message: unknown, ...params: unknown[]): void {
     if (!this.shouldLog(EConsoleLoggerLevel.ERROR)) return;
 
-    if (this.isFormatted(message)) {
-      return console.error(message, ...params);
-    }
     const formattedMessage = this.formatter.format('ERROR', message);
     console.error(formattedMessage, ...params);
   }
@@ -106,9 +123,6 @@ export class ConsoleLogger implements ILogger {
   public info(message: unknown, ...params: unknown[]): void {
     if (!this.shouldLog(EConsoleLoggerLevel.INFO)) return;
 
-    if (this.isFormatted(message)) {
-      return console.info(message, ...params);
-    }
     const formattedMessage = this.formatter.format('INFO', message);
     console.info(formattedMessage, ...params);
   }
@@ -122,9 +136,6 @@ export class ConsoleLogger implements ILogger {
   public warn(message: unknown, ...params: unknown[]): void {
     if (!this.shouldLog(EConsoleLoggerLevel.WARN)) return;
 
-    if (this.isFormatted(message)) {
-      return console.warn(message, ...params);
-    }
     const formattedMessage = this.formatter.format('WARN', message);
     console.warn(formattedMessage, ...params);
   }
