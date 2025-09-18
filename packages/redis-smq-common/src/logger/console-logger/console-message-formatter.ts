@@ -17,6 +17,7 @@ import {
  * log levels, namespaces, and ANSI color codes.
  */
 export class ConsoleMessageFormatter {
+  private readonly namespaces: string[] = [];
   private readonly includeTimestamp: boolean;
   private readonly colorize: boolean;
   private readonly dateFormatter: TConsoleLoggerOptionsDateFormatter;
@@ -29,9 +30,7 @@ export class ConsoleMessageFormatter {
     ERROR: '\u001b[31m', // Red
   };
 
-  private resetColor = '\u001b[0m';
-
-  private namespaces: string[] = [];
+  private readonly resetColor = '\u001b[0m';
 
   /**
    * Creates a new MessageFormatter instance.
@@ -73,32 +72,6 @@ export class ConsoleMessageFormatter {
   }
 
   /**
-   * Checks if a message already contains a timestamp and log level.
-   * Takes into account possible ANSI color codes in the message.
-   *
-   * @param message - The message to check
-   * @returns Whether the message already contains a timestamp and log level
-   */
-  public isFormatted(message: unknown): boolean {
-    if (typeof message !== 'string') return false;
-
-    // Strip any ANSI color codes before checking the format
-    const strippedMessage = this.stripColorCodes(message);
-
-    // Check for timestamp pattern followed by any log level in brackets
-    // This is a simplified check that may need to be adjusted based on dateFormat
-    const timestampLevelPattern = /^\[.+\] \[[A-Z]+\]/;
-
-    // If we're not including timestamps, just check for any log level in brackets
-    if (!this.includeTimestamp) {
-      const anyLevelPattern = /^\[[A-Z]+\]/;
-      return anyLevelPattern.test(strippedMessage);
-    }
-
-    return timestampLevelPattern.test(strippedMessage);
-  }
-
-  /**
    * Formats a log message with an optional timestamp, namespace, and color.
    *
    * @param level - The log level
@@ -106,11 +79,6 @@ export class ConsoleMessageFormatter {
    * @returns The formatted log message
    */
   public format(level: TConsoleLoggerLevelName, message: unknown): string {
-    // If the message is already formatted, return it as is
-    if (this.isFormatted(message)) {
-      return String(message);
-    }
-
     const timestamp = this.includeTimestamp
       ? `[${this.dateFormatter(new Date())}] `
       : '';
