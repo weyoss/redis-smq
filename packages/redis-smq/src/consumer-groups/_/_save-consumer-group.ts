@@ -16,8 +16,11 @@ import {
 } from 'redis-smq-common';
 import { TRedisSMQEvent } from '../../common/index.js';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
-import { _getQueueProperties } from '../../queue/_/_get-queue-properties.js';
-import { EQueueDeliveryModel, IQueueParams } from '../../queue/index.js';
+import { _getQueueProperties } from '../../queue-manager/_/_get-queue-properties.js';
+import {
+  EQueueDeliveryModel,
+  IQueueParams,
+} from '../../queue-manager/index.js';
 import {
   ConsumerGroupsConsumerGroupsNotSupportedError,
   ConsumerGroupsInvalidGroupIdError,

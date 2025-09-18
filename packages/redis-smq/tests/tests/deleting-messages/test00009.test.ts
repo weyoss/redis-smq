@@ -16,7 +16,7 @@ import {
 import { getMessage } from '../../common/message.js';
 import { getQueueScheduledMessages } from '../../common/queue-scheduled-messages.js';
 
-test('Combined test: Delete scheduled messages by IDs. Check scheduled messages. Check queue metrics.', async () => {
+test('Combined test: Delete scheduled messages by IDs. Check scheduled messages. Check queue-manager metrics.', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
 

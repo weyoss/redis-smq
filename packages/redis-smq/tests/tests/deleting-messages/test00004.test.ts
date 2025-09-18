@@ -19,7 +19,7 @@ import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-m
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 
-test('Combined test: Delete a dead-letter message. Check pending, acknowledged, and dead-letter message. Check queue metrics.', async () => {
+test('Combined test: Delete a dead-letter message. Check pending, acknowledged, and dead-letter message. Check queue-manager metrics.', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   const { queue, messageId } = await produceAndDeadLetterMessage();

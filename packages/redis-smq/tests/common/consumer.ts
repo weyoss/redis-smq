@@ -8,13 +8,10 @@
  */
 
 import bluebird from 'bluebird';
-import {
-  Consumer,
-  IQueueParams,
-  TConsumerMessageHandler,
-} from '../../src/index.js';
+import { Consumer, IQueueParams } from '../../src/index.js';
 import { shutDownBaseInstance } from './base-instance.js';
 import { getDefaultQueue } from './message-producing-consuming.js';
+import { TConsumerMessageHandler } from '../../src/index.js';
 
 type TGetConsumerArgs = {
   queue?: string | IQueueParams;

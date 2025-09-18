@@ -23,11 +23,11 @@ test('SetQueueRateLimit(): QueueRateLimitQueueNotFoundError', async () => {
   const defaultQueue = getDefaultQueue();
   const path1 = resolve(
     env.getCurrentDir(),
-    '../../../src/queue-rate-limit/queue-rate-limit.js',
+    '../../../src/queue-manager-rate-limit/queue-manager-rate-limit.js',
   );
   const path2 = resolve(
     env.getCurrentDir(),
-    '../../../src/queue/_/_parse-queue-params-and-validate.js',
+    '../../../src/queue-manager/_/_parse-queue-manager-params-and-validate.js',
   );
   const { QueueRateLimit } = await esmock<{
     QueueRateLimit: new () => QueueRateLimit;

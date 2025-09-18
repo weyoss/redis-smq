@@ -7,6 +7,7 @@
  * in the root directory of this source tree.
  */
 
+import bluebird from 'bluebird';
 import { shutDownConsumers } from './consumer.js';
 import { shutDownEventBus } from './event-bus-redis.js';
 import {
@@ -26,6 +27,9 @@ import { shutDownQueueScheduledMessages } from './queue-scheduled-messages.js';
 import { shutDownQueue } from './queue.js';
 import { shutDownRedisClients } from './redis.js';
 import { stopScheduleWorker } from './schedule-worker.js';
+import { Configuration } from '../../src/index.js';
+
+const ConfigurationAsync = bluebird.promisifyAll(Configuration);
 
 export async function shutdown(): Promise<void> {
   await shutDownConsumers();
@@ -48,4 +52,7 @@ export async function shutdown(): Promise<void> {
   // Redis clients should be stopped in the last step, to avoid random errors from different
   // dependant components.
   await shutDownRedisClients();
+
+  //
+  await ConfigurationAsync.shutdownAsync();
 }

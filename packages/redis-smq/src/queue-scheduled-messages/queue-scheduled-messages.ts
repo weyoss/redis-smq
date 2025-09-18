@@ -8,9 +8,9 @@
  */
 
 import { RedisClient } from '../common/redis-client/redis-client.js';
-import { Message } from '../message/index.js';
 import { QueueExplorer } from '../common/queue-explorer/queue-explorer.js';
 import { QueueStorageSortedSet } from '../common/queue-explorer/queue-storage/queue-storage-sorted-set.js';
+import { MessageManager } from '../message-manager/index.js';
 
 export class QueueScheduledMessages extends QueueExplorer {
   constructor() {
@@ -19,7 +19,7 @@ export class QueueScheduledMessages extends QueueExplorer {
     super(
       redisClient,
       new QueueStorageSortedSet(redisClient),
-      new Message(),
+      new MessageManager(),
       'keyQueueScheduled',
     );
     this.logger.debug('QueueScheduledMessages initialized');

@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { expect, vitest, test } from 'vitest';
+import { expect, test, vitest } from 'vitest';
 import { ICallback } from 'redis-smq-common';
 import {
   EMessagePriority,
@@ -26,7 +26,7 @@ import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 import { getQueue } from '../../common/queue.js';
 
-test('Combined test. Requeue a priority message from acknowledged queue. Check queue metrics.', async () => {
+test('Combined test. Requeue a priority message from acknowledged queue-manager. Check queue-manager metrics.', async () => {
   const defaultQueue = getDefaultQueue();
   const queue = await getQueue();
   await queue.saveAsync(

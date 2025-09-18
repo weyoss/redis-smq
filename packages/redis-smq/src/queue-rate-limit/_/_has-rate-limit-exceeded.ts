@@ -10,7 +10,7 @@
 import { ICallback, IRedisClient } from 'redis-smq-common';
 import { ELuaScriptName } from '../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
-import { IQueueParams, IQueueRateLimit } from '../../queue/index.js';
+import { IQueueParams, IQueueRateLimit } from '../../queue-manager/index.js';
 
 export function _hasRateLimitExceeded(
   redisClient: IRedisClient,

@@ -25,7 +25,7 @@ type TQueueMetrics = {
   acks: number;
 };
 
-test('Given many queues, a message is recovered from a consumer crash and re-queued to its origin queue', async () => {
+test('Given many queues, a message is recovered from a consumer crash and re-queued to its origin queue-manager', async () => {
   const defaultQueue = getDefaultQueue();
   const eventBus = await getEventBus();
   await createQueue(defaultQueue, false);

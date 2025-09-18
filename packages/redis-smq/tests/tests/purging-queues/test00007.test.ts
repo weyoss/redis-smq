@@ -18,7 +18,7 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getQueue } from '../../common/queue.js';
 
-test('Concurrently deleting a message queue and starting a consumer', async () => {
+test('Concurrently deleting a message queue-manager and starting a consumer', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   const consumer = getConsumer();

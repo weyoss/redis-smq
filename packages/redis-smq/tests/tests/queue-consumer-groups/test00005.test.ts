@@ -24,7 +24,7 @@ import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-me
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueue } from '../../common/queue.js';
 
-test('Publish and consume a message to/from queue with many consumer groups: unacknowledged messages', async () => {
+test('Publish and consume a message to/from queue-manager with many consumer groups: unacknowledged messages', async () => {
   const queue1: IQueueParams = {
     name: 'test-queue',
     ns: 'ns1',

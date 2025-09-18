@@ -7,6 +7,6 @@
  * in the root directory of this source tree.
  */
 
+export * from './message-handler/types/index.js';
 export * from './errors/index.js';
-export * from './types/index.js';
 export * from './consumer.js';

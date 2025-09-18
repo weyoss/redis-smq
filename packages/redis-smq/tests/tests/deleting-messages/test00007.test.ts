@@ -16,7 +16,7 @@ import {
 import { getMessage } from '../../common/message.js';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 
-test('Combined test: Delete acknowledged messages by IDs. Check acknowledged messages. Check queue metrics.', async () => {
+test('Combined test: Delete acknowledged messages by IDs. Check acknowledged messages. Check queue-manager metrics.', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   const { messageId: msg1 } = await produceAndAcknowledgeMessage(

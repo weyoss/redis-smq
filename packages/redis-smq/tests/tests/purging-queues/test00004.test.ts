@@ -16,7 +16,7 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 
-test('Purging dead letter queue', async () => {
+test('Purging dead letter queue-manager', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   const { queue, consumer } = await produceAndDeadLetterMessage();

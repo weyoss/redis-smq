@@ -30,3 +30,7 @@ export interface IMessagesStorageParsedConfig {
   acknowledged: IMessagesStorageParsedConfigOptions;
   deadLettered: IMessagesStorageParsedConfigOptions;
 }
+
+export interface IMessagesParsedConfig {
+  store: IMessagesStorageParsedConfig;
+}

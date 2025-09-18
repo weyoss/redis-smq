@@ -7,13 +7,15 @@
  * in the root directory of this source tree.
  */
 
+export * from './redis-smq.js';
 export * from './consumer/index.js';
 export * from './consumer-groups/index.js';
 export * from './exchange/index.js';
 export * from './message/index.js';
-export * from './namespace/index.js';
+export * from './message-manager/index.js';
+export * from './namespace-manager/index.js';
 export * from './producer/index.js';
-export * from './queue/index.js';
+export * from './queue-manager/index.js';
 export * from './queue-messages/index.js';
 export * from './queue-acknowledged-messages/index.js';
 export * from './queue-dead-lettered-messages/index.js';

@@ -9,13 +9,13 @@
 
 import bluebird from 'bluebird';
 import { createRedisClient, IRedisClient } from 'redis-smq-common';
-import { Configuration } from '../../src/config/index.js';
+import { Configuration } from '../../src/index.js';
 
 const redisClients: IRedisClient[] = [];
 const createInstanceAsync = bluebird.promisify(createRedisClient);
 
 export async function getRedisInstance() {
-  const c = await createInstanceAsync(Configuration.getSetConfig().redis);
+  const c = await createInstanceAsync(Configuration.getConfig().redis);
   redisClients.push(c);
   return bluebird.promisifyAll(c);
 }

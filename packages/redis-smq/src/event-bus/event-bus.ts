@@ -13,7 +13,7 @@ import { TRedisSMQEvent } from '../common/index.js';
 
 export class EventBus extends EventBusRedisFactory<TRedisSMQEvent> {
   constructor() {
-    const config = Configuration.getSetConfig();
+    const config = Configuration.getConfig();
     super(config.redis);
   }
 }

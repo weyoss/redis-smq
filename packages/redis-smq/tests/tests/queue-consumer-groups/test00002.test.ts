@@ -18,12 +18,12 @@ import {
   IQueueParams,
   Producer,
   ProducibleMessage,
+  QueueExplorerConsumerGroupIdRequiredError,
 } from '../../../src/index.js';
 import { getMessage } from '../../common/message.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 import { getQueue } from '../../common/queue.js';
-import { QueueExplorerConsumerGroupIdRequiredError } from '../../../src/index.js';
 
 test('Publish and consume a message to/from a consumer group', async () => {
   const queue1: IQueueParams = {

@@ -7,12 +7,11 @@
  * in the root directory of this source tree.
  */
 
-import { expect, vitest, test } from 'vitest';
+import { expect, test, vitest } from 'vitest';
 import bluebird from 'bluebird';
-import { Configuration } from '../../../src/index.js';
 import {
   EMessagePropertyStatus,
-  Message,
+  MessageManager,
   ProducibleMessage,
 } from '../../../src/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
@@ -24,7 +23,7 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getProducer } from '../../common/producer.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
-import RequeueImmediateWorker from '../../../src/consumer/workers/requeue-immediate.worker.js';
+import { RequeueImmediateWorker } from '../../../src/consumer/message-handler/workers/requeue-immediate.worker.js';
 
 test('An unacked message without retryDelay should be moved to queueRequeued. RequeueImmediateWorker should move the message from queueRequeued to queuePending.', async () => {
   const defaultQueue = getDefaultQueue();
@@ -49,19 +48,16 @@ test('An unacked message without retryDelay should be moved to queueRequeued. Re
   await untilConsumerDown(consumer);
   await shutDownBaseInstance(consumer);
 
-  const message = bluebird.promisifyAll(new Message());
+  const message = bluebird.promisifyAll(new MessageManager());
   const msg = await message.getMessageByIdAsync(messageId);
 
   expect(msg.status === EMessagePropertyStatus.UNACK_REQUEUING).toBe(true);
 
-  const workerArgs = {
-    queueParsedParams: { queueParams: defaultQueue, groupId: null },
-    config: Configuration.getSetConfig(),
-  };
+  const queueParsedParams = { queueParams: defaultQueue, groupId: null };
 
-  // should move from requeue queue to delay queue
+  // should move from requeue queue-manager to delay queue-manager
   const requeueImmediateWorker = bluebird.promisifyAll(
-    RequeueImmediateWorker(workerArgs),
+    new RequeueImmediateWorker(queueParsedParams),
   );
   await requeueImmediateWorker.runAsync();
   await bluebird.delay(5000);

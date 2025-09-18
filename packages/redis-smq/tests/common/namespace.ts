@@ -8,12 +8,12 @@
  */
 
 import bluebird from 'bluebird';
-import { Namespace } from '../../src/index.js';
+import { NamespaceManager } from '../../src/index.js';
 
-const instances: Namespace[] = [];
+const instances: NamespaceManager[] = [];
 
 export async function getNamespace() {
-  const instance = new Namespace();
+  const instance = new NamespaceManager();
   instances.push(instance);
   return bluebird.promisifyAll(instance);
 }

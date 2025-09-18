@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { ICallback, async, withRedisClient } from 'redis-smq-common';
+import { async, ICallback, withRedisClient } from 'redis-smq-common';
 import { QueueStorage } from './queue-storage.js';
 import { RedisClient } from '../../redis-client/redis-client.js';
 

@@ -15,7 +15,7 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 
-test('Purging priority queue', async () => {
+test('Purging priority queue-manager', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, true);
   const { queue } = await produceMessageWithPriority();

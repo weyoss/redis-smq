@@ -8,19 +8,19 @@
  */
 
 import { expect, test } from 'vitest';
-import _ from 'lodash';
-import { Configuration } from '../../../src/config/index.js';
+import { Configuration } from '../../../src/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
-import { config } from '../../common/config.js';
 import {
   createQueue,
   getDefaultQueue,
   produceAndAcknowledgeMessage,
 } from '../../common/message-producing-consuming.js';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
+import bluebird from 'bluebird';
 
 test('ProducibleMessage storage: acknowledged.queueSize = 3', async () => {
-  const cfg = _.merge(config, {
+  const configInstance = bluebird.promisifyAll(Configuration.getInstance());
+  await configInstance.updateConfigAsync({
     messages: {
       store: {
         acknowledged: {
@@ -29,8 +29,6 @@ test('ProducibleMessage storage: acknowledged.queueSize = 3', async () => {
       },
     },
   });
-  Configuration.reset();
-  Configuration.getSetConfig(cfg);
 
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);

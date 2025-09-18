@@ -11,7 +11,11 @@ import { async, ICallback, IEventBus, IRedisClient } from 'redis-smq-common';
 import { TRedisSMQEvent } from '../../common/index.js';
 import { ELuaScriptName } from '../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
-import { EQueueProperty, EQueueType, IQueueParams } from '../../queue/index.js';
+import {
+  EQueueProperty,
+  EQueueType,
+  IQueueParams,
+} from '../../queue-manager/index.js';
 import {
   ConsumerGroupsConsumerGroupNotEmptyError,
   ConsumerGroupsError,

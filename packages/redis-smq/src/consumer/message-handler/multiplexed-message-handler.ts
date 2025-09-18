@@ -9,10 +9,10 @@
 
 import { RedisClient } from '../../common/redis-client/redis-client.js';
 import { Consumer } from '../consumer.js';
-import { IConsumerMessageHandlerArgs } from '../types/index.js';
 import { DequeueMessage } from './dequeue-message/dequeue-message.js';
 import { MessageHandler } from './message-handler.js';
 import { EventBus } from '../../event-bus/index.js';
+import { IConsumerMessageHandlerParams } from './types/index.js';
 
 export class MultiplexedMessageHandler extends MessageHandler {
   protected dequeueNextFn;
@@ -20,7 +20,7 @@ export class MultiplexedMessageHandler extends MessageHandler {
   constructor(
     consumer: Consumer,
     redisClient: RedisClient,
-    handlerParams: IConsumerMessageHandlerArgs,
+    handlerParams: IConsumerMessageHandlerParams,
     eventBus: EventBus | null,
     dequeueNextFn: () => void,
   ) {
@@ -30,6 +30,14 @@ export class MultiplexedMessageHandler extends MessageHandler {
       `MultiplexedMessageHandler initialized for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
     );
     this.logger.debug('Auto-dequeue disabled for multiplexed handler');
+  }
+
+  override next() {
+    this.logger.debug(
+      `MultiplexedMessageHandler.next() called for queue ${this.queue.queueParams.name}`,
+    );
+    this.logger.debug('Delegating to external dequeueNextFn');
+    this.dequeueNextFn();
   }
 
   protected override initDequeueMessageInstance(): DequeueMessage {
@@ -56,13 +64,5 @@ export class MultiplexedMessageHandler extends MessageHandler {
       'DequeueMessage instance created successfully for multiplexed handler',
     );
     return instance;
-  }
-
-  override next() {
-    this.logger.debug(
-      `MultiplexedMessageHandler.next() called for queue ${this.queue.queueParams.name}`,
-    );
-    this.logger.debug('Delegating to external dequeueNextFn');
-    this.dequeueNextFn();
   }
 }

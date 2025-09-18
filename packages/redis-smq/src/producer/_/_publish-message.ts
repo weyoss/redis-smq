@@ -15,7 +15,7 @@ import {
   EMessagePropertyStatus,
 } from '../../message/index.js';
 import { MessageEnvelope } from '../../message/message-envelope.js';
-import { EQueueProperty, EQueueType } from '../../queue/index.js';
+import { EQueueProperty, EQueueType } from '../../queue-manager/index.js';
 import {
   ProducerError,
   ProducerMessageAlreadyExistsError,
@@ -26,11 +26,11 @@ import {
 } from '../errors/index.js';
 
 /**
- * Enqueues/schedules a message onto the specified queue in Redis.
+ * Enqueues/schedules a message onto the specified queue-manager in Redis.
  *
- * This function is responsible for placing a message into a queue, setting its state,
+ * This function is responsible for placing a message into a queue-manager, setting its state,
  * and handling any errors that may occur during the process. It uses a Redis client
- * to execute a Lua script that manages the message's placement in the queue.
+ * to execute a Lua script that manages the message's placement in the queue-manager.
  *
  * @param redisClient - The Redis client used for communication with the Redis server.
  * @param message - The message to be enqueued/scheduled, wrapped in a MessageEnvelope.

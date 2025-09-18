@@ -8,26 +8,29 @@
  */
 
 import {
+  createLogger,
   ICallback,
   ILogger,
-  logger,
   Runnable,
   TRedisClientEvent,
 } from 'redis-smq-common';
 import { TConsumerEvent } from '../common/index.js';
 import { RedisClient } from '../common/redis-client/redis-client.js';
 import { Configuration } from '../config/index.js';
-import { _parseQueueExtendedParams } from '../queue/_/_parse-queue-extended-params.js';
-import { IQueueParsedParams, TQueueExtendedParams } from '../queue/index.js';
+import { _parseQueueExtendedParams } from '../queue-manager/_/_parse-queue-extended-params.js';
+import {
+  IQueueParsedParams,
+  TQueueExtendedParams,
+} from '../queue-manager/index.js';
 import { ConsumerHeartbeat } from './consumer-heartbeat/consumer-heartbeat.js';
 import { MessageHandlerRunner } from './message-handler-runner/message-handler-runner.js';
 import { MultiplexedMessageHandlerRunner } from './message-handler-runner/multiplexed-message-handler-runner.js';
-import { TConsumerMessageHandler } from './types/index.js';
 import { eventBusPublisher } from './event-bus-publisher/event-bus-publisher.js';
 import { EventBus } from '../event-bus/index.js';
+import { TConsumerMessageHandler } from './message-handler/types/index.js';
 
 /**
- * Consumer class responsible for receiving and processing messages from a message queue.
+ * Consumer class responsible for receiving and processing messages from a message queue-manager.
  * It implements the `Runnable` interface to handle lifecycle events like startup and shutdown.
  * The Consumer can be configured for multiplexing, allowing it to handle multiple queues simultaneously with a single Redis connection.
  *
@@ -57,8 +60,8 @@ export class Consumer extends Runnable<TConsumerEvent> {
   constructor(enableMultiplexing?: boolean) {
     super();
     // Initialize configuration and components
-    const config = Configuration.getSetConfig();
-    this.logger = logger.getLogger(
+    const config = Configuration.getConfig();
+    this.logger = createLogger(
       config.logger,
       this.constructor.name.toLowerCase(),
     );
@@ -70,7 +73,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
     this.redisClient.on('error', this.onRedisError);
     this.logger.debug('Redis client initialized');
 
-    if (Configuration.getSetConfig().eventBus.enabled) {
+    if (config.eventBus.enabled) {
       this.logger.debug('Event bus is enabled, initializing');
       this.eventBus = new EventBus();
       this.eventBus.on('error', this.onRedisError);
@@ -103,11 +106,210 @@ export class Consumer extends Runnable<TConsumerEvent> {
   }
 
   /**
+   * Consumes messages from a specified queue-manager using the provided message handler.
+   *
+   * @param {TQueueExtendedParams} queue - A queue-manager from which messages will be consumed. Before consuming
+   * messages from a queue-manager make sure that the specified queue-manager already exists in
+   * the system.
+   * @param {TConsumerMessageHandler} messageHandler - A callback function that defines how to process each
+   * message consumed from the queue-manager. The messageHandler will receive the
+   * message as an argument and should implement the logic for processing the
+   * message. This might include business logic, transformation, storage, etc.
+   * It's crucial that this function handles exceptions and errors properly to
+   * avoid issues with message acknowledgment.
+   * @param {ICallback<void>} cb - The callback function will be executed after the consumption process is initiated.
+   * It typically signifies the end of the consumption setup and can be used to
+   * handle success or errors in starting the consumption process.
+   *
+   * @example
+   * ```typescript
+   * const consumer = new Consumer();
+   * consumer.consume(
+   *   'my-queue-manager',
+   *   (message, done) => {
+   *     // Handle the message
+   *     // ...
+   *     // Acknowledge the message
+   *     done();
+   *   },
+   *   (err) => {
+   *     if (err) {
+   *       console.error('Error consuming messages:', err);
+   *     } else {
+   *       console.log('Consumption set up successfully');
+   *     }
+   *   },
+   * );
+   * ```
+   *
+   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/consuming-messages.md
+   */
+  consume(
+    queue: TQueueExtendedParams,
+    messageHandler: TConsumerMessageHandler,
+    cb: ICallback<void>,
+  ): void {
+    this.logger.info(
+      `Setting up consumption for queue: ${typeof queue === 'string' ? queue : JSON.stringify(queue)}`,
+    );
+    const parsedQueueParams = _parseQueueExtendedParams(queue);
+    if (parsedQueueParams instanceof Error) {
+      this.logger.error(
+        `Failed to parse queue parameters: ${parsedQueueParams.message}`,
+      );
+      cb(parsedQueueParams);
+    } else {
+      this.logger.debug(
+        `Adding message handler for queue: ${JSON.stringify(parsedQueueParams)}`,
+      );
+      this.messageHandlerRunner.addMessageHandler(
+        parsedQueueParams,
+        messageHandler,
+        (err) => {
+          if (err) {
+            this.logger.error(`Failed to add message handler: ${err.message}`);
+            cb(err);
+          } else {
+            this.logger.info(
+              `Successfully set up consumption for queue: ${parsedQueueParams.queueParams.name} (namespace: ${parsedQueueParams.queueParams.ns}${parsedQueueParams.groupId ? `, group: ${parsedQueueParams.groupId}` : ''})`,
+            );
+            cb();
+          }
+        },
+      );
+    }
+  }
+
+  /**
+   * Cancels the consumption of messages from a specified queue-manager.
+   *
+   * This function is responsible for stopping the consumption of messages from a specific queue-manager.
+   * It removes the message handler associated with the given queue-manager from the message handler runner.
+   *
+   * @param {TQueueExtendedParams} queue - The queue-manager parameters.
+   * This parameter represents the queue-manager from which messages will be consumed.
+   * It can be a string representing the queue-manager name or an object containing additional queue-manager options.
+   *
+   * @param {ICallback<void>} cb - Callback function to be called once cancellation is complete.
+   * This callback function will be invoked after the message handler associated with the given queue-manager is removed.
+   * If an error occurs during the cancellation process, the error will be passed as the first argument to the callback function.
+   * Otherwise, the callback function will be invoked with no arguments.
+   *
+   * @example
+   * ```typescript
+   * const consumer = new Consumer();
+   * consumer.consume(
+   *   'my-queue-manager',
+   *   (message, done) => {
+   *     // Handle the message
+   *     // ...
+   *     // Acknowledge the message
+   *     done();
+   *   },
+   *   (err) => {
+   *     if (err) {
+   *       console.error('Error consuming messages:', err);
+   *     } else {
+   *       console.log('Consumption set up successfully');
+   *     }
+   *   },
+   * );
+   *
+   * // Cancel consumption after some time
+   * setTimeout(() => {
+   *   consumer.cancel('my-queue-manager', (err) => {
+   *     if (err) {
+   *       console.error('Error canceling consumption:', err);
+   *     } else {
+   *       console.log('Consumption cancelled successfully');
+   *     }
+   *   });
+   * }, 10000);
+   * ```
+   */
+  cancel(queue: TQueueExtendedParams, cb: ICallback<void>): void {
+    this.logger.info(
+      `Canceling consumption for queue: ${typeof queue === 'string' ? queue : JSON.stringify(queue)}`,
+    );
+    const parsedQueueParams = _parseQueueExtendedParams(queue);
+    if (parsedQueueParams instanceof Error) {
+      this.logger.error(
+        `Failed to parse queue parameters: ${parsedQueueParams.message}`,
+      );
+      cb(parsedQueueParams);
+    } else {
+      this.logger.debug(
+        `Removing message handler for queue: ${JSON.stringify(parsedQueueParams)}`,
+      );
+      this.messageHandlerRunner.removeMessageHandler(
+        parsedQueueParams,
+        (err) => {
+          if (err) {
+            this.logger.error(
+              `Failed to remove message handler: ${err.message}`,
+            );
+            cb(err);
+          } else {
+            this.logger.info(
+              `Successfully canceled consumption for queue: ${parsedQueueParams.queueParams.name} (namespace: ${parsedQueueParams.queueParams.ns}${parsedQueueParams.groupId ? `, group: ${parsedQueueParams.groupId}` : ''})`,
+            );
+            cb();
+          }
+        },
+      );
+    }
+  }
+
+  /**
+   * Retrieves a list of queues the consumer is currently configured to handle.
+   *
+   * This function returns an array of parsed queue-manager parameters that the consumer is currently set up to handle.
+   * The parsed queue-manager parameters include the queue-manager name, options, and any additional parameters specified.
+   *
+   * @returns {IQueueParsedParams[]} - An array of parsed queue-manager parameters.
+   * Each element in the array represents a queue-manager that the consumer is currently consuming messages from.
+   *
+   * @example
+   * ```typescript
+   * const consumer = new Consumer();
+   * consumer.consume(
+   *   'my-queue-manager',
+   *   (message, done) => {
+   *     // Handle the message
+   *     // ...
+   *     // Acknowledge the message
+   *     done();
+   *   },
+   *   (err) => {
+   *     if (err) {
+   *       console.error('Error consuming messages:', err);
+   *     } else {
+   *       console.log('Consumption set up successfully');
+   *     }
+   *   },
+   * );
+   *
+   * // Get the list of queues the consumer is handling
+   * const queues = consumer.getQueues();
+   * console.log('Queues:', queues);
+   * // Output: Queues: [{ queueParams: { name:'my-queue-manager', ns: 'default' }, groupId: null }]
+   * ```
+   */
+  getQueues(): IQueueParsedParams[] {
+    this.logger.debug('Getting list of queues being consumed');
+    const queues = this.messageHandlerRunner.getQueues();
+    this.logger.debug(
+      `Consumer is handling ${queues.length} queues: ${JSON.stringify(queues)}`,
+    );
+    return queues;
+  }
+
+  /**
    * Error handler for Redis client errors.
    *
    * @param {Error} error - The error encountered.
    */
-  protected onRedisError: TRedisClientEvent['error'] = (error) => {
+  protected onRedisError: TRedisClientEvent['error'] = (error: Error) => {
     this.logger.error(`Redis client error: ${error.message}`);
     this.handleError(error);
   };
@@ -334,204 +536,5 @@ export class Consumer extends Runnable<TConsumerEvent> {
     this.logger.debug(`Emitting consumer.error event for consumer ${this.id}`);
     this.emit('consumer.error', err, this.id);
     super.handleError(err);
-  }
-
-  /**
-   * Consumes messages from a specified queue using the provided message handler.
-   *
-   * @param {TQueueExtendedParams} queue - A queue from which messages will be consumed. Before consuming
-   * messages from a queue make sure that the specified queue already exists in
-   * the system.
-   * @param {TConsumerMessageHandler} messageHandler - A callback function that defines how to process each
-   * message consumed from the queue. The messageHandler will receive the
-   * message as an argument and should implement the logic for processing the
-   * message. This might include business logic, transformation, storage, etc.
-   * It's crucial that this function handles exceptions and errors properly to
-   * avoid issues with message acknowledgment.
-   * @param {ICallback<void>} cb - The callback function will be executed after the consumption process is initiated.
-   * It typically signifies the end of the consumption setup and can be used to
-   * handle success or errors in starting the consumption process.
-   *
-   * @example
-   * ```typescript
-   * const consumer = new Consumer();
-   * consumer.consume(
-   *   'my-queue',
-   *   (message, done) => {
-   *     // Handle the message
-   *     // ...
-   *     // Acknowledge the message
-   *     done();
-   *   },
-   *   (err) => {
-   *     if (err) {
-   *       console.error('Error consuming messages:', err);
-   *     } else {
-   *       console.log('Consumption set up successfully');
-   *     }
-   *   },
-   * );
-   * ```
-   *
-   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/consuming-messages.md
-   */
-  consume(
-    queue: TQueueExtendedParams,
-    messageHandler: TConsumerMessageHandler,
-    cb: ICallback<void>,
-  ): void {
-    this.logger.info(
-      `Setting up consumption for queue: ${typeof queue === 'string' ? queue : JSON.stringify(queue)}`,
-    );
-    const parsedQueueParams = _parseQueueExtendedParams(queue);
-    if (parsedQueueParams instanceof Error) {
-      this.logger.error(
-        `Failed to parse queue parameters: ${parsedQueueParams.message}`,
-      );
-      cb(parsedQueueParams);
-    } else {
-      this.logger.debug(
-        `Adding message handler for queue: ${JSON.stringify(parsedQueueParams)}`,
-      );
-      this.messageHandlerRunner.addMessageHandler(
-        parsedQueueParams,
-        messageHandler,
-        (err) => {
-          if (err) {
-            this.logger.error(`Failed to add message handler: ${err.message}`);
-            cb(err);
-          } else {
-            this.logger.info(
-              `Successfully set up consumption for queue: ${parsedQueueParams.queueParams.name} (namespace: ${parsedQueueParams.queueParams.ns}${parsedQueueParams.groupId ? `, group: ${parsedQueueParams.groupId}` : ''})`,
-            );
-            cb();
-          }
-        },
-      );
-    }
-  }
-
-  /**
-   * Cancels the consumption of messages from a specified queue.
-   *
-   * This function is responsible for stopping the consumption of messages from a specific queue.
-   * It removes the message handler associated with the given queue from the message handler runner.
-   *
-   * @param {TQueueExtendedParams} queue - The queue parameters.
-   * This parameter represents the queue from which messages will be consumed.
-   * It can be a string representing the queue name or an object containing additional queue options.
-   *
-   * @param {ICallback<void>} cb - Callback function to be called once cancellation is complete.
-   * This callback function will be invoked after the message handler associated with the given queue is removed.
-   * If an error occurs during the cancellation process, the error will be passed as the first argument to the callback function.
-   * Otherwise, the callback function will be invoked with no arguments.
-   *
-   * @example
-   * ```typescript
-   * const consumer = new Consumer();
-   * consumer.consume(
-   *   'my-queue',
-   *   (message, done) => {
-   *     // Handle the message
-   *     // ...
-   *     // Acknowledge the message
-   *     done();
-   *   },
-   *   (err) => {
-   *     if (err) {
-   *       console.error('Error consuming messages:', err);
-   *     } else {
-   *       console.log('Consumption set up successfully');
-   *     }
-   *   },
-   * );
-   *
-   * // Cancel consumption after some time
-   * setTimeout(() => {
-   *   consumer.cancel('my-queue', (err) => {
-   *     if (err) {
-   *       console.error('Error canceling consumption:', err);
-   *     } else {
-   *       console.log('Consumption cancelled successfully');
-   *     }
-   *   });
-   * }, 10000);
-   * ```
-   */
-  cancel(queue: TQueueExtendedParams, cb: ICallback<void>): void {
-    this.logger.info(
-      `Canceling consumption for queue: ${typeof queue === 'string' ? queue : JSON.stringify(queue)}`,
-    );
-    const parsedQueueParams = _parseQueueExtendedParams(queue);
-    if (parsedQueueParams instanceof Error) {
-      this.logger.error(
-        `Failed to parse queue parameters: ${parsedQueueParams.message}`,
-      );
-      cb(parsedQueueParams);
-    } else {
-      this.logger.debug(
-        `Removing message handler for queue: ${JSON.stringify(parsedQueueParams)}`,
-      );
-      this.messageHandlerRunner.removeMessageHandler(
-        parsedQueueParams,
-        (err) => {
-          if (err) {
-            this.logger.error(
-              `Failed to remove message handler: ${err.message}`,
-            );
-            cb(err);
-          } else {
-            this.logger.info(
-              `Successfully canceled consumption for queue: ${parsedQueueParams.queueParams.name} (namespace: ${parsedQueueParams.queueParams.ns}${parsedQueueParams.groupId ? `, group: ${parsedQueueParams.groupId}` : ''})`,
-            );
-            cb();
-          }
-        },
-      );
-    }
-  }
-
-  /**
-   * Retrieves a list of queues the consumer is currently configured to handle.
-   *
-   * This function returns an array of parsed queue parameters that the consumer is currently set up to handle.
-   * The parsed queue parameters include the queue name, options, and any additional parameters specified.
-   *
-   * @returns {IQueueParsedParams[]} - An array of parsed queue parameters.
-   * Each element in the array represents a queue that the consumer is currently consuming messages from.
-   *
-   * @example
-   * ```typescript
-   * const consumer = new Consumer();
-   * consumer.consume(
-   *   'my-queue',
-   *   (message, done) => {
-   *     // Handle the message
-   *     // ...
-   *     // Acknowledge the message
-   *     done();
-   *   },
-   *   (err) => {
-   *     if (err) {
-   *       console.error('Error consuming messages:', err);
-   *     } else {
-   *       console.log('Consumption set up successfully');
-   *     }
-   *   },
-   * );
-   *
-   * // Get the list of queues the consumer is handling
-   * const queues = consumer.getQueues();
-   * console.log('Queues:', queues);
-   * // Output: Queues: [{ queueParams: { name:'my-queue', ns: 'default' }, groupId: null }]
-   * ```
-   */
-  getQueues(): IQueueParsedParams[] {
-    this.logger.debug('Getting list of queues being consumed');
-    const queues = this.messageHandlerRunner.getQueues();
-    this.logger.debug(
-      `Consumer is handling ${queues.length} queues: ${JSON.stringify(queues)}`,
-    );
-    return queues;
   }
 }

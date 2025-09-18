@@ -8,7 +8,7 @@
  */
 
 import { v4 } from 'uuid';
-import { IQueueParams } from '../../../queue/index.js';
+import { IQueueParams } from '../../../queue-manager/index.js';
 import { ExchangeInvalidQueueParamsError } from '../../errors/index.js';
 import {
   EExchangeType,

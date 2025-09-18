@@ -14,13 +14,13 @@ import {
   withRedisClient,
 } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
-import { _getQueueProperties } from '../../queue/_/_get-queue-properties.js';
-import { _parseQueueParams } from '../../queue/_/_parse-queue-params.js';
+import { _getQueueProperties } from '../../queue-manager/_/_get-queue-properties.js';
+import { _parseQueueParams } from '../../queue-manager/_/_parse-queue-params.js';
 import {
   EQueueProperty,
   IQueueParams,
   IQueueProperties,
-} from '../../queue/index.js';
+} from '../../queue-manager/index.js';
 import {
   ExchangeFanOutExchangeHasBoundQueuesError,
   ExchangeFanOutQueueTypeError,
@@ -195,9 +195,9 @@ export class ExchangeFanOut extends ExchangeAbstract<string> {
   }
 
   /**
-   * Binds a queue to a fan-out exchange.
+   * Binds a queue-manager to a fan-out exchange.
    *
-   * @param queue - The queue to bind
+   * @param queue - The queue-manager to bind
    * @param exchangeParams - The name of the fan-out exchange
    * @param cb - Callback function called when the operation completes
    */
@@ -299,7 +299,7 @@ export class ExchangeFanOut extends ExchangeAbstract<string> {
 
                       if (!exchangeQueueProperties) {
                         this.logger.error(
-                          'Exchange queue properties returned empty',
+                          'Exchange queue-manager properties returned empty',
                         );
                         return cb(new CallbackEmptyReplyError());
                       }
@@ -388,9 +388,9 @@ export class ExchangeFanOut extends ExchangeAbstract<string> {
   }
 
   /**
-   * Unbinds a queue from a fan-out exchange.
+   * Unbinds a queue-manager from a fan-out exchange.
    *
-   * @param queue - The queue to unbind
+   * @param queue - The queue-manager to unbind
    * @param exchangeParams - The name of the fan-out exchange
    * @param cb - Callback function called when the operation completes
    */
@@ -553,9 +553,9 @@ export class ExchangeFanOut extends ExchangeAbstract<string> {
   }
 
   /**
-   * Retrieves the fan-out exchange a queue is bound to.
+   * Retrieves the fan-out exchange a queue-manager is bound to.
    *
-   * @param queue - The queue to check
+   * @param queue - The queue-manager to check
    * @param cb - Callback function that receives the exchange name or null
    */
   getQueueExchange(

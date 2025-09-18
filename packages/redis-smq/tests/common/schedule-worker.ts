@@ -8,22 +8,20 @@
  */
 
 import bluebird from 'bluebird';
-import { Runnable } from 'redis-smq-common';
-import { Configuration, IRedisSMQParsedConfig } from '../../src/index.js';
-import PublishScheduledWorker from '../../src/consumer/workers/publish-scheduled.worker.js';
+import { PublishScheduledWorker } from '../../src/consumer/message-handler/workers/publish-scheduled.worker.js';
 import { IQueueParams } from '../../src/index.js';
+import { WorkerAbstract } from '../../src/consumer/message-handler/workers/worker-abstract.js';
 
-const scheduleWorker: Record<string, Runnable<Record<string, never>>> = {};
+const scheduleWorker: Record<string, WorkerAbstract> = {};
 
 export async function startScheduleWorker(
   queueParams: IQueueParams,
-  config?: IRedisSMQParsedConfig,
 ): Promise<void> {
   const key = `${queueParams.ns}${queueParams.name}`;
   if (!scheduleWorker[key]) {
-    scheduleWorker[key] = PublishScheduledWorker({
-      queueParsedParams: { queueParams, groupId: null },
-      config: config ?? Configuration.getSetConfig(),
+    scheduleWorker[key] = new PublishScheduledWorker({
+      queueParams,
+      groupId: null,
     });
     await bluebird.promisifyAll(scheduleWorker[key]).runAsync();
   }

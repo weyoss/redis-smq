@@ -13,9 +13,9 @@ import {
   async,
   AsyncCallbackTimeoutError,
   CallbackEmptyReplyError,
+  createLogger,
   ICallback,
   ILogger,
-  logger,
   PanicError,
   Runnable,
   WorkerCallable,
@@ -31,14 +31,16 @@ import {
   IMessageTransferable,
 } from '../../../message/index.js';
 import { MessageEnvelope } from '../../../message/message-envelope.js';
-import { EQueueProperty, IQueueParsedParams } from '../../../queue/index.js';
+import {
+  EQueueProperty,
+  IQueueParsedParams,
+} from '../../../queue-manager/index.js';
 import { Consumer } from '../../consumer.js';
 import {
   EMessageUnacknowledgementAction,
   EMessageUnacknowledgementReason,
-  TConsumerMessageHandler,
   TMessageUnacknowledgementStatus,
-} from '../../types/index.js';
+} from './types/index.js';
 import {
   ConsumerMessageHandlerFileError,
   ConsumerMessageHandlerFilenameExtensionError,
@@ -46,6 +48,7 @@ import {
 import { MessageUnacknowledgement } from './message-unacknowledgement.js';
 import { eventBusPublisher } from './event-bus-publisher.js';
 import { EventBus } from '../../../event-bus/index.js';
+import { TConsumerMessageHandler } from '../types/index.js';
 
 export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
   protected logger;
@@ -78,8 +81,8 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     this.messageHandlerId = messageHandlerId;
     this.redisClient = redisClient;
     this.messageUnack = new MessageUnacknowledgement(redisClient);
-    this.logger = logger.getLogger(
-      Configuration.getSetConfig().logger,
+    this.logger = createLogger(
+      Configuration.getConfig().logger,
       this.constructor.name.toLowerCase(),
     );
 
@@ -117,6 +120,32 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     );
   }
 
+  handleReceivedMessage(message: MessageEnvelope): void {
+    const messageId = message.getId();
+    this.logger.debug(`Received message ${messageId}`);
+
+    if (this.isRunning()) {
+      if (message.getSetExpired()) {
+        this.logger.info(
+          `Message ${messageId} has expired, unacknowledging with TTL_EXPIRED reason`,
+        );
+        this.unacknowledgeMessage(
+          message,
+          EMessageUnacknowledgementReason.TTL_EXPIRED,
+        );
+      } else {
+        this.logger.debug(
+          `Message ${messageId} is valid, proceeding with consumption`,
+        );
+        this.consumeMessage(message);
+      }
+    } else {
+      this.logger.warn(
+        `Ignoring received message ${messageId} as consumer is not running`,
+      );
+    }
+  }
+
   protected override getLogger(): ILogger {
     return this.logger;
   }
@@ -126,7 +155,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     this.logger.debug(`Acknowledging message ${messageId}`);
 
     const { store, queueSize, expire } =
-      Configuration.getSetConfig().messages.store.acknowledged;
+      Configuration.getConfig().messages.store.acknowledged;
     const { keyMessage } = redisKeys.getMessageKeys(messageId);
 
     this.logger.debug(
@@ -563,31 +592,5 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     );
     this.logger.debug(`Emitted consumer.consumeMessage.error event`);
     super.handleError(err);
-  }
-
-  handleReceivedMessage(message: MessageEnvelope): void {
-    const messageId = message.getId();
-    this.logger.debug(`Received message ${messageId}`);
-
-    if (this.isRunning()) {
-      if (message.getSetExpired()) {
-        this.logger.info(
-          `Message ${messageId} has expired, unacknowledging with TTL_EXPIRED reason`,
-        );
-        this.unacknowledgeMessage(
-          message,
-          EMessageUnacknowledgementReason.TTL_EXPIRED,
-        );
-      } else {
-        this.logger.debug(
-          `Message ${messageId} is valid, proceeding with consumption`,
-        );
-        this.consumeMessage(message);
-      }
-    } else {
-      this.logger.warn(
-        `Ignoring received message ${messageId} as consumer is not running`,
-      );
-    }
   }
 }

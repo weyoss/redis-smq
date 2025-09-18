@@ -9,19 +9,19 @@
 
 import {
   async,
+  createLogger,
   ICallback,
   IEventBus,
   ILogger,
   IRedisClient,
-  logger,
   withEventBus,
   withRedisClient,
 } from 'redis-smq-common';
 import { TRedisSMQEvent } from '../common/index.js';
 import { RedisClient } from '../common/redis-client/redis-client.js';
 import { Configuration } from '../config/index.js';
-import { _parseQueueParams } from '../queue/_/_parse-queue-params.js';
-import { IQueueParams } from '../queue/index.js';
+import { _parseQueueParams } from '../queue-manager/_/_parse-queue-params.js';
+import { IQueueParams } from '../queue-manager/index.js';
 import { _deleteConsumerGroup } from './_/_delete-consumer-group.js';
 import { _getConsumerGroups } from './_/_get-consumer-groups.js';
 import { _saveConsumerGroup } from './_/_save-consumer-group.js';
@@ -38,8 +38,8 @@ export class ConsumerGroups {
   protected logger: ILogger;
 
   constructor() {
-    this.logger = logger.getLogger(
-      Configuration.getSetConfig().logger,
+    this.logger = createLogger(
+      Configuration.getConfig().logger,
       this.constructor.name.toLowerCase(),
     );
     this.logger.info('Initializing ConsumerGroups manager');
@@ -62,9 +62,9 @@ export class ConsumerGroups {
   /**
    * Save Consumer Group
    *
-   * Saves a consumer group to a specific queue.
+   * Saves a consumer group to a specific queue-manager.
    *
-   * @param {string | IQueueParams} queue - The queue to which the consumer group belongs.
+   * @param {string | IQueueParams} queue - The queue-manager to which the consumer group belongs.
    * @param {string} groupId - The ID of the consumer group to save.
    * @param {ICallback<number>} cb - Callback function to handle the result or error.
    */
@@ -126,9 +126,9 @@ export class ConsumerGroups {
   /**
    * Delete Consumer Group
    *
-   * Deletes a consumer group from a specific queue.
+   * Deletes a consumer group from a specific queue-manager.
    *
-   * @param {string | IQueueParams} queue - The queue from which to delete the consumer group.
+   * @param {string | IQueueParams} queue - The queue-manager from which to delete the consumer group.
    * @param {string} groupId - The ID of the consumer group to delete.
    * @param {ICallback<void>} cb - Callback function to handle the result or error.
    */
@@ -188,9 +188,9 @@ export class ConsumerGroups {
   /**
    * Get Consumer Groups
    *
-   * Retrieves a list of consumer group IDs associated with a specific queue.
+   * Retrieves a list of consumer group IDs associated with a specific queue-manager.
    *
-   * @param {string | IQueueParams} queue - The queue from which to retrieve consumer groups.
+   * @param {string | IQueueParams} queue - The queue-manager from which to retrieve consumer groups.
    * @param {ICallback<string[]>} cb - Callback function to handle the result or error.
    */
   getConsumerGroups(

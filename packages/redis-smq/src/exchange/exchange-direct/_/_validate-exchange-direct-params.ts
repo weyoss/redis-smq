@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { _parseQueueParams } from '../../../queue/_/_parse-queue-params.js';
-import { IQueueParams } from '../../../queue/index.js';
+import { _parseQueueParams } from '../../../queue-manager/_/_parse-queue-params.js';
+import { IQueueParams } from '../../../queue-manager/index.js';
 import { ExchangeInvalidQueueParamsError } from '../../errors/index.js';
 
 export function _validateExchangeDirectParams(

@@ -8,15 +8,15 @@
  */
 
 import { RedisClient } from '../common/redis-client/redis-client.js';
-import { Message } from '../message/index.js';
 import { QueueExplorer } from '../common/queue-explorer/queue-explorer.js';
 import { QueueStorageList } from '../common/queue-explorer/queue-storage/queue-storage-list.js';
+import { MessageManager } from '../message-manager/index.js';
 
 /**
- * Manages acknowledged messages in a queue.
+ * Manages acknowledged messages in a queue-manager.
  *
  * Acknowledged messages are those that have been successfully processed by consumers
- * and can be safely removed from the active queue. This class allows for tracking
+ * and can be safely removed from the active queue-manager. This class allows for tracking
  * and management of these messages when the system is configured to store them.
  *
  * @extends QueueExplorer
@@ -28,7 +28,7 @@ export class QueueAcknowledgedMessages extends QueueExplorer {
     super(
       redisClient,
       new QueueStorageList(redisClient),
-      new Message(),
+      new MessageManager(),
       'keyQueueAcknowledged',
     );
     this.logger.debug('QueueAcknowledgedMessages initialized');

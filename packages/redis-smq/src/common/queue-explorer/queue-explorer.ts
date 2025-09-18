@@ -9,32 +9,36 @@
 
 import {
   async,
+  createLogger,
   ICallback,
   IRedisClient,
-  logger,
   withRedisClient,
 } from 'redis-smq-common';
 import { RedisClient } from '../redis-client/redis-client.js';
 import { redisKeys } from '../redis-keys/redis-keys.js';
 import { Configuration } from '../../config/index.js';
-import { _deleteMessage } from '../../message/_/_delete-message.js';
-import { IMessageTransferable, Message } from '../../message/index.js';
-import { _parseQueueExtendedParams } from '../../queue/_/_parse-queue-extended-params.js';
-import { IQueueParsedParams, TQueueExtendedParams } from '../../queue/index.js';
+import { _deleteMessage } from '../../message-manager/_/_delete-message.js';
+import { IMessageTransferable } from '../../message/index.js';
+import { _parseQueueExtendedParams } from '../../queue-manager/_/_parse-queue-extended-params.js';
+import {
+  IQueueParsedParams,
+  TQueueExtendedParams,
+} from '../../queue-manager/index.js';
 import { _validateQueueExtendedParams } from './_/_validate-queue-extended-params.js';
 import { QueueStorage } from './queue-storage/queue-storage.js';
 import {
-  IQueueExplorer,
   IPaginationPage,
   IPaginationPageParams,
+  IQueueExplorer,
 } from './types/index.js';
+import { MessageManager } from '../../message-manager/index.js';
 
 /**
  * Provides a base implementation for exploring and managing messages within a
  * specific queue category (e.g., pending, acknowledged, dead-lettered).
  *
  * This abstract class encapsulates the common logic for counting messages,
- * fetching them in paginated sets, and purging them from the queue.
+ * fetching them in paginated sets, and purging them from the queue-manager.
  * Subclasses are responsible for providing the specific Redis key and storage
  * strategy for the message category they represent.
  *
@@ -48,9 +52,9 @@ export abstract class QueueExplorer implements IQueueExplorer {
   protected readonly redisClient: RedisClient;
 
   /**
-   * Message handler for retrieving detailed message information.
+   * Message manager for retrieving detailed message information.
    */
-  protected readonly message: Message;
+  protected readonly messageManager: MessageManager;
 
   /**
    * Flag indicating if a consumer group ID is required during validation.
@@ -76,141 +80,20 @@ export abstract class QueueExplorer implements IQueueExplorer {
   protected constructor(
     redisClient: RedisClient,
     messagesStorage: QueueStorage,
-    message: Message,
+    messageManager: MessageManager,
     redisKey: keyof ReturnType<typeof redisKeys.getQueueKeys>,
   ) {
     this.redisClient = redisClient;
     this.queueStorage = messagesStorage;
-    this.message = message;
+    this.messageManager = messageManager;
     this.redisKey = redisKey;
-    this.logger = logger.getLogger(
-      Configuration.getSetConfig().logger,
+    this.logger = createLogger(
+      Configuration.getConfig().logger,
       this.constructor.name.toLowerCase(),
     );
 
     // Log errors from Redis client
     this.redisClient.on('error', (err) => this.logger.error(err));
-  }
-
-  /**
-   * Computes the total number of pages based on the provided page size and total items.
-   *
-   * @param pageSize - Number of items per page
-   * @param totalItems - Total number of items
-   * @returns The total number of pages (at least 1)
-   */
-  protected getTotalPages(pageSize: number, totalItems: number): number {
-    if (pageSize <= 0) {
-      return 1;
-    }
-    const totalPages = Math.ceil(totalItems / pageSize);
-    return totalPages > 0 ? totalPages : 1;
-  }
-
-  /**
-   * Computes pagination parameters for a given page.
-   *
-   * @param cursor - Desired page number (1-based)
-   * @param totalItems - Total number of items
-   * @param pageSize - Number of items per page
-   * @returns An object with offsetStart, offsetEnd, currentPage, and totalPages
-   */
-  protected getPaginationParams(
-    cursor: number,
-    totalItems: number,
-    pageSize: number,
-  ): IPaginationPageParams {
-    const totalPages = this.getTotalPages(pageSize, totalItems);
-    const currentPage = cursor < 1 || cursor > totalPages ? 1 : cursor;
-    const offsetStart = (currentPage - 1) * pageSize;
-    const offsetEnd = offsetStart + pageSize - 1;
-    return { offsetStart, offsetEnd, currentPage, totalPages, pageSize };
-  }
-
-  /**
-   * Retrieves message IDs for a specific page.
-   *
-   * @param queue - Parsed queue parameters
-   * @param page - Page number
-   * @param pageSize - Number of items per page
-   * @param cb - Callback returning an IQueueMessagesPage of message IDs
-   */
-  protected getMessagesIds(
-    queue: IQueueParsedParams,
-    page: number,
-    pageSize: number,
-    cb: ICallback<IPaginationPage<string>>,
-  ): void {
-    this.logger.debug(
-      `Getting message IDs for queue ${queue.queueParams.name}, page ${page}, size ${pageSize}`,
-    );
-
-    const keys = redisKeys.getQueueKeys(queue.queueParams, queue.groupId);
-    const keyVal = keys[this.redisKey];
-
-    async.waterfall(
-      [
-        // Step 1: Count total messages
-        (next: ICallback<number>) => {
-          this.logger.debug(
-            `Counting messages for queue ${queue.queueParams.name}`,
-          );
-          this.queueStorage.count(keyVal, next);
-        },
-
-        // Step 2: Fetch messages for the requested page
-        (totalItems: number, next: ICallback<IPaginationPage<string>>) => {
-          this.logger.debug(
-            `Found ${totalItems} total messages for queue ${queue.queueParams.name}`,
-          );
-
-          const { currentPage, offsetStart, offsetEnd } =
-            this.getPaginationParams(page, totalItems, pageSize);
-
-          // Return empty result if no items
-          if (totalItems === 0) {
-            this.logger.debug(
-              `No messages found for queue ${queue.queueParams.name}`,
-            );
-            return next(null, {
-              totalItems,
-              items: [],
-            });
-          }
-
-          // Fetch items for the current page
-          this.logger.debug(
-            `Fetching messages for queue ${queue.queueParams.name} from index ${offsetStart} to ${offsetEnd}`,
-          );
-
-          this.queueStorage.fetchItems(
-            keyVal,
-            { page: currentPage, pageSize, offsetStart, offsetEnd },
-            (err, items) => {
-              if (err) {
-                this.logger.error(`Error fetching messages: ${err.message}`);
-                return next(err);
-              }
-
-              this.logger.debug(
-                `Retrieved ${items?.length || 0} messages for queue ${queue.queueParams.name}`,
-              );
-
-              next(null, {
-                totalItems,
-                items: items ?? [],
-              });
-            },
-          );
-        },
-      ],
-      (err, result) => {
-        if (err) {
-          this.logger.error(`Error in getMessagesIds: ${err.message}`);
-        }
-        cb(err, result);
-      },
-    );
   }
 
   /**
@@ -262,92 +145,6 @@ export abstract class QueueExplorer implements IQueueExplorer {
       },
       cb,
     );
-  }
-
-  /**
-   * Internal method to purge messages in batches.
-   *
-   * @param client - Redis client instance
-   * @param parsedParams - Validated queue parameters
-   * @param cb - Callback function
-   */
-  protected _purgeMessages(
-    client: IRedisClient,
-    parsedParams: IQueueParsedParams,
-    cb: ICallback,
-  ): void {
-    this.logger.debug(
-      `Starting batch purge for queue ${parsedParams.queueParams.name}`,
-    );
-
-    // Batch size
-    const pageSize = 1000;
-
-    // Recursive function to process batches
-    const purgeBatch = (page = 1): void => {
-      this.logger.debug(
-        `Processing purge batch with page ${page} / ${pageSize} for queue ${parsedParams.queueParams.name}`,
-      );
-
-      async.waterfall(
-        [
-          // Step 1: Get batch of message IDs
-          (next: ICallback<IPaginationPage<string>>) => {
-            this.getMessagesIds(parsedParams, page, pageSize, next);
-          },
-
-          // Step 2: Delete the messages and return next page
-          (result: IPaginationPage<string>, next: ICallback<number>) => {
-            const { items } = result;
-
-            // If no items, we're done with this batch
-            if (items.length === 0) {
-              this.logger.debug(
-                `No messages to purge in this batch for queue ${parsedParams.queueParams.name}`,
-              );
-              return next();
-            }
-
-            this.logger.debug(
-              `Deleting batch of ${items.length} messages from queue ${parsedParams.queueParams.name}`,
-            );
-
-            // Delete the batch of messages
-            _deleteMessage(client, items, (err, reply) => {
-              if (err) {
-                this.logger.error(`Error deleting messages: ${err.message}`);
-                return next(err);
-              }
-              this.logger.debug('MessageList deletion completed', reply);
-              next(null, page + 1);
-            });
-          },
-        ],
-        (err, nextPage) => {
-          if (err) {
-            this.logger.error(`Error in purge batch: ${err.message}`);
-            return cb(err);
-          }
-
-          // If there are more messages to process, continue with next batch
-          if (nextPage) {
-            this.logger.debug(
-              `More messages to purge, continuing with page ${nextPage} for queue ${parsedParams.queueParams.name}`,
-            );
-            purgeBatch(nextPage);
-          } else {
-            // All messages purged
-            this.logger.info(
-              `Successfully purged all messages from queue ${parsedParams.queueParams.name}`,
-            );
-            cb();
-          }
-        },
-      );
-    };
-
-    // Start purging from the first batch
-    purgeBatch(1);
   }
 
   /**
@@ -409,7 +206,7 @@ export abstract class QueueExplorer implements IQueueExplorer {
                 );
 
                 // Get detailed message objects for the IDs
-                this.message.getMessagesByIds(
+                this.messageManager.getMessagesByIds(
                   pageResult.items,
                   (err, messages) => {
                     if (err) {
@@ -505,7 +302,7 @@ export abstract class QueueExplorer implements IQueueExplorer {
         // Step 1: Shutdown message handler
         (next: ICallback) => {
           this.logger.debug('Shutting down message handler');
-          this.message.shutdown(next);
+          this.messageManager.shutdown(next);
         },
 
         // Step 2: Shutdown Redis client
@@ -523,5 +320,212 @@ export abstract class QueueExplorer implements IQueueExplorer {
         cb(err);
       },
     );
+  }
+
+  /**
+   * Computes the total number of pages based on the provided page size and total items.
+   *
+   * @param pageSize - Number of items per page
+   * @param totalItems - Total number of items
+   * @returns The total number of pages (at least 1)
+   */
+  protected getTotalPages(pageSize: number, totalItems: number): number {
+    if (pageSize <= 0) {
+      return 1;
+    }
+    const totalPages = Math.ceil(totalItems / pageSize);
+    return totalPages > 0 ? totalPages : 1;
+  }
+
+  /**
+   * Computes pagination parameters for a given page.
+   *
+   * @param cursor - Desired page number (1-based)
+   * @param totalItems - Total number of items
+   * @param pageSize - Number of items per page
+   * @returns An object with offsetStart, offsetEnd, currentPage, and totalPages
+   */
+  protected getPaginationParams(
+    cursor: number,
+    totalItems: number,
+    pageSize: number,
+  ): IPaginationPageParams {
+    const totalPages = this.getTotalPages(pageSize, totalItems);
+    const currentPage = cursor < 1 || cursor > totalPages ? 1 : cursor;
+    const offsetStart = (currentPage - 1) * pageSize;
+    const offsetEnd = offsetStart + pageSize - 1;
+    return { offsetStart, offsetEnd, currentPage, totalPages, pageSize };
+  }
+
+  /**
+   * Retrieves message IDs for a specific page.
+   *
+   * @param queue - Parsed queue-manager parameters
+   * @param page - Page number
+   * @param pageSize - Number of items per page
+   * @param cb - Callback returning an IQueueMessagesPage of message IDs
+   */
+  protected getMessagesIds(
+    queue: IQueueParsedParams,
+    page: number,
+    pageSize: number,
+    cb: ICallback<IPaginationPage<string>>,
+  ): void {
+    this.logger.debug(
+      `Getting message IDs for queue ${queue.queueParams.name}, page ${page}, size ${pageSize}`,
+    );
+
+    const keys = redisKeys.getQueueKeys(queue.queueParams, queue.groupId);
+    const keyVal = keys[this.redisKey];
+
+    async.waterfall(
+      [
+        // Step 1: Count total messages
+        (next: ICallback<number>) => {
+          this.logger.debug(
+            `Counting messages for queue ${queue.queueParams.name}`,
+          );
+          this.queueStorage.count(keyVal, next);
+        },
+
+        // Step 2: Fetch messages for the requested page
+        (totalItems: number, next: ICallback<IPaginationPage<string>>) => {
+          this.logger.debug(
+            `Found ${totalItems} total messages for queue ${queue.queueParams.name}`,
+          );
+
+          const { currentPage, offsetStart, offsetEnd } =
+            this.getPaginationParams(page, totalItems, pageSize);
+
+          // Return empty result if no items
+          if (totalItems === 0) {
+            this.logger.debug(
+              `No messages found for queue ${queue.queueParams.name}`,
+            );
+            return next(null, {
+              totalItems,
+              items: [],
+            });
+          }
+
+          // Fetch items for the current page
+          this.logger.debug(
+            `Fetching messages for queue ${queue.queueParams.name} from index ${offsetStart} to ${offsetEnd}`,
+          );
+
+          this.queueStorage.fetchItems(
+            keyVal,
+            { page: currentPage, pageSize, offsetStart, offsetEnd },
+            (err, items) => {
+              if (err) {
+                this.logger.error(`Error fetching messages: ${err.message}`);
+                return next(err);
+              }
+
+              this.logger.debug(
+                `Retrieved ${items?.length || 0} messages for queue ${queue.queueParams.name}`,
+              );
+
+              next(null, {
+                totalItems,
+                items: items ?? [],
+              });
+            },
+          );
+        },
+      ],
+      (err, result) => {
+        if (err) {
+          this.logger.error(`Error in getMessagesIds: ${err.message}`);
+        }
+        cb(err, result);
+      },
+    );
+  }
+
+  /**
+   * Internal method to purge messages in batches.
+   *
+   * @param client - Redis client instance
+   * @param parsedParams - Validated queue-manager parameters
+   * @param cb - Callback function
+   */
+  protected _purgeMessages(
+    client: IRedisClient,
+    parsedParams: IQueueParsedParams,
+    cb: ICallback,
+  ): void {
+    this.logger.debug(
+      `Starting batch purge for queue ${parsedParams.queueParams.name}`,
+    );
+
+    // Batch size
+    const pageSize = 1000;
+
+    // Recursive function to process batches
+    const purgeBatch = (page = 1): void => {
+      this.logger.debug(
+        `Processing purge batch with page ${page} / ${pageSize} for queue ${parsedParams.queueParams.name}`,
+      );
+
+      async.waterfall(
+        [
+          // Step 1: Get batch of message IDs
+          (next: ICallback<IPaginationPage<string>>) => {
+            this.getMessagesIds(parsedParams, page, pageSize, next);
+          },
+
+          // Step 2: Delete the messages and return next page
+          (result: IPaginationPage<string>, next: ICallback<number>) => {
+            const { items } = result;
+
+            // If no items, we're done with this batch
+            if (items.length === 0) {
+              this.logger.debug(
+                `No messages to purge in this batch for queue ${parsedParams.queueParams.name}`,
+              );
+              return next();
+            }
+
+            this.logger.debug(
+              `Deleting batch of ${items.length} messages from queue ${parsedParams.queueParams.name}`,
+            );
+
+            // Delete the batch of messages
+            _deleteMessage(client, items, (err, reply) => {
+              if (err) {
+                this.logger.error(`Error deleting messages: ${err.message}`);
+                return next(err);
+              }
+              this.logger.debug('MessageList deletion completed', reply);
+              next(null, page + 1);
+            });
+          },
+        ],
+        (err, nextPage) => {
+          if (err) {
+            this.logger.error(`Error in purge batch: ${err.message}`);
+            return cb(err);
+          }
+
+          // If there are more messages to process, continue with next batch
+          if (nextPage) {
+            this.logger.debug(
+              `More messages to purge, continuing with page ${nextPage} for queue ${parsedParams.queueParams.name}`,
+            );
+            purgeBatch(nextPage);
+          } else {
+            // All messages purged
+            this.logger.info(
+              `Successfully purged all messages from queue ${parsedParams.queueParams.name}`,
+            );
+            cb();
+          }
+        },
+      );
+    };
+
+    // Start purging from the first batch
+    purgeBatch(1);
   }
 }

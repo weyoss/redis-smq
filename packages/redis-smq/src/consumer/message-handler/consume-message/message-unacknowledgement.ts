@@ -9,9 +9,9 @@
 
 import {
   async,
+  createLogger,
   ICallback,
   IRedisClient,
-  logger,
   withRedisClient,
 } from 'redis-smq-common';
 import { RedisClient } from '../../../common/redis-client/redis-client.js';
@@ -22,9 +22,9 @@ import {
   EMessageProperty,
   EMessagePropertyStatus,
 } from '../../../message/index.js';
-import { _getMessages } from '../../../message/_/_get-message.js';
+import { _getMessages } from '../../../message-manager/_/_get-message.js';
 import { MessageEnvelope } from '../../../message/message-envelope.js';
-import { EQueueProperty, IQueueParams } from '../../../queue/index.js';
+import { EQueueProperty, IQueueParams } from '../../../queue-manager/index.js';
 import { _getConsumerQueues } from '../../_/_get-consumer-queues.js';
 import {
   EMessageUnacknowledgementAction,
@@ -66,7 +66,7 @@ const UNACK_STATIC_KEYS = (queue: IQueueParams): string[] => {
 
 const UNACK_STATIC_ARGS = (): (string | number)[] => {
   const { store, expire, queueSize } =
-    Configuration.getSetConfig().messages.store.deadLettered;
+    Configuration.getConfig().messages.store.deadLettered;
   return [
     EMessageUnacknowledgementAction.DELAY,
     EMessageUnacknowledgementAction.REQUEUE,
@@ -90,7 +90,7 @@ const UNACK_STATIC_ARGS = (): (string | number)[] => {
 };
 
 /**
- * Handles the unacknowledgement of messages in the message queue system.
+ * Handles the unacknowledgement of messages in the message queue-manager system.
  *
  * This class is responsible for determining what happens to messages that
  * were not successfully processed, including:
@@ -109,56 +109,10 @@ export class MessageUnacknowledgement {
    */
   constructor(redisClient: RedisClient) {
     this.redisClient = redisClient;
-    this.logger = logger.getLogger(
-      Configuration.getSetConfig().logger,
+    this.logger = createLogger(
+      Configuration.getConfig().logger,
       this.constructor.name.toLowerCase(),
     );
-  }
-
-  /**
-   * Determines the appropriate action to take for an unacknowledged message.
-   *
-   * @param message - The message envelope
-   * @param unacknowledgedReason - The reason for unacknowledgement
-   * @returns The action to take for the unacknowledged message
-   */
-  protected getMessageUnacknowledgementAction(
-    message: MessageEnvelope,
-    unacknowledgedReason: EMessageUnacknowledgementReason,
-  ): TMessageUnacknowledgementAction {
-    // Check if message TTL has expired
-    if (unacknowledgedReason === EMessageUnacknowledgementReason.TTL_EXPIRED) {
-      return {
-        action: EMessageUnacknowledgementAction.DEAD_LETTER,
-        deadLetterReason: EMessageUnacknowledgementDeadLetterReason.TTL_EXPIRED,
-      };
-    }
-
-    // Handle periodic messages
-    if (message.isPeriodic()) {
-      // Only non-periodic messages are re-queued. Failure of periodic messages is ignored since such
-      // messages are periodically scheduled for delivery.
-      return {
-        action: EMessageUnacknowledgementAction.DEAD_LETTER,
-        deadLetterReason:
-          EMessageUnacknowledgementDeadLetterReason.PERIODIC_MESSAGE,
-      };
-    }
-
-    // Check if retry threshold has been exceeded
-    if (message.hasRetryThresholdExceeded()) {
-      return {
-        action: EMessageUnacknowledgementAction.DEAD_LETTER,
-        deadLetterReason:
-          EMessageUnacknowledgementDeadLetterReason.RETRY_THRESHOLD_EXCEEDED,
-      };
-    }
-
-    // Determine if message should be delayed before retry
-    const delay = message.producibleMessage.getRetryDelay();
-    return delay
-      ? { action: EMessageUnacknowledgementAction.DELAY }
-      : { action: EMessageUnacknowledgementAction.REQUEUE };
   }
 
   /**
@@ -216,7 +170,7 @@ export class MessageUnacknowledgement {
               if (queues) next(null, queues);
               else _getConsumerQueues(client, consumerId, next);
             },
-            // Step 2: Process each queue and collect the results
+            // Step 2: Process each queue-manager and collect the results
             (
               queues: IQueueParams[],
               next: ICallback<TMessageUnacknowledgementStatus[]>,
@@ -250,6 +204,52 @@ export class MessageUnacknowledgement {
       },
       cb,
     );
+  }
+
+  /**
+   * Determines the appropriate action to take for an unacknowledged message.
+   *
+   * @param message - The message envelope
+   * @param unacknowledgedReason - The reason for unacknowledgement
+   * @returns The action to take for the unacknowledged message
+   */
+  protected getMessageUnacknowledgementAction(
+    message: MessageEnvelope,
+    unacknowledgedReason: EMessageUnacknowledgementReason,
+  ): TMessageUnacknowledgementAction {
+    // Check if message TTL has expired
+    if (unacknowledgedReason === EMessageUnacknowledgementReason.TTL_EXPIRED) {
+      return {
+        action: EMessageUnacknowledgementAction.DEAD_LETTER,
+        deadLetterReason: EMessageUnacknowledgementDeadLetterReason.TTL_EXPIRED,
+      };
+    }
+
+    // Handle periodic messages
+    if (message.isPeriodic()) {
+      // Only non-periodic messages are re-queued. Failure of periodic messages is ignored since such
+      // messages are periodically scheduled for delivery.
+      return {
+        action: EMessageUnacknowledgementAction.DEAD_LETTER,
+        deadLetterReason:
+          EMessageUnacknowledgementDeadLetterReason.PERIODIC_MESSAGE,
+      };
+    }
+
+    // Check if retry threshold has been exceeded
+    if (message.hasRetryThresholdExceeded()) {
+      return {
+        action: EMessageUnacknowledgementAction.DEAD_LETTER,
+        deadLetterReason:
+          EMessageUnacknowledgementDeadLetterReason.RETRY_THRESHOLD_EXCEEDED,
+      };
+    }
+
+    // Determine if message should be delayed before retry
+    const delay = message.producibleMessage.getRetryDelay();
+    return delay
+      ? { action: EMessageUnacknowledgementAction.DELAY }
+      : { action: EMessageUnacknowledgementAction.REQUEUE };
   }
 
   protected unacknowledgeMessagesFromProcessingQueue(

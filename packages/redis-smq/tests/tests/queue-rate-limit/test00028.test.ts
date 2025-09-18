@@ -9,7 +9,7 @@
 
 import { expect, test } from 'vitest';
 import {
-  QueueQueueNotFoundError,
+  QueueManagerQueueNotFoundError,
   QueueRateLimitInvalidIntervalError,
   QueueRateLimitInvalidLimitError,
 } from '../../../src/index.js';
@@ -27,7 +27,7 @@ test('SetQueueRateLimit()/GetQueueRateLimit()/ClearQueueRateLimit()', async () =
       limit: 5,
       interval: 1000,
     }),
-  ).rejects.toThrow(QueueQueueNotFoundError);
+  ).rejects.toThrow(QueueManagerQueueNotFoundError);
 
   await createQueue(defaultQueue, false);
   await queueRateLimit.setAsync(defaultQueue, {

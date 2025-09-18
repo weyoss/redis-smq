@@ -9,9 +9,9 @@
 
 import { expect, test } from 'vitest';
 import {
-  QueueQueueHasRunningConsumersError,
-  QueueQueueNotEmptyError,
-  QueueQueueNotFoundError,
+  QueueManagerActiveConsumersError,
+  QueueManagerQueueNotEmptyError,
+  QueueManagerQueueNotFoundError,
 } from '../../../src/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import {
@@ -22,7 +22,7 @@ import {
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueue } from '../../common/queue.js';
 
-test('Deleting a message queue with all of its data', async () => {
+test('Deleting a message queue-manager with all of its data', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   const { consumer, queue } = await produceAndAcknowledgeMessage();
@@ -34,20 +34,24 @@ test('Deleting a message queue with all of its data', async () => {
 
   const q = await getQueue();
 
-  await expect(q.deleteAsync(queue)).rejects.toThrow(QueueQueueNotEmptyError);
+  await expect(q.deleteAsync(queue)).rejects.toThrow(
+    QueueManagerQueueNotEmptyError,
+  );
 
   await queueMessages.purgeAsync(getDefaultQueue());
 
   await expect(q.deleteAsync(queue)).rejects.toThrow(
-    QueueQueueHasRunningConsumersError,
+    QueueManagerActiveConsumersError,
   );
 
   await shutDownBaseInstance(consumer);
   await q.deleteAsync(queue);
 
   await expect(queueMessages.countMessagesByStatusAsync(queue)).rejects.toThrow(
-    QueueQueueNotFoundError,
+    QueueManagerQueueNotFoundError,
   );
 
-  await expect(q.deleteAsync(queue)).rejects.toThrow(QueueQueueNotFoundError);
+  await expect(q.deleteAsync(queue)).rejects.toThrow(
+    QueueManagerQueueNotFoundError,
+  );
 });

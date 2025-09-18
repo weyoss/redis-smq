@@ -16,7 +16,7 @@ import {
 import { getMessage } from '../../common/message.js';
 import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
 
-test('Combined test: Delete dead-lettered messages by IDs. Check dead-lettered messages. Check queue metrics.', async () => {
+test('Combined test: Delete dead-lettered messages by IDs. Check dead-lettered messages. Check queue-manager metrics.', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   const { messageId: msg1 } = await produceAndDeadLetterMessage(
