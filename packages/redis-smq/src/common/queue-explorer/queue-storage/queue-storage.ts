@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { ICallback, ILogger, logger } from 'redis-smq-common';
+import { createLogger, ICallback, ILogger } from 'redis-smq-common';
 import { RedisClient } from '../../redis-client/redis-client.js';
 import { Configuration } from '../../../config/index.js';
 
@@ -24,8 +24,8 @@ export abstract class QueueStorage {
    */
   protected constructor(redisClient: RedisClient) {
     this.redisClient = redisClient;
-    this.logger = logger.getLogger(
-      Configuration.getSetConfig().logger,
+    this.logger = createLogger(
+      Configuration.getConfig().logger,
       this.constructor.name.toLowerCase(),
     );
   }

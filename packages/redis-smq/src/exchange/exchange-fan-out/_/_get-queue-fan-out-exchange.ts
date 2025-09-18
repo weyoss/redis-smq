@@ -12,8 +12,8 @@ import {
   ICallback,
   IRedisClient,
 } from 'redis-smq-common';
-import { _getQueueProperties } from '../../../queue/_/_get-queue-properties.js';
-import { IQueueParams } from '../../../queue/index.js';
+import { _getQueueProperties } from '../../../queue-manager/_/_get-queue-properties.js';
+import { IQueueParams } from '../../../queue-manager/index.js';
 
 export function _getQueueFanOutExchange(
   redisClient: IRedisClient,

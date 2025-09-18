@@ -10,21 +10,21 @@
 import {
   async,
   CallbackEmptyReplyError,
+  createLogger,
   ICallback,
-  logger,
   withRedisClient,
 } from 'redis-smq-common';
 import { RedisClient } from '../common/redis-client/redis-client.js';
 import { ELuaScriptName } from '../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../common/redis-keys/redis-keys.js';
 import { Configuration } from '../config/index.js';
-import { _parseQueueParamsAndValidate } from '../queue/_/_parse-queue-params-and-validate.js';
+import { _parseQueueParamsAndValidate } from '../queue-manager/_/_parse-queue-params-and-validate.js';
 import {
   EQueueProperty,
   IQueueParams,
   IQueueRateLimit,
-  Queue,
-} from '../queue/index.js';
+  QueueManager,
+} from '../queue-manager/index.js';
 import { _hasRateLimitExceeded } from './_/_has-rate-limit-exceeded.js';
 import {
   QueueRateLimitInvalidIntervalError,
@@ -42,24 +42,24 @@ import {
 export class QueueRateLimit {
   protected redisClient; // Redis client instance for interacting with Redis.
   protected logger; // Logger instance for logging errors and information.
-  protected queue; // Queue instance for managing queue operations.
+  protected queue; // Queue instance for managing queue-manager operations.
 
   constructor() {
-    this.logger = logger.getLogger(
-      Configuration.getSetConfig().logger,
+    this.logger = createLogger(
+      Configuration.getConfig().logger,
       this.constructor.name.toLowerCase(),
     );
     this.logger.debug('Initializing QueueRateLimit');
     this.redisClient = new RedisClient();
     this.redisClient.on('error', (err) => this.logger.error(err));
-    this.queue = new Queue();
+    this.queue = new QueueManager();
     this.logger.debug('QueueRateLimit initialized');
   }
 
   /**
-   * Resets or clears the rate limit settings for a specific queue.
+   * Resets or clears the rate limit settings for a specific queue-manager.
    *
-   * @param queue - The name of the queue or an IQueueParams object representing the queue.
+   * @param queue - The name of the queue-manager or an IQueueParams object representing the queue-manager.
    * @param cb - A callback function which receives an error or undefined when the operation is complete.
    */
   clear(queue: string | IQueueParams, cb: ICallback<void>): void {
@@ -104,13 +104,13 @@ export class QueueRateLimit {
   }
 
   /**
-   * Sets a rate limit for a specific queue.
+   * Sets a rate limit for a specific queue-manager.
    *
    * Rate limiting is a common practice to control how many messages can be
    * processed within a certain timeframe, preventing overload on consumers and
    * ensuring fair usage of resources.
    *
-   * @param queue - The name of the queue or an IQueueParams object. This is the queue for which you want to set a rate limit.
+   * @param queue - The name of the queue-manager or an IQueueParams object. This is the queue-manager for which you want to set a rate limit.
    * @param rateLimit - An IQueueRateLimit object specifying the rate limit configuration (limit and interval).
    * @param cb - A callback function called when the rate limit is set successfully. No arguments are passed.
    */
@@ -200,9 +200,9 @@ export class QueueRateLimit {
   }
 
   /**
-   * Checks if the rate limit for a specific queue has been exceeded.
+   * Checks if the rate limit for a specific queue-manager has been exceeded.
    *
-   * @param queue - The name of the queue or an IQueueParams object containing the queue configuration.
+   * @param queue - The name of the queue-manager or an IQueueParams object containing the queue-manager configuration.
    * @param rateLimit - An IQueueRateLimit object defining the rate limit parameters.
    * @param cb - A callback function which receives a boolean value indicating whether the rate limit has been exceeded.
    */
@@ -261,9 +261,9 @@ export class QueueRateLimit {
   }
 
   /**
-   * Retrieves the current rate limit parameters for a specific message queue.
+   * Retrieves the current rate limit parameters for a specific message queue-manager.
    *
-   * @param queue - The name of the queue or an IQueueParams object containing the queue configuration.
+   * @param queue - The name of the queue-manager or an IQueueParams object containing the queue-manager configuration.
    * @param cb - A callback function that is called once the rate limit has been fetched.
    * It receives either the current rate limit parameters or null if not set.
    */
@@ -322,7 +322,7 @@ export class QueueRateLimit {
   }
 
   /**
-   * Cleans up resources by shutting down the Redis client and the queue.
+   * Cleans up resources by shutting down the Redis client and the queue-manager.
    *
    * @param {ICallback<void>} cb - A callback function to handle completion of the shutdown process.
    */

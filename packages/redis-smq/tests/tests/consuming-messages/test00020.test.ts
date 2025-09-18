@@ -14,7 +14,7 @@ import {
 } from '../../../index.js';
 import { getProducer } from '../../common/producer.js';
 
-test('Producing a message without a message queue', async () => {
+test('Producing a message without a message queue-manager', async () => {
   const producer = getProducer();
   await producer.runAsync();
 

@@ -10,8 +10,8 @@
 import { fork } from 'child_process';
 import path from 'path';
 import { env, ICallback } from 'redis-smq-common';
-import { Configuration } from '../../src/index.js';
 import {
+  Configuration,
   EMessagePriority,
   EQueueDeliveryModel,
   EQueueType,
@@ -31,7 +31,7 @@ import { getQueue } from './queue.js';
 export function getDefaultQueue() {
   return {
     name: 'test_queue',
-    ns: Configuration.getSetConfig().namespace,
+    ns: Configuration.getConfig().namespace,
   };
 }
 

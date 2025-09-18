@@ -17,7 +17,7 @@ import { getMessage } from '../../common/message.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 
-test('Combined test: Delete a pending message with priority. Check pending message. Check queue metrics.', async () => {
+test('Combined test: Delete a pending message with priority. Check pending message. Check queue-manager metrics.', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, true);
   const { messageId, queue } = await produceMessageWithPriority();

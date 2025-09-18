@@ -8,7 +8,7 @@
  */
 
 import { ICallback, withRedisClient } from 'redis-smq-common';
-import { IQueueParams } from '../../queue/index.js';
+import { IQueueParams } from '../../queue-manager/index.js';
 import { ExchangeAbstract } from '../exchange-abstract.js';
 import { ITopicParams } from '../index.js';
 import { _getTopicExchangeParams } from './_/_get-topic-exchange-params.js';

@@ -13,7 +13,7 @@ import {
   ILoggerConfig,
   IRedisConfig,
 } from 'redis-smq-common';
-import { IMessagesConfig, IMessagesStorageParsedConfig } from '../../index.js';
+import { IMessagesConfig, IMessagesParsedConfig } from '../../index.js';
 
 export interface IEventBusConfig {
   enabled?: boolean;
@@ -44,9 +44,7 @@ export interface IRedisSMQConfig {
 }
 
 export interface IRedisSMQParsedConfig extends Required<IRedisSMQConfig> {
-  messages: {
-    store: IMessagesStorageParsedConfig;
-  };
+  messages: IMessagesParsedConfig;
   eventBus: Required<IEventBusConfig>;
 }
 

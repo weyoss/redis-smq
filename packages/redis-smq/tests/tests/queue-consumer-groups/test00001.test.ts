@@ -15,12 +15,12 @@ import {
   ConsumerGroups,
   EQueueDeliveryModel,
   EQueueType,
+  EventBus,
   IQueueParams,
 } from '../../../index.js';
 import { QueueConsumerGroupsCache } from '../../../src/producer/queue-consumer-groups-cache.js';
 import { getProducer } from '../../common/producer.js';
 import { getQueue } from '../../common/queue.js';
-import { EventBus } from '../../../index.js';
 
 test('QueueConsumerGroupsCache: combined tests', async () => {
   const producer = getProducer();

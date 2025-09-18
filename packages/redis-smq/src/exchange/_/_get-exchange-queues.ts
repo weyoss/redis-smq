@@ -8,7 +8,7 @@
  */
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
-import { IQueueParams } from '../../queue/index.js';
+import { IQueueParams } from '../../queue-manager/index.js';
 import { _getFanOutExchangeQueues } from '../exchange-fan-out/_/_get-fan-out-exchange-queues.js';
 import { _getTopicExchangeQueues } from '../exchange-topic/_/_get-topic-exchange-queues.js';
 import { EExchangeType, TExchangeTransferable } from '../types/index.js';

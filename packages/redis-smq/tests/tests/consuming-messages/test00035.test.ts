@@ -43,7 +43,7 @@ test('Consume message from different queues using a single consumer instance: ca
 
   eventBus.once('consumer.dequeueMessage.messageReceived', () => {
     setTimeout(() => {
-      // cancelling a queue when a message handler is active
+      // cancelling a queue-manager when a message handler is active
       consumer.cancelAsync('test0').catch((e: unknown) => {
         console.log(e);
       });

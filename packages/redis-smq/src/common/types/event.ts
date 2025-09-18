@@ -8,13 +8,15 @@
  */
 
 import {
-  EMessageUnacknowledgementDeadLetterReason,
-  EMessageUnacknowledgementReason,
-  IConsumerHeartbeat,
   IQueueParams,
   IQueueParsedParams,
   IQueueProperties,
 } from '../../index.js';
+import { IConsumerHeartbeat } from '../../consumer/consumer-heartbeat/types/index.js';
+import {
+  EMessageUnacknowledgementDeadLetterReason,
+  EMessageUnacknowledgementReason,
+} from '../../consumer/message-handler/consume-message/types/index.js';
 
 export type TConsumerHeartbeatEvent = {
   'consumerHeartbeat.heartbeat': (

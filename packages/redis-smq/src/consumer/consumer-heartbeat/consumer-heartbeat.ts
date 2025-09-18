@@ -9,21 +9,21 @@
 
 import * as os from 'os';
 import {
+  createLogger,
   ICallback,
   ILogger,
   IRedisClient,
-  logger,
   Runnable,
   Timer,
 } from 'redis-smq-common';
 import { TConsumerHeartbeatEvent } from '../../common/index.js';
-import { RedisClient } from '../../common/redis-client/redis-client.js';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../config/index.js';
 import { Consumer } from '../consumer.js';
-import { IConsumerHeartbeat } from '../types/index.js';
 import { eventBusPublisher } from './event-bus-publisher.js';
 import { EventBus } from '../../event-bus/index.js';
+import { IConsumerHeartbeat } from './types/index.js';
+import { RedisClient } from '../../common/redis-client/redis-client.js';
 
 const cpuUsageStatsRef = {
   cpuUsage: process.cpuUsage(),
@@ -73,8 +73,8 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
   ) {
     super();
     this.consumer = consumer;
-    this.logger = logger.getLogger(
-      Configuration.getSetConfig().logger,
+    this.logger = createLogger(
+      Configuration.getConfig().logger,
       this.constructor.name.toLowerCase(),
     );
     this.redisClient = redisClient;
@@ -107,6 +107,19 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
     this.logger.info(
       `ConsumerHeartbeat initialized for consumer ${consumer.getId()}`,
     );
+  }
+
+  static isConsumerAlive(
+    redisClient: IRedisClient,
+    consumerId: string,
+    cb: ICallback<boolean>,
+  ): void {
+    const { keyConsumerHeartbeat } = redisKeys.getConsumerKeys(consumerId);
+    redisClient.get(keyConsumerHeartbeat, (err, heartbeat) => {
+      if (err) return cb(err);
+      const isAlive = !!heartbeat;
+      cb(null, isAlive);
+    });
   }
 
   protected override getLogger(): ILogger {
@@ -183,10 +196,10 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
     );
   }
 
-  protected override goingUp(): ((cb: ICallback<void>) => void)[] {
+  protected override goingUp(): ((cb: ICallback) => void)[] {
     this.logger.info('ConsumerHeartbeat going up');
     return super.goingUp().concat([
-      (cb: ICallback<void>) => {
+      (cb: ICallback) => {
         this.logger.debug('Setting up initial heartbeat');
 
         const cleanUp = () => {
@@ -216,10 +229,10 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
     ]);
   }
 
-  protected override goingDown(): ((cb: ICallback<void>) => void)[] {
+  protected override goingDown(): ((cb: ICallback) => void)[] {
     this.logger.info('ConsumerHeartbeat going down');
     return [
-      (cb: ICallback<void>) => {
+      (cb: ICallback) => {
         this.logger.debug('Resetting timer');
         this.timer.reset();
 
@@ -247,18 +260,5 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
         });
       },
     ].concat(super.goingDown());
-  }
-
-  static isConsumerAlive(
-    redisClient: IRedisClient,
-    consumerId: string,
-    cb: ICallback<boolean>,
-  ): void {
-    const { keyConsumerHeartbeat } = redisKeys.getConsumerKeys(consumerId);
-    redisClient.get(keyConsumerHeartbeat, (err, heartbeat) => {
-      if (err) return cb(err);
-      const isAlive = !!heartbeat;
-      cb(null, isAlive);
-    });
   }
 }

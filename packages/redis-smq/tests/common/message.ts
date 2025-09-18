@@ -8,12 +8,12 @@
  */
 
 import bluebird from 'bluebird';
-import { Message } from '../../src/index.js';
+import { MessageManager } from '../../src/index.js';
 
-const instances: Message[] = [];
+const instances: MessageManager[] = [];
 
 export async function getMessage() {
-  const instance = new Message();
+  const instance = new MessageManager();
   instances.push(instance);
   return bluebird.promisifyAll(instance);
 }

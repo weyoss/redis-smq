@@ -8,7 +8,7 @@
  */
 
 import { ICallback } from 'redis-smq-common';
-import { IQueueParams } from '../../queue/index.js';
+import { IQueueParams } from '../../queue-manager/index.js';
 import { ExchangeAbstract } from '../exchange-abstract.js';
 import { _validateExchangeDirectParams } from './_/_validate-exchange-direct-params.js';
 

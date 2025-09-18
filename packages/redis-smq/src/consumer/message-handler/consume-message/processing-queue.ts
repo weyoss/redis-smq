@@ -10,9 +10,9 @@
 import { ICallback, IRedisClient, withRedisClient } from 'redis-smq-common';
 import { RedisClient } from '../../../common/redis-client/redis-client.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
-import { _getMessage } from '../../../message/_/_get-message.js';
+import { _getMessage } from '../../../message-manager/_/_get-message.js';
 import { MessageEnvelope } from '../../../message/message-envelope.js';
-import { IQueueParams } from '../../../queue/index.js';
+import { IQueueParams } from '../../../queue-manager/index.js';
 
 export const processingQueue = {
   fetchMessageFromProcessingQueue(

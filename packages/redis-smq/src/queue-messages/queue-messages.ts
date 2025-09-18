@@ -16,15 +16,14 @@ import {
 } from 'redis-smq-common';
 import { RedisClient } from '../common/redis-client/redis-client.js';
 import { _getConsumerGroups } from '../consumer-groups/_/_get-consumer-groups.js';
-import { Message } from '../message/index.js';
-import { _getQueueProperties } from '../queue/_/_get-queue-properties.js';
-import { _parseQueueParams } from '../queue/_/_parse-queue-params.js';
+import { _getQueueProperties } from '../queue-manager/_/_get-queue-properties.js';
+import { _parseQueueParams } from '../queue-manager/_/_parse-queue-params.js';
 import {
   EQueueDeliveryModel,
   EQueueType,
   IQueueParams,
   IQueueProperties,
-} from '../queue/index.js';
+} from '../queue-manager/index.js';
 import { QueueExplorer } from '../common/queue-explorer/queue-explorer.js';
 import { QueueStorageSet } from '../common/queue-explorer/queue-storage/queue-storage-set.js';
 import { QueueAcknowledgedMessages } from '../queue-acknowledged-messages/index.js';
@@ -36,9 +35,10 @@ import {
   IQueueGroupConsumersPendingCount,
   IQueueMessagesCount,
 } from './types/index.js';
+import { MessageManager } from '../message-manager/index.js';
 
 /**
- * QueueMessages class manages message counting and state reporting across queue types.
+ * QueueMessages class manages message counting and state reporting across queue-manager types.
  * It orchestrates various message handlers (pending, acknowledged, scheduled, dead-lettered)
  * and leverages a waterfall pattern for processing.
  */
@@ -54,7 +54,7 @@ export class QueueMessages extends QueueExplorer {
     super(
       redisClient,
       new QueueStorageSet(redisClient),
-      new Message(),
+      new MessageManager(),
       'keyQueueMessages',
     );
     this.priorityQueueMessages = new PriorityQueuePendingMessages();
@@ -87,10 +87,30 @@ export class QueueMessages extends QueueExplorer {
   }
 
   /**
+   * Gracefully shut down all message handlers and parent resources.
+   * @param cb - Callback invoked on shutdown completion.
+   */
+  override shutdown(cb: ICallback<void>): void {
+    async.series(
+      [
+        (next: ICallback<void>) => this.queuePendingMessages.shutdown(next),
+        (next: ICallback<void>) => this.priorityQueueMessages.shutdown(next),
+        (next: ICallback<void>) => this.queueScheduledMessages.shutdown(next),
+        (next: ICallback<void>) =>
+          this.queueAcknowledgedMessages.shutdown(next),
+        (next: ICallback<void>) =>
+          this.queueDeadLetteredMessages.shutdown(next),
+        (next: ICallback<void>) => super.shutdown(next),
+      ],
+      (err) => cb(err),
+    );
+  }
+
+  /**
    * Execute a series of counting operations using a waterfall flow.
    * @param client - Redis client instance.
-   * @param queueParams - Parsed queue parameters.
-   * @param queue - Original queue parameter.
+   * @param queueParams - Parsed queue-manager parameters.
+   * @param queue - Original queue-manager parameter.
    * @param cb - Callback function that returns a populated IQueueMessagesCount.
    */
   private executeCountingPipeline(
@@ -107,7 +127,7 @@ export class QueueMessages extends QueueExplorer {
     };
     async.waterfall(
       [
-        // Retrieve queue properties.
+        // Retrieve queue-manager properties.
         (next: ICallback<IQueueProperties>) =>
           this.getQueueProperties(client, queueParams, next),
 
@@ -156,9 +176,9 @@ export class QueueMessages extends QueueExplorer {
   }
 
   /**
-   * Retrieve properties for the specified queue.
+   * Retrieve properties for the specified queue-manager.
    * @param client - Redis client.
-   * @param queueParams - Parsed queue parameters.
+   * @param queueParams - Parsed queue-manager parameters.
    * @param cb - Callback returning IQueueProperties.
    */
   private getQueueProperties(
@@ -178,13 +198,13 @@ export class QueueMessages extends QueueExplorer {
   }
 
   /**
-   * Count pending messages based on the queue type and delivery model.
+   * Count pending messages based on the queue-manager type and delivery model.
    * For PUB_SUB, counts are aggregated for each consumer group.
    * For POINT_TO_POINT, performs a singular pending count.
    * @param client - Redis client.
    * @param properties - Queue properties.
-   * @param queue - Original queue parameter.
-   * @param queueParams - Parsed queue parameters.
+   * @param queue - Original queue-manager parameter.
+   * @param queueParams - Parsed queue-manager parameters.
    * @param cb - Callback returning count or group counts.
    */
   private countPendingMessages(
@@ -220,7 +240,7 @@ export class QueueMessages extends QueueExplorer {
   /**
    * Count pending messages for each consumer group and aggregate the result.
    * @param client - Redis client.
-   * @param queueParams - Parsed queue parameters.
+   * @param queueParams - Parsed queue-manager parameters.
    * @param countPendingForGroup - Function to count pending for a given group.
    * @param cb - Callback returning an object mapping group IDs to their counts.
    */
@@ -253,25 +273,5 @@ export class QueueMessages extends QueueExplorer {
         (err) => cb(err, pendingCounts),
       );
     });
-  }
-
-  /**
-   * Gracefully shut down all message handlers and parent resources.
-   * @param cb - Callback invoked on shutdown completion.
-   */
-  override shutdown(cb: ICallback<void>): void {
-    async.series(
-      [
-        (next: ICallback<void>) => this.queuePendingMessages.shutdown(next),
-        (next: ICallback<void>) => this.priorityQueueMessages.shutdown(next),
-        (next: ICallback<void>) => this.queueScheduledMessages.shutdown(next),
-        (next: ICallback<void>) =>
-          this.queueAcknowledgedMessages.shutdown(next),
-        (next: ICallback<void>) =>
-          this.queueDeadLetteredMessages.shutdown(next),
-        (next: ICallback<void>) => super.shutdown(next),
-      ],
-      (err) => cb(err),
-    );
   }
 }

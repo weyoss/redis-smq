@@ -8,12 +8,12 @@
  */
 
 import bluebird from 'bluebird';
-import { Queue } from '../../src/index.js';
+import { QueueManager } from '../../src/index.js';
 
-const instances: Queue[] = [];
+const instances: QueueManager[] = [];
 
 export async function getQueue() {
-  const instance = new Queue();
+  const instance = new QueueManager();
   instances.push(instance);
   return bluebird.promisifyAll(instance);
 }

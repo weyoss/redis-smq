@@ -49,7 +49,7 @@ test('ProducibleMessage', async () => {
   msg.setTopic('my-topic');
   expect(msg.getTopic()).toEqual({ ns: 'testing', topic: 'my-topic' });
 
-  msg.setQueue('my-queue');
+  msg.setQueue('my-queue-manager');
   expect(msg.getQueue()).toEqual({ ns: 'testing', name: 'my-queue' });
 
   msg.setFanOut('my-fanout');

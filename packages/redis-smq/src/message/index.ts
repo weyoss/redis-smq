@@ -10,4 +10,3 @@
 export * from './errors/index.js';
 export * from './types/index.js';
 export * from './producible-message.js';
-export * from './message.js';

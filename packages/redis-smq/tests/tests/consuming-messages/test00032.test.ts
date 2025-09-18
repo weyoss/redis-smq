@@ -17,7 +17,7 @@ import {
   EQueueType,
   IMessageTransferable,
 } from '../../../src/index.js';
-import { _getQueueConsumers } from '../../../src/queue/_/_get-queue-consumers.js';
+import { _getQueueConsumers } from '../../../src/queue-manager/_/_get-queue-consumers.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import { getDefaultQueue } from '../../common/message-producing-consuming.js';
 import { getQueue } from '../../common/queue.js';

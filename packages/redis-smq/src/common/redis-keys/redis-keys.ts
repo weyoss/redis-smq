@@ -75,6 +75,7 @@ enum ERedisKey {
   QUEUES,
   NAMESPACES,
   FANOUT_EXCHANGES,
+  CONFIGURATION,
 }
 
 /**
@@ -250,6 +251,7 @@ export const redisKeys = {
       keyQueues: ERedisKey.QUEUES,
       keyNamespaces: ERedisKey.NAMESPACES,
       keyFanOutExchanges: ERedisKey.FANOUT_EXCHANGES,
+      keyConfiguration: ERedisKey.CONFIGURATION,
     };
     return makeNamespacedKeys(mainKeys, REDIS_KEY_CONFIG.GLOBAL_NAMESPACE);
   },

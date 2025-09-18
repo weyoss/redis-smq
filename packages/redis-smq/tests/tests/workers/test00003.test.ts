@@ -9,13 +9,9 @@
 
 import { expect, test } from 'vitest';
 import bluebird from 'bluebird';
-import {
-  Configuration,
-  EMessagePropertyStatus,
-  QueueMessages,
-} from '../../../src/index.js';
-import RequeueImmediateWorker from '../../../src/consumer/workers/requeue-immediate.worker.js';
-import ReapConsumersWorker from '../../../src/consumer/workers/reap-consumers.worker.js';
+import { EMessagePropertyStatus, QueueMessages } from '../../../src/index.js';
+import { RequeueImmediateWorker } from '../../../src/consumer/message-handler/workers/requeue-immediate.worker.js';
+import { ReapConsumersWorker } from '../../../src/consumer/message-handler/workers/reap-consumers.worker.js';
 import {
   crashAConsumerConsumingAMessage,
   createQueue,
@@ -35,18 +31,15 @@ test('ReapConsumersWorker', async () => {
 
   expect(message.status === EMessagePropertyStatus.PROCESSING).toBe(true);
 
-  const workerArgs = {
-    queueParsedParams: { queueParams: defaultQueue, groupId: null },
-    config: Configuration.getSetConfig(),
-  };
+  const queueParsedParams = { queueParams: defaultQueue, groupId: null };
 
   const reapConsumerWorker = bluebird.promisifyAll(
-    ReapConsumersWorker(workerArgs),
+    new ReapConsumersWorker(queueParsedParams),
   );
   await reapConsumerWorker.runAsync();
 
   const requeueWorker = bluebird.promisifyAll(
-    RequeueImmediateWorker(workerArgs),
+    new RequeueImmediateWorker(queueParsedParams),
   );
   await requeueWorker.runAsync();
   await bluebird.delay(20000);

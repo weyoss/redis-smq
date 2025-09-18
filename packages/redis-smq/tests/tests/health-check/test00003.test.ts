@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { expect, vitest, test } from 'vitest';
+import { expect, test, vitest } from 'vitest';
 import bluebird from 'bluebird';
 import {
   Consumer,
@@ -66,7 +66,7 @@ test('Health check: case 3', async () => {
   consumer.on('consumer.goingUp', consumerGoingUpMock);
 
   await consumer.consumeAsync(
-    queueName, // using the default namespace
+    queueName, // using the default namespace-manager
     (message, cb) => cb(),
   );
 

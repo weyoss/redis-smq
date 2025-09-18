@@ -19,7 +19,7 @@ import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-me
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 
-test('Combined test. Requeue a message from acknowledged queue. Check queue metrics.', async () => {
+test('Combined test. Requeue a message from acknowledged queue-manager. Check queue-manager metrics.', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   const { messageId, queue, consumer } = await produceAndAcknowledgeMessage();

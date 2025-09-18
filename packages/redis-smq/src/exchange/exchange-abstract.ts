@@ -7,10 +7,10 @@
  * in the root directory of this source tree.
  */
 
-import { ICallback, logger } from 'redis-smq-common';
+import { createLogger, ICallback } from 'redis-smq-common';
 import { RedisClient } from '../common/redis-client/redis-client.js';
 import { Configuration } from '../config/index.js';
-import { IQueueParams } from '../queue/index.js';
+import { IQueueParams } from '../queue-manager/index.js';
 import { IExchange } from './types/exchange.js';
 
 export abstract class ExchangeAbstract<ExchangeParams>
@@ -20,8 +20,8 @@ export abstract class ExchangeAbstract<ExchangeParams>
   protected redisClient: RedisClient;
 
   constructor() {
-    this.logger = logger.getLogger(
-      Configuration.getSetConfig().logger,
+    this.logger = createLogger(
+      Configuration.getConfig().logger,
       this.constructor.name.toLowerCase(),
     );
     this.redisClient = new RedisClient();

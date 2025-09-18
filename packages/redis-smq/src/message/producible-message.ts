@@ -16,7 +16,7 @@ import {
   ITopicParams,
   TExchangeTransferable,
 } from '../exchange/index.js';
-import { IQueueParams } from '../queue/index.js';
+import { IQueueParams } from '../queue-manager/index.js';
 import { MessageMessagePropertyError } from './errors/index.js';
 import { EMessagePriority, TMessageConsumeOptions } from './types/index.js';
 
@@ -44,7 +44,7 @@ export class ProducibleMessage {
   // Stores the timestamp when the message was created. It is automatically set when a new instance of the ProducibleMessage class is instantiated.
   protected readonly createdAt: number;
 
-  // Stores the Time-To-Live (TTL) value for the message. The TTL determines how long the message should remain in the queue before it expires. A value of 0 indicates that the message does not expire.
+  // Stores the Time-To-Live (TTL) value for the message. The TTL determines how long the message should remain in the queue-manager before it expires. A value of 0 indicates that the message does not expire.
   protected ttl = 0;
 
   // Stores the retry threshold value for the message. The retry threshold specifies the maximum number of times a failed message can be retried before it is considered permanently failed.
@@ -59,7 +59,7 @@ export class ProducibleMessage {
   // Stores the message body. The message body can be any valid JSON value, such as a string, number, object, array, or null.
   protected body: unknown = null;
 
-  // Stores the priority of the message. The priority determines the order in which messages are processed within the queue.
+  // Stores the priority of the message. The priority determines the order in which messages are processed within the queue-manager.
   protected priority: EMessagePriority | null = null;
 
   // Stores the scheduled cron expression for the message.
@@ -283,7 +283,7 @@ export class ProducibleMessage {
    * Sets a delay for scheduling the current message's delivery.
    *
    * This function allows you to specify a delay in milliseconds before the message is
-   * actually sent to the queue. The delay ensures that the message is not delivered
+   * actually sent to the queue-manager. The delay ensures that the message is not delivered
    * immediately, allowing for the system to perform any necessary operations or checks.
    *
    * @param {number} delay - The delay value in milliseconds. A positive integer representing the
@@ -309,7 +309,7 @@ export class ProducibleMessage {
 
   /**
    * Retrieve the scheduled delay time for a message, which indicates how long
-   * the message should be delayed before it is delivered to a queue.
+   * the message should be delayed before it is delivered to a queue-manager.
    *
    * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduleddelay
    */
@@ -399,7 +399,7 @@ export class ProducibleMessage {
   /**
    * Sets the Time-To-Live (TTL) value for the current message.
    *
-   * The TTL determines how long the message should remain in the queue before
+   * The TTL determines how long the message should remain in the queue-manager before
    * it expires. This is useful for managing message lifetimes and preventing
    * the processing of outdated messages.
    *
@@ -440,8 +440,8 @@ export class ProducibleMessage {
    * Sets the retry threshold for the current message.
    *
    * Set the number of times a failed message can be retried before it is
-   * considered permanently failed and moved to a dead-letter queue (DLQ) or discarded
-   * according to the message queue configuration.
+   * considered permanently failed and moved to a dead-letter queue-manager (DLQ) or discarded
+   * according to the message queue-manager configuration.
    *
    * The default retry threshold is 3.
    *
@@ -510,7 +510,7 @@ export class ProducibleMessage {
    * This feature allows developers to manage the order in which messages are
    * processed based on their priority, enabling more important tasks to be handled before others.
    *
-   * Message priority should be set only when producing a message to a priority queue.
+   * Message priority should be set only when producing a message to a priority queue-manager.
    * Otherwise, message priority does not take effect.
    *
    * @param {EMessagePriority} priority - The priority level for the message.
@@ -567,7 +567,7 @@ export class ProducibleMessage {
    *
    * This feature is particularly useful in scenarios where you
    * want multiple services to react to the same event or message without
-   * needing to duplicate the message for each queue.
+   * needing to duplicate the message for each queue-manager.
    *
    * @param {string} fanOutName - The name of the fan-out pattern.
    * @returns {ProducibleMessage} - The updated `ProducibleMessage` instance, allowing method chaining.
@@ -604,13 +604,13 @@ export class ProducibleMessage {
   }
 
   /**
-   * Sets the queue parameters for the message, enabling a direct message publication model
-   * where messages can be sent to a specific queue and consumed
+   * Sets the queue-manager parameters for the message, enabling a direct message publication model
+   * where messages can be sent to a specific queue-manager and consumed
    * by consumers interested in those messages.
    *
-   * @param {string | IQueueParams} queueParams - The queue parameters can be provided as a string (queue name) or as an object (queue parameters).
-   *                                                  If a string is provided, it should be the name of the queue.
-   *                                                  If an object is provided, it should contain the queue parameters as defined in the RedisSMQ documentation.
+   * @param {string | IQueueParams} queueParams - The queue-manager parameters can be provided as a string (queue-manager name) or as an object (queue-manager parameters).
+   *                                                  If a string is provided, it should be the name of the queue-manager.
+   *                                                  If an object is provided, it should contain the queue-manager parameters as defined in the RedisSMQ documentation.
    * @returns {ProducibleMessage} - The updated `ProducibleMessage` instance, allowing method chaining.
    *
    * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/exchanges-and-delivery-models.md
@@ -623,16 +623,16 @@ export class ProducibleMessage {
   }
 
   /**
-   * Retrieves the queue parameters associated with the current message.
+   * Retrieves the queue-manager parameters associated with the current message.
    *
-   * This method returns the queue parameters that were set for the message using the
-   * setQueue method. The queue parameters determine how the message will be routed within
+   * This method returns the queue-manager parameters that were set for the message using the
+   * setQueue method. The queue-manager parameters determine how the message will be routed within
    * the messaging system.
    *
-   * @returns {ITopicParams | null} The queue parameters associated with the message.
-   *          Returns null if no queue parameters have been set.
+   * @returns {ITopicParams | null} The queue-manager parameters associated with the message.
+   *          Returns null if no queue-manager parameters have been set.
    *
-   * @see For more information on setting the queue parameters:
+   * @see For more information on setting the queue-manager parameters:
    *      https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setqueue
    */
   getQueue(): IQueueParams | null {
@@ -683,7 +683,7 @@ export class ProducibleMessage {
   }
 
   /**
-   * Retrieves the exchange (fan-out, topic, or queue name) associated with the current message.
+   * Retrieves the exchange (fan-out, topic, or queue-manager name) associated with the current message.
    *
    * This method returns the exchange that was set for the message using one of the
    * setQueue, setTopic, or setFanOut methods. The exchange determines how the message
@@ -756,7 +756,7 @@ export class ProducibleMessage {
   /**
    * Retrieves the Time-To-Live (TTL) value set for the message.
    *
-   * The TTL determines how long the message should remain in the queue before
+   * The TTL determines how long the message should remain in the queue-manager before
    * it expires. This is useful for managing message lifetimes and preventing
    * the processing of outdated messages.
    *
@@ -775,7 +775,7 @@ export class ProducibleMessage {
    *
    * The retry threshold specifies the maximum number of times a failed message
    * will be retried before it is considered permanently failed and potentially
-   * moved to a dead-letter queue.
+   * moved to a dead-letter queue-manager.
    *
    * @returns The retry threshold value. A positive integer representing the
    *          maximum number of retry attempts for the message.
@@ -823,7 +823,7 @@ export class ProducibleMessage {
    *
    * This method returns the priority level that was set for the message using the
    * setPriority method. The priority level determines the order in which messages
-   * are processed when using a priority queue.
+   * are processed when using a priority queue-manager.
    *
    * @returns {EMessagePriority | null} The priority level of the message as defined
    *          in the EMessagePriority enum, or null if no priority has been set.

@@ -8,7 +8,7 @@
  */
 
 import { ICallback } from 'redis-smq-common';
-import { IQueueParams } from '../../queue/index.js';
+import { IQueueParams } from '../../queue-manager/index.js';
 
 export enum EExchangeType {
   DIRECT,

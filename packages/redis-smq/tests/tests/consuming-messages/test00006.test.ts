@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { vitest, test } from 'vitest';
+import { test, vitest } from 'vitest';
 import { ICallback } from 'redis-smq-common';
 import { ProducibleMessage } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';

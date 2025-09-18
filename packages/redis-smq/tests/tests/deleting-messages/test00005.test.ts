@@ -18,7 +18,7 @@ import {
 import { getMessage } from '../../common/message.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 
-test('Combined test: Delete a message being in process. Check pending, acknowledged, and dead-letter message. Check queue metrics.', async () => {
+test('Combined test: Delete a message being in process. Check pending, acknowledged, and dead-letter message. Check queue-manager metrics.', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
 

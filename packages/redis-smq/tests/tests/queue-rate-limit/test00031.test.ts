@@ -24,7 +24,7 @@ process.on('warning', (warning) => {
   console.log('TRACING', warning);
 });
 
-test('Set a rate limit for a queue and consume message using many consumers', async () => {
+test('Set a rate limit for a queue-manager and consume message using many consumers', async () => {
   const eventBus = await getEventBus();
 
   const defaultQueue = getDefaultQueue();

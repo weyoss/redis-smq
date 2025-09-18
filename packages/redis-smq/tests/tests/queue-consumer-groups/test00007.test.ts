@@ -16,7 +16,7 @@ import {
   EQueueDeliveryModel,
   EQueueType,
   IQueueParams,
-  QueueInvalidQueueParameterError,
+  QueueManagerInvalidParameterError,
 } from '../../../src/index.js';
 import { getQueue } from '../../common/queue.js';
 
@@ -39,7 +39,7 @@ test('Consumer group ID validation', async () => {
       { queue: queue1, groupId: 'my-group-1!' },
       (msg, cb) => cb(),
     ),
-  ).rejects.toThrow(QueueInvalidQueueParameterError);
+  ).rejects.toThrow(QueueManagerInvalidParameterError);
 
   const consumerGroups = bluebird.promisifyAll(new ConsumerGroups());
   await expect(

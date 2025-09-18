@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { TQueueExtendedParams } from '../../../queue/index.js';
+import { TQueueExtendedParams } from '../../../queue-manager/index.js';
 import { ICallback } from 'redis-smq-common';
 import { IPaginationPage } from './pagination.js';
 import { IMessageTransferable } from '../../../message/index.js';

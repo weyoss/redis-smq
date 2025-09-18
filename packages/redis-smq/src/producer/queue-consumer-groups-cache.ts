@@ -9,9 +9,9 @@
 
 import {
   async,
+  createLogger,
   ICallback,
   ILogger,
-  logger,
   Runnable,
   TRedisClientEvent,
 } from 'redis-smq-common';
@@ -19,13 +19,13 @@ import { RedisClient } from '../common/redis-client/redis-client.js';
 import { Configuration } from '../config/index.js';
 import { _getConsumerGroups } from '../consumer-groups/_/_get-consumer-groups.js';
 import { EventBus } from '../event-bus/index.js';
-import { _getQueueProperties } from '../queue/_/_get-queue-properties.js';
-import { _getQueues } from '../queue/_/_get-queues.js';
+import { _getQueueProperties } from '../queue-manager/_/_get-queue-properties.js';
+import { _getQueues } from '../queue-manager/_/_get-queues.js';
 import {
   EQueueDeliveryModel,
   IQueueParams,
   IQueueProperties,
-} from '../queue/index.js';
+} from '../queue-manager/index.js';
 import { Producer } from './producer.js';
 
 export class QueueConsumerGroupsCache extends Runnable<
@@ -46,13 +46,40 @@ export class QueueConsumerGroupsCache extends Runnable<
     this.redisClient = redisClient;
     this.eventBus = eventBus;
     this.producerId = producer.getId();
-    this.logger = logger.getLogger(
-      Configuration.getSetConfig().logger,
+    this.logger = createLogger(
+      Configuration.getConfig().logger,
       this.constructor.name.toLowerCase(),
     );
     this.logger.debug(
       `QueueConsumerGroupsCache instance created for producer ${this.producerId}`,
     );
+  }
+
+  getConsumerGroups(queue: IQueueParams): {
+    exists: boolean;
+    consumerGroups: string[];
+  } {
+    const key = `${queue.name}@${queue.ns}`;
+    this.logger.debug(`Getting consumer groups for queue ${key}`);
+
+    if (this.consumerGroupsByQueues[key]) {
+      const groupCount = this.consumerGroupsByQueues[key].length;
+      this.logger.debug(
+        `Found queue ${key} in cache with ${groupCount} consumer groups`,
+      );
+      return {
+        exists: true,
+        consumerGroups: this.consumerGroupsByQueues[key],
+      };
+    }
+
+    this.logger.debug(
+      `Queue ${key} not found in cache, returning empty result`,
+    );
+    return {
+      exists: false,
+      consumerGroups: [],
+    };
   }
 
   protected override getLogger(): ILogger {
@@ -148,7 +175,7 @@ export class QueueConsumerGroupsCache extends Runnable<
   };
 
   protected subscribe = (cb: ICallback<void>): void => {
-    this.logger.debug('Subscribing to queue events');
+    this.logger.debug('Subscribing to queue-manager events');
     const instance = this.eventBus.getInstance();
     if (instance instanceof Error) {
       this.logger.error('Failed to get event bus instance', instance);
@@ -161,13 +188,13 @@ export class QueueConsumerGroupsCache extends Runnable<
       instance.on('queue.queueDeleted', this.deleteQueue);
       instance.on('queue.consumerGroupCreated', this.addConsumerGroup);
       instance.on('queue.consumerGroupDeleted', this.deleteConsumerGroup);
-      this.logger.info('Successfully subscribed to all queue events');
+      this.logger.info('Successfully subscribed to all queue-manager events');
       cb();
     }
   };
 
   protected unsubscribe = (cb: ICallback<void>): void => {
-    this.logger.debug('Unsubscribing from queue events');
+    this.logger.debug('Unsubscribing from queue-manager events');
     const instance = this.eventBus.getInstance();
     if (instance instanceof Error) {
       this.logger.error('Failed to get event bus instance', instance);
@@ -186,7 +213,9 @@ export class QueueConsumerGroupsCache extends Runnable<
         'queue.consumerGroupDeleted',
         this.deleteConsumerGroup,
       );
-      this.logger.info('Successfully unsubscribed from all queue events');
+      this.logger.info(
+        'Successfully unsubscribed from all queue-manager events',
+      );
       cb();
     }
   };
@@ -309,31 +338,4 @@ export class QueueConsumerGroupsCache extends Runnable<
     );
     cb();
   };
-
-  getConsumerGroups(queue: IQueueParams): {
-    exists: boolean;
-    consumerGroups: string[];
-  } {
-    const key = `${queue.name}@${queue.ns}`;
-    this.logger.debug(`Getting consumer groups for queue ${key}`);
-
-    if (this.consumerGroupsByQueues[key]) {
-      const groupCount = this.consumerGroupsByQueues[key].length;
-      this.logger.debug(
-        `Found queue ${key} in cache with ${groupCount} consumer groups`,
-      );
-      return {
-        exists: true,
-        consumerGroups: this.consumerGroupsByQueues[key],
-      };
-    }
-
-    this.logger.debug(
-      `Queue ${key} not found in cache, returning empty result`,
-    );
-    return {
-      exists: false,
-      consumerGroups: [],
-    };
-  }
 }

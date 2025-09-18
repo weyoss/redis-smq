@@ -16,10 +16,10 @@ import { parseEventBusConfig } from './parse-event-bus-config.js';
 
 export function parseConfig(config: IRedisSMQConfig): IRedisSMQParsedConfig {
   return {
-    namespace: parseNamespaceConfig(config),
-    redis: parseRedisConfig(config),
-    logger: parseLoggerConfig(config),
-    messages: parseMessagesConfig(config),
-    eventBus: parseEventBusConfig(config),
+    namespace: parseNamespaceConfig(config.namespace),
+    redis: parseRedisConfig(config.redis),
+    logger: parseLoggerConfig(config.logger),
+    messages: parseMessagesConfig(config.messages),
+    eventBus: parseEventBusConfig(config.eventBus),
   };
 }

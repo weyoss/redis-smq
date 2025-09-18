@@ -10,12 +10,11 @@
 import { expect, test, vitest } from 'vitest';
 import bluebird from 'bluebird';
 import {
-  Configuration,
   EMessagePropertyStatus,
-  Message,
+  MessageManager,
   ProducibleMessage,
 } from '../../../src/index.js';
-import RequeueDelayedWorker from '../../../src/consumer/workers/requeue-delayed.worker.js';
+import { RequeueDelayedWorker } from '../../../src/consumer/message-handler/workers/requeue-delayed.worker.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import { getConsumer } from '../../common/consumer.js';
 import { untilConsumerDown } from '../../common/events.js';
@@ -25,7 +24,7 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getProducer } from '../../common/producer.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
-import RequeueImmediateWorker from '../../../src/consumer/workers/requeue-immediate.worker.js';
+import { RequeueImmediateWorker } from '../../../src/consumer/message-handler/workers/requeue-immediate.worker.js';
 
 test('An unacked message with retryDelay should be moved to queueRequeued. RequeueImmediateWorker should move the message from queueRequeued to queueDelayed. RequeueDelayedWorker should move the message from queueDelayed to queuePending.', async () => {
   const defaultQueue = getDefaultQueue();
@@ -50,19 +49,14 @@ test('An unacked message with retryDelay should be moved to queueRequeued. Reque
   await untilConsumerDown(consumer);
   await shutDownBaseInstance(consumer);
 
-  const message = bluebird.promisifyAll(new Message());
+  const message = bluebird.promisifyAll(new MessageManager());
   const msg = await message.getMessageByIdAsync(messageId);
 
   expect(msg.status === EMessagePropertyStatus.UNACK_REQUEUING).toBe(true);
 
-  const workerArgs = {
-    queueParsedParams: { queueParams: defaultQueue, groupId: null },
-    config: Configuration.getSetConfig(),
-  };
-
-  // should move from requeue queue to delay queue
+  // should move from requeue queue-manager to delay queue-manager
   const requeueImmediateWorker = bluebird.promisifyAll(
-    RequeueImmediateWorker(workerArgs),
+    new RequeueImmediateWorker({ queueParams: defaultQueue, groupId: null }),
   );
   await requeueImmediateWorker.runAsync();
   await bluebird.delay(5000);
@@ -70,9 +64,9 @@ test('An unacked message with retryDelay should be moved to queueRequeued. Reque
   const msg2 = await message.getMessageByIdAsync(messageId);
   expect(msg2.status === EMessagePropertyStatus.UNACK_DELAYING).toBe(true);
 
-  // should move from requeue queue to delay queue
+  // should move from requeue queue-manager to delay queue-manager
   const requeueDelayedWorker = bluebird.promisifyAll(
-    RequeueDelayedWorker(workerArgs),
+    new RequeueDelayedWorker({ queueParams: defaultQueue, groupId: null }),
   );
   await requeueDelayedWorker.runAsync();
   await bluebird.delay(10000);

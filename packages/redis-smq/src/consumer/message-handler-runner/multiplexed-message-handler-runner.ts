@@ -13,8 +13,8 @@ import { EventBus } from '../../event-bus/index.js';
 import { Consumer } from '../consumer.js';
 import { MessageHandler } from '../message-handler/message-handler.js';
 import { MultiplexedMessageHandler } from '../message-handler/multiplexed-message-handler.js';
-import { IConsumerMessageHandlerArgs } from '../types/index.js';
 import { MessageHandlerRunner } from './message-handler-runner.js';
+import { IConsumerMessageHandlerParams } from '../message-handler/types/index.js';
 
 /**
  * MultiplexedMessageHandlerRunner schedules and rotates message handlers for multiple queues,
@@ -116,10 +116,10 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   };
 
   /**
-   * Creates a new MultiplexedMessageHandler instance for the given queue.
+   * Creates a new MultiplexedMessageHandler instance for the given queue-manager.
    */
   protected override createMessageHandlerInstance(
-    handlerParams: IConsumerMessageHandlerArgs,
+    handlerParams: IConsumerMessageHandlerParams,
   ): MessageHandler {
     this.logger.debug(
       `Creating MultiplexedMessageHandler for queue: ${JSON.stringify(handlerParams.queue)}`,

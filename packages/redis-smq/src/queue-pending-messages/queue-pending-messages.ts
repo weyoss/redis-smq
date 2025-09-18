@@ -10,21 +10,21 @@
 import {
   async,
   CallbackEmptyReplyError,
+  createLogger,
   ICallback,
-  logger,
   withRedisClient,
 } from 'redis-smq-common';
 import { RedisClient } from '../common/redis-client/redis-client.js';
 import { Configuration } from '../config/index.js';
 import { IMessageTransferable } from '../message/index.js';
-import { _getQueueProperties } from '../queue/_/_get-queue-properties.js';
-import { _parseQueueExtendedParams } from '../queue/_/_parse-queue-extended-params.js';
+import { _getQueueProperties } from '../queue-manager/_/_get-queue-properties.js';
+import { _parseQueueExtendedParams } from '../queue-manager/_/_parse-queue-extended-params.js';
 import {
   EQueueType,
   IQueueParsedParams,
   TQueueExtendedParams,
-} from '../queue/index.js';
-import { IQueueExplorer, IPaginationPage } from '../common/index.js';
+} from '../queue-manager/index.js';
+import { IPaginationPage, IQueueExplorer } from '../common/index.js';
 import { SequentialQueuePendingMessages } from './sequential-queue-pending-messages.js';
 import { PriorityQueuePendingMessages } from './priority-queue-pending-messages.js';
 
@@ -35,34 +35,14 @@ export class QueuePendingMessages implements IQueueExplorer {
   protected logger;
 
   constructor() {
-    this.logger = logger.getLogger(
-      Configuration.getSetConfig().logger,
+    this.logger = createLogger(
+      Configuration.getConfig().logger,
       this.constructor.name.toLowerCase(),
     );
     this.priorityQueueMessages = new PriorityQueuePendingMessages();
     this.sequentialQueuePendingMessages = new SequentialQueuePendingMessages();
     this.redisClient = new RedisClient();
     this.redisClient.on('error', (err) => this.logger.error(err));
-  }
-
-  protected getQueueImplementation(
-    queue: IQueueParsedParams,
-    cb: ICallback<IQueueExplorer>,
-  ): void {
-    withRedisClient(
-      this.redisClient,
-      (client, cb) =>
-        _getQueueProperties(client, queue.queueParams, (err, properties) => {
-          if (err) cb(err);
-          else if (!properties) cb(new CallbackEmptyReplyError());
-          else if (properties.queueType === EQueueType.PRIORITY_QUEUE) {
-            cb(null, this.priorityQueueMessages);
-          } else {
-            cb(null, this.sequentialQueuePendingMessages);
-          }
-        }),
-      cb,
-    );
   }
 
   countMessages(queue: TQueueExtendedParams, cb: ICallback<number>): void {
@@ -114,4 +94,24 @@ export class QueuePendingMessages implements IQueueExplorer {
       (err) => cb(err),
     );
   };
+
+  protected getQueueImplementation(
+    queue: IQueueParsedParams,
+    cb: ICallback<IQueueExplorer>,
+  ): void {
+    withRedisClient(
+      this.redisClient,
+      (client, cb) =>
+        _getQueueProperties(client, queue.queueParams, (err, properties) => {
+          if (err) cb(err);
+          else if (!properties) cb(new CallbackEmptyReplyError());
+          else if (properties.queueType === EQueueType.PRIORITY_QUEUE) {
+            cb(null, this.priorityQueueMessages);
+          } else {
+            cb(null, this.sequentialQueuePendingMessages);
+          }
+        }),
+      cb,
+    );
+  }
 }

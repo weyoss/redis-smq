@@ -9,7 +9,7 @@
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
-import { IQueueParams } from '../../queue/index.js';
+import { IQueueParams } from '../../queue-manager/index.js';
 
 /**
  * Retrieves all queues associated with a specific consumer.

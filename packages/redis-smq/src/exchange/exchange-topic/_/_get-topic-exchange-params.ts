@@ -15,7 +15,7 @@ import { ITopicParams } from '../../types/index.js';
 export function _getTopicExchangeParams(
   topic: ITopicParams | string,
 ): ITopicParams | ExchangeInvalidTopicParamsError {
-  const config = Configuration.getSetConfig();
+  const config = Configuration.getConfig();
   const topicParams =
     typeof topic === 'string'
       ? {

@@ -8,11 +8,11 @@
  */
 
 import _ from 'lodash';
-import { IRedisSMQConfig, IRedisSMQParsedConfig } from './types/index.js';
+import { IEventBusConfig, IRedisSMQParsedConfig } from './types/index.js';
 import { defaultConfig } from './default-config.js';
 
 export function parseEventBusConfig(
-  userConfig: IRedisSMQConfig,
+  userConfig?: IEventBusConfig,
 ): IRedisSMQParsedConfig['eventBus'] {
-  return _.merge({}, defaultConfig.eventBus, userConfig.eventBus ?? {});
+  return _.merge({}, defaultConfig.eventBus, userConfig ?? {});
 }

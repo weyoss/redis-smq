@@ -10,10 +10,10 @@
 import path from 'path';
 import {
   CallbackInvalidReplyError,
+  createLogger,
   env,
   ICallback,
   ILogger,
-  logger,
   Runnable,
   WorkerResourceGroup,
 } from 'redis-smq-common';
@@ -25,21 +25,25 @@ import { RedisClient } from '../../common/redis-client/redis-client.js';
 import { ELuaScriptName } from '../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../config/index.js';
-import { _parseMessage } from '../../message/_/_parse-message.js';
+import { _parseMessage } from '../../message-manager/_/_parse-message.js';
 import {
   EMessageProperty,
   EMessagePropertyStatus,
 } from '../../message/index.js';
-import { EQueueProperty, IQueueParsedParams } from '../../queue/index.js';
+import {
+  EQueueProperty,
+  IQueueParsedParams,
+} from '../../queue-manager/index.js';
 import { Consumer } from '../consumer.js';
-import { IConsumerMessageHandlerArgs } from '../types/index.js';
 import { ConsumeMessage } from './consume-message/consume-message.js';
 import { DequeueMessage } from './dequeue-message/dequeue-message.js';
 import { evenBusPublisher } from './even-bus-publisher.js';
 import { ConsumerMessageHandlerError } from './errors/index.js';
 import { EventBus } from '../../event-bus/index.js';
+import { IConsumerMessageHandlerParams } from './types/index.js';
+import { TConsumerMessageHandlerWorkerPayload } from './workers/types/index.js';
 
-const WORKERS_DIR = path.resolve(env.getCurrentDir(), '../workers');
+const WORKERS_DIR = path.resolve(env.getCurrentDir(), './workers');
 
 export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   protected consumer;
@@ -57,7 +61,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   constructor(
     consumer: Consumer,
     redisClient: RedisClient,
-    handlerParams: IConsumerMessageHandlerArgs,
+    handlerParams: IConsumerMessageHandlerParams,
     autoDequeue: boolean = true,
     eventBus: EventBus | null,
   ) {
@@ -67,8 +71,8 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     this.consumerId = consumer.getId();
     this.queue = queue;
     this.messageHandler = messageHandler;
-    this.logger = logger.getLogger(
-      Configuration.getSetConfig().logger,
+    this.logger = createLogger(
+      Configuration.getConfig().logger,
       this.constructor.name.toLowerCase(),
     );
 
@@ -104,6 +108,154 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     this.logger.info(
       `MessageHandler initialized for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
     );
+  }
+
+  /**
+   * Processes a message by fetching it from the queue-manager and updating its status to 'processing'.
+   *
+   * @param messageId - The unique identifier of the message to be processed.
+   *
+   * @remarks
+   * This method checks if the MessageHandler instance is running. If it is, it retrieves the message from the queue-manager using the provided `messageId`.
+   * It then updates the message's status to 'processing' and passes it to the `consumeMessage` instance for further handling.
+   * If the MessageHandler instance is not running, this method does nothing.
+   *
+   * @returns {void}
+   */
+  processMessage(messageId: string): void {
+    if (!this.isRunning()) {
+      this.logger.debug(
+        `Ignoring processMessage call for message ${messageId} as handler is not running`,
+      );
+      return;
+    }
+
+    this.logger.debug(`Processing message ${messageId}`);
+
+    const { keyMessage } = redisKeys.getMessageKeys(messageId);
+    this.logger.debug(`Message key: ${keyMessage}`);
+
+    const { keyQueueProperties } = redisKeys.getQueueKeys(
+      this.queue.queueParams,
+      this.queue.groupId,
+    );
+
+    const keys: string[] = [keyMessage, keyQueueProperties];
+    const argv: (string | number)[] = [
+      EMessageProperty.PROCESSING_STARTED_AT,
+      Date.now(),
+      EMessageProperty.STATUS,
+      EMessagePropertyStatus.PROCESSING,
+      EMessagePropertyStatus.PENDING, // Required for atomic check
+      EMessageProperty.ATTEMPTS,
+      EQueueProperty.PROCESSING_MESSAGES_COUNT,
+      EQueueProperty.PENDING_MESSAGES_COUNT,
+    ];
+
+    const redisClient = this.redisClient.getInstance();
+    if (redisClient instanceof Error) {
+      this.logger.error(`Failed to get Redis client: ${redisClient.message}`);
+      this.handleError(redisClient);
+      return;
+    }
+
+    this.logger.debug(
+      `Running FETCH_MESSAGE_FOR_PROCESSING script for message ${messageId}`,
+    );
+    redisClient.runScript(
+      ELuaScriptName.CHECKOUT_MESSAGE,
+      keys,
+      argv,
+      (err, reply: unknown) => {
+        if (err) {
+          this.logger.error(
+            `Failed to fetch message ${messageId} for processing: ${err.message}`,
+          );
+          return this.handleError(err);
+        }
+
+        // An empty reply indicates that the message was not in a PENDING state,
+        // likely because another consumer processed it first. This is an
+        // unexpected outcome as messages are dequeued atomically and placed
+        // into the processing queue-manager.
+        if (!reply) {
+          const errMsg = `Message ${messageId} could not be fetched.`;
+          this.logger.error(errMsg);
+          return this.handleError(new ConsumerMessageHandlerError(errMsg));
+        }
+
+        if (!Array.isArray(reply)) {
+          this.logger.error(
+            `Invalid reply type when fetching message ${messageId}`,
+          );
+          return this.handleError(new CallbackInvalidReplyError());
+        }
+
+        this.logger.debug(
+          `Message ${messageId} fetched successfully. Parsing message raw data...`,
+        );
+
+        const message = _parseMessage(reply);
+
+        this.logger.debug(
+          `Passing message ${messageId} to ConsumeMessage for handling`,
+        );
+        this.consumeMessage.handleReceivedMessage(message);
+      },
+    );
+  }
+
+  /**
+   * Processes the next message in the queue-manager by dequeuing it and making it available for consumption.
+   *
+   * This method calls the `dequeue` method of the `dequeueMessage` instance to retrieve a message from the queue-manager.
+   * If the MessageHandler instance is not running, this method does nothing.
+   *
+   * @remarks
+   * The `dequeue` method ensures that only one consumer instance processes a message at a time, preventing message duplication.
+   *
+   * @returns {void}
+   */
+  next(): void {
+    this.logger.debug('Requesting next message');
+    this.dequeue();
+  }
+
+  /**
+   * Dequeues a message from the associated queue-manager.
+   *
+   * This method checks if the MessageHandler instance is running and then calls the `dequeue` method of the `dequeueMessage` instance.
+   * If the MessageHandler instance is not running, the method does nothing.
+   *
+   * @remarks
+   * The `dequeue` method is responsible for retrieving a message from the queue-manager and making it available for processing.
+   * It ensures that only one consumer instance processes a message at a time, preventing message duplication.
+   *
+   * @returns {void}
+   */
+  dequeue(): void {
+    if (this.isRunning()) {
+      this.logger.debug('Dequeuing message from queue-manager');
+      this.dequeueMessage.dequeue();
+    } else {
+      this.logger.debug('Ignoring dequeue call as handler is not running');
+    }
+  }
+
+  /**
+   * Retrieves the queue-manager parameters associated with the current MessageHandler instance.
+   *
+   * @returns The queue-manager parameters, represented by the `IQueueParsedParams` interface.
+   *
+   * @remarks
+   * This method returns the queue-manager parameters that were provided when creating the MessageHandler instance.
+   * The returned object contains information about the queue-manager, such as the queue-manager name, consumer group ID, and other relevant details.
+   */
+  getQueue(): IQueueParsedParams {
+    this.logger.debug(
+      `Getting queue parameters: ${JSON.stringify(this.queue)}`,
+    );
+    return this.queue;
   }
 
   protected initDequeueMessageInstance(): DequeueMessage {
@@ -209,7 +361,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
    * @param err - The error object that was encountered.
    *
    * @remarks
-   * This method checks if the MessageHandler instance is currently running. If it is, it emits a 'consumer.messageHandler.error' event with the error, consumer ID, and queue information.
+   * This method checks if the MessageHandler instance is currently running. If it is, it emits a 'consumer.messageHandler.error' event with the error, consumer ID, and queue-manager information.
    * It then calls the parent class's `handleError` method to perform any additional error handling.
    */
   protected override handleError(err: Error) {
@@ -241,7 +393,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   protected setUpConsumerWorkers = (cb: ICallback<void>): void => {
     this.logger.debug('Setting up consumer workers');
 
-    const config = Configuration.getSetConfig();
+    const config = Configuration.getConfig();
     const { keyQueueWorkersLock } = redisKeys.getQueueKeys(
       this.queue.queueParams,
       this.queue.groupId,
@@ -271,9 +423,9 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
 
     this.logger.debug(`Loading workers from directory: ${WORKERS_DIR}`);
 
-    this.workerResourceGroup.loadFromDir(
+    this.workerResourceGroup.loadFromDir<TConsumerMessageHandlerWorkerPayload>(
       WORKERS_DIR,
-      { config, queueParsedParams: this.queue },
+      { redisConfig: config.redis, queueParsedParams: this.queue },
       (err) => {
         if (err) {
           this.logger.error(
@@ -414,153 +566,5 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
         });
       },
     ].concat(super.goingDown());
-  }
-
-  /**
-   * Processes a message by fetching it from the queue and updating its status to 'processing'.
-   *
-   * @param messageId - The unique identifier of the message to be processed.
-   *
-   * @remarks
-   * This method checks if the MessageHandler instance is running. If it is, it retrieves the message from the queue using the provided `messageId`.
-   * It then updates the message's status to 'processing' and passes it to the `consumeMessage` instance for further handling.
-   * If the MessageHandler instance is not running, this method does nothing.
-   *
-   * @returns {void}
-   */
-  processMessage(messageId: string): void {
-    if (!this.isRunning()) {
-      this.logger.debug(
-        `Ignoring processMessage call for message ${messageId} as handler is not running`,
-      );
-      return;
-    }
-
-    this.logger.debug(`Processing message ${messageId}`);
-
-    const { keyMessage } = redisKeys.getMessageKeys(messageId);
-    this.logger.debug(`Message key: ${keyMessage}`);
-
-    const { keyQueueProperties } = redisKeys.getQueueKeys(
-      this.queue.queueParams,
-      this.queue.groupId,
-    );
-
-    const keys: string[] = [keyMessage, keyQueueProperties];
-    const argv: (string | number)[] = [
-      EMessageProperty.PROCESSING_STARTED_AT,
-      Date.now(),
-      EMessageProperty.STATUS,
-      EMessagePropertyStatus.PROCESSING,
-      EMessagePropertyStatus.PENDING, // Required for atomic check
-      EMessageProperty.ATTEMPTS,
-      EQueueProperty.PROCESSING_MESSAGES_COUNT,
-      EQueueProperty.PENDING_MESSAGES_COUNT,
-    ];
-
-    const redisClient = this.redisClient.getInstance();
-    if (redisClient instanceof Error) {
-      this.logger.error(`Failed to get Redis client: ${redisClient.message}`);
-      this.handleError(redisClient);
-      return;
-    }
-
-    this.logger.debug(
-      `Running FETCH_MESSAGE_FOR_PROCESSING script for message ${messageId}`,
-    );
-    redisClient.runScript(
-      ELuaScriptName.CHECKOUT_MESSAGE,
-      keys,
-      argv,
-      (err, reply: unknown) => {
-        if (err) {
-          this.logger.error(
-            `Failed to fetch message ${messageId} for processing: ${err.message}`,
-          );
-          return this.handleError(err);
-        }
-
-        // An empty reply indicates that the message was not in a PENDING state,
-        // likely because another consumer processed it first. This is an
-        // unexpected outcome as messages are dequeued atomically and placed
-        // into the processing queue.
-        if (!reply) {
-          const errMsg = `Message ${messageId} could not be fetched.`;
-          this.logger.error(errMsg);
-          return this.handleError(new ConsumerMessageHandlerError(errMsg));
-        }
-
-        if (!Array.isArray(reply)) {
-          this.logger.error(
-            `Invalid reply type when fetching message ${messageId}`,
-          );
-          return this.handleError(new CallbackInvalidReplyError());
-        }
-
-        this.logger.debug(
-          `Message ${messageId} fetched successfully. Parsing message raw data...`,
-        );
-
-        const message = _parseMessage(reply);
-
-        this.logger.debug(
-          `Passing message ${messageId} to ConsumeMessage for handling`,
-        );
-        this.consumeMessage.handleReceivedMessage(message);
-      },
-    );
-  }
-
-  /**
-   * Processes the next message in the queue by dequeuing it and making it available for consumption.
-   *
-   * This method calls the `dequeue` method of the `dequeueMessage` instance to retrieve a message from the queue.
-   * If the MessageHandler instance is not running, this method does nothing.
-   *
-   * @remarks
-   * The `dequeue` method ensures that only one consumer instance processes a message at a time, preventing message duplication.
-   *
-   * @returns {void}
-   */
-  next(): void {
-    this.logger.debug('Requesting next message');
-    this.dequeue();
-  }
-
-  /**
-   * Dequeues a message from the associated queue.
-   *
-   * This method checks if the MessageHandler instance is running and then calls the `dequeue` method of the `dequeueMessage` instance.
-   * If the MessageHandler instance is not running, the method does nothing.
-   *
-   * @remarks
-   * The `dequeue` method is responsible for retrieving a message from the queue and making it available for processing.
-   * It ensures that only one consumer instance processes a message at a time, preventing message duplication.
-   *
-   * @returns {void}
-   */
-  dequeue(): void {
-    if (this.isRunning()) {
-      this.logger.debug('Dequeuing message from queue');
-      this.dequeueMessage.dequeue();
-    } else {
-      this.logger.debug('Ignoring dequeue call as handler is not running');
-    }
-  }
-
-  /**
-   * Retrieves the queue parameters associated with the current MessageHandler instance.
-   *
-   * @returns The queue parameters, represented by the `IQueueParsedParams` interface.
-   *
-   * @remarks
-   * This method returns the queue parameters that were provided when creating the MessageHandler instance.
-   * The returned object contains information about the queue, such as the queue name, consumer group ID, and other relevant details.
-   */
-  getQueue(): IQueueParsedParams {
-    this.logger.debug(
-      `Getting queue parameters: ${JSON.stringify(this.queue)}`,
-    );
-    return this.queue;
   }
 }

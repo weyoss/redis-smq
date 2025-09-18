@@ -10,3 +10,4 @@
 export * from './types/index.js';
 export * from './queue-explorer/errors/index.js';
 export * from './queue-explorer/types/index.js';
+export * from './redis-connection-pool/redis-connection-pool.js';
