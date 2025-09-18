@@ -20,7 +20,7 @@ import { RedisSMQRestApi } from 'redis-smq-rest-api';
 import { parseConfig } from './config/parse-config.js';
 import type { IRedisSMQWebUIConfig } from 'redis-smq-web-ui';
 import { createProxyMiddleware } from 'http-proxy-middleware';
-import { ILogger, logger } from 'redis-smq-common';
+import { createLogger, ILogger } from 'redis-smq-common';
 
 export class RedisSMQWebServer {
   private readonly app = express();
@@ -42,7 +42,7 @@ export class RedisSMQWebServer {
     };
     this.apiProxyTarget = this.config.webServer.apiProxyTarget ?? null;
     this.webUIPath = getDistPath();
-    this.logger = logger.getLogger(this.config.logger);
+    this.logger = createLogger(this.config.logger, 'RedisSMQWebServer');
   }
 
   private async setupMiddleware(): Promise<void> {
