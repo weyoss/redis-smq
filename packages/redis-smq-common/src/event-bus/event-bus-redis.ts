@@ -9,7 +9,7 @@
 
 import { ICallback } from '../async/index.js';
 import { IEventBusRedisConfig, TEventBusEvent } from './types/index.js';
-import { IRedisClient, RedisClientFactory } from '../redis-client/index.js';
+import { RedisClientFactory } from '../redis-client/index.js';
 import { EventBusError, EventBusNotConnectedError } from './errors/index.js';
 import { EventBus } from './event-bus.js';
 
@@ -130,14 +130,6 @@ export class EventBusRedis<
       .eventNames()
       .map((n) => String(n))
       .filter((n) => n !== 'error');
-  }
-
-  private shutdownClient(
-    client: IRedisClient | null,
-    cb: ICallback<void>,
-  ): void {
-    if (client) client.halt(cb);
-    else cb();
   }
 
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
