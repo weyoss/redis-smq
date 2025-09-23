@@ -40,7 +40,6 @@ import { LoggerError } from '../errors/index.js';
 export class ConsoleLogger implements ILogger {
   private readonly logLevel: EConsoleLoggerLevel;
   private readonly formatter: ConsoleMessageFormatter;
-  private readonly options: IConsoleLoggerOptions;
   private readonly namespaces: string[];
 
   /**
@@ -78,7 +77,6 @@ export class ConsoleLogger implements ILogger {
       logLevel = EConsoleLoggerLevel.INFO,
     } = options;
 
-    this.options = options;
     this.logLevel =
       typeof logLevel === 'number' ? logLevel : EConsoleLoggerLevel[logLevel];
 
@@ -93,50 +91,6 @@ export class ConsoleLogger implements ILogger {
       },
       this.namespaces,
     );
-  }
-
-  /**
-   * Creates a child logger instance that inherits the parent's configuration and namespaces.
-   * The child logger will have all parent namespaces plus an optional additional namespace,
-   * creating a hierarchical logging structure.
-   *
-   * Child loggers maintain the same log level, formatting options, and behavior as their parent,
-   * but extend the namespace chain for better message categorization.
-   *
-   * @param childNamespace - Optional namespace to append to the inherited namespace chain.
-   *                        If not provided, child will have identical namespaces as parent.
-   *
-   * @returns A new ConsoleLogger instance with inherited configuration and extended namespaces
-   *
-   * @throws {LoggerError} When the child namespace is invalid (empty or contains invalid characters)
-   *
-   * @example
-   * ```typescript
-   * const parent = new ConsoleLogger({}, ['app', 'service']);
-   *
-   * // Child with additional namespace
-   * const child = parent.createChild('database');
-   * // child namespaces: ['app', 'service', 'database']
-   *
-   * // Child without additional namespace
-   * const clone = parent.createChild();
-   * // clone namespaces: ['app', 'service']
-   *
-   * // Grandchild logger
-   * const grandchild = child.createChild('connection');
-   * // grandchild namespaces: ['app', 'service', 'database', 'connection']
-   * ```
-   */
-  public createChild(childNamespace?: string): ConsoleLogger {
-    const childNamespaces = [...this.namespaces];
-
-    // Add child namespace if provided
-    if (childNamespace && childNamespace.trim() !== '') {
-      childNamespaces.push(childNamespace);
-    }
-
-    // Create child logger with same options but extended namespaces
-    return new ConsoleLogger(this.options, childNamespaces);
   }
 
   /**
@@ -174,32 +128,6 @@ export class ConsoleLogger implements ILogger {
    */
   public getLogLevel(): EConsoleLoggerLevel {
     return this.logLevel;
-  }
-
-  /**
-   * Checks if a specific log level would be logged by this instance.
-   * Useful for conditional logging or performance optimization when constructing
-   * expensive log messages.
-   *
-   * @param level - The log level to check against the current minimum level
-   *
-   * @returns `true` if the level would be logged, `false` if it would be suppressed
-   *
-   * @example
-   * ```typescript
-   * const logger = new ConsoleLogger({ logLevel: EConsoleLoggerLevel.WARN });
-   *
-   * console.log(logger.isLevelEnabled(EConsoleLoggerLevel.DEBUG)); // false
-   * console.log(logger.isLevelEnabled(EConsoleLoggerLevel.ERROR)); // true
-   *
-   * // Conditional expensive logging
-   * if (logger.isLevelEnabled(EConsoleLoggerLevel.DEBUG)) {
-   *   logger.debug(expensiveDebugDataGeneration());
-   * }
-   * ```
-   */
-  public isLevelEnabled(level: EConsoleLoggerLevel): boolean {
-    return this.shouldLog(level);
   }
 
   /**
