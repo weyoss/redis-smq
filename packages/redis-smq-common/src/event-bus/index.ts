@@ -11,5 +11,3 @@ export * from './errors/index.js';
 export * from './types/index.js';
 export * from './event-bus.js';
 export * from './event-bus-redis.js';
-export * from './event-bus-redis-factory.js';
-export * from './with-event-bus.js';

@@ -7,14 +7,18 @@
  * in the root directory of this source tree.
  */
 
-import { ICallback } from '../../async/index.js';
-import { IEventEmitter, TEventEmitterEvent } from '../../event/index.js';
+import { TEventEmitterEvent } from '../../event/index.js';
+import { ILoggerConfig } from '../../logger/index.js';
+import { IRedisConfig } from '../../redis-client/index.js';
 
 export type TEventBusEvent = TEventEmitterEvent & {
   error: (err: Error) => void;
 };
 
-export interface IEventBus<Events extends TEventBusEvent>
-  extends IEventEmitter<Events> {
-  shutdown(cb: ICallback<void>): void;
+export interface IEventBusConfig {
+  logger?: ILoggerConfig;
+}
+
+export interface IEventBusRedisConfig extends IEventBusConfig {
+  redis: IRedisConfig;
 }
