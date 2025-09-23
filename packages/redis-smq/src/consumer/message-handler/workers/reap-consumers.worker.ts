@@ -15,118 +15,112 @@ import { WorkerAbstract } from './worker-abstract.js';
 import { workerBootstrap } from './worker-bootstrap.js';
 import { IQueueParsedParams } from '../../../queue-manager/index.js';
 import { EMessageUnacknowledgementReason } from '../consume-message/types/index.js';
+import { withSharedPoolConnection } from '../../../common/redis-connection-pool/with-shared-pool-connection.js';
 
 export class ReapConsumersWorker extends WorkerAbstract {
   protected messageUnacknowledgement: MessageUnacknowledgement;
 
   constructor(queueParsedParams: IQueueParsedParams) {
     super(queueParsedParams);
-    this.messageUnacknowledgement = new MessageUnacknowledgement(
-      this.redisClient,
-    );
+    this.messageUnacknowledgement = new MessageUnacknowledgement();
   }
 
   work = (cb: ICallback<void>): void => {
     this.logger.debug('Starting watch consumers work cycle');
 
-    const redisClient = this.redisClient.getInstance();
-    if (redisClient instanceof Error) {
-      this.logger.error('Failed to get Redis client instance', redisClient);
-      cb(redisClient);
-      return void 0;
-    }
+    withSharedPoolConnection((redisClient, cb) => {
+      const queueName = this.queueParsedParams.queueParams.name;
+      const queueNamespace = this.queueParsedParams.queueParams.ns;
+      this.logger.debug(
+        `Checking consumers for queue: ${queueNamespace}:${queueName}`,
+      );
 
-    const queueName = this.queueParsedParams.queueParams.name;
-    const queueNamespace = this.queueParsedParams.queueParams.ns;
-    this.logger.debug(
-      `Checking consumers for queue: ${queueNamespace}:${queueName}`,
-    );
+      _getQueueConsumerIds(
+        redisClient,
+        this.queueParsedParams.queueParams,
+        (err, consumerIds) => {
+          if (err) {
+            this.logger.error(
+              `Error retrieving consumer IDs for queue ${queueNamespace}:${queueName}`,
+              err,
+            );
+            cb(err);
+          } else {
+            const consumerCount = consumerIds?.length || 0;
+            this.logger.debug(
+              `Found ${consumerCount} consumers for queue ${queueNamespace}:${queueName}`,
+            );
 
-    _getQueueConsumerIds(
-      redisClient,
-      this.queueParsedParams.queueParams,
-      (err, consumerIds) => {
-        if (err) {
-          this.logger.error(
-            `Error retrieving consumer IDs for queue ${queueNamespace}:${queueName}`,
-            err,
-          );
-          cb(err);
-        } else {
-          const consumerCount = consumerIds?.length || 0;
-          this.logger.debug(
-            `Found ${consumerCount} consumers for queue ${queueNamespace}:${queueName}`,
-          );
-
-          async.eachOf(
-            consumerIds ?? [],
-            (consumerId, index, done) => {
-              this.logger.debug(
-                `Checking heartbeat for consumer ${consumerId} (${index + 1}/${consumerCount})`,
-              );
-
-              ConsumerHeartbeat.isConsumerAlive(
-                redisClient,
-                consumerId,
-                (err, alive) => {
-                  if (err) {
-                    this.logger.error(
-                      `Error checking heartbeat for consumer ${consumerId}`,
-                      err,
-                    );
-                    done(err);
-                  } else if (!alive) {
-                    this.logger.info(
-                      `Consumer ${consumerId} is offline, unacknowledging messages`,
-                    );
-                    this.messageUnacknowledgement.unacknowledgeMessagesInProcess(
-                      consumerId,
-                      [this.queueParsedParams.queueParams],
-                      EMessageUnacknowledgementReason.OFFLINE_CONSUMER,
-                      (err, status) => {
-                        if (err) {
-                          this.logger.error(
-                            `Failed to unacknowledge messages for offline consumer ${consumerId}`,
-                            err,
-                          );
-                          done(err);
-                        } else {
-                          const messageCount = status
-                            ? Object.keys(status).length
-                            : 0;
-                          this.logger.info(
-                            `Successfully unacknowledged ${messageCount} messages for offline consumer ${consumerId}`,
-                          );
-                          done();
-                        }
-                      },
-                    );
-                  } else {
-                    this.logger.debug(
-                      `Consumer ${consumerId} is alive and active`,
-                    );
-                    done();
-                  }
-                },
-              );
-            },
-            (err) => {
-              if (err) {
-                this.logger.error(
-                  'Error during consumer heartbeat check cycle',
-                  err,
-                );
-              } else {
+            async.eachOf(
+              consumerIds ?? [],
+              (consumerId, index, done) => {
                 this.logger.debug(
-                  'Completed watch consumers work cycle successfully',
+                  `Checking heartbeat for consumer ${consumerId} (${index + 1}/${consumerCount})`,
                 );
-              }
-              cb(err);
-            },
-          );
-        }
-      },
-    );
+
+                ConsumerHeartbeat.isConsumerAlive(
+                  redisClient,
+                  consumerId,
+                  (err, alive) => {
+                    if (err) {
+                      this.logger.error(
+                        `Error checking heartbeat for consumer ${consumerId}`,
+                        err,
+                      );
+                      done(err);
+                    } else if (!alive) {
+                      this.logger.info(
+                        `Consumer ${consumerId} is offline, unacknowledging messages`,
+                      );
+                      this.messageUnacknowledgement.unacknowledgeMessagesInProcess(
+                        consumerId,
+                        [this.queueParsedParams.queueParams],
+                        EMessageUnacknowledgementReason.OFFLINE_CONSUMER,
+                        (err, status) => {
+                          if (err) {
+                            this.logger.error(
+                              `Failed to unacknowledge messages for offline consumer ${consumerId}`,
+                              err,
+                            );
+                            done(err);
+                          } else {
+                            const messageCount = status
+                              ? Object.keys(status).length
+                              : 0;
+                            this.logger.info(
+                              `Successfully unacknowledged ${messageCount} messages for offline consumer ${consumerId}`,
+                            );
+                            done();
+                          }
+                        },
+                      );
+                    } else {
+                      this.logger.debug(
+                        `Consumer ${consumerId} is alive and active`,
+                      );
+                      done();
+                    }
+                  },
+                );
+              },
+              (err) => {
+                if (err) {
+                  this.logger.error(
+                    'Error during consumer heartbeat check cycle',
+                    err,
+                  );
+                } else {
+                  this.logger.debug(
+                    'Completed watch consumers work cycle successfully',
+                  );
+                }
+                cb(err);
+              },
+            );
+          }
+        },
+      );
+    }, cb);
   };
 }
 

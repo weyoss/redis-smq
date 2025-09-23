@@ -9,19 +9,22 @@
 
 import path from 'path';
 import {
+  CallbackEmptyReplyError,
   CallbackInvalidReplyError,
   createLogger,
   env,
   ICallback,
   ILogger,
+  IRedisClient,
+  PanicError,
   Runnable,
   WorkerResourceGroup,
 } from 'redis-smq-common';
 import {
+  RedisConnectionPool,
   TConsumerMessageHandlerEvent,
   TRedisSMQEvent,
 } from '../../common/index.js';
-import { RedisClient } from '../../common/redis-client/redis-client.js';
 import { ELuaScriptName } from '../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../config/index.js';
@@ -38,10 +41,10 @@ import { Consumer } from '../consumer.js';
 import { ConsumeMessage } from './consume-message/consume-message.js';
 import { DequeueMessage } from './dequeue-message/dequeue-message.js';
 import { evenBusPublisher } from './even-bus-publisher.js';
-import { ConsumerMessageHandlerError } from './errors/index.js';
-import { EventBus } from '../../event-bus/index.js';
+import { MessageHandlerError } from '../../errors/index.js';
 import { IConsumerMessageHandlerParams } from './types/index.js';
 import { TConsumerMessageHandlerWorkerPayload } from './workers/types/index.js';
+import { ERedisConnectionAcquisitionMode } from '../../common/redis-connection-pool/types/index.js';
 
 const WORKERS_DIR = path.resolve(env.getCurrentDir(), './workers');
 
@@ -54,16 +57,13 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   protected consumeMessage;
   protected messageHandler;
   protected autoDequeue;
-  protected redisClient;
-  protected eventBus;
   protected workerResourceGroup: WorkerResourceGroup | null = null;
+  protected redisClient: IRedisClient | null = null;
 
   constructor(
     consumer: Consumer,
-    redisClient: RedisClient,
     handlerParams: IConsumerMessageHandlerParams,
     autoDequeue: boolean = true,
-    eventBus: EventBus | null,
   ) {
     super();
     const { queue, messageHandler } = handlerParams;
@@ -71,10 +71,12 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     this.consumerId = consumer.getId();
     this.queue = queue;
     this.messageHandler = messageHandler;
-    this.logger = createLogger(
-      Configuration.getConfig().logger,
-      this.constructor.name.toLowerCase(),
-    );
+
+    const config = Configuration.getConfig();
+    this.logger = createLogger(config.logger, [
+      `${this.consumer.constructor.name}-${this.consumer.getId()}`,
+      `${this.constructor.name}-${this.getId()}`,
+    ]);
 
     this.logger.info(
       `Initializing MessageHandler for consumer ${this.consumerId}, queue ${JSON.stringify(this.queue)}`,
@@ -84,15 +86,13 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     );
 
     this.autoDequeue = autoDequeue;
-    this.redisClient = redisClient;
-    this.eventBus = eventBus;
 
-    if (this.eventBus) {
-      this.logger.debug('Event bus provided, setting up event bus publisher');
-      evenBusPublisher(this, this.eventBus, this.logger);
+    if (config.eventBus.enabled) {
+      this.logger.debug('Event bus is enabled, setting up event bus publisher');
+      evenBusPublisher(this);
     } else {
       this.logger.debug(
-        'No event bus provided, skipping event bus publisher setup',
+        'Event bus is not enabled, skipping event bus publisher setup',
       );
     }
 
@@ -110,13 +110,18 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     );
   }
 
+  protected getRedisClient(): IRedisClient | PanicError {
+    if (!this.redisClient) return new PanicError('Redis Client is missing');
+    return this.redisClient;
+  }
+
   /**
-   * Processes a message by fetching it from the queue-manager and updating its status to 'processing'.
+   * Processes a message by fetching it from the queue and updating its status to 'processing'.
    *
    * @param messageId - The unique identifier of the message to be processed.
    *
    * @remarks
-   * This method checks if the MessageHandler instance is running. If it is, it retrieves the message from the queue-manager using the provided `messageId`.
+   * This method checks if the MessageHandler instance is running. If it is, it retrieves the message from the queue using the provided `messageId`.
    * It then updates the message's status to 'processing' and passes it to the `consumeMessage` instance for further handling.
    * If the MessageHandler instance is not running, this method does nothing.
    *
@@ -152,7 +157,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       EQueueProperty.PENDING_MESSAGES_COUNT,
     ];
 
-    const redisClient = this.redisClient.getInstance();
+    const redisClient = this.getRedisClient();
     if (redisClient instanceof Error) {
       this.logger.error(`Failed to get Redis client: ${redisClient.message}`);
       this.handleError(redisClient);
@@ -177,11 +182,11 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
         // An empty reply indicates that the message was not in a PENDING state,
         // likely because another consumer processed it first. This is an
         // unexpected outcome as messages are dequeued atomically and placed
-        // into the processing queue-manager.
+        // into the processing queue.
         if (!reply) {
           const errMsg = `Message ${messageId} could not be fetched.`;
           this.logger.error(errMsg);
-          return this.handleError(new ConsumerMessageHandlerError(errMsg));
+          return this.handleError(new MessageHandlerError(errMsg));
         }
 
         if (!Array.isArray(reply)) {
@@ -206,9 +211,9 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   }
 
   /**
-   * Processes the next message in the queue-manager by dequeuing it and making it available for consumption.
+   * Processes the next message in the queue by dequeuing it and making it available for consumption.
    *
-   * This method calls the `dequeue` method of the `dequeueMessage` instance to retrieve a message from the queue-manager.
+   * This method calls the `dequeue` method of the `dequeueMessage` instance to retrieve a message from the queue.
    * If the MessageHandler instance is not running, this method does nothing.
    *
    * @remarks
@@ -222,20 +227,20 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   }
 
   /**
-   * Dequeues a message from the associated queue-manager.
+   * Dequeues a message from the associated queue.
    *
    * This method checks if the MessageHandler instance is running and then calls the `dequeue` method of the `dequeueMessage` instance.
    * If the MessageHandler instance is not running, the method does nothing.
    *
    * @remarks
-   * The `dequeue` method is responsible for retrieving a message from the queue-manager and making it available for processing.
+   * The `dequeue` method is responsible for retrieving a message from the queue and making it available for processing.
    * It ensures that only one consumer instance processes a message at a time, preventing message duplication.
    *
    * @returns {void}
    */
   dequeue(): void {
     if (this.isRunning()) {
-      this.logger.debug('Dequeuing message from queue-manager');
+      this.logger.debug('Dequeuing message from queue');
       this.dequeueMessage.dequeue();
     } else {
       this.logger.debug('Ignoring dequeue call as handler is not running');
@@ -243,13 +248,13 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   }
 
   /**
-   * Retrieves the queue-manager parameters associated with the current MessageHandler instance.
+   * Retrieves the queue parameters associated with the current MessageHandler instance.
    *
-   * @returns The queue-manager parameters, represented by the `IQueueParsedParams` interface.
+   * @returns The queue parameters, represented by the `IQueueParsedParams` interface.
    *
    * @remarks
-   * This method returns the queue-manager parameters that were provided when creating the MessageHandler instance.
-   * The returned object contains information about the queue-manager, such as the queue-manager name, consumer group ID, and other relevant details.
+   * This method returns the queue parameters that were provided when creating the MessageHandler instance.
+   * The returned object contains information about the queue, such as the queue name, consumer group ID, and other relevant details.
    */
   getQueue(): IQueueParsedParams {
     this.logger.debug(
@@ -260,12 +265,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
 
   protected initDequeueMessageInstance(): DequeueMessage {
     this.logger.debug('Creating new DequeueMessage instance');
-    const instance = new DequeueMessage(
-      new RedisClient(),
-      this.queue,
-      this.consumer,
-      this.eventBus,
-    );
+    const instance = new DequeueMessage(this.queue, this.consumer);
     this.logger.debug('Setting up error handler for DequeueMessage instance');
     instance.on('consumer.dequeueMessage.error', this.onError);
     this.logger.debug('DequeueMessage instance created successfully');
@@ -275,12 +275,10 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   protected initConsumeMessageInstance(): ConsumeMessage {
     this.logger.debug('Creating new ConsumeMessage instance');
     const instance = new ConsumeMessage(
-      this.redisClient,
       this.consumer,
       this.queue,
       this.getId(),
       this.messageHandler,
-      this.eventBus,
     );
     this.logger.debug('Setting up error handler for ConsumeMessage instance');
     instance.on('consumer.consumeMessage.error', this.onError);
@@ -361,7 +359,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
    * @param err - The error object that was encountered.
    *
    * @remarks
-   * This method checks if the MessageHandler instance is currently running. If it is, it emits a 'consumer.messageHandler.error' event with the error, consumer ID, and queue-manager information.
+   * This method checks if the MessageHandler instance is currently running. If it is, it emits a 'consumer.messageHandler.error' event with the error, consumer ID, and queue information.
    * It then calls the parent class's `handleError` method to perform any additional error handling.
    */
   protected override handleError(err: Error) {
@@ -401,7 +399,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
 
     this.logger.debug(`Queue workers lock key: ${keyQueueWorkersLock}`);
 
-    const redisClient = this.redisClient.getInstance();
+    const redisClient = this.getRedisClient();
     if (redisClient instanceof Error) {
       this.logger.error(`Failed to get Redis client: ${redisClient.message}`);
       cb(redisClient);
@@ -486,18 +484,19 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       `MessageHandler going up for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
     );
     return super.goingUp().concat([
-      (cb: ICallback<void>) => {
-        this.logger.debug('Starting DequeueMessage instance');
-        this.dequeueMessage.run((err) => {
-          if (err) {
-            this.logger.error(`Failed to start DequeueMessage: ${err.message}`);
-          } else {
-            this.logger.debug('DequeueMessage started successfully');
-          }
-          cb(err);
-        });
+      (cb: ICallback) => {
+        RedisConnectionPool.getInstance().acquire(
+          ERedisConnectionAcquisitionMode.SHARED,
+          (err, redisClient) => {
+            if (err) return cb(err);
+            if (!redisClient) return cb(new CallbackEmptyReplyError());
+            this.redisClient = redisClient;
+            cb();
+          },
+        );
       },
-      (cb: ICallback<void>) => {
+      (cb: ICallback) => this.setUpConsumerWorkers(cb),
+      (cb: ICallback) => {
         this.logger.debug('Starting ConsumeMessage instance');
         this.consumeMessage.run((err) => {
           if (err) {
@@ -508,7 +507,18 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
           cb(err);
         });
       },
-      (cb: ICallback<void>) => {
+      (cb: ICallback) => {
+        this.logger.debug('Starting DequeueMessage instance');
+        this.dequeueMessage.run((err) => {
+          if (err) {
+            this.logger.error(`Failed to start DequeueMessage: ${err.message}`);
+          } else {
+            this.logger.debug('DequeueMessage started successfully');
+          }
+          cb(err);
+        });
+      },
+      (cb: ICallback) => {
         if (this.autoDequeue) {
           this.logger.debug('Auto-dequeue enabled, initiating first dequeue');
           this.dequeue();
@@ -517,7 +527,6 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
         }
         cb();
       },
-      this.setUpConsumerWorkers,
     ]);
   }
 
@@ -564,6 +573,13 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
           }
           cb();
         });
+      },
+      (cb: ICallback) => {
+        if (this.redisClient) {
+          RedisConnectionPool.getInstance().release(this.redisClient);
+          this.redisClient = null;
+        }
+        cb();
       },
     ].concat(super.goingDown());
   }

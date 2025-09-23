@@ -11,12 +11,12 @@ import { expect, test } from 'vitest';
 import bluebird from 'bluebird';
 import {
   ConsumerGroups,
-  ConsumerGroupsConsumerGroupsNotSupportedError,
+  ConsumerGroupsNotSupportedError,
   EQueueDeliveryModel,
   EQueueType,
   IQueueParams,
 } from '../../../src/index.js';
-import { getQueue } from '../../common/queue.js';
+import { getQueueManager } from '../../common/queue-manager.js';
 
 test('Consumer groups/Queue delivery model validation', async () => {
   const queue1: IQueueParams = {
@@ -24,7 +24,7 @@ test('Consumer groups/Queue delivery model validation', async () => {
     ns: 'ns1',
   };
 
-  const queue = await getQueue();
+  const queue = await getQueueManager();
   await queue.saveAsync(
     queue1,
     EQueueType.PRIORITY_QUEUE,
@@ -34,7 +34,7 @@ test('Consumer groups/Queue delivery model validation', async () => {
   const consumerGroups = bluebird.promisifyAll(new ConsumerGroups());
   await expect(
     consumerGroups.saveConsumerGroupAsync(queue1, 'my-group-1'),
-  ).rejects.toThrow(ConsumerGroupsConsumerGroupsNotSupportedError);
+  ).rejects.toThrow(ConsumerGroupsNotSupportedError);
 
   await consumerGroups.shutdownAsync();
 });

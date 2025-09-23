@@ -8,13 +8,10 @@
  */
 
 import {
-  async,
   CallbackEmptyReplyError,
   createLogger,
   ICallback,
-  withRedisClient,
 } from 'redis-smq-common';
-import { RedisClient } from '../common/redis-client/redis-client.js';
 import { Configuration } from '../config/index.js';
 import { IMessageTransferable } from '../message/index.js';
 import { _getQueueProperties } from '../queue-manager/_/_get-queue-properties.js';
@@ -27,9 +24,9 @@ import {
 import { IPaginationPage, IQueueExplorer } from '../common/index.js';
 import { SequentialQueuePendingMessages } from './sequential-queue-pending-messages.js';
 import { PriorityQueuePendingMessages } from './priority-queue-pending-messages.js';
+import { withSharedPoolConnection } from '../common/redis-connection-pool/with-shared-pool-connection.js';
 
 export class QueuePendingMessages implements IQueueExplorer {
-  protected redisClient;
   protected priorityQueueMessages;
   protected sequentialQueuePendingMessages;
   protected logger;
@@ -41,8 +38,6 @@ export class QueuePendingMessages implements IQueueExplorer {
     );
     this.priorityQueueMessages = new PriorityQueuePendingMessages();
     this.sequentialQueuePendingMessages = new SequentialQueuePendingMessages();
-    this.redisClient = new RedisClient();
-    this.redisClient.on('error', (err) => this.logger.error(err));
   }
 
   countMessages(queue: TQueueExtendedParams, cb: ICallback<number>): void {
@@ -83,24 +78,11 @@ export class QueuePendingMessages implements IQueueExplorer {
     }
   }
 
-  shutdown = (cb: ICallback<void>): void => {
-    async.series(
-      [
-        (cb: ICallback<void>) => this.priorityQueueMessages.shutdown(cb),
-        (cb: ICallback<void>) =>
-          this.sequentialQueuePendingMessages.shutdown(cb),
-        this.redisClient.shutdown,
-      ],
-      (err) => cb(err),
-    );
-  };
-
   protected getQueueImplementation(
     queue: IQueueParsedParams,
     cb: ICallback<IQueueExplorer>,
   ): void {
-    withRedisClient(
-      this.redisClient,
+    withSharedPoolConnection(
       (client, cb) =>
         _getQueueProperties(client, queue.queueParams, (err, properties) => {
           if (err) cb(err);

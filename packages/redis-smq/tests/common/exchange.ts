@@ -10,22 +10,16 @@
 import bluebird from 'bluebird';
 import {
   ExchangeDirect,
-  ExchangeFanOut,
+  ExchangeFanout,
   ExchangeTopic,
 } from '../../src/index.js';
 
-const fanOutExchanges: ExchangeFanOut[] = [];
+const fanOutExchanges: ExchangeFanout[] = [];
 
 export function getFanOutExchange() {
-  const instance = new ExchangeFanOut();
+  const instance = new ExchangeFanout();
   fanOutExchanges.push(instance);
   return bluebird.promisifyAll(instance);
-}
-
-export async function shutDownFanOutExchange() {
-  for (const i of fanOutExchanges) {
-    await bluebird.promisifyAll(i).shutdownAsync();
-  }
 }
 
 const topicExchanges: ExchangeTopic[] = [];
@@ -36,22 +30,10 @@ export function getTopicExchange() {
   return bluebird.promisifyAll(instance);
 }
 
-export async function shutDownTopicExchange() {
-  for (const i of topicExchanges) {
-    await bluebird.promisifyAll(i).shutdownAsync();
-  }
-}
-
 const directExchanges: ExchangeDirect[] = [];
 
 export function getDirectExchange() {
   const instance = new ExchangeDirect();
   directExchanges.push(instance);
   return bluebird.promisifyAll(instance);
-}
-
-export async function shutDownDirectExchange() {
-  for (const i of directExchanges) {
-    await bluebird.promisifyAll(i).shutdownAsync();
-  }
 }

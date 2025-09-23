@@ -9,7 +9,7 @@
 
 import cronParser from 'cron-parser';
 import { _getExchangeDirectTransferable } from '../exchange/exchange-direct/_/_get-exchange-direct-transferable.js';
-import { _getExchangeFanOutTransferable } from '../exchange/exchange-fan-out/_/_get-exchange-fanout-transferable.js';
+import { _getExchangeFanOutTransferable } from '../exchange/exchange-fanout/_/_get-exchange-fanout-transferable.js';
 import { _getExchangeTopicTransferable } from '../exchange/exchange-topic/_/_get-exchange-topic-transferable.js';
 import {
   EExchangeType,
@@ -17,7 +17,7 @@ import {
   TExchangeTransferable,
 } from '../exchange/index.js';
 import { IQueueParams } from '../queue-manager/index.js';
-import { MessageMessagePropertyError } from './errors/index.js';
+import { MessagePropertyError } from '../errors/index.js';
 import { EMessagePriority, TMessageConsumeOptions } from './types/index.js';
 
 /**
@@ -44,7 +44,7 @@ export class ProducibleMessage {
   // Stores the timestamp when the message was created. It is automatically set when a new instance of the ProducibleMessage class is instantiated.
   protected readonly createdAt: number;
 
-  // Stores the Time-To-Live (TTL) value for the message. The TTL determines how long the message should remain in the queue-manager before it expires. A value of 0 indicates that the message does not expire.
+  // Stores the Time-To-Live (TTL) value for the message. The TTL determines how long the message should remain in the queue before it expires. A value of 0 indicates that the message does not expire.
   protected ttl = 0;
 
   // Stores the retry threshold value for the message. The retry threshold specifies the maximum number of times a failed message can be retried before it is considered permanently failed.
@@ -59,7 +59,7 @@ export class ProducibleMessage {
   // Stores the message body. The message body can be any valid JSON value, such as a string, number, object, array, or null.
   protected body: unknown = null;
 
-  // Stores the priority of the message. The priority determines the order in which messages are processed within the queue-manager.
+  // Stores the priority of the message. The priority determines the order in which messages are processed within the queue.
   protected priority: EMessagePriority | null = null;
 
   // Stores the scheduled cron expression for the message.
@@ -174,12 +174,12 @@ export class ProducibleMessage {
    *
    * @param {number} delay - The retry delay value in milliseconds.
    * @returns {number} - The validated retry delay value.
-   * @throws {MessageMessagePropertyError} - If the provided delay is not a valid number or is negative.
+   * @throws {MessagePropertyError} - If the provided delay is not a valid number or is negative.
    */
   protected static validateRetryDelay(delay: number): number {
     const value = Number(delay);
     if (isNaN(value) || value < 0) {
-      throw new MessageMessagePropertyError();
+      throw new MessagePropertyError();
     }
     return value;
   }
@@ -192,12 +192,12 @@ export class ProducibleMessage {
    *
    * @param {unknown} ttl - The TTL value to be validated.
    * @returns {number} - The validated TTL value.
-   * @throws {MessageMessagePropertyError} - If the provided TTL value is not a valid number or is negative.
+   * @throws {MessagePropertyError} - If the provided TTL value is not a valid number or is negative.
    */
   protected static validateTTL(ttl: unknown): number {
     const value = Number(ttl);
     if (isNaN(value) || value < 0) {
-      throw new MessageMessagePropertyError();
+      throw new MessagePropertyError();
     }
     return value;
   }
@@ -210,12 +210,12 @@ export class ProducibleMessage {
    *
    * @param {unknown} timeout - The timeout value to be validated.
    * @returns {number} - The validated consume timeout value.
-   * @throws {MessageMessagePropertyError} - If the provided timeout value is not a valid number or is negative.
+   * @throws {MessagePropertyError} - If the provided timeout value is not a valid number or is negative.
    */
   protected static validateConsumeTimeout(timeout: unknown): number {
     const value = Number(timeout);
     if (isNaN(value) || value < 0) {
-      throw new MessageMessagePropertyError();
+      throw new MessagePropertyError();
     }
     return value;
   }
@@ -228,12 +228,12 @@ export class ProducibleMessage {
    *
    * @param {unknown} threshold - The retry threshold value to be validated.
    * @returns {number} - The validated retry threshold value.
-   * @throws {MessageMessagePropertyError} - If the provided threshold is not a valid number or if it is less than zero.
+   * @throws {MessagePropertyError} - If the provided threshold is not a valid number or if it is less than zero.
    */
   protected static validateRetryThreshold(threshold: unknown): number {
     const value = Number(threshold);
     if (isNaN(value) || value < 0) {
-      throw new MessageMessagePropertyError();
+      throw new MessagePropertyError();
     }
     return value;
   }
@@ -266,14 +266,14 @@ export class ProducibleMessage {
    *
    * @returns {ProducibleMessage} - The updated `ProducibleMessage` instance, allowing method chaining.
    *
-   * @throws {MessageMessagePropertyError} - If the provided period value is not a positive integer.
+   * @throws {MessagePropertyError} - If the provided period value is not a positive integer.
    */
   setScheduledRepeatPeriod(period: number): ProducibleMessage {
     // JavaScript users do not have type checking
     // So just make sure that we have an integer value
     const value = Number(period);
     if (isNaN(value) || value < 0) {
-      throw new MessageMessagePropertyError();
+      throw new MessagePropertyError();
     }
     this.scheduledRepeatPeriod = value;
     return this;
@@ -283,13 +283,13 @@ export class ProducibleMessage {
    * Sets a delay for scheduling the current message's delivery.
    *
    * This function allows you to specify a delay in milliseconds before the message is
-   * actually sent to the queue-manager. The delay ensures that the message is not delivered
+   * actually sent to the queue. The delay ensures that the message is not delivered
    * immediately, allowing for the system to perform any necessary operations or checks.
    *
    * @param {number} delay - The delay value in milliseconds. A positive integer representing the
    *                         time to wait before sending the message.
    *
-   * @throws {MessageMessagePropertyError} - If the provided delay value is not a positive integer,
+   * @throws {MessagePropertyError} - If the provided delay value is not a positive integer,
    *                                      this error is thrown.
    *
    * @returns {ProducibleMessage} - The updated `ProducibleMessage` instance, allowing method chaining.
@@ -301,7 +301,7 @@ export class ProducibleMessage {
     // So just make sure that we have an integer value
     const value = Number(delay);
     if (isNaN(value) || value < 0) {
-      throw new MessageMessagePropertyError();
+      throw new MessagePropertyError();
     }
     this.scheduledDelay = value;
     return this;
@@ -309,7 +309,7 @@ export class ProducibleMessage {
 
   /**
    * Retrieve the scheduled delay time for a message, which indicates how long
-   * the message should be delayed before it is delivered to a queue-manager.
+   * the message should be delayed before it is delivered to a queue.
    *
    * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduleddelay
    */
@@ -361,14 +361,14 @@ export class ProducibleMessage {
    *
    * @returns {ProducibleMessage} - The updated `ProducibleMessage` instance, allowing method chaining.
    *
-   * @throws {MessageMessagePropertyError} - If the provided repeat value is not a non-negative integer.
+   * @throws {MessagePropertyError} - If the provided repeat value is not a non-negative integer.
    */
   setScheduledRepeat(repeat: number): ProducibleMessage {
     // JavaScript users do not have type checking
     // So just make sure that we have an integer value
     const value = Number(repeat);
     if (isNaN(value) || value < 0) {
-      throw new MessageMessagePropertyError();
+      throw new MessagePropertyError();
     }
     this.scheduledRepeat = value;
     return this;
@@ -399,7 +399,7 @@ export class ProducibleMessage {
   /**
    * Sets the Time-To-Live (TTL) value for the current message.
    *
-   * The TTL determines how long the message should remain in the queue-manager before
+   * The TTL determines how long the message should remain in the queue before
    * it expires. This is useful for managing message lifetimes and preventing
    * the processing of outdated messages.
    *
@@ -440,8 +440,8 @@ export class ProducibleMessage {
    * Sets the retry threshold for the current message.
    *
    * Set the number of times a failed message can be retried before it is
-   * considered permanently failed and moved to a dead-letter queue-manager (DLQ) or discarded
-   * according to the message queue-manager configuration.
+   * considered permanently failed and moved to a dead-letter queue (DLQ) or discarded
+   * according to the message queue configuration.
    *
    * The default retry threshold is 3.
    *
@@ -510,7 +510,7 @@ export class ProducibleMessage {
    * This feature allows developers to manage the order in which messages are
    * processed based on their priority, enabling more important tasks to be handled before others.
    *
-   * Message priority should be set only when producing a message to a priority queue-manager.
+   * Message priority should be set only when producing a message to a priority queue.
    * Otherwise, message priority does not take effect.
    *
    * @param {EMessagePriority} priority - The priority level for the message.
@@ -567,7 +567,7 @@ export class ProducibleMessage {
    *
    * This feature is particularly useful in scenarios where you
    * want multiple services to react to the same event or message without
-   * needing to duplicate the message for each queue-manager.
+   * needing to duplicate the message for each queue.
    *
    * @param {string} fanOutName - The name of the fan-out pattern.
    * @returns {ProducibleMessage} - The updated `ProducibleMessage` instance, allowing method chaining.
@@ -604,13 +604,13 @@ export class ProducibleMessage {
   }
 
   /**
-   * Sets the queue-manager parameters for the message, enabling a direct message publication model
-   * where messages can be sent to a specific queue-manager and consumed
+   * Sets the queue parameters for the message, enabling a direct message publication model
+   * where messages can be sent to a specific queue and consumed
    * by consumers interested in those messages.
    *
-   * @param {string | IQueueParams} queueParams - The queue-manager parameters can be provided as a string (queue-manager name) or as an object (queue-manager parameters).
-   *                                                  If a string is provided, it should be the name of the queue-manager.
-   *                                                  If an object is provided, it should contain the queue-manager parameters as defined in the RedisSMQ documentation.
+   * @param {string | IQueueParams} queueParams - The queue parameters can be provided as a string (queue name) or as an object (queue parameters).
+   *                                                  If a string is provided, it should be the name of the queue.
+   *                                                  If an object is provided, it should contain the queue parameters as defined in the RedisSMQ documentation.
    * @returns {ProducibleMessage} - The updated `ProducibleMessage` instance, allowing method chaining.
    *
    * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/exchanges-and-delivery-models.md
@@ -623,16 +623,16 @@ export class ProducibleMessage {
   }
 
   /**
-   * Retrieves the queue-manager parameters associated with the current message.
+   * Retrieves the queue parameters associated with the current message.
    *
-   * This method returns the queue-manager parameters that were set for the message using the
-   * setQueue method. The queue-manager parameters determine how the message will be routed within
+   * This method returns the queue parameters that were set for the message using the
+   * setQueue method. The queue parameters determine how the message will be routed within
    * the messaging system.
    *
-   * @returns {ITopicParams | null} The queue-manager parameters associated with the message.
-   *          Returns null if no queue-manager parameters have been set.
+   * @returns {ITopicParams | null} The queue parameters associated with the message.
+   *          Returns null if no queue parameters have been set.
    *
-   * @see For more information on setting the queue-manager parameters:
+   * @see For more information on setting the queue parameters:
    *      https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setqueue
    */
   getQueue(): IQueueParams | null {
@@ -683,7 +683,7 @@ export class ProducibleMessage {
   }
 
   /**
-   * Retrieves the exchange (fan-out, topic, or queue-manager name) associated with the current message.
+   * Retrieves the exchange (fan-out, topic, or queue name) associated with the current message.
    *
    * This method returns the exchange that was set for the message using one of the
    * setQueue, setTopic, or setFanOut methods. The exchange determines how the message
@@ -756,7 +756,7 @@ export class ProducibleMessage {
   /**
    * Retrieves the Time-To-Live (TTL) value set for the message.
    *
-   * The TTL determines how long the message should remain in the queue-manager before
+   * The TTL determines how long the message should remain in the queue before
    * it expires. This is useful for managing message lifetimes and preventing
    * the processing of outdated messages.
    *
@@ -775,7 +775,7 @@ export class ProducibleMessage {
    *
    * The retry threshold specifies the maximum number of times a failed message
    * will be retried before it is considered permanently failed and potentially
-   * moved to a dead-letter queue-manager.
+   * moved to a dead-letter queue.
    *
    * @returns The retry threshold value. A positive integer representing the
    *          maximum number of retry attempts for the message.
@@ -823,7 +823,7 @@ export class ProducibleMessage {
    *
    * This method returns the priority level that was set for the message using the
    * setPriority method. The priority level determines the order in which messages
-   * are processed when using a priority queue-manager.
+   * are processed when using a priority queue.
    *
    * @returns {EMessagePriority | null} The priority level of the message as defined
    *          in the EMessagePriority enum, or null if no priority has been set.

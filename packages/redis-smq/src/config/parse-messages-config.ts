@@ -20,7 +20,7 @@ import {
 import {
   ConfigurationMessageQueueSizeError,
   ConfigurationMessageStoreExpireError,
-} from './errors/index.js';
+} from '../errors/index.js';
 
 /**
  * @fileoverview Message configuration parsing utilities for RedisSMQ.
@@ -35,7 +35,7 @@ import {
  * These values are used when specific configuration is not provided.
  */
 const DEFAULT_STORAGE_VALUES = {
-  /** Default queue-manager size when storage is enabled but no size is specified */
+  /** Default queue size when storage is enabled but no size is specified */
   QUEUE_SIZE: 0,
   /** Default expiration time when storage is enabled but no expiration is specified */
   EXPIRE: 0,
@@ -45,7 +45,7 @@ const DEFAULT_STORAGE_VALUES = {
  * Validation constants for message storage configuration.
  */
 const VALIDATION_LIMITS = {
-  /** Minimum allowed queue-manager size */
+  /** Minimum allowed queue size */
   MIN_QUEUE_SIZE: 0,
   /** Minimum allowed expiration time */
   MIN_EXPIRE: 0,

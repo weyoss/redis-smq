@@ -19,7 +19,7 @@ import {
   createQueue,
   getDefaultQueue,
 } from '../../common/message-producing-consuming.js';
-import { getMessage } from '../../common/message.js';
+import { getMessageManager } from '../../common/message-manager.js';
 import { getProducer } from '../../common/producer.js';
 
 test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQUEUING -> UNACK_DELAYING -> ACKNOWLEDGED', async () => {
@@ -37,7 +37,7 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQUEUING ->
     .setRetryDelay(10000);
   const [id] = await producer.produceAsync(msg);
 
-  const message = await getMessage();
+  const message = await getMessageManager();
   const msg0 = await message.getMessageStatusAsync(id);
   expect(msg0).toBe(EMessagePropertyStatus.PENDING);
 

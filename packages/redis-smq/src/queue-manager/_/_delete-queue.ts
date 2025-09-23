@@ -18,9 +18,9 @@ import { _getConsumerGroups } from '../../consumer-groups/_/_get-consumer-groups
 import { ConsumerHeartbeat } from '../../consumer/consumer-heartbeat/consumer-heartbeat.js';
 import {
   QueueManagerActiveConsumersError,
-  QueueManagerQueueNotEmptyError,
-  QueueManagerQueueNotFoundError,
-} from '../errors/index.js';
+  QueueNotEmptyError,
+  QueueNotFoundError,
+} from '../../errors/index.js';
 import { EQueueDeliveryModel, IQueueParams } from '../types/index.js';
 import { _getQueueConsumerIds } from './_get-queue-consumer-ids.js';
 import { _getQueueProperties } from './_get-queue-properties.js';
@@ -103,10 +103,10 @@ export function _deleteQueue(
             (cb: ICallback<void>): void =>
               _getQueueProperties(redisClient, queueParams, (err, reply) => {
                 if (err) cb(err);
-                else if (!reply) cb(new QueueManagerQueueNotFoundError());
+                else if (!reply) cb(new QueueNotFoundError());
                 else {
                   const messagesCount = reply.messagesCount;
-                  if (messagesCount) cb(new QueueManagerQueueNotEmptyError());
+                  if (messagesCount) cb(new QueueNotEmptyError());
                   else {
                     exchange = reply.fanoutExchange ?? null;
                     pubSubDelivery =

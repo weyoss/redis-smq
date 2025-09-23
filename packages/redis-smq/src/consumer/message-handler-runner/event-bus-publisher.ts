@@ -7,21 +7,17 @@
  * in the root directory of this source tree.
  */
 
-import { ILogger } from 'redis-smq-common';
 import { TConsumerMessageHandlerRunnerEvent } from '../../common/index.js';
 import { EventBus } from '../../event-bus/index.js';
 import { MessageHandlerRunner } from './message-handler-runner.js';
 
 export function eventBusPublisher(
   messageHandlerRunner: MessageHandlerRunner,
-  eventBus: EventBus,
-  logger: ILogger,
 ): void {
   const error: TConsumerMessageHandlerRunnerEvent['consumer.messageHandlerRunner.error'] =
     (...args) => {
-      const instance = eventBus.getInstance();
-      if (instance instanceof Error) logger.error(instance);
-      else instance.emit('consumer.messageHandlerRunner.error', ...args);
+      const instance = EventBus.getInstance();
+      instance.emit('consumer.messageHandlerRunner.error', ...args);
     };
   messageHandlerRunner.on('consumer.messageHandlerRunner.error', error);
 }

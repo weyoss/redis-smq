@@ -7,22 +7,16 @@
  * in the root directory of this source tree.
  */
 
-import { ILogger } from 'redis-smq-common';
 import { TConsumerMessageHandlerEvent } from '../../common/index.js';
 import { EventBus } from '../../event-bus/index.js';
 import { MessageHandler } from './message-handler.js';
 
-export function evenBusPublisher(
-  messageHandler: MessageHandler,
-  eventBus: EventBus,
-  logger: ILogger,
-): void {
+export function evenBusPublisher(messageHandler: MessageHandler): void {
   const error: TConsumerMessageHandlerEvent['consumer.messageHandler.error'] = (
     ...args
   ) => {
-    const instance = eventBus.getInstance();
-    if (instance instanceof Error) logger.error(instance);
-    else instance.emit('consumer.messageHandler.error', ...args);
+    const instance = EventBus.getInstance();
+    instance.emit('consumer.messageHandler.error', ...args);
   };
   messageHandler.on('consumer.messageHandler.error', error);
 }

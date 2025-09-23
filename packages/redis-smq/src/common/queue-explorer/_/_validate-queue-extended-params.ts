@@ -14,9 +14,9 @@ import {
   IQueueParsedParams,
 } from '../../../queue-manager/index.js';
 import {
-  QueueExplorerConsumerGroupIdNotSupportedError,
-  QueueExplorerConsumerGroupIdRequiredError,
-} from '../errors/index.js';
+  ConsumerGroupIdNotSupportedError,
+  ConsumerGroupIdRequiredError,
+} from '../../../errors/index.js';
 
 export function _validateQueueExtendedParams(
   redisClient: IRedisClient,
@@ -33,12 +33,12 @@ export function _validateQueueExtendedParams(
         properties?.deliveryModel === EQueueDeliveryModel.PUB_SUB &&
         !groupId
       ) {
-        cb(new QueueExplorerConsumerGroupIdRequiredError());
+        cb(new ConsumerGroupIdRequiredError());
       } else if (
         properties?.deliveryModel === EQueueDeliveryModel.POINT_TO_POINT &&
         groupId
       ) {
-        cb(new QueueExplorerConsumerGroupIdNotSupportedError());
+        cb(new ConsumerGroupIdNotSupportedError());
       } else cb();
     }
   });

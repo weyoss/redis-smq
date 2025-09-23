@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { async, ICallback, IEventBus, IRedisClient } from 'redis-smq-common';
+import { async, EventBus, ICallback, IRedisClient } from 'redis-smq-common';
 import { TRedisSMQEvent } from '../../common/index.js';
 import { ELuaScriptName } from '../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
@@ -17,14 +17,14 @@ import {
   IQueueParams,
 } from '../../queue-manager/index.js';
 import {
-  ConsumerGroupsConsumerGroupNotEmptyError,
+  ConsumerGroupNotEmptyError,
   ConsumerGroupsError,
-  ConsumerGroupsQueueNotFoundError,
-} from '../errors/index.js';
+  QueueNotFoundError,
+} from '../../errors/index.js';
 
 export function _deleteConsumerGroup(
   redisClient: IRedisClient,
-  eventBus: IEventBus<TRedisSMQEvent>,
+  eventBus: EventBus<TRedisSMQEvent>,
   queue: IQueueParams,
   groupId: string,
   cb: ICallback,
@@ -51,9 +51,9 @@ export function _deleteConsumerGroup(
             if (err) cb(err);
             else if (reply !== 'OK') {
               if (reply === 'QUEUE_NOT_FOUND') {
-                cb(new ConsumerGroupsQueueNotFoundError());
+                cb(new QueueNotFoundError());
               } else if (reply === 'CONSUMER_GROUP_NOT_EMPTY') {
-                cb(new ConsumerGroupsConsumerGroupNotEmptyError());
+                cb(new ConsumerGroupNotEmptyError());
               } else {
                 cb(new ConsumerGroupsError());
               }

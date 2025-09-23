@@ -9,50 +9,22 @@
 
 import bluebird from 'bluebird';
 import { shutDownConsumers } from './consumer.js';
-import { shutDownEventBus } from './event-bus-redis.js';
-import {
-  shutDownDirectExchange,
-  shutDownFanOutExchange,
-  shutDownTopicExchange,
-} from './exchange.js';
-import { shutDownMessage } from './message.js';
-import { shutDownNamespace } from './namespace.js';
 import { shutDownProducers } from './producer.js';
-import { shutDownQueueAcknowledgedMessages } from './queue-acknowledged-messages.js';
-import { shutDownQueueDeadLetteredMessages } from './queue-dead-lettered-messages.js';
-import { shutDownQueueMessages } from './queue-messages.js';
-import { shutDownQueuePendingMessages } from './queue-pending-messages.js';
-import { shutDownQueueRateLimit } from './queue-rate-limit.js';
-import { shutDownQueueScheduledMessages } from './queue-scheduled-messages.js';
-import { shutDownQueue } from './queue.js';
 import { shutDownRedisClients } from './redis.js';
 import { stopScheduleWorker } from './schedule-worker.js';
-import { Configuration } from '../../src/index.js';
+import { RedisSMQ } from '../../src/index.js';
 
-const ConfigurationAsync = bluebird.promisifyAll(Configuration);
+const RedisSMQAsync = bluebird.promisifyAll(RedisSMQ);
 
 export async function shutdown(): Promise<void> {
   await shutDownConsumers();
   await shutDownProducers();
   await stopScheduleWorker();
-  await shutDownEventBus();
-  await shutDownQueueScheduledMessages();
-  await shutDownQueueRateLimit();
-  await shutDownQueuePendingMessages();
-  await shutDownQueueMessages();
-  await shutDownQueueDeadLetteredMessages();
-  await shutDownQueueAcknowledgedMessages();
-  await shutDownQueue();
-  await shutDownNamespace();
-  await shutDownMessage();
-  await shutDownDirectExchange();
-  await shutDownTopicExchange();
-  await shutDownFanOutExchange();
 
   // Redis clients should be stopped in the last step, to avoid random errors from different
   // dependant components.
   await shutDownRedisClients();
 
   //
-  await ConfigurationAsync.shutdownAsync();
+  await RedisSMQAsync.shutdownAsync();
 }

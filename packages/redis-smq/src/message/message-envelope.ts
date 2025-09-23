@@ -13,8 +13,8 @@ import { IQueueParams } from '../queue-manager/index.js';
 import {
   MessageDestinationQueueAlreadySetError,
   MessageDestinationQueueRequiredError,
-  MessageMessageExchangeRequiredError,
-} from './errors/index.js';
+  MessageExchangeRequiredError,
+} from '../errors/index.js';
 import { MessageState } from './message-state.js';
 import { ProducibleMessage } from './producible-message.js';
 import {
@@ -59,7 +59,7 @@ export class MessageEnvelope {
    *
    * @example
    * ```typescript
-   * const message = new ProducibleMessage().setQueue('my-queue-manager');
+   * const message = new ProducibleMessage().setQueue('my-queue');
    * const envelope = new MessageEnvelope(message);
    * const messageState = envelope.getMessageState();
    * console.log(messageState.getAttempts()); // Output: 0
@@ -108,7 +108,7 @@ export class MessageEnvelope {
    *
    * @example
    * ```typescript
-   * const message = new ProducibleMessage().setBody('Hello, world!').setQueue('my-queue-manager');
+   * const message = new ProducibleMessage().setBody('Hello, world!').setQueue('my-queue');
    * const envelope = new MessageEnvelope(message);
    * console.log(envelope.getId()); // Output: 'message-id'
    * ```
@@ -131,7 +131,7 @@ export class MessageEnvelope {
    *
    * @example
    * ```typescript
-   * const message = new ProducibleMessage().setBody('Hello, world!').setQueue('my-queue-manager').setTTL(3600000);
+   * const message = new ProducibleMessage().setBody('Hello, world!').setQueue('my-queue').setTTL(3600000);
    * const envelope = new MessageEnvelope(message);
    * console.log(message.getSetExpired()); // Output: false (message has not expired yet)
    *
@@ -183,7 +183,7 @@ export class MessageEnvelope {
    *
    * @example
    * ```typescript
-   * const message = new ProducibleMessage().setQueue('my-queue-manager');
+   * const message = new ProducibleMessage().setQueue('my-queue');
    * message.setScheduledDelay(60000); // Schedule message to be delivered in 1 minute
    * const envelope = new MessageEnvelope(message);
    * console.log(envelope.hasNextDelay()); // Output: true
@@ -215,13 +215,13 @@ export class MessageEnvelope {
    * @example
    * ```typescript
    * const message = new ProducibleMessage()
-   * message.setQueue('my-queue-manager');
+   * message.setQueue('my-queue');
    * message.setScheduledDelay(60000); // Schedule message to be delivered in 1 minute
    * const envelope = new MessageEnvelope(message);
    * console.log(envelope.getNextScheduledTimestamp()); // Output: 1642678860000 (timestamp in milliseconds)
    *
    * const message2 = new ProducibleMessage()
-   * message2.setQueue('my-queue-manager');
+   * message2.setQueue('my-queue');
    * message2.setScheduledCRON('* * * * *'); // Schedule message every minute
    * const envelope2 = new MessageEnvelope(message2);
    * console.log(envelope2.getNextScheduledTimestamp()); // Output: 1642678860000 (timestamp in milliseconds)
@@ -311,7 +311,7 @@ export class MessageEnvelope {
   /**
    * Retrieves the exchange associated with the producible message.
    *
-   * @throws {MessageMessageExchangeRequiredError} - If the producible message does not have an exchange set.
+   * @throws {MessageExchangeRequiredError} - If the producible message does not have an exchange set.
    *
    * @returns {TExchangeTransferable} - The exchange associated with the producible message.
    *
@@ -331,7 +331,7 @@ export class MessageEnvelope {
   getExchange(): TExchangeTransferable {
     const exchange = this.producibleMessage.getExchange();
     if (!exchange) {
-      throw new MessageMessageExchangeRequiredError();
+      throw new MessageExchangeRequiredError();
     }
     return exchange;
   }
@@ -348,12 +348,12 @@ export class MessageEnvelope {
    * @returns {MessageEnvelope} - The updated message envelope instance with the consumer group ID set.
    *
    * @remarks
-   * The consumer group ID is used to group consumers that are interested in consuming messages from the same queue-manager.
+   * The consumer group ID is used to group consumers that are interested in consuming messages from the same queue.
    * This allows for load balancing and parallel processing of messages within a consumer group.
    *
    * @example
    * ```typescript
-   * const message = new ProducibleMessage().setBody('Hello, world!').setQueue('my-queue-manager');
+   * const message = new ProducibleMessage().setBody('Hello, world!').setQueue('my-queue');
    * const envelope = new MessageEnvelope(message);
    * envelope.setConsumerGroupId('my-consumer-group');
    * console.log(envelope.getConsumerGroupId()); // Output: 'my-consumer-group'
@@ -371,12 +371,12 @@ export class MessageEnvelope {
    *                           Returns `null` if no consumer group ID is set.
    *
    * @remarks
-   * The consumer group ID is used to group consumers that are interested in consuming messages from the same queue-manager.
+   * The consumer group ID is used to group consumers that are interested in consuming messages from the same queue.
    * This allows for load balancing and parallel processing of messages within a consumer group.
    *
    * @example
    * ```typescript
-   * const message = new ProducibleMessage().setBody('Hello, world!').setQueue('my-queue-manager');
+   * const message = new ProducibleMessage().setBody('Hello, world!').setQueue('my-queue');
    * const envelope = new MessageEnvelope(message);
    * envelope.setConsumerGroupId('my-consumer-group');
    * console.log(envelope.getConsumerGroupId()); // Output: 'my-consumer-group'
@@ -395,11 +395,11 @@ export class MessageEnvelope {
    * This function creates a new object containing the properties of the message envelope,
    * including the message's creation timestamp, TTL, retry threshold, retry delay, consume timeout,
    * body, priority, scheduled CRON, scheduled delay, scheduled repeat period, scheduled repeat,
-   * exchange, destination queue-manager, and consumer group ID.
+   * exchange, destination queue, and consumer group ID.
    *
    * @example
    * ```typescript
-   * const message = new ProducibleMessage().setBody('Hello, world!').setQueue('my-queue-manager');
+   * const message = new ProducibleMessage().setBody('Hello, world!').setQueue('my-queue');
    * const envelope = new MessageEnvelope(message);
    * const messageParams = envelope.toJSON();
    * console.log(messageParams);
@@ -417,7 +417,7 @@ export class MessageEnvelope {
    * //   scheduledRepeatPeriod: null,
    * //   scheduledRepeat: 0,
    * //   exchange: { name: 'my-exchange', type: 'direct' },
-   * //   destinationQueue: { name: 'my-queue-manager' },
+   * //   destinationQueue: { name: 'my-queue' },
    * //   consumerGroupId: null
    * // }
    * ```
@@ -455,7 +455,7 @@ export class MessageEnvelope {
    *
    * @example
    * ```typescript
-   * const message = new ProducibleMessage().setBody('Hello, world!').setQueue('my-queue-manager');
+   * const message = new ProducibleMessage().setBody('Hello, world!').setQueue('my-queue');
    * const envelope = new MessageEnvelope(message);
    * const transferableMessage = envelope.transfer();
    * console.log(transferableMessage);
@@ -474,7 +474,7 @@ export class MessageEnvelope {
    * //   scheduledRepeatPeriod: null,
    * //   scheduledRepeat: 0,
    * //   exchange: { name: 'my-exchange', type: 'direct' },
-   * //   destinationQueue: { name: 'my-queue-manager' },
+   * //   destinationQueue: { name: 'my-queue' },
    * //   consumerGroupId: null,
    * //   messageState: { attempts: 0, effectiveScheduledDelay: null, scheduledCronFired: false, messageScheduledRepeatCount: 0 },
    * //   status: 'UNPUBLISHED'

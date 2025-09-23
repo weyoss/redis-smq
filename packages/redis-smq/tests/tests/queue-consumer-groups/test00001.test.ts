@@ -15,25 +15,21 @@ import {
   ConsumerGroups,
   EQueueDeliveryModel,
   EQueueType,
-  EventBus,
   IQueueParams,
 } from '../../../index.js';
 import { QueueConsumerGroupsCache } from '../../../src/producer/queue-consumer-groups-cache.js';
 import { getProducer } from '../../common/producer.js';
-import { getQueue } from '../../common/queue.js';
+import { getQueueManager } from '../../common/queue-manager.js';
 
 test('QueueConsumerGroupsCache: combined tests', async () => {
   const producer = getProducer();
-
-  const eventBus = bluebird.promisifyAll(new EventBus());
-  await eventBus.initAsync();
 
   const redisClient = bluebird.promisifyAll(new RedisClient());
   await redisClient.initAsync();
 
   // initializing a standalone dictionary
   const queueConsumerGroupsDictionary = bluebird.promisifyAll(
-    new QueueConsumerGroupsCache(producer, redisClient, eventBus),
+    new QueueConsumerGroupsCache(producer),
   );
   await queueConsumerGroupsDictionary.runAsync();
 
@@ -48,7 +44,7 @@ test('QueueConsumerGroupsCache: combined tests', async () => {
     consumerGroups: [],
   });
 
-  const queue = await getQueue();
+  const queue = await getQueueManager();
   await queue.saveAsync(
     queue1,
     EQueueType.PRIORITY_QUEUE,
@@ -154,7 +150,7 @@ test('QueueConsumerGroupsCache: combined tests', async () => {
   await queueConsumerGroupsDictionary.shutdownAsync();
 
   const queueConsumerGroupsDictionary2 = bluebird.promisifyAll(
-    new QueueConsumerGroupsCache(producer, redisClient, eventBus),
+    new QueueConsumerGroupsCache(producer),
   );
   await queueConsumerGroupsDictionary2.runAsync();
   const gp11 = queueConsumerGroupsDictionary2.getConsumerGroups(queue2);
@@ -165,6 +161,5 @@ test('QueueConsumerGroupsCache: combined tests', async () => {
 
   await queueConsumerGroupsDictionary2.shutdownAsync();
   await consumerGroups.shutdownAsync();
-  await eventBus.shutdownAsync();
   await redisClient.shutdownAsync();
 });

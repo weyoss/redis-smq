@@ -15,7 +15,7 @@ import {
   createQueue,
   getDefaultQueue,
 } from '../../common/message-producing-consuming.js';
-import { getMessage } from '../../common/message.js';
+import { getMessageManager } from '../../common/message-manager.js';
 import { getProducer } from '../../common/producer.js';
 import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
 
@@ -48,7 +48,7 @@ test('MessageList produced from scheduled message are processed like normal mess
   expect(res.totalItems).toBe(1);
   expect(typeof res.items[0].id).toBe('string');
 
-  const m = await getMessage();
+  const m = await getMessageManager();
   const mState = await m.getMessageStateAsync(res.items[0].id);
   expect(mState.scheduledMessageParentId).toBe(id);
   expect(mState.attempts).toBe(2);

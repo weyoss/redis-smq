@@ -13,7 +13,7 @@ import {
   EMessageProperty,
   EMessagePropertyStatus,
 } from '../../message/index.js';
-import { MessageManagerMessageNotFoundError } from '../errors/index.js';
+import { MessageNotFoundError } from '../../errors/index.js';
 
 export function _getMessageStatus(
   redisClient: IRedisClient,
@@ -26,7 +26,7 @@ export function _getMessageStatus(
     String(EMessageProperty.STATUS),
     (err, reply) => {
       if (err) cb(err);
-      else if (!reply) cb(new MessageManagerMessageNotFoundError());
+      else if (!reply) cb(new MessageNotFoundError());
       else cb(null, Number(reply));
     },
   );

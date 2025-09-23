@@ -19,14 +19,14 @@ import {
   ProducibleMessage,
 } from '../../../src/index.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
-import { getQueue } from '../../common/queue.js';
+import { getQueueManager } from '../../common/queue-manager.js';
 
 it('ConsumeMessageWorker: case 1', async () => {
   const consumer = bluebird.promisifyAll(new Consumer());
   await consumer.runAsync();
 
   const queue1 = 'test';
-  const queue = await getQueue();
+  const queue = await getQueueManager();
   await queue.saveAsync(
     queue1,
     EQueueType.FIFO_QUEUE,

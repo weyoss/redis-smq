@@ -20,7 +20,7 @@ import {
 import { _getQueueConsumers } from '../../../src/queue-manager/_/_get-queue-consumers.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import { getDefaultQueue } from '../../common/message-producing-consuming.js';
-import { getQueue } from '../../common/queue.js';
+import { getQueueManager } from '../../common/queue-manager.js';
 import { getRedisInstance } from '../../common/redis.js';
 
 const _getConsumerQueuesAsync = bluebird.promisify(_getConsumerQueues);
@@ -28,7 +28,7 @@ const _getQueueConsumersAsync = bluebird.promisify(_getQueueConsumers);
 
 test('Consume message from different queues using a single consumer instance: case 3', async () => {
   const defaultQueue = getDefaultQueue();
-  const queue = await getQueue();
+  const queue = await getQueueManager();
   await queue.saveAsync(
     defaultQueue,
     EQueueType.LIFO_QUEUE,

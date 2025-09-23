@@ -26,7 +26,7 @@ import {
   EMessagePropertyStatus,
 } from '../../message/index.js';
 import { _getMessage } from './_get-message.js';
-import { MessageManagerMessageNotFoundError } from '../errors/index.js';
+import { MessageNotFoundError } from '../../errors/index.js';
 import { IMessageManagerDeleteResponse } from '../types/index.js';
 
 export function _deleteMessage(
@@ -56,7 +56,7 @@ export function _deleteMessage(
     (id, _, done) => {
       _getMessage(redisClient, id, (err, msg) => {
         if (err) {
-          if (err instanceof MessageManagerMessageNotFoundError) {
+          if (err instanceof MessageNotFoundError) {
             stats.notFound += 1;
             stats.processed += 1;
             return done();
@@ -75,7 +75,7 @@ export function _deleteMessage(
       }
 
       const messagesByQueueAndGroup: Record<
-        string, // queue-manager ID
+        string, // queue ID
         Record<
           string, // consumer group ID
           { queue: IQueueParams; messages: MessageEnvelope[] }

@@ -8,7 +8,7 @@
  */
 
 import { redisKeys } from '../common/redis-keys/redis-keys.js';
-import { ConfigurationNamespaceError } from './errors/index.js';
+import { ConfigurationNamespaceError } from '../errors/index.js';
 import { defaultConfig } from './default-config.js';
 
 export function parseNamespaceConfig(userConfig?: string): string {

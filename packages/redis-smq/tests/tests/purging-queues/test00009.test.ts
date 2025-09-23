@@ -16,7 +16,7 @@ import {
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 
-test('Purging pending queue-manager', async () => {
+test('Purging pending queue', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   const { queue } = await produceMessage();

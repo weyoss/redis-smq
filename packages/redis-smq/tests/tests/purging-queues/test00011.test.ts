@@ -17,7 +17,7 @@ import {
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 
-test('Purging acknowledged queue-manager using QueueAcknowledgedMessages', async () => {
+test('Purging acknowledged queue using QueueAcknowledgedMessages', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   const { queue, consumer } = await produceAndAcknowledgeMessage();

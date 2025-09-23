@@ -7,55 +7,41 @@
  * in the root directory of this source tree.
  */
 
-import { ILogger } from 'redis-smq-common';
 import { EventBus } from '../../../event-bus/index.js';
 import { TConsumerConsumeMessageEvent } from '../../../common/index.js';
 import { ConsumeMessage } from './consume-message.js';
 
-export function eventBusPublisher(
-  consumeMessage: ConsumeMessage,
-  eventBus: EventBus,
-  logger: ILogger,
-): void {
+export function eventBusPublisher(consumeMessage: ConsumeMessage): void {
   const messageDeadLettered: TConsumerConsumeMessageEvent['consumer.consumeMessage.messageDeadLettered'] =
     (...args) => {
-      const instance = eventBus.getInstance();
-      if (instance instanceof Error) logger.error(instance);
-      else
-        instance.emit('consumer.consumeMessage.messageDeadLettered', ...args);
+      const instance = EventBus.getInstance();
+      instance.emit('consumer.consumeMessage.messageDeadLettered', ...args);
     };
   const messageDelayed: TConsumerConsumeMessageEvent['consumer.consumeMessage.messageDelayed'] =
     (...args) => {
-      const instance = eventBus.getInstance();
-      if (instance instanceof Error) logger.error(instance);
-      else instance.emit('consumer.consumeMessage.messageDelayed', ...args);
+      const instance = EventBus.getInstance();
+      instance.emit('consumer.consumeMessage.messageDelayed', ...args);
     };
   const messageRequeued: TConsumerConsumeMessageEvent['consumer.consumeMessage.messageRequeued'] =
     (...args) => {
-      const instance = eventBus.getInstance();
-      if (instance instanceof Error) logger.error(instance);
-      else instance.emit('consumer.consumeMessage.messageRequeued', ...args);
+      const instance = EventBus.getInstance();
+      instance.emit('consumer.consumeMessage.messageRequeued', ...args);
     };
   const messageAcknowledged: TConsumerConsumeMessageEvent['consumer.consumeMessage.messageAcknowledged'] =
     (...args) => {
-      const instance = eventBus.getInstance();
-      if (instance instanceof Error) logger.error(instance);
-      else
-        instance.emit('consumer.consumeMessage.messageAcknowledged', ...args);
+      const instance = EventBus.getInstance();
+      instance.emit('consumer.consumeMessage.messageAcknowledged', ...args);
     };
   const messageUnacknowledged: TConsumerConsumeMessageEvent['consumer.consumeMessage.messageUnacknowledged'] =
     (...args) => {
-      const instance = eventBus.getInstance();
-      if (instance instanceof Error) logger.error(instance);
-      else
-        instance.emit('consumer.consumeMessage.messageUnacknowledged', ...args);
+      const instance = EventBus.getInstance();
+      instance.emit('consumer.consumeMessage.messageUnacknowledged', ...args);
     };
   const error: TConsumerConsumeMessageEvent['consumer.consumeMessage.error'] = (
     ...args
   ) => {
-    const instance = eventBus.getInstance();
-    if (instance instanceof Error) logger.error(instance);
-    else instance.emit('consumer.consumeMessage.error', ...args);
+    const instance = EventBus.getInstance();
+    instance.emit('consumer.consumeMessage.error', ...args);
   };
   consumeMessage
     .on('consumer.consumeMessage.error', error)

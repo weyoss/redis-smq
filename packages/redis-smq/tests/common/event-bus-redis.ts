@@ -10,15 +10,6 @@
 import bluebird from 'bluebird';
 import { EventBus } from '../../src/index.js';
 
-let eventBus: ReturnType<typeof bluebird.promisifyAll<EventBus>> | null = null;
-
 export async function getEventBus() {
-  if (!eventBus) {
-    eventBus = bluebird.promisifyAll(new EventBus());
-  }
-  return eventBus.getSetInstanceAsync();
-}
-
-export async function shutDownEventBus() {
-  if (eventBus) await eventBus.shutdownAsync();
+  return bluebird.promisifyAll(EventBus.getInstance());
 }

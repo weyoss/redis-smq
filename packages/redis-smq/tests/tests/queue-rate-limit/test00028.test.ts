@@ -9,9 +9,9 @@
 
 import { expect, test } from 'vitest';
 import {
-  QueueManagerQueueNotFoundError,
-  QueueRateLimitInvalidIntervalError,
-  QueueRateLimitInvalidLimitError,
+  QueueNotFoundError,
+  InvalidRateLimitIntervalError,
+  InvalidRateLimitError,
 } from '../../../src/index.js';
 import {
   createQueue,
@@ -27,7 +27,7 @@ test('SetQueueRateLimit()/GetQueueRateLimit()/ClearQueueRateLimit()', async () =
       limit: 5,
       interval: 1000,
     }),
-  ).rejects.toThrow(QueueManagerQueueNotFoundError);
+  ).rejects.toThrow(QueueNotFoundError);
 
   await createQueue(defaultQueue, false);
   await queueRateLimit.setAsync(defaultQueue, {
@@ -48,12 +48,12 @@ test('SetQueueRateLimit()/GetQueueRateLimit()/ClearQueueRateLimit()', async () =
       limit: 0,
       interval: 1000,
     }),
-  ).rejects.toThrow(QueueRateLimitInvalidLimitError);
+  ).rejects.toThrow(InvalidRateLimitError);
 
   await expect(
     queueRateLimit.setAsync(defaultQueue, {
       limit: 4,
       interval: 0,
     }),
-  ).rejects.toThrow(QueueRateLimitInvalidIntervalError);
+  ).rejects.toThrow(InvalidRateLimitIntervalError);
 });

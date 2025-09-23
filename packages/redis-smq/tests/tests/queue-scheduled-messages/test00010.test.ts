@@ -12,16 +12,16 @@ import {
   EMessagePriority,
   EQueueDeliveryModel,
   EQueueType,
-  ProducerMessagePriorityRequiredError,
-  ProducerPriorityQueuingNotEnabledError,
-  ProducerQueueNotFoundError,
+  MessagePriorityRequiredError,
+  PriorityQueuingNotEnabledError,
   ProducibleMessage,
+  QueueNotFoundError,
 } from '../../../src/index.js';
 import { getProducer } from '../../common/producer.js';
-import { getQueue } from '../../common/queue.js';
+import { getQueueManager } from '../../common/queue-manager.js';
 
 test('Scheduling a message and expecting different kind of failures', async () => {
-  const queue = await getQueue();
+  const queue = await getQueueManager();
   await queue.saveAsync(
     'test0',
     EQueueType.LIFO_QUEUE,
@@ -44,7 +44,7 @@ test('Scheduling a message and expecting different kind of failures', async () =
       .setScheduledCRON('* * * * * *');
     await producer.produceAsync(msg);
   } catch (e: unknown) {
-    expect(e instanceof ProducerPriorityQueuingNotEnabledError).toBe(true);
+    expect(e instanceof PriorityQueuingNotEnabledError).toBe(true);
   }
 
   try {
@@ -54,7 +54,7 @@ test('Scheduling a message and expecting different kind of failures', async () =
       .setScheduledCRON('* * * * * *');
     await producer.produceAsync(msg1);
   } catch (e: unknown) {
-    expect(e instanceof ProducerMessagePriorityRequiredError).toBe(true);
+    expect(e instanceof MessagePriorityRequiredError).toBe(true);
   }
 
   try {
@@ -64,6 +64,6 @@ test('Scheduling a message and expecting different kind of failures', async () =
       .setScheduledCRON('* * * * * *');
     await producer.produceAsync(msg2);
   } catch (e: unknown) {
-    expect(e instanceof ProducerQueueNotFoundError).toBe(true);
+    expect(e instanceof QueueNotFoundError).toBe(true);
   }
 });

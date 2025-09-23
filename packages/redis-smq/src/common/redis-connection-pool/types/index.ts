@@ -41,17 +41,30 @@ export interface IConnectionPoolConfig {
   reapIntervalMillis?: number;
 }
 
-export interface IPooledConnection {
+/**
+ * Enumeration for connection acquisition modes.
+ */
+export enum ERedisConnectionAcquisitionMode {
+  // Exclusive mode - connection is locked to a single user until released
+  EXCLUSIVE = 'exclusive',
+  // Shared mode - connection can be used by multiple users simultaneously
+  SHARED = 'shared',
+}
+
+export interface IRedisPooledConnection {
   client: IRedisClient;
   createdAt: number;
   lastUsed: number;
   inUse: boolean;
+  sharedUsers: number;
+  exclusivelyAcquired: boolean;
+  acquisitionMode: ERedisConnectionAcquisitionMode;
 }
 
 export type TRedisConnectionPoolEvent = {
   connectionError: (err: Error) => void;
-  connectionCreated: (connection: IPooledConnection) => void;
-  connectionDestroyed: (connection: IPooledConnection) => void;
-  connectionAcquired: (connection: IPooledConnection) => void;
-  connectionReleased: (connection: IPooledConnection) => void;
+  connectionCreated: (connection: IRedisPooledConnection) => void;
+  connectionDestroyed: (connection: IRedisPooledConnection) => void;
+  connectionAcquired: (connection: IRedisPooledConnection) => void;
+  connectionReleased: (connection: IRedisPooledConnection) => void;
 };

@@ -9,7 +9,7 @@
 
 import { expect, test } from 'vitest';
 import {
-  ProducerExchangeNoMatchedQueueError,
+  NoMatchedQueueForExchangeError,
   ProducibleMessage,
 } from '../../../../src/index.js';
 import { getProducer } from '../../../common/producer.js';
@@ -21,6 +21,6 @@ test('ExchangeTopic: producing message having an exchange without matched queues
   const msg = new ProducibleMessage().setTopic('a.b.c.d').setBody('hello');
 
   await expect(producer.produceAsync(msg)).rejects.toThrow(
-    ProducerExchangeNoMatchedQueueError,
+    NoMatchedQueueForExchangeError,
   );
 });

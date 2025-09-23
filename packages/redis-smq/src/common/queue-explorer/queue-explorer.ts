@@ -7,14 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import {
-  async,
-  createLogger,
-  ICallback,
-  IRedisClient,
-  withRedisClient,
-} from 'redis-smq-common';
-import { RedisClient } from '../redis-client/redis-client.js';
+import { async, createLogger, ICallback, IRedisClient } from 'redis-smq-common';
 import { redisKeys } from '../redis-keys/redis-keys.js';
 import { Configuration } from '../../config/index.js';
 import { _deleteMessage } from '../../message-manager/_/_delete-message.js';
@@ -32,13 +25,14 @@ import {
   IQueueExplorer,
 } from './types/index.js';
 import { MessageManager } from '../../message-manager/index.js';
+import { withSharedPoolConnection } from '../redis-connection-pool/with-shared-pool-connection.js';
 
 /**
  * Provides a base implementation for exploring and managing messages within a
  * specific queue category (e.g., pending, acknowledged, dead-lettered).
  *
  * This abstract class encapsulates the common logic for counting messages,
- * fetching them in paginated sets, and purging them from the queue-manager.
+ * fetching them in paginated sets, and purging them from the queue.
  * Subclasses are responsible for providing the specific Redis key and storage
  * strategy for the message category they represent.
  *
@@ -46,11 +40,6 @@ import { MessageManager } from '../../message-manager/index.js';
  * @implements {IQueueExplorer}
  */
 export abstract class QueueExplorer implements IQueueExplorer {
-  /**
-   * Redis client instance for database operations.
-   */
-  protected readonly redisClient: RedisClient;
-
   /**
    * Message manager for retrieving detailed message information.
    */
@@ -78,12 +67,10 @@ export abstract class QueueExplorer implements IQueueExplorer {
   protected readonly logger;
 
   protected constructor(
-    redisClient: RedisClient,
     messagesStorage: QueueStorage,
     messageManager: MessageManager,
     redisKey: keyof ReturnType<typeof redisKeys.getQueueKeys>,
   ) {
-    this.redisClient = redisClient;
     this.queueStorage = messagesStorage;
     this.messageManager = messageManager;
     this.redisKey = redisKey;
@@ -91,9 +78,6 @@ export abstract class QueueExplorer implements IQueueExplorer {
       Configuration.getConfig().logger,
       this.constructor.name.toLowerCase(),
     );
-
-    // Log errors from Redis client
-    this.redisClient.on('error', (err) => this.logger.error(err));
   }
 
   /**
@@ -125,26 +109,22 @@ export abstract class QueueExplorer implements IQueueExplorer {
       `Purging messages from queue ${parsedParams.queueParams.name}`,
     );
 
-    withRedisClient(
-      this.redisClient,
-      (client, cb) => {
-        _validateQueueExtendedParams(
-          client,
-          parsedParams,
-          this.requireGroupId,
-          (err) => {
-            if (err) {
-              this.logger.error(
-                `Error validating queue parameters: ${err.message}`,
-              );
-              return cb(err);
-            }
-            this._purgeMessages(client, parsedParams, cb);
-          },
-        );
-      },
-      cb,
-    );
+    withSharedPoolConnection((client, cb) => {
+      _validateQueueExtendedParams(
+        client,
+        parsedParams,
+        this.requireGroupId,
+        (err) => {
+          if (err) {
+            this.logger.error(
+              `Error validating queue parameters: ${err.message}`,
+            );
+            return cb(err);
+          }
+          this._purgeMessages(client, parsedParams, cb);
+        },
+      );
+    }, cb);
   }
 
   /**
@@ -173,62 +153,58 @@ export abstract class QueueExplorer implements IQueueExplorer {
       `Getting messages for queue ${parsedParams.queueParams.name}, page ${page}, size ${pageSize}`,
     );
 
-    withRedisClient(
-      this.redisClient,
-      (client, cb) => {
-        _validateQueueExtendedParams(
-          client,
-          parsedParams,
-          this.requireGroupId,
-          (err) => {
-            if (err) {
-              this.logger.error(
-                `Error validating queue parameters: ${err.message}`,
-              );
-              return cb(err);
-            }
-
-            async.withCallback(
-              // Get message IDs for the requested page
-              (cb: ICallback<IPaginationPage<string>>) =>
-                this.getMessagesIds(parsedParams, page, pageSize, cb),
-              (pageResult, cb) => {
-                // If no messages on this page, return empty result
-                if (pageResult.items.length === 0) {
-                  this.logger.debug(
-                    `No messages found for queue ${parsedParams.queueParams.name} on page ${page}`,
-                  );
-                  return cb(null, { ...pageResult, items: [] });
-                }
-
-                this.logger.debug(
-                  `Retrieving ${pageResult.items.length} message details for queue ${parsedParams.queueParams.name}`,
-                );
-
-                // Get detailed message objects for the IDs
-                this.messageManager.getMessagesByIds(
-                  pageResult.items,
-                  (err, messages) => {
-                    if (err) {
-                      this.logger.error(
-                        `Error getting message details: ${err.message}`,
-                      );
-                      return cb(err);
-                    }
-                    this.logger.debug(
-                      `Successfully retrieved ${messages?.length || 0} message details for queue ${parsedParams.queueParams.name}`,
-                    );
-                    cb(null, { ...pageResult, items: messages ?? [] });
-                  },
-                );
-              },
-              cb,
+    withSharedPoolConnection((client, cb) => {
+      _validateQueueExtendedParams(
+        client,
+        parsedParams,
+        this.requireGroupId,
+        (err) => {
+          if (err) {
+            this.logger.error(
+              `Error validating queue parameters: ${err.message}`,
             );
-          },
-        );
-      },
-      cb,
-    );
+            return cb(err);
+          }
+
+          async.withCallback(
+            // Get message IDs for the requested page
+            (cb: ICallback<IPaginationPage<string>>) =>
+              this.getMessagesIds(parsedParams, page, pageSize, cb),
+            (pageResult, cb) => {
+              // If no messages on this page, return empty result
+              if (pageResult.items.length === 0) {
+                this.logger.debug(
+                  `No messages found for queue ${parsedParams.queueParams.name} on page ${page}`,
+                );
+                return cb(null, { ...pageResult, items: [] });
+              }
+
+              this.logger.debug(
+                `Retrieving ${pageResult.items.length} message details for queue ${parsedParams.queueParams.name}`,
+              );
+
+              // Get detailed message objects for the IDs
+              this.messageManager.getMessagesByIds(
+                pageResult.items,
+                (err, messages) => {
+                  if (err) {
+                    this.logger.error(
+                      `Error getting message details: ${err.message}`,
+                    );
+                    return cb(err);
+                  }
+                  this.logger.debug(
+                    `Successfully retrieved ${messages?.length || 0} message details for queue ${parsedParams.queueParams.name}`,
+                  );
+                  cb(null, { ...pageResult, items: messages ?? [] });
+                },
+              );
+            },
+            cb,
+          );
+        },
+      );
+    }, cb);
   }
 
   /**
@@ -250,76 +226,39 @@ export abstract class QueueExplorer implements IQueueExplorer {
       `Counting messages for queue ${parsedParams.queueParams.name}`,
     );
 
-    withRedisClient(
-      this.redisClient,
-      (client, cb) => {
-        _validateQueueExtendedParams(
-          client,
-          parsedParams,
-          this.requireGroupId,
-          (err) => {
+    withSharedPoolConnection((client, cb) => {
+      _validateQueueExtendedParams(
+        client,
+        parsedParams,
+        this.requireGroupId,
+        (err) => {
+          if (err) {
+            this.logger.error(
+              `Error validating queue parameters: ${err.message}`,
+            );
+            return cb(err);
+          }
+
+          const keys = redisKeys.getQueueKeys(
+            parsedParams.queueParams,
+            parsedParams.groupId,
+          );
+          const keyVal = keys[this.redisKey];
+
+          this.queueStorage.count(keyVal, (err, count) => {
             if (err) {
-              this.logger.error(
-                `Error validating queue parameters: ${err.message}`,
-              );
+              this.logger.error(`Error counting messages: ${err.message}`);
               return cb(err);
             }
 
-            const keys = redisKeys.getQueueKeys(
-              parsedParams.queueParams,
-              parsedParams.groupId,
+            this.logger.debug(
+              `Queue ${parsedParams.queueParams.name} has ${count} messages`,
             );
-            const keyVal = keys[this.redisKey];
-
-            this.queueStorage.count(keyVal, (err, count) => {
-              if (err) {
-                this.logger.error(`Error counting messages: ${err.message}`);
-                return cb(err);
-              }
-
-              this.logger.debug(
-                `Queue ${parsedParams.queueParams.name} has ${count} messages`,
-              );
-              cb(null, count);
-            });
-          },
-        );
-      },
-      cb,
-    );
-  }
-
-  /**
-   * Shuts down the manager and its dependencies gracefully.
-   *
-   * @param cb - Callback function
-   */
-  shutdown(cb: ICallback): void {
-    this.logger.info('Shutting down queue messages manager');
-
-    async.series(
-      [
-        // Step 1: Shutdown message handler
-        (next: ICallback) => {
-          this.logger.debug('Shutting down message handler');
-          this.messageManager.shutdown(next);
+            cb(null, count);
+          });
         },
-
-        // Step 2: Shutdown Redis client
-        (next: ICallback) => {
-          this.logger.debug('Shutting down Redis client');
-          this.redisClient.shutdown(next);
-        },
-      ],
-      (err) => {
-        if (err) {
-          this.logger.error(`Error during shutdown: ${err.message}`);
-        } else {
-          this.logger.info('Queue messages manager shutdown complete');
-        }
-        cb(err);
-      },
-    );
+      );
+    }, cb);
   }
 
   /**
@@ -360,7 +299,7 @@ export abstract class QueueExplorer implements IQueueExplorer {
   /**
    * Retrieves message IDs for a specific page.
    *
-   * @param queue - Parsed queue-manager parameters
+   * @param queue - Parsed queue parameters
    * @param page - Page number
    * @param pageSize - Number of items per page
    * @param cb - Callback returning an IQueueMessagesPage of message IDs
@@ -447,7 +386,7 @@ export abstract class QueueExplorer implements IQueueExplorer {
    * Internal method to purge messages in batches.
    *
    * @param client - Redis client instance
-   * @param parsedParams - Validated queue-manager parameters
+   * @param parsedParams - Validated queue parameters
    * @param cb - Callback function
    */
   protected _purgeMessages(

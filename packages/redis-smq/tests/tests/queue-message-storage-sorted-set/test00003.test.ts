@@ -9,7 +9,6 @@
 
 import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
-import { RedisClient } from '../../../src/common/redis-client/redis-client.js';
 import { redisKeys } from '../../../src/common/redis-keys/redis-keys.js';
 import {
   EMessagePriority,
@@ -29,9 +28,8 @@ const { promisifyAll } = bluebird;
 it('QueueStorageSortedSet: should fetch all items for a large list (chunking test)', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.PRIORITY_QUEUE);
-  const redisClient = promisifyAll(new RedisClient());
   const queueMessagesStorageSortedSet = promisifyAll(
-    new QueueStorageSortedSet(redisClient),
+    new QueueStorageSortedSet(),
   );
 
   const ids: string[] = [];
@@ -55,5 +53,4 @@ it('QueueStorageSortedSet: should fetch all items for a large list (chunking tes
     keyQueuePriorityPending,
   );
   expect(items.sort()).toEqual(ids.sort());
-  await redisClient.shutdownAsync();
 });

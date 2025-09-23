@@ -19,6 +19,7 @@ import { MessageEnvelope } from '../../../message/message-envelope.js';
 import { EQueueProperty, EQueueType } from '../../../queue-manager/index.js';
 import { WorkerAbstract } from './worker-abstract.js';
 import { workerBootstrap } from './worker-bootstrap.js';
+import { withSharedPoolConnection } from '../../../common/redis-connection-pool/with-shared-pool-connection.js';
 
 export class RequeueDelayedWorker extends WorkerAbstract {
   work = (cb: ICallback): void => {
@@ -45,39 +46,34 @@ export class RequeueDelayedWorker extends WorkerAbstract {
   protected fetchMessageIds = (cb: ICallback<string[]>): void => {
     this.logger?.debug('Fetching delayed message IDs.');
 
-    const redisClient = this.redisClient.getInstance();
-    if (redisClient instanceof Error) {
-      this.logger.error('Failed to get Redis client instance.', redisClient);
-      cb(redisClient);
-      return;
-    }
+    withSharedPoolConnection((redisClient, cb) => {
+      const { keyQueueDelayed } = redisKeys.getQueueKeys(
+        this.queueParsedParams.queueParams,
+        this.queueParsedParams.groupId,
+      );
 
-    const { keyQueueDelayed } = redisKeys.getQueueKeys(
-      this.queueParsedParams.queueParams,
-      this.queueParsedParams.groupId,
-    );
+      this.logger.debug(`Using delayed queue key: ${keyQueueDelayed}`);
+      const currentTimestamp = Date.now();
 
-    this.logger.debug(`Using delayed queue key: ${keyQueueDelayed}`);
-    const currentTimestamp = Date.now();
-
-    redisClient.zrangebyscore(
-      keyQueueDelayed,
-      0,
-      currentTimestamp,
-      0,
-      99,
-      (err, ids) => {
-        if (err) {
-          this.logger.error('Error fetching delayed message IDs.', err);
-          return cb(err);
-        }
-        const messageCount = ids?.length || 0;
-        this.logger.debug(
-          `Found ${messageCount} delayed messages ready for requeue (current timestamp: ${currentTimestamp}).`,
-        );
-        cb(null, ids || []);
-      },
-    );
+      redisClient.zrangebyscore(
+        keyQueueDelayed,
+        0,
+        currentTimestamp,
+        0,
+        99,
+        (err, ids) => {
+          if (err) {
+            this.logger.error('Error fetching delayed message IDs.', err);
+            return cb(err);
+          }
+          const messageCount = ids?.length || 0;
+          this.logger.debug(
+            `Found ${messageCount} delayed messages ready for requeue (current timestamp: ${currentTimestamp}).`,
+          );
+          cb(null, ids || []);
+        },
+      );
+    }, cb);
   };
 
   protected fetchMessages = (
@@ -91,22 +87,17 @@ export class RequeueDelayedWorker extends WorkerAbstract {
 
     this.logger.debug(`Fetching ${ids.length} messages from storage.`);
 
-    const redisClient = this.redisClient.getInstance();
-    if (redisClient instanceof Error) {
-      this.logger.error('Failed to get Redis client instance.', redisClient);
-      cb(redisClient);
-      return;
-    }
-
-    _getMessages(redisClient, ids, (err, messages) => {
-      if (err) {
-        this.logger.error('Error fetching messages.', err);
-        return cb(err);
-      }
-      const messageCount = messages?.length || 0;
-      this.logger.debug(`Successfully retrieved ${messageCount} messages.`);
-      cb(null, messages || []);
-    });
+    withSharedPoolConnection((redisClient, cb) => {
+      _getMessages(redisClient, ids, (err, messages) => {
+        if (err) {
+          this.logger.error('Error fetching messages.', err);
+          return cb(err);
+        }
+        const messageCount = messages?.length || 0;
+        this.logger.debug(`Successfully retrieved ${messageCount} messages.`);
+        cb(null, messages || []);
+      });
+    }, cb);
   };
 
   protected enqueueMessages = (
@@ -120,74 +111,72 @@ export class RequeueDelayedWorker extends WorkerAbstract {
 
     this.logger.debug(`Preparing to enqueue ${messages.length} messages.`);
 
-    const redisClient = this.redisClient.getInstance();
-    if (redisClient instanceof Error) {
-      this.logger.error('Failed to get Redis client instance.', redisClient);
-      return cb(redisClient);
-    }
+    withSharedPoolConnection((redisClient, cb) => {
+      const { keyQueueProperties, keyQueueDelayed } = redisKeys.getQueueKeys(
+        this.queueParsedParams.queueParams,
+        this.queueParsedParams.groupId,
+      );
 
-    const { keyQueueProperties, keyQueueDelayed } = redisKeys.getQueueKeys(
-      this.queueParsedParams.queueParams,
-      this.queueParsedParams.groupId,
-    );
+      // Static keys that are the same for all messages in the batch
+      const keys: string[] = [keyQueueProperties, keyQueueDelayed];
+      const argv: (string | number)[] = [
+        // Queue Property Constants
+        EQueueProperty.QUEUE_TYPE,
+        EQueueProperty.DELAYED_MESSAGES_COUNT,
+        EQueueProperty.PENDING_MESSAGES_COUNT,
+        EMessageProperty.STATUS,
+        EMessagePropertyStatus.PENDING,
+        EMessageProperty.LAST_RETRIED_ATTEMPT_AT,
+        EQueueType.LIFO_QUEUE,
+        EQueueType.FIFO_QUEUE,
+        Date.now(),
+      ];
 
-    // Static keys that are the same for all messages in the batch
-    const keys: string[] = [keyQueueProperties, keyQueueDelayed];
-    const argv: (string | number)[] = [
-      // Queue Property Constants
-      EQueueProperty.QUEUE_TYPE,
-      EQueueProperty.DELAYED_MESSAGES_COUNT,
-      EQueueProperty.PENDING_MESSAGES_COUNT,
-      EMessageProperty.STATUS,
-      EMessagePropertyStatus.PENDING,
-      EMessageProperty.LAST_RETRIED_ATTEMPT_AT,
-      EQueueType.LIFO_QUEUE,
-      EQueueType.FIFO_QUEUE,
-      Date.now(),
-    ];
-
-    for (const msg of messages) {
-      const messageId = msg.getId();
-      const { keyMessage } = redisKeys.getMessageKeys(messageId);
-      const { keyQueuePending, keyQueuePriorityPending } =
-        redisKeys.getQueueKeys(
-          msg.getDestinationQueue(),
-          msg.getConsumerGroupId(),
-        );
-      keys.push(keyMessage, keyQueuePending, keyQueuePriorityPending);
-      argv.push(messageId, msg.producibleMessage.getPriority() ?? '');
-    }
-
-    this.logger.debug(
-      `Executing REQUEUE_UNACKNOWLEDGED_MESSAGE_WITH_DELAY script for ${messages.length} messages.`,
-    );
-    redisClient.runScript(
-      ELuaScriptName.REQUEUE_DELAYED,
-      keys,
-      argv,
-      (err, reply) => {
-        if (err) {
-          this.logger.error(
-            'Error executing REQUEUE_UNACKNOWLEDGED_MESSAGE_WITH_DELAY script.',
-            err,
+      for (const msg of messages) {
+        const messageId = msg.getId();
+        const { keyMessage } = redisKeys.getMessageKeys(messageId);
+        const { keyQueuePending, keyQueuePriorityPending } =
+          redisKeys.getQueueKeys(
+            msg.getDestinationQueue(),
+            msg.getConsumerGroupId(),
           );
-          return cb(err);
-        }
-        if (typeof reply === 'number') {
-          if (reply !== messages.length) {
-            this.logger.warn(
-              `Script reported processing ${reply} messages, but expected ${messages.length}.`,
+        keys.push(keyMessage, keyQueuePending, keyQueuePriorityPending);
+        argv.push(messageId, msg.producibleMessage.getPriority() ?? '');
+      }
+
+      this.logger.debug(
+        `Executing REQUEUE_UNACKNOWLEDGED_MESSAGE_WITH_DELAY script for ${messages.length} messages.`,
+      );
+      redisClient.runScript(
+        ELuaScriptName.REQUEUE_DELAYED,
+        keys,
+        argv,
+        (err, reply) => {
+          if (err) {
+            this.logger.error(
+              'Error executing REQUEUE_UNACKNOWLEDGED_MESSAGE_WITH_DELAY script.',
+              err,
             );
+            return cb(err);
           }
-          this.logger.info(`Successfully requeued ${reply} delayed messages.`);
-          return cb();
-        }
-        this.logger.error(
-          `Script execution returned unexpected response: ${reply}`,
-        );
-        cb(new PanicError(`Unexpected reply: ${reply}`));
-      },
-    );
+          if (typeof reply === 'number') {
+            if (reply !== messages.length) {
+              this.logger.warn(
+                `Script reported processing ${reply} messages, but expected ${messages.length}.`,
+              );
+            }
+            this.logger.info(
+              `Successfully requeued ${reply} delayed messages.`,
+            );
+            return cb();
+          }
+          this.logger.error(
+            `Script execution returned unexpected response: ${reply}`,
+          );
+          cb(new PanicError(`Unexpected reply: ${reply}`));
+        },
+      );
+    }, cb);
   };
 }
 

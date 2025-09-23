@@ -14,8 +14,8 @@ import bluebird from 'bluebird';
 import { env, ICallback, IRedisClient } from 'redis-smq-common';
 import {
   IQueueParams,
+  QueueNotFoundError,
   QueueRateLimit,
-  QueueRateLimitQueueNotFoundError,
 } from '../../../src/index.js';
 import { getDefaultQueue } from '../../common/message-producing-consuming.js';
 
@@ -23,11 +23,11 @@ test('SetQueueRateLimit(): QueueRateLimitQueueNotFoundError', async () => {
   const defaultQueue = getDefaultQueue();
   const path1 = resolve(
     env.getCurrentDir(),
-    '../../../src/queue-manager-rate-limit/queue-manager-rate-limit.js',
+    '../../../src/queue-rate-limit/queue-rate-limit.js',
   );
   const path2 = resolve(
     env.getCurrentDir(),
-    '../../../src/queue-manager/_/_parse-queue-manager-params-and-validate.js',
+    '../../../src/queue-manager/_/_parse-queue-params-and-validate.js',
   );
   const { QueueRateLimit } = await esmock<{
     QueueRateLimit: new () => QueueRateLimit;
@@ -51,6 +51,5 @@ test('SetQueueRateLimit(): QueueRateLimitQueueNotFoundError', async () => {
       limit: 5,
       interval: 1000,
     }),
-  ).rejects.toThrow(QueueRateLimitQueueNotFoundError);
-  await queueRateLimit.shutdownAsync();
+  ).rejects.toThrow(QueueNotFoundError);
 });

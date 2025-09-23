@@ -25,13 +25,13 @@ test('Consume message from different queues and published by a single producer i
     await createQueue(queue, false);
 
     const message = new ProducibleMessage();
-    // queue-manager name should be normalized to lowercase
+    // queue name should be normalized to lowercase
     message.setBody(`Message ${i}`).setQueue(queue);
     await producer.produceAsync(message);
   }
   const queueMessages = await getQueueMessages();
   for (let i = 0; i < 5; i += 1) {
-    // Be carefull here: queue-manager name is always in lowercase. Otherwise it will be not normalized
+    // Be carefull here: queue name is always in lowercase. Otherwise it will be not normalized
     const m1 = await queueMessages.countMessagesByStatusAsync(`queue_${i}`);
     expect(m1).toEqual({
       acknowledged: 0,
@@ -40,7 +40,7 @@ test('Consume message from different queues and published by a single producer i
       pending: 1,
     });
 
-    // queue-manager name should be normalized to lowercase
+    // queue name should be normalized to lowercase
     const consumer = getConsumer({
       queue: `queUE_${i}`,
       messageHandler: (msg: IMessageTransferable, cb: ICallback<void>) => {

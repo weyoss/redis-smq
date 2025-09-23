@@ -7,8 +7,7 @@
  * in the root directory of this source tree.
  */
 
-export * from './errors/index.js';
 export * from './types/index.js';
 export * from './exchange-direct/index.js';
 export * from './exchange-topic/index.js';
-export * from './exchange-fan-out/index.js';
+export * from './exchange-fanout/index.js';

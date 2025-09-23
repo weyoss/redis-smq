@@ -18,12 +18,13 @@ import {
   Runnable,
   Timer,
 } from 'redis-smq-common';
-import { TConsumerDequeueMessageEvent } from '../../../common/index.js';
-import { RedisClient } from '../../../common/redis-client/redis-client.js';
+import {
+  RedisConnectionPool,
+  TConsumerDequeueMessageEvent,
+} from '../../../common/index.js';
 import { ELuaScriptName } from '../../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../../config/index.js';
-import { _saveConsumerGroup } from '../../../consumer-groups/_/_save-consumer-group.js';
 import { _hasRateLimitExceeded } from '../../../queue-rate-limit/_/_has-rate-limit-exceeded.js';
 import { _getQueueProperties } from '../../../queue-manager/_/_get-queue-properties.js';
 import {
@@ -31,17 +32,18 @@ import {
   EQueueType,
   IQueueParsedParams,
   IQueueRateLimit,
-  QueueManagerQueueNotFoundError,
+  QueueNotFoundError,
   TQueueConsumer,
-} from '../../../queue-manager/index.js';
+} from '../../../index.js';
 import { Consumer } from '../../consumer.js';
 import {
-  ConsumerConsumerGroupIdNotSupportedError,
-  ConsumerConsumerGroupIdRequiredError,
-} from '../../errors/index.js';
+  ConsumerGroupIdNotSupportedError,
+  ConsumerGroupIdRequiredError,
+  MessageHandlerError,
+} from '../../../errors/index.js';
 import { eventBusPublisher } from './event-bus-publisher.js';
-import { EventBus } from '../../../event-bus/index.js';
-import { ConsumerMessageHandlerError } from '../errors/index.js';
+import { ERedisConnectionAcquisitionMode } from '../../../common/redis-connection-pool/types/index.js';
+import { ConsumerGroups } from '../../../consumer-groups/index.js';
 
 const IPAddresses = (() => {
   const nets = os.networkInterfaces();
@@ -58,7 +60,6 @@ const IPAddresses = (() => {
 })();
 
 export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
-  protected redisClient;
   protected queue;
   protected consumerId;
   protected timer;
@@ -72,18 +73,17 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
   protected logger;
   protected blockUntilMessageReceived;
   protected autoCloseRedisConnection;
-  protected eventBus;
+  protected consumerGroups;
 
+  protected redisClient: IRedisClient | null = null;
   protected queueRateLimit: IQueueRateLimit | null = null;
   protected queueType: EQueueType | null = null;
   protected idleThreshold = 5;
   protected idleTrigger = 0;
 
   constructor(
-    redisClient: RedisClient,
     queue: IQueueParsedParams,
     consumer: Consumer,
-    eventBus: EventBus | null,
     blockUntilMessageReceived: boolean = true,
     autoCloseRedisConnection = true,
   ) {
@@ -104,29 +104,10 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
 
     this.blockUntilMessageReceived = blockUntilMessageReceived;
     this.autoCloseRedisConnection = autoCloseRedisConnection;
-    this.redisClient = redisClient;
-
-    this.logger.debug('Setting up Redis client error handler');
-    this.redisClient.on('error', (err) => {
-      this.logger.error(`Redis client error: ${err.message}`);
-      this.handleError(err);
-    });
-
-    if (!eventBus) {
-      this.logger.debug('No event bus provided, creating new instance');
-      this.eventBus = new EventBus();
-      this.eventBus.on('error', (err) => {
-        this.logger.error(`Event bus error: ${err.message}`);
-        this.handleError(err);
-      });
-    } else {
-      this.logger.debug('Using provided event bus instance');
-      this.eventBus = eventBus;
-    }
 
     if (Configuration.getConfig().eventBus.enabled) {
       this.logger.debug('Event bus is enabled, setting up event bus publisher');
-      eventBusPublisher(this, this.eventBus, this.logger);
+      eventBusPublisher(this);
     } else {
       this.logger.debug(
         'Event bus is disabled, skipping event bus publisher setup',
@@ -155,15 +136,6 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
     this.keyConsumerQueues = keyConsumerQueues;
     this.keyQueueProcessingQueues = keyQueueProcessingQueues;
 
-    this.logger.debug(`Queue keys initialized: 
-      keyQueuePriorityPending: ${this.keyQueuePriorityPending}
-      keyQueuePending: ${this.keyQueuePending}
-      keyQueueProcessing: ${this.keyQueueProcessing}
-      keyQueues: ${this.keyQueues}
-      keyQueueConsumers: ${this.keyQueueConsumers}
-      keyConsumerQueues: ${this.keyConsumerQueues}
-      keyQueueProcessingQueues: ${this.keyQueueProcessingQueues}`);
-
     this.logger.debug('Initializing timer');
     this.timer = new Timer();
     this.timer.on('error', (err) => {
@@ -171,9 +143,16 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
       this.handleError(err);
     });
 
+    this.consumerGroups = new ConsumerGroups();
+
     this.logger.info(
       `DequeueMessage initialized for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
     );
+  }
+
+  protected getRedisClient(): IRedisClient | PanicError {
+    if (!this.redisClient) return new PanicError('Redis Client is missing');
+    return this.redisClient;
   }
 
   dequeue(): void {
@@ -192,7 +171,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
       }, 1000);
     }
 
-    const redisClient = this.redisClient.getInstance();
+    const redisClient = this.getRedisClient();
     if (redisClient instanceof Error) {
       this.logger.error(
         `Failed to get Redis client instance: ${redisClient.message}`,
@@ -214,8 +193,8 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
   }
 
   protected override handleError(err: Error) {
-    this.logger.error(`DequeueMessage error: ${err.message}`, err);
     if (this.isRunning()) {
+      this.logger.error(`DequeueMessage error: ${err.message}`, err);
       this.logger.debug(
         `Emitting consumer.dequeueMessage.error event for consumer ${this.consumerId}`,
       );
@@ -229,26 +208,40 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
     super.handleError(err);
   }
 
-  protected override goingUp(): ((cb: ICallback<void>) => void)[] {
+  protected override goingUp(): ((cb: ICallback) => void)[] {
     this.logger.info(
       `DequeueMessage going up for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
     );
     return super.goingUp().concat([
-      (cb: ICallback<void>) => {
+      (cb: ICallback) => {
         this.logger.debug('Initializing Redis client');
-        this.redisClient.init((err) => {
-          if (err) {
-            this.logger.error(
-              `Failed to initialize Redis client: ${err.message}`,
-            );
-          } else {
+        const redisConnectionAcquisitionMode = this.blockUntilMessageReceived
+          ? ERedisConnectionAcquisitionMode.EXCLUSIVE
+          : ERedisConnectionAcquisitionMode.SHARED;
+
+        RedisConnectionPool.getInstance().acquire(
+          redisConnectionAcquisitionMode,
+          (err, redisClient) => {
+            if (err) {
+              this.logger.error(
+                `Failed to initialize Redis client: ${err.message}`,
+              );
+              return cb(err);
+            }
+            if (!redisClient) {
+              this.logger.error(
+                `Empty reply. Expected a Redis client instance.`,
+              );
+              return cb(new CallbackEmptyReplyError());
+            }
             this.logger.debug('Redis client initialized successfully');
-          }
-          cb(err);
-        });
+            this.redisClient = redisClient;
+            cb();
+          },
+        );
       },
       (cb: ICallback<void>) => {
-        this.logger.debug('Registering consumer with queue-manager');
+        this.logger.debug('Registering consumer with queue');
         const consumerInfo: TQueueConsumer = {
           ipAddress: IPAddresses,
           hostname: os.hostname(),
@@ -257,7 +250,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
         };
         this.logger.debug(`Consumer info: ${JSON.stringify(consumerInfo)}`);
 
-        const redisClient = this.redisClient.getInstance();
+        const redisClient = this.getRedisClient();
         if (redisClient instanceof Error) {
           this.logger.error(
             `Failed to get Redis client instance: ${redisClient.message}`,
@@ -293,18 +286,16 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
 
             if (reply === 'QUEUE_NOT_FOUND') {
               this.logger.error('Queue not found');
-              return cb(new QueueManagerQueueNotFoundError());
+              return cb(new QueueNotFoundError());
             }
 
             if (reply === 'OK') {
-              this.logger.debug(
-                'Consumer successfully registered with queue-manager',
-              );
+              this.logger.debug('Consumer successfully registered with queue');
               return cb();
             }
 
             cb(
-              new ConsumerMessageHandlerError(
+              new MessageHandlerError(
                 `Received unexpected reply message: ${reply}`,
               ),
             );
@@ -312,8 +303,8 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
         );
       },
       (cb: ICallback<void>) => {
-        this.logger.debug('Getting queue-manager properties');
-        const redisClient = this.redisClient.getInstance();
+        this.logger.debug('Getting queue properties');
+        const redisClient = this.getRedisClient();
         if (redisClient instanceof Error) {
           this.logger.error(
             `Failed to get Redis client instance: ${redisClient.message}`,
@@ -332,7 +323,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
               );
               cb(err);
             } else if (!queueProperties) {
-              this.logger.error('Empty queue-manager properties reply');
+              this.logger.error('Empty queue properties reply');
               cb(new CallbackEmptyReplyError());
             } else {
               this.queueType = queueProperties.queueType;
@@ -354,7 +345,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
                   this.logger.error(
                     'Consumer group ID not supported for point-to-point delivery model',
                   );
-                  cb(new ConsumerConsumerGroupIdNotSupportedError());
+                  cb(new ConsumerGroupIdNotSupportedError());
                 } else {
                   this.logger.debug('Point-to-point delivery model validated');
                   cb();
@@ -368,41 +359,36 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
                   this.logger.error(
                     'Consumer group ID required for pub/sub delivery model',
                   );
-                  cb(new ConsumerConsumerGroupIdRequiredError());
-                } else {
-                  this.logger.debug(
-                    `Pub/sub delivery model with group ID: ${groupId}`,
-                  );
-                  const eventBus = this.eventBus.getInstance();
-                  if (eventBus instanceof Error) {
-                    this.logger.error(
-                      `Failed to get event bus instance: ${eventBus.message}`,
-                    );
-                    cb(eventBus);
-                  } else {
-                    this.logger.debug(
-                      `Saving consumer group ${groupId} for queue ${queueParams.name}`,
-                    );
-                    _saveConsumerGroup(
-                      redisClient,
-                      eventBus,
-                      queueParams,
-                      groupId,
-                      (err, result) => {
-                        if (err) {
-                          this.logger.error(
-                            `Failed to save consumer group: ${err.message}`,
-                          );
-                        } else {
-                          this.logger.debug(
-                            `Consumer group saved successfully, result: ${result}`,
-                          );
-                        }
-                        cb(err);
-                      },
-                    );
-                  }
+                  return cb(new ConsumerGroupIdRequiredError());
                 }
+                this.logger.debug(
+                  `Pub/sub delivery model with group ID: ${groupId}`,
+                );
+                this.logger.debug(
+                  `Making sure consumer group ${groupId} for queue ${queueParams.name} exists...`,
+                );
+                this.consumerGroups.saveConsumerGroup(
+                  queueParams,
+                  groupId,
+                  (err, reply) => {
+                    if (err) {
+                      this.logger.error(
+                        `Error saving consumer group ${groupId} for queue ${queueParams.name}`,
+                        err,
+                      );
+                      return cb(err);
+                    }
+                    if (reply)
+                      this.logger.debug(
+                        `Consumer group ${groupId} for queue ${queueParams.name} saved successfully.`,
+                      );
+                    else
+                      this.logger.debug(
+                        `Consumer group ${groupId} for queue ${queueParams.name} already exists.`,
+                      );
+                    cb();
+                  },
+                );
               }
               // Unknown delivery model
               else {
@@ -423,37 +409,22 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
       `DequeueMessage going down for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
     );
     return [
-      (cb: ICallback<void>): void => {
+      (cb: ICallback): void => {
         this.logger.debug('Resetting timer');
         this.timer.reset();
-
-        if (!this.autoCloseRedisConnection) {
-          this.logger.debug(
-            'Skipping Redis connection close (autoCloseRedisConnection is false)',
-          );
-          return cb();
-        }
-
-        this.logger.debug('Closing Redis connection');
-        const redisClient = this.redisClient.getInstance();
-        // ignoring errors
-        if (redisClient instanceof Error) {
-          this.logger.warn(
-            `Could not get Redis client during shutdown: ${redisClient.message} (ignoring)`,
-          );
-          return cb();
-        }
-
-        redisClient.halt((err) => {
-          if (err) {
-            this.logger.warn(
-              `Error halting Redis client: ${err.message} (ignoring)`,
+        if (this.redisClient) {
+          if (this.blockUntilMessageReceived)
+            return RedisConnectionPool.getInstance().destroy(
+              this.redisClient,
+              () => {
+                this.redisClient = null;
+                cb();
+              },
             );
-          } else {
-            this.logger.debug('Redis client halted successfully');
-          }
-          cb();
-        });
+          RedisConnectionPool.getInstance().release(this.redisClient);
+          this.redisClient = null;
+        }
+        cb();
       },
     ].concat(super.goingDown());
   }
@@ -555,7 +526,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
   protected dequeueWithRateLimitExec = (redisClient: IRedisClient) => {
     this.logger.debug('Executing dequeue after rate limit check');
     if (this.isPriorityQueuingEnabled()) {
-      this.logger.debug('Using priority queue-manager dequeue method');
+      this.logger.debug('Using priority queue dequeue method');
       this.dequeueWithPriority(redisClient);
     } else {
       this.logger.debug('Using standard dequeue method');

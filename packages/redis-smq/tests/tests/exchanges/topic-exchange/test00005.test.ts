@@ -10,7 +10,7 @@
 import { expect, test } from 'vitest';
 import { ProducibleMessage } from '../../../../src/index.js';
 import { createQueue } from '../../../common/message-producing-consuming.js';
-import { getMessage } from '../../../common/message.js';
+import { getMessageManager } from '../../../common/message-manager.js';
 import { getProducer } from '../../../common/producer.js';
 import { isEqual } from '../../../common/utils.js';
 
@@ -26,7 +26,7 @@ test('ExchangeTopic: producing message with a Topic Exchange', async () => {
 
   const msg = new ProducibleMessage().setTopic('w123.2.4').setBody('hello');
   const ids = await producer.produceAsync(msg);
-  const message = await getMessage();
+  const message = await getMessageManager();
   const items = await message.getMessagesByIdsAsync(ids);
   expect(
     isEqual(

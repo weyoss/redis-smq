@@ -31,7 +31,7 @@ it('QueueStorageSortedSet: should fetch items with correct pagination', async ()
   await createQueue(defaultQueue, EQueueType.PRIORITY_QUEUE);
   const redisClient = promisifyAll(new RedisClient());
   const queueMessagesStorageSortedSet = promisifyAll(
-    new QueueStorageSortedSet(redisClient),
+    new QueueStorageSortedSet(),
   );
 
   let ids: string[] = [];

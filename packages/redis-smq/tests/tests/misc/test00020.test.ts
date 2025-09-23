@@ -10,7 +10,7 @@
 import { expect, test } from 'vitest';
 import {
   EMessagePriority,
-  MessageMessagePropertyError,
+  MessagePropertyError,
   ProducibleMessage,
 } from '../../../src/index.js';
 
@@ -18,25 +18,25 @@ test('ProducibleMessage', async () => {
   const msg = new ProducibleMessage();
   expect(() => {
     msg.setScheduledRepeatPeriod(-1);
-  }).toThrow(MessageMessagePropertyError);
+  }).toThrow(MessagePropertyError);
   expect(() => {
     msg.setScheduledDelay(-1);
-  }).toThrow(MessageMessagePropertyError);
+  }).toThrow(MessagePropertyError);
   expect(() => {
     msg.setScheduledRepeat(-1);
-  }).toThrow(MessageMessagePropertyError);
+  }).toThrow(MessagePropertyError);
   expect(() => {
     msg.setTTL(-1);
-  }).toThrow(MessageMessagePropertyError);
+  }).toThrow(MessagePropertyError);
   expect(() => {
     msg.setConsumeTimeout(-1);
-  }).toThrow(MessageMessagePropertyError);
+  }).toThrow(MessagePropertyError);
   expect(() => {
     msg.setRetryThreshold(-1);
-  }).toThrow(MessageMessagePropertyError);
+  }).toThrow(MessagePropertyError);
   expect(() => {
     msg.setRetryDelay(-1);
-  }).toThrow(MessageMessagePropertyError);
+  }).toThrow(MessagePropertyError);
 
   msg.setPriority(EMessagePriority.HIGHEST);
   expect(msg.getPriority()).toBe(EMessagePriority.HIGHEST);
@@ -49,7 +49,7 @@ test('ProducibleMessage', async () => {
   msg.setTopic('my-topic');
   expect(msg.getTopic()).toEqual({ ns: 'testing', topic: 'my-topic' });
 
-  msg.setQueue('my-queue-manager');
+  msg.setQueue('my-queue');
   expect(msg.getQueue()).toEqual({ ns: 'testing', name: 'my-queue' });
 
   msg.setFanOut('my-fanout');

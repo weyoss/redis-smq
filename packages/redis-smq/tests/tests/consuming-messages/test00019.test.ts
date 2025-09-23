@@ -15,7 +15,7 @@ import {
   createQueue,
   getDefaultQueue,
 } from '../../common/message-producing-consuming.js';
-import { getMessage } from '../../common/message.js';
+import { getMessageManager } from '../../common/message-manager.js';
 import { getProducer } from '../../common/producer.js';
 import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
 
@@ -45,7 +45,7 @@ test('An unacknowledged message is dead-lettered and not delivered again, given 
   const r = await deadLetteredMessages.getMessagesAsync(defaultQueue, 0, 100);
   expect(r.items.length).toBe(1);
 
-  const m = await getMessage();
+  const m = await getMessageManager();
   const mState = await m.getMessageStateAsync(r.items[0].id);
   expect(mState.attempts).toBe(1);
 });

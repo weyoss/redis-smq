@@ -13,7 +13,7 @@ import {
   EQueueDeliveryModel,
   EQueueType,
   NamespaceManager,
-  NamespaceManagerNamespaceNotFoundError,
+  NamespaceNotFoundError,
   QueueManager,
 } from '../../../src/index.js';
 
@@ -37,9 +37,8 @@ test('NamespaceManager', async () => {
   expect(nsList1).toEqual([]);
 
   await expect(namespace.getNamespaceQueuesAsync('testing')).rejects.toThrow(
-    NamespaceManagerNamespaceNotFoundError,
+    NamespaceNotFoundError,
   );
 
   await queue.shutdownAsync();
-  await namespace.shutdownAsync();
 });

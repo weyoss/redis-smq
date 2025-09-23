@@ -16,11 +16,11 @@ import {
   Producer,
   ProducibleMessage,
 } from '../../../src/index.js';
-import { getQueue } from '../../common/queue.js';
+import { getQueueManager } from '../../common/queue-manager.js';
 
 test('Health check: case 3', async () => {
   const queueName = `queue_${Date.now()}`;
-  const queue = await getQueue();
+  const queue = await getQueueManager();
   await queue.saveAsync(
     queueName,
     EQueueType.LIFO_QUEUE,
@@ -66,7 +66,7 @@ test('Health check: case 3', async () => {
   consumer.on('consumer.goingUp', consumerGoingUpMock);
 
   await consumer.consumeAsync(
-    queueName, // using the default namespace-manager
+    queueName, // using the default namespace
     (message, cb) => cb(),
   );
 

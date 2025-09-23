@@ -26,7 +26,7 @@ import {
   untilMessageDeadLettered,
 } from './events.js';
 import { getProducer } from './producer.js';
-import { getQueue } from './queue.js';
+import { getQueueManager } from './queue-manager.js';
 
 export function getDefaultQueue() {
   return {
@@ -127,7 +127,7 @@ export async function createQueue(
   queue: string | IQueueParams,
   mixed: boolean | EQueueType,
 ): Promise<void> {
-  const queueInstance = await getQueue();
+  const queueInstance = await getQueueManager();
   const type =
     typeof mixed === 'boolean'
       ? mixed

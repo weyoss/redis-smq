@@ -8,11 +8,21 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { IConnectionPoolConfig } from '../../../src/common/redis-connection-pool/types/index.js';
+import {
+  ERedisConnectionAcquisitionMode,
+  IConnectionPoolConfig,
+} from '../../../src/common/redis-connection-pool/types/index.js';
 import { RedisConnectionPool } from '../../../src/index.js';
 import bluebird from 'bluebird';
 import { config } from '../../common/config.js';
-import { IRedisClient } from 'redis-smq-common';
+import {
+  concurrentConnections,
+  connectionAcquisitionAndRelease,
+  poolLimitsEXCLUSIVE,
+  poolLimitsSHARED,
+} from './common.js';
+
+const connectionPool = bluebird.promisifyAll(RedisConnectionPool);
 
 describe('Redis Connection Pool', async () => {
   const poolConfig: IConnectionPoolConfig = {
@@ -26,10 +36,10 @@ describe('Redis Connection Pool', async () => {
   let pool: ReturnType<typeof bluebird.promisifyAll<RedisConnectionPool>>;
 
   beforeEach(async () => {
+    await connectionPool.shutdownAsync();
     pool = bluebird.promisifyAll(
-      RedisConnectionPool.getInstance(config.redis, poolConfig),
+      await connectionPool.initializeAsync(config.redis, poolConfig),
     );
-    await pool.initAsync();
   });
 
   afterEach(async () => {
@@ -41,73 +51,37 @@ describe('Redis Connection Pool', async () => {
     expect(stats.total).toEqual(2);
   });
 
-  it('Connection acquisition and release', async () => {
-    const redisClient = await pool.acquireAsync();
-    const statsAfterAcquire = pool.getStats();
-    expect(statsAfterAcquire.inUse).toEqual(1);
-
-    pool.release(redisClient);
-    const statsAfterRelease = pool.getStats();
-    expect(statsAfterRelease.inUse).toEqual(0);
-  });
-
-  it('Concurrent connections', async () => {
-    const concurrentOperations = 10;
-    const operations: Promise<void>[] = [];
-
-    for (let i = 0; i < concurrentOperations; i++) {
-      operations.push(
-        new Promise<void>((resolve, reject) => {
-          pool.acquire((err, client) => {
-            if (err) {
-              reject(
-                new Error(`Failed to acquire connection ${i}: ${err.message}`),
-              );
-              return;
-            }
-            if (!client) {
-              reject(new Error(`Expected a RedisClient instance`));
-            }
-
-            // Simulate some work
-            setTimeout(() => {
-              client?.get('hello', (err) => {
-                pool.release(client);
-                if (err) {
-                  return reject(
-                    new Error(`Get failed for connection ${i}: ${err.message}`),
-                  );
-                }
-                resolve();
-              });
-            }, Math.random() * 100); // Random delay 0-100ms
-          });
-        }),
-      );
-    }
-
-    await Promise.all(operations);
-
-    const finalStats = pool.getStats();
-    expect(finalStats.inUse).toEqual(0);
-  });
-
-  it('Pool limits', async () => {
-    const maxConnections = 5; // As configured in initialization
-    const clients: IRedisClient[] = [];
-
-    // Acquire maximum number of connections
-    for (let i = 0; i < maxConnections; i++) {
-      const client = await pool.acquireAsync();
-      clients.push(client);
-    }
-
-    const stats = pool.getStats();
-    expect(stats.inUse).toEqual(maxConnections);
-
-    await expect(async () => pool.acquireAsync()).rejects.toThrow(
-      'Connection acquire timeout',
+  it('Connection acquisition and release: ERedisConnectionAcquisitionMode.EXCLUSIVE', async () => {
+    await connectionAcquisitionAndRelease(
+      pool,
+      ERedisConnectionAcquisitionMode.EXCLUSIVE,
     );
+  });
+
+  it('Connection acquisition and release: ERedisConnectionAcquisitionMode.SHARED', async () => {
+    await connectionAcquisitionAndRelease(
+      pool,
+      ERedisConnectionAcquisitionMode.SHARED,
+    );
+  });
+
+  it('Concurrent connections: ERedisConnectionAcquisitionMode.EXCLUSIVE', async () => {
+    await concurrentConnections(
+      pool,
+      ERedisConnectionAcquisitionMode.EXCLUSIVE,
+    );
+  });
+
+  it('Concurrent connections: ERedisConnectionAcquisitionMode.SHARED', async () => {
+    await concurrentConnections(pool, ERedisConnectionAcquisitionMode.SHARED);
+  });
+
+  it('Pool limits: ERedisConnectionAcquisitionMode.EXCLUSIVE', async () => {
+    await poolLimitsEXCLUSIVE(pool);
+  });
+
+  it('Pool limits: ERedisConnectionAcquisitionMode.SHARED', async () => {
+    await poolLimitsSHARED(pool);
   });
 
   it('Graceful shutdown', async () => {

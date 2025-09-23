@@ -12,10 +12,10 @@ import { redisKeys } from '../../common/redis-keys/redis-keys.js';
 import { IQueueParams, TQueueConsumer } from '../types/index.js';
 
 /**
- * Retrieves all consumers associated with a specific queue-manager.
+ * Retrieves all consumers associated with a specific queue.
  *
  * @param client - The Redis client instance.
- * @param queue - The queue-manager parameters.
+ * @param queue - The queue parameters.
  * @param cb - The callback function to handle the result.
  */
 export function _getQueueConsumers(

@@ -20,13 +20,13 @@ import { getEventBus } from '../../common/event-bus-redis.js';
 import { getDefaultQueue } from '../../common/message-producing-consuming.js';
 import { getProducer } from '../../common/producer.js';
 import { getQueueRateLimit } from '../../common/queue-rate-limit.js';
-import { getQueue } from '../../common/queue.js';
+import { getQueueManager } from '../../common/queue-manager.js';
 import { validateTime } from '../../common/validate-time.js';
 
-test('Rate limit a priority queue-manager and check message rate', async () => {
+test('Rate limit a priority queue and check message rate', async () => {
   const defaultQueue = getDefaultQueue();
   const eventBus = await getEventBus();
-  const queue = await getQueue();
+  const queue = await getQueueManager();
   await queue.saveAsync(
     defaultQueue,
     EQueueType.PRIORITY_QUEUE,

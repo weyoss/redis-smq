@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { ICallback, IRedisConfig } from 'redis-smq-common';
-import { Configuration } from './config/index.js';
+import { async, ICallback, IRedisConfig } from 'redis-smq-common';
+import { Configuration, IRedisSMQConfig } from './config/index.js';
 import { Producer } from './producer/producer.js';
 import { Consumer } from './consumer/consumer.js';
 import { QueueManager } from './queue-manager/index.js';
@@ -23,6 +23,16 @@ import { QueueRateLimit } from './queue-rate-limit/index.js';
 import { MessageManager } from './message-manager/index.js';
 import { RedisConnectionPool } from './common/index.js';
 import { Disposable } from './common/types/disposable.js';
+import { EventBus } from './event-bus/index.js';
+import { parseRedisConfig } from './config/parse-redis-config.js';
+
+function isDisposable(disposable: object): disposable is Disposable {
+  return (
+    disposable &&
+    'shutdown' in disposable &&
+    typeof disposable.shutdown === 'function'
+  );
+}
 
 /**
  * Main RedisSMQ class providing a simplified API for Redis-based message queue operations.
@@ -37,8 +47,8 @@ export class RedisSMQ {
   private static readonly components = new Set<Disposable>();
 
   // Track a created component that exposes a shutdown(cb) API
-  private static trackComponent<T extends Disposable>(instance: T): T {
-    RedisSMQ.components.add(instance);
+  private static trackComponent<T extends object>(instance: T): T {
+    if (isDisposable(instance)) RedisSMQ.components.add(instance);
     return instance;
   }
 
@@ -65,6 +75,32 @@ export class RedisSMQ {
     });
   }
 
+  private static bootstrap(
+    redisConfig: IRedisConfig,
+    configurationInit: (cb: ICallback) => void,
+    cb: ICallback,
+  ): void {
+    async.series(
+      [
+        (cb: ICallback) =>
+          RedisConnectionPool.initialize(redisConfig, {}, (err) => cb(err)),
+        (cb: ICallback) => configurationInit(cb),
+        (cb: ICallback) => {
+          const config = Configuration.getConfig();
+          if (config.eventBus.enabled) {
+            return EventBus.getInstance().run((err) => cb(err));
+          }
+          cb();
+        },
+      ],
+      (err) => {
+        if (err) return cb(err);
+        RedisSMQ.initialized = true;
+        cb();
+      },
+    );
+  }
+
   /**
    * Initializes RedisSMQ with Redis connection settings.
    * This is the simplest way to get started - just provide Redis connection once.
@@ -76,7 +112,7 @@ export class RedisSMQ {
    * ```typescript
    * import { RedisSMQ, ERedisConfigClient } from 'redis-smq';
    *
-   * RedisSMQ.initialize('my-app', {
+   * RedisSMQ.initialize({
    *   client: ERedisConfigClient.IOREDIS,
    *   options: {
    *     host: 'localhost',
@@ -97,12 +133,60 @@ export class RedisSMQ {
    * ```
    */
   static initialize(redisConfig: IRedisConfig, cb: ICallback): void {
-    RedisConnectionPool.initialize(redisConfig);
-    Configuration.initialize(redisConfig, (err) => {
-      if (err) return cb(err);
-      RedisSMQ.initialized = true;
-      cb(null);
-    });
+    RedisSMQ.bootstrap(
+      redisConfig,
+      (cb: ICallback) => Configuration.initialize((err) => cb(err)),
+      cb,
+    );
+  }
+
+  /**
+   * Initializes RedisSMQ with custom RedisSMQ configuration.
+   * This method allows you to provide a complete RedisSMQ configuration that will be saved to Redis.
+   * The Redis connection configuration is extracted from the provided RedisSMQ configuration.
+   *
+   * @param redisSMQConfig - Complete RedisSMQ configuration including Redis settings
+   * @param cb - Callback function called when initialization completes
+   *
+   * @example
+   * ```typescript
+   * import { RedisSMQ, ERedisConfigClient } from 'redis-smq';
+   *
+   * RedisSMQ.initializeWithConfig({
+   *   namespace: 'my-custom-app',
+   *   redis: {
+   *     client: ERedisConfigClient.IOREDIS,
+   *     options: {
+   *       host: 'localhost',
+   *       port: 6379,
+   *       db: 0
+   *     }
+   *   },
+   *   logger: {
+   *     enabled: true,
+   *     options: { level: 'debug' }
+   *   },
+   *   eventBus: { enabled: true }
+   * }, (err) => {
+   *   if (err) {
+   *     console.error('Failed to initialize RedisSMQ:', err);
+   *   } else {
+   *     console.log('RedisSMQ initialized with custom configuration');
+   *   }
+   * });
+   * ```
+   */
+  static initializeWithConfig(
+    redisSMQConfig: IRedisSMQConfig,
+    cb: ICallback,
+  ): void {
+    const redisConfig = parseRedisConfig(redisSMQConfig.redis);
+    RedisSMQ.bootstrap(
+      redisConfig,
+      (cb: ICallback) =>
+        Configuration.initializeWithConfig(redisSMQConfig, (err) => cb(err)),
+      cb,
+    );
   }
 
   /**
@@ -175,8 +259,8 @@ export class RedisSMQ {
    *
    * @example
    * ```typescript
-   * const queue-manager = RedisSMQ.createQueue();
-   * queue-manager.save('my-queue-manager', EQueueType.LIFO_QUEUE, EQueueDeliveryModel.POINT_TO_POINT, (err, result) => {
+   * const queueManager = RedisSMQ.createQueueManager();
+   * queueManager.save('my-queue', EQueueType.LIFO_QUEUE, EQueueDeliveryModel.POINT_TO_POINT, (err, result) => {
    *   // Queue created
    * });
    * ```
@@ -194,8 +278,8 @@ export class RedisSMQ {
    *
    * @example
    * ```typescript
-   * const namespace-manager = RedisSMQ.createNamespace();
-   * namespace-manager.getNamespaces((err, namespaces) => {
+   * const namespaceManager = RedisSMQ.createNamespaceManager();
+   * namespaceManager.getNamespaces((err, namespaces) => {
    *   // Retrieved namespaces
    * });
    * ```
@@ -214,7 +298,7 @@ export class RedisSMQ {
    * @example
    * ```typescript
    * const queueMessages = RedisSMQ.createQueueMessages();
-   * queueMessages.countMessagesByStatus('my-queue-manager', (err, count) => {
+   * queueMessages.countMessagesByStatus('my-queue', (err, count) => {
    *   // Message counts by status
    * });
    * ```
@@ -233,7 +317,7 @@ export class RedisSMQ {
    * @example
    * ```typescript
    * const consumerGroups = RedisSMQ.createConsumerGroups();
-   * consumerGroups.saveConsumerGroup('my-queue-manager', 'group1', (err, result) => {
+   * consumerGroups.saveConsumerGroup('my-queue', 'group1', (err, result) => {
    *   // Consumer group saved
    * });
    * ```
@@ -252,7 +336,7 @@ export class RedisSMQ {
    * @example
    * ```typescript
    * const acknowledgedMessages = RedisSMQ.createQueueAcknowledgedMessages();
-   * acknowledgedMessages.countMessages('my-queue-manager', (err, count) => {
+   * acknowledgedMessages.countMessages('my-queue', (err, count) => {
    *   // Acknowledged message count
    * });
    * ```
@@ -271,7 +355,7 @@ export class RedisSMQ {
    * @example
    * ```typescript
    * const deadLetteredMessages = RedisSMQ.createQueueDeadLetteredMessages();
-   * deadLetteredMessages.countMessages('my-queue-manager', (err, count) => {
+   * deadLetteredMessages.countMessages('my-queue', (err, count) => {
    *   // Dead lettered message count
    * });
    * ```
@@ -290,7 +374,7 @@ export class RedisSMQ {
    * @example
    * ```typescript
    * const scheduledMessages = RedisSMQ.createQueueScheduledMessages();
-   * scheduledMessages.countMessages('my-queue-manager', (err, count) => {
+   * scheduledMessages.countMessages('my-queue', (err, count) => {
    *   // Scheduled message count
    * });
    * ```
@@ -309,7 +393,7 @@ export class RedisSMQ {
    * @example
    * ```typescript
    * const pendingMessages = RedisSMQ.createQueuePendingMessages();
-   * pendingMessages.countMessages({ queue-manager: 'my-queue-manager' }, (err, count) => {
+   * pendingMessages.countMessages({ queue: 'my-queue' }, (err, count) => {
    *   // Pending message count
    * });
    * ```
@@ -328,7 +412,7 @@ export class RedisSMQ {
    * @example
    * ```typescript
    * const queueRateLimit = RedisSMQ.createQueueRateLimit();
-   * queueRateLimit.setQueueRateLimit('my-queue-manager', { interval: 1000, limit: 10 }, (err) => {
+   * queueRateLimit.setQueueRateLimit('my-queue', { interval: 1000, limit: 10 }, (err) => {
    *   // Rate limit set
    * });
    * ```
@@ -396,10 +480,15 @@ export class RedisSMQ {
         Configuration.shutdown((cfgErr) => {
           if (cfgErr) errors.push(cfgErr);
 
-          // 4) Reset initialized flag
-          RedisSMQ.initialized = false;
+          // 4) Shutdown the event bus
+          EventBus.shutdown((eventBusErr) => {
+            if (eventBusErr) errors.push(eventBusErr);
 
-          cb(errors[0] || null);
+            // 5) Reset initialized flag
+            RedisSMQ.initialized = false;
+
+            cb(errors[0] || null);
+          });
         });
       });
     });
@@ -439,7 +528,7 @@ export class RedisSMQ {
    * ```typescript
    * const consumer = RedisSMQ.startConsumer(false, (err) => {
    *   if (!err) {
-   *     consumer.consume('my-queue-manager', messageHandler, (err) => {
+   *     consumer.consume('my-queue', messageHandler, (err) => {
    *       // Consumer is consuming messages
    *     });
    *   }

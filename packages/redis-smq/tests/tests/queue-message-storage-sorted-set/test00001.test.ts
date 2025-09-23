@@ -9,7 +9,6 @@
 
 import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
-import { RedisClient } from '../../../src/common/redis-client/redis-client.js';
 import { redisKeys } from '../../../src/common/redis-keys/redis-keys.js';
 import { EQueueType } from '../../../src/index.js';
 import { QueueStorageSortedSet } from '../../../src/common/queue-explorer/queue-storage/queue-storage-sorted-set.js';
@@ -23,9 +22,8 @@ const { promisifyAll } = bluebird;
 it('QueueStorageSortedSet: should return empty array for an empty list', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.PRIORITY_QUEUE);
-  const redisClient = promisifyAll(new RedisClient());
   const queueMessagesStorageSortedSet = promisifyAll(
-    new QueueStorageSortedSet(redisClient),
+    new QueueStorageSortedSet(),
   );
   const { keyQueuePriorityPending } = redisKeys.getQueueKeys(
     defaultQueue,
@@ -39,5 +37,4 @@ it('QueueStorageSortedSet: should return empty array for an empty list', async (
     },
   );
   expect(items.length).toBe(0);
-  await redisClient.shutdownAsync();
 });

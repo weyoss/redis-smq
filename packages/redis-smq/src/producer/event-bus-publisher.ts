@@ -7,47 +7,36 @@
  * in the root directory of this source tree.
  */
 
-import { ILogger } from 'redis-smq-common';
 import { TProducerEvent } from '../common/index.js';
-import { EventBus } from '../event-bus/index.js';
 import { Producer } from './producer.js';
+import { EventBus } from '../event-bus/index.js';
 
-export function eventBusPublisher(
-  producer: Producer,
-  eventBus: EventBus,
-  logger: ILogger,
-): void {
+export function eventBusPublisher(producer: Producer): void {
   const up: TProducerEvent['producer.up'] = (...args) => {
-    const instance = eventBus.getInstance();
-    if (instance instanceof Error) logger.error(instance);
-    else instance.emit('producer.up', ...args);
+    const instance = EventBus.getInstance();
+    instance.emit('producer.up', ...args);
   };
   const down: TProducerEvent['producer.down'] = (...args) => {
-    const instance = eventBus.getInstance();
-    if (instance instanceof Error) logger.error(instance);
-    else instance.emit('producer.down', ...args);
+    const instance = EventBus.getInstance();
+    instance.emit('producer.down', ...args);
   };
   const goingUp: TProducerEvent['producer.goingUp'] = (...args) => {
-    const instance = eventBus.getInstance();
-    if (instance instanceof Error) logger.error(instance);
-    else instance.emit('producer.goingUp', ...args);
+    const instance = EventBus.getInstance();
+    instance.emit('producer.goingUp', ...args);
   };
   const goingDown: TProducerEvent['producer.goingDown'] = (...args) => {
-    const instance = eventBus.getInstance();
-    if (instance instanceof Error) logger.error(instance);
-    else instance.emit('producer.goingDown', ...args);
+    const instance = EventBus.getInstance();
+    instance.emit('producer.goingDown', ...args);
   };
   const messagePublished: TProducerEvent['producer.messagePublished'] = (
     ...args
   ) => {
-    const instance = eventBus.getInstance();
-    if (instance instanceof Error) logger.error(instance);
-    else instance.emit('producer.messagePublished', ...args);
+    const instance = EventBus.getInstance();
+    instance.emit('producer.messagePublished', ...args);
   };
   const error: TProducerEvent['producer.error'] = (...args) => {
-    const instance = eventBus.getInstance();
-    if (instance instanceof Error) logger.error(instance);
-    else instance.emit('producer.error', ...args);
+    const instance = EventBus.getInstance();
+    instance.emit('producer.error', ...args);
   };
   producer.on('producer.goingDown', goingDown);
   producer.on('producer.goingUp', goingUp);

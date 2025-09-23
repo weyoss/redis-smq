@@ -9,13 +9,13 @@
 
 import { _parseQueueParams } from '../../../queue-manager/_/_parse-queue-params.js';
 import { IQueueParams } from '../../../queue-manager/index.js';
-import { ExchangeInvalidQueueParamsError } from '../../errors/index.js';
+import { InvalidDirectExchangeParametersError } from '../../../errors/index.js';
 
 export function _validateExchangeDirectParams(
   queue: string | IQueueParams,
-): IQueueParams | ExchangeInvalidQueueParamsError {
+): IQueueParams | InvalidDirectExchangeParametersError {
   const queueParams = _parseQueueParams(queue);
   if (queueParams instanceof Error)
-    return new ExchangeInvalidQueueParamsError();
+    return new InvalidDirectExchangeParametersError();
   return queueParams;
 }

@@ -12,13 +12,13 @@ import bluebird from 'bluebird';
 import {
   Consumer,
   ConsumerGroups,
-  ConsumerGroupsInvalidGroupIdError,
+  InvalidConsumerGroupIdError,
   EQueueDeliveryModel,
   EQueueType,
   IQueueParams,
-  QueueManagerInvalidParameterError,
+  InvalidQueueParametersError,
 } from '../../../src/index.js';
-import { getQueue } from '../../common/queue.js';
+import { getQueueManager } from '../../common/queue-manager.js';
 
 test('Consumer group ID validation', async () => {
   const queue1: IQueueParams = {
@@ -26,7 +26,7 @@ test('Consumer group ID validation', async () => {
     ns: 'ns1',
   };
 
-  const queue = await getQueue();
+  const queue = await getQueueManager();
   await queue.saveAsync(
     queue1,
     EQueueType.PRIORITY_QUEUE,
@@ -39,12 +39,12 @@ test('Consumer group ID validation', async () => {
       { queue: queue1, groupId: 'my-group-1!' },
       (msg, cb) => cb(),
     ),
-  ).rejects.toThrow(QueueManagerInvalidParameterError);
+  ).rejects.toThrow(InvalidQueueParametersError);
 
   const consumerGroups = bluebird.promisifyAll(new ConsumerGroups());
   await expect(
     consumerGroups.saveConsumerGroupAsync(queue1, 'my-group-1!'),
-  ).rejects.toThrow(ConsumerGroupsInvalidGroupIdError);
+  ).rejects.toThrow(InvalidConsumerGroupIdError);
 
   await consumerGroups.shutdownAsync();
   await consumer1.shutdownAsync();

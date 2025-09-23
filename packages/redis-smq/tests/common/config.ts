@@ -25,7 +25,10 @@ export const config = parseConfig({
     },
   },
   logger: {
-    enabled: false,
+    enabled: true,
+    options: {
+      logLevel: 'DEBUG',
+    },
   },
   messages: {
     store: true,

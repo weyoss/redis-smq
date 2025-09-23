@@ -8,7 +8,7 @@
  */
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
-import { QueueManagerQueueNotFoundError } from '../errors/index.js';
+import { QueueNotFoundError } from '../../errors/index.js';
 import { IQueueParams } from '../types/queue.js';
 import { _parseQueueParams } from './_parse-queue-params.js';
 import { _queueExists } from './_queue-exists.js';
@@ -23,7 +23,7 @@ export function _parseQueueParamsAndValidate(
   else
     _queueExists(redisClient, queueParams, (err, reply) => {
       if (err) cb(err);
-      else if (!reply) cb(new QueueManagerQueueNotFoundError());
+      else if (!reply) cb(new QueueNotFoundError());
       else cb(null, queueParams);
     });
 }

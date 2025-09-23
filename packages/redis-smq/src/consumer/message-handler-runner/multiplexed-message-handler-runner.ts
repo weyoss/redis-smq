@@ -8,8 +8,6 @@
  */
 
 import { ICallback, Timer } from 'redis-smq-common';
-import { RedisClient } from '../../common/redis-client/redis-client.js';
-import { EventBus } from '../../event-bus/index.js';
 import { Consumer } from '../consumer.js';
 import { MessageHandler } from '../message-handler/message-handler.js';
 import { MultiplexedMessageHandler } from '../message-handler/multiplexed-message-handler.js';
@@ -26,12 +24,8 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   protected activeMessageHandler: MessageHandler | null = null;
   protected readonly tickIntervalMs: number = 1000;
 
-  constructor(
-    consumer: Consumer,
-    redisClient: RedisClient,
-    eventBus: EventBus | null,
-  ) {
-    super(consumer, redisClient, eventBus);
+  constructor(consumer: Consumer) {
+    super(consumer);
     this.logger.info(
       `Initializing MultiplexedMessageHandlerRunner with ID: ${this.id}`,
     );
@@ -98,7 +92,10 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
     }
     this.activeMessageHandler = this.getNextMessageHandler();
     if (this.activeMessageHandler) {
-      if (this.activeMessageHandler.isRunning()) {
+      if (
+        this.activeMessageHandler.isRunning() &&
+        this.activeMessageHandler.isUp()
+      ) {
         this.logger.debug(
           `Triggering dequeue on active handler (ID: ${this.activeMessageHandler.getId()})`,
         );
@@ -116,7 +113,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   };
 
   /**
-   * Creates a new MultiplexedMessageHandler instance for the given queue-manager.
+   * Creates a new MultiplexedMessageHandler instance for the given queue.
    */
   protected override createMessageHandlerInstance(
     handlerParams: IConsumerMessageHandlerParams,
@@ -126,9 +123,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
     );
     const instance = new MultiplexedMessageHandler(
       this.consumer,
-      this.redisClient,
       handlerParams,
-      this.eventBus,
       this.execNextMessageHandler,
     );
     this.messageHandlerInstances.push(instance);

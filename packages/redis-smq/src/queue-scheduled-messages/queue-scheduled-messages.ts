@@ -7,18 +7,14 @@
  * in the root directory of this source tree.
  */
 
-import { RedisClient } from '../common/redis-client/redis-client.js';
 import { QueueExplorer } from '../common/queue-explorer/queue-explorer.js';
 import { QueueStorageSortedSet } from '../common/queue-explorer/queue-storage/queue-storage-sorted-set.js';
 import { MessageManager } from '../message-manager/index.js';
 
 export class QueueScheduledMessages extends QueueExplorer {
   constructor() {
-    const redisClient = new RedisClient();
-    redisClient.on('error', (err) => this.logger.error(err));
     super(
-      redisClient,
-      new QueueStorageSortedSet(redisClient),
+      new QueueStorageSortedSet(),
       new MessageManager(),
       'keyQueueScheduled',
     );

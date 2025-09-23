@@ -20,6 +20,7 @@ import { MessageEnvelope } from '../../../message/message-envelope.js';
 import { EQueueProperty, EQueueType } from '../../../queue-manager/index.js';
 import { WorkerAbstract } from './worker-abstract.js';
 import { workerBootstrap } from './worker-bootstrap.js';
+import { withSharedPoolConnection } from '../../../common/redis-connection-pool/with-shared-pool-connection.js';
 
 export class PublishScheduledWorker extends WorkerAbstract {
   work = (cb: ICallback): void => {
@@ -47,39 +48,34 @@ export class PublishScheduledWorker extends WorkerAbstract {
   protected fetchMessageIds = (cb: ICallback<string[]>): void => {
     this.logger.debug('Fetching scheduled message IDs');
 
-    const redisClient = this.redisClient.getInstance();
-    if (redisClient instanceof Error) {
-      this.logger.error('Failed to get Redis client instance', redisClient);
-      cb(redisClient);
-      return;
-    }
+    withSharedPoolConnection((redisClient, cb) => {
+      const { keyQueueScheduled } = redisKeys.getQueueKeys(
+        this.queueParsedParams.queueParams,
+        this.queueParsedParams.groupId,
+      );
 
-    const { keyQueueScheduled } = redisKeys.getQueueKeys(
-      this.queueParsedParams.queueParams,
-      this.queueParsedParams.groupId,
-    );
+      this.logger.debug(`Using scheduled queue key: ${keyQueueScheduled}`);
+      const currentTimestamp = Date.now();
 
-    this.logger.debug(`Using scheduled queue key: ${keyQueueScheduled}`);
-    const currentTimestamp = Date.now();
-
-    redisClient.zrangebyscore(
-      keyQueueScheduled,
-      0,
-      currentTimestamp,
-      0,
-      99,
-      (err, ids) => {
-        if (err) {
-          this.logger.error('Error fetching scheduled message IDs', err);
-          return cb(err);
-        }
-        const messageCount = ids?.length || 0;
-        this.logger.debug(
-          `Found ${messageCount} scheduled messages ready for publishing (current timestamp: ${currentTimestamp})`,
-        );
-        cb(null, ids || []);
-      },
-    );
+      redisClient.zrangebyscore(
+        keyQueueScheduled,
+        0,
+        currentTimestamp,
+        0,
+        99,
+        (err, ids) => {
+          if (err) {
+            this.logger.error('Error fetching scheduled message IDs', err);
+            return cb(err);
+          }
+          const messageCount = ids?.length || 0;
+          this.logger.debug(
+            `Found ${messageCount} scheduled messages ready for publishing (current timestamp: ${currentTimestamp})`,
+          );
+          cb(null, ids || []);
+        },
+      );
+    }, cb);
   };
 
   protected fetchMessages = (
@@ -94,23 +90,18 @@ export class PublishScheduledWorker extends WorkerAbstract {
 
     this.logger.debug(`Fetching ${ids.length} messages from storage`);
 
-    const redisClient = this.redisClient.getInstance();
-    if (redisClient instanceof Error) {
-      this.logger.error('Failed to get Redis client instance', redisClient);
-      cb(redisClient);
-      return;
-    }
-
-    _getMessages(redisClient, ids, (err, messages) => {
-      if (err) {
-        this.logger.error('Error fetching messages', err);
-        cb(err);
-      } else {
-        const messageCount = messages?.length || 0;
-        this.logger.debug(`Successfully retrieved ${messageCount} messages`);
-        cb(null, messages || []);
-      }
-    });
+    withSharedPoolConnection((redisClient, cb) => {
+      _getMessages(redisClient, ids, (err, messages) => {
+        if (err) {
+          this.logger.error('Error fetching messages', err);
+          cb(err);
+        } else {
+          const messageCount = messages?.length || 0;
+          this.logger.debug(`Successfully retrieved ${messageCount} messages`);
+          cb(null, messages || []);
+        }
+      });
+    }, cb);
   };
 
   protected enqueueMessages = (
@@ -125,194 +116,194 @@ export class PublishScheduledWorker extends WorkerAbstract {
 
     this.logger.debug(`Preparing to enqueue ${messages.length} messages`);
 
-    const redisClient = this.redisClient.getInstance();
-    if (redisClient instanceof Error) {
-      this.logger.error('Failed to get Redis client instance', redisClient);
-      cb(redisClient);
-      return;
-    }
+    withSharedPoolConnection((redisClient, cb) => {
+      const {
+        keyQueueProperties,
+        keyQueuePending,
+        keyQueuePriorityPending,
+        keyQueueScheduled,
+        keyQueueMessages,
+      } = redisKeys.getQueueKeys(
+        this.queueParsedParams.queueParams,
+        this.queueParsedParams.groupId,
+      );
 
-    const {
-      keyQueueProperties,
-      keyQueuePending,
-      keyQueuePriorityPending,
-      keyQueueScheduled,
-      keyQueueMessages,
-    } = redisKeys.getQueueKeys(
-      this.queueParsedParams.queueParams,
-      this.queueParsedParams.groupId,
-    );
+      // Static keys that are the same for all messages in the batch
+      const keys: string[] = [
+        keyQueueProperties,
+        keyQueuePending,
+        keyQueueMessages,
+        keyQueuePriorityPending,
+        keyQueueScheduled,
+      ];
+      const argv: (string | number)[] = [
+        // Queue Property Constants
+        EQueueProperty.QUEUE_TYPE,
+        EQueueProperty.MESSAGES_COUNT,
+        EQueueProperty.PENDING_MESSAGES_COUNT,
+        EQueueProperty.SCHEDULED_MESSAGES_COUNT,
+        EQueueType.PRIORITY_QUEUE,
+        EQueueType.LIFO_QUEUE,
+        EQueueType.FIFO_QUEUE,
 
-    // Static keys that are the same for all messages in the batch
-    const keys: string[] = [
-      keyQueueProperties,
-      keyQueuePending,
-      keyQueueMessages,
-      keyQueuePriorityPending,
-      keyQueueScheduled,
-    ];
-    const argv: (string | number)[] = [
-      // Queue Property Constants
-      EQueueProperty.QUEUE_TYPE,
-      EQueueProperty.MESSAGES_COUNT,
-      EQueueProperty.PENDING_MESSAGES_COUNT,
-      EQueueProperty.SCHEDULED_MESSAGES_COUNT,
-      EQueueType.PRIORITY_QUEUE,
-      EQueueType.LIFO_QUEUE,
-      EQueueType.FIFO_QUEUE,
+        // Message Status Constants
+        EMessagePropertyStatus.PENDING,
+        EMessagePropertyStatus.SCHEDULED,
 
-      // Message Status Constants
-      EMessagePropertyStatus.PENDING,
-      EMessagePropertyStatus.SCHEDULED,
+        // Message Property Constants
+        EMessageProperty.ID,
+        EMessageProperty.STATUS,
+        EMessageProperty.MESSAGE,
+        EMessageProperty.SCHEDULED_AT,
+        EMessageProperty.PUBLISHED_AT,
+        EMessageProperty.PROCESSING_STARTED_AT,
+        EMessageProperty.DEAD_LETTERED_AT,
+        EMessageProperty.ACKNOWLEDGED_AT,
+        EMessageProperty.UNACKNOWLEDGED_AT,
+        EMessageProperty.LAST_UNACKNOWLEDGED_AT,
+        EMessageProperty.LAST_SCHEDULED_AT,
+        EMessageProperty.REQUEUED_AT,
+        EMessageProperty.REQUEUE_COUNT,
+        EMessageProperty.LAST_REQUEUED_AT,
+        EMessageProperty.LAST_RETRIED_ATTEMPT_AT,
+        EMessageProperty.SCHEDULED_CRON_FIRED,
+        EMessageProperty.ATTEMPTS,
+        EMessageProperty.SCHEDULED_REPEAT_COUNT,
+        EMessageProperty.EXPIRED,
+        EMessageProperty.EFFECTIVE_SCHEDULED_DELAY,
+        EMessageProperty.SCHEDULED_TIMES,
+        EMessageProperty.SCHEDULED_MESSAGE_PARENT_ID,
+        EMessageProperty.REQUEUED_MESSAGE_PARENT_ID,
+      ];
 
-      // Message Property Constants
-      EMessageProperty.ID,
-      EMessageProperty.STATUS,
-      EMessageProperty.MESSAGE,
-      EMessageProperty.SCHEDULED_AT,
-      EMessageProperty.PUBLISHED_AT,
-      EMessageProperty.PROCESSING_STARTED_AT,
-      EMessageProperty.DEAD_LETTERED_AT,
-      EMessageProperty.ACKNOWLEDGED_AT,
-      EMessageProperty.UNACKNOWLEDGED_AT,
-      EMessageProperty.LAST_UNACKNOWLEDGED_AT,
-      EMessageProperty.LAST_SCHEDULED_AT,
-      EMessageProperty.REQUEUED_AT,
-      EMessageProperty.REQUEUE_COUNT,
-      EMessageProperty.LAST_REQUEUED_AT,
-      EMessageProperty.LAST_RETRIED_ATTEMPT_AT,
-      EMessageProperty.SCHEDULED_CRON_FIRED,
-      EMessageProperty.ATTEMPTS,
-      EMessageProperty.SCHEDULED_REPEAT_COUNT,
-      EMessageProperty.EXPIRED,
-      EMessageProperty.EFFECTIVE_SCHEDULED_DELAY,
-      EMessageProperty.SCHEDULED_TIMES,
-      EMessageProperty.SCHEDULED_MESSAGE_PARENT_ID,
-      EMessageProperty.REQUEUED_MESSAGE_PARENT_ID,
-    ];
+      async.eachOf(
+        messages,
+        (msg, index, done) => {
+          const messageId = msg.getId();
+          this.logger.debug(
+            `Processing message ${messageId} (${index + 1}/${messages.length})`,
+          );
 
-    async.eachOf(
-      messages,
-      (msg, index, done) => {
-        const messageId = msg.getId();
-        this.logger.debug(
-          `Processing message ${messageId} (${index + 1}/${messages.length})`,
-        );
+          const ts = Date.now();
+          const scheduledMessageId = msg.getId();
+          const { keyMessage: keyScheduledMessage } =
+            redisKeys.getMessageKeys(scheduledMessageId);
+          const nextScheduleTimestamp = msg.getNextScheduledTimestamp();
+          const scheduledMessageState = msg.getMessageState();
+          const messagePriority = msg.producibleMessage.getPriority() ?? '';
+          const scheduledMessageCronFired = Number(
+            scheduledMessageState.isScheduledCronFired(),
+          );
+          const scheduledMessageEffectiveScheduledDelay = Number(
+            scheduledMessageState.getEffectiveScheduledDelay(),
+          );
+          const scheduledMessageRepeatCount =
+            scheduledMessageState.getScheduledRepeatCount();
 
-        const ts = Date.now();
-        const scheduledMessageId = msg.getId();
-        const { keyMessage: keyScheduledMessage } =
-          redisKeys.getMessageKeys(scheduledMessageId);
-        const nextScheduleTimestamp = msg.getNextScheduledTimestamp();
-        const scheduledMessageState = msg.getMessageState();
-        const messagePriority = msg.producibleMessage.getPriority() ?? '';
-        const scheduledMessageCronFired = Number(
-          scheduledMessageState.isScheduledCronFired(),
-        );
-        const scheduledMessageEffectiveScheduledDelay = Number(
-          scheduledMessageState.getEffectiveScheduledDelay(),
-        );
-        const scheduledMessageRepeatCount =
-          scheduledMessageState.getScheduledRepeatCount();
+          let newMessageId = '';
+          let newMessageJSON = '';
+          let newMessagePublishedAt: string | number = '';
+          let newKeyMessage = '';
 
-        let newMessageId = '';
-        let newMessageJSON = '';
-        let newMessagePublishedAt: string | number = '';
-        let newKeyMessage = '';
+          if (nextScheduleTimestamp) {
+            // Repeating message: A new message is created and the original is rescheduled.
+            const newMessage = _fromMessage(msg);
+            newMessage.producibleMessage.resetScheduledParams();
+            const newMessageState = newMessage
+              .getMessageState()
+              .setPublishedAt(ts)
+              .setScheduledMessageParentId(scheduledMessageId);
+            newMessageId = newMessageState.getId();
+            newKeyMessage = redisKeys.getMessageKeys(newMessageId).keyMessage;
+            newMessageJSON = JSON.stringify(newMessage.toJSON());
+            newMessagePublishedAt = ts;
 
-        if (nextScheduleTimestamp) {
-          // Repeating message: A new message is created and the original is rescheduled.
-          const newMessage = _fromMessage(msg);
-          newMessage.producibleMessage.resetScheduledParams();
-          const newMessageState = newMessage
-            .getMessageState()
-            .setPublishedAt(ts)
-            .setScheduledMessageParentId(scheduledMessageId);
-          newMessageId = newMessageState.getId();
-          newKeyMessage = redisKeys.getMessageKeys(newMessageId).keyMessage;
-          newMessageJSON = JSON.stringify(newMessage.toJSON());
-          newMessagePublishedAt = ts;
+            scheduledMessageState.setLastScheduledAt(ts).incrScheduledTimes();
+          } else {
+            // Simple scheduled message: The message is moved to the pending queue.
+            scheduledMessageState.setPublishedAt(ts);
+          }
 
-          scheduledMessageState.setLastScheduledAt(ts).incrScheduledTimes();
-        } else {
-          // Simple scheduled message: The message is moved to the pending queue-manager.
-          scheduledMessageState.setPublishedAt(ts);
-        }
+          const scheduledMessageScheduledTimes =
+            scheduledMessageState.getScheduledTimes();
+          const scheduledMessageLastScheduledAt =
+            scheduledMessageState.getLastScheduledAt() ?? '';
+          const scheduledMessagePublishedAt =
+            scheduledMessageState.getPublishedAt() ?? '';
 
-        const scheduledMessageScheduledTimes =
-          scheduledMessageState.getScheduledTimes();
-        const scheduledMessageLastScheduledAt =
-          scheduledMessageState.getLastScheduledAt() ?? '';
-        const scheduledMessagePublishedAt =
-          scheduledMessageState.getPublishedAt() ?? '';
+          // Dynamic keys for this message
+          keys.push(newKeyMessage, keyScheduledMessage);
 
-        // Dynamic keys for this message
-        keys.push(newKeyMessage, keyScheduledMessage);
-
-        // Dynamic arguments for this message
-        argv.push(
-          newMessageId,
-          newMessageJSON,
-          messagePriority,
-          newMessagePublishedAt,
-          scheduledMessageId,
-          nextScheduleTimestamp,
-          scheduledMessageLastScheduledAt,
-          scheduledMessageScheduledTimes,
-          scheduledMessagePublishedAt,
-          scheduledMessageCronFired,
-          scheduledMessageRepeatCount,
-          scheduledMessageEffectiveScheduledDelay,
-        );
-        done();
-      },
-      (err) => {
-        if (err) {
-          this.logger.error('Error during message processing for enqueue', err);
-          return cb(err);
-        }
-        this.logger.debug(
-          `Executing PUBLISH_SCHEDULED_MESSAGE script for ${messages.length} messages`,
-        );
-        redisClient.runScript(
-          ELuaScriptName.PUBLISH_SCHEDULED,
-          keys,
-          argv,
-          (err, reply) => {
-            if (err) {
-              this.logger.error(
-                'Error executing publish scheduled message script',
-                err,
-              );
-              return cb(err);
-            }
-            if (typeof reply === 'number') {
-              if (reply !== messages.length) {
-                this.logger.warn(
-                  `Script reported processing ${reply} messages, but expected ${messages.length}.`,
+          // Dynamic arguments for this message
+          argv.push(
+            newMessageId,
+            newMessageJSON,
+            messagePriority,
+            newMessagePublishedAt,
+            scheduledMessageId,
+            nextScheduleTimestamp,
+            scheduledMessageLastScheduledAt,
+            scheduledMessageScheduledTimes,
+            scheduledMessagePublishedAt,
+            scheduledMessageCronFired,
+            scheduledMessageRepeatCount,
+            scheduledMessageEffectiveScheduledDelay,
+          );
+          done();
+        },
+        (err) => {
+          if (err) {
+            this.logger.error(
+              'Error during message processing for enqueue',
+              err,
+            );
+            return cb(err);
+          }
+          this.logger.debug(
+            `Executing PUBLISH_SCHEDULED_MESSAGE script for ${messages.length} messages`,
+          );
+          redisClient.runScript(
+            ELuaScriptName.PUBLISH_SCHEDULED,
+            keys,
+            argv,
+            (err, reply) => {
+              if (err) {
+                this.logger.error(
+                  'Error executing publish scheduled message script',
+                  err,
+                );
+                return cb(err);
+              }
+              if (typeof reply === 'number') {
+                if (reply !== messages.length) {
+                  this.logger.warn(
+                    `Script reported processing ${reply} messages, but expected ${messages.length}.`,
+                  );
+                }
+                this.logger.info(
+                  `Successfully published ${reply} scheduled messages.`,
+                );
+                return cb();
+              }
+              if (typeof reply === 'string') {
+                this.logger.error(
+                  `Script execution returned an error: ${reply}`,
+                );
+                return cb(
+                  new PanicError(
+                    `PUBLISH_SCHEDULED_MESSAGE script failed: ${reply}`,
+                  ),
                 );
               }
-              this.logger.info(
-                `Successfully published ${reply} scheduled messages.`,
+              this.logger.error(
+                `Script execution returned unexpected response: ${reply}`,
               );
-              return cb();
-            }
-            if (typeof reply === 'string') {
-              this.logger.error(`Script execution returned an error: ${reply}`);
-              return cb(
-                new PanicError(
-                  `PUBLISH_SCHEDULED_MESSAGE script failed: ${reply}`,
-                ),
-              );
-            }
-            this.logger.error(
-              `Script execution returned unexpected response: ${reply}`,
-            );
-            cb(new PanicError(`Unexpected reply: ${reply}`));
-          },
-        );
-      },
-    );
+              cb(new PanicError(`Unexpected reply: ${reply}`));
+            },
+          );
+        },
+      );
+    }, cb);
   };
 }
 

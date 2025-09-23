@@ -8,14 +8,14 @@
  */
 
 import bluebird from 'bluebird';
-import { Configuration, ProducibleMessage } from '../../src/index.js';
+import { ProducibleMessage, RedisSMQ } from '../../src/index.js';
 import { config } from './config.js';
 import { getRedisInstance } from './redis.js';
 
-const ConfigurationAsync = bluebird.promisifyAll(Configuration);
+const RedisSMQAsync = bluebird.promisifyAll(RedisSMQ);
 
 export async function startUp(): Promise<void> {
-  await ConfigurationAsync.initializeWithConfigAsync(config);
+  await RedisSMQAsync.initializeWithConfigAsync(config);
 
   ProducibleMessage.setDefaultConsumeOptions({
     ttl: 0,

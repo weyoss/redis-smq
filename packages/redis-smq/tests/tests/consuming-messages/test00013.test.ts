@@ -25,7 +25,7 @@ type TQueueMetrics = {
   acks: number;
 };
 
-test('Given many queues, a message is recovered from a consumer crash and re-queued to its origin queue-manager', async () => {
+test('Given many queues, a message is recovered from a consumer crash and re-queued to its origin queue', async () => {
   const defaultQueue = getDefaultQueue();
   const eventBus = await getEventBus();
   await createQueue(defaultQueue, false);
@@ -74,6 +74,7 @@ test('Given many queues, a message is recovered from a consumer crash and re-que
 
   // using defaultQueue
   await crashAConsumerConsumingAMessage();
+
   await bluebird.delay(10000);
 
   expect(defaultQueueMetrics.acks).toBe(1);

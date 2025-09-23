@@ -9,7 +9,6 @@
 
 import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
-import { RedisClient } from '../../../src/common/redis-client/redis-client.js';
 import { redisKeys } from '../../../src/common/redis-keys/redis-keys.js';
 import { EQueueType, ProducibleMessage } from '../../../src/index.js';
 import {
@@ -24,10 +23,7 @@ const { promisifyAll } = bluebird;
 it('QueueStorageList: should fetch items with correct pagination', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
-  const redisClient = promisifyAll(new RedisClient());
-  const queueMessagesStorageList = promisifyAll(
-    new QueueStorageList(redisClient),
-  );
+  const queueMessagesStorageList = promisifyAll(new QueueStorageList());
 
   const ids: string[] = [];
   const producer = getProducer();
@@ -62,6 +58,4 @@ it('QueueStorageList: should fetch items with correct pagination', async () => {
     },
   );
   expect(outOfBounds).toEqual([]);
-
-  await redisClient.shutdownAsync();
 });
