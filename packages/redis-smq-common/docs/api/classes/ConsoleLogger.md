@@ -2,8 +2,30 @@
 
 # Class: ConsoleLogger
 
-ConsoleLogger implements the ILogger interface and provides
-formatted logging with timestamps to the console.
+ConsoleLogger implements the ILogger interface and provides formatted logging
+with timestamps, namespaces, and color-coded output to the console.
+
+This logger supports hierarchical namespacing through child logger creation,
+configurable log levels, and customizable message formatting.
+
+## Example
+
+```typescript
+// Basic usage
+const logger = new ConsoleLogger();
+logger.info('Hello world');
+
+// With configuration
+const logger = new ConsoleLogger({
+  logLevel: EConsoleLoggerLevel.DEBUG,
+  colorize: true,
+  includeTimestamp: true
+});
+
+// With namespaces
+const logger = new ConsoleLogger({}, ['app', 'service']);
+logger.info('Service started'); // Output: [timestamp] INFO (app / service): Service started
+```
 
 ## Implements
 
@@ -13,9 +35,9 @@ formatted logging with timestamps to the console.
 
 ### Constructor
 
-> **new ConsoleLogger**(`options`): `ConsoleLogger`
+> **new ConsoleLogger**(`options`, `namespaces`): `ConsoleLogger`
 
-Creates a new ConsoleLogger instance.
+Creates a new ConsoleLogger instance with the specified configuration and namespaces.
 
 #### Parameters
 
@@ -23,11 +45,39 @@ Creates a new ConsoleLogger instance.
 
 [`IConsoleLoggerOptions`](../interfaces/IConsoleLoggerOptions.md) = `{}`
 
-Configuration options for the logger
+Configuration options for the logger behavior and formatting
+
+##### namespaces
+
+Single namespace string or array of namespace strings for message categorization
+
+`string` | `string`[]
 
 #### Returns
 
 `ConsoleLogger`
+
+#### Throws
+
+When any namespace is empty or contains invalid characters
+
+#### Example
+
+```typescript
+// Default logger
+const logger = new ConsoleLogger();
+
+// Configured logger
+const logger = new ConsoleLogger({
+  logLevel: EConsoleLoggerLevel.WARN,
+  colorize: false,
+  includeTimestamp: true
+});
+
+// Logger with namespaces
+const logger = new ConsoleLogger({}, ['api', 'auth']);
+const logger2 = new ConsoleLogger({}, 'database');
+```
 
 ## Methods
 
@@ -35,7 +85,9 @@ Configuration options for the logger
 
 > **debug**(`message`, ...`params`): `void`
 
-Logs a debug message to the console.
+Logs a debug message to the console with DEBUG level formatting.
+Debug messages are typically used for detailed diagnostic information
+that is only of interest when diagnosing problems.
 
 #### Parameters
 
@@ -43,17 +95,25 @@ Logs a debug message to the console.
 
 `unknown`
 
-The message to log
+The primary message to log (any type, will be stringified if not a string)
 
 ##### params
 
 ...`unknown`[]
 
-Additional parameters to log
+Additional parameters to log alongside the message
 
 #### Returns
 
 `void`
+
+#### Example
+
+```typescript
+logger.debug('User authentication started');
+logger.debug('Request data:', { userId: 123, action: 'login' });
+logger.debug({ complex: 'object', data: [1, 2, 3] });
+```
 
 #### Implementation of
 
@@ -65,7 +125,8 @@ Additional parameters to log
 
 > **error**(`message`, ...`params`): `void`
 
-Logs an error message to the console.
+Logs an error message to the console with ERROR level formatting.
+Error messages indicate serious problems that should be investigated immediately.
 
 #### Parameters
 
@@ -73,17 +134,25 @@ Logs an error message to the console.
 
 `unknown`
 
-The message to log
+The primary error message to log (any type, will be stringified if not a string)
 
 ##### params
 
 ...`unknown`[]
 
-Additional parameters to log
+Additional parameters such as error objects, stack traces, or context data
 
 #### Returns
 
 `void`
+
+#### Example
+
+```typescript
+logger.error('Database connection failed');
+logger.error('Authentication error:', error);
+logger.error('Critical system failure', { code: 500, details: errorDetails });
+```
 
 #### Implementation of
 
@@ -91,11 +160,61 @@ Additional parameters to log
 
 ***
 
+### getLogLevel()
+
+> **getLogLevel**(): [`EConsoleLoggerLevel`](../enumerations/EConsoleLoggerLevel.md)
+
+Gets the current minimum log level of this logger instance.
+Messages with levels below this threshold will be suppressed.
+
+#### Returns
+
+[`EConsoleLoggerLevel`](../enumerations/EConsoleLoggerLevel.md)
+
+The current log level enum value
+
+#### Example
+
+```typescript
+const logger = new ConsoleLogger({ logLevel: EConsoleLoggerLevel.WARN });
+console.log(logger.getLogLevel()); // 2 (EConsoleLoggerLevel.WARN)
+```
+
+***
+
+### getNamespaces()
+
+> **getNamespaces**(): `string`[]
+
+Gets the current namespaces of this logger instance.
+Returns a defensive copy to prevent external modification of the internal namespace array.
+
+#### Returns
+
+`string`[]
+
+A copy of the current namespaces array
+
+#### Example
+
+```typescript
+const logger = new ConsoleLogger({}, ['app', 'service']);
+const namespaces = logger.getNamespaces();
+console.log(namespaces); // ['app', 'service']
+
+// Modifying returned array doesn't affect logger
+namespaces.push('modified');
+console.log(logger.getNamespaces()); // Still ['app', 'service']
+```
+
+***
+
 ### info()
 
 > **info**(`message`, ...`params`): `void`
 
-Logs an info message to the console.
+Logs an informational message to the console with INFO level formatting.
+Info messages provide general information about application flow and important events.
 
 #### Parameters
 
@@ -103,17 +222,25 @@ Logs an info message to the console.
 
 `unknown`
 
-The message to log
+The primary informational message to log (any type, will be stringified if not a string)
 
 ##### params
 
 ...`unknown`[]
 
-Additional parameters to log
+Additional parameters to provide context or supplementary information
 
 #### Returns
 
 `void`
+
+#### Example
+
+```typescript
+logger.info('Application started successfully');
+logger.info('User logged in:', { userId: 123, username: 'john_doe' });
+logger.info('Processing completed', { recordsProcessed: 1500, duration: '2.3s' });
+```
 
 #### Implementation of
 
@@ -121,34 +248,13 @@ Additional parameters to log
 
 ***
 
-### isFormatted()
-
-> **isFormatted**(`message`): `boolean`
-
-Checks if a message already contains a timestamp and log level.
-Takes into account possible ANSI color codes in the message.
-
-#### Parameters
-
-##### message
-
-`unknown`
-
-The message to check
-
-#### Returns
-
-`boolean`
-
-Whether the message already contains a timestamp and log level
-
-***
-
 ### warn()
 
 > **warn**(`message`, ...`params`): `void`
 
-Logs a warning message to the console.
+Logs a warning message to the console with WARN level formatting.
+Warning messages indicate potentially harmful situations that should be noted
+but don't prevent the application from continuing.
 
 #### Parameters
 
@@ -156,17 +262,25 @@ Logs a warning message to the console.
 
 `unknown`
 
-The message to log
+The primary warning message to log (any type, will be stringified if not a string)
 
 ##### params
 
 ...`unknown`[]
 
-Additional parameters to log
+Additional parameters to provide context about the warning condition
 
 #### Returns
 
 `void`
+
+#### Example
+
+```typescript
+logger.warn('API rate limit approaching');
+logger.warn('Deprecated method used:', { method: 'oldFunction', alternative: 'newFunction' });
+logger.warn('Configuration missing, using defaults', { missingKeys: ['timeout', 'retries'] });
+```
 
 #### Implementation of
 

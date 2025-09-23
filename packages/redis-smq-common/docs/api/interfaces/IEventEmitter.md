@@ -2,10 +2,6 @@
 
 # Interface: IEventEmitter\<Events\>
 
-## Extended by
-
-- [`IEventBus`](IEventBus.md)
-
 ## Type Parameters
 
 ### Events

@@ -60,11 +60,11 @@
 
 ### getInstance()
 
-> **getInstance**(): `Error` \| [`IRedisClient`](../interfaces/IRedisClient.md)
+> **getInstance**(): [`IRedisClient`](../interfaces/IRedisClient.md)
 
 #### Returns
 
-`Error` \| [`IRedisClient`](../interfaces/IRedisClient.md)
+[`IRedisClient`](../interfaces/IRedisClient.md)
 
 ***
 
@@ -92,7 +92,7 @@
 
 ##### cb
 
-[`ICallback`](../interfaces/ICallback.md)\<`void`\>
+[`ICallback`](../interfaces/ICallback.md)
 
 #### Returns
 
@@ -224,7 +224,7 @@
 
 ##### cb
 
-[`ICallback`](../interfaces/ICallback.md)\<`void`\>
+[`ICallback`](../interfaces/ICallback.md)
 
 #### Returns
 
