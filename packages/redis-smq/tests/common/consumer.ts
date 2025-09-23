@@ -8,32 +8,29 @@
  */
 
 import bluebird from 'bluebird';
-import { Consumer, IQueueParams } from '../../src/index.js';
-import { shutDownBaseInstance } from './base-instance.js';
+import { ICallback } from 'redis-smq-common';
+import {
+  IMessageTransferable,
+  IQueueParams,
+  RedisSMQ,
+} from '../../src/index.js';
 import { getDefaultQueue } from './message-producing-consuming.js';
 import { TConsumerMessageHandler } from '../../src/index.js';
 
 type TGetConsumerArgs = {
   queue?: string | IQueueParams;
   messageHandler?: TConsumerMessageHandler;
-  consumeDefaultQueue?: boolean;
 };
 
-const consumersList: Consumer[] = [];
-
-export function getConsumer(args: TGetConsumerArgs = {}) {
+export function getConsumer(args?: TGetConsumerArgs | false) {
+  const c = bluebird.promisifyAll(RedisSMQ.createConsumer());
+  if (args === false) {
+    return c;
+  }
   const {
     queue = getDefaultQueue(),
-    messageHandler = (msg, cb) => cb(),
-    consumeDefaultQueue = true,
-  } = args;
-  const consumer = bluebird.promisifyAll(new Consumer());
-  if (consumeDefaultQueue)
-    consumer.consume(queue, messageHandler, () => void 0);
-  consumersList.push(consumer);
-  return consumer;
-}
-
-export async function shutDownConsumers() {
-  for (const i of consumersList) await shutDownBaseInstance(i);
+    messageHandler = (m: IMessageTransferable, cb: ICallback) => cb(),
+  } = args || {};
+  c.consume(queue, messageHandler, () => void 0);
+  return c;
 }

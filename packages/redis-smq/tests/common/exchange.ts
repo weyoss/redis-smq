@@ -8,32 +8,16 @@
  */
 
 import bluebird from 'bluebird';
-import {
-  ExchangeDirect,
-  ExchangeFanout,
-  ExchangeTopic,
-} from '../../src/index.js';
-
-const fanOutExchanges: ExchangeFanout[] = [];
+import { RedisSMQ } from '../../src/index.js';
 
 export function getFanOutExchange() {
-  const instance = new ExchangeFanout();
-  fanOutExchanges.push(instance);
-  return bluebird.promisifyAll(instance);
+  return bluebird.promisifyAll(RedisSMQ.createFanoutExchange());
 }
-
-const topicExchanges: ExchangeTopic[] = [];
 
 export function getTopicExchange() {
-  const instance = new ExchangeTopic();
-  topicExchanges.push(instance);
-  return bluebird.promisifyAll(instance);
+  return bluebird.promisifyAll(RedisSMQ.createTopicExchange());
 }
 
-const directExchanges: ExchangeDirect[] = [];
-
 export function getDirectExchange() {
-  const instance = new ExchangeDirect();
-  directExchanges.push(instance);
-  return bluebird.promisifyAll(instance);
+  return bluebird.promisifyAll(RedisSMQ.createDirectExchange());
 }

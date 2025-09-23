@@ -8,9 +8,8 @@
  */
 
 import bluebird from 'bluebird';
-import { NamespaceManager } from '../../src/index.js';
+import { RedisSMQ } from '../../src/index.js';
 
 export async function getNamespaceManager() {
-  const instance = new NamespaceManager();
-  return bluebird.promisifyAll(instance);
+  return bluebird.promisifyAll(RedisSMQ.createNamespaceManager());
 }

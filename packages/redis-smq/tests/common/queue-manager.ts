@@ -8,9 +8,9 @@
  */
 
 import bluebird from 'bluebird';
-import { QueueManager } from '../../src/index.js';
+import { RedisSMQ } from '../../src/index.js';
 
 export async function getQueueManager() {
-  const instance = new QueueManager();
+  const instance = RedisSMQ.createQueueManager();
   return bluebird.promisifyAll(instance);
 }
