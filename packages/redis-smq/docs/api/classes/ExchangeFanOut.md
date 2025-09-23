@@ -1,6 +1,6 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / ExchangeFanOut
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / ExchangeFanout
 
-# Class: ExchangeFanOut
+# Class: ExchangeFanout
 
 ExchangeFanOut implements the fan-out exchange pattern where messages
 published to the exchange are routed to all queues bound to it.
@@ -13,11 +13,11 @@ published to the exchange are routed to all queues bound to it.
 
 ### Constructor
 
-> **new ExchangeFanOut**(): `ExchangeFanOut`
+> **new ExchangeFanout**(): `ExchangeFanout`
 
 #### Returns
 
-`ExchangeFanOut`
+`ExchangeFanout`
 
 #### Overrides
 
@@ -182,26 +182,6 @@ Callback function called when the operation completes
 #### Returns
 
 `void`
-
-***
-
-### shutdown()
-
-> **shutdown**(`cb`): `void`
-
-#### Parameters
-
-##### cb
-
-`ICallback`\<`void`\>
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-`ExchangeAbstract.shutdown`
 
 ***
 

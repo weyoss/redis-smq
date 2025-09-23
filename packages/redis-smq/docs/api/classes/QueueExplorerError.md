@@ -6,11 +6,6 @@
 
 - `RedisSMQError`
 
-## Extended by
-
-- [`QueueExplorerConsumerGroupIdRequiredError`](QueueExplorerConsumerGroupIdRequiredError.md)
-- [`QueueExplorerConsumerGroupIdNotSupportedError`](QueueExplorerConsumerGroupIdNotSupportedError.md)
-
 ## Constructors
 
 ### Constructor

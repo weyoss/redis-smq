@@ -1,20 +1,20 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / ExchangeFanOutError
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / ExchangeFanoutError
 
-# Class: ExchangeFanOutError
+# Class: ExchangeFanoutError
 
 ## Extends
 
-- [`ExchangeError`](ExchangeError.md)
+- [`MessageExchangeError`](MessageExchangeError.md)
 
 ## Extended by
 
-- [`ExchangeFanOutQueueTypeError`](ExchangeFanOutQueueTypeError.md)
+- [`QueueDeliveryModelMismatchError`](QueueDeliveryModelMismatchError.md)
 
 ## Constructors
 
 ### Constructor
 
-> **new ExchangeFanOutError**(`message?`): `ExchangeFanOutError`
+> **new ExchangeFanoutError**(`message?`): `ExchangeFanoutError`
 
 #### Parameters
 
@@ -24,11 +24,11 @@
 
 #### Returns
 
-`ExchangeFanOutError`
+`ExchangeFanoutError`
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`constructor`](ExchangeError.md#constructor)
+[`MessageExchangeError`](MessageExchangeError.md).[`constructor`](MessageExchangeError.md#constructor)
 
 ## Properties
 
@@ -38,7 +38,7 @@
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`cause`](ExchangeError.md#cause)
+[`MessageExchangeError`](MessageExchangeError.md).[`cause`](MessageExchangeError.md#cause)
 
 ***
 
@@ -48,7 +48,7 @@
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`message`](ExchangeError.md#message)
+[`MessageExchangeError`](MessageExchangeError.md).[`message`](MessageExchangeError.md#message)
 
 ***
 
@@ -58,7 +58,7 @@
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`stack`](ExchangeError.md#stack)
+[`MessageExchangeError`](MessageExchangeError.md).[`stack`](MessageExchangeError.md#stack)
 
 ***
 
@@ -88,7 +88,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`prepareStackTrace`](ExchangeError.md#preparestacktrace)
+[`MessageExchangeError`](MessageExchangeError.md).[`prepareStackTrace`](MessageExchangeError.md#preparestacktrace)
 
 ***
 
@@ -98,7 +98,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`stackTraceLimit`](ExchangeError.md#stacktracelimit)
+[`MessageExchangeError`](MessageExchangeError.md).[`stackTraceLimit`](MessageExchangeError.md#stacktracelimit)
 
 ## Accessors
 
@@ -114,7 +114,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`name`](ExchangeError.md#name)
+[`MessageExchangeError`](MessageExchangeError.md).[`name`](MessageExchangeError.md#name)
 
 ## Methods
 
@@ -140,4 +140,4 @@ Create .stack property on a target object
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`captureStackTrace`](ExchangeError.md#capturestacktrace)
+[`MessageExchangeError`](MessageExchangeError.md).[`captureStackTrace`](MessageExchangeError.md#capturestacktrace)

@@ -8,9 +8,8 @@
 
 ## Extended by
 
-- [`QueueRateLimitInvalidIntervalError`](QueueRateLimitInvalidIntervalError.md)
-- [`QueueRateLimitInvalidLimitError`](QueueRateLimitInvalidLimitError.md)
-- [`QueueRateLimitQueueNotFoundError`](QueueRateLimitQueueNotFoundError.md)
+- [`InvalidRateLimitIntervalError`](InvalidRateLimitIntervalError.md)
+- [`InvalidRateLimitError`](InvalidRateLimitError.md)
 
 ## Constructors
 

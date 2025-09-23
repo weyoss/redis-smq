@@ -8,16 +8,13 @@
 
 ## Extended by
 
-- [`ProducerInstanceNotRunningError`](ProducerInstanceNotRunningError.md)
-- [`ProducerQueueMissingConsumerGroupsError`](ProducerQueueMissingConsumerGroupsError.md)
-- [`ProducerMessageExchangeRequiredError`](ProducerMessageExchangeRequiredError.md)
-- [`ProducerQueueNotFoundError`](ProducerQueueNotFoundError.md)
-- [`ProducerMessagePriorityRequiredError`](ProducerMessagePriorityRequiredError.md)
-- [`ProducerPriorityQueuingNotEnabledError`](ProducerPriorityQueuingNotEnabledError.md)
-- [`ProducerUnknownQueueTypeError`](ProducerUnknownQueueTypeError.md)
-- [`ProducerExchangeNoMatchedQueueError`](ProducerExchangeNoMatchedQueueError.md)
-- [`ProducerScheduleInvalidParametersError`](ProducerScheduleInvalidParametersError.md)
-- [`ProducerMessageAlreadyExistsError`](ProducerMessageAlreadyExistsError.md)
+- [`ProducerNotRunningError`](ProducerNotRunningError.md)
+- [`QueueHasNoConsumerGroupsError`](QueueHasNoConsumerGroupsError.md)
+- [`MessagePriorityRequiredError`](MessagePriorityRequiredError.md)
+- [`PriorityQueuingNotEnabledError`](PriorityQueuingNotEnabledError.md)
+- [`NoMatchedQueueForExchangeError`](NoMatchedQueueForExchangeError.md)
+- [`InvalidSchedulingParametersError`](InvalidSchedulingParametersError.md)
+- [`MessageAlreadyExistsError`](MessageAlreadyExistsError.md)
 
 ## Constructors
 

@@ -95,19 +95,3 @@
 #### Implementation of
 
 [`IQueueExplorer`](../interfaces/IQueueExplorer.md).[`purge`](../interfaces/IQueueExplorer.md#purge)
-
-***
-
-### shutdown()
-
-> **shutdown**(`cb`): `void`
-
-#### Parameters
-
-##### cb
-
-`ICallback`\<`void`\>
-
-#### Returns
-
-`void`
