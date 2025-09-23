@@ -19,10 +19,9 @@ type TEvent = {
   error: (err: Error) => void;
 };
 
-const getInstanceAsync = bluebird.promisify(EventBus.createInstance);
-
 it('EventBus: case 1', async () => {
-  const eventBusAsync = bluebird.promisifyAll(await getInstanceAsync<TEvent>());
+  const eventBusAsync = bluebird.promisifyAll(new EventBus<TEvent>());
+  await eventBusAsync.runAsync();
 
   // on
   const callback = vitest.fn();
@@ -59,7 +58,7 @@ it('EventBus: case 1', async () => {
   eventBusAsync.emit('e1', 'hello6');
   expect(callback4).toHaveBeenCalledTimes(1);
 
-  // removeAllListeners
+  // removeAllListeners (all)
   const callback5 = vitest.fn();
   eventBusAsync.on('e1', callback5);
   eventBusAsync.emit('e1', 'hello6');
@@ -71,29 +70,28 @@ it('EventBus: case 1', async () => {
 
   await eventBusAsync.shutdownAsync();
 
+  // After shutdown:
+  // - Registering/removing listeners should NOT emit errors.
+  // - Emitting non-error events SHOULD emit EventBusNotConnectedError.
   const errors: Error[] = [];
-  eventBusAsync.once('error', (e) => errors.push(e));
-
-  eventBusAsync.on('e1', () => void 0);
-  expect(errors[0]).toBeInstanceOf(EventBusNotConnectedError);
-
   eventBusAsync.on('error', (e) => errors.push(e));
 
-  eventBusAsync.once('e1', () => void 0);
-  expect(errors[1]).toBeInstanceOf(EventBusNotConnectedError);
-
-  eventBusAsync.removeListener('e1', () => void 0);
-  expect(errors[2]).toBeInstanceOf(EventBusNotConnectedError);
-
+  // Listener operations: no errors expected
+  const noop = () => void 0;
+  eventBusAsync.on('e1', noop);
+  eventBusAsync.once('e1', noop);
+  eventBusAsync.removeListener('e1', noop);
   eventBusAsync.removeAllListeners('e1');
-  expect(errors[3]).toBeInstanceOf(EventBusNotConnectedError);
-
   eventBusAsync.removeAllListeners();
-  expect(errors[4]).toBeInstanceOf(EventBusNotConnectedError);
+  expect(errors.length).toBe(0);
 
+  // Emitting while not running: should emit EventBusNotConnectedError
+  eventBusAsync.on('error', (e) => errors.push(e));
   eventBusAsync.emit('e1', 'hello8');
-  expect(errors[5]).toBeInstanceOf(EventBusNotConnectedError);
+  expect(errors.length).toBe(1);
+  expect(errors[0]).toBeInstanceOf(EventBusNotConnectedError);
 
-  eventBusAsync.removeListener('error', () => void 0);
+  // Cleanup error listeners should be no-op
+  eventBusAsync.removeListener('error', noop);
   eventBusAsync.removeAllListeners('error');
 });
