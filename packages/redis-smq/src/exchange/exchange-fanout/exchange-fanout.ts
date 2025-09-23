@@ -28,20 +28,72 @@ import { _getQueueFanoutExchange } from './_/_get-queue-fanout-exchange.js';
 import { _validateExchangeFanoutParams } from './_/_validate-exchange-fanout-params.js';
 
 /**
- * ExchangeFanOut implements the fan-out exchange pattern where messages
- * published to the exchange are routed to all queues bound to it.
+ * Fanout Exchange implementation for RedisSMQ.
+ *
+ * A fanout exchange routes messages to all queues bound to it, regardless of routing keys.
+ * This is useful for broadcasting messages to multiple consumers. All bound queues must
+ * have the same queue type to ensure compatibility.
+ *
+ * Key features:
+ * - Broadcasts messages to all bound queues
+ * - Enforces queue type consistency across bound queues
+ * - Supports atomic bind/unbind operations
+ * - Prevents deletion when queues are still bound
+ *
+ * @example
+ * ```typescript
+ * const fanoutExchange = new ExchangeFanout();
+ *
+ * // Save the exchange
+ * fanoutExchange.saveExchange('notifications', (err) => {
+ *   if (err) console.error('Failed to save exchange:', err);
+ * });
+ *
+ * // Bind queues to the exchange
+ * fanoutExchange.bindQueue('email-queue', 'notifications', (err) => {
+ *   if (err) console.error('Failed to bind queue:', err);
+ * });
+ *
+ * // Get all bound queues
+ * fanoutExchange.getQueues('notifications', (err, queues) => {
+ *   if (err) console.error('Error:', err);
+ *   else console.log('Bound queues:', queues);
+ * });
+ * ```
  */
 export class ExchangeFanout extends ExchangeAbstract<string> {
+  /**
+   * Creates a new ExchangeFanout instance.
+   *
+   * Initializes the fanout exchange with logging capabilities.
+   */
   constructor() {
     super();
     this.logger.info('ExchangeFanOut initialized');
   }
 
   /**
-   * Retrieves all queues bound to a fan-out exchange.
+   * Retrieves all queues bound to the specified fanout exchange.
    *
-   * @param exchangeParams - The name of the fan-out exchange
-   * @param cb - Callback function that receives the list of bound queues
+   * @param exchangeParams - The name of the fanout exchange
+   * @param cb - Callback function that receives the bound queues or an error
+   *
+   * @example
+   * ```typescript
+   * const exchange = new ExchangeFanout();
+   *
+   * exchange.getQueues('notifications', (err, queues) => {
+   *   if (err) {
+   *     console.error('Failed to get queues:', err);
+   *   } else {
+   *     console.log('Bound queues:', queues);
+   *     // queues = [{ name: 'email-queue', ns: 'default' }, { name: 'sms-queue', ns: 'default' }]
+   *   }
+   * });
+   * ```
+   *
+   * @throws {InvalidFanoutExchangeParametersError} When the exchange name is invalid
+   * @throws {Error} When Redis connection or query operations fail
    */
   getQueues(exchangeParams: string, cb: ICallback<IQueueParams[]>): void {
     this.logger.debug(`Getting queues for exchange: ${exchangeParams}`);
@@ -73,10 +125,28 @@ export class ExchangeFanout extends ExchangeAbstract<string> {
   }
 
   /**
-   * Saves a fan-out exchange to Redis.
+   * Creates and saves a new fanout exchange.
    *
-   * @param exchangeParams - The name of the fan-out exchange
-   * @param cb - Callback function called when the operation completes
+   * The exchange name must be a valid Redis key. Once saved, queues can be bound to this exchange.
+   *
+   * @param exchangeParams - The name of the fanout exchange to create
+   * @param cb - Callback function that receives an error if the operation fails
+   *
+   * @example
+   * ```typescript
+   * const exchange = new ExchangeFanout();
+   *
+   * exchange.saveExchange('user-notifications', (err) => {
+   *   if (err) {
+   *     console.error('Failed to save exchange:', err);
+   *   } else {
+   *     console.log('Exchange saved successfully');
+   *   }
+   * });
+   * ```
+   *
+   * @throws {InvalidFanoutExchangeParametersError} When the exchange name is invalid
+   * @throws {Error} When Redis connection or storage operations fail
    */
   saveExchange(exchangeParams: string, cb: ICallback<void>): void {
     this.logger.debug(`Saving exchange: ${exchangeParams}`);
@@ -107,10 +177,34 @@ export class ExchangeFanout extends ExchangeAbstract<string> {
   }
 
   /**
-   * Deletes a fan-out exchange from Redis.
+   * Deletes a fanout exchange.
    *
-   * @param exchangeParams - The name of the fan-out exchange
-   * @param cb - Callback function called when the operation completes
+   * The exchange can only be deleted if no queues are currently bound to it.
+   * This operation is atomic and uses Redis WATCH/MULTI/EXEC for consistency.
+   *
+   * @param exchangeParams - The name of the fanout exchange to delete
+   * @param cb - Callback function that receives an error if the operation fails
+   *
+   * @example
+   * ```typescript
+   * const exchange = new ExchangeFanout();
+   *
+   * exchange.deleteExchange('old-notifications', (err) => {
+   *   if (err) {
+   *     if (err instanceof ExchangeHasBoundQueuesError) {
+   *       console.error('Cannot delete: exchange has bound queues');
+   *     } else {
+   *       console.error('Failed to delete exchange:', err);
+   *     }
+   *   } else {
+   *     console.log('Exchange deleted successfully');
+   *   }
+   * });
+   * ```
+   *
+   * @throws {InvalidFanoutExchangeParametersError} When the exchange name is invalid
+   * @throws {ExchangeHasBoundQueuesError} When the exchange still has bound queues
+   * @throws {Error} When Redis connection or deletion operations fail
    */
   deleteExchange(exchangeParams: string, cb: ICallback<void>): void {
     this.logger.debug(`Deleting exchange: ${exchangeParams}`);
@@ -179,11 +273,48 @@ export class ExchangeFanout extends ExchangeAbstract<string> {
   }
 
   /**
-   * Binds a queue to a fan-out exchange.
+   * Binds a queue to a fanout exchange.
    *
-   * @param queue - The queue to bind
-   * @param exchangeParams - The name of the fan-out exchange
-   * @param cb - Callback function called when the operation completes
+   * This operation ensures that:
+   * - The queue exists and is accessible
+   * - All queues bound to the same exchange have the same queue type
+   * - The binding is atomic using Redis WATCH/MULTI/EXEC
+   * - If the queue was previously bound to another exchange, it's unbound first
+   *
+   * @param queue - The queue to bind (string name or IQueueParams object)
+   * @param exchangeParams - The name of the fanout exchange
+   * @param cb - Callback function that receives an error if the operation fails
+   *
+   * @example
+   * ```typescript
+   * const exchange = new ExchangeFanout();
+   *
+   * // Bind using queue name (uses default namespace)
+   * exchange.bindQueue('email-queue', 'notifications', (err) => {
+   *   if (err) console.error('Failed to bind queue:', err);
+   * });
+   *
+   * // Bind using queue parameters with custom namespace
+   * exchange.bindQueue(
+   *   { name: 'sms-queue', ns: 'messaging' },
+   *   'notifications',
+   *   (err) => {
+   *     if (err) {
+   *       if (err instanceof QueueDeliveryModelMismatchError) {
+   *         console.error('Queue type mismatch with existing bound queues');
+   *       } else {
+   *         console.error('Failed to bind queue:', err);
+   *       }
+   *     }
+   *   }
+   * );
+   * ```
+   *
+   * @throws {InvalidQueueParametersError} When the queue parameters are invalid
+   * @throws {InvalidFanoutExchangeParametersError} When the exchange name is invalid
+   * @throws {QueueNotFoundError} When the specified queue doesn't exist
+   * @throws {QueueDeliveryModelMismatchError} When queue type doesn't match existing bound queues
+   * @throws {Error} When Redis connection or binding operations fail
    */
   bindQueue(
     queue: IQueueParams | string,
@@ -368,11 +499,45 @@ export class ExchangeFanout extends ExchangeAbstract<string> {
   }
 
   /**
-   * Unbinds a queue from a fan-out exchange.
+   * Unbinds a queue from a fanout exchange.
    *
-   * @param queue - The queue to unbind
-   * @param exchangeParams - The name of the fan-out exchange
-   * @param cb - Callback function called when the operation completes
+   * This operation verifies that the queue is actually bound to the specified exchange
+   * before removing the binding. The operation is atomic using Redis WATCH/MULTI/EXEC.
+   *
+   * @param queue - The queue to unbind (string name or IQueueParams object)
+   * @param exchangeParams - The name of the fanout exchange
+   * @param cb - Callback function that receives an error if the operation fails
+   *
+   * @example
+   * ```typescript
+   * const exchange = new ExchangeFanout();
+   *
+   * // Unbind using queue name
+   * exchange.unbindQueue('email-queue', 'notifications', (err) => {
+   *   if (err) {
+   *     if (err instanceof QueueNotBoundError) {
+   *       console.error('Queue is not bound to this exchange');
+   *     } else {
+   *       console.error('Failed to unbind queue:', err);
+   *     }
+   *   }
+   * });
+   *
+   * // Unbind using queue parameters
+   * exchange.unbindQueue(
+   *   { name: 'sms-queue', ns: 'messaging' },
+   *   'notifications',
+   *   (err) => {
+   *     if (err) console.error('Failed to unbind queue:', err);
+   *   }
+   * );
+   * ```
+   *
+   * @throws {InvalidQueueParametersError} When the queue parameters are invalid
+   * @throws {InvalidFanoutExchangeParametersError} When the exchange name is invalid
+   * @throws {QueueNotFoundError} When the specified queue doesn't exist
+   * @throws {QueueNotBoundError} When the queue is not bound to the specified exchange
+   * @throws {Error} When Redis connection or unbinding operations fail
    */
   unbindQueue(
     queue: IQueueParams | string,
@@ -494,9 +659,25 @@ export class ExchangeFanout extends ExchangeAbstract<string> {
   }
 
   /**
-   * Retrieves all fan-out exchanges.
+   * Retrieves all existing fanout exchanges.
    *
-   * @param cb - Callback function that receives the list of exchanges
+   * @param cb - Callback function that receives the list of exchange names or an error
+   *
+   * @example
+   * ```typescript
+   * const exchange = new ExchangeFanout();
+   *
+   * exchange.getAllExchanges((err, exchanges) => {
+   *   if (err) {
+   *     console.error('Failed to get exchanges:', err);
+   *   } else {
+   *     console.log('Available exchanges:', exchanges);
+   *     // exchanges = ['notifications', 'user-events', 'system-alerts']
+   *   }
+   * });
+   * ```
+   *
+   * @throws {Error} When Redis connection or scan operations fail
    */
   getAllExchanges(cb: ICallback<string[]>): void {
     this.logger.debug('Getting all fan-out exchanges');
@@ -525,10 +706,39 @@ export class ExchangeFanout extends ExchangeAbstract<string> {
   }
 
   /**
-   * Retrieves the fan-out exchange a queue is bound to.
+   * Gets the fanout exchange that a queue is bound to.
    *
-   * @param queue - The queue to check
-   * @param cb - Callback function that receives the exchange name or null
+   * @param queue - The queue to check (string name or IQueueParams object)
+   * @param cb - Callback function that receives the exchange name or null if not bound
+   *
+   * @example
+   * ```typescript
+   * const exchange = new ExchangeFanout();
+   *
+   * // Check using queue name
+   * exchange.getQueueExchange('email-queue', (err, exchangeName) => {
+   *   if (err) {
+   *     console.error('Failed to get queue exchange:', err);
+   *   } else if (exchangeName) {
+   *     console.log(`Queue is bound to exchange: ${exchangeName}`);
+   *   } else {
+   *     console.log('Queue is not bound to any exchange');
+   *   }
+   * });
+   *
+   * // Check using queue parameters
+   * exchange.getQueueExchange(
+   *   { name: 'sms-queue', ns: 'messaging' },
+   *   (err, exchangeName) => {
+   *     if (err) console.error('Error:', err);
+   *     else console.log('Exchange:', exchangeName || 'none');
+   *   }
+   * );
+   * ```
+   *
+   * @throws {InvalidQueueParametersError} When the queue parameters are invalid
+   * @throws {QueueNotFoundError} When the specified queue doesn't exist
+   * @throws {Error} When Redis connection or query operations fail
    */
   getQueueExchange(
     queue: IQueueParams | string,
