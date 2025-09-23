@@ -8,6 +8,7 @@
  */
 
 import { expect, test } from 'vitest';
+import { IMessageTransferable } from '../../../src/index.js';
 import {
   createQueue,
   getDefaultQueue,
@@ -28,7 +29,9 @@ test('Combined test: Delete scheduled messages by IDs. Check scheduled messages.
 
   const res1 = await scheduledMessages.getMessagesAsync(defaultQueue, 0, 100);
   expect(res1.totalItems).toBe(2);
-  const items = res1.items.map((i) => i.id).sort((a, b) => (a > b ? 1 : -1));
+  const items = res1.items
+    .map((i: IMessageTransferable) => i.id)
+    .sort((a: string, b: string) => (a > b ? 1 : -1));
   expect(items).toEqual(ids);
 
   const count = await scheduledMessages.countMessagesAsync(getDefaultQueue());

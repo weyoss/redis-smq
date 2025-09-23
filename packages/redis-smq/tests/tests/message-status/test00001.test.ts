@@ -34,7 +34,7 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> ACKNOWLEDGED', asy
   const status0 = await message.getMessageStatusAsync(id);
   expect(status0).toBe(EMessagePropertyStatus.PENDING);
 
-  const consumer = getConsumer({ consumeDefaultQueue: false });
+  const consumer = getConsumer(false);
   const statuses: EMessagePropertyStatus[] = [];
   await consumer.consumeAsync(defaultQueue, (msg, cb) => {
     statuses.push(msg.status);

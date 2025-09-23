@@ -8,9 +8,8 @@
  */
 
 import bluebird from 'bluebird';
-import { MessageManager } from '../../src/index.js';
+import { RedisSMQ } from '../../src/index.js';
 
 export async function getMessageManager() {
-  const instance = new MessageManager();
-  return bluebird.promisifyAll(instance);
+  return bluebird.promisifyAll(RedisSMQ.createMessageManager());
 }

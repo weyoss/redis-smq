@@ -8,9 +8,9 @@
  */
 
 import bluebird from 'bluebird';
-import { QueueDeadLetteredMessages } from '../../src/index.js';
+import { RedisSMQ } from '../../src/index.js';
 
 export async function getQueueDeadLetteredMessages() {
-  const instance = new QueueDeadLetteredMessages();
+  const instance = RedisSMQ.createQueueDeadLetteredMessages();
   return bluebird.promisifyAll(instance);
 }

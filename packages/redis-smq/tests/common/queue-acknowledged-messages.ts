@@ -8,9 +8,9 @@
  */
 
 import bluebird from 'bluebird';
-import { QueueAcknowledgedMessages } from '../../src/index.js';
+import { RedisSMQ } from '../../src/index.js';
 
 export async function getQueueAcknowledgedMessages() {
-  const instance = new QueueAcknowledgedMessages();
+  const instance = RedisSMQ.createQueueAcknowledgedMessages();
   return bluebird.promisifyAll(instance);
 }
