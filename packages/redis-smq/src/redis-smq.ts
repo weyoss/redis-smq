@@ -9,6 +9,11 @@
 
 import { async, ICallback, IRedisConfig } from 'redis-smq-common';
 import { Configuration, IRedisSMQConfig } from './config/index.js';
+import {
+  ExchangeDirect,
+  ExchangeFanout,
+  ExchangeTopic,
+} from './exchange/index.js';
 import { Producer } from './producer/producer.js';
 import { Consumer } from './consumer/consumer.js';
 import { QueueManager } from './queue-manager/index.js';
@@ -420,6 +425,96 @@ export class RedisSMQ {
   static createQueueRateLimit(): QueueRateLimit {
     RedisSMQ.ensureInitialized();
     return RedisSMQ.trackComponent(new QueueRateLimit());
+  }
+
+  /**
+   * Creates a new fanout exchange instance.
+   *
+   * A fanout exchange routes messages to all queues bound to it, regardless of routing keys.
+   * This is useful for broadcasting messages to multiple consumers.
+   *
+   * @returns {ExchangeFanout} A new fanout exchange instance
+   * @throws {Error} If RedisSMQ is not initialized
+   *
+   * @example
+   * ```typescript
+   * // Initialize RedisSMQ first
+   * await RedisSMQ.initialize();
+   *
+   * // Create fanout exchange
+   * const fanoutExchange = RedisSMQ.createFanoutExchange();
+   *
+   * // Save the exchange
+   * fanoutExchange.saveExchange('notifications', (err) => {
+   *   if (err) console.error('Failed to save exchange:', err);
+   * });
+   * ```
+   */
+  static createFanoutExchange(): ExchangeFanout {
+    RedisSMQ.ensureInitialized();
+    return RedisSMQ.trackComponent(new ExchangeFanout());
+  }
+
+  /**
+   * Creates a new topic exchange instance.
+   *
+   * A topic exchange routes messages to queues based on wildcard pattern matching
+   * between the routing key and the binding pattern.
+   *
+   * @returns {ExchangeTopic} A new topic exchange instance
+   * @throws {Error} If RedisSMQ is not initialized
+   *
+   * @example
+   * ```typescript
+   * // Initialize RedisSMQ first
+   * await RedisSMQ.initialize();
+   *
+   * // Create topic exchange
+   * const topicExchange = RedisSMQ.createTopicExchange();
+   *
+   * // Bind queue with routing pattern
+   * topicExchange.bindQueue('user-queue', {
+   *   exchange: 'user-events',
+   *   routingKey: 'user.*.created'
+   * }, (err) => {
+   *   if (err) console.error('Failed to bind queue:', err);
+   * });
+   * ```
+   */
+  static createTopicExchange(): ExchangeTopic {
+    RedisSMQ.ensureInitialized();
+    return RedisSMQ.trackComponent(new ExchangeTopic());
+  }
+
+  /**
+   * Creates a new direct exchange instance.
+   *
+   * A direct exchange routes messages to queues based on exact routing key matches.
+   * Messages are delivered to queues whose binding key exactly matches the routing key.
+   *
+   * @returns {ExchangeDirect} A new direct exchange instance
+   * @throws {Error} If RedisSMQ is not initialized
+   *
+   * @example
+   * ```typescript
+   * // Initialize RedisSMQ first
+   * await RedisSMQ.initialize();
+   *
+   * // Create direct exchange
+   * const directExchange = RedisSMQ.createDirectExchange();
+   *
+   * // Bind queue with exact routing key
+   * directExchange.bindQueue('order-queue', {
+   *   exchange: 'orders',
+   *   routingKey: 'order.created'
+   * }, (err) => {
+   *   if (err) console.error('Failed to bind queue:', err);
+   * });
+   * ```
+   */
+  static createDirectExchange(): ExchangeDirect {
+    RedisSMQ.ensureInitialized();
+    return RedisSMQ.trackComponent(new ExchangeDirect());
   }
 
   /**
