@@ -25,7 +25,7 @@ export const config = parseConfig({
     },
   },
   logger: {
-    enabled: true,
+    enabled: false,
     options: {
       logLevel: 'DEBUG',
     },

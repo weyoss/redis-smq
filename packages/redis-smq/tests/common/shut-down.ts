@@ -10,7 +10,6 @@
 import bluebird from 'bluebird';
 import { shutDownConsumers } from './consumer.js';
 import { shutDownProducers } from './producer.js';
-import { shutDownRedisClients } from './redis.js';
 import { stopScheduleWorker } from './schedule-worker.js';
 import { RedisSMQ } from '../../src/index.js';
 
@@ -20,10 +19,6 @@ export async function shutdown(): Promise<void> {
   await shutDownConsumers();
   await shutDownProducers();
   await stopScheduleWorker();
-
-  // Redis clients should be stopped in the last step, to avoid random errors from different
-  // dependant components.
-  await shutDownRedisClients();
 
   //
   await RedisSMQAsync.shutdownAsync();

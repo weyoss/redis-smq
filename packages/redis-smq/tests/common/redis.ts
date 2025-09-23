@@ -8,23 +8,11 @@
  */
 
 import bluebird from 'bluebird';
-import { createRedisClient, IRedisClient } from 'redis-smq-common';
-import { Configuration } from '../../src/index.js';
-
-const redisClients: IRedisClient[] = [];
-const createInstanceAsync = bluebird.promisify(createRedisClient);
+import { ERedisConnectionAcquisitionMode } from '../../src/common/redis-connection-pool/types/index.js';
+import { RedisConnectionPool } from '../../src/index.js';
 
 export async function getRedisInstance() {
-  const c = await createInstanceAsync(Configuration.getConfig().redis);
-  redisClients.push(c);
+  const p = bluebird.promisifyAll(RedisConnectionPool.getInstance());
+  const c = await p.acquireAsync(ERedisConnectionAcquisitionMode.EXCLUSIVE);
   return bluebird.promisifyAll(c);
-}
-
-export async function shutDownRedisClients() {
-  while (redisClients.length) {
-    const redisClient = redisClients.pop();
-    if (redisClient) {
-      await bluebird.promisifyAll(redisClient).haltAsync();
-    }
-  }
 }
