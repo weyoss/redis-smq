@@ -8,25 +8,26 @@
  */
 
 import { ICallback } from '../async/index.js';
-import { CallbackEmptyReplyError } from '../errors/index.js';
 import { IEventBusRedisConfig, TEventBusEvent } from './types/index.js';
-import { createRedisClient, IRedisClient } from '../redis-client/index.js';
+import { IRedisClient, RedisClientFactory } from '../redis-client/index.js';
 import { EventBusError, EventBusNotConnectedError } from './errors/index.js';
 import { EventBus } from './event-bus.js';
 
 export class EventBusRedis<
   Events extends TEventBusEvent,
 > extends EventBus<Events> {
-  protected readonly redisConfig;
-  protected pubClient: IRedisClient | null = null;
-  protected subClient: IRedisClient | null = null;
+  protected pubClient: RedisClientFactory;
+  protected subClient: RedisClientFactory;
 
   // Track active Redis subscriptions to avoid duplicate SUBSCRIBE/UNSUBSCRIBE
   private readonly subscribedEvents = new Set<string>();
 
   constructor(config: IEventBusRedisConfig) {
     super(config);
-    this.redisConfig = config.redis;
+    this.pubClient = new RedisClientFactory(config.redis);
+    this.pubClient.on('error', (err) => this.handleError(err));
+    this.subClient = new RedisClientFactory(config.redis);
+    this.subClient.on('error', (err) => this.handleError(err));
   }
 
   // Publish non-error events via Redis; let 'error' behave locally, consistent with EventBus
@@ -41,7 +42,9 @@ export class EventBusRedis<
       this.eventEmitter.emit('error', new EventBusNotConnectedError());
       return false;
     }
-    this.pubClient?.publish(String(event), JSON.stringify(args), () => void 0);
+    this.pubClient
+      .getInstance()
+      .publish(String(event), JSON.stringify(args), () => void 0);
     return true;
   }
 
@@ -92,7 +95,7 @@ export class EventBusRedis<
       this.isRunning() &&
       !this.subscribedEvents.has(eventName)
     ) {
-      this.subClient?.subscribe(eventName);
+      this.subClient.getInstance().subscribe(eventName);
       this.subscribedEvents.add(eventName);
     }
   }
@@ -102,14 +105,14 @@ export class EventBusRedis<
 
     if (!eventName) {
       if (this.subscribedEvents.size > 0) {
-        this.subClient?.unsubscribe();
+        this.subClient.getInstance().unsubscribe();
         this.subscribedEvents.clear();
       }
       return;
     }
 
     if (this.subscribedEvents.has(eventName)) {
-      this.subClient?.unsubscribe(eventName);
+      this.subClient.getInstance().unsubscribe(eventName);
       this.subscribedEvents.delete(eventName);
     }
   }
@@ -129,35 +132,6 @@ export class EventBusRedis<
       .filter((n) => n !== 'error');
   }
 
-  private createRedisClient(
-    isSubscriber: boolean,
-    cb: ICallback<IRedisClient>,
-  ): void {
-    createRedisClient(this.redisConfig, (err, client) => {
-      if (err) return cb(err);
-      if (!client)
-        return cb(new EventBusError('Redis client initialization failed'));
-
-      client.on('error', (e: Error) => this.handleError(e));
-
-      if (isSubscriber) {
-        client.on('message', (channel: string, message: string) => {
-          try {
-            this.eventEmitter.emit(channel, ...JSON.parse(message));
-          } catch (parseError) {
-            const err =
-              parseError instanceof Error
-                ? parseError
-                : new EventBusError(String(parseError));
-            this.handleError(err);
-          }
-        });
-      }
-
-      cb(null, client);
-    });
-  }
-
   private shutdownClient(
     client: IRedisClient | null,
     cb: ICallback<void>,
@@ -169,20 +143,23 @@ export class EventBusRedis<
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
     return super.goingUp().concat([
       // Publisher
-      (cb: ICallback<void>) => {
-        this.createRedisClient(false, (err, client) => {
+      (cb: ICallback) => this.pubClient.init(cb),
+      (cb: ICallback) => {
+        this.subClient.init((err) => {
           if (err) return cb(err);
-          if (!client) return cb(new CallbackEmptyReplyError());
-          this.pubClient = client;
-          cb();
-        });
-      },
-      // Subscriber + sync existing listeners
-      (cb: ICallback<void>) => {
-        this.createRedisClient(true, (err, client) => {
-          if (err) return cb(err);
-          if (!client) return cb(new CallbackEmptyReplyError());
-          this.subClient = client;
+          this.subClient
+            .getInstance()
+            .on('message', (channel: string, message: string) => {
+              try {
+                this.eventEmitter.emit(channel, ...JSON.parse(message));
+              } catch (parseError) {
+                const err =
+                  parseError instanceof Error
+                    ? parseError
+                    : new EventBusError(String(parseError));
+                this.handleError(err);
+              }
+            });
           this.syncSubscriptionsWithListeners();
           cb();
         });
@@ -193,21 +170,12 @@ export class EventBusRedis<
   protected override goingDown(): ((cb: ICallback<void>) => void)[] {
     return [
       // Unsubscribe from all events
-      (cb: ICallback<void>) => {
+      (cb: ICallback) => {
         this.ensureUnsubscribed();
         cb();
       },
-      // Shutdown clients (DRY)
-      (cb: ICallback<void>) =>
-        this.shutdownClient(this.subClient, () => {
-          this.subClient = null;
-          cb();
-        }),
-      (cb: ICallback<void>) =>
-        this.shutdownClient(this.pubClient, () => {
-          this.pubClient = null;
-          cb();
-        }),
+      (cb: ICallback) => this.subClient.shutdown(cb),
+      (cb: ICallback) => this.pubClient.shutdown(cb),
     ].concat(super.goingDown());
   }
 }
