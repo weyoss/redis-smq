@@ -10,9 +10,9 @@
 import { ICallback } from '../async/index.js';
 import { CallbackEmptyReplyError, PanicError } from '../errors/index.js';
 import { EventEmitter } from '../event/index.js';
-import { createRedisClient } from './create-redis-client.js';
-import { InstanceLockError } from './errors/index.js';
+import { InstanceLockError, RedisClientError } from './errors/index.js';
 import {
+  ERedisConfigClient,
   IRedisClient,
   IRedisConfig,
   TRedisClientEvent,
@@ -34,7 +34,7 @@ export class RedisClientFactory extends EventEmitter<
     config: IRedisConfig,
     cb: ICallback<IRedisClient>,
   ): void {
-    createRedisClient(config, (err, client) => {
+    this.createRedisClient(config, (err, client) => {
       if (err) return cb(err);
       if (!client) return cb(new CallbackEmptyReplyError());
       this.setupClient(client, cb);
@@ -45,7 +45,7 @@ export class RedisClientFactory extends EventEmitter<
     cb(null, client);
   }
 
-  init = (cb: ICallback<void>): void => {
+  init = (cb: ICallback): void => {
     this.getSetInstance((err) => cb(err));
   };
 
@@ -65,7 +65,7 @@ export class RedisClientFactory extends EventEmitter<
     } else cb(new InstanceLockError());
   };
 
-  shutdown = (cb: ICallback<void>): void => {
+  shutdown = (cb: ICallback): void => {
     if (this.instance) {
       this.instance.halt(() => {
         this.instance = null;
@@ -74,11 +74,88 @@ export class RedisClientFactory extends EventEmitter<
     } else cb();
   };
 
-  getInstance(): IRedisClient | Error {
+  getInstance(): IRedisClient {
     if (!this.instance)
-      return new PanicError(
-        `Use first getSetInstance() to initialize the RedisClientInstance class`,
+      throw new PanicError(
+        `Use first init() to initialize the RedisClientInstance class`,
       );
     return this.instance;
+  }
+
+  protected createNodeRedisClient(
+    config: IRedisConfig,
+    cb: ICallback<IRedisClient>,
+  ): void {
+    import('./clients/node-redis/node-redis-client.js')
+      .then(({ NodeRedisClient }): void => {
+        const client = new NodeRedisClient(config.options);
+        cb(null, client);
+      })
+      .catch(() =>
+        cb(
+          new RedisClientError(
+            'REDIS client is not available. Please install node-redis.',
+          ),
+        ),
+      );
+  }
+
+  protected createIORedisClient(
+    config: IRedisConfig,
+    cb: ICallback<IRedisClient>,
+  ): void {
+    import('./clients/ioredis/ioredis-client.js')
+      .then(({ IoredisClient }): void => {
+        const client = new IoredisClient(config.options);
+        cb(null, client);
+      })
+      .catch(() =>
+        cb(
+          new RedisClientError(
+            'IOREDIS client is not available. Please install ioredis.',
+          ),
+        ),
+      );
+  }
+
+  protected initializeRedisClient(
+    config: IRedisConfig,
+    cb: ICallback<IRedisClient>,
+  ): void {
+    if (config.client === ERedisConfigClient.REDIS) {
+      return this.createNodeRedisClient(config, cb);
+    }
+    if (config.client === ERedisConfigClient.IOREDIS) {
+      return this.createIORedisClient(config, cb);
+    }
+    cb(
+      new RedisClientError(
+        'Unsupported Redis client type. Supported types are: REDIS, IOREDIS.',
+      ),
+    );
+  }
+
+  protected createRedisClient(
+    config: IRedisConfig,
+    cb: ICallback<IRedisClient>,
+  ): void {
+    this.initializeRedisClient(config, (err, client) => {
+      if (err) return cb(err);
+      if (!client) return cb(new CallbackEmptyReplyError());
+      const onReady = () => {
+        removeListeners();
+        cb(null, client);
+      };
+      const onError = (err: Error) => {
+        removeListeners();
+        cb(err);
+      };
+      const removeListeners = () => {
+        client.removeListener('ready', onReady);
+        client.removeListener('error', onError);
+      };
+      client.once('ready', onReady);
+      client.once('error', onError);
+    });
   }
 }
