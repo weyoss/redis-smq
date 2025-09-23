@@ -8,10 +8,11 @@
 
 ## Extended by
 
-- [`ConsumerGroupsQueueNotFoundError`](ConsumerGroupsQueueNotFoundError.md)
-- [`ConsumerGroupsConsumerGroupNotEmptyError`](ConsumerGroupsConsumerGroupNotEmptyError.md)
-- [`ConsumerGroupsInvalidGroupIdError`](ConsumerGroupsInvalidGroupIdError.md)
-- [`ConsumerGroupsConsumerGroupsNotSupportedError`](ConsumerGroupsConsumerGroupsNotSupportedError.md)
+- [`ConsumerGroupNotEmptyError`](ConsumerGroupNotEmptyError.md)
+- [`InvalidConsumerGroupIdError`](InvalidConsumerGroupIdError.md)
+- [`ConsumerGroupsNotSupportedError`](ConsumerGroupsNotSupportedError.md)
+- [`ConsumerGroupIdNotSupportedError`](ConsumerGroupIdNotSupportedError.md)
+- [`ConsumerGroupIdRequiredError`](ConsumerGroupIdRequiredError.md)
 
 ## Constructors
 

@@ -131,27 +131,3 @@ Callback function that will be invoked when the operation completes.
 #### Inherited from
 
 `QueueExplorer.purge`
-
-***
-
-### shutdown()
-
-> **shutdown**(`cb`): `void`
-
-Shuts down the manager and its dependencies gracefully.
-
-#### Parameters
-
-##### cb
-
-`ICallback`
-
-Callback function
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-`QueueExplorer.shutdown`

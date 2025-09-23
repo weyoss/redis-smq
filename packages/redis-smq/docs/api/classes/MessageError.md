@@ -8,15 +8,10 @@
 
 ## Extended by
 
+- [`MessageNotRequeuableError`](MessageNotRequeuableError.md)
 - [`MessageDestinationQueueAlreadySetError`](MessageDestinationQueueAlreadySetError.md)
 - [`MessageDestinationQueueRequiredError`](MessageDestinationQueueRequiredError.md)
-- [`MessageMessageExchangeRequiredError`](MessageMessageExchangeRequiredError.md)
-- [`MessageMessageNotFoundError`](MessageMessageNotFoundError.md)
-- [`MessageMessagePropertyError`](MessageMessagePropertyError.md)
-- [`MessageInvalidParametersError`](MessageInvalidParametersError.md)
-- [`MessageMessageNotRequeuableError`](MessageMessageNotRequeuableError.md)
-- [`MessageMessageNotDeletedError`](MessageMessageNotDeletedError.md)
-- [`MessageMessageAlreadyRequeuedError`](MessageMessageAlreadyRequeuedError.md)
+- [`MessagePropertyError`](MessagePropertyError.md)
 
 ## Constructors
 

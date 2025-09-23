@@ -46,11 +46,7 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq-common/docs/a
 
 ### messages
 
-> **messages**: `object`
-
-#### store
-
-> **store**: [`IMessagesStorageParsedConfig`](IMessagesStorageParsedConfig.md)
+> **messages**: [`IMessagesParsedConfig`](IMessagesParsedConfig.md)
 
 #### See
 

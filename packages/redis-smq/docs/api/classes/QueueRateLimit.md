@@ -138,23 +138,3 @@ A callback function called when the rate limit is set successfully. No arguments
 #### Returns
 
 `void`
-
-***
-
-### shutdown()
-
-> **shutdown**(`cb`): `void`
-
-Cleans up resources by shutting down the Redis client and the queue.
-
-#### Parameters
-
-##### cb
-
-`ICallback`\<`void`\>
-
-A callback function to handle completion of the shutdown process.
-
-#### Returns
-
-`void`

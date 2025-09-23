@@ -38,7 +38,7 @@
 
 ##### heartbeatPayload
 
-[`IConsumerHeartbeat`](../interfaces/IConsumerHeartbeat.md)
+`IConsumerHeartbeat`
 
 #### Returns
 

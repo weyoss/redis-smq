@@ -82,7 +82,7 @@
 
 ##### deadLetterReason
 
-[`EMessageUnacknowledgementDeadLetterReason`](../enumerations/EMessageUnacknowledgementDeadLetterReason.md)
+`EMessageUnacknowledgementDeadLetterReason`
 
 #### Returns
 
@@ -170,7 +170,7 @@
 
 ##### unknowledgmentReason
 
-[`EMessageUnacknowledgementReason`](../enumerations/EMessageUnacknowledgementReason.md)
+`EMessageUnacknowledgementReason`
 
 #### Returns
 

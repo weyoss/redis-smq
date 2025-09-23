@@ -4,7 +4,7 @@
 
 ## Extends
 
-- [`NamespaceError`](NamespaceError.md)
+- [`NamespaceManagerError`](NamespaceManagerError.md)
 
 ## Constructors
 
@@ -24,7 +24,7 @@
 
 #### Inherited from
 
-[`NamespaceError`](NamespaceError.md).[`constructor`](NamespaceError.md#constructor)
+[`NamespaceManagerError`](NamespaceManagerError.md).[`constructor`](NamespaceManagerError.md#constructor)
 
 ## Properties
 
@@ -34,7 +34,7 @@
 
 #### Inherited from
 
-[`NamespaceError`](NamespaceError.md).[`cause`](NamespaceError.md#cause)
+[`NamespaceManagerError`](NamespaceManagerError.md).[`cause`](NamespaceManagerError.md#cause)
 
 ***
 
@@ -44,7 +44,7 @@
 
 #### Inherited from
 
-[`NamespaceError`](NamespaceError.md).[`message`](NamespaceError.md#message)
+[`NamespaceManagerError`](NamespaceManagerError.md).[`message`](NamespaceManagerError.md#message)
 
 ***
 
@@ -54,7 +54,7 @@
 
 #### Inherited from
 
-[`NamespaceError`](NamespaceError.md).[`stack`](NamespaceError.md#stack)
+[`NamespaceManagerError`](NamespaceManagerError.md).[`stack`](NamespaceManagerError.md#stack)
 
 ***
 
@@ -84,7 +84,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`NamespaceError`](NamespaceError.md).[`prepareStackTrace`](NamespaceError.md#preparestacktrace)
+[`NamespaceManagerError`](NamespaceManagerError.md).[`prepareStackTrace`](NamespaceManagerError.md#preparestacktrace)
 
 ***
 
@@ -94,7 +94,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`NamespaceError`](NamespaceError.md).[`stackTraceLimit`](NamespaceError.md#stacktracelimit)
+[`NamespaceManagerError`](NamespaceManagerError.md).[`stackTraceLimit`](NamespaceManagerError.md#stacktracelimit)
 
 ## Accessors
 
@@ -110,7 +110,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`NamespaceError`](NamespaceError.md).[`name`](NamespaceError.md#name)
+[`NamespaceManagerError`](NamespaceManagerError.md).[`name`](NamespaceManagerError.md#name)
 
 ## Methods
 
@@ -136,4 +136,4 @@ Create .stack property on a target object
 
 #### Inherited from
 
-[`NamespaceError`](NamespaceError.md).[`captureStackTrace`](NamespaceError.md#capturestacktrace)
+[`NamespaceManagerError`](NamespaceManagerError.md).[`captureStackTrace`](NamespaceManagerError.md#capturestacktrace)

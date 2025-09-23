@@ -43,23 +43,3 @@ ExchangeAbstract\<string \| IQueueParams\>.constructor
 #### Overrides
 
 `ExchangeAbstract.getQueues`
-
-***
-
-### shutdown()
-
-> **shutdown**(`cb`): `void`
-
-#### Parameters
-
-##### cb
-
-`ICallback`\<`void`\>
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-`ExchangeAbstract.shutdown`

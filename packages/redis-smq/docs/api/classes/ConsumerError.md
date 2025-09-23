@@ -8,9 +8,8 @@
 
 ## Extended by
 
-- [`ConsumerConsumeMessageHandlerAlreadyExistsError`](ConsumerConsumeMessageHandlerAlreadyExistsError.md)
-- [`ConsumerConsumerGroupIdNotSupportedError`](ConsumerConsumerGroupIdNotSupportedError.md)
-- [`ConsumerConsumerGroupIdRequiredError`](ConsumerConsumerGroupIdRequiredError.md)
+- [`MessageHandlerAlreadyExistsError`](MessageHandlerAlreadyExistsError.md)
+- [`MessageHandlerError`](MessageHandlerError.md)
 
 ## Constructors
 
