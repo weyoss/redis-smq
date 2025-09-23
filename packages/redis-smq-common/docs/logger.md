@@ -1,137 +1,185 @@
-
 [RedisSMQ Common Library](../README.md) / Logger
 
 # Logger
 
-## Overview
-
-Logging is an essential part of any application for debugging, monitoring, and auditing purposes.
-The redis-smq-common logging system provides a simple yet powerful interface to log messages with different severity
-levels (debug, info, warn, error) and supports namespaces for better organization.
-
 ## Table of Contents
 
-- [Basic Usage](#basic-usage)
-    - [Enabling Logging](#enabling-logging)
-    - [Logging Messages](#logging-messages)
-    - [Cleaning Up](#cleaning-up)
+- [Overview](#overview)
+- [Installation](#installation)
 - [Configuration](#configuration)
-    - [Configuration Parameters](#configuration-parameters)
-    - [Configuration Example](#configuration-example)
-- [Built-in Console Logger](#built-in-console-logger)
-    - [Log Levels](#log-levels)
-    - [Advanced Configuration](#advanced-configuration)
-- [Performance Considerations](#performance-considerations)
+- [Usage](#usage)
+  - [Basic Logging](#basic-logging)
+  - [Namespaced Logging](#namespaced-logging)
+  - [Disabled Logging](#disabled-logging)
+- [Log Levels](#log-levels)
+- [API Reference](#api-reference)
 
-## Basic Usage
+---
 
-### Enabling Logging
+## Overview
 
-By default, logging is disabled to optimize performance. Logging can affect message processing performance due to I/O operations.
+The `redis-smq-common` logger provides a simple, configurable logging solution with support for:
 
-To enable logging, set `cfg.enabled` to `true` in the configuration. This will initialize the builtin `ConsoleLogger` as
-the default logger.
+- Multiple log levels (DEBUG, INFO, WARN, ERROR)
+- Hierarchical namespacing
+- Colorized console output
+- Timestamp formatting
+- Performance-optimized dummy logger when disabled
 
-```typescript
-import { logger } from 'redis-smq-common';
+## Installation
 
-// Configuration for enabling the logger
-const config = {
-  enabled: true,
-};
-
-// Get a logger instance with a namespace
-const log = logger.getLogger(config, 'MyNamespace');
+```bash
+npm install redis-smq-common
 ```
-
-### Logging Messages
-
-Once you have a logger instance, you can log messages at different severity levels:
-
-```typescript
-// Log messages at different levels
-log.info('This is an info message');
-log.warn('This is a warning message');
-log.error('This is an error message');
-log.debug('This is a debug message');
-
-// Log with additional parameters
-log.info('User logged in', { userId: 123, timestamp: new Date() });
-log.error('Operation failed', new Error('Database connection error'));
-```
-
-### Cleaning Up
-
-If needed, you can destroy the logger instance using:
-
-```typescript
-logger.destroy();
-```
-
-This is particularly useful in testing environments or when you need to reset the logger configuration.
 
 ## Configuration
 
-### Configuration Parameters
-
-The logger can be configured using an [ILoggerConfig](api/interfaces/ILoggerConfig.md) object with the following properties:
-
-| Property  | Type    | Required | Default | Description                                   |
-|-----------|---------|----------|---------|-----------------------------------------------|
-| `enabled` | boolean | No       | `false` | Determines whether logging is active          |
-| `options` | object  | No       | `{}`    | Configuration options for the built-in logger |
-
-### Configuration Example
+Configure the logger using an `ILoggerConfig` object:
 
 ```typescript
-import { ILoggerConfig } from 'redis-smq-common';
+import { ILoggerConfig, EConsoleLoggerLevel } from 'redis-smq-common';
 
-const loggerConfig: ILoggerConfig = {
-  enabled: true,
+const config: ILoggerConfig = {
+  enabled: true, // Enable/disable logging
   options: {
-    // Built-in logger options (see next section)
-  }
+    logLevel: EConsoleLoggerLevel.INFO, // Minimum log level
+    colorize: true, // Enable colored output
+    includeTimestamp: true, // Include timestamps
+  },
 };
 ```
 
-## Built-in Console Logger
+## Usage
 
-The redis-smq-common package comes with a built-in `ConsoleLogger` that provides basic logging functionality.
+### Basic Logging
 
-### Log Levels
+```typescript
+import { createLogger, ILoggerConfig } from 'redis-smq-common';
 
-The built-in logger supports the following log levels (in order of increasing severity):
+const config: ILoggerConfig = {
+  enabled: true,
+  options: {
+    logLevel: 'INFO',
+    colorize: true,
+    includeTimestamp: true,
+  },
+};
 
-| Level   | Description                                                      | Method        |
-|---------|------------------------------------------------------------------|---------------|
-| `DEBUG` | Detailed information for debugging purposes                      | `log.debug()` |
-| `INFO`  | General information about application progress                   | `log.info()`  |
-| `WARN`  | Warning messages that don't prevent the application from working | `log.warn()`  |
-| `ERROR` | Error messages that might require attention                      | `log.error()` |
+const logger = createLogger(config);
 
-Only messages at or above the configured log level will be displayed.
+// Log messages at different levels
+logger.debug('Debug information');
+logger.info('Application started');
+logger.warn('This is a warning');
+logger.error('An error occurred');
+```
+
+### Namespaced Logging
+
+Create loggers with namespaces for better message categorization:
+
+```typescript
+import { createLogger } from 'redis-smq-common';
+
+const config = {
+  enabled: true,
+  options: { colorize: true, includeTimestamp: true },
+};
+
+// Single namespace
+const dbLogger = createLogger(config, 'database');
+dbLogger.info('Connection established');
+// Output: [timestamp] INFO (database): Connection established
+
+// Multiple namespaces
+const apiLogger = createLogger(config, ['app', 'api', 'auth']);
+apiLogger.warn('Rate limit exceeded');
+// Output: [timestamp] WARN (app / api / auth): Rate limit exceeded
+```
+
+### Disabled Logging
+
+When logging is disabled, the logger methods become no-ops while preserving the ConsoleLogger structure:
+
+```typescript
+import { createLogger, ConsoleLogger } from 'redis-smq-common';
+
+// Disabled logger configuration
+const config = {
+  enabled: false, // Disable logging
+  options: { colorize: true, includeTimestamp: true },
+};
+
+const logger = createLogger(config, 'service') as ConsoleLogger;
+
+// All logging calls become no-ops (zero performance impact)
+logger.debug('This will not be logged');
+logger.info('This will not be logged');
+logger.warn('This will not be logged');
+logger.error('This will not be logged');
+
+// But you can still create child loggers and access other methods
+const childLogger = logger.createChild('database');
+const namespaces = logger.getNamespaces(); // ['service']
+const logLevel = logger.getLogLevel();
+```
 
 ### Advanced Configuration
 
-The built-in `ConsoleLogger` can be configured with several options. 
-
-#### Example 
-
 ```typescript
-import { ILoggerConfig } from 'redis-smq-common';
+import { createLogger, EConsoleLoggerLevel, ConsoleLogger } from 'redis-smq-common';
 
-const loggerConfig: ILoggerConfig = {
+const config = {
   enabled: true,
   options: {
-    includeTimestamp: true,                 // Include timestamps in log messages
-    colorize: true,                         // Use colors for different log levels
-    logLevel: EConsoleLoggerLevel.INFO,     // Only show INFO level and above
-  }
+    logLevel: EConsoleLoggerLevel.WARN, // Only WARN and ERROR messages
+    colorize: false, // Disable colors for production
+    includeTimestamp: true,
+  },
+};
+
+const logger = createLogger(config, 'production-service') as ConsoleLogger;
+
+logger.debug('Debug message'); // Will not be logged (below WARN level)
+logger.info('Info message');   // Will not be logged (below WARN level)
+logger.warn('Warning message'); // Will be logged
+logger.error('Error message');  // Will be logged
+
+// Check if a level would be logged
+if (logger.isLevelEnabled(EConsoleLoggerLevel.DEBUG)) {
+  logger.debug('Expensive debug operation');
+}
+```
+
+## Log Levels
+
+The logger supports the following log levels (in ascending order of severity):
+
+```typescript
+enum EConsoleLoggerLevel {
+  DEBUG = 0,
+  INFO = 1,
+  WARN = 2,
+  ERROR = 3,
+}
+```
+
+You can specify log levels using either the enum or string values:
+
+```typescript
+// Using enum
+const config1 = {
+  enabled: true,
+  options: { logLevel: EConsoleLoggerLevel.DEBUG },
+};
+
+// Using string
+const config2 = {
+  enabled: true,
+  options: { logLevel: 'DEBUG' },
 };
 ```
 
-See [ILoggerConfig](api/interfaces/ILoggerConfig.md) for more details.
+## API Reference
 
-## Performance Considerations
-
-For high-throughput applications, consider disabling logging in production or implementing log batching for third-party integrations.
+See [createLogger](api/functions/createLogger.md) for more details.
