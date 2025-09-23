@@ -56,20 +56,42 @@ For further details, visit:
 
 ![RedisSMQ Topic Exchange](redis-smq-topic-exchange.png)
 
-A topic exchange allows messages to be published to one or multiple queues that match a specified topic pattern.
+A topic exchange allows messages to be published to one or multiple queues that match a specified topic pattern using regular expressions.
 
-The topic pattern is a string composed of alphanumeric characters, including - and \_, separated by periods (.).
+The topic pattern can be any valid regular expression, providing powerful and flexible queue matching capabilities.
 
-For instance, the topic pattern a.b.c.d will match the following queues: a.b.c.d, a.b.c.d.e, and a.b.c.d.e.f, but it
-will not match a.b, a.b.c, or a.b.c.z.
+### Pattern Examples
 
-A topic pattern can also be represented as an object to denote the namespace:
-
+**Simple prefix matching:**
 ```javascript
-{ ns: 'my-app', topic: 'a.b.c.d' }
+// Pattern: "user"
+// Matches: "user", "user.created", "user.updated", "user.deleted"
 ```
 
-This will match all queues within the my-app namespace that satisfy the a.b.c.d pattern. If no namespace is specified, the default namespace will be applied.
+**Exact matching:**
+```javascript
+// Pattern: "^order\.created$"
+// Matches: "order.created" (exact match only)
+```
+
+**Wildcard patterns:**
+```javascript
+// Pattern: "user\.(created|updated|deleted)"
+// Matches: "user.created", "user.updated", "user.deleted"
+```
+
+**Complex patterns:**
+```javascript
+// Pattern: "^(user|admin)\..*\.priority\.(high|critical)$"
+// Matches: "user.account.priority.high", "admin.system.priority.critical"
+```
+
+**Namespace-aware patterns:**
+```javascript
+// Pattern with namespace object
+{ ns: 'my-app', topic: '^notification\.(email|sms)$' }
+// Matches queues in 'my-app' namespace: "notification.email", "notification.sms"
+```
 
 ### Usage
 
@@ -79,8 +101,22 @@ To set up a topic exchange for a message, use the [ProducibleMessage Class](api/
 const { ProducibleMessage } = require('redis-smq');
 
 const msg = new ProducibleMessage();
-msg.setTopic('a.b.c.d').setBody('123456789');
+
+// Simple pattern matching
+msg.setTopic('user').setBody('123456789');
+
+// Regex pattern for specific events
+msg.setTopic('order\\.(created|updated)').setBody('order data');
+
+// Namespace-specific pattern
+msg.setTopic({ ns: 'my-app', topic: '^notification\\.' }).setBody('notification');
 ```
+
+**Important Notes:**
+- Topic patterns are treated as regular expressions, so special regex characters need to be escaped
+- Use double backslashes (`\\`) in JavaScript strings to escape regex special characters
+- If no namespace is specified, the default namespace will be applied
+- The pattern is matched against the full queue name
 
 If the topic pattern does not correspond to any queues, the message will be deleted and an error will be generated.
 
@@ -90,18 +126,19 @@ For more information, refer to:
 
 - [ExchangeTopic Class](api/classes/ExchangeTopic.md)
 
-## FanOut Exchange
+## 3. FanOut Exchange
 
 ![RedisSMQ FanOut Exchange](redis-smq-fanout-exchange.png)
 
 A FanOut exchange enables producers to publish a message to all queues that are bound to the exchange via a binding key.
-Usage
+
+### Usage
 
 To use a FanOut exchange, you must first create it via [ExchangeFanOut.saveExchange()](api/classes/ExchangeFanOut.md#saveexchange) and then bind one or more queues to the exchange through ExchangeFanOut.bindQueue().
 
 To set up a FanOut exchange for a message, the [ProducibleMessage API](api/classes/ProducibleMessage.md) utilizes [ProducibleMessage.setFanOut()](api/classes/ProducibleMessage.md#setfanout):
 
-```javascript
+  ```javascript
 const { ProducibleMessage } = require('redis-smq');
 
 const msg = new ProducibleMessage();
