@@ -16,7 +16,6 @@
 - [ConsoleLogger](classes/ConsoleLogger.md)
 - [EventBus](classes/EventBus.md)
 - [EventBusRedis](classes/EventBusRedis.md)
-- [EventBusRedisFactory](classes/EventBusRedisFactory.md)
 - [EventEmitter](classes/EventEmitter.md)
 - [FileLock](classes/FileLock.md)
 - [PowerSwitch](classes/PowerSwitch.md)
@@ -36,7 +35,6 @@
 - [CallbackEmptyReplyError](classes/CallbackEmptyReplyError.md)
 - [CallbackInvalidReplyError](classes/CallbackInvalidReplyError.md)
 - [EventBusError](classes/EventBusError.md)
-- [EventBusInstanceLockError](classes/EventBusInstanceLockError.md)
 - [EventBusNotConnectedError](classes/EventBusNotConnectedError.md)
 - [InstanceLockError](classes/InstanceLockError.md)
 - [LockAcquireError](classes/LockAcquireError.md)
@@ -63,7 +61,8 @@
 
 - [ICallback](interfaces/ICallback.md)
 - [IConsoleLoggerOptions](interfaces/IConsoleLoggerOptions.md)
-- [IEventBus](interfaces/IEventBus.md)
+- [IEventBusConfig](interfaces/IEventBusConfig.md)
+- [IEventBusRedisConfig](interfaces/IEventBusRedisConfig.md)
 - [IEventEmitter](interfaces/IEventEmitter.md)
 - [ILogger](interfaces/ILogger.md)
 - [ILoggerConfig](interfaces/ILoggerConfig.md)
@@ -106,11 +105,8 @@
 - [archive](variables/archive.md)
 - [async](variables/async.md)
 - [env](variables/env.md)
-- [logger](variables/logger.md)
 - [net](variables/net.md)
 
 ## Functions
 
-- [createRedisClient](functions/createRedisClient.md)
-- [withEventBus](functions/withEventBus.md)
-- [withRedisClient](functions/withRedisClient.md)
+- [createLogger](functions/createLogger.md)

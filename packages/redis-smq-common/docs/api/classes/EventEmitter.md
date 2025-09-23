@@ -4,9 +4,6 @@
 
 ## Extended by
 
-- [`EventBus`](EventBus.md)
-- [`EventBusRedis`](EventBusRedis.md)
-- [`EventBusRedisFactory`](EventBusRedisFactory.md)
 - [`IRedisClient`](../interfaces/IRedisClient.md)
 - [`RedisClientFactory`](RedisClientFactory.md)
 - [`Runnable`](Runnable.md)

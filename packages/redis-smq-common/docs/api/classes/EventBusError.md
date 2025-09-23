@@ -9,7 +9,6 @@
 ## Extended by
 
 - [`EventBusNotConnectedError`](EventBusNotConnectedError.md)
-- [`EventBusInstanceLockError`](EventBusInstanceLockError.md)
 
 ## Constructors
 

@@ -34,7 +34,7 @@ true
 
 ### logLevel?
 
-> `optional` **logLevel**: `"INFO"` \| `"DEBUG"` \| [`EConsoleLoggerLevel`](../enumerations/EConsoleLoggerLevel.md) \| `"WARN"` \| `"ERROR"`
+> `optional` **logLevel**: [`EConsoleLoggerLevel`](../enumerations/EConsoleLoggerLevel.md) \| `"DEBUG"` \| `"INFO"` \| `"WARN"` \| `"ERROR"`
 
 Minimum log level to display
 Can be specified as a string ('DEBUG', 'INFO', 'WARN', 'ERROR') or

@@ -11,6 +11,7 @@ It provides methods for starting, stopping, and handling errors during the execu
 
 ## Extended by
 
+- [`EventBus`](EventBus.md)
 - [`RedisLock`](RedisLock.md)
 - [`WorkerResourceGroup`](WorkerResourceGroup.md)
 

@@ -199,7 +199,13 @@ Checks if the Runnable instance is currently up.
 
 ### loadFromDir()
 
-> **loadFromDir**(`workersDir`, `payload`, `cb`): `void`
+> **loadFromDir**\<`WorkerPayload`\>(`workersDir`, `payload`, `cb`): `void`
+
+#### Type Parameters
+
+##### WorkerPayload
+
+`WorkerPayload` = `unknown`
 
 #### Parameters
 
@@ -209,7 +215,7 @@ Checks if the Runnable instance is currently up.
 
 ##### payload
 
-`unknown`
+`WorkerPayload`
 
 ##### cb
 
