@@ -10,16 +10,7 @@
 import bluebird from 'bluebird';
 import { QueueMessages } from '../../src/index.js';
 
-const instances: QueueMessages[] = [];
-
 export async function getQueueMessages() {
   const instance = new QueueMessages();
-  instances.push(instance);
   return bluebird.promisifyAll(instance);
-}
-
-export async function shutDownQueueMessages() {
-  for (const i of instances) {
-    await bluebird.promisifyAll(i).shutdownAsync();
-  }
 }

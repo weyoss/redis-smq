@@ -8,7 +8,6 @@
  */
 
 import { createLogger, ICallback, ILogger } from 'redis-smq-common';
-import { RedisClient } from '../../redis-client/redis-client.js';
 import { Configuration } from '../../../config/index.js';
 
 /**
@@ -16,14 +15,9 @@ import { Configuration } from '../../../config/index.js';
  * Provides a common interface for different Redis data structures (lists, sets, etc.)
  */
 export abstract class QueueStorage {
-  protected redisClient;
   protected logger: ILogger;
 
-  /**
-   * @param redisClient Redis client instance
-   */
-  protected constructor(redisClient: RedisClient) {
-    this.redisClient = redisClient;
+  constructor() {
     this.logger = createLogger(
       Configuration.getConfig().logger,
       this.constructor.name.toLowerCase(),

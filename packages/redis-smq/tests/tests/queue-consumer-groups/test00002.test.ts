@@ -18,12 +18,12 @@ import {
   IQueueParams,
   Producer,
   ProducibleMessage,
-  QueueExplorerConsumerGroupIdRequiredError,
+  ConsumerGroupIdRequiredError,
 } from '../../../src/index.js';
-import { getMessage } from '../../common/message.js';
+import { getMessageManager } from '../../common/message-manager.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
-import { getQueue } from '../../common/queue.js';
+import { getQueueManager } from '../../common/queue-manager.js';
 
 test('Publish and consume a message to/from a consumer group', async () => {
   const queue1: IQueueParams = {
@@ -31,7 +31,7 @@ test('Publish and consume a message to/from a consumer group', async () => {
     ns: 'ns1',
   };
 
-  const queue = await getQueue();
+  const queue = await getQueueManager();
   await queue.saveAsync(
     queue1,
     EQueueType.PRIORITY_QUEUE,
@@ -53,7 +53,7 @@ test('Publish and consume a message to/from a consumer group', async () => {
 
   await bluebird.delay(5000);
 
-  const message = await getMessage();
+  const message = await getMessageManager();
   const msg = await message.getMessageByIdAsync(messageId);
   expect(msg.id).toEqual(messageId);
   expect(msg.consumerGroupId).toEqual('my-group');
@@ -69,7 +69,7 @@ test('Publish and consume a message to/from a consumer group', async () => {
 
   const pendingMessages = await getQueuePendingMessages();
   await expect(pendingMessages.getMessagesAsync(queue1, 1, 10)).rejects.toThrow(
-    QueueExplorerConsumerGroupIdRequiredError,
+    ConsumerGroupIdRequiredError,
   );
 
   const messages = await pendingMessages.getMessagesAsync(

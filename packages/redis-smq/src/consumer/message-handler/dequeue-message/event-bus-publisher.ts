@@ -7,34 +7,26 @@
  * in the root directory of this source tree.
  */
 
-import { ILogger } from 'redis-smq-common';
 import { TConsumerDequeueMessageEvent } from '../../../common/index.js';
 import { EventBus } from '../../../event-bus/index.js';
 import { DequeueMessage } from './dequeue-message.js';
 
-export function eventBusPublisher(
-  dequeueMessage: DequeueMessage,
-  eventBus: EventBus,
-  logger: ILogger,
-): void {
+export function eventBusPublisher(dequeueMessage: DequeueMessage): void {
   const messageReceived: TConsumerDequeueMessageEvent['consumer.dequeueMessage.messageReceived'] =
     (...args) => {
-      const instance = eventBus.getInstance();
-      if (instance instanceof Error) logger.error(instance);
-      else instance.emit('consumer.dequeueMessage.messageReceived', ...args);
+      const instance = EventBus.getInstance();
+      instance.emit('consumer.dequeueMessage.messageReceived', ...args);
     };
   const nextMessage: TConsumerDequeueMessageEvent['consumer.dequeueMessage.nextMessage'] =
     (...args) => {
-      const instance = eventBus.getInstance();
-      if (instance instanceof Error) logger.error(instance);
-      else instance.emit('consumer.dequeueMessage.nextMessage', ...args);
+      const instance = EventBus.getInstance();
+      instance.emit('consumer.dequeueMessage.nextMessage', ...args);
     };
   const error: TConsumerDequeueMessageEvent['consumer.dequeueMessage.error'] = (
     ...args
   ) => {
-    const instance = eventBus.getInstance();
-    if (instance instanceof Error) logger.error(instance);
-    else instance.emit('consumer.dequeueMessage.error', ...args);
+    const instance = EventBus.getInstance();
+    instance.emit('consumer.dequeueMessage.error', ...args);
   };
   dequeueMessage
     .on('consumer.dequeueMessage.messageReceived', messageReceived)

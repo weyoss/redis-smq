@@ -11,7 +11,7 @@ import { expect, test } from 'vitest';
 import {
   MessageDestinationQueueAlreadySetError,
   MessageDestinationQueueRequiredError,
-  MessageMessageExchangeRequiredError,
+  MessageExchangeRequiredError,
   ProducibleMessage,
 } from '../../../src/index.js';
 import { MessageEnvelope } from '../../../src/message/message-envelope.js';
@@ -26,5 +26,5 @@ test('MessageEnvelope: additional checks', async () => {
   expect(() => env.setDestinationQueue({ ns: 'ns1', name: 'queue2' })).toThrow(
     MessageDestinationQueueAlreadySetError,
   );
-  expect(() => env.getExchange()).toThrow(MessageMessageExchangeRequiredError);
+  expect(() => env.getExchange()).toThrow(MessageExchangeRequiredError);
 });

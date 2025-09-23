@@ -8,7 +8,7 @@
  */
 
 import { expect, test } from 'vitest';
-import { RedisKeysError } from '../../../src/common/redis-keys/errors/index.js';
+import { RedisKeysError } from '../../../src/index.js';
 import { redisKeys } from '../../../src/common/redis-keys/redis-keys.js';
 
 test('redisKeys', async () => {

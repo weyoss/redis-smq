@@ -10,16 +10,7 @@
 import bluebird from 'bluebird';
 import { QueueRateLimit } from '../../src/index.js';
 
-const instances: QueueRateLimit[] = [];
-
 export async function getQueueRateLimit() {
   const instance = new QueueRateLimit();
-  instances.push(instance);
   return bluebird.promisifyAll(instance);
-}
-
-export async function shutDownQueueRateLimit() {
-  for (const i of instances) {
-    await bluebird.promisifyAll(i).shutdownAsync();
-  }
 }

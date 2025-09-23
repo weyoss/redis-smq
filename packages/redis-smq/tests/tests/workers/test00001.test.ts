@@ -54,7 +54,7 @@ test('An unacked message with retryDelay should be moved to queueRequeued. Reque
 
   expect(msg.status === EMessagePropertyStatus.UNACK_REQUEUING).toBe(true);
 
-  // should move from requeue queue-manager to delay queue-manager
+  // should move from requeue queue to delay queue
   const requeueImmediateWorker = bluebird.promisifyAll(
     new RequeueImmediateWorker({ queueParams: defaultQueue, groupId: null }),
   );
@@ -64,7 +64,7 @@ test('An unacked message with retryDelay should be moved to queueRequeued. Reque
   const msg2 = await message.getMessageByIdAsync(messageId);
   expect(msg2.status === EMessagePropertyStatus.UNACK_DELAYING).toBe(true);
 
-  // should move from requeue queue-manager to delay queue-manager
+  // should move from requeue queue to delay queue
   const requeueDelayedWorker = bluebird.promisifyAll(
     new RequeueDelayedWorker({ queueParams: defaultQueue, groupId: null }),
   );

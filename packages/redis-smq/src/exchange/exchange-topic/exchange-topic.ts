@@ -7,7 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { ICallback, withRedisClient } from 'redis-smq-common';
+import { ICallback } from 'redis-smq-common';
+import { withSharedPoolConnection } from '../../common/redis-connection-pool/with-shared-pool-connection.js';
 import { IQueueParams } from '../../queue-manager/index.js';
 import { ExchangeAbstract } from '../exchange-abstract.js';
 import { ITopicParams } from '../index.js';
@@ -33,26 +34,22 @@ export class ExchangeTopic extends ExchangeAbstract<string | ITopicParams> {
       });
       return cb(topic);
     }
-    withRedisClient(
-      this.redisClient,
-      (client, cb) => {
-        this.logger.debug(`Getting topic exchange queues`, { topic });
-        _getTopicExchangeQueues(client, topic, (err, queues) => {
-          if (err) {
-            this.logger.error(`Failed to get topic exchange queues`, {
-              error: err.message,
-            });
-            cb(err);
-          } else {
-            this.logger.debug(`Successfully retrieved topic exchange queues`, {
-              topic,
-              queueCount: queues?.length || 0,
-            });
-            cb(null, queues);
-          }
-        });
-      },
-      cb,
-    );
+    withSharedPoolConnection((client, cb) => {
+      this.logger.debug(`Getting topic exchange queues`, { topic });
+      _getTopicExchangeQueues(client, topic, (err, queues) => {
+        if (err) {
+          this.logger.error(`Failed to get topic exchange queues`, {
+            error: err.message,
+          });
+          cb(err);
+        } else {
+          this.logger.debug(`Successfully retrieved topic exchange queues`, {
+            topic,
+            queueCount: queues?.length || 0,
+          });
+          cb(null, queues);
+        }
+      });
+    }, cb);
   }
 }

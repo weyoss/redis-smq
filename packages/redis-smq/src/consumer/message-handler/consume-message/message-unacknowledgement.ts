@@ -7,14 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import {
-  async,
-  createLogger,
-  ICallback,
-  IRedisClient,
-  withRedisClient,
-} from 'redis-smq-common';
-import { RedisClient } from '../../../common/redis-client/redis-client.js';
+import { async, createLogger, ICallback, IRedisClient } from 'redis-smq-common';
 import { ELuaScriptName } from '../../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../../config/index.js';
@@ -33,7 +26,8 @@ import {
   TMessageUnacknowledgementAction,
   TMessageUnacknowledgementStatus,
 } from './types/index.js';
-import { ConsumerMessageHandlerError } from '../errors/index.js';
+import { MessageHandlerError } from '../../../errors/index.js';
+import { withSharedPoolConnection } from '../../../common/redis-connection-pool/with-shared-pool-connection.js';
 
 type TScriptArgs = {
   keys: string[];
@@ -90,7 +84,7 @@ const UNACK_STATIC_ARGS = (): (string | number)[] => {
 };
 
 /**
- * Handles the unacknowledgement of messages in the message queue-manager system.
+ * Handles the unacknowledgement of messages in the message queue system.
  *
  * This class is responsible for determining what happens to messages that
  * were not successfully processed, including:
@@ -100,15 +94,11 @@ const UNACK_STATIC_ARGS = (): (string | number)[] => {
  */
 export class MessageUnacknowledgement {
   protected readonly logger;
-  protected readonly redisClient;
 
   /**
    * Creates a new MessageUnacknowledgement instance.
-   *
-   * @param redisClient - The Redis client to use for operations
    */
-  constructor(redisClient: RedisClient) {
-    this.redisClient = redisClient;
+  constructor() {
     this.logger = createLogger(
       Configuration.getConfig().logger,
       this.constructor.name.toLowerCase(),
@@ -129,21 +119,17 @@ export class MessageUnacknowledgement {
     unacknowledgementReason: EMessageUnacknowledgementReason,
     cb: ICallback<TMessageUnacknowledgementStatus>,
   ): void {
-    withRedisClient(
-      this.redisClient,
-      (client, done) => {
-        const queue = msg.getDestinationQueue();
-        this.executeUnacknowledgementScript(
-          client,
-          consumerId,
-          queue,
-          [msg],
-          unacknowledgementReason,
-          done,
-        );
-      },
-      cb,
-    );
+    withSharedPoolConnection((client, done) => {
+      const queue = msg.getDestinationQueue();
+      this.executeUnacknowledgementScript(
+        client,
+        consumerId,
+        queue,
+        [msg],
+        unacknowledgementReason,
+        done,
+      );
+    }, cb);
   }
 
   /**
@@ -160,50 +146,46 @@ export class MessageUnacknowledgement {
     unackReason: EMessageUnacknowledgementReason,
     cb: ICallback<TMessageUnacknowledgementStatus>,
   ): void {
-    withRedisClient(
-      this.redisClient,
-      (client, done) => {
-        async.waterfall(
-          [
-            // Step 1: Get the list of queues for this consumer
-            (next: ICallback<IQueueParams[]>) => {
-              if (queues) next(null, queues);
-              else _getConsumerQueues(client, consumerId, next);
-            },
-            // Step 2: Process each queue-manager and collect the results
-            (
-              queues: IQueueParams[],
-              next: ICallback<TMessageUnacknowledgementStatus[]>,
-            ) => {
-              async.map(
-                queues,
-                (queue, finished) =>
-                  this.unacknowledgeMessagesFromProcessingQueue(
-                    client,
-                    consumerId,
-                    queue,
-                    unackReason,
-                    finished,
-                  ),
-                100,
-                next,
-              );
-            },
-            // Step 3: Combine the results from all queues into a single status object
-            (
-              statuses: TMessageUnacknowledgementStatus[],
-              next: ICallback<TMessageUnacknowledgementStatus>,
-            ) => {
-              const combinedStatus: TMessageUnacknowledgementStatus =
-                Object.assign({}, ...statuses);
-              next(null, combinedStatus);
-            },
-          ],
-          done,
-        );
-      },
-      cb,
-    );
+    withSharedPoolConnection((client, done) => {
+      async.waterfall(
+        [
+          // Step 1: Get the list of queues for this consumer
+          (next: ICallback<IQueueParams[]>) => {
+            if (queues) next(null, queues);
+            else _getConsumerQueues(client, consumerId, next);
+          },
+          // Step 2: Process each queue and collect the results
+          (
+            queues: IQueueParams[],
+            next: ICallback<TMessageUnacknowledgementStatus[]>,
+          ) => {
+            async.map(
+              queues,
+              (queue, finished) =>
+                this.unacknowledgeMessagesFromProcessingQueue(
+                  client,
+                  consumerId,
+                  queue,
+                  unackReason,
+                  finished,
+                ),
+              100,
+              next,
+            );
+          },
+          // Step 3: Combine the results from all queues into a single status object
+          (
+            statuses: TMessageUnacknowledgementStatus[],
+            next: ICallback<TMessageUnacknowledgementStatus>,
+          ) => {
+            const combinedStatus: TMessageUnacknowledgementStatus =
+              Object.assign({}, ...statuses);
+            next(null, combinedStatus);
+          },
+        ],
+        done,
+      );
+    }, cb);
   }
 
   /**
@@ -396,15 +378,13 @@ export class MessageUnacknowledgement {
         const processedCount = Number(reply);
         if (isNaN(processedCount)) {
           return cb(
-            new ConsumerMessageHandlerError(
-              `Unexpected reply type received: ${reply}`,
-            ),
+            new MessageHandlerError(`Unexpected reply type received: ${reply}`),
           );
         }
         const expectedCount = messages.length;
         if (processedCount !== expectedCount) {
           return cb(
-            new ConsumerMessageHandlerError(
+            new MessageHandlerError(
               `Script reported processing ${processedCount} entries, but expected ${expectedCount}`,
             ),
           );

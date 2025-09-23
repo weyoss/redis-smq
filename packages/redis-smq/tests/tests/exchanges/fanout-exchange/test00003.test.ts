@@ -14,16 +14,16 @@ import {
   ProducibleMessage,
 } from '../../../../src/index.js';
 import { getFanOutExchange } from '../../../common/exchange.js';
-import { getMessage } from '../../../common/message.js';
+import { getMessageManager } from '../../../common/message-manager.js';
 import { getProducer } from '../../../common/producer.js';
-import { getQueue } from '../../../common/queue.js';
+import { getQueueManager } from '../../../common/queue-manager.js';
 import { isEqual } from '../../../common/utils.js';
 
 test('ExchangeFanOut: producing message with a FanOut exchange', async () => {
   const q1 = { ns: 'testing', name: 'w123' };
   const q2 = { ns: 'testing', name: 'w456' };
 
-  const queue = await getQueue();
+  const queue = await getQueueManager();
   await queue.saveAsync(
     q1,
     EQueueType.LIFO_QUEUE,
@@ -45,7 +45,7 @@ test('ExchangeFanOut: producing message with a FanOut exchange', async () => {
   const msg = new ProducibleMessage().setFanOut('fanout_a').setBody('hello');
 
   const ids = await producer.produceAsync(msg);
-  const message = await getMessage();
+  const message = await getMessageManager();
   const items = await message.getMessagesByIdsAsync(ids);
   expect(
     isEqual(
@@ -53,6 +53,4 @@ test('ExchangeFanOut: producing message with a FanOut exchange', async () => {
       [q1, q2],
     ),
   ).toBe(true);
-
-  await fanOutExchange.shutdownAsync();
 });

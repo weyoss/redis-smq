@@ -19,6 +19,7 @@ import { MessageEnvelope } from '../../../message/message-envelope.js';
 import { EQueueProperty, EQueueType } from '../../../queue-manager/index.js';
 import { WorkerAbstract } from './worker-abstract.js';
 import { workerBootstrap } from './worker-bootstrap.js';
+import { withSharedPoolConnection } from '../../../common/redis-connection-pool/with-shared-pool-connection.js';
 
 export class RequeueImmediateWorker extends WorkerAbstract {
   work = (cb: ICallback): void => {
@@ -43,20 +44,17 @@ export class RequeueImmediateWorker extends WorkerAbstract {
   };
 
   protected fetchMessageIds = (cb: ICallback<string[]>): void => {
-    const redisClient = this.redisClient.getInstance();
-    if (redisClient instanceof Error) {
-      cb(redisClient);
-      return;
-    }
-    const { keyQueueRequeued } = redisKeys.getQueueKeys(
-      this.queueParsedParams.queueParams,
-      this.queueParsedParams.groupId,
-    );
-    // Fetch up to 100 messages at a time
-    redisClient.lrange(keyQueueRequeued, 0, 99, (err, reply) => {
-      if (err) cb(err);
-      else cb(null, reply ?? []);
-    });
+    withSharedPoolConnection((redisClient, cb) => {
+      const { keyQueueRequeued } = redisKeys.getQueueKeys(
+        this.queueParsedParams.queueParams,
+        this.queueParsedParams.groupId,
+      );
+      // Fetch up to 100 messages at a time
+      redisClient.lrange(keyQueueRequeued, 0, 99, (err, reply) => {
+        if (err) cb(err);
+        else cb(null, reply ?? []);
+      });
+    }, cb);
   };
 
   protected fetchMessages = (
@@ -67,12 +65,9 @@ export class RequeueImmediateWorker extends WorkerAbstract {
       cb(null, []);
       return;
     }
-    const redisClient = this.redisClient.getInstance();
-    if (redisClient instanceof Error) {
-      cb(redisClient);
-      return;
-    }
-    _getMessages(redisClient, ids, cb);
+    withSharedPoolConnection((redisClient, cb) => {
+      _getMessages(redisClient, ids, cb);
+    }, cb);
   };
 
   protected requeueMessages = (
@@ -129,39 +124,40 @@ export class RequeueImmediateWorker extends WorkerAbstract {
       argv.push(messageId, priority ?? '', retryDelay, delayedTimestamp);
     }
 
-    const redisClient = this.redisClient.getInstance();
-    if (redisClient instanceof Error) {
-      cb(redisClient);
-      return;
-    }
-
-    this.logger.debug(
-      `Executing REQUEUE_UNACKNOWLEDGED_MESSAGE script with ${messages.length} messages`,
-    );
-    redisClient.runScript(
-      ELuaScriptName.REQUEUE_IMMEDIATE,
-      keys,
-      argv,
-      (err, reply) => {
-        if (err) {
-          this.logger.error('Error during message processing for requeue', err);
-          return cb(err);
-        }
-        if (typeof reply === 'number') {
-          if (reply !== messages.length) {
-            this.logger.warn(
-              `Script reported processing ${reply} messages, but expected ${messages.length}. This may be due to a message being moved or deleted before the worker could process it.`,
+    withSharedPoolConnection((redisClient, cb) => {
+      this.logger.debug(
+        `Executing REQUEUE_UNACKNOWLEDGED_MESSAGE script with ${messages.length} messages`,
+      );
+      redisClient.runScript(
+        ELuaScriptName.REQUEUE_IMMEDIATE,
+        keys,
+        argv,
+        (err, reply) => {
+          if (err) {
+            this.logger.error(
+              'Error during message processing for requeue',
+              err,
             );
+            return cb(err);
           }
-          this.logger.info(`Successfully requeued ${reply} messages.`);
-          return cb();
-        }
-        // Catch script-level errors and report them.
-        cb(
-          new PanicError(`Expected a numeric reply, but got ${String(reply)}`),
-        );
-      },
-    );
+          if (typeof reply === 'number') {
+            if (reply !== messages.length) {
+              this.logger.warn(
+                `Script reported processing ${reply} messages, but expected ${messages.length}. This may be due to a message being moved or deleted before the worker could process it.`,
+              );
+            }
+            this.logger.info(`Successfully requeued ${reply} messages.`);
+            return cb();
+          }
+          // Catch script-level errors and report them.
+          cb(
+            new PanicError(
+              `Expected a numeric reply, but got ${String(reply)}`,
+            ),
+          );
+        },
+      );
+    }, cb);
   };
 }
 

@@ -8,7 +8,7 @@
  */
 
 import { IQueueParams } from '../../index.js';
-import { RedisKeysInvalidKeyError } from './errors/index.js';
+import { RedisKeysInvalidKeyError } from '../../errors/index.js';
 
 /**
  * Redis key configuration constants

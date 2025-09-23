@@ -10,44 +10,47 @@
 import {
   Configuration,
   Consumer,
-  IRedisSMQConfig,
+  IRedisSMQParsedConfig,
   Producer,
   ProducibleMessage,
+  RedisSMQ,
 } from '../../src/index.js';
 import { getDefaultQueue } from './message-producing-consuming.js';
 
 process.on('message', function (payload: unknown) {
-  const config: IRedisSMQConfig = JSON.parse(String(payload));
-  Configuration.initializeWithConfig(config, (err) => {
+  const config: IRedisSMQParsedConfig = JSON.parse(String(payload));
+  RedisSMQ.initializeWithConfig(config, (err) => {
     if (err) throw err;
-
-    const defaultQueue = getDefaultQueue();
-    const producer = new Producer();
-    producer.run((err) => {
+    Configuration.getInstance().save(config, (err) => {
       if (err) throw err;
-      producer.produce(
-        new ProducibleMessage()
-          .setQueue(defaultQueue)
-          .setBody(123)
-          .setRetryDelay(0),
+      const defaultQueue = getDefaultQueue();
+      const producer = new Producer();
+      producer.run((err) => {
+        if (err) throw err;
+        producer.produce(
+          new ProducibleMessage()
+            .setQueue(defaultQueue)
+            .setBody(123)
+            .setRetryDelay(0),
+          (err) => {
+            if (err) throw err;
+          },
+        );
+      });
+
+      const consumer = new Consumer();
+      consumer.consume(
+        defaultQueue,
+        () => void 0, // not acknowledging
         (err) => {
           if (err) throw err;
         },
       );
+      consumer.run(() => void 0);
+
+      setTimeout(() => {
+        process.exit(0);
+      }, 10000);
     });
-
-    const consumer = new Consumer();
-    consumer.consume(
-      defaultQueue,
-      () => void 0, // not acknowledging
-      (err) => {
-        if (err) throw err;
-      },
-    );
-    consumer.run(() => void 0);
-
-    setTimeout(() => {
-      process.exit(0);
-    }, 10000);
   });
 });

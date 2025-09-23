@@ -15,12 +15,10 @@ import {
   Runnable,
 } from 'redis-smq-common';
 import { TConsumerMessageHandlerRunnerEvent } from '../../common/index.js';
-import { RedisClient } from '../../common/redis-client/redis-client.js';
 import { Configuration } from '../../config/index.js';
-import { EventBus } from '../../event-bus/index.js';
 import { IQueueParsedParams } from '../../queue-manager/index.js';
 import { Consumer } from '../consumer.js';
-import { ConsumerConsumeMessageHandlerAlreadyExistsError } from '../errors/index.js';
+import { MessageHandlerAlreadyExistsError } from '../../errors/index.js';
 import { MessageHandler } from '../message-handler/message-handler.js';
 import { eventBusPublisher } from './event-bus-publisher.js';
 import {
@@ -34,29 +32,29 @@ import {
  */
 export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunnerEvent> {
   protected consumer: Consumer;
-  protected redisClient: RedisClient;
   protected logger: ILogger;
   protected messageHandlerInstances: MessageHandler[] = [];
   protected messageHandlers: IConsumerMessageHandlerParams[] = [];
-  protected eventBus: EventBus | null;
 
-  constructor(
-    consumer: Consumer,
-    redisClient: RedisClient,
-    eventBus: EventBus | null,
-  ) {
+  constructor(consumer: Consumer) {
     super();
     this.consumer = consumer;
-    this.redisClient = redisClient;
+
+    const config = Configuration.getConfig();
+
     this.logger = createLogger(
-      Configuration.getConfig().logger,
+      config.logger,
       this.constructor.name.toLowerCase(),
     );
     this.logger.info(`Initializing MessageHandlerRunner with ID: ${this.id}`);
-    this.eventBus = eventBus;
-    if (this.eventBus) {
-      this.logger.debug('Event bus provided, setting up event bus publisher');
-      eventBusPublisher(this, this.eventBus, this.logger);
+
+    if (config.eventBus.enabled) {
+      this.logger.debug('Event bus enabled, setting up event bus publisher');
+      eventBusPublisher(this);
+    } else {
+      this.logger.debug(
+        'Event bus is not enabled, skipping event bus publisher setup',
+      );
     }
     this.logger.debug(
       `MessageHandlerRunner initialized for consumer ID: ${this.consumer.getId()}`,
@@ -64,7 +62,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
   }
 
   /**
-   * Removes a message handler for a given queue-manager, shutting down any running instance.
+   * Removes a message handler for a given queue, shutting down any running instance.
    */
   removeMessageHandler(queue: IQueueParsedParams, cb: ICallback<void>): void {
     const handler = this.getMessageHandler(queue);
@@ -98,7 +96,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
   }
 
   /**
-   * Adds a message handler for a queue-manager. If already exists, returns an error.
+   * Adds a message handler for a queue. If already exists, returns an error.
    * If runner is running, starts the handler immediately.
    */
   addMessageHandler(
@@ -110,7 +108,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
       this.logger.warn(
         `Message handler for queue ${queue.queueParams.name} already exists`,
       );
-      return cb(new ConsumerConsumeMessageHandlerAlreadyExistsError());
+      return cb(new MessageHandlerAlreadyExistsError());
     }
     const handlerParams: IConsumerMessageHandlerParams = {
       queue,
@@ -139,7 +137,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
   }
 
   /**
-   * Finds a running message handler instance for the given queue-manager.
+   * Finds a running message handler instance for the given queue.
    */
   protected getMessageHandlerInstance(
     queue: IQueueParsedParams,
@@ -155,7 +153,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
   }
 
   /**
-   * Finds the handler configuration for the given queue-manager.
+   * Finds the handler configuration for the given queue.
    */
   protected getMessageHandler(
     queue: IQueueParsedParams,
@@ -174,13 +172,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
   protected createMessageHandlerInstance(
     handlerParams: IConsumerMessageHandlerParams,
   ): MessageHandler {
-    const instance = new MessageHandler(
-      this.consumer,
-      this.redisClient,
-      handlerParams,
-      true,
-      this.eventBus,
-    );
+    const instance = new MessageHandler(this.consumer, handlerParams, true);
     instance.on('consumer.messageHandler.error', (err, consumerId, queue) => {
       this.logger.error(
         `MessageHandler error from consumer ${consumerId} for queue ${JSON.stringify(queue)}: ${err.message}`,
@@ -206,7 +198,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
     const handler = this.createMessageHandlerInstance(handlerParams);
     handler.run((err) => {
       if (err) {
-        this.logger.error(`Failed to run message handler: ${err.message}`);
+        this.logger.error(`Failed to run message handler:`, err);
         this.removeMessageHandler(handlerParams.queue, () => cb(err));
       } else {
         this.logger.debug(
@@ -264,7 +256,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
       },
       (err) => {
         if (err) {
-          this.logger.error(`Error starting message handlers: ${err.message}`);
+          this.logger.error(`Error starting message handlers:`, err);
         } else {
           this.logger.info(`All message handlers started`);
         }

@@ -10,19 +10,19 @@
 import { expect, test } from 'vitest';
 import {
   IQueueParams,
-  NamespaceManagerNamespaceNotFoundError,
+  NamespaceNotFoundError,
   QueueManagerActiveConsumersError,
-  QueueManagerQueueNotEmptyError,
-  QueueManagerQueueNotFoundError,
+  QueueNotEmptyError,
+  QueueNotFoundError,
 } from '../../../src/index.js';
 import {
   createQueue,
   produceAndAcknowledgeMessage,
 } from '../../common/message-producing-consuming.js';
-import { getNamespace } from '../../common/namespace.js';
+import { getNamespaceManager } from '../../common/namespace-manager.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 
-test('Combined: Fetching namespaces, deleting a namespace-manager with its message queues', async () => {
+test('Combined: Fetching namespaces, deleting a namespace with its message queues', async () => {
   const queueA: IQueueParams = {
     name: 'queue_a',
     ns: 'ns1',
@@ -37,9 +37,9 @@ test('Combined: Fetching namespaces, deleting a namespace-manager with its messa
   await createQueue(queueB, false);
   const { consumer: c2 } = await produceAndAcknowledgeMessage(queueB);
 
-  const ns = await getNamespace();
+  const namespaceManager = await getNamespaceManager();
 
-  const m0 = await ns.getNamespacesAsync();
+  const m0 = await namespaceManager.getNamespacesAsync();
   expect(m0).toEqual(['ns1']);
 
   const qm = await getQueueMessages();
@@ -52,45 +52,45 @@ test('Combined: Fetching namespaces, deleting a namespace-manager with its messa
   await c1.shutdownAsync();
   await c2.shutdownAsync();
 
-  await expect(ns.deleteAsync('ns1')).rejects.toThrow(
-    QueueManagerQueueNotEmptyError,
+  await expect(namespaceManager.deleteAsync('ns1')).rejects.toThrow(
+    QueueNotEmptyError,
   );
 
   await qm.purgeAsync(queueA);
 
-  await expect(ns.deleteAsync('ns1')).rejects.toThrow(
-    QueueManagerQueueNotEmptyError,
+  await expect(namespaceManager.deleteAsync('ns1')).rejects.toThrow(
+    QueueNotEmptyError,
   );
 
   await qm.purgeAsync(queueB);
   await c1.runAsync();
   await c2.runAsync();
 
-  await expect(ns.deleteAsync('ns1')).rejects.toThrow(
+  await expect(namespaceManager.deleteAsync('ns1')).rejects.toThrow(
     QueueManagerActiveConsumersError,
   );
 
   await c1.shutdownAsync();
 
-  await expect(ns.deleteAsync('ns1')).rejects.toThrow(
+  await expect(namespaceManager.deleteAsync('ns1')).rejects.toThrow(
     QueueManagerActiveConsumersError,
   );
 
   await c2.shutdownAsync();
-  await ns.deleteAsync('ns1');
+  await namespaceManager.deleteAsync('ns1');
 
   await expect(qm.countMessagesByStatusAsync(queueA)).rejects.toThrow(
-    QueueManagerQueueNotFoundError,
+    QueueNotFoundError,
   );
 
   await expect(qm.countMessagesByStatusAsync(queueB)).rejects.toThrow(
-    QueueManagerQueueNotFoundError,
+    QueueNotFoundError,
   );
 
-  const m5 = await ns.getNamespacesAsync();
+  const m5 = await namespaceManager.getNamespacesAsync();
   expect(m5).toEqual([]);
 
-  await expect(ns.deleteAsync('ns1')).rejects.toThrow(
-    NamespaceManagerNamespaceNotFoundError,
+  await expect(namespaceManager.deleteAsync('ns1')).rejects.toThrow(
+    NamespaceNotFoundError,
   );
 });

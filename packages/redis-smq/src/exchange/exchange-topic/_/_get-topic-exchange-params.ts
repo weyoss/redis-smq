@@ -9,12 +9,12 @@
 
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../../config/index.js';
-import { ExchangeInvalidTopicParamsError } from '../../errors/index.js';
+import { InvalidTopicExchangeParamsError } from '../../../errors/index.js';
 import { ITopicParams } from '../../types/index.js';
 
 export function _getTopicExchangeParams(
   topic: ITopicParams | string,
-): ITopicParams | ExchangeInvalidTopicParamsError {
+): ITopicParams | InvalidTopicExchangeParamsError {
   const config = Configuration.getConfig();
   const topicParams =
     typeof topic === 'string'
@@ -24,9 +24,9 @@ export function _getTopicExchangeParams(
         }
       : topic;
   const vTopic = redisKeys.validateRedisKey(topicParams.topic);
-  if (vTopic instanceof Error) return new ExchangeInvalidTopicParamsError();
+  if (vTopic instanceof Error) return new InvalidTopicExchangeParamsError();
   const vNamespace = redisKeys.validateNamespace(topicParams.ns);
-  if (vNamespace instanceof Error) return new ExchangeInvalidTopicParamsError();
+  if (vNamespace instanceof Error) return new InvalidTopicExchangeParamsError();
   return {
     topic: vTopic,
     ns: vNamespace,

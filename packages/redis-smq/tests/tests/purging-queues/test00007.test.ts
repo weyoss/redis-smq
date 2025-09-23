@@ -16,9 +16,9 @@ import {
   createQueue,
   getDefaultQueue,
 } from '../../common/message-producing-consuming.js';
-import { getQueue } from '../../common/queue.js';
+import { getQueueManager } from '../../common/queue-manager.js';
 
-test('Concurrently deleting a message queue-manager and starting a consumer', async () => {
+test('Concurrently deleting a message queue and starting a consumer', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   const consumer = getConsumer();
@@ -40,7 +40,7 @@ test('Concurrently deleting a message queue-manager and starting a consumer', as
     }, 5000);
   };
 
-  const q = await getQueue();
+  const q = await getQueueManager();
 
   const { WatchedKeysChangedError } = await import('redis-smq-common');
   await expect(

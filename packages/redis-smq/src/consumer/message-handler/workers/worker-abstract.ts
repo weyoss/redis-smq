@@ -14,12 +14,10 @@ import {
   Runnable,
   Timer,
 } from 'redis-smq-common';
-import { RedisClient } from '../../../common/redis-client/redis-client.js';
 import { Configuration } from '../../../config/index.js';
 import { IQueueParsedParams } from '../../../queue-manager/index.js';
 
 export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
-  protected redisClient;
   protected logger;
   protected config;
   protected queueParsedParams;
@@ -37,10 +35,6 @@ export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
     );
     this.logger.info(`Initializing worker: ${this.constructor.name}`);
 
-    // RedisClient
-    this.redisClient = new RedisClient();
-    this.redisClient.on('error', (err) => this.handleError(err));
-
     // Timer
     this.timer = new Timer();
     this.timer.on('error', (err: Error) => this.handleError(err));
@@ -56,10 +50,6 @@ export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
     this.logger.debug('Worker going up');
     return super.goingUp().concat([
       (cb: ICallback<void>) => {
-        this.logger.debug('Initializing Redis client');
-        this.redisClient.init(cb);
-      },
-      (cb: ICallback<void>) => {
         this.logger.debug('Setting up worker timer');
         this.timer.setTimeout(this.onTick, 1000);
         cb();
@@ -74,10 +64,6 @@ export abstract class WorkerAbstract extends Runnable<Record<string, never>> {
         this.logger.debug('Resetting worker timer');
         this.timer.reset();
         cb();
-      },
-      (cb: ICallback<void>) => {
-        this.logger.debug('Shutting down Redis client');
-        this.redisClient.shutdown(cb);
       },
     ].concat(super.goingDown());
   }

@@ -10,7 +10,7 @@
 import { expect, test } from 'vitest';
 import { EQueueDeliveryModel, EQueueType } from '../../../../src/index.js';
 import { getFanOutExchange } from '../../../common/exchange.js';
-import { getQueue } from '../../../common/queue.js';
+import { getQueueManager } from '../../../common/queue-manager.js';
 import { isEqual } from '../../../common/utils.js';
 
 test('ExchangeFanOut: bindQueue(), getExchangeQueues(), unbindQueue()', async () => {
@@ -20,7 +20,7 @@ test('ExchangeFanOut: bindQueue(), getExchangeQueues(), unbindQueue()', async ()
   const q2 = { ns: 'testing', name: 'w456' };
   const q3 = { ns: 'testing', name: 'w789' };
 
-  const queue = await getQueue();
+  const queue = await getQueueManager();
   await queue.saveAsync(
     q1,
     EQueueType.LIFO_QUEUE,

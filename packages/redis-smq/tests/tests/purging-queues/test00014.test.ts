@@ -18,7 +18,7 @@ import {
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 
-test('Combined test: Disable message storage, produce and acknowledge a message, and purge queue-manager', async () => {
+test('Combined test: Disable message storage, produce and acknowledge a message, and purge queue', async () => {
   const configInstance = bluebird.promisifyAll(Configuration.getInstance());
   await configInstance.updateConfigAsync({
     messages: {

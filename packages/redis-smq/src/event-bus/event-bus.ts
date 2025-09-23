@@ -7,13 +7,25 @@
  * in the root directory of this source tree.
  */
 
-import { EventBusRedisFactory } from 'redis-smq-common';
 import { Configuration } from '../config/index.js';
 import { TRedisSMQEvent } from '../common/index.js';
+import { EventBusRedis, ICallback } from 'redis-smq-common';
 
-export class EventBus extends EventBusRedisFactory<TRedisSMQEvent> {
-  constructor() {
-    const config = Configuration.getConfig();
-    super(config.redis);
+export class EventBus {
+  private static instance: EventBusRedis<TRedisSMQEvent> | null = null;
+
+  protected constructor() {}
+
+  static getInstance() {
+    if (!EventBus.instance) {
+      const config = Configuration.getConfig();
+      EventBus.instance = new EventBusRedis<TRedisSMQEvent>(config);
+    }
+    return EventBus.instance;
+  }
+
+  static shutdown(cb: ICallback) {
+    if (EventBus.instance) return EventBus.instance.shutdown(cb);
+    cb();
   }
 }

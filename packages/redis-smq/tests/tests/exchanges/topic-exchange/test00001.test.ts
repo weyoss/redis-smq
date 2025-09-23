@@ -8,19 +8,19 @@
  */
 
 import { expect, test } from 'vitest';
-import { ExchangeInvalidTopicParamsError } from '../../../../src/index.js';
+import { InvalidTopicExchangeParamsError } from '../../../../src/index.js';
 import { getTopicExchange } from '../../../common/exchange.js';
 
 test('ExchangeTopic: topic validation', async () => {
   const e = getTopicExchange();
   await expect(e.getQueuesAsync('!@223333')).rejects.toThrow(
-    ExchangeInvalidTopicParamsError,
+    InvalidTopicExchangeParamsError,
   );
   await expect(e.getQueuesAsync('223333.')).rejects.toThrow(
-    ExchangeInvalidTopicParamsError,
+    InvalidTopicExchangeParamsError,
   );
   await expect(e.getQueuesAsync('223333.w')).rejects.toThrow(
-    ExchangeInvalidTopicParamsError,
+    InvalidTopicExchangeParamsError,
   );
   await expect(e.getQueuesAsync('a223333.w')).resolves.not.toThrow();
   await expect(e.getQueuesAsync('a223333.w_e')).resolves.not.toThrow();

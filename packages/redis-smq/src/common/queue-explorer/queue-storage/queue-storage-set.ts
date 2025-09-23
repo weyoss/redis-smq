@@ -7,9 +7,9 @@
  * in the root directory of this source tree.
  */
 
-import { async, ICallback, withRedisClient } from 'redis-smq-common';
+import { async, ICallback } from 'redis-smq-common';
 import { QueueStorage } from './queue-storage.js';
-import { RedisClient } from '../../redis-client/redis-client.js';
+import { withSharedPoolConnection } from '../../redis-connection-pool/with-shared-pool-connection.js';
 
 /**
  * Implementation of QueueStorage for Redis sets.
@@ -20,11 +20,6 @@ import { RedisClient } from '../../redis-client/redis-client.js';
  * scanning rather than direct indexing.
  */
 export class QueueStorageSet extends QueueStorage {
-  constructor(redisClient: RedisClient) {
-    super(redisClient);
-    this.logger.debug(`${this.constructor.name} initialized`);
-  }
-
   /**
    * Counts the total number of items in a Redis set.
    *
@@ -37,23 +32,19 @@ export class QueueStorageSet extends QueueStorage {
    */
   count(redisKey: string, cb: ICallback<number>): void {
     this.logger.debug(`Counting items in ${redisKey}`);
-    withRedisClient(
-      this.redisClient,
-      (client, cb) => {
-        this.logger.debug(`Executing SCARD on ${redisKey}`);
+    withSharedPoolConnection((client, cb) => {
+      this.logger.debug(`Executing SCARD on ${redisKey}`);
 
-        client.scard(redisKey, (err, reply) => {
-          if (err) {
-            this.logger.error(`SCARD failed for ${redisKey}: ${err.message}`);
-            return cb(err);
-          }
+      client.scard(redisKey, (err, reply) => {
+        if (err) {
+          this.logger.error(`SCARD failed for ${redisKey}: ${err.message}`);
+          return cb(err);
+        }
 
-          this.logger.debug(`${redisKey} contains ${reply} items`);
-          cb(null, reply);
-        });
-      },
-      cb,
-    );
+        this.logger.debug(`${redisKey} contains ${reply} items`);
+        cb(null, reply);
+      });
+    }, cb);
   }
 
   /**
@@ -91,77 +82,73 @@ export class QueueStorageSet extends QueueStorage {
       `Fetching items from ${redisKey} (page ${page}, size ${pageSize})`,
     );
 
-    withRedisClient(
-      this.redisClient,
-      (client, cb) => {
-        /**
-         * Recursively scans through the set until reaching the target page.
-         *
-         * @param cursor - Redis cursor for SSCAN (start with "0" for first call)
-         * @param currentPage - Current page being processed (1-based)
-         * @param cb - Callback function that receives the scan result or an error
-         * @returns void
-         */
-        const scanToPage = (
-          cursor: string,
-          currentPage: number,
-          cb: ICallback<{ cursor: string; items: string[] }>,
-        ): void => {
-          this.logger.debug(
-            `SSCAN ${redisKey} with cursor ${cursor}, targeting page ${page}, currently at ${currentPage}`,
+    withSharedPoolConnection((client, cb) => {
+      /**
+       * Recursively scans through the set until reaching the target page.
+       *
+       * @param cursor - Redis cursor for SSCAN (start with "0" for first call)
+       * @param currentPage - Current page being processed (1-based)
+       * @param cb - Callback function that receives the scan result or an error
+       * @returns void
+       */
+      const scanToPage = (
+        cursor: string,
+        currentPage: number,
+        cb: ICallback<{ cursor: string; items: string[] }>,
+      ): void => {
+        this.logger.debug(
+          `SSCAN ${redisKey} with cursor ${cursor}, targeting page ${page}, currently at ${currentPage}`,
+        );
+        async.withCallback(
+          (cb: ICallback<{ cursor: string; items: string[] }>) =>
+            client.sscan(redisKey, cursor, { COUNT: pageSize }, cb),
+          (reply, cb) => {
+            // If we've reached the target page, return the items
+            if (currentPage == page) {
+              this.logger.debug(
+                `Reached target page ${page}, items: ${reply.items.length}`,
+              );
+              return cb(null, reply);
+            }
+
+            // If we've reached the end of the set but haven't reached the requested page
+            if (reply.cursor === '0') {
+              this.logger.debug(
+                `End of set reached at page ${currentPage}, target was ${page}`,
+              );
+              return cb(null, { cursor, items: [] });
+            }
+
+            // Continue to the next page
+            this.logger.debug(`Moving to next page, cursor: ${reply.cursor}`);
+            currentPage = currentPage + 1;
+            scanToPage(reply.cursor, currentPage, cb);
+          },
+          cb,
+        );
+      };
+
+      // Start scanning from the beginning with cursor "0" and page 1
+      scanToPage('0', 1, (err, reply) => {
+        if (err) {
+          this.logger.error(
+            `Error fetching items from ${redisKey}: ${err.message}`,
           );
-          async.withCallback(
-            (cb: ICallback<{ cursor: string; items: string[] }>) =>
-              client.sscan(redisKey, cursor, { COUNT: pageSize }, cb),
-            (reply, cb) => {
-              // If we've reached the target page, return the items
-              if (currentPage == page) {
-                this.logger.debug(
-                  `Reached target page ${page}, items: ${reply.items.length}`,
-                );
-                return cb(null, reply);
-              }
+          return cb(err);
+        }
 
-              // If we've reached the end of the set but haven't reached the requested page
-              if (reply.cursor === '0') {
-                this.logger.debug(
-                  `End of set reached at page ${currentPage}, target was ${page}`,
-                );
-                return cb(null, { cursor, items: [] });
-              }
+        const { items = [] } = reply ?? {};
+        const itemCount = items.length;
 
-              // Continue to the next page
-              this.logger.debug(`Moving to next page, cursor: ${reply.cursor}`);
-              currentPage = currentPage + 1;
-              scanToPage(reply.cursor, currentPage, cb);
-            },
-            cb,
-          );
-        };
+        if (itemCount === 0) {
+          this.logger.debug(`No items found in ${redisKey} for page ${page}`);
+        } else {
+          this.logger.debug(`Retrieved ${itemCount} items from ${redisKey}`);
+        }
 
-        // Start scanning from the beginning with cursor "0" and page 1
-        scanToPage('0', 1, (err, reply) => {
-          if (err) {
-            this.logger.error(
-              `Error fetching items from ${redisKey}: ${err.message}`,
-            );
-            return cb(err);
-          }
-
-          const { items = [] } = reply ?? {};
-          const itemCount = items.length;
-
-          if (itemCount === 0) {
-            this.logger.debug(`No items found in ${redisKey} for page ${page}`);
-          } else {
-            this.logger.debug(`Retrieved ${itemCount} items from ${redisKey}`);
-          }
-
-          cb(null, items);
-        });
-      },
-      cb,
-    );
+        cb(null, items);
+      });
+    }, cb);
   }
 
   /**
@@ -186,82 +173,76 @@ export class QueueStorageSet extends QueueStorage {
   fetchAllItems(redisKey: string, cb: ICallback<string[]>): void {
     this.logger.debug(`Fetching all items from ${redisKey}`);
 
-    withRedisClient(
-      this.redisClient,
-      (client, cb) => {
-        // Use a Set to ensure uniqueness of items
-        const items = new Set<string>();
-        let scanCount = 0;
+    withSharedPoolConnection((client, cb) => {
+      // Use a Set to ensure uniqueness of items
+      const items = new Set<string>();
+      let scanCount = 0;
 
-        /**
-         * Recursively scans through the entire set using cursor-based iteration.
-         *
-         * This function implements an incremental scanning approach using Redis SSCAN.
-         * It collects items batch by batch using a cursor-based iteration, which is
-         * memory-efficient and non-blocking for the Redis server.
-         *
-         * @param cursor - Redis cursor for SSCAN (start with "0" for first call)
-         * @param cb - Callback function called when scanning is complete or on error
-         * @returns void
-         */
-        const fullScan = (cursor: string, cb: ICallback<void>): void => {
-          scanCount++;
-          this.logger.debug(
-            `SSCAN ${redisKey} iteration ${scanCount}, cursor: ${cursor}`,
-          );
-          async.withCallback(
-            (cb: ICallback<{ cursor: string; items: string[] }>) =>
-              client.sscan(redisKey, cursor, {}, cb),
-            (reply, cb) => {
-              const newItems = reply.items.length;
-              this.logger.debug(
-                `Adding ${newItems} items from scan iteration ${scanCount}`,
-              );
-
-              // Add all items to the Set (duplicates are automatically handled)
-              reply.items.forEach((i) => items.add(i));
-
-              // If cursor is '0', we've completed the scan
-              if (reply.cursor === '0') {
-                this.logger.debug(
-                  `Scan complete after ${scanCount} iterations`,
-                );
-                return cb();
-              }
-
-              // Continue scanning with the new cursor
-              fullScan(reply.cursor, cb);
-            },
-            cb,
-          );
-        };
-
-        this.logger.debug(`Starting SSCAN with initial cursor=0`);
-
-        // Start scanning from cursor "0"
-        fullScan('0', (err) => {
-          if (err) {
-            this.logger.error(
-              `Error fetching all items from ${redisKey}: ${err.message}`,
-            );
-            return cb(err);
-          }
-
-          const itemCount = items.size;
-
-          if (itemCount === 0) {
-            this.logger.debug(`${redisKey} is empty`);
-          } else {
+      /**
+       * Recursively scans through the entire set using cursor-based iteration.
+       *
+       * This function implements an incremental scanning approach using Redis SSCAN.
+       * It collects items batch by batch using a cursor-based iteration, which is
+       * memory-efficient and non-blocking for the Redis server.
+       *
+       * @param cursor - Redis cursor for SSCAN (start with "0" for first call)
+       * @param cb - Callback function called when scanning is complete or on error
+       * @returns void
+       */
+      const fullScan = (cursor: string, cb: ICallback<void>): void => {
+        scanCount++;
+        this.logger.debug(
+          `SSCAN ${redisKey} iteration ${scanCount}, cursor: ${cursor}`,
+        );
+        async.withCallback(
+          (cb: ICallback<{ cursor: string; items: string[] }>) =>
+            client.sscan(redisKey, cursor, {}, cb),
+          (reply, cb) => {
+            const newItems = reply.items.length;
             this.logger.debug(
-              `Retrieved ${itemCount} total items from ${redisKey}`,
+              `Adding ${newItems} items from scan iteration ${scanCount}`,
             );
-          }
 
-          // Convert Set to array for the callback
-          cb(null, [...items.values()]);
-        });
-      },
-      cb,
-    );
+            // Add all items to the Set (duplicates are automatically handled)
+            reply.items.forEach((i) => items.add(i));
+
+            // If cursor is '0', we've completed the scan
+            if (reply.cursor === '0') {
+              this.logger.debug(`Scan complete after ${scanCount} iterations`);
+              return cb();
+            }
+
+            // Continue scanning with the new cursor
+            fullScan(reply.cursor, cb);
+          },
+          cb,
+        );
+      };
+
+      this.logger.debug(`Starting SSCAN with initial cursor=0`);
+
+      // Start scanning from cursor "0"
+      fullScan('0', (err) => {
+        if (err) {
+          this.logger.error(
+            `Error fetching all items from ${redisKey}: ${err.message}`,
+          );
+          return cb(err);
+        }
+
+        const itemCount = items.size;
+
+        if (itemCount === 0) {
+          this.logger.debug(`${redisKey} is empty`);
+        } else {
+          this.logger.debug(
+            `Retrieved ${itemCount} total items from ${redisKey}`,
+          );
+        }
+
+        // Convert Set to array for the callback
+        cb(null, [...items.values()]);
+      });
+    }, cb);
   }
 }

@@ -82,8 +82,8 @@ export enum EMessageProperty {
 
 export enum EMessagePropertyStatus {
   /**
-   * Message has been created but not yet published to the queue-manager.
-   * This is the default state of a message before it enters the message queue-manager.
+   * Message has been created but not yet published to the queue.
+   * This is the default state of a message before it enters the message queue.
    */
   NEW = 0,
 
@@ -108,17 +108,17 @@ export enum EMessagePropertyStatus {
   ACKNOWLEDGED,
 
   /**
-   * Message has been unacknowledged and is waiting in the requeue list to be moved back to the pending queue-manager.
+   * Message has been unacknowledged and is waiting in the requeue list to be moved back to the pending queue.
    */
   UNACK_REQUEUING,
 
   /**
-   * Message has been unacknowledged and is waiting in the delayed queue-manager for a scheduled retry.
+   * Message has been unacknowledged and is waiting in the delayed queue for a scheduled retry.
    */
   UNACK_DELAYING,
 
   /**
-   * Message has failed processing and has been moved to the dead-letter queue-manager.
+   * Message has failed processing and has been moved to the dead-letter queue.
    */
   DEAD_LETTERED,
 }

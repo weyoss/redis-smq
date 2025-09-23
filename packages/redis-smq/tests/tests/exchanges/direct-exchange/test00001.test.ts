@@ -8,19 +8,19 @@
  */
 
 import { expect, test } from 'vitest';
-import { ExchangeInvalidQueueParamsError } from '../../../../src/index.js';
+import { InvalidDirectExchangeParametersError } from '../../../../src/index.js';
 import { getDirectExchange } from '../../../common/exchange.js';
 
 test('DirectExchange', async () => {
   const e = getDirectExchange();
   await expect(e.getQueuesAsync('!@223333')).rejects.toThrow(
-    ExchangeInvalidQueueParamsError,
+    InvalidDirectExchangeParametersError,
   );
   await expect(e.getQueuesAsync('223333.')).rejects.toThrow(
-    ExchangeInvalidQueueParamsError,
+    InvalidDirectExchangeParametersError,
   );
   await expect(e.getQueuesAsync('223333.w')).rejects.toThrow(
-    ExchangeInvalidQueueParamsError,
+    InvalidDirectExchangeParametersError,
   );
   await expect(e.getQueuesAsync('a223333.w')).resolves.not.toThrow();
   await expect(e.getQueuesAsync('a223333.w_e')).resolves.not.toThrow();

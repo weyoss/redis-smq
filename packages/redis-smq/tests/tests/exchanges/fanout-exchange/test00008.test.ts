@@ -11,17 +11,17 @@ import { expect, test } from 'vitest';
 import {
   EQueueDeliveryModel,
   EQueueType,
-  ExchangeFanOutQueueTypeError,
+  QueueDeliveryModelMismatchError,
 } from '../../../../src/index.js';
 import { getFanOutExchange } from '../../../common/exchange.js';
-import { getQueue } from '../../../common/queue.js';
+import { getQueueManager } from '../../../common/queue-manager.js';
 
 test('ExchangeFanOut: binding different types of queues', async () => {
   const fanOutExchangeManager = getFanOutExchange();
   await fanOutExchangeManager.saveExchangeAsync('e1');
 
   const q1 = { ns: 'testing', name: 'w123' };
-  const queueInstance = await getQueue();
+  const queueInstance = await getQueueManager();
   await queueInstance.saveAsync(
     q1,
     EQueueType.LIFO_QUEUE,
@@ -37,6 +37,6 @@ test('ExchangeFanOut: binding different types of queues', async () => {
   );
 
   await expect(fanOutExchangeManager.bindQueueAsync(q2, 'e1')).rejects.toThrow(
-    ExchangeFanOutQueueTypeError,
+    QueueDeliveryModelMismatchError,
   );
 });

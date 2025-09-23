@@ -16,12 +16,15 @@ import {
   createLogger,
   ICallback,
   ILogger,
+  IRedisClient,
   PanicError,
   Runnable,
   WorkerCallable,
 } from 'redis-smq-common';
-import { TConsumerConsumeMessageEvent } from '../../../common/index.js';
-import { RedisClient } from '../../../common/redis-client/redis-client.js';
+import {
+  RedisConnectionPool,
+  TConsumerConsumeMessageEvent,
+} from '../../../common/index.js';
 import { ELuaScriptName } from '../../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../../config/index.js';
@@ -42,13 +45,13 @@ import {
   TMessageUnacknowledgementStatus,
 } from './types/index.js';
 import {
-  ConsumerMessageHandlerFileError,
-  ConsumerMessageHandlerFilenameExtensionError,
-} from '../errors/index.js';
+  MessageHandlerFileError,
+  MessageHandlerFilenameExtensionError,
+} from '../../../errors/index.js';
 import { MessageUnacknowledgement } from './message-unacknowledgement.js';
 import { eventBusPublisher } from './event-bus-publisher.js';
-import { EventBus } from '../../../event-bus/index.js';
 import { TConsumerMessageHandler } from '../types/index.js';
+import { ERedisConnectionAcquisitionMode } from '../../../common/redis-connection-pool/types/index.js';
 
 export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
   protected logger;
@@ -59,30 +62,30 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
   protected consumerId;
   protected messageHandler;
   protected messageHandlerId;
-  protected redisClient;
   protected messageUnack;
+  protected redisClient: IRedisClient | null = null;
   protected consumeMessageWorker: WorkerCallable<
     IMessageTransferable,
     void
   > | null = null;
 
   constructor(
-    redisClient: RedisClient,
     consumer: Consumer,
     queue: IQueueParsedParams,
     messageHandlerId: string,
     messageHandler: TConsumerMessageHandler,
-    eventBus: EventBus | null,
   ) {
     super();
     this.queue = queue;
     this.consumerId = consumer.getId();
     this.messageHandler = messageHandler;
     this.messageHandlerId = messageHandlerId;
-    this.redisClient = redisClient;
-    this.messageUnack = new MessageUnacknowledgement(redisClient);
+    this.messageUnack = new MessageUnacknowledgement();
+
+    const config = Configuration.getConfig();
+
     this.logger = createLogger(
-      Configuration.getConfig().logger,
+      config.logger,
       this.constructor.name.toLowerCase(),
     );
 
@@ -106,18 +109,23 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
       `Queue processing key: ${this.keyQueueProcessing}, acknowledged key: ${this.keyQueueAcknowledged}`,
     );
 
-    if (eventBus) {
-      this.logger.debug('Event bus provided, setting up event bus publisher');
-      eventBusPublisher(this, eventBus, this.logger);
+    if (config.eventBus.enabled) {
+      this.logger.debug('Event bus enabled, setting up event bus publisher');
+      eventBusPublisher(this);
     } else {
       this.logger.debug(
-        'No event bus provided, skipping event bus publisher setup',
+        'Event bus not enabled, skipping event bus publisher setup',
       );
     }
 
     this.logger.info(
       `ConsumeMessage initialized for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
     );
+  }
+
+  protected getRedisClient(): IRedisClient | PanicError {
+    if (!this.redisClient) return new PanicError('Redis Client is missing');
+    return this.redisClient;
   }
 
   handleReceivedMessage(message: MessageEnvelope): void {
@@ -162,7 +170,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
       `Message key: ${keyMessage}, store: ${store}, queueSize: ${queueSize}, expire: ${expire}`,
     );
 
-    const redisClient = this.redisClient.getInstance();
+    const redisClient = this.getRedisClient();
     if (redisClient instanceof Error) {
       this.logger.error(`Failed to get Redis client: ${redisClient.message}`);
       this.handleError(redisClient);
@@ -468,7 +476,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
         this.logger.error(
           `Invalid message handler file extension: ${fileExtension}, expected .js or .cjs`,
         );
-        cb(new ConsumerMessageHandlerFilenameExtensionError());
+        cb(new MessageHandlerFilenameExtensionError());
       } else {
         this.logger.debug(
           `Checking if message handler file exists: ${this.messageHandler}`,
@@ -478,7 +486,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
             this.logger.error(
               `Message handler file not found: ${this.messageHandler}, error: ${err.message}`,
             );
-            cb(new ConsumerMessageHandlerFileError());
+            cb(new MessageHandlerFileError());
           } else {
             this.logger.debug(
               `Message handler file validated successfully: ${this.messageHandler}`,
@@ -502,16 +510,26 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     return super.goingUp().concat([
       (cb: ICallback<void>) => {
         this.logger.debug('Initializing Redis client');
-        this.redisClient.init((err) => {
-          if (err) {
-            this.logger.error(
-              `Failed to initialize Redis client: ${err.message}`,
-            );
-          } else {
+        RedisConnectionPool.getInstance().acquire(
+          ERedisConnectionAcquisitionMode.SHARED,
+          (err, redisClient) => {
+            if (err) {
+              this.logger.error(
+                `Failed to initialize Redis client: ${err.message}`,
+              );
+              return cb(err);
+            }
+            if (!redisClient) {
+              this.logger.debug(
+                'Got an empty reply. Expected a Redis client instance',
+              );
+              return cb(new CallbackEmptyReplyError());
+            }
+            this.redisClient = redisClient;
             this.logger.debug('Redis client initialized successfully');
-          }
-          cb(err);
-        });
+            cb();
+          },
+        );
       },
       (cb: ICallback<void>) => {
         this.logger.debug('Validating message handler');
@@ -578,6 +596,13 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
           this.logger.debug('No consume message worker to shut down');
           cb();
         }
+      },
+      (cb: ICallback) => {
+        if (this.redisClient) {
+          RedisConnectionPool.getInstance().release(this.redisClient);
+          this.redisClient = null;
+        }
+        cb();
       },
     ].concat(super.goingDown());
   }

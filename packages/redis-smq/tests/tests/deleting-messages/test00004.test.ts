@@ -13,13 +13,13 @@ import {
   getDefaultQueue,
   produceAndDeadLetterMessage,
 } from '../../common/message-producing-consuming.js';
-import { getMessage } from '../../common/message.js';
+import { getMessageManager } from '../../common/message-manager.js';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 
-test('Combined test: Delete a dead-letter message. Check pending, acknowledged, and dead-letter message. Check queue-manager metrics.', async () => {
+test('Combined test: Delete a dead-letter message. Check pending, acknowledged, and dead-letter message. Check queue metrics.', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   const { queue, messageId } = await produceAndDeadLetterMessage();
@@ -48,7 +48,7 @@ test('Combined test: Delete a dead-letter message. Check pending, acknowledged, 
   expect(count.acknowledged).toBe(0);
   expect(count.deadLettered).toBe(1);
 
-  const message = await getMessage();
+  const message = await getMessageManager();
   const reply = await message.deleteMessageByIdAsync(messageId);
   expect(reply.status).toBe('OK');
   expect(reply.stats).toEqual({

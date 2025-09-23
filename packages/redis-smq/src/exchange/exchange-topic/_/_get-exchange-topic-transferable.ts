@@ -8,7 +8,7 @@
  */
 
 import { v4 } from 'uuid';
-import { ExchangeInvalidTopicParamsError } from '../../errors/index.js';
+import { InvalidTopicExchangeParamsError } from '../../../errors/index.js';
 import {
   EExchangeType,
   ITopicParams,
@@ -18,7 +18,7 @@ import { _validateExchangeTopicParams } from './_validate-exchange-topic-params.
 
 export function _getExchangeTopicTransferable(
   topic: string | ITopicParams,
-): TExchangeTopicTransferable | ExchangeInvalidTopicParamsError {
+): TExchangeTopicTransferable | InvalidTopicExchangeParamsError {
   const params = _validateExchangeTopicParams(topic);
   if (params instanceof Error) return params;
   return {

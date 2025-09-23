@@ -9,7 +9,7 @@
 
 import { v4 } from 'uuid';
 import { IQueueParams } from '../../../queue-manager/index.js';
-import { ExchangeInvalidQueueParamsError } from '../../errors/index.js';
+import { InvalidDirectExchangeParametersError } from '../../../errors/index.js';
 import {
   EExchangeType,
   TExchangeDirectTransferable,
@@ -18,7 +18,7 @@ import { _validateExchangeDirectParams } from './_validate-exchange-direct-param
 
 export function _getExchangeDirectTransferable(
   queue: string | IQueueParams,
-): TExchangeDirectTransferable | ExchangeInvalidQueueParamsError {
+): TExchangeDirectTransferable | InvalidDirectExchangeParametersError {
   const params = _validateExchangeDirectParams(queue);
   if (params instanceof Error) return params;
   return {

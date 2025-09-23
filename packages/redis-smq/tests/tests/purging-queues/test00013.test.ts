@@ -16,7 +16,7 @@ import {
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueueScheduledMessages } from '../../common/queue-scheduled-messages.js';
 
-test('Purging scheduled message queue-manager', async () => {
+test('Purging scheduled message queue', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   await scheduleMessage();

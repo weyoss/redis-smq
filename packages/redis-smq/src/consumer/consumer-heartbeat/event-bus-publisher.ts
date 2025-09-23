@@ -7,21 +7,15 @@
  * in the root directory of this source tree.
  */
 
-import { ILogger } from 'redis-smq-common';
 import { TConsumerHeartbeatEvent } from '../../common/index.js';
 import { ConsumerHeartbeat } from './consumer-heartbeat.js';
 import { EventBus } from '../../event-bus/index.js';
 
-export function eventBusPublisher(
-  consumerHeartbeat: ConsumerHeartbeat,
-  eventBus: EventBus,
-  logger: ILogger,
-): void {
+export function eventBusPublisher(consumerHeartbeat: ConsumerHeartbeat): void {
   const onConsumerHeartbeat: TConsumerHeartbeatEvent['consumerHeartbeat.heartbeat'] =
     (...args) => {
-      const instance = eventBus.getInstance();
-      if (instance instanceof Error) logger.error(instance);
-      else instance.emit('consumerHeartbeat.heartbeat', ...args);
+      const instance = EventBus.getInstance();
+      instance.emit('consumerHeartbeat.heartbeat', ...args);
     };
   consumerHeartbeat.on('consumerHeartbeat.heartbeat', onConsumerHeartbeat);
 }

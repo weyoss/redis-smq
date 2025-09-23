@@ -15,14 +15,14 @@ import {
 import { ELuaScriptName } from '../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
 import { EQueueProperty, EQueueType } from '../../queue-manager/index.js';
+import { MessageError } from '../../errors/index.js';
+import { _fromMessage } from './_from-message.js';
+import { _getMessage } from './_get-message.js';
+import { MessageNotRequeuableError } from '../../errors/index.js';
 import {
   EMessageProperty,
   EMessagePropertyStatus,
-  MessageError,
 } from '../../message/index.js';
-import { _fromMessage } from './_from-message.js';
-import { _getMessage } from './_get-message.js';
-import { MessageManagerMessageNotRequeuableError } from '../errors/message-manager-message-not-requeuable.error.js';
 
 export function _requeueMessage(
   redisClient: IRedisClient,
@@ -38,7 +38,7 @@ export function _requeueMessage(
         EMessagePropertyStatus.DEAD_LETTERED,
       ].includes(message.getStatus())
     ) {
-      return cb(new MessageManagerMessageNotRequeuableError());
+      return cb(new MessageNotRequeuableError());
     }
 
     // The check for MessageManagerMessageAlreadyRequeuedError has been removed

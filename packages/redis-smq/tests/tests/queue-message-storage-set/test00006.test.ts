@@ -9,7 +9,6 @@
 
 import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
-import { RedisClient } from '../../../src/common/redis-client/redis-client.js';
 import { redisKeys } from '../../../src/common/redis-keys/redis-keys.js';
 import { EQueueType, ProducibleMessage } from '../../../src/index.js';
 import { QueueStorageSet } from '../../../src/common/queue-explorer/queue-storage/queue-storage-set.js';
@@ -24,10 +23,7 @@ const { promisifyAll } = bluebird;
 it('QueueStorageSet: should fetch all items for a small list', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
-  const redisClient = promisifyAll(new RedisClient());
-  const queueMessagesStorageSet = promisifyAll(
-    new QueueStorageSet(redisClient),
-  );
+  const queueMessagesStorageSet = promisifyAll(new QueueStorageSet());
 
   const ids: string[] = [];
   const producer = getProducer();
@@ -43,5 +39,4 @@ it('QueueStorageSet: should fetch all items for a small list', async () => {
   const items =
     await queueMessagesStorageSet.fetchAllItemsAsync(keyQueueMessages);
   expect(items.sort()).toEqual(ids.sort());
-  await redisClient.shutdownAsync();
 });

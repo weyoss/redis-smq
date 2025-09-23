@@ -20,7 +20,7 @@ import { getProducer } from '../../common/producer.js';
 import { getQueueRateLimit } from '../../common/queue-rate-limit.js';
 import { validateTime } from '../../common/validate-time.js';
 
-test('Rate limit a queue-manager without priority and check message rate', async () => {
+test('Rate limit a queue without priority and check message rate', async () => {
   const eventBus = await getEventBus();
 
   const defaultQueue = getDefaultQueue();

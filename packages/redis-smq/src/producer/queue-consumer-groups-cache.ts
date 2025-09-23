@@ -10,15 +10,15 @@
 import {
   async,
   createLogger,
+  EventBusRedis,
   ICallback,
   ILogger,
+  IRedisClient,
   Runnable,
   TRedisClientEvent,
 } from 'redis-smq-common';
-import { RedisClient } from '../common/redis-client/redis-client.js';
 import { Configuration } from '../config/index.js';
 import { _getConsumerGroups } from '../consumer-groups/_/_get-consumer-groups.js';
-import { EventBus } from '../event-bus/index.js';
 import { _getQueueProperties } from '../queue-manager/_/_get-queue-properties.js';
 import { _getQueues } from '../queue-manager/_/_get-queues.js';
 import {
@@ -27,29 +27,33 @@ import {
   IQueueProperties,
 } from '../queue-manager/index.js';
 import { Producer } from './producer.js';
+import { withSharedPoolConnection } from '../common/redis-connection-pool/with-shared-pool-connection.js';
 
 export class QueueConsumerGroupsCache extends Runnable<
   Pick<TRedisClientEvent, 'error'>
 > {
-  protected redisClient;
   protected eventBus;
   protected producerId;
   protected logger;
   protected consumerGroupsByQueues: Record<string, string[]> = {};
+  protected redisClient: IRedisClient | null = null;
 
-  constructor(
-    producer: Producer,
-    redisClient: RedisClient,
-    eventBus: EventBus,
-  ) {
+  constructor(producer: Producer) {
     super();
-    this.redisClient = redisClient;
-    this.eventBus = eventBus;
     this.producerId = producer.getId();
     this.logger = createLogger(
       Configuration.getConfig().logger,
-      this.constructor.name.toLowerCase(),
+      this.constructor.name,
     );
+    const config = Configuration.getConfig();
+
+    // Exclusive EventBus instance is needed for tracking consumer group and queue creation/deletion events
+    // independently on user configuration
+    this.eventBus = new EventBusRedis(config);
+    this.eventBus.on('error', (err) => {
+      if (this.isRunning())
+        this.logger.error(`EventBus error: ${err.message}`, err);
+    });
     this.logger.debug(
       `QueueConsumerGroupsCache instance created for producer ${this.producerId}`,
     );
@@ -88,14 +92,24 @@ export class QueueConsumerGroupsCache extends Runnable<
 
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
     this.logger.debug('QueueConsumerGroupsCache is going up');
-    return super.goingUp().concat([this.subscribe, this.loadConsumerGroups]);
+    return super.goingUp().concat([
+      (cb: ICallback) => {
+        this.eventBus.run((err) => cb(err));
+      },
+      this.subscribe,
+      this.loadConsumerGroups,
+    ]);
   }
 
   protected override goingDown(): ((cb: ICallback<void>) => void)[] {
     this.logger.debug('QueueConsumerGroupsCache is going down');
-    return [this.unsubscribe, this.cleanUpConsumerGroups].concat(
-      super.goingDown(),
-    );
+    return [
+      this.unsubscribe,
+      this.cleanUpConsumerGroups,
+      (cb: ICallback) => {
+        this.eventBus.shutdown(cb);
+      },
+    ].concat(super.goingDown());
   }
 
   protected addConsumerGroup = (queue: IQueueParams, groupId: string) => {
@@ -175,61 +189,34 @@ export class QueueConsumerGroupsCache extends Runnable<
   };
 
   protected subscribe = (cb: ICallback<void>): void => {
-    this.logger.debug('Subscribing to queue-manager events');
-    const instance = this.eventBus.getInstance();
-    if (instance instanceof Error) {
-      this.logger.error('Failed to get event bus instance', instance);
-      cb(instance);
-    } else {
-      this.logger.debug(
-        'Successfully got event bus instance, registering event handlers',
-      );
-      instance.on('queue.queueCreated', this.addQueue);
-      instance.on('queue.queueDeleted', this.deleteQueue);
-      instance.on('queue.consumerGroupCreated', this.addConsumerGroup);
-      instance.on('queue.consumerGroupDeleted', this.deleteConsumerGroup);
-      this.logger.info('Successfully subscribed to all queue-manager events');
-      cb();
-    }
+    this.logger.debug('Subscribing to queue events');
+    this.eventBus.on('queue.queueCreated', this.addQueue);
+    this.eventBus.on('queue.queueDeleted', this.deleteQueue);
+    this.eventBus.on('queue.consumerGroupCreated', this.addConsumerGroup);
+    this.eventBus.on('queue.consumerGroupDeleted', this.deleteConsumerGroup);
+    this.logger.info('Successfully subscribed to all queue events');
+    cb();
   };
 
-  protected unsubscribe = (cb: ICallback<void>): void => {
-    this.logger.debug('Unsubscribing from queue-manager events');
-    const instance = this.eventBus.getInstance();
-    if (instance instanceof Error) {
-      this.logger.error('Failed to get event bus instance', instance);
-      cb(instance);
-    } else {
-      this.logger.debug(
-        'Successfully got event bus instance, removing event handlers',
-      );
-      instance.removeListener('queue.queueCreated', this.addQueue);
-      instance.removeListener('queue.queueDeleted', this.deleteQueue);
-      instance.removeListener(
-        'queue.consumerGroupCreated',
-        this.addConsumerGroup,
-      );
-      instance.removeListener(
-        'queue.consumerGroupDeleted',
-        this.deleteConsumerGroup,
-      );
-      this.logger.info(
-        'Successfully unsubscribed from all queue-manager events',
-      );
-      cb();
-    }
+  protected unsubscribe = (cb: ICallback): void => {
+    this.logger.debug('Unsubscribing from queue events');
+    this.eventBus.removeListener('queue.queueCreated', this.addQueue);
+    this.eventBus.removeListener('queue.queueDeleted', this.deleteQueue);
+    this.eventBus.removeListener(
+      'queue.consumerGroupCreated',
+      this.addConsumerGroup,
+    );
+    this.eventBus.removeListener(
+      'queue.consumerGroupDeleted',
+      this.deleteConsumerGroup,
+    );
+    this.logger.info('Successfully unsubscribed from all queue events');
+    cb();
   };
 
   protected loadConsumerGroups = (cb: ICallback<void>): void => {
     this.logger.debug('Loading consumer groups for all queues');
-    const redisClient = this.redisClient.getInstance();
-    if (redisClient instanceof Error) {
-      this.logger.error('Failed to get Redis client instance', redisClient);
-      cb(redisClient);
-    } else {
-      this.logger.debug(
-        'Successfully got Redis client instance, fetching queues',
-      );
+    withSharedPoolConnection((redisClient, cb) => {
       async.waterfall(
         [
           (cb: ICallback<IQueueParams[]>) => {
@@ -326,7 +313,7 @@ export class QueueConsumerGroupsCache extends Runnable<
           cb(err);
         },
       );
-    }
+    }, cb);
   };
 
   protected cleanUpConsumerGroups = (cb: ICallback<void>): void => {

@@ -11,11 +11,11 @@ import { expect, test } from 'vitest';
 import {
   EQueueDeliveryModel,
   EQueueType,
-  ExchangeFanOutExchangeHasBoundQueuesError,
-  ExchangeQueueIsNotBoundToExchangeError,
+  ExchangeHasBoundQueuesError,
+  QueueNotBoundError,
 } from '../../../../src/index.js';
 import { getFanOutExchange } from '../../../common/exchange.js';
-import { getQueue } from '../../../common/queue.js';
+import { getQueueManager } from '../../../common/queue-manager.js';
 
 test('ExchangeFanOut: creating and deleting an exchange', async () => {
   const fanOutExchange = getFanOutExchange();
@@ -27,7 +27,7 @@ test('ExchangeFanOut: creating and deleting an exchange', async () => {
 
   const q1 = { ns: 'testing', name: 'w123' };
 
-  const queue = await getQueue();
+  const queue = await getQueueManager();
   await queue.saveAsync(
     q1,
     EQueueType.LIFO_QUEUE,
@@ -48,12 +48,12 @@ test('ExchangeFanOut: creating and deleting an exchange', async () => {
   expect(r6).toEqual([q1]);
 
   await expect(fanOutExchange.deleteExchangeAsync('e2')).rejects.toThrow(
-    ExchangeFanOutExchangeHasBoundQueuesError,
+    ExchangeHasBoundQueuesError,
   );
 
   await fanOutExchange.unbindQueueAsync(q1, 'e2');
   await expect(fanOutExchange.unbindQueueAsync(q1, 'e2')).rejects.toThrow(
-    ExchangeQueueIsNotBoundToExchangeError,
+    QueueNotBoundError,
   );
 
   await fanOutExchange.deleteExchangeAsync('e2');

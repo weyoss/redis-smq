@@ -8,5 +8,4 @@
  */
 
 export * from './message-handler/types/index.js';
-export * from './errors/index.js';
 export * from './consumer.js';

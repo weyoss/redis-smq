@@ -19,16 +19,16 @@ import {
 import { getConsumer } from '../../common/consumer.js';
 import { untilMessageAcknowledged } from '../../common/events.js';
 import { getDefaultQueue } from '../../common/message-producing-consuming.js';
-import { getMessage } from '../../common/message.js';
+import { getMessageManager } from '../../common/message-manager.js';
 import { getProducer } from '../../common/producer.js';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
-import { getQueue } from '../../common/queue.js';
+import { getQueueManager } from '../../common/queue-manager.js';
 
-test('Combined test. Requeue a priority message from acknowledged queue-manager. Check queue-manager metrics.', async () => {
+test('Combined test. Requeue a priority message from acknowledged queue. Check queue metrics.', async () => {
   const defaultQueue = getDefaultQueue();
-  const queue = await getQueue();
+  const queue = await getQueueManager();
   await queue.saveAsync(
     defaultQueue,
     EQueueType.PRIORITY_QUEUE,
@@ -72,7 +72,7 @@ test('Combined test. Requeue a priority message from acknowledged queue-manager.
   expect(count.pending).toBe(0);
   expect(count.acknowledged).toBe(1);
 
-  const message = await getMessage();
+  const message = await getMessageManager();
   const newMessageId = await message.requeueMessageByIdAsync(id);
 
   const count2 = await queueMessages.countMessagesByStatusAsync(defaultQueue);

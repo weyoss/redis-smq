@@ -10,8 +10,8 @@
 import {
   async,
   CallbackEmptyReplyError,
+  EventBus,
   ICallback,
-  IEventBus,
   IRedisClient,
 } from 'redis-smq-common';
 import { TRedisSMQEvent } from '../../common/index.js';
@@ -22,19 +22,19 @@ import {
   IQueueParams,
 } from '../../queue-manager/index.js';
 import {
-  ConsumerGroupsConsumerGroupsNotSupportedError,
-  ConsumerGroupsInvalidGroupIdError,
-} from '../errors/index.js';
+  ConsumerGroupsNotSupportedError,
+  InvalidConsumerGroupIdError,
+} from '../../errors/index.js';
 
 export function _saveConsumerGroup(
   redisClient: IRedisClient,
-  eventBus: IEventBus<TRedisSMQEvent>,
+  eventBus: EventBus<TRedisSMQEvent>,
   queue: IQueueParams,
   groupId: string,
   cb: ICallback<number>,
 ): void {
   const gid = redisKeys.validateRedisKey(groupId);
-  if (gid instanceof Error) cb(new ConsumerGroupsInvalidGroupIdError());
+  if (gid instanceof Error) cb(new InvalidConsumerGroupIdError());
   else {
     async.waterfall(
       [
@@ -43,7 +43,7 @@ export function _saveConsumerGroup(
             if (err) cb(err);
             else if (!properties) cb(new CallbackEmptyReplyError());
             else if (properties.deliveryModel !== EQueueDeliveryModel.PUB_SUB)
-              cb(new ConsumerGroupsConsumerGroupsNotSupportedError());
+              cb(new ConsumerGroupsNotSupportedError());
             else cb();
           }),
         (_, cb: ICallback<number>) => {

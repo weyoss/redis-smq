@@ -14,18 +14,18 @@ import {
   getDefaultQueue,
   produceAndAcknowledgeMessage,
 } from '../../common/message-producing-consuming.js';
-import { getMessage } from '../../common/message.js';
+import { getMessageManager } from '../../common/message-manager.js';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 
-test('Combined test. Requeue a message from acknowledged queue-manager. Check queue-manager metrics.', async () => {
+test('Combined test. Requeue a message from acknowledged queue. Check queue metrics.', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   const { messageId, queue, consumer } = await produceAndAcknowledgeMessage();
   await shutDownBaseInstance(consumer);
 
-  const message = await getMessage();
+  const message = await getMessageManager();
   const newMessageId = await message.requeueMessageByIdAsync(messageId);
 
   const pendingMessages = await getQueuePendingMessages();

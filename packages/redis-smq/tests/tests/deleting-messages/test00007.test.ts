@@ -13,10 +13,10 @@ import {
   getDefaultQueue,
   produceAndAcknowledgeMessage,
 } from '../../common/message-producing-consuming.js';
-import { getMessage } from '../../common/message.js';
+import { getMessageManager } from '../../common/message-manager.js';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 
-test('Combined test: Delete acknowledged messages by IDs. Check acknowledged messages. Check queue-manager metrics.', async () => {
+test('Combined test: Delete acknowledged messages by IDs. Check acknowledged messages. Check queue metrics.', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   const { messageId: msg1 } = await produceAndAcknowledgeMessage(
@@ -43,7 +43,7 @@ test('Combined test: Delete acknowledged messages by IDs. Check acknowledged mes
   const count = await acknowledgedMessages.countMessagesAsync(defaultQueue);
   expect(count).toBe(2);
 
-  const message = await getMessage();
+  const message = await getMessageManager();
   const reply = await message.deleteMessagesByIdsAsync([msg1, msg2]);
   expect(reply.status).toBe('OK');
   expect(reply.stats).toEqual({

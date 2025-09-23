@@ -7,15 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import {
-  createLogger,
-  ICallback,
-  ILogger,
-  Runnable,
-  TRedisClientEvent,
-} from 'redis-smq-common';
+import { createLogger, ICallback, ILogger, Runnable } from 'redis-smq-common';
 import { TConsumerEvent } from '../common/index.js';
-import { RedisClient } from '../common/redis-client/redis-client.js';
 import { Configuration } from '../config/index.js';
 import { _parseQueueExtendedParams } from '../queue-manager/_/_parse-queue-extended-params.js';
 import {
@@ -26,11 +19,10 @@ import { ConsumerHeartbeat } from './consumer-heartbeat/consumer-heartbeat.js';
 import { MessageHandlerRunner } from './message-handler-runner/message-handler-runner.js';
 import { MultiplexedMessageHandlerRunner } from './message-handler-runner/multiplexed-message-handler-runner.js';
 import { eventBusPublisher } from './event-bus-publisher/event-bus-publisher.js';
-import { EventBus } from '../event-bus/index.js';
 import { TConsumerMessageHandler } from './message-handler/types/index.js';
 
 /**
- * Consumer class responsible for receiving and processing messages from a message queue-manager.
+ * Consumer class responsible for receiving and processing messages from a message queue.
  * It implements the `Runnable` interface to handle lifecycle events like startup and shutdown.
  * The Consumer can be configured for multiplexing, allowing it to handle multiple queues simultaneously with a single Redis connection.
  *
@@ -42,12 +34,6 @@ export class Consumer extends Runnable<TConsumerEvent> {
 
   // Logger instance for logging events and errors.
   protected logger;
-
-  // Redis client instance for interacting with Redis.
-  protected redisClient;
-
-  // Event bus instance used for publishing/subscribing events, if enabled in the configuration.
-  protected eventBus: EventBus | null = null;
 
   // Heartbeat instance for ensuring the consumer remains alive and responsive.
   protected heartbeat: ConsumerHeartbeat | null = null;
@@ -63,21 +49,17 @@ export class Consumer extends Runnable<TConsumerEvent> {
     const config = Configuration.getConfig();
     this.logger = createLogger(
       config.logger,
-      this.constructor.name.toLowerCase(),
+      `${this.constructor.name.toLowerCase()}-${this.id}`,
     );
     this.logger.info(
       `Initializing consumer${enableMultiplexing ? ' with multiplexing enabled' : ''}`,
     );
 
-    this.redisClient = new RedisClient();
-    this.redisClient.on('error', this.onRedisError);
-    this.logger.debug('Redis client initialized');
-
     if (config.eventBus.enabled) {
-      this.logger.debug('Event bus is enabled, initializing');
-      this.eventBus = new EventBus();
-      this.eventBus.on('error', this.onRedisError);
-      eventBusPublisher(this, this.eventBus, this.logger);
+      this.logger.debug(
+        'Event bus is enabled, initializing eventBusPublisher...',
+      );
+      eventBusPublisher(this);
       this.logger.debug('Event bus publisher configured');
     } else {
       this.logger.debug('Event bus is disabled');
@@ -87,12 +69,8 @@ export class Consumer extends Runnable<TConsumerEvent> {
       `Creating ${enableMultiplexing ? 'multiplexed' : 'standard'} message handler runner`,
     );
     this.messageHandlerRunner = enableMultiplexing
-      ? new MultiplexedMessageHandlerRunner(
-          this,
-          this.redisClient,
-          this.eventBus,
-        )
-      : new MessageHandlerRunner(this, this.redisClient, this.eventBus);
+      ? new MultiplexedMessageHandlerRunner(this)
+      : new MessageHandlerRunner(this);
 
     this.messageHandlerRunner.on(
       'consumer.messageHandlerRunner.error',
@@ -106,13 +84,13 @@ export class Consumer extends Runnable<TConsumerEvent> {
   }
 
   /**
-   * Consumes messages from a specified queue-manager using the provided message handler.
+   * Consumes messages from a specified queue using the provided message handler.
    *
-   * @param {TQueueExtendedParams} queue - A queue-manager from which messages will be consumed. Before consuming
-   * messages from a queue-manager make sure that the specified queue-manager already exists in
+   * @param {TQueueExtendedParams} queue - A queue from which messages will be consumed. Before consuming
+   * messages from a queue make sure that the specified queue already exists in
    * the system.
    * @param {TConsumerMessageHandler} messageHandler - A callback function that defines how to process each
-   * message consumed from the queue-manager. The messageHandler will receive the
+   * message consumed from the queue. The messageHandler will receive the
    * message as an argument and should implement the logic for processing the
    * message. This might include business logic, transformation, storage, etc.
    * It's crucial that this function handles exceptions and errors properly to
@@ -125,7 +103,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * ```typescript
    * const consumer = new Consumer();
    * consumer.consume(
-   *   'my-queue-manager',
+   *   'my-queue',
    *   (message, done) => {
    *     // Handle the message
    *     // ...
@@ -168,30 +146,29 @@ export class Consumer extends Runnable<TConsumerEvent> {
         (err) => {
           if (err) {
             this.logger.error(`Failed to add message handler: ${err.message}`);
-            cb(err);
-          } else {
-            this.logger.info(
-              `Successfully set up consumption for queue: ${parsedQueueParams.queueParams.name} (namespace: ${parsedQueueParams.queueParams.ns}${parsedQueueParams.groupId ? `, group: ${parsedQueueParams.groupId}` : ''})`,
-            );
-            cb();
+            return cb(err);
           }
+          this.logger.info(
+            `Successfully set up consumption for queue: ${parsedQueueParams.queueParams.name} (namespace: ${parsedQueueParams.queueParams.ns}${parsedQueueParams.groupId ? `, group: ${parsedQueueParams.groupId}` : ''})`,
+          );
+          cb();
         },
       );
     }
   }
 
   /**
-   * Cancels the consumption of messages from a specified queue-manager.
+   * Cancels the consumption of messages from a specified queue.
    *
-   * This function is responsible for stopping the consumption of messages from a specific queue-manager.
-   * It removes the message handler associated with the given queue-manager from the message handler runner.
+   * This function is responsible for stopping the consumption of messages from a specific queue.
+   * It removes the message handler associated with the given queue from the message handler runner.
    *
-   * @param {TQueueExtendedParams} queue - The queue-manager parameters.
-   * This parameter represents the queue-manager from which messages will be consumed.
-   * It can be a string representing the queue-manager name or an object containing additional queue-manager options.
+   * @param {TQueueExtendedParams} queue - The queue parameters.
+   * This parameter represents the queue from which messages will be consumed.
+   * It can be a string representing the queue name or an object containing additional queue options.
    *
    * @param {ICallback<void>} cb - Callback function to be called once cancellation is complete.
-   * This callback function will be invoked after the message handler associated with the given queue-manager is removed.
+   * This callback function will be invoked after the message handler associated with the given queue is removed.
    * If an error occurs during the cancellation process, the error will be passed as the first argument to the callback function.
    * Otherwise, the callback function will be invoked with no arguments.
    *
@@ -199,7 +176,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * ```typescript
    * const consumer = new Consumer();
    * consumer.consume(
-   *   'my-queue-manager',
+   *   'my-queue',
    *   (message, done) => {
    *     // Handle the message
    *     // ...
@@ -217,7 +194,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
    *
    * // Cancel consumption after some time
    * setTimeout(() => {
-   *   consumer.cancel('my-queue-manager', (err) => {
+   *   consumer.cancel('my-queue', (err) => {
    *     if (err) {
    *       console.error('Error canceling consumption:', err);
    *     } else {
@@ -263,17 +240,17 @@ export class Consumer extends Runnable<TConsumerEvent> {
   /**
    * Retrieves a list of queues the consumer is currently configured to handle.
    *
-   * This function returns an array of parsed queue-manager parameters that the consumer is currently set up to handle.
-   * The parsed queue-manager parameters include the queue-manager name, options, and any additional parameters specified.
+   * This function returns an array of parsed queue parameters that the consumer is currently set up to handle.
+   * The parsed queue parameters include the queue name, options, and any additional parameters specified.
    *
-   * @returns {IQueueParsedParams[]} - An array of parsed queue-manager parameters.
-   * Each element in the array represents a queue-manager that the consumer is currently consuming messages from.
+   * @returns {IQueueParsedParams[]} - An array of parsed queue parameters.
+   * Each element in the array represents a queue that the consumer is currently consuming messages from.
    *
    * @example
    * ```typescript
    * const consumer = new Consumer();
    * consumer.consume(
-   *   'my-queue-manager',
+   *   'my-queue',
    *   (message, done) => {
    *     // Handle the message
    *     // ...
@@ -292,7 +269,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * // Get the list of queues the consumer is handling
    * const queues = consumer.getQueues();
    * console.log('Queues:', queues);
-   * // Output: Queues: [{ queueParams: { name:'my-queue-manager', ns: 'default' }, groupId: null }]
+   * // Output: Queues: [{ queueParams: { name:'my-queue', ns: 'default' }, groupId: null }]
    * ```
    */
   getQueues(): IQueueParsedParams[] {
@@ -305,27 +282,13 @@ export class Consumer extends Runnable<TConsumerEvent> {
   }
 
   /**
-   * Error handler for Redis client errors.
-   *
-   * @param {Error} error - The error encountered.
-   */
-  protected onRedisError: TRedisClientEvent['error'] = (error: Error) => {
-    this.logger.error(`Redis client error: ${error.message}`);
-    this.handleError(error);
-  };
-
-  /**
    * Sets up the consumer's heartbeat to monitor its health.
    *
    * @param {ICallback<void>} cb - Callback function to be called once setup is complete.
    */
   protected setUpHeartbeat = (cb: ICallback<void>): void => {
     this.logger.debug('Setting up consumer heartbeat');
-    this.heartbeat = new ConsumerHeartbeat(
-      this,
-      this.redisClient,
-      this.eventBus ?? null,
-    );
+    this.heartbeat = new ConsumerHeartbeat(this);
     this.heartbeat.on('consumerHeartbeat.error', (err) => {
       this.logger.error(`Heartbeat error: ${err.message}`);
       this.handleError(err);
@@ -401,22 +364,6 @@ export class Consumer extends Runnable<TConsumerEvent> {
   };
 
   /**
-   * Shuts down the Redis client instance.
-   *
-   * @param {ICallback<void>} cb - Callback function to be called once shutdown is complete.
-   */
-  protected shutDownRedisClient = (cb: ICallback<void>): void => {
-    this.logger.debug('Shutting down Redis client');
-    this.redisClient.shutdown((err) => {
-      if (err) {
-        this.logger.warn(`Error during Redis client shutdown: ${err.message}`);
-      }
-      this.logger.debug('Redis client shut down');
-      cb();
-    });
-  };
-
-  /**
    * Defines the startup sequence for the consumer.
    *
    * @returns {((cb: ICallback<void>) => void)[]} - Array of functions to be executed in sequence during startup.
@@ -425,31 +372,12 @@ export class Consumer extends Runnable<TConsumerEvent> {
     this.logger.info('Consumer going up');
     return super.goingUp().concat([
       (cb) => {
-        if (this.eventBus) {
-          this.logger.debug('Initializing event bus');
-          this.eventBus.init((err) => {
-            if (err) {
-              this.logger.error(
-                `Failed to initialize event bus: ${err.message}`,
-              );
-            } else {
-              this.logger.debug('Event bus initialized');
-            }
-            cb(err);
-          });
-        } else {
-          this.logger.debug('Skipping event bus initialization (disabled)');
-          cb();
-        }
-      },
-      (cb) => {
         this.logger.debug(
           `Emitting consumer.goingUp event for consumer ${this.id}`,
         );
         this.emit('consumer.goingUp', this.id);
         cb();
       },
-      this.redisClient.init,
       this.setUpHeartbeat,
       this.runMessageHandlers,
     ]);
@@ -466,11 +394,9 @@ export class Consumer extends Runnable<TConsumerEvent> {
       `Emitting consumer.goingDown event for consumer ${this.id}`,
     );
     this.emit('consumer.goingDown', this.id);
-    return [
-      this.shutdownMessageHandlers,
-      this.shutDownHeartbeat,
-      this.shutDownRedisClient,
-    ].concat(super.goingDown());
+    return [this.shutdownMessageHandlers, this.shutDownHeartbeat].concat(
+      super.goingDown(),
+    );
   }
 
   /**
@@ -493,29 +419,11 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * @param {ICallback<boolean>} cb - Callback function to indicate success.
    */
   protected override down(cb: ICallback<boolean>) {
-    this.logger.info('Consumer is down');
+    this.logger.info(`Consumer ${this.getId()} is now down`);
     super.down(() => {
       this.logger.debug(`Emitting consumer.down event for consumer ${this.id}`);
       this.emit('consumer.down', this.id);
-      // Delay the shutdown of the event bus
-      if (this.eventBus) {
-        this.logger.debug('Delaying event bus shutdown by 1000ms');
-        setTimeout(() => {
-          this.logger.debug('Shutting down event bus');
-          this.eventBus?.shutdown((err) => {
-            if (err) {
-              this.logger.warn(
-                `Error during event bus shutdown: ${err.message}`,
-              );
-            }
-            this.logger.debug('Event bus shut down');
-            cb(null, true);
-          });
-        }, 1000);
-      } else {
-        this.logger.debug('No event bus to shut down');
-        cb(null, true);
-      }
+      cb(null, true);
     });
   }
 

@@ -9,7 +9,7 @@
 
 import { expect, test } from 'vitest';
 import { ProducibleMessage } from '../../../index.js';
-import { ProducerInstanceNotRunningError } from '../../../src/index.js';
+import { ProducerNotRunningError } from '../../../src/index.js';
 import {
   createQueue,
   getDefaultQueue,
@@ -24,6 +24,6 @@ test('Shutdown a producer and try to produce a message', async () => {
   const msg = new ProducibleMessage();
   msg.setBody({ hello: 'world' }).setQueue(getDefaultQueue());
   await expect(producer.produceAsync(msg)).rejects.toThrowError(
-    ProducerInstanceNotRunningError,
+    ProducerNotRunningError,
   );
 });

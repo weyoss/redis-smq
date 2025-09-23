@@ -18,19 +18,19 @@ import { MessageEnvelope } from '../../message/message-envelope.js';
 import { EQueueProperty, EQueueType } from '../../queue-manager/index.js';
 import {
   ProducerError,
-  ProducerMessageAlreadyExistsError,
-  ProducerMessagePriorityRequiredError,
-  ProducerPriorityQueuingNotEnabledError,
-  ProducerQueueNotFoundError,
-  ProducerUnknownQueueTypeError,
-} from '../errors/index.js';
+  MessageAlreadyExistsError,
+  MessagePriorityRequiredError,
+  PriorityQueuingNotEnabledError,
+  UnknownQueueTypeError,
+  QueueNotFoundError,
+} from '../../errors/index.js';
 
 /**
- * Enqueues/schedules a message onto the specified queue-manager in Redis.
+ * Enqueues/schedules a message onto the specified queue in Redis.
  *
- * This function is responsible for placing a message into a queue-manager, setting its state,
+ * This function is responsible for placing a message into a queue, setting its state,
  * and handling any errors that may occur during the process. It uses a Redis client
- * to execute a Lua script that manages the message's placement in the queue-manager.
+ * to execute a Lua script that manages the message's placement in the queue.
  *
  * @param redisClient - The Redis client used for communication with the Redis server.
  * @param message - The message to be enqueued/scheduled, wrapped in a MessageEnvelope.
@@ -177,21 +177,21 @@ export function _publishMessage(
           return cb();
         case 'QUEUE_NOT_FOUND':
           logger.error(`Queue ${queueName} not found for message ${messageId}`);
-          return cb(new ProducerQueueNotFoundError());
+          return cb(new QueueNotFoundError());
         case 'MESSAGE_PRIORITY_REQUIRED':
           logger.error(
             `Priority required for message ${messageId} but not provided`,
           );
-          return cb(new ProducerMessagePriorityRequiredError());
+          return cb(new MessagePriorityRequiredError());
         case 'MESSAGE_ALREADY_EXISTS':
           logger.error(`A message with ${messageId} already exists`);
-          return cb(new ProducerMessageAlreadyExistsError());
+          return cb(new MessageAlreadyExistsError());
         case 'PRIORITY_QUEUING_NOT_ENABLED':
           logger.error(`Priority queuing not enabled for queue ${queueName}`);
-          return cb(new ProducerPriorityQueuingNotEnabledError());
+          return cb(new PriorityQueuingNotEnabledError());
         case 'UNKNOWN_QUEUE_TYPE':
           logger.error(`Unknown queue type for queue ${queueName}`);
-          return cb(new ProducerUnknownQueueTypeError());
+          return cb(new UnknownQueueTypeError());
         default:
           logger.error(
             `Unknown error while publishing message ${messageId}: ${reply}`,

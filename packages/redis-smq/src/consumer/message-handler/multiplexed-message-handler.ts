@@ -7,11 +7,9 @@
  * in the root directory of this source tree.
  */
 
-import { RedisClient } from '../../common/redis-client/redis-client.js';
 import { Consumer } from '../consumer.js';
 import { DequeueMessage } from './dequeue-message/dequeue-message.js';
 import { MessageHandler } from './message-handler.js';
-import { EventBus } from '../../event-bus/index.js';
 import { IConsumerMessageHandlerParams } from './types/index.js';
 
 export class MultiplexedMessageHandler extends MessageHandler {
@@ -19,12 +17,10 @@ export class MultiplexedMessageHandler extends MessageHandler {
 
   constructor(
     consumer: Consumer,
-    redisClient: RedisClient,
     handlerParams: IConsumerMessageHandlerParams,
-    eventBus: EventBus | null,
     dequeueNextFn: () => void,
   ) {
-    super(consumer, redisClient, handlerParams, false, eventBus);
+    super(consumer, handlerParams, false);
     this.dequeueNextFn = dequeueNextFn;
     this.logger.info(
       `MultiplexedMessageHandler initialized for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
@@ -49,10 +45,8 @@ export class MultiplexedMessageHandler extends MessageHandler {
     );
 
     const instance = new DequeueMessage(
-      this.redisClient,
       this.queue,
       this.consumer,
-      this.eventBus,
       false, // blockUntilMessageReceived
       false, // autoCloseRedisConnection
     );

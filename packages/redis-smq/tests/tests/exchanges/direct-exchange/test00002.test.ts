@@ -10,7 +10,7 @@
 import { expect, test } from 'vitest';
 import { IQueueParams, ProducibleMessage } from '../../../../src/index.js';
 import { createQueue } from '../../../common/message-producing-consuming.js';
-import { getMessage } from '../../../common/message.js';
+import { getMessageManager } from '../../../common/message-manager.js';
 import { getProducer } from '../../../common/producer.js';
 import { isEqual } from '../../../common/utils.js';
 
@@ -25,7 +25,7 @@ test('DirectExchange: producing message with a Direct exchange', async () => {
   const ids = await producer.produceAsync(msg);
   expect(ids.length).toBe(1);
 
-  const message = await getMessage();
+  const message = await getMessageManager();
   const items = await message.getMessagesByIdsAsync(ids);
   expect(
     isEqual(

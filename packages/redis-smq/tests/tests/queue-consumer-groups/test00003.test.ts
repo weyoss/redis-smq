@@ -22,15 +22,15 @@ import {
 } from '../../../src/index.js';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
-import { getQueue } from '../../common/queue.js';
+import { getQueueManager } from '../../common/queue-manager.js';
 
-test('Publish and consume a message to/from queue-manager with many consumer groups: using a single consumer', async () => {
+test('Publish and consume a message to/from queue with many consumer groups: using a single consumer', async () => {
   const queue1: IQueueParams = {
     name: 'test-queue',
     ns: 'ns1',
   };
 
-  const queue = await getQueue();
+  const queue = await getQueueManager();
   await queue.saveAsync(
     queue1,
     EQueueType.PRIORITY_QUEUE,

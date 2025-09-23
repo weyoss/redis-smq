@@ -9,12 +9,12 @@
 
 import { expect, test } from 'vitest';
 import {
-  ProducerMessageExchangeRequiredError,
+  MessageExchangeRequiredError,
   ProducibleMessage,
 } from '../../../index.js';
 import { getProducer } from '../../common/producer.js';
 
-test('Producing a message without a message queue-manager', async () => {
+test('Producing a message without a message queue', async () => {
   const producer = getProducer();
   await producer.runAsync();
 
@@ -22,6 +22,6 @@ test('Producing a message without a message queue-manager', async () => {
   msg.setBody({ hello: 'world' });
 
   await expect(producer.produceAsync(msg)).rejects.toThrow(
-    ProducerMessageExchangeRequiredError,
+    MessageExchangeRequiredError,
   );
 });

@@ -7,7 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import { Configuration } from '../../../config/index.js';
 import { WorkerAbstract } from './worker-abstract.js';
 import { async, ICallback } from 'redis-smq-common';
 import { IQueueParsedParams } from '../../../queue-manager/index.js';
@@ -15,6 +14,7 @@ import {
   TConsumerMessageHandlerWorkerBootstrapFn,
   TConsumerMessageHandlerWorkerPayload,
 } from './types/index.js';
+import { RedisSMQ } from '../../../redis-smq.js';
 
 export function workerBootstrap(
   WorkerCtor: new (queueParsedParams: IQueueParsedParams) => WorkerAbstract,
@@ -25,7 +25,7 @@ export function workerBootstrap(
     return {
       run(cb: ICallback) {
         if (!worker) {
-          return Configuration.initialize(redisConfig, (err) => {
+          return RedisSMQ.initialize(redisConfig, (err) => {
             if (err) return cb(err);
             worker = new WorkerCtor(queueParsedParams);
             worker.run((err) => cb(err));
@@ -36,7 +36,7 @@ export function workerBootstrap(
       shutdown(cb: ICallback) {
         if (worker)
           async.series(
-            [(cb) => worker?.shutdown(cb), (cb) => Configuration.shutdown(cb)],
+            [(cb) => worker?.shutdown(cb), (cb) => RedisSMQ.shutdown(cb)],
             () => {
               worker = null;
               cb();
