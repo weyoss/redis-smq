@@ -137,3 +137,25 @@ Create .stack property on a target object
 #### Inherited from
 
 [`RedisClientError`](RedisClientError.md).[`captureStackTrace`](RedisClientError.md#capturestacktrace)
+
+***
+
+### isError()
+
+> `static` **isError**(`error`): `error is Error`
+
+Indicates whether the argument provided is a built-in Error instance or not.
+
+#### Parameters
+
+##### error
+
+`unknown`
+
+#### Returns
+
+`error is Error`
+
+#### Inherited from
+
+[`RedisClientError`](RedisClientError.md).[`isError`](RedisClientError.md#iserror)

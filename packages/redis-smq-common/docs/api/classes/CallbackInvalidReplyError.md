@@ -131,3 +131,25 @@ Create .stack property on a target object
 #### Inherited from
 
 [`PanicError`](PanicError.md).[`captureStackTrace`](PanicError.md#capturestacktrace)
+
+***
+
+### isError()
+
+> `static` **isError**(`error`): `error is Error`
+
+Indicates whether the argument provided is a built-in Error instance or not.
+
+#### Parameters
+
+##### error
+
+`unknown`
+
+#### Returns
+
+`error is Error`
+
+#### Inherited from
+
+[`PanicError`](PanicError.md).[`isError`](PanicError.md#iserror)
