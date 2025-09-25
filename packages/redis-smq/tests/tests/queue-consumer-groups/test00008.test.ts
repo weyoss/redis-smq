@@ -11,12 +11,12 @@ import { expect, test } from 'vitest';
 import bluebird from 'bluebird';
 import {
   ConsumerGroups,
-  ConsumerGroupsNotSupportedError,
   EQueueDeliveryModel,
   EQueueType,
   IQueueParams,
 } from '../../../src/index.js';
 import { getQueueManager } from '../../common/queue-manager.js';
+import { ConsumerGroupsNotSupportedError } from '../../../src/errors/index.js';
 
 test('Consumer groups/Queue delivery model validation', async () => {
   const queue1: IQueueParams = {

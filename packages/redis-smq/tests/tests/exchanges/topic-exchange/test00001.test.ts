@@ -1,6 +1,15 @@
-import { expect, test, describe } from 'vitest';
-import { InvalidTopicExchangeParamsError } from '../../../../src/index.js';
+/*
+ * Copyright (c)
+ * Weyoss <weyoss@protonmail.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
+ */
+
+import { describe, expect, test } from 'vitest';
 import { getTopicExchange } from '../../../common/exchange.js';
+import { InvalidTopicExchangeParamsError } from '../../../../src/errors/index.js';
 
 describe('ExchangeTopic: topic validation', () => {
   test('rejects on malformed topic structure', async () => {

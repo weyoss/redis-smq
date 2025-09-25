@@ -25,8 +25,8 @@ import {
 } from '../queue-manager/index.js';
 import { _hasRateLimitExceeded } from './_/_has-rate-limit-exceeded.js';
 import {
-  InvalidRateLimitIntervalError,
   InvalidRateLimitError,
+  InvalidRateLimitIntervalError,
   QueueNotFoundError,
 } from '../errors/index.js';
 import { withSharedPoolConnection } from '../common/redis-connection-pool/with-shared-pool-connection.js';

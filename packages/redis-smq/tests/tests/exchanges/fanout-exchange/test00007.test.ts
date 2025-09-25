@@ -8,14 +8,13 @@
  */
 
 import { expect, test } from 'vitest';
-import {
-  EQueueDeliveryModel,
-  EQueueType,
-  ExchangeHasBoundQueuesError,
-  QueueNotBoundError,
-} from '../../../../src/index.js';
+import { EQueueDeliveryModel, EQueueType } from '../../../../src/index.js';
 import { getFanOutExchange } from '../../../common/exchange.js';
 import { getQueueManager } from '../../../common/queue-manager.js';
+import {
+  ExchangeHasBoundQueuesError,
+  QueueNotBoundError,
+} from '../../../../src/errors/index.js';
 
 test('ExchangeFanOut: creating and deleting an exchange', async () => {
   const fanOutExchange = getFanOutExchange();

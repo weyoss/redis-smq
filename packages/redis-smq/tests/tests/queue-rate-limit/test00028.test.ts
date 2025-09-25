@@ -9,10 +9,10 @@
 
 import { expect, test } from 'vitest';
 import {
-  QueueNotFoundError,
-  InvalidRateLimitIntervalError,
   InvalidRateLimitError,
-} from '../../../src/index.js';
+  InvalidRateLimitIntervalError,
+  QueueNotFoundError,
+} from '../../../src/errors/index.js';
 import {
   createQueue,
   getDefaultQueue,

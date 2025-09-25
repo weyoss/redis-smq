@@ -12,13 +12,15 @@ import bluebird from 'bluebird';
 import {
   Consumer,
   ConsumerGroups,
-  InvalidConsumerGroupIdError,
   EQueueDeliveryModel,
   EQueueType,
   IQueueParams,
-  InvalidQueueParametersError,
 } from '../../../src/index.js';
 import { getQueueManager } from '../../common/queue-manager.js';
+import {
+  InvalidConsumerGroupIdError,
+  InvalidQueueParametersError,
+} from '../../../src/errors/index.js';
 
 test('Consumer group ID validation', async () => {
   const queue1: IQueueParams = {

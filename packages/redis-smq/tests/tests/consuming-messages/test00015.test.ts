@@ -12,13 +12,13 @@ import bluebird from 'bluebird';
 import { ICallback } from 'redis-smq-common';
 import {
   Consumer,
-  MessageHandlerAlreadyExistsError,
   EQueueDeliveryModel,
   EQueueType,
   IMessageTransferable,
 } from '../../../src/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import { getQueueManager } from '../../common/queue-manager.js';
+import { MessageHandlerAlreadyExistsError } from '../../../src/errors/index.js';
 
 test('Consume message from different queues using a single consumer instance: case 1', async () => {
   const queueInstance = await getQueueManager();

@@ -8,11 +8,8 @@
  */
 
 import { expect, test } from 'vitest';
-import {
-  EMessagePriority,
-  MessagePropertyError,
-  ProducibleMessage,
-} from '../../../src/index.js';
+import { EMessagePriority, ProducibleMessage } from '../../../src/index.js';
+import { MessagePropertyError } from '../../../src/errors/index.js';
 
 test('ProducibleMessage', async () => {
   const msg = new ProducibleMessage();

@@ -8,8 +8,11 @@
  */
 
 import { MessageEnvelope } from '../../message/message-envelope.js';
-import { ProducibleMessage } from '../../message/index.js';
-import { EMessageProperty, IMessageParams } from '../../message/index.js';
+import {
+  EMessageProperty,
+  IMessageParams,
+  ProducibleMessage,
+} from '../../message/index.js';
 import { _parseMessageState } from './_parse-message-state.js';
 
 /**

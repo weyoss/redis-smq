@@ -18,10 +18,7 @@ import {
   Runnable,
   Timer,
 } from 'redis-smq-common';
-import {
-  RedisConnectionPool,
-  TConsumerDequeueMessageEvent,
-} from '../../../common/index.js';
+import { TConsumerDequeueMessageEvent } from '../../../common/index.js';
 import { ELuaScriptName } from '../../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../../config/index.js';
@@ -32,18 +29,19 @@ import {
   EQueueType,
   IQueueParsedParams,
   IQueueRateLimit,
-  QueueNotFoundError,
   TQueueConsumer,
 } from '../../../index.js';
 import { Consumer } from '../../consumer.js';
 import {
-  ConsumerGroupIdNotSupportedError,
-  ConsumerGroupIdRequiredError,
+  ConsumerGroupRequiredError,
+  ConsumerGroupsNotSupportedError,
   MessageHandlerError,
+  QueueNotFoundError,
 } from '../../../errors/index.js';
 import { eventBusPublisher } from './event-bus-publisher.js';
-import { ERedisConnectionAcquisitionMode } from '../../../common/redis-connection-pool/types/index.js';
+import { ERedisConnectionAcquisitionMode } from '../../../common/redis-connection-pool/types/connection-pool.js';
 import { ConsumerGroups } from '../../../consumer-groups/index.js';
+import { RedisConnectionPool } from '../../../common/redis-connection-pool/redis-connection-pool.js';
 
 const IPAddresses = (() => {
   const nets = os.networkInterfaces();
@@ -150,11 +148,6 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
     );
   }
 
-  protected getRedisClient(): IRedisClient | PanicError {
-    if (!this.redisClient) return new PanicError('Redis Client is missing');
-    return this.redisClient;
-  }
-
   dequeue(): void {
     if (!this.isRunning()) {
       this.logger.debug('Dequeue called while not running, ignoring');
@@ -186,6 +179,11 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
       this.dequeueAndBlock(redisClient) ||
       this.dequeueAndReturn(redisClient)
     );
+  }
+
+  protected getRedisClient(): IRedisClient | PanicError {
+    if (!this.redisClient) return new PanicError('Redis Client is missing');
+    return this.redisClient;
   }
 
   protected override getLogger(): ILogger {
@@ -345,7 +343,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
                   this.logger.error(
                     'Consumer group ID not supported for point-to-point delivery model',
                   );
-                  cb(new ConsumerGroupIdNotSupportedError());
+                  cb(new ConsumerGroupsNotSupportedError());
                 } else {
                   this.logger.debug('Point-to-point delivery model validated');
                   cb();
@@ -359,7 +357,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
                   this.logger.error(
                     'Consumer group ID required for pub/sub delivery model',
                   );
-                  return cb(new ConsumerGroupIdRequiredError());
+                  return cb(new ConsumerGroupRequiredError());
                 }
                 this.logger.debug(
                   `Pub/sub delivery model with group ID: ${groupId}`,

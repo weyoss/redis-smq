@@ -8,11 +8,9 @@
  */
 
 import { expect, test } from 'vitest';
-import {
-  MessageExchangeRequiredError,
-  ProducibleMessage,
-} from '../../../index.js';
+import { ProducibleMessage } from '../../../index.js';
 import { getProducer } from '../../common/producer.js';
+import { MessageExchangeRequiredError } from '../../../src/errors/index.js';
 
 test('Producing a message without a message queue', async () => {
   const producer = getProducer();

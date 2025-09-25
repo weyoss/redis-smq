@@ -11,7 +11,7 @@ import { expect, test } from 'vitest';
 import {
   ConfigurationMessageQueueSizeError,
   ConfigurationMessageStoreExpireError,
-} from '../../../src/index.js';
+} from '../../../src/errors/index.js';
 import { parseMessageStorageConfig } from '../../../src/config/parse-messages-config.js';
 
 test('Configuration: storeMessages', async () => {

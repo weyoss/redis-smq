@@ -8,13 +8,13 @@
  */
 
 import { expect, test } from 'vitest';
+import { ProducibleMessage } from '../../../src/index.js';
+import { MessageEnvelope } from '../../../src/message/message-envelope.js';
 import {
   MessageDestinationQueueAlreadySetError,
   MessageDestinationQueueRequiredError,
   MessageExchangeRequiredError,
-  ProducibleMessage,
-} from '../../../src/index.js';
-import { MessageEnvelope } from '../../../src/message/message-envelope.js';
+} from '../../../src/errors/index.js';
 
 test('MessageEnvelope: additional checks', async () => {
   const msg = new ProducibleMessage();

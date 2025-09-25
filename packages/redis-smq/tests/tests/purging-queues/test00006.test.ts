@@ -12,7 +12,7 @@ import {
   QueueManagerActiveConsumersError,
   QueueNotEmptyError,
   QueueNotFoundError,
-} from '../../../src/index.js';
+} from '../../../src/errors/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import {
   createQueue,

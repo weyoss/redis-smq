@@ -16,7 +16,7 @@ import {
   PanicError,
   Runnable,
 } from 'redis-smq-common';
-import { RedisConnectionPool, TProducerEvent } from '../common/index.js';
+import { TProducerEvent } from '../common/index.js';
 import { Configuration } from '../config/index.js';
 import { _getExchangeQueues } from '../exchange/_/_get-exchange-queues.js';
 import { EExchangeType } from '../exchange/index.js';
@@ -25,15 +25,16 @@ import { MessageEnvelope } from '../message/message-envelope.js';
 import { IQueueParams } from '../queue-manager/index.js';
 import { _publishMessage } from './_/_publish-message.js';
 import {
-  NoMatchedQueueForExchangeError,
-  ProducerNotRunningError,
   MessageExchangeRequiredError,
-  QueueHasNoConsumerGroupsError,
+  NoMatchedQueueForExchangeError,
   ProducerError,
+  ProducerNotRunningError,
+  QueueHasNoConsumerGroupsError,
 } from '../errors/index.js';
 import { eventBusPublisher } from './event-bus-publisher.js';
 import { QueueConsumerGroupsCache } from './queue-consumer-groups-cache.js';
-import { ERedisConnectionAcquisitionMode } from '../common/redis-connection-pool/types/index.js';
+import { ERedisConnectionAcquisitionMode } from '../common/redis-connection-pool/types/connection-pool.js';
+import { RedisConnectionPool } from '../common/redis-connection-pool/redis-connection-pool.js';
 
 /**
  * The Producer class is responsible for producing messages, managing their

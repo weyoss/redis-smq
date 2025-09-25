@@ -14,11 +14,13 @@ import { IMessageTransferable } from '../../../message/index.js';
 
 export interface IQueueExplorer {
   countMessages(queue: TQueueExtendedParams, cb: ICallback<number>): void;
+
   getMessages(
     queue: TQueueExtendedParams,
     page: number,
     pageSize: number,
     cb: ICallback<IPaginationPage<IMessageTransferable>>,
   ): void;
+
   purge(queue: TQueueExtendedParams, cb: ICallback<void>): void;
 }

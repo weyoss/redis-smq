@@ -13,9 +13,9 @@ import {
   EQueueDeliveryModel,
   EQueueType,
   NamespaceManager,
-  NamespaceNotFoundError,
   QueueManager,
 } from '../../../src/index.js';
+import { NamespaceNotFoundError } from '../../../src/errors/index.js';
 
 test('NamespaceManager', async () => {
   const queue = bluebird.promisifyAll(new QueueManager());

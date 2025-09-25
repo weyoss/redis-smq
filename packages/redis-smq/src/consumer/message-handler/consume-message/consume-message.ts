@@ -21,10 +21,7 @@ import {
   Runnable,
   WorkerCallable,
 } from 'redis-smq-common';
-import {
-  RedisConnectionPool,
-  TConsumerConsumeMessageEvent,
-} from '../../../common/index.js';
+import { TConsumerConsumeMessageEvent } from '../../../common/index.js';
 import { ELuaScriptName } from '../../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
 import { Configuration } from '../../../config/index.js';
@@ -51,7 +48,8 @@ import {
 import { MessageUnacknowledgement } from './message-unacknowledgement.js';
 import { eventBusPublisher } from './event-bus-publisher.js';
 import { TConsumerMessageHandler } from '../types/index.js';
-import { ERedisConnectionAcquisitionMode } from '../../../common/redis-connection-pool/types/index.js';
+import { ERedisConnectionAcquisitionMode } from '../../../common/redis-connection-pool/types/connection-pool.js';
+import { RedisConnectionPool } from '../../../common/redis-connection-pool/redis-connection-pool.js';
 
 export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
   protected logger;
@@ -123,11 +121,6 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     );
   }
 
-  protected getRedisClient(): IRedisClient | PanicError {
-    if (!this.redisClient) return new PanicError('Redis Client is missing');
-    return this.redisClient;
-  }
-
   handleReceivedMessage(message: MessageEnvelope): void {
     const messageId = message.getId();
     this.logger.debug(`Received message ${messageId}`);
@@ -152,6 +145,11 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
         `Ignoring received message ${messageId} as consumer is not running`,
       );
     }
+  }
+
+  protected getRedisClient(): IRedisClient | PanicError {
+    if (!this.redisClient) return new PanicError('Redis Client is missing');
+    return this.redisClient;
   }
 
   protected override getLogger(): ILogger {

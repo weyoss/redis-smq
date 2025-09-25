@@ -12,8 +12,6 @@ import bluebird from 'bluebird';
 import path from 'path';
 import { env } from 'redis-smq-common';
 import {
-  MessageHandlerFileError,
-  MessageHandlerFilenameExtensionError,
   Consumer,
   EQueueDeliveryModel,
   EQueueType,
@@ -22,6 +20,10 @@ import {
 } from '../../../src/index.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueueManager } from '../../common/queue-manager.js';
+import {
+  MessageHandlerFileError,
+  MessageHandlerFilenameExtensionError,
+} from '../../../src/errors/index.js';
 
 it('ConsumeMessageWorker: case 2', async () => {
   const consumer = bluebird.promisifyAll(new Consumer());

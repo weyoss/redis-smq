@@ -1,8 +1,17 @@
+/*
+ * Copyright (c)
+ * Weyoss <weyoss@protonmail.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
+ */
+
 import bluebird from 'bluebird';
-import { RedisConnectionPool } from '../../../src/index.js';
-import { ERedisConnectionAcquisitionMode } from '../../../src/common/redis-connection-pool/types/index.js';
+import { ERedisConnectionAcquisitionMode } from '../../../src/common/redis-connection-pool/types/connection-pool.js';
 import { expect } from 'vitest';
 import { IRedisClient } from 'redis-smq-common';
+import { RedisConnectionPool } from '../../../src/common/redis-connection-pool/redis-connection-pool.js';
 
 export const connectionAcquisitionAndRelease = async (
   pool: ReturnType<typeof bluebird.promisifyAll<RedisConnectionPool>>,

@@ -49,11 +49,6 @@ export class ConsumerGroups {
     this.logger.debug('EventBus initialized');
   }
 
-  protected ensureEventBusIsRunning(cb: ICallback) {
-    if (this.eventBus.isRunning()) return cb();
-    this.eventBus.run((err) => cb(err));
-  }
-
   /**
    * Save Consumer Group
    *
@@ -238,4 +233,9 @@ export class ConsumerGroups {
       cb();
     });
   };
+
+  protected ensureEventBusIsRunning(cb: ICallback) {
+    if (this.eventBus.isRunning()) return cb();
+    this.eventBus.run((err) => cb(err));
+  }
 }

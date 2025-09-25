@@ -8,13 +8,10 @@
  */
 
 import { expect, test } from 'vitest';
-import {
-  EQueueDeliveryModel,
-  EQueueType,
-  QueueDeliveryModelMismatchError,
-} from '../../../../src/index.js';
+import { EQueueDeliveryModel, EQueueType } from '../../../../src/index.js';
 import { getFanOutExchange } from '../../../common/exchange.js';
 import { getQueueManager } from '../../../common/queue-manager.js';
+import { QueueDeliveryModelMismatchError } from '../../../../src/errors/index.js';
 
 test('ExchangeFanOut: binding different types of queues', async () => {
   const fanOutExchangeManager = getFanOutExchange();

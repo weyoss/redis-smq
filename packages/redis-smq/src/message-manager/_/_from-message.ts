@@ -10,8 +10,10 @@
 import { EExchangeType } from '../../exchange/index.js';
 import { MessageEnvelope } from '../../message/message-envelope.js';
 import { MessageState } from '../../message/message-state.js';
-import { ProducibleMessage } from '../../message/index.js';
-import { EMessagePropertyStatus } from '../../message/index.js';
+import {
+  EMessagePropertyStatus,
+  ProducibleMessage,
+} from '../../message/index.js';
 
 /**
  * Creates a deep copy of a MessageEnvelope instance. This factory is used

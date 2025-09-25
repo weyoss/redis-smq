@@ -18,12 +18,12 @@ import {
   IQueueParams,
   Producer,
   ProducibleMessage,
-  ConsumerGroupIdRequiredError,
 } from '../../../src/index.js';
 import { getMessageManager } from '../../common/message-manager.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 import { getQueueManager } from '../../common/queue-manager.js';
+import { ConsumerGroupRequiredError } from '../../../src/errors/index.js';
 
 test('Publish and consume a message to/from a consumer group', async () => {
   const queue1: IQueueParams = {
@@ -69,7 +69,7 @@ test('Publish and consume a message to/from a consumer group', async () => {
 
   const pendingMessages = await getQueuePendingMessages();
   await expect(pendingMessages.getMessagesAsync(queue1, 1, 10)).rejects.toThrow(
-    ConsumerGroupIdRequiredError,
+    ConsumerGroupRequiredError,
   );
 
   const messages = await pendingMessages.getMessagesAsync(
