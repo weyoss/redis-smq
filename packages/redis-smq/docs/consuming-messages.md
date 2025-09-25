@@ -7,7 +7,8 @@ the RedisSMQ.
 
 ## Setting Up a Consumer
 
-To consume messages from a specific queue, use the [Consumer Class](api/classes/Consumer.md), which includes the [Consumer.consume()](api/classes/Consumer.md#consume)
+To consume messages from a specific queue, use the [Consumer Class](api/classes/Consumer.md), which includes
+the [Consumer.consume()](api/classes/Consumer.md#consume)
 method to register a message handler.
 
 ### What is a Message Handler?
@@ -20,8 +21,10 @@ consumer using the [Consumer.run()](api/classes/Consumer.md#run) method.
 
 ## Consuming Messages
 
-To stop consuming messages from a queue and remove the related message handler, you can invoke the [Consumer.cancel()](api/classes/Consumer.md#cancel)
-method. To fully shut down the consumer and dismantle all message handlers, use the [Consumer.shutdown()](api/classes/Consumer.md#shutdown) method.
+To stop consuming messages from a queue and remove the related message handler, you can invoke
+the [Consumer.cancel()](api/classes/Consumer.md#cancel)
+method. To fully shut down the consumer and dismantle all message handlers, use
+the [Consumer.shutdown()](api/classes/Consumer.md#shutdown) method.
 
 ### Example: Registering a Message Handler
 

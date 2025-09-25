@@ -2,7 +2,8 @@
 
 # Type Alias: TMessageStatePropertyType\<T\>
 
-> **TMessageStatePropertyType**\<`T`\> = [`IMessageStateTransferable`](../interfaces/IMessageStateTransferable.md)\[[`TMessageStatePropertyKey`](TMessageStatePropertyKey.md)\<`T`\>\]
+> **TMessageStatePropertyType**\<`T`\> = [`IMessageStateTransferable`](../interfaces/IMessageStateTransferable.md)\[[
+`TMessageStatePropertyKey`](TMessageStatePropertyKey.md)\<`T`\>\]
 
 Utility type: Get the value type for a given enum value.
 

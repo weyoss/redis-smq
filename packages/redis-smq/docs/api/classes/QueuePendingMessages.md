@@ -62,7 +62,8 @@
 
 ##### cb
 
-`ICallback`\<[`IPaginationPage`](../interfaces/IPaginationPage.md)\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\<`unknown`\>\>\>
+`ICallback`\<[`IPaginationPage`](../interfaces/IPaginationPage.md)\<[
+`IMessageTransferable`](../interfaces/IMessageTransferable.md)\<`unknown`\>\>\>
 
 #### Returns
 

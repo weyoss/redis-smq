@@ -4,12 +4,14 @@
 
 ## Overview
 
-The [`ProducibleMessage Class`](api/classes/ProducibleMessage.md) handles application data, commonly known as the message payload, that can be
+The [`ProducibleMessage Class`](api/classes/ProducibleMessage.md) handles application data, commonly known as the
+message payload, that can be
 delivered to a consumer for asynchronous processing.
 
 ## Message Payload
 
 The message payload can be any valid JSON-serializable data:
+
 - Simple types: strings, numbers, booleans
 - Complex types: objects, arrays
 - Nested structures
@@ -64,15 +66,15 @@ msg
 
 RedisSMQ provides several specialized classes for message management:
 
-| Class | Purpose |
-|-------|---------|
-| [`ProducibleMessage`](api/classes/ProducibleMessage.md) | Configure and produce messages |
-| [`Message`](api/classes/Message.md) | Fetch, delete, or requeue individual messages |
-| [`QueueMessages`](api/classes/QueueMessages.md) | Manage all messages within a queue |
-| [`QueuePendingMessages`](api/classes/QueuePendingMessages.md) | Manage messages awaiting processing |
-| [`QueueAcknowledgedMessages`](api/classes/QueueAcknowledgedMessages.md) | Manage successfully processed messages |
-| [`QueueDeadLetteredMessages`](api/classes/QueueDeadLetteredMessages.md) | Manage messages that failed processing |
-| [`QueueScheduledMessages`](api/classes/QueueScheduledMessages.md) | Manage messages scheduled for future delivery |
+| Class                                                                   | Purpose                                       |
+|-------------------------------------------------------------------------|-----------------------------------------------|
+| [`ProducibleMessage`](api/classes/ProducibleMessage.md)                 | Configure and produce messages                |
+| [`MessageManager`](api/classes/MessageManager.md)                                     | Fetch, delete, or requeue individual messages |
+| [`QueueMessages`](api/classes/QueueMessages.md)                         | Manage all messages within a queue            |
+| [`QueuePendingMessages`](api/classes/QueuePendingMessages.md)           | Manage messages awaiting processing           |
+| [`QueueAcknowledgedMessages`](api/classes/QueueAcknowledgedMessages.md) | Manage successfully processed messages        |
+| [`QueueDeadLetteredMessages`](api/classes/QueueDeadLetteredMessages.md) | Manage messages that failed processing        |
+| [`QueueScheduledMessages`](api/classes/QueueScheduledMessages.md)       | Manage messages scheduled for future delivery |
 
 ## Message Operations
 

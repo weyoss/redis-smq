@@ -25,7 +25,8 @@ const queue = new Queue();
 
 - Static Analysis: ESM allows for static analysis, making it easier to identify and eliminate unused code.
 
-- Tree Shaking: Bundlers can more effectively remove dead code, potentially reducing the size of your final application bundle.
+- Tree Shaking: Bundlers can more effectively remove dead code, potentially reducing the size of your final application
+  bundle.
 
 - Improved Readability: The syntax is generally clearer and more intuitive, especially for new developers.
 
@@ -42,9 +43,11 @@ const queue = new Queue();
 
 ### Benefits of CJS
 
-- Widespread Compatibility: CJS is the traditional module format for Node.js and has broad compatibility with existing packages and libraries.
+- Widespread Compatibility: CJS is the traditional module format for Node.js and has broad compatibility with existing
+  packages and libraries.
 
-- Dynamic Loading: CommonJS allows for dynamic imports, which can be beneficial in certain scenarios where the module path is not known until runtime.
+- Dynamic Loading: CommonJS allows for dynamic imports, which can be beneficial in certain scenarios where the module
+  path is not known until runtime.
 
 By offering RedisSMQ in both ESM and CJS formats, we aim to provide developers with the flexibility needed to integrate
 seamlessly into their projects, regardless of their preferred module system. Whether you're building a modern

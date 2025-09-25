@@ -34,7 +34,7 @@ queue.save(
 );
 ```
 
-_Refer to [Queue.save()](api/classes/Queue.md#save) for additional details._
+_Refer to [QueueManager.save()](api/classes/QueueManager.md#save) for additional details._
 
 ### Publishing a Message to a Point-to-Point Queue
 
@@ -112,8 +112,10 @@ To consume messages from a Pub/Sub queue, a consumer group is required.
 
 - When publishing a message to a Pub/Sub queue, it is sent to all consumer groups associated with that queue.
 - Within each consumer group, only one consumer will receive the message.
-- If a message remains unacknowledged for a given time, it will be retried in the same manner as within a Point-to-Point queue.
-- If the retry threshold is exceeded, failed messages can be stored, if configured, in the dead-letter queue for that Pub/Sub queue.
+- If a message remains unacknowledged for a given time, it will be retried in the same manner as within a Point-to-Point
+  queue.
+- If the retry threshold is exceeded, failed messages can be stored, if configured, in the dead-letter queue for that
+  Pub/Sub queue.
 
 ### Creating a Pub/Sub Queue
 
@@ -137,13 +139,14 @@ queue.save(
 );
 ```
 
-_Refer to [Queue.save()](api/classes/Queue.md#save) for additional details._
+_Refer to [QueueManager.save()](api/classes/QueueManager.md#save) for additional details._
 
 ### Creating Consumer Groups
 
 A consumer group is automatically created when consuming messages from the queue if it does not already exist.
 
-You can also manually create consumer groups using the [ConsumerGroups.saveConsumerGroup()](api/classes/ConsumerGroups.md) method.
+You can also manually create consumer groups using
+the [ConsumerGroups.saveConsumerGroup()](api/classes/ConsumerGroups.md) method.
 
 _Refer to the [ConsumerGroups Class](api/classes/ConsumerGroups.md) for managing consumer groups._
 

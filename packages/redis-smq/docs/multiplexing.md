@@ -2,14 +2,16 @@
 
 # Multiplexing
 
-In standard operation mode, each message handler establishes and utilizes its own Redis connection for consuming messages. This approach offers several significant advantages:
+In standard operation mode, each message handler establishes and utilizes its own Redis connection for consuming
+messages. This approach offers several significant advantages:
 
 - **High Message Consumption Rate**: Independent connections can enhance the throughput of message handling.
 
 - **Isolation of Message Handlers**: Each handler operates independently, preventing any single handler from blocking
   others and improving overall application responsiveness.
 
-However, multiplexing allows multiple message handlers to share a single Redis connection, which, while it may seem counterintuitive, presents some compelling benefits for your application.
+However, multiplexing allows multiple message handlers to share a single Redis connection, which, while it may seem
+counterintuitive, presents some compelling benefits for your application.
 
 ## Advantages of Multiplexing
 
@@ -21,16 +23,23 @@ However, multiplexing allows multiple message handlers to share a single Redis c
 
 However, multiplexing is not without its drawbacks:
 
-- **Sequential Processing**: Messages from different queues cannot be dequeued and processed in parallel. Handlers are executed one after the other, leading to potential delays if multiplexing latency is applied before accessing the next queue.
+- **Sequential Processing**: Messages from different queues cannot be dequeued and processed in parallel. Handlers are
+  executed one after the other, leading to potential delays if multiplexing latency is applied before accessing the next
+  queue.
 
-- **Potential Delays in Message Processing**: If a message handler takes a considerable time to process a message, it can impede the timely dequeuing of messages for other handlers. This may not align with scenarios where prompt message consumption is critical.
+- **Potential Delays in Message Processing**: If a message handler takes a considerable time to process a message, it
+  can impede the timely dequeuing of messages for other handlers. This may not align with scenarios where prompt message
+  consumption is critical.
 
 ## Considerations Before Enabling Multiplexing
 
-Before opting for multiplexing, it’s crucial to weigh its advantages against the potential drawbacks. Assess your specific use case to determine if the resource optimization justifies the limitations on processing speed and message handling.
+Before opting for multiplexing, it’s crucial to weigh its advantages against the potential drawbacks. Assess your
+specific use case to determine if the resource optimization justifies the limitations on processing speed and message
+handling.
 How to Enable Multiplexing
 
-To enable multiplexing, you can utilize the first argument of the [Consumer Class Constructor](api/classes/Consumer.md#constructor):
+To enable multiplexing, you can utilize the first argument of
+the [Consumer Class Constructor](api/classes/Consumer.md#constructor):
 
 ```javascript
 const consumer = new Consumer(true);

@@ -2,6 +2,10 @@
 
 # API Reference
 
+## Namespaces
+
+- [errors](namespaces/errors/README.md)
+
 ## Enumerations
 
 - [EExchangeType](enumerations/EExchangeType.md)
@@ -32,67 +36,7 @@
 - [QueuePendingMessages](classes/QueuePendingMessages.md)
 - [QueueRateLimit](classes/QueueRateLimit.md)
 - [QueueScheduledMessages](classes/QueueScheduledMessages.md)
-- [RedisConnectionPool](classes/RedisConnectionPool.md)
 - [RedisSMQ](classes/RedisSMQ.md)
-
-## Error Classes
-
-- [ConfigurationError](classes/ConfigurationError.md)
-- [ConfigurationMessageQueueSizeError](classes/ConfigurationMessageQueueSizeError.md)
-- [ConfigurationMessageStoreExpireError](classes/ConfigurationMessageStoreExpireError.md)
-- [ConfigurationNamespaceError](classes/ConfigurationNamespaceError.md)
-- [ConsumerError](classes/ConsumerError.md)
-- [ConsumerGroupIdNotSupportedError](classes/ConsumerGroupIdNotSupportedError.md)
-- [ConsumerGroupIdRequiredError](classes/ConsumerGroupIdRequiredError.md)
-- [ConsumerGroupNotEmptyError](classes/ConsumerGroupNotEmptyError.md)
-- [ConsumerGroupNotFoundError](classes/ConsumerGroupNotFoundError.md)
-- [ConsumerGroupsError](classes/ConsumerGroupsError.md)
-- [ConsumerGroupsNotSupportedError](classes/ConsumerGroupsNotSupportedError.md)
-- [ExchangeFanoutError](classes/ExchangeFanoutError.md)
-- [ExchangeHasBoundQueuesError](classes/ExchangeHasBoundQueuesError.md)
-- [InvalidConsumerGroupIdError](classes/InvalidConsumerGroupIdError.md)
-- [InvalidDirectExchangeParametersError](classes/InvalidDirectExchangeParametersError.md)
-- [InvalidFanoutExchangeParametersError](classes/InvalidFanoutExchangeParametersError.md)
-- [InvalidNamespaceError](classes/InvalidNamespaceError.md)
-- [InvalidQueueParametersError](classes/InvalidQueueParametersError.md)
-- [InvalidRateLimitError](classes/InvalidRateLimitError.md)
-- [InvalidRateLimitIntervalError](classes/InvalidRateLimitIntervalError.md)
-- [InvalidSchedulingParametersError](classes/InvalidSchedulingParametersError.md)
-- [InvalidTopicExchangeParamsError](classes/InvalidTopicExchangeParamsError.md)
-- [MessageAlreadyExistsError](classes/MessageAlreadyExistsError.md)
-- [MessageDestinationQueueAlreadySetError](classes/MessageDestinationQueueAlreadySetError.md)
-- [MessageDestinationQueueRequiredError](classes/MessageDestinationQueueRequiredError.md)
-- [MessageError](classes/MessageError.md)
-- [MessageExchangeError](classes/MessageExchangeError.md)
-- [MessageExchangeRequiredError](classes/MessageExchangeRequiredError.md)
-- [MessageHandlerAlreadyExistsError](classes/MessageHandlerAlreadyExistsError.md)
-- [MessageHandlerError](classes/MessageHandlerError.md)
-- [MessageHandlerFileError](classes/MessageHandlerFileError.md)
-- [MessageHandlerFilenameExtensionError](classes/MessageHandlerFilenameExtensionError.md)
-- [MessageManagerError](classes/MessageManagerError.md)
-- [MessageNotFoundError](classes/MessageNotFoundError.md)
-- [MessageNotRequeuableError](classes/MessageNotRequeuableError.md)
-- [MessagePriorityRequiredError](classes/MessagePriorityRequiredError.md)
-- [MessagePropertyError](classes/MessagePropertyError.md)
-- [NamespaceManagerError](classes/NamespaceManagerError.md)
-- [NamespaceNotFoundError](classes/NamespaceNotFoundError.md)
-- [NoMatchedQueueForExchangeError](classes/NoMatchedQueueForExchangeError.md)
-- [PriorityQueuingNotEnabledError](classes/PriorityQueuingNotEnabledError.md)
-- [ProducerError](classes/ProducerError.md)
-- [ProducerNotRunningError](classes/ProducerNotRunningError.md)
-- [QueueAlreadyExistsError](classes/QueueAlreadyExistsError.md)
-- [QueueDeliveryModelMismatchError](classes/QueueDeliveryModelMismatchError.md)
-- [QueueExplorerError](classes/QueueExplorerError.md)
-- [QueueHasNoConsumerGroupsError](classes/QueueHasNoConsumerGroupsError.md)
-- [QueueManagerActiveConsumersError](classes/QueueManagerActiveConsumersError.md)
-- [QueueManagerError](classes/QueueManagerError.md)
-- [QueueNotBoundError](classes/QueueNotBoundError.md)
-- [QueueNotEmptyError](classes/QueueNotEmptyError.md)
-- [QueueNotFoundError](classes/QueueNotFoundError.md)
-- [QueueRateLimitError](classes/QueueRateLimitError.md)
-- [RedisKeysError](classes/RedisKeysError.md)
-- [RedisKeysInvalidKeyError](classes/RedisKeysInvalidKeyError.md)
-- [UnknownQueueTypeError](classes/UnknownQueueTypeError.md)
 
 ## Interfaces
 

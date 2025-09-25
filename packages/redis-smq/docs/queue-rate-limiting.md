@@ -4,9 +4,12 @@
 
 In certain scenarios, consuming messages at a high rate can be disadvantageous. Some potential issues include:
 
-- **System Performance:** A high rate of message consumption may overwhelm your application, leading to performance degradation.
-- **Resource Utilization:** Rapid message consumption can result in excessive resource usage, negatively impacting the overall performance of your system.
-- **External API Restrictions:** If your application interacts with an external API that enforces rate limits on client requests, consuming messages too quickly could risk the suspension or permanent ban of your service.
+- **System Performance:** A high rate of message consumption may overwhelm your application, leading to performance
+  degradation.
+- **Resource Utilization:** Rapid message consumption can result in excessive resource usage, negatively impacting the
+  overall performance of your system.
+- **External API Restrictions:** If your application interacts with an external API that enforces rate limits on client
+  requests, consuming messages too quickly could risk the suspension or permanent ban of your service.
 - **Additional Considerations:** Various other factors may necessitate managing message consumption rates.
 
 To address these challenges, RedisSMQ allows you to set and control the rate at which messages are consumed by

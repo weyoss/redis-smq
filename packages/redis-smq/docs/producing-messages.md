@@ -4,7 +4,8 @@
 
 The `Producer` class provides the functionality to publish messages to a queue efficiently.
 
-You can utilize a single `Producer` instance to send messages—including those with priority—to one or more queues simultaneously.
+You can utilize a single `Producer` instance to send messages—including those with priority—to one or more queues
+simultaneously.
 
 ### Important Note
 

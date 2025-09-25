@@ -21,7 +21,8 @@ For a comprehensive understanding of its efficiency, refer to the
 
 ## Message Throughput
 
-A key metric for assessing the performance of RedisSMQ is message throughput, measured in the number of messages processed per second by the message queue. Throughput can be evaluated in three primary scenarios:
+A key metric for assessing the performance of RedisSMQ is message throughput, measured in the number of messages
+processed per second by the message queue. Throughput can be evaluated in three primary scenarios:
 
 1. **Producer Throughput**: Measurement when only producer instances are running.
 2. **Consumer Throughput**: Measurement when only consumer instances are active.
@@ -38,16 +39,19 @@ The benchmarks were conducted on a KVM virtual machine with the following specif
 - **Host:** Desktop computer with an AMD FX8350 CPU and 32GB of RAM
 - **OS:** Debian 8
 
-No specific performance tuning was applied to the virtual machine or the Redis server settings. The virtual machine was configured to run a single instance of Redis, considering that Redis operates in a single-threaded manner; running multiple instances can enhance performance.
+No specific performance tuning was applied to the virtual machine or the Redis server settings. The virtual machine was
+configured to run a single instance of Redis, considering that Redis operates in a single-threaded manner; running
+multiple instances can enhance performance.
 
-All instances of consumers and producers, along with the Redis server, were launched from the same host for optimal resource utilization.
+All instances of consumers and producers, along with the Redis server, were launched from the same host for optimal
+resource utilization.
 
 ## Benchmark Results
 
 Here are the results of our benchmarking across different scenarios:
 
 | **Scenario**                                  | **Producer Rate (msg/sec)** | **Consumer Rate (msg/sec)** |
-| --------------------------------------------- | --------------------------- | --------------------------- |
+|-----------------------------------------------|-----------------------------|-----------------------------|
 | 1 Producer Instance                           | 23K+                        | 0                           |
 | 10 Producer Instances                         | 96K+                        | 0                           |
 | 1 Consumer Instance                           | 0                           | 13K+                        |

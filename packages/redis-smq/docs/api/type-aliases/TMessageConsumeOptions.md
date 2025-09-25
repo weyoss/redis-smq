@@ -2,4 +2,5 @@
 
 # Type Alias: TMessageConsumeOptions
 
-> **TMessageConsumeOptions** = `Pick`\<[`IMessageParams`](../interfaces/IMessageParams.md), `"ttl"` \| `"retryThreshold"` \| `"retryDelay"` \| `"consumeTimeout"`\>
+> **TMessageConsumeOptions** = `Pick`\<[`IMessageParams`](../interfaces/IMessageParams.md), `"ttl"` \|
+`"retryThreshold"` \| `"retryDelay"` \| `"consumeTimeout"`\>
