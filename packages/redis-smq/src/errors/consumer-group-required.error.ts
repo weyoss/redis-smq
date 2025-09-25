@@ -9,4 +9,4 @@
 
 import { ConsumerGroupsError } from './consumer-groups.error.js';
 
-export class ConsumerGroupIdNotSupportedError extends ConsumerGroupsError {}
+export class ConsumerGroupRequiredError extends ConsumerGroupsError {}

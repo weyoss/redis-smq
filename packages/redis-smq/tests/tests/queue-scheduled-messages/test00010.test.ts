@@ -12,13 +12,15 @@ import {
   EMessagePriority,
   EQueueDeliveryModel,
   EQueueType,
-  MessagePriorityRequiredError,
-  PriorityQueuingNotEnabledError,
   ProducibleMessage,
-  QueueNotFoundError,
 } from '../../../src/index.js';
 import { getProducer } from '../../common/producer.js';
 import { getQueueManager } from '../../common/queue-manager.js';
+import {
+  MessagePriorityRequiredError,
+  PriorityQueuingNotEnabledError,
+  QueueNotFoundError,
+} from '../../../src/errors/index.js';
 
 test('Scheduling a message and expecting different kind of failures', async () => {
   const queue = await getQueueManager();

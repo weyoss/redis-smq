@@ -21,7 +21,6 @@ import {
   WorkerResourceGroup,
 } from 'redis-smq-common';
 import {
-  RedisConnectionPool,
   TConsumerMessageHandlerEvent,
   TRedisSMQEvent,
 } from '../../common/index.js';
@@ -44,7 +43,8 @@ import { evenBusPublisher } from './even-bus-publisher.js';
 import { MessageHandlerError } from '../../errors/index.js';
 import { IConsumerMessageHandlerParams } from './types/index.js';
 import { TConsumerMessageHandlerWorkerPayload } from './workers/types/index.js';
-import { ERedisConnectionAcquisitionMode } from '../../common/redis-connection-pool/types/index.js';
+import { ERedisConnectionAcquisitionMode } from '../../common/redis-connection-pool/types/connection-pool.js';
+import { RedisConnectionPool } from '../../common/redis-connection-pool/redis-connection-pool.js';
 
 const WORKERS_DIR = path.resolve(env.getCurrentDir(), './workers');
 
@@ -108,11 +108,6 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     this.logger.info(
       `MessageHandler initialized for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
     );
-  }
-
-  protected getRedisClient(): IRedisClient | PanicError {
-    if (!this.redisClient) return new PanicError('Redis Client is missing');
-    return this.redisClient;
   }
 
   /**
@@ -261,6 +256,11 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       `Getting queue parameters: ${JSON.stringify(this.queue)}`,
     );
     return this.queue;
+  }
+
+  protected getRedisClient(): IRedisClient | PanicError {
+    if (!this.redisClient) return new PanicError('Redis Client is missing');
+    return this.redisClient;
   }
 
   protected initDequeueMessageInstance(): DequeueMessage {

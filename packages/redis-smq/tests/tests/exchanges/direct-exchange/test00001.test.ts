@@ -8,8 +8,8 @@
  */
 
 import { expect, test } from 'vitest';
-import { InvalidDirectExchangeParametersError } from '../../../../src/index.js';
 import { getDirectExchange } from '../../../common/exchange.js';
+import { InvalidDirectExchangeParametersError } from '../../../../src/errors/index.js';
 
 test('DirectExchange', async () => {
   const e = getDirectExchange();

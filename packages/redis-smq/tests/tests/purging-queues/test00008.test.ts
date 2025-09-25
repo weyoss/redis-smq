@@ -8,19 +8,19 @@
  */
 
 import { expect, test } from 'vitest';
-import {
-  IQueueParams,
-  NamespaceNotFoundError,
-  QueueManagerActiveConsumersError,
-  QueueNotEmptyError,
-  QueueNotFoundError,
-} from '../../../src/index.js';
+import { IQueueParams } from '../../../src/index.js';
 import {
   createQueue,
   produceAndAcknowledgeMessage,
 } from '../../common/message-producing-consuming.js';
 import { getNamespaceManager } from '../../common/namespace-manager.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
+import {
+  NamespaceNotFoundError,
+  QueueManagerActiveConsumersError,
+  QueueNotEmptyError,
+  QueueNotFoundError,
+} from '../../../src/errors/index.js';
 
 test('Combined: Fetching namespaces, deleting a namespace with its message queues', async () => {
   const queueA: IQueueParams = {

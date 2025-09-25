@@ -8,11 +8,9 @@
  */
 
 import { expect, test } from 'vitest';
-import {
-  NoMatchedQueueForExchangeError,
-  ProducibleMessage,
-} from '../../../../src/index.js';
+import { ProducibleMessage } from '../../../../src/index.js';
 import { getProducer } from '../../../common/producer.js';
+import { NoMatchedQueueForExchangeError } from '../../../../src/errors/index.js';
 
 test('ExchangeTopic: producing message having an exchange without matched queues ', async () => {
   const producer = getProducer();

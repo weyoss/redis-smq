@@ -13,9 +13,9 @@ import {
   IMessageTransferable,
   IQueueParams,
   RedisSMQ,
+  TConsumerMessageHandler,
 } from '../../src/index.js';
 import { getDefaultQueue } from './message-producing-consuming.js';
-import { TConsumerMessageHandler } from '../../src/index.js';
 
 type TGetConsumerArgs = {
   queue?: string | IQueueParams;

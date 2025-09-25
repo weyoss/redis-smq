@@ -14,8 +14,8 @@ import {
   IQueueParsedParams,
 } from '../../../queue-manager/index.js';
 import {
-  ConsumerGroupIdNotSupportedError,
-  ConsumerGroupIdRequiredError,
+  ConsumerGroupRequiredError,
+  ConsumerGroupsNotSupportedError,
 } from '../../../errors/index.js';
 
 export function _validateQueueExtendedParams(
@@ -33,12 +33,12 @@ export function _validateQueueExtendedParams(
         properties?.deliveryModel === EQueueDeliveryModel.PUB_SUB &&
         !groupId
       ) {
-        cb(new ConsumerGroupIdRequiredError());
+        cb(new ConsumerGroupRequiredError());
       } else if (
         properties?.deliveryModel === EQueueDeliveryModel.POINT_TO_POINT &&
         groupId
       ) {
-        cb(new ConsumerGroupIdNotSupportedError());
+        cb(new ConsumerGroupsNotSupportedError());
       } else cb();
     }
   });

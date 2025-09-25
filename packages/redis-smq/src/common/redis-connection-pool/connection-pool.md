@@ -1,6 +1,7 @@
 # Redis Connection Pool
 
-A robust Redis connection pool implementation for RedisSMQ that manages multiple Redis client instances to improve performance and handle concurrent operations efficiently.
+A robust Redis connection pool implementation for RedisSMQ that manages multiple Redis client instances to improve
+performance and handle concurrent operations efficiently.
 
 ## Features
 
@@ -74,7 +75,7 @@ pool.acquire((err, client) => {
     client.get('key', (getErr, value) => {
       // Release the connection back to the pool
       pool.release(client);
-      
+
       if (!getErr) {
         console.log('Retrieved value:', value);
       }
@@ -136,7 +137,7 @@ for (let i = 0; i < 20; i++) {
         // Perform Redis operation
         client.ping((pingErr) => {
           pool.release(client); // Always release
-          
+
           if (pingErr) return reject(pingErr);
           resolve(`Operation ${i} completed`);
         });
@@ -159,7 +160,7 @@ function performOperationWithRetry(maxRetries = 3) {
 
     const attempt = () => {
       attempts++;
-      
+
       pool.acquire((err, client) => {
         if (err) {
           if (attempts < maxRetries) {
@@ -171,12 +172,12 @@ function performOperationWithRetry(maxRetries = 3) {
 
         client.ping((pingErr) => {
           pool.release(client);
-          
+
           if (pingErr && attempts < maxRetries) {
             setTimeout(attempt, 1000 * attempts);
             return;
           }
-          
+
           pingErr ? reject(pingErr) : resolve('Success');
         });
       });
@@ -197,7 +198,7 @@ process.on('SIGTERM', () => {
       console.error('Error during pool shutdown:', err);
       process.exit(1);
     }
-    
+
     console.log('Pool shut down gracefully');
     process.exit(0);
   });
@@ -206,14 +207,14 @@ process.on('SIGTERM', () => {
 
 ## Configuration Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `min` | number | 2 | Minimum number of connections to maintain |
-| `max` | number | 10 | Maximum number of connections allowed |
-| `acquireTimeoutMillis` | number | 5000 | Timeout for acquiring connections (ms) |
-| `idleTimeoutMillis` | number | 30000 | Time before idle connections are closed (ms) |
-| `reapIntervalMillis` | number | 10000 | Interval for checking idle connections (ms) |
-| `testOnBorrow` | boolean | true | Validate connections before returning them |
+| Option                 | Type    | Default | Description                                  |
+|------------------------|---------|---------|----------------------------------------------|
+| `min`                  | number  | 2       | Minimum number of connections to maintain    |
+| `max`                  | number  | 10      | Maximum number of connections allowed        |
+| `acquireTimeoutMillis` | number  | 5000    | Timeout for acquiring connections (ms)       |
+| `idleTimeoutMillis`    | number  | 30000   | Time before idle connections are closed (ms) |
+| `reapIntervalMillis`   | number  | 10000   | Interval for checking idle connections (ms)  |
+| `testOnBorrow`         | boolean | true    | Validate connections before returning them   |
 
 ## Best Practices
 

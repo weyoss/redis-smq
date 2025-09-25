@@ -23,7 +23,7 @@ import { _getQueueProperties } from './_/_get-queue-properties.js';
 import { _getQueues } from './_/_get-queues.js';
 import { _parseQueueParams } from './_/_parse-queue-params.js';
 import { _queueExists } from './_/_queue-exists.js';
-import { QueueManagerError, QueueAlreadyExistsError } from '../errors/index.js';
+import { QueueAlreadyExistsError, QueueManagerError } from '../errors/index.js';
 import {
   EQueueDeliveryModel,
   EQueueProperty,
@@ -57,15 +57,6 @@ export class QueueManager {
       this.logger.error(`EventBus error: ${err.message}`, err);
     });
     this.logger.debug('EventBus initialized');
-  }
-
-  protected ensureEventBusIsRunning(cb: ICallback) {
-    if (this.eventBus.isRunning()) return cb();
-    this.eventBus.run((err, reply) => {
-      if (err) return cb(err);
-      if (!reply) return cb(new QueueManagerError('EventBus is not running'));
-      cb();
-    });
   }
 
   /**
@@ -465,4 +456,13 @@ export class QueueManager {
       cb(err);
     });
   };
+
+  protected ensureEventBusIsRunning(cb: ICallback) {
+    if (this.eventBus.isRunning()) return cb();
+    this.eventBus.run((err, reply) => {
+      if (err) return cb(err);
+      if (!reply) return cb(new QueueManagerError('EventBus is not running'));
+      cb();
+    });
+  }
 }

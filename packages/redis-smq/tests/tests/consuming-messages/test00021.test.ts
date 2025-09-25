@@ -9,12 +9,12 @@
 
 import { expect, test } from 'vitest';
 import { ProducibleMessage } from '../../../index.js';
-import { ProducerNotRunningError } from '../../../src/index.js';
 import {
   createQueue,
   getDefaultQueue,
 } from '../../common/message-producing-consuming.js';
 import { getProducer } from '../../common/producer.js';
+import { ProducerNotRunningError } from '../../../src/errors/index.js';
 
 test('Shutdown a producer and try to produce a message', async () => {
   const producer = getProducer();

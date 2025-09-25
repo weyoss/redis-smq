@@ -12,12 +12,9 @@ import { resolve } from 'path';
 import { expect, test, vitest } from 'vitest';
 import bluebird from 'bluebird';
 import { env, ICallback, IRedisClient } from 'redis-smq-common';
-import {
-  IQueueParams,
-  QueueNotFoundError,
-  QueueRateLimit,
-} from '../../../src/index.js';
+import { IQueueParams, QueueRateLimit } from '../../../src/index.js';
 import { getDefaultQueue } from '../../common/message-producing-consuming.js';
+import { QueueNotFoundError } from '../../../src/errors/index.js';
 
 test('SetQueueRateLimit(): QueueRateLimitQueueNotFoundError', async () => {
   const defaultQueue = getDefaultQueue();

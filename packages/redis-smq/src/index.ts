@@ -25,4 +25,4 @@ export * from './queue-rate-limit/index.js';
 export * from './event-bus/index.js';
 export * from './config/index.js';
 export * from './common/index.js';
-export * from './errors/index.js';
+export * as errors from './errors/index.js';

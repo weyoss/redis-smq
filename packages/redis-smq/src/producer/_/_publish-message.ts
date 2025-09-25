@@ -17,12 +17,12 @@ import {
 import { MessageEnvelope } from '../../message/message-envelope.js';
 import { EQueueProperty, EQueueType } from '../../queue-manager/index.js';
 import {
-  ProducerError,
   MessageAlreadyExistsError,
   MessagePriorityRequiredError,
   PriorityQueuingNotEnabledError,
-  UnknownQueueTypeError,
+  ProducerError,
   QueueNotFoundError,
+  UnknownQueueTypeError,
 } from '../../errors/index.js';
 
 /**

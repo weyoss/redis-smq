@@ -19,7 +19,7 @@ import {
   IConnectionPoolConfig,
   IRedisPooledConnection,
   TRedisConnectionPoolEvent,
-} from './types/index.js';
+} from './types/connection-pool.js';
 
 /**
  * Redis Connection Pool implementation that manages multiple Redis client instances
