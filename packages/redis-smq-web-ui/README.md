@@ -19,6 +19,7 @@ A Single Page Application for monitoring and managing RedisSMQ: inspect queues, 
 ## Version compatibility
 
 Always install matching versions of RedisSMQ packages. See the root docs for Version Compatibility. Use the same major/minor across:
+
 - redis-smq
 - redis-smq-common
 - redis-smq-rest-api
@@ -32,13 +33,14 @@ Always install matching versions of RedisSMQ packages. See the root docs for Ver
 Use redis-smq-web-server to host the UI and API in one place, or proxy the API to an external service.
 
 - In-process API:
-    - UI at http://localhost:8080/
-    - API at http://localhost:8080/api
+  - UI at http://localhost:8080/
+  - API at http://localhost:8080/api
 - Proxy to an external REST API:
-    - UI is still served locally
-    - API/docs/assets are forwarded to the upstream API
+  - UI is still served locally
+  - API/docs/assets are forwarded to the upstream API
 
 See [RedisSMQ Web Server](../redis-smq-web-server/README.md) for CLI options such as:
+
 - --port
 - --base-path
 - --api-proxy-target
@@ -46,6 +48,7 @@ See [RedisSMQ Web Server](../redis-smq-web-server/README.md) for CLI options suc
 ### Development
 
 Prerequisites:
+
 - Node.js >= 20
 - PNPM (recommended)
 
@@ -53,7 +56,7 @@ From the monorepo root:
 
 ```bash
 pnpm install
-pnpm -w -C packages/redis-smq-web-ui dev
+pnpm -F redis-smq-web-ui dev
 ```
 
 #### OpenAPI client generation
@@ -61,7 +64,7 @@ pnpm -w -C packages/redis-smq-web-ui dev
 The UI uses a generated OpenAPI client. To regenerate:
 
 ```shell
-pnpm -w -C packages/redis-smq-web-ui generate-openapi-client
+pnpm -F redis-smq-web-ui generate-openapi-client
 ```
 
 Make sure redis-smq-rest-api (with OpenAPI endpoint) is reachable as configured by the generation script.
@@ -69,7 +72,7 @@ Make sure redis-smq-rest-api (with OpenAPI endpoint) is reachable as configured 
 #### Running the dev Server
 
 ```bash
-pnpm -w -C packages/redis-smq-web-ui dev
+pnpm -F redis-smq-web-ui dev
 ```
 
 The dev script typically runs:
@@ -78,16 +81,16 @@ The dev script typically runs:
 - A local REST API dev server for convenience
 
 - Open the printed local URL to access the UI during development.
-  
+
 #### Building
-  
+
 From the monorepo root:
 
 ```shell
-pnpm -w -C packages/redis-smq-web-ui build
+pnpm -F redis-smq-web-ui build
 ```
 
-Artifacts are output to the package’s dist directory. 
+Artifacts are output to the package’s dist directory.
 Serve the built assets with [RedisSMQ Web Server](../redis-smq-web-server/README.md) for correct routing and API integration.
 
 #### Configuration and routing
