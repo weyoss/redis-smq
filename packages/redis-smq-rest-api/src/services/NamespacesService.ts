@@ -8,26 +8,26 @@
  */
 
 import bluebird from 'bluebird';
-import { Namespace } from 'redis-smq';
+import { NamespaceManager } from 'redis-smq';
 
 const { promisifyAll } = bluebird;
 
 export class NamespacesService {
-  protected namespace;
+  protected namespaceManager;
 
-  constructor(namespace: Namespace) {
-    this.namespace = promisifyAll(namespace);
+  constructor(namespaceManager: NamespaceManager) {
+    this.namespaceManager = promisifyAll(namespaceManager);
   }
 
   getNamespaces() {
-    return this.namespace.getNamespacesAsync();
+    return this.namespaceManager.getNamespacesAsync();
   }
 
   getNamespaceQueues(ns: string) {
-    return this.namespace.getNamespaceQueuesAsync(ns);
+    return this.namespaceManager.getNamespaceQueuesAsync(ns);
   }
 
   deleteNamespace(ns: string) {
-    return this.namespace.deleteAsync(ns);
+    return this.namespaceManager.deleteAsync(ns);
   }
 }

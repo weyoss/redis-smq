@@ -16,6 +16,7 @@ import { publishMessage } from '../../../tests/common/publish-message.js';
 import { saveConsumerGroup } from '../../../tests/common/save-consumer-group.js';
 import { TResponse } from '../../../tests/types/index.js';
 import { CountConsumerGroupPendingMessagesControllerResponseDTO } from '../../dto/controllers/consumer-groups/CountConsumerGroupPendingMessagesControllerResponseDTO.js';
+import { errors } from '../../errors/errors.js';
 
 describe('countConsumerGroupPendingMessagesController', () => {
   it('HTTP 200 OK', async () => {
@@ -49,20 +50,22 @@ describe('countConsumerGroupPendingMessagesController', () => {
     expect(response2.body?.data).toEqual(2);
   });
 
-  it('HTTP 400 BAD REQUEST: QueueInvalidQueueParameterError', async () => {
+  it('HTTP 400 BAD REQUEST: InvalidQueueParametersError', async () => {
     const request = supertest(`http://127.0.0.1:${config.apiServer?.port}`);
     const response1: TResponse<CountConsumerGroupPendingMessagesControllerResponseDTO> =
       await request.get(
         `/api/v1/namespaces/$$$/queues/@@@@/consumer-groups/******/total-messages`,
       );
-    expect(response1.status).toEqual(400);
-    expect(response1.body?.error?.code).toEqual(400);
+    expect(response1.status).toEqual(errors.InvalidQueueParametersError[0]);
+    expect(response1.body?.error?.code).toEqual(
+      errors.InvalidQueueParametersError[0],
+    );
     expect(response1.body?.error?.message).toEqual(
-      'QueueInvalidQueueParameterError',
+      'InvalidQueueParametersError',
     );
   });
 
-  it('HTTP 400 BAD REQUEST: QueueExplorerConsumerGroupIdNotSupportedError', async () => {
+  it('HTTP 400 BAD REQUEST: ConsumerGroupsNotSupportedError', async () => {
     const { queue } = await createQueue(
       'my-queue',
       EQueueType.LIFO_QUEUE,
@@ -73,10 +76,12 @@ describe('countConsumerGroupPendingMessagesController', () => {
       await request.get(
         `/api/v1/namespaces/${queue.ns}/queues/${queue.name}/consumer-groups/gp1/total-messages`,
       );
-    expect(response1.status).toEqual(400);
-    expect(response1.body?.error?.code).toEqual(400);
+    expect(response1.status).toEqual(errors.ConsumerGroupsNotSupportedError[0]);
+    expect(response1.body?.error?.code).toEqual(
+      errors.ConsumerGroupsNotSupportedError[0],
+    );
     expect(response1.body?.error?.message).toEqual(
-      'QueueExplorerConsumerGroupIdNotSupportedError',
+      'ConsumerGroupsNotSupportedError',
     );
   });
 });

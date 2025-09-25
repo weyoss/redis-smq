@@ -8,8 +8,8 @@
  */
 
 import { EMessagePropertyStatus } from 'redis-smq';
-import { TErrors } from '../../../errors/types/index.js';
+import { TErrors } from '../../../errors/errors.js';
 
 export type GetMessageStatusControllerResponseDTO =
   | readonly [200, EMessagePropertyStatus]
-  | TErrors['MessageMessageNotFoundError'];
+  | TErrors['MessageNotFoundError'];

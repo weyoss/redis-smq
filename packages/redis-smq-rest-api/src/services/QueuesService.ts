@@ -12,7 +12,7 @@ import {
   EQueueDeliveryModel,
   EQueueType,
   IQueueParams,
-  Queue,
+  QueueManager,
 } from 'redis-smq';
 
 const { promisifyAll } = bluebird;
@@ -20,8 +20,8 @@ const { promisifyAll } = bluebird;
 export class QueuesService {
   protected queue;
 
-  constructor(queue: Queue) {
-    this.queue = promisifyAll(queue);
+  constructor(queueManager: QueueManager) {
+    this.queue = promisifyAll(queueManager);
   }
 
   async createQueue(

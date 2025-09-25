@@ -11,7 +11,7 @@ import {
   IRedisSMQRestApiConfig,
   IRedisSMQRestApiParsedConfig,
 } from './types/index.js';
-import { parseConfig as parseRedisSMQConfig } from 'redis-smq';
+import { EConsoleLoggerLevel, ERedisConfigClient } from 'redis-smq-common';
 
 export const DEFAULT_PORT = 7210;
 export const DEFAULT_BASE_PATH = '/';
@@ -28,14 +28,20 @@ function normalizePath(path: string): string {
 export function parseConfig(
   config: IRedisSMQRestApiConfig = {},
 ): IRedisSMQRestApiParsedConfig {
-  const { apiServer = {}, ...rest } = config;
-  const redisSMQConfigParsed = parseRedisSMQConfig(rest);
-
+  const { apiServer = {}, redis, logger } = config;
   return {
-    ...redisSMQConfigParsed,
+    redis: redis ?? { client: ERedisConfigClient.IOREDIS },
     apiServer: {
       port: apiServer.port ?? DEFAULT_PORT,
       basePath: normalizePath(apiServer.basePath ?? DEFAULT_BASE_PATH),
+    },
+    logger: {
+      enabled: logger?.enabled || false,
+      options: {
+        includeTimestamp: logger?.options?.includeTimestamp || true,
+        colorize: logger?.options?.colorize || true,
+        logLevel: logger?.options?.logLevel || EConsoleLoggerLevel.INFO,
+      },
     },
   };
 }

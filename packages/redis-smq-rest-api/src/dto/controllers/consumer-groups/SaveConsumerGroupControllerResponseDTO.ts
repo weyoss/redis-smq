@@ -7,10 +7,10 @@
  * in the root directory of this source tree.
  */
 
-import { TErrors } from '../../../errors/types/index.js';
+import { TErrors } from '../../../errors/errors.js';
 
 export type SaveConsumerGroupControllerResponseDTO =
   | readonly [204, null]
-  | TErrors['QueueInvalidQueueParameterError']
-  | TErrors['QueueQueueNotFoundError']
-  | TErrors['ConsumerGroupsConsumerGroupsNotSupportedError'];
+  | TErrors['InvalidQueueParametersError']
+  | TErrors['QueueNotFoundError']
+  | TErrors['ConsumerGroupsNotSupportedError'];

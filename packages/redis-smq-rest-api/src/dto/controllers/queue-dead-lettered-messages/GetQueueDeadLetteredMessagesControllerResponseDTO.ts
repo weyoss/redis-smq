@@ -8,9 +8,9 @@
  */
 
 import { IMessageTransferable, IPaginationPage } from 'redis-smq';
-import { TErrors } from '../../../errors/types/index.js';
+import { TErrors } from '../../../errors/errors.js';
 
 export type GetQueueDeadLetteredMessagesControllerResponseDTO =
   | readonly [200, IPaginationPage<IMessageTransferable>]
-  | TErrors['QueueInvalidQueueParameterError']
-  | TErrors['QueueQueueNotFoundError'];
+  | TErrors['InvalidQueueParametersError']
+  | TErrors['QueueNotFoundError'];

@@ -7,11 +7,11 @@
  * in the root directory of this source tree.
  */
 
-import { TErrors } from '../../../errors/types/index.js';
+import { TErrors } from '../../../errors/errors.js';
 
 export type CountQueuePendingMessagesControllerResponseDTO =
   | readonly [200, number]
-  | TErrors['QueueInvalidQueueParameterError']
-  | TErrors['QueueQueueNotFoundError']
-  | TErrors['QueueExplorerConsumerGroupIdNotSupportedError']
-  | TErrors['QueueExplorerConsumerGroupIdRequiredError'];
+  | TErrors['InvalidQueueParametersError']
+  | TErrors['QueueNotFoundError']
+  | TErrors['ConsumerGroupsNotSupportedError']
+  | TErrors['ConsumerGroupRequiredError'];

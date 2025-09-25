@@ -8,14 +8,14 @@
  */
 
 import bluebird from 'bluebird';
-import { ExchangeFanOut, IQueueParams } from 'redis-smq';
+import { ExchangeFanout, IQueueParams } from 'redis-smq';
 
 const { promisifyAll } = bluebird;
 
 export class ExchangeFanOutService {
   protected exchangeFanOut;
 
-  constructor(exchangeFanOut: ExchangeFanOut) {
+  constructor(exchangeFanOut: ExchangeFanout) {
     this.exchangeFanOut = promisifyAll(exchangeFanOut);
   }
 

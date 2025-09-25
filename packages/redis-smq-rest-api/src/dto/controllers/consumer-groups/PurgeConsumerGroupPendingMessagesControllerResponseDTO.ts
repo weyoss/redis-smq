@@ -7,9 +7,9 @@
  * in the root directory of this source tree.
  */
 
-import { TErrors } from '../../../errors/types/index.js';
+import { TErrors } from '../../../errors/errors.js';
 
 export type PurgeConsumerGroupPendingMessagesControllerResponseDTO =
   | readonly [204, null]
-  | TErrors['QueueInvalidQueueParameterError']
-  | TErrors['QueueExplorerConsumerGroupIdNotSupportedError'];
+  | TErrors['InvalidQueueParametersError']
+  | TErrors['ConsumerGroupsNotSupportedError'];

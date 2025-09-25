@@ -8,9 +8,9 @@
  */
 
 import { IMessageTransferable, IPaginationPage } from 'redis-smq';
-import { TErrors } from '../../../errors/types/index.js';
+import { TErrors } from '../../../errors/errors.js';
 
 export type GetConsumerGroupPendingMessagesControllerResponseDTO =
   | readonly [200, IPaginationPage<IMessageTransferable>]
-  | TErrors['QueueInvalidQueueParameterError']
-  | TErrors['QueueExplorerConsumerGroupIdNotSupportedError'];
+  | TErrors['InvalidQueueParametersError']
+  | TErrors['ConsumerGroupsNotSupportedError'];

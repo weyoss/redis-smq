@@ -7,16 +7,16 @@
  * in the root directory of this source tree.
  */
 
-import { TErrors } from '../../../errors/types/index.js';
+import { TErrors } from '../../../errors/errors.js';
 
 export type PublishMessageControllerResponseDTO =
   | readonly [201, string[]]
-  | TErrors['ProducerInstanceNotRunningError']
-  | TErrors['ProducerMessageExchangeRequiredError']
-  | TErrors['ProducerExchangeNoMatchedQueueError']
-  | TErrors['ProducerQueueMissingConsumerGroupsError']
-  | TErrors['MessageMessagePropertyError']
-  | TErrors['ProducerQueueNotFoundError']
-  | TErrors['ProducerScheduleInvalidParametersError']
-  | TErrors['ProducerMessagePriorityRequiredError']
-  | TErrors['ProducerPriorityQueuingNotEnabledError'];
+  | TErrors['ProducerNotRunningError']
+  | TErrors['MessageExchangeRequiredError']
+  | TErrors['NoMatchedQueueForExchangeError']
+  | TErrors['QueueHasNoConsumerGroupsError']
+  | TErrors['MessagePropertyError']
+  | TErrors['QueueNotFoundError']
+  | TErrors['InvalidSchedulingParametersError']
+  | TErrors['MessagePriorityRequiredError']
+  | TErrors['PriorityQueuingNotEnabledError'];

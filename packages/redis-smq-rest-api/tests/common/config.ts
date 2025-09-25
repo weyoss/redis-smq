@@ -8,7 +8,7 @@
  */
 
 import { ERedisConfigClient } from 'redis-smq-common';
-import { IRedisSMQRestApiConfig } from '../../src/config/types/index.js';
+import { IRedisSMQRestApiConfig } from '../../src/config/index.js';
 
 export const config: IRedisSMQRestApiConfig = {
   redis: {
@@ -18,17 +18,5 @@ export const config: IRedisSMQRestApiConfig = {
       port: 0,
       showFriendlyErrorStack: true,
     },
-  },
-  logger: {
-    enabled: false,
-    options: {
-      logLevel: 'DEBUG',
-    },
-  },
-  eventBus: {
-    enabled: true,
-  },
-  messages: {
-    store: true,
   },
 };

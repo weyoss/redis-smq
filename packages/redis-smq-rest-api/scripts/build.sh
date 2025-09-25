@@ -12,6 +12,12 @@ set -e
 
 rm -rf dist
 
+# generate error mappings before building
+pnpm error-mappings:gen
+
+# format errors.ts
+eslint --fix src/errors/errors.ts
+
 # esm
 tsc -p ./tsconfig.json
 chmod +x dist/esm/bin/cli.js

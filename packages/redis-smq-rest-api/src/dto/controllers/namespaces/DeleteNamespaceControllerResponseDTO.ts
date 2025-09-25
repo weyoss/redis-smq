@@ -7,10 +7,10 @@
  * in the root directory of this source tree.
  */
 
-import { TErrors } from '../../../errors/types/index.js';
+import { TErrors } from '../../../errors/errors.js';
 
 export type DeleteNamespaceControllerResponseDTO =
   | readonly [204, null]
-  | TErrors['NamespaceInvalidNamespaceError']
+  | TErrors['InvalidNamespaceError']
   | TErrors['NamespaceNotFoundError']
-  | TErrors['QueueQueueHasRunningConsumersError'];
+  | TErrors['QueueManagerActiveConsumersError'];
