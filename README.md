@@ -96,8 +96,8 @@ Here's a basic example to create a queue, produce a message, and consume it:
 
 ```javascript
 // Creating a queue
-const queue = new Queue();
-queue.save('my_queue', EQueueType.LIFO_QUEUE, EQueueDeliveryModel.POINT_TO_POINT, (err) => {
+const queueManager = new QueueManager();
+queueManager.save('my_queue', EQueueType.LIFO_QUEUE, EQueueDeliveryModel.POINT_TO_POINT, (err) => {
     if (err) console.error(err);
 });
 
@@ -105,20 +105,21 @@ queue.save('my_queue', EQueueType.LIFO_QUEUE, EQueueDeliveryModel.POINT_TO_POINT
 const msg = new ProducibleMessage();
 msg.setQueue('my_queue').setBody('Hello Word!');
 producer.produce(msg, (err, ids) => {
-    if (err) console.error(err);
-    else console.log(`Produced message IDs are: ${ids.join(', ')}`);
+  if (err) console.error(err);
+  else console.log(`Produced message IDs are: ${ids.join(', ')}`);
 });
 
 // Consuming a message
 const consumer = new Consumer();
 const messageHandler = (msg, cb) => {
-    console.log(msg.body);
-    cb(); // Acknowledging
+  console.log(msg.body);
+  cb(); // Acknowledging
 };
 consumer.consume('my_queue', messageHandler, (err) => {
-    if (err) console.error(err);
+  if (err) console.error(err);
 });
 ```
+
 **Documentation**
 
 For more information, visit the [RedisSMQ Docs](packages/redis-smq/docs/README.md).
