@@ -14,14 +14,14 @@ For detailed information, refer to the [EventBus API](api/classes/EventBus.md).
 
 RedisSMQ supports several events that you can subscribe to:
 
-- [TConsumerEvent](api/README.md#tconsumerevent)
-- [TConsumerHeartbeatEvent](api/README.md#tconsumerheartbeatevent)
-- [TConsumerMessageHandlerRunnerEvent](api/README.md#tconsumermessagehandlerrunnerevent)
-- [TConsumerMessageHandlerEvent](api/README.md#tconsumermessagehandlerevent)
-- [TConsumerConsumeMessageEvent](api/README.md#tconsumerconsumemessageevent)
-- [TConsumerDequeueMessageEvent](api/README.md#tconsumerdequeuemessageevent)
-- [TProducerEvent](api/README.md#tproducerevent)
-- [TQueueEvent](api/README.md#tqueueevent)
+- [TConsumerEvent](api/type-aliases/TConsumerEvent.md)
+- [TConsumerHeartbeatEvent](api/type-aliases/TConsumerHeartbeatEvent.md)
+- [TConsumerMessageHandlerRunnerEvent](api/type-aliases/TConsumerMessageHandlerRunnerEvent.md)
+- [TConsumerMessageHandlerEvent](api/type-aliases/TConsumerMessageHandlerEvent.md)
+- [TConsumerConsumeMessageEvent](api/type-aliases/TConsumerConsumeMessageEvent.md)
+- [TConsumerDequeueMessageEvent](api/type-aliases/TConsumerDequeueMessageEvent.md)
+- [TProducerEvent](api/type-aliases/TProducerEvent.md)
+- [TQueueEvent](api/type-aliases/TQueueEvent.md)
 
 ## Usage
 
@@ -62,7 +62,8 @@ EventBus.getSetInstance((err, eventBus) => {
 
 ### Subscribing to Events
 
-The example below demonstrates how to subscribe to a [TConsumerConsumeMessageEvent](api/README.md#tconsumerconsumemessageevent):
+The example below demonstrates how to subscribe to
+a [TConsumerConsumeMessageEvent](api/type-aliases/TConsumerConsumeMessageEvent.md):
 
 ```javascript
 eventBus.on(

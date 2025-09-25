@@ -1,11 +1,12 @@
-[RedisSMQ](../README.md) / [Docs](README.md) / [FAQs](README.md) / What is the recommended way to set up and configure RedisSMQ for a new project?
+[RedisSMQ](../README.md) / [Docs](README.md) / [FAQs](README.md) / What is the recommended way to set up and configure
+RedisSMQ for a new project?
 
 # What is the recommended way to set up and configure RedisSMQ for a new project?
 
 1. Prerequisites
 
-   - **Redis**: Ensure you have Redis >=4 installed and running on your system or an accessible server.
-   - **Node.js**: Make sure you have Node.js >= v18 installed on your system.
+    - **Redis**: Ensure you have Redis >=4 installed and running on your system or an accessible server.
+    - **Node.js**: Make sure you have Node.js >= v18 installed on your system.
 
 2. Install RedisSMQ
 

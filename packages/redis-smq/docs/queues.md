@@ -43,7 +43,7 @@ queue.save(
 );
 ```
 
-For additional details, please refer to the [Queue.save()](api/classes/Queue.md#save) documentation.
+For additional details, please refer to the [QueueManager.save()](api/classes/QueueManager.md#save) documentation.
 
 ## FIFO (First In, First Out) Queues
 
@@ -66,7 +66,7 @@ queue.save(
 );
 ```
 
-Refer to [Queue.save()](api/classes/Queue.md#save) for more information.
+Refer to [QueueManager.save()](api/classes/QueueManager.md#save) for more information.
 
 ## Priority Queues
 
@@ -89,7 +89,7 @@ queue.save(
 );
 ```
 
-For further details, consult [Queue.save()](api/classes/Queue.md#save).
+For further details, consult [QueueManager.save()](api/classes/QueueManager.md#save).
 
 ### Setting Up Message Priorities
 
@@ -110,7 +110,7 @@ Valid priority values include:
 - `EMessagePriority.VERY_HIGH`
 - `EMessagePriority.HIGHEST`
 
-Please refer to the [EMessagePriority](api/enums/EMessagePriority.md) documentation for more information.
+Please refer to the [EMessagePriority](api/enumerations/EMessagePriority.md) documentation for more information.
 
 ## Queue Namespacing
 
@@ -119,7 +119,8 @@ preventing **name collisions** across multiple queues that may share the same na
 
 A queue can be identified by its name (e.g., `orders`) or by its name and namespace
 (e.g., `{ ns: 'my-app', name: 'orders' }`). If no namespace is specified, the queue defaults to the **default**
-namespace. This default can be configured through your configuration object. For more details, see [Configuration](configuration.md).
+namespace. This default can be configured through your configuration object. For more details,
+see [Configuration](configuration.md).
 
 ## Queue Naming Requirements
 
@@ -127,15 +128,17 @@ Queue names must adhere to the following criteria:
 
 - Composed solely of alphanumeric characters `[a-z0-9]` (e.g., `queue$` is invalid).
 - May include `-` and `_` characters (e.g., `my-queue` and `my_queue` are valid).
-- Must start with an alphabetic character `[a-z]` and end with an alphanumeric character `[a-z0-9]` (e.g., `3queue` and `my_queue_` are invalid).
-- Can include dots (`.`) for hierarchical naming (e.g., `sports.football`). Refer to [Topic Exchange](message-exchanges.md#topic-exchange) for further details.
+- Must start with an alphabetic character `[a-z]` and end with an alphanumeric character `[a-z0-9]` (e.g., `3queue` and
+  `my_queue_` are invalid).
+- Can include dots (`.`) for hierarchical naming (e.g., `sports.football`). Refer
+  to [Topic Exchange](message-exchanges.md#2-topic-exchange) for further details.
 
 ## Managing Queues and Namespaces
 
 RedisSMQ provides the following classes for effective queue and namespace management:
 
-- [Namespace Class](api/classes/Namespace.md)
-- [Queue Class](api/classes/Queue.md)
+- [NamespaceManager Class](api/classes/NamespaceManager.md)
+- [QueueManager Class](api/classes/QueueManager.md)
 
 ## Managing Queue Messages
 

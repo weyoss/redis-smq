@@ -75,7 +75,7 @@ to process the message before it is considered timed out.
 `number`
 
 The consumption timeout value in milliseconds.
-                  A value of 0 indicates no timeout is set.
+A value of 0 indicates no timeout is set.
 
 #### See
 
@@ -96,8 +96,8 @@ The createdAt timestamp is automatically set when a new message is created.
 `number`
 
 The createdAt timestamp as a Unix timestamp (milliseconds since epoch).
-         This value can be used for tracking the age of the message or for
-         other purposes related to message management.
+This value can be used for tracking the age of the message or for
+other purposes related to message management.
 
 ***
 
@@ -116,14 +116,14 @@ will be routed within the messaging system.
 `null` \| [`TExchangeTransferable`](../type-aliases/TExchangeTransferable.md)
 
 The exchange associated with the message.
-         Returns null if no exchange has been set.
-         The returned object contains information about the exchange type and its parameters.
+Returns null if no exchange has been set.
+The returned object contains information about the exchange type and its parameters.
 
 #### See
 
- - https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setqueue
- - https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#settopic
- - https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setfanout
+- https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setqueue
+- https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#settopic
+- https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setfanout
 
 ***
 
@@ -142,12 +142,12 @@ distributed to multiple queues simultaneously.
 `null` \| `string`
 
 The fan-out pattern name as a string if one has been set,
-                         or null if no fan-out pattern has been defined for this message.
+or null if no fan-out pattern has been defined for this message.
 
 #### See
 
 For more information on setting the fan-out pattern:
-     https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setfanout
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setfanout
 
 ***
 
@@ -166,12 +166,12 @@ are processed when using a priority queue.
 `null` \| [`EMessagePriority`](../enumerations/EMessagePriority.md)
 
 The priority level of the message as defined
-         in the EMessagePriority enum, or null if no priority has been set.
+in the EMessagePriority enum, or null if no priority has been set.
 
 #### See
 
 For more information on setting the priority:
-     https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setpriority
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setpriority
 
 ***
 
@@ -190,12 +190,12 @@ the messaging system.
 `null` \| [`IQueueParams`](../interfaces/IQueueParams.md)
 
 The queue parameters associated with the message.
-         Returns null if no queue parameters have been set.
+Returns null if no queue parameters have been set.
 
 #### See
 
 For more information on setting the queue parameters:
-     https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setqueue
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setqueue
 
 ***
 
@@ -214,7 +214,7 @@ temporary issues to be resolved before retrying.
 `number`
 
 The retry delay value in milliseconds. A value of 0 indicates no delay
-         between retry attempts.
+between retry attempts.
 
 #### See
 
@@ -237,12 +237,12 @@ moved to a dead-letter queue.
 `number`
 
 The retry threshold value. A positive integer representing the
-         maximum number of retry attempts for the message.
+maximum number of retry attempts for the message.
 
 #### See
 
 For more information on setting the retry threshold:
-     https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setretrythreshold
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setretrythreshold
 
 ***
 
@@ -261,12 +261,12 @@ for recurring message deliveries.
 `null` \| `string`
 
 The CRON expression as a string if one has been set,
-                         or null if no CRON schedule has been defined for this message.
+or null if no CRON schedule has been defined for this message.
 
 #### See
 
 For more information on setting the CRON schedule:
-     https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledcron
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledcron
 
 ***
 
@@ -301,12 +301,12 @@ how many times a message should be redelivered after its initial delivery.
 `number`
 
 The number of times the message is scheduled to repeat.
-                  A value of 0 indicates the message is not scheduled for repetition.
+A value of 0 indicates the message is not scheduled for repetition.
 
 #### See
 
 For more information on setting the scheduled repeat:
-     https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledrepeat
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledrepeat
 
 ***
 
@@ -324,12 +324,12 @@ to determine how often and how many times a message should be redelivered.
 `null` \| `number`
 
 The scheduled repeat period in milliseconds if set,
-                         or null if no repeat period has been defined for this message.
+or null if no repeat period has been defined for this message.
 
 #### See
 
 For more information on setting the scheduled repeat period:
-     https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledrepeatperiod
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledrepeatperiod
 
 ***
 
@@ -348,12 +348,12 @@ the messaging system.
 `null` \| [`ITopicParams`](../interfaces/ITopicParams.md)
 
 The topic parameters associated with the message.
-         Returns null if no topic parameters have been set.
+Returns null if no topic parameters have been set.
 
 #### See
 
 For more information on setting the topic parameters:
-     https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#settopic
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#settopic
 
 ***
 
@@ -372,12 +372,12 @@ the processing of outdated messages.
 `number`
 
 The TTL value in milliseconds. A value of 0 indicates that the
-         message does not expire.
+message does not expire.
 
 #### See
 
 For more information on setting the TTL:
-     https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setttl
+https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setttl
 
 ***
 
@@ -396,7 +396,7 @@ level has been set, and the method returns true. Otherwise, it returns false.
 `boolean`
 
 - Returns true if a priority level has been set for the message,
-                     false otherwise.
+  false otherwise.
 
 #### See
 
@@ -422,10 +422,10 @@ The updated `ProducibleMessage` instance with the reset scheduled parameters.
 
 #### See
 
- - https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledcron
- - https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduleddelay
- - https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledrepeatperiod
- - https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledrepeat
+- https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledcron
+- https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduleddelay
+- https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledrepeatperiod
+- https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledrepeat
 
 ***
 
@@ -444,7 +444,7 @@ The payload contains the actual data that the consumer will process.
 `unknown`
 
 The payload to be sent with the message. This can be of any type,
-                        but it will be converted to a string before being sent.
+but it will be converted to a string before being sent.
 
 #### Returns
 
@@ -477,7 +477,7 @@ The default consumption timeout is 0, which means there is no timeout set.
 `number`
 
 The consumption timeout value in milliseconds.
-                           A value of 0 indicates no timeout is set.
+A value of 0 indicates no timeout is set.
 
 #### Returns
 
@@ -545,7 +545,7 @@ Otherwise, message priority does not take effect.
 [`EMessagePriority`](../enumerations/EMessagePriority.md)
 
 The priority level for the message.
-                                   The available priority levels are defined in the EMessagePriority enum.
+The available priority levels are defined in the EMessagePriority enum.
 
 #### Returns
 
@@ -572,8 +572,8 @@ by consumers interested in those messages.
 ##### queueParams
 
 The queue parameters can be provided as a string (queue name) or as an object (queue parameters).
-                                                 If a string is provided, it should be the name of the queue.
-                                                 If an object is provided, it should contain the queue parameters as defined in the RedisSMQ documentation.
+If a string is provided, it should be the name of the queue.
+If an object is provided, it should contain the queue parameters as defined in the RedisSMQ documentation.
 
 `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
 
@@ -617,7 +617,7 @@ The default retry delay is 60000 milliseconds (1 minute).
 `number`
 
 The retry delay value in milliseconds. A value of 0 indicates no delay
-                        between retry attempts.
+between retry attempts.
 
 #### Returns
 
@@ -650,7 +650,7 @@ The default retry threshold is 3.
 `number`
 
 The retry threshold value. A positive integer representing the
-                            maximum number of retry attempts for the message. A value of 0 indicates no retry attempts.
+maximum number of retry attempts for the message. A value of 0 indicates no retry attempts.
 
 #### Returns
 
@@ -689,7 +689,7 @@ producibleMessage.setScheduledCRON('0 0 10 * * *').setScheduledRepeat(3).setSche
 `string`
 
 The CRON expression to define the schedule for the message's delivery.
-                       The expression should follow the CRON format standards.
+The expression should follow the CRON format standards.
 
 #### Returns
 
@@ -724,7 +724,7 @@ immediately, allowing for the system to perform any necessary operations or chec
 `number`
 
 The delay value in milliseconds. A positive integer representing the
-                        time to wait before sending the message.
+time to wait before sending the message.
 
 #### Returns
 
@@ -735,7 +735,7 @@ The delay value in milliseconds. A positive integer representing the
 #### Throws
 
 - If the provided delay value is not a positive integer,
-                                     this error is thrown.
+  this error is thrown.
 
 #### See
 
@@ -760,8 +760,8 @@ the message will be delivered.
 `number`
 
 The number of times the message is scheduled to repeat.
-                         Must be a non-negative integer.
-                         If the provided value is not a number or is negative, a `MessageMessagePropertyError` is thrown.
+Must be a non-negative integer.
+If the provided value is not a number or is negative, a `MessageMessagePropertyError` is thrown.
 
 #### Returns
 
@@ -794,8 +794,8 @@ how many times a message should be redelivered.
 `number`
 
 The repeat period value in milliseconds.
-                         A positive integer representing the time interval between redeliveries.
-                         If the provided value is not a positive integer, a MessageMessagePropertyError is thrown.
+A positive integer representing the time interval between redeliveries.
+If the provided value is not a positive integer, a MessageMessagePropertyError is thrown.
 
 #### Returns
 
@@ -856,7 +856,7 @@ the processing of outdated messages.
 `number`
 
 The TTL value in milliseconds. A value of 0 indicates that the
-                      message does not expire.
+message does not expire.
 
 #### Returns
 
@@ -887,11 +887,12 @@ These default values can be overridden when producing a message.
 `Partial`\<[`TMessageConsumeOptions`](../type-aliases/TMessageConsumeOptions.md)\>
 
 An object containing the consume options to be set as defaults.
-                         The object can include the following properties:
-                         - ttl: The default TTL value in milliseconds.
-                         - retryThreshold: The default retry threshold value.
-                         - retryDelay: The default retry delay value in milliseconds.
-                         - consumeTimeout: The default consumption timeout value in milliseconds.
+The object can include the following properties:
+
+- ttl: The default TTL value in milliseconds.
+- retryThreshold: The default retry threshold value.
+- retryDelay: The default retry delay value in milliseconds.
+- consumeTimeout: The default consumption timeout value in milliseconds.
 
 #### Returns
 

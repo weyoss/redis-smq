@@ -12,12 +12,14 @@ and delivering models.
 
 ## Message Exchanges
 
-[Message Exchanges](message-exchanges.md) enable the publication of a message to one or multiple queues based on the exchange configuration.
+[Message Exchanges](message-exchanges.md) enable the publication of a message to one or multiple queues based on the
+exchange configuration.
 This allows for flexible and dynamic routing of messages to various queues, catering to different application needs.
 
 ## Queue Delivery Models
 
-In contrast, [Queue Delivery Models](queue-delivery-models.md) govern how messages are delivered to consumers of a given queue. They determine
+In contrast, [Queue Delivery Models](queue-delivery-models.md) govern how messages are delivered to consumers of a given
+queue. They determine
 whether a message is delivered to a single consumer or to all consumers of the queue, ensuring that messages are
 processed efficiently and effectively.
 

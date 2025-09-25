@@ -260,9 +260,9 @@ config.reset((err) => {
 3. **NamespaceManager Isolation**: Use different namespaces for different applications/environments.
 
 4. **Message Storage Planning**: Configure message storage based on your debugging and monitoring needs:
-   - Enable for development/staging environments
-   - Configure appropriate retention policies for production
-   - Consider storage costs for high-volume applications
+    - Enable for development/staging environments
+    - Configure appropriate retention policies for production
+    - Consider storage costs for high-volume applications
 
 For an in-depth understanding of configuration options,
 see [IRedisSMQConfig Interface](api/interfaces/IRedisSMQConfig.md).

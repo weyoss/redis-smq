@@ -1,4 +1,5 @@
-[RedisSMQ](../README.md) / [Docs](README.md) / [FAQs](README.md) / How do I handle errors and exceptions when using RedisSMQ's classes and methods?
+[RedisSMQ](../README.md) / [Docs](README.md) / [FAQs](README.md) / How do I handle errors and exceptions when using
+RedisSMQ's classes and methods?
 
 # How do I handle errors and exceptions when using RedisSMQ's classes and methods?
 
@@ -7,7 +8,8 @@ error handling and event emitters. Here's a comprehensive guide on how to handle
 
 ## 1. Callback-based Error Handling
 
-Most methods in RedisSMQ use callbacks with the signature `(err, result) => void`. Always check for errors in these callbacks.
+Most methods in RedisSMQ use callbacks with the signature `(err, result) => void`. Always check for errors in these
+callbacks.
 
 Example:
 **File: /path/to/your/project/error-handling-example.js**

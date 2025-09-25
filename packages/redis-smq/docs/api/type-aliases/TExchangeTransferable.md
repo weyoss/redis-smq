@@ -2,4 +2,6 @@
 
 # Type Alias: TExchangeTransferable
 
-> **TExchangeTransferable** = [`TExchangeDirectTransferable`](TExchangeDirectTransferable.md) \| [`TExchangeTopicTransferable`](TExchangeTopicTransferable.md) \| [`TExchangeFanOutTransferable`](TExchangeFanOutTransferable.md)
+> **TExchangeTransferable** = [`TExchangeDirectTransferable`](TExchangeDirectTransferable.md) \| [
+`TExchangeTopicTransferable`](TExchangeTopicTransferable.md) \| [
+`TExchangeFanOutTransferable`](TExchangeFanOutTransferable.md)

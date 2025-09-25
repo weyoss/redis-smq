@@ -2,4 +2,5 @@
 
 # Type Alias: TMessageDeleteRawResponse
 
-> **TMessageDeleteRawResponse** = [`TMessageDeleteStatus`](TMessageDeleteStatus.md) \| \[`number`, `number`, `number`, `number`\]
+> **TMessageDeleteRawResponse** = [`TMessageDeleteStatus`](TMessageDeleteStatus.md) \| \[`number`, `number`, `number`,
+`number`\]

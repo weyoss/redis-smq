@@ -7,14 +7,20 @@ message queue (MQ) server.
 
 ## Configuring Scheduling Parameters
 
-To set up scheduling parameters for a specific message, you can utilize the following methods available in the [ProducibleMessage Class](api/classes/ProducibleMessage.md):
+To set up scheduling parameters for a specific message, you can utilize the following methods available in
+the [ProducibleMessage Class](api/classes/ProducibleMessage.md):
 
-- **[setScheduledCRON()](api/classes/ProducibleMessage.md#setscheduledcron)**: Allows you to specify a CRON expression for scheduling.
-- **[setScheduledDelay()](api/classes/ProducibleMessage.md#setscheduleddelay)**: Enables you to define a delay before the message is published.
-- **[setScheduledRepeat()](api/classes/ProducibleMessage.md#setscheduledrepeat)**: Used for setting up the message to repeat after a specified interval.
-- **[setScheduledRepeatPeriod()](api/classes/ProducibleMessage.md#setscheduledrepeatperiod)**: Sets the duration between each repeat occurrence.
+- **[setScheduledCRON()](api/classes/ProducibleMessage.md#setscheduledcron)**: Allows you to specify a CRON expression
+  for scheduling.
+- **[setScheduledDelay()](api/classes/ProducibleMessage.md#setscheduleddelay)**: Enables you to define a delay before
+  the message is published.
+- **[setScheduledRepeat()](api/classes/ProducibleMessage.md#setscheduledrepeat)**: Used for setting up the message to
+  repeat after a specified interval.
+- **[setScheduledRepeatPeriod()](api/classes/ProducibleMessage.md#setscheduledrepeatperiod)**: Sets the duration between
+  each repeat occurrence.
 
-You can publish scheduled messages just like any other message using the [Producer.produce()](api/classes/Producer.md#produce) method.
+You can publish scheduled messages just like any other message using
+the [Producer.produce()](api/classes/Producer.md#produce) method.
 
 ## Example
 
@@ -45,6 +51,7 @@ producer.produce(msg, (err, messageIds) => {
 
 For effective management of scheduled messages, refer to the following classes:
 
-- **[QueueScheduledMessages Class](api/classes/QueueScheduledMessages.md)**: Provides methods for handling scheduled messages in the queue.
-- **[Message Class](api/classes/Message.md)**: Offers additional functionalities for manipulating individual messages.
+- **[QueueScheduledMessages Class](api/classes/QueueScheduledMessages.md)**: Provides methods for handling scheduled
+  messages in the queue.
+- **[MessageManager Class](api/classes/MessageManager.md)**: Offers additional functionalities for manipulating individual messages.
 

@@ -1,11 +1,11 @@
-
 [RedisSMQ](../README.md) / [Docs](README.md) / Message Storage
 
 # Message Storage
 
 ## Overview
 
-RedisSMQ stores all messages in Redis data structures, with different storage mechanisms depending on message status and configuration. Understanding these storage patterns is essential for efficient queue management and troubleshooting.
+RedisSMQ stores all messages in Redis data structures, with different storage mechanisms depending on message status and
+configuration. Understanding these storage patterns is essential for efficient queue management and troubleshooting.
 
 ## Default Storage Behavior
 
@@ -29,7 +29,8 @@ RedisSMQ provides specialized classes for managing different types of messages:
 | Acknowledged  | [QueueAcknowledgedMessages](api/classes/QueueAcknowledgedMessages.md) | None            | **Yes**                      |
 | Dead-lettered | [QueueDeadLetteredMessages](api/classes/QueueDeadLetteredMessages.md) | None            | **Yes**                      |
 
-> **Important:** To use `QueueAcknowledgedMessages` or `QueueDeadLetteredMessages`, you must explicitly enable additional storage for these message types in your configuration.
+> **Important:** To use `QueueAcknowledgedMessages` or `QueueDeadLetteredMessages`, you must explicitly enable
+> additional storage for these message types in your configuration.
 
 ## Message Lifecycle and Storage
 
@@ -59,6 +60,7 @@ interface IMessageStoreConfig {
 ```
 
 Where:
+
 - `queueSize`: Maximum number of messages to store per queue (oldest removed first)
 - `expire`: Time in milliseconds before messages are automatically removed
 
