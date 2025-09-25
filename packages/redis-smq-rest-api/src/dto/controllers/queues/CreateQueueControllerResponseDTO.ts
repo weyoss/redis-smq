@@ -8,7 +8,7 @@
  */
 
 import { IQueueParams, IQueueProperties } from 'redis-smq';
-import { TErrors } from '../../../errors/types/index.js';
+import { TErrors } from '../../../errors/errors.js';
 
 export type CreateQueueControllerResponseDTO =
   | readonly [
@@ -18,5 +18,5 @@ export type CreateQueueControllerResponseDTO =
         properties: IQueueProperties;
       },
     ]
-  | TErrors['QueueInvalidQueueParameterError']
-  | TErrors['QueueQueueExistsError'];
+  | TErrors['InvalidQueueParametersError']
+  | TErrors['QueueAlreadyExistsError'];

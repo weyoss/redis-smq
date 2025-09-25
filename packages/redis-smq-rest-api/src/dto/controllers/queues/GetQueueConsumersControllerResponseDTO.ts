@@ -8,9 +8,9 @@
  */
 
 import { TQueueConsumer } from 'redis-smq';
-import { TErrors } from '../../../errors/types/index.js';
+import { TErrors } from '../../../errors/errors.js';
 
 export type GetQueueConsumersControllerResponseDTO =
   | readonly [200, { [key: string]: TQueueConsumer }]
-  | TErrors['QueueInvalidQueueParameterError']
-  | TErrors['QueueQueueNotFoundError'];
+  | TErrors['InvalidQueueParametersError']
+  | TErrors['QueueNotFoundError'];

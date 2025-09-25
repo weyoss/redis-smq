@@ -8,41 +8,41 @@
  */
 
 import bluebird from 'bluebird';
-import { Message, Producer, ProducibleMessage } from 'redis-smq';
+import { MessageManager, Producer, ProducibleMessage } from 'redis-smq';
 
 const { promisifyAll } = bluebird;
 
 export class MessagesService {
-  protected message;
+  protected messageManager;
   protected producer;
 
-  constructor(message: Message, producer: Producer) {
-    this.message = promisifyAll(message);
+  constructor(messageManager: MessageManager, producer: Producer) {
+    this.messageManager = promisifyAll(messageManager);
     this.producer = promisifyAll(producer);
   }
 
   async getMessagesByIds(messageIds: string[]) {
-    return this.message.getMessagesByIdsAsync(messageIds);
+    return this.messageManager.getMessagesByIdsAsync(messageIds);
   }
 
   async getMessageById(messageId: string) {
-    return this.message.getMessageByIdAsync(messageId);
+    return this.messageManager.getMessageByIdAsync(messageId);
   }
 
   async requeueMessageById(messageId: string) {
-    return this.message.requeueMessageByIdAsync(messageId);
+    return this.messageManager.requeueMessageByIdAsync(messageId);
   }
 
   async deleteMessageById(messageId: string) {
-    return this.message.deleteMessageByIdAsync(messageId);
+    return this.messageManager.deleteMessageByIdAsync(messageId);
   }
 
   async deleteMessagesByIds(messageIds: string[]) {
-    return this.message.deleteMessagesByIdsAsync(messageIds);
+    return this.messageManager.deleteMessagesByIdsAsync(messageIds);
   }
 
   async getMessageStatus(messageId: string) {
-    return this.message.getMessageStatusAsync(messageId);
+    return this.messageManager.getMessageStatusAsync(messageId);
   }
 
   async publishMessage(message: ProducibleMessage) {

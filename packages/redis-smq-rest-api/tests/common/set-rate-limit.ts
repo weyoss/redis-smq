@@ -8,7 +8,7 @@
  */
 
 import bluebird from 'bluebird';
-import { IQueueParams, IQueueRateLimit, QueueRateLimit } from 'redis-smq';
+import { IQueueParams, IQueueRateLimit, RedisSMQ } from 'redis-smq';
 
 const { promisifyAll } = bluebird;
 
@@ -16,8 +16,7 @@ export async function setRateLimit(
   queue: IQueueParams,
   rateLimit: IQueueRateLimit,
 ) {
-  const r = promisifyAll(new QueueRateLimit());
+  const r = promisifyAll(RedisSMQ.createQueueRateLimit());
   await r.setAsync(queue, rateLimit);
-  await r.shutdownAsync();
   return rateLimit;
 }

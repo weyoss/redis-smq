@@ -8,12 +8,11 @@
  */
 
 import bluebird from 'bluebird';
-import { ExchangeFanOut, IQueueParams } from 'redis-smq';
+import { ExchangeFanout, IQueueParams } from 'redis-smq';
 
 const { promisifyAll } = bluebird;
 
 export async function bindQueue(queue: IQueueParams, fanOut: string) {
-  const exchange = promisifyAll(new ExchangeFanOut());
+  const exchange = promisifyAll(new ExchangeFanout());
   await exchange.bindQueueAsync(queue, fanOut);
-  await exchange.shutdownAsync();
 }

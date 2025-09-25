@@ -9,11 +9,11 @@
 
 import {
   ConsumerGroups,
-  ExchangeFanOut,
-  Message,
-  Namespace,
+  ExchangeFanout,
+  MessageManager,
+  NamespaceManager,
   Producer,
-  Queue,
+  QueueManager,
   QueueAcknowledgedMessages,
   QueueDeadLetteredMessages,
   QueueMessages,
@@ -21,8 +21,7 @@ import {
   QueueRateLimit,
   QueueScheduledMessages,
 } from 'redis-smq';
-import { ILogger } from 'redis-smq-common';
-import { IRedisSMQRestApiParsedConfig } from '../../config/types/index.js';
+import { IRedisSMQRestApiParsedConfig } from '../../config/index.js';
 import { ConsumerGroupsService } from '../../services/ConsumerGroupsService.js';
 import { ExchangeFanOutService } from '../../services/ExchangeFanOutService.js';
 import { MessagesService } from '../../services/MessagesService.js';
@@ -36,19 +35,18 @@ import { QueueScheduledMessagesService } from '../../services/QueueScheduledMess
 import { QueuesService } from '../../services/QueuesService.js';
 
 export interface IContainer {
-  queue: Queue;
+  queueManager: QueueManager;
   queueMessages: QueueMessages;
   queuePendingMessages: QueuePendingMessages;
   queueAcknowledgedMessages: QueueAcknowledgedMessages;
   queueDeadLetteredMessages: QueueDeadLetteredMessages;
   queueScheduledMessages: QueueScheduledMessages;
-  message: Message;
+  messageManager: MessageManager;
   queueRateLimit: QueueRateLimit;
-  namespace: Namespace;
-  exchangeFanOut: ExchangeFanOut;
+  namespaceManager: NamespaceManager;
+  exchangeFanOut: ExchangeFanout;
   consumerGroups: ConsumerGroups;
   producer: Producer;
-  logger: ILogger;
   config: IRedisSMQRestApiParsedConfig;
 
   queuesService: QueuesService;

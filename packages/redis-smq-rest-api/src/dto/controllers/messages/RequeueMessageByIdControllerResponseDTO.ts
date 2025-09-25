@@ -7,10 +7,9 @@
  * in the root directory of this source tree.
  */
 
-import { TErrors } from '../../../errors/types/index.js';
+import { TErrors } from '../../../errors/errors.js';
 
 export type RequeueMessageByIdControllerResponseDTO =
   | readonly [204, null]
-  | TErrors['MessageMessageNotFoundError']
-  | TErrors['MessageMessageNotRequeuableError']
-  | TErrors['MessageInvalidParametersError'];
+  | TErrors['MessageNotFoundError']
+  | TErrors['MessageNotRequeuableError'];

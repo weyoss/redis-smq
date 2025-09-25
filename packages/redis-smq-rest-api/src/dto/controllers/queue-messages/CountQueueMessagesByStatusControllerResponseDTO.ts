@@ -8,9 +8,9 @@
  */
 
 import { IQueueMessagesCount } from 'redis-smq';
-import { TErrors } from '../../../errors/types/index.js';
+import { TErrors } from '../../../errors/errors.js';
 
 export type CountQueueMessagesByStatusControllerResponseDTO =
   | readonly [200, IQueueMessagesCount]
-  | TErrors['QueueInvalidQueueParameterError']
-  | TErrors['QueueQueueNotFoundError'];
+  | TErrors['InvalidQueueParametersError']
+  | TErrors['QueueNotFoundError'];

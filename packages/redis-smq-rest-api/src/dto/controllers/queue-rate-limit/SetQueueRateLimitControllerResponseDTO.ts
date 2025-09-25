@@ -8,9 +8,10 @@
  */
 
 import { IQueueRateLimit } from 'redis-smq';
-import { TErrors } from '../../../errors/types/index.js';
+import { TErrors } from '../../../errors/errors.js';
 
 export type SetQueueRateLimitControllerResponseDTO =
   | readonly [200, IQueueRateLimit]
-  | TErrors['QueueQueueNotFoundError']
-  | TErrors['QueueRateLimitQueueNotFoundError'];
+  | TErrors['QueueNotFoundError']
+  | TErrors['InvalidRateLimitError']
+  | TErrors['InvalidRateLimitIntervalError'];

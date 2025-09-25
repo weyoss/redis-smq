@@ -8,9 +8,9 @@
  */
 
 import { IQueueProperties } from 'redis-smq';
-import { TErrors } from '../../../errors/types/index.js';
+import { TErrors } from '../../../errors/errors.js';
 
 export type GetQueuePropertiesControllerResponseDTO =
   | readonly [200, IQueueProperties]
-  | TErrors['QueueInvalidQueueParameterError']
-  | TErrors['QueueQueueNotFoundError'];
+  | TErrors['InvalidQueueParametersError']
+  | TErrors['QueueNotFoundError'];

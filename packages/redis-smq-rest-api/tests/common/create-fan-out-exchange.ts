@@ -8,13 +8,12 @@
  */
 
 import bluebird from 'bluebird';
-import { ExchangeFanOut } from 'redis-smq';
+import { ExchangeFanout } from 'redis-smq';
 
 const { promisifyAll } = bluebird;
 
 export async function createFanOutExchange(name: string) {
-  const exchangeFanOut = promisifyAll(new ExchangeFanOut());
+  const exchangeFanOut = promisifyAll(new ExchangeFanout());
   await exchangeFanOut.saveExchangeAsync(name);
-  await exchangeFanOut.shutdownAsync();
   return name;
 }

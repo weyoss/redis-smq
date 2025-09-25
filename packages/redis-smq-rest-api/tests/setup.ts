@@ -7,26 +7,28 @@
  * in the root directory of this source tree.
  */
 
-import { Configuration } from 'redis-smq';
+import bluebird from 'bluebird';
+import { RedisSMQ } from 'redis-smq';
 import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
 import { config } from './common/config.js';
 import {
   getRedisClientInstance,
   shutdownRedisClient,
 } from './common/redis-client.js';
+import { redisSMQConfig } from './common/redis-smq-config.js';
 import { startApiServer, stopApiServer } from './common/start-api-server.js';
 import {
   initializeRedis,
   shutDownRedisServer,
 } from './common/start-redis-server.js';
 
+const RedisSMQAsync = bluebird.promisifyAll(RedisSMQ);
+
 beforeAll(async () => {
   await initializeRedis();
-  await startApiServer();
 });
 
 afterAll(async () => {
-  await stopApiServer();
   await shutdownRedisClient();
   await shutDownRedisServer();
 });
@@ -34,8 +36,15 @@ afterAll(async () => {
 beforeEach(async () => {
   const redis = await getRedisClientInstance();
   await redis.flushallAsync();
-  Configuration.reset();
-  Configuration.getSetConfig(config);
+  await RedisSMQAsync.initializeWithConfigAsync({
+    ...redisSMQConfig,
+    redis: config.redis,
+  });
+  await RedisSMQAsync.shutdownAsync();
+  await startApiServer();
 });
 
-afterEach(async () => void 0);
+afterEach(async () => {
+  await stopApiServer();
+  await RedisSMQAsync.shutdownAsync();
+});

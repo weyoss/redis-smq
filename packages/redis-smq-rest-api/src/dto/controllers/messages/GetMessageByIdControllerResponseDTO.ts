@@ -8,8 +8,8 @@
  */
 
 import { IMessageTransferable } from 'redis-smq';
-import { TErrors } from '../../../errors/types/index.js';
+import { TErrors } from '../../../errors/errors.js';
 
 export type GetMessageByIdControllerResponseDTO =
   | readonly [200, IMessageTransferable]
-  | TErrors['MessageMessageNotFoundError'];
+  | TErrors['MessageNotFoundError'];

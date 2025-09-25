@@ -7,9 +7,9 @@
  * in the root directory of this source tree.
  */
 
-import { TErrors } from '../../../errors/types/index.js';
+import { TErrors } from '../../../errors/errors.js';
 
 export type CountQueueAcknowledgedMessagesControllerResponseDTO =
   | readonly [200, number]
-  | TErrors['QueueInvalidQueueParameterError']
-  | TErrors['QueueQueueNotFoundError'];
+  | TErrors['InvalidQueueParametersError']
+  | TErrors['QueueNotBoundError'];

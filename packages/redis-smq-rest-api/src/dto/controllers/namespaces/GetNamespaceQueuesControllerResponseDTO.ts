@@ -8,9 +8,9 @@
  */
 
 import { IQueueParams } from 'redis-smq';
-import { TErrors } from '../../../errors/types/index.js';
+import { TErrors } from '../../../errors/errors.js';
 
 export type GetNamespaceQueuesControllerResponseDTO =
   | readonly [200, IQueueParams[]]
-  | TErrors['NamespaceInvalidNamespaceError']
+  | TErrors['InvalidNamespaceError']
   | TErrors['NamespaceNotFoundError'];

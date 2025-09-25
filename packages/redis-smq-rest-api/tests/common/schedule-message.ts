@@ -8,12 +8,12 @@
  */
 
 import bluebird from 'bluebird';
-import { IQueueParams, Producer, ProducibleMessage } from 'redis-smq';
+import { IQueueParams, ProducibleMessage, RedisSMQ } from 'redis-smq';
 
 const { promisifyAll } = bluebird;
 
 export async function scheduleMessage(queue: string | IQueueParams) {
-  const producer = promisifyAll(new Producer());
+  const producer = promisifyAll(RedisSMQ.createProducer());
   await producer.runAsync();
 
   const message = new ProducibleMessage();

@@ -9,18 +9,17 @@
 
 import {
   asClass,
-  asFunction,
   AwilixContainer,
   createContainer,
   InjectionMode,
 } from 'awilix';
 import {
   ConsumerGroups,
-  ExchangeFanOut,
-  Message,
-  Namespace,
+  ExchangeFanout,
+  MessageManager,
+  NamespaceManager,
   Producer,
-  Queue,
+  QueueManager,
   QueueAcknowledgedMessages,
   QueueDeadLetteredMessages,
   QueueMessages,
@@ -28,7 +27,6 @@ import {
   QueueRateLimit,
   QueueScheduledMessages,
 } from 'redis-smq';
-import { logger } from 'redis-smq-common';
 import { ConsumerGroupsService } from '../services/ConsumerGroupsService.js';
 import { ExchangeFanOutService } from '../services/ExchangeFanOutService.js';
 import { MessagesService } from '../services/MessagesService.js';
@@ -49,48 +47,24 @@ export class Container {
     const instance = this.getInstance();
     instance.register({
       // RedisSMQ classes
-      queue: asClass(Queue)
+      queueManager: asClass(QueueManager)
         .singleton()
         .disposer((i) => new Promise((resolve) => i.shutdown(resolve))),
-      queueMessages: asClass(QueueMessages)
-        .singleton()
-        .disposer((i) => new Promise((resolve) => i.shutdown(resolve))),
-      queuePendingMessages: asClass(QueuePendingMessages)
-        .singleton()
-        .disposer((i) => new Promise((resolve) => i.shutdown(resolve))),
-      queueAcknowledgedMessages: asClass(QueueAcknowledgedMessages)
-        .singleton()
-        .disposer((i) => new Promise((resolve) => i.shutdown(resolve))),
-      queueDeadLetteredMessages: asClass(QueueDeadLetteredMessages)
-        .singleton()
-        .disposer((i) => new Promise((resolve) => i.shutdown(resolve))),
-      queueScheduledMessages: asClass(QueueScheduledMessages)
-        .singleton()
-        .disposer((i) => new Promise((resolve) => i.shutdown(resolve))),
-      message: asClass(Message)
-        .singleton()
-        .disposer((i) => new Promise((resolve) => i.shutdown(resolve))),
-      queueRateLimit: asClass(QueueRateLimit)
-        .singleton()
-        .disposer((i) => new Promise((resolve) => i.shutdown(resolve))),
-      namespace: asClass(Namespace)
-        .singleton()
-        .disposer((i) => new Promise((resolve) => i.shutdown(resolve))),
-      exchangeFanOut: asClass(ExchangeFanOut)
-        .singleton()
-        .disposer((i) => new Promise((resolve) => i.shutdown(resolve))),
+      queueMessages: asClass(QueueMessages).singleton(),
+      queuePendingMessages: asClass(QueuePendingMessages).singleton(),
+      queueAcknowledgedMessages: asClass(QueueAcknowledgedMessages).singleton(),
+      queueDeadLetteredMessages: asClass(QueueDeadLetteredMessages).singleton(),
+      queueScheduledMessages: asClass(QueueScheduledMessages).singleton(),
+      messageManager: asClass(MessageManager).singleton(),
+      queueRateLimit: asClass(QueueRateLimit).singleton(),
+      namespaceManager: asClass(NamespaceManager).singleton(),
+      exchangeFanOut: asClass(ExchangeFanout).singleton(),
       consumerGroups: asClass(ConsumerGroups)
         .singleton()
         .disposer((i) => new Promise((resolve) => i.shutdown(resolve))),
       producer: asClass(Producer)
         .singleton()
         .disposer((i) => new Promise((resolve) => i.shutdown(resolve))),
-      logger: asFunction(() => {
-        const config = instance.resolve('config').logger || {
-          enabled: false,
-        };
-        return logger.getLogger(config);
-      }).singleton(),
 
       // Services
       queuesService: asClass(QueuesService),

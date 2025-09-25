@@ -1,3 +1,12 @@
+/*
+ * Copyright (c)
+ * Weyoss <weyoss@protonmail.com>
+ * https://github.com/weyoss
+ *
+ * This source code is licensed under the MIT license found in the LICENSE file
+ * in the root directory of this source tree.
+ */
+
 import { bodyParser } from '@koa/bodyparser';
 import cors from '@koa/cors';
 import { asValue } from 'awilix';
@@ -7,17 +16,18 @@ import Koa from 'koa';
 import mount from 'koa-mount';
 import koaStatic from 'koa-static';
 import { join } from 'path';
-import { Configuration } from 'redis-smq';
-import tmp from 'tmp';
+import { RedisSMQ } from 'redis-smq';
+import { createLogger, ILogger } from 'redis-smq-common';
 import { getAbsoluteFSPath as swaggerUiDistPath } from 'swagger-ui-dist';
-import { Container } from './container/Container.js';
-import { routing } from './router/routing.js';
+import tmp from 'tmp';
 import { constants } from './config/constants.js';
-import { parseConfig } from './config/index.js';
 import {
   IRedisSMQRestApiConfig,
   IRedisSMQRestApiParsedConfig,
+  parseConfig,
 } from './config/index.js';
+import { Container } from './container/Container.js';
+import { buildSwaggerUiHtml } from './helpers/swagger-ui.js';
 import {
   IApplicationMiddlewareContext,
   IApplicationMiddlewareState,
@@ -28,7 +38,10 @@ import {
   saveOpenApiDocument,
 } from './lib/openapi-spec/builder.js';
 import { registerResources } from './lib/router/index.js';
-import { buildSwaggerUiHtml } from './helpers/swagger-ui.js';
+import { routing } from './router/routing.js';
+
+// Promisify Configuration
+const RedisSMQAsync = bluebird.promisifyAll(RedisSMQ);
 
 // Promisify tmp
 const tmpAsync = bluebird.promisifyAll(tmp);
@@ -39,10 +52,10 @@ export class RedisSMQRestApi {
     IApplicationMiddlewareContext
   >;
   protected config: IRedisSMQRestApiParsedConfig;
-  protected httpServer: http.Server;
-  protected logger;
-  protected bootstrapped = false;
   protected runHttpServer: boolean;
+  protected logger: ILogger;
+  protected httpServer: http.Server;
+  protected bootstrapped = false;
 
   constructor(config: IRedisSMQRestApiConfig = {}, runHttpServer = true) {
     this.app = new Koa<
@@ -51,13 +64,12 @@ export class RedisSMQRestApi {
     >();
     this.runHttpServer = runHttpServer;
     this.config = parseConfig(config);
-    Configuration.getSetConfig(this.config);
 
     Container.registerServices();
     const container = Container.getInstance();
     container.register({ config: asValue(this.config) });
 
-    this.logger = container.resolve('logger');
+    this.logger = createLogger(this.config.logger, 'RedisSMQRestApi');
     this.httpServer = http.createServer(this.app.callback());
   }
 
@@ -137,6 +149,7 @@ export class RedisSMQRestApi {
 
   protected async bootstrap() {
     if (!this.bootstrapped) {
+      await RedisSMQAsync.initializeAsync(this.config.redis);
       await this.initApplicationMiddlewares();
       await this.initRouting();
       await this.initOpenApi();
@@ -168,6 +181,7 @@ export class RedisSMQRestApi {
       await new Promise((resolve) => this.httpServer.close(resolve));
     }
     await Container.getInstance().dispose();
+    await RedisSMQAsync.shutdownAsync();
     this.logger.info(`RedisSMQ HTTP API has been shutdown.`);
   }
 }

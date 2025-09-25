@@ -7,11 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { TErrors } from '../../../errors/types/index.js';
+import { TErrors } from '../../../errors/errors.js';
 
 export type DeleteMessagesByIdsControllerResponseDTO =
   | readonly [204, null]
-  | TErrors['MessageMessageNotFoundError']
-  | TErrors['MessageMessageInProcessError']
-  | TErrors['MessageMessageNotDeletedError']
-  | TErrors['MessageInvalidParametersError'];
+  | TErrors['MessageNotFoundError'];
