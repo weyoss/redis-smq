@@ -137,3 +137,25 @@ Create .stack property on a target object
 #### Inherited from
 
 [`EventBusError`](EventBusError.md).[`captureStackTrace`](EventBusError.md#capturestacktrace)
+
+***
+
+### isError()
+
+> `static` **isError**(`error`): `error is Error`
+
+Indicates whether the argument provided is a built-in Error instance or not.
+
+#### Parameters
+
+##### error
+
+`unknown`
+
+#### Returns
+
+`error is Error`
+
+#### Inherited from
+
+[`EventBusError`](EventBusError.md).[`isError`](EventBusError.md#iserror)
