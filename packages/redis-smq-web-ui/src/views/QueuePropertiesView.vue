@@ -77,7 +77,7 @@ const error = computed(() => {
 
 const isQueueNotFoundError = computed(() => {
   const err = queuePropertiesError.value?.error;
-  return err?.message === 'QueueQueueNotFoundError';
+  return err?.message === 'QueueNotFoundError';
 });
 
 // Page Content Management
