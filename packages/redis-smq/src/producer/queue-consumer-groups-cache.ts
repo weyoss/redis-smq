@@ -60,8 +60,8 @@ export class QueueConsumerGroupsCache extends Runnable<
   }
 
   getConsumerGroups(queue: IQueueParams): {
-    exists: boolean;
-    consumerGroups: string[];
+    isPubSub: boolean;
+    queueConsumerGroups: string[];
   } {
     const key = `${queue.name}@${queue.ns}`;
     this.logger.debug(`Getting consumer groups for queue ${key}`);
@@ -72,8 +72,8 @@ export class QueueConsumerGroupsCache extends Runnable<
         `Found queue ${key} in cache with ${groupCount} consumer groups`,
       );
       return {
-        exists: true,
-        consumerGroups: this.consumerGroupsByQueues[key],
+        isPubSub: true,
+        queueConsumerGroups: this.consumerGroupsByQueues[key],
       };
     }
 
@@ -81,8 +81,8 @@ export class QueueConsumerGroupsCache extends Runnable<
       `Queue ${key} not found in cache, returning empty result`,
     );
     return {
-      exists: false,
-      consumerGroups: [],
+      isPubSub: false,
+      queueConsumerGroups: [],
     };
   }
 

@@ -1,0 +1,20 @@
+import { ICallback, IRedisClient } from 'redis-smq-common';
+import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
+import { IQueueParams } from '../../../queue-manager/index.js';
+import { IExchangeParams } from '../../types/index.js';
+
+export function _getExchangeFanoutBoundQueues(
+  client: IRedisClient,
+  exchange: IExchangeParams,
+  cb: ICallback<IQueueParams[]>,
+) {
+  const { keyFanoutQueues } = redisKeys.getExchangeFanoutKeys(
+    exchange.ns,
+    exchange.name,
+  );
+  client.sscanAll(keyFanoutQueues, {}, (err, reply) => {
+    if (err) return cb(err);
+    const queues: IQueueParams[] = (reply || []).map((i) => JSON.parse(i));
+    cb(null, queues);
+  });
+}

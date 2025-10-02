@@ -9,7 +9,7 @@
 --
 -- ARGV:
 -- ARGV[1-2]: General queue parameters (namespace, queue)
--- ARGV[3-18]: All queue property keys and their corresponding values.
+-- ARGV[3-16]: All queue property keys and their corresponding values.
 --
 -- Returns:
 --   - 'OK' on success
@@ -30,16 +30,14 @@ local queuePropertiesQueueDeliveryModel = ARGV[5]
 local deliveryModel = ARGV[6]
 local queuePropertiesRateLimit = ARGV[7]
 local rateLimit = ARGV[8]
-local queuePropertiesFanoutExchange = ARGV[9]
-local fanoutExchange = ARGV[10]
-local queuePropertiesMessagesCount = ARGV[11]
-local queuePropertiesAcknowledgedMessagesCount = ARGV[12]
-local queuePropertiesDeadLetteredMessagesCount = ARGV[13]
-local queuePropertiesPendingMessagesCount = ARGV[14]
-local queuePropertiesScheduledMessagesCount = ARGV[15]
-local queuePropertiesProcessingMessagesCount = ARGV[16]
-local queuePropertiesDelayedMessagesCount = ARGV[17]
-local queuePropertiesRequeuedMessagesCount = ARGV[18]
+local queuePropertiesMessagesCount = ARGV[9]
+local queuePropertiesAcknowledgedMessagesCount = ARGV[10]
+local queuePropertiesDeadLetteredMessagesCount = ARGV[11]
+local queuePropertiesPendingMessagesCount = ARGV[12]
+local queuePropertiesScheduledMessagesCount = ARGV[13]
+local queuePropertiesProcessingMessagesCount = ARGV[14]
+local queuePropertiesDelayedMessagesCount = ARGV[15]
+local queuePropertiesRequeuedMessagesCount = ARGV[16]
 
 -- Check if queue already exists to prevent overwriting
 if redis.call("SISMEMBER", keyQueues, queue) == 1 then
@@ -58,7 +56,6 @@ redis.call("HSET", keyQueueProperties,
         queuePropertiesQueueType, queueType,
         queuePropertiesQueueDeliveryModel, deliveryModel,
         queuePropertiesRateLimit, rateLimit,
-        queuePropertiesFanoutExchange, fanoutExchange,
         -- Initialize all counters to 0 for a consistent state
         queuePropertiesMessagesCount, 0,
         queuePropertiesAcknowledgedMessagesCount, 0,

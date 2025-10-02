@@ -17,10 +17,12 @@ import { redisKeys } from '../../common/redis-keys/redis-keys.js';
 import { _getConsumerGroups } from '../../consumer-groups/_/_get-consumer-groups.js';
 import { ConsumerHeartbeat } from '../../consumer/consumer-heartbeat/consumer-heartbeat.js';
 import {
+  QueueHasBoundExchangesError,
   QueueManagerActiveConsumersError,
   QueueNotEmptyError,
   QueueNotFoundError,
 } from '../../errors/index.js';
+import { Exchange } from '../../exchange/index.js';
 import { EQueueDeliveryModel, IQueueParams } from '../types/index.js';
 import { _getQueueConsumerIds } from './_get-queue-consumer-ids.js';
 import { _getQueueProperties } from './_get-queue-properties.js';
@@ -85,7 +87,6 @@ export function _deleteQueue(
     keyQueueMessages,
     keyQueueConsumerGroups,
   ];
-  let exchange: string | null = null;
   let pubSubDelivery = false;
   redisClient.watch(
     [
@@ -108,13 +109,20 @@ export function _deleteQueue(
                   const messagesCount = reply.messagesCount;
                   if (messagesCount) cb(new QueueNotEmptyError());
                   else {
-                    exchange = reply.fanoutExchange ?? null;
                     pubSubDelivery =
                       reply.deliveryModel === EQueueDeliveryModel.PUB_SUB;
                     cb();
                   }
                 }
               }),
+            (cb: ICallback) => {
+              const exchange = new Exchange();
+              exchange.getQueueBoundExchanges(queueParams, (err, reply) => {
+                if (err) return cb(err);
+                if (reply?.length) return cb(new QueueHasBoundExchangesError());
+                cb();
+              });
+            },
             (cb: ICallback<void>) => {
               if (pubSubDelivery) {
                 _getConsumerGroups(redisClient, queueParams, (err, groups) => {
@@ -162,7 +170,6 @@ export function _deleteQueue(
                 keys.push(...processingQueues);
               }
               tx.del(keys);
-              if (exchange) tx.srem(exchange, str);
               cb(null, tx);
             }
           },

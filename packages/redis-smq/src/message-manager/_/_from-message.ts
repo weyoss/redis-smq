@@ -58,17 +58,24 @@ export function _fromMessage(
     newProducibleMsg.setScheduledRepeatPeriod(repeatPeriod);
   }
   newProducibleMsg.setScheduledRepeat(producibleMessage.getScheduledRepeat());
+
+  // Exchange
   const exchange = producibleMessage.getExchange();
   if (exchange) {
     if (exchange.type === EExchangeType.DIRECT) {
-      newProducibleMsg.setQueue(exchange.params);
+      newProducibleMsg.setDirectExchange(exchange);
     } else if (exchange.type === EExchangeType.TOPIC) {
-      newProducibleMsg.setTopic(exchange.params);
-    } else if (exchange.type === EExchangeType.FANOUT) {
-      newProducibleMsg.setFanOut(exchange.params);
+      newProducibleMsg.setTopicExchange(exchange);
+    } else {
+      newProducibleMsg.setFanoutExchange(exchange);
     }
   }
 
+  // Queue
+  const queue = producibleMessage.getQueue();
+  if (queue) newProducibleMsg.setQueue(queue);
+
+  // MessageEnvelope
   const newEnvelope = new MessageEnvelope(newProducibleMsg);
 
   // Handle MessageState cloning or resetting

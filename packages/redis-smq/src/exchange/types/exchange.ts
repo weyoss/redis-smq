@@ -7,46 +7,32 @@
  * in the root directory of this source tree.
  */
 
-import { ICallback } from 'redis-smq-common';
-import { IQueueParams } from '../../queue-manager/index.js';
-
 export enum EExchangeType {
   DIRECT,
   FANOUT,
   TOPIC,
 }
 
-export interface ITopicParams {
-  topic: string;
+export enum EExchangeQueuePolicy {
+  STANDARD, // only FIFO/LIFO queues
+  PRIORITY, // only priority queues
+}
+
+export enum EExchangeProperty {
+  TYPE = 0,
+  QUEUE_POLICY,
+}
+
+export interface IExchangeParams {
+  name: string;
   ns: string;
 }
 
-export type TExchangeDirectTransferable = {
-  type: EExchangeType.DIRECT;
-  params: IQueueParams;
-  exchangeTag: string;
-};
+export interface IExchangeParsedParams extends IExchangeParams {
+  type: EExchangeType;
+}
 
-export type TExchangeTopicTransferable = {
-  type: EExchangeType.TOPIC;
-  params: ITopicParams;
-  exchangeTag: string;
-};
-
-export type TExchangeFanOutTransferable = {
-  type: EExchangeType.FANOUT;
-  params: string;
-  exchangeTag: string;
-};
-
-export type TExchangeTransferable =
-  | TExchangeDirectTransferable
-  | TExchangeTopicTransferable
-  | TExchangeFanOutTransferable;
-
-export interface IExchange<ExchangeParams> {
-  getQueues(
-    exchangeParams: ExchangeParams,
-    cb: ICallback<IQueueParams[]>,
-  ): void;
+export interface IExchangeProperties {
+  type: EExchangeType;
+  queuePolicy: EExchangeQueuePolicy;
 }

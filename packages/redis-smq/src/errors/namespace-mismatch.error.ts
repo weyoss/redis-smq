@@ -9,4 +9,4 @@
 
 import { RedisSMQError } from 'redis-smq-common';
 
-export class MessageExchangeError extends RedisSMQError {}
+export class NamespaceMismatchError extends RedisSMQError {}

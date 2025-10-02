@@ -7,6 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import { ExchangeError } from './exchange.error.js';
+import { ProducerError } from './producer.error.js';
 
-export class MessageExchangeRequiredError extends ExchangeError {}
+export class NoMatchedQueuesForMessageExchangeError extends ProducerError {}

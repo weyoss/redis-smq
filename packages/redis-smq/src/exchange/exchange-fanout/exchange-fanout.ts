@@ -7,492 +7,454 @@
  * in the root directory of this source tree.
  */
 
-import { async, CallbackEmptyReplyError, ICallback } from 'redis-smq-common';
+import {
+  async,
+  CallbackEmptyReplyError,
+  createLogger,
+  ICallback,
+  IWatchTransactionAttemptResult,
+  withWatchTransaction,
+} from 'redis-smq-common';
 import { withSharedPoolConnection } from '../../common/redis-connection-pool/with-shared-pool-connection.js';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
-import { _getQueueProperties } from '../../queue-manager/_/_get-queue-properties.js';
-import { _parseQueueParams } from '../../queue-manager/_/_parse-queue-params.js';
-import {
-  EQueueProperty,
-  IQueueParams,
-  IQueueProperties,
-} from '../../queue-manager/index.js';
+import { Configuration } from '../../config/index.js';
 import {
   ExchangeHasBoundQueuesError,
-  QueueDeliveryModelMismatchError,
+  NamespaceMismatchError,
+  QueueAlreadyBound,
   QueueNotBoundError,
 } from '../../errors/index.js';
-import { ExchangeAbstract } from '../exchange-abstract.js';
-import { _getFanoutExchangeQueues } from './_/_get-fanout-exchange-queues.js';
-import { _getQueueFanoutExchange } from './_/_get-queue-fanout-exchange.js';
-import { _validateExchangeFanoutParams } from './_/_validate-exchange-fanout-params.js';
+import { _parseQueueParams } from '../../queue-manager/_/_parse-queue-params.js';
+import { EQueueType, IQueueParams } from '../../queue-manager/index.js';
+import { _parseExchangeParams } from '../_/_parse-exchange-params.js';
+import { _validateQueueBinding } from '../_/_validate-queue-binding.js';
+import { _validateExchange } from '../_/_validate-exchange.js';
+import {
+  EExchangeProperty,
+  EExchangeQueuePolicy,
+  EExchangeType,
+  IExchangeParams,
+} from '../types/index.js';
+import { _getExchangeFanoutBoundQueues } from './_/_get-exchange-fanout-bound-queues.js';
 
 /**
  * Fanout Exchange implementation for RedisSMQ.
  *
- * A fanout exchange routes messages to all queues bound to it, regardless of routing keys.
- * This is useful for broadcasting messages to multiple consumers. All bound queues must
- * have the same queue type to ensure compatibility.
+ * A fanout exchange routes messages to all queues that are bound to it, ignoring routing keys.
+ * This is useful for broadcasting messages to multiple consumers or implementing pub/sub patterns.
  *
- * Key features:
- * - Broadcasts messages to all bound queues
- * - Enforces queue type consistency across bound queues
- * - Supports atomic bind/unbind operations
- * - Prevents deletion when queues are still bound
+ * Features:
+ * - Message broadcasting to all bound queues
+ * - Atomic queue binding and unbinding operations
+ * - Concurrent modification detection using Redis WATCH
+ * - Namespace isolation for multi-tenant applications
+ * - Comprehensive error handling and validation
  *
  * @example
  * ```typescript
  * const fanoutExchange = new ExchangeFanout();
  *
- * // Save the exchange
- * fanoutExchange.saveExchange('notifications', (err) => {
- *   if (err) console.error('Failed to save exchange:', err);
- * });
- *
  * // Bind queues to the exchange
- * fanoutExchange.bindQueue('email-queue', 'notifications', (err) => {
- *   if (err) console.error('Failed to bind queue:', err);
+ * fanoutExchange.bindQueue('notifications', 'broadcast-exchange', (err) => {
+ *   if (err) {
+ *     console.error('Failed to bind queue:', err);
+ *     return;
+ *   }
+ *   console.log('Queue bound successfully');
  * });
  *
  * // Get all bound queues
- * fanoutExchange.getQueues('notifications', (err, queues) => {
- *   if (err) console.error('Error:', err);
- *   else console.log('Bound queues:', queues);
+ * fanoutExchange.matchQueues('broadcast-exchange', (err, queues) => {
+ *   if (err) {
+ *     console.error('Failed to get bound queues:', err);
+ *     return;
+ *   }
+ *   console.log('Bound queues:', queues);
  * });
  * ```
  */
-export class ExchangeFanout extends ExchangeAbstract<string> {
-  /**
-   * Creates a new ExchangeFanout instance.
-   *
-   * Initializes the fanout exchange with logging capabilities.
-   */
+export class ExchangeFanout {
+  protected readonly type = EExchangeType.FANOUT;
+  protected logger;
+
   constructor() {
-    super();
-    this.logger.info('ExchangeFanOut initialized');
+    this.logger = createLogger(
+      Configuration.getConfig().logger,
+      this.constructor.name,
+    );
   }
 
   /**
    * Retrieves all queues bound to the specified fanout exchange.
    *
-   * @param exchangeParams - The name of the fanout exchange
-   * @param cb - Callback function that receives the bound queues or an error
+   * This method returns all queues that are currently bound to the fanout exchange.
+   * In a fanout exchange, messages are delivered to all bound queues regardless
+   * of routing keys, making this method useful for understanding message distribution.
+   *
+   * @param exchange - The exchange identifier. Can be a string (exchange name) or
+   *                  an object with name and namespace properties. If namespace is
+   *                  not specified, the default namespace from configuration is used.
+   * @param cb - Callback function called with the list of bound queues or an error
+   *
+   * @throws {InvalidExchangeParametersError} When exchange parameters are invalid
+   * @throws {Error} When Redis operations fail
    *
    * @example
    * ```typescript
-   * const exchange = new ExchangeFanout();
+   * const fanoutExchange = new ExchangeFanout();
    *
-   * exchange.getQueues('notifications', (err, queues) => {
+   * // Get bound queues using exchange name
+   * fanoutExchange.matchQueues('broadcast-exchange', (err, queues) => {
    *   if (err) {
-   *     console.error('Failed to get queues:', err);
-   *   } else {
-   *     console.log('Bound queues:', queues);
-   *     // queues = [{ name: 'email-queue', ns: 'default' }, { name: 'sms-queue', ns: 'default' }]
+   *     console.error('Failed to get bound queues:', err);
+   *     return;
    *   }
-   * });
-   * ```
    *
-   * @throws {InvalidFanoutExchangeParametersError} When the exchange name is invalid
-   * @throws {Error} When Redis connection or query operations fail
+   *   console.log(`Found ${queues.length} bound queues:`);
+   *   queues.forEach(queue => {
+   *     console.log(`- Queue: ${queue.name} (namespace: ${queue.ns})`);
+   *   });
+   * });
+   *
+   * // Get bound queues using exchange object with namespace
+   * fanoutExchange.matchQueues(
+   *   { name: 'broadcast-exchange', ns: 'production' },
+   *   (err, queues) => {
+   *     if (!err) {
+   *       console.log('Production queues:', queues);
+   *     }
+   *   }
+   * );
+   * ```
    */
-  getQueues(exchangeParams: string, cb: ICallback<IQueueParams[]>): void {
-    this.logger.debug(`Getting queues for exchange: ${exchangeParams}`);
-
-    const fanOutName = _validateExchangeFanoutParams(exchangeParams);
-    if (fanOutName instanceof Error) {
-      this.logger.error(`Invalid exchange parameters: ${fanOutName.message}`);
-      return cb(fanOutName);
-    }
-
-    withSharedPoolConnection((client, cb) => {
-      this.logger.debug(`Fetching queues bound to exchange: ${fanOutName}`);
-      _getFanoutExchangeQueues(client, fanOutName, (err, queues) => {
-        if (err) {
-          this.logger.error(`Error fetching bound queues: ${err.message}`);
-          return cb(err);
-        }
-
-        this.logger.info(
-          `Found ${queues?.length || 0} queues bound to exchange: ${fanOutName}`,
-        );
-        if (queues && queues.length > 0) {
-          this.logger.debug(`Bound queues: ${JSON.stringify(queues)}`);
-        }
-
-        cb(null, queues || []);
-      });
-    }, cb);
+  matchQueues(
+    exchange: string | IExchangeParams,
+    cb: ICallback<IQueueParams[]>,
+  ): void {
+    const exchangeParams = _parseExchangeParams(exchange, this.type);
+    if (exchangeParams instanceof Error) return cb(exchangeParams);
+    withSharedPoolConnection(
+      (client, cb) => _getExchangeFanoutBoundQueues(client, exchangeParams, cb),
+      cb,
+    );
   }
 
   /**
-   * Creates and saves a new fanout exchange.
+   * Deletes a fanout exchange from the system.
    *
-   * The exchange name must be a valid Redis key. Once saved, queues can be bound to this exchange.
+   * @param exchange - The exchange identifier. Can be a string (exchange name) or
+   *                  an object with name and namespace properties.
+   * @param cb - Callback function called when the deletion completes
    *
-   * @param exchangeParams - The name of the fanout exchange to create
-   * @param cb - Callback function that receives an error if the operation fails
-   *
-   * @example
-   * ```typescript
-   * const exchange = new ExchangeFanout();
-   *
-   * exchange.saveExchange('user-notifications', (err) => {
-   *   if (err) {
-   *     console.error('Failed to save exchange:', err);
-   *   } else {
-   *     console.log('Exchange saved successfully');
-   *   }
-   * });
-   * ```
-   *
-   * @throws {InvalidFanoutExchangeParametersError} When the exchange name is invalid
-   * @throws {Error} When Redis connection or storage operations fail
-   */
-  saveExchange(exchangeParams: string, cb: ICallback<void>): void {
-    this.logger.debug(`Saving exchange: ${exchangeParams}`);
-
-    const fanOutName = _validateExchangeFanoutParams(exchangeParams);
-    if (fanOutName instanceof Error) {
-      this.logger.error(`Invalid exchange parameters: ${fanOutName.message}`);
-      return cb(fanOutName);
-    }
-
-    const { keyFanOutExchanges } = redisKeys.getMainKeys();
-    this.logger.debug(`Using Redis key: ${keyFanOutExchanges}`);
-
-    withSharedPoolConnection((client, cb) => {
-      this.logger.debug(
-        `Adding exchange ${fanOutName} to set ${keyFanOutExchanges}`,
-      );
-      client.sadd(keyFanOutExchanges, fanOutName, (err) => {
-        if (err) {
-          this.logger.error(`Failed to save exchange: ${err.message}`);
-          return cb(err);
-        }
-
-        this.logger.info(`Exchange ${fanOutName} saved successfully`);
-        cb();
-      });
-    }, cb);
-  }
-
-  /**
-   * Deletes a fanout exchange.
-   *
-   * The exchange can only be deleted if no queues are currently bound to it.
-   * This operation is atomic and uses Redis WATCH/MULTI/EXEC for consistency.
-   *
-   * @param exchangeParams - The name of the fanout exchange to delete
-   * @param cb - Callback function that receives an error if the operation fails
+   * @throws {InvalidExchangeParametersError} When exchange parameters are invalid
+   * @throws {ExchangeError} When the exchange is not found or type mismatch occurs
+   * @throws {ExchangeHasBoundQueuesError} When the exchange still has bound queues
+   * @throws {Error} When Redis operations fail or concurrent modifications are detected
    *
    * @example
    * ```typescript
-   * const exchange = new ExchangeFanout();
+   * const fanoutExchange = new ExchangeFanout();
    *
-   * exchange.deleteExchange('old-notifications', (err) => {
+   * // Delete an exchange (must have no bound queues)
+   * fanoutExchange.delete('old-broadcast-exchange', (err) => {
    *   if (err) {
    *     if (err instanceof ExchangeHasBoundQueuesError) {
    *       console.error('Cannot delete: exchange has bound queues');
+   *       // Unbind all queues first, then retry deletion
+   *     } else if (err instanceof ExchangeError) {
+   *       console.error('Exchange not found or invalid type');
    *     } else {
-   *       console.error('Failed to delete exchange:', err);
+   *       console.error('Deletion failed:', err);
    *     }
-   *   } else {
-   *     console.log('Exchange deleted successfully');
+   *     return;
    *   }
-   * });
-   * ```
    *
-   * @throws {InvalidFanoutExchangeParametersError} When the exchange name is invalid
-   * @throws {ExchangeHasBoundQueuesError} When the exchange still has bound queues
-   * @throws {Error} When Redis connection or deletion operations fail
+   *   console.log('Exchange deleted successfully');
+   * });
+   *
+   * // Delete exchange with specific namespace
+   * fanoutExchange.delete(
+   *   { name: 'temp-exchange', ns: 'testing' },
+   *   (err) => {
+   *     if (!err) console.log('Testing exchange deleted');
+   *   }
+   * );
+   * ```
    */
-  deleteExchange(exchangeParams: string, cb: ICallback<void>): void {
-    this.logger.debug(`Deleting exchange: ${exchangeParams}`);
+  delete(exchange: string | IExchangeParams, cb: ICallback): void {
+    const exchangeParams = _parseExchangeParams(exchange, this.type);
+    if (exchangeParams instanceof Error) return cb(exchangeParams);
 
-    const fanOutName = _validateExchangeFanoutParams(exchangeParams);
-    if (fanOutName instanceof Error) {
-      this.logger.error(`Invalid exchange parameters: ${fanOutName.message}`);
-      return cb(fanOutName);
-    }
-
-    const { keyFanoutExchangeBindings } =
-      redisKeys.getFanOutExchangeKeys(fanOutName);
-    const { keyFanOutExchanges } = redisKeys.getMainKeys();
-
-    this.logger.debug(
-      `Using Redis keys: ${keyFanOutExchanges}, ${keyFanoutExchangeBindings}`,
+    const { keyExchanges } = redisKeys.getMainKeys();
+    const { keyNamespaceExchanges } = redisKeys.getNamespaceKeys(
+      exchangeParams.ns,
+    );
+    const { keyExchange, keyFanoutQueues } = redisKeys.getExchangeFanoutKeys(
+      exchangeParams.ns,
+      exchangeParams.name,
     );
 
-    withSharedPoolConnection((client, cb) => {
-      this.logger.debug(
-        `Watching keys for atomic operation: ${keyFanOutExchanges}, ${keyFanoutExchangeBindings}`,
-      );
-      client.watch([keyFanOutExchanges, keyFanoutExchangeBindings], (err) => {
-        if (err) {
-          this.logger.error(`Failed to watch Redis keys: ${err.message}`);
-          return cb(err);
-        }
+    const exchangeStr = JSON.stringify(exchangeParams);
 
-        this.logger.debug(
-          `Checking if exchange ${fanOutName} has bound queues`,
-        );
-        _getFanoutExchangeQueues(client, fanOutName, (err, reply = []) => {
-          if (err) {
-            this.logger.error(`Error checking bound queues: ${err.message}`);
-            return cb(err);
-          }
+    withSharedPoolConnection((client, outerCb) => {
+      withWatchTransaction(
+        client,
+        (c, watch, done) => {
+          let boundQueuesCount = 0;
 
-          if (reply.length) {
-            this.logger.warn(
-              `Cannot delete exchange ${fanOutName}: has ${reply.length} bound queues`,
-            );
-            return cb(new ExchangeHasBoundQueuesError());
-          }
+          async.waterfall(
+            [
+              // 1) WATCH base keys first so subsequent reads are protected
+              (cb1: ICallback<void>) =>
+                watch(
+                  [
+                    keyExchange,
+                    keyFanoutQueues,
+                    keyExchanges,
+                    keyNamespaceExchanges,
+                  ],
+                  cb1,
+                ),
 
-          this.logger.debug(
-            `Executing multi commands to delete exchange ${fanOutName}`,
+              // 2) Validate exchange under WATCH
+              (_: void, cb1: ICallback<void>) =>
+                _validateExchange(c, exchangeParams, true, cb1),
+
+              // 3) Ensure there are no bound queues (reads happen after WATCH)
+              (_: void, cb1: ICallback<void>) =>
+                c.sscanAll(keyFanoutQueues, {}, (err, queues) => {
+                  if (err) return cb1(err);
+                  boundQueuesCount = queues?.length ?? 0;
+                  if (boundQueuesCount > 0) {
+                    this.logger.warn(
+                      `delete: exchange has ${boundQueuesCount} bound queues, aborting`,
+                    );
+                    return cb1(new ExchangeHasBoundQueuesError());
+                  }
+                  cb1();
+                }),
+
+              // 4) Build MULTI to delete atomically
+              (_: void, cb1: ICallback<IWatchTransactionAttemptResult>) => {
+                const multi = c.multi();
+
+                // Remove exchange meta and fanout binding set
+                multi.del(keyExchange);
+                multi.del(keyFanoutQueues);
+
+                // Remove from global and namespace indexes
+                multi.srem(keyExchanges, exchangeStr);
+                multi.srem(keyNamespaceExchanges, exchangeStr);
+
+                cb1(null, { multi });
+              },
+            ],
+            done,
           );
-          const multi = client.multi();
-          multi.srem(keyFanOutExchanges, fanOutName);
-          multi.del(keyFanoutExchangeBindings);
-
-          multi.exec((err) => {
-            if (err) {
-              this.logger.error(
-                `Failed to execute delete commands: ${err.message}`,
-              );
-              return cb(err);
-            }
-
-            this.logger.info(`Exchange ${fanOutName} deleted successfully`);
-            cb();
-          });
-        });
-      });
+        },
+        (err) => {
+          if (err) return outerCb(err);
+          this.logger.info(
+            `delete: exchange "${exchangeParams.name}" (ns=${exchangeParams.ns}) deleted`,
+          );
+          outerCb();
+        },
+        {
+          maxAttempts: 5,
+          onRetry: (attemptNo, maxAttempts) =>
+            this.logger.warn(
+              `delete: concurrent modification, retrying attempt=${attemptNo}/${maxAttempts}`,
+            ),
+        },
+      );
     }, cb);
   }
 
   /**
    * Binds a queue to a fanout exchange.
    *
-   * This operation ensures that:
-   * - The queue exists and is accessible
-   * - All queues bound to the same exchange have the same queue type
-   * - The binding is atomic using Redis WATCH/MULTI/EXEC
-   * - If the queue was previously bound to another exchange, it's unbound first
+   * This method creates a binding between a queue and a fanout exchange, enabling
+   * messages published to the exchange to be delivered to the bound queue. In fanout
+   * exchanges, all bound queues receive copies of every message, regardless of routing keys.
    *
-   * @param queue - The queue to bind (string name or IQueueParams object)
-   * @param exchangeParams - The name of the fanout exchange
-   * @param cb - Callback function that receives an error if the operation fails
+   * @param queue - The queue to bind. Can be a string (queue name) or an object
+   *               with name and namespace properties.
+   * @param exchange - The exchange to bind to. Can be a string (exchange name) or
+   *                  an object with name and namespace properties.
+   * @param cb - Callback function called when the binding operation completes
+   *
+   * @throws {InvalidQueueParametersError} When queue parameters are invalid
+   * @throws {InvalidExchangeParametersError} When exchange parameters are invalid
+   * @throws {QueueNotFoundError} When the specified queue does not exist
+   * @throws {NamespaceMismatchError} When namespace mismatch occurs
+   * @throws {ExchangeError} When exchange type is invalid
+   *                        or concurrent modifications are detected
+   * @throws {Error} When Redis operations fail
    *
    * @example
    * ```typescript
-   * const exchange = new ExchangeFanout();
+   * const fanoutExchange = new ExchangeFanout();
    *
-   * // Bind using queue name (uses default namespace)
-   * exchange.bindQueue('email-queue', 'notifications', (err) => {
-   *   if (err) console.error('Failed to bind queue:', err);
+   * // Bind a queue to an exchange (both in default namespace)
+   * fanoutExchange.bindQueue('email-notifications', 'user-events', (err) => {
+   *   if (err) {
+   *     if (err instanceof QueueNotFoundError) {
+   *       console.error('Queue does not exist');
+   *     } else if (err instanceof ExchangeError) {
+   *       console.error('Exchange error:', err.message);
+   *     } else {
+   *       console.error('Binding failed:', err);
+   *     }
+   *     return;
+   *   }
+   *
+   *   console.log('Queue bound to exchange successfully');
    * });
    *
-   * // Bind using queue parameters with custom namespace
-   * exchange.bindQueue(
-   *   { name: 'sms-queue', ns: 'messaging' },
-   *   'notifications',
+   * // Bind with explicit namespace specification
+   * fanoutExchange.bindQueue(
+   *   { name: 'sms-notifications', ns: 'production' },
+   *   { name: 'user-events', ns: 'production' },
    *   (err) => {
-   *     if (err) {
-   *       if (err instanceof QueueDeliveryModelMismatchError) {
-   *         console.error('Queue type mismatch with existing bound queues');
-   *       } else {
-   *         console.error('Failed to bind queue:', err);
-   *       }
+   *     if (!err) {
+   *       console.log('Production queue bound successfully');
    *     }
    *   }
    * );
-   * ```
    *
-   * @throws {InvalidQueueParametersError} When the queue parameters are invalid
-   * @throws {InvalidFanoutExchangeParametersError} When the exchange name is invalid
-   * @throws {QueueNotFoundError} When the specified queue doesn't exist
-   * @throws {QueueDeliveryModelMismatchError} When queue type doesn't match existing bound queues
-   * @throws {Error} When Redis connection or binding operations fail
+   * // Multiple queues can be bound to the same fanout exchange
+   * const queues = ['email-queue', 'sms-queue', 'push-queue'];
+   * queues.forEach(queueName => {
+   *   fanoutExchange.bindQueue(queueName, 'notification-fanout', (err) => {
+   *     if (!err) console.log(`${queueName} bound to fanout exchange`);
+   *   });
+   * });
+   * ```
    */
   bindQueue(
     queue: IQueueParams | string,
-    exchangeParams: string,
-    cb: ICallback<void>,
+    exchange: string | IExchangeParams,
+    cb: ICallback,
   ): void {
-    this.logger.debug(
-      `Binding queue ${typeof queue === 'string' ? queue : JSON.stringify(queue)} to exchange: ${exchangeParams}`,
-    );
-
     const queueParams = _parseQueueParams(queue);
-    const fanOutName = _validateExchangeFanoutParams(exchangeParams);
+    const exchangeParams = _parseExchangeParams(exchange, this.type);
 
-    if (queueParams instanceof Error) {
-      this.logger.error(`Invalid queue parameters: ${queueParams.message}`);
-      return cb(queueParams);
+    if (queueParams instanceof Error) return cb(queueParams);
+    if (exchangeParams instanceof Error) return cb(exchangeParams);
+
+    if (queueParams.ns !== exchangeParams.ns) {
+      return cb(new NamespaceMismatchError());
     }
 
-    if (fanOutName instanceof Error) {
-      this.logger.error(`Invalid exchange parameters: ${fanOutName.message}`);
-      return cb(fanOutName);
-    }
-
-    const { keyQueueProperties } = redisKeys.getQueueKeys(queueParams, null);
-    const { keyFanoutExchangeBindings } =
-      redisKeys.getFanOutExchangeKeys(fanOutName);
-    const { keyQueues, keyFanOutExchanges } = redisKeys.getMainKeys();
-
-    this.logger.debug(
-      `Using Redis keys: ${keyQueues}, ${keyQueueProperties}, ${keyFanoutExchangeBindings}, ${keyFanOutExchanges}`,
+    const { keyQueueProperties, keyQueueExchangeBindings } =
+      redisKeys.getQueueKeys(queueParams, null);
+    const { keyExchange, keyFanoutQueues } = redisKeys.getExchangeFanoutKeys(
+      exchangeParams.ns,
+      exchangeParams.name,
+    );
+    const { keyExchanges } = redisKeys.getMainKeys();
+    const { keyNamespaceExchanges } = redisKeys.getNamespaceKeys(
+      queueParams.ns,
     );
 
-    withSharedPoolConnection((client, cb) => {
-      async.waterfall(
-        [
-          (cb: ICallback<void>) => {
-            this.logger.debug(
-              `Watching keys for atomic operation: ${keyQueues}, ${keyQueueProperties}, ${keyFanoutExchangeBindings}`,
-            );
-            client.watch(
-              [keyQueues, keyQueueProperties, keyFanoutExchangeBindings],
-              (err) => {
-                if (err) {
-                  this.logger.error(
-                    `Failed to watch Redis keys: ${err.message}`,
-                  );
-                }
-                cb(err);
-              },
-            );
-          },
-          (_, cb: ICallback<IQueueProperties>) => {
-            this.logger.debug(
-              `Getting properties for queue: ${queueParams.name}`,
-            );
-            _getQueueProperties(client, queueParams, (err, properties) => {
-              if (err) {
-                this.logger.error(
-                  `Failed to get queue properties: ${err.message}`,
-                );
-              }
-              cb(err, properties);
-            });
-          },
-          (
-            queueProperties: IQueueProperties,
-            cb: ICallback<IQueueProperties>,
-          ) => {
-            this.logger.debug(
-              `Checking queue type compatibility for exchange: ${fanOutName}`,
-            );
-            _getFanoutExchangeQueues(client, fanOutName, (err, queues) => {
-              if (err) {
-                this.logger.error(
-                  `Error checking bound queues: ${err.message}`,
-                );
-                return cb(err);
-              }
+    const exchangeStr = JSON.stringify(exchangeParams);
+    const queueStr = JSON.stringify(queueParams);
 
-              const eQueue = queues?.pop();
-              if (eQueue) {
-                this.logger.debug(
-                  `Found existing queue ${eQueue.name}, checking type compatibility`,
-                );
-                _getQueueProperties(
-                  client,
-                  eQueue,
-                  (err, exchangeQueueProperties) => {
-                    if (err) {
-                      this.logger.error(
-                        `Failed to get exchange queue properties: ${err.message}`,
-                      );
-                      return cb(err);
-                    }
+    withSharedPoolConnection((client, outerCb) => {
+      withWatchTransaction(
+        client,
+        (c, watch, done) => {
+          let exchangeQueuePolicy: EExchangeQueuePolicy;
 
-                    if (!exchangeQueueProperties) {
-                      this.logger.error(
-                        'Exchange queue properties returned empty',
-                      );
-                      return cb(new CallbackEmptyReplyError());
-                    }
+          async.waterfall(
+            [
+              // 1) WATCH base keys BEFORE any reads that inform writes
+              (cb1: ICallback<void>) =>
+                watch(
+                  [
+                    keyExchange,
+                    keyQueueProperties,
+                    keyFanoutQueues,
+                    keyQueueExchangeBindings,
+                    keyExchanges,
+                    keyNamespaceExchanges,
+                  ],
+                  cb1,
+                ),
 
-                    if (
-                      exchangeQueueProperties.queueType !==
-                      queueProperties.queueType
-                    ) {
-                      this.logger.warn(
-                        `Queue type mismatch: ${queueProperties.queueType} vs ${exchangeQueueProperties.queueType}`,
-                      );
-                      return cb(new QueueDeliveryModelMismatchError());
-                    }
-
-                    this.logger.debug('Queue types are compatible');
-                    cb(null, queueProperties);
+              // 2) Validate queue/exchange binding and compute exchange policy (under WATCH)
+              (_: void, cb1: ICallback<void>) =>
+                _validateQueueBinding(
+                  c,
+                  exchangeParams,
+                  queueParams,
+                  (err, reply) => {
+                    if (err) return cb1(err);
+                    if (!reply) return cb1(new CallbackEmptyReplyError());
+                    const [queueProperties] = reply;
+                    exchangeQueuePolicy =
+                      queueProperties.queueType === EQueueType.PRIORITY_QUEUE
+                        ? EExchangeQueuePolicy.PRIORITY
+                        : EExchangeQueuePolicy.STANDARD;
+                    cb1();
                   },
-                );
-              } else {
-                this.logger.debug(
-                  'No existing queues bound to exchange, proceeding with bind',
-                );
-                cb(null, queueProperties);
-              }
-            });
-          },
-          (queueProperties: IQueueProperties, cb: ICallback<void>) => {
-            const currentExchangeParams = queueProperties.fanoutExchange;
+                ),
 
-            if (currentExchangeParams === fanOutName) {
-              this.logger.info(
-                `Queue ${queueParams.name} is already bound to fanout exchange ${fanOutName}`,
-              );
-              return cb();
-            }
+              // 3) Check if already bound (under WATCH)
+              (_: void, cb1: ICallback<void>) =>
+                c.sismember(keyFanoutQueues, queueStr, (err, reply) => {
+                  if (err) return cb1(err);
+                  if (reply === 1) {
+                    this.logger.debug('bindQueue: already bound');
+                    return cb1(new QueueAlreadyBound());
+                  }
+                  cb1();
+                }),
 
-            this.logger.debug(
-              `Binding queue ${queueParams.name} to fanout exchange ${fanOutName}`,
-            );
-            const multi = client.multi();
-            const queueParamsStr = JSON.stringify(queueParams);
+              // 4) Build MULTI to persist meta, indexes, and the binding atomically
+              (_: void, cb1: ICallback<IWatchTransactionAttemptResult>) => {
+                const typeField = String(EExchangeProperty.TYPE);
+                const queuePolicyField = String(EExchangeProperty.QUEUE_POLICY);
 
-            multi.sadd(keyFanOutExchanges, fanOutName);
-            multi.sadd(keyFanoutExchangeBindings, queueParamsStr);
-            multi.hset(
-              keyQueueProperties,
-              String(EQueueProperty.FANOUT_EXCHANGE),
-              fanOutName,
-            );
+                const multi = c.multi();
 
-            if (currentExchangeParams) {
-              this.logger.debug(
-                `Queue was previously bound to fanout exchange ${currentExchangeParams}, removing old binding`,
-              );
-              const { keyFanoutExchangeBindings } =
-                redisKeys.getFanOutExchangeKeys(currentExchangeParams);
-              multi.srem(keyFanoutExchangeBindings, queueParamsStr);
-            }
+                // Persist exchange meta as a hash
+                multi.hset(keyExchange, typeField, EExchangeType.FANOUT);
+                multi.hset(keyExchange, queuePolicyField, exchangeQueuePolicy);
 
-            multi.exec((err) => {
-              if (err) {
-                this.logger.error(
-                  `Failed to execute bind commands: ${err.message}`,
-                );
-              } else {
-                this.logger.info(
-                  `Queue ${queueParams.name} successfully bound to fanout exchange ${fanOutName}`,
-                );
-              }
-              cb(err);
-            });
-          },
-        ],
+                // Register exchange in global and namespace indexes
+                multi.sadd(keyExchanges, exchangeStr);
+                multi.sadd(keyNamespaceExchanges, exchangeStr);
+
+                // Forward binding: add queue to the fanout set
+                multi.sadd(keyFanoutQueues, queueStr);
+
+                // Reverse index: record that this queue is bound to this exchange
+                multi.sadd(keyQueueExchangeBindings, exchangeStr);
+
+                cb1(null, { multi });
+              },
+            ],
+            done,
+          );
+        },
         (err) => {
           if (err) {
-            this.logger.debug('Error occurred, unwatching Redis keys');
-            client.unwatch(() => cb(err));
-          } else {
-            cb();
+            // Treat already-bound as success (idempotent)
+            if (err instanceof QueueAlreadyBound) return outerCb();
+            return outerCb(err);
           }
+          this.logger.info(
+            `bindQueue: bound q=${queueParams.name} ns=${queueParams.ns} -> ex=${exchangeParams.name} ns=${exchangeParams.ns}`,
+          );
+          outerCb();
+        },
+        {
+          maxAttempts: 5,
+          onRetry: (attemptNo, maxAttempts) =>
+            this.logger.warn(
+              `bindQueue: concurrent modification, retrying attempt=${attemptNo}/${maxAttempts}`,
+            ),
         },
       );
     }, cb);
@@ -501,279 +463,150 @@ export class ExchangeFanout extends ExchangeAbstract<string> {
   /**
    * Unbinds a queue from a fanout exchange.
    *
-   * This operation verifies that the queue is actually bound to the specified exchange
-   * before removing the binding. The operation is atomic using Redis WATCH/MULTI/EXEC.
+   * This method removes the binding between a queue and a fanout exchange, stopping
+   * message delivery from the exchange to the specified queue. Other queues bound
+   * to the same exchange will continue to receive messages.
    *
-   * @param queue - The queue to unbind (string name or IQueueParams object)
-   * @param exchangeParams - The name of the fanout exchange
-   * @param cb - Callback function that receives an error if the operation fails
+   * Note: This operation does not delete the exchange or queue, only removes their binding.
+   *
+   * @param queue - The queue to unbind. Can be a string (queue name) or an object
+   *               with name and namespace properties.
+   * @param exchange - The exchange to unbind from. Can be a string (exchange name) or
+   *                  an object with name and namespace properties.
+   * @param cb - Callback function called when the unbinding operation completes
+   *
+   * @throws {InvalidQueueParametersError} When queue parameters are invalid
+   * @throws {InvalidExchangeParametersError} When exchange parameters are invalid
+   * @throws {NamespaceMismatchError} When namespace mismatch occurs
+   * @throws {ExchangeError} When exchange type is invalid,
+   *                        exchange is not found or concurrent modifications are detected
+   * @throws {Error} When Redis operations fail
    *
    * @example
    * ```typescript
-   * const exchange = new ExchangeFanout();
+   * const fanoutExchange = new ExchangeFanout();
    *
-   * // Unbind using queue name
-   * exchange.unbindQueue('email-queue', 'notifications', (err) => {
+   * // Unbind a queue from an exchange
+   * fanoutExchange.unbindQueue('email-notifications', 'user-events', (err) => {
    *   if (err) {
-   *     if (err instanceof QueueNotBoundError) {
-   *       console.error('Queue is not bound to this exchange');
+   *     if (err instanceof ExchangeError) {
+   *       console.error('Exchange error:', err.message);
    *     } else {
-   *       console.error('Failed to unbind queue:', err);
+   *       console.error('Unbinding failed:', err);
    *     }
+   *     return;
    *   }
+   *
+   *   console.log('Queue unbound from exchange successfully');
    * });
    *
-   * // Unbind using queue parameters
-   * exchange.unbindQueue(
-   *   { name: 'sms-queue', ns: 'messaging' },
-   *   'notifications',
+   * // Unbind with explicit namespace specification
+   * fanoutExchange.unbindQueue(
+   *   { name: 'sms-notifications', ns: 'production' },
+   *   { name: 'user-events', ns: 'production' },
    *   (err) => {
-   *     if (err) console.error('Failed to unbind queue:', err);
+   *     if (!err) {
+   *       console.log('Production queue unbound successfully');
+   *     }
    *   }
    * );
-   * ```
    *
-   * @throws {InvalidQueueParametersError} When the queue parameters are invalid
-   * @throws {InvalidFanoutExchangeParametersError} When the exchange name is invalid
-   * @throws {QueueNotFoundError} When the specified queue doesn't exist
-   * @throws {QueueNotBoundError} When the queue is not bound to the specified exchange
-   * @throws {Error} When Redis connection or unbinding operations fail
+   * // Unbind multiple queues from the same exchange
+   * const queuesToUnbind = ['temp-queue-1', 'temp-queue-2'];
+   * queuesToUnbind.forEach(queueName => {
+   *   fanoutExchange.unbindQueue(queueName, 'broadcast-exchange', (err) => {
+   *     if (!err) console.log(`${queueName} unbound from exchange`);
+   *   });
+   * });
+   * ```
    */
   unbindQueue(
     queue: IQueueParams | string,
-    exchangeParams: string,
-    cb: ICallback<void>,
+    exchange: string | IExchangeParams,
+    cb: ICallback,
   ): void {
-    this.logger.debug(
-      `Unbinding queue ${typeof queue === 'string' ? queue : JSON.stringify(queue)} from exchange: ${exchangeParams}`,
-    );
-
     const queueParams = _parseQueueParams(queue);
-    const fanOutName = _validateExchangeFanoutParams(exchangeParams);
+    const exchangeParams = _parseExchangeParams(exchange, this.type);
 
-    if (queueParams instanceof Error) {
-      this.logger.error(`Invalid queue parameters: ${queueParams.message}`);
-      return cb(queueParams);
+    if (queueParams instanceof Error) return cb(queueParams);
+    if (exchangeParams instanceof Error) return cb(exchangeParams);
+
+    if (queueParams.ns !== exchangeParams.ns) {
+      this.logger.error(`Namespace mismatch`);
+      return cb(new NamespaceMismatchError());
     }
 
-    if (fanOutName instanceof Error) {
-      this.logger.error(`Invalid exchange parameters: ${fanOutName.message}`);
-      return cb(fanOutName);
-    }
-
-    const { keyQueueProperties } = redisKeys.getQueueKeys(queueParams, null);
-    const { keyQueues } = redisKeys.getMainKeys();
-    const { keyFanoutExchangeBindings } =
-      redisKeys.getFanOutExchangeKeys(fanOutName);
-
-    this.logger.debug(
-      `Using Redis keys: ${keyQueues}, ${keyQueueProperties}, ${keyFanoutExchangeBindings}`,
+    const { keyQueueProperties, keyQueueExchangeBindings } =
+      redisKeys.getQueueKeys(queueParams, null);
+    const { keyExchange, keyFanoutQueues } = redisKeys.getExchangeFanoutKeys(
+      exchangeParams.ns,
+      exchangeParams.name,
     );
 
-    withSharedPoolConnection((client, cb) => {
-      async.series(
-        [
-          (cb: ICallback<void>) => {
-            this.logger.debug(
-              `Watching keys for atomic operation: ${keyQueues}, ${keyQueueProperties}, ${keyFanoutExchangeBindings}`,
-            );
-            client.watch(
-              [keyQueues, keyQueueProperties, keyFanoutExchangeBindings],
-              (err) => {
-                if (err) {
-                  this.logger.error(
-                    `Failed to watch Redis keys: ${err.message}`,
-                  );
-                }
-                cb(err);
+    const queueStr = JSON.stringify(queueParams);
+    const exchangeStr = JSON.stringify(exchangeParams);
+
+    withSharedPoolConnection((client, outerCb) => {
+      withWatchTransaction(
+        client,
+        (c, watch, done) => {
+          async.waterfall(
+            [
+              // 1) WATCH base keys BEFORE reads
+              (cb1: ICallback<void>) =>
+                watch(
+                  [
+                    keyExchange,
+                    keyQueueProperties,
+                    keyFanoutQueues,
+                    keyQueueExchangeBindings,
+                  ],
+                  cb1,
+                ),
+
+              // 2) Validate exchange type (under WATCH)
+              (_: void, cb1: ICallback<void>) =>
+                _validateExchange(c, exchangeParams, true, cb1),
+
+              // 3) Ensure the queue is currently bound (under WATCH)
+              (_: void, cb1: ICallback<void>) =>
+                c.sismember(keyFanoutQueues, queueStr, (err, reply) => {
+                  if (err) return cb1(err);
+                  if (reply !== 1) return cb1(new QueueNotBoundError());
+                  cb1();
+                }),
+
+              // 4) Build MULTI to unbind atomically
+              (_: void, cb1: ICallback<IWatchTransactionAttemptResult>) => {
+                const multi = c.multi();
+
+                // Remove queue from fanout set
+                multi.srem(keyFanoutQueues, queueStr);
+
+                // Reverse index: remove exchange from queue's bindings
+                multi.srem(keyQueueExchangeBindings, exchangeStr);
+
+                cb1(null, { multi });
               },
-            );
-          },
-          (cb: ICallback<void>) => {
-            this.logger.debug(
-              `Verifying queue ${queueParams.name} is bound to exchange ${fanOutName}`,
-            );
-            _getQueueProperties(client, queueParams, (err, properties) => {
-              if (err) {
-                this.logger.error(
-                  `Failed to get queue properties: ${err.message}`,
-                );
-                return cb(err);
-              }
-
-              if (!properties) {
-                this.logger.error('Queue properties returned empty');
-                return cb(new CallbackEmptyReplyError());
-              }
-
-              if (properties.fanoutExchange !== fanOutName) {
-                this.logger.warn(
-                  `Queue ${queueParams.name} is not bound to exchange ${fanOutName} (bound to: ${properties.fanoutExchange || 'none'})`,
-                );
-                return cb(new QueueNotBoundError());
-              }
-
-              this.logger.debug(
-                `Queue ${queueParams.name} is bound to exchange ${fanOutName}, proceeding with unbind`,
-              );
-              cb();
-            });
-          },
-          (cb: ICallback<void>) => {
-            this.logger.debug(
-              `Executing unbind commands for queue ${queueParams.name} from exchange ${fanOutName}`,
-            );
-            const multi = client.multi();
-            const queueParamsStr = JSON.stringify(queueParams);
-
-            multi.srem(keyFanoutExchangeBindings, queueParamsStr);
-            multi.hdel(
-              keyQueueProperties,
-              String(EQueueProperty.FANOUT_EXCHANGE),
-            );
-
-            multi.exec((err) => {
-              if (err) {
-                this.logger.error(
-                  `Failed to execute unbind commands: ${err.message}`,
-                );
-              } else {
-                this.logger.info(
-                  `Queue ${queueParams.name} successfully unbound from exchange ${fanOutName}`,
-                );
-              }
-              cb(err);
-            });
-          },
-        ],
+            ],
+            done,
+          );
+        },
         (err) => {
-          if (err) {
-            this.logger.debug('Error occurred, unwatching Redis keys');
-            client.unwatch(() => cb(err));
-          } else {
-            cb();
-          }
+          if (err) return outerCb(err);
+          this.logger.info(
+            `unbindQueue: unbound q=${queueParams.name} ns=${queueParams.ns} <- ex=${exchangeParams.name} ns=${exchangeParams.ns}`,
+          );
+          outerCb();
+        },
+        {
+          maxAttempts: 5,
+          onRetry: (attemptNo, maxAttempts) =>
+            this.logger.warn(
+              `unbindQueue: concurrent modification, retrying attempt=${attemptNo}/${maxAttempts}`,
+            ),
         },
       );
-    }, cb);
-  }
-
-  /**
-   * Retrieves all existing fanout exchanges.
-   *
-   * @param cb - Callback function that receives the list of exchange names or an error
-   *
-   * @example
-   * ```typescript
-   * const exchange = new ExchangeFanout();
-   *
-   * exchange.getAllExchanges((err, exchanges) => {
-   *   if (err) {
-   *     console.error('Failed to get exchanges:', err);
-   *   } else {
-   *     console.log('Available exchanges:', exchanges);
-   *     // exchanges = ['notifications', 'user-events', 'system-alerts']
-   *   }
-   * });
-   * ```
-   *
-   * @throws {Error} When Redis connection or scan operations fail
-   */
-  getAllExchanges(cb: ICallback<string[]>): void {
-    this.logger.debug('Getting all fan-out exchanges');
-
-    const { keyFanOutExchanges } = redisKeys.getMainKeys();
-    this.logger.debug(`Using Redis key: ${keyFanOutExchanges}`);
-
-    withSharedPoolConnection((client, cb) => {
-      this.logger.debug(
-        `Scanning all exchanges from set ${keyFanOutExchanges}`,
-      );
-      client.sscanAll(keyFanOutExchanges, {}, (err, exchanges) => {
-        if (err) {
-          this.logger.error(`Failed to scan exchanges: ${err.message}`);
-          return cb(err);
-        }
-
-        this.logger.info(`Found ${exchanges?.length || 0} fan-out exchanges`);
-        if (exchanges && exchanges.length > 0) {
-          this.logger.debug(`Exchanges: ${JSON.stringify(exchanges)}`);
-        }
-
-        cb(null, exchanges || []);
-      });
-    }, cb);
-  }
-
-  /**
-   * Gets the fanout exchange that a queue is bound to.
-   *
-   * @param queue - The queue to check (string name or IQueueParams object)
-   * @param cb - Callback function that receives the exchange name or null if not bound
-   *
-   * @example
-   * ```typescript
-   * const exchange = new ExchangeFanout();
-   *
-   * // Check using queue name
-   * exchange.getQueueExchange('email-queue', (err, exchangeName) => {
-   *   if (err) {
-   *     console.error('Failed to get queue exchange:', err);
-   *   } else if (exchangeName) {
-   *     console.log(`Queue is bound to exchange: ${exchangeName}`);
-   *   } else {
-   *     console.log('Queue is not bound to any exchange');
-   *   }
-   * });
-   *
-   * // Check using queue parameters
-   * exchange.getQueueExchange(
-   *   { name: 'sms-queue', ns: 'messaging' },
-   *   (err, exchangeName) => {
-   *     if (err) console.error('Error:', err);
-   *     else console.log('Exchange:', exchangeName || 'none');
-   *   }
-   * );
-   * ```
-   *
-   * @throws {InvalidQueueParametersError} When the queue parameters are invalid
-   * @throws {QueueNotFoundError} When the specified queue doesn't exist
-   * @throws {Error} When Redis connection or query operations fail
-   */
-  getQueueExchange(
-    queue: IQueueParams | string,
-    cb: ICallback<string | null>,
-  ): void {
-    this.logger.debug(
-      `Getting exchange for queue: ${typeof queue === 'string' ? queue : JSON.stringify(queue)}`,
-    );
-
-    const queueParams = _parseQueueParams(queue);
-    if (queueParams instanceof Error) {
-      this.logger.error(`Invalid queue parameters: ${queueParams.message}`);
-      return cb(queueParams);
-    }
-
-    withSharedPoolConnection((client, cb) => {
-      this.logger.debug(`Fetching exchange for queue: ${queueParams.name}`);
-      _getQueueFanoutExchange(client, queueParams, (err, exchange) => {
-        if (err) {
-          this.logger.error(`Error fetching queue exchange: ${err.message}`);
-          return cb(err);
-        }
-
-        if (exchange) {
-          this.logger.info(
-            `Queue ${queueParams.name} is bound to exchange: ${exchange}`,
-          );
-        } else {
-          this.logger.info(
-            `Queue ${queueParams.name} is not bound to any exchange`,
-          );
-        }
-
-        cb(null, exchange);
-      });
     }, cb);
   }
 }

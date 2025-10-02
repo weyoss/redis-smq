@@ -17,24 +17,29 @@ import {
   Runnable,
 } from 'redis-smq-common';
 import { TProducerEvent } from '../common/index.js';
+import { RedisConnectionPool } from '../common/redis-connection-pool/redis-connection-pool.js';
+import { ERedisConnectionAcquisitionMode } from '../common/redis-connection-pool/types/connection-pool.js';
 import { Configuration } from '../config/index.js';
-import { _getExchangeQueues } from '../exchange/_/_get-exchange-queues.js';
-import { EExchangeType } from '../exchange/index.js';
-import { ProducibleMessage } from '../message/index.js';
-import { MessageEnvelope } from '../message/message-envelope.js';
-import { IQueueParams } from '../queue-manager/index.js';
-import { _publishMessage } from './_/_publish-message.js';
 import {
   MessageExchangeRequiredError,
-  NoMatchedQueueForExchangeError,
+  NoMatchedQueuesForMessageExchangeError,
   ProducerError,
   ProducerNotRunningError,
   QueueHasNoConsumerGroupsError,
 } from '../errors/index.js';
+import {
+  EExchangeType,
+  ExchangeDirect,
+  ExchangeFanout,
+  ExchangeTopic,
+  IExchangeParsedParams,
+} from '../exchange/index.js';
+import { ProducibleMessage } from '../message/index.js';
+import { MessageEnvelope } from '../message/message-envelope.js';
+import { IQueueParams } from '../queue-manager/index.js';
+import { _publishMessage } from './_/_publish-message.js';
 import { eventBusPublisher } from './event-bus-publisher.js';
 import { QueueConsumerGroupsCache } from './queue-consumer-groups-cache.js';
-import { ERedisConnectionAcquisitionMode } from '../common/redis-connection-pool/types/connection-pool.js';
-import { RedisConnectionPool } from '../common/redis-connection-pool/redis-connection-pool.js';
 
 /**
  * The Producer class is responsible for producing messages, managing their
@@ -46,7 +51,9 @@ import { RedisConnectionPool } from '../common/redis-connection-pool/redis-conne
  * error objects when necessary.
  */
 export class Producer extends Runnable<TProducerEvent> {
-  protected count = 0;
+  protected fanoutExchange;
+  protected directExchange;
+  protected topicExchange;
   protected logger; // Logger instance for logging activity
   protected queueConsumerGroupsHandler: QueueConsumerGroupsCache | null = null; // Handler for queue consumer groups
   protected redisClient: IRedisClient | null = null; // Redis client for communication with Redis
@@ -62,6 +69,11 @@ export class Producer extends Runnable<TProducerEvent> {
       this.constructor.name.toLowerCase(),
     );
     this.logger.info(`Producer instance created with ID: ${this.getId()}`);
+
+    //
+    this.directExchange = new ExchangeDirect();
+    this.topicExchange = new ExchangeTopic();
+    this.fanoutExchange = new ExchangeFanout();
 
     // If the event bus is enabled in configuration, initializes the event bus publisher.
     if (Configuration.getConfig().eventBus.enabled) {
@@ -105,30 +117,25 @@ export class Producer extends Runnable<TProducerEvent> {
       return cb(new ProducerNotRunningError());
     }
 
-    const exchangeParams = msg.getExchange();
-    if (!exchangeParams) {
+    const qp = msg.getQueue();
+    if (qp) {
+      return this.produceMessage(msg, qp, cb);
+    }
+
+    const ep = msg.getExchange();
+    if (!ep) {
       this.logger.error(
-        'Cannot produce message: No exchange parameters provided',
+        'Cannot produce message: No exchange/queue parameters provided',
       );
       return cb(new MessageExchangeRequiredError());
     }
-
     this.logger.debug(
-      `Producing message with exchange type ${EExchangeType[exchangeParams.type]}`,
+      `Producing message with exchange type name=${ep.name} ns=${ep.ns} type=${EExchangeType[ep.type]}`,
     );
-
-    if (exchangeParams.type === EExchangeType.DIRECT) {
-      const queue = exchangeParams.params;
-      this.logger.debug(
-        `Direct exchange: producing message for queue ${queue.name}@${queue.ns}`,
-      );
-      return this.produceMessage(msg, queue, cb);
-    }
-
     this.logger.debug(
-      `Fanout exchange: getting queues for exchange ${exchangeParams.type}`,
+      `Getting queues for exchange name=${ep.name} ns=${ep.ns} type=${EExchangeType[ep.type]}`,
     );
-    _getExchangeQueues(this.getRedisClient(), exchangeParams, (err, queues) => {
+    this.matchExchangeQueues(ep, msg.getExchangeRoutingKey(), (err, queues) => {
       if (err) {
         this.logger.error('Failed to get exchange queues', err);
         return cb(err);
@@ -136,11 +143,11 @@ export class Producer extends Runnable<TProducerEvent> {
 
       if (!queues?.length) {
         this.logger.error('No matching queues found for exchange');
-        return cb(new NoMatchedQueueForExchangeError());
+        return cb(new NoMatchedQueuesForMessageExchangeError());
       }
 
       this.logger.info(`Found ${queues.length} matching queues for exchange`);
-      const messages: string[] = [];
+      const messageIds: string[] = [];
 
       async.eachOf(
         queues,
@@ -160,7 +167,7 @@ export class Producer extends Runnable<TProducerEvent> {
               this.logger.debug(
                 `Successfully produced ${reply.length} messages for queue ${queue.name}@${queue.ns}`,
               );
-              messages.push(...reply);
+              messageIds.push(...reply);
             }
             done();
           });
@@ -174,9 +181,9 @@ export class Producer extends Runnable<TProducerEvent> {
             return cb(err);
           }
           this.logger.info(
-            `Successfully produced ${messages.length} messages across ${queues.length} queues`,
+            `Successfully produced ${messageIds.length} messages across ${queues.length} queues`,
           );
-          cb(null, messages);
+          cb(null, messageIds);
         },
       );
     });
@@ -421,15 +428,13 @@ export class Producer extends Runnable<TProducerEvent> {
     const queueName = `${queue.name}@${queue.ns}`;
     this.logger.debug(`Producing message for queue ${queueName}`);
 
-    const { exists, consumerGroups } =
+    const { isPubSub, queueConsumerGroups } =
       this.getQueueConsumerGroupsHandler().getConsumerGroups(queue);
 
-    if (exists) {
-      this.logger.debug(
-        `Queue ${queueName} exists with ${consumerGroups.length} consumer groups`,
-      );
+    if (isPubSub) {
+      this.logger.debug(`Queue ${queueName} has a Pub/Sub delivery model`);
 
-      if (!consumerGroups.length) {
+      if (!queueConsumerGroups.length) {
         this.logger.error(`Queue ${queueName} has no consumer groups`);
         cb(new QueueHasNoConsumerGroupsError());
         return;
@@ -437,11 +442,11 @@ export class Producer extends Runnable<TProducerEvent> {
 
       const ids: string[] = [];
       this.logger.debug(
-        `Producing message for ${consumerGroups.length} consumer groups in queue ${queueName}`,
+        `Producing message for ${queueConsumerGroups.length} consumer groups in queue ${queueName}`,
       );
 
       async.eachOf(
-        consumerGroups,
+        queueConsumerGroups,
         (group, _, done) => {
           this.logger.debug(
             `Producing message for consumer group ${group} in queue ${queueName}`,
@@ -498,5 +503,23 @@ export class Producer extends Runnable<TProducerEvent> {
         }
       });
     }
+  }
+
+  protected matchExchangeQueues(
+    exchange: IExchangeParsedParams,
+    routingKey: string | null,
+    cb: ICallback<IQueueParams[]>,
+  ): void {
+    if (exchange.type === EExchangeType.DIRECT) {
+      if (!routingKey)
+        return cb(new ProducerError('A routing key is required.'));
+      return this.directExchange.matchQueues(exchange, routingKey, cb);
+    }
+    if (exchange.type === EExchangeType.TOPIC) {
+      if (!routingKey)
+        return cb(new ProducerError('A routing key is required.'));
+      return this.topicExchange.matchQueues(exchange, routingKey, cb);
+    }
+    this.fanoutExchange.matchQueues(exchange, cb);
   }
 }
