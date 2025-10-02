@@ -630,7 +630,6 @@ Useful for testing or reconfiguration.
 Shuts down RedisSMQ and closes shared resources.
 
 This convenience method:
-
 - Gracefully shuts down the Redis connection pool
 - Closes the configuration Redis client
 - Resets RedisSMQ initialization state
@@ -643,7 +642,7 @@ in-flight operations complete and connections are released back to the pool.
 
 ##### cb
 
-`ICallback`\<`void`\>
+`ICallback`
 
 Callback invoked when shutdown completes
 

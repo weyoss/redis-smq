@@ -60,8 +60,7 @@
 
 ### consumer.consumeMessage.messageDeadLettered()
 
-> **consumer.consumeMessage.messageDeadLettered**: (`messageId`, `queue`, `messageHandlerId`, `consumerId`,
-`deadLetterReason`) => `void`
+> **consumer.consumeMessage.messageDeadLettered**: (`messageId`, `queue`, `messageHandlerId`, `consumerId`, `deadLetterReason`) => `void`
 
 #### Parameters
 
@@ -149,8 +148,7 @@
 
 ### consumer.consumeMessage.messageUnacknowledged()
 
-> **consumer.consumeMessage.messageUnacknowledged**: (`messageId`, `queue`, `messageHandlerId`, `consumerId`,
-`unknowledgmentReason`) => `void`
+> **consumer.consumeMessage.messageUnacknowledged**: (`messageId`, `queue`, `messageHandlerId`, `consumerId`, `unknowledgmentReason`) => `void`
 
 #### Parameters
 

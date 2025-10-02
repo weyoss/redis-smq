@@ -8,7 +8,6 @@ This class provides a centralized way to manage RedisSMQ configuration with Redi
 It follows the singleton pattern to ensure consistent configuration across the application.
 
 Features:
-
 - Persistent configuration storage in Redis
 - Automatic configuration loading and saving
 - Configuration validation and parsing
@@ -204,7 +203,7 @@ After successful save, the current instance configuration is updated.
 [`IRedisSMQConfig`](../interfaces/IRedisSMQConfig.md)
 
 The configuration object to save. This will be validated and parsed
-before being stored in Redis.
+               before being stored in Redis.
 
 ##### cb
 
@@ -309,7 +308,7 @@ that the updated configuration is valid and consistent.
 [`IRedisSMQConfig`](../interfaces/IRedisSMQConfig.md)
 
 Configuration updates to apply. Can be a partial configuration
-object containing only the fields you want to change.
+                object containing only the fields you want to change.
 
 ##### cb
 

@@ -1,5 +1,4 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) /
-ProducerError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / ProducerError
 
 # Class: ProducerError
 
@@ -13,7 +12,7 @@ ProducerError
 - [`QueueHasNoConsumerGroupsError`](QueueHasNoConsumerGroupsError.md)
 - [`MessagePriorityRequiredError`](MessagePriorityRequiredError.md)
 - [`PriorityQueuingNotEnabledError`](PriorityQueuingNotEnabledError.md)
-- [`NoMatchedQueueForExchangeError`](NoMatchedQueueForExchangeError.md)
+- [`NoMatchedQueuesForMessageExchangeError`](NoMatchedQueuesForMessageExchangeError.md)
 - [`InvalidSchedulingParametersError`](InvalidSchedulingParametersError.md)
 - [`MessageAlreadyExistsError`](MessageAlreadyExistsError.md)
 

@@ -7,21 +7,35 @@ encapsulate the properties and behaviors of a message that can be produced and c
 This class provides methods to set and retrieve various message attributes, such as TTL, retry policies, scheduling
 options, and more.
 
+## Example
+
+```typescript
+const message = new ProducibleMessage()
+  .setBody({ userId: 123, action: 'process' })
+  .setTTL(60000)
+  .setRetryThreshold(5)
+  .setPriority(EMessagePriority.HIGH);
+```
+
 ## Constructors
 
 ### Constructor
 
 > **new ProducibleMessage**(): `ProducibleMessage`
 
-Constructs a new instance of the ProducibleMessage class.
-
-The constructor initializes the createdAt timestamp with the current time,
-and sets default values for the consume timeout, retry delay, TTL, and retry threshold.
-These default values are defined in the static property `defaultConsumeOptions`.
+Constructs a new ProducibleMessage instance with default consume options.
 
 #### Returns
 
 `ProducibleMessage`
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage();
+console.log(message.getTTL()); // 0
+console.log(message.getRetryThreshold()); // 3
+```
 
 ## Methods
 
@@ -29,21 +43,28 @@ These default values are defined in the static property `defaultConsumeOptions`.
 
 > **disablePriority**(): `ProducibleMessage`
 
-Disables the priority setting for the current message.
-
-This method resets the priority level of the message to null, effectively disabling
-the priority feature for this particular message. After calling this method, the message
-will be processed based on its default settings, without considering its priority.
+Removes the priority setting from the message.
 
 #### Returns
 
 `ProducibleMessage`
 
-- The updated `ProducibleMessage` instance, allowing method chaining.
+This instance for method chaining
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage()
+  .setPriority(EMessagePriority.HIGH)
+  .disablePriority();
+
+console.log(message.hasPriority()); // false
+```
 
 #### See
 
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setpriority
+ - [setPriority](#setpriority)
+ - [hasPriority](#haspriority)
 
 ***
 
@@ -51,13 +72,24 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/clas
 
 > **getBody**(): `unknown`
 
-Retrieves the payload of a message.
-
-See https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setbody
+Gets the message payload.
 
 #### Returns
 
 `unknown`
+
+The message payload
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage().setBody({ userId: 123 });
+console.log(message.getBody()); // { userId: 123 }
+```
+
+#### See
+
+[setBody](#setbody)
 
 ***
 
@@ -65,21 +97,24 @@ See https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/
 
 > **getConsumeTimeout**(): `number`
 
-Retrieves the consumption timeout value set for the message.
-
-The consumption timeout specifies the maximum amount of time allowed for a consumer
-to process the message before it is considered timed out.
+Gets the consumption timeout for the message.
 
 #### Returns
 
 `number`
 
-The consumption timeout value in milliseconds.
-A value of 0 indicates no timeout is set.
+Timeout in milliseconds (0 means no timeout)
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage().setConsumeTimeout(120000);
+console.log(message.getConsumeTimeout()); // 120000
+```
 
 #### See
 
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setconsumetimeout
+[setConsumeTimeout](#setconsumetimeout)
 
 ***
 
@@ -87,67 +122,78 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/clas
 
 > **getCreatedAt**(): `number`
 
-Retrieves the timestamp when the message was created.
-
-The createdAt timestamp is automatically set when a new message is created.
+Gets the timestamp when the message was created.
 
 #### Returns
 
 `number`
 
-The createdAt timestamp as a Unix timestamp (milliseconds since epoch).
-This value can be used for tracking the age of the message or for
-other purposes related to message management.
+Unix timestamp in milliseconds when the message was created
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage();
+const createdTime = message.getCreatedAt();
+console.log(new Date(createdTime)); // Current date/time
+```
 
 ***
 
 ### getExchange()
 
-> **getExchange**(): `null` \| [`TExchangeTransferable`](../type-aliases/TExchangeTransferable.md)
+> **getExchange**(): `null` \| [`IExchangeParsedParams`](../interfaces/IExchangeParsedParams.md)
 
-Retrieves the exchange (fan-out, topic, or queue name) associated with the current message.
-
-This method returns the exchange that was set for the message using one of the
-setQueue, setTopic, or setFanOut methods. The exchange determines how the message
-will be routed within the messaging system.
+Gets the current exchange configuration.
 
 #### Returns
 
-`null` \| [`TExchangeTransferable`](../type-aliases/TExchangeTransferable.md)
+`null` \| [`IExchangeParsedParams`](../interfaces/IExchangeParsedParams.md)
 
-The exchange associated with the message.
-Returns null if no exchange has been set.
-The returned object contains information about the exchange type and its parameters.
+Exchange parameters, or null if not set
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage().setTopicExchange('events');
+const exchange = message.getExchange();
+console.log(exchange?.name); // 'events'
+console.log(exchange?.type); // EExchangeType.TOPIC
+```
 
 #### See
 
-- https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setqueue
-- https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#settopic
-- https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setfanout
+ - [setTopicExchange](#settopicexchange)
+ - [setDirectExchange](#setdirectexchange)
+ - [setFanoutExchange](#setfanoutexchange)
 
 ***
 
-### getFanOut()
+### getExchangeRoutingKey()
 
-> **getFanOut**(): `null` \| `string`
+> **getExchangeRoutingKey**(): `null` \| `string`
 
-Retrieves the fan-out pattern associated with the current message.
-
-This method returns the fan-out pattern that was set for the message using the
-setFanOut method. The fan-out pattern determines how the message will be
-distributed to multiple queues simultaneously.
+Gets the current exchange routing key.
 
 #### Returns
 
 `null` \| `string`
 
-The fan-out pattern name as a string if one has been set,
-or null if no fan-out pattern has been defined for this message.
+The routing key, or null if not set
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage()
+  .setTopicExchange('events')
+  .setExchangeRoutingKey('user.created');
+
+console.log(message.getExchangeRoutingKey()); // 'user.created'
+```
 
 #### See
 
-For more information on setting the fan-out pattern:
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setfanout
+[setExchangeRoutingKey](#setexchangeroutingkey)
 
 ***
 
@@ -155,23 +201,24 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/clas
 
 > **getPriority**(): `null` \| [`EMessagePriority`](../enumerations/EMessagePriority.md)
 
-Retrieves the priority level set for the current message.
-
-This method returns the priority level that was set for the message using the
-setPriority method. The priority level determines the order in which messages
-are processed when using a priority queue.
+Gets the priority level of the message.
 
 #### Returns
 
 `null` \| [`EMessagePriority`](../enumerations/EMessagePriority.md)
 
-The priority level of the message as defined
-in the EMessagePriority enum, or null if no priority has been set.
+Priority level, or null if not set
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage().setPriority(EMessagePriority.HIGH);
+console.log(message.getPriority()); // EMessagePriority.HIGH
+```
 
 #### See
 
-For more information on setting the priority:
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setpriority
+[setPriority](#setpriority)
 
 ***
 
@@ -179,23 +226,25 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/clas
 
 > **getQueue**(): `null` \| [`IQueueParams`](../interfaces/IQueueParams.md)
 
-Retrieves the queue parameters associated with the current message.
-
-This method returns the queue parameters that were set for the message using the
-setQueue method. The queue parameters determine how the message will be routed within
-the messaging system.
+Gets the current target queue configuration.
 
 #### Returns
 
 `null` \| [`IQueueParams`](../interfaces/IQueueParams.md)
 
-The queue parameters associated with the message.
-Returns null if no queue parameters have been set.
+Queue parameters, or null if not set
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage().setQueue('my-queue');
+const queue = message.getQueue();
+console.log(queue?.name); // 'my-queue'
+```
 
 #### See
 
-For more information on setting the queue parameters:
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setqueue
+[setQueue](#setqueue)
 
 ***
 
@@ -203,22 +252,24 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/clas
 
 > **getRetryDelay**(): `number`
 
-Retrieves the retry delay set for the message.
-
-The retry delay specifies the time interval to wait before attempting to reprocess
-a failed message. This delay helps in managing system resources and allows for
-temporary issues to be resolved before retrying.
+Gets the retry delay for the message.
 
 #### Returns
 
 `number`
 
-The retry delay value in milliseconds. A value of 0 indicates no delay
-between retry attempts.
+Delay between retry attempts in milliseconds
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage().setRetryDelay(30000);
+console.log(message.getRetryDelay()); // 30000
+```
 
 #### See
 
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setretrydelay
+[setRetryDelay](#setretrydelay)
 
 ***
 
@@ -226,23 +277,24 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/clas
 
 > **getRetryThreshold**(): `number`
 
-Retrieves the retry threshold of a message.
-
-The retry threshold specifies the maximum number of times a failed message
-will be retried before it is considered permanently failed and potentially
-moved to a dead-letter queue.
+Gets the retry threshold for the message.
 
 #### Returns
 
 `number`
 
-The retry threshold value. A positive integer representing the
-maximum number of retry attempts for the message.
+Maximum number of retry attempts
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage().setRetryThreshold(5);
+console.log(message.getRetryThreshold()); // 5
+```
 
 #### See
 
-For more information on setting the retry threshold:
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setretrythreshold
+[setRetryThreshold](#setretrythreshold)
 
 ***
 
@@ -250,23 +302,24 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/clas
 
 > **getScheduledCRON**(): `null` \| `string`
 
-Retrieves the CRON expression associated with a scheduled message.
-
-This method returns the CRON expression that was set for the message using
-the setScheduledCRON method. The CRON expression defines the schedule
-for recurring message deliveries.
+Gets the CRON expression for scheduled message delivery.
 
 #### Returns
 
 `null` \| `string`
 
-The CRON expression as a string if one has been set,
-or null if no CRON schedule has been defined for this message.
+CRON expression, or null if not set
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage().setScheduledCRON('0 0 10 * * *');
+console.log(message.getScheduledCRON()); // '0 0 10 * * *'
+```
 
 #### See
 
-For more information on setting the CRON schedule:
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledcron
+[setScheduledCRON](#setscheduledcron)
 
 ***
 
@@ -274,16 +327,24 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/clas
 
 > **getScheduledDelay**(): `null` \| `number`
 
-Retrieve the scheduled delay time for a message, which indicates how long
-the message should be delayed before it is delivered to a queue.
+Gets the scheduled delay for message delivery.
 
 #### Returns
 
 `null` \| `number`
 
+The scheduled delay in milliseconds, or null if not set
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage().setScheduledDelay(5000);
+console.log(message.getScheduledDelay()); // 5000
+```
+
 #### See
 
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduleddelay
+[setScheduledDelay](#setscheduleddelay)
 
 ***
 
@@ -291,22 +352,24 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/clas
 
 > **getScheduledRepeat**(): `number`
 
-Retrieves the number of times a message is scheduled to repeat.
-
-This method returns the value set by the setScheduledRepeat method, which determines
-how many times a message should be redelivered after its initial delivery.
+Gets the number of times the message is scheduled to repeat.
 
 #### Returns
 
 `number`
 
-The number of times the message is scheduled to repeat.
-A value of 0 indicates the message is not scheduled for repetition.
+Number of repetitions (0 means no repetition)
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage().setScheduledRepeat(3);
+console.log(message.getScheduledRepeat()); // 3
+```
 
 #### See
 
-For more information on setting the scheduled repeat:
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledrepeat
+[setScheduledRepeat](#setscheduledrepeat)
 
 ***
 
@@ -314,46 +377,24 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/clas
 
 > **getScheduledRepeatPeriod**(): `null` \| `number`
 
-Retrieves the scheduled repeat period of a message.
-
-The repeat period is used in conjunction with the scheduled repeat count
-to determine how often and how many times a message should be redelivered.
+Gets the scheduled repeat period for the message.
 
 #### Returns
 
 `null` \| `number`
 
-The scheduled repeat period in milliseconds if set,
-or null if no repeat period has been defined for this message.
+Repeat period in milliseconds, or null if not set
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage().setScheduledRepeatPeriod(60000);
+console.log(message.getScheduledRepeatPeriod()); // 60000
+```
 
 #### See
 
-For more information on setting the scheduled repeat period:
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledrepeatperiod
-
-***
-
-### getTopic()
-
-> **getTopic**(): `null` \| [`ITopicParams`](../interfaces/ITopicParams.md)
-
-Retrieves the topic parameters associated with the current message.
-
-This method returns the topic parameters that were set for the message using the
-setTopic method. The topic parameters determine how the message will be routed within
-the messaging system.
-
-#### Returns
-
-`null` \| [`ITopicParams`](../interfaces/ITopicParams.md)
-
-The topic parameters associated with the message.
-Returns null if no topic parameters have been set.
-
-#### See
-
-For more information on setting the topic parameters:
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#settopic
+[setScheduledRepeatPeriod](#setscheduledrepeatperiod)
 
 ***
 
@@ -361,23 +402,24 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/clas
 
 > **getTTL**(): `number`
 
-Retrieves the Time-To-Live (TTL) value set for the message.
-
-The TTL determines how long the message should remain in the queue before
-it expires. This is useful for managing message lifetimes and preventing
-the processing of outdated messages.
+Gets the Time-To-Live (TTL) value for the message.
 
 #### Returns
 
 `number`
 
-The TTL value in milliseconds. A value of 0 indicates that the
-message does not expire.
+TTL in milliseconds (0 means no expiration)
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage().setTTL(300000);
+console.log(message.getTTL()); // 300000
+```
 
 #### See
 
-For more information on setting the TTL:
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setttl
+[setTTL](#setttl)
 
 ***
 
@@ -385,22 +427,27 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/clas
 
 > **hasPriority**(): `boolean`
 
-Checks if a priority level has been set for the current message.
-
-This method returns a boolean value indicating whether a priority level has been
-specified for the message. If the priority level is not null, it means a priority
-level has been set, and the method returns true. Otherwise, it returns false.
+Checks if a priority level has been set for the message.
 
 #### Returns
 
 `boolean`
 
-- Returns true if a priority level has been set for the message,
-  false otherwise.
+True if priority is set, false otherwise
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage();
+console.log(message.hasPriority()); // false
+
+message.setPriority(EMessagePriority.HIGH);
+console.log(message.hasPriority()); // true
+```
 
 #### See
 
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setpriority
+[setPriority](#setpriority)
 
 ***
 
@@ -408,24 +455,27 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/clas
 
 > **resetScheduledParams**(): `ProducibleMessage`
 
-Resets the scheduled parameters of the message.
+Resets all scheduled parameters to their default values.
 
-This function clears any previously set scheduled parameters for the message,
-such as the CRON expression, delay, repeat period, and repeat count.
-After calling this method, the message will no longer be scheduled for recurring deliveries.
+Clears CRON expression, delay, repeat period, and repeat count.
 
 #### Returns
 
 `ProducibleMessage`
 
-The updated `ProducibleMessage` instance with the reset scheduled parameters.
+This instance for method chaining
 
-#### See
+#### Example
 
-- https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledcron
-- https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduleddelay
-- https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledrepeatperiod
-- https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledrepeat
+```typescript
+const message = new ProducibleMessage()
+  .setScheduledCRON('0 0 10 * * *')
+  .setScheduledRepeat(5)
+  .resetScheduledParams(); // All scheduling cleared
+
+console.log(message.getScheduledCRON()); // null
+console.log(message.getScheduledRepeat()); // 0
+```
 
 ***
 
@@ -433,9 +483,9 @@ The updated `ProducibleMessage` instance with the reset scheduled parameters.
 
 > **setBody**(`body`): `ProducibleMessage`
 
-Sets the payload of the message to be sent.
+Sets the message payload.
 
-The payload contains the actual data that the consumer will process.
+The payload will be JSON-serialized when the message is sent.
 
 #### Parameters
 
@@ -443,18 +493,28 @@ The payload contains the actual data that the consumer will process.
 
 `unknown`
 
-The payload to be sent with the message. This can be of any type,
-but it will be converted to a string before being sent.
+The message payload (any JSON-serializable value)
 
 #### Returns
 
 `ProducibleMessage`
 
-- The updated `ProducibleMessage` instance, allowing method chaining.
+This instance for method chaining
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage()
+  .setBody({
+    userId: 123,
+    action: 'send-email',
+    data: { email: 'user@example.com' }
+  });
+```
 
 #### See
 
-https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify
+[getBody](#getbody)
 
 ***
 
@@ -462,13 +522,10 @@ https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects
 
 > **setConsumeTimeout**(`timeout`): `ProducibleMessage`
 
-Sets the consumption timeout for the current message.
+Sets the consumption timeout for the message.
 
-The consumption timeout specifies the maximum amount of time allowed for a consumer
-to process the message before it is considered timed out. This feature is useful in
-managing system resources and preventing messages from being stuck indefinitely.
-
-The default consumption timeout is 0, which means there is no timeout set.
+If a consumer takes longer than this timeout to process the message,
+the message will be considered failed and may be retried.
 
 #### Parameters
 
@@ -476,53 +533,153 @@ The default consumption timeout is 0, which means there is no timeout set.
 
 `number`
 
-The consumption timeout value in milliseconds.
-A value of 0 indicates no timeout is set.
+Timeout in milliseconds (0 means no timeout)
 
 #### Returns
 
 `ProducibleMessage`
 
-- The updated `ProducibleMessage` instance, allowing method chaining.
+This instance for method chaining
+
+#### Throws
+
+When the timeout is not a valid non-negative number
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage()
+  .setConsumeTimeout(30000) // 30 second timeout
+  .setBody({ complexTask: true });
+```
 
 #### See
 
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setconsumetimeout
+[getConsumeTimeout](#getconsumetimeout)
 
 ***
 
-### setFanOut()
+### setDirectExchange()
 
-> **setFanOut**(`fanOutName`): `ProducibleMessage`
+> **setDirectExchange**(`exchange`): `ProducibleMessage`
 
-Sets a fan-out pattern for message publication, enabling a publish-subscribe model
-where messages can be sent to multiple queues simultaneously.
+Sets a direct exchange for message routing.
 
-The fan-out pattern allows messages to be sent to multiple queues
-simultaneously, enabling effective distribution of messages to various
-subscribers.
-
-This feature is particularly useful in scenarios where you
-want multiple services to react to the same event or message without
-needing to duplicate the message for each queue.
+Direct exchanges route messages to queues with matching routing keys.
 
 #### Parameters
 
-##### fanOutName
+##### exchange
 
-`string`
+Exchange name or parameters
 
-The name of the fan-out pattern.
+`string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
 
 #### Returns
 
 `ProducibleMessage`
 
-- The updated `ProducibleMessage` instance, allowing method chaining.
+This instance for method chaining
+
+#### Throws
+
+When exchange parameters are invalid
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage()
+  .setDirectExchange('tasks')
+  .setExchangeRoutingKey('high-priority')
+  .setBody({ task: 'urgent-task' });
+```
 
 #### See
 
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/exchanges-and-delivery-models.md
+ - [setExchangeRoutingKey](#setexchangeroutingkey)
+ - [setFanoutExchange](#setfanoutexchange)
+ - [setTopicExchange](#settopicexchange)
+
+***
+
+### setExchangeRoutingKey()
+
+> **setExchangeRoutingKey**(`routingKey`): `ProducibleMessage`
+
+Sets the routing key for exchange-based message delivery.
+
+#### Parameters
+
+##### routingKey
+
+`string`
+
+The routing key for message routing
+
+#### Returns
+
+`ProducibleMessage`
+
+This instance for method chaining
+
+#### Throws
+
+When no exchange has been set
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage()
+  .setTopicExchange('events')
+  .setExchangeRoutingKey('user.login.success');
+```
+
+#### See
+
+ - [getExchangeRoutingKey](#getexchangeroutingkey)
+ - [setTopicExchange](#settopicexchange)
+ - [setDirectExchange](#setdirectexchange)
+
+***
+
+### setFanoutExchange()
+
+> **setFanoutExchange**(`exchange`): `ProducibleMessage`
+
+Sets a fanout exchange for message routing.
+
+Fanout exchanges deliver messages to all bound queues, ignoring routing keys.
+
+#### Parameters
+
+##### exchange
+
+Exchange name or parameters
+
+`string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
+
+#### Returns
+
+`ProducibleMessage`
+
+This instance for method chaining
+
+#### Throws
+
+When exchange parameters are invalid
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage()
+  .setFanoutExchange('notifications')
+  .setBody({ type: 'broadcast' });
+```
+
+#### See
+
+ - [setTopicExchange](#settopicexchange)
+ - [setDirectExchange](#setdirectexchange)
 
 ***
 
@@ -530,13 +687,10 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/exchange
 
 > **setPriority**(`priority`): `ProducibleMessage`
 
-Sets the priority level of a message for processing.
+Sets the priority level for the message.
 
-This feature allows developers to manage the order in which messages are
-processed based on their priority, enabling more important tasks to be handled before others.
-
-Message priority should be set only when producing a message to a priority queue.
-Otherwise, message priority does not take effect.
+Only effective when producing to a priority queue. Higher priority messages
+are processed before lower priority ones.
 
 #### Parameters
 
@@ -544,36 +698,43 @@ Otherwise, message priority does not take effect.
 
 [`EMessagePriority`](../enumerations/EMessagePriority.md)
 
-The priority level for the message.
-The available priority levels are defined in the EMessagePriority enum.
+The priority level from EMessagePriority enum
 
 #### Returns
 
 `ProducibleMessage`
 
-- The updated `ProducibleMessage` instance, allowing method chaining.
+This instance for method chaining
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage()
+  .setPriority(EMessagePriority.HIGH)
+  .setBody({ urgent: true });
+```
 
 #### See
 
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/queues.md
+ - [getPriority](#getpriority)
+ - [hasPriority](#haspriority)
+ - [disablePriority](#disablepriority)
 
 ***
 
 ### setQueue()
 
-> **setQueue**(`queueParams`): `ProducibleMessage`
+> **setQueue**(`queue`): `ProducibleMessage`
 
-Sets the queue parameters for the message, enabling a direct message publication model
-where messages can be sent to a specific queue and consumed
-by consumers interested in those messages.
+Sets the target queue for direct message delivery.
+
+Setting a queue clears any previously set exchange configuration.
 
 #### Parameters
 
-##### queueParams
+##### queue
 
-The queue parameters can be provided as a string (queue name) or as an object (queue parameters).
-If a string is provided, it should be the name of the queue.
-If an object is provided, it should contain the queue parameters as defined in the RedisSMQ documentation.
+Queue name or parameters
 
 `string` | [`IQueueParams`](../interfaces/IQueueParams.md)
 
@@ -581,11 +742,23 @@ If an object is provided, it should contain the queue parameters as defined in t
 
 `ProducibleMessage`
 
-- The updated `ProducibleMessage` instance, allowing method chaining.
+This instance for method chaining
+
+#### Throws
+
+When queue parameters are invalid
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage()
+  .setQueue('user-tasks')
+  .setBody({ userId: 123, task: 'process' });
+```
 
 #### See
 
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/exchanges-and-delivery-models.md
+[getQueue](#getqueue)
 
 ***
 
@@ -593,22 +766,10 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/exchange
 
 > **setRetryDelay**(`delay`): `ProducibleMessage`
 
-Sets the retry delay for failed messages.
+Sets the delay between retry attempts for failed messages.
 
-This function allows you to specify how long the system should wait before attempting to retry the
-processing of a failed message.
-
-This feature is crucial in ensuring that message processing is robust,
-especially in scenarios where temporary failures might occur, such as
-database unavailability or network issues.
-
-By utilizing a retry delay, you can reduce the risk of overwhelming your
-system with retries for messages that are likely to fail again immediately,
-thereby enhancing the reliability of your message processing.
-
-This method should be used in conjunction with setRetryThreshold().
-
-The default retry delay is 60000 milliseconds (1 minute).
+Helps prevent overwhelming the system with immediate retries and allows
+temporary issues to resolve.
 
 #### Parameters
 
@@ -616,18 +777,30 @@ The default retry delay is 60000 milliseconds (1 minute).
 
 `number`
 
-The retry delay value in milliseconds. A value of 0 indicates no delay
-between retry attempts.
+Delay in milliseconds (0 means no delay)
 
 #### Returns
 
 `ProducibleMessage`
 
-- The updated `ProducibleMessage` instance, allowing method chaining.
+This instance for method chaining
+
+#### Throws
+
+When the delay is not a valid non-negative number
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage()
+  .setRetryDelay(30000) // Wait 30 seconds between retries
+  .setRetryThreshold(3); // Retry up to 3 times
+```
 
 #### See
 
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setretrydelay
+ - [setRetryThreshold](#setretrythreshold)
+ - [getRetryDelay](#getretrydelay)
 
 ***
 
@@ -635,13 +808,9 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/clas
 
 > **setRetryThreshold**(`threshold`): `ProducibleMessage`
 
-Sets the retry threshold for the current message.
+Sets the maximum number of retry attempts for failed messages.
 
-Set the number of times a failed message can be retried before it is
-considered permanently failed and moved to a dead-letter queue (DLQ) or discarded
-according to the message queue configuration.
-
-The default retry threshold is 3.
+After exceeding this threshold, messages may be moved to a dead-letter queue.
 
 #### Parameters
 
@@ -649,18 +818,30 @@ The default retry threshold is 3.
 
 `number`
 
-The retry threshold value. A positive integer representing the
-maximum number of retry attempts for the message. A value of 0 indicates no retry attempts.
+Maximum retry attempts (0 means no retries)
 
 #### Returns
 
 `ProducibleMessage`
 
-- The updated `ProducibleMessage` instance, allowing method chaining.
+This instance for method chaining
+
+#### Throws
+
+When the threshold is not a valid non-negative number
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage()
+  .setRetryThreshold(5) // Retry up to 5 times
+  .setRetryDelay(10000); // Wait 10 seconds between retries
+```
 
 #### See
 
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setretrythreshold
+ - [setRetryDelay](#setretrydelay)
+ - [getRetryThreshold](#getretrythreshold)
 
 ***
 
@@ -668,19 +849,9 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/clas
 
 > **setScheduledCRON**(`cron`): `ProducibleMessage`
 
-Sets a CRON expression for scheduling the message's delivery.
+Sets a CRON expression for scheduled message delivery.
 
-This function allows you to specify a CRON expression to define the schedule for
-when the message should be delivered. The CRON expression is a string that follows
-a specific format, which defines the frequency and timing of the delivery.
-
-This function may be used in conjunction with setScheduledRepeat() and setScheduledRepeatPeriod(). For example,
-to publish a message every day at 10AM and from then publish the message with a delay of 10 minutes for 3 times:
-
-```typescript
-const producibleMessage = new ProducibleMessage();
-producibleMessage.setScheduledCRON('0 0 10 * * *').setScheduledRepeat(3).setScheduledRepeatPeriod(36000);
-```
+Can be combined with [setScheduledRepeat](#setscheduledrepeat) and [setScheduledRepeatPeriod](#setscheduledrepeatperiod) for complex scheduling.
 
 #### Parameters
 
@@ -688,22 +859,32 @@ producibleMessage.setScheduledCRON('0 0 10 * * *').setScheduledRepeat(3).setSche
 
 `string`
 
-The CRON expression to define the schedule for the message's delivery.
-The expression should follow the CRON format standards.
+Valid CRON expression (e.g., '0 0 10 * * *' for daily at 10 AM)
 
 #### Returns
 
 `ProducibleMessage`
 
-- Returns the instance of the ProducibleMessage class, allowing method chaining.
+This instance for method chaining
 
 #### Throws
 
-- Throws an error if the provided CRON expression is invalid.
+When the CRON expression is invalid
+
+#### Example
+
+```typescript
+// Daily at 10 AM, then repeat 3 times with 10-minute intervals
+const message = new ProducibleMessage()
+  .setScheduledCRON('0 0 10 * * *')
+  .setScheduledRepeat(3)
+  .setScheduledRepeatPeriod(600000); // 10 minutes
+```
 
 #### See
 
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledcron
+ - [setScheduledRepeat](#setscheduledrepeat)
+ - [setScheduledRepeatPeriod](#setscheduledrepeatperiod)
 
 ***
 
@@ -711,11 +892,7 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/clas
 
 > **setScheduledDelay**(`delay`): `ProducibleMessage`
 
-Sets a delay for scheduling the current message's delivery.
-
-This function allows you to specify a delay in milliseconds before the message is
-actually sent to the queue. The delay ensures that the message is not delivered
-immediately, allowing for the system to perform any necessary operations or checks.
+Sets a delay before the message's initial delivery.
 
 #### Parameters
 
@@ -723,23 +900,29 @@ immediately, allowing for the system to perform any necessary operations or chec
 
 `number`
 
-The delay value in milliseconds. A positive integer representing the
-time to wait before sending the message.
+The delay in milliseconds (must be non-negative)
 
 #### Returns
 
 `ProducibleMessage`
 
-- The updated `ProducibleMessage` instance, allowing method chaining.
+This instance for method chaining
 
 #### Throws
 
-- If the provided delay value is not a positive integer,
-  this error is thrown.
+When the delay is not a valid non-negative number
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage()
+  .setScheduledDelay(30000) // Deliver after 30 seconds
+  .setBody({ task: 'delayed-task' });
+```
 
 #### See
 
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setscheduledelay
+[getScheduledDelay](#getscheduleddelay)
 
 ***
 
@@ -747,11 +930,7 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/clas
 
 > **setScheduledRepeat**(`repeat`): `ProducibleMessage`
 
-Sets the number of times a message is scheduled to repeat after its initial delivery.
-
-This function is used to define how many times a message should be redelivered after its initial processing.
-The repeat count is used in conjunction with the scheduled repeat period to determine the total number of times
-the message will be delivered.
+Sets the number of times a message should repeat after initial delivery.
 
 #### Parameters
 
@@ -759,19 +938,29 @@ the message will be delivered.
 
 `number`
 
-The number of times the message is scheduled to repeat.
-Must be a non-negative integer.
-If the provided value is not a number or is negative, a `MessageMessagePropertyError` is thrown.
+Number of repetitions (must be non-negative)
 
 #### Returns
 
 `ProducibleMessage`
 
-- The updated `ProducibleMessage` instance, allowing method chaining.
+This instance for method chaining
 
 #### Throws
 
-- If the provided repeat value is not a non-negative integer.
+When the repeat value is not a valid non-negative number
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage()
+  .setScheduledRepeat(3) // Repeat 3 times after initial delivery
+  .setScheduledRepeatPeriod(60000); // Every minute
+```
+
+#### See
+
+[setScheduledRepeatPeriod](#setscheduledrepeatperiod)
 
 ***
 
@@ -779,13 +968,9 @@ If the provided value is not a number or is negative, a `MessageMessagePropertyE
 
 > **setScheduledRepeatPeriod**(`period`): `ProducibleMessage`
 
-Sets the repeat period for a scheduled message.
+Sets the repeat period for scheduled message delivery.
 
-This method allows you to specify a delay to wait for between each message delivery, enabling the
-creation of recurring jobs without the need for complex CRON expressions.
-
-The method should be used in conjunction with setScheduledRepeat() to determine
-how many times a message should be redelivered.
+Used with [setScheduledRepeat](#setscheduledrepeat) to create recurring messages with a fixed interval.
 
 #### Parameters
 
@@ -793,49 +978,72 @@ how many times a message should be redelivered.
 
 `number`
 
-The repeat period value in milliseconds.
-A positive integer representing the time interval between redeliveries.
-If the provided value is not a positive integer, a MessageMessagePropertyError is thrown.
+The repeat period in milliseconds (must be non-negative)
 
 #### Returns
 
 `ProducibleMessage`
 
-- The updated `ProducibleMessage` instance, allowing method chaining.
+This instance for method chaining
 
 #### Throws
 
-- If the provided period value is not a positive integer.
+When the period is not a valid non-negative number
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage()
+  .setScheduledRepeatPeriod(60000) // Repeat every minute
+  .setScheduledRepeat(5); // Repeat 5 times
+```
+
+#### See
+
+[setScheduledRepeat](#setscheduledrepeat)
 
 ***
 
-### setTopic()
+### setTopicExchange()
 
-> **setTopic**(`topicParams`): `ProducibleMessage`
+> **setTopicExchange**(`exchange`): `ProducibleMessage`
 
-Sets a topic for message publication, enabling a publish-subscribe model
-where messages can be sent to specific channels (topics) and consumed
-by subscribers interested in those topics.
+Sets a topic exchange for message routing.
 
-A topic can be thought of as a categorization or a label that groups
-related queues together.
-
-This feature is useful for organizing and filtering messages based on
-their content or purpose.
+Topic exchanges route messages based on routing key patterns.
 
 #### Parameters
 
-##### topicParams
+##### exchange
 
-`string` | [`ITopicParams`](../interfaces/ITopicParams.md)
+Exchange name or parameters
+
+`string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
 
 #### Returns
 
 `ProducibleMessage`
 
+This instance for method chaining
+
+#### Throws
+
+When exchange parameters are invalid
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage()
+  .setTopicExchange('events')
+  .setExchangeRoutingKey('user.created')
+  .setBody({ userId: 123 });
+```
+
 #### See
 
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/exchanges-and-delivery-models.md
+ - [setExchangeRoutingKey](#setexchangeroutingkey)
+ - [setFanoutExchange](#setfanoutexchange)
+ - [setDirectExchange](#setdirectexchange)
 
 ***
 
@@ -843,11 +1051,9 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/exchange
 
 > **setTTL**(`ttl`): `ProducibleMessage`
 
-Sets the Time-To-Live (TTL) value for the current message.
+Sets the Time-To-Live (TTL) for the message.
 
-The TTL determines how long the message should remain in the queue before
-it expires. This is useful for managing message lifetimes and preventing
-the processing of outdated messages.
+Messages with expired TTL will be automatically removed from the queue.
 
 #### Parameters
 
@@ -855,18 +1061,29 @@ the processing of outdated messages.
 
 `number`
 
-The TTL value in milliseconds. A value of 0 indicates that the
-message does not expire.
+TTL in milliseconds (0 means no expiration)
 
 #### Returns
 
 `ProducibleMessage`
 
-- The updated `ProducibleMessage` instance, allowing method chaining.
+This instance for method chaining
+
+#### Throws
+
+When the TTL is not a valid non-negative number
+
+#### Example
+
+```typescript
+const message = new ProducibleMessage()
+  .setTTL(300000) // Expire after 5 minutes
+  .setBody({ urgent: true });
+```
 
 #### See
 
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/classes/ProducibleMessage.md#setttl
+[getTTL](#getttl)
 
 ***
 
@@ -874,11 +1091,7 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/clas
 
 > `static` **setDefaultConsumeOptions**(`consumeOptions`): `void`
 
-Sets default consume options for all messages.
-
-This function allows developers to set default values for various consume options,
-such as Time-To-Live (TTL), retry threshold, retry delay, and consumption timeout.
-These default values can be overridden when producing a message.
+Sets default consume options for all future ProducibleMessage instances.
 
 #### Parameters
 
@@ -886,46 +1099,31 @@ These default values can be overridden when producing a message.
 
 `Partial`\<[`TMessageConsumeOptions`](../type-aliases/TMessageConsumeOptions.md)\>
 
-An object containing the consume options to be set as defaults.
-The object can include the following properties:
-
-- ttl: The default TTL value in milliseconds.
-- retryThreshold: The default retry threshold value.
-- retryDelay: The default retry delay value in milliseconds.
-- consumeTimeout: The default consumption timeout value in milliseconds.
+Partial consume options to override defaults
 
 #### Returns
 
 `void`
 
-This function does not return any value.
+#### Static
+
+#### Throws
+
+When any provided value is invalid
 
 #### Example
 
 ```typescript
-// default consume options
-const producibleMessage = new ProducibleMessage();
-producibleMessage.getTTL(); // 0
-producibleMessage.getRetryThreshold(); // 3
-producibleMessage.getRetryDelay(); // 60000
-producibleMessage.getConsumeTimeout(); // 0
-
-// overriding default consume options for all messages
+// Set new defaults
 ProducibleMessage.setDefaultConsumeOptions({
   ttl: 60000,
-  retryThreshold: 3,
-  retryDelay: 60000,
+  retryThreshold: 5,
+  retryDelay: 30000,
   consumeTimeout: 120000
-})
+});
 
-// checking updated default consume options
-const msg = new ProducibleMessage();
-msg.getTTL(); // 60000
-msg.getRetryThreshold(); // 3
-msg.getRetryDelay(); // 60000
-msg.getConsumeTimeout(); // 120000
-
-// overriding retry threshold for the current message
-msg.setRetryThreshold(5);
-msg.getRetryThreshold(); // 5
+// New instances will use these defaults
+const message = new ProducibleMessage();
+console.log(message.getTTL()); // 60000
+console.log(message.getRetryThreshold()); // 5
 ```

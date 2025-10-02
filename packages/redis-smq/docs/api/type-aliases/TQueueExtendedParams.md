@@ -2,5 +2,4 @@
 
 # Type Alias: TQueueExtendedParams
 
-> **TQueueExtendedParams** = `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) \| [
-`IQueueConsumerGroupParams`](../interfaces/IQueueConsumerGroupParams.md)
+> **TQueueExtendedParams** = `string` \| [`IQueueParams`](../interfaces/IQueueParams.md) \| [`IQueueConsumerGroupParams`](../interfaces/IQueueConsumerGroupParams.md)

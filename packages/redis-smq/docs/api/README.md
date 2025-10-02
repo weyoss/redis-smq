@@ -8,6 +8,8 @@
 
 ## Enumerations
 
+- [EExchangeProperty](enumerations/EExchangeProperty.md)
+- [EExchangeQueuePolicy](enumerations/EExchangeQueuePolicy.md)
 - [EExchangeType](enumerations/EExchangeType.md)
 - [EMessagePriority](enumerations/EMessagePriority.md)
 - [EMessageProperty](enumerations/EMessageProperty.md)
@@ -22,6 +24,7 @@
 - [Consumer](classes/Consumer.md)
 - [ConsumerGroups](classes/ConsumerGroups.md)
 - [EventBus](classes/EventBus.md)
+- [Exchange](classes/Exchange.md)
 - [ExchangeDirect](classes/ExchangeDirect.md)
 - [ExchangeFanout](classes/ExchangeFanout.md)
 - [ExchangeTopic](classes/ExchangeTopic.md)
@@ -42,7 +45,9 @@
 
 - [IConsumerMessageHandlerParams](interfaces/IConsumerMessageHandlerParams.md)
 - [IEventBusConfig](interfaces/IEventBusConfig.md)
-- [IExchange](interfaces/IExchange.md)
+- [IExchangeParams](interfaces/IExchangeParams.md)
+- [IExchangeParsedParams](interfaces/IExchangeParsedParams.md)
+- [IExchangeProperties](interfaces/IExchangeProperties.md)
 - [IMessageManagerDeleteResponse](interfaces/IMessageManagerDeleteResponse.md)
 - [IMessageParams](interfaces/IMessageParams.md)
 - [IMessagesConfig](interfaces/IMessagesConfig.md)
@@ -65,7 +70,6 @@
 - [IRedisSMQConfig](interfaces/IRedisSMQConfig.md)
 - [IRedisSMQDefaultConfig](interfaces/IRedisSMQDefaultConfig.md)
 - [IRedisSMQParsedConfig](interfaces/IRedisSMQParsedConfig.md)
-- [ITopicParams](interfaces/ITopicParams.md)
 
 ## Type Aliases
 
@@ -79,10 +83,6 @@
 - [TConsumerMessageHandlerFn](type-aliases/TConsumerMessageHandlerFn.md)
 - [TConsumerMessageHandlerRunnerEvent](type-aliases/TConsumerMessageHandlerRunnerEvent.md)
 - [TEventBusEvent](type-aliases/TEventBusEvent.md)
-- [TExchangeDirectTransferable](type-aliases/TExchangeDirectTransferable.md)
-- [TExchangeFanOutTransferable](type-aliases/TExchangeFanOutTransferable.md)
-- [TExchangeTopicTransferable](type-aliases/TExchangeTopicTransferable.md)
-- [TExchangeTransferable](type-aliases/TExchangeTransferable.md)
 - [TMessageConsumeOptions](type-aliases/TMessageConsumeOptions.md)
 - [TMessageDeleteRawResponse](type-aliases/TMessageDeleteRawResponse.md)
 - [TMessageDeleteStatus](type-aliases/TMessageDeleteStatus.md)

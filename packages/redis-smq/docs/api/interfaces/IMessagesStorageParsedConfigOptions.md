@@ -1,5 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) /
-IMessagesStorageParsedConfigOptions
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IMessagesStorageParsedConfigOptions
 
 # Interface: IMessagesStorageParsedConfigOptions
 
@@ -25,8 +24,7 @@ IMessagesStorageParsedConfigOptions
 
 #### Inherited from
 
-[`IMessagesStorageConfigOptions`](IMessagesStorageConfigOptions.md).[
-`queueSize`](IMessagesStorageConfigOptions.md#queuesize)
+[`IMessagesStorageConfigOptions`](IMessagesStorageConfigOptions.md).[`queueSize`](IMessagesStorageConfigOptions.md#queuesize)
 
 ***
 

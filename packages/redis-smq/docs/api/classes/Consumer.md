@@ -4,8 +4,7 @@
 
 Consumer class responsible for receiving and processing messages from a message queue.
 It implements the `Runnable` interface to handle lifecycle events like startup and shutdown.
-The Consumer can be configured for multiplexing, allowing it to handle multiple queues simultaneously with a single
-Redis connection.
+The Consumer can be configured for multiplexing, allowing it to handle multiple queues simultaneously with a single Redis connection.
 
 ## Extends
 
@@ -25,8 +24,7 @@ Creates a new Consumer instance.
 
 `boolean`
 
-(Optional) If set to true, the consumer uses a multiplexed message handler runner; otherwise, it uses a standard message
-handler runner.
+(Optional) If set to true, the consumer uses a multiplexed message handler runner; otherwise, it uses a standard message handler runner.
 
 #### Returns
 
@@ -63,8 +61,7 @@ It can be a string representing the queue name or an object containing additiona
 
 Callback function to be called once cancellation is complete.
 This callback function will be invoked after the message handler associated with the given queue is removed.
-If an error occurs during the cancellation process, the error will be passed as the first argument to the callback
-function.
+If an error occurs during the cancellation process, the error will be passed as the first argument to the callback function.
 Otherwise, the callback function will be invoked with no arguments.
 
 #### Returns
@@ -231,7 +228,7 @@ The parsed queue parameters include the queue name, options, and any additional 
 [`IQueueParsedParams`](../interfaces/IQueueParsedParams.md)[]
 
 - An array of parsed queue parameters.
-  Each element in the array represents a queue that the consumer is currently consuming messages from.
+Each element in the array represents a queue that the consumer is currently consuming messages from.
 
 #### Example
 

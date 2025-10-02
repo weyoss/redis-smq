@@ -1,5 +1,4 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) /
-QueueManagerError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / QueueManagerError
 
 # Class: QueueManagerError
 
@@ -15,6 +14,7 @@ QueueManagerError
 - [`QueueNotEmptyError`](QueueNotEmptyError.md)
 - [`QueueNotFoundError`](QueueNotFoundError.md)
 - [`InvalidQueueParametersError`](InvalidQueueParametersError.md)
+- [`QueueHasBoundExchangesError`](QueueHasBoundExchangesError.md)
 
 ## Constructors
 

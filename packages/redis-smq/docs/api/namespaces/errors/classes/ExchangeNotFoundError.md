@@ -1,17 +1,16 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) /
-NoMatchedQueueForExchangeError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / ExchangeNotFoundError
 
-# Class: NoMatchedQueueForExchangeError
+# Class: ExchangeNotFoundError
 
 ## Extends
 
-- [`ProducerError`](ProducerError.md)
+- [`ExchangeError`](ExchangeError.md)
 
 ## Constructors
 
 ### Constructor
 
-> **new NoMatchedQueueForExchangeError**(`message?`): `NoMatchedQueueForExchangeError`
+> **new ExchangeNotFoundError**(`message?`): `ExchangeNotFoundError`
 
 #### Parameters
 
@@ -21,11 +20,11 @@ NoMatchedQueueForExchangeError
 
 #### Returns
 
-`NoMatchedQueueForExchangeError`
+`ExchangeNotFoundError`
 
 #### Inherited from
 
-[`ProducerError`](ProducerError.md).[`constructor`](ProducerError.md#constructor)
+[`ExchangeError`](ExchangeError.md).[`constructor`](ExchangeError.md#constructor)
 
 ## Properties
 
@@ -35,7 +34,7 @@ NoMatchedQueueForExchangeError
 
 #### Inherited from
 
-[`ProducerError`](ProducerError.md).[`cause`](ProducerError.md#cause)
+[`ExchangeError`](ExchangeError.md).[`cause`](ExchangeError.md#cause)
 
 ***
 
@@ -45,7 +44,7 @@ NoMatchedQueueForExchangeError
 
 #### Inherited from
 
-[`ProducerError`](ProducerError.md).[`message`](ProducerError.md#message)
+[`ExchangeError`](ExchangeError.md).[`message`](ExchangeError.md#message)
 
 ***
 
@@ -55,7 +54,7 @@ NoMatchedQueueForExchangeError
 
 #### Inherited from
 
-[`ProducerError`](ProducerError.md).[`stack`](ProducerError.md#stack)
+[`ExchangeError`](ExchangeError.md).[`stack`](ExchangeError.md#stack)
 
 ***
 
@@ -85,7 +84,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`ProducerError`](ProducerError.md).[`prepareStackTrace`](ProducerError.md#preparestacktrace)
+[`ExchangeError`](ExchangeError.md).[`prepareStackTrace`](ExchangeError.md#preparestacktrace)
 
 ***
 
@@ -95,7 +94,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`ProducerError`](ProducerError.md).[`stackTraceLimit`](ProducerError.md#stacktracelimit)
+[`ExchangeError`](ExchangeError.md).[`stackTraceLimit`](ExchangeError.md#stacktracelimit)
 
 ## Accessors
 
@@ -111,7 +110,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`ProducerError`](ProducerError.md).[`name`](ProducerError.md#name)
+[`ExchangeError`](ExchangeError.md).[`name`](ExchangeError.md#name)
 
 ## Methods
 
@@ -137,7 +136,7 @@ Create .stack property on a target object
 
 #### Inherited from
 
-[`ProducerError`](ProducerError.md).[`captureStackTrace`](ProducerError.md#capturestacktrace)
+[`ExchangeError`](ExchangeError.md).[`captureStackTrace`](ExchangeError.md#capturestacktrace)
 
 ***
 
@@ -159,4 +158,4 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 #### Inherited from
 
-[`ProducerError`](ProducerError.md).[`isError`](ProducerError.md#iserror)
+[`ExchangeError`](ExchangeError.md).[`isError`](ExchangeError.md#iserror)

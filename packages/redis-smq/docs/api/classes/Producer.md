@@ -216,7 +216,6 @@ exchange is set and that at least one matching queue exists before
 publishing the message.
 
 This method handles various errors, including:
-
 - ProducerInstanceNotRunningError: Thrown when the producer instance is not running.
 - ProducerMessageExchangeRequiredError: Thrown when no exchange is set for the message.
 - ProducerExchangeNoMatchedQueueError: Thrown when no matching queues are found for the exchange.
@@ -239,8 +238,8 @@ The message to be produced and published.
 `ICallback`\<`string`[]\>
 
 A callback function to be executed upon completion.
-It receives an error as the first argument (if any)
-and an array of message IDs as the second argument.
+                                  It receives an error as the first argument (if any)
+                                  and an array of message IDs as the second argument.
 
 #### Returns
 

@@ -28,12 +28,6 @@
 
 ***
 
-### fanoutExchange
-
-> **fanoutExchange**: `null` \| `string`
-
-***
-
 ### messagesCount
 
 > **messagesCount**: `number`
