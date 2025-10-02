@@ -7,6 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import { ExchangeError } from './exchange.error.js';
+import { RedisSMQError } from 'redis-smq-common';
 
-export class MessageExchangeRequiredError extends ExchangeError {}
+export class ExchangeError extends RedisSMQError {}

@@ -24,7 +24,6 @@ function parseProperties(
   const properties: IQueueProperties = {
     deliveryModel: EQueueDeliveryModel.POINT_TO_POINT,
     queueType: EQueueType.LIFO_QUEUE,
-    fanoutExchange: null,
     rateLimit: null,
     messagesCount: 0,
     acknowledgedMessagesCount: 0,
@@ -47,9 +46,6 @@ function parseProperties(
         break;
       case EQueueProperty.RATE_LIMIT:
         properties.rateLimit = value ? JSON.parse(value) : null;
-        break;
-      case EQueueProperty.FANOUT_EXCHANGE:
-        properties.fanoutExchange = value ? value : null;
         break;
       case EQueueProperty.MESSAGES_COUNT:
         properties.messagesCount = Number(value);

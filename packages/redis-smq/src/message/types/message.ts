@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { TExchangeTransferable } from '../../exchange/index.js';
+import { IExchangeParsedParams } from '../../exchange/index.js';
 import { IQueueParams } from '../../queue-manager/index.js';
 import { IMessageStateTransferable } from './message-state.js';
 
@@ -125,7 +125,8 @@ export enum EMessagePropertyStatus {
 
 export interface IMessageParams<TBody = unknown> {
   createdAt: number;
-  exchange: TExchangeTransferable;
+  exchange: IExchangeParsedParams | null;
+  queue: IQueueParams | null;
   ttl: number;
   retryThreshold: number;
   retryDelay: number;

@@ -9,4 +9,4 @@
 
 import { ExchangeError } from './exchange.error.js';
 
-export class MessageExchangeRequiredError extends ExchangeError {}
+export class InvalidExchangeParametersError extends ExchangeError {}

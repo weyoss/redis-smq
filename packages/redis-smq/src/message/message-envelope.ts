@@ -8,12 +8,10 @@
  */
 
 import cronParser from 'cron-parser';
-import { TExchangeTransferable } from '../exchange/index.js';
 import { IQueueParams } from '../queue-manager/index.js';
 import {
   MessageDestinationQueueAlreadySetError,
   MessageDestinationQueueRequiredError,
-  MessageExchangeRequiredError,
 } from '../errors/index.js';
 import { MessageState } from './message-state.js';
 import { ProducibleMessage } from './producible-message.js';
@@ -308,34 +306,6 @@ export class MessageEnvelope {
     return 0;
   }
 
-  /**
-   * Retrieves the exchange associated with the producible message.
-   *
-   * @throws {MessageExchangeRequiredError} - If the producible message does not have an exchange set.
-   *
-   * @returns {TExchangeTransferable} - The exchange associated with the producible message.
-   *
-   * @remarks
-   * The exchange is used to route messages to the appropriate queues based on their routing keys.
-   * This function retrieves the exchange associated with the producible message and throws an error
-   * if no exchange is set.
-   *
-   * @example
-   * ```typescript
-   * const message = new ProducibleMessage().setBody('Hello, world!').setExchange('my-exchange');
-   * const envelope = new MessageEnvelope(message);
-   * const exchange = envelope.getExchange();
-   * console.log(exchange); // Output: { name: 'my-exchange', type: 'direct' }
-   * ```
-   */
-  getExchange(): TExchangeTransferable {
-    const exchange = this.producibleMessage.getExchange();
-    if (!exchange) {
-      throw new MessageExchangeRequiredError();
-    }
-    return exchange;
-  }
-
   toString(): string {
     return JSON.stringify(this);
   }
@@ -435,7 +405,8 @@ export class MessageEnvelope {
       scheduledDelay: this.producibleMessage.getScheduledDelay(),
       scheduledRepeatPeriod: this.producibleMessage.getScheduledRepeatPeriod(),
       scheduledRepeat: this.producibleMessage.getScheduledRepeat(),
-      exchange: this.getExchange(),
+      exchange: this.producibleMessage.getExchange(),
+      queue: this.producibleMessage.getQueue(),
       destinationQueue: this.getDestinationQueue(),
       consumerGroupId: this.getConsumerGroupId(),
     };

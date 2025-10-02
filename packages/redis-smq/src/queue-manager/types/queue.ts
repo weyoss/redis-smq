@@ -54,7 +54,6 @@ export interface IQueueProperties {
   deliveryModel: EQueueDeliveryModel;
   queueType: EQueueType;
   rateLimit: IQueueRateLimit | null;
-  fanoutExchange: string | null;
   messagesCount: number;
   scheduledMessagesCount: number;
   pendingMessagesCount: number;
@@ -68,7 +67,6 @@ export interface IQueueProperties {
 export enum EQueueProperty {
   QUEUE_TYPE,
   RATE_LIMIT,
-  FANOUT_EXCHANGE,
   MESSAGES_COUNT,
   DELIVERY_MODEL,
   SCHEDULED_MESSAGES_COUNT,

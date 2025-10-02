@@ -13,7 +13,6 @@ import { MessageEnvelope } from '../../../src/message/message-envelope.js';
 import {
   MessageDestinationQueueAlreadySetError,
   MessageDestinationQueueRequiredError,
-  MessageExchangeRequiredError,
 } from '../../../src/errors/index.js';
 
 test('MessageEnvelope: additional checks', async () => {
@@ -26,5 +25,4 @@ test('MessageEnvelope: additional checks', async () => {
   expect(() => env.setDestinationQueue({ ns: 'ns1', name: 'queue2' })).toThrow(
     MessageDestinationQueueAlreadySetError,
   );
-  expect(() => env.getExchange()).toThrow(MessageExchangeRequiredError);
 });
