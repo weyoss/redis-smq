@@ -46,13 +46,19 @@
 
 ### exchange
 
-> **exchange**: [`TExchangeTransferable`](../type-aliases/TExchangeTransferable.md)
+> **exchange**: `null` \| [`IExchangeParsedParams`](IExchangeParsedParams.md)
 
 ***
 
 ### priority
 
 > **priority**: `null` \| `number`
+
+***
+
+### queue
+
+> **queue**: `null` \| [`IQueueParams`](IQueueParams.md)
 
 ***
 

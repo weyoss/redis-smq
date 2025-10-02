@@ -1,16 +1,16 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / InvalidDirectExchangeParametersError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / NamespaceMismatchError
 
-# Class: InvalidDirectExchangeParametersError
+# Class: NamespaceMismatchError
 
 ## Extends
 
-- [`ExchangeError`](ExchangeError.md)
+- `RedisSMQError`
 
 ## Constructors
 
 ### Constructor
 
-> **new InvalidDirectExchangeParametersError**(`message?`): `InvalidDirectExchangeParametersError`
+> **new NamespaceMismatchError**(`message?`): `NamespaceMismatchError`
 
 #### Parameters
 
@@ -20,11 +20,11 @@
 
 #### Returns
 
-`InvalidDirectExchangeParametersError`
+`NamespaceMismatchError`
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`constructor`](ExchangeError.md#constructor)
+`RedisSMQError.constructor`
 
 ## Properties
 
@@ -34,7 +34,7 @@
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`cause`](ExchangeError.md#cause)
+`RedisSMQError.cause`
 
 ***
 
@@ -44,7 +44,7 @@
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`message`](ExchangeError.md#message)
+`RedisSMQError.message`
 
 ***
 
@@ -54,7 +54,7 @@
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`stack`](ExchangeError.md#stack)
+`RedisSMQError.stack`
 
 ***
 
@@ -84,7 +84,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`prepareStackTrace`](ExchangeError.md#preparestacktrace)
+`RedisSMQError.prepareStackTrace`
 
 ***
 
@@ -94,7 +94,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`stackTraceLimit`](ExchangeError.md#stacktracelimit)
+`RedisSMQError.stackTraceLimit`
 
 ## Accessors
 
@@ -110,7 +110,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`name`](ExchangeError.md#name)
+`RedisSMQError.name`
 
 ## Methods
 
@@ -136,7 +136,7 @@ Create .stack property on a target object
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`captureStackTrace`](ExchangeError.md#capturestacktrace)
+`RedisSMQError.captureStackTrace`
 
 ***
 
@@ -158,4 +158,4 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 #### Inherited from
 
-[`ExchangeError`](ExchangeError.md).[`isError`](ExchangeError.md#iserror)
+`RedisSMQError.isError`

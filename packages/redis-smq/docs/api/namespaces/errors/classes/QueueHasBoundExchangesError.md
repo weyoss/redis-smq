@@ -1,27 +1,16 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) /
-MessageExchangeError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / QueueHasBoundExchangesError
 
-# Class: MessageExchangeError
+# Class: QueueHasBoundExchangesError
 
 ## Extends
 
-- `RedisSMQError`
-
-## Extended by
-
-- [`MessageExchangeRequiredError`](MessageExchangeRequiredError.md)
-- [`ExchangeFanoutError`](ExchangeFanoutError.md)
-- [`InvalidTopicExchangeParamsError`](InvalidTopicExchangeParamsError.md)
-- [`InvalidFanoutExchangeParametersError`](InvalidFanoutExchangeParametersError.md)
-- [`InvalidDirectExchangeParametersError`](InvalidDirectExchangeParametersError.md)
-- [`ExchangeHasBoundQueuesError`](ExchangeHasBoundQueuesError.md)
-- [`QueueNotBoundError`](QueueNotBoundError.md)
+- [`QueueManagerError`](QueueManagerError.md)
 
 ## Constructors
 
 ### Constructor
 
-> **new MessageExchangeError**(`message?`): `MessageExchangeError`
+> **new QueueHasBoundExchangesError**(`message?`): `QueueHasBoundExchangesError`
 
 #### Parameters
 
@@ -31,11 +20,11 @@ MessageExchangeError
 
 #### Returns
 
-`MessageExchangeError`
+`QueueHasBoundExchangesError`
 
 #### Inherited from
 
-`RedisSMQError.constructor`
+[`QueueManagerError`](QueueManagerError.md).[`constructor`](QueueManagerError.md#constructor)
 
 ## Properties
 
@@ -45,7 +34,7 @@ MessageExchangeError
 
 #### Inherited from
 
-`RedisSMQError.cause`
+[`QueueManagerError`](QueueManagerError.md).[`cause`](QueueManagerError.md#cause)
 
 ***
 
@@ -55,7 +44,7 @@ MessageExchangeError
 
 #### Inherited from
 
-`RedisSMQError.message`
+[`QueueManagerError`](QueueManagerError.md).[`message`](QueueManagerError.md#message)
 
 ***
 
@@ -65,7 +54,7 @@ MessageExchangeError
 
 #### Inherited from
 
-`RedisSMQError.stack`
+[`QueueManagerError`](QueueManagerError.md).[`stack`](QueueManagerError.md#stack)
 
 ***
 
@@ -95,7 +84,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-`RedisSMQError.prepareStackTrace`
+[`QueueManagerError`](QueueManagerError.md).[`prepareStackTrace`](QueueManagerError.md#preparestacktrace)
 
 ***
 
@@ -105,7 +94,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-`RedisSMQError.stackTraceLimit`
+[`QueueManagerError`](QueueManagerError.md).[`stackTraceLimit`](QueueManagerError.md#stacktracelimit)
 
 ## Accessors
 
@@ -121,7 +110,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-`RedisSMQError.name`
+[`QueueManagerError`](QueueManagerError.md).[`name`](QueueManagerError.md#name)
 
 ## Methods
 
@@ -147,7 +136,7 @@ Create .stack property on a target object
 
 #### Inherited from
 
-`RedisSMQError.captureStackTrace`
+[`QueueManagerError`](QueueManagerError.md).[`captureStackTrace`](QueueManagerError.md#capturestacktrace)
 
 ***
 
@@ -169,4 +158,4 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 #### Inherited from
 
-`RedisSMQError.isError`
+[`QueueManagerError`](QueueManagerError.md).[`isError`](QueueManagerError.md#iserror)

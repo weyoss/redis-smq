@@ -1,5 +1,4 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) /
-InvalidConsumerGroupIdError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / InvalidConsumerGroupIdError
 
 # Class: InvalidConsumerGroupIdError
 

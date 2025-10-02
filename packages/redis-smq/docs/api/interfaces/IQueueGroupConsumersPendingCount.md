@@ -1,5 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) /
-IQueueGroupConsumersPendingCount
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IQueueGroupConsumersPendingCount
 
 # Interface: IQueueGroupConsumersPendingCount
 

@@ -1,5 +1,4 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) /
-ConsumerGroupRequiredError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / ConsumerGroupRequiredError
 
 # Class: ConsumerGroupRequiredError
 

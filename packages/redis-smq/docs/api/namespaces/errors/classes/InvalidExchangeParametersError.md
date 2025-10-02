@@ -1,6 +1,6 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / InvalidDirectExchangeParametersError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / InvalidExchangeParametersError
 
-# Class: InvalidDirectExchangeParametersError
+# Class: InvalidExchangeParametersError
 
 ## Extends
 
@@ -10,7 +10,7 @@
 
 ### Constructor
 
-> **new InvalidDirectExchangeParametersError**(`message?`): `InvalidDirectExchangeParametersError`
+> **new InvalidExchangeParametersError**(`message?`): `InvalidExchangeParametersError`
 
 #### Parameters
 
@@ -20,7 +20,7 @@
 
 #### Returns
 
-`InvalidDirectExchangeParametersError`
+`InvalidExchangeParametersError`
 
 #### Inherited from
 

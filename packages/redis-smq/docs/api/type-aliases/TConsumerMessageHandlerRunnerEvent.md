@@ -1,5 +1,4 @@
-[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) /
-TConsumerMessageHandlerRunnerEvent
+[RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / TConsumerMessageHandlerRunnerEvent
 
 # Type Alias: TConsumerMessageHandlerRunnerEvent
 

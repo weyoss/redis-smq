@@ -1,5 +1,4 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) /
-UnknownQueueTypeError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / UnknownQueueTypeError
 
 # Class: UnknownQueueTypeError
 

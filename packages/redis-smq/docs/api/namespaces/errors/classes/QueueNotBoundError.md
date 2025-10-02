@@ -1,11 +1,10 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) /
-QueueNotBoundError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / QueueNotBoundError
 
 # Class: QueueNotBoundError
 
 ## Extends
 
-- [`MessageExchangeError`](MessageExchangeError.md)
+- [`ExchangeError`](ExchangeError.md)
 
 ## Constructors
 
@@ -25,7 +24,7 @@ QueueNotBoundError
 
 #### Inherited from
 
-[`MessageExchangeError`](MessageExchangeError.md).[`constructor`](MessageExchangeError.md#constructor)
+[`ExchangeError`](ExchangeError.md).[`constructor`](ExchangeError.md#constructor)
 
 ## Properties
 
@@ -35,7 +34,7 @@ QueueNotBoundError
 
 #### Inherited from
 
-[`MessageExchangeError`](MessageExchangeError.md).[`cause`](MessageExchangeError.md#cause)
+[`ExchangeError`](ExchangeError.md).[`cause`](ExchangeError.md#cause)
 
 ***
 
@@ -45,7 +44,7 @@ QueueNotBoundError
 
 #### Inherited from
 
-[`MessageExchangeError`](MessageExchangeError.md).[`message`](MessageExchangeError.md#message)
+[`ExchangeError`](ExchangeError.md).[`message`](ExchangeError.md#message)
 
 ***
 
@@ -55,7 +54,7 @@ QueueNotBoundError
 
 #### Inherited from
 
-[`MessageExchangeError`](MessageExchangeError.md).[`stack`](MessageExchangeError.md#stack)
+[`ExchangeError`](ExchangeError.md).[`stack`](ExchangeError.md#stack)
 
 ***
 
@@ -85,7 +84,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`MessageExchangeError`](MessageExchangeError.md).[`prepareStackTrace`](MessageExchangeError.md#preparestacktrace)
+[`ExchangeError`](ExchangeError.md).[`prepareStackTrace`](ExchangeError.md#preparestacktrace)
 
 ***
 
@@ -95,7 +94,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`MessageExchangeError`](MessageExchangeError.md).[`stackTraceLimit`](MessageExchangeError.md#stacktracelimit)
+[`ExchangeError`](ExchangeError.md).[`stackTraceLimit`](ExchangeError.md#stacktracelimit)
 
 ## Accessors
 
@@ -111,7 +110,7 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-[`MessageExchangeError`](MessageExchangeError.md).[`name`](MessageExchangeError.md#name)
+[`ExchangeError`](ExchangeError.md).[`name`](ExchangeError.md#name)
 
 ## Methods
 
@@ -137,7 +136,7 @@ Create .stack property on a target object
 
 #### Inherited from
 
-[`MessageExchangeError`](MessageExchangeError.md).[`captureStackTrace`](MessageExchangeError.md#capturestacktrace)
+[`ExchangeError`](ExchangeError.md).[`captureStackTrace`](ExchangeError.md#capturestacktrace)
 
 ***
 
@@ -159,4 +158,4 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 #### Inherited from
 
-[`MessageExchangeError`](MessageExchangeError.md).[`isError`](MessageExchangeError.md#iserror)
+[`ExchangeError`](ExchangeError.md).[`isError`](ExchangeError.md#iserror)

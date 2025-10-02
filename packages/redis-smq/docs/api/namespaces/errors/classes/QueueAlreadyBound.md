@@ -1,6 +1,6 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / InvalidDirectExchangeParametersError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / QueueAlreadyBound
 
-# Class: InvalidDirectExchangeParametersError
+# Class: QueueAlreadyBound
 
 ## Extends
 
@@ -10,7 +10,7 @@
 
 ### Constructor
 
-> **new InvalidDirectExchangeParametersError**(`message?`): `InvalidDirectExchangeParametersError`
+> **new QueueAlreadyBound**(`message?`): `QueueAlreadyBound`
 
 #### Parameters
 
@@ -20,7 +20,7 @@
 
 #### Returns
 
-`InvalidDirectExchangeParametersError`
+`QueueAlreadyBound`
 
 #### Inherited from
 

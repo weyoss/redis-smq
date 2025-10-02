@@ -66,7 +66,7 @@
 
 ### exchange
 
-> **exchange**: [`TExchangeTransferable`](../type-aliases/TExchangeTransferable.md)
+> **exchange**: `null` \| [`IExchangeParsedParams`](IExchangeParsedParams.md)
 
 #### Inherited from
 
@@ -93,6 +93,16 @@
 #### Inherited from
 
 [`IMessageParams`](IMessageParams.md).[`priority`](IMessageParams.md#priority)
+
+***
+
+### queue
+
+> **queue**: `null` \| [`IQueueParams`](IQueueParams.md)
+
+#### Inherited from
+
+[`IMessageParams`](IMessageParams.md).[`queue`](IMessageParams.md#queue)
 
 ***
 
