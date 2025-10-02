@@ -69,6 +69,8 @@
 - [IRedisClient](interfaces/IRedisClient.md)
 - [IRedisConfig](interfaces/IRedisConfig.md)
 - [IRedisTransaction](interfaces/IRedisTransaction.md)
+- [IWatchTransactionAttemptResult](interfaces/IWatchTransactionAttemptResult.md)
+- [IWatchTransactionOptions](interfaces/IWatchTransactionOptions.md)
 - [IWorkerCallable](interfaces/IWorkerCallable.md)
 - [IWorkerRunnable](interfaces/IWorkerRunnable.md)
 - [IWorkerThreadData](interfaces/IWorkerThreadData.md)
@@ -110,3 +112,4 @@
 ## Functions
 
 - [createLogger](functions/createLogger.md)
+- [withWatchTransaction](functions/withWatchTransaction.md)
