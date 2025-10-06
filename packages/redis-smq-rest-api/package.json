@@ -93,7 +93,7 @@
   "scripts": {
     "schema:gen": "scripts/json-schema-gen.sh",
     "openapi:gen": "scripts/openapi-gen.js",
-    "error-mappings:gen": "scripts/generate-error-mappings.js",
+    "error-mappings:gen": "scripts/error-mappings-gen.sh",
     "build": "scripts/build.sh",
     "test": "../../scripts/test_workspace_esm.sh"
   },
