@@ -78,9 +78,9 @@ try {
   const output = replacePlaceholder(templateContent, mappingText);
   fs.writeFileSync(OUTPUT_FILE, output, 'utf8');
   console.log(
-    `✅ Generated ${OUTPUT_FILE} with ${Object.keys(mappings).length} error mappings`,
+    `Generated ${OUTPUT_FILE} with ${Object.keys(mappings).length} error mappings`,
   );
 } catch (e) {
-  console.error('❌ Failed to generate error mappings:', e);
+  console.error('Failed to generate error mappings:', e);
   process.exit(1);
 }
