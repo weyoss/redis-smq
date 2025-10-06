@@ -137,6 +137,30 @@ topicExchange.bindQueue(
 
 ***
 
+### create()
+
+> **create**(`exchange`, `queuePolicy`, `cb`): `void`
+
+#### Parameters
+
+##### exchange
+
+`string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
+
+##### queuePolicy
+
+[`EExchangeQueuePolicy`](../enumerations/EExchangeQueuePolicy.md)
+
+##### cb
+
+`ICallback`
+
+#### Returns
+
+`void`
+
+***
+
 ### delete()
 
 > **delete**(`exchange`, `cb`): `void`
@@ -203,7 +227,7 @@ topicExchange.delete(
 
 ### getBindingPatternQueues()
 
-> **getBindingPatternQueues**(`bindingPattern`, `exchange`, `cb`): `void`
+> **getBindingPatternQueues**(`exchange`, `bindingPattern`, `cb`): `void`
 
 Retrieve all queues bound to a specific binding pattern within a topic exchange.
 
@@ -213,17 +237,17 @@ will receive messages for routing keys that match the pattern.
 
 #### Parameters
 
-##### bindingPattern
-
-`string`
-
-The binding pattern to query (e.g., 'order.*.created').
-
 ##### exchange
 
 Exchange name or parameter object.
 
 `string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
+
+##### bindingPattern
+
+`string`
+
+The binding pattern to query (e.g., 'order.*.created').
 
 ##### cb
 
@@ -247,8 +271,8 @@ Error via callback on Redis operations failure.
 
 ```typescript
 topicExchange.getBindingPatternQueues(
-  'user.#',
   'notifications',
+  'user.#',
   (err, queues) => {
     if (err) {
       console.error('Failed to get pattern queues:', err);
