@@ -41,7 +41,7 @@ its namespace, name, and type information.
 
 ##### cb
 
-`ICallback`\<[`IExchangeParams`](../interfaces/IExchangeParams.md)[]\>
+`ICallback`\<[`IExchangeParsedParams`](../interfaces/IExchangeParsedParams.md)[]\>
 
 Callback invoked with an array of all exchange parameters or an error.
 
@@ -91,7 +91,7 @@ The namespace to query. Must be a valid Redis key identifier.
 
 ##### cb
 
-`ICallback`\<[`IExchangeParams`](../interfaces/IExchangeParams.md)[]\>
+`ICallback`\<[`IExchangeParsedParams`](../interfaces/IExchangeParsedParams.md)[]\>
 
 Callback invoked with an array of exchange parameters for the namespace or an error.
 
@@ -148,7 +148,7 @@ Queue name (string) or complete queue parameters (IQueueParams).
 
 ##### cb
 
-`ICallback`\<[`IExchangeParams`](../interfaces/IExchangeParams.md)[]\>
+`ICallback`\<[`IExchangeParsedParams`](../interfaces/IExchangeParsedParams.md)[]\>
 
 Callback invoked with an array of exchange parameters the queue is bound to or an error.
 

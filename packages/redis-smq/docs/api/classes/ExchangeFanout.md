@@ -154,6 +154,30 @@ queues.forEach(queueName => {
 
 ***
 
+### create()
+
+> **create**(`exchange`, `queuePolicy`, `cb`): `void`
+
+#### Parameters
+
+##### exchange
+
+`string` | [`IExchangeParams`](../interfaces/IExchangeParams.md)
+
+##### queuePolicy
+
+[`EExchangeQueuePolicy`](../enumerations/EExchangeQueuePolicy.md)
+
+##### cb
+
+`ICallback`
+
+#### Returns
+
+`void`
+
+***
+
 ### delete()
 
 > **delete**(`exchange`, `cb`): `void`
