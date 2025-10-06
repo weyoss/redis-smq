@@ -13,7 +13,7 @@ import {
   CallbackEmptyReplyError,
 } from 'redis-smq-common';
 import { IQueueParams } from '../queue-manager/index.js';
-import { IExchangeParams } from './types/index.js';
+import { IExchangeParsedParams } from './types/index.js';
 import { ExchangeError, RedisKeysInvalidKeyError } from '../errors/index.js';
 import { Configuration } from '../config/index.js';
 import { withSharedPoolConnection } from '../common/redis-connection-pool/with-shared-pool-connection.js';
@@ -72,7 +72,7 @@ export class Exchange {
    * });
    * ```
    */
-  getAllExchanges(cb: ICallback<IExchangeParams[]>): void {
+  getAllExchanges(cb: ICallback<IExchangeParsedParams[]>): void {
     const { keyExchanges } = redisKeys.getMainKeys();
     withSharedPoolConnection((client, done) => {
       client.smembers(keyExchanges, (err, members) => {
@@ -84,10 +84,10 @@ export class Exchange {
           this.logger.error('getAllExchanges: empty reply');
           return done(new CallbackEmptyReplyError());
         }
-        const exchanges: IExchangeParams[] = [];
+        const exchanges: IExchangeParsedParams[] = [];
         for (const s of members) {
           try {
-            const ex: IExchangeParams = JSON.parse(s);
+            const ex: IExchangeParsedParams = JSON.parse(s);
             if (ex && ex.ns && ex.name) exchanges.push(ex);
           } catch {
             this.logger.warn(
@@ -131,7 +131,10 @@ export class Exchange {
    * });
    * ```
    */
-  getNamespaceExchanges(ns: string, cb: ICallback<IExchangeParams[]>): void {
+  getNamespaceExchanges(
+    ns: string,
+    cb: ICallback<IExchangeParsedParams[]>,
+  ): void {
     const namespace = redisKeys.validateRedisKey(ns);
     if (namespace instanceof RedisKeysInvalidKeyError) {
       this.logger.error('getNamespaceExchanges: invalid namespace');
@@ -150,7 +153,9 @@ export class Exchange {
           this.logger.error(`getNamespaceExchanges: empty reply ns=${ns}`);
           return done(new CallbackEmptyReplyError());
         }
-        const exchanges: IExchangeParams[] = members.map((i) => JSON.parse(i));
+        const exchanges: IExchangeParsedParams[] = members.map((i) =>
+          JSON.parse(i),
+        );
         this.logger.debug(
           `getNamespaceExchanges: ns=${ns} count=${exchanges.length}`,
         );
@@ -201,7 +206,7 @@ export class Exchange {
    */
   getQueueBoundExchanges(
     queue: string | IQueueParams,
-    cb: ICallback<IExchangeParams[]>,
+    cb: ICallback<IExchangeParsedParams[]>,
   ): void {
     const queueParams = _parseQueueParams(queue);
     if (queueParams instanceof Error) {
@@ -226,7 +231,9 @@ export class Exchange {
           );
           return done(new CallbackEmptyReplyError());
         }
-        const exchanges: IExchangeParams[] = members.map((i) => JSON.parse(i));
+        const exchanges: IExchangeParsedParams[] = members.map((i) =>
+          JSON.parse(i),
+        );
         this.logger.debug(
           `getQueueBoundExchanges: ns=${queueParams.ns} q=${queueParams.name} count=${exchanges.length}`,
         );

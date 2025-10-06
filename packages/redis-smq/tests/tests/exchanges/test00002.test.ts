@@ -239,8 +239,8 @@ describe('ExchangeTopic', () => {
     const patterns = await topicExchange.getBindingPatternsAsync(ex);
     expect(patterns.sort()).toEqual([p1, p2].sort());
 
-    const p1Queues = await topicExchange.getBindingPatternQueuesAsync(p1, ex);
-    const p2Queues = await topicExchange.getBindingPatternQueuesAsync(p2, ex);
+    const p1Queues = await topicExchange.getBindingPatternQueuesAsync(ex, p1);
+    const p2Queues = await topicExchange.getBindingPatternQueuesAsync(ex, p2);
 
     expect(p1Queues).toEqual([queueA]);
     expect(p2Queues).toEqual([queueB]);
@@ -385,8 +385,8 @@ describe('ExchangeTopic', () => {
       expect(patterns).toEqual([pattern]);
 
       const queues = await topicExchange.getBindingPatternQueuesAsync(
-        pattern,
         ex,
+        pattern,
       );
 
       const sortByName = (arr: IQueueParams[]) =>
@@ -403,19 +403,19 @@ describe('ExchangeTopic', () => {
 
       // Both queues present
       let queues = await topicExchange.getBindingPatternQueuesAsync(
-        pattern,
         ex,
+        pattern,
       );
       expect(queues.map((q) => q.name).sort()).toEqual(['queue1', 'queue2']);
 
       // Unbind one queue
       await topicExchange.unbindQueueAsync(queueA, ex, pattern);
-      queues = await topicExchange.getBindingPatternQueuesAsync(pattern, ex);
+      queues = await topicExchange.getBindingPatternQueuesAsync(ex, pattern);
       expect(queues).toEqual([queueB]);
 
       // Unbind the last queue -> pattern should disappear from exchange
       await topicExchange.unbindQueueAsync(queueB, ex, pattern);
-      queues = await topicExchange.getBindingPatternQueuesAsync(pattern, ex);
+      queues = await topicExchange.getBindingPatternQueuesAsync(ex, pattern);
       expect(queues).toEqual([]);
 
       const patternsAfter = await topicExchange.getBindingPatternsAsync(ex);
@@ -439,12 +439,12 @@ describe('ExchangeTopic', () => {
 
       // Queues for p2 should be empty when queried against ex1 and vice versa
       const ex1p2Queues = await topicExchange.getBindingPatternQueuesAsync(
-        p2,
         ex1,
+        p2,
       );
       const ex2p1Queues = await topicExchange.getBindingPatternQueuesAsync(
-        p1,
         ex2,
+        p1,
       );
 
       expect(ex1p2Queues).toEqual([]);
@@ -454,8 +454,8 @@ describe('ExchangeTopic', () => {
     it('getBindingPatternQueues: returns empty array for a valid but unknown pattern on an exchange', async () => {
       const ex: IExchangeParams = { ns: 'ns1', name: 'ex_unknown_pattern' };
       const queues = await topicExchange.getBindingPatternQueuesAsync(
-        'unknown.pattern',
         ex,
+        'unknown.pattern',
       );
       expect(queues).toEqual([]);
     });
