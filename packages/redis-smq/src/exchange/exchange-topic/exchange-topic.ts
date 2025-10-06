@@ -17,6 +17,7 @@ import {
 } from 'redis-smq-common';
 import { withSharedPoolConnection } from '../../common/redis-connection-pool/with-shared-pool-connection.js';
 import { EQueueType, IQueueParams } from '../../queue-manager/index.js';
+import { _saveExchange } from '../_/_save-exchange.js';
 import { _validateQueueBinding } from '../_/_validate-queue-binding.js';
 import {
   EExchangeProperty,
@@ -33,6 +34,7 @@ import { _parseQueueParams } from '../../queue-manager/_/_parse-queue-params.js'
 import {
   ExchangeError,
   ExchangeHasBoundQueuesError,
+  InvalidTopicExchangeParamsError,
   NamespaceMismatchError,
   QueueAlreadyBound,
   QueueNotBoundError,
@@ -221,8 +223,8 @@ export class ExchangeTopic {
    * specified binding pattern. This is useful for understanding which queues
    * will receive messages for routing keys that match the pattern.
    *
-   * @param bindingPattern - The binding pattern to query (e.g., 'order.*.created').
    * @param exchange - Exchange name or parameter object.
+   * @param bindingPattern - The binding pattern to query (e.g., 'order.*.created').
    * @param cb - Callback invoked with an array of queues bound to the pattern or an error.
    *
    * @throws Error via callback on invalid exchange parameters.
@@ -231,8 +233,8 @@ export class ExchangeTopic {
    * @example
    * ```typescript
    * topicExchange.getBindingPatternQueues(
-   *   'user.#',
    *   'notifications',
+   *   'user.#',
    *   (err, queues) => {
    *     if (err) {
    *       console.error('Failed to get pattern queues:', err);
@@ -248,8 +250,8 @@ export class ExchangeTopic {
    * ```
    */
   getBindingPatternQueues(
-    bindingPattern: string,
     exchange: string | IExchangeParams,
+    bindingPattern: string,
     cb: ICallback<IQueueParams[]>,
   ): void {
     withSharedPoolConnection(
@@ -657,6 +659,20 @@ export class ExchangeTopic {
         },
       );
     }, cb);
+  }
+
+  create(
+    exchange: string | IExchangeParams,
+    queuePolicy: EExchangeQueuePolicy,
+    cb: ICallback,
+  ) {
+    const exchangeParams = _parseExchangeParams(exchange, this.type);
+    if (exchangeParams instanceof Error)
+      return cb(new InvalidTopicExchangeParamsError());
+    withSharedPoolConnection(
+      (client, cb) => _saveExchange(client, exchangeParams, queuePolicy, cb),
+      cb,
+    );
   }
 
   /**

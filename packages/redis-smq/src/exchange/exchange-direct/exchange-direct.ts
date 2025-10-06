@@ -28,6 +28,7 @@ import {
 import { _parseQueueParams } from '../../queue-manager/_/_parse-queue-params.js';
 import { EQueueType, IQueueParams } from '../../queue-manager/index.js';
 import { _parseExchangeParams } from '../_/_parse-exchange-params.js';
+import { _saveExchange } from '../_/_save-exchange.js';
 import { _validateQueueBinding } from '../_/_validate-queue-binding.js';
 import { _validateExchange } from '../_/_validate-exchange.js';
 import {
@@ -302,6 +303,20 @@ export class ExchangeDirect {
         },
       );
     }, cb);
+  }
+
+  create(
+    exchange: string | IExchangeParams,
+    queuePolicy: EExchangeQueuePolicy,
+    cb: ICallback,
+  ) {
+    const exchangeParams = _parseExchangeParams(exchange, this.type);
+    if (exchangeParams instanceof Error)
+      return cb(new InvalidDirectExchangeParametersError());
+    withSharedPoolConnection(
+      (client, cb) => _saveExchange(client, exchangeParams, queuePolicy, cb),
+      cb,
+    );
   }
 
   /**
