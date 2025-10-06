@@ -7,17 +7,28 @@
  * in the root directory of this source tree.
  */
 
-import {
-  EControllerRequestMethod,
-  EControllerRequestPayload,
-} from '../../../lib/controller/types/index.js';
-import { TRouterResourceMap } from '../../../lib/router/types/index.js';
 import { countConsumerGroupPendingMessagesController } from '../../../controllers/consumer-groups/countConsumerGroupPendingMessagesController.js';
 import { deleteConsumerGroupController } from '../../../controllers/consumer-groups/deleteConsumerGroupController.js';
 import { getConsumerGroupPendingMessagesController } from '../../../controllers/consumer-groups/getConsumerGroupPendingMessagesController.js';
 import { getConsumerGroupsController } from '../../../controllers/consumer-groups/getConsumerGroupsController.js';
 import { purgeConsumerGroupPendingMessagesController } from '../../../controllers/consumer-groups/purgeConsumerGroupPendingMessagesController.js';
 import { saveConsumerGroupController } from '../../../controllers/consumer-groups/saveConsumerGroupController.js';
+import { bindQueueDirectXController } from '../../../controllers/exchange-direct/bindQueueDirectXController.js';
+import { deleteExchangeDirectXController } from '../../../controllers/exchange-direct/deleteExchangeDirectXController.js';
+import { getRoutingKeyQueuesDirectXController } from '../../../controllers/exchange-direct/getRoutingKeyQueuesDirectXController.js';
+import { getRoutingKeysDirectXController } from '../../../controllers/exchange-direct/getRoutingKeysDirectXController.js';
+import { matchQueuesDirectXController } from '../../../controllers/exchange-direct/matchQueuesDirectXController.js';
+import { unbindQueueDirectXController } from '../../../controllers/exchange-direct/unbindQueueDirectXController.js';
+import { bindQueueFanoutXController } from '../../../controllers/exchange-fanout/bindQueueFanoutXController.js';
+import { deleteExchangeFanoutXController } from '../../../controllers/exchange-fanout/deleteExchangeFanoutXController.js';
+import { matchQueuesFanoutXController } from '../../../controllers/exchange-fanout/matchQueuesFanoutXController.js';
+import { unbindQueueFanoutXController } from '../../../controllers/exchange-fanout/unbindQueueFanoutXController.js';
+import { bindQueueTopicXController } from '../../../controllers/exchange-topic/bindQueueTopicXController.js';
+import { deleteExchangeTopicXController } from '../../../controllers/exchange-topic/deleteExchangeTopicXController.js';
+import { getBindingPatternQueuesTopicXController } from '../../../controllers/exchange-topic/getBindingPatternQueuesTopicXController.js';
+import { getBindingPatternsTopicXController } from '../../../controllers/exchange-topic/getBindingPatternsTopicXController.js';
+import { matchQueuesTopicXController } from '../../../controllers/exchange-topic/matchQueuesTopicXController.js';
+import { unbindQueueTopicXController } from '../../../controllers/exchange-topic/unbindQueueTopicXController.js';
 import { deleteNamespaceController } from '../../../controllers/namespace/deleteNamespaceController.js';
 import { getNamespaceQueuesController } from '../../../controllers/namespace/getNamespaceQueuesController.js';
 import { getNamespacesController } from '../../../controllers/namespace/getNamespacesController.js';
@@ -27,6 +38,7 @@ import { purgeQueueAcknowledgedMessagesController } from '../../../controllers/q
 import { countQueueDeadLetteredMessagesController } from '../../../controllers/queue-dead-lettered-messages/countQueueDeadLetteredMessagesController.js';
 import { getQueueDeadLetteredMessagesController } from '../../../controllers/queue-dead-lettered-messages/getQueueDeadLetteredMessagesController.js';
 import { purgeQueueDeadLetteredMessagesController } from '../../../controllers/queue-dead-lettered-messages/purgeQueueDeadLetteredMessagesController.js';
+import { getQueueExchangesController } from '../../../controllers/queue-exchanges/getQueueExchangesController.js';
 import { countQueueMessagesByStatusController } from '../../../controllers/queue-messages/countQueueMessagesByStatusController.js';
 import { countQueueMessagesController } from '../../../controllers/queue-messages/countQueueMessagesController.js';
 import { getQueueMessagesController } from '../../../controllers/queue-messages/getQueueMessagesController.js';
@@ -43,6 +55,11 @@ import { deleteQueueController } from '../../../controllers/queue/deleteQueueCon
 import { getQueueConsumersController } from '../../../controllers/queue/getQueueConsumersController.js';
 import { getQueuePropertiesController } from '../../../controllers/queue/getQueuePropertiesController.js';
 import { queueExistsController } from '../../../controllers/queue/queueExistsController.js';
+import {
+  EControllerRequestMethod,
+  EControllerRequestPayload,
+} from '../../../lib/controller/types/index.js';
+import { TRouterResourceMap } from '../../../lib/router/types/index.js';
 
 export const namespaces: TRouterResourceMap = {
   path: 'namespaces',
@@ -339,6 +356,213 @@ export const namespaces: TRouterResourceMap = {
                       handler: clearQueueRateLimitController,
                       method: EControllerRequestMethod.DELETE,
                       payload: [EControllerRequestPayload.PATH],
+                    },
+                  ],
+                },
+                {
+                  path: 'exchanges',
+                  resource: [
+                    {
+                      handler: getQueueExchangesController,
+                      method: EControllerRequestMethod.GET,
+                      payload: [EControllerRequestPayload.PATH],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          path: 'exchanges',
+          resource: [
+            {
+              path: 'fanout',
+              tags: ['Fanout Exchange'],
+              resource: [
+                {
+                  path: ':fanout',
+                  resource: [
+                    {
+                      handler: deleteExchangeFanoutXController,
+                      method: EControllerRequestMethod.DELETE,
+                      payload: [EControllerRequestPayload.PATH],
+                    },
+                    {
+                      path: 'queues',
+                      resource: [
+                        {
+                          handler: matchQueuesFanoutXController,
+                          method: EControllerRequestMethod.GET,
+                          payload: [EControllerRequestPayload.PATH],
+                        },
+                        {
+                          path: ':queue',
+                          resource: [
+                            {
+                              handler: bindQueueFanoutXController,
+                              method: EControllerRequestMethod.PUT,
+                              payload: [EControllerRequestPayload.PATH],
+                            },
+                            {
+                              handler: unbindQueueFanoutXController,
+                              method: EControllerRequestMethod.DELETE,
+                              payload: [EControllerRequestPayload.PATH],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              path: 'direct',
+              tags: ['Direct Exchange'],
+              resource: [
+                {
+                  path: ':direct',
+                  resource: [
+                    {
+                      handler: deleteExchangeDirectXController,
+                      method: EControllerRequestMethod.DELETE,
+                      payload: [EControllerRequestPayload.PATH],
+                    },
+                    {
+                      path: 'routing-keys',
+                      resource: [
+                        {
+                          handler: getRoutingKeysDirectXController,
+                          method: EControllerRequestMethod.GET,
+                          payload: [EControllerRequestPayload.PATH],
+                        },
+                        {
+                          path: ':routingKey',
+                          resource: [
+                            {
+                              path: 'queues',
+                              resource: [
+                                {
+                                  handler: getRoutingKeyQueuesDirectXController,
+                                  method: EControllerRequestMethod.GET,
+                                  payload: [EControllerRequestPayload.PATH],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      path: 'queues',
+                      resource: [
+                        {
+                          handler: matchQueuesDirectXController,
+                          method: EControllerRequestMethod.GET,
+                          payload: [
+                            EControllerRequestPayload.PATH,
+                            EControllerRequestPayload.QUERY,
+                          ],
+                        },
+                        {
+                          path: ':queue',
+                          resource: [
+                            {
+                              handler: bindQueueDirectXController,
+                              method: EControllerRequestMethod.PUT,
+                              payload: [
+                                EControllerRequestPayload.PATH,
+                                EControllerRequestPayload.QUERY,
+                              ],
+                            },
+                            {
+                              handler: unbindQueueDirectXController,
+                              method: EControllerRequestMethod.DELETE,
+                              payload: [
+                                EControllerRequestPayload.PATH,
+                                EControllerRequestPayload.QUERY,
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              path: 'topic',
+              tags: ['Topic Exchange'],
+              resource: [
+                {
+                  path: ':topic',
+                  resource: [
+                    {
+                      handler: deleteExchangeTopicXController,
+                      method: EControllerRequestMethod.DELETE,
+                      payload: [EControllerRequestPayload.PATH],
+                    },
+                    {
+                      path: 'binding-patterns',
+                      resource: [
+                        {
+                          handler: getBindingPatternsTopicXController,
+                          method: EControllerRequestMethod.GET,
+                          payload: [EControllerRequestPayload.PATH],
+                        },
+                        {
+                          path: ':pattern',
+                          resource: [
+                            {
+                              path: 'queues',
+                              resource: [
+                                {
+                                  handler:
+                                    getBindingPatternQueuesTopicXController,
+                                  method: EControllerRequestMethod.GET,
+                                  payload: [EControllerRequestPayload.PATH],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      path: 'queues',
+                      resource: [
+                        {
+                          handler: matchQueuesTopicXController,
+                          method: EControllerRequestMethod.GET,
+                          payload: [
+                            EControllerRequestPayload.PATH,
+                            EControllerRequestPayload.QUERY,
+                          ],
+                        },
+                        {
+                          path: ':queue',
+                          resource: [
+                            {
+                              handler: bindQueueTopicXController,
+                              method: EControllerRequestMethod.PUT,
+                              payload: [
+                                EControllerRequestPayload.PATH,
+                                EControllerRequestPayload.QUERY,
+                              ],
+                            },
+                            {
+                              handler: unbindQueueTopicXController,
+                              method: EControllerRequestMethod.DELETE,
+                              payload: [
+                                EControllerRequestPayload.PATH,
+                                EControllerRequestPayload.QUERY,
+                              ],
+                            },
+                          ],
+                        },
+                      ],
                     },
                   ],
                 },

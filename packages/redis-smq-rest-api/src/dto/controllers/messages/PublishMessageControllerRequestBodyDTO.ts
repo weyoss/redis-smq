@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { IMessageParams, IQueueParams, ITopicParams } from 'redis-smq';
+import { IExchangeParams, IMessageParams, IQueueParams } from 'redis-smq';
 
 export interface PublishMessageControllerRequestBodyDTO {
   message: Partial<
@@ -17,7 +17,28 @@ export interface PublishMessageControllerRequestBodyDTO {
     >
   >;
   exchange:
-    | { queue: string | IQueueParams; topic?: never; fanOut?: never }
-    | { queue?: never; topic: string | ITopicParams; fanOut?: never }
-    | { queue?: never; topic?: never; fanOut: string };
+    | {
+        queue: string | IQueueParams;
+        topic?: never;
+        fanOut?: never;
+        direct?: never;
+      }
+    | {
+        queue?: never;
+        topic?: string | IExchangeParams;
+        fanOut?: never;
+        direct?: never;
+      }
+    | {
+        queue?: never;
+        topic?: never;
+        fanOut?: string | IExchangeParams;
+        direct?: never;
+      }
+    | {
+        queue?: never;
+        topic?: never;
+        fanOut?: never;
+        direct?: string | IExchangeParams;
+      };
 }

@@ -49,8 +49,8 @@ export const publishMessageController: TControllerRequestHandler<
     msg.setScheduledRepeatPeriod(scheduledRepeatPeriod);
   if (scheduledDelay) msg.setScheduledDelay(scheduledDelay);
   if (exchange.queue) msg.setQueue(exchange.queue);
-  else if (exchange.topic) msg.setTopic(exchange.topic);
-  else if (exchange.fanOut) msg.setFanOut(exchange.fanOut);
+  else if (exchange.topic) msg.setTopicExchange(exchange.topic);
+  else if (exchange.fanOut) msg.setFanoutExchange(exchange.fanOut);
   const ids = await messagesService.publishMessage(msg);
   return [201, ids];
 };
