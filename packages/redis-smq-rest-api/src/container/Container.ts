@@ -26,9 +26,15 @@ import {
   QueuePendingMessages,
   QueueRateLimit,
   QueueScheduledMessages,
+  ExchangeTopic,
+  ExchangeDirect,
+  Exchange,
 } from 'redis-smq';
 import { ConsumerGroupsService } from '../services/ConsumerGroupsService.js';
-import { ExchangeFanOutService } from '../services/ExchangeFanOutService.js';
+import { ExchangeDirectService } from '../services/ExchangeDirectService.js';
+import { ExchangeFanoutService } from '../services/ExchangeFanoutService.js';
+import { ExchangesService } from '../services/ExchangesService.js';
+import { ExchangeTopicService } from '../services/ExchangeTopicService.js';
 import { MessagesService } from '../services/MessagesService.js';
 import { NamespacesService } from '../services/NamespacesService.js';
 import { QueueAcknowledgedMessagesService } from '../services/QueueAcknowledgedMessagesService.js';
@@ -58,7 +64,10 @@ export class Container {
       messageManager: asClass(MessageManager).singleton(),
       queueRateLimit: asClass(QueueRateLimit).singleton(),
       namespaceManager: asClass(NamespaceManager).singleton(),
-      exchangeFanOut: asClass(ExchangeFanout).singleton(),
+      exchangeFanout: asClass(ExchangeFanout).singleton(),
+      exchangeTopic: asClass(ExchangeTopic).singleton(),
+      exchangeDirect: asClass(ExchangeDirect).singleton(),
+      exchange: asClass(Exchange).singleton(),
       consumerGroups: asClass(ConsumerGroups)
         .singleton()
         .disposer((i) => new Promise((resolve) => i.shutdown(resolve))),
@@ -80,7 +89,10 @@ export class Container {
       messagesService: asClass(MessagesService),
       queueRateLimitService: asClass(QueueRateLimitService),
       namespacesService: asClass(NamespacesService),
-      exchangeFanOutService: asClass(ExchangeFanOutService),
+      exchangeFanoutService: asClass(ExchangeFanoutService),
+      exchangeDirectService: asClass(ExchangeDirectService),
+      exchangeTopicService: asClass(ExchangeTopicService),
+      exchangesService: asClass(ExchangesService),
       consumerGroupsService: asClass(ConsumerGroupsService),
     });
   }

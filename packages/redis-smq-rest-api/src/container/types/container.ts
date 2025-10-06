@@ -20,10 +20,16 @@ import {
   QueuePendingMessages,
   QueueRateLimit,
   QueueScheduledMessages,
+  Exchange,
+  ExchangeDirect,
+  ExchangeTopic,
 } from 'redis-smq';
 import { IRedisSMQRestApiParsedConfig } from '../../config/index.js';
 import { ConsumerGroupsService } from '../../services/ConsumerGroupsService.js';
-import { ExchangeFanOutService } from '../../services/ExchangeFanOutService.js';
+import { ExchangeDirectService } from '../../services/ExchangeDirectService.js';
+import { ExchangeFanoutService } from '../../services/ExchangeFanoutService.js';
+import { ExchangesService } from '../../services/ExchangesService.js';
+import { ExchangeTopicService } from '../../services/ExchangeTopicService.js';
 import { MessagesService } from '../../services/MessagesService.js';
 import { NamespacesService } from '../../services/NamespacesService.js';
 import { QueueAcknowledgedMessagesService } from '../../services/QueueAcknowledgedMessagesService.js';
@@ -44,7 +50,10 @@ export interface IContainer {
   messageManager: MessageManager;
   queueRateLimit: QueueRateLimit;
   namespaceManager: NamespaceManager;
-  exchangeFanOut: ExchangeFanout;
+  exchange: Exchange;
+  exchangeDirect: ExchangeDirect;
+  exchangeFanout: ExchangeFanout;
+  exchangeTopic: ExchangeTopic;
   consumerGroups: ConsumerGroups;
   producer: Producer;
   config: IRedisSMQRestApiParsedConfig;
@@ -58,7 +67,10 @@ export interface IContainer {
   messagesService: MessagesService;
   queueRateLimitService: QueueRateLimitService;
   namespacesService: NamespacesService;
-  exchangeFanOutService: ExchangeFanOutService;
+  exchangesService: ExchangesService;
+  exchangeFanoutService: ExchangeFanoutService;
+  exchangeDirectService: ExchangeDirectService;
+  exchangeTopicService: ExchangeTopicService;
   consumerGroupsService: ConsumerGroupsService;
 }
 

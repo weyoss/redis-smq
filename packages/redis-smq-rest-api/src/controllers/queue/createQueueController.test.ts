@@ -12,9 +12,9 @@ import supertest from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { config } from '../../../tests/common/config.js';
 import { TResponse } from '../../../tests/types/index.js';
-import { GetAllExchangesControllerResponseDTO } from '../../dto/controllers/exchange-fan-out/GetAllExchangesControllerResponseDTO.js';
 import { CreateQueueControllerRequestBodyDTO } from '../../dto/controllers/queues/CreateQueueControllerRequestBodyDTO.js';
 import { CreateQueueControllerResponseDTO } from '../../dto/controllers/queues/CreateQueueControllerResponseDTO.js';
+import { GetAllQueuesControllerResponseDTO } from '../../dto/controllers/queues/GetAllQueuesControllerResponseDTO.js';
 
 describe('createQueueController', () => {
   it('HTTP 201 Created', async () => {
@@ -38,7 +38,6 @@ describe('createQueueController', () => {
           deliveryModel: EQueueDeliveryModel.POINT_TO_POINT,
           queueType: EQueueType.LIFO_QUEUE,
           rateLimit: null,
-          fanoutExchange: null,
           messagesCount: 0,
           acknowledgedMessagesCount: 0,
           deadLetteredMessagesCount: 0,
@@ -51,7 +50,7 @@ describe('createQueueController', () => {
       },
     });
 
-    const response2: TResponse<GetAllExchangesControllerResponseDTO> =
+    const response2: TResponse<GetAllQueuesControllerResponseDTO> =
       await request.get('/api/v1/queues');
     expect(response2.status).toEqual(200);
     expect(response2.body).toEqual({ data: [requestBody.queue] });

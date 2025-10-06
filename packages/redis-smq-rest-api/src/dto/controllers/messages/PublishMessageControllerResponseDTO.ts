@@ -13,7 +13,7 @@ export type PublishMessageControllerResponseDTO =
   | readonly [201, string[]]
   | TErrors['ProducerNotRunningError']
   | TErrors['MessageExchangeRequiredError']
-  | TErrors['NoMatchedQueueForExchangeError']
+  | TErrors['NoMatchedQueuesForMessageExchangeError']
   | TErrors['QueueHasNoConsumerGroupsError']
   | TErrors['MessagePropertyError']
   | TErrors['QueueNotFoundError']
