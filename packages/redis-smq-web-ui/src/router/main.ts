@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import FanoutExchangesView from '@/views/FanoutExchangesView.vue';
+import ExchangesView from '@/views/ExchangesView.vue';
 import HomeViewView from '@/views/HomeView.vue';
 import type { RouteRecordRaw } from 'vue-router';
 
@@ -43,7 +43,7 @@ export const main: readonly RouteRecordRaw[] = [
   },
   {
     path: '/exchanges',
-    name: 'Fanout Exchanges',
-    component: FanoutExchangesView,
+    name: 'Exchanges',
+    component: ExchangesView,
   },
 ];

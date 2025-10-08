@@ -8,253 +8,539 @@
   -->
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { useEscapeKey } from '@/composables/useEscapeKey.ts';
-import type { IQueueParams } from '@/types';
+import { ref, computed, watch, nextTick } from 'vue';
+import BaseModal from './BaseModal.vue';
 import type { getErrorMessage } from '@/lib/error.ts';
 
-// Props and Emits
-const props = defineProps<{
+interface Props {
   isVisible: boolean;
-  isBinding: boolean;
-  bindError: ReturnType<typeof getErrorMessage>;
-}>();
+  isLoading?: boolean;
+  error?: ReturnType<typeof getErrorMessage>;
+  exchangeType: 'direct' | 'fanout' | 'topic';
+  exchangeName: string;
+  namespace: string;
+}
 
-const emit = defineEmits<{
-  (e: 'close'): void;
-  (e: 'bind', values: IQueueParams): void;
-}>();
+interface EmitPayload {
+  queueName: string;
+  routingKey?: string;
+  bindingPattern?: string;
+}
 
-// Component State
-const queue = ref('');
-
-const isFormValid = computed(() => {
-  // Validate that the queue name is in the format "name@ns"
-  const parts = queue.value.trim().split('@');
-  return parts.length === 2 && parts[0].length > 0 && parts[1].length > 0;
+const props = withDefaults(defineProps<Props>(), {
+  isLoading: false,
+  error: null,
 });
 
-// Event Handlers
-function handleSubmit() {
-  if (isFormValid.value && !props.isBinding) {
-    const parts = queue.value.trim().split('@');
-    const queueParams: IQueueParams = {
-      name: parts[0],
-      ns: parts[1],
-    };
-    emit('bind', queueParams);
+const emit = defineEmits<{
+  (e: 'confirm', payload: EmitPayload): void;
+  (e: 'cancel'): void;
+}>();
+
+// Form state
+const queueName = ref('');
+const routingKey = ref('');
+const bindingPattern = ref('');
+
+// Form validation
+const queueNameError = ref('');
+const routingKeyError = ref('');
+const bindingPatternError = ref('');
+
+// Form refs for focus management
+const queueNameInput = ref<HTMLInputElement | null>(null);
+
+// Computed properties
+const modalTitle = computed(() => {
+  const typeLabel =
+    props.exchangeType.charAt(0).toUpperCase() + props.exchangeType.slice(1);
+  return `Bind Queue to ${typeLabel} Exchange`;
+});
+
+const modalSubtitle = computed(() => {
+  return `${props.exchangeName} • ${props.namespace}`;
+});
+
+const modalDescription = computed(() => {
+  switch (props.exchangeType) {
+    case 'direct':
+      return 'Bind a queue to this direct exchange with a specific routing key. Messages will be routed to the queue only when the routing key matches exactly.';
+    case 'fanout':
+      return 'Bind a queue to this fanout exchange. All messages published to this exchange will be delivered to the bound queue.';
+    case 'topic':
+      return 'Bind a queue to this topic exchange with a binding pattern. Messages will be routed based on pattern matching with routing keys.';
+    default:
+      return 'Bind a queue to this exchange.';
   }
-}
+});
 
-function handleClose() {
-  emit('close');
-}
+const needsRoutingKey = computed(() => props.exchangeType === 'direct');
+const needsBindingPattern = computed(() => props.exchangeType === 'topic');
 
-// Reset form state when modal becomes visible
+const isFormValid = computed(() => {
+  const hasQueueName = queueName.value.trim().length > 0;
+  const hasRoutingKey =
+    !needsRoutingKey.value || routingKey.value.trim().length > 0;
+  const hasBindingPattern =
+    !needsBindingPattern.value || bindingPattern.value.trim().length > 0;
+
+  return (
+    hasQueueName &&
+    hasRoutingKey &&
+    hasBindingPattern &&
+    !queueNameError.value &&
+    !routingKeyError.value &&
+    !bindingPatternError.value
+  );
+});
+
+// Validation functions
+const validateQueueName = () => {
+  const value = queueName.value.trim();
+  if (!value) {
+    queueNameError.value = 'Queue name is required';
+    return false;
+  }
+  if (value.length < 1 || value.length > 255) {
+    queueNameError.value = 'Queue name must be between 1 and 255 characters';
+    return false;
+  }
+  if (!/^[a-zA-Z0-9._-]+$/.test(value)) {
+    queueNameError.value =
+      'Queue name can only contain letters, numbers, dots, underscores, and hyphens';
+    return false;
+  }
+  queueNameError.value = '';
+  return true;
+};
+
+const validateRoutingKey = () => {
+  if (!needsRoutingKey.value) {
+    routingKeyError.value = '';
+    return true;
+  }
+
+  const value = routingKey.value.trim();
+  if (!value) {
+    routingKeyError.value = 'Routing key is required for direct exchanges';
+    return false;
+  }
+  if (value.length > 255) {
+    routingKeyError.value = 'Routing key must not exceed 255 characters';
+    return false;
+  }
+  routingKeyError.value = '';
+  return true;
+};
+
+const validateBindingPattern = () => {
+  if (!needsBindingPattern.value) {
+    bindingPatternError.value = '';
+    return true;
+  }
+
+  const value = bindingPattern.value.trim();
+  if (!value) {
+    bindingPatternError.value =
+      'Binding pattern is required for topic exchanges';
+    return false;
+  }
+  if (value.length > 255) {
+    bindingPatternError.value =
+      'Binding pattern must not exceed 255 characters';
+    return false;
+  }
+  bindingPatternError.value = '';
+  return true;
+};
+
+const validateForm = () => {
+  const isQueueNameValid = validateQueueName();
+  const isRoutingKeyValid = validateRoutingKey();
+  const isBindingPatternValid = validateBindingPattern();
+
+  return isQueueNameValid && isRoutingKeyValid && isBindingPatternValid;
+};
+
+// Event handlers
+const handleConfirm = () => {
+  if (!validateForm() || props.isLoading) return;
+
+  const payload: EmitPayload = {
+    queueName: queueName.value.trim(),
+  };
+
+  if (needsRoutingKey.value) {
+    payload.routingKey = routingKey.value.trim();
+  }
+
+  if (needsBindingPattern.value) {
+    payload.bindingPattern = bindingPattern.value.trim();
+  }
+
+  emit('confirm', payload);
+};
+
+const handleCancel = () => {
+  if (props.isLoading) return;
+  emit('cancel');
+};
+
+// Reset form when modal opens/closes
+const resetForm = () => {
+  queueName.value = '';
+  routingKey.value = '';
+  bindingPattern.value = '';
+  queueNameError.value = '';
+  routingKeyError.value = '';
+  bindingPatternError.value = '';
+};
+
+// Watch for modal visibility changes
 watch(
   () => props.isVisible,
-  (newVal) => {
-    if (newVal) {
-      queue.value = '';
+  async (isVisible) => {
+    if (isVisible) {
+      resetForm();
+      await nextTick();
+      queueNameInput.value?.focus();
     }
   },
 );
 
-// Close modal on escape key press
-useEscapeKey([
-  {
-    isVisible: computed(() => props.isVisible),
-    onEscape: handleClose,
+// Watch for error changes to clear form errors
+watch(
+  () => props.error,
+  (newError) => {
+    if (!newError) {
+      // Clear form errors when external error is cleared
+      queueNameError.value = '';
+      routingKeyError.value = '';
+      bindingPatternError.value = '';
+    }
   },
-]);
+);
 </script>
 
 <template>
-  <teleport to="body">
-    <div v-if="isVisible" class="modal-overlay" @click.self="handleClose">
-      <div class="modal-container" role="dialog" aria-modal="true">
-        <!-- Modal Header -->
-        <div class="modal-header">
-          <h3 class="modal-title">Bind Queue to Exchange</h3>
-          <button class="btn-close" aria-label="Close" @click="handleClose">
-            &times;
-          </button>
+  <BaseModal
+    :is-visible="isVisible"
+    :title="modalTitle"
+    :subtitle="modalSubtitle"
+    icon="bi bi-link-45deg"
+    size="md"
+    @close="handleCancel"
+  >
+    <template #body>
+      <div class="bind-queue-content">
+        <p class="modal-description">{{ modalDescription }}</p>
+
+        <!-- Error Alert -->
+        <div v-if="error" class="error-alert" role="alert">
+          <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+          <span>{{ error }}</span>
         </div>
 
-        <!-- Modal Body -->
-        <div class="modal-body">
-          <form @submit.prevent="handleSubmit">
-            <div class="form-group">
-              <label for="queue" class="form-label">Queue</label>
-              <input
-                id="queue"
-                v-model="queue"
-                type="text"
-                class="form-control"
-                placeholder="e.g., my-queue@my-namespace"
-                required
-              />
-              <small class="form-text">
-                The queue to bind, in the format
-                <strong>name@ns</strong>.
-              </small>
+        <form @submit.prevent="handleConfirm">
+          <!-- Queue Name Field -->
+          <div class="form-group">
+            <label for="queueName" class="form-label">
+              Queue Name <span class="required">*</span>
+            </label>
+            <input
+              id="queueName"
+              ref="queueNameInput"
+              v-model="queueName"
+              type="text"
+              class="form-input"
+              :class="{ error: queueNameError }"
+              placeholder="Enter queue name"
+              :disabled="isLoading"
+              @blur="validateQueueName"
+              @input="queueNameError = ''"
+            />
+            <div v-if="queueNameError" class="field-error" role="alert">
+              {{ queueNameError }}
             </div>
-          </form>
-
-          <!-- Error Display -->
-          <div v-if="bindError" class="alert alert-danger mt-3">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            {{ bindError.message }}
+            <div class="field-hint">
+              Queue name can contain letters, numbers, dots, underscores, and
+              hyphens
+            </div>
           </div>
-        </div>
 
-        <!-- Modal Footer -->
-        <div class="modal-footer">
-          <button class="btn btn-secondary" @click="handleClose">Cancel</button>
-          <button
-            class="btn btn-primary"
-            :disabled="!isFormValid || isBinding"
-            @click="handleSubmit"
-          >
-            <span
-              v-if="isBinding"
-              class="spinner-border spinner-border-sm me-2"
-              role="status"
-              aria-hidden="true"
-            ></span>
-            {{ isBinding ? 'Binding...' : 'Bind Queue' }}
-          </button>
-        </div>
+          <!-- Routing Key Field (Direct Exchange) -->
+          <div v-if="needsRoutingKey" class="form-group">
+            <label for="routingKey" class="form-label">
+              Routing Key <span class="required">*</span>
+            </label>
+            <input
+              id="routingKey"
+              v-model="routingKey"
+              type="text"
+              class="form-input"
+              :class="{ error: routingKeyError }"
+              placeholder="Enter routing key"
+              :disabled="isLoading"
+              @blur="validateRoutingKey"
+              @input="routingKeyError = ''"
+            />
+            <div v-if="routingKeyError" class="field-error" role="alert">
+              {{ routingKeyError }}
+            </div>
+            <div class="field-hint">
+              Messages will be routed to this queue only when the routing key
+              matches exactly
+            </div>
+          </div>
+
+          <!-- Binding Pattern Field (Topic Exchange) -->
+          <div v-if="needsBindingPattern" class="form-group">
+            <label for="bindingPattern" class="form-label">
+              Binding Pattern <span class="required">*</span>
+            </label>
+            <input
+              id="bindingPattern"
+              v-model="bindingPattern"
+              type="text"
+              class="form-input"
+              :class="{ error: bindingPatternError }"
+              placeholder="Enter binding pattern (e.g., user.*.created)"
+              :disabled="isLoading"
+              @blur="validateBindingPattern"
+              @input="bindingPatternError = ''"
+            />
+            <div v-if="bindingPatternError" class="field-error" role="alert">
+              {{ bindingPatternError }}
+            </div>
+            <div class="field-hint">
+              Use * to match one word, # to match zero or more words (e.g.,
+              user.*.created, logs.#)
+            </div>
+          </div>
+        </form>
       </div>
-    </div>
-  </teleport>
+    </template>
+
+    <template #footer>
+      <button
+        type="button"
+        class="btn btn-secondary"
+        :disabled="isLoading"
+        @click="handleCancel"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        :disabled="!isFormValid || isLoading"
+        @click="handleConfirm"
+      >
+        <span
+          v-if="isLoading"
+          class="loading-spinner"
+          aria-hidden="true"
+        ></span>
+        <i v-else class="bi bi-link-45deg" aria-hidden="true"></i>
+        {{ isLoading ? 'Binding...' : 'Bind Queue' }}
+      </button>
+    </template>
+  </BaseModal>
 </template>
 
 <style scoped>
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1050;
-}
-
-.modal-container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-  width: 100%;
-  max-width: 500px;
+.bind-queue-content {
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
+  gap: 1.5rem;
 }
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.modal-title {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #343a40;
-}
-
-.btn-close {
-  background: none;
-  border: none;
-  font-size: 2rem;
-  font-weight: 300;
-  line-height: 1;
+/* Modal Description */
+.modal-description {
   color: #6c757d;
-  cursor: pointer;
-  padding: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
+  padding: 1rem;
+  background: #e7f3ff;
+  border-left: 4px solid #0d6efd;
+  border-radius: 4px;
 }
 
-.modal-body {
-  padding: 1.5rem;
+/* Error Alert */
+.error-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  font-size: 0.875rem;
 }
 
+.error-alert i {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+/* Form Styles */
 .form-group {
-  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .form-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #495057;
-}
-
-.form-control {
-  display: block;
-  width: 100%;
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
-  border: 1px solid #ced4da;
-  border-radius: 8px;
-  transition:
-    border-color 0.15s ease-in-out,
-    box-shadow 0.15s ease-in-out;
-}
-
-.form-control:focus {
-  border-color: #80bdff;
-  outline: 0;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-.form-text {
+  font-weight: 600;
+  color: #212529;
   font-size: 0.875rem;
-  color: #6c757d;
-  margin-top: 0.25rem;
 }
 
-.alert-danger {
-  padding: 1rem;
-  border-radius: 8px;
+.required {
+  color: #dc3545;
 }
 
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  padding: 1.5rem;
-  border-top: 1px solid #e9ecef;
-  background-color: #f8f9fa;
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
+.form-input {
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 }
 
-.btn {
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 500;
-  border: none;
-  cursor: pointer;
+.form-input:focus {
+  outline: none;
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
 }
 
-.btn-primary {
-  background-color: #0d6efd;
-  color: white;
+.form-input.error {
+  border-color: #dc3545;
 }
 
-.btn-primary:disabled {
-  background-color: #a1c9ff;
+.form-input.error:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.form-input:disabled {
+  background-color: #e9ecef;
+  opacity: 1;
   cursor: not-allowed;
 }
 
+.field-error {
+  color: #dc3545;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.field-hint {
+  color: #6c757d;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+/* Button Styles */
+.btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+  min-width: 120px;
+  border: none;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn:focus-visible {
+  outline: 2px solid;
+  outline-offset: 2px;
+}
+
 .btn-secondary {
-  background-color: #6c757d;
+  background: #6c757d;
   color: white;
+  border: 1px solid #6c757d;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #5c636a;
+  border-color: #5c636a;
+}
+
+.btn-secondary:focus-visible {
+  outline-color: #6c757d;
+}
+
+.btn-primary {
+  background: #0d6efd;
+  color: white;
+  border: 1px solid #0d6efd;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #0b5ed7;
+  border-color: #0a58ca;
+}
+
+.btn-primary:focus-visible {
+  outline-color: #0d6efd;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 576px) {
+  .bind-queue-content {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .modal-description {
+    padding: 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .form-input {
+    padding: 0.625rem;
+    font-size: 0.8rem;
+  }
+
+  .btn {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.8rem;
+    min-width: 100px;
+  }
 }
 </style>

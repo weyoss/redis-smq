@@ -9,214 +9,408 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useEscapeKey } from '@/composables/useEscapeKey.ts';
-import type { IQueueParams } from '@/types';
+import BaseModal from './BaseModal.vue';
 import type { getErrorMessage } from '@/lib/error.ts';
 
-// Props and Emits
-const props = defineProps<{
+interface Props {
   isVisible: boolean;
-  isUnbinding: boolean;
-  unbindError: ReturnType<typeof getErrorMessage>;
-  queue: IQueueParams | null;
-  exchangeName: string | null;
-}>();
+  isLoading?: boolean;
+  error?: ReturnType<typeof getErrorMessage>;
+  queueName: string;
+  routingKey?: string;
+  bindingPattern?: string;
+  exchangeType: 'direct' | 'fanout' | 'topic';
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  isLoading: false,
+  error: null,
+  routingKey: '',
+  bindingPattern: '',
+});
 
 const emit = defineEmits<{
-  (e: 'close'): void;
   (e: 'confirm'): void;
+  (e: 'cancel'): void;
 }>();
 
-// Event Handlers
-function handleConfirm() {
-  if (!props.isUnbinding) {
-    emit('confirm');
+// Computed properties
+const modalTitle = computed(() => {
+  const typeLabel =
+    props.exchangeType.charAt(0).toUpperCase() + props.exchangeType.slice(1);
+  return `Unbind Queue from ${typeLabel} Exchange`;
+});
+
+const modalSubtitle = computed(() => {
+  return `${props.queueName}`;
+});
+
+const bindingKey = computed(() => {
+  switch (props.exchangeType) {
+    case 'direct':
+      return props.routingKey;
+    case 'topic':
+      return props.bindingPattern;
+    case 'fanout':
+      return null; // Fanout exchanges don't use routing keys
+    default:
+      return null;
   }
-}
+});
 
-function handleClose() {
-  emit('close');
-}
+const bindingKeyLabel = computed(() => {
+  switch (props.exchangeType) {
+    case 'direct':
+      return 'Routing Key';
+    case 'topic':
+      return 'Binding Pattern';
+    default:
+      return null;
+  }
+});
 
-// Close modal on escape key press
-useEscapeKey([
-  {
-    isVisible: computed(() => props.isVisible),
-    onEscape: handleClose,
-  },
-]);
+const confirmationMessage = computed(() => {
+  const baseMessage = `Are you sure you want to unbind the queue "${props.queueName}"`;
+
+  if (bindingKey.value) {
+    return `${baseMessage} with ${bindingKeyLabel.value?.toLowerCase()} "${bindingKey.value}"?`;
+  }
+
+  return `${baseMessage}?`;
+});
+
+const warningMessage = computed(() => {
+  switch (props.exchangeType) {
+    case 'direct':
+      return 'Messages with this routing key will no longer be delivered to this queue.';
+    case 'fanout':
+      return 'This queue will no longer receive messages published to this exchange.';
+    case 'topic':
+      return 'Messages matching this binding pattern will no longer be delivered to this queue.';
+    default:
+      return 'This queue will no longer receive messages from this exchange.';
+  }
+});
+
+// Event handlers
+const handleConfirm = () => {
+  if (props.isLoading) return;
+  emit('confirm');
+};
+
+const handleCancel = () => {
+  if (props.isLoading) return;
+  emit('cancel');
+};
 </script>
 
 <template>
-  <teleport to="body">
-    <div v-if="isVisible" class="modal-overlay" @click.self="handleClose">
-      <div class="modal-container" role="dialog" aria-modal="true">
-        <!-- Modal Header -->
-        <div class="modal-header">
-          <h3 class="modal-title">Unbind Queue</h3>
-          <button class="btn-close" aria-label="Close" @click="handleClose">
-            &times;
-          </button>
+  <BaseModal
+    :is-visible="isVisible"
+    :title="modalTitle"
+    :subtitle="modalSubtitle"
+    icon="bi bi-unlink"
+    size="sm"
+    @close="handleCancel"
+  >
+    <template #body>
+      <div class="unbind-queue-content">
+        <!-- Error Alert -->
+        <div v-if="error" class="error-alert" role="alert">
+          <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+          <span>{{ error }}</span>
         </div>
 
-        <!-- Modal Body -->
-        <div class="modal-body">
-          <p v-if="queue && exchangeName" class="confirmation-text">
-            Are you sure you want to unbind the queue
-            <strong class="queue-name">{{ queue.name }}@{{ queue.ns }}</strong>
-            from the exchange
-            <strong class="exchange-name">{{ exchangeName }}</strong
-            >?
-          </p>
-          <p class="warning-text">
-            This action can be undone by binding the queue again.
-          </p>
-
-          <!-- Error Display -->
-          <div v-if="unbindError" class="alert alert-danger mt-3">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            {{ unbindError.message }}
+        <!-- Confirmation Message -->
+        <div class="confirmation-section">
+          <div class="confirmation-icon">
+            <i class="bi bi-question-circle-fill" aria-hidden="true"></i>
+          </div>
+          <div class="confirmation-content">
+            <p class="confirmation-message">{{ confirmationMessage }}</p>
+            <p class="warning-message">{{ warningMessage }}</p>
           </div>
         </div>
 
-        <!-- Modal Footer -->
-        <div class="modal-footer">
-          <button class="btn btn-secondary" @click="handleClose">Cancel</button>
-          <button
-            class="btn btn-danger"
-            :disabled="isUnbinding"
-            @click="handleConfirm"
-          >
-            <span
-              v-if="isUnbinding"
-              class="spinner-border spinner-border-sm me-2"
-              role="status"
-              aria-hidden="true"
-            ></span>
-            {{ isUnbinding ? 'Unbinding...' : 'Confirm Unbind' }}
-          </button>
+        <!-- Binding Details -->
+        <div class="binding-details">
+          <div class="detail-item">
+            <span class="detail-label">Queue:</span>
+            <span class="detail-value queue-name">{{ queueName }}</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="detail-label">Exchange Type:</span>
+            <span class="detail-value exchange-type">{{ exchangeType }}</span>
+          </div>
+
+          <div v-if="bindingKey && bindingKeyLabel" class="detail-item">
+            <span class="detail-label">{{ bindingKeyLabel }}:</span>
+            <span class="detail-value binding-key">{{ bindingKey }}</span>
+          </div>
         </div>
       </div>
-    </div>
-  </teleport>
+    </template>
+
+    <template #footer>
+      <button
+        type="button"
+        class="btn btn-secondary"
+        :disabled="isLoading"
+        @click="handleCancel"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="btn btn-danger"
+        :disabled="isLoading"
+        @click="handleConfirm"
+      >
+        <span
+          v-if="isLoading"
+          class="loading-spinner"
+          aria-hidden="true"
+        ></span>
+        <i v-else class="bi bi-unlink" aria-hidden="true"></i>
+        {{ isLoading ? 'Unbinding...' : 'Unbind Queue' }}
+      </button>
+    </template>
+  </BaseModal>
 </template>
 
 <style scoped>
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
+.unbind-queue-content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Error Alert */
+.error-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.error-alert i {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+/* Confirmation Section */
+.confirmation-section {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.confirmation-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  background: #fff3cd;
+  color: #856404;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1050;
-}
-
-.modal-container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-  width: 100%;
-  max-width: 500px;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.modal-title {
-  margin: 0;
   font-size: 1.5rem;
-  font-weight: 600;
-  color: #343a40;
 }
 
-.btn-close {
-  background: none;
-  border: none;
-  font-size: 2rem;
-  font-weight: 300;
-  line-height: 1;
-  color: #6c757d;
-  cursor: pointer;
-  padding: 0;
+.confirmation-content {
+  flex: 1;
 }
 
-.modal-body {
-  padding: 1.5rem;
-  color: #495057;
-}
-
-.confirmation-text {
-  font-size: 1.1rem;
-  line-height: 1.6;
-  margin-bottom: 1rem;
-}
-
-.queue-name,
-.exchange-name {
-  color: #dc3545;
-  font-family: 'Courier New', Courier, monospace;
-  background-color: #f8d7da;
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
-}
-
-.warning-text {
+.confirmation-message {
+  margin: 0 0 0.75rem 0;
   font-size: 1rem;
   font-weight: 500;
+  color: #212529;
+  line-height: 1.4;
+}
+
+.warning-message {
+  margin: 0;
+  font-size: 0.875rem;
   color: #856404;
-  background-color: #fff3cd;
-  border: 1px solid #ffeeba;
-  padding: 0.75rem 1.25rem;
-  border-radius: 8px;
+  background: #fff3cd;
+  padding: 0.75rem;
+  border-radius: 4px;
+  border-left: 4px solid #ffc107;
 }
 
-.alert-danger {
+/* Binding Details */
+.binding-details {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
   padding: 1rem;
-  border-radius: 8px;
-}
-
-.modal-footer {
   display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  padding: 1.5rem;
-  border-top: 1px solid #e9ecef;
-  background-color: #f8f9fa;
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #495057;
+  min-width: 100px;
+  font-size: 0.875rem;
+}
+
+.detail-value {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  color: #212529;
+  background: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+  font-size: 0.875rem;
+  flex: 1;
+}
+
+.queue-name {
+  color: #0c5460;
+  font-weight: 500;
+}
+
+.exchange-type {
+  text-transform: capitalize;
+  color: #0d6efd;
+  font-weight: 500;
+}
+
+.binding-key {
+  color: #856404;
+  font-weight: 500;
+}
+
+/* Button Styles */
 .btn {
   padding: 0.75rem 1.5rem;
-  border-radius: 8px;
+  border-radius: 6px;
   font-weight: 500;
-  border: none;
+  font-size: 0.875rem;
   cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+  min-width: 120px;
+  border: none;
 }
 
-.btn-danger {
-  background-color: #dc3545;
-  color: white;
-}
-
-.btn-danger:disabled {
-  background-color: #f1aeb5;
+.btn:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
+.btn:focus-visible {
+  outline: 2px solid;
+  outline-offset: 2px;
+}
+
 .btn-secondary {
-  background-color: #6c757d;
+  background: #6c757d;
   color: white;
+  border: 1px solid #6c757d;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #5c636a;
+  border-color: #5c636a;
+}
+
+.btn-secondary:focus-visible {
+  outline-color: #6c757d;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: white;
+  border: 1px solid #dc3545;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #c82333;
+  border-color: #bd2130;
+}
+
+.btn-danger:focus-visible {
+  outline-color: #dc3545;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 576px) {
+  .unbind-queue-content {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .confirmation-section {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.75rem;
+  }
+
+  .confirmation-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+  }
+
+  .detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .detail-label {
+    min-width: auto;
+  }
+
+  .detail-value {
+    width: 100%;
+  }
+
+  .btn {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.8rem;
+    min-width: 100px;
+  }
 }
 </style>
