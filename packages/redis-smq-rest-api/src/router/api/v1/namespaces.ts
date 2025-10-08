@@ -60,6 +60,7 @@ import {
   EControllerRequestPayload,
 } from '../../../lib/controller/types/index.js';
 import { TRouterResourceMap } from '../../../lib/router/types/index.js';
+import { getNamespaceExchangesController } from '../../../controllers/namespace/getNamespaceExchangesController.js';
 
 export const namespaces: TRouterResourceMap = {
   path: 'namespaces',
@@ -376,6 +377,11 @@ export const namespaces: TRouterResourceMap = {
         {
           path: 'exchanges',
           resource: [
+            {
+              handler: getNamespaceExchangesController,
+              method: EControllerRequestMethod.GET,
+              payload: [EControllerRequestPayload.PATH],
+            },
             {
               path: 'fanout',
               tags: ['Fanout Exchange'],

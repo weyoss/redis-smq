@@ -23,6 +23,10 @@ export class ExchangesService {
     return this.exchange.getQueueBoundExchangesAsync(queue);
   }
 
+  async getNamespaceExchanges(ns: string) {
+    return this.exchange.getNamespaceExchangesAsync(ns);
+  }
+
   async getAllExchanges() {
     return this.exchange.getAllExchangesAsync();
   }
