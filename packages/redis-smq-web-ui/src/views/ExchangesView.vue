@@ -315,7 +315,7 @@ watchEffect(() => {
   pageContentStore.setPageHeader({
     title: 'Exchanges',
     subtitle:
-      'View and manage exchange queue bindings in your Redis SMQ instance',
+      'View and manage exchange queue bindings in your RedisSMQ instance',
     icon: 'bi bi-diagram-3',
   });
 
@@ -331,7 +331,7 @@ watchEffect(() => {
       icon: 'bi bi-diagram-3',
       title: 'No Exchanges Found',
       message:
-        'No exchanges are currently configured in your Redis SMQ instance. Create your first exchange to start routing messages.',
+        'No exchanges are currently configured in your RedisSMQ instance. Create your first exchange to start routing messages.',
       actionLabel: 'Create Exchange',
       actionHandler: handleCreateExchange,
     });

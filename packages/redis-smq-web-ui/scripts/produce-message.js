@@ -46,7 +46,7 @@ function loadEnvironment(envPath) {
 }
 
 /**
- * Configure Redis SMQ connection
+ * Configure RedisSMQ connection
  */
 function configure() {
   const redisConfig = {
@@ -149,7 +149,7 @@ function parseArguments() {
 
   program
     .name('produce-message')
-    .description('Produce messages to a Redis SMQ queue')
+    .description('Produce messages to a RedisSMQ queue')
     .argument('<message>', 'Message content (string or JSON)')
     .option('-e, --env <file>', 'Environment file path', './.env')
     .requiredOption(

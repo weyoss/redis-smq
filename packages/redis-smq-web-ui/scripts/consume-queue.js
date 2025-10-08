@@ -46,7 +46,7 @@ function loadEnvironment(envPath) {
 }
 
 /**
- * Configure Redis SMQ connection
+ * Configure RedisSMQ connection
  */
 function configure() {
   const redisConfig = {
@@ -143,7 +143,7 @@ function parseArguments() {
 
   program
     .name('consume-queue')
-    .description('Start a Redis SMQ consumer')
+    .description('Start a RedisSMQ consumer')
     .option('-e, --env <file>', 'Environment file path', './.env')
     .requiredOption(
       '-q, --queue <ns:name>',

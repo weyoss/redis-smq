@@ -72,11 +72,7 @@ const retryInitialization = () => {
         <div class="loading-content">
           <div class="brand-section">
             <div class="brand-logo loading-logo">
-              <img
-                :src="logoImageBig"
-                alt="Redis SMQ Logo"
-                class="logo-image"
-              />
+              <img :src="logoImageBig" alt="RedisSMQ Logo" class="logo-image" />
             </div>
           </div>
           <div class="loading-animation">
@@ -116,7 +112,7 @@ const retryInitialization = () => {
               <div class="brand-logo">
                 <img
                   :src="logoImageSmall"
-                  alt="Redis SMQ Logo"
+                  alt="RedisSMQ Logo"
                   class="logo-image"
                 />
               </div>
