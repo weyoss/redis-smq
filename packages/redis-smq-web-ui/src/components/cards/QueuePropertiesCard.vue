@@ -392,30 +392,6 @@ function formatRateLimit(
           </div>
         </section>
 
-        <!-- Fanout Exchange Section -->
-        <section v-if="queueProperties.fanoutExchange" class="info-section">
-          <h4 class="section-title">
-            <i class="bi bi-diagram-3-fill"></i> Fanout Exchange
-          </h4>
-          <div class="info-grid">
-            <div class="info-item">
-              <div class="info-content">
-                <div class="info-icon fanout-exchange-icon">
-                  <i class="bi bi-diagram-3-fill"></i>
-                </div>
-                <div class="info-details">
-                  <div class="info-label">Bound Exchange</div>
-                  <div class="info-value">
-                    <span class="fanout-exchange">{{
-                      queueProperties.fanoutExchange
-                    }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         <!-- Statistics Section -->
         <section class="info-section">
           <h4 class="section-title">

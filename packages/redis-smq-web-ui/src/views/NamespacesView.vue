@@ -14,6 +14,9 @@ import { useRouter } from 'vue-router';
 import { useNamespaces } from '@/composables/useNamespaces.ts';
 import { usePageContentStore, type PageAction } from '@/stores/pageContent';
 
+// API hooks for exchanges
+import { useGetApiV1Exchanges } from '@/api/generated/exchanges/exchanges';
+
 import PageContent from '@/components/PageContent.vue';
 import NamespaceCard from '@/components/cards/NamespaceCard.vue';
 import DeleteNamespaceModal from '@/components/modals/DeleteNamespaceModal.vue';
@@ -29,19 +32,35 @@ const selectedQueueStore = useSelectedQueueStore();
 const selectedNamespaceStore = useSelectedNamespaceStore();
 const pageContentStore = usePageContentStore();
 
+// Fetch exchanges data
+const {
+  data: exchangesData,
+  isLoading: isLoadingExchanges,
+  refetch: refetchExchanges,
+} = useGetApiV1Exchanges();
+
 // Local state for modal visibility
 const showDeleteModal = ref(false);
 const namespaceToDelete = ref<string | null>(null);
 
 // Computed state from stores
 const sortedNamespaces = computed(() => namespaces.sortedNamespaces.value);
-const isLoading = computed(() => namespaces.isLoadingNamespaces.value);
+const isLoading = computed(
+  () => namespaces.isLoadingNamespaces.value || isLoadingExchanges.value,
+);
 const error = computed(() => namespaces.namespacesError.value);
 const isDeletingNamespace = computed(
   () => namespaces.isDeletingNamespace.value,
 );
 const deleteError = computed(() => namespaces.deleteNamespaceError.value);
 const hasNamespaces = computed(() => sortedNamespaces.value.length > 0);
+
+// Exchange data processing
+const exchanges = computed(() => exchangesData.value?.data || []);
+
+const getExchangeCountForNamespace = (namespace: string): number => {
+  return exchanges.value.filter((exchange) => exchange.ns === namespace).length;
+};
 
 // Page content definitions
 const pageTitle = 'Namespaces';
@@ -56,21 +75,28 @@ const pageActions = computed((): PageAction[] => [
     disabled: isLoading.value,
     loading: isLoading.value,
     handler: handleRefresh,
+    tooltip: 'Refresh namespaces and exchanges data',
   },
 ]);
 
 // Event Handlers
 function handleRefresh() {
   namespaces.refreshNamespaces();
+  refetchExchanges();
 }
 
 function goToCreateQueue() {
   router.push({ name: 'Queues' });
 }
 
-function goToNamespace(namespace: string) {
-  selectedNamespaceStore.selectNamespace(namespace);
-  router.push({ name: 'Namespace Queues', params: { ns: namespace } });
+function goToNamespace(ns: string) {
+  selectedNamespaceStore.selectNamespace(ns);
+  router.push({ name: 'Namespace Queues', params: { ns } });
+}
+
+function goToNamespaceExchanges(ns: string) {
+  selectedNamespaceStore.selectNamespace(ns);
+  router.push({ name: 'Namespace Exchanges', params: { ns } });
 }
 
 function goToQueueDetails(queue: IQueueParams): void {
@@ -93,6 +119,8 @@ async function deleteNamespace() {
   try {
     await namespaces.deleteNamespace(namespaceToDelete.value);
     cancelDelete();
+    // Refresh exchanges data after namespace deletion
+    refetchExchanges();
   } catch (error) {
     // Error is handled by the store and displayed in the modal
     console.error('Failed to delete namespace:', error);
@@ -166,6 +194,7 @@ onMounted(() => {
           :key="namespace"
           :namespace="namespace"
           :queue-count="listQueues.getNamespaceQueueCount.value(namespace)"
+          :exchange-count="getExchangeCountForNamespace(namespace)"
           :recent-queues="
             listQueues.getQueuesInNamespace(namespace).slice(0, 3)
           "
@@ -173,6 +202,7 @@ onMounted(() => {
           @click="goToNamespace(namespace)"
           @queue-click="goToQueueDetails"
           @delete="confirmDelete"
+          @view-exchanges="goToNamespaceExchanges"
         />
       </div>
     </PageContent>
@@ -201,6 +231,64 @@ onMounted(() => {
   gap: 1.5rem;
 }
 
+/* Alert Styles */
+.alert {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  position: relative;
+}
+
+.alert-warning {
+  color: #664d03;
+  background-color: #fff3cd;
+  border-color: #ffecb5;
+}
+
+.alert-dismissible {
+  padding-right: 3rem;
+}
+
+.alert-dismissible .btn-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  font-size: 1.125rem;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s ease-in-out;
+}
+
+.alert-dismissible .btn-close:hover {
+  opacity: 0.75;
+}
+
+.alert-dismissible .btn-close::before {
+  content: '×';
+  font-weight: bold;
+}
+
+.fade {
+  transition: opacity 0.15s linear;
+}
+
+.show {
+  opacity: 1;
+}
+
+.mb-4 {
+  margin-bottom: 1.5rem;
+}
+
+.me-2 {
+  margin-right: 0.5rem;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
   .namespaces-grid {
@@ -212,6 +300,20 @@ onMounted(() => {
   .namespaces-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
+  }
+
+  .alert {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  .alert-dismissible {
+    padding-right: 2.5rem;
+  }
+
+  .alert-dismissible .btn-close {
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
   }
 }
 </style>

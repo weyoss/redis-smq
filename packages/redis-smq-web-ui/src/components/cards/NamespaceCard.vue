@@ -13,20 +13,29 @@ import type { IQueueParams } from '@/types';
 interface Props {
   namespace: string;
   queueCount: number;
+  exchangeCount?: number;
   recentQueues: { ns: string; name: string }[];
   isDeleting: boolean;
 }
 
-defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  exchangeCount: 0,
+});
 
 const emit = defineEmits<{
   (e: 'click', namespace: string): void;
   (e: 'delete', namespace: string): void;
+  (e: 'view-exchanges', namespace: string): void;
   (e: 'queue-click', queue: IQueueParams): void;
 }>();
 
 function handleQueueClick(queue: IQueueParams) {
   emit('queue-click', queue);
+}
+
+function handleViewExchanges(event: Event) {
+  event.stopPropagation();
+  emit('view-exchanges', props.namespace);
 }
 </script>
 
@@ -34,7 +43,6 @@ function handleQueueClick(queue: IQueueParams) {
   <article
     class="namespace-card"
     :class="{ 'is-deleting': isDeleting }"
-    role="button"
     tabindex="0"
     :aria-label="`View details for namespace ${namespace}`"
     @click="emit('click', namespace)"
@@ -58,15 +66,26 @@ function handleQueueClick(queue: IQueueParams) {
           <span class="namespace-label">Namespace</span>
         </div>
       </div>
-      <button
-        type="button"
-        class="btn-delete"
-        aria-label="Delete namespace"
-        title="Delete namespace"
-        @click.stop="emit('delete', namespace)"
-      >
-        <i class="bi bi-trash"></i>
-      </button>
+      <div class="header-actions">
+        <button
+          type="button"
+          class="btn-action btn-exchanges"
+          aria-label="View exchanges"
+          title="View exchanges in this namespace"
+          @click.stop="handleViewExchanges"
+        >
+          <i class="bi bi-diagram-3"></i>
+        </button>
+        <button
+          type="button"
+          class="btn-action btn-delete"
+          aria-label="Delete namespace"
+          title="Delete namespace"
+          @click.stop="emit('delete', namespace)"
+        >
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
     </header>
 
     <!-- Card Body -->
@@ -76,6 +95,12 @@ function handleQueueClick(queue: IQueueParams) {
           <span class="stat-value">{{ queueCount }}</span>
           <span class="stat-label">
             {{ queueCount === 1 ? 'Queue' : 'Queues' }}
+          </span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">{{ exchangeCount }}</span>
+          <span class="stat-label">
+            {{ exchangeCount === 1 ? 'Exchange' : 'Exchanges' }}
           </span>
         </div>
       </div>
@@ -108,8 +133,24 @@ function handleQueueClick(queue: IQueueParams) {
 
     <!-- Card Footer -->
     <footer class="card-footer">
-      <span class="footer-text">View all queues</span>
-      <i class="bi bi-arrow-right"></i>
+      <div class="footer-actions">
+        <button
+          type="button"
+          class="footer-action"
+          @click.stop="emit('click', namespace)"
+        >
+          <span class="footer-text">View all queues</span>
+          <i class="bi bi-arrow-right"></i>
+        </button>
+        <button
+          type="button"
+          class="footer-action"
+          @click.stop="handleViewExchanges"
+        >
+          <span class="footer-text">View exchanges</span>
+          <i class="bi bi-diagram-3"></i>
+        </button>
+      </div>
     </footer>
   </article>
 </template>
@@ -210,20 +251,34 @@ function handleQueueClick(queue: IQueueParams) {
   letter-spacing: 0.5px;
 }
 
-.btn-delete {
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-action {
   background: none;
   border: none;
   color: #6c757d;
   font-size: 1.25rem;
   padding: 0.25rem;
   cursor: pointer;
-  transition: color 0.2s ease;
+  transition: all 0.2s ease;
   border-radius: 50%;
   width: 36px;
   height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.btn-action:hover {
+  background-color: #f1f3f5;
+}
+
+.btn-exchanges:hover {
+  color: #0d6efd;
+  background-color: #e7f3ff;
 }
 
 .btn-delete:hover {
@@ -333,19 +388,85 @@ function handleQueueClick(queue: IQueueParams) {
 
 /* Card Footer */
 .card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-top: 1.5rem;
   padding-top: 1rem;
   border-top: 1px solid #e9ecef;
+}
+
+.footer-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.footer-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex: 1;
+  background: none;
+  border: none;
   color: #0d6efd;
   font-weight: 500;
   font-size: 0.9rem;
-  transition: color 0.2s ease;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.namespace-card:hover .card-footer {
+.footer-action:hover {
+  background-color: #e7f3ff;
   color: #0a58ca;
+}
+
+.footer-text {
+  white-space: nowrap;
+}
+
+/* Responsive Design */
+@media (max-width: 576px) {
+  .header-actions {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .footer-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .stats-section {
+    padding: 0.75rem;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: more) {
+  .namespace-card {
+    border-width: 2px;
+  }
+
+  .btn-action:focus-visible,
+  .footer-action:focus-visible {
+    outline: 3px solid;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .namespace-card,
+  .btn-action,
+  .footer-action,
+  .queue-link {
+    transition: none;
+  }
+
+  .namespace-card:hover {
+    transform: none;
+  }
 }
 </style>

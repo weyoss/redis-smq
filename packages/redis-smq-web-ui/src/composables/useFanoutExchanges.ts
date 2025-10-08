@@ -7,215 +7,157 @@
  * in the root directory of this source tree.
  */
 
-import { computed, ref } from 'vue';
+import { computed, ref, unref, type MaybeRef } from 'vue';
 import { useQueryClient } from '@tanstack/vue-query';
+
+// Generated API hooks for Fanout exchange
 import {
-  getGetApiV1ExchangesFanOutQueryKey,
-  useDeleteApiV1ExchangesFanOutFanOutName,
-  useGetApiV1ExchangesFanOut,
-  useGetApiV1ExchangesFanOutFanOutNameQueues,
-  getGetApiV1ExchangesFanOutFanOutNameQueuesQueryKey,
-  usePostApiV1ExchangesFanOut,
-  usePutApiV1ExchangesFanOutFanOutNameQueues,
-  useDeleteApiV1ExchangesFanOutFanOutNameQueues,
-} from '@/api/generated/exchanges/exchanges.ts';
-import type {
-  PostApiV1ExchangesFanOutBody,
-  PutApiV1ExchangesFanOutFanOutNameQueuesBody,
-} from '@/api/model/index.ts';
-import type { IQueueParams } from '@/types';
+  // Queries
+  useGetApiV1NamespacesNsExchangesFanoutFanoutQueues,
+  getGetApiV1NamespacesNsExchangesFanoutFanoutQueuesQueryKey,
+  // Mutations
+  usePutApiV1NamespacesNsExchangesFanoutFanoutQueuesQueue,
+  useDeleteApiV1NamespacesNsExchangesFanoutFanoutQueuesQueue,
+  useDeleteApiV1NamespacesNsExchangesFanoutFanout,
+} from '@/api/generated/fanout-exchange/fanout-exchange';
 
 /**
- * Composable for managing fanout exchanges.
- * Provides reactive state, and methods for fetching, creating, deleting,
- * and binding/unbinding queues to exchanges.
+ * Composable to manage Fanout exchanges in a given namespace:
+ * - select a fanout exchange
+ * - load bound queues
+ * - bind/unbind a queue
+ * - delete the fanout exchange
+ *
+ * Note: The generated API for fanout exchanges currently exposes queue listing/bind/unbind
+ * and deleting a specific fanout exchange. It does not expose create/list all fanout exchanges.
  */
-export function useFanoutExchanges() {
+export function useFanoutExchanges(ns: MaybeRef<string>) {
   const queryClient = useQueryClient();
-  const fanoutExchangesQueryKey = getGetApiV1ExchangesFanOutQueryKey();
 
-  // State for the currently selected exchange
-  const selectedFanOutName = ref<string | null>(null);
+  // Selected fanout exchange name in the provided namespace
+  const selectedFanout = ref<string | null>(null);
+  const selectedFanoutForQuery = computed(() => selectedFanout.value ?? '');
 
-  // A computed property that is always a string to satisfy the hook's type signature.
-  const fanOutNameForQuery = computed(() => selectedFanOutName.value ?? '');
-
-  // Query for fetching all fanout exchanges
-  const {
-    data: fanoutExchangesResponse,
-    error: fanoutExchangesError,
-    isLoading: isLoadingFanoutExchanges,
-    refetch: refreshFanoutExchanges,
-  } = useGetApiV1ExchangesFanOut({
-    query: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
+  // Load queues bound to the selected fanout exchange
+  const boundQueuesQuery = useGetApiV1NamespacesNsExchangesFanoutFanoutQueues(
+    ns,
+    selectedFanoutForQuery,
+    {
+      query: {
+        // keep a bit of caching for UX and avoid flicker
+        staleTime: 60_000,
+      },
     },
+  );
+
+  // Normalized queues list (supports both array and { data } payload shapes)
+  const boundQueues = computed(() => {
+    const raw = boundQueuesQuery.data?.value;
+    if (raw) {
+      return raw.data;
+    }
+    return [];
   });
 
-  // Query for fetching queues of the selected fanout exchange
-  const {
-    data: boundQueuesResponse,
-    error: boundQueuesError,
-    isLoading: isLoadingBoundQueues,
-    refetch: refreshBoundQueues,
-  } = useGetApiV1ExchangesFanOutFanOutNameQueues(fanOutNameForQuery, {
-    query: {
-      enabled: computed(() => !!selectedFanOutName.value),
-    },
-  });
+  // Mutations
+  const bindQueueMutation =
+    usePutApiV1NamespacesNsExchangesFanoutFanoutQueuesQueue({
+      mutation: {
+        onSuccess: (_res, variables) => {
+          const { fanout } = variables;
+          const key =
+            getGetApiV1NamespacesNsExchangesFanoutFanoutQueuesQueryKey(
+              unref(ns),
+              fanout,
+            );
+          return queryClient.invalidateQueries({ queryKey: key });
+        },
+      },
+    });
 
-  // Mutation for creating a new fanout exchange
-  const createFanoutExchangeMutation = usePostApiV1ExchangesFanOut({
+  const unbindQueueMutation =
+    useDeleteApiV1NamespacesNsExchangesFanoutFanoutQueuesQueue({
+      mutation: {
+        onSuccess: (_res, variables) => {
+          const { fanout } = variables;
+          const key =
+            getGetApiV1NamespacesNsExchangesFanoutFanoutQueuesQueryKey(
+              unref(ns),
+              fanout,
+            );
+          return queryClient.invalidateQueries({ queryKey: key });
+        },
+      },
+    });
+
+  const deleteFanoutMutation = useDeleteApiV1NamespacesNsExchangesFanoutFanout({
     mutation: {
       onSuccess: () => {
-        return queryClient.invalidateQueries({
-          queryKey: fanoutExchangesQueryKey,
-        });
+        // If we deleted the currently selected exchange, clear selection and its queues
+        selectedFanout.value = null;
       },
     },
   });
 
-  // Mutation for deleting a fanout exchange
-  const deleteFanoutExchangeMutation = useDeleteApiV1ExchangesFanOutFanOutName({
-    mutation: {
-      onSuccess: (_, { fanOutName }) => {
-        if (selectedFanOutName.value === fanOutName) {
-          selectedFanOutName.value = null;
-        }
-        return queryClient.invalidateQueries({
-          queryKey: fanoutExchangesQueryKey,
-        });
-      },
-    },
-  });
-
-  // Mutation for binding a queue to a fanout exchange
-  const bindQueueMutation = usePutApiV1ExchangesFanOutFanOutNameQueues({
-    mutation: {
-      onSuccess: (_, { fanOutName }) => {
-        const boundQueuesQueryKey =
-          getGetApiV1ExchangesFanOutFanOutNameQueuesQueryKey(fanOutName);
-        return queryClient.invalidateQueries({ queryKey: boundQueuesQueryKey });
-      },
-    },
-  });
-
-  // Mutation for unbinding a queue from a fanout exchange
-  const unbindQueueMutation = useDeleteApiV1ExchangesFanOutFanOutNameQueues({
-    mutation: {
-      onSuccess: (_, { fanOutName }) => {
-        const boundQueuesQueryKey =
-          getGetApiV1ExchangesFanOutFanOutNameQueuesQueryKey(fanOutName);
-        return queryClient.invalidateQueries({
-          queryKey: boundQueuesQueryKey,
-        });
-      },
-    },
-  });
-
-  // Computed property for the list of all fanout exchanges
-  const fanoutExchanges = computed<string[]>(
-    () => fanoutExchangesResponse.value?.data ?? [],
-  );
-
-  // Computed property for a sorted list of fanout exchanges
-  const sortedFanoutExchanges = computed(() => {
-    return [...fanoutExchanges.value].sort((a, b) => a.localeCompare(b));
-  });
-
-  // Computed property for the queues bound to the selected exchange
-  const boundQueues = computed(() => boundQueuesResponse.value?.data ?? []);
-
-  // Computed states for mutations
-  const isCreatingFanoutExchange = computed(
-    () => createFanoutExchangeMutation.isPending.value,
-  );
-  const createFanoutExchangeError = computed(
-    () => createFanoutExchangeMutation.error.value,
-  );
-
-  const isDeletingFanoutExchange = computed(
-    () => deleteFanoutExchangeMutation.isPending.value,
-  );
-  const deleteFanoutExchangeError = computed(
-    () => deleteFanoutExchangeMutation.error.value,
-  );
-
-  const isBindingQueue = computed(() => bindQueueMutation.isPending.value);
-  const bindQueueError = computed(() => bindQueueMutation.error.value);
-
-  const isUnbindingQueue = computed(() => unbindQueueMutation.isPending.value);
-  const unbindQueueError = computed(() => unbindQueueMutation.error.value);
-
-  // Action to create a fanout exchange
-  async function createFanoutExchange(data: PostApiV1ExchangesFanOutBody) {
-    return createFanoutExchangeMutation.mutateAsync({ data });
-  }
-
-  // Action to delete a fanout exchange
-  async function deleteFanoutExchange(fanOutName: string) {
-    return deleteFanoutExchangeMutation.mutateAsync({ fanOutName });
-  }
-
-  // Action to bind a queue to a fanout exchange
-  async function bindQueueToFanoutExchange(
-    fanOutName: string,
-    data: PutApiV1ExchangesFanOutFanOutNameQueuesBody,
-  ) {
-    return bindQueueMutation.mutateAsync({ fanOutName, data });
-  }
-
-  // Action to unbind a queue from a fanout exchange
-  async function unbindQueueFromFanoutExchange(
-    fanOutName: string,
-    queue: IQueueParams,
-  ) {
-    return unbindQueueMutation.mutateAsync({
-      fanOutName,
-      params: queue,
+  // Actions
+  async function bindQueue(queue: string) {
+    const fanout = selectedFanout.value;
+    if (!fanout) throw new Error('No fanout exchange selected');
+    return bindQueueMutation.mutateAsync({
+      ns: unref(ns),
+      fanout,
+      queue,
     });
   }
 
-  // Action to select an exchange, which will trigger fetching its bound queues
-  function selectFanOutExchange(fanOutName: string | null) {
-    selectedFanOutName.value = fanOutName;
+  async function unbindQueue(queue: string) {
+    const fanout = selectedFanout.value;
+    if (!fanout) throw new Error('No fanout exchange selected');
+    return unbindQueueMutation.mutateAsync({
+      ns: unref(ns),
+      fanout,
+      queue,
+    });
   }
 
+  async function deleteSelectedFanout() {
+    const fanout = selectedFanout.value;
+    if (!fanout) throw new Error('No fanout exchange selected');
+    return deleteFanoutMutation.mutateAsync({
+      ns: unref(ns),
+      fanout,
+    });
+  }
+
+  function selectFanout(name: string | null) {
+    selectedFanout.value = name;
+  }
+
+  // Expose state
   return {
-    // Data
-    sortedFanoutExchanges,
-    selectedFanOutName,
+    // selection
+    selectedFanout,
+    selectFanout,
+
+    // bound queues
     boundQueues,
+    isLoadingBoundQueues: boundQueuesQuery.isLoading,
+    boundQueuesError: boundQueuesQuery.error,
+    refreshBoundQueues: boundQueuesQuery.refetch,
 
-    // Loading states
-    isLoadingFanoutExchanges,
-    isCreatingFanoutExchange,
-    isDeletingFanoutExchange,
-    isLoadingBoundQueues,
-    isBindingQueue,
-    isUnbindingQueue,
+    // actions
+    bindQueue,
+    unbindQueue,
+    deleteSelectedFanout,
 
-    // Errors
-    fanoutExchangesError,
-    createFanoutExchangeError,
-    deleteFanoutExchangeError,
-    boundQueuesError,
-    bindQueueError,
-    unbindQueueError,
+    // mutation states
+    isBindingQueue: bindQueueMutation.isPending,
+    bindQueueError: bindQueueMutation.error,
 
-    // Actions
-    createFanoutExchange,
-    deleteFanoutExchange,
-    refreshFanoutExchanges,
-    selectFanOutExchange,
-    refreshBoundQueues,
-    bindQueueToFanoutExchange,
-    unbindQueueFromFanoutExchange,
+    isUnbindingQueue: unbindQueueMutation.isPending,
+    unbindQueueError: unbindQueueMutation.error,
 
-    // Raw mutations for advanced usage
-    createFanoutExchangeMutation,
-    deleteFanoutExchangeMutation,
-    bindQueueMutation,
-    unbindQueueMutation,
+    isDeletingFanout: deleteFanoutMutation.isPending,
+    deleteFanoutError: deleteFanoutMutation.error,
   };
 }

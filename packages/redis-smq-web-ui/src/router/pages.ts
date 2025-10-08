@@ -16,6 +16,10 @@ import QueuePropertiesView from '@/views/QueuePropertiesView.vue';
 import ScheduledMessagesView from '@/views/ScheduledMessagesView.vue';
 import type { RouteRecordRaw } from 'vue-router';
 import QueueMessagesView from '@/views/QueueMessagesView.vue';
+import ExchangeDirectView from '@/views/ExchangeDirectView.vue';
+import ExchangeTopicView from '@/views/ExchangeTopicView.vue';
+import ExchangeFanoutViewView from '@/views/ExchangeFanoutView.vue';
+import NamespaceExchangesView from '@/views/NamespaceExchangesView.vue';
 
 export const pages: readonly RouteRecordRaw[] = [
   {
@@ -83,6 +87,42 @@ export const pages: readonly RouteRecordRaw[] = [
     component: QueueMessagesView,
     meta: {
       title: 'Queue Messages',
+    },
+  },
+  {
+    path: '/ns/:ns/exchanges',
+    name: 'Namespace Exchanges',
+    component: NamespaceExchangesView,
+    meta: {
+      title: 'Namespace Exchanges',
+      breadcrumb: 'Namespace Exchanges',
+    },
+  },
+  {
+    path: '/ns/:ns/exchanges/direct/:exchange',
+    name: 'Direct Exchange',
+    component: ExchangeDirectView,
+    meta: {
+      title: 'Direct Exchange Details',
+      breadcrumb: 'Direct Exchange Details',
+    },
+  },
+  {
+    path: '/ns/:ns/exchanges/topic/:exchange',
+    name: 'Topic Exchange',
+    component: ExchangeTopicView,
+    meta: {
+      title: 'Topic Exchange Details',
+      breadcrumb: 'Topic Exchange Details',
+    },
+  },
+  {
+    path: '/ns/:ns/exchanges/fanout/:exchange',
+    name: 'Fanout Exchange',
+    component: ExchangeFanoutViewView,
+    meta: {
+      title: 'Fanout Exchange Details',
+      breadcrumb: 'Fanout Exchange Details',
     },
   },
 ];

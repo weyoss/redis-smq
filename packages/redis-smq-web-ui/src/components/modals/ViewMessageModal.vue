@@ -8,7 +8,7 @@
   -->
 
 <script setup lang="ts">
-import type { IMessageTransferable } from '@/types';
+import { EExchangeType, type IMessageTransferable } from '@/types';
 import { computed, ref } from 'vue';
 import { formatDistanceToNow } from 'date-fns';
 import { formatDate } from '@/lib/format.ts';
@@ -461,24 +461,34 @@ function confirmRequeue(): void {
                 </div>
               </div>
 
-              <div class="info-section">
+              <div v-if="message.exchange" class="info-section">
                 <h6 class="section-title">Exchange Information</h6>
                 <div class="info-items">
                   <div class="info-item">
-                    <span class="info-label">Exchange Tag:</span>
-                    <span class="info-value">{{
-                      message.exchange.exchangeTag
-                    }}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="info-label">Binding Params:</span>
-                    <span class="info-value">{{
-                      message.exchange.params
-                    }}</span>
+                    <span class="info-label">Exchange Params:</span>
+                    <span class="info-value"
+                      >{{ message.exchange.name }}@{{
+                        message.exchange.ns
+                      }}</span
+                    >
                   </div>
                   <div class="info-item">
                     <span class="info-label">Type:</span>
-                    <span class="info-value">{{ message.exchange.type }}</span>
+                    <span class="info-value">{{
+                      EExchangeType[message.exchange.type]
+                    }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="message.queue" class="info-section">
+                <h6 class="section-title">Queue Information</h6>
+                <div class="info-items">
+                  <div class="info-item">
+                    <span class="info-label">Queue Params:</span>
+                    <span class="info-value"
+                      >{{ message.queue.name }}@{{ message.queue.ns }}</span
+                    >
                   </div>
                 </div>
               </div>
