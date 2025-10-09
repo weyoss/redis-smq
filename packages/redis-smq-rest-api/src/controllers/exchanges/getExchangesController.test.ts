@@ -18,7 +18,6 @@ import {
 } from '../../../tests/common/create-exchange.js';
 import { TResponse } from '../../../tests/types/index.js';
 import { GetExchangesControllerResponseDTO } from '../../dto/controllers/exchanges/GetExchangesControllerResponseDTO.js';
-import { GetNamespacesControllerResponseDTO } from '../../dto/controllers/namespaces/GetNamespacesControllerResponseDTO.js';
 
 describe('getExchangesController', () => {
   it('HTTP 200 OK', async () => {
@@ -45,10 +44,14 @@ describe('getExchangesController', () => {
     await createFanoutExchange(e2);
     await createTopicExchange(e3);
 
-    const response2: TResponse<GetNamespacesControllerResponseDTO> =
+    const response2: TResponse<GetExchangesControllerResponseDTO> =
       await request.get('/api/v1/exchanges');
     expect(response2.status).toEqual(200);
-    expect(response2.body?.data?.sort()).toEqual(
+    expect(
+      response2.body?.data?.sort((a, b) => {
+        return `${a.name}@${a.ns}` > `${b.name}@${b.ns}` ? 1 : -1;
+      }),
+    ).toEqual(
       [
         {
           ...e1,
@@ -62,7 +65,9 @@ describe('getExchangesController', () => {
           ...e3,
           type: EExchangeType.TOPIC,
         },
-      ].sort(),
+      ].sort((a, b) => {
+        return `${a.name}@${a.ns}` > `${b.name}@${b.ns}` ? 1 : -1;
+      }),
     );
   });
 });
