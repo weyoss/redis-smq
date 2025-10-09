@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.4](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.3...v9.0.0-next.4) (2025-10-09)
+
+### ♻️ Code Refactoring
+
+- **redis-smq-web-server:** replace console logging with app logger ([d8b3210](https://github.com/weyoss/redis-smq/commit/d8b32109929c54316630029ac8f7d9ed7fa094eb))
+- **redis-smq-web-server:** use createLogger function ([436e2ea](https://github.com/weyoss/redis-smq/commit/436e2ea044d9e02e0916b96c1213e92e25787e8a))
+
 ## [9.0.0-next.3](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.2...v9.0.0-next.3) (2025-09-09)
 
 ### 🐛 Bug Fixes
