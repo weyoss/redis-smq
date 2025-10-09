@@ -200,9 +200,10 @@ Configuration.getInstance().updateConfig(
 - REST API: [packages/redis-smq-rest-api/README.md](packages/redis-smq-rest-api/README.md)
 - Web UI: [packages/redis-smq-web-ui/README.md](packages/redis-smq-web-ui/README.md)
 
-_Important documentation note:_
+_Important note:_
 - This README and in-repo documentation reflect the latest changes from the master branch.
-- For documentation of the latest stable release, see: https://github.com/weyoss/redis-smq/tree/v8.3.1.
+- For documentation of the latest stable release, start at https://github.com/weyoss/redis-smq/releases/latest and 
+  browse the docs under source tree of the selected tag.
 
 **Contributing**
 
