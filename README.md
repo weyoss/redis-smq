@@ -62,7 +62,7 @@ npm install @redis/client --save
 
 **Version compatibility**
 
-Always install matching versions of RedisSMQ packages. See packages/redis-smq/docs/version-compatibility.md.
+Always install matching versions of RedisSMQ packages. See [version-compatibility.md](packages/redis-smq/docs/version-compatibility.md).
 
 **Quick Start (required initialization)**
 
