@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.4](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.3...v9.0.0-next.4) (2025-10-09)
+
+### ✨ Features
+
+- **redis-smq-web-ui:** add exchange management system ([c33650c](https://github.com/weyoss/redis-smq/commit/c33650c01a3c4fcd4663b08668642f7aea394fce))
+
+### 🐛 Bug Fixes
+
+- **redis-smq-web-ui:** fix error message reference ([8e6fb43](https://github.com/weyoss/redis-smq/commit/8e6fb4379976a7a3d26036f22f235f0271da79a0))
+- **redis-smq-web-ui:** initialize RedisSMQ before starting API server ([22887fa](https://github.com/weyoss/redis-smq/commit/22887faf0abc8939de9f90e8abfb18d7c8e93d02))
+- **redis-smq-web-ui:** update branding ([2bd50ce](https://github.com/weyoss/redis-smq/commit/2bd50ce8ef75bdca9c5602ddc8bc6d36cdb8342f))
+
+### 📝 Documentation
+
+- **redis-smq-web-ui:** improve README formatting ([e0d3399](https://github.com/weyoss/redis-smq/commit/e0d33990886f934df31e65fa831b87f7a761e3b0))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-web-ui:** standardize HTML formatting ([b290044](https://github.com/weyoss/redis-smq/commit/b290044c861014cda393467dd3b7af52f5507679))
+
 ## [9.0.0-next.3](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.2...v9.0.0-next.3) (2025-09-09)
 
 ### 🐛 Bug Fixes
