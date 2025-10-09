@@ -6,7 +6,7 @@ The RedisSMQ class provides a high-level, process-wide API that manages the shar
 bootstrap, various components, and optional EventBus. It is the recommended entry point for most applications.
 
 Key points:
-- Required: Initialize once per process using either RedisSMQ.initialize(...) or RedisSMQ.initializeWithConfig(...).
+- Required: Initialize once per process using either `RedisSMQ.initialize(...)` or `RedisSMQ.initializeWithConfig(...)`.
 - Optional: Direct use of the Configuration class. You don’t need to call Configuration.initialize; `RedisSMQ.initialize` 
   does it internally.
 - Shutdown: If components are created via RedisSMQ factory methods, you typically do not need to shut them down 
