@@ -1,169 +1,222 @@
-[RedisSMQ](../README.md) / [Docs](README.md) / [FAQs](README.md) / What is the recommended way to set up and configure
-RedisSMQ for a new project?
+[RedisSMQ](../README.md) / [Docs](README.md) / [FAQs](README.md) / What is the recommended way to set up and configure RedisSMQ for a new project?
 
 # What is the recommended way to set up and configure RedisSMQ for a new project?
 
-1. Prerequisites
+## 1) Prerequisites
 
-    - **Redis**: Ensure you have Redis >=4 installed and running on your system or an accessible server.
-    - **Node.js**: Make sure you have Node.js >= v18 installed on your system.
+- Redis: Redis 7.x (or compatible) running locally or accessible remotely
+- Node.js: v20+
+- One Redis client library installed: ioredis or @redis/client
 
-2. Install RedisSMQ
+## 2) Install packages
 
-   First, install the package using npm:
+Install RedisSMQ and shared utilities:
 
-   ```bash
-   npm install redis-smq@rc
-   ```
+```bash
+npm install redis-smq redis-smq-common --save
+```
 
-3. Install a Redis client:
+Install a Redis client (choose one):
 
-   Choose either node-redis or ioredis. For this example, we'll use ioredis:
+```bash
+# Option A: ioredis (recommended)
+npm install ioredis --save
 
-   ```shell
-   npm install ioredis
-   ```
+# Option B: @redis/client
+npm install @redis/client --save
+```
 
-4. Create a configuration file:
+## 3) Initialize RedisSMQ once per process (required)
 
-   Create a new file, for example, `redis-smq-config.js`, and add the following basic configuration:
+With the RedisSMQ class, you must initialize once at startup before creating producers, consumers, or managers.
 
-   File: /path/to/your/project/redis-smq-config.js
+Create a bootstrap file (for example, init.js):
 
-   ```javascript
-   import { ERedisConfigClient } from 'redis-smq-common';
+```javascript
+// init.js
+import { RedisSMQ } from 'redis-smq';
+import { ERedisConfigClient } from 'redis-smq-common';
 
-   export const config = {
-     namespace: 'my_project',
-     redis: {
-       client: ERedisConfigClient.IOREDIS,
-       options: {
-         host: '127.0.0.1',
-         port: 6379,
-       },
-     },
-     logger: {
-       enabled: true,
-       options: {
-         level: 'info',
-       },
-     },
-   };
-   ```
+// Required: initialize once per process
+export function initRedisSMQ(cb) {
+  RedisSMQ.initialize(
+    {
+      client: ERedisConfigClient.IOREDIS, // or ERedisConfigClient.REDIS
+      options: { host: '127.0.0.1', port: 6379, db: 0 },
+    },
+    cb,
+  );
+}
+```
 
-5. Create a queue
+Notes
+- Use `RedisSMQ.initialize(...)` for simple setups (recommended).
+- For persisted, shared configuration across processes, use `RedisSMQ.initializeWithConfig(...)` instead.
 
-   File: /path/to/your/project/queue.js
+## 4) Create a queue
 
-   ```javascript
-   import { Queue, Configuration } from 'redis-smq';
-   import config from './path/to/your/project/redis-smq-config.js';
+Use the QueueManager to create queues. Direct Queue Publishing (no exchange) is the fastest routing path.
 
-   Configuration.getSetConfig(config);
+Create queue.js:
 
-   // Initialize Queue
-   const queue = new Queue();
+```javascript
+// queue.js
+import { RedisSMQ, EQueueType, EQueueDeliveryModel } from 'redis-smq';
+import { initRedisSMQ } from './init.js';
 
-   // Save Queue Configuration
-   queue.save(
-     'my_queue',
-     EQueueType.LIFO_QUEUE,
-     EQueueDeliveryModel.POINT_TO_POINT,
-     (err, reply) => {
-       if (err) {
-         console.error(err);
-         return;
-       }
-       console.log('Queue created.', reply);
-       queue.shutdown((err) => {
-         console.log('Queue shut down');
-       });
-     },
-   );
-   ```
+initRedisSMQ((err) => {
+  if (err) return console.error('Init failed:', err);
 
-6. Create a producer
+  const qm = RedisSMQ.createQueueManager();
+  qm.save(
+    'my_queue',
+    EQueueType.LIFO_QUEUE,
+    EQueueDeliveryModel.POINT_TO_POINT,
+    (saveErr, reply) => {
+      if (saveErr) return console.error('Queue creation failed:', saveErr);
+      console.log('Queue created:', reply);
 
-   Create a file for your producer, e.g., `producer.js`:
+      // When components are created via RedisSMQ, you typically do not need
+      // to shut them down individually; prefer a single RedisSMQ.shutdown(cb)
+      // at application exit to close shared infrastructure.
+      RedisSMQ.shutdown((e) => e && console.error('Shutdown warning:', e));
+    },
+  );
+});
+```
 
-   File: /path/to/your/project/producer.js
+## 5) Create a producer
 
-   ```javascript
-   import { Producer, ProducibleMessage, Configuration } from 'redis-smq';
-   import config from './path/to/your/project/redis-smq-config.js';
+Producers publish messages to a target queue or an exchange. For best performance, publish directly to a queue.
 
-   Configuration.getSetConfig(config);
+Create producer.js:
 
-   const producer = new Producer();
+```javascript
+// producer.js
+import { RedisSMQ, ProducibleMessage } from 'redis-smq';
+import { ERedisConfigClient } from 'redis-smq-common';
+import { initRedisSMQ } from './init.js';
 
-   producer.run((err) => {
-     if (err) {
-       console.error('Failed to start producer:', err);
-       return;
-     }
+initRedisSMQ((err) => {
+  if (err) return console.error('Init failed:', err);
 
-     const message = new ProducibleMessage();
-     message.setBody({ hello: 'world' }).setQueue('my_queue');
+  // Create and start a producer
+  const producer = RedisSMQ.createProducer();
+  producer.run((runErr) => {
+    if (runErr) return console.error('Producer start failed:', runErr);
 
-     producer.produce(message, (err, messageIds) => {
-       if (err) {
-         console.error('Failed to produce message:', err);
-         return;
-       }
-       console.log(`Produced message IDs are: ${messageIds.join(', ')}`);
-       producer.shutdown((err) => {
-         if (err) console.error('Failed to shutdown producer:', err);
-         else console.log('Producer shut down.');
-       });
-     });
-   });
-   ```
+    // Direct queue publishing (fastest path)
+    const message = new ProducibleMessage()
+      .setQueue('my_queue')
+      .setBody({ hello: 'world' });
 
-7. Create a consumer
+    producer.produce(message, (produceErr, messageIds) => {
+      if (produceErr) return console.error('Produce failed:', produceErr);
+      console.log(`Produced message IDs: ${messageIds.join(', ')}`);
 
-   Create a file for your consumer, e.g., `consumer.js`:
+      // Prefer a single RedisSMQ.shutdown at app exit
+      RedisSMQ.shutdown((e) => e && console.error('Shutdown warning:', e));
+    });
+  });
+});
+```
 
-   File: /path/to/your/project/consumer.js
+## 6) Create a consumer
 
-   ```javascript
-   import { Consumer, Configuration } from 'redis-smq';
-   import config from './path/to/your/project/redis-smq-config.js';
+Consumers register handlers for queues (and optionally consumer groups for Pub/Sub queues) and then run.
 
-   Configuration.getSetConfig(config);
+Create consumer.js:
 
-   const consumer = new Consumer();
+```javascript
+// consumer.js
+import { RedisSMQ } from 'redis-smq';
+import { initRedisSMQ } from './init.js';
 
-   const messageHandler = (msg, cb) => {
-     console.log(msg.body);
-     cb(); // Acknowledging
-   };
+initRedisSMQ((err) => {
+  if (err) return console.error('Init failed:', err);
 
-   consumer.consume('my_queue', messageHandler, (err) => {
-     if (err) console.error('Failed to start consuming:', err);
-     else
-       console.log(
-         'Message handler successfully registered for queue: my_queue',
-       );
-   });
+  const consumer = RedisSMQ.createConsumer();
 
-   consumer.run((err) => {
-     if (err) console.error('Failed to start consumer:', err);
-     else console.log('Consumer is running.');
-   });
-   ```
+  const messageHandler = (msg, done) => {
+    console.log('Received:', msg.body);
+    done(); // Acknowledge success
+  };
 
-8. Run your application
+  consumer.consume('my_queue', messageHandler, (consumeErr) => {
+    if (consumeErr) return console.error('consume() failed:', consumeErr);
+    console.log('Handler registered for my_queue');
 
-   You can now run your producer and consumer in separate terminal windows:
+    consumer.run((runErr) => {
+      if (runErr) return console.error('Consumer start failed:', runErr);
+      console.log('Consumer is running');
 
-   ```bash
-   node path/to/your/project/queue.js
-   node path/to/your/project/producer.js
-   node path/to/your/project/consumer.js
-   ```
+      // In a real app, shutdown on process exit signals.
+      // For demo, shutdown immediately:
+      setTimeout(() => {
+        RedisSMQ.shutdown((e) => e && console.error('Shutdown warning:', e));
+      }, 1000);
+    });
+  });
+});
+```
 
-This setup provides a basic configuration for RedisSMQ in a new project.
+## 7) Run the examples
 
-For more advanced configurations and features, refer to the documentation in the `docs` directory of the RedisSMQ
-project. This includes information on different exchange types, delivery models, and other advanced features that
-you might want to incorporate as your project grows.
+Use separate terminals:
+
+```bash
+node queue.js
+node producer.js
+node consumer.js
+```
+
+You should see:
+- The queue created
+- The producer publishes a message to my_queue
+- The consumer receives and acknowledges it
+
+## Optional: Initialize with a full RedisSMQ configuration
+
+If you need to persist configuration in Redis and share it across processes:
+
+```javascript
+// init-with-config.js
+import { RedisSMQ } from 'redis-smq';
+import { ERedisConfigClient, EConsoleLoggerLevel } from 'redis-smq-common';
+
+export function initWithConfig(cb) {
+  RedisSMQ.initializeWithConfig(
+    {
+      namespace: 'my_project',
+      redis: {
+        client: ERedisConfigClient.IOREDIS,
+        options: { host: '127.0.0.1', port: 6379, db: 0 },
+      },
+      logger: { enabled: true, options: { logLevel: EConsoleLoggerLevel.INFO } },
+      messages: { store: false },
+      eventBus: { enabled: false },
+    },
+    cb,
+  );
+}
+```
+
+_Notes_
+- Direct use of the Configuration class is optional; `RedisSMQ.initialize` handles bootstrapping internally.
+- If components were created via RedisSMQ factory methods, you typically do not need to call shutdown on each instance. 
+Prefer a single `RedisSMQ.shutdown(cb)` at application exit.
+
+## Next steps
+
+- Producing and consuming
+   - [Producing messages](../producing-messages.md)
+   - [Consuming messages](../consuming-messages.md)
+- Queues and delivery
+   - [Queues](../queues.md)
+   - [Delivery models (Point-to-Point, Pub/Sub)](../queue-delivery-models.md)
+- Routing
+   - [Message exchanges (direct, topic, fanout)](../message-exchanges.md)
+   - [Exchanges vs direct publishing](../exchanges-and-delivery-models.md)
+- Performance and operations
+   - [Performance tips (direct queue publishing is fastest)](../performance.md)
+   - [Graceful shutdown with RedisSMQ.shutdown](../graceful-shutdown.md)
