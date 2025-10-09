@@ -58,10 +58,12 @@
     "redis:build": "scripts/redis.sh build"
   },
   "lint-staged": {
-    "*.(js|ts|json)": [
-      "type-coverage --strict --at-least 100  --ignore-files \"**/dist/**/*\" --ignore-files \"**/redis-smq-web-ui/**/*\"",
+    "*.{js,jsx,ts,tsx}": [
       "eslint --fix",
-      "prettier --write"
+      "type-coverage --strict --at-least 100  --ignore-files \"**/dist/**/*\" --ignore-files \"**/redis-smq-web-ui/**/*\" --"
+    ],
+    "*.{js,jsx,ts,tsx,json,css,scss,less,md,mdx,yml,yaml,html,gql,graphql}": [
+      "prettier --write --ignore-unknown"
     ]
   },
   "pnpm": {
