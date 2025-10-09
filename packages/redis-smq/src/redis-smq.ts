@@ -60,7 +60,8 @@ export class RedisSMQ {
    *
    * @example
    * ```typescript
-   * import { RedisSMQ, ERedisConfigClient } from 'redis-smq';
+   * import { RedisSMQ } from 'redis-smq';
+   * import { ERedisConfigClient } from 'redis-smq-common';
    *
    * RedisSMQ.initialize({
    *   client: ERedisConfigClient.IOREDIS,
@@ -72,13 +73,23 @@ export class RedisSMQ {
    * }, (err) => {
    *   if (err) {
    *     console.error('Failed to initialize RedisSMQ:', err);
-   *   } else {
-   *     console.log('RedisSMQ initialized successfully');
-   *
-   *     // Now you can create producers and consumers without Redis config!
-   *     const producer = RedisSMQ.createProducer();
-   *     const consumer = RedisSMQ.createConsumer();
+   *     return;
    *   }
+   *   console.log('RedisSMQ initialized successfully');
+   *
+   *   // Now you can create producers and consumers without Redis config!
+   *   const producer = RedisSMQ.createProducer();
+   *   const consumer = RedisSMQ.createConsumer();
+   *
+   *   producer.run((e) => {
+   *     if (e) return console.error('Producer failed to start:', e);
+   *     console.log('Producer ready');
+   *   });
+   *
+   *   consumer.run((e) => {
+   *     if (e) return console.error('Consumer failed to start:', e);
+   *     console.log('Consumer ready');
+   *   });
    * });
    * ```
    */
@@ -100,7 +111,8 @@ export class RedisSMQ {
    *
    * @example
    * ```typescript
-   * import { RedisSMQ, ERedisConfigClient } from 'redis-smq';
+   * import { RedisSMQ } from 'redis-smq';
+   * import { ERedisConfigClient } from 'redis-smq-common';
    *
    * RedisSMQ.initializeWithConfig({
    *   namespace: 'my-custom-app',
@@ -113,8 +125,7 @@ export class RedisSMQ {
    *     }
    *   },
    *   logger: {
-   *     enabled: true,
-   *     options: { level: 'debug' }
+   *     enabled: true
    *   },
    *   eventBus: { enabled: true }
    * }, (err) => {
@@ -149,9 +160,8 @@ export class RedisSMQ {
    * ```typescript
    * const producer = RedisSMQ.createProducer();
    * producer.run((err) => {
-   *   if (!err) {
-   *     // Producer is ready to send messages
-   *   }
+   *   if (err) return console.error('Producer failed to start:', err);
+   *   // Producer is ready to send messages
    * });
    * ```
    */
@@ -171,9 +181,8 @@ export class RedisSMQ {
    * ```typescript
    * const consumer = RedisSMQ.createConsumer();
    * consumer.run((err) => {
-   *   if (!err) {
-   *     // Consumer is ready to receive messages
-   *   }
+   *   if (err) return console.error('Consumer failed to start:', err);
+   *   // Consumer is ready to receive messages
    * });
    * ```
    */
@@ -192,7 +201,8 @@ export class RedisSMQ {
    * ```typescript
    * const messageManager = RedisSMQ.createMessageManager();
    * messageManager.getMessageById('message-id', (err, message) => {
-   *   // Retrieved message by ID
+   *   if (err) return console.error('Failed to get message:', err);
+   *   console.log('Message:', message);
    * });
    * ```
    */
@@ -209,10 +219,18 @@ export class RedisSMQ {
    *
    * @example
    * ```typescript
+   * import { EQueueType, EQueueDeliveryModel } from 'redis-smq';
+   *
    * const queueManager = RedisSMQ.createQueueManager();
-   * queueManager.save('my-queue', EQueueType.LIFO_QUEUE, EQueueDeliveryModel.POINT_TO_POINT, (err, result) => {
-   *   // Queue created
-   * });
+   * queueManager.save(
+   *   'my-queue',
+   *   EQueueType.LIFO_QUEUE,
+   *   EQueueDeliveryModel.POINT_TO_POINT,
+   *   (err, result) => {
+   *     if (err) return console.error('Failed to create queue:', err);
+   *     console.log('Queue created:', result);
+   *   }
+   * );
    * ```
    */
   static createQueueManager(): QueueManager {
@@ -230,7 +248,8 @@ export class RedisSMQ {
    * ```typescript
    * const namespaceManager = RedisSMQ.createNamespaceManager();
    * namespaceManager.getNamespaces((err, namespaces) => {
-   *   // Retrieved namespaces
+   *   if (err) return console.error('Failed to get namespaces:', err);
+   *   console.log('Namespaces:', namespaces);
    * });
    * ```
    */
@@ -249,7 +268,8 @@ export class RedisSMQ {
    * ```typescript
    * const queueMessages = RedisSMQ.createQueueMessages();
    * queueMessages.countMessagesByStatus('my-queue', (err, count) => {
-   *   // Message counts by status
+   *   if (err) return console.error('Failed to count messages:', err);
+   *   console.log('Counts:', count);
    * });
    * ```
    */
@@ -268,7 +288,8 @@ export class RedisSMQ {
    * ```typescript
    * const consumerGroups = RedisSMQ.createConsumerGroups();
    * consumerGroups.saveConsumerGroup('my-queue', 'group1', (err, result) => {
-   *   // Consumer group saved
+   *   if (err) return console.error('Failed to save group:', err);
+   *   console.log('Group saved, code:', result);
    * });
    * ```
    */
@@ -287,7 +308,8 @@ export class RedisSMQ {
    * ```typescript
    * const acknowledgedMessages = RedisSMQ.createQueueAcknowledgedMessages();
    * acknowledgedMessages.countMessages('my-queue', (err, count) => {
-   *   // Acknowledged message count
+   *   if (err) return console.error('Failed to count acknowledged:', err);
+   *   console.log('Acknowledged count:', count);
    * });
    * ```
    */
@@ -306,7 +328,8 @@ export class RedisSMQ {
    * ```typescript
    * const deadLetteredMessages = RedisSMQ.createQueueDeadLetteredMessages();
    * deadLetteredMessages.countMessages('my-queue', (err, count) => {
-   *   // Dead lettered message count
+   *   if (err) return console.error('Failed to count DLQ:', err);
+   *   console.log('Dead-lettered count:', count);
    * });
    * ```
    */
@@ -325,7 +348,8 @@ export class RedisSMQ {
    * ```typescript
    * const scheduledMessages = RedisSMQ.createQueueScheduledMessages();
    * scheduledMessages.countMessages('my-queue', (err, count) => {
-   *   // Scheduled message count
+   *   if (err) return console.error('Failed to count scheduled:', err);
+   *   console.log('Scheduled count:', count);
    * });
    * ```
    */
@@ -343,8 +367,9 @@ export class RedisSMQ {
    * @example
    * ```typescript
    * const pendingMessages = RedisSMQ.createQueuePendingMessages();
-   * pendingMessages.countMessages({ queue: 'my-queue' }, (err, count) => {
-   *   // Pending message count
+   * pendingMessages.countMessages('my-queue', (err, count) => {
+   *   if (err) return console.error('Failed to count pending:', err);
+   *   console.log('Pending count:', count);
    * });
    * ```
    */
@@ -362,8 +387,9 @@ export class RedisSMQ {
    * @example
    * ```typescript
    * const queueRateLimit = RedisSMQ.createQueueRateLimit();
-   * queueRateLimit.setQueueRateLimit('my-queue', { interval: 1000, limit: 10 }, (err) => {
-   *   // Rate limit set
+   * queueRateLimit.set('my-queue', { interval: 1000, limit: 10 }, (err) => {
+   *   if (err) return console.error('Failed to set rate limit:', err);
+   *   console.log('Rate limit set');
    * });
    * ```
    */
@@ -383,15 +409,20 @@ export class RedisSMQ {
    *
    * @example
    * ```typescript
-   * // Initialize RedisSMQ first
-   * await RedisSMQ.initialize();
+   * import { RedisSMQ } from 'redis-smq';
+   * import { ERedisConfigClient } from 'redis-smq-common';
    *
-   * // Create fanout exchange
-   * const fanoutExchange = RedisSMQ.createFanoutExchange();
+   * RedisSMQ.initialize({
+   *   client: ERedisConfigClient.IOREDIS,
+   *   options: { host: 'localhost', port: 6379 }
+   * }, (err) => {
+   *   if (err) return console.error('Init failed:', err);
    *
-   * // Save the exchange
-   * fanoutExchange.saveExchange('notifications', (err) => {
-   *   if (err) console.error('Failed to save exchange:', err);
+   *   const fanoutExchange = RedisSMQ.createFanoutExchange();
+   *   fanoutExchange.saveExchange('notifications', (saveErr) => {
+   *     if (saveErr) return console.error('Failed to save exchange:', saveErr);
+   *     console.log('Fanout exchange saved');
+   *   });
    * });
    * ```
    */
@@ -411,18 +442,23 @@ export class RedisSMQ {
    *
    * @example
    * ```typescript
-   * // Initialize RedisSMQ first
-   * await RedisSMQ.initialize();
+   * import { RedisSMQ } from 'redis-smq';
+   * import { ERedisConfigClient } from 'redis-smq-common';
    *
-   * // Create topic exchange
-   * const topicExchange = RedisSMQ.createTopicExchange();
-   *
-   * // Bind queue with routing pattern
-   * topicExchange.bindQueue('user-queue', {
-   *   exchange: 'user-events',
-   *   routingKey: 'user.*.created'
+   * RedisSMQ.initialize({
+   *   client: ERedisConfigClient.IOREDIS,
+   *   options: { host: 'localhost', port: 6379 }
    * }, (err) => {
-   *   if (err) console.error('Failed to bind queue:', err);
+   *   if (err) return console.error('Init failed:', err);
+   *
+   *   const topicExchange = RedisSMQ.createTopicExchange();
+   *   topicExchange.bindQueue('user-queue', {
+   *     exchange: 'user-events',
+   *     routingKey: 'user.*.created'
+   *   }, (bindErr) => {
+   *     if (bindErr) return console.error('Failed to bind queue:', bindErr);
+   *     console.log('Queue bound to topic exchange');
+   *   });
    * });
    * ```
    */
@@ -442,18 +478,23 @@ export class RedisSMQ {
    *
    * @example
    * ```typescript
-   * // Initialize RedisSMQ first
-   * await RedisSMQ.initialize();
+   * import { RedisSMQ } from 'redis-smq';
+   * import { ERedisConfigClient } from 'redis-smq-common';
    *
-   * // Create direct exchange
-   * const directExchange = RedisSMQ.createDirectExchange();
-   *
-   * // Bind queue with exact routing key
-   * directExchange.bindQueue('order-queue', {
-   *   exchange: 'orders',
-   *   routingKey: 'order.created'
+   * RedisSMQ.initialize({
+   *   client: ERedisConfigClient.IOREDIS,
+   *   options: { host: 'localhost', port: 6379 }
    * }, (err) => {
-   *   if (err) console.error('Failed to bind queue:', err);
+   *   if (err) return console.error('Init failed:', err);
+   *
+   *   const directExchange = RedisSMQ.createDirectExchange();
+   *   directExchange.bindQueue('order-queue', {
+   *     exchange: 'orders',
+   *     routingKey: 'order.created'
+   *   }, (bindErr) => {
+   *     if (bindErr) return console.error('Failed to bind queue:', bindErr);
+   *     console.log('Queue bound to direct exchange');
+   *   });
    * });
    * ```
    */
@@ -543,11 +584,11 @@ export class RedisSMQ {
    * @example
    * ```typescript
    * const producer = RedisSMQ.startProducer((err) => {
-   *   if (!err) {
-   *     producer.produce(message, (err, messageIds) => {
-   *       // Message sent
-   *     });
-   *   }
+   *   if (err) return console.error('Failed to start producer:', err);
+   *   producer.produce(message, (produceErr, messageIds) => {
+   *     if (produceErr) return console.error('Failed to produce:', produceErr);
+   *     console.log('Message sent:', messageIds);
+   *   });
    * });
    * ```
    */
@@ -567,11 +608,14 @@ export class RedisSMQ {
    * @example
    * ```typescript
    * const consumer = RedisSMQ.startConsumer(false, (err) => {
-   *   if (!err) {
-   *     consumer.consume('my-queue', messageHandler, (err) => {
-   *       // Consumer is consuming messages
-   *     });
-   *   }
+   *   if (err) return console.error('Failed to start consumer:', err);
+   *   consumer.consume('my-queue', (message, done) => {
+   *     // handle message ...
+   *     done();
+   *   }, (consumeErr) => {
+   *     if (consumeErr) return console.error('Failed to start consumption:', consumeErr);
+   *     console.log('Consumer is consuming messages');
+   *   });
    * });
    * ```
    */
