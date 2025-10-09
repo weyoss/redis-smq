@@ -7,6 +7,7 @@ your applications.
 
 ## Quick Start
 
+- **[Simplified API](simplified-redis-smq-api.md)**: 
 - **[Configuration](configuration.md)**: Set up RedisSMQ in your environment
 - **[Version Compatibility](version-compatibility.md)**: Ensure compatibility between RedisSMQ packages
 - **[ESM & CJS Modules](esm-cjs-modules.md)**: Choose between ECMAScript Modules and CommonJS

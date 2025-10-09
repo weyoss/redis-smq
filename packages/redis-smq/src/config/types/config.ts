@@ -20,6 +20,16 @@ export interface IEventBusConfig {
 }
 
 export interface IRedisSMQConfig {
+  /**
+   * Logical namespace for all queues, exchanges, and Redis keys used by RedisSMQ.
+   *
+   * Purpose:
+   * - Isolates resources between applications/environments.
+   * - Used whenever an operation does not explicitly pass a namespace.
+   *
+   * Defaults:
+   * - If omitted, the default namespace is used (see defaultConfig.namespace).
+   */
   namespace?: string;
 
   /**

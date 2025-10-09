@@ -11,7 +11,6 @@ Features:
 - Persistent configuration storage in Redis
 - Automatic configuration loading and saving
 - Configuration validation and parsing
-- Namespace-based configuration isolation
 - Redis connection management
 
 ## Example
@@ -41,11 +40,11 @@ Configuration.initialize((err) => {
 
 > **exists**(`cb`): `void`
 
-Checks if configuration exists in Redis for the current namespace.
+Checks if configuration exists in Redis.
 
 This method queries Redis to determine whether a configuration has been
-previously saved for the current namespace. It's useful for determining
-whether to load existing configuration or create a new one.
+previously saved. It's useful for determining whether to load existing
+configuration or create a new one.
 
 #### Parameters
 
@@ -124,7 +123,7 @@ console.log('Event bus enabled:', currentConfig.eventBus.enabled);
 
 > **load**(`cb`): `void`
 
-Loads configuration from Redis for the current namespace.
+Loads configuration from Redis into memory.
 
 This method retrieves the stored configuration from Redis and updates the current
 instance with the loaded values. The configuration is automatically parsed and
@@ -144,7 +143,7 @@ Callback function called with the loaded configuration or an error
 
 #### Throws
 
-When no configuration exists in Redis for the namespace
+When no configuration exists in Redis
 
 #### Throws
 
@@ -164,7 +163,7 @@ config.load((err, loadedConfig) => {
     return;
   }
 
-  console.log('Configuration loaded:', loadedConfig.namespace);
+  console.log('Configuration loaded:', loadedConfig);
 });
 ```
 
@@ -359,9 +358,10 @@ config.updateConfig({
 
 > `static` **getConfig**(): [`IRedisSMQParsedConfig`](../interfaces/IRedisSMQParsedConfig.md)
 
-Gets the current configuration object.
+Convenience accessor that returns the current parsed configuration
+from the singleton instance.
 
-This is a convenience method that combines `getInstance()` and `getConfig()`.
+Equivalent to Configuration.getInstance().getConfig().
 
 #### Returns
 
@@ -377,7 +377,6 @@ When the configuration has not been initialized
 
 ```typescript
 const config = Configuration.getConfig();
-console.log('Current namespace:', config.namespace);
 console.log('Redis host:', config.redis.options.host);
 ```
 
@@ -387,7 +386,7 @@ console.log('Redis host:', config.redis.options.host);
 
 > `static` **getInstance**(): `Configuration`
 
-Gets the singleton instance of the Configuration class.
+Gets the already-initialized singleton instance of Configuration.
 
 #### Returns
 
@@ -416,7 +415,7 @@ try {
 
 > `static` **initialize**(`cb`): `void`
 
-Initializes the Configuration singleton with the specified namespace and Redis configuration.
+Initializes the Configuration singleton.
 
 This method attempts to load existing configuration from Redis. If no configuration
 is found, it creates and saves a default configuration. This ensures that the
@@ -458,19 +457,48 @@ Configuration.initialize((err) => {
 
 > `static` **initializeWithConfig**(`config`, `cb`): `void`
 
+Initializes the Configuration singleton with a provided configuration object.
+The provided config is validated and persisted to Redis.
+
 #### Parameters
 
 ##### config
 
 [`IRedisSMQConfig`](../interfaces/IRedisSMQConfig.md)
 
+A partial or full configuration object to persist.
+
 ##### cb
 
 `ICallback`
 
+Callback invoked with (err).
+
 #### Returns
 
 `void`
+
+#### Remarks
+
+- This method synchronously validates the provided config using parseConfig.
+- If parseConfig fails, an exception may be thrown before the callback is invoked.
+
+#### Throws
+
+If parseConfig throws due to invalid input.
+
+#### Throws
+
+When the configuration is already initialized
+
+#### Example
+
+```typescript
+Configuration.initializeWithConfig({ namespace: 'acme' }, (err) => {
+  if (err) return console.error('Init with config failed:', err);
+  console.log('Successfully initialized.');
+});
+```
 
 ***
 
