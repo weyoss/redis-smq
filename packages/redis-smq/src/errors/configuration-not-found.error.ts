@@ -10,7 +10,7 @@
 import { ConfigurationError } from './configuration.error.js';
 
 export class ConfigurationNotFoundError extends ConfigurationError {
-  constructor(namespace: string) {
-    super(`No configuration found in Redis for namespace '${namespace}'`);
+  constructor() {
+    super(`No configuration found in Redis`);
   }
 }
