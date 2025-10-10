@@ -43,7 +43,7 @@ Callback function to handle success or error.
 
 `void`
 
-***
+---
 
 ### exists()
 
@@ -69,7 +69,7 @@ Callback function to return a boolean indicating the existence of the queue.
 
 `void`
 
-***
+---
 
 ### getConsumerIds()
 
@@ -100,7 +100,7 @@ A callback function that receives either an error or an array of consumer IDs.
 
 `void`
 
-***
+---
 
 ### getConsumers()
 
@@ -131,7 +131,7 @@ A callback function that receives either an error or a record of consumers.
 
 `void`
 
-***
+---
 
 ### getProperties()
 
@@ -157,7 +157,7 @@ Callback function to return the queue properties or an error.
 
 `void`
 
-***
+---
 
 ### getQueues()
 
@@ -177,7 +177,7 @@ Callback function to return with a list of queues or an error.
 
 `void`
 
-***
+---
 
 ### save()
 
@@ -218,10 +218,10 @@ Callback function to handle success or error.
 
 #### See
 
- - https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/enumerations/EQueueType.md
- - https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/enumerations/EQueueDeliveryModel.md
+- /packages/redis-smq/docs/api/enumerations/EQueueType.md
+- /packages/redis-smq/docs/api/enumerations/EQueueDeliveryModel.md
 
-***
+---
 
 ### shutdown()
 

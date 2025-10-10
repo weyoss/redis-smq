@@ -33,22 +33,22 @@ export interface IRedisSMQConfig {
   namespace?: string;
 
   /**
-   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq-common/docs/api/interfaces/IRedisConfig.md
+   * @see /packages/redis-smq-common/docs/api/interfaces/IRedisConfig.md
    */
   redis?: IRedisConfig;
 
   /**
-   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq-common/docs/api/interfaces/ILoggerConfig.md
+   * @see /packages/redis-smq-common/docs/api/interfaces/ILoggerConfig.md
    */
   logger?: ILoggerConfig;
 
   /**
-   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/message-storage.md
+   * @see /packages/redis-smq/docs/message-storage.md
    */
   messages?: IMessagesConfig;
 
   /**
-   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/event-bus.md
+   * @see /packages/redis-smq/docs/event-bus.md
    */
   eventBus?: IEventBusConfig;
 }

@@ -1,5 +1,14 @@
 # RedisSMQ Web UI
 
+---
+
+> You are viewing the documentation for the NEXT branch. These docs describe unreleased changes published under the npm "next" dist-tag.  
+> For the latest stable documentation, see:
+>
+> - Master (stable) README: https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-web-ui
+> - Latest release notes/tags: https://github.com/weyoss/redis-smq/releases/latest
+> - Install stable packages with @latest; pre-release with @next.
+
 ![RedisSMQ Web UI - Pending Messages](docs/screenshots/img01.png)
 
 A Single Page Application for monitoring and managing RedisSMQ: inspect queues, messages, consumers, and more — with an integrated OpenAPI client.
@@ -117,4 +126,4 @@ Contributions are welcome. Please see the repository’s CONTRIBUTING.md in the 
 
 ## License
 
-RedisSMQ Web UI is licensed under is released under the [MIT License](https://github.com/weyoss/redis-smq/blob/master/LICENSE).
+RedisSMQ Web UI is licensed under is released under the [MIT License](/LICENSE).

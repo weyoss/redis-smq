@@ -1,10 +1,19 @@
 # RedisSMQ Common Library
 
-[![Latest Release](https://img.shields.io/github/v/release/weyoss/redis-smq?include_prereleases&label=release&color=green&style=flat-square)](https://github.com/weyoss/redis-smq/releases)
-[![Code Coverage](https://img.shields.io/codecov/c/github/weyoss/redis-smq?flag=redis-smq-common&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/master/packages/redis-smq-common)
+---
 
-A shared foundation for the RedisSMQ ecosystem. 
-This package provides essential components and utilities used by RedisSMQ and related packages, helping you configure 
+> You are viewing the documentation for the NEXT branch. These docs describe unreleased changes published under the npm "next" dist-tag.  
+> For the latest stable documentation, see:
+>
+> - Master (stable) README: https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-common
+> - Latest release notes/tags: https://github.com/weyoss/redis-smq/releases/latest
+> - Install stable packages with @latest; pre-release with @next.
+
+[![Pre-release (next)](https://img.shields.io/npm/v/redis-smq-common/next?style=flat-square&label=redis-smq-common%40next)](https://www.npmjs.com/package/redis-smq-common?activeTab=versions)
+[![Code Coverage (next)](https://img.shields.io/codecov/c/github/weyoss/redis-smq?flag=redis-smq-common&branch=next&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/next/packages/redis-smq-common)
+
+A shared foundation for the RedisSMQ ecosystem.
+This package provides essential components and utilities used by RedisSMQ and related packages, helping you configure
 Redis clients, structure logging, and reuse core types across the stack.
 
 - Used by: `redis-smq`, `redis-smq-rest-api`, `redis-smq-web-server`, and `redis-smq-web-ui`
@@ -24,9 +33,9 @@ Redis clients, structure logging, and reuse core types across the stack.
 Install the package:
 
 ```bash
-npm install redis-smq-common
+npm install redis-smq-common@next
 # or
-pnpm add redis-smq-common
+pnpm add redis-smq-common@next
 ```
 
 This package works with multiple Redis clients. Install one of the supported clients based on your needs:
@@ -47,13 +56,13 @@ Note: Redis clients are optional peer dependencies; pick one and configure it in
 
 ## Version compatibility
 
-Always use matching versions of the RedisSMQ packages across your project to avoid runtime/API mismatches. 
+Always use matching versions of the RedisSMQ packages across your project to avoid runtime/API mismatches.
 See the monorepo documentation for Version Compatibility guidance.
 
 ## Documentation
 
 For in-depth guides and API references, see the documentation:  
-https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-common/docs
+https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-common/docs
 
 ## Related packages
 
@@ -68,4 +77,4 @@ Issues and pull requests are welcome. Please read the repository’s CONTRIBUTIN
 
 ## License
 
-This project is licensed under is released under the [MIT License](https://github.com/weyoss/redis-smq/blob/master/LICENSE).
+This project is licensed under is released under the [MIT License](/LICENSE).

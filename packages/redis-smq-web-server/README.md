@@ -1,5 +1,14 @@
 # RedisSMQ Web Server
 
+---
+
+> You are viewing the documentation for the NEXT branch. These docs describe unreleased changes published under the npm "next" dist-tag.  
+> For the latest stable documentation, see:
+>
+> - Master (stable) README: https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-web-server
+> - Latest release notes/tags: https://github.com/weyoss/redis-smq/releases/latest
+> - Install stable packages with @latest; pre-release with @next.
+
 A lightweight, configurable HTTP server that hosts the RedisSMQ Web UI and exposes the RedisSMQ HTTP API in the same process — or proxies it to an external API service.
 
 - Serves the SPA (Single Page Application) for monitoring and managing RedisSMQ.
@@ -19,7 +28,7 @@ A lightweight, configurable HTTP server that hosts the RedisSMQ Web UI and expos
 
 ```bash
 # Using npm
-npm install redis-smq redis-smq-common redis-smq-rest-api redis-smq-web-ui redis-smq-web-server --save
+npm install redis-smq@next redis-smq-common@next redis-smq-rest-api@next redis-smq-web-ui@next redis-smq-web-server@next --save
 ```
 
 Don't forget to install a Redis client. Choose either node-redis or ioredis:
@@ -69,7 +78,7 @@ npx redis-smq-web-server \
   --api-proxy-target http://127.0.0.1:7210
 ```
 
-When `--api-proxy-target` is provided, requests to `<basePath>/api`, `<basePath>/docs`, and `<basePath>/assets` are forwarded 
+When `--api-proxy-target` is provided, requests to `<basePath>/api`, `<basePath>/docs`, and `<basePath>/assets` are forwarded
 to the upstream. In this mode, Redis connection options on the web server are not used; the upstream API service manages Redis.
 
 ### Programmatically (optional)
@@ -125,8 +134,8 @@ await srv.run();
 - UI: served from the configured base path
   - Example: basePath = / → UI at /
   - Example: basePath = /redis-smq → UI at /redis-smq
-  
 - HTTP API: mounted under <basePath>/api
+
   - Example: basePath = / → API at /api
   - Example: basePath = /redis-smq → API at /redis-smq/api
 
@@ -175,12 +184,12 @@ interface IRedisSMQWebServerConfig extends IRedisSMQRestApiConfig {
 
 Notes:
 
-- When `webServer.apiProxyTarget` is set, the server proxies `<basePath>/api`, `<basePath>/docs`, and 
-`<basePath>/assets` to the target. In this mode, redis and logger options are not used by the web server (they are 
-handled by the upstream API service).
+- When `webServer.apiProxyTarget` is set, the server proxies `<basePath>/api`, `<basePath>/docs`, and
+  `<basePath>/assets` to the target. In this mode, redis and logger options are not used by the web server (they are
+  handled by the upstream API service).
 
-- When `webServer.apiProxyTarget` is not set, the web server mounts the embedded `redis-smq-rest-api` using the provided 
-`IRedisSMQRestApiConfig` (redis, logger, etc.).
+- When `webServer.apiProxyTarget` is not set, the web server mounts the embedded `redis-smq-rest-api` using the provided
+  `IRedisSMQRestApiConfig` (redis, logger, etc.).
 
 ### ClI flags
 
@@ -209,5 +218,4 @@ handled by the upstream API service).
 
 ## License
 
-RedisSMQ Web Server is licensed under is released under the [MIT License](https://github.com/weyoss/redis-smq/blob/master/LICENSE).
-
+RedisSMQ Web Server is licensed under is released under the [MIT License](/LICENSE).

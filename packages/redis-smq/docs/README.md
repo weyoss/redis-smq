@@ -7,7 +7,7 @@ your applications.
 
 ## Quick Start
 
-- **[Simplified API](simplified-redis-smq-api.md)**: 
+- **[Simplified API](simplified-redis-smq-api.md)**:
 - **[Configuration](configuration.md)**: Set up RedisSMQ in your environment
 - **[Version Compatibility](version-compatibility.md)**: Ensure compatibility between RedisSMQ packages
 - **[ESM & CJS Modules](esm-cjs-modules.md)**: Choose between ECMAScript Modules and CommonJS
@@ -49,7 +49,7 @@ your applications.
 ### Operations
 
 - **[Graceful Shutdown](graceful-shutdown.md)**: Safely manage system shutdown
-- **[Logs](https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq-common/docs/logger.md)**: Learn how to
+- **[Logs](/packages/redis-smq-common/docs/logger.md)**: Learn how to
   access and utilize logs for monitoring and debugging
 
 ## Tools & Interfaces
@@ -67,9 +67,9 @@ your applications.
 
 ## Additional Resources
 
-- [GitHub Repository](https://github.com/weyoss/redis-smq)
+- [GitHub Repository](/README.md)
 - [Issue Tracker](https://github.com/weyoss/redis-smq/issues)
-- [Changelog](https://github.com/weyoss/redis-smq/blob/master/CHANGELOG.md)
+- [Changelog](/CHANGELOG.md)
 
 ## Support
 
