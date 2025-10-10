@@ -10,9 +10,9 @@
 
 #### See
 
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/event-bus.md
+/packages/redis-smq/docs/event-bus.md
 
-***
+---
 
 ### logger?
 
@@ -20,9 +20,9 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/event-bu
 
 #### See
 
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq-common/docs/api/interfaces/ILoggerConfig.md
+/packages/redis-smq-common/docs/api/interfaces/ILoggerConfig.md
 
-***
+---
 
 ### messages?
 
@@ -30,9 +30,9 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq-common/docs/a
 
 #### See
 
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/message-storage.md
+/packages/redis-smq/docs/message-storage.md
 
-***
+---
 
 ### namespace?
 
@@ -41,13 +41,15 @@ https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/message-
 Logical namespace for all queues, exchanges, and Redis keys used by RedisSMQ.
 
 Purpose:
+
 - Isolates resources between applications/environments.
 - Used whenever an operation does not explicitly pass a namespace.
 
 Defaults:
+
 - If omitted, the default namespace is used (see defaultConfig.namespace).
 
-***
+---
 
 ### redis?
 
@@ -55,4 +57,4 @@ Defaults:
 
 #### See
 
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq-common/docs/api/interfaces/IRedisConfig.md
+/packages/redis-smq-common/docs/api/interfaces/IRedisConfig.md

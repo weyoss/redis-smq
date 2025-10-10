@@ -2,13 +2,8 @@
 
 # RedisSMQ Architecture Overview
 
-This document provides a high-level overview of the RedisSMQ architecture and how it facilitates reliable message 
+This document provides a high-level overview of the RedisSMQ architecture and how it facilitates reliable message
 queuing and processing at scale.
-
-Documentation note
-- This page reflects the latest changes from the master branch.
-- For documentation of the latest stable release, see https://github.com/weyoss/redis-smq/releases/latest and browse 
-the docs under packages/redis-smq/docs in that tagged source.
 
 ## High-level architecture
 
@@ -36,7 +31,7 @@ At a glance, RedisSMQ consists of:
   - Message storage (acknowledged/dead-lettered messages)
   - EventBus (internal system events)
 
-All components coordinate through Redis using atomic operations and Lua scripts where needed for correctness and 
+All components coordinate through Redis using atomic operations and Lua scripts where needed for correctness and
 performance.
 
 ## Initialization and lifecycle
@@ -54,58 +49,68 @@ performance.
 ## Message flow
 
 **1) Produce**
+
 - Direct Queue Publishing (No Exchange) [fastest]: Producer publishes directly to a specific queue.
-- Exchange-based routing (optional): Producer publishes to an exchange (direct/topic/fanout); the exchange resolves 
-bindings and routes to one or more queues.
+- Exchange-based routing (optional): Producer publishes to an exchange (direct/topic/fanout); the exchange resolves
+  bindings and routes to one or more queues.
 
 **2) Enqueue**
+
 - Messages are persisted in Redis queue structures:
   - FIFO/LIFO queues rely on list-based operations (fast path)
   - Priority queues use sorted data structures and Lua (additional overhead, but prioritized ordering)
 
 **3) Deliver**
+
 - Delivery model is applied per queue:
   - Point-to-Point: each message is delivered to exactly one consumer at a time
   - Pub/Sub: a copy of the message is delivered to each consumer group; within a group, one consumer receives it
 
 **4) Process**
+
 - Consumer runs the user-defined handler
 - Optional: worker threads can isolate handlers for better fault tolerance and to reduce main thread pressure
 
 **5) Acknowledge / Retry / Dead-letter**
+
 - Acknowledge: on success, the message is acknowledged; optionally stored if message storage is enabled
 - Retry: on failure, the message is re-queued with optional retryDelay until retryThreshold is reached
 - Dead-letter: after exceeding retryThreshold, the message can be moved to the dead-letter queue (and optionally stored)
 
 **6) Optional storage and introspection**
+
 - If enabled, acknowledged and dead-lettered messages are stored for observability and tooling (UI/API)
 
 ## Exchanges vs direct publishing
 
 - **Direct Queue Publishing (No Exchange)**
+
   - Producer sets the target queue (setQueue(...)) and does not set an exchange
   - Fastest path: avoids exchange lookup/binding resolution
   - Best for known destinations and task queues
 
 - **Direct Exchange**
+
   - Exact routing key match to bound queues
   - Lightweight routing with low overhead
   - Useful when decoupling producers from queue names but still using deterministic routing
 
 - **Topic Exchange**
-  - Wildcard routing (AMQP-style patterns with . separator, * and # wildcards)
+
+  - Wildcard routing (AMQP-style patterns with . separator, \* and # wildcards)
   - Flexible and dynamic, but with added matching overhead
 
 - **Fanout Exchange**
   - Broadcast to all queues bound to the exchange (no routing key)
   - Simplest logic but multiplies downstream work
 
-Routing choice affects only which queues receive messages. Delivery semantics are defined by the target queues' 
+Routing choice affects only which queues receive messages. Delivery semantics are defined by the target queues'
 delivery models.
 
 ## Delivery models
 
 - **Point-to-Point**
+
   - For each message, only one consumer processes it at a time
   - Ideal for task distribution and work queues
 
@@ -177,7 +182,7 @@ The scheduler manages due messages and enqueues them for consumption when approp
 
 ---
 
-This overview should help you reason about how producers, exchanges, queues, delivery models, and consumers interact 
+This overview should help you reason about how producers, exchanges, queues, delivery models, and consumers interact
 through Redis to provide a reliable and scalable messaging platform. For deeper dives, see:
 
 - Messages: [messages.md](messages.md)

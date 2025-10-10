@@ -120,7 +120,7 @@ export class Consumer extends Runnable<TConsumerEvent> {
    * );
    * ```
    *
-   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/consuming-messages.md
+   * @see /packages/redis-smq/docs/consuming-messages.md
    */
   consume(
     queue: TQueueExtendedParams,

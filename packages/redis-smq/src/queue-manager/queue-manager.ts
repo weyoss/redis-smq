@@ -63,8 +63,8 @@ export class QueueManager {
    * Save a new queue with specified parameters.
    * Upon success the callback function is invoked with the created queue details.
    *
-   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/enumerations/EQueueType.md
-   * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/api/enumerations/EQueueDeliveryModel.md
+   * @see /packages/redis-smq/docs/api/enumerations/EQueueType.md
+   * @see /packages/redis-smq/docs/api/enumerations/EQueueDeliveryModel.md
    * @param queue - The name or parameters for the queue.
    * @param queueType - The type of the queue, defined by EQueueType.
    * @param deliveryModel - The model for message delivery, defined by EQueueDeliveryModel.

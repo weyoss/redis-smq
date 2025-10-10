@@ -2,10 +2,18 @@
 
 A High-Performance Redis Simple Message Queue for Node.js
 
-[![Build](https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/tests.yml?style=flat-square)](https://github.com/weyoss/redis-smq/actions/workflows/tests.yml)
-[![Code Quality](https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/codeql.yml?style=flat-square&label=quality)](https://github.com/weyoss/redis-smq/actions/workflows/codeql.yml)
-[![Latest Release](https://img.shields.io/github/v/release/weyoss/redis-smq?include_prereleases&label=release&color=green&style=flat-square)](https://github.com/weyoss/redis-smq/releases)
-![Downloads](https://img.shields.io/npm/dm/redis-smq.svg?style=flat-square)
+---
+
+> You are viewing the documentation for the NEXT branch. These docs describe unreleased changes published under the npm "next" dist-tag.  
+> For the latest stable documentation, see:
+>
+> - Master (stable) README: https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq
+> - Latest release notes/tags: https://github.com/weyoss/redis-smq/releases/latest
+> - Install stable packages with @latest; pre-release with @next.
+
+[![Pre-release (next)](https://img.shields.io/npm/v/redis-smq/next?style=flat-square&label=redis-smq%40next)](https://www.npmjs.com/package/redis-smq?activeTab=versions)
+[![Build (next)](https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/tests.yml?branch=next&style=flat-square)](https://github.com/weyoss/redis-smq/actions/workflows/tests.yml?query=branch%3Anext)
+[![Code Quality (next)](https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/codeql.yml?branch=next&style=flat-square&label=quality)](https://github.com/weyoss/redis-smq/actions/workflows/codeql.yml?query=branch%3Anext)
 
 **Key Features**
 
@@ -39,7 +47,7 @@ A High-Performance Redis Simple Message Queue for Node.js
 Install core packages:
 
 ```bash
-npm i redis-smq@latest redis-smq-common@latest --save
+npm i redis-smq@next redis-smq-common@next --save
 ```
 
 Install a Redis client (choose one):
@@ -53,7 +61,7 @@ npm install @redis/client --save
 **Ecosystem**
 
 | Package                                                                            | Description                                          |
-|------------------------------------------------------------------------------------|------------------------------------------------------|
+| ---------------------------------------------------------------------------------- | ---------------------------------------------------- |
 | [packages/redis-smq/README.md](packages/redis-smq/README.md)                       | Core message queue for Node.js                       |
 | [packages/redis-smq-common/README.md](packages/redis-smq-common/README.md)         | Shared components and utilities                      |
 | [packages/redis-smq-rest-api/README.md](packages/redis-smq-rest-api/README.md)     | REST API with OpenAPI v3 and Swagger UI              |
@@ -139,7 +147,12 @@ RedisSMQ.initializeWithConfig(
 Create a queue, produce a message, and consume it. Ensure RedisSMQ has been initialized first (see Quick Start).
 
 ```typescript
-import { RedisSMQ, ProducibleMessage, EQueueType, EQueueDeliveryModel } from 'redis-smq';
+import {
+  RedisSMQ,
+  ProducibleMessage,
+  EQueueType,
+  EQueueDeliveryModel,
+} from 'redis-smq';
 
 // 1) Create a queue
 const queueManager = RedisSMQ.createQueueManager();
@@ -155,7 +168,9 @@ queueManager.save(
 
 // 2) Produce a message
 const producer = RedisSMQ.createProducer();
-const msg = new ProducibleMessage().setQueue('my_queue').setBody('Hello World!');
+const msg = new ProducibleMessage()
+  .setQueue('my_queue')
+  .setBody('Hello World!');
 producer.produce(msg, (err, ids) => {
   if (err) return console.error('Produce failed:', err);
   console.log(`Produced message IDs: ${ids.join(', ')}`);
@@ -199,11 +214,6 @@ Configuration.getInstance().updateConfig(
 - Full documentation: [packages/redis-smq/docs/README.md](packages/redis-smq/docs/README.md)
 - REST API: [packages/redis-smq-rest-api/README.md](packages/redis-smq-rest-api/README.md)
 - Web UI: [packages/redis-smq-web-ui/README.md](packages/redis-smq-web-ui/README.md)
-
-_Important note:_
-- This README and in-repo documentation reflect the latest changes from the master branch.
-- For documentation of the latest stable release, start at https://github.com/weyoss/redis-smq/releases/latest and 
-  browse the docs under source tree of the selected tag.
 
 **Contributing**
 

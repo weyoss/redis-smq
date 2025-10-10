@@ -19,7 +19,7 @@ import { MessageManager } from '../message-manager/index.js';
  * these messages are moved to a dead-letter queue for later inspection, troubleshooting, or manual reprocessing.
  *
  * @extends QueueExplorer
- * @see https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/configuration.md#message-storage
+ * @see /packages/redis-smq/docs/configuration.md#message-storage
  */
 export class QueueDeadLetteredMessages extends QueueExplorer {
   constructor() {

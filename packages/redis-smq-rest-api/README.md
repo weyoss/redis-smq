@@ -1,9 +1,18 @@
 # RedisSMQ REST API
 
-[![Latest Release](https://img.shields.io/github/v/release/weyoss/redis-smq?include_prereleases&label=release&color=green&style=flat-square)](https://github.com/weyoss/redis-smq/releases)
-[![Code Coverage](https://img.shields.io/codecov/c/github/weyoss/redis-smq?flag=redis-smq-rest-api&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/master/packages/redis-smq-rest-api)
+---
 
-RedisSMQ REST API provides an HTTP interface enabling any web-capable application to interact with the RedisSMQ message 
+> You are viewing the documentation for the NEXT branch. These docs describe unreleased changes published under the npm "next" dist-tag.  
+> For the latest stable documentation, see:
+>
+> - Master (stable) README: https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-rest-api
+> - Latest release notes/tags: https://github.com/weyoss/redis-smq/releases/latest
+> - Install stable packages with @latest; pre-release with @next.
+
+[![Pre-release (next)](https://img.shields.io/npm/v/redis-smq-rest-api/next?style=flat-square&label=redis-smq-rest-api%40next)](https://www.npmjs.com/package/redis-smq-rest-api?activeTab=versions)
+[![Code Coverage (next)](https://img.shields.io/codecov/c/github/weyoss/redis-smq?flag=redis-smq-rest-api&branch=next&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/next/packages/redis-smq-rest-api)
+
+RedisSMQ REST API provides an HTTP interface enabling any web-capable application to interact with the RedisSMQ message
 queue using a RESTful API.
 
 ## Features
@@ -18,7 +27,7 @@ queue using a RESTful API.
 
 ```bash
 # Using npm
-npm install redis-smq redis-smq-common redis-smq-rest-api --save
+npm install redis-smq@next redis-smq-common@next redis-smq-rest-api@next --save
 ```
 
 Don't forget to install a Redis client. Choose either node-redis or ioredis:
@@ -37,11 +46,11 @@ npm install ioredis --save
 npm install redis-smq@x.x.x redis-smq-rest-api@x.x.x redis-smq-common@x.x.x
 ```
 
-See [version compatibility](https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/version-compatibility.md) for details.
+See [version compatibility](/packages/redis-smq/docs/version-compatibility.md) for details.
 
 ## Configuration
 
-The REST API configuration extends the base [RedisSMQ configuration](https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/configuration.md) with additional API server settings.
+The REST API configuration extends the base [RedisSMQ configuration](/packages/redis-smq/docs/configuration.md) with additional API server settings.
 
 ### Configuration Options
 
@@ -92,7 +101,6 @@ The RedisSMQRestApi class can be used as a standalone server or embedded as midd
 
 This mode starts an HTTP server that listens on the configured port.
 
-
 ```typescript
 import { RedisSMQRestApi } from 'redis-smq-rest-api';
 import { ERedisConfigClient } from 'redis-smq-common';
@@ -110,7 +118,7 @@ await api.run();
 
 ### Embedded Middleware
 
-To integrate into an existing Express app, instantiate RedisSMQRestApi with false as the second argument to prevent it 
+To integrate into an existing Express app, instantiate RedisSMQRestApi with false as the second argument to prevent it
 from starting its own listener. Then, use getApplication() to get the middleware.
 
 ```javascript
@@ -130,7 +138,9 @@ const api = new RedisSMQRestApi(
 const restApiMiddleware = await api.getApplication();
 app.use(restApiMiddleware);
 
-app.listen(3000, () => console.log('Host app listening on http://localhost:3000'));
+app.listen(3000, () =>
+  console.log('Host app listening on http://localhost:3000'),
+);
 ```
 
 ## Usage from CLI
@@ -189,4 +199,4 @@ For detailed endpoint documentation, refer to the Swagger UI.
 
 ## License
 
-This project is licensed under is released under the [MIT License](https://github.com/weyoss/redis-smq/blob/master/LICENSE).
+This project is licensed under is released under the [MIT License](/LICENSE).
