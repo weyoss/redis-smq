@@ -4,7 +4,7 @@ A High-Performance Redis Simple Message Queue for Node.js
 
 [![Build](https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/tests.yml?style=flat-square)](https://github.com/weyoss/redis-smq/actions/workflows/tests.yml)
 [![Code Quality](https://img.shields.io/github/actions/workflow/status/weyoss/redis-smq/codeql.yml?style=flat-square&label=quality)](https://github.com/weyoss/redis-smq/actions/workflows/codeql.yml)
-[![Latest Release](https://img.shields.io/github/v/release/weyoss/redis-smq?include_prereleases&label=release&color=green&style=flat-square)](https://github.com/weyoss/redis-smq/releases)
+[![Latest Release](https://img.shields.io/github/v/release/weyoss/redis-smq?label=release&color=green&style=flat-square)](https://github.com/weyoss/redis-smq/releases)
 ![Downloads](https://img.shields.io/npm/dm/redis-smq.svg?style=flat-square)
 
 **What's New**
