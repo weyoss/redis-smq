@@ -2,12 +2,11 @@ name: ci
 
 #on: [push, pull_request]
 on:
-  # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [master]
+    branches: [next, master]
 
   pull_request:
-    branches: [master]
+    branches: [next, master]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -26,7 +25,7 @@ jobs:
 
       - name: List packages
         id: set-packages
-        run: |          
+        run: |
           packages=($(ls -d packages/* | xargs -n 1 basename))
           json="["
           for package in "${packages[@]}"; do
@@ -48,8 +47,7 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
-    needs:
-      list-packages
+    needs: list-packages
 
     steps:
       - name: Install Redis server
