@@ -6,7 +6,7 @@ A High-Performance Redis Simple Message Queue for Node.js
 > You are viewing the documentation for the NEXT branch. These docs describe unreleased changes published under the npm "next" dist-tag.  
 > For the latest stable documentation, see:
 >
-> - Master (stable) README: https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq
+> - Master (stable) README: https://github.com/weyoss/redis-smq/tree/master
 > - Latest release notes/tags: https://github.com/weyoss/redis-smq/releases/latest
 > - Install stable packages with @latest; pre-release with @next.
 
