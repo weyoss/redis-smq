@@ -1,7 +1,7 @@
 # RedisSMQ REST API
 
 > [!NOTE]
-> You are viewing the documentation for the NEXT branch. These docs describe unreleased changes published under the npm "next" dist-tag.  
+> You are viewing the documentation for the "next" branch. These docs describe unreleased changes published under the npm "next" dist-tag.  
 > For the latest stable documentation, see:
 >
 > - Master (stable) README: https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-rest-api
