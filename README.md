@@ -2,8 +2,7 @@
 
 A High-Performance Redis Simple Message Queue for Node.js
 
----
-
+> [!NOTE]
 > You are viewing the documentation for the NEXT branch. These docs describe unreleased changes published under the npm "next" dist-tag.  
 > For the latest stable documentation, see:
 >

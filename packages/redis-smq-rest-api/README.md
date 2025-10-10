@@ -1,7 +1,6 @@
 # RedisSMQ REST API
 
----
-
+> [!NOTE]
 > You are viewing the documentation for the NEXT branch. These docs describe unreleased changes published under the npm "next" dist-tag.  
 > For the latest stable documentation, see:
 >
