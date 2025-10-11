@@ -97,12 +97,7 @@ export class NodeRedisClient extends RedisClientAbstract {
   zrange(key: string, min: number, max: number, cb: ICallback<string[]>): void {
     this.client
       .zRange(key, min, max)
-      .then((reply) =>
-        cb(
-          null,
-          (Array.isArray(reply) ? reply : []).map((i) => String(i)),
-        ),
-      )
+      .then((reply) => cb(null, reply))
       .catch(cb);
   }
 
@@ -112,30 +107,9 @@ export class NodeRedisClient extends RedisClientAbstract {
     max: number,
     cb: ICallback<string[]>,
   ): void {
-    // For redis server 2.8 an error is thrown: [ErrorReply: ERR syntax error]
-    //
-    // this.client
-    //   .zRange(key, min, max, { REV: true })
-    //   .then((reply) =>
-    //     cb(
-    //       null,
-    //       (Array.isArray(reply) ? reply : []).map((i) => String(i)),
-    //     ),
-    //   )
-    //   .catch((err: Error) => {
-    //     console.log('III', err);
-    //     cb(err);
-    //   });
-
-    // Sending a raw command
     this.client
-      .sendCommand(['ZREVRANGE', key, String(min), String(max)])
-      .then((reply) =>
-        cb(
-          null,
-          (Array.isArray(reply) ? reply : []).map((i) => String(i)),
-        ),
-      )
+      .zRange(key, min, max, { REV: true })
+      .then((reply) => cb(null, reply))
       .catch(cb);
   }
 
@@ -198,15 +172,10 @@ export class NodeRedisClient extends RedisClientAbstract {
     options: { MATCH?: string; COUNT?: number },
     cb: ICallback<{ cursor: string; items: string[] }>,
   ): void {
-    const args: [string, number, { MATCH?: string; COUNT?: number }] = [
-      key,
-      Number(cursor),
-      options,
-    ];
     this.client
-      .sScan(...args)
+      .sScan(key, cursor, options)
       .then(({ cursor, members }) => {
-        cb(null, { cursor: String(cursor), items: members });
+        cb(null, { cursor, items: members });
       })
       .catch(cb);
   }
@@ -217,19 +186,14 @@ export class NodeRedisClient extends RedisClientAbstract {
     options: { MATCH?: string; COUNT?: number },
     cb: ICallback<{ cursor: string; items: string[] }>,
   ): void {
-    const args: [string, number, { MATCH?: string; COUNT?: number }] = [
-      key,
-      Number(cursor),
-      options,
-    ];
     this.client
-      .zScan(...args)
+      .zScan(key, cursor, options)
       .then(({ cursor, members }) => {
         const result = new Set<string>();
         for (const i of members) {
           result.add(i.value);
         }
-        cb(null, { cursor: String(cursor), items: [...result] });
+        cb(null, { cursor, items: [...result] });
       })
       .catch(cb);
   }
@@ -268,20 +232,14 @@ export class NodeRedisClient extends RedisClientAbstract {
     options: { MATCH?: string; COUNT?: number },
     cb: ICallback<{ cursor: string; result: Record<string, string> }>,
   ): void {
-    const args: [string, number, { MATCH?: string; COUNT?: number }] = [
-      key,
-      Number(cursor),
-      options,
-    ];
     this.client
-      .hScan(...args)
-      .then(({ cursor, tuples }) => {
+      .hScan(key, cursor, options)
+      .then(({ cursor, entries }) => {
         const result: Record<string, string> = {};
-        while (tuples.length) {
-          const item = tuples.shift();
-          if (item) result[item.field] = item.value;
+        for (const item of entries) {
+          result[item.field] = item.value;
         }
-        cb(null, { cursor: String(cursor), result });
+        cb(null, { cursor, result });
       })
       .catch(cb);
   }
@@ -308,7 +266,7 @@ export class NodeRedisClient extends RedisClientAbstract {
   hdel(key: string, fields: string | string[], cb: ICallback<number>): void {
     this.client
       .hDel(key, fields)
-      .then((reply) => cb(null, Number(reply)))
+      .then((reply) => cb(null, reply))
       .catch(cb);
   }
 
@@ -414,10 +372,8 @@ export class NodeRedisClient extends RedisClientAbstract {
 
   loadScript(script: string, cb: ICallback<string>): void {
     this.client
-      .sendCommand(['SCRIPT', 'LOAD', script])
-      .then((reply) =>
-        cb(null, typeof reply === 'string' ? reply : String(reply)),
-      )
+      .scriptLoad(script)
+      .then((reply) => cb(null, reply))
       .catch(cb);
   }
 
@@ -426,13 +382,15 @@ export class NodeRedisClient extends RedisClientAbstract {
     args: (string | number)[] | string | number,
     cb: (err?: Error | null, res?: unknown) => void,
   ): void {
-    const arrHash: (string | number)[] = [hash];
-    const arrArgs = Array.isArray(args) ? args : [args];
+    const arrArgs = (Array.isArray(args) ? args : [args]).map(String);
+    const numKeys = Number(arrArgs[0]);
+    const keys = arrArgs.slice(1, numKeys + 1);
+    const scriptArgs = arrArgs.slice(numKeys + 1);
     this.client
-      .sendCommand([
-        'evalsha',
-        ...arrHash.concat(arrArgs).map((i) => String(i)),
-      ])
+      .evalSha(hash, {
+        keys,
+        arguments: scriptArgs,
+      })
       .then((reply) => {
         if (Array.isArray(reply)) {
           cb(
@@ -447,8 +405,8 @@ export class NodeRedisClient extends RedisClientAbstract {
 
   get(key: string, cb: ICallback<string | null>): void {
     this.client
-      .sendCommand(['get', key])
-      .then((reply) => cb(null, typeof reply === 'string' ? reply : null))
+      .get(key)
+      .then((reply) => cb(null, reply))
       .catch(cb);
   }
 
@@ -461,8 +419,8 @@ export class NodeRedisClient extends RedisClientAbstract {
 
   llen(key: string, cb: ICallback<number>): void {
     this.client
-      .sendCommand(['llen', key])
-      .then((reply) => cb(null, Number(reply)))
+      .lLen(key)
+      .then((reply) => cb(null, reply))
       .catch(cb);
   }
 
@@ -494,8 +452,8 @@ export class NodeRedisClient extends RedisClientAbstract {
     cb: ICallback<number>,
   ): void {
     this.client
-      .sendCommand(['zremrangebyscore', source, `${min}`, `${max}`])
-      .then((reply) => cb(null, Number(reply)))
+      .zRemRangeByScore(source, min, max)
+      .then((reply) => cb(null, reply))
       .catch(cb);
   }
 
@@ -517,7 +475,6 @@ export class NodeRedisClient extends RedisClientAbstract {
     } else cb();
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   end(): void {
     if (!this.connectionClosed) {
       this.client.disconnect().catch(() => void 0);
@@ -527,7 +484,7 @@ export class NodeRedisClient extends RedisClientAbstract {
   shutdown(cb: ICallback<void> = () => void 0): void {
     if (!this.connectionClosed) {
       this.client.once('end', cb);
-      this.client.quit();
+      this.client.quit().catch(() => void 0);
     } else cb();
   }
 

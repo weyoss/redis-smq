@@ -12,28 +12,35 @@ import {
   RedisFunctions,
   RedisModules,
   RedisScripts,
+  RespVersions,
+  TypeMapping,
   WatchError,
 } from '@redis/client';
-import { RedisClientMultiCommandType } from '@redis/client/dist/lib/client/multi-command.js';
 import { ICallback } from '../../../async/index.js';
 import { WatchedKeysChangedError } from '../../errors/index.js';
 import { IRedisTransaction } from '../../types/index.js';
+import { RedisClientMultiCommandType } from '@redis/client/dist/lib/client/multi-command.js';
 
-export type TRedisTransactionNodeRedis = RedisClientMultiCommandType<
+// Use explicit generics and the dedicated multi command type to avoid collapsing to `any`.
+export type TNodeRedisClient = RedisClientType<
   RedisModules,
   RedisFunctions,
-  RedisScripts
+  RedisScripts,
+  RespVersions,
+  TypeMapping
 >;
-export type TRedisClientNodeRedis = RedisClientType<
-  RedisModules,
-  RedisFunctions,
-  RedisScripts
->;
-
 export class NodeRedisClientMulti implements IRedisTransaction {
-  protected multi: TRedisTransactionNodeRedis;
+  protected multi: RedisClientMultiCommandType<
+    'typed',
+    unknown[],
+    RedisModules,
+    RedisFunctions,
+    RedisScripts,
+    RespVersions,
+    TypeMapping
+  >;
 
-  constructor(client: TRedisClientNodeRedis) {
+  constructor(client: TNodeRedisClient) {
     this.multi = client.multi();
   }
 
@@ -125,7 +132,7 @@ export class NodeRedisClientMulti implements IRedisTransaction {
   exec(cb: ICallback<unknown[]>): void {
     this.multi
       .exec()
-      .then((reply) => cb(null, reply))
+      .then((reply: unknown[]) => cb(null, reply))
       .catch((err: Error) => {
         if (err instanceof WatchError) cb(new WatchedKeysChangedError());
         else cb(err);
