@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import cronParser from 'cron-parser';
+import { CronExpressionParser } from 'cron-parser';
 import { MessageError, MessagePropertyError } from '../errors/index.js';
 import { _parseExchangeParams } from '../exchange/_/_parse-exchange-params.js';
 import {
@@ -419,7 +419,7 @@ export class ProducibleMessage {
    */
   setScheduledCRON(cron: string): ProducibleMessage {
     // it throws an exception for an invalid value
-    cronParser.parseExpression(cron);
+    CronExpressionParser.parse(cron);
     this.scheduledCron = cron;
     return this;
   }

@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import cronParser from 'cron-parser';
+import { CronExpressionParser } from 'cron-parser';
 import { IQueueParams } from '../queue-manager/index.js';
 import {
   MessageDestinationQueueAlreadySetError,
@@ -254,7 +254,7 @@ export class MessageEnvelope {
 
     // Calculate next CRON timestamp
     const cronTimestamp = cronExpression
-      ? cronParser.parseExpression(cronExpression).next().getTime()
+      ? CronExpressionParser.parse(cronExpression).next().getTime()
       : 0;
 
     // Calculate next Repeat timestamp
