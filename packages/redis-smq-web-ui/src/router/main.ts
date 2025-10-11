@@ -21,6 +21,15 @@ export const main: readonly RouteRecordRaw[] = [
     },
   },
   {
+    path: '/ns',
+    name: 'Namespaces',
+    component: () => import('../views/NamespacesView.vue'),
+    meta: {
+      title: 'Namespace Management',
+      breadcrumbs: 'Namespaces',
+    },
+  },
+  {
     path: '/queues',
     name: 'Queues',
     // route level code-splitting
@@ -30,15 +39,6 @@ export const main: readonly RouteRecordRaw[] = [
     meta: {
       title: 'Queue Management',
       breadcrumbs: 'Queues',
-    },
-  },
-  {
-    path: '/ns',
-    name: 'Namespaces',
-    component: () => import('../views/NamespacesView.vue'),
-    meta: {
-      title: 'Namespace Management',
-      breadcrumbs: 'Namespaces',
     },
   },
   {
