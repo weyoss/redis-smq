@@ -52,7 +52,6 @@ function handleOverlayClick() {
       :aria-labelledby="`modal-title-${title.replace(/\s+/g, '-').toLowerCase()}`"
       aria-modal="true"
       @click="handleOverlayClick"
-      @keydown.esc="handleClose"
     >
       <div class="modal-container" :class="modalSizeClass" @click.stop>
         <div class="modal-content">
