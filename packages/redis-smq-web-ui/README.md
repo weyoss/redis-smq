@@ -125,4 +125,4 @@ Contributions are welcome. Please see the repository’s CONTRIBUTING.md in the 
 
 ## License
 
-RedisSMQ Web UI is licensed under is released under the [MIT License](/LICENSE).
+RedisSMQ Web UI is released under the [MIT License](/LICENSE).
