@@ -40,7 +40,7 @@
     "redis-smq-web-server": "./dist/esm/bin/cli.js"
   },
   "dependencies": {
-    "commander": "13.1.0",
+    "commander": "14.0.1",
     "express": "4.21.2",
     "http-proxy-middleware": "3.0.5"
   },
@@ -48,8 +48,8 @@
     "@types/express": "4.17.23"
   },
   "peerDependencies": {
-    "@redis/client": "^1.6.0",
-    "ioredis": "^5.4.0",
+    "@redis/client": "^5",
+    "ioredis": "^5",
     "redis-smq": "workspace:^",
     "redis-smq-common": "workspace:^",
     "redis-smq-rest-api": "workspace:^",
