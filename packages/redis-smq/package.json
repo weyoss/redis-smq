@@ -50,8 +50,8 @@
     "./package.json": "./package.json"
   },
   "peerDependencies": {
-    "@redis/client": "^1.6.0",
-    "ioredis": "^5.4.0",
+    "@redis/client": "^5",
+    "ioredis": "^5",
     "redis-smq-common": "workspace:^"
   },
   "peerDependenciesMeta": {
@@ -63,9 +63,9 @@
     }
   },
   "dependencies": {
-    "cron-parser": "4.9.0",
+    "cron-parser": "5.4.0",
     "lodash": "4.17.21",
-    "uuid": "11.1.0"
+    "uuid": "13.0.0"
   },
   "scripts": {
     "build": "scripts/build.sh",
