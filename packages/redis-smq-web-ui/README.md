@@ -10,118 +10,112 @@
 
 ![RedisSMQ Web UI - Pending Messages](docs/screenshots/img01.png)
 
-A Single Page Application for monitoring and managing RedisSMQ: inspect queues, messages, consumers, and more — with an integrated OpenAPI client.
+A Single Page Application for monitoring and managing RedisSMQ. Inspect queues and messages, review consumers, and perform common actions — with an integrated, type-safe OpenAPI client.
 
 - Works seamlessly with the RedisSMQ REST API
-- Best served via the RedisSMQ Web Server (serves static UI and hosts or proxies the API)
-- Ships with developer-friendly tooling, types, and test setup
+- Best served via the RedisSMQ Web Server (serves the static UI and hosts or proxies the API)
+- Ships with developer-friendly types and OpenAPI client generation
 
 ## Features
 
-- Dashboard to overview queues, consumers, and message stats
+- Dashboard for queues, consumers, and message stats
 - Queue/message browsers with filters and actions (ack, retry, delete, etc.)
-- Support for FIFO/LIFO/Priority Queues and multiple delivery models
-- Integrated documentation via Swagger UI (when served with the REST API)
-- Type-safe OpenAPI client (generated)
+- Supports multiple queue and delivery models
+- Exchange types: Direct, Topic, Fanout
+- Type-safe OpenAPI client (generated from the REST API schema)
+- History-fallback friendly routing (works correctly under a sub-path when configured)
 
 ## Version compatibility
 
-Always install matching versions of RedisSMQ packages. See the root docs for Version Compatibility. Use the same major/minor across:
+Always install matching versions of RedisSMQ packages (same major/minor) to avoid runtime/API mismatches. See
+[version-compatibility.md](/packages/redis-smq/docs/version-compatibility.md).
 
-- redis-smq
-- redis-smq-common
-- redis-smq-rest-api
-- redis-smq-web-server
-- redis-smq-web-ui
+## Requirements
 
-## Getting started
+See [requirements of RedisSMQ](/README.md).
 
-### Recommended: run via the Web Server
+## Installation
 
-Use redis-smq-web-server to host the UI and API in one place, or proxy the API to an external service.
+Typically consumed via the [RedisSMQ Web Server](/packages/redis-smq-web-server/README.md). To set up everything with pre-release builds:
 
-- In-process API:
+```bash
+npm install redis-smq@next redis-smq-common@next redis-smq-rest-api@next redis-smq-web-ui@next redis-smq-web-server@next
+# Choose a Redis client:
+npm install ioredis
+# or
+npm install @redis/client
+```
+
+## Quick start
+
+Use the [RedisSMQ Web Server](/packages/redis-smq-web-server/README.md) to serve the UI and either mount the REST API in-process or proxy to an external instance.
+
+- In-process API (default):
   - UI at http://localhost:8080/
   - API at http://localhost:8080/api
 - Proxy to an external REST API:
-  - UI is still served locally
+  - UI is served locally
   - API/docs/assets are forwarded to the upstream API
 
-See [RedisSMQ Web Server](../redis-smq-web-server/README.md) for CLI options such as:
-
-- --port
-- --base-path
-- --api-proxy-target
-
-### Development
-
-Prerequisites:
-
-- Node.js >= 20
-- PNPM (recommended)
-
-From the monorepo root:
+Examples:
 
 ```bash
-pnpm install
-pnpm -F redis-smq-web-ui dev
+# Default (UI at /, API at /api)
+npx redis-smq-web-server
+
+# Serve under a sub-path (e.g., behind a reverse proxy)
+npx redis-smq-web-server --base-path /redis-smq
+
+# Proxy API/docs/assets to an external REST API
+npx redis-smq-web-server --api-proxy-target http://127.0.0.1:7210
 ```
 
-#### OpenAPI client generation
+See [RedisSMQ Web Server](/packages/redis-smq-web-server/README.md) for CLI options such as:
 
-The UI uses a generated OpenAPI client. To regenerate:
+- `--port`
+- `--base-path`
+- `--api-proxy-target`
+- Redis connection and logging options (used only when hosting the API in-process)
 
-```shell
-pnpm -F redis-smq-web-ui generate-openapi-client
-```
+## Configuration and routing
 
-Make sure redis-smq-rest-api (with OpenAPI endpoint) is reachable as configured by the generation script.
+- Base path
+  - When served by [RedisSMQ Web Server](/packages/redis-smq-web-server/README.md), basePath controls where the UI and local API/docs are mounted.
+  - Examples:
+    - basePath = / → UI at /, API at /api, Swagger UI at /docs
+    - basePath = /redis-smq → UI at /redis-smq, API at /redis-smq/api, Swagger UI at /redis-smq/docs
 
-#### Running the dev Server
+- API endpoint
+  - With an embedded API (no proxy): the server mounts the REST API alongside the UI under <basePath>/api.
+  - With a proxy target: the server forwards <basePath>/api, <basePath>/docs, and <basePath>/assets to the configured upstream URL.
 
-```bash
-pnpm -F redis-smq-web-ui dev
-```
+- Standalone/static hosting (advanced)
+  - If hosting the UI assets yourself:
+    - Serve the SPA with history fallback (so client-side routes work on refresh).
+    - Ensure the public base path matches where you host the app.
+    - Proxy API requests to the REST API under the same public base path (e.g., <basePath>/api).
+    - Expose <basePath>/docs and <basePath>/assets if you want Swagger UI and API schema accessible.
+  - Note: [RedisSMQ Web Server](/packages/redis-smq-web-server/README.md) already handles these concerns and is the simplest path.
 
-The dev script typically runs:
+## Deploying behind a reverse proxy
 
-- Vite dev server for the UI
-- A local REST API dev server for convenience
-
-- Open the printed local URL to access the UI during development.
-
-#### Building
-
-From the monorepo root:
-
-```shell
-pnpm -F redis-smq-web-ui build
-```
-
-Artifacts are output to the package’s dist directory.
-Serve the built assets with [RedisSMQ Web Server](../redis-smq-web-server/README.md) for correct routing and API integration.
-
-#### Configuration and routing
-
-- Base path: When served by redis-smq-web-server, the basePath is handled by the server and the UI will work under either / or a sub-path (e.g., /redis-smq).
-- API endpoint: When using redis-smq-web-server, the UI automatically talks to the in-process API or the configured proxy target.
-- Swagger UI and static docs are available when the REST API is hosted or proxied alongside the UI.
-
-For standalone/static hosting, ensure your server:
-
-- Serves the built assets under the desired public base path
-- Proxies API requests to the REST API under the same base path (e.g., /api)
+- Set a public sub-path using the web server’s --base-path (e.g., /redis-smq).
+- Forward both the UI and API prefixes through your proxy:
+  - /redis-smq → web server
+- If proxying the API to an external service, combine with --api-proxy-target:
+  - Client → reverse proxy → web server (/redis-smq)
+  - Web server proxies /redis-smq/api, /redis-smq/docs, /redis-smq/assets → external API
 
 ## Related packages
 
 - [redis-smq](../redis-smq/README.md): Core message queue
 - [redis-smq-common](../redis-smq-common/README.md): Shared components/utilities
-- [redis-smq-rest-api](../redis-smq-rest-api/README.md): REST API with OpenAPI 3 schema and Swagger UI
+- [redis-smq-rest-api](../redis-smq-rest-api/README.md): REST API with OpenAPI v3 and Swagger UI
 - [redis-smq-web-server](../redis-smq-web-server/README.md): Static hosting + in-process or proxied API
 
 ## Contributing
 
-Contributions are welcome. Please see the repository’s CONTRIBUTING.md in the project root.
+Contributions are welcome. Please see the repository’s [CONTRIBUTING.md](/CONTRIBUTING.md) in the project root.
 
 ## License
 
