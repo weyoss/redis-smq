@@ -9,11 +9,14 @@
  * in the root directory of this source tree.
  */
 
-import { Producer, Configuration, ProducibleMessage } from 'redis-smq';
+import { RedisSMQ, ProducibleMessage } from 'redis-smq';
 import { ERedisConfigClient } from 'redis-smq-common';
 import { Command } from 'commander';
 import dotenv from 'dotenv';
 import path from 'path';
+import bluebird from 'bluebird';
+
+const RedisSMQAsync = bluebird.promisifyAll(RedisSMQ);
 
 /**
  * Parse queue string into namespace and name components
@@ -48,7 +51,7 @@ function loadEnvironment(envPath) {
 /**
  * Configure RedisSMQ connection
  */
-function configure() {
+async function configure() {
   const redisConfig = {
     client: ERedisConfigClient.IOREDIS,
     options: {
@@ -57,7 +60,7 @@ function configure() {
     },
   };
 
-  Configuration.getSetConfig({ redis: redisConfig });
+  await RedisSMQAsync.initializeAsync(redisConfig);
   console.log(
     `Redis configured: ${redisConfig.options.host}:${redisConfig.options.port}`,
   );
@@ -116,25 +119,6 @@ function produceMessage(producer, message) {
         reject(err);
       } else {
         resolve(ids);
-      }
-    });
-  });
-}
-
-/**
- * Shutdown producer with promise wrapper
- * @param {Producer} producer - Producer instance
- * @returns {Promise} Promise that resolves when shutdown is complete
- */
-function shutdownProducer(producer) {
-  return new Promise((resolve, reject) => {
-    producer.shutdown((err) => {
-      if (err) {
-        console.error('Error during producer shutdown:', err);
-        reject(err);
-      } else {
-        console.log('Producer shutdown completed');
-        resolve();
       }
     });
   });
@@ -203,51 +187,31 @@ function validateOptions(options) {
 }
 
 /**
- * Initialize application components
- * @param {Object} options - Command line options
- * @returns {Object} Initialized components
- */
-function initializeComponents(options) {
-  // Validate options
-  validateOptions(options);
-
-  // Load environment configuration
-  loadEnvironment(options.env);
-
-  // Parse queue configuration
-  const queue = parseQueue(options.queue);
-
-  // Configure Redis connection
-  configure();
-
-  // Parse message content
-  const messageContent = parseMessageContent(options.message);
-
-  // Initialize producer
-  const producer = new Producer();
-
-  return {
-    producer,
-    queue,
-    messageContent,
-  };
-}
-
-/**
  * Main application entry point
  */
 async function main() {
   // Parse command line arguments
   const options = parseArguments();
 
-  // Initialize components
-  const { producer, queue, messageContent } = initializeComponents(options);
-  await new Promise((resolve, reject) => {
-    producer.run((err) => {
-      if (err) reject(err);
-      else resolve();
-    });
-  });
+  // Validate options
+  validateOptions(options);
+
+  // Load environment configuration
+  loadEnvironment(options.env);
+
+  // Configure Redis connection
+  await configure();
+
+  // Parse queue configuration
+  const queue = parseQueue(options.queue);
+
+  // Parse message content
+  const messageContent = parseMessageContent(options.message);
+
+  // Initialize producer
+  const producer = bluebird.promisifyAll(RedisSMQAsync.createProducer());
+  await producer.runAsync();
+
   try {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] Starting message production...`);
@@ -275,7 +239,7 @@ async function main() {
   } finally {
     // Always cleanup producer
     try {
-      await shutdownProducer(producer);
+      await RedisSMQAsync.shutdownAsync();
     } catch {
       // ignoring errors
     }

@@ -9,11 +9,40 @@
  * in the root directory of this source tree.
  */
 
-import { Consumer, Configuration } from 'redis-smq';
+import { RedisSMQ } from 'redis-smq';
 import { ERedisConfigClient } from 'redis-smq-common';
 import { Command } from 'commander';
 import dotenv from 'dotenv';
 import path from 'path';
+import bluebird from 'bluebird';
+
+const RedisSMQAsync = bluebird.promisifyAll(RedisSMQ);
+
+/**
+ * Create graceful shutdown handler
+ * @returns {Function} Shutdown function
+ */
+function createShutdownHandler() {
+  let isShuttingDown = false;
+
+  return async () => {
+    if (isShuttingDown) {
+      return;
+    }
+
+    isShuttingDown = true;
+    console.log('\nInitiating graceful shutdown...');
+
+    try {
+      await RedisSMQAsync.shutdownAsync();
+      console.log('Graceful shutdown completed');
+      process.exit(0);
+    } catch (error) {
+      console.error('Error during shutdown:', error);
+      process.exit(1);
+    }
+  };
+}
 
 /**
  * Parse queue string into namespace and name components
@@ -48,7 +77,7 @@ function loadEnvironment(envPath) {
 /**
  * Configure RedisSMQ connection
  */
-function configure() {
+async function configure() {
   const redisConfig = {
     client: ERedisConfigClient.IOREDIS,
     options: {
@@ -57,81 +86,12 @@ function configure() {
     },
   };
 
-  Configuration.getSetConfig({ redis: redisConfig });
+  await RedisSMQAsync.initializeAsync(redisConfig);
   console.log(
     `Redis configured: ${redisConfig.options.host}:${redisConfig.options.port}`,
   );
 
   return redisConfig;
-}
-
-/**
- * Start the consumer
- * @param {Consumer} consumer - Consumer instance
- * @param {Object} consumeQueue - Queue configuration for consuming
- */
-function startConsumer(consumer, consumeQueue) {
-  return new Promise((resolve, reject) => {
-    consumer.run((err) => {
-      if (err) {
-        console.error('Failed to start consumer:', err);
-        reject(err);
-        return;
-      }
-
-      console.log(
-        `Consumer started - consuming from ${consumeQueue.ns}:${consumeQueue.name}`,
-      );
-
-      resolve();
-    });
-  });
-}
-
-/**
- * Shutdown consumer with promise wrapper
- * @param {Consumer} consumer - Consumer instance
- * @returns {Promise} Promise that resolves when shutdown is complete
- */
-function shutdownConsumer(consumer) {
-  return new Promise((resolve, reject) => {
-    consumer.shutdown((err) => {
-      if (err) {
-        console.error('Error during consumer shutdown:', err);
-        reject(err);
-      } else {
-        console.log('Consumer shutdown completed');
-        resolve();
-      }
-    });
-  });
-}
-
-/**
- * Create graceful shutdown handler
- * @param {Consumer} consumer - Consumer instance
- * @returns {Function} Shutdown function
- */
-function createShutdownHandler(consumer) {
-  let isShuttingDown = false;
-
-  return async () => {
-    if (isShuttingDown) {
-      return;
-    }
-
-    isShuttingDown = true;
-    console.log('\nInitiating graceful shutdown...');
-
-    try {
-      await shutdownConsumer(consumer);
-      console.log('Graceful shutdown completed');
-      process.exit(0);
-    } catch (error) {
-      console.error('Error during shutdown:', error);
-      process.exit(1);
-    }
-  };
 }
 
 /**
@@ -155,37 +115,6 @@ function parseArguments() {
 }
 
 /**
- * Initialize application components
- * @param {Object} options - Command line options
- * @returns {Object} Initialized components
- */
-function initializeComponents(options) {
-  // Load environment configuration
-  loadEnvironment(options.env);
-
-  // Configure
-  configure();
-
-  // Parse queue configuration
-  const consumeQueue = parseQueue(options.queue);
-
-  // Initialize consumer
-  const consumer = new Consumer();
-  consumer.consume(
-    consumeQueue,
-    (msg, cb) => cb(),
-    (err) => {
-      if (err) console.log(err);
-    },
-  );
-
-  return {
-    consumer,
-    consumeQueue,
-  };
-}
-
-/**
  * Setup signal handlers for graceful shutdown
  * @param {Function} shutdownHandler - Shutdown handler function
  */
@@ -202,15 +131,25 @@ async function main() {
     // Parse command line arguments
     const options = parseArguments();
 
-    // Initialize components
-    const { consumer, consumeQueue } = initializeComponents(options);
+    // Load environment configuration
+    loadEnvironment(options.env);
 
-    // Create and setup shutdown handler
-    const shutdownHandler = createShutdownHandler(consumer);
+    // Configure
+    await configure();
+
+    // Parse queue configuration
+    const consumeQueue = parseQueue(options.queue);
+
+    // Initialize consumer
+    const consumer = bluebird.promisifyAll(RedisSMQAsync.createConsumer());
+    await consumer.runAsync();
+    await consumer.consumeAsync(consumeQueue, (msg, cb) => cb());
+    console.log(
+      `Consumer started - consuming from ${consumeQueue.ns}:${consumeQueue.name}`,
+    );
+
+    const shutdownHandler = createShutdownHandler();
     setupSignalHandlers(shutdownHandler);
-
-    // Start the consumer
-    await startConsumer(consumer, consumeQueue);
   } catch (error) {
     console.error('Application startup failed:', error.message);
     process.exit(1);
