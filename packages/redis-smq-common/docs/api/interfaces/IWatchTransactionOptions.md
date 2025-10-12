@@ -6,7 +6,7 @@
 
 ### backoff()?
 
-> `optional` **backoff**: (`attemptNo`) => `undefined` \| `number`
+> `optional` **backoff**: (`attemptNo`) => `number` \| `undefined`
 
 Optional backoff strategy in milliseconds. Return a number to delay before retrying.
 Return undefined or <= 0 for no delay.
@@ -19,9 +19,9 @@ Return undefined or <= 0 for no delay.
 
 #### Returns
 
-`undefined` \| `number`
+`number` \| `undefined`
 
-***
+---
 
 ### makeRetryExceededError()?
 
@@ -33,7 +33,7 @@ Optional factory to create a domain-specific error when retries are exhausted.
 
 `Error`
 
-***
+---
 
 ### maxAttempts?
 
@@ -41,7 +41,7 @@ Optional factory to create a domain-specific error when retries are exhausted.
 
 Maximum number of attempts (including the first one). Default: 5
 
-***
+---
 
 ### onExecError()?
 
@@ -59,7 +59,7 @@ Optional hook invoked when EXEC fails with an error (not null abort).
 
 `void`
 
-***
+---
 
 ### onRetry()?
 
@@ -81,7 +81,7 @@ Optional hook invoked on each retry before scheduling the next attempt.
 
 `void`
 
-***
+---
 
 ### onWatchError()?
 

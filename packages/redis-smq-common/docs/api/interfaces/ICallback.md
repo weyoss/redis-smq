@@ -22,7 +22,7 @@ The type of the successful result
 
 Error object if operation failed, null/undefined if successful
 
-`null` | `Error`
+`Error` | `null`
 
 #### result?
 
@@ -46,7 +46,7 @@ Overload for successful case with explicit null/undefined error
 
 Must be null or undefined to indicate success
 
-`undefined` | `null`
+`null` | `undefined`
 
 #### result
 
