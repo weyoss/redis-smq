@@ -22,17 +22,17 @@
 
 [`IMessageParams`](IMessageParams.md).[`body`](IMessageParams.md#body)
 
-***
+---
 
 ### consumerGroupId
 
-> **consumerGroupId**: `null` \| `string`
+> **consumerGroupId**: `string` \| `null`
 
 #### Inherited from
 
 [`IMessageParams`](IMessageParams.md).[`consumerGroupId`](IMessageParams.md#consumergroupid)
 
-***
+---
 
 ### consumeTimeout
 
@@ -42,7 +42,7 @@
 
 [`IMessageParams`](IMessageParams.md).[`consumeTimeout`](IMessageParams.md#consumetimeout)
 
-***
+---
 
 ### createdAt
 
@@ -52,7 +52,7 @@
 
 [`IMessageParams`](IMessageParams.md).[`createdAt`](IMessageParams.md#createdat)
 
-***
+---
 
 ### destinationQueue
 
@@ -62,49 +62,49 @@
 
 [`IMessageParams`](IMessageParams.md).[`destinationQueue`](IMessageParams.md#destinationqueue)
 
-***
+---
 
 ### exchange
 
-> **exchange**: `null` \| [`IExchangeParsedParams`](IExchangeParsedParams.md)
+> **exchange**: [`IExchangeParsedParams`](IExchangeParsedParams.md) \| `null`
 
 #### Inherited from
 
 [`IMessageParams`](IMessageParams.md).[`exchange`](IMessageParams.md#exchange)
 
-***
+---
 
 ### id
 
 > **id**: `string`
 
-***
+---
 
 ### messageState
 
 > **messageState**: [`IMessageStateTransferable`](IMessageStateTransferable.md)
 
-***
+---
 
 ### priority
 
-> **priority**: `null` \| `number`
+> **priority**: `number` \| `null`
 
 #### Inherited from
 
 [`IMessageParams`](IMessageParams.md).[`priority`](IMessageParams.md#priority)
 
-***
+---
 
 ### queue
 
-> **queue**: `null` \| [`IQueueParams`](IQueueParams.md)
+> **queue**: [`IQueueParams`](IQueueParams.md) \| `null`
 
 #### Inherited from
 
 [`IMessageParams`](IMessageParams.md).[`queue`](IMessageParams.md#queue)
 
-***
+---
 
 ### retryDelay
 
@@ -114,7 +114,7 @@
 
 [`IMessageParams`](IMessageParams.md).[`retryDelay`](IMessageParams.md#retrydelay)
 
-***
+---
 
 ### retryThreshold
 
@@ -124,27 +124,27 @@
 
 [`IMessageParams`](IMessageParams.md).[`retryThreshold`](IMessageParams.md#retrythreshold)
 
-***
+---
 
 ### scheduledCron
 
-> **scheduledCron**: `null` \| `string`
+> **scheduledCron**: `string` \| `null`
 
 #### Inherited from
 
 [`IMessageParams`](IMessageParams.md).[`scheduledCron`](IMessageParams.md#scheduledcron)
 
-***
+---
 
 ### scheduledDelay
 
-> **scheduledDelay**: `null` \| `number`
+> **scheduledDelay**: `number` \| `null`
 
 #### Inherited from
 
 [`IMessageParams`](IMessageParams.md).[`scheduledDelay`](IMessageParams.md#scheduleddelay)
 
-***
+---
 
 ### scheduledRepeat
 
@@ -154,23 +154,23 @@
 
 [`IMessageParams`](IMessageParams.md).[`scheduledRepeat`](IMessageParams.md#scheduledrepeat)
 
-***
+---
 
 ### scheduledRepeatPeriod
 
-> **scheduledRepeatPeriod**: `null` \| `number`
+> **scheduledRepeatPeriod**: `number` \| `null`
 
 #### Inherited from
 
 [`IMessageParams`](IMessageParams.md).[`scheduledRepeatPeriod`](IMessageParams.md#scheduledrepeatperiod)
 
-***
+---
 
 ### status
 
 > **status**: [`EMessagePropertyStatus`](../enumerations/EMessagePropertyStatus.md)
 
-***
+---
 
 ### ttl
 

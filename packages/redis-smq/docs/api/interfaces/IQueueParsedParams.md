@@ -6,9 +6,9 @@
 
 ### groupId
 
-> **groupId**: `null` \| `string`
+> **groupId**: `string` \| `null`
 
-***
+---
 
 ### queueParams
 

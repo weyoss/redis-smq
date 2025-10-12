@@ -15,13 +15,7 @@ In certain scenarios, consuming messages at a high rate can be disadvantageous. 
 To address these challenges, RedisSMQ allows you to set and control the rate at which messages are consumed by
 implementing a rate limit for a queue.
 
-## Prerequisites
-
-- Initialize RedisSMQ once per process before creating components:
-  - `RedisSMQ.initialize(redisConfig, cb)`, or
-  - `RedisSMQ.initializeWithConfig(redisSMQConfig, cb)`
-- Create the rate-limiting component via the RedisSMQ factory:
-  - `const queueRateLimit = RedisSMQ.createQueueRateLimit()`
+---
 
 ## Quick example
 
@@ -72,10 +66,14 @@ RedisSMQ.initialize(
     const queueRateLimit = RedisSMQ.createQueueRateLimit();
 
     // 3) Apply a limit: 200 messages per 60_000 ms
-    queueRateLimit.set('notifications', { limit: 200, interval: 60000 }, (setErr) => {
-      if (setErr) return console.error('Error setting rate limit:', setErr);
-      console.log('Rate limit set successfully!');
-    });
+    queueRateLimit.set(
+      'notifications',
+      { limit: 200, interval: 60000 },
+      (setErr) => {
+        if (setErr) return console.error('Error setting rate limit:', setErr);
+        console.log('Rate limit set successfully!');
+      },
+    );
 
     // Optionally: verify current settings
     queueRateLimit.get('notifications', (getErr, params) => {
@@ -92,14 +90,18 @@ RedisSMQ.initialize(
 ## API usage patterns
 
 - Set a rate limit
+
 ```javascript
 queueRateLimit.set('queue-name', { limit: 100, interval: 1000 }, cb);
 ```
+
 Where:
+
 - limit: number of messages
 - interval: time window in milliseconds
 
 - Get the current rate limit
+
 ```javascript
 queueRateLimit.get('queue-name', (err, params) => {
   // params is null if no rate limit is set
@@ -107,6 +109,7 @@ queueRateLimit.get('queue-name', (err, params) => {
 ```
 
 - Clear a rate limit
+
   ```javascript
   queueRateLimit.clear('queue-name', (err) => {
     // removes any configured rate limit for the queue
@@ -126,6 +129,7 @@ queueRateLimit.get('queue-name', (err, params) => {
   ```
 
 Notes:
+
 - You can pass a queue name string or a queue descriptor object (e.g., `{ ns: 'my_app', name: 'notifications' }`) wherever a queue is required.
 
 ## Behavior and considerations
@@ -136,15 +140,17 @@ Notes:
 
 ## Shutdown
 
-- If the `QueueRateLimit` instance was created via RedisSMQ factory methods, you typically do not need to shut it down 
-individually. Prefer a single `RedisSMQ.shutdown(cb)` call at application exit.
-- If you created `QueueRateLimit` outside of RedisSMQ (advanced usage), you may shut it down explicitly if the 
-component exposes a shutdown method.
+- If the `QueueRateLimit` instance was created via RedisSMQ factory methods, you typically do not need to shut it down
+  individually. Prefer a single `RedisSMQ.shutdown(cb)` call at application exit.
+- If you created `QueueRateLimit` outside of RedisSMQ (advanced usage), you may shut it down explicitly if the
+  component exposes a shutdown method.
 
 ## See also
 
 - QueueRateLimit class: [API Reference](api/classes/QueueRateLimit.md)
 - Queues overview: [queues.md](queues.md)
 - Consuming messages: [consuming-messages.md](consuming-messages.md)
+
 ```
 
+```

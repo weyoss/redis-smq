@@ -6,123 +6,123 @@
 
 ### acknowledgedAt
 
-> **acknowledgedAt**: `null` \| `number`
+> **acknowledgedAt**: `number` \| `null`
 
-***
+---
 
 ### attempts
 
 > **attempts**: `number`
 
-***
+---
 
 ### deadLetteredAt
 
-> **deadLetteredAt**: `null` \| `number`
+> **deadLetteredAt**: `number` \| `null`
 
-***
+---
 
 ### effectiveScheduledDelay
 
 > **effectiveScheduledDelay**: `number`
 
-***
+---
 
 ### expired
 
 > **expired**: `boolean`
 
-***
+---
 
 ### lastRequeuedAt
 
-> **lastRequeuedAt**: `null` \| `number`
+> **lastRequeuedAt**: `number` \| `null`
 
-***
+---
 
 ### lastRetriedAttemptAt
 
-> **lastRetriedAttemptAt**: `null` \| `number`
+> **lastRetriedAttemptAt**: `number` \| `null`
 
-***
+---
 
 ### lastScheduledAt
 
-> **lastScheduledAt**: `null` \| `number`
+> **lastScheduledAt**: `number` \| `null`
 
-***
+---
 
 ### lastUnacknowledgedAt
 
-> **lastUnacknowledgedAt**: `null` \| `number`
+> **lastUnacknowledgedAt**: `number` \| `null`
 
-***
+---
 
 ### processingStartedAt
 
-> **processingStartedAt**: `null` \| `number`
+> **processingStartedAt**: `number` \| `null`
 
-***
+---
 
 ### publishedAt
 
-> **publishedAt**: `null` \| `number`
+> **publishedAt**: `number` \| `null`
 
-***
+---
 
 ### requeueCount
 
 > **requeueCount**: `number`
 
-***
+---
 
 ### requeuedAt
 
-> **requeuedAt**: `null` \| `number`
+> **requeuedAt**: `number` \| `null`
 
-***
+---
 
 ### requeuedMessageParentId
 
-> **requeuedMessageParentId**: `null` \| `string`
+> **requeuedMessageParentId**: `string` \| `null`
 
-***
+---
 
 ### scheduledAt
 
-> **scheduledAt**: `null` \| `number`
+> **scheduledAt**: `number` \| `null`
 
-***
+---
 
 ### scheduledCronFired
 
 > **scheduledCronFired**: `boolean`
 
-***
+---
 
 ### scheduledMessageParentId
 
-> **scheduledMessageParentId**: `null` \| `string`
+> **scheduledMessageParentId**: `string` \| `null`
 
-***
+---
 
 ### scheduledRepeatCount
 
 > **scheduledRepeatCount**: `number`
 
-***
+---
 
 ### scheduledTimes
 
 > **scheduledTimes**: `number`
 
-***
+---
 
 ### unacknowledgedAt
 
-> **unacknowledgedAt**: `null` \| `number`
+> **unacknowledgedAt**: `number` \| `null`
 
-***
+---
 
 ### uuid
 

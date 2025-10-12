@@ -4,12 +4,6 @@
 
 The [Consumer](api/classes/Consumer.md) receives and processes messages from one or more queues.
 
-Prerequisites:
-- Initialize RedisSMQ once per process before creating consumers:
-  - `RedisSMQ.initialize(redisConfig, cb)`, or
-  - `RedisSMQ.initializeWithConfig(redisSMQConfig, cb)`
-- Prefer creating consumers via the RedisSMQ factory: `const consumer = RedisSMQ.createConsumer()`
-
 ## Message Handler
 
 A message handler is a callback you define. It receives the delivered message and must acknowledge or fail it.
@@ -18,6 +12,7 @@ A message handler is a callback you define. It receives the delivered message an
 - Consumers do not auto-start; call [`Consumer.run()`](api/classes/Consumer.md#run) explicitly.
 
 Acknowledgement:
+
 - Call `done()` with no arguments to acknowledge success.
 - Call `done(err)` to signal failure (the message will be retried based on your configuration).
 
@@ -101,7 +96,7 @@ RedisSMQ.initialize(
 
 ## Pub/Sub Consumption (consumer groups)
 
-For Pub/Sub queues, provide a consumer group ID. Each message is delivered to all groups; within a group, only one 
+For Pub/Sub queues, provide a consumer group ID. Each message is delivered to all groups; within a group, only one
 consumer receives it.
 
 ```javascript
@@ -145,11 +140,11 @@ RedisSMQ.initialize(
 ## Stopping Consumption
 
 - Cancel a specific queue handler: [`Consumer.cancel()`](api/classes/Consumer.md#cancel)
-    - Removes the handler for that queue, the consumer keeps running for other queues.
+  - Removes the handler for that queue, the consumer keeps running for other queues.
 - Shut down the consumer and remove all handlers: [`Consumer.shutdown()`](api/classes/Consumer.md#shutdown)
-    - Useful if you need to stop an individual consumer early.
-- When using RedisSMQ factory-created components, you typically do not need to call shutdown on each instance at 
-application exit. Prefer a single `RedisSMQ.shutdown(cb)` to close shared infrastructure and tracked components.
+  - Useful if you need to stop an individual consumer early.
+- When using RedisSMQ factory-created components, you typically do not need to call shutdown on each instance at
+  application exit. Prefer a single `RedisSMQ.shutdown(cb)` to close shared infrastructure and tracked components.
 
 Example cancel:
 
@@ -169,7 +164,7 @@ consumer.cancel('test_queue', (err) => {
 
 ## Message Storage (optional)
 
-By default, RedisSMQ does not store acknowledged or dead-lettered messages. You can enable storage in 
+By default, RedisSMQ does not store acknowledged or dead-lettered messages. You can enable storage in
 your [configuration](configuration.md) if needed for observability or auditing.
 
 For more in-depth information, refer to the [Consumer Class](api/classes/Consumer.md) documentation.
