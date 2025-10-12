@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.5](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.4...v9.0.0-next.5) (2025-10-12)
+
+### 🚀 Chore
+
+- **redis-smq:** update dependencies to latest versions ([6864c71](https://github.com/weyoss/redis-smq/commit/6864c712ad8596fc461e5825b8a9d6d2d422095e))
+
+### 📝 Documentation
+
+- add GitHub note callouts in README files ([86e855a](https://github.com/weyoss/redis-smq/commit/86e855ae7aea91e3295301671b8da3249164ea40))
+- fix navigation breadcrumb ([63ec998](https://github.com/weyoss/redis-smq/commit/63ec998fa01613479a984813959a1361336c5f92))
+- **redis-smq:** update docs and clean up ([66ed0b8](https://github.com/weyoss/redis-smq/commit/66ed0b8bff775bae6083cee5d958c64d19d71b2c))
+- standardize "next" branch reference ([15f3e4f](https://github.com/weyoss/redis-smq/commit/15f3e4f4347fd4f76f9dc167dd72f174f178ab8e))
+- streamline and improve documentation structure and readability ([b3aabab](https://github.com/weyoss/redis-smq/commit/b3aabab6bf036d5e8a9908de746bbe7d86422920))
+- update README files for next branch with pre-release badges and doc links ([463250b](https://github.com/weyoss/redis-smq/commit/463250bbd754d44ae6741abcf4e2d62995aef620))
+
 ## [9.0.0-next.4](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.3...v9.0.0-next.4) (2025-10-09)
 
 ### ⚠ BREAKING CHANGES
