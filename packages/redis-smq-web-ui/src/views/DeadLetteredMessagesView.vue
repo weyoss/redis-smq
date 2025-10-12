@@ -17,6 +17,8 @@ import { useSelectedQueuePropertiesStore } from '@/stores/selectedQueuePropertie
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
 import type { IQueueParams } from '@/types/index.ts';
 import { useDeadLetteredMessages } from '@/composables/useDeadLetteredMessages.ts';
+import { useGetApiV1Config } from '@/api/generated/configuration/configuration.ts';
+import { getErrorMessage } from '@/lib/error.ts';
 
 const selectedQueueStore = useSelectedQueueStore();
 const queuePropertiesStore = useSelectedQueuePropertiesStore();
@@ -109,6 +111,24 @@ watchEffect(() => {
   pageContentStore.setPageActions([]);
 });
 
+// Load RedisSMQ configuration to check if dead-lettered messages storage is enabled
+const {
+  data: configData,
+  isLoading: isConfigLoading,
+  error: configError,
+  refetch: refetchConfig,
+} = useGetApiV1Config();
+
+const dlEnabled = computed<boolean | null>(() => {
+  // Expected shape from generated model: data.messages.store.deadLettered.enabled
+  const enabled = configData.value?.data?.messages?.store?.deadLettered?.store;
+  return typeof enabled === 'boolean' ? enabled : null;
+});
+
+const configErrorMessage = computed(() => {
+  return getErrorMessage(configError);
+});
+
 // Event handlers to connect UI events to composable actions
 async function handleDelete(messageId: string) {
   if (deleteMessage) {
@@ -133,6 +153,81 @@ async function onPageSizeChange(size: number) {
 
 <template>
   <PageContent :show-section-header="false">
+    <!-- CONFIG LOADING BANNER -->
+    <div
+      v-if="isConfigLoading"
+      class="dl-loading-alert"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="dl-alert-row">
+        <i class="bi bi-arrow-repeat dl-alert-icon" aria-hidden="true"></i>
+        <div class="dl-alert-text">
+          <strong>Loading configuration…</strong>
+          <p class="dl-alert-message">
+            Checking server settings for dead-lettered messages storage.
+          </p>
+        </div>
+        <div class="dl-alert-actions">
+          <span
+            class="spinner-border spinner-border-sm"
+            aria-hidden="true"
+          ></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIG ERROR BANNER -->
+    <div
+      v-else-if="configError"
+      class="dl-error-alert"
+      role="alert"
+      aria-live="polite"
+    >
+      <div class="dl-alert-row">
+        <i
+          class="bi bi-exclamation-triangle-fill dl-alert-icon"
+          aria-hidden="true"
+        ></i>
+        <div class="dl-alert-text">
+          <strong>Could not load server configuration</strong>
+          <p class="dl-alert-message">
+            {{ configErrorMessage }}
+          </p>
+        </div>
+        <div class="dl-alert-actions">
+          <button
+            class="btn btn-sm btn-outline-primary"
+            type="button"
+            @click="refetchConfig()"
+          >
+            <i class="bi bi-arrow-clockwise me-1"></i>
+            Retry
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DISABLED STORAGE BANNER -->
+    <div
+      v-else-if="dlEnabled === false"
+      class="dl-disabled-alert"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="dl-alert-row">
+        <i class="bi bi-info-circle-fill dl-alert-icon" aria-hidden="true"></i>
+        <div class="dl-alert-text">
+          <strong>Dead-lettered messages storage is disabled</strong>
+          <p class="dl-alert-message">
+            The server configuration indicates that dead-lettered messages are
+            not being stored. This view may be empty or missing data until
+            storage is enabled on the server.
+          </p>
+        </div>
+      </div>
+    </div>
+
     <MessageList
       v-if="selectedQueue"
       :messages="messages"
@@ -156,3 +251,80 @@ async function onPageSizeChange(size: number) {
     />
   </PageContent>
 </template>
+
+<style scoped>
+/* Shared layout for banners */
+.dl-alert-row {
+  display: flex;
+  align-items: center; /* center vertically */
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.dl-alert-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.dl-alert-text {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.dl-alert-message {
+  margin: 0;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Right-aligned actions (spinner/retry) centered vertically */
+.dl-alert-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+}
+
+/* Loading style */
+.dl-loading-alert {
+  background: #cff4fc;
+  border: 1px solid #b6effb;
+  color: #055160;
+  border-radius: 12px;
+  padding: clamp(10px, 2.5vw, 16px);
+  margin-bottom: clamp(12px, 2.5vw, 16px);
+  box-shadow: 0 2px 4px rgba(5, 81, 96, 0.06);
+}
+
+/* Error style */
+.dl-error-alert {
+  background: #f8d7da;
+  border: 1px solid #f5c2c7;
+  color: #842029;
+  border-radius: 12px;
+  padding: clamp(10px, 2.5vw, 16px);
+  margin-bottom: clamp(12px, 2.5vw, 16px);
+  box-shadow: 0 2px 4px rgba(132, 32, 41, 0.06);
+}
+
+/* Disabled style */
+.dl-disabled-alert {
+  background: #fff3cd;
+  border: 1px solid #ffe69c;
+  color: #664d03;
+  border-radius: 12px;
+  padding: clamp(10px, 2.5vw, 16px);
+  margin-bottom: clamp(12px, 2.5vw, 16px);
+  box-shadow: 0 2px 4px rgba(102, 77, 3, 0.06);
+}
+
+/* Small screens: tighter gaps */
+@media (max-width: 768px) {
+  .dl-alert-row {
+    gap: 0.5rem;
+  }
+}
+</style>
