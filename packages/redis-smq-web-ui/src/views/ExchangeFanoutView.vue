@@ -282,7 +282,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
+  <div class="fanout-exchange-view">
     <PageContent>
       <!-- Exchange Overview Stats -->
       <div
@@ -423,27 +423,48 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* Wrapper: mobile-first safety and overflow guards */
+.fanout-exchange-view,
+.fanout-exchange-view * {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.fanout-exchange-view {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 2.4vw, 24px);
+  overflow-x: hidden; /* guard against horizontal scroll */
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 /* Stats Overview */
 .stats-overview {
-  margin-bottom: 2rem;
+  margin-bottom: clamp(12px, 2.5vw, 24px);
 }
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(clamp(180px, 35vw, 240px), 1fr)
+  );
+  gap: clamp(12px, 2.5vw, 20px);
 }
 
 .stat-card {
   background: white;
   border: 1px solid #e9ecef;
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: clamp(12px, 2.8vw, 24px);
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: clamp(10px, 2vw, 16px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+  min-width: 0;
 }
 
 .stat-card:hover {
@@ -474,10 +495,11 @@ onMounted(() => {
 
 .stat-content {
   flex: 1;
+  min-width: 0; /* allow text to wrap/ellipsis */
 }
 
 .stat-value {
-  font-size: 2rem;
+  font-size: clamp(1.5rem, 4.5vw, 2rem);
   font-weight: 700;
   color: #212529;
   line-height: 1.2;
@@ -488,11 +510,13 @@ onMounted(() => {
   color: #6c757d;
   font-weight: 500;
   margin-top: 0.25rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* Exchange Info */
 .exchange-info {
-  margin-bottom: 2rem;
+  margin-bottom: clamp(12px, 2.5vw, 24px);
 }
 
 .info-card {
@@ -500,63 +524,75 @@ onMounted(() => {
   border: 1px solid #b3d9ff;
   border-left: 4px solid #0d6efd;
   border-radius: 8px;
-  padding: 1.5rem;
+  padding: clamp(12px, 2.8vw, 24px);
 }
 
 .info-header {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 1rem;
+  margin-bottom: clamp(8px, 2vw, 12px);
 }
 
 .info-header i {
   color: #0d6efd;
   font-size: 1.25rem;
+  flex-shrink: 0;
 }
 
 .info-header h3 {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: clamp(1rem, 2.8vw, 1.125rem);
   font-weight: 600;
   color: #212529;
+  overflow-wrap: anywhere;
 }
 
 .info-description {
   margin: 0;
   color: #495057;
   line-height: 1.5;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* Queues Section */
 .queues-section {
-  margin-top: 2rem;
+  margin-top: clamp(12px, 2.5vw, 24px);
 }
 
 .section-title {
-  font-size: 1.5rem;
+  font-size: clamp(1.25rem, 3.5vw, 1.5rem);
   font-weight: 600;
   color: #212529;
-  margin: 0 0 1.5rem 0;
+  margin: 0 0 clamp(12px, 2.5vw, 20px) 0;
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .queues-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(clamp(260px, 44vw, 340px), 1fr)
+  );
+  gap: clamp(12px, 2.8vw, 24px);
 }
 
 .queue-card {
   background: white;
   border: 1px solid #e9ecef;
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: clamp(12px, 2.8vw, 24px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+  min-width: 0;
 }
 
 .queue-card:hover {
@@ -568,7 +604,10 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1rem;
+  margin-bottom: clamp(10px, 2.2vw, 16px);
+  gap: 0.75rem;
+  min-width: 0;
+  flex-wrap: wrap; /* avoid overflow on narrow screens */
 }
 
 .queue-info {
@@ -576,11 +615,13 @@ onMounted(() => {
   align-items: center;
   gap: 0.75rem;
   flex: 1;
+  min-width: 0;
 }
 
 .queue-info i {
   color: #0c5460;
   font-size: 1.25rem;
+  flex-shrink: 0;
 }
 
 .queue-name {
@@ -588,6 +629,9 @@ onMounted(() => {
   color: #212529;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .btn-unbind {
@@ -595,19 +639,26 @@ onMounted(() => {
   border: 1px solid #dc3545;
   color: #dc3545;
   padding: 0.5rem 0.75rem;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  display: flex;
+  font-weight: 600;
+  transition:
+    transform 0.15s ease,
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .btn-unbind:hover:not(:disabled) {
   background-color: #dc3545;
   color: white;
+  transform: translateY(-1px);
 }
 
 .btn-unbind:disabled {
@@ -621,7 +672,7 @@ onMounted(() => {
 }
 
 .queue-status {
-  padding-top: 1rem;
+  padding-top: clamp(10px, 2.2vw, 16px);
   border-top: 1px solid #e9ecef;
 }
 
@@ -630,6 +681,7 @@ onMounted(() => {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
+  overflow-wrap: anywhere;
 }
 
 .status-indicator.active {
@@ -652,20 +704,23 @@ onMounted(() => {
 
   .queue-header {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .queue-name {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .btn-unbind {
-    align-self: flex-end;
+    width: 100%;
+    justify-content: center;
   }
 }
 
 @media (max-width: 576px) {
-  .stat-card {
-    padding: 1rem;
-  }
-
   .stat-icon {
     width: 40px;
     height: 40px;
@@ -673,28 +728,20 @@ onMounted(() => {
   }
 
   .stat-value {
-    font-size: 1.5rem;
-  }
-
-  .info-card {
-    padding: 1rem;
+    font-size: clamp(1.25rem, 5vw, 1.5rem);
   }
 
   .info-header h3 {
-    font-size: 1rem;
-  }
-
-  .queue-card {
-    padding: 1rem;
+    font-size: clamp(0.95rem, 3.2vw, 1rem);
   }
 
   .queue-name {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
   }
 
   .btn-unbind {
-    padding: 0.4rem 0.6rem;
-    font-size: 0.8rem;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.85rem;
   }
 }
 
@@ -702,5 +749,28 @@ onMounted(() => {
 .queue-card:focus-within {
   outline: 2px solid #0d6efd;
   outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .stat-card,
+  .queue-card,
+  .btn-unbind {
+    transition: none;
+  }
+  .stat-card:hover,
+  .queue-card:hover,
+  .btn-unbind:hover {
+    transform: none;
+  }
+}
+
+/* High contrast support */
+@media (prefers-contrast: more) {
+  .queue-card,
+  .stat-card,
+  .info-card {
+    border-width: 2px;
+  }
 }
 </style>

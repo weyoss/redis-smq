@@ -228,6 +228,8 @@ function getActionButtonClass(action: PageAction) {
 .page-content {
   min-height: 100vh;
   background: #f8f9fa;
+  /* Guard against accidental horizontal scroll from deeply nested content */
+  overflow-x: hidden;
 }
 
 /* Page Header */
@@ -246,6 +248,8 @@ function getActionButtonClass(action: PageAction) {
   align-items: center;
   gap: 1.5rem;
   flex: 1;
+  /* Allow flex children to shrink and wrap text without causing overflow */
+  min-width: 0;
 }
 
 .page-title-section {
@@ -253,6 +257,7 @@ function getActionButtonClass(action: PageAction) {
   align-items: center;
   gap: 1.5rem;
   flex: 1;
+  min-width: 0; /* prevent overflow due to min-content sizing */
 }
 
 .page-icon {
@@ -275,6 +280,7 @@ function getActionButtonClass(action: PageAction) {
 
 .title-content {
   flex: 1;
+  min-width: 0; /* allow wrapping/ellipsis inside title area */
 }
 
 .page-title {
@@ -283,6 +289,9 @@ function getActionButtonClass(action: PageAction) {
   font-weight: 700;
   color: #1a1a1a;
   line-height: 1.2;
+  /* Long titles should wrap gracefully */
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .page-subtitle {
@@ -290,11 +299,19 @@ function getActionButtonClass(action: PageAction) {
   color: #6c757d;
   font-size: 1rem;
   line-height: 1.4;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .page-actions {
   display: flex;
   gap: 1rem;
+  flex-wrap: wrap; /* wrap buttons to next line instead of overflowing */
+  align-items: center;
+}
+
+.page-actions .btn {
+  max-width: 100%;
 }
 
 /* Button Styles */
@@ -309,6 +326,9 @@ function getActionButtonClass(action: PageAction) {
   transition: all 0.2s ease;
   cursor: pointer;
   text-decoration: none;
+  line-height: 1.2;
+  /* Let button text wrap if needed to avoid overflow on small screens */
+  white-space: normal;
 }
 
 .btn-refresh {
@@ -381,6 +401,8 @@ function getActionButtonClass(action: PageAction) {
 /* Content Section */
 .content-section {
   padding: 2rem;
+  /* Respect safe area on devices with a home indicator */
+  padding-bottom: calc(2rem + env(safe-area-inset-bottom));
 }
 
 .section-header {
@@ -388,6 +410,7 @@ function getActionButtonClass(action: PageAction) {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  gap: 1rem;
 }
 
 .section-title {
@@ -395,12 +418,18 @@ function getActionButtonClass(action: PageAction) {
   font-size: 1.5rem;
   font-weight: 600;
   color: #1a1a1a;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .section-meta {
   color: #6c757d;
   font-size: 0.875rem;
   font-weight: 500;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  min-width: 0;
+  text-align: right;
 }
 
 /* State Containers */
@@ -457,6 +486,8 @@ function getActionButtonClass(action: PageAction) {
   font-size: 1.5rem;
   font-weight: 600;
   color: #1a1a1a;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .state-message {
@@ -464,6 +495,8 @@ function getActionButtonClass(action: PageAction) {
   margin: 0 0 1rem 0;
   line-height: 1.5;
   font-size: 1rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .state-details {
@@ -472,6 +505,8 @@ function getActionButtonClass(action: PageAction) {
   line-height: 1.4;
   font-size: 0.875rem;
   font-style: italic;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* State Actions - Centered */
@@ -489,6 +524,18 @@ function getActionButtonClass(action: PageAction) {
   border-radius: 16px;
   padding: 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  /* Keep content within bounds on small screens */
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Make media fluid to avoid overflow from images/videos in slotted content */
+.main-content img,
+.state-content img,
+.main-content video,
+.state-content video {
+  max-width: 100%;
+  height: auto;
 }
 
 /* Animations */
@@ -533,8 +580,20 @@ function getActionButtonClass(action: PageAction) {
     font-size: 1.75rem;
   }
 
+  .page-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .page-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
   .content-section {
     padding: 1.5rem 1rem;
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
   }
 
   .main-content {
@@ -545,6 +604,10 @@ function getActionButtonClass(action: PageAction) {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
+  }
+
+  .section-meta {
+    text-align: left;
   }
 
   .state-actions {
@@ -558,7 +621,7 @@ function getActionButtonClass(action: PageAction) {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 576px) {
   .page-header {
     padding: 1rem;
   }
@@ -569,6 +632,7 @@ function getActionButtonClass(action: PageAction) {
 
   .content-section {
     padding: 1rem;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
   }
 
   .state-container {

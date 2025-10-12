@@ -373,7 +373,7 @@ function handleDelete() {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 576px) {
   .queue-item {
     padding: 1rem;
   }

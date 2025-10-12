@@ -561,7 +561,7 @@ function handleClose() {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 576px) {
   .form-content {
     padding: 0.75rem;
   }

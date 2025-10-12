@@ -466,7 +466,7 @@ onMounted(() => {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 576px) {
   .summary-stats {
     flex-direction: column;
     gap: 1rem;

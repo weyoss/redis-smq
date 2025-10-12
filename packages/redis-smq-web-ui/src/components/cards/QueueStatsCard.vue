@@ -652,7 +652,7 @@ function handleRefresh(): void {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 576px) {
   .card-header {
     padding: 1rem;
   }

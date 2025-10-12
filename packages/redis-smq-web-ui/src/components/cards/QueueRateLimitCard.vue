@@ -547,13 +547,19 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Card Container */
+/* Mobile-first safety: sizing and overflow guards */
+.rate-limit-card,
+.rate-limit-card * {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
 .rate-limit-card {
   background: white;
   border-radius: 16px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   border: 1px solid #e9ecef;
-  overflow: hidden;
+  overflow: hidden; /* contain inner visuals */
   transition: box-shadow 0.2s ease;
 }
 
@@ -564,19 +570,22 @@ onMounted(() => {
 /* Header */
 .card-header {
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  padding: 1.5rem 2rem;
+  padding: clamp(12px, 3vw, 24px) clamp(16px, 4vw, 32px);
   border-bottom: 1px solid #e9ecef;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: clamp(8px, 2.5vw, 16px);
+  flex-wrap: wrap; /* allow actions to wrap under title on small screens */
 }
 
 .header-content {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0; /* allow text to shrink without overflow */
 }
 
 .card-title {
-  font-size: 1.25rem;
+  font-size: clamp(1.05rem, 2.8vw, 1.25rem);
   font-weight: 700;
   color: #212529;
   margin: 0 0 0.25rem 0;
@@ -592,23 +601,31 @@ onMounted(() => {
 
 .card-subtitle {
   color: #6c757d;
-  font-size: 0.875rem;
+  font-size: clamp(0.85rem, 2.6vw, 0.95rem);
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .header-actions {
   display: flex;
   gap: 0.5rem;
+  flex: 0 0 auto;
 }
 
 .btn-refresh {
   background: white;
   border: 1px solid #ced4da;
   border-radius: 8px;
-  padding: 0.5rem;
+  padding: 0; /* use explicit size for better tap targets */
   color: #6c757d;
   transition: all 0.2s ease;
   cursor: pointer;
+  width: 44px; /* 44x44 recommended touch target */
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .btn-refresh:hover:not(:disabled) {
@@ -632,13 +649,13 @@ onMounted(() => {
 
 /* Content */
 .card-content {
-  padding: 2rem;
+  padding: clamp(16px, 4vw, 32px);
 }
 
 /* Content States */
 .content-state {
   text-align: center;
-  padding: 2rem;
+  padding: clamp(16px, 4vw, 28px);
 }
 
 .state-content {
@@ -650,12 +667,14 @@ onMounted(() => {
   color: #495057;
   margin-bottom: 0.75rem;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .state-subtitle {
   color: #6c757d;
   margin: 0;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 /* Loading State */
@@ -665,15 +684,15 @@ onMounted(() => {
 
 /* Error State */
 .error-state {
-  padding: 2rem;
+  padding: clamp(16px, 4vw, 28px);
 }
 
 .error-content {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
+  gap: clamp(10px, 2.5vw, 16px);
+  margin-bottom: clamp(16px, 3vw, 24px);
 }
 
 .error-icon {
@@ -683,6 +702,7 @@ onMounted(() => {
 
 .error-text {
   text-align: center;
+  min-width: 0;
 }
 
 .error-title {
@@ -695,6 +715,8 @@ onMounted(() => {
   color: #6c757d;
   margin: 0;
   line-height: 1.5;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .error-actions {
@@ -717,16 +739,16 @@ onMounted(() => {
 .no-limit-section {
   background: #f8f9fa;
   border-radius: 12px;
-  padding: 2rem;
+  padding: clamp(16px, 4vw, 28px);
   text-align: center;
 }
 
 .no-limit-content {
-  margin-bottom: 2rem;
+  margin-bottom: clamp(16px, 4vw, 24px);
 }
 
 .no-limit-icon {
-  font-size: 3rem;
+  font-size: clamp(2.25rem, 7vw, 3rem);
   margin-bottom: 1rem;
   display: block;
 }
@@ -741,6 +763,7 @@ onMounted(() => {
   color: #6c757d;
   line-height: 1.6;
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .btn-set-limit {
@@ -754,14 +777,16 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 2rem;
-  padding: 1.5rem;
+  gap: clamp(12px, 3vw, 24px);
+  padding: clamp(12px, 3vw, 20px);
   background: #f8f9fa;
   border-radius: 12px;
+  flex-wrap: wrap; /* avoid overflow on smaller widths */
 }
 
 .rate-limit-status {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .status-indicator {
@@ -776,6 +801,7 @@ onMounted(() => {
   font-size: 0.8rem;
   font-weight: 600;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .status-badge.active {
@@ -783,12 +809,18 @@ onMounted(() => {
   color: #0f5132;
 }
 
+.rate-limit-details {
+  min-width: 0; /* allow wrapping of long text */
+}
+
 .rate-limit-value {
-  font-size: 1.5rem;
+  font-size: clamp(1.25rem, 4.5vw, 1.5rem);
   font-weight: 700;
   color: #212529;
   margin-bottom: 0.5rem;
   line-height: 1.2;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .rate-limit-interval {
@@ -800,12 +832,14 @@ onMounted(() => {
   color: #6c757d;
   font-size: 0.9rem;
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .rate-limit-actions {
   display: flex;
   gap: 0.75rem;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .btn-edit,
@@ -820,11 +854,11 @@ onMounted(() => {
 .rate-limit-form {
   background: #f8f9fa;
   border-radius: 12px;
-  padding: 2rem;
+  padding: clamp(16px, 4vw, 28px);
 }
 
 .form-header {
-  margin-bottom: 2rem;
+  margin-bottom: clamp(16px, 4vw, 24px);
   text-align: center;
 }
 
@@ -838,22 +872,24 @@ onMounted(() => {
   color: #6c757d;
   font-size: 0.9rem;
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .form-body {
-  margin-bottom: 2rem;
+  margin-bottom: clamp(16px, 4vw, 24px);
 }
 
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  gap: clamp(12px, 3vw, 24px);
+  margin-bottom: clamp(12px, 3vw, 24px);
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .form-label {
@@ -885,31 +921,36 @@ onMounted(() => {
 
 .input-group {
   display: flex;
-  gap: 0;
+  align-items: stretch;
 }
 
 .input-group .form-control {
+  flex: 1 1 auto;
+  min-width: 0; /* allow to shrink on narrow screens */
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
   border-right: none;
 }
 
 .input-group .form-select {
+  flex: 0 0 auto;
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
-  min-width: 120px;
+  min-width: clamp(84px, 28vw, 160px); /* avoid overflow on small screens */
 }
 
 .field-error {
   color: #dc3545;
   font-size: 0.8rem;
   margin-top: 0.25rem;
+  overflow-wrap: anywhere;
 }
 
 .field-help {
   color: #6c757d;
   font-size: 0.8rem;
   margin-top: 0.25rem;
+  overflow-wrap: anywhere;
 }
 
 /* Rate Limit Preview */
@@ -917,7 +958,7 @@ onMounted(() => {
   background: white;
   border: 1px solid #e9ecef;
   border-radius: 8px;
-  padding: 1rem;
+  padding: clamp(10px, 2.5vw, 16px);
 }
 
 .preview-content {
@@ -936,15 +977,17 @@ onMounted(() => {
   color: #495057;
   font-size: 0.9rem;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 /* Form Footer */
 .form-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
-  padding-top: 1.5rem;
+  gap: clamp(10px, 3vw, 16px);
+  padding-top: clamp(12px, 3vw, 16px);
   border-top: 1px solid #e9ecef;
+  flex-wrap: wrap;
 }
 
 .btn-cancel,
@@ -957,20 +1000,22 @@ onMounted(() => {
 /* Modal */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1050;
-  padding: 1rem;
+  padding: 1rem; /* base padding */
+  padding-top: calc(1rem + env(safe-area-inset-top));
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  padding-left: calc(1rem + env(safe-area-inset-left));
+  padding-right: calc(1rem + env(safe-area-inset-right));
+  overscroll-behavior: contain;
 }
 
 .modal-dialog {
-  max-width: 500px;
+  max-width: min(500px, 100%);
   width: 100%;
 }
 
@@ -979,23 +1024,28 @@ onMounted(() => {
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: min(90vh, 680px); /* allow content to scroll on mobile */
 }
 
 .modal-header {
-  padding: 1.5rem 2rem;
+  padding: clamp(12px, 3vw, 24px) clamp(16px, 4vw, 32px);
   border-bottom: 1px solid #e9ecef;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
 }
 
 .modal-title {
-  font-size: 1.1rem;
+  font-size: clamp(1rem, 3vw, 1.1rem);
   font-weight: 600;
   color: #212529;
   margin: 0;
   display: flex;
   align-items: center;
+  gap: 0.5rem;
 }
 
 .btn-close {
@@ -1004,8 +1054,14 @@ onMounted(() => {
   padding: 0.5rem;
   color: #6c757d;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 6px;
   transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-close:hover {
@@ -1014,13 +1070,15 @@ onMounted(() => {
 }
 
 .modal-body {
-  padding: 2rem;
+  padding: clamp(16px, 4vw, 32px);
+  overflow-y: auto; /* scroll body if needed */
 }
 
 .modal-message {
   color: #495057;
   line-height: 1.6;
   margin-bottom: 1rem;
+  overflow-wrap: anywhere;
 }
 
 .queue-identifier {
@@ -1038,33 +1096,23 @@ onMounted(() => {
   display: flex;
   align-items: center;
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .modal-footer {
-  padding: 1.5rem 2rem;
+  padding: clamp(12px, 3vw, 24px) clamp(16px, 4vw, 32px);
   border-top: 1px solid #e9ecef;
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
+  gap: clamp(10px, 3vw, 16px);
+  flex-wrap: wrap;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .card-header {
-    padding: 1rem 1.5rem;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-  }
-
-  .card-content {
-    padding: 1.5rem;
-  }
-
   .rate-limit-info {
     flex-direction: column;
     align-items: stretch;
-    gap: 1.5rem;
   }
 
   .rate-limit-actions {
@@ -1073,57 +1121,45 @@ onMounted(() => {
 
   .btn-edit,
   .btn-clear {
-    flex: 1;
+    flex: 1 1 auto;
   }
 
   .form-grid {
     grid-template-columns: 1fr;
-    gap: 1rem;
   }
 
   .form-footer {
     flex-direction: column;
-    gap: 0.75rem;
   }
 
   .btn-cancel,
   .btn-save {
     width: 100%;
   }
-
-  .modal-dialog {
-    margin: 1rem;
-  }
-
-  .modal-header,
-  .modal-body,
-  .modal-footer {
-    padding: 1rem 1.5rem;
-  }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 576px) {
   .card-header {
-    padding: 1rem;
+    padding: clamp(10px, 3.5vw, 14px) clamp(12px, 4vw, 16px);
   }
 
   .card-content {
-    padding: 1rem;
+    padding: clamp(12px, 4vw, 16px);
   }
 
   .no-limit-section,
   .rate-limit-form {
-    padding: 1.5rem;
+    padding: clamp(12px, 4vw, 16px);
   }
 
   .rate-limit-info {
-    padding: 1rem;
+    padding: clamp(10px, 3.5vw, 14px);
   }
 
-  .modal-header,
-  .modal-body,
-  .modal-footer {
-    padding: 1rem;
+  /* Avoid iOS zoom on inputs by keeping font-size >= 16px */
+  .form-control,
+  .form-select {
+    font-size: 16px;
   }
 }
 

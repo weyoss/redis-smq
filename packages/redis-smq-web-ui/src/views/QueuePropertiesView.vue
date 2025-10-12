@@ -154,7 +154,7 @@ useEscapeKey([
 </script>
 
 <template>
-  <div>
+  <div class="queue-properties-view">
     <PageContent>
       <!-- The main content is rendered by the slot if not loading/error/empty -->
       <div v-if="queue" class="details-grid">
@@ -174,7 +174,6 @@ useEscapeKey([
       :queue="{ ns, name }"
       :is-deleting="isDeletingQueue"
       :is-visible="isDeleteModalVisible"
-      :error="deleteQueueError ? getErrorMessage(deleteQueueError) : null"
       @cancel="hideDeleteModal"
       @confirm="handleConfirmDelete"
     />
@@ -182,24 +181,54 @@ useEscapeKey([
 </template>
 
 <style scoped>
+/* Mobile-first safety: sizing and overflow guards within this view */
+.queue-properties-view,
+.queue-properties-view * {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+/* Use fluid gaps and prevent horizontal scroll; rely on PageContent padding */
 .details-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(12px, 3vw, 24px);
   align-items: start;
+  overflow-wrap: anywhere; /* guard against long strings overflowing */
+  word-break: break-word;
 }
 
 .details-column-main,
 .details-column-secondary {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: clamp(12px, 2.5vw, 20px);
+  min-width: 0; /* ensure children can shrink without causing overflow */
 }
 
-/* Responsive Design */
+/* Collapse to single column earlier to avoid cramped layout */
 @media (max-width: 1200px) {
   .details-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Tighter gaps on tablets/phones and safe bottom spacing */
+@media (max-width: 768px) {
+  .details-grid {
+    gap: clamp(10px, 3.5vw, 16px);
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+  .details-column-main,
+  .details-column-secondary {
+    gap: clamp(10px, 3.5vw, 16px);
+  }
+}
+
+/* Extra small screens: ensure ample breathing room */
+@media (max-width: 576px) {
+  .details-grid {
+    gap: clamp(8px, 4vw, 14px);
   }
 }
 </style>
