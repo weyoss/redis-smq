@@ -132,10 +132,21 @@ function formatMessageBody(body: unknown): string {
     return String(body);
   }
 }
+
+// Keyboard accessibility for message cards
+function handleCardKeydown(
+  e: KeyboardEvent,
+  message: IMessageTransferable,
+): void {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    handleMessageClick(message);
+  }
+}
 </script>
 
 <template>
-  <div class="messages-component">
+  <section class="messages-component" aria-live="polite">
     <!-- Controls Section -->
     <div v-if="hasMessages || showPagination" class="messages-controls">
       <div class="controls-left">
@@ -191,7 +202,7 @@ function formatMessageBody(body: unknown): string {
       <!-- Loading State -->
       <div v-if="isLoading && !hasMessages" class="state-card loading-state">
         <div class="state-content">
-          <div class="spinner-border text-primary mb-3"></div>
+          <div class="spinner-border text-primary mb-3" role="status" />
           <h5 class="state-title">Loading messages...</h5>
           <p class="state-subtitle">Please wait while we fetch your messages</p>
         </div>
@@ -200,7 +211,7 @@ function formatMessageBody(body: unknown): string {
       <!-- Error State -->
       <div v-else-if="error" class="state-card error-state">
         <div class="state-content">
-          <div class="state-icon">
+          <div class="state-icon" aria-hidden="true">
             <i class="bi bi-exclamation-triangle-fill text-danger"></i>
           </div>
           <div class="state-text">
@@ -219,7 +230,7 @@ function formatMessageBody(body: unknown): string {
       <!-- Empty State -->
       <div v-else-if="!hasMessages" class="state-card empty-state">
         <div class="state-content">
-          <div class="state-icon">📭</div>
+          <div class="state-icon" aria-hidden="true">📭</div>
           <h4 class="state-title">{{ emptyMessage }}</h4>
           <p class="state-subtitle">
             Messages will appear here when they are available
@@ -228,12 +239,16 @@ function formatMessageBody(body: unknown): string {
       </div>
 
       <!-- Messages List -->
-      <div v-else class="messages-list">
+      <div v-else class="messages-list" role="list" aria-label="Messages list">
         <div
           v-for="message in messages"
           :key="message.id"
           class="message-card"
+          role="button"
+          tabindex="0"
+          :aria-label="`View message ${message.id} details`"
           @click="handleMessageClick(message)"
+          @keydown="handleCardKeydown($event, message)"
         >
           <div class="message-header">
             <div class="message-id-section">
@@ -364,15 +379,18 @@ function formatMessageBody(body: unknown): string {
       @delete-message="handleDelete"
       @requeue-message="handleRequeue"
     />
-  </div>
+  </section>
 </template>
 
 <style scoped>
-/* Component Container */
+/* Container safety and spacing */
 .messages-component {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden; /* guard against horizontal scroll on mobile */
 }
 
 /* Controls Section */
@@ -388,6 +406,11 @@ function formatMessageBody(body: unknown): string {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
+.controls-left,
+.controls-right {
+  min-width: 0; /* allow flex children to shrink */
+}
+
 .controls-left {
   flex: 1;
 }
@@ -397,18 +420,21 @@ function formatMessageBody(body: unknown): string {
   align-items: center;
   gap: 1rem;
   flex-shrink: 0;
+  flex-wrap: wrap; /* wrap controls instead of overflowing */
 }
 
 .pagination-info .info-text {
   color: #6c757d;
   font-size: 0.9rem;
   font-weight: 500;
+  overflow-wrap: anywhere;
 }
 
 .page-size-selector {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .selector-label {
@@ -468,6 +494,7 @@ function formatMessageBody(body: unknown): string {
   padding: 3rem 2rem;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  overflow-wrap: anywhere;
 }
 
 .state-content {
@@ -486,80 +513,23 @@ function formatMessageBody(body: unknown): string {
   margin-bottom: 0.5rem;
   font-weight: 600;
   font-size: 1.25rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
-.state-subtitle {
+.state-subtitle,
+.state-message {
   color: #6c757d;
   margin: 0 0 1.5rem 0;
   font-size: 1rem;
   line-height: 1.5;
-}
-
-.state-message {
-  color: #6c757d;
-  margin: 0 0 1.5rem 0;
-  font-size: 0.95rem;
-  line-height: 1.5;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .state-text {
   margin-bottom: 1.5rem;
   text-align: center;
-}
-
-.state-actions {
-  display: flex;
-  justify-content: center;
-  gap: 0.75rem;
-}
-
-.btn-primary {
-  background: #0d6efd;
-  border: 1px solid #0d6efd;
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-primary:hover {
-  background: #0b5ed7;
-  border-color: #0a58ca;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(13, 110, 253, 0.25);
-}
-
-/* Loading State */
-.loading-state .spinner-border {
-  width: 2.5rem;
-  height: 2.5rem;
-}
-
-/* Error State */
-.error-state .state-content {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  text-align: left;
-  margin-bottom: 1.5rem;
-}
-
-.error-state .state-icon {
-  font-size: 2rem;
-  margin: 0;
-  flex-shrink: 0;
-}
-
-.error-state .state-text {
-  flex: 1;
-  margin: 0;
-}
-
-.error-state .state-title {
-  margin-bottom: 0.25rem;
-  font-size: 1.125rem;
 }
 
 /* Messages List */
@@ -577,6 +547,7 @@ function formatMessageBody(body: unknown): string {
   transition: all 0.2s ease;
   cursor: pointer;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  outline: none;
 }
 
 .message-card:hover {
@@ -585,12 +556,19 @@ function formatMessageBody(body: unknown): string {
   transform: translateY(-1px);
 }
 
+.message-card:focus-visible {
+  outline: 2px solid #0d6efd;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.2);
+}
+
 .message-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 1rem;
   gap: 1rem;
+  min-width: 0;
 }
 
 .message-id-section {
@@ -605,7 +583,7 @@ function formatMessageBody(body: unknown): string {
   font-weight: 600;
   display: block;
   margin-bottom: 0.25rem;
-  word-break: break-all;
+  word-break: break-all; /* long IDs wrap safely */
 }
 
 .message-date {
@@ -619,6 +597,7 @@ function formatMessageBody(body: unknown): string {
   flex-wrap: wrap;
   gap: 0.75rem;
   align-items: center;
+  min-width: 0;
 }
 
 .metadata-item {
@@ -626,16 +605,20 @@ function formatMessageBody(body: unknown): string {
   align-items: center;
   gap: 0.25rem;
   font-size: 0.75rem;
+  overflow: hidden; /* prevent accidental overflow */
 }
 
 .metadata-label {
   color: #6c757d;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .metadata-value {
   color: #495057;
   font-weight: 600;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .priority-badge {
@@ -704,6 +687,8 @@ function formatMessageBody(body: unknown): string {
   word-break: break-word;
   max-height: 200px;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Pagination Section */
@@ -728,6 +713,7 @@ function formatMessageBody(body: unknown): string {
   margin: 0;
   padding: 0;
   gap: 0.25rem;
+  flex-wrap: wrap; /* allow wrapping on small screens */
 }
 
 .page-item {
@@ -786,6 +772,10 @@ function formatMessageBody(body: unknown): string {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .messages-component {
+    gap: 1.25rem;
+  }
+
   .messages-controls {
     flex-direction: column;
     align-items: stretch;
@@ -805,6 +795,10 @@ function formatMessageBody(body: unknown): string {
     justify-content: flex-start;
   }
 
+  .body-content {
+    max-height: 35vh; /* more room on mobile, avoids tall overflow */
+  }
+
   .pagination {
     gap: 0.125rem;
   }
@@ -817,13 +811,32 @@ function formatMessageBody(body: unknown): string {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 576px) {
   .messages-component {
     gap: 1rem;
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
   .messages-controls {
     padding: 0.75rem;
+  }
+
+  .controls-right {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: stretch;
+  }
+
+  .page-size-selector {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    width: 100%;
+  }
+
+  .btn-refresh {
+    width: 100%;
+    justify-content: center;
   }
 
   .message-card {
@@ -842,20 +855,78 @@ function formatMessageBody(body: unknown): string {
     font-size: 1.125rem;
   }
 
-  .page-size-selector {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
+  .page-link {
+    min-width: 1.9rem;
+    height: 1.9rem;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .message-card:hover,
+  .btn-refresh:hover,
+  .page-link:hover {
+    transform: none;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .messages-controls,
+  .state-card,
+  .message-card,
+  .messages-pagination {
+    background: #1a1a1a;
+    border-color: #404040;
+    box-shadow: none;
+    color: #e6e6e6;
   }
 
-  .controls-right {
-    flex-direction: column;
-    gap: 0.75rem;
+  .body-content {
+    background: #121212;
+    border-color: #404040;
+    color: #e6e6e6;
   }
 
-  .btn-refresh {
-    width: 100%;
-    justify-content: center;
+  .page-link {
+    background: #1a1a1a;
+    border-color: #404040;
+    color: #6ea8fe;
   }
+
+  .page-link:hover:not(:disabled) {
+    background: #2a2a2a;
+    border-color: #4a4a4a;
+    color: #9ec1ff;
+  }
+
+  .page-item.active .page-link {
+    background: #0b5ed7;
+    border-color: #0b5ed7;
+    color: #ffffff;
+  }
+}
+
+/* High Contrast */
+@media (prefers-contrast: more) {
+  .message-card:focus-visible {
+    outline-width: 3px;
+  }
+}
+
+/* Scrollbar styling (WebKit) */
+.body-content::-webkit-scrollbar {
+  width: 8px;
+}
+.body-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+.body-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+.body-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 </style>

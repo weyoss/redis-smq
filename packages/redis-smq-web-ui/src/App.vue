@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import BreadcrumbsBar from '@/components/BreadcrumbsPanel.vue';
 import { main } from '@/router/main.ts';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, onBeforeUnmount, watch } from 'vue';
 import { type RouteRecordNameGeneric, useRouter } from 'vue-router';
 import packageJson from '../package.json';
 import logoImageSmall from '@/assets/images/redis-smq-logo-small.png';
@@ -62,6 +62,45 @@ const isActiveRoute = (routeName: RouteRecordNameGeneric) => {
 const retryInitialization = () => {
   initializeApp();
 };
+
+// Mobile navigation state and a11y handling
+const isMobileNavOpen = ref(false);
+const mobileNavDropdown = ref<HTMLElement | null>(null);
+
+// Close mobile nav on route change
+watch(
+  () => router.currentRoute.value.fullPath,
+  () => {
+    isMobileNavOpen.value = false;
+  },
+);
+
+// Close on outside click
+function handleDocumentClick(e: MouseEvent) {
+  if (!isMobileNavOpen.value) return;
+  const target = e.target as Node;
+  const container = mobileNavDropdown.value;
+  if (container && !container.contains(target)) {
+    isMobileNavOpen.value = false;
+  }
+}
+
+// Close on Escape key
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' && isMobileNavOpen.value) {
+    isMobileNavOpen.value = false;
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleDocumentClick, true);
+  document.addEventListener('keydown', handleKeydown, true);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleDocumentClick, true);
+  document.removeEventListener('keydown', handleKeydown, true);
+});
 </script>
 
 <template>
@@ -156,12 +195,14 @@ const retryInitialization = () => {
 
             <!-- Mobile Navigation -->
             <div class="nav-mobile">
-              <div class="mobile-nav-dropdown">
+              <div ref="mobileNavDropdown" class="mobile-nav-dropdown">
                 <button
                   class="mobile-nav-toggle"
                   type="button"
-                  data-bs-toggle="dropdown"
-                  aria-expanded="false"
+                  :aria-expanded="isMobileNavOpen"
+                  aria-haspopup="true"
+                  aria-controls="mobile-nav-menu"
+                  @click="isMobileNavOpen = !isMobileNavOpen"
                 >
                   <span class="current-page">
                     {{
@@ -171,14 +212,20 @@ const retryInitialization = () => {
                   </span>
                   <i class="bi bi-chevron-down toggle-icon"></i>
                 </button>
-                <ul class="mobile-nav-menu">
-                  <li v-for="route in main" :key="route.name">
+                <ul
+                  v-show="isMobileNavOpen"
+                  id="mobile-nav-menu"
+                  class="mobile-nav-menu"
+                  role="menu"
+                >
+                  <li v-for="route in main" :key="route.name" role="none">
                     <RouterLink
                       :to="{ name: route.name }"
                       class="mobile-nav-link"
                       :class="{
                         'mobile-nav-link-active': isActiveRoute(route.name),
                       }"
+                      role="menuitem"
                     >
                       {{ route.name }}
                     </RouterLink>
@@ -267,10 +314,19 @@ const retryInitialization = () => {
 </template>
 
 <style scoped>
-/* App Container */
+/* Global-ish safety for mobile inside this component's scope */
+.app,
+.app * {
+  box-sizing: border-box;
+}
+
 .app {
   min-height: 100vh;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  overflow-x: hidden; /* Prevent horizontal overflow on mobile */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: manipulation;
 }
 
 /* Common Brand Components */
@@ -319,6 +375,8 @@ const retryInitialization = () => {
   object-fit: contain;
   filter: brightness(1.1) contrast(1.1);
   transition: all 0.3s ease;
+  max-width: 100%; /* Fluid images to avoid overflow */
+  height: auto;
 }
 
 .brand-info {
@@ -345,15 +403,14 @@ const retryInitialization = () => {
 /* Loading Screen Specific Styles */
 .loading-screen {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .loading-container {
@@ -432,15 +489,14 @@ const retryInitialization = () => {
 /* Error Screen */
 .error-screen {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .error-container {
@@ -505,6 +561,7 @@ const retryInitialization = () => {
   position: sticky;
   top: 0;
   z-index: 1030;
+  padding-top: env(safe-area-inset-top);
 }
 
 .header-container {
@@ -611,6 +668,9 @@ const retryInitialization = () => {
 
 .nav-label {
   font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis; /* Prevent overly long labels from overflowing */
 }
 
 .nav-indicator {
@@ -647,6 +707,7 @@ const retryInitialization = () => {
   cursor: pointer;
   transition: all 0.3s ease;
   color: white;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .mobile-nav-toggle:hover {
@@ -658,6 +719,9 @@ const retryInitialization = () => {
 .current-page {
   font-weight: 600;
   color: white;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .toggle-icon {
@@ -671,17 +735,21 @@ const retryInitialization = () => {
 
 .mobile-nav-menu {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 0.5rem);
   left: 0;
   right: 0;
   background: white;
   border: 2px solid #e9ecef;
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  margin-top: 0.5rem;
+  margin: 0;
   padding: 0.5rem 0;
   list-style: none;
   z-index: 1000;
+  max-height: 60vh; /* Scrollable on small screens */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .mobile-nav-link {
@@ -691,6 +759,9 @@ const retryInitialization = () => {
   text-decoration: none;
   font-weight: 500;
   transition: all 0.2s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mobile-nav-link:hover {
@@ -710,6 +781,7 @@ const retryInitialization = () => {
   flex: 1;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   min-height: calc(100vh - 200px);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .content-wrapper {
@@ -720,6 +792,9 @@ const retryInitialization = () => {
   max-width: 1400px;
   margin: 0 auto;
   padding: 2rem;
+  width: 100%;
+  overflow-wrap: anywhere; /* Avoid long content causing horizontal scroll */
+  word-break: break-word;
 }
 
 /* Page Loading */
@@ -969,6 +1044,13 @@ const retryInitialization = () => {
     font-size: 0.65rem;
     letter-spacing: 1.5px;
   }
+
+  /* Avoid sticky conflict with header on mobile: make breadcrumbs non-sticky */
+  :deep(.breadcrumb-navigation) {
+    position: static !important;
+    top: auto !important;
+    box-shadow: none !important;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1028,6 +1110,22 @@ const retryInitialization = () => {
   .spinner {
     width: 40px;
     height: 40px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .brand-section,
+  .brand-logo,
+  .nav-link,
+  .mobile-nav-toggle,
+  .footer-link {
+    transition: none;
+  }
+  .nav-link:hover,
+  .mobile-nav-toggle:hover,
+  .footer-link:hover {
+    transform: none;
   }
 }
 </style>

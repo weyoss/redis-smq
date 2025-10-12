@@ -8,6 +8,7 @@
   -->
 
 <script lang="ts" setup>
+import BaseModal from '@/components/modals/BaseModal.vue';
 import { getErrorMessage } from '@/lib/error.ts';
 
 interface Props {
@@ -15,240 +16,159 @@ interface Props {
   namespace: string | null;
   queueCount: number;
   isDeleting: boolean;
-  error: any;
+  error: ReturnType<typeof getErrorMessage>;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 const emit = defineEmits<{
   (e: 'cancel'): void;
   (e: 'confirm'): void;
 }>();
+
+function handleClose() {
+  if (!props.isDeleting) emit('cancel');
+}
+
+function handleConfirm() {
+  if (!props.isDeleting) emit('confirm');
+}
 </script>
 
 <template>
-  <teleport to="body">
-    <div
-      v-if="isVisible"
-      aria-labelledby="delete-namespace-title"
-      aria-modal="true"
-      class="modal-overlay"
-      role="dialog"
-      @click="emit('cancel')"
-      @keydown.esc="emit('cancel')"
-    >
-      <div class="modal-container" @click.stop>
-        <div class="modal-content">
-          <!-- Header -->
-          <header class="modal-header delete-header">
-            <div class="header-icon">
-              <i class="bi bi-exclamation-triangle-fill"></i>
-            </div>
-            <div class="header-content">
-              <h2 id="delete-namespace-title" class="modal-title">
-                Delete Namespace
-              </h2>
-              <p class="modal-subtitle">This action cannot be undone</p>
-            </div>
-            <button
-              aria-label="Close modal"
-              class="btn-close"
-              type="button"
-              @click="emit('cancel')"
-            >
-              <i class="bi bi-x"></i>
-            </button>
-          </header>
+  <BaseModal
+    :is-visible="isVisible"
+    title="Delete Namespace"
+    subtitle="This action cannot be undone"
+    icon="bi bi-exclamation-triangle-fill"
+    size="sm"
+    @close="handleClose"
+  >
+    <template #body>
+      <div class="dialog-body">
+        <!-- Confirmation -->
+        <section class="confirmation-message">
+          <p class="message-text">
+            Are you sure you want to permanently delete the namespace
+            <strong class="namespace-identifier" :title="namespace ?? ''">
+              {{ namespace }}
+            </strong>
+            ?
+          </p>
 
-          <!-- Body -->
-          <main class="modal-body">
-            <div class="confirmation-message">
-              <p class="message-text">
-                Are you sure you want to permanently delete the namespace
-                <strong class="namespace-identifier">{{ namespace }}</strong
-                >?
-              </p>
-
-              <div class="namespace-details">
-                <div class="detail-item">
-                  <span class="detail-label">Queues in namespace:</span>
-                  <span class="detail-value">{{ queueCount }}</span>
-                </div>
-              </div>
+          <div
+            class="namespace-details"
+            role="group"
+            aria-label="Namespace details"
+          >
+            <div class="detail-item">
+              <span class="detail-label">Queues in namespace:</span>
+              <span class="detail-value">{{ queueCount }}</span>
             </div>
+          </div>
+        </section>
 
-            <div class="warning-section">
-              <div class="warning-content">
-                <div class="warning-icon">
-                  <i class="bi bi-shield-exclamation"></i>
-                </div>
-                <div class="warning-text">
-                  <h4 class="warning-title">Warning</h4>
-                  <ul class="warning-list">
-                    <li>
-                      All queues in this namespace will be permanently deleted
-                    </li>
-                    <li>All messages in these queues will be lost</li>
-                    <li>
-                      Make sure that all consumers connected to these queues are
-                      disconnected
-                    </li>
-                    <li>This action cannot be reversed</li>
-                  </ul>
-                </div>
-              </div>
+        <!-- Warning -->
+        <section class="warning-section" aria-live="polite">
+          <div class="warning-content">
+            <div class="warning-icon" aria-hidden="true">
+              <i class="bi bi-shield-exclamation"></i>
             </div>
-
-            <!-- Error Display -->
-            <div v-if="error" class="error-section">
-              <div class="error-content">
-                <div class="error-icon">
-                  <i class="bi bi-exclamation-circle-fill"></i>
-                </div>
-                <div class="error-text">
-                  <h4 class="error-title">Deletion Failed</h4>
-                  <p class="error-message">
-                    {{ getErrorMessage(error)?.message }}
-                  </p>
-                </div>
-              </div>
+            <div class="warning-text">
+              <h4 class="warning-title">Warning</h4>
+              <ul class="warning-list">
+                <li>
+                  All queues in this namespace will be permanently deleted
+                </li>
+                <li>All messages in these queues will be lost</li>
+                <li>
+                  Ensure all consumers connected to these queues are
+                  disconnected
+                </li>
+                <li>This action cannot be reversed</li>
+              </ul>
             </div>
-          </main>
+          </div>
+        </section>
 
-          <!-- Footer -->
-          <footer class="modal-footer">
-            <button
-              class="btn btn-secondary"
-              type="button"
-              @click="emit('cancel')"
-            >
-              <i class="bi bi-x-circle me-2"></i>
-              Cancel
-            </button>
-            <button
-              :disabled="isDeleting"
-              class="btn btn-danger"
-              type="button"
-              @click="emit('confirm')"
-            >
-              <template v-if="isDeleting">
-                <span class="spinner-border spinner-border-sm me-2"></span>
-                Deleting...
-              </template>
-              <template v-else>
-                <i class="bi bi-trash-fill me-2"></i>
-                Delete Namespace
-              </template>
-            </button>
-          </footer>
-        </div>
+        <!-- Error Display -->
+        <section v-if="error" class="error-section" role="alert">
+          <div class="error-content">
+            <div class="error-icon" aria-hidden="true">
+              <i class="bi bi-exclamation-circle-fill"></i>
+            </div>
+            <div class="error-text">
+              <h4 class="error-title">Deletion Failed</h4>
+              <p class="error-message">{{ error }}</p>
+            </div>
+          </div>
+        </section>
       </div>
-    </div>
-  </teleport>
+    </template>
+
+    <template #footer>
+      <div class="actions">
+        <button
+          class="btn btn-outline-secondary"
+          type="button"
+          :disabled="isDeleting"
+          @click="handleClose"
+        >
+          <i class="bi bi-x-circle me-2" aria-hidden="true"></i>
+          Cancel
+        </button>
+
+        <button
+          class="btn btn-danger"
+          type="button"
+          :disabled="isDeleting"
+          @click="handleConfirm"
+        >
+          <template v-if="isDeleting">
+            <span
+              class="spinner-border spinner-border-sm me-2"
+              role="status"
+              aria-hidden="true"
+            ></span>
+            Deleting...
+          </template>
+          <template v-else>
+            <i class="bi bi-trash-fill me-2" aria-hidden="true"></i>
+            Delete Namespace
+          </template>
+        </button>
+      </div>
+    </template>
+  </BaseModal>
 </template>
 
 <style scoped>
-/* Modal Overlay */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1050;
-  backdrop-filter: blur(4px);
+/* Body layout and overflow safety */
+.dialog-body,
+.dialog-body * {
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
-/* Modal Container */
-.modal-container {
-  background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  width: 90%;
-  max-width: 600px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+.dialog-body {
+  display: grid;
+  gap: clamp(12px, 2.8vw, 18px);
+  padding: 0; /* BaseModal provides padding */
+  overflow-x: hidden;
 }
 
-/* Modal Content */
-.modal-content {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-/* Modal Header */
-.modal-header {
-  display: flex;
-  align-items: flex-start;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.delete-header {
-  background-color: #fff3cd;
-  color: #664d03;
-}
-
-.header-icon {
-  font-size: 1.75rem;
-  margin-right: 1rem;
-  flex-shrink: 0;
-}
-
-.header-content {
-  flex-grow: 1;
-}
-
-.modal-title {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.modal-subtitle {
-  margin: 0.25rem 0 0 0;
-  font-size: 0.875rem;
-  opacity: 0.8;
-}
-
-.btn-close {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.2s ease;
-  padding: 0;
-  line-height: 1;
-}
-
-.btn-close:hover {
-  opacity: 1;
-}
-
-/* Modal Body */
-.modal-body {
-  padding: 1.5rem;
-  overflow-y: auto;
-  flex-grow: 1;
-}
-
+/* Confirmation section */
 .confirmation-message {
-  margin-bottom: 1.5rem;
+  display: grid;
+  gap: 0.75rem;
 }
 
 .message-text {
   font-size: 1rem;
   color: #495057;
   line-height: 1.6;
-  margin: 0 0 1rem 0;
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .namespace-identifier {
@@ -259,17 +179,19 @@ const emit = defineEmits<{
   font-size: 0.9em;
 }
 
+/* Namespace details */
 .namespace-details {
   background-color: #f8f9fa;
   border: 1px solid #e9ecef;
   border-radius: 8px;
-  padding: 1rem;
+  padding: clamp(10px, 2.6vw, 14px);
 }
 
 .detail-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
 }
 
 .detail-label {
@@ -278,27 +200,28 @@ const emit = defineEmits<{
 }
 
 .detail-value {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1.125rem;
 }
 
-/* Warning Section */
+/* Warning section */
 .warning-section {
   background-color: #f8d7da;
   border: 1px solid #f5c2c7;
   border-radius: 8px;
-  padding: 1rem;
+  padding: clamp(10px, 2.6vw, 14px);
   color: #58151c;
 }
 
 .warning-content {
   display: flex;
   align-items: flex-start;
-  gap: 1rem;
+  gap: 0.75rem;
+  min-width: 0;
 }
 
 .warning-icon {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   flex-shrink: 0;
 }
 
@@ -319,24 +242,24 @@ const emit = defineEmits<{
   margin-bottom: 0.25rem;
 }
 
-/* Error Section */
+/* Error section */
 .error-section {
-  margin-top: 1.5rem;
   background-color: #f8d7da;
   border: 1px solid #f5c2c7;
   border-radius: 8px;
-  padding: 1rem;
+  padding: clamp(10px, 2.6vw, 14px);
 }
 
 .error-content {
   display: flex;
   align-items: flex-start;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .error-icon {
   font-size: 1.25rem;
   color: #842029;
+  flex-shrink: 0;
 }
 
 .error-title {
@@ -350,61 +273,49 @@ const emit = defineEmits<{
   margin: 0;
   font-size: 0.875rem;
   color: #842029;
+  overflow-wrap: anywhere;
 }
 
-/* Modal Footer */
-.modal-footer {
+/* Footer actions: spacing and mobile behavior */
+.actions {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 0.75rem;
-  padding: 1rem 1.5rem;
-  border-top: 1px solid #e9ecef;
-  background-color: #f8f9fa;
+  flex-wrap: wrap;
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.625rem 1.25rem;
-  border-radius: 6px;
-  font-weight: 500;
-  font-size: 0.875rem;
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.actions .btn {
+  min-width: 140px;
 }
 
-.btn-secondary {
-  background-color: white;
-  border-color: #ced4da;
-  color: #495057;
+/* Allow stacking buttons on small screens */
+@media (max-width: 576px) {
+  .warning-content,
+  .error-content,
+  .detail-item {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: left;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .actions .btn {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+  }
 }
 
-.btn-secondary:hover {
-  background-color: #f8f9fa;
-  border-color: #adb5bd;
-}
-
-.btn-danger {
-  background-color: #dc3545;
-  border-color: #dc3545;
-  color: white;
-}
-
-.btn-danger:hover:not(:disabled) {
-  background-color: #c82333;
-  border-color: #bd2130;
-}
-
-.btn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-.spinner-border-sm {
-  width: 1rem;
-  height: 1rem;
-  border-width: 0.2em;
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .actions .btn {
+    transition: none;
+  }
 }
 </style>

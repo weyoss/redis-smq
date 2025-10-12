@@ -416,7 +416,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
+  <div class="topic-exchange-view">
     <PageContent>
       <!-- Exchange Overview Stats -->
       <div
@@ -469,11 +469,11 @@ onMounted(() => {
           >
             <div class="binding-header">
               <div class="binding-pattern-info">
-                <div class="binding-pattern-badge">
+                <div class="binding-pattern-badge" title="Binding pattern">
                   <i class="bi bi-hash" aria-hidden="true"></i>
-                  <span class="binding-pattern-text">{{
-                    binding.bindingPattern
-                  }}</span>
+                  <span class="binding-pattern-text">
+                    {{ binding.bindingPattern }}
+                  </span>
                 </div>
                 <div class="queue-count">
                   {{ binding.totalQueues }}
@@ -564,27 +564,47 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* Mobile-first safety: ensure no horizontal bleeding */
+.topic-exchange-view,
+.topic-exchange-view * {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.topic-exchange-view {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 2vw, 24px);
+  overflow-x: hidden;
+}
+
 /* Stats Overview */
 .stats-overview {
-  margin-bottom: 2rem;
+  margin-bottom: clamp(12px, 2.5vw, 24px);
 }
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(clamp(180px, 30vw, 260px), 1fr)
+  );
+  gap: clamp(12px, 2.5vw, 20px);
 }
 
 .stat-card {
   background: white;
   border: 1px solid #e9ecef;
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: clamp(12px, 2.5vw, 20px);
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: clamp(10px, 2vw, 16px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+  min-width: 0;
 }
 
 .stat-card:hover {
@@ -615,13 +635,15 @@ onMounted(() => {
 
 .stat-content {
   flex: 1;
+  min-width: 0;
 }
 
 .stat-value {
-  font-size: 2rem;
+  font-size: clamp(1.5rem, 4.5vw, 2rem);
   font-weight: 700;
   color: #212529;
   line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .stat-label {
@@ -629,27 +651,30 @@ onMounted(() => {
   color: #6c757d;
   font-weight: 500;
   margin-top: 0.25rem;
+  overflow-wrap: anywhere;
 }
 
 /* Bindings Section */
 .bindings-section {
-  margin-top: 2rem;
+  margin-top: clamp(12px, 2.5vw, 24px);
 }
 
 .section-title {
-  font-size: 1.5rem;
+  font-size: clamp(1.25rem, 3.5vw, 1.5rem);
   font-weight: 600;
   color: #212529;
-  margin: 0 0 1.5rem 0;
+  margin: 0 0 clamp(12px, 2.2vw, 20px) 0;
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .bindings-list {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: clamp(12px, 2vw, 20px);
 }
 
 .binding-card {
@@ -658,7 +683,8 @@ onMounted(() => {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
+  transition: box-shadow 0.2s ease;
+  min-width: 0;
 }
 
 .binding-card:hover {
@@ -667,7 +693,7 @@ onMounted(() => {
 
 .binding-header {
   background: #f8f9fa;
-  padding: 1.25rem 1.5rem;
+  padding: clamp(12px, 2.2vw, 20px) clamp(14px, 2.2vw, 24px);
   border-bottom: 1px solid #e9ecef;
 }
 
@@ -675,12 +701,13 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: clamp(10px, 2vw, 16px);
   margin-bottom: 0.75rem;
+  min-width: 0;
 }
 
 .binding-pattern-badge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   background: #e2d9f3;
@@ -689,50 +716,58 @@ onMounted(() => {
   border-radius: 6px;
   font-weight: 500;
   font-size: 0.875rem;
+  max-width: 100%;
 }
 
 .binding-pattern-text {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-weight: 600;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .queue-count {
   font-size: 0.875rem;
   color: #6c757d;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .pattern-explanation {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
-  font-size: 0.8rem;
+  font-size: clamp(0.75rem, 2.5vw, 0.9rem);
   color: #6c757d;
   background: #e7f3ff;
   padding: 0.5rem 0.75rem;
   border-radius: 4px;
   border-left: 3px solid #0d6efd;
+  overflow-wrap: anywhere;
 }
 
 .explanation-text {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .queues-list {
-  padding: 1.5rem;
+  padding: clamp(12px, 2.5vw, 24px);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: clamp(10px, 2vw, 16px);
 }
 
 .queue-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem;
+  padding: clamp(10px, 2.2vw, 16px);
   background: #f8f9fa;
   border-radius: 8px;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease;
+  min-width: 0;
 }
 
 .queue-item:hover {
@@ -744,17 +779,22 @@ onMounted(() => {
   align-items: center;
   gap: 0.75rem;
   flex: 1;
+  min-width: 0;
 }
 
 .queue-info i {
   color: #0c5460;
   font-size: 1.125rem;
+  flex-shrink: 0;
 }
 
 .queue-name {
   font-weight: 500;
   color: #212529;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .btn-unbind {
@@ -765,16 +805,23 @@ onMounted(() => {
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  display: flex;
+  font-weight: 600;
+  transition:
+    transform 0.15s ease,
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .btn-unbind:hover:not(:disabled) {
   background-color: #dc3545;
   color: white;
+  transform: translateY(-1px);
 }
 
 .btn-unbind:disabled {
@@ -788,7 +835,7 @@ onMounted(() => {
 }
 
 .no-queues {
-  padding: 2rem 1.5rem;
+  padding: clamp(16px, 2.5vw, 24px);
   text-align: center;
   color: #6c757d;
   font-style: italic;
@@ -821,26 +868,33 @@ onMounted(() => {
 
   .queue-item {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .queue-name {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .btn-unbind {
-    align-self: flex-end;
+    width: 100%;
+    justify-content: center;
   }
 
   .binding-header {
-    padding: 1rem;
+    padding: clamp(10px, 2.2vw, 16px);
   }
 
   .queues-list {
-    padding: 1rem;
+    padding: clamp(10px, 2.5vw, 16px);
   }
 }
 
 @media (max-width: 576px) {
   .stat-card {
-    padding: 1rem;
+    padding: clamp(10px, 2.8vw, 16px);
   }
 
   .stat-icon {
@@ -850,7 +904,7 @@ onMounted(() => {
   }
 
   .stat-value {
-    font-size: 1.5rem;
+    font-size: clamp(1.25rem, 5vw, 1.5rem);
   }
 
   .binding-pattern-badge {
@@ -859,16 +913,16 @@ onMounted(() => {
   }
 
   .binding-pattern-text {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
   }
 
   .queue-item {
-    padding: 0.75rem;
+    padding: clamp(8px, 2.5vw, 12px);
   }
 
   .btn-unbind {
-    padding: 0.4rem 0.6rem;
-    font-size: 0.8rem;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.85rem;
   }
 }
 
@@ -876,5 +930,19 @@ onMounted(() => {
 .binding-card:focus-within {
   outline: 2px solid #0d6efd;
   outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .stat-card,
+  .btn-unbind,
+  .queue-item {
+    transition: none;
+  }
+  .stat-card:hover,
+  .btn-unbind:hover,
+  .queue-item:hover {
+    transform: none;
+  }
 }
 </style>

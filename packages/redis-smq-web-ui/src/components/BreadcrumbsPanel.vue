@@ -175,9 +175,10 @@ function navigateTo(to: string): void {
   >
     <div class="breadcrumb-container">
       <div class="breadcrumb-content">
-        <!-- Home Icon -->
-        <div class="breadcrumb-home">
+        <!-- Home Icon (decorative) -->
+        <div class="breadcrumb-home" aria-hidden="true">
           <i class="bi bi-house-fill"></i>
+          <span class="sr-only">Home</span>
         </div>
 
         <!-- Breadcrumb Items -->
@@ -220,15 +221,31 @@ function navigateTo(to: string): void {
 </template>
 
 <style scoped>
+/* Accessibility helper */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  border: 0;
+}
+
 /* Breadcrumb Navigation */
 .breadcrumb-navigation {
   background: white;
   border-bottom: 1px solid #e9ecef;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
   position: sticky;
+  /* Allow host to set an offset to avoid overlapping the sticky header */
   top: 0;
   z-index: 1020;
   margin-bottom: 0;
+  /* Prevent horizontal scroll bleeding */
+  overflow-x: hidden;
+  will-change: transform;
 }
 
 .breadcrumb-container {
@@ -243,6 +260,8 @@ function navigateTo(to: string): void {
   gap: 1rem;
   padding: 1rem 0;
   min-height: 60px;
+  /* Ensure children can shrink without overflow */
+  min-width: 0;
 }
 
 /* Home Icon */
@@ -342,11 +361,19 @@ function navigateTo(to: string): void {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 200px;
+  /* Responsive clamp prevents overflow while keeping reasonable width */
+  max-width: clamp(120px, 28vw, 220px);
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  /* Disable sticky on small screens to avoid overlapping sticky header */
+  .breadcrumb-navigation {
+    position: static;
+    top: auto;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  }
+
   .breadcrumb-container {
     padding: 0 1rem;
   }
@@ -374,7 +401,7 @@ function navigateTo(to: string): void {
   }
 
   .breadcrumb-text {
-    max-width: 150px;
+    max-width: clamp(90px, 35vw, 150px);
   }
 
   .breadcrumb-separator {
@@ -382,7 +409,7 @@ function navigateTo(to: string): void {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 576px) {
   .breadcrumb-container {
     padding: 0 0.75rem;
   }
@@ -406,7 +433,7 @@ function navigateTo(to: string): void {
   }
 
   .breadcrumb-text {
-    max-width: 100px;
+    max-width: clamp(70px, 40vw, 120px);
   }
 
   /* Hide middle breadcrumbs on very small screens if there are many */
@@ -417,12 +444,14 @@ function navigateTo(to: string): void {
     display: none;
   }
 
-  /* Show ellipsis when items are hidden */
-  .breadcrumb-list:has(.breadcrumb-item:nth-child(n + 4))::before {
-    content: '...';
+  /* Insert an ellipsis between first and last visible items when items are hidden */
+  .breadcrumb-list:has(.breadcrumb-item:nth-child(n + 4))
+    .breadcrumb-item:first-child::after {
+    content: '…';
     color: #6c757d;
     padding: 0 0.25rem;
-    font-weight: 500;
+    margin-left: 0.125rem;
+    font-weight: 600;
   }
 }
 

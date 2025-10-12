@@ -402,17 +402,17 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
+  <div class="exchange-content">
     <PageContent>
       <!-- Exchange Overview Stats -->
       <div
         v-if="!isLoading && !hasError && totalRoutingKeys > 0"
         class="stats-overview"
       >
-        <div class="stats-grid">
+        <div class="stats-grid" role="group" aria-label="Exchange stats">
           <div class="stat-card">
-            <div class="stat-icon routing-keys">
-              <i class="bi bi-key" aria-hidden="true"></i>
+            <div class="stat-icon routing-keys" aria-hidden="true">
+              <i class="bi bi-key"></i>
             </div>
             <div class="stat-content">
               <div class="stat-value">{{ totalRoutingKeys }}</div>
@@ -423,8 +423,8 @@ onMounted(() => {
           </div>
 
           <div class="stat-card">
-            <div class="stat-icon queues">
-              <i class="bi bi-box" aria-hidden="true"></i>
+            <div class="stat-icon queues" aria-hidden="true">
+              <i class="bi bi-box"></i>
             </div>
             <div class="stat-content">
               <div class="stat-value">{{ totalQueues }}</div>
@@ -437,24 +437,25 @@ onMounted(() => {
       </div>
 
       <!-- Queue Bindings List -->
-      <div
+      <section
         v-if="!isLoading && !hasError && queueBindings.length > 0"
         class="bindings-section"
+        aria-labelledby="bindings-title"
       >
-        <h2 class="section-title">
+        <h2 id="bindings-title" class="section-title">
           <i class="bi bi-diagram-3" aria-hidden="true"></i>
           Queue Bindings
         </h2>
 
         <div class="bindings-list">
-          <div
+          <article
             v-for="binding in queueBindings"
             :key="binding.routingKey"
             class="binding-card"
           >
-            <div class="binding-header">
+            <header class="binding-header">
               <div class="routing-key-info">
-                <div class="routing-key-badge">
+                <div class="routing-key-badge" title="Routing key">
                   <i class="bi bi-key" aria-hidden="true"></i>
                   <span class="routing-key-text">{{ binding.routingKey }}</span>
                 </div>
@@ -463,7 +464,7 @@ onMounted(() => {
                   {{ binding.totalQueues === 1 ? 'queue' : 'queues' }}
                 </div>
               </div>
-            </div>
+            </header>
 
             <div v-if="binding.queues.length > 0" class="queues-list">
               <div
@@ -492,9 +493,9 @@ onMounted(() => {
               <i class="bi bi-inbox" aria-hidden="true"></i>
               <span>No queues bound to this routing key</span>
             </div>
-          </div>
+          </article>
         </div>
-      </div>
+      </section>
     </PageContent>
 
     <!-- Delete Exchange Confirmation Dialog -->
@@ -540,27 +541,48 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* Wrapper: responsive padding and horizontal overflow guard */
+.exchange-content {
+  --content-padding: clamp(12px, 2.8vw, 24px);
+  padding: var(--content-padding);
+  padding-bottom: calc(var(--content-padding) + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 2.2vw, 24px);
+  overflow-x: hidden; /* avoid accidental horizontal scroll */
+}
+
+/* Ensure inner elements never bleed horizontally */
+.exchange-content,
+.exchange-content * {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
 /* Stats Overview */
 .stats-overview {
-  margin-bottom: 2rem;
+  margin-bottom: clamp(16px, 2.5vw, 24px);
 }
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: clamp(12px, 2.2vw, 20px);
 }
 
 .stat-card {
   background: white;
   border: 1px solid #e9ecef;
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: clamp(14px, 2.2vw, 24px);
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: clamp(10px, 2vw, 16px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+  min-width: 0;
 }
 
 .stat-card:hover {
@@ -591,10 +613,11 @@ onMounted(() => {
 
 .stat-content {
   flex: 1;
+  min-width: 0; /* allow wrapping within */
 }
 
 .stat-value {
-  font-size: 2rem;
+  font-size: clamp(1.5rem, 4.5vw, 2rem);
   font-weight: 700;
   color: #212529;
   line-height: 1.2;
@@ -605,27 +628,30 @@ onMounted(() => {
   color: #6c757d;
   font-weight: 500;
   margin-top: 0.25rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* Bindings Section */
 .bindings-section {
-  margin-top: 2rem;
+  margin-top: clamp(12px, 2.5vw, 24px);
 }
 
 .section-title {
-  font-size: 1.5rem;
+  font-size: clamp(1.25rem, 3.8vw, 1.5rem);
   font-weight: 600;
   color: #212529;
-  margin: 0 0 1.5rem 0;
+  margin: 0 0 clamp(12px, 2.2vw, 20px) 0;
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  overflow-wrap: anywhere;
 }
 
 .bindings-list {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: clamp(12px, 2vw, 20px);
 }
 
 .binding-card {
@@ -634,7 +660,8 @@ onMounted(() => {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
+  transition: box-shadow 0.2s ease;
+  min-width: 0;
 }
 
 .binding-card:hover {
@@ -643,7 +670,7 @@ onMounted(() => {
 
 .binding-header {
   background: #f8f9fa;
-  padding: 1.25rem 1.5rem;
+  padding: clamp(12px, 2.2vw, 20px) clamp(14px, 2.2vw, 24px);
   border-bottom: 1px solid #e9ecef;
 }
 
@@ -651,11 +678,12 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: clamp(10px, 2vw, 16px);
+  min-width: 0; /* enable child wrapping */
 }
 
 .routing-key-badge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   background: #fff3cd;
@@ -664,34 +692,39 @@ onMounted(() => {
   border-radius: 6px;
   font-weight: 500;
   font-size: 0.875rem;
+  max-width: 100%;
 }
 
 .routing-key-text {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-weight: 600;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .queue-count {
   font-size: 0.875rem;
   color: #6c757d;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .queues-list {
-  padding: 1.5rem;
+  padding: clamp(12px, 2.5vw, 24px);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: clamp(10px, 2vw, 16px);
 }
 
 .queue-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem;
+  padding: clamp(10px, 2.2vw, 16px);
   background: #f8f9fa;
   border-radius: 8px;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease;
+  min-width: 0; /* allow children to shrink */
 }
 
 .queue-item:hover {
@@ -703,17 +736,22 @@ onMounted(() => {
   align-items: center;
   gap: 0.75rem;
   flex: 1;
+  min-width: 0;
 }
 
 .queue-info i {
   color: #0c5460;
   font-size: 1.125rem;
+  flex-shrink: 0;
 }
 
 .queue-name {
   font-weight: 500;
   color: #212529;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .btn-unbind {
@@ -721,19 +759,26 @@ onMounted(() => {
   border: 1px solid #dc3545;
   color: #dc3545;
   padding: 0.5rem 0.75rem;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  display: flex;
+  font-weight: 600;
+  transition:
+    transform 0.15s ease,
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .btn-unbind:hover:not(:disabled) {
   background-color: #dc3545;
   color: white;
+  transform: translateY(-1px);
 }
 
 .btn-unbind:disabled {
@@ -747,7 +792,7 @@ onMounted(() => {
 }
 
 .no-queues {
-  padding: 2rem 1.5rem;
+  padding: clamp(16px, 2.5vw, 24px);
   text-align: center;
   color: #6c757d;
   font-style: italic;
@@ -775,12 +820,40 @@ onMounted(() => {
 
   .queue-item {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .queue-name {
+    white-space: normal; /* allow wrapping on small screens */
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .btn-unbind {
-    align-self: flex-end;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 576px) {
+  .routing-key-badge {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .stat-card,
+  .btn-unbind,
+  .queue-item {
+    transition: none;
+  }
+  .stat-card:hover,
+  .btn-unbind:hover,
+  .queue-item:hover {
+    transform: none;
   }
 }
 </style>

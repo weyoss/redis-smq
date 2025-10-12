@@ -52,7 +52,9 @@ const error = computed(() => namespaces.namespacesError.value);
 const isDeletingNamespace = computed(
   () => namespaces.isDeletingNamespace.value,
 );
-const deleteError = computed(() => namespaces.deleteNamespaceError.value);
+const deleteError = computed(() =>
+  getErrorMessage(namespaces.deleteNamespaceError.value?.error),
+);
 const hasNamespaces = computed(() => sortedNamespaces.value.length > 0);
 
 // Exchange data processing

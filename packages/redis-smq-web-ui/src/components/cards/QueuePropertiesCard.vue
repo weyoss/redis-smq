@@ -248,6 +248,7 @@ function formatRateLimit(
         <button
           class="btn btn-refresh"
           :disabled="isLoading"
+          aria-label="Refresh queue information"
           title="Refresh queue information"
           @click="refreshQueueInfo"
         >
@@ -261,19 +262,27 @@ function formatRateLimit(
       <!-- Loading State -->
       <div v-if="isLoading" class="content-state loading-state">
         <div class="state-content">
-          <div class="spinner-border text-primary mb-2"></div>
+          <div
+            class="spinner-border text-primary mb-2"
+            role="status"
+            aria-live="polite"
+            aria-label="Loading queue"
+          ></div>
           <h5 class="state-title">Loading...</h5>
         </div>
       </div>
 
       <!-- Error State -->
-      <div v-else-if="error" class="content-state error-state">
+      <div v-else-if="error" class="content-state error-state" role="alert">
         <div class="error-content">
-          <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>
+          <i
+            class="bi bi-exclamation-triangle-fill text-danger me-2"
+            aria-hidden="true"
+          ></i>
           <span>{{ error }}</span>
         </div>
         <button class="btn btn-sm btn-primary mt-2" @click="refreshQueueInfo">
-          <i class="bi bi-arrow-clockwise me-1"></i>
+          <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>
           Retry
         </button>
       </div>
@@ -283,19 +292,22 @@ function formatRateLimit(
         <!-- Configuration Section -->
         <section class="info-section">
           <h4 class="section-title">
-            <i class="bi bi-gear-fill"></i> Configuration
+            <i class="bi bi-gear-fill" aria-hidden="true"></i>
+            Configuration
           </h4>
           <div class="info-grid">
             <!-- Queue Name -->
             <div class="info-item">
               <div class="info-content">
                 <div class="info-icon queue-name-icon">
-                  <i class="bi bi-tag-fill"></i>
+                  <i class="bi bi-tag-fill" aria-hidden="true"></i>
                 </div>
                 <div class="info-details">
                   <div class="info-label">Queue Name</div>
                   <div class="info-value">
-                    <span class="queue-name">{{ queue.name }}</span>
+                    <span class="queue-name" :title="queue.name">{{
+                      queue.name
+                    }}</span>
                   </div>
                 </div>
               </div>
@@ -305,12 +317,14 @@ function formatRateLimit(
             <div class="info-item">
               <div class="info-content">
                 <div class="info-icon namespace-icon">
-                  <i class="bi bi-folder-fill"></i>
+                  <i class="bi bi-folder-fill" aria-hidden="true"></i>
                 </div>
                 <div class="info-details">
                   <div class="info-label">Namespace</div>
                   <div class="info-value">
-                    <span class="namespace">{{ queue.ns }}</span>
+                    <span class="namespace" :title="queue.ns">{{
+                      queue.ns
+                    }}</span>
                   </div>
                 </div>
               </div>
@@ -320,7 +334,7 @@ function formatRateLimit(
             <div class="info-item">
               <div class="info-content">
                 <div class="info-icon queue-type-icon">
-                  <i class="bi bi-list-ol"></i>
+                  <i class="bi bi-list-ol" aria-hidden="true"></i>
                 </div>
                 <div class="info-details">
                   <div class="info-label">Queue Type</div>
@@ -343,7 +357,7 @@ function formatRateLimit(
             <div class="info-item">
               <div class="info-content">
                 <div class="info-icon delivery-model-icon">
-                  <i class="bi bi-arrow-left-right"></i>
+                  <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
                 </div>
                 <div class="info-details">
                   <div class="info-label">Delivery Model</div>
@@ -371,13 +385,14 @@ function formatRateLimit(
         <!-- Rate Limit Section -->
         <section class="info-section">
           <h4 class="section-title">
-            <i class="bi bi-speedometer2"></i> Rate Limit
+            <i class="bi bi-speedometer2" aria-hidden="true"></i>
+            Rate Limit
           </h4>
           <div class="info-grid">
             <div class="info-item">
               <div class="info-content">
                 <div class="info-icon rate-limit-icon">
-                  <i class="bi bi-speedometer2"></i>
+                  <i class="bi bi-speedometer2" aria-hidden="true"></i>
                 </div>
                 <div class="info-details">
                   <div class="info-label">Current Limit</div>
@@ -395,7 +410,8 @@ function formatRateLimit(
         <!-- Statistics Section -->
         <section class="info-section">
           <h4 class="section-title">
-            <i class="bi bi-bar-chart-line-fill"></i> Message Statistics
+            <i class="bi bi-bar-chart-line-fill" aria-hidden="true"></i>
+            Message Statistics
           </h4>
           <div class="info-grid stats-grid">
             <div
@@ -408,7 +424,7 @@ function formatRateLimit(
             >
               <div class="info-content">
                 <div class="info-icon" :class="stat.iconClass">
-                  <i :class="stat.icon"></i>
+                  <i :class="stat.icon" aria-hidden="true"></i>
                 </div>
                 <div class="info-details">
                   <div class="info-label">{{ stat.label }}</div>
@@ -416,7 +432,11 @@ function formatRateLimit(
                     {{ formatNumber(stat.value) }}
                   </div>
                 </div>
-                <div v-if="stat.routeName" class="info-arrow">
+                <div
+                  v-if="stat.routeName"
+                  class="info-arrow"
+                  aria-hidden="true"
+                >
                   <i class="bi bi-chevron-right"></i>
                 </div>
               </div>
@@ -428,7 +448,7 @@ function formatRateLimit(
       <!-- No Queue Selected -->
       <div v-else class="content-state empty-state">
         <div class="state-content">
-          <div class="empty-icon">📋</div>
+          <div class="empty-icon" aria-hidden="true">📋</div>
           <h4 class="state-title">No Queue Selected</h4>
           <p class="state-subtitle">Select a queue to view its properties</p>
         </div>
@@ -438,13 +458,26 @@ function formatRateLimit(
 </template>
 
 <style scoped>
+/* Mobile-first safety: sizing and overflow guards */
+.queue-info-card,
+.queue-info-card * {
+  box-sizing: border-box;
+}
+
+.queue-info-card img,
+.queue-info-card svg,
+.queue-info-card video {
+  max-width: 100%;
+  height: auto;
+}
+
 /* Card Container */
 .queue-info-card {
   background: white;
   border-radius: 16px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   border: 1px solid #e9ecef;
-  overflow: hidden;
+  overflow: hidden; /* contain inner visuals */
   transition: box-shadow 0.2s ease;
 }
 
@@ -455,19 +488,22 @@ function formatRateLimit(
 /* Header */
 .card-header {
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  padding: 1.5rem 2rem;
+  padding: clamp(12px, 3.2vw, 24px) clamp(16px, 4vw, 32px);
   border-bottom: 1px solid #e9ecef;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: clamp(8px, 2.5vw, 16px);
+  flex-wrap: wrap; /* allow actions to wrap below on small screens */
 }
 
 .header-content {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0; /* allow text to shrink without overflow */
 }
 
 .card-title {
-  font-size: 1.25rem;
+  font-size: clamp(1.05rem, 2.8vw, 1.25rem);
   font-weight: 700;
   color: #212529;
   margin: 0 0 0.25rem 0;
@@ -478,28 +514,36 @@ function formatRateLimit(
 
 .title-icon {
   color: #17a2b8;
-  font-size: 1.1rem;
+  font-size: clamp(1rem, 2.6vw, 1.1rem);
+  flex-shrink: 0;
 }
 
 .card-subtitle {
   color: #6c757d;
-  font-size: 0.875rem;
+  font-size: clamp(0.85rem, 2.6vw, 0.95rem);
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .header-actions {
   display: flex;
   gap: 0.5rem;
+  flex: 0 0 auto;
 }
 
 .btn-refresh {
   background: white;
   border: 1px solid #ced4da;
-  border-radius: 8px;
-  padding: 0.5rem;
+  border-radius: 10px;
   color: #6c757d;
   transition: all 0.2s ease;
   cursor: pointer;
+  width: 44px; /* comfortable tap target */
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .btn-refresh:hover:not(:disabled) {
@@ -523,27 +567,27 @@ function formatRateLimit(
 
 /* Content */
 .card-content {
-  padding: 2rem;
+  padding: clamp(16px, 4vw, 32px);
 }
 
 .queue-details-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: clamp(16px, 3vw, 24px);
 }
 
 .info-section {
   background: #ffffff;
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: clamp(12px, 3vw, 20px);
   border: 1px solid #e9ecef;
 }
 
 .section-title {
-  font-size: 1.1rem;
+  font-size: clamp(1rem, 3vw, 1.1rem);
   font-weight: 600;
   color: #495057;
-  margin: 0 0 1rem 0;
+  margin: 0 0 clamp(10px, 2.2vw, 16px) 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -552,11 +596,11 @@ function formatRateLimit(
 /* Content States */
 .content-state {
   text-align: center;
-  padding: 1rem;
+  padding: clamp(12px, 3vw, 20px);
 }
 
 .state-content {
-  max-width: 300px;
+  max-width: 360px;
   margin: 0 auto;
 }
 
@@ -564,13 +608,15 @@ function formatRateLimit(
   color: #495057;
   margin-bottom: 0.5rem;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: clamp(0.95rem, 2.8vw, 1rem);
 }
 
 .state-subtitle {
   color: #6c757d;
   margin: 0;
-  font-size: 0.875rem;
+  font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 /* Error State */
@@ -579,13 +625,14 @@ function formatRateLimit(
   align-items: center;
   justify-content: center;
   color: #dc3545;
-  font-size: 0.875rem;
+  font-size: clamp(0.8rem, 2.5vw, 0.9rem);
   margin-bottom: 0.5rem;
+  gap: 0.5rem;
 }
 
 /* Empty State */
 .empty-icon {
-  font-size: 2.5rem;
+  font-size: clamp(2rem, 7vw, 2.5rem);
   margin-bottom: 1rem;
   display: block;
 }
@@ -593,21 +640,28 @@ function formatRateLimit(
 /* Info Grids */
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(clamp(200px, 40vw, 280px), 1fr)
+  );
+  gap: clamp(10px, 2.5vw, 16px);
 }
 
 .stats-grid {
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(clamp(160px, 38vw, 220px), 1fr)
+  );
 }
 
 .info-item {
   background: #f8f9fa;
-  border-radius: 8px;
-  padding: 1rem;
+  border-radius: 10px;
+  padding: clamp(10px, 2.5vw, 16px);
   transition: all 0.2s ease;
   border: 1px solid #e9ecef;
   border-left: 4px solid transparent;
+  min-width: 0; /* allow children to truncate/wrap */
 }
 
 .info-item.clickable {
@@ -621,16 +675,23 @@ function formatRateLimit(
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+.info-item:focus-within {
+  outline: 2px solid #0d6efd;
+  outline-offset: 2px;
+}
+
 .info-content {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: clamp(8px, 2.2vw, 12px);
+  min-width: 0;
 }
 
 .info-arrow {
   margin-left: auto;
   color: #adb5bd;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .info-item.clickable:hover .info-arrow {
@@ -639,18 +700,18 @@ function formatRateLimit(
 }
 
 .info-icon {
-  width: 32px;
-  height: 32px;
+  width: clamp(28px, 6vw, 32px);
+  height: clamp(28px, 6vw, 32px);
   border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: clamp(0.9rem, 3vw, 1rem);
   flex-shrink: 0;
 }
 
 .info-details {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -664,11 +725,14 @@ function formatRateLimit(
 }
 
 .info-value {
-  line-height: 1.2;
+  line-height: 1.3;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .stat-value {
-  font-size: 1.25rem;
+  font-size: clamp(1.1rem, 3.5vw, 1.25rem);
   font-weight: 700;
   color: #212529;
 }
@@ -678,9 +742,11 @@ function formatRateLimit(
 .namespace,
 .rate-limit,
 .fanout-exchange {
-  font-size: 1rem;
+  font-size: clamp(0.95rem, 3vw, 1rem);
   font-weight: 600;
   font-family: 'Courier New', monospace;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .queue-name {
@@ -706,27 +772,7 @@ function formatRateLimit(
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-}
-
-.queue-type-badge.queue-type-fifo {
-  background: #e7f3ff;
-  color: #0d6efd;
-}
-.queue-type-badge.queue-type-lifo {
-  background: #fff3cd;
-  color: #856404;
-}
-.queue-type-badge.queue-type-priority {
-  background: #f8d7da;
-  color: #721c24;
-}
-.delivery-model-badge.delivery-model-p2p {
-  background: #e8f5e8;
-  color: #0f5132;
-}
-.delivery-model-badge.delivery-model-pubsub {
-  background: #f3e8ff;
-  color: #6f42c1;
+  white-space: nowrap; /* keep badge compact */
 }
 
 /* Icon Colors */
@@ -790,50 +836,45 @@ function formatRateLimit(
 /* Responsive Design */
 @media (max-width: 768px) {
   .card-header {
-    padding: 1rem 1.5rem;
     flex-direction: column;
     align-items: stretch;
-    gap: 1rem;
-  }
-  .card-content {
-    padding: 1.5rem;
-  }
-  .info-grid {
-    grid-template-columns: 1fr;
     gap: 0.75rem;
   }
-  .info-item {
-    padding: 0.75rem;
-  }
-  .info-content {
-    gap: 0.5rem;
-  }
-  .info-icon {
-    width: 28px;
-    height: 28px;
-    font-size: 0.875rem;
+  .card-content {
+    padding: clamp(12px, 3.5vw, 20px);
   }
   .content-state {
-    padding: 0.75rem;
+    padding: clamp(10px, 3vw, 16px);
   }
 }
 
-@media (max-width: 480px) {
-  .card-header,
-  .card-content {
-    padding: 1rem;
+@media (max-width: 576px) {
+  .card-header {
+    padding: clamp(10px, 3.5vw, 14px) clamp(12px, 4vw, 16px);
   }
-  .info-item {
-    padding: 0.75rem;
+  .card-content {
+    padding: clamp(12px, 4vw, 16px);
   }
   .empty-icon {
-    font-size: 2rem;
+    font-size: clamp(1.8rem, 8vw, 2rem);
   }
 }
 
 /* Focus states for accessibility */
-.btn-refresh:focus {
+.btn-refresh:focus-visible {
   outline: 2px solid #17a2b8;
   outline-offset: 2px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .queue-info-card,
+  .btn-refresh,
+  .info-item {
+    transition: none;
+  }
+  .info-item.clickable:hover {
+    transform: none;
+  }
 }
 </style>

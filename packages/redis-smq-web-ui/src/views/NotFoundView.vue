@@ -126,7 +126,8 @@ function goToQueues(): void {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: radial-gradient(
+  background-image:
+    radial-gradient(
       circle at 25% 25%,
       rgba(255, 255, 255, 0.1) 0%,
       transparent 50%
@@ -368,7 +369,7 @@ function goToQueues(): void {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 576px) {
   .not-found-container {
     padding: 1.5rem;
   }

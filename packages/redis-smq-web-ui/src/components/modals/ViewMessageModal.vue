@@ -13,6 +13,7 @@ import { computed, ref } from 'vue';
 import { formatDistanceToNow } from 'date-fns';
 import { formatDate } from '@/lib/format.ts';
 import ConfirmationDialogModal from '@/components/modals/ConfirmationDialogModal.vue';
+import BaseModal from './BaseModal.vue';
 
 interface Props {
   message: IMessageTransferable | null;
@@ -92,7 +93,6 @@ const formattedLastRequeuedAt = computed(() => {
 
 const statusBadgeClass = computed(() => {
   if (!props.message) return '';
-
   switch (props.message.status) {
     case 0:
       return 'badge bg-secondary'; // SCHEDULED
@@ -115,7 +115,6 @@ const statusBadgeClass = computed(() => {
 
 const statusText = computed(() => {
   if (!props.message) return '';
-
   switch (props.message.status) {
     case 0:
       return 'Scheduled';
@@ -137,8 +136,8 @@ const statusText = computed(() => {
 });
 
 const priorityText = computed(() => {
-  if (!props.message?.priority) return 'Normal';
-
+  if (!props.message?.priority && props.message?.priority !== 0)
+    return 'Normal';
   const priorities = [
     'Highest',
     'Very High',
@@ -149,16 +148,13 @@ const priorityText = computed(() => {
     'Very Low',
     'Lowest',
   ];
-
-  return priorities[props.message.priority] || 'Normal';
+  return priorities[props.message!.priority!] || 'Normal';
 });
 
 const formattedBody = computed(() => {
   if (!props.message?.body) return '';
-
   try {
     if (typeof props.message.body === 'string') {
-      // Try to parse as JSON for pretty formatting
       const parsed = JSON.parse(props.message.body);
       return JSON.stringify(parsed, null, 2);
     }
@@ -169,14 +165,12 @@ const formattedBody = computed(() => {
 });
 
 // Check if message is dead-lettered (status 6)
-const isDeadLettered = computed(() => {
-  return props.message?.status === 6;
-});
+const isDeadLettered = computed(() => props.message?.status === 6);
 
 // Check if any action is in progress
-const isActionInProgress = computed(() => {
-  return props.isDeleting || props.isRequeuing;
-});
+const isActionInProgress = computed(
+  () => props.isDeleting || props.isRequeuing,
+);
 
 const timelineEvents = computed(() => {
   if (!props.message) return [];
@@ -255,27 +249,20 @@ const timelineEvents = computed(() => {
     },
   ];
   return events
-    .filter((event) => !!event.timestamp)
+    .filter((e) => !!e.timestamp)
     .sort((a, b) => Number(a.timestamp) - Number(b.timestamp));
 });
 
 function handleClose(): void {
   if (isActionInProgress.value) return; // Prevent closing during actions
-
   emit('close');
   emit('update:show', false);
 }
 
-function handleBackdropClick(event: Event): void {
-  if (event.target === event.currentTarget && !isActionInProgress.value) {
-    handleClose();
-  }
-}
-
 function copyToClipboard(text: string): void {
   navigator.clipboard.writeText(text).then(() => {
-    // Could add a toast notification here
-    console.log('Copied to clipboard');
+    // Optional: add a toast here
+    // console.log('Copied to clipboard');
   });
 }
 
@@ -297,41 +284,16 @@ function confirmRequeue(): void {
 </script>
 
 <template>
-  <div
-    v-if="show && message"
-    class="modal-backdrop"
-    @click="handleBackdropClick"
+  <BaseModal
+    :is-visible="!!message && show"
+    title="Message Details"
+    :subtitle="message ? `ID: ${message.id}` : undefined"
+    icon="bi bi-envelope-fill"
+    size="lg"
+    @close="handleClose"
   >
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <!-- Header -->
-        <div class="modal-header">
-          <div class="modal-title-section">
-            <h4 class="modal-title">
-              <i class="bi bi-envelope-fill me-2"></i>
-              Message Details
-            </h4>
-            <div class="message-id">
-              <span class="text-muted">ID:</span>
-              <code class="ms-1">{{ message.id }}</code>
-              <button
-                class="btn btn-sm btn-outline-secondary ms-2"
-                title="Copy ID"
-                @click="copyToClipboard(message.id)"
-              >
-                <i class="bi bi-clipboard"></i>
-              </button>
-            </div>
-          </div>
-          <button
-            type="button"
-            class="btn-close"
-            aria-label="Close"
-            :disabled="isActionInProgress"
-            @click="handleClose"
-          ></button>
-        </div>
-
+    <template #body>
+      <div class="vm-body">
         <!-- Status Bar -->
         <div class="status-bar">
           <div class="status-info">
@@ -341,7 +303,7 @@ function confirmRequeue(): void {
               {{ formattedCreatedAt }}
             </span>
           </div>
-          <div class="queue-info">
+          <div v-if="message" class="queue-info">
             <span class="badge bg-light text-dark">
               <i class="bi bi-collection me-1"></i>
               {{ message.destinationQueue.ns }}:{{
@@ -401,7 +363,7 @@ function confirmRequeue(): void {
         </div>
 
         <!-- Tab Content -->
-        <div class="modal-body">
+        <div class="tab-panels">
           <!-- Overview Tab -->
           <div v-if="activeTab === 'overview'" class="tab-content">
             <div class="info-grid">
@@ -418,12 +380,12 @@ function confirmRequeue(): void {
                   </div>
                   <div class="info-item">
                     <span class="info-label">TTL:</span>
-                    <span class="info-value">{{ message.ttl }}ms</span>
+                    <span class="info-value">{{ message!.ttl }}ms</span>
                   </div>
                   <div class="info-item">
                     <span class="info-label">Consumer Group:</span>
                     <span class="info-value">{{
-                      message.consumerGroupId || 'None'
+                      message!.consumerGroupId || 'None'
                     }}</span>
                   </div>
                 </div>
@@ -434,60 +396,62 @@ function confirmRequeue(): void {
                 <div class="info-items">
                   <div class="info-item">
                     <span class="info-label">Retry Threshold:</span>
-                    <span class="info-value">{{ message.retryThreshold }}</span>
+                    <span class="info-value">{{
+                      message!.retryThreshold
+                    }}</span>
                   </div>
                   <div class="info-item">
                     <span class="info-label">Retry Delay:</span>
-                    <span class="info-value">{{ message.retryDelay }}ms</span>
+                    <span class="info-value">{{ message!.retryDelay }}ms</span>
                   </div>
                   <div class="info-item">
                     <span class="info-label">Consume Timeout:</span>
                     <span class="info-value"
-                      >{{ message.consumeTimeout }}ms</span
+                      >{{ message!.consumeTimeout }}ms</span
                     >
                   </div>
                   <div class="info-item">
                     <span class="info-label">Current Attempts:</span>
                     <span class="info-value">{{
-                      message.messageState.attempts
+                      message!.messageState.attempts
                     }}</span>
                   </div>
                   <div class="info-item">
                     <span class="info-label">Requeue Count:</span>
                     <span class="info-value">{{
-                      message.messageState.requeueCount
+                      message!.messageState.requeueCount
                     }}</span>
                   </div>
                 </div>
               </div>
 
-              <div v-if="message.exchange" class="info-section">
+              <div v-if="message?.exchange" class="info-section">
                 <h6 class="section-title">Exchange Information</h6>
                 <div class="info-items">
                   <div class="info-item">
                     <span class="info-label">Exchange Params:</span>
                     <span class="info-value"
-                      >{{ message.exchange.name }}@{{
-                        message.exchange.ns
+                      >{{ message!.exchange!.name }}@{{
+                        message!.exchange!.ns
                       }}</span
                     >
                   </div>
                   <div class="info-item">
                     <span class="info-label">Type:</span>
                     <span class="info-value">{{
-                      EExchangeType[message.exchange.type]
+                      EExchangeType[message!.exchange!.type]
                     }}</span>
                   </div>
                 </div>
               </div>
 
-              <div v-if="message.queue" class="info-section">
+              <div v-if="message?.queue" class="info-section">
                 <h6 class="section-title">Queue Information</h6>
                 <div class="info-items">
                   <div class="info-item">
                     <span class="info-label">Queue Params:</span>
                     <span class="info-value"
-                      >{{ message.queue.name }}@{{ message.queue.ns }}</span
+                      >{{ message!.queue!.name }}@{{ message!.queue!.ns }}</span
                     >
                   </div>
                 </div>
@@ -524,7 +488,7 @@ function confirmRequeue(): void {
                   <div class="info-item">
                     <span class="info-label">UUID:</span>
                     <code class="info-value">{{
-                      message.messageState.uuid
+                      message!.messageState.uuid
                     }}</code>
                   </div>
                   <div class="info-item">
@@ -534,7 +498,7 @@ function confirmRequeue(): void {
                   <div class="info-item">
                     <span class="info-label">Attempts:</span>
                     <span class="info-value">{{
-                      message.messageState.attempts
+                      message!.messageState.attempts
                     }}</span>
                   </div>
                   <div class="info-item">
@@ -542,12 +506,12 @@ function confirmRequeue(): void {
                     <span
                       class="badge"
                       :class="
-                        message.messageState.expired
+                        message!.messageState.expired
                           ? 'bg-danger'
                           : 'bg-success'
                       "
                     >
-                      {{ message.messageState.expired ? 'Yes' : 'No' }}
+                      {{ message!.messageState.expired ? 'Yes' : 'No' }}
                     </span>
                   </div>
                 </div>
@@ -587,7 +551,7 @@ function confirmRequeue(): void {
                   <div class="info-item">
                     <span class="info-label">Scheduled Times:</span>
                     <span class="info-value">{{
-                      message.messageState.scheduledTimes
+                      message!.messageState.scheduledTimes
                     }}</span>
                   </div>
                 </div>
@@ -608,29 +572,31 @@ function confirmRequeue(): void {
                   <div class="info-item">
                     <span class="info-label">Scheduled Cron:</span>
                     <span class="info-value">{{
-                      message.scheduledCron || 'None'
+                      message!.scheduledCron || 'None'
                     }}</span>
                   </div>
                   <div class="info-item">
                     <span class="info-label">Scheduled Delay:</span>
-                    <span class="info-value">{{
-                      message.scheduledDelay
-                        ? `${message.scheduledDelay} ms`
-                        : 'None'
-                    }}</span>
+                    <span class="info-value">
+                      {{
+                        message!.scheduledDelay
+                          ? `${message!.scheduledDelay} ms`
+                          : 'None'
+                      }}
+                    </span>
                   </div>
                   <div class="info-item">
                     <span class="info-label">Cron Fired:</span>
                     <span
                       class="badge"
                       :class="
-                        message.messageState.scheduledCronFired
+                        message!.messageState.scheduledCronFired
                           ? 'bg-success'
                           : 'bg-secondary'
                       "
                     >
                       {{
-                        message.messageState.scheduledCronFired ? 'Yes' : 'No'
+                        message!.messageState.scheduledCronFired ? 'Yes' : 'No'
                       }}
                     </span>
                   </div>
@@ -644,8 +610,8 @@ function confirmRequeue(): void {
                     <span class="info-label">Repeat Period:</span>
                     <span class="info-value">
                       {{
-                        message.scheduledRepeatPeriod
-                          ? `${message.scheduledRepeatPeriod} ms`
+                        message!.scheduledRepeatPeriod
+                          ? `${message!.scheduledRepeatPeriod} ms`
                           : 'None'
                       }}
                     </span>
@@ -653,22 +619,22 @@ function confirmRequeue(): void {
                   <div class="info-item">
                     <span class="info-label">Repeat Count:</span>
                     <span class="info-value">{{
-                      message.scheduledRepeat
+                      message!.scheduledRepeat
                     }}</span>
                   </div>
                   <div class="info-item">
                     <span class="info-label">Current Repeat:</span>
                     <span class="info-value">{{
-                      message.messageState.scheduledRepeatCount
+                      message!.messageState.scheduledRepeatCount
                     }}</span>
                   </div>
                   <div class="info-item">
                     <span class="info-label">Last Scheduled At:</span>
                     <span class="info-value">
                       {{
-                        message.messageState.lastScheduledAt
+                        message!.messageState.lastScheduledAt
                           ? new Date(
-                              message.messageState.lastScheduledAt,
+                              message!.messageState.lastScheduledAt,
                             ).toLocaleString()
                           : 'Never'
                       }}
@@ -678,7 +644,7 @@ function confirmRequeue(): void {
               </div>
 
               <div
-                v-if="message.messageState.scheduledMessageParentId"
+                v-if="message?.messageState.scheduledMessageParentId"
                 class="info-section"
               >
                 <h6 class="section-title">Scheduled Message Reference</h6>
@@ -687,14 +653,14 @@ function confirmRequeue(): void {
                     <span class="info-label">Scheduled Message Parent ID:</span>
                     <div class="d-flex align-items-center">
                       <code class="info-value">{{
-                        message.messageState.scheduledMessageParentId
+                        message!.messageState.scheduledMessageParentId
                       }}</code>
                       <button
                         class="btn btn-sm btn-outline-secondary ms-2"
                         title="Copy Scheduled Message Parent ID"
                         @click="
                           copyToClipboard(
-                            message.messageState.scheduledMessageParentId,
+                            message!.messageState.scheduledMessageParentId!,
                           )
                         "
                       >
@@ -706,7 +672,7 @@ function confirmRequeue(): void {
               </div>
 
               <div
-                v-if="message.messageState.requeuedMessageParentId"
+                v-if="message?.messageState.requeuedMessageParentId"
                 class="info-section"
               >
                 <h6 class="section-title">Requeued Message Reference</h6>
@@ -715,14 +681,14 @@ function confirmRequeue(): void {
                     <span class="info-label">Requeued Message Parent ID:</span>
                     <div class="d-flex align-items-center">
                       <code class="info-value">{{
-                        message.messageState.requeuedMessageParentId
+                        message!.messageState.requeuedMessageParentId
                       }}</code>
                       <button
                         class="btn btn-sm btn-outline-secondary ms-2"
                         title="Copy Requeued Message Parent ID"
                         @click="
                           copyToClipboard(
-                            message.messageState.requeuedMessageParentId,
+                            message!.messageState.requeuedMessageParentId!,
                           )
                         "
                       >
@@ -740,7 +706,7 @@ function confirmRequeue(): void {
             <ul class="timeline">
               <li
                 v-for="event in timelineEvents"
-                :key="event.type"
+                :key="`${event.type}-${event.timestamp}`"
                 class="timeline-item"
               >
                 <div class="timeline-marker" :class="event.color">
@@ -756,189 +722,119 @@ function confirmRequeue(): void {
             </ul>
           </div>
         </div>
-
-        <!-- Footer -->
-        <div class="modal-footer">
-          <div class="footer-info">
-            <small class="text-muted">
-              <i class="bi bi-info-circle me-1"></i>
-              Message created {{ formattedCreatedAt }}
-            </small>
-          </div>
-          <div class="footer-actions">
-            <!-- Requeue Button (only for dead-lettered messages) -->
-            <button
-              v-if="isDeadLettered"
-              type="button"
-              class="btn btn-warning"
-              :disabled="isActionInProgress"
-              @click="showRequeueConfirm = true"
-            >
-              <template v-if="isRequeuing">
-                <span class="spinner-border spinner-border-sm me-2"></span>
-                Requeuing...
-              </template>
-              <template v-else>
-                <i class="bi bi-arrow-clockwise me-2"></i>
-                Requeue Message
-              </template>
-            </button>
-
-            <!-- Delete Button -->
-            <button
-              type="button"
-              class="btn btn-danger"
-              :disabled="isActionInProgress"
-              @click="showDeleteConfirm = true"
-            >
-              <template v-if="isDeleting">
-                <span class="spinner-border spinner-border-sm me-2"></span>
-                Deleting...
-              </template>
-              <template v-else>
-                <i class="bi bi-trash me-2"></i>
-                Delete Message
-              </template>
-            </button>
-
-            <!-- Close Button -->
-            <button
-              type="button"
-              class="btn btn-secondary"
-              :disabled="isActionInProgress"
-              @click="handleClose"
-            >
-              Close
-            </button>
-          </div>
-        </div>
       </div>
-    </div>
+    </template>
 
-    <!-- Confirmation Dialogs using the reusable component -->
-    <ConfirmationDialogModal
-      :is-visible="showDeleteConfirm"
-      title="Delete Message"
-      message="Are you sure you want to delete this message? This action cannot be undone."
-      confirm-text="Delete Message"
-      variant="danger"
-      :is-loading="isDeleting"
-      @confirm="confirmDelete"
-      @close="showDeleteConfirm = false"
-    >
-      <template #message-preview>
-        <strong>Message ID: </strong>
-        <code>{{ message?.id }}</code>
-      </template>
-    </ConfirmationDialogModal>
+    <template #footer>
+      <div class="footer-info">
+        <small class="text-muted">
+          <i class="bi bi-info-circle me-1"></i>
+          Message created {{ formattedCreatedAt }}
+        </small>
+      </div>
+      <div class="footer-actions">
+        <!-- Requeue Button (only for dead-lettered messages) -->
+        <button
+          v-if="isDeadLettered"
+          type="button"
+          class="btn btn-warning"
+          :disabled="isActionInProgress"
+          @click="showRequeueConfirm = true"
+        >
+          <template v-if="isRequeuing">
+            <span class="spinner-border spinner-border-sm me-2"></span>
+            Requeuing...
+          </template>
+          <template v-else>
+            <i class="bi bi-arrow-clockwise me-2"></i>
+            Requeue Message
+          </template>
+        </button>
 
-    <ConfirmationDialogModal
-      :is-visible="showRequeueConfirm"
-      title="Requeue Message"
-      message="Are you sure you want to requeue this dead-lettered message? It will be moved back to the pending queue for processing."
-      confirm-text="Requeue Message"
-      variant="warning"
-      :is-loading="isRequeuing"
-      @confirm="confirmRequeue"
-      @close="showRequeueConfirm = false"
-    >
-      <template #message-preview>
-        <strong>Message ID: </strong>
-        <code>{{ message?.id }}</code>
-      </template>
-    </ConfirmationDialogModal>
-  </div>
+        <!-- Delete Button -->
+        <button
+          type="button"
+          class="btn btn-danger"
+          :disabled="isActionInProgress"
+          @click="showDeleteConfirm = true"
+        >
+          <template v-if="isDeleting">
+            <span class="spinner-border spinner-border-sm me-2"></span>
+            Deleting...
+          </template>
+          <template v-else>
+            <i class="bi bi-trash me-2"></i>
+            Delete Message
+          </template>
+        </button>
+
+        <!-- Close Button -->
+        <button
+          type="button"
+          class="btn btn-secondary"
+          :disabled="isActionInProgress"
+          @click="handleClose"
+        >
+          Close
+        </button>
+      </div>
+    </template>
+  </BaseModal>
+
+  <!-- Confirmation Dialogs using the reusable component -->
+  <ConfirmationDialogModal
+    :is-visible="showDeleteConfirm"
+    title="Delete Message"
+    message="Are you sure you want to delete this message? This action cannot be undone."
+    confirm-text="Delete Message"
+    variant="danger"
+    :is-loading="isDeleting"
+    @confirm="confirmDelete"
+    @close="showDeleteConfirm = false"
+  >
+    <template #message-preview>
+      <strong>Message ID: </strong>
+      <code>{{ message?.id }}</code>
+    </template>
+  </ConfirmationDialogModal>
+
+  <ConfirmationDialogModal
+    :is-visible="showRequeueConfirm"
+    title="Requeue Message"
+    message="Are you sure you want to requeue this dead-lettered message? It will be moved back to the pending queue for processing."
+    confirm-text="Requeue Message"
+    variant="warning"
+    :is-loading="isRequeuing"
+    @confirm="confirmRequeue"
+    @close="showRequeueConfirm = false"
+  >
+    <template #message-preview>
+      <strong>Message ID: </strong>
+      <code>{{ message?.id }}</code>
+    </template>
+  </ConfirmationDialogModal>
 </template>
 
 <style scoped>
-/* Modal Structure */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1050;
-  backdrop-filter: blur(2px);
-}
-
-.modal-dialog {
-  width: 90%;
-  max-width: 800px;
-  max-height: 90vh;
+/* Wrapper inside BaseModal body: ensure safe overflow and spacing harmony with BaseModal */
+.vm-body {
   display: flex;
   flex-direction: column;
-}
-
-.modal-content {
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  display: flex;
-  flex-direction: column;
-  max-height: 100%;
-  overflow: hidden;
-}
-
-/* Header Section */
-.modal-header {
-  padding: 1.5rem 2rem;
-  border-bottom: 1px solid #e9ecef;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  background: #f8f9fa;
-}
-
-.modal-title-section {
-  flex: 1;
-}
-
-.modal-title {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #212529;
-  display: flex;
-  align-items: center;
-}
-
-.message-id {
-  display: flex;
-  align-items: center;
-  font-size: 0.875rem;
-}
-
-.btn-close {
-  background: none;
-  border: none;
-  font-size: 1.25rem;
-  cursor: pointer;
-  padding: 0.25rem;
-  color: #6c757d;
-  transition: color 0.2s ease;
-}
-
-.btn-close:hover:not(:disabled) {
-  color: #000000;
-}
-
-.btn-close:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  gap: 1rem;
+  overflow-x: hidden; /* guard against horizontal scroll on mobile */
 }
 
 /* Status Bar */
 .status-bar {
-  padding: 1rem 2rem;
+  padding: 0.75rem 1rem;
   background: #f8f9fa;
-  border-bottom: 1px solid #e9ecef;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .status-info,
@@ -952,30 +848,34 @@ function confirmRequeue(): void {
 /* Navigation Tabs */
 .modal-tabs {
   background: #f8f9fa;
-  border-bottom: 1px solid #e9ecef;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
   display: grid;
-  /* Creates 4 equal-width columns that fill the container */
   grid-template-columns: repeat(5, 1fr);
   width: 100%;
+  overflow: hidden;
 }
 
 .tab-button {
   background: none;
   border: none;
-  padding: 1rem 1.5rem;
+  padding: 0.875rem 1rem;
   cursor: pointer;
   font-size: 0.875rem;
   font-weight: 500;
   color: #6c757d;
   border-bottom: 3px solid transparent;
-  transition: all 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
   white-space: nowrap;
   align-items: center;
 }
 
 .tab-button:hover:not(:disabled) {
   color: #495057;
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .tab-button.active {
@@ -984,11 +884,9 @@ function confirmRequeue(): void {
   background: #ffffff;
 }
 
-/* Content Area */
-.modal-body {
-  padding: 2rem;
-  overflow-y: auto;
-  flex: 1;
+/* Panels */
+.tab-panels {
+  display: block;
 }
 
 .tab-content {
@@ -1009,18 +907,18 @@ function confirmRequeue(): void {
 /* Information Layout */
 .info-grid {
   display: grid;
-  gap: 2rem;
+  gap: 1rem;
 }
 
 .info-section {
   background: #f8f9fa;
   border-radius: 8px;
-  padding: 1.5rem;
+  padding: 1rem;
   border: 1px solid #e9ecef;
 }
 
 .section-title {
-  margin: 0 0 1rem 0;
+  margin: 0 0 0.75rem 0;
   font-size: 1rem;
   font-weight: 600;
   color: #495057;
@@ -1031,14 +929,14 @@ function confirmRequeue(): void {
 
 .info-items {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .info-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem 0;
+  padding: 0.375rem 0;
   border-bottom: 1px solid #e9ecef;
 }
 
@@ -1057,13 +955,15 @@ function confirmRequeue(): void {
   color: #212529;
   font-size: 0.875rem;
   text-align: right;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* Message Body Display */
 .body-section {
   background: #f8f9fa;
   border-radius: 8px;
-  padding: 1.5rem;
+  padding: 1rem;
   border: 1px solid #e9ecef;
 }
 
@@ -1090,7 +990,7 @@ function confirmRequeue(): void {
 
 /* Timeline styles */
 .timeline-section {
-  padding: 1rem 0;
+  padding: 0.5rem 0;
 }
 
 .timeline {
@@ -1113,7 +1013,7 @@ function confirmRequeue(): void {
 .timeline-item {
   display: flex;
   align-items: flex-start;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   position: relative;
 }
 
@@ -1122,13 +1022,13 @@ function confirmRequeue(): void {
 }
 
 .timeline-marker {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   background: #ffffff;
   border: 2px solid #e9ecef;
   z-index: 1;
@@ -1152,8 +1052,8 @@ function confirmRequeue(): void {
 }
 
 .timeline-content {
-  margin-left: 1.5rem;
-  padding-top: 0.5rem;
+  margin-left: 1.25rem;
+  padding-top: 0.25rem;
 }
 
 .timeline-title {
@@ -1168,27 +1068,21 @@ function confirmRequeue(): void {
   margin: 0;
 }
 
-/* Footer Section */
-.modal-footer {
-  padding: 1rem 2rem;
-  border-top: 1px solid #e9ecef;
-  background: #f8f9fa;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
+/* Footer expect BaseModal to align content horizontally by default */
 .footer-info {
   flex: 1;
+  overflow-wrap: anywhere;
 }
 
 .footer-actions {
   display: flex;
-  gap: 0.75rem;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap; /* allow wrapping instead of overflow */
+  gap: 0.75rem; /* primary spacing between buttons */
 }
 
-/* Button Styles */
+/* Button Styles (inherited elsewhere; keep local hover transforms reduced for mobile) */
 .btn {
   padding: 0.5rem 1rem;
   border-radius: 6px;
@@ -1201,76 +1095,64 @@ function confirmRequeue(): void {
   text-decoration: none;
   font-size: 0.875rem;
 }
-
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
-
 .btn-secondary {
   background: #6c757d;
   border-color: #6c757d;
   color: #ffffff;
 }
-
 .btn-secondary:hover:not(:disabled) {
   background: #5c636a;
   border-color: #565e64;
   transform: translateY(-1px);
 }
-
 .btn-danger {
   background: #dc3545;
   border-color: #dc3545;
   color: #ffffff;
 }
-
 .btn-danger:hover:not(:disabled) {
   background: #c82333;
   border-color: #bd2130;
   transform: translateY(-1px);
 }
-
 .btn-warning {
   background: #ffc107;
   border-color: #ffc107;
   color: #212529;
 }
-
 .btn-warning:hover:not(:disabled) {
   background: #e0a800;
   border-color: #d39e00;
   transform: translateY(-1px);
 }
-
 .btn-outline-secondary {
   background: transparent;
   border-color: #6c757d;
   color: #6c757d;
 }
-
 .btn-outline-secondary:hover:not(:disabled) {
   background: #6c757d;
   color: #ffffff;
 }
-
 .btn-outline-primary {
   background: transparent;
   border-color: #0d6efd;
   color: #0d6efd;
 }
-
 .btn-outline-primary:hover:not(:disabled) {
   background: #0d6efd;
   color: #ffffff;
 }
-
 .btn-sm {
   padding: 0.25rem 0.5rem;
   font-size: 0.8125rem;
 }
 
-/* Utility Classes */
+/* Utilities */
 .spinner-border {
   display: inline-block;
   width: 1rem;
@@ -1281,19 +1163,16 @@ function confirmRequeue(): void {
   border-radius: 50%;
   animation: spinner-border 0.75s linear infinite;
 }
-
 .spinner-border-sm {
   width: 0.875rem;
   height: 0.875rem;
   border-width: 0.125em;
 }
-
 @keyframes spinner-border {
   to {
     transform: rotate(360deg);
   }
 }
-
 .badge {
   display: inline-block;
   padding: 0.25em 0.4em;
@@ -1305,7 +1184,6 @@ function confirmRequeue(): void {
   vertical-align: baseline;
   border-radius: 0.25rem;
 }
-
 .bg-secondary {
   background-color: #6c757d !important;
   color: #ffffff;
@@ -1331,41 +1209,22 @@ function confirmRequeue(): void {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .modal-dialog {
-    width: 95%;
-    max-height: 95vh;
-  }
-
-  .modal-header,
   .status-bar {
-    padding: 1rem 1.5rem;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
+    padding: 0.75rem;
+    gap: 0.5rem;
   }
 
-  .modal-body {
-    padding: 1.5rem;
-  }
-
-  .modal-footer {
-    padding: 1rem 1.5rem;
-    flex-direction: column;
-    gap: 1rem;
-    align-items: stretch;
-  }
-
-  .footer-actions {
-    justify-content: stretch;
-  }
-
-  .footer-actions .btn {
-    flex: 1;
+  .modal-tabs {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
   .tab-button {
-    padding: 0.75rem 1rem;
-    font-size: 0.8rem;
+    padding: 0.75rem 0.75rem;
+    font-size: 0.82rem;
+  }
+
+  .info-section {
+    padding: 0.875rem;
   }
 
   .info-item {
@@ -1377,29 +1236,29 @@ function confirmRequeue(): void {
   .info-value {
     text-align: left;
   }
+
+  .footer-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .footer-actions .btn {
+    flex: 1 1 auto;
+  }
 }
 
-@media (max-width: 480px) {
-  .modal-dialog {
-    width: 100%;
-    height: 100%;
-    max-height: 100vh;
+@media (max-width: 576px) {
+  .body-section {
+    padding: 0.75rem;
   }
 
-  .modal-content {
-    border-radius: 0;
-    height: 100%;
-  }
-
-  .message-id {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
+  .message-body {
+    max-height: 45vh; /* more room on small screens */
   }
 
   .footer-actions {
     flex-direction: column;
-    gap: 0.5rem;
   }
 
   .footer-actions .btn {
@@ -1408,224 +1267,55 @@ function confirmRequeue(): void {
   }
 }
 
-/* Performance Optimizations */
+/* Accessibility, High Contrast and Dark Mode parity with BaseModal */
 @media (prefers-reduced-motion: reduce) {
   .tab-content,
   .btn,
-  .tab-button,
-  .btn-close {
+  .tab-button {
     transition: none;
     animation: none;
   }
-
   .spinner-border {
     animation: none;
   }
-
-  .fadeIn {
-    animation: none;
-  }
 }
 
-/* Focus Management */
-.btn:focus,
-.btn-close:focus {
-  outline: 2px solid #0d6efd;
-  outline-offset: 2px;
-}
-
-.btn:focus:not(:focus-visible) {
-  outline: none;
-}
-
-/* High Contrast Mode */
 @media (prefers-contrast: more) {
-  .modal-content {
-    border: 2px solid #000000;
-  }
-
-  .btn {
-    border-width: 2px;
-  }
-
   .info-item {
     border-bottom-width: 2px;
   }
-
   .badge {
     border: 1px solid currentColor;
   }
 }
 
-/* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
-  .modal-content {
-    background: #1a1a1a;
-    color: #ffffff;
-  }
-
-  .modal-header,
   .status-bar,
-  .modal-tabs,
-  .modal-footer {
+  .modal-tabs {
     background: #2d2d2d;
     border-color: #404040;
   }
-
   .info-section,
   .body-section {
     background: #2d2d2d;
     border-color: #404040;
   }
-
   .message-body {
     background: #1a1a1a;
     border-color: #404040;
     color: #ffffff;
   }
-
-  .message-preview {
-    background: #2d2d2d;
-    border-color: #404040;
-  }
-
   .tab-button.active {
     background: #1a1a1a;
   }
-
   .text-muted {
     color: #a0a0a0 !important;
   }
-
   .info-label {
     color: #a0a0a0;
   }
-
   .info-value {
     color: #ffffff;
-  }
-}
-
-/* Print Styles */
-@media print {
-  .modal-backdrop {
-    position: static;
-    background: none;
-  }
-
-  .modal-dialog {
-    width: 100%;
-    max-width: none;
-    max-height: none;
-  }
-
-  .modal-content {
-    box-shadow: none;
-    border: 1px solid #000000;
-  }
-
-  .modal-header,
-  .status-bar,
-  .modal-footer {
-    background: none !important;
-    border-color: #000000;
-  }
-
-  .footer-actions,
-  .btn-close,
-  .confirmation-backdrop {
-    display: none !important;
-  }
-
-  .modal-tabs {
-    display: none;
-  }
-
-  .tab-content {
-    display: block !important;
-  }
-
-  .spinner-border {
-    display: none;
-  }
-}
-
-/* Container Queries (Future Enhancement) */
-@container (max-width: 600px) {
-  .modal-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .footer-actions {
-    flex-direction: column;
-  }
-}
-
-/* Scroll Behavior */
-.modal-body {
-  scroll-behavior: smooth;
-}
-
-.modal-body::-webkit-scrollbar {
-  width: 8px;
-}
-
-.modal-body::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
-}
-
-.modal-body::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
-}
-
-.modal-body::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-/* Loading States */
-.btn[disabled] {
-  pointer-events: none;
-}
-
-.tab-button[disabled] {
-  pointer-events: none;
-}
-
-/* Backdrop Blur Support */
-@supports (backdrop-filter: blur(2px)) {
-  .modal-backdrop {
-    backdrop-filter: blur(2px);
-  }
-}
-
-@supports not (backdrop-filter: blur(2px)) {
-  .modal-backdrop {
-    background: rgba(0, 0, 0, 0.6);
-  }
-}
-
-/* GPU Acceleration */
-.modal-content,
-.confirmation-dialog {
-  transform: translateZ(0);
-  will-change: transform;
-}
-
-.btn {
-  transform: translateZ(0);
-}
-
-/* Reduced Motion Fallbacks */
-@media (prefers-reduced-motion: reduce) {
-  .btn:hover {
-    transform: none;
-  }
-
-  .tab-content {
-    transform: none;
   }
 }
 </style>

@@ -640,15 +640,29 @@ const toggleDropdown = () => {
 </template>
 
 <style scoped>
+/* Mobile-first: sizing and overflow guards */
+.exchange-card,
+.exchange-card * {
+  box-sizing: border-box;
+}
+
+.exchange-card img,
+.exchange-card svg,
+.exchange-card video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Card container with responsive paddings */
 .exchange-card {
   position: relative;
   background-color: white;
   border: 1px solid #e9ecef;
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: clamp(12px, 3.2vw, 24px);
   display: flex;
   flex-direction: column;
-  overflow: visible; /* For dropdown */
+  overflow: visible; /* keep dropdown visible */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   transition:
     transform 0.2s ease,
@@ -669,10 +683,7 @@ const toggleDropdown = () => {
 /* Loading Overlays */
 .loading-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   flex-direction: column;
@@ -697,7 +708,8 @@ const toggleDropdown = () => {
   justify-content: center;
   gap: 0.75rem;
   color: #0d6efd;
-  padding: 2rem;
+  padding: clamp(16px, 3.2vw, 32px);
+  text-align: center;
 }
 
 /* Error State */
@@ -708,7 +720,7 @@ const toggleDropdown = () => {
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  padding: 2rem;
+  padding: clamp(16px, 3.2vw, 32px);
   text-align: center;
   color: #dc3545;
 }
@@ -716,6 +728,8 @@ const toggleDropdown = () => {
 .error-message {
   margin: 0;
   font-size: 0.9rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .btn-retry {
@@ -728,7 +742,7 @@ const toggleDropdown = () => {
   font-size: 0.85rem;
   font-weight: 500;
   transition: all 0.2s ease;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
 }
@@ -742,26 +756,28 @@ const toggleDropdown = () => {
 .card-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1.5rem;
+  align-items: center;
+  gap: clamp(8px, 2.4vw, 16px);
+  margin-bottom: clamp(12px, 2.4vw, 24px);
+  flex-wrap: wrap; /* allow wrapping on smaller widths */
 }
 
 .header-content {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: clamp(8px, 2.4vw, 16px);
   min-width: 0;
-  flex: 1;
+  flex: 1 1 auto;
 }
 
 .header-icon {
-  width: 48px;
-  height: 48px;
+  width: clamp(40px, 6.5vw, 48px);
+  height: clamp(40px, 6.5vw, 48px);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: clamp(1.1rem, 3.2vw, 1.5rem);
   flex-shrink: 0;
   cursor: help;
 }
@@ -770,17 +786,14 @@ const toggleDropdown = () => {
   background: #cff4fc;
   color: #055160;
 }
-
 .header-icon.fanout {
   background: #d1e7dd;
   color: #0f5132;
 }
-
 .header-icon.topic {
   background: #e2d9f3;
   color: #5a2a94;
 }
-
 .header-icon.gray {
   background: #f8f9fa;
   color: #6c757d;
@@ -788,12 +801,12 @@ const toggleDropdown = () => {
 
 .header-text {
   min-width: 0;
-  flex: 1;
+  flex: 1 1 auto;
 }
 
 .card-title {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: clamp(1.05rem, 2.8vw, 1.25rem);
   font-weight: 600;
   color: #212529;
   white-space: nowrap;
@@ -806,11 +819,13 @@ const toggleDropdown = () => {
   color: #6c757d;
   display: block;
   margin-top: 0.25rem;
+  overflow-wrap: anywhere;
 }
 
 /* Actions Menu */
 .actions-menu {
   position: relative;
+  flex: 0 0 auto;
 }
 
 .btn-actions {
@@ -824,9 +839,10 @@ const toggleDropdown = () => {
   border-radius: 50%;
   width: 36px;
   height: 36px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .btn-actions:hover,
@@ -843,15 +859,18 @@ const toggleDropdown = () => {
 
 .dropdown-menu {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 6px);
   right: 0;
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   border: 1px solid #e9ecef;
   padding: 0.5rem;
-  width: 180px;
-  overflow: hidden;
+  width: min(220px, 92vw); /* viewport-safe width */
+  max-height: min(70vh, 400px); /* scrollable on small screens */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   display: block !important;
   z-index: 10;
 }
@@ -909,13 +928,13 @@ const toggleDropdown = () => {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  gap: clamp(12px, 2.8vw, 24px);
+  margin-bottom: clamp(12px, 2.4vw, 24px);
 }
 
 .stats-section {
   display: flex;
-  padding: 1rem;
+  padding: clamp(10px, 2.6vw, 16px);
   background-color: #f8f9fa;
   border-radius: 8px;
 }
@@ -925,10 +944,11 @@ const toggleDropdown = () => {
   flex-direction: column;
   align-items: center;
   flex-grow: 1;
+  min-width: 0;
 }
 
 .stat-value {
-  font-size: 1.75rem;
+  font-size: clamp(1.25rem, 4.8vw, 1.75rem);
   font-weight: 700;
   color: #0d6efd;
   line-height: 1.2;
@@ -939,6 +959,7 @@ const toggleDropdown = () => {
   color: #6c757d;
   font-weight: 500;
   margin-top: 0.25rem;
+  overflow-wrap: anywhere;
 }
 
 .queues-section {
@@ -946,19 +967,20 @@ const toggleDropdown = () => {
 }
 
 .queues-title {
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #495057;
   margin: 0 0 0.75rem 0;
   display: flex;
   align-items: center;
+  gap: 0.5rem;
+  overflow-wrap: anywhere;
 }
 
 .metadata-info {
   font-size: 0.75rem;
   color: #6c757d;
   font-weight: 400;
-  margin-left: 0.5rem;
 }
 
 .queues-list {
@@ -967,47 +989,56 @@ const toggleDropdown = () => {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: clamp(6px, 1.8vw, 8px);
 }
 
 .queue-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 0.75rem;
+  padding: clamp(8px, 2.2vw, 12px) clamp(10px, 2.5vw, 12px);
   background-color: #f8f9fa;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 0.85rem;
   color: #495057;
+  min-width: 0; /* prevent children from overflowing */
+  gap: 0.75rem;
 }
 
 .queue-info {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0; /* allow ellipsis */
 }
 
 .queue-name {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .btn-unbind-queue {
+  position: relative;
   background: none;
   border: none;
   color: #dc3545;
-  font-size: 1rem;
+  font-size: 1.1rem;
   cursor: pointer;
-  padding: 0.25rem;
+  padding: 0;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  display: flex;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  opacity: 0.7;
+  opacity: 0.8;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
 }
 
 .btn-unbind-queue:hover {
@@ -1029,7 +1060,7 @@ const toggleDropdown = () => {
 
 .no-queues-message {
   text-align: center;
-  padding: 2rem 1rem;
+  padding: clamp(16px, 3.2vw, 32px);
   border: 2px dashed #e9ecef;
   border-radius: 8px;
   display: flex;
@@ -1047,33 +1078,7 @@ const toggleDropdown = () => {
   margin: 0;
   color: #6c757d;
   font-size: 0.9rem;
-}
-
-.btn-bind-now {
-  background: none;
-  border: 1px solid #0d6efd;
-  color: #0d6efd;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.btn-bind-now:hover,
-.btn-bind-now:focus {
-  background-color: #0d6efd;
-  color: white;
-  outline: none;
-}
-
-.btn-bind-now:focus-visible {
-  outline: 2px solid #0d6efd;
-  outline-offset: 2px;
+  overflow-wrap: anywhere;
 }
 
 /* Footer */
@@ -1086,7 +1091,7 @@ const toggleDropdown = () => {
   background-color: #f8f9fa;
   border: 1px solid #e9ecef;
   color: #495057;
-  padding: 0.75rem;
+  padding: clamp(10px, 2.6vw, 12px);
   border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
@@ -1112,36 +1117,46 @@ const toggleDropdown = () => {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .exchange-card {
-    padding: 1rem;
-  }
-
-  .card-header {
-    margin-bottom: 1rem;
-  }
-
-  .header-content {
-    gap: 0.75rem;
-  }
-
-  .header-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 1.25rem;
-  }
-
   .card-title {
-    font-size: 1.125rem;
-  }
-
-  .stat-value {
-    font-size: 1.5rem;
+    /* Keep title readable with ellipsis; switch to wrap on very narrow screens */
+    white-space: nowrap;
   }
 
   .btn-unbind-queue {
-    width: 20px;
-    height: 20px;
-    font-size: 0.875rem;
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .header-content {
+    align-items: flex-start;
+  }
+
+  .card-header {
+    align-items: flex-start;
+  }
+
+  .card-title {
+    white-space: normal; /* allow wrapping on very small screens */
+    overflow-wrap: anywhere;
+  }
+
+  .queue-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .queue-name {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .btn-unbind-queue {
+    align-self: flex-end;
   }
 }
 

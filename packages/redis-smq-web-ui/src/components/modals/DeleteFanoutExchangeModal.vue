@@ -9,15 +9,14 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useEscapeKey } from '@/composables/useEscapeKey.ts';
 import type { getErrorMessage } from '@/lib/error.ts';
+import BaseModal from '@/components/modals/BaseModal.vue';
 
-// Props and Emits
 const props = defineProps<{
   isVisible: boolean;
   isDeleting: boolean;
   exchangeName: string | null;
-  deleteError: ReturnType<typeof getErrorMessage>;
+  deleteError?: ReturnType<typeof getErrorMessage>;
 }>();
 
 const emit = defineEmits<{
@@ -25,135 +24,129 @@ const emit = defineEmits<{
   (e: 'confirm'): void;
 }>();
 
-// Event Handlers
-function handleConfirm() {
-  if (!props.isDeleting) {
-    emit('confirm');
-  }
-}
-
 function handleClose() {
-  emit('close');
+  if (!props.isDeleting) emit('close');
 }
 
-// Close modal on escape key press
-useEscapeKey([
-  {
-    isVisible: computed(() => props.isVisible),
-    onEscape: handleClose,
-  },
-]);
+function handleConfirm() {
+  if (!props.isDeleting) emit('confirm');
+}
 </script>
 
 <template>
-  <teleport to="body">
-    <div v-if="isVisible" class="modal-overlay" @click.self="handleClose">
-      <div class="modal-container" role="dialog" aria-modal="true">
-        <!-- Modal Header -->
-        <div class="modal-header">
-          <h3 class="modal-title">Delete Fanout Exchange</h3>
-          <button class="btn-close" aria-label="Close" @click="handleClose">
-            &times;
-          </button>
-        </div>
-
-        <!-- Modal Body -->
-        <div class="modal-body">
-          <p class="confirmation-text">
+  <BaseModal
+    :is-visible="isVisible"
+    title="Delete Fanout Exchange"
+    subtitle="This action cannot be undone"
+    icon="bi bi-exclamation-triangle-fill"
+    size="sm"
+    @close="handleClose"
+  >
+    <template #body>
+      <div class="dialog-body">
+        <!-- Confirmation -->
+        <section class="confirmation-section">
+          <p class="message-text">
             Are you sure you want to permanently delete the fanout exchange
-            <strong class="exchange-name">{{ exchangeName }}</strong
-            >?
+            <strong class="exchange-name" :title="exchangeName ?? ''">
+              {{ exchangeName }}
+            </strong>
+            ?
           </p>
-          <p class="warning-text">This action cannot be undone.</p>
+        </section>
 
-          <!-- Error Display -->
-          <div v-if="deleteError" class="alert alert-danger mt-3">
-            <span class="me-2">⚠️</span>
-            {{ deleteError.message }}
+        <!-- Warning -->
+        <section class="warning-section" aria-live="polite">
+          <div class="warning-content">
+            <div class="warning-icon" aria-hidden="true">
+              <i class="bi bi-shield-exclamation"></i>
+            </div>
+            <div class="warning-text">
+              <h4 class="warning-title">Warning</h4>
+              <ul class="warning-list">
+                <li>All queue bindings to this exchange will be removed</li>
+                <li>
+                  Messages published to this exchange will no longer be routed
+                </li>
+                <li>This action cannot be reversed</li>
+              </ul>
+            </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Modal Footer -->
-        <div class="modal-footer">
-          <button class="btn btn-secondary" @click="handleClose">Cancel</button>
-          <button
-            class="btn btn-danger"
-            :disabled="isDeleting"
-            @click="handleConfirm"
-          >
+        <!-- Error -->
+        <section v-if="deleteError" class="error-section" role="alert">
+          <div class="error-content">
+            <div class="error-icon" aria-hidden="true">
+              <i class="bi bi-exclamation-circle-fill"></i>
+            </div>
+            <div class="error-text">
+              <h4 class="error-title">Deletion Failed</h4>
+              <p class="error-message">{{ deleteError }}</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </template>
+
+    <template #footer>
+      <div class="actions">
+        <button
+          class="btn btn-outline-secondary"
+          type="button"
+          :disabled="isDeleting"
+          @click="handleClose"
+        >
+          <i class="bi bi-x-circle me-2" aria-hidden="true"></i>
+          Cancel
+        </button>
+
+        <button
+          class="btn btn-danger"
+          type="button"
+          :disabled="isDeleting"
+          @click="handleConfirm"
+        >
+          <template v-if="isDeleting">
             <span
-              v-if="isDeleting"
               class="spinner-border spinner-border-sm me-2"
               role="status"
               aria-hidden="true"
             ></span>
-            {{ isDeleting ? 'Deleting...' : 'Confirm Delete' }}
-          </button>
-        </div>
+            Deleting...
+          </template>
+          <template v-else>
+            <i class="bi bi-trash-fill me-2" aria-hidden="true"></i>
+            Confirm Delete
+          </template>
+        </button>
       </div>
-    </div>
-  </teleport>
+    </template>
+  </BaseModal>
 </template>
 
 <style scoped>
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1050;
+/* Mobile-first safety: sizing and overflow guards */
+.dialog-body,
+.dialog-body * {
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
-.modal-container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-  width: 100%;
-  max-width: 500px;
-  display: flex;
-  flex-direction: column;
+.dialog-body {
+  display: grid;
+  gap: clamp(12px, 2.8vw, 18px);
+  padding: 0; /* BaseModal provides padding */
+  overflow-x: hidden;
 }
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.modal-title {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #343a40;
-}
-
-.btn-close {
-  background: none;
-  border: none;
-  font-size: 2rem;
-  font-weight: 300;
-  line-height: 1;
-  color: #6c757d;
-  cursor: pointer;
-  padding: 0;
-}
-
-.modal-body {
-  padding: 1.5rem;
-  color: #495057;
-}
-
-.confirmation-text {
-  font-size: 1.1rem;
+.message-text {
+  color: #374151;
+  font-size: 1rem;
   line-height: 1.6;
-  margin-bottom: 1rem;
+  margin: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .exchange-name {
@@ -164,52 +157,137 @@ useEscapeKey([
   border-radius: 4px;
 }
 
-.warning-text {
-  font-size: 1rem;
-  font-weight: 500;
-  color: #856404;
-  background-color: #fff3cd;
-  border: 1px solid #ffeeba;
-  padding: 0.75rem 1.25rem;
-  border-radius: 8px;
+/* Warning section */
+.warning-section {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  padding: clamp(10px, 2.6vw, 14px);
 }
 
-.alert-danger {
-  padding: 1rem;
-  border-radius: 8px;
-}
-
-.modal-footer {
+.warning-content {
   display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.warning-icon {
+  width: 40px;
+  height: 40px;
+  background: #fef3c7;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #d97706;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.warning-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.warning-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #92400e;
+  margin: 0 0 0.25rem 0;
+}
+
+.warning-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: #92400e;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Error section */
+.error-section {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  padding: clamp(10px, 2.6vw, 14px);
+}
+
+.error-content {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.error-icon {
+  width: 40px;
+  height: 40px;
+  background: #fee2e2;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #dc2626;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.error-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.error-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #991b1b;
+  margin: 0 0 0.25rem 0;
+}
+
+.error-message {
+  color: #991b1b;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Footer actions: spacing and mobile behavior */
+.actions {
+  display: flex;
+  align-items: center;
   justify-content: flex-end;
-  gap: 1rem;
-  padding: 1.5rem;
-  border-top: 1px solid #e9ecef;
-  background-color: #f8f9fa;
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
-.btn {
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 500;
-  border: none;
-  cursor: pointer;
+.actions .btn {
+  min-width: 140px;
 }
 
-.btn-danger {
-  background-color: #dc3545;
-  color: white;
+@media (max-width: 576px) {
+  .warning-content,
+  .error-content {
+    flex-direction: column;
+    text-align: left;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .actions .btn {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+  }
 }
 
-.btn-danger:disabled {
-  background-color: #f1aeb5;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  background-color: #6c757d;
-  color: white;
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .actions .btn {
+    transition: none;
+  }
 }
 </style>
