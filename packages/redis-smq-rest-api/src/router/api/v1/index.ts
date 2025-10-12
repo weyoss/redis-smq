@@ -12,8 +12,9 @@ import { exchanges } from './exchanges.js';
 import { messages } from './messages.js';
 import { namespaces } from './namespaces.js';
 import { queues } from './queues.js';
+import { configuration } from './configuration.js';
 
 export const v1: TRouterResourceMap = {
   path: 'v1',
-  resource: [queues, namespaces, messages, exchanges],
+  resource: [configuration, queues, namespaces, messages, exchanges],
 };

@@ -9,6 +9,7 @@
 
 import {
   asClass,
+  asFunction,
   AwilixContainer,
   createContainer,
   InjectionMode,
@@ -29,6 +30,7 @@ import {
   ExchangeTopic,
   ExchangeDirect,
   Exchange,
+  Configuration,
 } from 'redis-smq';
 import { ConsumerGroupsService } from '../services/ConsumerGroupsService.js';
 import { ExchangeDirectService } from '../services/ExchangeDirectService.js';
@@ -45,6 +47,7 @@ import { QueueRateLimitService } from '../services/QueueRateLimitService.js';
 import { QueueScheduledMessagesService } from '../services/QueueScheduledMessagesService.js';
 import { QueuesService } from '../services/QueuesService.js';
 import { IContainer } from './types/container.js';
+import { ConfigurationService } from '../services/ConfigurationService.js';
 
 export class Container {
   private static instance: AwilixContainer<IContainer> | null = null;
@@ -74,6 +77,7 @@ export class Container {
       producer: asClass(Producer)
         .singleton()
         .disposer((i) => new Promise((resolve) => i.shutdown(resolve))),
+      configuration: asFunction(() => Configuration.getInstance()).singleton(),
 
       // Services
       queuesService: asClass(QueuesService),
@@ -94,6 +98,7 @@ export class Container {
       exchangeTopicService: asClass(ExchangeTopicService),
       exchangesService: asClass(ExchangesService),
       consumerGroupsService: asClass(ConsumerGroupsService),
+      configurationService: asClass(ConfigurationService),
     });
   }
 

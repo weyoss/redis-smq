@@ -23,6 +23,7 @@ import {
   Exchange,
   ExchangeDirect,
   ExchangeTopic,
+  Configuration,
 } from 'redis-smq';
 import { IRedisSMQRestApiParsedConfig } from '../../config/index.js';
 import { ConsumerGroupsService } from '../../services/ConsumerGroupsService.js';
@@ -39,6 +40,7 @@ import { QueuePendingMessagesService } from '../../services/QueuePendingMessages
 import { QueueRateLimitService } from '../../services/QueueRateLimitService.js';
 import { QueueScheduledMessagesService } from '../../services/QueueScheduledMessagesService.js';
 import { QueuesService } from '../../services/QueuesService.js';
+import { ConfigurationService } from '../../services/ConfigurationService.js';
 
 export interface IContainer {
   queueManager: QueueManager;
@@ -56,6 +58,7 @@ export interface IContainer {
   exchangeTopic: ExchangeTopic;
   consumerGroups: ConsumerGroups;
   producer: Producer;
+  configuration: Configuration;
   config: IRedisSMQRestApiParsedConfig;
 
   queuesService: QueuesService;
@@ -72,6 +75,7 @@ export interface IContainer {
   exchangeDirectService: ExchangeDirectService;
   exchangeTopicService: ExchangeTopicService;
   consumerGroupsService: ConsumerGroupsService;
+  configurationService: ConfigurationService;
 }
 
 export interface IContextScope<
