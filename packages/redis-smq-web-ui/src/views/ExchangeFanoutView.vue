@@ -28,6 +28,7 @@ import PageContent from '@/components/PageContent.vue';
 import ConfirmationDialogModal from '@/components/modals/ConfirmationDialogModal.vue';
 import BindQueueModal from '@/components/modals/BindQueueModal.vue';
 import UnbindQueueModal from '@/components/modals/UnbindQueueModal.vue';
+import BaseModal from '@/components/modals/BaseModal.vue';
 
 // Composables
 const route = useRoute();
@@ -46,6 +47,7 @@ const isValidRoute = computed(() => !!(exchangeName.value && namespace.value));
 const showDeleteDialog = ref(false);
 const showBindQueueModal = ref(false);
 const showUnbindQueueModal = ref(false);
+const showCannotDeleteDialog = ref(false); // Info dialog when queues are bound
 
 // Selected items for operations
 const selectedQueueForUnbind = ref<string | null>(null);
@@ -152,6 +154,13 @@ const deleteError = computed(() =>
   getErrorMessage(deleteExchangeMutation.error.value?.error),
 );
 
+// Derived message for cannot-delete dialog
+const cannotDeleteMessage = computed(() => {
+  const q = totalQueues.value;
+  const qWord = q === 1 ? 'queue' : 'queues';
+  return `This fanout exchange cannot be deleted because it has ${q} bound ${qWord}. Unbind all queues first.`;
+});
+
 // --- Event Handlers ---
 
 const handleBindQueue = () => {
@@ -164,6 +173,11 @@ const handleUnbindQueue = (queueName: string) => {
 };
 
 const handleDeleteExchange = () => {
+  // Notify user instead of silently disabling the action
+  if (totalQueues.value > 0) {
+    showCannotDeleteDialog.value = true;
+    return;
+  }
   showDeleteDialog.value = true;
 };
 
@@ -191,6 +205,8 @@ const confirmUnbindQueue = async () => {
 };
 
 const confirmDeleteExchange = async () => {
+  // Extra safety: avoid mutation if deletion is not allowed
+  if (totalQueues.value > 0) return;
   await deleteExchangeMutation.mutateAsync({
     ns: namespace.value,
     fanout: exchangeName.value,
@@ -225,10 +241,12 @@ const pageActions = computed((): PageAction[] => [
     label: 'Delete Exchange',
     icon: 'bi bi-trash',
     variant: 'danger',
+    // Keep enabled; only disable while deleting. If blocked, we show an info dialog.
     disabled: isDeletingExchange.value,
     loading: isDeletingExchange.value,
     handler: handleDeleteExchange,
-    tooltip: 'Delete this exchange and all its bindings',
+    tooltip:
+      'Delete this exchange. If any queues are bound, you will be prompted to unbind them first.',
   },
 ]);
 
@@ -393,6 +411,42 @@ onMounted(() => {
       @confirm="confirmDeleteExchange"
       @close="showDeleteDialog = false"
     />
+
+    <!-- Cannot Delete Info Dialog -->
+    <BaseModal
+      :is-visible="showCannotDeleteDialog"
+      title="Cannot Delete Exchange"
+      :subtitle="`Namespace: ${namespace}`"
+      icon="bi bi-exclamation-triangle-fill"
+      size="sm"
+      @close="showCannotDeleteDialog = false"
+    >
+      <template #body>
+        <div class="cannot-delete-body">
+          <p class="cannot-delete-message">
+            {{ cannotDeleteMessage }}
+          </p>
+          <div class="cannot-delete-stats">
+            <div class="stat">
+              <span class="label">Bound Queues</span>
+              <span class="value">{{ totalQueues }}</span>
+            </div>
+          </div>
+          <div class="hint">
+            Unbind all queues from this exchange to proceed with deletion.
+          </div>
+        </div>
+      </template>
+      <template #footer>
+        <button
+          type="button"
+          class="btn btn-primary"
+          @click="showCannotDeleteDialog = false"
+        >
+          OK, got it
+        </button>
+      </template>
+    </BaseModal>
 
     <!-- Bind Queue Modal -->
     <BindQueueModal
@@ -690,6 +744,55 @@ onMounted(() => {
 
 .status-indicator.active i {
   color: #198754;
+}
+
+/* Cannot delete info modal */
+.cannot-delete-body {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0; /* BaseModal provides body padding */
+  overflow-x: hidden;
+}
+
+.cannot-delete-message {
+  margin: 0;
+  color: #495057;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.cannot-delete-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.5rem;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 0.75rem;
+}
+
+.cannot-delete-stats .stat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.cannot-delete-stats .label {
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.cannot-delete-stats .value {
+  color: #212529;
+  font-weight: 700;
+}
+
+.hint {
+  font-size: 0.875rem;
+  color: #6c757d;
 }
 
 /* Responsive Design */

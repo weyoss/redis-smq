@@ -32,6 +32,7 @@ import PageContent from '@/components/PageContent.vue';
 import ConfirmationDialogModal from '@/components/modals/ConfirmationDialogModal.vue';
 import BindQueueModal from '@/components/modals/BindQueueModal.vue';
 import UnbindQueueModal from '@/components/modals/UnbindQueueModal.vue';
+import BaseModal from '@/components/modals/BaseModal.vue'; /* NEW */
 
 // Composables
 const route = useRoute();
@@ -50,6 +51,7 @@ const isValidRoute = computed(() => !!(exchangeName.value && namespace.value));
 const showDeleteDialog = ref(false);
 const showBindQueueModal = ref(false);
 const showUnbindQueueModal = ref(false);
+const showCannotDeleteDialog = ref(false); // NEW
 
 // Selected items for operations
 const selectedQueueForUnbind = ref<{
@@ -259,6 +261,9 @@ const totalQueues = computed(() => {
 
 const totalBindingPatterns = computed(() => bindingPatterns.value.length);
 
+// Policy: a topic exchange cannot be deleted while any queues are bound
+const canDeleteExchange = computed(() => totalQueues.value === 0);
+
 // Loading states for mutations
 const isBindingQueue = computed(() => bindQueueMutation.isPending.value);
 const isUnbindingQueue = computed(() => unbindQueueMutation.isPending.value);
@@ -288,6 +293,11 @@ const handleUnbindQueue = (queueName: string, bindingPattern: string) => {
 };
 
 const handleDeleteExchange = () => {
+  // Notify user instead of disabling the action
+  if (!canDeleteExchange.value) {
+    showCannotDeleteDialog.value = true; // NEW: show info modal
+    return;
+  }
   showDeleteDialog.value = true;
 };
 
@@ -325,6 +335,9 @@ const confirmUnbindQueue = async () => {
 };
 
 const confirmDeleteExchange = async () => {
+  // Extra safety
+  if (!canDeleteExchange.value) return;
+
   await deleteExchangeMutation.mutateAsync({
     ns: namespace.value,
     topic: exchangeName.value,
@@ -359,10 +372,12 @@ const pageActions = computed((): PageAction[] => [
     label: 'Delete Exchange',
     icon: 'bi bi-trash',
     variant: 'danger',
-    disabled: isDeletingExchange.value,
+    // Keep enabled; only disable while deleting
+    disabled: isDeletingExchange.value, // CHANGED
     loading: isDeletingExchange.value,
     handler: handleDeleteExchange,
-    tooltip: 'Delete this exchange and all its bindings',
+    tooltip:
+      'Delete this exchange. If any queues are bound, you will be prompted to unbind them first.',
   },
 ]);
 
@@ -412,6 +427,15 @@ onMounted(() => {
   if (!isValidRoute.value) {
     router.push('/exchanges');
   }
+});
+
+// NEW: derived info message for the cannot-delete dialog
+const cannotDeleteMessage = computed(() => {
+  const queues = totalQueues.value;
+  const patterns = totalBindingPatterns.value;
+  const qWord = queues === 1 ? 'queue' : 'queues';
+  const pWord = patterns === 1 ? 'binding pattern' : 'binding patterns';
+  return `This topic exchange cannot be deleted because it has ${queues} bound ${qWord} across ${patterns} ${pWord}. Unbind all queues first.`;
 });
 </script>
 
@@ -527,12 +551,52 @@ onMounted(() => {
       :is-loading="isDeletingExchange"
       :error="deleteError"
       title="Delete Topic Exchange"
-      :message="`Are you sure you want to delete the topic exchange '${exchangeName}'? This will remove all queue bindings and cannot be undone.`"
+      :message="`Are you sure you want to delete the topic exchange '${exchangeName}'?`"
       confirm-text="Delete Exchange"
       variant="danger"
       @confirm="confirmDeleteExchange"
       @close="showDeleteDialog = false"
     />
+
+    <!-- NEW: Cannot Delete Info Dialog -->
+    <BaseModal
+      :is-visible="showCannotDeleteDialog"
+      title="Cannot Delete Exchange"
+      :subtitle="`Namespace: ${namespace}`"
+      icon="bi bi-exclamation-triangle-fill"
+      size="sm"
+      @close="showCannotDeleteDialog = false"
+    >
+      <template #body>
+        <div class="cannot-delete-body">
+          <p class="cannot-delete-message">
+            {{ cannotDeleteMessage }}
+          </p>
+          <div class="cannot-delete-stats">
+            <div class="stat">
+              <span class="label">Binding Patterns:</span>
+              <span class="value">{{ totalBindingPatterns }}</span>
+            </div>
+            <div class="stat">
+              <span class="label">Bound Queues:</span>
+              <span class="value">{{ totalQueues }}</span>
+            </div>
+          </div>
+          <div class="hint">
+            Unbind all queues from this exchange to proceed with deletion.
+          </div>
+        </div>
+      </template>
+      <template #footer>
+        <button
+          type="button"
+          class="btn btn-primary"
+          @click="showCannotDeleteDialog = false"
+        >
+          OK, got it
+        </button>
+      </template>
+    </BaseModal>
 
     <!-- Bind Queue Modal -->
     <BindQueueModal
@@ -847,6 +911,56 @@ onMounted(() => {
 
 .no-queues i {
   font-size: 1.25rem;
+}
+
+/* NEW: Cannot delete info modal styles */
+.cannot-delete-body {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0; /* BaseModal provides padding */
+  overflow-x: hidden;
+}
+
+.cannot-delete-message {
+  margin: 0;
+  color: #495057;
+  line-height: 1.5;
+  text-align: left;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.cannot-delete-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.5rem;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 0.75rem;
+}
+
+.cannot-delete-stats .stat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.cannot-delete-stats .label {
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.cannot-delete-stats .value {
+  color: #212529;
+  font-weight: 700;
+}
+
+.hint {
+  font-size: 0.875rem;
+  color: #6c757d;
 }
 
 /* Responsive Design */
