@@ -3,6 +3,35 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.5](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.4...v9.0.0-next.5) (2025-10-12)
+
+### ✨ Features
+
+- **redis-smq-web-ui:** improve mobile experience ([1230bfe](https://github.com/weyoss/redis-smq/commit/1230bfee88f2d6ed2dea4c56bd4b7e4c7dd216df))
+- **redis-smq-web-ui:** notify about disabled message storage for ack/dl messages ([b3ecc52](https://github.com/weyoss/redis-smq/commit/b3ecc527548c770c37829cc69f716c27b8df5f14))
+
+### 🐛 Bug Fixes
+
+- **redis-smq-web-ui:** fix sudden CreateExchangeModal closure ([b6b2b0e](https://github.com/weyoss/redis-smq/commit/b6b2b0edb6d4d1c4fc022d2cbaf2f21101a61c4a))
+
+### 🚀 Chore
+
+- **redis-smq-web-ui:** update dependencies to latest versions ([f48c578](https://github.com/weyoss/redis-smq/commit/f48c578eaf84b04bdb700d808b5acc60396fc9e5))
+
+### 📝 Documentation
+
+- add GitHub note callouts in README files ([86e855a](https://github.com/weyoss/redis-smq/commit/86e855ae7aea91e3295301671b8da3249164ea40))
+- **redis-smq-web-ui:** fix license statement ([0e37a16](https://github.com/weyoss/redis-smq/commit/0e37a16143bc458de9b33e78e2be9f1757897f33))
+- **redis-smq-web-ui:** improve README clarity and structure ([d85bffe](https://github.com/weyoss/redis-smq/commit/d85bffede56fcc17651af1ac7d0fb0a03cb331ce))
+- standardize "next" branch reference ([15f3e4f](https://github.com/weyoss/redis-smq/commit/15f3e4f4347fd4f76f9dc167dd72f174f178ab8e))
+- update README files for next branch with pre-release badges and doc links ([463250b](https://github.com/weyoss/redis-smq/commit/463250bbd754d44ae6741abcf4e2d62995aef620))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-web-ui:** migrate scripts utils to use RedisSMQ class ([30797f8](https://github.com/weyoss/redis-smq/commit/30797f855272f5c2f3456224c0a91a2301d2eb39))
+- **redis-smq-web-ui:** remove unused CreateFanoutExchangeModal ([79f3fda](https://github.com/weyoss/redis-smq/commit/79f3fdae50c2f1cc21592e7a8759daf98be09fe8))
+- **redis-smq-web-ui:** reorder navigation menu items ([235e81c](https://github.com/weyoss/redis-smq/commit/235e81c98a4df75b229b89227e06c2d7aaded068))
+
 ## [9.0.0-next.4](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.3...v9.0.0-next.4) (2025-10-09)
 
 ### ✨ Features

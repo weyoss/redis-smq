@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.5](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.4...v9.0.0-next.5) (2025-10-12)
+
+### 📝 Documentation
+
+- add GitHub note callouts in README files ([86e855a](https://github.com/weyoss/redis-smq/commit/86e855ae7aea91e3295301671b8da3249164ea40))
+- **redis-smq-common:** update docs and clean up ([21cedc6](https://github.com/weyoss/redis-smq/commit/21cedc648fb8df7cc58ea44fe16790ccacbb92a5))
+- standardize "next" branch reference ([15f3e4f](https://github.com/weyoss/redis-smq/commit/15f3e4f4347fd4f76f9dc167dd72f174f178ab8e))
+- update README files for next branch with pre-release badges and doc links ([463250b](https://github.com/weyoss/redis-smq/commit/463250bbd754d44ae6741abcf4e2d62995aef620))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-common:** upgrade node-redis client to v5 ([0746f52](https://github.com/weyoss/redis-smq/commit/0746f52a3080bb80398b4a8ce8847910806363ab))
+
 ## [9.0.0-next.4](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.3...v9.0.0-next.4) (2025-10-09)
 
 ### ⚠ BREAKING CHANGES
