@@ -10,6 +10,7 @@ mechanism.
 - When using the RedisSMQ class and EventBus is enabled, RedisSMQ will start and manage the EventBus for you.
 
 For the full API, see the EventBus API and event type definitions:
+
 - EventBus class: [API Reference](api/classes/EventBus.md)
 - Events:
   - [TConsumerEvent](api/type-aliases/TConsumerEvent.md)
@@ -20,15 +21,6 @@ For the full API, see the EventBus API and event type definitions:
   - [TConsumerDequeueMessageEvent](api/type-aliases/TConsumerDequeueMessageEvent.md)
   - [TProducerEvent](api/type-aliases/TProducerEvent.md)
   - [TQueueEvent](api/type-aliases/TQueueEvent.md)
-
-## Prerequisites
-
-Initialize RedisSMQ once per process before using EventBus.
-
-- Option A: Initialize with Redis connection (recommended for most)
-- Option B: Initialize with a full RedisSMQ configuration (persisted in Redis)
-
-See Configuration guide: [configuration.md](configuration.md)
 
 ## Enabling the EventBus
 
@@ -60,9 +52,10 @@ RedisSMQ.initializeWithConfig(
 ```
 
 Notes:
-- Enabling EventBus after initialization via configuration updates will persist the setting, but the EventBus will be 
-started automatically only during initialization. Prefer enabling it before calling 
-`RedisSMQ.initialize/initializeWithConfig`.
+
+- Enabling EventBus after initialization via configuration updates will persist the setting, but the EventBus will be
+  started automatically only during initialization. Prefer enabling it before calling
+  `RedisSMQ.initialize/initializeWithConfig`.
 
 ## Getting the EventBus instance
 
@@ -80,6 +73,7 @@ const eventBus = EventBus.getInstance();
 Subscribe using the event names defined by the type aliases above.
 
 Example: subscribe to a consumer message acknowledgment event:
+
 ```typescript
 import { EventBus } from 'redis-smq';
 
@@ -95,14 +89,14 @@ eventBus.on(
 );
 ```
 
-You may subscribe to any supported event (consumer lifecycle, producer lifecycle, queue changes, heartbeats, 
+You may subscribe to any supported event (consumer lifecycle, producer lifecycle, queue changes, heartbeats,
 message flow, etc.) using the event names listed in the API links above.
 
 ## Shutdown
 
-- If components were created via the `RedisSMQ` class (recommended), prefer calling `RedisSMQ.shutdown(cb)`. It will 
-close shared infrastructure and the EventBus automatically when enabled; you do not need to shut down EventBus 
-separately.
+- If components were created via the `RedisSMQ` class (recommended), prefer calling `RedisSMQ.shutdown(cb)`. It will
+  close shared infrastructure and the EventBus automatically when enabled; you do not need to shut down EventBus
+  separately.
 - If you explicitly need to stop the EventBus (for example, outside of a full RedisSMQ shutdown), call:
 
 ```typescript
@@ -117,13 +111,13 @@ EventBus.shutdown((err) => {
 ## Troubleshooting
 
 - Ensure RedisSMQ has been initialized before accessing EventBus:
-    - Call `RedisSMQ.initialize(...)` or `RedisSMQ.initializeWithConfig(...)` at startup.
-    - Access EventBus via `EventBus.getInstance()` after initialization completes.
+  - Call `RedisSMQ.initialize(...)` or `RedisSMQ.initializeWithConfig(...)` at startup.
+  - Access EventBus via `EventBus.getInstance()` after initialization completes.
 - No events received:
-    - Confirm `eventBus.enabled` is true in the configuration you initialized with.
-    - Verify you are subscribing to correct event names (see API type alias pages).
+  - Confirm `eventBus.enabled` is true in the configuration you initialized with.
+  - Verify you are subscribing to correct event names (see API type alias pages).
 - Graceful shutdown:
-    - Prefer a single `RedisSMQ.shutdown(cb)` call to close all tracked components and the EventBus at application exit.
+  - Prefer a single `RedisSMQ.shutdown(cb)` call to close all tracked components and the EventBus at application exit.
 
-By enabling the EventBus and subscribing to the desired channels, you can observe internal activity across producers, 
+By enabling the EventBus and subscribing to the desired channels, you can observe internal activity across producers,
 consumers, and queues with minimal code.

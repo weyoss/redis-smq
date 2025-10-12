@@ -2,33 +2,29 @@
 
 # Message Exchanges
 
-RedisSMQ exchanges provide intelligent message routing to deliver messages to one or multiple queues based on routing 
+RedisSMQ exchanges provide intelligent message routing to deliver messages to one or multiple queues based on routing
 strategies.
-
-Important
-- Initialize RedisSMQ once per process using `RedisSMQ.initialize(...)` or `RedisSMQ.initializeWithConfig(...)`.
-- When components are created via RedisSMQ factory methods, you typically do not need to shut them down individually; 
-prefer a single `RedisSMQ.shutdown(cb)` at application exit to close shared infrastructure and tracked components.
 
 ## Overview
 
-Instead of sending messages directly to specific queues, you can publish messages to exchanges, which route them to 
+Instead of sending messages directly to specific queues, you can publish messages to exchanges, which route them to
 appropriate queues based on routing rules.
 
 Performance note
-- Fastest: Direct Queue Publishing (no exchange). If you know the destination queue, `setQueue('...')` and do not set 
-an exchange. This avoids exchange lookups and is faster than using a direct exchange.
+
+- Fastest: Direct Queue Publishing (no exchange). If you know the destination queue, `setQueue('...')` and do not set
+  an exchange. This avoids exchange lookups and is faster than using a direct exchange.
 - Next-best: Direct exchange (exact-match routing).
 - Heavier: Topic exchange (wildcard matching).
 - Fanout: Broadcast to all bound queues (multiplies work).
 
 ### Exchange Types
 
-| Type        | Routing Strategy                | Use Case                                     |
-|-------------|---------------------------------|----------------------------------------------|
-| Direct      | Exact routing key match         | Point-to-point messaging, task queues        |
-| Topic       | Pattern matching with wildcards | Event-driven architecture, selective routing |
-| Fanout      | Broadcast to all bound queues   | Notifications, logging, broadcasting         |
+| Type   | Routing Strategy                | Use Case                                     |
+| ------ | ------------------------------- | -------------------------------------------- |
+| Direct | Exact routing key match         | Point-to-point messaging, task queues        |
+| Topic  | Pattern matching with wildcards | Event-driven architecture, selective routing |
+| Fanout | Broadcast to all bound queues   | Notifications, logging, broadcasting         |
 
 ### Key Benefits
 
@@ -40,7 +36,7 @@ an exchange. This avoids exchange lookups and is faster than using a direct exch
 
 ### Direct Queue Publishing (No Exchange)
 
-For simple point-to-point messaging with the highest performance, publish directly to a queue. This is faster than 
+For simple point-to-point messaging with the highest performance, publish directly to a queue. This is faster than
 using a direct exchange.
 
 ```javascript
@@ -49,7 +45,7 @@ using a direct exchange.
 const { ProducibleMessage } = require('redis-smq');
 
 const message = new ProducibleMessage()
-  .setQueue('user.notifications')    // direct queue publishing (fastest path)
+  .setQueue('user.notifications') // direct queue publishing (fastest path)
   .setBody({ userId: 123, message: 'Welcome!' });
 ```
 
@@ -83,6 +79,7 @@ const fanoutMessage = new ProducibleMessage()
 ## Exchange Setup
 
 Important
+
 - Exchanges are created automatically when you first bind a queue to them. No explicit creation step is required.
 
 ### Binding Queues to Exchanges
@@ -94,10 +91,15 @@ const { RedisSMQ } = require('redis-smq');
 
 // Direct Exchange
 const directExchange = RedisSMQ.createDirectExchange();
-directExchange.bindQueue('order-processor', 'orders', 'order.created', (err) => {
-  if (err) console.error('Binding failed:', err);
-  else console.log('Queue bound to direct exchange');
-});
+directExchange.bindQueue(
+  'order-processor',
+  'orders',
+  'order.created',
+  (err) => {
+    if (err) console.error('Binding failed:', err);
+    else console.log('Queue bound to direct exchange');
+  },
+);
 
 // Topic Exchange
 const topicExchange = RedisSMQ.createTopicExchange();
@@ -124,14 +126,19 @@ Routes messages to queues with exact routing key matches.
 'use strict';
 
 // Setup binding
-directExchange.bindQueue('payment-processor', 'payments', 'payment.process', callback);
+directExchange.bindQueue(
+  'payment-processor',
+  'payments',
+  'payment.process',
+  callback,
+);
 
 // Send message
 const { ProducibleMessage } = require('redis-smq');
 
 const message = new ProducibleMessage()
   .setDirectExchange('payments')
-  .setExchangeRoutingKey('payment.process')  // Must match exactly
+  .setExchangeRoutingKey('payment.process') // Must match exactly
   .setBody({ amount: 99.99, currency: 'USD' });
 ```
 
@@ -139,7 +146,7 @@ const message = new ProducibleMessage()
 
 Routes messages using AMQP-style wildcard patterns:
 
-- '*' matches exactly one word
+- '\*' matches exactly one word
 - '#' matches zero or more words
 - Words are separated by dots (.)
 
@@ -156,17 +163,17 @@ const { ProducibleMessage } = require('redis-smq');
 
 const message = new ProducibleMessage()
   .setTopicExchange('events')
-  .setExchangeRoutingKey('order.created')  // Matches 'order.*' and '*.created'
+  .setExchangeRoutingKey('order.created') // Matches 'order.*' and '*.created'
   .setBody({ orderId: 'ORD-001', customerId: 'CUST-123' });
 ```
 
 Pattern examples:
 
-| Pattern     | Matches                                       | Does Not Match                 |
-|-------------|-----------------------------------------------|--------------------------------|
-| order.*     | order.created, order.updated                  | order, order.payment.completed |
-| order.#     | order, order.created, order.payment.completed | user.created                   |
-| *.created   | order.created, user.created                   | order.updated                  |
+| Pattern    | Matches                                       | Does Not Match                 |
+| ---------- | --------------------------------------------- | ------------------------------ |
+| order.\*   | order.created, order.updated                  | order, order.payment.completed |
+| order.#    | order, order.created, order.payment.completed | user.created                   |
+| \*.created | order.created, user.created                   | order.updated                  |
 
 ### 3. Fanout Exchange
 
@@ -207,7 +214,10 @@ producer.run((err) => {
 
   producer.produce(message, (produceErr, messageIds) => {
     if (produceErr) {
-      if (produceErr.message && produceErr.message.includes('No matching queues')) {
+      if (
+        produceErr.message &&
+        produceErr.message.includes('No matching queues')
+      ) {
         console.warn('No queues matched routing criteria');
       } else {
         console.error('Failed to produce message:', produceErr);
@@ -224,6 +234,7 @@ producer.run((err) => {
 ### Deleting Exchanges
 
 Important
+
 - An exchange cannot be deleted if it has bound queues. Unbind all queues first.
 
 ```javascript
@@ -252,7 +263,12 @@ directExchange.getRoutingKeys('orders', (err, keys) => {
 'use strict';
 
 // Direct Exchange
-directExchange.unbindQueue('queue-name', 'exchange-name', 'routing.key', callback);
+directExchange.unbindQueue(
+  'queue-name',
+  'exchange-name',
+  'routing.key',
+  callback,
+);
 
 // Topic Exchange
 topicExchange.unbindQueue('queue-name', 'exchange-name', 'pattern.*', callback);
@@ -266,11 +282,13 @@ fanoutExchange.unbindQueue('queue-name', 'exchange-name', callback);
 ### 1. When to Use Each Approach
 
 Direct Queue (`setQueue()`) — use for:
+
 - Simple point-to-point messaging
 - Known destination queues
 - Minimal routing overhead and best performance
 
 Exchanges — use for:
+
 - Multiple destination queues
 - Dynamic routing based on content, patterns, or topology that changes without touching producers
 - Decoupling producers from consumers
@@ -281,14 +299,14 @@ Use hierarchical naming for better routing:
 
 ```javascript
 // Good: Clear hierarchy
-'user.account.created'
-'order.payment.completed'
-'system.alert.critical'
+'user.account.created';
+'order.payment.completed';
+'system.alert.critical';
 
 // Avoid: Flat naming
-'user_created'
-'payment_done'
-'critical_alert'
+'user_created';
+'payment_done';
+'critical_alert';
 ```
 
 ### 3. Setup Strategy
@@ -355,7 +373,7 @@ const event = new ProducibleMessage()
   .setBody({
     userId: 123,
     email: 'user@example.com',
-    timestamp: new Date()
+    timestamp: new Date(),
   });
 
 // Multiple subscribers can bind to:
@@ -383,7 +401,7 @@ const notification = new ProducibleMessage()
   .setBody({
     userId: 123,
     message: 'Your order has shipped!',
-    priority: 'high'
+    priority: 'high',
   });
 ```
 

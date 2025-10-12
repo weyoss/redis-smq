@@ -2,21 +2,8 @@
 
 # Queue Delivery Models
 
-RedisSMQ offers two reliable message delivery models: Point-to-Point and Pub/Sub. This guide explains each model with 
+RedisSMQ offers two reliable message delivery models: Point-to-Point and Pub/Sub. This guide explains each model with
 updated examples using the RedisSMQ class, along with best practices.
-
-## Prerequisites
-
-- Initialize RedisSMQ once per process:
-  - `RedisSMQ.initialize(redisConfig, cb)`
-  - or `RedisSMQ.initializeWithConfig(redisSMQConfig, cb)`
-- Create components via RedisSMQ factory methods (recommended), for example:
-  - `const queueManager = RedisSMQ.createQueueManager()`
-  - `const producer = RedisSMQ.createProducer()`
-  - `const consumer = RedisSMQ.createConsumer()`
-- When components are created through RedisSMQ factory methods, you typically do not need to shut them down 
-individually. Prefer calling `RedisSMQ.shutdown(cb)` at application exit to close shared infrastructure and tracked 
-components.
 
 ---
 
@@ -118,7 +105,8 @@ RedisSMQ.initialize(
     };
 
     consumer.consume('my-queue', messageHandler, (consumeErr) => {
-      if (consumeErr) console.error('Error adding message handler:', consumeErr);
+      if (consumeErr)
+        console.error('Error adding message handler:', consumeErr);
       else console.log('Message handler added successfully');
     });
 
@@ -138,8 +126,8 @@ RedisSMQ.initialize(
 
 ![Pub/Sub Delivery Model High-level View](redis-smq-pubsub-delivery-model-highlevel-view.png)
 
-In the Pub/Sub model, messages are delivered to all consumer groups of a queue. Within each consumer group, only one 
-consumer receives the message. Every group gets a copy, enabling fan-out while keeping per-group ordering and retry 
+In the Pub/Sub model, messages are delivered to all consumer groups of a queue. Within each consumer group, only one
+consumer receives the message. Every group gets a copy, enabling fan-out while keeping per-group ordering and retry
 semantics.
 
 ### Consumer Groups
@@ -177,7 +165,7 @@ RedisSMQ.initialize(
 );
 ```
 
-Refer to the [ConsumerGroups class](api/classes/ConsumerGroups.md) for managing consumer groups. In many cases, a group 
+Refer to the [ConsumerGroups class](api/classes/ConsumerGroups.md) for managing consumer groups. In many cases, a group
 can also be created implicitly the first time you start consuming with a given groupId.
 
 ### Creating a Pub/Sub Queue
@@ -241,7 +229,8 @@ RedisSMQ.initialize(
 
       producer.produce(message, (produceErr, ids) => {
         if (produceErr) console.error('Error producing message:', produceErr);
-        else console.log('Successfully produced to group(s), message IDs:', ids);
+        else
+          console.log('Successfully produced to group(s), message IDs:', ids);
       });
     });
   },
@@ -279,7 +268,8 @@ RedisSMQ.initialize(
       { queue: 'my-pubsub-queue', groupId: 'my-app-group-1' },
       messageHandler,
       (consumeErr) => {
-        if (consumeErr) console.error('Error adding message handler:', consumeErr);
+        if (consumeErr)
+          console.error('Error adding message handler:', consumeErr);
         else console.log('Message handler added');
       },
     );

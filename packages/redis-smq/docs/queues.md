@@ -6,12 +6,7 @@ In RedisSMQ, a queue plays a crucial role in managing messages produced by produ
 The system supports three distinct types of queues: LIFO (Last In, First Out), FIFO (First In, First Out), and
 Priority queues.
 
-## Prerequisites
-
-- Initialize RedisSMQ once per process using `RedisSMQ.initialize(...)` or `RedisSMQ.initializeWithConfig(...)`.
-- Create queue-related managers via RedisSMQ factory methods, for example: `const queueManager = RedisSMQ.createQueueManager()`.
-- When components are created via RedisSMQ factory methods, you typically do not need to shut them down individually. 
-Prefer calling `RedisSMQ.shutdown(cb)` at application exit to close shared infrastructure and tracked components.
+---
 
 ## Reliability
 
@@ -155,7 +150,7 @@ Queue names must adhere to the following criteria:
 - Composed solely of alphanumeric characters` [a-z0-9]` (e.g., queue$ is invalid).
 - May include `-` and `_` characters (e.g., `my-queue` and `my_queue` are valid).
 - Must start with an alphabetic character `[a-z]` and end with an alphanumeric character `[a-z0-9]` (e.g., `3queue` and
-  `my_queue`_ are invalid).
+  `my_queue`\_ are invalid).
 - Can include dots (`.`) for hierarchical naming (e.g., `sports.football`). Refer
   to [Topic Exchange](message-exchanges.md#2-topic-exchange) for further details.
 

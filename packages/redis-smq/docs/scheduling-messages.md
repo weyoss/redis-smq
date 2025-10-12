@@ -2,9 +2,8 @@
 
 # Scheduling Messages
 
-## Overview
-
 RedisSMQ lets you schedule one-time or recurring message deliveries using per-message options on the ProducibleMessage class:
+
 - `setScheduledDelay(delayMs)` — deliver once after a fixed delay
 - `setScheduledCRON(cron)` — deliver on a CRON schedule
 - `setScheduledRepeat(n)` — repeat N times after the initial delivery
@@ -13,19 +12,10 @@ RedisSMQ lets you schedule one-time or recurring message deliveries using per-me
 
 You produce scheduled messages like any other message using `Producer.produce()`.
 
-## Prerequisites
-
-- Initialize RedisSMQ once per process before creating components:
-  - `RedisSMQ.initialize(redisConfig, cb)`, or
-  - `RedisSMQ.initializeWithConfig(redisSMQConfig, cb)`
-- Create components via RedisSMQ factory methods (recommended):
-  - `const producer = RedisSMQ.createProducer()`
-- When components are created via RedisSMQ, you typically do not need to shut them down individually. Prefer a 
-single `RedisSMQ.shutdown(cb)` at application exit to close shared infrastructure and tracked components.
-
 ## Choosing a target
 
 Each scheduled message must target exactly one destination:
+
 - Queue: `ProducibleMessage.setQueue('queue-name')` — fastest routing path (direct queue publishing, no exchange)
 - Exchange:
   - Direct: `setDirectExchange('name')` + `setExchangeRoutingKey('key')`
@@ -58,8 +48,8 @@ RedisSMQ.initialize(
 
       const msg = new ProducibleMessage()
         .setBody({ hello: 'world' })
-        .setQueue('test_queue')          // direct queue publishing (fastest)
-        .setScheduledDelay(30_000);      // deliver once after 30 seconds
+        .setQueue('test_queue') // direct queue publishing (fastest)
+        .setScheduledDelay(30_000); // deliver once after 30 seconds
 
       producer.produce(msg, (e, ids) => {
         if (e) return console.error('Produce failed:', e);
@@ -94,9 +84,9 @@ RedisSMQ.initialize(
       const msg = new ProducibleMessage()
         .setQueue('reports_queue')
         .setBody({ report: 'daily-stats' })
-        .setScheduledCRON('0 0 10 * * *')  // at 10:00:00 every day
-        .setScheduledRepeat(3)             // repeat 3 times after the initial run
-        .setScheduledRepeatPeriod(600_000);// every 10 minutes
+        .setScheduledCRON('0 0 10 * * *') // at 10:00:00 every day
+        .setScheduledRepeat(3) // repeat 3 times after the initial run
+        .setScheduledRepeatPeriod(600_000); // every 10 minutes
 
       producer.produce(msg, (e, ids) => {
         if (e) return console.error('Produce failed:', e);
@@ -130,8 +120,8 @@ RedisSMQ.initialize(
       const msg = new ProducibleMessage()
         .setQueue('heartbeat_queue')
         .setBody({ type: 'heartbeat' })
-        .setScheduledDelay(5_000)          // initial delivery after 5 seconds
-        .setScheduledRepeat(5)             // then 5 repeats
+        .setScheduledDelay(5_000) // initial delivery after 5 seconds
+        .setScheduledRepeat(5) // then 5 repeats
         .setScheduledRepeatPeriod(60_000); // every minute
 
       producer.produce(msg, (e, ids) => {
@@ -159,7 +149,7 @@ msg.resetScheduledParams(); // clears CRON, delay, repeat, and repeat period
 
 ## Managing Scheduled Messages
 
-Use `QueueScheduledMessages` to inspect or purge scheduled messages. Use MessageManager to retrieve or delete a 
+Use `QueueScheduledMessages` to inspect or purge scheduled messages. Use MessageManager to retrieve or delete a
 specific message by ID.
 
 ### Count and list scheduled messages

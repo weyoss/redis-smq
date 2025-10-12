@@ -2,22 +2,13 @@
 
 # Producing Messages
 
-The Producer publishes messages to a target queue or via exchanges (direct, topic, fanout). A single Producer instance 
+The Producer publishes messages to a target queue or via exchanges (direct, topic, fanout). A single Producer instance
 can efficiently send messages—including priority or scheduled ones—to one or multiple queues.
-
-Important
-- Initialize RedisSMQ once per process before creating a Producer.
-- When components are created through RedisSMQ factory methods, you typically do not need to shut them down 
-individually; prefer RedisSMQ.shutdown(cb) to close shared infrastructure and tracked components.
-
-See also:
-- Initialization: [configuration.md](configuration.md)
-- Exchanges overview: [message-exchanges.md](message-exchanges.md)
-- API: [api/classes/Producer.md](api/classes/Producer.md) and [api/classes/ProducibleMessage.md](api/classes/ProducibleMessage.md)
 
 ## Targeting a queue or an exchange
 
 Before producing, you must set exactly one target on the message:
+
 - Queue
   - ProducibleMessage.setQueue('queue-name')
 - Direct exchange (requires routing key)
@@ -25,7 +16,7 @@ Before producing, you must set exactly one target on the message:
   - ProducibleMessage.setExchangeRoutingKey('routing.key')
 - Topic exchange (requires routing key/pattern)
   - ProducibleMessage.setTopicExchange('exchange-name')
-  - ProducibleMessage.setExchangeRoutingKey('user.created' | 'user.*' | 'user.#' ...)
+  - ProducibleMessage.setExchangeRoutingKey('user.created' | 'user.\*' | 'user.#' ...)
 - Fanout exchange (no routing key)
   - ProducibleMessage.setFanoutExchange('exchange-name')
 
@@ -61,9 +52,9 @@ RedisSMQ.initialize(
 
       // 3) Build a message targeting a queue
       const msg = new ProducibleMessage()
-        .setBody({ hello: 'world' })  // payload
-        .setTTL(3600000)              // TTL in ms (optional)
-        .setQueue('test_queue');      // target a queue
+        .setBody({ hello: 'world' }) // payload
+        .setTTL(3600000) // TTL in ms (optional)
+        .setQueue('test_queue'); // target a queue
 
       producer.produce(msg, (produceErr, messageIds) => {
         if (produceErr) {
@@ -187,12 +178,14 @@ RedisSMQ.initialize(
 
 - Priority: Set with `ProducibleMessage.setPriority(...)` when producing to a priority queue.
 - Retries: Configure retry behavior with `setRetryThreshold(...)` and `setRetryDelay(...)`.
-- Scheduling: Use `setScheduledDelay(...)`, `setScheduledCRON(...)`, and `setScheduledRepeat(...)` for delayed/recurring 
-delivery.
+- Scheduling: Use `setScheduledDelay(...)`, `setScheduledCRON(...)`, and `setScheduledRepeat(...)` for delayed/recurring
+  delivery.
 - Timeout: Use `setConsumeTimeout(...)` to fail a message if the consumer exceeds the processing window.
 
 ## Further Reading
 
-- Message Exchanges: [message-exchanges.md](message-exchanges.md)
+- Initialization: [configuration.md](configuration.md)
 - Producer API: [api/classes/Producer.md](api/classes/Producer.md)
 - ProducibleMessage API: [api/classes/ProducibleMessage.md](api/classes/ProducibleMessage.md)
+- Exchanges overview: [message-exchanges.md](message-exchanges.md)
+- Message Exchanges: [message-exchanges.md](message-exchanges.md)

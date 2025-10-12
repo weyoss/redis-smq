@@ -5,6 +5,8 @@
 This document provides a high-level overview of the RedisSMQ architecture and how it facilitates reliable message
 queuing and processing at scale.
 
+---
+
 ## High-level architecture
 
 At a glance, RedisSMQ consists of:
@@ -84,19 +86,16 @@ performance.
 ## Exchanges vs direct publishing
 
 - **Direct Queue Publishing (No Exchange)**
-
   - Producer sets the target queue (setQueue(...)) and does not set an exchange
   - Fastest path: avoids exchange lookup/binding resolution
   - Best for known destinations and task queues
 
 - **Direct Exchange**
-
   - Exact routing key match to bound queues
   - Lightweight routing with low overhead
   - Useful when decoupling producers from queue names but still using deterministic routing
 
 - **Topic Exchange**
-
   - Wildcard routing (AMQP-style patterns with . separator, \* and # wildcards)
   - Flexible and dynamic, but with added matching overhead
 
@@ -110,7 +109,6 @@ delivery models.
 ## Delivery models
 
 - **Point-to-Point**
-
   - For each message, only one consumer processes it at a time
   - Ideal for task distribution and work queues
 

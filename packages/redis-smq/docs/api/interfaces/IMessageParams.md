@@ -18,85 +18,85 @@
 
 > **body**: `TBody`
 
-***
+---
 
 ### consumerGroupId
 
-> **consumerGroupId**: `null` \| `string`
+> **consumerGroupId**: `string` \| `null`
 
-***
+---
 
 ### consumeTimeout
 
 > **consumeTimeout**: `number`
 
-***
+---
 
 ### createdAt
 
 > **createdAt**: `number`
 
-***
+---
 
 ### destinationQueue
 
 > **destinationQueue**: [`IQueueParams`](IQueueParams.md)
 
-***
+---
 
 ### exchange
 
-> **exchange**: `null` \| [`IExchangeParsedParams`](IExchangeParsedParams.md)
+> **exchange**: [`IExchangeParsedParams`](IExchangeParsedParams.md) \| `null`
 
-***
+---
 
 ### priority
 
-> **priority**: `null` \| `number`
+> **priority**: `number` \| `null`
 
-***
+---
 
 ### queue
 
-> **queue**: `null` \| [`IQueueParams`](IQueueParams.md)
+> **queue**: [`IQueueParams`](IQueueParams.md) \| `null`
 
-***
+---
 
 ### retryDelay
 
 > **retryDelay**: `number`
 
-***
+---
 
 ### retryThreshold
 
 > **retryThreshold**: `number`
 
-***
+---
 
 ### scheduledCron
 
-> **scheduledCron**: `null` \| `string`
+> **scheduledCron**: `string` \| `null`
 
-***
+---
 
 ### scheduledDelay
 
-> **scheduledDelay**: `null` \| `number`
+> **scheduledDelay**: `number` \| `null`
 
-***
+---
 
 ### scheduledRepeat
 
 > **scheduledRepeat**: `number`
 
-***
+---
 
 ### scheduledRepeatPeriod
 
-> **scheduledRepeatPeriod**: `null` \| `number`
+> **scheduledRepeatPeriod**: `number` \| `null`
 
-***
+---
 
 ### ttl
 

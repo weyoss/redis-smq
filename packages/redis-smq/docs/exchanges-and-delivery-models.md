@@ -12,27 +12,17 @@ Message exchanges and queue delivery models are distinct but complementary. Exch
 - Delivery models determine how a given queue delivers messages to its consumers.
 
 See also:
+
 - Message Exchanges: [message-exchanges.md](message-exchanges.md)
 - Queue Delivery Models: [queue-delivery-models.md](queue-delivery-models.md)
 
-## Prerequisites
-
-- Initialize RedisSMQ once per process:
-  - `RedisSMQ.initialize(redisConfig, cb)`
-  - or `RedisSMQ.initializeWithConfig(redisSMQConfig, cb)`
-- Create components via RedisSMQ factory methods (recommended), for example:
-  - `const queueManager = RedisSMQ.createQueueManager()`
-  - `const producer = RedisSMQ.createProducer()`
-  - `const consumer = RedisSMQ.createConsumer()`
-- When components are created via RedisSMQ factory methods, you typically do not need to shut them down individually. 
-Prefer a single `RedisSMQ.shutdown(cb)` at application exit to close shared infrastructure and tracked components.
-
 ## Message Exchanges (routing)
 
-[Message Exchanges](message-exchanges.md) let producers publish to an exchange instead of a specific queue. The 
+[Message Exchanges](message-exchanges.md) let producers publish to an exchange instead of a specific queue. The
 exchange then routes the message to zero, one, or multiple queues based on bindings and routing rules.
 
 Common exchange types:
+
 - Direct: exact routing key match
 - Topic: wildcard pattern matching (AMQP-style)
 - Fanout: broadcast to all bound queues
@@ -42,6 +32,7 @@ Key point: Exchanges only affect how messages are routed to queues. They do not 
 ## Queue Delivery Models (consumption)
 
 [Queue Delivery Models](queue-delivery-models.md) define how each queue delivers messages to its consumers:
+
 - Point-to-Point: each message is delivered to a single consumer at a time
 - Pub/Sub: messages are delivered to all consumer groups of the queue; within each group, only one consumer receives the message
 
@@ -58,6 +49,7 @@ This means a single published message can be routed to multiple queues, where ea
 ## Example: Direct exchange routing to different delivery models
 
 The example below:
+
 - Creates two queues:
   - `orders.worker` (Point-to-Point)
   - `orders.events` (Pub/Sub)
@@ -103,36 +95,46 @@ RedisSMQ.initialize(
 
             // 3) Bind queues to a direct exchange
             const direct = RedisSMQ.createDirectExchange();
-            direct.bindQueue('orders.worker', 'orders', 'order.created', (b1) => {
-              if (b1) return console.error('Bind worker failed:', b1);
+            direct.bindQueue(
+              'orders.worker',
+              'orders',
+              'order.created',
+              (b1) => {
+                if (b1) return console.error('Bind worker failed:', b1);
 
-              direct.bindQueue(
-                'orders.events',
-                'orders',
-                'order.created',
-                (b2) => {
-                  if (b2) return console.error('Bind events failed:', b2);
+                direct.bindQueue(
+                  'orders.events',
+                  'orders',
+                  'order.created',
+                  (b2) => {
+                    if (b2) return console.error('Bind events failed:', b2);
 
-                  // 4) Produce a message to the exchange
-                  const producer = RedisSMQ.createProducer();
-                  producer.run((prErr) => {
-                    if (prErr) return console.error('Producer start failed:', prErr);
+                    // 4) Produce a message to the exchange
+                    const producer = RedisSMQ.createProducer();
+                    producer.run((prErr) => {
+                      if (prErr)
+                        return console.error('Producer start failed:', prErr);
 
-                    const msg = new ProducibleMessage()
-                      .setDirectExchange('orders')
-                      .setExchangeRoutingKey('order.created')
-                      .setBody({ orderId: 'O-1001' });
+                      const msg = new ProducibleMessage()
+                        .setDirectExchange('orders')
+                        .setExchangeRoutingKey('order.created')
+                        .setBody({ orderId: 'O-1001' });
 
-                    producer.produce(msg, (prodErr, messageIds) => {
-                      if (prodErr) return console.error('Produce failed:', prodErr);
-                      console.log(`Delivered to ${messageIds.length} queue(s):`, messageIds);
+                      producer.produce(msg, (prodErr, messageIds) => {
+                        if (prodErr)
+                          return console.error('Produce failed:', prodErr);
+                        console.log(
+                          `Delivered to ${messageIds.length} queue(s):`,
+                          messageIds,
+                        );
 
-                      // Note: Prefer a single RedisSMQ.shutdown(cb) at application exit.
+                        // Note: Prefer a single RedisSMQ.shutdown(cb) at application exit.
+                      });
                     });
-                  });
-                },
-              );
-            });
+                  },
+                );
+              },
+            );
           },
         );
       },
@@ -142,6 +144,7 @@ RedisSMQ.initialize(
 ```
 
 Consumption notes:
+
 - `orders.worker` (Point-to-Point): each message is processed by exactly one consumer at a time. Consumers do not need a groupId.
 - `orders.events` (Pub/Sub): the same message is delivered to all consumer groups of the queue; when consuming, you must provide a groupId.
 
@@ -186,14 +189,14 @@ RedisSMQ.initialize(
 ## Best Practices
 
 - Choose exchange type based on routing requirements:
-    - Direct for exact matches, Topic for pattern-based routing, Fanout for broadcast.
+  - Direct for exact matches, Topic for pattern-based routing, Fanout for broadcast.
 - Model consumption per queue with the appropriate delivery model:
-    - Point-to-Point for task queues and work distribution.
-    - Pub/Sub for fan-out to multiple services (use consumer groups per service).
+  - Point-to-Point for task queues and work distribution.
+  - Pub/Sub for fan-out to multiple services (use consumer groups per service).
 - Configure bindings during application startup. This avoids missing routes at runtime.
 - Ensure at least one consumer group exists before producing to a Pub/Sub queue.
 - Handle production errors:
-    - If no queues match routing criteria (or no fanout bindings exist), expect a “No matching queues” error.
+  - If no queues match routing criteria (or no fanout bindings exist), expect a “No matching queues” error.
 - When creating components via RedisSMQ factory methods, prefer a single RedisSMQ.shutdown(cb) at process exit rather than shutting down instances individually.
 
 ## Summary
@@ -203,5 +206,6 @@ RedisSMQ.initialize(
 - Combining both lets you route a single published message to multiple queues and deliver them according to each queue’s semantics.
 
 For deeper dives, see:
+
 - message-exchanges.md for exchange types and API
 - queue-delivery-models.md for delivery semantics and consumer groups
