@@ -306,8 +306,8 @@ function confirmRequeue(): void {
           <div v-if="message" class="queue-info">
             <span class="badge bg-light text-dark">
               <i class="bi bi-collection me-1"></i>
-              {{ message.destinationQueue.ns }}:{{
-                message.destinationQueue.name
+              {{ message.destinationQueue.name }}@{{
+                message.destinationQueue.ns
               }}
             </span>
           </div>
