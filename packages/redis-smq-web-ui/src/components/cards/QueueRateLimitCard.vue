@@ -14,6 +14,7 @@ import { Form, Field, ErrorMessage, type GenericObject } from 'vee-validate';
 import { z } from 'zod';
 import { toTypedSchema } from '@vee-validate/zod';
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
+import ClearRateLimitConfirmationModal from '@/components/modals/ClearRateLimitConfirmationModal.vue';
 
 const selectedQueueStore = useSelectedQueueStore();
 const queueRateLimit = useQueueRateLimit();
@@ -480,69 +481,14 @@ onMounted(() => {
     </main>
 
     <!-- Clear Rate Limit Confirmation Modal -->
-    <div
-      v-if="showClearConfirm"
-      class="modal-overlay"
-      @click="showClearConfirm = false"
-    >
-      <div class="modal-dialog" @click.stop>
-        <div class="modal-content">
-          <header class="modal-header">
-            <h4 class="modal-title">
-              <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
-              Clear Rate Limit
-            </h4>
-            <button
-              type="button"
-              class="btn-close"
-              title="Close"
-              @click="showClearConfirm = false"
-            >
-              <i class="bi bi-x"></i>
-            </button>
-          </header>
-
-          <main class="modal-body">
-            <p class="modal-message">
-              Are you sure you want to remove the rate limit for queue
-              <strong class="queue-identifier"
-                >"{{ selectedQueue?.name }}@{{ selectedQueue?.ns }}"</strong
-              >?
-            </p>
-            <div class="modal-warning">
-              <i class="bi bi-info-circle me-2"></i>
-              This will allow messages to be processed without any rate
-              restrictions.
-            </div>
-          </main>
-
-          <footer class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-outline-secondary"
-              @click="showClearConfirm = false"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="btn btn-danger"
-              :disabled="isUpdating"
-              @click="clearRateLimit"
-            >
-              <template v-if="isUpdating">
-                <span class="spinner-border spinner-border-sm me-2"></span>
-                Clearing...
-              </template>
-              <template v-else>
-                <i class="bi bi-trash me-2"></i>
-                Clear Rate Limit
-              </template>
-            </button>
-          </footer>
-        </div>
-      </div>
-    </div>
+    <ClearRateLimitConfirmationModal
+      :is-visible="showClearConfirm"
+      :queue-name="selectedQueue?.name ?? null"
+      :queue-ns="selectedQueue?.ns ?? null"
+      :is-processing="isUpdating"
+      @close="showClearConfirm = false"
+      @confirm="clearRateLimit"
+    />
   </div>
 </template>
 
@@ -995,117 +941,6 @@ onMounted(() => {
   padding: 0.75rem 1.5rem;
   border-radius: 6px;
   font-weight: 600;
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1050;
-  padding: 1rem; /* base padding */
-  padding-top: calc(1rem + env(safe-area-inset-top));
-  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
-  padding-left: calc(1rem + env(safe-area-inset-left));
-  padding-right: calc(1rem + env(safe-area-inset-right));
-  overscroll-behavior: contain;
-}
-
-.modal-dialog {
-  max-width: min(500px, 100%);
-  width: 100%;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  max-height: min(90vh, 680px); /* allow content to scroll on mobile */
-}
-
-.modal-header {
-  padding: clamp(12px, 3vw, 24px) clamp(16px, 4vw, 32px);
-  border-bottom: 1px solid #e9ecef;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.modal-title {
-  font-size: clamp(1rem, 3vw, 1.1rem);
-  font-weight: 600;
-  color: #212529;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.btn-close {
-  background: none;
-  border: none;
-  padding: 0.5rem;
-  color: #6c757d;
-  cursor: pointer;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-  -webkit-tap-highlight-color: transparent;
-  width: 36px;
-  height: 36px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-close:hover {
-  background: #f8f9fa;
-  color: #495057;
-}
-
-.modal-body {
-  padding: clamp(16px, 4vw, 32px);
-  overflow-y: auto; /* scroll body if needed */
-}
-
-.modal-message {
-  color: #495057;
-  line-height: 1.6;
-  margin-bottom: 1rem;
-  overflow-wrap: anywhere;
-}
-
-.queue-identifier {
-  color: #0d6efd;
-  font-family: 'Courier New', monospace;
-}
-
-.modal-warning {
-  background: #fff3cd;
-  border: 1px solid #ffeaa7;
-  border-radius: 6px;
-  padding: 0.75rem 1rem;
-  color: #856404;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-.modal-footer {
-  padding: clamp(12px, 3vw, 24px) clamp(16px, 4vw, 32px);
-  border-top: 1px solid #e9ecef;
-  display: flex;
-  justify-content: flex-end;
-  gap: clamp(10px, 3vw, 16px);
-  flex-wrap: wrap;
 }
 
 /* Responsive Design */
