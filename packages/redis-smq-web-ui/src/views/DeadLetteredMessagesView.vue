@@ -68,7 +68,7 @@ const {
 const pageTitle = computed(() => {
   if (!selectedQueue.value) return 'Dead-Lettered Messages';
 
-  const queueContext = `${selectedQueue.value.ns}/${selectedQueue.value.name}`;
+  const queueContext = `${selectedQueue.value.name}@${selectedQueue.value.ns}`;
   return `Dead-Lettered Messages - ${queueContext}`;
 });
 

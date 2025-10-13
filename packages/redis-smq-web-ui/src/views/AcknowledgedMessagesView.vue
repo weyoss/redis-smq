@@ -69,7 +69,7 @@ const {
 const pageTitle = computed(() => {
   if (!selectedQueue.value) return 'Acknowledged Messages';
 
-  const queueContext = `${selectedQueue.value.ns}/${selectedQueue.value.name}`;
+  const queueContext = `${selectedQueue.value.name}@${selectedQueue.value.ns}`;
   return `Acknowledged Messages - ${queueContext}`;
 });
 

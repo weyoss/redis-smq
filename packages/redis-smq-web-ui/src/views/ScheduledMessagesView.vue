@@ -59,7 +59,7 @@ const {
 // Page header wiring
 const pageTitle = computed(() => {
   if (!selectedQueue.value) return 'Scheduled Messages';
-  const queueContext = `${selectedQueue.value.ns}/${selectedQueue.value.name}`;
+  const queueContext = `${selectedQueue.value.name}@${selectedQueue.value.ns}`;
   return `Scheduled Messages - ${queueContext}`;
 });
 
