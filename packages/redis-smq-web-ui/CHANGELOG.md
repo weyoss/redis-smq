@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.6](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.5...v9.0.0-next.6) (2025-10-13)
+
+### ✨ Features
+
+- **redis-smq-web-ui:** add notification for exchange deletion with bound queues ([c9159fa](https://github.com/weyoss/redis-smq/commit/c9159fa9404583bacd88392c11ae245d5df3b4ba))
+- **redis-smq-web-ui:** add unified DeleteExchangeModal for all exchange types ([db69156](https://github.com/weyoss/redis-smq/commit/db6915686fbb5f85414ee6a71f83b00a5afaf1ac))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-web-ui:** remove unused DeleteFanoutExchangeModal ([d91136c](https://github.com/weyoss/redis-smq/commit/d91136c952843fe16d8fcbc1b4f96ad92c452f93))
+
 ## [9.0.0-next.5](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.4...v9.0.0-next.5) (2025-10-12)
 
 ### ✨ Features
