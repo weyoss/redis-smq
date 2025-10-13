@@ -21,3 +21,14 @@ export interface IExchangeParams {
 export interface IExchangeParsedParams extends IExchangeParams {
   type: EExchangeType;
 }
+
+export type TExchangeDeleteEventPayloadTotals = {
+  totalQueues: number;
+  totalRoutingKeys?: number;
+  totalBindingPatterns?: number;
+};
+
+export type TExchangeDeleteEventPayload = {
+  exchange: IExchangeParsedParams;
+  totals: TExchangeDeleteEventPayloadTotals;
+};

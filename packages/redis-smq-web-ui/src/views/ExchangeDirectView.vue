@@ -8,31 +8,25 @@
   -->
 
 <script setup lang="ts">
-import { ref, computed, watchEffect, onMounted } from 'vue';
+import { computed, onMounted, ref, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQueryClient } from '@tanstack/vue-query';
-
-// API hooks for direct exchange operations
 import {
-  useGetApiV1NamespacesNsExchangesDirectDirectRoutingKeys,
-  useGetApiV1NamespacesNsExchangesDirectDirectQueues,
-  usePutApiV1NamespacesNsExchangesDirectDirectQueuesQueue,
-  useDeleteApiV1NamespacesNsExchangesDirectDirectQueuesQueue,
-  useDeleteApiV1NamespacesNsExchangesDirectDirect,
-  getGetApiV1NamespacesNsExchangesDirectDirectRoutingKeysQueryKey,
   getGetApiV1NamespacesNsExchangesDirectDirectQueuesQueryKey,
+  getGetApiV1NamespacesNsExchangesDirectDirectRoutingKeysQueryKey,
+  useDeleteApiV1NamespacesNsExchangesDirectDirectQueuesQueue,
+  useGetApiV1NamespacesNsExchangesDirectDirectQueues,
+  useGetApiV1NamespacesNsExchangesDirectDirectRoutingKeys,
+  usePutApiV1NamespacesNsExchangesDirectDirectQueuesQueue,
 } from '@/api/generated/direct-exchange/direct-exchange';
-
 import type { GetApiV1NamespacesNsExchangesDirectDirectQueuesParams } from '@/api/model/index.ts';
-
-// Components and utilities
-import { usePageContentStore, type PageAction } from '@/stores/pageContent';
+import { type PageAction, usePageContentStore } from '@/stores/pageContent';
 import { getErrorMessage } from '@/lib/error';
 import PageContent from '@/components/PageContent.vue';
-import ConfirmationDialogModal from '@/components/modals/ConfirmationDialogModal.vue';
 import BindQueueModal from '@/components/modals/BindQueueModal.vue';
 import UnbindQueueModal from '@/components/modals/UnbindQueueModal.vue';
-import BaseModal from '@/components/modals/BaseModal.vue';
+import DeleteExchangeModal from '@/components/modals/DeleteExchangeModal.vue';
+import { EExchangeType } from '@/types/index.ts';
 
 // Composables
 const route = useRoute();
@@ -51,7 +45,6 @@ const isValidRoute = computed(() => !!exchangeName.value && !!namespace.value);
 const showDeleteDialog = ref(false);
 const showBindQueueModal = ref(false);
 const showUnbindQueueModal = ref(false);
-const showCannotDeleteDialog = ref(false); // NEW: informational dialog
 
 // Selected items for operations
 const selectedQueueForUnbind = ref<{ name: string; routingKey: string } | null>(
@@ -171,18 +164,6 @@ const unbindQueueMutation =
     },
   });
 
-// Delete exchange mutation
-const deleteExchangeMutation = useDeleteApiV1NamespacesNsExchangesDirectDirect({
-  mutation: {
-    onSuccess: () => {
-      router.push('/exchanges');
-    },
-    onError: (error) => {
-      console.error('Failed to delete exchange:', error);
-    },
-  },
-});
-
 // --- Computed Properties ---
 
 const isLoading = computed(() => {
@@ -250,28 +231,6 @@ const totalRoutingKeys = computed(() => routingKeys.value.length);
 // Loading states for mutations
 const isBindingQueue = computed(() => bindQueueMutation.isPending.value);
 const isUnbindingQueue = computed(() => unbindQueueMutation.isPending.value);
-const isDeletingExchange = computed(
-  () => deleteExchangeMutation.isPending.value,
-);
-
-const bindError = computed(() =>
-  getErrorMessage(bindQueueMutation.error.value?.error),
-);
-const unbindError = computed(() =>
-  getErrorMessage(unbindQueueMutation.error.value?.error),
-);
-const deleteError = computed(() =>
-  getErrorMessage(deleteExchangeMutation.error.value?.error),
-);
-
-// NEW: Derived message for cannot-delete dialog
-const cannotDeleteMessage = computed(() => {
-  const q = totalQueues.value;
-  const r = totalRoutingKeys.value;
-  const qWord = q === 1 ? 'queue' : 'queues';
-  const rWord = r === 1 ? 'routing key' : 'routing keys';
-  return `This direct exchange cannot be deleted because it has ${q} bound ${qWord} across ${r} ${rWord}. Unbind all queues first.`;
-});
 
 // --- Event Handlers ---
 
@@ -285,11 +244,7 @@ const handleUnbindQueue = (queueName: string, routingKey: string) => {
 };
 
 const handleDeleteExchange = () => {
-  // Notify user instead of silently disabling the action
-  if (totalQueues.value > 0) {
-    showCannotDeleteDialog.value = true;
-    return;
-  }
+  // Always open; DeleteExchangeModal will inform user if deletion is blocked and handle deletion internally.
   showDeleteDialog.value = true;
 };
 
@@ -326,14 +281,9 @@ const confirmUnbindQueue = async () => {
   });
 };
 
-const confirmDeleteExchange = async () => {
-  // Extra safety: avoid mutation if deletion is not allowed
-  if (totalQueues.value > 0) return;
-
-  await deleteExchangeMutation.mutateAsync({
-    ns: namespace.value,
-    direct: exchangeName.value,
-  });
+// After successful deletion inside DeleteExchangeModal, navigate away
+const onDeleted = () => {
+  router.push('/exchanges');
 };
 
 // --- Page Content Setup ---
@@ -364,9 +314,9 @@ const pageActions = computed((): PageAction[] => [
     label: 'Delete Exchange',
     icon: 'bi bi-trash',
     variant: 'danger',
-    // Keep enabled; only disable while deleting. If blocked, we show an info dialog.
-    disabled: isDeletingExchange.value,
-    loading: isDeletingExchange.value,
+    // Keep enabled; DeleteExchangeModal manages its own pending state.
+    disabled: false,
+    loading: false,
     handler: handleDeleteExchange,
     tooltip:
       'Delete this exchange. If any queues are bound, you will be prompted to unbind them first.',
@@ -519,64 +469,23 @@ onMounted(() => {
       </section>
     </PageContent>
 
-    <!-- Delete Exchange Confirmation Dialog -->
-    <ConfirmationDialogModal
+    <!-- Delete Exchange Modal (self-contained deletion) -->
+    <DeleteExchangeModal
       :is-visible="showDeleteDialog"
-      :is-loading="isDeletingExchange"
-      :error="deleteError"
-      title="Delete Direct Exchange"
-      :message="`Are you sure you want to delete the direct exchange '${exchangeName}'? This will remove all queue bindings and cannot be undone.`"
-      confirm-text="Delete Exchange"
-      variant="danger"
-      @confirm="confirmDeleteExchange"
+      :exchange-type="EExchangeType.DIRECT"
+      :exchange-name="exchangeName"
+      :namespace="namespace"
+      :total-queues="totalQueues"
+      :total-routing-keys="totalRoutingKeys"
+      @deleted="onDeleted"
       @close="showDeleteDialog = false"
     />
-
-    <!-- NEW: Cannot Delete Info Dialog -->
-    <BaseModal
-      :is-visible="showCannotDeleteDialog"
-      title="Cannot Delete Exchange"
-      :subtitle="`Namespace: ${namespace}`"
-      icon="bi bi-exclamation-triangle-fill"
-      size="sm"
-      @close="showCannotDeleteDialog = false"
-    >
-      <template #body>
-        <div class="cannot-delete-body">
-          <p class="cannot-delete-message">
-            {{ cannotDeleteMessage }}
-          </p>
-          <div class="cannot-delete-stats">
-            <div class="stat">
-              <span class="label">Routing Keys</span>
-              <span class="value">{{ totalRoutingKeys }}</span>
-            </div>
-            <div class="stat">
-              <span class="label">Bound Queues</span>
-              <span class="value">{{ totalQueues }}</span>
-            </div>
-          </div>
-          <div class="hint">
-            Unbind all queues from this exchange to proceed with deletion.
-          </div>
-        </div>
-      </template>
-      <template #footer>
-        <button
-          type="button"
-          class="btn btn-primary"
-          @click="showCannotDeleteDialog = false"
-        >
-          OK, got it
-        </button>
-      </template>
-    </BaseModal>
 
     <!-- Bind Queue Modal -->
     <BindQueueModal
       :is-visible="showBindQueueModal"
       :is-loading="isBindingQueue"
-      :error="bindError"
+      :error="getErrorMessage(bindQueueMutation.error.value?.error)"
       exchange-type="direct"
       :exchange-name="exchangeName"
       :namespace="namespace"
@@ -588,7 +497,7 @@ onMounted(() => {
     <UnbindQueueModal
       :is-visible="showUnbindQueueModal"
       :is-loading="isUnbindingQueue"
-      :error="unbindError"
+      :error="getErrorMessage(unbindQueueMutation.error.value?.error)"
       :queue-name="selectedQueueForUnbind?.name || ''"
       :routing-key="selectedQueueForUnbind?.routingKey || ''"
       exchange-type="direct"
@@ -865,55 +774,6 @@ onMounted(() => {
 
 .no-queues i {
   font-size: 1.25rem;
-}
-
-/* NEW: Cannot delete info modal styles */
-.cannot-delete-body {
-  display: grid;
-  gap: 0.75rem;
-  padding: 0; /* BaseModal provides padding */
-  overflow-x: hidden;
-}
-
-.cannot-delete-message {
-  margin: 0;
-  color: #495057;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.cannot-delete-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 0.5rem;
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 6px;
-  padding: 0.75rem;
-}
-
-.cannot-delete-stats .stat {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-}
-
-.cannot-delete-stats .label {
-  color: #6c757d;
-  font-weight: 500;
-}
-
-.cannot-delete-stats .value {
-  color: #212529;
-  font-weight: 700;
-}
-
-.hint {
-  font-size: 0.875rem;
-  color: #6c757d;
 }
 
 /* Responsive Design */

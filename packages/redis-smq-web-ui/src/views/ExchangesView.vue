@@ -11,31 +11,24 @@
 import { ref, computed, watchEffect } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQueryClient } from '@tanstack/vue-query';
-
-// Main listing API
 import {
   useGetApiV1Exchanges,
   getGetApiV1ExchangesQueryKey,
 } from '@/api/generated/exchanges/exchanges';
-
-// Exchange deletion APIs
-import { useDeleteApiV1NamespacesNsExchangesFanoutFanout } from '@/api/generated/fanout-exchange/fanout-exchange';
-import { useDeleteApiV1NamespacesNsExchangesDirectDirect } from '@/api/generated/direct-exchange/direct-exchange';
-import { useDeleteApiV1NamespacesNsExchangesTopicTopic } from '@/api/generated/topic-exchange/topic-exchange';
-
-// Exchange creation APIs (via queue binding)
 import { usePutApiV1NamespacesNsExchangesFanoutFanoutQueuesQueue } from '@/api/generated/fanout-exchange/fanout-exchange';
 import { usePutApiV1NamespacesNsExchangesDirectDirectQueuesQueue } from '@/api/generated/direct-exchange/direct-exchange';
 import { usePutApiV1NamespacesNsExchangesTopicTopicQueuesQueue } from '@/api/generated/topic-exchange/topic-exchange';
-
-// Types and Components
 import type { GetApiV1Exchanges200DataItem } from '@/api/model';
 import { usePageContentStore, type PageAction } from '@/stores/pageContent';
 import { getErrorMessage } from '@/lib/error';
 import PageContent from '@/components/PageContent.vue';
-import ConfirmationDialogModal from '@/components/modals/ConfirmationDialogModal.vue';
 import CreateExchangeModal from '@/components/modals/CreateExchangeModal.vue';
-import { EExchangeType } from '@/types/exchanges';
+import DeleteExchangeModal from '@/components/modals/DeleteExchangeModal.vue';
+import {
+  EExchangeType,
+  type TExchangeDeleteEventPayload,
+  type TExchangeDeleteEventPayloadTotals,
+} from '@/types/exchanges';
 import ExchangeCard from '@/components/cards/ExchangeCard.vue';
 
 // Composables
@@ -48,54 +41,10 @@ const showDeleteDialog = ref(false);
 const showCreateDialog = ref(false);
 const exchangeToDelete = ref<GetApiV1Exchanges200DataItem | null>(null);
 
+const deleteTotals = ref<TExchangeDeleteEventPayloadTotals | null>(null);
+
 // API Data Fetching
 const { data, isLoading, isError, error, refetch } = useGetApiV1Exchanges();
-
-// Deletion Mutations
-const deleteFanoutExchange = useDeleteApiV1NamespacesNsExchangesFanoutFanout({
-  mutation: {
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: getGetApiV1ExchangesQueryKey(),
-      });
-      showDeleteDialog.value = false;
-      exchangeToDelete.value = null;
-    },
-    onError: (error) => {
-      console.error('Failed to delete fanout exchange:', error);
-    },
-  },
-});
-
-const deleteDirectExchange = useDeleteApiV1NamespacesNsExchangesDirectDirect({
-  mutation: {
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: getGetApiV1ExchangesQueryKey(),
-      });
-      showDeleteDialog.value = false;
-      exchangeToDelete.value = null;
-    },
-    onError: (error) => {
-      console.error('Failed to delete direct exchange:', error);
-    },
-  },
-});
-
-const deleteTopicExchange = useDeleteApiV1NamespacesNsExchangesTopicTopic({
-  mutation: {
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: getGetApiV1ExchangesQueryKey(),
-      });
-      showDeleteDialog.value = false;
-      exchangeToDelete.value = null;
-    },
-    onError: (error) => {
-      console.error('Failed to delete topic exchange:', error);
-    },
-  },
-});
 
 // Creation Mutations (via queue binding)
 const createFanoutExchange =
@@ -143,14 +92,6 @@ const createTopicExchange =
     },
   });
 
-// Combined loading/error state for deletion
-const isDeleting = computed(
-  () =>
-    deleteFanoutExchange.isPending.value ||
-    deleteDirectExchange.isPending.value ||
-    deleteTopicExchange.isPending.value,
-);
-
 // Combined loading/error state for creation
 const isCreating = computed(
   () =>
@@ -175,8 +116,22 @@ const exchanges = computed<GetApiV1Exchanges200DataItem[]>(
 const errorMessage = computed(() => getErrorMessage(error.value));
 
 // Handlers
-const handleDeleteExchange = (exchange: GetApiV1Exchanges200DataItem) => {
-  exchangeToDelete.value = exchange;
+const handleDeleteExchange = (payload: TExchangeDeleteEventPayload) => {
+  // Find the full exchange item to retain shape used elsewhere
+  const found =
+    exchanges.value.find(
+      (e) => e.name === payload.exchange.name && e.ns === payload.exchange.ns,
+    ) || null;
+
+  exchangeToDelete.value =
+    found ??
+    ({
+      name: payload.exchange.name,
+      ns: payload.exchange.ns,
+      type: payload.exchange.type,
+    } as GetApiV1Exchanges200DataItem);
+
+  deleteTotals.value = payload.totals;
   showDeleteDialog.value = true;
 };
 
@@ -190,30 +145,7 @@ const handleBindQueue = (exchange: GetApiV1Exchanges200DataItem) => {
   // Logic to open a "Bind Queue" modal would go here
 };
 
-const confirmDeleteExchange = async () => {
-  if (!exchangeToDelete.value) return;
-
-  const { type, name, ns } = exchangeToDelete.value;
-
-  try {
-    switch (type) {
-      case EExchangeType.FANOUT:
-        await deleteFanoutExchange.mutateAsync({ ns, fanout: name });
-        break;
-      case EExchangeType.DIRECT:
-        await deleteDirectExchange.mutateAsync({ ns, direct: name });
-        break;
-      case EExchangeType.TOPIC:
-        await deleteTopicExchange.mutateAsync({ ns, topic: name });
-        break;
-      default:
-        throw new Error(`Unsupported exchange type: ${type}`);
-    }
-  } catch (error) {
-    console.error('Failed to delete exchange:', error);
-  }
-};
-
+// Creation confirm
 const confirmCreateExchange = async (payload: {
   name: string;
   type: EExchangeType;
@@ -340,10 +272,40 @@ watchEffect(() => {
     pageContentStore.setEmptyState(false);
   }
 });
+
+/* =========================
+   DeleteExchangeModal data
+   ========================= */
+
+// Selected exchange fields
+const exchangeToDeleteNs = computed(() => exchangeToDelete.value?.ns ?? '');
+const exchangeToDeleteName = computed(() => exchangeToDelete.value?.name ?? '');
+const exchangeToDeleteType = computed(() => exchangeToDelete.value?.type ?? 0);
+
+// Use totals supplied by ExchangeCard instead of refetching here
+const totalQueuesForDelete = computed<number>(
+  () => deleteTotals.value?.totalQueues ?? 0,
+);
+const totalRoutingKeysForDelete = computed<number | undefined>(
+  () => deleteTotals.value?.totalRoutingKeys,
+);
+const totalBindingPatternsForDelete = computed<number | undefined>(
+  () => deleteTotals.value?.totalBindingPatterns,
+);
+
+// Handle post-deletion refresh
+const onExchangeDeleted = () => {
+  queryClient.invalidateQueries({
+    queryKey: getGetApiV1ExchangesQueryKey(),
+  });
+  showDeleteDialog.value = false;
+  exchangeToDelete.value = null;
+  deleteTotals.value = null;
+};
 </script>
 
 <template>
-  <div>
+  <div class="exchanges-view">
     <PageContent>
       <!-- Exchanges Grid -->
       <div v-if="exchanges.length > 0" class="grid grid-cols-2 gap-6">
@@ -351,11 +313,6 @@ watchEffect(() => {
           v-for="exchange in exchanges"
           :key="`${exchange.name}-${exchange.ns}`"
           :exchange="exchange"
-          :is-deleting="
-            isDeleting &&
-            exchangeToDelete?.name === exchange.name &&
-            exchangeToDelete?.ns === exchange.ns
-          "
           @delete="handleDeleteExchange"
           @view-details="navigateToExchange"
           @bind-queue="handleBindQueue"
@@ -363,18 +320,20 @@ watchEffect(() => {
       </div>
     </PageContent>
 
-    <!-- Delete Confirmation Dialog -->
-    <ConfirmationDialogModal
+    <!-- Delete Exchange Modal -->
+    <DeleteExchangeModal
       :is-visible="showDeleteDialog"
-      :is-loading="isDeleting"
-      title="Delete Exchange"
-      :message="`Are you sure you want to delete the exchange '${exchangeToDelete?.name}'? This action cannot be undone.`"
-      confirm-text="Delete Exchange"
-      variant="danger"
-      @confirm="confirmDeleteExchange"
+      :exchange-type="exchangeToDeleteType"
+      :exchange-name="exchangeToDeleteName"
+      :namespace="exchangeToDeleteNs"
+      :total-queues="totalQueuesForDelete"
+      :total-routing-keys="totalRoutingKeysForDelete"
+      :total-binding-patterns="totalBindingPatternsForDelete"
+      @deleted="onExchangeDeleted"
       @close="
         showDeleteDialog = false;
         exchangeToDelete = null;
+        deleteTotals = null;
       "
     />
 
@@ -390,6 +349,17 @@ watchEffect(() => {
 </template>
 
 <style scoped>
+/* Prevent accidental horizontal overflow on mobile */
+.exchanges-view,
+.exchanges-view * {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.exchanges-view {
+  overflow-x: hidden;
+}
+
 /* Ensure smooth transitions and better focus states */
 button:focus-visible {
   outline: 2px solid #3b82f6;
@@ -403,7 +373,7 @@ button:focus-visible {
     line-height: 1.75rem;
   }
 
-  /* On very small screens, stack cards vertically */
+  /* On small screens, stack cards vertically */
   .grid-cols-2 {
     grid-template-columns: 1fr;
   }

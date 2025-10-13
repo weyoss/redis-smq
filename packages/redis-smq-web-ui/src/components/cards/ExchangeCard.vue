@@ -9,7 +9,11 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
-import { EExchangeType } from '@/types';
+import {
+  EExchangeType,
+  type TExchangeDeleteEventPayload,
+  type TExchangeDeleteEventPayloadTotals,
+} from '@/types';
 
 // API hooks for fetching routing keys and binding patterns
 import { useGetApiV1NamespacesNsExchangesDirectDirectRoutingKeys } from '@/api/generated/direct-exchange/direct-exchange';
@@ -46,7 +50,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'delete', payload: Exchange): void;
+  (e: 'delete', payload: TExchangeDeleteEventPayload): void;
   (e: 'viewDetails', payload: Exchange): void;
   (e: 'bindQueue', payload: Exchange): void;
   (e: 'unbindQueue', payload: { exchange: Exchange; queueName: string }): void;
@@ -403,7 +407,19 @@ const metadataInfo = computed(() => {
 // Event handlers
 const handleDelete = () => {
   showDropdown.value = false;
-  emit('delete', props.exchange);
+  const totals: TExchangeDeleteEventPayloadTotals = {
+    totalQueues: queues.value.total,
+    totalRoutingKeys:
+      props.exchange.type === EExchangeType.DIRECT
+        ? (queues.value.routingKeys?.length ?? 0)
+        : undefined,
+    totalBindingPatterns:
+      props.exchange.type === EExchangeType.TOPIC
+        ? (queues.value.bindingPatterns?.length ?? 0)
+        : undefined,
+  };
+
+  emit('delete', { exchange: props.exchange, totals });
 };
 
 const handleBindQueue = () => {
@@ -655,11 +671,13 @@ const toggleDropdown = () => {
 
 /* Card container with responsive paddings */
 .exchange-card {
-  position: relative;
+  /* shared padding variable used by button positioning too */
+  --card-pad: clamp(12px, 3.2vw, 24px);
+  position: relative; /* needed for absolutely positioned actions menu */
   background-color: white;
   border: 1px solid #e9ecef;
   border-radius: 12px;
-  padding: clamp(12px, 3.2vw, 24px);
+  padding: var(--card-pad);
   display: flex;
   flex-direction: column;
   overflow: visible; /* keep dropdown visible */
@@ -754,20 +772,25 @@ const toggleDropdown = () => {
 
 /* Header */
 .card-header {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: clamp(8px, 2.4vw, 16px);
   margin-bottom: clamp(12px, 2.4vw, 24px);
-  flex-wrap: wrap; /* allow wrapping on smaller widths */
+  flex-wrap: wrap;
+  /* Reserve space so text doesn't run under the floating actions button */
+  padding-inline-end: calc(clamp(48px, 8vw, 64px) + env(safe-area-inset-right));
 }
 
+/* Ensure header content can shrink and wrap without overflow */
 .header-content {
   display: flex;
   align-items: center;
   gap: clamp(8px, 2.4vw, 16px);
   min-width: 0;
   flex: 1 1 auto;
+  max-width: 100%;
 }
 
 .header-icon {
@@ -804,6 +827,7 @@ const toggleDropdown = () => {
   flex: 1 1 auto;
 }
 
+/* Title/subtitle overflow safety */
 .card-title {
   margin: 0;
   font-size: clamp(1.05rem, 2.8vw, 1.25rem);
@@ -820,12 +844,15 @@ const toggleDropdown = () => {
   display: block;
   margin-top: 0.25rem;
   overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
-/* Actions Menu */
+/* Actions Menu - anchor to header top-right with logical properties */
 .actions-menu {
-  position: relative;
-  flex: 0 0 auto;
+  position: absolute;
+  inset-block-start: 0; /* top: 0 */
+  inset-inline-end: 0; /* right: 0 */
+  z-index: 5;
 }
 
 .btn-actions {
@@ -857,22 +884,30 @@ const toggleDropdown = () => {
   outline-offset: 2px;
 }
 
+/* Dropdown sizing: avoid horizontal scrollbars and keep within viewport */
 .dropdown-menu {
   position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
+  inset-block-start: calc(100% + 6px);
+  inset-inline-end: 0;
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   border: 1px solid #e9ecef;
   padding: 0.5rem;
-  width: min(220px, 92vw); /* viewport-safe width */
-  max-height: min(70vh, 400px); /* scrollable on small screens */
+
+  /* Updated sizing: fit content, but keep within sensible/viewport bounds */
+  width: max-content; /* grow to fit items */
+  min-width: 240px; /* at least this wide */
+  max-width: min(92vw, 360px); /* but not wider than viewport/sane max */
+
+  max-block-size: min(70vh, 400px);
   overflow-y: auto;
+  overflow-x: hidden; /* avoid horizontal scrollbars */
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   display: block !important;
   z-index: 10;
+  box-sizing: border-box; /* include padding/border in width */
 }
 
 .dropdown-item {
@@ -902,6 +937,13 @@ const toggleDropdown = () => {
 .dropdown-item.danger:focus {
   background-color: #f8d7da;
   color: #842029;
+}
+
+/* Ensure text can wrap instead of being clipped */
+.dropdown-item span {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .dropdown-divider {
@@ -1115,6 +1157,14 @@ const toggleDropdown = () => {
   outline-offset: 2px;
 }
 
+/* Body lists and items: respect width constraints */
+.queues-title,
+.stat-label,
+.error-message {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .card-title {
@@ -1132,15 +1182,21 @@ const toggleDropdown = () => {
 @media (max-width: 576px) {
   .header-content {
     align-items: flex-start;
+    padding-inline-end: calc(
+      clamp(56px, 12vw, 72px) + env(safe-area-inset-right)
+    );
   }
 
   .card-header {
     align-items: flex-start;
+    /* Tighten or loosen reserved space for the floating button on very small screens */
+    padding-right: clamp(56px, 12vw, 72px);
   }
 
   .card-title {
-    white-space: normal; /* allow wrapping on very small screens */
+    white-space: normal;
     overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .queue-item {
@@ -1197,7 +1253,6 @@ const toggleDropdown = () => {
 @media (prefers-color-scheme: dark) {
   .exchange-card {
     background: #2d3748;
-    border-color: #4a5568;
   }
 
   .dropdown-menu {
