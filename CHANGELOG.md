@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.7](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.6...v9.0.0-next.7) (2025-10-13)
+
+### 📝 Documentation
+
+- **redis-smq-web-ui:** update web ui screenshot ([8c1addb](https://github.com/weyoss/redis-smq/commit/8c1addb026e6ee734070adc2d57e522d07411cdb))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-web-ui:** extract ClearRateLimitConfirmationModal component ([f46508a](https://github.com/weyoss/redis-smq/commit/f46508a70b1d1695f11dd7b0aff6d17f7d5ea36a))
+- **redis-smq-web-ui:** unify queue display format to name@namespace ([0362b5b](https://github.com/weyoss/redis-smq/commit/0362b5b02245ef98cf33f2775ad280d9ae6fda05))
+
 ## [9.0.0-next.6](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.5...v9.0.0-next.6) (2025-10-13)
 
 ### ✨ Features
