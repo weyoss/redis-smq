@@ -8,7 +8,7 @@
 > - Latest release notes/tags: https://github.com/weyoss/redis-smq/releases/latest
 > - Install stable packages with @latest; pre-release with @next.
 
-![RedisSMQ Web UI - Pending Messages](docs/screenshots/img01.png)
+![RedisSMQ Web UI - Home](docs/screenshots/img01.png)
 
 A Single Page Application for monitoring and managing RedisSMQ. Inspect queues and messages, review consumers, and perform common actions — with an integrated, type-safe OpenAPI client.
 
