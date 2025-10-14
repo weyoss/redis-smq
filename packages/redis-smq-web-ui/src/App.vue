@@ -402,6 +402,18 @@ onBeforeUnmount(() => {
 
 /* Loading Screen Specific Styles */
 .loading-screen {
+  /* The minimum width for the loading logo “frame.” */
+  --loading-logo-min: 120px;
+  /* The fluid (viewport-based) preferred width. Setting this to 0vw effectively disables fluid scaling */
+  --loading-logo-fluid: 60vw;
+  /* The maximum width for the loading logo “frame.” */
+  --loading-logo-max: 240px;
+
+  /* Hard cap for the image inside the frame. */
+  --loading-img-max: 220px;
+  /* Scales the inner image to 82% of the frame width. */
+  --loading-img-percent: 82%;
+
   position: fixed;
   inset: 0;
   background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
@@ -420,7 +432,7 @@ onBeforeUnmount(() => {
 }
 
 .loading-content {
-  max-width: 400px;
+  max-width: 480px;
 }
 
 .loading-screen .brand-section {
@@ -430,8 +442,14 @@ onBeforeUnmount(() => {
 }
 
 .loading-screen .brand-logo {
-  width: 465px;
-  height: 315px;
+  /* Make the glass frame responsive with original-ish aspect ratio */
+  width: clamp(
+    var(--loading-logo-min),
+    var(--loading-logo-fluid),
+    var(--loading-logo-max)
+  );
+  aspect-ratio: 465 / 315; /* keep the frame proportions consistent */
+  height: auto; /* let aspect-ratio control height */
   border-radius: 20px;
 }
 
@@ -440,8 +458,9 @@ onBeforeUnmount(() => {
 }
 
 .loading-screen .logo-image {
-  width: 365px;
-  height: 215px;
+  /* Scale the logo inside the frame responsively, with a sensible max */
+  width: min(var(--loading-img-percent), var(--loading-img-max));
+  height: auto;
 }
 
 .loading-screen .brand-info {
@@ -449,7 +468,7 @@ onBeforeUnmount(() => {
 }
 
 .loading-screen .brand-title {
-  font-size: 2.5rem;
+  font-size: clamp(1.8rem, 4.5vw, 2.5rem);
   margin: 0 0 0.25rem 0;
   text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   background: linear-gradient(45deg, #ffffff, #f0f8ff);
@@ -460,7 +479,7 @@ onBeforeUnmount(() => {
 }
 
 .loading-screen .brand-subtitle {
-  font-size: 1rem;
+  font-size: clamp(0.9rem, 2.2vw, 1rem);
   opacity: 0.9;
   letter-spacing: 3px;
 }
@@ -470,10 +489,10 @@ onBeforeUnmount(() => {
 }
 
 .spinner {
-  width: 48px;
-  height: 48px;
-  border: 4px solid rgba(255, 255, 255, 0.2);
-  border-top: 4px solid white;
+  width: clamp(32px, 6vw, 48px);
+  height: clamp(32px, 6vw, 48px);
+  border: clamp(3px, 0.6vw, 4px) solid rgba(255, 255, 255, 0.2);
+  border-top: clamp(3px, 0.6vw, 4px) solid white;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 1.5rem;
@@ -1021,7 +1040,7 @@ onBeforeUnmount(() => {
     padding-right: 1rem;
   }
 
-  /* Header brand adjustments for mobile */
+  /* Header brand adjustments for mobile (unchanged) */
   .app-header .brand-section {
     gap: 0.75rem;
   }
@@ -1054,7 +1073,7 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 480px) {
-  /* Header brand adjustments for small screens */
+  /* Header brand adjustments for small screens (unchanged) */
   .app-header .brand-section {
     gap: 0.5rem;
   }
@@ -1078,24 +1097,14 @@ onBeforeUnmount(() => {
     letter-spacing: 1px;
   }
 
-  /* Loading screen adjustments for small screens */
+  /* Loading screen text tweaks for small screens */
   .loading-screen .brand-section {
     margin-bottom: 2rem;
     gap: 0.75rem;
   }
 
-  .loading-screen .brand-logo {
-    width: 200px;
-    height: 140px;
-  }
-
-  .loading-screen .logo-image {
-    width: 160px;
-    height: 100px;
-  }
-
   .loading-screen .brand-title {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
   }
 
   .loading-screen .brand-subtitle {
@@ -1105,11 +1114,6 @@ onBeforeUnmount(() => {
 
   .loading-text {
     font-size: 1rem;
-  }
-
-  .spinner {
-    width: 40px;
-    height: 40px;
   }
 }
 
