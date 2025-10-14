@@ -13,8 +13,6 @@ import { useRouter } from 'vue-router';
 import { usePageContentStore, type PageAction } from '@/stores/pageContent';
 import { useSelectedQueueStore } from '@/stores/selectedQueue';
 import { useEscapeKey } from '@/composables/useEscapeKey';
-import type { QueueFormValues } from '@/composables/useQueueForm';
-import type { PostApiV1QueuesBody } from '@/api/model/index.ts';
 
 import PageContent from '@/components/PageContent.vue';
 import QueueListItem from '@/components/QueueListItem.vue';
@@ -22,7 +20,6 @@ import CreateQueueModal from '@/components/modals/CreateQueueModal.vue';
 import DeleteQueueModal from '@/components/modals/DeleteQueueModal.vue';
 import { getErrorMessage } from '@/lib/error.ts';
 import { useListQueues } from '@/composables/useListQueues.ts';
-import { useCreateQueue } from '@/composables/useCreateQueue.ts';
 import { useDeleteQueue } from '@/composables/useDeleteQueue.ts';
 
 const router = useRouter();
@@ -32,11 +29,6 @@ const selectedQueueStore = useSelectedQueueStore();
 // Directly use composable hooks for queue management
 const { sortedQueues, isLoadingQueues, queuesError, refetchQueues } =
   useListQueues();
-
-const { createQueue, isCreatingQueue, createQueueError, createQueueMutation } =
-  useCreateQueue(async () => {
-    await refetchQueues();
-  });
 
 const { deleteQueue, isDeletingQueue, deleteQueueError, deleteQueueMutation } =
   useDeleteQueue(async () => {
@@ -70,8 +62,9 @@ const pageActions = computed((): PageAction[] => [
     label: 'Create Queue',
     icon: 'bi bi-plus-circle',
     variant: 'primary',
-    disabled: isCreatingQueue.value,
-    loading: isCreatingQueue.value,
+    // Creation is handled inside the modal; keep this always enabled
+    disabled: false,
+    loading: false,
     handler: () => (showCreateModal.value = true),
   },
 ]);
@@ -79,21 +72,6 @@ const pageActions = computed((): PageAction[] => [
 // Event Handlers
 function goToQueueDetails(ns: string, name: string) {
   router.push({ name: 'Queue', params: { ns, queue: name } });
-}
-
-async function handleCreateQueue(formValues: QueueFormValues) {
-  try {
-    const queueData: PostApiV1QueuesBody = {
-      queue: { ns: formValues.ns, name: formValues.name },
-      queueType: formValues.type,
-      queueDeliveryModel: formValues.deliveryModel,
-    };
-    await createQueue({ data: queueData });
-    showCreateModal.value = false;
-  } catch (err) {
-    // Error is handled by the hook and displayed in the modal
-    console.error('Failed to create queue:', err);
-  }
 }
 
 function confirmDelete(ns: string, name: string) {
@@ -107,7 +85,7 @@ async function deleteQueueConfirmed() {
     await deleteQueue(queueToDelete.value);
     showDeleteModal.value = false;
   } catch (err) {
-    // Error is handled by the hook and displayed in the modal
+    // Error is handled by the hook and displayed in the banner
     console.error('Failed to delete queue:', err);
   }
 }
@@ -167,20 +145,6 @@ useEscapeKey([
     <PageContent>
       <!-- Transient Error Banners -->
       <div
-        v-if="createQueueError && !showCreateModal"
-        class="alert alert-warning alert-dismissible fade show mb-4"
-        role="alert"
-      >
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        {{ getErrorMessage(createQueueError) }}
-        <button
-          type="button"
-          class="btn-close"
-          aria-label="Close"
-          @click="createQueueMutation.reset()"
-        ></button>
-      </div>
-      <div
         v-if="deleteQueueError && !showDeleteModal"
         class="alert alert-warning alert-dismissible fade show mb-4"
         role="alert"
@@ -219,12 +183,8 @@ useEscapeKey([
     <!-- Modals (teleported to body) -->
     <CreateQueueModal
       :is-visible="showCreateModal"
-      :is-creating="isCreatingQueue"
-      :create-error="
-        createQueueError ? `${getErrorMessage(createQueueError)?.message}` : ''
-      "
       @close="showCreateModal = false"
-      @create="handleCreateQueue"
+      @created="refetchQueues()"
     />
     <DeleteQueueModal
       v-if="showDeleteModal && queueToDelete"
@@ -260,7 +220,7 @@ useEscapeKey([
 }
 
 .queues-list {
-  max-height: calc(100vh - 260px); /* Adjust based on header height */
+  max-height: calc(100vh - 260px);
   overflow-y: auto;
 }
 

@@ -8,14 +8,12 @@
   -->
 
 <script setup lang="ts">
-import type { PostApiV1QueuesBody } from '@/api/model/index.ts';
 import { computed, onMounted, ref, watch, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+
 import { useNamespaces } from '@/composables/useNamespaces.ts';
-import { EQueueDeliveryModel, EQueueType } from '@/types/index.ts';
 import { getErrorMessage } from '@/lib/error.ts';
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
-import { useCreateQueue } from '@/composables/useCreateQueue.ts';
 import { useSelectedNamespaceStore } from '@/stores/selectedNamespace.ts';
 import { useDeleteQueue } from '@/composables/useDeleteQueue.ts';
 import { usePageContentStore, type PageAction } from '@/stores/pageContent.ts';
@@ -32,11 +30,7 @@ const selectedNamespaceStore = useSelectedNamespaceStore();
 const selectedQueueStore = useSelectedQueueStore();
 const pageContentStore = usePageContentStore();
 
-const createQueue = useCreateQueue(async () => {
-  showCreateForm.value = false;
-  await namespaces.refreshNamespaceQueues(namespace.value);
-});
-
+// Delete queue composable (creation handled inside CreateQueueModal)
 const deleteQueue = useDeleteQueue(async () => {
   showDeleteConfirm.value = false;
   queueToDelete.value = null;
@@ -61,9 +55,7 @@ const namespaceExists = computed(() => {
   return namespaces.namespaceExists.value(namespace.value);
 });
 
-// Mutation States
-const isCreatingQueue = computed(() => createQueue.isCreatingQueue.value);
-const createQueueError = computed(() => createQueue.createQueueError.value);
+// Mutation States (delete only, create is self-contained in the modal)
 const isDeletingQueue = computed(() => deleteQueue.isDeletingQueue.value);
 const deleteQueueError = computed(() => deleteQueue.deleteQueueError.value);
 
@@ -97,21 +89,7 @@ function cancelDelete() {
   queueToDelete.value = null;
 }
 
-// API Actions
-async function handleCreateQueue(formValues: {
-  name: string;
-  ns: string;
-  type: EQueueType;
-  deliveryModel: EQueueDeliveryModel;
-}) {
-  const queueData: PostApiV1QueuesBody = {
-    queue: { ns: formValues.ns, name: formValues.name },
-    queueType: formValues.type,
-    queueDeliveryModel: formValues.deliveryModel,
-  };
-  await createQueue.createQueueMutation.mutateAsync({ data: queueData });
-}
-
+// API Actions (delete only)
 async function deleteQueueConfirmed() {
   if (!queueToDelete.value) return;
   await deleteQueue.deleteQueueMutation.mutateAsync({
@@ -139,8 +117,8 @@ const pageActions = computed((): PageAction[] => [
     label: 'Create Queue',
     icon: 'bi bi-plus-circle',
     variant: 'primary',
-    disabled: isCreatingQueue.value,
-    loading: isCreatingQueue.value,
+    disabled: false,
+    loading: false,
     handler: openCreateForm,
   },
 ]);
@@ -209,25 +187,7 @@ onMounted(() => {
 <template>
   <div>
     <PageContent>
-      <!-- Contextual Error Banners -->
-      <div
-        v-if="createQueueError && !showCreateForm"
-        class="alert alert-warning alert-dismissible fade show error-banner"
-      >
-        <div class="d-flex align-items-center">
-          <i class="bi bi-exclamation-triangle me-2"></i>
-          <span
-            >Failed to create queue:
-            {{ getErrorMessage(createQueueError) }}</span
-          >
-        </div>
-        <button
-          type="button"
-          class="btn-close"
-          @click="createQueue.createQueueMutation.reset()"
-        ></button>
-      </div>
-
+      <!-- Contextual Error Banner (Delete only; Create modal handles its own errors) -->
       <div
         v-if="deleteQueueError && !showDeleteConfirm"
         class="alert alert-warning alert-dismissible fade show error-banner"
@@ -298,13 +258,9 @@ onMounted(() => {
     <!-- Modals -->
     <CreateQueueModal
       :is-visible="showCreateForm"
-      :is-creating="isCreatingQueue"
-      :create-error="
-        createQueueError ? `${getErrorMessage(createQueueError)?.message}` : ''
-      "
       :namespace="namespace"
       @close="cancelCreate"
-      @create="handleCreateQueue"
+      @created="namespaces.refreshNamespaceQueues(namespace)"
     />
 
     <DeleteQueueModal

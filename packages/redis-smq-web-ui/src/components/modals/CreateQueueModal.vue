@@ -8,14 +8,17 @@
   -->
 
 <script setup lang="ts">
+import { computed, ref, watch } from 'vue';
 import { EQueueDeliveryModel, EQueueType } from '@/types';
 import {
   useQueueForm,
   type QueueFormValues,
 } from '@/composables/useQueueForm.ts';
 import { Field, ErrorMessage, type GenericObject, useForm } from 'vee-validate';
-import { watch } from 'vue';
 import BaseModal from '@/components/modals/BaseModal.vue';
+import { useCreateQueue } from '@/composables/useCreateQueue.ts';
+import { getErrorMessage } from '@/lib/error.ts';
+import type { PostApiV1QueuesBody } from '@/api/model/index.ts';
 
 // Custom focus directive
 const vFocus = {
@@ -24,22 +27,13 @@ const vFocus = {
 
 const props = defineProps<{
   isVisible: boolean;
-  isCreating: boolean;
-  createError: string;
   namespace?: string;
 }>();
 
 const emit = defineEmits<{
   (e: 'close'): void;
-  (
-    e: 'create',
-    formValues: {
-      name: string;
-      ns: string;
-      type: EQueueType;
-      deliveryModel: EQueueDeliveryModel;
-    },
-  ): void;
+  // Emit the created queue payload back to parent for optional refresh/navigation
+  (e: 'created', payload: QueueFormValues): void;
 }>();
 
 // Use the form hook - destructure individual properties
@@ -53,21 +47,57 @@ const { meta, handleSubmit } = useForm({
   validationSchema,
 });
 
-// Reset form when dialog is closed
+// Track last submitted values so we can emit on success
+const submittedValues = ref<QueueFormValues | null>(null);
+
+// API: self-contained create logic
+const { createQueue, isCreatingQueue, createQueueError, createQueueMutation } =
+  useCreateQueue(async () => {
+    if (submittedValues.value) {
+      // Notify parent about the created queue (so it can refetch/navigate)
+      emit('created', submittedValues.value);
+    }
+    // Reset form and state after successful creation
+    resetForm();
+    submittedValues.value = null;
+    // Request close
+    emit('close');
+  });
+
+// Display-friendly error text
+const createErrorText = computed(() => {
+  if (!createQueueError.value) return '';
+  const err = getErrorMessage(createQueueError.value);
+  // Support both string and {message} shapes
+  return typeof err === 'string'
+    ? err
+    : (err?.message ?? 'Failed to create queue');
+});
+
+// Reset form and mutation when dialog is closed
 watch(
   () => props.isVisible,
   (isVisible) => {
     if (!isVisible) {
       resetForm();
+      submittedValues.value = null;
+      createQueueMutation.reset();
     }
   },
 );
 
 // Form submission handler
-const onFormSubmit = handleSubmit((values: GenericObject) => {
-  emit('create', {
-    ...(values as QueueFormValues),
-  });
+const onFormSubmit = handleSubmit(async (values: GenericObject) => {
+  const formValues = values as QueueFormValues;
+  submittedValues.value = formValues;
+
+  const queueData: PostApiV1QueuesBody = {
+    queue: { ns: formValues.ns, name: formValues.name },
+    queueType: formValues.type,
+    queueDeliveryModel: formValues.deliveryModel,
+  };
+
+  await createQueue({ data: queueData });
 });
 
 function handleClose() {
@@ -242,14 +272,14 @@ function handleClose() {
           </section>
 
           <!-- Error Display -->
-          <div v-if="createError" class="error-section">
+          <div v-if="createQueueError" class="error-section">
             <div class="error-content">
               <div class="error-icon">
                 <i class="bi bi-exclamation-triangle-fill"></i>
               </div>
               <div class="error-text">
                 <h4 class="error-title">Creation Failed</h4>
-                <p class="error-message">{{ createError }}</p>
+                <p class="error-message">{{ createErrorText }}</p>
               </div>
             </div>
           </div>
@@ -265,10 +295,10 @@ function handleClose() {
       <button
         type="submit"
         class="btn btn-primary"
-        :disabled="isCreating || !meta.valid"
+        :disabled="isCreatingQueue || !meta.valid"
         @click="onFormSubmit"
       >
-        <template v-if="isCreating">
+        <template v-if="isCreatingQueue">
           <span class="spinner-border spinner-border-sm me-2"></span>
           Creating Queue...
         </template>
