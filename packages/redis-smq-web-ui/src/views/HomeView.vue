@@ -23,9 +23,13 @@ import {
   getApiV1NamespacesNsQueuesNameConsumers,
   getGetApiV1NamespacesNsQueuesNameConsumersQueryKey,
 } from '@/api/generated/consumers/consumers.ts';
+import CreateQueueModal from '@/components/modals/CreateQueueModal.vue';
 
 const router = useRouter();
 const queryClient = useQueryClient();
+
+// Local UI state: Create Queue modal
+const showCreateQueueModal = ref(false);
 
 const systemStats = ref({
   totalQueues: 0,
@@ -41,8 +45,18 @@ const quickActions = [
     title: 'Create Queue',
     description: 'Set up a new message queue',
     icon: 'bi-plus-circle-fill',
-    color: 'primary',
-    action: () => router.push({ name: 'Queues' }),
+    color: 'info',
+    // Open the self-contained modal instead of navigating away
+    action: () => {
+      showCreateQueueModal.value = true;
+    },
+  },
+  {
+    title: 'Set up Exchange',
+    description: 'Bind your queue to an exchange',
+    icon: 'bi-diagram-3',
+    color: 'info',
+    action: () => router.push({ name: 'Exchanges' }),
   },
   {
     title: 'View Queues',
@@ -52,17 +66,10 @@ const quickActions = [
     action: () => router.push({ name: 'Queues' }),
   },
   {
-    title: 'Monitor Activity',
-    description: 'Check system performance',
-    icon: 'bi-graph-up',
-    color: 'success',
-    action: () => router.push({ name: 'Monitoring' }),
-  },
-  {
     title: 'Documentation',
     description: 'Learn more about RedisSMQ',
     icon: 'bi-book-fill',
-    color: 'secondary',
+    color: 'info',
     action: () =>
       window.open(
         'https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq/docs/README.md',
@@ -171,10 +178,6 @@ const loadDashboardData = async () => {
   }
 };
 
-const refreshData = () => {
-  loadDashboardData();
-};
-
 // Lifecycle
 onMounted(() => {
   loadDashboardData();
@@ -241,92 +244,6 @@ onMounted(() => {
 
       <!-- Dashboard Content -->
       <div v-else class="dashboard-content">
-        <!-- System Overview Cards -->
-        <section class="overview-section">
-          <div class="section-header">
-            <h2 class="section-title">
-              <i class="bi bi-speedometer2 me-2"></i>
-              System Overview
-            </h2>
-            <button
-              class="btn btn-outline-primary btn-sm refresh-btn"
-              @click="refreshData"
-            >
-              <i class="bi bi-arrow-clockwise me-1"></i>
-              Refresh
-            </button>
-          </div>
-
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-icon queues-icon">
-                <i class="bi bi-list-ul"></i>
-              </div>
-              <div class="stat-content">
-                <div class="stat-number">{{ formattedStats.totalQueues }}</div>
-                <div class="stat-title">Total Queues</div>
-                <div class="stat-description">Active message queues</div>
-              </div>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-icon messages-icon">
-                <i class="bi bi-envelope-fill"></i>
-              </div>
-              <div class="stat-content">
-                <div class="stat-number">
-                  {{ formattedStats.totalMessages }}
-                </div>
-                <div class="stat-title">Messages Processed</div>
-                <div class="stat-description">Total messages handled</div>
-              </div>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-icon consumers-icon">
-                <i class="bi bi-gear-fill"></i>
-              </div>
-              <div class="stat-content">
-                <div class="stat-number">
-                  {{ formattedStats.currentlyInProcess }}
-                </div>
-                <div class="stat-title">Currently in Process</div>
-                <div class="stat-description">
-                  Total message being processed
-                </div>
-              </div>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-icon consumers-icon">
-                <i class="bi bi-hourglass-split"></i>
-              </div>
-              <div class="stat-content">
-                <div class="stat-number">
-                  {{ formattedStats.pendingMessages }}
-                </div>
-                <div class="stat-title">Pending Messages</div>
-                <div class="stat-description">
-                  Total message in the waiting queue
-                </div>
-              </div>
-            </div>
-
-            <div class="stat-card">
-              <div class="stat-icon consumers-icon">
-                <i class="bi bi-people-fill"></i>
-              </div>
-              <div class="stat-content">
-                <div class="stat-number">
-                  {{ formattedStats.activeConsumers }}
-                </div>
-                <div class="stat-title">Active Consumers</div>
-                <div class="stat-description">Connected consumers</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         <!-- Quick Actions -->
         <section class="actions-section">
           <div class="section-header">
@@ -376,26 +293,37 @@ onMounted(() => {
                   <div class="step-content">
                     <h4 class="step-title">Create a Queue</h4>
                     <p class="step-description">
-                      Set up your first message queue with the desired
-                      configuration
+                      Create a new queue to hold your messages.
                     </p>
                   </div>
                 </div>
                 <div class="step-item">
                   <div class="step-number">2</div>
                   <div class="step-content">
-                    <h4 class="step-title">Configure Consumers</h4>
+                    <h4 class="step-title">Publish a Message</h4>
                     <p class="step-description">
-                      Add consumer groups to process messages efficiently
+                      Send messages directly to your queue or publish them
+                      through an exchange.
                     </p>
                   </div>
                 </div>
                 <div class="step-item">
                   <div class="step-number">3</div>
                   <div class="step-content">
-                    <h4 class="step-title">Monitor Performance</h4>
+                    <h4 class="step-title">Consume Messages</h4>
                     <p class="step-description">
-                      Track message processing and system performance
+                      Build a consumer in your application to process messages
+                      from the queue.
+                    </p>
+                  </div>
+                </div>
+                <div class="step-item">
+                  <div class="step-number">4</div>
+                  <div class="step-content">
+                    <h4 class="step-title">Monitor & Manage</h4>
+                    <p class="step-description">
+                      Use the Web UI to monitor your queues, exchanges, and
+                      messages in real-time.
                     </p>
                   </div>
                 </div>
@@ -423,6 +351,13 @@ onMounted(() => {
         </section>
       </div>
     </main>
+
+    <!-- Create Queue Modal -->
+    <CreateQueueModal
+      :is-visible="showCreateQueueModal"
+      @close="showCreateQueueModal = false"
+      @created="loadDashboardData"
+    />
   </div>
 </template>
 
@@ -442,10 +377,6 @@ onMounted(() => {
   touch-action: manipulation;
 }
 
-/* Spacing tokens */
-:root {
-  /* Scoped styles won't leak; tokens are for this component only */
-}
 .hero-section {
   /* Use clamp + safe-area for comfortable gutters on mobile */
   padding: clamp(24px, 6vw, 64px) clamp(16px, 4vw, 32px);
@@ -454,6 +385,7 @@ onMounted(() => {
   background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
   color: white;
   margin-bottom: clamp(16px, 3vw, 32px);
+  border-radius: 16px;
 }
 
 .hero-content {
