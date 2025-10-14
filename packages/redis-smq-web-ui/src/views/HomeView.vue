@@ -330,8 +330,9 @@ onMounted(() => {
               </div>
               <div class="getting-started-actions">
                 <button
+                  v-if="systemStats.totalQueues === 0"
                   class="btn btn-primary"
-                  @click="router.push({ name: 'Queues' })"
+                  @click="showCreateQueueModal = true"
                 >
                   <i class="bi bi-plus-circle me-2"></i>
                   Create Your First Queue
