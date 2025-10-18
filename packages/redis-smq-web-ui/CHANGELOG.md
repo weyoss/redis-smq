@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.8](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.7...v9.0.0-next.8) (2025-10-18)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-web-ui:** make loading screen responsive with fluid scaling ([fe6d346](https://github.com/weyoss/redis-smq/commit/fe6d3469eaf67a3f52f903c79e2a25942c46ef86))
+- **redis-smq-web-ui:** offer to create the first queue only when no queues exist ([8042b45](https://github.com/weyoss/redis-smq/commit/8042b45d5c735352df83e44176647c722509e128))
+
+### 📝 Documentation
+
+- **redis-smq-web-ui:** update README screenshot to home view ([874ad7f](https://github.com/weyoss/redis-smq/commit/874ad7f342119b71004662731482e8b45b921991))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-web-ui:** integrate CreateQueueModal into HomeView, simplify dashboard ([de2a116](https://github.com/weyoss/redis-smq/commit/de2a116a8fb069a8ff51c0d3b616fadb7d6d306c))
+- **redis-smq-web-ui:** make CreateQueueModal self-contained ([ff31b5c](https://github.com/weyoss/redis-smq/commit/ff31b5c5f3b10d0831184350616c096c0118613f))
+
 ## [9.0.0-next.7](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.6...v9.0.0-next.7) (2025-10-13)
 
 ### 📝 Documentation
