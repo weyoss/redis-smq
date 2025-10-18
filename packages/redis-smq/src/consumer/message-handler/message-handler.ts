@@ -45,6 +45,8 @@ import { IConsumerMessageHandlerParams } from './types/index.js';
 import { TConsumerMessageHandlerWorkerPayload } from './workers/types/index.js';
 import { ERedisConnectionAcquisitionMode } from '../../common/redis-connection-pool/types/connection-pool.js';
 import { RedisConnectionPool } from '../../common/redis-connection-pool/redis-connection-pool.js';
+import { _deleteEphemeralConsumerGroup } from './_/_delete-ephemeral-consumer-group.js';
+import { _prepareConsumerGroup } from './_/_prepare-consumer-group.js';
 
 const WORKERS_DIR = path.resolve(env.getCurrentDir(), './workers');
 
@@ -52,13 +54,16 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   protected consumer;
   protected consumerId;
   protected queue;
-  protected logger;
-  protected dequeueMessage;
-  protected consumeMessage;
+  protected logger: ILogger;
+  protected dequeueMessage: DequeueMessage | null = null;
+  protected consumeMessage: ConsumeMessage | null = null;
   protected messageHandler;
   protected autoDequeue;
   protected workerResourceGroup: WorkerResourceGroup | null = null;
   protected redisClient: IRedisClient | null = null;
+
+  // Tracks an auto-generated ephemeral consumer group for PUB_SUB
+  protected ephemeralConsumerGroupId: string | null = null;
 
   constructor(
     consumer: Consumer,
@@ -73,10 +78,10 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     this.messageHandler = messageHandler;
 
     const config = Configuration.getConfig();
-    this.logger = createLogger(config.logger, [
-      `${this.consumer.constructor.name}-${this.consumer.getId()}`,
-      `${this.constructor.name}-${this.getId()}`,
-    ]);
+    this.logger = createLogger(
+      config.logger,
+      `${this.constructor.name.toLowerCase()}-${this.getId()}`,
+    );
 
     this.logger.info(
       `Initializing MessageHandler for consumer ${this.consumerId}, queue ${JSON.stringify(this.queue)}`,
@@ -95,15 +100,6 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
         'Event bus is not enabled, skipping event bus publisher setup',
       );
     }
-
-    this.logger.debug('Initializing DequeueMessage instance');
-    this.dequeueMessage = this.initDequeueMessageInstance();
-
-    this.logger.debug('Initializing ConsumeMessage instance');
-    this.consumeMessage = this.initConsumeMessageInstance();
-
-    this.logger.debug('Registering system events');
-    this.registerSystemEvents();
 
     this.logger.info(
       `MessageHandler initialized for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
@@ -129,6 +125,16 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       );
       return;
     }
+
+    if (!this.consumeMessage) {
+      // Should not happen post goingUp, but guard for safety
+      this.logger.warn(
+        'ConsumeMessage instance is not initialized yet. Skipping processMessage call.',
+      );
+      return;
+    }
+
+    const consumeMessage = this.consumeMessage;
 
     this.logger.debug(`Processing message ${messageId}`);
 
@@ -174,10 +180,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
           return this.handleError(err);
         }
 
-        // An empty reply indicates that the message was not in a PENDING state,
-        // likely because another consumer processed it first. This is an
-        // unexpected outcome as messages are dequeued atomically and placed
-        // into the processing queue.
+        // An empty reply indicates that the message was not in a PENDING state.
         if (!reply) {
           const errMsg = `Message ${messageId} could not be fetched.`;
           this.logger.error(errMsg);
@@ -200,7 +203,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
         this.logger.debug(
           `Passing message ${messageId} to ConsumeMessage for handling`,
         );
-        this.consumeMessage.handleReceivedMessage(message);
+        consumeMessage.handleReceivedMessage(message);
       },
     );
   }
@@ -234,23 +237,21 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
    * @returns {void}
    */
   dequeue(): void {
-    if (this.isRunning()) {
-      this.logger.debug('Dequeuing message from queue');
-      this.dequeueMessage.dequeue();
-    } else {
+    if (!this.isRunning()) {
       this.logger.debug('Ignoring dequeue call as handler is not running');
+      return;
     }
+    if (!this.dequeueMessage) {
+      // Should not happen post goingUp, but guard for safety
+      this.logger.warn(
+        'DequeueMessage instance is not initialized yet. Skipping dequeue call.',
+      );
+      return;
+    }
+    this.logger.debug('Dequeuing message from queue');
+    this.dequeueMessage.dequeue();
   }
 
-  /**
-   * Retrieves the queue parameters associated with the current MessageHandler instance.
-   *
-   * @returns The queue parameters, represented by the `IQueueParsedParams` interface.
-   *
-   * @remarks
-   * This method returns the queue parameters that were provided when creating the MessageHandler instance.
-   * The returned object contains information about the queue, such as the queue name, consumer group ID, and other relevant details.
-   */
   getQueue(): IQueueParsedParams {
     this.logger.debug(
       `Getting queue parameters: ${JSON.stringify(this.queue)}`,
@@ -329,6 +330,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   };
 
   protected registerSystemEvents = (): void => {
+    if (!this.dequeueMessage || !this.consumeMessage) return;
     this.logger.debug('Registering system event handlers');
     this.dequeueMessage.on(
       'consumer.dequeueMessage.messageReceived',
@@ -347,6 +349,28 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       this.onMessageAcknowledged,
     );
     this.logger.debug('All system event handlers registered successfully');
+  };
+
+  protected unregisterSystemEvents = (): void => {
+    if (!this.dequeueMessage || !this.consumeMessage) return;
+    this.logger.debug('Unregistering system event handlers');
+    this.dequeueMessage.removeListener(
+      'consumer.dequeueMessage.messageReceived',
+      this.onMessageReceived,
+    );
+    this.dequeueMessage.removeListener(
+      'consumer.dequeueMessage.nextMessage',
+      this.onMessageNext,
+    );
+    this.consumeMessage.removeListener(
+      'consumer.consumeMessage.messageUnacknowledged',
+      this.onMessageUnacknowledged,
+    );
+    this.consumeMessage.removeListener(
+      'consumer.consumeMessage.messageAcknowledged',
+      this.onMessageAcknowledged,
+    );
+    this.logger.debug('All system event handlers unregistered');
   };
 
   protected override getLogger(): ILogger {
@@ -386,9 +410,8 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
    * Sets up and initializes consumer workers.
    *
    * @param cb - A callback function that will be called once the setup is complete or if an error occurs.
-   *             The callback takes an error as its argument, which will be null if no error occurred.
    */
-  protected setUpConsumerWorkers = (cb: ICallback<void>): void => {
+  protected setUpConsumerWorkers = (cb: ICallback): void => {
     this.logger.debug('Setting up consumer workers');
 
     const config = Configuration.getConfig();
@@ -451,7 +474,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     );
   };
 
-  protected shutDownConsumerWorkers = (cb: ICallback<void>): void => {
+  protected shutDownConsumerWorkers = (cb: ICallback): void => {
     if (this.workerResourceGroup) {
       this.logger.debug('Shutting down consumer workers');
       this.workerResourceGroup.shutdown((err) => {
@@ -472,14 +495,8 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
 
   /**
    * Prepares the MessageHandler instance for operation by setting up necessary components and processes.
-   *
-   * @returns An array of functions, each representing a setup operation to be executed in sequence.
-   *
-   * @remarks
-   * This method extends the `goingUp` process from the parent class by adding additional setup steps specific to the MessageHandler.
-   * It includes running the `dequeueMessage` and `consumeMessage` instances, optionally starting the dequeue process, and setting up consumer workers.
    */
-  protected override goingUp(): ((cb: ICallback<void>) => void)[] {
+  protected override goingUp(): ((cb: ICallback) => void)[] {
     this.logger.info(
       `MessageHandler going up for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
     );
@@ -495,8 +512,47 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
           },
         );
       },
+
+      /**
+       * Ensures an appropriate consumer group is present for PUB_SUB queues.
+       * - If delivery model is PUB_SUB and no groupId provided, creates an ephemeral consumer group.
+       * - If a groupId is provided, ensures it exists (idempotent save).
+       * - Updates this.queue.groupId.
+       */
+      (cb: ICallback) => {
+        _prepareConsumerGroup(
+          this.queue,
+          this.consumerId,
+          (err, effectiveGroupId) => {
+            if (err) return cb(err);
+            // Update queue with the effective group
+            if (effectiveGroupId && this.queue.groupId !== effectiveGroupId) {
+              this.queue = { ...this.queue, groupId: effectiveGroupId };
+              this.logger.debug(
+                `Effective consumer group resolved: '${effectiveGroupId}'.`,
+              );
+            }
+            cb();
+          },
+          this.logger,
+        );
+      },
+
+      // Create DequeueMessage/ConsumeMessage only once, after consumer group is resolved
+      (cb: ICallback) => {
+        if (!this.consumeMessage) {
+          this.consumeMessage = this.initConsumeMessageInstance();
+        }
+        if (!this.dequeueMessage) {
+          this.dequeueMessage = this.initDequeueMessageInstance();
+        }
+        // Register system events exactly once
+        this.registerSystemEvents();
+        cb();
+      },
       (cb: ICallback) => this.setUpConsumerWorkers(cb),
       (cb: ICallback) => {
+        if (!this.consumeMessage) return cb();
         this.logger.debug('Starting ConsumeMessage instance');
         this.consumeMessage.run((err) => {
           if (err) {
@@ -508,6 +564,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
         });
       },
       (cb: ICallback) => {
+        if (!this.dequeueMessage) return cb();
         this.logger.debug('Starting DequeueMessage instance');
         this.dequeueMessage.run((err) => {
           if (err) {
@@ -532,23 +589,43 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
 
   /**
    * Performs cleanup operations and shuts down the consumer workers before shutting down the MessageHandler instance.
-   *
-   * @remarks
-   * This method is called when the MessageHandler instance is being shut down. It ensures that all resources are properly cleaned up and that any running worker processes are terminated.
-   * The method executes the following steps:
-   * 1. Calls the `shutDownConsumerWorkers` method to terminate any running consumer worker processes.
-   * 2. Shuts down the `dequeueMessage` and `consumeMessage` instances by calling their respective `shutdown` methods.
-   * 3. Calls the `super.goingDown` method to perform any additional cleanup operations defined in the parent class.
-   *
-   * @returns An array of functions, each representing a cleanup operation to be executed in sequence.
    */
-  protected override goingDown(): ((cb: ICallback<void>) => void)[] {
+  protected override goingDown(): ((cb: ICallback) => void)[] {
     this.logger.info(
       `MessageHandler going down for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
     );
     return [
+      // First, delete ephemeral consumer group if one was created
+      (cb: ICallback): void => {
+        const ephemeral = this.ephemeralConsumerGroupId;
+        if (!ephemeral) return cb();
+
+        this.logger.debug(
+          `Deleting ephemeral consumer group '${ephemeral}' for queue '${this.queue.queueParams.name}'`,
+        );
+        _deleteEphemeralConsumerGroup(
+          this.queue.queueParams,
+          ephemeral,
+          (err) => {
+            if (err) {
+              this.logger.warn(
+                `Failed to delete ephemeral consumer group '${ephemeral}': ${err.message}`,
+              );
+            } else {
+              this.logger.debug(
+                `Ephemeral consumer group '${ephemeral}' deleted successfully.`,
+              );
+            }
+            this.ephemeralConsumerGroupId = null;
+            cb();
+          },
+        );
+      },
       this.shutDownConsumerWorkers,
-      (cb: ICallback<void>) => {
+      (cb: ICallback) => {
+        // Unregister events before shutting down to avoid duplicate handlers on future runs
+        this.unregisterSystemEvents();
+        if (!this.dequeueMessage) return cb();
         this.logger.debug('Shutting down DequeueMessage instance');
         this.dequeueMessage.shutdown((err) => {
           if (err) {
@@ -558,10 +635,12 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
           } else {
             this.logger.debug('DequeueMessage shut down successfully');
           }
+          this.dequeueMessage = null;
           cb();
         });
       },
-      (cb: ICallback<void>) => {
+      (cb: ICallback) => {
+        if (!this.consumeMessage) return cb();
         this.logger.debug('Shutting down ConsumeMessage instance');
         this.consumeMessage.shutdown((err) => {
           if (err) {
@@ -571,6 +650,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
           } else {
             this.logger.debug('ConsumeMessage shut down successfully');
           }
+          this.consumeMessage = null;
           cb();
         });
       },

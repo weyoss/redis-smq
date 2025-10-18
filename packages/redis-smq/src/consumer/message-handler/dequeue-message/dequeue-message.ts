@@ -25,7 +25,6 @@ import { Configuration } from '../../../config/index.js';
 import { _hasRateLimitExceeded } from '../../../queue-rate-limit/_/_has-rate-limit-exceeded.js';
 import { _getQueueProperties } from '../../../queue-manager/_/_get-queue-properties.js';
 import {
-  EQueueDeliveryModel,
   EQueueType,
   IQueueParsedParams,
   IQueueRateLimit,
@@ -33,14 +32,11 @@ import {
 } from '../../../index.js';
 import { Consumer } from '../../consumer.js';
 import {
-  ConsumerGroupRequiredError,
-  ConsumerGroupsNotSupportedError,
   MessageHandlerError,
   QueueNotFoundError,
 } from '../../../errors/index.js';
 import { eventBusPublisher } from './event-bus-publisher.js';
 import { ERedisConnectionAcquisitionMode } from '../../../common/redis-connection-pool/types/connection-pool.js';
-import { ConsumerGroups } from '../../../consumer-groups/index.js';
 import { RedisConnectionPool } from '../../../common/redis-connection-pool/redis-connection-pool.js';
 
 const IPAddresses = (() => {
@@ -71,7 +67,6 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
   protected logger;
   protected blockUntilMessageReceived;
   protected autoCloseRedisConnection;
-  protected consumerGroups;
 
   protected redisClient: IRedisClient | null = null;
   protected queueRateLimit: IQueueRateLimit | null = null;
@@ -140,8 +135,6 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
       this.logger.error(`Timer error: ${err.message}`);
       this.handleError(err);
     });
-
-    this.consumerGroups = new ConsumerGroups();
 
     this.logger.info(
       `DequeueMessage initialized for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
@@ -238,7 +231,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
           },
         );
       },
-      (cb: ICallback<void>) => {
+      (cb: ICallback) => {
         this.logger.debug('Registering consumer with queue');
         const consumerInfo: TQueueConsumer = {
           ipAddress: IPAddresses,
@@ -300,7 +293,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
           },
         );
       },
-      (cb: ICallback<void>) => {
+      (cb: ICallback) => {
         this.logger.debug('Getting queue properties');
         const redisClient = this.getRedisClient();
         if (redisClient instanceof Error) {
@@ -310,7 +303,6 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
           cb(redisClient);
           return void 0;
         }
-
         _getQueueProperties(
           redisClient,
           this.queue.queueParams,
@@ -326,75 +318,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
             } else {
               this.queueType = queueProperties.queueType;
               this.queueRateLimit = queueProperties.rateLimit ?? null;
-
-              this.logger.debug(`Queue properties retrieved: 
-                queueType: ${EQueueType[this.queueType]}
-                rateLimit: ${this.queueRateLimit ? JSON.stringify(this.queueRateLimit) : 'null'}
-                deliveryModel: ${EQueueDeliveryModel[queueProperties.deliveryModel]}`);
-
-              const { queueParams, groupId } = this.queue;
-
-              // P2P delivery model
-              if (
-                queueProperties.deliveryModel ===
-                EQueueDeliveryModel.POINT_TO_POINT
-              ) {
-                if (groupId) {
-                  this.logger.error(
-                    'Consumer group ID not supported for point-to-point delivery model',
-                  );
-                  cb(new ConsumerGroupsNotSupportedError());
-                } else {
-                  this.logger.debug('Point-to-point delivery model validated');
-                  cb();
-                }
-              }
-              // PubSub delivery model
-              else if (
-                queueProperties.deliveryModel === EQueueDeliveryModel.PUB_SUB
-              ) {
-                if (!groupId) {
-                  this.logger.error(
-                    'Consumer group ID required for pub/sub delivery model',
-                  );
-                  return cb(new ConsumerGroupRequiredError());
-                }
-                this.logger.debug(
-                  `Pub/sub delivery model with group ID: ${groupId}`,
-                );
-                this.logger.debug(
-                  `Making sure consumer group ${groupId} for queue ${queueParams.name} exists...`,
-                );
-                this.consumerGroups.saveConsumerGroup(
-                  queueParams,
-                  groupId,
-                  (err, reply) => {
-                    if (err) {
-                      this.logger.error(
-                        `Error saving consumer group ${groupId} for queue ${queueParams.name}`,
-                        err,
-                      );
-                      return cb(err);
-                    }
-                    if (reply)
-                      this.logger.debug(
-                        `Consumer group ${groupId} for queue ${queueParams.name} saved successfully.`,
-                      );
-                    else
-                      this.logger.debug(
-                        `Consumer group ${groupId} for queue ${queueParams.name} already exists.`,
-                      );
-                    cb();
-                  },
-                );
-              }
-              // Unknown delivery model
-              else {
-                this.logger.error(
-                  `Unknown delivery model: ${queueProperties.deliveryModel}`,
-                );
-                cb(new PanicError('UNKNOWN_DELIVERY_MODEL'));
-              }
+              cb();
             }
           },
         );
@@ -402,7 +326,7 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
     ]);
   }
 
-  protected override goingDown(): ((cb: ICallback<void>) => void)[] {
+  protected override goingDown(): ((cb: ICallback) => void)[] {
     this.logger.info(
       `DequeueMessage going down for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
     );
