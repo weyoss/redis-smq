@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.8](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.7...v9.0.0-next.8) (2025-10-18)
+
+### ✨ Features
+
+- **redis-smq:** make consumerGroupId optional for PubSub queue consumers ([0529efd](https://github.com/weyoss/redis-smq/commit/0529efd3ab38ba6f423143af344b30d2ef1cc4a4))
+
+### 🐛 Bug Fixes
+
+- **redis-smq:** check consumer group existence when relevant ([1711ac1](https://github.com/weyoss/redis-smq/commit/1711ac1db83ae8ca1e65947c33ca2878f49e15ed))
+
+### 📝 Documentation
+
+- **redis-smq:** clarify consumer group behavior for PubSub queues ([84f0e48](https://github.com/weyoss/redis-smq/commit/84f0e484bdca19085d067d738bb9d1adaa825ca1))
+
 ## [9.0.0-next.7](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.6...v9.0.0-next.7) (2025-10-13)
 
 **Note:** Version bump only for package redis-smq
