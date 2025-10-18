@@ -282,4 +282,6 @@ RedisSMQ.initialize(
 );
 ```
 
-Remember to provide a consumer group ID when consuming messages from a Pub/Sub queue.
+_Note:_
+
+If you do not provide a consumer group ID when consuming messages from a Pub/Sub queue, the consumer will create an ephemeral consumer group for the session. Provide a consumer group ID to join a persistent, named group.
