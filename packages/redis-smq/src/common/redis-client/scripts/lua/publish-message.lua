@@ -8,13 +8,14 @@
 -- KEYS[3]: keyQueuePending
 -- KEYS[4]: keyQueueScheduled
 -- KEYS[5]: keyQueueMessages
--- KEYS[6]: keyMessage
+-- KEYS[6]: keyQueueConsumerGroups
+-- KEYS[7]: keyMessage
 --
 -- ARGV layout:
 -- ARGV[1-11]: Queue property keys and scheduling values
--- ARGV[12-34]: Message property keys (22 keys)
--- ARGV[35-57]: Message property values (22 values)
-
+-- ARGV[12-34]: Message property keys (23 keys)
+-- ARGV[35-57]: Message property values (23 values)
+-- ARGV[58]: consumerGroupId
 --
 -- This script depends on 'shared-procedures/publish-message.lua'.
 -- The content of 'shared-procedures/publish-message.lua' must be prepended to this script before loading it into Redis.

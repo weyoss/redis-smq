@@ -16,6 +16,7 @@ import { workerBootstrap } from './worker-bootstrap.js';
 import { IQueueParsedParams } from '../../../queue-manager/index.js';
 import { EMessageUnacknowledgementReason } from '../consume-message/types/index.js';
 import { withSharedPoolConnection } from '../../../common/redis-connection-pool/with-shared-pool-connection.js';
+import { _deleteEphemeralConsumerGroup } from '../_/_delete-ephemeral-consumer-group.js';
 
 export class ReapConsumersWorker extends WorkerAbstract {
   protected messageUnacknowledgement: MessageUnacknowledgement;
@@ -23,6 +24,44 @@ export class ReapConsumersWorker extends WorkerAbstract {
   constructor(queueParsedParams: IQueueParsedParams) {
     super(queueParsedParams);
     this.messageUnacknowledgement = new MessageUnacknowledgement();
+  }
+
+  protected cleanUp(consumerId: string, cb: ICallback): void {
+    async.series(
+      [
+        (done: ICallback) => {
+          this.logger.info(`Unacknowledging messages...`);
+          this.messageUnacknowledgement.unacknowledgeMessagesInProcess(
+            consumerId,
+            [this.queueParsedParams.queueParams],
+            EMessageUnacknowledgementReason.OFFLINE_CONSUMER,
+            (err, status) => {
+              if (err) {
+                this.logger.error(
+                  `Failed to unacknowledge messages for offline consumer ${consumerId}`,
+                  err,
+                );
+                return done(err);
+              }
+              const messageCount = status ? Object.keys(status).length : 0;
+              this.logger.info(
+                `Successfully unacknowledged ${messageCount} messages for offline consumer ${consumerId}`,
+              );
+              done();
+            },
+          );
+        },
+        (done: ICallback) => {
+          this.logger.info(`Cleaning up ephemeral consumer groups...`);
+          _deleteEphemeralConsumerGroup(
+            this.queueParsedParams.queueParams,
+            consumerId,
+            done,
+          );
+        },
+      ],
+      (err) => cb(err),
+    );
   }
 
   work = (cb: ICallback<void>): void => {
@@ -70,30 +109,9 @@ export class ReapConsumersWorker extends WorkerAbstract {
                       done(err);
                     } else if (!alive) {
                       this.logger.info(
-                        `Consumer ${consumerId} is offline, unacknowledging messages`,
+                        `Consumer ${consumerId} is offline, cleaning up...`,
                       );
-                      this.messageUnacknowledgement.unacknowledgeMessagesInProcess(
-                        consumerId,
-                        [this.queueParsedParams.queueParams],
-                        EMessageUnacknowledgementReason.OFFLINE_CONSUMER,
-                        (err, status) => {
-                          if (err) {
-                            this.logger.error(
-                              `Failed to unacknowledge messages for offline consumer ${consumerId}`,
-                              err,
-                            );
-                            done(err);
-                          } else {
-                            const messageCount = status
-                              ? Object.keys(status).length
-                              : 0;
-                            this.logger.info(
-                              `Successfully unacknowledged ${messageCount} messages for offline consumer ${consumerId}`,
-                            );
-                            done();
-                          }
-                        },
-                      );
+                      this.cleanUp(consumerId, done);
                     } else {
                       this.logger.debug(
                         `Consumer ${consumerId} is alive and active`,

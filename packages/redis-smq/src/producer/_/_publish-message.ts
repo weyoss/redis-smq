@@ -17,6 +17,7 @@ import {
 import { MessageEnvelope } from '../../message/message-envelope.js';
 import { EQueueProperty, EQueueType } from '../../queue-manager/index.js';
 import {
+  ConsumerGroupNotFoundError,
   MessageAlreadyExistsError,
   MessagePriorityRequiredError,
   PriorityQueuingNotEnabledError,
@@ -150,6 +151,7 @@ export function _publishMessage(
     ...schedulingValues,
     ...messagePropertyKeys,
     ...messagePropertyValues,
+    consumerGroupId ?? '',
   ];
 
   redisClient.runScript(
@@ -160,6 +162,7 @@ export function _publishMessage(
       keys.keyQueuePending,
       keys.keyQueueScheduled,
       keys.keyQueueMessages,
+      keys.keyQueueConsumerGroups,
       keyMessage,
     ],
     scriptArgs,
@@ -178,6 +181,11 @@ export function _publishMessage(
         case 'QUEUE_NOT_FOUND':
           logger.error(`Queue ${queueName} not found for message ${messageId}`);
           return cb(new QueueNotFoundError());
+        case 'CONSUMER_GROUP_NOT_FOUND':
+          logger.error(
+            `Consumer group ${consumerGroupId} not found for queue ${queueName}`,
+          );
+          return cb(new ConsumerGroupNotFoundError());
         case 'MESSAGE_PRIORITY_REQUIRED':
           logger.error(
             `Priority required for message ${messageId} but not provided`,
