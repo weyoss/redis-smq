@@ -112,20 +112,33 @@ export class RequeueDelayedWorker extends WorkerAbstract {
     this.logger.debug(`Preparing to enqueue ${messages.length} messages.`);
 
     withSharedPoolConnection((redisClient, cb) => {
-      const { keyQueueProperties, keyQueueDelayed } = redisKeys.getQueueKeys(
+      const {
+        keyQueueProperties,
+        keyQueueDelayed,
+        keyQueueDL,
+        keyQueueConsumerGroups,
+      } = redisKeys.getQueueKeys(
         this.queueParsedParams.queueParams,
         this.queueParsedParams.groupId,
       );
 
       // Static keys that are the same for all messages in the batch
-      const keys: string[] = [keyQueueProperties, keyQueueDelayed];
+      const keys: string[] = [
+        keyQueueProperties,
+        keyQueueDelayed,
+        keyQueueDL,
+        keyQueueConsumerGroups,
+      ];
       const argv: (string | number)[] = [
         // Queue Property Constants
         EQueueProperty.QUEUE_TYPE,
         EQueueProperty.DELAYED_MESSAGES_COUNT,
         EQueueProperty.PENDING_MESSAGES_COUNT,
+        EQueueProperty.DEAD_LETTERED_MESSAGES_COUNT,
         EMessageProperty.STATUS,
         EMessagePropertyStatus.PENDING,
+        EMessagePropertyStatus.DEAD_LETTERED,
+        EMessageProperty.DEAD_LETTERED_AT,
         EMessageProperty.LAST_RETRIED_ATTEMPT_AT,
         EQueueType.LIFO_QUEUE,
         EQueueType.FIFO_QUEUE,
@@ -134,6 +147,7 @@ export class RequeueDelayedWorker extends WorkerAbstract {
 
       for (const msg of messages) {
         const messageId = msg.getId();
+        const consumerGroupId = msg.getConsumerGroupId();
         const { keyMessage } = redisKeys.getMessageKeys(messageId);
         const { keyQueuePending, keyQueuePriorityPending } =
           redisKeys.getQueueKeys(
@@ -141,7 +155,11 @@ export class RequeueDelayedWorker extends WorkerAbstract {
             msg.getConsumerGroupId(),
           );
         keys.push(keyMessage, keyQueuePending, keyQueuePriorityPending);
-        argv.push(messageId, msg.producibleMessage.getPriority() ?? '');
+        argv.push(
+          messageId,
+          msg.producibleMessage.getPriority() ?? '',
+          consumerGroupId ?? '',
+        );
       }
 
       this.logger.debug(

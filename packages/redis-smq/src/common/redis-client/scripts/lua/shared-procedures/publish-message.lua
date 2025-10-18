@@ -8,7 +8,8 @@ local function publish_message(keys, args)
     local keyQueuePending = keys[3]
     local keyQueueScheduled = keys[4]
     local keyQueueMessages = keys[5]
-    local keyMessage = keys[6]
+    local keyQueueConsumerGroups = keys[6]
+    local keyMessage = keys[7]
 
     -- ARGV
     -- Queue properties (1-7)
@@ -76,12 +77,22 @@ local function publish_message(keys, args)
     local messageScheduledMessageParentId = args[56]
     local messageRequeuedMessageParentId = args[57]
 
+    -- Consumer Group ID (58)
+    local consumerGroupId = args[58]
+
     -- Get queue type with a single field fetch
     local queueType = redis.call("HGET", keyQueueProperties, EQueuePropertyQueueType)
 
     -- Early return if queue doesn't exist
     if queueType == false then
         return 'QUEUE_NOT_FOUND'
+    end
+
+    -- If a consumer group ID is provided, verify it exists.
+    if consumerGroupId and consumerGroupId ~= '' then
+        if redis.call("SISMEMBER", keyQueueConsumerGroups, consumerGroupId) == 0 then
+            return 'CONSUMER_GROUP_NOT_FOUND'
+        end
     end
 
     -- Idempotency check: prevent overwriting an existing message

@@ -80,17 +80,24 @@ export class RequeueImmediateWorker extends WorkerAbstract {
       return;
     }
 
-    const { keyQueueProperties, keyQueueDelayed, keyQueueRequeued } =
-      redisKeys.getQueueKeys(
-        this.queueParsedParams.queueParams,
-        this.queueParsedParams.groupId,
-      );
+    const {
+      keyQueueProperties,
+      keyQueueDelayed,
+      keyQueueRequeued,
+      keyQueueDL,
+      keyQueueConsumerGroups,
+    } = redisKeys.getQueueKeys(
+      this.queueParsedParams.queueParams,
+      this.queueParsedParams.groupId,
+    );
 
     // Prepare static script arguments once.
     const keys: string[] = [
       keyQueueProperties,
       keyQueueRequeued,
       keyQueueDelayed,
+      keyQueueDL,
+      keyQueueConsumerGroups,
     ];
 
     const timestamp = Date.now();
@@ -99,8 +106,11 @@ export class RequeueImmediateWorker extends WorkerAbstract {
       EQueueProperty.REQUEUED_MESSAGES_COUNT,
       EQueueProperty.DELAYED_MESSAGES_COUNT,
       EQueueProperty.PENDING_MESSAGES_COUNT,
+      EQueueProperty.DEAD_LETTERED_MESSAGES_COUNT,
       EMessageProperty.STATUS,
       EMessagePropertyStatus.PENDING,
+      EMessagePropertyStatus.DEAD_LETTERED,
+      EMessageProperty.DEAD_LETTERED_AT,
       EMessagePropertyStatus.UNACK_DELAYING,
       EMessageProperty.LAST_RETRIED_ATTEMPT_AT,
       EQueueType.LIFO_QUEUE,
@@ -111,17 +121,21 @@ export class RequeueImmediateWorker extends WorkerAbstract {
     // Prepare dynamic script arguments for each message.
     for (const msg of messages) {
       const messageId = msg.getId();
+      const consumerGroupId = msg.getConsumerGroupId();
       const priority = msg.producibleMessage.getPriority();
       const retryDelay = msg.producibleMessage.getRetryDelay();
       const delayedTimestamp = retryDelay ? timestamp + retryDelay : 0;
       const { keyQueuePending, keyQueuePriorityPending } =
-        redisKeys.getQueueKeys(
-          msg.getDestinationQueue(),
-          msg.getConsumerGroupId(),
-        );
+        redisKeys.getQueueKeys(msg.getDestinationQueue(), consumerGroupId);
       const { keyMessage } = redisKeys.getMessageKeys(messageId);
       keys.push(keyMessage, keyQueuePending, keyQueuePriorityPending);
-      argv.push(messageId, priority ?? '', retryDelay, delayedTimestamp);
+      argv.push(
+        messageId,
+        priority ?? '',
+        retryDelay,
+        delayedTimestamp,
+        consumerGroupId ?? '',
+      );
     }
 
     withSharedPoolConnection((redisClient, cb) => {

@@ -5,18 +5,20 @@
 --   - REQUEUE_COUNT: Incremented on each requeue.
 --   - LAST_REQUEUED_AT: Updated on each requeue.
 -- The new message is published to the pending queue by calling the 'publish_message' shared procedure.
+-- If the target consumer group for a message does not exist, the message is not re-queued.
 --
 -- This script depends on 'shared-procedures/publish-message.lua'.
 -- The content of 'shared-procedures/publish-message.lua' must be prepended to this script before loading it into Redis.
 --
 -- KEYS:
---   Static Keys (1-5):
+--   Static Keys (1-6):
 --     KEYS[1]: keyQueueProperties
 --     KEYS[2]: keyQueuePriorityPending
 --     KEYS[3]: keyQueuePending
 --     KEYS[4]: keyQueueMessages
 --     KEYS[5]: keyQueueScheduled
---   Dynamic Keys (6...): A repeating pair for each message being requeued.
+--     KEYS[6]: keyQueueConsumerGroups
+--   Dynamic Keys (7...): A repeating pair for each message being requeued.
 --     - keyOriginalMessage
 --     - keyNewMessage
 --
@@ -24,13 +26,14 @@
 --   ARGV[1-32]: A list of all EQueueProperty and EMessageProperty constants.
 --   ARGV[33...]: A flat list of repeating parameters for each message being requeued.
 --
--- ARGV structure per message (6 parameters):
+-- ARGV structure per message (7 parameters):
 --   1. newChildMessageId
 --   2. newChildMessage (JSON)
 --   3. newChildMessagePriority
 --   4. newChildMessagePublishedAt
---   5. requeuedAt (timestamp for the first requeue, used with HSETNX)
---   6. lastRequeuedAt (timestamp for the last requeue, used with HSET)
+--   5. requeuedAt (timestamp for the first requeue)
+--   6. lastRequeuedAt (timestamp for the last requeue)
+--   7. consumerGroupId
 --
 -- Returns:
 --   - A string with a detailed error message if the operation fails for any message.
@@ -42,6 +45,7 @@ local keyQueuePriorityPending = KEYS[2]
 local keyQueuePending = KEYS[3]
 local keyQueueMessages = KEYS[4]
 local keyQueueScheduled = KEYS[5]
+local keyQueueConsumerGroups = KEYS[6]
 
 -- Performance Optimization: Check if the queue exists ONCE before processing the batch.
 if redis.call("EXISTS", keyQueueProperties) == 0 then
@@ -88,8 +92,8 @@ local EMessagePropertyRequeuedMessageParentId = ARGV[32]
 
 -- Loop constants
 local INITIAL_ARGV_OFFSET = 32
-local INITIAL_KEY_OFFSET = 5
-local PARAMS_PER_MESSAGE = 6
+local INITIAL_KEY_OFFSET = 6
+local PARAMS_PER_MESSAGE = 7
 local KEYS_PER_MESSAGE = 2
 local keyIndex = INITIAL_KEY_OFFSET + 1
 local requeuedCount = 0
@@ -102,6 +106,7 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
     local newChildMessagePublishedAt = ARGV[argvIndex + 3]
     local requeuedAt = ARGV[argvIndex + 4]
     local lastRequeuedAt = ARGV[argvIndex + 5]
+    local consumerGroupId = ARGV[argvIndex + 6]
 
     -- Extract message-specific KEYS
     local keyOriginalMessage = KEYS[keyIndex]
@@ -111,42 +116,55 @@ for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
     -- Fetch original message ID. Only proceed if the original message exists.
     local originalMessageId = redis.call("HGET", keyOriginalMessage, EMessagePropertyId)
     if originalMessageId then
-        -- Update the original message with requeue history
-        redis.call(
-            "HSET", keyOriginalMessage,
-            EMessagePropertyRequeuedAt, requeuedAt,
-            EMessagePropertyLastRequeuedAt, lastRequeuedAt
-        )
-        redis.call("HINCRBY", keyOriginalMessage, EMessagePropertyRequeueCount, 1)
-
-        -- Publish the new message by calling the publish_message shared procedure.
-        local pKeys = {
-            keyQueueProperties,
-            keyQueuePriorityPending,
-            keyQueuePending,
-            keyQueueScheduled,
-            keyQueueMessages,
-            keyNewMessage
-        }
-        -- The order of arguments must exactly match the 'publish-message.lua' script.
-        local pArgs = {
-            -- Queue properties (1-7)
-            EQueuePropertyQueueType, EQueuePropertyMessagesCount, EQueuePropertyPendingMessagesCount, EQueuePropertyScheduledMessagesCount, EQueuePropertyQueueTypePriorityQueue, EQueuePropertyQueueTypeLIFOQueue, EQueuePropertyQueueTypeFIFOQueue,
-            -- Message priority and scheduling (8-11)
-            newChildMessagePriority, '', EMessagePropertyStatusScheduled, EMessagePropertyStatusPending,
-            -- Message Property Keys (12-34, 23 keys)
-            EMessagePropertyId, EMessagePropertyStatus, EMessagePropertyMessage, EMessagePropertyScheduledAt, EMessagePropertyPublishedAt, EMessagePropertyProcessingStartedAt, EMessagePropertyDeadLetteredAt, EMessagePropertyAcknowledgedAt, EMessagePropertyUnacknowledgedAt, EMessagePropertyLastUnacknowledgedAt, EMessagePropertyLastScheduledAt, EMessagePropertyRequeuedAt, EMessagePropertyRequeueCount, EMessagePropertyLastRequeuedAt, EMessagePropertyLastRetriedAttemptAt, EMessagePropertyScheduledCronFired, EMessagePropertyAttempts, EMessagePropertyScheduledRepeatCount, EMessagePropertyExpired, EMessagePropertyEffectiveScheduledDelay, EMessagePropertyScheduledTimes, EMessagePropertyScheduledMessageParentId, EMessagePropertyRequeuedMessageParentId,
-            -- Message Property Values (35-57, 23 values)
-            newChildMessageId, EMessagePropertyStatusPending, newChildMessage, '', newChildMessagePublishedAt, '', '', '', '', '', '', '', '0', '', '', '0', '0', '0', '0', '0', '0', '', originalMessageId
-        }
-        local result = publish_message(pKeys, pArgs)
-        if result ~= 'OK' then
-            -- If the publish script fails, stop immediately and return a detailed error.
-            -- This prevents leaving the system in an inconsistent state where the original
-            -- message is marked as re-queued but the new message was never published.
-            return 'REQUEUE_ERROR:' .. originalMessageId .. ':' .. result
+        local group_exists = true
+        if consumerGroupId and consumerGroupId ~= '' then
+            if redis.call("SISMEMBER", keyQueueConsumerGroups, consumerGroupId) == 0 then
+                group_exists = false
+            end
         end
-        requeuedCount = requeuedCount + 1
+
+        if group_exists then
+            -- Update the original message with requeue history
+            redis.call(
+                "HSET", keyOriginalMessage,
+                EMessagePropertyRequeuedAt, requeuedAt,
+                EMessagePropertyLastRequeuedAt, lastRequeuedAt
+            )
+            redis.call("HINCRBY", keyOriginalMessage, EMessagePropertyRequeueCount, 1)
+
+            -- Publish the new message by calling the publish_message shared procedure.
+            local pKeys = {
+                keyQueueProperties,
+                keyQueuePriorityPending,
+                keyQueuePending,
+                keyQueueScheduled,
+                keyQueueMessages,
+                keyQueueConsumerGroups,
+                keyNewMessage
+            }
+            -- The order of arguments must exactly match the 'publish-message.lua' script.
+            local pArgs = {
+                -- Queue properties (1-7)
+                EQueuePropertyQueueType, EQueuePropertyMessagesCount, EQueuePropertyPendingMessagesCount, EQueuePropertyScheduledMessagesCount, EQueuePropertyQueueTypePriorityQueue, EQueuePropertyQueueTypeLIFOQueue, EQueuePropertyQueueTypeFIFOQueue,
+                -- Message priority and scheduling (8-11)
+                newChildMessagePriority, '', EMessagePropertyStatusScheduled, EMessagePropertyStatusPending,
+                -- Message Property Keys (12-34, 23 keys)
+                EMessagePropertyId, EMessagePropertyStatus, EMessagePropertyMessage, EMessagePropertyScheduledAt, EMessagePropertyPublishedAt, EMessagePropertyProcessingStartedAt, EMessagePropertyDeadLetteredAt, EMessagePropertyAcknowledgedAt, EMessagePropertyUnacknowledgedAt, EMessagePropertyLastUnacknowledgedAt, EMessagePropertyLastScheduledAt, EMessagePropertyRequeuedAt, EMessagePropertyRequeueCount, EMessagePropertyLastRequeuedAt, EMessagePropertyLastRetriedAttemptAt, EMessagePropertyScheduledCronFired, EMessagePropertyAttempts, EMessagePropertyScheduledRepeatCount, EMessagePropertyExpired, EMessagePropertyEffectiveScheduledDelay, EMessagePropertyScheduledTimes, EMessagePropertyScheduledMessageParentId, EMessagePropertyRequeuedMessageParentId,
+                -- Message Property Values (35-57, 23 values)
+                newChildMessageId, EMessagePropertyStatusPending, newChildMessage, '', newChildMessagePublishedAt, '', '', '', '', '', '', '', '0', '', '', '0', '0', '0', '0', '0', '0', '', originalMessageId,
+                -- Consumer Group ID (58)
+                consumerGroupId
+            }
+            local result = publish_message(pKeys, pArgs)
+            if result ~= 'OK' then
+                -- If the publish script fails, stop immediately and return a detailed error.
+                -- This prevents leaving the system in an inconsistent state where the original
+                -- message is marked as re-queued but the new message was never published.
+                return 'REQUEUE_ERROR:' .. originalMessageId .. ':' .. result
+            end
+            requeuedCount = requeuedCount + 1
+        end
+        -- If group does not exist, we do nothing and the loop continues to the next message.
     end
 end
 

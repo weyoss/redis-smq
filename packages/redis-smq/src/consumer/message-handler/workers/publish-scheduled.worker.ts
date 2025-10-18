@@ -123,6 +123,8 @@ export class PublishScheduledWorker extends WorkerAbstract {
         keyQueuePriorityPending,
         keyQueueScheduled,
         keyQueueMessages,
+        keyQueueDL,
+        keyQueueConsumerGroups,
       } = redisKeys.getQueueKeys(
         this.queueParsedParams.queueParams,
         this.queueParsedParams.groupId,
@@ -135,6 +137,8 @@ export class PublishScheduledWorker extends WorkerAbstract {
         keyQueueMessages,
         keyQueuePriorityPending,
         keyQueueScheduled,
+        keyQueueDL,
+        keyQueueConsumerGroups,
       ];
       const argv: (string | number)[] = [
         // Queue Property Constants
@@ -142,6 +146,7 @@ export class PublishScheduledWorker extends WorkerAbstract {
         EQueueProperty.MESSAGES_COUNT,
         EQueueProperty.PENDING_MESSAGES_COUNT,
         EQueueProperty.SCHEDULED_MESSAGES_COUNT,
+        EQueueProperty.DEAD_LETTERED_MESSAGES_COUNT,
         EQueueType.PRIORITY_QUEUE,
         EQueueType.LIFO_QUEUE,
         EQueueType.FIFO_QUEUE,
@@ -149,6 +154,7 @@ export class PublishScheduledWorker extends WorkerAbstract {
         // Message Status Constants
         EMessagePropertyStatus.PENDING,
         EMessagePropertyStatus.SCHEDULED,
+        EMessagePropertyStatus.DEAD_LETTERED,
 
         // Message Property Constants
         EMessageProperty.ID,
@@ -186,6 +192,7 @@ export class PublishScheduledWorker extends WorkerAbstract {
 
           const ts = Date.now();
           const scheduledMessageId = msg.getId();
+          const consumerGroupId = msg.getConsumerGroupId();
           const { keyMessage: keyScheduledMessage } =
             redisKeys.getMessageKeys(scheduledMessageId);
           const nextScheduleTimestamp = msg.getNextScheduledTimestamp();
@@ -248,6 +255,8 @@ export class PublishScheduledWorker extends WorkerAbstract {
             scheduledMessageCronFired,
             scheduledMessageRepeatCount,
             scheduledMessageEffectiveScheduledDelay,
+            consumerGroupId ?? '',
+            ts,
           );
           done();
         },

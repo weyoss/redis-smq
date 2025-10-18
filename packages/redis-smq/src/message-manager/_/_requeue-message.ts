@@ -70,6 +70,7 @@ export function _requeueMessage(
       keyQueuePriorityPending,
       keyQueueMessages,
       keyQueueScheduled,
+      keyQueueConsumerGroups,
     } = redisKeys.getQueueKeys(destinationQueue, consumerGroupId);
 
     // Build KEYS array for the Lua script
@@ -80,6 +81,7 @@ export function _requeueMessage(
       keyQueuePending,
       keyQueueMessages,
       keyQueueScheduled,
+      keyQueueConsumerGroups,
       // Dynamic keys
       keyOriginalMessage,
       keyNewMessage,
@@ -132,6 +134,7 @@ export function _requeueMessage(
       ts, // newChildMessagePublishedAt
       message.getMessageState().getRequeuedAt() ?? ts, // requeuedAt
       ts, // lastRequeuedAt
+      consumerGroupId ?? '',
     ];
 
     redisClient.runScript(
@@ -145,11 +148,11 @@ export function _requeueMessage(
         // For a single message, this should be 1.
         if (reply === 1) return cb(null, newChildMessageId);
 
-        // The script returns 0 if the original message does not exist.
+        // The script returns 0 if the original message or consumer group does not exist.
         if (reply === 0) {
           return cb(
             new MessageError(
-              `Could not requeue message ID ${messageId}. Message not found.`,
+              `Could not requeue message ID ${messageId}. Message or consumer group not found.`,
             ),
           );
         }
