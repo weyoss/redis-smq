@@ -26,6 +26,7 @@ import {
   ProducerError,
   ProducerNotRunningError,
   QueueHasNoConsumerGroupsError,
+  RoutingKeyRequiredError,
 } from '../errors/index.js';
 import {
   EExchangeType,
@@ -39,268 +40,303 @@ import { MessageEnvelope } from '../message/message-envelope.js';
 import { IQueueParams } from '../queue-manager/index.js';
 import { _publishMessage } from './_/_publish-message.js';
 import { eventBusPublisher } from './event-bus-publisher.js';
-import { QueueConsumerGroupsCache } from './queue-consumer-groups-cache.js';
+import { PubSubTargetResolver } from './pub-sub-target-resolver.js';
 
 /**
- * The Producer class is responsible for producing messages, managing their
- * delivery to various queues, and ensuring that all components are ready
- * for operation.
- * The class provides methods for enqueuing messages, handling consumer groups,
- * and producing messages based on the message's exchange parameters.
- * Error handling is included throughout the methods, returning appropriate
- * error objects when necessary.
+ * The Producer class is a stateful service responsible for publishing messages
+ * to the Redis-SMQ system. It manages the entire message delivery lifecycle,
+ * including complex routing logic via exchanges, and ensures that all underlying
+ * components are properly managed.
+ *
+ * @example
+ * ```typescript
+ * const producer = new Producer();
+ * producer.run((err) => {
+ *   if (err) {
+ *     console.error('Failed to start producer:', err);
+ *     return;
+ *   }
+ *   console.log('Producer is running');
+ * });
+ * ```
  */
 export class Producer extends Runnable<TProducerEvent> {
-  protected fanoutExchange;
-  protected directExchange;
-  protected topicExchange;
-  protected logger; // Logger instance for logging activity
-  protected queueConsumerGroupsHandler: QueueConsumerGroupsCache | null = null; // Handler for queue consumer groups
-  protected redisClient: IRedisClient | null = null; // Redis client for communication with Redis
+  protected fanoutExchange: ExchangeFanout;
+  protected directExchange: ExchangeDirect;
+  protected topicExchange: ExchangeTopic;
+  protected logger: ILogger;
+  protected pubSubTargetResolver: PubSubTargetResolver | null = null;
+  protected redisClient: IRedisClient | null = null;
 
   /**
-   * Constructor for the Producer class. Initializes the Redis client,
-   * event bus, and logger. Sets up the event bus publisher if enabled.
+   * Initializes a new Producer instance.
+   *
+   * Note: The producer is not yet running after construction. Call `run()` to start it.
    */
   constructor() {
     super();
     this.logger = createLogger(
       Configuration.getConfig().logger,
-      this.constructor.name.toLowerCase(),
+      this.constructor.name,
     );
-    this.logger.info(`Producer instance created with ID: ${this.getId()}`);
+    this.logger.info(`Producer instance created [ID: ${this.getId()}]`);
 
-    //
     this.directExchange = new ExchangeDirect();
     this.topicExchange = new ExchangeTopic();
     this.fanoutExchange = new ExchangeFanout();
 
-    // If the event bus is enabled in configuration, initializes the event bus publisher.
+    // If the event bus is enabled, set up the publisher to emit producer events.
     if (Configuration.getConfig().eventBus.enabled) {
-      this.logger.debug(
-        'Event bus is enabled, initializing eventBusPublisher...',
-      );
+      this.logger.debug('Event bus is enabled. Initializing event publisher.');
       eventBusPublisher(this);
     } else {
-      this.logger.debug(
-        'Event bus is disabled, skipping eventBusPublisher initialization',
-      );
+      this.logger.debug('Event bus is disabled. Skipping event publisher.');
     }
   }
 
   /**
-   * Produces a message based on the provided parameters. Ensures that a valid
-   * exchange is set and that at least one matching queue exists before
-   * publishing the message.
+   * Publishes a message to a queue or an exchange.
    *
-   * This method handles various errors, including:
-   * - ProducerInstanceNotRunningError: Thrown when the producer instance is not running.
-   * - ProducerMessageExchangeRequiredError: Thrown when no exchange is set for the message.
-   * - ProducerExchangeNoMatchedQueueError: Thrown when no matching queues are found for the exchange.
-   * - ProducerQueueNotFoundError: Thrown when a queue is not found.
-   * - ProducerMessagePriorityRequiredError: Thrown when a message priority is required.
-   * - ProducerPriorityQueuingNotEnabledError: Thrown when priority queuing is not enabled.
-   * - ProducerUnknownQueueTypeError: Thrown when an unknown queue type is encountered.
-   * - ProducerError: A generic error thrown when an unexpected error occurs.
+   * This method orchestrates the message publication process and supports two main workflows:
+   * 1.  **Direct-to-Queue**: If the message specifies a destination queue via `msg.getQueue()`,
+   *     the message is sent directly to that queue.
+   * 2.  **Exchange-Based Routing**: If the message specifies an exchange via `msg.getExchange()`,
+   *     this method resolves the exchange to a set of matching queues and publishes a copy
+   *     of the message to each one.
    *
-   * @param {ProducibleMessage} msg - The message to be produced and published.
-   * @param {ICallback<string[]>} cb - A callback function to be executed upon completion.
-   *                                   It receives an error as the first argument (if any)
-   *                                   and an array of message IDs as the second argument.
-   * @returns {void}
+   * The method performs the following validations:
+   * - Ensures the producer is running; returns `ProducerNotRunningError` if not.
+   * - Ensures the message specifies either a queue or an exchange; returns
+   *   `MessageExchangeRequiredError` if neither is specified.
+   * - For exchange-based routing, ensures at least one queue matches the exchange;
+   *   returns `NoMatchedQueuesForMessageExchangeError` if no matches are found.
+   *
+   * @param msg - The message to be published. Must specify either a destination queue
+   *              or an exchange (or both).
+   * @param cb - A callback function invoked upon completion.
+   *             - On success: `cb(null, messageIds)` where `messageIds` is an array of
+   *               published message IDs (one per queue for exchange routing, or one for
+   *               direct queue routing).
+   *             - On error: `cb(error)` where `error` is one of:
+   *               - `ProducerNotRunningError`: Producer is not running.
+   *               - `MessageExchangeRequiredError`: Message has neither queue nor exchange.
+   *               - `NoMatchedQueuesForMessageExchangeError`: Exchange matched no queues.
+   *               - Other errors from queue or exchange operations.
+   *
+   * @example
+   * ```typescript
+   * const msg = new ProducibleMessage()
+   *   .setQueue({ name: 'my-queue', ns: 'default' })
+   *   .setBody({ data: 'example' });
+   *
+   * producer.produce(msg, (err, messageIds) => {
+   *   if (err) {
+   *     console.error('Failed to produce message:', err);
+   *   } else {
+   *     console.log('Published message IDs:', messageIds);
+   *   }
+   * });
+   * ```
    */
   produce(msg: ProducibleMessage, cb: ICallback<string[]>): void {
     if (!this.isRunning()) {
-      this.logger.error(
-        'Cannot produce message: Producer instance is not running',
-      );
+      this.logger.error('Cannot produce message. Producer is not running.');
       return cb(new ProducerNotRunningError());
     }
 
-    const qp = msg.getQueue();
-    if (qp) {
-      return this.produceMessage(msg, qp, cb);
+    const queueParams = msg.getQueue();
+    if (queueParams) {
+      return this._produceToQueue(msg, queueParams, cb);
     }
 
-    const ep = msg.getExchange();
-    if (!ep) {
+    const exchangeParams = msg.getExchange();
+    if (!exchangeParams) {
       this.logger.error(
-        'Cannot produce message: No exchange/queue parameters provided',
+        'Message can not be produced without a queue or an exchange.',
       );
       return cb(new MessageExchangeRequiredError());
     }
+
     this.logger.debug(
-      `Producing message with exchange type name=${ep.name} ns=${ep.ns} type=${EExchangeType[ep.type]}`,
+      `Looking up queues for exchange [${exchangeParams.name}@${exchangeParams.ns}]...`,
     );
-    this.logger.debug(
-      `Getting queues for exchange name=${ep.name} ns=${ep.ns} type=${EExchangeType[ep.type]}`,
-    );
-    this.matchExchangeQueues(ep, msg.getExchangeRoutingKey(), (err, queues) => {
-      if (err) {
-        this.logger.error('Failed to get exchange queues', err);
-        return cb(err);
-      }
+    this._matchExchangeQueues(
+      exchangeParams,
+      msg.getExchangeRoutingKey(),
+      (err, queues) => {
+        if (err) {
+          this.logger.error('Failed to match queues for exchange.', err);
+          return cb(err);
+        }
 
-      if (!queues?.length) {
-        this.logger.error('No matching queues found for exchange');
-        return cb(new NoMatchedQueuesForMessageExchangeError());
-      }
-
-      this.logger.info(`Found ${queues.length} matching queues for exchange`);
-      const messageIds: string[] = [];
-
-      async.eachOf(
-        queues,
-        (queue, index, done) => {
-          this.logger.debug(
-            `Producing message for queue ${queue.name}@${queue.ns} (${index + 1}/${queues.length})`,
+        if (!queues?.length) {
+          this.logger.error(
+            `No queues found for exchange [${exchangeParams.name}@${exchangeParams.ns}].`,
           );
-          this.produceMessage(msg, queue, (err, reply) => {
+          return cb(new NoMatchedQueuesForMessageExchangeError());
+        }
+
+        this.logger.info(
+          `Found [${queues.length}] matching queues for exchange.`,
+        );
+        const messageIds: string[] = [];
+
+        async.eachOf(
+          queues,
+          (queue, index, done) => {
+            this.logger.debug(
+              `Producing message to queue [${queue.name}@${queue.ns}] (${index + 1}/${queues.length}).`,
+            );
+            this._produceToQueue(msg, queue, (err, reply) => {
+              if (err) {
+                this.logger.error(
+                  `Failed to produce message to queue [${queue.name}@${queue.ns}].`,
+                  err,
+                );
+                return done(err);
+              }
+              if (reply) {
+                messageIds.push(...reply);
+              }
+              done();
+            });
+          },
+          (err) => {
             if (err) {
               this.logger.error(
-                `Failed to produce message for queue ${queue.name}@${queue.ns}`,
+                'An error occurred while producing messages to one or more queues.',
                 err,
               );
-              return done(err);
+              return cb(err);
             }
-            if (reply) {
-              this.logger.debug(
-                `Successfully produced ${reply.length} messages for queue ${queue.name}@${queue.ns}`,
-              );
-              messageIds.push(...reply);
-            }
-            done();
-          });
-        },
-        (err) => {
-          if (err) {
-            this.logger.error(
-              'Failed to produce messages for some queues',
-              err,
+            this.logger.info(
+              `Successfully produced [${messageIds.length}] messages across [${queues.length}] queues.`,
             );
-            return cb(err);
-          }
-          this.logger.info(
-            `Successfully produced ${messageIds.length} messages across ${queues.length} queues`,
-          );
-          cb(null, messageIds);
-        },
-      );
-    });
+            cb(null, messageIds);
+          },
+        );
+      },
+    );
   }
 
   /**
    * Retrieves the logger instance for this producer.
-   * @returns {ILogger} The logger instance.
+   *
+   * @returns The logger instance used for logging producer operations.
    */
   protected override getLogger(): ILogger {
     return this.logger;
   }
 
+  /**
+   * Retrieves the active Redis client used for publishing messages.
+   *
+   * @returns The active Redis client.
+   * @throws {ProducerError} If the Redis client is not available, indicating
+   *         the producer is not properly initialized or has been shut down.
+   */
   protected getRedisClient(): IRedisClient {
     if (!this.redisClient)
-      throw new ProducerError('Redis Client is not running');
+      throw new ProducerError('Redis client is not available.');
     return this.redisClient;
   }
 
   /**
-   * Initializes the queue consumer groups handler.
-   * @param {ICallback<void>} cb - Callback to execute upon completion.
+   * A lifecycle helper method that initializes and starts the `PubSubTargetResolver`.
+   *
+   * The `PubSubTargetResolver` is responsible for maintaining an in-memory cache
+   * of consumer groups for PUB/SUB queues, enabling fast lookups during message
+   * production without repeated Redis queries.
+   *
+   * @param cb - A callback function invoked upon completion.
+   *             - On success: `cb(null)` or `cb()`.
+   *             - On error: `cb(error)` if the resolver fails to start.
    */
-  protected initQueueConsumerGroupsHandler = (cb: ICallback): void => {
-    this.logger.debug('Initializing queue consumer groups handler');
-    this.queueConsumerGroupsHandler = new QueueConsumerGroupsCache(this);
-    this.queueConsumerGroupsHandler.run((err) => {
+  protected _runPubSubTargetResolver = (cb: ICallback): void => {
+    this.logger.debug('Starting PubSubTargetResolver...');
+    this.pubSubTargetResolver = new PubSubTargetResolver(this);
+    this.pubSubTargetResolver.run((err) => {
       if (err) {
-        this.logger.error(
-          'Failed to initialize queue consumer groups handler',
-          err,
-        );
+        this.logger.error('Failed to start PubSubTargetResolver.', err);
       } else {
-        this.logger.debug(
-          'Queue consumer groups handler initialized successfully',
-        );
+        this.logger.debug('PubSubTargetResolver has been started.');
       }
       cb(err);
     });
   };
 
   /**
-   * Shuts down the queue consumer groups handler.
-   * @param {ICallback<void>} cb - Callback to execute upon completion.
+   * A lifecycle helper method that gracefully shuts down the `PubSubTargetResolver`.
+   *
+   * @param cb - A callback function to be executed upon completion.
    */
-  protected shutDownQueueConsumerGroupsHandler = (cb: ICallback): void => {
-    if (this.queueConsumerGroupsHandler) {
-      this.logger.debug('Shutting down queue consumer groups handler');
-      this.queueConsumerGroupsHandler.shutdown(() => {
-        this.logger.debug(
-          'Queue consumer groups handler shut down successfully',
-        );
-        this.queueConsumerGroupsHandler = null;
+  protected _shutdownPubSubTargetResolver = (cb: ICallback): void => {
+    if (this.pubSubTargetResolver) {
+      this.logger.debug('Shutting down PubSubTargetResolver...');
+      this.pubSubTargetResolver.shutdown(() => {
+        this.logger.debug('PubSubTargetResolver has been shut down.');
+        this.pubSubTargetResolver = null;
         cb();
       });
     } else {
-      this.logger.debug('No queue consumer groups handler to shut down');
       cb();
     }
   };
 
   /**
-   * Defines the sequence of actions to take when the Producer is going up.
-   * @returns {((cb: ICallback<void>) => void)[]} An array of functions to execute.
+   * Defines the sequence of tasks to run when the Producer is starting up.
+   * This includes acquiring a Redis connection and starting the `PubSubTargetResolver`.
+   *
+   * @returns An array of functions to be executed in series.
    */
   protected override goingUp(): ((cb: ICallback) => void)[] {
-    this.logger.info(`Producer ${this.getId()} is starting up`);
+    this.logger.info(`Producer [ID: ${this.getId()}] is going up...`);
     return super.goingUp().concat([
       (cb: ICallback): void => {
-        async.withCallback(
-          (cb) =>
-            RedisConnectionPool.getInstance().acquire(
-              ERedisConnectionAcquisitionMode.SHARED,
-              cb,
-            ),
-          (redisClient: IRedisClient, cb: ICallback) => {
-            this.redisClient = redisClient;
-            cb();
+        RedisConnectionPool.getInstance().acquire(
+          ERedisConnectionAcquisitionMode.SHARED,
+          (err, client) => {
+            if (err) cb(err);
+            else {
+              this.redisClient = client ?? null;
+              cb();
+            }
           },
-          (err) => cb(err),
         );
       },
       (cb: ICallback) => {
-        this.logger.debug(
-          `Emitting producer.goingUp event for producer ${this.id}`,
-        );
         this.emit('producer.goingUp', this.id);
         cb();
       },
-      this.initQueueConsumerGroupsHandler,
+      this._runPubSubTargetResolver,
     ]);
   }
 
   /**
-   * Handles actions when the producer is successfully brought 'up'.
-   * @param {ICallback<boolean>} cb - Callback to execute upon completion.
+   * A hook that runs after the producer has successfully started. It finalizes
+   * the "up" state and emits the `producer.up` event.
+   *
+   * @param cb - A callback function.
    */
   protected override up(cb: ICallback<boolean>) {
     super.up(() => {
-      this.logger.info(`Producer ${this.getId()} is now up and running`);
+      this.logger.info(`Producer [ID: ${this.getId()}] is up.`);
       this.emit('producer.up', this.id);
       cb(null, true);
     });
   }
 
   /**
-   * Defines the sequence of actions to take when the Producer is shutting down.
-   * This method is responsible for shutting down the producer instance and its associated components.
-   * It ensures that the producer instance is properly closed and that any event bus instances are also shut down.
+   * Defines the sequence of tasks to run when the Producer is shutting down.
+   * This includes shutting down the `PubSubTargetResolver` and releasing the Redis connection.
    *
-   * @returns {((cb: ICallback<void>) => void)[]} An array of functions to execute.
+   * @returns An array of functions to be executed in series.
    */
   protected override goingDown(): ((cb: ICallback) => void)[] {
-    this.logger.info(`Producer ${this.getId()} is shutting down`);
+    this.logger.info(`Producer [ID: ${this.getId()}] is going down...`);
     this.emit('producer.goingDown', this.id);
     return [
-      this.shutDownQueueConsumerGroupsHandler,
+      this._shutdownPubSubTargetResolver,
       (cb: ICallback) => {
         if (this.redisClient) {
           RedisConnectionPool.getInstance().release(this.redisClient);
@@ -312,214 +348,235 @@ export class Producer extends Runnable<TProducerEvent> {
   }
 
   /**
-   * Defines the sequence of actions to take when the producer is successfully brought 'down'.
+   * A hook that runs after the producer has successfully shut down.
    *
-   * @param {ICallback<boolean>} cb - A callback function to be executed upon completion.
-   *                                   It receives a boolean value as the first argument, indicating whether the shutdown process was successful.
+   * This method finalizes the "down" state by:
+   * - Logging the successful shutdown.
+   * - Emitting the `producer.down` event to notify listeners.
+   *
+   * @param cb - A callback function invoked upon completion.
+   *             - Always called with: `cb(null, true)`.
    */
   protected override down(cb: ICallback<boolean>): void {
     super.down(() => {
-      this.logger.info(`Producer ${this.getId()} is now down`);
+      this.logger.info(`Producer [ID: ${this.getId()}] is down.`);
       this.emit('producer.down', this.id);
       cb(null, true);
     });
   }
 
   /**
-   * Retrieves the current instance of the QueueConsumerGroupsCache handler.
+   * Retrieves the active `PubSubTargetResolver` instance.
    *
-   * This method ensures that the QueueConsumerGroupsCache handler is initialized
-   * and returns its current instance. It is used to manage and access consumer
-   * groups associated with queues.
+   * This method is used internally to access the resolver for looking up consumer
+   * groups for PUB/SUB queues during message production.
    *
-   * @returns {QueueConsumerGroupsCache} The current instance of the queue consumer groups handler.
-   *
-   * @throws {PanicError} If the handler instance is not initialized, indicating
-   * that the handler is expected but not available.
+   * @returns The `PubSubTargetResolver` instance.
+   * @throws {PanicError} If the resolver is not initialized, indicating a critical
+   *         internal error. This should never occur if the producer is running correctly.
    */
-  protected getQueueConsumerGroupsHandler(): QueueConsumerGroupsCache {
-    if (!this.queueConsumerGroupsHandler) {
-      const error = new PanicError(
-        `Expected an instance of QueueConsumerGroupsHandler`,
-      );
-      this.logger.error('Queue consumer groups handler not initialized', error);
-      throw error;
+  protected getPubSubTargetResolver(): PubSubTargetResolver {
+    if (!this.pubSubTargetResolver) {
+      throw new PanicError('Expected PubSubTargetResolver to be running.');
     }
-    return this.queueConsumerGroupsHandler;
+    return this.pubSubTargetResolver;
   }
 
-  protected produceMessageItem(
+  /**
+   * Prepares and dispatches a single message envelope to Redis.
+   *
+   * This is the final internal step before a message is handed off to the `_publishMessage`
+   * script executor. It performs the following operations:
+   * - Sets the destination queue on the message envelope.
+   * - Sets appropriate timestamps based on whether the message is schedulable:
+   *   - For schedulable messages: Sets `scheduledAt`, `lastScheduledAt`, and increments
+   *     the scheduled times counter.
+   *   - For non-schedulable messages: Sets `publishedAt`.
+   * - Executes the Redis Lua script to persist the message.
+   * - Emits the `producer.messagePublished` event for non-scheduled messages.
+   *
+   * @param message - The message envelope to dispatch. Must be a valid `MessageEnvelope` instance.
+   * @param queue - The destination queue parameters (name and namespace).
+   * @param cb - A callback function invoked upon completion.
+   *             - On success: `cb(null, messageId)` where `messageId` is the ID of the published message.
+   *             - On error: `cb(error)` if the message fails to publish to Redis.
+   */
+  protected _dispatch(
     message: MessageEnvelope,
     queue: IQueueParams,
     cb: ICallback<string>,
   ): void {
-    const messageId = message
-      .setDestinationQueue(queue)
-      .getMessageState()
-      .getId();
-
+    message.setDestinationQueue(queue);
+    const messageId = message.getId();
     const queueName = `${queue.name}@${queue.ns}`;
-    this.logger.debug(
-      `Producing message item ${messageId} for queue ${queueName}${
-        message.isSchedulable() ? ' (scheduled)' : ''
-      }`,
-    );
-
-    const handleResult: ICallback = (err) => {
-      if (err) {
-        this.logger.error(
-          `Failed to produce message ${messageId} for queue ${queueName}`,
-          err,
-        );
-        cb(err);
-      } else {
-        const action = message.isSchedulable() ? 'scheduled' : 'published';
-        this.logger.info(
-          `Message (ID ${messageId}) has been ${action} to queue ${queueName}`,
-        );
-        if (!message.isSchedulable()) {
-          this.logger.debug(
-            `Emitting messagePublished event for message ${messageId}`,
-          );
-          this.emit(
-            'producer.messagePublished',
-            messageId,
-            { queueParams: queue, groupId: message.getConsumerGroupId() },
-            this.id,
-          );
-        }
-        cb(null, messageId);
-      }
-    };
 
     const ts = Date.now();
     if (message.isSchedulable()) {
-      this.logger.debug(`Scheduling message ${messageId} for future delivery`);
       message
         .getMessageState()
         .setScheduledAt(ts)
         .setLastScheduledAt(ts)
         .incrScheduledTimes();
     } else {
-      this.logger.debug(
-        `Enqueueing message ${messageId} for immediate delivery`,
-      );
       message.getMessageState().setPublishedAt(ts);
     }
-    _publishMessage(this.getRedisClient(), message, this.logger, handleResult);
+
+    _publishMessage(this.getRedisClient(), message, this.logger, (err) => {
+      if (err) {
+        this.logger.error(
+          `Failed to dispatch message [${messageId}] to queue [${queueName}].`,
+          err,
+        );
+        cb(err);
+      } else {
+        const action = message.isSchedulable() ? 'scheduled' : 'published';
+        this.logger.info(
+          `Message [${messageId}] has been ${action} to queue [${queueName}].`,
+        );
+        if (!message.isSchedulable()) {
+          this.emit(
+            'producer.messagePublished',
+            messageId,
+            {
+              queueParams: queue,
+              groupId: message.getConsumerGroupId(),
+            },
+            this.id,
+          );
+        }
+        cb(null, messageId);
+      }
+    });
   }
 
   /**
-   * Produces messages for the specified queue and handles multiple consumer
-   * groups if applicable. It checks if the queue exists and has consumer groups,
-   * then produces the message for each group. If no consumer groups are found,
-   * it returns an error. Otherwise, it produces the message for the queue.
+   * Produces a message to a single, specified queue, handling different delivery models.
    *
-   * @param message - The message to produce.
-   * @param queue - Queue parameters.
-   * @param cb - Callback to execute upon completion. It receives an error as the first argument (if any)
-   *             and an array of message IDs as the second argument.
+   * This method contains the core delivery logic and determines how a message is
+   * delivered based on the queue's delivery model:
+   *
+   * **PUB/SUB Delivery Model:**
+   * - Consults the `PubSubTargetResolver` to retrieve the list of consumer groups
+   *   registered for the queue.
+   * - If no consumer groups exist, returns `QueueHasNoConsumerGroupsError`.
+   * - Otherwise, "fans out" the message by creating a distinct copy for each
+   *   consumer group and dispatching each copy separately.
+   *
+   * **Other Delivery Models (FIFO, LIFO, etc.):**
+   * - Publishes a single message directly to the queue without fan-out.
+   *
+   * @param message - The message to produce. Must be a valid `ProducibleMessage` instance.
+   * @param queue - The destination queue parameters (name and namespace).
+   * @param cb - A callback function invoked upon completion.
+   *             - On success: `cb(null, messageIds)` where `messageIds` is an array of
+   *               published message IDs (one per consumer group for PUB/SUB, or one for
+   *               other delivery models).
+   *             - On error: `cb(error)` where `error` is one of:
+   *               - `QueueHasNoConsumerGroupsError`: Queue is PUB/SUB but has no consumer groups.
+   *               - Other errors from message dispatch operations.
    */
-  protected produceMessage(
+  protected _produceToQueue(
     message: ProducibleMessage,
     queue: IQueueParams,
     cb: ICallback<string[]>,
   ): void {
     const queueName = `${queue.name}@${queue.ns}`;
-    this.logger.debug(`Producing message for queue ${queueName}`);
-
-    const { isPubSub, queueConsumerGroups } =
-      this.getQueueConsumerGroupsHandler().getConsumerGroups(queue);
+    const { isPubSub, targets } =
+      this.getPubSubTargetResolver().resolveTargets(queue);
 
     if (isPubSub) {
-      this.logger.debug(`Queue ${queueName} has a Pub/Sub delivery model`);
-
-      if (!queueConsumerGroups.length) {
-        this.logger.error(`Queue ${queueName} has no consumer groups`);
-        cb(new QueueHasNoConsumerGroupsError());
-        return;
+      if (!targets.length) {
+        this.logger.error(
+          `Queue [${queueName}] is PUB/SUB but has no consumer groups.`,
+        );
+        return cb(new QueueHasNoConsumerGroupsError());
       }
 
       const ids: string[] = [];
       this.logger.debug(
-        `Producing message for ${queueConsumerGroups.length} consumer groups in queue ${queueName}`,
+        `Fanning out message to [${targets.length}] consumer groups for queue [${queueName}].`,
       );
 
       async.eachOf(
-        queueConsumerGroups,
-        (group, _, done) => {
-          this.logger.debug(
-            `Producing message for consumer group ${group} in queue ${queueName}`,
-          );
-          const msg = new MessageEnvelope(message).setConsumerGroupId(group);
-          this.produceMessageItem(msg, queue, (err, reply) => {
-            if (err) {
-              this.logger.error(
-                `Failed to produce message for consumer group ${group}`,
-                err,
-              );
-              done(err);
-            } else {
-              this.logger.debug(
-                `Successfully produced message ${reply} for consumer group ${group}`,
-              );
-              ids.push(String(reply));
-              done();
-            }
+        targets,
+        (groupId, _, done) => {
+          const msg = new MessageEnvelope(message).setConsumerGroupId(groupId);
+          this._dispatch(msg, queue, (err, reply) => {
+            if (err) return done(err);
+            if (reply) ids.push(reply);
+            done();
           });
         },
         (err) => {
           if (err) {
             this.logger.error(
-              `Failed to produce messages for some consumer groups in queue ${queueName}`,
+              `Failed to produce messages to one or more consumer groups for queue [${queueName}].`,
               err,
             );
-            cb(err);
-          } else {
-            this.logger.info(
-              `Successfully produced ${ids.length} messages for queue ${queueName}`,
-            );
-            cb(null, ids);
+            return cb(err);
           }
+          this.logger.info(
+            `Successfully produced [${ids.length}] messages to queue [${queueName}].`,
+          );
+          cb(null, ids);
         },
       );
     } else {
-      this.logger.debug(
-        `Queue ${queueName} has no consumer groups, producing message directly`,
-      );
       const msg = new MessageEnvelope(message);
-      this.produceMessageItem(msg, queue, (err, reply) => {
+      this._dispatch(msg, queue, (err, reply) => {
         if (err) {
           this.logger.error(
-            `Failed to produce message for queue ${queueName}`,
+            `Failed to produce message to queue [${queueName}].`,
             err,
           );
-          cb(err);
-        } else {
-          this.logger.info(
-            `Successfully produced message ${reply} for queue ${queueName}`,
-          );
-          cb(null, [String(reply)]);
+          return cb(err);
         }
+        this.logger.info(
+          `Successfully produced message [${reply}] to queue [${queueName}].`,
+        );
+        cb(null, reply ? [reply] : []);
       });
     }
   }
 
-  protected matchExchangeQueues(
+  /**
+   * A dispatcher method that routes a request to the correct exchange handler
+   * based on the exchange type.
+   *
+   * This method acts as a router, delegating to the appropriate exchange implementation
+   * based on the exchange type:
+   * - **DIRECT**: Routes to `ExchangeDirect.matchQueues()`. Requires a routing key.
+   * - **TOPIC**: Routes to `ExchangeTopic.matchQueues()`. Requires a routing key.
+   * - **FANOUT**: Routes to `ExchangeFanout.matchQueues()`. Does not require a routing key.
+   *
+   * @param exchange - The exchange parameters (name, namespace, and type).
+   * @param routingKey - The routing key used for matching. Required for DIRECT and TOPIC
+   *                     exchanges; ignored for FANOUT exchanges. Pass `null` if not applicable.
+   * @param cb - A callback function invoked upon completion.
+   *             - On success: `cb(null, queues)` where `queues` is an array of matched
+   *               queue parameters.
+   *             - On error: `cb(error)` where `error` is one of:
+   *               - `RoutingKeyRequiredError`: Routing key is required but not provided
+   *                 for DIRECT or TOPIC exchanges.
+   *               - `ProducerError`: Unsupported exchange type.
+   *               - Other errors from exchange operations.
+   */
+  protected _matchExchangeQueues(
     exchange: IExchangeParsedParams,
     routingKey: string | null,
     cb: ICallback<IQueueParams[]>,
   ): void {
     if (exchange.type === EExchangeType.DIRECT) {
-      if (!routingKey)
-        return cb(new ProducerError('A routing key is required.'));
+      if (!routingKey) return cb(new RoutingKeyRequiredError());
       return this.directExchange.matchQueues(exchange, routingKey, cb);
     }
     if (exchange.type === EExchangeType.TOPIC) {
-      if (!routingKey)
-        return cb(new ProducerError('A routing key is required.'));
+      if (!routingKey) return cb(new RoutingKeyRequiredError());
       return this.topicExchange.matchQueues(exchange, routingKey, cb);
     }
-    this.fanoutExchange.matchQueues(exchange, cb);
+    if (exchange.type === EExchangeType.FANOUT) {
+      return this.fanoutExchange.matchQueues(exchange, cb);
+    }
+    cb(new ProducerError(`Unsupported exchange type.`));
   }
 }
