@@ -50,7 +50,7 @@
 
 `Error.cause`
 
----
+***
 
 ### message
 
@@ -60,7 +60,7 @@
 
 `Error.message`
 
----
+***
 
 ### stack?
 
@@ -70,7 +70,7 @@
 
 `Error.stack`
 
----
+***
 
 ### stackTraceLimit
 
@@ -119,7 +119,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack; // Similar to `new Error().stack`
+myObject.stack;  // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -174,7 +174,7 @@ a();
 
 `Error.captureStackTrace`
 
----
+***
 
 ### isError()
 
@@ -196,7 +196,7 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 `Error.isError`
 
----
+***
 
 ### prepareStackTrace()
 

@@ -30,7 +30,7 @@
 
 [`RedisServerError`](RedisServerError.md).[`cause`](RedisServerError.md#cause)
 
----
+***
 
 ### message
 
@@ -40,7 +40,7 @@
 
 [`RedisServerError`](RedisServerError.md).[`message`](RedisServerError.md#message)
 
----
+***
 
 ### stack?
 
@@ -50,7 +50,7 @@
 
 [`RedisServerError`](RedisServerError.md).[`stack`](RedisServerError.md#stack)
 
----
+***
 
 ### stackTraceLimit
 
@@ -99,7 +99,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack; // Similar to `new Error().stack`
+myObject.stack;  // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -154,7 +154,7 @@ a();
 
 [`RedisServerError`](RedisServerError.md).[`captureStackTrace`](RedisServerError.md#capturestacktrace)
 
----
+***
 
 ### isError()
 
@@ -176,7 +176,7 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 [`RedisServerError`](RedisServerError.md).[`isError`](RedisServerError.md#iserror)
 
----
+***
 
 ### prepareStackTrace()
 

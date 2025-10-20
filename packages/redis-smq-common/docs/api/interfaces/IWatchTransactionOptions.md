@@ -21,7 +21,7 @@ Return undefined or <= 0 for no delay.
 
 `number` \| `undefined`
 
----
+***
 
 ### makeRetryExceededError()?
 
@@ -33,7 +33,7 @@ Optional factory to create a domain-specific error when retries are exhausted.
 
 `Error`
 
----
+***
 
 ### maxAttempts?
 
@@ -41,7 +41,7 @@ Optional factory to create a domain-specific error when retries are exhausted.
 
 Maximum number of attempts (including the first one). Default: 5
 
----
+***
 
 ### onExecError()?
 
@@ -59,7 +59,7 @@ Optional hook invoked when EXEC fails with an error (not null abort).
 
 `void`
 
----
+***
 
 ### onRetry()?
 
@@ -81,7 +81,7 @@ Optional hook invoked on each retry before scheduling the next attempt.
 
 `void`
 
----
+***
 
 ### onWatchError()?
 

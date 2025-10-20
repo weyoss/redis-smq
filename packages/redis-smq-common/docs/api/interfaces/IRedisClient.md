@@ -34,7 +34,7 @@
 
 `void`
 
----
+***
 
 ### del()
 
@@ -54,7 +54,7 @@
 
 `void`
 
----
+***
 
 ### emit()
 
@@ -64,7 +64,7 @@
 
 ##### E
 
-`E` _extends_ keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
+`E` *extends* keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
 
 #### Parameters
 
@@ -84,7 +84,7 @@
 
 [`EventEmitter`](../classes/EventEmitter.md).[`emit`](../classes/EventEmitter.md#emit)
 
----
+***
 
 ### end()
 
@@ -100,7 +100,7 @@
 
 `void`
 
----
+***
 
 ### evalsha()
 
@@ -124,7 +124,7 @@
 
 `void`
 
----
+***
 
 ### flushall()
 
@@ -140,7 +140,7 @@
 
 `void`
 
----
+***
 
 ### get()
 
@@ -160,7 +160,7 @@
 
 `void`
 
----
+***
 
 ### getInfo()
 
@@ -176,7 +176,7 @@
 
 `void`
 
----
+***
 
 ### getScriptId()
 
@@ -192,7 +192,7 @@
 
 `string` \| [`RedisClientError`](../classes/RedisClientError.md)
 
----
+***
 
 ### halt()
 
@@ -208,7 +208,7 @@
 
 `void`
 
----
+***
 
 ### hdel()
 
@@ -232,7 +232,7 @@
 
 `void`
 
----
+***
 
 ### hget()
 
@@ -256,7 +256,7 @@
 
 `void`
 
----
+***
 
 ### hgetall()
 
@@ -276,7 +276,7 @@
 
 `void`
 
----
+***
 
 ### hkeys()
 
@@ -296,7 +296,7 @@
 
 `void`
 
----
+***
 
 ### hlen()
 
@@ -316,7 +316,7 @@
 
 `void`
 
----
+***
 
 ### hmget()
 
@@ -340,7 +340,7 @@
 
 `void`
 
----
+***
 
 ### hscan()
 
@@ -374,7 +374,7 @@
 
 `void`
 
----
+***
 
 ### hscanAll()
 
@@ -404,7 +404,7 @@
 
 `void`
 
----
+***
 
 ### hset()
 
@@ -432,7 +432,7 @@
 
 `void`
 
----
+***
 
 ### llen()
 
@@ -452,7 +452,7 @@
 
 `void`
 
----
+***
 
 ### lmove()
 
@@ -484,7 +484,7 @@
 
 `void`
 
----
+***
 
 ### loadBuiltInScriptFiles()
 
@@ -500,7 +500,7 @@
 
 `void`
 
----
+***
 
 ### loadScript()
 
@@ -520,7 +520,7 @@
 
 `void`
 
----
+***
 
 ### loadScriptFiles()
 
@@ -540,7 +540,7 @@
 
 `void`
 
----
+***
 
 ### lpoprpush()
 
@@ -564,7 +564,7 @@
 
 `void`
 
----
+***
 
 ### lrange()
 
@@ -592,7 +592,7 @@
 
 `void`
 
----
+***
 
 ### lrem()
 
@@ -620,7 +620,7 @@
 
 `void`
 
----
+***
 
 ### multi()
 
@@ -630,7 +630,7 @@
 
 [`IRedisTransaction`](IRedisTransaction.md)
 
----
+***
 
 ### on()
 
@@ -640,7 +640,7 @@
 
 ##### E
 
-`E` _extends_ keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
+`E` *extends* keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
 
 #### Parameters
 
@@ -660,7 +660,7 @@
 
 [`EventEmitter`](../classes/EventEmitter.md).[`on`](../classes/EventEmitter.md#on)
 
----
+***
 
 ### once()
 
@@ -670,7 +670,7 @@
 
 ##### E
 
-`E` _extends_ keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
+`E` *extends* keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
 
 #### Parameters
 
@@ -690,7 +690,7 @@
 
 [`EventEmitter`](../classes/EventEmitter.md).[`once`](../classes/EventEmitter.md#once)
 
----
+***
 
 ### psubscribe()
 
@@ -706,7 +706,7 @@
 
 `void`
 
----
+***
 
 ### publish()
 
@@ -730,7 +730,7 @@
 
 `void`
 
----
+***
 
 ### punsubscribe()
 
@@ -746,7 +746,7 @@
 
 `void`
 
----
+***
 
 ### removeAllListeners()
 
@@ -756,7 +756,7 @@
 
 ##### E
 
-`E` _extends_ keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
+`E` *extends* keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
 
 #### Parameters
 
@@ -772,7 +772,7 @@
 
 [`EventEmitter`](../classes/EventEmitter.md).[`removeAllListeners`](../classes/EventEmitter.md#removealllisteners)
 
----
+***
 
 ### removeListener()
 
@@ -782,7 +782,7 @@
 
 ##### E
 
-`E` _extends_ keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
+`E` *extends* keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
 
 #### Parameters
 
@@ -802,7 +802,7 @@
 
 [`EventEmitter`](../classes/EventEmitter.md).[`removeListener`](../classes/EventEmitter.md#removelistener)
 
----
+***
 
 ### rpop()
 
@@ -822,7 +822,7 @@
 
 `void`
 
----
+***
 
 ### rpoplpush()
 
@@ -846,7 +846,7 @@
 
 `void`
 
----
+***
 
 ### runScript()
 
@@ -874,7 +874,7 @@
 
 `void`
 
----
+***
 
 ### sadd()
 
@@ -898,7 +898,7 @@
 
 `void`
 
----
+***
 
 ### scard()
 
@@ -918,7 +918,7 @@
 
 `void`
 
----
+***
 
 ### set()
 
@@ -960,7 +960,7 @@
 
 `void`
 
----
+***
 
 ### shutdown()
 
@@ -976,7 +976,7 @@
 
 `void`
 
----
+***
 
 ### sismember()
 
@@ -1000,7 +1000,7 @@
 
 `void`
 
----
+***
 
 ### smembers()
 
@@ -1020,7 +1020,7 @@
 
 `void`
 
----
+***
 
 ### srem()
 
@@ -1044,7 +1044,7 @@
 
 `void`
 
----
+***
 
 ### sscan()
 
@@ -1078,7 +1078,7 @@
 
 `void`
 
----
+***
 
 ### sscanAll()
 
@@ -1108,7 +1108,7 @@
 
 `void`
 
----
+***
 
 ### subscribe()
 
@@ -1124,7 +1124,7 @@
 
 `void`
 
----
+***
 
 ### unsubscribe()
 
@@ -1140,7 +1140,7 @@
 
 `void`
 
----
+***
 
 ### unwatch()
 
@@ -1156,7 +1156,7 @@
 
 `void`
 
----
+***
 
 ### updateServerVersion()
 
@@ -1172,7 +1172,7 @@
 
 `void`
 
----
+***
 
 ### validateRedisServerSupport()
 
@@ -1188,7 +1188,7 @@
 
 `void`
 
----
+***
 
 ### validateRedisVersion()
 
@@ -1212,7 +1212,7 @@
 
 `boolean`
 
----
+***
 
 ### watch()
 
@@ -1232,7 +1232,7 @@
 
 `void`
 
----
+***
 
 ### zadd()
 
@@ -1260,7 +1260,7 @@
 
 `void`
 
----
+***
 
 ### zcard()
 
@@ -1280,7 +1280,7 @@
 
 `void`
 
----
+***
 
 ### zpoprpush()
 
@@ -1304,7 +1304,7 @@
 
 `void`
 
----
+***
 
 ### zrange()
 
@@ -1332,7 +1332,7 @@
 
 `void`
 
----
+***
 
 ### zrangebyscore()
 
@@ -1368,7 +1368,7 @@
 
 `void`
 
----
+***
 
 ### zrangebyscorewithscores()
 
@@ -1396,7 +1396,7 @@
 
 `void`
 
----
+***
 
 ### zrem()
 
@@ -1420,7 +1420,7 @@
 
 `void`
 
----
+***
 
 ### zremrangebyscore()
 
@@ -1448,7 +1448,7 @@
 
 `void`
 
----
+***
 
 ### zrevrange()
 
@@ -1476,7 +1476,7 @@
 
 `void`
 
----
+***
 
 ### zscan()
 
