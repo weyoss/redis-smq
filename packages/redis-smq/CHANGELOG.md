@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.9](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.8...v9.0.0-next.9) (2025-10-21)
+
+### 🐛 Bug Fixes
+
+- **redis-smq:** add missing RoutingKeyRequiredError class ([2a76b66](https://github.com/weyoss/redis-smq/commit/2a76b668a698cd79f8cb437a642d5062067cd149))
+
+### 📝 Documentation
+
+- **redis-smq:** update documentation and improve md formatting ([c659b9f](https://github.com/weyoss/redis-smq/commit/c659b9f8f4b026d731ddaf94228ce871ee56f14a))
+
+### ♻️ Code Refactoring
+
+- **redis-smq:** rename QueueConsumerGroupsCache to PubSubTargetResolver, clean up Producer docs ([1ea5669](https://github.com/weyoss/redis-smq/commit/1ea566959e97b0b695cea85b9f2117903273320d))
+
 ## [9.0.0-next.8](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.7...v9.0.0-next.8) (2025-10-18)
 
 ### ✨ Features

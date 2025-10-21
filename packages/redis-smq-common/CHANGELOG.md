@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.9](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.8...v9.0.0-next.9) (2025-10-21)
+
+### 📝 Documentation
+
+- **redis-smq-common:** standardize markdown formatting in API documentation ([445296c](https://github.com/weyoss/redis-smq/commit/445296cd091e1e6a77116238cc4b0327323f9f8a))
+
 ## [9.0.0-next.8](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.7...v9.0.0-next.8) (2025-10-18)
 
 **Note:** Version bump only for package redis-smq-common
