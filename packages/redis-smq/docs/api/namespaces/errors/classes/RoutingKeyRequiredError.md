@@ -1,27 +1,16 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / ProducerError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / RoutingKeyRequiredError
 
-# Class: ProducerError
+# Class: RoutingKeyRequiredError
 
 ## Extends
 
-- `RedisSMQError`
-
-## Extended by
-
-- [`ProducerNotRunningError`](ProducerNotRunningError.md)
-- [`QueueHasNoConsumerGroupsError`](QueueHasNoConsumerGroupsError.md)
-- [`MessagePriorityRequiredError`](MessagePriorityRequiredError.md)
-- [`PriorityQueuingNotEnabledError`](PriorityQueuingNotEnabledError.md)
-- [`NoMatchedQueuesForMessageExchangeError`](NoMatchedQueuesForMessageExchangeError.md)
-- [`InvalidSchedulingParametersError`](InvalidSchedulingParametersError.md)
-- [`MessageAlreadyExistsError`](MessageAlreadyExistsError.md)
-- [`RoutingKeyRequiredError`](RoutingKeyRequiredError.md)
+- [`ProducerError`](ProducerError.md)
 
 ## Constructors
 
 ### Constructor
 
-> **new ProducerError**(`message?`): `ProducerError`
+> **new RoutingKeyRequiredError**(`message?`): `RoutingKeyRequiredError`
 
 #### Parameters
 
@@ -31,11 +20,11 @@
 
 #### Returns
 
-`ProducerError`
+`RoutingKeyRequiredError`
 
 #### Inherited from
 
-`RedisSMQError.constructor`
+[`ProducerError`](ProducerError.md).[`constructor`](ProducerError.md#constructor)
 
 ## Properties
 
@@ -45,7 +34,7 @@
 
 #### Inherited from
 
-`RedisSMQError.cause`
+[`ProducerError`](ProducerError.md).[`cause`](ProducerError.md#cause)
 
 ---
 
@@ -55,7 +44,7 @@
 
 #### Inherited from
 
-`RedisSMQError.message`
+[`ProducerError`](ProducerError.md).[`message`](ProducerError.md#message)
 
 ---
 
@@ -65,7 +54,7 @@
 
 #### Inherited from
 
-`RedisSMQError.stack`
+[`ProducerError`](ProducerError.md).[`stack`](ProducerError.md#stack)
 
 ---
 
@@ -85,7 +74,7 @@ not capture any frames.
 
 #### Inherited from
 
-`RedisSMQError.stackTraceLimit`
+[`ProducerError`](ProducerError.md).[`stackTraceLimit`](ProducerError.md#stacktracelimit)
 
 ## Accessors
 
@@ -101,7 +90,7 @@ not capture any frames.
 
 #### Inherited from
 
-`RedisSMQError.name`
+[`ProducerError`](ProducerError.md).[`name`](ProducerError.md#name)
 
 ## Methods
 
@@ -169,7 +158,7 @@ a();
 
 #### Inherited from
 
-`RedisSMQError.captureStackTrace`
+[`ProducerError`](ProducerError.md).[`captureStackTrace`](ProducerError.md#capturestacktrace)
 
 ---
 
@@ -191,7 +180,7 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 #### Inherited from
 
-`RedisSMQError.isError`
+[`ProducerError`](ProducerError.md).[`isError`](ProducerError.md#iserror)
 
 ---
 
@@ -219,4 +208,4 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
 #### Inherited from
 
-`RedisSMQError.prepareStackTrace`
+[`ProducerError`](ProducerError.md).[`prepareStackTrace`](ProducerError.md#preparestacktrace)
