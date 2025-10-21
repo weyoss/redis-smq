@@ -2,13 +2,23 @@
 
 # Class: Producer
 
-The Producer class is responsible for producing messages, managing their
-delivery to various queues, and ensuring that all components are ready
-for operation.
-The class provides methods for enqueuing messages, handling consumer groups,
-and producing messages based on the message's exchange parameters.
-Error handling is included throughout the methods, returning appropriate
-error objects when necessary.
+The Producer class is a stateful service responsible for publishing messages
+to the Redis-SMQ system. It manages the entire message delivery lifecycle,
+including complex routing logic via exchanges, and ensures that all underlying
+components are properly managed.
+
+## Example
+
+```typescript
+const producer = new Producer();
+producer.run((err) => {
+  if (err) {
+    console.error('Failed to start producer:', err);
+    return;
+  }
+  console.log('Producer is running');
+});
+```
 
 ## Extends
 
@@ -20,8 +30,9 @@ error objects when necessary.
 
 > **new Producer**(): `Producer`
 
-Constructor for the Producer class. Initializes the Redis client,
-event bus, and logger. Sets up the event bus publisher if enabled.
+Initializes a new Producer instance.
+
+Note: The producer is not yet running after construction. Call `run()` to start it.
 
 #### Returns
 
@@ -41,7 +52,7 @@ event bus, and logger. Sets up the event bus publisher if enabled.
 
 ##### E
 
-`E` *extends* keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
+`E` _extends_ keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
 
 #### Parameters
 
@@ -61,7 +72,7 @@ event bus, and logger. Sets up the event bus publisher if enabled.
 
 `Runnable.emit`
 
-***
+---
 
 ### getId()
 
@@ -75,7 +86,7 @@ event bus, and logger. Sets up the event bus publisher if enabled.
 
 `Runnable.getId`
 
-***
+---
 
 ### isDown()
 
@@ -89,7 +100,7 @@ event bus, and logger. Sets up the event bus publisher if enabled.
 
 `Runnable.isDown`
 
-***
+---
 
 ### isGoingDown()
 
@@ -103,7 +114,7 @@ event bus, and logger. Sets up the event bus publisher if enabled.
 
 `Runnable.isGoingDown`
 
-***
+---
 
 ### isGoingUp()
 
@@ -117,7 +128,7 @@ event bus, and logger. Sets up the event bus publisher if enabled.
 
 `Runnable.isGoingUp`
 
-***
+---
 
 ### isRunning()
 
@@ -131,7 +142,7 @@ event bus, and logger. Sets up the event bus publisher if enabled.
 
 `Runnable.isRunning`
 
-***
+---
 
 ### isUp()
 
@@ -145,7 +156,7 @@ event bus, and logger. Sets up the event bus publisher if enabled.
 
 `Runnable.isUp`
 
-***
+---
 
 ### on()
 
@@ -155,7 +166,7 @@ event bus, and logger. Sets up the event bus publisher if enabled.
 
 ##### E
 
-`E` *extends* keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
+`E` _extends_ keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
 
 #### Parameters
 
@@ -175,7 +186,7 @@ event bus, and logger. Sets up the event bus publisher if enabled.
 
 `Runnable.on`
 
-***
+---
 
 ### once()
 
@@ -185,7 +196,7 @@ event bus, and logger. Sets up the event bus publisher if enabled.
 
 ##### E
 
-`E` *extends* keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
+`E` _extends_ keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
 
 #### Parameters
 
@@ -205,25 +216,29 @@ event bus, and logger. Sets up the event bus publisher if enabled.
 
 `Runnable.once`
 
-***
+---
 
 ### produce()
 
 > **produce**(`msg`, `cb`): `void`
 
-Produces a message based on the provided parameters. Ensures that a valid
-exchange is set and that at least one matching queue exists before
-publishing the message.
+Publishes a message to a queue or an exchange.
 
-This method handles various errors, including:
-- ProducerInstanceNotRunningError: Thrown when the producer instance is not running.
-- ProducerMessageExchangeRequiredError: Thrown when no exchange is set for the message.
-- ProducerExchangeNoMatchedQueueError: Thrown when no matching queues are found for the exchange.
-- ProducerQueueNotFoundError: Thrown when a queue is not found.
-- ProducerMessagePriorityRequiredError: Thrown when a message priority is required.
-- ProducerPriorityQueuingNotEnabledError: Thrown when priority queuing is not enabled.
-- ProducerUnknownQueueTypeError: Thrown when an unknown queue type is encountered.
-- ProducerError: A generic error thrown when an unexpected error occurs.
+This method orchestrates the message publication process and supports two main workflows:
+
+1.  **Direct-to-Queue**: If the message specifies a destination queue via `msg.getQueue()`,
+    the message is sent directly to that queue.
+2.  **Exchange-Based Routing**: If the message specifies an exchange via `msg.getExchange()`,
+    this method resolves the exchange to a set of matching queues and publishes a copy
+    of the message to each one.
+
+The method performs the following validations:
+
+- Ensures the producer is running; returns `ProducerNotRunningError` if not.
+- Ensures the message specifies either a queue or an exchange; returns
+  `MessageExchangeRequiredError` if neither is specified.
+- For exchange-based routing, ensures at least one queue matches the exchange;
+  returns `NoMatchedQueuesForMessageExchangeError` if no matches are found.
 
 #### Parameters
 
@@ -231,21 +246,38 @@ This method handles various errors, including:
 
 [`ProducibleMessage`](ProducibleMessage.md)
 
-The message to be produced and published.
+The message to be published. Must specify either a destination queue
+or an exchange (or both).
 
 ##### cb
 
 `ICallback`\<`string`[]\>
 
-A callback function to be executed upon completion.
-                                  It receives an error as the first argument (if any)
-                                  and an array of message IDs as the second argument.
+A callback function invoked upon completion. - On success: `cb(null, messageIds)` where `messageIds` is an array of
+published message IDs (one per queue for exchange routing, or one for
+direct queue routing). - On error: `cb(error)` where `error` is one of: - `ProducerNotRunningError`: Producer is not running. - `MessageExchangeRequiredError`: Message has neither queue nor exchange. - `NoMatchedQueuesForMessageExchangeError`: Exchange matched no queues. - Other errors from queue or exchange operations.
 
 #### Returns
 
 `void`
 
-***
+#### Example
+
+```typescript
+const msg = new ProducibleMessage()
+  .setQueue({ name: 'my-queue', ns: 'default' })
+  .setBody({ data: 'example' });
+
+producer.produce(msg, (err, messageIds) => {
+  if (err) {
+    console.error('Failed to produce message:', err);
+  } else {
+    console.log('Published message IDs:', messageIds);
+  }
+});
+```
+
+---
 
 ### removeAllListeners()
 
@@ -255,7 +287,7 @@ A callback function to be executed upon completion.
 
 ##### E
 
-`E` *extends* keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
+`E` _extends_ keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
 
 #### Parameters
 
@@ -271,7 +303,7 @@ A callback function to be executed upon completion.
 
 `Runnable.removeAllListeners`
 
-***
+---
 
 ### removeListener()
 
@@ -281,7 +313,7 @@ A callback function to be executed upon completion.
 
 ##### E
 
-`E` *extends* keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
+`E` _extends_ keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
 
 #### Parameters
 
@@ -301,7 +333,7 @@ A callback function to be executed upon completion.
 
 `Runnable.removeListener`
 
-***
+---
 
 ### run()
 
@@ -321,7 +353,7 @@ A callback function to be executed upon completion.
 
 `Runnable.run`
 
-***
+---
 
 ### shutdown()
 

@@ -63,4 +63,5 @@
 - [QueueRateLimitError](classes/QueueRateLimitError.md)
 - [RedisKeysError](classes/RedisKeysError.md)
 - [RedisKeysInvalidKeyError](classes/RedisKeysInvalidKeyError.md)
+- [RoutingKeyRequiredError](classes/RoutingKeyRequiredError.md)
 - [UnknownQueueTypeError](classes/UnknownQueueTypeError.md)
