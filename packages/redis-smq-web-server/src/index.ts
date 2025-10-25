@@ -21,6 +21,7 @@ import { parseConfig } from './config/parse-config.js';
 import type { IRedisSMQWebUIConfig } from 'redis-smq-web-ui';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { createLogger, ILogger } from 'redis-smq-common';
+import rateLimit from 'express-rate-limit';
 
 export class RedisSMQWebServer {
   private readonly app = express();
@@ -46,6 +47,14 @@ export class RedisSMQWebServer {
   }
 
   private async setupMiddleware(): Promise<void> {
+    // prevent denial-of-service attacks
+    this.app.use(
+      rateLimit({
+        windowMs: 60 * 1000, // 1 minutes
+        limit: 250, // max 250 requests per windowMs
+      }),
+    );
+
     // Static file serving with caching headers
     this.app.use(
       // type-coverage:ignore-next-line

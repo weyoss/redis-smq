@@ -42,6 +42,7 @@
   "dependencies": {
     "commander": "14.0.1",
     "express": "4.21.2",
+    "express-rate-limit": "8.1.0",
     "http-proxy-middleware": "3.0.5"
   },
   "devDependencies": {
