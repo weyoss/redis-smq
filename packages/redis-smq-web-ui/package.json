@@ -71,7 +71,7 @@
     "zod": "3.25.76"
   },
   "devDependencies": {
-    "@playwright/test": "1.51.1",
+    "@playwright/test": "1.56.1",
     "@tanstack/vue-query": "5.90.2",
     "@tsconfig/node20": "20.1.5",
     "@types/jsdom": "27.0.0",
