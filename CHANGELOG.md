@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.10](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.9...v9.0.0-next.10) (2025-10-26)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-rest-api:** add missing RoutingKeyRequiredError to error mappings ([1f46aed](https://github.com/weyoss/redis-smq/commit/1f46aedb5a7cffd2c936316d5cef31a4927f3934))
+- **redis-smq-web-server:** add rate limiting middleware to prevent DoS attacks ([5c144fd](https://github.com/weyoss/redis-smq/commit/5c144fdc67007aa686bdceddc36e3d93635bcff9))
+- **redis-smq-web-server:** improve base path handling and routing logic ([5e7ff4c](https://github.com/weyoss/redis-smq/commit/5e7ff4c46b07b29bd1328bbf9732efbd07cb60b1))
+- **redis-smq-web-ui:** handle correctly base path ([f338be1](https://github.com/weyoss/redis-smq/commit/f338be1c279bd1b6a91225c85c2615490f0050cc))
+
+### 🚀 Chore
+
+- **redis-smq-web-ui:** upgrade playwright to version 1.56.1 ([ac1cd46](https://github.com/weyoss/redis-smq/commit/ac1cd46cc64c927fb00ade40e39e4752fc8fa9fd))
+- **redis-smq-web-ui:** upgrade vite to version 7.1.12 ([5c92529](https://github.com/weyoss/redis-smq/commit/5c92529828d9f2512dee5f1b95d92eba996ee2ab))
+
+### 📝 Documentation
+
+- **redis-smq-web-server:** add npm version/code coverage badges ([c4c76c2](https://github.com/weyoss/redis-smq/commit/c4c76c2a781ad414ae1117f9b47cdb0c4eb04fac))
+
+### ✅ Tests
+
+- **redis-smq-web-server:** add comprehensive E2E test suite ([d67e5c6](https://github.com/weyoss/redis-smq/commit/d67e5c6d4cfb62d6736698d5fdb158a2bebf41df))
+
 ## [9.0.0-next.9](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.8...v9.0.0-next.9) (2025-10-21)
 
 ### 🐛 Bug Fixes

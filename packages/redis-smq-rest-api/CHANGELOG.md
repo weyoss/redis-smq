@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.10](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.9...v9.0.0-next.10) (2025-10-26)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-rest-api:** add missing RoutingKeyRequiredError to error mappings ([1f46aed](https://github.com/weyoss/redis-smq/commit/1f46aedb5a7cffd2c936316d5cef31a4927f3934))
+
 ## [9.0.0-next.9](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.8...v9.0.0-next.9) (2025-10-21)
 
 **Note:** Version bump only for package redis-smq-rest-api
