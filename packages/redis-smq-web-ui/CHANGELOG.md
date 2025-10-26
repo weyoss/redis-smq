@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.10](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.9...v9.0.0-next.10) (2025-10-26)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-web-ui:** handle correctly base path ([f338be1](https://github.com/weyoss/redis-smq/commit/f338be1c279bd1b6a91225c85c2615490f0050cc))
+
+### 🚀 Chore
+
+- **redis-smq-web-ui:** upgrade playwright to version 1.56.1 ([ac1cd46](https://github.com/weyoss/redis-smq/commit/ac1cd46cc64c927fb00ade40e39e4752fc8fa9fd))
+- **redis-smq-web-ui:** upgrade vite to version 7.1.12 ([5c92529](https://github.com/weyoss/redis-smq/commit/5c92529828d9f2512dee5f1b95d92eba996ee2ab))
+
 ## [9.0.0-next.9](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.8...v9.0.0-next.9) (2025-10-21)
 
 **Note:** Version bump only for package redis-smq-web-ui

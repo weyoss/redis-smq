@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.10](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.9...v9.0.0-next.10) (2025-10-26)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-web-server:** add rate limiting middleware to prevent DoS attacks ([5c144fd](https://github.com/weyoss/redis-smq/commit/5c144fdc67007aa686bdceddc36e3d93635bcff9))
+- **redis-smq-web-server:** improve base path handling and routing logic ([5e7ff4c](https://github.com/weyoss/redis-smq/commit/5e7ff4c46b07b29bd1328bbf9732efbd07cb60b1))
+
+### 📝 Documentation
+
+- **redis-smq-web-server:** add npm version/code coverage badges ([c4c76c2](https://github.com/weyoss/redis-smq/commit/c4c76c2a781ad414ae1117f9b47cdb0c4eb04fac))
+
+### ✅ Tests
+
+- **redis-smq-web-server:** add comprehensive E2E test suite ([d67e5c6](https://github.com/weyoss/redis-smq/commit/d67e5c6d4cfb62d6736698d5fdb158a2bebf41df))
+
 ## [9.0.0-next.9](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.8...v9.0.0-next.9) (2025-10-21)
 
 **Note:** Version bump only for package redis-smq-web-server
