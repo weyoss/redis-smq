@@ -8,6 +8,9 @@
 > - Latest release notes/tags: https://github.com/weyoss/redis-smq/releases/latest
 > - Install stable packages with @latest; pre-release with @next.
 
+[![Pre-release (next)](https://img.shields.io/npm/v/redis-smq-web-server/next?style=flat-square&label=redis-smq-web-server%40next)](https://www.npmjs.com/package/redis-smq-web-server?activeTab=versions)
+[![Code Coverage (next)](https://img.shields.io/codecov/c/github/weyoss/redis-smq?flag=redis-smq-web-server&branch=next&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/next/packages/redis-smq-web-server)
+
 A lightweight, configurable HTTP server that hosts the RedisSMQ Web UI and exposes the RedisSMQ HTTP API in the same process — or proxies it to an external API service.
 
 - Serves the SPA (Single Page Application) for monitoring and managing RedisSMQ.
@@ -134,7 +137,6 @@ await srv.run();
   - Example: basePath = / → UI at /
   - Example: basePath = /redis-smq → UI at /redis-smq
 - HTTP API: mounted under <basePath>/api
-
   - Example: basePath = / → API at /api
   - Example: basePath = /redis-smq → API at /redis-smq/api
 
