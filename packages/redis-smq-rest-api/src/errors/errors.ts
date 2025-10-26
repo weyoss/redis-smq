@@ -98,6 +98,7 @@ export const errors = {
   QueueRateLimitError: [429, 'QueueRateLimitError'],
   RedisKeysError: [500, 'RedisKeysError'],
   RedisKeysInvalidKeyError: [400, 'RedisKeysInvalidKeyError'],
+  RoutingKeyRequiredError: [400, 'RoutingKeyRequiredError'],
   UnknownQueueTypeError: [500, 'UnknownQueueTypeError'],
 } as const;
 
