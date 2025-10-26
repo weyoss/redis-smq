@@ -34,7 +34,7 @@
   "scripts": {
     "build": "scripts/build.sh",
     "dev": "tsc -w & node --watch dist/index.js",
-    "test": "vitest run --passWithNoTests"
+    "test": "../../scripts/test_workspace_esm.sh"
   },
   "bin": {
     "redis-smq-web-server": "./dist/esm/bin/cli.js"
