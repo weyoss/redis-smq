@@ -23,6 +23,10 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 import { createLogger, ILogger } from 'redis-smq-common';
 import rateLimit from 'express-rate-limit';
 
+type TRequest = express.Request<unknown, unknown, unknown>;
+type TResponse = express.Response<unknown>;
+type TNextFn = express.NextFunction;
+
 export class RedisSMQWebServer {
   private readonly app = express();
   private readonly config: IRedisSMQWebServerParsedConfig;
@@ -39,7 +43,7 @@ export class RedisSMQWebServer {
     this.config = parseConfig(config);
     this.webUIConfig = {
       BASE_PATH: this.config.webServer.basePath,
-      API_URL: '/',
+      API_URL: this.config.webServer.basePath,
     };
     this.apiProxyTarget = this.config.webServer.apiProxyTarget ?? null;
     this.webUIPath = getDistPath();
@@ -51,24 +55,22 @@ export class RedisSMQWebServer {
     this.app.use(
       rateLimit({
         windowMs: 60 * 1000, // 1 minutes
-        limit: 250, // max 250 requests per windowMs
+        limit: 1000, // max 1000 requests per windowMs
       }),
     );
 
-    // Static file serving with caching headers
+    // Static file serving with caching headers. This handles UI assets from /assets/* etc.
+    // It is placed before any API/SPA routing to ensure assets are served directly.
     this.app.use(
       // type-coverage:ignore-next-line
       express.static(this.webUIPath, {
         etag: true,
         lastModified: true,
-        index: false,
+        index: false, // We manually handle index.html serving for the SPA
         setHeaders: (res: express.Response<unknown>, filePath) => {
-          // Set caching headers based on file type
           if (filePath.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg)$/)) {
-            // Cache assets for 1 day
             res.setHeader('Cache-Control', 'public, max-age=86400');
           } else {
-            // No caching for HTML files
             res.setHeader('Cache-Control', 'no-cache');
           }
         },
@@ -77,66 +79,96 @@ export class RedisSMQWebServer {
   }
 
   private async setupApi(): Promise<void> {
+    const basePath = this.config.webServer.basePath;
+    const apiPath = path.posix.join(basePath, 'api');
+    const docsPath = path.posix.join(basePath, 'docs');
+
+    const apiBasePaths = [apiPath, docsPath];
+    const isApiRequest = (path: string) =>
+      apiBasePaths.some((base) => path === base || path.startsWith(`${base}/`));
+
     const target = this.config.webServer.apiProxyTarget;
+
     if (target) {
-      const proxyOptions = {
+      // Proxy Mode: Conditionally forward requests to the target without stripping prefixes.
+      const proxy = createProxyMiddleware({
         target,
         changeOrigin: true,
         ws: true,
-        logLevel: 'warn' as const,
-      };
-      // Proxy REST API endpoints and docs/assets served by REST API
-      this.app.use('/api', createProxyMiddleware(proxyOptions));
-      this.app.use('/docs', createProxyMiddleware(proxyOptions));
-      this.app.use('/assets', createProxyMiddleware(proxyOptions));
+      });
+      this.app.use(
+        (req: TRequest, res: TResponse, next: express.NextFunction) => {
+          if (isApiRequest(req.path)) {
+            return proxy(req, res, next);
+          }
+          next();
+        },
+      );
       return;
     }
 
-    // No proxy target is provided, mount the embedded REST API server as middleware (covers /api, /docs, /assets)
-    // The `false` argument prevents the REST API server from starting its own listener
+    // Embedded Mode: Conditionally delegate requests to the embedded REST API.
     this.restApi = new RedisSMQRestApi(this.config, false);
     const restApiCallback = await this.restApi.getApplication();
-    this.app.use(restApiCallback);
+    this.app.use((req: TRequest, res: TResponse, next: TNextFn) => {
+      if (isApiRequest(req.path)) {
+        // The callback handles the request entirely and does not use next().
+        return restApiCallback(req, res);
+      }
+      next();
+    });
+  }
+
+  private sendIndexHtml(res: express.Response<unknown>) {
+    const indexPath = path.join(this.webUIPath, 'index.html');
+    fs.readFile(indexPath, 'utf8', (err, data) => {
+      if (err) {
+        this.logger.error('Error reading index.html:', err);
+        return res.status(500).send('Error loading application');
+      }
+      const configScript = `<script>window.configs = ${JSON.stringify(
+        this.webUIConfig,
+      )};</script>`;
+      const modifiedHtml = data.replace('</head>', `${configScript}</head>`);
+      res.send(modifiedHtml);
+    });
   }
 
   private async setupRoutes(): Promise<void> {
+    // The API middleware is registered first. It will selectively handle API requests
+    // or pass them through to the SPA routes.
     await this.setupApi();
 
-    // All non-API/Docs/Assets GET requests are handled by the web UI
-    this.app.get(
-      /^\/(?!api|docs|assets).*/,
-      (
-        _: express.Request<Record<string, unknown>, unknown, unknown>,
-        res: express.Response<unknown>,
-      ) => {
-        // Read the index.html file
-        const indexPath = path.join(this.webUIPath, 'index.html');
-        fs.readFile(indexPath, 'utf8', (err, data) => {
-          if (err) {
-            this.logger.error('Error reading index.html:', err);
-            return res.status(500).send('Error loading application');
-          }
+    // Build basePath-aware routes for the SPA.
+    const basePath = this.config.webServer.basePath || '/';
 
-          // Inject the configuration into the HTML
-          const configScript = `<script>window.configs = ${JSON.stringify(
-            this.webUIConfig,
-          )};</script>`;
+    // Optional: if basePath is not '/', redirect '/' to basePath.
+    if (basePath !== '/') {
+      this.app.get('/', (_req: TRequest, res: TResponse) =>
+        res.redirect(basePath),
+      );
+    }
 
-          // Insert the config script before the closing </head> tag
-          const modifiedHtml = data.replace(
-            '</head>',
-            `${configScript}</head>`,
-          );
+    // SPA catch-all route.
+    // It serves index.html for any GET request that hasn't been handled by
+    // the static middleware or the API middleware.
+    const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const normalizedBase = basePath.replace(/\/+$/, '') || '/';
+    const anchor =
+      normalizedBase === '/' ? '^/' : `^${escapeRegex(normalizedBase)}/?`;
 
-          // Send the modified HTML
-          res.send(modifiedHtml);
-        });
-      },
+    // This regex matches paths that are NOT api, docs, or assets, so they can be handled by the SPA.
+    const nonApiOrAsset = new RegExp(`${anchor}(?!api/|docs/|assets/).*`);
+    this.app.get(nonApiOrAsset, (_req: TRequest, res: TResponse) =>
+      this.sendIndexHtml(res),
     );
   }
 
   private async bootstrap(): Promise<void> {
     if (!this.bootstrapped) {
+      // Order is important:
+      // 1. Static assets middleware to serve UI files directly.
+      // 2. Main routing setup, which includes API handling and the SPA catch-all.
       await this.setupMiddleware();
       await this.setupRoutes();
       this.bootstrapped = true;
@@ -154,6 +186,7 @@ export class RedisSMQWebServer {
         this.logger.info(`Embedded Redis SMQ REST API is mounted`);
       }
       this.logger.info(`Serving static assets from: ${this.webUIPath}`);
+      this.logger.info(`Base path: ${this.config.webServer.basePath || '/'}`);
     });
   }
 

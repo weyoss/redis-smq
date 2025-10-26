@@ -33,11 +33,13 @@ export function parseConfig(
     ...defaultConfig.webServer,
     ...config.webServer,
   };
+  // remove trailing '/'
+  const basePath = String(webServer.basePath).replace(/\/+$/, '') || '/';
   return {
     ...restApiParsedConfig,
     webServer: {
       port: Number(webServer.port),
-      basePath: String(webServer.basePath),
+      basePath,
       apiProxyTarget: webServer.apiProxyTarget
         ? String(webServer.apiProxyTarget)
         : undefined,
