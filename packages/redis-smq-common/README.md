@@ -76,4 +76,4 @@ Issues and pull requests are welcome. Please read the repository’s CONTRIBUTIN
 
 ## License
 
-This project is licensed under is released under the [MIT License](/LICENSE).
+RedisSMQ Common Library is released under the [MIT License](/LICENSE).

@@ -198,4 +198,4 @@ For detailed endpoint documentation, refer to the Swagger UI.
 
 ## License
 
-This project is licensed under is released under the [MIT License](/LICENSE).
+RedisSMQ REST API is released under the [MIT License](/LICENSE).
