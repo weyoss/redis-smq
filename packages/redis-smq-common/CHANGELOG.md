@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.12](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.11...v9.0.0-next.12) (2025-10-27)
+
+### 📝 Documentation
+
+- fix license section formatting and standardize project names ([abbdbda](https://github.com/weyoss/redis-smq/commit/abbdbdae6fc42f0a9353b7cd786386a98e6e850d))
+
 ## [9.0.0-next.11](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.10...v9.0.0-next.11) (2025-10-27)
 
 ### 🐛 Bug Fixes

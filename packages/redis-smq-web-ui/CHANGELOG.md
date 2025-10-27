@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.12](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.11...v9.0.0-next.12) (2025-10-27)
+
+### 🚀 Chore
+
+- add copyright headers to source files ([771e980](https://github.com/weyoss/redis-smq/commit/771e9802ddea11abb5982c4bfdfde1bebf1c7468))
+
 ## [9.0.0-next.11](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.10...v9.0.0-next.11) (2025-10-27)
 
 **Note:** Version bump only for package redis-smq-web-ui
