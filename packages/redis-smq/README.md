@@ -24,4 +24,4 @@ The source code and documentation for RedisSMQ are in the main [redis-smq](/READ
 
 ## License
 
-This project is released under the [MIT License](/LICENSE).
+RedisSMQ is released under the [MIT License](/LICENSE).

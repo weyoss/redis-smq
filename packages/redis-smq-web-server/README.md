@@ -219,4 +219,4 @@ Notes:
 
 ## License
 
-RedisSMQ Web Server is licensed under is released under the [MIT License](/LICENSE).
+RedisSMQ Web Server is released under the [MIT License](/LICENSE).
