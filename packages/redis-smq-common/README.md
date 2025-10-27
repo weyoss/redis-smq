@@ -9,7 +9,7 @@
 > - Install stable packages with @latest; pre-release with @next.
 
 [![Pre-release (next)](https://img.shields.io/npm/v/redis-smq-common/next?style=flat-square&label=redis-smq-common%40next)](https://www.npmjs.com/package/redis-smq-common?activeTab=versions)
-[![Code Coverage (next)](https://img.shields.io/codecov/c/github/weyoss/redis-smq?flag=redis-smq-common&branch=next&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/next/packages/redis-smq-common)
+[![Code Coverage (next)](https://img.shields.io/codecov/c/github/weyoss/redis-smq/next?flag=redis-smq-common&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/next/packages/redis-smq-common)
 
 A shared foundation for the RedisSMQ ecosystem.
 This package provides essential components and utilities used by RedisSMQ and related packages, helping you configure
