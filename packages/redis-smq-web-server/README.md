@@ -15,14 +15,14 @@ A lightweight, configurable HTTP server that hosts the RedisSMQ Web UI and expos
 
 - Serves the SPA (Single Page Application) for monitoring and managing RedisSMQ.
 - Mounts the HTTP API under a configurable base path.
-- Can run the HTTP API in-process, or proxy API/docs/assets to an external `redis-smq-rest-api`.
+- Can run the HTTP API in-process, or proxy API to an external `redis-smq-rest-api`.
 - Requires only Redis connection details when hosting the API in-process; with proxying, Redis is managed by the upstream API service.
 
 ## Features
 
 - Static SPA hosting with history fallback (client-side routing supported).
 - One binary to serve both UI and HTTP API (or proxy to an existing API instance).
-- Optional upstream proxy for API/docs/assets via a single flag.
+- Optional upstream proxy for API via a single flag.
 - Simple, explicit configuration via CLI or programmatic config.
 - Sensible defaults; easily deployable behind reverse proxies.
 
@@ -80,7 +80,7 @@ npx redis-smq-web-server \
   --api-proxy-target http://127.0.0.1:7210
 ```
 
-When `--api-proxy-target` is provided, requests to `<basePath>/api`, `<basePath>/docs`, and `<basePath>/assets` are forwarded
+When `--api-proxy-target` is provided, requests to `<basePath>/api` and `<basePath>/docs` are forwarded
 to the upstream. In this mode, Redis connection options on the web server are not used; the upstream API service manages Redis.
 
 ### Programmatically (optional)
@@ -118,7 +118,7 @@ const server = new RedisSMQWebServer({
 await server.run();
 // await server.shutdown();
 
-// Or proxy API/docs/assets to an external service
+// Or proxy API to an external service
 const srv = new RedisSMQWebServer({
   webServer: {
     port: 8080,
@@ -149,7 +149,6 @@ Proxying behavior:
 - When apiProxyTarget is set, the server forwards:
   - <basePath>/api → ${apiProxyTarget}
   - <basePath>/docs → ${apiProxyTarget}
-  - <basePath>/assets → ${apiProxyTarget}
 - When apiProxyTarget is not set, the server hosts the embedded REST API in-process.
 
 ## Configuration
@@ -174,7 +173,7 @@ interface IRedisSMQWebServerConfig extends IRedisSMQRestApiConfig {
     basePath?: string;
 
     /**
-     * Optional target for proxying (/api, /docs, /assets).
+     * Optional target for proxying API.
      * If provided, the embedded REST API is not mounted and requests are forwarded to the target.
      * Example: 'http://127.0.0.1:7210'
      */
@@ -185,8 +184,7 @@ interface IRedisSMQWebServerConfig extends IRedisSMQRestApiConfig {
 
 Notes:
 
-- When `webServer.apiProxyTarget` is set, the server proxies `<basePath>/api`, `<basePath>/docs`, and
-  `<basePath>/assets` to the target. In this mode, redis and logger options are not used by the web server (they are
+- When `webServer.apiProxyTarget` is set, the server proxies `<basePath>/api` and `<basePath>/docs` to the target. In this mode, redis and logger options are not used by the web server (they are
   handled by the upstream API service).
 
 - When `webServer.apiProxyTarget` is not set, the web server mounts the embedded `redis-smq-rest-api` using the provided
@@ -197,7 +195,7 @@ Notes:
 ```shell
 -p, --port <number>                 Port to run the server on (default: "8080")
 -b, --base-path <string>            Base public path for the RedisSMQ Web UI SPA (default: "/")
--t, --api-proxy-target <string>     Proxy target for API (/api, /docs, /assets). Example: http://127.0.0.1:6000
+-t, --api-proxy-target <string>     Proxy target for API (/api, /docs). Example: http://127.0.0.1:6000
 -c, --redis-client <ioredis|redis>  Redis client. Valid options are: ioredis, redis. (default: "ioredis")
 -r, --redis-host <string>           Redis server host (default: "127.0.0.1")
 -o, --redis-port <number>           Redis server port (default: "6379")
@@ -215,7 +213,7 @@ Notes:
 - If you terminate TLS at the proxy, no additional config is needed here.
 - If you also proxy the API to an external service, combine with `--api-proxy-target`:
   - Client → reverse proxy → web server (/redis-smq)
-  - Web server proxies /redis-smq/api, /redis-smq/docs, /redis-smq/assets → external API
+  - Web server proxies /redis-smq/api, /redis-smq/docs → external API
 
 ## License
 
