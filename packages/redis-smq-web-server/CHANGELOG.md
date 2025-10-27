@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.11](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.10...v9.0.0-next.11) (2025-10-27)
+
+### 🐛 Bug Fixes
+
+- correct codecov badge URL format ([3ebb5c8](https://github.com/weyoss/redis-smq/commit/3ebb5c8ba8a7f9902de054d7aaf0c1fc572fb9a6))
+
+### ✅ Tests
+
+- **redis-smq-web-server:** add CLI and API proxy e2e tests ([a96ee8e](https://github.com/weyoss/redis-smq/commit/a96ee8e5a91f7a36dcd0a66082fc0b25be62350f))
+
 ## [9.0.0-next.10](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.9...v9.0.0-next.10) (2025-10-26)
 
 ### 🐛 Bug Fixes
