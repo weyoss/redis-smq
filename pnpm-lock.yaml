@@ -9699,10 +9699,10 @@ packages:
       }
     engines: { node: '>=14.18.0' }
 
-  superjson@2.2.3:
+  superjson@2.2.5:
     resolution:
       {
-        integrity: sha512-ay3d+LW/S6yppKoTz3Bq4mG0xrS5bFwfWEBmQfbC7lt5wmtk+Obq0TxVuA9eYRirBTQb1K3eEpBRHMQEo0WyVw==,
+        integrity: sha512-zWPTX96LVsA/eVYnqOM2+ofcdPqdS1dAF1LN4TS2/MWuUpfitd9ctTa87wt4xrYnZnkLtS69xpBdSxVBP5Rm6w==,
       }
     engines: { node: '>=16' }
 
@@ -13052,7 +13052,7 @@ snapshots:
       mitt: 3.0.1
       perfect-debounce: 1.0.0
       speakingurl: 14.0.1
-      superjson: 2.2.3
+      superjson: 2.2.5
 
   '@vue/devtools-kit@8.0.3':
     dependencies:
@@ -13062,7 +13062,7 @@ snapshots:
       mitt: 3.0.1
       perfect-debounce: 2.0.0
       speakingurl: 14.0.1
-      superjson: 2.2.3
+      superjson: 2.2.5
 
   '@vue/devtools-shared@7.7.7':
     dependencies:
@@ -15728,7 +15728,7 @@ snapshots:
 
   log-symbols@4.1.0:
     dependencies:
-      chalk: 4.1.2
+      chalk: 4.1.0
       is-unicode-supported: 0.1.0
 
   log-update@6.1.0:
@@ -17382,7 +17382,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  superjson@2.2.3:
+  superjson@2.2.5:
     dependencies:
       copy-anything: 4.0.5
 
