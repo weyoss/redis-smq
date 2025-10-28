@@ -37,6 +37,10 @@ export function parseConfig(
   const basePath = String(webServer.basePath).replace(/\/+$/, '') || '/';
   return {
     ...restApiParsedConfig,
+    apiServer: {
+      ...restApiParsedConfig.apiServer,
+      basePath: basePath,
+    },
     webServer: {
       port: Number(webServer.port),
       basePath,
