@@ -73,7 +73,7 @@ import { ERedisConfigClient, EConsoleLoggerLevel } from 'redis-smq-common';
 const config = {
   apiServer: {
     port: 7210,
-    basePath: '/', // API at '/', Swagger at '/docs'
+    basePath: '/', // API at '/api', Swagger at '/swagger'
   },
   redis: {
     client: ERedisConfigClient.IOREDIS,
@@ -181,7 +181,7 @@ npx redis-smq-rest-api --port 8000 --redis-host 10.0.0.5 --redis-port 6380
 Access the interactive API documentation at:
 
 ```text
-http://<HOSTNAME>:<PORT>/docs
+http://<HOSTNAME>:<PORT>/swagger
 ```
 
 ### OpenAPI Specification
@@ -189,7 +189,7 @@ http://<HOSTNAME>:<PORT>/docs
 Download the OpenAPI specification at:
 
 ```text
-http://<HOSTNAME>:<PORT>/assets/openapi-specs.json
+http://<HOSTNAME>:<PORT>/swagger/assets/openapi-specs.json
 ```
 
 ## Available Endpoints

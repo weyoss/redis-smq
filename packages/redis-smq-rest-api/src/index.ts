@@ -40,10 +40,8 @@ import {
 import { registerResources } from './lib/router/index.js';
 import { routing } from './router/routing.js';
 
-// Promisify Configuration
+// Promisify external async APIs
 const RedisSMQAsync = bluebird.promisifyAll(RedisSMQ);
-
-// Promisify tmp
 const tmpAsync = bluebird.promisifyAll(tmp);
 
 export class RedisSMQRestApi {
@@ -74,12 +72,15 @@ export class RedisSMQRestApi {
   }
 
   protected async initApplicationMiddlewares() {
+    // Per-request scope for DI
     this.app.use<IApplicationMiddlewareState, IApplicationMiddlewareContext>(
       (ctx, next) => {
         ctx.scope = Container.getInstance().createScope();
         return next();
       },
     );
+
+    // Global middlewares
     this.app.use(errorHandlerMiddleware);
     this.app.use(bodyParser());
     this.app.use(
@@ -90,85 +91,80 @@ export class RedisSMQRestApi {
   }
 
   protected async initOpenApi() {
-    this.logger.info(`Initializing OpenAPI...`);
-    const spec = await generateOpenApiDocument(
-      routing,
-      this.config.apiServer.basePath,
-    );
+    const { basePath } = this.config.apiServer;
+    const openApiFilename = constants.openApiDocumentFilename;
 
-    // Save OpenAPI document to a temp dir and mount it under <basePath>/assets
+    this.logger.info('Initializing OpenAPI...');
+    const spec = await generateOpenApiDocument(routing, basePath);
+
+    // Create a temporary directory to store the OpenAPI spec file
     const tmpDir = await tmpAsync.dirAsync();
     await saveOpenApiDocument(spec, tmpDir);
 
-    const { basePath } = this.config.apiServer;
-    this.app.use(mount(join(basePath, '/assets'), koaStatic(tmpDir)));
+    // Mount middleware in order from most specific to least specific path
+    // to avoid route conflicts.
 
-    // Serve Swagger UI assets locally from swagger-ui-dist
+    // 1. Serve Swagger UI assets from /swagger/ui
     const uiAssetsFsPath = swaggerUiDistPath();
     this.app.use(
-      mount(join(basePath, '/docs/assets'), koaStatic(uiAssetsFsPath)),
+      mount(join(basePath, '/swagger/ui'), koaStatic(uiAssetsFsPath)),
     );
 
-    // Serve a local HTML page that references the local UI assets and the generated spec
-    const specsBasePath = `/assets/${constants.openApiDocumentFilename}`;
-    const assetsPublicBase = join(basePath, '/docs/assets');
-    const html = buildSwaggerUiHtml(
-      join(basePath, specsBasePath),
-      assetsPublicBase,
-    );
+    // 2. Serve the OpenAPI spec from /swagger/assets/<filename>
+    this.app.use(mount(join(basePath, '/swagger/assets'), koaStatic(tmpDir)));
 
+    // Prepare URLs for the HTML template
+    const specUrl = join(basePath, '/swagger/assets', openApiFilename);
+    const uiAssetsUrl = join(basePath, '/swagger/ui');
+    const html = buildSwaggerUiHtml(specUrl, uiAssetsUrl);
+
+    // 3. Serve the Swagger UI HTML at /swagger
     this.app.use(
-      mount(
-        join(basePath, '/docs'),
-        async (ctx: { type: string; body: string }) => {
+      mount(join(basePath, '/swagger'), (ctx: Koa.Context) => {
+        // Only serve HTML for the root of the mount path (e.g., /swagger or /swagger/)
+        if (ctx.path === '/' || ctx.path === '') {
           ctx.type = 'text/html; charset=utf-8';
           ctx.body = html;
-        },
-      ),
+        }
+        // Requests for other sub-paths will fall through and result in a 404
+      }),
     );
-  }
-
-  protected logOpenApiUrls() {
-    const { port, basePath } = this.config.apiServer;
-    const hostname = 'localhost'; // For logging convenience
-    const baseURL = `http://${hostname}:${port}${
-      basePath === '/' ? '' : basePath
-    }`;
-    const specsURL = `${baseURL}/assets/${constants.openApiDocumentFilename}`;
-    this.logger.info(`OpenAPI specs are available at ${specsURL}`);
-    const docsURL = `${baseURL}/docs`;
-    this.logger.info(`SWAGGER UI is accessible from ${docsURL}`);
   }
 
   protected async initRouting() {
-    this.logger.info(`Registering routes...`);
+    this.logger.info('Registering routes...');
     const appRouter = await registerResources(routing);
     this.app.use(appRouter.routes());
     this.app.use(appRouter.allowedMethods());
   }
 
   protected async bootstrap() {
-    if (!this.bootstrapped) {
-      await RedisSMQAsync.initializeAsync(this.config.redis);
-      await this.initApplicationMiddlewares();
-      await this.initRouting();
-      await this.initOpenApi();
-      this.bootstrapped = true;
-    }
+    if (this.bootstrapped) return;
+
+    await RedisSMQAsync.initializeAsync(this.config.redis);
+    await this.initApplicationMiddlewares();
+    await this.initRouting();
+    await this.initOpenApi();
+
+    this.bootstrapped = true;
   }
 
   async run() {
     await this.bootstrap();
-    if (this.runHttpServer) {
-      const { port } = this.config.apiServer;
-      await new Promise<void>((resolve) =>
-        this.httpServer.listen(port, () => resolve()),
-      );
-      this.logger.info(
-        `RedisSMQ REST API server is running on http://localhost:${port}...`,
-      );
-      this.logOpenApiUrls();
-    }
+    if (!this.runHttpServer) return;
+
+    const { port, basePath } = this.config.apiServer;
+    await new Promise<void>((resolve) =>
+      this.httpServer.listen(port, () => resolve()),
+    );
+    this.logger.info(
+      `RedisSMQ REST API server is running on http://localhost:${port}...`,
+    );
+    const baseURL = `http://127.0.0.1:${port}${basePath === '/' ? '' : basePath}`;
+    this.logger.info(
+      `OpenAPI specs are available at ${baseURL}/swagger/assets/${constants.openApiDocumentFilename}`,
+    );
+    this.logger.info(`SWAGGER UI is accessible from ${baseURL}/swagger`);
   }
 
   async getApplication() {
@@ -182,6 +178,6 @@ export class RedisSMQRestApi {
     }
     await Container.getInstance().dispose();
     await RedisSMQAsync.shutdownAsync();
-    this.logger.info(`RedisSMQ HTTP API has been shutdown.`);
+    this.logger.info('RedisSMQ HTTP API has been shutdown.');
   }
 }

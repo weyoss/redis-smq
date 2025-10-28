@@ -8,8 +8,8 @@
  */
 
 export function buildSwaggerUiHtml(specUrl: string, assetsBasePath: string) {
-  // assetsBasePath should point to the mounted swagger-ui-dist directory (e.g., <basePath>/docs/assets)
-  // specUrl should point to the generated OpenAPI JSON served under <basePath>/assets/<filename>
+  // assetsBasePath should point to the mounted swagger-ui-dist directory (e.g., <basePath>/swagger/ui)
+  // specUrl should point to the generated OpenAPI JSON served under <basePath>/swagger/assets/<filename>
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
