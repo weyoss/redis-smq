@@ -80,7 +80,7 @@ npx redis-smq-web-server \
   --api-proxy-target http://127.0.0.1:7210
 ```
 
-When `--api-proxy-target` is provided, requests to `<basePath>/api` and `<basePath>/docs` are forwarded
+When `--api-proxy-target` is provided, requests to `<basePath>/api` and `<basePath>/swagger` are forwarded
 to the upstream. In this mode, Redis connection options on the web server are not used; the upstream API service manages Redis.
 
 ### Programmatically (optional)
@@ -95,7 +95,7 @@ import { EConsoleLoggerLevel, ERedisConfigClient } from 'redis-smq-common';
 const server = new RedisSMQWebServer({
   webServer: {
     port: 8080,
-    basePath: '/', // UI at '/', API at '/api', docs at '/docs'
+    basePath: '/', // UI at '/', API at '/api', swagger at '/swagger'
   },
   // The following options are used only when apiProxyTarget is NOT set
   redis: {
@@ -140,15 +140,15 @@ await srv.run();
   - Example: basePath = / → API at /api
   - Example: basePath = /redis-smq → API at /redis-smq/api
 
-- Swagger UI: mounted under <basePath>/docs
-  - Example: basePath = / → Swagger UI at /docs
-  - Example: basePath = /redis-smq → Swagger UI at /redis-smq/docs
+- Swagger UI: mounted under <basePath>/swagger
+  - Example: basePath = / → Swagger UI at /swagger
+  - Example: basePath = /redis-smq → Swagger UI at /redis-smq/swagger
 
 Proxying behavior:
 
 - When apiProxyTarget is set, the server forwards:
   - <basePath>/api → ${apiProxyTarget}
-  - <basePath>/docs → ${apiProxyTarget}
+  - <basePath>/swagger → ${apiProxyTarget}
 - When apiProxyTarget is not set, the server hosts the embedded REST API in-process.
 
 ## Configuration
@@ -167,7 +167,7 @@ interface IRedisSMQWebServerConfig extends IRedisSMQRestApiConfig {
     port?: number;
 
     /**
-     * Base public path for the RedisSMQ Web UI and the local API/docs when embedded.
+     * Base public path for the RedisSMQ Web UI and the local API/Swagger when embedded.
      * Default: '/'
      */
     basePath?: string;
@@ -184,7 +184,7 @@ interface IRedisSMQWebServerConfig extends IRedisSMQRestApiConfig {
 
 Notes:
 
-- When `webServer.apiProxyTarget` is set, the server proxies `<basePath>/api` and `<basePath>/docs` to the target. In this mode, redis and logger options are not used by the web server (they are
+- When `webServer.apiProxyTarget` is set, the server proxies `<basePath>/api` and `<basePath>/swagger` to the target. In this mode, redis and logger options are not used by the web server (they are
   handled by the upstream API service).
 
 - When `webServer.apiProxyTarget` is not set, the web server mounts the embedded `redis-smq-rest-api` using the provided
@@ -195,7 +195,7 @@ Notes:
 ```shell
 -p, --port <number>                 Port to run the server on (default: "8080")
 -b, --base-path <string>            Base public path for the RedisSMQ Web UI SPA (default: "/")
--t, --api-proxy-target <string>     Proxy target for API (/api, /docs). Example: http://127.0.0.1:6000
+-t, --api-proxy-target <string>     Proxy target for API (/api, /swagger). Example: http://127.0.0.1:6000
 -c, --redis-client <ioredis|redis>  Redis client. Valid options are: ioredis, redis. (default: "ioredis")
 -r, --redis-host <string>           Redis server host (default: "127.0.0.1")
 -o, --redis-port <number>           Redis server port (default: "6379")
@@ -207,13 +207,7 @@ Notes:
 
 ## Deploying behind a reverse proxy
 
-- Set --base-path to the public sub-path you expose (e.g., /redis-smq).
-- Ensure your proxy forwards both the UI and API prefixes:
-  - /redis-smq → web server
-- If you terminate TLS at the proxy, no additional config is needed here.
-- If you also proxy the API to an external service, combine with `--api-proxy-target`:
-  - Client → reverse proxy → web server (/redis-smq)
-  - Web server proxies /redis-smq/api, /redis-smq/docs → external API
+See [Deploying behind a reverse proxy](docs/deploying-behind-a-reverse-proxy.md).
 
 ## License
 
