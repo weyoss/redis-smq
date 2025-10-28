@@ -11,6 +11,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { startApiServer, stopApiServer } from '../common/start-api-server.js';
 import { startCliWithArgs, StartedProcess } from '../common/start-cli.js';
+import path from 'path';
 
 describe('RedisSMQ Web Server CLI e2e tests', () => {
   describe('serves SPA with default basePath "/"', () => {
@@ -41,7 +42,8 @@ describe('RedisSMQ Web Server CLI e2e tests', () => {
       const assetPath = scriptSrc.startsWith('http')
         ? scriptSrc.replace(started.url, '')
         : scriptSrc;
-      const assetRes = await request(started.url).get(assetPath).expect(200);
+      const absolutePath = path.resolve('/', assetPath);
+      const assetRes = await request(started.url).get(absolutePath).expect(200);
       expect(assetRes.headers['cache-control']).toBeDefined();
       expect(assetRes.headers['cache-control']).toMatch(/max-age=\d+/);
     });
@@ -74,7 +76,7 @@ describe('RedisSMQ Web Server CLI e2e tests', () => {
     });
 
     it('serves index.html at "/ui" and SPA fallback under it', async () => {
-      const res = await request(started.url).get('/ui').expect(200);
+      const res = await request(started.url).get('/ui/').expect(200);
       expect(res.headers['content-type']).toMatch(/text\/html/);
 
       const sub = await request(started.url).get('/ui/queues').expect(200);
@@ -117,8 +119,8 @@ describe('RedisSMQ Web Server CLI e2e tests', () => {
         .expect('Content-Type', /application\/json/);
     });
 
-    it('proxies /docs', async () => {
-      const res = await request(started.url).get('/docs').expect(200);
+    it('proxies /swagger', async () => {
+      const res = await request(started.url).get('/swagger').expect(200);
       expect(res.text).toMatch(/<html|<!doctype/i);
     });
 

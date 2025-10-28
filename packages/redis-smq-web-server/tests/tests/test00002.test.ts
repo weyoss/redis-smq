@@ -13,6 +13,7 @@ import { startApiServer, stopApiServer } from '../common/start-api-server.js';
 import { RedisSMQWebServer } from '../../index.js';
 import { config } from '../common/config.js';
 import { net } from 'redis-smq-common';
+import path from 'path';
 
 describe('RedisSMQWebServer with apiProxyTarget', () => {
   let webServerUrl: string;
@@ -45,8 +46,8 @@ describe('RedisSMQWebServer with apiProxyTarget', () => {
       .expect('Content-Type', /application\/json/);
   });
 
-  it('proxies /docs', async () => {
-    const res = await request(webServerUrl).get('/docs').expect(200);
+  it('proxies /swagger', async () => {
+    const res = await request(webServerUrl).get('/swagger').expect(200);
     expect(res.text).toContain('Swagger UI');
   });
 
@@ -69,7 +70,8 @@ describe('RedisSMQWebServer with apiProxyTarget', () => {
       ? scriptSrc.replace(webServerUrl, '')
       : scriptSrc;
 
-    const assetRes = await request(webServerUrl).get(assetPath).expect(200);
+    const absolutePath = path.resolve('/', assetPath);
+    const assetRes = await request(webServerUrl).get(absolutePath).expect(200);
     expect(assetRes.headers['cache-control']).toBeDefined();
   });
 });
