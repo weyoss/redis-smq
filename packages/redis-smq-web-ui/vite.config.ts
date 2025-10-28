@@ -25,4 +25,5 @@ export default defineConfig({
     outDir: 'dist/browser',
     emptyOutDir: true, // ensure the output directory is cleaned before each build
   },
+  base: '',
 });
