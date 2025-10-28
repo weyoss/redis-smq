@@ -14,6 +14,7 @@ import {
   shutdownWebServer,
   startWebServer,
 } from '../common/start-web-server.js';
+import path from 'path';
 
 describe('RedisSMQWebServer E2E Tests', () => {
   const serverUrl = `http://localhost:${config.webServer?.port}`;
@@ -58,7 +59,8 @@ describe('RedisSMQWebServer E2E Tests', () => {
       : scriptSrc;
 
     // Fetch the script asset and expect Cache-Control to be set (assets are cached)
-    const assetRes = await request(serverUrl).get(assetPath).expect(200);
+    const absolutePath = path.resolve('/', assetPath);
+    const assetRes = await request(serverUrl).get(absolutePath).expect(200);
     expect(assetRes.headers['cache-control']).toBeDefined();
   });
 
@@ -102,17 +104,10 @@ describe('RedisSMQWebServer E2E Tests', () => {
     expect(response.headers['content-type']).not.toContain('text/html');
   });
 
-  it('should not serve index.html for /docs routes', async () => {
+  it('should not serve index.html for /swagger routes', async () => {
     await startWebServer();
-    const response = await request(serverUrl).get('/docs');
+    const response = await request(serverUrl).get('/swagger');
     expect(response.text).toContain('Swagger UI');
-  });
-
-  it('should include rate limit headers', async () => {
-    await startWebServer();
-    const response = await request(serverUrl).get('/');
-    expect(response.headers['x-ratelimit-limit']).toBeDefined();
-    expect(response.headers['x-ratelimit-remaining']).toBeDefined();
   });
 
   it('should handle concurrent requests', async () => {

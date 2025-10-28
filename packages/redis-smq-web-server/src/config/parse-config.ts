@@ -29,21 +29,41 @@ export function parseConfig(
   config: Partial<IRedisSMQWebServerConfig> = {},
 ): IRedisSMQWebServerParsedConfig {
   const restApiParsedConfig = parseRestApiConfig(config);
+
+  // Normalize a URL path and ensure it starts with a '/' and has no trailing
+  // slash (unless it's just '/').
+  const normalizePath = (path: string): string => {
+    const s = path
+      .split('/')
+      .map((i) => i.trim())
+      .filter((i) => !!i)
+      .join('/');
+    return `/${s}`;
+  };
+
+  // Determine the definitive basePath. The webServer config takes precedence over apiServer.
+  // If webServer.basePath is not set, we respect the value from the apiServer config,
+  // which has already been parsed and defaulted by parseRestApiConfig.
+  const basePath =
+    config.webServer?.basePath !== undefined
+      ? normalizePath(config.webServer.basePath)
+      : restApiParsedConfig.apiServer.basePath;
+
+  // Combine web server configs, with user-provided values taking precedence.
   const webServer = {
     ...defaultConfig.webServer,
     ...config.webServer,
   };
-  // remove trailing '/'
-  const basePath = String(webServer.basePath).replace(/\/+$/, '') || '/';
+
   return {
     ...restApiParsedConfig,
     apiServer: {
       ...restApiParsedConfig.apiServer,
-      basePath: basePath,
+      basePath: basePath, // Ensure both use the same, correct basePath
     },
     webServer: {
       port: Number(webServer.port),
-      basePath,
+      basePath: basePath,
       apiProxyTarget: webServer.apiProxyTarget
         ? String(webServer.apiProxyTarget)
         : undefined,
