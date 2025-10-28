@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.14](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.13...v9.0.0-next.14) (2025-10-28)
+
+### ⚠ BREAKING CHANGES
+
+- **redis-smq-web-server:** fix base path routing and improve middleware setup
+- **redis-smq-rest-api:** reorganize Swagger UI routing
+
+### 🐛 Bug Fixes
+
+- **redis-smq-web-server:** fix base path routing and improve middleware setup ([45d6c6d](https://github.com/weyoss/redis-smq/commit/45d6c6dbb35999676575f7f3373a495c9c2e3731))
+- **redis-smq-web-ui:** fix base path handling ([622576e](https://github.com/weyoss/redis-smq/commit/622576e0abd511f7731a3ef98d9777c554007893))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-rest-api:** reorganize Swagger UI routing ([e36f455](https://github.com/weyoss/redis-smq/commit/e36f455134b994ec8278654443d2e8e6d0d5d3c6))
+
 ## [9.0.0-next.13](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.12...v9.0.0-next.13) (2025-10-28)
 
 ### 🐛 Bug Fixes

@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.14](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.13...v9.0.0-next.14) (2025-10-28)
+
+### 🐛 Bug Fixes
+
+- **redis-smq-web-ui:** fix base path handling ([622576e](https://github.com/weyoss/redis-smq/commit/622576e0abd511f7731a3ef98d9777c554007893))
+
 ## [9.0.0-next.13](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.12...v9.0.0-next.13) (2025-10-28)
 
 **Note:** Version bump only for package redis-smq-web-ui

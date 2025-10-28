@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.14](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.13...v9.0.0-next.14) (2025-10-28)
+
+### ⚠ BREAKING CHANGES
+
+- **redis-smq-rest-api:** reorganize Swagger UI routing
+
+### ♻️ Code Refactoring
+
+- **redis-smq-rest-api:** reorganize Swagger UI routing ([e36f455](https://github.com/weyoss/redis-smq/commit/e36f455134b994ec8278654443d2e8e6d0d5d3c6))
+
 ## [9.0.0-next.13](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.12...v9.0.0-next.13) (2025-10-28)
 
 ### 🚀 Chore
