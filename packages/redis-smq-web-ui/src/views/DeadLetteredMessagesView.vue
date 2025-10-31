@@ -121,7 +121,8 @@ const {
 
 const dlEnabled = computed<boolean | null>(() => {
   // Expected shape from generated model: data.messages.store.deadLettered.enabled
-  const enabled = configData.value?.data?.messages?.store?.deadLettered?.store;
+  const enabled =
+    configData.value?.data?.messageAudit.deadLetteredMessages?.enabled;
   return typeof enabled === 'boolean' ? enabled : null;
 });
 
@@ -218,11 +219,11 @@ async function onPageSizeChange(size: number) {
       <div class="dl-alert-row">
         <i class="bi bi-info-circle-fill dl-alert-icon" aria-hidden="true"></i>
         <div class="dl-alert-text">
-          <strong>Dead-lettered messages storage is disabled</strong>
+          <strong>Dead-lettered messages audit is disabled</strong>
           <p class="dl-alert-message">
-            The server configuration indicates that dead-lettered messages are
-            not being stored. This view may be empty or missing data until
-            storage is enabled on the server.
+            The server configuration indicates that dead-lettered messages audit
+            is not being enabled. This view may be empty or missing data until
+            messages audit is enabled on the server.
           </p>
         </div>
       </div>

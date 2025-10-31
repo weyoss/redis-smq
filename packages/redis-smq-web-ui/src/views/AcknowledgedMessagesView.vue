@@ -121,7 +121,8 @@ const {
 } = useGetApiV1Config();
 
 const ackEnabled = computed<boolean | null>(() => {
-  const enabled = configData.value?.data?.messages?.store?.acknowledged?.store;
+  const enabled =
+    configData.value?.data?.messageAudit?.acknowledgedMessages?.enabled;
   return typeof enabled === 'boolean' ? enabled : null;
 });
 
@@ -212,11 +213,11 @@ async function onPageSizeChange(size: number) {
       <div class="ack-alert-row">
         <i class="bi bi-info-circle-fill ack-alert-icon" aria-hidden="true"></i>
         <div class="ack-alert-text">
-          <strong>Acknowledged messages storage is disabled</strong>
+          <strong>Acknowledged messages audit is disabled</strong>
           <p class="ack-alert-message">
-            The server configuration indicates that acknowledged messages are
-            not being stored. This view may be empty or missing data until
-            storage is enabled on the server.
+            The server configuration indicates that acknowledged messages audit
+            is not being audited. This view may be empty or missing data until
+            messages audit is enabled on the server.
           </p>
         </div>
       </div>
