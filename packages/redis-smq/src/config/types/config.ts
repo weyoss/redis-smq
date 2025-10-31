@@ -13,7 +13,7 @@ import {
   ILoggerConfig,
   IRedisConfig,
 } from 'redis-smq-common';
-import { IMessagesConfig, IMessagesParsedConfig } from '../../index.js';
+import { IMessageAuditParsedConfig, IMessageAuditConfig } from '../../index.js';
 
 export interface IEventBusConfig {
   enabled?: boolean;
@@ -43,9 +43,9 @@ export interface IRedisSMQConfig {
   logger?: ILoggerConfig;
 
   /**
-   * @see /packages/redis-smq/docs/message-storage.md
+   * @see /packages/redis-smq/docs/message-audit.md
    */
-  messages?: IMessagesConfig;
+  messageAudit?: boolean | IMessageAuditConfig;
 
   /**
    * @see /packages/redis-smq/docs/event-bus.md
@@ -53,8 +53,9 @@ export interface IRedisSMQConfig {
   eventBus?: IEventBusConfig;
 }
 
-export interface IRedisSMQParsedConfig extends Required<IRedisSMQConfig> {
-  messages: IMessagesParsedConfig;
+export interface IRedisSMQParsedConfig
+  extends Required<Omit<IRedisSMQConfig, 'messageAudit'>> {
+  messageAudit: IMessageAuditParsedConfig;
   eventBus: Required<IEventBusConfig>;
 }
 

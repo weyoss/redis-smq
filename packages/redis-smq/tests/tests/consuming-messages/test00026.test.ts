@@ -21,11 +21,9 @@ import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-me
 test('ProducibleMessage storage: acknowledged.expire = 10000', async () => {
   const configInstance = bluebird.promisifyAll(Configuration.getInstance());
   await configInstance.updateConfigAsync({
-    messages: {
-      store: {
-        acknowledged: {
-          expire: 20000,
-        },
+    messageAudit: {
+      acknowledgedMessages: {
+        expire: 20000,
       },
     },
   });

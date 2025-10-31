@@ -20,12 +20,10 @@ import {
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
 
-test('Message storage: storeMessages = false', async () => {
+test('Message audit: enabled = false', async () => {
   const configInstance = bluebird.promisifyAll(Configuration.getInstance());
   await configInstance.updateConfigAsync({
-    messages: {
-      store: false,
-    },
+    messageAudit: false,
   });
 
   const defaultQueue = getDefaultQueue();

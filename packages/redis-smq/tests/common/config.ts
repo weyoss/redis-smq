@@ -30,8 +30,9 @@ export const config = parseConfig({
       logLevel: 'DEBUG',
     },
   },
-  messages: {
-    store: true,
+  messageAudit: {
+    acknowledgedMessages: true,
+    deadLetteredMessages: true,
   },
   eventBus: {
     enabled: true,

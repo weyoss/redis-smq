@@ -12,18 +12,16 @@ import { EConsoleLoggerLevel, ERedisConfigClient } from 'redis-smq-common';
 
 export const defaultConfig: IRedisSMQDefaultConfig = {
   namespace: 'default',
-  messages: {
-    store: {
-      acknowledged: {
-        store: false,
-        queueSize: 0,
-        expire: 0,
-      },
-      deadLettered: {
-        store: false,
-        queueSize: 0,
-        expire: 0,
-      },
+  messageAudit: {
+    acknowledgedMessages: {
+      enabled: false,
+      queueSize: 0,
+      expire: 0,
+    },
+    deadLetteredMessages: {
+      enabled: false,
+      queueSize: 0,
+      expire: 0,
     },
   },
   redis: {
