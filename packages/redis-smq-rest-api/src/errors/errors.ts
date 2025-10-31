@@ -16,13 +16,13 @@
  */
 export const errors = {
   ConfigurationError: [400, 'ConfigurationError'],
-  ConfigurationMessageQueueSizeError: [
+  ConfigurationMessageAuditExpireError: [
     400,
-    'ConfigurationMessageQueueSizeError',
+    'ConfigurationMessageAuditExpireError',
   ],
-  ConfigurationMessageStoreExpireError: [
+  ConfigurationMessageAuditQueueSizeError: [
     400,
-    'ConfigurationMessageStoreExpireError',
+    'ConfigurationMessageAuditQueueSizeError',
   ],
   ConfigurationNamespaceError: [400, 'ConfigurationNamespaceError'],
   ConsumerError: [500, 'ConsumerError'],
