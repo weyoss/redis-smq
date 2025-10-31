@@ -17,7 +17,7 @@ This comprehensive guide will help you implement and optimize message queuing in
 - [Queue Delivery Models](queue-delivery-models.md) — Explore different delivery models available for your queues.
 - [Queue Rate Limiting](queue-rate-limiting.md) — Throttle consumption per queue.
 - [Messages](messages.md) — Get a comprehensive overview of message handling within RedisSMQ.
-- [Message Storage](message-storage.md) — Optional retention for acked/dead-lettered messages.
+- [Message Audit](message-audit.md) — Optional audit for acked/dead-lettered messages.
 - [Producing Messages](producing-messages.md) — Discover how to produce and send messages to your queues.
 - [Consuming Messages](consuming-messages.md) — Get insights into how to consume and process messages from your
   queues.

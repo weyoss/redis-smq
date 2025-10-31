@@ -10,7 +10,7 @@ these messages are moved to a dead-letter queue for later inspection, troublesho
 
 ## See
 
-/packages/redis-smq/docs/configuration.md#message-storage
+/packages/redis-smq/docs/configuration.md#message-audit
 
 ## Extends
 

@@ -10,7 +10,7 @@ and management of these messages when the system is configured to store them.
 
 ## See
 
-/packages/redis-smq/docs/configuration.md#message-storage
+/packages/redis-smq/docs/configuration.md#message-audit
 
 ## Extends
 

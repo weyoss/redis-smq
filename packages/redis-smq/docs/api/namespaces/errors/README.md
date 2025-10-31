@@ -5,8 +5,8 @@
 ## Classes
 
 - [ConfigurationError](classes/ConfigurationError.md)
-- [ConfigurationMessageQueueSizeError](classes/ConfigurationMessageQueueSizeError.md)
-- [ConfigurationMessageStoreExpireError](classes/ConfigurationMessageStoreExpireError.md)
+- [ConfigurationMessageAuditExpireError](classes/ConfigurationMessageAuditExpireError.md)
+- [ConfigurationMessageAuditQueueSizeError](classes/ConfigurationMessageAuditQueueSizeError.md)
 - [ConfigurationNamespaceError](classes/ConfigurationNamespaceError.md)
 - [ConsumerError](classes/ConsumerError.md)
 - [ConsumerGroupNotEmptyError](classes/ConsumerGroupNotEmptyError.md)

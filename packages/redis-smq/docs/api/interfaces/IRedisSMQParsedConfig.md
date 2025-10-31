@@ -4,7 +4,7 @@
 
 ## Extends
 
-- `Required`\<[`IRedisSMQConfig`](IRedisSMQConfig.md)\>
+- `Required`\<`Omit`\<[`IRedisSMQConfig`](IRedisSMQConfig.md), `"messageAudit"`\>\>
 
 ## Extended by
 
@@ -40,17 +40,9 @@
 
 ---
 
-### messages
+### messageAudit
 
-> **messages**: [`IMessagesParsedConfig`](IMessagesParsedConfig.md)
-
-#### See
-
-/packages/redis-smq/docs/message-storage.md
-
-#### Overrides
-
-[`IRedisSMQConfig`](IRedisSMQConfig.md).[`messages`](IRedisSMQConfig.md#messages)
+> **messageAudit**: [`IMessageAuditParsedConfig`](IMessageAuditParsedConfig.md)
 
 ---
 

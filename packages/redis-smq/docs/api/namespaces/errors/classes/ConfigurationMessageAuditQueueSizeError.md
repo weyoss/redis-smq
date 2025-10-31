@@ -1,6 +1,6 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / ConfigurationMessageQueueSizeError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / ConfigurationMessageAuditQueueSizeError
 
-# Class: ConfigurationMessageQueueSizeError
+# Class: ConfigurationMessageAuditQueueSizeError
 
 ## Extends
 
@@ -10,7 +10,7 @@
 
 ### Constructor
 
-> **new ConfigurationMessageQueueSizeError**(`message?`): `ConfigurationMessageQueueSizeError`
+> **new ConfigurationMessageAuditQueueSizeError**(`message?`): `ConfigurationMessageAuditQueueSizeError`
 
 #### Parameters
 
@@ -20,7 +20,7 @@
 
 #### Returns
 
-`ConfigurationMessageQueueSizeError`
+`ConfigurationMessageAuditQueueSizeError`
 
 #### Inherited from
 
