@@ -160,12 +160,12 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
     const messageId = message.getId();
     this.logger.debug(`Acknowledging message ${messageId}`);
 
-    const { store, queueSize, expire } =
-      Configuration.getConfig().messages.store.acknowledged;
+    const { enabled, queueSize, expire } =
+      Configuration.getConfig().messageAudit.acknowledgedMessages;
     const { keyMessage } = redisKeys.getMessageKeys(messageId);
 
     this.logger.debug(
-      `Message key: ${keyMessage}, store: ${store}, queueSize: ${queueSize}, expire: ${expire}`,
+      `Message key: ${keyMessage}, enabled: ${enabled}, queueSize: ${queueSize}, expire: ${expire}`,
     );
 
     const redisClient = this.getRedisClient();
@@ -182,7 +182,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
       EMessageProperty.ACKNOWLEDGED_AT,
       EQueueProperty.ACKNOWLEDGED_MESSAGES_COUNT,
       EQueueProperty.PROCESSING_MESSAGES_COUNT,
-      Number(store),
+      Number(enabled),
       expire,
       queueSize * -1,
       Date.now(),

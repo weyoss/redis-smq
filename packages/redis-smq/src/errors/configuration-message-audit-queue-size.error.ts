@@ -9,4 +9,4 @@
 
 import { ConfigurationError } from './configuration.error.js';
 
-export class ConfigurationMessageStoreExpireError extends ConfigurationError {}
+export class ConfigurationMessageAuditQueueSizeError extends ConfigurationError {}

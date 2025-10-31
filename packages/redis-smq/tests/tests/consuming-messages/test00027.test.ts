@@ -21,11 +21,9 @@ import bluebird from 'bluebird';
 test('ProducibleMessage storage: acknowledged.queueSize = 3', async () => {
   const configInstance = bluebird.promisifyAll(Configuration.getInstance());
   await configInstance.updateConfigAsync({
-    messages: {
-      store: {
-        acknowledged: {
-          queueSize: 3,
-        },
+    messageAudit: {
+      acknowledgedMessages: {
+        queueSize: 3,
       },
     },
   });

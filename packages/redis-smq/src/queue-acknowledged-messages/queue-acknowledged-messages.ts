@@ -19,7 +19,7 @@ import { MessageManager } from '../message-manager/index.js';
  * and management of these messages when the system is configured to store them.
  *
  * @extends QueueExplorer
- * @see /packages/redis-smq/docs/configuration.md#message-storage
+ * @see /packages/redis-smq/docs/configuration.md#message-audit
  */
 export class QueueAcknowledgedMessages extends QueueExplorer {
   constructor() {

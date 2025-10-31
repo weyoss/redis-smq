@@ -7,30 +7,23 @@
  * in the root directory of this source tree.
  */
 
-export interface IMessagesConfig {
-  store?: boolean | IMessagesStorageConfig;
-}
-
-export interface IMessagesStorageConfigOptions {
+export interface IMessageAuditConfigOptions {
   queueSize?: number;
   expire?: number;
 }
 
-export interface IMessagesStorageConfig {
-  acknowledged?: boolean | IMessagesStorageConfigOptions;
-  deadLettered?: boolean | IMessagesStorageConfigOptions;
+export interface IMessageAuditParsedConfigOptions {
+  enabled: boolean;
+  queueSize: number;
+  expire: number;
 }
 
-export interface IMessagesStorageParsedConfigOptions
-  extends Required<IMessagesStorageConfigOptions> {
-  store: boolean;
+export interface IMessageAuditConfig {
+  acknowledgedMessages?: boolean | IMessageAuditConfigOptions;
+  deadLetteredMessages?: boolean | IMessageAuditConfigOptions;
 }
 
-export interface IMessagesStorageParsedConfig {
-  acknowledged: IMessagesStorageParsedConfigOptions;
-  deadLettered: IMessagesStorageParsedConfigOptions;
-}
-
-export interface IMessagesParsedConfig {
-  store: IMessagesStorageParsedConfig;
+export interface IMessageAuditParsedConfig {
+  acknowledgedMessages: IMessageAuditParsedConfigOptions;
+  deadLetteredMessages: IMessageAuditParsedConfigOptions;
 }

@@ -59,13 +59,13 @@ const UNACK_STATIC_KEYS = (queue: IQueueParams): string[] => {
 };
 
 const UNACK_STATIC_ARGS = (): (string | number)[] => {
-  const { store, expire, queueSize } =
-    Configuration.getConfig().messages.store.deadLettered;
+  const { enabled, expire, queueSize } =
+    Configuration.getConfig().messageAudit.deadLetteredMessages;
   return [
     EMessageUnacknowledgementAction.DELAY,
     EMessageUnacknowledgementAction.REQUEUE,
     EMessageUnacknowledgementAction.DEAD_LETTER,
-    Number(store),
+    Number(enabled),
     expire,
     queueSize * -1,
     EMessageProperty.STATUS,

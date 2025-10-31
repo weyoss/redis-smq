@@ -442,11 +442,11 @@ export class Configuration {
   updateConfig(updates: IRedisSMQConfig, cb: ICallback<void>): void {
     try {
       const mergedConfig: IRedisSMQConfig = {
-        namespace: updates.namespace || this.config.namespace,
-        redis: updates.redis || this.config.redis,
-        logger: updates.logger || this.config.logger,
-        messages: updates.messages || this.config.messages,
-        eventBus: updates.eventBus || this.config.eventBus,
+        namespace: updates.namespace ?? this.config.namespace,
+        redis: updates.redis ?? this.config.redis,
+        logger: updates.logger ?? this.config.logger,
+        messageAudit: updates.messageAudit ?? this.config.messageAudit,
+        eventBus: updates.eventBus ?? this.config.eventBus,
       };
 
       this.save(mergedConfig, cb);
