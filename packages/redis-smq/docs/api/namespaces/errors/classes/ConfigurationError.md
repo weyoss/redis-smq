@@ -8,8 +8,8 @@
 
 ## Extended by
 
-- [`ConfigurationMessageStoreExpireError`](ConfigurationMessageStoreExpireError.md)
-- [`ConfigurationMessageQueueSizeError`](ConfigurationMessageQueueSizeError.md)
+- [`ConfigurationMessageAuditExpireError`](ConfigurationMessageAuditExpireError.md)
+- [`ConfigurationMessageAuditQueueSizeError`](ConfigurationMessageAuditQueueSizeError.md)
 - [`ConfigurationNamespaceError`](ConfigurationNamespaceError.md)
 
 ## Constructors

@@ -162,9 +162,9 @@ consumer.cancel('test_queue', (err) => {
 - Retries: Unacknowledged messages are retried until reaching the configured retry threshold.
 - DLQ: Messages that repeatedly fail can be dead-lettered if configured. See [Messages](messages.md) and [Configuration](configuration.md).
 
-## Message Storage (optional)
+## Message Audit (optional)
 
-By default, RedisSMQ does not store acknowledged or dead-lettered messages. You can enable storage in
+By default, RedisSMQ does not dedicate an additional storage for acknowledged or dead-lettered messages. You can enable additional storage in
 your [configuration](configuration.md) if needed for observability or auditing.
 
 For more in-depth information, refer to the [Consumer Class](api/classes/Consumer.md) documentation.

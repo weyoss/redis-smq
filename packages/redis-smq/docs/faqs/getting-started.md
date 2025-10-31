@@ -50,6 +50,7 @@ export function initRedisSMQ(cb) {
 ```
 
 Notes
+
 - Use `RedisSMQ.initialize(...)` for simple setups (recommended).
 - For persisted, shared configuration across processes, use `RedisSMQ.initializeWithConfig(...)` instead.
 
@@ -171,6 +172,7 @@ node consumer.js
 ```
 
 You should see:
+
 - The queue created
 - The producer publishes a message to my_queue
 - The consumer receives and acknowledges it
@@ -192,8 +194,11 @@ export function initWithConfig(cb) {
         client: ERedisConfigClient.IOREDIS,
         options: { host: '127.0.0.1', port: 6379, db: 0 },
       },
-      logger: { enabled: true, options: { logLevel: EConsoleLoggerLevel.INFO } },
-      messages: { store: false },
+      logger: {
+        enabled: true,
+        options: { logLevel: EConsoleLoggerLevel.INFO },
+      },
+      messageAudit: false,
       eventBus: { enabled: false },
     },
     cb,
@@ -202,21 +207,22 @@ export function initWithConfig(cb) {
 ```
 
 _Notes_
+
 - Direct use of the Configuration class is optional; `RedisSMQ.initialize` handles bootstrapping internally.
-- If components were created via RedisSMQ factory methods, you typically do not need to call shutdown on each instance. 
-Prefer a single `RedisSMQ.shutdown(cb)` at application exit.
+- If components were created via RedisSMQ factory methods, you typically do not need to call shutdown on each instance.
+  Prefer a single `RedisSMQ.shutdown(cb)` at application exit.
 
 ## Next steps
 
 - Producing and consuming
-   - [Producing messages](../producing-messages.md)
-   - [Consuming messages](../consuming-messages.md)
+  - [Producing messages](../producing-messages.md)
+  - [Consuming messages](../consuming-messages.md)
 - Queues and delivery
-   - [Queues](../queues.md)
-   - [Delivery models (Point-to-Point, Pub/Sub)](../queue-delivery-models.md)
+  - [Queues](../queues.md)
+  - [Delivery models (Point-to-Point, Pub/Sub)](../queue-delivery-models.md)
 - Routing
-   - [Message exchanges (direct, topic, fanout)](../message-exchanges.md)
-   - [Exchanges vs direct publishing](../exchanges-and-delivery-models.md)
+  - [Message exchanges (direct, topic, fanout)](../message-exchanges.md)
+  - [Exchanges vs direct publishing](../exchanges-and-delivery-models.md)
 - Performance and operations
-   - [Performance tips (direct queue publishing is fastest)](../performance.md)
-   - [Graceful shutdown with RedisSMQ.shutdown](../graceful-shutdown.md)
+  - [Performance tips (direct queue publishing is fastest)](../performance.md)
+  - [Graceful shutdown with RedisSMQ.shutdown](../graceful-shutdown.md)

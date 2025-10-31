@@ -1,6 +1,6 @@
-[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / ConfigurationMessageStoreExpireError
+[RedisSMQ](../../../../../README.md) / [Docs](../../../../README.md) / [API Reference](../../../README.md) / [errors](../README.md) / ConfigurationMessageAuditExpireError
 
-# Class: ConfigurationMessageStoreExpireError
+# Class: ConfigurationMessageAuditExpireError
 
 ## Extends
 
@@ -10,7 +10,7 @@
 
 ### Constructor
 
-> **new ConfigurationMessageStoreExpireError**(`message?`): `ConfigurationMessageStoreExpireError`
+> **new ConfigurationMessageAuditExpireError**(`message?`): `ConfigurationMessageAuditExpireError`
 
 #### Parameters
 
@@ -20,7 +20,7 @@
 
 #### Returns
 
-`ConfigurationMessageStoreExpireError`
+`ConfigurationMessageAuditExpireError`
 
 #### Inherited from
 

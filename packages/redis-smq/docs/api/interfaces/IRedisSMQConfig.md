@@ -24,13 +24,13 @@
 
 ---
 
-### messages?
+### messageAudit?
 
-> `optional` **messages**: [`IMessagesConfig`](IMessagesConfig.md)
+> `optional` **messageAudit**: `boolean` \| [`IMessageAuditConfig`](IMessageAuditConfig.md)
 
 #### See
 
-/packages/redis-smq/docs/message-storage.md
+/packages/redis-smq/docs/message-audit.md
 
 ---
 

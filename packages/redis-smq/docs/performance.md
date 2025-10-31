@@ -2,17 +2,17 @@
 
 # RedisSMQ Performance
 
-This document explains the key factors that impact RedisSMQ performance, how to tune for high throughput and 
+This document explains the key factors that impact RedisSMQ performance, how to tune for high throughput and
 predictable latency, and how to measure throughput in producer-only, consumer-only, and combined scenarios.
 
 ## Overview
 
 RedisSMQ is designed for high performance with a callback-based architecture, a small memory footprint, and careful use
-of Redis primitives. In production, you can further optimize performance by disabling or avoiding optional features 
+of Redis primitives. In production, you can further optimize performance by disabling or avoiding optional features
 that add overhead:
 
 - Logging (especially console logging)
-- Message storage for acknowledged and dead-lettered messages
+- Message audit for acknowledged and dead-lettered messages
 - EventBus (leave disabled unless you need system-wide events)
 - Priority queues (choose FIFO/LIFO when possible)
 - Routing via exchanges:
@@ -23,21 +23,23 @@ that add overhead:
 - Multiplexing (disable if you need maximum per-queue throughput)
 
 Prerequisites:
+
 - Initialize once per process:
   - `RedisSMQ.initialize(redisConfig, cb)`, or
   - `RedisSMQ.initializeWithConfig(redisSMQConfig, cb)`
 - Create components via RedisSMQ factory methods (recommended).
-- When created via RedisSMQ, you typically do not need to shut down components individually. Prefer a single 
-`RedisSMQ.shutdown(cb)` at application exit.
+- When created via RedisSMQ, you typically do not need to shut down components individually. Prefer a single
+  `RedisSMQ.shutdown(cb)` at application exit.
 
 See also:
+
 - Messages: [messages.md](messages.md)
 - Consuming messages: [consuming-messages.md](consuming-messages.md)
 - Queue types: [queues.md](queues.md)
 - Delivery models: [queue-delivery-models.md](queue-delivery-models.md)
 - Multiplexing: [multiplexing.md](multiplexing.md)
 - Message handler worker threads: [message-handler-worker-threads.md](message-handler-worker-threads.md)
-- Message storage: [message-storage.md](message-storage.md)
+- Message audit: [message-audit.md](message-audit.md)
 
 ## What drives performance
 
@@ -56,8 +58,8 @@ See also:
   - Smaller, shallow JSON bodies serialize/deserialize faster
 - Logging
   - Disable or lower verbosity in production
-- Message storage
-  - Storing acknowledged and dead-lettered messages adds Redis ops and memory usage
+- Message audit
+  - Auditing acknowledged and dead-lettered messages adds Redis ops and memory usage
 - EventBus
   - Disabled by default; enabling adds PubSub activity
 - Consumer model
@@ -79,7 +81,7 @@ See also:
 - Keep messages small; store heavy payloads externally and reference them by ID
 - Disable or lower logging levels in production
 - Keep EventBus disabled unless observability requires it
-- Leave acknowledged/dead-lettered message storage disabled unless needed
+- Leave acknowledged/dead-lettered message audit disabled unless needed
 - Avoid multiplexing for hot queues; isolate hot queues in dedicated consumers
 - Consider worker threads only when handler isolation is required; measure overhead
 - Co-locate producers/consumers with Redis or ensure low-latency networking
@@ -89,11 +91,13 @@ See also:
 ## Throughput measurements
 
 Throughput is messages per second under:
-1) Producer-only: produce as fast as possible without consumers
-2) Consumer-only: consume from a preloaded queue with no producers
-3) Combined: producers and consumers active concurrently
+
+1. Producer-only: produce as fast as possible without consumers
+2. Consumer-only: consume from a preloaded queue with no producers
+3. Combined: producers and consumers active concurrently
 
 Interpreting results:
+
 - Producer-only highlights publishing capacity and routing overhead
 - Consumer-only highlights dequeue + handler overhead and queue mechanics
 - Combined reflects end-to-end system behavior, including contention
@@ -113,34 +117,38 @@ Note: Redis is single-threaded per instance; if a single instance becomes a bott
 
 The table below shows historical example results from a modest VM and should be considered illustrative only. Do not treat these as current performance targets.
 
-| Scenario                       | Producer Rate (msg/s)   | Consumer Rate (msg/s) |
-|--------------------------------|-------------------------|-----------------------|
-| 1 Producer                     | 23K+                    | 0                     |
-| 10 Producers                   | 96K+                    | 0                     |
-| 1 Consumer                     | 0                       | 13K+                  |
-| 10 Consumers                   | 0                       | 49K+                  |
-| 1 Producer + 1 Consumer        | 22K+                    | 12K+                  |
-| 10 Producers + 10 Consumers    | 45K+                    | 27K+                  |
-| 10 Producers + 20 Consumers    | 32K+                    | 32K+                  |
+| Scenario                    | Producer Rate (msg/s) | Consumer Rate (msg/s) |
+| --------------------------- | --------------------- | --------------------- |
+| 1 Producer                  | 23K+                  | 0                     |
+| 10 Producers                | 96K+                  | 0                     |
+| 1 Consumer                  | 0                     | 13K+                  |
+| 10 Consumers                | 0                     | 49K+                  |
+| 1 Producer + 1 Consumer     | 22K+                  | 12K+                  |
+| 10 Producers + 10 Consumers | 45K+                  | 27K+                  |
+| 10 Producers + 20 Consumers | 32K+                  | 32K+                  |
 
 Your results will vary. Use these as a rough directional reference only.
 
 ## Measuring throughput yourself
 
 Producer-only sketch:
+
 - Initialize via RedisSMQ.initialize(...)
 - Create a Producer and call run(cb)
 - Produce N messages as fast as possible, measure time
 
 Consumer-only sketch:
+
 - Preload a queue with N messages
 - Create a Consumer, register a fast handler, run, and measure time to drain
 
 Combined:
+
 - Start producer and consumer simultaneously
 - Measure end-to-end time to send and acknowledge N messages
 
 Tips for accurate measurement:
+
 - Pin CPU and minimize background load
 - Disable logging
 - Use stable message bodies and sizes
@@ -179,6 +187,7 @@ Tips for accurate measurement:
 RedisSMQ can deliver high throughput with predictable latency when configured appropriately. Use LIFO/FIFO queues for raw speed, route with the simplest option first (publish directly to queues when possible), keep optional features off unless needed, measure with realistic payloads and handlers, and validate performance at the scale you expect in production.
 
 For deeper dives and related topics:
+
 - Consuming messages: [consuming-messages.md](consuming-messages.md)
 - Producing messages: [producing-messages.md](producing-messages.md)
 - Multiplexing: [multiplexing.md](multiplexing.md)

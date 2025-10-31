@@ -2,7 +2,7 @@
 
 # How do I handle errors and exceptions when using RedisSMQ's classes and methods?
 
-RedisSMQ exposes a callback-based API. Proper error handling spans initialization, producing, consuming, and shutdown. 
+RedisSMQ exposes a callback-based API. Proper error handling spans initialization, producing, consuming, and shutdown.
 This guide shows recommended patterns using the RedisSMQ class, factory-created components, the errors namespace, and the optional EventBus.
 
 ## 1) Callback-based error handling
@@ -71,7 +71,10 @@ import { RedisSMQ } from 'redis-smq';
 import { ERedisConfigClient } from 'redis-smq-common';
 
 RedisSMQ.initialize(
-  { client: ERedisConfigClient.IOREDIS, options: { host: '127.0.0.1', port: 6379 } },
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: '127.0.0.1', port: 6379 },
+  },
   (initErr) => {
     if (initErr) return console.error('Init failed:', initErr);
 
@@ -93,7 +96,8 @@ RedisSMQ.initialize(
         }
       },
       (consumeErr) => {
-        if (consumeErr) return console.error('Failed to register handler:', consumeErr);
+        if (consumeErr)
+          return console.error('Failed to register handler:', consumeErr);
 
         consumer.run((runErr) => {
           if (runErr) console.error('Consumer failed to start:', runErr);
@@ -106,6 +110,7 @@ RedisSMQ.initialize(
 ```
 
 _Tip_
+
 - Wrap business logic in try/catch and call done(error) on failure so the message can be retried according to your
   configuration.
 
@@ -120,7 +125,10 @@ import { RedisSMQ, ProducibleMessage, errors } from 'redis-smq';
 import { ERedisConfigClient } from 'redis-smq-common';
 
 RedisSMQ.initialize(
-  { client: ERedisConfigClient.IOREDIS, options: { host: '127.0.0.1', port: 6379 } },
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: '127.0.0.1', port: 6379 },
+  },
   (initErr) => {
     if (initErr) return console.error('Init failed:', initErr);
 
@@ -172,7 +180,7 @@ RedisSMQ.initializeWithConfig(
       enabled: true,
       options: { logLevel: EConsoleLoggerLevel.INFO },
     },
-    messages: { store: false },
+    messageAudit: false,
     eventBus: { enabled: false },
   },
   (err) => {
@@ -196,7 +204,7 @@ consumer.on('error', (err) => appLogger.error('Consumer error', { err }));
 Other error events can be consumed from the EventBus. This is useful for centralized observability across producers, consumers, queues, and internals.
 
 - Enable EventBus before initialization (recommended when you need to collect events):
-    - With persisted config: set `eventBus: { enabled: true }` in `RedisSMQ.initializeWithConfig(...)`
+  - With persisted config: set `eventBus: { enabled: true }` in `RedisSMQ.initializeWithConfig(...)`
 - After initialization completes, get the singleton and subscribe to events.
 - The `TRedisSMQEvent` type alias includes all possible EventBus event names. Consult the API reference for the full list.
 
@@ -216,7 +224,7 @@ RedisSMQ.initializeWithConfig(
       options: { host: '127.0.0.1', port: 6379 },
     },
     logger: { enabled: false },
-    messages: { store: false },
+    messageAudit: false,
     eventBus: { enabled: true }, // Enable EventBus
   },
   (err) => {
@@ -245,7 +253,8 @@ RedisSMQ.initializeWithConfig(
 ```
 
 Notes:
+
 - Event names and payloads are strongly typed by `TRedisSMQEvent`. See API:
-    - EventBus class: `api/classes/EventBus.md`
-    - All events union: `api/type-aliases/TRedisSMQEvent.md`
+  - EventBus class: `api/classes/EventBus.md`
+  - All events union: `api/type-aliases/TRedisSMQEvent.md`
 - If EventBus is enabled via configuration and you create components through `RedisSMQ`, a single `RedisSMQ.shutdown(cb)` will stop EventBus and close shared resources for you.

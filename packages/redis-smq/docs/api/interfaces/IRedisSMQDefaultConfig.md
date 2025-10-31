@@ -44,17 +44,13 @@
 
 ---
 
-### messages
+### messageAudit
 
-> **messages**: [`IMessagesParsedConfig`](IMessagesParsedConfig.md)
-
-#### See
-
-/packages/redis-smq/docs/message-storage.md
+> **messageAudit**: [`IMessageAuditParsedConfig`](IMessageAuditParsedConfig.md)
 
 #### Inherited from
 
-[`IRedisSMQParsedConfig`](IRedisSMQParsedConfig.md).[`messages`](IRedisSMQParsedConfig.md#messages)
+[`IRedisSMQParsedConfig`](IRedisSMQParsedConfig.md).[`messageAudit`](IRedisSMQParsedConfig.md#messageaudit)
 
 ---
 

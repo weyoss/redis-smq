@@ -30,7 +30,7 @@ At a glance, RedisSMQ consists of:
 - **Optional subsystems**
   - Scheduler (delayed/CRON/repeating messages)
   - Rate limiting (throttle consumption per queue)
-  - Message storage (acknowledged/dead-lettered messages)
+  - Message audit (acknowledged/dead-lettered messages)
   - EventBus (internal system events)
 
 All components coordinate through Redis using atomic operations and Lua scripts where needed for correctness and
@@ -75,7 +75,7 @@ performance.
 
 **5) Acknowledge / Retry / Dead-letter**
 
-- Acknowledge: on success, the message is acknowledged; optionally stored if message storage is enabled
+- Acknowledge: on success, the message is acknowledged; optionally stored in dedicated storage if message audit is enabled
 - Retry: on failure, the message is re-queued with optional retryDelay until retryThreshold is reached
 - Dead-letter: after exceeding retryThreshold, the message can be moved to the dead-letter queue (and optionally stored)
 
@@ -126,8 +126,8 @@ delivery models.
 - **Ordering**
   - FIFO/LIFO queues provide natural ordering semantics
   - Priority queues trade strict FIFO/LIFO for prioritized delivery
-- **Persistence options**
-  - Message storage for acknowledged/dead-lettered messages is optional and disabled by default to minimize overhead
+- **Audit options**
+  - Message audit for acknowledged/dead-lettered messages is optional and disabled by default to minimize overhead
 
 ## Scheduling and delay
 
@@ -167,7 +167,7 @@ The scheduler manages due messages and enqueues them for consumption when approp
 - Fastest routing: direct queue publishing (no exchange) > direct exchange > topic exchange; fanout multiplies work
 - Fastest queues: FIFO/LIFO; priority adds overhead
 - Keep messages small and avoid heavy payloads in-line
-- Disable optional features (logging, EventBus, message storage) unless needed
+- Disable optional features (logging, EventBus, message audit) unless needed
 - Avoid multiplexing for hot queues; use dedicated consumers for maximum throughput
 
 ## Graceful shutdown
