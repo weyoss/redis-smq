@@ -19,7 +19,5 @@ export const redisSMQConfig: IRedisSMQConfig = {
   eventBus: {
     enabled: true,
   },
-  messages: {
-    store: true,
-  },
+  messageAudit: true,
 };
