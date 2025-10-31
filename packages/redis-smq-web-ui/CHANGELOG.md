@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.15](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.14...v9.0.0-next.15) (2025-10-31)
+
+### ♻️ Code Refactoring
+
+- **redis-smq-web-ui:** update message audit configuration handling ([1f2c55f](https://github.com/weyoss/redis-smq/commit/1f2c55f113e5b8e34feb7c37d9f4f0507d82a6e3))
+
 ## [9.0.0-next.14](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.13...v9.0.0-next.14) (2025-10-28)
 
 ### 🐛 Bug Fixes

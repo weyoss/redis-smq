@@ -3,6 +3,27 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.15](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.14...v9.0.0-next.15) (2025-10-31)
+
+### ⚠ BREAKING CHANGES
+
+- **redis-smq:** improve message audit configuration and parsing logic
+
+### 📝 Documentation
+
+- **redis-smq-web-server:** add reverse proxy deployment guide ([c19a48c](https://github.com/weyoss/redis-smq/commit/c19a48c58c1e384a0d484cb79ee461503fa0a306))
+- **redis-smq:** update message audit related documentation and api ([de075ea](https://github.com/weyoss/redis-smq/commit/de075ea5e1e6a83d0b6cf5aa07cc7a310bcb6cb8))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-rest-api:** update message audit config and error classes ([03bbced](https://github.com/weyoss/redis-smq/commit/03bbced8a687fbf41cbaae57aa455318b5db4da5))
+- **redis-smq-web-ui:** update message audit configuration handling ([1f2c55f](https://github.com/weyoss/redis-smq/commit/1f2c55f113e5b8e34feb7c37d9f4f0507d82a6e3))
+- **redis-smq:** improve message audit configuration and parsing logic ([62c9750](https://github.com/weyoss/redis-smq/commit/62c97506eecf27f691959a4b85f02d277b8bc150))
+
+### ✅ Tests
+
+- **redis-smq-rest-api:** fix expected configuration object keys ([d72049a](https://github.com/weyoss/redis-smq/commit/d72049a7aa0e82823b491ad053088cb446d37642))
+
 ## [9.0.0-next.14](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.13...v9.0.0-next.14) (2025-10-28)
 
 ### ⚠ BREAKING CHANGES
