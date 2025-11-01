@@ -47,7 +47,7 @@
 
 `RedisSMQError.cause`
 
----
+***
 
 ### message
 
@@ -57,7 +57,7 @@
 
 `RedisSMQError.message`
 
----
+***
 
 ### stack?
 
@@ -67,7 +67,7 @@
 
 `RedisSMQError.stack`
 
----
+***
 
 ### stackTraceLimit
 
@@ -116,7 +116,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack; // Similar to `new Error().stack`
+myObject.stack;  // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -171,7 +171,7 @@ a();
 
 `RedisSMQError.captureStackTrace`
 
----
+***
 
 ### isError()
 
@@ -193,7 +193,7 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 `RedisSMQError.isError`
 
----
+***
 
 ### prepareStackTrace()
 

@@ -36,7 +36,7 @@
 
 [`QueueManagerError`](QueueManagerError.md).[`cause`](QueueManagerError.md#cause)
 
----
+***
 
 ### message
 
@@ -46,7 +46,7 @@
 
 [`QueueManagerError`](QueueManagerError.md).[`message`](QueueManagerError.md#message)
 
----
+***
 
 ### stack?
 
@@ -56,7 +56,7 @@
 
 [`QueueManagerError`](QueueManagerError.md).[`stack`](QueueManagerError.md#stack)
 
----
+***
 
 ### stackTraceLimit
 
@@ -105,7 +105,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack; // Similar to `new Error().stack`
+myObject.stack;  // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -160,7 +160,7 @@ a();
 
 [`QueueManagerError`](QueueManagerError.md).[`captureStackTrace`](QueueManagerError.md#capturestacktrace)
 
----
+***
 
 ### isError()
 
@@ -182,7 +182,7 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 [`QueueManagerError`](QueueManagerError.md).[`isError`](QueueManagerError.md#iserror)
 
----
+***
 
 ### prepareStackTrace()
 

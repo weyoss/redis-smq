@@ -4,199 +4,150 @@
 
 ## Overview
 
-RedisSMQ stores all messages in Redis data structures, with different storage mechanisms depending on message status
-and configuration. Understanding these storage patterns is essential for efficient queue management and troubleshooting.
+Message audit creates dedicated storage to track processed messages by storing their IDs. This enables efficient
+monitoring and analysis of acknowledged and dead-lettered messages per queue.
 
-## Default Storage Behavior
+## How It Works
 
-By default,
+**All messages are always stored** in their respective queues until explicitly deleted.
 
-- All published messages are stored in their respective queues until explicitly deleted.
-- Acknowledged messages are not retained in separate storage after processing.
-- Dead-lettered messages are not retained in separate storage after failing.
+**When message audit is enabled:**
 
-This default configuration optimizes application performance and Redis memory usage while maintaining core functionality.
+- Additional dedicated storage is created for processed message IDs
+- Acknowledged message IDs are stored separately per queue
+- Dead-lettered message IDs are stored separately per queue
+- [QueueAcknowledgedMessages](api/classes/QueueAcknowledgedMessages.md) and [QueueDeadLetteredMessages](api/classes/QueueDeadLetteredMessages.md) allow to browse these tracked messages
 
-## Message Types and Storage Requirements
+**Without message audit:**
 
-RedisSMQ provides specialized classes for managing different types of messages:
+- No dedicated storage for processed message tracking
+- [QueueAcknowledgedMessages](api/classes/QueueAcknowledgedMessages.md) and [QueueDeadLetteredMessages](api/classes/QueueDeadLetteredMessages.md) are not useful
+- You can still browse all messages using [QueueMessages](api/classes/QueueMessages.md)
 
-| Message Type  | Management Class                                                      | Messages Audit Configurable |
-| ------------- | --------------------------------------------------------------------- | --------------------------- |
-| All Messages  | [QueueMessages](api/classes/QueueMessages.md)                         | No                          |
-| Scheduled     | [QueueScheduledMessages](api/classes/QueueScheduledMessages.md)       | No                          |
-| Pending       | [QueuePendingMessages](api/classes/QueuePendingMessages.md)           | No                          |
-| Acknowledged  | [QueueAcknowledgedMessages](api/classes/QueueAcknowledgedMessages.md) | Yes                         |
-| Dead-lettered | [QueueDeadLetteredMessages](api/classes/QueueDeadLetteredMessages.md) | Yes                         |
+## Configuration
 
-- To use `QueueAcknowledgedMessages` or `QueueDeadLetteredMessages`, you must explicitly enable message audit for
-  these message types in your configuration (see `messageAudit` below).
+See:
 
-## Message Lifecycle and Storage
+- [Configuration Interface](api/interfaces/IRedisSMQConfig.md#messageaudit).
+- [IMessageAuditConfig Interface](api/interfaces/IMessageAuditConfig.md)
 
-![Message Lifecycle and Storage](message-audit.png)
+### Examples
 
-## Configuration Options
-
-The `messageAudit` configuration allows you to:
-
-1. Enable dedicated storage for acknowledged messages
-2. Enable dedicated storage for dead-lettered messages
-3. Set retention limits (by count and/or time) for each storage type
-
-### Basic Configuration Structure
-
-_Units_
-
-- queueSize: count of stored messages per queue
-- expire: time to retain messages, in seconds
+**Create storage for all processed messages tracking:**
 
 ```typescript
-interface IMessageAuditConfig {
-  acknowledgedMessages?:
-    | boolean
-    | {
-        queueSize?: number; // max messages per queue
-        expire?: number; // retention time in seconds
-      };
-  deadLetteredMessages?:
-    | boolean
-    | {
-        queueSize?: number; // max messages per queue
-        expire?: number; // retention time in seconds
-      };
-}
+const config: IRedisSMQConfig = {
+  messageAudit: true,
+};
 ```
 
-## Configuration Examples
-
-### Example 1: Enable Dead-Lettered Message Audit
+**Create storage for dead-lettered message tracking:**
 
 ```typescript
-import { IRedisSMQConfig } from 'redis-smq';
-
 const config: IRedisSMQConfig = {
   messageAudit: {
-    deadLetteredMessages: true, // Store all dead-lettered messages indefinitely
+    deadLetteredMessages: true,
   },
 };
 ```
 
-### Example 2: Store All Acknowledged Messages, Limit Dead-Lettered Messages
+**Create storage with limits:**
 
 ```typescript
-import { IRedisSMQConfig } from 'redis-smq';
-
 const config: IRedisSMQConfig = {
   messageAudit: {
-    acknowledgedMessages: true, // Store all acknowledged messages indefinitely
+    acknowledgedMessages: {
+      queueSize: 5000, // store last 5,000 message IDs per queue
+      expire: 12 * 60 * 60, // keep IDs for 12 hours
+    },
     deadLetteredMessages: {
-      queueSize: 100000, // Store up to 100,000 dead-lettered messages per queue
-      expire: 24 * 60 * 60, // Retain for 1 day (in seconds)
+      queueSize: 10000, // store last 10,000 message IDs per queue
+      expire: 7 * 24 * 60 * 60, // keep IDs for 7 days
     },
   },
 };
 ```
 
-### Example 3: Limit Both Message Types with Different Retention Policies
+## Queue Explorer Classes
 
-```typescript
-import { IRedisSMQConfig } from 'redis-smq';
+| Class                       | Purpose                                | Requires Message Audit               |
+| --------------------------- | -------------------------------------- | ------------------------------------ |
+| `QueueMessages`             | All messages in queue                  | No                                   |
+| `QueuePendingMessages`      | Messages waiting to be processed       | No                                   |
+| `QueueScheduledMessages`    | Messages scheduled for future delivery | No                                   |
+| `QueueAcknowledgedMessages` | Successfully processed messages        | **Yes** - requires dedicated storage |
+| `QueueDeadLetteredMessages` | Messages that failed processing        | **Yes** - requires dedicated storage |
 
-const config: IRedisSMQConfig = {
-  messages: {
-    acknowledged: {
-      queueSize: 5000, // Store up to 5,000 acknowledged messages per queue
-      expire: 12 * 60 * 60, // Retain for 12 hours (in seconds)
-    },
-    deadLettered: {
-      queueSize: 10000, // Store up to 10,000 dead-lettered messages per queue
-      expire: 7 * 24 * 60 * 60, // Retain for 7 days (in seconds)
-    },
-  },
-};
-```
-
-## Accessing Messages Without Enabling Message Audit
-
-Even without enabling message audit, you can still access messages by ID and browse queue contents.
+### Usage Examples
 
 ```javascript
-'use strict';
-
 const { RedisSMQ } = require('redis-smq');
-const { ERedisConfigClient } = require('redis-smq-common');
 
-// Initialize once per process (if not already initialized)
-RedisSMQ.initialize(
-  {
-    client: ERedisConfigClient.IOREDIS,
-    options: { host: '127.0.0.1', port: 6379, db: 0 },
-  },
-  (err) => {
-    if (err) return console.error('Init failed:', err);
+RedisSMQ.initialize(config, (err) => {
+  if (err) throw err;
 
-    // Create managers via RedisSMQ (recommended)
-    const messageManager = RedisSMQ.createMessageManager();
-    const queueMessages = RedisSMQ.createQueueMessages();
+  // These work without message audit
+  const allMessages = RedisSMQ.createQueueMessages();
+  const pendingMessages = RedisSMQ.createQueuePendingMessages();
 
-    // Get a specific message by ID
-    messageManager.getMessageById('id1', (e, msg) => {
-      if (e) console.error('getMessageById error:', e);
-      else console.log('Message:', msg);
-    });
+  // These require message audit to be enabled (dedicated storage must exist)
+  const acknowledgedMessages = RedisSMQ.createQueueAcknowledgedMessages();
+  const deadLetteredMessages = RedisSMQ.createQueueDeadLetteredMessages();
 
-    // Get multiple messages by IDs
-    messageManager.getMessagesByIds(['id1', 'id2'], (e, messages) => {
-      if (e) console.error('getMessagesByIds error:', e);
-      else console.log('Messages:', messages);
-    });
+  // Browse all messages in queue
+  allMessages.getMessages('my-queue', 1, 100, (err, page) => {
+    console.log('All messages in queue:', page.items);
+  });
 
-    // Get message state/status
-    messageManager.getMessageState('id1', (e, state) => {
-      if (e) console.error('getMessageState error:', e);
-      else console.log('State:', state);
-    });
-    messageManager.getMessageStatus('id1', (e, status) => {
-      if (e) console.error('getMessageStatus error:', e);
-      else console.log('Status:', status);
-    });
+  // Access tracked dead-lettered messages (requires audit enabled)
+  deadLetteredMessages.countMessages('my-queue', (err, count) => {
+    console.log('Tracked dead-lettered messages:', count);
+  });
 
-    // Browse all messages (pending/ack/dead-lettered/scheduled as available)
-    queueMessages.getMessages('my-queue', 1, 100, (e, page) => {
-      if (e) console.error('getMessages error:', e);
-      else console.log('Page:', page);
-    });
-
-    // Preferred at application exit:
-    // RedisSMQ.shutdown((e) => e && console.error('Shutdown error:', e));
-  },
-);
+  // Access any message by ID
+  const messageManager = RedisSMQ.createMessageManager();
+  messageManager.getMessageById('message-id', (err, message) => {
+    console.log('Message:', message);
+  });
+});
 ```
 
-## Message Audit Considerations
+## When to Enable Message Audit
 
-- Memory usage: Storing all acknowledged messages may significantly increase Redis memory consumption.
-- Performance: Large retention windows increase Redis operations and memory; prioritize only what you need for
-  observability.
-- Monitoring needs: Balance retention requirements (auditing/troubleshooting) against system resources.
+**Enable acknowledged message audit when:**
 
-## Best Practices
+- You need to track successful processing rates by queue
+- Compliance requires acknowledged message history per queue
+- You're analyzing queue-specific performance patterns
 
-- Enable acknowledged message audit only when message history tracking is required.
-- Enable dead-lettered message audit in production for troubleshooting failed messages.
-- Set reasonable size limits based on your queue throughput and available memory.
-- Configure time-based expiration (expire in seconds) for compliance with data retention policies.
-- Monitor Redis memory usage and command latency when using message audit.
-- For the fastest routing path, prefer direct queue publishing (`setQueue`) over exchanges when applicable
-  (see [performance.md](performance.md)).
+**Enable dead-lettered message audit when:**
 
-## Summary
+- You need to troubleshoot failures by queue
+- You want to monitor error rates per queue
+- You're debugging queue-specific processing issues
 
-- By default, audit for acknowledged and dead-lettered messages is not enabled.
-- To manage acknowledged or dead-lettered messages via their dedicated classes, configure `messageAudit` with
-  per-type limits and expiration.
-- Use [MessageManager](api/classes/MessageManager.md) and [QueueMessages](api/classes/QueueManager.md) to inspect
-  messages even without dedicated storage.
-- Balance storage needs against system resources and performance requirements, using size/time limits to prevent
-  unbounded growth.
+## Storage Considerations
+
+**Dedicated storage impact:**
+
+- `queueSize`: Limits how many message IDs are stored per queue
+- `expire`: Controls how long message IDs are retained in dedicated storage
+- Each enabled audit type creates separate Redis storage structures
+
+**Resource management:**
+
+- Monitor Redis memory usage as audit storage grows
+- Higher message throughput requires larger `queueSize` limits
+- Consider the trade-off between tracking capability and storage overhead
+
+## Troubleshooting
+
+**"Cannot access acknowledged/dead-lettered messages"**
+
+- Ensure message audit is enabled for the specific message type
+
+**High Redis memory usage**
+
+- Reduce `queueSize` limits to store fewer message IDs
+- Decrease `expire` times to retain IDs for shorter periods
+- Consider disabling audit for high-throughput queues

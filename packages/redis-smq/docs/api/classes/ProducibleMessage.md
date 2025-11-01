@@ -63,10 +63,10 @@ console.log(message.hasPriority()); // false
 
 #### See
 
-- [setPriority](#setpriority)
-- [hasPriority](#haspriority)
+ - [setPriority](#setpriority)
+ - [hasPriority](#haspriority)
 
----
+***
 
 ### getBody()
 
@@ -91,7 +91,7 @@ console.log(message.getBody()); // { userId: 123 }
 
 [setBody](#setbody)
 
----
+***
 
 ### getConsumeTimeout()
 
@@ -116,7 +116,7 @@ console.log(message.getConsumeTimeout()); // 120000
 
 [setConsumeTimeout](#setconsumetimeout)
 
----
+***
 
 ### getCreatedAt()
 
@@ -138,7 +138,7 @@ const createdTime = message.getCreatedAt();
 console.log(new Date(createdTime)); // Current date/time
 ```
 
----
+***
 
 ### getExchange()
 
@@ -163,11 +163,11 @@ console.log(exchange?.type); // EExchangeType.TOPIC
 
 #### See
 
-- [setTopicExchange](#settopicexchange)
-- [setDirectExchange](#setdirectexchange)
-- [setFanoutExchange](#setfanoutexchange)
+ - [setTopicExchange](#settopicexchange)
+ - [setDirectExchange](#setdirectexchange)
+ - [setFanoutExchange](#setfanoutexchange)
 
----
+***
 
 ### getExchangeRoutingKey()
 
@@ -195,7 +195,7 @@ console.log(message.getExchangeRoutingKey()); // 'user.created'
 
 [setExchangeRoutingKey](#setexchangeroutingkey)
 
----
+***
 
 ### getPriority()
 
@@ -220,7 +220,7 @@ console.log(message.getPriority()); // EMessagePriority.HIGH
 
 [setPriority](#setpriority)
 
----
+***
 
 ### getQueue()
 
@@ -246,7 +246,7 @@ console.log(queue?.name); // 'my-queue'
 
 [setQueue](#setqueue)
 
----
+***
 
 ### getRetryDelay()
 
@@ -271,7 +271,7 @@ console.log(message.getRetryDelay()); // 30000
 
 [setRetryDelay](#setretrydelay)
 
----
+***
 
 ### getRetryThreshold()
 
@@ -296,7 +296,7 @@ console.log(message.getRetryThreshold()); // 5
 
 [setRetryThreshold](#setretrythreshold)
 
----
+***
 
 ### getScheduledCRON()
 
@@ -321,7 +321,7 @@ console.log(message.getScheduledCRON()); // '0 0 10 * * *'
 
 [setScheduledCRON](#setscheduledcron)
 
----
+***
 
 ### getScheduledDelay()
 
@@ -346,7 +346,7 @@ console.log(message.getScheduledDelay()); // 5000
 
 [setScheduledDelay](#setscheduleddelay)
 
----
+***
 
 ### getScheduledRepeat()
 
@@ -371,7 +371,7 @@ console.log(message.getScheduledRepeat()); // 3
 
 [setScheduledRepeat](#setscheduledrepeat)
 
----
+***
 
 ### getScheduledRepeatPeriod()
 
@@ -396,7 +396,7 @@ console.log(message.getScheduledRepeatPeriod()); // 60000
 
 [setScheduledRepeatPeriod](#setscheduledrepeatperiod)
 
----
+***
 
 ### getTTL()
 
@@ -421,7 +421,7 @@ console.log(message.getTTL()); // 300000
 
 [setTTL](#setttl)
 
----
+***
 
 ### hasPriority()
 
@@ -449,7 +449,7 @@ console.log(message.hasPriority()); // true
 
 [setPriority](#setpriority)
 
----
+***
 
 ### resetScheduledParams()
 
@@ -477,7 +477,7 @@ console.log(message.getScheduledCRON()); // null
 console.log(message.getScheduledRepeat()); // 0
 ```
 
----
+***
 
 ### setBody()
 
@@ -504,18 +504,19 @@ This instance for method chaining
 #### Example
 
 ```typescript
-const message = new ProducibleMessage().setBody({
-  userId: 123,
-  action: 'send-email',
-  data: { email: 'user@example.com' },
-});
+const message = new ProducibleMessage()
+  .setBody({
+    userId: 123,
+    action: 'send-email',
+    data: { email: 'user@example.com' }
+  });
 ```
 
 #### See
 
 [getBody](#getbody)
 
----
+***
 
 ### setConsumeTimeout()
 
@@ -556,7 +557,7 @@ const message = new ProducibleMessage()
 
 [getConsumeTimeout](#getconsumetimeout)
 
----
+***
 
 ### setDirectExchange()
 
@@ -595,11 +596,11 @@ const message = new ProducibleMessage()
 
 #### See
 
-- [setExchangeRoutingKey](#setexchangeroutingkey)
-- [setFanoutExchange](#setfanoutexchange)
-- [setTopicExchange](#settopicexchange)
+ - [setExchangeRoutingKey](#setexchangeroutingkey)
+ - [setFanoutExchange](#setfanoutexchange)
+ - [setTopicExchange](#settopicexchange)
 
----
+***
 
 ### setExchangeRoutingKey()
 
@@ -635,11 +636,11 @@ const message = new ProducibleMessage()
 
 #### See
 
-- [getExchangeRoutingKey](#getexchangeroutingkey)
-- [setTopicExchange](#settopicexchange)
-- [setDirectExchange](#setdirectexchange)
+ - [getExchangeRoutingKey](#getexchangeroutingkey)
+ - [setTopicExchange](#settopicexchange)
+ - [setDirectExchange](#setdirectexchange)
 
----
+***
 
 ### setFanoutExchange()
 
@@ -677,10 +678,10 @@ const message = new ProducibleMessage()
 
 #### See
 
-- [setTopicExchange](#settopicexchange)
-- [setDirectExchange](#setdirectexchange)
+ - [setTopicExchange](#settopicexchange)
+ - [setDirectExchange](#setdirectexchange)
 
----
+***
 
 ### setPriority()
 
@@ -715,11 +716,11 @@ const message = new ProducibleMessage()
 
 #### See
 
-- [getPriority](#getpriority)
-- [hasPriority](#haspriority)
-- [disablePriority](#disablepriority)
+ - [getPriority](#getpriority)
+ - [hasPriority](#haspriority)
+ - [disablePriority](#disablepriority)
 
----
+***
 
 ### setQueue()
 
@@ -759,7 +760,7 @@ const message = new ProducibleMessage()
 
 [getQueue](#getqueue)
 
----
+***
 
 ### setRetryDelay()
 
@@ -798,10 +799,10 @@ const message = new ProducibleMessage()
 
 #### See
 
-- [setRetryThreshold](#setretrythreshold)
-- [getRetryDelay](#getretrydelay)
+ - [setRetryThreshold](#setretrythreshold)
+ - [getRetryDelay](#getretrydelay)
 
----
+***
 
 ### setRetryThreshold()
 
@@ -839,10 +840,10 @@ const message = new ProducibleMessage()
 
 #### See
 
-- [setRetryDelay](#setretrydelay)
-- [getRetryThreshold](#getretrythreshold)
+ - [setRetryDelay](#setretrydelay)
+ - [getRetryThreshold](#getretrythreshold)
 
----
+***
 
 ### setScheduledCRON()
 
@@ -858,7 +859,7 @@ Can be combined with [setScheduledRepeat](#setscheduledrepeat) and [setScheduled
 
 `string`
 
-Valid CRON expression (e.g., '0 0 10 \* \* \*' for daily at 10 AM)
+Valid CRON expression (e.g., '0 0 10 * * *' for daily at 10 AM)
 
 #### Returns
 
@@ -882,10 +883,10 @@ const message = new ProducibleMessage()
 
 #### See
 
-- [setScheduledRepeat](#setscheduledrepeat)
-- [setScheduledRepeatPeriod](#setscheduledrepeatperiod)
+ - [setScheduledRepeat](#setscheduledrepeat)
+ - [setScheduledRepeatPeriod](#setscheduledrepeatperiod)
 
----
+***
 
 ### setScheduledDelay()
 
@@ -923,7 +924,7 @@ const message = new ProducibleMessage()
 
 [getScheduledDelay](#getscheduleddelay)
 
----
+***
 
 ### setScheduledRepeat()
 
@@ -961,7 +962,7 @@ const message = new ProducibleMessage()
 
 [setScheduledRepeatPeriod](#setscheduledrepeatperiod)
 
----
+***
 
 ### setScheduledRepeatPeriod()
 
@@ -1001,7 +1002,7 @@ const message = new ProducibleMessage()
 
 [setScheduledRepeat](#setscheduledrepeat)
 
----
+***
 
 ### setTopicExchange()
 
@@ -1040,11 +1041,11 @@ const message = new ProducibleMessage()
 
 #### See
 
-- [setExchangeRoutingKey](#setexchangeroutingkey)
-- [setFanoutExchange](#setfanoutexchange)
-- [setDirectExchange](#setdirectexchange)
+ - [setExchangeRoutingKey](#setexchangeroutingkey)
+ - [setFanoutExchange](#setfanoutexchange)
+ - [setDirectExchange](#setdirectexchange)
 
----
+***
 
 ### setTTL()
 
@@ -1084,7 +1085,7 @@ const message = new ProducibleMessage()
 
 [getTTL](#getttl)
 
----
+***
 
 ### setDefaultConsumeOptions()
 
@@ -1118,7 +1119,7 @@ ProducibleMessage.setDefaultConsumeOptions({
   ttl: 60000,
   retryThreshold: 5,
   retryDelay: 30000,
-  consumeTimeout: 120000,
+  consumeTimeout: 120000
 });
 
 // New instances will use these defaults

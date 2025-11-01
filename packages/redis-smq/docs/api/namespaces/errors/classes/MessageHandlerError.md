@@ -42,7 +42,7 @@
 
 [`ConsumerError`](ConsumerError.md).[`cause`](ConsumerError.md#cause)
 
----
+***
 
 ### message
 
@@ -52,7 +52,7 @@
 
 [`ConsumerError`](ConsumerError.md).[`message`](ConsumerError.md#message)
 
----
+***
 
 ### stack?
 
@@ -62,7 +62,7 @@
 
 [`ConsumerError`](ConsumerError.md).[`stack`](ConsumerError.md#stack)
 
----
+***
 
 ### stackTraceLimit
 
@@ -111,7 +111,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack; // Similar to `new Error().stack`
+myObject.stack;  // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -166,7 +166,7 @@ a();
 
 [`ConsumerError`](ConsumerError.md).[`captureStackTrace`](ConsumerError.md#capturestacktrace)
 
----
+***
 
 ### isError()
 
@@ -188,7 +188,7 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 [`ConsumerError`](ConsumerError.md).[`isError`](ConsumerError.md#iserror)
 
----
+***
 
 ### prepareStackTrace()
 
