@@ -101,7 +101,7 @@ setTimeout(() => {
 }, 10000);
 ```
 
----
+***
 
 ### consume()
 
@@ -168,7 +168,7 @@ consumer.consume(
 
 /packages/redis-smq/docs/consuming-messages.md
 
----
+***
 
 ### emit()
 
@@ -178,7 +178,7 @@ consumer.consume(
 
 ##### E
 
-`E` _extends_ keyof [`TConsumerEvent`](../type-aliases/TConsumerEvent.md)
+`E` *extends* keyof [`TConsumerEvent`](../type-aliases/TConsumerEvent.md)
 
 #### Parameters
 
@@ -198,7 +198,7 @@ consumer.consume(
 
 `Runnable.emit`
 
----
+***
 
 ### getId()
 
@@ -212,7 +212,7 @@ consumer.consume(
 
 `Runnable.getId`
 
----
+***
 
 ### getQueues()
 
@@ -228,7 +228,7 @@ The parsed queue parameters include the queue name, options, and any additional 
 [`IQueueParsedParams`](../interfaces/IQueueParsedParams.md)[]
 
 - An array of parsed queue parameters.
-  Each element in the array represents a queue that the consumer is currently consuming messages from.
+Each element in the array represents a queue that the consumer is currently consuming messages from.
 
 #### Example
 
@@ -257,7 +257,7 @@ console.log('Queues:', queues);
 // Output: Queues: [{ queueParams: { name:'my-queue', ns: 'default' }, groupId: null }]
 ```
 
----
+***
 
 ### isDown()
 
@@ -271,7 +271,7 @@ console.log('Queues:', queues);
 
 `Runnable.isDown`
 
----
+***
 
 ### isGoingDown()
 
@@ -285,7 +285,7 @@ console.log('Queues:', queues);
 
 `Runnable.isGoingDown`
 
----
+***
 
 ### isGoingUp()
 
@@ -299,7 +299,7 @@ console.log('Queues:', queues);
 
 `Runnable.isGoingUp`
 
----
+***
 
 ### isRunning()
 
@@ -313,7 +313,7 @@ console.log('Queues:', queues);
 
 `Runnable.isRunning`
 
----
+***
 
 ### isUp()
 
@@ -327,7 +327,7 @@ console.log('Queues:', queues);
 
 `Runnable.isUp`
 
----
+***
 
 ### on()
 
@@ -337,7 +337,7 @@ console.log('Queues:', queues);
 
 ##### E
 
-`E` _extends_ keyof [`TConsumerEvent`](../type-aliases/TConsumerEvent.md)
+`E` *extends* keyof [`TConsumerEvent`](../type-aliases/TConsumerEvent.md)
 
 #### Parameters
 
@@ -357,7 +357,7 @@ console.log('Queues:', queues);
 
 `Runnable.on`
 
----
+***
 
 ### once()
 
@@ -367,7 +367,7 @@ console.log('Queues:', queues);
 
 ##### E
 
-`E` _extends_ keyof [`TConsumerEvent`](../type-aliases/TConsumerEvent.md)
+`E` *extends* keyof [`TConsumerEvent`](../type-aliases/TConsumerEvent.md)
 
 #### Parameters
 
@@ -387,7 +387,7 @@ console.log('Queues:', queues);
 
 `Runnable.once`
 
----
+***
 
 ### removeAllListeners()
 
@@ -397,7 +397,7 @@ console.log('Queues:', queues);
 
 ##### E
 
-`E` _extends_ keyof [`TConsumerEvent`](../type-aliases/TConsumerEvent.md)
+`E` *extends* keyof [`TConsumerEvent`](../type-aliases/TConsumerEvent.md)
 
 #### Parameters
 
@@ -413,7 +413,7 @@ console.log('Queues:', queues);
 
 `Runnable.removeAllListeners`
 
----
+***
 
 ### removeListener()
 
@@ -423,7 +423,7 @@ console.log('Queues:', queues);
 
 ##### E
 
-`E` _extends_ keyof [`TConsumerEvent`](../type-aliases/TConsumerEvent.md)
+`E` *extends* keyof [`TConsumerEvent`](../type-aliases/TConsumerEvent.md)
 
 #### Parameters
 
@@ -443,7 +443,7 @@ console.log('Queues:', queues);
 
 `Runnable.removeListener`
 
----
+***
 
 ### run()
 
@@ -463,7 +463,7 @@ console.log('Queues:', queues);
 
 `Runnable.run`
 
----
+***
 
 ### shutdown()
 

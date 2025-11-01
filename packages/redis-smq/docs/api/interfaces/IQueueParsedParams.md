@@ -8,7 +8,7 @@
 
 > **groupId**: `string` \| `null`
 
----
+***
 
 ### queueParams
 

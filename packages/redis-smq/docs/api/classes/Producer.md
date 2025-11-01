@@ -52,7 +52,7 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 
 ##### E
 
-`E` _extends_ keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
+`E` *extends* keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
 
 #### Parameters
 
@@ -72,7 +72,7 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 
 `Runnable.emit`
 
----
+***
 
 ### getId()
 
@@ -86,7 +86,7 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 
 `Runnable.getId`
 
----
+***
 
 ### isDown()
 
@@ -100,7 +100,7 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 
 `Runnable.isDown`
 
----
+***
 
 ### isGoingDown()
 
@@ -114,7 +114,7 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 
 `Runnable.isGoingDown`
 
----
+***
 
 ### isGoingUp()
 
@@ -128,7 +128,7 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 
 `Runnable.isGoingUp`
 
----
+***
 
 ### isRunning()
 
@@ -142,7 +142,7 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 
 `Runnable.isRunning`
 
----
+***
 
 ### isUp()
 
@@ -156,7 +156,7 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 
 `Runnable.isUp`
 
----
+***
 
 ### on()
 
@@ -166,7 +166,7 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 
 ##### E
 
-`E` _extends_ keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
+`E` *extends* keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
 
 #### Parameters
 
@@ -186,7 +186,7 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 
 `Runnable.on`
 
----
+***
 
 ### once()
 
@@ -196,7 +196,7 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 
 ##### E
 
-`E` _extends_ keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
+`E` *extends* keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
 
 #### Parameters
 
@@ -216,7 +216,7 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 
 `Runnable.once`
 
----
+***
 
 ### produce()
 
@@ -225,7 +225,6 @@ Note: The producer is not yet running after construction. Call `run()` to start 
 Publishes a message to a queue or an exchange.
 
 This method orchestrates the message publication process and supports two main workflows:
-
 1.  **Direct-to-Queue**: If the message specifies a destination queue via `msg.getQueue()`,
     the message is sent directly to that queue.
 2.  **Exchange-Based Routing**: If the message specifies an exchange via `msg.getExchange()`,
@@ -233,7 +232,6 @@ This method orchestrates the message publication process and supports two main w
     of the message to each one.
 
 The method performs the following validations:
-
 - Ensures the producer is running; returns `ProducerNotRunningError` if not.
 - Ensures the message specifies either a queue or an exchange; returns
   `MessageExchangeRequiredError` if neither is specified.
@@ -247,15 +245,21 @@ The method performs the following validations:
 [`ProducibleMessage`](ProducibleMessage.md)
 
 The message to be published. Must specify either a destination queue
-or an exchange (or both).
+             or an exchange (or both).
 
 ##### cb
 
 `ICallback`\<`string`[]\>
 
-A callback function invoked upon completion. - On success: `cb(null, messageIds)` where `messageIds` is an array of
-published message IDs (one per queue for exchange routing, or one for
-direct queue routing). - On error: `cb(error)` where `error` is one of: - `ProducerNotRunningError`: Producer is not running. - `MessageExchangeRequiredError`: Message has neither queue nor exchange. - `NoMatchedQueuesForMessageExchangeError`: Exchange matched no queues. - Other errors from queue or exchange operations.
+A callback function invoked upon completion.
+            - On success: `cb(null, messageIds)` where `messageIds` is an array of
+              published message IDs (one per queue for exchange routing, or one for
+              direct queue routing).
+            - On error: `cb(error)` where `error` is one of:
+              - `ProducerNotRunningError`: Producer is not running.
+              - `MessageExchangeRequiredError`: Message has neither queue nor exchange.
+              - `NoMatchedQueuesForMessageExchangeError`: Exchange matched no queues.
+              - Other errors from queue or exchange operations.
 
 #### Returns
 
@@ -277,7 +281,7 @@ producer.produce(msg, (err, messageIds) => {
 });
 ```
 
----
+***
 
 ### removeAllListeners()
 
@@ -287,7 +291,7 @@ producer.produce(msg, (err, messageIds) => {
 
 ##### E
 
-`E` _extends_ keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
+`E` *extends* keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
 
 #### Parameters
 
@@ -303,7 +307,7 @@ producer.produce(msg, (err, messageIds) => {
 
 `Runnable.removeAllListeners`
 
----
+***
 
 ### removeListener()
 
@@ -313,7 +317,7 @@ producer.produce(msg, (err, messageIds) => {
 
 ##### E
 
-`E` _extends_ keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
+`E` *extends* keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
 
 #### Parameters
 
@@ -333,7 +337,7 @@ producer.produce(msg, (err, messageIds) => {
 
 `Runnable.removeListener`
 
----
+***
 
 ### run()
 
@@ -353,7 +357,7 @@ producer.produce(msg, (err, messageIds) => {
 
 `Runnable.run`
 
----
+***
 
 ### shutdown()
 

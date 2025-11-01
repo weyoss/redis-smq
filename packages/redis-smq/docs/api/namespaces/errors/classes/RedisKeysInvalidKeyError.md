@@ -36,7 +36,7 @@
 
 [`RedisKeysError`](RedisKeysError.md).[`cause`](RedisKeysError.md#cause)
 
----
+***
 
 ### message
 
@@ -46,7 +46,7 @@
 
 [`RedisKeysError`](RedisKeysError.md).[`message`](RedisKeysError.md#message)
 
----
+***
 
 ### stack?
 
@@ -56,7 +56,7 @@
 
 [`RedisKeysError`](RedisKeysError.md).[`stack`](RedisKeysError.md#stack)
 
----
+***
 
 ### stackTraceLimit
 
@@ -105,7 +105,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack; // Similar to `new Error().stack`
+myObject.stack;  // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -160,7 +160,7 @@ a();
 
 [`RedisKeysError`](RedisKeysError.md).[`captureStackTrace`](RedisKeysError.md#capturestacktrace)
 
----
+***
 
 ### isError()
 
@@ -182,7 +182,7 @@ Indicates whether the argument provided is a built-in Error instance or not.
 
 [`RedisKeysError`](RedisKeysError.md).[`isError`](RedisKeysError.md#iserror)
 
----
+***
 
 ### prepareStackTrace()
 

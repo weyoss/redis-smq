@@ -44,7 +44,7 @@ A callback function which receives an error or undefined when the operation is c
 
 `void`
 
----
+***
 
 ### get()
 
@@ -71,7 +71,7 @@ It receives either the current rate limit parameters or null if not set.
 
 `void`
 
----
+***
 
 ### hasExceeded()
 
@@ -103,7 +103,7 @@ A callback function which receives a boolean value indicating whether the rate l
 
 `void`
 
----
+***
 
 ### set()
 

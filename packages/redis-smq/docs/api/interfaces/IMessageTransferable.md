@@ -22,7 +22,7 @@
 
 [`IMessageParams`](IMessageParams.md).[`body`](IMessageParams.md#body)
 
----
+***
 
 ### consumerGroupId
 
@@ -32,7 +32,7 @@
 
 [`IMessageParams`](IMessageParams.md).[`consumerGroupId`](IMessageParams.md#consumergroupid)
 
----
+***
 
 ### consumeTimeout
 
@@ -42,7 +42,7 @@
 
 [`IMessageParams`](IMessageParams.md).[`consumeTimeout`](IMessageParams.md#consumetimeout)
 
----
+***
 
 ### createdAt
 
@@ -52,7 +52,7 @@
 
 [`IMessageParams`](IMessageParams.md).[`createdAt`](IMessageParams.md#createdat)
 
----
+***
 
 ### destinationQueue
 
@@ -62,7 +62,7 @@
 
 [`IMessageParams`](IMessageParams.md).[`destinationQueue`](IMessageParams.md#destinationqueue)
 
----
+***
 
 ### exchange
 
@@ -72,19 +72,19 @@
 
 [`IMessageParams`](IMessageParams.md).[`exchange`](IMessageParams.md#exchange)
 
----
+***
 
 ### id
 
 > **id**: `string`
 
----
+***
 
 ### messageState
 
 > **messageState**: [`IMessageStateTransferable`](IMessageStateTransferable.md)
 
----
+***
 
 ### priority
 
@@ -94,7 +94,7 @@
 
 [`IMessageParams`](IMessageParams.md).[`priority`](IMessageParams.md#priority)
 
----
+***
 
 ### queue
 
@@ -104,7 +104,7 @@
 
 [`IMessageParams`](IMessageParams.md).[`queue`](IMessageParams.md#queue)
 
----
+***
 
 ### retryDelay
 
@@ -114,7 +114,7 @@
 
 [`IMessageParams`](IMessageParams.md).[`retryDelay`](IMessageParams.md#retrydelay)
 
----
+***
 
 ### retryThreshold
 
@@ -124,7 +124,7 @@
 
 [`IMessageParams`](IMessageParams.md).[`retryThreshold`](IMessageParams.md#retrythreshold)
 
----
+***
 
 ### scheduledCron
 
@@ -134,7 +134,7 @@
 
 [`IMessageParams`](IMessageParams.md).[`scheduledCron`](IMessageParams.md#scheduledcron)
 
----
+***
 
 ### scheduledDelay
 
@@ -144,7 +144,7 @@
 
 [`IMessageParams`](IMessageParams.md).[`scheduledDelay`](IMessageParams.md#scheduleddelay)
 
----
+***
 
 ### scheduledRepeat
 
@@ -154,7 +154,7 @@
 
 [`IMessageParams`](IMessageParams.md).[`scheduledRepeat`](IMessageParams.md#scheduledrepeat)
 
----
+***
 
 ### scheduledRepeatPeriod
 
@@ -164,13 +164,13 @@
 
 [`IMessageParams`](IMessageParams.md).[`scheduledRepeatPeriod`](IMessageParams.md#scheduledrepeatperiod)
 
----
+***
 
 ### status
 
 > **status**: [`EMessagePropertyStatus`](../enumerations/EMessagePropertyStatus.md)
 
----
+***
 
 ### ttl
 
