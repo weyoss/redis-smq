@@ -14,7 +14,7 @@ import { Configuration } from '../../../config/index.js';
  * Abstract class for queue message storage operations
  * Provides a common interface for different Redis data structures (lists, sets, etc.)
  */
-export abstract class QueueStorage {
+export abstract class QueueStorageAbstract {
   protected logger: ILogger;
 
   constructor() {

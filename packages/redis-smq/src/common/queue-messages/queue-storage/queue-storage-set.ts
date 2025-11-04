@@ -8,18 +8,18 @@
  */
 
 import { async, ICallback } from 'redis-smq-common';
-import { QueueStorage } from './queue-storage.js';
+import { QueueStorageAbstract } from './queue-storage-abstract.js';
 import { withSharedPoolConnection } from '../../redis-connection-pool/with-shared-pool-connection.js';
 
 /**
- * Implementation of QueueStorage for Redis sets.
+ * Implementation of QueueStorageAbstract for Redis sets.
  * Key Redis commands used: SCARD, SSCAN
  *
  * @remarks
  * Since Redis sets are unordered, pagination is implemented using cursor-based
  * scanning rather than direct indexing.
  */
-export class QueueStorageSet extends QueueStorage {
+export class QueueStorageSet extends QueueStorageAbstract {
   /**
    * Counts the total number of items in a Redis set.
    *
