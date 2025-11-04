@@ -87,7 +87,6 @@ export const errors = {
   QueueAlreadyBound: [500, 'QueueAlreadyBound'],
   QueueAlreadyExistsError: [409, 'QueueAlreadyExistsError'],
   QueueDeliveryModelMismatchError: [500, 'QueueDeliveryModelMismatchError'],
-  QueueExplorerError: [500, 'QueueExplorerError'],
   QueueHasBoundExchangesError: [500, 'QueueHasBoundExchangesError'],
   QueueHasNoConsumerGroupsError: [500, 'QueueHasNoConsumerGroupsError'],
   QueueManagerActiveConsumersError: [500, 'QueueManagerActiveConsumersError'],
