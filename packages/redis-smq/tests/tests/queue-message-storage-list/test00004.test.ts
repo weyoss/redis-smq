@@ -15,7 +15,7 @@ import {
   createQueue,
   getDefaultQueue,
 } from '../../common/message-producing-consuming.js';
-import { QueueStorageList } from '../../../src/common/queue-explorer/queue-storage/queue-storage-list.js';
+import { QueueStorageList } from '../../../src/common/queue-messages/queue-storage/queue-storage-list.js';
 import { getProducer } from '../../common/producer.js';
 
 const { promisifyAll } = bluebird;

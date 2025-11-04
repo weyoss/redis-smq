@@ -20,7 +20,7 @@ import {
   createQueue,
   getDefaultQueue,
 } from '../../common/message-producing-consuming.js';
-import { QueueStorageSortedSet } from '../../../src/common/queue-explorer/queue-storage/queue-storage-sorted-set.js';
+import { QueueStorageSortedSet } from '../../../src/common/queue-messages/queue-storage/queue-storage-sorted-set.js';
 
 import { getProducer } from '../../common/producer.js';
 

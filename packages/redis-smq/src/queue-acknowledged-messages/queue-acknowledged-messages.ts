@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { QueueExplorer } from '../common/queue-explorer/queue-explorer.js';
-import { QueueStorageList } from '../common/queue-explorer/queue-storage/queue-storage-list.js';
+import { QueueMessagesAbstract } from '../common/queue-messages/queue-messages-abstract.js';
+import { QueueStorageList } from '../common/queue-messages/queue-storage/queue-storage-list.js';
 import { MessageManager } from '../message-manager/index.js';
 
 /**
@@ -18,10 +18,10 @@ import { MessageManager } from '../message-manager/index.js';
  * and can be safely removed from the active queue. This class allows for tracking
  * and management of these messages when the system is configured to store them.
  *
- * @extends QueueExplorer
+ * @extends QueueMessagesAbstract
  * @see /packages/redis-smq/docs/configuration.md#message-audit
  */
-export class QueueAcknowledgedMessages extends QueueExplorer {
+export class QueueAcknowledgedMessages extends QueueMessagesAbstract {
   constructor() {
     super(new QueueStorageList(), new MessageManager(), 'keyQueueAcknowledged');
     this.logger.debug('QueueAcknowledgedMessages initialized');

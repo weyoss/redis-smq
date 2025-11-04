@@ -7,6 +7,5 @@
  * in the root directory of this source tree.
  */
 
-import { RedisSMQError } from 'redis-smq-common';
-
-export class QueueExplorerError extends RedisSMQError {}
+export * from './queue-messages.js';
+export * from './pagination.js';

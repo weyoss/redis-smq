@@ -57,7 +57,6 @@ export * from './configuration.error.js';
 export * from './configuration-message-audit-expire.error.js';
 export * from './configuration-message-audit-queue-size.error.js';
 export * from './configuration-namespace.error.js';
-export * from './queue-explorer.error.js';
 export * from './redis-keys-invalid-key.error.js';
 export * from './redis-keys.error.js';
 export * from './queue-rate-limit.error.js';
