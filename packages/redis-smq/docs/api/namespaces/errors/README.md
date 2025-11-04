@@ -52,7 +52,6 @@
 - [QueueAlreadyBound](classes/QueueAlreadyBound.md)
 - [QueueAlreadyExistsError](classes/QueueAlreadyExistsError.md)
 - [QueueDeliveryModelMismatchError](classes/QueueDeliveryModelMismatchError.md)
-- [QueueExplorerError](classes/QueueExplorerError.md)
 - [QueueHasBoundExchangesError](classes/QueueHasBoundExchangesError.md)
 - [QueueHasNoConsumerGroupsError](classes/QueueHasNoConsumerGroupsError.md)
 - [QueueManagerActiveConsumersError](classes/QueueManagerActiveConsumersError.md)

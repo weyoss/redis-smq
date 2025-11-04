@@ -4,7 +4,7 @@
 
 ## Implements
 
-- [`IQueueExplorer`](../interfaces/IQueueExplorer.md)
+- [`IQueueMessages`](../interfaces/IQueueMessages.md)
 
 ## Constructors
 
@@ -38,9 +38,9 @@
 
 #### Implementation of
 
-[`IQueueExplorer`](../interfaces/IQueueExplorer.md).[`countMessages`](../interfaces/IQueueExplorer.md#countmessages)
+[`IQueueMessages`](../interfaces/IQueueMessages.md).[`countMessages`](../interfaces/IQueueMessages.md#countmessages)
 
-***
+---
 
 ### getMessages()
 
@@ -70,9 +70,9 @@
 
 #### Implementation of
 
-[`IQueueExplorer`](../interfaces/IQueueExplorer.md).[`getMessages`](../interfaces/IQueueExplorer.md#getmessages)
+[`IQueueMessages`](../interfaces/IQueueMessages.md).[`getMessages`](../interfaces/IQueueMessages.md#getmessages)
 
-***
+---
 
 ### purge()
 
@@ -94,4 +94,4 @@
 
 #### Implementation of
 
-[`IQueueExplorer`](../interfaces/IQueueExplorer.md).[`purge`](../interfaces/IQueueExplorer.md#purge)
+[`IQueueMessages`](../interfaces/IQueueMessages.md).[`purge`](../interfaces/IQueueMessages.md#purge)
