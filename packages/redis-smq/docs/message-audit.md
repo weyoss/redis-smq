@@ -68,7 +68,7 @@ const config: IRedisSMQConfig = {
 };
 ```
 
-## Queue Explorer Classes
+## Queue Messages Classes
 
 | Class                       | Purpose                                | Requires Message Audit               |
 | --------------------------- | -------------------------------------- | ------------------------------------ |
