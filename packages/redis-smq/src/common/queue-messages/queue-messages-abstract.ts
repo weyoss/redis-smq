@@ -22,13 +22,13 @@ import { QueueStorage } from './queue-storage/queue-storage.js';
 import {
   IPaginationPage,
   IPaginationPageParams,
-  IQueueExplorer,
+  IQueueMessages,
 } from './types/index.js';
 import { MessageManager } from '../../message-manager/index.js';
 import { withSharedPoolConnection } from '../redis-connection-pool/with-shared-pool-connection.js';
 
 /**
- * Provides a base implementation for exploring and managing messages within a
+ * Provides a base implementation for browsing and managing messages within a
  * specific queue category (e.g., pending, acknowledged, dead-lettered).
  *
  * This abstract class encapsulates the common logic for counting messages,
@@ -37,9 +37,9 @@ import { withSharedPoolConnection } from '../redis-connection-pool/with-shared-p
  * strategy for the message category they represent.
  *
  * @abstract
- * @implements {IQueueExplorer}
+ * @implements {IQueueMessages}
  */
-export abstract class QueueExplorer implements IQueueExplorer {
+export abstract class QueueMessagesAbstract implements IQueueMessages {
   /**
    * Message manager for retrieving detailed message information.
    */

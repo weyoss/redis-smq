@@ -8,4 +8,4 @@
  */
 
 export * from './types/index.js';
-export * from './queue-explorer/types/index.js';
+export * from './queue-messages/types/index.js';

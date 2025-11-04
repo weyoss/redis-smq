@@ -22,8 +22,8 @@ import {
   IQueueParams,
   IQueueProperties,
 } from '../queue-manager/index.js';
-import { QueueExplorer } from '../common/queue-explorer/queue-explorer.js';
-import { QueueStorageSet } from '../common/queue-explorer/queue-storage/queue-storage-set.js';
+import { QueueMessagesAbstract } from '../common/queue-messages/queue-messages-abstract.js';
+import { QueueStorageSet } from '../common/queue-messages/queue-storage/queue-storage-set.js';
 import { QueueAcknowledgedMessages } from '../queue-acknowledged-messages/index.js';
 import { QueueDeadLetteredMessages } from '../queue-dead-lettered-messages/index.js';
 import { SequentialQueuePendingMessages } from '../queue-pending-messages/sequential-queue-pending-messages.js';
@@ -41,7 +41,7 @@ import { withSharedPoolConnection } from '../common/redis-connection-pool/with-s
  * It orchestrates various message handlers (pending, acknowledged, scheduled, dead-lettered)
  * and leverages a waterfall pattern for processing.
  */
-export class QueueMessages extends QueueExplorer {
+export class QueueMessages extends QueueMessagesAbstract {
   protected readonly priorityQueueMessages: PriorityQueuePendingMessages;
   protected readonly queuePendingMessages: SequentialQueuePendingMessages;
   protected readonly queueDeadLetteredMessages: QueueDeadLetteredMessages;

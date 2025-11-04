@@ -7,11 +7,11 @@
  * in the root directory of this source tree.
  */
 
-import { QueueExplorer } from '../common/queue-explorer/queue-explorer.js';
-import { QueueStorageSortedSet } from '../common/queue-explorer/queue-storage/queue-storage-sorted-set.js';
+import { QueueMessagesAbstract } from '../common/queue-messages/queue-messages-abstract.js';
+import { QueueStorageSortedSet } from '../common/queue-messages/queue-storage/queue-storage-sorted-set.js';
 import { MessageManager } from '../message-manager/index.js';
 
-export class PriorityQueuePendingMessages extends QueueExplorer {
+export class PriorityQueuePendingMessages extends QueueMessagesAbstract {
   protected override requireGroupId = true;
 
   constructor() {

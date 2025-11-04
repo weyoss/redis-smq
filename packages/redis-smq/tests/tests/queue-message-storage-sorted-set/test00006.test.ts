@@ -15,7 +15,7 @@ import {
   EQueueType,
   ProducibleMessage,
 } from '../../../src/index.js';
-import { QueueStorageSortedSet } from '../../../src/common/queue-explorer/queue-storage/queue-storage-sorted-set.js';
+import { QueueStorageSortedSet } from '../../../src/common/queue-messages/queue-storage/queue-storage-sorted-set.js';
 
 import {
   createQueue,

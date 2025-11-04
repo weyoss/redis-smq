@@ -21,12 +21,12 @@ import {
   IQueueParsedParams,
   TQueueExtendedParams,
 } from '../queue-manager/index.js';
-import { IPaginationPage, IQueueExplorer } from '../common/index.js';
+import { IPaginationPage, IQueueMessages } from '../common/index.js';
 import { SequentialQueuePendingMessages } from './sequential-queue-pending-messages.js';
 import { PriorityQueuePendingMessages } from './priority-queue-pending-messages.js';
 import { withSharedPoolConnection } from '../common/redis-connection-pool/with-shared-pool-connection.js';
 
-export class QueuePendingMessages implements IQueueExplorer {
+export class QueuePendingMessages implements IQueueMessages {
   protected priorityQueueMessages;
   protected sequentialQueuePendingMessages;
   protected logger;
@@ -80,7 +80,7 @@ export class QueuePendingMessages implements IQueueExplorer {
 
   protected getQueueImplementation(
     queue: IQueueParsedParams,
-    cb: ICallback<IQueueExplorer>,
+    cb: ICallback<IQueueMessages>,
   ): void {
     withSharedPoolConnection(
       (client, cb) =>

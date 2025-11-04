@@ -12,7 +12,7 @@ import { ICallback } from 'redis-smq-common';
 import { IPaginationPage } from './pagination.js';
 import { IMessageTransferable } from '../../../message/index.js';
 
-export interface IQueueExplorer {
+export interface IQueueMessages {
   countMessages(queue: TQueueExtendedParams, cb: ICallback<number>): void;
 
   getMessages(
