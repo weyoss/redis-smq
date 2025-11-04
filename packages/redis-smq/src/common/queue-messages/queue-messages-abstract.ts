@@ -18,7 +18,7 @@ import {
   TQueueExtendedParams,
 } from '../../queue-manager/index.js';
 import { _validateQueueExtendedParams } from './_/_validate-queue-extended-params.js';
-import { QueueStorage } from './queue-storage/queue-storage.js';
+import { QueueStorageAbstract } from './queue-storage/queue-storage-abstract.js';
 import {
   IPaginationPage,
   IPaginationPageParams,
@@ -59,7 +59,7 @@ export abstract class QueueMessagesAbstract implements IQueueMessages {
   /**
    * Storage manager for queue messages.
    */
-  protected readonly queueStorage: QueueStorage;
+  protected readonly queueStorage: QueueStorageAbstract;
 
   /**
    * Logger instance for logging operations.
@@ -67,7 +67,7 @@ export abstract class QueueMessagesAbstract implements IQueueMessages {
   protected readonly logger;
 
   protected constructor(
-    messagesStorage: QueueStorage,
+    messagesStorage: QueueStorageAbstract,
     messageManager: MessageManager,
     redisKey: keyof ReturnType<typeof redisKeys.getQueueKeys>,
   ) {
