@@ -10,45 +10,40 @@ To accommodate a diverse range of developer preferences and use cases, RedisSMQ 
 CJS formats. This flexibility enables developers to choose the appropriate module system that best fits their
 application's architecture.
 
-## Using RedisSMQ with ES Modules (ESM)
-
-To use RedisSMQ as an ES module, you can leverage the `import` syntax. Here’s a simple example:
+## ESM
 
 ```javascript
-import { Queue } from 'redis-smq';
+import { RedisSMQ } from 'redis-smq';
+import { ERedisConfigClient } from 'redis-smq-common';
 
-// Instantiate a new RedisSMQ Queue
-const queue = new Queue();
+// Initialize once per process
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: '127.0.0.1', port: 6379, db: 0 },
+  },
+  (err) => {
+    if (err) return console.error('Init error:', err);
+    // ...
+  },
+);
 ```
 
-### Benefits of ESM
-
-- Static Analysis: ESM allows for static analysis, making it easier to identify and eliminate unused code.
-
-- Tree Shaking: Bundlers can more effectively remove dead code, potentially reducing the size of your final application
-  bundle.
-
-- Improved Readability: The syntax is generally clearer and more intuitive, especially for new developers.
-
-## Using RedisSMQ with CommonJS Modules (CJS)
-
-For those using CommonJS, you can require RedisSMQ with the `require` syntax. Here’s an example:
+## CJS
 
 ```javascript
-const { Queue } = require('redis-smq');
+const { RedisSMQ } = require('redis-smq');
+const { ERedisConfigClient } = require('redis-smq-common');
 
-// Instantiate a new RedisSMQ Queue
-const queue = new Queue();
+// Initialize once per process
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: '127.0.0.1', port: 6379, db: 0 },
+  },
+  (err) => {
+    if (err) return console.error('Init error:', err);
+    // ...
+  },
+);
 ```
-
-### Benefits of CJS
-
-- Widespread Compatibility: CJS is the traditional module format for Node.js and has broad compatibility with existing
-  packages and libraries.
-
-- Dynamic Loading: CommonJS allows for dynamic imports, which can be beneficial in certain scenarios where the module
-  path is not known until runtime.
-
-By offering RedisSMQ in both ESM and CJS formats, we aim to provide developers with the flexibility needed to integrate
-seamlessly into their projects, regardless of their preferred module system. Whether you're building a modern
-application with ES modules or maintaining legacy systems with CommonJS, RedisSMQ is designed to meet your needs.
