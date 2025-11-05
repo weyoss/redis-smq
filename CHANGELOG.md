@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.16](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.15...v9.0.0-next.16) (2025-11-05)
+
+### 🐛 Bug Fixes
+
+- **redis-smq:** don’t fail reap cycle on ephemeral consumer group deletion errors ([ebb28b9](https://github.com/weyoss/redis-smq/commit/ebb28b9d01b47df6a288d0cbeba63c79c6cdfb67))
+
+### 📝 Documentation
+
+- **redis-smq:** add missing IQueueMessages reference ([bd690b5](https://github.com/weyoss/redis-smq/commit/bd690b5502366c0951fafb8a956ac30a8711e89a))
+- **redis-smq:** clarify message audit documentation ([e1a06a8](https://github.com/weyoss/redis-smq/commit/e1a06a895e13274b624583d6ab39199ce1cb98c0))
+- **redis-smq:** update API reference ([febee6a](https://github.com/weyoss/redis-smq/commit/febee6ada6e757c865897d30ab403d73963e946a))
+- **redis-smq:** update API reference ([f98eb39](https://github.com/weyoss/redis-smq/commit/f98eb392b60162831135ad91843f3fee31feb9f1))
+- **redis-smq:** update ESM/CJS module usage examples with new API ([ef52575](https://github.com/weyoss/redis-smq/commit/ef5257589ce01b204a75d7a5ab97136efdef9def))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-rest-api:** remove QueueExplorerError from API error list ([687e116](https://github.com/weyoss/redis-smq/commit/687e1165ac9b17c5d331b7ff4b42b59f7ac5db17))
+- **redis-smq:** rename QueueExplorer to QueueMessagesAbstract ([459d7e6](https://github.com/weyoss/redis-smq/commit/459d7e6d86192033d6a4a7f878cd4e3d6ef6f6b8))
+- **redis-smq:** rename QueueStorage to QueueStorageAbstract ([8bc0f5b](https://github.com/weyoss/redis-smq/commit/8bc0f5b0a1f4abb15ab2181ae3d9700cd4842030))
+
 ## [9.0.0-next.15](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.14...v9.0.0-next.15) (2025-10-31)
 
 ### ⚠ BREAKING CHANGES
