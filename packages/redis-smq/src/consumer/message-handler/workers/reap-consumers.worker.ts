@@ -56,7 +56,22 @@ export class ReapConsumersWorker extends WorkerAbstract {
           _deleteEphemeralConsumerGroup(
             this.queueParsedParams.queueParams,
             consumerId,
-            done,
+            (err) => {
+              const queue = this.queueParsedParams.queueParams;
+              const queueRef = `${queue.name}@${queue.ns}`;
+              if (err) {
+                // Best-effort cleanup: do not fail the whole cycle, but log with full context
+                this.logger.warn(
+                  `Failed to delete ephemeral consumer group for ${queueRef}, consumer ${consumerId}`,
+                  err,
+                );
+              } else {
+                this.logger.debug(
+                  `Ephemeral consumer group deleted for ${queueRef}, consumer ${consumerId}`,
+                );
+              }
+              done();
+            },
           );
         },
       ],
