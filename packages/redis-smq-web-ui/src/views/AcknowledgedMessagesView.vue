@@ -215,9 +215,9 @@ async function onPageSizeChange(size: number) {
         <div class="ack-alert-text">
           <strong>Acknowledged messages audit is disabled</strong>
           <p class="ack-alert-message">
-            The server configuration indicates that acknowledged messages audit
-            is not being audited. This view may be empty or missing data until
-            messages audit is enabled on the server.
+            Acknowledged message auditing is disabled in the RedisSMQ
+            configuration. This view will remain empty until auditing is
+            enabled.
           </p>
         </div>
       </div>
