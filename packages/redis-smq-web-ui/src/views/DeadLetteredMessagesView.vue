@@ -221,9 +221,9 @@ async function onPageSizeChange(size: number) {
         <div class="dl-alert-text">
           <strong>Dead-lettered messages audit is disabled</strong>
           <p class="dl-alert-message">
-            The server configuration indicates that dead-lettered messages audit
-            is not being enabled. This view may be empty or missing data until
-            messages audit is enabled on the server.
+            Dead-lettered message auditing is disabled in the RedisSMQ
+            configuration. This view will remain empty until auditing is
+            enabled.
           </p>
         </div>
       </div>
