@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.18](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.17...v9.0.0-next.18) (2025-11-07)
+
+### 📝 Documentation
+
+- convert relative paths to absolute URLs in package READMEs ([ad5da5f](https://github.com/weyoss/redis-smq/commit/ad5da5f14aeb01822e560e7e15473dc27518e80a))
+
 ## [9.0.0-next.17](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.16...v9.0.0-next.17) (2025-11-07)
 
 ### ⚠ BREAKING CHANGES
