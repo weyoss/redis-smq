@@ -1,2 +1,3 @@
 #!/usr/bin/env sh
 lint-staged
+scripts/update-readme-files.sh

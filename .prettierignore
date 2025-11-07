@@ -1,2 +1,8 @@
 **/dist/*
 **/node_modules/*
+README.template.md
+packages/redis-smq/README.template.md
+packages/redis-smq-common/README.template.md
+packages/redis-smq-rest-api/README.template.md
+packages/redis-smq-web-server/README.template.md
+packages/redis-smq-web-ui/README.template.md

@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+scripts/update-readme-files.sh
+git commit -m "docs: update README files"
