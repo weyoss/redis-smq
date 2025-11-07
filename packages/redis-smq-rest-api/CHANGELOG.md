@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.1](https://github.com/weyoss/redis-smq/compare/v9.0.0...v9.0.1) (2025-11-07)
+
+### 📝 Documentation
+
+- update install commands to use [@latest](https://github.com/latest) instead of [@next](https://github.com/next) ([353abe8](https://github.com/weyoss/redis-smq/commit/353abe893f457f706290c7c182a2b8bc07458dbe))
+- update README files for release v9 ([b838b11](https://github.com/weyoss/redis-smq/commit/b838b119323e9c73a420bef1d07a0d432f3607f0))
+
 ## [9.0.0](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.18...v9.0.0) (2025-11-07)
 
 **Note:** Version bump only for package redis-smq-rest-api
