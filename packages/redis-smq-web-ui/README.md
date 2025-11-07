@@ -1,22 +1,52 @@
 # RedisSMQ Web UI
 
-A powerful, intuitive web interface for managing and monitoring RedisSMQ message queues, designed to streamline operations and improve visibility into your messaging infrastructure.
+![RedisSMQ Web UI - Home](https://raw.githubusercontent.com/weyoss/redis-smq/master/packages/redis-smq-web-ui/docs/screenshots/img01.png)
 
-## Key Features
+A Single Page Application for monitoring and managing RedisSMQ. Inspect queues and messages, review consumers, and perform common actions — with an integrated, type-safe OpenAPI client.
 
-- **Real-time Monitoring**: Track queue metrics, message throughput, and consumer activity with live updates and visual dashboards
-- **Comprehensive Management**: Create, configure, and manage queues, messages, and consumers through a user-friendly interface
-- **Message Inspection**: View message content, metadata, and delivery status with detailed filtering options
-- **Performance Analytics**: Visualize queue performance trends and system health metrics
+- Works seamlessly with the RedisSMQ REST API
+- Best served via the RedisSMQ Web Server (serves the static UI and hosts or proxies the API)
+- Ships with developer-friendly types and OpenAPI client generation
 
-## Status
+## Features
 
-🚧 **Under Active Development** 🚧
+- Dashboard for queues, consumers, and message stats
+- Queue/message browsers with filters and actions (ack, retry, delete, etc.)
+- Supports multiple queue and delivery models
+- Exchange types: Direct, Topic, Fanout
+- Type-safe OpenAPI client (generated from the REST API schema)
 
-The next generation of RedisSMQ Web UI is currently being built to fully support RedisSMQ v8. 
+## Requirements
 
-We're implementing features incrementally with a focus on stability and performance. 
+See [RedisSMQ requirements](https://github.com/weyoss/redis-smq/tree/master/README.md).
 
-Early access builds will be available soon for testing and feedback.
+## Installation
 
-Follow our [GitHub repository](https://github.com/weyoss/redis-smq) for updates and release announcements.
+Typically consumed via the [RedisSMQ Web Server](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-web-server/README.md). To set up everything with pre-release builds:
+
+```bash
+npm install redis-smq@next redis-smq-common@next redis-smq-rest-api@next redis-smq-web-ui@next redis-smq-web-server@next
+# Choose a Redis client:
+npm install ioredis
+# or
+npm install @redis/client
+```
+
+## Version Compatibility
+
+Always install matching versions of RedisSMQ packages to ensure compatibility. See [version compatibility](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq/docs/version-compatibility.md) for details.
+
+## Documentation
+
+For in-depth guides and API references, see [the documentation page](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-web-ui/docs/README.md).
+
+## Related packages
+
+- [redis-smq](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq/README.md): Core message queue
+- [redis-smq-common](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-common/README.md): Shared components/utilities
+- [redis-smq-rest-api](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-rest-api/README.md): REST API with OpenAPI v3 and Swagger UI
+- [redis-smq-web-server](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-web-server/README.md): Static hosting + in-process or proxied API
+
+## License
+
+RedisSMQ Web UI is released under the [MIT License](https://github.com/weyoss/redis-smq/tree/master/LICENSE).
