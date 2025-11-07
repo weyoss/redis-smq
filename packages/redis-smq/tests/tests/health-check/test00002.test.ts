@@ -7,9 +7,9 @@
  * in the root directory of this source tree.
  */
 
-import { expect, vitest, test } from 'vitest';
+import { expect, test, vitest } from 'vitest';
 import bluebird from 'bluebird';
-import { Consumer } from '../../../src/lib/index.js';
+import { Consumer } from '../../../src/index.js';
 
 test('Health check: case 2', async () => {
   const consumerUpMock = vitest.fn();

@@ -2,82 +2,81 @@
 
 # Interface: ILogger
 
-## Implemented by
-
-- [`ConsoleLogger`](../classes/ConsoleLogger.md)
-
-## Table of contents
-
-### Methods
-
-- [debug](ILogger.md#debug)
-- [error](ILogger.md#error)
-- [info](ILogger.md#info)
-- [warn](ILogger.md#warn)
-
 ## Methods
 
-### debug
+### debug()
 
-▸ **debug**(`message`, `...params`): `void`
+> **debug**(`message`, ...`params`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `message` | `unknown` |
-| `...params` | `unknown`[] |
+##### message
+
+`unknown`
+
+##### params
+
+...`unknown`[]
 
 #### Returns
 
 `void`
 
-___
+***
 
-### error
+### error()
 
-▸ **error**(`message`, `...params`): `void`
+> **error**(`message`, ...`params`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `message` | `unknown` |
-| `...params` | `unknown`[] |
+##### message
+
+`unknown`
+
+##### params
+
+...`unknown`[]
 
 #### Returns
 
 `void`
 
-___
+***
 
-### info
+### info()
 
-▸ **info**(`message`, `...params`): `void`
+> **info**(`message`, ...`params`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `message` | `unknown` |
-| `...params` | `unknown`[] |
+##### message
+
+`unknown`
+
+##### params
+
+...`unknown`[]
 
 #### Returns
 
 `void`
 
-___
+***
 
-### warn
+### warn()
 
-▸ **warn**(`message`, `...params`): `void`
+> **warn**(`message`, ...`params`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `message` | `unknown` |
-| `...params` | `unknown`[] |
+##### message
+
+`unknown`
+
+##### params
+
+...`unknown`[]
 
 #### Returns
 

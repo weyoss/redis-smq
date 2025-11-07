@@ -12,25 +12,25 @@ import bluebird from 'bluebird';
 import path from 'path';
 import { env } from 'redis-smq-common';
 import {
-  ConsumerMessageHandlerFileError,
-  ConsumerMessageHandlerFilenameExtensionError,
-} from '../../../src/lib/consumer/message-handler/errors/index.js';
-import {
   Consumer,
   EQueueDeliveryModel,
   EQueueType,
   Producer,
   ProducibleMessage,
-} from '../../../src/lib/index.js';
+} from '../../../src/index.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
-import { getQueue } from '../../common/queue.js';
+import { getQueueManager } from '../../common/queue-manager.js';
+import {
+  MessageHandlerFileError,
+  MessageHandlerFilenameExtensionError,
+} from '../../../src/errors/index.js';
 
 it('ConsumeMessageWorker: case 2', async () => {
   const consumer = bluebird.promisifyAll(new Consumer());
   await consumer.runAsync();
 
   const queue1 = 'test';
-  const queue = await getQueue();
+  const queue = await getQueueManager();
   await queue.saveAsync(
     queue1,
     EQueueType.FIFO_QUEUE,
@@ -43,7 +43,7 @@ it('ConsumeMessageWorker: case 2', async () => {
   );
 
   await expect(consumer.consumeAsync(queue1, handlerFilename)).rejects.toThrow(
-    ConsumerMessageHandlerFileError,
+    MessageHandlerFileError,
   );
 
   const handlerFilename2 = path.resolve(
@@ -52,7 +52,7 @@ it('ConsumeMessageWorker: case 2', async () => {
   );
 
   await expect(consumer.consumeAsync(queue1, handlerFilename2)).rejects.toThrow(
-    ConsumerMessageHandlerFilenameExtensionError,
+    MessageHandlerFilenameExtensionError,
   );
 
   const handlerFilename3 = path.resolve(

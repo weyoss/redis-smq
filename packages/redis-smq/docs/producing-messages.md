@@ -2,57 +2,190 @@
 
 # Producing Messages
 
-The `Producer` class provides the functionality to publish messages to a queue efficiently.
+The Producer publishes messages to a target queue or via exchanges (direct, topic, fanout). A single Producer instance
+can efficiently send messages—including priority or scheduled ones—to one or multiple queues.
 
-You can utilize a single `Producer` instance to send messages—including those with priority—to one or more queues simultaneously.
+## Targeting a queue or an exchange
 
-### Important Note
+Before producing, you must set exactly one target on the message:
 
-Before publishing a message, ensure that you specify an exchange for the message using one of the following methods:
+- Queue
+  - ProducibleMessage.setQueue('queue-name')
+- Direct exchange (requires routing key)
+  - ProducibleMessage.setDirectExchange('exchange-name')
+  - ProducibleMessage.setExchangeRoutingKey('routing.key')
+- Topic exchange (requires routing key/pattern)
+  - ProducibleMessage.setTopicExchange('exchange-name')
+  - ProducibleMessage.setExchangeRoutingKey('user.created' | 'user.\*' | 'user.#' ...)
+- Fanout exchange (no routing key)
+  - ProducibleMessage.setFanoutExchange('exchange-name')
 
-- [ProducibleMessage.setQueue()](api/classes/ProducibleMessage.md#setqueue)
-- [ProducibleMessage.setTopic()](api/classes/ProducibleMessage.md#settopic)
-- [ProducibleMessage.setFanOut()](api/classes/ProducibleMessage.md#setfanout)
+If you don’t set a queue or an exchange, producing will fail.
 
-Failure to set an exchange will result in an error.
-
-### Example Code
-
-Here's a simple example of how to use the `Producer` to send a message:
+## Quick start: produce to a queue
 
 ```javascript
 'use strict';
-const { ProducibleMessage, Producer } = require('redis-smq');
 
-const producer = new Producer();
+const { RedisSMQ, ProducibleMessage } = require('redis-smq');
+const { ERedisConfigClient } = require('redis-smq-common');
 
-// Start the producer before publishing a message
-producer.run((err) => {
-  if (err) {
-    console.error('Error starting producer:', err);
-  } else {
-    const msg = new ProducibleMessage();
-    msg
-      .setBody({ hello: 'world' }) // Set the message body
-      .setTTL(3600000) // Set message expiration time in milliseconds
-      .setQueue('test_queue'); // Specify the queue for the message
+// 1) Initialize once
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS, // or ERedisConfigClient.REDIS
+    options: { host: '127.0.0.1', port: 6379, db: 0 },
+  },
+  (err) => {
+    if (err) {
+      console.error('Failed to initialize RedisSMQ:', err);
+      return;
+    }
 
-    producer.produce(msg, (err, reply) => {
-      if (err) {
-        console.error('Error producing message:', err);
-      } else {
-        console.log('Successfully produced message:', reply);
+    // 2) Create and start a producer
+    const producer = RedisSMQ.createProducer();
+    producer.run((startErr) => {
+      if (startErr) {
+        console.error('Error starting producer:', startErr);
+        return;
       }
+
+      // 3) Build a message targeting a queue
+      const msg = new ProducibleMessage()
+        .setBody({ hello: 'world' }) // payload
+        .setTTL(3600000) // TTL in ms (optional)
+        .setQueue('test_queue'); // target a queue
+
+      producer.produce(msg, (produceErr, messageIds) => {
+        if (produceErr) {
+          console.error('Error producing message:', produceErr);
+        } else {
+          console.log('Produced message IDs:', messageIds);
+        }
+
+        // 4) Preferred shutdown: close everything at app exit with RedisSMQ.shutdown(...)
+        // RedisSMQ.shutdown((e) => e && console.error('Shutdown error:', e));
+      });
     });
-  }
-});
+  },
+);
 ```
 
-### Further Reading
+## Produce via a topic exchange
 
-For more information, check out the following resources:
+```javascript
+'use strict';
 
-- [Message Exchanges](message-exchanges.md)
-- [Producer Class Documentation](api/classes/Producer.md)
+const { RedisSMQ, ProducibleMessage } = require('redis-smq');
+const { ERedisConfigClient } = require('redis-smq-common');
 
-This will help you understand message routing and the capabilities of the producer class in depth.
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: '127.0.0.1', port: 6379 },
+  },
+  (err) => {
+    if (err) throw err;
+
+    const producer = RedisSMQ.createProducer();
+    producer.run((runErr) => {
+      if (runErr) throw runErr;
+
+      // Publish to a topic exchange; consumers bind queues using wildcard patterns
+      const msg = new ProducibleMessage()
+        .setTopicExchange('events')
+        .setExchangeRoutingKey('user.created')
+        .setBody({ userId: 123, ts: Date.now() });
+
+      producer.produce(msg, (e, ids) => {
+        if (e) return console.error('Produce failed:', e);
+        console.log(`Delivered to ${ids.length} queue(s):`, ids);
+      });
+    });
+  },
+);
+```
+
+## Produce via a direct exchange
+
+```javascript
+'use strict';
+
+const { RedisSMQ, ProducibleMessage } = require('redis-smq');
+const { ERedisConfigClient } = require('redis-smq-common');
+
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: '127.0.0.1', port: 6379 },
+  },
+  (err) => {
+    if (err) throw err;
+
+    const producer = RedisSMQ.createProducer();
+    producer.run((runErr) => {
+      if (runErr) throw runErr;
+
+      const msg = new ProducibleMessage()
+        .setDirectExchange('orders')
+        .setExchangeRoutingKey('order.created') // exact match required by bound queues
+        .setBody({ orderId: 'ORD-001' });
+
+      producer.produce(msg, (e, ids) => {
+        if (e) return console.error('Produce failed:', e);
+        console.log('Produced to queues:', ids);
+      });
+    });
+  },
+);
+```
+
+## Produce via a fanout exchange
+
+```javascript
+'use strict';
+
+const { RedisSMQ, ProducibleMessage } = require('redis-smq');
+const { ERedisConfigClient } = require('redis-smq-common');
+
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: '127.0.0.1', port: 6379 },
+  },
+  (err) => {
+    if (err) throw err;
+
+    const producer = RedisSMQ.createProducer();
+    producer.run((runErr) => {
+      if (runErr) throw runErr;
+
+      // Fanout ignores routing keys; message goes to all bound queues
+      const msg = new ProducibleMessage()
+        .setFanoutExchange('notifications')
+        .setBody({ message: 'System maintenance in 10 minutes' });
+
+      producer.produce(msg, (e, ids) => {
+        if (e) return console.error('Produce failed:', e);
+        console.log('Broadcast to queues:', ids);
+      });
+    });
+  },
+);
+```
+
+## Tips
+
+- Priority: Set with `ProducibleMessage.setPriority(...)` when producing to a priority queue.
+- Retries: Configure retry behavior with `setRetryThreshold(...)` and `setRetryDelay(...)`.
+- Scheduling: Use `setScheduledDelay(...)`, `setScheduledCRON(...)`, and `setScheduledRepeat(...)` for delayed/recurring
+  delivery.
+- Timeout: Use `setConsumeTimeout(...)` to fail a message if the consumer exceeds the processing window.
+
+## Further Reading
+
+- Initialization: [configuration.md](configuration.md)
+- Producer API: [api/classes/Producer.md](api/classes/Producer.md)
+- ProducibleMessage API: [api/classes/ProducibleMessage.md](api/classes/ProducibleMessage.md)
+- Exchanges overview: [message-exchanges.md](message-exchanges.md)
+- Message Exchanges: [message-exchanges.md](message-exchanges.md)

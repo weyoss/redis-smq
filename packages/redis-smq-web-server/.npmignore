@@ -1,0 +1,9 @@
+# Ignore everything
+*
+
+# Except the dist directory
+!dist/cjs/**
+!dist/esm/**
+!LICENSE
+!CHANGELOG.md
+!package.json

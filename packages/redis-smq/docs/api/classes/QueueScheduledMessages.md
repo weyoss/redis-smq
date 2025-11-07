@@ -2,53 +2,45 @@
 
 # Class: QueueScheduledMessages
 
-## Hierarchy
+## Extends
 
-- `QueueMessagesManagerAbstract`
-
-  ↳ **`QueueScheduledMessages`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](QueueScheduledMessages.md#constructor)
-
-### Methods
-
-- [countMessages](QueueScheduledMessages.md#countmessages)
-- [getMessages](QueueScheduledMessages.md#getmessages)
-- [purge](QueueScheduledMessages.md#purge)
-- [shutdown](QueueScheduledMessages.md#shutdown)
+- `QueueMessagesAbstract`
 
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new QueueScheduledMessages**(): [`QueueScheduledMessages`](QueueScheduledMessages.md)
+> **new QueueScheduledMessages**(): `QueueScheduledMessages`
 
 #### Returns
 
-[`QueueScheduledMessages`](QueueScheduledMessages.md)
+`QueueScheduledMessages`
 
 #### Overrides
 
-QueueMessagesManagerAbstract.constructor
+`QueueMessagesAbstract.constructor`
 
 ## Methods
 
-### countMessages
+### countMessages()
 
-▸ **countMessages**(`queue`, `cb`): `void`
+> **countMessages**(`queue`, `cb`): `void`
 
 Counts the total number of messages in the queue.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) | Extended queue parameters |
-| `cb` | `ICallback`\<`number`\> | Callback returning the count |
+##### queue
+
+[`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
+
+Extended queue parameters
+
+##### cb
+
+`ICallback`\<`number`\>
+
+Callback returning the count
 
 #### Returns
 
@@ -56,24 +48,41 @@ Counts the total number of messages in the queue.
 
 #### Inherited from
 
-QueueMessagesManagerAbstract.countMessages
+`QueueMessagesAbstract.countMessages`
 
-___
+***
 
-### getMessages
+### getMessages()
 
-▸ **getMessages**(`queue`, `page`, `pageSize`, `cb`): `void`
+> **getMessages**(`queue`, `page`, `pageSize`, `cb`): `void`
 
 Retrieves detailed messages for a specific page.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) | Extended queue parameters |
-| `page` | `number` | Page number |
-| `pageSize` | `number` | Number of items per page |
-| `cb` | `ICallback`\<[`IQueueMessagesPage`](../interfaces/IQueueMessagesPage.md)\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\>\> | Callback returning an IQueueMessagesPage of IMessageTransferable |
+##### queue
+
+[`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
+
+Extended queue parameters
+
+##### page
+
+`number`
+
+Page number
+
+##### pageSize
+
+`number`
+
+Number of items per page
+
+##### cb
+
+`ICallback`\<[`IPaginationPage`](../interfaces/IPaginationPage.md)\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\<`unknown`\>\>\>
+
+Callback returning an IQueueMessagesPage of IMessageTransferable
 
 #### Returns
 
@@ -81,13 +90,13 @@ Retrieves detailed messages for a specific page.
 
 #### Inherited from
 
-QueueMessagesManagerAbstract.getMessages
+`QueueMessagesAbstract.getMessages`
 
-___
+***
 
-### purge
+### purge()
 
-▸ **purge**(`queue`, `cb`): `void`
+> **purge**(`queue`, `cb`): `void`
 
 Purges all messages from the specified queue.
 
@@ -95,15 +104,25 @@ Different message types can be purged using specific classes:
 - [QueueMessages](QueueMessages.md) - Delete all queue messages
 - [QueueAcknowledgedMessages](QueueAcknowledgedMessages.md) - Delete acknowledged messages (if configured to be stored)
 - [QueueDeadLetteredMessages](QueueDeadLetteredMessages.md) - Delete dead-lettered messages (if configured to be stored)
-- [QueueScheduledMessages](QueueScheduledMessages.md) - Delete scheduled messages
+- QueueScheduledMessages - Delete scheduled messages
 - [QueuePendingMessages](QueuePendingMessages.md) - Delete pending messages
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) | The queue to purge. Can be a string, queue parameters object, or queue consumer group parameters. |
-| `cb` | `ICallback`\<`void`\> | Callback function that will be invoked when the operation completes. If an error occurs, the first parameter will contain the Error object. Otherwise, the first parameter will be null/undefined. |
+##### queue
+
+[`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
+
+The queue to purge. Can be a string, queue parameters object,
+               or queue consumer group parameters.
+
+##### cb
+
+`ICallback`
+
+Callback function that will be invoked when the operation completes.
+            If an error occurs, the first parameter will contain the Error object.
+            Otherwise, the first parameter will be null/undefined.
 
 #### Returns
 
@@ -111,26 +130,4 @@ Different message types can be purged using specific classes:
 
 #### Inherited from
 
-QueueMessagesManagerAbstract.purge
-
-___
-
-### shutdown
-
-▸ **shutdown**(`cb`): `void`
-
-Shuts down the manager and its dependencies gracefully.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `cb` | `ICallback`\<`void`\> | Callback function |
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-QueueMessagesManagerAbstract.shutdown
+`QueueMessagesAbstract.purge`

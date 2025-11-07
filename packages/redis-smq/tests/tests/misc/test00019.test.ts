@@ -9,155 +9,140 @@
 
 import { expect, test } from 'vitest';
 import {
-  ConfigurationMessageQueueSizeError,
-  ConfigurationMessageStoreExpireError,
-} from '../../../src/config/index.js';
-import Store from '../../../src/config/messages/store.js';
+  ConfigurationMessageAuditQueueSizeError,
+  ConfigurationMessageAuditExpireError,
+} from '../../../src/errors/index.js';
+import { parseMessageAuditConfig } from '../../../src/config/parse-message-audit-config.js';
 
 test('Configuration: storeMessages', async () => {
   expect(() => {
-    Store({
-      messages: {
-        store: {
-          acknowledged: {
-            queueSize: -11,
-          },
-        },
+    parseMessageAuditConfig({
+      acknowledgedMessages: {
+        queueSize: -11,
       },
     });
-  }).toThrow(ConfigurationMessageQueueSizeError);
+  }).toThrow(ConfigurationMessageAuditQueueSizeError);
 
   expect(() => {
-    Store({
-      messages: {
-        store: {
-          acknowledged: {
-            expire: -7,
-          },
-        },
+    parseMessageAuditConfig({
+      acknowledgedMessages: {
+        expire: -7,
       },
     });
-  }).toThrow(ConfigurationMessageStoreExpireError);
+  }).toThrow(ConfigurationMessageAuditExpireError);
 
-  const config = Store({});
-  expect(config.deadLettered.store).toEqual(false);
-  expect(config.deadLettered.expire).toEqual(0);
-  expect(config.deadLettered.queueSize).toEqual(0);
-  expect(config.acknowledged.store).toEqual(false);
-  expect(config.acknowledged.expire).toEqual(0);
-  expect(config.acknowledged.queueSize).toEqual(0);
+  const config = parseMessageAuditConfig({});
+  expect(config.deadLetteredMessages.enabled).toEqual(false);
+  expect(config.deadLetteredMessages.expire).toEqual(0);
+  expect(config.deadLetteredMessages.queueSize).toEqual(0);
+  expect(config.acknowledgedMessages.enabled).toEqual(false);
+  expect(config.acknowledgedMessages.expire).toEqual(0);
+  expect(config.acknowledgedMessages.queueSize).toEqual(0);
 
-  const config2 = Store({ messages: { store: false } });
-  expect(config2.deadLettered.store).toEqual(false);
-  expect(config2.deadLettered.expire).toEqual(0);
-  expect(config2.deadLettered.queueSize).toEqual(0);
-  expect(config2.acknowledged.store).toEqual(false);
-  expect(config2.acknowledged.expire).toEqual(0);
-  expect(config2.acknowledged.queueSize).toEqual(0);
+  const config2 = parseMessageAuditConfig(false);
+  expect(config2.deadLetteredMessages.enabled).toEqual(false);
+  expect(config2.deadLetteredMessages.expire).toEqual(0);
+  expect(config2.deadLetteredMessages.queueSize).toEqual(0);
+  expect(config2.acknowledgedMessages.enabled).toEqual(false);
+  expect(config2.acknowledgedMessages.expire).toEqual(0);
+  expect(config2.acknowledgedMessages.queueSize).toEqual(0);
 
-  const config3 = Store({ messages: { store: true } });
-  expect(config3.deadLettered.store).toEqual(true);
-  expect(config3.deadLettered.expire).toEqual(0);
-  expect(config3.deadLettered.queueSize).toEqual(0);
-  expect(config3.acknowledged.store).toEqual(true);
-  expect(config3.acknowledged.expire).toEqual(0);
-  expect(config3.acknowledged.queueSize).toEqual(0);
+  const config3 = parseMessageAuditConfig(true);
+  expect(config3.deadLetteredMessages.enabled).toEqual(true);
+  expect(config3.deadLetteredMessages.expire).toEqual(0);
+  expect(config3.deadLetteredMessages.queueSize).toEqual(0);
+  expect(config3.acknowledgedMessages.enabled).toEqual(true);
+  expect(config3.acknowledgedMessages.expire).toEqual(0);
+  expect(config3.acknowledgedMessages.queueSize).toEqual(0);
 
-  const config4 = Store({ messages: { store: {} } });
-  expect(config4.deadLettered.store).toEqual(false);
-  expect(config4.deadLettered.expire).toEqual(0);
-  expect(config4.deadLettered.queueSize).toEqual(0);
-  expect(config4.acknowledged.store).toEqual(false);
-  expect(config4.acknowledged.expire).toEqual(0);
-  expect(config4.acknowledged.queueSize).toEqual(0);
+  const config4 = parseMessageAuditConfig({});
+  expect(config4.deadLetteredMessages.enabled).toEqual(false);
+  expect(config4.deadLetteredMessages.expire).toEqual(0);
+  expect(config4.deadLetteredMessages.queueSize).toEqual(0);
+  expect(config4.acknowledgedMessages.enabled).toEqual(false);
+  expect(config4.acknowledgedMessages.expire).toEqual(0);
+  expect(config4.acknowledgedMessages.queueSize).toEqual(0);
 
-  const config5 = Store({
-    messages: {
-      store: { acknowledged: false },
+  const config5 = parseMessageAuditConfig({
+    acknowledgedMessages: false,
+  });
+  expect(config5.deadLetteredMessages.enabled).toEqual(false);
+  expect(config5.deadLetteredMessages.expire).toEqual(0);
+  expect(config5.deadLetteredMessages.queueSize).toEqual(0);
+  expect(config5.acknowledgedMessages.enabled).toEqual(false);
+  expect(config5.acknowledgedMessages.expire).toEqual(0);
+  expect(config5.acknowledgedMessages.queueSize).toEqual(0);
+
+  const config6 = parseMessageAuditConfig({
+    acknowledgedMessages: true,
+  });
+  expect(config6.deadLetteredMessages.enabled).toEqual(false);
+  expect(config6.deadLetteredMessages.expire).toEqual(0);
+  expect(config6.deadLetteredMessages.queueSize).toEqual(0);
+  expect(config6.acknowledgedMessages.enabled).toEqual(true);
+  expect(config6.acknowledgedMessages.expire).toEqual(0);
+  expect(config6.acknowledgedMessages.queueSize).toEqual(0);
+
+  const config7 = parseMessageAuditConfig({
+    acknowledgedMessages: true,
+    deadLetteredMessages: false,
+  });
+  expect(config7.deadLetteredMessages.enabled).toEqual(false);
+  expect(config7.deadLetteredMessages.expire).toEqual(0);
+  expect(config7.deadLetteredMessages.queueSize).toEqual(0);
+  expect(config7.acknowledgedMessages.enabled).toEqual(true);
+  expect(config7.acknowledgedMessages.expire).toEqual(0);
+  expect(config7.acknowledgedMessages.queueSize).toEqual(0);
+
+  const config8 = parseMessageAuditConfig({
+    acknowledgedMessages: true,
+    deadLetteredMessages: true,
+  });
+  expect(config8.deadLetteredMessages.enabled).toEqual(true);
+  expect(config8.deadLetteredMessages.expire).toEqual(0);
+  expect(config8.deadLetteredMessages.queueSize).toEqual(0);
+  expect(config8.acknowledgedMessages.enabled).toEqual(true);
+  expect(config8.acknowledgedMessages.expire).toEqual(0);
+  expect(config8.acknowledgedMessages.queueSize).toEqual(0);
+
+  const config9 = parseMessageAuditConfig({
+    acknowledgedMessages: {},
+    deadLetteredMessages: true,
+  });
+  expect(config9.deadLetteredMessages.enabled).toEqual(true);
+  expect(config9.deadLetteredMessages.expire).toEqual(0);
+  expect(config9.deadLetteredMessages.queueSize).toEqual(0);
+  expect(config9.acknowledgedMessages.enabled).toEqual(true);
+  expect(config9.acknowledgedMessages.expire).toEqual(0);
+  expect(config9.acknowledgedMessages.queueSize).toEqual(0);
+
+  const config10 = parseMessageAuditConfig({
+    acknowledgedMessages: {
+      expire: 90000,
+    },
+    deadLetteredMessages: true,
+  });
+  expect(config10.deadLetteredMessages.enabled).toEqual(true);
+  expect(config10.deadLetteredMessages.expire).toEqual(0);
+  expect(config10.deadLetteredMessages.queueSize).toEqual(0);
+  expect(config10.acknowledgedMessages.enabled).toEqual(true);
+  expect(config10.acknowledgedMessages.expire).toEqual(90000);
+  expect(config10.acknowledgedMessages.queueSize).toEqual(0);
+
+  const config11 = parseMessageAuditConfig({
+    acknowledgedMessages: {
+      expire: 90000,
+      queueSize: 10000,
+    },
+    deadLetteredMessages: {
+      expire: 18000,
+      queueSize: 20000,
     },
   });
-  expect(config5.deadLettered.store).toEqual(false);
-  expect(config5.deadLettered.expire).toEqual(0);
-  expect(config5.deadLettered.queueSize).toEqual(0);
-  expect(config5.acknowledged.store).toEqual(false);
-  expect(config5.acknowledged.expire).toEqual(0);
-  expect(config5.acknowledged.queueSize).toEqual(0);
-
-  const config6 = Store({
-    messages: { store: { acknowledged: true } },
-  });
-  expect(config6.deadLettered.store).toEqual(false);
-  expect(config6.deadLettered.expire).toEqual(0);
-  expect(config6.deadLettered.queueSize).toEqual(0);
-  expect(config6.acknowledged.store).toEqual(true);
-  expect(config6.acknowledged.expire).toEqual(0);
-  expect(config6.acknowledged.queueSize).toEqual(0);
-
-  const config7 = Store({
-    messages: { store: { acknowledged: true, deadLettered: false } },
-  });
-  expect(config7.deadLettered.store).toEqual(false);
-  expect(config7.deadLettered.expire).toEqual(0);
-  expect(config7.deadLettered.queueSize).toEqual(0);
-  expect(config7.acknowledged.store).toEqual(true);
-  expect(config7.acknowledged.expire).toEqual(0);
-  expect(config7.acknowledged.queueSize).toEqual(0);
-
-  const config8 = Store({
-    messages: { store: { acknowledged: true, deadLettered: true } },
-  });
-  expect(config8.deadLettered.store).toEqual(true);
-  expect(config8.deadLettered.expire).toEqual(0);
-  expect(config8.deadLettered.queueSize).toEqual(0);
-  expect(config8.acknowledged.store).toEqual(true);
-  expect(config8.acknowledged.expire).toEqual(0);
-  expect(config8.acknowledged.queueSize).toEqual(0);
-
-  const config9 = Store({
-    messages: { store: { acknowledged: {}, deadLettered: true } },
-  });
-  expect(config9.deadLettered.store).toEqual(true);
-  expect(config9.deadLettered.expire).toEqual(0);
-  expect(config9.deadLettered.queueSize).toEqual(0);
-  expect(config9.acknowledged.store).toEqual(true);
-  expect(config9.acknowledged.expire).toEqual(0);
-  expect(config9.acknowledged.queueSize).toEqual(0);
-
-  const config10 = Store({
-    messages: {
-      store: {
-        acknowledged: {
-          expire: 90000,
-        },
-        deadLettered: true,
-      },
-    },
-  });
-  expect(config10.deadLettered.store).toEqual(true);
-  expect(config10.deadLettered.expire).toEqual(0);
-  expect(config10.deadLettered.queueSize).toEqual(0);
-  expect(config10.acknowledged.store).toEqual(true);
-  expect(config10.acknowledged.expire).toEqual(90000);
-  expect(config10.acknowledged.queueSize).toEqual(0);
-
-  const config11 = Store({
-    messages: {
-      store: {
-        acknowledged: {
-          expire: 90000,
-          queueSize: 10000,
-        },
-        deadLettered: {
-          expire: 18000,
-          queueSize: 20000,
-        },
-      },
-    },
-  });
-  expect(config11.deadLettered.store).toEqual(true);
-  expect(config11.deadLettered.expire).toEqual(18000);
-  expect(config11.deadLettered.queueSize).toEqual(20000);
-  expect(config11.acknowledged.store).toEqual(true);
-  expect(config11.acknowledged.expire).toEqual(90000);
-  expect(config11.acknowledged.queueSize).toEqual(10000);
+  expect(config11.deadLetteredMessages.enabled).toEqual(true);
+  expect(config11.deadLetteredMessages.expire).toEqual(18000);
+  expect(config11.deadLetteredMessages.queueSize).toEqual(20000);
+  expect(config11.acknowledgedMessages.enabled).toEqual(true);
+  expect(config11.acknowledgedMessages.expire).toEqual(90000);
+  expect(config11.acknowledgedMessages.queueSize).toEqual(10000);
 });

@@ -1,0 +1,95 @@
+{
+  "name": "redis-smq-web-ui",
+  "version": "9.0.0-next.18",
+  "description": "Web UI for RedisSMQ: monitor and manage queues, messages, and consumers.",
+  "author": "Weyoss <weyoss@protonmail.com>",
+  "license": "MIT",
+  "keywords": [
+    "redis",
+    "smq",
+    "redis-smq",
+    "message-queue",
+    "queue",
+    "web-ui",
+    "dashboard",
+    "monitoring",
+    "vue",
+    "spa"
+  ],
+  "homepage": "https://github.com/weyoss/redis-smq",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/weyoss/redis-smq.git"
+  },
+  "bugs": {
+    "url": "https://github.com/weyoss/redis-smq/issues"
+  },
+  "type": "module",
+  "main": "./dist/node/cjs/index.js",
+  "module": "./dist/node/esm/index.js",
+  "types": "./dist/node/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/node/esm/index.d.ts",
+        "default": "./dist/node/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/node/cjs/index.d.ts",
+        "default": "./dist/node/cjs/index.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "dev": "run-p run-dev-server run-api-server",
+    "run-dev-server": "vite",
+    "preview": "vite preview",
+    "test:unit": "vitest",
+    "test:e2e": "playwright test",
+    "build": "scripts/build.sh",
+    "generate-openapi-client": "./scripts/generate_openapi_client.sh",
+    "run-api-server": "./scripts/run_api_server.js",
+    "consume-queue": "./scripts/consume-queue.js",
+    "produce-message": "./scripts/produce-message.js"
+  },
+  "peerDependencies": {
+    "redis-smq-common": "workspace:^"
+  },
+  "dependencies": {
+    "@vee-validate/zod": "4.15.1",
+    "bootstrap": "5.3.8",
+    "bootstrap-icons": "1.13.1",
+    "date-fns": "4.1.0",
+    "pinia": "3.0.3",
+    "vee-validate": "4.15.1",
+    "vue": "3.5.22",
+    "vue-router": "4.5.1",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@tanstack/vue-query": "5.90.2",
+    "@tsconfig/node20": "20.1.5",
+    "@types/jsdom": "27.0.0",
+    "@vitejs/plugin-vue": "6.0.1",
+    "@vue/test-utils": "2.4.6",
+    "@vue/tsconfig": "0.7.0",
+    "axios": "1.12.2",
+    "commander": "14.0.1",
+    "dotenv": "17.2.3",
+    "jsdom": "27.0.0",
+    "orval": "7.13.2",
+    "redis-smq": "workspace:^",
+    "redis-smq-common": "workspace:^",
+    "redis-smq-rest-api": "workspace:^",
+    "vite": "7.1.12",
+    "vite-plugin-dts": "4.5.4",
+    "vite-plugin-node-polyfills": "0.24.0",
+    "vite-plugin-vue-devtools": "8.0.2",
+    "vue-tsc": "3.1.1"
+  }
+}

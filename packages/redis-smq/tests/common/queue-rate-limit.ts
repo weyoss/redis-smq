@@ -8,18 +8,9 @@
  */
 
 import bluebird from 'bluebird';
-import { QueueRateLimit } from '../../src/lib/index.js';
-
-const instances: QueueRateLimit[] = [];
+import { RedisSMQ } from '../../src/index.js';
 
 export async function getQueueRateLimit() {
-  const instance = new QueueRateLimit();
-  instances.push(instance);
+  const instance = RedisSMQ.createQueueRateLimit();
   return bluebird.promisifyAll(instance);
-}
-
-export async function shutDownQueueRateLimit() {
-  for (const i of instances) {
-    await bluebird.promisifyAll(i).shutdownAsync();
-  }
 }

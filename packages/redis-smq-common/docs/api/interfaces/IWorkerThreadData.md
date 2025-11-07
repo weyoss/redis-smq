@@ -2,28 +2,20 @@
 
 # Interface: IWorkerThreadData
 
-## Table of contents
-
-### Properties
-
-- [filename](IWorkerThreadData.md#filename)
-- [initialPayload](IWorkerThreadData.md#initialpayload)
-- [type](IWorkerThreadData.md#type)
-
 ## Properties
 
 ### filename
 
-• **filename**: `string`
+> **filename**: `string`
 
-___
+***
 
 ### initialPayload
 
-• **initialPayload**: `unknown`
+> **initialPayload**: `unknown`
 
-___
+***
 
 ### type
 
-• **type**: [`EWorkerType`](../enums/EWorkerType.md)
+> **type**: [`EWorkerType`](../enumerations/EWorkerType.md)

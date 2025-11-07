@@ -8,10 +8,9 @@
  */
 
 import { expect, test } from 'vitest';
-import _ from 'lodash';
-import { Configuration } from '../../../src/config/index.js';
+import bluebird from 'bluebird';
+import { Configuration } from '../../../src/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
-import { config } from '../../common/config.js';
 import {
   createQueue,
   getDefaultQueue,
@@ -21,17 +20,14 @@ import {
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
 
-test('Message storage: acknowledged = false, deadLettered = true', async () => {
-  const cfg = _.merge(config, {
-    messages: {
-      store: {
-        acknowledged: false,
-        deadLettered: true,
-      },
+test('Message audit: acknowledged = false, deadLettered = true', async () => {
+  const configInstance = bluebird.promisifyAll(Configuration.getInstance());
+  await configInstance.updateConfigAsync({
+    messageAudit: {
+      acknowledgedMessages: false,
+      deadLetteredMessages: true,
     },
   });
-  Configuration.reset();
-  Configuration.getSetConfig(cfg);
 
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);

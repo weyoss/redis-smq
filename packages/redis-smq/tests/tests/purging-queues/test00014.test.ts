@@ -7,10 +7,9 @@
  * in the root directory of this source tree.
  */
 
-import _ from 'lodash';
+import bluebird from 'bluebird';
 import { expect, test } from 'vitest';
-import { Configuration } from '../../../src/config/index.js';
-import { config } from '../../common/config.js';
+import { Configuration } from '../../../src/index.js';
 import {
   createQueue,
   getDefaultQueue,
@@ -19,14 +18,11 @@ import {
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 
-test('Combined test: Disable message storage, produce and acknowledge a message, and purge queue', async () => {
-  const cfg = _.merge(config, {
-    messages: {
-      store: false,
-    },
+test('Combined test: Disable message audit, produce and acknowledge a message, and purge queue', async () => {
+  const configInstance = bluebird.promisifyAll(Configuration.getInstance());
+  await configInstance.updateConfigAsync({
+    messageAudit: false,
   });
-  Configuration.reset();
-  Configuration.getSetConfig(cfg);
 
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);

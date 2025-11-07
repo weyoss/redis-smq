@@ -9,14 +9,13 @@
 
 import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
-import { RedisClient } from '../../../src/common/redis-client/redis-client.js';
 import { redisKeys } from '../../../src/common/redis-keys/redis-keys.js';
 import {
   EMessagePriority,
   EQueueType,
   ProducibleMessage,
-} from '../../../src/lib/index.js';
-import { QueueMessagesStorageSortedSet } from '../../../src/lib/queue-messages/queue-messages-storage/queue-messages-storage-sorted-set.js';
+} from '../../../src/index.js';
+import { QueueStorageSortedSet } from '../../../src/common/queue-messages/queue-storage/queue-storage-sorted-set.js';
 
 import {
   createQueue,
@@ -26,12 +25,11 @@ import { getProducer } from '../../common/producer.js';
 
 const { promisifyAll } = bluebird;
 
-it('QueueMessagesStorageSortedSet: should fetch all items for a small list', async () => {
+it('QueueStorageSortedSet: should fetch all items for a small list', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.PRIORITY_QUEUE);
-  const redisClient = promisifyAll(new RedisClient());
   const queueMessagesStorageSortedSet = promisifyAll(
-    new QueueMessagesStorageSortedSet(redisClient),
+    new QueueStorageSortedSet(),
   );
 
   const ids: string[] = [];
@@ -55,5 +53,4 @@ it('QueueMessagesStorageSortedSet: should fetch all items for a small list', asy
     keyQueuePriorityPending,
   );
   expect(items.sort()).toEqual(ids.sort());
-  await redisClient.shutdownAsync();
 });

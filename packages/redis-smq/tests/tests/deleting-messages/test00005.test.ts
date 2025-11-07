@@ -15,7 +15,7 @@ import {
   getDefaultQueue,
   produceMessage,
 } from '../../common/message-producing-consuming.js';
-import { getMessage } from '../../common/message.js';
+import { getMessageManager } from '../../common/message-manager.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 
 test('Combined test: Delete a message being in process. Check pending, acknowledged, and dead-letter message. Check queue metrics.', async () => {
@@ -38,7 +38,7 @@ test('Combined test: Delete a message being in process. Check pending, acknowled
 
   await bluebird.delay(5000);
 
-  const message = await getMessage();
+  const message = await getMessageManager();
   const reply = await message.deleteMessageByIdAsync(messageId);
   expect(reply.status).toBe('MESSAGE_NOT_DELETED');
   expect(reply.stats).toEqual({
@@ -75,6 +75,4 @@ test('Combined test: Delete a message being in process. Check pending, acknowled
     notFound: 1,
     inProcess: 0,
   });
-
-  await message.shutdownAsync();
 });

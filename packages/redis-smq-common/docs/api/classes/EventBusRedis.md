@@ -2,227 +2,358 @@
 
 # Class: EventBusRedis\<Events\>
 
-## Type parameters
+EventBus
+- Keeps listener management simple: delegate to base EventEmitter without extra guards
+- Only validates running state when emitting non-error events
+- Ensures listeners are cleared on shutdown
 
-| Name | Type |
-| :------ | :------ |
-| `Events` | extends [`TEventBusEvent`](../README.md#teventbusevent) |
+## Extends
 
-## Hierarchy
+- [`EventBus`](EventBus.md)\<`Events`\>
 
-- [`EventEmitter`](EventEmitter.md)\<`Events`\>
+## Type Parameters
 
-  ↳ **`EventBusRedis`**
+### Events
 
-## Implements
+`Events` *extends* [`TEventBusEvent`](../type-aliases/TEventBusEvent.md)
 
-- [`IEventBus`](../interfaces/IEventBus.md)\<`Events`\>
+## Constructors
 
-## Table of contents
+### Constructor
 
-### Methods
-
-- [emit](EventBusRedis.md#emit)
-- [on](EventBusRedis.md#on)
-- [once](EventBusRedis.md#once)
-- [removeAllListeners](EventBusRedis.md#removealllisteners)
-- [removeListener](EventBusRedis.md#removelistener)
-- [shutdown](EventBusRedis.md#shutdown)
-- [createInstance](EventBusRedis.md#createinstance)
-
-## Methods
-
-### emit
-
-▸ **emit**\<`E`\>(`event`, `...args`): `boolean`
-
-#### Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+> **new EventBusRedis**\<`Events`\>(`config`): `EventBusRedis`\<`Events`\>
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `...args` | `Parameters`\<`Events`[`E`]\> |
+##### config
+
+[`IEventBusRedisConfig`](../interfaces/IEventBusRedisConfig.md)
+
+#### Returns
+
+`EventBusRedis`\<`Events`\>
+
+#### Overrides
+
+[`EventBus`](EventBus.md).[`constructor`](EventBus.md#constructor)
+
+## Methods
+
+### emit()
+
+> **emit**\<`E`\>(`event`, ...`args`): `boolean`
+
+Emit an event.
+- 'error' events are always emitted locally.
+- Non-error events require the bus to be running; otherwise an error is emitted and false is returned.
+
+#### Type Parameters
+
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
+
+#### Parameters
+
+##### event
+
+`E`
+
+##### args
+
+...`Parameters`\<`Events`\[`E`\]\>
 
 #### Returns
 
 `boolean`
 
-#### Implementation of
-
-[IEventBus](../interfaces/IEventBus.md).[emit](../interfaces/IEventBus.md#emit)
-
 #### Overrides
 
-[EventEmitter](EventEmitter.md).[emit](EventEmitter.md#emit)
+[`EventBus`](EventBus.md).[`emit`](EventBus.md#emit)
 
-___
+***
 
-### on
+### getId()
 
-▸ **on**\<`E`\>(`event`, `listener`): `this`
+> **getId**(): `string`
 
-#### Type parameters
+Retrieves the unique identifier of the Runnable instance.
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+#### Returns
+
+`string`
+
+- The unique identifier of the Runnable instance.
+
+#### Inherited from
+
+[`EventBus`](EventBus.md).[`getId`](EventBus.md#getid)
+
+***
+
+### isDown()
+
+> **isDown**(): `boolean`
+
+Checks if the Runnable instance is currently down.
+
+#### Returns
+
+`boolean`
+
+- Returns `true` if the Runnable instance is down, `false` otherwise.
+
+#### Inherited from
+
+[`EventBus`](EventBus.md).[`isDown`](EventBus.md#isdown)
+
+***
+
+### isGoingDown()
+
+> **isGoingDown**(): `boolean`
+
+Checks if the Runnable instance is currently going down.
+
+#### Returns
+
+`boolean`
+
+- Returns `true` if the Runnable instance is going down, `false` otherwise.
+
+#### Inherited from
+
+[`EventBus`](EventBus.md).[`isGoingDown`](EventBus.md#isgoingdown)
+
+***
+
+### isGoingUp()
+
+> **isGoingUp**(): `boolean`
+
+Checks if the Runnable instance is currently going up.
+
+#### Returns
+
+`boolean`
+
+- Returns `true` if the Runnable instance is going up, `false` otherwise.
+
+#### Inherited from
+
+[`EventBus`](EventBus.md).[`isGoingUp`](EventBus.md#isgoingup)
+
+***
+
+### isRunning()
+
+> **isRunning**(): `boolean`
+
+Checks if the Runnable instance is currently running or going up.
+
+#### Returns
+
+`boolean`
+
+- Returns `true` if the Runnable instance is running or going up, `false` otherwise.
+
+#### Inherited from
+
+[`EventBus`](EventBus.md).[`isRunning`](EventBus.md#isrunning)
+
+***
+
+### isUp()
+
+> **isUp**(): `boolean`
+
+Checks if the Runnable instance is currently up.
+
+#### Returns
+
+`boolean`
+
+- Returns `true` if the Runnable instance is up, `false` otherwise.
+
+#### Inherited from
+
+[`EventBus`](EventBus.md).[`isUp`](EventBus.md#isup)
+
+***
+
+### on()
+
+> **on**\<`E`\>(`event`, `listener`): `this`
+
+#### Type Parameters
+
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `Events`[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+`Events`\[`E`\]
 
 #### Returns
 
 `this`
 
-#### Implementation of
-
-[IEventBus](../interfaces/IEventBus.md).[on](../interfaces/IEventBus.md#on)
-
 #### Overrides
 
-[EventEmitter](EventEmitter.md).[on](EventEmitter.md#on)
+[`EventBus`](EventBus.md).[`on`](EventBus.md#on)
 
-___
+***
 
-### once
+### once()
 
-▸ **once**\<`E`\>(`event`, `listener`): `this`
+> **once**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `Events`[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+`Events`\[`E`\]
 
 #### Returns
 
 `this`
 
-#### Implementation of
-
-[IEventBus](../interfaces/IEventBus.md).[once](../interfaces/IEventBus.md#once)
-
 #### Overrides
 
-[EventEmitter](EventEmitter.md).[once](EventEmitter.md#once)
+[`EventBus`](EventBus.md).[`once`](EventBus.md#once)
 
-___
+***
 
-### removeAllListeners
+### removeAllListeners()
 
-▸ **removeAllListeners**\<`E`\>(`event?`): `this`
+> **removeAllListeners**\<`E`\>(`event?`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event?` | `Extract`\<`E`, `string`\> |
+##### event?
+
+`Extract`\<`E`, `string`\>
 
 #### Returns
 
 `this`
 
-#### Implementation of
-
-[IEventBus](../interfaces/IEventBus.md).[removeAllListeners](../interfaces/IEventBus.md#removealllisteners)
-
 #### Overrides
 
-[EventEmitter](EventEmitter.md).[removeAllListeners](EventEmitter.md#removealllisteners)
+[`EventBus`](EventBus.md).[`removeAllListeners`](EventBus.md#removealllisteners)
 
-___
+***
 
-### removeListener
+### removeListener()
 
-▸ **removeListener**\<`E`\>(`event`, `listener`): `this`
+> **removeListener**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `Events`[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+`Events`\[`E`\]
 
 #### Returns
 
 `this`
 
-#### Implementation of
-
-[IEventBus](../interfaces/IEventBus.md).[removeListener](../interfaces/IEventBus.md#removelistener)
-
 #### Overrides
 
-[EventEmitter](EventEmitter.md).[removeListener](EventEmitter.md#removelistener)
+[`EventBus`](EventBus.md).[`removeListener`](EventBus.md#removelistener)
 
-___
+***
 
-### shutdown
+### run()
 
-▸ **shutdown**(`cb`): `void`
+> **run**(`cb`): `void`
+
+Initiates the Runnable instance's execution.
+
+The `run` method starts the Runnable instance by executing the `goingUp` tasks.
+If the Runnable instance is already running or going up, the method will return immediately without executing any tasks.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | [`ICallback`](../interfaces/ICallback.md)\<`void`\> |
+##### cb
+
+[`ICallback`](../interfaces/ICallback.md)\<`boolean`\>
+
+A callback function that will be called after the execution process is completed.
+            If an error occurs during the execution process, the error will be passed as the first parameter to the callback.
+            If the execution process is successful, the callback will be called with a boolean parameter indicating whether the Runnable instance was running or not.
+            If the Runnable instance was not running, the callback will be called with `true`.
+            If the Runnable instance was already running, the callback will be called with `false`.
 
 #### Returns
 
 `void`
 
-#### Implementation of
+#### Inherited from
 
-[IEventBus](../interfaces/IEventBus.md).[shutdown](../interfaces/IEventBus.md#shutdown)
+[`EventBus`](EventBus.md).[`run`](EventBus.md#run)
 
-___
+***
 
-### createInstance
+### shutdown()
 
-▸ **createInstance**\<`T`\>(`config`, `cb`): `void`
+> **shutdown**(`cb`): `void`
 
-#### Type parameters
+Performs a graceful shutdown of the Runnable instance.
 
-| Name | Type |
-| :------ | :------ |
-| `T` | extends [`TEventBusEvent`](../README.md#teventbusevent) |
+The shutdown process involves executing the `goingDown` tasks, which are responsible for cleaning up resources.
+The shutdown behavior depends on the current state of the Runnable instance:
+- If the Runnable is running (`isRunning()`) and going up (`isGoingUp()`), the shutdown process will rollback the going up state.
+- If the Runnable is running (`isRunning()`) and up (`isUp()`), the shutdown process will mark the Runnable as going down.
+- After executing the `goingDown` tasks, the Runnable will call the `down` method to finalize the shutdown process.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `config` | [`IRedisConfig`](../interfaces/IRedisConfig.md) |
-| `cb` | [`ICallback`](../interfaces/ICallback.md)\<[`IEventBus`](../interfaces/IEventBus.md)\<`T`\>\> |
+##### cb
+
+[`ICallback`](../interfaces/ICallback.md)\<`void`\>
+
+A callback function that will be called after the shutdown process is completed.
+            If an error occurs during the shutdown process, the error will be passed as the first parameter to the callback.
+            If the shutdown process is successful, the callback will be called with no arguments.
 
 #### Returns
 
 `void`
+
+#### Inherited from
+
+[`EventBus`](EventBus.md).[`shutdown`](EventBus.md#shutdown)

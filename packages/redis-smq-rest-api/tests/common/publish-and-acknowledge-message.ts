@@ -33,8 +33,7 @@ export async function publishAndAcknowledgeMessage(
   const ids = await producer.produceAsync(message);
 
   const acknowledgedMessages: string[] = [];
-  const eventBus = promisifyAll(new EventBus());
-  const eventBusInstance = await eventBus.getSetInstanceAsync();
+  const eventBusInstance = EventBus.getInstance();
   eventBusInstance.on(
     'consumer.consumeMessage.messageAcknowledged',
     (messageId) => {
@@ -54,6 +53,5 @@ export async function publishAndAcknowledgeMessage(
 
   await producer.shutdownAsync();
   await consumer.shutdownAsync();
-  await eventBus.shutdownAsync();
   return ids;
 }

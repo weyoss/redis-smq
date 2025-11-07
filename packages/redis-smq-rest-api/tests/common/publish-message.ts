@@ -11,8 +11,8 @@ import bluebird from 'bluebird';
 import {
   EMessagePriority,
   IQueueParams,
-  Producer,
   ProducibleMessage,
+  RedisSMQ,
 } from 'redis-smq';
 
 const { promisifyAll } = bluebird;
@@ -21,7 +21,7 @@ export async function publishMessage(
   queue: string | IQueueParams,
   priorityQueue = false,
 ) {
-  const producer = promisifyAll(new Producer());
+  const producer = promisifyAll(RedisSMQ.createProducer());
   await producer.runAsync();
 
   const message = new ProducibleMessage();

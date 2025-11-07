@@ -13,7 +13,7 @@ import {
   getDefaultQueue,
   produceAndAcknowledgeMessage,
 } from '../../common/message-producing-consuming.js';
-import { getMessage } from '../../common/message.js';
+import { getMessageManager } from '../../common/message-manager.js';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
@@ -46,7 +46,7 @@ test('Combined test: Delete an acknowledged message. Check pending, acknowledged
   expect(count.pending).toBe(0);
   expect(count.acknowledged).toBe(1);
 
-  const message = await getMessage();
+  const message = await getMessageManager();
   const reply = await message.deleteMessageByIdAsync(messageId);
   expect(reply.status).toBe('OK');
   expect(reply.stats).toEqual({

@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { expect, vitest, test } from 'vitest';
+import { expect, test, vitest } from 'vitest';
 import bluebird from 'bluebird';
 import {
   Consumer,
@@ -15,12 +15,12 @@ import {
   EQueueType,
   Producer,
   ProducibleMessage,
-} from '../../../src/lib/index.js';
-import { getQueue } from '../../common/queue.js';
+} from '../../../src/index.js';
+import { getQueueManager } from '../../common/queue-manager.js';
 
 test('Health check: case 3', async () => {
   const queueName = `queue_${Date.now()}`;
-  const queue = await getQueue();
+  const queue = await getQueueManager();
   await queue.saveAsync(
     queueName,
     EQueueType.LIFO_QUEUE,

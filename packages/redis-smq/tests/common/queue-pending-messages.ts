@@ -8,18 +8,9 @@
  */
 
 import bluebird from 'bluebird';
-import { QueuePendingMessages } from '../../src/lib/index.js';
-
-const instances: QueuePendingMessages[] = [];
+import { RedisSMQ } from '../../src/index.js';
 
 export async function getQueuePendingMessages() {
-  const instance = new QueuePendingMessages();
-  instances.push(instance);
+  const instance = RedisSMQ.createQueuePendingMessages();
   return bluebird.promisifyAll(instance);
-}
-
-export async function shutDownQueuePendingMessages() {
-  for (const i of instances) {
-    await bluebird.promisifyAll(i).shutdownAsync();
-  }
 }

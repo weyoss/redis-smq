@@ -8,7 +8,7 @@
  */
 
 import { RedisSMQError } from 'redis-smq-common';
-import { getErrorResponseParams } from '../../../app/errors/getErrorResponseParams.js';
+import { getErrorResponseParams } from '../../../errors/getErrorResponseParams.js';
 import { TApplicationMiddleware } from '../../application/types/index.js';
 import { ValidationError } from '../errors/ValidationError.js';
 
@@ -23,6 +23,7 @@ export const errorHandlerMiddleware: TApplicationMiddleware = async (
     console.error(e);
     if (e instanceof RedisSMQError) {
       const [code, message] = getErrorResponseParams(e);
+      ctx.status = code;
       ctx.body = {
         error: {
           code,

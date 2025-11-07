@@ -13,7 +13,7 @@ import {
   getDefaultQueue,
   produceMessageWithPriority,
 } from '../../common/message-producing-consuming.js';
-import { getMessage } from '../../common/message.js';
+import { getMessageManager } from '../../common/message-manager.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 
@@ -31,7 +31,7 @@ test('Combined test: Delete a pending message with priority. Check pending messa
   const count = await queueMessages.countMessagesByStatusAsync(queue);
   expect(count.pending).toBe(1);
 
-  const message = await getMessage();
+  const message = await getMessageManager();
   const reply = await message.deleteMessageByIdAsync(messageId);
   expect(reply.status).toBe('OK');
   expect(reply.stats).toEqual({

@@ -33,8 +33,7 @@ export async function publishAndDeadLetterMessage(
   const ids = await producer.produceAsync(message);
 
   const deadLetteredMessages: string[] = [];
-  const eventBus = promisifyAll(new EventBus());
-  const eventBusInstance = await eventBus.getSetInstanceAsync();
+  const eventBusInstance = EventBus.getInstance();
   eventBusInstance.on(
     'consumer.consumeMessage.messageDeadLettered',
     (messageId) => {
@@ -54,6 +53,5 @@ export async function publishAndDeadLetterMessage(
 
   await producer.shutdownAsync();
   await consumer.shutdownAsync();
-  await eventBus.shutdownAsync();
   return ids;
 }

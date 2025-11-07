@@ -7,13 +7,10 @@
  * in the root directory of this source tree.
  */
 
-import { expect, vitest, test } from 'vitest';
+import { expect, test, vitest } from 'vitest';
 import bluebird from 'bluebird';
 import { ICallback } from 'redis-smq-common';
-import {
-  IMessageTransferable,
-  ProducibleMessage,
-} from '../../../src/lib/index.js';
+import { IMessageTransferable, ProducibleMessage } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import { getEventBus } from '../../common/event-bus-redis.js';
 import {

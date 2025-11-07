@@ -8,7 +8,7 @@
  */
 
 import { expect, test } from 'vitest';
-import { ProducibleMessage } from '../../../src/lib/index.js';
+import { ProducibleMessage } from '../../../src/index.js';
 import {
   createQueue,
   getDefaultQueue,
@@ -38,8 +38,7 @@ test('Pending message', async () => {
     0,
     100,
   );
-  expect(Object.keys(messages)).toEqual(['cursor', 'totalItems', 'items']);
-  expect(messages.cursor).toBe(0);
+  expect(Object.keys(messages)).toEqual(['totalItems', 'items']);
   expect(messages.totalItems).toBe(1);
   expect(messages.items.length).toBe(1);
   expect(messages.items[0].id).toBe(id);

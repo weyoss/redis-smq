@@ -1,189 +1,181 @@
 [RedisSMQ](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / IMessageTransferable
 
-# Interface: IMessageTransferable
+# Interface: IMessageTransferable\<TBody\>
 
-## Hierarchy
+## Extends
 
-- [`IMessageParams`](IMessageParams.md)
+- [`IMessageParams`](IMessageParams.md)\<`TBody`\>
 
-  ↳ **`IMessageTransferable`**
+## Type Parameters
 
-## Table of contents
+### TBody
 
-### Properties
-
-- [body](IMessageTransferable.md#body)
-- [consumeTimeout](IMessageTransferable.md#consumetimeout)
-- [consumerGroupId](IMessageTransferable.md#consumergroupid)
-- [createdAt](IMessageTransferable.md#createdat)
-- [destinationQueue](IMessageTransferable.md#destinationqueue)
-- [exchange](IMessageTransferable.md#exchange)
-- [id](IMessageTransferable.md#id)
-- [messageState](IMessageTransferable.md#messagestate)
-- [priority](IMessageTransferable.md#priority)
-- [retryDelay](IMessageTransferable.md#retrydelay)
-- [retryThreshold](IMessageTransferable.md#retrythreshold)
-- [scheduledCron](IMessageTransferable.md#scheduledcron)
-- [scheduledDelay](IMessageTransferable.md#scheduleddelay)
-- [scheduledRepeat](IMessageTransferable.md#scheduledrepeat)
-- [scheduledRepeatPeriod](IMessageTransferable.md#scheduledrepeatperiod)
-- [status](IMessageTransferable.md#status)
-- [ttl](IMessageTransferable.md#ttl)
+`TBody` = `unknown`
 
 ## Properties
 
 ### body
 
-• **body**: `unknown`
+> **body**: `TBody`
 
 #### Inherited from
 
-[IMessageParams](IMessageParams.md).[body](IMessageParams.md#body)
+[`IMessageParams`](IMessageParams.md).[`body`](IMessageParams.md#body)
 
-___
-
-### consumeTimeout
-
-• **consumeTimeout**: `number`
-
-#### Inherited from
-
-[IMessageParams](IMessageParams.md).[consumeTimeout](IMessageParams.md#consumetimeout)
-
-___
+***
 
 ### consumerGroupId
 
-• **consumerGroupId**: ``null`` \| `string`
+> **consumerGroupId**: `string` \| `null`
 
 #### Inherited from
 
-[IMessageParams](IMessageParams.md).[consumerGroupId](IMessageParams.md#consumergroupid)
+[`IMessageParams`](IMessageParams.md).[`consumerGroupId`](IMessageParams.md#consumergroupid)
 
-___
+***
+
+### consumeTimeout
+
+> **consumeTimeout**: `number`
+
+#### Inherited from
+
+[`IMessageParams`](IMessageParams.md).[`consumeTimeout`](IMessageParams.md#consumetimeout)
+
+***
 
 ### createdAt
 
-• **createdAt**: `number`
+> **createdAt**: `number`
 
 #### Inherited from
 
-[IMessageParams](IMessageParams.md).[createdAt](IMessageParams.md#createdat)
+[`IMessageParams`](IMessageParams.md).[`createdAt`](IMessageParams.md#createdat)
 
-___
+***
 
 ### destinationQueue
 
-• **destinationQueue**: [`IQueueParams`](IQueueParams.md)
+> **destinationQueue**: [`IQueueParams`](IQueueParams.md)
 
 #### Inherited from
 
-[IMessageParams](IMessageParams.md).[destinationQueue](IMessageParams.md#destinationqueue)
+[`IMessageParams`](IMessageParams.md).[`destinationQueue`](IMessageParams.md#destinationqueue)
 
-___
+***
 
 ### exchange
 
-• **exchange**: [`TExchangeTransferable`](../README.md#texchangetransferable)
+> **exchange**: [`IExchangeParsedParams`](IExchangeParsedParams.md) \| `null`
 
 #### Inherited from
 
-[IMessageParams](IMessageParams.md).[exchange](IMessageParams.md#exchange)
+[`IMessageParams`](IMessageParams.md).[`exchange`](IMessageParams.md#exchange)
 
-___
+***
 
 ### id
 
-• **id**: `string`
+> **id**: `string`
 
-___
+***
 
 ### messageState
 
-• **messageState**: [`IMessageStateTransferable`](IMessageStateTransferable.md)
+> **messageState**: [`IMessageStateTransferable`](IMessageStateTransferable.md)
 
-___
+***
 
 ### priority
 
-• **priority**: ``null`` \| `number`
+> **priority**: `number` \| `null`
 
 #### Inherited from
 
-[IMessageParams](IMessageParams.md).[priority](IMessageParams.md#priority)
+[`IMessageParams`](IMessageParams.md).[`priority`](IMessageParams.md#priority)
 
-___
+***
+
+### queue
+
+> **queue**: [`IQueueParams`](IQueueParams.md) \| `null`
+
+#### Inherited from
+
+[`IMessageParams`](IMessageParams.md).[`queue`](IMessageParams.md#queue)
+
+***
 
 ### retryDelay
 
-• **retryDelay**: `number`
+> **retryDelay**: `number`
 
 #### Inherited from
 
-[IMessageParams](IMessageParams.md).[retryDelay](IMessageParams.md#retrydelay)
+[`IMessageParams`](IMessageParams.md).[`retryDelay`](IMessageParams.md#retrydelay)
 
-___
+***
 
 ### retryThreshold
 
-• **retryThreshold**: `number`
+> **retryThreshold**: `number`
 
 #### Inherited from
 
-[IMessageParams](IMessageParams.md).[retryThreshold](IMessageParams.md#retrythreshold)
+[`IMessageParams`](IMessageParams.md).[`retryThreshold`](IMessageParams.md#retrythreshold)
 
-___
+***
 
 ### scheduledCron
 
-• **scheduledCron**: ``null`` \| `string`
+> **scheduledCron**: `string` \| `null`
 
 #### Inherited from
 
-[IMessageParams](IMessageParams.md).[scheduledCron](IMessageParams.md#scheduledcron)
+[`IMessageParams`](IMessageParams.md).[`scheduledCron`](IMessageParams.md#scheduledcron)
 
-___
+***
 
 ### scheduledDelay
 
-• **scheduledDelay**: ``null`` \| `number`
+> **scheduledDelay**: `number` \| `null`
 
 #### Inherited from
 
-[IMessageParams](IMessageParams.md).[scheduledDelay](IMessageParams.md#scheduleddelay)
+[`IMessageParams`](IMessageParams.md).[`scheduledDelay`](IMessageParams.md#scheduleddelay)
 
-___
+***
 
 ### scheduledRepeat
 
-• **scheduledRepeat**: `number`
+> **scheduledRepeat**: `number`
 
 #### Inherited from
 
-[IMessageParams](IMessageParams.md).[scheduledRepeat](IMessageParams.md#scheduledrepeat)
+[`IMessageParams`](IMessageParams.md).[`scheduledRepeat`](IMessageParams.md#scheduledrepeat)
 
-___
+***
 
 ### scheduledRepeatPeriod
 
-• **scheduledRepeatPeriod**: ``null`` \| `number`
+> **scheduledRepeatPeriod**: `number` \| `null`
 
 #### Inherited from
 
-[IMessageParams](IMessageParams.md).[scheduledRepeatPeriod](IMessageParams.md#scheduledrepeatperiod)
+[`IMessageParams`](IMessageParams.md).[`scheduledRepeatPeriod`](IMessageParams.md#scheduledrepeatperiod)
 
-___
+***
 
 ### status
 
-• **status**: [`EMessagePropertyStatus`](../enums/EMessagePropertyStatus.md)
+> **status**: [`EMessagePropertyStatus`](../enumerations/EMessagePropertyStatus.md)
 
-___
+***
 
 ### ttl
 
-• **ttl**: `number`
+> **ttl**: `number`
 
 #### Inherited from
 
-[IMessageParams](IMessageParams.md).[ttl](IMessageParams.md#ttl)
+[`IMessageParams`](IMessageParams.md).[`ttl`](IMessageParams.md#ttl)

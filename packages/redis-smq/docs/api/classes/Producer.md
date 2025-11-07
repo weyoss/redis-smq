@@ -2,78 +2,67 @@
 
 # Class: Producer
 
-The Producer class is responsible for producing messages, managing their
-delivery to various queues, and ensuring that all components are ready
-for operation.
-The class provides methods for enqueuing messages, handling consumer groups,
-and producing messages based on the message's exchange parameters.
-Error handling is included throughout the methods, returning appropriate
-error objects when necessary.
+The Producer class is a stateful service responsible for publishing messages
+to the Redis-SMQ system. It manages the entire message delivery lifecycle,
+including complex routing logic via exchanges, and ensures that all underlying
+components are properly managed.
 
-## Hierarchy
+## Example
 
-- `Runnable`\<[`TProducerEvent`](../README.md#tproducerevent)\>
+```typescript
+const producer = new Producer();
+producer.run((err) => {
+  if (err) {
+    console.error('Failed to start producer:', err);
+    return;
+  }
+  console.log('Producer is running');
+});
+```
 
-  ↳ **`Producer`**
+## Extends
 
-## Table of contents
-
-### Constructors
-
-- [constructor](Producer.md#constructor)
-
-### Methods
-
-- [emit](Producer.md#emit)
-- [getId](Producer.md#getid)
-- [isDown](Producer.md#isdown)
-- [isGoingDown](Producer.md#isgoingdown)
-- [isGoingUp](Producer.md#isgoingup)
-- [isRunning](Producer.md#isrunning)
-- [isUp](Producer.md#isup)
-- [on](Producer.md#on)
-- [once](Producer.md#once)
-- [produce](Producer.md#produce)
-- [removeAllListeners](Producer.md#removealllisteners)
-- [removeListener](Producer.md#removelistener)
-- [run](Producer.md#run)
-- [shutdown](Producer.md#shutdown)
+- `Runnable`\<[`TProducerEvent`](../type-aliases/TProducerEvent.md)\>
 
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new Producer**(): [`Producer`](Producer.md)
+> **new Producer**(): `Producer`
 
-Constructor for the Producer class. Initializes the Redis client,
-event bus, and logger. Sets up the event bus publisher if enabled.
+Initializes a new Producer instance.
+
+Note: The producer is not yet running after construction. Call `run()` to start it.
 
 #### Returns
 
-[`Producer`](Producer.md)
+`Producer`
 
 #### Overrides
 
-Runnable\<TProducerEvent\>.constructor
+`Runnable<TProducerEvent>.constructor`
 
 ## Methods
 
-### emit
+### emit()
 
-▸ **emit**\<`E`\>(`event`, `...args`): `boolean`
+> **emit**\<`E`\>(`event`, ...`args`): `boolean`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TProducerEvent`](../README.md#tproducerevent) |
+##### E
+
+`E` *extends* keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `...args` | `Parameters`\<[`TProducerEvent`](../README.md#tproducerevent)[`E`]\> |
+##### event
+
+`E`
+
+##### args
+
+...`Parameters`\<[`TProducerEvent`](../type-aliases/TProducerEvent.md)\[`E`\]\>
 
 #### Returns
 
@@ -81,13 +70,13 @@ Runnable\<TProducerEvent\>.constructor
 
 #### Inherited from
 
-Runnable.emit
+`Runnable.emit`
 
-___
+***
 
-### getId
+### getId()
 
-▸ **getId**(): `string`
+> **getId**(): `string`
 
 #### Returns
 
@@ -95,27 +84,13 @@ ___
 
 #### Inherited from
 
-Runnable.getId
+`Runnable.getId`
 
-___
+***
 
-### isDown
+### isDown()
 
-▸ **isDown**(): `boolean`
-
-#### Returns
-
-`boolean`
-
-#### Inherited from
-
-Runnable.isDown
-
-___
-
-### isGoingDown
-
-▸ **isGoingDown**(): `boolean`
+> **isDown**(): `boolean`
 
 #### Returns
 
@@ -123,27 +98,13 @@ ___
 
 #### Inherited from
 
-Runnable.isGoingDown
+`Runnable.isDown`
 
-___
+***
 
-### isGoingUp
+### isGoingDown()
 
-▸ **isGoingUp**(): `boolean`
-
-#### Returns
-
-`boolean`
-
-#### Inherited from
-
-Runnable.isGoingUp
-
-___
-
-### isRunning
-
-▸ **isRunning**(): `boolean`
+> **isGoingDown**(): `boolean`
 
 #### Returns
 
@@ -151,13 +112,13 @@ ___
 
 #### Inherited from
 
-Runnable.isRunning
+`Runnable.isGoingDown`
 
-___
+***
 
-### isUp
+### isGoingUp()
 
-▸ **isUp**(): `boolean`
+> **isGoingUp**(): `boolean`
 
 #### Returns
 
@@ -165,26 +126,57 @@ ___
 
 #### Inherited from
 
-Runnable.isUp
+`Runnable.isGoingUp`
 
-___
+***
 
-### on
+### isRunning()
 
-▸ **on**\<`E`\>(`event`, `listener`): `this`
+> **isRunning**(): `boolean`
 
-#### Type parameters
+#### Returns
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TProducerEvent`](../README.md#tproducerevent) |
+`boolean`
+
+#### Inherited from
+
+`Runnable.isRunning`
+
+***
+
+### isUp()
+
+> **isUp**(): `boolean`
+
+#### Returns
+
+`boolean`
+
+#### Inherited from
+
+`Runnable.isUp`
+
+***
+
+### on()
+
+> **on**\<`E`\>(`event`, `listener`): `this`
+
+#### Type Parameters
+
+##### E
+
+`E` *extends* keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | [`TProducerEvent`](../README.md#tproducerevent)[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+[`TProducerEvent`](../type-aliases/TProducerEvent.md)\[`E`\]
 
 #### Returns
 
@@ -192,26 +184,29 @@ ___
 
 #### Inherited from
 
-Runnable.on
+`Runnable.on`
 
-___
+***
 
-### once
+### once()
 
-▸ **once**\<`E`\>(`event`, `listener`): `this`
+> **once**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TProducerEvent`](../README.md#tproducerevent) |
+##### E
+
+`E` *extends* keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | [`TProducerEvent`](../README.md#tproducerevent)[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+[`TProducerEvent`](../type-aliases/TProducerEvent.md)\[`E`\]
 
 #### Returns
 
@@ -219,56 +214,90 @@ ___
 
 #### Inherited from
 
-Runnable.once
+`Runnable.once`
 
-___
+***
 
-### produce
+### produce()
 
-▸ **produce**(`msg`, `cb`): `void`
+> **produce**(`msg`, `cb`): `void`
 
-Produces a message based on the provided parameters. Ensures that a valid
-exchange is set and that at least one matching queue exists before
-publishing the message.
+Publishes a message to a queue or an exchange.
 
-This method handles various errors, including:
-- ProducerInstanceNotRunningError: Thrown when the producer instance is not running.
-- ProducerMessageExchangeRequiredError: Thrown when no exchange is set for the message.
-- ProducerExchangeNoMatchedQueueError: Thrown when no matching queues are found for the exchange.
-- ProducerQueueNotFoundError: Thrown when a queue is not found.
-- ProducerMessagePriorityRequiredError: Thrown when a message priority is required.
-- ProducerPriorityQueuingNotEnabledError: Thrown when priority queuing is not enabled.
-- ProducerUnknownQueueTypeError: Thrown when an unknown queue type is encountered.
-- ProducerError: A generic error thrown when an unexpected error occurs.
+This method orchestrates the message publication process and supports two main workflows:
+1.  **Direct-to-Queue**: If the message specifies a destination queue via `msg.getQueue()`,
+    the message is sent directly to that queue.
+2.  **Exchange-Based Routing**: If the message specifies an exchange via `msg.getExchange()`,
+    this method resolves the exchange to a set of matching queues and publishes a copy
+    of the message to each one.
+
+The method performs the following validations:
+- Ensures the producer is running; returns `ProducerNotRunningError` if not.
+- Ensures the message specifies either a queue or an exchange; returns
+  `MessageExchangeRequiredError` if neither is specified.
+- For exchange-based routing, ensures at least one queue matches the exchange;
+  returns `NoMatchedQueuesForMessageExchangeError` if no matches are found.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `msg` | [`ProducibleMessage`](ProducibleMessage.md) | The message to be produced and published. |
-| `cb` | `ICallback`\<`string`[]\> | A callback function to be executed upon completion. It receives an error as the first argument (if any) and an array of message IDs as the second argument. |
+##### msg
+
+[`ProducibleMessage`](ProducibleMessage.md)
+
+The message to be published. Must specify either a destination queue
+             or an exchange (or both).
+
+##### cb
+
+`ICallback`\<`string`[]\>
+
+A callback function invoked upon completion.
+            - On success: `cb(null, messageIds)` where `messageIds` is an array of
+              published message IDs (one per queue for exchange routing, or one for
+              direct queue routing).
+            - On error: `cb(error)` where `error` is one of:
+              - `ProducerNotRunningError`: Producer is not running.
+              - `MessageExchangeRequiredError`: Message has neither queue nor exchange.
+              - `NoMatchedQueuesForMessageExchangeError`: Exchange matched no queues.
+              - Other errors from queue or exchange operations.
 
 #### Returns
 
 `void`
 
-___
+#### Example
 
-### removeAllListeners
+```typescript
+const msg = new ProducibleMessage()
+  .setQueue({ name: 'my-queue', ns: 'default' })
+  .setBody({ data: 'example' });
 
-▸ **removeAllListeners**\<`E`\>(`event?`): `this`
+producer.produce(msg, (err, messageIds) => {
+  if (err) {
+    console.error('Failed to produce message:', err);
+  } else {
+    console.log('Published message IDs:', messageIds);
+  }
+});
+```
 
-#### Type parameters
+***
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TProducerEvent`](../README.md#tproducerevent) |
+### removeAllListeners()
+
+> **removeAllListeners**\<`E`\>(`event?`): `this`
+
+#### Type Parameters
+
+##### E
+
+`E` *extends* keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event?` | `Extract`\<`E`, `string`\> |
+##### event?
+
+`Extract`\<`E`, `string`\>
 
 #### Returns
 
@@ -276,26 +305,29 @@ ___
 
 #### Inherited from
 
-Runnable.removeAllListeners
+`Runnable.removeAllListeners`
 
-___
+***
 
-### removeListener
+### removeListener()
 
-▸ **removeListener**\<`E`\>(`event`, `listener`): `this`
+> **removeListener**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TProducerEvent`](../README.md#tproducerevent) |
+##### E
+
+`E` *extends* keyof [`TProducerEvent`](../type-aliases/TProducerEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | [`TProducerEvent`](../README.md#tproducerevent)[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+[`TProducerEvent`](../type-aliases/TProducerEvent.md)\[`E`\]
 
 #### Returns
 
@@ -303,19 +335,19 @@ ___
 
 #### Inherited from
 
-Runnable.removeListener
+`Runnable.removeListener`
 
-___
+***
 
-### run
+### run()
 
-▸ **run**(`cb`): `void`
+> **run**(`cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | `ICallback`\<`boolean`\> |
+##### cb
+
+`ICallback`\<`boolean`\>
 
 #### Returns
 
@@ -323,19 +355,19 @@ ___
 
 #### Inherited from
 
-Runnable.run
+`Runnable.run`
 
-___
+***
 
-### shutdown
+### shutdown()
 
-▸ **shutdown**(`cb`): `void`
+> **shutdown**(`cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | `ICallback`\<`void`\> |
+##### cb
+
+`ICallback`\<`void`\>
 
 #### Returns
 
@@ -343,4 +375,4 @@ ___
 
 #### Inherited from
 
-Runnable.shutdown
+`Runnable.shutdown`

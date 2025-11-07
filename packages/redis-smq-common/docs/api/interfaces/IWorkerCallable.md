@@ -2,35 +2,31 @@
 
 # Interface: IWorkerCallable\<Payload, Reply\>
 
-## Type parameters
+## Type Parameters
 
-| Name |
-| :------ |
-| `Payload` |
-| `Reply` |
+### Payload
 
-## Implemented by
+`Payload`
 
-- [`WorkerCallable`](../classes/WorkerCallable.md)
+### Reply
 
-## Table of contents
-
-### Methods
-
-- [call](IWorkerCallable.md#call)
+`Reply`
 
 ## Methods
 
-### call
+### call()
 
-▸ **call**(`args`, `cb`): `void`
+> **call**(`args`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `args` | `Payload` |
-| `cb` | [`ICallback`](ICallback.md)\<`Reply`\> |
+##### args
+
+`Payload`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`Reply`\>
 
 #### Returns
 

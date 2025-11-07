@@ -12,7 +12,7 @@ import {
   EQueueDeliveryModel,
   EQueueType,
   IQueueParams,
-  Queue,
+  QueueManager,
 } from 'redis-smq';
 
 const { promisifyAll } = bluebird;
@@ -22,7 +22,7 @@ export async function createQueue(
   queueType: EQueueType = EQueueType.LIFO_QUEUE,
   deliveryModel: EQueueDeliveryModel = EQueueDeliveryModel.POINT_TO_POINT,
 ) {
-  const queueInstance = promisifyAll(new Queue());
+  const queueInstance = promisifyAll(new QueueManager());
   const r = await queueInstance.saveAsync(queue, queueType, deliveryModel);
   await queueInstance.shutdownAsync();
   return r;

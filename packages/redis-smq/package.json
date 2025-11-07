@@ -1,28 +1,34 @@
 {
   "name": "redis-smq",
-  "version": "8.3.1",
-  "description": "A simple high-performance Redis message queue for Node.js.",
+  "version": "9.0.0-next.18",
+  "description": "A high-performance, reliable, and scalable message queue for Node.js.",
   "author": "Weyoss <weyoss@protonmail.com>",
   "license": "MIT",
   "keywords": [
     "redis",
-    "message queue",
-    "message-queue",
-    "message",
-    "queue",
-    "job queue",
-    "job-queue",
-    "jobs",
     "redis-smq",
-    "priority",
-    "priority queue",
+    "message-queue",
+    "queue",
+    "job-queue",
+    "task-queue",
+    "delayed-jobs",
+    "scheduled-jobs",
+    "retry",
+    "dead-letter",
     "priority-queue",
-    "scheduler",
-    "broker",
-    "message broker",
-    "message-broker"
+    "fifo",
+    "lifo",
+    "nodejs",
+    "typescript"
   ],
   "homepage": "https://github.com/weyoss/redis-smq",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/weyoss/redis-smq.git"
+  },
   "bugs": {
     "url": "https://github.com/weyoss/redis-smq/issues"
   },
@@ -44,27 +50,30 @@
     "./package.json": "./package.json"
   },
   "peerDependencies": {
+    "@redis/client": "^5",
+    "ioredis": "^5",
     "redis-smq-common": "workspace:^"
   },
+  "peerDependenciesMeta": {
+    "@redis/client": {
+      "optional": true
+    },
+    "ioredis": {
+      "optional": true
+    }
+  },
   "dependencies": {
-    "cron-parser": "4.9.0",
+    "cron-parser": "5.4.0",
     "lodash": "4.17.21",
-    "uuid": "11.1.0"
-  },
-  "engineStrict": true,
-  "engines": {
-    "node": ">=20"
-  },
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/weyoss/redis-smq.git"
+    "uuid": "13.0.0"
   },
   "scripts": {
     "build": "scripts/build.sh",
     "test": "../../scripts/test_workspace_esm.sh",
     "document": "scripts/document.sh"
+  },
+  "engineStrict": true,
+  "engines": {
+    "node": ">=20"
   }
 }

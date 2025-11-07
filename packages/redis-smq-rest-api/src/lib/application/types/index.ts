@@ -9,7 +9,7 @@
 
 import { Middleware } from '@koa/router';
 import { AwilixContainer } from 'awilix';
-import { IContextScope } from '../../../app/container/types/container.js';
+import { IContextScope } from '../../../container/types/container.js';
 
 export interface IApplicationMiddlewareContext<
   RequestPathDTO = unknown,

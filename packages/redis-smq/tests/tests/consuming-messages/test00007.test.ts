@@ -7,9 +7,9 @@
  * in the root directory of this source tree.
  */
 
-import { expect, vitest, test } from 'vitest';
+import { expect, test, vitest } from 'vitest';
 import { ICallback } from 'redis-smq-common';
-import { IMessageParams, ProducibleMessage } from '../../../src/lib/index.js';
+import { IMessageParams, ProducibleMessage } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import { getEventBus } from '../../common/event-bus-redis.js';
 import { untilMessageAcknowledged } from '../../common/events.js';

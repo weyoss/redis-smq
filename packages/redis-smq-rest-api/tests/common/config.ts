@@ -8,9 +8,9 @@
  */
 
 import { ERedisConfigClient } from 'redis-smq-common';
-import { IRedisSMQHttpApiConfig } from '../../src/config/types/index.js';
+import { IRedisSMQRestApiConfig } from '../../src/config/index.js';
 
-export const config: IRedisSMQHttpApiConfig = {
+export const config: IRedisSMQRestApiConfig = {
   redis: {
     client: ERedisConfigClient.IOREDIS,
     options: {
@@ -18,14 +18,5 @@ export const config: IRedisSMQHttpApiConfig = {
       port: 0,
       showFriendlyErrorStack: true,
     },
-  },
-  logger: {
-    enabled: false,
-  },
-  eventBus: {
-    enabled: true,
-  },
-  messages: {
-    store: true,
   },
 };

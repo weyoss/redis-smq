@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Consumer, Producer } from '../../src/lib/index.js';
+import { Consumer, Producer } from '../../src/index.js';
 
 export async function shutDownBaseInstance(
   i: Consumer | Producer,

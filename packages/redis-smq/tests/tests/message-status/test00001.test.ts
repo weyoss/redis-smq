@@ -9,14 +9,14 @@
 
 import { expect, test } from 'vitest';
 import { EMessagePropertyStatus, ProducibleMessage } from '../../../index.js';
-import { EQueueType } from '../../../src/lib/index.js';
+import { EQueueType } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import { untilMessageAcknowledged } from '../../common/events.js';
 import {
   createQueue,
   getDefaultQueue,
 } from '../../common/message-producing-consuming.js';
-import { getMessage } from '../../common/message.js';
+import { getMessageManager } from '../../common/message-manager.js';
 import { getProducer } from '../../common/producer.js';
 
 test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> ACKNOWLEDGED', async () => {
@@ -30,11 +30,11 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> ACKNOWLEDGED', asy
   msg.setBody({ hello: 'world' }).setQueue(getDefaultQueue());
   const [id] = await producer.produceAsync(msg);
 
-  const message = await getMessage();
+  const message = await getMessageManager();
   const status0 = await message.getMessageStatusAsync(id);
   expect(status0).toBe(EMessagePropertyStatus.PENDING);
 
-  const consumer = getConsumer({ consumeDefaultQueue: false });
+  const consumer = getConsumer(false);
   const statuses: EMessagePropertyStatus[] = [];
   await consumer.consumeAsync(defaultQueue, (msg, cb) => {
     statuses.push(msg.status);

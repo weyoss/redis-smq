@@ -9,14 +9,14 @@
 
 import { expect, test } from 'vitest';
 import { ICallback, IRedisClient } from 'redis-smq-common';
-import { processingQueue } from '../../../src/lib/consumer/message-handler/message-handler/consume-message/processing-queue.js';
-import { IQueueParams } from '../../../src/lib/index.js';
+import { processingQueue } from '../../../src/consumer/message-handler/consume-message/processing-queue.js';
+import { IQueueParams } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import {
   createQueue,
   getDefaultQueue,
 } from '../../common/message-producing-consuming.js';
-import { getQueue } from '../../common/queue.js';
+import { getQueueManager } from '../../common/queue-manager.js';
 
 test('Concurrently deleting a message queue and starting a consumer', async () => {
   const defaultQueue = getDefaultQueue();
@@ -40,7 +40,7 @@ test('Concurrently deleting a message queue and starting a consumer', async () =
     }, 5000);
   };
 
-  const q = await getQueue();
+  const q = await getQueueManager();
 
   const { WatchedKeysChangedError } = await import('redis-smq-common');
   await expect(

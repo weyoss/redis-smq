@@ -4,12 +4,14 @@
 
 ## Package Version Alignment
 
-It is crucial to maintain version alignment between all RedisSMQ packages to ensure compatibility and prevent potential issues. Always install matching versions of:
+It is crucial to maintain version alignment between all RedisSMQ packages to ensure compatibility and prevent potential
+issues. Always install matching versions of:
 
 - `redis-smq`
 - `redis-smq-common`
 - `redis-smq-rest-api`
 - `redis-smq-web-ui`
+- `redis-smq-web-server`
 
 ## Installation Example
 
@@ -32,6 +34,7 @@ npm list redis-smq redis-smq-common redis-smq-rest-api redis-smq-web-ui
 ## Troubleshooting
 
 If you encounter version mismatch issues, you may see errors like:
+
 - Incompatible API calls
 - Type mismatches
 - Runtime exceptions

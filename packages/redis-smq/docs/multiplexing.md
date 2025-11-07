@@ -2,59 +2,120 @@
 
 # Multiplexing
 
-In standard operation mode, each message handler establishes and utilizes its own Redis connection for consuming messages. This approach offers several significant advantages:
+By default, each message handler uses its own Redis connection for consuming messages. This has important benefits:
 
-- **High Message Consumption Rate**: Independent connections can enhance the throughput of message handling.
+- High message consumption rate: parallel dequeueing/processing per handler
+- Isolation: one slow handler won’t block others
 
-- **Isolation of Message Handlers**: Each handler operates independently, preventing any single handler from blocking
-  others and improving overall application responsiveness.
+Multiplexing lets multiple message handlers share a single Redis connection within the same Consumer. While this reduces parallelism, it can significantly decrease the number of Redis connections your application uses.
 
-However, multiplexing allows multiple message handlers to share a single Redis connection, which, while it may seem counterintuitive, presents some compelling benefits for your application.
+## When to consider multiplexing
 
-## Advantages of Multiplexing
+Use multiplexing if:
+- You manage a large number of low-traffic queues
+- You must minimize Redis connections (e.g., connection quotas in serverless/PaaS)
+- You want to simplify resource planning for many queues per process
 
-- **Resource Efficiency**: By sharing a single Redis connection, multiplexing enables consumers to manage a large
-  number of message queues without imposing a considerable load on your system. This approach curtails the number of
-  Redis connections, keeping it at just one for all message handlers regardless of the number of queues.
+Avoid or limit multiplexing if:
+- You need maximum throughput and parallel processing across queues
+- You have “hot” queues where head-of-line blocking would be problematic
+- Your handlers are CPU-bound or perform long-running work
 
-## Disadvantages of Multiplexing
+## Advantages
 
-However, multiplexing is not without its drawbacks:
+- Resource efficiency: Share a single Redis connection across many queue handlers in one Consumer
+- Scalability of queue count: Handle many queues with predictable, low connection usage
 
-- **Sequential Processing**: Messages from different queues cannot be dequeued and processed in parallel. Handlers are executed one after the other, leading to potential delays if multiplexing latency is applied before accessing the next queue.
+## Disadvantages
 
-- **Potential Delays in Message Processing**: If a message handler takes a considerable time to process a message, it can impede the timely dequeuing of messages for other handlers. This may not align with scenarios where prompt message consumption is critical.
+- Serial dequeue/processing: Handlers execute one after another; no parallel dequeue across queues in a multiplexed Consumer
+- Potential head-of-line blocking: A slow handler can delay dequeueing for other queues handled by the same Consumer
 
-## Considerations Before Enabling Multiplexing
+## Prerequisites
 
-Before opting for multiplexing, it’s crucial to weigh its advantages against the potential drawbacks. Assess your specific use case to determine if the resource optimization justifies the limitations on processing speed and message handling.
-How to Enable Multiplexing
+- Initialize RedisSMQ once per process:
+  - RedisSMQ.initialize(redisConfig, cb), or
+  - RedisSMQ.initializeWithConfig(redisSMQConfig, cb)
+- Prefer creating consumers via RedisSMQ factory methods (recommended)
+- When components are created via RedisSMQ factory methods, you typically do not need to shut them down individually. Prefer a single RedisSMQ.shutdown(cb) at application exit to close shared infrastructure and tracked components.
 
-To enable multiplexing, you can utilize the first argument of the [Consumer Class Constructor](api/classes/Consumer.md#constructor):
+## Enabling multiplexing
 
+You can enable multiplexing on the Consumer by passing true as the first argument.
+
+Recommended (via RedisSMQ factory):
 ```javascript
-const consumer = new Consumer(true);
+'use strict';
+
+const { RedisSMQ } = require('redis-smq');
+const { ERedisConfigClient } = require('redis-smq-common');
+
+// Initialize once per process
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: '127.0.0.1', port: 6379, db: 0 },
+  },
+  (err) => {
+    if (err) return console.error('Init failed:', err);
+
+    // Create a multiplexed consumer (single Redis connection for multiple handlers)
+    const consumer = RedisSMQ.createConsumer(true);
+
+    // Register handlers for multiple queues
+    consumer.consume('queue1', (msg, done) => { /* ... */ done(); }, (e) => e && console.error(e));
+    consumer.consume('queue2', (msg, done) => { /* ... */ done(); }, (e) => e && console.error(e));
+    consumer.consume('queue3', (msg, done) => { /* ... */ done(); }, (e) => e && console.error(e));
+
+    // Start the consumer
+    consumer.run((runErr) => {
+      if (runErr) return console.error('Consumer start failed:', runErr);
+      console.log('Multiplexed consumer is running');
+    });
+
+    // At application exit, prefer a single call:
+    // RedisSMQ.shutdown((e) => e && console.error('Shutdown error:', e));
+  },
+);
 ```
 
-Once your consumer instance is created, you can use it as follows:
-
+Direct instantiation (advanced):
 ```javascript
-consumer.consume('queue1', messageHandler1, (e) => {
-  //...
-});
+'use strict';
 
-consumer.consume('queue2', messageHandler2, (e) => {
-  //...
-});
+const { Consumer } = require('redis-smq');
 
-consumer.consume('queue3', messageHandler3, (e) => {
-  //...
-});
-
-consumer.consume('queue4', messageHandler4, (e) => {
-  //...
-});
+const consumer = new Consumer(true); // enable multiplexing
+consumer.consume('queueA', (msg, done) => { /* ... */ done(); }, () => {});
+consumer.run(() => {});
+// If created directly, you can shut down this instance with consumer.shutdown(cb)
 ```
 
-As highlighted, multiplexing should primarily be employed when managing a substantial number of queues and aiming to
-optimize system resources. If this is not your situation, it may be advisable to refrain from enabling it.
+## Operational tips
+
+- Keep handlers fast: Long-running handlers increase latency for other queues in the same multiplexed Consumer
+- Isolate “hot” queues: Use a dedicated non-multiplexed Consumer, or separate multiplexed Consumers by traffic profile
+- Scale out cautiously: If you need some parallelism, run multiple multiplexed Consumers, each handling a subset of queues
+- Manage handlers dynamically:
+  - Cancel a specific queue handler:
+    ```javascript
+    consumer.cancel('queue2', (err) => {
+      if (err) console.error('Cancel failed:', err);
+      else console.log('Stopped consuming queue2');
+    });
+    ```
+  - Inspect configured queues:
+    ```javascript
+    const queues = consumer.getQueues();
+    console.log('Multiplexed queues:', queues);
+    ```
+
+## Summary
+
+- Multiplexing reduces Redis connections by sharing one connection across many handlers in a single Consumer.
+- Throughput trades off against connection savings: processing is sequential within a multiplexed Consumer.
+- Use multiplexing for many low-traffic queues or in environments with strict connection limits.
+- For high-throughput or latency-sensitive queues, prefer non-multiplexed Consumers or split work across multiple Consumers.
+
+For API details, see the Consumer class:
+- [Consumer](api/classes/Consumer.md)

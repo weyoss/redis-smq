@@ -7,146 +7,512 @@
  * in the root directory of this source tree.
  */
 
-import EventBus from './event-bus.js';
-import Logger from './logger.js';
-import Messages from './messages/messages.js';
-import Namespace from './namespace.js';
-import Redis from './redis.js';
-import { IRedisSMQConfig, IRedisSMQConfigRequired } from './types/index.js';
+import { ICallback } from 'redis-smq-common';
+import { IRedisSMQConfig, IRedisSMQParsedConfig } from './types/index.js';
+import { ConfigurationNotFoundError } from '../errors/configuration-not-found.error.js';
+import { redisKeys } from '../common/redis-keys/redis-keys.js';
+import { parseConfig } from './parse-config.js';
+import { ConfigurationError } from '../errors/index.js';
+import { defaultConfig } from './default-config.js';
+import { withSharedPoolConnection } from '../common/redis-connection-pool/with-shared-pool-connection.js';
 
 /**
  * Configuration class for managing and setting up the RedisSMQ message queue.
- * This class is responsible for creating and managing instances of other configuration classes,
- * such as Namespace, Redis, Logger, Messages, and EventBus.
+ *
+ * This class provides a centralized way to manage RedisSMQ configuration with Redis persistence.
+ * It follows the singleton pattern to ensure consistent configuration across the application.
+ *
+ * Features:
+ * - Persistent configuration storage in Redis
+ * - Automatic configuration loading and saving
+ * - Configuration validation and parsing
+ * - Redis connection management
+ *
+ * @example
+ * ```typescript
+ * // Initialize configuration
+ * Configuration.initialize((err) => {
+ *   if (err) {
+ *     console.error('Failed to initialize configuration:', err);
+ *     return;
+ *   }
+ *
+ *   // Get configuration instance
+ *   const config = Configuration.getInstance();
+ *   const currentConfig = config.getConfig();
+ *
+ *   // Update configuration
+ *   config.updateConfig({ logger: { enabled: false } }, (err) => {
+ *     if (!err) console.log('Configuration updated');
+ *   });
+ * });
+ * ```
  */
 export class Configuration {
+  /** The singleton instance of the Configuration class */
   protected static instance: Configuration | null = null;
-  protected config: IRedisSMQConfigRequired;
 
   /**
-   * Initializes the configuration properties using the provided `config` object.
+   * The parsed and validated configuration object stored in-memory.
+   * Initialized with defaultConfig until a successful load/save occurs.
+   */
+  protected config: IRedisSMQParsedConfig = defaultConfig;
+
+  /**
+   * Creates a new Configuration instance.
    *
-   * @param config - An object containing the configuration settings for the RedisSMQ library.
-   * It should include properties for `namespace`, `redis`, `logger`, `messages`, and `eventBus`.
+   * This constructor is protected to enforce the singleton pattern.
+   * Use the static `initialize` method to create and configure the instance.
+   */
+  protected constructor() {}
+
+  /**
+   * Gets the already-initialized singleton instance of Configuration.
    *
-   * @remarks
-   * This constructor is protected and should not be called directly.
-   * Instead, use the static method `getSetConfig` to obtain an instance of the Configuration class.
+   * @returns The Configuration instance
+   * @throws {ConfigurationError} When the configuration has not been initialized
    *
    * @example
    * ```typescript
-   * const config = {
-   *   namespace: 'myNamespace',
-   *   redis: {
-   *     host: 'localhost',
-   *     port: 6379,
-   *   },
-   * };
-   *
-   * const myConfig = Configuration.getSetConfig(config);
-   * console.log(myConfig); // Output: { namespace: 'myNamespace', redis: { host: 'localhost', port: 6379 }, ... }
+   * try {
+   *   const config = Configuration.getInstance();
+   *   console.log('Configuration is ready');
+   * } catch (err) {
+   *   console.error('Configuration not initialized:', err.message);
+   * }
    * ```
    */
-  protected constructor(config: IRedisSMQConfig) {
-    this.config = this.parseConfiguration(config);
-  }
-
-  /**
-   * A static method that returns the singleton instance of the Configuration class.
-   * If an instance does not exist, it creates a new one using the provided configuration.
-   *
-   * @param config - An optional configuration object for the RedisSMQ.
-   * If not provided, an empty object is used.
-   *
-   * @returns The singleton instance of the Configuration class,
-   * containing the required configuration properties.
-   *
-   * @example
-   * ```typescript
-   * const config = {
-   *   namespace: 'myNamespace',
-   *   redis: {
-   *     host: 'localhost',
-   *     port: 6379,
-   *   },
-   * };
-   *
-   * const myConfig = Configuration.getSetConfig(config);
-   * console.log(myConfig); // Output: { namespace: 'myNamespace', redis: { host: 'localhost', port: 6379 }, ... }
-   * ```
-   */
-  static getSetConfig(config: IRedisSMQConfig = {}): IRedisSMQConfigRequired {
+  static getInstance(): Configuration {
     if (!Configuration.instance) {
-      Configuration.instance = new Configuration(config);
+      throw new ConfigurationError('Configuration not initialized');
     }
-    return Configuration.instance.getConfig();
+    return Configuration.instance;
   }
 
   /**
-   * Resets the singleton instance of the Configuration class.
-   * This method is used to clear the current configuration and allow for a new instance to be created.
+   * Convenience accessor that returns the current parsed configuration
+   * from the singleton instance.
+   *
+   * Equivalent to Configuration.getInstance().getConfig().
+   *
+   * @returns The current parsed configuration
+   * @throws {ConfigurationError} When the configuration has not been initialized
+   *
+   * @example
+   * ```typescript
+   * const config = Configuration.getConfig();
+   * console.log('Redis host:', config.redis.options.host);
+   * ```
+   */
+  static getConfig(): IRedisSMQParsedConfig {
+    return Configuration.getInstance().getConfig();
+  }
+
+  /**
+   * Initializes the Configuration singleton.
+   *
+   * This method attempts to load existing configuration from Redis. If no configuration
+   * is found, it creates and saves a default configuration. This ensures that the
+   * configuration is always persisted and available for subsequent application starts.
+   *
+   * @param cb - Callback function called when initialization completes
+   *
+   * @throws {ConfigurationError} When the configuration is already initialized
+   *
+   * @example
+   * ```typescript
+   * Configuration.initialize((err) => {
+   *   if (err) {
+   *     console.error('Configuration initialization failed:', err);
+   *     return;
+   *   }
+   *
+   *   console.log('Configuration initialized successfully');
+   *   const config = Configuration.getConfig();
+   * });
+   * ```
+   */
+  static initialize(cb: ICallback<Configuration>): void {
+    if (Configuration.instance) {
+      return cb(new ConfigurationError('Configuration already initialized'));
+    }
+
+    const instance = new Configuration();
+    instance.load((err) => {
+      if (err) {
+        if (err instanceof ConfigurationNotFoundError) {
+          // Configuration not found in Redis, save the default configuration
+          return instance.saveCurrentConfig((err) => {
+            if (err) return cb(err);
+            //
+            Configuration.instance = instance;
+            cb(null, instance);
+          });
+        }
+        return cb(err);
+      }
+
+      // Configuration loaded successfully from Redis
+      Configuration.instance = instance;
+      cb(null, instance);
+    });
+  }
+
+  /**
+   * Initializes the Configuration singleton with a provided configuration object.
+   * The provided config is validated and persisted to Redis.
+   *
+   * @param config - A partial or full configuration object to persist.
+   * @param cb - Callback invoked with (err).
    *
    * @remarks
-   * This method is useful when testing or when changing the configuration settings dynamically.
-   * After calling this method, the next time `getSetConfig` is called, a new instance of the Configuration class will be created.
+   * - This method synchronously validates the provided config using parseConfig.
+   * - If parseConfig fails, an exception may be thrown before the callback is invoked.
+   *
+   * @throws {Error} If parseConfig throws due to invalid input.
+   * @throws {ConfigurationError} When the configuration is already initialized
    *
    * @example
    * ```typescript
-   * // Create a configuration instance
-   * const config = {
-   *   namespace: 'myNamespace',
-   *   redis: {
-   *     host: 'localhost',
-   *     port: 6379,
-   *   },
-   * };
-   *
-   * const myConfig = Configuration.getSetConfig(config);
-   *
-   * // Reset the configuration
-   * Configuration.reset();
-   *
-   * // Create a new configuration instance
-   * const newConfig = Configuration.getSetConfig();
+   * Configuration.initializeWithConfig({ namespace: 'acme' }, (err) => {
+   *   if (err) return console.error('Init with config failed:', err);
+   *   console.log('Successfully initialized.');
+   * });
    * ```
    */
-  static reset(): void {
-    Configuration.instance = null;
+  static initializeWithConfig(config: IRedisSMQConfig, cb: ICallback): void {
+    if (Configuration.instance) {
+      return cb(new ConfigurationError('Configuration already initialized'));
+    }
+
+    const parsedConfig: IRedisSMQParsedConfig = parseConfig(config);
+    const instance = new Configuration();
+    return instance.saveConfig(parsedConfig, (err) => {
+      if (err) return cb(err);
+      //
+      Configuration.instance = instance;
+      cb(null);
+    });
   }
 
   /**
-   * Retrieves the current configuration settings for the RedisSMQ library.
+   * Shuts down the Configuration singleton.
    *
-   * @returns An object containing the required configuration properties:
-   * - `namespace`: An instance of the Namespace class, representing the namespace for Redis keys.
-   * - `redis`: An instance of the Redis class, managing the Redis connection.
-   * - `logger`: An instance of the Logger class, responsible for logging messages.
-   * - `messages`: An instance of the Messages class, managing message templates.
-   * - `eventBus`: An instance of the EventBus class, handling event subscriptions and notifications.
+   * This method performs a clean shutdown by resetting the singleton instance to null.
+   *
+   * After calling this method, you can call `initialize` again to create a new
+   * configuration instance. This is particularly useful for testing scenarios,
+   * application restarts, or when you need to reconfigure the application at runtime.
+   *
+   * @param cb - Callback function called when the shutdown operation completes.
    *
    * @example
    * ```typescript
-   * const myConfig = Configuration.getSetConfig();
-   * console.log(myConfig.namespace); // Output: Namespace instance
-   * console.log(myConfig.redis); // Output: Redis instance
-   * console.log(myConfig.logger); // Output: Logger instance
-   * console.log(myConfig.messages); // Output: Messages instance
-   * console.log(myConfig.eventBus); // Output: EventBus instance
+   * // Basic shutdown with error handling
+   * Configuration.shutdown((err) => {
+   *   if (err) {
+   *     console.error('Failed to shutdown configuration:', err);
+   *     return;
+   *   }
+   *
+   *   console.log('Configuration shutdown successfully');
+   *
+   *   // Now safe to reinitialize
+   *   Configuration.initialize((err) => {
+   *     if (!err) {
+   *       console.log('Configuration reinitialized');
+   *     }
+   *   });
+   * });
+   *
+   * // Shutdown in testing scenarios
+   * afterEach((done) => {
+   *   Configuration.shutdown(done);
+   * });
+   *
+   * // Shutdown during application exit
+   * process.on('SIGTERM', () => {
+   *   Configuration.shutdown((err) => {
+   *     if (err) console.error('Shutdown error:', err);
+   *     process.exit(err ? 1 : 0);
+   *   });
+   * });
    * ```
    */
-  getConfig(): IRedisSMQConfigRequired {
+  static shutdown(cb: ICallback): void {
+    Configuration.instance = null;
+    cb();
+  }
+
+  /**
+   * Loads configuration from Redis into memory.
+   *
+   * This method retrieves the stored configuration from Redis and updates the current
+   * instance with the loaded values. The configuration is automatically parsed and
+   * validated during the loading process.
+   *
+   * @param cb - Callback function called with the loaded configuration or an error
+   *
+   * @throws {ConfigurationNotFoundError} When no configuration exists in Redis
+   * @throws {Error} When Redis client initialization fails or JSON parsing fails
+   *
+   * @example
+   * ```typescript
+   * const config = Configuration.getInstance();
+   * config.load((err, loadedConfig) => {
+   *   if (err) {
+   *     if (err instanceof ConfigurationNotFoundError) {
+   *       console.log('No configuration found in Redis');
+   *     } else {
+   *       console.error('Failed to load configuration:', err);
+   *     }
+   *     return;
+   *   }
+   *
+   *   console.log('Configuration loaded:', loadedConfig);
+   * });
+   * ```
+   */
+  load(cb: ICallback<IRedisSMQParsedConfig>): void {
+    withSharedPoolConnection((redisClient, cb) => {
+      const { keyConfiguration } = redisKeys.getMainKeys();
+      redisClient.get(keyConfiguration, (err, configData) => {
+        if (err) return cb(err);
+        if (!configData) {
+          return cb(new ConfigurationNotFoundError());
+        }
+
+        try {
+          this.config = JSON.parse(configData);
+          cb(null, this.config);
+        } catch (parseErr) {
+          cb(
+            new Error(
+              `Failed to parse configuration from Redis: ${parseErr instanceof Error ? parseErr.message : 'Unknown error'}`,
+            ),
+          );
+        }
+      });
+    }, cb);
+  }
+
+  /**
+   * Saves the provided configuration to Redis.
+   *
+   * This method validates, parses, and stores the configuration in Redis.
+   * The configuration is automatically serialized to JSON format for storage.
+   * After successful save, the current instance configuration is updated.
+   *
+   * @param config - The configuration object to save. This will be validated and parsed
+   *                before being stored in Redis.
+   * @param cb - Callback function called when the save operation completes
+   *
+   * @throws {Error} When Redis client initialization fails or Redis operations fail
+   *
+   * @example
+   * ```typescript
+   * const config = Configuration.getInstance();
+   * const newConfig = {
+   *   namespace: 'my-app',
+   *   logger: { enabled: true, options: { level: 'info' } },
+   *   eventBus: { enabled: false }
+   * };
+   *
+   * config.save(newConfig, (err) => {
+   *   if (err) {
+   *     console.error('Failed to save configuration:', err);
+   *     return;
+   *   }
+   *
+   *   console.log('Configuration saved successfully');
+   * });
+   * ```
+   */
+  save(config: IRedisSMQConfig, cb: ICallback): void {
+    const parsedConfig = parseConfig(config);
+    this.saveConfig(parsedConfig, cb);
+  }
+
+  /**
+   * Saves the current instance configuration to Redis.
+   *
+   * This is a convenience method that saves the current configuration without
+   * needing to pass it as a parameter. It's particularly useful when you've
+   * made changes to the configuration and want to persist them.
+   *
+   * @param cb - Callback function called when the save operation completes
+   *
+   * @throws {Error} When Redis client initialization fails or Redis operations fail
+   *
+   * @example
+   * ```typescript
+   * const config = Configuration.getInstance();
+   *
+   * // Modify configuration in memory
+   * config.getConfig().logger.enabled = false;
+   *
+   * // Save the current state to Redis
+   * config.saveCurrentConfig((err) => {
+   *   if (err) {
+   *     console.error('Failed to save current configuration:', err);
+   *     return;
+   *   }
+   *
+   *   console.log('Current configuration saved to Redis');
+   * });
+   * ```
+   */
+  saveCurrentConfig(cb: ICallback): void {
+    this.saveConfig(this.config, cb);
+  }
+
+  reset(cb: ICallback): void {
+    const defaultConfig = parseConfig({});
+    this.saveConfig(defaultConfig, cb);
+  }
+
+  /**
+   * Gets the current configuration object.
+   *
+   * This method returns the current parsed and validated configuration.
+   * The returned object is a read-only representation of the configuration
+   * and should not be modified directly. Use `updateConfig()` to make changes.
+   *
+   * @returns The current parsed configuration containing all RedisSMQ settings
+   *
+   * @example
+   * ```typescript
+   * const config = Configuration.getInstance();
+   * const currentConfig = config.getConfig();
+   *
+   * console.log('NamespaceManager:', currentConfig.namespace);
+   * console.log('Logger enabled:', currentConfig.logger.enabled);
+   * console.log('Redis host:', currentConfig.redis.options.host);
+   * console.log('Event bus enabled:', currentConfig.eventBus.enabled);
+   * ```
+   */
+  getConfig(): IRedisSMQParsedConfig {
     return this.config;
   }
 
-  protected parseConfiguration(
-    config: IRedisSMQConfig,
-  ): IRedisSMQConfigRequired {
-    return {
-      namespace: Namespace(config),
-      redis: Redis(config),
-      logger: Logger(config),
-      messages: Messages(config),
-      eventBus: EventBus(config),
-    };
+  /**
+   * Updates the current configuration with new values and saves to Redis.
+   *
+   * This method merges the provided configuration updates with the current
+   * configuration and saves the result to Redis. Only the provided fields
+   * will be updated; other fields will retain their current values.
+   *
+   * The configuration is validated and parsed before being saved, ensuring
+   * that the updated configuration is valid and consistent.
+   *
+   * @param updates - Configuration updates to apply. Can be a partial configuration
+   *                 object containing only the fields you want to change.
+   * @param cb - Callback function called when the update operation completes
+   *
+   * @throws {Error} When configuration validation fails or Redis operations fail
+   *
+   * @example
+   * ```typescript
+   * const config = Configuration.getInstance();
+   *
+   * // Update only logger settings
+   * config.updateConfig({
+   *   logger: {
+   *     enabled: false,
+   *     options: { level: 'error' }
+   *   }
+   * }, (err) => {
+   *   if (err) {
+   *     console.error('Failed to update configuration:', err);
+   *     return;
+   *   }
+   *
+   *   console.log('Logger configuration updated');
+   * });
+   *
+   * // Update multiple settings
+   * config.updateConfig({
+   *   logger: { enabled: true },
+   *   eventBus: { enabled: true }
+   * }, (err) => {
+   *   if (!err) console.log('Multiple settings updated');
+   * });
+   * ```
+   */
+  updateConfig(updates: IRedisSMQConfig, cb: ICallback<void>): void {
+    try {
+      const mergedConfig: IRedisSMQConfig = {
+        namespace: updates.namespace ?? this.config.namespace,
+        redis: updates.redis ?? this.config.redis,
+        logger: updates.logger ?? this.config.logger,
+        messageAudit: updates.messageAudit ?? this.config.messageAudit,
+        eventBus: updates.eventBus ?? this.config.eventBus,
+      };
+
+      this.save(mergedConfig, cb);
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      cb(error);
+    }
+  }
+
+  /**
+   * Checks if configuration exists in Redis.
+   *
+   * This method queries Redis to determine whether a configuration has been
+   * previously saved. It's useful for determining whether to load existing
+   * configuration or create a new one.
+   *
+   * @param cb - Callback function called with the existence check result
+   *
+   * @throws {Error} When Redis client initialization fails or Redis operations fail
+   *
+   * @example
+   * ```typescript
+   * const config = Configuration.getInstance();
+   *
+   * config.exists((err, exists) => {
+   *   if (err) {
+   *     console.error('Failed to check configuration existence:', err);
+   *     return;
+   *   }
+   *
+   *   if (exists) {
+   *     console.log('Configuration exists in Redis');
+   *     config.load((loadErr, loadedConfig) => {
+   *       if (!loadErr) console.log('Configuration loaded');
+   *     });
+   *   } else {
+   *     console.log('No configuration found, using defaults');
+   *     config.saveCurrentConfig((saveErr) => {
+   *       if (!saveErr) console.log('Default configuration saved');
+   *     });
+   *   }
+   * });
+   * ```
+   */
+  exists(cb: ICallback<boolean>): void {
+    withSharedPoolConnection((redisClient, cb) => {
+      const { keyConfiguration } = redisKeys.getMainKeys();
+      redisClient.get(keyConfiguration, (err, configData) => {
+        if (err) return cb(err);
+        cb(null, configData !== null);
+      });
+    }, cb);
+  }
+
+  protected saveConfig(
+    config: IRedisSMQParsedConfig,
+    cb: ICallback<void>,
+  ): void {
+    withSharedPoolConnection((redisClient, cb) => {
+      const { keyConfiguration } = redisKeys.getMainKeys();
+      const configStr = JSON.stringify(config);
+      redisClient.set(keyConfiguration, configStr, {}, (setErr) => {
+        if (setErr) return cb(setErr);
+        this.config = config;
+        cb(null);
+      });
+    }, cb);
   }
 }

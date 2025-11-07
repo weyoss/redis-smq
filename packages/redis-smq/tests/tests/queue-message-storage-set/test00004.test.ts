@@ -9,25 +9,21 @@
 
 import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
-import { RedisClient } from '../../../src/common/redis-client/redis-client.js';
 import { redisKeys } from '../../../src/common/redis-keys/redis-keys.js';
-import { EQueueType, ProducibleMessage } from '../../../src/lib/index.js';
+import { EQueueType, ProducibleMessage } from '../../../src/index.js';
 import {
   createQueue,
   getDefaultQueue,
 } from '../../common/message-producing-consuming.js';
 import { getProducer } from '../../common/producer.js';
-import { QueueMessagesStorageSet } from '../../../src/lib/queue-messages/queue-messages-storage/queue-messages-storage-set.js';
+import { QueueStorageSet } from '../../../src/common/queue-messages/queue-storage/queue-storage-set.js';
 
 const { promisifyAll } = bluebird;
 
-it('QueueMessagesStorageSet: should fetch items with correct pagination', async () => {
+it('QueueStorageSet: should fetch items with correct pagination', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
-  const redisClient = promisifyAll(new RedisClient());
-  const queueMessagesStorageSet = promisifyAll(
-    new QueueMessagesStorageSet(redisClient),
-  );
+  const queueMessagesStorageSet = promisifyAll(new QueueStorageSet());
 
   const ids: string[] = [];
   const producer = getProducer();
@@ -61,5 +57,4 @@ it('QueueMessagesStorageSet: should fetch items with correct pagination', async 
   expect(outOfBounds).toEqual([]);
 
   expect([...allPages.values()].sort()).toEqual(ids.sort());
-  await redisClient.shutdownAsync();
 });

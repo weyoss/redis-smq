@@ -7,99 +7,57 @@
  * in the root directory of this source tree.
  */
 
-import { async } from '../async/index.js';
 import { ICallback } from '../async/index.js';
-import { EventEmitter, IEventBus, TEventBusEvent } from '../event/index.js';
-import {
-  createRedisClient,
-  IRedisClient,
-  IRedisConfig,
-} from '../redis-client/index.js';
-import { EventBusNotConnectedError } from './errors/index.js';
+import { IEventBusRedisConfig, TEventBusEvent } from './types/index.js';
+import { RedisClientFactory } from '../redis-client/index.js';
+import { EventBusError, EventBusNotConnectedError } from './errors/index.js';
+import { EventBus } from './event-bus.js';
 
-export class EventBusRedis<Events extends TEventBusEvent>
-  extends EventEmitter<Events>
-  implements IEventBus<Events>
-{
-  protected connected = false;
-  protected pubClient;
-  protected subClient;
+export class EventBusRedis<
+  Events extends TEventBusEvent,
+> extends EventBus<Events> {
+  protected pubClient: RedisClientFactory;
+  protected subClient: RedisClientFactory;
 
-  protected constructor(pubClient: IRedisClient, subClient: IRedisClient) {
-    super();
+  // Track active Redis subscriptions to avoid duplicate SUBSCRIBE/UNSUBSCRIBE
+  private readonly subscribedEvents = new Set<string>();
 
-    //
-    this.pubClient = pubClient;
-    this.pubClient.on('error', (err: Error) => {
-      this.eventEmitter.emit('error', err);
-    });
-
-    //
-    this.subClient = subClient;
-    this.subClient.on('message', (channel: keyof Events, message: string) => {
-      this.eventEmitter.emit(String(channel), ...JSON.parse(message));
-    });
-    this.subClient.on('error', (err: Error) => {
-      this.eventEmitter.emit('error', err);
-    });
-
-    this.connected = true;
+  constructor(config: IEventBusRedisConfig) {
+    super(config);
+    this.pubClient = new RedisClientFactory(config.redis);
+    this.pubClient.on('error', (err) => this.handleError(err));
+    this.subClient = new RedisClientFactory(config.redis);
+    this.subClient.on('error', (err) => this.handleError(err));
   }
 
+  // Publish non-error events via Redis; let 'error' behave locally, consistent with EventBus
   override emit<E extends keyof Events>(
     event: E,
     ...args: Parameters<Events[E]>
   ): boolean {
-    if (!this.connected) {
+    if (event === 'error') {
+      return super.emit(event, ...args);
+    }
+    if (!this.isRunning()) {
       this.eventEmitter.emit('error', new EventBusNotConnectedError());
       return false;
     }
-    this.pubClient.publish(String(event), JSON.stringify(args), () => void 0);
+    this.pubClient
+      .getInstance()
+      .publish(String(event), JSON.stringify(args), () => void 0);
     return true;
   }
 
+  // Always register listeners locally; subscription is managed separately and idempotently.
   override on<E extends keyof Events>(event: E, listener: Events[E]): this {
-    if (event === 'error') {
-      super.on('error', listener);
-      return this;
-    }
-    if (!this.connected) {
-      this.eventEmitter.emit('error', new EventBusNotConnectedError());
-      return this;
-    }
-    this.subClient.subscribe(String(event));
     super.on(event, listener);
+    this.ensureSubscribed(String(event));
     return this;
   }
 
   override once<E extends keyof Events>(event: E, listener: Events[E]): this {
-    if (event === 'error') {
-      super.once('error', listener);
-      return this;
-    }
-    if (!this.connected) {
-      this.eventEmitter.emit('error', new EventBusNotConnectedError());
-      return this;
-    }
-    this.subClient.subscribe(String(event));
     super.once(event, listener);
-    return this;
-  }
-
-  override removeAllListeners<E extends keyof Events>(
-    event?: Extract<E, string>,
-  ): this {
-    if (event === 'error') {
-      super.removeAllListeners('error');
-      return this;
-    }
-    if (!this.connected) {
-      this.eventEmitter.emit('error', new EventBusNotConnectedError());
-      return this;
-    }
-    if (event) this.subClient.unsubscribe(String(event));
-    else this.subClient.unsubscribe();
-    super.removeAllListeners(event);
+    this.ensureSubscribed(String(event));
     return this;
   }
 
@@ -107,69 +65,109 @@ export class EventBusRedis<Events extends TEventBusEvent>
     event: E,
     listener: Events[E],
   ): this {
-    if (event === 'error') {
-      super.removeListener('error', listener);
-      return this;
-    }
-    if (!this.connected) {
-      this.eventEmitter.emit('error', new EventBusNotConnectedError());
-      return this;
-    }
     super.removeListener(event, listener);
+    // Unsubscribe if there are no more listeners for this event
+    if (
+      event !== 'error' &&
+      this.eventEmitter.listenerCount(String(event)) === 0
+    ) {
+      this.ensureUnsubscribed(String(event));
+    }
     return this;
   }
 
-  shutdown(cb: ICallback<void>) {
-    if (this.connected) {
-      async.series(
-        [
-          (cb: ICallback<void>) => this.subClient.halt(() => cb()),
-          (cb: ICallback<void>) => this.pubClient.halt(() => cb()),
-        ],
-        () => {
-          this.connected = false;
-          cb();
-        },
-      );
-    } else cb();
+  override removeAllListeners<E extends keyof Events>(
+    event?: Extract<E, string>,
+  ): this {
+    super.removeAllListeners(event);
+    if (event && event !== 'error') {
+      this.ensureUnsubscribed(String(event));
+    } else if (!event) {
+      this.ensureUnsubscribed(); // Unsubscribe from all
+    }
+    return this;
   }
 
-  static createInstance<T extends TEventBusEvent>(
-    config: IRedisConfig,
-    cb: ICallback<IEventBus<T>>,
-  ): void {
-    let pubClient: IRedisClient | null | undefined = null;
-    let subClient: IRedisClient | null | undefined = null;
-    async.series(
-      [
-        (cb: ICallback<void>) =>
-          createRedisClient(config, (err, client) => {
-            if (err) cb(err);
-            else {
-              pubClient = client;
-              cb();
-            }
-          }),
-        (cb: ICallback<void>) =>
-          createRedisClient(config, (err, client) => {
-            if (err) cb(err);
-            else {
-              subClient = client;
-              cb();
-            }
-          }),
-      ],
-      (err) => {
-        if (err) {
-          if (pubClient) pubClient.halt(() => void 0);
-          if (subClient) subClient.halt(() => void 0);
-          cb(err);
-        } else if (!pubClient || !subClient) cb(new Error());
-        else {
-          const instance = new EventBusRedis<T>(pubClient, subClient);
-          cb(null, instance);
-        }
+  // Centralized, idempotent subscription management (DRY)
+  private ensureSubscribed(eventName: string): void {
+    if (
+      eventName !== 'error' &&
+      this.isRunning() &&
+      !this.subscribedEvents.has(eventName)
+    ) {
+      this.subClient.getInstance().subscribe(eventName);
+      this.subscribedEvents.add(eventName);
+    }
+  }
+
+  private ensureUnsubscribed(eventName?: string): void {
+    if (eventName === 'error') return;
+
+    if (!eventName) {
+      if (this.subscribedEvents.size > 0) {
+        this.subClient.getInstance().unsubscribe();
+        this.subscribedEvents.clear();
+      }
+      return;
+    }
+
+    if (this.subscribedEvents.has(eventName)) {
+      this.subClient.getInstance().unsubscribe(eventName);
+      this.subscribedEvents.delete(eventName);
+    }
+  }
+
+  private syncSubscriptionsWithListeners(): void {
+    // Subscribe to all existing non-error listener event names on startup
+    if (!this.isRunning()) return;
+    for (const name of this.getListenerEventNames()) {
+      this.ensureSubscribed(name);
+    }
+  }
+
+  private getListenerEventNames(): string[] {
+    return this.eventEmitter
+      .eventNames()
+      .map((n) => String(n))
+      .filter((n) => n !== 'error');
+  }
+
+  protected override goingUp(): ((cb: ICallback<void>) => void)[] {
+    return super.goingUp().concat([
+      // Publisher
+      (cb: ICallback) => this.pubClient.init(cb),
+      (cb: ICallback) => {
+        this.subClient.init((err) => {
+          if (err) return cb(err);
+          this.subClient
+            .getInstance()
+            .on('message', (channel: string, message: string) => {
+              try {
+                this.eventEmitter.emit(channel, ...JSON.parse(message));
+              } catch (parseError) {
+                const err =
+                  parseError instanceof Error
+                    ? parseError
+                    : new EventBusError(String(parseError));
+                this.handleError(err);
+              }
+            });
+          this.syncSubscriptionsWithListeners();
+          cb();
+        });
       },
-    );
+    ]);
+  }
+
+  protected override goingDown(): ((cb: ICallback<void>) => void)[] {
+    return [
+      // Unsubscribe from all events
+      (cb: ICallback) => {
+        this.ensureUnsubscribed();
+        cb();
+      },
+      (cb: ICallback) => this.subClient.shutdown(cb),
+      (cb: ICallback) => this.pubClient.shutdown(cb),
+    ].concat(super.goingDown());
   }
 }

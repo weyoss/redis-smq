@@ -10,15 +10,15 @@
 import { fork } from 'child_process';
 import path from 'path';
 import { env, ICallback } from 'redis-smq-common';
-import { Configuration } from '../../src/config/index.js';
 import {
+  Configuration,
   EMessagePriority,
   EQueueDeliveryModel,
   EQueueType,
   IMessageTransferable,
   IQueueParams,
   ProducibleMessage,
-} from '../../src/lib/index.js';
+} from '../../src/index.js';
 import { config } from './config.js';
 import { getConsumer } from './consumer.js';
 import {
@@ -26,12 +26,12 @@ import {
   untilMessageDeadLettered,
 } from './events.js';
 import { getProducer } from './producer.js';
-import { getQueue } from './queue.js';
+import { getQueueManager } from './queue-manager.js';
 
 export function getDefaultQueue() {
   return {
     name: 'test_queue',
-    ns: Configuration.getSetConfig().namespace,
+    ns: Configuration.getConfig().namespace,
   };
 }
 
@@ -127,7 +127,7 @@ export async function createQueue(
   queue: string | IQueueParams,
   mixed: boolean | EQueueType,
 ): Promise<void> {
-  const queueInstance = await getQueue();
+  const queueInstance = await getQueueManager();
   const type =
     typeof mixed === 'boolean'
       ? mixed

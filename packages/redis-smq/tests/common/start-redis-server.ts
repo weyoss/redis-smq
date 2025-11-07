@@ -7,8 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { ERedisConfigClient } from 'redis-smq-common';
-import { RedisServer } from 'redis-smq-common';
+import { ERedisConfigClient, RedisServer } from 'redis-smq-common';
 import { config } from './config.js';
 
 let redisServer: RedisServer | null = null;

@@ -218,9 +218,9 @@ export class WorkerResourceGroup extends Runnable<TWorkerResourceGroupEvent> {
     );
   };
 
-  loadFromDir = (
+  loadFromDir = <WorkerPayload = unknown>(
     workersDir: string,
-    payload: unknown,
+    payload: WorkerPayload,
     cb: ICallback<void>,
   ): void => {
     if (this.isDown() && !this.isGoingUp()) {

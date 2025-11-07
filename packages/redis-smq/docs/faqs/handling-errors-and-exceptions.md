@@ -2,174 +2,259 @@
 
 # How do I handle errors and exceptions when using RedisSMQ's classes and methods?
 
-Handling errors and exceptions is crucial when working with RedisSMQ. The library uses a combination of callback-based
-error handling and event emitters. Here's a comprehensive guide on how to handle errors and exceptions effectively:
+RedisSMQ exposes a callback-based API. Proper error handling spans initialization, producing, consuming, and shutdown.
+This guide shows recommended patterns using the RedisSMQ class, factory-created components, the errors namespace, and the optional EventBus.
 
-## 1. Callback-based Error Handling
+## 1) Callback-based error handling
 
-Most methods in RedisSMQ use callbacks with the signature `(err, result) => void`. Always check for errors in these callbacks.
+Most public methods follow Node-style callbacks: (err, result) => void. Always check the error first.
 
-Example:
-**File: /path/to/your/project/error-handling-example.js**
+Example: initialize, start a producer, and produce a message
 
 ```javascript
-import { Producer, ProducibleMessage } from 'redis-smq';
+'use strict';
 
-const producer = new Producer();
+import { RedisSMQ, ProducibleMessage, errors } from 'redis-smq';
+import { ERedisConfigClient } from 'redis-smq-common';
 
-producer.run((err) => {
-  if (err) {
-    console.error('Failed to start producer:', err);
-    return;
-  }
-
-  const message = new ProducibleMessage();
-  message.setBody({ data: 'example' }).setQueue('my_queue');
-
-  producer.produce(message, (err, messageId) => {
-    if (err) {
-      console.error('Failed to produce message:', err);
-      // Handle the error appropriately
+// 1) Initialize once per process
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: '127.0.0.1', port: 6379, db: 0 },
+  },
+  (initErr) => {
+    if (initErr) {
+      console.error('RedisSMQ initialization failed:', initErr);
       return;
     }
-    console.log('Message produced with ID:', messageId);
-  });
-});
-```
 
-## 2. Event-based Error Handling
+    // 2) Create and start a producer
+    const producer = RedisSMQ.createProducer();
+    producer.run((runErr) => {
+      if (runErr) {
+        console.error('Producer failed to start:', runErr);
+        return;
+      }
 
-RedisSMQ classes extend from `Runnable`, which is an EventEmitter. You can listen for error events.
+      // Direct queue publishing (fastest path)
+      const msg = new ProducibleMessage()
+        .setQueue('my_queue')
+        .setBody({ data: 'example' });
 
-**File: /path/to/your/project/event-error-handling-example.js**
-
-```javascript
-import { Consumer } from 'redis-smq';
-
-const consumer = new Consumer();
-
-consumer.on('error', (err) => {
-  console.error('Consumer encountered an error:', err);
-  // Implement your error handling logic here
-});
-
-consumer.run((err) => {
-  if (err) console.error('Failed to start consumer:', err);
-  else console.log('Consumer is ready');
-});
-```
-
-## 3. Try-Catch Blocks
-
-For synchronous operations or when using async/await, use try-catch blocks.
-
-**File: /path/to/your/project/try-catch-example.js**
-
-```javascript
-import { Queue } from 'redis-smq';
-import { EQueueType } from 'redis-smq/dist/types/index.js';
-
-async function createQueue() {
-  try {
-    const queue = new Queue('my_queue', EQueueType.FIFO_QUEUE);
-    await new Promise((resolve, reject) => {
-      queue.save((err) => {
-        if (err) reject(err);
-        else resolve();
+      // 3) Produce and handle errors
+      producer.produce(msg, (produceErr, messageIds) => {
+        if (produceErr) {
+          if (produceErr instanceof errors.QueueNotFoundError) {
+            console.error('Queue does not exist:', produceErr.message);
+          } else {
+            console.error('Failed to produce message:', produceErr);
+          }
+          return;
+        }
+        console.log('Message produced with IDs:', messageIds);
       });
     });
-    console.log('Queue created successfully');
-  } catch (err) {
-    console.error('Failed to create queue:', err);
-    // Handle the error appropriately
-  }
-}
-
-createQueue();
+  },
+);
 ```
 
-## 4. Specific Error Types
+## 2) Event-based error handling
 
-RedisSMQ uses specific error types for different scenarios. Check for these to handle specific cases:
-
-**File: /path/to/your/project/specific-error-handling-example.js**
+Components emit error events. Listen for 'error' to centralize alerting/metrics. You can add listeners before or after
+`run(...)`.
 
 ```javascript
-import { Producer, ProducibleMessage } from 'redis-smq';
-import { QueueNotFoundError } from 'redis-smq/dist/lib/queue/errors/queue-not-found.error.js';
+'use strict';
 
-const producer = new Producer();
+import { RedisSMQ } from 'redis-smq';
+import { ERedisConfigClient } from 'redis-smq-common';
 
-producer.run((err) => {
-  if (err) {
-    console.error('Failed to start producer:', err);
-    return;
-  }
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: '127.0.0.1', port: 6379 },
+  },
+  (initErr) => {
+    if (initErr) return console.error('Init failed:', initErr);
 
-  const message = new ProducibleMessage();
-  message.setBody({ data: 'example' }).setQueue('non_existent_queue');
+    const consumer = RedisSMQ.createConsumer();
 
-  producer.produce(message, (err, messageId) => {
-    if (err) {
-      if (err instanceof QueueNotFoundError) {
-        console.error('The specified queue does not exist:', err.message);
-        // Handle the specific case of a non-existent queue
-      } else {
-        console.error('Failed to produce message:', err);
-        // Handle other types of errors
-      }
-      return;
-    }
-    console.log('Message produced with ID:', messageId);
-  });
-});
+    consumer.on('error', (err) => {
+      // Centralize logging/metrics/alerts for runtime errors
+      console.error('Consumer error event:', err);
+    });
+
+    consumer.consume(
+      'my_queue',
+      (message, done) => {
+        try {
+          // Your message handling logic...
+          done(); // acknowledge success
+        } catch (e) {
+          done(e); // acknowledge failure so retries can occur
+        }
+      },
+      (consumeErr) => {
+        if (consumeErr)
+          return console.error('Failed to register handler:', consumeErr);
+
+        consumer.run((runErr) => {
+          if (runErr) console.error('Consumer failed to start:', runErr);
+          else console.log('Consumer is running');
+        });
+      },
+    );
+  },
+);
 ```
 
-## 5. Graceful Shutdown
+_Tip_
 
-Implement proper shutdown procedures to handle errors during application termination:
+- Wrap business logic in try/catch and call done(error) on failure so the message can be retried according to your
+  configuration.
 
-**File: /path/to/your/project/graceful-shutdown-example.js**
+## 3) Handling specific error types
+
+All error classes are exported under the `errors` namespace.
 
 ```javascript
-import { Consumer } from 'redis-smq';
+'use strict';
 
-const consumer = new Consumer();
+import { RedisSMQ, ProducibleMessage, errors } from 'redis-smq';
+import { ERedisConfigClient } from 'redis-smq-common';
 
-process.on('SIGINT', () => {
-  console.log('Shutting down gracefully...');
-  consumer.shutdown((err) => {
-    if (err) {
-      console.error('Error during shutdown:', err);
-      process.exit(1);
-    } else {
-      console.log('Shutdown complete');
-      process.exit(0);
-    }
-  });
-});
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: '127.0.0.1', port: 6379 },
+  },
+  (initErr) => {
+    if (initErr) return console.error('Init failed:', initErr);
 
-consumer.run((err) => {
-  if (err) console.error('Failed to start consumer:', err);
-  else console.log('Consumer is ready');
-});
+    const producer = RedisSMQ.createProducer();
+    producer.run((runErr) => {
+      if (runErr) return console.error('Producer start failed:', runErr);
+
+      const message = new ProducibleMessage()
+        .setQueue('non_existent_queue')
+        .setBody({ data: 'example' });
+
+      producer.produce(message, (err) => {
+        if (err) {
+          if (err instanceof errors.QueueNotFoundError) {
+            console.error('The specified queue does not exist:', err.message);
+            // e.g., create the queue or route to a fallback
+          } else {
+            console.error('Produce failed:', err);
+          }
+          return;
+        }
+        console.log('Produced successfully');
+      });
+    });
+  },
+);
 ```
 
-## 6. Logging
+## 4) Logging
 
-Utilize the built-in logger for consistent error logging:
+Enable RedisSMQ internal logging via configuration, and use your application logger consistently in callbacks and handlers.
 
-**File: /path/to/your/project/logging-example.js**
+Enable logging during initialization (persisted configuration):
 
 ```javascript
-import { Producer } from 'redis-smq';
+'use strict';
 
-const producer = new Producer();
+import { RedisSMQ } from 'redis-smq';
+import { ERedisConfigClient, EConsoleLoggerLevel } from 'redis-smq-common';
 
-producer
-  .getLogger()
-  .error('An error occurred', { additionalInfo: 'Some context' });
+RedisSMQ.initializeWithConfig(
+  {
+    namespace: 'my_app_dev',
+    redis: {
+      client: ERedisConfigClient.IOREDIS,
+      options: { host: '127.0.0.1', port: 6379 },
+    },
+    logger: {
+      enabled: true,
+      options: { logLevel: EConsoleLoggerLevel.INFO },
+    },
+    messageAudit: false,
+    eventBus: { enabled: false },
+  },
+  (err) => {
+    if (err) console.error('Init with config failed:', err);
+  },
+);
 ```
 
-Remember to always handle errors at every level of your application, from initialization to message processing. This
-comprehensive approach will help you build a robust and reliable system using RedisSMQ.
+Use your app logger in callbacks/handlers:
+
+```javascript
+producer.produce(msg, (err) => {
+  if (err) appLogger.error('Produce failed', { err, queue: 'my_queue' });
+});
+
+consumer.on('error', (err) => appLogger.error('Consumer error', { err }));
+```
+
+## 5) Error events via EventBus (optional)
+
+Other error events can be consumed from the EventBus. This is useful for centralized observability across producers, consumers, queues, and internals.
+
+- Enable EventBus before initialization (recommended when you need to collect events):
+  - With persisted config: set `eventBus: { enabled: true }` in `RedisSMQ.initializeWithConfig(...)`
+- After initialization completes, get the singleton and subscribe to events.
+- The `TRedisSMQEvent` type alias includes all possible EventBus event names. Consult the API reference for the full list.
+
+Example (ESM):
+
+```typescript
+import { RedisSMQ, EventBus } from 'redis-smq';
+import type { TRedisSMQEvent } from 'redis-smq';
+import { ERedisConfigClient } from 'redis-smq-common';
+
+// Initialize with EventBus enabled (persisted configuration)
+RedisSMQ.initializeWithConfig(
+  {
+    namespace: 'my_app',
+    redis: {
+      client: ERedisConfigClient.IOREDIS,
+      options: { host: '127.0.0.1', port: 6379 },
+    },
+    logger: { enabled: false },
+    messageAudit: false,
+    eventBus: { enabled: true }, // Enable EventBus
+  },
+  (err) => {
+    if (err) return console.error('Init failed:', err);
+
+    const eventBus = EventBus.getInstance();
+
+    // Subscribe to specific events; TRedisSMQEvent includes all supported names
+    const eventsToWatch: TRedisSMQEvent[] = [
+      // Choose relevant error events from the API reference, for example:
+      // 'consumer.consumeMessage.error',
+      // 'producer.error',
+      // 'queue.error',
+    ];
+
+    eventsToWatch.forEach((name) => {
+      eventBus.on(name, (...args: unknown[]) => {
+        // args schema depends on the event; see API reference for payload shapes
+        console.error('[EventBus]', name, ...args);
+      });
+    });
+
+    // You can also subscribe to non-error events if needed (acks, bindings, etc.)
+  },
+);
+```
+
+Notes:
+
+- Event names and payloads are strongly typed by `TRedisSMQEvent`. See API:
+  - EventBus class: `api/classes/EventBus.md`
+  - All events union: `api/type-aliases/TRedisSMQEvent.md`
+- If EventBus is enabled via configuration and you create components through `RedisSMQ`, a single `RedisSMQ.shutdown(cb)` will stop EventBus and close shared resources for you.

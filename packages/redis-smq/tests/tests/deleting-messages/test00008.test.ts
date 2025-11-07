@@ -13,7 +13,7 @@ import {
   getDefaultQueue,
   produceAndDeadLetterMessage,
 } from '../../common/message-producing-consuming.js';
-import { getMessage } from '../../common/message.js';
+import { getMessageManager } from '../../common/message-manager.js';
 import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
 
 test('Combined test: Delete dead-lettered messages by IDs. Check dead-lettered messages. Check queue metrics.', async () => {
@@ -27,6 +27,7 @@ test('Combined test: Delete dead-lettered messages by IDs. Check dead-lettered m
     defaultQueue,
     true,
   );
+
   const ids = [msg1, msg2].sort((a, b) => (a > b ? 1 : -1));
 
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
@@ -44,8 +45,8 @@ test('Combined test: Delete dead-lettered messages by IDs. Check dead-lettered m
     await deadLetteredMessages.countMessagesAsync(getDefaultQueue());
   expect(count).toBe(2);
 
-  const message = await getMessage();
-  const reply = await message.deleteMessagesByIdsAsync([msg1, msg2]);
+  const messageManager = await getMessageManager();
+  const reply = await messageManager.deleteMessagesByIdsAsync([msg1, msg2]);
   expect(reply.status).toBe('OK');
   expect(reply.stats).toEqual({
     processed: 2,

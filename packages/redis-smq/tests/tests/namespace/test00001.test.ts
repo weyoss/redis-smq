@@ -12,20 +12,20 @@ import bluebird from 'bluebird';
 import {
   EQueueDeliveryModel,
   EQueueType,
-  Namespace,
-  NamespaceNotFoundError,
-  Queue,
-} from '../../../src/lib/index.js';
+  NamespaceManager,
+  QueueManager,
+} from '../../../src/index.js';
+import { NamespaceNotFoundError } from '../../../src/errors/index.js';
 
-test('Namespace', async () => {
-  const queue = bluebird.promisifyAll(new Queue());
+test('NamespaceManager', async () => {
+  const queue = bluebird.promisifyAll(new QueueManager());
   await queue.saveAsync(
     'myqueue',
     EQueueType.FIFO_QUEUE,
     EQueueDeliveryModel.POINT_TO_POINT,
   );
 
-  const namespace = bluebird.promisifyAll(new Namespace());
+  const namespace = bluebird.promisifyAll(new NamespaceManager());
   const nsList = await namespace.getNamespacesAsync();
   expect(nsList).toEqual(['testing']);
 
@@ -41,5 +41,4 @@ test('Namespace', async () => {
   );
 
   await queue.shutdownAsync();
-  await namespace.shutdownAsync();
 });

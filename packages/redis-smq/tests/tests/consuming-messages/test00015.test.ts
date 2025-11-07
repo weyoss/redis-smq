@@ -12,16 +12,16 @@ import bluebird from 'bluebird';
 import { ICallback } from 'redis-smq-common';
 import {
   Consumer,
-  ConsumerConsumeMessageHandlerAlreadyExistsError,
   EQueueDeliveryModel,
   EQueueType,
   IMessageTransferable,
-} from '../../../src/lib/index.js';
+} from '../../../src/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
-import { getQueue } from '../../common/queue.js';
+import { getQueueManager } from '../../common/queue-manager.js';
+import { MessageHandlerAlreadyExistsError } from '../../../src/errors/index.js';
 
 test('Consume message from different queues using a single consumer instance: case 1', async () => {
-  const queueInstance = await getQueue();
+  const queueInstance = await getQueueManager();
   const consumer = bluebird.promisifyAll(new Consumer());
 
   expect(consumer.getQueues()).toEqual([]);
@@ -51,7 +51,7 @@ test('Consume message from different queues using a single consumer instance: ca
       'another_queue',
       (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
     ),
-  ).rejects.toThrow(ConsumerConsumeMessageHandlerAlreadyExistsError);
+  ).rejects.toThrow(MessageHandlerAlreadyExistsError);
 
   expect(consumer.getQueues()).toEqual([
     { queueParams: { name: 'test_queue', ns: 'testing' }, groupId: null },
@@ -82,7 +82,7 @@ test('Consume message from different queues using a single consumer instance: ca
       'another_queue',
       (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
     ),
-  ).rejects.toThrow(ConsumerConsumeMessageHandlerAlreadyExistsError);
+  ).rejects.toThrow(MessageHandlerAlreadyExistsError);
 
   await consumer.cancelAsync('another_queue');
 
@@ -118,7 +118,7 @@ test('Consume message from different queues using a single consumer instance: ca
       'queue_a',
       (msg: IMessageTransferable, cb: ICallback<void>) => cb(),
     ),
-  ).rejects.toThrow(ConsumerConsumeMessageHandlerAlreadyExistsError);
+  ).rejects.toThrow(MessageHandlerAlreadyExistsError);
 
   expect(consumer.getQueues()).toEqual([
     { queueParams: { name: 'test_queue', ns: 'testing' }, groupId: null },
