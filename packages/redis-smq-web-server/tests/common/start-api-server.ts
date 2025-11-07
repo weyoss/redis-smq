@@ -9,16 +9,17 @@
 
 import { net } from 'redis-smq-common';
 import { config } from './config.js';
-import { RedisSMQRestApi } from 'redis-smq-rest-api';
+import { IRedisSMQRestApiConfig, RedisSMQRestApi } from 'redis-smq-rest-api';
 
 let server: RedisSMQRestApi | null = null;
 
 export async function startApiServer() {
   if (!server) {
     const port = await net.getRandomPort();
-    config.apiServer = config.apiServer || {};
-    config.apiServer.port = port;
-    server = new RedisSMQRestApi(config);
+    const cfg: IRedisSMQRestApiConfig = config;
+    cfg.apiServer = cfg.apiServer || {};
+    cfg.apiServer.port = port;
+    server = new RedisSMQRestApi(cfg);
     await server.run();
     return port;
   }
