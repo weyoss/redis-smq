@@ -40,7 +40,7 @@
 
 [`IQueueMessages`](../interfaces/IQueueMessages.md).[`countMessages`](../interfaces/IQueueMessages.md#countmessages)
 
----
+***
 
 ### getMessages()
 
@@ -72,7 +72,7 @@
 
 [`IQueueMessages`](../interfaces/IQueueMessages.md).[`getMessages`](../interfaces/IQueueMessages.md#getmessages)
 
----
+***
 
 ### purge()
 

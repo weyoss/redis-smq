@@ -54,7 +54,7 @@ Callback returning the count
 
 `QueueMessagesAbstract.countMessages`
 
----
+***
 
 ### countMessagesByStatus()
 
@@ -80,7 +80,7 @@ Callback function returning the IQueueMessagesCount.
 
 `void`
 
----
+***
 
 ### getMessages()
 
@@ -122,7 +122,7 @@ Callback returning an IQueueMessagesPage of IMessageTransferable
 
 `QueueMessagesAbstract.getMessages`
 
----
+***
 
 ### purge()
 
@@ -131,7 +131,6 @@ Callback returning an IQueueMessagesPage of IMessageTransferable
 Purges all messages from the specified queue.
 
 Different message types can be purged using specific classes:
-
 - QueueMessages - Delete all queue messages
 - [QueueAcknowledgedMessages](QueueAcknowledgedMessages.md) - Delete acknowledged messages (if configured to be stored)
 - [QueueDeadLetteredMessages](QueueDeadLetteredMessages.md) - Delete dead-lettered messages (if configured to be stored)
@@ -145,15 +144,15 @@ Different message types can be purged using specific classes:
 [`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
 
 The queue to purge. Can be a string, queue parameters object,
-or queue consumer group parameters.
+               or queue consumer group parameters.
 
 ##### cb
 
 `ICallback`
 
 Callback function that will be invoked when the operation completes.
-If an error occurs, the first parameter will contain the Error object.
-Otherwise, the first parameter will be null/undefined.
+            If an error occurs, the first parameter will contain the Error object.
+            Otherwise, the first parameter will be null/undefined.
 
 #### Returns
 
