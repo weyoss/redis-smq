@@ -1,7 +1,0 @@
-# Keep the receiving branch’s README versions during merges
-README.md merge=ours
-packages/redis-smq/README.md merge=ours
-packages/redis-smq-common/README.md merge=ours
-packages/redis-smq-rest-api/README.md merge=ours
-packages/redis-smq-web-server/README.md merge=ours
-packages/redis-smq-web-ui/README.md merge=ours
