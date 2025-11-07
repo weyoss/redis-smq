@@ -24,9 +24,9 @@ Redis clients, structure logging, and reuse core types across the stack.
 Install the package:
 
 ```bash
-npm install redis-smq-common@next
+npm install redis-smq-common@latest
 # or
-pnpm add redis-smq-common@next
+pnpm add redis-smq-common@latest
 ```
 
 This package works with multiple Redis clients. Install one of the supported clients based on your needs:

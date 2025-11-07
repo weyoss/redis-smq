@@ -18,7 +18,7 @@ queue using a RESTful API.
 
 ```bash
 # Using npm
-npm install redis-smq@next redis-smq-common@next redis-smq-rest-api@next --save
+npm install redis-smq@latest redis-smq-common@latest redis-smq-rest-api@latest --save
 ```
 
 Don't forget to install a Redis client. Choose either node-redis or ioredis:

@@ -19,7 +19,7 @@ the REST API through two flexible modes of operation:
 
 ```bash
 # Using npm
-npm install redis-smq@next redis-smq-common@next redis-smq-rest-api@next redis-smq-web-ui@next redis-smq-web-server@next --save
+npm install redis-smq@latest redis-smq-common@latest redis-smq-rest-api@latest redis-smq-web-ui@latest redis-smq-web-server@latest --save
 ```
 
 Don't forget to install a Redis client. Choose either node-redis or ioredis:
