@@ -1,8 +1,9 @@
 [RedisSMQ Common Library](../README.md) / Documentation
 
-# Documentation
+# RedisSMQ Common Library - Documentation
 
-The RedisSMQ Common Library consists of the following key components:
+RedisSMQ Common provides shared building blocks used across the RedisSMQ ecosystem. Below is an overview of the key
+components and utilities.
 
 1. **EventBus**: Implements a publish-subscribe pattern for event handling, allowing components to communicate through events without direct coupling.
 2. **RedisLock**: Provides distributed locking mechanisms using Redis as a centralized lock manager.
@@ -22,13 +23,12 @@ The RedisSMQ Common Library consists of the following key components:
 16. **Worker**: Implements a worker pattern for processing tasks, allowing the creation of specialized workers for different types of jobs.
 17. **Timer**: A wrapper around setTimout() and setInterval().
 
-See [API reference](./api/README.md) for more details.
+## API Reference
+
+See the complete API reference: [api/README.md](api/README.md)
 
 ## Guides
-
-To get started with the RedisSMQ Common Library, refer to the following guides:
 
 - [Logger](./logger.md)
 - [Redis Client](./redis-client)
 - [Redis Server](./redis-server.md)
-

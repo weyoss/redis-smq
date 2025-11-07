@@ -55,8 +55,7 @@ Note: Redis clients are optional peer dependencies; pick one and configure it in
 
 ## Version compatibility
 
-Always use matching versions of the RedisSMQ packages across your project to avoid runtime/API mismatches.
-See the monorepo documentation for Version Compatibility guidance.
+Always install matching versions of RedisSMQ packages to ensure compatibility. See [version compatibility](/packages/redis-smq/docs/version-compatibility.md) for details.
 
 ## Documentation
 
@@ -69,10 +68,6 @@ https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-common/docs
 - [redis-smq-rest-api](../redis-smq-rest-api/README.md): REST API with OpenAPI v3 and Swagger UI
 - [redis-smq-web-server](../redis-smq-web-server/README.md): Web server for hosting the UI and proxying/serving the API
 - [redis-smq-web-ui](../redis-smq-web-ui/README.md): SPA for monitoring and managing RedisSMQ
-
-## Contributing
-
-Issues and pull requests are welcome. Please read the repository’s CONTRIBUTING.md at the project root before submitting changes.
 
 ## License
 
