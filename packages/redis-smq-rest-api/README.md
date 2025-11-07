@@ -39,19 +39,19 @@ npm install ioredis --save
 
 ## Version Compatibility
 
-Always install matching versions of RedisSMQ packages to ensure compatibility. See [version compatibility](/packages/redis-smq/docs/version-compatibility.md) for details.
+Always install matching versions of RedisSMQ packages to ensure compatibility. See [version compatibility](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq/docs/version-compatibility.md) for details.
 
 ## Documentation
 
-For in-depth guides and API references, see [the documentation page](docs/README.md):
+For in-depth guides and API references, see [the documentation page](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-rest-api/docs/README.md):
 
 ## Related packages
 
-- [redis-smq](../redis-smq/README.md): Core message queue
-- [redis-smq-common](../redis-smq-common/README.md): Shared components/utilities
-- [redis-smq-web-server](../redis-smq-web-server/README.md): Static hosting + in-process or proxied API
-- [redis-smq-web-ui](../redis-smq-web-ui/README.md): SPA for monitoring and managing RedisSMQ
+- [redis-smq](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq/README.md): Core message queue
+- [redis-smq-common](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-common/README.md): Shared components/utilities
+- [redis-smq-web-server](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-web-server/README.md): Static hosting + in-process or proxied API
+- [redis-smq-web-ui](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-web-ui/README.md): SPA for monitoring and managing RedisSMQ
 
 ## License
 
-RedisSMQ REST API is released under the [MIT License](/LICENSE).
+RedisSMQ REST API is released under the [MIT License](https://github.com/weyoss/redis-smq/tree/next/LICENSE).
