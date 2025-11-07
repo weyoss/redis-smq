@@ -55,19 +55,19 @@ Note: Redis clients are optional peer dependencies; pick one and configure it in
 
 ## Version compatibility
 
-Always install matching versions of RedisSMQ packages to ensure compatibility. See [version compatibility](/packages/redis-smq/docs/version-compatibility.md) for details.
+Always install matching versions of RedisSMQ packages to ensure compatibility. See [version compatibility](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq/docs/version-compatibility.md) for details.
 
 ## Documentation
 
-For in-depth guides and API references, see [the documentation page](docs/README.md).
+For in-depth guides and API references, see [the documentation page](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-common/docs/README.md).
 
 ## Related packages
 
-- [redis-smq](../redis-smq/README.md): Core message queue for Node.js
-- [redis-smq-rest-api](../redis-smq-rest-api/README.md): REST API with OpenAPI v3 and Swagger UI
-- [redis-smq-web-server](../redis-smq-web-server/README.md): Web server for hosting the UI and proxying/serving the API
-- [redis-smq-web-ui](../redis-smq-web-ui/README.md): SPA for monitoring and managing RedisSMQ
+- [redis-smq](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq/README.md): Core message queue for Node.js
+- [redis-smq-rest-api](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-rest-api/README.md): REST API with OpenAPI v3 and Swagger UI
+- [redis-smq-web-server](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-web-server/README.md): Web server for hosting the UI and proxying/serving the API
+- [redis-smq-web-ui](https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-web-ui/README.md): SPA for monitoring and managing RedisSMQ
 
 ## License
 
-RedisSMQ Common Library is released under the [MIT License](/LICENSE).
+RedisSMQ Common Library is released under the [MIT License](https://github.com/weyoss/redis-smq/tree/next/LICENSE).

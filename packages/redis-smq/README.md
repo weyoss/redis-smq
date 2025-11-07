@@ -20,8 +20,8 @@ producers/consumers APIs, and integrates with a REST API and Web UI for monitori
 - Works with ioredis or the official @redis/client
 - Optional REST API and Web UI for management and observability
 
-The source code and documentation for RedisSMQ are in the main [redis-smq](/README.md) repository.
+The source code and documentation for RedisSMQ are in the main [redis-smq](https://github.com/weyoss/redis-smq/tree/next/README.md) repository.
 
 ## License
 
-RedisSMQ is released under the [MIT License](/LICENSE).
+RedisSMQ is released under the [MIT License](https://github.com/weyoss/redis-smq/tree/next/LICENSE).
