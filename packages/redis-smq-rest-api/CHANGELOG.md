@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.17](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.16...v9.0.0-next.17) (2025-11-07)
+
+### 📝 Documentation
+
+- **redis-smq-rest-api:** restructure README, move details to separate files ([2a5e5d9](https://github.com/weyoss/redis-smq/commit/2a5e5d9a4644e9d1ce490262e7682a83e9dc0e00))
+- standardize documentation links to use relative paths ([fc7c474](https://github.com/weyoss/redis-smq/commit/fc7c474bffbd2160fb9bb8727cec4bbdc5a23dc8))
+
 ## [9.0.0-next.16](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.15...v9.0.0-next.16) (2025-11-05)
 
 ### ♻️ Code Refactoring

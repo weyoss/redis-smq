@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.17](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.16...v9.0.0-next.17) (2025-11-07)
+
+### 📝 Documentation
+
+- **redis-smq:** improve classes/interfaces formatting ([f76936a](https://github.com/weyoss/redis-smq/commit/f76936a13b57887b40b3ac15f6756b6a5f8e87eb))
+
 ## [9.0.0-next.16](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.15...v9.0.0-next.16) (2025-11-05)
 
 ### 🐛 Bug Fixes

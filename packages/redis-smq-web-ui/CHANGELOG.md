@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.17](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.16...v9.0.0-next.17) (2025-11-07)
+
+### 📝 Documentation
+
+- **redis-smq-web-ui:** restructure README, move details to separate files ([1f701cd](https://github.com/weyoss/redis-smq/commit/1f701cd6e1e5eee01525677f86bf98b69e7c4dfd))
+- standardize documentation links to use relative paths ([fc7c474](https://github.com/weyoss/redis-smq/commit/fc7c474bffbd2160fb9bb8727cec4bbdc5a23dc8))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-web-ui:** improve message audit disabled alert text clarity ([1b5d99f](https://github.com/weyoss/redis-smq/commit/1b5d99fee98f93a61c26564f79623787082665cd))
+- **redis-smq-web-ui:** remove unused custom-fetch.ts ([eb672c4](https://github.com/weyoss/redis-smq/commit/eb672c4bbfb83dfb1f2c54809338f4a20d43bd75))
+
 ## [9.0.0-next.16](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.15...v9.0.0-next.16) (2025-11-05)
 
 **Note:** Version bump only for package redis-smq-web-ui

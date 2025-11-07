@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.17](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.16...v9.0.0-next.17) (2025-11-07)
+
+### ⚠ BREAKING CHANGES
+
+- **redis-smq-web-server:** remove apiServer from IRedisSMQWebServerConfig
+
+### 📝 Documentation
+
+- **redis-smq-web-server:** restructure README, move details to separate files ([99a5bce](https://github.com/weyoss/redis-smq/commit/99a5bce764ed7ba7568f2498ea59ce662a84d7ad))
+- standardize documentation links to use relative paths ([fc7c474](https://github.com/weyoss/redis-smq/commit/fc7c474bffbd2160fb9bb8727cec4bbdc5a23dc8))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-web-server:** remove apiServer from IRedisSMQWebServerConfig ([b78dea0](https://github.com/weyoss/redis-smq/commit/b78dea0def68dde6d8550b1355b98ed9aeda833c))
+
 ## [9.0.0-next.16](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.15...v9.0.0-next.16) (2025-11-05)
 
 **Note:** Version bump only for package redis-smq-web-server
