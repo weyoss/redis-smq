@@ -9,3 +9,4 @@
 
 export * from './config.js';
 export * from './redis-client.js';
+export * from './watch-transaction.js';

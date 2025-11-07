@@ -10,10 +10,7 @@
 import { expect, test } from 'vitest';
 import bluebird from 'bluebird';
 import { ICallback } from 'redis-smq-common';
-import {
-  IMessageTransferable,
-  ProducibleMessage,
-} from '../../../src/lib/index.js';
+import { IMessageTransferable, ProducibleMessage } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import { getEventBus } from '../../common/event-bus-redis.js';
 import {
@@ -77,6 +74,7 @@ test('Given many queues, a message is recovered from a consumer crash and re-que
 
   // using defaultQueue
   await crashAConsumerConsumingAMessage();
+
   await bluebird.delay(10000);
 
   expect(defaultQueueMetrics.acks).toBe(1);

@@ -13,7 +13,7 @@ import {
   getDefaultQueue,
   produceMessage,
 } from '../../common/message-producing-consuming.js';
-import { getMessage } from '../../common/message.js';
+import { getMessageManager } from '../../common/message-manager.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 
 test('Combined test: Delete pending messages by IDs. Check pending messages. Check queue metrics.', async () => {
@@ -33,7 +33,7 @@ test('Combined test: Delete pending messages by IDs. Check pending messages. Che
   const count = await pendingMessages.countMessagesAsync(getDefaultQueue());
   expect(count).toBe(2);
 
-  const message = await getMessage();
+  const message = await getMessageManager();
   const reply = await message.deleteMessagesByIdsAsync([msg1, msg2]);
   expect(reply.status).toBe('OK');
   expect(reply.stats).toEqual({

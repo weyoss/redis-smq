@@ -18,7 +18,7 @@ import { scriptFileMap } from './scripts/scripts.js';
 
 export class RedisClient extends RedisClientFactory {
   constructor(cfg?: IRedisConfig) {
-    const config = cfg ?? Configuration.getSetConfig().redis;
+    const config = cfg ?? Configuration.getConfig().redis;
     super(config);
   }
 

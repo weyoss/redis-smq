@@ -7,16 +7,16 @@
  * in the root directory of this source tree.
  */
 
-import { URL } from 'url';
-import { constants } from './constants.js';
-import { ConfigInvalidApiServerParamsError } from './errors/ConfigInvalidApiServerParamsError.js';
 import {
-  IRedisSMQHttpApiConfig,
-  IRedisSMQHttpApiParsedConfig,
-  THttpApiConfig,
+  IRedisSMQRestApiConfig,
+  IRedisSMQRestApiParsedConfig,
 } from './types/index.js';
+import { EConsoleLoggerLevel, ERedisConfigClient } from 'redis-smq-common';
 
-function normalizePath(path: string) {
+export const DEFAULT_PORT = 7210;
+export const DEFAULT_BASE_PATH = '/';
+
+function normalizePath(path: string): string {
   const s = path
     .split('/')
     .map((i) => i.trim())
@@ -25,42 +25,23 @@ function normalizePath(path: string) {
   return `/${s}`;
 }
 
-function validateURL(
-  apiServer: THttpApiConfig,
-): [string, number, string] | Error {
-  const {
-    hostname = constants.apiServerHostname,
-    port = constants.apiServerPort,
-    basePath = constants.apiServerBasePath,
-  } = apiServer;
-  const address = `http://${hostname}:${port}${normalizePath(basePath)}`;
-  try {
-    const url = new URL(address);
-    if (!['http'].map((x) => `${x.toLowerCase()}:`).includes(url.protocol)) {
-      return new ConfigInvalidApiServerParamsError();
-    }
-    if (hostname !== url.hostname || port !== Number(url.port)) {
-      return new ConfigInvalidApiServerParamsError();
-    }
-    return [url.hostname, Number(url.port), url.pathname];
-  } catch {
-    return new ConfigInvalidApiServerParamsError();
-  }
-}
-
 export function parseConfig(
-  config: IRedisSMQHttpApiConfig = {},
-): IRedisSMQHttpApiParsedConfig {
-  const { apiServer = {}, ...rest } = config;
-  const reply = validateURL(apiServer);
-  if (reply instanceof Error) throw reply;
-  const [hostname, port, basePath] = reply;
+  config: IRedisSMQRestApiConfig = {},
+): IRedisSMQRestApiParsedConfig {
+  const { apiServer = {}, redis, logger } = config;
   return {
-    ...rest,
+    redis: redis ?? { client: ERedisConfigClient.IOREDIS },
     apiServer: {
-      hostname,
-      port,
-      basePath,
+      port: apiServer.port ?? DEFAULT_PORT,
+      basePath: normalizePath(apiServer.basePath ?? DEFAULT_BASE_PATH),
+    },
+    logger: {
+      enabled: logger?.enabled || false,
+      options: {
+        includeTimestamp: logger?.options?.includeTimestamp || true,
+        colorize: logger?.options?.colorize || true,
+        logLevel: logger?.options?.logLevel || EConsoleLoggerLevel.INFO,
+      },
     },
   };
 }

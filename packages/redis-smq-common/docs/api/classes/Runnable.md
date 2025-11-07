@@ -1,62 +1,49 @@
 [RedisSMQ Common Library](../../../README.md) / [Docs](../../README.md) / [API Reference](../README.md) / Runnable
 
-# Class: Runnable\<Event\>
+# Abstract Class: Runnable\<Event\>
 
 A Runnable class that provides a foundation for managing long-running tasks.
 It provides methods for starting, stopping, and handling errors during the execution of tasks.
 
-## Type parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `Event` | extends [`TEventEmitterEvent`](../README.md#teventemitterevent) | The type of events that the Runnable class can emit. |
-
-## Hierarchy
+## Extends
 
 - [`EventEmitter`](EventEmitter.md)\<`Event`\>
 
-  ↳ **`Runnable`**
+## Extended by
 
-  ↳↳ [`RedisLock`](RedisLock.md)
+- [`EventBus`](EventBus.md)
+- [`RedisLock`](RedisLock.md)
+- [`WorkerResourceGroup`](WorkerResourceGroup.md)
 
-  ↳↳ [`WorkerResourceGroup`](WorkerResourceGroup.md)
+## Type Parameters
 
-## Table of contents
+### Event
 
-### Methods
+`Event` *extends* [`TEventEmitterEvent`](../type-aliases/TEventEmitterEvent.md)
 
-- [emit](Runnable.md#emit)
-- [getId](Runnable.md#getid)
-- [isDown](Runnable.md#isdown)
-- [isGoingDown](Runnable.md#isgoingdown)
-- [isGoingUp](Runnable.md#isgoingup)
-- [isRunning](Runnable.md#isrunning)
-- [isUp](Runnable.md#isup)
-- [on](Runnable.md#on)
-- [once](Runnable.md#once)
-- [removeAllListeners](Runnable.md#removealllisteners)
-- [removeListener](Runnable.md#removelistener)
-- [run](Runnable.md#run)
-- [shutdown](Runnable.md#shutdown)
+The type of events that the Runnable class can emit.
 
 ## Methods
 
-### emit
+### emit()
 
-▸ **emit**\<`E`\>(`event`, `...args`): `boolean`
+> **emit**\<`E`\>(`event`, ...`args`): `boolean`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `...args` | `Parameters`\<`Event`[`E`]\> |
+##### event
+
+`E`
+
+##### args
+
+...`Parameters`\<`Event`\[`E`\]\>
 
 #### Returns
 
@@ -64,13 +51,13 @@ It provides methods for starting, stopping, and handling errors during the execu
 
 #### Inherited from
 
-[EventEmitter](EventEmitter.md).[emit](EventEmitter.md#emit)
+[`EventEmitter`](EventEmitter.md).[`emit`](EventEmitter.md#emit)
 
-___
+***
 
-### getId
+### getId()
 
-▸ **getId**(): `string`
+> **getId**(): `string`
 
 Retrieves the unique identifier of the Runnable instance.
 
@@ -80,11 +67,11 @@ Retrieves the unique identifier of the Runnable instance.
 
 - The unique identifier of the Runnable instance.
 
-___
+***
 
-### isDown
+### isDown()
 
-▸ **isDown**(): `boolean`
+> **isDown**(): `boolean`
 
 Checks if the Runnable instance is currently down.
 
@@ -94,11 +81,11 @@ Checks if the Runnable instance is currently down.
 
 - Returns `true` if the Runnable instance is down, `false` otherwise.
 
-___
+***
 
-### isGoingDown
+### isGoingDown()
 
-▸ **isGoingDown**(): `boolean`
+> **isGoingDown**(): `boolean`
 
 Checks if the Runnable instance is currently going down.
 
@@ -108,11 +95,11 @@ Checks if the Runnable instance is currently going down.
 
 - Returns `true` if the Runnable instance is going down, `false` otherwise.
 
-___
+***
 
-### isGoingUp
+### isGoingUp()
 
-▸ **isGoingUp**(): `boolean`
+> **isGoingUp**(): `boolean`
 
 Checks if the Runnable instance is currently going up.
 
@@ -122,11 +109,11 @@ Checks if the Runnable instance is currently going up.
 
 - Returns `true` if the Runnable instance is going up, `false` otherwise.
 
-___
+***
 
-### isRunning
+### isRunning()
 
-▸ **isRunning**(): `boolean`
+> **isRunning**(): `boolean`
 
 Checks if the Runnable instance is currently running or going up.
 
@@ -136,11 +123,11 @@ Checks if the Runnable instance is currently running or going up.
 
 - Returns `true` if the Runnable instance is running or going up, `false` otherwise.
 
-___
+***
 
-### isUp
+### isUp()
 
-▸ **isUp**(): `boolean`
+> **isUp**(): `boolean`
 
 Checks if the Runnable instance is currently up.
 
@@ -150,24 +137,27 @@ Checks if the Runnable instance is currently up.
 
 - Returns `true` if the Runnable instance is up, `false` otherwise.
 
-___
+***
 
-### on
+### on()
 
-▸ **on**\<`E`\>(`event`, `listener`): `this`
+> **on**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `Event`[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+`Event`\[`E`\]
 
 #### Returns
 
@@ -175,26 +165,29 @@ ___
 
 #### Inherited from
 
-[EventEmitter](EventEmitter.md).[on](EventEmitter.md#on)
+[`EventEmitter`](EventEmitter.md).[`on`](EventEmitter.md#on)
 
-___
+***
 
-### once
+### once()
 
-▸ **once**\<`E`\>(`event`, `listener`): `this`
+> **once**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `Event`[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+`Event`\[`E`\]
 
 #### Returns
 
@@ -202,25 +195,25 @@ ___
 
 #### Inherited from
 
-[EventEmitter](EventEmitter.md).[once](EventEmitter.md#once)
+[`EventEmitter`](EventEmitter.md).[`once`](EventEmitter.md#once)
 
-___
+***
 
-### removeAllListeners
+### removeAllListeners()
 
-▸ **removeAllListeners**\<`E`\>(`event?`): `this`
+> **removeAllListeners**\<`E`\>(`event?`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event?` | `Extract`\<`E`, `string`\> |
+##### event?
+
+`Extract`\<`E`, `string`\>
 
 #### Returns
 
@@ -228,26 +221,29 @@ ___
 
 #### Inherited from
 
-[EventEmitter](EventEmitter.md).[removeAllListeners](EventEmitter.md#removealllisteners)
+[`EventEmitter`](EventEmitter.md).[`removeAllListeners`](EventEmitter.md#removealllisteners)
 
-___
+***
 
-### removeListener
+### removeListener()
 
-▸ **removeListener**\<`E`\>(`event`, `listener`): `this`
+> **removeListener**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends `string` \| `number` \| `symbol` |
+##### E
+
+`E` *extends* `string` \| `number` \| `symbol`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `Event`[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+`Event`\[`E`\]
 
 #### Returns
 
@@ -255,13 +251,13 @@ ___
 
 #### Inherited from
 
-[EventEmitter](EventEmitter.md).[removeListener](EventEmitter.md#removelistener)
+[`EventEmitter`](EventEmitter.md).[`removeListener`](EventEmitter.md#removelistener)
 
-___
+***
 
-### run
+### run()
 
-▸ **run**(`cb`): `void`
+> **run**(`cb`): `void`
 
 Initiates the Runnable instance's execution.
 
@@ -270,19 +266,25 @@ If the Runnable instance is already running or going up, the method will return 
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `cb` | [`ICallback`](../interfaces/ICallback.md)\<`boolean`\> | A callback function that will be called after the execution process is completed. If an error occurs during the execution process, the error will be passed as the first parameter to the callback. If the execution process is successful, the callback will be called with a boolean parameter indicating whether the Runnable instance was running or not. If the Runnable instance was not running, the callback will be called with `true`. If the Runnable instance was already running, the callback will be called with `false`. |
+##### cb
+
+[`ICallback`](../interfaces/ICallback.md)\<`boolean`\>
+
+A callback function that will be called after the execution process is completed.
+            If an error occurs during the execution process, the error will be passed as the first parameter to the callback.
+            If the execution process is successful, the callback will be called with a boolean parameter indicating whether the Runnable instance was running or not.
+            If the Runnable instance was not running, the callback will be called with `true`.
+            If the Runnable instance was already running, the callback will be called with `false`.
 
 #### Returns
 
 `void`
 
-___
+***
 
-### shutdown
+### shutdown()
 
-▸ **shutdown**(`cb`): `void`
+> **shutdown**(`cb`): `void`
 
 Performs a graceful shutdown of the Runnable instance.
 
@@ -294,9 +296,13 @@ The shutdown behavior depends on the current state of the Runnable instance:
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `cb` | [`ICallback`](../interfaces/ICallback.md)\<`void`\> | A callback function that will be called after the shutdown process is completed. If an error occurs during the shutdown process, the error will be passed as the first parameter to the callback. If the shutdown process is successful, the callback will be called with no arguments. |
+##### cb
+
+[`ICallback`](../interfaces/ICallback.md)\<`void`\>
+
+A callback function that will be called after the shutdown process is completed.
+            If an error occurs during the shutdown process, the error will be passed as the first parameter to the callback.
+            If the shutdown process is successful, the callback will be called with no arguments.
 
 #### Returns
 

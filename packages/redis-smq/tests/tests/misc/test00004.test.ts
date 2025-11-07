@@ -8,13 +8,12 @@
  */
 
 import { expect, test } from 'vitest';
+import { ProducibleMessage } from '../../../src/index.js';
+import { MessageEnvelope } from '../../../src/message/message-envelope.js';
 import {
   MessageDestinationQueueAlreadySetError,
   MessageDestinationQueueRequiredError,
-  MessageMessageExchangeRequiredError,
-  ProducibleMessage,
-} from '../../../src/lib/index.js';
-import { MessageEnvelope } from '../../../src/lib/message/message-envelope.js';
+} from '../../../src/errors/index.js';
 
 test('MessageEnvelope: additional checks', async () => {
   const msg = new ProducibleMessage();
@@ -26,5 +25,4 @@ test('MessageEnvelope: additional checks', async () => {
   expect(() => env.setDestinationQueue({ ns: 'ns1', name: 'queue2' })).toThrow(
     MessageDestinationQueueAlreadySetError,
   );
-  expect(() => env.getExchange()).toThrow(MessageMessageExchangeRequiredError);
 });

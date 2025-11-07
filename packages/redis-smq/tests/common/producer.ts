@@ -8,18 +8,8 @@
  */
 
 import bluebird from 'bluebird';
-import { Producer } from '../../src/lib/index.js';
-import { shutDownBaseInstance } from './base-instance.js';
-
-const producersList: Producer[] = [];
+import { RedisSMQ } from '../../src/index.js';
 
 export function getProducer() {
-  const producer = new Producer();
-  const p = bluebird.promisifyAll(producer);
-  producersList.push(p);
-  return p;
-}
-
-export async function shutDownProducers() {
-  for (const i of producersList) await shutDownBaseInstance(i);
+  return bluebird.promisifyAll(RedisSMQ.createProducer());
 }

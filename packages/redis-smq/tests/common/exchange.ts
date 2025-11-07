@@ -8,50 +8,16 @@
  */
 
 import bluebird from 'bluebird';
-import {
-  ExchangeDirect,
-  ExchangeFanOut,
-  ExchangeTopic,
-} from '../../src/lib/index.js';
-
-const fanOutExchanges: ExchangeFanOut[] = [];
+import { RedisSMQ } from '../../src/index.js';
 
 export function getFanOutExchange() {
-  const instance = new ExchangeFanOut();
-  fanOutExchanges.push(instance);
-  return bluebird.promisifyAll(instance);
+  return bluebird.promisifyAll(RedisSMQ.createFanoutExchange());
 }
-
-export async function shutDownFanOutExchange() {
-  for (const i of fanOutExchanges) {
-    await bluebird.promisifyAll(i).shutdownAsync();
-  }
-}
-
-const topicExchanges: ExchangeTopic[] = [];
 
 export function getTopicExchange() {
-  const instance = new ExchangeTopic();
-  topicExchanges.push(instance);
-  return bluebird.promisifyAll(instance);
+  return bluebird.promisifyAll(RedisSMQ.createTopicExchange());
 }
-
-export async function shutDownTopicExchange() {
-  for (const i of topicExchanges) {
-    await bluebird.promisifyAll(i).shutdownAsync();
-  }
-}
-
-const directExchanges: ExchangeDirect[] = [];
 
 export function getDirectExchange() {
-  const instance = new ExchangeDirect();
-  directExchanges.push(instance);
-  return bluebird.promisifyAll(instance);
-}
-
-export async function shutDownDirectExchange() {
-  for (const i of directExchanges) {
-    await bluebird.promisifyAll(i).shutdownAsync();
-  }
+  return bluebird.promisifyAll(RedisSMQ.createDirectExchange());
 }

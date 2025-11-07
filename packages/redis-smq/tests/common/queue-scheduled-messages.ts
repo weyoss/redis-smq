@@ -8,18 +8,8 @@
  */
 
 import bluebird from 'bluebird';
-import { QueueScheduledMessages } from '../../src/lib/index.js';
-
-const instances: QueueScheduledMessages[] = [];
+import { RedisSMQ } from '../../src/index.js';
 
 export async function getQueueScheduledMessages() {
-  const instance = new QueueScheduledMessages();
-  instances.push(instance);
-  return bluebird.promisifyAll(instance);
-}
-
-export async function shutDownQueueScheduledMessages() {
-  for (const i of instances) {
-    await bluebird.promisifyAll(i).shutdownAsync();
-  }
+  return bluebird.promisifyAll(RedisSMQ.createQueueScheduledMessages());
 }

@@ -6,64 +6,39 @@ Consumer class responsible for receiving and processing messages from a message 
 It implements the `Runnable` interface to handle lifecycle events like startup and shutdown.
 The Consumer can be configured for multiplexing, allowing it to handle multiple queues simultaneously with a single Redis connection.
 
-## Hierarchy
+## Extends
 
-- `Runnable`\<[`TConsumerEvent`](../README.md#tconsumerevent)\>
-
-  ↳ **`Consumer`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](Consumer.md#constructor)
-
-### Methods
-
-- [cancel](Consumer.md#cancel)
-- [consume](Consumer.md#consume)
-- [emit](Consumer.md#emit)
-- [getId](Consumer.md#getid)
-- [getQueues](Consumer.md#getqueues)
-- [isDown](Consumer.md#isdown)
-- [isGoingDown](Consumer.md#isgoingdown)
-- [isGoingUp](Consumer.md#isgoingup)
-- [isRunning](Consumer.md#isrunning)
-- [isUp](Consumer.md#isup)
-- [on](Consumer.md#on)
-- [once](Consumer.md#once)
-- [removeAllListeners](Consumer.md#removealllisteners)
-- [removeListener](Consumer.md#removelistener)
-- [run](Consumer.md#run)
-- [shutdown](Consumer.md#shutdown)
+- `Runnable`\<[`TConsumerEvent`](../type-aliases/TConsumerEvent.md)\>
 
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new Consumer**(`enableMultiplexing?`): [`Consumer`](Consumer.md)
+> **new Consumer**(`enableMultiplexing?`): `Consumer`
 
 Creates a new Consumer instance.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `enableMultiplexing?` | `boolean` | (Optional) If set to true, the consumer uses a multiplexed message handler runner; otherwise, it uses a standard message handler runner. |
+##### enableMultiplexing?
+
+`boolean`
+
+(Optional) If set to true, the consumer uses a multiplexed message handler runner; otherwise, it uses a standard message handler runner.
 
 #### Returns
 
-[`Consumer`](Consumer.md)
+`Consumer`
 
 #### Overrides
 
-Runnable\<TConsumerEvent\>.constructor
+`Runnable<TConsumerEvent>.constructor`
 
 ## Methods
 
-### cancel
+### cancel()
 
-▸ **cancel**(`queue`, `cb`): `void`
+> **cancel**(`queue`, `cb`): `void`
 
 Cancels the consumption of messages from a specified queue.
 
@@ -72,16 +47,28 @@ It removes the message handler associated with the given queue from the message 
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) | The queue parameters. This parameter represents the queue from which messages will be consumed. It can be a string representing the queue name or an object containing additional queue options. |
-| `cb` | `ICallback`\<`void`\> | Callback function to be called once cancellation is complete. This callback function will be invoked after the message handler associated with the given queue is removed. If an error occurs during the cancellation process, the error will be passed as the first argument to the callback function. Otherwise, the callback function will be invoked with no arguments. |
+##### queue
+
+[`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
+
+The queue parameters.
+This parameter represents the queue from which messages will be consumed.
+It can be a string representing the queue name or an object containing additional queue options.
+
+##### cb
+
+`ICallback`\<`void`\>
+
+Callback function to be called once cancellation is complete.
+This callback function will be invoked after the message handler associated with the given queue is removed.
+If an error occurs during the cancellation process, the error will be passed as the first argument to the callback function.
+Otherwise, the callback function will be invoked with no arguments.
 
 #### Returns
 
 `void`
 
-**`Example`**
+#### Example
 
 ```typescript
 const consumer = new Consumer();
@@ -114,27 +101,48 @@ setTimeout(() => {
 }, 10000);
 ```
 
-___
+***
 
-### consume
+### consume()
 
-▸ **consume**(`queue`, `messageHandler`, `cb`): `void`
+> **consume**(`queue`, `messageHandler`, `cb`): `void`
 
 Consumes messages from a specified queue using the provided message handler.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) | A queue from which messages will be consumed. Before consuming messages from a queue make sure that the specified queue already exists in the system. |
-| `messageHandler` | [`TConsumerMessageHandler`](../README.md#tconsumermessagehandler) | A callback function that defines how to process each message consumed from the queue. The messageHandler will receive the message as an argument and should implement the logic for processing the message. This might include business logic, transformation, storage, etc. It's crucial that this function handles exceptions and errors properly to avoid issues with message acknowledgment. |
-| `cb` | `ICallback`\<`void`\> | The callback function will be executed after the consumption process is initiated. It typically signifies the end of the consumption setup and can be used to handle success or errors in starting the consumption process. |
+##### queue
+
+[`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
+
+A queue from which messages will be consumed. Before consuming
+messages from a queue make sure that the specified queue already exists in
+the system.
+
+##### messageHandler
+
+[`TConsumerMessageHandler`](../type-aliases/TConsumerMessageHandler.md)
+
+A callback function that defines how to process each
+message consumed from the queue. The messageHandler will receive the
+message as an argument and should implement the logic for processing the
+message. This might include business logic, transformation, storage, etc.
+It's crucial that this function handles exceptions and errors properly to
+avoid issues with message acknowledgment.
+
+##### cb
+
+`ICallback`\<`void`\>
+
+The callback function will be executed after the consumption process is initiated.
+It typically signifies the end of the consumption setup and can be used to
+handle success or errors in starting the consumption process.
 
 #### Returns
 
 `void`
 
-**`Example`**
+#### Example
 
 ```typescript
 const consumer = new Consumer();
@@ -156,28 +164,31 @@ consumer.consume(
 );
 ```
 
-**`See`**
+#### See
 
-https://github.com/weyoss/redis-smq/blob/master/packages/redis-smq/docs/consuming-messages.md
+/packages/redis-smq/docs/consuming-messages.md
 
-___
+***
 
-### emit
+### emit()
 
-▸ **emit**\<`E`\>(`event`, `...args`): `boolean`
+> **emit**\<`E`\>(`event`, ...`args`): `boolean`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TConsumerEvent`](../README.md#tconsumerevent) |
+##### E
+
+`E` *extends* keyof [`TConsumerEvent`](../type-aliases/TConsumerEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `...args` | `Parameters`\<[`TConsumerEvent`](../README.md#tconsumerevent)[`E`]\> |
+##### event
+
+`E`
+
+##### args
+
+...`Parameters`\<[`TConsumerEvent`](../type-aliases/TConsumerEvent.md)\[`E`\]\>
 
 #### Returns
 
@@ -185,13 +196,13 @@ ___
 
 #### Inherited from
 
-Runnable.emit
+`Runnable.emit`
 
-___
+***
 
-### getId
+### getId()
 
-▸ **getId**(): `string`
+> **getId**(): `string`
 
 #### Returns
 
@@ -199,13 +210,13 @@ ___
 
 #### Inherited from
 
-Runnable.getId
+`Runnable.getId`
 
-___
+***
 
-### getQueues
+### getQueues()
 
-▸ **getQueues**(): [`IQueueParsedParams`](../interfaces/IQueueParsedParams.md)[]
+> **getQueues**(): [`IQueueParsedParams`](../interfaces/IQueueParsedParams.md)[]
 
 Retrieves a list of queues the consumer is currently configured to handle.
 
@@ -219,7 +230,7 @@ The parsed queue parameters include the queue name, options, and any additional 
 - An array of parsed queue parameters.
 Each element in the array represents a queue that the consumer is currently consuming messages from.
 
-**`Example`**
+#### Example
 
 ```typescript
 const consumer = new Consumer();
@@ -246,25 +257,11 @@ console.log('Queues:', queues);
 // Output: Queues: [{ queueParams: { name:'my-queue', ns: 'default' }, groupId: null }]
 ```
 
-___
+***
 
-### isDown
+### isDown()
 
-▸ **isDown**(): `boolean`
-
-#### Returns
-
-`boolean`
-
-#### Inherited from
-
-Runnable.isDown
-
-___
-
-### isGoingDown
-
-▸ **isGoingDown**(): `boolean`
+> **isDown**(): `boolean`
 
 #### Returns
 
@@ -272,27 +269,13 @@ ___
 
 #### Inherited from
 
-Runnable.isGoingDown
+`Runnable.isDown`
 
-___
+***
 
-### isGoingUp
+### isGoingDown()
 
-▸ **isGoingUp**(): `boolean`
-
-#### Returns
-
-`boolean`
-
-#### Inherited from
-
-Runnable.isGoingUp
-
-___
-
-### isRunning
-
-▸ **isRunning**(): `boolean`
+> **isGoingDown**(): `boolean`
 
 #### Returns
 
@@ -300,13 +283,13 @@ ___
 
 #### Inherited from
 
-Runnable.isRunning
+`Runnable.isGoingDown`
 
-___
+***
 
-### isUp
+### isGoingUp()
 
-▸ **isUp**(): `boolean`
+> **isGoingUp**(): `boolean`
 
 #### Returns
 
@@ -314,26 +297,57 @@ ___
 
 #### Inherited from
 
-Runnable.isUp
+`Runnable.isGoingUp`
 
-___
+***
 
-### on
+### isRunning()
 
-▸ **on**\<`E`\>(`event`, `listener`): `this`
+> **isRunning**(): `boolean`
 
-#### Type parameters
+#### Returns
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TConsumerEvent`](../README.md#tconsumerevent) |
+`boolean`
+
+#### Inherited from
+
+`Runnable.isRunning`
+
+***
+
+### isUp()
+
+> **isUp**(): `boolean`
+
+#### Returns
+
+`boolean`
+
+#### Inherited from
+
+`Runnable.isUp`
+
+***
+
+### on()
+
+> **on**\<`E`\>(`event`, `listener`): `this`
+
+#### Type Parameters
+
+##### E
+
+`E` *extends* keyof [`TConsumerEvent`](../type-aliases/TConsumerEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | [`TConsumerEvent`](../README.md#tconsumerevent)[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+[`TConsumerEvent`](../type-aliases/TConsumerEvent.md)\[`E`\]
 
 #### Returns
 
@@ -341,26 +355,29 @@ ___
 
 #### Inherited from
 
-Runnable.on
+`Runnable.on`
 
-___
+***
 
-### once
+### once()
 
-▸ **once**\<`E`\>(`event`, `listener`): `this`
+> **once**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TConsumerEvent`](../README.md#tconsumerevent) |
+##### E
+
+`E` *extends* keyof [`TConsumerEvent`](../type-aliases/TConsumerEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | [`TConsumerEvent`](../README.md#tconsumerevent)[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+[`TConsumerEvent`](../type-aliases/TConsumerEvent.md)\[`E`\]
 
 #### Returns
 
@@ -368,25 +385,25 @@ ___
 
 #### Inherited from
 
-Runnable.once
+`Runnable.once`
 
-___
+***
 
-### removeAllListeners
+### removeAllListeners()
 
-▸ **removeAllListeners**\<`E`\>(`event?`): `this`
+> **removeAllListeners**\<`E`\>(`event?`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TConsumerEvent`](../README.md#tconsumerevent) |
+##### E
+
+`E` *extends* keyof [`TConsumerEvent`](../type-aliases/TConsumerEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event?` | `Extract`\<`E`, `string`\> |
+##### event?
+
+`Extract`\<`E`, `string`\>
 
 #### Returns
 
@@ -394,26 +411,29 @@ ___
 
 #### Inherited from
 
-Runnable.removeAllListeners
+`Runnable.removeAllListeners`
 
-___
+***
 
-### removeListener
+### removeListener()
 
-▸ **removeListener**\<`E`\>(`event`, `listener`): `this`
+> **removeListener**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TConsumerEvent`](../README.md#tconsumerevent) |
+##### E
+
+`E` *extends* keyof [`TConsumerEvent`](../type-aliases/TConsumerEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | [`TConsumerEvent`](../README.md#tconsumerevent)[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+[`TConsumerEvent`](../type-aliases/TConsumerEvent.md)\[`E`\]
 
 #### Returns
 
@@ -421,19 +441,19 @@ ___
 
 #### Inherited from
 
-Runnable.removeListener
+`Runnable.removeListener`
 
-___
+***
 
-### run
+### run()
 
-▸ **run**(`cb`): `void`
+> **run**(`cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | `ICallback`\<`boolean`\> |
+##### cb
+
+`ICallback`\<`boolean`\>
 
 #### Returns
 
@@ -441,19 +461,19 @@ ___
 
 #### Inherited from
 
-Runnable.run
+`Runnable.run`
 
-___
+***
 
-### shutdown
+### shutdown()
 
-▸ **shutdown**(`cb`): `void`
+> **shutdown**(`cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | `ICallback`\<`void`\> |
+##### cb
+
+`ICallback`\<`void`\>
 
 #### Returns
 
@@ -461,4 +481,4 @@ ___
 
 #### Inherited from
 
-Runnable.shutdown
+`Runnable.shutdown`

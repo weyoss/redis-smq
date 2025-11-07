@@ -8,18 +8,9 @@
  */
 
 import bluebird from 'bluebird';
-import { QueueAcknowledgedMessages } from '../../src/lib/index.js';
-
-const instances: QueueAcknowledgedMessages[] = [];
+import { RedisSMQ } from '../../src/index.js';
 
 export async function getQueueAcknowledgedMessages() {
-  const instance = new QueueAcknowledgedMessages();
-  instances.push(instance);
+  const instance = RedisSMQ.createQueueAcknowledgedMessages();
   return bluebird.promisifyAll(instance);
-}
-
-export async function shutDownQueueAcknowledgedMessages() {
-  for (const i of instances) {
-    await bluebird.promisifyAll(i).shutdownAsync();
-  }
 }

@@ -7,20 +7,41 @@
  * in the root directory of this source tree.
  */
 
-import { IRedisSMQConfig } from 'redis-smq';
+import {
+  EConsoleLoggerLevel,
+  ERedisConfigClient,
+  IConsoleLoggerOptions,
+  ILoggerConfig,
+  IRedisConfig,
+} from 'redis-smq-common';
 
-export type THttpApiConfig = {
+export type TRestApiConfig = {
   port?: number;
-  hostname?: string;
   basePath?: string;
 };
 
-export interface IRedisSMQHttpApiConfig extends IRedisSMQConfig {
-  apiServer?: THttpApiConfig;
+export interface IRedisSMQRestApiConfig {
+  redis?: IRedisConfig;
+  apiServer?: TRestApiConfig;
+  logger?: ILoggerConfig;
 }
-export type IRedisSMQHttpApiParsedConfig = Omit<
-  IRedisSMQHttpApiConfig,
-  'apiServer'
-> & {
-  apiServer: Required<THttpApiConfig>;
-};
+
+export interface IRedisSMQRestApiParsedConfig {
+  redis: IRedisConfig;
+  apiServer: Required<TRestApiConfig>;
+  logger: {
+    enabled: boolean;
+    options: Required<IConsoleLoggerOptions>;
+  };
+}
+
+export interface IRedisSMQRestApiCliOptions {
+  port: string;
+  redisClient: ERedisConfigClient;
+  basePath: string;
+  redisPort: string;
+  redisHost: string;
+  redisDb: string;
+  enableLog: string;
+  logLevel: EConsoleLoggerLevel;
+}

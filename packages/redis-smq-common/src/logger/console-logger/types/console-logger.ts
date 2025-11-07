@@ -49,18 +49,4 @@ export interface IConsoleLoggerOptions {
    * @default EConsoleLoggerLevel.DEBUG (0)
    */
   logLevel?: TConsoleLoggerLevelName | EConsoleLoggerLevel;
-
-  /**
-   * Custom date formatter function to format timestamps
-   * If not provided, ISO string format will be used
-   * @example
-   * // Format as local time
-   * dateFormat: (date) => date.toLocaleTimeString()
-   *
-   * // Format as YYYY-MM-DD HH:MM:SS
-   * dateFormat: (date) => {
-   *   return date.toISOString().replace('T', ' ').split('.')[0];
-   * }
-   */
-  dateFormat?: TConsoleLoggerOptionsDateFormatter;
 }

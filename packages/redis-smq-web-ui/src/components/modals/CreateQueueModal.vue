@@ -1,0 +1,624 @@
+<!--
+  - Copyright (c)
+  - Weyoss <weyoss@protonmail.com>
+  - https://github.com/weyoss
+  -
+  - This source code is licensed under the MIT license found in the LICENSE file
+  - in the root directory of this source tree.
+  -->
+
+<script setup lang="ts">
+import { computed, ref, watch } from 'vue';
+import { EQueueDeliveryModel, EQueueType } from '@/types';
+import {
+  useQueueForm,
+  type QueueFormValues,
+} from '@/composables/useQueueForm.ts';
+import { Field, ErrorMessage, type GenericObject, useForm } from 'vee-validate';
+import BaseModal from '@/components/modals/BaseModal.vue';
+import { useCreateQueue } from '@/composables/useCreateQueue.ts';
+import { getErrorMessage } from '@/lib/error.ts';
+import type { PostApiV1QueuesBody } from '@/api/model/index.ts';
+
+// Custom focus directive
+const vFocus = {
+  mounted: (el: HTMLElement) => el.focus(),
+};
+
+const props = defineProps<{
+  isVisible: boolean;
+  namespace?: string;
+}>();
+
+const emit = defineEmits<{
+  (e: 'close'): void;
+  // Emit the created queue payload back to parent for optional refresh/navigation
+  (e: 'created', payload: QueueFormValues): void;
+}>();
+
+// Use the form hook - destructure individual properties
+const { errors, resetForm, initialValues, validationSchema } = useQueueForm({
+  ns: props.namespace,
+});
+
+// Use vee-validate's useForm to get access to meta outside of Form component
+const { meta, handleSubmit } = useForm({
+  initialValues,
+  validationSchema,
+});
+
+// Track last submitted values so we can emit on success
+const submittedValues = ref<QueueFormValues | null>(null);
+
+// API: self-contained create logic
+const { createQueue, isCreatingQueue, createQueueError, createQueueMutation } =
+  useCreateQueue(async () => {
+    if (submittedValues.value) {
+      // Notify parent about the created queue (so it can refetch/navigate)
+      emit('created', submittedValues.value);
+    }
+    // Reset form and state after successful creation
+    resetForm();
+    submittedValues.value = null;
+    // Request close
+    emit('close');
+  });
+
+// Display-friendly error text
+const createErrorText = computed(() => {
+  if (!createQueueError.value) return '';
+  const err = getErrorMessage(createQueueError.value);
+  // Support both string and {message} shapes
+  return typeof err === 'string'
+    ? err
+    : (err?.message ?? 'Failed to create queue');
+});
+
+// Reset form and mutation when dialog is closed
+watch(
+  () => props.isVisible,
+  (isVisible) => {
+    if (!isVisible) {
+      resetForm();
+      submittedValues.value = null;
+      createQueueMutation.reset();
+    }
+  },
+);
+
+// Form submission handler
+const onFormSubmit = handleSubmit(async (values: GenericObject) => {
+  const formValues = values as QueueFormValues;
+  submittedValues.value = formValues;
+
+  const queueData: PostApiV1QueuesBody = {
+    queue: { ns: formValues.ns, name: formValues.name },
+    queueType: formValues.type,
+    queueDeliveryModel: formValues.deliveryModel,
+  };
+
+  await createQueue({ data: queueData });
+});
+
+function handleClose() {
+  emit('close');
+}
+</script>
+
+<template>
+  <BaseModal
+    :is-visible="isVisible"
+    title="Create New Queue"
+    subtitle="Configure your message queue settings"
+    icon="bi bi-plus-circle-fill"
+    @close="handleClose"
+  >
+    <template #body>
+      <form @submit.prevent="onFormSubmit">
+        <div class="form-content">
+          <!-- Basic Information Section -->
+          <section class="form-section">
+            <div class="section-header">
+              <h3 class="section-title">
+                <i class="bi bi-info-circle-fill section-icon"></i>
+                Basic Information
+              </h3>
+              <p class="section-description">
+                Define the queue name and namespace
+              </p>
+            </div>
+
+            <div class="form-grid">
+              <!-- Queue Name Field -->
+              <div class="form-group">
+                <label for="name" class="form-label">
+                  <i class="bi bi-tag-fill label-icon"></i>
+                  Queue Name
+                  <span class="required-indicator">*</span>
+                </label>
+                <Field
+                  id="name"
+                  v-focus
+                  name="name"
+                  type="text"
+                  placeholder="e.g. user-notifications"
+                  :class="['form-control', { error: errors.name }]"
+                  autocomplete="off"
+                  aria-describedby="name-help name-error"
+                />
+                <ErrorMessage id="name-error" name="name" class="field-error" />
+                <div id="name-help" class="field-help">
+                  <i class="bi bi-lightbulb help-icon"></i>
+                  Use letters, numbers, underscores, and hyphens only
+                </div>
+              </div>
+
+              <!-- Namespace Field -->
+              <div class="form-group">
+                <label for="ns" class="form-label">
+                  <i class="bi bi-folder-fill label-icon"></i>
+                  Namespace
+                  <span class="required-indicator">*</span>
+                </label>
+                <Field
+                  id="ns"
+                  name="ns"
+                  type="text"
+                  placeholder="e.g. production"
+                  :class="['form-control', { error: errors.ns }]"
+                  autocomplete="off"
+                  aria-describedby="ns-help ns-error"
+                />
+                <ErrorMessage id="ns-error" name="ns" class="field-error" />
+                <div id="ns-help" class="field-help">
+                  <i class="bi bi-lightbulb help-icon"></i>
+                  Organize queues by environment or application
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Configuration Section -->
+          <section class="form-section">
+            <div class="section-header">
+              <h3 class="section-title">
+                <i class="bi bi-gear-fill section-icon"></i>
+                Queue Configuration
+              </h3>
+              <p class="section-description">
+                Choose how messages are processed and delivered
+              </p>
+            </div>
+
+            <div class="form-grid">
+              <!-- Queue Type Field -->
+              <div class="form-group">
+                <label for="type" class="form-label">
+                  <i class="bi bi-list-ol label-icon"></i>
+                  Queue Type
+                  <span class="required-indicator">*</span>
+                </label>
+                <Field
+                  id="type"
+                  name="type"
+                  as="select"
+                  :class="['form-select', { error: errors.type }]"
+                  aria-describedby="type-help type-error"
+                >
+                  <option value="">Select processing order</option>
+                  <option :value="EQueueType.FIFO_QUEUE">FIFO Queue</option>
+                  <option :value="EQueueType.LIFO_QUEUE">LIFO Queue</option>
+                  <option :value="EQueueType.PRIORITY_QUEUE">
+                    Priority Queue
+                  </option>
+                </Field>
+                <ErrorMessage id="type-error" name="type" class="field-error" />
+                <div id="type-help" class="field-help">
+                  <div class="help-options">
+                    <div class="help-option">
+                      <strong>FIFO:</strong> First message in, first message out
+                    </div>
+                    <div class="help-option">
+                      <strong>LIFO:</strong> Last message in, first message out
+                    </div>
+                    <div class="help-option">
+                      <strong>Priority:</strong> Higher priority messages
+                      processed first
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Delivery Model Field -->
+              <div class="form-group">
+                <label for="deliveryModel" class="form-label">
+                  <i class="bi bi-arrow-left-right label-icon"></i>
+                  Delivery Model
+                  <span class="required-indicator">*</span>
+                </label>
+                <Field
+                  id="deliveryModel"
+                  name="deliveryModel"
+                  as="select"
+                  :class="['form-select', { error: errors.deliveryModel }]"
+                  aria-describedby="deliveryModel-help deliveryModel-error"
+                >
+                  <option value="">Select delivery pattern</option>
+                  <option :value="EQueueDeliveryModel.POINT_TO_POINT">
+                    Point to Point
+                  </option>
+                  <option :value="EQueueDeliveryModel.PUB_SUB">
+                    Publish/Subscribe
+                  </option>
+                </Field>
+                <ErrorMessage
+                  id="deliveryModel-error"
+                  name="deliveryModel"
+                  class="field-error"
+                />
+                <div id="deliveryModel-help" class="field-help">
+                  <div class="help-options">
+                    <div class="help-option">
+                      <strong>Point to Point:</strong> One-to-one message
+                      delivery
+                    </div>
+                    <div class="help-option">
+                      <strong>Pub/Sub:</strong> One-to-many message broadcasting
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Error Display -->
+          <div v-if="createQueueError" class="error-section">
+            <div class="error-content">
+              <div class="error-icon">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+              </div>
+              <div class="error-text">
+                <h4 class="error-title">Creation Failed</h4>
+                <p class="error-message">{{ createErrorText }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </template>
+
+    <template #footer>
+      <button type="button" class="btn btn-secondary" @click="handleClose">
+        <i class="bi bi-x-circle me-2"></i>
+        Cancel
+      </button>
+      <button
+        type="submit"
+        class="btn btn-primary"
+        :disabled="isCreatingQueue || !meta.valid"
+        @click="onFormSubmit"
+      >
+        <template v-if="isCreatingQueue">
+          <span class="spinner-border spinner-border-sm me-2"></span>
+          Creating Queue...
+        </template>
+        <template v-else>
+          <i class="bi bi-check-circle me-2"></i>
+          Create Queue
+        </template>
+      </button>
+    </template>
+  </BaseModal>
+</template>
+
+<style scoped>
+/* Form Content */
+.form-content {
+  padding: 1.25rem 1.5rem;
+}
+
+/* Form Sections */
+.form-section {
+  margin-bottom: 1.75rem;
+}
+
+.form-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-header {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 0.375rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-icon {
+  color: #0d6efd;
+  font-size: 0.9rem;
+}
+
+.section-description {
+  color: #6b7280;
+  font-size: 0.8rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Form Grid */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+/* Form Groups */
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.375rem;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.85rem;
+}
+
+.label-icon {
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
+.required-indicator {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+/* Form Controls */
+.form-control,
+.form-select {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.form-control:focus,
+.form-select:focus {
+  outline: none;
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+.form-control.error,
+.form-select.error {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.form-control::placeholder {
+  color: #9ca3af;
+}
+
+/* Field Errors */
+.field-error {
+  color: #dc2626;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  font-weight: 500;
+}
+
+/* Field Help */
+.field-help {
+  color: #6b7280;
+  font-size: 0.75rem;
+  margin-top: 0.375rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.25rem;
+  line-height: 1.4;
+}
+
+.help-icon {
+  color: #0d6efd;
+  font-size: 0.7rem;
+  margin-top: 0.1rem;
+  flex-shrink: 0;
+}
+
+.help-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-left: 0.75rem;
+}
+
+.help-option {
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+
+.help-option strong {
+  color: #374151;
+}
+
+/* Error Section */
+.error-section {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.error-content {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.error-icon {
+  width: 32px;
+  height: 32px;
+  background: #fee2e2;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #dc2626;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.error-text {
+  flex: 1;
+}
+
+.error-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #991b1b;
+  margin: 0 0 0.375rem 0;
+}
+
+.error-message {
+  color: #991b1b;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Buttons */
+.btn {
+  padding: 0.625rem 1.25rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 100px;
+}
+
+.btn-secondary {
+  background: white;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+  transform: translateY(-1px);
+}
+
+.btn-primary {
+  background: #0d6efd;
+  color: white;
+  border-color: #0d6efd;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #0b5ed7;
+  border-color: #0a58ca;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.spinner-border {
+  width: 0.875rem;
+  height: 0.875rem;
+  border-width: 2px;
+}
+
+.me-2 {
+  margin-right: 0.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .form-content {
+    padding: 1rem;
+  }
+
+  .form-section {
+    margin-bottom: 1.25rem;
+  }
+
+  .section-header {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .form-grid {
+    gap: 1rem;
+  }
+
+  .error-section {
+    padding: 0.75rem;
+  }
+
+  .error-content {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .help-options {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 576px) {
+  .form-content {
+    padding: 0.75rem;
+  }
+
+  .error-section {
+    padding: 0.75rem;
+  }
+}
+
+/* Focus states for accessibility */
+.btn:focus,
+.form-control:focus,
+.form-select:focus {
+  outline: 2px solid #0d6efd;
+  outline-offset: 2px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .form-control,
+  .form-select {
+    transition: none;
+  }
+
+  .btn:hover {
+    transform: none;
+  }
+}
+</style>

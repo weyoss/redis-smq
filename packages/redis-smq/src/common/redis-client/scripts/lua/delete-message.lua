@@ -1,21 +1,60 @@
-local QUEUE_TYPE = ARGV[1]
-local MSG_COUNT = ARGV[2]
-local QUEUE_TYPE_PRIORITY = ARGV[3]
-local QUEUE_TYPE_LIFO = ARGV[4]
-local QUEUE_TYPE_FIFO = ARGV[5]
-local MSG_STATUS = ARGV[6]
-local MSG_STATUS_PROCESSING = ARGV[7]
-local MSG_STATUS_ACKNOWLEDGED = ARGV[8]
-local MSG_STATUS_PENDING = ARGV[9]
-local MSG_STATUS_SCHEDULED = ARGV[10]
-local MSG_STATUS_DEADLETTERED = ARGV[11]
-local MSG_STATUS_UNACK_DELAYING = ARGV[12]
-local MSG_STATUS_UNACK_REQUEUING = ARGV[13]
+-- Description:
+-- Deletes one or more messages from a queue.
+-- This script is optimized for batch operations and ensures all queue counters are correctly updated.
+--
+-- KEYS:
+--   Static Keys (1-9): All queue-related keys.
+--   Dynamic Keys (10...): A list of message keys (keyMessage) to be deleted.
+--
+-- ARGV:
+--   Static ARGV (1-19): All constants and queue property names.
+--   Dynamic ARGV (20...): A list of message IDs to be deleted.
+--
+-- Returns:
+--   A table with counts: {processedCount, successCount, notFoundCount, inProcessCount}
 
-local STATUS_OK = 'OK'
-local STATUS_MESSAGE_NOT_FOUND = 'MESSAGE_NOT_FOUND'
-local STATUS_MESSAGE_IN_PROCESS = 'MESSAGE_IN_PROCESS'
-local STATUS_INVALID_PARAMETERS = 'INVALID_PARAMETERS'
+-- Static Keys
+local keyQueueProperties = KEYS[1]
+local keyQueueMessages = KEYS[2]
+local keyQueuePending = KEYS[3]
+local keyQueuePriorityPending = KEYS[4]
+local keyQueueScheduled = KEYS[5]
+local keyQueueAcknowledged = KEYS[6]
+local keyQueueDL = KEYS[7]
+local keyQueueDelayed = KEYS[8]
+local keyQueueRequeued = KEYS[9]
+
+-- Static ARGV (Constants and Queue Property Names)
+local EQueuePropertyQueueType = ARGV[1]
+local EQueuePropertyMessagesCount = ARGV[2]
+local EQueuePropertyAcknowledgedMessagesCount = ARGV[3]
+local EQueuePropertyDeadLetteredMessagesCount = ARGV[4]
+local EQueuePropertyPendingMessagesCount = ARGV[5]
+local EQueuePropertyScheduledMessagesCount = ARGV[6]
+local EQueuePropertyDelayedMessagesCount = ARGV[7]
+local EQueuePropertyRequeuedMessagesCount = ARGV[8]
+local EQueueTypePriority = ARGV[9]
+local EQueueTypeLIFO = ARGV[10]
+local EQueueTypeFIFO = ARGV[11]
+local EMessagePropertyStatus = ARGV[12]
+local EMessageStatusProcessing = ARGV[13]
+local EMessageStatusAcknowledged = ARGV[14]
+local EMessageStatusPending = ARGV[15]
+local EMessageStatusScheduled = ARGV[16]
+local EMessageStatusDeadLettered = ARGV[17]
+local EMessageStatusDelayed = ARGV[18]
+local EMessageStatusRequeued = ARGV[19]
+
+-- Constants
+local INITIAL_KEY_OFFSET = 9
+local INITIAL_ARGV_OFFSET = 19
+local PARAMS_PER_MESSAGE = 1
+local KEYS_PER_MESSAGE = 1
+
+-- Validation
+if ((#KEYS - INITIAL_KEY_OFFSET) * PARAMS_PER_MESSAGE) ~= ((#ARGV - INITIAL_ARGV_OFFSET) * KEYS_PER_MESSAGE) then
+    return 'INVALID_ARGS_ERROR'
+end
 
 -- Counters for tracking results
 local processedCount = 0
@@ -23,78 +62,64 @@ local successCount = 0
 local notFoundCount = 0
 local inProcessCount = 0
 
--- Constants for parameter counts
-local INITIAL_KEY_OFFSET = 0
-local INITIAL_ARGV_OFFSET = 13
-local PARAMS_PER_MESSAGE = 1
-local KEYS_PER_MESSAGE = 10
+-- Fetch queue type once before the loop for efficiency
+local queueType = redis.call("HGET", keyQueueProperties, EQueuePropertyQueueType)
 
--- Validate parameters
-if #ARGV <= INITIAL_ARGV_OFFSET then
-    return 'INVALID_PARAMETERS'
-end
+for i = 1, (#ARGV - INITIAL_ARGV_OFFSET) do
+    local keyIndex = INITIAL_KEY_OFFSET + i
+    local argvIndex = INITIAL_ARGV_OFFSET + i
 
---
-local keyIndex = INITIAL_KEY_OFFSET + 1
-
-for argvIndex = INITIAL_ARGV_OFFSET + 1, #ARGV, PARAMS_PER_MESSAGE do
+    local messageKey = KEYS[keyIndex]
     local messageId = ARGV[argvIndex]
 
-    -- Setup direct key references for this message
-    local queueScheduled = KEYS[keyIndex]
-    local queueDelayed = KEYS[keyIndex + 1]
-    local queueRequeued = KEYS[keyIndex + 2]
-    local messageKey = KEYS[keyIndex + 3]
-    local queueProperties = KEYS[keyIndex + 4]
-    local queuePending = KEYS[keyIndex + 5]
-    local queueDL = KEYS[keyIndex + 6]
-    local queueAcknowledged = KEYS[keyIndex + 7]
-    local queuePriorityPending = KEYS[keyIndex + 8]
-    local queueMessages = KEYS[keyIndex + 9]
-
-    -- Update keyIndex for next iteration
-    keyIndex = keyIndex + KEYS_PER_MESSAGE
-
-    --
     processedCount = processedCount + 1
 
     -- Check if message exists and get its status
-    local messageStatus = redis.call("HGET", messageKey, MSG_STATUS)
+    local messageStatus = redis.call("HGET", messageKey, EMessagePropertyStatus)
     if messageStatus == false then
         notFoundCount = notFoundCount + 1
-    elseif messageStatus == MSG_STATUS_PROCESSING then
+    elseif messageStatus == EMessageStatusProcessing then
         inProcessCount = inProcessCount + 1
     else
+        local counterToDecrement = nil
         -- Remove from appropriate queue based on status
-        if messageStatus == MSG_STATUS_ACKNOWLEDGED then
-            redis.call("LREM", queueAcknowledged, 1, messageId)
-        elseif messageStatus == MSG_STATUS_DEADLETTERED then
-            redis.call("LREM", queueDL, 1, messageId)
-        elseif messageStatus == MSG_STATUS_SCHEDULED then
-            redis.call("ZREM", queueScheduled, messageId)
-        elseif messageStatus == MSG_STATUS_UNACK_DELAYING then
-            redis.call("LREM", queueDelayed, 1, messageId)
-        elseif messageStatus == MSG_STATUS_UNACK_REQUEUING then
-            redis.call("LREM", queueRequeued, 1, messageId)
-        elseif messageStatus == MSG_STATUS_PENDING then
-            local queueType = redis.call("HGET", queueProperties, QUEUE_TYPE)
+        if messageStatus == EMessageStatusAcknowledged then
+            redis.call("LREM", keyQueueAcknowledged, 1, messageId)
+            counterToDecrement = EQueuePropertyAcknowledgedMessagesCount
+        elseif messageStatus == EMessageStatusDeadLettered then
+            redis.call("LREM", keyQueueDL, 1, messageId)
+            counterToDecrement = EQueuePropertyDeadLetteredMessagesCount
+        elseif messageStatus == EMessageStatusScheduled then
+            redis.call("ZREM", keyQueueScheduled, messageId)
+            counterToDecrement = EQueuePropertyScheduledMessagesCount
+        elseif messageStatus == EMessageStatusDelayed then
+            redis.call("LREM", keyQueueDelayed, 1, messageId)
+            counterToDecrement = EQueuePropertyDelayedMessagesCount
+        elseif messageStatus == EMessageStatusRequeued then
+            redis.call("LREM", keyQueueRequeued, 1, messageId)
+            counterToDecrement = EQueuePropertyRequeuedMessagesCount
+        elseif messageStatus == EMessageStatusPending then
             if queueType then
-                if queueType == QUEUE_TYPE_PRIORITY then
-                    redis.call("ZREM", queuePriorityPending, messageId)
-                elseif queueType == QUEUE_TYPE_FIFO or queueType == QUEUE_TYPE_LIFO then
-                    redis.call("LREM", queuePending, 1, messageId)
+                if queueType == EQueueTypePriority then
+                    redis.call("ZREM", keyQueuePriorityPending, messageId)
+                elseif queueType == EQueueTypeFIFO or queueType == EQueueTypeLIFO then
+                    redis.call("LREM", keyQueuePending, 1, messageId)
                 end
             end
+            counterToDecrement = EQueuePropertyPendingMessagesCount
         end
 
-        -- Delete the message
+        -- Delete the message hash
         redis.call("DEL", messageKey)
 
-        -- Remove the message ID from queue messages
-        redis.call("SREM", queueMessages, messageId)
+        -- Remove the message ID from the queue's global message set
+        redis.call("SREM", keyQueueMessages, messageId)
 
-        -- Decrements the message count in queue properties
-        redis.call("HINCRBY", queueProperties, MSG_COUNT, -1)
+        -- Decrement the total message count and the status-specific count
+        redis.call("HINCRBY", keyQueueProperties, EQueuePropertyMessagesCount, -1)
+        if counterToDecrement then
+            redis.call("HINCRBY", keyQueueProperties, counterToDecrement, -1)
+        end
 
         successCount = successCount + 1
     end

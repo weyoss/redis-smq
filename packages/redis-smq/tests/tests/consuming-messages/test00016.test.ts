@@ -14,7 +14,7 @@ import {
   Consumer,
   IMessageTransferable,
   ProducibleMessage,
-} from '../../../src/lib/index.js';
+} from '../../../src/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import { untilMessageAcknowledged } from '../../common/events.js';
 import { createQueue } from '../../common/message-producing-consuming.js';

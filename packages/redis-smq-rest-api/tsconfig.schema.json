@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": []
   },
-  "include": ["./src/app/dto"]
+  "include": ["./src/dto"]
 }

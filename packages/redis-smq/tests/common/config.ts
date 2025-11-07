@@ -8,12 +8,12 @@
  */
 
 import { ERedisConfigClient } from 'redis-smq-common';
-import { IRedisSMQConfig } from '../../src/config/index.js';
+import { parseConfig } from '../../src/index.js';
 
 const redisHost = process.env.REDIS_HOST || '127.0.0.1';
 const redisPort = Number(process.env.REDIS_PORT) || 6379;
 
-export const config: IRedisSMQConfig = {
+export const config = parseConfig({
   namespace: 'testing',
   redis: {
     client: ERedisConfigClient.IOREDIS,
@@ -26,11 +26,15 @@ export const config: IRedisSMQConfig = {
   },
   logger: {
     enabled: false,
+    options: {
+      logLevel: 'DEBUG',
+    },
   },
-  messages: {
-    store: true,
+  messageAudit: {
+    acknowledgedMessages: true,
+    deadLetteredMessages: true,
   },
   eventBus: {
     enabled: true,
   },
-};
+});

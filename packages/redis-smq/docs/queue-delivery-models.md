@@ -2,95 +2,120 @@
 
 # Queue Delivery Models
 
-RedisSMQ offers two reliable message delivery models: **Point-to-Point** and **Pub/Sub**. Below, we delve into each
-model, providing detailed explanations, sample code snippets, and best practices for implementation.
+RedisSMQ offers two reliable message delivery models: Point-to-Point and Pub/Sub. This guide explains each model with
+updated examples using the RedisSMQ class, along with best practices.
+
+---
 
 ## Point-to-Point Delivery Model
 
 ![Point-to-Point Delivery Model](redis-smq-point-2-point-delivery-model.png)
 
-In the **Point-to-Point** model, a message is produced to a queue and delivered to a single consumer at a time. This
-model ensures that each message is processed only once by one consumer.
+In the Point-to-Point model, a message is produced to a queue and delivered to a single consumer at a time. Each message is processed once by one consumer.
 
 ### Creating a Point-to-Point Queue
 
-To create a Point-to-Point queue, use the following code snippet:
-
 ```javascript
-const { Queue, EQueueDeliveryModel, EQueueType } = require('redis-smq');
+'use strict';
 
-const queue = new Queue();
-queue.save(
-  'my-queue',
-  EQueueType.LIFO_QUEUE,
-  EQueueDeliveryModel.POINT_TO_POINT,
-  (err, reply) => {
-    if (err) {
-      console.error('Error creating queue:', err);
-    } else {
-      console.log('Successfully created queue:', reply);
-    }
+const { RedisSMQ, EQueueDeliveryModel, EQueueType } = require('redis-smq');
+const { ERedisConfigClient } = require('redis-smq-common');
+
+// Initialize once per process
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: '127.0.0.1', port: 6379, db: 0 },
+  },
+  (err) => {
+    if (err) return console.error('Init failed:', err);
+
+    const queueManager = RedisSMQ.createQueueManager();
+    queueManager.save(
+      'my-queue',
+      EQueueType.LIFO_QUEUE,
+      EQueueDeliveryModel.POINT_TO_POINT,
+      (saveErr, reply) => {
+        if (saveErr) console.error('Error creating queue:', saveErr);
+        else console.log('Successfully created queue:', reply);
+      },
+    );
   },
 );
 ```
 
-_Refer to [Queue.save()](api/classes/Queue.md#save) for additional details._
+Refer to [`QueueManager.save()`](api/classes/QueueManager.md#save) for additional details.
 
 ### Publishing a Message to a Point-to-Point Queue
 
-To publish a message to a Point-to-Point queue, use the following:
-
 ```javascript
-const { Producer, ProducibleMessage } = require('redis-smq');
+'use strict';
 
-const message = new ProducibleMessage();
-message.setBody('hello world').setQueue('my-queue');
+const { RedisSMQ, ProducibleMessage } = require('redis-smq');
+const { ERedisConfigClient } = require('redis-smq-common');
 
-const producer = new Producer();
-producer.run((err) => {
-  if (err) {
-    console.error('Error running producer:', err);
-  } else {
-    producer.produce(message, (err, reply) => {
-      if (err) {
-        console.error('Error producing message:', err);
-      } else {
-        console.log('Successfully produced message:', reply);
-      }
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: '127.0.0.1', port: 6379 },
+  },
+  (err) => {
+    if (err) return console.error('Init failed:', err);
+
+    const producer = RedisSMQ.createProducer();
+    producer.run((runErr) => {
+      if (runErr) return console.error('Error running producer:', runErr);
+
+      const message = new ProducibleMessage()
+        .setBody('hello world')
+        .setQueue('my-queue');
+
+      producer.produce(message, (produceErr, ids) => {
+        if (produceErr) console.error('Error producing message:', produceErr);
+        else console.log('Successfully produced message IDs:', ids);
+      });
     });
-  }
-});
+  },
+);
 ```
 
-_Refer to [Producer.produce()](api/classes/Producer.md#produce) for more details._
+Refer to [`Producer.produce()`](api/classes/Producer.md#produce) for more details.
 
 ### Consuming a Message from a Point-to-Point Queue
 
-To consume a message from a Point-to-Point queue, you can use the following snippet:
-
 ```javascript
-const { Consumer } = require('redis-smq');
+'use strict';
 
-const consumer = new Consumer();
+const { RedisSMQ } = require('redis-smq');
+const { ERedisConfigClient } = require('redis-smq-common');
 
-const messageHandler = (msg, cb) => {
-  // Acknowledge the message
-  cb();
-};
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: '127.0.0.1', port: 6379 },
+  },
+  (err) => {
+    if (err) return console.error('Init failed:', err);
 
-consumer.consume('my-queue', messageHandler, (err) => {
-  if (err) {
-    console.error('Error adding message handler:', err);
-  } else {
-    console.log('Message handler added successfully');
-  }
-});
+    const consumer = RedisSMQ.createConsumer();
 
-consumer.run((err) => {
-  if (err) {
-    console.error('Error running consumer:', err);
-  }
-});
+    const messageHandler = (msg, cb) => {
+      // Your processing logic here...
+      cb(); // acknowledge
+    };
+
+    consumer.consume('my-queue', messageHandler, (consumeErr) => {
+      if (consumeErr)
+        console.error('Error adding message handler:', consumeErr);
+      else console.log('Message handler added successfully');
+    });
+
+    consumer.run((runErr) => {
+      if (runErr) console.error('Error running consumer:', runErr);
+      else console.log('Consumer is running');
+    });
+  },
+);
 ```
 
 ---
@@ -101,114 +126,162 @@ consumer.run((err) => {
 
 ![Pub/Sub Delivery Model High-level View](redis-smq-pubsub-delivery-model-highlevel-view.png)
 
-In the **Pub/Sub** model, messages are delivered to all consumers of a queue. Every consumer receives and processes a
-copy of the produced message.
+In the Pub/Sub model, messages are delivered to all consumer groups of a queue. Within each consumer group, only one
+consumer receives the message. Every group gets a copy, enabling fan-out while keeping per-group ordering and retry
+semantics.
 
 ### Consumer Groups
 
 ![Pub/Sub Delivery Model](redis-smq-pubsub-delivery-model.png)
 
-To consume messages from a Pub/Sub queue, a consumer group is required.
-
+- A consumer group is required to consume from a Pub/Sub queue.
 - When publishing a message to a Pub/Sub queue, it is sent to all consumer groups associated with that queue.
 - Within each consumer group, only one consumer will receive the message.
-- If a message remains unacknowledged for a given time, it will be retried in the same manner as within a Point-to-Point queue.
-- If the retry threshold is exceeded, failed messages can be stored, if configured, in the dead-letter queue for that Pub/Sub queue.
+- If a message remains unacknowledged for a given time, it will be retried similarly to Point-to-Point queues.
+- If the retry threshold is exceeded, failed messages can be stored (if configured) in the dead-letter queue.
+
+You can manage consumer groups programmatically:
+
+```javascript
+'use strict';
+
+const { RedisSMQ } = require('redis-smq');
+const { ERedisConfigClient } = require('redis-smq-common');
+
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: '127.0.0.1', port: 6379 },
+  },
+  (err) => {
+    if (err) return console.error('Init failed:', err);
+
+    const groups = RedisSMQ.createConsumerGroups();
+    groups.saveConsumerGroup('my-pubsub-queue', 'my-app-group-1', (e, code) => {
+      if (e) console.error('Failed to save consumer group:', e);
+      else console.log('Consumer group saved:', code);
+    });
+  },
+);
+```
+
+Refer to the [ConsumerGroups class](api/classes/ConsumerGroups.md) for managing consumer groups. In many cases, a group
+can also be created implicitly the first time you start consuming with a given groupId.
 
 ### Creating a Pub/Sub Queue
 
-To create a Pub/Sub queue, use the following:
-
 ```javascript
-const { Queue, EQueueDeliveryModel, EQueueType } = require('redis-smq');
+'use strict';
 
-const queue = new Queue();
-queue.save(
-  'my-pubsub-queue',
-  EQueueType.LIFO_QUEUE,
-  EQueueDeliveryModel.PUB_SUB,
-  (err, reply) => {
-    if (err) {
-      console.error('Error creating Pub/Sub queue:', err);
-    } else {
-      console.log('Successfully created Pub/Sub queue:', reply);
-    }
+const { RedisSMQ, EQueueDeliveryModel, EQueueType } = require('redis-smq');
+const { ERedisConfigClient } = require('redis-smq-common');
+
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: '127.0.0.1', port: 6379, db: 0 },
+  },
+  (err) => {
+    if (err) return console.error('Init failed:', err);
+
+    const queueManager = RedisSMQ.createQueueManager();
+    queueManager.save(
+      'my-pubsub-queue',
+      EQueueType.LIFO_QUEUE,
+      EQueueDeliveryModel.PUB_SUB,
+      (saveErr, reply) => {
+        if (saveErr) console.error('Error creating Pub/Sub queue:', saveErr);
+        else console.log('Successfully created Pub/Sub queue:', reply);
+      },
+    );
   },
 );
 ```
 
-_Refer to [Queue.save()](api/classes/Queue.md#save) for additional details._
-
-### Creating Consumer Groups
-
-A consumer group is automatically created when consuming messages from the queue if it does not already exist.
-
-You can also manually create consumer groups using the [ConsumerGroups.saveConsumerGroup()](api/classes/ConsumerGroups.md) method.
-
-_Refer to the [ConsumerGroups Class](api/classes/ConsumerGroups.md) for managing consumer groups._
+Refer to [`QueueManager.save()`](api/classes/QueueManager.md#save) for additional details.
 
 ### Publishing a Message to a Pub/Sub Queue
 
-Use the following code to publish a message to a Pub/Sub queue:
+Note: When producing a message to a Pub/Sub queue, at least one consumer group must exist. If no groups exist, an error
+will be returned.
 
 ```javascript
-const { ProducibleMessage, Producer } = require('redis-smq');
+'use strict';
 
-const message = new ProducibleMessage();
-message.setBody('hello world').setQueue('my-pubsub-queue');
+const { RedisSMQ, ProducibleMessage } = require('redis-smq');
+const { ERedisConfigClient } = require('redis-smq-common');
 
-const producer = new Producer();
-producer.run((err) => {
-  if (err) {
-    console.error('Error running producer:', err);
-  } else {
-    producer.produce(message, (err, reply) => {
-      if (err) {
-        console.error('Error producing message:', err);
-      } else {
-        console.log('Successfully produced message:', reply);
-      }
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: '127.0.0.1', port: 6379 },
+  },
+  (err) => {
+    if (err) return console.error('Init failed:', err);
+
+    const producer = RedisSMQ.createProducer();
+    producer.run((runErr) => {
+      if (runErr) return console.error('Error running producer:', runErr);
+
+      const message = new ProducibleMessage()
+        .setBody('hello world')
+        .setQueue('my-pubsub-queue');
+
+      producer.produce(message, (produceErr, ids) => {
+        if (produceErr) console.error('Error producing message:', produceErr);
+        else
+          console.log('Successfully produced to group(s), message IDs:', ids);
+      });
     });
-  }
-});
+  },
+);
 ```
 
-_Note:_ When producing a message to a Pub/Sub queue, if no consumer groups exist, an error will be returned. Ensure
-that at least one consumer group is created prior to publishing messages.
-
-_Refer to [Producer.produce()](api/classes/Producer.md#produce) for more details._
+Refer to [`Producer.produce()`](api/classes/Producer.md#produce) for more details.
 
 ### Consuming a Message from a Pub/Sub Queue
 
-To consume a message from a Pub/Sub queue, ensure to specify the consumer group ID:
+Provide the consumer group ID when consuming from a Pub/Sub queue:
 
 ```javascript
-const { Consumer } = require('redis-smq');
+'use strict';
 
-const consumer = new Consumer();
+const { RedisSMQ } = require('redis-smq');
+const { ERedisConfigClient } = require('redis-smq-common');
 
-const messageHandler = (msg, cb) => {
-  // Acknowledge the message
-  cb();
-};
-
-consumer.consume(
-  { queue: 'my-pubsub-queue', groupId: 'my-app-group-1' },
-  messageHandler,
+RedisSMQ.initialize(
+  {
+    client: ERedisConfigClient.IOREDIS,
+    options: { host: '127.0.0.1', port: 6379 },
+  },
   (err) => {
-    if (err) {
-      console.error('Error adding message handler:', err);
-    } else {
-      console.log('Message handler added successfully');
-    }
+    if (err) return console.error('Init failed:', err);
+
+    const consumer = RedisSMQ.createConsumer();
+
+    const messageHandler = (msg, cb) => {
+      // process message...
+      cb(); // acknowledge
+    };
+
+    consumer.consume(
+      { queue: 'my-pubsub-queue', groupId: 'my-app-group-1' },
+      messageHandler,
+      (consumeErr) => {
+        if (consumeErr)
+          console.error('Error adding message handler:', consumeErr);
+        else console.log('Message handler added');
+      },
+    );
+
+    consumer.run((runErr) => {
+      if (runErr) console.error('Error running consumer:', runErr);
+      else console.log('Consumer is running');
+    });
   },
 );
-
-consumer.run((err) => {
-  if (err) {
-    console.error('Error running consumer:', err);
-  }
-});
 ```
 
-_Remember to provide the consumer group ID when consuming messages from a Pub/Sub queue._
+_Note:_
+
+If you do not provide a consumer group ID when consuming messages from a Pub/Sub queue, the consumer will create an ephemeral consumer group for the session. Provide a consumer group ID to join a persistent, named group.

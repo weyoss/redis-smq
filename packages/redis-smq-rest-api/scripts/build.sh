@@ -12,11 +12,16 @@ set -e
 
 rm -rf dist
 
+# generate error mappings before building
+pnpm error-mappings:gen
+
 # esm
 tsc -p ./tsconfig.json
+chmod +x dist/esm/bin/cli.js
 
 # cjs
 tsc -p ./tsconfig.cjs.json
+chmod +x dist/cjs/bin/cli.js
 cat >dist/cjs/package.json <<!EOF
 {
     "type": "commonjs"
@@ -25,3 +30,6 @@ cat >dist/cjs/package.json <<!EOF
 
 # schema
 pnpm schema:gen
+
+# openapi
+pnpm openapi:gen

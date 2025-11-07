@@ -4,43 +4,33 @@
 
 ## Implements
 
-- [`IQueueMessageManager`](../interfaces/IQueueMessageManager.md)
-
-## Table of contents
-
-### Constructors
-
-- [constructor](QueuePendingMessages.md#constructor)
-
-### Methods
-
-- [countMessages](QueuePendingMessages.md#countmessages)
-- [getMessages](QueuePendingMessages.md#getmessages)
-- [purge](QueuePendingMessages.md#purge)
-- [shutdown](QueuePendingMessages.md#shutdown)
+- [`IQueueMessages`](../interfaces/IQueueMessages.md)
 
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new QueuePendingMessages**(): [`QueuePendingMessages`](QueuePendingMessages.md)
+> **new QueuePendingMessages**(): `QueuePendingMessages`
 
 #### Returns
 
-[`QueuePendingMessages`](QueuePendingMessages.md)
+`QueuePendingMessages`
 
 ## Methods
 
-### countMessages
+### countMessages()
 
-▸ **countMessages**(`queue`, `cb`): `void`
+> **countMessages**(`queue`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
-| `cb` | `ICallback`\<`number`\> |
+##### queue
+
+[`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
+
+##### cb
+
+`ICallback`\<`number`\>
 
 #### Returns
 
@@ -48,22 +38,31 @@
 
 #### Implementation of
 
-[IQueueMessageManager](../interfaces/IQueueMessageManager.md).[countMessages](../interfaces/IQueueMessageManager.md#countmessages)
+[`IQueueMessages`](../interfaces/IQueueMessages.md).[`countMessages`](../interfaces/IQueueMessages.md#countmessages)
 
-___
+***
 
-### getMessages
+### getMessages()
 
-▸ **getMessages**(`queue`, `page`, `pageSize`, `cb`): `void`
+> **getMessages**(`queue`, `page`, `pageSize`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
-| `page` | `number` |
-| `pageSize` | `number` |
-| `cb` | `ICallback`\<[`IQueueMessagesPage`](../interfaces/IQueueMessagesPage.md)\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\>\> |
+##### queue
+
+[`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
+
+##### page
+
+`number`
+
+##### pageSize
+
+`number`
+
+##### cb
+
+`ICallback`\<[`IPaginationPage`](../interfaces/IPaginationPage.md)\<[`IMessageTransferable`](../interfaces/IMessageTransferable.md)\<`unknown`\>\>\>
 
 #### Returns
 
@@ -71,20 +70,23 @@ ___
 
 #### Implementation of
 
-[IQueueMessageManager](../interfaces/IQueueMessageManager.md).[getMessages](../interfaces/IQueueMessageManager.md#getmessages)
+[`IQueueMessages`](../interfaces/IQueueMessages.md).[`getMessages`](../interfaces/IQueueMessages.md#getmessages)
 
-___
+***
 
-### purge
+### purge()
 
-▸ **purge**(`queue`, `cb`): `void`
+> **purge**(`queue`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `queue` | [`TQueueExtendedParams`](../README.md#tqueueextendedparams) |
-| `cb` | `ICallback`\<`void`\> |
+##### queue
+
+[`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
+
+##### cb
+
+`ICallback`\<`void`\>
 
 #### Returns
 
@@ -92,20 +94,4 @@ ___
 
 #### Implementation of
 
-[IQueueMessageManager](../interfaces/IQueueMessageManager.md).[purge](../interfaces/IQueueMessageManager.md#purge)
-
-___
-
-### shutdown
-
-▸ **shutdown**(`cb`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `cb` | `ICallback`\<`void`\> |
-
-#### Returns
-
-`void`
+[`IQueueMessages`](../interfaces/IQueueMessages.md).[`purge`](../interfaces/IQueueMessages.md#purge)

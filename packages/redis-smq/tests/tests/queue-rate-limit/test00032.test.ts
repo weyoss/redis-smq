@@ -12,22 +12,19 @@ import { resolve } from 'path';
 import { expect, test, vitest } from 'vitest';
 import bluebird from 'bluebird';
 import { env, ICallback, IRedisClient } from 'redis-smq-common';
-import {
-  IQueueParams,
-  QueueRateLimit,
-  QueueRateLimitQueueNotFoundError,
-} from '../../../src/lib/index.js';
+import { IQueueParams, QueueRateLimit } from '../../../src/index.js';
 import { getDefaultQueue } from '../../common/message-producing-consuming.js';
+import { QueueNotFoundError } from '../../../src/errors/index.js';
 
 test('SetQueueRateLimit(): QueueRateLimitQueueNotFoundError', async () => {
   const defaultQueue = getDefaultQueue();
   const path1 = resolve(
     env.getCurrentDir(),
-    '../../../src/lib/queue-rate-limit/queue-rate-limit.js',
+    '../../../src/queue-rate-limit/queue-rate-limit.js',
   );
   const path2 = resolve(
     env.getCurrentDir(),
-    '../../../src/lib/queue/_/_parse-queue-params-and-validate.js',
+    '../../../src/queue-manager/_/_parse-queue-params-and-validate.js',
   );
   const { QueueRateLimit } = await esmock<{
     QueueRateLimit: new () => QueueRateLimit;
@@ -51,6 +48,5 @@ test('SetQueueRateLimit(): QueueRateLimitQueueNotFoundError', async () => {
       limit: 5,
       interval: 1000,
     }),
-  ).rejects.toThrow(QueueRateLimitQueueNotFoundError);
-  await queueRateLimit.shutdownAsync();
+  ).rejects.toThrow(QueueNotFoundError);
 });

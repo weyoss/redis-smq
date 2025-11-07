@@ -2,68 +2,51 @@
 
 # Class: RedisClientFactory
 
-## Hierarchy
+## Extends
 
-- [`EventEmitter`](EventEmitter.md)\<`Pick`\<[`TRedisClientEvent`](../README.md#tredisclientevent), ``"error"``\>\>
-
-  ↳ **`RedisClientFactory`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](RedisClientFactory.md#constructor)
-
-### Methods
-
-- [emit](RedisClientFactory.md#emit)
-- [getInstance](RedisClientFactory.md#getinstance)
-- [getSetInstance](RedisClientFactory.md#getsetinstance)
-- [init](RedisClientFactory.md#init)
-- [on](RedisClientFactory.md#on)
-- [once](RedisClientFactory.md#once)
-- [removeAllListeners](RedisClientFactory.md#removealllisteners)
-- [removeListener](RedisClientFactory.md#removelistener)
-- [shutdown](RedisClientFactory.md#shutdown)
+- [`EventEmitter`](EventEmitter.md)\<`Pick`\<[`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md), `"error"`\>\>
 
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new RedisClientFactory**(`config`): [`RedisClientFactory`](RedisClientFactory.md)
+> **new RedisClientFactory**(`config`): `RedisClientFactory`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `config` | [`IRedisConfig`](../interfaces/IRedisConfig.md) |
+##### config
+
+[`IRedisConfig`](../interfaces/IRedisConfig.md)
 
 #### Returns
 
-[`RedisClientFactory`](RedisClientFactory.md)
+`RedisClientFactory`
 
 #### Overrides
 
-[EventEmitter](EventEmitter.md).[constructor](EventEmitter.md#constructor)
+[`EventEmitter`](EventEmitter.md).[`constructor`](EventEmitter.md#constructor)
 
 ## Methods
 
-### emit
+### emit()
 
-▸ **emit**\<`E`\>(`event`, `...args`): `boolean`
+> **emit**\<`E`\>(`event`, ...`args`): `boolean`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends ``"error"`` |
+##### E
+
+`E` *extends* `"error"`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `...args` | `Parameters`\<`Pick`\<[`TRedisClientEvent`](../README.md#tredisclientevent), ``"error"``\>[`E`]\> |
+##### event
+
+`E`
+
+##### args
+
+...`Parameters`\<`Pick`\<[`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md), `"error"`\>\[`E`\]\>
 
 #### Returns
 
@@ -71,68 +54,71 @@
 
 #### Inherited from
 
-[EventEmitter](EventEmitter.md).[emit](EventEmitter.md#emit)
+[`EventEmitter`](EventEmitter.md).[`emit`](EventEmitter.md#emit)
 
-___
+***
 
-### getInstance
+### getInstance()
 
-▸ **getInstance**(): `Error` \| [`IRedisClient`](../interfaces/IRedisClient.md)
-
-#### Returns
-
-`Error` \| [`IRedisClient`](../interfaces/IRedisClient.md)
-
-___
-
-### getSetInstance
-
-▸ **getSetInstance**(`cb`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `cb` | [`ICallback`](../interfaces/ICallback.md)\<[`IRedisClient`](../interfaces/IRedisClient.md)\> |
+> **getInstance**(): [`IRedisClient`](../interfaces/IRedisClient.md)
 
 #### Returns
 
-`void`
+[`IRedisClient`](../interfaces/IRedisClient.md)
 
-___
+***
 
-### init
+### getSetInstance()
 
-▸ **init**(`cb`): `void`
+> **getSetInstance**(`cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | [`ICallback`](../interfaces/ICallback.md)\<`void`\> |
+##### cb
+
+[`ICallback`](../interfaces/ICallback.md)\<[`IRedisClient`](../interfaces/IRedisClient.md)\>
 
 #### Returns
 
 `void`
 
-___
+***
 
-### on
+### init()
 
-▸ **on**\<`E`\>(`event`, `listener`): `this`
-
-#### Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `E` | extends ``"error"`` |
+> **init**(`cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `Pick`\<[`TRedisClientEvent`](../README.md#tredisclientevent), ``"error"``\>[`E`] |
+##### cb
+
+[`ICallback`](../interfaces/ICallback.md)
+
+#### Returns
+
+`void`
+
+***
+
+### on()
+
+> **on**\<`E`\>(`event`, `listener`): `this`
+
+#### Type Parameters
+
+##### E
+
+`E` *extends* `"error"`
+
+#### Parameters
+
+##### event
+
+`E`
+
+##### listener
+
+`Pick`\<[`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md), `"error"`\>\[`E`\]
 
 #### Returns
 
@@ -140,26 +126,29 @@ ___
 
 #### Inherited from
 
-[EventEmitter](EventEmitter.md).[on](EventEmitter.md#on)
+[`EventEmitter`](EventEmitter.md).[`on`](EventEmitter.md#on)
 
-___
+***
 
-### once
+### once()
 
-▸ **once**\<`E`\>(`event`, `listener`): `this`
+> **once**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends ``"error"`` |
+##### E
+
+`E` *extends* `"error"`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `Pick`\<[`TRedisClientEvent`](../README.md#tredisclientevent), ``"error"``\>[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+`Pick`\<[`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md), `"error"`\>\[`E`\]
 
 #### Returns
 
@@ -167,25 +156,25 @@ ___
 
 #### Inherited from
 
-[EventEmitter](EventEmitter.md).[once](EventEmitter.md#once)
+[`EventEmitter`](EventEmitter.md).[`once`](EventEmitter.md#once)
 
-___
+***
 
-### removeAllListeners
+### removeAllListeners()
 
-▸ **removeAllListeners**\<`E`\>(`event?`): `this`
+> **removeAllListeners**\<`E`\>(`event?`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends ``"error"`` |
+##### E
+
+`E` *extends* `"error"`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event?` | `Extract`\<`E`, `string`\> |
+##### event?
+
+`Extract`\<`E`, `string`\>
 
 #### Returns
 
@@ -193,26 +182,29 @@ ___
 
 #### Inherited from
 
-[EventEmitter](EventEmitter.md).[removeAllListeners](EventEmitter.md#removealllisteners)
+[`EventEmitter`](EventEmitter.md).[`removeAllListeners`](EventEmitter.md#removealllisteners)
 
-___
+***
 
-### removeListener
+### removeListener()
 
-▸ **removeListener**\<`E`\>(`event`, `listener`): `this`
+> **removeListener**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends ``"error"`` |
+##### E
+
+`E` *extends* `"error"`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `Pick`\<[`TRedisClientEvent`](../README.md#tredisclientevent), ``"error"``\>[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+`Pick`\<[`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md), `"error"`\>\[`E`\]
 
 #### Returns
 
@@ -220,19 +212,19 @@ ___
 
 #### Inherited from
 
-[EventEmitter](EventEmitter.md).[removeListener](EventEmitter.md#removelistener)
+[`EventEmitter`](EventEmitter.md).[`removeListener`](EventEmitter.md#removelistener)
 
-___
+***
 
-### shutdown
+### shutdown()
 
-▸ **shutdown**(`cb`): `void`
+> **shutdown**(`cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `cb` | [`ICallback`](../interfaces/ICallback.md)\<`void`\> |
+##### cb
+
+[`ICallback`](../interfaces/ICallback.md)
 
 #### Returns
 

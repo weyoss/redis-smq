@@ -2,10 +2,10 @@ name: 'code quality'
 
 on:
   push:
-    branches: ['master']
+    branches: [next, master]
+
   pull_request:
-    # The branches below must be a subset of the branches above
-    branches: ['master']
+    branches: [next, master]
 
 jobs:
   analyze:
@@ -35,8 +35,8 @@ jobs:
           npm install pnpm@10 -g
 
       - name: Install dependencies and build packages
-        run: |
-          pnpm install
+        run: pnpm build:ca
+        continue-on-error: false
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3

@@ -7,19 +7,19 @@
  * in the root directory of this source tree.
  */
 
-import { expect, vitest, test } from 'vitest';
-import { ProducibleMessage } from '../../../src/lib/index.js';
+import { expect, test, vitest } from 'vitest';
+import { ProducibleMessage } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import { untilMessageDeadLettered } from '../../common/events.js';
 import {
   createQueue,
   getDefaultQueue,
 } from '../../common/message-producing-consuming.js';
-import { getMessage } from '../../common/message.js';
+import { getMessageManager } from '../../common/message-manager.js';
 import { getProducer } from '../../common/producer.js';
 import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
 
-test('Messages produced from scheduled message are processed like normal message upon consume failures (retry, delay, requeue, etc)', async () => {
+test('MessageList produced from scheduled message are processed like normal message upon consume failures (retry, delay, requeue, etc)', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
 
@@ -30,10 +30,11 @@ test('Messages produced from scheduled message are processed like normal message
   });
 
   const msg = new ProducibleMessage()
-    .setScheduledRepeat(10)
-    .setScheduledRepeatPeriod(60000)
+    .setScheduledRepeat(3)
+    .setScheduledRepeatPeriod(30000)
     .setBody('message body')
-    .setRetryThreshold(5)
+    .setRetryThreshold(2)
+    .setRetryDelay(0)
     .setQueue(getDefaultQueue());
   const producer = getProducer();
   await producer.runAsync();
@@ -47,8 +48,8 @@ test('Messages produced from scheduled message are processed like normal message
   expect(res.totalItems).toBe(1);
   expect(typeof res.items[0].id).toBe('string');
 
-  const m = await getMessage();
+  const m = await getMessageManager();
   const mState = await m.getMessageStateAsync(res.items[0].id);
-  expect(mState.scheduledMessageId).toBe(id);
-  expect(mState.attempts).toBe(4);
+  expect(mState.scheduledMessageParentId).toBe(id);
+  expect(mState.attempts).toBe(2);
 });

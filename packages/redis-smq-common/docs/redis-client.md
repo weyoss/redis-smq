@@ -9,6 +9,8 @@
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
+    - [Basic Operations](#basic-operations)
+    - [Shutdown](#shutdown)
 - [Error Handling](#error-handling)
 
 ---
@@ -23,11 +25,13 @@ The `redis-smq-common` library supports two Redis clients:
 You can specify which client to use via the `client` property in the configuration object (`ERedisConfigClient.REDIS` or
 `ERedisConfigClient.IOREDIS`).
 
+Note: `ERedisConfigClient.REDIS` maps to the `@redis/client` package.
+
 ## Prerequisites
 
 Before setting up the Redis client, ensure that you have the following:
 
-- Node.js installed (version 14 or higher).
+- Node.js installed (version 20 or higher).
 - Redis server running and accessible.
 
 ## Installation
@@ -45,10 +49,10 @@ To install the necessary dependencies for using the Redis client, follow these s
 - For `node-redis`:
 
   ```bash
-  npm install node-redis
-  ```
+  npm install @redis/client  ```
 
 - For `ioredis`:
+
   ```bash
   npm install ioredis
   ```
@@ -61,7 +65,7 @@ The Redis client can be configured using an `IRedisConfig` object. Below is an e
 import { IRedisConfig, ERedisConfigClient } from 'redis-smq-common';
 
 const config: IRedisConfig = {
-  client: ERedisConfigClient.REDIS, // or ERedisConfigClient.IOREDIS
+  client: ERedisConfigClient.IOREDIS, // or ERedisConfigClient.REDIS
   options: {
     host: 'localhost',
     port: 6379,
@@ -73,58 +77,168 @@ const config: IRedisConfig = {
 
 ## Usage
 
-### Example Usage
+### Basic Operations
 
 ```typescript
 import {
-  createRedisClient,
+  RedisClientFactory,
   IRedisConfig,
   ERedisConfigClient,
+  IRedisClient,
 } from 'redis-smq-common';
-import {
-  CallbackEmptyReplyError,
-  RedisClientError,
-} from 'redis-smq-common/errors';
 
 const config: IRedisConfig = {
-  client: ERedisConfigClient.REDIS, // or ERedisConfigClient.IOREDIS
+  client: ERedisConfigClient.IOREDIS, // or ERedisConfigClient.REDIS
   options: {
     host: 'localhost',
     port: 6379,
-    password: 'your_redis_password', // if required
-    db: 0, // specify the database number
+    password: 'your_redis_password', // optional
+    db: 0,
   },
 };
 
-createRedisClient(config, (err, client) => {
+const redisClient = new RedisClientFactory(config);
+
+// Listen for factory errors
+redisClient.on('error', (err: Error) => {
+  console.error('Redis client factory error:', err);
+});
+
+// Initialize the factory and get client instance
+redisClient.init((err) => {
   if (err) {
-    console.error('Failed to create Redis client:', err);
+    console.error('Failed to initialize Redis client factory:', err);
     return;
   }
 
-  // Use the Redis client
-  client.set('key', 'value', {}, (err, reply) => {
-    if (err) {
-      console.error('Failed to set key:', err);
+  // Get the client instance
+  const redisClient = factory.getInstance();
+
+  // SET operation
+  redisClient.set('mykey', 'myvalue', {}, (setErr, setReply) => {
+    if (setErr) {
+      console.error('Failed to set key:', setErr);
       return;
     }
-    console.log('Set key successfully:', reply);
-  });
+    console.log('Set key successfully:', setReply);
 
-  client.get('key', (err, reply) => {
-    if (err) {
-      console.error('Failed to get key:', err);
-      return;
+    // GET operation
+    redisClient.get('mykey', (getErr, reply) => {
+      if (getErr) {
+        console.error('Failed to get key:', getErr);
+      } else {
+        console.log('Get key value:', reply);
+      }
+
+      // Shutdown the factory when done
+      redisClient.shutdown((shutdownErr) => {
+        if (shutdownErr) console.error('Error during shutdown:', shutdownErr);
+        console.log('Redis client factory shut down');
+      });
+    });
+  });
+});
+```
+
+### Alternative: Direct Instance Access
+
+```typescript
+import {
+  RedisClientFactory,
+  IRedisConfig,
+  ERedisConfigClient,
+} from 'redis-smq-common';
+
+const config: IRedisConfig = {
+  client: ERedisConfigClient.IOREDIS,
+  options: { host: 'localhost', port: 6379, db: 0 },
+};
+
+const redisClient = new RedisClientFactory(config);
+
+redisClient.on('error', (err: Error) => {
+  console.error('Factory error:', err);
+});
+
+// Get or set instance (creates if not exists)
+redisClient.getSetInstance((err, client) => {
+  if (err) {
+    console.error('Failed to get Redis client instance:', err);
+    return;
+  }
+
+  console.log('Redis client ready');
+
+  // Use the client for operations
+  redisClient.set('testkey', 'testvalue', {}, (setErr, reply) => {
+    if (setErr) {
+      console.error('SET error:', setErr);
+    } else {
+      console.log('SET success:', reply);
     }
-    console.log('Get key value:', reply);
-  });
 
-  // Close the connection when done
-  client.end(true);
+    // Shutdown when done
+    redisClient.shutdown(() => {
+      console.log('Factory shut down');
+    });
+  });
+});
+```
+
+### Shutdown
+
+Always properly shutdown the factory to close Redis connections:
+
+
+```typescript
+// Graceful shutdown
+redisClient.shutdown((err) => {
+  if (err) {
+    console.error('Error during shutdown:', err);
+  } else {
+    console.log('Redis client factory shut down successfully');
+  }
 });
 ```
 
 ### Error Handling
 
-The `createRedisClient` function handles errors gracefully. If there's an issue creating the client or connecting to
-Redis, it will call the callback with an appropriate error.
+The Redis client factory provides comprehensive error handling:
+
+- Factory errors: The RedisClientFactory emits 'error' events for client-level issues.
+- Initialization errors: The init() and getSetInstance() methods pass errors via callbacks.
+- Instance lock errors: getSetInstance() throws InstanceLockError if called while locked.
+- Panic errors: getInstance() throws PanicError if called before initialization.
+
+```typescript
+const redisClient = new RedisClientFactory(config);
+
+// Handle factory-level errors
+redisClient.on('error', (factoryErr: Error) => {
+  console.error('Redis factory error:', factoryErr);
+});
+
+// Handle initialization errors
+redisClient.init((initErr) => {
+  if (initErr) {
+    console.error('Initialization failed:', initErr);
+    return;
+  }
+
+  try {
+    // Get instance (throws PanicError if not initialized)
+    const instance = factory.getInstance();
+    
+    // Handle command errors
+    instance.get('somekey', (cmdErr, reply) => {
+      if (cmdErr) {
+        console.error('Command error:', cmdErr);
+        return;
+      }
+      console.log('Success:', reply);
+    });
+  } catch (panicErr) {
+    console.error('Panic error:', panicErr);
+  }
+});
+```

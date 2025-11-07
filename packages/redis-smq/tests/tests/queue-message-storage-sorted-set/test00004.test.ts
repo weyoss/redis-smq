@@ -15,23 +15,23 @@ import {
   EMessagePriority,
   EQueueType,
   ProducibleMessage,
-} from '../../../src/lib/index.js';
+} from '../../../src/index.js';
 import {
   createQueue,
   getDefaultQueue,
 } from '../../common/message-producing-consuming.js';
-import { QueueMessagesStorageSortedSet } from '../../../src/lib/queue-messages/queue-messages-storage/queue-messages-storage-sorted-set.js';
+import { QueueStorageSortedSet } from '../../../src/common/queue-messages/queue-storage/queue-storage-sorted-set.js';
 
 import { getProducer } from '../../common/producer.js';
 
 const { promisifyAll } = bluebird;
 
-it('QueueMessagesStorageSortedSet: should fetch items with correct pagination', async () => {
+it('QueueStorageSortedSet: should fetch items with correct pagination', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.PRIORITY_QUEUE);
   const redisClient = promisifyAll(new RedisClient());
   const queueMessagesStorageSortedSet = promisifyAll(
-    new QueueMessagesStorageSortedSet(redisClient),
+    new QueueStorageSortedSet(),
   );
 
   let ids: string[] = [];

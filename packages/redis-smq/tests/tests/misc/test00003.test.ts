@@ -8,8 +8,8 @@
  */
 
 import { expect, test } from 'vitest';
-import { RedisKeysError } from '../../../src/common/redis-keys/errors/index.js';
 import { redisKeys } from '../../../src/common/redis-keys/redis-keys.js';
+import { RedisKeysError } from '../../../src/errors/index.js';
 
 test('redisKeys', async () => {
   expect(redisKeys.validateNamespace('global')).toBeInstanceOf(RedisKeysError);

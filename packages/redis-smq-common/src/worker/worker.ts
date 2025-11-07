@@ -13,7 +13,7 @@ import { Worker as WorkerThread } from 'worker_threads';
 import { ICallback } from '../async/index.js';
 import { env } from '../env/index.js';
 import { EventEmitter } from '../event/index.js';
-import { logger } from '../logger/index.js';
+import { createLogger } from '../logger/index.js';
 import { WorkerThreadError } from './errors/index.js';
 import {
   EWorkerThreadChildExecutionCode,
@@ -55,7 +55,7 @@ export abstract class Worker<
     this.id = randomUUID();
     this.workerFilename = workerFilename;
     this.initialPayload = initialPayload;
-    this.logger = logger.getLogger({ enabled: false });
+    this.logger = createLogger({ enabled: false });
     this.logger.info(`Worker instance created for ${workerFilename}`);
     this.logger.debug('Worker initialization details', {
       id: this.id,

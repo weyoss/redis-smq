@@ -2,81 +2,63 @@
 
 # Class: WorkerCallable\<Payload, Reply\>
 
-## Type parameters
-
-| Name |
-| :------ |
-| `Payload` |
-| `Reply` |
-
-## Hierarchy
+## Extends
 
 - `Worker`\<`Payload`, `Reply`\>
 
-  ↳ **`WorkerCallable`**
+## Type Parameters
+
+### Payload
+
+`Payload`
+
+### Reply
+
+`Reply`
 
 ## Implements
 
 - [`IWorkerCallable`](../interfaces/IWorkerCallable.md)\<`Payload`, `Reply`\>
 
-## Table of contents
-
-### Constructors
-
-- [constructor](WorkerCallable.md#constructor)
-
-### Methods
-
-- [call](WorkerCallable.md#call)
-- [emit](WorkerCallable.md#emit)
-- [getId](WorkerCallable.md#getid)
-- [on](WorkerCallable.md#on)
-- [once](WorkerCallable.md#once)
-- [postMessage](WorkerCallable.md#postmessage)
-- [removeAllListeners](WorkerCallable.md#removealllisteners)
-- [removeListener](WorkerCallable.md#removelistener)
-- [shutdown](WorkerCallable.md#shutdown)
-
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new WorkerCallable**\<`Payload`, `Reply`\>(`workerFilename`, `logger?`): [`WorkerCallable`](WorkerCallable.md)\<`Payload`, `Reply`\>
-
-#### Type parameters
-
-| Name |
-| :------ |
-| `Payload` |
-| `Reply` |
+> **new WorkerCallable**\<`Payload`, `Reply`\>(`workerFilename`, `logger?`): `WorkerCallable`\<`Payload`, `Reply`\>
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `workerFilename` | `string` |
-| `logger?` | [`ILogger`](../interfaces/ILogger.md) |
+##### workerFilename
+
+`string`
+
+##### logger?
+
+[`ILogger`](../interfaces/ILogger.md)
 
 #### Returns
 
-[`WorkerCallable`](WorkerCallable.md)\<`Payload`, `Reply`\>
+`WorkerCallable`\<`Payload`, `Reply`\>
 
 #### Overrides
 
-Worker\<Payload, Reply\>.constructor
+`Worker<Payload, Reply>.constructor`
 
 ## Methods
 
-### call
+### call()
 
-▸ **call**(`payload`, `cb`): `void`
+> **call**(`payload`, `cb`): `void`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `payload` | `Payload` |
-| `cb` | [`ICallback`](../interfaces/ICallback.md)\<`Reply`\> |
+##### payload
+
+`Payload`
+
+##### cb
+
+[`ICallback`](../interfaces/ICallback.md)\<`Reply`\>
 
 #### Returns
 
@@ -84,26 +66,29 @@ Worker\<Payload, Reply\>.constructor
 
 #### Implementation of
 
-[IWorkerCallable](../interfaces/IWorkerCallable.md).[call](../interfaces/IWorkerCallable.md#call)
+[`IWorkerCallable`](../interfaces/IWorkerCallable.md).[`call`](../interfaces/IWorkerCallable.md#call)
 
-___
+***
 
-### emit
+### emit()
 
-▸ **emit**\<`E`\>(`event`, `...args`): `boolean`
+> **emit**\<`E`\>(`event`, ...`args`): `boolean`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof `TWorkerEvent` |
+##### E
+
+`E` *extends* keyof `TWorkerEvent`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `...args` | `Parameters`\<`TWorkerEvent`[`E`]\> |
+##### event
+
+`E`
+
+##### args
+
+...`Parameters`\<`TWorkerEvent`\[`E`\]\>
 
 #### Returns
 
@@ -111,13 +96,13 @@ ___
 
 #### Inherited from
 
-Worker.emit
+`Worker.emit`
 
-___
+***
 
-### getId
+### getId()
 
-▸ **getId**(): `string`
+> **getId**(): `string`
 
 Gets the worker ID.
 
@@ -129,26 +114,29 @@ The worker ID.
 
 #### Inherited from
 
-Worker.getId
+`Worker.getId`
 
-___
+***
 
-### on
+### on()
 
-▸ **on**\<`E`\>(`event`, `listener`): `this`
+> **on**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof `TWorkerEvent` |
+##### E
+
+`E` *extends* keyof `TWorkerEvent`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `TWorkerEvent`[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+`TWorkerEvent`\[`E`\]
 
 #### Returns
 
@@ -156,26 +144,29 @@ ___
 
 #### Inherited from
 
-Worker.on
+`Worker.on`
 
-___
+***
 
-### once
+### once()
 
-▸ **once**\<`E`\>(`event`, `listener`): `this`
+> **once**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof `TWorkerEvent` |
+##### E
+
+`E` *extends* keyof `TWorkerEvent`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `TWorkerEvent`[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+`TWorkerEvent`\[`E`\]
 
 #### Returns
 
@@ -183,21 +174,23 @@ ___
 
 #### Inherited from
 
-Worker.once
+`Worker.once`
 
-___
+***
 
-### postMessage
+### postMessage()
 
-▸ **postMessage**(`message`): `void`
+> **postMessage**(`message`): `void`
 
 Posts a message to the worker thread.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `message` | [`TWorkerThreadParentMessage`](../README.md#tworkerthreadparentmessage) | The message to post to the worker thread. |
+##### message
+
+[`TWorkerThreadParentMessage`](../type-aliases/TWorkerThreadParentMessage.md)
+
+The message to post to the worker thread.
 
 #### Returns
 
@@ -205,25 +198,25 @@ Posts a message to the worker thread.
 
 #### Inherited from
 
-Worker.postMessage
+`Worker.postMessage`
 
-___
+***
 
-### removeAllListeners
+### removeAllListeners()
 
-▸ **removeAllListeners**\<`E`\>(`event?`): `this`
+> **removeAllListeners**\<`E`\>(`event?`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof `TWorkerEvent` |
+##### E
+
+`E` *extends* keyof `TWorkerEvent`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event?` | `Extract`\<`E`, `string`\> |
+##### event?
+
+`Extract`\<`E`, `string`\>
 
 #### Returns
 
@@ -231,26 +224,29 @@ ___
 
 #### Inherited from
 
-Worker.removeAllListeners
+`Worker.removeAllListeners`
 
-___
+***
 
-### removeListener
+### removeListener()
 
-▸ **removeListener**\<`E`\>(`event`, `listener`): `this`
+> **removeListener**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof `TWorkerEvent` |
+##### E
+
+`E` *extends* keyof `TWorkerEvent`
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | `TWorkerEvent`[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+`TWorkerEvent`\[`E`\]
 
 #### Returns
 
@@ -258,21 +254,23 @@ ___
 
 #### Inherited from
 
-Worker.removeListener
+`Worker.removeListener`
 
-___
+***
 
-### shutdown
+### shutdown()
 
-▸ **shutdown**(`cb`): `void`
+> **shutdown**(`cb`): `void`
 
 Shuts down the worker thread.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `cb` | [`ICallback`](../interfaces/ICallback.md)\<`void`\> | The callback function to call after shutdown. |
+##### cb
+
+[`ICallback`](../interfaces/ICallback.md)\<`void`\>
+
+The callback function to call after shutdown.
 
 #### Returns
 
@@ -280,4 +278,4 @@ Shuts down the worker thread.
 
 #### Inherited from
 
-Worker.shutdown
+`Worker.shutdown`

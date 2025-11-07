@@ -2,25 +2,18 @@
 
 # Interface: IQueueRateLimit
 
-## Table of contents
-
-### Properties
-
-- [interval](IQueueRateLimit.md#interval)
-- [limit](IQueueRateLimit.md#limit)
-
 ## Properties
 
 ### interval
 
-• **interval**: `number`
+> **interval**: `number`
 
 The time window over which the rate limit is applied. In milliseconds.
 
-___
+***
 
 ### limit
 
-• **limit**: `number`
+> **limit**: `number`
 
 The maximum number of messages that can be processed per unit of time.

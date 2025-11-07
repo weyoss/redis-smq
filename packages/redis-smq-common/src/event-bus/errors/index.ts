@@ -9,4 +9,3 @@
 
 export * from './event-bus.error.js';
 export * from './event-bus-not-connected.error.js';
-export * from './event-bus-instance-lock.error.js';

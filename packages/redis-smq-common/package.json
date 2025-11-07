@@ -1,28 +1,31 @@
 {
   "name": "redis-smq-common",
-  "version": "8.3.1",
-  "description": "RedisSMQ Common Library provides many components that are mainly used by RedisSMQ and RedisSMQ Monitor.",
+  "version": "9.0.0-next.18",
+  "description": "Provides essential components and utilities shared across RedisSMQ packages.",
   "author": "Weyoss <weyoss@protonmail.com>",
   "license": "MIT",
   "keywords": [
     "redis",
-    "message queue",
-    "message-queue",
-    "message",
-    "queue",
-    "job queue",
-    "job-queue",
-    "jobs",
     "redis-smq",
-    "priority",
-    "priority queue",
+    "smq",
+    "message-queue",
+    "message-broker",
+    "job-queue",
     "priority-queue",
     "scheduler",
     "broker",
-    "message broker",
-    "message-broker"
+    "fifo",
+    "lifo",
+    "jobs"
   ],
   "homepage": "https://github.com/weyoss/redis-smq",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/weyoss/redis-smq.git"
+  },
   "bugs": {
     "url": "https://github.com/weyoss/redis-smq/issues"
   },
@@ -51,8 +54,8 @@
     }
   },
   "peerDependencies": {
-    "@redis/client": "^1.6.0",
-    "ioredis": "^5.4.0"
+    "@redis/client": "^5",
+    "ioredis": "^5"
   },
   "peerDependenciesMeta": {
     "@redis/client": {
@@ -63,12 +66,12 @@
     }
   },
   "dependencies": {
-    "axios": "1.8.4",
+    "axios": "1.12.2",
     "bluebird": "3.7.2",
-    "commander": "13.1.0",
+    "commander": "14.0.1",
     "lodash": "4.17.21",
-    "tar": "7.4.3",
-    "uuid": "11.1.0"
+    "tar": "7.5.1",
+    "uuid": "13.0.0"
   },
   "scripts": {
     "test": "../../scripts/test_workspace_esm.sh",
@@ -81,12 +84,5 @@
   "engineStrict": true,
   "engines": {
     "node": ">=20"
-  },
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/weyoss/redis-smq.git"
   }
 }

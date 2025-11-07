@@ -7,8 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import { IQueueParams } from '../../lib/index.js';
-import { RedisKeysInvalidKeyError } from './errors/index.js';
+import { IQueueParams } from '../../index.js';
+import { RedisKeysInvalidKeyError } from '../../errors/index.js';
 
 /**
  * Redis key configuration constants
@@ -17,8 +17,15 @@ const REDIS_KEY_CONFIG = {
   /** Key segments separator */
   SEGMENT_SEPARATOR: ':',
 
-  /** Keys version */
-  VERSION: '800.26',
+  /**
+   * Major version of the Redis data structure.
+   *
+   * This value MUST be updated upon introducing breaking changes to the Redis data structure.
+   *
+   * The versioning scheme is based on the major version of the application. For instance,
+   * for an application version like v9.x.x, this value should be 9.
+   */
+  VERSION: 9,
 
   /** Global namespace identifier */
   GLOBAL_NAMESPACE: 'global',
@@ -50,16 +57,32 @@ enum ERedisKey {
   QUEUE_MESSAGES,
   QUEUE_MESSAGE_IDS,
   QUEUE_CONSUMER_GROUPS,
+  QUEUE_EXCHANGE_BINDINGS,
+
+  // Message keys
+  MESSAGE,
+
+  // Consumer keys
+  CONSUMER_QUEUES,
+  CONSUMER_HEARTBEAT,
+
+  // Namespace keys
+  NS_QUEUES,
+  NS_EXCHANGES,
+
+  //
+  EXCHANGE,
+  EXCHANGE_DIRECT_ROUTING_KEYS,
+  EXCHANGE_DIRECT_ROUTING_KEY_QUEUES,
+  EXCHANGE_TOPIC_BINDING_PATTERNS,
+  EXCHANGE_TOPIC_BINDING_PATTERN_QUEUES,
+  EXCHANGE_FANOUT_QUEUES,
 
   // Global keys
   QUEUES,
-  CONSUMER_QUEUES,
-  CONSUMER_HEARTBEAT,
-  NS_QUEUES,
   NAMESPACES,
-  EXCHANGE_BINDINGS,
-  FANOUT_EXCHANGES,
-  MESSAGE,
+  EXCHANGES,
+  CONFIGURATION,
 }
 
 /**
@@ -104,9 +127,75 @@ export const redisKeys = {
   getNamespaceKeys(ns: string) {
     const keys = {
       keyNamespaceQueues: ERedisKey.NS_QUEUES,
+      keyNamespaceExchanges: ERedisKey.NS_EXCHANGES,
     };
     return {
       ...makeNamespacedKeys(keys, ns),
+    };
+  },
+
+  getExchangeKeys(ns: string, exchangeName: string) {
+    const keys = {
+      keyExchange: ERedisKey.EXCHANGE,
+    };
+    return {
+      ...makeNamespacedKeys(keys, ns, exchangeName),
+    };
+  },
+
+  getExchangeDirectKeys(ns: string, exchangeName: string) {
+    const keys = {
+      keyExchangeRoutingKeys: ERedisKey.EXCHANGE_DIRECT_ROUTING_KEYS,
+    };
+    return {
+      ...this.getExchangeKeys(ns, exchangeName),
+      ...makeNamespacedKeys(keys, ns, exchangeName),
+    };
+  },
+
+  getExchangeTopicKeys(ns: string, exchangeName: string) {
+    const keys = {
+      keyExchangeBindingPatterns: ERedisKey.EXCHANGE_TOPIC_BINDING_PATTERNS,
+    };
+    return {
+      ...this.getExchangeKeys(ns, exchangeName),
+      ...makeNamespacedKeys(keys, ns, exchangeName),
+    };
+  },
+
+  getExchangeFanoutKeys(ns: string, exchangeName: string) {
+    const keys = {
+      keyFanoutQueues: ERedisKey.EXCHANGE_FANOUT_QUEUES,
+    };
+    return {
+      ...this.getExchangeKeys(ns, exchangeName),
+      ...makeNamespacedKeys(keys, ns, exchangeName),
+    };
+  },
+
+  getExchangeDirectRoutingKeyKeys(
+    ns: string,
+    exchangeName: string,
+    routingKey: string,
+  ) {
+    const keys = {
+      keyRoutingKeyQueues: ERedisKey.EXCHANGE_DIRECT_ROUTING_KEY_QUEUES,
+    };
+    return {
+      ...makeNamespacedKeys(keys, ns, exchangeName, routingKey),
+    };
+  },
+
+  getExchangeTopicBindingPatternKeys(
+    ns: string,
+    exchangeName: string,
+    bindingPattern: string,
+  ) {
+    const keys = {
+      keyBindingPatternQueues: ERedisKey.EXCHANGE_TOPIC_BINDING_PATTERN_QUEUES,
+    };
+    return {
+      ...makeNamespacedKeys(keys, ns, exchangeName, bindingPattern),
     };
   },
 
@@ -132,6 +221,7 @@ export const redisKeys = {
       keyQueueMessageIds: ERedisKey.QUEUE_MESSAGE_IDS,
       keyQueueConsumerGroups: ERedisKey.QUEUE_CONSUMER_GROUPS,
       keyQueueWorkersLock: ERedisKey.QUEUE_WORKERS_LOCK,
+      keyQueueExchangeBindings: ERedisKey.QUEUE_EXCHANGE_BINDINGS,
     };
 
     const pendingKeys = {
@@ -166,25 +256,6 @@ export const redisKeys = {
         messageKeys,
         REDIS_KEY_CONFIG.GLOBAL_NAMESPACE,
         messageId,
-      ),
-    };
-  },
-
-  /**
-   * Get keys for a fanout exchange
-   *
-   * @param bindingKey - Exchange binding key
-   * @returns Exchange-specific keys
-   */
-  getFanOutExchangeKeys(bindingKey: string) {
-    const exchangeKeys = {
-      keyExchangeBindings: ERedisKey.EXCHANGE_BINDINGS,
-    };
-    return {
-      ...makeNamespacedKeys(
-        exchangeKeys,
-        REDIS_KEY_CONFIG.GLOBAL_NAMESPACE,
-        bindingKey,
       ),
     };
   },
@@ -233,8 +304,9 @@ export const redisKeys = {
   getMainKeys() {
     const mainKeys = {
       keyQueues: ERedisKey.QUEUES,
+      keyExchanges: ERedisKey.EXCHANGES,
       keyNamespaces: ERedisKey.NAMESPACES,
-      keyFanOutExchanges: ERedisKey.FANOUT_EXCHANGES,
+      keyConfiguration: ERedisKey.CONFIGURATION,
     };
     return makeNamespacedKeys(mainKeys, REDIS_KEY_CONFIG.GLOBAL_NAMESPACE);
   },

@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { Consumer } from '../../src/lib/index.js';
+import { Consumer } from '../../src/index.js';
 import { getEventBus } from './event-bus-redis.js';
 
 export async function untilMessageAcknowledged(

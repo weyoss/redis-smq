@@ -8,14 +8,13 @@
  */
 
 import { expect, test } from 'vitest';
-import { MessageMessageNotRequeuableError } from '../../../src/lib/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import {
   createQueue,
   getDefaultQueue,
   produceAndDeadLetterMessage,
 } from '../../common/message-producing-consuming.js';
-import { getMessage } from '../../common/message.js';
+import { getMessageManager } from '../../common/message-manager.js';
 import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
 import { getQueueMessages } from '../../common/queue-messages.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
@@ -26,26 +25,49 @@ test('Combined test: Requeue a message from dead-letter queue. Check queue metri
   const { messageId, queue, consumer } = await produceAndDeadLetterMessage();
   await shutDownBaseInstance(consumer);
 
-  const message = await getMessage();
-  await message.requeueMessageByIdAsync(messageId);
+  const message = await getMessageManager();
+  const newMessageId = await message.requeueMessageByIdAsync(messageId);
 
   const pendingMessages = await getQueuePendingMessages();
   const res2 = await pendingMessages.getMessagesAsync(queue, 0, 100);
   expect(res2.totalItems).toBe(1);
   expect(res2.items.length).toBe(1);
-  expect(res2.items[0].id).toEqual(messageId);
+  expect(res2.items[0].id).toBe(newMessageId);
+  expect(res2.items[0].messageState.requeuedMessageParentId).toEqual(messageId);
 
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
   const res3 = await deadLetteredMessages.getMessagesAsync(queue, 0, 100);
-  expect(res3.totalItems).toBe(0);
-  expect(res3.items.length).toBe(0);
+  expect(res3.totalItems).toBe(1);
+  expect(res3.items.length).toBe(1);
+  expect(res3.items[0].messageState.requeuedAt).toBe(
+    res2.items[0].messageState.publishedAt,
+  );
+  expect(res3.items[0].messageState.lastRequeuedAt).toBe(
+    res2.items[0].messageState.publishedAt,
+  );
+  expect(res3.items[0].messageState.requeueCount).toBe(1);
+
+  const newMessageId2 = await message.requeueMessageByIdAsync(messageId);
+
+  const res4 = await pendingMessages.getMessagesAsync(queue, 0, 100);
+  expect(res4.totalItems).toBe(2);
+  expect(res4.items.length).toBe(2);
+  expect(res4.items[1].id).toBe(newMessageId2);
+  expect(res4.items[1].messageState.requeuedMessageParentId).toEqual(messageId);
+
+  const res5 = await deadLetteredMessages.getMessagesAsync(queue, 0, 100);
+  expect(res5.totalItems).toBe(1);
+  expect(res5.items.length).toBe(1);
+  expect(res5.items[0].messageState.requeuedAt).toBe(
+    res2.items[0].messageState.publishedAt,
+  );
+  expect(res5.items[0].messageState.lastRequeuedAt).toBe(
+    res4.items[1].messageState.publishedAt,
+  );
+  expect(res5.items[0].messageState.requeueCount).toBe(2);
 
   const queueMessages = await getQueueMessages();
   const count = await queueMessages.countMessagesByStatusAsync(queue);
-  expect(count.deadLettered).toBe(0);
-  expect(count.pending).toBe(1);
-
-  await expect(message.requeueMessageByIdAsync(messageId)).rejects.toThrow(
-    MessageMessageNotRequeuableError,
-  );
+  expect(count.deadLettered).toBe(1);
+  expect(count.pending).toBe(2);
 });

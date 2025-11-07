@@ -10,7 +10,7 @@
 import { expect, test } from 'vitest';
 import bluebird from 'bluebird';
 import { ProducibleMessage } from '../../../index.js';
-import { EQueueType } from '../../../src/lib/index.js';
+import { EQueueType } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import {
   createQueue,

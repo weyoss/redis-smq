@@ -237,7 +237,7 @@ export interface IRedisClient extends EventEmitter<TRedisClientEvent> {
   loadBuiltInScriptFiles(cb: ICallback<void>): void;
 
   loadScriptFiles(
-    scriptMap: Record<string, string>,
+    scriptMap: Record<string, string | string[]>,
     cb: ICallback<Record<string, string>>,
   ): void;
 

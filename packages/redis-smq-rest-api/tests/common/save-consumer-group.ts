@@ -8,7 +8,7 @@
  */
 
 import bluebird from 'bluebird';
-import { ConsumerGroups, IQueueParams } from 'redis-smq';
+import { IQueueParams, RedisSMQ } from 'redis-smq';
 
 const { promisifyAll } = bluebird;
 
@@ -16,8 +16,7 @@ export async function saveConsumerGroup(
   queue: IQueueParams,
   consumerGroup: string,
 ) {
-  const c = promisifyAll(new ConsumerGroups());
+  const c = promisifyAll(RedisSMQ.createConsumerGroups());
   await c.saveConsumerGroupAsync(queue, consumerGroup);
-  await c.shutdownAsync();
   return consumerGroup;
 }

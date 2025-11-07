@@ -9,9 +9,9 @@
 
 import { expect, test } from 'vitest';
 import bluebird from 'bluebird';
-import { Configuration } from '../../../src/config/index.js';
-import RequeueUnacknowledgedWorker from '../../../src/lib/consumer/workers/requeue-unacknowledged.worker.js';
-import WatchConsumersWorker from '../../../src/lib/consumer/workers/watch-consumers.worker.js';
+import { EMessagePropertyStatus, QueueMessages } from '../../../src/index.js';
+import { RequeueImmediateWorker } from '../../../src/consumer/message-handler/workers/requeue-immediate.worker.js';
+import { ReapConsumersWorker } from '../../../src/consumer/message-handler/workers/reap-consumers.worker.js';
 import {
   crashAConsumerConsumingAMessage,
   createQueue,
@@ -19,23 +19,27 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getQueuePendingMessages } from '../../common/queue-pending-messages.js';
 
-test('WatchdogWorker', async () => {
+test('ReapConsumersWorker', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, false);
   await crashAConsumerConsumingAMessage();
 
-  const workerArgs = {
-    queueParsedParams: { queueParams: defaultQueue, groupId: null },
-    config: Configuration.getSetConfig(),
-  };
+  const queueMessages = bluebird.promisifyAll(new QueueMessages());
+  const messages = await queueMessages.getMessagesAsync(defaultQueue, 0, 100);
+  expect(messages.totalItems).toBe(1);
+  const [message] = messages.items;
 
-  const watchdogWorker = bluebird.promisifyAll(
-    WatchConsumersWorker(workerArgs),
+  expect(message.status === EMessagePropertyStatus.PROCESSING).toBe(true);
+
+  const queueParsedParams = { queueParams: defaultQueue, groupId: null };
+
+  const reapConsumerWorker = bluebird.promisifyAll(
+    new ReapConsumersWorker(queueParsedParams),
   );
-  await watchdogWorker.runAsync();
+  await reapConsumerWorker.runAsync();
 
   const requeueWorker = bluebird.promisifyAll(
-    RequeueUnacknowledgedWorker(workerArgs),
+    new RequeueImmediateWorker(queueParsedParams),
   );
   await requeueWorker.runAsync();
   await bluebird.delay(20000);
@@ -45,5 +49,5 @@ test('WatchdogWorker', async () => {
   expect(res3.totalItems).toBe(1);
 
   await requeueWorker.shutdownAsync();
-  await watchdogWorker.shutdownAsync();
+  await reapConsumerWorker.shutdownAsync();
 });

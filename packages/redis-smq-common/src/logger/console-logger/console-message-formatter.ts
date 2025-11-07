@@ -14,9 +14,10 @@ import {
 
 /**
  * ConsoleMessageFormatter handles the formatting of log messages with timestamps,
- * log levels, and ANSI color codes.
+ * log levels, namespaces, and ANSI color codes.
  */
 export class ConsoleMessageFormatter {
+  private readonly namespaces: string[] = [];
   private readonly includeTimestamp: boolean;
   private readonly colorize: boolean;
   private readonly dateFormatter: TConsoleLoggerOptionsDateFormatter;
@@ -29,12 +30,13 @@ export class ConsoleMessageFormatter {
     ERROR: '\u001b[31m', // Red
   };
 
-  private resetColor = '\u001b[0m';
+  private readonly resetColor = '\u001b[0m';
 
   /**
    * Creates a new MessageFormatter instance.
    *
    * @param options - Configuration options for the formatter
+   * @param namespace - Namespaces
    * @param options.includeTimestamp - Whether to include timestamps in log messages (default: true)
    * @param options.colorize - Whether to colorize log messages (default: true)
    * @param options.dateFormat - Custom date formatter function (default: ISO string)
@@ -45,11 +47,13 @@ export class ConsoleMessageFormatter {
       colorize?: boolean;
       dateFormat?: TConsoleLoggerOptionsDateFormatter;
     } = {},
+    namespace: string[] = [],
   ) {
     const { includeTimestamp, colorize, dateFormat } = options;
     this.includeTimestamp = includeTimestamp !== false;
     this.colorize = colorize !== false;
     this.dateFormatter = dateFormat || ((date: Date) => date.toISOString());
+    this.namespaces = namespace;
   }
 
   /**
@@ -68,32 +72,6 @@ export class ConsoleMessageFormatter {
   }
 
   /**
-   * Checks if a message already contains a timestamp and log level.
-   * Takes into account possible ANSI color codes in the message.
-   *
-   * @param message - The message to check
-   * @returns Whether the message already contains a timestamp and log level
-   */
-  public isFormatted(message: unknown): boolean {
-    if (typeof message !== 'string') return false;
-
-    // Strip any ANSI color codes before checking the format
-    const strippedMessage = this.stripColorCodes(message);
-
-    // Check for timestamp pattern followed by any log level in brackets
-    // This is a simplified check that may need to be adjusted based on dateFormat
-    const timestampLevelPattern = /^\[.+\] \[[A-Z]+\]/;
-
-    // If we're not including timestamps, just check for any log level in brackets
-    if (!this.includeTimestamp) {
-      const anyLevelPattern = /^\[[A-Z]+\]/;
-      return anyLevelPattern.test(strippedMessage);
-    }
-
-    return timestampLevelPattern.test(strippedMessage);
-  }
-
-  /**
    * Formats a log message with an optional timestamp, namespace, and color.
    *
    * @param level - The log level
@@ -101,11 +79,6 @@ export class ConsoleMessageFormatter {
    * @returns The formatted log message
    */
   public format(level: TConsoleLoggerLevelName, message: unknown): string {
-    // If the message is already formatted, return it as is
-    if (this.isFormatted(message)) {
-      return String(message);
-    }
-
     const timestamp = this.includeTimestamp
       ? `[${this.dateFormatter(new Date())}] `
       : '';
@@ -114,7 +87,7 @@ export class ConsoleMessageFormatter {
       typeof message === 'string' ? message : JSON.stringify(message);
 
     // Base formatted message without color
-    const baseMessage = `${timestamp}[${level}] ${this.stripColorCodes(formattedMessage)}`;
+    const baseMessage = `${timestamp}${level}${this.formatNamespaces(this.namespaces)}: ${this.stripColorCodes(formattedMessage)}`;
 
     // Add color if enabled
     if (this.colorize && this.levelColors[level]) {
@@ -122,5 +95,15 @@ export class ConsoleMessageFormatter {
     }
 
     return baseMessage;
+  }
+
+  /**
+   * Formats multiple namespaces into a string representation.
+   * @param namespaces - Array of namespace strings.
+   * @returns Formatted namespace string like [ns1 / ns2 / ns3].
+   */
+  protected formatNamespaces(namespaces: string[]): string {
+    if (!namespaces.length) return '';
+    return ` (${namespaces.join(' / ')})`;
   }
 }

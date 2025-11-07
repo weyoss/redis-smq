@@ -5,69 +5,55 @@
 Represents a distributed locking mechanism using Redis.
 Extends the Runnable class and implements locking, extending, and releasing operations.
 
-## Hierarchy
+## Extends
 
-- [`Runnable`](Runnable.md)\<[`TLockerEvent`](../README.md#tlockerevent)\>
-
-  ↳ **`RedisLock`**
-
-## Table of contents
-
-### Constructors
-
-- [constructor](RedisLock.md#constructor)
-
-### Methods
-
-- [acquireLock](RedisLock.md#acquirelock)
-- [emit](RedisLock.md#emit)
-- [extendLock](RedisLock.md#extendlock)
-- [getId](RedisLock.md#getid)
-- [isDown](RedisLock.md#isdown)
-- [isGoingDown](RedisLock.md#isgoingdown)
-- [isGoingUp](RedisLock.md#isgoingup)
-- [isLocked](RedisLock.md#islocked)
-- [isReleased](RedisLock.md#isreleased)
-- [isRunning](RedisLock.md#isrunning)
-- [isUp](RedisLock.md#isup)
-- [on](RedisLock.md#on)
-- [once](RedisLock.md#once)
-- [releaseLock](RedisLock.md#releaselock)
-- [removeAllListeners](RedisLock.md#removealllisteners)
-- [removeListener](RedisLock.md#removelistener)
-- [run](RedisLock.md#run)
-- [shutdown](RedisLock.md#shutdown)
+- [`Runnable`](Runnable.md)\<[`TLockerEvent`](../type-aliases/TLockerEvent.md)\>
 
 ## Constructors
 
-### constructor
+### Constructor
 
-• **new RedisLock**(`redisClient`, `logger`, `lockKey`, `ttl`, `retryOnFail?`, `autoExtendInterval?`): [`RedisLock`](RedisLock.md)
+> **new RedisLock**(`redisClient`, `logger`, `lockKey`, `ttl`, `retryOnFail`, `autoExtendInterval`): `RedisLock`
 
 #### Parameters
 
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `redisClient` | [`IRedisClient`](../interfaces/IRedisClient.md) | `undefined` |
-| `logger` | [`ILogger`](../interfaces/ILogger.md) | `undefined` |
-| `lockKey` | `string` | `undefined` |
-| `ttl` | `number` | `undefined` |
-| `retryOnFail` | `boolean` | `false` |
-| `autoExtendInterval` | `number` | `0` |
+##### redisClient
+
+[`IRedisClient`](../interfaces/IRedisClient.md)
+
+##### logger
+
+[`ILogger`](../interfaces/ILogger.md)
+
+##### lockKey
+
+`string`
+
+##### ttl
+
+`number`
+
+##### retryOnFail
+
+`boolean` = `false`
+
+##### autoExtendInterval
+
+`number` = `0`
 
 #### Returns
 
-[`RedisLock`](RedisLock.md)
+`RedisLock`
 
 #### Overrides
 
-Runnable\<TLockerEvent\>.constructor
+`Runnable<TLockerEvent>.constructor`
 
 ## Methods
 
-### acquireLock
+### acquireLock()
 
-▸ **acquireLock**(`cb`): `void`
+> **acquireLock**(`cb`): `void`
 
 Attempts to acquire a lock for the current instance.
 
@@ -81,32 +67,38 @@ If auto-extension is enabled, the lock's TTL will be extended automatically at r
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `cb` | [`ICallback`](../interfaces/ICallback.md)\<`boolean`\> | A callback function that will be invoked with a boolean indicating the lock acquisition result, or an error (if any) upon successful execution. |
+##### cb
+
+[`ICallback`](../interfaces/ICallback.md)\<`boolean`\>
+
+A callback function that will be invoked with a boolean indicating the lock acquisition result,
+or an error (if any) upon successful execution.
 
 #### Returns
 
 `void`
 
-___
+***
 
-### emit
+### emit()
 
-▸ **emit**\<`E`\>(`event`, `...args`): `boolean`
+> **emit**\<`E`\>(`event`, ...`args`): `boolean`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TLockerEvent`](../README.md#tlockerevent) |
+##### E
+
+`E` *extends* keyof [`TLockerEvent`](../type-aliases/TLockerEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `...args` | `Parameters`\<[`TLockerEvent`](../README.md#tlockerevent)[`E`]\> |
+##### event
+
+`E`
+
+##### args
+
+...`Parameters`\<[`TLockerEvent`](../type-aliases/TLockerEvent.md)\[`E`\]\>
 
 #### Returns
 
@@ -114,13 +106,13 @@ ___
 
 #### Inherited from
 
-[Runnable](Runnable.md).[emit](Runnable.md#emit)
+[`Runnable`](Runnable.md).[`emit`](Runnable.md#emit)
 
-___
+***
 
-### extendLock
+### extendLock()
 
-▸ **extendLock**(`cb`): `void`
+> **extendLock**(`cb`): `void`
 
 Attempts to extend the lock's time-to-live (TTL) if auto-extension is not enabled.
 
@@ -129,27 +121,29 @@ If auto-extension is enabled, an error is returned. If the lock is not currently
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `cb` | [`ICallback`](../interfaces/ICallback.md)\<`void`\> | A callback function that will be invoked with an error (if any) or `undefined` upon successful execution. |
+##### cb
+
+[`ICallback`](../interfaces/ICallback.md)\<`void`\>
+
+A callback function that will be invoked with an error (if any) or `undefined` upon successful execution.
 
 #### Returns
 
 `void`
 
-**`Throws`**
+#### Throws
 
 - If auto-extension is enabled.
 
-**`Throws`**
+#### Throws
 
 - If the lock is not currently held.
 
-___
+***
 
-### getId
+### getId()
 
-▸ **getId**(): `string`
+> **getId**(): `string`
 
 Retrieves the unique identifier of the Runnable instance.
 
@@ -161,13 +155,13 @@ Retrieves the unique identifier of the Runnable instance.
 
 #### Inherited from
 
-[Runnable](Runnable.md).[getId](Runnable.md#getid)
+[`Runnable`](Runnable.md).[`getId`](Runnable.md#getid)
 
-___
+***
 
-### isDown
+### isDown()
 
-▸ **isDown**(): `boolean`
+> **isDown**(): `boolean`
 
 Checks if the Runnable instance is currently down.
 
@@ -179,13 +173,13 @@ Checks if the Runnable instance is currently down.
 
 #### Inherited from
 
-[Runnable](Runnable.md).[isDown](Runnable.md#isdown)
+[`Runnable`](Runnable.md).[`isDown`](Runnable.md#isdown)
 
-___
+***
 
-### isGoingDown
+### isGoingDown()
 
-▸ **isGoingDown**(): `boolean`
+> **isGoingDown**(): `boolean`
 
 Checks if the Runnable instance is currently going down.
 
@@ -197,13 +191,13 @@ Checks if the Runnable instance is currently going down.
 
 #### Inherited from
 
-[Runnable](Runnable.md).[isGoingDown](Runnable.md#isgoingdown)
+[`Runnable`](Runnable.md).[`isGoingDown`](Runnable.md#isgoingdown)
 
-___
+***
 
-### isGoingUp
+### isGoingUp()
 
-▸ **isGoingUp**(): `boolean`
+> **isGoingUp**(): `boolean`
 
 Checks if the Runnable instance is currently going up.
 
@@ -215,13 +209,13 @@ Checks if the Runnable instance is currently going up.
 
 #### Inherited from
 
-[Runnable](Runnable.md).[isGoingUp](Runnable.md#isgoingup)
+[`Runnable`](Runnable.md).[`isGoingUp`](Runnable.md#isgoingup)
 
-___
+***
 
-### isLocked
+### isLocked()
 
-▸ **isLocked**(): `boolean`
+> **isLocked**(): `boolean`
 
 Checks if the lock is currently held.
 
@@ -233,11 +227,11 @@ This method returns a boolean indicating whether the lock is currently held by t
 
 - Returns `true` if the lock is held, `false` otherwise.
 
-___
+***
 
-### isReleased
+### isReleased()
 
-▸ **isReleased**(): `boolean`
+> **isReleased**(): `boolean`
 
 Checks if the lock is released.
 
@@ -249,11 +243,11 @@ This method returns a boolean indicating whether the lock is currently released.
 
 - Returns `true` if the lock is released, `false` otherwise.
 
-___
+***
 
-### isRunning
+### isRunning()
 
-▸ **isRunning**(): `boolean`
+> **isRunning**(): `boolean`
 
 Checks if the Runnable instance is currently running or going up.
 
@@ -265,13 +259,13 @@ Checks if the Runnable instance is currently running or going up.
 
 #### Inherited from
 
-[Runnable](Runnable.md).[isRunning](Runnable.md#isrunning)
+[`Runnable`](Runnable.md).[`isRunning`](Runnable.md#isrunning)
 
-___
+***
 
-### isUp
+### isUp()
 
-▸ **isUp**(): `boolean`
+> **isUp**(): `boolean`
 
 Checks if the Runnable instance is currently up.
 
@@ -283,26 +277,29 @@ Checks if the Runnable instance is currently up.
 
 #### Inherited from
 
-[Runnable](Runnable.md).[isUp](Runnable.md#isup)
+[`Runnable`](Runnable.md).[`isUp`](Runnable.md#isup)
 
-___
+***
 
-### on
+### on()
 
-▸ **on**\<`E`\>(`event`, `listener`): `this`
+> **on**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TLockerEvent`](../README.md#tlockerevent) |
+##### E
+
+`E` *extends* keyof [`TLockerEvent`](../type-aliases/TLockerEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | [`TLockerEvent`](../README.md#tlockerevent)[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+[`TLockerEvent`](../type-aliases/TLockerEvent.md)\[`E`\]
 
 #### Returns
 
@@ -310,26 +307,29 @@ ___
 
 #### Inherited from
 
-[Runnable](Runnable.md).[on](Runnable.md#on)
+[`Runnable`](Runnable.md).[`on`](Runnable.md#on)
 
-___
+***
 
-### once
+### once()
 
-▸ **once**\<`E`\>(`event`, `listener`): `this`
+> **once**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TLockerEvent`](../README.md#tlockerevent) |
+##### E
+
+`E` *extends* keyof [`TLockerEvent`](../type-aliases/TLockerEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | [`TLockerEvent`](../README.md#tlockerevent)[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+[`TLockerEvent`](../type-aliases/TLockerEvent.md)\[`E`\]
 
 #### Returns
 
@@ -337,13 +337,13 @@ ___
 
 #### Inherited from
 
-[Runnable](Runnable.md).[once](Runnable.md#once)
+[`Runnable`](Runnable.md).[`once`](Runnable.md#once)
 
-___
+***
 
-### releaseLock
+### releaseLock()
 
-▸ **releaseLock**(`cb`): `void`
+> **releaseLock**(`cb`): `void`
 
 Releases the lock held by the current instance.
 
@@ -353,31 +353,33 @@ If an error occurs during the release process, the callback is invoked with the 
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `cb` | [`ICallback`](../interfaces/ICallback.md)\<`void`\> | A callback function that will be invoked with an error (if any) or `undefined` upon successful execution. |
+##### cb
+
+[`ICallback`](../interfaces/ICallback.md)\<`void`\>
+
+A callback function that will be invoked with an error (if any) or `undefined` upon successful execution.
 
 #### Returns
 
 `void`
 
-___
+***
 
-### removeAllListeners
+### removeAllListeners()
 
-▸ **removeAllListeners**\<`E`\>(`event?`): `this`
+> **removeAllListeners**\<`E`\>(`event?`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TLockerEvent`](../README.md#tlockerevent) |
+##### E
+
+`E` *extends* keyof [`TLockerEvent`](../type-aliases/TLockerEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event?` | `Extract`\<`E`, `string`\> |
+##### event?
+
+`Extract`\<`E`, `string`\>
 
 #### Returns
 
@@ -385,26 +387,29 @@ ___
 
 #### Inherited from
 
-[Runnable](Runnable.md).[removeAllListeners](Runnable.md#removealllisteners)
+[`Runnable`](Runnable.md).[`removeAllListeners`](Runnable.md#removealllisteners)
 
-___
+***
 
-### removeListener
+### removeListener()
 
-▸ **removeListener**\<`E`\>(`event`, `listener`): `this`
+> **removeListener**\<`E`\>(`event`, `listener`): `this`
 
-#### Type parameters
+#### Type Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `E` | extends keyof [`TLockerEvent`](../README.md#tlockerevent) |
+##### E
+
+`E` *extends* keyof [`TLockerEvent`](../type-aliases/TLockerEvent.md)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `event` | `E` |
-| `listener` | [`TLockerEvent`](../README.md#tlockerevent)[`E`] |
+##### event
+
+`E`
+
+##### listener
+
+[`TLockerEvent`](../type-aliases/TLockerEvent.md)\[`E`\]
 
 #### Returns
 
@@ -412,27 +417,30 @@ ___
 
 #### Inherited from
 
-[Runnable](Runnable.md).[removeListener](Runnable.md#removelistener)
+[`Runnable`](Runnable.md).[`removeListener`](Runnable.md#removelistener)
 
-___
+***
 
-### run
+### run()
 
-▸ **run**(`cb`): `void`
+> **run**(`cb`): `void`
 
 Overrides the `run` method from the `Runnable` class to handle the lock acquisition process.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `cb` | [`ICallback`](../interfaces/ICallback.md)\<`boolean`\> | A callback function that will be invoked with a boolean indicating the lock acquisition result, or an error (if any) upon successful execution. |
+##### cb
+
+[`ICallback`](../interfaces/ICallback.md)\<`boolean`\>
+
+A callback function that will be invoked with a boolean indicating the lock acquisition result,
+or an error (if any) upon successful execution.
 
 #### Returns
 
 `void`
 
-**`Remarks`**
+#### Remarks
 
 This method attempts to acquire a lock for the current instance using the Redis client.
 If the lock is successfully acquired, the callback is invoked with `true`.
@@ -444,13 +452,13 @@ If auto-extension is enabled, the lock's TTL will be extended automatically at r
 
 #### Overrides
 
-[Runnable](Runnable.md).[run](Runnable.md#run)
+[`Runnable`](Runnable.md).[`run`](Runnable.md#run)
 
-___
+***
 
-### shutdown
+### shutdown()
 
-▸ **shutdown**(`cb`): `void`
+> **shutdown**(`cb`): `void`
 
 Performs a graceful shutdown of the Runnable instance.
 
@@ -462,9 +470,13 @@ The shutdown behavior depends on the current state of the Runnable instance:
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `cb` | [`ICallback`](../interfaces/ICallback.md)\<`void`\> | A callback function that will be called after the shutdown process is completed. If an error occurs during the shutdown process, the error will be passed as the first parameter to the callback. If the shutdown process is successful, the callback will be called with no arguments. |
+##### cb
+
+[`ICallback`](../interfaces/ICallback.md)\<`void`\>
+
+A callback function that will be called after the shutdown process is completed.
+            If an error occurs during the shutdown process, the error will be passed as the first parameter to the callback.
+            If the shutdown process is successful, the callback will be called with no arguments.
 
 #### Returns
 
@@ -472,4 +484,4 @@ The shutdown behavior depends on the current state of the Runnable instance:
 
 #### Inherited from
 
-[Runnable](Runnable.md).[shutdown](Runnable.md#shutdown)
+[`Runnable`](Runnable.md).[`shutdown`](Runnable.md#shutdown)

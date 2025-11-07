@@ -9,7 +9,7 @@
 
 import { expect, test } from 'vitest';
 import { EMessagePropertyStatus, ProducibleMessage } from '../../../index.js';
-import { EQueueType } from '../../../src/lib/index.js';
+import { EQueueType } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import {
   untilMessageAcknowledged,
@@ -19,7 +19,7 @@ import {
   createQueue,
   getDefaultQueue,
 } from '../../common/message-producing-consuming.js';
-import { getMessage } from '../../common/message.js';
+import { getMessageManager } from '../../common/message-manager.js';
 import { getProducer } from '../../common/producer.js';
 
 test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQUEUING -> ACKNOWLEDGED', async () => {
@@ -37,11 +37,11 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQUEUING ->
     .setRetryDelay(0);
   const [id] = await producer.produceAsync(msg);
 
-  const message = await getMessage();
-  const msg0 = await message.getMessageByIdAsync(id);
+  const messageManager = await getMessageManager();
+  const msg0 = await messageManager.getMessageByIdAsync(id);
   expect(msg0.status).toBe(EMessagePropertyStatus.PENDING);
 
-  const consumer = getConsumer({ consumeDefaultQueue: false });
+  const consumer = getConsumer(false);
   const msg1: EMessagePropertyStatus[] = [];
   await consumer.consumeAsync(defaultQueue, (msg, cb) => {
     if (!msg1.length) {
@@ -55,14 +55,15 @@ test('Message status: UNPUBLISHED -> PENDING -> PROCESSING -> UNACK_REQUEUING ->
   await consumer.shutdownAsync();
   expect(msg1[0]).toBe(EMessagePropertyStatus.PROCESSING);
 
-  const msg2 = await message.getMessageStatusAsync(id);
+  const msg2 = await messageManager.getMessageStatusAsync(id);
   expect(msg2).toBe(EMessagePropertyStatus.UNACK_REQUEUING);
 
+  await consumer.cancelAsync(defaultQueue);
   await consumer.consumeAsync(defaultQueue, (msg, cb) => cb());
   consumer.run(() => void 0);
 
   await untilMessageAcknowledged(consumer);
 
-  const msg3 = await message.getMessageStatusAsync(id);
+  const msg3 = await messageManager.getMessageStatusAsync(id);
   expect(msg3).toBe(EMessagePropertyStatus.ACKNOWLEDGED);
 });

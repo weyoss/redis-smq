@@ -2,50 +2,97 @@
 
 # Graceful Shutdown
 
-RedisSMQ is designed to handle failures and unexpected shutdowns without losing messages. It ensures that all
-operations are transactional, guaranteeing data consistency and integrity.
+RedisSMQ is designed to handle failures and unexpected shutdowns without losing messages. Core operations are 
+transactional to preserve consistency and integrity.
 
-To facilitate a smooth shutdown process and minimize the occurrence of failed messages, RedisSMQ provides a
-shutdown() method in supported classes. This method performs critical cleanup tasks, including:
+With the RedisSMQ class:
+- Initialize once per process using RedisSMQ.initialize(...) or RedisSMQ.initializeWithConfig(...).
+- If you created components via RedisSMQ factory methods (e.g., createProducer, createConsumer, createQueueManager), 
+  you do not need to shut them down individually. Prefer calling RedisSMQ.shutdown(cb) at the end to close shared 
+  infrastructure and all tracked components automatically.
+- You can still call shutdown(cb) on an individual instance if you want to stop it earlier or if it was not created via 
+  RedisSMQ.
 
-1. Completing in-progress message processing
-2. Saving any necessary state information
-3. Releasing system resources
-4. Gracefully closing Redis connections
+## Recommended shutdown order
 
-## Example of Shutting Down a Consumer:
+1. Stop your application from accepting new work (e.g., stop HTTP server).
+2. Optionally call shutdown(cb) on specific components you want to stop early (e.g., a Consumer), if needed.
+3. Call RedisSMQ.shutdown(cb) to close shared infrastructure and automatically shut down components created via 
+   RedisSMQ.
 
-```javascript
+Note
+- If EventBus is enabled in configuration and started by RedisSMQ, RedisSMQ.shutdown(cb) will shut it down. If you 
+  started EventBus manually, you may shut it down explicitly.
+
+## Example: application-wide shutdown (recommended)
+
+```typescript
+import { RedisSMQ } from 'redis-smq';
+
+// Assume RedisSMQ.initialize(...) or initializeWithConfig(...) was called at startup.
+const producer = RedisSMQ.createProducer();
+const consumer = RedisSMQ.createConsumer();
+
+producer.run((err) => {
+  if (err) return console.error('Producer start failed:', err);
+  console.log('Producer ready');
+});
+consumer.run((err) => {
+  if (err) return console.error('Consumer start failed:', err);
+  console.log('Consumer ready');
+});
+
+function makeShutdownOnce() {
+  let called = false;
+  return () => {
+    if (called) return;
+    called = true;
+
+    // Stop accepting new work here if applicable (e.g., close HTTP server).
+
+    // Prefer a single call: RedisSMQ.shutdown will close all components created via RedisSMQ.
+    RedisSMQ.shutdown((err) => {
+      if (err) {
+        console.error('Shutdown finished with errors:', err);
+        process.exitCode = 1;
+      } else {
+        console.log('Shutdown completed cleanly');
+      }
+    });
+  };
+}
+
+const requestShutdown = makeShutdownOnce();
+process.once('SIGINT', requestShutdown);
+process.once('SIGTERM', requestShutdown);
+```
+
+## Example: shutting down a single Consumer (optional)
+
+It is still valid to shut down a single instance if you need to stop it earlier than the rest of the system, or if it 
+was not created via RedisSMQ.
+
+```typescript
 consumer.shutdown((err) => {
   if (err) {
-    console.log('An error occurred');
-    console.error(err);
+    console.error('Consumer shutdown error:', err);
   } else {
-    console.log('Consumer has been shut down successfully');
+    console.log('Consumer shut down successfully');
   }
 });
 ```
 
-### Important Classes to Shut Down Before Exiting
+## What RedisSMQ.shutdown(cb) handles automatically
 
-Before terminating your application, be sure to call `shutdown()` on the following classes:
+RedisSMQ.shutdown(cb) automatically shuts down shared infrastructure and any components that were created via RedisSMQ 
+factory methods (such as producers, consumers, managers, and exchanges). If you created instances without using 
+RedisSMQ factory methods, shut them down explicitly or ensure they are tracked by your application.
 
-- [Consumer](api/classes/Consumer.md)
-- [ConsumerGroups](api/classes/ConsumerGroups.md)
-- [EventBus](api/classes/EventBus.md)
-- [ExchangeDirect](api/classes/ExchangeDirect.md)
-- [ExchangeFanOut](api/classes/ExchangeFanOut.md)
-- [ExchangeTopic](api/classes/ExchangeTopic.md)
-- [Message](api/classes/Message.md)
-- [Namespace](api/classes/Namespace.md)
-- [Producer](api/classes/Producer.md)
-- [Queue](api/classes/Queue.md)
-- [QueueAcknowledgedMessages](api/classes/QueueAcknowledgedMessages.md)
-- [QueueDeadLetteredMessages](api/classes/QueueDeadLetteredMessages.md)
-- [QueueMessages](api/classes/QueueMessages.md)
-- [QueuePendingMessages](api/classes/QueuePendingMessages.md)
-- [QueueRateLimit](api/classes/QueueRateLimit.md)
-- [QueueScheduledMessages](api/classes/QueueScheduledMessages.md)
+For a complete list of available components and their APIs, see the [API Reference](api/README.md).
 
-For a comprehensive list of classes that support graceful shutdown functionality, please refer to the
-[API Documentation](api/README.md).
+## Common pitfalls
+
+- Not initialized: Always create components after RedisSMQ.initialize(...) or RedisSMQ.initializeWithConfig(...).
+- Multiple signals: Ensure your shutdown logic runs once even if multiple signals arrive.
+- Forcing exit: Avoid calling process.exit() immediately; wait for shutdown callbacks to release resources and 
+  acknowledge messages.

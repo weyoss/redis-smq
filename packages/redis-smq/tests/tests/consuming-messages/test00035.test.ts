@@ -17,11 +17,11 @@ import {
   IMessageParams,
   IMessageTransferable,
   ProducibleMessage,
-} from '../../../src/lib/index.js';
+} from '../../../src/index.js';
 import { shutDownBaseInstance } from '../../common/base-instance.js';
 import { getEventBus } from '../../common/event-bus-redis.js';
 import { getProducer } from '../../common/producer.js';
-import { getQueue } from '../../common/queue.js';
+import { getQueueManager } from '../../common/queue-manager.js';
 
 test('Consume message from different queues using a single consumer instance: case 6', async () => {
   const eventBus = await getEventBus();
@@ -33,7 +33,7 @@ test('Consume message from different queues using a single consumer instance: ca
   // running without message handlers
   await bluebird.delay(5000);
 
-  const queue = await getQueue();
+  const queue = await getQueueManager();
   await queue.saveAsync(
     'test0',
     EQueueType.LIFO_QUEUE,

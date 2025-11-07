@@ -7,99 +7,58 @@
  * in the root directory of this source tree.
  */
 
-import { ICallback } from '../async/index.js';
-import { EventEmitter } from '../event/index.js';
 import { EventBusNotConnectedError } from './errors/index.js';
-import { IEventBus, TEventBusEvent } from './types/index.js';
+import { IEventBusConfig, TEventBusEvent } from './types/index.js';
+import { Runnable } from '../runnable/index.js';
+import { createLogger, ILogger } from '../logger/index.js';
+import { ICallback } from '../async/index.js';
 
-export class EventBus<Events extends TEventBusEvent>
-  extends EventEmitter<Events>
-  implements IEventBus<Events>
-{
-  protected connected = false;
+/**
+ * EventBus
+ * - Keeps listener management simple: delegate to base EventEmitter without extra guards
+ * - Only validates running state when emitting non-error events
+ * - Ensures listeners are cleared on shutdown
+ */
+export class EventBus<Events extends TEventBusEvent> extends Runnable<Events> {
+  private readonly logger: ILogger;
 
-  protected constructor() {
+  constructor(config: IEventBusConfig = {}) {
     super();
-    this.connected = true;
+    this.logger = createLogger(config?.logger);
   }
 
+  protected override getLogger(): ILogger {
+    return this.logger;
+  }
+
+  /**
+   * Emit an event.
+   * - 'error' events are always emitted locally.
+   * - Non-error events require the bus to be running; otherwise an error is emitted and false is returned.
+   */
   override emit<E extends keyof Events>(
     event: E,
     ...args: Parameters<Events[E]>
   ): boolean {
-    if (!this.connected) {
+    if (event === 'error') {
+      return super.emit(event, ...args);
+    }
+    if (!this.isRunning()) {
       this.eventEmitter.emit('error', new EventBusNotConnectedError());
       return false;
     }
     return super.emit(event, ...args);
   }
 
-  override on<E extends keyof Events>(event: E, listener: Events[E]): this {
-    if (event === 'error') {
-      super.on('error', listener);
-      return this;
-    }
-    if (!this.connected) {
-      this.eventEmitter.emit('error', new EventBusNotConnectedError());
-      return this;
-    }
-    super.on(event, listener);
-    return this;
-  }
-
-  override once<E extends keyof Events>(event: E, listener: Events[E]): this {
-    if (event === 'error') {
-      super.once('error', listener);
-      return this;
-    }
-    if (!this.connected) {
-      this.eventEmitter.emit('error', new EventBusNotConnectedError());
-      return this;
-    }
-    super.once(event, listener);
-    return this;
-  }
-
-  override removeAllListeners<E extends keyof Events>(
-    event?: Extract<E, string>,
-  ): this {
-    if (event === 'error') {
-      super.removeAllListeners('error');
-      return this;
-    }
-    if (!this.connected) {
-      this.eventEmitter.emit('error', new EventBusNotConnectedError());
-      return this;
-    }
-    super.removeAllListeners(event);
-    return this;
-  }
-
-  override removeListener<E extends keyof Events>(
-    event: E,
-    listener: Events[E],
-  ): this {
-    if (event === 'error') {
-      super.removeListener('error', listener);
-      return this;
-    }
-    if (!this.connected) {
-      this.eventEmitter.emit('error', new EventBusNotConnectedError());
-      return this;
-    }
-    super.removeListener(event, listener);
-    return this;
-  }
-
-  shutdown(cb: ICallback<void>) {
-    if (this.connected) this.connected = false;
-    cb();
-  }
-
-  static createInstance<T extends TEventBusEvent>(
-    cb: ICallback<IEventBus<T>>,
-  ): void {
-    const instance = new EventBus<T>();
-    cb(null, instance);
+  /**
+   * Ensure all listeners are removed on shutdown.
+   */
+  protected override goingDown(): ((cb: ICallback<void>) => void)[] {
+    return [
+      (cb: ICallback<void>) => {
+        super.removeAllListeners();
+        cb();
+      },
+    ].concat(super.goingDown());
   }
 }

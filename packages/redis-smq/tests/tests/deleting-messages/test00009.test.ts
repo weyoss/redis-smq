@@ -8,12 +8,13 @@
  */
 
 import { expect, test } from 'vitest';
+import { IMessageTransferable } from '../../../src/index.js';
 import {
   createQueue,
   getDefaultQueue,
   scheduleMessage,
 } from '../../common/message-producing-consuming.js';
-import { getMessage } from '../../common/message.js';
+import { getMessageManager } from '../../common/message-manager.js';
 import { getQueueScheduledMessages } from '../../common/queue-scheduled-messages.js';
 
 test('Combined test: Delete scheduled messages by IDs. Check scheduled messages. Check queue metrics.', async () => {
@@ -28,13 +29,15 @@ test('Combined test: Delete scheduled messages by IDs. Check scheduled messages.
 
   const res1 = await scheduledMessages.getMessagesAsync(defaultQueue, 0, 100);
   expect(res1.totalItems).toBe(2);
-  const items = res1.items.map((i) => i.id).sort((a, b) => (a > b ? 1 : -1));
+  const items = res1.items
+    .map((i: IMessageTransferable) => i.id)
+    .sort((a: string, b: string) => (a > b ? 1 : -1));
   expect(items).toEqual(ids);
 
   const count = await scheduledMessages.countMessagesAsync(getDefaultQueue());
   expect(count).toBe(2);
 
-  const message = await getMessage();
+  const message = await getMessageManager();
   const reply = await message.deleteMessagesByIdsAsync([msg1, msg2]);
   expect(reply.status).toBe('OK');
   expect(reply.stats).toEqual({

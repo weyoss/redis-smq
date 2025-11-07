@@ -9,14 +9,14 @@
 
 import { test } from 'vitest';
 import bluebird from 'bluebird';
-import { EQueueDeliveryModel, EQueueType } from '../../../src/lib/index.js';
+import { EQueueDeliveryModel, EQueueType } from '../../../src/index.js';
 import { getConsumer } from '../../common/consumer.js';
 import { getDefaultQueue } from '../../common/message-producing-consuming.js';
-import { getQueue } from '../../common/queue.js';
+import { getQueueManager } from '../../common/queue-manager.js';
 
 test('Priority queuing: case 1', async () => {
   const defaultQueue = getDefaultQueue();
-  const queue = await getQueue();
+  const queue = await getQueueManager();
   await queue.saveAsync(
     defaultQueue,
     EQueueType.PRIORITY_QUEUE,

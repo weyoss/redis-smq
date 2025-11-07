@@ -9,10 +9,9 @@
 
 import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
-import { RedisClient } from '../../../src/common/redis-client/redis-client.js';
 import { redisKeys } from '../../../src/common/redis-keys/redis-keys.js';
-import { EQueueType, ProducibleMessage } from '../../../src/lib/index.js';
-import { QueueMessagesStorageSet } from '../../../src/lib/queue-messages/queue-messages-storage/queue-messages-storage-set.js';
+import { EQueueType, ProducibleMessage } from '../../../src/index.js';
+import { QueueStorageSet } from '../../../src/common/queue-messages/queue-storage/queue-storage-set.js';
 import {
   createQueue,
   getDefaultQueue,
@@ -21,13 +20,10 @@ import { getProducer } from '../../common/producer.js';
 
 const { promisifyAll } = bluebird;
 
-it('QueueMessagesStorageSet: should fetch all items for a large list (chunking test)', async () => {
+it('QueueStorageSet: should fetch all items for a large list (chunking test)', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
-  const redisClient = promisifyAll(new RedisClient());
-  const queueMessagesStorageSet = promisifyAll(
-    new QueueMessagesStorageSet(redisClient),
-  );
+  const queueMessagesStorageSet = promisifyAll(new QueueStorageSet());
 
   const ids: string[] = [];
   const producer = getProducer();
@@ -43,5 +39,4 @@ it('QueueMessagesStorageSet: should fetch all items for a large list (chunking t
   const items =
     await queueMessagesStorageSet.fetchAllItemsAsync(keyQueueMessages);
   expect(items.sort()).toEqual(ids.sort());
-  await redisClient.shutdownAsync();
 });

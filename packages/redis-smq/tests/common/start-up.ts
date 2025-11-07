@@ -7,15 +7,16 @@
  * in the root directory of this source tree.
  */
 
-import { logger } from 'redis-smq-common';
-import { Configuration } from '../../src/config/index.js';
-import { ProducibleMessage } from '../../src/lib/index.js';
+import bluebird from 'bluebird';
+import { ProducibleMessage, RedisSMQ } from '../../src/index.js';
 import { config } from './config.js';
 import { getRedisInstance } from './redis.js';
 
+const RedisSMQAsync = bluebird.promisifyAll(RedisSMQ);
+
 export async function startUp(): Promise<void> {
-  Configuration.reset();
-  Configuration.getSetConfig(config);
+  await RedisSMQAsync.initializeWithConfigAsync(config);
+
   ProducibleMessage.setDefaultConsumeOptions({
     ttl: 0,
     retryThreshold: 3,
@@ -24,6 +25,4 @@ export async function startUp(): Promise<void> {
   });
   const redisClient = await getRedisInstance();
   await redisClient.flushallAsync();
-  logger.destroy();
-  logger.setLogger(console);
 }

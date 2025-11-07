@@ -9,10 +9,9 @@
 
 import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
-import { RedisClient } from '../../../src/common/redis-client/redis-client.js';
 import { redisKeys } from '../../../src/common/redis-keys/redis-keys.js';
-import { EQueueType } from '../../../src/lib/index.js';
-import { QueueMessagesStorageSet } from '../../../src/lib/queue-messages/queue-messages-storage/queue-messages-storage-set.js';
+import { EQueueType } from '../../../src/index.js';
+import { QueueStorageSet } from '../../../src/common/queue-messages/queue-storage/queue-storage-set.js';
 import {
   createQueue,
   getDefaultQueue,
@@ -20,13 +19,10 @@ import {
 
 const { promisifyAll } = bluebird;
 
-it('QueueMessagesStorageSet: should return empty array for an empty list', async () => {
+it('QueueStorageSet: should return empty array for an empty list', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.FIFO_QUEUE);
-  const redisClient = promisifyAll(new RedisClient());
-  const queueMessagesStorageSet = promisifyAll(
-    new QueueMessagesStorageSet(redisClient),
-  );
+  const queueMessagesStorageSet = promisifyAll(new QueueStorageSet());
   const { keyQueueMessages } = redisKeys.getQueueKeys(defaultQueue, null);
   const items = await queueMessagesStorageSet.fetchItemsAsync(
     keyQueueMessages,
@@ -36,5 +32,4 @@ it('QueueMessagesStorageSet: should return empty array for an empty list', async
     },
   );
   expect(items.length).toBe(0);
-  await redisClient.shutdownAsync();
 });
