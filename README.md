@@ -38,7 +38,7 @@ A High-Performance Redis Simple Message Queue for Node.js
 Install core packages:
 
 ```bash
-npm i redis-smq@next redis-smq-common@next --save
+npm i redis-smq@latest redis-smq-common@latest --save
 ```
 
 Install a Redis client (choose one):

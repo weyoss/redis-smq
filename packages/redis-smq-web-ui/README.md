@@ -25,7 +25,7 @@ See [RedisSMQ requirements](https://github.com/weyoss/redis-smq/tree/master/READ
 Typically consumed via the [RedisSMQ Web Server](https://github.com/weyoss/redis-smq/tree/master/packages/redis-smq-web-server/README.md). To set up everything with pre-release builds:
 
 ```bash
-npm install redis-smq@next redis-smq-common@next redis-smq-rest-api@next redis-smq-web-ui@next redis-smq-web-server@next
+npm install redis-smq@latest redis-smq-common@latest redis-smq-rest-api@latest redis-smq-web-ui@latest redis-smq-web-server@latest
 # Choose a Redis client:
 npm install ioredis
 # or
