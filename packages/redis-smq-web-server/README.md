@@ -11,20 +11,17 @@
 [![Pre-release (next)](https://img.shields.io/npm/v/redis-smq-web-server/next?style=flat-square&label=redis-smq-web-server%40next)](https://www.npmjs.com/package/redis-smq-web-server?activeTab=versions)
 [![Code Coverage (next)](https://img.shields.io/codecov/c/github/weyoss/redis-smq/next?flag=redis-smq-web-server&style=flat-square)](https://app.codecov.io/github/weyoss/redis-smq/tree/next/packages/redis-smq-web-server)
 
-A lightweight, configurable HTTP server that hosts the RedisSMQ Web UI and exposes the RedisSMQ HTTP API in the same process — or proxies it to an external API service.
+A lightweight server that brings the RedisSMQ management ecosystem to life. It serves the official Web UI and provides
+the REST API through two flexible modes of operation:
 
-- Serves the SPA (Single Page Application) for monitoring and managing RedisSMQ.
-- Mounts the HTTP API under a configurable base path.
-- Can run the HTTP API in-process, or proxy API to an external `redis-smq-rest-api`.
-- Requires only Redis connection details when hosting the API in-process; with proxying, Redis is managed by the upstream API service.
+- **Standalone Mode:** Run the Web UI and REST API in a single process for an all-in-one setup.
+- **Proxy Mode:** Serve the Web UI and proxy API requests to a separate redis-smq-rest-api instance for distributed deployments.
 
 ## Features
 
-- Static SPA hosting with history fallback (client-side routing supported).
-- One binary to serve both UI and HTTP API (or proxy to an existing API instance).
-- Optional upstream proxy for API via a single flag.
-- Simple, explicit configuration via CLI or programmatic config.
-- Sensible defaults; easily deployable behind reverse proxies.
+- **Dual-Mode Operation:** Standalone (UI + API in one process) or Proxy (UI + proxied API).
+- **Versatile Execution:** Start from the CLI as a standalone server or embed as a library in your Node.js app.
+- **Consistent Ecosystem:** Works seamlessly with `redis-smq`, `redis-smq-rest-api`, and `redis-smq-web-ui`.
 
 ## Installation
 
@@ -41,173 +38,21 @@ npm install @redis/client --save
 npm install ioredis --save
 ```
 
-## Quick Start
+## Version Compatibility
 
-### From the Command Line
+Always install matching versions of RedisSMQ packages to ensure compatibility. See [version compatibility](/packages/redis-smq/docs/version-compatibility.md) for details.
 
-Start the server with defaults:
+## Documentation
 
-```shell
-npx redis-smq-web-server
-```
+For in-depth guides and API references, see the documentation:  
+https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-web-server/docs
 
-Customize host/port, UI base path, and Redis connection:
+## Related packages
 
-```shell
-npx redis-smq-web-server \
-  --port 8080 \
-  --base-path / \
-  --redis-host 127.0.0.1 \
-  --redis-port 6379 \
-  --redis-db 1
-```
-
-**Common scenarios:**
-
-- Serve under a sub-path (behind a reverse proxy):
-
-```shell
-npx redis-smq-web-server --base-path /redis-smq
-```
-
-UI will be available at http://localhost:8080/redis-smq and the HTTP API under http://localhost:8080/redis-smq/api.
-
-- Use an external API (proxy mode) — useful if you run redis-smq-rest-api separately:
-
-```shell
-npx redis-smq-web-server \
-  --port 8080 \
-  --api-proxy-target http://127.0.0.1:7210
-```
-
-When `--api-proxy-target` is provided, requests to `<basePath>/api` and `<basePath>/swagger` are forwarded
-to the upstream. In this mode, Redis connection options on the web server are not used; the upstream API service manages Redis.
-
-### Programmatically (optional)
-
-If you prefer embedding the server in your app, you can pass the same configuration programmatically.
-
-```typescript
-import { RedisSMQWebServer } from 'redis-smq-web-server';
-import { EConsoleLoggerLevel, ERedisConfigClient } from 'redis-smq-common';
-
-// Run with the embedded REST API (in-process)
-const server = new RedisSMQWebServer({
-  webServer: {
-    port: 8080,
-    basePath: '/', // UI at '/', API at '/api', swagger at '/swagger'
-  },
-  // The following options are used only when apiProxyTarget is NOT set
-  redis: {
-    client: ERedisConfigClient.IOREDIS,
-    options: {
-      host: '127.0.0.1',
-      port: 6379,
-      db: 1,
-      showFriendlyErrorStack: true,
-    },
-  },
-  logger: {
-    enabled: true,
-    options: {
-      level: EConsoleLoggerLevel.INFO,
-    },
-  },
-});
-
-await server.run();
-// await server.shutdown();
-
-// Or proxy API to an external service
-const srv = new RedisSMQWebServer({
-  webServer: {
-    port: 8080,
-    basePath: '/', // or '/redis-smq'
-    apiProxyTarget: 'http://127.0.0.1:7210',
-  },
-  // No redis/logger config required in proxy mode
-});
-
-await srv.run();
-```
-
-## Routes
-
-- UI: served from the configured base path
-  - Example: basePath = / → UI at /
-  - Example: basePath = /redis-smq → UI at /redis-smq
-- HTTP API: mounted under <basePath>/api
-  - Example: basePath = / → API at /api
-  - Example: basePath = /redis-smq → API at /redis-smq/api
-
-- Swagger UI: mounted under <basePath>/swagger
-  - Example: basePath = / → Swagger UI at /swagger
-  - Example: basePath = /redis-smq → Swagger UI at /redis-smq/swagger
-
-Proxying behavior:
-
-- When apiProxyTarget is set, the server forwards:
-  - <basePath>/api → ${apiProxyTarget}
-  - <basePath>/swagger → ${apiProxyTarget}
-- When apiProxyTarget is not set, the server hosts the embedded REST API in-process.
-
-## Configuration
-
-Configuration can be provided programmatically or via CLI arguments. The core interface is:
-
-```typescript
-import type { IRedisSMQRestApiConfig } from 'redis-smq-rest-api';
-
-interface IRedisSMQWebServerConfig extends IRedisSMQRestApiConfig {
-  webServer?: {
-    /**
-     * HTTP port to run the web server on.
-     * Default: 8080
-     */
-    port?: number;
-
-    /**
-     * Base public path for the RedisSMQ Web UI and the local API/Swagger when embedded.
-     * Default: '/'
-     */
-    basePath?: string;
-
-    /**
-     * Optional target for proxying API.
-     * If provided, the embedded REST API is not mounted and requests are forwarded to the target.
-     * Example: 'http://127.0.0.1:7210'
-     */
-    apiProxyTarget?: string;
-  };
-}
-```
-
-Notes:
-
-- When `webServer.apiProxyTarget` is set, the server proxies `<basePath>/api` and `<basePath>/swagger` to the target. In this mode, redis and logger options are not used by the web server (they are
-  handled by the upstream API service).
-
-- When `webServer.apiProxyTarget` is not set, the web server mounts the embedded `redis-smq-rest-api` using the provided
-  `IRedisSMQRestApiConfig` (redis, logger, etc.).
-
-### ClI flags
-
-```shell
--p, --port <number>                 Port to run the server on (default: "8080")
--b, --base-path <string>            Base public path for the RedisSMQ Web UI SPA (default: "/")
--t, --api-proxy-target <string>     Proxy target for API (/api, /swagger). Example: http://127.0.0.1:6000
--c, --redis-client <ioredis|redis>  Redis client. Valid options are: ioredis, redis. (default: "ioredis")
--r, --redis-host <string>           Redis server host (default: "127.0.0.1")
--o, --redis-port <number>           Redis server port (default: "6379")
--d, --redis-db <number>             Redis database number (default: "0")
--e, --enable-log <0|1>              Enable console logging. Valid options are: 0, 1 (default: "0")
--v, --log-level <0|1|2|3>           Log level. Numbers: 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR (default: "1")
--h, --help                          display help for command
-```
-
-## Deploying behind a reverse proxy
-
-See [Deploying behind a reverse proxy](docs/deploying-behind-a-reverse-proxy.md).
+- [redis-smq](../redis-smq/README.md): Core message queue
+- [redis-smq-common](../redis-smq-common/README.md): Shared components/utilities
+- [redis-smq-rest-api](../redis-smq-rest-api/README.md): REST API with OpenAPI v3 and Swagger UI
+- [redis-smq-web-ui](../redis-smq-web-ui/README.md): SPA for monitoring and managing RedisSMQ
 
 ## License
 
