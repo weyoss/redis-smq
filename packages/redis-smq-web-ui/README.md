@@ -46,8 +46,7 @@ Always install matching versions of RedisSMQ packages to ensure compatibility. S
 
 ## Documentation
 
-For in-depth guides and API references, see the documentation:  
-https://github.com/weyoss/redis-smq/tree/next/packages/redis-smq-web-server/docs
+For in-depth guides and API references, see [the documentation page](docs/README.md).
 
 ## Related packages
 
