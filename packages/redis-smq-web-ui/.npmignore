@@ -3,7 +3,6 @@
 
 # Except the dist directory
 !dist/**
-!docs/screenshots/img01.png
 !LICENSE
 !CHANGELOG.md
 !package.json
