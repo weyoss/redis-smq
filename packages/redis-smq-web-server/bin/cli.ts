@@ -43,7 +43,7 @@ program
   )
   .option(
     '-t, --api-proxy-target <string>',
-    'Proxy target for API (/api, /docs, /assets). Example: http://127.0.0.1:6000',
+    'Proxy target for API (/api, /swagger). Example: http://127.0.0.1:6000',
     defaultConfig.webServer?.apiProxyTarget,
   )
   .option(
@@ -89,11 +89,6 @@ const config: IRedisSMQWebServerConfig = {
     port: Number(options.port),
     basePath: options.basePath,
     apiProxyTarget: options.apiProxyTarget,
-  },
-  // Using the same port and basePath for apiServer as for webServer to maintain existing behavior.
-  apiServer: {
-    port: Number(options.port),
-    basePath: options.basePath,
   },
   redis: {
     client: options.redisClient,
