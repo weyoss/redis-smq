@@ -3,6 +3,27 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.0-next.17](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.16...v9.0.0-next.17) (2025-11-07)
+
+### ⚠ BREAKING CHANGES
+
+- **redis-smq-web-server:** remove apiServer from IRedisSMQWebServerConfig
+
+### 📝 Documentation
+
+- **redis-smq-common:** restructure README, move details to separate files ([fbdc31d](https://github.com/weyoss/redis-smq/commit/fbdc31d336543a25ffa0f17d2cafeb6ca685134f))
+- **redis-smq-rest-api:** restructure README, move details to separate files ([2a5e5d9](https://github.com/weyoss/redis-smq/commit/2a5e5d9a4644e9d1ce490262e7682a83e9dc0e00))
+- **redis-smq-web-server:** restructure README, move details to separate files ([99a5bce](https://github.com/weyoss/redis-smq/commit/99a5bce764ed7ba7568f2498ea59ce662a84d7ad))
+- **redis-smq-web-ui:** restructure README, move details to separate files ([1f701cd](https://github.com/weyoss/redis-smq/commit/1f701cd6e1e5eee01525677f86bf98b69e7c4dfd))
+- **redis-smq:** improve classes/interfaces formatting ([f76936a](https://github.com/weyoss/redis-smq/commit/f76936a13b57887b40b3ac15f6756b6a5f8e87eb))
+- standardize documentation links to use relative paths ([fc7c474](https://github.com/weyoss/redis-smq/commit/fc7c474bffbd2160fb9bb8727cec4bbdc5a23dc8))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-web-server:** remove apiServer from IRedisSMQWebServerConfig ([b78dea0](https://github.com/weyoss/redis-smq/commit/b78dea0def68dde6d8550b1355b98ed9aeda833c))
+- **redis-smq-web-ui:** improve message audit disabled alert text clarity ([1b5d99f](https://github.com/weyoss/redis-smq/commit/1b5d99fee98f93a61c26564f79623787082665cd))
+- **redis-smq-web-ui:** remove unused custom-fetch.ts ([eb672c4](https://github.com/weyoss/redis-smq/commit/eb672c4bbfb83dfb1f2c54809338f4a20d43bd75))
+
 ## [9.0.0-next.16](https://github.com/weyoss/redis-smq/compare/v9.0.0-next.15...v9.0.0-next.16) (2025-11-05)
 
 ### 🐛 Bug Fixes
