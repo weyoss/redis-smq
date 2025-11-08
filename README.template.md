@@ -43,6 +43,8 @@ Install core packages:
 __INSTALL_CMD__
 ```
 
+> Upgrading to v9? This is a major release with breaking changes. Please read the [v9.0.0 Release Notes](__DOCS_PREFIX__release-notes/release-v9.md) for details.
+
 Install a Redis client (choose one):
 
 ```bash
@@ -108,7 +110,7 @@ RedisSMQ.initialize(
 
 Option B: Initialize with a full RedisSMQ configuration (persisted in Redis)
 
-Use when you want configuration persisted and shared across processes. On first run, the config is saved. Subsequent processes can initialize normally (using `RedisSMQ.initialize`).
+Use when you want configuration persisted and shared across processes. On first run, the config is saved. Subsequent processes can initialize normally (using RedisSMQ.initialize).
 
 ```typescript
 import { RedisSMQ } from 'redis-smq';
@@ -183,7 +185,7 @@ consumer.consume('my_queue', handler, (err) => {
 
 **Configuration (optional)**
 
-Using the Configuration class directly is optional. After `RedisSMQ.initialize(...)` or `RedisSMQ.initializeWithConfig(...)`, you can inspect or update the persisted configuration if needed.
+Using the Configuration class directly is optional. After RedisSMQ.initialize(...) or RedisSMQ.initializeWithConfig(...), you can inspect or update the persisted configuration if needed.
 
 ```typescript
 import { Configuration } from 'redis-smq';
@@ -215,4 +217,3 @@ We welcome contributions. Please read [CONTRIBUTING.md](__DOCS_PREFIX__CONTRIBUT
 **License**
 
 RedisSMQ is released under the [MIT License](__DOCS_PREFIX__LICENSE).
-
