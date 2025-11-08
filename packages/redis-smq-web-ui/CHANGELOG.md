@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.2-next.1](https://github.com/weyoss/redis-smq/compare/v9.0.2-next.0...v9.0.2-next.1) (2025-11-08)
+
+### 🐛 Bug Fixes
+
+- update deps to resolve security vulnerabilities ([390d488](https://github.com/weyoss/redis-smq/commit/390d4880241c6bc3cf37e94d1b09f34197a7fa7b))
+
 ## [9.0.2-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.1...v9.0.2-next.0) (2025-11-08)
 
 ### 📦‍ Build System

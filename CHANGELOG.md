@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.2-next.1](https://github.com/weyoss/redis-smq/compare/v9.0.2-next.0...v9.0.2-next.1) (2025-11-08)
+
+### 🐛 Bug Fixes
+
+- update deps to resolve security vulnerabilities ([390d488](https://github.com/weyoss/redis-smq/commit/390d4880241c6bc3cf37e94d1b09f34197a7fa7b))
+
+### 📝 Documentation
+
+- add v9 release notes and upgrade notice to README ([2c742a1](https://github.com/weyoss/redis-smq/commit/2c742a169b04343fd9e00c162b74a2b2601ac9b5))
+- update npm badge links to point to GitHub releases ([1eaee9e](https://github.com/weyoss/redis-smq/commit/1eaee9e1734b4e78ac56ca9853baac1d58dd2ec9))
+
 ## [9.0.2-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.1...v9.0.2-next.0) (2025-11-08)
 
 ### 🚀 Chore
