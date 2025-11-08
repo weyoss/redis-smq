@@ -95,7 +95,7 @@
     "openapi:gen": "scripts/openapi-gen.js",
     "error-mappings:gen": "scripts/error-mappings-gen.sh",
     "build": "scripts/build.sh",
-    "test": "../../scripts/test_workspace_esm.sh"
+    "test": "../../scripts/test-workspace-esm.sh"
   },
   "bin": {
     "redis-smq-rest-api": "./dist/esm/bin/cli.js"
