@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.2-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.1...v9.0.2-next.0) (2025-11-08)
+
+### ✅ Tests
+
+- rename test_workspace_esm.sh to test-workspace-esm.sh ([4c56821](https://github.com/weyoss/redis-smq/commit/4c5682125c99949118141418c11bd296d2869172))
+
+### 📦‍ Build System
+
+- automate README.md files update ([9d54181](https://github.com/weyoss/redis-smq/commit/9d54181260e6615d176fe47b4786f8edb21c2911))
+
 ## [9.0.1](https://github.com/weyoss/redis-smq/compare/v9.0.0...v9.0.1) (2025-11-07)
 
 ### 📝 Documentation
