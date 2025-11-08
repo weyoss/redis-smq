@@ -94,7 +94,7 @@ update_readme() {
 > - Install stable packages with @latest; pre-release with @next.
 EOF
 )
-      npm_badge='[![Pre-release (next)](https://img.shields.io/npm/v/redis-smq/next?style=flat-square&label=redis-smq%40next)](https://www.npmjs.com/package/redis-smq?activeTab=versions)'
+      npm_badge='[![Pre-release (next)](https://img.shields.io/npm/v/redis-smq/next?style=flat-square&label=redis-smq%40next)](https://github.com/'"$owner_repo"'/releases)'
       install_cmd='npm i redis-smq@next redis-smq-common@next --save'
     else
       note=$(cat <<EOF
@@ -107,7 +107,7 @@ EOF
 > - Install stable packages with @latest; pre-release with @next.
 EOF
 )
-      npm_badge='[![Stable](https://img.shields.io/npm/v/redis-smq/latest?style=flat-square&label=redis-smq%40latest)](https://www.npmjs.com/package/redis-smq?activeTab=versions)'
+      npm_badge='[![Stable](https://img.shields.io/npm/v/redis-smq/latest?style=flat-square&label=redis-smq%40latest)](https://github.com/'"$owner_repo"'/releases/latest)'
       install_cmd='npm i redis-smq redis-smq-common --save'
     fi
     build_badge='[![Build ('"$branch"')](https://img.shields.io/github/actions/workflow/status/'"$owner_repo"'/tests.yml?branch='"$branch"'&style=flat-square)](https://github.com/'"$owner_repo"'/actions/workflows/tests.yml?query=branch%3A'"$branch"')'
@@ -124,7 +124,7 @@ EOF
 > - Install stable packages with @latest; pre-release with @next.
 EOF
 )
-      npm_badge="[![Pre-release (next)](https://img.shields.io/npm/v/$package_name/next?style=flat-square&label=$package_name%40next)](https://www.npmjs.com/package/$package_name?activeTab=versions)"
+      npm_badge="[![Pre-release (next)](https://img.shields.io/npm/v/$package_name/next?style=flat-square&label=$package_name%40next)](https://github.com/$owner_repo/releases)"
     else
       note=$(cat <<EOF
 > [!NOTE]
@@ -136,7 +136,7 @@ EOF
 > - Install stable packages with @latest; pre-release with @next.
 EOF
 )
-      npm_badge="[![Stable](https://img.shields.io/npm/v/$package_name/latest?style=flat-square&label=$package_name%40latest)](https://www.npmjs.com/package/$package_name?activeTab=versions)"
+      npm_badge="[![Stable](https://img.shields.io/npm/v/$package_name/latest?style=flat-square&label=$package_name%40latest)](https://github.com/$owner_repo/releases/latest)"
     fi
     codecov_badge="[![Code Coverage ($branch)](https://img.shields.io/codecov/c/github/$owner_repo/$branch?flag=$package_name&style=flat-square)](https://app.codecov.io/github/$owner_repo/tree/$branch/packages/$package_name)"
     docs_prefix="../../" # Adjust relative links from package dir
