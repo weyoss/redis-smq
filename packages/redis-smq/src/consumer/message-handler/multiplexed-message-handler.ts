@@ -7,7 +7,6 @@
  * in the root directory of this source tree.
  */
 
-import { Consumer } from '../consumer.js';
 import { DequeueMessage } from './dequeue-message/dequeue-message.js';
 import { MessageHandler } from './message-handler.js';
 import { IConsumerMessageHandlerParams } from './types/index.js';
@@ -16,11 +15,11 @@ export class MultiplexedMessageHandler extends MessageHandler {
   protected dequeueNextFn;
 
   constructor(
-    consumer: Consumer,
+    consumerId: string,
     handlerParams: IConsumerMessageHandlerParams,
     dequeueNextFn: () => void,
   ) {
-    super(consumer, handlerParams, false);
+    super(consumerId, handlerParams, false);
     this.dequeueNextFn = dequeueNextFn;
     this.logger.info(
       `MultiplexedMessageHandler initialized for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
@@ -46,7 +45,7 @@ export class MultiplexedMessageHandler extends MessageHandler {
 
     const instance = new DequeueMessage(
       this.queue,
-      this.consumer,
+      this.consumerId,
       false, // blockUntilMessageReceived
       false, // autoCloseRedisConnection
     );

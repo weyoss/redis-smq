@@ -69,8 +69,8 @@ export class Consumer extends Runnable<TConsumerEvent> {
       `Creating ${enableMultiplexing ? 'multiplexed' : 'standard'} message handler runner`,
     );
     this.messageHandlerRunner = enableMultiplexing
-      ? new MultiplexedMessageHandlerRunner(this)
-      : new MessageHandlerRunner(this);
+      ? new MultiplexedMessageHandlerRunner(this.getId())
+      : new MessageHandlerRunner(this.getId());
 
     this.messageHandlerRunner.on(
       'consumer.messageHandlerRunner.error',

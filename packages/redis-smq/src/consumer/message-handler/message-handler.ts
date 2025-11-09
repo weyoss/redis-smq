@@ -36,7 +36,6 @@ import {
   EQueueProperty,
   IQueueParsedParams,
 } from '../../queue-manager/index.js';
-import { Consumer } from '../consumer.js';
 import { ConsumeMessage } from './consume-message/consume-message.js';
 import { DequeueMessage } from './dequeue-message/dequeue-message.js';
 import { evenBusPublisher } from './even-bus-publisher.js';
@@ -51,7 +50,6 @@ import { _prepareConsumerGroup } from './_/_prepare-consumer-group.js';
 const WORKERS_DIR = path.resolve(env.getCurrentDir(), './workers');
 
 export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
-  protected consumer;
   protected consumerId;
   protected queue;
   protected logger: ILogger;
@@ -66,14 +64,13 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   protected ephemeralConsumerGroupId: string | null = null;
 
   constructor(
-    consumer: Consumer,
+    consumerId: string,
     handlerParams: IConsumerMessageHandlerParams,
     autoDequeue: boolean = true,
   ) {
     super();
     const { queue, messageHandler } = handlerParams;
-    this.consumer = consumer;
-    this.consumerId = consumer.getId();
+    this.consumerId = consumerId;
     this.queue = queue;
     this.messageHandler = messageHandler;
 
@@ -266,7 +263,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
 
   protected initDequeueMessageInstance(): DequeueMessage {
     this.logger.debug('Creating new DequeueMessage instance');
-    const instance = new DequeueMessage(this.queue, this.consumer);
+    const instance = new DequeueMessage(this.queue, this.consumerId);
     this.logger.debug('Setting up error handler for DequeueMessage instance');
     instance.on('consumer.dequeueMessage.error', this.onError);
     this.logger.debug('DequeueMessage instance created successfully');
@@ -276,7 +273,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   protected initConsumeMessageInstance(): ConsumeMessage {
     this.logger.debug('Creating new ConsumeMessage instance');
     const instance = new ConsumeMessage(
-      this.consumer,
+      this.consumerId,
       this.queue,
       this.getId(),
       this.messageHandler,
