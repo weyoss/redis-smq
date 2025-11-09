@@ -24,45 +24,29 @@ import { eventBusPublisher } from './event-bus-publisher.js';
 import { IConsumerHeartbeat } from './types/index.js';
 import { withSharedPoolConnection } from '../../common/redis-connection-pool/with-shared-pool-connection.js';
 
-const cpuUsageStatsRef = {
-  cpuUsage: process.cpuUsage(),
-  time: process.hrtime(),
-};
-
-function cpuUsage() {
-  const currentTimestamp = process.hrtime();
-  const currentCPUUsage = process.cpuUsage();
-  const timestampDiff = process.hrtime(cpuUsageStatsRef.time);
-  const cpuUsageDiff = process.cpuUsage(cpuUsageStatsRef.cpuUsage);
-  cpuUsageStatsRef.time = currentTimestamp;
-  cpuUsageStatsRef.cpuUsage = currentCPUUsage;
-
-  // convert hrtime to milliseconds
-  const hrtime = (time: number[]) => {
-    return time[0] * 1e3 + time[1] / 1e6;
-  };
-
-  // convert (user/system) usage time from micro to milliseconds
-  const usageTime = (time: number) => {
-    return time / 1000;
-  };
-
-  return {
-    percentage: (
-      (usageTime(cpuUsageDiff.user + cpuUsageDiff.system) /
-        hrtime(timestampDiff)) *
-      100
-    ).toFixed(1),
-    ...cpuUsageDiff,
-  };
-}
-
+/**
+ * ConsumerHeartbeat
+ * - Emits periodic heartbeats with RAM/CPU stats
+ * - Persists heartbeat to Redis with TTL
+ * - Reschedules reliably even on transient errors (exponential backoff)
+ * - Uses a single timestamp source for payload and event emission
+ */
 export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
   protected static readonly heartbeatTTL = 10 * 1000; // 10 sec
-  protected timer;
-  protected keyConsumerHeartbeat;
-  protected consumer;
-  protected logger;
+  protected static readonly baseBeatIntervalMs = 1000; // nominal cadence
+  protected static readonly maxBackoffMs = 10_000; // cap for error backoff
+
+  protected timer: Timer;
+  protected keyConsumerHeartbeat: string;
+  protected consumer: Consumer;
+  protected logger: ILogger;
+
+  // Instance-local CPU usage trackers to avoid cross-talk between instances/tests
+  private cpuStatsTime = process.hrtime();
+  private cpuStatsUsage = process.cpuUsage();
+
+  // Backoff state for resilient rescheduling
+  private currentDelayMs = ConsumerHeartbeat.baseBeatIntervalMs;
 
   constructor(consumer: Consumer) {
     super();
@@ -122,10 +106,38 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
     return this.logger;
   }
 
+  /**
+   * Compute CPU usage percentage since the last call (instance-local).
+   */
+  private getCpuUsage() {
+    const nowTime = process.hrtime();
+    const nowUsage = process.cpuUsage();
+
+    const diffTime = process.hrtime(this.cpuStatsTime);
+    const diffUsage = process.cpuUsage(this.cpuStatsUsage);
+
+    // Update references for next measurement
+    this.cpuStatsTime = nowTime;
+    this.cpuStatsUsage = nowUsage;
+
+    const hrtimeMs = (t: [number, number]) => t[0] * 1e3 + t[1] / 1e6; // seconds,nanoseconds -> ms
+    const usageMs = (u: number) => u / 1000; // microseconds -> ms
+
+    const totalCpuMs = usageMs(diffUsage.user + diffUsage.system);
+    const elapsedMs = hrtimeMs(diffTime);
+    const percentage =
+      elapsedMs > 0 ? ((totalCpuMs / elapsedMs) * 100).toFixed(1) : '0.0';
+
+    return {
+      percentage,
+      ...diffUsage,
+    };
+  }
+
   protected getPayload(): IConsumerHeartbeat {
     this.logger.debug('Generating heartbeat payload');
     const timestamp = Date.now();
-    const payload = {
+    const payload: IConsumerHeartbeat = {
       timestamp,
       data: {
         ram: {
@@ -133,7 +145,7 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
           free: os.freemem(),
           total: os.totalmem(),
         },
-        cpu: cpuUsage(),
+        cpu: this.getCpuUsage(),
       },
     };
     this.logger.debug(
@@ -142,13 +154,46 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
     return payload;
   }
 
+  /**
+   * Schedule the next beat respecting Timer semantics and current backoff.
+   * Ensures we don't schedule while going down.
+   */
+  private scheduleNextBeat(): void {
+    if (!this.isRunning()) {
+      this.logger.debug(
+        'Skipping scheduling next heartbeat because the instance is not running or is going down',
+      );
+      return;
+    }
+    const delay = this.currentDelayMs;
+    this.logger.debug(`Scheduling next heartbeat in ${delay}ms`);
+    const scheduled = this.timer.setTimeout(() => this.beat(), delay);
+    if (!scheduled) {
+      // Timer already armed; reset and try once more
+      this.logger.debug(
+        'Timer was already armed; resetting and rescheduling heartbeat',
+      );
+      this.timer.reset();
+      this.timer.setTimeout(() => this.beat(), delay);
+    }
+  }
+
   protected beat(): void {
+    if (!this.isRunning() || this.isGoingDown()) {
+      // Do not perform beats while not running/shutting down
+      this.logger.debug(
+        'Skipping heartbeat beat() because the instance is not running or is going down',
+      );
+      return;
+    }
+
     this.logger.debug('Starting heartbeat cycle');
     withSharedPoolConnection(
       (redisClient, cb: ICallback) => {
         const heartbeatPayload = this.getPayload();
         const consumerId = this.consumer.getId();
-        const timestamp = Date.now();
+        // Use the exact payload timestamp for the event
+        const timestamp = heartbeatPayload.timestamp;
         const heartbeatPayloadStr = JSON.stringify(heartbeatPayload);
 
         this.logger.debug(
@@ -168,14 +213,16 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
             this.logger.debug(
               `Heartbeat successfully set in Redis for consumer ${consumerId}`,
             );
+            // Success: reset backoff to base
+            this.currentDelayMs = ConsumerHeartbeat.baseBeatIntervalMs;
+
             this.emit(
               'consumerHeartbeat.heartbeat',
               consumerId,
               timestamp,
               heartbeatPayload,
             );
-            this.logger.debug('Scheduling next heartbeat in 1000ms');
-            this.timer.setTimeout(() => this.beat(), 1000);
+
             cb();
           },
         );
@@ -184,7 +231,19 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
         if (err) {
           this.logger.error(`Failed to set heartbeat in Redis: ${err.message}`);
           this.emit('consumerHeartbeat.error', err);
+
+          // Back off exponentially on error (up to cap)
+          this.currentDelayMs = Math.min(
+            this.currentDelayMs * 2,
+            ConsumerHeartbeat.maxBackoffMs,
+          );
+        } else {
+          // Ensure delay is base if there was no error in callback path
+          this.currentDelayMs = ConsumerHeartbeat.baseBeatIntervalMs;
         }
+
+        // Always attempt to schedule the next beat unless we're going down
+        this.scheduleNextBeat();
       },
     );
   }
@@ -216,6 +275,9 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
         this.once('consumerHeartbeat.heartbeat', onHeartbeat);
         this.once('consumerHeartbeat.error', onError);
 
+        // Reset backoff at start
+        this.currentDelayMs = ConsumerHeartbeat.baseBeatIntervalMs;
+
         this.logger.debug('Initiating first heartbeat');
         this.beat();
       },
@@ -230,16 +292,16 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
         this.timer.reset();
 
         withSharedPoolConnection(
-          (redisClient, cb: ICallback) => {
+          (redisClient, cbInner: ICallback) => {
             this.logger.debug(
               `Deleting heartbeat key ${this.keyConsumerHeartbeat} from Redis`,
             );
             redisClient.del(this.keyConsumerHeartbeat, (err) => {
-              if (err) return cb(err);
+              if (err) return cbInner(err);
               this.logger.debug(
                 `Deleted successfully heartbeat key ${this.keyConsumerHeartbeat} from Redis`,
               );
-              cb();
+              cbInner();
             });
           },
           (err) => {
