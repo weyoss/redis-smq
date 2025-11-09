@@ -38,15 +38,14 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   }
 
   /**
-   * Schedules the next tick for message handler execution.
-   * Ensures only one timer is active at a time.
+   * Schedules the next execution tick after the configured interval.
+   * This is the single authoritative method for scheduling.
    */
-  protected nextTick(): void {
+  protected scheduleNextTick = (): void => {
     if (!this.isRunning()) {
-      this.logger.debug('nextTick called while not running, ignoring');
+      this.logger.debug('scheduleNextTick called while not running, ignoring');
       return;
     }
-    this.activeMessageHandler = null;
     this.timer.reset(); // Always clear any previous timer
     this.logger.debug(
       `Scheduling next message handler execution in ${this.tickIntervalMs}ms`,
@@ -55,7 +54,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
       () => this.execNextMessageHandler(),
       this.tickIntervalMs,
     );
-  }
+  };
 
   /**
    * Returns the next message handler in round-robin order.
@@ -80,8 +79,8 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   }
 
   /**
-   * Executes the next message handler in the rotation.
-   * If the handler is running, triggers dequeue; otherwise, schedules the next tick.
+   * Executes the logic for a single tick: selecting one message handler and
+   * attempting to dequeue a message from it.
    */
   protected execNextMessageHandler = (): void => {
     if (!this.isRunning()) {
@@ -104,11 +103,11 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
         this.logger.debug(
           `Active handler (ID: ${this.activeMessageHandler.getId()}) is not running, scheduling next tick`,
         );
-        this.nextTick();
+        this.scheduleNextTick();
       }
     } else {
       this.logger.debug('No active handler available, scheduling next tick');
-      this.nextTick();
+      this.scheduleNextTick();
     }
   };
 
@@ -121,10 +120,12 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
     this.logger.debug(
       `Creating MultiplexedMessageHandler for queue: ${JSON.stringify(handlerParams.queue)}`,
     );
+    // Pass scheduleNextTick to the handler. When a dequeue is empty,
+    // it will schedule the next tick with a delay, preventing an infinite loop.
     const instance = new MultiplexedMessageHandler(
       this.consumerContext,
       handlerParams,
-      this.execNextMessageHandler,
+      this.scheduleNextTick,
     );
     this.messageHandlerInstances.push(instance);
     this.logger.info(
@@ -144,10 +145,11 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
     this.logger.debug(
       `Shutting down handler (ID: ${messageHandler.getId()}) for queue: ${JSON.stringify(queue)}`,
     );
+    const wasActive = messageHandler === this.activeMessageHandler;
     super.shutdownMessageHandler(messageHandler, () => {
-      if (messageHandler === this.activeMessageHandler) {
+      if (wasActive) {
         this.logger.debug('Shut down active handler, scheduling next tick');
-        this.nextTick();
+        this.scheduleNextTick();
       }
       cb();
     });
@@ -161,6 +163,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
     return super.goingUp().concat([
       (cb: ICallback<void>) => {
         this.logger.debug('Starting message handler execution cycle');
+        // Start the cycle by executing the first tick immediately.
         this.execNextMessageHandler();
         cb();
       },
