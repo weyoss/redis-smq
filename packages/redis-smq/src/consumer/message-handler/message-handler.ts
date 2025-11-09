@@ -17,6 +17,7 @@ import {
   IRedisClient,
   PanicError,
   Runnable,
+  Timer,
   WorkerResourceGroup,
 } from 'redis-smq-common';
 import {
@@ -50,7 +51,6 @@ const WORKERS_DIR = path.resolve(env.getCurrentDir(), './workers');
 
 export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   protected readonly consumerContext: IConsumerContext;
-  protected readonly consumerId: string;
   protected readonly logger: ILogger;
   protected readonly config: IRedisSMQParsedConfig;
 
@@ -61,6 +61,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   protected autoDequeue;
   protected workerResourceGroup: WorkerResourceGroup | null = null;
   protected redisClient: IRedisClient | null = null;
+  protected timer: Timer;
 
   // Tracks an auto-generated ephemeral consumer group for PUB_SUB
   protected ephemeralConsumerGroupId: string | null = null;
@@ -72,72 +73,33 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   ) {
     super();
     this.consumerContext = consumerContext;
-    this.consumerId = consumerContext.consumerId;
     this.logger = consumerContext.logger;
     this.config = consumerContext.config;
 
     const { queue, messageHandler } = handlerParams;
     this.queue = queue;
     this.messageHandler = messageHandler;
-
-    this.logger.info(
-      `Initializing MessageHandler for consumer ${this.consumerId}, queue ${JSON.stringify(this.queue)}`,
-    );
-    this.logger.debug(
-      `autoDequeue: ${autoDequeue}, messageHandler type: ${typeof messageHandler}`,
-    );
-
     this.autoDequeue = autoDequeue;
 
-    if (this.config.eventBus.enabled) {
-      this.logger.debug('Event bus is enabled, setting up event bus publisher');
-      evenBusPublisher(this);
-    } else {
-      this.logger.debug(
-        'Event bus is not enabled, skipping event bus publisher setup',
-      );
-    }
+    this.timer = new Timer();
+    this.timer.on('error', (err) => this.handleError(err));
 
-    this.logger.info(
-      `MessageHandler initialized for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
-    );
+    if (this.config.eventBus.enabled) {
+      evenBusPublisher(this);
+    }
   }
 
-  /**
-   * Processes a message by fetching it from the queue and updating its status to 'processing'.
-   *
-   * @param messageId - The unique identifier of the message to be processed.
-   *
-   * @remarks
-   * This method checks if the MessageHandler instance is running. If it is, it retrieves the message from the queue using the provided `messageId`.
-   * It then updates the message's status to 'processing' and passes it to the `consumeMessage` instance for further handling.
-   * If the MessageHandler instance is not running, this method does nothing.
-   *
-   * @returns {void}
-   */
   processMessage(messageId: string): void {
-    if (!this.isRunning()) {
-      this.logger.debug(
-        `Ignoring processMessage call for message ${messageId} as handler is not running`,
-      );
+    if (!this.isRunning() || !this.consumeMessage) {
       return;
     }
-
-    if (!this.consumeMessage) {
-      // Should not happen post goingUp, but guard for safety
-      this.logger.warn(
-        'ConsumeMessage instance is not initialized yet. Skipping processMessage call.',
-      );
-      return;
-    }
-
     const consumeMessage = this.consumeMessage;
-
-    this.logger.debug(`Processing message ${messageId}`);
+    const redisClient = this.getRedisClient();
+    if (redisClient instanceof Error) {
+      return this.handleError(redisClient);
+    }
 
     const { keyMessage } = redisKeys.getMessageKeys(messageId);
-    this.logger.debug(`Message key: ${keyMessage}`);
-
     const { keyQueueProperties } = redisKeys.getQueueKeys(
       this.queue.queueParams,
       this.queue.groupId,
@@ -155,119 +117,42 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       EQueueProperty.PENDING_MESSAGES_COUNT,
     ];
 
-    const redisClient = this.getRedisClient();
-    if (redisClient instanceof Error) {
-      this.logger.error(`Failed to get Redis client: ${redisClient.message}`);
-      this.handleError(redisClient);
-      return;
-    }
-
-    this.logger.debug(
-      `Running FETCH_MESSAGE_FOR_PROCESSING script for message ${messageId}`,
-    );
     redisClient.runScript(
       ELuaScriptName.CHECKOUT_MESSAGE,
       keys,
       argv,
       (err, reply: unknown) => {
-        if (err) {
-          this.logger.error(
-            `Failed to fetch message ${messageId} for processing: ${err.message}`,
-          );
-          return this.handleError(err);
-        }
-
-        // An empty reply indicates that the message was not in a PENDING state.
-        // This could be because of a race condition:
-        // 1 Consumer A may freeze defore calling CHECKOUT_MESSAGE
-        // 2 A separate cleanup worker (reap-consumers.worker.ts) runs
-        //    - It scans for "stale" messages in processing queues
-        //    - It finds message-123 in Consumer A's queue, sees it's been there too long, and moves it back to the main pending list to be re-processed
-        // 3 Consumer B now successfully dequeues message-123. It's a legitimate consumer, and the message is available again
-        // 4 Consumer B immediately calls the CHECKOUT_MESSAGE script
-        //    - The script checks the message hash, sees status: "PENDING", updates it to status: "PROCESSING", and returns the message data
-        //    - Everything is working correctly for Consumer B.
-        // 5 Now, Consumer A's process un-freezes. It still has the messageId "message-123" in memory from Step 1
-        // 6 It finally tries to execute the CHECKOUT_MESSAGE script.
-        //    - The script runs for Consumer A. It checks the status of message-123 in the hash. But the status is now "PROCESSING" (because Consumer B already checked it out).
-        // 7 The script's condition fails, and it returns nil.
+        if (err) return this.handleError(err);
         if (!reply) {
           this.logger.warn(
             `Message [${messageId}] could not be fetched. It may have been processed by another consumer.`,
           );
-          // Dequeue next message
-          return this.next();
+          // A slot has been freed. Immediately try to get another message.
+          this.next();
+          return;
         }
-
         if (!Array.isArray(reply)) {
-          this.logger.error(
-            `Invalid reply type when fetching message ${messageId}`,
-          );
           return this.handleError(new CallbackInvalidReplyError());
         }
-
-        this.logger.debug(
-          `Message ${messageId} fetched successfully. Parsing message raw data...`,
-        );
-
         const message = _parseMessage(reply);
-
-        this.logger.debug(
-          `Passing message ${messageId} to ConsumeMessage for handling`,
-        );
         consumeMessage.handleReceivedMessage(message);
       },
     );
   }
 
-  /**
-   * Processes the next message in the queue by dequeuing it and making it available for consumption.
-   *
-   * This method calls the `dequeue` method of the `dequeueMessage` instance to retrieve a message from the queue.
-   * If the MessageHandler instance is not running, this method does nothing.
-   *
-   * @remarks
-   * The `dequeue` method ensures that only one consumer instance processes a message at a time, preventing message duplication.
-   *
-   * @returns {void}
-   */
   next(): void {
-    this.logger.debug('Requesting next message');
-    this.dequeue();
+    if (this.isRunning()) {
+      this.dequeue();
+    }
   }
 
-  /**
-   * Dequeues a message from the associated queue.
-   *
-   * This method checks if the MessageHandler instance is running and then calls the `dequeue` method of the `dequeueMessage` instance.
-   * If the MessageHandler instance is not running, the method does nothing.
-   *
-   * @remarks
-   * The `dequeue` method is responsible for retrieving a message from the queue and making it available for processing.
-   * It ensures that only one consumer instance processes a message at a time, preventing message duplication.
-   *
-   * @returns {void}
-   */
   dequeue(): void {
-    if (!this.isRunning()) {
-      this.logger.debug('Ignoring dequeue call as handler is not running');
-      return;
+    if (this.isRunning() && this.dequeueMessage) {
+      this.dequeueMessage.dequeue();
     }
-    if (!this.dequeueMessage) {
-      // Should not happen post goingUp, but guard for safety
-      this.logger.warn(
-        'DequeueMessage instance is not initialized yet. Skipping dequeue call.',
-      );
-      return;
-    }
-    this.logger.debug('Dequeuing message from queue');
-    this.dequeueMessage.dequeue();
   }
 
   getQueue(): IQueueParsedParams {
-    this.logger.debug(
-      `Getting queue parameters: ${JSON.stringify(this.queue)}`,
-    );
     return this.queue;
   }
 
@@ -276,74 +161,41 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
     return this.redisClient;
   }
 
-  protected initDequeueMessageInstance(): DequeueMessage {
-    this.logger.debug('Creating new DequeueMessage instance');
-    const instance = new DequeueMessage(this.consumerContext, this.queue);
-    this.logger.debug('Setting up error handler for DequeueMessage instance');
-    instance.on('consumer.dequeueMessage.error', this.onError);
-    this.logger.debug('DequeueMessage instance created successfully');
-    return instance;
-  }
-
-  protected initConsumeMessageInstance(): ConsumeMessage {
-    this.logger.debug('Creating new ConsumeMessage instance');
-    const instance = new ConsumeMessage(
-      this.consumerContext,
-      this.queue,
-      this.getId(),
-      this.messageHandler,
-    );
-    this.logger.debug('Setting up error handler for ConsumeMessage instance');
-    instance.on('consumer.consumeMessage.error', this.onError);
-    this.logger.debug('ConsumeMessage instance created successfully');
-    return instance;
-  }
-
   protected onMessageReceived: TRedisSMQEvent['consumer.dequeueMessage.messageReceived'] =
     (messageId) => {
-      this.logger.debug(
-        `Message received event for message ${messageId}, processing`,
-      );
+      // A message has been received, so process it
       this.processMessage(messageId);
     };
 
   protected onMessageUnacknowledged: TRedisSMQEvent['consumer.consumeMessage.messageUnacknowledged'] =
-    (messageId) => {
-      this.logger.debug(
-        `Message unacknowledged event for message ${messageId}, requesting next message`,
-      );
+    () => {
+      // A message has been processed, so a slot is free.
+      // Immediately request the next message.
       this.next();
     };
 
   protected onMessageAcknowledged: TRedisSMQEvent['consumer.consumeMessage.messageAcknowledged'] =
-    (messageId) => {
-      this.logger.debug(
-        `Message acknowledged event for message ${messageId}, requesting next message`,
-      );
+    () => {
+      // A message has been processed, so a slot is free.
+      // Immediately request the next message.
       this.next();
     };
 
   protected onMessageNext: TRedisSMQEvent['consumer.dequeueMessage.nextMessage'] =
     () => {
-      this.logger.debug('Next message event received, requesting next message');
-      this.next();
+      // This event means the queue is empty or rate-limited.
+      this.timer.setTimeout(() => this.next(), 1000);
     };
 
   protected onError = (err: Error) => {
-    // ignore errors that may occur during shutdown
     if (this.isRunning()) {
-      this.logger.error(`Error event received while running: ${err.message}`);
       this.handleError(err);
-    } else {
-      this.logger.debug(
-        `Ignoring error event received during shutdown: ${err.message}`,
-      );
     }
   };
 
   protected registerSystemEvents = (): void => {
-    if (!this.dequeueMessage || !this.consumeMessage) return;
-    this.logger.debug('Registering system event handlers');
+    if (!this.dequeueMessage || !this.consumeMessage)
+      throw new PanicError('Message components are not initialized.');
     this.dequeueMessage.on(
       'consumer.dequeueMessage.messageReceived',
       this.onMessageReceived,
@@ -360,12 +212,10 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       'consumer.consumeMessage.messageAcknowledged',
       this.onMessageAcknowledged,
     );
-    this.logger.debug('All system event handlers registered successfully');
   };
 
   protected unregisterSystemEvents = (): void => {
     if (!this.dequeueMessage || !this.consumeMessage) return;
-    this.logger.debug('Unregistering system event handlers');
     this.dequeueMessage.removeListener(
       'consumer.dequeueMessage.messageReceived',
       this.onMessageReceived,
@@ -382,135 +232,69 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       'consumer.consumeMessage.messageAcknowledged',
       this.onMessageAcknowledged,
     );
-    this.logger.debug('All system event handlers unregistered');
   };
 
   protected override getLogger(): ILogger {
     return this.logger;
   }
 
-  /**
-   * Handles errors that occur during the operation of the MessageHandler.
-   *
-   * @param err - The error object that was encountered.
-   *
-   * @remarks
-   * This method checks if the MessageHandler instance is currently running. If it is, it emits a 'consumer.messageHandler.error' event with the error, consumer ID, and queue information.
-   * It then calls the parent class's `handleError` method to perform any additional error handling.
-   */
   protected override handleError(err: Error) {
     if (this.isRunning()) {
       this.logger.error(`MessageHandler error: ${err.message}`, err);
-      this.logger.debug(
-        `Emitting consumer.messageHandler.error event for consumer ${this.consumerId}`,
-      );
       this.emit(
         'consumer.messageHandler.error',
         err,
-        this.consumerId,
+        this.consumerContext.consumerId,
         this.queue,
-      );
-    } else {
-      this.logger.debug(
-        `Error occurred while not running: ${err.message} (ignoring)`,
       );
     }
     super.handleError(err);
   }
 
-  /**
-   * Sets up and initializes consumer workers.
-   *
-   * @param cb - A callback function that will be called once the setup is complete or if an error occurs.
-   */
   protected setUpConsumerWorkers = (cb: ICallback): void => {
-    this.logger.debug('Setting up consumer workers');
-
+    const redisClient = this.getRedisClient();
+    if (redisClient instanceof Error) return cb(redisClient);
     const { keyQueueWorkersLock } = redisKeys.getQueueKeys(
       this.queue.queueParams,
       this.queue.groupId,
     );
-
-    this.logger.debug(`Queue workers lock key: ${keyQueueWorkersLock}`);
-
-    const redisClient = this.getRedisClient();
-    if (redisClient instanceof Error) {
-      this.logger.error(`Failed to get Redis client: ${redisClient.message}`);
-      cb(redisClient);
-      return void 0;
-    }
-
-    this.logger.debug('Creating WorkerResourceGroup');
     this.workerResourceGroup = new WorkerResourceGroup(
       redisClient,
       this.logger,
       keyQueueWorkersLock,
     );
-
-    this.logger.debug('Setting up error handler for WorkerResourceGroup');
-    this.workerResourceGroup.on('workerResourceGroup.error', (err) => {
-      this.logger.error(`WorkerResourceGroup error: ${err.message}`);
-      this.handleError(err);
-    });
-
-    this.logger.debug(`Loading workers from directory: ${WORKERS_DIR}`);
-
+    this.workerResourceGroup.on('workerResourceGroup.error', this.onError);
     this.workerResourceGroup.loadFromDir<TConsumerMessageHandlerWorkerPayload>(
       WORKERS_DIR,
       { redisConfig: this.config.redis, queueParsedParams: this.queue },
       (err) => {
-        if (err) {
-          this.logger.error(
-            `Failed to load workers from directory: ${err.message}`,
-          );
-          cb(err);
-        } else {
-          this.logger.debug(
-            'Workers loaded successfully, starting WorkerResourceGroup',
-          );
-          this.workerResourceGroup?.run((err) => {
-            if (err) {
-              this.logger.error(
-                `Failed to start WorkerResourceGroup: ${err.message}`,
-              );
-              this.handleError(err);
-            } else {
-              this.logger.debug('WorkerResourceGroup started successfully');
-            }
-          });
-          this.logger.debug('Consumer workers setup completed');
-          cb();
-        }
+        if (err) return cb(err);
+        this.workerResourceGroup?.run((err) => {
+          if (err) this.handleError(err);
+        });
+        cb();
       },
     );
   };
 
   protected shutDownConsumerWorkers = (cb: ICallback): void => {
     if (this.workerResourceGroup) {
-      this.logger.debug('Shutting down consumer workers');
-      this.workerResourceGroup.shutdown((err) => {
-        if (err) {
-          this.logger.warn(
-            `Error during WorkerResourceGroup shutdown: ${err.message} (ignoring)`,
-          );
-        }
-        this.logger.debug('Consumer workers shut down successfully');
+      this.workerResourceGroup.shutdown(() => {
         this.workerResourceGroup = null;
         cb();
       });
-    } else {
-      this.logger.debug('No consumer workers to shut down');
-      cb();
-    }
+    } else cb();
   };
 
   /**
-   * Prepares the MessageHandler instance for operation by setting up necessary components and processes.
+   * A factory method for creating a DequeueMessage instance.
+   * This method can be overridden by subclasses to customize the DequeueMessage creation.
    */
+  protected createDequeueMessageInstance(): DequeueMessage {
+    return new DequeueMessage(this.consumerContext, this.queue);
+  }
+
   protected override goingUp(): ((cb: ICallback) => void)[] {
-    this.logger.info(
-      `MessageHandler going up for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
-    );
     return super.goingUp().concat([
       (cb: ICallback) => {
         RedisConnectionPool.getInstance().acquire(
@@ -523,110 +307,62 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
           },
         );
       },
-
-      /**
-       * Ensures an appropriate consumer group is present for PUB_SUB queues.
-       * - If delivery model is PUB_SUB and no groupId provided, creates an ephemeral consumer group.
-       * - If a groupId is provided, ensures it exists (idempotent save).
-       * - Updates this.queue.groupId.
-       */
       (cb: ICallback) => {
         _prepareConsumerGroup(
           this.queue,
-          this.consumerId,
+          this.consumerContext.consumerId,
           (err, effectiveGroupId) => {
             if (err) return cb(err);
-            // Update queue with the effective group
             if (effectiveGroupId && this.queue.groupId !== effectiveGroupId) {
               this.queue = { ...this.queue, groupId: effectiveGroupId };
               this.ephemeralConsumerGroupId = effectiveGroupId;
-              this.logger.debug(
-                `Effective consumer group resolved: '${effectiveGroupId}'.`,
-              );
             }
             cb();
           },
           this.logger,
         );
       },
-
-      // Create DequeueMessage/ConsumeMessage only once, after consumer group is resolved
       (cb: ICallback) => {
-        if (!this.consumeMessage) {
-          this.consumeMessage = this.initConsumeMessageInstance();
-        }
-        if (!this.dequeueMessage) {
-          this.dequeueMessage = this.initDequeueMessageInstance();
-        }
-        // Register system events exactly once
+        this.consumeMessage = new ConsumeMessage(
+          this.consumerContext,
+          this.queue,
+          this.getId(),
+          this.messageHandler,
+        );
+        this.consumeMessage.on('consumer.consumeMessage.error', this.onError);
+
+        this.dequeueMessage = this.createDequeueMessageInstance();
+        this.dequeueMessage.on('consumer.dequeueMessage.error', this.onError);
+
         this.registerSystemEvents();
         cb();
       },
-      (cb: ICallback) => this.setUpConsumerWorkers(cb),
-      (cb: ICallback) => {
-        if (!this.consumeMessage) return cb();
-        this.logger.debug('Starting ConsumeMessage instance');
-        this.consumeMessage.run((err) => {
-          if (err) {
-            this.logger.error(`Failed to start ConsumeMessage: ${err.message}`);
-          } else {
-            this.logger.debug('ConsumeMessage started successfully');
-          }
-          cb(err);
-        });
-      },
-      (cb: ICallback) => {
-        if (!this.dequeueMessage) return cb();
-        this.logger.debug('Starting DequeueMessage instance');
-        this.dequeueMessage.run((err) => {
-          if (err) {
-            this.logger.error(`Failed to start DequeueMessage: ${err.message}`);
-          } else {
-            this.logger.debug('DequeueMessage started successfully');
-          }
-          cb(err);
-        });
-      },
+      this.setUpConsumerWorkers,
+      (cb: ICallback) => this.consumeMessage?.run((err) => cb(err)),
+      (cb: ICallback) => this.dequeueMessage?.run((err) => cb(err)),
       (cb: ICallback) => {
         if (this.autoDequeue) {
-          this.logger.debug('Auto-dequeue enabled, initiating first dequeue');
           this.dequeue();
-        } else {
-          this.logger.debug('Auto-dequeue disabled, skipping initial dequeue');
         }
         cb();
       },
     ]);
   }
 
-  /**
-   * Performs cleanup operations and shuts down the consumer workers before shutting down the MessageHandler instance.
-   */
   protected override goingDown(): ((cb: ICallback) => void)[] {
-    this.logger.info(
-      `MessageHandler going down for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
-    );
     return [
-      // First, delete ephemeral consumer group if one was created
       (cb: ICallback): void => {
+        this.timer.reset();
         const ephemeral = this.ephemeralConsumerGroupId;
         if (!ephemeral) return cb();
-
-        this.logger.debug(
-          `Deleting ephemeral consumer group '${ephemeral}' for queue '${this.queue.queueParams.name}'`,
-        );
         _deleteEphemeralConsumerGroup(
           this.queue.queueParams,
-          this.consumerId,
+          this.consumerContext.consumerId,
           ephemeral,
           (err) => {
             if (err) {
               this.logger.warn(
                 `Failed to delete ephemeral consumer group '${ephemeral}': ${err.message}`,
-              );
-            } else {
-              this.logger.debug(
-                `Ephemeral consumer group '${ephemeral}' deleted successfully.`,
               );
             }
             this.ephemeralConsumerGroupId = null;
@@ -636,33 +372,14 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
       },
       this.shutDownConsumerWorkers,
       (cb: ICallback) => {
-        // Unregister events before shutting down to avoid duplicate handlers on future runs
         this.unregisterSystemEvents();
-        if (!this.dequeueMessage) return cb();
-        this.logger.debug('Shutting down DequeueMessage instance');
-        this.dequeueMessage.shutdown((err) => {
-          if (err) {
-            this.logger.warn(
-              `Error during DequeueMessage shutdown: ${err.message} (ignoring)`,
-            );
-          } else {
-            this.logger.debug('DequeueMessage shut down successfully');
-          }
+        this.dequeueMessage?.shutdown(() => {
           this.dequeueMessage = null;
           cb();
         });
       },
       (cb: ICallback) => {
-        if (!this.consumeMessage) return cb();
-        this.logger.debug('Shutting down ConsumeMessage instance');
-        this.consumeMessage.shutdown((err) => {
-          if (err) {
-            this.logger.warn(
-              `Error during ConsumeMessage shutdown: ${err.message} (ignoring)`,
-            );
-          } else {
-            this.logger.debug('ConsumeMessage shut down successfully');
-          }
+        this.consumeMessage?.shutdown(() => {
           this.consumeMessage = null;
           cb();
         });
