@@ -10,7 +10,6 @@
 import * as os from 'os';
 import {
   CallbackEmptyReplyError,
-  createLogger,
   ICallback,
   ILogger,
   IRedisClient,
@@ -21,7 +20,7 @@ import {
 import { TConsumerDequeueMessageEvent } from '../../../common/index.js';
 import { ELuaScriptName } from '../../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
-import { Configuration } from '../../../config/index.js';
+import { Configuration, IRedisSMQParsedConfig } from '../../../config/index.js';
 import { _hasRateLimitExceeded } from '../../../queue-rate-limit/_/_has-rate-limit-exceeded.js';
 import { _getQueueProperties } from '../../../queue-manager/_/_get-queue-properties.js';
 import {
@@ -37,6 +36,7 @@ import {
 import { eventBusPublisher } from './event-bus-publisher.js';
 import { ERedisConnectionAcquisitionMode } from '../../../common/redis-connection-pool/types/connection-pool.js';
 import { RedisConnectionPool } from '../../../common/redis-connection-pool/redis-connection-pool.js';
+import { IConsumerContext } from '../../types/consumer-context.js';
 
 const IPAddresses = (() => {
   const nets = os.networkInterfaces();
@@ -53,8 +53,11 @@ const IPAddresses = (() => {
 })();
 
 export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
+  protected readonly consumerId: string;
+  protected readonly logger: ILogger;
+  protected readonly config: IRedisSMQParsedConfig;
+
   protected queue;
-  protected consumerId;
   protected timer;
   protected keyQueues;
   protected keyQueueConsumers;
@@ -63,7 +66,6 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
   protected keyQueueProcessing;
   protected keyQueuePending;
   protected keyQueuePriorityPending;
-  protected logger;
   protected blockUntilMessageReceived;
   protected autoCloseRedisConnection;
 
@@ -74,18 +76,17 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
   protected idleTrigger = 0;
 
   constructor(
+    consumerContext: IConsumerContext,
     queue: IQueueParsedParams,
-    consumerId: string,
     blockUntilMessageReceived: boolean = true,
     autoCloseRedisConnection = true,
   ) {
     super();
+    this.consumerId = consumerContext.consumerId;
+    this.logger = consumerContext.logger;
+    this.config = consumerContext.config;
     this.queue = queue;
-    this.consumerId = consumerId;
-    this.logger = createLogger(
-      Configuration.getConfig().logger,
-      this.constructor.name.toLowerCase(),
-    );
+    this.logger = consumerContext.logger;
 
     this.logger.info(
       `Initializing DequeueMessage for consumer ${this.consumerId}, queue ${JSON.stringify(this.queue)}`,

@@ -10,16 +10,17 @@
 import { DequeueMessage } from './dequeue-message/dequeue-message.js';
 import { MessageHandler } from './message-handler.js';
 import { IConsumerMessageHandlerParams } from './types/index.js';
+import { IConsumerContext } from '../types/consumer-context.js';
 
 export class MultiplexedMessageHandler extends MessageHandler {
   protected dequeueNextFn;
 
   constructor(
-    consumerId: string,
+    consumerContext: IConsumerContext,
     handlerParams: IConsumerMessageHandlerParams,
     dequeueNextFn: () => void,
   ) {
-    super(consumerId, handlerParams, false);
+    super(consumerContext, handlerParams, false);
     this.dequeueNextFn = dequeueNextFn;
     this.logger.info(
       `MultiplexedMessageHandler initialized for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
@@ -44,8 +45,8 @@ export class MultiplexedMessageHandler extends MessageHandler {
     );
 
     const instance = new DequeueMessage(
+      this.consumerContext,
       this.queue,
-      this.consumerId,
       false, // blockUntilMessageReceived
       false, // autoCloseRedisConnection
     );

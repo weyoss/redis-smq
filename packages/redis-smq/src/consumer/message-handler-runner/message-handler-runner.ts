@@ -24,20 +24,24 @@ import {
   IConsumerMessageHandlerParams,
   TConsumerMessageHandler,
 } from '../message-handler/types/index.js';
+import { IConsumerContext } from '../types/consumer-context.js';
 
 /**
  * Manages the lifecycle of message handlers for a consumer, including
  * adding, removing, starting, and shutting down handlers for specific queues.
  */
 export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunnerEvent> {
+  protected readonly consumerContext: IConsumerContext;
   protected readonly consumerId: string;
+
   protected logger: ILogger;
   protected messageHandlerInstances: MessageHandler[] = [];
   protected messageHandlers: IConsumerMessageHandlerParams[] = [];
 
-  constructor(consumerId: string) {
+  constructor(consumerContext: IConsumerContext) {
     super();
-    this.consumerId = consumerId;
+    this.consumerContext = consumerContext;
+    this.consumerId = consumerContext.consumerId;
 
     const config = Configuration.getConfig();
 
@@ -171,7 +175,11 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
   protected createMessageHandlerInstance(
     handlerParams: IConsumerMessageHandlerParams,
   ): MessageHandler {
-    const instance = new MessageHandler(this.consumerId, handlerParams, true);
+    const instance = new MessageHandler(
+      this.consumerContext,
+      handlerParams,
+      true,
+    );
     instance.on('consumer.messageHandler.error', (err, consumerId, queue) => {
       this.logger.error(
         `MessageHandler error from consumer ${consumerId} for queue ${JSON.stringify(queue)}: ${err.message}`,

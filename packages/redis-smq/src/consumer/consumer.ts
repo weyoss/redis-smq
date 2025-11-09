@@ -20,6 +20,7 @@ import { MessageHandlerRunner } from './message-handler-runner/message-handler-r
 import { MultiplexedMessageHandlerRunner } from './message-handler-runner/multiplexed-message-handler-runner.js';
 import { eventBusPublisher } from './event-bus-publisher/event-bus-publisher.js';
 import { TConsumerMessageHandler } from './message-handler/types/index.js';
+import { IConsumerContext } from './types/consumer-context.js';
 
 /**
  * Consumer class responsible for receiving and processing messages from a message queue.
@@ -29,6 +30,8 @@ import { TConsumerMessageHandler } from './message-handler/types/index.js';
  * @extends Runnable<TConsumerEvent>
  */
 export class Consumer extends Runnable<TConsumerEvent> {
+  protected readonly consumerContext: IConsumerContext;
+
   // Instance responsible for running message handlers. It can be either a multiplexed or a standard message handler runner.
   protected messageHandlerRunner;
 
@@ -51,6 +54,14 @@ export class Consumer extends Runnable<TConsumerEvent> {
       config.logger,
       `${this.constructor.name.toLowerCase()}-${this.id}`,
     );
+
+    //
+    this.consumerContext = {
+      consumerId: this.getId(),
+      config: config,
+      logger: this.logger,
+    };
+
     this.logger.info(
       `Initializing consumer${enableMultiplexing ? ' with multiplexing enabled' : ''}`,
     );
@@ -69,8 +80,8 @@ export class Consumer extends Runnable<TConsumerEvent> {
       `Creating ${enableMultiplexing ? 'multiplexed' : 'standard'} message handler runner`,
     );
     this.messageHandlerRunner = enableMultiplexing
-      ? new MultiplexedMessageHandlerRunner(this.getId())
-      : new MessageHandlerRunner(this.getId());
+      ? new MultiplexedMessageHandlerRunner(this.consumerContext)
+      : new MessageHandlerRunner(this.consumerContext);
 
     this.messageHandlerRunner.on(
       'consumer.messageHandlerRunner.error',

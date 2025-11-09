@@ -11,7 +11,6 @@ import path from 'path';
 import {
   CallbackEmptyReplyError,
   CallbackInvalidReplyError,
-  createLogger,
   env,
   ICallback,
   ILogger,
@@ -26,7 +25,7 @@ import {
 } from '../../common/index.js';
 import { ELuaScriptName } from '../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
-import { Configuration } from '../../config/index.js';
+import { Configuration, IRedisSMQParsedConfig } from '../../config/index.js';
 import { _parseMessage } from '../../message-manager/_/_parse-message.js';
 import {
   EMessageProperty,
@@ -46,13 +45,17 @@ import { ERedisConnectionAcquisitionMode } from '../../common/redis-connection-p
 import { RedisConnectionPool } from '../../common/redis-connection-pool/redis-connection-pool.js';
 import { _deleteEphemeralConsumerGroup } from './_/_delete-ephemeral-consumer-group.js';
 import { _prepareConsumerGroup } from './_/_prepare-consumer-group.js';
+import { IConsumerContext } from '../types/consumer-context.js';
 
 const WORKERS_DIR = path.resolve(env.getCurrentDir(), './workers');
 
 export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
-  protected consumerId;
+  protected readonly consumerContext: IConsumerContext;
+  protected readonly consumerId: string;
+  protected readonly logger: ILogger;
+  protected readonly config: IRedisSMQParsedConfig;
+
   protected queue;
-  protected logger: ILogger;
   protected dequeueMessage: DequeueMessage | null = null;
   protected consumeMessage: ConsumeMessage | null = null;
   protected messageHandler;
@@ -64,21 +67,19 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   protected ephemeralConsumerGroupId: string | null = null;
 
   constructor(
-    consumerId: string,
+    consumerContext: IConsumerContext,
     handlerParams: IConsumerMessageHandlerParams,
     autoDequeue: boolean = true,
   ) {
     super();
+    this.consumerContext = consumerContext;
+    this.consumerId = consumerContext.consumerId;
+    this.logger = consumerContext.logger;
+    this.config = consumerContext.config;
+
     const { queue, messageHandler } = handlerParams;
-    this.consumerId = consumerId;
     this.queue = queue;
     this.messageHandler = messageHandler;
-
-    const config = Configuration.getConfig();
-    this.logger = createLogger(
-      config.logger,
-      `${this.constructor.name.toLowerCase()}-${this.getId()}`,
-    );
 
     this.logger.info(
       `Initializing MessageHandler for consumer ${this.consumerId}, queue ${JSON.stringify(this.queue)}`,
@@ -89,7 +90,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
 
     this.autoDequeue = autoDequeue;
 
-    if (config.eventBus.enabled) {
+    if (this.config.eventBus.enabled) {
       this.logger.debug('Event bus is enabled, setting up event bus publisher');
       evenBusPublisher(this);
     } else {
@@ -263,7 +264,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
 
   protected initDequeueMessageInstance(): DequeueMessage {
     this.logger.debug('Creating new DequeueMessage instance');
-    const instance = new DequeueMessage(this.queue, this.consumerId);
+    const instance = new DequeueMessage(this.consumerContext, this.queue);
     this.logger.debug('Setting up error handler for DequeueMessage instance');
     instance.on('consumer.dequeueMessage.error', this.onError);
     this.logger.debug('DequeueMessage instance created successfully');
@@ -273,7 +274,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   protected initConsumeMessageInstance(): ConsumeMessage {
     this.logger.debug('Creating new ConsumeMessage instance');
     const instance = new ConsumeMessage(
-      this.consumerId,
+      this.consumerContext,
       this.queue,
       this.getId(),
       this.messageHandler,
