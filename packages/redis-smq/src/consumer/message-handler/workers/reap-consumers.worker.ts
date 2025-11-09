@@ -56,6 +56,7 @@ export class ReapConsumersWorker extends WorkerAbstract {
           _deleteEphemeralConsumerGroup(
             this.queueParsedParams.queueParams,
             consumerId,
+            null,
             (err) => {
               const queue = this.queueParsedParams.queueParams;
               const queueRef = `${queue.name}@${queue.ns}`;
