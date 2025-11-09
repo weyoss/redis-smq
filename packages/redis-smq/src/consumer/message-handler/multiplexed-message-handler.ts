@@ -23,7 +23,7 @@ export class MultiplexedMessageHandler extends MessageHandler {
     super(consumerContext, handlerParams, false);
     this.dequeueNextFn = dequeueNextFn;
     this.logger.info(
-      `MultiplexedMessageHandler initialized for consumer ${this.consumerId}, queue ${this.queue.queueParams.name}`,
+      `MultiplexedMessageHandler initialized for consumer ${this.consumerContext.consumerId}, queue ${this.queue.queueParams.name}`,
     );
     this.logger.debug('Auto-dequeue disabled for multiplexed handler');
   }
@@ -36,27 +36,15 @@ export class MultiplexedMessageHandler extends MessageHandler {
     this.dequeueNextFn();
   }
 
-  protected override initDequeueMessageInstance(): DequeueMessage {
+  protected override createDequeueMessageInstance(): DequeueMessage {
     this.logger.debug(
-      'Creating DequeueMessage instance for multiplexed handler',
+      'Creating DequeueMessage instance for multiplexed handler with blockUntilMessageReceived=false and autoCloseRedisConnection=false',
     );
-    this.logger.debug(
-      'Setting blockUntilMessageReceived=false and autoCloseRedisConnection=false',
-    );
-
-    const instance = new DequeueMessage(
+    return new DequeueMessage(
       this.consumerContext,
       this.queue,
       false, // blockUntilMessageReceived
       false, // autoCloseRedisConnection
     );
-
-    this.logger.debug('Setting up error handler for DequeueMessage instance');
-    instance.on('consumer.dequeueMessage.error', this.onError);
-
-    this.logger.debug(
-      'DequeueMessage instance created successfully for multiplexed handler',
-    );
-    return instance;
   }
 }
