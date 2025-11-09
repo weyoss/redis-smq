@@ -1,3 +1,23 @@
 #!/usr/bin/env sh
+
+# First, run the script that updates the README files.
 scripts/update-readme-files.sh
-git commit -m "docs: update README files"
+
+# Get the destination branch (the current branch).
+DEST_BRANCH=$(git symbolic-ref --short HEAD)
+
+# Try to parse the source branch from the last reflog entry (e.g., "merge my-feature:").
+# This is the most reliable way to find the source branch name after a merge.
+SOURCE_BRANCH=$(git reflog -n 1 | sed -n 's/.*merge \([^:]*\):.*/\1/p' | tr -d '[:space:]')
+
+COMMIT_MSG=""
+if [ -n "$SOURCE_BRANCH" ]; then
+  # If a source branch was found, create a detailed message.
+  COMMIT_MSG="chore: update READMEs after merging '$SOURCE_BRANCH' into '$DEST_BRANCH'"
+else
+  # Fallback to a generic but still useful message if the source branch couldn't be determined.
+  COMMIT_MSG="chore: update READMEs after merge into '$DEST_BRANCH'"
+fi
+
+# Create the commit with the dynamic message.
+git commit -m "$COMMIT_MSG"
