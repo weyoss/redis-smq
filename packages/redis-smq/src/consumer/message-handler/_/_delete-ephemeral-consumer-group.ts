@@ -15,9 +15,12 @@ import { _generateEphemeralConsumerGroupId } from './_generate-ephemeral-consume
 export function _deleteEphemeralConsumerGroup(
   queueParams: IQueueParams,
   consumerId: string,
+  ephemeralConsumerGroupId: string | null,
   cb: ICallback,
 ) {
   const consumerGroups: ConsumerGroups = new ConsumerGroups();
-  const groupId = _generateEphemeralConsumerGroupId(consumerId);
+  const groupId = ephemeralConsumerGroupId
+    ? ephemeralConsumerGroupId
+    : _generateEphemeralConsumerGroupId(consumerId);
   consumerGroups.deleteConsumerGroup(queueParams, groupId, cb);
 }

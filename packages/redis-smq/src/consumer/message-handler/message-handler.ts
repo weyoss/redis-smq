@@ -528,6 +528,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
             // Update queue with the effective group
             if (effectiveGroupId && this.queue.groupId !== effectiveGroupId) {
               this.queue = { ...this.queue, groupId: effectiveGroupId };
+              this.ephemeralConsumerGroupId = effectiveGroupId;
               this.logger.debug(
                 `Effective consumer group resolved: '${effectiveGroupId}'.`,
               );
@@ -605,6 +606,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
         );
         _deleteEphemeralConsumerGroup(
           this.queue.queueParams,
+          this.consumerId,
           ephemeral,
           (err) => {
             if (err) {
