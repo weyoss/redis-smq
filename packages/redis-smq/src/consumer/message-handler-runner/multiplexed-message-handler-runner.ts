@@ -12,6 +12,7 @@ import { MessageHandler } from '../message-handler/message-handler.js';
 import { MultiplexedMessageHandler } from '../message-handler/multiplexed-message-handler.js';
 import { MessageHandlerRunner } from './message-handler-runner.js';
 import { IConsumerMessageHandlerParams } from '../message-handler/types/index.js';
+import { IConsumerContext } from '../types/consumer-context.js';
 
 /**
  * MultiplexedMessageHandlerRunner schedules and rotates message handlers for multiple queues,
@@ -23,8 +24,8 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   protected activeMessageHandler: MessageHandler | null = null;
   protected readonly tickIntervalMs: number = 1000;
 
-  constructor(consumerId: string) {
-    super(consumerId);
+  constructor(consumerContext: IConsumerContext) {
+    super(consumerContext);
     this.logger.info(
       `Initializing MultiplexedMessageHandlerRunner with ID: ${this.id}`,
     );
@@ -121,7 +122,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
       `Creating MultiplexedMessageHandler for queue: ${JSON.stringify(handlerParams.queue)}`,
     );
     const instance = new MultiplexedMessageHandler(
-      this.consumerId,
+      this.consumerContext,
       handlerParams,
       this.execNextMessageHandler,
     );

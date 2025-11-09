@@ -13,7 +13,6 @@ import {
   async,
   AsyncCallbackTimeoutError,
   CallbackEmptyReplyError,
-  createLogger,
   ICallback,
   ILogger,
   IRedisClient,
@@ -24,7 +23,7 @@ import {
 import { TConsumerConsumeMessageEvent } from '../../../common/index.js';
 import { ELuaScriptName } from '../../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
-import { Configuration } from '../../../config/index.js';
+import { Configuration, IRedisSMQParsedConfig } from '../../../config/index.js';
 import {
   EMessageProperty,
   EMessagePropertyStatus,
@@ -49,14 +48,17 @@ import { eventBusPublisher } from './event-bus-publisher.js';
 import { TConsumerMessageHandler } from '../types/index.js';
 import { ERedisConnectionAcquisitionMode } from '../../../common/redis-connection-pool/types/connection-pool.js';
 import { RedisConnectionPool } from '../../../common/redis-connection-pool/redis-connection-pool.js';
+import { IConsumerContext } from '../../types/consumer-context.js';
 
 export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
-  protected logger;
+  protected readonly consumerId: string;
+  protected readonly logger: ILogger;
+  protected readonly config: IRedisSMQParsedConfig;
+
   protected keyQueueProperties;
   protected keyQueueProcessing;
   protected keyQueueAcknowledged;
   protected queue;
-  protected consumerId;
   protected messageHandler;
   protected messageHandlerId;
   protected messageUnack;
@@ -67,24 +69,19 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
   > | null = null;
 
   constructor(
-    consumerId: string,
+    consumerContext: IConsumerContext,
     queue: IQueueParsedParams,
     messageHandlerId: string,
     messageHandler: TConsumerMessageHandler,
   ) {
     super();
+    this.consumerId = consumerContext.consumerId;
+    this.logger = consumerContext.logger;
+    this.config = consumerContext.config;
     this.queue = queue;
-    this.consumerId = consumerId;
     this.messageHandler = messageHandler;
     this.messageHandlerId = messageHandlerId;
     this.messageUnack = new MessageUnacknowledgement();
-
-    const config = Configuration.getConfig();
-
-    this.logger = createLogger(
-      config.logger,
-      this.constructor.name.toLowerCase(),
-    );
 
     this.logger.debug(
       `Initializing ConsumeMessage for consumer ${this.consumerId}, queue ${JSON.stringify(this.queue)}, messageHandlerId ${this.messageHandlerId}`,
@@ -106,7 +103,7 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
       `Queue processing key: ${this.keyQueueProcessing}, acknowledged key: ${this.keyQueueAcknowledged}`,
     );
 
-    if (config.eventBus.enabled) {
+    if (this.config.eventBus.enabled) {
       this.logger.debug('Event bus enabled, setting up event bus publisher');
       eventBusPublisher(this);
     } else {
