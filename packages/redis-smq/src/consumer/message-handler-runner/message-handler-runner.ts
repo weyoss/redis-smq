@@ -17,7 +17,6 @@ import {
 import { TConsumerMessageHandlerRunnerEvent } from '../../common/index.js';
 import { Configuration } from '../../config/index.js';
 import { IQueueParsedParams } from '../../queue-manager/index.js';
-import { Consumer } from '../consumer.js';
 import { MessageHandlerAlreadyExistsError } from '../../errors/index.js';
 import { MessageHandler } from '../message-handler/message-handler.js';
 import { eventBusPublisher } from './event-bus-publisher.js';
@@ -31,14 +30,14 @@ import {
  * adding, removing, starting, and shutting down handlers for specific queues.
  */
 export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunnerEvent> {
-  protected consumer: Consumer;
+  protected readonly consumerId: string;
   protected logger: ILogger;
   protected messageHandlerInstances: MessageHandler[] = [];
   protected messageHandlers: IConsumerMessageHandlerParams[] = [];
 
-  constructor(consumer: Consumer) {
+  constructor(consumerId: string) {
     super();
-    this.consumer = consumer;
+    this.consumerId = consumerId;
 
     const config = Configuration.getConfig();
 
@@ -57,7 +56,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
       );
     }
     this.logger.debug(
-      `MessageHandlerRunner initialized for consumer ID: ${this.consumer.getId()}`,
+      `MessageHandlerRunner initialized for consumer ID: ${this.consumerId}`,
     );
   }
 
@@ -172,7 +171,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
   protected createMessageHandlerInstance(
     handlerParams: IConsumerMessageHandlerParams,
   ): MessageHandler {
-    const instance = new MessageHandler(this.consumer, handlerParams, true);
+    const instance = new MessageHandler(this.consumerId, handlerParams, true);
     instance.on('consumer.messageHandler.error', (err, consumerId, queue) => {
       this.logger.error(
         `MessageHandler error from consumer ${consumerId} for queue ${JSON.stringify(queue)}: ${err.message}`,
@@ -298,11 +297,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
   protected override handleError(err: Error) {
     if (this.isRunning()) {
       this.logger.error(`MessageHandlerRunner error: ${err.message}`, err);
-      this.emit(
-        'consumer.messageHandlerRunner.error',
-        err,
-        this.consumer.getId(),
-      );
+      this.emit('consumer.messageHandlerRunner.error', err, this.consumerId);
     }
     super.handleError(err);
   }

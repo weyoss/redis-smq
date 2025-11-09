@@ -35,7 +35,6 @@ import {
   EQueueProperty,
   IQueueParsedParams,
 } from '../../../queue-manager/index.js';
-import { Consumer } from '../../consumer.js';
 import {
   EMessageUnacknowledgementAction,
   EMessageUnacknowledgementReason,
@@ -68,14 +67,14 @@ export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {
   > | null = null;
 
   constructor(
-    consumer: Consumer,
+    consumerId: string,
     queue: IQueueParsedParams,
     messageHandlerId: string,
     messageHandler: TConsumerMessageHandler,
   ) {
     super();
     this.queue = queue;
-    this.consumerId = consumer.getId();
+    this.consumerId = consumerId;
     this.messageHandler = messageHandler;
     this.messageHandlerId = messageHandlerId;
     this.messageUnack = new MessageUnacknowledgement();

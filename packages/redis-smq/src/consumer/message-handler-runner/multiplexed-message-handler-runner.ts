@@ -8,7 +8,6 @@
  */
 
 import { ICallback, Timer } from 'redis-smq-common';
-import { Consumer } from '../consumer.js';
 import { MessageHandler } from '../message-handler/message-handler.js';
 import { MultiplexedMessageHandler } from '../message-handler/multiplexed-message-handler.js';
 import { MessageHandlerRunner } from './message-handler-runner.js';
@@ -24,8 +23,8 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   protected activeMessageHandler: MessageHandler | null = null;
   protected readonly tickIntervalMs: number = 1000;
 
-  constructor(consumer: Consumer) {
-    super(consumer);
+  constructor(consumerId: string) {
+    super(consumerId);
     this.logger.info(
       `Initializing MultiplexedMessageHandlerRunner with ID: ${this.id}`,
     );
@@ -122,7 +121,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
       `Creating MultiplexedMessageHandler for queue: ${JSON.stringify(handlerParams.queue)}`,
     );
     const instance = new MultiplexedMessageHandler(
-      this.consumer,
+      this.consumerId,
       handlerParams,
       this.execNextMessageHandler,
     );

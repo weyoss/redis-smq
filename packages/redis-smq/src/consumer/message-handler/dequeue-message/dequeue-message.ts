@@ -30,7 +30,6 @@ import {
   IQueueRateLimit,
   TQueueConsumer,
 } from '../../../index.js';
-import { Consumer } from '../../consumer.js';
 import {
   MessageHandlerError,
   QueueNotFoundError,
@@ -76,13 +75,13 @@ export class DequeueMessage extends Runnable<TConsumerDequeueMessageEvent> {
 
   constructor(
     queue: IQueueParsedParams,
-    consumer: Consumer,
+    consumerId: string,
     blockUntilMessageReceived: boolean = true,
     autoCloseRedisConnection = true,
   ) {
     super();
     this.queue = queue;
-    this.consumerId = consumer.getId();
+    this.consumerId = consumerId;
     this.logger = createLogger(
       Configuration.getConfig().logger,
       this.constructor.name.toLowerCase(),
