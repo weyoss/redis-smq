@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.3-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.2...v9.0.3-next.0) (2025-11-09)
+
+### 🐛 Bug Fixes
+
+- **redis-smq:** ensure ephemeral consumer groups cleanup ([d551caa](https://github.com/weyoss/redis-smq/commit/d551caa8c51509155436a1d90809486bf7b7f7c1))
+
+### 📝 Documentation
+
+- update README files ([aa98d75](https://github.com/weyoss/redis-smq/commit/aa98d752f69ed1593ae43f0e38b9df087b11d6de))
+
+### ♻️ Code Refactoring
+
+- **redis-smq:** decouple consumer components from Consumer class ([185a91f](https://github.com/weyoss/redis-smq/commit/185a91fd11f60d1896bb15727ab8d4055874eb1e))
+- **redis-smq:** improve ConsumerHeartbeat reliability and instance isolation ([d544d1c](https://github.com/weyoss/redis-smq/commit/d544d1c50720770a560ca33ea56c807df7d6fd65))
+
 ## [9.0.2](https://github.com/weyoss/redis-smq/compare/v9.0.2-next.1...v9.0.2) (2025-11-08)
 
 ### 📝 Documentation
