@@ -25,7 +25,7 @@ import {
 } from '../../common/index.js';
 import { ELuaScriptName } from '../../common/redis-client/scripts/scripts.js';
 import { redisKeys } from '../../common/redis-keys/redis-keys.js';
-import { Configuration, IRedisSMQParsedConfig } from '../../config/index.js';
+import { IRedisSMQParsedConfig } from '../../config/index.js';
 import { _parseMessage } from '../../message-manager/_/_parse-message.js';
 import {
   EMessageProperty,
@@ -412,7 +412,6 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
   protected setUpConsumerWorkers = (cb: ICallback): void => {
     this.logger.debug('Setting up consumer workers');
 
-    const config = Configuration.getConfig();
     const { keyQueueWorkersLock } = redisKeys.getQueueKeys(
       this.queue.queueParams,
       this.queue.groupId,
@@ -444,7 +443,7 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
 
     this.workerResourceGroup.loadFromDir<TConsumerMessageHandlerWorkerPayload>(
       WORKERS_DIR,
-      { redisConfig: config.redis, queueParsedParams: this.queue },
+      { redisConfig: this.config.redis, queueParsedParams: this.queue },
       (err) => {
         if (err) {
           this.logger.error(
