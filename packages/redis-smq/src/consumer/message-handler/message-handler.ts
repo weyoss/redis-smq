@@ -38,7 +38,6 @@ import {
 import { ConsumeMessage } from './consume-message/consume-message.js';
 import { DequeueMessage } from './dequeue-message/dequeue-message.js';
 import { evenBusPublisher } from './even-bus-publisher.js';
-import { MessageHandlerError } from '../../errors/index.js';
 import { IConsumerMessageHandlerParams } from './types/index.js';
 import { TConsumerMessageHandlerWorkerPayload } from './workers/types/index.js';
 import { ERedisConnectionAcquisitionMode } from '../../common/redis-connection-pool/types/connection-pool.js';
@@ -179,10 +178,25 @@ export class MessageHandler extends Runnable<TConsumerMessageHandlerEvent> {
         }
 
         // An empty reply indicates that the message was not in a PENDING state.
+        // This could be because of a race condition:
+        // 1 Consumer A may freeze defore calling CHECKOUT_MESSAGE
+        // 2 A separate cleanup worker (reap-consumers.worker.ts) runs
+        //    - It scans for "stale" messages in processing queues
+        //    - It finds message-123 in Consumer A's queue, sees it's been there too long, and moves it back to the main pending list to be re-processed
+        // 3 Consumer B now successfully dequeues message-123. It's a legitimate consumer, and the message is available again
+        // 4 Consumer B immediately calls the CHECKOUT_MESSAGE script
+        //    - The script checks the message hash, sees status: "PENDING", updates it to status: "PROCESSING", and returns the message data
+        //    - Everything is working correctly for Consumer B.
+        // 5 Now, Consumer A's process un-freezes. It still has the messageId "message-123" in memory from Step 1
+        // 6 It finally tries to execute the CHECKOUT_MESSAGE script.
+        //    - The script runs for Consumer A. It checks the status of message-123 in the hash. But the status is now "PROCESSING" (because Consumer B already checked it out).
+        // 7 The script's condition fails, and it returns nil.
         if (!reply) {
-          const errMsg = `Message ${messageId} could not be fetched.`;
-          this.logger.error(errMsg);
-          return this.handleError(new MessageHandlerError(errMsg));
+          this.logger.warn(
+            `Message [${messageId}] could not be fetched. It may have been processed by another consumer.`,
+          );
+          // Dequeue next message
+          return this.next();
         }
 
         if (!Array.isArray(reply)) {
