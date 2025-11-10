@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.3](https://github.com/weyoss/redis-smq/compare/v9.0.3-next.1...v9.0.3) (2025-11-10)
+
+### 🚀 Chore
+
+- update READMEs after merging 'origin/next' into 'master' ([6a3d1ab](https://github.com/weyoss/redis-smq/commit/6a3d1ab48e5fc08b56e0a8ae12e70fc5ba9b55a7))
+
 ## [9.0.3-next.1](https://github.com/weyoss/redis-smq/compare/v9.0.3-next.0...v9.0.3-next.1) (2025-11-10)
 
 **Note:** Version bump only for package redis-smq-web-ui
