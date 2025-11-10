@@ -7,15 +7,8 @@
  * in the root directory of this source tree.
  */
 
-import {
-  async,
-  createLogger,
-  ICallback,
-  ILogger,
-  Runnable,
-} from 'redis-smq-common';
+import { async, ICallback, ILogger, Runnable } from 'redis-smq-common';
 import { TConsumerMessageHandlerRunnerEvent } from '../../common/index.js';
-import { Configuration } from '../../config/index.js';
 import { IQueueParsedParams } from '../../queue-manager/index.js';
 import { MessageHandlerAlreadyExistsError } from '../../errors/index.js';
 import { MessageHandler } from '../message-handler/message-handler.js';
@@ -32,36 +25,19 @@ import { IConsumerContext } from '../types/consumer-context.js';
  */
 export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunnerEvent> {
   protected readonly consumerContext: IConsumerContext;
-  protected readonly consumerId: string;
+  protected readonly logger: ILogger;
 
-  protected logger: ILogger;
   protected messageHandlerInstances: MessageHandler[] = [];
   protected messageHandlers: IConsumerMessageHandlerParams[] = [];
 
   constructor(consumerContext: IConsumerContext) {
     super();
     this.consumerContext = consumerContext;
-    this.consumerId = consumerContext.consumerId;
-
-    const config = Configuration.getConfig();
-
-    this.logger = createLogger(
-      config.logger,
-      this.constructor.name.toLowerCase(),
-    );
-    this.logger.info(`Initializing MessageHandlerRunner with ID: ${this.id}`);
-
-    if (config.eventBus.enabled) {
-      this.logger.debug('Event bus enabled, setting up event bus publisher');
+    this.logger = this.consumerContext.logger;
+    if (this.consumerContext.config.eventBus.enabled) {
       eventBusPublisher(this);
-    } else {
-      this.logger.debug(
-        'Event bus is not enabled, skipping event bus publisher setup',
-      );
     }
-    this.logger.debug(
-      `MessageHandlerRunner initialized for consumer ID: ${this.consumerId}`,
-    );
+    this.logger.info(`MessageHandlerRunner with ID: ${this.id} initialized.`);
   }
 
   /**
@@ -184,8 +160,11 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
       this.logger.error(
         `MessageHandler error from consumer ${consumerId} for queue ${JSON.stringify(queue)}: ${err.message}`,
       );
-      this.removeMessageHandler(queue, () => {
-        this.logger.error(`Error in MessageHandler: ${err.message}`, err);
+      // Shut down the faulty instance.
+      this.shutdownMessageHandler(instance, () => {
+        this.logger.error(
+          `Shutting down faulty MessageHandler instance (ID: ${instance.getId()}) due to an error.`,
+        );
       });
     });
     this.messageHandlerInstances.push(instance);
@@ -206,7 +185,8 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
     handler.run((err) => {
       if (err) {
         this.logger.error(`Failed to run message handler:`, err);
-        this.removeMessageHandler(handlerParams.queue, () => cb(err));
+        // If run fails, we only need to shut down this instance, not remove the config.
+        this.shutdownMessageHandler(handler, () => cb(err));
       } else {
         this.logger.debug(
           `Message handler started for queue: ${handlerParams.queue.queueParams.name}`,
@@ -223,7 +203,6 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
     messageHandler: MessageHandler,
     cb: ICallback<void>,
   ): void {
-    const queue = messageHandler.getQueue();
     messageHandler.shutdown((err) => {
       if (err) {
         this.logger.warn(
@@ -232,14 +211,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
       }
       const beforeCount = this.messageHandlerInstances.length;
       this.messageHandlerInstances = this.messageHandlerInstances.filter(
-        (handler) => {
-          const iQueue = handler.getQueue();
-          return !(
-            iQueue.queueParams.name === queue.queueParams.name &&
-            iQueue.queueParams.ns === queue.queueParams.ns &&
-            iQueue.groupId === queue.groupId
-          );
-        },
+        (handler) => handler.getId() !== messageHandler.getId(),
       );
       const afterCount = this.messageHandlerInstances.length;
       this.logger.debug(
@@ -305,7 +277,11 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
   protected override handleError(err: Error) {
     if (this.isRunning()) {
       this.logger.error(`MessageHandlerRunner error: ${err.message}`, err);
-      this.emit('consumer.messageHandlerRunner.error', err, this.consumerId);
+      this.emit(
+        'consumer.messageHandlerRunner.error',
+        err,
+        this.consumerContext.consumerId,
+      );
     }
     super.handleError(err);
   }
