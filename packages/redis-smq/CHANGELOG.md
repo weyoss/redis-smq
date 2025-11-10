@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.3-next.1](https://github.com/weyoss/redis-smq/compare/v9.0.3-next.0...v9.0.3-next.1) (2025-11-10)
+
+### 🐛 Bug Fixes
+
+- **redis-smq:** handle gracefully message checkout race condition ([4d00db7](https://github.com/weyoss/redis-smq/commit/4d00db7d935a244c7fbf94ca9aa78e2cd3bffccb))
+
+### ♻️ Code Refactoring
+
+- **redis-smq:** implement message handler reconciliation mechanism ([0b3dde2](https://github.com/weyoss/redis-smq/commit/0b3dde206e9c3ae682573fa7f9e57b0dfc201550))
+- **redis-smq:** improve MessageHandlerRunner and error handling ([a3f955f](https://github.com/weyoss/redis-smq/commit/a3f955f7236879c96a78ef7200377932084681d2))
+- **redis-smq:** improve next scheduling in MultiplexedMessageHandlerRunner ([4082586](https://github.com/weyoss/redis-smq/commit/4082586c5529b4ce16afaefb1159dce7a9dbbc78))
+- **redis-smq:** introduce consumer context for dependency injection ([0b3c62c](https://github.com/weyoss/redis-smq/commit/0b3c62cd6b204d4c79885a076dfc91963c6353f1))
+- **redis-smq:** simplify and improve control flow for MessageHandler/DequeueMessage ([b5e2b3e](https://github.com/weyoss/redis-smq/commit/b5e2b3e037b4f4d627afb7a37508681397e6352d))
+- **redis-smq:** use the config object from consumerContext ([b9e4ddd](https://github.com/weyoss/redis-smq/commit/b9e4dddfa4903a4b742f560e9b38eef04ed0d359))
+
 ## [9.0.3-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.2...v9.0.3-next.0) (2025-11-09)
 
 ### 🐛 Bug Fixes
