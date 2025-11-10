@@ -1,6 +1,6 @@
 {
   "name": "redis-smq-common",
-  "version": "9.0.3-next.1",
+  "version": "9.0.3",
   "description": "Provides essential components and utilities shared across RedisSMQ packages.",
   "author": "Weyoss <weyoss@protonmail.com>",
   "license": "MIT",
