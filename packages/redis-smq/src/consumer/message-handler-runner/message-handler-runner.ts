@@ -7,7 +7,7 @@
  * in the root directory of this source tree.
  */
 
-import { async, ICallback, ILogger, Runnable } from 'redis-smq-common';
+import { async, ICallback, ILogger, Runnable, Timer } from 'redis-smq-common';
 import { TConsumerMessageHandlerRunnerEvent } from '../../common/index.js';
 import { IQueueParsedParams } from '../../queue-manager/index.js';
 import { MessageHandlerAlreadyExistsError } from '../../errors/index.js';
@@ -22,10 +22,14 @@ import { IConsumerContext } from '../types/consumer-context.js';
 /**
  * Manages the lifecycle of message handlers for a consumer, including
  * adding, removing, starting, and shutting down handlers for specific queues.
+ * It also includes a supervisor mechanism to automatically restart handlers
+ * that fail during runtime.
  */
 export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunnerEvent> {
+  protected readonly handlerReconciliationInterval = 5000; // todo: make it configurable: config.consumer.handlerReconciliationInterval
   protected readonly consumerContext: IConsumerContext;
   protected readonly logger: ILogger;
+  protected readonly supervisorTimer: Timer;
 
   protected messageHandlerInstances: MessageHandler[] = [];
   protected messageHandlers: IConsumerMessageHandlerParams[] = [];
@@ -37,22 +41,83 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
     if (this.consumerContext.config.eventBus.enabled) {
       eventBusPublisher(this);
     }
+    this.supervisorTimer = new Timer();
+    this.supervisorTimer.on('error', (err) => this.handleError(err));
     this.logger.info(`MessageHandlerRunner with ID: ${this.id} initialized.`);
   }
 
   /**
-   * Removes a message handler for a given queue, shutting down any running instance.
+   * Schedules the next reconciliation check.
    */
+  protected scheduleReconciliation = (): void => {
+    if (this.isRunning()) {
+      this.supervisorTimer.setTimeout(
+        this.reconcileHandlers,
+        this.handlerReconciliationInterval,
+      );
+    }
+  };
+
+  /**
+   * The supervisor loop. Periodically checks for configurations that do not
+   * have a running instance and attempts to restart them sequentially.
+   */
+  protected reconcileHandlers = (): void => {
+    if (!this.isRunning()) return;
+
+    this.logger.debug('Running handler reconciliation...');
+    const runningQueues = this.messageHandlerInstances.map((i) =>
+      JSON.stringify(i.getQueue()),
+    );
+
+    const zombieHandlers = this.messageHandlers.filter(
+      (i) => !runningQueues.includes(JSON.stringify(i.queue)),
+    );
+
+    if (zombieHandlers.length > 0) {
+      this.logger.warn(
+        `Found ${zombieHandlers.length} zombie handler(s). Attempting to restart sequentially...`,
+      );
+      const tasks = zombieHandlers.map((handlerParams) => {
+        return (done: ICallback<void>) => {
+          // Re-validate state at the last moment to prevent a race condition
+          // where a handler is removed while reconciliation is in progress.
+          if (!this.getMessageHandler(handlerParams.queue)) {
+            this.logger.warn(
+              `Handler for queue ${handlerParams.queue.queueParams.name} was removed during reconciliation. Skipping restart.`,
+            );
+            return done();
+          }
+
+          this.logger.debug(
+            `Reconciling handler for queue: ${handlerParams.queue.queueParams.name}`,
+          );
+          this.runMessageHandler(handlerParams, (err) => {
+            if (err) {
+              this.logger.error(
+                `Failed to restart zombie handler for queue ${handlerParams.queue.queueParams.name}.`,
+              );
+            }
+            // We call done() without an error to allow the series to continue with the next handler.
+            done();
+          });
+        };
+      });
+      async.series(tasks, () => {
+        this.logger.debug('Finished reconciliation series for this tick.');
+        this.scheduleReconciliation();
+      });
+    } else {
+      this.logger.debug('No zombie handlers found.');
+      this.scheduleReconciliation();
+    }
+  };
+
   removeMessageHandler(queue: IQueueParsedParams, cb: ICallback<void>): void {
     const handler = this.getMessageHandler(queue);
     if (!handler) {
-      this.logger.debug(
-        `No message handler found for queue: ${queue.queueParams.name}, nothing to remove`,
-      );
       return cb();
     }
-    // Remove from configuration
-    const beforeCount = this.messageHandlers.length;
     this.messageHandlers = this.messageHandlers.filter((h) => {
       const q = h.queue;
       return !(
@@ -61,11 +126,6 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
         queue.groupId === q.groupId
       );
     });
-    const afterCount = this.messageHandlers.length;
-    this.logger.info(
-      `Message handler for queue (${queue.queueParams.name}) removed. Removed ${beforeCount - afterCount} configuration(s).`,
-    );
-    // Remove running instance if exists
     const handlerInstance = this.getMessageHandlerInstance(queue);
     if (handlerInstance) {
       this.shutdownMessageHandler(handlerInstance, cb);
@@ -156,21 +216,13 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
       handlerParams,
       true,
     );
-    instance.on('consumer.messageHandler.error', (err, consumerId, queue) => {
+    instance.on('consumer.messageHandler.error', (err) => {
       this.logger.error(
-        `MessageHandler error from consumer ${consumerId} for queue ${JSON.stringify(queue)}: ${err.message}`,
+        `MessageHandler [${instance.getId()}] has experienced a runtime error: ${err.message}. Shutting down instance. The supervisor will attempt to restart it.`,
       );
-      // Shut down the faulty instance.
-      this.shutdownMessageHandler(instance, () => {
-        this.logger.error(
-          `Shutting down faulty MessageHandler instance (ID: ${instance.getId()}) due to an error.`,
-        );
-      });
+      this.shutdownMessageHandler(instance, () => {});
     });
     this.messageHandlerInstances.push(instance);
-    this.logger.info(
-      `Created MessageHandler (ID: ${instance.getId()}) for queue: ${handlerParams.queue.queueParams.name}. Total: ${this.messageHandlerInstances.length}`,
-    );
     return instance;
   }
 
@@ -179,18 +231,24 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
    */
   protected runMessageHandler(
     handlerParams: IConsumerMessageHandlerParams,
-    cb: ICallback<void>,
+    cb: ICallback,
   ): void {
+    // Avoid creating a duplicate instance if one already exists
+    if (this.getMessageHandlerInstance(handlerParams.queue)) {
+      this.logger.warn(
+        `A message handler instance for queue ${handlerParams.queue.queueParams.name} is already running.`,
+      );
+      return cb();
+    }
     const handler = this.createMessageHandlerInstance(handlerParams);
     handler.run((err) => {
       if (err) {
-        this.logger.error(`Failed to run message handler:`, err);
-        // If run fails, we only need to shut down this instance, not remove the config.
-        this.shutdownMessageHandler(handler, () => cb(err));
-      } else {
-        this.logger.debug(
-          `Message handler started for queue: ${handlerParams.queue.queueParams.name}`,
+        this.logger.error(
+          `Failed to run message handler for queue ${handlerParams.queue.queueParams.name}. Removing configuration.`,
+          err,
         );
+        this.removeMessageHandler(handlerParams.queue, () => cb(err));
+      } else {
         cb();
       }
     });
@@ -201,21 +259,11 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
    */
   protected shutdownMessageHandler(
     messageHandler: MessageHandler,
-    cb: ICallback<void>,
+    cb: ICallback,
   ): void {
-    messageHandler.shutdown((err) => {
-      if (err) {
-        this.logger.warn(
-          `Error during message handler shutdown (ignored): ${err.message}`,
-        );
-      }
-      const beforeCount = this.messageHandlerInstances.length;
+    messageHandler.shutdown(() => {
       this.messageHandlerInstances = this.messageHandlerInstances.filter(
         (handler) => handler.getId() !== messageHandler.getId(),
-      );
-      const afterCount = this.messageHandlerInstances.length;
-      this.logger.debug(
-        `Removed ${beforeCount - afterCount} message handler instance(s). Remaining: ${afterCount}`,
       );
       cb();
     });
@@ -224,33 +272,20 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
   /**
    * Starts all registered message handlers.
    */
-  protected runMessageHandlers = (cb: ICallback<void>): void => {
-    const handlerCount = this.messageHandlers.length;
-    this.logger.info(`Starting ${handlerCount} message handler(s)`);
-    if (handlerCount === 0) return cb();
+  protected runMessageHandlers = (cb: ICallback): void => {
     async.each(
       this.messageHandlers,
       (handlerParams, _, done) => {
         this.runMessageHandler(handlerParams, done);
       },
-      (err) => {
-        if (err) {
-          this.logger.error(`Error starting message handlers:`, err);
-        } else {
-          this.logger.info(`All message handlers started`);
-        }
-        cb(err);
-      },
+      cb,
     );
   };
 
   /**
    * Shuts down all running message handlers.
    */
-  protected shutDownMessageHandlers = (cb: ICallback<void>): void => {
-    const handlerCount = this.messageHandlerInstances.length;
-    this.logger.info(`Shutting down ${handlerCount} message handler(s)`);
-    if (handlerCount === 0) return cb();
+  protected shutDownMessageHandlers = (cb: ICallback): void => {
     async.each(
       this.messageHandlerInstances,
       (handler, _, done) => {
@@ -258,20 +293,29 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
       },
       () => {
         this.messageHandlerInstances = [];
-        this.logger.info('All message handlers have been shut down');
         cb();
       },
     );
   };
 
-  protected override goingUp(): ((cb: ICallback<void>) => void)[] {
-    this.logger.info('MessageHandlerRunner going up');
-    return super.goingUp().concat([this.runMessageHandlers]);
+  protected override goingUp(): ((cb: ICallback) => void)[] {
+    return super.goingUp().concat([
+      this.runMessageHandlers,
+      (cb: ICallback) => {
+        this.reconcileHandlers();
+        cb();
+      },
+    ]);
   }
 
-  protected override goingDown(): ((cb: ICallback<void>) => void)[] {
-    this.logger.info('MessageHandlerRunner going down');
-    return [this.shutDownMessageHandlers].concat(super.goingDown());
+  protected override goingDown(): ((cb: ICallback) => void)[] {
+    return [
+      (cb: ICallback) => {
+        this.supervisorTimer.reset();
+        cb();
+      },
+      this.shutDownMessageHandlers,
+    ].concat(super.goingDown());
   }
 
   protected override handleError(err: Error) {
