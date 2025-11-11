@@ -30,6 +30,77 @@ export class IoredisClient extends RedisClientAbstract {
     });
   }
 
+  ping(cb: ICallback<string>): void {
+    this.client.ping(cb);
+  }
+
+  mget(keys: string[], cb: ICallback<(string | null)[]>): void {
+    this.client.mget(...keys, cb);
+  }
+
+  incr(key: string, cb: ICallback<number>): void {
+    this.client.incr(key, cb);
+  }
+
+  decr(key: string, cb: ICallback<number>): void {
+    this.client.decr(key, cb);
+  }
+
+  incrby(key: string, increment: number, cb: ICallback<number>): void {
+    this.client.incrby(key, increment, cb);
+  }
+
+  decrby(key: string, decrement: number, cb: ICallback<number>): void {
+    this.client.decrby(key, decrement, cb);
+  }
+
+  expire(key: string, seconds: number, cb: ICallback<number>): void {
+    this.client.expire(key, seconds, cb);
+  }
+
+  pexpire(key: string, milliseconds: number, cb: ICallback<number>): void {
+    this.client.pexpire(key, milliseconds, cb);
+  }
+
+  ttl(key: string, cb: ICallback<number>): void {
+    this.client.ttl(key, cb);
+  }
+
+  pttl(key: string, cb: ICallback<number>): void {
+    this.client.pttl(key, cb);
+  }
+
+  lpush(key: string, elements: string | string[], cb: ICallback<number>): void {
+    const args = Array.isArray(elements) ? elements : [elements];
+    this.client.lpush(key, ...args, cb);
+  }
+
+  rpush(key: string, elements: string | string[], cb: ICallback<number>): void {
+    const args = Array.isArray(elements) ? elements : [elements];
+    this.client.rpush(key, ...args, cb);
+  }
+
+  lpop(key: string, cb: ICallback<string | null>): void {
+    this.client.lpop(key, cb);
+  }
+
+  ltrim(key: string, start: number, stop: number, cb: ICallback<string>): void {
+    this.client.ltrim(key, start, stop, cb);
+  }
+
+  zcount(
+    key: string,
+    min: string | number,
+    max: string | number,
+    cb: ICallback<number>,
+  ): void {
+    this.client.zcount(key, min, max, cb);
+  }
+
+  zscore(key: string, member: string, cb: ICallback<string | null>): void {
+    this.client.zscore(key, member, cb);
+  }
+
   set(
     key: string,
     value: string,

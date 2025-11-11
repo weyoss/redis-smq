@@ -22,6 +22,66 @@ export class IoredisClientMulti implements IRedisTransaction {
     this.multi = client.multi();
   }
 
+  get(key: string): this {
+    this.multi.get(key);
+    return this;
+  }
+
+  hget(key: string, field: string): this {
+    this.multi.hget(key, field);
+    return this;
+  }
+
+  smembers(key: string): this {
+    this.multi.smembers(key);
+    return this;
+  }
+
+  hgetall(key: string): this {
+    this.multi.hgetall(key);
+    return this;
+  }
+
+  zcard(key: string): this {
+    this.multi.zcard(key);
+    return this;
+  }
+
+  scard(key: string): this {
+    this.multi.scard(key);
+    return this;
+  }
+
+  llen(key: string): this {
+    this.multi.llen(key);
+    return this;
+  }
+
+  zscore(key: string, member: string): this {
+    this.multi.zscore(key, member);
+    return this;
+  }
+
+  incr(key: string): this {
+    this.multi.incr(key);
+    return this;
+  }
+
+  decr(key: string): this {
+    this.multi.decr(key);
+    return this;
+  }
+
+  incrby(key: string, increment: number): this {
+    this.multi.incrby(key, increment);
+    return this;
+  }
+
+  decrby(key: string, decrement: number): this {
+    this.multi.decrby(key, decrement);
+    return this;
+  }
+
   lrem(key: string, count: number, element: string): this {
     this.multi.lrem(key, count, element);
     return this;
