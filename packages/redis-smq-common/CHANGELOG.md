@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.4-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.3...v9.0.4-next.0) (2025-11-11)
+
+### 🚀 Chore
+
+- update READMEs after merging 'v9.0.3' into 'next' ([5bc9ff0](https://github.com/weyoss/redis-smq/commit/5bc9ff0c9b8d8743a7613fbd499124dab05b1433))
+
+### ♻️ Code Refactoring
+
+- **redis-smq:** expand IRedisClient with additional Redis operations ([a282844](https://github.com/weyoss/redis-smq/commit/a282844a9b0e2c4b1c36b242f49788d16b2683a8))
+
+### ✅ Tests
+
+- **redis-smq-common:** make scan operation tests more flexible ([7b54475](https://github.com/weyoss/redis-smq/commit/7b54475504ef262f18f81ffa951171176cef52c0))
+
 ## [9.0.3](https://github.com/weyoss/redis-smq/compare/v9.0.3-next.1...v9.0.3) (2025-11-10)
 
 ### 🚀 Chore
