@@ -9,6 +9,7 @@
 
 import * as os from 'os';
 import {
+  CallbackEmptyReplyError,
   createLogger,
   ICallback,
   ILogger,
@@ -99,6 +100,30 @@ export class ConsumerHeartbeat extends Runnable<TConsumerHeartbeatEvent> {
       if (err) return cb(err);
       const isAlive = !!heartbeat;
       cb(null, isAlive);
+    });
+  }
+
+  static isConsumerListAlive(
+    redisClient: IRedisClient,
+    consumerIds: string[],
+    cb: ICallback<Record<string, boolean>>,
+  ): void {
+    if (!consumerIds.length) {
+      cb(null, {});
+      return;
+    }
+    const heartbeatKeys = consumerIds.map((id) => {
+      const { keyConsumerHeartbeat } = redisKeys.getConsumerKeys(id);
+      return keyConsumerHeartbeat;
+    });
+    redisClient.mget(heartbeatKeys, (err, replies) => {
+      if (err) return cb(err);
+      if (!replies) return cb(new CallbackEmptyReplyError());
+      const result: Record<string, boolean> = {};
+      consumerIds.forEach((id, index) => {
+        result[id] = !!replies[index];
+      });
+      cb(null, result);
     });
   }
 

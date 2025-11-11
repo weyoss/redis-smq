@@ -33,23 +33,25 @@ function checkOnlineConsumers(
   queue: IQueueParams,
   cb: ICallback<void>,
 ): void {
-  _getQueueConsumerIds(redisClient, queue, (err, consumers) => {
+  _getQueueConsumerIds(redisClient, queue, (err, consumerIds) => {
     if (err) cb(err);
-    async.eachOf(
-      consumers ?? [],
-      (consumerId, _, done) => {
-        ConsumerHeartbeat.isConsumerAlive(
-          redisClient,
-          consumerId,
-          (err, alive) => {
-            if (err) done(err);
-            else if (alive) done(new QueueManagerActiveConsumersError());
-            else done();
-          },
-        );
-      },
-      (err) => cb(err),
-    );
+    else if (!consumerIds || !consumerIds.length) cb();
+    else {
+      ConsumerHeartbeat.isConsumerListAlive(
+        redisClient,
+        consumerIds,
+        (err, aliveMap) => {
+          if (err) cb(err);
+          else {
+            const online = aliveMap
+              ? Object.values(aliveMap).some((i) => i)
+              : false;
+            if (online) cb(new QueueManagerActiveConsumersError());
+            else cb();
+          }
+        },
+      );
+    }
   });
 }
 
