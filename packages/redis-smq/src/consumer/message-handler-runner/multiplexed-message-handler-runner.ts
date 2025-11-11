@@ -31,18 +31,8 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   }
 
   /**
-   * Overrides the parent's reconciliation logic. The multiplexer has its own
-   * scheduling mechanism ('scheduleNextTick') and does not rely on the
-   * concurrent-safe supervisor from the parent class, which is incompatible
-   * with the "one-at-a-time" multiplexing strategy.
-   */
-  protected override reconcileHandlers = (): void => {
-    // Do nothing.
-  };
-
-  /**
    * Schedules the next execution tick after the configured interval.
-   * This is the single authoritative method for scheduling.
+   * This is the single authoritative method for scheduling a delayed tick.
    */
   protected scheduleNextTick = (): void => {
     if (!this.isRunning()) return;
@@ -66,24 +56,33 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   }
 
   /**
-   * Executes the logic for a single tick: selecting one message handler and
-   * attempting to dequeue a message from it.
+   * Executes the logic for a single tick. It iterates through available handlers
+   * in a round-robin fashion to find one that is ready to run, then calls dequeue() on it.
+   * If no handlers are ready, it schedules a delayed retry.
    */
   protected execNextMessageHandler = (): void => {
     if (!this.isRunning()) return;
-    this.activeMessageHandler = this.getNextMessageHandler();
-    if (this.activeMessageHandler) {
-      if (
-        this.activeMessageHandler.isRunning() &&
-        this.activeMessageHandler.isUp()
-      ) {
-        this.activeMessageHandler.dequeue();
-      } else {
-        this.scheduleNextTick();
-      }
-    } else {
+
+    const totalHandlers = this.messageHandlerInstances.length;
+    if (totalHandlers === 0) {
       this.scheduleNextTick();
+      return;
     }
+
+    // Iterate through handlers to find a runnable one without intermediate delays.
+    for (let i = 0; i < totalHandlers; i += 1) {
+      const handler = this.getNextMessageHandler();
+      if (handler && handler.isRunning() && handler.isUp()) {
+        this.activeMessageHandler = handler;
+        this.activeMessageHandler.dequeue();
+        // A runnable handler was found and activated. Exit until it calls back.
+        return;
+      }
+    }
+
+    // If we looped through all handlers and none were runnable, schedule a delayed tick.
+    this.activeMessageHandler = null;
+    this.scheduleNextTick();
   };
 
   /**
@@ -92,16 +91,24 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   protected override createMessageHandlerInstance(
     handlerParams: IConsumerMessageHandlerParams,
   ): MessageHandler {
-    // Pass scheduleNextTick to the handler. When a dequeue is empty,
-    // it will schedule the next tick with a delay, preventing an infinite loop.
+    // Pass scheduleNextTick to the handler. When a dequeue is empty or a message
+    // is processed, it will schedule the next tick, preventing an infinite loop.
     const instance = new MultiplexedMessageHandler(
       this.consumerContext,
       handlerParams,
       this.scheduleNextTick,
     );
+    instance.on('consumer.messageHandler.error', (err) => {
+      this.logger.error(
+        `MultiplexedMessageHandler [${instance.getId()}] has experienced a runtime error: ${err.message}. Shutting down instance. The supervisor will attempt to restart it.`,
+      );
+      this.shutdownMessageHandler(instance, () => {});
+    });
     this.messageHandlerInstances.push(instance);
     this.logger.info(
-      `Created MultiplexedMessageHandler (ID: ${instance.getId()}) for queue: ${handlerParams.queue.queueParams.name}. Total: ${this.messageHandlerInstances.length}`,
+      `Created MultiplexedMessageHandler (ID: ${instance.getId()}) for queue: ${
+        handlerParams.queue.queueParams.name
+      }. Total: ${this.messageHandlerInstances.length}`,
     );
     return instance;
   }
@@ -116,7 +123,10 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
     const wasActive = messageHandler === this.activeMessageHandler;
     super.shutdownMessageHandler(messageHandler, () => {
       if (wasActive) {
-        this.scheduleNextTick();
+        this.activeMessageHandler = null;
+        // Use setTimeout to avoid immediate re-execution within the same call stack
+        // and allow other shutdown operations to complete.
+        setTimeout(() => this.execNextMessageHandler(), 0);
       }
       cb();
     });
@@ -124,6 +134,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
 
   /**
    * Starts the runner and kicks off the scheduling cycle.
+   * The parent's `goingUp` sequence already calls `runMessageHandlers` and `reconcileHandlers`.
    */
   protected override goingUp(): ((cb: ICallback<void>) => void)[] {
     return super.goingUp().concat([
@@ -136,10 +147,16 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
   }
 
   /**
-   * Stops the runner and resets the timer.
+   * Stops the runner and resets the scheduler timer.
    */
   protected override goingDown(): ((cb: ICallback<void>) => void)[] {
-    this.schedulerTimer.reset();
-    return super.goingDown();
+    return [
+      (cb: ICallback<void>) => {
+        this.schedulerTimer.reset();
+        cb();
+      },
+      // The parent's goingDown() sequence will handle shutting down handlers
+      // and resetting the supervisor timer.
+    ].concat(super.goingDown());
   }
 }
