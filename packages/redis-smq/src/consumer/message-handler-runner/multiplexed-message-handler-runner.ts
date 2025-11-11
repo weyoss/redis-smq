@@ -19,7 +19,7 @@ import { IConsumerContext } from '../types/consumer-context.js';
  * ensuring only one handler is active at a time and providing fair round-robin scheduling.
  */
 export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
-  protected readonly tickIntervalMs: number = 1000; // todo make it configurable: config.consumer.multiplexingTickIntervalMs
+  protected readonly multiplexingTickIntervalMs: number = 1000; // todo make it configurable: config.consumer.multiplexingTickIntervalMs
   protected schedulerTimer: Timer;
   protected index: number = 0;
   protected activeMessageHandler: MessageHandler | null = null;
@@ -49,7 +49,7 @@ export class MultiplexedMessageHandlerRunner extends MessageHandlerRunner {
     this.schedulerTimer.reset();
     this.schedulerTimer.setTimeout(
       () => this.execNextMessageHandler(),
-      this.tickIntervalMs,
+      this.multiplexingTickIntervalMs,
     );
   };
 
