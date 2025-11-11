@@ -47,6 +47,25 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
   }
 
   /**
+   * Generates a unique, consistent identifier for a queue configuration.
+   */
+  protected getQueueIdentifier(queue: IQueueParsedParams): string {
+    return `${queue.queueParams.ns}:${queue.queueParams.name}:${
+      queue.groupId ?? ''
+    }`;
+  }
+
+  /**
+   * Checks if two queue parameter objects represent the same queue.
+   */
+  protected isSameQueue(
+    q1: IQueueParsedParams,
+    q2: IQueueParsedParams,
+  ): boolean {
+    return this.getQueueIdentifier(q1) === this.getQueueIdentifier(q2);
+  }
+
+  /**
    * Schedules the next reconciliation check.
    */
   protected scheduleReconciliation = (): void => {
@@ -66,12 +85,14 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
     if (!this.isRunning()) return;
 
     this.logger.debug('Running handler reconciliation...');
-    const runningQueues = this.messageHandlerInstances.map((i) =>
-      JSON.stringify(i.getQueue()),
+    const runningQueues = new Set(
+      this.messageHandlerInstances.map((i) =>
+        this.getQueueIdentifier(i.getQueue()),
+      ),
     );
 
     const zombieHandlers = this.messageHandlers.filter(
-      (i) => !runningQueues.includes(JSON.stringify(i.queue)),
+      (i) => !runningQueues.has(this.getQueueIdentifier(i.queue)),
     );
 
     if (zombieHandlers.length > 0) {
@@ -118,14 +139,9 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
     if (!handler) {
       return cb();
     }
-    this.messageHandlers = this.messageHandlers.filter((h) => {
-      const q = h.queue;
-      return !(
-        queue.queueParams.name === q.queueParams.name &&
-        queue.queueParams.ns === q.queueParams.ns &&
-        queue.groupId === q.groupId
-      );
-    });
+    this.messageHandlers = this.messageHandlers.filter(
+      (h) => !this.isSameQueue(h.queue, queue),
+    );
     const handlerInstance = this.getMessageHandlerInstance(queue);
     if (handlerInstance) {
       this.shutdownMessageHandler(handlerInstance, cb);
@@ -181,14 +197,9 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
   protected getMessageHandlerInstance(
     queue: IQueueParsedParams,
   ): MessageHandler | undefined {
-    return this.messageHandlerInstances.find((i) => {
-      const handlerQueue = i.getQueue();
-      return (
-        handlerQueue.queueParams.name === queue.queueParams.name &&
-        handlerQueue.queueParams.ns === queue.queueParams.ns &&
-        handlerQueue.groupId === queue.groupId
-      );
-    });
+    return this.messageHandlerInstances.find((i) =>
+      this.isSameQueue(i.getQueue(), queue),
+    );
   }
 
   /**
@@ -197,12 +208,7 @@ export class MessageHandlerRunner extends Runnable<TConsumerMessageHandlerRunner
   protected getMessageHandler(
     queue: IQueueParsedParams,
   ): IConsumerMessageHandlerParams | undefined {
-    return this.messageHandlers.find(
-      (i) =>
-        i.queue.queueParams.name === queue.queueParams.name &&
-        i.queue.queueParams.ns === queue.queueParams.ns &&
-        i.queue.groupId === queue.groupId,
-    );
+    return this.messageHandlers.find((i) => this.isSameQueue(i.queue, queue));
   }
 
   /**
