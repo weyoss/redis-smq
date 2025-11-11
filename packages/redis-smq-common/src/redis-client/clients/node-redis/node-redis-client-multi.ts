@@ -29,6 +29,7 @@ export type TNodeRedisClient = RedisClientType<
   RespVersions,
   TypeMapping
 >;
+
 export class NodeRedisClientMulti implements IRedisTransaction {
   protected multi: RedisClientMultiCommandType<
     'typed',
@@ -42,6 +43,66 @@ export class NodeRedisClientMulti implements IRedisTransaction {
 
   constructor(client: TNodeRedisClient) {
     this.multi = client.multi();
+  }
+
+  get(key: string): this {
+    this.multi.get(key);
+    return this;
+  }
+
+  hget(key: string, field: string): this {
+    this.multi.hGet(key, field);
+    return this;
+  }
+
+  smembers(key: string): this {
+    this.multi.sMembers(key);
+    return this;
+  }
+
+  hgetall(key: string): this {
+    this.multi.hGetAll(key);
+    return this;
+  }
+
+  zcard(key: string): this {
+    this.multi.zCard(key);
+    return this;
+  }
+
+  scard(key: string): this {
+    this.multi.sCard(key);
+    return this;
+  }
+
+  llen(key: string): this {
+    this.multi.lLen(key);
+    return this;
+  }
+
+  zscore(key: string, member: string): this {
+    this.multi.zScore(key, member);
+    return this;
+  }
+
+  incr(key: string): this {
+    this.multi.incr(key);
+    return this;
+  }
+
+  decr(key: string): this {
+    this.multi.decr(key);
+    return this;
+  }
+
+  incrby(key: string, increment: number): this {
+    this.multi.incrBy(key, increment);
+    return this;
+  }
+
+  decrby(key: string, decrement: number): this {
+    this.multi.decrBy(key, decrement);
+    return this;
   }
 
   lrem(key: string, count: number, element: string): this {

@@ -499,4 +499,124 @@ export class NodeRedisClient extends RedisClientAbstract {
     this.client.on(event, listener);
     return this;
   }
+
+  // -- start new methods
+
+  ping(cb: ICallback<string>): void {
+    this.client
+      .ping()
+      .then((reply) => cb(null, reply))
+      .catch(cb);
+  }
+
+  mget(keys: string[], cb: ICallback<(string | null)[]>): void {
+    this.client
+      .mGet(keys)
+      .then((reply) => cb(null, reply))
+      .catch(cb);
+  }
+
+  incr(key: string, cb: ICallback<number>): void {
+    this.client
+      .incr(key)
+      .then((reply) => cb(null, reply))
+      .catch(cb);
+  }
+
+  decr(key: string, cb: ICallback<number>): void {
+    this.client
+      .decr(key)
+      .then((reply) => cb(null, reply))
+      .catch(cb);
+  }
+
+  incrby(key: string, increment: number, cb: ICallback<number>): void {
+    this.client
+      .incrBy(key, increment)
+      .then((reply) => cb(null, reply))
+      .catch(cb);
+  }
+
+  decrby(key: string, decrement: number, cb: ICallback<number>): void {
+    this.client
+      .decrBy(key, decrement)
+      .then((reply) => cb(null, reply))
+      .catch(cb);
+  }
+
+  expire(key: string, seconds: number, cb: ICallback<number>): void {
+    this.client
+      .expire(key, seconds)
+      .then((reply) => cb(null, reply))
+      .catch(cb);
+  }
+
+  pexpire(key: string, milliseconds: number, cb: ICallback<number>): void {
+    this.client
+      .pExpire(key, milliseconds)
+      .then((reply) => cb(null, reply))
+      .catch(cb);
+  }
+  ttl(key: string, cb: ICallback<number>): void {
+    this.client
+      .ttl(key)
+      .then((reply) => cb(null, reply))
+      .catch(cb);
+  }
+
+  pttl(key: string, cb: ICallback<number>): void {
+    this.client
+      .pTTL(key)
+      .then((reply) => cb(null, reply))
+      .catch(cb);
+  }
+
+  lpush(key: string, elements: string | string[], cb: ICallback<number>): void {
+    this.client
+      .lPush(key, elements)
+      .then((reply) => cb(null, reply))
+      .catch(cb);
+  }
+
+  rpush(key: string, elements: string | string[], cb: ICallback<number>): void {
+    this.client
+      .rPush(key, elements)
+      .then((reply) => cb(null, reply))
+      .catch(cb);
+  }
+
+  lpop(key: string, cb: ICallback<string | null>): void {
+    this.client
+      .lPop(key)
+      .then((reply) => cb(null, reply))
+      .catch(cb);
+  }
+
+  ltrim(key: string, start: number, stop: number, cb: ICallback<string>): void {
+    this.client
+      .lTrim(key, start, stop)
+      .then((reply) => cb(null, reply))
+      .catch(cb);
+  }
+
+  zcount(
+    key: string,
+    min: string | number,
+    max: string | number,
+    cb: ICallback<number>,
+  ): void {
+    this.client
+      .zCount(key, min, max)
+      .then((reply) => cb(null, reply))
+      .catch(cb);
+  }
+
+  zscore(key: string, member: string, cb: ICallback<string | null>): void {
+    this.client
+      .zScore(key, member)
+      .then((reply) => cb(null, reply !== null ? String(reply) : null))
+      .catch(cb);
+  }
+
+  // -- end new methods
 }

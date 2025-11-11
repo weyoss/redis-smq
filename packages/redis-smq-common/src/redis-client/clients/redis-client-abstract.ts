@@ -84,6 +84,64 @@ export abstract class RedisClientAbstract
     } else validate(cb);
   }
 
+  abstract ping(cb: ICallback<string>): void;
+
+  abstract mget(keys: string[], cb: ICallback<(string | null)[]>): void;
+
+  abstract incr(key: string, cb: ICallback<number>): void;
+
+  abstract decr(key: string, cb: ICallback<number>): void;
+
+  abstract incrby(key: string, increment: number, cb: ICallback<number>): void;
+
+  abstract decrby(key: string, decrement: number, cb: ICallback<number>): void;
+
+  abstract expire(key: string, seconds: number, cb: ICallback<number>): void;
+
+  abstract pexpire(
+    key: string,
+    milliseconds: number,
+    cb: ICallback<number>,
+  ): void;
+
+  abstract ttl(key: string, cb: ICallback<number>): void;
+
+  abstract pttl(key: string, cb: ICallback<number>): void;
+
+  abstract lpush(
+    key: string,
+    elements: string | string[],
+    cb: ICallback<number>,
+  ): void;
+
+  abstract rpush(
+    key: string,
+    elements: string | string[],
+    cb: ICallback<number>,
+  ): void;
+
+  abstract lpop(key: string, cb: ICallback<string | null>): void;
+
+  abstract ltrim(
+    key: string,
+    start: number,
+    stop: number,
+    cb: ICallback<string>,
+  ): void;
+
+  abstract zcount(
+    key: string,
+    min: string | number,
+    max: string | number,
+    cb: ICallback<number>,
+  ): void;
+
+  abstract zscore(
+    key: string,
+    member: string,
+    cb: ICallback<string | null>,
+  ): void;
+
   abstract set(
     key: string,
     value: string,
