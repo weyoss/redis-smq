@@ -39,24 +39,7 @@ RedisSMQ.initialize(
     },
   },
   (err) => {
-    if (err) {
-      console.error('Failed to initialize RedisSMQ:', err);
-      return;
-    }
-
-    // Now create producers and consumers without repeating Redis config
-    const producer = RedisSMQ.createProducer();
-    const consumer = RedisSMQ.createConsumer();
-
-    producer.run((e) => {
-      if (e) return console.error('Producer start failed:', e);
-      console.log('Producer ready');
-    });
-
-    consumer.run((e) => {
-      if (e) return console.error('Consumer start failed:', e);
-      console.log('Consumer ready');
-    });
+    if (err) console.error('Failed to initialize RedisSMQ:', err);
   },
 );
 ```
@@ -86,9 +69,7 @@ RedisSMQ.initializeWithConfig(
         logLevel: EConsoleLoggerLevel.INFO,
       },
     },
-    messages: {
-      store: false,
-    },
+    messageAudit: false,
     eventBus: {
       enabled: false,
     },
@@ -146,8 +127,8 @@ RedisSMQ.initialize(
   (err) => {
     if (err) return console.error('Init failed:', err);
 
-    const manager = Configuration.getInstance();
-    manager.updateConfig(
+    const cfg = Configuration.getInstance();
+    cfg.updateConfig(
       {
         logger: { enabled: true },
         messageAudit: {
@@ -176,13 +157,13 @@ RedisSMQ.initialize(
   (err) => {
     if (err) return console.error('Init failed:', err);
 
-    const manager = Configuration.getInstance();
-    manager.save(
+    const cfg = Configuration.getInstance();
+    cfg.save(
       {
         logger: { enabled: false },
       },
-      (saveErr) => {
-        if (saveErr) return console.error('Save failed:', saveErr);
+      (err) => {
+        if (err) return console.error('Save failed:', err);
         console.log('Configuration saved to Redis');
       },
     );
@@ -203,9 +184,9 @@ RedisSMQ.initialize(
   (err) => {
     if (err) return console.error('Init failed:', err);
 
-    const manager = Configuration.getInstance();
-    manager.exists((existsErr, exists) => {
-      if (existsErr) return console.error('Exists check failed:', existsErr);
+    const cfg = Configuration.getInstance();
+    cfg.exists((err, exists) => {
+      if (err) return console.error('Exists check failed:', err);
       console.log(
         exists
           ? 'Configuration exists in Redis'
@@ -229,9 +210,9 @@ RedisSMQ.initialize(
   (err) => {
     if (err) return console.error('Init failed:', err);
 
-    const manager = Configuration.getInstance();
-    manager.reset((resetErr) => {
-      if (resetErr) return console.error('Reset failed:', resetErr);
+    const cfg = Configuration.getInstance();
+    cfg.reset((err) => {
+      if (err) return console.error('Reset failed:', err);
       console.log('Configuration reset to defaults and persisted to Redis');
     });
   },

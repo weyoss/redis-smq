@@ -26,7 +26,7 @@ For the full API, see the EventBus API and event type definitions:
 
 Enable EventBus when initializing with a full RedisSMQ configuration:
 
-```typescript
+```javascript
 import { RedisSMQ } from 'redis-smq';
 import { ERedisConfigClient, EConsoleLoggerLevel } from 'redis-smq-common';
 
@@ -41,7 +41,7 @@ RedisSMQ.initializeWithConfig(
       enabled: true,
       options: { logLevel: EConsoleLoggerLevel.INFO },
     },
-    messages: { store: false },
+    messageAudit: false,
     eventBus: { enabled: true }, // Enable EventBus
   },
   (err) => {
@@ -61,7 +61,7 @@ Notes:
 
 When EventBus is enabled, retrieve the singleton instance and subscribe to events. No callback is needed.
 
-```typescript
+```javascript
 import { EventBus } from 'redis-smq';
 
 // Succeeds after RedisSMQ.initialize*(...) has completed
@@ -74,7 +74,7 @@ Subscribe using the event names defined by the type aliases above.
 
 Example: subscribe to a consumer message acknowledgment event:
 
-```typescript
+```javascript
 import { EventBus } from 'redis-smq';
 
 const eventBus = EventBus.getInstance();
@@ -99,7 +99,7 @@ message flow, etc.) using the event names listed in the API links above.
   separately.
 - If you explicitly need to stop the EventBus (for example, outside of a full RedisSMQ shutdown), call:
 
-```typescript
+```javascript
 import { EventBus } from 'redis-smq';
 
 EventBus.shutdown((err) => {
