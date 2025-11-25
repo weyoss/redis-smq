@@ -127,7 +127,6 @@ _2. Create a queue_
 ```javascript
 import {
   RedisSMQ,
-  ProducibleMessage,
   EQueueType,
   EQueueDeliveryModel,
 } from 'redis-smq';
