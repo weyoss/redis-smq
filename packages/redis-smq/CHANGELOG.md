@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.5-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.4...v9.0.5-next.0) (2025-12-04)
+
+### 🐛 Bug Fixes
+
+- **redis-smq:** fail when acked message audit is not enabled ([c6d2124](https://github.com/weyoss/redis-smq/commit/c6d212464b8733cfa73a8effc6912f0605248636))
+- **redis-smq:** fail when unacked message audit is not enabled ([a8df756](https://github.com/weyoss/redis-smq/commit/a8df7563c4874b66fd4831a0a6fb9f298f4aecdb))
+
+### 🚀 Chore
+
+- update READMEs after merging 'v9.0.4' into 'next' ([9fce2ae](https://github.com/weyoss/redis-smq/commit/9fce2ae4158c1c2ca112a897e08d73913d1a7bd1))
+
+### 📝 Documentation
+
+- **redis-smq:** improve code examples ([8f89029](https://github.com/weyoss/redis-smq/commit/8f890296c54164d12ae1196c8623069376e81415))
+- **redis-smq:** update API reference ([fa916f7](https://github.com/weyoss/redis-smq/commit/fa916f7042345c169ddaf40dd71f3b988d9f29cc))
+
+### ✅ Tests
+
+- **redis-smq:** update tests to expect audit errors when audit is disabled ([525dabc](https://github.com/weyoss/redis-smq/commit/525dabca6cb39b0854cc42273103f5b9bb40e6fc))
+
 ## [9.0.4](https://github.com/weyoss/redis-smq/compare/v9.0.4-next.0...v9.0.4) (2025-11-13)
 
 ### 🚀 Chore
