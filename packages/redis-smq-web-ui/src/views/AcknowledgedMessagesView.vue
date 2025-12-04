@@ -18,11 +18,6 @@ import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
 import type { IQueueParams } from '@/types/index.ts';
 import { useAcknowledgedMessages } from '@/composables/useAcknowledgedMessages.ts';
 
-// Generated API client hook to load RedisSMQ configuration
-// Path: packages/redis-smq-web-ui/src/api/generated/configuration/configuration.ts
-import { useGetApiV1Config } from '@/api/generated/configuration/configuration.ts';
-import { getErrorMessage } from '@/lib/error.ts';
-
 const selectedQueueStore = useSelectedQueueStore();
 const queuePropertiesStore = useSelectedQueuePropertiesStore();
 const pageContentStore = usePageContentStore();
@@ -52,17 +47,23 @@ watch(
 // Queue state
 const selectedQueue = computed(() => selectedQueueStore.selectedQueue);
 
-// Use the acknowledged messages composable
+// Use the acknowledged messages composable, which now provides all necessary state
 const {
   messages,
   pagination,
   isLoading,
   isDeleting,
+  isRequeuing,
   error,
   goToPage,
   setPageSize,
   refresh,
   deleteMessage,
+  requeueMessage,
+  isConfigLoading,
+  configError,
+  ackEnabled,
+  refetchConfig,
 } = useAcknowledgedMessages(queueParams, 20);
 
 // Page content
@@ -90,7 +91,7 @@ watchEffect(() => {
   });
 });
 
-// Page content state management - simplified to handle only queue selection
+// Page content state management
 watchEffect(() => {
   if (!selectedQueue.value) {
     pageContentStore.setEmptyState(true, {
@@ -105,45 +106,12 @@ watchEffect(() => {
     return;
   }
 
-  // Clear page-level states when queue is selected - let MessageList component handle its own states
+  // Clear page-level states when queue is selected
   pageContentStore.setLoadingState(false);
   pageContentStore.setErrorState(null);
   pageContentStore.setEmptyState(false);
   pageContentStore.setPageActions([]);
 });
-
-// Load RedisSMQ configuration to check if acknowledged messages storage is enabled
-const {
-  data: configData,
-  isLoading: isConfigLoading,
-  error: configError,
-  refetch: refetchConfig,
-} = useGetApiV1Config();
-
-const ackEnabled = computed<boolean | null>(() => {
-  const enabled =
-    configData.value?.data?.messageAudit?.acknowledgedMessages?.enabled;
-  return typeof enabled === 'boolean' ? enabled : null;
-});
-
-const configErrorMessage = computed(() => {
-  return getErrorMessage(configError.value);
-});
-
-// Event handlers to connect UI events to composable actions
-async function handleDelete(messageId: string) {
-  if (deleteMessage) {
-    await deleteMessage(messageId);
-  }
-}
-
-function onPageChange(page: number) {
-  void goToPage(page);
-}
-
-async function onPageSizeChange(size: number) {
-  await setPageSize(size);
-}
 </script>
 
 <template>
@@ -160,7 +128,7 @@ async function onPageSizeChange(size: number) {
         <div class="ack-alert-text">
           <strong>Loading configuration…</strong>
           <p class="ack-alert-message">
-            Checking server settings for acknowledged messages storage.
+            Checking server settings for acknowledged messages audit.
           </p>
         </div>
         <div class="ack-alert-actions">
@@ -187,7 +155,7 @@ async function onPageSizeChange(size: number) {
         <div class="ack-alert-text">
           <strong>Could not load server configuration</strong>
           <p class="ack-alert-message">
-            {{ configErrorMessage }}
+            {{ configError }}
           </p>
         </div>
         <div class="ack-alert-actions">
@@ -223,8 +191,9 @@ async function onPageSizeChange(size: number) {
       </div>
     </div>
 
+    <!-- MAIN LIST: only when a queue is selected AND ack is enabled -->
     <MessageList
-      v-if="selectedQueue"
+      v-if="selectedQueue && ackEnabled === true"
       :messages="messages"
       :is-loading="isLoading"
       :error="error"
@@ -233,15 +202,16 @@ async function onPageSizeChange(size: number) {
       empty-message="No acknowledged messages found for this queue. Messages appear here when they have been successfully processed and acknowledged by consumers."
       icon="bi-check-circle"
       :is-deleting="isDeleting"
-      :is-requeuing="false"
+      :is-requeuing="isRequeuing"
       @refresh="refresh"
-      @delete-message="handleDelete"
-      @page-change="onPageChange"
-      @page-size-change="onPageSizeChange"
-      @first-page="onPageChange(1)"
-      @previous-page="onPageChange(pagination.currentPage - 1)"
-      @next-page="onPageChange(pagination.currentPage + 1)"
-      @last-page="onPageChange(pagination.totalPages)"
+      @delete-message="deleteMessage"
+      @requeue-message="requeueMessage"
+      @page-change="goToPage"
+      @page-size-change="setPageSize"
+      @first-page="goToPage(1)"
+      @previous-page="goToPage(pagination.currentPage - 1)"
+      @next-page="goToPage(pagination.currentPage + 1)"
+      @last-page="goToPage(pagination.totalPages)"
     />
   </PageContent>
 </template>
