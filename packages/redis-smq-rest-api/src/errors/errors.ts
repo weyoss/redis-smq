@@ -15,6 +15,10 @@
  * ErrorName: [400, 'ErrorName'],
  */
 export const errors = {
+  AcknowledgedMessageAuditNotEnabledError: [
+    500,
+    'AcknowledgedMessageAuditNotEnabledError',
+  ],
   ConfigurationError: [400, 'ConfigurationError'],
   ConfigurationMessageAuditExpireError: [
     400,
@@ -31,6 +35,10 @@ export const errors = {
   ConsumerGroupRequiredError: [400, 'ConsumerGroupRequiredError'],
   ConsumerGroupsError: [500, 'ConsumerGroupsError'],
   ConsumerGroupsNotSupportedError: [501, 'ConsumerGroupsNotSupportedError'],
+  DeadLetteredMessageAuditNotEnabledError: [
+    500,
+    'DeadLetteredMessageAuditNotEnabledError',
+  ],
   ExchangeError: [500, 'ExchangeError'],
   ExchangeFanoutError: [500, 'ExchangeFanoutError'],
   ExchangeHasBoundQueuesError: [500, 'ExchangeHasBoundQueuesError'],
