@@ -68,3 +68,4 @@ export * from './namespace-mismatch.error.js';
 export * from './exchange-not-found.error.js';
 export * from './queue-already-bound.js';
 export * from './routing-key-required.error.js';
+export * from './acknowledged-message-audit-not-enabled.error.js';
