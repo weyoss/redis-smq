@@ -19,6 +19,10 @@ import {
 } from '../../common/message-producing-consuming.js';
 import { getQueueAcknowledgedMessages } from '../../common/queue-acknowledged-messages.js';
 import { getQueueDeadLetteredMessages } from '../../common/queue-dead-lettered-messages.js';
+import {
+  AcknowledgedMessageAuditNotEnabledError,
+  DeadLetteredMessageAuditNotEnabledError,
+} from '../../../src/errors/index.js';
 
 test('Message audit: enabled = false', async () => {
   const configInstance = bluebird.promisifyAll(Configuration.getInstance());
@@ -33,13 +37,9 @@ test('Message audit: enabled = false', async () => {
   await shutDownBaseInstance(producer);
   await shutDownBaseInstance(consumer);
   const deadLetteredMessages = await getQueueDeadLetteredMessages();
-  const res1 = await deadLetteredMessages.getMessagesAsync(
-    defaultQueue,
-    0,
-    100,
-  );
-  expect(res1.totalItems).toBe(0);
-  expect(res1.items.length).toBe(0);
+  await expect(
+    deadLetteredMessages.getMessagesAsync(defaultQueue, 0, 100),
+  ).rejects.toThrowError(DeadLetteredMessageAuditNotEnabledError);
 
   const { producer: p, consumer: c } =
     await produceAndAcknowledgeMessage(getDefaultQueue());
@@ -48,11 +48,7 @@ test('Message audit: enabled = false', async () => {
   await shutDownBaseInstance(c);
 
   const acknowledgedMessages = await getQueueAcknowledgedMessages();
-  const res2 = await acknowledgedMessages.getMessagesAsync(
-    defaultQueue,
-    0,
-    100,
-  );
-  expect(res2.totalItems).toBe(0);
-  expect(res2.items.length).toBe(0);
+  await expect(
+    acknowledgedMessages.getMessagesAsync(defaultQueue, 0, 100),
+  ).rejects.toThrowError(AcknowledgedMessageAuditNotEnabledError);
 });
