@@ -17,8 +17,6 @@ import { useSelectedQueuePropertiesStore } from '@/stores/selectedQueuePropertie
 import { useSelectedQueueStore } from '@/stores/selectedQueue.ts';
 import type { IQueueParams } from '@/types/index.ts';
 import { useDeadLetteredMessages } from '@/composables/useDeadLetteredMessages.ts';
-import { useGetApiV1Config } from '@/api/generated/configuration/configuration.ts';
-import { getErrorMessage } from '@/lib/error.ts';
 
 const selectedQueueStore = useSelectedQueueStore();
 const queuePropertiesStore = useSelectedQueuePropertiesStore();
@@ -49,7 +47,7 @@ watch(
 // Queue state
 const selectedQueue = computed(() => selectedQueueStore.selectedQueue);
 
-// Use the dead lettered messages composable
+// Use the dead-lettered messages composable
 const {
   messages,
   pagination,
@@ -62,6 +60,10 @@ const {
   refresh,
   deleteMessage,
   requeueMessage,
+  isConfigLoading,
+  configError,
+  deadLetteringEnabled,
+  refetchConfig,
 } = useDeadLetteredMessages(queueParams, 20);
 
 // Page content
@@ -85,11 +87,11 @@ watchEffect(() => {
   pageContentStore.setPageHeader({
     title: pageTitle.value,
     subtitle: pageSubtitle.value,
-    icon: 'bi bi-x-circle',
+    icon: 'bi bi-heartbreak',
   });
 });
 
-// Page content state management - simplified to handle only queue selection
+// Page content state management
 watchEffect(() => {
   if (!selectedQueue.value) {
     pageContentStore.setEmptyState(true, {
@@ -104,52 +106,12 @@ watchEffect(() => {
     return;
   }
 
-  // Clear page-level states when queue is selected - let MessageList component handle its own states
+  // Clear page-level states when queue is selected
   pageContentStore.setLoadingState(false);
   pageContentStore.setErrorState(null);
   pageContentStore.setEmptyState(false);
   pageContentStore.setPageActions([]);
 });
-
-// Load RedisSMQ configuration to check if dead-lettered messages storage is enabled
-const {
-  data: configData,
-  isLoading: isConfigLoading,
-  error: configError,
-  refetch: refetchConfig,
-} = useGetApiV1Config();
-
-const dlEnabled = computed<boolean | null>(() => {
-  // Expected shape from generated model: data.messages.store.deadLettered.enabled
-  const enabled =
-    configData.value?.data?.messageAudit.deadLetteredMessages?.enabled;
-  return typeof enabled === 'boolean' ? enabled : null;
-});
-
-const configErrorMessage = computed(() => {
-  return getErrorMessage(configError);
-});
-
-// Event handlers to connect UI events to composable actions
-async function handleDelete(messageId: string) {
-  if (deleteMessage) {
-    await deleteMessage(messageId);
-  }
-}
-
-async function handleRequeue(messageId: string) {
-  if (requeueMessage) {
-    await requeueMessage(messageId);
-  }
-}
-
-function onPageChange(page: number) {
-  void goToPage(page);
-}
-
-async function onPageSizeChange(size: number) {
-  await setPageSize(size);
-}
 </script>
 
 <template>
@@ -157,19 +119,19 @@ async function onPageSizeChange(size: number) {
     <!-- CONFIG LOADING BANNER -->
     <div
       v-if="isConfigLoading"
-      class="dl-loading-alert"
+      class="dlq-loading-alert"
       role="status"
       aria-live="polite"
     >
-      <div class="dl-alert-row">
-        <i class="bi bi-arrow-repeat dl-alert-icon" aria-hidden="true"></i>
-        <div class="dl-alert-text">
+      <div class="dlq-alert-row">
+        <i class="bi bi-arrow-repeat dlq-alert-icon" aria-hidden="true"></i>
+        <div class="dlq-alert-text">
           <strong>Loading configuration…</strong>
-          <p class="dl-alert-message">
-            Checking server settings for dead-lettered messages storage.
+          <p class="dlq-alert-message">
+            Checking server settings for dead-lettered messages audit.
           </p>
         </div>
-        <div class="dl-alert-actions">
+        <div class="dlq-alert-actions">
           <span
             class="spinner-border spinner-border-sm"
             aria-hidden="true"
@@ -181,22 +143,22 @@ async function onPageSizeChange(size: number) {
     <!-- CONFIG ERROR BANNER -->
     <div
       v-else-if="configError"
-      class="dl-error-alert"
+      class="dlq-error-alert"
       role="alert"
       aria-live="polite"
     >
-      <div class="dl-alert-row">
+      <div class="dlq-alert-row">
         <i
-          class="bi bi-exclamation-triangle-fill dl-alert-icon"
+          class="bi bi-exclamation-triangle-fill dlq-alert-icon"
           aria-hidden="true"
         ></i>
-        <div class="dl-alert-text">
+        <div class="dlq-alert-text">
           <strong>Could not load server configuration</strong>
-          <p class="dl-alert-message">
-            {{ configErrorMessage }}
+          <p class="dlq-alert-message">
+            {{ configError }}
           </p>
         </div>
-        <div class="dl-alert-actions">
+        <div class="dlq-alert-actions">
           <button
             class="btn btn-sm btn-outline-primary"
             type="button"
@@ -211,16 +173,16 @@ async function onPageSizeChange(size: number) {
 
     <!-- DISABLED STORAGE BANNER -->
     <div
-      v-else-if="dlEnabled === false"
-      class="dl-disabled-alert"
+      v-else-if="deadLetteringEnabled === false"
+      class="dlq-disabled-alert"
       role="status"
       aria-live="polite"
     >
-      <div class="dl-alert-row">
-        <i class="bi bi-info-circle-fill dl-alert-icon" aria-hidden="true"></i>
-        <div class="dl-alert-text">
-          <strong>Dead-lettered messages audit is disabled</strong>
-          <p class="dl-alert-message">
+      <div class="dlq-alert-row">
+        <i class="bi bi-info-circle-fill dlq-alert-icon" aria-hidden="true"></i>
+        <div class="dlq-alert-text">
+          <strong>Dead-lettered message audit is disabled</strong>
+          <p class="dlq-alert-message">
             Dead-lettered message auditing is disabled in the RedisSMQ
             configuration. This view will remain empty until auditing is
             enabled.
@@ -229,68 +191,47 @@ async function onPageSizeChange(size: number) {
       </div>
     </div>
 
+    <!-- MAIN LIST: only when a queue is selected AND dead-lettering is enabled -->
     <MessageList
-      v-if="selectedQueue"
+      v-if="selectedQueue && deadLetteringEnabled === true"
       :messages="messages"
       :is-loading="isLoading"
       :error="error"
       :pagination="pagination"
       :show-pagination="true"
-      empty-message="No dead-lettered messages found for this queue. Messages appear here when they fail processing and exceed retry limits."
-      icon="bi-x-circle"
+      empty-message="No dead-lettered messages found for this queue. Messages are moved here after failing all retry attempts."
+      icon="bi-heartbreak"
       :is-deleting="isDeleting"
       :is-requeuing="isRequeuing"
       @refresh="refresh"
-      @delete-message="handleDelete"
-      @requeue-message="handleRequeue"
-      @page-change="onPageChange"
-      @page-size-change="onPageSizeChange"
-      @first-page="onPageChange(1)"
-      @previous-page="onPageChange(pagination.currentPage - 1)"
-      @next-page="onPageChange(pagination.currentPage + 1)"
-      @last-page="onPageChange(pagination.totalPages)"
+      @delete-message="deleteMessage"
+      @requeue-message="requeueMessage"
+      @page-change="goToPage"
+      @page-size-change="setPageSize"
+      @first-page="goToPage(1)"
+      @previous-page="goToPage(pagination.currentPage - 1)"
+      @next-page="goToPage(pagination.currentPage + 1)"
+      @last-page="goToPage(pagination.totalPages)"
     />
   </PageContent>
 </template>
 
 <style scoped>
-/* Shared layout for banners */
-.dl-alert-row {
+/* Using 'dlq' prefix for styles to avoid conflicts */
+.dlq-alert-row {
   display: flex;
-  align-items: center; /* center vertically */
+  align-items: center;
   gap: 0.75rem;
   flex-wrap: wrap;
 }
 
-.dl-alert-icon {
+.dlq-alert-icon {
   font-size: 1.25rem;
   flex-shrink: 0;
 }
 
-.dl-alert-text {
-  display: grid;
-  gap: 0.25rem;
-  min-width: 0;
-}
-
-.dl-alert-message {
-  margin: 0;
-  line-height: 1.4;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-/* Right-aligned actions (spinner/retry) centered vertically */
-.dl-alert-actions {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100%;
-}
-
-/* Loading style */
-.dl-loading-alert {
+/* Loading */
+.dlq-loading-alert {
   background: #cff4fc;
   border: 1px solid #b6effb;
   color: #055160;
@@ -300,8 +241,8 @@ async function onPageSizeChange(size: number) {
   box-shadow: 0 2px 4px rgba(5, 81, 96, 0.06);
 }
 
-/* Error style */
-.dl-error-alert {
+/* Error */
+.dlq-error-alert {
   background: #f8d7da;
   border: 1px solid #f5c2c7;
   color: #842029;
@@ -311,8 +252,8 @@ async function onPageSizeChange(size: number) {
   box-shadow: 0 2px 4px rgba(132, 32, 41, 0.06);
 }
 
-/* Disabled style */
-.dl-disabled-alert {
+/* Disabled info */
+.dlq-disabled-alert {
   background: #fff3cd;
   border: 1px solid #ffe69c;
   color: #664d03;
@@ -322,9 +263,29 @@ async function onPageSizeChange(size: number) {
   box-shadow: 0 2px 4px rgba(102, 77, 3, 0.06);
 }
 
-/* Small screens: tighter gaps */
+.dlq-alert-text {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.dlq-alert-message {
+  margin: 0;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.dlq-alert-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+}
+
 @media (max-width: 768px) {
-  .dl-alert-row {
+  .dlq-alert-row {
     gap: 0.5rem;
   }
 }
