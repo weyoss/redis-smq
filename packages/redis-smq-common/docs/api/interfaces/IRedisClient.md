@@ -34,7 +34,51 @@
 
 `void`
 
-***
+---
+
+### decr()
+
+> **decr**(`key`, `cb`): `void`
+
+#### Parameters
+
+##### key
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
+
+#### Returns
+
+`void`
+
+---
+
+### decrby()
+
+> **decrby**(`key`, `decrement`, `cb`): `void`
+
+#### Parameters
+
+##### key
+
+`string`
+
+##### decrement
+
+`number`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
+
+#### Returns
+
+`void`
+
+---
 
 ### del()
 
@@ -54,7 +98,7 @@
 
 `void`
 
-***
+---
 
 ### emit()
 
@@ -64,7 +108,7 @@
 
 ##### E
 
-`E` *extends* keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
+`E` _extends_ keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
 
 #### Parameters
 
@@ -84,7 +128,7 @@
 
 [`EventEmitter`](../classes/EventEmitter.md).[`emit`](../classes/EventEmitter.md#emit)
 
-***
+---
 
 ### end()
 
@@ -100,7 +144,7 @@
 
 `void`
 
-***
+---
 
 ### evalsha()
 
@@ -124,7 +168,31 @@
 
 `void`
 
-***
+---
+
+### expire()
+
+> **expire**(`key`, `seconds`, `cb`): `void`
+
+#### Parameters
+
+##### key
+
+`string`
+
+##### seconds
+
+`number`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
+
+#### Returns
+
+`void`
+
+---
 
 ### flushall()
 
@@ -140,7 +208,7 @@
 
 `void`
 
-***
+---
 
 ### get()
 
@@ -160,7 +228,7 @@
 
 `void`
 
-***
+---
 
 ### getInfo()
 
@@ -176,7 +244,7 @@
 
 `void`
 
-***
+---
 
 ### getScriptId()
 
@@ -192,7 +260,7 @@
 
 `string` \| [`RedisClientError`](../classes/RedisClientError.md)
 
-***
+---
 
 ### halt()
 
@@ -208,7 +276,7 @@
 
 `void`
 
-***
+---
 
 ### hdel()
 
@@ -232,7 +300,7 @@
 
 `void`
 
-***
+---
 
 ### hget()
 
@@ -256,7 +324,7 @@
 
 `void`
 
-***
+---
 
 ### hgetall()
 
@@ -276,7 +344,7 @@
 
 `void`
 
-***
+---
 
 ### hkeys()
 
@@ -296,7 +364,7 @@
 
 `void`
 
-***
+---
 
 ### hlen()
 
@@ -316,7 +384,7 @@
 
 `void`
 
-***
+---
 
 ### hmget()
 
@@ -340,7 +408,7 @@
 
 `void`
 
-***
+---
 
 ### hscan()
 
@@ -374,7 +442,7 @@
 
 `void`
 
-***
+---
 
 ### hscanAll()
 
@@ -404,7 +472,7 @@
 
 `void`
 
-***
+---
 
 ### hset()
 
@@ -432,7 +500,51 @@
 
 `void`
 
-***
+---
+
+### incr()
+
+> **incr**(`key`, `cb`): `void`
+
+#### Parameters
+
+##### key
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
+
+#### Returns
+
+`void`
+
+---
+
+### incrby()
+
+> **incrby**(`key`, `increment`, `cb`): `void`
+
+#### Parameters
+
+##### key
+
+`string`
+
+##### increment
+
+`number`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
+
+#### Returns
+
+`void`
+
+---
 
 ### llen()
 
@@ -452,7 +564,7 @@
 
 `void`
 
-***
+---
 
 ### lmove()
 
@@ -484,7 +596,7 @@
 
 `void`
 
-***
+---
 
 ### loadBuiltInScriptFiles()
 
@@ -500,7 +612,7 @@
 
 `void`
 
-***
+---
 
 ### loadScript()
 
@@ -520,7 +632,7 @@
 
 `void`
 
-***
+---
 
 ### loadScriptFiles()
 
@@ -540,7 +652,27 @@
 
 `void`
 
-***
+---
+
+### lpop()
+
+> **lpop**(`key`, `cb`): `void`
+
+#### Parameters
+
+##### key
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`string` \| `null`\>
+
+#### Returns
+
+`void`
+
+---
 
 ### lpoprpush()
 
@@ -564,7 +696,31 @@
 
 `void`
 
-***
+---
+
+### lpush()
+
+> **lpush**(`key`, `elements`, `cb`): `void`
+
+#### Parameters
+
+##### key
+
+`string`
+
+##### elements
+
+`string` | `string`[]
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
+
+#### Returns
+
+`void`
+
+---
 
 ### lrange()
 
@@ -592,7 +748,7 @@
 
 `void`
 
-***
+---
 
 ### lrem()
 
@@ -620,7 +776,55 @@
 
 `void`
 
-***
+---
+
+### ltrim()
+
+> **ltrim**(`key`, `start`, `stop`, `cb`): `void`
+
+#### Parameters
+
+##### key
+
+`string`
+
+##### start
+
+`number`
+
+##### stop
+
+`number`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`string`\>
+
+#### Returns
+
+`void`
+
+---
+
+### mget()
+
+> **mget**(`keys`, `cb`): `void`
+
+#### Parameters
+
+##### keys
+
+`string`[]
+
+##### cb
+
+[`ICallback`](ICallback.md)\<(`string` \| `null`)[]\>
+
+#### Returns
+
+`void`
+
+---
 
 ### multi()
 
@@ -630,7 +834,7 @@
 
 [`IRedisTransaction`](IRedisTransaction.md)
 
-***
+---
 
 ### on()
 
@@ -640,7 +844,7 @@
 
 ##### E
 
-`E` *extends* keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
+`E` _extends_ keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
 
 #### Parameters
 
@@ -660,7 +864,7 @@
 
 [`EventEmitter`](../classes/EventEmitter.md).[`on`](../classes/EventEmitter.md#on)
 
-***
+---
 
 ### once()
 
@@ -670,7 +874,7 @@
 
 ##### E
 
-`E` *extends* keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
+`E` _extends_ keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
 
 #### Parameters
 
@@ -690,7 +894,47 @@
 
 [`EventEmitter`](../classes/EventEmitter.md).[`once`](../classes/EventEmitter.md#once)
 
-***
+---
+
+### pexpire()
+
+> **pexpire**(`key`, `milliseconds`, `cb`): `void`
+
+#### Parameters
+
+##### key
+
+`string`
+
+##### milliseconds
+
+`number`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
+
+#### Returns
+
+`void`
+
+---
+
+### ping()
+
+> **ping**(`cb`): `void`
+
+#### Parameters
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`string`\>
+
+#### Returns
+
+`void`
+
+---
 
 ### psubscribe()
 
@@ -706,7 +950,27 @@
 
 `void`
 
-***
+---
+
+### pttl()
+
+> **pttl**(`key`, `cb`): `void`
+
+#### Parameters
+
+##### key
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
+
+#### Returns
+
+`void`
+
+---
 
 ### publish()
 
@@ -730,7 +994,7 @@
 
 `void`
 
-***
+---
 
 ### punsubscribe()
 
@@ -746,7 +1010,7 @@
 
 `void`
 
-***
+---
 
 ### removeAllListeners()
 
@@ -756,7 +1020,7 @@
 
 ##### E
 
-`E` *extends* keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
+`E` _extends_ keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
 
 #### Parameters
 
@@ -772,7 +1036,7 @@
 
 [`EventEmitter`](../classes/EventEmitter.md).[`removeAllListeners`](../classes/EventEmitter.md#removealllisteners)
 
-***
+---
 
 ### removeListener()
 
@@ -782,7 +1046,7 @@
 
 ##### E
 
-`E` *extends* keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
+`E` _extends_ keyof [`TRedisClientEvent`](../type-aliases/TRedisClientEvent.md)
 
 #### Parameters
 
@@ -802,7 +1066,7 @@
 
 [`EventEmitter`](../classes/EventEmitter.md).[`removeListener`](../classes/EventEmitter.md#removelistener)
 
-***
+---
 
 ### rpop()
 
@@ -822,7 +1086,7 @@
 
 `void`
 
-***
+---
 
 ### rpoplpush()
 
@@ -846,7 +1110,31 @@
 
 `void`
 
-***
+---
+
+### rpush()
+
+> **rpush**(`key`, `elements`, `cb`): `void`
+
+#### Parameters
+
+##### key
+
+`string`
+
+##### elements
+
+`string` | `string`[]
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
+
+#### Returns
+
+`void`
+
+---
 
 ### runScript()
 
@@ -874,7 +1162,7 @@
 
 `void`
 
-***
+---
 
 ### sadd()
 
@@ -898,7 +1186,7 @@
 
 `void`
 
-***
+---
 
 ### scard()
 
@@ -918,7 +1206,7 @@
 
 `void`
 
-***
+---
 
 ### set()
 
@@ -960,7 +1248,7 @@
 
 `void`
 
-***
+---
 
 ### shutdown()
 
@@ -976,7 +1264,7 @@
 
 `void`
 
-***
+---
 
 ### sismember()
 
@@ -1000,7 +1288,7 @@
 
 `void`
 
-***
+---
 
 ### smembers()
 
@@ -1020,7 +1308,7 @@
 
 `void`
 
-***
+---
 
 ### srem()
 
@@ -1044,7 +1332,7 @@
 
 `void`
 
-***
+---
 
 ### sscan()
 
@@ -1078,7 +1366,7 @@
 
 `void`
 
-***
+---
 
 ### sscanAll()
 
@@ -1108,7 +1396,7 @@
 
 `void`
 
-***
+---
 
 ### subscribe()
 
@@ -1124,7 +1412,27 @@
 
 `void`
 
-***
+---
+
+### ttl()
+
+> **ttl**(`key`, `cb`): `void`
+
+#### Parameters
+
+##### key
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
+
+#### Returns
+
+`void`
+
+---
 
 ### unsubscribe()
 
@@ -1140,7 +1448,7 @@
 
 `void`
 
-***
+---
 
 ### unwatch()
 
@@ -1156,7 +1464,7 @@
 
 `void`
 
-***
+---
 
 ### updateServerVersion()
 
@@ -1172,7 +1480,7 @@
 
 `void`
 
-***
+---
 
 ### validateRedisServerSupport()
 
@@ -1188,7 +1496,7 @@
 
 `void`
 
-***
+---
 
 ### validateRedisVersion()
 
@@ -1212,7 +1520,7 @@
 
 `boolean`
 
-***
+---
 
 ### watch()
 
@@ -1232,7 +1540,7 @@
 
 `void`
 
-***
+---
 
 ### zadd()
 
@@ -1260,7 +1568,7 @@
 
 `void`
 
-***
+---
 
 ### zcard()
 
@@ -1280,7 +1588,35 @@
 
 `void`
 
-***
+---
+
+### zcount()
+
+> **zcount**(`key`, `min`, `max`, `cb`): `void`
+
+#### Parameters
+
+##### key
+
+`string`
+
+##### min
+
+`string` | `number`
+
+##### max
+
+`string` | `number`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`number`\>
+
+#### Returns
+
+`void`
+
+---
 
 ### zpoprpush()
 
@@ -1304,7 +1640,7 @@
 
 `void`
 
-***
+---
 
 ### zrange()
 
@@ -1332,7 +1668,7 @@
 
 `void`
 
-***
+---
 
 ### zrangebyscore()
 
@@ -1368,7 +1704,7 @@
 
 `void`
 
-***
+---
 
 ### zrangebyscorewithscores()
 
@@ -1382,11 +1718,11 @@
 
 ##### min
 
-`number`
+`string` | `number`
 
 ##### max
 
-`number`
+`string` | `number`
 
 ##### cb
 
@@ -1396,7 +1732,7 @@
 
 `void`
 
-***
+---
 
 ### zrem()
 
@@ -1420,7 +1756,7 @@
 
 `void`
 
-***
+---
 
 ### zremrangebyscore()
 
@@ -1448,7 +1784,7 @@
 
 `void`
 
-***
+---
 
 ### zrevrange()
 
@@ -1476,7 +1812,7 @@
 
 `void`
 
-***
+---
 
 ### zscan()
 
@@ -1505,6 +1841,30 @@
 ##### cb
 
 [`ICallback`](ICallback.md)\<\{ `cursor`: `string`; `items`: `string`[]; \}\>
+
+#### Returns
+
+`void`
+
+---
+
+### zscore()
+
+> **zscore**(`key`, `member`, `cb`): `void`
+
+#### Parameters
+
+##### key
+
+`string`
+
+##### member
+
+`string`
+
+##### cb
+
+[`ICallback`](ICallback.md)\<`string` \| `null`\>
 
 #### Returns
 
