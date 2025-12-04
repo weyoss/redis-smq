@@ -4,6 +4,42 @@
 
 ## Methods
 
+### decr()
+
+> **decr**(`key`): `this`
+
+#### Parameters
+
+##### key
+
+`string`
+
+#### Returns
+
+`this`
+
+---
+
+### decrby()
+
+> **decrby**(`key`, `decrement`): `this`
+
+#### Parameters
+
+##### key
+
+`string`
+
+##### decrement
+
+`number`
+
+#### Returns
+
+`this`
+
+---
+
 ### del()
 
 > **del**(`key`): `this`
@@ -18,7 +54,7 @@
 
 `this`
 
-***
+---
 
 ### exec()
 
@@ -34,7 +70,7 @@
 
 `void`
 
-***
+---
 
 ### expire()
 
@@ -54,7 +90,23 @@
 
 `this`
 
-***
+---
+
+### get()
+
+> **get**(`key`): `this`
+
+#### Parameters
+
+##### key
+
+`string`
+
+#### Returns
+
+`this`
+
+---
 
 ### hdel()
 
@@ -74,7 +126,43 @@
 
 `this`
 
-***
+---
+
+### hget()
+
+> **hget**(`key`, `field`): `this`
+
+#### Parameters
+
+##### key
+
+`string`
+
+##### field
+
+`string`
+
+#### Returns
+
+`this`
+
+---
+
+### hgetall()
+
+> **hgetall**(`key`): `this`
+
+#### Parameters
+
+##### key
+
+`string`
+
+#### Returns
+
+`this`
+
+---
 
 ### hincrby()
 
@@ -98,7 +186,7 @@
 
 `this`
 
-***
+---
 
 ### hset()
 
@@ -122,7 +210,59 @@
 
 `this`
 
-***
+---
+
+### incr()
+
+> **incr**(`key`): `this`
+
+#### Parameters
+
+##### key
+
+`string`
+
+#### Returns
+
+`this`
+
+---
+
+### incrby()
+
+> **incrby**(`key`, `increment`): `this`
+
+#### Parameters
+
+##### key
+
+`string`
+
+##### increment
+
+`number`
+
+#### Returns
+
+`this`
+
+---
+
+### llen()
+
+> **llen**(`key`): `this`
+
+#### Parameters
+
+##### key
+
+`string`
+
+#### Returns
+
+`this`
+
+---
 
 ### lpop()
 
@@ -138,7 +278,7 @@
 
 `this`
 
-***
+---
 
 ### lpush()
 
@@ -158,7 +298,7 @@
 
 `this`
 
-***
+---
 
 ### lrem()
 
@@ -182,7 +322,7 @@
 
 `this`
 
-***
+---
 
 ### ltrim()
 
@@ -206,7 +346,7 @@
 
 `this`
 
-***
+---
 
 ### pexpire()
 
@@ -226,7 +366,7 @@
 
 `this`
 
-***
+---
 
 ### rpop()
 
@@ -242,7 +382,7 @@
 
 `this`
 
-***
+---
 
 ### rpoplpush()
 
@@ -262,7 +402,7 @@
 
 `this`
 
-***
+---
 
 ### rpush()
 
@@ -282,7 +422,7 @@
 
 `this`
 
-***
+---
 
 ### sadd()
 
@@ -302,7 +442,39 @@
 
 `this`
 
-***
+---
+
+### scard()
+
+> **scard**(`key`): `this`
+
+#### Parameters
+
+##### key
+
+`string`
+
+#### Returns
+
+`this`
+
+---
+
+### smembers()
+
+> **smembers**(`key`): `this`
+
+#### Parameters
+
+##### key
+
+`string`
+
+#### Returns
+
+`this`
+
+---
 
 ### srem()
 
@@ -322,7 +494,7 @@
 
 `this`
 
-***
+---
 
 ### zadd()
 
@@ -346,7 +518,23 @@
 
 `this`
 
-***
+---
+
+### zcard()
+
+> **zcard**(`key`): `this`
+
+#### Parameters
+
+##### key
+
+`string`
+
+#### Returns
+
+`this`
+
+---
 
 ### zrem()
 
@@ -361,6 +549,26 @@
 ##### element
 
 `string` | `string`[]
+
+#### Returns
+
+`this`
+
+---
+
+### zscore()
+
+> **zscore**(`key`, `member`): `this`
+
+#### Parameters
+
+##### key
+
+`string`
+
+##### member
+
+`string`
 
 #### Returns
 
