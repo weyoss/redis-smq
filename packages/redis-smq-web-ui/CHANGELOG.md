@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.5-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.4...v9.0.5-next.0) (2025-12-04)
+
+### 🚀 Chore
+
+- update READMEs after merging 'v9.0.4' into 'next' ([9fce2ae](https://github.com/weyoss/redis-smq/commit/9fce2ae4158c1c2ca112a897e08d73913d1a7bd1))
+
+### ♻️ Code Refactoring
+
+- **redis-smq-web-ui:** consolidate acked messages configuration logic ([1fbf6ec](https://github.com/weyoss/redis-smq/commit/1fbf6ecc622e74b6fb441ce52d75f652ee57ccde))
+- **redis-smq-web-ui:** consolidate dl messages configuration logic ([7443a32](https://github.com/weyoss/redis-smq/commit/7443a32a1cb814d756202004b4327dec3317edb1))
+
 ## [9.0.4](https://github.com/weyoss/redis-smq/compare/v9.0.4-next.0...v9.0.4) (2025-11-13)
 
 ### 🚀 Chore
