@@ -63,6 +63,7 @@ export interface MessagesQueryConfig {
   queryKeyPrefix: string;
   enableDelete?: boolean;
   enableRequeue?: boolean;
+  enabled?: Ref<boolean | null>; // Allow external control over enabled state
 }
 
 /**
@@ -128,8 +129,13 @@ export function useMessages(
     queryKey,
     initialPageParam: 1,
     enabled: computed(() => {
-      // Only enable query when queueParams is not null and has required fields
-      return !!(queueParams.value?.ns && queueParams.value?.name);
+      const baseEnabled = !!(queueParams.value?.ns && queueParams.value?.name);
+      // If an external enabled flag is provided, respect it.
+      // Treat null as 'not yet determined', so disable query.
+      if (config.enabled !== undefined) {
+        return baseEnabled && config.enabled.value === true;
+      }
+      return baseEnabled;
     }),
     retry: (failureCount: number, err: unknown) => {
       // Do not retry on 422 Unprocessable Entity
