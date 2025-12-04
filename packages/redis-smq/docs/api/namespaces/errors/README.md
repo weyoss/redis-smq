@@ -4,6 +4,7 @@
 
 ## Classes
 
+- [AcknowledgedMessageAuditNotEnabledError](classes/AcknowledgedMessageAuditNotEnabledError.md)
 - [ConfigurationError](classes/ConfigurationError.md)
 - [ConfigurationMessageAuditExpireError](classes/ConfigurationMessageAuditExpireError.md)
 - [ConfigurationMessageAuditQueueSizeError](classes/ConfigurationMessageAuditQueueSizeError.md)
@@ -14,6 +15,7 @@
 - [ConsumerGroupRequiredError](classes/ConsumerGroupRequiredError.md)
 - [ConsumerGroupsError](classes/ConsumerGroupsError.md)
 - [ConsumerGroupsNotSupportedError](classes/ConsumerGroupsNotSupportedError.md)
+- [DeadLetteredMessageAuditNotEnabledError](classes/DeadLetteredMessageAuditNotEnabledError.md)
 - [ExchangeError](classes/ExchangeError.md)
 - [ExchangeFanoutError](classes/ExchangeFanoutError.md)
 - [ExchangeHasBoundQueuesError](classes/ExchangeHasBoundQueuesError.md)

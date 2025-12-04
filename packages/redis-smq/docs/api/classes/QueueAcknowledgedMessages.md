@@ -6,7 +6,7 @@ Manages acknowledged messages in a queue.
 
 Acknowledged messages are those that have been successfully processed by consumers
 and can be safely removed from the active queue. This class allows for tracking
-and management of these messages when the system is configured to store them.
+and management of these messages when the system is configured to audit them.
 
 ## See
 
@@ -56,11 +56,11 @@ Callback returning the count
 
 `void`
 
-#### Inherited from
+#### Overrides
 
 `QueueMessagesAbstract.countMessages`
 
-***
+---
 
 ### getMessages()
 
@@ -98,11 +98,11 @@ Callback returning an IQueueMessagesPage of IMessageTransferable
 
 `void`
 
-#### Inherited from
+#### Overrides
 
 `QueueMessagesAbstract.getMessages`
 
-***
+---
 
 ### purge()
 
@@ -111,6 +111,7 @@ Callback returning an IQueueMessagesPage of IMessageTransferable
 Purges all messages from the specified queue.
 
 Different message types can be purged using specific classes:
+
 - [QueueMessages](QueueMessages.md) - Delete all queue messages
 - QueueAcknowledgedMessages - Delete acknowledged messages (if configured to be stored)
 - [QueueDeadLetteredMessages](QueueDeadLetteredMessages.md) - Delete dead-lettered messages (if configured to be stored)
@@ -124,20 +125,20 @@ Different message types can be purged using specific classes:
 [`TQueueExtendedParams`](../type-aliases/TQueueExtendedParams.md)
 
 The queue to purge. Can be a string, queue parameters object,
-               or queue consumer group parameters.
+or queue consumer group parameters.
 
 ##### cb
 
 `ICallback`
 
 Callback function that will be invoked when the operation completes.
-            If an error occurs, the first parameter will contain the Error object.
-            Otherwise, the first parameter will be null/undefined.
+If an error occurs, the first parameter will contain the Error object.
+Otherwise, the first parameter will be null/undefined.
 
 #### Returns
 
 `void`
 
-#### Inherited from
+#### Overrides
 
 `QueueMessagesAbstract.purge`
