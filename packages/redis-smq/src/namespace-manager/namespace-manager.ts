@@ -13,7 +13,7 @@ import {
   createLogger,
   ICallback,
 } from 'redis-smq-common';
-import { redisKeys } from '../common/redis-keys/redis-keys.js';
+import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
 import { Configuration } from '../config/index.js';
 import { _deleteQueue } from '../queue-manager/_/_delete-queue.js';
 import { _getQueues } from '../queue-manager/_/_get-queues.js';
@@ -22,7 +22,7 @@ import {
   InvalidNamespaceError,
   NamespaceNotFoundError,
 } from '../errors/index.js';
-import { withSharedPoolConnection } from '../common/redis-connection-pool/with-shared-pool-connection.js';
+import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 
 /**
  * NamespaceManager class for managing message queue namespaces in Redis.

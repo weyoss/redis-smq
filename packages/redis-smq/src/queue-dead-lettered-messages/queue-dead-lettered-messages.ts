@@ -7,12 +7,12 @@
  * in the root directory of this source tree.
  */
 
-import { QueueMessagesAbstract } from '../common/queue-messages/queue-messages-abstract.js';
-import { QueueStorageList } from '../common/queue-messages/queue-storage/queue-storage-list.js';
+import { MessageBrowserAbstract } from '../common/message-browser/message-browser-abstract.js';
+import { BrowserStorageList } from '../common/message-browser/browser-storage/browser-storage-list.js';
 import { MessageManager } from '../message-manager/index.js';
 import { TQueueExtendedParams } from '../queue-manager/index.js';
 import { ICallback } from 'redis-smq-common';
-import { IPaginationPage } from '../common/index.js';
+import { IBrowserPage } from '../common/index.js';
 import { IMessageTransferable } from '../message/index.js';
 import { Configuration } from '../config/index.js';
 import { DeadLetteredMessageAuditNotEnabledError } from '../errors/index.js';
@@ -24,12 +24,12 @@ import { DeadLetteredMessageAuditNotEnabledError } from '../errors/index.js';
  * and exceeded their retry limits.  When the system is configured to audit them,
  * these messages are moved to a dead-letter queue for later inspection, troubleshooting, or manual reprocessing.
  *
- * @extends QueueMessagesAbstract
+ * @extends MessageBrowserAbstract
  * @see /packages/redis-smq/docs/configuration.md#message-audit
  */
-export class QueueDeadLetteredMessages extends QueueMessagesAbstract {
+export class QueueDeadLetteredMessages extends MessageBrowserAbstract {
   constructor() {
-    super(new QueueStorageList(), new MessageManager(), 'keyQueueDL');
+    super(new BrowserStorageList(), new MessageManager(), 'keyQueueDL');
     this.logger.debug('QueueDeadLetteredMessages initialized');
   }
 
@@ -37,7 +37,7 @@ export class QueueDeadLetteredMessages extends QueueMessagesAbstract {
     queue: TQueueExtendedParams,
     page: number,
     pageSize: number,
-    cb: ICallback<IPaginationPage<IMessageTransferable>>,
+    cb: ICallback<IBrowserPage<IMessageTransferable>>,
   ) {
     const cfg = Configuration.getConfig();
     if (!cfg.messageAudit.deadLetteredMessages.enabled)

@@ -19,7 +19,7 @@ import { IQueueParams } from '../queue-manager/index.js';
 import { _deleteConsumerGroup } from './_/_delete-consumer-group.js';
 import { _getConsumerGroups } from './_/_get-consumer-groups.js';
 import { _saveConsumerGroup } from './_/_save-consumer-group.js';
-import { withSharedPoolConnection } from '../common/redis-connection-pool/with-shared-pool-connection.js';
+import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { TRedisSMQEvent } from '../common/index.js';
 
 /**

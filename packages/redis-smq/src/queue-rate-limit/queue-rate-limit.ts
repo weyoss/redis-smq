@@ -13,8 +13,8 @@ import {
   createLogger,
   ICallback,
 } from 'redis-smq-common';
-import { ELuaScriptName } from '../common/redis-client/scripts/scripts.js';
-import { redisKeys } from '../common/redis-keys/redis-keys.js';
+import { ELuaScriptName } from '../common/redis/redis-client/scripts/scripts.js';
+import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
 import { Configuration } from '../config/index.js';
 import { _parseQueueParamsAndValidate } from '../queue-manager/_/_parse-queue-params-and-validate.js';
 import {
@@ -29,7 +29,7 @@ import {
   InvalidRateLimitIntervalError,
   QueueNotFoundError,
 } from '../errors/index.js';
-import { withSharedPoolConnection } from '../common/redis-connection-pool/with-shared-pool-connection.js';
+import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 
 /**
  * The QueueRateLimit class provides functionality to manage rate limiting for

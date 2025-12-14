@@ -14,7 +14,7 @@ import {
   IWatchTransactionAttemptResult,
   withWatchTransaction,
 } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis-keys/redis-keys.js';
+import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { ExchangeError } from '../../errors/index.js';
 import {
   EExchangeProperty,

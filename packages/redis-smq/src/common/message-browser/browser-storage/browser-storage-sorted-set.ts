@@ -8,14 +8,14 @@
  */
 
 import { async, ICallback } from 'redis-smq-common';
-import { QueueStorageAbstract } from './queue-storage-abstract.js';
-import { withSharedPoolConnection } from '../../redis-connection-pool/with-shared-pool-connection.js';
+import { BrowserStorageAbstract } from './browser-storage-abstract.js';
+import { withSharedPoolConnection } from '../../redis/redis-connection-pool/with-shared-pool-connection.js';
 
 /**
  * Implementation of QueueStorageAbstract for Redis sorted sets.
  * Key Redis commands used: ZCARD, ZRANGE, ZSCAN
  */
-export class QueueStorageSortedSet extends QueueStorageAbstract {
+export class BrowserStorageSortedSet extends BrowserStorageAbstract {
   /**
    * Counts the total number of items in a Redis sorted set
    *

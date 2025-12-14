@@ -8,7 +8,7 @@
  */
 
 import { ICallback, IRedisClient } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis-keys/redis-keys.js';
+import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { MessageState } from '../../message/message-state.js';
 import { _parseMessageState } from './_parse-message-state.js';
 import { MessageNotFoundError } from '../../errors/index.js';

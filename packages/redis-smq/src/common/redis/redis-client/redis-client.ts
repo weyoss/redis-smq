@@ -13,7 +13,7 @@ import {
   IRedisConfig,
   RedisClientFactory,
 } from 'redis-smq-common';
-import { Configuration } from '../../config/index.js';
+import { Configuration } from '../../../config/index.js';
 import { scriptFileMap } from './scripts/scripts.js';
 
 export class RedisClient extends RedisClientFactory {

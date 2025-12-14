@@ -11,7 +11,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   ERedisConnectionAcquisitionMode,
   IConnectionPoolConfig,
-} from '../../../src/common/redis-connection-pool/types/connection-pool.js';
+} from '../../../src/common/redis/redis-connection-pool/types/connection-pool.js';
 import bluebird from 'bluebird';
 import { config } from '../../common/config.js';
 import {
@@ -20,7 +20,7 @@ import {
   poolLimitsEXCLUSIVE,
   poolLimitsSHARED,
 } from './common.js';
-import { RedisConnectionPool } from '../../../src/common/redis-connection-pool/redis-connection-pool.js';
+import { RedisConnectionPool } from '../../../src/common/redis/redis-connection-pool/redis-connection-pool.js';
 
 const connectionPool = bluebird.promisifyAll(RedisConnectionPool);
 

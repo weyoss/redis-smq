@@ -21,8 +21,8 @@ import {
   WorkerCallable,
 } from 'redis-smq-common';
 import { TConsumerConsumeMessageEvent } from '../../../common/index.js';
-import { ELuaScriptName } from '../../../common/redis-client/scripts/scripts.js';
-import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
+import { ELuaScriptName } from '../../../common/redis/redis-client/scripts/scripts.js';
+import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
 import { Configuration, IRedisSMQParsedConfig } from '../../../config/index.js';
 import {
   EMessageProperty,
@@ -46,8 +46,8 @@ import {
 import { MessageUnacknowledgement } from './message-unacknowledgement.js';
 import { eventBusPublisher } from './event-bus-publisher.js';
 import { TConsumerMessageHandler } from '../types/index.js';
-import { ERedisConnectionAcquisitionMode } from '../../../common/redis-connection-pool/types/connection-pool.js';
-import { RedisConnectionPool } from '../../../common/redis-connection-pool/redis-connection-pool.js';
+import { ERedisConnectionAcquisitionMode } from '../../../common/redis/redis-connection-pool/types/connection-pool.js';
+import { RedisConnectionPool } from '../../../common/redis/redis-connection-pool/redis-connection-pool.js';
 import { IConsumerContext } from '../../types/consumer-context.js';
 
 export class ConsumeMessage extends Runnable<TConsumerConsumeMessageEvent> {

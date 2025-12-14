@@ -8,8 +8,8 @@
  */
 
 import { async, createLogger, ICallback, IRedisClient } from 'redis-smq-common';
-import { ELuaScriptName } from '../../../common/redis-client/scripts/scripts.js';
-import { redisKeys } from '../../../common/redis-keys/redis-keys.js';
+import { ELuaScriptName } from '../../../common/redis/redis-client/scripts/scripts.js';
+import { redisKeys } from '../../../common/redis/redis-keys/redis-keys.js';
 import { Configuration } from '../../../config/index.js';
 import {
   EMessageProperty,
@@ -27,7 +27,7 @@ import {
   TMessageUnacknowledgementStatus,
 } from './types/index.js';
 import { MessageHandlerError } from '../../../errors/index.js';
-import { withSharedPoolConnection } from '../../../common/redis-connection-pool/with-shared-pool-connection.js';
+import { withSharedPoolConnection } from '../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 
 type TScriptArgs = {
   keys: string[];

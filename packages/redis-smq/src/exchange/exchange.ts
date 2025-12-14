@@ -16,8 +16,8 @@ import { IQueueParams } from '../queue-manager/index.js';
 import { IExchangeParsedParams } from './types/index.js';
 import { ExchangeError, RedisKeysInvalidKeyError } from '../errors/index.js';
 import { Configuration } from '../config/index.js';
-import { withSharedPoolConnection } from '../common/redis-connection-pool/with-shared-pool-connection.js';
-import { redisKeys } from '../common/redis-keys/redis-keys.js';
+import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
+import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
 import { _parseQueueParams } from '../queue-manager/_/_parse-queue-params.js';
 
 /**

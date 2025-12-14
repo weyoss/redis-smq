@@ -8,10 +8,10 @@
  */
 
 import bluebird from 'bluebird';
-import { ERedisConnectionAcquisitionMode } from '../../../src/common/redis-connection-pool/types/connection-pool.js';
+import { ERedisConnectionAcquisitionMode } from '../../../src/common/redis/redis-connection-pool/types/connection-pool.js';
 import { expect } from 'vitest';
 import { IRedisClient } from 'redis-smq-common';
-import { RedisConnectionPool } from '../../../src/common/redis-connection-pool/redis-connection-pool.js';
+import { RedisConnectionPool } from '../../../src/common/redis/redis-connection-pool/redis-connection-pool.js';
 
 export const connectionAcquisitionAndRelease = async (
   pool: ReturnType<typeof bluebird.promisifyAll<RedisConnectionPool>>,

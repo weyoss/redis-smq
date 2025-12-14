@@ -12,8 +12,8 @@ import {
   ICallback,
   IRedisClient,
 } from 'redis-smq-common';
-import { ELuaScriptName } from '../../common/redis-client/scripts/scripts.js';
-import { redisKeys } from '../../common/redis-keys/redis-keys.js';
+import { ELuaScriptName } from '../../common/redis/redis-client/scripts/scripts.js';
+import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { EQueueProperty, EQueueType } from '../../queue-manager/index.js';
 import { MessageError, MessageNotRequeuableError } from '../../errors/index.js';
 import { _fromMessage } from './_from-message.js';

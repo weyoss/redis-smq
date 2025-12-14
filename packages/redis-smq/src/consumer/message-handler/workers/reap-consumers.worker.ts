@@ -15,7 +15,7 @@ import { WorkerAbstract } from './worker-abstract.js';
 import { workerBootstrap } from './worker-bootstrap.js';
 import { IQueueParsedParams } from '../../../queue-manager/index.js';
 import { EMessageUnacknowledgementReason } from '../consume-message/types/index.js';
-import { withSharedPoolConnection } from '../../../common/redis-connection-pool/with-shared-pool-connection.js';
+import { withSharedPoolConnection } from '../../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { _deleteEphemeralConsumerGroup } from '../_/_delete-ephemeral-consumer-group.js';
 
 export class ReapConsumersWorker extends WorkerAbstract {

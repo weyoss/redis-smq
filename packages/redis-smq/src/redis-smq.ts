@@ -29,7 +29,7 @@ import { MessageManager } from './message-manager/index.js';
 import { Disposable } from './common/types/disposable.js';
 import { EventBus } from './event-bus/index.js';
 import { parseRedisConfig } from './config/parse-redis-config.js';
-import { RedisConnectionPool } from './common/redis-connection-pool/redis-connection-pool.js';
+import { RedisConnectionPool } from './common/redis/redis-connection-pool/redis-connection-pool.js';
 
 function isDisposable(disposable: object): disposable is Disposable {
   return (

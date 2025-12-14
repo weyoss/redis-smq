@@ -9,9 +9,9 @@
 
 import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
-import { redisKeys } from '../../../src/common/redis-keys/redis-keys.js';
+import { redisKeys } from '../../../src/common/redis/redis-keys/redis-keys.js';
 import { EQueueType } from '../../../src/index.js';
-import { QueueStorageSortedSet } from '../../../src/common/queue-messages/queue-storage/queue-storage-sorted-set.js';
+import { BrowserStorageSortedSet } from '../../../src/common/message-browser/browser-storage/browser-storage-sorted-set.js';
 
 import {
   createQueue,
@@ -25,7 +25,7 @@ it('QueueStorageSortedSet: should return 0 for an empty list', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.PRIORITY_QUEUE);
   const queueMessagesStorageSortedSet = promisifyAll(
-    new QueueStorageSortedSet(),
+    new BrowserStorageSortedSet(),
   );
 
   const { keyQueuePriorityPending } = redisKeys.getQueueKeys(
@@ -42,7 +42,7 @@ it('should return the correct count after adding items', async () => {
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.PRIORITY_QUEUE);
   const queueMessagesStorageSortedSet = promisifyAll(
-    new QueueStorageSortedSet(),
+    new BrowserStorageSortedSet(),
   );
   await produceMessageWithPriority(defaultQueue);
   const { keyQueuePriorityPending } = redisKeys.getQueueKeys(

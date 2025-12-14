@@ -18,8 +18,8 @@ import {
   EQueueType,
   IQueueParams,
 } from '../../queue-manager/index.js';
-import { redisKeys } from '../../common/redis-keys/redis-keys.js';
-import { ELuaScriptName } from '../../common/redis-client/scripts/scripts.js';
+import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
+import { ELuaScriptName } from '../../common/redis/redis-client/scripts/scripts.js';
 import { MessageEnvelope } from '../../message/message-envelope.js';
 import {
   EMessageProperty,

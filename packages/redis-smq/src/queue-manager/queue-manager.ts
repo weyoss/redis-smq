@@ -13,8 +13,8 @@ import {
   EventBusRedis,
   ICallback,
 } from 'redis-smq-common';
-import { ELuaScriptName } from '../common/redis-client/scripts/scripts.js';
-import { redisKeys } from '../common/redis-keys/redis-keys.js';
+import { ELuaScriptName } from '../common/redis/redis-client/scripts/scripts.js';
+import { redisKeys } from '../common/redis/redis-keys/redis-keys.js';
 import { Configuration } from '../config/index.js';
 import { _deleteQueue } from './_/_delete-queue.js';
 import { _getQueueConsumerIds } from './_/_get-queue-consumer-ids.js';
@@ -32,7 +32,7 @@ import {
   IQueueProperties,
   TQueueConsumer,
 } from './types/index.js';
-import { withSharedPoolConnection } from '../common/redis-connection-pool/with-shared-pool-connection.js';
+import { withSharedPoolConnection } from '../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 import { TRedisSMQEvent } from '../common/index.js';
 
 /**

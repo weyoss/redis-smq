@@ -13,7 +13,7 @@ import {
   IRedisClient,
   IRedisTransaction,
 } from 'redis-smq-common';
-import { redisKeys } from '../../common/redis-keys/redis-keys.js';
+import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { _getConsumerGroups } from '../../consumer-groups/_/_get-consumer-groups.js';
 import { ConsumerHeartbeat } from '../../consumer/consumer-heartbeat/consumer-heartbeat.js';
 import {

@@ -8,13 +8,13 @@
  */
 
 import { ICallback } from 'redis-smq-common';
-import { QueueStorageAbstract } from './queue-storage-abstract.js';
-import { withSharedPoolConnection } from '../../redis-connection-pool/with-shared-pool-connection.js';
+import { BrowserStorageAbstract } from './browser-storage-abstract.js';
+import { withSharedPoolConnection } from '../../redis/redis-connection-pool/with-shared-pool-connection.js';
 
 /**
  * Implementation of QueueStorageAbstract for Redis lists
  */
-export class QueueStorageList extends QueueStorageAbstract {
+export class BrowserStorageList extends BrowserStorageAbstract {
   /**
    * Counts the number of items in a Redis list
    *

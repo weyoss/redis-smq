@@ -7,14 +7,14 @@
  * in the root directory of this source tree.
  */
 
-import { QueueMessagesAbstract } from '../common/queue-messages/queue-messages-abstract.js';
-import { QueueStorageSortedSet } from '../common/queue-messages/queue-storage/queue-storage-sorted-set.js';
+import { MessageBrowserAbstract } from '../common/message-browser/message-browser-abstract.js';
+import { BrowserStorageSortedSet } from '../common/message-browser/browser-storage/browser-storage-sorted-set.js';
 import { MessageManager } from '../message-manager/index.js';
 
-export class QueueScheduledMessages extends QueueMessagesAbstract {
+export class QueueScheduledMessages extends MessageBrowserAbstract {
   constructor() {
     super(
-      new QueueStorageSortedSet(),
+      new BrowserStorageSortedSet(),
       new MessageManager(),
       'keyQueueScheduled',
     );

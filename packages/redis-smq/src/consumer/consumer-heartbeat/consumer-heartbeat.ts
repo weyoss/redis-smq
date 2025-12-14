@@ -18,12 +18,12 @@ import {
   Timer,
 } from 'redis-smq-common';
 import { TConsumerHeartbeatEvent } from '../../common/index.js';
-import { redisKeys } from '../../common/redis-keys/redis-keys.js';
+import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { Configuration } from '../../config/index.js';
 import { Consumer } from '../consumer.js';
 import { eventBusPublisher } from './event-bus-publisher.js';
 import { IConsumerHeartbeat } from './types/index.js';
-import { withSharedPoolConnection } from '../../common/redis-connection-pool/with-shared-pool-connection.js';
+import { withSharedPoolConnection } from '../../common/redis/redis-connection-pool/with-shared-pool-connection.js';
 
 /**
  * ConsumerHeartbeat

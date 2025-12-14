@@ -9,13 +9,13 @@
 
 import bluebird from 'bluebird';
 import { expect, it } from 'vitest';
-import { redisKeys } from '../../../src/common/redis-keys/redis-keys.js';
+import { redisKeys } from '../../../src/common/redis/redis-keys/redis-keys.js';
 import {
   EMessagePriority,
   EQueueType,
   ProducibleMessage,
 } from '../../../src/index.js';
-import { QueueStorageSortedSet } from '../../../src/common/queue-messages/queue-storage/queue-storage-sorted-set.js';
+import { BrowserStorageSortedSet } from '../../../src/common/message-browser/browser-storage/browser-storage-sorted-set.js';
 
 import {
   createQueue,
@@ -29,7 +29,7 @@ it('QueueStorageSortedSet: should fetch all items for a large list (chunking tes
   const defaultQueue = getDefaultQueue();
   await createQueue(defaultQueue, EQueueType.PRIORITY_QUEUE);
   const queueMessagesStorageSortedSet = promisifyAll(
-    new QueueStorageSortedSet(),
+    new BrowserStorageSortedSet(),
   );
 
   const ids: string[] = [];

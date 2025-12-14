@@ -24,8 +24,8 @@ import {
   TConsumerMessageHandlerEvent,
   TRedisSMQEvent,
 } from '../../common/index.js';
-import { ELuaScriptName } from '../../common/redis-client/scripts/scripts.js';
-import { redisKeys } from '../../common/redis-keys/redis-keys.js';
+import { ELuaScriptName } from '../../common/redis/redis-client/scripts/scripts.js';
+import { redisKeys } from '../../common/redis/redis-keys/redis-keys.js';
 import { IRedisSMQParsedConfig } from '../../config/index.js';
 import { _parseMessage } from '../../message-manager/_/_parse-message.js';
 import {
@@ -41,8 +41,8 @@ import { DequeueMessage } from './dequeue-message/dequeue-message.js';
 import { evenBusPublisher } from './even-bus-publisher.js';
 import { IConsumerMessageHandlerParams } from './types/index.js';
 import { TConsumerMessageHandlerWorkerPayload } from './workers/types/index.js';
-import { ERedisConnectionAcquisitionMode } from '../../common/redis-connection-pool/types/connection-pool.js';
-import { RedisConnectionPool } from '../../common/redis-connection-pool/redis-connection-pool.js';
+import { ERedisConnectionAcquisitionMode } from '../../common/redis/redis-connection-pool/types/connection-pool.js';
+import { RedisConnectionPool } from '../../common/redis/redis-connection-pool/redis-connection-pool.js';
 import { _deleteEphemeralConsumerGroup } from './_/_delete-ephemeral-consumer-group.js';
 import { _prepareConsumerGroup } from './_/_prepare-consumer-group.js';
 import { IConsumerContext } from '../types/consumer-context.js';
