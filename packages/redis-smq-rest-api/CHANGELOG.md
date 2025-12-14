@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [9.0.5-next.1](https://github.com/weyoss/redis-smq/compare/v9.0.5-next.0...v9.0.5-next.1) (2025-12-14)
+
+### ♻️ Code Refactoring
+
+- **redis-smq-rest-api:** adopt IBrowserPage type from redis-smq ([2383261](https://github.com/weyoss/redis-smq/commit/2383261fa95581bd103d563c2042e5304a97f416))
+
 ## [9.0.5-next.0](https://github.com/weyoss/redis-smq/compare/v9.0.4...v9.0.5-next.0) (2025-12-04)
 
 ### 🚀 Chore
